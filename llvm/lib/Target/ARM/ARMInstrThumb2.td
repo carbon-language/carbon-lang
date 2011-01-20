@@ -3322,3 +3322,59 @@ def t2MSRsys : T2MSR<0b111100111001, 0b10, 0,
                    (outs), (ins rGPR:$Rn, msr_mask:$mask), NoItinerary, "msr",
                    "\tspsr$mask, $Rn",
                    [/* For disassembly only; pattern left blank */]>;
+
+//===----------------------------------------------------------------------===//
+// Move between coprocessor and ARM core register -- for disassembly only
+//
+
+class t2MovRCopro<string opc, bit direction>
+  : T2Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
+                       GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
+          [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-24} = 0b1110;
+  let Inst{20} = direction;
+  let Inst{4} = 1;
+
+  bits<4> Rt;
+  bits<4> cop;
+  bits<3> opc1;
+  bits<3> opc2;
+  bits<4> CRm;
+  bits<4> CRn;
+
+  let Inst{15-12} = Rt;
+  let Inst{11-8}  = cop;
+  let Inst{23-21} = opc1;
+  let Inst{7-5}   = opc2;
+  let Inst{3-0}   = CRm;
+  let Inst{19-16} = CRn;
+}
+
+def t2MCR : t2MovRCopro<"mcr2", 0 /* from ARM core register to coprocessor */>;
+def t2MRC : t2MovRCopro<"mrc2", 1 /* from coprocessor to ARM core register */>;
+
+class t2MovRRCopro<string opc, bit direction>
+  : T2Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"),
+          [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-24} = 0b1100;
+  let Inst{23-21} = 0b010;
+  let Inst{20} = direction;
+
+  bits<4> Rt;
+  bits<4> Rt2;
+  bits<4> cop;
+  bits<4> opc1;
+  bits<4> CRm;
+
+  let Inst{15-12} = Rt;
+  let Inst{19-16} = Rt2;
+  let Inst{11-8}  = cop;
+  let Inst{7-4}   = opc1;
+  let Inst{3-0}   = CRm;
+}
+
+def t2MCRR : t2MovRRCopro<"mcrr2",0/* from ARM core register to coprocessor */>;
+def t2MRRC : t2MovRRCopro<"mrrc2",1/* from coprocessor to ARM core register */>;
+
