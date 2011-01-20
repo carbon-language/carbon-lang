@@ -852,6 +852,27 @@ Decl *Sema::ActOnAccessSpecifier(AccessSpecifier Access,
   return ASDecl;
 }
 
+/// CheckOverrideControl - Check C++0x override control semantics.
+static void 
+CheckOverrideControl(Sema& SemaRef, const Decl *D) {
+  const CXXMethodDecl *MD = llvm::dyn_cast<CXXMethodDecl>(D);
+  if (!MD || !MD->isVirtual())
+    return;
+
+  // C++0x [class.virtual]p3:
+  //   If a virtual function is marked with the virt-specifier override and does
+  //   not override a member function of a base class, 
+  //   the program is ill-formed.
+  bool HasOverriddenMethods = 
+    MD->begin_overridden_methods() != MD->end_overridden_methods();
+  if (MD->isMarkedOverride() && !HasOverriddenMethods) {
+    SemaRef.Diag(MD->getLocation(), 
+                 diag::err_function_marked_override_not_overriding)
+      << MD->getDeclName();
+    return;
+  }
+}
+
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
 /// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
 /// bitfield width if there is one and 'InitExpr' specifies the initializer if
@@ -995,7 +1016,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       Diag(Member->getLocStart(), 
            diag::override_keyword_only_allowed_on_virtual_member_functions)
         << "override" << FixItHint::CreateRemoval(VS.getOverrideLoc());
-    }
+    } else
+      MD->setIsMarkedOverride(true);
   }
   if (VS.isFinalSpecified()) {
     CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member);
@@ -1003,8 +1025,12 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       Diag(Member->getLocStart(), 
            diag::override_keyword_only_allowed_on_virtual_member_functions)
       << "final" << FixItHint::CreateRemoval(VS.getFinalLoc());
-    }    
+    } else
+      MD->setIsMarkedFinal(true);
   }
+
+  CheckOverrideControl(*this, Member);
+
   assert((Name || isInstField) && "No identifier for non-field ?");
 
   if (Init)

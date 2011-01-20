@@ -874,15 +874,14 @@ def err_repeat_attribute : Error<"'%0' attribute cannot be repeated">;
 def override_keyword_only_allowed_on_virtual_member_functions : Error<
   "only virtual member functions can be marked '%0'">;
 
+def err_function_marked_override_not_overriding : Error<
+  "%0 marked 'override' but does not override any member functions">;
+
 // C++0x [[final]]
 def err_final_function_overridden : Error<
   "declaration of %0 overrides a 'final' function">;
 def err_final_base : Error<
   "derivation from 'final' %0">;
-
-// C++0x [[override]]
-def err_override_function_not_overriding : Error<
-  "%0 marked 'override' but does not override any member functions">;
 
 def err_function_overriding_without_override : Error<
   "%0 overrides function%s1 without being marked 'override'">;

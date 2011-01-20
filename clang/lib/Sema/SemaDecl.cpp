@@ -3388,7 +3388,8 @@ CheckClassMemberNameAttributes(Sema& SemaRef, const FunctionDecl *FD) {
   ///   If a virtual member function f is marked override and does not override
   ///   a member function of a base class the program is ill-formed.
   if (HasOverrideAttr && !HasOverriddenMethods) {
-    SemaRef.Diag(MD->getLocation(), diag::err_override_function_not_overriding)
+    SemaRef.Diag(MD->getLocation(), 
+                 diag::err_function_marked_override_not_overriding)
       << MD->getDeclName();
     return;
   }
