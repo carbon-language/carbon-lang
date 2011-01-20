@@ -564,7 +564,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // Diagnose if an ivar was lazily synthesdized due to a previous
       // use and if 1) property is @dynamic or 2) property is synthesized
       // but it requires an ivar of different name.
-      ObjCInterfaceDecl *ClassDeclared;
+      ObjCInterfaceDecl *ClassDeclared=0;
       ObjCIvarDecl *Ivar = 0;
       if (!Synthesize)
         Ivar = IDecl->lookupInstanceVariable(PropertyId, ClassDeclared);
