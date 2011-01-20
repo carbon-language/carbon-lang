@@ -154,3 +154,8 @@
 @ CHECK: mrrc2  p7, #1, r5, r4, c1 @ encoding: [0x11,0x57,0x54,0xfc]
         mrrc2  p7, #1, r5, r4, c1
 
+@ CHECK: cdp  p7, #1, c1, c1, c1, #4 @ encoding: [0x81,0x17,0x11,0xee]
+        cdp  p7, #1, c1, c1, c1, #4
+@ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x81,0x17,0x11,0xfe]
+        cdp2  p7, #1, c1, c1, c1, #4
+

@@ -3555,19 +3555,45 @@ include "ARMInstrNEON.td"
 // Coprocessor Instructions.  For disassembly only.
 //
 
-def CDP : ABI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
-            nohash_imm:$CRd, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
-            NoItinerary, "cdp", "\tp$cop, $opc1, cr$CRd, cr$CRn, cr$CRm, $opc2",
-              [/* For disassembly only; pattern left blank */]> {
-  let Inst{4} = 0;
+def CDP : ABI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
+            c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+            NoItinerary, "cdp", "\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
+            [/* For disassembly only; pattern left blank */]> {
+  bits<4> opc1;
+  bits<4> CRn;
+  bits<4> CRd;
+  bits<4> cop;
+  bits<3> opc2;
+  bits<4> CRm;
+
+  let Inst{3-0}   = CRm;
+  let Inst{4}     = 0;
+  let Inst{7-5}   = opc2;
+  let Inst{11-8}  = cop;
+  let Inst{15-12} = CRd;
+  let Inst{19-16} = CRn;
+  let Inst{23-20} = opc1;
 }
 
-def CDP2 : ABXI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
-               nohash_imm:$CRd, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
-               NoItinerary, "cdp2\tp$cop, $opc1, cr$CRd, cr$CRn, cr$CRm, $opc2",
+def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
+               c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+               NoItinerary, "cdp2\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
                [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
-  let Inst{4} = 0;
+  bits<4> opc1;
+  bits<4> CRn;
+  bits<4> CRd;
+  bits<4> cop;
+  bits<3> opc2;
+  bits<4> CRm;
+
+  let Inst{3-0}   = CRm;
+  let Inst{4}     = 0;
+  let Inst{7-5}   = opc2;
+  let Inst{11-8}  = cop;
+  let Inst{15-12} = CRd;
+  let Inst{19-16} = CRn;
+  let Inst{23-20} = opc1;
 }
 
 class ACI<dag oops, dag iops, string opc, string asm>
