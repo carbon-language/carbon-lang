@@ -185,19 +185,6 @@ BVPair CFGBlockValues::getPredBitVectors(const clang::CFGBlock *block) {
   return BVPair(&bvA, &getBitVector(*itr, block));
 }
 
-
-static void printVector(const CFGBlock *block, llvm::BitVector &bv,
-                        unsigned num) {
-  
-  #if 0
-  llvm::errs() << block->getBlockID() << " :";
-  for (unsigned i = 0; i < bv.size(); ++i) {
-    llvm::errs() << ' ' << bv[i];
-  }
-  llvm::errs() << " : " << num << '\n';
-  #endif
-}
-
 void CFGBlockValues::mergeIntoScratch(llvm::BitVector const &source,
                                       bool isFirst) {
   if (isFirst)
@@ -212,7 +199,6 @@ bool CFGBlockValues::updateBitVectorWithScratch(const CFGBlock *block) {
   if (changed)
     dst = scratch;
   
-  printVector(block, scratch, 0);
   return changed;
 }
 
@@ -223,8 +209,6 @@ bool CFGBlockValues::updateBitVectors(const CFGBlock *block,
                  *newVals.second != *vals.second;
   *vals.first = *newVals.first;
   *vals.second = *newVals.second;
-  printVector(block, *vals.first, 1);
-  printVector(block, *vals.second, 2);
   return changed;
 }
 
