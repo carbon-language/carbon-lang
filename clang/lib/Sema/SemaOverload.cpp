@@ -2146,6 +2146,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
         User.EllipsisConversion = false;
       }
       User.ConversionFunction = Constructor;
+      User.FoundConversionFunction = Best->FoundDecl.getDecl();
       User.After.setAsIdentityConversion();
       User.After.setFromType(ThisType->getAs<PointerType>()->getPointeeType());
       User.After.setAllToTypes(ToType);
@@ -2160,6 +2161,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       //   implicit object parameter of the conversion function.
       User.Before = Best->Conversions[0].Standard;
       User.ConversionFunction = Conversion;
+      User.FoundConversionFunction = Best->FoundDecl.getDecl();
       User.EllipsisConversion = false;
 
       // C++ [over.ics.user]p2:
@@ -2876,6 +2878,7 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
     ICS.UserDefined.Before = Best->Conversions[0].Standard;
     ICS.UserDefined.After = Best->FinalConversion;
     ICS.UserDefined.ConversionFunction = Best->Function;
+    ICS.UserDefined.FoundConversionFunction = Best->FoundDecl.getDecl();
     ICS.UserDefined.EllipsisConversion = false;
     assert(ICS.UserDefined.After.ReferenceBinding &&
            ICS.UserDefined.After.DirectBinding &&
@@ -4106,6 +4109,8 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   Candidate.Conversions[0].UserDefined.Before = ObjectInit.Standard;
   Candidate.Conversions[0].UserDefined.EllipsisConversion = false;
   Candidate.Conversions[0].UserDefined.ConversionFunction = Conversion;
+  Candidate.Conversions[0].UserDefined.FoundConversionFunction 
+    = FoundDecl.getDecl();
   Candidate.Conversions[0].UserDefined.After
     = Candidate.Conversions[0].UserDefined.Before;
   Candidate.Conversions[0].UserDefined.After.setAsIdentityConversion();

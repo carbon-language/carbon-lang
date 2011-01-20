@@ -488,3 +488,13 @@ namespace test21 {
     A<int>::Inner i; // expected-error {{'Inner' is a private member}}
   }
 }
+
+namespace rdar8876150 {
+  struct A { operator bool(); };
+  struct B : private A { using A::operator bool; };
+
+  bool f() {
+    B b;
+    return !b;
+  }
+}
