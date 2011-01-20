@@ -707,8 +707,8 @@ bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
                   "mark it isCodeGenOnly");
   
   // Reject matchables with operand modifiers, these aren't something we can
-  /// handle, the target should be refactored to use operands instead of
-  /// modifiers.
+  // handle, the target should be refactored to use operands instead of
+  // modifiers.
   //
   // Also, check for instructions which reference the operand multiple times;
   // this implies a constraint we would not honor.
