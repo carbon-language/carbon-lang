@@ -87,3 +87,16 @@ int s2_load_y(struct s2 *a) { return a->y; }
 // CHECK-FUNCTIONS: define void @s2_copy
 // CHECK-FUNCTIONS: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 8, i32 2, i1 false)
 void s2_copy(struct s2 *a, struct s2 *b) { *b = *a; }
+
+struct __attribute__((packed, aligned)) s3 {
+  short aShort;
+  int anInt;
+};
+// CHECK-GLOBAL: @s3_1 = global i32 2
+int s3_1 = __alignof(((struct s3*) 0)->anInt);
+// CHECK-FUNCTIONS: define i32 @test3(
+int test3(struct s3 *ptr) {
+  // CHECK-FUNCTIONS:      [[PTR:%.*]] = getelementptr inbounds {{%.*}}* {{%.*}}, i32 0, i32 1
+  // CHECK-FUNCTIONS-NEXT: load i32* [[PTR]], align 2
+  return ptr->anInt;
+}

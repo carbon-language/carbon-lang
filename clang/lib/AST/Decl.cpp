@@ -1881,6 +1881,25 @@ bool FieldDecl::isAnonymousStructOrUnion() const {
   return false;
 }
 
+unsigned FieldDecl::getFieldIndex() const {
+  if (CachedFieldIndex) return CachedFieldIndex - 1;
+
+  unsigned index = 0;
+  RecordDecl::field_iterator
+    i = getParent()->field_begin(), e = getParent()->field_end();
+  while (true) {
+    assert(i != e && "failed to find field in parent!");
+    if (*i == this)
+      break;
+
+    ++i;
+    ++index;
+  }
+
+  CachedFieldIndex = index + 1;
+  return index;
+}
+
 //===----------------------------------------------------------------------===//
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//

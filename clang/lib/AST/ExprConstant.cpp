@@ -1565,14 +1565,7 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
         return false;
       RecordDecl *RD = RT->getDecl();
       const ASTRecordLayout &RL = Info.Ctx.getASTRecordLayout(RD);
-      unsigned i = 0;
-      // FIXME: It would be nice if we didn't have to loop here!
-      for (RecordDecl::field_iterator Field = RD->field_begin(),
-                                      FieldEnd = RD->field_end();
-           Field != FieldEnd; (void)++Field, ++i) {
-        if (*Field == MemberDecl)
-          break;
-      }
+      unsigned i = MemberDecl->getFieldIndex();
       assert(i < RL.getFieldCount() && "offsetof field in wrong type");
       Result += Info.Ctx.toCharUnitsFromBits(RL.getFieldOffset(i));
       CurrentType = MemberDecl->getType().getNonReferenceType();

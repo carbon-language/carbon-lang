@@ -1728,18 +1728,25 @@ public:
 class FieldDecl : public DeclaratorDecl {
   // FIXME: This can be packed into the bitfields in Decl.
   bool Mutable : 1;
+  mutable unsigned CachedFieldIndex : 31;
+
   Expr *BitWidth;
 protected:
   FieldDecl(Kind DK, DeclContext *DC, SourceLocation L,
             IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
             Expr *BW, bool Mutable)
-    : DeclaratorDecl(DK, DC, L, Id, T, TInfo), Mutable(Mutable), BitWidth(BW) {
+    : DeclaratorDecl(DK, DC, L, Id, T, TInfo),
+      Mutable(Mutable), CachedFieldIndex(0), BitWidth(BW) {
   }
 
 public:
   static FieldDecl *Create(const ASTContext &C, DeclContext *DC,
                            SourceLocation L, IdentifierInfo *Id, QualType T,
                            TypeSourceInfo *TInfo, Expr *BW, bool Mutable);
+
+  /// getFieldIndex - Returns the index of this field within its record,
+  /// as appropriate for passing to ASTRecordLayout::getFieldOffset.
+  unsigned getFieldIndex() const;
 
   /// isMutable - Determines whether this field is mutable (C++ only).
   bool isMutable() const { return Mutable; }

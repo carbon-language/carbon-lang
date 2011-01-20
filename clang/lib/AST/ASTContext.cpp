@@ -590,8 +590,11 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
     }
   }
 
+  // If we're using the align attribute only, just ignore everything
+  // else about the declaration and its type.
   if (UseAlignAttrOnly) {
-    // ignore type of value
+    // do nothing
+
   } else if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
     if (const ReferenceType* RT = T->getAs<ReferenceType>()) {
@@ -617,11 +620,30 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
       }
       Align = std::max(Align, getPreferredTypeAlign(T.getTypePtr()));
     }
-    if (const FieldDecl *FD = dyn_cast<FieldDecl>(VD)) {
-      // In the case of a field in a packed struct, we want the minimum
-      // of the alignment of the field and the alignment of the struct.
-      Align = std::min(Align,
-        getPreferredTypeAlign(FD->getParent()->getTypeForDecl()));
+
+    // Fields can be subject to extra alignment constraints, like if
+    // the field is packed, the struct is packed, or the struct has a
+    // a max-field-alignment constraint (#pragma pack).  So calculate
+    // the actual alignment of the field within the struct, and then
+    // (as we're expected to) constrain that by the alignment of the type.
+    if (const FieldDecl *field = dyn_cast<FieldDecl>(VD)) {
+      // So calculate the alignment of the field.
+      const ASTRecordLayout &layout = getASTRecordLayout(field->getParent());
+
+      // Start with the record's overall alignment.
+      unsigned fieldAlign = layout.getAlignment();
+
+      // Use the GCD of that and the offset within the record.
+      uint64_t offset = layout.getFieldOffset(field->getFieldIndex());
+      if (offset > 0) {
+        // Alignment is always a power of 2, so the GCD will be a power of 2,
+        // which means we get to do this crazy thing instead of Euclid's.
+        uint64_t lowBitOfOffset = offset & (~offset + 1);
+        if (lowBitOfOffset < fieldAlign)
+          fieldAlign = static_cast<unsigned>(lowBitOfOffset);
+      }
+
+      Align = std::min(Align, fieldAlign);
     }
   }
 
