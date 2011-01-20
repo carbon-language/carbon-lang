@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <utility>
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/BitVector.h"
@@ -71,26 +72,39 @@ llvm::Optional<unsigned> DeclToBit::getBitVectorIndex(const VarDecl *d) {
 // CFGBlockValues: dataflow values for CFG blocks.
 //====------------------------------------------------------------------------//
 
+typedef std::pair<llvm::BitVector *, llvm::BitVector *> BVPair;
+
 namespace {
 class CFGBlockValues {
   const CFG &cfg;
-  llvm::BitVector **vals;
+  BVPair *vals;
   llvm::BitVector scratch;
   DeclToBit declToBit;
+  
+  llvm::BitVector &lazyCreate(llvm::BitVector *&bv);
 public:
   CFGBlockValues(const CFG &cfg);
   ~CFGBlockValues();
   
   void computeSetOfDeclarations(const DeclContext &dc);  
-  llvm::BitVector &getBitVector(const CFGBlock *block);
+  llvm::BitVector &getBitVector(const CFGBlock *block,
+                                const CFGBlock *dstBlock);
+
+  BVPair &getBitVectors(const CFGBlock *block);
+
+  BVPair getPredBitVectors(const CFGBlock *block);
+  
   void mergeIntoScratch(llvm::BitVector const &source, bool isFirst);
   bool updateBitVectorWithScratch(const CFGBlock *block);
+  bool updateBitVectors(const CFGBlock *block, const BVPair &newVals);
   
   bool hasNoDeclarations() const {
     return declToBit.size() == 0;
   }
   
   void resetScratch();
+  llvm::BitVector &getScratch() { return scratch; }
+  
   llvm::BitVector::reference operator[](const VarDecl *vd);
 };  
 }
@@ -99,7 +113,7 @@ CFGBlockValues::CFGBlockValues(const CFG &c) : cfg(c), vals(0) {
   unsigned n = cfg.getNumBlockIDs();
   if (!n)
     return;
-  vals = new llvm::BitVector*[n];
+  vals = new std::pair<llvm::BitVector*, llvm::BitVector*>[n];
   memset(vals, 0, sizeof(*vals) * n);
 }
 
@@ -107,8 +121,10 @@ CFGBlockValues::~CFGBlockValues() {
   unsigned n = cfg.getNumBlockIDs();
   if (n == 0)
     return;
-  for (unsigned i = 0; i < n; ++i)
-    delete vals[i];
+  for (unsigned i = 0; i < n; ++i) {
+    delete vals[i].first;
+    delete vals[i].second;
+  }
   delete [] vals;
 }
 
@@ -117,14 +133,69 @@ void CFGBlockValues::computeSetOfDeclarations(const DeclContext &dc) {
   scratch.resize(declToBit.size());
 }
 
-llvm::BitVector &CFGBlockValues::getBitVector(const CFGBlock *block) {
-  unsigned idx = block->getBlockID();
-  llvm::BitVector *bv = vals[idx];
-  if (!bv) {
+llvm::BitVector &CFGBlockValues::lazyCreate(llvm::BitVector *&bv) {
+  if (!bv)
     bv = new llvm::BitVector(declToBit.size());
-    vals[idx] = bv;
-  }
   return *bv;
+}
+
+/// This function pattern matches for a '&&' or '||' that appears at
+/// the beginning of a CFGBlock that also (1) has a terminator and 
+/// (2) has no other elements.  If such an expression is found, it is returned.
+static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
+  if (block->empty())
+    return 0;
+  
+  CFGStmt cstmt = block->front().getAs<CFGStmt>();
+  BinaryOperator *b = llvm::dyn_cast_or_null<BinaryOperator>(cstmt.getStmt());
+  if (!b || !b->isLogicalOp() || block->getTerminatorCondition() != b)
+    return 0;
+  return b;
+}
+
+llvm::BitVector &CFGBlockValues::getBitVector(const CFGBlock *block,
+                                              const CFGBlock *dstBlock) {
+  unsigned idx = block->getBlockID();
+  if (dstBlock && block->succ_size() == 2) {
+    assert(block->getTerminator());
+    if (getLogicalOperatorInChain(block)) {
+      if (*block->succ_begin() == dstBlock)
+        return lazyCreate(vals[idx].first);
+      assert(*(block->succ_begin()+1) == dstBlock);
+      return lazyCreate(vals[idx].second);
+    }
+  }
+
+  assert(vals[idx].second == 0);
+  return lazyCreate(vals[idx].first);
+}
+
+BVPair &CFGBlockValues::getBitVectors(const clang::CFGBlock *block) {
+  unsigned idx = block->getBlockID();
+  lazyCreate(vals[idx].first);
+  lazyCreate(vals[idx].second);
+  return vals[idx];
+}
+
+BVPair CFGBlockValues::getPredBitVectors(const clang::CFGBlock *block) {
+  assert(block->pred_size() == 2);
+  CFGBlock::const_pred_iterator itr = block->pred_begin();
+  llvm::BitVector &bvA = getBitVector(*itr, block);
+  ++itr;
+  return BVPair(&bvA, &getBitVector(*itr, block));
+}
+
+
+static void printVector(const CFGBlock *block, llvm::BitVector &bv,
+                        unsigned num) {
+  
+  #if 0
+  llvm::errs() << block->getBlockID() << " :";
+  for (unsigned i = 0; i < bv.size(); ++i) {
+    llvm::errs() << ' ' << bv[i];
+  }
+  llvm::errs() << " : " << num << '\n';
+  #endif
 }
 
 void CFGBlockValues::mergeIntoScratch(llvm::BitVector const &source,
@@ -136,10 +207,24 @@ void CFGBlockValues::mergeIntoScratch(llvm::BitVector const &source,
 }
 
 bool CFGBlockValues::updateBitVectorWithScratch(const CFGBlock *block) {
-  llvm::BitVector &dst = getBitVector(block);
+  llvm::BitVector &dst = getBitVector(block, 0);
   bool changed = (dst != scratch);
   if (changed)
     dst = scratch;
+  
+  printVector(block, scratch, 0);
+  return changed;
+}
+
+bool CFGBlockValues::updateBitVectors(const CFGBlock *block,
+                                      const BVPair &newVals) {
+  BVPair &vals = getBitVectors(block);
+  bool changed = *newVals.first != *vals.first ||
+                 *newVals.second != *vals.second;
+  *vals.first = *newVals.first;
+  *vals.second = *newVals.second;
+  printVector(block, *vals.first, 1);
+  printVector(block, *vals.second, 2);
   return changed;
 }
 
@@ -370,15 +455,33 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
 // High-level "driver" logic for uninitialized values analysis.
 //====------------------------------------------------------------------------//
 
-static void runOnBlock(const CFGBlock *block, const CFG &cfg,
+static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
                        CFGBlockValues &vals,
                        UninitVariablesHandler *handler = 0) {
-  // Merge in values of predecessor blocks.    
+  
+  if (const BinaryOperator *b = getLogicalOperatorInChain(block)) {
+    assert(block->pred_size() == 2);
+    assert(block->succ_size() == 2);
+    assert(block->getTerminatorCondition() == b);
+    
+    BVPair valsAB = vals.getPredBitVectors(block);
+    vals.mergeIntoScratch(*valsAB.first, true);
+    vals.mergeIntoScratch(*valsAB.second, false);
+    valsAB.second = &vals.getScratch();
+    if (b->getOpcode() == BO_LOr) {
+      // Ensure the invariant that 'first' corresponds to the true
+      // branch and 'second' to the false.
+      std::swap(valsAB.first, valsAB.second);
+    }
+    return vals.updateBitVectors(block, valsAB);
+  }
+
+  // Default behavior: merge in values of predecessor blocks.    
   vals.resetScratch();
   bool isFirst = true;
   for (CFGBlock::const_pred_iterator I = block->pred_begin(),
        E = block->pred_end(); I != E; ++I) {
-    vals.mergeIntoScratch(vals.getBitVector(*I), isFirst);
+    vals.mergeIntoScratch(vals.getBitVector(*I, block), isFirst);
     isFirst = false;
   }
   // Apply the transfer function.
@@ -389,6 +492,7 @@ static void runOnBlock(const CFGBlock *block, const CFG &cfg,
       tf.BlockStmt_Visit(cs->getStmt());
     }
   }
+  return vals.updateBitVectorWithScratch(block);
 }
 
 void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
@@ -404,9 +508,8 @@ void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
   worklist.enqueueSuccessors(&cfg.getEntry());
 
   while (const CFGBlock *block = worklist.dequeue()) {
-    runOnBlock(block, cfg, vals);    
     // Did the block change?
-    bool changed = vals.updateBitVectorWithScratch(block);    
+    bool changed = runOnBlock(block, cfg, vals);    
     if (changed || !previouslyVisited[block->getBlockID()])
       worklist.enqueueSuccessors(block);    
     previouslyVisited[block->getBlockID()] = true;

@@ -110,4 +110,63 @@ void test17() {
   *x = 1; // expected-warning{{use of uninitialized variable 'x'}}
   *x = 1; // no-warning
 }
-  
+
+int test18(int x, int y) {
+  int z;
+  if (x && y && (z = 1)) {
+    return z; // no-warning
+  }
+  return 0;
+}
+
+int test19_aux1();
+int test19_aux2();
+int test19_aux3(int *x);
+int test19() {
+  int z;
+  if (test19_aux1() + test19_aux2() && test19_aux1() && test19_aux3(&z))
+    return z; // no-warning
+  return 0;
+}
+
+int test20() {
+  int z;
+  if ((test19_aux1() + test19_aux2() && test19_aux1()) || test19_aux3(&z))
+    return z; // expected-warning{{use of uninitialized variable 'z'}}
+  return 0;
+}
+
+int test21(int x, int y) {
+  int z;
+  if ((x && y) || test19_aux3(&z) || test19_aux2())
+    return z; // expected-warning{{use of uninitialized variable 'z'}}
+  return 0;
+}
+
+int test22() {
+  int z;
+  while (test19_aux1() + test19_aux2() && test19_aux1() && test19_aux3(&z))
+    return z; // no-warning
+  return 0;
+}
+
+int test23() {
+  int z;
+  for ( ; test19_aux1() + test19_aux2() && test19_aux1() && test19_aux3(&z) ; )
+    return z; // no-warning
+  return 0;
+}
+
+// The basic uninitialized value analysis doesn't have enough path-sensitivity
+// to catch initializations relying on control-dependencies spanning multiple
+// conditionals.  This possibly can be handled by making the CFG itself
+// represent such control-dependencies, but it is a niche case.
+int test24(int flag) {
+  unsigned val;
+  if (flag)
+    val = 1;
+  if (!flag)
+    val = 1;
+  return val; // expected-warning{{use of uninitialized variable 'val'}}
+}
+
