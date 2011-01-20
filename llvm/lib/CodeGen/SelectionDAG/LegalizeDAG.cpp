@@ -3181,14 +3181,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       BottomHalf = DAG.getNode(Ops[isSigned][1], dl, DAG.getVTList(VT, VT), LHS,
                                RHS);
       TopHalf = BottomHalf.getValue(1);
-    } else {
-      // FIXME: We should be able to fall back to a libcall with an illegal
-      // type in some cases.
-      // Also, we can fall back to a division in some cases, but that's a big
-      // performance hit in the general case.
-      assert(TLI.isTypeLegal(EVT::getIntegerVT(*DAG.getContext(),
-                                               VT.getSizeInBits() * 2)) &&
-             "Don't know how to expand this operation yet!");
+    } else if (TLI.isTypeLegal(EVT::getIntegerVT(*DAG.getContext(),
+                                                 VT.getSizeInBits() * 2))) {
       EVT WideVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits() * 2);
       LHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, LHS);
       RHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, RHS);
@@ -3197,6 +3191,31 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                DAG.getIntPtrConstant(0));
       TopHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT, Tmp1,
                             DAG.getIntPtrConstant(1));
+    } else {
+      // We can fall back to a libcall with an illegal type for the MUL if we
+      // have a libcall big enough.
+      // Also, we can fall back to a division in some cases, but that's a big
+      // performance hit in the general case.
+      EVT WideVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits() * 2);
+      RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+      if (WideVT == MVT::i16)
+        LC = RTLIB::MUL_I16;
+      else if (WideVT == MVT::i32)
+        LC = RTLIB::MUL_I32;
+      else if (WideVT == MVT::i64)
+        LC = RTLIB::MUL_I64;
+      else if (WideVT == MVT::i128)
+        LC = RTLIB::MUL_I128;
+      assert(LC != RTLIB::UNKNOWN_LIBCALL && "Cannot expand this operation!");
+      LHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, LHS);
+      RHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, RHS);
+      
+      SDValue Ops[2] = { LHS, RHS };
+      SDValue Ret = ExpandLibCall(LC, Node, Ops);
+      BottomHalf = DAG.getNode(ISD::TRUNCATE, dl, VT, Ret);
+      TopHalf = DAG.getNode(ISD::SRL, dl, Ret.getValueType(), Ret,
+                       DAG.getConstant(VT.getSizeInBits(), TLI.getPointerTy()));
+      TopHalf = DAG.getNode(ISD::TRUNCATE, dl, VT, TopHalf);
     }
     if (isSigned) {
       Tmp1 = DAG.getConstant(VT.getSizeInBits() - 1, TLI.getShiftAmountTy());
