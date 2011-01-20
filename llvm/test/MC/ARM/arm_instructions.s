@@ -161,3 +161,6 @@
 
 @ CHECK: clrex @ encoding: [0x1f,0xf0,0x7f,0xf5]
         clrex
+
+@ CHECK: clz  r9, r0 @ encoding: [0x10,0x9f,0x6f,0xe1]
+        clz  r9, r0
