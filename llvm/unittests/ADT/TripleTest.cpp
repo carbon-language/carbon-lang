@@ -85,15 +85,19 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_EQ(Triple::x86_64, T.getArch());
   EXPECT_EQ(Triple::PC, T.getVendor());
   EXPECT_EQ(Triple::Linux, T.getOS());
-  // When environments are defined, change this test to verify the "gnu"
-  // environment.
-  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+  EXPECT_EQ(Triple::GNU, T.getEnvironment());
 
   T = Triple("powerpc-dunno-notsure");
   EXPECT_EQ(Triple::ppc, T.getArch());
   EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
   EXPECT_EQ(Triple::UnknownOS, T.getOS());
   EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
+  T = Triple("arm-none-eabi");
+  EXPECT_EQ(Triple::arm, T.getArch());
+  EXPECT_EQ(Triple::NoVendor, T.getVendor());
+  EXPECT_EQ(Triple::NoOS, T.getOS());
+  EXPECT_EQ(Triple::EABI, T.getEnvironment());
 
   T = Triple("huh");
   EXPECT_EQ(Triple::UnknownArch, T.getArch());
@@ -110,6 +114,7 @@ static std::string Join(StringRef A, StringRef B, StringRef C, StringRef D) {
 }
 
 TEST(TripleTest, Normalization) {
+
   EXPECT_EQ("", Triple::normalize(""));
   EXPECT_EQ("-", Triple::normalize("-"));
   EXPECT_EQ("--", Triple::normalize("--"));
@@ -143,6 +148,8 @@ TEST(TripleTest, Normalization) {
   EXPECT_EQ("i386", Triple::normalize("i386"));
   EXPECT_EQ("-pc", Triple::normalize("pc"));
   EXPECT_EQ("--linux", Triple::normalize("linux"));
+
+  EXPECT_EQ("x86_64--linux-gnu", Triple::normalize("x86_64-gnu-linux"));
 
   // Check that normalizing a permutated set of valid components returns a
   // triple with the unpermuted components.
@@ -251,6 +258,7 @@ TEST(TripleTest, MutateName) {
   EXPECT_EQ(Triple::PC, T.getVendor());
   EXPECT_EQ(Triple::Darwin, T.getOS());
   EXPECT_EQ("i386-pc-darwin", T.getTriple());
+
 }
 
 }

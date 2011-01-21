@@ -72,7 +72,8 @@ public:
     UnknownVendor,
 
     Apple,
-    PC
+    PC,
+    NoVendor
   };
   enum OSType {
     UnknownOS,
@@ -92,10 +93,15 @@ public:
     Solaris,
     Win32,
     Haiku,
-    Minix
+    Minix,
+    NoOS
   };
   enum EnvironmentType {
-    UnknownEnvironment
+    UnknownEnvironment,
+
+    GNU,
+    GNUEABI,
+    EABI
   };
 
 private:

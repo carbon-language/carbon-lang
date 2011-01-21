@@ -84,6 +84,7 @@ const char *Triple::getVendorTypeName(VendorType Kind) {
 
   case Apple: return "apple";
   case PC: return "pc";
+  case NoVendor: return "none";
   }
 
   return "<invalid>";
@@ -109,6 +110,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case Win32: return "win32";
   case Haiku: return "haiku";
   case Minix: return "minix";
+  case NoOS: return "none";
   }
 
   return "<invalid>";
@@ -117,6 +119,9 @@ const char *Triple::getOSTypeName(OSType Kind) {
 const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   switch (Kind) {
   case UnknownEnvironment: return "unknown";
+  case GNU: return "gnu";
+  case GNUEABI: return "gnueabi";
+  case EABI: return "eabi";
   }
 
   return "<invalid>";
@@ -293,6 +298,8 @@ Triple::VendorType Triple::ParseVendor(StringRef VendorName) {
     return Apple;
   else if (VendorName == "pc")
     return PC;
+  else if (VendorName == "none")
+    return NoVendor;
   else
     return UnknownVendor;
 }
@@ -330,12 +337,21 @@ Triple::OSType Triple::ParseOS(StringRef OSName) {
     return Haiku;
   else if (OSName.startswith("minix"))
     return Minix;
+  else if (OSName.startswith("eabi"))
+    return NoOS;
   else
     return UnknownOS;
 }
 
 Triple::EnvironmentType Triple::ParseEnvironment(StringRef EnvironmentName) {
-  return UnknownEnvironment;
+  if (EnvironmentName.startswith("eabi"))
+    return EABI;
+  else if (EnvironmentName.startswith("gnueabi"))
+    return GNUEABI;
+  else if (EnvironmentName.startswith("gnu"))
+    return GNU;
+  else
+    return UnknownEnvironment;
 }
 
 void Triple::Parse() const {
@@ -344,7 +360,12 @@ void Triple::Parse() const {
   Arch = ParseArch(getArchName());
   Vendor = ParseVendor(getVendorName());
   OS = ParseOS(getOSName());
-  Environment = ParseEnvironment(getEnvironmentName());
+  if (OS == NoOS) {
+    // Some targets don't have an OS (embedded systems)
+    Environment = ParseEnvironment(getOSName());
+  } else {
+    Environment = ParseEnvironment(getEnvironmentName());
+  }
 
   assert(isInitialized() && "Failed to initialize!");
 }
@@ -411,7 +432,13 @@ std::string Triple::normalize(StringRef Str) {
         break;
       case 2:
         OS = ParseOS(Comp);
-        Valid = OS != UnknownOS;
+        // Some targets don't have an OS (embedded systems)
+        if (OS == NoOS) {
+          Environment = ParseEnvironment(Comp);
+          Valid = Environment != UnknownEnvironment;
+        } else {
+          Valid = OS != UnknownOS;
+        }
         break;
       case 3:
         Environment = ParseEnvironment(Comp);
@@ -450,6 +477,9 @@ std::string Triple::normalize(StringRef Str) {
           for (unsigned i = Idx; i < Components.size(); ++i) {
             // Skip over any fixed components.
             while (i < array_lengthof(Found) && Found[i]) ++i;
+            // Fix problem when Components vector is not big enough
+            if (i >= Components.size())
+              Components.push_back(StringRef(""));
             // Place the component at the new position, getting the component
             // that was at this position - it will be moved right.
             std::swap(CurrentComponent, Components[i]);
