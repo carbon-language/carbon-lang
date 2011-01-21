@@ -88,3 +88,25 @@ unique_ptr<int> test_unique_ptr() {
 
   return p;
 }
+
+namespace perfect_forwarding {
+  struct A { };
+
+  struct F0 {
+    void operator()(A&, const A&, A&&, const A&&, A&&, const A&&); // expected-note{{candidate function not viable: 5th argument ('const perfect_forwarding::A') would lose const qualifier}}
+  };
+
+  template<typename F, typename ...Args>
+  void forward(F f, Args &&...args) {
+    f(static_cast<Args&&>(args)...); // expected-error{{no matching function for call to object of type 'perfect_forwarding::F0'}}
+  }
+
+  template<typename T> T get();
+
+  void test_forward() {
+    forward(F0(), get<A&>(), get<A const&>(), get<A>(), get<const A>(),
+            get<A&&>(), get<const A&&>());
+    forward(F0(), get<A&>(), get<A const&>(), get<A>(), get<const A>(), // expected-note{{in instantiation of function template specialization 'perfect_forwarding::forward<perfect_forwarding::F0, perfect_forwarding::A &, const perfect_forwarding::A &, perfect_forwarding::A, const perfect_forwarding::A, const perfect_forwarding::A, const perfect_forwarding::A>' requested here}}
+            get<const A&&>(), get<const A&&>());
+  }
+};
