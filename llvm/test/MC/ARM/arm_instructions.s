@@ -164,3 +164,15 @@
 
 @ CHECK: clz  r9, r0 @ encoding: [0x10,0x9f,0x6f,0xe1]
         clz  r9, r0
+
+@ CHECK: qadd  r1, r2, r3 @ encoding: [0x52,0x10,0x03,0xe1]
+        qadd  r1, r2, r3
+
+@ CHECK: qsub  r1, r2, r3 @ encoding: [0x52,0x10,0x23,0xe1]
+        qsub  r1, r2, r3
+
+@ CHECK: qdadd  r1, r2, r3 @ encoding: [0x52,0x10,0x43,0xe1]
+        qdadd  r1, r2, r3
+
+@ CHECK: qdsub  r1, r2, r3 @ encoding: [0x52,0x10,0x63,0xe1]
+        qdsub  r1, r2, r3

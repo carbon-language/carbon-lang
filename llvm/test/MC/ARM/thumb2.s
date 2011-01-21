@@ -202,3 +202,15 @@
 
 @ CHECK: clz  r9, r0 @ encoding: [0xb0,0xfa,0x80,0xf9]
         clz  r9, r0
+
+@ CHECK: qadd  r1, r2, r3 @ encoding: [0x83,0xfa,0x82,0xf1]
+        qadd  r1, r2, r3
+
+@ CHECK: qsub  r1, r2, r3 @ encoding: [0x83,0xfa,0xa2,0xf1]
+        qsub  r1, r2, r3
+
+@ CHECK: qdadd  r1, r2, r3 @ encoding: [0x83,0xfa,0x92,0xf1]
+        qdadd  r1, r2, r3
+
+@ CHECK: qdsub  r1, r2, r3 @ encoding: [0x83,0xfa,0xb2,0xf1]
+        qdsub  r1, r2, r3

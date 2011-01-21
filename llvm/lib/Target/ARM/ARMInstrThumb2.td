@@ -1856,9 +1856,10 @@ def t2SEL : T2ThreeReg<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
 // A6.3.13, A6.3.14, A6.3.15 Parallel addition and subtraction (signed/unsigned)
 // And Miscellaneous operations -- for disassembly only
 class T2I_pam<bits<3> op22_20, bits<4> op7_4, string opc,
-              list<dag> pat = [/* For disassembly only; pattern left blank */]>
-  : T2I<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), NoItinerary, opc,
-        "\t$Rd, $Rn, $Rm", pat> {
+              list<dag> pat = [/* For disassembly only; pattern left blank */],
+              dag iops = (ins rGPR:$Rn, rGPR:$Rm),
+              string asm = "\t$Rd, $Rn, $Rm">
+  : T2I<(outs rGPR:$Rd), iops, NoItinerary, opc, asm, pat> {
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0101;
   let Inst{22-20} = op22_20;
@@ -1877,15 +1878,19 @@ class T2I_pam<bits<3> op22_20, bits<4> op7_4, string opc,
 // Saturating add/subtract -- for disassembly only
 
 def t2QADD    : T2I_pam<0b000, 0b1000, "qadd",
-                        [(set rGPR:$Rd, (int_arm_qadd rGPR:$Rn, rGPR:$Rm))]>;
+                        [(set rGPR:$Rd, (int_arm_qadd rGPR:$Rn, rGPR:$Rm))],
+                        (ins rGPR:$Rm, rGPR:$Rn), "\t$Rd, $Rm, $Rn">;
 def t2QADD16  : T2I_pam<0b001, 0b0001, "qadd16">;
 def t2QADD8   : T2I_pam<0b000, 0b0001, "qadd8">;
 def t2QASX    : T2I_pam<0b010, 0b0001, "qasx">;
-def t2QDADD   : T2I_pam<0b000, 0b1001, "qdadd">;
-def t2QDSUB   : T2I_pam<0b000, 0b1011, "qdsub">;
+def t2QDADD   : T2I_pam<0b000, 0b1001, "qdadd", [],
+                        (ins rGPR:$Rm, rGPR:$Rn), "\t$Rd, $Rm, $Rn">;
+def t2QDSUB   : T2I_pam<0b000, 0b1011, "qdsub", [],
+                        (ins rGPR:$Rm, rGPR:$Rn), "\t$Rd, $Rm, $Rn">;
 def t2QSAX    : T2I_pam<0b110, 0b0001, "qsax">;
 def t2QSUB    : T2I_pam<0b000, 0b1010, "qsub",
-                        [(set rGPR:$Rd, (int_arm_qsub rGPR:$Rn, rGPR:$Rm))]>;
+                        [(set rGPR:$Rd, (int_arm_qsub rGPR:$Rn, rGPR:$Rm))],
+                        (ins rGPR:$Rm, rGPR:$Rn), "\t$Rd, $Rm, $Rn">;
 def t2QSUB16  : T2I_pam<0b101, 0b0001, "qsub16">;
 def t2QSUB8   : T2I_pam<0b100, 0b0001, "qsub8">;
 def t2UQADD16 : T2I_pam<0b001, 0b0101, "uqadd16">;
