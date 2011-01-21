@@ -13,19 +13,19 @@ entry:
 	ret float %retval
 }
 ; VFP2: test1:
-; VFP2: 	vneg.f32	s1, s0
+; VFP2: 	vneg.f32	s{{.*}}, s{{.*}}
 
 ; NFP1: test1:
-; NFP1: 	vneg.f32	d1, d0
+; NFP1: 	vneg.f32	d{{.*}}, d{{.*}}
 
 ; NFP0: test1:
-; NFP0: 	vneg.f32	s1, s0
+; NFP0: 	vneg.f32	s{{.*}}, s{{.*}}
 
 ; CORTEXA8: test1:
-; CORTEXA8: 	vneg.f32	d1, d0
+; CORTEXA8: 	vneg.f32	d{{.*}}, d{{.*}}
 
 ; CORTEXA9: test1:
-; CORTEXA9: 	vneg.f32	s1, s0
+; CORTEXA9: 	vneg.f32	s{{.*}}, s{{.*}}
 
 define float @test2(float* %a) {
 entry:
@@ -37,17 +37,17 @@ entry:
 	ret float %retval
 }
 ; VFP2: test2:
-; VFP2: 	vneg.f32	s1, s0
+; VFP2: 	vneg.f32	s{{.*}}, s{{.*}}
 
 ; NFP1: test2:
-; NFP1: 	vneg.f32	d1, d0
+; NFP1: 	vneg.f32	d{{.*}}, d{{.*}}
 
 ; NFP0: test2:
-; NFP0: 	vneg.f32	s1, s0
+; NFP0: 	vneg.f32	s{{.*}}, s{{.*}}
 
 ; CORTEXA8: test2:
-; CORTEXA8: 	vneg.f32	d1, d0
+; CORTEXA8: 	vneg.f32	d{{.*}}, d{{.*}}
 
 ; CORTEXA9: test2:
-; CORTEXA9: 	vneg.f32	s1, s0
+; CORTEXA9: 	vneg.f32	s{{.*}}, s{{.*}}
 

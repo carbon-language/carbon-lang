@@ -66,10 +66,9 @@ static RegisterScheduler
                       "which tries to balance ILP and register pressure",
                       createILPListDAGScheduler);
 
-static cl::opt<bool> EnableSchedCycles(
-  "enable-sched-cycles",
-  cl::desc("Enable cycle-level precision during preRA scheduling"),
-  cl::init(false), cl::Hidden);
+static cl::opt<bool> DisableSchedCycles(
+  "disable-sched-cycles", cl::Hidden, cl::init(true),
+  cl::desc("Disable cycle-level precision during preRA scheduling"));
 
 namespace {
 //===----------------------------------------------------------------------===//
@@ -124,10 +123,10 @@ public:
       Topo(SUnits) {
 
     const TargetMachine &tm = mf.getTarget();
-    if (EnableSchedCycles && OptLevel != CodeGenOpt::None)
-      HazardRec = tm.getInstrInfo()->CreateTargetHazardRecognizer(&tm, this);
-    else
+    if (DisableSchedCycles || !NeedLatency)
       HazardRec = new ScheduleHazardRecognizer();
+    else
+      HazardRec = tm.getInstrInfo()->CreateTargetHazardRecognizer(&tm, this);
   }
 
   ~ScheduleDAGRRList() {
@@ -168,7 +167,7 @@ public:
 
 private:
   bool isReady(SUnit *SU) {
-    return !EnableSchedCycles || !AvailableQueue->hasReadyFilter() ||
+    return DisableSchedCycles || !AvailableQueue->hasReadyFilter() ||
       AvailableQueue->isReady(SU);
   }
 
@@ -237,7 +236,7 @@ void ScheduleDAGRRList::Schedule() {
         << " '" << BB->getName() << "' **********\n");
 
   CurCycle = 0;
-  MinAvailableCycle = EnableSchedCycles ? UINT_MAX : 0;
+  MinAvailableCycle = DisableSchedCycles ? 0 : UINT_MAX;
   NumLiveRegs = 0;
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);
   LiveRegGens.resize(TRI->getNumRegs(), NULL);
@@ -350,7 +349,7 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU) {
 /// Check to see if any of the pending instructions are ready to issue.  If
 /// so, add them to the available queue.
 void ScheduleDAGRRList::ReleasePending() {
-  if (!EnableSchedCycles) {
+  if (DisableSchedCycles) {
     assert(PendingQueue.empty() && "pending instrs not allowed in this mode");
     return;
   }
@@ -385,7 +384,7 @@ void ScheduleDAGRRList::AdvanceToCycle(unsigned NextCycle) {
     return;
 
   AvailableQueue->setCurCycle(NextCycle);
-  if (HazardRec->getMaxLookAhead() == 0) {
+  if (!HazardRec->isEnabled()) {
     // Bypass lots of virtual calls in case of long latency.
     CurCycle = NextCycle;
   }
@@ -405,7 +404,7 @@ void ScheduleDAGRRList::AdvanceToCycle(unsigned NextCycle) {
 /// Move the scheduler state forward until the specified node's dependents are
 /// ready and can be scheduled with no resource conflicts.
 void ScheduleDAGRRList::AdvancePastStalls(SUnit *SU) {
-  if (!EnableSchedCycles)
+  if (DisableSchedCycles)
     return;
 
   unsigned ReadyCycle = isBottomUp ? SU->getHeight() : SU->getDepth();
@@ -440,7 +439,7 @@ void ScheduleDAGRRList::AdvancePastStalls(SUnit *SU) {
 /// Record this SUnit in the HazardRecognizer.
 /// Does not update CurCycle.
 void ScheduleDAGRRList::EmitNode(SUnit *SU) {
-  if (!EnableSchedCycles || HazardRec->getMaxLookAhead() == 0)
+  if (!HazardRec->isEnabled())
     return;
 
   // Check for phys reg copy.
@@ -525,9 +524,9 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
   // (1) No available instructions
   // (2) All pipelines full, so available instructions must have hazards.
   //
-  // If SchedCycles is disabled, count each inst as one cycle.
-  if (!EnableSchedCycles ||
-      AvailableQueue->empty() || HazardRec->atIssueLimit())
+  // If HazardRec is disabled, count each inst as one cycle.
+  if (!HazardRec->isEnabled() || HazardRec->atIssueLimit()
+      || AvailableQueue->empty())
     AdvanceToCycle(CurCycle + 1);
 }
 
@@ -585,7 +584,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   SU->setHeightDirty();
   SU->isScheduled = false;
   SU->isAvailable = true;
-  if (EnableSchedCycles && AvailableQueue->hasReadyFilter()) {
+  if (!DisableSchedCycles && AvailableQueue->hasReadyFilter()) {
     // Don't make available until backtracking is complete.
     SU->isPending = true;
     PendingQueue.push_back(SU);
@@ -2010,23 +2009,26 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
   } else if (RStall)
     return -1;
 
-  // If either node is scheduling for latency, sort them by depth
+  // If either node is scheduling for latency, sort them by height/depth
   // and latency.
   if (!checkPref || (left->SchedulingPref == Sched::Latency ||
                      right->SchedulingPref == Sched::Latency)) {
-    int LDepth = (int)left->getDepth();
-    int RDepth = (int)right->getDepth();
-
-    if (EnableSchedCycles) {
-      if (LDepth != RDepth)
-        DEBUG(dbgs() << "  Comparing latency of SU (" << left->NodeNum
-              << ") depth " << LDepth << " vs SU (" << right->NodeNum
-              << ") depth " << RDepth << ")\n");
-        return LDepth < RDepth ? 1 : -1;
-    }
-    else {
+    if (DisableSchedCycles) {
       if (LHeight != RHeight)
         return LHeight > RHeight ? 1 : -1;
+    }
+    else {
+      // If neither instruction stalls (!LStall && !RStall) then
+      // it's height is already covered so only its depth matters. We also reach
+      // this if both stall but have the same height.
+      unsigned LDepth = left->getDepth();
+      unsigned RDepth = right->getDepth();
+      if (LDepth != RDepth) {
+        DEBUG(dbgs() << "  Comparing latency of SU (" << left->NodeNum
+              << ") depth " << LDepth << " vs SU (" << right->NodeNum
+              << ") depth " << RDepth << "\n");
+        return LDepth < RDepth ? 1 : -1;
+      }
     }
     if (left->Latency != right->Latency)
       return left->Latency > right->Latency ? 1 : -1;
@@ -2068,7 +2070,7 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
   if (LScratch != RScratch)
     return LScratch > RScratch;
 
-  if (EnableSchedCycles) {
+  if (!DisableSchedCycles) {
     int result = BUCompareLatency(left, right, false /*checkPref*/, SPQ);
     if (result != 0)
       return result > 0;

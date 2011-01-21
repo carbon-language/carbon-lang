@@ -567,9 +567,9 @@ public:
   virtual unsigned getInlineAsmLength(const char *Str,
                                       const MCAsmInfo &MAI) const;
 
-  /// CreateTargetPreRAHazardRecognizer - Allocate and return a hazard
-  /// recognizer to use for this target when scheduling the machine instructions
-  /// before register allocation.
+  /// CreateTargetHazardRecognizer - Allocate and return a hazard recognizer to
+  /// use for this target when scheduling the machine instructions before
+  /// register allocation.
   virtual ScheduleHazardRecognizer*
   CreateTargetHazardRecognizer(const TargetMachine *TM,
                                const ScheduleDAG *DAG) const = 0;
@@ -609,6 +609,14 @@ public:
   /// instruction will be decoded to on the target cpu.
   virtual unsigned getNumMicroOps(const InstrItineraryData *ItinData,
                                   const MachineInstr *MI) const;
+
+  /// isZeroCost - Return true for pseudo instructions that don't consume any
+  /// machine resources in their current form. These are common cases that the
+  /// scheduler should consider free, rather than conservatively handling them
+  /// as instructions with no itinerary.
+  bool isZeroCost(unsigned Opcode) const {
+    return Opcode <= TargetOpcode::COPY;
+  }
 
   /// getOperandLatency - Compute and return the use operand latency of a given
   /// pair of def and use.
@@ -685,6 +693,8 @@ public:
   virtual bool isSchedulingBoundary(const MachineInstr *MI,
                                     const MachineBasicBlock *MBB,
                                     const MachineFunction &MF) const;
+
+  bool usePreRAHazardRecognizer() const;
 
   virtual ScheduleHazardRecognizer *
   CreateTargetHazardRecognizer(const TargetMachine*, const ScheduleDAG*) const;

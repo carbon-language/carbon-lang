@@ -41,14 +41,6 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
-// Other targets already have a hazard recognizer enabled by default, so this
-// flag currently only affects ARM. It will be generalized when it becomes a
-// disabled flag.
-static cl::opt<bool> EnableHazardRecognizer(
-  "enable-sched-hazard", cl::Hidden,
-  cl::desc("Enable hazard detection during preRA scheduling"),
-  cl::init(false));
-
 /// ARM_MLxEntry - Record information about MLA / MLS instructions.
 struct ARM_MLxEntry {
   unsigned MLxOpc;     // MLA / MLS opcode
@@ -97,7 +89,7 @@ ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
 ScheduleHazardRecognizer *ARMBaseInstrInfo::
 CreateTargetHazardRecognizer(const TargetMachine *TM,
                              const ScheduleDAG *DAG) const {
-  if (EnableHazardRecognizer) {
+  if (usePreRAHazardRecognizer()) {
     const InstrItineraryData *II = TM->getInstrItineraryData();
     return new ScoreboardHazardRecognizer(II, DAG, "pre-RA-sched");
   }
@@ -2173,6 +2165,10 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     return 1;
 
   const TargetInstrDesc &DefTID = get(DefNode->getMachineOpcode());
+
+  if (isZeroCost(DefTID.Opcode))
+    return 0;
+
   if (!ItinData || ItinData->isEmpty())
     return DefTID.mayLoad() ? 3 : 1;
 

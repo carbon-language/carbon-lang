@@ -42,6 +42,8 @@ public:
 
   unsigned getMaxLookAhead() const { return MaxLookAhead; }
 
+  bool isEnabled() const { return MaxLookAhead != 0; }
+
   /// atIssueLimit - Return true if no more instructions may be issued in this
   /// cycle.
   virtual bool atIssueLimit() const { return false; }

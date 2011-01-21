@@ -11,7 +11,7 @@ entry:
 ; NEON: vnmla.f32
 
 ; A8: t1:
-; A8: vnmul.f32 s0, s1, s0
+; A8: vnmul.f32 s0, s{{[01]}}, s{{[01]}}
 ; A8: vsub.f32 d0, d0, d1
 	%0 = fmul float %a, %b
 	%1 = fsub float -0.0, %0
@@ -28,7 +28,7 @@ entry:
 ; NEON: vnmla.f32
 
 ; A8: t2:
-; A8: vnmul.f32 s0, s1, s0
+; A8: vnmul.f32 s0, s{{[01]}}, s{{[01]}}
 ; A8: vsub.f32 d0, d0, d1
 	%0 = fmul float %a, %b
 	%1 = fmul float -1.0, %0
@@ -45,7 +45,7 @@ entry:
 ; NEON: vnmla.f64
 
 ; A8: t3:
-; A8: vnmul.f64 d16, d16, d17
+; A8: vnmul.f64 d16, d1{{[67]}}, d1{{[67]}}
 ; A8: vsub.f64 d16, d16, d17
 	%0 = fmul double %a, %b
 	%1 = fsub double -0.0, %0
@@ -62,7 +62,7 @@ entry:
 ; NEON: vnmla.f64
 
 ; A8: t4:
-; A8: vnmul.f64 d16, d16, d17
+; A8: vnmul.f64 d16, d1{{[67]}}, d1{{[67]}}
 ; A8: vsub.f64 d16, d16, d17
 	%0 = fmul double %a, %b
 	%1 = fmul double -1.0, %0

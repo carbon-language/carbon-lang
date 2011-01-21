@@ -19,6 +19,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrItineraries.h"
 
 using namespace llvm;
@@ -170,14 +171,17 @@ void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
   if (!ItinData || ItinData->isEmpty())
     return;
 
-  ++IssueCount;
-
-  unsigned cycle = 0;
-
   // Use the itinerary for the underlying instruction to reserve FU's
   // in the scoreboard at the appropriate future cycles.
   const TargetInstrDesc *TID = DAG->getInstrDesc(SU);
   assert(TID && "The scheduler must filter non-machineinstrs");
+  if (DAG->TII->isZeroCost(TID->Opcode))
+    return;
+
+  ++IssueCount;
+
+  unsigned cycle = 0;
+
   unsigned idx = TID->getSchedClass();
   for (const InstrStage *IS = ItinData->beginStage(idx),
          *E = ItinData->endStage(idx); IS != E; ++IS) {
