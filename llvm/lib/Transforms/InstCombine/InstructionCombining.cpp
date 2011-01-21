@@ -538,9 +538,11 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   if (!PN->hasOneUse()) {
     // Walk the use list for the instruction, comparing them to I.
     for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
-         UI != E; ++UI)
-      if (!I.isIdenticalTo(cast<Instruction>(*UI))) 
+         UI != E; ++UI) {
+      Instruction *User = cast<Instruction>(*UI);
+      if (User != &I && !I.isIdenticalTo(User))
         return 0;
+    }
     // Otherwise, we can replace *all* users with the new PHI we form.
   }
   
@@ -565,6 +567,12 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(InVal))
       if (II->getParent() == NonConstBB)
         return 0;
+    
+    // If the incoming non-constant value is in I's block, we will remove one
+    // instruction, but insert another equivalent one, leading to infinite
+    // instcombine.
+    if (NonConstBB == I.getParent())
+      return 0;
   }
   
   // If there is exactly one non-constant value, we can insert a copy of the

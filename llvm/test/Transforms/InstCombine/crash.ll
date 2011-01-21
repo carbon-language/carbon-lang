@@ -353,3 +353,20 @@ entry:
   ret %struct.basic_ios* %0
 }
 
+; PR9013
+define void @test18() nounwind ssp {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %l_197.0 = phi i32 [ 0, %entry ], [ %sub.i, %for.inc ]
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.cond
+  %conv = and i32 %l_197.0, 255
+  %sub.i = add nsw i32 %conv, -1
+  br label %for.cond
+
+return:                                           ; No predecessors!
+  ret void
+}
