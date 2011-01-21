@@ -824,6 +824,8 @@ def warn_var_is_uninit : Warning<"use of uninitialized variable %0">,
   InGroup<DiagGroup<"uninitialized-experimental">>, DefaultIgnore;
 def note_var_is_uninit : Note<
   "variable %0 is possibly uninitialized when used here">;
+def note_var_fixit_add_initialization : Note<
+  "add initialization to silence this warning">;
 def err_init_incomplete_type : Error<"initialization of incomplete type %0">;
 
 def err_temp_copy_no_viable : Error<

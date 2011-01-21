@@ -106,7 +106,7 @@ void test16() {
 void test17() {
   // Don't warn multiple times about the same uninitialized variable
   // along the same path.
-  int *x; // expected-warning{{use of uninitialized variable 'x'}}
+  int *x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   *x = 1; // expected-note{{variable 'x' is possibly uninitialized when used here}}
   *x = 1; // no-warning
 }

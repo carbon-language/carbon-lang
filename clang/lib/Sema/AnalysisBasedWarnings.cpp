@@ -16,6 +16,7 @@
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -405,7 +406,7 @@ public:
       
       S.Diag(vd->getLocStart(), diag::warn_var_is_uninit)
         << vd->getDeclName() << vd->getSourceRange();
-
+      
       // Sort the uses by their SourceLocations.  While not strictly
       // guaranteed to produce them in line/column order, this will provide
       // a stable ordering.
@@ -417,6 +418,24 @@ public:
         S.Diag(dr->getLocStart(), diag::note_var_is_uninit)
           << vd->getDeclName() << dr->getSourceRange();
       }
+
+      // Suggest possible initialization (if any).
+      const char *initialization = 0;
+      QualType vdTy = vd->getType();
+      
+      if (vdTy->getAs<ObjCObjectPointerType>()) {
+        initialization = " = nil";
+      }
+      else if (vdTy->getAs<PointerType>()) {
+        initialization = " = 0";
+      }
+      
+      if (initialization) {
+        SourceLocation loc = S.PP.getLocForEndOfToken(vd->getLocEnd());
+        S.Diag(loc, diag::note_var_fixit_add_initialization)
+          << FixItHint::CreateInsertion(loc, initialization);
+      }
+
       delete vec;
     }
     delete uses;
