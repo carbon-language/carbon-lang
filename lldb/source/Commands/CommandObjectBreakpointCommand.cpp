@@ -282,13 +282,6 @@ CommandObjectBreakpointCommandAdd::Execute
         return false;
     }
 
-    if (command.GetArgumentCount() == 0)
-    {
-        result.AppendError ("No breakpoint specified to which to add the commands");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-
     BreakpointIDList valid_bp_ids;
     CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
 
