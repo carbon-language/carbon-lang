@@ -2798,10 +2798,6 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
   CXXRecordDecl *T2RecordDecl
     = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 
-  QualType ToType
-    = AllowRvalues? DeclType->getAs<ReferenceType>()->getPointeeType()
-                  : DeclType;
-
   OverloadCandidateSet CandidateSet(DeclLoc);
   const UnresolvedSetImpl *Conversions
     = T2RecordDecl->getVisibleConversionFunctions();
