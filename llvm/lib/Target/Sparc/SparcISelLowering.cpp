@@ -721,7 +721,7 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case SPISD::CALL:       return "SPISD::CALL";
   case SPISD::RET_FLAG:   return "SPISD::RET_FLAG";
   case SPISD::GLOBAL_BASE_REG: return "SPISD::GLOBAL_BASE_REG";
-  case SPISD::FLUSH:      return "SPISD::FLUSH";
+  case SPISD::FLUSHW:     return "SPISD::FLUSHW";
   }
 }
 
@@ -969,9 +969,9 @@ static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) {
 }
 
 
-static SDValue getFLUSH(SDValue Op, SelectionDAG &DAG) {
+static SDValue getFLUSHW(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
-  SDValue Chain = DAG.getNode(SPISD::FLUSH,
+  SDValue Chain = DAG.getNode(SPISD::FLUSHW,
                               dl, MVT::Other, DAG.getEntryNode());
   return Chain;
 }
@@ -987,19 +987,19 @@ static SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
   uint64_t depth = Op.getConstantOperandVal(0);
 
   SDValue FrameAddr;
-  if (depth == 0) 
+  if (depth == 0)
     FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
   else {
     // flush first to make sure the windowed registers' values are in stack
-    SDValue Chain = getFLUSH(Op, DAG);
+    SDValue Chain = getFLUSHW(Op, DAG);
     FrameAddr = DAG.getCopyFromReg(Chain, dl, FrameReg, VT);
-    
+
     for (uint64_t i = 0; i != depth; ++i) {
-      SDValue Ptr = DAG.getNode(ISD::ADD, 
+      SDValue Ptr = DAG.getNode(ISD::ADD,
                                 dl, MVT::i32,
                                 FrameAddr, DAG.getIntPtrConstant(56));
-      FrameAddr = DAG.getLoad(MVT::i32, dl, 
-                              Chain, 
+      FrameAddr = DAG.getLoad(MVT::i32, dl,
+                              Chain,
                               Ptr,
                               MachinePointerInfo(), false, false, 0);
     }
@@ -1018,20 +1018,20 @@ static SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
   uint64_t depth = Op.getConstantOperandVal(0);
 
   SDValue RetAddr;
-  if (depth == 0) 
+  if (depth == 0)
     RetAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, RetReg, VT);
   else {
     // flush first to make sure the windowed registers' values are in stack
-    SDValue Chain = getFLUSH(Op, DAG);
+    SDValue Chain = getFLUSHW(Op, DAG);
     RetAddr = DAG.getCopyFromReg(Chain, dl, SP::I6, VT);
-    
+
     for (uint64_t i = 0; i != depth; ++i) {
-      SDValue Ptr = DAG.getNode(ISD::ADD, 
+      SDValue Ptr = DAG.getNode(ISD::ADD,
                                 dl, MVT::i32,
-                                RetAddr, 
+                                RetAddr,
                                 DAG.getIntPtrConstant((i == depth-1)?60:56));
-      RetAddr = DAG.getLoad(MVT::i32, dl, 
-                            Chain, 
+      RetAddr = DAG.getLoad(MVT::i32, dl,
+                            Chain,
                             Ptr,
                             MachinePointerInfo(), false, false, 0);
     }
