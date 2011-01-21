@@ -164,6 +164,9 @@ CCKEXT_ARM_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 FUNCTIONS.cc_kext.armv6 := $(CCKEXT_ARM_FUNCTIONS)
 FUNCTIONS.cc_kext.armv7 := $(CCKEXT_ARM_FUNCTIONS)
 
+CFLAGS.cc_kext.armv6 := $(CFLAGS) -mthumb
+CFLAGS.cc_kext.armv7 := $(CFLAGS) -mthumb
+
 CCKEXT_X86_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	divxc3 \
 	fixunsxfdi \
