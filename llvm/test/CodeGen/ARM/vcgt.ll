@@ -161,9 +161,9 @@ define <4 x i32> @vacgtQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 ; rdar://7923010
 define <4 x i32> @vcgt_zext(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK: vcgt_zext:
+;CHECK: vmov.i32 q10, #0x1
 ;CHECK: vcgt.f32 q8
-;CHECK: vmov.i32 q9, #0x1
-;CHECK: vand q8, q8, q9
+;CHECK: vand q8, q8, q10
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
 	%tmp3 = fcmp ogt <4 x float> %tmp1, %tmp2

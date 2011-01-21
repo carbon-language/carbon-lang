@@ -67,7 +67,7 @@ static RegisterScheduler
                       createILPListDAGScheduler);
 
 static cl::opt<bool> DisableSchedCycles(
-  "disable-sched-cycles", cl::Hidden, cl::init(true),
+  "disable-sched-cycles", cl::Hidden, cl::init(false),
   cl::desc("Disable cycle-level precision during preRA scheduling"));
 
 namespace {
