@@ -86,6 +86,15 @@ public:
     {
         return false;
     }
+    
+    virtual bool
+    IsDereferenceOfParent ()
+    {
+        return false;
+    }
+    
+    virtual bool
+    GetBaseClassPath (Stream &s);
 
     virtual void
     GetExpressionPath (Stream &s, bool qualify_cxx_base_classes);
@@ -276,7 +285,10 @@ public:
     {
         return m_parent;
     }
-    
+
+    ValueObject *
+    GetNonBaseClassParent();
+
     void
     SetPointersPointToLoadAddrs (bool b)
     {
@@ -312,7 +324,8 @@ protected:
                         m_value_did_change:1,
                         m_children_count_valid:1,
                         m_old_value_valid:1,
-                        m_pointers_point_to_load_addrs:1;
+                        m_pointers_point_to_load_addrs:1,
+                        m_is_deref_of_parent:1;
     
     friend class CommandObjectExpression;
     friend class ClangExpressionVariable;

@@ -113,6 +113,7 @@ SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMembe
     uint32_t child_bitfield_bit_size = 0;
     uint32_t child_bitfield_bit_offset = 0;
     bool child_is_base_class = false;
+    bool child_is_deref_of_parent = false;
 
     if (IsValid ())
     {
@@ -128,7 +129,8 @@ SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMembe
                                                                       child_byte_offset,
                                                                       child_bitfield_bit_size,
                                                                       child_bitfield_bit_offset,
-                                                                      child_is_base_class);
+                                                                      child_is_base_class,
+                                                                      child_is_deref_of_parent);
         
     }
     
@@ -142,6 +144,7 @@ SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMembe
         member.m_bit_size = child_bitfield_bit_size;
         member.m_bit_offset = child_bitfield_bit_offset;
         member.m_is_base_class = child_is_base_class;
+        member.m_is_deref_of_paremt = child_is_deref_of_parent;
     }
     else
     {

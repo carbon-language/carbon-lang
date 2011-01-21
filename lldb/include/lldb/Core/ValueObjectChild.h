@@ -32,7 +32,8 @@ public:
                       int32_t byte_offset,
                       uint32_t bitfield_bit_size,
                       uint32_t bitfield_bit_offset,
-                      bool is_base_class);
+                      bool is_base_class,
+                      bool is_deref_of_parent);
 
 
     virtual ~ValueObjectChild();
@@ -94,6 +95,12 @@ public:
         return m_is_base_class;
     }
 
+    virtual bool
+    IsDereferenceOfParent ()
+    {
+        return m_is_deref_of_parent;
+    }
+
 protected:
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     void *m_clang_type; // The type of the child in question within the parent (m_parent_sp)
@@ -103,6 +110,7 @@ protected:
     uint8_t m_bitfield_bit_size;
     uint8_t m_bitfield_bit_offset;
     bool m_is_base_class;
+    bool m_is_deref_of_parent;
 
 //
 //  void

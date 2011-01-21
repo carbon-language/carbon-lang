@@ -128,6 +128,7 @@ protected:
     uint32_t m_bit_size;
     uint32_t m_bit_offset;
     bool m_is_base_class;
+    bool m_is_deref_of_paremt;
 };
 
 

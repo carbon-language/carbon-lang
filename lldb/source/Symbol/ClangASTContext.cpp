@@ -2373,7 +2373,8 @@ ClangASTContext::GetChildClangTypeAtIndex
     int32_t &child_byte_offset,
     uint32_t &child_bitfield_bit_size,
     uint32_t &child_bitfield_bit_offset,
-    bool &child_is_base_class
+    bool &child_is_base_class,
+    bool &child_is_deref_of_parent
 )
 {
     if (parent_clang_type)
@@ -2389,7 +2390,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                                          child_byte_offset,
                                          child_bitfield_bit_size,
                                          child_bitfield_bit_offset,
-                                         child_is_base_class);
+                                         child_is_base_class, 
+                                         child_is_deref_of_parent);
     return NULL;
 }
 
@@ -2407,7 +2409,8 @@ ClangASTContext::GetChildClangTypeAtIndex
     int32_t &child_byte_offset,
     uint32_t &child_bitfield_bit_size,
     uint32_t &child_bitfield_bit_offset,
-    bool &child_is_base_class
+    bool &child_is_base_class,
+    bool &child_is_deref_of_parent
 )
 {
     if (parent_clang_type == NULL)
@@ -2612,6 +2615,8 @@ ClangASTContext::GetChildClangTypeAtIndex
 
                 if (transparent_pointers && ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
                 {
+                    child_is_deref_of_parent = false;
+                    bool tmp_child_is_deref_of_parent = false;
                     return GetChildClangTypeAtIndex (ast,
                                                      parent_name,
                                                      pointer_type->getPointeeType().getAsOpaquePtr(),
@@ -2623,10 +2628,12 @@ ClangASTContext::GetChildClangTypeAtIndex
                                                      child_byte_offset,
                                                      child_bitfield_bit_size,
                                                      child_bitfield_bit_offset,
-                                                     child_is_base_class);
+                                                     child_is_base_class,
+                                                     tmp_child_is_deref_of_parent);
                 }
                 else
                 {
+                    child_is_deref_of_parent = true;
                     if (parent_name)
                     {
                         child_name.assign(1, '*');
@@ -2681,6 +2688,8 @@ ClangASTContext::GetChildClangTypeAtIndex
 
                 if (transparent_pointers && ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
                 {
+                    child_is_deref_of_parent = false;
+                    bool tmp_child_is_deref_of_parent = false;
                     return GetChildClangTypeAtIndex (ast,
                                                      parent_name,
                                                      pointer_type->getPointeeType().getAsOpaquePtr(),
@@ -2692,10 +2701,13 @@ ClangASTContext::GetChildClangTypeAtIndex
                                                      child_byte_offset,
                                                      child_bitfield_bit_size,
                                                      child_bitfield_bit_offset,
-                                                     child_is_base_class);
+                                                     child_is_base_class,
+                                                     tmp_child_is_deref_of_parent);
                 }
                 else
                 {
+                    child_is_deref_of_parent = true;
+
                     if (parent_name)
                     {
                         child_name.assign(1, '*');
@@ -2723,6 +2735,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                 clang_type_t pointee_clang_type = pointee_type.getAsOpaquePtr();
                 if (transparent_pointers && ClangASTContext::IsAggregateType (pointee_clang_type))
                 {
+                    child_is_deref_of_parent = false;
+                    bool tmp_child_is_deref_of_parent = false;
                     return GetChildClangTypeAtIndex (ast,
                                                      parent_name,
                                                      pointee_clang_type,
@@ -2734,7 +2748,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                                                      child_byte_offset,
                                                      child_bitfield_bit_size,
                                                      child_bitfield_bit_offset,
-                                                     child_is_base_class);
+                                                     child_is_base_class,
+                                                     tmp_child_is_deref_of_parent);
                 }
                 else
                 {
@@ -2769,7 +2784,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                                              child_byte_offset,
                                              child_bitfield_bit_size,
                                              child_bitfield_bit_offset,
-                                             child_is_base_class);
+                                             child_is_base_class,
+                                             child_is_deref_of_parent);
             break;
 
         default:

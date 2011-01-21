@@ -559,50 +559,6 @@ lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
     }
     return m_clang_type != NULL;
 }
-
-clang_type_t 
-lldb_private::Type::GetChildClangTypeAtIndex
-(
-    const char *parent_name,
-    uint32_t idx,
-    bool transparent_pointers,
-    bool omit_empty_base_classes,
-    ConstString& name,
-    uint32_t &child_byte_size,
-    int32_t &child_byte_offset,
-    uint32_t &child_bitfield_bit_size,
-    uint32_t &child_bitfield_bit_offset,
-    bool &child_is_base_class
-)
-{
-    clang_type_t child_qual_type = NULL;
-    
-    if (GetClangType())
-    {
-        std::string name_str;
-        child_qual_type = GetClangASTContext().GetChildClangTypeAtIndex (parent_name,
-                                                                         m_clang_type,
-                                                                         idx,
-                                                                         transparent_pointers,
-                                                                         omit_empty_base_classes,
-                                                                         name_str,
-                                                                         child_byte_size,
-                                                                         child_byte_offset,
-                                                                         child_bitfield_bit_size,
-                                                                         child_bitfield_bit_offset,
-                                                                         child_is_base_class);
-        
-        if (child_qual_type)
-        {
-            if (!name_str.empty())
-                name.SetCString(name_str.c_str());
-            else
-                name.Clear();
-        }
-    }
-    return child_qual_type;
-}
-
 uint32_t
 lldb_private::Type::GetEncodingMask ()
 {

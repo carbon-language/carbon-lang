@@ -64,7 +64,8 @@ ValueObject::ValueObject (ValueObject *parent) :
     m_value_did_change (false),
     m_children_count_valid (false),
     m_old_value_valid (false),
-    m_pointers_point_to_load_addrs (false)
+    m_pointers_point_to_load_addrs (false),
+    m_is_deref_of_parent (false)
 {
 }
 
@@ -367,6 +368,8 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
     uint32_t child_bitfield_bit_size = 0;
     uint32_t child_bitfield_bit_offset = 0;
     bool child_is_base_class = false;
+    bool child_is_deref_of_parent = false;
+
     const bool transparent_pointers = synthetic_array_member == false;
     clang::ASTContext *clang_ast = GetClangAST();
     clang_type_t clang_type = GetClangType();
@@ -382,7 +385,8 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
                                                                   child_byte_offset,
                                                                   child_bitfield_bit_size,
                                                                   child_bitfield_bit_offset,
-                                                                  child_is_base_class);
+                                                                  child_is_base_class,
+                                                                  child_is_deref_of_parent);
     if (child_clang_type && child_byte_size)
     {
         if (synthetic_index)
@@ -400,7 +404,8 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
                                                child_byte_offset,
                                                child_bitfield_bit_size,
                                                child_bitfield_bit_offset,
-                                               child_is_base_class));
+                                               child_is_base_class,
+                                               child_is_deref_of_parent));
         if (m_pointers_point_to_load_addrs)
             valobj_sp->SetPointersPointToLoadAddrs (m_pointers_point_to_load_addrs);
     }
@@ -931,47 +936,90 @@ ValueObject::SetDynamicValue ()
     return true;
 }
 
+bool
+ValueObject::GetBaseClassPath (Stream &s)
+{
+    if (IsBaseClass())
+    {
+        bool parent_had_base_class = m_parent && m_parent->GetBaseClassPath (s);
+        clang_type_t clang_type = GetClangType();
+        std::string cxx_class_name;
+        bool this_had_base_class = ClangASTContext::GetCXXClassName (clang_type, cxx_class_name);
+        if (this_had_base_class)
+        {
+            if (parent_had_base_class)
+                s.PutCString("::");
+            s.PutCString(cxx_class_name.c_str());
+        }
+        return parent_had_base_class || this_had_base_class;
+    }
+    return false;
+}
+
+
+ValueObject *
+ValueObject::GetNonBaseClassParent()
+{
+    if (m_parent)
+    {
+        if (m_parent->IsBaseClass())
+            return m_parent->GetNonBaseClassParent();
+        else
+            return m_parent;
+    }
+    return NULL;
+}
 
 void
 ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes)
 {
+    const bool is_deref_of_parent = IsDereferenceOfParent ();
+    
+    if (is_deref_of_parent)
+        s.PutCString("*(");
+
     if (m_parent)
-    {
         m_parent->GetExpressionPath (s, qualify_cxx_base_classes);
-        clang_type_t parent_clang_type = m_parent->GetClangType();
-        if (parent_clang_type)
+    
+    if (!IsBaseClass())
+    {
+        if (!is_deref_of_parent)
         {
-            if (ClangASTContext::IsPointerType(parent_clang_type))
+            ValueObject *non_base_class_parent = GetNonBaseClassParent();
+            if (non_base_class_parent)
             {
-                s.PutCString("->");
+                clang_type_t non_base_class_parent_clang_type = non_base_class_parent->GetClangType();
+                if (non_base_class_parent_clang_type)
+                {
+                    const uint32_t non_base_class_parent_type_info = ClangASTContext::GetTypeInfo (non_base_class_parent_clang_type, NULL, NULL);
+                    
+                    if (non_base_class_parent_type_info & ClangASTContext::eTypeIsPointer)
+                    {
+                        s.PutCString("->");
+                    }
+                    else if ((non_base_class_parent_type_info & ClangASTContext::eTypeHasChildren) &&
+                        !(non_base_class_parent_type_info & ClangASTContext::eTypeIsArray))
+                    {
+                        s.PutChar('.');
+                    }
+                }
             }
-            else if (ClangASTContext::IsAggregateType (parent_clang_type))
+
+            const char *name = GetName().GetCString();
+            if (name)
             {
-                if (ClangASTContext::IsArrayType (parent_clang_type) == false &&
-                    m_parent->IsBaseClass() == false)
-                    s.PutChar('.');
+                if (qualify_cxx_base_classes)
+                {
+                    if (GetBaseClassPath (s))
+                        s.PutCString("::");
+                }
+                s.PutCString(name);
             }
         }
     }
     
-    if (IsBaseClass())
-    {
-        if (qualify_cxx_base_classes)
-        {
-            clang_type_t clang_type = GetClangType();
-            std::string cxx_class_name;
-            if (ClangASTContext::GetCXXClassName (clang_type, cxx_class_name))
-            {
-                s << cxx_class_name.c_str() << "::";
-            }
-        }
-    }
-    else
-    {
-        const char *name = GetName().GetCString();
-        if (name)
-            s.PutCString(name);    
-    }
+    if (is_deref_of_parent)
+        s.PutChar(')');
 }
 
 void
@@ -1012,7 +1060,7 @@ ValueObject::DumpValueObject
             s.Indent();
 
             // Always show the type for the top level items.
-            if (show_types || curr_depth == 0)
+            if (show_types || (curr_depth == 0 && !flat_output))
                 s.Printf("(%s) ", valobj->GetTypeName().AsCString("<invalid type>"));
 
 
@@ -1223,6 +1271,7 @@ ValueObject::Dereference (Error &error)
         uint32_t child_bitfield_bit_size = 0;
         uint32_t child_bitfield_bit_offset = 0;
         bool child_is_base_class = false;
+        bool child_is_deref_of_parent = false;
         const bool transparent_pointers = false;
         clang::ASTContext *clang_ast = GetClangAST();
         clang_type_t clang_type = GetClangType();
@@ -1238,7 +1287,8 @@ ValueObject::Dereference (Error &error)
                                                                       child_byte_offset,
                                                                       child_bitfield_bit_size,
                                                                       child_bitfield_bit_offset,
-                                                                      child_is_base_class);
+                                                                      child_is_base_class,
+                                                                      child_is_deref_of_parent);
         if (child_clang_type && child_byte_size)
         {
             ConstString child_name;
@@ -1253,7 +1303,8 @@ ValueObject::Dereference (Error &error)
                                                    child_byte_offset,
                                                    child_bitfield_bit_size,
                                                    child_bitfield_bit_offset,
-                                                   child_is_base_class));
+                                                   child_is_base_class,
+                                                   child_is_deref_of_parent));
         }
     }
 
