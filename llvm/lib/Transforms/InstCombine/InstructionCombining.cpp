@@ -455,8 +455,9 @@ Value *InstCombiner::dyn_castFNegVal(Value *V) const {
 
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
-  if (CastInst *CI = dyn_cast<CastInst>(&I))
+  if (CastInst *CI = dyn_cast<CastInst>(&I)) {
     return IC->Builder->CreateCast(CI->getOpcode(), SO, I.getType());
+  }
 
   // Figure out if the constant is the left or the right argument.
   bool ConstIsRHS = isa<Constant>(I.getOperand(1));
@@ -498,11 +499,24 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
     // Bool selects with constant operands can be folded to logical ops.
     if (SI->getType()->isIntegerTy(1)) return 0;
 
+    // If it's a bitcast involving vectors, make sure it has the same number of
+    // elements on both sides.
+    if (BitCastInst *BC = dyn_cast<BitCastInst>(&Op)) {
+      const VectorType *DestTy = dyn_cast<VectorType>(BC->getDestTy());
+      const VectorType *SrcTy = dyn_cast<VectorType>(BC->getSrcTy());
+
+      // Verify that either both or neither are vectors.
+      if ((SrcTy == NULL) != (DestTy == NULL)) return 0;
+      // If vectors, verify that they have the same number of elements.
+      if (SrcTy && SrcTy->getNumElements() != DestTy->getNumElements())
+        return 0;
+    }
+    
     Value *SelectTrueVal = FoldOperationIntoSelectOperand(Op, TV, this);
     Value *SelectFalseVal = FoldOperationIntoSelectOperand(Op, FV, this);
 
-    return SelectInst::Create(SI->getCondition(), SelectTrueVal,
-                              SelectFalseVal);
+    return SelectInst::Create(SI->getCondition(),
+                              SelectTrueVal, SelectFalseVal);
   }
   return 0;
 }
