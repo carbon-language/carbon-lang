@@ -901,9 +901,23 @@ IRForTarget::RewritePersistentAllocs(llvm::Module &llvm_module, llvm::BasicBlock
         Instruction &inst = *ii;
         
         if (AllocaInst *alloc = dyn_cast<AllocaInst>(&inst))
-            if (alloc->getName().startswith("$") &&
-                !alloc->getName().startswith("$__lldb"))
+        {
+            llvm::StringRef alloc_name = alloc->getName();
+            
+            if (alloc_name.startswith("$") &&
+                !alloc_name.startswith("$__lldb"))
+            {
+                if (alloc_name.find_first_of("0123456789") == 1)
+                {
+                    if (log)
+                        log->Printf("Rejecting a numeric persistent variable.");
+                    
+                    return false;
+                }
+                
                 pvar_allocs.push_back(alloc);
+            }
+        }
     }
     
     InstrIterator iter;
