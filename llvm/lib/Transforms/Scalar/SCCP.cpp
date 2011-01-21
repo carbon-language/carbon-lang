@@ -1606,10 +1606,6 @@ namespace {
     // algorithm, and return true if the function was modified.
     //
     bool runOnFunction(Function &F);
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesCFG();
-    }
   };
 } // end anonymous namespace
 
