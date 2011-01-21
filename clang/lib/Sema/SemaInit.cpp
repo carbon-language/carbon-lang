@@ -2571,23 +2571,19 @@ static void TryReferenceInitialization(Sema &S,
   //     - Otherwise, the reference shall be an lvalue reference to a 
   //       non-volatile const type (i.e., cv1 shall be const), or the reference
   //       shall be an rvalue reference.
-  if (!((isLValueRef && T1Quals.hasConst() && !T1Quals.hasVolatile()) ||
-        (isRValueRef && InitCategory.isRValue()))) {
+  if (isLValueRef && !(T1Quals.hasConst() && !T1Quals.hasVolatile())) {
     if (S.Context.getCanonicalType(T2) == S.Context.OverloadTy)
       Sequence.SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
     else if (ConvOvlResult && !Sequence.getFailedCandidateSet().empty())
       Sequence.SetOverloadFailure(
                         InitializationSequence::FK_ReferenceInitOverloadFailed,
                                   ConvOvlResult);
-    else if (isLValueRef)
+    else
       Sequence.SetFailed(InitCategory.isLValue()
         ? (RefRelationship == Sema::Ref_Related
              ? InitializationSequence::FK_ReferenceInitDropsQualifiers
              : InitializationSequence::FK_NonConstLValueReferenceBindingToUnrelated)
         : InitializationSequence::FK_NonConstLValueReferenceBindingToTemporary);
-    else
-      Sequence.SetFailed(
-                    InitializationSequence::FK_RValueReferenceBindingToLValue);
 
     return;
   }
@@ -2696,6 +2692,15 @@ static void TryReferenceInitialization(Sema &S,
     return;
   }
 
+  //   [...] If T1 is reference-related to T2 and the reference is an rvalue 
+  //   reference, the initializer expression shall not be an lvalue.
+  if (RefRelationship >= Sema::Ref_Related && !isLValueRef && 
+      InitCategory.isLValue()) {
+    Sequence.SetFailed(
+                    InitializationSequence::FK_RValueReferenceBindingToLValue);
+    return;
+  }
+  
   Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/true);
   return;
 }

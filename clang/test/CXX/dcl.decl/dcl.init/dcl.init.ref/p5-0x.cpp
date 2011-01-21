@@ -17,7 +17,7 @@ int f(int);
 
 template<typename T>
 struct ConvertsTo {
-  operator T();
+  operator T(); // expected-note 2{{candidate function}}
 };
 
 void test_rvalue_refs() {
@@ -56,6 +56,13 @@ void test_rvalue_refs() {
 
   // function lvalue
   int (&&function1)(int) = ConvertsTo<int(&)(int)>();
+
+  // In the second case, if the reference is an rvalue reference and
+  // the second standard conversion sequence of the user-defined
+  // conversion sequence includes an lvalue-to-rvalue conversion, the
+  // program is ill-formed.
+  int &&int2 = ConvertsTo<int&>(); // expected-error{{no viable conversion from 'ConvertsTo<int &>' to 'int'}}
+  int &&int3 = ConvertsTo<float&>(); // expected-error{{no viable conversion from 'ConvertsTo<float &>' to 'int'}}
 }
 
 class NonCopyable {
@@ -80,4 +87,21 @@ void test_direct_binding() {
   NonCopyable &&nc9 = ConvertsTo<NonCopyableDerived&&>();
   const NonCopyable &nc10 = ConvertsTo<NonCopyable&&>();
   const NonCopyable &nc11 = ConvertsTo<NonCopyableDerived&&>();
+}
+
+namespace std_example {
+  struct A { }; 
+  struct B : A { } b; 
+  extern B f(); 
+  const A& rca = f(); 
+  A&& rra = f();
+  struct X { 
+    operator B();  // expected-note{{candidate function}}
+    operator int&(); // expected-note{{candidate function}}
+  } x;
+  const A& r = x;
+  int i;
+  int&& rri = static_cast<int&&>(i);
+  B&& rrb = x;
+  int&& rri2 = X(); // expected-error{{no viable conversion from 'std_example::X' to 'int'}}
 }

@@ -47,7 +47,7 @@ void f() {
   ilr_c2 vilr2 = i1;
 
   conv_to_not_int_rvalue cnir;
-  not_int &&ni4 = cnir; // expected-error {{rvalue reference cannot bind to lvalue}}
+  not_int &&ni4 = cnir;
   not_int &ni5 = cnir; // expected-error{{non-const lvalue reference to type 'not_int' cannot bind to a value of unrelated type 'conv_to_not_int_rvalue'}}
   not_int &&ni6 = conv_to_not_int_rvalue();
 
