@@ -172,7 +172,9 @@ static Value *getFCmpValue(bool isordered, unsigned code,
   case 4: Pred = isordered ? FCmpInst::FCMP_OLT : FCmpInst::FCMP_ULT; break;
   case 5: Pred = isordered ? FCmpInst::FCMP_ONE : FCmpInst::FCMP_UNE; break;
   case 6: Pred = isordered ? FCmpInst::FCMP_OLE : FCmpInst::FCMP_ULE; break;
-  case 7: return ConstantInt::getTrue(LHS->getContext());
+  case 7: 
+    if (!isordered) return ConstantInt::getTrue(LHS->getContext());
+    Pred = FCmpInst::FCMP_ORD; break;
   }
   return Builder->CreateFCmp(Pred, LHS, RHS);
 }
