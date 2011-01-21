@@ -16,4 +16,10 @@ X return_by_move(int i, X x) {
   else
     return x;
 }
+
+void throw_move_only(X x) {
+  X x2;
+  throw x;
+  throw x2;
+}
   
