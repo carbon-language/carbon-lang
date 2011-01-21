@@ -38,11 +38,7 @@ CC := gcc
 override CC := $(subst -arch ,-arch_,$(CC))
 override CC := $(patsubst -arch_%,,$(CC))
 
-# Note that although we use -fno-builtin here, the backend may still synthesize
-# calls to runtime functions. Unfortunately, we currently have no way to
-# guarantee that we won't be creating a cycle in the runtime library, aside from
-# explicit runtime testing.
-CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer -fno-builtin
+CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
@@ -58,7 +54,6 @@ CCKEXT_COMMON_FUNCTIONS := \
 	ashrdi3 \
 	bswapdi2 \
 	bswapsi2 \
-	clear_cache \
 	clzdi2 \
 	clzsi2 \
 	cmpdi2 \
