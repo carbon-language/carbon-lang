@@ -128,13 +128,14 @@ public:
 } // end namespace
 
 SymbolRef COFFObjectFile::getSymbolNext(DataRefImpl Symb) const {
-  const coff_symbol *symb = *reinterpret_cast<const coff_symbol**>(&Symb);
+  const coff_symbol *symb = reinterpret_cast<const coff_symbol*>(Symb.p);
   symb += 1 + symb->NumberOfAuxSymbols;
-  return SymbolRef(DataRefImpl(symb), this);
+  Symb.p = reinterpret_cast<intptr_t>(symb);
+  return SymbolRef(Symb, this);
 }
 
 StringRef COFFObjectFile::getSymbolName(DataRefImpl Symb) const {
-  const coff_symbol *symb = *reinterpret_cast<const coff_symbol**>(&Symb);
+  const coff_symbol *symb = reinterpret_cast<const coff_symbol*>(Symb.p);
   // Check for string table entry. First 4 bytes are 0.
   if (symb->Name.Offset.Zeroes == 0) {
     uint32_t Offset = symb->Name.Offset.Offset;
@@ -149,7 +150,7 @@ StringRef COFFObjectFile::getSymbolName(DataRefImpl Symb) const {
 }
 
 uint64_t COFFObjectFile::getSymbolAddress(DataRefImpl Symb) const {
-  const coff_symbol *symb = *reinterpret_cast<const coff_symbol**>(&Symb);
+  const coff_symbol *symb = reinterpret_cast<const coff_symbol*>(Symb.p);
   const coff_section *Section = getSection(symb->SectionNumber);
   char Type = getSymbolNMTypeChar(Symb);
   if (Type == 'U' || Type == 'w')
@@ -163,7 +164,7 @@ uint64_t COFFObjectFile::getSymbolSize(DataRefImpl Symb) const {
   // FIXME: Return the correct size. This requires looking at all the symbols
   //        in the same section as this symbol, and looking for either the next
   //        symbol, or the end of the section.
-  const coff_symbol *symb = *reinterpret_cast<const coff_symbol**>(&Symb);
+  const coff_symbol *symb = reinterpret_cast<const coff_symbol*>(Symb.p);
   const coff_section *Section = getSection(symb->SectionNumber);
   char Type = getSymbolNMTypeChar(Symb);
   if (Type == 'U' || Type == 'w')
@@ -174,7 +175,7 @@ uint64_t COFFObjectFile::getSymbolSize(DataRefImpl Symb) const {
 }
 
 char COFFObjectFile::getSymbolNMTypeChar(DataRefImpl Symb) const {
-  const coff_symbol *symb = *reinterpret_cast<const coff_symbol**>(&Symb);
+  const coff_symbol *symb = reinterpret_cast<const coff_symbol*>(Symb.p);
   char ret = StringSwitch<char>(getSymbolName(Symb))
     .StartsWith(".debug", 'N')
     .StartsWith(".sxdata", 'N')
@@ -236,13 +237,14 @@ bool COFFObjectFile::isSymbolInternal(DataRefImpl Symb) const {
 }
 
 SectionRef COFFObjectFile::getSectionNext(DataRefImpl Sec) const {
-  const coff_section *sec = *reinterpret_cast<const coff_section**>(&Sec);
+  const coff_section *sec = reinterpret_cast<const coff_section*>(Sec.p);
   sec += 1;
-  return SectionRef(DataRefImpl(sec), this);
+  Sec.p = reinterpret_cast<intptr_t>(sec);
+  return SectionRef(Sec, this);
 }
 
 StringRef COFFObjectFile::getSectionName(DataRefImpl Sec) const {
-  const coff_section *sec = *reinterpret_cast<const coff_section**>(&Sec);
+  const coff_section *sec = reinterpret_cast<const coff_section*>(Sec.p);
   StringRef name;
   if (sec->Name[7] == 0)
     // Null terminated, let ::strlen figure out the length.
@@ -263,23 +265,23 @@ StringRef COFFObjectFile::getSectionName(DataRefImpl Sec) const {
 }
 
 uint64_t COFFObjectFile::getSectionAddress(DataRefImpl Sec) const {
-  const coff_section *sec = *reinterpret_cast<const coff_section**>(&Sec);
+  const coff_section *sec = reinterpret_cast<const coff_section*>(Sec.p);
   return sec->VirtualAddress;
 }
 
 uint64_t COFFObjectFile::getSectionSize(DataRefImpl Sec) const {
-  const coff_section *sec = *reinterpret_cast<const coff_section**>(&Sec);
+  const coff_section *sec = reinterpret_cast<const coff_section*>(Sec.p);
   return sec->SizeOfRawData;
 }
 
 StringRef COFFObjectFile::getSectionContents(DataRefImpl Sec) const {
-  const coff_section *sec = *reinterpret_cast<const coff_section**>(&Sec);
+  const coff_section *sec = reinterpret_cast<const coff_section*>(Sec.p);
   return StringRef(reinterpret_cast<const char *>(base + sec->PointerToRawData),
                    sec->SizeOfRawData);
 }
 
 bool COFFObjectFile::isSectionText(DataRefImpl Sec) const {
-  const coff_section *sec = *reinterpret_cast<const coff_section**>(&Sec);
+  const coff_section *sec = reinterpret_cast<const coff_section*>(Sec.p);
   return sec->Characteristics & COFF::IMAGE_SCN_CNT_CODE;
 }
 
@@ -300,29 +302,32 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object)
 }
 
 ObjectFile::symbol_iterator COFFObjectFile::begin_symbols() const {
-  return symbol_iterator(
-    SymbolRef(DataRefImpl(SymbolTable), this));
+  DataRefImpl ret;
+  ret.p = reinterpret_cast<intptr_t>(SymbolTable);
+  return symbol_iterator(SymbolRef(ret, this));
 }
 
 ObjectFile::symbol_iterator COFFObjectFile::end_symbols() const {
   // The symbol table ends where the string table begins.
-  return symbol_iterator(
-    SymbolRef(DataRefImpl(StringTable), this));
+  DataRefImpl ret;
+  ret.p = reinterpret_cast<intptr_t>(StringTable);
+  return symbol_iterator(SymbolRef(ret, this));
 }
 
 ObjectFile::section_iterator COFFObjectFile::begin_sections() const {
-  return section_iterator(
-    SectionRef(DataRefImpl(SectionTable), this));
+  DataRefImpl ret;
+  ret.p = reinterpret_cast<intptr_t>(SectionTable);
+  return section_iterator(SectionRef(ret, this));
 }
 
 ObjectFile::section_iterator COFFObjectFile::end_sections() const {
-  return section_iterator(
-    SectionRef(
-      DataRefImpl((void *)(SectionTable + Header->NumberOfSections)), this));
+  DataRefImpl ret;
+  ret.p = reinterpret_cast<intptr_t>(SectionTable + Header->NumberOfSections);
+  return section_iterator(SectionRef(ret, this));
 }
 
 uint8_t COFFObjectFile::getBytesInAddress() const {
-  return 4;
+  return getArch() == Triple::x86_64 ? 8 : 4;
 }
 
 StringRef COFFObjectFile::getFileFormatName() const {

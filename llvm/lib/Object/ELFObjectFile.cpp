@@ -128,8 +128,7 @@ struct Elf_Shdr_Impl : Elf_Shdr_Base<target_endianness, is64Bits> {
   unsigned getEntityCount() const {
     if (sh_entsize == 0)
       return 0;
-    else
-      return sh_size / sh_entsize;
+    return sh_size / sh_entsize;
   }
 };
 }
@@ -173,14 +172,6 @@ struct Elf_Sym_Impl : Elf_Sym_Base<target_endianness, is64Bits> {
   void setBindingAndType(unsigned char b, unsigned char t) {
     st_info = (b << 4) + (t & 0x0f);
   }
-};
-}
-
-namespace {
-struct ELFDataRefImpl {
-  uint32_t SymbolIndex;
-  uint16_t SymbolTableSectionIndex;
-  uint16_t Unused;
 };
 }
 
@@ -261,10 +252,8 @@ public:
 template<support::endianness target_endianness, bool is64Bits>
 void ELFObjectFile<target_endianness, is64Bits>
                   ::validateSymbol(DataRefImpl Symb) const {
-  const ELFDataRefImpl SymbolData = *reinterpret_cast<ELFDataRefImpl *>(&Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
-  const Elf_Shdr *SymbolTableSection =
-    SymbolTableSections[SymbolData.SymbolTableSectionIndex];
+  const Elf_Shdr *SymbolTableSection = SymbolTableSections[Symb.d.b];
   // FIXME: We really need to do proper error handling in the case of an invalid
   //        input file. Because we don't use exceptions, I think we'll just pass
   //        an error object around.
@@ -283,20 +272,18 @@ template<support::endianness target_endianness, bool is64Bits>
 SymbolRef ELFObjectFile<target_endianness, is64Bits>
                        ::getSymbolNext(DataRefImpl Symb) const {
   validateSymbol(Symb);
-  ELFDataRefImpl &SymbolData = *reinterpret_cast<ELFDataRefImpl *>(&Symb);
-  const Elf_Shdr *SymbolTableSection =
-    SymbolTableSections[SymbolData.SymbolTableSectionIndex];
+  const Elf_Shdr *SymbolTableSection = SymbolTableSections[Symb.d.b];
 
-  ++SymbolData.SymbolIndex;
+  ++Symb.d.a;
   // Check to see if we are at the end of this symbol table.
-  if (SymbolData.SymbolIndex >= SymbolTableSection->getEntityCount()) {
+  if (Symb.d.a >= SymbolTableSection->getEntityCount()) {
     // We are at the end. If there are other symbol tables, jump to them.
-    ++SymbolData.SymbolTableSectionIndex;
-    SymbolData.SymbolIndex = 1; // The 0th symbol in ELF is fake.
+    ++Symb.d.b;
+    Symb.d.a = 1; // The 0th symbol in ELF is fake.
     // Otherwise return the terminator.
-    if (SymbolData.SymbolTableSectionIndex >= SymbolTableSections.size()) {
-      SymbolData.SymbolIndex = std::numeric_limits<uint32_t>::max();
-      SymbolData.SymbolTableSectionIndex = std::numeric_limits<uint32_t>::max();
+    if (Symb.d.b >= SymbolTableSections.size()) {
+      Symb.d.a = std::numeric_limits<uint32_t>::max();
+      Symb.d.b = std::numeric_limits<uint32_t>::max();
     }
   }
 
@@ -426,40 +413,37 @@ bool ELFObjectFile<target_endianness, is64Bits>
 template<support::endianness target_endianness, bool is64Bits>
 SectionRef ELFObjectFile<target_endianness, is64Bits>
                         ::getSectionNext(DataRefImpl Sec) const {
-  const uint8_t *sec = *reinterpret_cast<const uint8_t **>(&Sec);
+  const uint8_t *sec = reinterpret_cast<const uint8_t *>(Sec.p);
   sec += Header->e_shentsize;
-  return SectionRef(DataRefImpl(sec), this);
+  Sec.p = reinterpret_cast<intptr_t>(sec);
+  return SectionRef(Sec, this);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 StringRef ELFObjectFile<target_endianness, is64Bits>
                        ::getSectionName(DataRefImpl Sec) const {
-  const Elf_Shdr *sec =
-    *reinterpret_cast<const Elf_Shdr **>(&Sec);
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   return StringRef(getString(dot_shstrtab_sec, sec->sh_name));
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 uint64_t ELFObjectFile<target_endianness, is64Bits>
                       ::getSectionAddress(DataRefImpl Sec) const {
-  const Elf_Shdr *sec =
-    *reinterpret_cast<const Elf_Shdr **>(&Sec);
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   return sec->sh_addr;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 uint64_t ELFObjectFile<target_endianness, is64Bits>
                       ::getSectionSize(DataRefImpl Sec) const {
-  const Elf_Shdr *sec =
-    *reinterpret_cast<const Elf_Shdr **>(&Sec);
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   return sec->sh_size;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 StringRef ELFObjectFile<target_endianness, is64Bits>
                        ::getSectionContents(DataRefImpl Sec) const {
-  const Elf_Shdr *sec =
-    *reinterpret_cast<const Elf_Shdr **>(&Sec);
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   const char *start = (char*)base + sec->sh_offset;
   return StringRef(start, sec->sh_size);
 }
@@ -467,8 +451,7 @@ StringRef ELFObjectFile<target_endianness, is64Bits>
 template<support::endianness target_endianness, bool is64Bits>
 bool ELFObjectFile<target_endianness, is64Bits>
                   ::isSectionText(DataRefImpl Sec) const {
-  const Elf_Shdr *sec =
-    *reinterpret_cast<const Elf_Shdr **>(&Sec);
+  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   if (sec->sh_flags & ELF::SHF_EXECINSTR)
     return true;
   return false;
@@ -538,49 +521,49 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object)
 template<support::endianness target_endianness, bool is64Bits>
 ObjectFile::symbol_iterator ELFObjectFile<target_endianness, is64Bits>
                                          ::begin_symbols() const {
-  ELFDataRefImpl SymbolData;
+  DataRefImpl SymbolData;
   memset(&SymbolData, 0, sizeof(SymbolData));
   if (SymbolTableSections.size() == 0) {
-    SymbolData.SymbolIndex = std::numeric_limits<uint32_t>::max();
-    SymbolData.SymbolTableSectionIndex = std::numeric_limits<uint32_t>::max();
+    SymbolData.d.a = std::numeric_limits<uint32_t>::max();
+    SymbolData.d.b = std::numeric_limits<uint32_t>::max();
   } else {
-    SymbolData.SymbolIndex = 1; // The 0th symbol in ELF is fake.
-    SymbolData.SymbolTableSectionIndex = 0;
+    SymbolData.d.a = 1; // The 0th symbol in ELF is fake.
+    SymbolData.d.b = 0;
   }
-  return symbol_iterator(
-    SymbolRef(DataRefImpl(*reinterpret_cast<DataRefImpl*>(&SymbolData)), this));
+  return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 ObjectFile::symbol_iterator ELFObjectFile<target_endianness, is64Bits>
                                          ::end_symbols() const {
-  ELFDataRefImpl SymbolData;
+  DataRefImpl SymbolData;
   memset(&SymbolData, 0, sizeof(SymbolData));
-  SymbolData.SymbolIndex = std::numeric_limits<uint32_t>::max();
-  SymbolData.SymbolTableSectionIndex = std::numeric_limits<uint32_t>::max();
-  return symbol_iterator(
-    SymbolRef(DataRefImpl(*reinterpret_cast<DataRefImpl*>(&SymbolData)), this));
+  SymbolData.d.a = std::numeric_limits<uint32_t>::max();
+  SymbolData.d.b = std::numeric_limits<uint32_t>::max();
+  return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 ObjectFile::section_iterator ELFObjectFile<target_endianness, is64Bits>
                                           ::begin_sections() const {
-  return section_iterator(
-    SectionRef(DataRefImpl(base + Header->e_shoff), this));
+  DataRefImpl ret;
+  ret.p = reinterpret_cast<intptr_t>(base + Header->e_shoff);
+  return section_iterator(SectionRef(ret, this));
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 ObjectFile::section_iterator ELFObjectFile<target_endianness, is64Bits>
                                           ::end_sections() const {
-  return section_iterator(
-    SectionRef(DataRefImpl(base
-                           + Header->e_shoff
-                           + (Header->e_shentsize * Header->e_shnum)), this));
+  DataRefImpl ret;
+  ret.p = reinterpret_cast<intptr_t>(base
+                                     + Header->e_shoff
+                                     + (Header->e_shentsize * Header->e_shnum));
+  return section_iterator(SectionRef(ret, this));
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 uint8_t ELFObjectFile<target_endianness, is64Bits>::getBytesInAddress() const {
-  return 4;
+  return is64Bits ? 8 : 4;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -626,20 +609,17 @@ unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
 template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
 ELFObjectFile<target_endianness, is64Bits>::getSymbol(DataRefImpl Symb) const {
-  const ELFDataRefImpl SymbolData = *reinterpret_cast<ELFDataRefImpl *>(&Symb);
-  const Elf_Shdr *sec =
-    SymbolTableSections[SymbolData.SymbolTableSectionIndex];
+  const Elf_Shdr *sec = SymbolTableSections[Symb.d.b];
   return reinterpret_cast<const Elf_Sym *>(
            base
            + sec->sh_offset
-           + (SymbolData.SymbolIndex * sec->sh_entsize));
+           + (Symb.d.a * sec->sh_entsize));
 }
 
 template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
 ELFObjectFile<target_endianness, is64Bits>::getSection(DataRefImpl Symb) const {
-  const ELFDataRefImpl SymbolData = *reinterpret_cast<ELFDataRefImpl *>(&Symb);
-  const Elf_Shdr *sec = getSection(SymbolData.SymbolTableSectionIndex);
+  const Elf_Shdr *sec = getSection(Symb.d.b);
   if (sec->sh_type != ELF::SHT_SYMTAB)
     // FIXME: Proper error handling.
     report_fatal_error("Invalid symbol table section!");

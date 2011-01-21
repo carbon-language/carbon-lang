@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include <cstring>
 
 namespace llvm {
 
@@ -25,7 +26,19 @@ class StringRef;
 namespace object {
 
 class ObjectFile;
-typedef uint64_t DataRefImpl;
+
+union DataRefImpl {
+  struct {
+    uint32_t a, b;
+  } d;
+  intptr_t p;
+};
+
+static bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
+  // Check bitwise identical. This is the only legal way to compare a union w/o
+  // knowing which member is in use.
+  return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
+}
 
 /// SymbolRef - This is a value type class that represents a single symbol in
 /// the list of symbols in the object file.
