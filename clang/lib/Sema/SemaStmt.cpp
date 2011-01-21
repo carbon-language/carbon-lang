@@ -1137,6 +1137,86 @@ const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
   return 0;
 }
 
+/// \brief Perform the initialization of a return value.
+///
+/// This routine implements C++0x [class.copy]p33, which attempts to treat
+/// returned lvalues as rvalues in certain cases (to prefer move construction),
+/// then falls back to treating them as lvalues if that failed.
+static ExprResult initializeReturnValue(Sema &S,
+                                        const VarDecl *NRVOCandidate,
+                                        SourceLocation ReturnLoc,
+                                        QualType ResultType,
+                                        Expr *RetValExp) {
+  // C++0x [class.copy]p33:
+  //   When the criteria for elision of a copy operation are met or would 
+  //   be met save for the fact that the source object is a function 
+  //   parameter, and the object to be copied is designated by an lvalue, 
+  //   overload resolution to select the constructor for the copy is first
+  //   performed as if the object were designated by an rvalue.
+  InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc, 
+                                                                 ResultType,
+                                                           NRVOCandidate != 0);
+  
+  ExprResult Res = ExprError();
+  if (NRVOCandidate || S.getCopyElisionCandidate(ResultType, RetValExp, true)) {
+    ImplicitCastExpr AsRvalue(ImplicitCastExpr::OnStack, 
+                              RetValExp->getType(), CK_LValueToRValue,
+                              RetValExp, VK_XValue);
+    
+    Expr *InitExpr = &AsRvalue;
+    InitializationKind Kind 
+    = InitializationKind::CreateCopy(RetValExp->getLocStart(),
+                                     RetValExp->getLocStart());
+    InitializationSequence Seq(S, Entity, Kind, &InitExpr, 1);
+    
+    //   [...] If overload resolution fails, or if the type of the first 
+    //   parameter of the selected constructor is not an rvalue reference
+    //   to the object’s type (possibly cv-qualified), overload resolution 
+    //   is performed again, considering the object as an lvalue.
+    if (Seq.getKind() != InitializationSequence::FailedSequence) {
+      for (InitializationSequence::step_iterator Step = Seq.step_begin(),
+           StepEnd = Seq.step_end();
+           Step != StepEnd; ++Step) {
+        if (Step->Kind 
+            != InitializationSequence::SK_ConstructorInitialization)
+          continue;
+        
+        CXXConstructorDecl *Constructor 
+        = cast<CXXConstructorDecl>(Step->Function.Function);
+        
+        const RValueReferenceType *RRefType
+        = Constructor->getParamDecl(0)->getType()
+        ->getAs<RValueReferenceType>();
+        
+        // If we don't meet the criteria, break out now.
+        if (!RRefType || 
+            !S.Context.hasSameUnqualifiedType(RRefType->getPointeeType(),
+                                              ResultType))
+          break;
+        
+        // Promote "AsRvalue" to the heap, since we now need this
+        // expression node to persist.
+        RetValExp = ImplicitCastExpr::Create(S.Context,
+                                             RetValExp->getType(),
+                                             CK_LValueToRValue,
+                                             RetValExp, 0, VK_XValue);
+        
+        // Complete type-checking the initialization of the return type
+        // using the constructor we found.
+        Res = Seq.Perform(S, Entity, Kind, MultiExprArg(&RetValExp, 1));
+      }
+    }
+  }
+  
+  // Either we didn't meet the criteria for treating an lvalue as an rvalue,
+  // above, or overload resolution failed. Either way, we need to try 
+  // (again) now with the return value expression as written.
+  if (Res.isInvalid())
+    Res = S.PerformCopyInitialization(Entity, SourceLocation(), RetValExp);
+  
+  return Res;
+}
+
 /// ActOnBlockReturnStmt - Utility routine to figure out block's return type.
 ///
 StmtResult
@@ -1193,12 +1273,8 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       // In C++ the return statement is handled via a copy initialization.
       // the C version of which boils down to CheckSingleAssignmentConstraints.
       NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
-      ExprResult Res = PerformCopyInitialization(
-                               InitializedEntity::InitializeResult(ReturnLoc, 
-                                                                   FnRetType,
-                                                            NRVOCandidate != 0),
-                               SourceLocation(),
-                               Owned(RetValExp));
+      ExprResult Res = initializeReturnValue(*this, NRVOCandidate, ReturnLoc,
+                                             FnRetType, RetValExp);
       if (Res.isInvalid()) {
         // FIXME: Cleanup temporaries here, anyway?
         return StmtError();
@@ -1291,12 +1367,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       // In C++ the return statement is handled via a copy initialization.
       // the C version of which boils down to CheckSingleAssignmentConstraints.
       NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
-      ExprResult Res = PerformCopyInitialization(
-                               InitializedEntity::InitializeResult(ReturnLoc, 
-                                                                   FnRetType,
-                                                            NRVOCandidate != 0),
-                               SourceLocation(),
-                               Owned(RetValExp));
+      ExprResult Res = initializeReturnValue(*this, NRVOCandidate, ReturnLoc,
+                                             FnRetType, RetValExp);
       if (Res.isInvalid()) {
         // FIXME: Cleanup temporaries here, anyway?
         return StmtError();

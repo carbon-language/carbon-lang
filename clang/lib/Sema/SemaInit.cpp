@@ -3363,20 +3363,20 @@ static ExprResult CopyObject(Sema &S,
   if (S.RequireCompleteType(Loc, T, S.PDiag(diag::err_temp_copy_incomplete)))
     return move(CurInit);
 
-  // Perform overload resolution using the class's copy constructors.
+  // Perform overload resolution using the class's copy/move constructors.
   DeclContext::lookup_iterator Con, ConEnd;
   OverloadCandidateSet CandidateSet(Loc);
   for (llvm::tie(Con, ConEnd) = S.LookupConstructors(Class);
        Con != ConEnd; ++Con) {
-    // Only consider copy constructors and constructor templates. Per
+    // Only consider copy/move constructors and constructor templates. Per
     // C++0x [dcl.init]p16, second bullet to class types, this
     // initialization is direct-initialization.
     CXXConstructorDecl *Constructor = 0;
 
     if ((Constructor = dyn_cast<CXXConstructorDecl>(*Con))) {
-      // Handle copy constructors, only.
+      // Handle copy/moveconstructors, only.
       if (!Constructor || Constructor->isInvalidDecl() ||
-          !Constructor->isCopyConstructor() ||
+          !Constructor->isCopyOrMoveConstructor() ||
           !Constructor->isConvertingConstructor(/*AllowExplicit=*/true))
         continue;
 

@@ -1473,6 +1473,29 @@ public:
     return isCopyConstructor(TypeQuals);
   }
 
+  /// \brief Determine whether this constructor is a move constructor
+  /// (C++0x [class.copy]p3), which can be used to move values of the class.
+  ///
+  /// \param TypeQuals If this constructor is a move constructor, will be set
+  /// to the type qualifiers on the referent of the first parameter's type.
+  bool isMoveConstructor(unsigned &TypeQuals) const;
+
+  /// \brief Determine whether this constructor is a move constructor
+  /// (C++0x [class.copy]p3), which can be used to move values of the class.
+  bool isMoveConstructor() const;
+  
+  /// \brief Determine whether this is a copy or move constructor.
+  ///
+  /// \param TypeQuals Will be set to the type qualifiers on the reference
+  /// parameter, if in fact this is a copy or move constructor.
+  bool isCopyOrMoveConstructor(unsigned &TypeQuals) const;
+
+  /// \brief Determine whether this a copy or move constructor.
+  bool isCopyOrMoveConstructor() const {
+    unsigned Quals;
+    return isCopyOrMoveConstructor(Quals);
+  }
+
   /// isConvertingConstructor - Whether this constructor is a
   /// converting constructor (C++ [class.conv.ctor]), which can be
   /// used for user-defined conversions.

@@ -1116,25 +1116,40 @@ bool CXXConstructorDecl::isDefaultConstructor() const {
 
 bool
 CXXConstructorDecl::isCopyConstructor(unsigned &TypeQuals) const {
+  return isCopyOrMoveConstructor(TypeQuals) &&
+         getParamDecl(0)->getType()->isLValueReferenceType();
+}
+
+bool CXXConstructorDecl::isMoveConstructor(unsigned &TypeQuals) const {
+  return isCopyOrMoveConstructor(TypeQuals) &&
+    getParamDecl(0)->getType()->isRValueReferenceType();
+}
+
+/// \brief Determine whether this is a copy or move constructor.
+bool CXXConstructorDecl::isCopyOrMoveConstructor(unsigned &TypeQuals) const {
   // C++ [class.copy]p2:
   //   A non-template constructor for class X is a copy constructor
   //   if its first parameter is of type X&, const X&, volatile X& or
   //   const volatile X&, and either there are no other parameters
   //   or else all other parameters have default arguments (8.3.6).
+  // C++0x [class.copy]p3:
+  //   A non-template constructor for class X is a move constructor if its
+  //   first parameter is of type X&&, const X&&, volatile X&&, or 
+  //   const volatile X&&, and either there are no other parameters or else 
+  //   all other parameters have default arguments.
   if ((getNumParams() < 1) ||
       (getNumParams() > 1 && !getParamDecl(1)->hasDefaultArg()) ||
       (getPrimaryTemplate() != 0) ||
       (getDescribedFunctionTemplate() != 0))
     return false;
-
+  
   const ParmVarDecl *Param = getParamDecl(0);
-
-  // Do we have a reference type? Rvalue references don't count.
-  const LValueReferenceType *ParamRefType =
-    Param->getType()->getAs<LValueReferenceType>();
+  
+  // Do we have a reference type? 
+  const ReferenceType *ParamRefType = Param->getType()->getAs<ReferenceType>();
   if (!ParamRefType)
     return false;
-
+  
   // Is it a reference to our class type?
   ASTContext &Context = getASTContext();
   
@@ -1144,12 +1159,12 @@ CXXConstructorDecl::isCopyConstructor(unsigned &TypeQuals) const {
     = Context.getCanonicalType(Context.getTagDeclType(getParent()));
   if (PointeeType.getUnqualifiedType() != ClassTy)
     return false;
-
+  
   // FIXME: other qualifiers?
-
-  // We have a copy constructor.
+  
+  // We have a copy or move constructor.
   TypeQuals = PointeeType.getCVRQualifiers();
-  return true;
+  return true;  
 }
 
 bool CXXConstructorDecl::isConvertingConstructor(bool AllowExplicit) const {

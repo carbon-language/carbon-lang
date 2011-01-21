@@ -59,7 +59,7 @@ unique_ptr<T> make_unique_ptr(Args &&...args) {
 
 template<typename T> void accept_unique_ptr(unique_ptr<T>); // expected-note{{passing argument to parameter here}}
 
-void test_unique_ptr() {
+unique_ptr<int> test_unique_ptr() {
   // Simple construction
   unique_ptr<int> p;
   unique_ptr<int> p1(new int);
@@ -85,4 +85,6 @@ void test_unique_ptr() {
 
   // Implicit copies (failures);
   accept_unique_ptr(p); // expected-error{{call to deleted constructor of 'unique_ptr<int>'}}
+
+  return p;
 }
