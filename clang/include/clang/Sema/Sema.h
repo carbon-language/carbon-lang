@@ -1025,6 +1025,11 @@ public:
   bool DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType);
 
 
+  ExprResult PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
+                                             const VarDecl *NRVOCandidate,
+                                             QualType ResultType,
+                                             Expr *Value);
+  
   ExprResult PerformCopyInitialization(const InitializedEntity &Entity,
                                        SourceLocation EqualLoc,
                                        ExprResult Init);
