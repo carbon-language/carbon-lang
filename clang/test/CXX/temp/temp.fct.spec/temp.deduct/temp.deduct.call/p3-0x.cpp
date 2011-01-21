@@ -22,3 +22,25 @@ void test_f0() {
   X<Y> xy1 = f0(xvalue<Y>());
   X<Y&> xy2 = f0(lvalue<Y>());
 }
+
+template<typename T> X<T> f1(const T&&); // expected-note{{candidate function [with T = int] not viable: no known conversion from 'int' to 'int const &&' for 1st argument}} \
+// expected-note{{candidate function [with T = Y] not viable: no known conversion from 'Y' to 'Y const &&' for 1st argument}}
+
+void test_f1() {
+  X<int> xi0 = f1(prvalue<int>());
+  X<int> xi1 = f1(xvalue<int>());
+  f1(lvalue<int>()); // expected-error{{no matching function for call to 'f1'}}
+  X<Y> xy0 = f1(prvalue<Y>());
+  X<Y> xy1 = f1(xvalue<Y>());
+  f1(lvalue<Y>()); // expected-error{{no matching function for call to 'f1'}}
+}
+
+namespace std_example {
+  template <class T> int f(T&&); 
+  template <class T> int g(const T&&); // expected-note{{candidate function [with T = int] not viable: no known conversion from 'int' to 'int const &&' for 1st argument}}
+
+  int i;
+  int n1 = f(i);
+  int n2 = f(0);
+  int n3 = g(i); // expected-error{{no matching function for call to 'g'}}
+}
