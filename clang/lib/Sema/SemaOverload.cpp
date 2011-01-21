@@ -2434,9 +2434,9 @@ CompareStandardConversionSequences(Sema &S,
     //      implicit object parameter of a non-static member function declared
     //      without a ref-qualifier, and S1 binds an rvalue reference to an
     //      rvalue and S2 binds an lvalue reference.
-    // FIXME: We don't know if we're dealing with the implicit object parameter,
-    // or if the member function in this case has a ref qualifier.
-    // (Of course, we don't have ref qualifiers yet.)
+    // FIXME: Rvalue references. We don't know if we're dealing with the 
+    // implicit object parameter, or if the member function in this case has a 
+    // ref qualifier. (Of course, we don't have ref qualifiers yet.)
     if (SCS1.RRefBinding != SCS2.RRefBinding)
       return SCS1.RRefBinding ? ImplicitConversionSequence::Better
                               : ImplicitConversionSequence::Worse;
