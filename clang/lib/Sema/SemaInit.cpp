@@ -2363,11 +2363,6 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     // functions.
     CXXRecordDecl *T2RecordDecl = cast<CXXRecordDecl>(T2RecordType->getDecl());
 
-    // Determine the type we are converting to. If we are allowed to
-    // convert to an rvalue, take the type that the destination type
-    // refers to.
-    QualType ToType = AllowRValues? cv1T1 : DestType;
-
     const UnresolvedSetImpl *Conversions
       = T2RecordDecl->getVisibleConversionFunctions();
     for (UnresolvedSetImpl::const_iterator I = Conversions->begin(),
@@ -2395,10 +2390,10 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
         if (ConvTemplate)
           S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(),
                                            ActingDC, Initializer,
-                                           ToType, CandidateSet);
+                                           DestType, CandidateSet);
         else
           S.AddConversionCandidate(Conv, I.getPair(), ActingDC,
-                                   Initializer, ToType, CandidateSet);
+                                   Initializer, DestType, CandidateSet);
       }
     }
   }

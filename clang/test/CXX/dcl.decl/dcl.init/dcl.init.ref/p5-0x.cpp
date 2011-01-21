@@ -22,7 +22,6 @@ struct ConvertsTo {
 
 void test_rvalue_refs() {
   // If the initializer expression...
-
   //   - is an xvalue, class prvalue, array prvalue or function lvalue
   //     and "cv1 T1" is reference-compatible with "cv2 T2", or
 
@@ -54,9 +53,9 @@ void test_rvalue_refs() {
   // class prvalue
   Base&& base6 = ConvertsTo<Base>();
   Base&& base7 = ConvertsTo<Derived>();
-  
-  // FIXME: function lvalue
-  //  int (&&function1)(int) = ConvertsTo<int(&)(int)>();
+
+  // function lvalue
+  int (&&function1)(int) = ConvertsTo<int(&)(int)>();
 }
 
 class NonCopyable {
