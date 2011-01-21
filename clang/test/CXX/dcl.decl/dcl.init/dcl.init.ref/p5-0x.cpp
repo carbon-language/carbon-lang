@@ -89,7 +89,23 @@ void test_direct_binding() {
   const NonCopyable &nc11 = ConvertsTo<NonCopyableDerived&&>();
 }
 
-namespace std_example {
+namespace std_example_1 {
+  double d = 2.0; 
+  double& rd = d; 
+  const double& rcd = d;
+  struct A { }; 
+  struct B : A { 
+    operator int&();
+  } b;
+  A& ra = b; 
+  const A& rca = b; 
+  int& ir = B();
+}
+
+namespace std_example_2 {
+  double& rd2 = 2.0; // expected-error{{non-const lvalue reference to type 'double' cannot bind to a temporary of type 'double'}}
+  int i = 2; 
+  double& rd3 = i; // expected-error{{non-const lvalue reference to type 'double' cannot bind to a value of unrelated type 'int'}}
   struct A { }; 
   struct B : A { } b; 
   extern B f(); 
@@ -100,8 +116,17 @@ namespace std_example {
     operator int&(); // expected-note{{candidate function}}
   } x;
   const A& r = x;
-  int i;
   int&& rri = static_cast<int&&>(i);
   B&& rrb = x;
-  int&& rri2 = X(); // expected-error{{no viable conversion from 'std_example::X' to 'int'}}
+  int&& rri2 = X(); // expected-error{{no viable conversion from 'std_example_2::X' to 'int'}}
+
+  const double& rcd2 = 2;
+  double&& rrd = 2;
+  const volatile int cvi = 1; 
+  const int& r2 = cvi; // expected-error{{binding of reference to type 'const int' to a value of type 'const volatile int' drops qualifiers}}
+
+  double d;
+  double&& rrd2 = d; // expected-error{{rvalue reference to type 'double' cannot bind to lvalue of type 'double'}}
+  double&& rrd3 = i;
 }
+
