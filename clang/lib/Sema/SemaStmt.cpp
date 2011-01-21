@@ -1089,40 +1089,49 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
   return Owned(new (Context) BreakStmt(BreakLoc));
 }
 
-/// \brief Determine whether a return statement is a candidate for the named
-/// return value optimization (C++0x 12.8p34, bullet 1).
+/// \brief Determine whether the given expression is a candidate for 
+/// copy elision in either a return statement or a throw expression.
 ///
-/// \param Ctx The context in which the return expression and type occur.
+/// \param ReturnType If we're determining the copy elision candidate for
+/// a return statement, this is the return type of the function. If we're
+/// determining the copy elision candidate for a throw expression, this will
+/// be a NULL type.
 ///
-/// \param RetType The return type of the function or block.
+/// \param E The expression being returned from the function or block, or
+/// being thrown.
 ///
-/// \param RetExpr The expression being returned from the function or block.
+/// \param AllowFunctionParameter
 ///
 /// \returns The NRVO candidate variable, if the return statement may use the
 /// NRVO, or NULL if there is no such candidate.
-static const VarDecl *getNRVOCandidate(ASTContext &Ctx, QualType RetType,
-                                       Expr *RetExpr) {
-  QualType ExprType = RetExpr->getType();
+const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
+                                             Expr *E,
+                                             bool AllowFunctionParameter) {
+  QualType ExprType = E->getType();
   // - in a return statement in a function with ...
   // ... a class return type ...
-  if (!RetType->isRecordType())
-    return 0;
-  // ... the same cv-unqualified type as the function return type ...
-  if (!Ctx.hasSameUnqualifiedType(RetType, ExprType))
-    return 0;
-  // ... the expression is the name of a non-volatile automatic object ...
-  // We ignore parentheses here.
-  // FIXME: Is this compliant? (Everyone else does it)
-  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(RetExpr->IgnoreParens());
+  if (!ReturnType.isNull()) {
+    if (!ReturnType->isRecordType())
+      return 0;
+    // ... the same cv-unqualified type as the function return type ...
+    if (!Context.hasSameUnqualifiedType(ReturnType, ExprType))
+      return 0;
+  }
+  
+  // ... the expression is the name of a non-volatile automatic object 
+  // (other than a function or catch-clause parameter)) ...
+  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E->IgnoreParens());
   if (!DR)
     return 0;
   const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
   if (!VD)
     return 0;
   
-  if (VD->getKind() == Decl::Var && VD->hasLocalStorage() && 
+  if (VD->hasLocalStorage() && !VD->isExceptionVariable() &&
       !VD->getType()->isReferenceType() && !VD->hasAttr<BlocksAttr>() &&
-      !VD->getType().isVolatileQualified())
+      !VD->getType().isVolatileQualified() &&
+      (VD->getKind() == Decl::Var ||
+       AllowFunctionParameter && VD->getKind() == Decl::ParmVar))
     return VD;
   
   return 0;
@@ -1183,7 +1192,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
       // In C++ the return statement is handled via a copy initialization.
       // the C version of which boils down to CheckSingleAssignmentConstraints.
-      NRVOCandidate = getNRVOCandidate(Context, FnRetType, RetValExp);
+      NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
       ExprResult Res = PerformCopyInitialization(
                                InitializedEntity::InitializeResult(ReturnLoc, 
                                                                    FnRetType,
@@ -1281,7 +1290,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
       // In C++ the return statement is handled via a copy initialization.
       // the C version of which boils down to CheckSingleAssignmentConstraints.
-      NRVOCandidate = getNRVOCandidate(Context, FnRetType, RetValExp);
+      NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
       ExprResult Res = PerformCopyInitialization(
                                InitializedEntity::InitializeResult(ReturnLoc, 
                                                                    FnRetType,

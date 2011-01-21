@@ -1648,6 +1648,9 @@ public:
   StmtResult ActOnContinueStmt(SourceLocation ContinueLoc, Scope *CurScope);
   StmtResult ActOnBreakStmt(SourceLocation GotoLoc, Scope *CurScope);
 
+  const VarDecl *getCopyElisionCandidate(QualType ReturnType, Expr *E,
+                                         bool AllowFunctionParameters);
+  
   StmtResult ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp);
   StmtResult ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp);
 

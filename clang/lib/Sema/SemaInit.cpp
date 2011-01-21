@@ -3317,7 +3317,7 @@ static ExprResult CopyObject(Sema &S,
   if (!Class)
     return move(CurInit);
 
-  // C++0x [class.copy]p34:
+  // C++0x [class.copy]p32:
   //   When certain criteria are met, an implementation is allowed to
   //   omit the copy/move construction of a class object, even if the
   //   copy/move constructor and/or destructor for the object have

@@ -517,7 +517,7 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
 
   // Initialize the exception result.  This implicitly weeds out
   // abstract types or types with inaccessible copy constructors.
-  // FIXME: Determine whether we can elide this copy per C++0x [class.copy]p34.
+  // FIXME: Determine whether we can elide this copy per C++0x [class.copy]p32.
   InitializedEntity Entity =
     InitializedEntity::InitializeException(ThrowLoc, E->getType(),
                                            /*NRVO=*/false);
