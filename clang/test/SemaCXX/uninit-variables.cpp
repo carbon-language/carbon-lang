@@ -33,7 +33,7 @@ unsigned test3_b() {
   return x; // no-warning
 }
 unsigned test3_c() {
-  unsigned x ; // expected-warning{{use of uninitialized variable 'x'}}
+  unsigned x ; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   const bool flag = false;
   if (flag && (x = test3_aux()) == 0) {
     x = 1;

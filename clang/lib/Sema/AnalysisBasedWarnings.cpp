@@ -421,12 +421,19 @@ public:
 
       // Suggest possible initialization (if any).
       const char *initialization = 0;
-      QualType vdTy = vd->getType();
+      QualType vdTy = vd->getType().getCanonicalType();
       
       if (vdTy->getAs<ObjCObjectPointerType>()) {
-        initialization = " = nil";
+        // Check if 'nil' is defined.
+        if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
+          initialization = " = nil";
+        else
+          initialization = " = 0";
       }
-      else if (vdTy->getAs<PointerType>()) {
+      else if (vdTy->isRealFloatingType()) {
+        initialization = " = 0.0";
+      }
+      else if (vdTy->isScalarType()) {
         initialization = " = 0";
       }
       

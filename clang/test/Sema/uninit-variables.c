@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -Wuninitialized-experimental -fsyntax-only %s -verify
 
 int test1() {
-  int x; // expected-warning{{use of uninitialized variable 'x'}}
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   return x; // expected-note{{variable 'x' is possibly uninitialized when used here}}
 }
 
@@ -17,25 +17,25 @@ int test3() {
 }
 
 int test4() {
-  int x; // expected-warning{{use of uninitialized variable 'x'}}
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   ++x; // expected-note{{variable 'x' is possibly uninitialized when used here}}
   return x; 
 }
 
 int test5() {
-  int x, y; // expected-warning{{use of uninitialized variable 'y'}}
+  int x, y; // expected-warning{{use of uninitialized variable 'y'}} expected-note{{add initialization to silence this warning}}
   x = y; // expected-note{{variable 'y' is possibly uninitialized when used here}}
   return x;
 }
 
 int test6() {
-  int x; // expected-warning{{use of uninitialized variable 'x'}}
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   x += 2; // expected-note{{variable 'x' is possibly uninitialized when used here}}
   return x;
 }
 
 int test7(int y) {
-  int x; // expected-warning{{use of uninitialized variable 'x'}}
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   if (y)
     x = 1;
   return x;  // expected-note{{variable 'x' is possibly uninitialized when used here}}
@@ -51,7 +51,7 @@ int test8(int y) {
 }
 
 int test9(int n) {
-  int x; // expected-warning{{use of uninitialized variable 'x'}}
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   for (unsigned i = 0 ; i < n; ++i) {
     if (i == n - 1)
       break;
@@ -61,7 +61,7 @@ int test9(int n) {
 }
 
 int test10(unsigned n) {
-  int x; // expected-warning{{use of uninitialized variable 'x'}}
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   for (unsigned i = 0 ; i < n; ++i) {
     x = 1;
   }
@@ -69,7 +69,7 @@ int test10(unsigned n) {
 }
 
 int test11(unsigned n) {
-  int x; // expected-warning{{use of uninitialized variable 'x'}}
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   for (unsigned i = 0 ; i <= n; ++i) {
     x = 1;
   }
@@ -77,7 +77,7 @@ int test11(unsigned n) {
 }
 
 void test12(unsigned n) {
-  for (unsigned i ; n ; ++i) ; // expected-warning{{use of uninitialized variable 'i'}} expected-note{{variable 'i' is possibly uninitialized when used here}}}
+  for (unsigned i ; n ; ++i) ; // expected-warning{{use of uninitialized variable 'i'}} expected-note{{variable 'i' is possibly uninitialized when used here}}} expected-note{{add initialization to silence this warning}}
 }
 
 int test13() {
@@ -92,7 +92,7 @@ void test14() {
 }
 
 void test15() {
-  int x = x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{variable 'x' is possibly uninitialized when used here}}
+  int x = x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{variable 'x' is possibly uninitialized when used here}} expected-note{{add initialization to silence this warning}}
 }
 
 // Don't warn in the following example; shows dataflow confluence.
@@ -130,14 +130,14 @@ int test19() {
 }
 
 int test20() {
-  int z; // expected-warning{{use of uninitialized variable 'z'}}
+  int z; // expected-warning{{use of uninitialized variable 'z'}} expected-note{{add initialization to silence this warning}}
   if ((test19_aux1() + test19_aux2() && test19_aux1()) || test19_aux3(&z))
     return z; //  expected-note{{variable 'z' is possibly uninitialized when used here}}
   return 0;
 }
 
 int test21(int x, int y) {
-  int z; // expected-warning{{use of uninitialized variable 'z'}}  
+  int z; // expected-warning{{use of uninitialized variable 'z'}} expected-note{{add initialization to silence this warning}}
   if ((x && y) || test19_aux3(&z) || test19_aux2())
     return z; // expected-note{{variable 'z' is possibly uninitialized when used here}}
   return 0;
@@ -162,7 +162,7 @@ int test23() {
 // conditionals.  This possibly can be handled by making the CFG itself
 // represent such control-dependencies, but it is a niche case.
 int test24(int flag) {
-  unsigned val; // expected-warning{{use of uninitialized variable 'val'}}
+  unsigned val; // expected-warning{{use of uninitialized variable 'val'}} expected-note{{add initialization to silence this warning}}
   if (flag)
     val = 1;
   if (!flag)
@@ -170,3 +170,13 @@ int test24(int flag) {
   return val; //  expected-note{{variable 'val' is possibly uninitialized when used here}}
 }
 
+float test25() {
+  float x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
+  return x; // expected-note{{variable 'x' is possibly uninitialized when used here}}
+}
+
+typedef int MyInt;
+MyInt test26() {
+  MyInt x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
+  return x; // expected-note{{variable 'x' is possibly uninitialized when used here}}
+}
