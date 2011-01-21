@@ -1053,7 +1053,6 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     Function->setInvalidDecl();
 
   bool Redeclaration = false;
-  bool OverloadableAttrRequired = false;
   bool isExplicitSpecialization = false;
     
   LookupResult Previous(SemaRef, Function->getDeclName(), SourceLocation(),
@@ -1105,8 +1104,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   }
   
   SemaRef.CheckFunctionDeclaration(/*Scope*/ 0, Function, Previous,
-                                   isExplicitSpecialization, Redeclaration,
-                                   /*FIXME:*/OverloadableAttrRequired);
+                                   isExplicitSpecialization, Redeclaration);
 
   NamedDecl *PrincipalDecl = (TemplateParams
                               ? cast<NamedDecl>(FunctionTemplate)
@@ -1386,9 +1384,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   }
 
   bool Redeclaration = false;
-  bool OverloadableAttrRequired = false;
-  SemaRef.CheckFunctionDeclaration(0, Method, Previous, false, Redeclaration,
-                                   /*FIXME:*/OverloadableAttrRequired);
+  SemaRef.CheckFunctionDeclaration(0, Method, Previous, false, Redeclaration);
 
   if (D->isPure())
     SemaRef.CheckPureMethod(Method, SourceRange());

@@ -3844,13 +3844,15 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Finally, we know we have the right number of parameters, install them.
   NewFD->setParams(Params.data(), Params.size());
 
-  bool OverloadableAttrRequired=false; // FIXME: HACK!
+  // Process the non-inheritable attributes on this declaration.
+  ProcessDeclAttributes(S, NewFD, D,
+                        /*NonInheritable=*/true, /*Inheritable=*/false);
+
   if (!getLangOptions().CPlusPlus) {
     // Perform semantic checking on the function declaration.
     bool isExplctSpecialization=false;
     CheckFunctionDeclaration(S, NewFD, Previous, isExplctSpecialization,
-                             Redeclaration, 
-                             /*FIXME:*/OverloadableAttrRequired);
+                             Redeclaration);
     assert((NewFD->isInvalidDecl() || !Redeclaration ||
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
            "previous declaration set still overloaded");
@@ -3926,9 +3928,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
 
     // Perform semantic checking on the function declaration.
-    bool flag_c_overloaded=false; // unused for c++
     CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
-                             Redeclaration, /*FIXME:*/flag_c_overloaded);
+                             Redeclaration);
 
     assert((NewFD->isInvalidDecl() || !Redeclaration ||
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
@@ -4035,7 +4036,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // (for example to check for conflicts, etc).
   // FIXME: This needs to happen before we merge declarations. Then,
   // let attribute merging cope with attribute conflicts.
-  ProcessDeclAttributes(S, NewFD, D);
+  ProcessDeclAttributes(S, NewFD, D,
+                        /*NonInheritable=*/false, /*Inheritable=*/true);
 
   // attributes declared post-definition are currently ignored
   // FIXME: This should happen during attribute merging
@@ -4049,17 +4051,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   AddKnownFunctionAttributes(NewFD);
-
-  if (OverloadableAttrRequired && !NewFD->hasAttr<OverloadableAttr>()) {
-    // If a function name is overloadable in C, then every function
-    // with that name must be marked "overloadable".
-    Diag(NewFD->getLocation(), diag::err_attribute_overloadable_missing)
-      << Redeclaration << NewFD;
-    if (!Previous.empty())
-      Diag(Previous.getRepresentativeDecl()->getLocation(),
-           diag::note_attribute_overloadable_prev_overload);
-    NewFD->addAttr(::new (Context) OverloadableAttr(SourceLocation(), Context));
-  }
 
   if (NewFD->hasAttr<OverloadableAttr>() && 
       !NewFD->getType()->getAs<FunctionProtoType>()) {
@@ -4121,8 +4112,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                                     LookupResult &Previous,
                                     bool IsExplicitSpecialization,
-                                    bool &Redeclaration,
-                                    bool &OverloadableAttrRequired) {
+                                    bool &Redeclaration) {
   // If NewFD is already known erroneous, don't do any of this checking.
   if (NewFD->isInvalidDecl()) {
     // If this is a class member, mark the class invalid immediately.
@@ -4167,9 +4157,6 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
       Redeclaration = true;
       OldDecl = Previous.getFoundDecl();
     } else {
-      if (!getLangOptions().CPlusPlus)
-        OverloadableAttrRequired = true;
-
       switch (CheckOverload(S, NewFD, Previous, OldDecl,
                             /*NewIsUsingDecl*/ false)) {
       case Ovl_Match:
@@ -4183,6 +4170,23 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
       case Ovl_Overload:
         Redeclaration = false;
         break;
+      }
+
+      if (!getLangOptions().CPlusPlus && !NewFD->hasAttr<OverloadableAttr>()) {
+        // If a function name is overloadable in C, then every function
+        // with that name must be marked "overloadable".
+        Diag(NewFD->getLocation(), diag::err_attribute_overloadable_missing)
+          << Redeclaration << NewFD;
+        NamedDecl *OverloadedDecl = 0;
+        if (Redeclaration)
+          OverloadedDecl = OldDecl;
+        else if (!Previous.empty())
+          OverloadedDecl = Previous.getRepresentativeDecl();
+        if (OverloadedDecl)
+          Diag(OverloadedDecl->getLocation(),
+               diag::note_attribute_overloadable_prev_overload);
+        NewFD->addAttr(::new (Context) OverloadableAttr(SourceLocation(),
+                                                        Context));
       }
     }
 

@@ -727,8 +727,7 @@ public:
   void CheckFunctionDeclaration(Scope *S,
                                 FunctionDecl *NewFD, LookupResult &Previous,
                                 bool IsExplicitSpecialization,
-                                bool &Redeclaration,
-                                bool &OverloadableAttrRequired);
+                                bool &Redeclaration);
   void CheckMain(FunctionDecl *FD);
   Decl *ActOnParamDeclarator(Scope *S, Declarator &D);
   ParmVarDecl *BuildParmVarDeclForTypedef(DeclContext *DC,
