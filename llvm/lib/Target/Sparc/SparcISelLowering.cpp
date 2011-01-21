@@ -313,6 +313,30 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Keep stack frames 8-byte aligned.
   ArgsSize = (ArgsSize+7) & ~7;
 
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+
+  //Create local copies for byval args.
+  SmallVector<SDValue, 8> ByValArgs;
+  for (unsigned i = 0,  e = Outs.size(); i != e; ++i) {
+    ISD::ArgFlagsTy Flags = Outs[i].Flags;
+    if (!Flags.isByVal())
+      continue;
+
+    SDValue Arg = OutVals[i];
+    unsigned Size = Flags.getByValSize();
+    unsigned Align = Flags.getByValAlign();
+
+    int FI = MFI->CreateStackObject(Size, Align, false);
+    SDValue FIPtr = DAG.getFrameIndex(FI, getPointerTy());
+    SDValue SizeNode = DAG.getConstant(Size, MVT::i32);
+
+    Chain = DAG.getMemcpy(Chain, dl, FIPtr, Arg, SizeNode, Align,
+                          false,        //isVolatile,
+                          (Size <= 32), //AlwaysInline if size <= 32
+                          MachinePointerInfo(), MachinePointerInfo());
+    ByValArgs.push_back(FIPtr);
+  }
+
   Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(ArgsSize, true));
 
   SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
@@ -320,11 +344,17 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   const unsigned StackOffset = 92;
   // Walk the register/memloc assignments, inserting copies/loads.
-  for (unsigned i = 0, realArgIdx = 0, e = ArgLocs.size();
+  for (unsigned i = 0, realArgIdx = 0, byvalArgIdx = 0, e = ArgLocs.size();
        i != e;
        ++i, ++realArgIdx) {
     CCValAssign &VA = ArgLocs[i];
     SDValue Arg = OutVals[realArgIdx];
+
+    ISD::ArgFlagsTy Flags = Outs[realArgIdx].Flags;
+
+    //Use local copy if it is a byval arg.
+    if (Flags.isByVal())
+      Arg = ByValArgs[byvalArgIdx++];
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
