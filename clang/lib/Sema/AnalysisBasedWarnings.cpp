@@ -364,14 +364,62 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
 //===----------------------------------------------------------------------===//
 
 namespace {
+struct SLocSort {
+  bool operator()(const DeclRefExpr *a, const DeclRefExpr *b) {
+    SourceLocation aLoc = a->getLocStart();
+    SourceLocation bLoc = b->getLocStart();
+    return aLoc.getRawEncoding() < bLoc.getRawEncoding();
+  }
+};
+
 class UninitValsDiagReporter : public UninitVariablesHandler {
   Sema &S;
+  typedef llvm::SmallVector<const DeclRefExpr *, 2> UsesVec;
+  typedef llvm::DenseMap<const VarDecl *, UsesVec*> UsesMap;
+  UsesMap *uses;
+  
 public:
-  UninitValsDiagReporter(Sema &S) : S(S) {}
+  UninitValsDiagReporter(Sema &S) : S(S), uses(0) {}
+  ~UninitValsDiagReporter() { 
+    flushDiagnostics();
+  }
   
   void handleUseOfUninitVariable(const DeclRefExpr *dr, const VarDecl *vd) {
-    S.Diag(dr->getLocStart(), diag::warn_var_is_uninit)
-      << vd->getDeclName() << dr->getSourceRange();
+    if (!uses)
+      uses = new UsesMap();
+    
+    UsesVec *&vec = (*uses)[vd];
+    if (!vec)
+      vec = new UsesVec();
+    
+    vec->push_back(dr);    
+  }
+  
+  void flushDiagnostics() {
+    if (!uses)
+      return;
+
+    for (UsesMap::iterator i = uses->begin(), e = uses->end(); i != e; ++i) {
+      const VarDecl *vd = i->first;
+      UsesVec *vec = i->second;
+      
+      S.Diag(vd->getLocStart(), diag::warn_var_is_uninit)
+        << vd->getDeclName() << vd->getSourceRange();
+
+      // Sort the uses by their SourceLocations.  While not strictly
+      // guaranteed to produce them in line/column order, this will provide
+      // a stable ordering.
+      std::sort(vec->begin(), vec->end(), SLocSort());
+      
+      for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve; ++vi)
+      {
+        const DeclRefExpr *dr = *vi;
+        S.Diag(dr->getLocStart(), diag::note_var_is_uninit)
+          << vd->getDeclName() << dr->getSourceRange();
+      }
+      delete vec;
+    }
+    delete uses;
   }
 };
 }

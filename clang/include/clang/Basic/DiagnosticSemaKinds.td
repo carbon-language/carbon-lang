@@ -822,6 +822,8 @@ def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
   InGroup<DiagGroup<"uninitialized">>;
 def warn_var_is_uninit : Warning<"use of uninitialized variable %0">,
   InGroup<DiagGroup<"uninitialized-experimental">>, DefaultIgnore;
+def note_var_is_uninit : Note<
+  "variable %0 is possibly uninitialized when used here">;
 def err_init_incomplete_type : Error<"initialization of incomplete type %0">;
 
 def err_temp_copy_no_viable : Error<
