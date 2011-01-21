@@ -17,7 +17,7 @@ int f(int);
 
 template<typename T>
 struct ConvertsTo {
-  operator T(); // expected-note 2{{candidate function}}
+  operator T(); // expected-note 4{{candidate function}}
 };
 
 void test_rvalue_refs() {
@@ -130,3 +130,35 @@ namespace std_example_2 {
   double&& rrd3 = i;
 }
 
+namespace argument_passing {
+  void base_rvalue_ref(Base&&);
+  void int_rvalue_ref(int&&); // expected-note 2{{passing argument to parameter here}}
+  void array_rvalue_ref(int (&&)[5]);
+  void function_rvalue_ref(int (&&)(int));
+
+  void test() {
+    base_rvalue_ref(xvalue<Base>());
+    base_rvalue_ref(xvalue<Derived>());
+    int_rvalue_ref(xvalue<int>());
+    
+    base_rvalue_ref(prvalue<Base>());
+    base_rvalue_ref(prvalue<Derived>());
+    
+    array_rvalue_ref(HasArray().array);
+    
+    function_rvalue_ref(f);
+    
+    base_rvalue_ref(ConvertsTo<Base&&>());
+    base_rvalue_ref(ConvertsTo<Derived&&>());
+    int_rvalue_ref(ConvertsTo<int&&>());
+    
+    base_rvalue_ref(ConvertsTo<Base>());
+    base_rvalue_ref(ConvertsTo<Derived>());
+
+    function_rvalue_ref(ConvertsTo<int(&)(int)>());
+    
+    int_rvalue_ref(ConvertsTo<int&>()); // expected-error{{no viable conversion from 'ConvertsTo<int &>' to 'int'}}
+    int_rvalue_ref(ConvertsTo<float&>()); // expected-error{{no viable conversion from 'ConvertsTo<float &>' to 'int'}}
+  }
+
+}
