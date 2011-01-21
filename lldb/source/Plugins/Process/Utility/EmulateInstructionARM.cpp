@@ -39,7 +39,7 @@ using namespace lldb_private;
 #define COND_UNCOND 0xF
 
 
-#define MASK_CPSR_MODE_MASK	(0x0000001fu)
+#define MASK_CPSR_MODE_MASK     (0x0000001fu)
 #define MASK_CPSR_T         (1u << 5)
 #define MASK_CPSR_F         (1u << 6)
 #define MASK_CPSR_I         (1u << 7)
@@ -54,16 +54,16 @@ using namespace lldb_private;
 #define MASK_CPSR_N         (1u << 31)
 
 
-#define ARMv4	  (1u << 0)
+#define ARMv4     (1u << 0)
 #define ARMv4T    (1u << 1)
 #define ARMv5T    (1u << 2)
 #define ARMv5TE   (1u << 3)
 #define ARMv5TEJ  (1u << 4)
-#define ARMv6	  (1u << 5)
+#define ARMv6     (1u << 5)
 #define ARMv6K    (1u << 6)
 #define ARMv6T2   (1u << 7)
-#define ARMv7	  (1u << 8)
-#define ARMv8	  (1u << 8)
+#define ARMv7     (1u << 8)
+#define ARMv8     (1u << 8)
 #define ARMvAll   (0xffffffffu)
 
 typedef bool (*EmulateCallback) (EmulateInstructionARM *emulator);
