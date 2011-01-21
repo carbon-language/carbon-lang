@@ -105,7 +105,7 @@ CCKEXT_COMMON_FUNCTIONS := \
 	udivmoddi4 \
 	umoddi3
 
-CCKEXT_ARM_FUNCTIONS := $(CCKEXT_COMMON_FUNCTONS) \
+CCKEXT_ARM_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	adddf3 \
 	addsf3 \
 	aeabi_cdcmpeq \
