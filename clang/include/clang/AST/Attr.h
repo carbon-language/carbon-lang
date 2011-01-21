@@ -58,9 +58,10 @@ class Attr {
 private:
   SourceLocation Loc;
   unsigned AttrKind : 16;
-  bool Inherited : 1;
 
 protected:
+  bool Inherited : 1;
+
   virtual ~Attr();
   
   void* operator new(size_t bytes) throw() {
@@ -99,14 +100,27 @@ public:
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
 
-  bool isInherited() const { return Inherited; }
-  void setInherited(bool I) { Inherited = I; }
-
   // Clone this attribute.
   virtual Attr* clone(ASTContext &C) const = 0;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *) { return true; }
+};
+
+class InheritableAttr : public Attr {
+protected:
+  InheritableAttr(attr::Kind AK, SourceLocation L)
+    : Attr(AK, L) {}
+
+public:
+  bool isInherited() const { return Inherited; }
+  void setInherited(bool I) { Inherited = I; }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() <= attr::LAST_INHERITABLE;
+  }
+  static bool classof(const InheritableAttr *) { return true; }
 };
 
 #include "clang/AST/Attrs.inc"

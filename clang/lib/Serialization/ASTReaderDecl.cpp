@@ -1253,12 +1253,10 @@ void ASTReader::ReadAttributes(PerFileData &F, AttrVec &Attrs,
     Attr *New = 0;
     attr::Kind Kind = (attr::Kind)Record[Idx++];
     SourceLocation Loc = ReadSourceLocation(F, Record, Idx);
-    bool isInherited = Record[Idx++];
 
 #include "clang/Serialization/AttrPCHRead.inc"
 
     assert(New && "Unable to decode attribute?");
-    New->setInherited(isInherited);
     Attrs.push_back(New);
   }
 }

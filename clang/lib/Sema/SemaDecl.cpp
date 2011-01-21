@@ -1019,11 +1019,11 @@ static void MergeDeclAttributes(Decl *New, Decl *Old, ASTContext &C) {
   // we process them.
   if (!New->hasAttrs())
     New->setAttrs(AttrVec());
-  for (Decl::attr_iterator i = Old->attr_begin(), e = Old->attr_end(); i != e;
-       ++i) {
-    // FIXME: Make this more general than just checking for Overloadable.
-    if (!DeclHasAttr(New, *i) && (*i)->getKind() != attr::Overloadable) {
-      Attr *NewAttr = (*i)->clone(C);
+  for (specific_attr_iterator<InheritableAttr>
+       i = Old->specific_attr_begin<InheritableAttr>(),
+       e = Old->specific_attr_end<InheritableAttr>(); i != e; ++i) {
+    if (!DeclHasAttr(New, *i)) {
+      InheritableAttr *NewAttr = cast<InheritableAttr>((*i)->clone(C));
       NewAttr->setInherited(true);
       New->addAttr(NewAttr);
     }

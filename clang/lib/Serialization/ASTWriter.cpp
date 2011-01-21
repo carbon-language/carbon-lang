@@ -2284,7 +2284,6 @@ void ASTWriter::WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record) {
     const Attr * A = *i;
     Record.push_back(A->getKind()); // FIXME: stable encoding, target attrs
     AddSourceLocation(A->getLocation(), Record);
-    Record.push_back(A->isInherited());
 
 #include "clang/Serialization/AttrPCHWrite.inc"
 
