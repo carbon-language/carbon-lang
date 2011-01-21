@@ -1130,8 +1130,8 @@ const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
   if (VD->hasLocalStorage() && !VD->isExceptionVariable() &&
       !VD->getType()->isReferenceType() && !VD->hasAttr<BlocksAttr>() &&
       !VD->getType().isVolatileQualified() &&
-      (VD->getKind() == Decl::Var ||
-       AllowFunctionParameter && VD->getKind() == Decl::ParmVar))
+      ((VD->getKind() == Decl::Var) ||
+       (AllowFunctionParameter && VD->getKind() == Decl::ParmVar)))
     return VD;
   
   return 0;
