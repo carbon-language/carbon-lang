@@ -2659,18 +2659,19 @@ static void HandleUuidAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
 
-/// ProcessDeclAttribute - Apply the specific attribute to the specified decl if
-/// the attribute applies to decls.  If the attribute is a type attribute, just
-/// silently ignore it if a GNU attribute. FIXME: Applying a C++0x attribute to
-/// the wrong thing is illegal (C++0x [dcl.attr.grammar]/4).
-static void ProcessDeclAttribute(Scope *scope, Decl *D,
-                                 const AttributeList &Attr, Sema &S) {
-  if (Attr.isInvalid())
-    return;
+static void ProcessNonInheritableDeclAttr(Scope *scope, Decl *D,
+                                          const AttributeList &Attr, Sema &S) {
+  switch (Attr.getKind()) {
+  case AttributeList::AT_device:      HandleDeviceAttr      (D, Attr, S); break;
+  case AttributeList::AT_host:        HandleHostAttr        (D, Attr, S); break;
+  case AttributeList::AT_overloadable:HandleOverloadableAttr(D, Attr, S); break;
+  default:
+    break;
+  }
+}
 
-  if (Attr.isDeclspecAttribute() && !isKnownDeclSpecAttr(Attr))
-    // FIXME: Try to deal with other __declspec attributes!
-    return;
+static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
+                                       const AttributeList &Attr, Sema &S) {
   switch (Attr.getKind()) {
   case AttributeList::AT_IBAction:            HandleIBAction(D, Attr, S); break;
     case AttributeList::AT_IBOutlet:          HandleIBOutlet(D, Attr, S); break;
@@ -2683,6 +2684,12 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_neon_polyvector_type:
     // Ignore these, these are type attributes, handled by
     // ProcessTypeAttributes.
+    break;
+  case AttributeList::AT_device:
+  case AttributeList::AT_host:
+  case AttributeList::AT_overloadable:
+    // Ignore, this is a non-inheritable attribute, handled
+    // by ProcessNonInheritableDeclAttr.
     break;
   case AttributeList::AT_alias:       HandleAliasAttr       (D, Attr, S); break;
   case AttributeList::AT_aligned:     HandleAlignedAttr     (D, Attr, S); break;
@@ -2699,7 +2706,6 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_constructor: HandleConstructorAttr (D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr  (D, Attr, S); break;
   case AttributeList::AT_destructor:  HandleDestructorAttr  (D, Attr, S); break;
-  case AttributeList::AT_device:      HandleDeviceAttr      (D, Attr, S); break;
   case AttributeList::AT_ext_vector_type:
     HandleExtVectorTypeAttr(scope, D, Attr, S);
     break;
@@ -2709,7 +2715,6 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_global:      HandleGlobalAttr      (D, Attr, S); break;
   case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr   (D, Attr, S); break;
   case AttributeList::AT_hiding:      HandleHidingAttr      (D, Attr, S); break;
-  case AttributeList::AT_host:        HandleHostAttr        (D, Attr, S); break;
   case AttributeList::AT_launch_bounds:
     HandleLaunchBoundsAttr(D, Attr, S);
     break;
@@ -2759,7 +2764,6 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_objc_exception:
     HandleObjCExceptionAttr(D, Attr, S);
     break;
-  case AttributeList::AT_overloadable:HandleOverloadableAttr(D, Attr, S); break;
   case AttributeList::AT_nsobject:    HandleObjCNSObject    (D, Attr, S); break;
   case AttributeList::AT_blocks:      HandleBlocksAttr      (D, Attr, S); break;
   case AttributeList::AT_sentinel:    HandleSentinelAttr    (D, Attr, S); break;
@@ -2795,18 +2799,40 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   }
 }
 
+/// ProcessDeclAttribute - Apply the specific attribute to the specified decl if
+/// the attribute applies to decls.  If the attribute is a type attribute, just
+/// silently ignore it if a GNU attribute. FIXME: Applying a C++0x attribute to
+/// the wrong thing is illegal (C++0x [dcl.attr.grammar]/4).
+static void ProcessDeclAttribute(Scope *scope, Decl *D,
+                                 const AttributeList &Attr, Sema &S,
+                                 bool NonInheritable, bool Inheritable) {
+  if (Attr.isInvalid())
+    return;
+
+  if (Attr.isDeclspecAttribute() && !isKnownDeclSpecAttr(Attr))
+    // FIXME: Try to deal with other __declspec attributes!
+    return;
+
+  if (NonInheritable)
+    ProcessNonInheritableDeclAttr(scope, D, Attr, S);
+
+  if (Inheritable)
+    ProcessInheritableDeclAttr(scope, D, Attr, S);
+}
+
 /// ProcessDeclAttributeList - Apply all the decl attributes in the specified
 /// attribute list to the specified decl, ignoring any type attributes.
 void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
-                                    const AttributeList *AttrList) {
+                                    const AttributeList *AttrList,
+                                    bool NonInheritable, bool Inheritable) {
   for (const AttributeList* l = AttrList; l; l = l->getNext()) {
-    ProcessDeclAttribute(S, D, *l, *this);
+    ProcessDeclAttribute(S, D, *l, *this, NonInheritable, Inheritable);
   }
 
   // GCC accepts
   // static int a9 __attribute__((weakref));
   // but that looks really pointless. We reject it.
-  if (D->hasAttr<WeakRefAttr>() && !D->hasAttr<AliasAttr>()) {
+  if (Inheritable && D->hasAttr<WeakRefAttr>() && !D->hasAttr<AliasAttr>()) {
     Diag(AttrList->getLoc(), diag::err_attribute_weakref_without_alias) <<
     dyn_cast<NamedDecl>(D)->getNameAsString();
     return;
@@ -2866,10 +2892,11 @@ void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
 /// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
 /// it, apply them to D.  This is a bit tricky because PD can have attributes
 /// specified in many different places, and we need to find and apply them all.
-void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
+void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
+                                 bool NonInheritable, bool Inheritable) {
   // It's valid to "forward-declare" #pragma weak, in which case we
   // have to do this.
-  if (!WeakUndeclaredIdentifiers.empty()) {
+  if (Inheritable && !WeakUndeclaredIdentifiers.empty()) {
     if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
       if (IdentifierInfo *Id = ND->getIdentifier()) {
         llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator I
@@ -2885,7 +2912,7 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
 
   // Apply decl attributes from the DeclSpec if present.
   if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes().getList())
-    ProcessDeclAttributeList(S, D, Attrs);
+    ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
 
   // Walk the declarator structure, applying decl attributes that were in a type
   // position to the decl itself.  This handles cases like:
@@ -2893,11 +2920,11 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
   // when X is a decl attribute.
   for (unsigned i = 0, e = PD.getNumTypeObjects(); i != e; ++i)
     if (const AttributeList *Attrs = PD.getTypeObject(i).getAttrs())
-      ProcessDeclAttributeList(S, D, Attrs);
+      ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
 
   // Finally, apply any attributes on the decl itself.
   if (const AttributeList *Attrs = PD.getAttributes())
-    ProcessDeclAttributeList(S, D, Attrs);
+    ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
 }
 
 /// PushParsingDeclaration - Enter a new "scope" of deprecation

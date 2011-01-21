@@ -1369,8 +1369,10 @@ public:
   // More parsing and symbol table subroutines.
 
   // Decl attributes - this routine is the top level dispatcher.
-  void ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD);
-  void ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AL);
+  void ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
+                           bool NonInheritable = true, bool Inheritable = true);
+  void ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AL,
+                           bool NonInheritable = true, bool Inheritable = true);
 
   bool CheckRegparmAttr(const AttributeList &attr, unsigned &value);
   bool CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC);
