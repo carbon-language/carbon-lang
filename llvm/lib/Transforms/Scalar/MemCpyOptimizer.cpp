@@ -690,8 +690,10 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   
   // Second, the length of the memcpy's must be the same, or the preceeding one
   // must be larger than the following one.
-  ConstantInt *C1 = dyn_cast<ConstantInt>(MDep->getLength());
-  if (!C1) return false;
+  ConstantInt *MDepLen = dyn_cast<ConstantInt>(MDep->getLength());
+  ConstantInt *MLen = dyn_cast<ConstantInt>(M->getLength());
+  if (!MDepLen || !MLen || MDepLen->getZExtValue() < MLen->getZExtValue())
+    return false;
   
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
