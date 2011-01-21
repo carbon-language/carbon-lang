@@ -25,7 +25,7 @@ ReserveR9("arm-reserve-r9", cl::Hidden,
           cl::desc("Reserve R9, making it unavailable as GPR"));
 
 static cl::opt<bool>
-UseMOVT("arm-darwin-use-movt", cl::init(false), cl::Hidden);
+DarwinUseMOVT("arm-darwin-use-movt", cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
 StrictAlign("arm-strict-align", cl::Hidden,
@@ -150,11 +150,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
     UseMovt = hasV6T2Ops();
   else {
     IsR9Reserved = ReserveR9 | (ARMArchVersion < V6);
-    if (UseMOVT && hasV6T2Ops()) {
-      unsigned Maj, Min, Rev;
-      TargetTriple.getDarwinNumber(Maj, Min, Rev);
-      UseMovt = Maj > 4;
-    }
+    UseMovt = DarwinUseMOVT && hasV6T2Ops();
   }
 
   if (!isThumb() || hasThumb2())

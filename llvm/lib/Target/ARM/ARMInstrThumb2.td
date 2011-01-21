@@ -1701,7 +1701,7 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm_hilo16:$imm), IIC_iMOVi,
   let Inst{7-0}   = imm{7-0};
 }
 
-def t2MOVi16_pic_ga : PseudoInst<(outs rGPR:$Rd),
+def t2MOVi16_ga_pcrel : PseudoInst<(outs rGPR:$Rd),
                                 (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
 
 let Constraints = "$src = $Rd" in {
@@ -1726,7 +1726,7 @@ def t2MOVTi16 : T2I<(outs rGPR:$Rd),
   let Inst{7-0}   = imm{7-0};
 }
 
-def t2MOVTi16_pic_ga : PseudoInst<(outs rGPR:$Rd),
+def t2MOVTi16_ga_pcrel : PseudoInst<(outs rGPR:$Rd),
                      (ins rGPR:$src, i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
 } // Constraints
 
@@ -3253,15 +3253,21 @@ def t2MOVi32imm : PseudoInst<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                             [(set rGPR:$dst, (i32 imm:$src))]>,
                             Requires<[IsThumb, HasV6T2]>;
 
-// Pseudo instruction that combines movw + movt + add pc.
+// Pseudo instruction that combines movw + movt + add pc (if pic).
 // It also makes it possible to rematerialize the instructions.
 // FIXME: Remove this when we can do generalized remat and when machine licm
 // can properly the instructions.
-let isReMaterializable = 1 in
-def t2MOV_pic_ga_add_pc : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr),
-                                     IIC_iMOVix2addpc,
+let isReMaterializable = 1 in {
+def t2MOV_ga_pcrel : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr),
+                                IIC_iMOVix2addpc,
                           [(set rGPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
                           Requires<[IsThumb2, UseMovt]>;
+
+def t2MOV_ga_dyn : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr),
+                              IIC_iMOVix2,
+                          [(set rGPR:$dst, (ARMWrapperDYN tglobaladdr:$addr))]>,
+                          Requires<[IsThumb2, UseMovt]>;
+}
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>,

@@ -832,42 +832,54 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       return true;
     }
 
-    case ARM::MOV_pic_ga_add_pc:
-    case ARM::MOV_pic_ga_ldr:
-    case ARM::t2MOV_pic_ga_add_pc: {
-      // Expand into movw + movw + add pc / ldr [pc]
+    case ARM::MOV_ga_dyn:
+    case ARM::MOV_ga_pcrel:
+    case ARM::MOV_ga_pcrel_ldr:
+    case ARM::t2MOV_ga_dyn:
+    case ARM::t2MOV_ga_pcrel: {
+      // Expand into movw + movw. Also "add pc" / ldr [pc] in PIC mode.
       unsigned LabelId = AFI->createPICLabelUId();
       unsigned DstReg = MI.getOperand(0).getReg();
       bool DstIsDead = MI.getOperand(0).isDead();
       const MachineOperand &MO1 = MI.getOperand(1);
       const GlobalValue *GV = MO1.getGlobal();
       unsigned TF = MO1.getTargetFlags();
-      bool isARM = Opcode != ARM::t2MOV_pic_ga_add_pc;
-      unsigned LO16Opc = isARM ? ARM::MOVi16_pic_ga : ARM::t2MOVi16_pic_ga;
-      unsigned HI16Opc = isARM ? ARM::MOVTi16_pic_ga : ARM::t2MOVTi16_pic_ga;
+      bool isARM = Opcode != ARM::t2MOV_ga_pcrel;
+      bool isPIC = (Opcode != ARM::MOV_ga_dyn && Opcode != ARM::t2MOV_ga_dyn);
+      unsigned LO16Opc = isARM ? ARM::MOVi16_ga_pcrel : ARM::t2MOVi16_ga_pcrel;
+      unsigned HI16Opc = isARM ? ARM::MOVTi16_ga_pcrel : ARM::t2MOVTi16_ga_pcrel;
+      unsigned LO16TF = isPIC
+        ? ARMII::MO_LO16_NONLAZY_PIC : ARMII::MO_LO16_NONLAZY;
+      unsigned HI16TF = isPIC
+        ? ARMII::MO_HI16_NONLAZY_PIC : ARMII::MO_HI16_NONLAZY;
       unsigned PICAddOpc = isARM
-        ? (Opcode == ARM::MOV_pic_ga_ldr ? ARM::PICLDR : ARM::PICADD)
+        ? (Opcode == ARM::MOV_ga_pcrel_ldr ? ARM::PICLDR : ARM::PICADD)
         : ARM::tPICADD;
       MachineInstrBuilder MIB1 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                          TII->get(LO16Opc), DstReg)
-        .addGlobalAddress(GV, MO1.getOffset(),
-                          TF | ARMII::MO_LO16_NONLAZY_PIC)
-        .addImm(LabelId);
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(HI16Opc), DstReg)
-        .addReg(DstReg)
-        .addGlobalAddress(GV, MO1.getOffset(),
-                          TF | ARMII::MO_HI16_NONLAZY_PIC)
+        .addGlobalAddress(GV, MO1.getOffset(), TF | LO16TF)
         .addImm(LabelId);
       MachineInstrBuilder MIB2 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                                         TII->get(HI16Opc), DstReg)
+        .addReg(DstReg)
+        .addGlobalAddress(GV, MO1.getOffset(), TF | HI16TF)
+        .addImm(LabelId);
+      if (!isPIC) {
+        TransferImpOps(MI, MIB1, MIB2);
+        MI.eraseFromParent();
+        return true;
+      }
+
+      MachineInstrBuilder MIB3 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                          TII->get(PICAddOpc))
         .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
         .addReg(DstReg).addImm(LabelId);
       if (isARM) {
-        AddDefaultPred(MIB2);
-        if (Opcode == ARM::MOV_pic_ga_ldr)
+        AddDefaultPred(MIB3);
+        if (Opcode == ARM::MOV_ga_pcrel_ldr)
           (*MIB2).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       }
-      TransferImpOps(MI, MIB1, MIB2);
+      TransferImpOps(MI, MIB1, MIB3);
       MI.eraseFromParent();
       return true;
     }
@@ -1219,9 +1231,10 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
 }
 
 bool ARMExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
-  TII = static_cast<const ARMBaseInstrInfo*>(MF.getTarget().getInstrInfo());
-  TRI = MF.getTarget().getRegisterInfo();
-  STI = &MF.getTarget().getSubtarget<ARMSubtarget>();
+  const TargetMachine &TM = MF.getTarget();
+  TII = static_cast<const ARMBaseInstrInfo*>(TM.getInstrInfo());
+  TRI = TM.getRegisterInfo();
+  STI = &TM.getSubtarget<ARMSubtarget>();
   AFI = MF.getInfo<ARMFunctionInfo>();
 
   bool Modified = false;

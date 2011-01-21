@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s -check-prefix=THUMB
 ; RUN: llc < %s -mtriple=arm-apple-darwin -relocation-model=pic -disable-fp-elim   | FileCheck %s -check-prefix=ARM
-; RUN: llc < %s -mtriple=armv7-apple-darwin10 -relocation-model=pic -disable-fp-elim -arm-darwin-use-movt | FileCheck %s -check-prefix=MOVT
+; RUN: llc < %s -mtriple=arm-apple-darwin -relocation-model=pic -disable-fp-elim -mattr=+v6t2 | FileCheck %s -check-prefix=MOVT
 ; rdar://7353541
 ; rdar://7354376
 ; rdar://8887598
@@ -24,8 +24,8 @@ entry:
 ; ARM: ldr r{{[0-9]+}}, [r{{[0-9]+}}]
 
 ; MOVT: t:
-; MOVT: movw [[REGISTER_2:r[0-9]+]], :lower16:(L_GV$non_lazy_ptr-(LPC0_0+4))
-; MOVT: movt [[REGISTER_2]], :upper16:(L_GV$non_lazy_ptr-(LPC0_0+4))
+; MOVT: movw [[REGISTER_2:r[0-9]+]], :lower16:(L_GV$non_lazy_ptr-(LPC0_0+8))
+; MOVT: movt [[REGISTER_2]], :upper16:(L_GV$non_lazy_ptr-(LPC0_0+8))
 ; MOVT: LPC0_0:
 ; MOVT: ldr r{{[0-9]+}}, [pc, [[REGISTER_2]]]
 ; MOVT: ldr r{{[0-9]+}}, [r{{[0-9]+}}]

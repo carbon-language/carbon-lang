@@ -69,8 +69,9 @@ def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
 
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
-def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
+def ARMWrapperDYN    : SDNode<"ARMISD::WrapperDYN",  SDTIntUnaryOp>;
 def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntUnaryOp>;
+def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
 
 def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeqStart,
                               [SDNPHasChain, SDNPOutGlue]>;
@@ -1943,8 +1944,8 @@ def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins i32imm_hilo16:$imm),
   let Inst{25} = 1;
 }
 
-def MOVi16_pic_ga : PseudoInst<(outs GPR:$Rd),
-                               (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
+def MOVi16_ga_pcrel : PseudoInst<(outs GPR:$Rd),
+                                (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
 
 let Constraints = "$src = $Rd" in {
 def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, i32imm_hilo16:$imm),
@@ -1963,8 +1964,8 @@ def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, i32imm_hilo16:$imm),
   let Inst{25} = 1;
 }
 
-def MOVTi16_pic_ga : PseudoInst<(outs GPR:$Rd),
-                     (ins GPR:$src, i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
+def MOVTi16_ga_pcrel : PseudoInst<(outs GPR:$Rd),
+                      (ins GPR:$src, i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
 
 } // Constraints
 
@@ -3412,18 +3413,23 @@ def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                            [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;
 
-// Pseudo instruction that combines movw + movt + add pc.
+// Pseudo instruction that combines movw + movt + add pc (if PIC).
 // It also makes it possible to rematerialize the instructions.
 // FIXME: Remove this when we can do generalized remat and when machine licm
 // can properly the instructions.
 let isReMaterializable = 1 in {
-def MOV_pic_ga_add_pc : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
-                                   IIC_iMOVix2addpc,
+def MOV_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+                              IIC_iMOVix2addpc,
                         [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
                         Requires<[IsARM, UseMovt]>;
 
+def MOV_ga_dyn : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+                             IIC_iMOVix2,
+                        [(set GPR:$dst, (ARMWrapperDYN tglobaladdr:$addr))]>,
+                        Requires<[IsARM, UseMovt]>;
+
 let AddedComplexity = 10 in
-def MOV_pic_ga_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+def MOV_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                                 IIC_iMOVix2ld,
                     [(set GPR:$dst, (load (ARMWrapperPIC tglobaladdr:$addr)))]>,
                     Requires<[IsARM, UseMovt]>;

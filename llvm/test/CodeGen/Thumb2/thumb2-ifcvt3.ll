@@ -23,7 +23,6 @@ bb52:                                             ; preds = %newFuncRoot
 ; CHECK: movne
 ; CHECK: moveq
 ; CHECK: pop
-; CHECK-NEXT: @ BB#1:
   %0 = load i64* @posed, align 4                  ; <i64> [#uses=3]
   %1 = sub i64 %0, %.reload78                     ; <i64> [#uses=1]
   %2 = ashr i64 %1, 1                             ; <i64> [#uses=3]

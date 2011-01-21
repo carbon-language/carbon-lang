@@ -751,6 +751,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
   case ARMISD::Wrapper:       return "ARMISD::Wrapper";
+  case ARMISD::WrapperDYN:    return "ARMISD::WrapperDYN";
   case ARMISD::WrapperPIC:    return "ARMISD::WrapperPIC";
   case ARMISD::WrapperJT:     return "ARMISD::WrapperJT";
   case ARMISD::CALL:          return "ARMISD::CALL";
@@ -1999,11 +2000,13 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
     ++NumMovwMovt;
     // FIXME: Once remat is capable of dealing with instructions with register
     // operands, expand this into two nodes.
-    if (RelocM != Reloc::PIC_)
+    if (RelocM == Reloc::Static)
       return DAG.getNode(ARMISD::Wrapper, dl, PtrVT,
                                  DAG.getTargetGlobalAddress(GV, dl, PtrVT));
 
-    SDValue Result = DAG.getNode(ARMISD::WrapperPIC, dl, PtrVT,
+    unsigned Wrapper = (RelocM == Reloc::PIC_)
+      ? ARMISD::WrapperPIC : ARMISD::WrapperDYN;
+    SDValue Result = DAG.getNode(Wrapper, dl, PtrVT,
                                  DAG.getTargetGlobalAddress(GV, dl, PtrVT));
     if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
       Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,

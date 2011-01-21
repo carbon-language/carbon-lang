@@ -863,25 +863,34 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::MOVi16_pic_ga:
-  case ARM::t2MOVi16_pic_ga: {
+  case ARM::MOVi16_ga_pcrel:
+  case ARM::t2MOVi16_ga_pcrel: {
     MCInst TmpInst;
-    TmpInst.setOpcode(Opc == ARM::MOVi16_pic_ga ? ARM::MOVi16 : ARM::t2MOVi16);
+    TmpInst.setOpcode(Opc == ARM::MOVi16_ga_pcrel? ARM::MOVi16 : ARM::t2MOVi16);
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
 
+    unsigned TF = MI->getOperand(1).getTargetFlags();
+    bool isPIC = TF == ARMII::MO_LO16_NONLAZY_PIC;
     const GlobalValue *GV = MI->getOperand(1).getGlobal();
     MCSymbol *GVSym = GetARMGVSymbol(GV);
     const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
-    MCSymbol *LabelSym = getPICLabel(MAI->getPrivateGlobalPrefix(),
-                                getFunctionNumber(), MI->getOperand(2).getImm(),
-                                     OutContext);
-    const MCExpr *LabelSymExpr = MCSymbolRefExpr::Create(LabelSym, OutContext);
-    const MCExpr *PCRelExpr =
-      ARMMCExpr::CreateLower16(MCBinaryExpr::CreateSub(GVSymExpr,
-                                      MCBinaryExpr::CreateAdd(LabelSymExpr,
-                                        MCConstantExpr::Create(4, OutContext),
+    if (isPIC) {
+      MCSymbol *LabelSym = getPICLabel(MAI->getPrivateGlobalPrefix(),
+                                       getFunctionNumber(),
+                                       MI->getOperand(2).getImm(), OutContext);
+      const MCExpr *LabelSymExpr= MCSymbolRefExpr::Create(LabelSym, OutContext);
+      unsigned PCAdj = (Opc == ARM::MOVi16_ga_pcrel) ? 8 : 4;
+      const MCExpr *PCRelExpr =
+        ARMMCExpr::CreateLower16(MCBinaryExpr::CreateSub(GVSymExpr,
+                                  MCBinaryExpr::CreateAdd(LabelSymExpr,
+                                      MCConstantExpr::Create(PCAdj, OutContext),
                                           OutContext), OutContext), OutContext);
-    TmpInst.addOperand(MCOperand::CreateExpr(PCRelExpr));
+      TmpInst.addOperand(MCOperand::CreateExpr(PCRelExpr));
+    } else {
+      const MCExpr *RefExpr= ARMMCExpr::CreateLower16(GVSymExpr, OutContext);
+      TmpInst.addOperand(MCOperand::CreateExpr(RefExpr));
+    }
+
     // Add predicate operands.
     TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
     TmpInst.addOperand(MCOperand::CreateReg(0));
@@ -890,26 +899,35 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
-  case ARM::MOVTi16_pic_ga:
-  case ARM::t2MOVTi16_pic_ga: {
+  case ARM::MOVTi16_ga_pcrel:
+  case ARM::t2MOVTi16_ga_pcrel: {
     MCInst TmpInst;
-    TmpInst.setOpcode(Opc==ARM::MOVTi16_pic_ga ? ARM::MOVTi16 : ARM::t2MOVTi16);
+    TmpInst.setOpcode(Opc == ARM::MOVTi16_ga_pcrel
+                      ? ARM::MOVTi16 : ARM::t2MOVTi16);
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
 
+    unsigned TF = MI->getOperand(2).getTargetFlags();
+    bool isPIC = TF == ARMII::MO_HI16_NONLAZY_PIC;
     const GlobalValue *GV = MI->getOperand(2).getGlobal();
     MCSymbol *GVSym = GetARMGVSymbol(GV);
     const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
-    MCSymbol *LabelSym = getPICLabel(MAI->getPrivateGlobalPrefix(),
-                                getFunctionNumber(), MI->getOperand(3).getImm(),
-                                     OutContext);
-    const MCExpr *LabelSymExpr = MCSymbolRefExpr::Create(LabelSym, OutContext);
-    const MCExpr *PCRelExpr =
-      ARMMCExpr::CreateUpper16(MCBinaryExpr::CreateSub(GVSymExpr,
-                                      MCBinaryExpr::CreateAdd(LabelSymExpr,
-                                        MCConstantExpr::Create(4, OutContext),
+    if (isPIC) {
+      MCSymbol *LabelSym = getPICLabel(MAI->getPrivateGlobalPrefix(),
+                                       getFunctionNumber(),
+                                       MI->getOperand(3).getImm(), OutContext);
+      const MCExpr *LabelSymExpr= MCSymbolRefExpr::Create(LabelSym, OutContext);
+      unsigned PCAdj = (Opc == ARM::MOVTi16_ga_pcrel) ? 8 : 4;
+      const MCExpr *PCRelExpr =
+        ARMMCExpr::CreateUpper16(MCBinaryExpr::CreateSub(GVSymExpr,
+                                   MCBinaryExpr::CreateAdd(LabelSymExpr,
+                                      MCConstantExpr::Create(PCAdj, OutContext),
                                           OutContext), OutContext), OutContext);
-    TmpInst.addOperand(MCOperand::CreateExpr(PCRelExpr));
+      TmpInst.addOperand(MCOperand::CreateExpr(PCRelExpr));
+    } else {
+      const MCExpr *RefExpr= ARMMCExpr::CreateUpper16(GVSymExpr, OutContext);
+      TmpInst.addOperand(MCOperand::CreateExpr(RefExpr));
+    }
     // Add predicate operands.
     TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
     TmpInst.addOperand(MCOperand::CreateReg(0));

@@ -553,10 +553,10 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   case ARMII::Size2Bytes: return 2;          // Thumb1 instruction.
   case ARMII::SizeSpecial: {
     switch (Opc) {
-    case ARM::MOVi16_pic_ga:
-    case ARM::MOVTi16_pic_ga:
-    case ARM::t2MOVi16_pic_ga:
-    case ARM::t2MOVTi16_pic_ga:
+    case ARM::MOVi16_ga_pcrel:
+    case ARM::MOVTi16_ga_pcrel:
+    case ARM::t2MOVi16_ga_pcrel:
+    case ARM::t2MOVTi16_ga_pcrel:
       return 4;
     case ARM::MOVi32imm:
     case ARM::t2MOVi32imm:
@@ -1051,8 +1051,11 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
       Opcode == ARM::t2LDRpci_pic ||
       Opcode == ARM::tLDRpci ||
       Opcode == ARM::tLDRpci_pic ||
-      Opcode == ARM::MOV_pic_ga_add_pc ||
-      Opcode == ARM::t2MOV_pic_ga_add_pc) {
+      Opcode == ARM::MOV_ga_dyn ||
+      Opcode == ARM::MOV_ga_pcrel ||
+      Opcode == ARM::MOV_ga_pcrel_ldr ||
+      Opcode == ARM::t2MOV_ga_dyn ||
+      Opcode == ARM::t2MOV_ga_pcrel) {
     if (MI1->getOpcode() != Opcode)
       return false;
     if (MI0->getNumOperands() != MI1->getNumOperands())
@@ -1063,8 +1066,11 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
     if (MO0.getOffset() != MO1.getOffset())
       return false;
 
-    if (Opcode == ARM::MOV_pic_ga_add_pc ||
-        Opcode == ARM::t2MOV_pic_ga_add_pc)
+    if (Opcode == ARM::MOV_ga_dyn ||
+        Opcode == ARM::MOV_ga_pcrel ||
+        Opcode == ARM::MOV_ga_pcrel_ldr ||
+        Opcode == ARM::t2MOV_ga_dyn ||
+        Opcode == ARM::t2MOV_ga_pcrel)
       // Ignore the PC labels.
       return MO0.getGlobal() == MO1.getGlobal();
 

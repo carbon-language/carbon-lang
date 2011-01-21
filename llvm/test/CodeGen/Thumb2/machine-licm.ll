@@ -3,9 +3,6 @@
 ; rdar://7353541
 ; rdar://7354376
 
-; The generated code is no where near ideal. It's not recognizing the two
-; constantpool entries being loaded can be merged into one.
-
 @GV = external global i32                         ; <i32*> [#uses=2]
 
 define void @t1(i32* nocapture %vals, i32 %c) nounwind {
@@ -17,21 +14,21 @@ entry:
 
 bb.nph:                                           ; preds = %entry
 ; CHECK: BB#1
-; CHECK: ldr.n r2, LCPI0_0
+; CHECK: movw r2, :lower16:L_GV$non_lazy_ptr
+; CHECK: movt r2, :upper16:L_GV$non_lazy_ptr
 ; CHECK: ldr r2, [r2]
 ; CHECK: ldr r3, [r2]
 ; CHECK: LBB0_2
-; CHECK: LCPI0_0:
-; CHECK-NOT: LCPI0_1:
+; CHECK-NOT: LCPI0_0:
 
 ; PIC: BB#1
-; PIC: ldr.n r2, LCPI0_0
+; PIC: movw r2, :lower16:(L_GV$non_lazy_ptr-(LPC0_0+4))
+; PIC: movt r2, :upper16:(L_GV$non_lazy_ptr-(LPC0_0+4))
 ; PIC: add r2, pc
 ; PIC: ldr r2, [r2]
 ; PIC: ldr r3, [r2]
 ; PIC: LBB0_2
-; PIC: LCPI0_0:
-; PIC-NOT: LCPI0_1:
+; PIC-NOT: LCPI0_0:
 ; PIC: .section
   %.pre = load i32* @GV, align 4                  ; <i32> [#uses=1]
   br label %bb
