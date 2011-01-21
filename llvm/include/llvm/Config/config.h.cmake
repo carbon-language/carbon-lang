@@ -130,13 +130,13 @@
 #cmakedefine HAVE_FENV_H ${HAVE_FENV_H}
 
 /* Define if libffi is available on this platform. */
-#undef HAVE_FFI_CALL
+#cmakedefine HAVE_FFI_CALL ${HAVE_FFI_CALL}
 
 /* Define to 1 if you have the <ffi/ffi.h> header file. */
-#undef HAVE_FFI_FFI_H
+#cmakedefine HAVE_FFI_FFI_H ${HAVE_FFI_FFI_H}
 
 /* Define to 1 if you have the <ffi.h> header file. */
-#undef HAVE_FFI_H
+#cmakedefine HAVE_FFI_H ${HAVE_FFI_H}
 
 /* Set to 1 if the finite function is found in <ieeefp.h> */
 #cmakedefine HAVE_FINITE_IN_IEEEFP_H ${HAVE_FINITE_IN_IEEEFP_H}

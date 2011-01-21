@@ -114,6 +114,10 @@ if(LLVM_ENABLE_TIMESTAMPS)
   set(ENABLE_TIMESTAMPS 1)
 endif()
 
+option(LLVM_ENABLE_FFI "Use libffi to call external functions from the interpreter" OFF)
+set(FFI_LIBRARY_DIR "" CACHE PATH "Additional directory, where CMake should search for libffi.so")
+set(FFI_INCLUDE_DIR "" CACHE PATH "Additional directory, where CMake should search for ffi.h or ffi/ffi.h")
+
 set(C_INCLUDE_DIRS "" CACHE STRING
   "Colon separated list of directories clang will search for headers.")
 
