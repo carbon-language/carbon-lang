@@ -28,11 +28,7 @@ UniversalArchs.armv6 := armv6
 
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
-UniversalArchs.cc_kext := armv6 i386 x86_64
-
-# FIXME: Don't build an armv7 slice currently, they have the same functions.
-#
-#UniversalArchs.cc_kext := armv6 armv7 i386 x86_64
+UniversalArchs.cc_kext := armv6 armv7 i386 x86_64
 
 ###
 
