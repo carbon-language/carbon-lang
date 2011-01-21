@@ -55,9 +55,14 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
 
 /// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
 /// expr can be devirtualized.
-static bool canDevirtualizeMemberFunctionCalls(const Expr *Base, 
+static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
+                                               const Expr *Base, 
                                                const CXXMethodDecl *MD) {
   
+  // Cannot divirtualize in kext mode.
+  if (Context.getLangOptions().AppleKext)
+    return false;
+
   // If the member function has the "final" attribute, we know that it can't be
   // overridden and can therefore devirtualize it.
   if (MD->hasAttr<FinalAttr>())
@@ -173,12 +178,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   // We also don't emit a virtual call if the base expression has a record type
   // because then we know what the type is.
   bool UseVirtualCall;
-  if (!getContext().getLangOptions().AppleKext)
-    UseVirtualCall = MD->isVirtual() && !ME->hasQualifier()
-                     && !canDevirtualizeMemberFunctionCalls(ME->getBase(), MD);
-  else
-    UseVirtualCall = MD->isVirtual();
-
+  UseVirtualCall = MD->isVirtual() && !ME->hasQualifier()
+                   && !canDevirtualizeMemberFunctionCalls(getContext(),
+                                                          ME->getBase(), MD);
   llvm::Value *Callee;
   if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD)) {
     if (UseVirtualCall) {
@@ -190,14 +192,13 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
                dyn_cast<CXXConstructorDecl>(MD)) {
     Callee = CGM.GetAddrOfFunction(GlobalDecl(Ctor, Ctor_Complete), Ty);
   } else if (UseVirtualCall) {
-    if (getContext().getLangOptions().AppleKext &&
-        ME->hasQualifier()) {
-      Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), This, Ty);
-    }
-    else
       Callee = BuildVirtualCall(MD, This, Ty); 
   } else {
-    Callee = CGM.GetAddrOfFunction(MD, Ty);
+    if (getContext().getLangOptions().AppleKext &&
+        ME->hasQualifier())
+      Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), This, Ty);
+    else 
+      Callee = CGM.GetAddrOfFunction(MD, Ty);
   }
 
   return EmitCXXMemberCall(MD, Callee, ReturnValue, This, /*VTT=*/0,
@@ -277,8 +278,8 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                                    FPT->isVariadic());
   llvm::Value *Callee;
   if (MD->isVirtual() && 
-      (getContext().getLangOptions().AppleKext || 
-       !canDevirtualizeMemberFunctionCalls(E->getArg(0), MD)))
+      !canDevirtualizeMemberFunctionCalls(getContext(),
+                                           E->getArg(0), MD))
     Callee = BuildVirtualCall(MD, This, Ty);
   else
     Callee = CGM.GetAddrOfFunction(MD, Ty);
