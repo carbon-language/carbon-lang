@@ -481,8 +481,9 @@ public:
                                SymbolContext *addr_context,
                                bool first_insn,
                                bool stop_other_threads,
-                               lldb::Vote stop_vote = lldb::eVoteYes,
-                               lldb::Vote run_vote = lldb::eVoteNoOpinion);
+                               lldb::Vote stop_vote, // = lldb::eVoteYes,
+                               lldb::Vote run_vote, // = lldb::eVoteNoOpinion);
+                               uint32_t frame_idx);
 
     //------------------------------------------------------------------
     /// Gets the plan used to step through the code that steps from a function
@@ -527,9 +528,10 @@ public:
 
     virtual ThreadPlan *
     QueueThreadPlanForStepUntil (bool abort_other_plans,
-                               lldb::addr_t *address_list,
-                               size_t num_addresses,
-                               bool stop_others);
+                                 lldb::addr_t *address_list,
+                                 size_t num_addresses,
+                                 bool stop_others,
+                                 uint32_t frame_idx);
 
     virtual ThreadPlan *
     QueueThreadPlanForCallFunction (bool abort_other_plans,

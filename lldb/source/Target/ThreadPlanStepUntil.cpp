@@ -37,7 +37,8 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
     Thread &thread,
     lldb::addr_t *address_list,
     size_t num_addresses,
-    bool stop_others
+    bool stop_others,
+    uint32_t frame_idx
 ) :
     ThreadPlan (ThreadPlan::eKindStepUntil, "Step until", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_stack_depth (0),
@@ -56,40 +57,43 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
     // Stash away our "until" addresses:
     Target &target = m_thread.GetProcess().GetTarget();
 
-    m_step_from_insn = m_thread.GetRegisterContext()->GetPC(0);
-    lldb::user_id_t thread_id = m_thread.GetID();
-
-    // Find the return address and set a breakpoint there:
-    // FIXME - can we do this more securely if we know first_insn?
-
-    StackFrame *return_frame = m_thread.GetStackFrameAtIndex(1).get();
-    // TODO: add inline functionality
-    m_return_addr = return_frame->GetRegisterContext()->GetPC();
-    Breakpoint *return_bp = target.CreateBreakpoint (m_return_addr, true).get();
-    if (return_bp != NULL)
+    StackFrameSP frame_sp (m_thread.GetStackFrameAtIndex (frame_idx));
+    if (frame_sp)
     {
-        return_bp->SetThreadID(thread_id);
-        m_return_bp_id = return_bp->GetID();
-    }
-    else
-    {
-        m_return_bp_id = LLDB_INVALID_BREAK_ID;
-    }
+        m_step_from_insn = frame_sp->GetStackID().GetPC();
+        lldb::user_id_t thread_id = m_thread.GetID();
 
-    m_stack_depth = m_thread.GetStackFrameCount();
+        // Find the return address and set a breakpoint there:
+        // FIXME - can we do this more securely if we know first_insn?
 
-    // Now set breakpoints on all our return addresses:
-    for (int i = 0; i < num_addresses; i++)
-    {
-        Breakpoint *until_bp = target.CreateBreakpoint (address_list[i], true).get();
-        if (until_bp != NULL)
+        StackFrameSP return_frame_sp (m_thread.GetStackFrameAtIndex(frame_idx + 1));
+        if (return_frame_sp)
         {
-            until_bp->SetThreadID(thread_id);
-            m_until_points[address_list[i]] = until_bp->GetID();
+            // TODO: add inline functionality
+            m_return_addr = return_frame_sp->GetStackID().GetPC();
+            Breakpoint *return_bp = target.CreateBreakpoint (m_return_addr, true).get();
+            if (return_bp != NULL)
+            {
+                return_bp->SetThreadID(thread_id);
+                m_return_bp_id = return_bp->GetID();
+            }
         }
-        else
+
+        m_stack_depth = m_thread.GetStackFrameCount() - frame_idx;
+
+        // Now set breakpoints on all our return addresses:
+        for (int i = 0; i < num_addresses; i++)
         {
-            m_until_points[address_list[i]] = LLDB_INVALID_BREAK_ID;
+            Breakpoint *until_bp = target.CreateBreakpoint (address_list[i], true).get();
+            if (until_bp != NULL)
+            {
+                until_bp->SetThreadID(thread_id);
+                m_until_points[address_list[i]] = until_bp->GetID();
+            }
+            else
+            {
+                m_until_points[address_list[i]] = LLDB_INVALID_BREAK_ID;
+            }
         }
     }
 }

@@ -85,7 +85,15 @@ public:
     StepOut ();
 
     void
+    StepOutOfFrame (lldb::SBFrame &frame);
+
+    void
     StepInstruction(bool step_over);
+
+    SBError
+    StepOverUntil (lldb::SBFrame &frame, 
+                   lldb::SBFileSpec &file_spec, 
+                   uint32_t line);
 
     void
     RunToAddress (lldb::addr_t addr);

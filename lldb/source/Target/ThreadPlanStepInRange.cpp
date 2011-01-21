@@ -270,9 +270,13 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
     if (should_step_out)
     {
         // FIXME: Make sure the ThreadPlanForStepOut does the right thing with inlined functions.
-        return current_plan->GetThread().QueueThreadPlanForStepOut (false, NULL, true, 
+        return current_plan->GetThread().QueueThreadPlanForStepOut (false, 
+                                                                    NULL, 
+                                                                    true, 
                                                                     current_plan->StopOthers(), 
-                                                                    eVoteNo, eVoteNoOpinion);
+                                                                    eVoteNo, 
+                                                                    eVoteNoOpinion,
+                                                                    0); // Frame index
     }
 
     return NULL;

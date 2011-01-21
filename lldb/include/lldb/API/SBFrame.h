@@ -146,6 +146,9 @@ private:
     lldb_private::StackFrame *
     get() const;
 
+    const lldb::StackFrameSP &
+    get_sp() const;
+    
 #endif
 
 

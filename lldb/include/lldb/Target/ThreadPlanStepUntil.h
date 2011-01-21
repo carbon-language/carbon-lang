@@ -45,7 +45,8 @@ protected:
     ThreadPlanStepUntil (Thread &thread,
                          lldb::addr_t *address_list,
                          size_t num_addresses,
-                         bool stop_others);
+                         bool stop_others,
+                         uint32_t frame_idx = 0);
     void AnalyzeStop(void);
 
 private:
@@ -67,9 +68,10 @@ private:
 
     friend ThreadPlan *
     Thread::QueueThreadPlanForStepUntil (bool abort_other_plans,
-                                       lldb::addr_t *address_list,
-                                       size_t num_addresses,
-                                       bool stop_others);
+                                         lldb::addr_t *address_list,
+                                         size_t num_addresses,
+                                         bool stop_others,
+                                         uint32_t frame_idx);
 
     // Need an appropriate marker for the current stack so we can tell step out
     // from step in.

@@ -492,8 +492,53 @@ SBThread::StepOut ()
         bool abort_other_plans = true;
         bool stop_other_threads = true;
 
-        m_opaque_sp->QueueThreadPlanForStepOut (abort_other_plans, NULL, false, stop_other_threads, eVoteYes, eVoteNoOpinion);
+        m_opaque_sp->QueueThreadPlanForStepOut (abort_other_plans, 
+                                                NULL, 
+                                                false, 
+                                                stop_other_threads, 
+                                                eVoteYes, 
+                                                eVoteNoOpinion,
+                                                0);
+        
+        Process &process = m_opaque_sp->GetProcess();
+        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
+        Error error (process.Resume());
+        if (error.Success())
+        {
+            // If we are doing synchronous mode, then wait for the
+            // process to stop yet again!
+            if (process.GetTarget().GetDebugger().GetAsyncExecution () == false)
+                process.WaitForProcessToStop (NULL);
+        }
+    }
+}
 
+void
+SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (log)
+    {
+        SBStream frame_desc_strm;
+        sb_frame.GetDescription (frame_desc_strm);
+        log->Printf ("SBThread(%p)::StepOutOfFrame (frame = SBFrame(%p): %s)", m_opaque_sp.get(), sb_frame.get(), frame_desc_strm.GetData());
+    }
+
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
+        bool abort_other_plans = true;
+        bool stop_other_threads = true;
+
+        m_opaque_sp->QueueThreadPlanForStepOut (abort_other_plans, 
+                                                NULL, 
+                                                false, 
+                                                stop_other_threads, 
+                                                eVoteYes, 
+                                                eVoteNoOpinion,
+                                                sb_frame->GetFrameIndex());
+        
         Process &process = m_opaque_sp->GetProcess();
         process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
         Error error (process.Resume());
@@ -559,8 +604,140 @@ SBThread::RunToAddress (lldb::addr_t addr)
                 process.WaitForProcessToStop (NULL);
         }
     }
-
 }
+
+SBError
+SBThread::StepOverUntil (lldb::SBFrame &sb_frame, 
+                         lldb::SBFileSpec &sb_file_spec, 
+                         uint32_t line)
+{
+    SBError sb_error;
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    char path[PATH_MAX];
+
+    if (log)
+    {
+        SBStream frame_desc_strm;
+        sb_frame.GetDescription (frame_desc_strm);
+        sb_file_spec->GetPath (path, sizeof(path));
+        log->Printf ("SBThread(%p)::StepOverUntil (frame = SBFrame(%p): %s, file+line = %s:%u)", 
+                     m_opaque_sp.get(), 
+                     sb_frame.get(), 
+                     frame_desc_strm.GetData(),
+                     path, line);
+    }
+    
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
+
+        if (line == 0)
+        {
+            sb_error.SetErrorString("invalid line argument");
+            return sb_error;
+        }
+        
+        StackFrameSP frame_sp;
+        if (sb_frame.IsValid())
+            frame_sp = sb_frame.get_sp();
+        else
+        {
+            frame_sp = m_opaque_sp->GetSelectedFrame ();
+            if (!frame_sp)
+                frame_sp = m_opaque_sp->GetStackFrameAtIndex (0);
+        }
+    
+        SymbolContext frame_sc;
+        if (!frame_sp)        
+        {
+            sb_error.SetErrorString("no valid frames in thread to step");
+            return sb_error;
+        }
+
+        // If we have a frame, get its line
+        frame_sc = frame_sp->GetSymbolContext (eSymbolContextCompUnit  |
+                                               eSymbolContextFunction  | 
+                                               eSymbolContextLineEntry | 
+                                               eSymbolContextSymbol    );
+                                               
+        if (frame_sc.comp_unit == NULL)
+        {
+            sb_error.SetErrorStringWithFormat("frame %u doesn't have debug information", frame_sp->GetFrameIndex());
+            return sb_error;
+        }
+        
+        FileSpec step_file_spec;
+        if (sb_file_spec.IsValid())
+        {
+            // The file spec passed in was valid, so use it
+            step_file_spec = sb_file_spec.ref();
+        }
+        else
+        {
+            if (frame_sc.line_entry.IsValid())
+                step_file_spec = frame_sc.line_entry.file;
+            else
+            {
+                sb_error.SetErrorString("invalid file argument or no file for frame");
+                return sb_error;
+            }
+        }
+    
+        std::vector<addr_t> step_over_until_addrs;
+        const bool abort_other_plans = true;
+        const bool stop_other_threads = true;
+        const bool check_inlines = true;
+        const bool exact = false;
+
+        SymbolContextList sc_list;
+        const uint32_t num_matches = frame_sc.comp_unit->ResolveSymbolContext (step_file_spec, line, check_inlines, exact, eSymbolContextLineEntry, sc_list);
+        if (num_matches > 0)
+        {
+            SymbolContext sc;
+            for (uint32_t i=0; i<num_matches; ++i)
+            {
+                if (sc_list.GetContextAtIndex(i, sc))
+                {
+                    addr_t step_addr = sc.line_entry.range.GetBaseAddress().GetLoadAddress(&m_opaque_sp->GetProcess().GetTarget());
+                    if (step_addr != LLDB_INVALID_ADDRESS)
+                    {
+                        step_over_until_addrs.push_back(step_addr);
+                    }
+                }
+            }
+        }
+
+        if (step_over_until_addrs.empty())
+        {
+            step_file_spec.GetPath (path, sizeof(path));
+            sb_error.SetErrorStringWithFormat("No line entries for %s:u", path, line);
+        }
+        else
+        {
+            m_opaque_sp->QueueThreadPlanForStepUntil (abort_other_plans, 
+                                                      &step_over_until_addrs[0],
+                                                      step_over_until_addrs.size(),
+                                                      stop_other_threads,
+                                                      frame_sp->GetFrameIndex());      
+
+            m_opaque_sp->GetProcess().GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
+            sb_error.ref() = m_opaque_sp->GetProcess().Resume();
+            if (sb_error->Success())
+            {
+                // If we are doing synchronous mode, then wait for the
+                // process to stop yet again!
+                if (m_opaque_sp->GetProcess().GetTarget().GetDebugger().GetAsyncExecution () == false)
+                    m_opaque_sp->GetProcess().WaitForProcessToStop (NULL);
+            }
+        }
+    }
+    else
+    {
+        sb_error.SetErrorString("this SBThread object is invalid");
+    }
+    return sb_error;
+}
+
 
 bool
 SBThread::Suspend()
@@ -606,10 +783,10 @@ SBThread::GetProcess ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
-        SBStream sstr;
-        process.GetDescription (sstr);
+        SBStream frame_desc_strm;
+        process.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetProcess () => SBProcess(%p): %s", m_opaque_sp.get(),
-                     process.get(), sstr.GetData());
+                     process.get(), frame_desc_strm.GetData());
     }
 
     return process;
@@ -647,10 +824,10 @@ SBThread::GetFrameAtIndex (uint32_t idx)
 
     if (log)
     {
-        SBStream sstr;
-        sb_frame.GetDescription (sstr);
+        SBStream frame_desc_strm;
+        sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetFrameAtIndex (idx=%d) => SBFrame(%p): %s", 
-                     m_opaque_sp.get(), idx, sb_frame.get(), sstr.GetData());
+                     m_opaque_sp.get(), idx, sb_frame.get(), frame_desc_strm.GetData());
     }
 
     return sb_frame;
@@ -670,10 +847,10 @@ SBThread::GetSelectedFrame ()
 
     if (log)
     {
-        SBStream sstr;
-        sb_frame.GetDescription (sstr);
+        SBStream frame_desc_strm;
+        sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetSelectedFrame () => SBFrame(%p): %s", 
-                     m_opaque_sp.get(), sb_frame.get(), sstr.GetData());
+                     m_opaque_sp.get(), sb_frame.get(), frame_desc_strm.GetData());
     }
 
     return sb_frame;
@@ -698,10 +875,10 @@ SBThread::SetSelectedFrame (uint32_t idx)
 
     if (log)
     {
-        SBStream sstr;
-        sb_frame.GetDescription (sstr);
+        SBStream frame_desc_strm;
+        sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::SetSelectedFrame (idx=%u) => SBFrame(%p): %s", 
-                     m_opaque_sp.get(), idx, sb_frame.get(), sstr.GetData());
+                     m_opaque_sp.get(), idx, sb_frame.get(), frame_desc_strm.GetData());
     }
     return sb_frame;
 }

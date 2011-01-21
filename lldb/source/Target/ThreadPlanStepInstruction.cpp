@@ -129,7 +129,7 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
                     s.Address (return_addr, m_thread.GetProcess().GetAddressByteSize());
                     log->Printf("%s.", s.GetData());
                 }
-                m_thread.QueueThreadPlanForStepOut(false, NULL, true, m_stop_other_threads, eVoteNo, eVoteNoOpinion);
+                m_thread.QueueThreadPlanForStepOut(false, NULL, true, m_stop_other_threads, eVoteNo, eVoteNoOpinion, 0);
                 return false;
             }
             else

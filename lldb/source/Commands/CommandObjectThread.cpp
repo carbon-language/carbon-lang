@@ -729,7 +729,13 @@ public:
             {
                 ThreadPlan *new_plan;
 
-                new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans, NULL, false, bool_stop_other_threads, eVoteYes, eVoteNoOpinion);
+                new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans, 
+                                                              NULL, 
+                                                              false, 
+                                                              bool_stop_other_threads, 
+                                                              eVoteYes, 
+                                                              eVoteNoOpinion, 
+                                                              thread->GetSelectedFrameIndex());
                 // FIXME: This will keep the step plan on the thread stack when we hit a breakpoint while stepping over.
                 // Maybe there should be a parameter to control this.
                 new_plan->SetOkayToDiscard(false);
@@ -1208,7 +1214,7 @@ public:
                     index_ptr++;
                 }
 
-                new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans, &address_list.front(), address_list.size(), m_options.m_stop_others);
+                new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans, &address_list.front(), address_list.size(), m_options.m_stop_others, thread->GetSelectedFrameIndex ());
                 new_plan->SetOkayToDiscard(false);
             }
             else

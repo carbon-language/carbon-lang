@@ -661,7 +661,12 @@ Thread::QueueFundamentalPlan (bool abort_other_plans)
 }
 
 ThreadPlan *
-Thread::QueueThreadPlanForStepSingleInstruction (bool step_over, bool abort_other_plans, bool stop_other_threads)
+Thread::QueueThreadPlanForStepSingleInstruction
+(
+    bool step_over, 
+    bool abort_other_plans, 
+    bool stop_other_threads
+)
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanStepInstruction (*this, step_over, stop_other_threads, eVoteNoOpinion, eVoteNoOpinion));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
@@ -706,10 +711,24 @@ Thread::QueueThreadPlanForStepOverBreakpointPlan (bool abort_other_plans)
 }
 
 ThreadPlan *
-Thread::QueueThreadPlanForStepOut (bool abort_other_plans, SymbolContext *addr_context, bool first_insn,
-        bool stop_other_threads, Vote stop_vote, Vote run_vote)
+Thread::QueueThreadPlanForStepOut 
+(
+    bool abort_other_plans, 
+    SymbolContext *addr_context, 
+    bool first_insn,
+    bool stop_other_threads, 
+    Vote stop_vote, 
+    Vote run_vote,
+    uint32_t frame_idx
+)
 {
-    ThreadPlanSP thread_plan_sp (new ThreadPlanStepOut (*this, addr_context, first_insn, stop_other_threads, stop_vote, run_vote));
+    ThreadPlanSP thread_plan_sp (new ThreadPlanStepOut (*this, 
+                                                        addr_context, 
+                                                        first_insn, 
+                                                        stop_other_threads, 
+                                                        stop_vote, 
+                                                        run_vote, 
+                                                        frame_idx));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp.get();
 }
@@ -761,11 +780,12 @@ Thread::QueueThreadPlanForRunToAddress (bool abort_other_plans,
 
 ThreadPlan *
 Thread::QueueThreadPlanForStepUntil (bool abort_other_plans,
-                                       lldb::addr_t *address_list,
-                                       size_t num_addresses,
-                                       bool stop_other_threads)
+                                     lldb::addr_t *address_list,
+                                     size_t num_addresses,
+                                     bool stop_other_threads,
+                                     uint32_t frame_idx)
 {
-    ThreadPlanSP thread_plan_sp (new ThreadPlanStepUntil (*this, address_list, num_addresses, stop_other_threads));
+    ThreadPlanSP thread_plan_sp (new ThreadPlanStepUntil (*this, address_list, num_addresses, stop_other_threads, frame_idx));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp.get();
 

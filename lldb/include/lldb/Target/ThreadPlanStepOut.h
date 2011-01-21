@@ -40,13 +40,14 @@ public:
                        bool first_insn,
                        bool stop_others,
                        lldb::Vote stop_vote,
-                       lldb::Vote run_vote);
+                       lldb::Vote run_vote,
+                       uint32_t frame_idx);
 protected:
 
 private:
     SymbolContext *m_step_from_context;
     lldb::addr_t m_step_from_insn;
-    uint64_t m_stack_depth;
+    uint32_t m_stack_depth;
     lldb::break_id_t m_return_bp_id;
     lldb::addr_t m_return_addr;
     bool m_first_insn;
@@ -58,7 +59,8 @@ private:
                                        bool first_insn,
                                        bool stop_others,
                                        lldb::Vote stop_vote,
-                                       lldb::Vote run_vote);
+                                       lldb::Vote run_vote,
+                                       uint32_t frame_idx);
 
     // Need an appropriate marker for the current stack so we can tell step out
     // from step in.

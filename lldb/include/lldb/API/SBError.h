@@ -72,16 +72,17 @@ public:
     GetDescription (lldb::SBStream &description) const;
 
 protected:
+
+#ifndef SWIG
     friend class SBArguments;
     friend class SBDebugger;
     friend class SBCommunication;
     friend class SBHostOS;
     friend class SBInputReader;
     friend class SBProcess;
+    friend class SBThread;
     friend class SBTarget;
     friend class SBValue;
-
-#ifndef SWIG
 
     lldb_private::Error *
     get();

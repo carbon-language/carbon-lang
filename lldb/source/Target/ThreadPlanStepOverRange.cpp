@@ -104,7 +104,13 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     }
     else if (FrameIsYounger())
     {
-        new_plan = m_thread.QueueThreadPlanForStepOut (false, NULL, true, stop_others, lldb::eVoteNo, lldb::eVoteNoOpinion);
+        new_plan = m_thread.QueueThreadPlanForStepOut (false, 
+                                                       NULL, 
+                                                       true, 
+                                                       stop_others, 
+                                                       lldb::eVoteNo, 
+                                                       lldb::eVoteNoOpinion,
+                                                       0);
     }
     else if (!InSymbol())
     {

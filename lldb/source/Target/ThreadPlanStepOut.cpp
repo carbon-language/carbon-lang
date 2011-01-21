@@ -35,7 +35,8 @@ ThreadPlanStepOut::ThreadPlanStepOut
     bool first_insn,
     bool stop_others,
     Vote stop_vote,
-    Vote run_vote
+    Vote run_vote,
+    uint32_t frame_idx
 ) :
     ThreadPlan (ThreadPlan::eKindStepOut, "Step out", thread, stop_vote, run_vote),
     m_step_from_context (context),
@@ -50,24 +51,20 @@ ThreadPlanStepOut::ThreadPlanStepOut
     // Find the return address and set a breakpoint there:
     // FIXME - can we do this more securely if we know first_insn?
 
-    StackFrame *return_frame = m_thread.GetStackFrameAtIndex(1).get();
-    if (return_frame)
+    StackFrameSP return_frame_sp (m_thread.GetStackFrameAtIndex(frame_idx + 1));
+    if (return_frame_sp)
     {
         // TODO: check for inlined frames and do the right thing...
-        m_return_addr = return_frame->GetRegisterContext()->GetPC();
+        m_return_addr = return_frame_sp->GetRegisterContext()->GetPC();
         Breakpoint *return_bp = m_thread.GetProcess().GetTarget().CreateBreakpoint (m_return_addr, true).get();
         if (return_bp != NULL)
         {
             return_bp->SetThreadID(m_thread.GetID());
             m_return_bp_id = return_bp->GetID();
         }
-        else
-        {
-            m_return_bp_id = LLDB_INVALID_BREAK_ID;
-        }
     }
 
-    m_stack_depth = m_thread.GetStackFrameCount();
+    m_stack_depth = m_thread.GetStackFrameCount() - frame_idx;
 }
 
 ThreadPlanStepOut::~ThreadPlanStepOut ()
@@ -116,6 +113,10 @@ ThreadPlanStepOut::PlanExplainsStop ()
             BreakpointSiteSP site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (stop_info_sp->GetValue()));
             if (site_sp && site_sp->IsBreakpointAtThisSite (m_return_bp_id))
             {
+                const uint32_t num_frames = m_thread.GetStackFrameCount();
+                if (m_stack_depth > num_frames);
+                    SetPlanComplete();
+
                 // If there was only one owner, then we're done.  But if we also hit some
                 // user breakpoint on our way out, we should mark ourselves as done, but
                 // also not claim to explain the stop, since it is more important to report
@@ -124,7 +125,6 @@ ThreadPlanStepOut::PlanExplainsStop ()
                 if (site_sp->GetNumberOfOwners() == 1)
                     return true;
                 
-                SetPlanComplete();
             }
             return false;
         }
@@ -143,9 +143,7 @@ ThreadPlanStepOut::PlanExplainsStop ()
 bool
 ThreadPlanStepOut::ShouldStop (Event *event_ptr)
 {
-    if (IsPlanComplete()
-        || m_thread.GetRegisterContext()->GetPC() == m_return_addr
-        || m_stack_depth > m_thread.GetStackFrameCount())
+    if (IsPlanComplete() || m_stack_depth > m_thread.GetStackFrameCount())
     {
         SetPlanComplete();
         return true;

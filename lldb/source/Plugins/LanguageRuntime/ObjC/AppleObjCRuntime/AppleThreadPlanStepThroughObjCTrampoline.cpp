@@ -129,7 +129,13 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
                     log->Printf ("Implementation lookup returned msgForward function: 0x%llx, stopping.", target_addr);
 
                 SymbolContext sc = m_thread.GetStackFrameAtIndex(0)->GetSymbolContext(eSymbolContextEverything);
-                m_run_to_sp.reset(new ThreadPlanStepOut(m_thread, &sc, true, m_stop_others, eVoteNoOpinion, eVoteNoOpinion));
+                m_run_to_sp.reset(new ThreadPlanStepOut (m_thread, 
+                                                         &sc, 
+                                                         true, 
+                                                         m_stop_others, 
+                                                         eVoteNoOpinion, 
+                                                         eVoteNoOpinion,
+                                                         0));
                 m_thread.QueueThreadPlan(m_run_to_sp, false);
                 m_run_to_sp->SetPrivate(true);
                 return false;
