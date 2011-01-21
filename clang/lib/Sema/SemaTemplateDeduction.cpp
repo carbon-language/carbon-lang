@@ -2399,6 +2399,18 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
     ParamType = ParamType.getLocalUnqualifiedType();
   const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>();
   if (ParamRefType) {
+    //   [C++0x] If P is an rvalue reference to a cv-unqualified
+    //   template parameter and the argument is an lvalue, the type
+    //   "lvalue reference to A" is used in place of A for type
+    //   deduction.
+    if (const RValueReferenceType *RValueRef
+                                   = dyn_cast<RValueReferenceType>(ParamType)) {
+      if (!RValueRef->getPointeeType().getQualifiers() &&
+          isa<TemplateTypeParmType>(RValueRef->getPointeeType()) &&
+          Arg->Classify(S.Context).isLValue())
+        ArgType = S.Context.getLValueReferenceType(ArgType);
+    }
+
     //   [...] If P is a reference type, the type referred to by P is used
     //   for type deduction.
     ParamType = ParamRefType->getPointeeType();

@@ -3013,8 +3013,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   // qualifier.
   // This is also the point where rvalue references and lvalue inits no longer
   // go together.
-  if ((!isRValRef && !T1.isConstQualified()) ||
-      (isRValRef && InitCategory.isLValue()))
+  if (!isRValRef && !T1.isConstQualified())
     return ICS;
 
   //       -- If T1 is a function type, then
@@ -3073,8 +3072,17 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
         !S.RequireCompleteType(DeclLoc, T2, 0) && 
         FindConversionForRefInit(S, ICS, DeclType, DeclLoc,
                                  Init, T2, /*AllowRvalues=*/true,
-                                 AllowExplicit))
+                                 AllowExplicit)) {
+      // In the second case, if the reference is an rvalue reference
+      // and the second standard conversion sequence of the
+      // user-defined conversion sequence includes an lvalue-to-rvalue
+      // conversion, the program is ill-formed.
+      if (ICS.isUserDefined() && isRValRef && 
+          ICS.UserDefined.After.First == ICK_Lvalue_To_Rvalue)
+        ICS.setBad(BadConversionSequence::no_conversion, Init, DeclType);
+
       return ICS;
+    }
   }
   
   //       -- Otherwise, a temporary of type "cv1 T1" is created and
@@ -3101,6 +3109,12 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
       (T1->isRecordType() || T2->isRecordType()))
     return ICS;
 
+  // If T1 is reference-related to T2 and the reference is an rvalue
+  // reference, the initializer expression shall not be an lvalue.
+  if (RefRelationship >= Sema::Ref_Related &&
+      isRValRef && Init->Classify(S.Context).isLValue())
+    return ICS;
+
   // C++ [over.ics.ref]p2:
   //   When a parameter of reference type is not bound directly to
   //   an argument expression, the conversion sequence is the one
@@ -3123,6 +3137,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     ICS.UserDefined.After.ReferenceBinding = true;
     ICS.UserDefined.After.RRefBinding = isRValRef;
   }
+
   return ICS;
 }
 
@@ -4005,6 +4020,16 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
       Candidate.FailureKind = ovl_fail_final_conversion_not_exact;
     }
       
+    // C++0x [dcl.init.ref]p5:
+    //    In the second case, if the reference is an rvalue reference and
+    //    the second standard conversion sequence of the user-defined
+    //    conversion sequence includes an lvalue-to-rvalue conversion, the
+    //    program is ill-formed.
+    if (ToType->isRValueReferenceType() && 
+        ICS.Standard.First == ICK_Lvalue_To_Rvalue) {
+      Candidate.Viable = false;
+      Candidate.FailureKind = ovl_fail_bad_final_conversion;
+    }
     break;
 
   case ImplicitConversionSequence::BadConversion:
