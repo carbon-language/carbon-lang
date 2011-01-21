@@ -38,7 +38,11 @@ CC := gcc
 override CC := $(subst -arch ,-arch_,$(CC))
 override CC := $(patsubst -arch_%,,$(CC))
 
-CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
+# Note that although we use -fno-builtin here, the backend may still synthesize
+# calls to runtime functions. Unfortunately, we currently have no way to
+# guarantee that we won't be creating a cycle in the runtime library, aside from
+# explicit runtime testing.
+CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer -fno-builtin
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
