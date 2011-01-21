@@ -532,10 +532,9 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   if (NumPHIValues == 0)
     return 0;
   
-  // We normally only transform phis with a single use, unless we're trying
-  // hard to make jump threading happen.  However, if a PHI has multiple uses
-  // and they are all the same operation, we can fold *all* of the uses into the
-  // PHI.
+  // We normally only transform phis with a single use.  However, if a PHI has
+  // multiple uses and they are all the same operation, we can fold *all* of the
+  // uses into the PHI.
   if (!PN->hasOneUse()) {
     // Walk the use list for the instruction, comparing them to I.
     for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
