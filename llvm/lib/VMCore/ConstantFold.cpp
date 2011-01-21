@@ -511,9 +511,13 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
       return Constant::getNullValue(DestTy);
     return UndefValue::get(DestTy);
   }
+
   // No compile-time operations on this type yet.
   if (V->getType()->isPPC_FP128Ty() || DestTy->isPPC_FP128Ty())
     return 0;
+
+  if (V->isNullValue() && !DestTy->isX86_MMXTy())
+    return Constant::getNullValue(DestTy);
 
   // If the cast operand is a constant expression, there's a few things we can
   // do to try to simplify it.
