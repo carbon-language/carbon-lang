@@ -767,7 +767,8 @@ def err_init_conversion_failed : Error<
   "base class|a vector element}0 of type %1 with an %select{rvalue|lvalue}2 of "
   "type %3">;
 
-def err_lvalue_to_rvalue_ref : Error<"rvalue reference cannot bind to lvalue">;
+def err_lvalue_to_rvalue_ref : Error<"rvalue reference to type %0 cannot bind "
+  "to lvalue of type %1">;
 def err_invalid_initialization : Error<
 "invalid initialization of reference of type %0 from expression of type %1">;
 def err_lvalue_to_rvalue_ambig_ref : Error<"rvalue reference cannot bind to lvalue "

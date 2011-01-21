@@ -4140,6 +4140,7 @@ bool InitializationSequence::Diagnose(Sema &S,
       
   case FK_RValueReferenceBindingToLValue:
     S.Diag(Kind.getLocation(), diag::err_lvalue_to_rvalue_ref)
+      << DestType.getNonReferenceType() << Args[0]->getType()
       << Args[0]->getSourceRange();
     break;
       
