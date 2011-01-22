@@ -1492,13 +1492,12 @@ public:
   bool isNewSpecified() const { return Specifiers & VS_New; }
   SourceLocation getNewLoc() const { return VS_newLoc; }
 
+  static const char *getSpecifierName(Specifier VS);
+
 private:
   unsigned Specifiers;
 
   SourceLocation VS_overrideLoc, VS_finalLoc, VS_newLoc;
-
-  static const char *getSpecifierName(Specifier VS);
-
 };
 
 /// ClassVirtSpecifiers - Represents a C++0x class-virt-specifier-seq.
@@ -1521,12 +1520,12 @@ public:
   bool isExplicitSpecified() const { return Specifiers & CVS_Explicit; }
   SourceLocation getExplicitLoc() const { return CVS_explicitLoc; }
 
+  static const char *getSpecifierName(Specifier CVS);
+
 private:
   unsigned Specifiers;
 
   SourceLocation CVS_finalLoc, CVS_explicitLoc;
-
-  static const char *getSpecifierName(Specifier CVS);
 };
 
 } // end namespace clang

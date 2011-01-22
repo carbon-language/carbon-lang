@@ -390,6 +390,9 @@ def warn_deleted_function_accepted_as_extension: ExtWarn<
   "deleted function definition accepted as a C++0x extension">, InGroup<CXX0x>;
 
 // C++0x override control
+def ext_override_control_keyword : Extension<
+  "'%0' keyword accepted as a C++0x extension">, InGroup<CXX0x>;
+
 def err_duplicate_virt_specifier : Error<
   "class member already marked '%0'">;
 def err_duplicate_class_virt_specifier : Error<

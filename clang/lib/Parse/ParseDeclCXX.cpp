@@ -1272,7 +1272,7 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///         final
 ///         new
 VirtSpecifiers::Specifier Parser::isCXX0XVirtSpecifier() const {
-  if (!getLang().CPlusPlus0x)
+  if (!getLang().CPlusPlus)
     return VirtSpecifiers::VS_None;
 
   if (Tok.is(tok::kw_new))
@@ -1316,6 +1316,9 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
         << PrevSpec
         << FixItHint::CreateRemoval(Tok.getLocation());
 
+    if (!getLang().CPlusPlus0x)
+      Diag(Tok.getLocation(), diag::ext_override_control_keyword)
+        << VirtSpecifiers::getSpecifierName(Specifier);
     ConsumeToken();
   }
 }
@@ -1327,7 +1330,7 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
 ///         final
 ///         explicit
 ClassVirtSpecifiers::Specifier Parser::isCXX0XClassVirtSpecifier() const {
-  if (!getLang().CPlusPlus0x)
+  if (!getLang().CPlusPlus)
     return ClassVirtSpecifiers::CVS_None;
 
   if (Tok.is(tok::kw_explicit))
@@ -1368,6 +1371,11 @@ void Parser::ParseOptionalCXX0XClassVirtSpecifierSeq(ClassVirtSpecifiers &CVS) {
       Diag(Tok.getLocation(), diag::err_duplicate_class_virt_specifier)
        << PrevSpec
        << FixItHint::CreateRemoval(Tok.getLocation());
+
+    if (!getLang().CPlusPlus0x)
+      Diag(Tok.getLocation(), diag::ext_override_control_keyword)
+      << ClassVirtSpecifiers::getSpecifierName(Specifier);
+
     ConsumeToken();
   }
 }
