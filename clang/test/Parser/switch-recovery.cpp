@@ -17,4 +17,18 @@ struct B {
       return;
     }
   }
+
+  void test2() {
+    enum X { Xa, Xb } x;
+
+    switch (x) { // expected-warning {{enumeration value 'Xb' not handled in switch}}
+    case Xa; // expected-error {{expected ':' after 'case'}}
+      break;
+    }
+
+    switch (x) {
+    default; // expected-error {{expected ':' after 'default'}}
+      break;
+    }
+  }
 };

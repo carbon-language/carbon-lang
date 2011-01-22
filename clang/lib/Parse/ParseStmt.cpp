@@ -311,13 +311,19 @@ StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs) {
     ColonProtection.restore();
 
     SourceLocation ColonLoc;
-    if (Tok.isNot(tok::colon)) {
+    if (Tok.is(tok::colon)) {
+      ColonLoc = ConsumeToken();
+
+    // Treat "case blah;" as a typo for "case blah:".
+    } else if (Tok.is(tok::semi)) {
+      ColonLoc = ConsumeToken();
+      Diag(ColonLoc, diag::err_expected_colon_after) << "'case'"
+        << FixItHint::CreateReplacement(ColonLoc, ":");
+    } else {
       SourceLocation ExpectedLoc = PP.getLocForEndOfToken(PrevTokLocation);
       Diag(ExpectedLoc, diag::err_expected_colon_after) << "'case'"
         << FixItHint::CreateInsertion(ExpectedLoc, ":");
       ColonLoc = ExpectedLoc;
-    } else {
-      ColonLoc = ConsumeToken();
     }
     
     StmtResult Case =
@@ -382,13 +388,19 @@ StmtResult Parser::ParseDefaultStatement(ParsedAttributes &attrs) {
   SourceLocation DefaultLoc = ConsumeToken();  // eat the 'default'.
 
   SourceLocation ColonLoc;
-  if (Tok.isNot(tok::colon)) {
+  if (Tok.is(tok::colon)) {
+    ColonLoc = ConsumeToken();
+
+  // Treat "default;" as a typo for "default:".
+  } else if (Tok.is(tok::semi)) {
+    ColonLoc = ConsumeToken();
+    Diag(ColonLoc, diag::err_expected_colon_after) << "'default'"
+      << FixItHint::CreateReplacement(ColonLoc, ":");
+  } else {
     SourceLocation ExpectedLoc = PP.getLocForEndOfToken(PrevTokLocation);
     Diag(ExpectedLoc, diag::err_expected_colon_after) << "'default'"
       << FixItHint::CreateInsertion(ExpectedLoc, ":");
     ColonLoc = ExpectedLoc;
-  } else {
-    ColonLoc = ConsumeToken();
   }
   
   // Diagnose the common error "switch (X) {... default: }", which is not valid.
