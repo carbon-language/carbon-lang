@@ -133,7 +133,7 @@ ASTResultSynthesizer::SynthesizeFunctionResult (FunctionDecl *FunDecl)
     if (!function_decl)
         return false;
     
-    if (log)
+    if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream os(s);
@@ -150,8 +150,8 @@ ASTResultSynthesizer::SynthesizeFunctionResult (FunctionDecl *FunDecl)
     
     bool ret = SynthesizeBodyResult (compound_stmt,
                                      function_decl);
-    
-    if (log)
+
+    if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream os(s);
@@ -160,7 +160,7 @@ ASTResultSynthesizer::SynthesizeFunctionResult (FunctionDecl *FunDecl)
         
         os.flush();
         
-        log->Printf("Transformed function AST:\n%s", s.c_str());
+        log->Printf ("Transformed function AST:\n%s", s.c_str());
     }
     
     return ret;
@@ -179,7 +179,7 @@ ASTResultSynthesizer::SynthesizeObjCMethodResult (ObjCMethodDecl *MethodDecl)
     if (!MethodDecl)
         return false;
     
-    if (log)
+    if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream os(s);

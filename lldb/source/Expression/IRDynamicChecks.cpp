@@ -487,8 +487,8 @@ IRDynamicChecks::runOnModule(llvm::Module &M)
     
     if (!ooc.Instrument())
         return false;
-    
-    if (log)
+
+    if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream oss(s);
@@ -497,7 +497,7 @@ IRDynamicChecks::runOnModule(llvm::Module &M)
         
         oss.flush();
         
-        log->Printf("Module after dynamic checks: \n%s", s.c_str());
+        log->Printf ("Module after dynamic checks: \n%s", s.c_str());
     }
     
     return true;    

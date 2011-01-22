@@ -187,8 +187,8 @@ IRToDWARF::runOnModule(Module &M)
     
     if (!runOnBasicBlock(function->getEntryBlock(), relocator))
         return false;
-    
-    if (log)
+
+    if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream oss(s);
@@ -197,7 +197,7 @@ IRToDWARF::runOnModule(Module &M)
         
         oss.flush();
         
-        log->Printf("Module being translated to DWARF: \n%s", s.c_str());
+        log->Printf ("Module being translated to DWARF: \n%s", s.c_str());
     }
     
     // TEMPORARY: Fail in order to force execution in the target.
