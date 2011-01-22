@@ -341,7 +341,9 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     DestPointee = DestPointer->getPointeeType();
   } else if ((DestReference = DestType->getAs<ReferenceType>())) {
     DestPointee = DestReference->getPointeeType();
-    VK = isa<LValueReferenceType>(DestReference) ? VK_LValue : VK_RValue;
+    VK = isa<LValueReferenceType>(DestReference) ? VK_LValue 
+       : isa<RValueReferenceType>(DestReference) ? VK_XValue
+       : VK_RValue;
   } else {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ref_or_ptr)
       << OrigDestType << DestRange;
@@ -364,10 +366,8 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   // C++0x 5.2.7p2: If T is a pointer type, v shall be an rvalue of a pointer to
   //   complete class type, [...]. If T is an lvalue reference type, v shall be
-  //   an lvalue of a complete class type, [...]. If T is an rvalue reference
-  //   type, v shall be an expression having a complete effective class type,
-  //   [...]
-
+  //   an lvalue of a complete class type, [...]. If T is an rvalue reference 
+  //   type, v shall be an expression having a complete class type, [...]
   QualType SrcType = Self.Context.getCanonicalType(OrigSrcType);
   QualType SrcPointee;
   if (DestPointer) {
@@ -578,8 +578,9 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   if (tcr != TC_NotApplicable)
     return tcr;
 
-  // N2844 5.2.9p3: An lvalue of type "cv1 T1" can be cast to type "rvalue
-  //   reference to cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
+  // C++0x [expr.static.cast]p3: 
+  //   A glvalue of type "cv1 T1" can be cast to type "rvalue reference to cv2
+  //   T2" if "cv2 T2" is reference-compatible with "cv1 T1".
   tcr = TryLValueToRValueCast(Self, SrcExpr, DestType, msg);
   if (tcr != TC_NotApplicable) {
     Kind = CK_NoOp;
@@ -695,13 +696,14 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
 TryCastResult
 TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                       unsigned &msg) {
-  // N2844 5.2.9p3: An lvalue of type "cv1 T1" can be cast to type "rvalue
-  //   reference to cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
+  // C++0x [expr.static.cast]p3:
+  //   A glvalue of type "cv1 T1" can be cast to type "rvalue reference to 
+  //   cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
   const RValueReferenceType *R = DestType->getAs<RValueReferenceType>();
   if (!R)
     return TC_NotApplicable;
 
-  if (!SrcExpr->isLValue())
+  if (!SrcExpr->isGLValue())
     return TC_NotApplicable;
 
   // Because we try the reference downcast before this function, from now on
@@ -710,15 +712,13 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   bool DerivedToBase;
   bool ObjCConversion;
   if (Self.CompareReferenceRelationship(SrcExpr->getLocStart(),
-                                        SrcExpr->getType(), R->getPointeeType(),
+                                        R->getPointeeType(), SrcExpr->getType(),
                                         DerivedToBase, ObjCConversion) <
         Sema::Ref_Compatible_With_Added_Qualification) {
     msg = diag::err_bad_lvalue_to_rvalue_cast;
     return TC_Failed;
   }
 
-  // FIXME: We should probably have an AST node for lvalue-to-rvalue 
-  // conversions.
   return TC_Success;
 }
 
