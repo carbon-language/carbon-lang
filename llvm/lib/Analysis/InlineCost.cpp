@@ -189,6 +189,11 @@ unsigned CodeMetrics::CountBonusForConstant(Value *V) {
     }
   }
   
+  // FIXME: The only reason we're applying the bonus once is while it's great
+  // to devirtualize calls the magnitude of the bonus x number of call sites
+  // can lead to a huge code explosion when we prefer to inline 1000 instruction
+  // functions that have 10 call sites. This should be made a function of the
+  // estimated inline penalty/benefit + the indirect call bonus.
   if (indirectCallBonus) Bonus += InlineConstants::IndirectCallBonus;
   
   return Bonus;
