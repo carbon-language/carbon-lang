@@ -2037,10 +2037,13 @@ Process::ControlPrivateStateThread (uint32_t signal)
             signal == eBroadcastInternalStateControlResume);
 
     if (log)
-        log->Printf ("Process::%s ( ) - signal: %d", __FUNCTION__, signal);
+        log->Printf ("Process::%s (signal = %d)", __FUNCTION__, signal);
 
-    // Signal the private state thread
-    if (m_private_state_thread != LLDB_INVALID_HOST_THREAD)
+    // Signal the private state thread. First we should copy this is case the
+    // thread starts exiting since the private state thread will NULL this out
+    // when it exits
+    const lldb::thread_t private_state_thread = m_private_state_thread;
+    if (private_state_thread != LLDB_INVALID_HOST_THREAD)
     {
         TimeValue timeout_time;
         bool timed_out;
@@ -2055,10 +2058,10 @@ Process::ControlPrivateStateThread (uint32_t signal)
         if (signal == eBroadcastInternalStateControlStop)
         {
             if (timed_out)
-                Host::ThreadCancel (m_private_state_thread, NULL);
+                Host::ThreadCancel (private_state_thread, NULL);
 
             thread_result_t result = NULL;
-            Host::ThreadJoin (m_private_state_thread, &result, NULL);
+            Host::ThreadJoin (private_state_thread, &result, NULL);
             m_private_state_thread = LLDB_INVALID_HOST_THREAD;
         }
     }
