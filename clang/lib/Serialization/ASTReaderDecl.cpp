@@ -800,6 +800,9 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.DeclaredCopyConstructor = Record[Idx++];
   Data.DeclaredCopyAssignment = Record[Idx++];
   Data.DeclaredDestructor = Record[Idx++];
+  Data.IsMarkedFinal = Record[Idx++];
+  Data.IsMarkedExplicit = Record[Idx++];
+
   Data.NumBases = Record[Idx++];
   if (Data.NumBases)
     Data.Bases = Reader.GetCXXBaseSpecifiersOffset(Record[Idx++]);
