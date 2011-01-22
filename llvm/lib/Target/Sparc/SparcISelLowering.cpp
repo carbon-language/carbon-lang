@@ -33,6 +33,19 @@ using namespace llvm;
 // Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
+static bool CC_Sparc_Assign_SRet(unsigned &ValNo, MVT &ValVT,
+                                 MVT &LocVT, CCValAssign::LocInfo &LocInfo,
+                                 ISD::ArgFlagsTy &ArgFlags, CCState &State)
+{
+  assert (ArgFlags.isSRet());
+
+  //Assign SRet argument
+  State.addLoc(CCValAssign::getCustomMem(ValNo, ValVT,
+                                         0,
+                                         LocVT, LocInfo));
+  return true;
+}
+
 static bool CC_Sparc_Assign_f64(unsigned &ValNo, MVT &ValVT,
                                 MVT &LocVT, CCValAssign::LocInfo &LocInfo,
                                 ISD::ArgFlagsTy &ArgFlags, CCState &State)
@@ -70,6 +83,8 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
                                  const SmallVectorImpl<SDValue> &OutVals,
                                  DebugLoc dl, SelectionDAG &DAG) const {
 
+  MachineFunction &MF = DAG.getMachineFunction();
+
   // CCValAssign - represent the assignment of the return value to locations.
   SmallVector<CCValAssign, 16> RVLocs;
 
@@ -82,10 +97,10 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
 
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
+  if (MF.getRegInfo().liveout_empty()) {
     for (unsigned i = 0; i != RVLocs.size(); ++i)
       if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
+        MF.getRegInfo().addLiveOut(RVLocs[i].getLocReg());
   }
 
   SDValue Flag;
@@ -100,6 +115,18 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
 
     // Guarantee that all emitted copies are stuck together with flags.
     Flag = Chain.getValue(1);
+  }
+  // If the function returns a struct, copy the SRetReturnReg to I0
+  if (MF.getFunction()->hasStructRetAttr()) {
+    SparcMachineFunctionInfo *SFI = MF.getInfo<SparcMachineFunctionInfo>();
+    unsigned Reg = SFI->getSRetReturnReg();
+    if (!Reg)
+      llvm_unreachable("sret virtual register not created in the entry block");
+    SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
+    Chain = DAG.getCopyToReg(Chain, dl, SP::I0, Val, Flag);
+    Flag = Chain.getValue(1);
+    if (MF.getRegInfo().liveout_empty())
+      MF.getRegInfo().addLiveOut(SP::I0);
   }
 
   if (Flag.getNode())
@@ -133,6 +160,17 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
+
+    if (i == 0  && Ins[i].Flags.isSRet()) {
+      //Get SRet from [%fp+64]
+      int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, 64, true);
+      SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+      SDValue Arg = DAG.getLoad(MVT::i32, dl, Chain, FIPtr,
+                                MachinePointerInfo(),
+                                false, false, 0);
+      InVals.push_back(Arg);
+      continue;
+    }
 
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
@@ -242,6 +280,18 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
       Load = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), Load);
     }
     InVals.push_back(Load);
+  }
+
+  if (MF.getFunction()->hasStructRetAttr()) {
+    //Copy the SRet Argument to SRetReturnReg
+    SparcMachineFunctionInfo *SFI = MF.getInfo<SparcMachineFunctionInfo>();
+    unsigned Reg = SFI->getSRetReturnReg();
+    if (!Reg) {
+      Reg = MF.getRegInfo().createVirtualRegister(&SP::IntRegsRegClass);
+      SFI->setSRetReturnReg(Reg);
+    }
+    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), dl, Reg, InVals[0]);
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Chain);
   }
 
   // Store remaining ArgRegs to the stack if this is a varargs function.
@@ -372,6 +422,18 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     case CCValAssign::BCvt:
       Arg = DAG.getNode(ISD::BITCAST, dl, VA.getLocVT(), Arg);
       break;
+    }
+
+    if (Flags.isSRet()) {
+      assert(VA.needsCustom());
+      // store SRet argument in %sp+64
+      SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
+      SDValue PtrOff = DAG.getIntPtrConstant(64);
+      PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
+                                         MachinePointerInfo(),
+                                         false, false, 0));
+      continue;
     }
 
     if (VA.needsCustom()) {
