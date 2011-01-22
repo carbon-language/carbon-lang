@@ -776,6 +776,7 @@ static std::string getEnumNameForToken(StringRef Str) {
     case '%': Res += "_PCT_"; break;
     case ':': Res += "_COLON_"; break;
     case '!': Res += "_EXCLAIM_"; break;
+    case '.': Res += "_DOT_"; break;
     default:
       if (isalnum(*it))
         Res += *it;
