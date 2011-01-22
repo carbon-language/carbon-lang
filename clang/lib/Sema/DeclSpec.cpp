@@ -669,8 +669,8 @@ void UnqualifiedId::setOperatorFunctionId(SourceLocation OperatorLoc,
   }
 }
 
-bool VirtSpecifiers::SetVirtSpecifier(VirtSpecifier VS, SourceLocation Loc,
-                                      const char *&PrevSpec) {
+bool VirtSpecifiers::SetSpecifier(VirtSpecifier VS, SourceLocation Loc,
+                                  const char *&PrevSpec) {
   if (Specifiers & VS) {
     PrevSpec = getSpecifierName(VS);
     return true;
@@ -684,6 +684,7 @@ bool VirtSpecifiers::SetVirtSpecifier(VirtSpecifier VS, SourceLocation Loc,
   case VS_Final:    VS_finalLoc = Loc; break;
   case VS_New:      VS_newLoc = Loc; break;
   }
+
   return false;
 }
 
@@ -695,3 +696,31 @@ const char *VirtSpecifiers::getSpecifierName(VirtSpecifier VS) {
   case VS_New: return "new";
   }
 }
+
+bool ClassVirtSpecifiers::SetSpecifier(ClassVirtSpecifier CVS, 
+                                       SourceLocation Loc,
+                                       const char *&PrevSpec) {
+  if (Specifiers & CVS) {
+    PrevSpec = getSpecifierName(CVS);
+    return true;
+  }
+
+  Specifiers |= CVS;
+
+  switch (CVS) {
+  default: assert(0 && "Unknown specifier!");
+  case CVS_Final: CVS_finalLoc = Loc; break;
+  case CVS_Explicit: CVS_explicitLoc = Loc; break;
+  }
+
+  return false;
+}
+
+const char *ClassVirtSpecifiers::getSpecifierName(ClassVirtSpecifier CVS) {
+  switch (CVS) {
+  default: assert(0 && "Unknown specifier");
+  case CVS_Final: return "final";
+  case CVS_Explicit: return "explicit";
+  }
+}
+

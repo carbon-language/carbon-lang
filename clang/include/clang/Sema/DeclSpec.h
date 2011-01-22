@@ -1480,8 +1480,8 @@ public:
 
   VirtSpecifiers() : Specifiers(0) { }
 
-  bool SetVirtSpecifier(VirtSpecifier VS, SourceLocation Loc, 
-                        const char *&PrevSpec);
+  bool SetSpecifier(VirtSpecifier VS, SourceLocation Loc,
+                    const char *&PrevSpec);
 
   bool isOverrideSpecified() const { return Specifiers & VS_Override; }
   SourceLocation getOverrideLoc() const { return VS_overrideLoc; }
@@ -1511,6 +1511,9 @@ public:
   };
 
   ClassVirtSpecifiers() : Specifiers(0) { }
+
+  bool SetSpecifier(ClassVirtSpecifier CVS, SourceLocation Loc,
+                    const char *&PrevSpec);
 
   bool isFinalSpecified() const { return Specifiers & CVS_Final; }
   SourceLocation getFinalLoc() const { return CVS_finalLoc; }

@@ -1308,7 +1308,7 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
     // C++ [class.mem]p8:
     //   A virt-specifier-seq shall contain at most one of each virt-specifier.
     const char* PrevSpec = 0;
-    if (VS.SetVirtSpecifier(Specifier, Tok.getLocation(), PrevSpec))
+    if (VS.SetSpecifier(Specifier, Tok.getLocation(), PrevSpec))
       Diag(Tok.getLocation(), diag::err_duplicate_virt_specifier)
         << PrevSpec
         << FixItHint::CreateRemoval(Tok.getLocation());
