@@ -66,9 +66,6 @@ using namespace lldb_private;
 #define ARMv8     (1u << 8)
 #define ARMvAll   (0xffffffffu)
 
-typedef bool (*EmulateCallback) (EmulateInstructionARM *emulator);
-    
-
 typedef enum ARMEncoding
 {
     eEncodingA1,
@@ -83,7 +80,9 @@ typedef enum ARMEncoding
     eEncodingT5,
 } ARMEncoding;
 
-
+// Pass along (ARMEncoding)encoding as the callback data.
+typedef bool (*EmulateCallback) (EmulateInstructionARM *emulator, ARMEncoding encoding);
+    
 typedef struct ARMOpcode
 {
     uint32_t mask;
@@ -95,7 +94,7 @@ typedef struct ARMOpcode
 };
 
 static bool 
-EmulateARMPushEncodingA1 (EmulateInstructionARM *emulator)
+EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -135,7 +134,19 @@ EmulateARMPushEncodingA1 (EmulateInstructionARM *emulator)
         const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
-        const uint32_t registers = EmulateInstruction::UnsignedBits (opcode, 15, 0);
+        uint32_t registers = 0;
+        switch (encoding) {
+        case eEncodingA1:
+            registers = EmulateInstruction::UnsignedBits (opcode, 15, 0);
+            break;
+        case eEncodingA2:
+            const uint32_t Rt = EmulateInstruction::UnsignedBits (opcode, 15, 12);
+            // if t == 13 then UNPREDICTABLE
+            if (Rt == dwarf_sp)
+                return false;
+            registers = (1u << Rt);
+            break;
+        }
         addr_t sp_offset = addr_byte_size * EmulateInstruction::BitCount (registers);
         addr_t addr = sp - sp_offset;
         uint32_t i;
@@ -159,7 +170,7 @@ EmulateARMPushEncodingA1 (EmulateInstructionARM *emulator)
         if (EmulateInstruction::BitIsSet (registers, 1u << 15))
         {
             context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
-            context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
+            context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
             const uint32_t pc = emulator->ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
             if (!success)
                 return false;
@@ -180,7 +191,8 @@ EmulateARMPushEncodingA1 (EmulateInstructionARM *emulator)
 
 static ARMOpcode g_arm_opcodes[] =
 {
-    { 0x0fff0000, 0x092d0000, ARMvAll, eEncodingA1, "PUSH<c> <registers>", EmulateARMPushEncodingA1 }
+    { 0x0fff0000, 0x092d0000, ARMvAll, eEncodingA1, "PUSH<c> <registers>", EmulateARMPushEncoding },
+    { 0x0fff0fff, 0x052d0004, ARMvAll, eEncodingA2, "PUSH<c> <registers>", EmulateARMPushEncoding }
 };
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
