@@ -89,8 +89,8 @@ typedef struct ARMOpcode
     uint32_t value;
     uint32_t variants;
     ARMEncoding encoding;
-    const char *name;
     EmulateCallback callback;
+    const char *name;
 };
 
 static bool 
@@ -191,8 +191,10 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 static ARMOpcode g_arm_opcodes[] =
 {
-    { 0x0fff0000, 0x092d0000, ARMvAll, eEncodingA1, "PUSH<c> <registers>", EmulateARMPushEncoding },
-    { 0x0fff0fff, 0x052d0004, ARMvAll, eEncodingA2, "PUSH<c> <registers>", EmulateARMPushEncoding }
+    { 0x0fff0000, 0x092d0000, ARMvAll, eEncodingA1, EmulateARMPushEncoding,
+      "PUSH<c> <registers> ; <registers> contains more than one register" },
+    { 0x0fff0fff, 0x052d0004, ARMvAll, eEncodingA2, EmulateARMPushEncoding,
+      "PUSH<c> <registers> ; <registers> contains one register, <Rt>" }
 };
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
