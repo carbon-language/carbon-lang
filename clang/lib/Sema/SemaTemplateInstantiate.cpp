@@ -1640,6 +1640,9 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   
   Instantiation->setTagKind(Pattern->getTagKind());
 
+  Instantiation->setIsMarkedFinal(Pattern->isMarkedFinal());
+  Instantiation->setIsMarkedExplicit(Pattern->isMarkedExplicit());
+
   // Do substitution on the base class specifiers.
   if (SubstBaseSpecifiers(Instantiation, Pattern, TemplateArgs))
     Invalid = true;
