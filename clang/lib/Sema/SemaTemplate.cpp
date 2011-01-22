@@ -2470,7 +2470,6 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   TemplateParameterList::iterator Param = Params->begin(),
                                ParamEnd = Params->end();
   unsigned ArgIdx = 0;
-  LocalInstantiationScope InstScope(*this, true);
   while (Param != ParamEnd) {
     if (ArgIdx > NumArgs && PartialTemplateArgs)
       break;
