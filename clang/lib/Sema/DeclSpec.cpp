@@ -669,7 +669,7 @@ void UnqualifiedId::setOperatorFunctionId(SourceLocation OperatorLoc,
   }
 }
 
-bool VirtSpecifiers::SetSpecifier(VirtSpecifier VS, SourceLocation Loc,
+bool VirtSpecifiers::SetSpecifier(Specifier VS, SourceLocation Loc,
                                   const char *&PrevSpec) {
   if (Specifiers & VS) {
     PrevSpec = getSpecifierName(VS);
@@ -688,7 +688,7 @@ bool VirtSpecifiers::SetSpecifier(VirtSpecifier VS, SourceLocation Loc,
   return false;
 }
 
-const char *VirtSpecifiers::getSpecifierName(VirtSpecifier VS) {
+const char *VirtSpecifiers::getSpecifierName(Specifier VS) {
   switch (VS) {
   default: assert(0 && "Unknown specifier");
   case VS_Override: return "override";
@@ -697,8 +697,7 @@ const char *VirtSpecifiers::getSpecifierName(VirtSpecifier VS) {
   }
 }
 
-bool ClassVirtSpecifiers::SetSpecifier(ClassVirtSpecifier CVS, 
-                                       SourceLocation Loc,
+bool ClassVirtSpecifiers::SetSpecifier(Specifier CVS, SourceLocation Loc,
                                        const char *&PrevSpec) {
   if (Specifiers & CVS) {
     PrevSpec = getSpecifierName(CVS);
@@ -716,7 +715,7 @@ bool ClassVirtSpecifiers::SetSpecifier(ClassVirtSpecifier CVS,
   return false;
 }
 
-const char *ClassVirtSpecifiers::getSpecifierName(ClassVirtSpecifier CVS) {
+const char *ClassVirtSpecifiers::getSpecifierName(Specifier CVS) {
   switch (CVS) {
   default: assert(0 && "Unknown specifier");
   case CVS_Final: return "final";

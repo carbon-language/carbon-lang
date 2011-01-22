@@ -1471,7 +1471,7 @@ struct FieldDeclarator {
 /// VirtSpecifiers - Represents a C++0x virt-specifier-seq.
 class VirtSpecifiers {
 public:
-  enum VirtSpecifier {
+  enum Specifier {
     VS_None = 0,
     VS_Override = 1,
     VS_Final = 2,
@@ -1480,7 +1480,7 @@ public:
 
   VirtSpecifiers() : Specifiers(0) { }
 
-  bool SetSpecifier(VirtSpecifier VS, SourceLocation Loc,
+  bool SetSpecifier(Specifier VS, SourceLocation Loc,
                     const char *&PrevSpec);
 
   bool isOverrideSpecified() const { return Specifiers & VS_Override; }
@@ -1497,14 +1497,14 @@ private:
 
   SourceLocation VS_overrideLoc, VS_finalLoc, VS_newLoc;
 
-  static const char *getSpecifierName(VirtSpecifier VS);
+  static const char *getSpecifierName(Specifier VS);
 
 };
 
 /// ClassVirtSpecifiers - Represents a C++0x class-virt-specifier-seq.
 class ClassVirtSpecifiers {
 public:
-  enum ClassVirtSpecifier {
+  enum Specifier {
     CVS_None = 0,
     CVS_Final = 1,
     CVS_Explicit = 2
@@ -1512,7 +1512,7 @@ public:
 
   ClassVirtSpecifiers() : Specifiers(0) { }
 
-  bool SetSpecifier(ClassVirtSpecifier CVS, SourceLocation Loc,
+  bool SetSpecifier(Specifier CVS, SourceLocation Loc,
                     const char *&PrevSpec);
 
   bool isFinalSpecified() const { return Specifiers & CVS_Final; }
@@ -1526,7 +1526,7 @@ private:
 
   SourceLocation CVS_finalLoc, CVS_explicitLoc;
 
-  static const char *getSpecifierName(ClassVirtSpecifier CVS);
+  static const char *getSpecifierName(Specifier CVS);
 };
 
 } // end namespace clang

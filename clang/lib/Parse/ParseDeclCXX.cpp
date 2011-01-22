@@ -807,9 +807,9 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
   // There are four options here.  If we have 'struct foo;', then this
   // is either a forward declaration or a friend declaration, which
-  // have to be treated differently.  If we have 'struct foo {...' or
-  // 'struct foo :...' then this is a definition. Otherwise we have
-  // something like 'struct foo xyz', a reference.
+  // have to be treated differently.  If we have 'struct foo {...',
+  // 'struct foo :...' or 'struct foo <class-virt-specifier>' then this is a
+  // definition. Otherwise we have something like 'struct foo xyz', a reference.
   // However, in some contexts, things look like declarations but are just
   // references, e.g.
   // new struct s;
@@ -819,7 +819,9 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   Sema::TagUseKind TUK;
   if (SuppressDeclarations)
     TUK = Sema::TUK_Reference;
-  else if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon))){
+  else if (Tok.is(tok::l_brace) || 
+           (getLang().CPlusPlus && Tok.is(tok::colon)) ||
+           isCXX0XClassVirtSpecifier() != ClassVirtSpecifiers::CVS_None) {
     if (DS.isFriendSpecified()) {
       // C++ [class.friend]p2:
       //   A class shall not be defined in a friend declaration.
@@ -1004,7 +1006,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // If there is a body, parse it and inform the actions module.
   if (TUK == Sema::TUK_Definition) {
     assert(Tok.is(tok::l_brace) ||
-           (getLang().CPlusPlus && Tok.is(tok::colon)));
+           (getLang().CPlusPlus && Tok.is(tok::colon)) ||
+           isCXX0XClassVirtSpecifier() != ClassVirtSpecifiers::CVS_None);
     if (getLang().CPlusPlus)
       ParseCXXMemberSpecification(StartLoc, TagType, TagOrTempResult.get());
     else
@@ -1268,7 +1271,10 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///         override
 ///         final
 ///         new
-VirtSpecifiers::VirtSpecifier Parser::isCXX0XVirtSpecifier() const {
+VirtSpecifiers::Specifier Parser::isCXX0XVirtSpecifier() const {
+  if (!getLang().CPlusPlus0x)
+    return VirtSpecifiers::VS_None;
+
   if (Tok.is(tok::kw_new))
     return VirtSpecifiers::VS_New;
 
@@ -1297,22 +1303,71 @@ VirtSpecifiers::VirtSpecifier Parser::isCXX0XVirtSpecifier() const {
 ///         virt-specifier
 ///         virt-specifier-seq virt-specifier
 void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
-  if (!getLang().CPlusPlus0x)
-    return;
-
   while (true) {
-    VirtSpecifiers::VirtSpecifier Specifier = isCXX0XVirtSpecifier();
+    VirtSpecifiers::Specifier Specifier = isCXX0XVirtSpecifier();
     if (Specifier == VirtSpecifiers::VS_None)
       return;
 
     // C++ [class.mem]p8:
     //   A virt-specifier-seq shall contain at most one of each virt-specifier.
-    const char* PrevSpec = 0;
+    const char *PrevSpec = 0;
     if (VS.SetSpecifier(Specifier, Tok.getLocation(), PrevSpec))
       Diag(Tok.getLocation(), diag::err_duplicate_virt_specifier)
         << PrevSpec
         << FixItHint::CreateRemoval(Tok.getLocation());
 
+    ConsumeToken();
+  }
+}
+
+/// isCXX0XClassVirtSpecifier - Determine whether the next token is a C++0x
+/// class-virt-specifier.
+///
+///       class-virt-specifier:
+///         final
+///         explicit
+ClassVirtSpecifiers::Specifier Parser::isCXX0XClassVirtSpecifier() const {
+  if (!getLang().CPlusPlus0x)
+    return ClassVirtSpecifiers::CVS_None;
+
+  if (Tok.is(tok::kw_explicit))
+    return ClassVirtSpecifiers::CVS_Explicit;
+
+  if (Tok.is(tok::identifier)) {
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+  
+    // Initialize the contextual keywords.
+    if (!Ident_final) {
+      Ident_final = &PP.getIdentifierTable().get("final");
+      Ident_override = &PP.getIdentifierTable().get("override");
+    }
+
+    if (II == Ident_final)
+      return ClassVirtSpecifiers::CVS_Final;
+  }
+
+  return ClassVirtSpecifiers::CVS_None;
+}
+
+/// ParseOptionalCXX0XClassVirtSpecifierSeq - Parse a class-virt-specifier-seq.
+///
+///       class-virt-specifier-seq:
+///         class-virt-specifier
+///         class-virt-specifier-seq class-virt-specifier
+void Parser::ParseOptionalCXX0XClassVirtSpecifierSeq(ClassVirtSpecifiers &CVS) {
+  while (true) {
+    ClassVirtSpecifiers::Specifier Specifier = isCXX0XClassVirtSpecifier();
+    if (Specifier == ClassVirtSpecifiers::CVS_None)
+      return;
+
+    // C++ [class]p1:
+    // A class-virt-specifier-seq shall contain at most one of each 
+    // class-virt-specifier.
+    const char *PrevSpec = 0;
+    if (CVS.SetSpecifier(Specifier, Tok.getLocation(), PrevSpec))
+      Diag(Tok.getLocation(), diag::err_duplicate_class_virt_specifier)
+       << PrevSpec
+       << FixItHint::CreateRemoval(Tok.getLocation());
     ConsumeToken();
   }
 }
@@ -1696,6 +1751,9 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   if (TagDecl)
     Actions.ActOnTagStartDefinition(getCurScope(), TagDecl);
+
+  ClassVirtSpecifiers CVS;
+  ParseOptionalCXX0XClassVirtSpecifierSeq(CVS);
 
   if (Tok.is(tok::colon)) {
     ParseBaseClause(TagDecl);

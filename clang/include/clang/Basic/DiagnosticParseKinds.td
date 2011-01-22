@@ -392,6 +392,8 @@ def warn_deleted_function_accepted_as_extension: ExtWarn<
 // C++0x override control
 def err_duplicate_virt_specifier : Error<
   "class member already marked '%0'">;
+def err_duplicate_class_virt_specifier : Error<
+  "class already marked '%0'">;
 
 def err_scoped_enum_missing_identifier : Error<
   "scoped enumeration requires a name">;
