@@ -81,7 +81,7 @@ public:
     // wait indefinitely.
     size_t
     WaitForPacket (StringExtractorGDBRemote &response,
-                   lldb_private::TimeValue* timeout);
+                   const lldb_private::TimeValue* timeout);
 
     char
     GetAck (uint32_t timeout_seconds);
@@ -222,7 +222,10 @@ public:
     {
         return m_public_is_running.GetValue();
     }
-    
+
+    bool
+    WaitForNotRunning (const lldb_private::TimeValue *timeout_ptr);
+
     bool
     GetHostInfo (uint32_t timeout_seconds);
 
@@ -256,7 +259,10 @@ protected:
 
     size_t
     WaitForPacketNoLock (StringExtractorGDBRemote &response, 
-                         lldb_private::TimeValue* timeout_time_ptr);
+                         const lldb_private::TimeValue* timeout_ptr);
+
+    bool
+    WaitForNotRunningPrivate (const lldb_private::TimeValue *timeout_ptr);
 
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunication can see and modify these

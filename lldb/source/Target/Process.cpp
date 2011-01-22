@@ -452,17 +452,22 @@ Process::WaitForStateChangedEventsPrivate (const TimeValue *timeout, EventSP &ev
         log->Printf ("Process::%s (timeout = %p, event_sp)...", __FUNCTION__, timeout);
 
     StateType state = eStateInvalid;
-    if (m_private_state_listener.WaitForEventForBroadcasterWithType(timeout,
-                                                                    &m_private_state_broadcaster,
-                                                                    eBroadcastBitStateChanged,
-                                                                    event_sp))
+    if (m_private_state_listener.WaitForEventForBroadcasterWithType (timeout,
+                                                                     &m_private_state_broadcaster,
+                                                                     eBroadcastBitStateChanged,
+                                                                     event_sp))
         state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
 
     // This is a bit of a hack, but when we wait here we could very well return
     // to the command-line, and that could disable the log, which would render the
     // log we got above invalid.
     if (log)
-        log->Printf ("Process::%s (timeout = %p, event_sp) => %s", __FUNCTION__, timeout, StateAsCString(state));
+    {
+        if (state == eStateInvalid)
+            log->Printf ("Process::%s (timeout = %p, event_sp) => TIMEOUT", __FUNCTION__, timeout);
+        else
+            log->Printf ("Process::%s (timeout = %p, event_sp) => %s", __FUNCTION__, timeout, StateAsCString(state));
+    }
     return state;
 }
 
@@ -547,21 +552,23 @@ Process::GetExitDescription ()
     return NULL;
 }
 
-void
+bool
 Process::SetExitStatus (int status, const char *cstr)
 {
-    if (m_private_state.GetValue() != eStateExited)
-    {
-        m_exit_status = status;
-        if (cstr)
-            m_exit_string = cstr;
-        else
-            m_exit_string.clear();
+    // We were already in the exited state
+    if (m_private_state.GetValue() == eStateExited)
+        return false;
+    
+    m_exit_status = status;
+    if (cstr)
+        m_exit_string = cstr;
+    else
+        m_exit_string.clear();
 
-        DidExit ();
+    DidExit ();
 
-        SetPrivateState (eStateExited);
-    }
+    SetPrivateState (eStateExited);
+    return true;
 }
 
 // This static callback can be used to watch for local child processes on
@@ -1425,11 +1432,17 @@ Process::WaitForProcessStopPrivate (const TimeValue *timeout, EventSP &event_sp)
     // call DidLaunch:
     while (1)
     {
-        // FIXME: Might want to put a timeout in here:
-        state = WaitForStateChangedEventsPrivate (NULL, event_sp);
-        if (state == eStateStopped || state == eStateCrashed || state == eStateExited)
+        event_sp.reset();
+        state = WaitForStateChangedEventsPrivate (timeout, event_sp);
+
+        if (StateIsStoppedState(state))
             break;
-        else
+
+        // If state is invalid, then we timed out
+        if (state == eStateInvalid)
+            break;
+
+        if (event_sp)
             HandlePrivateEvent (event_sp);
     }
     return state;
@@ -1744,7 +1757,7 @@ Process::Halt ()
                 // Wait for 2 seconds for the process to stop.
                 TimeValue timeout_time;
                 timeout_time = TimeValue::Now();
-                timeout_time.OffsetWithSeconds(2);
+                timeout_time.OffsetWithSeconds(1);
                 StateType state = WaitForStateChangedEventsPrivate (&timeout_time, event_sp);
                 
                 if (state == eStateInvalid)

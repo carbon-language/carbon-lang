@@ -511,6 +511,18 @@ GDBRemoteCommunication::SendInterrupt
     return false;
 }
 
+bool
+GDBRemoteCommunication::WaitForNotRunning (const TimeValue *timeout_ptr)
+{
+    return m_public_is_running.WaitForValueEqualTo (false, timeout_ptr, NULL);
+}
+
+bool
+GDBRemoteCommunication::WaitForNotRunningPrivate (const TimeValue *timeout_ptr)
+{
+    return m_private_is_running.WaitForValueEqualTo (false, timeout_ptr, NULL);
+}
+
 size_t
 GDBRemoteCommunication::WaitForPacket (StringExtractorGDBRemote &response, uint32_t timeout_seconds)
 {
@@ -522,14 +534,14 @@ GDBRemoteCommunication::WaitForPacket (StringExtractorGDBRemote &response, uint3
 }
 
 size_t
-GDBRemoteCommunication::WaitForPacket (StringExtractorGDBRemote &response, TimeValue* timeout_time_ptr)
+GDBRemoteCommunication::WaitForPacket (StringExtractorGDBRemote &response, const TimeValue* timeout_time_ptr)
 {
     Mutex::Locker locker(m_sequence_mutex);
     return WaitForPacketNoLock (response, timeout_time_ptr);
 }
 
 size_t
-GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &response, TimeValue* timeout_time_ptr)
+GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &response, const TimeValue* timeout_time_ptr)
 {
     bool checksum_error = false;
     response.Clear ();

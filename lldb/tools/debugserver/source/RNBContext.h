@@ -95,6 +95,16 @@ public:
     const char *    LaunchStatusAsString (std::string& s);
     nub_launch_flavor_t LaunchFlavor () const { return m_launch_flavor; }
     void            SetLaunchFlavor (nub_launch_flavor_t flavor) { m_launch_flavor = flavor; }
+    
+    const char *    GetWorkingDirectory () const 
+                    { 
+                        if (!m_working_directory.empty())
+                            return m_working_directory.c_str();
+                        return NULL;
+                    }
+
+    bool            SetWorkingDirectory (const char *path);
+                        
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from RNBContext can see and modify these
@@ -107,6 +117,7 @@ protected:
     DNBError        m_launch_status;    // This holds the status from the last launch attempt.
     std::vector<std::string> m_arg_vec;
     std::vector<std::string> m_env_vec; // This will be unparsed - entries FOO=value
+    std::string     m_working_directory;
 
     void    StartProcessStatusThread();
     void    StopProcessStatusThread();

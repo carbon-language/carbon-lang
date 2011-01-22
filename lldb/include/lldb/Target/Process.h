@@ -1260,7 +1260,7 @@ public:
     ///
     /// @see lldb::StateType
     //------------------------------------------------------------------
-    virtual void
+    virtual bool
     SetExitStatus (int exit_status, const char *cstr);
 
     //------------------------------------------------------------------

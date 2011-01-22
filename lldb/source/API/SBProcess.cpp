@@ -421,11 +421,12 @@ SBProcess::Continue ()
 SBError
 SBProcess::Destroy ()
 {
-    Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-
     SBError sb_error;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_error.SetError(m_opaque_sp->Destroy());
+    }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
 
@@ -434,7 +435,10 @@ SBProcess::Destroy ()
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::Destroy () => SBError (%p): %s", m_opaque_sp.get(), sb_error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::Destroy () => SBError (%p): %s", 
+                     m_opaque_sp.get(), 
+                     sb_error.get(), 
+                     sstr.GetData());
     }
 
     return sb_error;

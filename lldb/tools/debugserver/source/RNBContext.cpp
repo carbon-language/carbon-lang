@@ -12,11 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "RNBContext.h"
+
+#include <sys/stat.h>
+#include <sstream>
+
 #include "RNBRemote.h"
 #include "DNB.h"
 #include "DNBLog.h"
 #include "CFString.h"
-#include <sstream>
+
 
 //----------------------------------------------------------------------
 // Destructor
@@ -48,6 +52,20 @@ RNBContext::ArgumentAtIndex (int index)
     else
         return NULL;
 }
+
+bool
+RNBContext::SetWorkingDirectory (const char *path)
+{
+    struct stat working_directory_stat;
+    if (::stat (path, &working_directory_stat) != 0)
+    {
+        m_working_directory.clear();
+        return false;
+    }
+    m_working_directory.assign(path);
+    return true;
+}
+
 
 void
 RNBContext::SetProcessID (nub_process_t pid)

@@ -149,6 +149,9 @@ public:
     DoSignal (int signal);
 
     virtual lldb_private::Error
+    WillDestroy ();
+
+    virtual lldb_private::Error
     DoDestroy ();
 
     virtual void
@@ -381,6 +384,12 @@ protected:
                                lldb::InputReaderAction notification,
                                const char *bytes, 
                                size_t bytes_len);
+
+    lldb_private::Error
+    InterruptIfRunning (bool discard_thread_plans, 
+                        bool catch_stop_event, 
+                        bool resume_private_state_thread,
+                        lldb::EventSP &stop_event_sp);
 
 private:
     //------------------------------------------------------------------

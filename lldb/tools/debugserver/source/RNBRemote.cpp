@@ -3126,6 +3126,7 @@ RNBRemote::HandlePacket_k (const char *p)
     // No response to should be sent to the kill packet
     if (m_ctx.HasValidProcessID())
         DNBProcessKill (m_ctx.ProcessID());
+    SendPacket ("W09");
     return rnb_success;
 }
 

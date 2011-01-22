@@ -61,26 +61,18 @@ int g_isatty = 0;
 #define RNBLogSTDERR(fmt, ...) do { if (g_isatty) { fprintf(stderr, fmt, ## __VA_ARGS__); } else { _DNBLog(0, fmt, ## __VA_ARGS__); } } while (0)
 
 //----------------------------------------------------------------------
-// Run Loop function prototypes
-//----------------------------------------------------------------------
-RNBRunLoopMode RNBRunLoopGetStartModeFromRemote (RNBRemoteSP &remote);
-RNBRunLoopMode RNBRunLoopInferiorExecuting (RNBRemoteSP &remote);
-
-
-//----------------------------------------------------------------------
 // Get our program path and arguments from the remote connection.
 // We will need to start up the remote connection without a PID, get the
 // arguments, wait for the new process to finish launching and hit its
 // entry point,  and then return the run loop mode that should come next.
 //----------------------------------------------------------------------
 RNBRunLoopMode
-RNBRunLoopGetStartModeFromRemote (RNBRemoteSP &remoteSP)
+RNBRunLoopGetStartModeFromRemote (RNBRemote* remote)
 {
     std::string packet;
 
-    if (remoteSP.get() != NULL)
+    if (remote)
     {
-        RNBRemote* remote = remoteSP.get();
         RNBContext& ctx = remote->Context();
         uint32_t event_mask = RNBContext::event_read_packet_available;
 
@@ -151,7 +143,7 @@ RNBRunLoopGetStartModeFromRemote (RNBRemoteSP &remoteSP)
 // or crash process state.
 //----------------------------------------------------------------------
 RNBRunLoopMode
-RNBRunLoopLaunchInferior (RNBRemoteSP &remote, const char *stdio_path, bool no_stdio)
+RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char *stdout_path, const char *stderr_path, bool no_stdio)
 {
     RNBContext& ctx = remote->Context();
 
@@ -208,7 +200,10 @@ RNBRunLoopLaunchInferior (RNBRemoteSP &remote, const char *stdio_path, bool no_s
     nub_process_t pid = DNBProcessLaunch (resolved_path,
                                           &inferior_argv[0],
                                           &inferior_envp[0],
-                                          stdio_path,
+                                          ctx.GetWorkingDirectory(),
+                                          stdin_path,
+                                          stdout_path,
+                                          stderr_path,
                                           no_stdio,
                                           launch_flavor,
                                           g_disable_aslr,
@@ -317,7 +312,7 @@ RNBRunLoopLaunchInferior (RNBRemoteSP &remote, const char *stdio_path, bool no_s
 // or crash process state.
 //----------------------------------------------------------------------
 RNBRunLoopMode
-RNBRunLoopLaunchAttaching (RNBRemoteSP &remote, nub_process_t attach_pid, nub_process_t& pid)
+RNBRunLoopLaunchAttaching (RNBRemote *remote, nub_process_t attach_pid, nub_process_t& pid)
 {
     RNBContext& ctx = remote->Context();
 
@@ -381,7 +376,7 @@ signal_handler(int signo)
 
 // Return the new run loop mode based off of the current process state
 RNBRunLoopMode
-HandleProcessStateChange (RNBRemoteSP &remote, bool initialize)
+HandleProcessStateChange (RNBRemote *remote, bool initialize)
 {
     RNBContext& ctx = remote->Context();
     nub_process_t pid = ctx.ProcessID();
@@ -460,7 +455,7 @@ HandleProcessStateChange (RNBRemoteSP &remote, bool initialize)
 // makes the inferior run, we need to leave this function with a new state
 // as the return code.
 RNBRunLoopMode
-RNBRunLoopInferiorExecuting (RNBRemoteSP &remote)
+RNBRunLoopInferiorExecuting (RNBRemote *remote)
 {
     DNBLogThreadedIf (LOG_RNB_MINIMAL, "#### %s", __FUNCTION__);
     RNBContext& ctx = remote->Context();
@@ -565,19 +560,19 @@ RNBRunLoopInferiorExecuting (RNBRemoteSP &remote)
 //----------------------------------------------------------------------
 
 static int
-StartListening (RNBRemoteSP remoteSP, int listen_port)
+StartListening (RNBRemote *remote, int listen_port)
 {
-    if (!remoteSP->Comm().IsConnected())
+    if (!remote->Comm().IsConnected())
     {
         RNBLogSTDOUT ("Listening to port %i...\n", listen_port);
-        if (remoteSP->Comm().Listen(listen_port) != rnb_success)
+        if (remote->Comm().Listen(listen_port) != rnb_success)
         {
             RNBLogSTDERR ("Failed to get connection from a remote gdb process.\n");
             return 0;
         }
         else
         {
-            remoteSP->StartReadRemoteDataThread();
+            remote->StartReadRemoteDataThread();
         }
     }
     return 1;
@@ -656,10 +651,14 @@ static struct option g_long_options[] =
     { "waitfor-interval",   required_argument,  NULL,               'i' },  // Time in usecs to wait between sampling the pid list when waiting for a process by name
     { "waitfor-duration",   required_argument,  NULL,               'd' },  // The time in seconds to wait for a process to show up by name
     { "native-regs",        no_argument,        NULL,               'r' },  // Specify to use the native registers instead of the gdb defaults for the architecture.
-    { "stdio-path",         required_argument,  NULL,               's' },  // Set the STDIO path to be used when launching applications
+    { "stdio-path",         required_argument,  NULL,               's' },  // Set the STDIO path to be used when launching applications (STDIN, STDOUT and STDERR)
+    { "stdin-path",         required_argument,  NULL,               'I' },  // Set the STDIN path to be used when launching applications
+    { "stdout-path",        required_argument,  NULL,               'O' },  // Set the STDIN path to be used when launching applications
+    { "stderr-path",        required_argument,  NULL,               'E' },  // Set the STDIN path to be used when launching applications
     { "no-stdio",           no_argument,        NULL,               'n' },  // Do not set up any stdio (perhaps the program is a GUI program)
     { "setsid",             no_argument,        NULL,               'S' },  // call setsid() to make debugserver run in its own sessions
     { "disable-aslr",       no_argument,        NULL,               'D' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
+    { "chdir",              no_argument,        NULL,               'c' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -696,8 +695,11 @@ main (int argc, char *argv[])
     std::string compile_options;
     std::string waitfor_pid_name;           // Wait for a process that starts with this name
     std::string attach_pid_name;
-    std::string stdio_path;
+    std::string stdin_path;
+    std::string stdout_path;
+    std::string stderr_path;
     std::string arch_name;
+    std::string working_directory;          // The new working directory to use for the inferior
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
     useconds_t waitfor_duration = 0;        // Time in seconds to wait for a process by name, 0 means wait forever.
     bool no_stdio = false;
@@ -783,6 +785,11 @@ main (int argc, char *argv[])
                 }
                 break;
 
+            case 'c':
+                if (optarg && optarg[0])
+                    working_directory.assign(optarg);
+                break;
+
             case 'x':
                 if (optarg && optarg[0])
                 {
@@ -856,7 +863,21 @@ main (int argc, char *argv[])
                 break;
 
             case 's':
-                stdio_path = optarg;
+                stdin_path.assign(optarg);
+                stdout_path.assign(optarg);
+                stderr_path.assign(optarg);
+                break;
+
+            case 'I':
+                stdin_path.assign(optarg);
+                break;
+
+            case 'O':
+                stdout_path.assign(optarg);
+                break;
+            
+            case 'E':
+                stderr_path.assign(optarg);
                 break;
 
             case 'n':
@@ -910,7 +931,6 @@ main (int argc, char *argv[])
     g_remoteSP.reset (new RNBRemote (use_native_registers, arch_name.c_str()));
     
     
-
     RNBRemote *remote = g_remoteSP.get();
     if (remote == NULL)
     {
@@ -918,7 +938,16 @@ main (int argc, char *argv[])
         return -1;
     }
 
-    g_remoteSP->Initialize();
+    if (!working_directory.empty())
+    {
+        if (remote->Context().SetWorkingDirectory (working_directory.c_str()) == false)
+        {
+            RNBLogSTDERR ("error: working directory doesn't exist '%s'.\n", working_directory.c_str());
+            exit (8);
+        }
+    }
+
+    remote->Initialize();
 
     RNBContext& ctx = remote->Context();
 
@@ -1054,9 +1083,9 @@ main (int argc, char *argv[])
 #if defined (__arm__)
                 if (g_lockdown_opt)
                 {
-                    if (!g_remoteSP->Comm().IsConnected())
+                    if (!remote->Comm().IsConnected())
                     {
-                        if (g_remoteSP->Comm().ConnectToService () != rnb_success)
+                        if (remote->Comm().ConnectToService () != rnb_success)
                         {
                             RNBLogSTDERR ("Failed to get connection from a remote gdb process.\n");
                             mode = eRNBRunLoopModeExit;
@@ -1069,21 +1098,21 @@ main (int argc, char *argv[])
                             {
                                 DNBLogDebug("Task list: %s", applist_plist.c_str());
 
-                                g_remoteSP->Comm().Write(applist_plist.c_str(), applist_plist.size());
+                                remote->Comm().Write(applist_plist.c_str(), applist_plist.size());
                                 // Issue a read that will never yield any data until the other side
                                 // closes the socket so this process doesn't just exit and cause the
                                 // socket to close prematurely on the other end and cause data loss.
                                 std::string buf;
-                                g_remoteSP->Comm().Read(buf);
+                                remote->Comm().Read(buf);
                             }
-                            g_remoteSP->Comm().Disconnect(false);
+                            remote->Comm().Disconnect(false);
                             mode = eRNBRunLoopModeExit;
                             break;
                         }
                         else
                         {
                             // Start watching for remote packets
-                            g_remoteSP->StartReadRemoteDataThread();
+                            remote->StartReadRemoteDataThread();
                         }
                     }
                 }
@@ -1091,19 +1120,19 @@ main (int argc, char *argv[])
 #endif
                     if (listen_port != INT32_MAX)
                     {
-                        if (!StartListening (g_remoteSP, listen_port))
+                        if (!StartListening (remote, listen_port))
                             mode = eRNBRunLoopModeExit;
                     }
                     else if (str[0] == '/')
                     {
-                        if (g_remoteSP->Comm().OpenFile (str))
+                        if (remote->Comm().OpenFile (str))
                             mode = eRNBRunLoopModeExit;
                     }
                 if (mode != eRNBRunLoopModeExit)
                 {
                     RNBLogSTDOUT ("Got a connection, waiting for process information for launching or attaching.\n");
 
-                    mode = RNBRunLoopGetStartModeFromRemote (g_remoteSP);
+                    mode = RNBRunLoopGetStartModeFromRemote (remote);
                 }
                 break;
 
@@ -1157,7 +1186,7 @@ main (int argc, char *argv[])
 
                     RNBLogSTDOUT ("Attaching to process %i...\n", attach_pid);
                     nub_process_t attached_pid;
-                    mode = RNBRunLoopLaunchAttaching (g_remoteSP, attach_pid, attached_pid);
+                    mode = RNBRunLoopLaunchAttaching (remote, attach_pid, attached_pid);
                     if (mode != eRNBRunLoopModeInferiorExecuting)
                     {
                         const char *error_str = remote->Context().LaunchStatus().AsString();
@@ -1201,12 +1230,12 @@ main (int argc, char *argv[])
                 {
                     if (listen_port != INT32_MAX)
                     {
-                        if (!StartListening (g_remoteSP, listen_port))
+                        if (!StartListening (remote, listen_port))
                             mode = eRNBRunLoopModeExit;
                     }
                     else if (str[0] == '/')
                     {
-                        if (g_remoteSP->Comm().OpenFile (str))
+                        if (remote->Comm().OpenFile (str))
                             mode = eRNBRunLoopModeExit;
                     }
                     if (mode != eRNBRunLoopModeExit)
@@ -1215,33 +1244,39 @@ main (int argc, char *argv[])
                 break;
 
             case eRNBRunLoopModeInferiorLaunching:
-                mode = RNBRunLoopLaunchInferior (g_remoteSP, stdio_path.empty() ? NULL : stdio_path.c_str(), no_stdio);
-
-                if (mode == eRNBRunLoopModeInferiorExecuting)
                 {
-                    if (listen_port != INT32_MAX)
-                    {
-                        if (!StartListening (g_remoteSP, listen_port))
-                            mode = eRNBRunLoopModeExit;
-                    }
-                    else if (str[0] == '/')
-                    {
-                        if (g_remoteSP->Comm().OpenFile (str))
-                            mode = eRNBRunLoopModeExit;
-                    }
+                    mode = RNBRunLoopLaunchInferior (remote, 
+                                                     stdin_path.empty() ? NULL : stdin_path.c_str(), 
+                                                     stdout_path.empty() ? NULL : stdout_path.c_str(), 
+                                                     stderr_path.empty() ? NULL : stderr_path.c_str(), 
+                                                     no_stdio);
 
-                    if (mode != eRNBRunLoopModeExit)
-                        RNBLogSTDOUT ("Got a connection, waiting for debugger instructions.\n");
-                }
-                else
-                {
-                    const char *error_str = remote->Context().LaunchStatus().AsString();
-                    RNBLogSTDERR ("error: failed to launch process %s: %s\n", argv[0], error_str ? error_str : "unknown error.");
+                    if (mode == eRNBRunLoopModeInferiorExecuting)
+                    {
+                        if (listen_port != INT32_MAX)
+                        {
+                            if (!StartListening (remote, listen_port))
+                                mode = eRNBRunLoopModeExit;
+                        }
+                        else if (str[0] == '/')
+                        {
+                            if (remote->Comm().OpenFile (str))
+                                mode = eRNBRunLoopModeExit;
+                        }
+
+                        if (mode != eRNBRunLoopModeExit)
+                            RNBLogSTDOUT ("Got a connection, waiting for debugger instructions.\n");
+                    }
+                    else
+                    {
+                        const char *error_str = remote->Context().LaunchStatus().AsString();
+                        RNBLogSTDERR ("error: failed to launch process %s: %s\n", argv[0], error_str ? error_str : "unknown error.");
+                    }
                 }
                 break;
 
             case eRNBRunLoopModeInferiorExecuting:
-                mode = RNBRunLoopInferiorExecuting(g_remoteSP);
+                mode = RNBRunLoopInferiorExecuting(remote);
                 break;
 
             default:
@@ -1251,8 +1286,8 @@ main (int argc, char *argv[])
         }
     }
 
-    g_remoteSP->StopReadRemoteDataThread ();
-    g_remoteSP->Context().SetProcessID(INVALID_NUB_PROCESS);
+    remote->StopReadRemoteDataThread ();
+    remote->Context().SetProcessID(INVALID_NUB_PROCESS);
 
     return 0;
 }

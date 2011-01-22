@@ -1491,7 +1491,10 @@ MachProcess::LaunchForDebug
     const char *path,
     char const *argv[],
     char const *envp[],
-    const char *stdio_path,
+    const char *working_directory, // NULL => dont' change, non-NULL => set working directory for inferior to this
+    const char *stdin_path,
+    const char *stdout_path,
+    const char *stderr_path,
     bool no_stdio,
     nub_launch_flavor_t launch_flavor,
     int disable_aslr,
@@ -1517,7 +1520,10 @@ MachProcess::LaunchForDebug
                                                                 DNBArchProtocol::GetArchitecture (),
                                                                 argv, 
                                                                 envp, 
-                                                                stdio_path,
+                                                                working_directory,
+                                                                stdin_path,
+                                                                stdout_path,
+                                                                stderr_path,
                                                                 no_stdio, 
                                                                 this, 
                                                                 disable_aslr, 
@@ -1607,7 +1613,10 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     cpu_type_t cpu_type,
     char const *argv[],
     char const *envp[],
-    const char *stdio_path,
+    const char *working_directory,
+    const char *stdin_path,
+    const char *stdout_path,
+    const char *stderr_path,
     bool no_stdio,
     MachProcess* process,
     int disable_aslr,
@@ -1665,14 +1674,13 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     pid_t pid = INVALID_NUB_PROCESS;
     if (file_actions_valid)
     {
-        if (stdio_path == NULL && !no_stdio)
+        if (stdin_path == NULL && stdout_path == NULL && stderr_path == NULL && !no_stdio)
         {
             pty_error = pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY);
             if (pty_error == PseudoTerminal::success)
-                stdio_path = pty.SlaveName();
-            // Make sure we were able to get the slave name
-            if (stdio_path == NULL)
-                stdio_path = "/dev/null";
+            {
+                stdin_path = stdout_path = stderr_path = pty.SlaveName();
+            }
         }
 
 		// if no_stdio, then do open file actions, opening /dev/null.
@@ -1693,11 +1701,11 @@ MachProcess::PosixSpawnChildForPTraceDebugging
             if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
                 err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDERR_FILENO, path=/dev/null)");
         }
-        else if (stdio_path != NULL)
+        else
         {
-            int slave_fd_err = open (stdio_path, O_RDWR, 0);
-            int slave_fd_in = open (stdio_path, O_RDONLY, 0);
-            int slave_fd_out = open (stdio_path, O_WRONLY, 0);
+            int slave_fd_err = open (stderr_path ? stderr_path : "/dev/null", O_RDWR  , 0);
+            int slave_fd_in  = open (stdin_path  ? stdin_path  : "/dev/null", O_RDONLY, 0);
+            int slave_fd_out = open (stdout_path ? stdout_path : "/dev/null", O_WRONLY, 0);
 
             err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_err, STDERR_FILENO), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
