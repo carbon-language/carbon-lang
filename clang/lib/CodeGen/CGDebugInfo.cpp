@@ -1226,6 +1226,12 @@ llvm::DIType CGDebugInfo::CreateType(const LValueReferenceType *Ty,
                                Ty, Ty->getPointeeType(), Unit);
 }
 
+llvm::DIType CGDebugInfo::CreateType(const RValueReferenceType *Ty, 
+                                     llvm::DIFile Unit) {
+  return CreatePointerLikeType(llvm::dwarf::DW_TAG_rvalue_reference_type, 
+                               Ty, Ty->getPointeeType(), Unit);
+}
+
 llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty, 
                                      llvm::DIFile U) {
   QualType PointerDiffTy = CGM.getContext().getPointerDiffType();
@@ -1413,6 +1419,8 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 
   case Type::LValueReference:
     return CreateType(cast<LValueReferenceType>(Ty), Unit);
+  case Type::RValueReference:
+    return CreateType(cast<RValueReferenceType>(Ty), Unit);
 
   case Type::MemberPointer:
     return CreateType(cast<MemberPointerType>(Ty), Unit);
@@ -1426,12 +1434,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::TypeOf:
   case Type::Decltype:
     llvm_unreachable("type should have been unwrapped!");
-    return llvm::DIType();
-      
-  case Type::RValueReference:
-    // FIXME: Implement!
-    Diag = "rvalue references";
-    break;
+    return llvm::DIType();      
   }
   
   assert(Diag && "Fall through without a diagnostic?");
