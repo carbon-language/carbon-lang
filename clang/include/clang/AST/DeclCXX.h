@@ -356,6 +356,12 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief Whether we have already declared a destructor within the class.
     bool DeclaredDestructor : 1;
 
+    /// \brief Whether this class is marked 'final'.
+    bool IsMarkedFinal : 1;
+
+    /// \brief Whether this class is marked 'explicit'.
+    bool IsMarkedExplicit : 1;
+
     /// NumBases - The number of base class specifiers in Bases.
     unsigned NumBases;
     
@@ -658,7 +664,19 @@ public:
   ///
   /// This value is used for lazy creation of destructors.
   bool hasDeclaredDestructor() const { return data().DeclaredDestructor; }
-  
+
+  /// \brief Whether this class is marked 'final'.
+  bool isMarkedFinal() const { return data().IsMarkedFinal; }
+
+  /// \brief Mark this class as 'final'.
+  void setIsMarkedFinal(bool IMF) { data().IsMarkedFinal = IMF; }
+
+  /// \brief Whether this class is marked 'explicit'.
+  bool isMarkedExplicit() const { return data().IsMarkedExplicit; }
+
+  /// \brief Mark this class as 'explicit'.
+  void setIsMarkedExplicit(bool IME) { data().IsMarkedExplicit = IME; }
+
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.
   UnresolvedSetImpl *getConversionFunctions() {

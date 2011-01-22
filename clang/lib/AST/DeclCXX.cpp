@@ -36,6 +36,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasTrivialDestructor(true), ComputedVisibleConversions(false),
     DeclaredDefaultConstructor(false), DeclaredCopyConstructor(false), 
     DeclaredCopyAssignment(false), DeclaredDestructor(false),
+    IsMarkedFinal(false), IsMarkedExplicit(false),
     NumBases(0), NumVBases(0), Bases(), VBases(), 
     Definition(D), FirstFriend(0) {
 }
