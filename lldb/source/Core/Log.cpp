@@ -442,6 +442,10 @@ Log::ListAllLogChannels (Stream *strm)
 bool
 Log::GetVerbose() const
 {
+    // FIXME: This has to be centralized between the stream and the log...
+    if (m_options.Test(LLDB_LOG_OPTION_VERBOSE))
+        return true;
+        
     if (m_stream_sp)
         return m_stream_sp->GetVerbose();
     return false;
