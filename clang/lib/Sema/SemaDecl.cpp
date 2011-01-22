@@ -3705,7 +3705,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
              diag::err_virtual_non_function);
       } else if (!CurContext->isRecord()) {
         // 'virtual' was specified outside of the class.
-        Diag(D.getDeclSpec().getVirtualSpecLoc(), diag::err_virtual_out_of_class)
+        Diag(D.getDeclSpec().getVirtualSpecLoc(), 
+             diag::err_virtual_out_of_class)
+          << FixItHint::CreateRemoval(D.getDeclSpec().getVirtualSpecLoc());
+      } else if (NewFD->getDescribedFunctionTemplate()) {
+        // C++ [temp.mem]p3:
+        //  A member function template shall not be virtual.
+        Diag(D.getDeclSpec().getVirtualSpecLoc(),
+             diag::err_virtual_member_function_template)
           << FixItHint::CreateRemoval(D.getDeclSpec().getVirtualSpecLoc());
       } else {
         // Okay: Add virtual to the method.
