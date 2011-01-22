@@ -6423,6 +6423,7 @@ void Sema::ActOnTagStartDefinition(Scope *S, Decl *TagD) {
 }
 
 void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
+                                           ClassVirtSpecifiers &CVS,
                                            SourceLocation LBraceLoc) {
   AdjustDeclIfTemplate(TagD);
   CXXRecordDecl *Record = cast<CXXRecordDecl>(TagD);
@@ -6432,6 +6433,9 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
   if (!Record->getIdentifier())
     return;
 
+  Record->setIsMarkedFinal(CVS.isFinalSpecified());
+  Record->setIsMarkedExplicit(CVS.isExplicitSpecified());
+    
   // C++ [class]p2:
   //   [...] The class-name is also inserted into the scope of the
   //   class itself; this is known as the injected-class-name. For
