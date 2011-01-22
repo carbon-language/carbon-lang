@@ -407,7 +407,6 @@ Process::WaitForStateChangedEvents (const TimeValue *timeout, EventSP &event_sp)
                                                        event_sp))
         state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
 
-    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
     if (log)
         log->Printf ("Process::%s (timeout = %p, event_sp) => %s",
                      __FUNCTION__,
@@ -427,7 +426,6 @@ Process::PeekAtStateChangedEvents ()
     Event *event_ptr;
     event_ptr = m_listener.PeekAtNextEventForBroadcasterWithType (this,
                                                                   eBroadcastBitStateChanged);
-    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
     if (log)
     {
         if (event_ptr)
@@ -463,7 +461,6 @@ Process::WaitForStateChangedEventsPrivate (const TimeValue *timeout, EventSP &ev
     // This is a bit of a hack, but when we wait here we could very well return
     // to the command-line, and that could disable the log, which would render the
     // log we got above invalid.
-    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
     if (log)
         log->Printf ("Process::%s (timeout = %p, event_sp) => %s", __FUNCTION__, timeout, StateAsCString(state));
     return state;
@@ -2140,7 +2137,6 @@ Process::RunPrivateStateThread ()
                 break;
             }
             
-            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
             if (log)
                 log->Printf ("Process::%s (arg = %p, pid = %i) got a control event: %d", __FUNCTION__, this, GetID(), event_sp->GetType());
 
@@ -2160,7 +2156,6 @@ Process::RunPrivateStateThread ()
             internal_state == eStateExited  ||
             internal_state == eStateDetached )
         {
-            log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
             if (log)
                 log->Printf ("Process::%s (arg = %p, pid = %i) about to exit with internal state %s...", __FUNCTION__, this, GetID(), StateAsCString(internal_state));
 
@@ -2169,10 +2164,11 @@ Process::RunPrivateStateThread ()
     }
 
     // Verify log is still enabled before attempting to write to it...
-    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
     if (log)
         log->Printf ("Process::%s (arg = %p, pid = %i) thread exiting...", __FUNCTION__, this, GetID());
 
+    m_private_state_control_wait.SetValue (true, eBroadcastAlways);
+    m_private_state_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
 }
 

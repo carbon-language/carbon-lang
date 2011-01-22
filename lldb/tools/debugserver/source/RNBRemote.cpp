@@ -3123,11 +3123,10 @@ RNBRemote::HandlePacket_D (const char *p)
 rnb_err_t
 RNBRemote::HandlePacket_k (const char *p)
 {
-    if (!m_ctx.HasValidProcessID())
-        return SendPacket ("E26");
-    if (!DNBProcessKill (m_ctx.ProcessID()))
-        return SendPacket ("E27");
-    return SendPacket ("OK");
+    // No response to should be sent to the kill packet
+    if (m_ctx.HasValidProcessID())
+        DNBProcessKill (m_ctx.ProcessID());
+    return rnb_success;
 }
 
 rnb_err_t

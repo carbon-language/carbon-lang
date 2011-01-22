@@ -541,7 +541,7 @@ ProcessGDBRemote::ConnectToDebugserver (const char *host_port)
     if (m_gdb_comm.StartReadThread(&error))
     {
         // Send an initial ack
-        m_gdb_comm.SendAck('+');
+        m_gdb_comm.SendAck();
 
         if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
             m_debugserver_thread = Host::StartMonitoringChildProcess (MonitorDebugserverProcess,
@@ -1141,24 +1141,16 @@ Error
 ProcessGDBRemote::DoHalt (bool &caused_stop)
 {
     Error error;
-    
-    if (m_gdb_comm.IsRunning())
-    {
-        caused_stop = true;
-        bool timed_out = false;
-        Mutex::Locker locker;
 
-        if (!m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
-        {
-            if (timed_out)
-                error.SetErrorString("timed out sending interrupt packet");
-            else
-                error.SetErrorString("unknown error sending interrupt packet");
-        }
-    }
-    else
+    bool timed_out = false;
+    Mutex::Locker locker;
+
+    if (!m_gdb_comm.SendInterrupt (locker, 2, caused_stop, timed_out))
     {
-        caused_stop = false;
+        if (timed_out)
+            error.SetErrorString("timed out sending interrupt packet");
+        else
+            error.SetErrorString("unknown error sending interrupt packet");
     }
 
     return error;
@@ -1172,11 +1164,12 @@ ProcessGDBRemote::WillDetach ()
     if (m_gdb_comm.IsRunning())
     {
         bool timed_out = false;
+        bool sent_interrupt = false;
         Mutex::Locker locker;
         PausePrivateStateThread();
         m_thread_list.DiscardThreadPlans();
         m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
-        if (!m_gdb_comm.SendInterrupt (locker, 2, &timed_out))
+        if (!m_gdb_comm.SendInterrupt (locker, 2, sent_interrupt, timed_out))
         {
             if (timed_out)
                 error.SetErrorString("timed out sending interrupt packet");
@@ -1238,22 +1231,10 @@ ProcessGDBRemote::DoDestroy ()
         log->Printf ("ProcessGDBRemote::DoDestroy()");
 
     // Interrupt if our inferior is running...
-    Mutex::Locker locker;
-    m_gdb_comm.SendInterrupt (locker, 1);
-    DisableAllBreakpointSites ();
-    SetExitStatus(-1, "process killed");
-
-    StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse("k", response, 1, false))
+    if (m_gdb_comm.IsConnected())
     {
-        log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
-        if (log)
-        {
-            if (response.IsOKPacket())
-                log->Printf ("ProcessGDBRemote::DoDestroy() kill was successful");
-            else
-                log->Printf ("ProcessGDBRemote::DoDestroy() kill failed: %s", response.GetStringRef().c_str());
-        }
+        // Don't get a response when killing our
+        m_gdb_comm.SendPacket ("k", 1);
     }
 
     StopAsyncThread ();

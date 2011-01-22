@@ -87,12 +87,21 @@ GDBRemoteCommunication::CalculcateChecksum (const char *payload, size_t payload_
 }
 
 size_t
-GDBRemoteCommunication::SendAck (char ack_char)
+GDBRemoteCommunication::SendAck ()
 {
-    Mutex::Locker locker(m_sequence_mutex);
-    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "send packet: %c", ack_char);
+    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "send packet: +");
     ConnectionStatus status = eConnectionStatusSuccess;
+    char ack_char = '+';
     return Write (&ack_char, 1, status, NULL) == 1;
+}
+
+size_t
+GDBRemoteCommunication::SendNack ()
+{
+    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "send packet: -");
+    ConnectionStatus status = eConnectionStatusSuccess;
+    char nack_char = '-';
+    return Write (&nack_char, 1, status, NULL) == 1;
 }
 
 size_t
@@ -141,7 +150,8 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
             m_async_packet_predicate.SetValue (true, eBroadcastNever);
             
             bool timed_out = false;
-            if (SendInterrupt(locker, 1, &timed_out))
+            bool sent_interrupt = false;
+            if (SendInterrupt(locker, 1, sent_interrupt, timed_out))
             {
                 if (m_async_packet_predicate.WaitForValueEqualTo (false, &timeout_time, &timed_out))
                 {
@@ -443,8 +453,9 @@ GDBRemoteCommunication::SendAsyncSignal (int signo)
 {
     m_async_signal = signo;
     bool timed_out = false;
+    bool sent_interrupt = false;
     Mutex::Locker locker;
-    if (SendInterrupt (locker, 1, &timed_out))
+    if (SendInterrupt (locker, 1, sent_interrupt, timed_out))
         return true;
     m_async_signal = -1;
     return false;
@@ -461,10 +472,16 @@ GDBRemoteCommunication::SendAsyncSignal (int signo)
 // (gdb remote protocol requires this), and do what we need to do, then resume.
 
 bool
-GDBRemoteCommunication::SendInterrupt (Mutex::Locker& locker, uint32_t seconds_to_wait_for_stop, bool *timed_out)
+GDBRemoteCommunication::SendInterrupt 
+(
+    Mutex::Locker& locker, 
+    uint32_t seconds_to_wait_for_stop,             
+    bool &sent_interrupt,
+    bool &timed_out
+)
 {
-    if (timed_out)
-        *timed_out = false;
+    sent_interrupt = false;
+    timed_out = false;
 
     if (IsConnected() && IsRunning())
     {
@@ -484,8 +501,9 @@ GDBRemoteCommunication::SendInterrupt (Mutex::Locker& locker, uint32_t seconds_t
             ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "send packet: \\x03");
             if (Write (&ctrl_c, 1, status, NULL) > 0)
             {
+                sent_interrupt = true;
                 if (seconds_to_wait_for_stop)
-                    m_private_is_running.WaitForValueEqualTo (false, &timeout, timed_out);
+                    m_private_is_running.WaitForValueEqualTo (false, &timeout, &timed_out);
                 return true;
             }
         }
@@ -553,9 +571,9 @@ GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &response,
                             checksum_error = packet_checksum != actual_checksum;
                             // Send the ack or nack if needed
                             if (checksum_error || !success)
-                                SendAck('-');
+                                SendNack();
                             else
-                                SendAck('+');
+                                SendAck();
                         }
                     }
                     else

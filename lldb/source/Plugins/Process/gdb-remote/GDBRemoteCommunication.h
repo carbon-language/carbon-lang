@@ -87,7 +87,11 @@ public:
     GetAck (uint32_t timeout_seconds);
 
     size_t
-    SendAck (char ack_char);
+    SendAck ();
+
+    size_t
+    SendNack ();
+
 
     char
     CalculcateChecksum (const char *payload,
@@ -117,7 +121,8 @@ public:
     bool
     SendInterrupt (lldb_private::Mutex::Locker &locker, 
                    uint32_t seconds_to_wait_for_stop, 
-                   bool *timed_out = NULL);
+                   bool &sent_interrupt, 
+                   bool &timed_out);
 
     bool
     GetSequenceMutex(lldb_private::Mutex::Locker& locker);

@@ -392,9 +392,9 @@ ClangASTType::DumpValue
                         continue;
 
                     if (base_class->isVirtual())
-                        field_bit_offset = record_layout.getVBaseClassOffset(base_class_decl).getQuantity();
+                        field_bit_offset = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
                     else
-                        field_bit_offset = record_layout.getBaseClassOffset(base_class_decl).getQuantity();
+                        field_bit_offset = record_layout.getBaseClassOffset(base_class_decl).getQuantity() * 8;
                     field_byte_offset = field_bit_offset / 8;
                     assert (field_bit_offset % 8 == 0);
                     if (child_idx == 0)

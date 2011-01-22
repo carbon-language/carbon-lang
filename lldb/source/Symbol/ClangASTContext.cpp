@@ -2475,9 +2475,9 @@ ClangASTContext::GetChildClangTypeAtIndex
 
 
                             if (base_class->isVirtual())
-                                bit_offset = record_layout.getVBaseClassOffset(base_class_decl).getQuantity();
+                                bit_offset = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
                             else
-                                bit_offset = record_layout.getBaseClassOffset(base_class_decl).getQuantity();
+                                bit_offset = record_layout.getBaseClassOffset(base_class_decl).getQuantity() * 8;
 
                             // Base classes should be a multiple of 8 bits in size
                             assert (bit_offset % 8 == 0);
