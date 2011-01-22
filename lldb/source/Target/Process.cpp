@@ -2651,7 +2651,9 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                  single_thread_timeout_usec);
             }
             
-            if (exe_ctx.process->Halt().Success())
+            Error halt_error = exe_ctx.process->Halt();
+            
+            if (halt_error.Success())
             {
                 timeout_ptr = NULL;
                 if (log)
@@ -2698,6 +2700,22 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     }
                 }
             }
+            else
+            {
+                
+                if (log)
+                    log->Printf ("Halt failed: \"%s\", I'm just going to wait a little longer and see if the world gets nicer to me.", 
+                                 halt_error.AsCString());
+                
+                    if (single_thread_timeout_usec != 0)
+                    {
+                        real_timeout = TimeValue::Now();
+                        real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
+                        timeout_ptr = &real_timeout;
+                    }
+                    continue;
+            }
+
         }
         
         stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
@@ -2722,7 +2740,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (log)
             {
                 StreamString s;
-                event_sp->Dump (&s);
+                if (event_sp)
+                    event_sp->Dump (&s);
+                else
+                {
+                    log->Printf ("Stop event that interrupted us is NULL.");
+                }
+
                 StreamString ts;
 
                 const char *event_explanation;                
@@ -2764,7 +2788,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             continue;
                         }
                         
-                        ts.Printf("<");
+                        ts.Printf("<0x%4.4x ", thread->GetID());
                         RegisterContext *register_context = thread->GetRegisterContext().get();
                         
                         if (register_context)
@@ -2785,8 +2809,26 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     event_explanation = ts.GetData();
                 } while (0);
                 
-                if (log)
-                    log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
+                // See if any of the threads that stopped think we ought to stop.  Otherwise continue on.
+                if (!GetThreadList().ShouldStop(event_sp.get()))
+                {
+                    if (log)
+                        log->Printf("Execution interrupted, but nobody wanted to stop, so we continued: %s %s", 
+                                    s.GetData(), event_explanation);
+                    if (single_thread_timeout_usec != 0)
+                    {
+                        real_timeout = TimeValue::Now();
+                        real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
+                        timeout_ptr = &real_timeout;
+                    }
+    
+                    continue;
+                }
+                else
+                {
+                    if (log)
+                        log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
+                }
             }
             
             if (discard_on_error && thread_plan_sp)
