@@ -1035,6 +1035,10 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
 
+  // If the input value is provably positive, build a zext instead.
+  if (isKnownNonNegative(Op))
+    return getZeroExtendExpr(Op, Ty);
+
   // If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can sign extend all of the
   // operands (often constants).  This allows analysis of something like
