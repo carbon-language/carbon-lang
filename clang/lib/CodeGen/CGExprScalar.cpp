@@ -1110,7 +1110,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 
   case CK_GetObjCProperty: {
     assert(CGF.getContext().hasSameUnqualifiedType(E->getType(), DestTy));
-    assert(E->isLValue() && E->getObjectKind() == OK_ObjCProperty &&
+    assert(E->isGLValue() && E->getObjectKind() == OK_ObjCProperty &&
            "CK_GetObjCProperty for non-lvalue or non-ObjCProperty");
     RValue RV = CGF.EmitLoadOfLValue(CGF.EmitLValue(E), E->getType());
     return RV.getScalarVal();

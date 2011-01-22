@@ -202,7 +202,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
   }
 
   RValue RV;
-  if (E->isLValue()) {
+  if (E->isGLValue()) {
     // Emit the expression as an lvalue.
     LValue LV = CGF.EmitLValue(E);
     if (LV.isSimple())
