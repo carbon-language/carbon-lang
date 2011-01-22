@@ -324,9 +324,7 @@ void CodeGenModule::AddGlobalDtor(llvm::Function * Dtor, int Priority) {
 void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
   // Ctor function type is void()*.
   llvm::FunctionType* CtorFTy =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                            std::vector<const llvm::Type*>(),
-                            false);
+    llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), false);
   llvm::Type *CtorPFTy = llvm::PointerType::getUnqual(CtorFTy);
 
   // Get the type of a ctor entry, { i32, void ()* }.
@@ -822,8 +820,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
   if (isa<llvm::FunctionType>(Ty)) {
     FTy = cast<llvm::FunctionType>(Ty);
   } else {
-    FTy = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                                  std::vector<const llvm::Type*>(), false);
+    FTy = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), false);
     IsIncompleteFunction = true;
   }
   
