@@ -77,6 +77,7 @@ public:
     WillPop ();
 
 protected:
+    void ReportRegisterState (const char *message);
 private:
     void
     DoTakedown ();
@@ -104,6 +105,7 @@ private:
     LanguageRuntime                                *m_cxx_language_runtime;
     LanguageRuntime                                *m_objc_language_runtime;
     Thread::ThreadStateCheckpoint                   m_stored_thread_state;
+    bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };
