@@ -119,6 +119,7 @@ enum dwarf_constants {
   DW_TAG_imported_unit = 0x3d,
   DW_TAG_condition = 0x3f,
   DW_TAG_shared_type = 0x40,
+  DW_TAG_rvalue_reference_type = 0x41,
   DW_TAG_lo_user = 0x4080,
   DW_TAG_hi_user = 0xffff,
 
