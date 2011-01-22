@@ -192,10 +192,6 @@ class MachineFrameInfo {
   /// CSIValid - Has CSInfo been set yet?
   bool CSIValid;
 
-  /// SpillObjects - A vector indicating which frame indices refer to
-  /// spill slots.
-  SmallVector<bool, 8> SpillObjects;
-
   /// TargetFrameLowering - Target information about frame layout.
   ///
   const TargetFrameLowering &TFI;
