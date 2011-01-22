@@ -48,7 +48,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_arg_addr (arg),
     m_args (NULL),
     m_process (thread.GetProcess()),
-    m_thread (thread)
+    m_thread (thread),
+    m_takedown_done (false)
 {
     SetOkayToDiscard (discard_on_error);
 
@@ -79,6 +80,9 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     lldb::addr_t StartLoadAddr = m_start_addr.GetLoadAddress(&target);
 
     // Checkpoint the thread state so we can restore it later.
+    if (log && log->GetVerbose())
+        ReportRegisterState ("About to checkpoint thread before function call.  Original register state was:");
+
     if (!thread.CheckpointThreadState (m_stored_thread_state))
     {
         if (log)
@@ -100,12 +104,25 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                  cmd_arg))
         return;
     
+    ReportRegisterState ("Function call was set up.  Register state was:");
+    
+    m_valid = true;    
+}
+
+ThreadPlanCallFunction::~ThreadPlanCallFunction ()
+{
+}
+
+void
+ThreadPlanCallFunction::ReportRegisterState (const char *message)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
     {
         RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
-        
-        log->PutCString("Function call was set up.  Register state was:");
-        
+
+        log->PutCString(message);
+
         for (uint32_t register_index = 0, num_registers = reg_ctx->GetRegisterCount();
              register_index < num_registers;
              ++register_index)
@@ -116,23 +133,27 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
             log->Printf("  %s = 0x%llx", register_name, register_value);
         }
     }
-    
-    m_valid = true;    
-}
-
-ThreadPlanCallFunction::~ThreadPlanCallFunction ()
-{
-        DoTakedown();
 }
 
 void
 ThreadPlanCallFunction::DoTakedown ()
 {
-    if (m_valid && !IsPlanComplete())
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    if (!m_takedown_done)
     {
+        if (log)
+            log->Printf ("DoTakedown called for thread 0x%4.4x, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
+        m_takedown_done = true;
         m_thread.RestoreThreadStateFromCheckpoint(m_stored_thread_state);
         SetPlanComplete();
         ClearBreakpoints();
+        if (log && log->GetVerbose())
+            ReportRegisterState ("Restoring thread state after function call.  Restored register state:");
+    }
+    else
+    {
+        if (log)
+            log->Printf ("DoTakedown called as no-op for thread 0x%4.4x, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
     }
 }
 
@@ -224,24 +245,7 @@ ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
 {
     if (PlanExplainsStop())
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-        
-        if (log)
-        {
-            RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
-
-            log->PutCString("Function completed.  Register state was:");
-
-            for (uint32_t register_index = 0, num_registers = reg_ctx->GetRegisterCount();
-                 register_index < num_registers;
-                 ++register_index)
-            {
-                const char *register_name = reg_ctx->GetRegisterName(register_index);
-                uint64_t register_value = reg_ctx->ReadRegisterAsUnsigned(register_index, LLDB_INVALID_ADDRESS);
-                
-                log->Printf("  %s = 0x%llx", register_name, register_value);
-            }
-        }
+        ReportRegisterState ("Function completed.  Register state was:");
         
         DoTakedown();
         
