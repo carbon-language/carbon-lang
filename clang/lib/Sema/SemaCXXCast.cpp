@@ -1050,9 +1050,8 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                   bool CStyle, unsigned &msg) {
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
-  if (const LValueReferenceType *DestTypeTmp =
-        DestType->getAs<LValueReferenceType>()) {
-    if (!SrcExpr->isLValue()) {
+  if (const ReferenceType *DestTypeTmp =DestType->getAs<ReferenceType>()) {
+    if (DestTypeTmp->isLValueReferenceType() && !SrcExpr->isLValue()) {
       // Cannot const_cast non-lvalue to lvalue reference type. But if this
       // is C-style, static_cast might find a way, so we simply suggest a
       // message and tell the parent to keep searching.
@@ -1156,8 +1155,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
   if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {
     bool LValue = DestTypeTmp->isLValueReferenceType();
     if (LValue && !SrcExpr->isLValue()) {
-      // Cannot cast non-lvalue to reference type. See the similar comment in
-      // const_cast.
+      // Cannot cast non-lvalue to lvalue reference type. See the similar 
+      // comment in const_cast.
       msg = diag::err_bad_cxx_cast_rvalue;
       return TC_NotApplicable;
     }
