@@ -1468,7 +1468,7 @@ struct FieldDeclarator {
   }
 };
 
-/// 
+/// VirtSpecifiers - Represents a C++0x virt-specifier-seq.
 class VirtSpecifiers {
 public:
   enum VirtSpecifier {
@@ -1499,6 +1499,31 @@ private:
 
   static const char *getSpecifierName(VirtSpecifier VS);
 
+};
+
+/// ClassVirtSpecifiers - Represents a C++0x class-virt-specifier-seq.
+class ClassVirtSpecifiers {
+public:
+  enum ClassVirtSpecifier {
+    CVS_None = 0,
+    CVS_Final = 1,
+    CVS_Explicit = 2
+  };
+
+  ClassVirtSpecifiers() : Specifiers(0) { }
+
+  bool isFinalSpecified() const { return Specifiers & CVS_Final; }
+  SourceLocation getFinalLoc() const { return CVS_finalLoc; }
+
+  bool isExplicitSpecified() const { return Specifiers & CVS_Explicit; }
+  SourceLocation getExplicitLoc() const { return CVS_explicitLoc; }
+
+private:
+  unsigned Specifiers;
+
+  SourceLocation CVS_finalLoc, CVS_explicitLoc;
+
+  static const char *getSpecifierName(ClassVirtSpecifier CVS);
 };
 
 } // end namespace clang

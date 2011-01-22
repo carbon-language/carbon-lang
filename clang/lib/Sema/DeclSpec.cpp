@@ -669,15 +669,6 @@ void UnqualifiedId::setOperatorFunctionId(SourceLocation OperatorLoc,
   }
 }
 
-const char *VirtSpecifiers::getSpecifierName(VirtSpecifier VS) {
-  switch (VS) {
-  default: assert(0 && "Unknown specifier");
-  case VS_Override: return "override";
-  case VS_Final: return "final";
-  case VS_New: return "new";
-  }
-}
-
 bool VirtSpecifiers::SetVirtSpecifier(VirtSpecifier VS, SourceLocation Loc,
                                       const char *&PrevSpec) {
   if (Specifiers & VS) {
@@ -696,3 +687,11 @@ bool VirtSpecifiers::SetVirtSpecifier(VirtSpecifier VS, SourceLocation Loc,
   return false;
 }
 
+const char *VirtSpecifiers::getSpecifierName(VirtSpecifier VS) {
+  switch (VS) {
+  default: assert(0 && "Unknown specifier");
+  case VS_Override: return "override";
+  case VS_Final: return "final";
+  case VS_New: return "new";
+  }
+}
