@@ -626,7 +626,7 @@ MachTask::AllocateMemory (size_t size, uint32_t permissions)
     if (err.Error() == KERN_SUCCESS)
     {
         // Set the protections:
-        vm_prot_t mach_prot = 0;
+        vm_prot_t mach_prot = VM_PROT_NONE;
         if (permissions & eMemoryPermissionsReadable)
             mach_prot |= VM_PROT_READ;
         if (permissions & eMemoryPermissionsWritable)
@@ -663,7 +663,14 @@ MachTask::DeallocateMemory (nub_addr_t addr)
         if ((*pos).first == addr)
         {
             m_allocations.erase(pos);
-            return ::mach_vm_deallocate (task, (*pos).first, (*pos).second) == KERN_SUCCESS;
+#define ALWAYS_ZOMBIE_ALLOCATIONS 0
+            if (ALWAYS_ZOMBIE_ALLOCATIONS || getenv ("DEBUGSERVER_ZOMBIE_ALLOCATIONS"))
+            {
+                ::mach_vm_protect (task, (*pos).first, (*pos).second, 0, VM_PROT_NONE);
+                return true;
+            }
+            else
+                return ::mach_vm_deallocate (task, (*pos).first, (*pos).second) == KERN_SUCCESS;
         }
         
     }
