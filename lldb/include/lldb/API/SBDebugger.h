@@ -25,8 +25,11 @@ public:
     static void
     Terminate();
     
-    static SBDebugger
+    static lldb::SBDebugger
     Create();
+
+    static void
+    Destroy (lldb::SBDebugger &debugger);
 
     SBDebugger();
 

@@ -259,6 +259,9 @@ public:
     
     static void 
     Terminate ();
+    
+    static void
+    Destroy (lldb::DebuggerSP &debugger_sp);
 
     ~Debugger ();
 

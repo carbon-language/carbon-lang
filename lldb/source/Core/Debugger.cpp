@@ -114,6 +114,26 @@ Debugger::CreateInstance ()
     return debugger_sp;
 }
 
+void
+Debugger::Destroy (lldb::DebuggerSP &debugger_sp)
+{
+    if (debugger_sp.get() == NULL)
+        return;
+        
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    DebuggerList &debugger_list = GetDebuggerList ();
+    DebuggerList::iterator pos, end = debugger_list.end();
+    for (pos = debugger_list.begin (); pos != end; ++pos)
+    {
+        if ((*pos).get() == debugger_sp.get())
+        {
+            debugger_list.erase (pos);
+            return;
+        }
+    }
+
+}
+
 lldb::DebuggerSP
 Debugger::GetSP ()
 {

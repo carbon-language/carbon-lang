@@ -83,6 +83,24 @@ SBDebugger::Create()
     return debugger;
 }
 
+void
+SBDebugger::Destroy (SBDebugger &debugger)
+{
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    if (log)
+    {
+        SBStream sstr;
+        debugger.GetDescription (sstr);
+        log->Printf ("SBDebugger::Destroy () => SBDebugger(%p): %s", debugger.m_opaque_sp.get(), sstr.GetData());
+    }
+    
+    Debugger::Destroy (debugger.m_opaque_sp);
+    
+    if (debugger.m_opaque_sp.get() != NULL)
+        debugger.m_opaque_sp.reset();
+}
+
 SBDebugger::SBDebugger () :
     m_opaque_sp ()
 {
