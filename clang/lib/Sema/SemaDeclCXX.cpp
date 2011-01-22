@@ -886,6 +886,26 @@ void Sema::CheckOverrideControl(const Decl *D) {
       << MD->getDeclName();
     return;
   }
+
+  // C++0x [class.derived]p8:
+  //   In a class definition marked with the class-virt-specifier explicit,
+  //   if a virtual member function that is neither implicitly-declared nor a 
+  //   destructor overrides a member function of a base class and it is not
+  //   marked with the virt-specifier override, the program is ill-formed.
+  if (MD->getParent()->isMarkedExplicit() && !isa<CXXDestructorDecl>(MD) &&
+      HasOverriddenMethods && !MD->isMarkedOverride()) {
+    llvm::SmallVector<const CXXMethodDecl*, 4> 
+      OverriddenMethods(MD->begin_overridden_methods(), 
+                        MD->end_overridden_methods());
+
+    Diag(MD->getLocation(), diag::err_function_overriding_without_override)
+      << MD->getDeclName() 
+      << (unsigned)OverriddenMethods.size();
+
+    for (unsigned I = 0; I != OverriddenMethods.size(); ++I)
+      Diag(OverriddenMethods[I]->getLocation(),
+           diag::note_overridden_virtual_function);
+  }
 }
 
 /// CheckIfOverriddenFunctionIsMarkedFinal - Checks whether a virtual member 
