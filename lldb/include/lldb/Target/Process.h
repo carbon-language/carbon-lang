@@ -1753,6 +1753,18 @@ public:
         m_dynamic_checkers_ap.reset(dynamic_checkers);
     }
 
+    virtual bool
+    StartNoticingNewThreads()
+    {   
+        return true;
+    }
+    
+    virtual bool
+    StopNoticingNewThreads()
+    {   
+        return true;
+    }
+    
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
