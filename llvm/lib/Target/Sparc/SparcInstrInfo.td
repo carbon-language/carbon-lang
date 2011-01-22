@@ -694,48 +694,57 @@ let Defs = [FCC] in {
 let Predicates = [HasV9], Constraints = "$T = $dst" in {
   // Move Integer Register on Condition (MOVcc) p. 194 of the V9 manual.
   // FIXME: Add instruction encodings for the JIT some day.
-  def MOVICCrr
-    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, CCOp:$cc),
-             "mov$cc %icc, $F, $dst",
-             [(set IntRegs:$dst,
-                         (SPselecticc IntRegs:$F, IntRegs:$T, imm:$cc))]>;
-  def MOVICCri
-    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, i32imm:$F, CCOp:$cc),
-             "mov$cc %icc, $F, $dst",
-             [(set IntRegs:$dst,
-                          (SPselecticc simm11:$F, IntRegs:$T, imm:$cc))]>;
+  let Uses = [ICC] in {
+    def MOVICCrr
+      : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, CCOp:$cc),
+               "mov$cc %icc, $F, $dst",
+               [(set IntRegs:$dst,
+                           (SPselecticc IntRegs:$F, IntRegs:$T, imm:$cc))]>;
+    def MOVICCri
+      : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, i32imm:$F, CCOp:$cc),
+               "mov$cc %icc, $F, $dst",
+               [(set IntRegs:$dst,
+                            (SPselecticc simm11:$F, IntRegs:$T, imm:$cc))]>;
+  }
 
-  def MOVFCCrr
-    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, CCOp:$cc),
-             "mov$cc %fcc0, $F, $dst",
-             [(set IntRegs:$dst,
-                         (SPselectfcc IntRegs:$F, IntRegs:$T, imm:$cc))]>;
-  def MOVFCCri
-    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, i32imm:$F, CCOp:$cc),
-             "mov$cc %fcc0, $F, $dst",
-             [(set IntRegs:$dst,
-                          (SPselectfcc simm11:$F, IntRegs:$T, imm:$cc))]>;
+  let Uses = [FCC] in {
+    def MOVFCCrr
+      : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, CCOp:$cc),
+               "mov$cc %fcc0, $F, $dst",
+               [(set IntRegs:$dst,
+                           (SPselectfcc IntRegs:$F, IntRegs:$T, imm:$cc))]>;
+    def MOVFCCri
+      : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, i32imm:$F, CCOp:$cc),
+               "mov$cc %fcc0, $F, $dst",
+               [(set IntRegs:$dst,
+                            (SPselectfcc simm11:$F, IntRegs:$T, imm:$cc))]>;
+  }
 
-  def FMOVS_ICC
-    : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, CCOp:$cc),
-             "fmovs$cc %icc, $F, $dst",
-             [(set FPRegs:$dst,
-                         (SPselecticc FPRegs:$F, FPRegs:$T, imm:$cc))]>;
-  def FMOVD_ICC
-    : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, CCOp:$cc),
-             "fmovd$cc %icc, $F, $dst",
-             [(set DFPRegs:$dst,
-                         (SPselecticc DFPRegs:$F, DFPRegs:$T, imm:$cc))]>;
-  def FMOVS_FCC
-    : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, CCOp:$cc),
-             "fmovs$cc %fcc0, $F, $dst",
-             [(set FPRegs:$dst,
-                         (SPselectfcc FPRegs:$F, FPRegs:$T, imm:$cc))]>;
-  def FMOVD_FCC
-    : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, CCOp:$cc),
-             "fmovd$cc %fcc0, $F, $dst",
-             [(set DFPRegs:$dst,
-                         (SPselectfcc DFPRegs:$F, DFPRegs:$T, imm:$cc))]>;
+  let Uses = [ICC] in {
+    def FMOVS_ICC
+      : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, CCOp:$cc),
+               "fmovs$cc %icc, $F, $dst",
+               [(set FPRegs:$dst,
+                           (SPselecticc FPRegs:$F, FPRegs:$T, imm:$cc))]>;
+    def FMOVD_ICC
+      : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, CCOp:$cc),
+               "fmovd$cc %icc, $F, $dst",
+               [(set DFPRegs:$dst,
+                           (SPselecticc DFPRegs:$F, DFPRegs:$T, imm:$cc))]>;
+  }
+
+  let Uses = [FCC] in {
+    def FMOVS_FCC
+      : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, CCOp:$cc),
+               "fmovs$cc %fcc0, $F, $dst",
+               [(set FPRegs:$dst,
+                           (SPselectfcc FPRegs:$F, FPRegs:$T, imm:$cc))]>;
+    def FMOVD_FCC
+      : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, CCOp:$cc),
+               "fmovd$cc %fcc0, $F, $dst",
+               [(set DFPRegs:$dst,
+                           (SPselectfcc DFPRegs:$F, DFPRegs:$T, imm:$cc))]>;
+  }
 
 }
 
