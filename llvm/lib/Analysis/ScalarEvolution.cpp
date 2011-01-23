@@ -904,15 +904,11 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
     // so, we should be able to simplify this further.
     const SCEV *X = ST->getOperand();
     ConstantRange CR = getUnsignedRange(X);
-    unsigned OrigBits = CR.getBitWidth();
     unsigned TruncBits = getTypeSizeInBits(ST->getType());
     unsigned NewBits = getTypeSizeInBits(Ty);
     if (CR.truncate(TruncBits).zeroExtend(NewBits).contains(
-            CR.zextOrTrunc(NewBits))) {
-      if (NewBits > OrigBits) return getZeroExtendExpr(X, Ty);
-      if (NewBits < OrigBits) return getTruncateExpr(X, Ty);
-      return X;
-    }
+            CR.zextOrTrunc(NewBits)))
+      return getTruncateOrZeroExtend(X, Ty);
   }
 
   // If the input value is a chrec scev, and we can prove that the value
@@ -1062,15 +1058,11 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
     // so, we should be able to simplify this further.
     const SCEV *X = ST->getOperand();
     ConstantRange CR = getSignedRange(X);
-    unsigned OrigBits = CR.getBitWidth();
     unsigned TruncBits = getTypeSizeInBits(ST->getType());
     unsigned NewBits = getTypeSizeInBits(Ty);
     if (CR.truncate(TruncBits).signExtend(NewBits).contains(
-            CR.sextOrTrunc(NewBits))) {
-      if (NewBits > OrigBits) return getSignExtendExpr(X, Ty);
-      if (NewBits < OrigBits) return getTruncateExpr(X, Ty);
-      return X;
-    }
+            CR.sextOrTrunc(NewBits)))
+      return getTruncateOrSignExtend(X, Ty);
   }
 
   // If the input value is a chrec scev, and we can prove that the value
