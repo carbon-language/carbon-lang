@@ -29,12 +29,12 @@ void MipsTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
 
   SmallDataSection =
     getContext().getELFSection(".sdata", ELF::SHT_PROGBITS,
-                               MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
+                               ELF::SHF_WRITE |ELF::SHF_ALLOC,
                                SectionKind::getDataRel());
 
   SmallBSSSection =
     getContext().getELFSection(".sbss", ELF::SHT_NOBITS,
-                               MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
+                               ELF::SHF_WRITE |ELF::SHF_ALLOC,
                                SectionKind::getBSS());
 
 }

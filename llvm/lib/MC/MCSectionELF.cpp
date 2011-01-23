@@ -43,37 +43,37 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
   
   // Handle the weird solaris syntax if desired.
   if (MAI.usesSunStyleELFSectionSwitchSyntax() && 
-      !(Flags & MCSectionELF::SHF_MERGE)) {
-    if (Flags & MCSectionELF::SHF_ALLOC)
+      !(Flags & ELF::SHF_MERGE)) {
+    if (Flags & ELF::SHF_ALLOC)
       OS << ",#alloc";
-    if (Flags & MCSectionELF::SHF_EXECINSTR)
+    if (Flags & ELF::SHF_EXECINSTR)
       OS << ",#execinstr";
-    if (Flags & MCSectionELF::SHF_WRITE)
+    if (Flags & ELF::SHF_WRITE)
       OS << ",#write";
-    if (Flags & MCSectionELF::SHF_TLS)
+    if (Flags & ELF::SHF_TLS)
       OS << ",#tls";
     OS << '\n';
     return;
   }
   
   OS << ",\"";
-  if (Flags & MCSectionELF::SHF_ALLOC)
+  if (Flags & ELF::SHF_ALLOC)
     OS << 'a';
-  if (Flags & MCSectionELF::SHF_EXECINSTR)
+  if (Flags & ELF::SHF_EXECINSTR)
     OS << 'x';
-  if (Flags & MCSectionELF::SHF_WRITE)
+  if (Flags & ELF::SHF_WRITE)
     OS << 'w';
-  if (Flags & MCSectionELF::SHF_MERGE)
+  if (Flags & ELF::SHF_MERGE)
     OS << 'M';
-  if (Flags & MCSectionELF::SHF_STRINGS)
+  if (Flags & ELF::SHF_STRINGS)
     OS << 'S';
-  if (Flags & MCSectionELF::SHF_TLS)
+  if (Flags & ELF::SHF_TLS)
     OS << 'T';
   
   // If there are target-specific flags, print them.
-  if (Flags & MCSectionELF::XCORE_SHF_CP_SECTION)
+  if (Flags & ELF::XCORE_SHF_CP_SECTION)
     OS << 'c';
-  if (Flags & MCSectionELF::XCORE_SHF_DP_SECTION)
+  if (Flags & ELF::XCORE_SHF_DP_SECTION)
     OS << 'd';
   
   OS << '"';
@@ -100,7 +100,7 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << "progbits";
 
   if (EntrySize) {
-    assert(Flags & MCSectionELF::SHF_MERGE);
+    assert(Flags & ELF::SHF_MERGE);
     OS << "," << EntrySize;
   }
 
@@ -108,7 +108,7 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
 }
 
 bool MCSectionELF::UseCodeAlign() const {
-  return getFlags() & MCSectionELF::SHF_EXECINSTR;
+  return getFlags() & ELF::SHF_EXECINSTR;
 }
 
 bool MCSectionELF::isVirtualSection() const {

@@ -156,20 +156,20 @@ private:
 
   void SetSectionData() {
     SetSection(".data", ELF::SHT_PROGBITS,
-               MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
+               ELF::SHF_WRITE |ELF::SHF_ALLOC,
                SectionKind::getDataRel());
     EmitCodeAlignment(4, 0);
   }
   void SetSectionText() {
     SetSection(".text", ELF::SHT_PROGBITS,
-               MCSectionELF::SHF_EXECINSTR |
-               MCSectionELF::SHF_ALLOC, SectionKind::getText());
+               ELF::SHF_EXECINSTR |
+               ELF::SHF_ALLOC, SectionKind::getText());
     EmitCodeAlignment(4, 0);
   }
   void SetSectionBss() {
     SetSection(".bss", ELF::SHT_NOBITS,
-               MCSectionELF::SHF_WRITE |
-               MCSectionELF::SHF_ALLOC, SectionKind::getBSS());
+               ELF::SHF_WRITE |
+               ELF::SHF_ALLOC, SectionKind::getBSS());
     EmitCodeAlignment(4, 0);
   }
 };
@@ -193,7 +193,7 @@ void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
   const MCSectionELF &Section =
     static_cast<const MCSectionELF&>(Symbol->getSection());
   MCSymbolData &SD = getAssembler().getSymbolData(*Symbol);
-  if (Section.getFlags() & MCSectionELF::SHF_TLS)
+  if (Section.getFlags() & ELF::SHF_TLS)
     SetType(SD, ELF::STT_TLS);
 }
 
@@ -347,8 +347,8 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   if (GetBinding(SD) == ELF_STB_Local) {
     const MCSection *Section = getAssembler().getContext().getELFSection(".bss",
                                                                     ELF::SHT_NOBITS,
-                                                                    MCSectionELF::SHF_WRITE |
-                                                                    MCSectionELF::SHF_ALLOC,
+                                                                    ELF::SHF_WRITE |
+                                                                    ELF::SHF_ALLOC,
                                                                     SectionKind::getBSS());
     Symbol->setSection(*Section);
 

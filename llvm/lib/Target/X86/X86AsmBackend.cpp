@@ -297,7 +297,7 @@ public:
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
     const MCSectionELF &ES = static_cast<const MCSectionELF&>(Section);
-    return ES.getFlags() & MCSectionELF::SHF_MERGE;
+    return ES.getFlags() & ELF::SHF_MERGE;
   }
 };
 

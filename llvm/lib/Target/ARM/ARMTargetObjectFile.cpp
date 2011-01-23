@@ -28,13 +28,13 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
   if (TM.getSubtarget<ARMSubtarget>().isAAPCS_ABI()) {
     StaticCtorSection =
       getContext().getELFSection(".init_array", ELF::SHT_INIT_ARRAY,
-                                 MCSectionELF::SHF_WRITE |
-                                 MCSectionELF::SHF_ALLOC,
+                                 ELF::SHF_WRITE |
+                                 ELF::SHF_ALLOC,
                                  SectionKind::getDataRel());
     StaticDtorSection =
       getContext().getELFSection(".fini_array", ELF::SHT_FINI_ARRAY,
-                                 MCSectionELF::SHF_WRITE |
-                                 MCSectionELF::SHF_ALLOC,
+                                 ELF::SHF_WRITE |
+                                 ELF::SHF_ALLOC,
                                  SectionKind::getDataRel());
   }
   

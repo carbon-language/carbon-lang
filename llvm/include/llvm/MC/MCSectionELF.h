@@ -15,6 +15,7 @@
 #define LLVM_MC_MCSECTIONELF_H
 
 #include "llvm/MC/MCSection.h"
+#include "llvm/Support/ELF.h"
 
 namespace llvm {
 
@@ -59,53 +60,6 @@ public:
   /// header index.
   bool HasCommonSymbols() const;
 
-  /// Valid section flags.
-  enum {
-    // The section contains data that should be writable.
-    SHF_WRITE            = 0x1U,
-
-    // The section occupies memory during execution.
-    SHF_ALLOC            = 0x2U,
-
-    // The section contains executable machine instructions.
-    SHF_EXECINSTR        = 0x4U,
-
-    // The data in the section may be merged to eliminate duplication.
-    SHF_MERGE            = 0x10U,
-
-    // Elements in the section consist of null-terminated character strings.
-    SHF_STRINGS          = 0x20U,
-
-    // A field in this section holds a section header table index.
-    SHF_INFO_LINK        = 0x40U,
-
-    // Adds special ordering requirements for link editors.
-    SHF_LINK_ORDER       = 0x80U,
-
-    // This section requires special OS-specific processing to avoid incorrect
-    // behavior.
-    SHF_OS_NONCONFORMING = 0x100U,
-
-    // This section is a member of a section group.
-    SHF_GROUP            = 0x200U,
-
-    // This section holds Thread-Local Storage.
-    SHF_TLS              = 0x400U,
-
-
-    // Start of target-specific flags.
-
-    /// XCORE_SHF_CP_SECTION - All sections with the "c" flag are grouped
-    /// together by the linker to form the constant pool and the cp register is
-    /// set to the start of the constant pool by the boot code.
-    XCORE_SHF_CP_SECTION = 0x800U,
-
-    /// XCORE_SHF_DP_SECTION - All sections with the "d" flag are grouped
-    /// together by the linker to form the data section and the dp register is
-    /// set to the start of the section by the boot code.
-    XCORE_SHF_DP_SECTION = 0x1000U
-  };
-
   StringRef getSectionName() const { return SectionName; }
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
@@ -120,7 +74,7 @@ public:
   /// isBaseAddressKnownZero - We know that non-allocatable sections (like
   /// debug info) have a base of zero.
   virtual bool isBaseAddressKnownZero() const {
-    return (getFlags() & SHF_ALLOC) == 0;
+    return (getFlags() & ELF::SHF_ALLOC) == 0;
   }
 
   static bool classof(const MCSection *S) {

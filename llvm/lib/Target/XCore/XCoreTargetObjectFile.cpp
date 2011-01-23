@@ -21,29 +21,29 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
 
   DataSection =
     Ctx.getELFSection(".dp.data", ELF::SHT_PROGBITS, 
-                      MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE |
-                      MCSectionELF::XCORE_SHF_DP_SECTION,
+                      ELF::SHF_ALLOC | ELF::SHF_WRITE |
+                      ELF::XCORE_SHF_DP_SECTION,
                       SectionKind::getDataRel());
   BSSSection =
     Ctx.getELFSection(".dp.bss", ELF::SHT_NOBITS,
-                      MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE |
-                      MCSectionELF::XCORE_SHF_DP_SECTION,
+                      ELF::SHF_ALLOC | ELF::SHF_WRITE |
+                      ELF::XCORE_SHF_DP_SECTION,
                       SectionKind::getBSS());
   
   MergeableConst4Section = 
     Ctx.getELFSection(".cp.rodata.cst4", ELF::SHT_PROGBITS,
-                      MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
-                      MCSectionELF::XCORE_SHF_CP_SECTION,
+                      ELF::SHF_ALLOC | ELF::SHF_MERGE |
+                      ELF::XCORE_SHF_CP_SECTION,
                       SectionKind::getMergeableConst4());
   MergeableConst8Section = 
     Ctx.getELFSection(".cp.rodata.cst8", ELF::SHT_PROGBITS,
-                      MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
-                      MCSectionELF::XCORE_SHF_CP_SECTION,
+                      ELF::SHF_ALLOC | ELF::SHF_MERGE |
+                      ELF::XCORE_SHF_CP_SECTION,
                       SectionKind::getMergeableConst8());
   MergeableConst16Section = 
     Ctx.getELFSection(".cp.rodata.cst16", ELF::SHT_PROGBITS,
-                      MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
-                      MCSectionELF::XCORE_SHF_CP_SECTION,
+                      ELF::SHF_ALLOC | ELF::SHF_MERGE |
+                      ELF::XCORE_SHF_CP_SECTION,
                       SectionKind::getMergeableConst16());
   
   // TLS globals are lowered in the backend to arrays indexed by the current
@@ -54,8 +54,8 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
 
   ReadOnlySection = 
     Ctx.getELFSection(".cp.rodata", ELF::SHT_PROGBITS,
-                      MCSectionELF::SHF_ALLOC |
-                      MCSectionELF::XCORE_SHF_CP_SECTION,
+                      ELF::SHF_ALLOC |
+                      ELF::XCORE_SHF_CP_SECTION,
                       SectionKind::getReadOnlyWithRel());
 
   // Dynamic linking is not supported. Data with relocations is placed in the

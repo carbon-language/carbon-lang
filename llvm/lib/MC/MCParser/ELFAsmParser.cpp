@@ -61,58 +61,58 @@ public:
   // the best way for us to get access to it?
   bool ParseSectionDirectiveData(StringRef, SMLoc) {
     return ParseSectionSwitch(".data", ELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
+                              ELF::SHF_WRITE |ELF::SHF_ALLOC,
                               SectionKind::getDataRel());
   }
   bool ParseSectionDirectiveText(StringRef, SMLoc) {
     return ParseSectionSwitch(".text", ELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_EXECINSTR |
-                              MCSectionELF::SHF_ALLOC, SectionKind::getText());
+                              ELF::SHF_EXECINSTR |
+                              ELF::SHF_ALLOC, SectionKind::getText());
   }
   bool ParseSectionDirectiveBSS(StringRef, SMLoc) {
     return ParseSectionSwitch(".bss", ELF::SHT_NOBITS,
-                              MCSectionELF::SHF_WRITE |
-                              MCSectionELF::SHF_ALLOC, SectionKind::getBSS());
+                              ELF::SHF_WRITE |
+                              ELF::SHF_ALLOC, SectionKind::getBSS());
   }
   bool ParseSectionDirectiveRoData(StringRef, SMLoc) {
     return ParseSectionSwitch(".rodata", ELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_ALLOC,
+                              ELF::SHF_ALLOC,
                               SectionKind::getReadOnly());
   }
   bool ParseSectionDirectiveTData(StringRef, SMLoc) {
     return ParseSectionSwitch(".tdata", ELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_ALLOC |
-                              MCSectionELF::SHF_TLS | MCSectionELF::SHF_WRITE,
+                              ELF::SHF_ALLOC |
+                              ELF::SHF_TLS | ELF::SHF_WRITE,
                               SectionKind::getThreadData());
   }
   bool ParseSectionDirectiveTBSS(StringRef, SMLoc) {
     return ParseSectionSwitch(".tbss", ELF::SHT_NOBITS,
-                              MCSectionELF::SHF_ALLOC |
-                              MCSectionELF::SHF_TLS | MCSectionELF::SHF_WRITE,
+                              ELF::SHF_ALLOC |
+                              ELF::SHF_TLS | ELF::SHF_WRITE,
                               SectionKind::getThreadBSS());
   }
   bool ParseSectionDirectiveDataRel(StringRef, SMLoc) {
     return ParseSectionSwitch(".data.rel", ELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_ALLOC |
-                              MCSectionELF::SHF_WRITE,
+                              ELF::SHF_ALLOC |
+                              ELF::SHF_WRITE,
                               SectionKind::getDataRel());
   }
   bool ParseSectionDirectiveDataRelRo(StringRef, SMLoc) {
     return ParseSectionSwitch(".data.rel.ro", ELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_ALLOC |
-                              MCSectionELF::SHF_WRITE,
+                              ELF::SHF_ALLOC |
+                              ELF::SHF_WRITE,
                               SectionKind::getReadOnlyWithRel());
   }
   bool ParseSectionDirectiveDataRelRoLocal(StringRef, SMLoc) {
     return ParseSectionSwitch(".data.rel.ro.local", ELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_ALLOC |
-                              MCSectionELF::SHF_WRITE,
+                              ELF::SHF_ALLOC |
+                              ELF::SHF_WRITE,
                               SectionKind::getReadOnlyWithRelLocal());
   }
   bool ParseSectionDirectiveEhFrame(StringRef, SMLoc) {
     return ParseSectionSwitch(".eh_frame", ELF::SHT_PROGBITS,
-                              MCSectionELF::SHF_ALLOC |
-                              MCSectionELF::SHF_WRITE,
+                              ELF::SHF_ALLOC |
+                              ELF::SHF_WRITE,
                               SectionKind::getDataRel());
   }
   bool ParseDirectiveSection(StringRef, SMLoc);
@@ -195,9 +195,9 @@ bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
 }
 
 static SectionKind computeSectionKind(unsigned Flags) {
-  if (Flags & MCSectionELF::SHF_EXECINSTR)
+  if (Flags & ELF::SHF_EXECINSTR)
     return SectionKind::getText();
-  if (Flags & MCSectionELF::SHF_TLS)
+  if (Flags & ELF::SHF_TLS)
     return SectionKind::getThreadData();
   return SectionKind::getDataRel();
 }
@@ -208,31 +208,31 @@ static int parseSectionFlags(StringRef flagsStr) {
   for (unsigned i = 0; i < flagsStr.size(); i++) {
     switch (flagsStr[i]) {
     case 'a':
-      flags |= MCSectionELF::SHF_ALLOC;
+      flags |= ELF::SHF_ALLOC;
       break;
     case 'x':
-      flags |= MCSectionELF::SHF_EXECINSTR;
+      flags |= ELF::SHF_EXECINSTR;
       break;
     case 'w':
-      flags |= MCSectionELF::SHF_WRITE;
+      flags |= ELF::SHF_WRITE;
       break;
     case 'M':
-      flags |= MCSectionELF::SHF_MERGE;
+      flags |= ELF::SHF_MERGE;
       break;
     case 'S':
-      flags |= MCSectionELF::SHF_STRINGS;
+      flags |= ELF::SHF_STRINGS;
       break;
     case 'T':
-      flags |= MCSectionELF::SHF_TLS;
+      flags |= ELF::SHF_TLS;
       break;
     case 'c':
-      flags |= MCSectionELF::XCORE_SHF_CP_SECTION;
+      flags |= ELF::XCORE_SHF_CP_SECTION;
       break;
     case 'd':
-      flags |= MCSectionELF::XCORE_SHF_DP_SECTION;
+      flags |= ELF::XCORE_SHF_DP_SECTION;
       break;
     case 'G':
-      flags |= MCSectionELF::SHF_GROUP;
+      flags |= ELF::SHF_GROUP;
       break;
     default:
       return -1;
@@ -257,9 +257,9 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   // Set the defaults first.
   if (SectionName == ".fini" || SectionName == ".init" ||
       SectionName == ".rodata")
-    Flags |= MCSectionELF::SHF_ALLOC;
+    Flags |= ELF::SHF_ALLOC;
   if (SectionName == ".fini" || SectionName == ".init")
-    Flags |= MCSectionELF::SHF_EXECINSTR;
+    Flags |= ELF::SHF_EXECINSTR;
 
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
@@ -275,8 +275,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
       return TokError("unknown flag");
     Flags |= extraFlags;
 
-    bool Mergeable = Flags & MCSectionELF::SHF_MERGE;
-    bool Group = Flags & MCSectionELF::SHF_GROUP;
+    bool Mergeable = Flags & ELF::SHF_MERGE;
+    bool Group = Flags & ELF::SHF_GROUP;
 
     if (getLexer().isNot(AsmToken::Comma)) {
       if (Mergeable)
@@ -417,8 +417,8 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
   const MCSection *OldSection = getStreamer().getCurrentSection();
   const MCSection *Comment =
     getContext().getELFSection(".comment", ELF::SHT_PROGBITS,
-                               MCSectionELF::SHF_MERGE |
-                               MCSectionELF::SHF_STRINGS,
+                               ELF::SHF_MERGE |
+                               ELF::SHF_STRINGS,
                                SectionKind::getReadOnly(),
                                1, "");
 

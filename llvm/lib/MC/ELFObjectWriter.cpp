@@ -714,7 +714,7 @@ const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
     return &Symbol;
   }
 
-  if (Section.getFlags() & MCSectionELF::SHF_MERGE) {
+  if (Section.getFlags() & ELF::SHF_MERGE) {
     if (Target.getConstant() == 0)
       return NULL;
     if (Renamed)
@@ -1183,7 +1183,7 @@ void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
        it != ie; ++it) {
     const MCSectionELF &Section =
       static_cast<const MCSectionELF&>(it->getSection());
-    if (!(Section.getFlags() & MCSectionELF::SHF_GROUP))
+    if (!(Section.getFlags() & ELF::SHF_GROUP))
       continue;
 
     const MCSymbol *SignatureSymbol = Section.getGroup();
@@ -1206,7 +1206,7 @@ void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
        it != ie; ++it, ++Index) {
     const MCSectionELF &Section =
       static_cast<const MCSectionELF&>(it->getSection());
-    if (!(Section.getFlags() & MCSectionELF::SHF_GROUP))
+    if (!(Section.getFlags() & ELF::SHF_GROUP))
       continue;
     const MCSectionELF *Group = RevGroupMap[Section.getGroup()];
     MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
