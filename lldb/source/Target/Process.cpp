@@ -1398,13 +1398,31 @@ Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
 {
     // Fixme: we should track the blocks we've allocated, and clean them up...
     // We could even do our own allocator here if that ends up being more efficient.
-    return DoAllocateMemory (size, permissions, error);
+    addr_t allocated_addr = DoAllocateMemory (size, permissions, error);
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf("Process::AllocateMemory(size = %zu, permissions=%c%c%c) => 0x%16.16llx (m_stop_id = %u)", 
+                    size, 
+                    permissions & ePermissionsReadable ? 'r' : '-',
+                    permissions & ePermissionsWritable ? 'w' : '-',
+                    permissions & ePermissionsExecutable ? 'x' : '-',
+                    (uint64_t)allocated_addr,
+                    m_stop_id);
+    return allocated_addr;
 }
 
 Error
 Process::DeallocateMemory (addr_t ptr)
 {
-    return DoDeallocateMemory (ptr);
+    Error error(DoDeallocateMemory (ptr));
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf("Process::DeallocateMemory(addr=0x%16.16llx) => err = %s (m_stop_id = %u)", 
+                    ptr, 
+                    error.AsCString("SUCCESS"),
+                    m_stop_id);
+    return error;
 }
 
 

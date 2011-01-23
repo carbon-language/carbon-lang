@@ -1181,18 +1181,35 @@ ProcessGDBRemote::InterruptIfRunning
 {
     Error error;
 
-    if (m_gdb_comm.IsRunning())
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    
+    const bool is_running = m_gdb_comm.IsRunning();
+    if (log)
+        log->Printf ("ProcessGDBRemote::InterruptIfRunning(discard_thread_plans=%i, catch_stop_event=%i, resume_private_state_thread=%i) is_running=%i", 
+                     discard_thread_plans, 
+                     catch_stop_event, 
+                     resume_private_state_thread,
+                     is_running);
+
+    if (catch_stop_event)
+    {
+        if (log)
+            log->Printf ("ProcessGDBRemote::InterruptIfRunning() pausing private state thread");
+        PausePrivateStateThread();
+    }
+    
+    if (discard_thread_plans)
+    {
+        if (log)
+            log->Printf ("ProcessGDBRemote::InterruptIfRunning() discarding all thread plans");
+        m_thread_list.DiscardThreadPlans();
+    }
+    if (is_running)
     {
         bool timed_out = false;
         bool sent_interrupt = false;
         Mutex::Locker locker;
         
-        if (catch_stop_event)
-            PausePrivateStateThread();
-        
-        if (discard_thread_plans)
-            m_thread_list.DiscardThreadPlans();
-
         //m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
         if (!m_gdb_comm.SendInterrupt (locker, 1, sent_interrupt, timed_out))
         {
@@ -1205,20 +1222,27 @@ ProcessGDBRemote::InterruptIfRunning
             return error;
         }
         
-        
         if (catch_stop_event)
         {
             TimeValue timeout_time;
             timeout_time = TimeValue::Now();
             timeout_time.OffsetWithSeconds(1);
             StateType state = WaitForProcessStopPrivate (&timeout_time, stop_event_sp);
+    
+            const bool timed_out = state == eStateInvalid;
+            if (log)
+                log->Printf ("ProcessGDBRemote::InterruptIfRunning() catch stop event: state = %s, timed-out=%i", StateAsCString(state), timed_out);
 
-            if (state == eStateInvalid)
+            if (timed_out)
                 error.SetErrorString("unable to verify target stopped");
         }
         
         if (catch_stop_event && resume_private_state_thread)
+        {
+            if (log)
+                log->Printf ("ProcessGDBRemote::InterruptIfRunning() resuming private state thread");
             ResumePrivateStateThread();
+        }
     }
     return error;
 }
@@ -1226,6 +1250,10 @@ ProcessGDBRemote::InterruptIfRunning
 Error
 ProcessGDBRemote::WillDetach ()
 {
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    if (log)
+        log->Printf ("ProcessGDBRemote::WillDetach()");
+
     bool discard_thread_plans = true; 
     bool catch_stop_event = true;
     bool resume_private_state_thread = false; // DoDetach will resume the thread
@@ -1269,11 +1297,16 @@ ProcessGDBRemote::DoDetach()
 Error
 ProcessGDBRemote::WillDestroy ()
 {
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    if (log)
+        log->Printf ("ProcessGDBRemote::WillDestroy()");
     bool discard_thread_plans = true; 
     bool catch_stop_event = true;
     bool resume_private_state_thread = true;
     EventSP event_sp;
-    return InterruptIfRunning (discard_thread_plans, catch_stop_event, resume_private_state_thread, event_sp);    
+    return InterruptIfRunning (discard_thread_plans, catch_stop_event, resume_private_state_thread, event_sp);
+    
+
 }
 
 Error
