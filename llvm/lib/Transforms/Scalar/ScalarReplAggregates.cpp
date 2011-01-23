@@ -105,7 +105,10 @@ namespace {
 
     unsigned SRThreshold;
 
-    void MarkUnsafe(AllocaInfo &I) { I.isUnsafe = true; }
+    void MarkUnsafe(AllocaInfo &I, Instruction *User) {
+      I.isUnsafe = true;
+      DEBUG(dbgs() << "  Transformation preventing inst: " << *User << '\n');
+    }
 
     bool isSafeAllocaToScalarRepl(AllocaInst *AI);
 
@@ -114,7 +117,8 @@ namespace {
     void isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t &Offset,
                    AllocaInfo &Info);
     void isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
-                         const Type *MemOpType, bool isStore, AllocaInfo &Info);
+                         const Type *MemOpType, bool isStore, AllocaInfo &Info,
+                         Instruction *TheAccess);
     bool TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size);
     uint64_t FindElementAndOffset(const Type *&T, uint64_t &Offset,
                                   const Type *&IdxTy);
@@ -1078,31 +1082,29 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
         isSafeForScalarRepl(GEPI, AI, GEPOffset, Info);
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
       ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
-      if (Length)
-        isSafeMemAccess(AI, Offset, Length->getZExtValue(), 0,
-                        UI.getOperandNo() == 0, Info);
-      else
-        MarkUnsafe(Info);
+      if (Length == 0)
+        return MarkUnsafe(Info, User);
+      isSafeMemAccess(AI, Offset, Length->getZExtValue(), 0,
+                      UI.getOperandNo() == 0, Info, MI);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      if (!LI->isVolatile()) {
-        const Type *LIType = LI->getType();
-        isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(LIType),
-                        LIType, false, Info);
-        Info.hasALoadOrStore = true;
-      } else
-        MarkUnsafe(Info);
+      if (LI->isVolatile())
+        return MarkUnsafe(Info, User);
+      const Type *LIType = LI->getType();
+      isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(LIType),
+                      LIType, false, Info, LI);
+      Info.hasALoadOrStore = true;
+        
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Store is ok if storing INTO the pointer, not storing the pointer
-      if (!SI->isVolatile() && SI->getOperand(0) != I) {
-        const Type *SIType = SI->getOperand(0)->getType();
-        isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(SIType),
-                        SIType, true, Info);
-        Info.hasALoadOrStore = true;
-      } else
-        MarkUnsafe(Info);
+      if (SI->isVolatile() || SI->getOperand(0) == I)
+        return MarkUnsafe(Info, User);
+        
+      const Type *SIType = SI->getOperand(0)->getType();
+      isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(SIType),
+                      SIType, true, Info, SI);
+      Info.hasALoadOrStore = true;
     } else {
-      DEBUG(errs() << "  Transformation preventing inst: " << *User << '\n');
-      MarkUnsafe(Info);
+      return MarkUnsafe(Info, User);
     }
     if (Info.isUnsafe) return;
   }
@@ -1128,7 +1130,7 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
 
     ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPIt.getOperand());
     if (!IdxVal)
-      return MarkUnsafe(Info);
+      return MarkUnsafe(Info, GEPI);
   }
 
   // Compute the offset due to this GEP and check if the alloca has a
@@ -1137,7 +1139,7 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
   Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
                                  &Indices[0], Indices.size());
   if (!TypeHasComponent(AI->getAllocatedType(), Offset, 0))
-    MarkUnsafe(Info);
+    MarkUnsafe(Info, GEPI);
 }
 
 /// isHomogeneousAggregate - Check if type T is a struct or array containing
@@ -1186,7 +1188,7 @@ static bool isCompatibleAggregate(const Type *T1, const Type *T2) {
 /// pointer bitcasted to a different type.
 void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
                            const Type *MemOpType, bool isStore,
-                           AllocaInfo &Info) {
+                           AllocaInfo &Info, Instruction *TheAccess) {
   // Check if this is a load/store of the entire alloca.
   if (Offset == 0 && MemSize == TD->getTypeAllocSize(AI->getAllocatedType())) {
     // This can be safe for MemIntrinsics (where MemOpType is 0) and integer
@@ -1216,7 +1218,7 @@ void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
     return;
   }
 
-  return MarkUnsafe(Info);
+  return MarkUnsafe(Info, TheAccess);
 }
 
 /// TypeHasComponent - Return true if T has a component type with the
