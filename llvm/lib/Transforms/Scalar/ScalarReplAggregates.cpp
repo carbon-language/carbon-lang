@@ -247,26 +247,6 @@ private:
 } // end anonymous namespace.
 
 
-/// IsVerbotenVectorType - Return true if this is a vector type ScalarRepl isn't
-/// allowed to form.  We do this to avoid MMX types, which is a complete hack,
-/// but is required until the backend is fixed.
-static bool IsVerbotenVectorType(const VectorType *VTy, const Instruction *I) {
-  StringRef Triple(I->getParent()->getParent()->getParent()->getTargetTriple());
-  if (!Triple.startswith("i386") &&
-      !Triple.startswith("x86_64"))
-    return false;
-
-  // Reject all the MMX vector types.
-  switch (VTy->getNumElements()) {
-  default: return false;
-  case 1: return VTy->getElementType()->isIntegerTy(64);
-  case 2: return VTy->getElementType()->isIntegerTy(32);
-  case 4: return VTy->getElementType()->isIntegerTy(16);
-  case 8: return VTy->getElementType()->isIntegerTy(8);
-  }
-}
-
-
 /// TryConvert - Analyze the specified alloca, and if it is safe to do so,
 /// rewrite it to be a new alloca which is mem2reg'able.  This returns the new
 /// alloca if possible or null if not.
@@ -283,8 +263,7 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
   // we just get a lot of insert/extracts.  If at least one vector is
   // involved, then we probably really do have a union of vector/array.
   const Type *NewTy;
-  if (VectorTy && VectorTy->isVectorTy() && HadAVector &&
-      !IsVerbotenVectorType(cast<VectorType>(VectorTy), AI)) {
+  if (VectorTy && VectorTy->isVectorTy() && HadAVector) {
     DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
           << *VectorTy << '\n');
     NewTy = VectorTy;  // Use the vector type.
