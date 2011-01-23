@@ -889,7 +889,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
     FI = Unvisited.begin(), FE = Unvisited.end();
     while(FI != FE && !FoundPath) {
       const BasicBlock *BB = *FI; ++FI;
-      const BasicBlock *Dest;
+      const BasicBlock *Dest = 0;
       Path P;
       bool BackEdgeFound = false;
       for (const_pred_iterator NBB = pred_begin(BB), End = pred_end(BB);

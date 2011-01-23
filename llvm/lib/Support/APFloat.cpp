@@ -175,7 +175,7 @@ totalExponent(StringRef::iterator p, StringRef::iterator end,
 {
   int unsignedExponent;
   bool negative, overflow;
-  int exponent;
+  int exponent = 0;
 
   assert(p != end && "Exponent has no digits");
 

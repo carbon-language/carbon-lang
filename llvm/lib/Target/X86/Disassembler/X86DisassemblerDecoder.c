@@ -290,7 +290,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
   BOOL isPrefix = TRUE;
   BOOL prefixGroups[4] = { FALSE };
   uint64_t prefixLocation;
-  uint8_t byte;
+  uint8_t byte = 0;
   
   BOOL hasAdSize = FALSE;
   BOOL hasOpSize = FALSE;

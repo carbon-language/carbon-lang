@@ -518,7 +518,7 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
   }
   assert(Lane < RegElts && "out of range lane for VLD/VST-lane");
 
-  unsigned D0, D1, D2, D3;
+  unsigned D0 = 0, D1 = 0, D2 = 0, D3 = 0;
   unsigned DstReg = 0;
   bool DstIsDead = false;
   if (TableEntry->IsLoad) {

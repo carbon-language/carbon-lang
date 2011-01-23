@@ -612,7 +612,7 @@ SDNode *
 SPUDAGToDAGISel::Select(SDNode *N) {
   unsigned Opc = N->getOpcode();
   int n_ops = -1;
-  unsigned NewOpc;
+  unsigned NewOpc = 0;
   EVT OpVT = N->getValueType(0);
   SDValue Ops[8];
   DebugLoc dl = N->getDebugLoc();
