@@ -651,14 +651,14 @@ static struct option g_long_options[] =
     { "waitfor-interval",   required_argument,  NULL,               'i' },  // Time in usecs to wait between sampling the pid list when waiting for a process by name
     { "waitfor-duration",   required_argument,  NULL,               'd' },  // The time in seconds to wait for a process to show up by name
     { "native-regs",        no_argument,        NULL,               'r' },  // Specify to use the native registers instead of the gdb defaults for the architecture.
-    { "stdio-path",         required_argument,  NULL,               's' },  // Set the STDIO path to be used when launching applications (STDIN, STDOUT and STDERR)
-    { "stdin-path",         required_argument,  NULL,               'I' },  // Set the STDIN path to be used when launching applications
-    { "stdout-path",        required_argument,  NULL,               'O' },  // Set the STDIN path to be used when launching applications
-    { "stderr-path",        required_argument,  NULL,               'E' },  // Set the STDIN path to be used when launching applications
-    { "no-stdio",           no_argument,        NULL,               'n' },  // Do not set up any stdio (perhaps the program is a GUI program)
-    { "setsid",             no_argument,        NULL,               'S' },  // call setsid() to make debugserver run in its own sessions
+    { "stdio-path",         required_argument,  NULL,               's' },  // Set the STDIO path to be used when launching applications (STDIN, STDOUT and STDERR) (only if debugserver launches the process)
+    { "stdin-path",         required_argument,  NULL,               'I' },  // Set the STDIN path to be used when launching applications (only if debugserver launches the process)
+    { "stdout-path",        required_argument,  NULL,               'O' },  // Set the STDIN path to be used when launching applications (only if debugserver launches the process)
+    { "stderr-path",        required_argument,  NULL,               'E' },  // Set the STDIN path to be used when launching applications (only if debugserver launches the process)
+    { "no-stdio",           no_argument,        NULL,               'n' },  // Do not set up any stdio (perhaps the program is a GUI program) (only if debugserver launches the process)
+    { "setsid",             no_argument,        NULL,               'S' },  // call setsid() to make debugserver run in its own session
     { "disable-aslr",       no_argument,        NULL,               'D' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
-    { "chdir",              no_argument,        NULL,               'c' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
+    { "working-dir",        required_argument,  NULL,               'W' },  // The working directory that the inferior process should have (only if debugserver launches the process)
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -699,7 +699,7 @@ main (int argc, char *argv[])
     std::string stdout_path;
     std::string stderr_path;
     std::string arch_name;
-    std::string working_directory;          // The new working directory to use for the inferior
+    std::string working_dir;          // The new working directory to use for the inferior
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
     useconds_t waitfor_duration = 0;        // Time in seconds to wait for a process by name, 0 means wait forever.
     bool no_stdio = false;
@@ -785,9 +785,9 @@ main (int argc, char *argv[])
                 }
                 break;
 
-            case 'c':
+            case 'W':
                 if (optarg && optarg[0])
-                    working_directory.assign(optarg);
+                    working_dir.assign(optarg);
                 break;
 
             case 'x':
@@ -826,7 +826,7 @@ main (int argc, char *argv[])
                     else if (strcasecmp(optarg, "stderr") == 0)
                         log_file = stderr;
                     else
-                        log_file = fopen(optarg, "w+");
+                        log_file = fopen(optarg, "w");
 
                     if (log_file == NULL)
                     {
@@ -938,11 +938,11 @@ main (int argc, char *argv[])
         return -1;
     }
 
-    if (!working_directory.empty())
+    if (!working_dir.empty())
     {
-        if (remote->Context().SetWorkingDirectory (working_directory.c_str()) == false)
+        if (remote->Context().SetWorkingDirectory (working_dir.c_str()) == false)
         {
-            RNBLogSTDERR ("error: working directory doesn't exist '%s'.\n", working_directory.c_str());
+            RNBLogSTDERR ("error: working directory doesn't exist '%s'.\n", working_dir.c_str());
             exit (8);
         }
     }

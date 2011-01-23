@@ -30,8 +30,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/un.h>
 
 #include <string>
@@ -50,6 +51,7 @@ static struct option g_long_options[] =
 	{ "help",           no_argument,		NULL,           'h'		},
 	{ "setsid",         no_argument,		NULL,           's'		},
 	{ "unix-socket",    required_argument,  NULL,           'u'		},
+    { "working-dir",    required_argument,  NULL,           'w'     },
 	{ NULL,				0,					NULL,            0		}
 };
 
@@ -62,7 +64,7 @@ usage()
 "                    for debugging.\n"
 "\n"
 "SYNOPSIS\n"
-"    darwin-debug --unix-socket=<SOCKET> [--arch=<ARCH>] [--disable-aslr] [--no-env] [--setsid] [--help] -- <PROGRAM> [<PROGRAM-ARG> <PROGRAM-ARG> ....]\n"
+"    darwin-debug --unix-socket=<SOCKET> [--arch=<ARCH>] [--working-dir=<PATH>] [--disable-aslr] [--no-env] [--setsid] [--help] -- <PROGRAM> [<PROGRAM-ARG> <PROGRAM-ARG> ....]\n"
 "\n"
 "DESCRIPTION\n"
 "    darwin-debug will exec itself into a child process <PROGRAM> that is\n"
@@ -95,7 +97,13 @@ exit_with_errno (int err, const char *prefix)
 }
 
 pid_t
-posix_spawn_for_debug (char *const *argv, char *const *envp, cpu_type_t cpu_type, int disable_aslr)
+posix_spawn_for_debug 
+(
+    char *const *argv, 
+    char *const *envp, 
+    const char *working_dir,
+    cpu_type_t cpu_type, 
+    int disable_aslr)
 {
     pid_t pid = 0;
 
@@ -126,6 +134,15 @@ posix_spawn_for_debug (char *const *argv, char *const *envp, cpu_type_t cpu_type
         size_t ocount = 0;
         exit_with_errno (::posix_spawnattr_setbinpref_np (&attr, 1, &cpu_type, &ocount), "posix_spawnattr_setbinpref_np () error: ");
     }
+    
+    // I wish there was a posix_spawn flag to change the working directory of
+    // the inferior process we will spawn, but there currently isn't. If there
+    // ever is a better way to do this, we should use it. I would rather not
+    // manually fork, chdir in the child process, and then posix_spawn with exec
+    // as the whole reason for doing posix_spawn is to not hose anything up
+    // after the fork and prior to the exec...
+    if (working_dir)
+        ::chdir (working_dir);
 
     exit_with_errno (::posix_spawnp (&pid, path, NULL, &attr, (char * const*)argv, (char * const*)envp), "posix_spawn() error: ");
     
@@ -157,6 +174,7 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     int disable_aslr = 0; // By default we disable ASLR
     int pass_env = 1;
     std::string unix_socket_name;
+    std::string working_dir;
 	while ((ch = getopt_long(argc, argv, "a:dehsu:?", g_long_options, NULL)) != -1)
 	{
 		switch (ch) 
@@ -197,6 +215,16 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
 
         case 'u':
             unix_socket_name.assign (optarg);
+            break;
+
+        case 'w':
+            {
+                struct stat working_dir_stat;
+                if (stat (optarg, &working_dir_stat) == 0)
+                    working_dir.assign (optarg);
+                else
+                    ::fprintf(stderr, "warning: working directory doesn't exist: '%s'\n", optarg);
+            }
             break;
 
 		case 'h':
@@ -254,7 +282,15 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     close (s);
 
     system("clear");
-    printf ("Launching '%s' for debug with %u arguments:\n", argv[0], argc);
+    if (working_dir.empty())
+    {
+        char cwd[PATH_MAX];
+        const char *cwd_ptr = getcwd(cwd, sizeof(cwd));
+        printf ("Launching '%s' in '%s' for debug with %u arguments:\n", argv[0], cwd_ptr, argc);
+    }
+    else
+        printf ("Launching '%s' in '%s' for debug with %u arguments:\n", argv[0], working_dir.c_str(), argc);
+
     for (int i=0; i<argc; ++i)
         printf ("argv[%u] = '%s'\n", i, argv[i]);
 
@@ -262,6 +298,7 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     // to debug.
     posix_spawn_for_debug (argv, 
                            pass_env ? envp : NULL, 
+                           working_dir.empty() ? NULL : working_dir.c_str(),
                            cpu_type, 
                            disable_aslr);
     

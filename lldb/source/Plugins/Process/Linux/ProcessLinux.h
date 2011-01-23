@@ -72,7 +72,8 @@ public:
              uint32_t launch_flags,
              const char *stdin_path,
              const char *stdout_path,
-             const char *stderr_path);
+             const char *stderr_path,
+             const char *working_directory);
 
     virtual void
     DidLaunch();

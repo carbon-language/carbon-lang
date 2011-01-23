@@ -316,7 +316,8 @@ ProcessMacOSX::DoLaunch
     uint32_t flags,
     const char *stdin_path,
     const char *stdout_path,
-    const char *stderr_path
+    const char *stderr_path,
+    const char *working_dir
 )
 {
 //  ::LogSetBitMask (PD_LOG_DEFAULT);

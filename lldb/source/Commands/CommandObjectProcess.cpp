@@ -57,12 +57,13 @@ public:
 
             switch (short_option)
             {
-                case 's':   stop_at_entry = true;       break;
-                case 'e':   stderr_path = option_arg;   break;
-                case 'i':   stdin_path  = option_arg;   break;
-                case 'o':   stdout_path = option_arg;   break;
-                case 'p':   plugin_name = option_arg;   break;
-                case 'n':   no_stdio = true;            break;
+                case 's':   stop_at_entry = true;               break;
+                case 'e':   stderr_path.assign (option_arg);    break;
+                case 'i':   stdin_path.assign (option_arg);     break;
+                case 'o':   stdout_path.assign (option_arg);    break;
+                case 'p':   plugin_name.assign (option_arg);    break;
+                case 'n':   no_stdio = true;                    break;
+                case 'w':   working_dir.assign (option_arg);    break;
                 case 't':   
                     if (option_arg && option_arg[0])
                         tty_name.assign (option_arg);
@@ -87,6 +88,7 @@ public:
             stdout_path.clear();
             stderr_path.clear();
             plugin_name.clear();
+            working_dir.clear();
             no_stdio = false;
         }
 
@@ -110,6 +112,7 @@ public:
         std::string stdin_path;
         std::string stdout_path;
         std::string plugin_name;
+        std::string working_dir;
 
     };
 
@@ -249,6 +252,9 @@ public:
         const char **inferior_envp = environment.GetArgumentCount() ? environment.GetConstArgumentVector() : NULL;
 
         Error error;
+        const char *working_dir = NULL;
+        if (!m_options.working_dir.empty())
+            working_dir = m_options.working_dir.c_str();
 
         if (m_options.in_new_tty)
         {
@@ -256,6 +262,7 @@ public:
             lldb::pid_t pid = Host::LaunchInNewTerminal (m_options.tty_name.c_str(),
                                                          inferior_argv,
                                                          inferior_envp,
+                                                         working_dir,
                                                          &exe_module->GetArchitecture(),
                                                          true,
                                                          process->GetDisableASLR());
@@ -287,19 +294,13 @@ public:
                 stderr_path = m_options.stderr_path.empty() ? NULL : m_options.stderr_path.c_str();
             }
 
-            if (stdin_path == NULL)
-                stdin_path = "/dev/null";
-            if (stdout_path == NULL)
-                stdout_path = "/dev/null";
-            if (stderr_path == NULL)
-                stderr_path = "/dev/null";
-
             error = process->Launch (inferior_argv,
                                      inferior_envp,
                                      launch_flags,
                                      stdin_path,
                                      stdout_path,
-                                     stderr_path);
+                                     stderr_path,
+                                     working_dir);
         }
                      
         if (error.Success())
@@ -363,6 +364,7 @@ CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
 { SET1 | SET2 | SET3, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
 {        SET2       , false, "tty",           't', optional_argument, NULL, 0, eArgTypePath,    "Start the process in a terminal. If <path> is specified, look for a terminal whose name contains <path>, else start the process in a new terminal."},
 {               SET3, false, "no-stdio",      'n', no_argument,       NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
+{ SET1 | SET2 | SET3, false, "working-dir",   'w', required_argument, NULL, 0, eArgTypePath,    "Set the current working directory to <path> when running the inferior."},
 { 0,                  false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
 };
 

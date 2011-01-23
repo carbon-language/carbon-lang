@@ -82,8 +82,9 @@ public:
               char const *envp[],           // Can be NULL
               uint32_t flags,
               const char *stdin_path,       // Can be NULL
-              const char *stdout_path,  // Can be NULL
-              const char *stderr_path); // Can be NULL
+              const char *stdout_path,      // Can be NULL
+              const char *stderr_path,      // Can be NULL
+              const char *working_dir);     // Can be NULL
 
     virtual void
     DidLaunch ();
@@ -295,6 +296,9 @@ protected:
                              char const *inferior_argv[],
                              char const *inferior_envp[],
                              const char *stdin_path,
+                             const char *stdout_path,
+                             const char *stderr_path,
+                             const char *working_dir,
                              bool launch_process,           // Set to true if we are going to be launching a the process
                              lldb::pid_t attach_pid,        // If inferior inferior_argv == NULL, then attach to this pid
                              const char *attach_pid_name,   // Wait for the next process to launch whose basename matches "attach_wait_name"

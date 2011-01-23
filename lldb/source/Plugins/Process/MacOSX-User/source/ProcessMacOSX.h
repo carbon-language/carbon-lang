@@ -95,8 +95,9 @@ public:
               char const *envp[],           // Can be NULL
               uint32_t launch_flags,
               const char *stdin_path,       // Can be NULL
-              const char *stdout_path,  // Can be NULL
-              const char *stderr_path); // Can be NULL
+              const char *stdout_path,      // Can be NULL
+              const char *stderr_path,      // Can be NULL
+              const char *working_dir);     // Can be NULL
 
     virtual void
     DidLaunch ();

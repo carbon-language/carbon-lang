@@ -122,7 +122,8 @@ ProcessLinux::DoLaunch(Module *module,
                        uint32_t launch_flags,
                        const char *stdin_path,
                        const char *stdout_path,
-                       const char *stderr_path)
+                       const char *stderr_path,
+                       const char *working_directory)
 {
     Error error;
     assert(m_monitor == NULL);

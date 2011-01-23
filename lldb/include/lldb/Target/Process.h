@@ -540,6 +540,9 @@ public:
     ///     process. If all stdXX_path arguments are NULL, a pseudo
     ///     terminal will be used.
     ///
+    /// @param[in] working_directory
+    ///     The working directory to have the child process run in
+    ///
     /// @return
     ///     An error object. Call GetID() to get the process ID if
     ///     the error object is success.
@@ -550,7 +553,8 @@ public:
             uint32_t launch_flags,
             const char *stdin_path,
             const char *stdout_path,
-            const char *stderr_path);
+            const char *stderr_path,
+            const char *working_directory);
 
     //------------------------------------------------------------------
     /// Attach to an existing process using a process ID.
@@ -950,6 +954,9 @@ public:
     ///     process. If all stdXX_path arguments are NULL, a pseudo
     ///     terminal will be used.
     ///
+    /// @param[in] working_directory
+    ///     The working directory to have the child process run in
+    ///
     /// @return
     ///     A new valid process ID, or LLDB_INVALID_PROCESS_ID if
     ///     launching fails.
@@ -961,7 +968,8 @@ public:
               uint32_t launch_flags,
               const char *stdin_path,
               const char *stdout_path,
-              const char *stderr_path) = 0;
+              const char *stderr_path,
+              const char *working_directory) = 0;
     
     //------------------------------------------------------------------
     /// Called after launching a process.

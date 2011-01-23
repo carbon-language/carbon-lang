@@ -185,8 +185,21 @@ DNBProcessLaunch (const char *path,
                   char *err_str,
                   size_t err_len)
 {
-    DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv = %p, envp = %p, launch_flavor = %u, disable_aslr = %d, err = %p, err_len = %zu) called...", __FUNCTION__, path, argv, envp, launch_flavor, disable_aslr, err_str, err_len);
-
+    DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv = %p, envp = %p, working_dir=%s, stdin=%s, stdout=%s, stderr=%s, no-stdio=%i, launch_flavor = %u, disable_aslr = %d, err = %p, err_len = %zu) called...", 
+                     __FUNCTION__, 
+                     path, 
+                     argv, 
+                     envp, 
+                     working_directory,
+                     stdin_path,
+                     stdout_path,
+                     stderr_path,
+                     no_stdio,
+                     launch_flavor, 
+                     disable_aslr, 
+                     err_str, 
+                     err_len);
+    
     if (err_str && err_len > 0)
         err_str[0] = '\0';
     struct stat path_stat;

@@ -329,8 +329,9 @@ public:
 
     static lldb::pid_t
     LaunchInNewTerminal (const char *tty_name,  // Optional partial or full tty name ("/dev/ttys000" or "ttys000")
-                         const char **argv,   // argv[0] is executable
-                         const char **envp,
+                         const char **argv,     // argv[0] is executable, argv[1] and on are the arguments
+                         const char **envp,     
+                         const char *working_dir,
                          const ArchSpec *arch_spec,
                          bool stop_at_entry,
                          bool disable_aslr);

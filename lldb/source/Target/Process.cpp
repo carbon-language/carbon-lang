@@ -1456,7 +1456,8 @@ Process::Launch
     uint32_t launch_flags,
     const char *stdin_path,
     const char *stdout_path,
-    const char *stderr_path
+    const char *stderr_path,
+    const char *working_directory
 )
 {
     Error error;
@@ -1507,7 +1508,8 @@ Process::Launch
                                   launch_flags,
                                   stdin_path, 
                                   stdout_path, 
-                                  stderr_path);
+                                  stderr_path,
+                                  working_directory);
 
                 if (error.Fail())
                 {
@@ -3252,10 +3254,10 @@ Process::SettingsController::instance_settings_table[] =
     { "run-args",       eSetVarTypeArray,       NULL,           NULL,       false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },
     { "env-vars",       eSetVarTypeDictionary,  NULL,           NULL,       false,  false,  "A list of all the environment variables to be passed to the executable's environment, and their values." },
     { "inherit-env",    eSetVarTypeBoolean,     "true",         NULL,       false,  false,  "Inherit the environment from the process that is running LLDB." },
-    { "input-path",     eSetVarTypeString,      "/dev/stdin",   NULL,       false,  false,  "The file/path to be used by the executable program for reading its input." },
-    { "output-path",    eSetVarTypeString,      "/dev/stdout",  NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
-    { "error-path",     eSetVarTypeString,      "/dev/stderr",  NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
-    { "plugin",         eSetVarTypeEnum,        NULL         ,  g_plugins,  false,  false,  "The plugin to be used to run the process." }, 
+    { "input-path",     eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for reading its input." },
+    { "output-path",    eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
+    { "error-path",     eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
+    { "plugin",         eSetVarTypeEnum,        NULL,           g_plugins,  false,  false,  "The plugin to be used to run the process." }, 
     { "disable-aslr",   eSetVarTypeBoolean,     "true",         NULL,       false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
     { "disable-stdio",  eSetVarTypeBoolean,     "false",        NULL,       false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
     {  NULL,            eSetVarTypeNone,        NULL,           NULL,       false,  false,  NULL }

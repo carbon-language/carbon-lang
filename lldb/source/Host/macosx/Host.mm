@@ -226,6 +226,7 @@ LaunchInNewTerminalWithCommandFile
 (
     const char **argv, 
     const char **envp,
+    const char *working_dir,
     const ArchSpec *arch_spec,
     bool stop_at_entry,
     bool disable_aslr
@@ -404,6 +405,7 @@ LaunchInNewTerminalWithAppleScript
     const char *tty_name,
     const char **argv, 
     const char **envp,
+    const char *working_dir,
     const ArchSpec *arch_spec,
     bool stop_at_entry,
     bool disable_aslr
@@ -440,6 +442,9 @@ LaunchInNewTerminalWithAppleScript
     if (arch_spec && arch_spec->IsValid())
         command.Printf(" --arch=%s", arch_spec->AsCString());
 
+    if (working_dir)
+        command.Printf(" --working-dir '%s'", working_dir);
+    
     if (disable_aslr)
         command.PutCString(" --disable-aslr");
         
@@ -520,15 +525,16 @@ Host::LaunchInNewTerminal
     const char *tty_name,
     const char **argv, 
     const char **envp,
+    const char *working_dir,
     const ArchSpec *arch_spec,
     bool stop_at_entry,
     bool disable_aslr
 )
 {
 #if defined (LLDB_HOST_USE_APPLESCRIPT)
-    return LaunchInNewTerminalWithAppleScript (tty_name, argv, envp, arch_spec, stop_at_entry, disable_aslr);
+    return LaunchInNewTerminalWithAppleScript (tty_name, argv, envp, working_dir, arch_spec, stop_at_entry, disable_aslr);
 #else
-    return LaunchInNewTerminalWithCommandFile (argv, envp, arch_spec, stop_at_entry, disable_aslr);
+    return LaunchInNewTerminalWithCommandFile (argv, envp, working_dir, arch_spec, stop_at_entry, disable_aslr);
 #endif
 }
 

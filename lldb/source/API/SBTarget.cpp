@@ -117,35 +117,6 @@ SBTarget::GetDebugger () const
 }
 
 SBProcess
-SBTarget::LaunchProcess
-(
-    char const **argv,
-    char const **envp,
-    const char *tty,
-    uint32_t launch_flags,
-    bool stop_at_entry
-)
-{
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    if (log)
-        log->Printf ("SBTarget(%p)::LaunchProcess (argv=%p, envp=%p, tty=\"%s\", launch_flags=%d, stop_at_entry=%i)",
-                     m_opaque_sp.get(), argv, envp, tty, launch_flags, stop_at_entry);
-
-    SBError sb_error;    
-    SBProcess sb_process = Launch (argv, envp, tty, launch_flags, stop_at_entry, sb_error);
-
-    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-    if (log)
-    {
-        log->Printf ("SBTarget(%p)::LaunchProcess (...) => SBProcess(%p)", 
-                     m_opaque_sp.get(), sb_process.get());
-    }
-
-    return sb_process;
-}
-
-SBProcess
 SBTarget::Launch
 (
     char const **argv,
@@ -156,12 +127,38 @@ SBTarget::Launch
     SBError &error
 )
 {
+    return Launch (argv, envp, tty, tty, tty, NULL, launch_flags, stop_at_entry, error);
+}
+
+SBProcess
+SBTarget::Launch 
+(
+    char const **argv,
+    char const **envp,
+    const char *stdin_path,
+    const char *stdout_path,
+    const char *stderr_path,
+    const char *working_directory,
+    uint32_t launch_flags,   // See LaunchFlags
+    bool stop_at_entry,
+    lldb::SBError& error
+)
+{
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
     {
-        log->Printf ("SBTarget(%p)::Launch (argv=%p, envp=%p, tty=\"%s\", launch_flags=%d, stop_at_entry=%i, &error (%p))...",
-                     m_opaque_sp.get(), argv, envp, tty, launch_flags, stop_at_entry, error.get());
+        log->Printf ("SBTarget(%p)::Launch (argv=%p, envp=%p, stdin=%s, stdout=%s, stderr=%s, working-dir=%s, launch_flags=0x%x, stop_at_entry=%i, &error (%p))...",
+                     m_opaque_sp.get(), 
+                     argv, 
+                     envp, 
+                     stdin_path ? stdin_path : "NULL", 
+                     stdout_path ? stdout_path : "NULL", 
+                     stderr_path ? stderr_path : "NULL", 
+                     working_directory ? working_directory : "NULL",
+                     launch_flags, 
+                     stop_at_entry, 
+                     error.get());
     }
     SBProcess sb_process;
     if (m_opaque_sp)
@@ -171,7 +168,7 @@ SBTarget::Launch
 
         if (sb_process.IsValid())
         {
-            error.SetError (sb_process->Launch (argv, envp, launch_flags, tty, tty, tty));
+            error.SetError (sb_process->Launch (argv, envp, launch_flags, stdin_path, stdout_path, stderr_path, working_directory));
             if (error.Success())
             {
                 // We we are stopping at the entry point, we can return now!

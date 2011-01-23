@@ -1946,9 +1946,17 @@ UserSettingsController::UpdateStringVariable (lldb::VarSetOperationType op,
                                               Error &err)
 {
     if (op == lldb::eVarSetOperationAssign)
-        string_var = new_value;
+    {
+        if (new_value && new_value[0])
+            string_var.assign (new_value);
+        else
+            string_var.clear();
+    }
     else if (op == lldb::eVarSetOperationAppend)
-        string_var.append (new_value);
+    {
+        if (new_value && new_value[0])
+            string_var.append (new_value);
+    }
     else if (op == lldb::eVarSetOperationClear)
         string_var.clear();
     else
@@ -1964,19 +1972,25 @@ UserSettingsController::UpdateBooleanVariable (lldb::VarSetOperationType op,
     if (op != lldb::eVarSetOperationAssign)
         err.SetErrorString ("Invalid operation for Boolean variable.  Cannot update value.\n");
 
+    if (new_value && new_value[0])
+    {
+        if ((::strcasecmp(new_value, "true") == 0) ||
+            (::strcasecmp(new_value, "yes") == 0)  ||
+            (::strcasecmp(new_value, "on") == 0)   ||
+            (::strcasecmp(new_value, "1") == 0))
+            bool_var = true;
+        else 
+        if ((::strcasecmp(new_value, "false") == 0) ||
+            (::strcasecmp(new_value, "no") == 0)    ||
+            (::strcasecmp(new_value, "off") == 0)   ||
+            (::strcasecmp(new_value, "0") == 0))
+            bool_var = false;
+        else
+            err.SetErrorStringWithFormat ("Invalid boolean value '%s'\n", new_value);
+    }
+    else
+        err.SetErrorString ("Invalid value.  Cannot perform update.\n");
 
-    if ((new_value == NULL)
-        || (new_value[0] == '\0'))
-      err.SetErrorString ("Invalid value.  Cannot perform update.\n");
-
-    std::string bool_val_str (new_value);
-
-    std::transform (bool_val_str.begin(), bool_val_str.end(), bool_val_str.begin(), ::tolower);
-
-    if (bool_val_str == "true")
-        bool_var = true;
-    else if (bool_val_str == "false")
-        bool_var = false;
 }
 
 void

@@ -1625,7 +1625,16 @@ MachProcess::PosixSpawnChildForPTraceDebugging
 {
     posix_spawnattr_t attr;
     short flags;
-    DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv=%p, envp=%p, process )", __FUNCTION__, path, argv, envp);
+    DNBLogThreadedIf(LOG_PROCESS, "%s ( path='%s', argv=%p, envp=%p, working_dir=%s, stdin=%s, stdout=%s stderr=%s, no-stdio=%i)", 
+                     __FUNCTION__, 
+                     path, 
+                     argv, 
+                     envp,
+                     working_directory,
+                     stdin_path,
+                     stdout_path,
+                     stderr_path,
+                     no_stdio);
 
     err.SetError( ::posix_spawnattr_init (&attr), DNBError::POSIX);
     if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
@@ -1703,9 +1712,9 @@ MachProcess::PosixSpawnChildForPTraceDebugging
         }
         else
         {
-            int slave_fd_err = open (stderr_path ? stderr_path : "/dev/null", O_RDWR  , 0);
-            int slave_fd_in  = open (stdin_path  ? stdin_path  : "/dev/null", O_RDONLY, 0);
-            int slave_fd_out = open (stdout_path ? stdout_path : "/dev/null", O_WRONLY, 0);
+            int slave_fd_err = open (stderr_path ? stderr_path : "/dev/null", O_NOCTTY | O_CREAT | O_RDWR   , 0640);
+            int slave_fd_in  = open (stdin_path  ? stdin_path  : "/dev/null", O_NOCTTY | O_RDONLY);
+            int slave_fd_out = open (stdout_path ? stdout_path : "/dev/null", O_NOCTTY | O_CREAT | O_WRONLY , 0640);
 
             err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_err, STDERR_FILENO), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
@@ -1719,12 +1728,23 @@ MachProcess::PosixSpawnChildForPTraceDebugging
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
                 err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d, newfiledes = STDOUT_FILENO )", slave_fd_out);
         }
+
+        // TODO: Verify if we can set the working directory back immediately
+        // after the posix_spawnp call without creating a race condition???
+        if (working_directory)
+            ::chdir (working_directory);
+        
         err.SetError( ::posix_spawnp (&pid, path, &file_actions, &attr, (char * const*)argv, (char * const*)envp), DNBError::POSIX);
         if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
             err.LogThreaded("::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", pid, path, &file_actions, &attr, argv, envp);
     }
     else
     {
+        // TODO: Verify if we can set the working directory back immediately
+        // after the posix_spawnp call without creating a race condition???
+        if (working_directory)
+            ::chdir (working_directory);
+        
         err.SetError( ::posix_spawnp (&pid, path, NULL, &attr, (char * const*)argv, (char * const*)envp), DNBError::POSIX);
         if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
             err.LogThreaded("::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", pid, path, NULL, &attr, argv, envp);

@@ -375,7 +375,8 @@ ProcessGDBRemote::DoLaunch
     uint32_t launch_flags,
     const char *stdin_path,
     const char *stdout_path,
-    const char *stderr_path
+    const char *stderr_path,
+    const char *working_dir
 )
 {
     Error error;
@@ -400,7 +401,10 @@ ProcessGDBRemote::DoLaunch
             error = StartDebugserverProcess (host_port,
                                              argv,
                                              envp,
-                                             NULL, //stdin_path,
+                                             stdin_path,
+                                             stdout_path,
+                                             stderr_path,
+                                             working_dir,
                                              launch_process,
                                              LLDB_INVALID_PROCESS_ID,
                                              NULL, false,
@@ -420,10 +424,14 @@ ProcessGDBRemote::DoLaunch
             error = StartDebugserverProcess (host_port,
                                              NULL,
                                              NULL,
-                                             NULL, //stdin_path
+                                             stdin_path,
+                                             stdout_path,
+                                             stderr_path,
+                                             working_dir,
                                              launch_process,
                                              LLDB_INVALID_PROCESS_ID,
-                                             NULL, false,
+                                             NULL, 
+                                             false,
                                              launch_flags,
                                              inferior_arch);
             if (error.Fail())
@@ -644,6 +652,9 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
                                          NULL,                      // inferior_argv
                                          NULL,                      // inferior_envp
                                          NULL,                      // stdin_path
+                                         NULL,                      // stdout_path
+                                         NULL,                      // stderr_path
+                                         NULL,                      // working_dir
                                          false,                     // launch_process == false (we are attaching)
                                          LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
                                          NULL,                      // Don't send any attach by process name option to debugserver
@@ -746,6 +757,9 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
                                          NULL,                      // inferior_argv
                                          NULL,                      // inferior_envp
                                          NULL,                      // stdin_path
+                                         NULL,                      // stdout_path
+                                         NULL,                      // stderr_path
+                                         NULL,                      // working_dir
                                          false,                     // launch_process == false (we are attaching)
                                          LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
                                          NULL,                      // Don't send any attach by process name option to debugserver
@@ -1732,7 +1746,10 @@ ProcessGDBRemote::StartDebugserverProcess
     const char *debugserver_url,    // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
     char const *inferior_argv[],    // Arguments for the inferior program including the path to the inferior itself as the first argument
     char const *inferior_envp[],    // Environment to pass along to the inferior program
-    char const *stdio_path,
+    const char *stdin_path,
+    const char *stdout_path,
+    const char *stderr_path,
+    const char *working_dir,
     bool launch_process,            // Set to true if we are going to be launching a the process
     lldb::pid_t attach_pid,         // If inferior inferior_argv == NULL, and attach_pid != LLDB_INVALID_PROCESS_ID send this pid as an argument to debugserver
     const char *attach_name,        // Wait for the next process to launch whose basename matches "attach_name"
@@ -1824,7 +1841,13 @@ ProcessGDBRemote::StartDebugserverProcess
             char arg_cstr[PATH_MAX];
 
             lldb_utility::PseudoTerminal pty;
-            if (launch_process && stdio_path == NULL && m_local_debugserver && !no_stdio)
+            const char *stdio_path = NULL;
+            if (launch_process && 
+                stdin_path == NULL && 
+                stdout_path == NULL && 
+                stderr_path == NULL && 
+                m_local_debugserver &&
+                no_stdio == false)
             {
                 if (pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
                     stdio_path = pty.GetSlaveName (NULL, 0);
@@ -1843,14 +1866,60 @@ ProcessGDBRemote::StartDebugserverProcess
                 debugserver_args.AppendArguments("--disable-aslr");
             
             // Only set the inferior
-            if (launch_process && stdio_path)
+            if (launch_process)
             {
-                debugserver_args.AppendArgument("--stdio-path");
-                debugserver_args.AppendArgument(stdio_path);
+                if (no_stdio)
+                    debugserver_args.AppendArgument("--no-stdio");
+                else
+                {
+                    if (stdin_path && stdout_path && stderr_path && 
+                        strcmp(stdin_path, stdout_path) == 0 &&
+                        strcmp(stdin_path, stderr_path) == 0)
+                    {
+                        stdio_path = stdin_path;
+                        stdin_path = stdout_path = stderr_path = NULL;
+                    }
+
+                    if (stdio_path)
+                    {
+                        // All file handles to stdin, stdout, stderr are the same...
+                        debugserver_args.AppendArgument("--stdio-path");
+                        debugserver_args.AppendArgument(stdio_path);
+                    }
+                    else
+                    {
+                        if (stdin_path == NULL && (stdout_path || stderr_path))
+                            stdin_path = "/dev/null";
+
+                        if (stdout_path == NULL && (stdin_path || stderr_path))
+                            stdout_path = "/dev/null";
+
+                        if (stderr_path == NULL && (stdin_path || stdout_path))
+                            stderr_path = "/dev/null";
+
+                        if (stdin_path)
+                        {
+                            debugserver_args.AppendArgument("--stdin-path");
+                            debugserver_args.AppendArgument(stdin_path);
+                        }
+                        if (stdout_path)
+                        {
+                            debugserver_args.AppendArgument("--stdout-path");
+                            debugserver_args.AppendArgument(stdout_path);
+                        }
+                        if (stderr_path)
+                        {
+                            debugserver_args.AppendArgument("--stderr-path");
+                            debugserver_args.AppendArgument(stderr_path);
+                        }
+                    }
+                }
             }
-            else if (launch_process && no_stdio)
+
+            if (working_dir)
             {
-                debugserver_args.AppendArgument("--no-stdio");
+                debugserver_args.AppendArgument("--working-dir");
+                debugserver_args.AppendArgument(working_dir);
             }
 
             const char *env_debugserver_log_file = getenv("LLDB_DEBUGSERVER_LOG_FILE");
