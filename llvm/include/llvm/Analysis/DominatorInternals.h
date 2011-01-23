@@ -159,13 +159,6 @@ Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
   return VInfo.Label;
 }
 
-template<class GraphT>
-void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
-          unsigned DFSNumV, typename GraphT::NodeType* W,
-        typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo) {
-  WInfo.Ancestor = DFSNumV;
-}
-
 template<class FuncT, class NodeT>
 void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
                FuncT& F) {
@@ -248,7 +241,8 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
       Buckets[WInfo.Semi] = i;
     }
 
-    Link<GraphT>(DT, WInfo.Parent, W, WInfo);
+    // Link W to its DFS tree parent.
+    WInfo.Ancestor = WInfo.Parent;
   }
 
   if (N >= 1) {
