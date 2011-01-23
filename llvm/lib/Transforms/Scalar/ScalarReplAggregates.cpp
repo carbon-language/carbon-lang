@@ -79,6 +79,9 @@ namespace {
     /// information about the uses.  All these fields are initialized to false
     /// and set to true when something is learned.
     struct AllocaInfo {
+      /// The alloca to promote.
+      AllocaInst *AI;
+      
       /// isUnsafe - This is set to true if the alloca cannot be SROA'd.
       bool isUnsafe : 1;
 
@@ -98,8 +101,8 @@ namespace {
       /// not set this.
       bool hasALoadOrStore : 1;
       
-      AllocaInfo()
-        : isUnsafe(false), isMemCpySrc(false), isMemCpyDst(false),
+      explicit AllocaInfo(AllocaInst *ai)
+        : AI(ai), isUnsafe(false), isMemCpySrc(false), isMemCpyDst(false),
           hasSubelementAccess(false), hasALoadOrStore(false) {}
     };
 
@@ -112,11 +115,9 @@ namespace {
 
     bool isSafeAllocaToScalarRepl(AllocaInst *AI);
 
-    void isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
-                             AllocaInfo &Info);
-    void isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t &Offset,
-                   AllocaInfo &Info);
-    void isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
+    void isSafeForScalarRepl(Instruction *I, uint64_t Offset, AllocaInfo &Info);
+    void isSafeGEP(GetElementPtrInst *GEPI, uint64_t &Offset, AllocaInfo &Info);
+    void isSafeMemAccess(uint64_t Offset, uint64_t MemSize,
                          const Type *MemOpType, bool isStore, AllocaInfo &Info,
                          Instruction *TheAccess);
     bool TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size);
@@ -1068,29 +1069,29 @@ void SROA::DeleteDeadInstructions() {
 /// performing scalar replacement of alloca AI.  The results are flagged in
 /// the Info parameter.  Offset indicates the position within AI that is
 /// referenced by this instruction.
-void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
+void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
                                AllocaInfo &Info) {
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
 
     if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
-      isSafeForScalarRepl(BC, AI, Offset, Info);
+      isSafeForScalarRepl(BC, Offset, Info);
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
       uint64_t GEPOffset = Offset;
-      isSafeGEP(GEPI, AI, GEPOffset, Info);
+      isSafeGEP(GEPI, GEPOffset, Info);
       if (!Info.isUnsafe)
-        isSafeForScalarRepl(GEPI, AI, GEPOffset, Info);
+        isSafeForScalarRepl(GEPI, GEPOffset, Info);
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
       ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
       if (Length == 0)
         return MarkUnsafe(Info, User);
-      isSafeMemAccess(AI, Offset, Length->getZExtValue(), 0,
+      isSafeMemAccess(Offset, Length->getZExtValue(), 0,
                       UI.getOperandNo() == 0, Info, MI);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       if (LI->isVolatile())
         return MarkUnsafe(Info, User);
       const Type *LIType = LI->getType();
-      isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(LIType),
+      isSafeMemAccess(Offset, TD->getTypeAllocSize(LIType),
                       LIType, false, Info, LI);
       Info.hasALoadOrStore = true;
         
@@ -1100,7 +1101,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
         return MarkUnsafe(Info, User);
         
       const Type *SIType = SI->getOperand(0)->getType();
-      isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(SIType),
+      isSafeMemAccess(Offset, TD->getTypeAllocSize(SIType),
                       SIType, true, Info, SI);
       Info.hasALoadOrStore = true;
     } else {
@@ -1115,7 +1116,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
 /// references, and when the resulting offset corresponds to an element within
 /// the alloca type.  The results are flagged in the Info parameter.  Upon
 /// return, Offset is adjusted as specified by the GEP indices.
-void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
+void SROA::isSafeGEP(GetElementPtrInst *GEPI,
                      uint64_t &Offset, AllocaInfo &Info) {
   gep_type_iterator GEPIt = gep_type_begin(GEPI), E = gep_type_end(GEPI);
   if (GEPIt == E)
@@ -1138,7 +1139,7 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
   SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
   Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
                                  &Indices[0], Indices.size());
-  if (!TypeHasComponent(AI->getAllocatedType(), Offset, 0))
+  if (!TypeHasComponent(Info.AI->getAllocatedType(), Offset, 0))
     MarkUnsafe(Info, GEPI);
 }
 
@@ -1186,11 +1187,12 @@ static bool isCompatibleAggregate(const Type *T1, const Type *T2) {
 /// alloca or has an offset and size that corresponds to a component element
 /// within it.  The offset checked here may have been formed from a GEP with a
 /// pointer bitcasted to a different type.
-void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
+void SROA::isSafeMemAccess(uint64_t Offset, uint64_t MemSize,
                            const Type *MemOpType, bool isStore,
                            AllocaInfo &Info, Instruction *TheAccess) {
   // Check if this is a load/store of the entire alloca.
-  if (Offset == 0 && MemSize == TD->getTypeAllocSize(AI->getAllocatedType())) {
+  if (Offset == 0 &&
+      MemSize == TD->getTypeAllocSize(Info.AI->getAllocatedType())) {
     // This can be safe for MemIntrinsics (where MemOpType is 0) and integer
     // loads/stores (which are essentially the same as the MemIntrinsics with
     // regard to copying padding between elements).  But, if an alloca is
@@ -1206,13 +1208,13 @@ void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
     // This is also safe for references using a type that is compatible with
     // the type of the alloca, so that loads/stores can be rewritten using
     // insertvalue/extractvalue.
-    if (isCompatibleAggregate(MemOpType, AI->getAllocatedType())) {
+    if (isCompatibleAggregate(MemOpType, Info.AI->getAllocatedType())) {
       Info.hasSubelementAccess = true;
       return;
     }
   }
   // Check if the offset/size correspond to a component within the alloca type.
-  const Type *T = AI->getAllocatedType();
+  const Type *T = Info.AI->getAllocatedType();
   if (TypeHasComponent(T, Offset, MemSize)) {
     Info.hasSubelementAccess = true;
     return;
@@ -1827,9 +1829,9 @@ static bool HasPadding(const Type *Ty, const TargetData &TD) {
 bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // Loop over the use list of the alloca.  We can only transform it if all of
   // the users are safe to transform.
-  AllocaInfo Info;
+  AllocaInfo Info(AI);
 
-  isSafeForScalarRepl(AI, AI, 0, Info);
+  isSafeForScalarRepl(AI, 0, Info);
   if (Info.isUnsafe) {
     DEBUG(dbgs() << "Cannot transform: " << *AI << '\n');
     return false;
