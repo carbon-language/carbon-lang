@@ -475,8 +475,7 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
   
   for (unsigned I = 0; I != NumUnexpanded; ++I) {
     // Compute the depth and index for this parameter pack.
-    unsigned Depth;
-    unsigned Index;
+    unsigned Depth = 0, Index = 0;
     IdentifierInfo *Name;
     bool IsFunctionParameterPack = false;
     

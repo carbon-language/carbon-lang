@@ -2888,7 +2888,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
   }
   
-  bool isExplicitSpecialization;
+  bool isExplicitSpecialization = false;
   VarDecl *NewVD;
   if (!getLangOptions().CPlusPlus) {
       NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(),
