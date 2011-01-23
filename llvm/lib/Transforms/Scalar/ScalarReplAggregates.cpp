@@ -82,6 +82,10 @@ namespace {
       /// The alloca to promote.
       AllocaInst *AI;
       
+      /// CheckedPHIs - This is a set of verified PHI nodes, to prevent infinite
+      /// looping and avoid redundant work.
+      SmallPtrSet<PHINode*, 8> CheckedPHIs;
+      
       /// isUnsafe - This is set to true if the alloca cannot be SROA'd.
       bool isUnsafe : 1;
 
@@ -116,10 +120,12 @@ namespace {
     bool isSafeAllocaToScalarRepl(AllocaInst *AI);
 
     void isSafeForScalarRepl(Instruction *I, uint64_t Offset, AllocaInfo &Info);
+    void isSafePHISelectUseForScalarRepl(Instruction *User, uint64_t Offset,
+                                         AllocaInfo &Info);
     void isSafeGEP(GetElementPtrInst *GEPI, uint64_t &Offset, AllocaInfo &Info);
     void isSafeMemAccess(uint64_t Offset, uint64_t MemSize,
                          const Type *MemOpType, bool isStore, AllocaInfo &Info,
-                         Instruction *TheAccess);
+                         Instruction *TheAccess, bool AllowWholeAccess);
     bool TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size);
     uint64_t FindElementAndOffset(const Type *&T, uint64_t &Offset,
                                   const Type *&IdxTy);
@@ -1086,13 +1092,14 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
       if (Length == 0)
         return MarkUnsafe(Info, User);
       isSafeMemAccess(Offset, Length->getZExtValue(), 0,
-                      UI.getOperandNo() == 0, Info, MI);
+                      UI.getOperandNo() == 0, Info, MI,
+                      true /*AllowWholeAccess*/);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       if (LI->isVolatile())
         return MarkUnsafe(Info, User);
       const Type *LIType = LI->getType();
       isSafeMemAccess(Offset, TD->getTypeAllocSize(LIType),
-                      LIType, false, Info, LI);
+                      LIType, false, Info, LI, true /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
         
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
@@ -1102,8 +1109,65 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
         
       const Type *SIType = SI->getOperand(0)->getType();
       isSafeMemAccess(Offset, TD->getTypeAllocSize(SIType),
-                      SIType, true, Info, SI);
+                      SIType, true, Info, SI, true /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
+    } else if (isa<PHINode>(User) || isa<SelectInst>(User)) {
+      isSafePHISelectUseForScalarRepl(User, Offset, Info);
+    } else {
+      return MarkUnsafe(Info, User);
+    }
+    if (Info.isUnsafe) return;
+  }
+}
+ 
+
+/// isSafePHIUseForScalarRepl - If we see a PHI node or select using a pointer
+/// derived from the alloca, we can often still split the alloca into elements.
+/// This is useful if we have a large alloca where one element is phi'd
+/// together somewhere: we can SRoA and promote all the other elements even if
+/// we end up not being able to promote this one.
+///
+/// All we require is that the uses of the PHI do not index into other parts of
+/// the alloca.  The most important use case for this is single load and stores
+/// that are PHI'd together, which can happen due to code sinking.
+void SROA::isSafePHISelectUseForScalarRepl(Instruction *I, uint64_t Offset,
+                                           AllocaInfo &Info) {
+  // If we've already checked this PHI, don't do it again.
+  if (PHINode *PN = dyn_cast<PHINode>(I))
+    if (!Info.CheckedPHIs.insert(PN))
+      return;
+  
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+    
+    if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
+      isSafePHISelectUseForScalarRepl(BC, Offset, Info);
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+      // Only allow "bitcast" GEPs for simplicity.  We could generalize this,
+      // but would have to prove that we're staying inside of an element being
+      // promoted.
+      if (!GEPI->hasAllZeroIndices())
+        return MarkUnsafe(Info, User);
+      isSafePHISelectUseForScalarRepl(GEPI, Offset, Info);
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      if (LI->isVolatile())
+        return MarkUnsafe(Info, User);
+      const Type *LIType = LI->getType();
+      isSafeMemAccess(Offset, TD->getTypeAllocSize(LIType),
+                      LIType, false, Info, LI, false /*AllowWholeAccess*/);
+      Info.hasALoadOrStore = true;
+      
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      // Store is ok if storing INTO the pointer, not storing the pointer
+      if (SI->isVolatile() || SI->getOperand(0) == I)
+        return MarkUnsafe(Info, User);
+      
+      const Type *SIType = SI->getOperand(0)->getType();
+      isSafeMemAccess(Offset, TD->getTypeAllocSize(SIType),
+                      SIType, true, Info, SI, false /*AllowWholeAccess*/);
+      Info.hasALoadOrStore = true;
+    } else if (isa<PHINode>(User) || isa<SelectInst>(User)) {
+      isSafePHISelectUseForScalarRepl(User, Offset, Info);
     } else {
       return MarkUnsafe(Info, User);
     }
@@ -1187,11 +1251,15 @@ static bool isCompatibleAggregate(const Type *T1, const Type *T2) {
 /// alloca or has an offset and size that corresponds to a component element
 /// within it.  The offset checked here may have been formed from a GEP with a
 /// pointer bitcasted to a different type.
+///
+/// If AllowWholeAccess is true, then this allows uses of the entire alloca as a
+/// unit.  If false, it only allows accesses known to be in a single element.
 void SROA::isSafeMemAccess(uint64_t Offset, uint64_t MemSize,
                            const Type *MemOpType, bool isStore,
-                           AllocaInfo &Info, Instruction *TheAccess) {
+                           AllocaInfo &Info, Instruction *TheAccess,
+                           bool AllowWholeAccess) {
   // Check if this is a load/store of the entire alloca.
-  if (Offset == 0 &&
+  if (Offset == 0 && AllowWholeAccess &&
       MemSize == TD->getTypeAllocSize(Info.AI->getAllocatedType())) {
     // This can be safe for MemIntrinsics (where MemOpType is 0) and integer
     // loads/stores (which are essentially the same as the MemIntrinsics with
@@ -1257,14 +1325,21 @@ bool SROA::TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size) {
 /// instruction.
 void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
                                 SmallVector<AllocaInst*, 32> &NewElts) {
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E;) {
+    Use &TheUse = UI.getUse();
+    Instruction *User = cast<Instruction>(*UI++);
 
     if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
       RewriteBitCast(BC, AI, Offset, NewElts);
-    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+      continue;
+    }
+    
+    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
       RewriteGEP(GEPI, AI, Offset, NewElts);
-    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
+      continue;
+    }
+    
+    if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
       ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
       uint64_t MemSize = Length->getZExtValue();
       if (Offset == 0 &&
@@ -1272,7 +1347,10 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
         RewriteMemIntrinUserOfAlloca(MI, I, AI, NewElts);
       // Otherwise the intrinsic can only touch a single element and the
       // address operand will be updated, so nothing else needs to be done.
-    } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      continue;
+    }
+    
+    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       const Type *LIType = LI->getType();
       
       if (isCompatibleAggregate(LIType, AI->getAllocatedType())) {
@@ -1297,7 +1375,10 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
         // If this is a load of the entire alloca to an integer, rewrite it.
         RewriteLoadUserOfWholeAlloca(LI, AI, NewElts);
       }
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      continue;
+    }
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       Value *Val = SI->getOperand(0);
       const Type *SIType = Val->getType();
       if (isCompatibleAggregate(SIType, AI->getAllocatedType())) {
@@ -1320,6 +1401,26 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
         // If this is a store of the entire alloca from an integer, rewrite it.
         RewriteStoreUserOfWholeAlloca(SI, AI, NewElts);
       }
+      continue;
+    }
+    
+    if (isa<SelectInst>(User) || isa<PHINode>(User)) {
+      // If we have a PHI user of the alloca itself (as opposed to a GEP or 
+      // bitcast) we have to rewrite it.  GEP and bitcast uses will be RAUW'd to
+      // the new pointer.
+      if (!isa<AllocaInst>(I)) continue;
+      
+      assert(Offset == 0 && NewElts[0] &&
+             "Direct alloca use should have a zero offset");
+      
+      // If we have a use of the alloca, we know the derived uses will be
+      // utilizing just the first element of the scalarized result.  Insert a
+      // bitcast of the first alloca before the user as required.
+      AllocaInst *NewAI = NewElts[0];
+      BitCastInst *BCI = new BitCastInst(NewAI, AI->getType(), "", NewAI);
+      NewAI->moveBefore(BCI);
+      TheUse = BCI;
+      continue;
     }
   }
 }
@@ -1859,6 +1960,7 @@ bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
         return false;
     }
   }
+  
   return true;
 }
 
