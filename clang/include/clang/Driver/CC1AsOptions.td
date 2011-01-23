@@ -70,3 +70,6 @@ def show_inst : Flag<"-show-inst">,
 
 def relax_all : Flag<"-relax-all">,
     HelpText<"Relax all fixups (for performance testing)">;
+
+def no_exec_stack : Flag<"--noexecstack">,
+    HelpText<"Mark the file as not needing an executable stack">;

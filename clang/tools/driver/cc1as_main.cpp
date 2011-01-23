@@ -101,6 +101,7 @@ struct AssemblerInvocation {
   /// @{
 
   unsigned RelaxAll : 1;
+  unsigned NoExecStack : 1;
 
   /// @}
 
@@ -115,6 +116,7 @@ public:
     ShowInst = 0;
     ShowEncoding = 0;
     RelaxAll = 0;
+    NoExecStack = 0;
   }
 
   static void CreateFromArgs(AssemblerInvocation &Res, const char **ArgBegin,
@@ -193,6 +195,7 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
 
   // Assemble Options
   Opts.RelaxAll = Args->hasArg(OPT_relax_all);
+  Opts.NoExecStack =  Args->hasArg(OPT_no_exec_stack);
 }
 
 static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
@@ -269,7 +272,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     TM->getTargetLowering()->getObjFileLowering();
   const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(Ctx, *TM);
 
-
+  // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (Opts.OutputType == AssemblerInvocation::FT_Asm) {
     MCInstPrinter *IP =
       TheTarget->createMCInstPrinter(Opts.OutputAsmVariant, *MAI);
@@ -290,7 +293,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     MCCodeEmitter *CE = TheTarget->createCodeEmitter(*TM, Ctx);
     TargetAsmBackend *TAB = TheTarget->createAsmBackend(Opts.Triple);
     Str.reset(TheTarget->createObjectStreamer(Opts.Triple, Ctx, *TAB, *Out,
-                                              CE, Opts.RelaxAll));
+                                              CE, Opts.RelaxAll,
+                                              Opts.NoExecStack));
     Str.get()->InitSections();
   }
 
