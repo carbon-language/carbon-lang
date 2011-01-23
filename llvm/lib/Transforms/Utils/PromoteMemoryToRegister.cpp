@@ -282,8 +282,8 @@ namespace {
   };
   
   struct AllocaInfo {
-    std::vector<BasicBlock*> DefiningBlocks;
-    std::vector<BasicBlock*> UsingBlocks;
+    SmallVector<BasicBlock*, 32> DefiningBlocks;
+    SmallVector<BasicBlock*, 32> UsingBlocks;
     
     StoreInst  *OnlyStore;
     BasicBlock *OnlyBlock;
