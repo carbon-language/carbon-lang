@@ -17,6 +17,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ELF.h"
 using namespace llvm;
 
 enum AsmWriterFlavorTy {
@@ -98,7 +99,7 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
 
 const MCSection *X86ELFMCAsmInfo::
 getNonexecutableStackSection(MCContext &Ctx) const {
-  return Ctx.getELFSection(".note.GNU-stack", MCSectionELF::SHT_PROGBITS,
+  return Ctx.getELFSection(".note.GNU-stack", ELF::SHT_PROGBITS,
                            0, SectionKind::getMetadata());
 }
 

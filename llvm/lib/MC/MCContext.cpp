@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/ELF.h"
 using namespace llvm;
 
 typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
@@ -211,7 +212,7 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
 
 const MCSectionELF *MCContext::CreateELFGroupSection() {
   MCSectionELF *Result =
-    new (*this) MCSectionELF(".group", MCSectionELF::SHT_GROUP, 0,
+    new (*this) MCSectionELF(".group", ELF::SHT_GROUP, 0,
                              SectionKind::getReadOnly(), 4, NULL);
   return Result;
 }

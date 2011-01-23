@@ -155,19 +155,19 @@ private:
   }
 
   void SetSectionData() {
-    SetSection(".data", MCSectionELF::SHT_PROGBITS,
+    SetSection(".data", ELF::SHT_PROGBITS,
                MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
                SectionKind::getDataRel());
     EmitCodeAlignment(4, 0);
   }
   void SetSectionText() {
-    SetSection(".text", MCSectionELF::SHT_PROGBITS,
+    SetSection(".text", ELF::SHT_PROGBITS,
                MCSectionELF::SHF_EXECINSTR |
                MCSectionELF::SHF_ALLOC, SectionKind::getText());
     EmitCodeAlignment(4, 0);
   }
   void SetSectionBss() {
-    SetSection(".bss", MCSectionELF::SHT_NOBITS,
+    SetSection(".bss", ELF::SHT_NOBITS,
                MCSectionELF::SHF_WRITE |
                MCSectionELF::SHF_ALLOC, SectionKind::getBSS());
     EmitCodeAlignment(4, 0);
@@ -346,7 +346,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   if (GetBinding(SD) == ELF_STB_Local) {
     const MCSection *Section = getAssembler().getContext().getELFSection(".bss",
-                                                                    MCSectionELF::SHT_NOBITS,
+                                                                    ELF::SHT_NOBITS,
                                                                     MCSectionELF::SHF_WRITE |
                                                                     MCSectionELF::SHF_ALLOC,
                                                                     SectionKind::getBSS());

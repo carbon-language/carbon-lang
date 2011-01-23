@@ -16,6 +16,7 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/ELF.h"
 using namespace llvm;
 
 namespace {
@@ -59,57 +60,57 @@ public:
   // FIXME: Part of this logic is duplicated in the MCELFStreamer. What is
   // the best way for us to get access to it?
   bool ParseSectionDirectiveData(StringRef, SMLoc) {
-    return ParseSectionSwitch(".data", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".data", ELF::SHT_PROGBITS,
                               MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
                               SectionKind::getDataRel());
   }
   bool ParseSectionDirectiveText(StringRef, SMLoc) {
-    return ParseSectionSwitch(".text", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".text", ELF::SHT_PROGBITS,
                               MCSectionELF::SHF_EXECINSTR |
                               MCSectionELF::SHF_ALLOC, SectionKind::getText());
   }
   bool ParseSectionDirectiveBSS(StringRef, SMLoc) {
-    return ParseSectionSwitch(".bss", MCSectionELF::SHT_NOBITS,
+    return ParseSectionSwitch(".bss", ELF::SHT_NOBITS,
                               MCSectionELF::SHF_WRITE |
                               MCSectionELF::SHF_ALLOC, SectionKind::getBSS());
   }
   bool ParseSectionDirectiveRoData(StringRef, SMLoc) {
-    return ParseSectionSwitch(".rodata", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".rodata", ELF::SHT_PROGBITS,
                               MCSectionELF::SHF_ALLOC,
                               SectionKind::getReadOnly());
   }
   bool ParseSectionDirectiveTData(StringRef, SMLoc) {
-    return ParseSectionSwitch(".tdata", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".tdata", ELF::SHT_PROGBITS,
                               MCSectionELF::SHF_ALLOC |
                               MCSectionELF::SHF_TLS | MCSectionELF::SHF_WRITE,
                               SectionKind::getThreadData());
   }
   bool ParseSectionDirectiveTBSS(StringRef, SMLoc) {
-    return ParseSectionSwitch(".tbss", MCSectionELF::SHT_NOBITS,
+    return ParseSectionSwitch(".tbss", ELF::SHT_NOBITS,
                               MCSectionELF::SHF_ALLOC |
                               MCSectionELF::SHF_TLS | MCSectionELF::SHF_WRITE,
                               SectionKind::getThreadBSS());
   }
   bool ParseSectionDirectiveDataRel(StringRef, SMLoc) {
-    return ParseSectionSwitch(".data.rel", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".data.rel", ELF::SHT_PROGBITS,
                               MCSectionELF::SHF_ALLOC |
                               MCSectionELF::SHF_WRITE,
                               SectionKind::getDataRel());
   }
   bool ParseSectionDirectiveDataRelRo(StringRef, SMLoc) {
-    return ParseSectionSwitch(".data.rel.ro", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".data.rel.ro", ELF::SHT_PROGBITS,
                               MCSectionELF::SHF_ALLOC |
                               MCSectionELF::SHF_WRITE,
                               SectionKind::getReadOnlyWithRel());
   }
   bool ParseSectionDirectiveDataRelRoLocal(StringRef, SMLoc) {
-    return ParseSectionSwitch(".data.rel.ro.local", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".data.rel.ro.local", ELF::SHT_PROGBITS,
                               MCSectionELF::SHF_ALLOC |
                               MCSectionELF::SHF_WRITE,
                               SectionKind::getReadOnlyWithRelLocal());
   }
   bool ParseSectionDirectiveEhFrame(StringRef, SMLoc) {
-    return ParseSectionSwitch(".eh_frame", MCSectionELF::SHT_PROGBITS,
+    return ParseSectionSwitch(".eh_frame", ELF::SHT_PROGBITS,
                               MCSectionELF::SHF_ALLOC |
                               MCSectionELF::SHF_WRITE,
                               SectionKind::getDataRel());
@@ -322,21 +323,21 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");
 
-  unsigned Type = MCSectionELF::SHT_PROGBITS;
+  unsigned Type = ELF::SHT_PROGBITS;
 
   if (!TypeName.empty()) {
     if (TypeName == "init_array")
-      Type = MCSectionELF::SHT_INIT_ARRAY;
+      Type = ELF::SHT_INIT_ARRAY;
     else if (TypeName == "fini_array")
-      Type = MCSectionELF::SHT_FINI_ARRAY;
+      Type = ELF::SHT_FINI_ARRAY;
     else if (TypeName == "preinit_array")
-      Type = MCSectionELF::SHT_PREINIT_ARRAY;
+      Type = ELF::SHT_PREINIT_ARRAY;
     else if (TypeName == "nobits")
-      Type = MCSectionELF::SHT_NOBITS;
+      Type = ELF::SHT_NOBITS;
     else if (TypeName == "progbits")
-      Type = MCSectionELF::SHT_PROGBITS;
+      Type = ELF::SHT_PROGBITS;
     else if (TypeName == "note")
-      Type = MCSectionELF::SHT_NOTE;
+      Type = ELF::SHT_NOTE;
     else
       return TokError("unknown section type");
   }
@@ -415,7 +416,7 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
 
   const MCSection *OldSection = getStreamer().getCurrentSection();
   const MCSection *Comment =
-    getContext().getELFSection(".comment", MCSectionELF::SHT_PROGBITS,
+    getContext().getELFSection(".comment", ELF::SHT_PROGBITS,
                                MCSectionELF::SHF_MERGE |
                                MCSectionELF::SHF_STRINGS,
                                SectionKind::getReadOnly(),

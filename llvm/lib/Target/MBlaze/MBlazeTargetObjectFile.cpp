@@ -16,6 +16,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ELF.h"
 using namespace llvm;
 
 void MBlazeTargetObjectFile::
@@ -23,12 +24,12 @@ Initialize(MCContext &Ctx, const TargetMachine &TM) {
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
 
   SmallDataSection =
-    getContext().getELFSection(".sdata", MCSectionELF::SHT_PROGBITS,
+    getContext().getELFSection(".sdata", ELF::SHT_PROGBITS,
                                MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
                                SectionKind::getDataRel());
 
   SmallBSSSection =
-    getContext().getELFSection(".sbss", MCSectionELF::SHT_NOBITS,
+    getContext().getELFSection(".sbss", ELF::SHT_NOBITS,
                                MCSectionELF::SHF_WRITE |MCSectionELF::SHF_ALLOC,
                                SectionKind::getBSS());
 

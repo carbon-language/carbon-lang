@@ -11,7 +11,9 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/raw_ostream.h"
+
 using namespace llvm;
 
 MCSectionELF::~MCSectionELF() {} // anchor.
@@ -84,17 +86,17 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
   else
     OS << '@';
 
-  if (Type == MCSectionELF::SHT_INIT_ARRAY)
+  if (Type == ELF::SHT_INIT_ARRAY)
     OS << "init_array";
-  else if (Type == MCSectionELF::SHT_FINI_ARRAY)
+  else if (Type == ELF::SHT_FINI_ARRAY)
     OS << "fini_array";
-  else if (Type == MCSectionELF::SHT_PREINIT_ARRAY)
+  else if (Type == ELF::SHT_PREINIT_ARRAY)
     OS << "preinit_array";
-  else if (Type == MCSectionELF::SHT_NOBITS)
+  else if (Type == ELF::SHT_NOBITS)
     OS << "nobits";
-  else if (Type == MCSectionELF::SHT_NOTE)
+  else if (Type == ELF::SHT_NOTE)
     OS << "note";
-  else if (Type == MCSectionELF::SHT_PROGBITS)
+  else if (Type == ELF::SHT_PROGBITS)
     OS << "progbits";
 
   if (EntrySize) {
@@ -110,7 +112,7 @@ bool MCSectionELF::UseCodeAlign() const {
 }
 
 bool MCSectionELF::isVirtualSection() const {
-  return getType() == MCSectionELF::SHT_NOBITS;
+  return getType() == ELF::SHT_NOBITS;
 }
 
 // HasCommonSymbols - True if this section holds common symbols, this is

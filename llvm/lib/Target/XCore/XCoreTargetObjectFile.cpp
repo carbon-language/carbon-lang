@@ -12,6 +12,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/ELF.h"
 using namespace llvm;
 
 
@@ -19,28 +20,28 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
 
   DataSection =
-    Ctx.getELFSection(".dp.data", MCSectionELF::SHT_PROGBITS, 
+    Ctx.getELFSection(".dp.data", ELF::SHT_PROGBITS, 
                       MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE |
                       MCSectionELF::XCORE_SHF_DP_SECTION,
                       SectionKind::getDataRel());
   BSSSection =
-    Ctx.getELFSection(".dp.bss", MCSectionELF::SHT_NOBITS,
+    Ctx.getELFSection(".dp.bss", ELF::SHT_NOBITS,
                       MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE |
                       MCSectionELF::XCORE_SHF_DP_SECTION,
                       SectionKind::getBSS());
   
   MergeableConst4Section = 
-    Ctx.getELFSection(".cp.rodata.cst4", MCSectionELF::SHT_PROGBITS,
+    Ctx.getELFSection(".cp.rodata.cst4", ELF::SHT_PROGBITS,
                       MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
                       MCSectionELF::XCORE_SHF_CP_SECTION,
                       SectionKind::getMergeableConst4());
   MergeableConst8Section = 
-    Ctx.getELFSection(".cp.rodata.cst8", MCSectionELF::SHT_PROGBITS,
+    Ctx.getELFSection(".cp.rodata.cst8", ELF::SHT_PROGBITS,
                       MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
                       MCSectionELF::XCORE_SHF_CP_SECTION,
                       SectionKind::getMergeableConst8());
   MergeableConst16Section = 
-    Ctx.getELFSection(".cp.rodata.cst16", MCSectionELF::SHT_PROGBITS,
+    Ctx.getELFSection(".cp.rodata.cst16", ELF::SHT_PROGBITS,
                       MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_MERGE |
                       MCSectionELF::XCORE_SHF_CP_SECTION,
                       SectionKind::getMergeableConst16());
@@ -52,7 +53,7 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
   TLSBSSSection = BSSSection;
 
   ReadOnlySection = 
-    Ctx.getELFSection(".cp.rodata", MCSectionELF::SHT_PROGBITS,
+    Ctx.getELFSection(".cp.rodata", ELF::SHT_PROGBITS,
                       MCSectionELF::SHF_ALLOC |
                       MCSectionELF::XCORE_SHF_CP_SECTION,
                       SectionKind::getReadOnlyWithRel());
