@@ -2522,8 +2522,8 @@ def warn_inst_method_not_found : Warning<
   "method %objcinstance0 not found (return type defaults to 'id')">;
 def error_no_super_class_message : Error<
   "no @interface declaration found in class messaging of %0">;
-def error_no_super_class : Error<
-  "no super class declared in @interface for %0">;
+def error_root_class_cannot_use_super : Error<
+  "%0 cannot use 'super' because it is a root class">;
 def err_invalid_receiver_to_message : Error<
   "invalid receiver to message expression">;
 def err_invalid_receiver_to_message_super : Error<

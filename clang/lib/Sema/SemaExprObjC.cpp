@@ -716,7 +716,8 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
   ObjCInterfaceDecl *Super = Class->getSuperClass();
   if (!Super) {
     // The current class does not have a superclass.
-    Diag(SuperLoc, diag::error_no_super_class) << Class->getIdentifier();
+    Diag(SuperLoc, diag::error_root_class_cannot_use_super)
+      << Class->getIdentifier();
     return ExprError();
   }
 

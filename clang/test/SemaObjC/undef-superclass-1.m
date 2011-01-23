@@ -22,7 +22,7 @@
 
 @implementation SUPER
 - (void)dealloc {
-    [super dealloc]; // expected-error {{no super class declared in @interface for 'SUPER'}}
+    [super dealloc]; // expected-error {{'SUPER' cannot use 'super' because it is a root class}}
 }
 @end
 
