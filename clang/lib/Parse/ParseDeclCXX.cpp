@@ -2223,7 +2223,6 @@ void Parser::ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
       // No arguments
       case AttributeList::AT_base_check:
       case AttributeList::AT_carries_dependency:
-      case AttributeList::AT_final:
       case AttributeList::AT_hiding:
       case AttributeList::AT_noreturn:
       case AttributeList::AT_override: {

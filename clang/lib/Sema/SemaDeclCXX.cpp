@@ -533,15 +533,6 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     return 0;
   }
 
-  // FIXME: Get rid of this.
-  // C++0x CWG Issue #817 indicates that [[final]] classes shouldn't be bases.
-  if (CXXBaseDecl->hasAttr<FinalAttr>()) {
-    Diag(BaseLoc, diag::err_final_base) << BaseType.getAsString();
-    Diag(CXXBaseDecl->getLocation(), diag::note_previous_decl)
-      << BaseType;
-    return 0;
-  }
-
   if (BaseDecl->isInvalidDecl())
     Class->setInvalidDecl();
   
@@ -913,15 +904,13 @@ void Sema::CheckOverrideControl(const Decl *D) {
 /// C++0x [class.virtual]p3.
 bool Sema::CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
                                                   const CXXMethodDecl *Old) {
-  // FIXME: Get rid of FinalAttr here.
-  if (Old->hasAttr<FinalAttr>() || Old->isMarkedFinal()) {
-    Diag(New->getLocation(), diag::err_final_function_overridden)
-      << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
-    return true;
-  }
-  
-  return false;
+  if (!Old->isMarkedFinal())
+    return false;
+
+  Diag(New->getLocation(), diag::err_final_function_overridden)
+    << New->getDeclName();
+  Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+  return true;
 }
 
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member

@@ -223,12 +223,6 @@ def FastCall : InheritableAttr {
   let Spellings = ["fastcall", "__fastcall"];
 }
 
-def Final : InheritableAttr {
-  let Spellings = ["final"];
-  let Subjects = [CXXRecord, CXXVirtualMethod];
-  let Namespaces = ["", "std"];
-}
-
 def Format : InheritableAttr {
   let Spellings = ["format"];
   let Args = [StringArgument<"Type">, IntArgument<"FormatIdx">,

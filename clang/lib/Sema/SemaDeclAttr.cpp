@@ -2437,32 +2437,6 @@ static void HandleLaunchBoundsAttr(Decl *d, const AttributeList &Attr, Sema &S){
   }
 }
 
-static void HandleFinalAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-
-  if (!isa<CXXRecordDecl>(d)
-   && (!isa<CXXMethodDecl>(d) || !cast<CXXMethodDecl>(d)->isVirtual())) {
-    S.Diag(Attr.getLoc(),
-           Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
-                                   : diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 7 /*virtual method or class*/;
-    return;
-  }
-  
-  // FIXME: Conform to C++0x redeclaration rules.
-  
-  if (d->getAttr<FinalAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "final";
-    return;
-  }
-
-  d->addAttr(::new (S.Context) FinalAttr(Attr.getLoc(), S.Context));
-}
-
 //===----------------------------------------------------------------------===//
 // C++0x member checking attributes
 //===----------------------------------------------------------------------===//
@@ -2709,7 +2683,6 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_ext_vector_type:
     HandleExtVectorTypeAttr(scope, D, Attr, S);
     break;
-  case AttributeList::AT_final:       HandleFinalAttr       (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr      (D, Attr, S); break;
   case AttributeList::AT_format_arg:  HandleFormatArgAttr   (D, Attr, S); break;
   case AttributeList::AT_global:      HandleGlobalAttr      (D, Attr, S); break;
