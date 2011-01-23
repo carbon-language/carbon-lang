@@ -898,6 +898,23 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
 
+  // zext(trunc(x)) --> zext(x) or x or trunc(x)
+  if (const SCEVTruncateExpr *ST = dyn_cast<SCEVTruncateExpr>(Op)) {
+    // It's possible the bits taken off by the truncate were all zero bits. If
+    // so, we should be able to simplify this further.
+    const SCEV *X = ST->getOperand();
+    ConstantRange CR = getUnsignedRange(X);
+    unsigned OrigBits = CR.getBitWidth();
+    unsigned TruncBits = getTypeSizeInBits(ST->getType());
+    unsigned NewBits = getTypeSizeInBits(Ty);
+    if (CR.truncate(TruncBits).zeroExtend(NewBits).contains(
+            CR.zextOrTrunc(NewBits))) {
+      if (NewBits > OrigBits) return getZeroExtendExpr(X, Ty);
+      if (NewBits < OrigBits) return getTruncateExpr(X, Ty);
+      return X;
+    }
+  }
+
   // If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can zero extend all of the
   // operands (often constants).  This allows analysis of something like
@@ -1038,6 +1055,23 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   // If the input value is provably positive, build a zext instead.
   if (isKnownNonNegative(Op))
     return getZeroExtendExpr(Op, Ty);
+
+  // sext(trunc(x)) --> sext(x) or x or trunc(x)
+  if (const SCEVTruncateExpr *ST = dyn_cast<SCEVTruncateExpr>(Op)) {
+    // It's possible the bits taken off by the truncate were all sign bits. If
+    // so, we should be able to simplify this further.
+    const SCEV *X = ST->getOperand();
+    ConstantRange CR = getSignedRange(X);
+    unsigned OrigBits = CR.getBitWidth();
+    unsigned TruncBits = getTypeSizeInBits(ST->getType());
+    unsigned NewBits = getTypeSizeInBits(Ty);
+    if (CR.truncate(TruncBits).signExtend(NewBits).contains(
+            CR.sextOrTrunc(NewBits))) {
+      if (NewBits > OrigBits) return getSignExtendExpr(X, Ty);
+      if (NewBits < OrigBits) return getTruncateExpr(X, Ty);
+      return X;
+    }
+  }
 
   // If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can sign extend all of the
