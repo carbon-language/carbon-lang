@@ -195,11 +195,11 @@ protected:
   // Information record used during immediate dominators computation.
   struct InfoRec {
     unsigned DFSNum;
+    unsigned Parent;
     unsigned Semi;
     NodeT *Label;
-    unsigned Parent, Ancestor;
 
-    InfoRec() : DFSNum(0), Semi(0), Label(0), Parent(0), Ancestor(0) {}
+    InfoRec() : DFSNum(0), Parent(0), Semi(0), Label(0) {}
   };
 
   DenseMap<NodeT*, NodeT*> IDoms;
@@ -564,13 +564,10 @@ public:
 
 protected:
   template<class GraphT>
-  friend void Compress(DominatorTreeBase<typename GraphT::NodeType>& DT,
-                       typename GraphT::NodeType* VIn);
-
-  template<class GraphT>
   friend typename GraphT::NodeType* Eval(
                                DominatorTreeBase<typename GraphT::NodeType>& DT,
-                                         typename GraphT::NodeType* V);
+                                         typename GraphT::NodeType* V,
+                                         unsigned LastLinked);
 
   template<class GraphT>
   friend unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,

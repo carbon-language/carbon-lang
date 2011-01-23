@@ -42,7 +42,6 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
   VInfo.Label = V;
 
   Vertex.push_back(V);        // Vertex[n] = V;
-  //Info[V].Ancestor = 0;     // Ancestor[n] = 0
 
   for (succ_iterator SI = succ_begin(V), E = succ_end(V); SI != E; ++SI) {
     InfoRec &SuccVInfo = DT.Info[*SI];
@@ -70,7 +69,6 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
       BBInfo.Label = BB;
 
       DT.Vertex.push_back(BB);       // Vertex[n] = V;
-      //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
 
       if (IsChildOfArtificialExit)
         BBInfo.Parent = 1;
@@ -106,53 +104,47 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
 }
 
 template<class GraphT>
-void Compress(DominatorTreeBase<typename GraphT::NodeType>& DT,
-              typename GraphT::NodeType *VIn) {
+typename GraphT::NodeType* 
+Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
+     typename GraphT::NodeType *VIn, unsigned LastLinked) {
+  typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInInfo =
+                                                                  DT.Info[VIn];
+  if (VInInfo.DFSNum < LastLinked)
+    return VIn;
+
   SmallVector<typename GraphT::NodeType*, 32> Work;
   SmallPtrSet<typename GraphT::NodeType*, 32> Visited;
-  typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInVAInfo =
-                                      DT.Info[DT.Vertex[DT.Info[VIn].Ancestor]];
 
-  if (VInVAInfo.Ancestor != 0)
+  if (VInInfo.Parent >= LastLinked)
     Work.push_back(VIn);
   
   while (!Work.empty()) {
     typename GraphT::NodeType* V = Work.back();
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInfo =
                                                                      DT.Info[V];
-    typename GraphT::NodeType* VAncestor = DT.Vertex[VInfo.Ancestor];
-    typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VAInfo =
-                                                             DT.Info[VAncestor];
+    typename GraphT::NodeType* VAncestor = DT.Vertex[VInfo.Parent];
 
     // Process Ancestor first
-    if (Visited.insert(VAncestor) &&
-        VAInfo.Ancestor != 0) {
+    if (Visited.insert(VAncestor) && VInfo.Parent >= LastLinked) {
       Work.push_back(VAncestor);
       continue;
     } 
     Work.pop_back(); 
 
     // Update VInfo based on Ancestor info
-    if (VAInfo.Ancestor == 0)
+    if (VInfo.Parent < LastLinked)
       continue;
+
+    typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VAInfo =
+                                                             DT.Info[VAncestor];
     typename GraphT::NodeType* VAncestorLabel = VAInfo.Label;
     typename GraphT::NodeType* VLabel = VInfo.Label;
     if (DT.Info[VAncestorLabel].Semi < DT.Info[VLabel].Semi)
       VInfo.Label = VAncestorLabel;
-    VInfo.Ancestor = VAInfo.Ancestor;
+    VInfo.Parent = VAInfo.Parent;
   }
-}
 
-template<class GraphT>
-typename GraphT::NodeType* 
-Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
-     typename GraphT::NodeType *V) {
-  typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInfo =
-                                                                     DT.Info[V];
-  if (VInfo.Ancestor == 0)
-    return V;
-  Compress<GraphT>(DT, V);
-  return VInfo.Label;
+  return VInInfo.Label;
 }
 
 template<class FuncT, class NodeT>
@@ -169,7 +161,6 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
     BBInfo.Label = NULL;
 
     DT.Vertex.push_back(NULL);       // Vertex[n] = V;
-      //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
   }
 
   // Step #1: Number blocks in depth-first order and initialize variables used
@@ -205,7 +196,7 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
     // Step #2: Implicitly define the immediate dominator of vertices
     for (unsigned j = i; Buckets[j] != i; j = Buckets[j]) {
       typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
-      typename GraphT::NodeType* U = Eval<GraphT>(DT, V);
+      typename GraphT::NodeType* U = Eval<GraphT>(DT, V, i + 1);
       DT.IDoms[V] = DT.Info[U].Semi < i ? U : W;
     }
 
@@ -219,7 +210,7 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
          E = InvTraits::child_end(W); CI != E; ++CI) {
       typename InvTraits::NodeType *N = *CI;
       if (DT.Info.count(N)) {  // Only if this predecessor is reachable!
-        unsigned SemiU = DT.Info[Eval<GraphT>(DT, N)].Semi;
+        unsigned SemiU = DT.Info[Eval<GraphT>(DT, N, i + 1)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
@@ -234,9 +225,6 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
       Buckets[i] = Buckets[WInfo.Semi];
       Buckets[WInfo.Semi] = i;
     }
-
-    // Link W to its DFS tree parent.
-    WInfo.Ancestor = WInfo.Parent;
   }
 
   if (N >= 1) {
