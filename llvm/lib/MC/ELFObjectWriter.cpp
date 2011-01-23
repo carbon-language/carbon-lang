@@ -329,8 +329,11 @@ namespace {
     virtual void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout,
                                 const SectionIndexMapTy &SectionIndexMap);
 
-    virtual void CreateGroupSections(MCAssembler &Asm, MCAsmLayout &Layout,
-                             GroupMapTy &GroupMap, RevGroupMapTy &RevGroupMap);
+    // Create the sections that show up in the symbol table. Currently
+    // those are the .note.GNU-stack section and the group sections.
+    virtual void CreateIndexedSections(MCAssembler &Asm, MCAsmLayout &Layout,
+                                       GroupMapTy &GroupMap,
+                                       RevGroupMapTy &RevGroupMap);
 
     virtual void ExecutePostLayoutBinding(MCAssembler &Asm,
                                           const MCAsmLayout &Layout);
@@ -1174,10 +1177,19 @@ ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
   return &SecA == &SecB;
 }
 
-void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
-                                          MCAsmLayout &Layout,
-                                          GroupMapTy &GroupMap,
-                                          RevGroupMapTy &RevGroupMap) {
+void ELFObjectWriter::CreateIndexedSections(MCAssembler &Asm,
+                                            MCAsmLayout &Layout,
+                                            GroupMapTy &GroupMap,
+                                            RevGroupMapTy &RevGroupMap) {
+  // Create the .note.GNU-stack section if needed.
+  MCContext &Ctx = Asm.getContext();
+  if (Asm.getNoExecStack()) {
+    const MCSectionELF *GnuStackSection =
+      Ctx.getELFSection(".note.GNU-stack", ELF::SHT_PROGBITS, 0,
+                        SectionKind::getReadOnly());
+    Asm.getOrCreateSectionData(*GnuStackSection);
+  }
+
   // Build the groups
   for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
        it != ie; ++it) {
@@ -1190,7 +1202,7 @@ void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
     Asm.getOrCreateSymbolData(*SignatureSymbol);
     const MCSectionELF *&Group = RevGroupMap[SignatureSymbol];
     if (!Group) {
-      Group = Asm.getContext().CreateELFGroupSection();
+      Group = Ctx.CreateELFGroupSection();
       MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
       Data.setAlignment(4);
       MCDataFragment *F = new MCDataFragment(&Data);
@@ -1334,8 +1346,8 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) {
   GroupMapTy GroupMap;
   RevGroupMapTy RevGroupMap;
-  CreateGroupSections(Asm, const_cast<MCAsmLayout&>(Layout), GroupMap,
-                      RevGroupMap);
+  CreateIndexedSections(Asm, const_cast<MCAsmLayout&>(Layout), GroupMap,
+                        RevGroupMap);
 
   SectionIndexMapTy SectionIndexMap;
 

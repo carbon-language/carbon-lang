@@ -104,6 +104,7 @@ protected: // Can only create subclasses.
   const MCAsmInfo *AsmInfo;
 
   unsigned MCRelaxAll : 1;
+  unsigned MCNoExecStack : 1;
   unsigned MCUseLoc : 1;
 
 public:
@@ -169,6 +170,12 @@ public:
   /// setMCRelaxAll - Set whether all machine code instructions should be
   /// relaxed.
   void setMCRelaxAll(bool Value) { MCRelaxAll = Value; }
+
+  /// hasMCNoExecStack - Check whether an executable stack is not needed.
+  bool hasMCNoExecStack() const { return MCNoExecStack; }
+
+  /// setMCNoExecStack - Set whether an executabel stack is not needed.
+  void setMCNoExecStack(bool Value) { MCNoExecStack = Value; }
 
   /// hasMCUseLoc - Check whether we should use dwarf's .loc directive.
   bool hasMCUseLoc() const { return MCUseLoc; }

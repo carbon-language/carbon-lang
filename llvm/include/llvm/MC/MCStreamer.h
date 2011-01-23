@@ -469,7 +469,7 @@ namespace llvm {
   /// ELF format object files.
   MCStreamer *createELFStreamer(MCContext &Ctx, TargetAsmBackend &TAB,
 				raw_ostream &OS, MCCodeEmitter *CE,
-				bool RelaxAll = false);
+				bool RelaxAll, bool NoExecStack);
 
   /// createLoggingStreamer - Create a machine code streamer which just logs the
   /// API calls and then dispatches to another streamer.

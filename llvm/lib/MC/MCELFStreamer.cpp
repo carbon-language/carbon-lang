@@ -515,10 +515,12 @@ void MCELFStreamer::Finish() {
 }
 
 MCStreamer *llvm::createELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
-                                      raw_ostream &OS, MCCodeEmitter *CE,
-                                      bool RelaxAll) {
+                                    raw_ostream &OS, MCCodeEmitter *CE,
+                                    bool RelaxAll, bool NoExecStack) {
   MCELFStreamer *S = new MCELFStreamer(Context, TAB, OS, CE);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
+  if (NoExecStack)
+    S->getAssembler().setNoExecStack(true);
   return S;
 }

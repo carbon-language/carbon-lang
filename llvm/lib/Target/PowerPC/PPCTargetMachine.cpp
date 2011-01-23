@@ -35,7 +35,8 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
                                     MCContext &Ctx, TargetAsmBackend &TAB,
                                     raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
-                                    bool RelaxAll) {
+                                    bool RelaxAll,
+                                    bool NoExecStack) {
   switch (Triple(TT).getOS()) {
   case Triple::Darwin:
     return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);

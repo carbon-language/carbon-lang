@@ -694,6 +694,7 @@ private:
   SmallPtrSet<const MCSymbol*, 64> ThumbFuncs;
 
   unsigned RelaxAll : 1;
+  unsigned NoExecStack : 1;
   unsigned SubsectionsViaSymbols : 1;
 
 private:
@@ -807,6 +808,9 @@ public:
 
   bool getRelaxAll() const { return RelaxAll; }
   void setRelaxAll(bool Value) { RelaxAll = Value; }
+
+  bool getNoExecStack() const { return NoExecStack; }
+  void setNoExecStack(bool Value) { NoExecStack = Value; }
 
   /// @name Section List Access
   /// @{

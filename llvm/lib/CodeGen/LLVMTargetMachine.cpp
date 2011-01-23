@@ -168,7 +168,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
     AsmStreamer.reset(getTarget().createObjectStreamer(TargetTriple, *Context,
                                                        *TAB, Out, MCE,
-                                                       hasMCRelaxAll()));
+                                                       hasMCRelaxAll(),
+                                                       hasMCNoExecStack()));
     AsmStreamer.get()->InitSections();
     break;
   }

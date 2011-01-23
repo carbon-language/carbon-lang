@@ -69,6 +69,9 @@ static cl::opt<bool>
 RelaxAll("mc-relax-all", cl::desc("Relax all fixups"));
 
 static cl::opt<bool>
+NoExecStack("mc-no-exec-stack", cl::desc("File doesn't need an exec stack"));
+
+static cl::opt<bool>
 EnableLogging("enable-api-logging", cl::desc("Enable MC API logging"));
 
 enum OutputFileType {
@@ -336,6 +339,7 @@ static int AssembleInput(const char *ProgName) {
     TM->getTargetLowering()->getObjFileLowering();
   const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(Ctx, *TM);
 
+  // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (FileType == OFT_AssemblyFile) {
     MCInstPrinter *IP =
       TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI);
@@ -355,7 +359,8 @@ static int AssembleInput(const char *ProgName) {
     MCCodeEmitter *CE = TheTarget->createCodeEmitter(*TM, Ctx);
     TargetAsmBackend *TAB = TheTarget->createAsmBackend(TripleName);
     Str.reset(TheTarget->createObjectStreamer(TripleName, Ctx, *TAB,
-                                              FOS, CE, RelaxAll));
+                                              FOS, CE, RelaxAll,
+                                              NoExecStack));
   }
 
   if (EnableLogging) {

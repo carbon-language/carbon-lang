@@ -89,7 +89,8 @@ namespace llvm {
                                                 TargetAsmBackend &TAB,
                                                 raw_ostream &_OS,
                                                 MCCodeEmitter *_Emitter,
-                                                bool RelaxAll);
+                                                bool RelaxAll,
+                                                bool NoExecStack);
     typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
                                              formatted_raw_ostream &OS,
                                              bool isVerboseAsm,
@@ -308,14 +309,17 @@ namespace llvm {
     /// \arg _OS - The stream object.
     /// \arg _Emitter - The target independent assembler object.Takes ownership.
     /// \arg RelaxAll - Relax all fixups?
+    /// \arg NoExecStack - Mark file as not needing a executable stack.
     MCStreamer *createObjectStreamer(const std::string &TT, MCContext &Ctx,
                                      TargetAsmBackend &TAB,
                                      raw_ostream &_OS,
                                      MCCodeEmitter *_Emitter,
-                                     bool RelaxAll) const {
+                                     bool RelaxAll,
+                                     bool NoExecStack) const {
       if (!ObjectStreamerCtorFn)
         return 0;
-      return ObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter, RelaxAll);
+      return ObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter, RelaxAll,
+                                  NoExecStack);
     }
 
     /// createAsmStreamer - Create a target specific MCStreamer.
