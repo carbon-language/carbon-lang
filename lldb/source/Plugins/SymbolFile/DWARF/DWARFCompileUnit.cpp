@@ -12,6 +12,7 @@
 #include "lldb/Core/Mangled.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Symbol/ObjectFile.h"
 
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugAranges.h"
@@ -219,7 +220,17 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
                 break;  // We are done with this compile unit!
         }
 
-        assert(offset <= GetNextCompileUnitOffset());
+        if (offset > GetNextCompileUnitOffset())
+        {
+            char path[PATH_MAX];
+            ObjectFile *objfile = m_dwarf2Data->GetObjectFile();
+            if (objfile)
+            {
+                objfile->GetFileSpec().GetPath(path, sizeof(path));
+            }
+            fprintf (stderr, "warning: DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x in '%s'\n", GetOffset(), offset, path);
+            break;
+        }
     }
     SetDIERelations();
     return m_die_array.size();
