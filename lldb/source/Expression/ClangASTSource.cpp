@@ -240,26 +240,26 @@ NameSearchContext::AddGenericFunDecl()
 clang::NamedDecl *
 NameSearchContext::AddTypeDecl(void *type)
 {
-    QualType qual_type = QualType::getFromOpaquePtr(type);
+    if (type)
+    {
+        QualType qual_type = QualType::getFromOpaquePtr(type);
 
-    if (TagType *tag_type = dyn_cast<clang::TagType>(qual_type))
-    {
-        TagDecl *tag_decl = tag_type->getDecl();
-        
-        m_decls.push_back(tag_decl);
-        
-        return tag_decl;
+        if (TagType *tag_type = dyn_cast<clang::TagType>(qual_type))
+        {
+            TagDecl *tag_decl = tag_type->getDecl();
+            
+            m_decls.push_back(tag_decl);
+            
+            return tag_decl;
+        }
+        else if (ObjCObjectType *objc_object_type = dyn_cast<clang::ObjCObjectType>(qual_type))
+        {
+            ObjCInterfaceDecl *interface_decl = objc_object_type->getInterface();
+            
+            m_decls.push_back((NamedDecl*)interface_decl);
+            
+            return (NamedDecl*)interface_decl;
+        }
     }
-    else if (ObjCObjectType *objc_object_type = dyn_cast<clang::ObjCObjectType>(qual_type))
-    {
-        ObjCInterfaceDecl *interface_decl = objc_object_type->getInterface();
-        
-        m_decls.push_back((NamedDecl*)interface_decl);
-        
-        return (NamedDecl*)interface_decl;
-    }
-    else
-    {
-        return NULL;
-    }
+    return NULL;
 }
