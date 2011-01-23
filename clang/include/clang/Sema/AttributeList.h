@@ -108,7 +108,6 @@ public:
     AT_format_arg,
     AT_global,
     AT_gnu_inline,
-    AT_hiding,
     AT_host,
     AT_launch_bounds,
     AT_malloc,
@@ -126,7 +125,6 @@ public:
     AT_nothrow,
     AT_nsobject,
     AT_objc_exception,
-    AT_override,
     AT_cf_returns_not_retained, // Clang-specific.
     AT_cf_returns_retained,     // Clang-specific.
     AT_ns_returns_not_retained, // Clang-specific.

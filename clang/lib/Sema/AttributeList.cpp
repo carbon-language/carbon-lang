@@ -56,7 +56,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("__const", AT_const) // some GCC headers do contain this spelling
     .Case("blocks", AT_blocks)
     .Case("format", AT_format)
-    .Case("hiding", AT_hiding)
     .Case("malloc", AT_malloc)
     .Case("packed", AT_packed)
     .Case("unused", AT_unused)
@@ -77,7 +76,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("iboutletcollection", AT_IBOutletCollection)
     .Case("noreturn", AT_noreturn)
     .Case("noinline", AT_noinline)
-    .Case("override", AT_override)
     .Case("sentinel", AT_sentinel)
     .Case("NSObject", AT_nsobject)
     .Case("dllimport", AT_dllimport)

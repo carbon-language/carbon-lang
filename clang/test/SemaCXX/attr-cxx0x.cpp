@@ -14,15 +14,3 @@ static_assert(alignof(align_small) == 1, "j's alignment is wrong");
 static_assert(alignof(align_multiple) == 8, "l's alignment is wrong");
 static_assert(alignof(align_member) == 8, "quuux's alignment is wrong");
 static_assert(sizeof(align_member) == 8, "quuux's size is wrong");
-
-int bc_fail [[base_check]]; // expected-error {{'base_check' attribute only applies to class types}}
-int hiding_fail [[hiding]]; // expected-error {{'hiding' attribute only applies to member types}}
-int override_fail [[override]]; // expected-error {{'override' attribute only applies to virtual method types}}
-
-struct base {
-  virtual void function();
-  virtual void other_function();
-};
-
-struct [[base_check, base_check]] bc : base { // expected-error {{'base_check' attribute cannot be repeated}}
-};

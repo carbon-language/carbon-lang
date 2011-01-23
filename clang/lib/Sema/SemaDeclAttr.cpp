@@ -2438,82 +2438,6 @@ static void HandleLaunchBoundsAttr(Decl *d, const AttributeList &Attr, Sema &S){
 }
 
 //===----------------------------------------------------------------------===//
-// C++0x member checking attributes
-//===----------------------------------------------------------------------===//
-
-static void HandleBaseCheckAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-  
-  if (!isa<CXXRecordDecl>(d)) {
-    S.Diag(Attr.getLoc(),
-           Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
-                                   : diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 9 /*class*/;
-    return;
-  }
-  
-  if (d->getAttr<BaseCheckAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "base_check";
-    return;
-  }
-  
-  d->addAttr(::new (S.Context) BaseCheckAttr(Attr.getLoc(), S.Context));
-}
-
-static void HandleHidingAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-
-  if (!isa<RecordDecl>(d->getDeclContext())) {
-    // FIXME: It's not the type that's the problem
-    S.Diag(Attr.getLoc(),
-           Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
-                                   : diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 11 /*member*/;
-    return;
-  }
-
-  // FIXME: Conform to C++0x redeclaration rules.
-
-  if (d->getAttr<HidingAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "hiding";
-    return;
-  }
-
-  d->addAttr(::new (S.Context) HidingAttr(Attr.getLoc(), S.Context));
-}
-
-static void HandleOverrideAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-
-  if (!isa<CXXMethodDecl>(d) || !cast<CXXMethodDecl>(d)->isVirtual()) {
-    // FIXME: It's not the type that's the problem
-    S.Diag(Attr.getLoc(),
-           Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
-                                   : diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 10 /*virtual method*/;
-    return;
-  }
-
-  // FIXME: Conform to C++0x redeclaration rules.
-
-  if (d->getAttr<OverrideAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "override";
-    return;
-  }
-
-  d->addAttr(::new (S.Context) OverrideAttr(Attr.getLoc(), S.Context));
-}
-
-//===----------------------------------------------------------------------===//
 // Checker-specific attribute handlers.
 //===----------------------------------------------------------------------===//
 
@@ -2672,7 +2596,6 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_analyzer_noreturn:
     HandleAnalyzerNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_annotate:    HandleAnnotateAttr    (D, Attr, S); break;
-  case AttributeList::AT_base_check:  HandleBaseCheckAttr   (D, Attr, S); break;
   case AttributeList::AT_carries_dependency:
                                       HandleDependencyAttr  (D, Attr, S); break;
   case AttributeList::AT_common:      HandleCommonAttr      (D, Attr, S); break;
@@ -2687,7 +2610,6 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_format_arg:  HandleFormatArgAttr   (D, Attr, S); break;
   case AttributeList::AT_global:      HandleGlobalAttr      (D, Attr, S); break;
   case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr   (D, Attr, S); break;
-  case AttributeList::AT_hiding:      HandleHidingAttr      (D, Attr, S); break;
   case AttributeList::AT_launch_bounds:
     HandleLaunchBoundsAttr(D, Attr, S);
     break;
@@ -2703,7 +2625,6 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_naked:       HandleNakedAttr       (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr    (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr     (D, Attr, S); break;
-  case AttributeList::AT_override:    HandleOverrideAttr    (D, Attr, S); break;
   case AttributeList::AT_shared:      HandleSharedAttr      (D, Attr, S); break;
   case AttributeList::AT_vecreturn:   HandleVecReturnAttr   (D, Attr, S); break;
 

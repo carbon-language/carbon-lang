@@ -129,12 +129,6 @@ def AsmLabel : InheritableAttr {
   let Args = [StringArgument<"Label">];
 }
 
-def BaseCheck : InheritableAttr {
-  let Spellings = ["base_check"];
-  let Subjects = [CXXRecord];
-  let Namespaces = ["", "std"];
-}
-
 def Blocks : InheritableAttr {
   let Spellings = ["blocks"];
   let Args = [EnumArgument<"Type", "BlockType", ["byref"], ["ByRef"]>];
@@ -238,12 +232,6 @@ def GNUInline : InheritableAttr {
   let Spellings = ["gnu_inline"];
 }
 
-def Hiding : InheritableAttr {
-  let Spellings = ["hiding"];
-  let Subjects = [Field, CXXMethod];
-  let Namespaces = ["", "std"];
-}
-
 def IBAction : InheritableAttr {
   let Spellings = ["ibaction"];
 }
@@ -342,12 +330,6 @@ def ObjCException : InheritableAttr {
 
 def ObjCNSObject : InheritableAttr {
   let Spellings = ["NSOjbect"];
-}
-
-def Override : InheritableAttr {
-  let Spellings = ["override"];
-  let Subjects = [CXXVirtualMethod];
-  let Namespaces = ["", "std"];
 }
 
 def Overloadable : Attr {
