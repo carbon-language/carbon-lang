@@ -31,6 +31,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
@@ -43,12 +44,14 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumReplaced,  "Number of allocas broken up");
 STATISTIC(NumPromoted,  "Number of allocas promoted");
+STATISTIC(NumAdjusted,  "Number of scalar allocas adjusted to allow promotion");
 STATISTIC(NumConverted, "Number of aggregates converted to scalar");
 STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 
@@ -862,6 +865,134 @@ public:
 };
 } // end anon namespace
 
+/// isSafeSelectToSpeculate - Select instructions that use an alloca and are
+/// subsequently loaded can be rewritten to load both input pointers and then
+/// select between the result, allowing the load of the alloca to be promoted.
+/// From this:
+///   %P2 = select i1 %cond, i32* %Alloca, i32* %Other
+///   %V = load i32* %P2
+/// to:
+///   %V1 = load i32* %Alloca      -> will be mem2reg'd
+///   %V2 = load i32* %Other
+///   %V = select i1 %cond, i32 %V1, i32* %V2
+///
+/// We can do this to a select if its only uses are loads and if the operand to
+/// the select can be loaded unconditionally.
+static bool isSafeSelectToSpeculate(SelectInst *SI, const TargetData *TD) {
+  bool TDerefable = SI->getTrueValue()->isDereferenceablePointer();
+  bool FDerefable = SI->getFalseValue()->isDereferenceablePointer();
+  
+  for (Value::use_iterator UI = SI->use_begin(), UE = SI->use_end();
+       UI != UE; ++UI) {
+    LoadInst *LI = dyn_cast<LoadInst>(*UI);
+    if (LI == 0 || LI->isVolatile()) return false;
+    
+    // Both operands to the select need to be deferencable, either absolutely
+    // (e.g. allocas) or at this point because we can see other accesses to it.
+    if (!TDerefable && !isSafeToLoadUnconditionally(SI->getTrueValue(), LI,
+                                                    LI->getAlignment(), TD))
+      return false;
+    if (!FDerefable && !isSafeToLoadUnconditionally(SI->getFalseValue(), LI,
+                                                    LI->getAlignment(), TD))
+      return false;
+  }
+  
+  return true;
+}
+
+
+/// tryToMakeAllocaBePromotable - This returns true if the alloca only has
+/// direct (non-volatile) loads and stores to it.  If the alloca is close but
+/// not quite there, this will transform the code to allow promotion.  As such,
+/// it is a non-pure predicate.
+static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
+  SetVector<Instruction*, SmallVector<Instruction*, 4>,
+            SmallPtrSet<Instruction*, 4> > InstsToRewrite;
+  
+  for (Value::use_iterator UI = AI->use_begin(), UE = AI->use_end();
+       UI != UE; ++UI) {
+    User *U = *UI;
+    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
+      if (LI->isVolatile())
+        return false;
+      continue;
+    }
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+      if (SI->getOperand(0) == AI || SI->isVolatile())
+        return false;   // Don't allow a store OF the AI, only INTO the AI.
+      continue;
+    }
+
+    if (SelectInst *SI = dyn_cast<SelectInst>(U)) {
+      // If the condition being selected on is a constant, fold the select, yes
+      // this does (rarely) happen early on.
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(SI->getCondition())) {
+        Value *Result = SI->getOperand(1+CI->isZero());
+        SI->replaceAllUsesWith(Result);
+        SI->eraseFromParent();
+        
+        // This is very rare and we just scrambled the use list of AI, start
+        // over completely.
+        return tryToMakeAllocaBePromotable(AI, TD);
+      }
+
+      // If it is safe to turn "load (select c, AI, ptr)" into a select of two
+      // loads, then we can transform this by rewriting the select.
+      if (!isSafeSelectToSpeculate(SI, TD))
+        return false;
+      
+      InstsToRewrite.insert(SI);
+      continue;
+    }
+    
+    return false;
+  }
+
+  // If there are no instructions to rewrite, then all uses are load/stores and
+  // we're done!
+  if (InstsToRewrite.empty())
+    return true;
+  
+  // If we have instructions that need to be rewritten for this to be promotable
+  // take care of it now.
+  for (unsigned i = 0, e = InstsToRewrite.size(); i != e; ++i) {
+    // Selects in InstsToRewrite only have load uses.  Rewrite each as two
+    // loads with a new select.
+    SelectInst *SI = cast<SelectInst>(InstsToRewrite[i]);
+    
+    for (Value::use_iterator UI = SI->use_begin(), E = SI->use_end(); UI != E;){
+      LoadInst *LI = cast<LoadInst>(*UI++);
+      
+      IRBuilder<> Builder(LI);
+      LoadInst *TrueLoad = 
+        Builder.CreateLoad(SI->getTrueValue(), LI->getName()+".t");
+      LoadInst *FalseLoad = 
+        Builder.CreateLoad(SI->getFalseValue(), LI->getName()+".t");
+      
+      // Transfer alignment and TBAA info if present.
+      TrueLoad->setAlignment(LI->getAlignment());
+      FalseLoad->setAlignment(LI->getAlignment());
+      if (MDNode *Tag = LI->getMetadata(LLVMContext::MD_tbaa)) {
+        TrueLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
+        FalseLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
+      }
+      
+      Value *V = Builder.CreateSelect(SI->getCondition(), TrueLoad, FalseLoad);
+      V->takeName(LI);
+      LI->replaceAllUsesWith(V);
+      LI->eraseFromParent();
+    }
+    
+    // Now that all the loads are gone, the select is gone too.
+    SI->eraseFromParent();
+  }
+    
+  ++NumAdjusted;
+  return true;
+}
+
+
 bool SROA::performPromotion(Function &F) {
   std::vector<AllocaInst*> Allocas;
   DominatorTree *DT = 0;
@@ -879,7 +1010,7 @@ bool SROA::performPromotion(Function &F) {
     // the entry node
     for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
       if (AllocaInst *AI = dyn_cast<AllocaInst>(I))       // Is it an alloca?
-        if (isAllocaPromotable(AI))
+        if (tryToMakeAllocaBePromotable(AI, TD))
           Allocas.push_back(AI);
 
     if (Allocas.empty()) break;

@@ -44,16 +44,15 @@ F:
 }
 
 ; CHECK: @test3
-; CHECK: %A.0 = alloca i32
-; CHECK: %A.1 = alloca i32
+; CHECK-NEXT: %Q = select i1 %c, i32 1, i32 2
+; CHECK-NEXT: ret i32 %Q
 ; rdar://8904039
 define i32 @test3(i1 %c) {
-entry:
   %A = alloca {i32, i32}
   %B = getelementptr {i32, i32}* %A, i32 0, i32 0
   store i32 1, i32* %B
   %C = getelementptr {i32, i32}* %A, i32 0, i32 1
-  store i32 2, i32* %B
+  store i32 2, i32* %C
   
   %X = select i1 %c, i32* %B, i32* %C
   %Q = load i32* %X
@@ -76,3 +75,58 @@ entry:
   %Q = load i64* %Y
   ret i64 %Q
 }
+
+
+;;
+;; Tests for promoting allocas used by selects.
+;; rdar://7339113
+;;
+
+define i32 @test5(i32 *%P) nounwind readnone ssp {
+entry:
+  %b = alloca i32, align 8 
+  store i32 2, i32* %b, align 8
+  
+  ;; Select on constant condition should be folded.
+  %p.0 = select i1 false, i32* %b, i32* %P
+  store i32 123, i32* %p.0
+  
+  %r = load i32* %b, align 8
+  ret i32 %r
+  
+; CHECK: @test5
+; CHECK: store i32 123, i32* %P
+; CHECK: ret i32 2
+}
+
+define i32 @test6(i32 %x, i1 %c) nounwind readnone ssp {
+  %a = alloca i32, align 8
+  %b = alloca i32, align 8
+  store i32 1, i32* %a, align 8
+  store i32 2, i32* %b, align 8
+  %p.0 = select i1 %c, i32* %b, i32* %a
+  %r = load i32* %p.0, align 8
+  ret i32 %r
+; CHECK: @test6
+; CHECK-NEXT: %r = select i1 %c, i32 2, i32 1
+; CHECK-NEXT: ret i32 %r
+}
+
+; Verify that the loads happen where the loads are, not where the select is.
+define i32 @test7(i32 %x, i1 %c) nounwind readnone ssp {
+  %a = alloca i32, align 8
+  %b = alloca i32, align 8
+  store i32 1, i32* %a
+  store i32 2, i32* %b
+  %p.0 = select i1 %c, i32* %b, i32* %a
+  
+  store i32 0, i32* %a
+  
+  %r = load i32* %p.0, align 8
+  ret i32 %r
+; CHECK: @test7
+; CHECK-NOT: alloca i32
+; CHECK: %r = select i1 %c, i32 2, i32 0
+; CHECK: ret i32 %r
+}
+
