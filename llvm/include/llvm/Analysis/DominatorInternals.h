@@ -198,7 +198,7 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   // Buckets[i] stores the index of the first element in V's bucket. After V's
   // bucket is processed, Buckets[i] stores the index of the next element in the
   // bucket containing V, if any.
-  std::vector<unsigned> Buckets;
+  SmallVector<unsigned, 32> Buckets;
   Buckets.resize(N + 1);
   for (unsigned i = 1; i <= N; ++i)
     Buckets[i] = i;
