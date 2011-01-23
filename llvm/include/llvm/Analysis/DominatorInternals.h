@@ -43,8 +43,6 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
 
   Vertex.push_back(V);        // Vertex[n] = V;
   //Info[V].Ancestor = 0;     // Ancestor[n] = 0
-  //Info[V].Child = 0;        // Child[v] = 0
-  VInfo.Size = 1;             // Size[v] = 1
 
   for (succ_iterator SI = succ_begin(V), E = succ_end(V); SI != E; ++SI) {
     InfoRec &SuccVInfo = DT.Info[*SI];
@@ -73,8 +71,6 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
 
       DT.Vertex.push_back(BB);       // Vertex[n] = V;
       //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
-      //BBInfo[V].Child = 0;      // Child[v] = 0
-      BBInfo.Size = 1;            // Size[v] = 1
 
       if (IsChildOfArtificialExit)
         BBInfo.Parent = 1;
@@ -174,8 +170,6 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
 
     DT.Vertex.push_back(NULL);       // Vertex[n] = V;
       //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
-      //BBInfo[V].Child = 0;      // Child[v] = 0
-    BBInfo.Size = 1;            // Size[v] = 1
   }
 
   // Step #1: Number blocks in depth-first order and initialize variables used

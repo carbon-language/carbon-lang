@@ -196,12 +196,10 @@ protected:
   struct InfoRec {
     unsigned DFSNum;
     unsigned Semi;
-    unsigned Size;
-    NodeT *Label, *Child;
+    NodeT *Label;
     unsigned Parent, Ancestor;
 
-    InfoRec() : DFSNum(0), Semi(0), Size(0), Label(0), Child(0), Parent(0),
-                Ancestor(0) {}
+    InfoRec() : DFSNum(0), Semi(0), Label(0), Parent(0), Ancestor(0) {}
   };
 
   DenseMap<NodeT*, NodeT*> IDoms;
