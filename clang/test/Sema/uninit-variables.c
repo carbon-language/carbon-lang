@@ -180,3 +180,15 @@ MyInt test26() {
   MyInt x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
   return x; // expected-note{{variable 'x' is possibly uninitialized when used here}}
 }
+
+// Test handling of sizeof().
+int test27() {
+  struct test_27 { int x; } *y;
+  return sizeof(y->x); // no-warning
+}
+
+int test28() {
+  int len; // expected-warning{{use of uninitialized variable 'len'}} expected-note{{add initialization to silence this warning}}
+  return sizeof(int[len]); // expected-note{{variable 'len' is possibly uninitialized when used here}}
+}
+

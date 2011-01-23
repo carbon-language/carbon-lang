@@ -302,6 +302,7 @@ public:
   void VisitUnaryOperator(UnaryOperator *uo);
   void VisitBinaryOperator(BinaryOperator *bo);
   void VisitCastExpr(CastExpr *ce);
+  void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *se);
 };
 }
 
@@ -433,6 +434,15 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
     }
   }  
   Visit(ce->getSubExpr());
+}
+
+void TransferFunctions::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *se) {
+  if (se->isSizeOf()) {
+    if (se->getType()->isConstantSizeType())
+      return;
+    // Handle VLAs.
+    Visit(se->getArgumentExpr());
+  }
 }
 
 //------------------------------------------------------------------------====//
