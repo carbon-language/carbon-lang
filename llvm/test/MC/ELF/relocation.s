@@ -13,7 +13,7 @@ bar:
         leaq	foo@TLSGD(%rip), %rax    # R_X86_64_TLSGD
         leaq	foo@TPOFF(%rax), %rax    # R_X86_64_TPOFF32
         leaq	foo@TLSLD(%rip), %rdi    # R_X86_64_TLSLD
-        leaq	foo@DTPOFF(%rax), %rcx   # R_X86_64_DTPOFF32
+        leaq	foo@dtpoff(%rax), %rcx   # R_X86_64_DTPOFF32
         pushq    $bar
         movq	foo(%rip), %rdx
         leaq    foo-bar(%r14),%r14
