@@ -119,12 +119,12 @@ class ClassTypesTestCase(TestBase):
                        str(self.line)])
 
         # Now launch the process, and do not stop at entry point.
-        rc = lldb.SBError()
-        self.process = target.Launch([], [], os.ctermid(), 0, False, rc)
+        error = lldb.SBError()
+        self.process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
         #self.breakAfterLaunch(self.process, "C::C(int, int, int)")
 
-        if not rc.Success() or not self.process.IsValid():
-            self.fail("SBTarget.LaunchProcess() failed")
+        if not error.Success() or not self.process.IsValid():
+            self.fail("SBTarget.Launch() failed")
 
         if self.process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "

@@ -44,7 +44,8 @@ class FrameAPITestCase(TestBase):
         # Note that we don't assign the process to self.process as in other test
         # cases.  We want the inferior to run till it exits and there's no need
         # for the testing framework to kill the inferior upon tearDown().
-        process = target.LaunchProcess([], [], os.ctermid(), 0, False)
+        error = lldb.SBError()
+        process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
         process = target.GetProcess()
         self.assertTrue(process.GetState() == lldb.eStateStopped,

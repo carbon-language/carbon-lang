@@ -64,7 +64,8 @@ class TestObjCStepping(TestBase):
         self.assertTrue(break_returnStruct_call_super.IsValid(), VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchProcess([], [], os.ctermid(), 0, False)
+        error = lldb.SBError()
+        self.process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 

@@ -139,7 +139,8 @@ class BreakpointConditionsTestCase(TestBase):
             startstr = 'val == 3')
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchProcess([], [], os.ctermid(), 0, False)
+        error = lldb.SBError()
+        self.process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)

@@ -116,49 +116,6 @@ SBTarget::GetDebugger () const
     return debugger;
 }
 
-SBProcess
-SBTarget::LaunchProcess
-(
-    char const **argv,
-    char const **envp,
-    const char *tty,
-    uint32_t launch_flags,
-    bool stop_at_entry
-)
-{
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    if (log)
-        log->Printf ("SBTarget(%p)::LaunchProcess (argv=%p, envp=%p, tty=\"%s\", launch_flags=%d, stop_at_entry=%i)",
-                     m_opaque_sp.get(), argv, envp, tty, launch_flags, stop_at_entry);
-
-    SBError sb_error;    
-    SBProcess sb_process = Launch (argv, envp, tty, tty, tty, NULL, launch_flags, stop_at_entry, sb_error);
-
-    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
-    if (log)
-    {
-        log->Printf ("SBTarget(%p)::LaunchProcess (...) => SBProcess(%p)", 
-                     m_opaque_sp.get(), sb_process.get());
-    }
-
-    return sb_process;
-}
-
-
-SBProcess
-SBTarget::Launch
-(
-    char const **argv,
-    char const **envp,
-    const char *tty,
-    uint32_t launch_flags,
-    bool stop_at_entry,
-    SBError &error
-)
-{
-    return Launch (argv, envp, tty, tty, tty, NULL, launch_flags, stop_at_entry, error);
-}
 
 SBProcess
 SBTarget::Launch 

@@ -816,7 +816,7 @@ class TestBase(unittest2.TestCase):
 
     def breakAfterLaunch(self, process, func, trace=False):
         """
-        Perform some dancees after LaunchProcess() to break at func name.
+        Perform some dances after Launch() to break at func name.
 
         Return True if we can successfully break at the func name in due time.
         """

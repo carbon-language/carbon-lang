@@ -55,33 +55,6 @@ public:
     GetProcess ();
 
     lldb::SBProcess
-    LaunchProcess (char const **argv,
-                   char const **envp,
-                   const char *tty,
-                   uint32_t launch_flags,   // See LaunchFlags
-                   bool stop_at_entry);
-
-    lldb::SBProcess
-    Launch (char const **argv,
-            char const **envp,
-            const char *tty,
-            uint32_t launch_flags,   // See LaunchFlags
-            bool stop_at_entry,
-            lldb::SBError& error);
-
-#ifdef SWIG
-%rename(LaunchWithCWD) Launch (char const **argv,
-                               char const **envp,
-                               const char *stdin_path,
-                               const char *stdout_path,
-                               const char *stderr_path,
-                               const char *working_directory,
-                               uint32_t launch_flags,   // See LaunchFlags
-                               bool stop_at_entry,
-                               lldb::SBError& error);
-#endif
-
-    lldb::SBProcess
     Launch (char const **argv,
             char const **envp,
             const char *stdin_path,

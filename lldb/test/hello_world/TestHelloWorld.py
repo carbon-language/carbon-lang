@@ -49,10 +49,11 @@ class HelloWorldTestCase(TestBase):
                         "Breakpoint.SetEnabled(True) works")
 
         # rdar://problem/8364687
-        # SBTarget.LaunchProcess() issue (or is there some race condition)?
+        # SBTarget.Launch() issue (or is there some race condition)?
 
         if useLaunchAPI:
-            process = target.LaunchProcess([], [], os.ctermid(), 0, False)
+            error = lldb.SBError()
+            process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
             # The following isn't needed anymore, rdar://8364687 is fixed.
             #
             # Apply some dances after LaunchProcess() in order to break at "main".

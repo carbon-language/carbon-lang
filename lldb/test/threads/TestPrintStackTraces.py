@@ -35,7 +35,7 @@ class ThreadsStackTracesTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         rc = lldb.SBError()
-        self.process = target.Launch([], [], os.ctermid(), 0, False, rc)
+        self.process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
 
         if not rc.Success() or not self.process.IsValid():
             self.fail("SBTarget.LaunchProcess() failed")
