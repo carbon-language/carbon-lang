@@ -363,6 +363,10 @@ bool Value::isDereferenceablePointer() const {
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(this))
     return !GV->hasExternalWeakLinkage();
 
+  // byval arguments are ok.
+  if (const Argument *A = dyn_cast<Argument>(this))
+    return A->hasByValAttr();
+  
   // For GEPs, determine if the indexing lands within the allocated object.
   if (const GEPOperator *GEP = dyn_cast<GEPOperator>(this)) {
     // Conservatively require that the base pointer be fully dereferenceable.
