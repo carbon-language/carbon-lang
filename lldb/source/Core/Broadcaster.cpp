@@ -214,7 +214,7 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
     const uint32_t event_type = event_sp->GetType();
 
     Mutex::Locker event_types_locker(m_listeners_mutex);
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS | LIBLLDB_LOG_PROCESS));
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
     if (log)
     {
         StreamString event_description;
@@ -229,6 +229,11 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
 
     if (m_hijacking_listener != NULL && m_hijacking_mask & event_type)
     {
+        // FIXME: REMOVE THIS EXTRA LOGGING
+        LogSP log_process(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
+        if (log_process)
+            log_process->Printf ("Hijacking event delivery for Broadcaster(\"%s\").", m_broadcaster_name.AsCString(""));
+            
         if (unique && m_hijacking_listener->PeekAtNextEventForBroadcasterWithType (this, event_type))
             return;
         m_hijacking_listener->AddEvent (event_sp);
