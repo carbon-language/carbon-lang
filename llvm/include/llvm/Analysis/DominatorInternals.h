@@ -53,8 +53,8 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
 #else
   bool IsChildOfArtificialExit = (N != 0);
 
-  std::vector<std::pair<typename GraphT::NodeType*,
-                        typename GraphT::ChildIteratorType> > Worklist;
+  SmallVector<std::pair<typename GraphT::NodeType*,
+                        typename GraphT::ChildIteratorType>, 32> Worklist;
   Worklist.push_back(std::make_pair(V, GraphT::child_begin(V)));
   while (!Worklist.empty()) {
     typename GraphT::NodeType* BB = Worklist.back().first;
