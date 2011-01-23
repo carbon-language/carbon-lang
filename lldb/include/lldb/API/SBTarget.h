@@ -55,6 +55,13 @@ public:
     GetProcess ();
 
     lldb::SBProcess
+    LaunchProcess (char const **argv,
+                   char const **envp,
+                   const char *tty,
+                   uint32_t launch_flags,   // See LaunchFlags
+                   bool stop_at_entry);
+
+    lldb::SBProcess
     Launch (char const **argv,
             char const **envp,
             const char *tty,
