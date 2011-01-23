@@ -134,11 +134,6 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
     getContext().getELFSection(".gcc_except_table", ELF::SHT_PROGBITS,
                                ELF::SHF_ALLOC,
                                SectionKind::getReadOnly());
-  EHFrameSection =
-    getContext().getELFSection(".eh_frame", ELF::SHT_PROGBITS,
-                               ELF::SHF_ALLOC,
-                               SectionKind::getDataRel());
-
   // Debug Info Sections.
   DwarfAbbrevSection =
     getContext().getELFSection(".debug_abbrev", ELF::SHT_PROGBITS, 0,
@@ -175,6 +170,11 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                SectionKind::getMetadata());
 }
 
+const MCSection *TargetLoweringObjectFileELF::getEHFrameSection() const {
+  return getContext().getELFSection(".eh_frame", ELF::SHT_PROGBITS,
+                                    ELF::SHF_ALLOC,
+                                    SectionKind::getDataRel());
+}
 
 static SectionKind
 getELFKindForNamedSection(StringRef Name, SectionKind K) {
@@ -581,14 +581,6 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   // Exception Handling.
   LSDASection = getContext().getMachOSection("__TEXT", "__gcc_except_tab", 0,
                                              SectionKind::getReadOnlyWithRel());
-  EHFrameSection =
-    getContext().getMachOSection("__TEXT", "__eh_frame",
-                                 MCSectionMachO::S_COALESCED |
-                                 MCSectionMachO::S_ATTR_NO_TOC |
-                                 MCSectionMachO::S_ATTR_STRIP_STATIC_SYMS |
-                                 MCSectionMachO::S_ATTR_LIVE_SUPPORT,
-                                 SectionKind::getReadOnly());
-
   // Debug Information.
   DwarfAbbrevSection =
     getContext().getMachOSection("__DWARF", "__debug_abbrev",
@@ -640,6 +632,15 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                  SectionKind::getMetadata());
 
   TLSExtraDataSection = TLSTLVSection;
+}
+
+const MCSection *TargetLoweringObjectFileMachO::getEHFrameSection() const {
+  return getContext().getMachOSection("__TEXT", "__eh_frame",
+                                      MCSectionMachO::S_COALESCED |
+                                      MCSectionMachO::S_ATTR_NO_TOC |
+                                      MCSectionMachO::S_ATTR_STRIP_STATIC_SYMS |
+                                      MCSectionMachO::S_ATTR_LIVE_SUPPORT,
+                                      SectionKind::getReadOnly());
 }
 
 const MCSection *TargetLoweringObjectFileMachO::
@@ -873,13 +874,6 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                 COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
                                 COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getReadOnly());
-  EHFrameSection =
-    getContext().getCOFFSection(".eh_frame",
-                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                COFF::IMAGE_SCN_MEM_READ |
-                                COFF::IMAGE_SCN_MEM_WRITE,
-                                SectionKind::getDataRel());
-
   // Debug info.
   DwarfAbbrevSection =
     getContext().getCOFFSection(".debug_abbrev",
@@ -942,6 +936,15 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                 COFF::IMAGE_SCN_LNK_INFO,
                                 SectionKind::getMetadata());
 }
+
+const MCSection *TargetLoweringObjectFileCOFF::getEHFrameSection() const {
+  return getContext().getCOFFSection(".eh_frame",
+                                     COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                     COFF::IMAGE_SCN_MEM_READ |
+                                     COFF::IMAGE_SCN_MEM_WRITE,
+                                     SectionKind::getDataRel());
+}
+
 
 static unsigned
 getCOFFSectionFlags(SectionKind K) {

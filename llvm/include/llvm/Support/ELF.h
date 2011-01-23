@@ -501,6 +501,8 @@ enum {
   SHT_ARM_DEBUGOVERLAY    = 0x70000004U,
   SHT_ARM_OVERLAYSECTION  = 0x70000005U,
 
+  SHT_X86_64_UNWIND       = 0x70000001, // Unwind information
+
   SHT_HIPROC        = 0x7fffffff, // Highest processor architecture-specific type.
   SHT_LOUSER        = 0x80000000, // Lowest type reserved for applications.
   SHT_HIUSER        = 0xffffffff  // Highest type reserved for applications.

@@ -338,6 +338,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
       Type = ELF::SHT_PROGBITS;
     else if (TypeName == "note")
       Type = ELF::SHT_NOTE;
+    else if (TypeName == "unwind")
+      Type = ELF::SHT_X86_64_UNWIND;
     else
       return TokError("unknown section type");
   }

@@ -69,10 +69,6 @@ protected:
   /// the section the Language Specific Data Area information is emitted to.
   const MCSection *LSDASection;
   
-  /// EHFrameSection - If exception handling is supported by the target, this is
-  /// the section the EH Frame is emitted to.
-  const MCSection *EHFrameSection;
-  
   // Dwarf sections for debug info.  If a target supports debug info, these must
   // be set.
   const MCSection *DwarfAbbrevSection;
@@ -143,7 +139,7 @@ public:
   const MCSection *getStaticCtorSection() const { return StaticCtorSection; }
   const MCSection *getStaticDtorSection() const { return StaticDtorSection; }
   const MCSection *getLSDASection() const { return LSDASection; }
-  const MCSection *getEHFrameSection() const { return EHFrameSection; }
+  virtual const MCSection *getEHFrameSection() const = 0;
   const MCSection *getDwarfAbbrevSection() const { return DwarfAbbrevSection; }
   const MCSection *getDwarfInfoSection() const { return DwarfInfoSection; }
   const MCSection *getDwarfLineSection() const { return DwarfLineSection; }

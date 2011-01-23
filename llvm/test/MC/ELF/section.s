@@ -85,3 +85,19 @@ foo:
 bar:
 .section        .text.foo,"axG",@progbits,foo,comdat
 .section        .text.bar,"axMG",@progbits,42,bar,comdat
+
+// Test that the default values are not used
+
+.section .eh_frame,"a",@unwind
+
+// CHECK:       (('sh_name', 0x00000080) # '.eh_frame'
+// CHECK-NEXT:   ('sh_type', 0x70000001)
+// CHECK-NEXT:   ('sh_flags', 0x00000002)
+// CHECK-NEXT:   ('sh_addr', 0x00000000)
+// CHECK-NEXT:   ('sh_offset', 0x00000050)
+// CHECK-NEXT:   ('sh_size', 0x00000000)
+// CHECK-NEXT:   ('sh_link', 0x00000000)
+// CHECK-NEXT:   ('sh_info', 0x00000000)
+// CHECK-NEXT:   ('sh_addralign', 0x00000001)
+// CHECK-NEXT:   ('sh_entsize', 0x00000000)
+// CHECK-NEXT:  ),

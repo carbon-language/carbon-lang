@@ -57,6 +57,8 @@ public:
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
+  virtual const MCSection *getEHFrameSection() const;
+
   const MCSection *getDataRelSection() const { return DataRelSection; }
 
   /// getSectionForConstant - Given a constant with the SectionKind, return a
@@ -121,6 +123,8 @@ public:
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
+  virtual const MCSection *getEHFrameSection() const;
+
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
@@ -183,6 +187,8 @@ public:
   ~TargetLoweringObjectFileCOFF() {}
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+
+  virtual const MCSection *getEHFrameSection() const;
 
   virtual const MCSection *getDrectveSection() const { return DrectveSection; }
 
