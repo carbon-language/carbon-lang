@@ -575,11 +575,6 @@ protected:
                                          typename GraphT::NodeType* V);
 
   template<class GraphT>
-  friend void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
-                   unsigned DFSNumV, typename GraphT::NodeType* W,
-         typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo);
-
-  template<class GraphT>
   friend unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
                           typename GraphT::NodeType* V,
                           unsigned N);
