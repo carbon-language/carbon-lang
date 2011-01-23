@@ -2627,15 +2627,15 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 
     exe_ctx.thread->QueueThreadPlan(thread_plan_sp, true);
     
-    Listener listener("ClangFunction temporary listener");
+    Listener listener("lldb.process.listener.run-thread-plan");
     exe_ctx.process->HijackProcessEvents(&listener);
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
     if (log)
     {
         StreamString s;
         thread_plan_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
-        log->Printf ("Resuming thread 0x%x to run thread plan \"%s\".", tid, s.GetData());
+        log->Printf ("Resuming thread %u - 0x%4.4x to run thread plan \"%s\".",  exe_ctx.thread->GetIndexID(), exe_ctx.thread->GetID(), s.GetData());
     }
     
     Error resume_error = exe_ctx.process->Resume ();
@@ -2738,14 +2738,15 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 if (log)
                     log->Printf ("Halt failed: \"%s\", I'm just going to wait a little longer and see if the world gets nicer to me.", 
                                  halt_error.AsCString());
+                abort();
                 
-                    if (single_thread_timeout_usec != 0)
-                    {
-                        real_timeout = TimeValue::Now();
-                        real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
-                        timeout_ptr = &real_timeout;
-                    }
-                    continue;
+                if (single_thread_timeout_usec != 0)
+                {
+                    real_timeout = TimeValue::Now();
+                    real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
+                    timeout_ptr = &real_timeout;
+                }
+                continue;
             }
 
         }

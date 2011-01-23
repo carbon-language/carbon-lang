@@ -213,16 +213,18 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
 
     const uint32_t event_type = event_sp->GetType();
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
+    Mutex::Locker event_types_locker(m_listeners_mutex);
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS | LIBLLDB_LOG_PROCESS));
     if (log)
     {
         StreamString event_description;
         event_sp->Dump  (&event_description);
-        log->Printf ("%p Broadcaster(\"%s\")::BroadcastEvent (event_sp = {%s}, unique =%i)",
+        log->Printf ("%p Broadcaster(\"%s\")::BroadcastEvent (event_sp = {%s}, unique =%i) hijack = %p",
                      this,
                      m_broadcaster_name.AsCString(""),
                      event_description.GetData(),
-                     unique);
+                     unique,
+                     m_hijacking_listener);
     }
 
     if (m_hijacking_listener != NULL && m_hijacking_mask & event_type)
@@ -233,7 +235,6 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
     }
     else
     {
-        Mutex::Locker event_types_locker(m_listeners_mutex);
         collection::iterator pos, end = m_listeners.end();
 
 
@@ -270,7 +271,8 @@ bool
 Broadcaster::HijackBroadcaster (Listener *listener, uint32_t event_mask)
 {
     Mutex::Locker event_types_locker(m_listeners_mutex);
-
+    assert (m_hijacking_listener == NULL);
+    
     if (m_hijacking_listener != NULL)
         return false;
     
