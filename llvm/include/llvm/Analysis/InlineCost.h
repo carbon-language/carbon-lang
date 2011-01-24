@@ -112,8 +112,6 @@ namespace llvm {
       /// entry here.
       std::vector<ArgInfo> ArgumentWeights;
 
-
-
       /// analyzeFunction - Add information about the specified function
       /// to the current structure.
       void analyzeFunction(Function *F);
