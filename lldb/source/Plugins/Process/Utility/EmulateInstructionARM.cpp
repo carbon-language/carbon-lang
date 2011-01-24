@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "EmulateInstructionARM.h"
+#include "ARMUtils.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -80,6 +81,7 @@ typedef enum ARMEncoding
     eEncodingT5,
 } ARMEncoding;
 
+// Typedef for the callback function used during the emulation.
 // Pass along (ARMEncoding)encoding as the callback data.
 typedef bool (*EmulateCallback) (EmulateInstructionARM *emulator, ARMEncoding encoding);
     
