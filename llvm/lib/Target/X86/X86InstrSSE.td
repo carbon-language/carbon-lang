@@ -5799,6 +5799,9 @@ def : Pat<(X86Movlps VR128:$src1,
 def : Pat<(v4f32 (X86Movlps VR128:$src1, VR128:$src2)),
           (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_sd))>;
 
+def : Pat<(v4i32 (X86Movlps VR128:$src1, VR128:$src2)), 
+          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_sd))>; 
+
 // Shuffle with MOVLPD
 def : Pat<(v2f64 (X86Movlpd VR128:$src1, (load addr:$src2))),
           (MOVLPDrm VR128:$src1, addr:$src2)>;
