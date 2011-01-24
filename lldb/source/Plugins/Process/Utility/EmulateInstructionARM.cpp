@@ -180,9 +180,9 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
 static ARMOpcode g_arm_opcodes[] =
 {
     { 0xffff0000, 0xe8ad0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, EmulateARMPushEncoding,
-      "PUSH<c> <registers> ; <registers> contains more than one register" },
+      "PUSH<c>.W <registers> ; <registers> contains more than one register" },
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, EmulateARMPushEncoding,
-      "PUSH<c> <registers> ; <registers> contains one register, <Rt>" },
+      "PUSH<c>.W <registers> ; <registers> contains one register, <Rt>" },
     { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, EmulateARMPushEncoding,
       "PUSH<c> <registers> ; <registers> contains more than one register" },
     { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, EmulateARMPushEncoding,
