@@ -3126,6 +3126,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
 ///
 ConstantRange
 ScalarEvolution::getSignedRange(const SCEV *S) {
+  // See if we've computed this range already.
   DenseMap<const SCEV *, ConstantRange>::iterator I = SignedRanges.find(S);
   if (I != SignedRanges.end())
     return I->second;
