@@ -350,6 +350,12 @@ getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
     return llvm::GlobalValue::InternalLinkage;
 
   case ExternalLinkage:
+    if (!CGM.getLangOptions().RTTI) {
+      // RTTI is not enabled, which means that this type info struct is going
+      // to be used for exception handling. Give it linkonce_odr linkage.
+      return llvm::GlobalValue::LinkOnceODRLinkage;
+    }
+
     if (const RecordType *Record = dyn_cast<RecordType>(Ty)) {
       const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
       if (RD->isDynamicClass())
