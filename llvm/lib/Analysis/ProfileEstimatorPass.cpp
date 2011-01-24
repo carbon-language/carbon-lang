@@ -323,6 +323,7 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
   FunctionInformation.erase(&F);
   BlockInformation[&F].clear();
   EdgeInformation[&F].clear();
+  BBToVisit.clear();
 
   // Mark all blocks as to visit.
   for (Function::iterator bi = F.begin(), be = F.end(); bi != be; ++bi)
