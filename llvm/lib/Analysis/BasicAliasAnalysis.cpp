@@ -554,7 +554,7 @@ BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
   SmallVector<const Value *, 16> Worklist;
   Worklist.push_back(Loc.Ptr);
   do {
-    const Value *V = GetUnderlyingObject(Worklist.pop_back_val());
+    const Value *V = GetUnderlyingObject(Worklist.pop_back_val(), TD);
     if (!Visited.insert(V)) {
       Visited.clear();
       return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
@@ -659,7 +659,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   assert(notDifferentParent(CS.getInstruction(), Loc.Ptr) &&
          "AliasAnalysis query involving multiple functions!");
 
-  const Value *Object = GetUnderlyingObject(Loc.Ptr);
+  const Value *Object = GetUnderlyingObject(Loc.Ptr, TD);
   
   // If this is a tail call and Loc.Ptr points to a stack location, we know that
   // the tail call cannot access or modify the local stack.
@@ -787,7 +787,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
-/// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1),
+/// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1, TD),
 /// UnderlyingV2 is the same for V2.
 ///
 AliasAnalysis::AliasResult
@@ -1070,8 +1070,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
     return NoAlias;  // Scalars cannot alias each other
 
   // Figure out what objects these things are pointing to if we can.
-  const Value *O1 = GetUnderlyingObject(V1);
-  const Value *O2 = GetUnderlyingObject(V2);
+  const Value *O1 = GetUnderlyingObject(V1, TD);
+  const Value *O2 = GetUnderlyingObject(V2, TD);
 
   // Null values in the default address space don't point to any object, so they
   // don't alias any other pointer.

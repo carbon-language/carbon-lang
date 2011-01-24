@@ -1504,7 +1504,8 @@ uint64_t llvm::GetStringLength(Value *V) {
   return Len == ~0ULL ? 1 : Len;
 }
 
-Value *llvm::GetUnderlyingObject(Value *V, unsigned MaxLookup) {
+Value *
+llvm::GetUnderlyingObject(Value *V, const TargetData *TD, unsigned MaxLookup) {
   if (!V->getType()->isPointerTy())
     return V;
   for (unsigned Count = 0; MaxLookup == 0 || Count < MaxLookup; ++Count) {
@@ -1519,8 +1520,8 @@ Value *llvm::GetUnderlyingObject(Value *V, unsigned MaxLookup) {
     } else {
       // See if InstructionSimplify knows any relevant tricks.
       if (Instruction *I = dyn_cast<Instruction>(V))
-        // TODO: Aquire TargetData and DominatorTree and use them.
-        if (Value *Simplified = SimplifyInstruction(I, 0, 0)) {
+        // TODO: Aquire a DominatorTree and use it.
+        if (Value *Simplified = SimplifyInstruction(I, TD, 0)) {
           V = Simplified;
           continue;
         }

@@ -339,7 +339,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // need to continue scanning until the malloc call.
     if (isa<AllocaInst>(Inst) ||
         (isa<CallInst>(Inst) && extractMallocCall(Inst))) {
-      const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr);
+      const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, TD);
       
       if (AccessPtr == Inst ||
           AA->alias(Inst, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)

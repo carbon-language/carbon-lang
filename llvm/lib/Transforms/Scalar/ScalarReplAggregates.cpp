@@ -529,9 +529,9 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
       // If the source and destination are both to the same alloca, then this is
       // a noop copy-to-self, just delete it.  Otherwise, emit a load and store
       // as appropriate.
-      AllocaInst *OrigAI = cast<AllocaInst>(GetUnderlyingObject(Ptr, 0));
+      AllocaInst *OrigAI = cast<AllocaInst>(GetUnderlyingObject(Ptr, &TD, 0));
 
-      if (GetUnderlyingObject(MTI->getSource(), 0) != OrigAI) {
+      if (GetUnderlyingObject(MTI->getSource(), &TD, 0) != OrigAI) {
         // Dest must be OrigAI, change this to be a load from the original
         // pointer (bitcasted), then a store to our new alloca.
         assert(MTI->getRawDest() == Ptr && "Neither use is of pointer?");
@@ -547,7 +547,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
         LoadInst *SrcVal = Builder.CreateLoad(SrcPtr, "srcval");
         SrcVal->setAlignment(MTI->getAlignment());
         Builder.CreateStore(SrcVal, NewAI);
-      } else if (GetUnderlyingObject(MTI->getDest(), 0) != OrigAI) {
+      } else if (GetUnderlyingObject(MTI->getDest(), &TD, 0) != OrigAI) {
         // Src must be OrigAI, change this to be a load from NewAI then a store
         // through the original dest pointer (bitcasted).
         assert(MTI->getRawSource() == Ptr && "Neither use is of pointer?");
