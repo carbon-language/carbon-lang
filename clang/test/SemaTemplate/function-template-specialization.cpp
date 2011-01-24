@@ -41,3 +41,8 @@ namespace PR5833 {
 }
 template <> bool PR5833::f0<float>(float &t1) {}
 
+// PR8295
+namespace PR8295 {
+  template <typename T> void f(T t) {}
+  template <typename T> void f<T*>(T* t) {} // expected-error{{function template partial specialization is not allowed}}
+}

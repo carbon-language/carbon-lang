@@ -3836,8 +3836,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       HasExplicitTemplateArgs = true;
     
       if (FunctionTemplate) {
-        // FIXME: Diagnose function template with explicit template
-        // arguments.
+        // Function template with explicit template arguments.
+        Diag(D.getIdentifierLoc(), diag::err_function_template_partial_spec)
+          << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc);
+
         HasExplicitTemplateArgs = false;
       } else if (!isFunctionTemplateSpecialization && 
                  !D.getDeclSpec().isFriendSpecified()) {

@@ -1683,6 +1683,8 @@ def err_function_template_spec_ambiguous : Error<
     "arguments to identify a particular function template">;
 def note_function_template_spec_matched : Note<
     "function template matches specialization %0">;
+def err_function_template_partial_spec : Error<
+    "function template partial specialization is not allowed">;
 
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<
