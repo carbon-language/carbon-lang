@@ -1270,26 +1270,6 @@ SingleSource/Benchmarks/Misc/dt.c
 
 //===---------------------------------------------------------------------===//
 
-A/B get pinned to the stack because we turn an if/then into a select instead
-of PRE'ing the load/store.  This may be fixable in instcombine:
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37892
-
-struct X { int i; };
-int foo (int x) {
-  struct X a;
-  struct X b;
-  struct X *p;
-  a.i = 1;
-  b.i = 2;
-  if (x)
-    p = &a;
-  else
-    p = &b;
-  return p->i;
-}
-
-//===---------------------------------------------------------------------===//
-
 Interesting missed case because of control flow flattening (should be 2 loads):
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=26629
 With: llvm-gcc t2.c -S -o - -O0 -emit-llvm | llvm-as | 
