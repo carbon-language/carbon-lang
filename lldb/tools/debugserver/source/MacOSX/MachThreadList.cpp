@@ -194,7 +194,7 @@ MachThreadList::Clear()
 }
 
 uint32_t
-MachThreadList::UpdateThreadList(MachProcess *process, bool update)
+MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadList::collection *new_threads)
 {
     // locker will keep a mutex locked until it goes out of scope
     DNBLogThreadedIf (LOG_THREAD, "MachThreadList::UpdateThreadList (pid = %4.4x, update = %u) process stop count = %u", process->ProcessID(), update, process->StopCount());
@@ -250,6 +250,11 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update)
                 {
                     // We don't have this thread, lets add it.
                     thread_sp.reset(new MachThread(process, tid));
+
+                    // Add the new thread regardless of its is user ready state...
+                    if (new_threads)
+                        new_threads->push_back(thread_sp);
+
                     // Make sure the thread is ready to be displayed and shown to users
                     // before we add this thread to our list...
                     if (thread_sp->IsUserReady())
@@ -319,6 +324,24 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
         // There must always be a thread action for every thread.
         assert (thread_action);
         thread->ThreadWillResume (thread_action);
+    }
+    
+    if (DNBLogCheckLogBit(LOG_THREAD))
+    {
+        MachThreadList::collection new_threads;
+        UpdateThreadList(process, true, &new_threads);
+        if (new_threads.size())
+        {
+            
+            for (uint32_t idx = 0, num_new_threads = new_threads.size(); idx < num_new_threads; ++idx)
+            {
+                DNBLogThreadedIf (LOG_THREAD, "MachThreadList::ProcessWillResume (pid = %4.4x) stop-id=%u, newly discovered thread: 0x%4.4x, thread-is-user-ready=%i)", 
+                                  process->ProcessID(), 
+                                  process->StopCount(), 
+                                  new_threads[idx]->ThreadID(),
+                                  new_threads[idx]->IsUserReady());
+            }
+        }
     }
 }
 

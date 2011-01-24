@@ -59,7 +59,7 @@ protected:
     typedef collection::iterator        iterator;
     typedef collection::const_iterator  const_iterator;
 
-    uint32_t        UpdateThreadList (MachProcess *process, bool update);
+    uint32_t        UpdateThreadList (MachProcess *process, bool update, collection *num_threads = NULL);
 //  const_iterator  FindThreadByID (thread_t tid) const;
 
     collection      m_threads;
