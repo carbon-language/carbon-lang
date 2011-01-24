@@ -7081,6 +7081,8 @@ static QualType CheckIncrementDecrementOperand(Sema &S, Expr *Op,
     if (PR.isInvalid()) return QualType();
     return CheckIncrementDecrementOperand(S, PR.take(), VK, OpLoc,
                                           isInc, isPrefix);
+  } else if (S.getLangOptions().AltiVec && ResType->isVectorType()) {
+    // OK! ( C/C++ Language Extensions for CBEA(Version 2.6) 10.3 )
   } else {
     S.Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement)
       << ResType << int(isInc) << Op->getSourceRange();

@@ -3113,3 +3113,14 @@ void test7() {
   res_i = (vf1 <= vf2);                    // CHECK: @llvm.ppc.altivec.vcmpgefp.p(i32 2
   res_i = (vf1 >= vf2);                    // CHECK: @llvm.ppc.altivec.vcmpgefp.p(i32 2
 }
+
+/* ------------------------------- increment/decrement: ----------------------------- */
+// CHECK: define void @test8
+void test8() {
+  vector int vi;
+  vi++;                                    // CHECK: add nsw <4 x i32> {{.*}} <i32 1, i32 1, i32 1, i32 1>
+  vector unsigned int vui;
+  --vui;                                   // CHECK: add <4 x i32> {{.*}} <i32 -1, i32 -1, i32 -1, i32 -1>
+  vector float vf;
+  vf++;                                    // CHECK: fadd <4 x float> {{.*}} <float 1.000000e+000, float 1.000000e+000, float 1.000000e+000, float 1.000000e+000>
+}
