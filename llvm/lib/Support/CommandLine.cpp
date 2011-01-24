@@ -185,7 +185,8 @@ static Option *LookupOption(StringRef &Arg, StringRef &Value,
 /// (after an equal sign) return that as well.  This assumes that leading dashes
 /// have already been stripped.
 static Option *LookupNearestOption(StringRef Arg,
-                                   const StringMap<Option*> &OptionsMap) {
+                                   const StringMap<Option*> &OptionsMap,
+                                   const char *&NearestString) {
   // Reject all dashes.
   if (Arg.empty()) return 0;
 
@@ -197,11 +198,21 @@ static Option *LookupNearestOption(StringRef Arg,
   unsigned BestDistance = 0;
   for (StringMap<Option*>::const_iterator it = OptionsMap.begin(),
          ie = OptionsMap.end(); it != ie; ++it) {
-    unsigned Distance = StringRef(it->second->ArgStr).edit_distance(
-      Arg, /*AllowReplacements=*/true, /*MaxEditDistance=*/BestDistance);
-    if (!Best || Distance < BestDistance) {
-      Best = it->second;
-      BestDistance = Distance;
+    Option *O = it->second;
+    SmallVector<const char*, 16> OptionNames;
+    O->getExtraOptionNames(OptionNames);
+    if (O->ArgStr[0])
+      OptionNames.push_back(O->ArgStr);
+
+    for (size_t i = 0, e = OptionNames.size(); i != e; ++i) {
+      StringRef Name = OptionNames[i];
+      unsigned Distance = StringRef(Name).edit_distance(
+        Arg, /*AllowReplacements=*/true, /*MaxEditDistance=*/BestDistance);
+      if (!Best || Distance < BestDistance) {
+        Best = O;
+        NearestString = OptionNames[i];
+        BestDistance = Distance;
+      }
     }
   }
 
@@ -600,6 +611,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   for (int i = 1; i < argc; ++i) {
     Option *Handler = 0;
     Option *NearestHandler = 0;
+    const char *NearestHandlerString = 0;
     StringRef Value;
     StringRef ArgName = "";
 
@@ -677,7 +689,8 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
       // Otherwise, look for the closest available option to report to the user
       // in the upcoming error.
       if (Handler == 0 && SinkOpts.empty())
-        NearestHandler = LookupNearestOption(ArgName, Opts);
+        NearestHandler = LookupNearestOption(ArgName, Opts,
+                                             NearestHandlerString);
     }
 
     if (Handler == 0) {
@@ -685,9 +698,11 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
         errs() << ProgramName << ": Unknown command line argument '"
              << argv[i] << "'.  Try: '" << argv[0] << " -help'\n";
 
-        // If we know a near match, report it as well.
-        errs() << ProgramName << ": Did you mean '-"
-               << NearestHandler->ArgStr << "'?\n";
+        if (NearestHandler) {
+          // If we know a near match, report it as well.
+          errs() << ProgramName << ": Did you mean '-"
+                 << NearestHandlerString << "'?\n";
+        }
 
         ErrorParsing = true;
       } else {
