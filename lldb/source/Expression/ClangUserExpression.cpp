@@ -89,11 +89,14 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
         {
             TypeFromUser target_ast_type(pointer_target_type, this_type->GetClangAST());
             
-            if (target_ast_type.IsDefined())
+            if (target_ast_type.IsDefined() &&
+                ClangASTContext::IsCXXClassType(target_ast_type.GetOpaqueQualType()))
+            {
                 m_cplusplus = true;
             
-            if (target_ast_type.IsConst())
-                m_const_object = true;
+                if (target_ast_type.IsConst())
+                    m_const_object = true;
+            }
         }
     }
     else if (self_var.get())
