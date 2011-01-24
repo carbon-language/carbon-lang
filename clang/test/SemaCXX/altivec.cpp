@@ -6,7 +6,7 @@ void f(V4i a)
 {
 }
 
-void test1()
+void test()
 {
   V4i vGCC;
   vector int vAltiVec;
@@ -15,25 +15,4 @@ void test1()
   vGCC = vAltiVec;
   bool res = vGCC > vAltiVec;
   vAltiVec = 0 ? vGCC : vGCC;
-}
-
-template<typename T>
-void template_f(T param) {
-  param++;
-}
-
-void test2()
-{
-  vector int vi;
-  ++vi;
-  vi++;
-  --vi;
-  vi--;
-  vector float vf;
-  vf++;
-
-  ++vi=vi;
-  vi++=vi;         // expected-error {{expression is not assignable}}
-  (++vi)[1]=1;
-  template_f(vi);
 }

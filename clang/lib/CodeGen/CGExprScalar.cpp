@@ -302,11 +302,6 @@ public:
     return EmitScalarPrePostIncDec(E, LV, true, true);
   }
 
-  llvm::Value *EmitAddConsiderOverflowBehavior(const UnaryOperator *E,
-                                               llvm::Value *InVal,
-                                               llvm::Value *NextVal,
-                                               bool IsInc);
-
   llvm::Value *EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
                                        bool isInc, bool isPre);
 
@@ -1227,31 +1222,6 @@ Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
 //===----------------------------------------------------------------------===//
 
 llvm::Value *ScalarExprEmitter::
-EmitAddConsiderOverflowBehavior(const UnaryOperator *E,
-                                llvm::Value *InVal,
-                                llvm::Value *NextVal, bool IsInc) {
-  switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
-  case LangOptions::SOB_Undefined:
-    return Builder.CreateNSWAdd(InVal, NextVal, IsInc ? "inc" : "dec");
-    break;
-  case LangOptions::SOB_Defined:
-    return Builder.CreateAdd(InVal, NextVal, IsInc ? "inc" : "dec");
-    break;
-  case LangOptions::SOB_Trapping:
-    BinOpInfo BinOp;
-    BinOp.LHS = InVal;
-    BinOp.RHS = NextVal;
-    BinOp.Ty = E->getType();
-    BinOp.Opcode = BO_Add;
-    BinOp.E = E;
-    return EmitOverflowCheckedBinOp(BinOp);
-    break;
-  }
-  assert(false && "Unknown SignedOverflowBehaviorTy");
-  return 0;
-}
-
-llvm::Value *ScalarExprEmitter::
 EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
                         bool isInc, bool isPre) {
   
@@ -1300,26 +1270,31 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     // An interesting aspect of this is that increment is always true.
     // Decrement does not have this property.
     NextVal = llvm::ConstantInt::getTrue(VMContext);
-  } else if (ValTy->isVectorType()) {
-    if (ValTy->hasIntegerRepresentation()) {
-      NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
-
-      NextVal = ValTy->hasSignedIntegerRepresentation() ?
-                EmitAddConsiderOverflowBehavior(E, InVal, NextVal, isInc) :
-                Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
-    } else {
-      NextVal = Builder.CreateFAdd(
-                  InVal,
-                  llvm::ConstantFP::get(InVal->getType(), AmountVal),
-                  isInc ? "inc" : "dec");
-    }
   } else if (isa<llvm::IntegerType>(InVal->getType())) {
     NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
-
-    NextVal = ValTy->isSignedIntegerType() ?
-              EmitAddConsiderOverflowBehavior(E, InVal, NextVal, isInc) :
-              // Unsigned integer inc is always two's complement.
-              Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+    
+    if (!ValTy->isSignedIntegerType())
+      // Unsigned integer inc is always two's complement.
+      NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+    else {
+      switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
+      case LangOptions::SOB_Undefined:
+        NextVal = Builder.CreateNSWAdd(InVal, NextVal, isInc ? "inc" : "dec");
+        break;
+      case LangOptions::SOB_Defined:
+        NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+        break;
+      case LangOptions::SOB_Trapping:
+        BinOpInfo BinOp;
+        BinOp.LHS = InVal;
+        BinOp.RHS = NextVal;
+        BinOp.Ty = E->getType();
+        BinOp.Opcode = BO_Add;
+        BinOp.E = E;
+        NextVal = EmitOverflowCheckedBinOp(BinOp);
+        break;
+      }
+    }
   } else {
     // Add the inc/dec to the real part.
     if (InVal->getType()->isFloatTy())
