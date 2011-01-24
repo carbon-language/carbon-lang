@@ -1968,8 +1968,8 @@ ProcessGDBRemote::StartDebugserverProcess
                 ::snprintf (arg_cstr, sizeof(arg_cstr), "--log-flags=%s", env_debugserver_log_flags);
                 debugserver_args.AppendArgument(arg_cstr);
             }
-            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
-            debugserver_args.AppendArgument("--log-flags=0x800e0e");
+//            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
+//            debugserver_args.AppendArgument("--log-flags=0x800e0e");
 
             // Now append the program arguments
             if (launch_process)
