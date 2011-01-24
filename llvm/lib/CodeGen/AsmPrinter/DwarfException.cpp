@@ -451,7 +451,8 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Begin the exception table.
-  Asm->OutStreamer.SwitchSection(LSDASection);
+  if (LSDASection)
+    Asm->OutStreamer.SwitchSection(LSDASection);
   Asm->EmitAlignment(2);
 
   // Emit the LSDA.
