@@ -796,9 +796,28 @@ public:
     }
 
     if (!Tag) {
-      // FIXME: Would be nice to highlight just the source range.
-      SemaRef.Diag(IdLoc, diag::err_not_tag_in_scope)
-        << Kind << Id << DC;
+      // Check where the name exists but isn't a tag type and use that to emit
+      // better diagnostics.
+      LookupResult Result(SemaRef, Id, IdLoc, Sema::LookupTagName);
+      SemaRef.LookupQualifiedName(Result, DC);
+      switch (Result.getResultKind()) {
+        case LookupResult::Found:
+        case LookupResult::FoundOverloaded:
+        case LookupResult::FoundUnresolvedValue: {
+	  NamedDecl *SomeDecl = Result.getRepresentativeDecl();
+          unsigned Kind = 0;
+          if (isa<TypedefDecl>(SomeDecl)) Kind = 1;
+          else if (isa<ClassTemplateDecl>(SomeDecl)) Kind = 2;
+          SemaRef.Diag(IdLoc, diag::err_tag_reference_non_tag) << Kind;
+          SemaRef.Diag(SomeDecl->getLocation(), diag::note_declared_at);
+          break;
+	}
+        default:
+          // FIXME: Would be nice to highlight just the source range.
+          SemaRef.Diag(IdLoc, diag::err_not_tag_in_scope)
+            << Kind << Id << DC;
+          break;
+      }
       return QualType();
     }
 
