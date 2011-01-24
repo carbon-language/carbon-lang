@@ -601,7 +601,8 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 
   // Now throw the exception.
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
-  llvm::Constant *TypeInfo = CGM.GetAddrOfRTTIDescriptor(ThrowType, true);
+  llvm::Constant *TypeInfo = CGM.GetAddrOfRTTIDescriptor(ThrowType, 
+                                                         /*ForEH=*/true);
 
   // The address of the destructor.  If the exception type has a
   // trivial destructor (or isn't a record), we just pass null.
@@ -656,7 +657,8 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
   for (unsigned I = 0; I != NumExceptions; ++I) {
     QualType Ty = Proto->getExceptionType(I);
     QualType ExceptType = Ty.getNonReferenceType().getUnqualifiedType();
-    llvm::Value *EHType = CGM.GetAddrOfRTTIDescriptor(ExceptType, true);
+    llvm::Value *EHType = CGM.GetAddrOfRTTIDescriptor(ExceptType,
+                                                      /*ForEH=*/true);
     Filter->setFilter(I, EHType);
   }
 }
@@ -706,7 +708,7 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
       if (CaughtType->isObjCObjectPointerType())
         TypeInfo = CGM.getObjCRuntime().GetEHType(CaughtType);
       else
-        TypeInfo = CGM.GetAddrOfRTTIDescriptor(CaughtType, true);
+        TypeInfo = CGM.GetAddrOfRTTIDescriptor(CaughtType, /*ForEH=*/true);
       CatchScope->setHandler(I, TypeInfo, Handler);
     } else {
       // No exception decl indicates '...', a catch-all.
