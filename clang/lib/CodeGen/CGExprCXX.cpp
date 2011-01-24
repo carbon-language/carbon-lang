@@ -65,12 +65,12 @@ static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
 
   // If the member function is marked 'final', we know that it can't be
   // overridden and can therefore devirtualize it.
-  if (MD->isMarkedFinal())
+  if (MD->hasAttr<FinalAttr>())
     return true;
 
   // Similarly, if the class itself is marked 'final' it can't be overridden
   // and we can therefore devirtualize the member function call.
-  if (MD->getParent()->isMarkedFinal())
+  if (MD->getParent()->hasAttr<FinalAttr>())
     return true;
 
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base)) {

@@ -6386,8 +6386,10 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
   if (!Record->getIdentifier())
     return;
 
-  Record->setIsMarkedFinal(CVS.isFinalSpecified());
-  Record->setIsMarkedExplicit(CVS.isExplicitSpecified());
+  if (CVS.isFinalSpecified())
+    Record->addAttr(new (Context) FinalAttr(CVS.getFinalLoc(), Context));
+  if (CVS.isExplicitSpecified())
+    Record->addAttr(new (Context) ExplicitAttr(CVS.getExplicitLoc(), Context));
     
   // C++ [class]p2:
   //   [...] The class-name is also inserted into the scope of the

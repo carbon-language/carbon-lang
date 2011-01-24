@@ -525,7 +525,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   //   If a class is marked with the class-virt-specifier final and it appears
   //   as a base-type-specifier in a base-clause (10 class.derived), the program
   //   is ill-formed.
-  if (CXXBaseDecl->isMarkedFinal()) {
+  if (CXXBaseDecl->hasAttr<FinalAttr>()) {
     Diag(BaseLoc, diag::err_class_marked_final_used_as_base) 
       << CXXBaseDecl->getDeclName();
     Diag(CXXBaseDecl->getLocation(), diag::note_previous_decl)
@@ -871,7 +871,7 @@ void Sema::CheckOverrideControl(const Decl *D) {
   //   the program is ill-formed.
   bool HasOverriddenMethods = 
     MD->begin_overridden_methods() != MD->end_overridden_methods();
-  if (MD->isMarkedOverride() && !HasOverriddenMethods) {
+  if (MD->hasAttr<OverrideAttr>() && !HasOverriddenMethods) {
     Diag(MD->getLocation(), 
                  diag::err_function_marked_override_not_overriding)
       << MD->getDeclName();
@@ -883,8 +883,8 @@ void Sema::CheckOverrideControl(const Decl *D) {
   //   if a virtual member function that is neither implicitly-declared nor a 
   //   destructor overrides a member function of a base class and it is not
   //   marked with the virt-specifier override, the program is ill-formed.
-  if (MD->getParent()->isMarkedExplicit() && !isa<CXXDestructorDecl>(MD) &&
-      HasOverriddenMethods && !MD->isMarkedOverride()) {
+  if (MD->getParent()->hasAttr<ExplicitAttr>() && !isa<CXXDestructorDecl>(MD) &&
+      HasOverriddenMethods && !MD->hasAttr<OverrideAttr>()) {
     llvm::SmallVector<const CXXMethodDecl*, 4> 
       OverriddenMethods(MD->begin_overridden_methods(), 
                         MD->end_overridden_methods());
@@ -904,7 +904,7 @@ void Sema::CheckOverrideControl(const Decl *D) {
 /// C++0x [class.virtual]p3.
 bool Sema::CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
                                                   const CXXMethodDecl *Old) {
-  if (!Old->isMarkedFinal())
+  if (!Old->hasAttr<FinalAttr>())
     return false;
 
   Diag(New->getLocation(), diag::err_final_function_overridden)
@@ -1057,7 +1057,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
            diag::override_keyword_only_allowed_on_virtual_member_functions)
         << "override" << FixItHint::CreateRemoval(VS.getOverrideLoc());
     } else
-      MD->setIsMarkedOverride(true);
+      MD->addAttr(new (Context) OverrideAttr(VS.getOverrideLoc(), Context));
   }
   if (VS.isFinalSpecified()) {
     CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member);
@@ -1066,7 +1066,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
            diag::override_keyword_only_allowed_on_virtual_member_functions)
       << "final" << FixItHint::CreateRemoval(VS.getFinalLoc());
     } else
-      MD->setIsMarkedFinal(true);
+      MD->addAttr(new (Context) FinalAttr(VS.getFinalLoc(), Context));
   }
 
   CheckOverrideControl(Member);

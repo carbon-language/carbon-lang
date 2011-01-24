@@ -213,8 +213,16 @@ def DLLImport : InheritableAttr {
   let Spellings = ["dllimport"];
 }
 
+def Explicit : InheritableAttr {
+  let Spellings = [];
+}
+
 def FastCall : InheritableAttr {
   let Spellings = ["fastcall", "__fastcall"];
+}
+
+def Final : InheritableAttr { 
+  let Spellings = [];
 }
 
 def Format : InheritableAttr {
@@ -334,6 +342,10 @@ def ObjCNSObject : InheritableAttr {
 
 def Overloadable : Attr {
   let Spellings = ["overloadable"];
+}
+
+def Override : InheritableAttr { 
+  let Spellings = [];
 }
 
 def Ownership : InheritableAttr {

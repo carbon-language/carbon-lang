@@ -1389,8 +1389,6 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   if (D->isPure())
     SemaRef.CheckPureMethod(Method, SourceRange());
 
-  Method->setIsMarkedOverride(D->isMarkedOverride());
-  Method->setIsMarkedFinal(D->isMarkedFinal());
   Method->setAccess(D->getAccess());
 
   SemaRef.CheckOverrideControl(Method);
