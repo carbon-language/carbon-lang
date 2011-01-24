@@ -43,9 +43,9 @@ void use_X1(X1 *x1) { x1->f(); }
 
 // FIXME: The checks are extremely difficult to get right when the globals
 // aren't alphabetized
-// CHECK: @_ZTV2X1 = weak_odr unnamed_addr constant
+// CHECK: @_ZTV2X1 = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTV5testa = unnamed_addr constant [3 x i8*] [i8* null
-// CHECK: @_ZTV5testc = weak_odr unnamed_addr constant [3 x i8*] [i8* null
+// CHECK: @_ZTV5testc = linkonce_odr unnamed_addr constant [3 x i8*] [i8* null
 // CHECK: @_ZTVN12_GLOBAL__N_15testgE = internal unnamed_addr constant [3 x i8*] [i8* null
-// CHECK: @_ZTV5teste = weak_odr unnamed_addr constant [3 x i8*] [i8* null
-// CHECK: @_ZTV5testb = weak_odr unnamed_addr constant [3 x i8*] [i8* null
+// CHECK: @_ZTV5teste = linkonce_odr unnamed_addr constant [3 x i8*] [i8* null
+// CHECK: @_ZTV5testb = linkonce_odr unnamed_addr constant [3 x i8*] [i8* null

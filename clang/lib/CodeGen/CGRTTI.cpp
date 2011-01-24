@@ -355,10 +355,10 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
         return CodeGenModule::getVTableLinkage(RD);
     }
 
-    return llvm::GlobalValue::WeakODRLinkage;
+    return llvm::GlobalValue::LinkOnceODRLinkage;
   }
 
-  return llvm::GlobalValue::WeakODRLinkage;
+  return llvm::GlobalValue::LinkOnceODRLinkage;
 }
 
 // CanUseSingleInheritance - Return whether the given record decl has a "single, 
@@ -640,7 +640,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
                           /*ForRTTI*/ true, /*ForDefinition*/ true);
   else if (Hidden || 
            (CGM.getCodeGenOpts().HiddenWeakVTables &&
-            Linkage == llvm::GlobalValue::WeakODRLinkage)) {
+            Linkage == llvm::GlobalValue::LinkOnceODRLinkage)) {
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   }
   GV->setUnnamedAddr(true);

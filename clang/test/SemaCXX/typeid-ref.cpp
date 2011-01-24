@@ -6,7 +6,7 @@ namespace std {
 struct X { };
 
 void f() {
-  // CHECK: @_ZTS1X = weak_odr constant
-  // CHECK: @_ZTI1X = weak_odr unnamed_addr constant 
+  // CHECK: @_ZTS1X = linkonce_odr constant
+  // CHECK: @_ZTI1X = linkonce_odr unnamed_addr constant 
   (void)typeid(X&);
 }

@@ -103,12 +103,12 @@ void use_F() {
 
 // C has no key function, so its vtable should have weak_odr linkage
 // and hidden visibility (rdar://problem/7523229).
-// CHECK-2: @_ZTV1C = weak_odr unnamed_addr constant
-// CHECK-2: @_ZTS1C = weak_odr constant
-// CHECK-2: @_ZTI1C = weak_odr unnamed_addr constant
-// CHECK-2-HIDDEN: @_ZTV1C = weak_odr hidden unnamed_addr constant
-// CHECK-2-HIDDEN: @_ZTS1C = weak_odr constant
-// CHECK-2-HIDDEN: @_ZTI1C = weak_odr hidden unnamed_addr constant
+// CHECK-2: @_ZTV1C = linkonce_odr unnamed_addr constant
+// CHECK-2: @_ZTS1C = linkonce_odr constant
+// CHECK-2: @_ZTI1C = linkonce_odr unnamed_addr constant
+// CHECK-2-HIDDEN: @_ZTV1C = linkonce_odr hidden unnamed_addr constant
+// CHECK-2-HIDDEN: @_ZTS1C = linkonce_odr constant
+// CHECK-2-HIDDEN: @_ZTI1C = linkonce_odr hidden unnamed_addr constant
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.
@@ -144,16 +144,16 @@ void use_F() {
 
 // E<long> is an implicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
-// weak_odr linkage.
-// CHECK-7: @_ZTV1EIlE = weak_odr unnamed_addr constant
-// CHECK-7: @_ZTS1EIlE = weak_odr constant
-// CHECK-7: @_ZTI1EIlE = weak_odr unnamed_addr constant
+// linkonce_odr linkage.
+// CHECK-7: @_ZTV1EIlE = linkonce_odr unnamed_addr constant
+// CHECK-7: @_ZTS1EIlE = linkonce_odr constant
+// CHECK-7: @_ZTI1EIlE = linkonce_odr unnamed_addr constant
 
 // F<long> is an implicit template instantiation with no key function,
-// so its vtable should have weak_odr linkage.
-// CHECK-8: @_ZTV1FIlE = weak_odr unnamed_addr constant
-// CHECK-8: @_ZTS1FIlE = weak_odr constant
-// CHECK-8: @_ZTI1FIlE = weak_odr unnamed_addr constant
+// so its vtable should have linkonce_odr linkage.
+// CHECK-8: @_ZTV1FIlE = linkonce_odr unnamed_addr constant
+// CHECK-8: @_ZTS1FIlE = linkonce_odr constant
+// CHECK-8: @_ZTI1FIlE = linkonce_odr unnamed_addr constant
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
@@ -177,14 +177,14 @@ void use_F() {
 // CHECK-12: @_ZTIN12_GLOBAL__N_11AE = internal unnamed_addr constant
 
 // F<char> is an explicit specialization without a key function, so
-// its vtable should have weak_odr linkage.
-// CHECK-13: @_ZTV1FIcE = weak_odr unnamed_addr constant
-// CHECK-13: @_ZTS1FIcE = weak_odr constant
-// CHECK-13: @_ZTI1FIcE = weak_odr unnamed_addr constant
+// its vtable should have linkonce_odr linkage.
+// CHECK-13: @_ZTV1FIcE = linkonce_odr unnamed_addr constant
+// CHECK-13: @_ZTS1FIcE = linkonce_odr constant
+// CHECK-13: @_ZTI1FIcE = linkonce_odr unnamed_addr constant
 
 // RUN: FileCheck --check-prefix=CHECK-G %s < %t
 //
-// CHECK-G: @_ZTV1GIiE = weak_odr unnamed_addr constant
+// CHECK-G: @_ZTV1GIiE = linkonce_odr unnamed_addr constant
 template <typename T>
 class G {
 public:
@@ -202,7 +202,7 @@ void G_f0()  { new G<int>(); }
 
 // H<int> has a key function without a body but it's a template instantiation
 // so its VTable must be emmitted.
-// CHECK-H: @_ZTV1HIiE = weak_odr unnamed_addr constant
+// CHECK-H: @_ZTV1HIiE = linkonce_odr unnamed_addr constant
 template <typename T>
 class H {
 public:

@@ -4,10 +4,10 @@
 #include <typeinfo>
 
 // CHECK-WITH-HIDDEN: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
-// CHECK-WITH-HIDDEN: @_ZTSPK2T4 = weak_odr hidden constant 
-// CHECK-WITH-HIDDEN: @_ZTS2T4 = weak_odr hidden constant 
-// CHECK-WITH-HIDDEN: @_ZTI2T4 = weak_odr hidden unnamed_addr constant 
-// CHECK-WITH-HIDDEN: @_ZTIPK2T4 = weak_odr hidden unnamed_addr constant 
+// CHECK-WITH-HIDDEN: @_ZTSPK2T4 = linkonce_odr hidden constant 
+// CHECK-WITH-HIDDEN: @_ZTS2T4 = linkonce_odr hidden constant 
+// CHECK-WITH-HIDDEN: @_ZTI2T4 = linkonce_odr hidden unnamed_addr constant 
+// CHECK-WITH-HIDDEN: @_ZTIPK2T4 = linkonce_odr hidden unnamed_addr constant 
 
 // CHECK: _ZTSP1C = internal constant
 // CHECK: _ZTS1C = internal constant
@@ -24,8 +24,8 @@
 // CHECK: _ZTSM1CPS_ = internal constant
 // CHECK: _ZTIM1CPS_ = internal unnamed_addr constant
 // CHECK: _ZTSM1A1C = internal constant
-// CHECK: _ZTS1A = weak_odr constant
-// CHECK: _ZTI1A = weak_odr hidden unnamed_addr constant
+// CHECK: _ZTS1A = linkonce_odr constant
+// CHECK: _ZTI1A = linkonce_odr hidden unnamed_addr constant
 // CHECK: _ZTIM1A1C = internal unnamed_addr constant
 // CHECK: _ZTSM1AP1C = internal constant
 // CHECK: _ZTIM1AP1C = internal unnamed_addr constant
@@ -37,24 +37,24 @@
 // CHECK: _ZTIFN12_GLOBAL__N_11DEvE = internal unnamed_addr constant
 // CHECK: _ZTSFvN12_GLOBAL__N_11DEE = internal constant
 // CHECK: _ZTIFvN12_GLOBAL__N_11DEE = internal unnamed_addr constant
-// CHECK: _ZTSPFvvE = weak_odr constant
-// CHECK: _ZTSFvvE = weak_odr constant
-// CHECK: _ZTIFvvE = weak_odr hidden unnamed_addr constant
-// CHECK: _ZTIPFvvE = weak_odr hidden unnamed_addr constant
+// CHECK: _ZTSPFvvE = linkonce_odr constant
+// CHECK: _ZTSFvvE = linkonce_odr constant
+// CHECK: _ZTIFvvE = linkonce_odr hidden unnamed_addr constant
+// CHECK: _ZTIPFvvE = linkonce_odr hidden unnamed_addr constant
 // CHECK: _ZTSN12_GLOBAL__N_11EE = internal constant
 // CHECK: _ZTIN12_GLOBAL__N_11EE = internal unnamed_addr constant
-// CHECK: _ZTSA10_i = weak_odr constant
-// CHECK: _ZTIA10_i = weak_odr hidden unnamed_addr constant
-// CHECK: _ZTI1TILj0EE = weak_odr unnamed_addr constant
+// CHECK: _ZTSA10_i = linkonce_odr constant
+// CHECK: _ZTIA10_i = linkonce_odr hidden unnamed_addr constant
+// CHECK: _ZTI1TILj0EE = linkonce_odr unnamed_addr constant
 // CHECK: _ZTI1TILj1EE = weak_odr unnamed_addr constant
 // CHECK: _ZTI1TILj2EE = external constant
 // CHECK: _ZTS1B = constant
 // CHECK: _ZTI1B = unnamed_addr constant
-// CHECK: _ZTS1F = weak_odr constant
+// CHECK: _ZTS1F = linkonce_odr constant
 
 // CHECK: _ZTIN12_GLOBAL__N_11DE to
 
-// A has no key function, so its RTTI data should be weak_odr.
+// A has no key function, so its RTTI data should be linkonce_odr.
 struct A { };
 
 // B has a key function defined in the translation unit, so the RTTI data should
@@ -90,7 +90,7 @@ namespace {
 };
 
 // F has a key function defined in the translation unit, but it is inline so the RTTI
-// data should be emitted with weak_odr linkage.
+// data should be emitted with linkonce_odr linkage.
 struct F {
   virtual void f();
 };
