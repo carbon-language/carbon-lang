@@ -1090,6 +1090,13 @@ void AsmMatcherInfo::BuildInfo() {
   for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
     CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i], Target);
 
+    // If the tblgen -match-prefix option is specified (for tblgen hackers),
+    // filter the set of instruction aliases we consider, based on the target
+    // instruction.
+    if (!StringRef(Alias->ResultInst->TheDef->getName()).startswith(
+          MatchPrefix))
+      continue;
+
     OwningPtr<MatchableInfo> II(new MatchableInfo(Alias));
     
     II->Initialize(*this, SingletonRegisters);
@@ -1708,6 +1715,10 @@ static std::string GetAliasRequiredFeatures(Record *R,
 /// EmitMnemonicAliases - If the target has any MnemonicAlias<> definitions,
 /// emit a function for them and return true, otherwise return false.
 static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
+  // Ignore aliases when match-prefix is set.
+  if (!MatchPrefix.empty())
+    return false;
+
   std::vector<Record*> Aliases =
     Info.getRecords().getAllDerivedDefinitions("MnemonicAlias");
   if (Aliases.empty()) return false;
