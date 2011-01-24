@@ -168,6 +168,12 @@ bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
   SMLoc FirstLoc = getLexer().getLoc();
   unsigned Size = 0;
 
+  if (getLexer().is(AsmToken::String)) {
+    SectionName = getTok().getIdentifier();
+    Lex();
+    return false;
+  }
+
   for (;;) {
     StringRef Tmp;
     unsigned CurSize;
@@ -176,10 +182,15 @@ bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
     if (getLexer().is(AsmToken::Minus)) {
       CurSize = 1;
       Lex(); // Consume the "-".
-    } else if (!getParser().ParseIdentifier(Tmp))
-      CurSize = Tmp.size();
-    else
+    } else if (getLexer().is(AsmToken::String)) {
+      CurSize = getTok().getIdentifier().size() + 2;
+      Lex();
+    } else if (getLexer().is(AsmToken::Identifier)) {
+      CurSize = getTok().getIdentifier().size();
+      Lex();
+    } else {
       break;
+    }
 
     Size += CurSize;
     SectionName = StringRef(FirstLoc.getPointer(), Size);

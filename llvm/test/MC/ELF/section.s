@@ -101,3 +101,10 @@ bar:
 // CHECK-NEXT:   ('sh_addralign', 0x00000001)
 // CHECK-NEXT:   ('sh_entsize', 0x00000000)
 // CHECK-NEXT:  ),
+
+// Test that we handle the strings like gas
+.section bar-"foo"
+.section "foo"
+
+// CHECK: ('sh_name', 0x0000008a) # 'bar-"foo"'
+// CHECK: ('sh_name', 0x00000094) # 'foo'
