@@ -135,6 +135,9 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
             break;
         case eEncodingA1:
             registers = EmulateInstruction::UnsignedBits (opcode, 15, 0);
+            // Instead of return false, let's handle the following case as well,
+            // which amounts to pushing one reg onto the full descending stacks.
+            // if BitCount(register_list) < 2 then SEE STMDB / STMFD;
             break;
         case eEncodingA2:
             t = EmulateInstruction::UnsignedBits (opcode, 15, 12);
