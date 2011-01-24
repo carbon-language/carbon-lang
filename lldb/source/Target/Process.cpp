@@ -1401,7 +1401,7 @@ Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
     addr_t allocated_addr = DoAllocateMemory (size, permissions, error);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf("Process::AllocateMemory(size = %zu, permissions=%c%c%c) => 0x%16.16llx (m_stop_id = %u)", 
+        log->Printf("Process::AllocateMemory(size=%4zu, permissions=%c%c%c) => 0x%16.16llx (m_stop_id = %u)", 
                     size, 
                     permissions & ePermissionsReadable ? 'r' : '-',
                     permissions & ePermissionsWritable ? 'w' : '-',
