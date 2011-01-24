@@ -316,22 +316,27 @@ ThreadList::ShouldReportRun (Event *event_ptr)
     // Run through the threads and ask whether we should report this event.
     // The rule is NO vote wins over everything, a YES vote wins over no opinion.
 
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    
     for (pos = m_threads.begin(); pos != end; ++pos)
     {
-        ThreadSP thread_sp(*pos);
-        if (thread_sp->GetResumeState () != eStateSuspended)
-
-        switch (thread_sp->ShouldReportRun (event_ptr))
+        if ((*pos)->GetResumeState () != eStateSuspended)
         {
-            case eVoteNoOpinion:
-                continue;
-            case eVoteYes:
-                if (result == eVoteNoOpinion)
-                    result = eVoteYes;
-                break;
-            case eVoteNo:
-                result = eVoteNo;
-                break;
+            switch ((*pos)->ShouldReportRun (event_ptr))
+            {
+                case eVoteNoOpinion:
+                    continue;
+                case eVoteYes:
+                    if (result == eVoteNoOpinion)
+                        result = eVoteYes;
+                    break;
+                case eVoteNo:
+                    log->Printf ("ThreadList::ShouldReportRun() thread %d (0x%4.4x) says don't report.", 
+                                 (*pos)->GetIndexID(), 
+                                 (*pos)->GetID());
+                    result = eVoteNo;
+                    break;
+            }
         }
     }
     return result;
