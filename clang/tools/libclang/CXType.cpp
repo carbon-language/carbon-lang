@@ -113,6 +113,7 @@ CXType clang_getCursorType(CXCursor C) {
   using namespace cxcursor;
   
   CXTranslationUnit TU = cxcursor::getCursorTU(C);
+  ASTContext &Context = static_cast<ASTUnit *>(TU->TUData)->getASTContext();
   if (clang_isExpression(C.kind)) {
     QualType T = cxcursor::getCursorExpr(C)->getType();
     return MakeCXType(T, TU);
@@ -122,9 +123,9 @@ CXType clang_getCursorType(CXCursor C) {
     Decl *D = cxcursor::getCursorDecl(C);
 
     if (TypeDecl *TD = dyn_cast<TypeDecl>(D))
-      return MakeCXType(QualType(TD->getTypeForDecl(), 0), TU);
+      return MakeCXType(Context.getTypeDeclType(TD), TU);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
-      return MakeCXType(QualType(ID->getTypeForDecl(), 0), TU);
+      return MakeCXType(Context.getObjCInterfaceType(ID), TU);
     if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
       return MakeCXType(VD->getType(), TU);
     if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D))
@@ -136,22 +137,22 @@ CXType clang_getCursorType(CXCursor C) {
   
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
-    case CXCursor_ObjCSuperClassRef:
-      return MakeCXType(
-                QualType(getCursorObjCSuperClassRef(C).first->getTypeForDecl(), 
-                         0), 
-                        TU);
-      
-    case CXCursor_ObjCClassRef:
-      return MakeCXType(
-                      QualType(getCursorObjCClassRef(C).first->getTypeForDecl(), 
-                               0), 
-                        TU);
-      
-    case CXCursor_TypeRef:
-      return MakeCXType(QualType(getCursorTypeRef(C).first->getTypeForDecl(), 
-                                 0), 
-                        TU);
+    case CXCursor_ObjCSuperClassRef: {
+      QualType T
+        = Context.getObjCInterfaceType(getCursorObjCSuperClassRef(C).first);
+      return MakeCXType(T, TU);
+    }
+        
+    case CXCursor_ObjCClassRef: {
+      QualType T = Context.getObjCInterfaceType(getCursorObjCClassRef(C).first);
+      return MakeCXType(T, TU);
+    }
+        
+    case CXCursor_TypeRef: {
+      QualType T = Context.getTypeDeclType(getCursorTypeRef(C).first);
+      return MakeCXType(T, TU);
+
+    }
       
     case CXCursor_CXXBaseSpecifier:
       return cxtype::MakeCXType(getCursorCXXBaseSpecifier(C)->getType(), TU);
@@ -372,7 +373,7 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
   else {
     QualType Ty;
     if (TypeDecl *TD = dyn_cast<TypeDecl>(D))
-      Ty = QualType(TD->getTypeForDecl(), 0);
+      Ty = Ctx.getTypeDeclType(TD);
     if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
       Ty = VD->getType();
     else return cxstring::createCXString("?");

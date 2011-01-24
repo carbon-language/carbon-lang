@@ -4,6 +4,7 @@ int *f(int *p, char *x, FooType z) {
   FooType w = z;
   return p + z;
 }
+typedef double OtherType;
 
 // RUN: c-index-test -test-print-typekind %s | FileCheck %s
 // CHECK: TypedefDecl=FooType:1:13 (Definition) typekind=Typedef [canonical=Int] [isPOD=1]
@@ -22,4 +23,5 @@ int *f(int *p, char *x, FooType z) {
 // CHECK: UnexposedExpr= typekind=Pointer [isPOD=1]
 // CHECK: DeclRefExpr=p:3:13 typekind=Pointer [isPOD=1]
 // CHECK: DeclRefExpr=z:3:33 typekind=Typedef [canonical=Int] [isPOD=1]
+// CHECK: TypedefDecl=OtherType:7:16 (Definition) typekind=Typedef [canonical=Double] [isPOD=1]
 
