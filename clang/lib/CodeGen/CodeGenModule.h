@@ -496,8 +496,7 @@ public:
 
   /// getVTableLinkage - Return the appropriate linkage for the vtable, VTT,
   /// and type information of the given class.
-  static llvm::GlobalVariable::LinkageTypes 
-  getVTableLinkage(const CXXRecordDecl *RD);
+  llvm::GlobalVariable::LinkageTypes getVTableLinkage(const CXXRecordDecl *RD);
 
   /// GetTargetTypeStoreSize - Return the store size, in character units, of
   /// the given LLVM type.

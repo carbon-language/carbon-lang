@@ -329,7 +329,8 @@ static bool ContainsIncompleteClassType(QualType Ty) {
 
 /// getTypeInfoLinkage - Return the linkage that the type info and type info
 /// name constants should have for the given type.
-static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
+static llvm::GlobalVariable::LinkageTypes 
+getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
   // Itanium C++ ABI 2.9.5p7:
   //   In addition, it and all of the intermediate abi::__pointer_type_info 
   //   structs in the chain down to the abi::__class_type_info for the
@@ -352,7 +353,7 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
     if (const RecordType *Record = dyn_cast<RecordType>(Ty)) {
       const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
       if (RD->isDynamicClass())
-        return CodeGenModule::getVTableLinkage(RD);
+        return CGM.getVTableLinkage(RD);
     }
 
     return llvm::GlobalValue::LinkOnceODRLinkage;
@@ -530,7 +531,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   if (IsStdLib)
     Linkage = llvm::GlobalValue::ExternalLinkage;
   else
-    Linkage = getTypeInfoLinkage(Ty);
+    Linkage = getTypeInfoLinkage(CGM, Ty);
 
   // Add the vtable pointer.
   BuildVTablePointer(cast<Type>(Ty));
