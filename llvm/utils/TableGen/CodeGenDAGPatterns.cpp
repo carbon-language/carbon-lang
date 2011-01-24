@@ -434,6 +434,36 @@ bool EEVT::TypeSet::EnforceVectorEltTypeIs(EEVT::TypeSet &VTOperand,
   return MadeChange;
 }
 
+/// EnforceVectorSubVectorTypeIs - 'this' is now constrainted to be a
+/// vector type specified by VTOperand.
+bool EEVT::TypeSet::EnforceVectorSubVectorTypeIs(EEVT::TypeSet &VTOperand,
+                                                 TreePattern &TP) {
+  // "This" must be a vector and "VTOperand" must be a vector.
+  bool MadeChange = false;
+  MadeChange |= EnforceVector(TP);
+  MadeChange |= VTOperand.EnforceVector(TP);
+
+  // "This" must be larger than "VTOperand."
+  MadeChange |= VTOperand.EnforceSmallerThan(*this, TP);
+
+  // If we know the vector type, it forces the scalar types to agree.
+  if (isConcrete()) {
+    EVT IVT = getConcrete();
+    IVT = IVT.getVectorElementType();
+
+    EEVT::TypeSet EltTypeSet(IVT.getSimpleVT().SimpleTy, TP);
+    MadeChange |= VTOperand.EnforceVectorEltTypeIs(EltTypeSet, TP);
+  } else if (VTOperand.isConcrete()) {
+    EVT IVT = VTOperand.getConcrete();
+    IVT = IVT.getVectorElementType();
+
+    EEVT::TypeSet EltTypeSet(IVT.getSimpleVT().SimpleTy, TP);
+    MadeChange |= EnforceVectorEltTypeIs(EltTypeSet, TP);
+  }
+
+  return MadeChange;
+}
+
 //===----------------------------------------------------------------------===//
 // Helpers for working with extended types.
 
@@ -605,6 +635,10 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
   } else if (R->isSubClassOf("SDTCisEltOfVec")) {
     ConstraintType = SDTCisEltOfVec;
     x.SDTCisEltOfVec_Info.OtherOperandNum = R->getValueAsInt("OtherOpNum");
+  } else if (R->isSubClassOf("SDTCisSubVecOfVec")) {
+    ConstraintType = SDTCisSubVecOfVec;
+    x.SDTCisSubVecOfVec_Info.OtherOperandNum =
+      R->getValueAsInt("OtherOpNum");
   } else {
     errs() << "Unrecognized SDTypeConstraint '" << R->getName() << "'!\n";
     exit(1);
@@ -707,6 +741,17 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     // type.
     return VecOperand->getExtType(VResNo).
       EnforceVectorEltTypeIs(NodeToApply->getExtType(ResNo), TP);
+  }
+  case SDTCisSubVecOfVec: {
+    unsigned VResNo = 0;
+    TreePatternNode *BigVecOperand =
+      getOperandNum(x.SDTCisSubVecOfVec_Info.OtherOperandNum, N, NodeInfo,
+                    VResNo);
+
+    // Filter vector types out of BigVecOperand that don't have the
+    // right subvector type.
+    return BigVecOperand->getExtType(VResNo).
+      EnforceVectorSubVectorTypeIs(NodeToApply->getExtType(ResNo), TP);
   }
   }
   return false;

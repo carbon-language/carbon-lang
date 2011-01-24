@@ -131,6 +131,10 @@ namespace EEVT {
     /// whose element is VT.
     bool EnforceVectorEltTypeIs(EEVT::TypeSet &VT, TreePattern &TP);
 
+    /// EnforceVectorSubVectorTypeIs - 'this' is now constrainted to
+    /// be a vector type VT.
+    bool EnforceVectorSubVectorTypeIs(EEVT::TypeSet &VT, TreePattern &TP);
+
     bool operator!=(const TypeSet &RHS) const { return TypeVec != RHS.TypeVec; }
     bool operator==(const TypeSet &RHS) const { return TypeVec == RHS.TypeVec; }
 
@@ -155,7 +159,8 @@ struct SDTypeConstraint {
   unsigned OperandNo;   // The operand # this constraint applies to.
   enum {
     SDTCisVT, SDTCisPtrTy, SDTCisInt, SDTCisFP, SDTCisVec, SDTCisSameAs,
-    SDTCisVTSmallerThanOp, SDTCisOpSmallerThanOp, SDTCisEltOfVec
+    SDTCisVTSmallerThanOp, SDTCisOpSmallerThanOp, SDTCisEltOfVec,
+    SDTCisSubVecOfVec
   } ConstraintType;
 
   union {   // The discriminated union.
@@ -174,6 +179,9 @@ struct SDTypeConstraint {
     struct {
       unsigned OtherOperandNum;
     } SDTCisEltOfVec_Info;
+    struct {
+      unsigned OtherOperandNum;
+    } SDTCisSubVecOfVec_Info;
   } x;
 
   /// ApplyTypeConstraint - Given a node in a pattern, apply this type
