@@ -826,8 +826,12 @@ main (int argc, char *argv[])
                     else if (strcasecmp(optarg, "stderr") == 0)
                         log_file = stderr;
                     else
+                    {
                         log_file = fopen(optarg, "w");
-
+                        if (log_file != NULL)
+                            setlinebuf(log_file);
+                    }
+                    
                     if (log_file == NULL)
                     {
                         const char *errno_str = strerror(errno);
