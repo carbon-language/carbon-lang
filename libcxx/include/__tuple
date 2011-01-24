@@ -72,20 +72,20 @@ template <class _Tp> struct __tuple_like<const _Tp> : public __tuple_like<_Tp> {
 template <class _Tp> struct __tuple_like<volatile _Tp> : public __tuple_like<_Tp> {};
 template <class _Tp> struct __tuple_like<const volatile _Tp> : public __tuple_like<_Tp> {};
 
-template <class... _Tp> struct __tuple_like<tuple<_Tp...>> : true_type {};
+template <class... _Tp> struct __tuple_like<tuple<_Tp...> > : true_type {};
 template <class _T1, class _T2> struct __tuple_like<pair<_T1, _T2> > : true_type {};
 template <class _Tp, size_t _Size> struct __tuple_like<array<_Tp, _Size> > : true_type {};
 
 template <size_t _Ip, class ..._Tp>
-typename tuple_element<_Ip, tuple<_Tp...>>::type&
+typename tuple_element<_Ip, tuple<_Tp...> >::type&
 get(tuple<_Tp...>&);
 
 template <size_t _Ip, class ..._Tp>
-const typename tuple_element<_Ip, tuple<_Tp...>>::type&
+const typename tuple_element<_Ip, tuple<_Tp...> >::type&
 get(const tuple<_Tp...>&);
 
 template <size_t _Ip, class ..._Tp>
-typename tuple_element<_Ip, tuple<_Tp...>>::type&&
+typename tuple_element<_Ip, tuple<_Tp...> >::type&&
 get(tuple<_Tp...>&&);
 
 template <size_t _Ip, class _T1, class _T2>
@@ -143,7 +143,7 @@ struct __make_tuple_indices
 template <class ..._Tp> struct __tuple_types {};
 
 template <size_t _Ip>
-class _LIBCPP_VISIBLE tuple_element<_Ip, __tuple_types<>>
+class _LIBCPP_VISIBLE tuple_element<_Ip, __tuple_types<> >
 {
 public:
     static_assert(_Ip == 0, "tuple_element index out of range");
@@ -151,26 +151,26 @@ public:
 };
 
 template <class _Hp, class ..._Tp>
-class _LIBCPP_VISIBLE tuple_element<0, __tuple_types<_Hp, _Tp...>>
+class _LIBCPP_VISIBLE tuple_element<0, __tuple_types<_Hp, _Tp...> >
 {
 public:
     typedef _Hp type;
 };
 
 template <size_t _Ip, class _Hp, class ..._Tp>
-class _LIBCPP_VISIBLE tuple_element<_Ip, __tuple_types<_Hp, _Tp...>>
+class _LIBCPP_VISIBLE tuple_element<_Ip, __tuple_types<_Hp, _Tp...> >
 {
 public:
-    typedef typename tuple_element<_Ip-1, __tuple_types<_Tp...>>::type type;
+    typedef typename tuple_element<_Ip-1, __tuple_types<_Tp...> >::type type;
 };
 
 template <class ..._Tp>
-class _LIBCPP_VISIBLE tuple_size<__tuple_types<_Tp...>>
+class _LIBCPP_VISIBLE tuple_size<__tuple_types<_Tp...> >
     : public integral_constant<size_t, sizeof...(_Tp)>
 {
 };
 
-template <class... _Tp> struct __tuple_like<__tuple_types<_Tp...>> : true_type {};
+template <class... _Tp> struct __tuple_like<__tuple_types<_Tp...> > : true_type {};
 
 // __make_tuple_types
 
@@ -212,13 +212,13 @@ template <bool, class _Tp, class _Up>
 struct __tuple_convertible_imp : public false_type {};
 
 template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
-struct __tuple_convertible_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...>>
+struct __tuple_convertible_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
     : public integral_constant<bool,
                                is_convertible<_Tp0, _Up0>::value &&
-                               __tuple_convertible_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...>>::value> {};
+                               __tuple_convertible_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
 
 template <>
-struct __tuple_convertible_imp<true, __tuple_types<>, __tuple_types<>>
+struct __tuple_convertible_imp<true, __tuple_types<>, __tuple_types<> >
     : public true_type {};
 
 template <class _Tp, class _Up, bool = __tuple_like<typename remove_reference<_Tp>::type>::value,
@@ -239,13 +239,13 @@ template <bool, class _Tp, class _Up>
 struct __tuple_assignable_imp : public false_type {};
 
 template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
-struct __tuple_assignable_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...>>
+struct __tuple_assignable_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
     : public integral_constant<bool,
                                is_assignable<_Up0&, _Tp0>::value &&
-                               __tuple_assignable_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...>>::value> {};
+                               __tuple_assignable_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
 
 template <>
-struct __tuple_assignable_imp<true, __tuple_types<>, __tuple_types<>>
+struct __tuple_assignable_imp<true, __tuple_types<>, __tuple_types<> >
     : public true_type {};
 
 template <class _Tp, class _Up, bool = __tuple_like<typename remove_reference<_Tp>::type>::value,

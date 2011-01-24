@@ -120,7 +120,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 // tuple_size
 
 template <class ..._Tp>
-class _LIBCPP_VISIBLE tuple_size<tuple<_Tp...>>
+class _LIBCPP_VISIBLE tuple_size<tuple<_Tp...> >
     : public integral_constant<size_t, sizeof...(_Tp)>
 {
 };
@@ -128,10 +128,10 @@ class _LIBCPP_VISIBLE tuple_size<tuple<_Tp...>>
 // tuple_element
 
 template <size_t _Ip, class ..._Tp>
-class _LIBCPP_VISIBLE tuple_element<_Ip, tuple<_Tp...>>
+class _LIBCPP_VISIBLE tuple_element<_Ip, tuple<_Tp...> >
 {
 public:
-    typedef typename tuple_element<_Ip, __tuple_types<_Tp...>>::type type;
+    typedef typename tuple_element<_Ip, __tuple_types<_Tp...> >::type type;
 };
 
 // __tuple_leaf
@@ -373,7 +373,7 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
     template <class _Tuple,
               class = typename enable_if
                       <
-                         __tuple_convertible<_Tuple, tuple<_Tp...>>::value
+                         __tuple_convertible<_Tuple, tuple<_Tp...> >::value
                       >::type
              >
         _LIBCPP_INLINE_VISIBILITY
@@ -385,7 +385,7 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
     template <class _Alloc, class _Tuple,
               class = typename enable_if
                       <
-                         __tuple_convertible<_Tuple, tuple<_Tp...>>::value
+                         __tuple_convertible<_Tuple, tuple<_Tp...> >::value
                       >::type
              >
         _LIBCPP_INLINE_VISIBILITY
@@ -400,7 +400,7 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
         _LIBCPP_INLINE_VISIBILITY
         typename enable_if
         <
-            __tuple_assignable<_Tuple, tuple<_Tp...>>::value,
+            __tuple_assignable<_Tuple, tuple<_Tp...> >::value,
             __tuple_impl&
         >::type
         operator=(_Tuple&& __t)
@@ -425,11 +425,11 @@ class _LIBCPP_VISIBLE tuple
     base base_;
 
     template <size_t _Jp, class ..._Up> friend
-        typename tuple_element<_Jp, tuple<_Up...>>::type& get(tuple<_Up...>&);
+        typename tuple_element<_Jp, tuple<_Up...> >::type& get(tuple<_Up...>&);
     template <size_t _Jp, class ..._Up> friend
-        const typename tuple_element<_Jp, tuple<_Up...>>::type& get(const tuple<_Up...>&);
+        const typename tuple_element<_Jp, tuple<_Up...> >::type& get(const tuple<_Up...>&);
     template <size_t _Jp, class ..._Up> friend
-        typename tuple_element<_Jp, tuple<_Up...>>::type&& get(tuple<_Up...>&&);
+        typename tuple_element<_Jp, tuple<_Up...> >::type&& get(tuple<_Up...>&&);
 public:
 
     _LIBCPP_INLINE_VISIBILITY
@@ -567,28 +567,28 @@ swap(tuple<_Tp...>& __t, tuple<_Tp...>& __u) {__t.swap(__u);}
 
 template <size_t _Ip, class ..._Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-typename tuple_element<_Ip, tuple<_Tp...>>::type&
+typename tuple_element<_Ip, tuple<_Tp...> >::type&
 get(tuple<_Tp...>& __t)
 {
-    typedef typename tuple_element<_Ip, tuple<_Tp...>>::type type;
+    typedef typename tuple_element<_Ip, tuple<_Tp...> >::type type;
     return static_cast<__tuple_leaf<_Ip, type>&>(__t.base_).get();
 }
 
 template <size_t _Ip, class ..._Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-const typename tuple_element<_Ip, tuple<_Tp...>>::type&
+const typename tuple_element<_Ip, tuple<_Tp...> >::type&
 get(const tuple<_Tp...>& __t)
 {
-    typedef typename tuple_element<_Ip, tuple<_Tp...>>::type type;
+    typedef typename tuple_element<_Ip, tuple<_Tp...> >::type type;
     return static_cast<const __tuple_leaf<_Ip, type>&>(__t.base_).get();
 }
 
 template <size_t _Ip, class ..._Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-typename tuple_element<_Ip, tuple<_Tp...>>::type&&
+typename tuple_element<_Ip, tuple<_Tp...> >::type&&
 get(tuple<_Tp...>&& __t)
 {
-    typedef typename tuple_element<_Ip, tuple<_Tp...>>::type type;
+    typedef typename tuple_element<_Ip, tuple<_Tp...> >::type type;
     return static_cast<__tuple_leaf<_Ip, type>&&>(__t.base_).get();
 }
 
@@ -626,7 +626,7 @@ struct ___make_tuple_return
 };
 
 template <class _Tp>
-struct ___make_tuple_return<reference_wrapper<_Tp>>
+struct ___make_tuple_return<reference_wrapper<_Tp> >
 {
     typedef _Tp& type;
 };
@@ -751,7 +751,7 @@ operator<=(const tuple<_Tp...>& __x, const tuple<_Up...>& __y)
 template <class _Tp, class _Up> struct __tuple_cat_type;
 
 template <class ..._Ttypes, class ..._Utypes>
-struct __tuple_cat_type<tuple<_Ttypes...>, __tuple_types<_Utypes...>>
+struct __tuple_cat_type<tuple<_Ttypes...>, __tuple_types<_Utypes...> >
 {
     typedef tuple<_Ttypes..., _Utypes...> type;
 };
@@ -841,7 +841,7 @@ template <class _Types, class _I0, class _J0>
 struct __tuple_cat;
 
 template <class ..._Types, size_t ..._I0, size_t ..._J0>
-struct __tuple_cat<tuple<_Types...>, __tuple_indices<_I0...>, __tuple_indices<_J0...>>
+struct __tuple_cat<tuple<_Types...>, __tuple_indices<_I0...>, __tuple_indices<_J0...> >
 {
     template <class _Tuple0>
     _LIBCPP_INLINE_VISIBILITY
