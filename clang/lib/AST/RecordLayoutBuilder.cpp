@@ -98,12 +98,7 @@ class EmptySubobjectMap {
     assert(FieldOffset % CharWidth == 0 && 
            "Field offset not at char boundary!");
 
-    return toCharUnits(FieldOffset);
-  }
-
-  // FIXME: Remove this.
-  CharUnits toCharUnits(uint64_t Offset) const {
-    return CharUnits::fromQuantity(Offset / CharWidth);
+    return Context.toCharUnitsFromBits(FieldOffset);
   }
 
 protected:
@@ -153,7 +148,7 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(BaseDecl);
     if (BaseDecl->isEmpty()) {
       // If the class decl is empty, get its size.
-      EmptySize = toCharUnits(Layout.getSize());
+      EmptySize = Context.toCharUnitsFromBits(Layout.getSize());
     } else {
       // Otherwise, we get the largest empty subobject for the decl.
       EmptySize = Layout.getSizeOfLargestEmptySubobject();
@@ -180,7 +175,7 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(MemberDecl);
     if (MemberDecl->isEmpty()) {
       // If the class decl is empty, get its size.
-      EmptySize = toCharUnits(Layout.getSize());
+      EmptySize = Context.toCharUnitsFromBits(Layout.getSize());
     } else {
       // Otherwise, we get the largest empty subobject for the decl.
       EmptySize = Layout.getSizeOfLargestEmptySubobject();
@@ -433,7 +428,7 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const FieldDecl *FD,
       if (!CanPlaceFieldSubobjectAtOffset(RD, RD, ElementOffset))
         return false;
 
-      ElementOffset += toCharUnits(Layout.getSize());
+      ElementOffset += Context.toCharUnitsFromBits(Layout.getSize());
     }
   }
 
@@ -538,7 +533,7 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const FieldDecl *FD,
         return;
 
       UpdateEmptyFieldSubobjects(RD, RD, ElementOffset);
-      ElementOffset += toCharUnits(Layout.getSize());
+      ElementOffset += Context.toCharUnitsFromBits(Layout.getSize());
     }
   }
 }
@@ -621,10 +616,7 @@ protected:
       DataSize(0), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
       PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
-  // FIXME: Remove these.
-  CharUnits toCharUnits(uint64_t Offset) const {
-    return Context.toCharUnitsFromBits(Offset);
-  }
+  // FIXME: Remove this.
   uint64_t toOffset(CharUnits Offset) const {
     return Offset.getQuantity() * Context.getCharWidth();
   }
@@ -1117,7 +1109,8 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   uint64_t Offset = llvm::RoundUpToAlignment(DataSize, BaseAlign);
 
   // Try to place the base.
-  while (!EmptySubobjects->CanPlaceBaseAtOffset(Base, toCharUnits(Offset)))
+  while (!EmptySubobjects->CanPlaceBaseAtOffset(Base, 
+                                          Context.toCharUnitsFromBits(Offset)))
     Offset += BaseAlign;
 
   if (!Base->Class->isEmpty()) {
@@ -1131,7 +1124,7 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign, UnpackedBaseAlign);
 
-  return toCharUnits(Offset);
+  return Context.toCharUnitsFromBits(Offset);
 }
 
 void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
@@ -1434,7 +1427,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   if (!IsUnion && EmptySubobjects) {
     // Check if we can place the field at this offset.
     while (!EmptySubobjects->CanPlaceFieldAtOffset(D, 
-                                                   toCharUnits(FieldOffset))) {
+                                    Context.toCharUnitsFromBits(FieldOffset))) {
       // We couldn't place the field at the offset. Try again at a new offset.
       FieldOffset += FieldAlign;
     }
