@@ -874,7 +874,7 @@ public:
 /// to:
 ///   %V1 = load i32* %Alloca      -> will be mem2reg'd
 ///   %V2 = load i32* %Other
-///   %V = select i1 %cond, i32 %V1, i32* %V2
+///   %V = select i1 %cond, i32 %V1, i32 %V2
 ///
 /// We can do this to a select if its only uses are loads and if the operand to
 /// the select can be loaded unconditionally.
@@ -887,7 +887,7 @@ static bool isSafeSelectToSpeculate(SelectInst *SI, const TargetData *TD) {
     LoadInst *LI = dyn_cast<LoadInst>(*UI);
     if (LI == 0 || LI->isVolatile()) return false;
     
-    // Both operands to the select need to be deferencable, either absolutely
+    // Both operands to the select need to be dereferencable, either absolutely
     // (e.g. allocas) or at this point because we can see other accesses to it.
     if (!TDerefable && !isSafeToLoadUnconditionally(SI->getTrueValue(), LI,
                                                     LI->getAlignment(), TD))
@@ -897,6 +897,77 @@ static bool isSafeSelectToSpeculate(SelectInst *SI, const TargetData *TD) {
       return false;
   }
   
+  return true;
+}
+
+/// isSafePHIToSpeculate - PHI instructions that use an alloca and are
+/// subsequently loaded can be rewritten to load both input pointers in the pred
+/// blocks and then PHI the results, allowing the load of the alloca to be
+/// promoted.
+/// From this:
+///   %P2 = phi [i32* %Alloca, i32* %Other]
+///   %V = load i32* %P2
+/// to:
+///   %V1 = load i32* %Alloca      -> will be mem2reg'd
+///   ...
+///   %V2 = load i32* %Other
+///   ...
+///   %V = phi [i32 %V1, i32 %V2]
+///
+/// We can do this to a select if its only uses are loads and if the operand to
+/// the select can be loaded unconditionally.
+static bool isSafePHIToSpeculate(PHINode *PN, const TargetData *TD) {
+  // For now, we can only do this promotion if the load is in the same block as
+  // the PHI, and if there are no stores between the phi and load.
+  // TODO: Allow recursive phi users.
+  // TODO: Allow stores.
+  BasicBlock *BB = PN->getParent();
+  unsigned MaxAlign = 0;
+  for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
+       UI != UE; ++UI) {
+    LoadInst *LI = dyn_cast<LoadInst>(*UI);
+    if (LI == 0 || LI->isVolatile()) return false;
+    
+    // For now we only allow loads in the same block as the PHI.  This is a
+    // common case that happens when instcombine merges two loads through a PHI.
+    if (LI->getParent() != BB) return false;
+    
+    // Ensure that there are no instructions between the PHI and the load that
+    // could store.
+    for (BasicBlock::iterator BBI = PN; &*BBI != LI; ++BBI)
+      if (BBI->mayWriteToMemory())
+        return false;
+    
+    MaxAlign = std::max(MaxAlign, LI->getAlignment());
+  }
+  
+  // Okay, we know that we have one or more loads in the same block as the PHI.
+  // We can transform this if it is safe to push the loads into the predecessor
+  // blocks.  The only thing to watch out for is that we can't put a possibly
+  // trapping load in the predecessor if it is a critical edge.
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    BasicBlock *Pred = PN->getIncomingBlock(i);
+
+    // If the predecessor has a single successor, then the edge isn't critical.
+    if (Pred->getTerminator()->getNumSuccessors() == 1)
+      continue;
+    
+    Value *InVal = PN->getIncomingValue(i);
+    
+    // If the InVal is an invoke in the pred, we can't put a load on the edge.
+    if (InvokeInst *II = dyn_cast<InvokeInst>(InVal))
+      if (II->getParent() == Pred)
+        return false;
+
+    // If this pointer is always safe to load, or if we can prove that there is
+    // already a load in the block, then we can move the load to the pred block.
+    if (InVal->isDereferenceablePointer() ||
+        isSafeToLoadUnconditionally(InVal, Pred->getTerminator(), MaxAlign, TD))
+      continue;
+    
+    return false;
+  }
+    
   return true;
 }
 
@@ -946,6 +1017,21 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
       continue;
     }
     
+    if (PHINode *PN = dyn_cast<PHINode>(U)) {
+      if (PN->use_empty()) {  // Dead PHIs can be stripped.
+        InstsToRewrite.insert(PN);
+        continue;
+      }
+      
+      // If it is safe to turn "load (phi [AI, ptr, ...])" into a PHI of loads
+      // in the pred blocks, then we can transform this by rewriting the PHI.
+      if (!isSafePHIToSpeculate(PN, TD))
+        return false;
+      
+      InstsToRewrite.insert(PN);
+      continue;
+    }
+    
     return false;
   }
 
@@ -957,35 +1043,80 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
   // If we have instructions that need to be rewritten for this to be promotable
   // take care of it now.
   for (unsigned i = 0, e = InstsToRewrite.size(); i != e; ++i) {
-    // Selects in InstsToRewrite only have load uses.  Rewrite each as two
-    // loads with a new select.
-    SelectInst *SI = cast<SelectInst>(InstsToRewrite[i]);
-    
-    for (Value::use_iterator UI = SI->use_begin(), E = SI->use_end(); UI != E;){
-      LoadInst *LI = cast<LoadInst>(*UI++);
+    if (SelectInst *SI = dyn_cast<SelectInst>(InstsToRewrite[i])) {
+      // Selects in InstsToRewrite only have load uses.  Rewrite each as two
+      // loads with a new select.
+      while (!SI->use_empty()) {
+        LoadInst *LI = cast<LoadInst>(SI->use_back());
       
-      IRBuilder<> Builder(LI);
-      LoadInst *TrueLoad = 
-        Builder.CreateLoad(SI->getTrueValue(), LI->getName()+".t");
-      LoadInst *FalseLoad = 
-        Builder.CreateLoad(SI->getFalseValue(), LI->getName()+".t");
-      
-      // Transfer alignment and TBAA info if present.
-      TrueLoad->setAlignment(LI->getAlignment());
-      FalseLoad->setAlignment(LI->getAlignment());
-      if (MDNode *Tag = LI->getMetadata(LLVMContext::MD_tbaa)) {
-        TrueLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
-        FalseLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
+        IRBuilder<> Builder(LI);
+        LoadInst *TrueLoad = 
+          Builder.CreateLoad(SI->getTrueValue(), LI->getName()+".t");
+        LoadInst *FalseLoad = 
+          Builder.CreateLoad(SI->getFalseValue(), LI->getName()+".t");
+        
+        // Transfer alignment and TBAA info if present.
+        TrueLoad->setAlignment(LI->getAlignment());
+        FalseLoad->setAlignment(LI->getAlignment());
+        if (MDNode *Tag = LI->getMetadata(LLVMContext::MD_tbaa)) {
+          TrueLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
+          FalseLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
+        }
+        
+        Value *V = Builder.CreateSelect(SI->getCondition(), TrueLoad, FalseLoad);
+        V->takeName(LI);
+        LI->replaceAllUsesWith(V);
+        LI->eraseFromParent();
       }
-      
-      Value *V = Builder.CreateSelect(SI->getCondition(), TrueLoad, FalseLoad);
-      V->takeName(LI);
-      LI->replaceAllUsesWith(V);
+    
+      // Now that all the loads are gone, the select is gone too.
+      SI->eraseFromParent();
+      continue;
+    }
+    
+    // Otherwise, we have a PHI node which allows us to push the loads into the
+    // predecessors.
+    PHINode *PN = cast<PHINode>(InstsToRewrite[i]);
+    if (PN->use_empty()) {
+      PN->eraseFromParent();
+      continue;
+    }
+    
+    const Type *LoadTy = cast<PointerType>(PN->getType())->getElementType();
+    PHINode *NewPN = PHINode::Create(LoadTy, PN->getName()+".ld", PN);
+
+    // Get the TBAA tag and alignment to use from one of the loads.  It doesn't
+    // matter which one we get and if any differ, it doesn't matter.
+    LoadInst *SomeLoad = cast<LoadInst>(PN->use_back());
+    MDNode *TBAATag = SomeLoad->getMetadata(LLVMContext::MD_tbaa);
+    unsigned Align = SomeLoad->getAlignment();
+    
+    // Rewrite all loads of the PN to use the new PHI.
+    while (!PN->use_empty()) {
+      LoadInst *LI = cast<LoadInst>(PN->use_back());
+      LI->replaceAllUsesWith(NewPN);
       LI->eraseFromParent();
     }
     
-    // Now that all the loads are gone, the select is gone too.
-    SI->eraseFromParent();
+    // Inject loads into all of the pred blocks.  Keep track of which blocks we
+    // insert them into in case we have multiple edges from the same block.
+    DenseMap<BasicBlock*, LoadInst*> InsertedLoads;
+    
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      BasicBlock *Pred = PN->getIncomingBlock(i);
+      LoadInst *&Load = InsertedLoads[Pred];
+      if (Load == 0) {
+        Load = new LoadInst(PN->getIncomingValue(i),
+                            PN->getName() + "." + Pred->getName(),
+                            Pred->getTerminator());
+        Load->setAlignment(Align);
+        if (TBAATag) Load->setMetadata(LLVMContext::MD_tbaa, TBAATag);
+      }
+      
+      NewPN->addIncoming(Load, Pred);
+    }
+    
+    PN->eraseFromParent();
   }
     
   ++NumAdjusted;

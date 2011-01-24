@@ -25,8 +25,8 @@ entry:
 }
 
 ; CHECK: @test2
-; CHECK: %A.0 = alloca i32
-; CHECK: %A.1 = alloca i32
+; CHECK: %X.ld = phi i32 [ 1, %entry ], [ 2, %T ]
+; CHECK-NEXT: ret i32 %X.ld
 define i32 @test2(i1 %c) {
 entry:
   %A = alloca {i32, i32}
@@ -35,7 +35,7 @@ entry:
   br i1 %c, label %T, label %F
 T:
   %C = getelementptr {i32, i32}* %A, i32 0, i32 1
-  store i32 2, i32* %B
+  store i32 2, i32* %C
   br label %F
 F:
   %X = phi i32* [%B, %entry], [%C, %T]
@@ -130,3 +130,24 @@ define i32 @test7(i32 %x, i1 %c) nounwind readnone ssp {
 ; CHECK: ret i32 %r
 }
 
+;; Promote allocs that are PHI'd together by moving the loads.
+define i32 @test8(i32 %x) nounwind readnone ssp {
+; CHECK: @test8
+; CHECK-NOT: load i32
+; CHECK-NOT: store i32
+; CHECK: %p.0.ld = phi i32 [ 2, %entry ], [ 1, %T ]
+; CHECK-NEXT: ret i32 %p.0.ld
+entry:
+  %a = alloca i32, align 8
+  %b = alloca i32, align 8
+  store i32 1, i32* %a, align 8
+  store i32 2, i32* %b, align 8
+  %c = icmp eq i32 %x, 0 
+  br i1 %c, label %T, label %Cont
+T:
+  br label %Cont
+Cont:
+  %p.0 = phi i32* [%b, %entry],[%a, %T]
+  %r = load i32* %p.0, align 8
+  ret i32 %r
+}
