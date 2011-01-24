@@ -189,15 +189,15 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
 static ARMOpcode g_arm_opcodes[] =
 {
     { 0x0000fe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, EmulateARMPushEncoding,
-      "PUSH<c> <registers>" },
+      "push<c> <registers>" },
     { 0xffff0000, 0xe8ad0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, EmulateARMPushEncoding,
-      "PUSH<c>.W <registers> ; <registers> contains more than one register" },
+      "push<c>.w <registers> ; <registers> contains more than one register" },
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, EmulateARMPushEncoding,
-      "PUSH<c>.W <registers> ; <registers> contains one register, <Rt>" },
+      "push<c>.w <registers> ; <registers> contains one register, <Rt>" },
     { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, EmulateARMPushEncoding,
-      "PUSH<c> <registers> ; <registers> contains more than one register" },
+      "push<c> <registers> ; <registers> contains more than one register" },
     { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, EmulateARMPushEncoding,
-      "PUSH<c> <registers> ; <registers> contains one register, <Rt>" }
+      "push<c> <registers> ; <registers> contains one register, <Rt>" }
 };
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
