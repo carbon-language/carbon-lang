@@ -331,9 +331,10 @@ ThreadList::ShouldReportRun (Event *event_ptr)
                         result = eVoteYes;
                     break;
                 case eVoteNo:
-                    log->Printf ("ThreadList::ShouldReportRun() thread %d (0x%4.4x) says don't report.", 
-                                 (*pos)->GetIndexID(), 
-                                 (*pos)->GetID());
+                    if (log)
+                        log->Printf ("ThreadList::ShouldReportRun() thread %d (0x%4.4x) says don't report.", 
+                                     (*pos)->GetIndexID(), 
+                                     (*pos)->GetID());
                     result = eVoteNo;
                     break;
             }
