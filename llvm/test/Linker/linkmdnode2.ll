@@ -10,3 +10,13 @@ define void @foo1() {
   %x = call i8 @llvm.something(metadata !22)
   ret void
 }
+
+
+
+; PR9015
+define void @test() {
+  ret void, !abc !0
+}
+
+!0 = metadata !{metadata !0, i32 42 }
+

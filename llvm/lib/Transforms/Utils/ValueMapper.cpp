@@ -38,15 +38,16 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM,
     if (!MD->isFunctionLocal() && (Flags & RF_NoModuleLevelChanges))
       return VM[V] = const_cast<Value*>(V);
     
+    // Create a dummy node in case we have a metadata cycle.
+    MDNode *Dummy = MDNode::getTemporary(V->getContext(), 0, 0);
+    VM[V] = Dummy;
+    
     // Check all operands to see if any need to be remapped.
     for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i) {
       Value *OP = MD->getOperand(i);
       if (OP == 0 || MapValue(OP, VM, Flags) == OP) continue;
 
-      // Ok, at least one operand needs remapping.  Create a dummy node in case
-      // we have a metadata cycle.
-      MDNode *Dummy = MDNode::getTemporary(V->getContext(), 0, 0);
-      VM[V] = Dummy;
+      // Ok, at least one operand needs remapping.  
       SmallVector<Value*, 4> Elts;
       Elts.reserve(MD->getNumOperands());
       for (i = 0; i != e; ++i) {
@@ -55,12 +56,16 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM,
       }
       MDNode *NewMD = MDNode::get(V->getContext(), Elts.data(), Elts.size());
       Dummy->replaceAllUsesWith(NewMD);
+      VM[V] = NewMD;
       MDNode::deleteTemporary(Dummy);
-      return VM[V] = NewMD;
+      return NewMD;
     }
 
+    VM[V] = const_cast<Value*>(V);
+    MDNode::deleteTemporary(Dummy);
+
     // No operands needed remapping.  Use an identity mapping.
-    return VM[V] = const_cast<Value*>(V);
+    return const_cast<Value*>(V);
   }
 
   // Okay, this either must be a constant (which may or may not be mappable) or
