@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
 
-struct A {}; // expected-note {{candidate is the implicit copy constructor}}
+struct A {};
 
 struct BASE {
   operator A(); // expected-note {{candidate function}}
