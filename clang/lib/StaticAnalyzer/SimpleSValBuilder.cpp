@@ -724,8 +724,8 @@ SVal SimpleSValBuilder::evalBinOpLL(const GRState *state,
 
       if (LeftOffset.getRegion() != NULL &&
           LeftOffset.getRegion() == RightOffset.getRegion()) {
-        int64_t left = LeftOffset.getByteOffset();
-        int64_t right = RightOffset.getByteOffset();
+        CharUnits left = LeftOffset.getOffset();
+        CharUnits right = RightOffset.getOffset();
 
         switch (op) {
         default:

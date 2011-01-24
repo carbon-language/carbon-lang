@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_GR_MEMREGION_H
 #define LLVM_CLANG_GR_MEMREGION_H
 
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/StaticAnalyzer/PathSensitive/SVals.h"
@@ -778,14 +779,14 @@ private:
   friend class ElementRegion;
 
   const MemRegion *Region;
-  int64_t Offset;
+  CharUnits Offset;
 
-  RegionRawOffset(const MemRegion* reg, int64_t offset = 0)
+  RegionRawOffset(const MemRegion* reg, CharUnits offset = CharUnits::Zero())
     : Region(reg), Offset(offset) {}
 
 public:
   // FIXME: Eventually support symbolic offsets.
-  int64_t getByteOffset() const { return Offset; }
+  CharUnits getOffset() const { return Offset; }
   const MemRegion *getRegion() const { return Region; }
 
   void dumpToStream(llvm::raw_ostream& os) const;
