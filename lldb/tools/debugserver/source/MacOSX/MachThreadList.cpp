@@ -322,20 +322,36 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
 
     UpdateThreadList(process, true, &new_threads);
 
+    DNBThreadResumeAction resume_new_threads = { -1, eStateRunning, 0, INVALID_NUB_ADDRESS };
+
+    const uint32_t num_new_threads = new_threads.size();
     const uint32_t num_threads = m_threads.size();
     for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
         MachThread *thread = m_threads[idx].get();
+        bool handled = false;
+        for (uint32_t new_idx = 0; new_idx < num_new_threads; ++new_idx)
+        {
+            if (thread == new_threads[new_idx].get())
+            {
+                thread->ThreadWillResume(&resume_new_threads);
+                handled = true;
+                break;
+            }
+        }
 
-        const DNBThreadResumeAction *thread_action = thread_actions.GetActionForThread (thread->ThreadID(), true);
-        // There must always be a thread action for every thread.
-        assert (thread_action);
-        thread->ThreadWillResume (thread_action);
+        if (!handled)
+        {
+            const DNBThreadResumeAction *thread_action = thread_actions.GetActionForThread (thread->ThreadID(), true);
+            // There must always be a thread action for every thread.
+            assert (thread_action);
+            thread->ThreadWillResume (thread_action);
+        }
     }
     
     if (new_threads.size())
     {
-        for (uint32_t idx = 0, num_new_threads = new_threads.size(); idx < num_new_threads; ++idx)
+        for (uint32_t idx = 0; idx < num_new_threads; ++idx)
         {
             DNBLogThreadedIf (LOG_THREAD, "MachThreadList::ProcessWillResume (pid = %4.4x) stop-id=%u, resuming newly discovered thread: 0x%4.4x, thread-is-user-ready=%i)", 
                               process->ProcessID(), 

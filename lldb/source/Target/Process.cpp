@@ -2643,9 +2643,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     
     Listener listener("lldb.process.listener.run-thread-plan");
     exe_ctx.process->HijackProcessEvents(&listener);
-    Event *random_event = listener.PeekAtNextEvent();
- //   if (random_event != NULL)
- //       abort();
         
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
     if (log)
