@@ -67,7 +67,7 @@ using namespace lldb_private;
 #define ARMv8     (1u << 8)
 #define ARMvAll   (0xffffffffu)
 
-typedef enum ARMEncoding
+typedef enum
 {
     eEncodingA1,
     eEncodingA2,
@@ -81,19 +81,26 @@ typedef enum ARMEncoding
     eEncodingT5,
 } ARMEncoding;
 
+typedef enum
+{
+    eSize16,
+    eSize32
+} ARMInstrSize;
+
 // Typedef for the callback function used during the emulation.
 // Pass along (ARMEncoding)encoding as the callback data.
 typedef bool (*EmulateCallback) (EmulateInstructionARM *emulator, ARMEncoding encoding);
     
-typedef struct ARMOpcode
+typedef struct
 {
     uint32_t mask;
     uint32_t value;
     uint32_t variants;
     ARMEncoding encoding;
+    ARMInstrSize size;
     EmulateCallback callback;
     const char *name;
-};
+}  ARMOpcode;
 
 static bool 
 EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
@@ -137,16 +144,31 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
         if (!success)
             return false;
         uint32_t registers = 0;
+        uint32_t t; // UInt(Rt)
         switch (encoding) {
+        case eEncodingT2:
+            // Ignore bits 15 & 13.
+            registers = EmulateInstruction::UnsignedBits (opcode, 15, 0) & ~0xa000;
+            // if BitCount(registers) < 2 then UNPREDICTABLE;
+            if (BitCount(registers) < 2)
+                return false;
+            break;
+        case eEncodingT3:
+            t = EmulateInstruction::UnsignedBits (opcode, 15, 12);
+            // if BadReg(t) then UNPREDICTABLE;
+            if (BadReg(t))
+                return false;
+            registers = (1u << t);
+            break;
         case eEncodingA1:
             registers = EmulateInstruction::UnsignedBits (opcode, 15, 0);
             break;
         case eEncodingA2:
-            const uint32_t Rt = EmulateInstruction::UnsignedBits (opcode, 15, 12);
-            // if t == 13 then UNPREDICTABLE
-            if (Rt == dwarf_sp)
+            t = EmulateInstruction::UnsignedBits (opcode, 15, 12);
+            // if t == 13 then UNPREDICTABLE;
+            if (t == dwarf_sp)
                 return false;
-            registers = (1u << Rt);
+            registers = (1u << t);
             break;
         }
         addr_t sp_offset = addr_byte_size * EmulateInstruction::BitCount (registers);
@@ -193,9 +215,13 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 static ARMOpcode g_arm_opcodes[] =
 {
-    { 0x0fff0000, 0x092d0000, ARMvAll, eEncodingA1, EmulateARMPushEncoding,
+    { 0xffff0000, 0xe8ad0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, EmulateARMPushEncoding,
       "PUSH<c> <registers> ; <registers> contains more than one register" },
-    { 0x0fff0fff, 0x052d0004, ARMvAll, eEncodingA2, EmulateARMPushEncoding,
+    { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, EmulateARMPushEncoding,
+      "PUSH<c> <registers> ; <registers> contains one register, <Rt>" },
+    { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, EmulateARMPushEncoding,
+      "PUSH<c> <registers> ; <registers> contains more than one register" },
+    { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, EmulateARMPushEncoding,
       "PUSH<c> <registers> ; <registers> contains one register, <Rt>" }
 };
 
