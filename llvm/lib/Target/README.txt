@@ -289,14 +289,6 @@ unsigned int popcount(unsigned int input) {
 
 This sort of thing should be added to the loop idiom pass.
 
-This loop isn't converted to a memset:
-
-void f(char *dest, int n) {
-  for (int i = 0; i < n; ++i) {
-    dest[n] = 0;
-  }
-}
-
 //===---------------------------------------------------------------------===//
 
 These should turn into single 16-bit (unaligned?) loads on little/big endian
