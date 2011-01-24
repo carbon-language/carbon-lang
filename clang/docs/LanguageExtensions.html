@@ -151,10 +151,10 @@ can be used like this:</p>
 #endif
 
 ...
-#if __has_attribute(override)
-#define OVERRIDE __attribute__((override))
+#if __has_attribute(always_inline)
+#define ALWAYS_INLINE __attribute__((always_inline))
 #else
-#define OVERRIDE
+#define ALWAYS_INLINE
 #endif
 ...
 </pre>
