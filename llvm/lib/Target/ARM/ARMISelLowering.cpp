@@ -551,9 +551,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
   setOperationAction(ISD::EHSELECTION,        MVT::i32,   Expand);
-  // FIXME: Shouldn't need this, since no register is used, but the legalizer
-  // doesn't yet know how to not do that for SjLj.
-  setExceptionSelectorRegister(ARM::R0);
+  setOperationAction(ISD::EXCEPTIONADDR,      MVT::i32,   Expand);
+  setExceptionPointerRegister(ARM::R0);
+  setExceptionSelectorRegister(ARM::R1);
+
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
   // ARMv6 Thumb1 (except for CPUs that support dmb / dsb) and earlier use
   // the default expansion.
