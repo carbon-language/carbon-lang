@@ -351,17 +351,35 @@ Vote
 Thread::ShouldReportRun (Event* event_ptr)
 {
     StateType thread_state = GetResumeState ();
+    
     if (thread_state == eStateSuspended
             || thread_state == eStateInvalid)
+    {
         return eVoteNoOpinion;
-
+    }
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (m_completed_plan_stack.size() > 0)
     {
         // Don't use GetCompletedPlan here, since that suppresses private plans.
+        if (log)
+            log->Printf ("Current Plan for thread %d (0x%4.4x): %s being asked whether we should report run.", 
+                         GetIndexID(), 
+                         GetID(),
+                         m_completed_plan_stack.back()->GetName());
+                         
         return m_completed_plan_stack.back()->ShouldReportRun (event_ptr);
     }
     else
+    {
+        if (log)
+            log->Printf ("Current Plan for thread %d (0x%4.4x): %s being asked whether we should report run.", 
+                         GetIndexID(), 
+                         GetID(),
+                         GetCurrentPlan()->GetName());
+                         
         return GetCurrentPlan()->ShouldReportRun (event_ptr);
+     }
 }
 
 bool

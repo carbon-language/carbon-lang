@@ -90,7 +90,8 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
         {
         case eStopReasonInvalid:
         case eStopReasonNone:
-            m_run_vote = eVoteNo;
+            // This 
+            m_run_vote = eVoteNoOpinion;
             m_stop_vote = eVoteNo;
             return false;
 
@@ -153,7 +154,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
     }
     else
     {
-        m_run_vote = eVoteNo;
+        m_run_vote = eVoteNoOpinion;
         m_stop_vote = eVoteNo;
     }
 
@@ -178,6 +179,17 @@ ThreadPlanBase::WillStop ()
 {
     return true;
 }
+
+bool 
+ThreadPlanBase::WillResume (lldb::StateType resume_state, bool current_plan)
+{
+    // Reset these to the default values so we don't set them wrong, then not get asked
+    // for a while, then return the wrong answer.
+    m_run_vote = eVoteNoOpinion;
+    m_stop_vote = eVoteNo;
+    return true;
+}
+
 
 // The base plan is never done.
 bool

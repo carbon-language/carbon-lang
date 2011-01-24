@@ -1716,7 +1716,10 @@ Process::Resume ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf("Process::Resume() m_stop_id = %u", m_stop_id);
+        log->Printf("Process::Resume() m_stop_id = %u, public state: %s private state: %s", 
+                    m_stop_id,
+                    StateAsCString(m_public_state.GetValue()),
+                    StateAsCString(m_private_state.GetValue()));
 
     Error error (WillResume());
     // Tell the process it is about to resume before the thread list
@@ -1737,13 +1740,17 @@ Process::Resume ()
             {
                 DidResume();
                 m_thread_list.DidResume();
+                if (log)
+                    log->Printf ("Process thinks the process has resumed.");
             }
         }
         else
         {
-            error.SetErrorStringWithFormat("thread list returned flase after WillResume");
+            error.SetErrorStringWithFormat("Process::WillResume() thread list returned false after WillResume");
         }
     }
+    else if (log)
+        log->Printf ("Process::WillResume() got an error \"%s\".", error.AsCString("<unknown error>"));
     return error;
 }
 
@@ -2605,6 +2612,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         return lldb::eExecutionSetupError;
     }
     
+    if (m_private_state.GetValue() != eStateStopped)
+    {
+        errors.Printf ("RunThreadPlan called while the private state was not stopped.");
+        // REMOVE BEAR TRAP...
+        // abort();
+    }
+    
     // Save this value for restoration of the execution context after we run
     uint32_t tid = exe_ctx.thread->GetIndexID();
 
@@ -2629,7 +2643,10 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     
     Listener listener("lldb.process.listener.run-thread-plan");
     exe_ctx.process->HijackProcessEvents(&listener);
-    
+    Event *random_event = listener.PeekAtNextEvent();
+ //   if (random_event != NULL)
+ //       abort();
+        
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
     if (log)
     {
@@ -2738,7 +2755,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 if (log)
                     log->Printf ("Halt failed: \"%s\", I'm just going to wait a little longer and see if the world gets nicer to me.", 
                                  halt_error.AsCString());
-                abort();
+//                abort();
                 
                 if (single_thread_timeout_usec != 0)
                 {
