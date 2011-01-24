@@ -1,6 +1,6 @@
 ; RUN: opt -S -tbaa -basicaa -gvn < %s | grep {ret i32 %}
 ; RUN: opt -S -tbaa -gvn < %s | grep {ret i32 0}
-; rdar://8875631
+; rdar://8875631, rdar://8875069
 
 ; BasicAA should notice that the store stores to the entire %u object,
 ; so the %tmp5 load is PartialAlias with the store and suppress TBAA.
