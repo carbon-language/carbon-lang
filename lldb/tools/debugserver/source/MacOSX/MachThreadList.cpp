@@ -315,6 +315,13 @@ void
 MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeActions &thread_actions)
 {
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
+
+    // Update our thread list, because sometimes libdispatch or the kernel
+    // will spawn threads while a task is suspended.
+    MachThreadList::collection new_threads;
+
+    UpdateThreadList(process, true, &new_threads);
+
     const uint32_t num_threads = m_threads.size();
     for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
@@ -326,21 +333,15 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
         thread->ThreadWillResume (thread_action);
     }
     
-    if (DNBLogCheckLogBit(LOG_THREAD))
+    if (new_threads.size())
     {
-        MachThreadList::collection new_threads;
-        UpdateThreadList(process, true, &new_threads);
-        if (new_threads.size())
+        for (uint32_t idx = 0, num_new_threads = new_threads.size(); idx < num_new_threads; ++idx)
         {
-            
-            for (uint32_t idx = 0, num_new_threads = new_threads.size(); idx < num_new_threads; ++idx)
-            {
-                DNBLogThreadedIf (LOG_THREAD, "MachThreadList::ProcessWillResume (pid = %4.4x) stop-id=%u, newly discovered thread: 0x%4.4x, thread-is-user-ready=%i)", 
-                                  process->ProcessID(), 
-                                  process->StopCount(), 
-                                  new_threads[idx]->ThreadID(),
-                                  new_threads[idx]->IsUserReady());
-            }
+            DNBLogThreadedIf (LOG_THREAD, "MachThreadList::ProcessWillResume (pid = %4.4x) stop-id=%u, resuming newly discovered thread: 0x%4.4x, thread-is-user-ready=%i)", 
+                              process->ProcessID(), 
+                              process->StopCount(), 
+                              new_threads[idx]->ThreadID(),
+                              new_threads[idx]->IsUserReady());
         }
     }
 }
