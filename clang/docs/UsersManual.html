@@ -248,32 +248,29 @@ when this is enabled, Clang will print something like:</p>
          ^
          //
 </pre>
-
-<p>When this is disabled, Clang will just print:</p>
-
-<pre>
-  <b><font color="black">test.c:28:8: <font color="magenta">warning</font>: extra tokens at end of #endif directive [-Wextra-tokens]</font></b>
-  #endif bad
-         <font color="green">^</font>
-         <font color="green">//</font>
-</pre>
-
 </dd>
-
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <dt id="opt_fcolor_diagnostics"><b>-f[no-]color-diagnostics</b>: </dt>
 <dd>This option, which defaults to on when a color-capable terminal is
   detected, controls whether or not Clang prints diagnostics in color.
   When this option is enabled, Clang will use colors to highlight
   specific parts of the diagnostic, e.g.,
- 
-<pre>
-<test.c:2:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
-#endif bad
-       ^
-       //
+ <pre>
+  <b><font color="black">test.c:28:8: <font color="magenta">warning</font>: extra tokens at end of #endif directive [-Wextra-tokens]</font></b>
+  #endif bad
+         <font color="green">^</font>
+         <font color="green">//</font>
 </pre>
-</dd>'
+
+<p>When this is disabled, Clang will just print:</p>
+
+<pre>
+  test.c:2:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
+  #endif bad
+         ^
+         //
+</pre>
+</dd>
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <dt id="opt_fdiagnostics-show-option"><b>-f[no-]diagnostics-show-option</b>:
 Enable <tt>[-Woption]</tt> information in diagnostic line.</dt>
