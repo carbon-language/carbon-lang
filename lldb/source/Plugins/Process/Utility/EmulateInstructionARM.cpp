@@ -108,8 +108,17 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
         if (!success)
             return false;
         uint32_t registers = 0;
-        uint32_t t; // UInt(Rt)
+        uint32_t t; // t = UInt(Rt)
         switch (encoding) {
+        case eEncodingT1:
+            registers = EmulateInstruction::UnsignedBits (opcode, 7, 0);
+            // The M bit represents LR.
+            if (EmulateInstruction::UnsignedBits (opcode, 8, 8))
+                registers |= 0x000eu;
+            // if BitCount(registers) < 1 then UNPREDICTABLE;
+            if (BitCount(registers) < 1)
+                return false;
+            break;
         case eEncodingT2:
             // Ignore bits 15 & 13.
             registers = EmulateInstruction::UnsignedBits (opcode, 15, 0) & ~0xa000;
@@ -179,6 +188,8 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 static ARMOpcode g_arm_opcodes[] =
 {
+    { 0x0000fe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, EmulateARMPushEncoding,
+      "PUSH<c> <registers>" },
     { 0xffff0000, 0xe8ad0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, EmulateARMPushEncoding,
       "PUSH<c>.W <registers> ; <registers> contains more than one register" },
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, EmulateARMPushEncoding,
