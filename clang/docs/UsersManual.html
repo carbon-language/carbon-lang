@@ -562,7 +562,7 @@ example code will tell Clang or GCC to ignore the -Wall warnings:</p>
 #pragma GCC diagnostic ignored "-Wall"
 </pre>
 
-<p>In addition to all of the functionality of provided by GCC's pragma, Clang 
+<p>In addition to all of the functionality provided by GCC's pragma, Clang 
 also allows you to push and pop the current warning state.  This is particularly
 useful when writing a header file that will be compiled by other people, because 
 you don't know what warning flags they build with.</p>
@@ -601,7 +601,7 @@ by the user via changes to the source code.  This can be done in two ways:
 attributes (e.g., <tt>__attribute__((nonnull)))</tt>) that can either suppress
 static analyzer warnings or teach the analyzer about code invariants which
 enable it to find more bugs. While many of these attributes are standard GCC
-attributes, additional ones have added to Clang to specifically support the
+attributes, additional ones have been added to Clang to specifically support the
 static analyzer. Detailed information on these annotations can be found in the
 <a href="http://clang-analyzer.llvm.org/annotations.html">analyzer's
 documentation</a>.</li>
@@ -620,7 +620,7 @@ selectively exclude code the analyzer examines.  Here is an example:
 In general, this usage is discouraged. Instead, we prefer that users file bugs
 against the analyzer when it flags false positives. There is also active
 discussion of allowing users in the future to selectively silence specific
-analyzer warnings (some which can already be done using <a
+analyzer warnings (some of which can already be done using <a
 href="analyzer_annotations">annotations</a>).</li>
 
 </ul>
@@ -639,7 +639,7 @@ Precompiled header files, which represent one of many ways to implement
 this optimization, are literally files that represent an on-disk cache that
 contains the vital information necessary to reduce some of the work
 needed to process a corresponding header file. While details of precompiled
-headers vary between compilers, precompiled headers have been shown to be a
+headers vary between compilers, precompiled headers have been shown to be
 highly effective at speeding up program compilation on systems with very large
 system headers (e.g., Mac OS/X).</p>
 
@@ -739,11 +739,11 @@ likely to affect PCH files that reference a large number of headers.</p>
 on runtime code generation to check for undefined behavior.</dt>
 
 <dd>This option, which defaults to off, controls whether or not Clang
-adds runtime checks for undefined runtime behavior.  If the check fails,
+adds runtime checks for undefined runtime behavior.  If a check fails,
 <tt>__builtin_trap()</tt> is used to indicate failure.
 The checks are:
 <p>
-<li>Subscripting where the static type of one operand is variable
+<li>Subscripting where the static type of one operand is a variable
     which is decayed from an array type and the other operand is
     greater than the size of the array or less than zero.</li>
 <li>Shift operators where the amount shifted is greater or equal to the
@@ -758,7 +758,7 @@ The checks are:
 <dt id="opt_fno-assume-sane-operator-new"><b>-fno-assume-sane-operator-new</b>:
 Don't assume that the C++'s new operator is sane.</dt>
 <dd>This option tells the compiler to do not assume that C++'s global new
-operator will always return a pointer that do not
+operator will always return a pointer that does not
 alias any other pointer when the function returns.</dd>
 
 <!-- ======================================================================= -->
@@ -884,7 +884,7 @@ bug-reporting guidelines somewhere?).</p>
 <ul>
 
 <li>clang does not support the gcc extension that allows variable-length arrays
-in structures.  This is for a few of reasons: one, it is tricky
+in structures.  This is for a few reasons: one, it is tricky
 to implement, two, the extension is completely undocumented, and three, the
 extension appears to be rarely used.  Note that clang <em>does</em> support
 flexible array members (arrays with a zero or unspecified size at the end of
