@@ -1645,11 +1645,13 @@ bool RegReductionPQBase::HighRegPressure(const SUnit *SU) const {
     // NumSuccsLeft counts all deps. Don't compare it with NumSuccs which only
     // counts data deps.  To be more precise, we could maintain a
     // NumDataSuccsLeft count.
+    /* FIXME: exposing a downstream bug, JM/lencode miscompile
     if (PredSU->NumSuccsLeft != PredSU->Succs.size()) {
       DEBUG(dbgs() << "  SU(" << PredSU->NodeNum << ") live across SU("
             << SU->NodeNum << ")\n");
       continue;
     }
+    */
     const SDNode *PN = PredSU->getNode();
     if (!PN->isMachineOpcode()) {
       if (PN->getOpcode() == ISD::CopyFromReg) {
