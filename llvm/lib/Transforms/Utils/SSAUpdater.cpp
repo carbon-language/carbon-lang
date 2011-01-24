@@ -469,6 +469,9 @@ run(const SmallVectorImpl<Instruction*> &Insts) const {
     LoadInst *ALoad = LiveInLoads[i];
     Value *NewVal = SSA.GetValueInMiddleOfBlock(ALoad->getParent());
     replaceLoadWithValue(ALoad, NewVal);
+
+    // Avoid assertions in unreachable code.
+    if (NewVal == ALoad) NewVal = UndefValue::get(NewVal->getType());
     ALoad->replaceAllUsesWith(NewVal);
     ReplacedLoads[ALoad] = NewVal;
   }
