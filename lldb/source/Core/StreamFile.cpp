@@ -95,6 +95,13 @@ StreamFile::Open (const char *path, const char *permissions)
 }
 
 void
+StreamFile::SetLineBuffered ()
+{
+    if (m_file != NULL)
+        setlinebuf (m_file);
+}
+
+void
 StreamFile::Flush ()
 {
     if (m_file)

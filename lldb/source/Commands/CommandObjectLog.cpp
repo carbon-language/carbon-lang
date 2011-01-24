@@ -113,23 +113,30 @@ public:
             std::string channel(args.GetArgumentAtIndex(0));
             args.Shift ();  // Shift off the channel
             StreamSP log_stream_sp;
-
+            StreamFile *log_file_ptr = NULL;  // This will get put in the log_stream_sp, no need to free it.
             if (m_options.log_file.empty())
             {
-                log_stream_sp.reset(new StreamFile(m_interpreter.GetDebugger().GetOutputFileHandle()));
+                log_file_ptr = new StreamFile(m_interpreter.GetDebugger().GetOutputFileHandle());
+                log_stream_sp.reset(log_file_ptr);
             }
             else
             {
                 LogStreamMap::iterator pos = m_log_streams.find(m_options.log_file);
                 if (pos == m_log_streams.end())
                 {
-                    log_stream_sp.reset (new StreamFile (m_options.log_file.c_str(), "w"));
+                    log_file_ptr = new StreamFile (m_options.log_file.c_str(), "w");
+                    log_stream_sp.reset (log_file_ptr);
                     m_log_streams[m_options.log_file] = log_stream_sp;
                 }
                 else
                     log_stream_sp = pos->second;
             }
             assert (log_stream_sp.get());
+            
+            // If we ended up making a StreamFile for log output, line buffer it.
+            if (log_file_ptr != NULL)
+                log_file_ptr->SetLineBuffered();
+                
             uint32_t log_options = m_options.log_options;
             if (log_options == 0)
                 log_options = LLDB_LOG_OPTION_PREPEND_THREAD_NAME | LLDB_LOG_OPTION_THREADSAFE;
