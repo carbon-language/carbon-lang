@@ -1621,8 +1621,10 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       // For conversion functions, we'll diagnose this particular error later.
       if ((T->isArrayType() || T->isFunctionType()) &&
           (D.getName().getKind() != UnqualifiedId::IK_ConversionFunctionId)) {
-        Diag(DeclType.Loc, diag::err_func_returning_array_function) 
-          << T->isFunctionType() << T;
+        unsigned diagID = diag::err_func_returning_array_function;
+        if (D.getContext() == Declarator::BlockLiteralContext)
+          diagID = diag::err_block_returning_array_function;
+        Diag(DeclType.Loc, diagID) << T->isFunctionType() << T;
         T = Context.IntTy;
         D.setInvalidType(true);
       }

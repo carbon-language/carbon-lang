@@ -3381,8 +3381,8 @@ def err_blocks_disable : Error<"blocks support disabled - compile with -fblocks"
 def err_expected_block_lbrace : Error<"expected '{' in block literal">;
 def err_return_in_block_expression : Error<
   "return not allowed in block expression literal">;
-def err_block_returns_array : Error<
-  "block declared as returning an array">;
+def err_block_returning_array_function : Error<
+  "block cannot return %select{array|function}0 type %1">;
 
 
 // CFString checking
