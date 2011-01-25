@@ -91,7 +91,7 @@ namespace InitVTable {
     B(int);
   };
 
-  // CHECK: define unnamed_addr void @_ZN10InitVTable1BC2Ev(
+  // CHECK: define void @_ZN10InitVTable1BC2Ev(%"struct.InitVTable::B"* %this) unnamed_addr
   // CHECK:      [[T0:%.*]] = bitcast [[B:%.*]]* [[THIS:%.*]] to i8***
   // CHECK-NEXT: store i8** getelementptr inbounds ([3 x i8*]* @_ZTVN10InitVTable1BE, i64 0, i64 2), i8*** [[T0]]
   // CHECK:      [[VTBL:%.*]] = load i32 ([[B]]*)*** {{%.*}}
@@ -104,7 +104,7 @@ namespace InitVTable {
   // CHECK-NEXT: ret void
   B::B() : A(foo()) {}
 
-  // CHECK: define unnamed_addr void @_ZN10InitVTable1BC2Ei(
+  // CHECK: define void @_ZN10InitVTable1BC2Ei(%"struct.InitVTable::B"* %this, i32 %x) unnamed_addr
   // CHECK:      [[ARG:%.*]] = add nsw i32 {{%.*}}, 5
   // CHECK-NEXT: call void @_ZN10InitVTable1AC2Ei({{.*}}* {{%.*}}, i32 [[ARG]])
   // CHECK-NEXT: [[T0:%.*]] = bitcast [[B]]* {{%.*}} to i8***
@@ -125,7 +125,7 @@ template<typename T> struct X;
 
 // Make sure that the instantiated constructor initializes start and
 // end properly.
-// CHECK: define linkonce_odr unnamed_addr void @_ZN1XIiEC2ERKS0_
+// CHECK: define linkonce_odr void @_ZN1XIiEC2ERKS0_(%struct.X* %this, %struct.X* %other) unnamed_addr
 // CHECK: {{store.*null}}
 // CHECK: {{store.*null}}
 // CHECK: ret

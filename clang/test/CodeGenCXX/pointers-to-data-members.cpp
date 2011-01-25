@@ -120,7 +120,7 @@ struct A {
   A();
 };
 
-// CHECK: define unnamed_addr void @_ZN9ValueInit1AC2Ev
+// CHECK: define void @_ZN9ValueInit1AC2Ev(%"struct.ValueInit::A"* %this) unnamed_addr
 // CHECK: store i64 -1, i64*
 // CHECK: ret void
 A::A() : a() {}

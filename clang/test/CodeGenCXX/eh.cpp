@@ -197,11 +197,11 @@ namespace test9 {
 
   struct A { A(); };
 
-  // CHECK:      define unnamed_addr void @_ZN5test91AC1Ev
+  // CHECK:      define void @_ZN5test91AC1Ev(%"struct.test10::A"* %this) unnamed_addr
   // CHECK:      call void @_ZN5test91AC2Ev
   // CHECK-NEXT: ret void
 
-  // CHECK: define unnamed_addr void @_ZN5test91AC2Ev(
+  // CHECK: define void @_ZN5test91AC2Ev(%"struct.test10::A"* %this) unnamed_addr
   A::A() try {
   // CHECK:      invoke void @_ZN5test96opaqueEv()
     opaque();

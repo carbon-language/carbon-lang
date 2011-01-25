@@ -21,7 +21,7 @@ struct P {
 };
 
 
-// CHECK: define linkonce_odr unnamed_addr void @_ZN1XC1ERKS_
+// CHECK: define linkonce_odr void @_ZN1XC1ERKS_(%struct.X* %this, %struct.X*) unnamed_addr
 struct X  : M, N, P { // ...
   X() : f1(1.0), d1(2.0), i1(3), name("HELLO"), bf1(0xff), bf2(0xabcd),
         au_i1(1234), au1_4("MASKED") {}
@@ -136,7 +136,7 @@ void f(B b1) {
   B b2 = b1;
 }
 
-// CHECK: define linkonce_odr unnamed_addr void @_ZN6PR66281BC2ERKS0_
+// CHECK: define linkonce_odr void @_ZN6PR66281BC2ERKS0_(%"struct.PR6628::B"* %this, %"struct.PR6628::B"*) unnamed_addr
 // CHECK: call void @_ZN6PR66281TC1Ev
 // CHECK: call void @_ZN6PR66281TC1Ev
 // CHECK: call void @_ZN6PR66281AC2ERKS0_RKNS_1TES5_

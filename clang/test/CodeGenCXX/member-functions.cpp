@@ -20,9 +20,9 @@ void test1() {
 
 
 struct S {
-  // RUN: grep "define linkonce_odr unnamed_addr void @_ZN1SC1Ev" %t
+  // RUN: grep "define linkonce_odr void @_ZN1SC1Ev.*unnamed_addr" %t
   inline S() { }
-  // RUN: grep "define linkonce_odr unnamed_addr void @_ZN1SC1Ev" %t
+  // RUN: grep "define linkonce_odr void @_ZN1SC1Ev.*unnamed_addr" %t
   inline ~S() { }
   
   

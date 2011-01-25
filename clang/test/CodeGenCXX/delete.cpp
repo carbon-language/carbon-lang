@@ -54,7 +54,7 @@ namespace test0 {
     delete a;
   }
 
-  // CHECK: define linkonce_odr unnamed_addr void @_ZN5test01AD1Ev
+  // CHECK: define linkonce_odr void @_ZN5test01AD1Ev(%class.A* %this) unnamed_addr
   // CHECK: define linkonce_odr void @_ZN5test01AdlEPv
 }
 
