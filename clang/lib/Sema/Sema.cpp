@@ -290,6 +290,8 @@ void Sema::ActOnEndOfTranslationUnit() {
     // this translation unit, then those vtables are considered "used" and must
     // be emitted.
     for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I) {
+      assert(!DynamicClasses[I]->isDependentType() &&
+             "Should not see dependent types here!");
       if (const CXXMethodDecl *KeyFunction
           = Context.getKeyFunction(DynamicClasses[I])) {
         const FunctionDecl *Definition = 0;

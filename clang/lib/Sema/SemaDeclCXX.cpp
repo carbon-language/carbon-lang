@@ -2746,7 +2746,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
-  if (Record->isDynamicClass())
+  if (Record->isDynamicClass() && !Record->isDependentType())
     DynamicClasses.push_back(Record);
 
   if (Record->getIdentifier()) {
