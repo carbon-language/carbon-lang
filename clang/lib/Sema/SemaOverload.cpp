@@ -2966,7 +2966,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
       ICS.Standard.setToType(2, T1);
       ICS.Standard.ReferenceBinding = true;
       ICS.Standard.DirectBinding = true;
-      ICS.Standard.RRefBinding = isRValRef;
+      ICS.Standard.RRefBinding = isRValRef && InitCategory.isRValue();
       ICS.Standard.CopyConstructor = 0;
 
       // Nothing more to do: the inaccessibility/ambiguity check for
@@ -3036,7 +3036,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     ICS.Standard.DirectBinding = 
       S.getLangOptions().CPlusPlus0x || 
       (InitCategory.isPRValue() && !T2->isRecordType());
-    ICS.Standard.RRefBinding = isRValRef;
+    ICS.Standard.RRefBinding = isRValRef && InitCategory.isRValue();
     ICS.Standard.CopyConstructor = 0;
     return ICS; 
   }

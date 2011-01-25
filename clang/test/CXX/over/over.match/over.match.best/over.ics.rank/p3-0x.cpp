@@ -15,7 +15,7 @@ namespace std_example {
   float &k2 = g2(f1());
   float &l2 = g2(f2());
 
-  // FIXME: We don't support ref-qualifiers set.
+  // FIXME: We don't support ref-qualifiers yet.
 #if 0
   struct A { 
     A& operator<<(int); 
@@ -32,4 +32,28 @@ namespace std_example {
   A().p(); 
   a.p();
 #endif
+}
+
+template<typename T>
+struct remove_reference {
+  typedef T type;
+};
+
+template<typename T>
+struct remove_reference<T&> {
+  typedef T type;
+};
+
+template<typename T>
+struct remove_reference<T&&> {
+  typedef T type;
+};
+
+namespace FunctionReferencesOverloading {
+  template<typename T> int &f(typename remove_reference<T>::type&); // expected-note{{candidate function [with T = int (&)(int)]}}
+  template<typename T> float &f(typename remove_reference<T>::type&&); // expected-note{{candidate function [with T = int (&)(int)]}}
+
+  void test_f(int (&func_ref)(int)) {
+    f<int (&)(int)>(func_ref); // expected-error{{call to 'f' is ambiguous}}
+  }
 }
