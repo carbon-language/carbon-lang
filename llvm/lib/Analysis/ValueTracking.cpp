@@ -742,7 +742,8 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
     // If X and Y are both non-negative (as signed values) then their sum is not
     // zero.
     if (XKnownNonNegative && YKnownNonNegative)
-      return true;
+      return false;
+//      return true;
 
     // If X and Y are both negative (as signed values) then their sum is not
     // zero unless both X and Y equal INT_MIN.
