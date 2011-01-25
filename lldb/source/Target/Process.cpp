@@ -555,9 +555,20 @@ Process::GetExitDescription ()
 bool
 Process::SetExitStatus (int status, const char *cstr)
 {
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf("Process::SetExitStatus (status=%i (0x%8.8x), description=%s%s%s)", 
+                    status, status,
+                    cstr ? "\"" : "",
+                    cstr ? cstr : "NULL",
+                    cstr ? "\"" : "");
+
     // We were already in the exited state
     if (m_private_state.GetValue() == eStateExited)
+    {
+        log->Printf("Process::SetExitStatus () ignoring exit status because state was already set to eStateExited");
         return false;
+    }
     
     m_exit_status = status;
     if (cstr)
@@ -621,7 +632,7 @@ Process::GetState()
 void
 Process::SetPublicState (StateType new_state)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE));
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
     if (log)
         log->Printf("Process::SetPublicState (%s)", StateAsCString(new_state));
     m_public_state.SetValue (new_state);
@@ -636,7 +647,7 @@ Process::GetPrivateState ()
 void
 Process::SetPrivateState (StateType new_state)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE));
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
     bool state_changed = false;
 
     if (log)
@@ -2111,19 +2122,22 @@ void
 Process::HandlePrivateEvent (EventSP &event_sp)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
-    const StateType internal_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+    const StateType new_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
     // See if we should broadcast this state to external clients?
     const bool should_broadcast = ShouldBroadcastEvent (event_sp.get());
-    if (log)
-        log->Printf ("Process::%s (arg = %p, pid = %i) got event '%s' broadcast = %s", __FUNCTION__, this, GetID(), StateAsCString(internal_state), should_broadcast ? "yes" : "no");
 
     if (should_broadcast)
     {
         if (log)
         {
-            log->Printf ("\tChanging public state from: %s to %s", StateAsCString(GetState ()), StateAsCString (internal_state));
+            log->Printf ("Process::%s (pid = %i) broadcasting new state %s (old state %s) to %s", 
+                         __FUNCTION__, 
+                         GetID(), 
+                         StateAsCString(new_state), 
+                         StateAsCString (GetState ()),
+                         IsHijackedForEvent(eBroadcastBitStateChanged) ? "hijacked" : "public");
         }
-        if (StateIsRunningState (internal_state))
+        if (StateIsRunningState (new_state))
             PushProcessInputReader ();
         else 
             PopProcessInputReader ();
@@ -2134,7 +2148,12 @@ Process::HandlePrivateEvent (EventSP &event_sp)
     {
         if (log)
         {
-            log->Printf ("\tNot changing public state with event: %s", StateAsCString (internal_state));
+            log->Printf ("Process::%s (pid = %i) suppressing state %s (old state %s): should_broadcast == false", 
+                         __FUNCTION__, 
+                         GetID(), 
+                         StateAsCString(new_state), 
+                         StateAsCString (GetState ()),
+                         IsHijackedForEvent(eBroadcastBitStateChanged) ? "hijacked" : "public");
         }
     }
 }
@@ -2649,7 +2668,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     {
         StreamString s;
         thread_plan_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
-        log->Printf ("Resuming thread %u - 0x%4.4x to run thread plan \"%s\".",  exe_ctx.thread->GetIndexID(), exe_ctx.thread->GetID(), s.GetData());
+        log->Printf ("Process::RunThreadPlan(): Resuming thread %u - 0x%4.4x to run thread plan \"%s\".",  exe_ctx.thread->GetIndexID(), exe_ctx.thread->GetID(), s.GetData());
     }
     
     Error resume_error = exe_ctx.process->Resume ();
@@ -2690,10 +2709,10 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             // Not really sure what to do if Halt fails here...
             if (log) {
                 if (try_all_threads)
-                    log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.",
+                    log->Printf ("Process::RunThreadPlan(): Running function with timeout: %d timed out, trying with all threads enabled.",
                                  single_thread_timeout_usec);
                 else
-                    log->Printf ("Running function with timeout: %d timed out, abandoning execution.", 
+                    log->Printf ("Process::RunThreadPlan(): Running function with timeout: %d timed out, abandoning execution.", 
                                  single_thread_timeout_usec);
             }
             
@@ -2703,7 +2722,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 timeout_ptr = NULL;
                 if (log)
-                    log->Printf ("Halt succeeded.");
+                    log->Printf ("Process::RunThreadPlan(): Halt succeeded.");
                     
                 // Between the time that we got the timeout and the time we halted, but target
                 // might have actually completed the plan.  If so, we're done.  Note, I call WFE here with a short 
@@ -2715,7 +2734,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
                     if (log)
                     {
-                        log->Printf ("Stopped with event: %s", StateAsCString(stop_state));
+                        log->Printf ("Process::RunThreadPlan(): Stopped with event: %s", StateAsCString(stop_state));
                         if (stop_state == lldb::eStateStopped && Process::ProcessEventData::GetInterruptedFromEvent(event_sp.get()))
                             log->Printf ("    Event was the Halt interruption event.");
                     }
@@ -2723,7 +2742,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
                     {
                         if (log)
-                            log->Printf ("Even though we timed out, the call plan was done.  Exiting wait loop.");
+                            log->Printf ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  Exiting wait loop.");
                         return_value = lldb::eExecutionCompleted;
                         break;
                     }
@@ -2734,7 +2753,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         
                         thread_plan_sp->SetStopOthers (false);
                         if (log)
-                            log->Printf ("About to resume.");
+                            log->Printf ("Process::RunThreadPlan(): About to resume.");
 
                         exe_ctx.process->Resume();
                         continue;
@@ -2750,7 +2769,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 
                 if (log)
-                    log->Printf ("Halt failed: \"%s\", I'm just going to wait a little longer and see if the world gets nicer to me.", 
+                    log->Printf ("Process::RunThreadPlan(): halt failed: error = \"%s\", I'm just going to wait a little longer and see if the world gets nicer to me.", 
                                  halt_error.AsCString());
 //                abort();
                 
@@ -2767,18 +2786,22 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         
         stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
         if (log)
-            log->Printf("Got event: %s.", StateAsCString(stop_state));
+            log->Printf("Process::RunThreadPlan(): got event: %s.", StateAsCString(stop_state));
         
         if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
             continue;
         
         if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
         {
+            if (log)
+                log->Printf("Process::RunThreadPlan(): thread plan is done");
             return_value = lldb::eExecutionCompleted;
             break;
         }
         else if (exe_ctx.thread->WasThreadPlanDiscarded (thread_plan_sp.get()))
         {
+            if (log)
+                log->Printf("Process::RunThreadPlan(): thread plan was discarded");
             return_value = lldb::eExecutionDiscarded;
             break;
         }
@@ -2791,7 +2814,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     event_sp->Dump (&s);
                 else
                 {
-                    log->Printf ("Stop event that interrupted us is NULL.");
+                    log->Printf ("Process::RunThreadPlan(): Stop event that interrupted us is NULL.");
                 }
 
                 StreamString ts;
@@ -2860,7 +2883,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 if (!GetThreadList().ShouldStop(event_sp.get()))
                 {
                     if (log)
-                        log->Printf("Execution interrupted, but nobody wanted to stop, so we continued: %s %s", 
+                        log->Printf("Process::RunThreadPlan(): execution interrupted, but nobody wanted to stop, so we continued: %s %s", 
                                     s.GetData(), event_explanation);
                     if (single_thread_timeout_usec != 0)
                     {
@@ -2874,7 +2897,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 else
                 {
                     if (log)
-                        log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
+                        log->Printf("Process::RunThreadPlan(): execution interrupted: %s %s", s.GetData(), event_explanation);
                 }
             }
             

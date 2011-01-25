@@ -213,6 +213,18 @@ public:
     {
         m_fake = fake;
     }
+    
+    bool
+    IsEncrypted () const
+    {
+        return m_encrypted;
+    }
+    
+    void
+    SetIsEncrypted (bool b)
+    {
+        m_encrypted = b;
+    }
 
     bool
     IsDescendant (const Section *section);
@@ -273,10 +285,11 @@ protected:
     uint64_t        m_file_offset;      // Object file offset (if any)
     uint64_t        m_file_size;        // Object file size (can be smaller than m_byte_size for zero filled sections...)
     SectionList     m_children;         // Child sections
-    bool            m_fake;             // If true, then this section only can contain the address if one of its
+    bool            m_fake:1,           // If true, then this section only can contain the address if one of its
                                         // children contains an address. This allows for gaps between the children
                                         // that are contained in the address range for this section, but do not produce
                                         // hits unless the children contain the address.
+                    m_encrypted:1;      // Set to true if the contents are encrypted
     const Section * m_linked_section;
     uint64_t        m_linked_offset;
 private:

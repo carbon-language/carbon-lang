@@ -222,6 +222,14 @@ protected:
     bool
     HijackBroadcaster (Listener *listener, uint32_t event_mask = UINT32_MAX);
     
+    bool
+    IsHijackedForEvent (uint32_t event_mask)
+    {
+        if (m_hijacking_listener)
+            return (event_mask & m_hijacking_mask) != 0;
+        return false;
+    }
+
     //------------------------------------------------------------------
     /// Restore the state of the Broadcaster from a previous hijack attempt.
     ///

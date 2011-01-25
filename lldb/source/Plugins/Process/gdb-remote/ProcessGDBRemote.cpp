@@ -1175,7 +1175,6 @@ ProcessGDBRemote::InterruptIfRunning
 (
     bool discard_thread_plans, 
     bool catch_stop_event, 
-    bool resume_private_state_thread,
     EventSP &stop_event_sp
 )
 {
@@ -1183,21 +1182,14 @@ ProcessGDBRemote::InterruptIfRunning
 
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     
+    bool paused_private_state_thread = false;
     const bool is_running = m_gdb_comm.IsRunning();
     if (log)
-        log->Printf ("ProcessGDBRemote::InterruptIfRunning(discard_thread_plans=%i, catch_stop_event=%i, resume_private_state_thread=%i) is_running=%i", 
+        log->Printf ("ProcessGDBRemote::InterruptIfRunning(discard_thread_plans=%i, catch_stop_event=%i) is_running=%i", 
                      discard_thread_plans, 
-                     catch_stop_event, 
-                     resume_private_state_thread,
+                     catch_stop_event,
                      is_running);
 
-    if (catch_stop_event)
-    {
-        if (log)
-            log->Printf ("ProcessGDBRemote::InterruptIfRunning() pausing private state thread");
-        PausePrivateStateThread();
-    }
-    
     if (discard_thread_plans)
     {
         if (log)
@@ -1206,6 +1198,14 @@ ProcessGDBRemote::InterruptIfRunning
     }
     if (is_running)
     {
+        if (catch_stop_event)
+        {
+            if (log)
+                log->Printf ("ProcessGDBRemote::InterruptIfRunning() pausing private state thread");
+            PausePrivateStateThread();
+            paused_private_state_thread = true;
+        }
+
         bool timed_out = false;
         bool sent_interrupt = false;
         Mutex::Locker locker;
@@ -1217,17 +1217,18 @@ ProcessGDBRemote::InterruptIfRunning
                 error.SetErrorString("timed out sending interrupt packet");
             else
                 error.SetErrorString("unknown error sending interrupt packet");
-            if (catch_stop_event)
+            if (paused_private_state_thread)
                 ResumePrivateStateThread();
             return error;
         }
         
         if (catch_stop_event)
         {
+            // LISTEN HERE
             TimeValue timeout_time;
             timeout_time = TimeValue::Now();
-            timeout_time.OffsetWithSeconds(1);
-            StateType state = WaitForProcessStopPrivate (&timeout_time, stop_event_sp);
+            timeout_time.OffsetWithSeconds(5);
+            StateType state = WaitForStateChangedEventsPrivate (&timeout_time, stop_event_sp);
     
             const bool timed_out = state == eStateInvalid;
             if (log)
@@ -1237,7 +1238,7 @@ ProcessGDBRemote::InterruptIfRunning
                 error.SetErrorString("unable to verify target stopped");
         }
         
-        if (catch_stop_event && resume_private_state_thread)
+        if (paused_private_state_thread)
         {
             if (log)
                 log->Printf ("ProcessGDBRemote::InterruptIfRunning() resuming private state thread");
@@ -1256,9 +1257,8 @@ ProcessGDBRemote::WillDetach ()
 
     bool discard_thread_plans = true; 
     bool catch_stop_event = true;
-    bool resume_private_state_thread = false; // DoDetach will resume the thread
     EventSP event_sp;
-    return InterruptIfRunning (discard_thread_plans, catch_stop_event, resume_private_state_thread, event_sp);
+    return InterruptIfRunning (discard_thread_plans, catch_stop_event, event_sp);
 }
 
 Error
@@ -1295,21 +1295,6 @@ ProcessGDBRemote::DoDetach()
 }
 
 Error
-ProcessGDBRemote::WillDestroy ()
-{
-    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
-    if (log)
-        log->Printf ("ProcessGDBRemote::WillDestroy()");
-    bool discard_thread_plans = true; 
-    bool catch_stop_event = true;
-    bool resume_private_state_thread = true;
-    EventSP event_sp;
-    return InterruptIfRunning (discard_thread_plans, catch_stop_event, resume_private_state_thread, event_sp);
-    
-
-}
-
-Error
 ProcessGDBRemote::DoDestroy ()
 {
     Error error;
@@ -1320,38 +1305,11 @@ ProcessGDBRemote::DoDestroy ()
     // Interrupt if our inferior is running...
     if (m_gdb_comm.IsConnected())
     {
-        m_continue_packet.Clear();
-        m_continue_packet.Printf("k");
-        Listener listener ("gdb-remote.kill-packet-sent");
-        if (listener.StartListeningForEvents (&m_gdb_comm, GDBRemoteCommunication::eBroadcastBitRunPacketSent))
+        StringExtractorGDBRemote response;
+        bool send_async = true;
+        if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, 3, send_async) == 0)
         {
-            EventSP event_sp;
-            TimeValue timeout;
-            timeout = TimeValue::Now();
-            timeout.OffsetWithSeconds (1);
-            m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (m_continue_packet.GetData(), m_continue_packet.GetSize()));
-
-            // Wait for the async thread to send the "k" packet
-            if (listener.WaitForEvent (&timeout, event_sp))
-            {
-                if (log)
-                    log->Printf ("ProcessGDBRemote::DoDestroy() got confirmation the \"k\" packet was sent");
-            }
-            else
-            {
-                if (log)
-                    log->Printf ("ProcessGDBRemote::DoDestroy() timed out waiting for \"k\" packet to be sent");
-                error.SetErrorString("Resume timed out.");
-            }
-            
-            // Wait for the async thread to exit which will indicate we stopped.
-            // Hopefully the stop will be a process exited state since we are
-            // asking the process to go away.
-            if (!m_gdb_comm.WaitForNotRunning (&timeout))
-            {
-                if (log)
-                    log->Printf ("ProcessGDBRemote::DoDestroy() timed out waiting for \"k\" stop reply packet");
-            }
+            error.SetErrorString("kill packet failed");
         }
     }
     StopAsyncThread ();
