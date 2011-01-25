@@ -677,10 +677,6 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
         case eValueTypeScalar:               // raw scalar value
             break;
 
-        case eContextTypeValue:
-            m_value.Clear();    // TODO: Sean, fill this in
-            break;
-
         default:
         case eValueTypeFileAddress:
             m_value.Clear();
