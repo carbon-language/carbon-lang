@@ -2560,6 +2560,17 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
     if (!unwrapped.isFunctionType())
       return false;
 
+    // Diagnose regparm with fastcall.
+    const FunctionType *fn = unwrapped.get();
+    CallingConv CC = fn->getCallConv();
+    if (CC == CC_X86FastCall) {
+      S.Diag(attr.getLoc(), diag::err_attributes_are_not_compatible)
+        << FunctionType::getNameForCallConv(CC)
+        << "regparm";
+      attr.setInvalid();
+      return true;
+    }
+
     FunctionType::ExtInfo EI = 
       unwrapped.get()->getExtInfo().withRegParm(value);
     type = unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
@@ -2578,7 +2589,8 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
   CallingConv CCOld = fn->getCallConv();
   if (S.Context.getCanonicalCallConv(CC) ==
       S.Context.getCanonicalCallConv(CCOld)) {
-    attr.setInvalid();
+    FunctionType::ExtInfo EI= unwrapped.get()->getExtInfo().withCallingConv(CC);
+    type = unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
     return true;
   }
 
@@ -2603,6 +2615,15 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
     const FunctionProtoType *FnP = cast<FunctionProtoType>(fn);
     if (FnP->isVariadic()) {
       S.Diag(attr.getLoc(), diag::err_cconv_varargs)
+        << FunctionType::getNameForCallConv(CC);
+      attr.setInvalid();
+      return true;
+    }
+
+    // Also diagnose fastcall with regparm.
+    if (fn->getRegParmType()) {
+      S.Diag(attr.getLoc(), diag::err_attributes_are_not_compatible)
+        << "regparm"
         << FunctionType::getNameForCallConv(CC);
       attr.setInvalid();
       return true;
