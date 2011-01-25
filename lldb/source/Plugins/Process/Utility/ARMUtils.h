@@ -50,6 +50,30 @@ namespace lldb_private {
 #define MASK_CPSR_N         (1u << 31)
 
 
+static inline uint32_t bits(const uint32_t val, const uint32_t msbit, const uint32_t lsbit)
+{
+    assert(msbit < 32 && lsbit <= msbit);
+    return (val >> lsbit) & ((1u << (msbit - lsbit + 1)) - 1);
+}
+
+static inline uint32_t bit(const uint32_t val, const uint32_t msbit)
+{
+    return bits(val, msbit, msbit);
+}
+
+static inline uint32_t ARMExpandImm(uint32_t imm12)
+{
+    uint32_t imm = bits(imm12, 7, 0);      // immediate value
+    uint32_t rot = 2 * bits(imm12, 11, 8); // rotate amount
+    return (imm >> rot) | (imm << (32 - rot));
+}
+
+// Convenience function for ARMExpandImm(imm12).
+static inline uint32_t ARMExpand(uint32_t val)
+{
+    return ARMExpandImm(bits(val, 11, 0));
+}
+
 // This function performs the check for the register numbers 13 and 15 that are
 // not permitted for many Thumb register specifiers.
 static inline bool BadReg(uint32_t n) { return n == 13 || n == 15; }

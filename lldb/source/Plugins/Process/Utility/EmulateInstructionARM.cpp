@@ -191,7 +191,61 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
-// A store operation to the SP that also updates the SP.
+// A sub operation to adjust the SP -- allocate space for local storage.
+static bool
+emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), ‘1’);
+        if d == 15 then // Can only occur for ARM encoding
+                    ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        uint32_t imm32;
+        switch (encoding) {
+        case eEncodingA1:
+            imm32 = ARMExpand(opcode); // imm32 = ARMExpandImm(imm12)
+            break;
+        default:
+            return false;
+        }
+        addr_t sp_offset = imm32;
+        addr_t addr = sp - sp_offset; // the adjusted stack pointer value
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextAdjustStackPointer,
+                                                eRegisterKindGeneric,
+                                                LLDB_REGNUM_GENERIC_SP,
+                                                sp_offset };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
+            return false;
+    }
+    return true;
+}
+
+// A store operation to the stacks that also updates the SP.
 static bool
 emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 {
@@ -267,23 +321,27 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 static ARMOpcode g_arm_opcodes[] =
 {
     { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, emulate_push,
-      "push<c> <registers> ; <registers> contains more than one register" },
+      "push <registers> ; <registers> contains more than one register" },
     { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, emulate_push,
-      "push<c> <registers> ; <registers> contains one register, <Rt>" },
+      "push <registers> ; <registers> contains one register, <Rt>" },
+
+    // adjust the stack pointer
+    { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_sp_imm,
+      "sub sp, sp, #n"},
 
     // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
     { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp,
-      "str<c><q> Rt, [sp, #-n]!" }
+      "str Rt, [sp, #-n]!" }
 };
 
 static ARMOpcode g_thumb_opcodes[] =
 {
     { 0x0000fe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push,
-      "push<c> <registers>" },
+      "push <registers>" },
     { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push,
-      "push<c>.w <registers> ; <registers> contains more than one register" },
+      "push.w <registers> ; <registers> contains more than one register" },
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push,
-      "push<c>.w <registers> ; <registers> contains one register, <Rt>" }
+      "push.w <registers> ; <registers> contains one register, <Rt>" }
 };
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
