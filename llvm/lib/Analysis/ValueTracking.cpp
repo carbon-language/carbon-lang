@@ -24,9 +24,22 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/PatternMatch.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <cstring>
 using namespace llvm;
+using namespace llvm::PatternMatch;
+
+const unsigned MaxDepth = 6;
+
+/// getBitWidth - Returns the bitwidth of the given scalar or pointer type (if
+/// unknown returns 0).  For vector types, returns the element type's bitwidth.
+static unsigned getBitWidth(const Type *Ty, const TargetData *TD) {
+  if (unsigned BitWidth = Ty->getScalarSizeInBits())
+    return BitWidth;
+  assert(isa<PointerType>(Ty) && "Expected a pointer type!");
+  return TD ? TD->getPointerSizeInBits() : 0;
+}
 
 /// ComputeMaskedBits - Determine which of the bits specified in Mask are
 /// known to be either zero or one and return them in the KnownZero/KnownOne
@@ -47,7 +60,6 @@ using namespace llvm;
 void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                              APInt &KnownZero, APInt &KnownOne,
                              const TargetData *TD, unsigned Depth) {
-  const unsigned MaxDepth = 6;
   assert(V && "No Value?");
   assert(Depth <= MaxDepth && "Limit Search Depth");
   unsigned BitWidth = Mask.getBitWidth();
@@ -618,6 +630,157 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     }
     break;
   }
+}
+
+/// ComputeSignBit - Determine whether the sign bit is known to be zero or
+/// one.  Convenience wrapper around ComputeMaskedBits.
+void llvm::ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
+                          const TargetData *TD, unsigned Depth) {
+  unsigned BitWidth = getBitWidth(V->getType(), TD);
+  if (!BitWidth) {
+    KnownZero = false;
+    KnownOne = false;
+    return;
+  }
+  APInt ZeroBits(BitWidth, 0);
+  APInt OneBits(BitWidth, 0);
+  ComputeMaskedBits(V, APInt::getSignBit(BitWidth), ZeroBits, OneBits, TD,
+                    Depth);
+  KnownOne = OneBits[BitWidth - 1];
+  KnownZero = ZeroBits[BitWidth - 1];
+}
+
+/// isPowerOfTwo - Return true if the given value is known to have exactly one
+/// bit set when defined. For vectors return true if every element is known to
+/// be a power of two when defined.  Supports values with integer or pointer
+/// types and vectors of integers.
+bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
+    return CI->getValue().countPopulation() == 1;
+  // TODO: Handle vector constants.
+
+  // 1 << X is clearly a power of two if the one is not shifted off the end.  If
+  // it is shifted off the end then the result is undefined.
+  if (match(V, m_Shl(m_One(), m_Value())))
+    return true;
+
+  // (signbit) >>l X is clearly a power of two if the one is not shifted off the
+  // bottom.  If it is shifted off the bottom then the result is undefined.
+  ConstantInt *CI;
+  if (match(V, m_LShr(m_ConstantInt(CI), m_Value())) &&
+      CI->getValue().isSignBit())
+    return true;
+
+  // The remaining tests are all recursive, so bail out if we hit the limit.
+  if (Depth++ == MaxDepth)
+    return false;
+
+  if (ZExtInst *ZI = dyn_cast<ZExtInst>(V))
+    return isPowerOfTwo(ZI->getOperand(0), TD, Depth);
+
+  if (SelectInst *SI = dyn_cast<SelectInst>(V))
+    return isPowerOfTwo(SI->getTrueValue(), TD, Depth) &&
+      isPowerOfTwo(SI->getFalseValue(), TD, Depth);
+
+  return false;
+}
+
+/// isKnownNonZero - Return true if the given value is known to be non-zero
+/// when defined.  For vectors return true if every element is known to be
+/// non-zero when defined.  Supports values with integer or pointer type and
+/// vectors of integers.
+bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
+  if (Constant *C = dyn_cast<Constant>(V)) {
+    if (C->isNullValue())
+      return false;
+    if (isa<ConstantInt>(C))
+      // Must be non-zero due to null test above.
+      return true;
+    // TODO: Handle vectors
+    return false;
+  }
+
+  // The remaining tests are all recursive, so bail out if we hit the limit.
+  if (Depth++ == MaxDepth)
+    return false;
+
+  unsigned BitWidth = getBitWidth(V->getType(), TD);
+
+  // X | Y != 0 if X != 0 or Y != 0.
+  Value *X = 0, *Y = 0;
+  if (match(V, m_Or(m_Value(X), m_Value(Y))))
+    return isKnownNonZero(X, TD, Depth) || isKnownNonZero(Y, TD, Depth);
+
+  // ext X != 0 if X != 0.
+  if (isa<SExtInst>(V) || isa<ZExtInst>(V))
+    return isKnownNonZero(cast<Instruction>(V)->getOperand(0), TD, Depth);
+
+  // shl X, A != 0 if X is odd.  Note that the value of the shift is undefined
+  // if the lowest bit is shifted off the end.
+  if (BitWidth && match(V, m_Shl(m_Value(X), m_Value(Y)))) {
+    APInt KnownZero(BitWidth, 0);
+    APInt KnownOne(BitWidth, 0);
+    ComputeMaskedBits(V, APInt(BitWidth, 1), KnownZero, KnownOne, TD, Depth);
+    if (KnownOne[0])
+      return true;
+  }
+  // shr X, A != 0 if X is negative.  Note that the value of the shift is not
+  // defined if the sign bit is shifted off the end.
+  else if (match(V, m_Shr(m_Value(X), m_Value(Y)))) {
+    bool XKnownNonNegative, XKnownNegative;
+    ComputeSignBit(X, XKnownNonNegative, XKnownNegative, TD, Depth);
+    if (XKnownNegative)
+      return true;
+  }
+  // X + Y.
+  else if (match(V, m_Add(m_Value(X), m_Value(Y)))) {
+    bool XKnownNonNegative, XKnownNegative;
+    bool YKnownNonNegative, YKnownNegative;
+    ComputeSignBit(X, XKnownNonNegative, XKnownNegative, TD, Depth);
+    ComputeSignBit(Y, YKnownNonNegative, YKnownNegative, TD, Depth);
+
+    // If X and Y are both non-negative (as signed values) then their sum is not
+    // zero.
+    if (XKnownNonNegative && YKnownNonNegative)
+      return true;
+
+    // If X and Y are both negative (as signed values) then their sum is not
+    // zero unless both X and Y equal INT_MIN.
+    if (BitWidth && XKnownNegative && YKnownNegative) {
+      APInt KnownZero(BitWidth, 0);
+      APInt KnownOne(BitWidth, 0);
+      APInt Mask = APInt::getSignedMaxValue(BitWidth);
+      // The sign bit of X is set.  If some other bit is set then X is not equal
+      // to INT_MIN.
+      ComputeMaskedBits(X, Mask, KnownZero, KnownOne, TD, Depth);
+      if ((KnownOne & Mask) != 0)
+        return true;
+      // The sign bit of Y is set.  If some other bit is set then Y is not equal
+      // to INT_MIN.
+      ComputeMaskedBits(Y, Mask, KnownZero, KnownOne, TD, Depth);
+      if ((KnownOne & Mask) != 0)
+        return true;
+    }
+
+    // The sum of a non-negative number and a power of two is not zero.
+    if (XKnownNonNegative && isPowerOfTwo(Y, TD, Depth))
+      return true;
+    if (YKnownNonNegative && isPowerOfTwo(X, TD, Depth))
+      return true;
+  }
+  // (C ? X : Y) != 0 if X != 0 and Y != 0.
+  else if (SelectInst *SI = dyn_cast<SelectInst>(V)) {
+    if (isKnownNonZero(SI->getTrueValue(), TD, Depth) &&
+        isKnownNonZero(SI->getFalseValue(), TD, Depth))
+      return true;
+  }
+
+  if (!BitWidth) return false;
+  APInt KnownZero(BitWidth, 0);
+  APInt KnownOne(BitWidth, 0);
+  ComputeMaskedBits(V, APInt::getAllOnesValue(BitWidth), KnownZero, KnownOne,
+                    TD, Depth);
+  return KnownOne != 0;
 }
 
 /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use

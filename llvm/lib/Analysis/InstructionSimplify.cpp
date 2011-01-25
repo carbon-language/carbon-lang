@@ -22,6 +22,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Target/TargetData.h"
@@ -1153,7 +1154,69 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
-  // See if we are doing a comparison with a constant.
+  // icmp <alloca*>, <global/alloca*/null> - Different stack variables have
+  // different addresses, and what's more the address of a stack variable is
+  // never null or equal to the address of a global.  Note that generalizing
+  // to the case where LHS is a global variable address or null is pointless,
+  // since if both LHS and RHS are constants then we already constant folded
+  // the compare, and if only one of them is then we moved it to RHS already.
+  if (isa<AllocaInst>(LHS) && (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) ||
+                               isa<ConstantPointerNull>(RHS)))
+    // We already know that LHS != LHS.
+    return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
+
+  // If we are comparing with zero then try hard since this is a common case.
+  if (match(RHS, m_Zero())) {
+    bool LHSKnownNonNegative, LHSKnownNegative;
+    switch (Pred) {
+    default:
+      assert(false && "Unknown ICmp predicate!");
+    case ICmpInst::ICMP_ULT:
+      return ConstantInt::getFalse(LHS->getContext());
+    case ICmpInst::ICMP_UGE:
+      return ConstantInt::getTrue(LHS->getContext());
+    case ICmpInst::ICMP_EQ:
+    case ICmpInst::ICMP_ULE:
+      if (isKnownNonZero(LHS, TD))
+        return ConstantInt::getFalse(LHS->getContext());
+      break;
+    case ICmpInst::ICMP_NE:
+    case ICmpInst::ICMP_UGT:
+      if (isKnownNonZero(LHS, TD))
+        return ConstantInt::getTrue(LHS->getContext());
+      break;
+    case ICmpInst::ICMP_SLT:
+      ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
+      if (LHSKnownNegative)
+        return ConstantInt::getTrue(LHS->getContext());
+      if (LHSKnownNonNegative)
+        return ConstantInt::getFalse(LHS->getContext());
+      break;
+    case ICmpInst::ICMP_SLE:
+      ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
+      if (LHSKnownNegative)
+        return ConstantInt::getTrue(LHS->getContext());
+      if (LHSKnownNonNegative && isKnownNonZero(LHS, TD))
+        return ConstantInt::getFalse(LHS->getContext());
+      break;
+    case ICmpInst::ICMP_SGE:
+      ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
+      if (LHSKnownNegative)
+        return ConstantInt::getFalse(LHS->getContext());
+      if (LHSKnownNonNegative)
+        return ConstantInt::getTrue(LHS->getContext());
+      break;
+    case ICmpInst::ICMP_SGT:
+      ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
+      if (LHSKnownNegative)
+        return ConstantInt::getFalse(LHS->getContext());
+      if (LHSKnownNonNegative && isKnownNonZero(LHS, TD))
+        return ConstantInt::getTrue(LHS->getContext());
+      break;
+    }
+  }
+
+  // See if we are doing a comparison with a constant integer.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
     switch (Pred) {
     default: break;
@@ -1191,17 +1254,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       break;
     }
   }
-
-  // icmp <alloca*>, <global/alloca*/null> - Different stack variables have
-  // different addresses, and what's more the address of a stack variable is
-  // never null or equal to the address of a global.  Note that generalizing
-  // to the case where LHS is a global variable address or null is pointless,
-  // since if both LHS and RHS are constants then we already constant folded
-  // the compare, and if only one of them is then we moved it to RHS already.
-  if (isa<AllocaInst>(LHS) && (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) ||
-                               isa<ConstantPointerNull>(RHS)))
-    // We already know that LHS != LHS.
-    return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
 
   // Compare of cast, for example (zext X) != 0 -> X != 0
   if (isa<CastInst>(LHS) && (isa<Constant>(RHS) || isa<CastInst>(RHS))) {

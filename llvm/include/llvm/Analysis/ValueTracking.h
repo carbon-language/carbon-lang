@@ -39,6 +39,23 @@ namespace llvm {
                          APInt &KnownOne, const TargetData *TD = 0,
                          unsigned Depth = 0);
   
+  /// ComputeSignBit - Determine whether the sign bit is known to be zero or
+  /// one.  Convenience wrapper around ComputeMaskedBits.
+  void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
+                      const TargetData *TD = 0, unsigned Depth = 0);
+
+  /// isPowerOfTwo - Return true if the given value is known to have exactly one
+  /// bit set when defined. For vectors return true if every element is known to
+  /// be a power of two when defined.  Supports values with integer or pointer
+  /// type and vectors of integers.
+  bool isPowerOfTwo(Value *V, const TargetData *TD = 0, unsigned Depth = 0);
+
+  /// isKnownNonZero - Return true if the given value is known to be non-zero
+  /// when defined.  For vectors return true if every element is known to be
+  /// non-zero when defined.  Supports values with integer or pointer type and
+  /// vectors of integers.
+  bool isKnownNonZero(Value *V, const TargetData *TD = 0, unsigned Depth = 0);
+
   /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
   /// this predicate to simplify operations downstream.  Mask is known to be
   /// zero for bits that V cannot have.
