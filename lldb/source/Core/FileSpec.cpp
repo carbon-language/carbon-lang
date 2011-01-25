@@ -497,29 +497,33 @@ FileSpec::ResolveExecutableLocation ()
 {
     if (!m_directory)
     {
-        const std::string file_str (m_filename.AsCString());
-        llvm::sys::Path path = llvm::sys::Program::FindProgramByName (file_str);
-        const std::string &path_str = path.str();
-        llvm::StringRef dir_ref = llvm::sys::path::parent_path(path_str);
-        //llvm::StringRef dir_ref = path.getDirname();
-        if (! dir_ref.empty())
+        const char *file_cstr = m_filename.GetCString();
+        if (file_cstr)
         {
-            // FindProgramByName returns "." if it can't find the file.
-            if (strcmp (".", dir_ref.data()) == 0)
-                return false;
-
-            m_directory.SetCString (dir_ref.data());
-            if (Exists())
-                return true;
-            else
+            const std::string file_str (file_cstr);
+            llvm::sys::Path path = llvm::sys::Program::FindProgramByName (file_str);
+            const std::string &path_str = path.str();
+            llvm::StringRef dir_ref = llvm::sys::path::parent_path(path_str);
+            //llvm::StringRef dir_ref = path.getDirname();
+            if (! dir_ref.empty())
             {
-                // If FindProgramByName found the file, it returns the directory + filename in its return results.
-                // We need to separate them.
-                FileSpec tmp_file (dir_ref.data(), false);
-                if (tmp_file.Exists())
-                {
-                    m_directory = tmp_file.m_directory;
+                // FindProgramByName returns "." if it can't find the file.
+                if (strcmp (".", dir_ref.data()) == 0)
+                    return false;
+
+                m_directory.SetCString (dir_ref.data());
+                if (Exists())
                     return true;
+                else
+                {
+                    // If FindProgramByName found the file, it returns the directory + filename in its return results.
+                    // We need to separate them.
+                    FileSpec tmp_file (dir_ref.data(), false);
+                    if (tmp_file.Exists())
+                    {
+                        m_directory = tmp_file.m_directory;
+                        return true;
+                    }
                 }
             }
         }
