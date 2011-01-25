@@ -40,12 +40,12 @@ class ThreadsStackTracesTestCase(TestBase):
         if not rc.Success() or not self.process.IsValid():
             self.fail("SBTarget.LaunchProcess() failed")
 
+        import lldbutil
         if self.process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
                       lldbutil.StateTypeString(self.process.GetState()))
 
-        import lldbutil
         lldbutil.PrintStackTraces(self.process)
 
 
