@@ -169,7 +169,9 @@ public:
                   DeclarationName Entity) : Self(Self) {
       OldLocation = Self.getDerived().getBaseLocation();
       OldEntity = Self.getDerived().getBaseEntity();
-      Self.getDerived().setBase(Location, Entity);
+      
+      if (Location.isValid())
+        Self.getDerived().setBase(Location, Entity);
     }
 
     ~TemporaryBase() {
