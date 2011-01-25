@@ -133,7 +133,8 @@ bool
 Thread::RestoreThreadStateFromCheckpoint (ThreadStateCheckpoint &saved_state)
 {
     RestoreSaveFrameZero(saved_state.register_backup);
-    saved_state.stop_info_sp->MakeStopInfoValid();
+    if (saved_state.stop_info_sp)
+        saved_state.stop_info_sp->MakeStopInfoValid();
     SetStopInfo(saved_state.stop_info_sp);
     return true;
 }
