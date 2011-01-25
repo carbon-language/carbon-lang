@@ -133,30 +133,24 @@ namespace clang {
     /// Deprecated - Whether this the deprecated conversion of a
     /// string literal to a pointer to non-const character data
     /// (C++ 4.2p2).
-    unsigned DeprecatedStringLiteralToCharPtr : 1;
+    bool DeprecatedStringLiteralToCharPtr : 1;
 
     /// IncompatibleObjC - Whether this is an Objective-C conversion
     /// that we should warn about (if we actually use it).
-    unsigned IncompatibleObjC : 1;
+    bool IncompatibleObjC : 1;
 
     /// ReferenceBinding - True when this is a reference binding
     /// (C++ [over.ics.ref]).
-    unsigned ReferenceBinding : 1;
+    bool ReferenceBinding : 1;
 
     /// DirectBinding - True when this is a reference binding that is a
     /// direct binding (C++ [dcl.init.ref]).
-    unsigned DirectBinding : 1;
+    bool DirectBinding : 1;
 
-    /// \brief Whether this is an lvalue reference binding (otherwise, it's
-    /// an rvalue reference binding).
-    unsigned IsLvalueReference : 1;
-    
-    /// \brief Whether we're binding to a function lvalue.
-    unsigned BindsToFunctionLvalue : 1;
-    
-    /// \brief Whether we're binding to an rvalue.
-    unsigned BindsToRvalue : 1;
-    
+    /// RRefBinding - True when this is a reference binding of an rvalue
+    /// reference to an rvalue (C++0x [over.ics.rank]p3b4).
+    bool RRefBinding : 1;
+
     /// FromType - The type that this conversion is converting
     /// from. This is an opaque pointer that can be translated into a
     /// QualType.
