@@ -739,6 +739,51 @@ placed at the end of function prototypes:</p>
 
 <p>Query for this feature with __has_feature(attribute_analyzer_noreturn).</p>
 
+<h4 id="attr_retain_release">Objective-C retaining behavior attributes</h4>
+
+<p>In Objective-C, functions and methods are generally assumed to take
+and return objects with +0 retain counts, with some exceptions for
+special methods like <tt>+alloc</tt> and <tt>init</tt>.  However,
+there are exceptions, and so Clang provides attributes to allow these
+exceptions to be documented, which helps the analyzer find leaks (and
+ignore non-leaks).</p>
+
+<p><b>Usage</b>: The <tt>ns_returns_retained</tt>, <tt>ns_returns_not_retained</tt>,
+<tt>ns_returns_autoreleased</tt>, <tt>cf_returns_retained</tt>,
+and <tt>cf_returns_not_retained</tt> attributes can be placed on
+methods and functions that return Objective-C or CoreFoundation
+objects.  They are commonly placed at the end of a function prototype
+or method declaration:</p>
+
+<pre>
+  id foo() <b>__attribute__((ns_returns_retained))</b>;
+
+  - (NSString*) bar: (int) x <b>__attribute__((ns_returns_retained))</b>;
+</pre>
+
+<p>The <tt>*_returns_retained</tt> attributes specify that the
+returned object has a +1 retain count.
+The <tt>*_returns_not_retained</tt> attributes specify that the return
+object has a +0 retain count, even if the normal convention for its
+selector would be +1.  <tt>ns_returns_autoreleased</tt> specifies that the
+returned object is +0, but is guaranteed to live at least as long as the
+next flush of an autorelease pool.</p>
+
+<p><b>Usage</b>: The <tt>ns_consumed</tt> and <tt>cf_consumed</tt>
+attributes can be placed on an parameter declaration; they specify
+that the argument is expected to have a +1 retain count, which will be
+balanced in some way by the function or method.
+The <tt>ns_consumes_self</tt> attribute can only be placed on an
+Objective-C method; it specifies that the method expects
+its <tt>self</tt> parameter to have a +1 retain count, which it will
+balance in some way.</p>
+
+<pre>
+  void <b>foo(__attribute__((ns_consumed))</b> NSString *string);
+
+  - (void) bar <b>__attribute__((ns_consumes_self))</b>;
+  - (void) baz: (id) <b>__attribute__((ns_consumed))</b> x;
+</pre>
 
 </div>
 </body>
