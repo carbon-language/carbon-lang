@@ -285,6 +285,18 @@ const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
   return getPersistentState(State);
 }
 
+void GRStateManager::recycleUnusedStates() {
+  for (std::vector<GRState*>::iterator i = recentlyAllocatedStates.begin(),
+       e = recentlyAllocatedStates.end(); i != e; ++i) {
+    GRState *state = *i;
+    if (state->referencedByExplodedNode())
+      continue;
+    StateSet.RemoveNode(state);
+    freeStates.push_back(state);
+  }
+  recentlyAllocatedStates.clear();
+}
+
 const GRState* GRStateManager::getPersistentState(GRState& State) {
 
   llvm::FoldingSetNodeID ID;
@@ -294,10 +306,18 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
   if (GRState* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
     return I;
 
-  GRState* I = (GRState*) Alloc.Allocate<GRState>();
-  new (I) GRState(State);
-  StateSet.InsertNode(I, InsertPos);
-  return I;
+  GRState *newState = 0;
+  if (!freeStates.empty()) {
+    newState = freeStates.back();
+    freeStates.pop_back();    
+  }
+  else {
+    newState = (GRState*) Alloc.Allocate<GRState>();
+  }
+  new (newState) GRState(State);
+  StateSet.InsertNode(newState, InsertPos);
+  recentlyAllocatedStates.push_back(newState);
+  return newState;
 }
 
 const GRState* GRState::makeWithStore(Store store) const {

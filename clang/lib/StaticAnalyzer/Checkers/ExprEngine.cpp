@@ -574,6 +574,9 @@ void ExprEngine::processCFGElement(const CFGElement E,
 }
 
 void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
+  // Recycle any unused states in the GRStateManager.
+  StateMgr.recycleUnusedStates();
+  
   currentStmt = S.getStmt();
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 currentStmt->getLocStart(),

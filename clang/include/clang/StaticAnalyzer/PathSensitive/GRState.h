@@ -18,6 +18,7 @@
 #include "clang/StaticAnalyzer/PathSensitive/Environment.h"
 #include "clang/StaticAnalyzer/PathSensitive/Store.h"
 #include "clang/StaticAnalyzer/PathSensitive/SValBuilder.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Casting.h"
@@ -78,7 +79,7 @@ private:
 
   friend class GRStateManager;
 
-  GRStateManager *StateMgr;
+  llvm::PointerIntPair<GRStateManager *, 1, bool> stateMgr;
   Environment Env;           // Maps a Stmt to its current SVal.
   Store St;                  // Maps a location to its current value.
   GenericDataMap   GDM;      // Custom data stored by a client of this class.
@@ -92,7 +93,7 @@ public:
   /// This ctor is used when creating the first GRState object.
   GRState(GRStateManager *mgr, const Environment& env,
           Store st, GenericDataMap gdm)
-    : StateMgr(mgr),
+    : stateMgr(mgr, false),
       Env(env),
       St(st),
       GDM(gdm) {}
@@ -101,14 +102,23 @@ public:
   ///  in FoldingSetNode will also get copied.
   GRState(const GRState& RHS)
     : llvm::FoldingSetNode(),
-      StateMgr(RHS.StateMgr),
+      stateMgr(RHS.stateMgr.getPointer(), false),
       Env(RHS.Env),
       St(RHS.St),
       GDM(RHS.GDM) {}
 
-  /// getStateManager - Return the GRStateManager associated with this state.
+  /// Return the GRStateManager associated with this state.
   GRStateManager &getStateManager() const {
-    return *StateMgr;
+    return *stateMgr.getPointer();
+  }
+
+  /// Return true if this state is referenced by a persistent ExplodedNode.
+  bool referencedByExplodedNode() const {
+    return stateMgr.getInt();
+  }
+  
+  void setReferencedByExplodedNode() {
+    stateMgr.setInt(true);
   }
 
   /// getEnvironment - Return the environment associated with this state.
@@ -428,8 +438,15 @@ private:
   /// Object that manages the data for all created SVals.
   llvm::OwningPtr<SValBuilder> svalBuilder;
 
-  /// Alloc - A BumpPtrAllocator to allocate states.
+  /// A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator &Alloc;
+
+  /// A vector of recently allocated GRStates that can potentially be
+  /// reused.
+  std::vector<GRState *> recentlyAllocatedStates;
+  
+  /// A vector of GRStates that we can reuse.
+  std::vector<GRState *> freeStates;
 
 public:
   GRStateManager(ASTContext& Ctx,
@@ -509,6 +526,10 @@ public:
   }
 
   const GRState* getPersistentState(GRState& Impl);
+  
+  /// Periodically called by ExprEngine to recycle GRStates that were
+  /// created but never used for creating an ExplodedNode.
+  void recycleUnusedStates();
 
   //==---------------------------------------------------------------------==//
   // Generic Data Map methods.

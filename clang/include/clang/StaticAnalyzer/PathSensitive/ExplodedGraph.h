@@ -31,6 +31,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/Support/Casting.h"
 #include "clang/Analysis/Support/BumpVector.h"
+#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
 
 namespace clang {
 
@@ -38,7 +39,6 @@ class CFG;
 
 namespace ento {
 
-class GRState;
 class ExplodedGraph;
 
 //===----------------------------------------------------------------------===//
@@ -115,7 +115,9 @@ class ExplodedNode : public llvm::FoldingSetNode {
 public:
 
   explicit ExplodedNode(const ProgramPoint& loc, const GRState* state)
-    : Location(loc), State(state) {}
+    : Location(loc), State(state) {
+    const_cast<GRState*>(State)->setReferencedByExplodedNode();
+  }
 
   /// getLocation - Returns the edge associated with the given node.
   ProgramPoint getLocation() const { return Location; }
