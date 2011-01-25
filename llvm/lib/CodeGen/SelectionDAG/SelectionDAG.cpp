@@ -5424,6 +5424,23 @@ void SelectionDAG::AddDbgValue(SDDbgValue *DB, SDNode *SD, bool isParameter) {
     SD->setHasDebugValue(true);
 }
 
+/// TransferDbgValues - Transfer SDDbgValues.
+void SelectionDAG::TransferDbgValues(SDValue From, SDValue To) {
+  if (From == To || !From.getNode()->getHasDebugValue())
+    return;
+  SDNode *FromNode = From.getNode();
+  SDNode *ToNode = To.getNode();
+  SmallVector<SDDbgValue*,2> &DVs = GetDbgValues(FromNode);
+  DbgInfo->removeSDDbgValues(FromNode);
+  for (SmallVector<SDDbgValue *, 2>::iterator I = DVs.begin(), E = DVs.end();
+       I != E; ++I) {
+    if ((*I)->getKind() == SDDbgValue::SDNODE) {
+      AddDbgValue(*I, ToNode, false);
+      (*I)->setSDNode(ToNode, To.getResNo());
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                              SDNode Class
 //===----------------------------------------------------------------------===//

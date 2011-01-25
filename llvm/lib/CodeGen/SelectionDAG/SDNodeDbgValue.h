@@ -83,6 +83,14 @@ public:
   // Returns the SDNode* for a register ref
   SDNode *getSDNode() { assert (kind==SDNODE); return u.s.Node; }
 
+  // setSDNode - If underlying SDNode is replaced by another node then
+  // SelectionDAG can use this to transfer DbgValue.
+  void setSDNode(SDNode *N, unsigned R) { 
+    assert (kind==SDNODE); 
+    u.s.Node = N; 
+    u.s.ResNo = R;
+  }
+
   // Returns the ResNo for a register ref
   unsigned getResNo() { assert (kind==SDNODE); return u.s.ResNo; }
 

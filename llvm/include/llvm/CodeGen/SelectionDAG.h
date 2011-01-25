@@ -100,6 +100,10 @@ public:
     return DbgValMap[Node];
   }
 
+  void removeSDDbgValues(const SDNode *Node) {
+    DbgValMap.erase(Node);
+  }
+
   typedef SmallVector<SDDbgValue*,32>::iterator DbgIterator;
   DbgIterator DbgBegin() { return DbgValues.begin(); }
   DbgIterator DbgEnd()   { return DbgValues.end(); }
@@ -901,6 +905,9 @@ public:
   SmallVector<SDDbgValue*,2> &GetDbgValues(const SDNode* SD) {
     return DbgInfo->getSDDbgValues(SD);
   }
+  
+  /// TransferDbgValues - Transfer SDDbgValues.
+  void TransferDbgValues(SDValue From, SDValue To);
 
   /// hasDebugValues - Return true if there are any SDDbgValue nodes associated
   /// with this SelectionDAG.
