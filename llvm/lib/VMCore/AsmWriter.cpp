@@ -1590,8 +1590,6 @@ void AssemblyWriter::printFunction(const Function *F) {
   Attributes RetAttrs = Attrs.getRetAttributes();
   if (RetAttrs != Attribute::None)
     Out <<  Attribute::getAsString(Attrs.getRetAttributes()) << ' ';
-  if (F->hasUnnamedAddr())
-    Out << "unnamed_addr ";
   TypePrinter.print(F->getReturnType(), Out);
   Out << ' ';
   WriteAsOperandInternal(Out, F, &TypePrinter, &Machine, F->getParent());
@@ -1631,6 +1629,8 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ')';
+  if (F->hasUnnamedAddr())
+    Out << " unnamed_addr";
   Attributes FnAttrs = Attrs.getFnAttributes();
   if (FnAttrs != Attribute::None)
     Out << ' ' << Attribute::getAsString(Attrs.getFnAttributes());

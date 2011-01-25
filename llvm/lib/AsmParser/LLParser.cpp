@@ -2670,8 +2670,6 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   unsigned Linkage;
 
   unsigned Visibility, RetAttrs;
-  bool UnnamedAddr;
-  LocTy UnnamedAddrLoc;
   CallingConv::ID CC;
   PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc = Lex.getLoc();
@@ -2679,8 +2677,6 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       ParseOptionalVisibility(Visibility) ||
       ParseOptionalCallingConv(CC) ||
       ParseOptionalAttrs(RetAttrs, 1) ||
-      ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
-                         &UnnamedAddrLoc) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/))
     return true;
 
@@ -2742,8 +2738,12 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   std::string Section;
   unsigned Alignment;
   std::string GC;
+  bool UnnamedAddr;
+  LocTy UnnamedAddrLoc;
 
   if (ParseArgumentList(ArgList, isVarArg, false) ||
+      ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
+                         &UnnamedAddrLoc) ||
       ParseOptionalAttrs(FuncAttrs, 2) ||
       (EatIfPresent(lltok::kw_section) &&
        ParseStringConstant(Section)) ||
