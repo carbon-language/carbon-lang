@@ -619,16 +619,8 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
       // Insert all SDDbgValue's whose order(s) are before "Order".
       if (!MI)
         continue;
-#ifndef NDEBUG
-      unsigned LastDIOrder = 0;
-#endif
       for (; DI != DE &&
              (*DI)->getOrder() >= LastOrder && (*DI)->getOrder() < Order; ++DI) {
-#ifndef NDEBUG
-        assert((*DI)->getOrder() >= LastDIOrder &&
-               "SDDbgValue nodes must be in source order!");
-        LastDIOrder = (*DI)->getOrder();
-#endif
         if ((*DI)->isInvalidated())
           continue;
         MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, VRBaseMap);
