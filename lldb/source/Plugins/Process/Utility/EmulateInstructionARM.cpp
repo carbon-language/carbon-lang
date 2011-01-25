@@ -108,7 +108,7 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
         if (!success)
             return false;
         uint32_t registers = 0;
-        uint32_t t; // t = UInt(Rt)
+        uint32_t Rt; // the source register
         switch (encoding) {
         case eEncodingT1:
             registers = EmulateInstruction::UnsignedBits (opcode, 7, 0);
@@ -127,11 +127,11 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
                 return false;
             break;
         case eEncodingT3:
-            t = EmulateInstruction::UnsignedBits (opcode, 15, 12);
+            Rt = EmulateInstruction::UnsignedBits (opcode, 15, 12);
             // if BadReg(t) then UNPREDICTABLE;
-            if (BadReg(t))
+            if (BadReg(Rt))
                 return false;
-            registers = (1u << t);
+            registers = (1u << Rt);
             break;
         case eEncodingA1:
             registers = EmulateInstruction::UnsignedBits (opcode, 15, 0);
@@ -140,11 +140,11 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
             // if BitCount(register_list) < 2 then SEE STMDB / STMFD;
             break;
         case eEncodingA2:
-            t = EmulateInstruction::UnsignedBits (opcode, 15, 12);
+            Rt = EmulateInstruction::UnsignedBits (opcode, 15, 12);
             // if t == 13 then UNPREDICTABLE;
-            if (t == dwarf_sp)
+            if (Rt == dwarf_sp)
                 return false;
-            registers = (1u << t);
+            registers = (1u << Rt);
             break;
         default:
             return false;
@@ -218,11 +218,11 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
         const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
-        uint32_t t; // t = UInt(Rt)            
+        uint32_t Rt; // the source register
         uint32_t imm12;
         switch (encoding) {
         case eEncodingA1:
-            t = EmulateInstruction::UnsignedBits (opcode, 15, 12);
+            Rt = EmulateInstruction::UnsignedBits (opcode, 15, 12);
             imm12 = EmulateInstruction::UnsignedBits (opcode, 11, 0);
             break;
         default:
@@ -232,10 +232,10 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
         addr_t addr = sp - sp_offset;
         
         EmulateInstruction::Context context = { EmulateInstruction::eContextPushRegisterOnStack, eRegisterKindDWARF, 0, 0 };
-        if (t != 15)
+        if (Rt != 15)
         {
-            context.arg1 = dwarf_r0 + t;    // arg1 in the context is the DWARF register number
-            context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
+            context.arg1 = dwarf_r0 + Rt;    // arg1 in the context is the DWARF register number
+            context.arg2 = addr - sp;        // arg2 in the context is the stack pointer offset
             uint32_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
             if (!success)
                 return false;
