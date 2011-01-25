@@ -380,32 +380,6 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
       CS.isNoInline())
     return llvm::InlineCost::getNever();
 
-  // InlineCost - This value measures how good of an inline candidate this call
-  // site is to inline.  A lower inline cost make is more likely for the call to
-  // be inlined.  This value may go negative.
-  //
-  int InlineCost = 0;
-
-  // If there is only one call of the function, and it has internal linkage,
-  // make it almost guaranteed to be inlined.
-  //
-  if (Callee->hasLocalLinkage() && Callee->hasOneUse() && isDirectCall)
-    InlineCost += InlineConstants::LastCallToStaticBonus;
-  
-  // If this function uses the coldcc calling convention, prefer not to inline
-  // it.
-  if (Callee->getCallingConv() == CallingConv::Cold)
-    InlineCost += InlineConstants::ColdccPenalty;
-  
-  // If the instruction after the call, or if the normal destination of the
-  // invoke is an unreachable instruction, the function is noreturn.  As such,
-  // there is little point in inlining this.
-  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
-    if (isa<UnreachableInst>(II->getNormalDest()->begin()))
-      InlineCost += InlineConstants::NoreturnPenalty;
-  } else if (isa<UnreachableInst>(++BasicBlock::iterator(TheCall)))
-    InlineCost += InlineConstants::NoreturnPenalty;
-  
   // Get information about the callee.
   FunctionInfo *CalleeFI = &CachedFunctionInfo[Callee];
   
@@ -444,6 +418,12 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
       return InlineCost::getNever();
   }
 
+  // InlineCost - This value measures how good of an inline candidate this call
+  // site is to inline.  A lower inline cost make is more likely for the call to
+  // be inlined.  This value may go negative.
+  //
+  int InlineCost = 0;
+
   // Add to the inline quality for properties that make the call valuable to
   // inline.  This includes factors that indicate that the result of inlining
   // the function will be optimizable.  Currently this just looks at arguments
@@ -475,8 +455,28 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
     }
   }
   
+  // If there is only one call of the function, and it has internal linkage,
+  // make it almost guaranteed to be inlined.
+  //
+  if (Callee->hasLocalLinkage() && Callee->hasOneUse() && isDirectCall)
+    InlineCost += InlineConstants::LastCallToStaticBonus;
+
   // Now that we have considered all of the factors that make the call site more
   // likely to be inlined, look at factors that make us not want to inline it.
+
+  // If the instruction after the call, or if the normal destination of the
+  // invoke is an unreachable instruction, the function is noreturn.  As such,
+  // there is little point in inlining this.
+  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
+    if (isa<UnreachableInst>(II->getNormalDest()->begin()))
+      InlineCost += InlineConstants::NoreturnPenalty;
+  } else if (isa<UnreachableInst>(++BasicBlock::iterator(TheCall)))
+    InlineCost += InlineConstants::NoreturnPenalty;
+  
+  // If this function uses the coldcc calling convention, prefer not to inline
+  // it.
+  if (Callee->getCallingConv() == CallingConv::Cold)
+    InlineCost += InlineConstants::ColdccPenalty;
 
   // Calls usually take a long time, so they make the inlining gain smaller.
   InlineCost += CalleeFI->Metrics.NumCalls * InlineConstants::CallPenalty;
