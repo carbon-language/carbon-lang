@@ -555,10 +555,10 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("ownership_holds", true)
            .Case("ownership_returns", true)
            .Case("ownership_takes", true)
-           .Case("cxx_inline_namespaces", true)
+           .Case("cxx_inline_namespaces", LangOpts.CPlusPlus)
          //.Case("cxx_lambdas", false)
          //.Case("cxx_nullptr", false)
-         //.Case("cxx_rvalue_references", false)
+           .Case("cxx_rvalue_references", LangOpts.CPlusPlus)
            .Case("cxx_variadic_templates", LangOpts.CPlusPlus)
            .Case("tls", PP.getTargetInfo().isTLSSupported())
            .Default(false);

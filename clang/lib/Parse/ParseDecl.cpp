@@ -2722,7 +2722,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     // Complain about rvalue references in C++03, but then go on and build
     // the declarator.
     if (Kind == tok::ampamp && !getLang().CPlusPlus0x)
-      Diag(Loc, diag::err_rvalue_reference);
+      Diag(Loc, diag::ext_rvalue_reference);
 
     // C++ 8.3.2p1: cv-qualified references are ill-formed except when the
     // cv-qualifiers are introduced through the use of a typedef or of a

@@ -77,8 +77,8 @@ int rvalue_references();
 int no_rvalue_references();
 #endif
 
-// CHECK-0X: no_rvalue_references
-// CHECK-NO-0X: no_rvalue_references
+// CHECK-0X: rvalue_references
+// CHECK-NO-0X: rvalue_references
 
 
 #if __has_feature(cxx_variadic_templates)

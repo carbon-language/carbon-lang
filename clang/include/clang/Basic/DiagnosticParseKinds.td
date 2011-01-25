@@ -158,10 +158,10 @@ def err_invalid_reference_qualifier_application : Error<
   "'%0' qualifier may not be applied to a reference">;
 def err_illegal_decl_reference_to_reference : Error<
   "%0 declared as a reference to a reference">;
-def err_rvalue_reference : Error<
-  "rvalue references are only allowed in C++0x">;
-def ext_inline_namespace : Extension<
-  "inline namespaces are a C++0x feature">;
+def ext_rvalue_reference : ExtWarn<
+  "rvalue references are a C++0x extension">, InGroup<CXX0x>;
+def ext_inline_namespace : ExtWarn<
+  "inline namespaces are a C++0x feature">, InGroup<CXX0x>;
 def err_argument_required_after_attribute : Error<
   "argument required after attribute">;
 def err_missing_param : Error<"expected parameter declarator">;

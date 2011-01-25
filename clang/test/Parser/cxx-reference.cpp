@@ -18,4 +18,4 @@ int & volatile Y = val; // expected-error {{'volatile' qualifier may not be appl
 int & const volatile Z = val; /* expected-error {{'const' qualifier may not be applied}} \
                            expected-error {{'volatile' qualifier may not be applied}} */
 
-typedef int && RV; // expected-error {{rvalue references are only allowed in C++0x}}
+typedef int && RV; // expected-warning {{rvalue references are a C++0x extension}}
