@@ -61,13 +61,11 @@ define i1 @sext3() {
 }
 
 define i1 @add(i32 %x, i32 %y) {
-; CHECK: @add
   %l = lshr i32 %x, 1
   %r = lshr i32 %y, 1
   %s = add i32 %l, %r
   %c = icmp eq i32 %s, 0
   ret i1 %c
-; CHECK: ret i1 false
 }
 
 define i1 @add2(i8 %x, i8 %y) {
