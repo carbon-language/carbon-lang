@@ -67,7 +67,7 @@ DWARFCallFrameInfo::GetUnwindPlan (Address addr, UnwindPlan& unwind_plan)
 bool
 DWARFCallFrameInfo::GetFDEEntryByAddress (Address addr, FDEEntry& fde_entry)
 {
-    if (m_section.get() == NULL)
+    if (m_section.get() == NULL || m_section->IsEncrypted())
         return false;
     GetFDEIndex();
 
@@ -83,7 +83,7 @@ DWARFCallFrameInfo::GetFDEEntryByAddress (Address addr, FDEEntry& fde_entry)
     {
         --idx;
     }
-    if (idx != m_fde_index.begin() && idx->bounds.GetBaseAddress().GetOffset() != addr.GetOffset())
+    if (idx != m_fde_index.begin() && !idx->bounds.ContainsFileAddress (addr))
     {
        --idx;
     }
@@ -281,7 +281,7 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
 void
 DWARFCallFrameInfo::GetFDEIndex ()
 {
-    if (m_section.get() == NULL)
+    if (m_section.get() == NULL || m_section->IsEncrypted())
         return;
     if (m_fde_index_initialized)
         return;
@@ -337,7 +337,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
 {
     dw_offset_t current_entry = offset;
 
-    if (m_section.get() == NULL)
+    if (m_section.get() == NULL || m_section->IsEncrypted())
         return false;
 
     if (m_cfi_data_initialized == false)
