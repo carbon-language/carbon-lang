@@ -73,7 +73,7 @@ void test1(NSString *format, ...) {
 void test2() {
   static int y = 0;
   int x;
-  ^{ y = x + 1; }();  // expected-warning{{Variable 'x' is captured by block with a garbage value}}
+  ^{ y = x + 1; }();  // expected-warning{{Variable 'x' is uninitialized when captured by block}}
 }
 
 void test2_b() {
@@ -86,5 +86,5 @@ void test2_b() {
 
 void test2_c() {
   typedef void (^myblock)(void);
-  myblock f = ^() { f(); }; // expected-warning{{Variable 'f' is captured by block with a garbage value}}
+  myblock f = ^() { f(); }; // expected-warning{{Variable 'f' is uninitialized when captured by block}}
 }

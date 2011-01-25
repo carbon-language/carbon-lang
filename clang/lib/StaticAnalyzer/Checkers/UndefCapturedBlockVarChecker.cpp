@@ -82,14 +82,14 @@ UndefCapturedBlockVarChecker::PostVisitBlockExpr(CheckerContext &C,
     if (state->getSVal(VR).isUndef())
       if (ExplodedNode *N = C.generateSink()) {
         if (!BT)
-          BT = new BuiltinBug("Captured block variable is uninitialized");
+          BT = new BuiltinBug("uninitialized variable captured by block");
 
         // Generate a bug report.
         llvm::SmallString<128> buf;
         llvm::raw_svector_ostream os(buf);
 
-        os << "Variable '" << VD->getName() << "' is captured by block with "
-              "a garbage value";
+        os << "Variable '" << VD->getName() 
+           << "' is uninitialized when captured by block";
 
         EnhancedBugReport *R = new EnhancedBugReport(*BT, os.str(), N);
         if (const Expr *Ex = FindBlockDeclRefExpr(BE->getBody(), VD))
