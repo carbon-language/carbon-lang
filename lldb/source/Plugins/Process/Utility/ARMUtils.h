@@ -61,17 +61,63 @@ static inline uint32_t bit(const uint32_t val, const uint32_t msbit)
     return bits(val, msbit, msbit);
 }
 
-static inline uint32_t ARMExpandImm(uint32_t imm12)
+static uint32_t ror(uint32_t val, uint32_t N, uint32_t shift)
 {
-    uint32_t imm = bits(imm12, 7, 0);      // immediate value
-    uint32_t rot = 2 * bits(imm12, 11, 8); // rotate amount
+    uint32_t m = shift % N;
+    return (val >> m) | (val << (N - m));
+}
+
+static inline uint32_t ARMExpandImm(uint32_t val)
+{
+    uint32_t imm = bits(val, 7, 0);      // immediate value
+    uint32_t rot = 2 * bits(val, 11, 8); // rotate amount
     return (imm >> rot) | (imm << (32 - rot));
 }
 
-// Convenience function for ARMExpandImm(imm12).
-static inline uint32_t ARMExpand(uint32_t val)
+static inline uint32_t ThumbExpandImm(uint32_t val)
 {
-    return ARMExpandImm(bits(val, 11, 0));
+  uint32_t imm32 = 0;
+  const uint32_t i = bit(val, 26);
+  const uint32_t imm3 = bits(val, 14, 12);
+  const uint32_t abcdefgh = bits(val, 7, 0);
+  const uint32_t imm12 = i << 11 | imm3 << 8 | abcdefgh;
+
+  if (bits(imm12, 10, 11) == 0)
+  {
+      switch (bits(imm12, 8, 9)) {
+      case 0:
+          imm32 = abcdefgh;
+          break;
+
+      case 1:
+          imm32 = abcdefgh << 16 | abcdefgh;
+          break;
+
+      case 2:
+          imm32 = abcdefgh << 24 | abcdefgh << 8;
+          break;
+
+      case 3:
+          imm32 = abcdefgh  << 24 | abcdefgh << 16 | abcdefgh << 8 | abcdefgh; 
+          break;
+      }
+  }
+  else
+  {
+      const uint32_t unrotated_value = 0x80 | bits(imm12, 0, 6);
+      imm32 = ror(unrotated_value, 32, bits(imm12, 7, 11));
+  }
+  return imm32;
+}
+
+// imm32 = ZeroExtend(i:imm3:imm8, 32)
+static inline uint32_t ThumbImm12(uint32_t val)
+{
+  const uint32_t i = bit(val, 26);
+  const uint32_t imm3 = bits(val, 14, 12);
+  const uint32_t imm8 = bits(val, 7, 0);
+  const uint32_t imm12 = i << 11 | imm3 << 8 | imm8;
+  return imm12;
 }
 
 // This function performs the check for the register numbers 13 and 15 that are

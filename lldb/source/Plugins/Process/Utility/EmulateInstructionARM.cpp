@@ -28,7 +28,7 @@ using namespace lldb_private;
 #define ARMv6K    (1u << 6)
 #define ARMv6T2   (1u << 7)
 #define ARMv7     (1u << 8)
-#define ARMv8     (1u << 8)
+#define ARMv8     (1u << 9)
 #define ARMvAll   (0xffffffffu)
 
 typedef enum
@@ -225,8 +225,14 @@ emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
             return false;
         uint32_t imm32;
         switch (encoding) {
+        case eEncodingT2:
+            imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
+            break;
+        case eEncodingT3:
+            imm32 = ThumbImm12(opcode); // imm32 = ZeroExtend(i:imm3:imm8, 32)
+            break;
         case eEncodingA1:
-            imm32 = ARMExpand(opcode); // imm32 = ARMExpandImm(imm12)
+            imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
             break;
         default:
             return false;
@@ -327,11 +333,11 @@ static ARMOpcode g_arm_opcodes[] =
 
     // adjust the stack pointer
     { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_sp_imm,
-      "sub sp, sp, #n"},
+      "sub sp, sp, #<const>"},
 
     // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
     { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp,
-      "str Rt, [sp, #-n]!" }
+      "str Rt, [sp, #-<imm12>]!" }
 };
 
 static ARMOpcode g_thumb_opcodes[] =
@@ -341,7 +347,14 @@ static ARMOpcode g_thumb_opcodes[] =
     { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push,
       "push.w <registers> ; <registers> contains more than one register" },
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push,
-      "push.w <registers> ; <registers> contains one register, <Rt>" }
+      "push.w <registers> ; <registers> contains one register, <Rt>" },
+
+    // adjust the stack pointer
+    { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm,
+      "sub{s}.w sp, sp, #<const>"},
+    // adjust the stack pointer
+    { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_sub_sp_imm,
+      "subw sp, sp, #<imm12>"}
 };
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
