@@ -85,6 +85,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("deprecated", AT_deprecated)
     .Case("visibility", AT_visibility)
     .Case("destructor", AT_destructor)
+    .Case("forbid_temporaries", AT_forbid_temporaries)
     .Case("format_arg", AT_format_arg)
     .Case("gnu_inline", AT_gnu_inline)
     .Case("weak_import", AT_weak_import)

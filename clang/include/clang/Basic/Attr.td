@@ -232,6 +232,11 @@ def Final : InheritableAttr {
   let Spellings = [];
 }
 
+def ForbidTemporaries : Attr {
+  let Spellings = ["forbid_temporaries"];
+  let Subjects = [CXXRecord];
+}
+
 def Format : InheritableAttr {
   let Spellings = ["format"];
   let Args = [StringArgument<"Type">, IntArgument<"FormatIdx">,
