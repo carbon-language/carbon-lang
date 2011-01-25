@@ -78,7 +78,9 @@ static bool CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType);
 // %1: Source Type
 // %2: Destination Type
 static TryCastResult TryLValueToRValueCast(Sema &Self, Expr *SrcExpr,
-                                           QualType DestType, unsigned &msg);
+                                           QualType DestType, CastKind &Kind,
+                                           CXXCastPath &BasePath,
+                                           unsigned &msg);
 static TryCastResult TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr,
                                                QualType DestType, bool CStyle,
                                                const SourceRange &OpRange,
@@ -581,11 +583,9 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   // C++0x [expr.static.cast]p3: 
   //   A glvalue of type "cv1 T1" can be cast to type "rvalue reference to cv2
   //   T2" if "cv2 T2" is reference-compatible with "cv1 T1".
-  tcr = TryLValueToRValueCast(Self, SrcExpr, DestType, msg);
-  if (tcr != TC_NotApplicable) {
-    Kind = CK_NoOp;
+  tcr = TryLValueToRValueCast(Self, SrcExpr, DestType, Kind, BasePath, msg);
+  if (tcr != TC_NotApplicable)
     return tcr;
-  }
 
   // C++ 5.2.9p2: An expression e can be explicitly converted to a type T
   //   [...] if the declaration "T t(e);" is well-formed, [...].
@@ -695,7 +695,7 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
 /// Tests whether a conversion according to N2844 is valid.
 TryCastResult
 TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
-                      unsigned &msg) {
+                      CastKind &Kind, CXXCastPath &BasePath, unsigned &msg) {
   // C++0x [expr.static.cast]p3:
   //   A glvalue of type "cv1 T1" can be cast to type "rvalue reference to 
   //   cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
@@ -719,6 +719,17 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
     return TC_Failed;
   }
 
+  if (DerivedToBase) {
+    Kind = CK_DerivedToBase;
+    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                       /*DetectVirtual=*/true);
+    if (!Self.IsDerivedFrom(SrcExpr->getType(), R->getPointeeType(), Paths))
+      return TC_NotApplicable;
+  
+    Self.BuildBasePathArray(Paths, BasePath);
+  } else
+    Kind = CK_NoOp;
+  
   return TC_Success;
 }
 
