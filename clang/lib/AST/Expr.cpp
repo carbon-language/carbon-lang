@@ -2471,9 +2471,9 @@ ObjCInterfaceDecl *ObjCMessageExpr::getReceiverInterface() const {
     break;
 
   case SuperClass:
-    if (const ObjCObjectPointerType *Iface
-                       = getSuperType()->getAs<ObjCObjectPointerType>())
-      return Iface->getInterfaceDecl();
+    if (const ObjCObjectType *Iface
+          = getSuperType()->getAs<ObjCObjectType>())
+      return Iface->getInterface();
     break;
   }
 
