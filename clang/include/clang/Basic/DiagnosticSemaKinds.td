@@ -822,10 +822,12 @@ def note_uninit_reference_member : Note<
   "uninitialized reference member is here">;
 def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
   InGroup<DiagGroup<"uninitialized">>;
-def warn_var_is_uninit : Warning<"use of uninitialized variable %0">,
+def warn_uninit_var : Warning<"use of uninitialized variable %0">,
   InGroup<DiagGroup<"uninitialized-experimental">>, DefaultIgnore;
-def note_var_is_uninit : Note<
+def note_uninit_var : Note<
   "variable %0 is possibly uninitialized when used here">;
+def note_uninit_var_captured_by_block : Note<
+  "variable %0 is possibly uninitialized when captured by block">;
 def note_var_fixit_add_initialization : Note<
   "add initialization to silence this warning">;
 def err_init_incomplete_type : Error<"initialization of incomplete type %0">;

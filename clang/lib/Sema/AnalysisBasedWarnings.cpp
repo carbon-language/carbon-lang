@@ -366,7 +366,7 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
 
 namespace {
 struct SLocSort {
-  bool operator()(const DeclRefExpr *a, const DeclRefExpr *b) {
+  bool operator()(const Expr *a, const Expr *b) {
     SourceLocation aLoc = a->getLocStart();
     SourceLocation bLoc = b->getLocStart();
     return aLoc.getRawEncoding() < bLoc.getRawEncoding();
@@ -375,7 +375,7 @@ struct SLocSort {
 
 class UninitValsDiagReporter : public UninitVariablesHandler {
   Sema &S;
-  typedef llvm::SmallVector<const DeclRefExpr *, 2> UsesVec;
+  typedef llvm::SmallVector<const Expr *, 2> UsesVec;
   typedef llvm::DenseMap<const VarDecl *, UsesVec*> UsesMap;
   UsesMap *uses;
   
@@ -385,7 +385,7 @@ public:
     flushDiagnostics();
   }
   
-  void handleUseOfUninitVariable(const DeclRefExpr *dr, const VarDecl *vd) {
+  void handleUseOfUninitVariable(const Expr *ex, const VarDecl *vd) {
     if (!uses)
       uses = new UsesMap();
     
@@ -393,7 +393,7 @@ public:
     if (!vec)
       vec = new UsesVec();
     
-    vec->push_back(dr);    
+    vec->push_back(ex);
   }
   
   void flushDiagnostics() {
@@ -404,7 +404,7 @@ public:
       const VarDecl *vd = i->first;
       UsesVec *vec = i->second;
       
-      S.Diag(vd->getLocStart(), diag::warn_var_is_uninit)
+      S.Diag(vd->getLocStart(), diag::warn_uninit_var)
         << vd->getDeclName() << vd->getSourceRange();
       
       // Sort the uses by their SourceLocations.  While not strictly
@@ -414,9 +414,15 @@ public:
       
       for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve; ++vi)
       {
-        const DeclRefExpr *dr = *vi;
-        S.Diag(dr->getLocStart(), diag::note_var_is_uninit)
-          << vd->getDeclName() << dr->getSourceRange();
+        if (const DeclRefExpr *dr = dyn_cast<DeclRefExpr>(*vi)) {
+          S.Diag(dr->getLocStart(), diag::note_uninit_var)
+            << vd->getDeclName() << dr->getSourceRange();
+        }
+        else {
+          const BlockExpr *be = cast<BlockExpr>(*vi);
+          S.Diag(be->getLocStart(), diag::note_uninit_var_captured_by_block)
+            << vd->getDeclName();
+        }
       }
 
       // Suggest possible initialization (if any).
@@ -514,11 +520,12 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   if (P.enableCheckUnreachable)
     CheckUnreachable(S, AC);
   
-  if (Diags.getDiagnosticLevel(diag::warn_var_is_uninit, D->getLocStart())
+  if (Diags.getDiagnosticLevel(diag::warn_uninit_var, D->getLocStart())
       != Diagnostic::Ignored) {
     if (CFG *cfg = AC.getCFG()) {
       UninitValsDiagReporter reporter(S);
-      runUninitializedVariablesAnalysis(*cast<DeclContext>(D), *cfg, reporter);
+      runUninitializedVariablesAnalysis(*cast<DeclContext>(D), *cfg, AC,
+                                        reporter);
     }
   }
 }

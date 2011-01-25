@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wuninitialized-experimental -fsyntax-only %s -verify
+// RUN: %clang_cc1 -fsyntax-only -Wuninitialized-experimental -fsyntax-only -fblocks %s -verify
 
 int test1() {
   int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
@@ -190,5 +190,25 @@ int test27() {
 int test28() {
   int len; // expected-warning{{use of uninitialized variable 'len'}} expected-note{{add initialization to silence this warning}}
   return sizeof(int[len]); // expected-note{{variable 'len' is possibly uninitialized when used here}}
+}
+
+void test29() {
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
+  (void) ^{ (void) x; }; // expected-note{{variable 'x' is possibly uninitialized when captured by block}}
+}
+
+void test30() {
+  static int x; // no-warning
+  (void) ^{ (void) x; };
+}
+
+void test31() {
+  __block int x; // no-warning
+  (void) ^{ (void) x; };
+}
+
+int test32_x;
+void test32() {
+  (void) ^{ (void) test32_x; }; // no-warning
 }
 

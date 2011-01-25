@@ -17,9 +17,10 @@
 
 namespace clang {
 
+class AnalysisContext;
 class CFG;  
 class DeclContext;
-class DeclRefExpr;
+class Expr;
 class VarDecl;
   
 class UninitVariablesHandler {
@@ -27,11 +28,12 @@ public:
   UninitVariablesHandler() {}
   virtual ~UninitVariablesHandler();
   
-  virtual void handleUseOfUninitVariable(const DeclRefExpr *dr,
+  virtual void handleUseOfUninitVariable(const Expr *ex,
                                          const VarDecl *vd) {}
 };
   
 void runUninitializedVariablesAnalysis(const DeclContext &dc, const CFG &cfg,
+                                       AnalysisContext &ac,
                                        UninitVariablesHandler &handler);
 
 }
