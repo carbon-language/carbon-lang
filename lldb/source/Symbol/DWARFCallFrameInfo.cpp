@@ -83,7 +83,7 @@ DWARFCallFrameInfo::GetFDEEntryByAddress (Address addr, FDEEntry& fde_entry)
     {
         --idx;
     }
-    if (idx != m_fde_index.begin() && !idx->bounds.ContainsFileAddress (addr))
+    if (idx != m_fde_index.begin() && idx->bounds.GetBaseAddress().GetOffset() != addr.GetOffset())
     {
        --idx;
     }
