@@ -270,9 +270,21 @@ static bool shouldRunOnFunctionOrMethod(const NamedDecl *ND) {
   const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ND);
   if (!MD)
     return false;
-  if (!MD->getClassInterface()->getSuperClass())
-    return false;
   if (!isInitializationMethod(MD))
+    return false;
+
+  // self = [super init] applies only to NSObject subclasses.
+  // For instance, NSProxy doesn't implement -init.
+  ASTContext& Ctx = MD->getASTContext();
+  IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
+  ObjCInterfaceDecl* ID = MD->getClassInterface()->getSuperClass();
+  for ( ; ID ; ID = ID->getSuperClass()) {
+    IdentifierInfo *II = ID->getIdentifier();
+
+    if (II == NSObjectII)
+      break;
+  }
+  if (!ID)
     return false;
 
   return true;

@@ -17,6 +17,9 @@
 -(id)init;
 -(id)release;
 @end
+@interface NSProxy <NSObject> {}
+@end
+
 //#import "Foundation/NSObject.h"
 typedef unsigned NSUInteger;
 typedef int NSInteger;
@@ -46,6 +49,10 @@ extern void *somePtr;
 -(id)_init;
 -(id)initWithSomething:(int)x;
 -(void)doSomething;
+@end
+
+@interface MyProxyObj : NSProxy {}
+-(id)init;
 @end
 
 @implementation MyObj
@@ -135,5 +142,11 @@ extern void *somePtr;
 }
 
 -(void)doSomething {}
+
+@end
+
+@implementation MyProxyObj
+
+- (id)init { return self; }
 
 @end
