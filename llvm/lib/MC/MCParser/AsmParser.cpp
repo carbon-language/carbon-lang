@@ -563,6 +563,13 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     }
     return false;
   }
+  case AsmToken::Real: {
+    APFloat RealVal(APFloat::IEEEdouble, getTok().getString());
+    int64_t IntVal = RealVal.bitcastToAPInt().getSExtValue();
+    Res = MCConstantExpr::Create(IntVal, getContext());
+    Lex(); // Eat token.
+    return false;
+  }
   case AsmToken::Dot: {
     // This is a '.' reference, which references the current PC.  Emit a
     // temporary label to the streamer and refer to it.
@@ -573,7 +580,6 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     Lex(); // Eat identifier.
     return false;
   }
-
   case AsmToken::LParen:
     Lex(); // Eat the '('.
     return ParseParenExpr(Res, EndLoc);
