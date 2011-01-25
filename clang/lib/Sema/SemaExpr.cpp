@@ -3814,7 +3814,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     //   - 'type' is an Objective C type
     //   - 'bar' is a pseudo-destructor name which happens to refer to
     //     the appropriate pointer type
-    } else if (Ptr->getPointeeType()->isRecordType() &&
+    } else if (!IsArrow && Ptr->getPointeeType()->isRecordType() &&
                MemberName.getNameKind() != DeclarationName::CXXDestructorName) {
       Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
         << BaseType << int(IsArrow) << BaseExpr->getSourceRange()

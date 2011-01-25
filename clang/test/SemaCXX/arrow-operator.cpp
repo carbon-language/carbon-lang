@@ -23,3 +23,16 @@ void f(C &c, D& d, E& e) {
   d->f();
   e->f(); // expected-error{{incomplete definition of type}}
 }
+
+// rdar://8875304
+namespace rdar8875304 {
+class Point {};
+class Line_Segment{ public: Line_Segment(const Point&){} };
+class Node { public: Point Location(){ Point p; return p; } };
+
+void f()
+{
+   Node** node1;
+   Line_Segment(node1->Location()); // expected-error {{not a structure or union}}
+}
+}
