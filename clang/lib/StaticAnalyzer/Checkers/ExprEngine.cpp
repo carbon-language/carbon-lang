@@ -2300,9 +2300,16 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
       WL.push_back(ObjCMsgWLItem(Item.I, *NI));
   }
 
-  // Now that the arguments are processed, handle the previsits checks.
+  // Now that the arguments are processed, handle the ObjC message.
+  VisitObjCMessage(ME, ArgsEvaluated, Dst);
+}
+
+void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
+                                  ExplodedNodeSet &Src, ExplodedNodeSet& Dst) {
+
+  // Handle the previsits checks.
   ExplodedNodeSet DstPrevisit;
-  CheckerVisitObjCMessage(ME, DstPrevisit, ArgsEvaluated, /*isPreVisit=*/true);
+  CheckerVisitObjCMessage(msg, DstPrevisit, Src, /*isPreVisit=*/true);
 
   // Proceed with evaluate the message expression.
   ExplodedNodeSet dstEval;
@@ -2310,13 +2317,13 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
   for (ExplodedNodeSet::iterator DI = DstPrevisit.begin(),
                                  DE = DstPrevisit.end(); DI != DE; ++DI) {
 
-    Pred = *DI;
+    ExplodedNode *Pred = *DI;
     bool RaisesException = false;
     unsigned oldSize = dstEval.size();
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     SaveOr OldHasGen(Builder->hasGeneratedNode);
 
-    if (const Expr *Receiver = ME->getInstanceReceiver()) {
+    if (const Expr *Receiver = msg.getInstanceReceiver()) {
       const GRState *state = GetState(Pred);
 
       // Bifurcate the state into nil and non-nil ones.
@@ -2329,13 +2336,13 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
       // There are three cases: can be nil or non-nil, must be nil, must be
       // non-nil. We handle must be nil, and merge the rest two into non-nil.
       if (nilState && !notNilState) {
-        CheckerEvalNilReceiver(ME, dstEval, nilState, Pred);
+        CheckerEvalNilReceiver(msg, dstEval, nilState, Pred);
         continue;
       }
 
       // Check if the "raise" message was sent.
       assert(notNilState);
-      if (ME->getSelector() == RaiseSel)
+      if (msg.getSelector() == RaiseSel)
         RaisesException = true;
 
       // Check if we raise an exception.  For now treat these as sinks.
@@ -2344,11 +2351,11 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
         Builder->BuildSinks = true;
 
       // Dispatch to plug-in transfer function.
-      evalObjCMessage(dstEval, ME, Pred, notNilState);
+      evalObjCMessage(dstEval, msg, Pred, notNilState);
     }
-    else if (ObjCInterfaceDecl *Iface = ME->getReceiverInterface()) {
+    else if (const ObjCInterfaceDecl *Iface = msg.getReceiverInterface()) {
       IdentifierInfo* ClsName = Iface->getIdentifier();
-      Selector S = ME->getSelector();
+      Selector S = msg.getSelector();
 
       // Check for special instance methods.
       if (!NSExceptionII) {
@@ -2392,19 +2399,19 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
         Builder->BuildSinks = true;
 
       // Dispatch to plug-in transfer function.
-      evalObjCMessage(dstEval, ME, Pred, Builder->GetState(Pred));
+      evalObjCMessage(dstEval, msg, Pred, Builder->GetState(Pred));
     }
 
     // Handle the case where no nodes where generated.  Auto-generate that
     // contains the updated state if we aren't generating sinks.
     if (!Builder->BuildSinks && dstEval.size() == oldSize &&
         !Builder->hasGeneratedNode)
-      MakeNode(dstEval, ME, Pred, GetState(Pred));
+      MakeNode(dstEval, msg.getOriginExpr(), Pred, GetState(Pred));
   }
 
   // Finally, perform the post-condition check of the ObjCMessageExpr and store
   // the created nodes in 'Dst'.
-  CheckerVisitObjCMessage(ME, Dst, dstEval, /*isPreVisit=*/false);
+  CheckerVisitObjCMessage(msg, Dst, dstEval, /*isPreVisit=*/false);
 }
 
 //===----------------------------------------------------------------------===//

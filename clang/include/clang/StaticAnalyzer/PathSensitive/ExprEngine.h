@@ -391,6 +391,8 @@ public:
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(const ObjCMessageExpr* ME, ExplodedNode* Pred, 
                             ExplodedNodeSet& Dst);
+  void VisitObjCMessage(const ObjCMessage &msg, ExplodedNodeSet &Src,
+                        ExplodedNodeSet& Dst);
 
   /// VisitReturnStmt - Transfer function logic for return statements.
   void VisitReturnStmt(const ReturnStmt* R, ExplodedNode* Pred, 
