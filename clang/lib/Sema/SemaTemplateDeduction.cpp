@@ -49,7 +49,10 @@ namespace clang {
     /// \brief Allow non-dependent types to differ, e.g., when performing
     /// template argument deduction from a function call where conversions
     /// may apply.
-    TDF_SkipNonDependent = 0x08
+    TDF_SkipNonDependent = 0x08,
+    /// \brief Whether we are performing template argument deduction for
+    /// parameters and arguments in a top-level template argument 
+    TDF_TopLevelParameterTypeList = 0x10
   };
 }
 
@@ -763,9 +766,9 @@ DeduceTemplateArguments(Sema &S,
       
       // Deduce template arguments from the pattern.
       if (Sema::TemplateDeductionResult Result 
-          = DeduceTemplateArguments(S, TemplateParams, Pattern, Args[ArgIdx],
-                                    Info, Deduced, PartialOrdering,
-                                    RefParamComparisons))
+            = DeduceTemplateArguments(S, TemplateParams, Pattern, Args[ArgIdx],
+                                      Info, Deduced, TDF, PartialOrdering,
+                                      RefParamComparisons))
         return Result;
       
       // Capture the deduced template arguments for each parameter pack expanded
@@ -897,6 +900,29 @@ DeduceTemplateArguments(Sema &S,
       Quals.setCVRQualifiers(Quals.getCVRQualifiers() &
                              Arg.getCVRQualifiers());
       Param = S.Context.getQualifiedType(UnqualParam, Quals);
+    }
+    
+    if ((TDF & TDF_TopLevelParameterTypeList) && !Param->isFunctionType()) {
+      // C++0x [temp.deduct.type]p10:
+      //   If P and A are function types that originated from deduction when
+      //   taking the address of a function template (14.8.2.2) or when deducing
+      //   template arguments from a function declaration (14.8.2.6) and Pi and
+      //   Ai are parameters of the top-level parameter-type-list of P and A, 
+      //   respectively, Pi is adjusted if it is an rvalue reference to a 
+      //   cv-unqualified template parameter and Ai is an lvalue reference, in 
+      //   which case the type of Pi is changed to be the template parameter 
+      //   type (i.e., T&& is changed to simply T). [ Note: As a result, when
+      //   Pi is T&& and Ai is X&, the adjusted Pi will be T, causing T to be
+      //   deduced as X&. — end note ]
+      TDF &= ~TDF_TopLevelParameterTypeList;
+      
+      if (const RValueReferenceType *ParamRef
+                                        = Param->getAs<RValueReferenceType>()) {
+        if (isa<TemplateTypeParmType>(ParamRef->getPointeeType()) &&
+            !ParamRef->getPointeeType().getQualifiers())
+          if (Arg->isLValueReferenceType())
+            Param = ParamRef->getPointeeType();
+      }
     }
   }
   
@@ -1119,6 +1145,7 @@ DeduceTemplateArguments(Sema &S,
     //     T(*)()
     //     T(*)(T)
     case Type::FunctionProto: {
+      unsigned SubTDF = TDF & TDF_TopLevelParameterTypeList;
       const FunctionProtoType *FunctionProtoArg =
         dyn_cast<FunctionProtoType>(Arg);
       if (!FunctionProtoArg)
@@ -1147,7 +1174,7 @@ DeduceTemplateArguments(Sema &S,
                                      FunctionProtoParam->getNumArgs(),
                                      FunctionProtoArg->arg_type_begin(),
                                      FunctionProtoArg->getNumArgs(),
-                                     Info, Deduced, 0);
+                                     Info, Deduced, SubTDF);
     }
 
     case Type::InjectedClassName: {
@@ -2767,7 +2794,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     if (TemplateDeductionResult Result
           = ::DeduceTemplateArguments(*this, TemplateParams,
                                       FunctionType, ArgFunctionType, Info,
-                                      Deduced, 0))
+                                      Deduced, TDF_TopLevelParameterTypeList))
       return Result;
   }
 
