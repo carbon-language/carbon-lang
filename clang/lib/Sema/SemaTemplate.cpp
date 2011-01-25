@@ -5901,7 +5901,8 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
     if (InnerTSI)
       Builder.pushFullCopy(InnerTSI->getTypeLoc());
     else
-      Builder.push<TemplateSpecializationTypeLoc>(T).initialize(TemplateLoc);
+      Builder.push<TemplateSpecializationTypeLoc>(T).initialize(Context,
+                                                                TemplateLoc);
 
     /* Note: NNS already embedded in template specialization type T. */
     T = Context.getElaboratedType(ETK_Typename, /*NNS=*/0, T);
@@ -5937,7 +5938,8 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
     for (unsigned I = 0, E = TST->getNumArgs(); I != E; ++I)
       TL.setArgLocInfo(I, TSTL.getArgLocInfo(I));
   } else {
-    TL.initializeLocal(SourceLocation());
+    // FIXME: Poor source-location information here.
+    TL.initializeLocal(Context, TemplateLoc);
   }
   TL.setKeywordLoc(TypenameLoc);
   TL.setQualifierRange(SS.getRange());

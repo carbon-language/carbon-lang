@@ -2980,8 +2980,8 @@ QualType TreeTransform<Derived>::TransformType(QualType T) {
 
   // Temporary workaround.  All of these transformations should
   // eventually turn into transformations on TypeLocs.
-  TypeSourceInfo *DI = getSema().Context.CreateTypeSourceInfo(T);
-  DI->getTypeLoc().initialize(getDerived().getBaseLocation());
+  TypeSourceInfo *DI = getSema().Context.getTrivialTypeSourceInfo(T,
+                                                getDerived().getBaseLocation());
   
   TypeSourceInfo *NewDI = getDerived().TransformType(DI);
 
@@ -3073,7 +3073,7 @@ TreeTransform<Derived>::TransformTypeInObjectScope(QualType T,
     return T;
 
   TypeSourceInfo *TSI =
-    SemaRef.Context.getTrivialTypeSourceInfo(T, getBaseLocation());
+    SemaRef.Context.getTrivialTypeSourceInfo(T, getDerived().getBaseLocation());
 
   TSI = getDerived().TransformTypeInObjectScope(TSI, ObjectType,
                                                 UnqualLookup, Prefix);

@@ -1127,7 +1127,7 @@ TypeSourceInfo *ASTContext::CreateTypeSourceInfo(QualType T,
 TypeSourceInfo *ASTContext::getTrivialTypeSourceInfo(QualType T,
                                                      SourceLocation L) const {
   TypeSourceInfo *DI = CreateTypeSourceInfo(T);
-  DI->getTypeLoc().initialize(L);
+  DI->getTypeLoc().initialize(const_cast<ASTContext &>(*this), L);
   return DI;
 }
 

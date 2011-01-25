@@ -1972,10 +1972,12 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
 namespace {
   class TypeSpecLocFiller : public TypeLocVisitor<TypeSpecLocFiller> {
+    ASTContext &Context;
     const DeclSpec &DS;
 
   public:
-    TypeSpecLocFiller(const DeclSpec &DS) : DS(DS) {}
+    TypeSpecLocFiller(ASTContext &Context, const DeclSpec &DS) 
+      : Context(Context), DS(DS) {}
 
     void VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
       Visit(TL.getUnqualifiedLoc());
@@ -1990,7 +1992,7 @@ namespace {
       // Handle the base type, which might not have been written explicitly.
       if (DS.getTypeSpecType() == DeclSpec::TST_unspecified) {
         TL.setHasBaseTypeAsWritten(false);
-        TL.getBaseLoc().initialize(SourceLocation());
+        TL.getBaseLoc().initialize(Context, SourceLocation());
       } else {
         TL.setHasBaseTypeAsWritten(true);
         Visit(TL.getBaseLoc());
@@ -2021,7 +2023,7 @@ namespace {
       // If we got no declarator info from previous Sema routines,
       // just fill with the typespec loc.
       if (!TInfo) {
-        TL.initialize(DS.getTypeSpecTypeLoc());
+        TL.initialize(Context, DS.getTypeSpecTypeLoc());
         return;
       }
 
@@ -2114,7 +2116,7 @@ namespace {
           return;
         }
       }
-      TL.initializeLocal(SourceLocation());
+      TL.initializeLocal(Context, SourceLocation());
       TL.setKeywordLoc(Keyword != ETK_None
                        ? DS.getTypeSpecTypeLoc()
                        : SourceLocation());
@@ -2126,7 +2128,7 @@ namespace {
 
     void VisitTypeLoc(TypeLoc TL) {
       // FIXME: add other typespec types and change this to an assert.
-      TL.initialize(DS.getTypeSpecTypeLoc());
+      TL.initialize(Context, DS.getTypeSpecTypeLoc());
     }
   };
 
@@ -2231,7 +2233,7 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
     assert(TL.getFullDataSize() == CurrTL.getFullDataSize());
     memcpy(CurrTL.getOpaqueData(), TL.getOpaqueData(), TL.getFullDataSize());
   } else {
-    TypeSpecLocFiller(D.getDeclSpec()).Visit(CurrTL);
+    TypeSpecLocFiller(Context, D.getDeclSpec()).Visit(CurrTL);
   }
       
   return TInfo;

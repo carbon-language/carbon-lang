@@ -77,14 +77,15 @@ TypeLoc TypeLoc::getNextTypeLocImpl(TypeLoc TL) {
 /// \brief Initializes a type location, and all of its children
 /// recursively, as if the entire tree had been written in the
 /// given location.
-void TypeLoc::initializeImpl(TypeLoc TL, SourceLocation Loc) {
+void TypeLoc::initializeImpl(ASTContext &Context, TypeLoc TL, 
+                             SourceLocation Loc) {
   while (true) {
     switch (TL.getTypeLocClass()) {
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
 #define TYPELOC(CLASS, PARENT)        \
     case CLASS: {                     \
       CLASS##TypeLoc TLCasted = cast<CLASS##TypeLoc>(TL); \
-      TLCasted.initializeLocal(Loc);  \
+      TLCasted.initializeLocal(Context, Loc);  \
       TL = TLCasted.getNextTypeLoc(); \
       if (!TL) return;                \
       continue;                       \
@@ -229,3 +230,38 @@ TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {
     TL = PTL->getInnerLoc();
   return TL;
 }
+
+void TemplateSpecializationTypeLoc::initializeArgLocs(ASTContext &Context, 
+                                                      unsigned NumArgs,
+                                                  const TemplateArgument *Args,
+                                              TemplateArgumentLocInfo *ArgInfos,
+                                                      SourceLocation Loc) {
+  for (unsigned i = 0, e = NumArgs; i != e; ++i) {
+    switch (Args[i].getKind()) {
+    case TemplateArgument::Null: 
+    case TemplateArgument::Declaration:
+    case TemplateArgument::Integral:
+    case TemplateArgument::Pack:
+    case TemplateArgument::Expression:
+      // FIXME: Can we do better for declarations and integral values?
+      ArgInfos[i] = TemplateArgumentLocInfo();
+      break;
+      
+    case TemplateArgument::Type:
+      ArgInfos[i] = TemplateArgumentLocInfo(
+                          Context.getTrivialTypeSourceInfo(Args[i].getAsType(), 
+                                                           Loc));
+      break;
+        
+    case TemplateArgument::Template:
+      ArgInfos[i] = TemplateArgumentLocInfo(SourceRange(Loc), Loc, 
+                                            SourceLocation());
+      break;
+      
+    case TemplateArgument::TemplateExpansion:
+      ArgInfos[i] = TemplateArgumentLocInfo(SourceRange(Loc), Loc, Loc);
+      break;
+    }
+  }
+}
+

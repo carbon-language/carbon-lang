@@ -20,6 +20,7 @@
 #include "clang/Basic/Specifiers.h"
 
 namespace clang {
+  class ASTContext;
   class ParmVarDecl;
   class TypeSourceInfo;
   class UnqualTypeLoc;
@@ -126,8 +127,8 @@ public:
   ///
   /// This method exists to provide a simple transition for code that
   /// relies on location-less types.
-  void initialize(SourceLocation Loc) const {
-    initializeImpl(*this, Loc);
+  void initialize(ASTContext &Context, SourceLocation Loc) const {
+    initializeImpl(Context, *this, Loc);
   }
 
   /// \brief Initializes this by copying its information from another
@@ -158,7 +159,7 @@ public:
   static bool classof(const TypeLoc *TL) { return true; }
 
 private:
-  static void initializeImpl(TypeLoc TL, SourceLocation Loc);
+  static void initializeImpl(ASTContext &Context, TypeLoc TL, SourceLocation Loc);
   static TypeLoc getNextTypeLocImpl(TypeLoc TL);
   static TypeLoc IgnoreParensImpl(TypeLoc TL);
   static SourceRange getLocalSourceRangeImpl(TypeLoc TL);
@@ -207,7 +208,7 @@ public:
 
   /// Initializes the local data of this type source info block to
   /// provide no information.
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     // do nothing
   }
 
@@ -407,7 +408,7 @@ public:
   SourceRange getLocalSourceRange() const {
     return SourceRange(getNameLoc(), getNameLoc());
   }
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setNameLoc(Loc);
   }
 
@@ -508,7 +509,7 @@ public:
       getWrittenBuiltinSpecs().ModeAttr = written;
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setBuiltinLoc(Loc);
     if (needsExtraLocalData()) {
       WrittenBuiltinSpecs &wbs = getWrittenBuiltinSpecs();
@@ -707,7 +708,7 @@ public:
     return range;
   }
 
-  void initializeLocal(SourceLocation loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation loc) {
     setAttrNameLoc(loc);
     if (hasAttrExprOperand()) {
       setAttrOperandParensRange(SourceRange(loc));
@@ -793,7 +794,7 @@ public:
     return SourceRange(getLAngleLoc(), getRAngleLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setHasBaseTypeAsWritten(true);
     setLAngleLoc(Loc);
     setRAngleLoc(Loc);
@@ -837,7 +838,7 @@ public:
     return SourceRange(getNameLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setNameLoc(Loc);
   }
 };
@@ -868,7 +869,7 @@ public:
     return SourceRange(getLParenLoc(), getRParenLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setLParenLoc(Loc);
     setRParenLoc(Loc);
   }
@@ -907,7 +908,7 @@ public:
     return SourceRange(getSigilLoc(), getSigilLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setSigilLoc(Loc);
   }
 
@@ -1058,7 +1059,7 @@ public:
     return SourceRange(getLParenLoc(), getRParenLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setLParenLoc(Loc);
     setRParenLoc(Loc);
     setTrailingReturn(false);
@@ -1132,7 +1133,7 @@ public:
     return SourceRange(getLBracketLoc(), getRBracketLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setLBracketLoc(Loc);
     setRBracketLoc(Loc);
     setSizeExpr(NULL);
@@ -1234,24 +1235,18 @@ public:
     return SourceRange(getTemplateNameLoc(), getRAngleLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setLAngleLoc(Loc);
     setRAngleLoc(Loc);
     setTemplateNameLoc(Loc);
-    initializeArgLocs(getNumArgs(), getTypePtr()->getArgs(),
+    initializeArgLocs(Context, getNumArgs(), getTypePtr()->getArgs(),
                       getArgInfos(), Loc);
   }
 
-  static void initializeArgLocs(unsigned NumArgs,
+  static void initializeArgLocs(ASTContext &Context, unsigned NumArgs,
                                 const TemplateArgument *Args,
                                 TemplateArgumentLocInfo *ArgInfos,
-                                SourceLocation Loc) {
-    for (unsigned i = 0, e = NumArgs; i != e; ++i) {
-      // FIXME: We can generate better location info here for type arguments,
-      // template template arguments, and template template pack expansions (?).
-      ArgInfos[i] = TemplateArgumentLocInfo();
-    }
-  }
+                                SourceLocation Loc);
 
   unsigned getExtraLocalDataSize() const {
     return getNumArgs() * sizeof(TemplateArgumentLocInfo);
@@ -1346,7 +1341,7 @@ public:
     return SourceRange(getTypeofLoc(), getRParenLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setTypeofLoc(Loc);
     setLParenLoc(Loc);
     setRParenLoc(Loc);
@@ -1420,7 +1415,7 @@ public:
       return getQualifierRange();
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setKeywordLoc(Loc);
     setQualifierRange(SourceRange(Loc));
   }
@@ -1485,7 +1480,7 @@ public:
     memcpy(Data, Loc.Data, size);
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setKeywordLoc(Loc);
     setQualifierRange(SourceRange(Loc));
     setNameLoc(Loc);
@@ -1569,13 +1564,13 @@ public:
     memcpy(Data, Loc.Data, size);
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setKeywordLoc(Loc);
     setQualifierRange(SourceRange(Loc));
     setNameLoc(Loc);
     setLAngleLoc(Loc);
     setRAngleLoc(Loc);
-    TemplateSpecializationTypeLoc::initializeArgLocs(getNumArgs(),
+    TemplateSpecializationTypeLoc::initializeArgLocs(Context, getNumArgs(),
                                                      getTypePtr()->getArgs(),
                                                      getArgInfos(), Loc);
   }
@@ -1611,7 +1606,7 @@ public:
     return SourceRange(getEllipsisLoc(), getEllipsisLoc());
   }
 
-  void initializeLocal(SourceLocation Loc) {
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
     setEllipsisLoc(Loc);
   }
 
