@@ -67,7 +67,7 @@ typedef struct
 }  ARMOpcode;
 
 static bool 
-EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
+emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -146,8 +146,10 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
                 return false;
             registers = (1u << t);
             break;
+        default:
+            return false;
         }
-        addr_t sp_offset = addr_byte_size * EmulateInstruction::BitCount (registers);
+        addr_t sp_offset = addr_byte_size * BitCount (registers);
         addr_t addr = sp - sp_offset;
         uint32_t i;
         
@@ -189,21 +191,98 @@ EmulateARMPushEncoding (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
+// A store operation to the SP that also updates the SP.
+static bool
+emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+        address = if index then offset_addr else R[n];
+        MemU[address,4] = if t == 15 then PCStoreValue() else R[t];
+        if wback then R[n] = offset_addr;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const uint32_t addr_byte_size = emulator->GetAddressByteSize();
+        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        uint32_t t; // t = UInt(Rt)            
+        uint32_t imm12;
+        switch (encoding) {
+        case eEncodingA1:
+            t = EmulateInstruction::UnsignedBits (opcode, 15, 12);
+            imm12 = EmulateInstruction::UnsignedBits (opcode, 11, 0);
+            break;
+        default:
+            return false;
+        }
+        addr_t sp_offset = imm12;
+        addr_t addr = sp - sp_offset;
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextPushRegisterOnStack, eRegisterKindDWARF, 0, 0 };
+        if (t != 15)
+        {
+            context.arg1 = dwarf_r0 + t;    // arg1 in the context is the DWARF register number
+            context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
+            uint32_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
+            if (!success)
+                return false;
+            if (!emulator->WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
+                return false;
+        }
+        else
+        {
+            context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
+            context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
+            const uint32_t pc = emulator->ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            if (!success)
+                return false;
+            if (!emulator->WriteMemoryUnsigned (context, addr, pc + 8, addr_byte_size))
+                return false;
+        }
+        
+        context.type = EmulateInstruction::eContextAdjustStackPointer;
+        context.arg0 = eRegisterKindGeneric;
+        context.arg1 = LLDB_REGNUM_GENERIC_SP;
+        context.arg2 = sp_offset;
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
+            return false;
+    }
+    return true;
+}
+
 static ARMOpcode g_arm_opcodes[] =
 {
-    { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, EmulateARMPushEncoding,
+    { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, emulate_push,
       "push<c> <registers> ; <registers> contains more than one register" },
-    { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, EmulateARMPushEncoding,
-      "push<c> <registers> ; <registers> contains one register, <Rt>" }
+    { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, emulate_push,
+      "push<c> <registers> ; <registers> contains one register, <Rt>" },
+
+    // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
+    { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp,
+      "str<c><q> Rt, [sp, #-n]!" }
 };
 
 static ARMOpcode g_thumb_opcodes[] =
 {
-    { 0x0000fe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, EmulateARMPushEncoding,
+    { 0x0000fe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push,
       "push<c> <registers>" },
-    { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, EmulateARMPushEncoding,
+    { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push,
       "push<c>.w <registers> ; <registers> contains more than one register" },
-    { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, EmulateARMPushEncoding,
+    { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push,
       "push<c>.w <registers> ; <registers> contains one register, <Rt>" }
 };
 
