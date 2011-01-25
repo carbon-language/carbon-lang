@@ -865,6 +865,10 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       VisitObjCAtSynchronizedStmt(cast<ObjCAtSynchronizedStmt>(S), Pred, Dst);
       break;
 
+    case Stmt::ObjCPropertyRefExprClass:
+      VisitObjCPropertyRefExpr(cast<ObjCPropertyRefExpr>(S), Pred, Dst);
+      break;
+
     // Cases not handled yet; but will handle some day.
     case Stmt::DesignatedInitExprClass:
     case Stmt::ExtVectorElementExprClass:
@@ -875,7 +879,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::ObjCAtTryStmtClass:
     case Stmt::ObjCEncodeExprClass:
     case Stmt::ObjCIsaExprClass:
-    case Stmt::ObjCPropertyRefExprClass:
     case Stmt::ObjCProtocolExprClass:
     case Stmt::ObjCSelectorExprClass:
     case Stmt::ObjCStringLiteralClass:
@@ -1799,6 +1802,17 @@ void ExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
 
   assert(Builder && "StmtNodeBuilder must be defined.");
 
+  // Proceed with the store.  We use AssignE as the anchor for the PostStore
+  // ProgramPoint if it is non-NULL, and LocationE otherwise.
+  const Expr *StoreE = AssignE ? AssignE : LocationE;
+
+  if (isa<loc::ObjCPropRef>(location)) {
+    loc::ObjCPropRef prop = cast<loc::ObjCPropRef>(location);
+    ExplodedNodeSet src = Pred;
+    return VisitObjCMessage(ObjCPropertySetter(prop.getPropRefExpr(),
+                                               StoreE, Val), src, Dst);
+  }
+
   // Evaluate the location (checks for bad dereferences).
   ExplodedNodeSet Tmp;
   evalLocation(Tmp, LocationE, Pred, state, location, tag, false);
@@ -1811,10 +1825,6 @@ void ExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
   SaveAndRestore<ProgramPoint::Kind> OldSPointKind(Builder->PointKind,
                                                    ProgramPoint::PostStoreKind);
 
-  // Proceed with the store.  We use AssignE as the anchor for the PostStore
-  // ProgramPoint if it is non-NULL, and LocationE otherwise.
-  const Expr *StoreE = AssignE ? AssignE : LocationE;
-
   for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
     evalBind(Dst, StoreE, *NI, GetState(*NI), location, Val);
 }
@@ -1824,6 +1834,13 @@ void ExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
                             const GRState* state, SVal location,
                             const void *tag, QualType LoadTy) {
   assert(!isa<NonLoc>(location) && "location cannot be a NonLoc.");
+
+  if (isa<loc::ObjCPropRef>(location)) {
+    loc::ObjCPropRef prop = cast<loc::ObjCPropRef>(location);
+    ExplodedNodeSet src = Pred;
+    return VisitObjCMessage(ObjCPropertyGetter(prop.getPropRefExpr(), Ex),
+                            src, Dst);
+  }
 
   // Are we loading from a region?  This actually results in two loads; one
   // to fetch the address of the referenced value and one to fetch the
@@ -2045,6 +2062,34 @@ void ExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
   // Finally, perform the post-condition check of the CallExpr and store
   // the created nodes in 'Dst'.
   CheckerVisit(CE, Dst, DstTmp3, PostVisitStmtCallback);
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer function: Objective-C dot-syntax to access a property.
+//===----------------------------------------------------------------------===//
+
+void ExprEngine::VisitObjCPropertyRefExpr(const ObjCPropertyRefExpr *Ex,
+                                          ExplodedNode *Pred,
+                                          ExplodedNodeSet &Dst) {
+
+  // Visit the base expression, which is needed for computing the lvalue
+  // of the ivar.
+  ExplodedNodeSet dstBase;
+  const Expr *baseExpr = Ex->getBase();
+  Visit(baseExpr, Pred, dstBase);
+
+  ExplodedNodeSet dstPropRef;
+
+  // Using the base, compute the lvalue of the instance variable.
+  for (ExplodedNodeSet::iterator I = dstBase.begin(), E = dstBase.end();
+       I!=E; ++I) {
+    ExplodedNode *nodeBase = *I;
+    const GRState *state = GetState(nodeBase);
+    SVal baseVal = state->getSVal(baseExpr);
+    MakeNode(dstPropRef, Ex, *I, state->BindExpr(Ex, loc::ObjCPropRef(Ex)));
+  }
+  
+  Dst.insert(dstPropRef);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2426,7 +2471,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   ExplodedNodeSet S2;
   CheckerVisit(CastE, S2, S1, PreVisitStmtCallback);
   
-  if (CastE->getCastKind() == CK_LValueToRValue) {
+  if (CastE->getCastKind() == CK_LValueToRValue ||
+      CastE->getCastKind() == CK_GetObjCProperty) {
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I!=E; ++I) {
       ExplodedNode *subExprNode = *I;
       const GRState *state = GetState(subExprNode);

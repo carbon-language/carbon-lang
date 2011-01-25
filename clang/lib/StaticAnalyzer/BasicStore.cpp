@@ -196,6 +196,7 @@ SVal BasicStoreManager::Retrieve(Store store, Loc loc, QualType T) {
       return V.isUnknownOrUndef() ? V : CastRetrievedVal(V, TR, T);
     }
 
+    case loc::ObjCPropRefKind:
     case loc::ConcreteIntKind:
       // Support direct accesses to memory.  It's up to individual checkers
       // to flag an error.

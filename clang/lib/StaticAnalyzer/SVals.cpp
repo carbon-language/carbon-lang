@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/PathSensitive/GRState.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/Basic/IdentifierTable.h"
 
 using namespace clang;
@@ -354,6 +355,22 @@ void Loc::dumpToStream(llvm::raw_ostream& os) const {
     case loc::MemRegionKind:
       os << '&' << cast<loc::MemRegionVal>(this)->getRegion()->getString();
       break;
+    case loc::ObjCPropRefKind: {
+      const ObjCPropertyRefExpr *E = cast<loc::ObjCPropRef>(this)->getPropRefExpr();
+      os << "objc-prop{";
+      if (E->isSuperReceiver())
+        os << "super.";
+      else if (E->getBase())
+        os << "<base>.";
+
+      if (E->isImplicitProperty())
+        os << E->getImplicitPropertyGetter()->getSelector().getAsString();
+      else
+        os << E->getExplicitProperty()->getName();
+
+      os << "}";
+      break;
+    }
     default:
       assert(false && "Pretty-printing not implemented for this Loc.");
       break;

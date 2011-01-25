@@ -246,10 +246,11 @@ void CallAndMessageChecker::preVisitObjCMessage(CheckerContext &C,
       return;
     }
 
+  const char *bugDesc = msg.isPropertySetter() ?
+                     "Argument for property setter is an uninitialized value"
+                   : "Argument in message expression is an uninitialized value";
   // Check for any arguments that are uninitialized/undefined.
-  PreVisitProcessArgs(C, CallOrObjCMessage(msg, state),
-                      "Argument in message expression "
-                      "is an uninitialized value", BT_msg_arg);
+  PreVisitProcessArgs(C, CallOrObjCMessage(msg, state), bugDesc, BT_msg_arg);
 }
 
 bool CallAndMessageChecker::evalNilReceiver(CheckerContext &C,

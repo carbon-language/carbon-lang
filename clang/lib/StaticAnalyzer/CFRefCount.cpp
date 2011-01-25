@@ -2033,9 +2033,10 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
       else
         os << "function call";
     }
-    else {
-      assert (isa<ObjCMessageExpr>(S));
+    else if (isa<ObjCMessageExpr>(S)) {
       os << "Method";
+    } else {
+      os << "Property";
     }
 
     if (CurrV.getObjKind() == RetEffect::CF) {

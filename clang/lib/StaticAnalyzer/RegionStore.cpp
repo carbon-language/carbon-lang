@@ -985,6 +985,9 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   if (isa<loc::ConcreteInt>(L)) {
     return UnknownVal();
   }
+  if (!isa<loc::MemRegionVal>(L)) {
+    return UnknownVal();
+  }
 
   const MemRegion *MR = cast<loc::MemRegionVal>(L).getRegion();
 
