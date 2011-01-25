@@ -28,7 +28,7 @@
 using namespace clang;
 using namespace llvm;
 
-namespace {
+namespace clang {
   class BackendConsumer : public ASTConsumer {
     Diagnostic &Diags;
     BackendAction Action;
@@ -236,10 +236,7 @@ void CodeGenAction::EndSourceFileAction() {
     return;
 
   // Steal the module from the consumer.
-  BackendConsumer *Consumer = static_cast<BackendConsumer*>(
-    &getCompilerInstance().getASTConsumer());
-
-  TheModule.reset(Consumer->takeModule());
+  TheModule.reset(BEConsumer->takeModule());
 }
 
 llvm::Module *CodeGenAction::takeModule() {
@@ -274,10 +271,12 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
   if (BA != Backend_EmitNothing && !OS)
     return 0;
 
-  return new BackendConsumer(BA, CI.getDiagnostics(),
-                             CI.getCodeGenOpts(), CI.getTargetOpts(),
-                             CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
-                             CI.getLLVMContext());
+  BEConsumer = 
+      new BackendConsumer(BA, CI.getDiagnostics(),
+                          CI.getCodeGenOpts(), CI.getTargetOpts(),
+                          CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
+                          CI.getLLVMContext());
+  return BEConsumer;
 }
 
 void CodeGenAction::ExecuteAction() {

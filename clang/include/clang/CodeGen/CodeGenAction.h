@@ -18,6 +18,7 @@ namespace llvm {
 }
 
 namespace clang {
+class BackendConsumer;
 
 class CodeGenAction : public ASTFrontendAction {
 private:
@@ -42,6 +43,8 @@ public:
   /// takeModule - Take the generated LLVM module, for use after the action has
   /// been run. The result may be null on failure.
   llvm::Module *takeModule();
+
+  BackendConsumer *BEConsumer;
 };
 
 class EmitAssemblyAction : public CodeGenAction {

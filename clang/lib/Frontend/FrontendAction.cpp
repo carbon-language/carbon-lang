@@ -10,11 +10,14 @@
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclGroup.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/FrontendPluginRegistry.h"
+#include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Parse/ParseAST.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -85,6 +88,39 @@ void FrontendAction::setCurrentFile(llvm::StringRef Value, InputKind Kind,
   CurrentASTUnit.reset(AST);
 }
 
+ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
+                                                      llvm::StringRef InFile) {
+  ASTConsumer* Consumer = CreateASTConsumer(CI, InFile);
+  if (!Consumer)
+    return 0;
+
+  if (CI.getFrontendOpts().AddPluginActions.size() == 0)
+    return Consumer;
+
+  // Make sure the non-plugin consumer is first, so that plugins can't
+  // modifiy the AST.
+  std::vector<ASTConsumer*> Consumers(1, Consumer);
+
+  for (size_t i = 0, e = CI.getFrontendOpts().AddPluginActions.size();
+       i != e; ++i) { 
+    // This is O(|plugins| * |add_plugins|), but since both numbers are
+    // way below 50 in practice, that's ok.
+    for (FrontendPluginRegistry::iterator
+        it = FrontendPluginRegistry::begin(),
+        ie = FrontendPluginRegistry::end();
+        it != ie; ++it) {
+      if (it->getName() == CI.getFrontendOpts().AddPluginActions[i]) {
+        llvm::OwningPtr<PluginASTAction> P(it->instantiate());
+        FrontendAction* c = P.get();
+        if (P->ParseArgs(CI, CI.getFrontendOpts().PluginArgs))
+          Consumers.push_back(c->CreateASTConsumer(CI, InFile));
+      }
+    }
+  }
+
+  return new MultiplexConsumer(Consumers);
+}
+
 bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                      llvm::StringRef Filename,
                                      InputKind InputKind) {
@@ -122,7 +158,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       goto failure;
 
     /// Create the AST consumer.
-    CI.setASTConsumer(CreateASTConsumer(CI, Filename));
+    CI.setASTConsumer(CreateWrappedASTConsumer(CI, Filename));
     if (!CI.hasASTConsumer())
       goto failure;
 
@@ -166,7 +202,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (!usesPreprocessorOnly()) {
     CI.createASTContext();
 
-    llvm::OwningPtr<ASTConsumer> Consumer(CreateASTConsumer(CI, Filename));
+    llvm::OwningPtr<ASTConsumer> Consumer(
+        CreateWrappedASTConsumer(CI, Filename));
     if (!Consumer)
       goto failure;
 

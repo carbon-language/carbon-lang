@@ -103,6 +103,9 @@ public:
   /// Arg to pass to the plugin
   std::vector<std::string> PluginArgs;
 
+  /// The list of plugin actions to run in addition to the normal action.
+  std::vector<std::string> AddPluginActions;
+
   /// The list of plugins to load.
   std::vector<std::string> Plugins;
 

@@ -52,6 +52,10 @@ class FrontendAction {
   CompilerInstance *Instance;
   friend class ASTMergeAction;
 
+private:
+  ASTConsumer* CreateWrappedASTConsumer(CompilerInstance &CI,
+                                        llvm::StringRef InFile);
+
 protected:
   /// @name Implementation Action Interface
   /// @{

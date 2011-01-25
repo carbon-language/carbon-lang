@@ -15,6 +15,7 @@
 
 namespace clang {
   class Decl;
+  class DeclContext;
   class TagDecl;
   class CXXRecordDecl;
   class ClassTemplateDecl;

@@ -433,6 +433,10 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-load");
     Res.push_back(Opts.Plugins[i]);
   }
+  for (unsigned i = 0, e = Opts.AddPluginActions.size(); i != e; ++i) {
+    Res.push_back("-add-plugin");
+    Res.push_back(Opts.AddPluginActions[i]);
+  }
   for (unsigned i = 0, e = Opts.ASTMergeFiles.size(); i != e; ++i) {
     Res.push_back("-ast-merge");
     Res.push_back(Opts.ASTMergeFiles[i]);
@@ -1097,6 +1101,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
         Opts.PluginArgs.push_back((*it)->getValue(Args, 1));
     }
   }
+
+  Opts.AddPluginActions = Args.getAllArgValues(OPT_add_plugin);
 
   if (const Arg *A = Args.getLastArg(OPT_code_completion_at)) {
     Opts.CodeCompletionAt =
