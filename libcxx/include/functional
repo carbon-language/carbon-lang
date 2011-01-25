@@ -1559,10 +1559,7 @@ typename enable_if
 __mu(_Ti&, _Uj& __uj)
 {
     const size_t _Indx = is_placeholder<_Ti>::value - 1;
-    // compiler bug workaround
-    typename tuple_element<_Indx, _Uj>::type __t = get<_Indx>(__uj);
-    return __t;
-//    return _STD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj));
+    return _STD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj));
 }
 
 template <class _Ti, class _Uj>
