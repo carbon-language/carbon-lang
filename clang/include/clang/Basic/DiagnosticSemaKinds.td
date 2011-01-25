@@ -1038,17 +1038,17 @@ def err_attribute_weakref_without_alias : Error<
 def err_alias_not_supported_on_darwin : Error <
   "only weak aliases are supported on darwin">;
 def warn_attribute_wrong_decl_type : Warning<
-  "%0 attribute only applies to %select{function|union|"
-  "variable and function|function or method|parameter|"
-  "parameter or Objective-C method|function, method or block|"
-  "virtual method or class|function, method, or parameter|class|virtual method"
-  "|member|variable|method}1 types">;
+  "%0 attribute only applies to %select{functions|unions|"
+  "variables and functions|functions and methods|parameters|"
+  "parameters and methods|functions, methods and blocks|"
+  "classes and virtual methods|functions, methods, and parameters|"
+  "classes|virtual methods|class members|variables|methods}1">;
 def err_attribute_wrong_decl_type : Error<
-  "%0 attribute only applies to %select{function|union|"
-  "variable and function|function or method|parameter|"
-  "parameter or Objective-C method|function, method or block|"
-  "virtual method or class|function, method, or parameter|class|virtual method"
-  "|member|variable|method}1 types">;
+  "%0 attribute only applies to %select{functions|unions|"
+  "variables and functions|functions and methods|parameters|"
+  "parameters and methods|functions, methods and blocks|"
+  "classes and virtual methods|functions, methods, and parameters|"
+  "classes|virtual methods|class members|variables|methods}1">;
 def warn_function_attribute_wrong_type : Warning<
   "%0 only applies to function types; type here is %1">;
 def warn_gnu_inline_attribute_requires_inline : Warning<

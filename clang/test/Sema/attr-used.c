@@ -3,7 +3,7 @@
 extern int l0 __attribute__((used)); // expected-warning {{used attribute ignored}}
 __private_extern__ int l1 __attribute__((used)); // expected-warning {{used attribute ignored}}
 
-struct __attribute__((used)) s { // expected-warning {{'used' attribute only applies to variable and function types}}
+struct __attribute__((used)) s { // expected-warning {{'used' attribute only applies to variables and functions}}
   int x;
 };
 

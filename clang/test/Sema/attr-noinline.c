@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -verify -fsyntax-only
 
-int a __attribute__((noinline)); // expected-warning {{'noinline' attribute only applies to function types}}
+int a __attribute__((noinline)); // expected-warning {{'noinline' attribute only applies to functions}}
 
 void t1() __attribute__((noinline));
 
