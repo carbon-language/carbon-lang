@@ -589,7 +589,7 @@ typename tuple_element<_Ip, tuple<_Tp...> >::type&&
 get(tuple<_Tp...>&& __t)
 {
     typedef typename tuple_element<_Ip, tuple<_Tp...> >::type type;
-    return static_cast<typename tuple_element<_Ip, tuple<_Tp...> >::type&&>(
+    return static_cast<type&&>(
              static_cast<__tuple_leaf<_Ip, type>&&>(__t.base_).get());
 }
 
