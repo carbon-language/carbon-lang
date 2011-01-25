@@ -233,13 +233,15 @@ QualType SymbolRegionValue::getType(ASTContext& C) const {
 SymbolManager::~SymbolManager() {}
 
 bool SymbolManager::canSymbolicate(QualType T) {
+  T = T.getCanonicalType();
+
   if (Loc::IsLocType(T))
     return true;
 
   if (T->isIntegerType())
     return T->isScalarType();
 
-  if (T->isRecordType())
+  if (T->isRecordType() && !T->isUnionType())
     return true;
 
   return false;
