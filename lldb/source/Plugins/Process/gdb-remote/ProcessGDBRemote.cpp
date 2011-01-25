@@ -1307,7 +1307,17 @@ ProcessGDBRemote::DoDestroy ()
     {
         StringExtractorGDBRemote response;
         bool send_async = true;
-        if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, 3, send_async) == 0)
+        if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, 3, send_async))
+        {
+            char packet_cmd = response.GetChar(0);
+
+            if (packet_cmd == 'W' || packet_cmd == 'X')
+            {
+                m_last_stop_packet = response;
+                SetExitStatus(response.GetHexU8(), NULL);
+            }
+        }
+        else
         {
             error.SetErrorString("kill packet failed");
         }
