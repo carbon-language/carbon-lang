@@ -33,6 +33,8 @@ namespace llvm {
 class Value;
 class User;
 class Use;
+template<typename>
+struct simplify_type;
 
 // Use** is only 4-byte aligned.
 template<>
