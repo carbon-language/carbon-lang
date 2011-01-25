@@ -653,8 +653,8 @@ static struct option g_long_options[] =
     { "native-regs",        no_argument,        NULL,               'r' },  // Specify to use the native registers instead of the gdb defaults for the architecture.
     { "stdio-path",         required_argument,  NULL,               's' },  // Set the STDIO path to be used when launching applications (STDIN, STDOUT and STDERR) (only if debugserver launches the process)
     { "stdin-path",         required_argument,  NULL,               'I' },  // Set the STDIN path to be used when launching applications (only if debugserver launches the process)
-    { "stdout-path",        required_argument,  NULL,               'O' },  // Set the STDIN path to be used when launching applications (only if debugserver launches the process)
-    { "stderr-path",        required_argument,  NULL,               'E' },  // Set the STDIN path to be used when launching applications (only if debugserver launches the process)
+    { "stdout-path",        required_argument,  NULL,               'O' },  // Set the STDOUT path to be used when launching applications (only if debugserver launches the process)
+    { "stderr-path",        required_argument,  NULL,               'E' },  // Set the STDERR path to be used when launching applications (only if debugserver launches the process)
     { "no-stdio",           no_argument,        NULL,               'n' },  // Do not set up any stdio (perhaps the program is a GUI program) (only if debugserver launches the process)
     { "setsid",             no_argument,        NULL,               'S' },  // call setsid() to make debugserver run in its own session
     { "disable-aslr",       no_argument,        NULL,               'D' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
