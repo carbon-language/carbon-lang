@@ -1307,7 +1307,7 @@ ProcessGDBRemote::DoDestroy ()
     {
         StringExtractorGDBRemote response;
         bool send_async = true;
-        if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, 3, send_async))
+        if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, 2, send_async))
         {
             char packet_cmd = response.GetChar(0);
 
@@ -1319,7 +1319,8 @@ ProcessGDBRemote::DoDestroy ()
         }
         else
         {
-            error.SetErrorString("kill packet failed");
+            SetExitStatus(SIGABRT, NULL);
+            //error.SetErrorString("kill packet failed");
         }
     }
     StopAsyncThread ();
@@ -1936,8 +1937,8 @@ ProcessGDBRemote::StartDebugserverProcess
                 ::snprintf (arg_cstr, sizeof(arg_cstr), "--log-flags=%s", env_debugserver_log_flags);
                 debugserver_args.AppendArgument(arg_cstr);
             }
-            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
-            debugserver_args.AppendArgument("--log-flags=0x800e0e");
+//            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
+//            debugserver_args.AppendArgument("--log-flags=0x800e0e");
 
             // Now append the program arguments
             if (launch_process)

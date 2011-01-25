@@ -30,15 +30,14 @@ MachThread::MachThread (MachProcess *process, thread_t thread) :
     m_state (eStateUnloaded),
     m_state_mutex (PTHREAD_MUTEX_RECURSIVE),
     m_breakID (INVALID_NUB_BREAK_ID),
-    m_suspend_count (0),
+    m_suspendCount (0),
     m_arch_ap (DNBArchProtocol::Create (this)),
-    m_reg_sets (m_arch_ap->GetRegisterSetInfo (&n_num_reg_sets)),
-    m_basic_info_valid (false)
+    m_reg_sets (m_arch_ap->GetRegisterSetInfo (&n_num_reg_sets))
 {
     // Get the thread state so we know if a thread is in a state where we can't
     // muck with it and also so we get the suspend count correct in case it was
     // already suspended
-    GetBasicInfo(true);
+    GetBasicInfo();
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::MachThread ( process = %p, tid = 0x%4.4x, seq_id = %u )", &m_process, m_tid, m_seq_id);
 }
 
@@ -49,7 +48,7 @@ MachThread::~MachThread()
 
 
 
-int32_t
+uint32_t
 MachThread::Suspend()
 {
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
@@ -57,47 +56,14 @@ MachThread::Suspend()
     {
         DNBError err(::thread_suspend (m_tid), DNBError::MachKernel);
         if (err.Success())
-            m_suspend_count++;
+            m_suspendCount++;
         if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
             err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
     }
-    return m_suspend_count;
+    return SuspendCount();
 }
 
-int32_t
-MachThread::ForceResume ()
-{
-    // We need to resume this all the way to 0.  
-    DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
-    // Okay, now m_basic_info has the full suspend count.  So I'll just
-    // keep decrementing the suspend count till that is zero, and at the same time
-    // decrement m_suspend_count.  If that goes below zero, then the next time we
-    // call RestoreSuspendCount, we'll have to suspend it back to 0.
-    uint32_t num_suspends = m_basic_info.suspend_count + m_suspend_count;
-    DNBError err;
-    while (num_suspends > 0)
-    {
-        if (m_suspend_count < 0)
-         DNBLogThreadedIf(LOG_THREAD, "MachThread::%s ( ) (tid = %4.4x) setting suspend count negative = %d", __FUNCTION__,
-                     m_tid, m_suspend_count);
-        err = ::thread_resume (m_tid);
-        if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
-            err.LogThreaded("ForceResume ::thread_resume (%4.4x)", m_tid);
-        if (err.Success())
-        {
-            --m_suspend_count;
-            --num_suspends;
-        }
-        else
-        {
-            break;
-        }
-    }
-    return m_suspend_count;
-
-}
-
-int32_t
+uint32_t
 MachThread::Resume()
 {
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
@@ -105,59 +71,49 @@ MachThread::Resume()
     {
         RestoreSuspendCount();
     }
-    return m_suspend_count;
+    return SuspendCount();
 }
 
 bool
 MachThread::RestoreSuspendCount()
 {
-    DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( ) (tid = %4.4x) our suspend count = %d", __FUNCTION__,
-                     m_tid, m_suspend_count);
+    DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
     DNBError err;
     if (ThreadIDIsValid(m_tid) == false)
         return false;
-    if (m_suspend_count > 0)
+    if (m_suspendCount > 0)
     {
-        while (m_suspend_count > 0)
+        while (m_suspendCount > 0)
         {
             err = ::thread_resume (m_tid);
             if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
-                err.LogThreaded("RestoreSuspendCount ::thread_resume (%4.4x)", m_tid);
+                err.LogThreaded("::thread_resume (%4.4x)", m_tid);
             if (err.Success())
-                --m_suspend_count;
+                --m_suspendCount;
             else
             {
-                if (GetBasicInfo(true))
-                    m_suspend_count = m_basic_info.suspend_count;
+                if (GetBasicInfo())
+                    m_suspendCount = m_basicInfo.suspend_count;
                 else
-                    m_suspend_count = 0;
+                    m_suspendCount = 0;
                 return false; // ??? 
             }
         }
     }
-    else if (m_suspend_count < 0)
-    {
-         DNBLogThreadedIf(LOG_THREAD, "MachThread::%s ( ) (tid = %4.4x) negative suspend count = %d", __FUNCTION__,
-                     m_tid, m_suspend_count);
-        while (m_suspend_count < 0)
-        {
-            err = ::thread_suspend (m_tid);
-            if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
-                err.LogThreaded("RestoreSuspendCount ::thread_suspend (%4.4x)", m_tid);
-                
-            if (err.Success())
-                ++m_suspend_count;
-            else
-            {
-                if (GetBasicInfo(true))
-                    m_suspend_count = m_basic_info.suspend_count;
-                else
-                    m_suspend_count = 0;
-                return false; // ??? 
-            }
-
-        }
-    }
+    // We don't currently really support resuming a thread that was externally
+    // suspended. If/when we do, we will need to make the code below work and
+    // m_suspendCount will need to become signed instead of unsigned.
+//    else if (m_suspendCount < 0)
+//    {
+//        while (m_suspendCount < 0)
+//        {
+//            err = ::thread_suspend (m_tid);
+//            if (err.Success())
+//                ++m_suspendCount;
+//            if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
+//                err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
+//        }
+//    }
     return true;
 }
 
@@ -237,9 +193,10 @@ MachThread::InferiorThreadID() const
 bool
 MachThread::IsUserReady()
 {
-    GetBasicInfo (false);
+    if (m_basicInfo.run_state == 0)
+        GetBasicInfo ();
     
-    switch (m_basic_info.run_state)
+    switch (m_basicInfo.run_state)
     {
     default: 
     case TH_STATE_UNINTERRUPTIBLE:  
@@ -255,16 +212,10 @@ MachThread::IsUserReady()
 }
 
 struct thread_basic_info *
-MachThread::GetBasicInfo (bool force)
+MachThread::GetBasicInfo ()
 {
-    if (!force && m_basic_info_valid)
-        return &m_basic_info;
-        
-    if (MachThread::GetBasicInfo(m_tid, &m_basic_info))
-    {
-        m_basic_info_valid = true;
-        return &m_basic_info;
-    }
+    if (MachThread::GetBasicInfo(m_tid, &m_basicInfo))
+        return &m_basicInfo;
     return NULL;
 }
 
@@ -336,7 +287,7 @@ MachThread::Dump(uint32_t index)
 {
     const char * thread_run_state = NULL;
 
-    switch (m_basic_info.run_state)
+    switch (m_basicInfo.run_state)
     {
     case TH_STATE_RUNNING:          thread_run_state = "running"; break;    // 1 thread is running normally
     case TH_STATE_STOPPED:          thread_run_state = "stopped"; break;    // 2 thread is stopped
@@ -353,15 +304,15 @@ MachThread::Dump(uint32_t index)
         GetPC(INVALID_NUB_ADDRESS),
         GetSP(INVALID_NUB_ADDRESS),
         m_breakID,
-        m_basic_info.user_time.seconds,      m_basic_info.user_time.microseconds,
-        m_basic_info.system_time.seconds,    m_basic_info.system_time.microseconds,
-        m_basic_info.cpu_usage,
-        m_basic_info.policy,
-        m_basic_info.run_state,
+        m_basicInfo.user_time.seconds,      m_basicInfo.user_time.microseconds,
+        m_basicInfo.system_time.seconds,    m_basicInfo.system_time.microseconds,
+        m_basicInfo.cpu_usage,
+        m_basicInfo.policy,
+        m_basicInfo.run_state,
         thread_run_state,
-        m_basic_info.flags,
-        m_basic_info.suspend_count, m_suspend_count,
-        m_basic_info.sleep_time);
+        m_basicInfo.flags,
+        m_basicInfo.suspend_count, m_suspendCount,
+        m_basicInfo.sleep_time);
     //DumpRegisterState(0);
 }
 
@@ -370,11 +321,7 @@ MachThread::ThreadWillResume(const DNBThreadResumeAction *thread_action)
 {
     if (thread_action->addr != INVALID_NUB_ADDRESS)
         SetPC (thread_action->addr);
-    // DidStop restores the state to it's natural state, and sets
-    // m_suspend_count to 0 in the process, and then here is the only
-    // place that we should be suspending or resuming (and thus changing
-    // that state.
-    assert (m_suspend_count == 0);
+
     SetState (thread_action->state);
     switch (thread_action->state)
     {
@@ -384,10 +331,8 @@ MachThread::ThreadWillResume(const DNBThreadResumeAction *thread_action)
         break;
 
     case eStateRunning:
-        Resume();
-        break;
     case eStateStepping:
-        ForceResume();
+        Resume();
         break;
     }
     m_arch_ap->ThreadWillResume();
@@ -493,7 +438,7 @@ MachThread::ThreadDidStop()
     RestoreSuspendCount();
 
     // Update the basic information for a thread
-    GetBasicInfo (true);
+    MachThread::GetBasicInfo(m_tid, &m_basicInfo);
 
 #if ENABLE_AUTO_STEPPING_OVER_BP
     // See if we were at a breakpoint when we last resumed that we disabled,
@@ -503,7 +448,7 @@ MachThread::ThreadDidStop()
     if (NUB_BREAK_ID_IS_VALID(breakID))
     {
         m_process->EnableBreakpoint(breakID);
-        if (m_basic_info.suspend_count > 0)
+        if (m_basicInfo.suspend_count > 0)
         {
             SetState(eStateSuspended);
         }
@@ -526,7 +471,7 @@ MachThread::ThreadDidStop()
     }
     else
     {
-        if (m_basic_info.suspend_count > 0)
+        if (m_basicInfo.suspend_count > 0)
         {
             SetState(eStateSuspended);
         }
@@ -536,7 +481,7 @@ MachThread::ThreadDidStop()
         }
     }
 #else
-    if (m_basic_info.suspend_count > 0)
+    if (m_basicInfo.suspend_count > 0)
         SetState(eStateSuspended);
     else
         SetState(eStateStopped);

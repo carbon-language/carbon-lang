@@ -49,6 +49,11 @@ public:
 
     uint32_t        SequenceID() const { return m_seq_id; }
     static bool     ThreadIDIsValid(thread_t thread);
+    uint32_t        Resume();
+    uint32_t        Suspend();
+    uint32_t        SuspendCount() const { return m_suspendCount; }
+    bool            RestoreSuspendCount();
+
     bool            GetRegisterState(int flavor, bool force);
     bool            SetRegisterState(int flavor);
     uint64_t        GetPC(uint64_t failValue = INVALID_NUB_ADDRESS);    // Get program counter
@@ -87,6 +92,8 @@ public:
                     }
 
     bool            IsUserReady();
+    struct thread_basic_info *
+                    GetBasicInfo ();
     const char *    GetBasicInfoAsString () const;
     const char *    GetName ();
     
@@ -97,13 +104,6 @@ public:
     }
 
 protected:
-    int32_t         Resume();
-    int32_t         ForceResume();
-    int32_t         Suspend();
-//    uint32_t        SuspendCount() const { return m_suspendCount; }
-    bool            RestoreSuspendCount();
-    struct thread_basic_info *
-                    GetBasicInfo (bool force);
     static bool     GetBasicInfo(thread_t threadID, struct thread_basic_info *basic_info);
 
     bool
@@ -118,9 +118,8 @@ protected:
     nub_state_t                     m_state;        // The state of our process
     PThreadMutex                    m_state_mutex;  // Multithreaded protection for m_state
     nub_break_t                     m_breakID;      // Breakpoint that this thread is (stopped)/was(running) at (NULL for none)
-    struct thread_basic_info        m_basic_info;    // Basic information for a thread used to see if a thread is valid
-    bool                            m_basic_info_valid;
-    uint32_t                        m_suspend_count; // The current suspend count
+    struct thread_basic_info        m_basicInfo;    // Basic information for a thread used to see if a thread is valid
+    uint32_t                        m_suspendCount; // The current suspend count
     MachException::Data             m_stop_exception; // The best exception that describes why this thread is stopped
     std::auto_ptr<DNBArchProtocol>  m_arch_ap;      // Arch specific information for register state and more
     const DNBRegisterSetInfo *const m_reg_sets;      // Register set information for this thread
@@ -129,7 +128,6 @@ protected:
     thread_identifier_info_data_t   m_ident_info;
     struct proc_threadinfo          m_proc_threadinfo;
     std::string                     m_dispatch_queue_name;
-
 #endif
 
 };
