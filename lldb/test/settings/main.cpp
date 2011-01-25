@@ -62,6 +62,7 @@ main(int argc, char const *argv[])
         }
     }
 
+    std::cerr << "This message should go to standard error.\n";
     std::cout << "This message should go to standard out.\n";
 
     outfile.close();

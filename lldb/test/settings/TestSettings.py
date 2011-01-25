@@ -16,6 +16,7 @@ class SettingsCommandTestCase(TestBase):
         """Cleanup the test byproducts."""
         system(["/bin/sh", "-c", "rm -f output1.txt"])
         system(["/bin/sh", "-c", "rm -f output2.txt"])
+        system(["/bin/sh", "-c", "rm -f stderr.txt"])
         system(["/bin/sh", "-c", "rm -f stdout.txt"])
 
     def test_set_prompt(self):
@@ -140,28 +141,42 @@ class SettingsCommandTestCase(TestBase):
             substrs = ["The host environment variable 'MY_HOST_ENV_VAR1' successfully passed.",
                        "The host environment variable 'MY_HOST_ENV_VAR2' successfully passed."])
 
-    @unittest2.expectedFailure
-    # rdar://problem/8435794
-    # settings set target.process.output-path does not seem to work
-    def test_set_output_path(self):
-        """Test that setting target.process.output-path for the launched process works."""
+    def test_set_error_output_path(self):
+        """Test that setting target.process.error/output-path for the launched process works."""
         self.buildDefault()
 
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        # Set the output-path and verify it is set.
-        self.runCmd("settings set target.process.output-path 'stdout.txt'")
-        # And add a hook to restore original setting of target.process.output-path
-        # later on during tearDown().
+        # Set the error-path and output-path and verify both are set.
+        self.runCmd("settings set target.process.error-path stderr.txt")
+        self.runCmd("settings set target.process.output-path stdout.txt")
+        # And add hooks to restore the original settings during tearDown().
         self.addTearDownHook(
             lambda: self.runCmd("settings set -r target.process.output-path"))
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set -r target.process.error-path"))
+
+        self.expect("settings show target.process.error-path",
+                    SETTING_MSG("target.process.error-path"),
+            startstr = "target.process.error-path (string) = 'stderr.txt'")
 
         self.expect("settings show target.process.output-path",
                     SETTING_MSG("target.process.output-path"),
             startstr = "target.process.output-path (string) = 'stdout.txt'")
 
         self.runCmd("run", RUN_SUCCEEDED)
+
+        # The 'stderr.txt' file should now exist.
+        self.assertTrue(os.path.isfile("stderr.txt"),
+                        "'stderr.txt' exists due to target.process.error-path.")
+
+        # Read the output file produced by running the program.
+        with open('stderr.txt', 'r') as f:
+            output = f.read()
+
+        self.expect(output, exe=False,
+            startstr = "This message should go to standard error.")
 
         # The 'stdout.txt' file should now exist.
         self.assertTrue(os.path.isfile("stdout.txt"),
