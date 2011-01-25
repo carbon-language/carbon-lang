@@ -740,10 +740,10 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
     ComputeSignBit(Y, YKnownNonNegative, YKnownNegative, TD, Depth);
 
     // If X and Y are both non-negative (as signed values) then their sum is not
-    // zero.
+    // zero unless both X and Y are zero.
     if (XKnownNonNegative && YKnownNonNegative)
-      return false;
-//      return true;
+      if (isKnownNonZero(X, TD, Depth) || isKnownNonZero(Y, TD, Depth))
+        return true;
 
     // If X and Y are both negative (as signed values) then their sum is not
     // zero unless both X and Y equal INT_MIN.

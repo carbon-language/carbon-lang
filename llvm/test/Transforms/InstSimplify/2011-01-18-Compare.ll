@@ -61,11 +61,14 @@ define i1 @sext3() {
 }
 
 define i1 @add(i32 %x, i32 %y) {
+; CHECK: @add
   %l = lshr i32 %x, 1
-  %r = lshr i32 %y, 1
+  %q = lshr i32 %y, 1
+  %r = or i32 %q, 1
   %s = add i32 %l, %r
   %c = icmp eq i32 %s, 0
   ret i1 %c
+; CHECK: ret i1 false
 }
 
 define i1 @add2(i8 %x, i8 %y) {
@@ -76,6 +79,16 @@ define i1 @add2(i8 %x, i8 %y) {
   %c = icmp eq i8 %s, 0
   ret i1 %c
 ; CHECK: ret i1 false
+}
+
+define i1 @add3(i8 %x, i8 %y) {
+; CHECK: @add3
+  %l = zext i8 %x to i32
+  %r = zext i8 %y to i32
+  %s = add i32 %l, %r
+  %c = icmp eq i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 %c
 }
 
 define i1 @addpowtwo(i32 %x, i32 %y) {
