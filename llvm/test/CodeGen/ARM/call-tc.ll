@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=armv6-apple-darwin -mattr=+vfp2 -arm-tail-calls | FileCheck %s -check-prefix=CHECKV6
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -relocation-model=pic -mattr=+vfp2 -arm-tail-calls | FileCheck %s -check-prefix=CHECKELF
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -arm-tail-calls | FileCheck %s -check-prefix=CHECKT2
 
 @t = weak global i32 ()* null           ; <i32 ()**> [#uses=1]
 
@@ -62,4 +63,25 @@ entry:
 ; CHECKELF: b __aeabi_idiv(PLT) @ TAILCALL
   %0 = sdiv i32 %a, %b
   ret i32 %0
+}
+
+; Make sure the tail call instruction isn't deleted
+; rdar://8309338
+declare void @foo() nounwind
+
+define void @t7() nounwind {
+entry:
+; CHECKT2: t7:
+; CHECKT2: blxeq _foo
+; CHECKT2-NEXT: pop.w
+; CHECKT2-NEXT: b.w _foo
+  br i1 undef, label %bb, label %bb1.lr.ph
+
+bb1.lr.ph:
+  tail call void @foo() nounwind
+  unreachable
+
+bb:
+  tail call void @foo() nounwind
+  ret void
 }

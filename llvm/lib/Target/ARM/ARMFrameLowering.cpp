@@ -586,6 +586,11 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc DL = MI->getDebugLoc();
+  unsigned RetOpcode = MI->getOpcode();
+  bool isTailCall = (RetOpcode == ARM::TCRETURNdi ||
+                     RetOpcode == ARM::TCRETURNdiND ||
+                     RetOpcode == ARM::TCRETURNri ||
+                     RetOpcode == ARM::TCRETURNriND);
 
   SmallVector<unsigned, 4> Regs;
   unsigned i = CSI.size();
@@ -596,7 +601,7 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
       unsigned Reg = CSI[i-1].getReg();
       if (!(Func)(Reg, STI.isTargetDarwin())) continue;
 
-      if (Reg == ARM::LR && !isVarArg && STI.hasV5TOps()) {
+      if (Reg == ARM::LR && !isTailCall && !isVarArg && STI.hasV5TOps()) {
         Reg = ARM::PC;
         LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
         // Fold the return instruction into the LDM.
