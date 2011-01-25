@@ -1040,15 +1040,15 @@ def err_alias_not_supported_on_darwin : Error <
 def warn_attribute_wrong_decl_type : Warning<
   "%0 attribute only applies to %select{function|union|"
   "variable and function|function or method|parameter|"
-  "parameter or Objective-C method |function, method or block|"
+  "parameter or Objective-C method|function, method or block|"
   "virtual method or class|function, method, or parameter|class|virtual method"
-  "|member|variable}1 types">;
+  "|member|variable|method}1 types">;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{function|union|"
   "variable and function|function or method|parameter|"
-  "parameter or Objective-C method |function, method or block|"
+  "parameter or Objective-C method|function, method or block|"
   "virtual method or class|function, method, or parameter|class|virtual method"
-  "|member|variable}1 types">;
+  "|member|variable|method}1 types">;
 def warn_function_attribute_wrong_type : Warning<
   "%0 only applies to function types; type here is %1">;
 def warn_gnu_inline_attribute_requires_inline : Warning<
@@ -1179,8 +1179,11 @@ def note_attribute_overloadable_prev_overload : Note<
 def err_attribute_overloadable_no_prototype : Error<
   "'overloadable' function %0 must have a prototype">;
 def warn_ns_attribute_wrong_return_type : Warning<
-    "%0 attribute only applies to functions or methods that "
-    "return a pointer or Objective-C object">;
+  "%0 attribute only applies to %select{functions|methods}1 that "
+  "return %select{an Objective-C object|a pointer}2">;
+def warn_ns_attribute_wrong_parameter_type : Warning<
+  "%0 attribute only applies to %select{Objective-C object|pointer}1 "
+  "parameters">;
 
 // Function Parameter Semantic Analysis.
 def err_param_with_void_type : Error<"argument may not have 'void' type">;

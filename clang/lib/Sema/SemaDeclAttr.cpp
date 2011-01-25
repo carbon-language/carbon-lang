@@ -2441,48 +2441,116 @@ static void HandleLaunchBoundsAttr(Decl *d, const AttributeList &Attr, Sema &S){
 // Checker-specific attribute handlers.
 //===----------------------------------------------------------------------===//
 
-static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
+static bool isValidSubjectOfNSAttribute(Sema &S, QualType type) {
+  return type->isObjCObjectPointerType() || S.Context.isObjCNSObjectType(type);
+}
+static bool isValidSubjectOfCFAttribute(Sema &S, QualType type) {
+  return type->isPointerType() || isValidSubjectOfNSAttribute(S, type);
+}
+
+static void HandleNSConsumedAttr(Decl *d, const AttributeList &attr, Sema &S) {
+  ParmVarDecl *param = dyn_cast<ParmVarDecl>(d);
+  if (!param) {
+    S.Diag(d->getLocStart(), diag::warn_attribute_wrong_decl_type)
+      << SourceRange(attr.getLoc()) << attr.getName() << 4 /*parameter*/;
+    return;
+  }
+
+  bool typeOK, cf;
+  if (attr.getKind() == AttributeList::AT_ns_consumed) {
+    typeOK = isValidSubjectOfNSAttribute(S, param->getType());
+    cf = false;
+  } else {
+    typeOK = isValidSubjectOfCFAttribute(S, param->getType());
+    cf = true;
+  }
+
+  if (!typeOK) {
+    S.Diag(d->getLocStart(), diag::warn_ns_attribute_wrong_parameter_type)
+      << SourceRange(attr.getLoc()) << attr.getName() << cf;
+    return;
+  }
+
+  if (cf)
+    param->addAttr(::new (S.Context) CFConsumedAttr(attr.getLoc(), S.Context));
+  else
+    param->addAttr(::new (S.Context) NSConsumedAttr(attr.getLoc(), S.Context));  
+}
+
+static void HandleNSConsumesSelfAttr(Decl *d, const AttributeList &attr,
+                                     Sema &S) {
+  if (!isa<ObjCMethodDecl>(d)) {
+    S.Diag(d->getLocStart(), diag::warn_attribute_wrong_decl_type)
+      << SourceRange(attr.getLoc()) << attr.getName() << 13 /*method*/;
+    return;
+  }
+
+  d->addAttr(::new (S.Context) NSConsumesSelfAttr(attr.getLoc(), S.Context));
+}
+
+static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &attr,
                                         Sema &S) {
 
-  QualType RetTy;
+  QualType returnType;
 
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(d))
-    RetTy = MD->getResultType();
+    returnType = MD->getResultType();
   else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d))
-    RetTy = FD->getResultType();
+    returnType = FD->getResultType();
   else {
-    SourceLocation L = Attr.getLoc();
     S.Diag(d->getLocStart(), diag::warn_attribute_wrong_decl_type)
-        << SourceRange(L, L) << Attr.getName() << 3 /* function or method */;
+        << SourceRange(attr.getLoc()) << attr.getName()
+        << 3 /* function or method */;
     return;
   }
 
-  if (!(S.Context.isObjCNSObjectType(RetTy) || RetTy->getAs<PointerType>()
-        || RetTy->getAs<ObjCObjectPointerType>())) {
-    SourceLocation L = Attr.getLoc();
+  bool typeOK;
+  bool cf;
+  switch (attr.getKind()) {
+  default: llvm_unreachable("invalid ownership attribute"); return;
+  case AttributeList::AT_ns_returns_autoreleased:
+  case AttributeList::AT_ns_returns_retained:
+  case AttributeList::AT_ns_returns_not_retained:
+    typeOK = isValidSubjectOfNSAttribute(S, returnType);
+    cf = false;
+    break;
+
+  case AttributeList::AT_cf_returns_retained:
+  case AttributeList::AT_cf_returns_not_retained:
+    typeOK = isValidSubjectOfCFAttribute(S, returnType);
+    cf = true;
+    break;
+  }
+
+  if (!typeOK) {
     S.Diag(d->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
-      << SourceRange(L, L) << Attr.getName();
+      << SourceRange(attr.getLoc())
+      << attr.getName() << isa<ObjCMethodDecl>(d) << cf;
     return;
   }
 
-  switch (Attr.getKind()) {
+  switch (attr.getKind()) {
     default:
       assert(0 && "invalid ownership attribute");
       return;
+    case AttributeList::AT_ns_returns_autoreleased:
+      d->addAttr(::new (S.Context) NSReturnsAutoreleasedAttr(attr.getLoc(),
+                                                             S.Context));
+      return;
     case AttributeList::AT_cf_returns_not_retained:
-      d->addAttr(::new (S.Context) CFReturnsNotRetainedAttr(Attr.getLoc(),
+      d->addAttr(::new (S.Context) CFReturnsNotRetainedAttr(attr.getLoc(),
                                                             S.Context));
       return;
     case AttributeList::AT_ns_returns_not_retained:
-      d->addAttr(::new (S.Context) NSReturnsNotRetainedAttr(Attr.getLoc(),
+      d->addAttr(::new (S.Context) NSReturnsNotRetainedAttr(attr.getLoc(),
                                                             S.Context));
       return;
     case AttributeList::AT_cf_returns_retained:
-      d->addAttr(::new (S.Context) CFReturnsRetainedAttr(Attr.getLoc(),
+      d->addAttr(::new (S.Context) CFReturnsRetainedAttr(attr.getLoc(),
                                                          S.Context));
       return;
     case AttributeList::AT_ns_returns_retained:
-      d->addAttr(::new (S.Context) NSReturnsRetainedAttr(Attr.getLoc(),
+      d->addAttr(::new (S.Context) NSReturnsRetainedAttr(attr.getLoc(),
                                                          S.Context));
       return;
   };
@@ -2629,6 +2697,12 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_vecreturn:   HandleVecReturnAttr   (D, Attr, S); break;
 
   // Checker-specific.
+  case AttributeList::AT_cf_consumed:
+  case AttributeList::AT_ns_consumed: HandleNSConsumedAttr  (D, Attr, S); break;
+  case AttributeList::AT_ns_consumes_self:
+    HandleNSConsumesSelfAttr(D, Attr, S); break;
+
+  case AttributeList::AT_ns_returns_autoreleased:
   case AttributeList::AT_ns_returns_not_retained:
   case AttributeList::AT_cf_returns_not_retained:
   case AttributeList::AT_ns_returns_retained:

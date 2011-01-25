@@ -129,6 +129,10 @@ public:
     AT_cf_returns_retained,     // Clang-specific.
     AT_ns_returns_not_retained, // Clang-specific.
     AT_ns_returns_retained,     // Clang-specific.
+    AT_ns_returns_autoreleased, // Clang-specific.
+    AT_cf_consumed,             // Clang-specific.
+    AT_ns_consumed,             // Clang-specific.
+    AT_ns_consumes_self,        // Clang-specific.
     AT_objc_gc,
     AT_overloadable,       // Clang-specific.
     AT_ownership_holds,    // Clang-specific.

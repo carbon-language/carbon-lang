@@ -146,10 +146,17 @@ def CDecl : InheritableAttr {
 
 def CFReturnsRetained : InheritableAttr {
   let Spellings = ["cf_returns_retained"];
+  let Subjects = [ObjCMethod, Function];
 }
 
 def CFReturnsNotRetained : InheritableAttr {
   let Spellings = ["cf_returns_not_retained"];
+  let Subjects = [ObjCMethod, Function];
+}
+
+def CFConsumed : InheritableAttr {
+  let Spellings = ["cf_consumed"];
+  let Subjects = [ParmVar];
 }
 
 def Cleanup : InheritableAttr {
@@ -326,10 +333,27 @@ def NoThrow : InheritableAttr {
 
 def NSReturnsRetained : InheritableAttr {
   let Spellings = ["ns_returns_retained"];
+  let Subjects = [ObjCMethod, Function];
 }
 
 def NSReturnsNotRetained : InheritableAttr {
   let Spellings = ["ns_returns_not_retained"];
+  let Subjects = [ObjCMethod, Function];
+}
+
+def NSReturnsAutoreleased : InheritableAttr {
+  let Spellings = ["ns_returns_autoreleased"];
+  let Subjects = [ObjCMethod, Function];
+}
+
+def NSConsumesSelf : InheritableAttr {
+  let Spellings = ["ns_consumes_self"];
+  let Subjects = [ObjCMethod];
+}
+
+def NSConsumed : InheritableAttr {
+  let Spellings = ["ns_consumed"];
+  let Subjects = [ParmVar];
 }
 
 def ObjCException : InheritableAttr {
@@ -337,7 +361,7 @@ def ObjCException : InheritableAttr {
 }
 
 def ObjCNSObject : InheritableAttr {
-  let Spellings = ["NSOjbect"];
+  let Spellings = ["NSObject"];
 }
 
 def Overloadable : Attr {
