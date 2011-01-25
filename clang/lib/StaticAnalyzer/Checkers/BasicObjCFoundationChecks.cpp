@@ -43,24 +43,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 static const ObjCInterfaceType* GetReceiverType(const ObjCMessageExpr* ME) {
-  QualType T;
-  switch (ME->getReceiverKind()) {
-    case ObjCMessageExpr::Instance:
-      T = ME->getInstanceReceiver()->getType();
-      break;
-      
-    case ObjCMessageExpr::SuperInstance:
-      T = ME->getSuperType();
-      break;
-      
-    case ObjCMessageExpr::Class:
-    case ObjCMessageExpr::SuperClass:
-      return 0;
-  }
-  
-  if (const ObjCObjectPointerType *PT = T->getAs<ObjCObjectPointerType>())
-    return PT->getInterfaceType();
-  
+  if (ObjCInterfaceDecl *ID = ME->getReceiverInterface())
+    return ID->getTypeForDecl()->getAs<ObjCInterfaceType>();
   return NULL;
 }
 
