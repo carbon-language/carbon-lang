@@ -600,11 +600,7 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_abstract : public __libcpp_abstra
 
 namespace __is_convertible_imp
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-template <class _Tp> char  __test(const volatile typename remove_reference<_Tp>::type&&);
-#else
 template <class _Tp> char  __test(_Tp);
-#endif
 template <class _Tp> __two __test(...);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> _Tp&& __source();

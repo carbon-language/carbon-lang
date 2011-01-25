@@ -16,6 +16,10 @@
 typedef void Function();
 typedef char Array[1];
 
+class NonCopyable {
+  NonCopyable(NonCopyable&);
+};
+
 int main()
 {
     {
@@ -365,5 +369,16 @@ int main()
     static_assert(( std::is_convertible<char*, const char*>::value), "");
     static_assert((!std::is_convertible<const char*, char*>::value), "");
     static_assert(( std::is_convertible<const char*, const char*>::value), "");
+    }
+    {
+    static_assert((std::is_convertible<NonCopyable&, NonCopyable&>::value), "");
+    static_assert((std::is_convertible<NonCopyable&, const NonCopyable&>::value), "");
+    static_assert((std::is_convertible<NonCopyable&, const volatile NonCopyable&>::value), "");
+    static_assert((std::is_convertible<NonCopyable&, volatile NonCopyable&>::value), "");
+    static_assert((std::is_convertible<const NonCopyable&, const NonCopyable&>::value), "");
+    static_assert((std::is_convertible<const NonCopyable&, const volatile NonCopyable&>::value), "");
+    static_assert((std::is_convertible<volatile NonCopyable&, const volatile NonCopyable&>::value), "");
+    static_assert((std::is_convertible<const volatile NonCopyable&, const volatile NonCopyable&>::value), "");
+    static_assert((!std::is_convertible<const NonCopyable&, NonCopyable&>::value), "");
     }
 }
