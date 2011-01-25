@@ -190,10 +190,10 @@ def SDTVecInsert : SDTypeProfile<1, 3, [    // vector insert
   SDTCisEltOfVec<2, 1>, SDTCisSameAs<0, 1>, SDTCisPtrTy<3>
 ]>;
 
-def SDTSubVecExtract : SDTypeProfile<1, 1, [// subvector extract
+def SDTSubVecExtract : SDTypeProfile<1, 2, [// subvector extract
   SDTCisSubVecOfVec<0,1>
 ]>;
-def SDTSubVecInsert : SDTypeProfile<1, 2, [ // subvector insert
+def SDTSubVecInsert : SDTypeProfile<1, 3, [ // subvector insert
   SDTCisSubVecOfVec<2, 1>, SDTCisSameAs<0,1>
 ]>;
 
