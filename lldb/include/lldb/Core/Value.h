@@ -63,8 +63,11 @@ public:
     Value(double v);
     Value(long double v);
     Value(const uint8_t *bytes, int len);
-    Value(const Value &v);
+    Value(const Value &rhs);
     
+    Value &
+    operator=(const Value &rhs);
+
     Value *
     CreateProxy();
     
@@ -145,10 +148,16 @@ protected:
 class ValueList
 {
 public:
-    ValueList () {}
+    ValueList () :
+        m_values()
+    {
+    }
+
     ValueList (const ValueList &rhs);
 
-    ~ValueList () {}
+    ~ValueList () 
+    {
+    }
 
     const ValueList & operator= (const ValueList &rhs);
 

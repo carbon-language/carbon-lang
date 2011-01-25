@@ -38,6 +38,7 @@ class BreakpointLocationList
 friend class Breakpoint;
 
 public:
+    virtual 
     ~BreakpointLocationList();
 
     //------------------------------------------------------------------

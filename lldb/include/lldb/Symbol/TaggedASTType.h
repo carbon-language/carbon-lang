@@ -29,7 +29,7 @@ public:
     TaggedASTType () :
         ClangASTType() { }
     
-    ~TaggedASTType() { }
+    virtual ~TaggedASTType() { }
     
     TaggedASTType<C> &operator= (const TaggedASTType<C> &tw)
     {

@@ -72,6 +72,9 @@ protected:
     FILE* m_file;           ///< File handle to dump to.
     bool m_close_file;
     std::string m_path_name;
+    
+private:
+    DISALLOW_COPY_AND_ASSIGN (StreamFile);
 };
 
 } // namespace lldb_private

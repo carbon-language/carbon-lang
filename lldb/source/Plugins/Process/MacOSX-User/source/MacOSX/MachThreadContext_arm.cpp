@@ -133,7 +133,7 @@ MachThreadContext_arm::ShouldStop ()
 void
 MachThreadContext_arm::RefreshStateAfterStop ()
 {
-    EnableHardwareSingleStep (false) == KERN_SUCCESS;
+    EnableHardwareSingleStep (false);
 }
 
 #if defined (ENABLE_ARM_SINGLE_STEP)

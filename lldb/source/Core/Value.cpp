@@ -142,6 +142,26 @@ Value::Value(const Value &v) :
     }
 }
 
+Value &
+Value::operator=(const Value &rhs)
+{
+    if (this != &rhs)
+    {
+        m_value = rhs.m_value;
+        m_value_type = rhs.m_value_type;
+        m_context = rhs.m_context;
+        m_context_type = rhs.m_context_type;
+        if ((uintptr_t)rhs.m_value.ULongLong(LLDB_INVALID_ADDRESS) == (uintptr_t)rhs.m_data_buffer.GetBytes())
+        {
+            m_data_buffer.CopyData(rhs.m_data_buffer.GetBytes(),
+                                   rhs.m_data_buffer.GetByteSize());
+        
+            m_value = (uintptr_t)m_data_buffer.GetBytes();
+        }
+    }
+    return *this;
+}
+
 Value *
 Value::CreateProxy()
 {
@@ -653,17 +673,17 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
     {
         // Resolve the proxy
         
-        Value * v = (Value*)m_context;
+        Value * rhs = (Value*)m_context;
         
-        m_value = v->m_value;
-        m_value_type = v->m_value_type;
-        m_context = v->m_context;
-        m_context_type = v->m_context_type;
+        m_value = rhs->m_value;
+        m_value_type = rhs->m_value_type;
+        m_context = rhs->m_context;
+        m_context_type = rhs->m_context_type;
         
-        if ((uintptr_t)v->m_value.ULongLong(LLDB_INVALID_ADDRESS) == (uintptr_t)v->m_data_buffer.GetBytes())
+        if ((uintptr_t)rhs->m_value.ULongLong(LLDB_INVALID_ADDRESS) == (uintptr_t)rhs->m_data_buffer.GetBytes())
         {
-            m_data_buffer.CopyData(v->m_data_buffer.GetBytes(),
-                                   v->m_data_buffer.GetByteSize());
+            m_data_buffer.CopyData(rhs->m_data_buffer.GetBytes(),
+                                   rhs->m_data_buffer.GetByteSize());
             
             m_value = (uintptr_t)m_data_buffer.GetBytes();
         }

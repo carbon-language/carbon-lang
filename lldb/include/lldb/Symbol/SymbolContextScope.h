@@ -71,6 +71,9 @@ namespace lldb_private {
 class SymbolContextScope
 {
 public:
+    virtual
+    ~SymbolContextScope () {}
+
     //------------------------------------------------------------------
     /// Reconstruct the object's symbolc context into \a sc.
     ///

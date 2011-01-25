@@ -217,18 +217,14 @@ DW_OP_value_to_name (uint32_t val)
 DWARFExpression::DWARFExpression() :
     m_data(),
     m_reg_kind (eRegisterKindDWARF),
-    m_loclist_slide (LLDB_INVALID_ADDRESS),
-    m_expr_locals (NULL),
-    m_decl_map (NULL)
+    m_loclist_slide (LLDB_INVALID_ADDRESS)
 {
 }
 
 DWARFExpression::DWARFExpression(const DWARFExpression& rhs) :
     m_data(rhs.m_data),
     m_reg_kind (rhs.m_reg_kind),
-    m_loclist_slide(rhs.m_loclist_slide),
-    m_expr_locals (rhs.m_expr_locals),
-    m_decl_map (rhs.m_decl_map)
+    m_loclist_slide(rhs.m_loclist_slide)
 {
 }
 
@@ -236,9 +232,7 @@ DWARFExpression::DWARFExpression(const DWARFExpression& rhs) :
 DWARFExpression::DWARFExpression(const DataExtractor& data, uint32_t data_offset, uint32_t data_length) :
     m_data(data, data_offset, data_length),
     m_reg_kind (eRegisterKindDWARF),
-    m_loclist_slide(LLDB_INVALID_ADDRESS),
-    m_expr_locals (NULL),
-    m_decl_map (NULL)
+    m_loclist_slide(LLDB_INVALID_ADDRESS)
 {
 }
 
@@ -254,19 +248,6 @@ bool
 DWARFExpression::IsValid() const
 {
     return m_data.GetByteSize() > 0;
-}
-
-
-void
-DWARFExpression::SetExpressionLocalVariableList (ClangExpressionVariableList *locals)
-{
-    m_expr_locals = locals;
-}
-
-void
-DWARFExpression::SetExpressionDeclMap (ClangExpressionDeclMap *decl_map)
-{
-    m_decl_map = decl_map;
 }
 
 void
@@ -749,6 +730,8 @@ DWARFExpression::Evaluate
 (
     ExecutionContextScope *exe_scope,
     clang::ASTContext *ast_context,
+    ClangExpressionVariableList *expr_locals,
+    ClangExpressionDeclMap *decl_map,
     lldb::addr_t loclist_base_load_addr,
     const Value* initial_value_ptr,
     Value& result,
@@ -756,7 +739,7 @@ DWARFExpression::Evaluate
 ) const
 {
     ExecutionContext exe_ctx (exe_scope);
-    return Evaluate(&exe_ctx, ast_context, NULL, loclist_base_load_addr, initial_value_ptr, result, error_ptr);
+    return Evaluate(&exe_ctx, ast_context, expr_locals, decl_map, NULL, loclist_base_load_addr, initial_value_ptr, result, error_ptr);
 }
 
 bool
@@ -764,6 +747,8 @@ DWARFExpression::Evaluate
 (
     ExecutionContext *exe_ctx,
     clang::ASTContext *ast_context,
+    ClangExpressionVariableList *expr_locals,
+    ClangExpressionDeclMap *decl_map,
     RegisterContext *reg_ctx,
     lldb::addr_t loclist_base_load_addr,
     const Value* initial_value_ptr,
@@ -809,7 +794,7 @@ DWARFExpression::Evaluate
 
                     if (length > 0 && lo_pc <= pc && pc < hi_pc)
                     {
-                        return DWARFExpression::Evaluate (exe_ctx, ast_context, m_data, m_expr_locals, m_decl_map, reg_ctx, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
+                        return DWARFExpression::Evaluate (exe_ctx, ast_context, expr_locals, decl_map, reg_ctx, m_data, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
                     }
                     offset += length;
                 }
@@ -821,7 +806,7 @@ DWARFExpression::Evaluate
     }
 
     // Not a location list, just a single expression.
-    return DWARFExpression::Evaluate (exe_ctx, ast_context, m_data, m_expr_locals, m_decl_map, reg_ctx, 0, m_data.GetByteSize(), m_reg_kind, initial_value_ptr, result, error_ptr);
+    return DWARFExpression::Evaluate (exe_ctx, ast_context, expr_locals, decl_map, reg_ctx, m_data, 0, m_data.GetByteSize(), m_reg_kind, initial_value_ptr, result, error_ptr);
 }
 
 
@@ -831,10 +816,10 @@ DWARFExpression::Evaluate
 (
     ExecutionContext *exe_ctx,
     clang::ASTContext *ast_context,
-    const DataExtractor& opcodes,
     ClangExpressionVariableList *expr_locals,
     ClangExpressionDeclMap *decl_map,
     RegisterContext *reg_ctx,
+    const DataExtractor& opcodes,
     const uint32_t opcodes_offset,
     const uint32_t opcodes_length,
     const uint32_t reg_kind,

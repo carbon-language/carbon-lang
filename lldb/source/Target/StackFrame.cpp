@@ -48,9 +48,9 @@ StackFrame::StackFrame
     lldb::addr_t pc, 
     const SymbolContext *sc_ptr
 ) :
+    m_thread (thread),
     m_frame_index (frame_idx),
     m_concrete_frame_index (unwind_frame_index),    
-    m_thread (thread),
     m_reg_context_sp (),
     m_id (pc, cfa, NULL),
     m_frame_code_addr (NULL, pc),
@@ -59,7 +59,8 @@ StackFrame::StackFrame
     m_frame_base (),
     m_frame_base_error (),
     m_variable_list_sp (),
-    m_variable_list_value_objects ()
+    m_variable_list_value_objects (),
+    m_disassembly ()
 {
     if (sc_ptr != NULL)
     {
@@ -78,9 +79,9 @@ StackFrame::StackFrame
     lldb::addr_t pc, 
     const SymbolContext *sc_ptr
 ) :
+    m_thread (thread),
     m_frame_index (frame_idx),
     m_concrete_frame_index (unwind_frame_index),    
-    m_thread (thread),
     m_reg_context_sp (reg_context_sp),
     m_id (pc, cfa, NULL),
     m_frame_code_addr (NULL, pc),
@@ -89,7 +90,8 @@ StackFrame::StackFrame
     m_frame_base (),
     m_frame_base_error (),
     m_variable_list_sp (),
-    m_variable_list_value_objects ()
+    m_variable_list_value_objects (),
+    m_disassembly ()
 {
     if (sc_ptr != NULL)
     {
@@ -114,9 +116,9 @@ StackFrame::StackFrame
     const Address& pc_addr,
     const SymbolContext *sc_ptr
 ) :
+    m_thread (thread),
     m_frame_index (frame_idx),
     m_concrete_frame_index (unwind_frame_index),    
-    m_thread (thread),
     m_reg_context_sp (reg_context_sp),
     m_id (pc_addr.GetLoadAddress (&thread.GetProcess().GetTarget()), cfa, NULL),
     m_frame_code_addr (pc_addr),
@@ -125,7 +127,8 @@ StackFrame::StackFrame
     m_frame_base (),
     m_frame_base_error (),
     m_variable_list_sp (),
-    m_variable_list_value_objects ()
+    m_variable_list_value_objects (),
+    m_disassembly ()
 {
     if (sc_ptr != NULL)
     {
@@ -626,7 +629,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32
                         if (var_path.size() > 2) // Need at least two brackets and a number
                         {
                             char *end = NULL;
-                            int32_t child_index = ::strtol (&var_path[1], &end, 0);
+                            long child_index = ::strtol (&var_path[1], &end, 0);
                             if (end && *end == ']')
                             {
 
@@ -745,7 +748,7 @@ StackFrame::GetFrameBaseValue (Scalar &frame_base, Error *error_ptr)
             if (m_sc.function->GetFrameBaseExpression().IsLocationList())
                 loclist_base_addr = m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (&m_thread.GetProcess().GetTarget());
 
-            if (m_sc.function->GetFrameBaseExpression().Evaluate(&exe_ctx, NULL, NULL, loclist_base_addr, NULL, expr_value, &m_frame_base_error) == false)
+            if (m_sc.function->GetFrameBaseExpression().Evaluate(&exe_ctx, NULL, NULL, NULL, NULL, loclist_base_addr, NULL, expr_value, &m_frame_base_error) == false)
             {
                 // We should really have an error if evaluate returns, but in case
                 // we don't, lets set the error to something at least.

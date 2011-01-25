@@ -639,11 +639,9 @@ DWARFCompileUnit::Index
         const size_t num_attributes = die.GetAttributes(m_dwarf2Data, this, fixed_form_sizes, attributes);
         if (num_attributes > 0)
         {
-            uint32_t i;
-            
             is_variable = tag == DW_TAG_variable;
 
-            for (i=0; i<num_attributes; ++i)
+            for (uint32_t i=0; i<num_attributes; ++i)
             {
                 dw_attr_t attr = attributes.AttributeAtIndex(i);
                 DWARFFormValue form_value;
@@ -767,7 +765,7 @@ DWARFCompileUnit::Index
                 }
                 else
                 {
-                    for (size_t i=0, num_ranges = ranges.Size(); i<num_ranges; ++i)
+                    for (uint32_t i=0, num_ranges = ranges.Size(); i<num_ranges; ++i)
                     {
                         const DWARFDebugRanges::Range *range = ranges.RangeAtIndex (i);
                         aranges->AppendRange (m_offset, range->begin_offset, range->end_offset);

@@ -344,11 +344,10 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
                                                                                    eSymbolTypeData);
         if (trampoline_symbol != NULL)
         {
-            const Address &temp_address = trampoline_symbol->GetValue();
-            if (!temp_address.IsValid())
+            if (!trampoline_symbol->GetValue().IsValid())
                 return false;
                 
-            m_trampoline_header = temp_address.GetLoadAddress(&target);
+            m_trampoline_header = trampoline_symbol->GetValue().GetLoadAddress(&target);
             if (m_trampoline_header == LLDB_INVALID_ADDRESS)
                 return false;
             
@@ -358,11 +357,10 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
                                                                                    eSymbolTypeCode);
             if (changed_symbol != NULL)
             {
-                const Address &temp_address = changed_symbol->GetValue();
-                if (!temp_address.IsValid())
+                if (!changed_symbol->GetValue().IsValid())
                     return false;
                     
-                lldb::addr_t changed_addr = temp_address.GetLoadAddress(&target);
+                lldb::addr_t changed_addr = changed_symbol->GetValue().GetLoadAddress(&target);
                 if (changed_addr != LLDB_INVALID_ADDRESS)
                 {
                     BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr,

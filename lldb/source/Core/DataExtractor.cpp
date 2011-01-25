@@ -1253,7 +1253,7 @@ DataExtractor::Dump
                 // earlier C++ libraries
                 std::string binary_value(64, '0');
                 std::bitset<64> bits(uval64);
-                for (size_t i = 0; i < 64; ++i)
+                for (i = 0; i < 64; ++i)
                     if (bits[i])
                         binary_value[64 - 1 - i] = '1';
                 if (item_bit_size > 0)

@@ -189,6 +189,8 @@ public:
     bool
     Evaluate (ExecutionContextScope *exe_scope,
               clang::ASTContext *ast_context,
+              ClangExpressionVariableList *expr_locals,
+              ClangExpressionDeclMap *decl_map,
               lldb::addr_t loclist_base_load_addr,
               const Value* initial_value_ptr,
               Value& result,
@@ -201,6 +203,8 @@ public:
     bool
     Evaluate (ExecutionContext *exe_ctx,
               clang::ASTContext *ast_context,
+              ClangExpressionVariableList *expr_locals,
+              ClangExpressionDeclMap *decl_map,
               RegisterContext *reg_ctx,
               lldb::addr_t loclist_base_load_addr,
               const Value* initial_value_ptr,
@@ -269,10 +273,10 @@ public:
     static bool
     Evaluate (ExecutionContext *exe_ctx,
               clang::ASTContext *ast_context,
-              const DataExtractor& opcodes,
               ClangExpressionVariableList *expr_locals,
               ClangExpressionDeclMap *decl_map,
               RegisterContext *reg_ctx,
+              const DataExtractor& opcodes,
               const uint32_t offset,
               const uint32_t length,
               const uint32_t reg_set,
@@ -331,8 +335,7 @@ protected:
     lldb::addr_t m_loclist_slide;               ///< A value used to slide the location list offsets so that 
                                                 ///< they are relative to the object that owns the location list
                                                 ///< (the function for frame base and variable location lists)
-    ClangExpressionVariableList *m_expr_locals; ///< The locals used by this expression.  See Evaluate()
-    ClangExpressionDeclMap *m_decl_map;         ///< The external variables used by this expression.  See Evaluate()
+
 };
 
 } // namespace lldb_private

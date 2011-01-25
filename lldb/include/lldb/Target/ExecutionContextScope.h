@@ -39,6 +39,9 @@ namespace lldb_private {
 class ExecutionContextScope
 {
 public:
+    virtual
+    ~ExecutionContextScope () {}
+
     virtual Target *
     CalculateTarget () = 0;
 

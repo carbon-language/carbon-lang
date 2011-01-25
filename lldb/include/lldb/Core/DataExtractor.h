@@ -720,10 +720,10 @@ public:
     GetU8 ( uint32_t *offset_ptr) const;
 
     uint8_t
-    GetU8_unchecked ( uint32_t *offset_ptr) const
+    GetU8_unchecked (uint32_t *offset_ptr) const
     {
         uint8_t val = m_start[*offset_ptr];
-        *offset_ptr += sizeof(val);
+        *offset_ptr += 1;
         return val;
     }
     

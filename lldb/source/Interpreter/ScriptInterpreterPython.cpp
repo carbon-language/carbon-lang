@@ -1293,7 +1293,6 @@ ScriptInterpreterPython::BreakpointCallbackFunction
         && python_function_name[0] != '\0')
     {
         Thread *thread = context->exe_ctx.thread;
-        Target *target = context->exe_ctx.target;
         const StackFrameSP stop_frame_sp = thread->GetStackFrameSPForStackFramePtr (context->exe_ctx.frame);
         BreakpointSP breakpoint_sp = target->GetBreakpointByID (break_id);
         const BreakpointLocationSP bp_loc_sp = breakpoint_sp->FindLocationByID (break_loc_id);

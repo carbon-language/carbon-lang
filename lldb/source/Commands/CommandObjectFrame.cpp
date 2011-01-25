@@ -629,7 +629,7 @@ public:
                     {
                         for (uint32_t i=0; i<num_variables; i++)
                         {
-                            VariableSP var_sp (variable_list->GetVariableAtIndex(i));
+                            var_sp = variable_list->GetVariableAtIndex(i);
                             bool dump_variable = true;
                             
                             switch (var_sp->GetScope())

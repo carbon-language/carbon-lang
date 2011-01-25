@@ -1098,13 +1098,13 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 gdb_thread->SetName (thread_name.empty() ? thread_name.c_str() : NULL);
                 if (exc_type != 0)
                 {
-                    const size_t exc_data_count = exc_data.size();
+                    const size_t exc_data_size = exc_data.size();
 
                     gdb_thread->SetStopInfo (StopInfoMachException::CreateStopReasonWithMachException (*thread_sp,
                                                                                                        exc_type, 
-                                                                                                       exc_data_count,
-                                                                                                       exc_data_count >= 1 ? exc_data[0] : 0,
-                                                                                                       exc_data_count >= 2 ? exc_data[1] : 0));
+                                                                                                       exc_data_size,
+                                                                                                       exc_data_size >= 1 ? exc_data[0] : 0,
+                                                                                                       exc_data_size >= 2 ? exc_data[1] : 0));
                 }
                 else if (signo)
                 {
@@ -1230,7 +1230,7 @@ ProcessGDBRemote::InterruptIfRunning
             timeout_time.OffsetWithSeconds(5);
             StateType state = WaitForStateChangedEventsPrivate (&timeout_time, stop_event_sp);
     
-            const bool timed_out = state == eStateInvalid;
+            timed_out = state == eStateInvalid;
             if (log)
                 log->Printf ("ProcessGDBRemote::InterruptIfRunning() catch stop event: state = %s, timed-out=%i", StateAsCString(state), timed_out);
 

@@ -21,6 +21,8 @@ namespace lldb_private {
 class PluginInterface
 {
 public:
+    virtual
+    ~PluginInterface () {}
 
     virtual const char *
     GetPluginName() = 0;

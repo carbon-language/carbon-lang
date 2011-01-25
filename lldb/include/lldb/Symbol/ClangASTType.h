@@ -46,7 +46,7 @@ protected:
     {
     }
     
-    ~ClangASTType();
+    virtual ~ClangASTType();
     
     const ClangASTType &
     operator= (const ClangASTType &atb)
@@ -75,10 +75,10 @@ public:
     static ConstString
     GetClangTypeName (lldb::clang_type_t clang_type);
 
-    uint64_t
+    uint32_t
     GetClangTypeBitWidth ();
 
-    static uint64_t
+    static uint32_t
     GetClangTypeBitWidth (clang::ASTContext *ast_context, lldb::clang_type_t opaque_clang_qual_type);
 
     size_t

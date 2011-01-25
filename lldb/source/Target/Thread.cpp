@@ -844,7 +844,7 @@ Thread::DumpThreadPlans (lldb_private::Stream *s) const
 
     stack_size = m_discarded_plan_stack.size();
     s->Printf ("Discarded Plan Stack: %d elements.\n", stack_size);
-    for (int i = stack_size - 1; i >= 0; i--)
+    for (i = stack_size - 1; i >= 0; i--)
     {
         s->Printf ("Element %d: ", i);
         s->IndentMore();

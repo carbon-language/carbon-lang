@@ -3909,7 +3909,7 @@ ClangASTContext::CreateMemberPointerType (clang_type_t clang_pointee_type, clang
     return NULL;
 }
 
-size_t
+uint32_t
 ClangASTContext::GetPointerBitSize ()
 {
     ASTContext *ast = getASTContext();

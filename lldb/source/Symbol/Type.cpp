@@ -27,16 +27,17 @@
 #include "lldb/Target/Process.h"
 
 using namespace lldb;
+using namespace lldb_private;
 
-lldb_private::Type::Type
+Type::Type
 (
     lldb::user_id_t uid,
     SymbolFile* symbol_file,
     const ConstString &name,
     uint32_t byte_size,
     SymbolContextScope *context,
-    uintptr_t encoding_data,
-    EncodingDataType encoding_data_type,
+    user_id_t encoding_uid,
+    EncodingDataType encoding_uid_type,
     const Declaration& decl,
     clang_type_t clang_type,
     ResolveState clang_type_resolve_state
@@ -46,8 +47,8 @@ lldb_private::Type::Type
     m_symbol_file (symbol_file),
     m_context (context),
     m_encoding_type (NULL),
-    m_encoding_uid_type (encoding_data_type),
-    m_encoding_uid (encoding_data),
+    m_encoding_uid (encoding_uid),
+    m_encoding_uid_type (encoding_uid_type),
     m_byte_size (byte_size),
     m_decl (decl),
     m_clang_type (clang_type),
@@ -55,7 +56,7 @@ lldb_private::Type::Type
 {
 }
 
-lldb_private::Type::Type () :
+Type::Type () :
     UserID (0),
     m_name ("<INVALID TYPE>"),
     m_symbol_file (NULL),
@@ -71,29 +72,33 @@ lldb_private::Type::Type () :
 }
 
 
-const lldb_private::Type&
-lldb_private::Type::operator= (const Type& rhs)
+Type::Type (const Type &rhs) :
+    UserID (rhs),
+    m_name (rhs.m_name),
+    m_symbol_file (rhs.m_symbol_file),
+    m_context (rhs.m_context),
+    m_encoding_type (rhs.m_encoding_type),
+    m_encoding_uid_type (rhs.m_encoding_uid_type),
+    m_encoding_uid (rhs.m_encoding_uid),
+    m_byte_size (rhs.m_byte_size),
+    m_decl (rhs.m_decl),
+    m_clang_type (rhs.m_clang_type),
+    m_clang_type_resolve_state (rhs.m_clang_type_resolve_state)
+{
+}
+
+const Type&
+Type::operator= (const Type& rhs)
 {
     if (this != &rhs)
     {
-        UserID::operator= (rhs);
-        m_name = rhs.m_name;
-        m_symbol_file = rhs.m_symbol_file;
-        m_context = rhs.m_context;
-        m_encoding_type = rhs.m_encoding_type;
-        m_encoding_uid_type = rhs.m_encoding_uid_type;
-        m_encoding_uid = rhs.m_encoding_uid;
-        m_byte_size = rhs.m_byte_size;
-        m_decl = rhs.m_decl;
-        m_clang_type = rhs.m_clang_type;
-        m_clang_type_resolve_state = rhs.m_clang_type_resolve_state;
     }
     return *this;
 }
 
 
 void
-lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
+Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
 {
     *s << "id = " << (const UserID&)*this;
 
@@ -133,7 +138,7 @@ lldb_private::Type::GetDescription (Stream *s, lldb::DescriptionLevel level, boo
 
 
 void
-lldb_private::Type::Dump (Stream *s, bool show_context)
+Type::Dump (Stream *s, bool show_context)
 {
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
@@ -183,8 +188,8 @@ lldb_private::Type::Dump (Stream *s, bool show_context)
     s->EOL();
 }
 
-const lldb_private::ConstString &
-lldb_private::Type::GetName()
+const ConstString &
+Type::GetName()
 {
     if (!(m_name))
     {
@@ -199,18 +204,18 @@ lldb_private::Type::GetName()
 }
 
 void
-lldb_private::Type::DumpTypeName(Stream *s)
+Type::DumpTypeName(Stream *s)
 {
     GetName().Dump(s, "<invalid-type-name>");
 }
 
 
 void
-lldb_private::Type::DumpValue
+Type::DumpValue
 (
-    lldb_private::ExecutionContext *exe_ctx,
-    lldb_private::Stream *s,
-    const lldb_private::DataExtractor &data,
+    ExecutionContext *exe_ctx,
+    Stream *s,
+    const DataExtractor &data,
     uint32_t data_byte_offset,
     bool show_types,
     bool show_summary,
@@ -229,7 +234,7 @@ lldb_private::Type::DumpValue
             s->PutCString(") ");
         }
 
-        lldb_private::ClangASTType::DumpValue (GetClangAST (),
+        ClangASTType::DumpValue (GetClangAST (),
                                                m_clang_type,
                                                exe_ctx,
                                                s,
@@ -246,8 +251,8 @@ lldb_private::Type::DumpValue
     }
 }
 
-lldb_private::Type *
-lldb_private::Type::GetEncodingType ()
+Type *
+Type::GetEncodingType ()
 {
     if (m_encoding_type == NULL && m_encoding_uid != LLDB_INVALID_UID)
         m_encoding_type = m_symbol_file->ResolveTypeUID(m_encoding_uid);
@@ -256,8 +261,8 @@ lldb_private::Type::GetEncodingType ()
     
 
 
-uint64_t
-lldb_private::Type::GetByteSize()
+uint32_t
+Type::GetByteSize()
 {
     if (m_byte_size == 0)
     {
@@ -274,7 +279,7 @@ lldb_private::Type::GetByteSize()
                     m_byte_size = encoding_type->GetByteSize();
                 if (m_byte_size == 0)
                 {
-                    uint64_t bit_width = ClangASTType::GetClangTypeBitWidth (GetClangAST(), GetClangLayoutType());
+                    uint32_t bit_width = ClangASTType::GetClangTypeBitWidth (GetClangAST(), GetClangLayoutType());
                     m_byte_size = (bit_width + 7 ) / 8;
                 }
             }
@@ -293,7 +298,7 @@ lldb_private::Type::GetByteSize()
 
 
 uint32_t
-lldb_private::Type::GetNumChildren (bool omit_empty_base_classes)
+Type::GetNumChildren (bool omit_empty_base_classes)
 {
     if (ResolveClangType(eResolveStateForward))
     {
@@ -305,7 +310,7 @@ lldb_private::Type::GetNumChildren (bool omit_empty_base_classes)
 }
 
 bool
-lldb_private::Type::IsAggregateType ()
+Type::IsAggregateType ()
 {
     if (ResolveClangType(eResolveStateForward))
         return ClangASTContext::IsAggregateType (m_clang_type);
@@ -313,33 +318,33 @@ lldb_private::Type::IsAggregateType ()
 }
 
 lldb::Format
-lldb_private::Type::GetFormat ()
+Type::GetFormat ()
 {
     // Make sure we resolve our type if it already hasn't been.
     if (!ResolveClangType(eResolveStateForward))
         return lldb::eFormatInvalid;
-    return lldb_private::ClangASTType::GetFormat (m_clang_type);
+    return ClangASTType::GetFormat (m_clang_type);
 }
 
 
 
 lldb::Encoding
-lldb_private::Type::GetEncoding (uint32_t &count)
+Type::GetEncoding (uint32_t &count)
 {
     // Make sure we resolve our type if it already hasn't been.
     if (!ResolveClangType(eResolveStateForward))
         return lldb::eEncodingInvalid;
 
-    return lldb_private::ClangASTType::GetEncoding (m_clang_type, count);
+    return ClangASTType::GetEncoding (m_clang_type, count);
 }
 
 
 
 bool
-lldb_private::Type::DumpValueInMemory
+Type::DumpValueInMemory
 (
-    lldb_private::ExecutionContext *exe_ctx,
-    lldb_private::Stream *s,
+    ExecutionContext *exe_ctx,
+    Stream *s,
     lldb::addr_t address,
     lldb::AddressType address_type,
     bool show_types,
@@ -349,7 +354,7 @@ lldb_private::Type::DumpValueInMemory
 {
     if (address != LLDB_INVALID_ADDRESS)
     {
-        lldb_private::DataExtractor data;
+        DataExtractor data;
         data.SetByteOrder (exe_ctx->process->GetByteOrder());
         if (ReadFromMemory (exe_ctx, address, address_type, data))
         {
@@ -362,7 +367,7 @@ lldb_private::Type::DumpValueInMemory
 
 
 bool
-lldb_private::Type::ReadFromMemory (lldb_private::ExecutionContext *exe_ctx, lldb::addr_t addr, lldb::AddressType address_type, lldb_private::DataExtractor &data)
+Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, lldb::AddressType address_type, DataExtractor &data)
 {
     if (address_type == lldb::eAddressTypeFile)
     {
@@ -401,26 +406,26 @@ lldb_private::Type::ReadFromMemory (lldb_private::ExecutionContext *exe_ctx, lld
 
 
 bool
-lldb_private::Type::WriteToMemory (lldb_private::ExecutionContext *exe_ctx, lldb::addr_t addr, lldb::AddressType address_type, lldb_private::DataExtractor &data)
+Type::WriteToMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, lldb::AddressType address_type, DataExtractor &data)
 {
     return false;
 }
 
 
-lldb_private::TypeList*
-lldb_private::Type::GetTypeList()
+TypeList*
+Type::GetTypeList()
 {
     return GetSymbolFile()->GetTypeList();
 }
 
-const lldb_private::Declaration &
-lldb_private::Type::GetDeclaration () const
+const Declaration &
+Type::GetDeclaration () const
 {
     return m_decl;
 }
 
 bool
-lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
+Type::ResolveClangType (ResolveState clang_type_resolve_state)
 {
     Type *encoding_type = NULL;
     if (m_clang_type == NULL)
@@ -560,7 +565,7 @@ lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
     return m_clang_type != NULL;
 }
 uint32_t
-lldb_private::Type::GetEncodingMask ()
+Type::GetEncodingMask ()
 {
     uint32_t encoding_mask = 1u << m_encoding_uid_type;
     Type *encoding_type = GetEncodingType();
@@ -571,40 +576,40 @@ lldb_private::Type::GetEncodingMask ()
 }
 
 clang_type_t 
-lldb_private::Type::GetClangType ()
+Type::GetClangType ()
 {
     ResolveClangType(eResolveStateFull);
     return m_clang_type;
 }
 
 clang_type_t 
-lldb_private::Type::GetClangLayoutType ()
+Type::GetClangLayoutType ()
 {
     ResolveClangType(eResolveStateLayout);
     return m_clang_type;
 }
 
 clang_type_t 
-lldb_private::Type::GetClangForwardType ()
+Type::GetClangForwardType ()
 {
     ResolveClangType (eResolveStateForward);
     return m_clang_type;
 }
 
 clang::ASTContext *
-lldb_private::Type::GetClangAST ()
+Type::GetClangAST ()
 {
     return GetClangASTContext().getASTContext();
 }
 
-lldb_private::ClangASTContext &
-lldb_private::Type::GetClangASTContext ()
+ClangASTContext &
+Type::GetClangASTContext ()
 {
     return m_symbol_file->GetClangASTContext();
 }
 
 int
-lldb_private::Type::Compare(const Type &a, const Type &b)
+Type::Compare(const Type &a, const Type &b)
 {
     // Just compare the UID values for now...
     lldb::user_id_t a_uid = a.GetID();
@@ -620,14 +625,14 @@ lldb_private::Type::Compare(const Type &a, const Type &b)
 
 
 void *
-lldb_private::Type::CreateClangPointerType (lldb_private::Type *type)
+Type::CreateClangPointerType (Type *type)
 {
     assert(type);
     return GetClangASTContext().CreatePointerType(type->GetClangForwardType());
 }
 
 void *
-lldb_private::Type::CreateClangTypedefType (lldb_private::Type *typedef_type, lldb_private::Type *base_type)
+Type::CreateClangTypedefType (Type *typedef_type, Type *base_type)
 {
     assert(typedef_type && base_type);
     return GetClangASTContext().CreateTypedefType (typedef_type->GetName().AsCString(), 
@@ -636,14 +641,14 @@ lldb_private::Type::CreateClangTypedefType (lldb_private::Type *typedef_type, ll
 }
 
 void *
-lldb_private::Type::CreateClangLValueReferenceType (lldb_private::Type *type)
+Type::CreateClangLValueReferenceType (Type *type)
 {
     assert(type);
     return GetClangASTContext().CreateLValueReferenceType(type->GetClangForwardType());
 }
 
 void *
-lldb_private::Type::CreateClangRValueReferenceType (lldb_private::Type *type)
+Type::CreateClangRValueReferenceType (Type *type)
 {
     assert(type);
     return GetClangASTContext().CreateRValueReferenceType (type->GetClangForwardType());

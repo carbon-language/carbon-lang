@@ -48,6 +48,11 @@ public:
 
 private:
     virtual void on_zero_shared();
+
+    // Outlaw copy constructor and assignment operator to keep effictive C++
+    // warnings down to a minumum
+    shared_ptr_pointer (const shared_ptr_pointer &);
+    shared_ptr_pointer & operator=(const shared_ptr_pointer &);
 };
 
 template <class T>
@@ -169,7 +174,7 @@ SharingPtr<T>::SharingPtr()
 template<class T>
 template<class Y>
 SharingPtr<T>::SharingPtr(Y* p)
-    : ptr_(p)
+    : ptr_(p), cntrl_(0)
 {
     std::auto_ptr<Y> hold(p);
     typedef imp::shared_ptr_pointer<Y*> _CntrlBlk;

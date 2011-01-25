@@ -859,13 +859,13 @@ ClangASTType::DumpSummary
     }
 }
 
-uint64_t
+uint32_t
 ClangASTType::GetClangTypeBitWidth ()
 {
     return GetClangTypeBitWidth (m_ast, m_type);
 }
 
-uint64_t
+uint32_t
 ClangASTType::GetClangTypeBitWidth (clang::ASTContext *ast_context, clang_type_t clang_type)
 {
     if (ast_context && clang_type)

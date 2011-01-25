@@ -589,7 +589,7 @@ public:
     CreateMemberPointerType (lldb::clang_type_t  clang_pointee_type,
                              lldb::clang_type_t  clang_class_type);
 
-    size_t
+    uint32_t
     GetPointerBitSize ();
 
     static bool

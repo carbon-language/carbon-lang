@@ -89,7 +89,9 @@ public:
     //----------------------------------------------------------------------
     /// The following values should not live beyond parsing
     //----------------------------------------------------------------------
-    struct ParserVars {
+    class ParserVars 
+    {
+    public:
 
         ParserVars() :
             m_parser_type(),
@@ -103,6 +105,9 @@ public:
         const clang::NamedDecl *m_named_decl;   ///< The Decl corresponding to this variable
         llvm::Value            *m_llvm_value;   ///< The IR value corresponding to this variable; usually a GlobalValue
         lldb_private::Value    *m_lldb_value;   ///< The value found in LLDB for this variable
+
+    private:
+        DISALLOW_COPY_AND_ASSIGN (ParserVars);
     };
     //----------------------------------------------------------------------
     /// Make this variable usable by the parser by allocating space for

@@ -51,6 +51,8 @@ private:
     UnwindAssemblyProfiler* m_assembly_profiler;
 
     DWARFCallFrameInfo* m_eh_frame;
+    
+    DISALLOW_COPY_AND_ASSIGN (UnwindTable);
 };
 
 } // namespace lldb_private

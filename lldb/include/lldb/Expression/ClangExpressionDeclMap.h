@@ -469,7 +469,9 @@ private:
     //----------------------------------------------------------------------
     /// The following values should not live beyond parsing
     //----------------------------------------------------------------------
-    struct ParserVars {
+    class ParserVars 
+    {
+    public:
         ParserVars() :
             m_exe_ctx(NULL),
             m_sym_ctx(),
@@ -493,6 +495,8 @@ private:
         ClangPersistentVariables   *m_persistent_vars;  ///< The persistent variables for the process.
         bool                        m_enable_lookups;   ///< Set to true during parsing if we have found the first "$__lldb" name.
         bool                        m_ignore_lookups;   ///< True during an import when we should be ignoring type lookups.
+    private:
+        DISALLOW_COPY_AND_ASSIGN (ParserVars);
     };
     
     std::auto_ptr<ParserVars> m_parser_vars;

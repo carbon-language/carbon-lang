@@ -93,7 +93,7 @@ public:
     uint32_t
     GetSiblingIndex () const;
 
-    uint32_t
+    lldb::addr_t
     GetByteSize () const { return m_addr_range.GetByteSize(); }
 
     lldb::SymbolType

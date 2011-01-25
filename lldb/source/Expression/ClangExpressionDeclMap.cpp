@@ -1402,17 +1402,15 @@ ClangExpressionDeclMap::DoMaterializeOneRegister
 {
     uint32_t register_number = reg_info.kinds[lldb::eRegisterKindLLDB];
     uint32_t register_byte_size = reg_info.byte_size;
-    
-    Error error;
-    
+
     if (dematerialize)
     {
         DataBufferHeap register_data (register_byte_size, 0);
         
-        Error error;
-        if (exe_ctx.process->ReadMemory (addr, register_data.GetBytes(), register_byte_size, error) != register_byte_size)
+        Error read_error;
+        if (exe_ctx.process->ReadMemory (addr, register_data.GetBytes(), register_byte_size, read_error) != register_byte_size)
         {
-            err.SetErrorStringWithFormat ("Couldn't read %s from the target: %s", reg_info.name, error.AsCString());
+            err.SetErrorStringWithFormat ("Couldn't read %s from the target: %s", reg_info.name, read_error.AsCString());
             return false;
         }
         
@@ -1801,7 +1799,7 @@ ClangExpressionDeclMap::GetVariableValue
     }
     Error err;
     
-    if (!var_location_expr.Evaluate(&exe_ctx, ast, NULL, loclist_base_load_addr, NULL, *var_location.get(), &err))
+    if (!var_location_expr.Evaluate(&exe_ctx, ast, NULL, NULL, NULL, loclist_base_load_addr, NULL, *var_location.get(), &err))
     {
         if (log)
             log->Printf("Error evaluating location: %s", err.AsCString());

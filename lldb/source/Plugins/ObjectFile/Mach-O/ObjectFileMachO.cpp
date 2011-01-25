@@ -202,11 +202,11 @@ ObjectFileMachO::GetAddressByteSize () const
 Symtab *
 ObjectFileMachO::GetSymtab()
 {
-    lldb_private::Mutex::Locker locker(m_mutex);
+    lldb_private::Mutex::Locker symfile_locker(m_mutex);
     if (m_symtab_ap.get() == NULL)
     {
         m_symtab_ap.reset(new Symtab(this));
-        Mutex::Locker locker (m_symtab_ap->GetMutex());
+        Mutex::Locker symtab_locker (m_symtab_ap->GetMutex());
         ParseSymtab (true);
     }
     return m_symtab_ap.get();

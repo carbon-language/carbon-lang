@@ -96,12 +96,10 @@ ProcessGDBRemoteLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, A
 {
     // Try see if there already is a log - that way we can reuse its settings.
     // We could reuse the log in toto, but we don't know that the stream is the same.
-    uint32_t flag_bits;
+    uint32_t flag_bits = 0;
     LogSP log(GetLog ());
     if (log)
         flag_bits = log->GetMask().Get();
-    else
-        flag_bits = 0;
 
     // Now make a new log with this stream if one was provided
     if (log_stream_sp)
@@ -112,7 +110,6 @@ ProcessGDBRemoteLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, A
 
     if (log)
     {
-        uint32_t flag_bits = 0;
         bool got_unknown_category = false;
         const size_t argc = args.GetArgumentCount();
         for (size_t i=0; i<argc; ++i)

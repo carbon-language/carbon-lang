@@ -46,7 +46,7 @@ public:
     /// @result
     ///   Returns breakpoint id.
     //------------------------------------------------------------------
-    virtual lldb::break_id_t
+    lldb::break_id_t
     Add (lldb::BreakpointSP& bp_sp, bool notify);
 
     //------------------------------------------------------------------
