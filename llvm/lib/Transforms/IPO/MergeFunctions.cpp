@@ -68,6 +68,7 @@ using namespace llvm;
 
 STATISTIC(NumFunctionsMerged, "Number of functions merged");
 STATISTIC(NumThunksWritten, "Number of thunks generated");
+STATISTIC(NumAliasesWritten, "Number of aliases generated");
 STATISTIC(NumDoubleWeak, "Number of new functions created");
 
 /// ProfileFunction - Creates a hash-code for the function which is the same
@@ -164,7 +165,8 @@ namespace {
 class MergeFunctions : public ModulePass {
 public:
   static char ID;
-  MergeFunctions() : ModulePass(ID) {
+  MergeFunctions()
+    : ModulePass(ID), HasGlobalAliases(false) {
     initializeMergeFunctionsPass(*PassRegistry::getPassRegistry());
   }
 
@@ -189,14 +191,24 @@ private:
   /// queue the functions.
   void RemoveUsers(Value *V);
 
+  /// Replace all direct calls of Old with calls of New. Will bitcast New if
+  /// necessary to make types match.
+  void replaceDirectCallers(Function *Old, Function *New);
+
   /// MergeTwoFunctions - Merge two equivalent functions. Upon completion, G
   /// may be deleted, or may be converted into a thunk. In either case, it
   /// should never be visited again.
   void MergeTwoFunctions(Function *F, Function *G);
 
+  /// WriteThunkOrAlias - Replace G with a thunk or an alias to F. Deletes G.
+  void WriteThunkOrAlias(Function *F, Function *G);
+
   /// WriteThunk - Replace G with a simple tail call to bitcast(F). Also
   /// replace direct uses of G with bitcast(F). Deletes G.
   void WriteThunk(Function *F, Function *G);
+
+  /// WriteAlias - Replace G with an alias to F. Deletes G.
+  void WriteAlias(Function *F, Function *G);
 
   /// The set of all distinct functions. Use the Insert and Remove methods to
   /// modify it.
@@ -204,6 +216,9 @@ private:
 
   /// TargetData for more accurate GEP comparisons. May be NULL.
   TargetData *TD;
+
+  /// Whether or not the target supports global aliases.
+  bool HasGlobalAliases;
 };
 
 }  // end anonymous namespace
@@ -587,22 +602,39 @@ bool FunctionComparator::Compare() {
   return true;
 }
 
+/// Replace direct callers of Old with New.
+void MergeFunctions::replaceDirectCallers(Function *Old, Function *New) {
+  Constant *BitcastNew = ConstantExpr::getBitCast(New, Old->getType());
+  for (Value::use_iterator UI = Old->use_begin(), UE = Old->use_end();
+       UI != UE;) {
+    Value::use_iterator TheIter = UI;
+    ++UI;
+    CallSite CS(*TheIter);
+    if (CS && CS.isCallee(TheIter)) {
+      Remove(CS.getInstruction()->getParent()->getParent());
+      TheIter.getUse().set(BitcastNew);
+    }
+  }
+}
+
+void MergeFunctions::WriteThunkOrAlias(Function *F, Function *G) {
+  if (HasGlobalAliases && G->hasUnnamedAddr()) {
+    if (G->hasExternalLinkage() || G->hasLocalLinkage() ||
+        G->hasWeakLinkage()) {
+      WriteAlias(F, G);
+      return;
+    }
+  }
+
+  WriteThunk(F, G);
+}
+
 /// WriteThunk - Replace G with a simple tail call to bitcast(F). Also replace
 /// direct uses of G with bitcast(F). Deletes G.
 void MergeFunctions::WriteThunk(Function *F, Function *G) {
   if (!G->mayBeOverridden()) {
     // Redirect direct callers of G to F.
-    Constant *BitcastF = ConstantExpr::getBitCast(F, G->getType());
-    for (Value::use_iterator UI = G->use_begin(), UE = G->use_end();
-         UI != UE;) {
-      Value::use_iterator TheIter = UI;
-      ++UI;
-      CallSite CS(*TheIter);
-      if (CS && CS.isCallee(TheIter)) {
-        Remove(CS.getInstruction()->getParent()->getParent());
-        TheIter.getUse().set(BitcastF);
-      }
-    }
+    replaceDirectCallers(G, F);
   }
 
   // If G was internal then we may have replaced all uses of G with F. If so,
@@ -645,31 +677,53 @@ void MergeFunctions::WriteThunk(Function *F, Function *G) {
   ++NumThunksWritten;
 }
 
+/// WriteAlias - Replace G with an alias to F and delete G.
+void MergeFunctions::WriteAlias(Function *F, Function *G) {
+  Constant *BitcastF = ConstantExpr::getBitCast(F, G->getType());
+  GlobalAlias *GA = new GlobalAlias(G->getType(), G->getLinkage(), "",
+                                    BitcastF, G->getParent());
+  F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
+  GA->takeName(G);
+  GA->setVisibility(G->getVisibility());
+  RemoveUsers(G);
+  G->replaceAllUsesWith(GA);
+  G->eraseFromParent();
+
+  DEBUG(dbgs() << "WriteAlias: " << GA->getName() << '\n');
+  ++NumAliasesWritten;
+}
+
 /// MergeTwoFunctions - Merge two equivalent functions. Upon completion,
 /// Function G is deleted.
 void MergeFunctions::MergeTwoFunctions(Function *F, Function *G) {
   if (F->mayBeOverridden()) {
     assert(G->mayBeOverridden());
 
-    // Make them both thunks to the same internal function.
-    Function *H = Function::Create(F->getFunctionType(), F->getLinkage(), "",
-                                   F->getParent());
-    H->copyAttributesFrom(F);
-    H->takeName(F);
-    RemoveUsers(F);
-    F->replaceAllUsesWith(H);
+    if (HasGlobalAliases) {
+      // Make them both thunks to the same internal function.
+      Function *H = Function::Create(F->getFunctionType(), F->getLinkage(), "",
+                                     F->getParent());
+      H->copyAttributesFrom(F);
+      H->takeName(F);
+      RemoveUsers(F);
+      F->replaceAllUsesWith(H);
 
-    unsigned MaxAlignment = std::max(G->getAlignment(), H->getAlignment());
+      unsigned MaxAlignment = std::max(G->getAlignment(), H->getAlignment());
 
-    WriteThunk(F, G);
-    WriteThunk(F, H);
+      WriteAlias(F, G);
+      WriteAlias(F, H);
 
-    F->setAlignment(MaxAlignment);
-    F->setLinkage(GlobalValue::PrivateLinkage);
+      F->setAlignment(MaxAlignment);
+      F->setLinkage(GlobalValue::PrivateLinkage);
+    } else {
+      // We can't merge them. Instead, pick one and update all direct callers
+      // to call it and hope that we improve the instruction cache hit rate.
+      replaceDirectCallers(G, F);
+    }
 
     ++NumDoubleWeak;
   } else {
-    WriteThunk(F, G);
+    WriteThunkOrAlias(F, G);
   }
 
   ++NumFunctionsMerged;
