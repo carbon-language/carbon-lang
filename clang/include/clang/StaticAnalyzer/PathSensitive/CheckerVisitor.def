@@ -34,7 +34,6 @@ PREVISIT(CXXStaticCastExpr, CastExpr)
 PREVISIT(DeclStmt, Stmt)
 PREVISIT(ImplicitCastExpr, CastExpr)
 PREVISIT(ObjCAtSynchronizedStmt, Stmt)
-PREVISIT(ObjCMessageExpr, Stmt)
 PREVISIT(ReturnStmt, Stmt)
 
 POSTVISIT(BlockExpr, Stmt)
@@ -43,7 +42,6 @@ POSTVISIT(CallExpr, GenericCall)
 POSTVISIT(CompoundAssignOperator, BinaryOperator)
 POSTVISIT(CXXOperatorCallExpr, GenericCall)
 POSTVISIT(CXXMemberCallExpr, GenericCall)
-POSTVISIT(ObjCMessageExpr, Stmt)
 POSTVISIT(ObjCIvarRefExpr, Stmt)
 
 #undef PREVISIT

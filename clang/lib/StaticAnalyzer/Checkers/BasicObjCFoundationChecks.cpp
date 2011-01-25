@@ -42,14 +42,14 @@ public:
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-static const ObjCInterfaceType* GetReceiverType(const ObjCMessageExpr* ME) {
-  if (ObjCInterfaceDecl *ID = ME->getReceiverInterface())
+static const ObjCInterfaceType* GetReceiverType(const ObjCMessage &msg) {
+  if (const ObjCInterfaceDecl *ID = msg.getReceiverInterface())
     return ID->getTypeForDecl()->getAs<ObjCInterfaceType>();
   return NULL;
 }
 
-static const char* GetReceiverNameType(const ObjCMessageExpr* ME) {
-  if (const ObjCInterfaceType *ReceiverType = GetReceiverType(ME))
+static const char* GetReceiverNameType(const ObjCMessage &msg) {
+  if (const ObjCInterfaceType *ReceiverType = GetReceiverType(msg))
     return ReceiverType->getDecl()->getIdentifier()->getNameStart();
   return NULL;
 }
@@ -69,16 +69,16 @@ static inline bool isNil(SVal X) {
 namespace {
   class NilArgChecker : public CheckerVisitor<NilArgChecker> {
     APIMisuse *BT;
-    void WarnNilArg(CheckerContext &C, const ObjCMessageExpr* ME, unsigned Arg);
+    void WarnNilArg(CheckerContext &C, const ObjCMessage &msg, unsigned Arg);
   public:
     NilArgChecker() : BT(0) {}
     static void *getTag() { static int x = 0; return &x; }
-    void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);
+    void preVisitObjCMessage(CheckerContext &C, ObjCMessage msg);
   };
 }
 
 void NilArgChecker::WarnNilArg(CheckerContext &C,
-                               const clang::ObjCMessageExpr *ME,
+                               const ObjCMessage &msg,
                                unsigned int Arg)
 {
   if (!BT)
@@ -87,24 +87,24 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
   if (ExplodedNode *N = C.generateSink()) {
     llvm::SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
-    os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
-       << ME->getSelector().getAsString() << "' cannot be nil";
+    os << "Argument to '" << GetReceiverNameType(msg) << "' method '"
+       << msg.getSelector().getAsString() << "' cannot be nil";
 
     RangedBugReport *R = new RangedBugReport(*BT, os.str(), N);
-    R->addRange(ME->getArg(Arg)->getSourceRange());
+    R->addRange(msg.getArgSourceRange(Arg));
     C.EmitReport(R);
   }
 }
 
-void NilArgChecker::PreVisitObjCMessageExpr(CheckerContext &C,
-                                            const ObjCMessageExpr *ME)
+void NilArgChecker::preVisitObjCMessage(CheckerContext &C,
+                                        ObjCMessage msg)
 {
-  const ObjCInterfaceType *ReceiverType = GetReceiverType(ME);
+  const ObjCInterfaceType *ReceiverType = GetReceiverType(msg);
   if (!ReceiverType)
     return;
   
   if (isNSString(ReceiverType->getDecl()->getIdentifier()->getName())) {
-    Selector S = ME->getSelector();
+    Selector S = msg.getSelector();
     
     if (S.isUnarySelector())
       return;
@@ -127,8 +127,8 @@ void NilArgChecker::PreVisitObjCMessageExpr(CheckerContext &C,
         Name == "compare:options:range:locale:" ||
         Name == "componentsSeparatedByCharactersInSet:" ||
         Name == "initWithFormat:") {
-      if (isNil(C.getState()->getSVal(ME->getArg(0))))
-        WarnNilArg(C, ME, 0);
+      if (isNil(msg.getArgSVal(0, C.getState())))
+        WarnNilArg(C, msg, 0);
     }
   }
 }
@@ -441,12 +441,12 @@ public:
 
   static void *getTag() { static int x = 0; return &x; }
       
-  void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);    
+  void preVisitObjCMessage(CheckerContext &C, ObjCMessage msg);
 };
 }
 
-void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
-                                                  const ObjCMessageExpr *ME) {
+void ClassReleaseChecker::preVisitObjCMessage(CheckerContext &C,
+                                              ObjCMessage msg) {
   
   if (!BT) {
     BT = new APIMisuse("message incorrectly sent to class instead of class "
@@ -459,21 +459,12 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
     drainS = GetNullarySelector("drain", Ctx);
   }
   
-  ObjCInterfaceDecl *Class = 0;
-
-  switch (ME->getReceiverKind()) {
-  case ObjCMessageExpr::Class:
-    Class = ME->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
-    break;
-  case ObjCMessageExpr::SuperClass:
-    Class = ME->getSuperType()->getAs<ObjCObjectType>()->getInterface();
-    break;
-  case ObjCMessageExpr::Instance:
-  case ObjCMessageExpr::SuperInstance:
+  if (msg.isInstanceMessage())
     return;
-  }
+  const ObjCInterfaceDecl *Class = msg.getReceiverInterface();
+  assert(Class);
 
-  Selector S = ME->getSelector();
+  Selector S = msg.getSelector();
   if (!(S == releaseS || S == retainS || S == autoreleaseS || S == drainS))
     return;
   
@@ -486,7 +477,7 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
        << "' and not the class directly";
   
     RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
-    report->addRange(ME->getSourceRange());
+    report->addRange(msg.getSourceRange());
     C.EmitReport(report);
   }
 }

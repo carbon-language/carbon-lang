@@ -145,10 +145,49 @@ void ExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
   // automatically.
 }
 
-void ExprEngine::CheckerEvalNilReceiver(const ObjCMessageExpr *ME,
-                                          ExplodedNodeSet &Dst,
-                                          const GRState *state,
-                                          ExplodedNode *Pred) {
+void ExprEngine::CheckerVisitObjCMessage(const ObjCMessage &msg,
+                                         ExplodedNodeSet &Dst,
+                                         ExplodedNodeSet &Src,
+                                         bool isPrevisit) {
+
+  if (Checkers.empty()) {
+    Dst.insert(Src);
+    return;
+  }
+
+  ExplodedNodeSet Tmp;
+  ExplodedNodeSet *PrevSet = &Src;
+
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
+  {
+    ExplodedNodeSet *CurrSet = 0;
+    if (I+1 == E)
+      CurrSet = &Dst;
+    else {
+      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
+      CurrSet->clear();
+    }
+
+    void *tag = I->first;
+    Checker *checker = I->second;
+
+    for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
+         NI != NE; ++NI)
+      checker->GR_visitObjCMessage(*CurrSet, *Builder, *this, msg,
+                                   *NI, tag, isPrevisit);
+
+    // Update which NodeSet is the current one.
+    PrevSet = CurrSet;
+  }
+
+  // Don't autotransition.  The CheckerContext objects should do this
+  // automatically.
+}
+
+void ExprEngine::CheckerEvalNilReceiver(const ObjCMessage &msg,
+                                        ExplodedNodeSet &Dst,
+                                        const GRState *state,
+                                        ExplodedNode *Pred) {
   bool evaluated = false;
   ExplodedNodeSet DstTmp;
 
@@ -156,7 +195,7 @@ void ExprEngine::CheckerEvalNilReceiver(const ObjCMessageExpr *ME,
     void *tag = I->first;
     Checker *checker = I->second;
 
-    if (checker->GR_evalNilReceiver(DstTmp, *Builder, *this, ME, Pred, state,
+    if (checker->GR_evalNilReceiver(DstTmp, *Builder, *this, msg, Pred, state,
                                     tag)) {
       evaluated = true;
       break;
@@ -2263,7 +2302,7 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
 
   // Now that the arguments are processed, handle the previsits checks.
   ExplodedNodeSet DstPrevisit;
-  CheckerVisit(ME, DstPrevisit, ArgsEvaluated, PreVisitStmtCallback);
+  CheckerVisitObjCMessage(ME, DstPrevisit, ArgsEvaluated, /*isPreVisit=*/true);
 
   // Proceed with evaluate the message expression.
   ExplodedNodeSet dstEval;
@@ -2305,7 +2344,7 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
         Builder->BuildSinks = true;
 
       // Dispatch to plug-in transfer function.
-      evalObjCMessageExpr(dstEval, ME, Pred, notNilState);
+      evalObjCMessage(dstEval, ME, Pred, notNilState);
     }
     else if (ObjCInterfaceDecl *Iface = ME->getReceiverInterface()) {
       IdentifierInfo* ClsName = Iface->getIdentifier();
@@ -2353,7 +2392,7 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
         Builder->BuildSinks = true;
 
       // Dispatch to plug-in transfer function.
-      evalObjCMessageExpr(dstEval, ME, Pred, Builder->GetState(Pred));
+      evalObjCMessage(dstEval, ME, Pred, Builder->GetState(Pred));
     }
 
     // Handle the case where no nodes where generated.  Auto-generate that
@@ -2365,7 +2404,7 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
 
   // Finally, perform the post-condition check of the ObjCMessageExpr and store
   // the created nodes in 'Dst'.
-  CheckerVisit(ME, Dst, dstEval, PostVisitStmtCallback);
+  CheckerVisitObjCMessage(ME, Dst, dstEval, /*isPreVisit=*/false);
 }
 
 //===----------------------------------------------------------------------===//

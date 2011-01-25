@@ -203,12 +203,26 @@ private:
       _PostVisit(C, S);
   }
 
+  void GR_visitObjCMessage(ExplodedNodeSet &Dst,
+                           StmtNodeBuilder &Builder,
+                           ExprEngine &Eng,
+                           const ObjCMessage &msg,
+                           ExplodedNode *Pred, void *tag, bool isPrevisit) {
+    CheckerContext C(Dst, Builder, Eng, Pred, tag,
+                     isPrevisit ? ProgramPoint::PreStmtKind :
+                     ProgramPoint::PostStmtKind, 0, msg.getOriginExpr());
+    if (isPrevisit)
+      preVisitObjCMessage(C, msg);
+    else
+      postVisitObjCMessage(C, msg);
+  }
+
   bool GR_evalNilReceiver(ExplodedNodeSet &Dst, StmtNodeBuilder &Builder,
-                          ExprEngine &Eng, const ObjCMessageExpr *ME,
+                          ExprEngine &Eng, const ObjCMessage &msg,
                           ExplodedNode *Pred, const GRState *state, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, ProgramPoint::PostStmtKind,
-                     0, ME, state);
-    return evalNilReceiver(C, ME);
+                     0, msg.getOriginExpr(), state);
+    return evalNilReceiver(C, msg);
   }
 
   bool GR_evalCallExpr(ExplodedNodeSet &Dst, StmtNodeBuilder &Builder,
@@ -258,6 +272,8 @@ public:
   virtual ~Checker();
   virtual void _PreVisit(CheckerContext &C, const Stmt *S) {}
   virtual void _PostVisit(CheckerContext &C, const Stmt *S) {}
+  virtual void preVisitObjCMessage(CheckerContext &C, ObjCMessage msg) {}
+  virtual void postVisitObjCMessage(CheckerContext &C, ObjCMessage msg) {}
   virtual void visitLocation(CheckerContext &C, const Stmt *S, SVal location,
                              bool isLoad) {}
   virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
@@ -272,7 +288,7 @@ public:
                                     ExprEngine &Eng,
                                     const Stmt *Condition, void *tag) {}
 
-  virtual bool evalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME) {
+  virtual bool evalNilReceiver(CheckerContext &C, ObjCMessage msg) {
     return false;
   }
 

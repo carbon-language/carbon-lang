@@ -39,7 +39,7 @@ public:
     return &x;
   }
 
-  void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);    
+  void preVisitObjCMessage(CheckerContext &C, ObjCMessage msg);    
 };
 
 } // end anonymous namespace
@@ -54,10 +54,10 @@ void ento::RegisterNSAutoreleasePoolChecks(ExprEngine &Eng) {
 }
 
 void
-NSAutoreleasePoolChecker::PreVisitObjCMessageExpr(CheckerContext &C,
-                                                  const ObjCMessageExpr *ME) {
+NSAutoreleasePoolChecker::preVisitObjCMessage(CheckerContext &C,
+                                              ObjCMessage msg) {
   
-  const Expr *receiver = ME->getInstanceReceiver();
+  const Expr *receiver = msg.getInstanceReceiver();
   if (!receiver)
     return;
   
@@ -75,13 +75,13 @@ NSAutoreleasePoolChecker::PreVisitObjCMessageExpr(CheckerContext &C,
     return;
   
   // Sending 'release' message?
-  if (ME->getSelector() != releaseS)
+  if (msg.getSelector() != releaseS)
     return;
                      
-  SourceRange R = ME->getSourceRange();
+  SourceRange R = msg.getSourceRange();
 
   C.getBugReporter().EmitBasicReport("Use -drain instead of -release",
     "API Upgrade (Apple)",
     "Use -drain instead of -release when using NSAutoreleasePool "
-    "and garbage collection", ME->getLocStart(), &R, 1);
+    "and garbage collection", R.getBegin(), &R, 1);
 }

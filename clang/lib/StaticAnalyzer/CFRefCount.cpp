@@ -40,14 +40,15 @@ using llvm::StrInStrNoCase;
 
 namespace {
 class InstanceReceiver {
-  const ObjCMessageExpr *ME;
+  ObjCMessage Msg;
   const LocationContext *LC;
 public:
-  InstanceReceiver(const ObjCMessageExpr *me = 0,
-                   const LocationContext *lc = 0) : ME(me), LC(lc) {}
+  InstanceReceiver() : LC(0) { }
+  InstanceReceiver(const ObjCMessage &msg,
+                   const LocationContext *lc = 0) : Msg(msg), LC(lc) {}
 
   bool isValid() const {
-    return ME && ME->isInstanceMessage();
+    return Msg.isValid() && Msg.isInstanceMessage();
   }
   operator bool() const {
     return isValid();
@@ -57,7 +58,7 @@ public:
     assert(isValid());
     // We have an expression for the receiver?  Fetch the value
     // of that expression.
-    if (const Expr *Ex = ME->getInstanceReceiver())
+    if (const Expr *Ex = Msg.getInstanceReceiver())
       return state->getSValAsScalarOrLoc(Ex);
 
     // Otherwise we are sending a message to super.  In this case the
@@ -70,11 +71,11 @@ public:
 
   SourceRange getSourceRange() const {
     assert(isValid());
-    if (const Expr *Ex = ME->getInstanceReceiver())
+    if (const Expr *Ex = Msg.getInstanceReceiver())
       return Ex->getSourceRange();
 
     // Otherwise we are sending a message to super.
-    SourceLocation L = ME->getSuperLoc();
+    SourceLocation L = Msg.getSuperLoc();
     assert(L.isValid());
     return SourceRange(L, L);
   }
@@ -798,14 +799,14 @@ public:
 
   RetainSummary* getSummary(const FunctionDecl* FD);
 
-  RetainSummary *getInstanceMethodSummary(const ObjCMessageExpr *ME,
+  RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
                                           const GRState *state,
                                           const LocationContext *LC);
 
-  RetainSummary* getInstanceMethodSummary(const ObjCMessageExpr* ME,
+  RetainSummary* getInstanceMethodSummary(const ObjCMessage &msg,
                                           const ObjCInterfaceDecl* ID) {
-    return getInstanceMethodSummary(ME->getSelector(), 0,
-                            ID, ME->getMethodDecl(), ME->getType());
+    return getInstanceMethodSummary(msg.getSelector(), 0,
+                            ID, msg.getMethodDecl(), msg.getType(Ctx));
   }
 
   RetainSummary* getInstanceMethodSummary(Selector S, IdentifierInfo *ClsName,
@@ -818,23 +819,15 @@ public:
                                        const ObjCMethodDecl *MD,
                                        QualType RetTy);
 
-  RetainSummary *getClassMethodSummary(const ObjCMessageExpr *ME) {
-    ObjCInterfaceDecl *Class = 0;
-    switch (ME->getReceiverKind()) {
-    case ObjCMessageExpr::Class:
-    case ObjCMessageExpr::SuperClass:
-      Class = ME->getReceiverInterface();
-      break;
+  RetainSummary *getClassMethodSummary(const ObjCMessage &msg) {
+    const ObjCInterfaceDecl *Class = 0;
+    if (!msg.isInstanceMessage())
+      Class = msg.getReceiverInterface();
 
-    case ObjCMessageExpr::Instance:
-    case ObjCMessageExpr::SuperInstance:
-      break;
-    }
-
-    return getClassMethodSummary(ME->getSelector(),
+    return getClassMethodSummary(msg.getSelector(),
                                  Class? Class->getIdentifier() : 0,
                                  Class,
-                                 ME->getMethodDecl(), ME->getType());
+                                 msg.getMethodDecl(), msg.getType(Ctx));
   }
 
   /// getMethodSummary - This version of getMethodSummary is used to query
@@ -1310,13 +1303,13 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
 }
 
 RetainSummary*
-RetainSummaryManager::getInstanceMethodSummary(const ObjCMessageExpr *ME,
+RetainSummaryManager::getInstanceMethodSummary(const ObjCMessage &msg,
                                                const GRState *state,
                                                const LocationContext *LC) {
 
   // We need the type-information of the tracked receiver object
   // Retrieve it from the state.
-  const Expr *Receiver = ME->getInstanceReceiver();
+  const Expr *Receiver = msg.getInstanceReceiver();
   const ObjCInterfaceDecl* ID = 0;
 
   // FIXME: Is this really working as expected?  There are cases where
@@ -1344,12 +1337,12 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessageExpr *ME,
     }
   } else {
     // FIXME: Hack for 'super'.
-    ID = ME->getReceiverInterface();
+    ID = msg.getReceiverInterface();
   }
 
   // FIXME: The receiver could be a reference to a class, meaning that
   //  we should use the class method.
-  RetainSummary *Summ = getInstanceMethodSummary(ME, ID);
+  RetainSummary *Summ = getInstanceMethodSummary(msg, ID);
 
   // Special-case: are we sending a mesage to "self"?
   //  This is a hack.  When we have full-IP this should be removed.
@@ -1693,10 +1686,10 @@ public:
                    ExprEngine& Eng,
                    StmtNodeBuilder& Builder,
                    const Expr* Ex,
+                   const CallOrObjCMessage &callOrMsg,
                    InstanceReceiver Receiver,
                    const RetainSummary& Summ,
                    const MemRegion *Callee,
-                   ConstExprIterator arg_beg, ConstExprIterator arg_end,
                    ExplodedNode* Pred, const GRState *state);
 
   virtual void evalCall(ExplodedNodeSet& Dst,
@@ -1706,12 +1699,12 @@ public:
                         ExplodedNode* Pred);
 
 
-  virtual void evalObjCMessageExpr(ExplodedNodeSet& Dst,
-                                   ExprEngine& Engine,
-                                   StmtNodeBuilder& Builder,
-                                   const ObjCMessageExpr* ME,
-                                   ExplodedNode* Pred,
-                                   const GRState *state);
+  virtual void evalObjCMessage(ExplodedNodeSet& Dst,
+                               ExprEngine& Engine,
+                               StmtNodeBuilder& Builder,
+                               ObjCMessage msg,
+                               ExplodedNode* Pred,
+                               const GRState *state);
   // Stores.
   virtual void evalBind(StmtNodeBuilderRef& B, SVal location, SVal val);
 
@@ -2477,16 +2470,14 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
                              ExprEngine& Eng,
                              StmtNodeBuilder& Builder,
                              const Expr* Ex,
+                             const CallOrObjCMessage &callOrMsg,
                              InstanceReceiver Receiver,
                              const RetainSummary& Summ,
                              const MemRegion *Callee,
-                             ConstExprIterator arg_beg, 
-                             ConstExprIterator arg_end,
                              ExplodedNode* Pred, const GRState *state) {
 
   // Evaluate the effect of the arguments.
   RefVal::Kind hasErr = (RefVal::Kind) 0;
-  unsigned idx = 0;
   SourceRange ErrorRange;
   SymbolRef ErrorSym = 0;
 
@@ -2498,8 +2489,8 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
   //  done an invalidation pass.
   llvm::DenseSet<SymbolRef> WhitelistedSymbols;
 
-  for (ConstExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {
-    SVal V = state->getSValAsScalarOrLoc(*I);
+  for (unsigned idx = 0, e = callOrMsg.getNumArgs(); idx != e; ++idx) {
+    SVal V = callOrMsg.getArgSValAsScalarOrLoc(idx);
     SymbolRef Sym = V.getAsLocSymbol();
 
     if (Sym)
@@ -2507,7 +2498,7 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
         WhitelistedSymbols.insert(Sym);
         state = Update(state, Sym, *T, Summ.getArg(idx), hasErr);
         if (hasErr) {
-          ErrorRange = (*I)->getSourceRange();
+          ErrorRange = callOrMsg.getArgSourceRange(idx);
           ErrorSym = Sym;
           break;
         }
@@ -2650,19 +2641,7 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
       // FIXME: We eventually should handle structs and other compound types
       // that are returned by value.
 
-      QualType T = Ex->getType();
-
-      // For CallExpr, use the result type to know if it returns a reference.
-      if (const CallExpr *CE = dyn_cast<CallExpr>(Ex)) {
-        const Expr *Callee = CE->getCallee();
-        if (const FunctionDecl *FD = state->getSVal(Callee).getAsFunctionDecl())
-          T = FD->getResultType();
-      }
-      else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(Ex)) {
-        if (const ObjCMethodDecl *MD = ME->getMethodDecl())
-          T = MD->getResultType();
-      }
-
+      QualType T = callOrMsg.getResultType(Eng.getContext());
       if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
         SValBuilder &svalBuilder = Eng.getSValBuilder();
@@ -2675,9 +2654,8 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
 
     case RetEffect::Alias: {
       unsigned idx = RE.getIndex();
-      assert (arg_end >= arg_beg);
-      assert (idx < (unsigned) (arg_end - arg_beg));
-      SVal V = state->getSValAsScalarOrLoc(*(arg_beg+idx));
+      assert (idx < callOrMsg.getNumArgs());
+      SVal V = callOrMsg.getArgSValAsScalarOrLoc(idx);
       state = state->BindExpr(Ex, V, false);
       break;
     }
@@ -2756,25 +2734,28 @@ void CFRefCount::evalCall(ExplodedNodeSet& Dst,
   }
 
   assert(Summ);
-  evalSummary(Dst, Eng, Builder, CE, 0, *Summ, L.getAsRegion(),
-              CE->arg_begin(), CE->arg_end(), Pred, Builder.GetState(Pred));
+  evalSummary(Dst, Eng, Builder, CE,
+              CallOrObjCMessage(CE, Builder.GetState(Pred)),
+              InstanceReceiver(), *Summ,L.getAsRegion(),
+              Pred, Builder.GetState(Pred));
 }
 
-void CFRefCount::evalObjCMessageExpr(ExplodedNodeSet& Dst,
-                                     ExprEngine& Eng,
-                                     StmtNodeBuilder& Builder,
-                                     const ObjCMessageExpr* ME,
-                                     ExplodedNode* Pred,
-                                     const GRState *state) {
+void CFRefCount::evalObjCMessage(ExplodedNodeSet& Dst,
+                                 ExprEngine& Eng,
+                                 StmtNodeBuilder& Builder,
+                                 ObjCMessage msg,
+                                 ExplodedNode* Pred,
+                                 const GRState *state) {
   RetainSummary *Summ =
-    ME->isInstanceMessage()
-      ? Summaries.getInstanceMethodSummary(ME, state,Pred->getLocationContext())
-      : Summaries.getClassMethodSummary(ME);
+    msg.isInstanceMessage()
+      ? Summaries.getInstanceMethodSummary(msg, state,Pred->getLocationContext())
+      : Summaries.getClassMethodSummary(msg);
 
   assert(Summ && "RetainSummary is null");
-  evalSummary(Dst, Eng, Builder, ME,
-              InstanceReceiver(ME, Pred->getLocationContext()), *Summ, NULL,
-              ME->arg_begin(), ME->arg_end(), Pred, state);
+  evalSummary(Dst, Eng, Builder, msg.getOriginExpr(),
+              CallOrObjCMessage(msg, Builder.GetState(Pred)),
+              InstanceReceiver(msg, Pred->getLocationContext()), *Summ, NULL,
+              Pred, state);
 }
 
 namespace {

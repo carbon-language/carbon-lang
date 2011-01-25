@@ -17,6 +17,7 @@
 
 #include "clang/StaticAnalyzer/PathSensitive/GRState.h"
 #include "clang/StaticAnalyzer/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/PathSensitive/ObjCMessage.h"
 #include <vector>
 
 namespace clang {
@@ -47,12 +48,12 @@ public:
                         const CallExpr* CE, SVal L,
                         ExplodedNode* Pred) {}
 
-  virtual void evalObjCMessageExpr(ExplodedNodeSet& Dst,
-                                   ExprEngine& Engine,
-                                   StmtNodeBuilder& Builder,
-                                   const ObjCMessageExpr* ME,
-                                   ExplodedNode* Pred,
-                                   const GRState *state) {}
+  virtual void evalObjCMessage(ExplodedNodeSet& Dst,
+                               ExprEngine& Engine,
+                               StmtNodeBuilder& Builder,
+                               ObjCMessage msg,
+                               ExplodedNode* Pred,
+                               const GRState *state) {}
 
   // Stores.
 
