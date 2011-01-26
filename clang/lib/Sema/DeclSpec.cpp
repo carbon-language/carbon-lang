@@ -52,6 +52,8 @@ DeclaratorChunk DeclaratorChunk::getFunction(const ParsedAttributes &attrs,
                                              ParamInfo *ArgInfo,
                                              unsigned NumArgs,
                                              unsigned TypeQuals,
+                                             bool RefQualifierIsLvalueRef,
+                                             SourceLocation RefQualifierLoc,
                                              bool hasExceptionSpec,
                                              SourceLocation ThrowLoc,
                                              bool hasAnyExceptionSpec,
@@ -74,6 +76,8 @@ DeclaratorChunk DeclaratorChunk::getFunction(const ParsedAttributes &attrs,
   I.Fun.TypeQuals        = TypeQuals;
   I.Fun.NumArgs          = NumArgs;
   I.Fun.ArgInfo          = 0;
+  I.Fun.RefQualifierIsLValueRef = RefQualifierIsLvalueRef;
+  I.Fun.RefQualifierLoc = RefQualifierLoc.getRawEncoding();
   I.Fun.hasExceptionSpec = hasExceptionSpec;
   I.Fun.ThrowLoc         = ThrowLoc.getRawEncoding();
   I.Fun.hasAnyExceptionSpec = hasAnyExceptionSpec;

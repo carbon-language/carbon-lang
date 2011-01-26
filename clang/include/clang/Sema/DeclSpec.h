@@ -898,6 +898,10 @@ struct DeclaratorChunk {
     /// contains the location of the ellipsis.
     unsigned isVariadic : 1;
 
+    /// \brief Whether the ref-qualifier (if any) is an lvalue reference.
+    /// Otherwise, it's an rvalue reference.
+    unsigned RefQualifierIsLValueRef : 1;
+    
     /// The type qualifiers: const/volatile/restrict.
     /// The qualifier bitmask values are the same as in QualType.
     unsigned TypeQuals : 3;
@@ -922,6 +926,11 @@ struct DeclaratorChunk {
     /// the function has one.
     unsigned NumExceptions;
 
+    /// \brief The location of the ref-qualifier, if any.
+    ///
+    /// If this is an invalid location, there is no ref-qualifier.
+    unsigned RefQualifierLoc;
+    
     /// ThrowLoc - When hasExceptionSpec is true, the location of the throw
     /// keyword introducing the spec.
     unsigned ThrowLoc;
@@ -970,6 +979,15 @@ struct DeclaratorChunk {
     SourceLocation getThrowLoc() const {
       return SourceLocation::getFromRawEncoding(ThrowLoc);
     }
+    
+    /// \brief Retrieve the location of the ref-qualifier, if any.
+    SourceLocation getRefQualifierLoc() const {
+      return SourceLocation::getFromRawEncoding(RefQualifierLoc);
+    }
+    
+    /// \brief Determine whether this function declaration contains a 
+    /// ref-qualifier.
+    bool hasRefQualifier() const { return getRefQualifierLoc().isValid(); }
   };
 
   struct BlockPointerTypeInfo : TypeInfoCommon {
@@ -1084,7 +1102,10 @@ struct DeclaratorChunk {
                                      bool hasProto, bool isVariadic,
                                      SourceLocation EllipsisLoc,
                                      ParamInfo *ArgInfo, unsigned NumArgs,
-                                     unsigned TypeQuals, bool hasExceptionSpec,
+                                     unsigned TypeQuals, 
+                                     bool RefQualifierIsLvalueRef,
+                                     SourceLocation RefQualifierLoc,
+                                     bool hasExceptionSpec,
                                      SourceLocation ThrowLoc,
                                      bool hasAnyExceptionSpec,
                                      ParsedType *Exceptions,

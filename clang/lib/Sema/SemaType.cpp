@@ -520,6 +520,7 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
                              /*variadic*/ false, SourceLocation(),
                              /*args*/ 0, 0,
                              /*type quals*/ 0,
+                             /*ref-qualifier*/true, SourceLocation(),
                              /*EH*/ false, SourceLocation(), false, 0, 0, 0,
                              /*parens*/ loc, loc,
                              declarator));

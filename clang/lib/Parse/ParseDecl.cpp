@@ -3064,8 +3064,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 ///           '=' assignment-expression
 /// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
-/// For C++, after the parameter-list, it also parses "cv-qualifier-seq[opt]"
-/// and "exception-specification[opt]".
+/// For C++, after the parameter-list, it also parses "cv-qualifier-seq[opt]",
+/// C++0x "ref-qualifier[opt]" and "exception-specification[opt]".
 ///
 void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                      ParsedAttributes &attrs,
@@ -3085,6 +3085,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
     // cv-qualifier-seq[opt].
     DeclSpec DS;
+    SourceLocation RefQualifierLoc;
+    bool RefQualifierIsLValueRef = true;
     bool hasExceptionSpec = false;
     SourceLocation ThrowLoc;
     bool hasAnyExceptionSpec = false;
@@ -3097,6 +3099,16 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       if (!DS.getSourceRange().getEnd().isInvalid())
         EndLoc = DS.getSourceRange().getEnd();
 
+      // Parse ref-qualifier[opt]
+      if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
+        if (!getLang().CPlusPlus0x)
+          Diag(Tok, diag::ext_rvalue_reference);
+        
+        RefQualifierIsLValueRef = Tok.is(tok::amp);
+        RefQualifierLoc = ConsumeToken();
+        EndLoc = RefQualifierLoc;
+      }
+      
       // Parse exception-specification[opt].
       if (Tok.is(tok::kw_throw)) {
         hasExceptionSpec = true;
@@ -3121,6 +3133,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                SourceLocation(),
                                                /*arglist*/ 0, 0,
                                                DS.getTypeQualifiers(),
+                                               RefQualifierIsLValueRef,
+                                               RefQualifierLoc,
                                                hasExceptionSpec, ThrowLoc,
                                                hasAnyExceptionSpec,
                                                Exceptions.data(),
@@ -3320,6 +3334,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   SourceLocation EndLoc = RParenLoc;
 
   DeclSpec DS;
+  SourceLocation RefQualifierLoc;
+  bool RefQualifierIsLValueRef = true;
   bool hasExceptionSpec = false;
   SourceLocation ThrowLoc;
   bool hasAnyExceptionSpec = false;
@@ -3333,6 +3349,16 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     ParseTypeQualifierListOpt(DS, false /*no attributes*/);
       if (!DS.getSourceRange().getEnd().isInvalid())
         EndLoc = DS.getSourceRange().getEnd();
+
+    // Parse ref-qualifier[opt]
+    if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
+      if (!getLang().CPlusPlus0x)
+        Diag(Tok, diag::ext_rvalue_reference);
+      
+      RefQualifierIsLValueRef = Tok.is(tok::amp);
+      RefQualifierLoc = ConsumeToken();
+      EndLoc = RefQualifierLoc;
+    }
 
     // Parse exception-specification[opt].
     if (Tok.is(tok::kw_throw)) {
@@ -3362,6 +3388,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                              EllipsisLoc,
                                              ParamInfo.data(), ParamInfo.size(),
                                              DS.getTypeQualifiers(),
+                                             RefQualifierIsLValueRef,
+                                             RefQualifierLoc,
                                              hasExceptionSpec, ThrowLoc,
                                              hasAnyExceptionSpec,
                                              Exceptions.data(),
@@ -3443,6 +3471,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
                                              SourceLocation(),
                                              &ParamInfo[0], ParamInfo.size(),
                                              /*TypeQuals*/0,
+                                             true, SourceLocation(),
                                              /*exception*/false,
                                              SourceLocation(), false, 0, 0, 0,
                                              LParenLoc, RLoc, D),
