@@ -101,12 +101,13 @@ void llvm::LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
     case MachineOperand::MO_BlockAddress:
       MCOp = GetSymbolRef(MO,AP.GetBlockAddressSymbol(MO.getBlockAddress()),AP);
       break;
-    case MachineOperand::MO_FPImmediate:
+    case MachineOperand::MO_FPImmediate: {
       APFloat Val = MO.getFPImm()->getValueAPF();
       bool ignored;
       Val.convert(APFloat::IEEEdouble, APFloat::rmTowardZero, &ignored);
       MCOp = MCOperand::CreateFPImm(Val.convertToDouble());
       break;
+    }
     }
 
     OutMI.addOperand(MCOp);
