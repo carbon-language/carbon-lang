@@ -354,6 +354,21 @@ void TypePrinter::printFunctionProto(const FunctionProtoType *T,
     S += " __attribute__((regparm (" +
         llvm::utostr_32(Info.getRegParm()) + ")))";
   
+  AppendTypeQualList(S, T->getTypeQuals());
+
+  switch (T->getRefQualifier()) {
+  case RQ_None:
+    break;
+    
+  case RQ_LValue:
+    S += " &";
+    break;
+    
+  case RQ_RValue:
+    S += " &&";
+    break;
+  }
+  
   if (T->hasExceptionSpec()) {
     S += " throw(";
     if (T->hasAnyExceptionSpec())
@@ -370,8 +385,6 @@ void TypePrinter::printFunctionProto(const FunctionProtoType *T,
     S += ")";
   }
 
-  AppendTypeQualList(S, T->getTypeQuals());
-  
   print(T->getResultType(), S);
 }
 

@@ -633,6 +633,7 @@ public:
                                     QualType *ParamTypes,
                                     unsigned NumParamTypes,
                                     bool Variadic, unsigned Quals,
+                                    RefQualifierKind RefQualifier,
                                     const FunctionType::ExtInfo &Info);
 
   /// \brief Build a new unprototyped function type.
@@ -3796,6 +3797,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                    ParamTypes.size(),
                                                    T->isVariadic(),
                                                    T->getTypeQuals(),
+                                                   T->getRefQualifier(),
                                                    T->getExtInfo());
     if (Result.isNull())
       return QualType();
@@ -7178,7 +7180,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
                                                         ParamTypes.data(),
                                                         ParamTypes.size(),
                                                         BD->isVariadic(),
-                                                        0,
+                                                        0, RQ_None,
                                                BExprFunctionType->getExtInfo());
   CurBlock->FunctionType = FunctionType;
 
@@ -7373,9 +7375,10 @@ QualType TreeTransform<Derived>::RebuildFunctionProtoType(QualType T,
                                                         unsigned NumParamTypes,
                                                           bool Variadic,
                                                           unsigned Quals,
+                                                  RefQualifierKind RefQualifier,
                                             const FunctionType::ExtInfo &Info) {
   return SemaRef.BuildFunctionType(T, ParamTypes, NumParamTypes, Variadic,
-                                   Quals,
+                                   Quals, RefQualifier,
                                    getDerived().getBaseLocation(),
                                    getDerived().getBaseEntity(),
                                    Info);

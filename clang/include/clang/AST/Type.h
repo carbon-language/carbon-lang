@@ -823,6 +823,18 @@ public:
   }
 };
 
+/// \brief The kind of C++0x ref-qualifier associated with a function type, 
+/// which determines whether a member function's "this" object can be an 
+/// lvalue, rvalue, or neither.
+enum RefQualifierKind {
+  /// \brief No ref-qualifier was provided.
+  RQ_None = 0,
+  /// \brief An lvalue ref-qualifier was provided (\c &).
+  RQ_LValue,
+  /// \brief An rvalue ref-qualifier was provided (\c &&).
+  RQ_RValue
+};
+  
 /// Type - This is the base class of the type hierarchy.  A central concept
 /// with types is that each type always has a canonical type.  A canonical type
 /// is the type with any typedef names stripped out of it or the types it
@@ -961,6 +973,11 @@ protected:
     /// C++ 8.3.5p4: The return type, the parameter type list and the
     /// cv-qualifier-seq, [...], are part of the function type.
     unsigned TypeQuals : 3;
+    
+    /// \brief The ref-qualifier associated with a \c FunctionProtoType.
+    ///
+    /// This is a value of type \c RefQualifierKind.
+    unsigned RefQualifier : 2;
   };
 
   class ObjCObjectTypeBitfields {
@@ -2267,7 +2284,8 @@ class FunctionType : public Type {
 
 protected:
   FunctionType(TypeClass tc, QualType res, bool variadic,
-               unsigned typeQuals, QualType Canonical, bool Dependent,
+               unsigned typeQuals, RefQualifierKind RefQualifier,
+               QualType Canonical, bool Dependent,
                bool VariablyModified, bool ContainsUnexpandedParameterPack, 
                ExtInfo Info)
     : Type(tc, Canonical, Dependent, VariablyModified, 
@@ -2276,9 +2294,15 @@ protected:
     FunctionTypeBits.ExtInfo = Info.Bits;
     FunctionTypeBits.Variadic = variadic;
     FunctionTypeBits.TypeQuals = typeQuals;
+    FunctionTypeBits.RefQualifier = static_cast<unsigned>(RefQualifier);
   }
   bool isVariadic() const { return FunctionTypeBits.Variadic; }
   unsigned getTypeQuals() const { return FunctionTypeBits.TypeQuals; }
+  
+  RefQualifierKind getRefQualifier() const {
+    return static_cast<RefQualifierKind>(FunctionTypeBits.RefQualifier);
+  }
+
 public:
 
   QualType getResultType() const { return ResultType; }
@@ -2307,7 +2331,7 @@ public:
 /// no information available about its arguments.
 class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionNoProtoType(QualType Result, QualType Canonical, ExtInfo Info)
-    : FunctionType(FunctionNoProto, Result, false, 0, Canonical,
+    : FunctionType(FunctionNoProto, Result, false, 0, RQ_None, Canonical,
                    /*Dependent=*/false, Result->isVariablyModifiedType(), 
                    /*ContainsUnexpandedParameterPack=*/false, Info) {}
 
@@ -2345,13 +2369,14 @@ public:
   struct ExtProtoInfo {
     ExtProtoInfo() :
       Variadic(false), HasExceptionSpec(false), HasAnyExceptionSpec(false),
-      TypeQuals(0), NumExceptions(0), Exceptions(0) {}
+      TypeQuals(0), RefQualifier(RQ_None), NumExceptions(0), Exceptions(0) {}
 
     FunctionType::ExtInfo ExtInfo;
     bool Variadic;
     bool HasExceptionSpec;
     bool HasAnyExceptionSpec;
     unsigned char TypeQuals;
+    RefQualifierKind RefQualifier;
     unsigned NumExceptions;
     const QualType *Exceptions;
   };
@@ -2405,6 +2430,7 @@ public:
     EPI.HasExceptionSpec = hasExceptionSpec();
     EPI.HasAnyExceptionSpec = hasAnyExceptionSpec();
     EPI.TypeQuals = static_cast<unsigned char>(getTypeQuals());
+    EPI.RefQualifier = getRefQualifier();
     EPI.NumExceptions = NumExceptions;
     EPI.Exceptions = exception_begin();
     return EPI;
@@ -2434,6 +2460,12 @@ public:
   
   unsigned getTypeQuals() const { return FunctionType::getTypeQuals(); }
 
+  
+  /// \brief Retrieve the ref-qualifier associated with this function type.
+  RefQualifierKind getRefQualifier() const {
+    return FunctionType::getRefQualifier();
+  }
+  
   typedef const QualType *arg_type_iterator;
   arg_type_iterator arg_type_begin() const {
     return reinterpret_cast<const QualType *>(this+1);

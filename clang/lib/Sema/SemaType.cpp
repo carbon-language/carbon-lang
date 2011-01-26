@@ -1269,6 +1269,7 @@ QualType Sema::BuildFunctionType(QualType T,
                                  QualType *ParamTypes,
                                  unsigned NumParamTypes,
                                  bool Variadic, unsigned Quals,
+                                 RefQualifierKind RefQualifier,
                                  SourceLocation Loc, DeclarationName Entity,
                                  FunctionType::ExtInfo Info) {
   if (T->isArrayType() || T->isFunctionType()) {
@@ -1294,6 +1295,7 @@ QualType Sema::BuildFunctionType(QualType T,
   FunctionProtoType::ExtProtoInfo EPI;
   EPI.Variadic = Variadic;
   EPI.TypeQuals = Quals;
+  EPI.RefQualifier = RefQualifier;
   EPI.ExtInfo = Info;
 
   return Context.getFunctionType(T, ParamTypes, NumParamTypes, EPI);
@@ -1722,7 +1724,10 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         FunctionProtoType::ExtProtoInfo EPI;
         EPI.Variadic = FTI.isVariadic;
         EPI.TypeQuals = FTI.TypeQuals;
-
+        EPI.RefQualifier = !FTI.hasRefQualifier()? RQ_None
+                    : FTI.RefQualifierIsLValueRef? RQ_LValue
+                    : RQ_RValue;
+        
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
         llvm::SmallVector<QualType, 16> ArgTys;
@@ -1876,21 +1881,44 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       FreeFunction = (DC && !DC->isRecord());
     }
 
-    if (FnTy->getTypeQuals() != 0 &&
+    // C++0x [dcl.fct]p6:
+    //   A ref-qualifier shall only be part of the function type for a
+    //   non-static member function, the function type to which a pointer to
+    //   member refers, or the top-level function type of a function typedef 
+    //   declaration.
+    if ((FnTy->getTypeQuals() != 0 || FnTy->getRefQualifier()) &&
         D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
         (FreeFunction ||
          D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)) {
-      if (D.isFunctionDeclarator())
-        Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_function_type);
-      else
-        Diag(D.getIdentifierLoc(),
-             diag::err_invalid_qualified_typedef_function_type_use)
-          << FreeFunction;
-
-      // Strip the cv-quals from the type.
+      if (FnTy->getTypeQuals() != 0) {
+        if (D.isFunctionDeclarator())
+          Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_function_type);
+        else
+          Diag(D.getIdentifierLoc(),
+               diag::err_invalid_qualified_typedef_function_type_use)
+            << FreeFunction;
+      }
+          
+      if (FnTy->getRefQualifier()) {
+        if (D.isFunctionDeclarator()) {
+          SourceLocation Loc
+            = D.getTypeObject(D.getNumTypeObjects()-1).Fun.getRefQualifierLoc();
+          Diag(Loc, diag::err_invalid_ref_qualifier_function_type)
+            << (FnTy->getRefQualifier() == RQ_LValue)
+            << FixItHint::CreateRemoval(Loc);
+        } else {
+          Diag(D.getIdentifierLoc(), 
+               diag::err_invalid_ref_qualifier_typedef_function_type_use)
+            << FreeFunction
+            << (FnTy->getRefQualifier() == RQ_LValue);
+        }
+      }
+          
+      // Strip the cv-quals and ref-qualifier from the type.
       FunctionProtoType::ExtProtoInfo EPI = FnTy->getExtProtoInfo();
       EPI.TypeQuals = 0;
-
+      EPI.RefQualifier = RQ_None;
+          
       T = Context.getFunctionType(FnTy->getResultType(), FnTy->arg_type_begin(),
                                   FnTy->getNumArgs(), EPI);
     }

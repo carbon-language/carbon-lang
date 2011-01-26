@@ -2873,6 +2873,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
     EPI.Variadic = Record[Idx++];
     EPI.TypeQuals = Record[Idx++];
+    EPI.RefQualifier = static_cast<RefQualifierKind>(Record[Idx++]);
     EPI.HasExceptionSpec = Record[Idx++];
     EPI.HasAnyExceptionSpec = Record[Idx++];
     EPI.NumExceptions = Record[Idx++];

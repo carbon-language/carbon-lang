@@ -1112,7 +1112,8 @@ llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
 FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
                                      unsigned numArgs, QualType canonical,
                                      const ExtProtoInfo &epi)
-  : FunctionType(FunctionProto, result, epi.Variadic, epi.TypeQuals, canonical,
+  : FunctionType(FunctionProto, result, epi.Variadic, epi.TypeQuals, 
+                 epi.RefQualifier, canonical,
                  result->isDependentType(),
                  result->isVariablyModifiedType(),
                  result->containsUnexpandedParameterPack(),
@@ -1162,6 +1163,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
   ID.AddBoolean(epi.Variadic);
   ID.AddInteger(epi.TypeQuals);
+  ID.AddInteger(epi.RefQualifier);
   if (epi.HasExceptionSpec) {
     ID.AddBoolean(epi.HasAnyExceptionSpec);
     for (unsigned i = 0; i != epi.NumExceptions; ++i)

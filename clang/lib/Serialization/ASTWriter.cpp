@@ -176,6 +176,7 @@ void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
     Writer.AddTypeRef(T->getArgType(I), Record);
   Record.push_back(T->isVariadic());
   Record.push_back(T->getTypeQuals());
+  Record.push_back(static_cast<unsigned>(T->getRefQualifier()));
   Record.push_back(T->hasExceptionSpec());
   Record.push_back(T->hasAnyExceptionSpec());
   Record.push_back(T->getNumExceptions());

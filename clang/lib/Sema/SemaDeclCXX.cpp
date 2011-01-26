@@ -3023,6 +3023,15 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
     D.setInvalidType();
   }
 
+  // C++0x [class.ctor]p4:
+  //   A constructor shall not be declared with a ref-qualifier.
+  if (FTI.hasRefQualifier()) {
+    Diag(FTI.getRefQualifierLoc(), diag::err_ref_qualifier_constructor)
+      << FTI.RefQualifierIsLValueRef 
+      << FixItHint::CreateRemoval(FTI.getRefQualifierLoc());
+    D.setInvalidType();
+  }
+  
   // Rebuild the function type "R" without any type qualifiers (in
   // case any of the errors above fired) and with "void" as the
   // return type, since constructors don't have return types.
@@ -3032,7 +3041,8 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
 
   FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
   EPI.TypeQuals = 0;
-
+  EPI.RefQualifier = RQ_None;
+  
   return Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
                                  Proto->getNumArgs(), EPI);
 }
@@ -3173,6 +3183,15 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
     D.setInvalidType();
   }
 
+  // C++0x [class.dtor]p2:
+  //   A destructor shall not be declared with a ref-qualifier.
+  if (FTI.hasRefQualifier()) {
+    Diag(FTI.getRefQualifierLoc(), diag::err_ref_qualifier_destructor)
+      << FTI.RefQualifierIsLValueRef
+      << FixItHint::CreateRemoval(FTI.getRefQualifierLoc());
+    D.setInvalidType();
+  }
+  
   // Make sure we don't have any parameters.
   if (FTI.NumArgs > 0 && !FTIHasSingleVoidArgument(FTI)) {
     Diag(D.getIdentifierLoc(), diag::err_destructor_with_params);
@@ -3199,6 +3218,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
   FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
   EPI.Variadic = false;
   EPI.TypeQuals = 0;
+  EPI.RefQualifier = RQ_None;
   return Context.getFunctionType(Context.VoidTy, 0, 0, EPI);
 }
 

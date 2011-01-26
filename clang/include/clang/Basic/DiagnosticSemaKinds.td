@@ -730,6 +730,9 @@ def err_covariant_return_type_class_type_more_qualified : Error<
 def err_constructor_cannot_be : Error<"constructor cannot be declared '%0'">;
 def err_invalid_qualified_constructor : Error<
   "'%0' qualifier is not allowed on a constructor">;
+def err_ref_qualifier_constructor : Error<
+  "ref-qualifier '%select{&&|&}0' is not allowed on a constructor">;
+
 def err_constructor_return_type : Error<
   "constructor cannot have a return type">;
 def err_constructor_redeclared : Error<"constructor cannot be redeclared">;
@@ -749,6 +752,8 @@ def err_destructor_not_member : Error<
 def err_destructor_cannot_be : Error<"destructor cannot be declared '%0'">;
 def err_invalid_qualified_destructor : Error<
   "'%0' qualifier is not allowed on a destructor">;
+def err_ref_qualifier_destructor : Error<
+  "ref-qualifier '%select{&&|&}0' is not allowed on a destructor">;
 def err_destructor_return_type : Error<"destructor cannot have a return type">;
 def err_destructor_redeclared : Error<"destructor cannot be redeclared">;
 def err_destructor_with_params : Error<"destructor cannot have any parameters">;
@@ -2461,11 +2466,17 @@ def err_invalid_member_use_in_static_method : Error<
   "invalid use of member %0 in static member function">;
 def err_invalid_qualified_function_type : Error<
   "type qualifier is not allowed on this function">;
+def err_invalid_ref_qualifier_function_type : Error<
+  "ref-qualifier '%select{&&|&}0' is only allowed on non-static member functions,"
+  " member function pointers, and typedefs of function types">;
 def err_invalid_qualified_function_pointer : Error<
   "type qualifier is not allowed on this function %select{pointer|reference}0">;
 def err_invalid_qualified_typedef_function_type_use : Error<
   "a qualified function type cannot be used to declare a "
   "%select{static member|nonmember}0 function">;
+def err_invalid_ref_qualifier_typedef_function_type_use : Error<
+  "%select{static member|nonmember}0 function cannot have a ref-qualifier "
+  "'%select{&&|&}1'">;
 
 def err_invalid_non_static_member_use : Error<
   "invalid use of nonstatic data member %0">;

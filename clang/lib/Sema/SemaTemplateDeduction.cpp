@@ -2106,6 +2106,7 @@ Sema::SubstituteExplicitTemplateArguments(
                                       ParamTypes.data(), ParamTypes.size(),
                                       Proto->isVariadic(),
                                       Proto->getTypeQuals(),
+                                      Proto->getRefQualifier(),
                                       Function->getLocation(),
                                       Function->getDeclName(),
                                       Proto->getExtInfo());
