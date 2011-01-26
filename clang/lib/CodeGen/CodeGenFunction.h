@@ -811,7 +811,11 @@ public:
   /// getByrefValueFieldNumber - Given a declaration, returns the LLVM field
   /// number that holds the value.
   unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
-  
+
+  /// BuildBlockByrefAddress - Computes address location of the
+  /// variable which is declared as __block.
+  llvm::Value *BuildBlockByrefAddress(llvm::Value *BaseAddr,
+                                      const VarDecl *V);
 private:
   CGDebugInfo *DebugInfo;
 

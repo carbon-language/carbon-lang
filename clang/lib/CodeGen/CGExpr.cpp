@@ -1164,12 +1164,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       V = CGM.getStaticLocalDeclAddress(VD);
     assert(V && "DeclRefExpr not entered in LocalDeclMap?");
 
-    if (VD->hasAttr<BlocksAttr>()) {
-      V = Builder.CreateStructGEP(V, 1, "forwarding");
-      V = Builder.CreateLoad(V);
-      V = Builder.CreateStructGEP(V, getByRefValueLLVMField(VD),
-                                  VD->getNameAsString());
-    }
+    if (VD->hasAttr<BlocksAttr>())
+      V = BuildBlockByrefAddress(V, VD);
+    
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "tmp");
 
