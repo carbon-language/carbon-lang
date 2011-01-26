@@ -286,8 +286,14 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
                                           const Type *Ty2) const {
   if (Ty1 == Ty2)
     return true;
-  if (Ty1->getTypeID() != Ty2->getTypeID())
+  if (Ty1->getTypeID() != Ty2->getTypeID()) {
+    if (TD) {
+      LLVMContext &Ctx = Ty1->getContext();
+      if (isa<PointerType>(Ty1) && Ty2 == TD->getIntPtrType(Ctx)) return true;
+      if (isa<PointerType>(Ty2) && Ty1 == TD->getIntPtrType(Ctx)) return true;
+    }
     return false;
+  }
 
   switch(Ty1->getTypeID()) {
   default:
