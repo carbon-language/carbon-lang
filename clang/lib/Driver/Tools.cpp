@@ -910,6 +910,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       if (types::isObjC(InputType)) {
         CmdArgs.push_back("-analyzer-check-objc-methodsigs");
         CmdArgs.push_back("-analyzer-check-objc-unused-ivars");
+        CmdArgs.push_back("-analyzer-check-objc-self-init");
         // Do not enable the missing -dealloc check.
         // '-analyzer-check-objc-missing-dealloc',
       }

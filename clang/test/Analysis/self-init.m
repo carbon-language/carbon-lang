@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-check-objc-self-init %s -verify
 
 @class NSZone, NSCoder;
 @protocol NSObject

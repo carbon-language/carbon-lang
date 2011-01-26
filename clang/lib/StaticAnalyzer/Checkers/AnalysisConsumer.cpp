@@ -357,6 +357,9 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);
 
+  if (C.Opts.ObjCSelfInitCheck && isa<ObjCMethodDecl>(D))
+    registerObjCSelfInitChecker(Eng);
+
   // Enable idempotent operation checking if it was explicitly turned on, or if
   // we are running experimental checks (i.e. everything)
   if (C.Opts.IdempotentOps || C.Opts.EnableExperimentalChecks

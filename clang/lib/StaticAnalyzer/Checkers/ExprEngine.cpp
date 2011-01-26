@@ -309,7 +309,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   RegisterUndefResultChecker(Eng);
   RegisterStackAddrLeakChecker(Eng);
   RegisterObjCAtSyncChecker(Eng);
-  registerObjCSelfInitChecker(Eng);
 
   // This is not a checker yet.
   RegisterNoReturnFunctionChecker(Eng);

@@ -118,6 +118,8 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-analyzer-experimental-internal-checks");
   if (Opts.IdempotentOps)
     Res.push_back("-analyzer-check-idempotent-operations");
+  if (Opts.ObjCSelfInitCheck)
+    Res.push_back("-analyzer-check-objc-self-init");
   if (Opts.BufferOverflows)
     Res.push_back("-analyzer-check-buffer-overflows");
 }
@@ -868,6 +870,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.MaxLoop = Args.getLastArgIntValue(OPT_analyzer_max_loop, 4, Diags);
   Opts.InlineCall = Args.hasArg(OPT_analyzer_inline_call);
   Opts.IdempotentOps = Args.hasArg(OPT_analysis_WarnIdempotentOps);
+  Opts.ObjCSelfInitCheck = Args.hasArg(OPT_analysis_WarnObjCSelfInit);
   Opts.BufferOverflows = Args.hasArg(OPT_analysis_WarnBufferOverflows);
 }
 

@@ -64,6 +64,8 @@ def analysis_WarnObjCUnusedIvars : Flag<"-analyzer-check-objc-unused-ivars">,
   HelpText<"Warn about private ivars that are never used">;
 def analysis_ObjCMemChecker : Flag<"-analyzer-check-objc-mem">,
   HelpText<"Run the [Core] Foundation reference count checker">;
+def analysis_WarnObjCSelfInit : Flag<"-analyzer-check-objc-self-init">,
+  HelpText<"Warn about missing initialization of 'self' in an initializer">;
 def analysis_WarnSizeofPointer : Flag<"-warn-sizeof-pointer">,
   HelpText<"Warn about unintended use of sizeof() on pointer expressions">;
 def analysis_WarnIdempotentOps : Flag<"-analyzer-check-idempotent-operations">,
