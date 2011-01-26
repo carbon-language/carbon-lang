@@ -1622,7 +1622,10 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       if ((T->isArrayType() || T->isFunctionType()) &&
           (D.getName().getKind() != UnqualifiedId::IK_ConversionFunctionId)) {
         unsigned diagID = diag::err_func_returning_array_function;
-        if (D.getContext() == Declarator::BlockLiteralContext)
+        // Last processing chunk in block context means this function chunk
+        // represents the block.
+        if (chunkIndex == 0 &&
+            D.getContext() == Declarator::BlockLiteralContext)
           diagID = diag::err_block_returning_array_function;
         Diag(DeclType.Loc, diagID) << T->isFunctionType() << T;
         T = Context.IntTy;
