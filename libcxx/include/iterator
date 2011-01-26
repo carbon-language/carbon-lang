@@ -902,8 +902,13 @@ public:
     template <class _Up> _LIBCPP_INLINE_VISIBILITY move_iterator(const move_iterator<_Up>& __u)
         : __i(__u.base()) {}
     _LIBCPP_INLINE_VISIBILITY _Iter base() const {return __i;}
-    _LIBCPP_INLINE_VISIBILITY reference operator*() const {return *__i;}
-    _LIBCPP_INLINE_VISIBILITY pointer  operator->() const {return &(operator*());}
+    _LIBCPP_INLINE_VISIBILITY reference operator*() const {
+      return static_cast<reference>(*__i);
+    }
+    _LIBCPP_INLINE_VISIBILITY pointer  operator->() const {
+      typename iterator_traits<iterator_type>::reference __ref = *__i;
+      return &__ref;
+    }
     _LIBCPP_INLINE_VISIBILITY move_iterator& operator++() {++__i; return *this;}
     _LIBCPP_INLINE_VISIBILITY move_iterator  operator++(int)
         {move_iterator __tmp(*this); ++__i; return __tmp;}
@@ -919,7 +924,9 @@ public:
     _LIBCPP_INLINE_VISIBILITY move_iterator& operator-=(difference_type __n)
         {__i -= __n; return *this;}
     _LIBCPP_INLINE_VISIBILITY reference         operator[](difference_type __n) const
-        {return __i[__n];}
+    {
+      return static_cast<reference>(__i[__n]);
+    }
 };
 
 template <class _Iter1, class _Iter2>
