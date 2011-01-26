@@ -94,7 +94,8 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
       isVariadic = true;
       continue;
     } else if (!Rec->isSubClassOf("RegisterClass") &&
-               Rec->getName() != "ptr_rc" && Rec->getName() != "unknown")
+               !Rec->isSubClassOf("PointerLikeRegClass") &&
+               Rec->getName() != "unknown")
       throw "Unknown operand class '" + Rec->getName() +
       "' in '" + R->getName() + "' instruction!";
 

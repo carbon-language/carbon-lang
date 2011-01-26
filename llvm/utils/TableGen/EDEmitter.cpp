@@ -354,7 +354,8 @@ static void X86PopulateOperands(
     const CGIOperandList::OperandInfo &operandInfo = inst.Operands[index];
     Record &rec = *operandInfo.Rec;
 
-    if (X86TypeFromOpName(operandTypes[index], rec.getName())) {
+    if (X86TypeFromOpName(operandTypes[index], rec.getName()) &&
+        !rec.isSubClassOf("PointerLikeRegClass")) {
       errs() << "Operand type: " << rec.getName().c_str() << "\n";
       errs() << "Operand name: " << operandInfo.Name.c_str() << "\n";
       errs() << "Instruction name: " << inst.TheDef->getName().c_str() << "\n";
