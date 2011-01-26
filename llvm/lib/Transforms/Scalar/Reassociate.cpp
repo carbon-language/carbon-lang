@@ -811,16 +811,23 @@ Value *Reassociate::OptimizeAdd(Instruction *I,
     // RemoveFactorFromExpression on successive values to behave differently.
     Instruction *DummyInst = BinaryOperator::CreateAdd(MaxOccVal, MaxOccVal);
     SmallVector<Value*, 4> NewMulOps;
-    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    for (unsigned i = 0; i != Ops.size(); ++i) {
       // Only try to remove factors from expressions we're allowed to.
       BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op);
       if (BOp == 0 || BOp->getOpcode() != Instruction::Mul || !BOp->use_empty())
         continue;
       
       if (Value *V = RemoveFactorFromExpression(Ops[i].Op, MaxOccVal)) {
-        NewMulOps.push_back(V);
-        Ops.erase(Ops.begin()+i);
-        --i; --e;
+        // The factorized operand may occur several times.  Convert them all in
+        // one fell swoop.
+        for (unsigned j = Ops.size(); j != i;) {
+          --j;
+          if (Ops[j].Op == Ops[i].Op) {
+            NewMulOps.push_back(V);
+            Ops.erase(Ops.begin()+j);
+          }
+        }
+        --i;
       }
     }
     
