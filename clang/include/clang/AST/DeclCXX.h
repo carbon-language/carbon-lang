@@ -1096,6 +1096,20 @@ public:
     return getType()->getAs<FunctionProtoType>()->getTypeQuals();
   }
 
+  /// \brief Retrieve the ref-qualifier associated with this method.
+  ///
+  /// In the following example, \c f() has an lvalue ref-qualifier, \c g()
+  /// has an rvalue ref-qualifier, and \c h() has no ref-qualifier.
+  /// \code
+  /// struct X {
+  ///   void f() &;
+  ///   void g() &&;
+  ///   void h();
+  /// };
+  RefQualifierKind getRefQualifier() const {
+    return getType()->getAs<FunctionProtoType>()->getRefQualifier();
+  }
+  
   bool hasInlineBody() const;
 
   // Implement isa/cast/dyncast/etc.
