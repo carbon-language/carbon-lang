@@ -226,3 +226,12 @@
 @ CHECK: vstmia	r1, {s2, s3, s4, s5, s6, s7} @ encoding: [0x06,0x1a,0x81,0xec]
         vstmia  r1, {d2,d3-d6,d7}
         vstmia  r1, {s2,s3-s6,s7}
+
+@ CHECK: vcvtr.s32.f64  s0, d0 @ encoding: [0x40,0x0b,0xbd,0xee]
+@ CHECK: vcvtr.s32.f32  s0, s1 @ encoding: [0x60,0x0a,0xbd,0xee]
+@ CHECK: vcvtr.u32.f64  s0, d0 @ encoding: [0x40,0x0b,0xbc,0xee]
+@ CHECK: vcvtr.u32.f32  s0, s1 @ encoding: [0x60,0x0a,0xbc,0xee]
+        vcvtr.s32.f64  s0, d0
+        vcvtr.s32.f32  s0, s1
+        vcvtr.u32.f64  s0, d0
+        vcvtr.u32.f32  s0, s1
