@@ -1,10 +1,10 @@
 //===- X86RegisterInfo.td - Describe the X86 Register File --*- tablegen -*-==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the X86 Register file, defining the registers themselves,
@@ -34,8 +34,8 @@ let Namespace = "X86" in {
   // because the register file generator is smart enough to figure out that
   // AL aliases AX if we tell it that AX aliased AL (for example).
 
-  // Dwarf numbering is different for 32-bit and 64-bit, and there are 
-  // variations by target as well. Currently the first entry is for X86-64, 
+  // Dwarf numbering is different for 32-bit and 64-bit, and there are
+  // variations by target as well. Currently the first entry is for X86-64,
   // second - for EH on X86-32/Darwin and third is 'generic' one (X86-32/Linux
   // and debug information on X86-32/Darwin)
 
@@ -81,7 +81,7 @@ let Namespace = "X86" in {
   def SP : RegisterWithSubRegs<"sp", [SPL]>, DwarfRegNum<[7, 5, 4]>;
   }
   def IP : Register<"ip">, DwarfRegNum<[16]>;
-  
+
   // X86-64 only
   let SubRegIndices = [sub_8bit] in {
   def R8W  : RegisterWithSubRegs<"r8w", [R8B]>, DwarfRegNum<[8, -2, -2]>;
@@ -103,8 +103,8 @@ let Namespace = "X86" in {
   def EDI : RegisterWithSubRegs<"edi", [DI]>, DwarfRegNum<[5, 7, 7]>;
   def EBP : RegisterWithSubRegs<"ebp", [BP]>, DwarfRegNum<[6, 4, 5]>;
   def ESP : RegisterWithSubRegs<"esp", [SP]>, DwarfRegNum<[7, 5, 4]>;
-  def EIP : RegisterWithSubRegs<"eip", [IP]>, DwarfRegNum<[16, 8, 8]>;  
-  
+  def EIP : RegisterWithSubRegs<"eip", [IP]>, DwarfRegNum<[16, 8, 8]>;
+
   // X86-64 only
   def R8D  : RegisterWithSubRegs<"r8d", [R8W]>, DwarfRegNum<[8, -2, -2]>;
   def R9D  : RegisterWithSubRegs<"r9d", [R9W]>, DwarfRegNum<[9, -2, -2]>;
@@ -208,7 +208,7 @@ let Namespace = "X86" in {
   def ST4 : Register<"st(4)">, DwarfRegNum<[37, 16, 15]>;
   def ST5 : Register<"st(5)">, DwarfRegNum<[38, 17, 16]>;
   def ST6 : Register<"st(6)">, DwarfRegNum<[39, 18, 17]>;
-  def ST7 : Register<"st(7)">, DwarfRegNum<[40, 19, 18]>; 
+  def ST7 : Register<"st(7)">, DwarfRegNum<[40, 19, 18]>;
 
   // Status flags register
   def EFLAGS : Register<"flags">;
@@ -220,7 +220,7 @@ let Namespace = "X86" in {
   def ES : Register<"es">;
   def FS : Register<"fs">;
   def GS : Register<"gs">;
-  
+
   // Debug registers
   def DR0 : Register<"dr0">;
   def DR1 : Register<"dr1">;
@@ -230,7 +230,7 @@ let Namespace = "X86" in {
   def DR5 : Register<"dr5">;
   def DR6 : Register<"dr6">;
   def DR7 : Register<"dr7">;
-  
+
   // Control registers
   def CR0 : Register<"cr0">;
   def CR1 : Register<"cr1">;
@@ -261,10 +261,10 @@ let Namespace = "X86" in {
 // implicitly defined to be the register allocation order.
 //
 
-// List call-clobbered registers before callee-save registers. RBX, RBP, (and 
+// List call-clobbered registers before callee-save registers. RBX, RBP, (and
 // R12, R13, R14, and R15 for X86-64) are callee-save registers.
 // In 64-mode, there are 12 additional i8 registers, SIL, DIL, BPL, SPL, and
-// R8B, ... R15B. 
+// R8B, ... R15B.
 // Allocate R12 and R13 last, as these require an extra byte when
 // encoded in x86_64 instructions.
 // FIXME: Allow AH, CH, DH, BH to be used as general-purpose registers in

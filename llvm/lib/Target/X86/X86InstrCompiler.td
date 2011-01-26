@@ -849,38 +849,38 @@ def : Pat<(X86call (i64 texternalsym:$dst)),
 // tailcall stuff
 def : Pat<(X86tcret GR32_TC:$dst, imm:$off),
           (TCRETURNri GR32_TC:$dst, imm:$off)>,
-	  Requires<[In32BitMode]>;
+          Requires<[In32BitMode]>;
 
 // FIXME: This is disabled for 32-bit PIC mode because the global base
 // register which is part of the address mode may be assigned a
 // callee-saved register.
 def : Pat<(X86tcret (load addr:$dst), imm:$off),
           (TCRETURNmi addr:$dst, imm:$off)>,
-	  Requires<[In32BitMode, IsNotPIC]>;
+          Requires<[In32BitMode, IsNotPIC]>;
 
 def : Pat<(X86tcret (i32 tglobaladdr:$dst), imm:$off),
           (TCRETURNdi texternalsym:$dst, imm:$off)>,
-	  Requires<[In32BitMode]>;
+          Requires<[In32BitMode]>;
 
 def : Pat<(X86tcret (i32 texternalsym:$dst), imm:$off),
           (TCRETURNdi texternalsym:$dst, imm:$off)>,
-	  Requires<[In32BitMode]>;
+          Requires<[In32BitMode]>;
 
 def : Pat<(X86tcret GR64_TC:$dst, imm:$off),
           (TCRETURNri64 GR64_TC:$dst, imm:$off)>,
-	  Requires<[In64BitMode]>;
+          Requires<[In64BitMode]>;
 
 def : Pat<(X86tcret (load addr:$dst), imm:$off),
           (TCRETURNmi64 addr:$dst, imm:$off)>,
-	  Requires<[In64BitMode]>;
+          Requires<[In64BitMode]>;
 
 def : Pat<(X86tcret (i64 tglobaladdr:$dst), imm:$off),
           (TCRETURNdi64 tglobaladdr:$dst, imm:$off)>,
-	  Requires<[In64BitMode]>;
+          Requires<[In64BitMode]>;
 
 def : Pat<(X86tcret (i64 texternalsym:$dst), imm:$off),
           (TCRETURNdi64 texternalsym:$dst, imm:$off)>,
-	  Requires<[In64BitMode]>;
+          Requires<[In64BitMode]>;
 
 // Normal calls, with various flavors of addresses.
 def : Pat<(X86call (i32 tglobaladdr:$dst)),
@@ -1661,4 +1661,3 @@ def : Pat<(and GR64:$src1, i64immSExt8:$src2),
           (AND64ri8 GR64:$src1, i64immSExt8:$src2)>;
 def : Pat<(and GR64:$src1, i64immSExt32:$src2),
           (AND64ri32 GR64:$src1, i64immSExt32:$src2)>;
-

@@ -36,7 +36,7 @@ def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
                                              SDTCisSameAs<0, 3>,
                                              SDTCisInt<0>, SDTCisVT<1, i32>]>;
 
-// SDTBinaryArithWithFlagsInOut - RES1, EFLAGS = op LHS, RHS, EFLAGS 
+// SDTBinaryArithWithFlagsInOut - RES1, EFLAGS = op LHS, RHS, EFLAGS
 def SDTBinaryArithWithFlagsInOut : SDTypeProfile<2, 3,
                                             [SDTCisSameAs<0, 2>,
                                              SDTCisSameAs<0, 3>,
@@ -1612,4 +1612,3 @@ def : InstAlias<"xchgb $mem, $val", (XCHG8rm  GR8 :$val, i8mem :$mem)>;
 def : InstAlias<"xchgw $mem, $val", (XCHG16rm GR16:$val, i16mem:$mem)>;
 def : InstAlias<"xchgl $mem, $val", (XCHG32rm GR32:$val, i32mem:$mem)>;
 def : InstAlias<"xchgq $mem, $val", (XCHG64rm GR64:$val, i64mem:$mem)>;
-
