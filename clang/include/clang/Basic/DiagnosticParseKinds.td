@@ -160,6 +160,8 @@ def err_illegal_decl_reference_to_reference : Error<
   "%0 declared as a reference to a reference">;
 def ext_rvalue_reference : ExtWarn<
   "rvalue references are a C++0x extension">, InGroup<CXX0x>;
+def ext_ref_qualifier : ExtWarn<
+  "reference qualifiers on functions are a C++0x extension">, InGroup<CXX0x>;
 def ext_inline_namespace : ExtWarn<
   "inline namespaces are a C++0x feature">, InGroup<CXX0x>;
 def err_argument_required_after_attribute : Error<

@@ -3102,7 +3102,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       // Parse ref-qualifier[opt]
       if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
         if (!getLang().CPlusPlus0x)
-          Diag(Tok, diag::ext_rvalue_reference);
+          Diag(Tok, diag::ext_ref_qualifier);
         
         RefQualifierIsLValueRef = Tok.is(tok::amp);
         RefQualifierLoc = ConsumeToken();
@@ -3353,7 +3353,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // Parse ref-qualifier[opt]
     if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
       if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::ext_rvalue_reference);
+        Diag(Tok, diag::ext_ref_qualifier);
       
       RefQualifierIsLValueRef = Tok.is(tok::amp);
       RefQualifierLoc = ConsumeToken();
