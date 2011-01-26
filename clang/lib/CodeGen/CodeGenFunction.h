@@ -214,6 +214,7 @@ public:
   template <class T, class A0, class A1>
   class UnconditionalCleanup2 : public Cleanup {
     A0 a0; A1 a1;
+  public:
     UnconditionalCleanup2(A0 a0, A1 a1) : a0(a0), a1(a1) {}
     void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
       T::Emit(CGF, IsForEHCleanup, a0, a1);
@@ -226,17 +227,18 @@ public:
   class ConditionalCleanup2 : public ConditionalCleanup {
     typedef typename SavedValueInCond<A0>::saved_type A0_saved;
     typedef typename SavedValueInCond<A1>::saved_type A1_saved;
-    A0_saved a0; A1_saved a1;
+    A0_saved a0_saved;
+    A1_saved a1_saved;
 
     void EmitImpl(CodeGenFunction &CGF, bool IsForEHCleanup) {
-      A0 a0 = SavedValueInCond<A0>::restore(CGF, a0);
-      A1 a1 = SavedValueInCond<A1>::restore(CGF, a1);
+      A0 a0 = SavedValueInCond<A0>::restore(CGF, a0_saved);
+      A1 a1 = SavedValueInCond<A1>::restore(CGF, a1_saved);
       T::Emit(CGF, IsForEHCleanup, a0, a1);
     }
 
   public:
     ConditionalCleanup2(llvm::Value *cond, A0_saved a0, A1_saved a1)
-      : ConditionalCleanup(cond), a0(a0), a1(a1) {}
+      : ConditionalCleanup(cond), a0_saved(a0), a1_saved(a1) {}
   };
 
 private:

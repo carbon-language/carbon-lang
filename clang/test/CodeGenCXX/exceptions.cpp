@@ -196,10 +196,10 @@ namespace test3 {
     // CHECK-NEXT: [[CLEANUPACTIVE:%.*]] = alloca i1
     // CHECK-NEXT: [[TMP:%.*]] = alloca [[A]], align 8
     // CHECK:      [[TMPACTIVE:%.*]] = alloca i1
-    // CHECK-NEXT: store i1 false, i1* [[TMPACTIVE]]
     // CHECK-NEXT: store i1 false, i1* [[CLEANUPACTIVE]]
 
     // CHECK:      [[COND:%.*]] = trunc i8 {{.*}} to i1
+    // CHECK-NEXT: store i1 false, i1* [[TMPACTIVE]]
     // CHECK-NEXT: br i1 [[COND]]
     return (cond ?
 

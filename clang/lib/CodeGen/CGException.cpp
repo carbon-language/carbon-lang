@@ -179,8 +179,7 @@ llvm::Value *CodeGenFunction::initFullExprCleanup() {
   // Initialize it to false at a site that's guaranteed to be run
   // before each evaluation.
   llvm::BasicBlock *block = OutermostConditional->getStartingBlock();
-  new llvm::StoreInst(Builder.getFalse(), run,
-                      block->getFirstNonPHIOrDbg());
+  new llvm::StoreInst(Builder.getFalse(), run, &block->back());
 
   // Initialize it to true at the current location.
   Builder.CreateStore(Builder.getTrue(), run);
