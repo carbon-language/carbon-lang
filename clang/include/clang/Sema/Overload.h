@@ -157,6 +157,10 @@ namespace clang {
     /// \brief Whether we're binding to an rvalue.
     unsigned BindsToRvalue : 1;
     
+    /// \brief Whether this binds an implicit object argument to a 
+    /// non-static member function without a ref-qualifier.
+    unsigned BindsImplicitObjectArgumentWithoutRefQualifier : 1;
+    
     /// FromType - The type that this conversion is converting
     /// from. This is an opaque pointer that can be translated into a
     /// QualType.

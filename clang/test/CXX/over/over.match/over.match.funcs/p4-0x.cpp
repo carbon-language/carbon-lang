@@ -27,6 +27,8 @@ struct X0 {
 
   int &h() const&;
   float &h() &&;
+  int &h2() const&;
+  float &h2() const&&;
 };
 
 void X0::g() {
@@ -62,4 +64,7 @@ void test_ref_qualifier_overloading() {
   int &ir1 = lvalue<X0>().h();
   float &fr1 = xvalue<X0>().h();
   float &fr2 = prvalue<X0>().h();
+  int &ir2 = lvalue<X0>().h2();
+  float &fr3 = xvalue<X0>().h2();
+  float &fr4 = prvalue<X0>().h2();
 }

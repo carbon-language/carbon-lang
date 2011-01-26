@@ -173,6 +173,7 @@ void StandardConversionSequence::setAsIdentityConversion() {
   IsLvalueReference = true;
   BindsToFunctionLvalue = false;
   BindsToRvalue = false;
+  BindsImplicitObjectArgumentWithoutRefQualifier = false;
   CopyConstructor = 0;
 }
 
@@ -2344,11 +2345,10 @@ static bool isBetterReferenceBindingKind(const StandardConversionSequence &SCS1,
   // time of this writing) break the standard definition of std::forward
   // and std::reference_wrapper when dealing with references to functions.
   // Proposed wording changes submitted to CWG for consideration.
-  //
-  // Note: neither of these conditions will evalute true for the implicit 
-  // object parameter, because we don't set either BindsToRvalue or
-  // BindsToFunctionLvalue when computing the conversion sequence for the
-  // implicit object parameter.
+  if (SCS1.BindsImplicitObjectArgumentWithoutRefQualifier ||
+      SCS2.BindsImplicitObjectArgumentWithoutRefQualifier)
+    return false;
+  
   return (!SCS1.IsLvalueReference && SCS1.BindsToRvalue &&
           SCS2.IsLvalueReference) ||
          (SCS1.IsLvalueReference && SCS1.BindsToFunctionLvalue &&
@@ -2994,6 +2994,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
       ICS.Standard.IsLvalueReference = !isRValRef;
       ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
       ICS.Standard.BindsToRvalue = false;
+      ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
       ICS.Standard.CopyConstructor = 0;
 
       // Nothing more to do: the inaccessibility/ambiguity check for
@@ -3066,6 +3067,7 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     ICS.Standard.IsLvalueReference = !isRValRef;
     ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
     ICS.Standard.BindsToRvalue = InitCategory.isRValue();        
+    ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
     ICS.Standard.CopyConstructor = 0;
     return ICS; 
   }
@@ -3146,11 +3148,13 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     ICS.Standard.IsLvalueReference = !isRValRef;
     ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
     ICS.Standard.BindsToRvalue = true;
+    ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
   } else if (ICS.isUserDefined()) {
     ICS.UserDefined.After.ReferenceBinding = true;
     ICS.Standard.IsLvalueReference = !isRValRef;
     ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
     ICS.Standard.BindsToRvalue = true;
+    ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
   }
 
   return ICS;
@@ -3286,9 +3290,9 @@ TryObjectArgumentInitialization(Sema &S, QualType OrigFromType,
   ICS.Standard.DirectBinding = true;
   ICS.Standard.IsLvalueReference = Method->getRefQualifier() != RQ_RValue; 
   ICS.Standard.BindsToFunctionLvalue = false;
-  
-  // Note: we intentionally don't set this; see isBetterReferenceBindingKind().
-  ICS.Standard.BindsToRvalue = false;
+  ICS.Standard.BindsToRvalue = FromClassification.isRValue();
+  ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier
+    = (Method->getRefQualifier() == RQ_None);
   return ICS;
 }
 
