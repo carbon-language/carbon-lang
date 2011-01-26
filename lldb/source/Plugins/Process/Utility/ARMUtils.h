@@ -120,6 +120,13 @@ static inline uint32_t ThumbImm12(uint32_t val)
   return imm12;
 }
 
+// imm32 = ZeroExtend(imm7:'00', 32)
+static inline uint32_t ThumbImmScaled(uint32_t val)
+{
+  const uint32_t imm7 = bits(val, 6, 0);
+  return imm7 * 4;
+}
+
 // This function performs the check for the register numbers 13 and 15 that are
 // not permitted for many Thumb register specifiers.
 static inline bool BadReg(uint32_t n) { return n == 13 || n == 15; }

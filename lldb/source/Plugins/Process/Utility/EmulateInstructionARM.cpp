@@ -225,6 +225,8 @@ emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
             return false;
         uint32_t imm32;
         switch (encoding) {
+        case eEncodingT1:
+            imm32 = ThumbImmScaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
         case eEncodingT2:
             imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
             break;
@@ -326,6 +328,7 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 static ARMOpcode g_arm_opcodes[] =
 {
+    // push register(s)
     { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, emulate_push,
       "push <registers> ; <registers> contains more than one register" },
     { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, emulate_push,
@@ -342,13 +345,17 @@ static ARMOpcode g_arm_opcodes[] =
 
 static ARMOpcode g_thumb_opcodes[] =
 {
-    { 0x0000fe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push,
+    // push register(s)
+    { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push,
       "push <registers>" },
     { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push,
       "push.w <registers> ; <registers> contains more than one register" },
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push,
       "push.w <registers> ; <registers> contains one register, <Rt>" },
 
+    // adjust the stack pointer
+    { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm,
+      "sub{s} sp, sp, #<imm>"},
     // adjust the stack pointer
     { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm,
       "sub{s}.w sp, sp, #<const>"},
