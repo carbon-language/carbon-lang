@@ -149,6 +149,7 @@ ThreadPlanCallFunction::DoTakedown ()
         ClearBreakpoints();
         if (log && log->GetVerbose())
             ReportRegisterState ("Restoring thread state after function call.  Restored register state:");
+
     }
     else
     {
@@ -236,7 +237,10 @@ ThreadPlanCallFunction::PlanExplainsStop ()
     else
     {
         // If the subplan is running, any crashes are attributable to us.
-        return (m_subplan_sp.get() != NULL);
+        // If we want to discard the plan, then we say we explain the stop
+        // but if we are going to be discarded, let whoever is above us
+        // explain the stop.
+        return ((m_subplan_sp.get() != NULL) && !OkayToDiscard());
     }
 }
 
