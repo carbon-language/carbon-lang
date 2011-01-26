@@ -316,7 +316,7 @@ X86RegisterInfo::getPointerRegClass(unsigned Kind) const {
     if (TM.getSubtarget<X86Subtarget>().is64Bit())
       return &X86::GR64RegClass;
     return &X86::GR32RegClass;
-  case 1: // Normal GRPs except the stack pointer (for encoding reasons).
+  case 1: // Normal GPRs except the stack pointer (for encoding reasons).
     if (TM.getSubtarget<X86Subtarget>().is64Bit())
       return &X86::GR64_NOSPRegClass;
     return &X86::GR32_NOSPRegClass;
