@@ -39,6 +39,7 @@ td {
   <li><a href="#cxx_lambdas">C++0x lambdas</a></li>
   <li><a href="#cxx_nullptr">C++0x nullptr</a></li>
   <li><a href="#cxx_rvalue_references">C++0x rvalue references</a></li>
+  <li><a href="#cxx_reference_qualified_functions">C++0x reference-qualified functions</a></li>
   <li><a href="#cxx_static_assert">C++0x <tt>static_assert()</tt></a></li>
   <li><a href="#cxx_auto_type">C++0x type inference</a></li>
   <li><a href="#cxx_variadic_templates">C++0x variadic templates</a></li>
@@ -423,11 +424,13 @@ lambdas is enabled. clang does not currently implement this feature.</p>
 <tt>nullptr</tt> is enabled. clang does not yet fully implement this
 feature.</p>
 
+<h3 id="cxx_reference_qualified_functions">C++0x reference-qualified functions</h3>
+<p>Use <tt>__has_feature(cxx_reference_qualified_functions)</tt> to determine if support for reference-qualified functions (e.g., member functions with <code>&amp;</code> or <code>&amp;&amp;</code> applied to <code>*this</code>) is enabled.</p>
+
 <h3 id="cxx_rvalue_references">C++0x rvalue references</tt></h3>
 
 <p>Use <tt>__has_feature(cxx_rvalue_references)</tt> to determine if support for
-rvalue references is enabled. clang does not yet fully implement this
-feature.</p>
+rvalue references is enabled. </p>
 
 <h3 id="cxx_static_assert">C++0x <tt>static_assert()</tt></h3>
 
@@ -438,7 +441,8 @@ compile-time assertions using <tt>static_assert</tt> is enabled.</p>
 
 <p>Use <tt>__has_feature(cxx_auto_type)</tt> to determine C++0x type inference
 is supported using the <tt>auto</tt> specifier. If this is disabled,
-<tt>auto</tt> will instead be a storage class specifier, as in C or C++98.</p>
+<tt>auto</tt> will instead be a storage class specifier, as in C or C++98.
+Clang does not currently implement this feature.</p>
 
 <h3 id="cxx_variadic_templates">C++0x variadic templates</h3>
 

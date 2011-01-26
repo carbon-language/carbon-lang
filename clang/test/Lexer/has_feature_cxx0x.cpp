@@ -99,3 +99,13 @@ int no_inline_namespaces();
 
 // CHECK-0X: has_inline_namespaces
 // CHECK-NO-0X: no_inline_namespaces
+
+#if __has_feature(cxx_reference_qualified_functions)
+int has_reference_qualified_functions();
+#else
+int no_reference_qualified_functions();
+#endif
+
+// CHECK-0X: has_reference_qualified_functions
+// CHECK-NO-0X: no_reference_qualified_functions
+
