@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/SourceMgr.h"
 #include <string>
 #include <vector>
 #include <utility>
@@ -297,11 +298,18 @@ namespace llvm {
     /// ResultOperands - The decoded operands for the result instruction.
     std::vector<ResultOperand> ResultOperands;
 
-    /// ResultInstOperandIndex - For each operand, this vector holds the
-    /// corresponding index of an operand in the result instruction.
-    std::vector<unsigned> ResultInstOperandIndex;
+    /// ResultInstOperandIndex - For each operand, this vector holds a pair of
+    /// indices to identify the corresponding operand in the result
+    /// instruction.  The first index specifies the operand and the second
+    /// index specifies the suboperand.  If there are no suboperands or if all
+    /// of them are matched by the operand, the second value should be -1.
+    std::vector<std::pair<unsigned, int> > ResultInstOperandIndex;
     
     CodeGenInstAlias(Record *R, CodeGenTarget &T);
+
+    bool tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
+                         Record *InstOpRec, bool hasSubOps, SMLoc Loc,
+                         CodeGenTarget &T, ResultOperand &ResOp);
   };    
 }
 

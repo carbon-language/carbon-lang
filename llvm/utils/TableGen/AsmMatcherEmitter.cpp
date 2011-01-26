@@ -253,8 +253,11 @@ struct MatchableInfo {
 
     /// The operand name this is, if anything.
     StringRef SrcOpName;
+
+    /// The suboperand index within SrcOpName, or -1 for the entire operand.
+    int SubOpIdx;
     
-    explicit AsmOperand(StringRef T) : Token(T), Class(0) {}
+    explicit AsmOperand(StringRef T) : Token(T), Class(0), SubOpIdx(-1) {}
   };
   
   /// ResOperand - This represents a single operand in the result instruction
@@ -296,46 +299,41 @@ struct MatchableInfo {
       Record *Register;
     };
     
-    /// OpInfo - This is the information about the instruction operand that is
-    /// being populated.
-    const CGIOperandList::OperandInfo *OpInfo;
+    /// MINumOperands - The number of MCInst operands populated by this
+    /// operand.
+    unsigned MINumOperands;
     
-    static ResOperand getRenderedOp(unsigned AsmOpNum,
-                                    const CGIOperandList::OperandInfo *Op) {
+    static ResOperand getRenderedOp(unsigned AsmOpNum, unsigned NumOperands) {
       ResOperand X;
       X.Kind = RenderAsmOperand;
       X.AsmOperandNum = AsmOpNum;
-      X.OpInfo = Op;
+      X.MINumOperands = NumOperands;
       return X;
     }
     
-    static ResOperand getTiedOp(unsigned TiedOperandNum,
-                                const CGIOperandList::OperandInfo *Op) {
+    static ResOperand getTiedOp(unsigned TiedOperandNum) {
       ResOperand X;
       X.Kind = TiedOperand;
       X.TiedOperandNum = TiedOperandNum;
-      X.OpInfo = Op;
+      X.MINumOperands = 1;
       return X;
     }
     
-    static ResOperand getImmOp(int64_t Val,
-                               const CGIOperandList::OperandInfo *Op) {
+    static ResOperand getImmOp(int64_t Val) {
       ResOperand X;
       X.Kind = ImmOperand;
       X.ImmVal = Val;
-      X.OpInfo = Op;
+      X.MINumOperands = 1;
       return X;
     }
     
-    static ResOperand getRegOp(Record *Reg,
-                               const CGIOperandList::OperandInfo *Op) {
+    static ResOperand getRegOp(Record *Reg) {
       ResOperand X;
       X.Kind = RegOperand;
       X.Register = Reg;
-      X.OpInfo = Op;
+      X.MINumOperands = 1;
       return X;
     }
-    
   };
 
   /// TheDef - This is the definition of the instruction or InstAlias that this
@@ -397,6 +395,18 @@ struct MatchableInfo {
   Record *getSingletonRegisterForAsmOperand(unsigned i,
                                             const AsmMatcherInfo &Info) const;  
 
+  /// FindAsmOperand - Find the AsmOperand with the specified name and
+  /// suboperand index.
+  int FindAsmOperand(StringRef N, int SubOpIdx) const {
+    for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i)
+      if (N == AsmOperands[i].SrcOpName &&
+          SubOpIdx == AsmOperands[i].SubOpIdx)
+        return i;
+    return -1;
+  }
+  
+  /// FindAsmOperandNamed - Find the first AsmOperand with the specified name.
+  /// This does not check the suboperand index.
   int FindAsmOperandNamed(StringRef N) const {
     for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i)
       if (N == AsmOperands[i].SrcOpName)
@@ -531,7 +541,8 @@ private:
   ClassInfo *getTokenClass(StringRef Token);
 
   /// getOperandClass - Lookup or create the class for the given operand.
-  ClassInfo *getOperandClass(const CGIOperandList::OperandInfo &OI);
+  ClassInfo *getOperandClass(const CGIOperandList::OperandInfo &OI,
+                             int SubOpIdx = -1);
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
@@ -541,11 +552,9 @@ private:
   /// operand classes.
   void BuildOperandClasses();
 
-  void BuildInstructionOperandReference(MatchableInfo *II,
-                                        StringRef OpName,
-                                        MatchableInfo::AsmOperand &Op);
-  void BuildAliasOperandReference(MatchableInfo *II,
-                                  StringRef OpName,
+  void BuildInstructionOperandReference(MatchableInfo *II, StringRef OpName,
+                                        unsigned AsmOpIdx);
+  void BuildAliasOperandReference(MatchableInfo *II, StringRef OpName,
                                   MatchableInfo::AsmOperand &Op);
                                   
 public:
@@ -806,19 +815,24 @@ ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
 }
 
 ClassInfo *
-AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI) {
-  if (OI.Rec->isSubClassOf("RegisterClass")) {
-    if (ClassInfo *CI = RegisterClassClasses[OI.Rec])
+AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI,
+                                int SubOpIdx) {
+  Record *Rec = OI.Rec;
+  if (SubOpIdx != -1)
+    Rec = dynamic_cast<DefInit*>(OI.MIOperandInfo->getArg(SubOpIdx))->getDef();
+
+  if (Rec->isSubClassOf("RegisterClass")) {
+    if (ClassInfo *CI = RegisterClassClasses[Rec])
       return CI;
-    throw TGError(OI.Rec->getLoc(), "register class has no class info!");
+    throw TGError(Rec->getLoc(), "register class has no class info!");
   }
 
-  assert(OI.Rec->isSubClassOf("Operand") && "Unexpected operand!");
-  Record *MatchClass = OI.Rec->getValueAsDef("ParserMatchClass");
+  assert(Rec->isSubClassOf("Operand") && "Unexpected operand!");
+  Record *MatchClass = Rec->getValueAsDef("ParserMatchClass");
   if (ClassInfo *CI = AsmOperandClasses[MatchClass])
     return CI;
 
-  throw TGError(OI.Rec->getLoc(), "operand has no match class!");
+  throw TGError(Rec->getLoc(), "operand has no match class!");
 }
 
 void AsmMatcherInfo::
@@ -1120,7 +1134,9 @@ void AsmMatcherInfo::BuildInfo() {
     MatchableInfo *II = *it;
 
     // Parse the tokens after the mnemonic.
-    for (unsigned i = 0, e = II->AsmOperands.size(); i != e; ++i) {
+    // Note: BuildInstructionOperandReference may insert new AsmOperands, so
+    // don't precompute the loop bound.
+    for (unsigned i = 0; i != II->AsmOperands.size(); ++i) {
       MatchableInfo::AsmOperand &Op = II->AsmOperands[i];
       StringRef Token = Op.Token;
 
@@ -1151,7 +1167,7 @@ void AsmMatcherInfo::BuildInfo() {
         OperandName = Token.substr(1);
       
       if (II->DefRec.is<const CodeGenInstruction*>())
-        BuildInstructionOperandReference(II, OperandName, Op);
+        BuildInstructionOperandReference(II, OperandName, i);
       else
         BuildAliasOperandReference(II, OperandName, Op);
     }
@@ -1171,9 +1187,10 @@ void AsmMatcherInfo::BuildInfo() {
 void AsmMatcherInfo::
 BuildInstructionOperandReference(MatchableInfo *II,
                                  StringRef OperandName,
-                                 MatchableInfo::AsmOperand &Op) {
+                                 unsigned AsmOpIdx) {
   const CodeGenInstruction &CGI = *II->DefRec.get<const CodeGenInstruction*>();
   const CGIOperandList &Operands = CGI.Operands;
+  MatchableInfo::AsmOperand *Op = &II->AsmOperands[AsmOpIdx];
   
   // Map this token to an operand.
   unsigned Idx;
@@ -1181,8 +1198,29 @@ BuildInstructionOperandReference(MatchableInfo *II,
     throw TGError(II->TheDef->getLoc(), "error: unable to find operand: '" +
                   OperandName.str() + "'");
 
+  // If the instruction operand has multiple suboperands, but the parser
+  // match class for the asm operand is still the default "ImmAsmOperand",
+  // then handle each suboperand separately.
+  if (Op->SubOpIdx == -1 && Operands[Idx].MINumOperands > 1) {
+    Record *Rec = Operands[Idx].Rec;
+    assert(Rec->isSubClassOf("Operand") && "Unexpected operand!");
+    Record *MatchClass = Rec->getValueAsDef("ParserMatchClass");
+    if (MatchClass && MatchClass->getValueAsString("Name") == "Imm") {
+      // Insert remaining suboperands after AsmOpIdx in II->AsmOperands.
+      StringRef Token = Op->Token; // save this in case Op gets moved
+      for (unsigned SI = 1, SE = Operands[Idx].MINumOperands; SI != SE; ++SI) {
+        MatchableInfo::AsmOperand NewAsmOp(Token);
+        NewAsmOp.SubOpIdx = SI;
+        II->AsmOperands.insert(II->AsmOperands.begin()+AsmOpIdx+SI, NewAsmOp);
+      }
+      // Replace Op with first suboperand.
+      Op = &II->AsmOperands[AsmOpIdx]; // update the pointer in case it moved
+      Op->SubOpIdx = 0;
+    }
+  }
+
   // Set up the operand class.
-  Op.Class = getOperandClass(Operands[Idx]);
+  Op->Class = getOperandClass(Operands[Idx], Op->SubOpIdx);
 
   // If the named operand is tied, canonicalize it to the untied operand.
   // For example, something like:
@@ -1196,15 +1234,12 @@ BuildInstructionOperandReference(MatchableInfo *II,
   if (OITied != -1) {
     // The tied operand index is an MIOperand index, find the operand that
     // contains it.
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (Operands[i].MIOperandNo == unsigned(OITied)) {
-        OperandName = Operands[i].Name;
-        break;
-      }
-    }
+    std::pair<unsigned, unsigned> Idx = Operands.getSubOperandNumber(OITied);
+    OperandName = Operands[Idx.first].Name;
+    Op->SubOpIdx = Idx.second;
   }
   
-  Op.SrcOpName = OperandName;
+  Op->SrcOpName = OperandName;
 }
 
 /// BuildAliasOperandReference - When parsing an operand reference out of the
@@ -1221,8 +1256,10 @@ void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
         CGA.ResultOperands[i].getName() == OperandName) {
       // It's safe to go with the first one we find, because CodeGenInstAlias
       // validates that all operands with the same name have the same record.
-      unsigned ResultIdx = CGA.ResultInstOperandIndex[i];
-      Op.Class = getOperandClass(CGA.ResultInst->Operands[ResultIdx]);
+      unsigned ResultIdx = CGA.ResultInstOperandIndex[i].first;
+      Op.SubOpIdx = CGA.ResultInstOperandIndex[i].second;
+      Op.Class = getOperandClass(CGA.ResultInst->Operands[ResultIdx],
+                                 Op.SubOpIdx);
       Op.SrcOpName = OperandName;
       return;
     }
@@ -1242,22 +1279,31 @@ void MatchableInfo::BuildInstructionResultOperands() {
     // If this is a tied operand, just copy from the previously handled operand.
     int TiedOp = OpInfo.getTiedRegister();
     if (TiedOp != -1) {
-      ResOperands.push_back(ResOperand::getTiedOp(TiedOp, &OpInfo));
+      ResOperands.push_back(ResOperand::getTiedOp(TiedOp));
       continue;
     }
     
-    // Find out what operand from the asmparser that this MCInst operand comes
-    // from.
+    // Find out what operand from the asmparser this MCInst operand comes from.
     int SrcOperand = FindAsmOperandNamed(OpInfo.Name);
+    if (OpInfo.Name.empty() || SrcOperand == -1)
+      throw TGError(TheDef->getLoc(), "Instruction '" +
+                    TheDef->getName() + "' has operand '" + OpInfo.Name +
+                    "' that doesn't appear in asm string!");
 
-    if (!OpInfo.Name.empty() && SrcOperand != -1) {
-      ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand, &OpInfo));
+    // Check if the one AsmOperand populates the entire operand.
+    unsigned NumOperands = OpInfo.MINumOperands;
+    if (AsmOperands[SrcOperand].SubOpIdx == -1) {
+      ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand, NumOperands));
       continue;
     }
-    
-    throw TGError(TheDef->getLoc(), "Instruction '" +
-                  TheDef->getName() + "' has operand '" + OpInfo.Name +
-                  "' that doesn't appear in asm string!");
+
+    // Add a separate ResOperand for each suboperand.
+    for (unsigned AI = 0; AI < NumOperands; ++AI) {
+      assert(AsmOperands[SrcOperand+AI].SubOpIdx == (int)AI &&
+             AsmOperands[SrcOperand+AI].SrcOpName == OpInfo.Name &&
+             "unexpected AsmOperands for suboperands");
+      ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand + AI, 1));
+    }
   }
 }
 
@@ -1268,42 +1314,50 @@ void MatchableInfo::BuildAliasResultOperands() {
   // Loop over all operands of the result instruction, determining how to
   // populate them.
   unsigned AliasOpNo = 0;
+  unsigned LastOpNo = CGA.ResultInstOperandIndex.size();
   for (unsigned i = 0, e = ResultInst->Operands.size(); i != e; ++i) {
-    const CGIOperandList::OperandInfo &OpInfo = ResultInst->Operands[i];
+    const CGIOperandList::OperandInfo *OpInfo = &ResultInst->Operands[i];
     
     // If this is a tied operand, just copy from the previously handled operand.
-    int TiedOp = OpInfo.getTiedRegister();
+    int TiedOp = OpInfo->getTiedRegister();
     if (TiedOp != -1) {
-      ResOperands.push_back(ResOperand::getTiedOp(TiedOp, &OpInfo));
-      continue;
-    }
-    
-    // Find out what operand from the asmparser that this MCInst operand comes
-    // from.
-    switch (CGA.ResultOperands[AliasOpNo].Kind) {
-    case CodeGenInstAlias::ResultOperand::K_Record: {
-      StringRef Name = CGA.ResultOperands[AliasOpNo++].getName();
-      int SrcOperand = FindAsmOperandNamed(Name);
-      if (SrcOperand != -1) {
-        ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand, &OpInfo));
-        continue;
-      }
-      
-      throw TGError(TheDef->getLoc(), "Instruction '" +
-                    TheDef->getName() + "' has operand '" + OpInfo.Name +
-                    "' that doesn't appear in asm string!");
-    }
-    case CodeGenInstAlias::ResultOperand::K_Imm: {
-      int64_t ImmVal = CGA.ResultOperands[AliasOpNo++].getImm();
-      ResOperands.push_back(ResOperand::getImmOp(ImmVal, &OpInfo));
+      ResOperands.push_back(ResOperand::getTiedOp(TiedOp));
       continue;
     }
 
-    case CodeGenInstAlias::ResultOperand::K_Reg: {
-      Record *Reg = CGA.ResultOperands[AliasOpNo++].getRegister();
-      ResOperands.push_back(ResOperand::getRegOp(Reg, &OpInfo));
-      continue;
-    }
+    // Handle all the suboperands for this operand.
+    const std::string &OpName = OpInfo->Name;
+    for ( ; AliasOpNo <  LastOpNo &&
+            CGA.ResultInstOperandIndex[AliasOpNo].first == i; ++AliasOpNo) {
+      int SubIdx = CGA.ResultInstOperandIndex[AliasOpNo].second;
+
+      // Find out what operand from the asmparser that this MCInst operand
+      // comes from.
+      switch (CGA.ResultOperands[AliasOpNo].Kind) {
+      default: assert(0 && "unexpected InstAlias operand kind");
+      case CodeGenInstAlias::ResultOperand::K_Record: {
+        StringRef Name = CGA.ResultOperands[AliasOpNo].getName();
+        int SrcOperand = FindAsmOperand(Name, SubIdx);
+        if (SrcOperand == -1)
+          throw TGError(TheDef->getLoc(), "Instruction '" +
+                        TheDef->getName() + "' has operand '" + OpName +
+                        "' that doesn't appear in asm string!");
+        unsigned NumOperands = (SubIdx == -1 ? OpInfo->MINumOperands : 1);
+        ResOperands.push_back(ResOperand::getRenderedOp(SrcOperand,
+                                                        NumOperands));
+        break;
+      }
+      case CodeGenInstAlias::ResultOperand::K_Imm: {
+        int64_t ImmVal = CGA.ResultOperands[AliasOpNo].getImm();
+        ResOperands.push_back(ResOperand::getImmOp(ImmVal));
+        break;
+      }
+      case CodeGenInstAlias::ResultOperand::K_Reg: {
+        Record *Reg = CGA.ResultOperands[AliasOpNo].getRegister();
+        ResOperands.push_back(ResOperand::getRegOp(Reg));
+        break;
+      }
+      }
     }
   }
 }
@@ -1362,19 +1416,19 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
           Signature += "Reg";
         else
           Signature += Op.Class->ClassName;
-        Signature += utostr(OpInfo.OpInfo->MINumOperands);
+        Signature += utostr(OpInfo.MINumOperands);
         Signature += "_" + itostr(OpInfo.AsmOperandNum);
         
         CaseOS << "    ((" << TargetOperandClass << "*)Operands["
                << (OpInfo.AsmOperandNum+1) << "])->" << Op.Class->RenderMethod
-               << "(Inst, " << OpInfo.OpInfo->MINumOperands << ");\n";
+               << "(Inst, " << OpInfo.MINumOperands << ");\n";
         break;
       }
           
       case MatchableInfo::ResOperand::TiedOperand: {
         // If this operand is tied to a previous one, just copy the MCInst
         // operand from the earlier one.We can only tie single MCOperand values.
-      //assert(OpInfo.OpInfo->MINumOperands == 1 && "Not a singular MCOperand");
+        //assert(OpInfo.MINumOperands == 1 && "Not a singular MCOperand");
         unsigned TiedOp = OpInfo.TiedOperandNum;
         assert(i > TiedOp && "Tied operand preceeds its target!");
         CaseOS << "    Inst.addOperand(Inst.getOperand(" << TiedOp << "));\n";

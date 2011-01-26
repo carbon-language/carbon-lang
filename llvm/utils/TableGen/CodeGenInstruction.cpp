@@ -390,6 +390,71 @@ FlattenAsmStringVariants(StringRef Cur, unsigned Variant) {
 /// CodeGenInstAlias Implementation
 //===----------------------------------------------------------------------===//
 
+/// tryAliasOpMatch - This is a helper function for the CodeGenInstAlias
+/// constructor.  It checks if an argument in an InstAlias pattern matches
+/// the corresponding operand of the instruction.  It returns true on a
+/// successful match, with ResOp set to the result operand to be used.
+bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
+                                       Record *InstOpRec, bool hasSubOps,
+                                       SMLoc Loc, CodeGenTarget &T,
+                                       ResultOperand &ResOp) {
+  Init *Arg = Result->getArg(AliasOpNo);
+  DefInit *ADI = dynamic_cast<DefInit*>(Arg);
+
+  if (ADI && ADI->getDef() == InstOpRec) {
+    // If the operand is a record, it must have a name, and the record type
+    // must match up with the instruction's argument type.
+    if (Result->getArgName(AliasOpNo).empty())
+      throw TGError(Loc, "result argument #" + utostr(AliasOpNo) +
+                    " must have a name!");
+    ResOp = ResultOperand(Result->getArgName(AliasOpNo), ADI->getDef());
+    return true;
+  }
+
+  // Handle explicit registers.
+  if (ADI && ADI->getDef()->isSubClassOf("Register")) {
+    if (!InstOpRec->isSubClassOf("RegisterClass"))
+      return false;
+
+    if (!T.getRegisterClass(InstOpRec).containsRegister(ADI->getDef()))
+      throw TGError(Loc, "fixed register " +ADI->getDef()->getName()
+                    + " is not a member of the " + InstOpRec->getName() +
+                    " register class!");
+
+    if (!Result->getArgName(AliasOpNo).empty())
+      throw TGError(Loc, "result fixed register argument must "
+                    "not have a name!");
+
+    ResOp = ResultOperand(ADI->getDef());
+    return true;
+  }
+
+  // Handle "zero_reg" for optional def operands.
+  if (ADI && ADI->getDef()->getName() == "zero_reg") {
+
+    // Check if this is an optional def.
+    if (!InstOpRec->isSubClassOf("OptionalDefOperand"))
+      throw TGError(Loc, "reg0 used for result that is not an "
+                    "OptionalDefOperand!");
+
+    ResOp = ResultOperand(static_cast<Record*>(0));
+    return true;
+  }
+
+  if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
+    if (hasSubOps || !InstOpRec->isSubClassOf("Operand"))
+      return false;
+    // Integer arguments can't have names.
+    if (!Result->getArgName(AliasOpNo).empty())
+      throw TGError(Loc, "result argument #" + utostr(AliasOpNo) +
+                    " must not have a name!");
+    ResOp = ResultOperand(II->getValue());
+    return true;
+  }
+
+  return false;
+}
+
 CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
   AsmString = R->getValueAsString("AsmString");
   Result = R->getValueAsDag("ResultInst");
@@ -422,103 +487,51 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
   // Decode and validate the arguments of the result.
   unsigned AliasOpNo = 0;
   for (unsigned i = 0, e = ResultInst->Operands.size(); i != e; ++i) {
+
     // Tied registers don't have an entry in the result dag.
     if (ResultInst->Operands[i].getTiedRegister() != -1)
       continue;
 
     if (AliasOpNo >= Result->getNumArgs())
-      throw TGError(R->getLoc(), "result has " + utostr(Result->getNumArgs()) +
-                    " arguments, but " + ResultInst->TheDef->getName() +
-                    " instruction expects " +
-                    utostr(ResultInst->Operands.size()) + " operands!");
+      throw TGError(R->getLoc(), "not enough arguments for instruction!");
 
-
-    Init *Arg = Result->getArg(AliasOpNo);
-    Record *ResultOpRec = ResultInst->Operands[i].Rec;
-
-    // Handle explicit registers.
-    if (DefInit *ADI = dynamic_cast<DefInit*>(Arg)) {
-      if (ADI->getDef()->isSubClassOf("Register")) {
-        if (!Result->getArgName(AliasOpNo).empty())
-          throw TGError(R->getLoc(), "result fixed register argument must "
-                        "not have a name!");
-
-        if (!ResultOpRec->isSubClassOf("RegisterClass"))
-          throw TGError(R->getLoc(), "result fixed register argument is not "
-                        "passed to a RegisterClass operand!");
-
-        if (!T.getRegisterClass(ResultOpRec).containsRegister(ADI->getDef()))
-          throw TGError(R->getLoc(), "fixed register " +ADI->getDef()->getName()
-                        + " is not a member of the " + ResultOpRec->getName() +
-                        " register class!");
-
-        // Now that it is validated, add it.
-        ResultOperands.push_back(ResultOperand(ADI->getDef()));
-        ResultInstOperandIndex.push_back(i);
-        ++AliasOpNo;
-        continue;
-      }
-      if (ADI->getDef()->getName() == "zero_reg") {
-        if (!Result->getArgName(AliasOpNo).empty())
-          throw TGError(R->getLoc(), "result fixed register argument must "
-                        "not have a name!");
-
-        // Check if this is an optional def.
-        if (!ResultOpRec->isSubClassOf("OptionalDefOperand"))
-          throw TGError(R->getLoc(), "reg0 used for result that is not an "
-                        "OptionalDefOperand!");
-
-        // Now that it is validated, add it.
-        ResultOperands.push_back(ResultOperand(static_cast<Record*>(0)));
-        ResultInstOperandIndex.push_back(i);
-        ++AliasOpNo;
-        continue;
-      }
-    }
-
-    // If the operand is a record, it must have a name, and the record type must
-    // match up with the instruction's argument type.
-    if (DefInit *ADI = dynamic_cast<DefInit*>(Arg)) {
-      if (Result->getArgName(AliasOpNo).empty())
-        throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
-                      " must have a name!");
-
-      if (ADI->getDef() != ResultOpRec)
-        throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
-                      " declared with class " + ADI->getDef()->getName() +
-                      ", instruction operand is class " +
-                      ResultOpRec->getName());
-
-      // Now that it is validated, add it.
-      ResultOperands.push_back(ResultOperand(Result->getArgName(AliasOpNo),
-                                             ADI->getDef()));
-      ResultInstOperandIndex.push_back(i);
+    Record *InstOpRec = ResultInst->Operands[i].Rec;
+    unsigned NumSubOps = ResultInst->Operands[i].MINumOperands;
+    ResultOperand ResOp(static_cast<int64_t>(0));
+    if (tryAliasOpMatch(Result, AliasOpNo, InstOpRec, (NumSubOps > 1),
+                        R->getLoc(), T, ResOp)) {
+      ResultOperands.push_back(ResOp);
+      ResultInstOperandIndex.push_back(std::make_pair(i, -1));
       ++AliasOpNo;
       continue;
     }
 
-    if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
-      // Integer arguments can't have names.
-      if (!Result->getArgName(AliasOpNo).empty())
-        throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
-                      " must not have a name!");
-      if (ResultInst->Operands[i].MINumOperands != 1 ||
-          !ResultOpRec->isSubClassOf("Operand"))
-        throw TGError(R->getLoc(), "invalid argument class " +
-                      ResultOpRec->getName() +
-                      " for integer result operand!");
-      ResultOperands.push_back(ResultOperand(II->getValue()));
-      ResultInstOperandIndex.push_back(i);
-      ++AliasOpNo;
+    // If the argument did not match the instruction operand, and the operand
+    // is composed of multiple suboperands, try matching the suboperands.
+    if (NumSubOps > 1) {
+      DagInit *MIOI = ResultInst->Operands[i].MIOperandInfo;
+      for (unsigned SubOp = 0; SubOp != NumSubOps; ++SubOp) {
+        if (AliasOpNo >= Result->getNumArgs())
+          throw TGError(R->getLoc(), "not enough arguments for instruction!");
+        Record *SubRec = dynamic_cast<DefInit*>(MIOI->getArg(SubOp))->getDef();
+        if (tryAliasOpMatch(Result, AliasOpNo, SubRec, false,
+                            R->getLoc(), T, ResOp)) {
+          ResultOperands.push_back(ResOp);
+          ResultInstOperandIndex.push_back(std::make_pair(i, SubOp));
+          ++AliasOpNo;
+        } else {
+          throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
+                        " does not match instruction operand class " +
+                        (SubOp == 0 ? InstOpRec->getName() :SubRec->getName()));
+        }
+      }
       continue;
     }
-
-    throw TGError(R->getLoc(), "result of inst alias has unknown operand type");
+    throw TGError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
+                  " does not match instruction operand class " +
+                  InstOpRec->getName());
   }
 
   if (AliasOpNo != Result->getNumArgs())
-    throw TGError(R->getLoc(), "result has " + utostr(Result->getNumArgs()) +
-                  " arguments, but " + ResultInst->TheDef->getName() +
-                  " instruction expects " + utostr(ResultInst->Operands.size())+
-                  " operands!");
+    throw TGError(R->getLoc(), "too many operands for instruction!");
 }
