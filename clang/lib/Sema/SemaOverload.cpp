@@ -170,7 +170,9 @@ void StandardConversionSequence::setAsIdentityConversion() {
   DeprecatedStringLiteralToCharPtr = false;
   ReferenceBinding = false;
   DirectBinding = false;
-  RRefBinding = false;
+  IsLvalueReference = true;
+  BindsToFunctionLvalue = false;
+  BindsToRvalue = false;
   CopyConstructor = 0;
 }
 
@@ -2324,6 +2326,33 @@ compareStandardConversionSubsets(ASTContext &Context,
   return ImplicitConversionSequence::Indistinguishable;
 }
 
+/// \brief Determine whether one of the given reference bindings is better
+/// than the other based on what kind of bindings they are.
+static bool isBetterReferenceBindingKind(const StandardConversionSequence &SCS1,
+                                       const StandardConversionSequence &SCS2) {
+  // C++0x [over.ics.rank]p3b4:
+  //   -- S1 and S2 are reference bindings (8.5.3) and neither refers to an
+  //      implicit object parameter of a non-static member function declared
+  //      without a ref-qualifier, and *either* S1 binds an rvalue reference 
+  //      to an rvalue and S2 binds an lvalue reference *or S1 binds an
+  //      lvalue reference to a function lvalue and S2 binds an rvalue 
+  //      reference*.
+  //
+  // FIXME: Rvalue references. We're going rogue with the above edits,
+  // because the semantics in the current C++0x working paper (N3225 at the
+  // time of this writing) break the standard definition of std::forward
+  // and std::reference_wrapper when dealing with references to functions.
+  // Proposed wording changes submitted to CWG for consideration.
+  //
+  // FIXME: Rvalue references. We don't know if we're dealing with the 
+  // implicit object parameter, or if the member function in this case has a 
+  // ref qualifier. (Of course, we don't have ref qualifiers yet.)
+  return (!SCS1.IsLvalueReference && SCS1.BindsToRvalue &&
+          SCS2.IsLvalueReference) ||
+         (SCS1.IsLvalueReference && SCS1.BindsToFunctionLvalue &&
+          !SCS2.IsLvalueReference);
+}
+  
 /// CompareStandardConversionSequences - Compare two standard
 /// conversion sequences to determine whether one is better than the
 /// other or if they are indistinguishable (C++ 13.3.3.2p3).
@@ -2429,18 +2458,12 @@ CompareStandardConversionSequences(Sema &S,
     return QualCK;
 
   if (SCS1.ReferenceBinding && SCS2.ReferenceBinding) {
-    // C++0x [over.ics.rank]p3b4:
-    //   -- S1 and S2 are reference bindings (8.5.3) and neither refers to an
-    //      implicit object parameter of a non-static member function declared
-    //      without a ref-qualifier, and S1 binds an rvalue reference to an
-    //      rvalue and S2 binds an lvalue reference.
-    // FIXME: Rvalue references. We don't know if we're dealing with the 
-    // implicit object parameter, or if the member function in this case has a 
-    // ref qualifier. (Of course, we don't have ref qualifiers yet.)
-    if (SCS1.RRefBinding != SCS2.RRefBinding)
-      return SCS1.RRefBinding ? ImplicitConversionSequence::Better
-                              : ImplicitConversionSequence::Worse;
-
+    // Check for a better reference binding based on the kind of bindings.
+    if (isBetterReferenceBindingKind(SCS1, SCS2))
+      return ImplicitConversionSequence::Better;
+    else if (isBetterReferenceBindingKind(SCS2, SCS1))
+      return ImplicitConversionSequence::Worse;
+    
     // C++ [over.ics.rank]p3b4:
     //   -- S1 and S2 are reference bindings (8.5.3), and the types to
     //      which the references refer are the same type except for
@@ -2966,7 +2989,9 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
       ICS.Standard.setToType(2, T1);
       ICS.Standard.ReferenceBinding = true;
       ICS.Standard.DirectBinding = true;
-      ICS.Standard.RRefBinding = isRValRef && InitCategory.isRValue();
+      ICS.Standard.IsLvalueReference = !isRValRef;
+      ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
+      ICS.Standard.BindsToRvalue = false;
       ICS.Standard.CopyConstructor = 0;
 
       // Nothing more to do: the inaccessibility/ambiguity check for
@@ -3036,7 +3061,9 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     ICS.Standard.DirectBinding = 
       S.getLangOptions().CPlusPlus0x || 
       (InitCategory.isPRValue() && !T2->isRecordType());
-    ICS.Standard.RRefBinding = isRValRef && InitCategory.isRValue();
+    ICS.Standard.IsLvalueReference = !isRValRef;
+    ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
+    ICS.Standard.BindsToRvalue = InitCategory.isRValue();        
     ICS.Standard.CopyConstructor = 0;
     return ICS; 
   }
@@ -3114,10 +3141,14 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   // Of course, that's still a reference binding.
   if (ICS.isStandard()) {
     ICS.Standard.ReferenceBinding = true;
-    ICS.Standard.RRefBinding = isRValRef;
+    ICS.Standard.IsLvalueReference = !isRValRef;
+    ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
+    ICS.Standard.BindsToRvalue = true;
   } else if (ICS.isUserDefined()) {
     ICS.UserDefined.After.ReferenceBinding = true;
-    ICS.UserDefined.After.RRefBinding = isRValRef;
+    ICS.Standard.IsLvalueReference = !isRValRef;
+    ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
+    ICS.Standard.BindsToRvalue = true;
   }
 
   return ICS;
@@ -3212,7 +3243,11 @@ TryObjectArgumentInitialization(Sema &S, QualType OrigFromType,
   ICS.Standard.setAllToTypes(ImplicitParamType);
   ICS.Standard.ReferenceBinding = true;
   ICS.Standard.DirectBinding = true;
-  ICS.Standard.RRefBinding = false;
+  
+  // FIXME: Rvalue references.
+  ICS.Standard.IsLvalueReference = true; 
+  ICS.Standard.BindsToFunctionLvalue = false;
+  ICS.Standard.BindsToRvalue = false;
   return ICS;
 }
 

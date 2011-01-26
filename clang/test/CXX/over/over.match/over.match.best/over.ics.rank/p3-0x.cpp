@@ -50,10 +50,10 @@ struct remove_reference<T&&> {
 };
 
 namespace FunctionReferencesOverloading {
-  template<typename T> int &f(typename remove_reference<T>::type&); // expected-note{{candidate function [with T = int (&)(int)]}}
-  template<typename T> float &f(typename remove_reference<T>::type&&); // expected-note{{candidate function [with T = int (&)(int)]}}
+  template<typename T> int &f(typename remove_reference<T>::type&);
+  template<typename T> float &f(typename remove_reference<T>::type&&);
 
   void test_f(int (&func_ref)(int)) {
-    f<int (&)(int)>(func_ref); // expected-error{{call to 'f' is ambiguous}}
+    int &ir = f<int (&)(int)>(func_ref);
   }
 }
