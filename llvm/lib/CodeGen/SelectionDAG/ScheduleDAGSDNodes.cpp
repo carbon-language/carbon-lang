@@ -501,6 +501,35 @@ namespace {
   };
 }
 
+/// ProcessSDDbgValues - Process SDDbgValues assoicated with this node.
+static void ProcessSDDbgValues(SDNode *N, SelectionDAG *DAG, 
+                               InstrEmitter &Emitter,
+                    SmallVector<std::pair<unsigned, MachineInstr*>, 32> &Orders,
+                            DenseMap<SDValue, unsigned> &VRBaseMap,
+                            unsigned Order) {
+  if (!N->getHasDebugValue())
+    return;
+
+  // Opportunistically insert immediate dbg_value uses, i.e. those with source
+  // order number right after the N.
+  MachineBasicBlock *BB = Emitter.getBlock();
+  MachineBasicBlock::iterator InsertPos = Emitter.getInsertPos();
+  SmallVector<SDDbgValue*,2> &DVs = DAG->GetDbgValues(N);
+  for (unsigned i = 0, e = DVs.size(); i != e; ++i) {
+    if (DVs[i]->isInvalidated())
+      continue;
+    unsigned DVOrder = DVs[i]->getOrder();
+    if (!Order || DVOrder == ++Order) {
+      MachineInstr *DbgMI = Emitter.EmitDbgValue(DVs[i], VRBaseMap);
+      if (DbgMI) {
+        Orders.push_back(std::make_pair(DVOrder, DbgMI));
+        BB->insert(InsertPos, DbgMI);
+      }
+      DVs[i]->setIsInvalidated();
+    }
+  }
+}
+
 // ProcessSourceNode - Process nodes with source order numbers. These are added
 // to a vector which EmitSchedule uses to determine how to insert dbg_value
 // instructions in the right order.
@@ -521,25 +550,7 @@ static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
   }
 
   Orders.push_back(std::make_pair(Order, prior(Emitter.getInsertPos())));
-  if (!N->getHasDebugValue())
-    return;
-  // Opportunistically insert immediate dbg_value uses, i.e. those with source
-  // order number right after the N.
-  MachineBasicBlock::iterator InsertPos = Emitter.getInsertPos();
-  SmallVector<SDDbgValue*,2> &DVs = DAG->GetDbgValues(N);
-  for (unsigned i = 0, e = DVs.size(); i != e; ++i) {
-    if (DVs[i]->isInvalidated())
-      continue;
-    unsigned DVOrder = DVs[i]->getOrder();
-    if (DVOrder == ++Order) {
-      MachineInstr *DbgMI = Emitter.EmitDbgValue(DVs[i], VRBaseMap);
-      if (DbgMI) {
-        Orders.push_back(std::make_pair(DVOrder, DbgMI));
-        BB->insert(InsertPos, DbgMI);
-      }
-      DVs[i]->setIsInvalidated();
-    }
-  }
+  ProcessSDDbgValues(N, DAG, Emitter, Orders, VRBaseMap, Order);
 }
 
 
