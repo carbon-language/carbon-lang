@@ -454,11 +454,6 @@ public:
   /// @name Output Files
   /// {
 
-  /// getOutputFileList - Get the list of (path, output stream) pairs of output
-  /// files; the path may be empty but the stream will always be non-null.
-  const std::list< std::pair<std::string,
-                             llvm::raw_ostream*> > &getOutputFileList() const;
-
   /// addOutputFile - Add an output file onto the list of tracked output files.
   ///
   /// \param OutFile - The output file info.
