@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wall -Wunused-macros -Wunused-parameter -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wall -Wunused-macros -Wunused-parameter -Wno-uninitialized -verify %s
 
 // rdar://8365684
 struct S {
