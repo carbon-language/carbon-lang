@@ -357,10 +357,8 @@ static ARMOpcode g_thumb_opcodes[] =
     // adjust the stack pointer
     { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm,
       "sub{s} sp, sp, #<imm>"},
-    // adjust the stack pointer
     { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm,
       "sub{s}.w sp, sp, #<const>"},
-    // adjust the stack pointer
     { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_sub_sp_imm,
       "subw sp, sp, #<imm12>"}
 };
