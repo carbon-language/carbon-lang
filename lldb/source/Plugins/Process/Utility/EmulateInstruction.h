@@ -104,45 +104,6 @@ public:
     virtual bool
     EvaluateInstruction () = 0;
     
-    // Create a mask that starts at bit zero and includes "bit"
-    static uint64_t
-    MaskUpToBit (const uint64_t bit)
-    {
-        return (1ull << (bit + 1ull)) - 1ull;
-    }
-
-    static bool
-    BitIsSet (const uint64_t value, const uint64_t bit)
-    {
-        return (value & (1ull << bit)) != 0;
-    }
-
-    static bool
-    BitIsClear (const uint64_t value, const uint64_t bit)
-    {
-        return (value & (1ull << bit)) == 0;
-    }
-
-    static int64_t
-    SignedBits (const uint64_t value, const uint64_t msbit, const uint64_t lsbit)
-    {
-        uint64_t result = UnsignedBits (value, msbit, lsbit);
-        if (BitIsSet(value, msbit))
-        {
-            // Sign extend
-            result |= ~MaskUpToBit (msbit - lsbit);
-        }
-        return result;
-    }
-
-    static uint64_t
-    UnsignedBits (const uint64_t value, const uint64_t msbit, const uint64_t lsbit)
-    {
-        uint64_t result = value >> lsbit;
-        result &= MaskUpToBit (msbit - lsbit);
-        return result;
-    }
-
     uint64_t
     ReadRegisterUnsigned (uint32_t reg_kind, 
                           uint32_t reg_num, 
@@ -168,19 +129,6 @@ public:
                          uint64_t uval,
                          size_t uval_byte_size);
 
-    static uint32_t
-    BitCount (uint64_t value)
-    {
-        uint32_t set_bit_count = 0;
-        while (value)
-        {
-            if (value & 1)
-                ++set_bit_count;
-            value >>= 1;
-        }
-        return set_bit_count;
-    }
-    
     uint32_t
     GetAddressByteSize () const
     {
