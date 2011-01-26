@@ -53,6 +53,7 @@ protected:
   void dropHungoffUses() {
     Use::zap(OperandList, OperandList + NumOperands, true);
     OperandList = 0;
+    // Reset NumOperands so User::operator delete() does the right thing.
     NumOperands = 0;
   }
 public:

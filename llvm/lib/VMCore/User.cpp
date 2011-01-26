@@ -73,16 +73,9 @@ void *User::operator new(size_t s, unsigned Us) {
 void User::operator delete(void *Usr) {
   User *Start = static_cast<User*>(Usr);
   Use *Storage = static_cast<Use*>(Usr) - Start->NumOperands;
-  //
-  // look for a variadic User
-  if (Storage == Start->OperandList) {
-    ::operator delete(Storage);
-    return;
-  }
-  //
-  // in all other cases just delete the nullary User (covers hung-off
-  // uses also
-  ::operator delete(Usr);
+  // If there were hung-off uses, they will have been freed already and
+  // NumOperands reset to 0, so here we just free the User itself.
+  ::operator delete(Storage);
 }
 
 } // End llvm namespace
