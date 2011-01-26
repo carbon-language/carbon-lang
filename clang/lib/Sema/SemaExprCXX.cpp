@@ -2557,6 +2557,32 @@ QualType Sema::CheckPointerToMemberOperands(Expr *&lex, Expr *&rex,
   QualType Result = MemPtr->getPointeeType();
   Result = Context.getCVRQualifiedType(Result, LType.getCVRQualifiers());
 
+  // C++0x [expr.mptr.oper]p6:
+  //   In a .* expression whose object expression is an rvalue, the program is
+  //   ill-formed if the second operand is a pointer to member function with 
+  //   ref-qualifier &. In a ->* expression or in a .* expression whose object 
+  //   expression is an lvalue, the program is ill-formed if the second operand 
+  //   is a pointer to member function with ref-qualifier &&.
+  if (const FunctionProtoType *Proto = Result->getAs<FunctionProtoType>()) {
+    switch (Proto->getRefQualifier()) {
+    case RQ_None:
+      // Do nothing
+      break;
+
+    case RQ_LValue:
+      if (!isIndirect && !lex->Classify(Context).isLValue())
+        Diag(Loc, diag::err_pointer_to_member_oper_value_classify)
+          << RType << 1 << lex->getSourceRange();
+      break;
+    
+    case RQ_RValue:
+      if (isIndirect || !lex->Classify(Context).isRValue())
+        Diag(Loc, diag::err_pointer_to_member_oper_value_classify)
+          << RType << 0 << lex->getSourceRange();
+      break;
+    }
+  }
+  
   // C++ [expr.mptr.oper]p6:
   //   The result of a .* expression whose second operand is a pointer
   //   to a data member is of the same value category as its
