@@ -78,7 +78,8 @@ static bool CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType);
 // %1: Source Type
 // %2: Destination Type
 static TryCastResult TryLValueToRValueCast(Sema &Self, Expr *SrcExpr,
-                                           QualType DestType, CastKind &Kind,
+                                           QualType DestType, bool CStyle,
+                                           CastKind &Kind,
                                            CXXCastPath &BasePath,
                                            unsigned &msg);
 static TryCastResult TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr,
@@ -583,7 +584,8 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   // C++0x [expr.static.cast]p3: 
   //   A glvalue of type "cv1 T1" can be cast to type "rvalue reference to cv2
   //   T2" if "cv2 T2" is reference-compatible with "cv1 T1".
-  tcr = TryLValueToRValueCast(Self, SrcExpr, DestType, Kind, BasePath, msg);
+  tcr = TryLValueToRValueCast(Self, SrcExpr, DestType, CStyle, Kind, BasePath, 
+                              msg);
   if (tcr != TC_NotApplicable)
     return tcr;
 
@@ -695,7 +697,8 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
 /// Tests whether a conversion according to N2844 is valid.
 TryCastResult
 TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
-                      CastKind &Kind, CXXCastPath &BasePath, unsigned &msg) {
+                      bool CStyle, CastKind &Kind, CXXCastPath &BasePath, 
+                      unsigned &msg) {
   // C++0x [expr.static.cast]p3:
   //   A glvalue of type "cv1 T1" can be cast to type "rvalue reference to 
   //   cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
@@ -711,8 +714,15 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   // FIXME: Should allow casting away constness if CStyle.
   bool DerivedToBase;
   bool ObjCConversion;
+  QualType FromType = SrcExpr->getType();
+  QualType ToType = R->getPointeeType();
+  if (CStyle) {
+    FromType = FromType.getUnqualifiedType();
+    ToType = ToType.getUnqualifiedType();
+  }
+  
   if (Self.CompareReferenceRelationship(SrcExpr->getLocStart(),
-                                        R->getPointeeType(), SrcExpr->getType(),
+                                        ToType, FromType,
                                         DerivedToBase, ObjCConversion) <
         Sema::Ref_Compatible_With_Added_Qualification) {
     msg = diag::err_bad_lvalue_to_rvalue_cast;
