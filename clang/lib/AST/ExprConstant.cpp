@@ -549,7 +549,7 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
 
     // Now figure out the necessary offset to add to the baseLV to get from
     // the derived class to the base class.
-    uint64_t Offset = 0;
+    CharUnits Offset = CharUnits::Zero();
 
     QualType Ty = E->getSubExpr()->getType();
     const CXXRecordDecl *DerivedDecl = 
@@ -567,13 +567,12 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
       const CXXRecordDecl *BaseDecl = Base->getType()->getAsCXXRecordDecl();
       const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(DerivedDecl);
 
-      Offset += Layout.getBaseClassOffsetInBits(BaseDecl);
+      Offset += Layout.getBaseClassOffset(BaseDecl);
       DerivedDecl = BaseDecl;
     }
 
     Result.Base = BaseLV.getLValueBase();
-    Result.Offset = BaseLV.getLValueOffset() + 
-      Info.Ctx.toCharUnitsFromBits(Offset);
+    Result.Offset = BaseLV.getLValueOffset() + Offset;
     return true;
   }
 
@@ -1595,9 +1594,7 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
         return false;
       
       // Add the offset to the base.
-      Result += Info.Ctx.toCharUnitsFromBits(
-             RL.getBaseClassOffsetInBits(
-               cast<CXXRecordDecl>(BaseRT->getDecl())));
+      Result += RL.getBaseClassOffset(cast<CXXRecordDecl>(BaseRT->getDecl()));
       break;
     }
     }
