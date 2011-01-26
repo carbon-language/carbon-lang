@@ -89,10 +89,6 @@ protected:
 
 public:
 
-  /// \brief Whether this attribute should be merged to new
-  /// declarations.
-  virtual bool isMerged() const { return true; }
-
   attr::Kind getKind() const {
     return static_cast<attr::Kind>(AttrKind);
   }
