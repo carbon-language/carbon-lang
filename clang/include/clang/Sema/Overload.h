@@ -130,7 +130,7 @@ namespace clang {
     /// Third - The third conversion can be a qualification conversion.
     ImplicitConversionKind Third : 8;
 
-    /// Deprecated - Whether this the deprecated conversion of a
+    /// \brief Whether this is the deprecated conversion of a
     /// string literal to a pointer to non-const character data
     /// (C++ 4.2p2).
     unsigned DeprecatedStringLiteralToCharPtr : 1;
