@@ -681,7 +681,7 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
     return true;
 
   // If the function is a class member, its signature includes the
-  // cv-qualifiers (if any) on the function itself.
+  // cv-qualifiers (if any) and ref-qualifier (if any) on the function itself.
   //
   // As part of this, also check whether one of the member functions
   // is static, in which case they are not overloads (C++
@@ -692,7 +692,8 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
   CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
   if (OldMethod && NewMethod &&
       !OldMethod->isStatic() && !NewMethod->isStatic() &&
-      OldMethod->getTypeQualifiers() != NewMethod->getTypeQualifiers())
+      (OldMethod->getTypeQualifiers() != NewMethod->getTypeQualifiers() ||
+       OldMethod->getRefQualifier() != NewMethod->getRefQualifier()))
     return true;
   
   // The signatures match; this is not an overload.
