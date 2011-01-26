@@ -93,3 +93,13 @@ int rdar8875247_test() {
   rdar8875247 f;
 } // expected-warning{{control reaches end of non-void function}}
 
+struct rdar8875247_B {
+  rdar8875247_B();
+  ~rdar8875247_B();
+};
+
+rdar8875247_B test_rdar8875247_B() {
+  rdar8875247_B f;
+  return f;
+} // no-warning
+

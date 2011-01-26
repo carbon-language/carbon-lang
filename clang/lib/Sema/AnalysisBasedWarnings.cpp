@@ -121,26 +121,29 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
     const CFGBlock& B = **I;
     if (!live[B.getBlockID()])
       continue;
-    if (B.size() == 0) {
+
+    // Destructors can appear after the 'return' in the CFG.  This is
+    // normal.  We need to look pass the destructors for the return
+    // statement (if it exists).
+    CFGBlock::const_reverse_iterator ri = B.rbegin(), re = B.rend();
+    for ( ; ri != re ; ++ri) {
+      CFGElement CE = *ri;
+      if (isa<CFGStmt>(CE))
+        break;
+    }
+    
+    // No more CFGElements in the block?
+    if (ri == re) {
       if (B.getTerminator() && isa<CXXTryStmt>(B.getTerminator())) {
         HasAbnormalEdge = true;
         continue;
       }
-
       // A labeled empty statement, or the entry block...
       HasPlainEdge = true;
       continue;
     }
-    CFGElement CE = B[B.size()-1];
-    
-    if (!isa<CFGStmt>(CE)) {
-      HasPlainEdge = true;
-      continue;
-    }
 
-    CFGStmt CS = CE.getAs<CFGStmt>();
-    if (!CS.isValid())
-      continue;
+    CFGStmt CS = cast<CFGStmt>(*ri);
     Stmt *S = CS.getStmt();
     if (isa<ReturnStmt>(S)) {
       HasLiveReturn = true;
