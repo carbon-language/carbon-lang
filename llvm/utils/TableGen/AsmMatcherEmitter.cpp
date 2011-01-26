@@ -426,7 +426,7 @@ struct MatchableInfo {
       return AsmOperands.size() < RHS.AsmOperands.size();
 
     // Compare lexicographically by operand. The matcher validates that other
-    // orderings wouldn't be ambiguous using \see CouldMatchAmiguouslyWith().
+    // orderings wouldn't be ambiguous using \see CouldMatchAmbiguouslyWith().
     for (unsigned i = 0, e = AsmOperands.size(); i != e; ++i) {
       if (*AsmOperands[i].Class < *RHS.AsmOperands[i].Class)
         return true;
@@ -437,10 +437,10 @@ struct MatchableInfo {
     return false;
   }
 
-  /// CouldMatchAmiguouslyWith - Check whether this matchable could
+  /// CouldMatchAmbiguouslyWith - Check whether this matchable could
   /// ambiguously match the same set of operands as \arg RHS (without being a
   /// strictly superior match).
-  bool CouldMatchAmiguouslyWith(const MatchableInfo &RHS) {
+  bool CouldMatchAmbiguouslyWith(const MatchableInfo &RHS) {
     // The primary comparator is the instruction mnemonic.
     if (Mnemonic != RHS.Mnemonic)
       return false;
@@ -1867,7 +1867,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
         MatchableInfo &A = *Info.Matchables[i];
         MatchableInfo &B = *Info.Matchables[j];
 
-        if (A.CouldMatchAmiguouslyWith(B)) {
+        if (A.CouldMatchAmbiguouslyWith(B)) {
           errs() << "warning: ambiguous matchables:\n";
           A.dump();
           errs() << "\nis incomparable with:\n";
