@@ -295,6 +295,7 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
     // Fall through in Release mode.
   case Type::IntegerTyID:
   case Type::OpaqueTyID:
+  case Type::VectorTyID:
     // Ty1 == Ty2 would have returned true earlier.
     return false;
 
@@ -352,13 +353,6 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
     const ArrayType *ATy2 = cast<ArrayType>(Ty2);
     return ATy1->getNumElements() == ATy2->getNumElements() &&
            isEquivalentType(ATy1->getElementType(), ATy2->getElementType());
-  }
-
-  case Type::VectorTyID: {
-    const VectorType *VTy1 = cast<VectorType>(Ty1);
-    const VectorType *VTy2 = cast<VectorType>(Ty2);
-    return VTy1->getNumElements() == VTy2->getNumElements() &&
-           isEquivalentType(VTy1->getElementType(), VTy2->getElementType());
   }
   }
 }
