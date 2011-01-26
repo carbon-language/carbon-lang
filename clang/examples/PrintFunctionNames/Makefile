@@ -18,7 +18,11 @@ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/PrintFunctionNames.exports
 endif
 endif
 
-LINK_LIBS_IN_SHARED = 1
+LINK_LIBS_IN_SHARED = 0
 SHARED_LIBRARY = 1
 
 include $(CLANG_LEVEL)/Makefile
+
+ifeq ($(OS),Darwin)
+  LDFLAGS=-Wl,-undefined,dynamic_lookup
+endif
