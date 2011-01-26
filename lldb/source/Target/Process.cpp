@@ -566,7 +566,8 @@ Process::SetExitStatus (int status, const char *cstr)
     // We were already in the exited state
     if (m_private_state.GetValue() == eStateExited)
     {
-        log->Printf("Process::SetExitStatus () ignoring exit status because state was already set to eStateExited");
+        if (log)
+            log->Printf("Process::SetExitStatus () ignoring exit status because state was already set to eStateExited");
         return false;
     }
     
