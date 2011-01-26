@@ -1222,6 +1222,10 @@ Parser::TPResult Parser::TryParseFunctionDeclarator() {
          Tok.is(tok::kw_restrict)   )
     ConsumeToken();
 
+  // ref-qualifier[opt]
+  if (Tok.is(tok::amp) || Tok.is(tok::ampamp))
+    ConsumeToken();
+  
   // exception-specification
   if (Tok.is(tok::kw_throw)) {
     ConsumeToken();

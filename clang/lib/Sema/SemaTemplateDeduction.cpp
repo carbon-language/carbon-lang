@@ -1154,11 +1154,11 @@ DeduceTemplateArguments(Sema &S,
       const FunctionProtoType *FunctionProtoParam =
         cast<FunctionProtoType>(Param);
 
-      if (FunctionProtoParam->getTypeQuals() !=
-          FunctionProtoArg->getTypeQuals())
-        return Sema::TDK_NonDeducedMismatch;
-
-      if (FunctionProtoParam->isVariadic() != FunctionProtoArg->isVariadic())
+      if (FunctionProtoParam->getTypeQuals() 
+            != FunctionProtoArg->getTypeQuals() ||
+          FunctionProtoParam->getRefQualifier() 
+            != FunctionProtoArg->getRefQualifier() ||
+          FunctionProtoParam->isVariadic() != FunctionProtoArg->isVariadic())
         return Sema::TDK_NonDeducedMismatch;
 
       // Check return types.
