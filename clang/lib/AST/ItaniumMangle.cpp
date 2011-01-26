@@ -1191,21 +1191,35 @@ void CXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
   Out << Buffer;
 }
 
-void CXXNameMangler::mangleType(QualType T) {
+void CXXNameMangler::mangleType(QualType nonCanon) {
   // Only operate on the canonical type!
-  T = Context.getASTContext().getCanonicalType(T);
+  QualType canon = nonCanon.getCanonicalType();
 
-  bool IsSubstitutable = T.hasLocalQualifiers() || !isa<BuiltinType>(T);
-  if (IsSubstitutable && mangleSubstitution(T))
+  SplitQualType split = canon.split();
+  Qualifiers quals = split.second;
+  const Type *ty = split.first;
+
+  bool isSubstitutable = quals || !isa<BuiltinType>(ty);
+  if (isSubstitutable && mangleSubstitution(canon))
     return;
 
-  if (Qualifiers Quals = T.getLocalQualifiers()) {
-    mangleQualifiers(Quals);
+  // If we're mangling a qualified array type, push the qualifiers to
+  // the element type.
+  if (quals && isa<ArrayType>(ty)) {
+    ty = Context.getASTContext().getAsArrayType(canon);
+    quals = Qualifiers();
+
+    // Note that we don't update canon: we want to add the
+    // substitution at the canonical type.
+  }
+
+  if (quals) {
+    mangleQualifiers(quals);
     // Recurse:  even if the qualified type isn't yet substitutable,
     // the unqualified type might be.
-    mangleType(T.getLocalUnqualifiedType());
+    mangleType(QualType(ty, 0));
   } else {
-    switch (T->getTypeClass()) {
+    switch (ty->getTypeClass()) {
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define NON_CANONICAL_TYPE(CLASS, PARENT) \
     case Type::CLASS: \
@@ -1213,15 +1227,15 @@ void CXXNameMangler::mangleType(QualType T) {
       return;
 #define TYPE(CLASS, PARENT) \
     case Type::CLASS: \
-      mangleType(static_cast<const CLASS##Type*>(T.getTypePtr())); \
+      mangleType(static_cast<const CLASS##Type*>(ty)); \
       break;
 #include "clang/AST/TypeNodes.def"
     }
   }
 
   // Add the substitution.
-  if (IsSubstitutable)
-    addSubstitution(T);
+  if (isSubstitutable)
+    addSubstitution(canon);
 }
 
 void CXXNameMangler::mangleNameOrStandardSubstitution(const NamedDecl *ND) {

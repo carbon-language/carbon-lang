@@ -635,3 +635,15 @@ namespace test22 {
   // CHECK: define void @_ZN6test221fEDn(
   void f(decltype(nullptr)) { }
 }
+
+// rdar://problem/8913416
+namespace test23 {
+  typedef void * const vpc;
+
+  // CHECK: define void @_ZN6test231fERA10_KPv(
+  void f(vpc (&)[10]) {}
+
+  typedef vpc vpca5[5];
+  void f(vpca5 volatile (&)[10]) {}
+  // CHECK: define void @_ZN6test231fERA10_A5_VKPv(
+}
