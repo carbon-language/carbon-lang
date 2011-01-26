@@ -814,7 +814,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   bool isCustom = false;
 
   // Figure out the correct action; the way to query this varies by opcode
-  TargetLowering::LegalizeAction Action;
+  TargetLowering::LegalizeAction Action = TargetLowering::Legal;
   bool SimpleFinishLegalizing = true;
   switch (Node->getOpcode()) {
   case ISD::INTRINSIC_W_CHAIN:
