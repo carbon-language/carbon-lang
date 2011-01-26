@@ -142,6 +142,64 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;
 }
 
+// CountBonusForConstant - Figure out an approximation for how much per-call
+// performance boost we can expect if the specified value is constant.
+unsigned CodeMetrics::CountBonusForConstant(Value *V) {
+  unsigned Bonus = 0;
+  bool indirectCallBonus = false;
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    User *U = *UI;
+    if (CallInst *CI = dyn_cast<CallInst>(U)) {
+      // Turning an indirect call into a direct call is a BIG win
+      if (CI->getCalledValue() == V)
+        indirectCallBonus = true;
+    }
+    else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
+      // Turning an indirect call into a direct call is a BIG win
+      if (II->getCalledValue() == V)
+        indirectCallBonus = true;
+    }
+    // FIXME: Eliminating conditional branches and switches should
+    // also yield a per-call performance boost.
+    else {
+      // Figure out the bonuses that wll accrue due to simple constant
+      // propagation.
+      Instruction &Inst = cast<Instruction>(*U);
+
+      // We can't constant propagate instructions which have effects or
+      // read memory.
+      //
+      // FIXME: It would be nice to capture the fact that a load from a
+      // pointer-to-constant-global is actually a *really* good thing to zap.
+      // Unfortunately, we don't know the pointer that may get propagated here,
+      // so we can't make this decision.
+      if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
+          isa<AllocaInst>(Inst))
+        continue;
+
+      bool AllOperandsConstant = true;
+      for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i)
+        if (!isa<Constant>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
+          AllOperandsConstant = false;
+          break;
+        }
+
+      if (AllOperandsConstant)
+        Bonus += CountBonusForConstant(&Inst);
+    }
+  }
+  
+  // FIXME: The only reason we're applying the bonus once is while it's great
+  // to devirtualize calls the magnitude of the bonus x number of call sites
+  // can lead to a huge code explosion when we prefer to inline 1000 instruction
+  // functions that have 10 call sites. This should be made a function of the
+  // estimated inline penalty/benefit + the indirect call bonus.
+  if (indirectCallBonus) Bonus += InlineConstants::IndirectCallBonus;
+  
+  return Bonus;
+}
+
+
 // CountCodeReductionForConstant - Figure out an approximation for how many
 // instructions will be constant folded if the specified value is constant.
 //
@@ -251,14 +309,17 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
   ArgumentWeights.reserve(F->arg_size());
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     ArgumentWeights.push_back(ArgInfo(Metrics.CountCodeReductionForConstant(I),
-                                      Metrics.CountCodeReductionForAlloca(I)));
+                                      Metrics.CountCodeReductionForAlloca(I),
+                                      Metrics.CountBonusForConstant(I)));
 }
 
 /// NeverInline - returns true if the function should never be inlined into
 /// any caller
-bool InlineCostAnalyzer::FunctionInfo::NeverInline() {
+bool InlineCostAnalyzer::FunctionInfo::NeverInline()
+{
   return (Metrics.callsSetJmp || Metrics.isRecursive || 
           Metrics.containsIndirectBr);
+
 }
 // getSpecializationBonus - The heuristic used to determine the per-call
 // performance boost for using a specialization of Callee with argument
@@ -282,14 +343,8 @@ int InlineCostAnalyzer::getSpecializationBonus(Function *Callee,
   if (CalleeFI->Metrics.NumBlocks == 0)
     CalleeFI->analyzeFunction(Callee);
 
-  unsigned ArgNo = 0;
-  unsigned i = 0;
-  for (Function::arg_iterator I = Callee->arg_begin(), E = Callee->arg_end();
-       I != E; ++I, ++ArgNo)
-    if (ArgNo == SpecializedArgNos[i]) {
-      ++i;
-      Bonus += CountBonusForConstant(I);
-    }
+  for (unsigned i = 0, s = SpecializedArgNos.size(); i < s; ++i )
+    Bonus += CalleeFI->ArgumentWeights[SpecializedArgNos[i]].ConstantBonus;
 
   // Calls usually take a long time, so they make the specialization gain 
   // smaller.
@@ -298,62 +353,6 @@ int InlineCostAnalyzer::getSpecializationBonus(Function *Callee,
   return Bonus;
 }
 
-// CountBonusForConstant - Figure out an approximation for how much per-call
-// performance boost we can expect if the specified value is constant.
-unsigned InlineCostAnalyzer::CountBonusForConstant(Value *V) {
-  unsigned Bonus = 0;
-  bool indirectCallBonus = false;
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    User *U = *UI;
-    if (CallInst *CI = dyn_cast<CallInst>(U)) {
-      // Turning an indirect call into a direct call is a BIG win
-      if (CI->getCalledValue() == V)
-        indirectCallBonus = true;
-    }
-    else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
-      // Turning an indirect call into a direct call is a BIG win
-      if (II->getCalledValue() == V)
-        indirectCallBonus = true;
-    }
-    // FIXME: Eliminating conditional branches and switches should
-    // also yield a per-call performance boost.
-    else {
-      // Figure out the bonuses that wll accrue due to simple constant
-      // propagation.
-      Instruction &Inst = cast<Instruction>(*U);
-
-      // We can't constant propagate instructions which have effects or
-      // read memory.
-      //
-      // FIXME: It would be nice to capture the fact that a load from a
-      // pointer-to-constant-global is actually a *really* good thing to zap.
-      // Unfortunately, we don't know the pointer that may get propagated here,
-      // so we can't make this decision.
-      if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
-          isa<AllocaInst>(Inst))
-        continue;
-
-      bool AllOperandsConstant = true;
-      for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i)
-        if (!isa<Constant>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
-          AllOperandsConstant = false;
-          break;
-        }
-
-      if (AllOperandsConstant)
-        Bonus += CountBonusForConstant(&Inst);
-    }
-  }
-  
-  // FIXME: The only reason we're applying the bonus once is while it's great
-  // to devirtualize calls the magnitude of the bonus x number of call sites
-  // can lead to a huge code explosion when we prefer to inline 1000 instruction
-  // functions that have 10 call sites. This should be made a function of the
-  // estimated inline penalty/benefit + the indirect call bonus.
-  if (indirectCallBonus) Bonus += InlineConstants::IndirectCallBonus;
-  
-  return Bonus;
-}
 
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
@@ -428,33 +427,31 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   // passed into the function.
   //
   unsigned ArgNo = 0;
-  CallSite::arg_iterator I = CS.arg_begin();
-  for (Function::arg_iterator FI = Callee->arg_begin(), FE = Callee->arg_end();
-       FI != FE; ++I, ++FI, ++ArgNo) {
+  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
+       I != E; ++I, ++ArgNo) {
+    // Each argument passed in has a cost at both the caller and the callee
+    // sides.  Measurements show that each argument costs about the same as an
+    // instruction.
+    InlineCost -= InlineConstants::InstrCost;
 
     // If an alloca is passed in, inlining this function is likely to allow
     // significant future optimization possibilities (like scalar promotion, and
     // scalarization), so encourage the inlining of the function.
     //
-    if (isa<AllocaInst>(I))
-      InlineCost -= CalleeFI->ArgumentWeights[ArgNo].AllocaWeight;
+    if (isa<AllocaInst>(I)) {
+      if (ArgNo < CalleeFI->ArgumentWeights.size())
+        InlineCost -= CalleeFI->ArgumentWeights[ArgNo].AllocaWeight;
 
-    // If this is a constant being passed into the function, use the argument
-    // weights calculated for the callee to determine how much will be folded
-    // away with this information.
-    else if (isa<Constant>(I)) {
-      InlineCost -= CalleeFI->ArgumentWeights[ArgNo].ConstantWeight;
-       
-      // Compute any constant bonus due to inlining we want to give here.
-      InlineCost -= CountBonusForConstant(FI);
+      // If this is a constant being passed into the function, use the argument
+      // weights calculated for the callee to determine how much will be folded
+      // away with this information.
+    } else if (isa<Constant>(I)) {
+      if (ArgNo < CalleeFI->ArgumentWeights.size())
+        InlineCost -= (CalleeFI->ArgumentWeights[ArgNo].ConstantWeight +
+                       CalleeFI->ArgumentWeights[ArgNo].ConstantBonus);
     }
   }
   
-  // Each argument passed in has a cost at both the caller and the callee
-  // sides.  Measurements show that each argument costs about the same as an
-  // instruction.
-  InlineCost -= (CS.arg_size() * InlineConstants::InstrCost);
-
   // If there is only one call of the function, and it has internal linkage,
   // make it almost guaranteed to be inlined.
   //

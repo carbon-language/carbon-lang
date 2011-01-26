@@ -96,9 +96,10 @@ namespace llvm {
     public:
       unsigned ConstantWeight;
       unsigned AllocaWeight;
+      unsigned ConstantBonus;
 
-      ArgInfo(unsigned CWeight, unsigned AWeight)
-        : ConstantWeight(CWeight), AllocaWeight(AWeight)
+      ArgInfo(unsigned CWeight, unsigned AWeight, unsigned CBonus)
+        : ConstantWeight(CWeight), AllocaWeight(AWeight), ConstantBonus(CBonus)
           {}
     };
 
@@ -124,7 +125,6 @@ namespace llvm {
     // the ValueMap will update itself when this happens.
     ValueMap<const Function *, FunctionInfo> CachedFunctionInfo;
 
-    unsigned CountBonusForConstant(Value *V);
   public:
 
     /// getInlineCost - The heuristic used to determine if we should inline the
