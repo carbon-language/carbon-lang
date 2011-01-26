@@ -673,12 +673,37 @@ void ARMInstPrinter::printT2AddrModeSoRegOperand(const MCInst *MI,
 
 void ARMInstPrinter::printVFPf32ImmOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
-  O << '#' << (float)MI->getOperand(OpNum).getFPImm();
+  const MCOperand &MO = MI->getOperand(OpNum);
+  O << '#';
+  if (MO.isFPImm()) {
+    O << (float)MO.getFPImm();
+  } else {
+    union {
+      uint32_t I;
+      float F;
+    } FPUnion;
+
+    FPUnion.I = MO.getImm();
+    O << FPUnion.F;
+  }
 }
 
 void ARMInstPrinter::printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
-  O << '#' << MI->getOperand(OpNum).getFPImm();
+  const MCOperand &MO = MI->getOperand(OpNum);
+  O << '#';
+  if (MO.isFPImm()) {
+    O << MO.getFPImm();
+  } else {
+    // We expect the binary encoding of a floating point number here.
+    union {
+      uint64_t I;
+      double D;
+    } FPUnion;
+
+    FPUnion.I = MO.getImm();
+    O << FPUnion.D;
+  }
 }
 
 void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
