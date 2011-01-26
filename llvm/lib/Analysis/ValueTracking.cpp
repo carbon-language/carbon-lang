@@ -656,7 +656,7 @@ void llvm::ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
 /// types and vectors of integers.
 bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-    return CI->getValue().countPopulation() == 1;
+    return CI->getValue().isPowerOf2();
   // TODO: Handle vector constants.
 
   // 1 << X is clearly a power of two if the one is not shifted off the end.  If
