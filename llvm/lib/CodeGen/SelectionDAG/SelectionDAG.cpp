@@ -3082,6 +3082,30 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   case ISD::VECTOR_SHUFFLE:
     llvm_unreachable("should use getVectorShuffle constructor!");
     break;
+  case ISD::INSERT_SUBVECTOR: {
+    SDValue Index = N3;
+    if (VT.isSimple() && N1.getValueType().isSimple()
+        && N2.getValueType().isSimple()) {
+      assert(VT.isVector() && N1.getValueType().isVector() &&
+             N2.getValueType().isVector() &&
+             "Insert subvector VTs must be a vectors");
+      assert(VT == N1.getValueType() &&
+             "Dest and insert subvector source types must match!");
+      assert(N2.getValueType().getSimpleVT() <= N1.getValueType().getSimpleVT() &&
+             "Insert subvector must be from smaller vector to larger vector!");
+      if (ConstantSDNode *CSD = dyn_cast<ConstantSDNode>(Index.getNode())) {
+        uint64_t Idx = CSD->getZExtValue();
+        assert((N2.getValueType().getVectorNumElements() + Idx
+                <= VT.getVectorNumElements())
+               && "Insert subvector overflow!");
+      }
+
+      // Trivial insertion.
+      if (VT.getSimpleVT() == N2.getValueType().getSimpleVT())
+        return N2;
+    }
+    break;
+  }
   case ISD::BITCAST:
     // Fold bit_convert nodes from a type to themselves.
     if (N1.getValueType() == VT)
@@ -5811,6 +5835,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::INSERT_VECTOR_ELT:   return "insert_vector_elt";
   case ISD::EXTRACT_VECTOR_ELT:  return "extract_vector_elt";
   case ISD::CONCAT_VECTORS:      return "concat_vectors";
+  case ISD::INSERT_SUBVECTOR:    return "insert_subvector";
   case ISD::EXTRACT_SUBVECTOR:   return "extract_subvector";
   case ISD::SCALAR_TO_VECTOR:    return "scalar_to_vector";
   case ISD::VECTOR_SHUFFLE:      return "vector_shuffle";

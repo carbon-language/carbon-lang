@@ -269,6 +269,14 @@ namespace ISD {
     /// lengths of the input vectors.
     CONCAT_VECTORS,
 
+    /// INSERT_SUBVECTOR(VECTOR1, VECTOR2, IDX) - Returns a vector
+    /// with VECTOR2 inserted into VECTOR1 at the (potentially
+    /// variable) element number IDX, which must be a multiple of the
+    /// VECTOR2 vector length.  The elements of VECTOR1 starting at
+    /// IDX are overwritten with VECTOR2.  Elements IDX through
+    /// vector_length(VECTOR2) must be valid VECTOR1 indices.
+    INSERT_SUBVECTOR,
+
     /// EXTRACT_SUBVECTOR(VECTOR, IDX) - Returns a subvector from VECTOR (an
     /// vector value) starting with the element number IDX, which must be a
     /// constant multiple of the result vector length.

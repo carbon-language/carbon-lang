@@ -171,6 +171,7 @@ private:
   SDValue ExpandBitCount(unsigned Opc, SDValue Op, DebugLoc dl);
 
   SDValue ExpandExtractFromVectorThroughStack(SDValue Op);
+  SDValue ExpandInsertToVectorThroughStack(SDValue Op);
   SDValue ExpandVectorBuildThroughStack(SDNode* Node);
 
   std::pair<SDValue, SDValue> ExpandAtomic(SDNode *Node);
@@ -1588,6 +1589,50 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
                         false, false, 0);
 }
 
+SDValue SelectionDAGLegalize::ExpandInsertToVectorThroughStack(SDValue Op) {
+  assert(Op.getValueType().isVector() && "Non-vector insert subvector!");
+
+  SDValue Vec  = Op.getOperand(0);
+  SDValue Part = Op.getOperand(1);
+  SDValue Idx  = Op.getOperand(2);
+  DebugLoc dl  = Op.getDebugLoc();
+
+  // Store the value to a temporary stack slot, then LOAD the returned part.
+
+  SDValue StackPtr = DAG.CreateStackTemporary(Vec.getValueType());
+  int FI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
+  MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(FI);
+
+  // First store the whole vector.
+  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, PtrInfo,
+                            false, false, 0);
+
+  // Then store the inserted part.
+
+  // Add the offset to the index.
+  unsigned EltSize =
+      Vec.getValueType().getVectorElementType().getSizeInBits()/8;
+
+  Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
+                    DAG.getConstant(EltSize, Idx.getValueType()));
+
+  if (Idx.getValueType().bitsGT(TLI.getPointerTy()))
+    Idx = DAG.getNode(ISD::TRUNCATE, dl, TLI.getPointerTy(), Idx);
+  else
+    Idx = DAG.getNode(ISD::ZERO_EXTEND, dl, TLI.getPointerTy(), Idx);
+
+  SDValue SubStackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx,
+                                    StackPtr);
+
+  // Store the subvector.
+  Ch = DAG.getStore(DAG.getEntryNode(), dl, Part, SubStackPtr,
+                    MachinePointerInfo(), false, false, 0);
+
+  // Finally, load the updated vector.
+  return DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr, PtrInfo,
+                     false, false, 0);
+}
+
 SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
   // We can't handle this case efficiently.  Allocate a sufficiently
   // aligned object on the stack, store each element into it, then load
@@ -2805,6 +2850,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     break;
   case ISD::EXTRACT_SUBVECTOR:
     Results.push_back(ExpandExtractFromVectorThroughStack(SDValue(Node, 0)));
+    break;
+  case ISD::INSERT_SUBVECTOR:
+    Results.push_back(ExpandInsertToVectorThroughStack(SDValue(Node, 0)));
     break;
   case ISD::CONCAT_VECTORS: {
     Results.push_back(ExpandVectorBuildThroughStack(Node));
