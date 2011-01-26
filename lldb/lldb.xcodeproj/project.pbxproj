@@ -384,6 +384,7 @@
 		AF68D3311255A111002FF25B /* UnwindLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */; };
 		AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF94005711C03F6500085DB9 /* SymbolVendor.cpp */; };
 		B23DD25012EDFAC1000C3894 /* ARMUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = B23DD24F12EDFAC1000C3894 /* ARMUtils.h */; };
+		B287E63F12EFAE2C00C9BEFE /* ARMDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = B287E63E12EFAE2C00C9BEFE /* ARMDefines.h */; };
 		B296983712C2FB98002D92C3 /* CommandObjectVersion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */; };
 		B2D3033712EFA5C500F84EB3 /* InstructionUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */; };
 /* End PBXBuildFile section */
@@ -1097,6 +1098,7 @@
 		AF68D3301255A110002FF25B /* UnwindLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindLLDB.h; path = Utility/UnwindLLDB.h; sourceTree = "<group>"; };
 		AF94005711C03F6500085DB9 /* SymbolVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolVendor.cpp; path = source/Symbol/SymbolVendor.cpp; sourceTree = "<group>"; };
 		B23DD24F12EDFAC1000C3894 /* ARMUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMUtils.h; path = Utility/ARMUtils.h; sourceTree = "<group>"; };
+		B287E63E12EFAE2C00C9BEFE /* ARMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMDefines.h; path = Utility/ARMDefines.h; sourceTree = "<group>"; };
 		B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectVersion.cpp; path = source/Commands/CommandObjectVersion.cpp; sourceTree = "<group>"; };
 		B296983512C2FB2B002D92C3 /* CommandObjectVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectVersion.h; path = source/Commands/CommandObjectVersion.h; sourceTree = "<group>"; };
 		B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InstructionUtils.h; path = Utility/InstructionUtils.h; sourceTree = "<group>"; };
@@ -1614,6 +1616,7 @@
 			isa = PBXGroup;
 			children = (
 				B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */,
+				B287E63E12EFAE2C00C9BEFE /* ARMDefines.h */,
 				B23DD24F12EDFAC1000C3894 /* ARMUtils.h */,
 				2621C9CC12EA009300711A30 /* EmulateInstruction.h */,
 				2621CA0A12EA107700711A30 /* EmulateInstruction.cpp */,
@@ -2321,6 +2324,7 @@
 				2621C9D012EA066500711A30 /* EmulateInstructionARM.h in Headers */,
 				B23DD25012EDFAC1000C3894 /* ARMUtils.h in Headers */,
 				B2D3033712EFA5C500F84EB3 /* InstructionUtils.h in Headers */,
+				B287E63F12EFAE2C00C9BEFE /* ARMDefines.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

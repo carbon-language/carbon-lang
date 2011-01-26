@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "EmulateInstructionARM.h"
+#include "ARMDefines.h"
 #include "ARMUtils.h"
 
 using namespace lldb;
