@@ -121,6 +121,8 @@ def usage():
 Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
+-A   : specify the architecture to launch for the inferior process
+-C   : specify the compiler used to build the inferior executable
 -a   : don't do lldb Python API tests
        use @python_api_test to decorate a test case as lldb Python API test
 +a   : just do lldb Python API tests
@@ -276,6 +278,20 @@ def parseOptionsAndInitTestdirs():
 
         if sys.argv[index].find('-h') != -1:
             usage()
+        elif sys.argv[index].startswith('-A'):
+            # Increment by 1 to fetch the ARCH spec.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            os.environ["ARCH"] = sys.argv[index]
+            index += 1
+        elif sys.argv[index].startswith('-C'):
+            # Increment by 1 to fetch the CC spec.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            os.environ["CC"] = sys.argv[index]
+            index += 1
         elif sys.argv[index].startswith('-a'):
             dont_do_python_api_test = True
             index += 1
