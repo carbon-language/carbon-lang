@@ -54,3 +54,14 @@
 @ CHECK: cdp  p7, #1, c1, c1, c1, #4 @ encoding: [0x11,0xee,0x81,0x17]
         cdp  p7, #1, c1, c1, c1, #4
 
+@ CHECK: nop @ encoding: [0x00,0xbf]
+        nop
+
+@ CHECK: yield @ encoding: [0x10,0xbf]
+        yield
+
+@ CHECK: wfe @ encoding: [0x20,0xbf]
+        wfe
+
+@ CHECK: wfi @ encoding: [0x30,0xbf]
+        wfi

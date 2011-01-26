@@ -3157,6 +3157,7 @@ class T2I_hint<bits<8> op7_0, string opc, string asm>
   : T2I<(outs), (ins), NoItinerary, opc, asm,
         [/* For disassembly only; pattern left blank */]> {
   let Inst{31-20} = 0xf3a;
+  let Inst{19-16} = 0b1111;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
   let Inst{10-8} = 0b000;
