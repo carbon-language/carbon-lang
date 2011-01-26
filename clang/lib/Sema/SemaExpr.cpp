@@ -1354,7 +1354,8 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
     LookForIvars = false;
   else
     LookForIvars = (Lookup.isSingleResult() &&
-                    Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod());
+                    Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod() &&
+                    (Lookup.getAsSingle<VarDecl>() != 0));
   if (!LookForIvars)
     return 0;
   
