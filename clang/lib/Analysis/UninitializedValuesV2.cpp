@@ -291,6 +291,7 @@ class TransferFunctions : public CFGRecStmtVisitor<TransferFunctions> {
   AnalysisContext &ac;
   UninitVariablesHandler *handler;
   const DeclRefExpr *currentDR;
+  const Expr *currentVoidCast;
   const bool flagBlockUses;
 public:
   TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
@@ -298,7 +299,7 @@ public:
                     UninitVariablesHandler *handler,
                     bool flagBlockUses)
     : vals(vals), cfg(cfg), ac(ac), handler(handler), currentDR(0),
-      flagBlockUses(flagBlockUses) {}
+      currentVoidCast(0), flagBlockUses(flagBlockUses) {}
   
   const CFG &getCFG() { return cfg; }
   void reportUninit(const DeclRefExpr *ex, const VarDecl *vd);
@@ -446,14 +447,23 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
       SaveAndRestore<const DeclRefExpr*> lastDR(currentDR, 
                                                 res.getDeclRefExpr());
       Visit(ce->getSubExpr());
-      if (vals[vd] == Uninitialized) {
+      if (currentVoidCast != ce && vals[vd] == Uninitialized) {
         reportUninit(res.getDeclRefExpr(), vd);
         // Don't cascade warnings.
         vals[vd] = Initialized;
       }
       return;
     }
-  }  
+  }
+  else if (CStyleCastExpr *cse = dyn_cast<CStyleCastExpr>(ce)) {
+    if (cse->getType()->isVoidType()) {
+      // e.g. (void) x;
+      SaveAndRestore<const Expr *>
+        lastVoidCast(currentVoidCast, cse->getSubExpr()->IgnoreParens());
+      Visit(cse->getSubExpr());
+      return;
+    }
+  }
   Visit(ce->getSubExpr());
 }
 

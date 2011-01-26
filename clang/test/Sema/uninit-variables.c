@@ -212,3 +212,14 @@ void test32() {
   (void) ^{ (void) test32_x; }; // no-warning
 }
 
+void test_33() {
+  int x; // no-warning
+  (void) x;
+}
+
+int test_34() {
+  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
+  (void) x;
+  return x; // expected-note{{variable 'x' is possibly uninitialized when used here}}
+}
+
