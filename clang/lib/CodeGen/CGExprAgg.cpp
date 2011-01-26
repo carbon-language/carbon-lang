@@ -367,8 +367,8 @@ void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
 }
 
 void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
+  CodeGenFunction::StmtExprEvaluation eval(CGF);
   CGF.EmitCompoundStmt(*E->getSubStmt(), true, Dest);
-  CGF.EnsureInsertPoint();
 }
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
@@ -423,20 +423,19 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
 
+  CodeGenFunction::ConditionalEvaluation eval(CGF);
   CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
-
-  CGF.BeginConditionalBranch();
-  CGF.EmitBlock(LHSBlock);
 
   // Save whether the destination's lifetime is externally managed.
   bool DestLifetimeManaged = Dest.isLifetimeExternallyManaged();
 
+  eval.begin(CGF);
+  CGF.EmitBlock(LHSBlock);
   Visit(E->getLHS());
-  CGF.EndConditionalBranch();
-  CGF.EmitBranch(ContBlock);
+  eval.end(CGF);
 
-  CGF.BeginConditionalBranch();
-  CGF.EmitBlock(RHSBlock);
+  assert(CGF.HaveInsertPoint() && "expression evaluation ended with no IP!");
+  CGF.Builder.CreateBr(ContBlock);
 
   // If the result of an agg expression is unused, then the emission
   // of the LHS might need to create a destination slot.  That's fine
@@ -444,9 +443,10 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   // we shouldn't claim that its lifetime is externally managed.
   Dest.setLifetimeExternallyManaged(DestLifetimeManaged);
 
+  eval.begin(CGF);
+  CGF.EmitBlock(RHSBlock);
   Visit(E->getRHS());
-  CGF.EndConditionalBranch();
-  CGF.EmitBranch(ContBlock);
+  eval.end(CGF);
 
   CGF.EmitBlock(ContBlock);
 }

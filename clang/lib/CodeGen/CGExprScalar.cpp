@@ -1204,10 +1204,9 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 }
 
 Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
-  RValue value = CGF.EmitCompoundStmt(*E->getSubStmt(),
-                                      !E->getType()->isVoidType());
-  CGF.EnsureInsertPoint();
-  return value.getScalarVal();
+  CodeGenFunction::StmtExprEvaluation eval(CGF);
+  return CGF.EmitCompoundStmt(*E->getSubStmt(), !E->getType()->isVoidType())
+    .getScalarVal();
 }
 
 Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
@@ -2226,6 +2225,8 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("land.end");
   llvm::BasicBlock *RHSBlock  = CGF.createBasicBlock("land.rhs");
 
+  CodeGenFunction::ConditionalEvaluation eval(CGF);
+
   // Branch on the LHS first.  If it is false, go to the failure (cont) block.
   CGF.EmitBranchOnBoolExpr(E->getLHS(), RHSBlock, ContBlock);
 
@@ -2239,10 +2240,10 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
        PI != PE; ++PI)
     PN->addIncoming(llvm::ConstantInt::getFalse(VMContext), *PI);
 
-  CGF.BeginConditionalBranch();
+  eval.begin(CGF);
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
-  CGF.EndConditionalBranch();
+  eval.end(CGF);
 
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
@@ -2276,6 +2277,8 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor.end");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("lor.rhs");
 
+  CodeGenFunction::ConditionalEvaluation eval(CGF);
+
   // Branch on the LHS first.  If it is true, go to the success (cont) block.
   CGF.EmitBranchOnBoolExpr(E->getLHS(), ContBlock, RHSBlock);
 
@@ -2289,13 +2292,13 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
        PI != PE; ++PI)
     PN->addIncoming(llvm::ConstantInt::getTrue(VMContext), *PI);
 
-  CGF.BeginConditionalBranch();
+  eval.begin(CGF);
 
   // Emit the RHS condition as a bool value.
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
 
-  CGF.EndConditionalBranch();
+  eval.end(CGF);
 
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
@@ -2425,6 +2428,8 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
+
+  CodeGenFunction::ConditionalEvaluation eval(CGF);
   
   // If we don't have the GNU missing condition extension, emit a branch on bool
   // the normal way.
@@ -2456,24 +2461,20 @@ VisitConditionalOperator(const ConditionalOperator *E) {
     Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
   }
 
-  CGF.BeginConditionalBranch();
   CGF.EmitBlock(LHSBlock);
-
-  // Handle the GNU extension for missing LHS.
+  eval.begin(CGF);
   Value *LHS = Visit(E->getTrueExpr());
+  eval.end(CGF);
 
-  CGF.EndConditionalBranch();
   LHSBlock = Builder.GetInsertBlock();
-  CGF.EmitBranch(ContBlock);
+  Builder.CreateBr(ContBlock);
 
-  CGF.BeginConditionalBranch();
   CGF.EmitBlock(RHSBlock);
-
+  eval.begin(CGF);
   Value *RHS = Visit(E->getRHS());
-  CGF.EndConditionalBranch();
-  RHSBlock = Builder.GetInsertBlock();
-  CGF.EmitBranch(ContBlock);
+  eval.end(CGF);
 
+  RHSBlock = Builder.GetInsertBlock();
   CGF.EmitBlock(ContBlock);
 
   // If the LHS or RHS is a throw expression, it will be legitimately null.

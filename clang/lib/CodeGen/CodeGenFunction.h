@@ -97,6 +97,24 @@ struct BranchFixup {
   llvm::BranchInst *InitialBranch;
 };
 
+/// A metaprogramming class which decides whether a type is a subclass
+/// of llvm::Value that needs to be saved if it's used in a
+/// conditional cleanup.
+template
+  <class T,
+   bool mustSave =
+     llvm::is_base_of<llvm::Value, llvm::remove_pointer<T> >::value
+     && !llvm::is_base_of<llvm::Constant, llvm::remove_pointer<T> >::value
+     && !llvm::is_base_of<llvm::BasicBlock, llvm::remove_pointer<T> >::value>
+struct SavedValueInCond {
+  typedef T type;
+  typedef T saved_type;
+  static bool needsSaving(type value) { return false; }
+  static saved_type save(CodeGenFunction &CGF, type value) { return value; }
+  static type restore(CodeGenFunction &CGF, saved_type value) { return value; }
+};
+// Partial specialization for true arguments at end of file.
+
 enum CleanupKind {
   EHCleanup = 0x1,
   NormalCleanup = 0x2,
@@ -173,6 +191,52 @@ public:
     // \param IsForEHCleanup true if this is for an EH cleanup, false
     ///  if for a normal cleanup.
     virtual void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) = 0;
+  };
+
+  /// A helper class for cleanups that execute conditionally.
+  class ConditionalCleanup : public Cleanup {
+    /// Either an i1 which directly indicates whether the cleanup
+    /// should be run or an i1* from which that should be loaded.
+    llvm::Value *cond;
+
+  public:
+    virtual void Emit(CodeGenFunction &CGF, bool IsForEHCleanup);
+
+  protected:
+    ConditionalCleanup(llvm::Value *cond) : cond(cond) {}
+
+    /// Emit the non-conditional code for the cleanup.
+    virtual void EmitImpl(CodeGenFunction &CGF, bool IsForEHCleanup) = 0;
+  };
+
+  /// UnconditionalCleanupN stores its N parameters and just passes
+  /// them to the real cleanup function.
+  template <class T, class A0, class A1>
+  class UnconditionalCleanup2 : public Cleanup {
+    A0 a0; A1 a1;
+    UnconditionalCleanup2(A0 a0, A1 a1) : a0(a0), a1(a1) {}
+    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
+      T::Emit(CGF, IsForEHCleanup, a0, a1);
+    }
+  };
+
+  /// ConditionalCleanupN stores the saved form of its N parameters,
+  /// then restores them and performs the cleanup.
+  template <class T, class A0, class A1>
+  class ConditionalCleanup2 : public ConditionalCleanup {
+    typedef typename SavedValueInCond<A0>::saved_type A0_saved;
+    typedef typename SavedValueInCond<A1>::saved_type A1_saved;
+    A0_saved a0; A1_saved a1;
+
+    void EmitImpl(CodeGenFunction &CGF, bool IsForEHCleanup) {
+      A0 a0 = SavedValueInCond<A0>::restore(CGF, a0);
+      A1 a1 = SavedValueInCond<A1>::restore(CGF, a1);
+      T::Emit(CGF, IsForEHCleanup, a0, a1);
+    }
+
+  public:
+    ConditionalCleanup2(llvm::Value *cond, A0_saved a0, A1_saved a1)
+      : ConditionalCleanup(cond), a0(a0), a1(a1) {}
   };
 
 private:
@@ -536,6 +600,14 @@ public:
 
   llvm::BasicBlock *getInvokeDestImpl();
 
+  /// Sets up a condition for a full-expression cleanup.
+  llvm::Value *initFullExprCleanup();
+
+  template <class T>
+  typename SavedValueInCond<T>::saved_type saveValueInCond(T value) {
+    return SavedValueInCond<T>::save(*this, value);
+  }
+
 public:
   /// ObjCEHValueStack - Stack of Objective-C exception values, used for
   /// rethrows.
@@ -551,6 +623,28 @@ public:
                                 llvm::Constant *EndCatchFn,
                                 llvm::Constant *RethrowFn);
   void ExitFinallyBlock(FinallyInfo &FinallyInfo);
+
+  /// pushFullExprCleanup - Push a cleanup to be run at the end of the
+  /// current full-expression.  Safe against the possibility that
+  /// we're currently inside a conditionally-evaluated expression.
+  template <class T, class A0, class A1>
+  void pushFullExprCleanup(CleanupKind kind, A0 a0, A1 a1) {
+    // If we're not in a conditional branch, or if none of the
+    // arguments requires saving, then use the unconditional cleanup.
+    if (!(isInConditionalBranch() ||
+          SavedValueInCond<A0>::needsSaving(a0) ||
+          SavedValueInCond<A1>::needsSaving(a1))) {
+      typedef EHScopeStack::UnconditionalCleanup2<T, A0, A1> CleanupType;
+      return EHStack.pushCleanup<CleanupType>(kind, a0, a1);
+    }
+
+    llvm::Value *condVar = initFullExprCleanup();
+    typename SavedValueInCond<A0>::saved_type a0_saved = saveValueInCond(a0);
+    typename SavedValueInCond<A1>::saved_type a1_saved = saveValueInCond(a1);
+
+    typedef EHScopeStack::ConditionalCleanup2<T, A0, A1> CleanupType;
+    EHStack.pushCleanup<CleanupType>(kind, condVar, a0_saved, a1_saved);
+  }
 
   /// PushDestructorCleanup - Push a cleanup to call the
   /// complete-object destructor of an object of the given type at the
@@ -659,30 +753,58 @@ public:
   /// destination.
   UnwindDest getRethrowDest();
 
-  /// BeginConditionalBranch - Should be called before a conditional part of an
-  /// expression is emitted. For example, before the RHS of the expression below
-  /// is emitted:
-  ///
-  /// b && f(T());
-  ///
-  /// This is used to make sure that any temporaries created in the conditional
-  /// branch are only destroyed if the branch is taken.
-  void BeginConditionalBranch() {
-    ++ConditionalBranchLevel;
-  }
+  /// An object to manage conditionally-evaluated expressions.
+  class ConditionalEvaluation {
+    llvm::BasicBlock *StartBB;
 
-  /// EndConditionalBranch - Should be called after a conditional part of an
-  /// expression has been emitted.
-  void EndConditionalBranch() {
-    assert(ConditionalBranchLevel != 0 &&
-           "Conditional branch mismatch!");
+  public:
+    ConditionalEvaluation(CodeGenFunction &CGF)
+      : StartBB(CGF.Builder.GetInsertBlock()) {}
 
-    --ConditionalBranchLevel;
-  }
+    void begin(CodeGenFunction &CGF) {
+      assert(CGF.OutermostConditional != this);
+      if (!CGF.OutermostConditional)
+        CGF.OutermostConditional = this;
+    }
+
+    void end(CodeGenFunction &CGF) {
+      assert(CGF.OutermostConditional != 0);
+      if (CGF.OutermostConditional == this)
+        CGF.OutermostConditional = 0;
+    }
+
+    /// Returns a block which will be executed prior to each
+    /// evaluation of the conditional code.
+    llvm::BasicBlock *getStartingBlock() const {
+      return StartBB;
+    }
+  };
 
   /// isInConditionalBranch - Return true if we're currently emitting
   /// one branch or the other of a conditional expression.
-  bool isInConditionalBranch() const { return ConditionalBranchLevel != 0; }
+  bool isInConditionalBranch() const { return OutermostConditional != 0; }
+
+  /// An RAII object to record that we're evaluating a statement
+  /// expression.
+  class StmtExprEvaluation {
+    CodeGenFunction &CGF;
+
+    /// We have to save the outermost conditional: cleanups in a
+    /// statement expression aren't conditional just because the
+    /// StmtExpr is.
+    ConditionalEvaluation *SavedOutermostConditional;
+
+  public:
+    StmtExprEvaluation(CodeGenFunction &CGF)
+      : CGF(CGF), SavedOutermostConditional(CGF.OutermostConditional) {
+      CGF.OutermostConditional = 0;
+    }
+
+    ~StmtExprEvaluation() {
+      CGF.OutermostConditional = SavedOutermostConditional;
+      CGF.EnsureInsertPoint();
+    }
+  };
   
   /// getByrefValueFieldNumber - Given a declaration, returns the LLVM field
   /// number that holds the value.
@@ -750,10 +872,10 @@ private:
   ImplicitParamDecl *CXXVTTDecl;
   llvm::Value *CXXVTTValue;
 
-  /// ConditionalBranchLevel - Contains the nesting level of the current
-  /// conditional branch. This is used so that we know if a temporary should be
-  /// destroyed conditionally.
-  unsigned ConditionalBranchLevel;
+  /// OutermostConditional - Points to the outermost active
+  /// conditional control.  This is used so that we know if a
+  /// temporary should be destroyed conditionally.
+  ConditionalEvaluation *OutermostConditional;
 
 
   /// ByrefValueInfoMap - For each __block variable, contains a pair of the LLVM
@@ -1784,6 +1906,48 @@ private:
   }
 
   void EmitDeclMetadata();
+};
+
+/// Helper class with most of the code for saving a value for a
+/// conditional expression cleanup.
+struct SavedValueInCondImpl {
+  typedef llvm::PointerIntPair<llvm::Value*, 1, bool> saved_type;
+
+  /// Answer whether the given value needs extra work to be saved.
+  static bool needsSaving(llvm::Value *value) {
+    // If it's not an instruction, we don't need to save.
+    if (!isa<llvm::Instruction>(value)) return false;
+
+    // If it's an instruction in the entry block, we don't need to save.
+    llvm::BasicBlock *block = cast<llvm::Instruction>(value)->getParent();
+    return (block != &block->getParent()->getEntryBlock());
+  }
+
+  /// Try to save the given value.
+  static saved_type save(CodeGenFunction &CGF, llvm::Value *value) {
+    if (!needsSaving(value)) return saved_type(value, false);
+
+    // Otherwise we need an alloca.
+    llvm::Value *alloca =
+      CGF.CreateTempAlloca(value->getType(), "cond-cleanup.save");
+    CGF.Builder.CreateStore(value, alloca);
+
+    return saved_type(alloca, true);
+  }
+
+  static llvm::Value *restore(CodeGenFunction &CGF, saved_type value) {
+    if (!value.getInt()) return value.getPointer();
+    return CGF.Builder.CreateLoad(value.getPointer());
+  }
+};
+
+/// Partial specialization of SavedValueInCond for when a value really
+/// requires saving.
+template <class T> struct SavedValueInCond<T,true> : SavedValueInCondImpl {
+  typedef T type;
+  static type restore(CodeGenFunction &CGF, saved_type value) {
+    return static_cast<T>(SavedValueInCondImpl::restore(CGF, value));
+  }
 };
 
 /// CGBlockInfo - Information to generate a block literal.

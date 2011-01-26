@@ -41,7 +41,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     SwitchInsn(0), CaseRangeBlock(0),
     DidCallStackSave(false), UnreachableBlock(0),
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
-    ConditionalBranchLevel(0), TerminateLandingPad(0), TerminateHandler(0),
+    OutermostConditional(0), TerminateLandingPad(0), TerminateHandler(0),
     TrapBB(0) {
       
   // Get some frequently used types.
@@ -447,13 +447,15 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       // Emit the LHS as a conditional.  If the LHS conditional is false, we
       // want to jump to the FalseBlock.
       llvm::BasicBlock *LHSTrue = createBasicBlock("land.lhs.true");
+
+      ConditionalEvaluation eval(*this);
       EmitBranchOnBoolExpr(CondBOp->getLHS(), LHSTrue, FalseBlock);
       EmitBlock(LHSTrue);
 
       // Any temporaries created here are conditional.
-      BeginConditionalBranch();
+      eval.begin(*this);
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
-      EndConditionalBranch();
+      eval.end(*this);
 
       return;
     } else if (CondBOp->getOpcode() == BO_LOr) {
@@ -474,13 +476,15 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       // Emit the LHS as a conditional.  If the LHS conditional is true, we
       // want to jump to the TrueBlock.
       llvm::BasicBlock *LHSFalse = createBasicBlock("lor.lhs.false");
+
+      ConditionalEvaluation eval(*this);
       EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, LHSFalse);
       EmitBlock(LHSFalse);
 
       // Any temporaries created here are conditional.
-      BeginConditionalBranch();
+      eval.begin(*this);
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
-      EndConditionalBranch();
+      eval.end(*this);
 
       return;
     }
@@ -500,11 +504,20 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       // br(c ? x : y, t, f) -> br(c, br(x, t, f), br(y, t, f))
       llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
       llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
+
+      ConditionalEvaluation cond(*this);
       EmitBranchOnBoolExpr(CondOp->getCond(), LHSBlock, RHSBlock);
+
+      cond.begin(*this);
       EmitBlock(LHSBlock);
       EmitBranchOnBoolExpr(CondOp->getLHS(), TrueBlock, FalseBlock);
+      cond.end(*this);
+
+      cond.begin(*this);
       EmitBlock(RHSBlock);
       EmitBranchOnBoolExpr(CondOp->getRHS(), TrueBlock, FalseBlock);
+      cond.end(*this);
+
       return;
     }
   }

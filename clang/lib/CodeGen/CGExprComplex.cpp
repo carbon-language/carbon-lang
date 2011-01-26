@@ -325,9 +325,8 @@ ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitStmtExpr(const StmtExpr *E) {
-  RValue result = CGF.EmitCompoundStmt(*E->getSubStmt(), true);
-  CGF.EnsureInsertPoint();
-  return result.getComplexVal();
+  CodeGenFunction::StmtExprEvaluation eval(CGF);
+  return CGF.EmitCompoundStmt(*E->getSubStmt(), true).getComplexVal();
 }
 
 /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
@@ -647,29 +646,32 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
 
+  CodeGenFunction::ConditionalEvaluation eval(CGF);
+
   if (E->getLHS())
     CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
   else {
     Expr *save = E->getSAVE();
     assert(save && "VisitConditionalOperator - save is null");
-    // Intentianlly not doing direct assignment to ConditionalSaveExprs[save] !!
+    // Intentionally not doing direct assignment to ConditionalSaveExprs[save] !!
     ComplexPairTy SaveVal = Visit(save);
     CGF.ConditionalSaveComplexExprs[save] = SaveVal;
     CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
   }
 
+  eval.begin(CGF);
   CGF.EmitBlock(LHSBlock);
   ComplexPairTy LHS = Visit(E->getTrueExpr());
   LHSBlock = Builder.GetInsertBlock();
   CGF.EmitBranch(ContBlock);
+  eval.end(CGF);
 
+  eval.begin(CGF);
   CGF.EmitBlock(RHSBlock);
-
   ComplexPairTy RHS = Visit(E->getRHS());
   RHSBlock = Builder.GetInsertBlock();
-  CGF.EmitBranch(ContBlock);
-
   CGF.EmitBlock(ContBlock);
+  eval.end(CGF);
 
   // Create a PHI node for the real part.
   llvm::PHINode *RealPN = Builder.CreatePHI(LHS.first->getType(), "cond.r");

@@ -60,7 +60,7 @@ void CodeGenFunction::EmitCXXTemporary(const CXXTemporary *Temporary,
 
   // Check if temporaries need to be conditional. If so, we'll create a
   // condition boolean, initialize it to 0 and
-  if (ConditionalBranchLevel != 0) {
+  if (isInConditionalBranch()) {
     CondPtr = CreateTempAlloca(llvm::Type::getInt1Ty(VMContext), "cond");
 
     // Initialize it to false. This initialization takes place right after

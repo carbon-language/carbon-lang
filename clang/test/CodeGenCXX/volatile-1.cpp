@@ -143,20 +143,17 @@ void test() {
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: volatile store
 
-  // FIXME: the phi-equivalent is unnecessary
   k ? (i=i) : (j=j);
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: icmp
   // CHECK-NEXT: br i1
   // CHECK: volatile load
   // CHECK-NEXT: volatile store
-  // CHECK-NEXT: store [[INT]]* @i
   // CHECK-NEXT: br label
   // CHECK: volatile load
   // CHECK-NEXT: volatile store
-  // CHECK-NEXT: store [[INT]]* @j
   // CHECK-NEXT: br label
-  // CHECK: load [[INT]]**
+  // CHECK:      phi
 
   (void)(i,(i=i));
   // CHECK-NEXT: volatile load

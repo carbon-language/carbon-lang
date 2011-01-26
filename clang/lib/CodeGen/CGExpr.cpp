@@ -1692,6 +1692,8 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator *E) {
     llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
     llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
     llvm::BasicBlock *ContBlock = createBasicBlock("cond.end");
+
+    ConditionalEvaluation eval(*this);
     
     if (E->getLHS())
       EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
@@ -1705,35 +1707,34 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator *E) {
     }
     
     // Any temporaries created here are conditional.
-    BeginConditionalBranch();
     EmitBlock(LHSBlock);
+    eval.begin(*this);
     LValue LHS = EmitLValue(E->getTrueExpr());
-
-    EndConditionalBranch();
+    eval.end(*this);
     
     if (!LHS.isSimple())
       return EmitUnsupportedLValue(E, "conditional operator");
 
-    // FIXME: We shouldn't need an alloca for this.
-    llvm::Value *Temp = CreateTempAlloca(LHS.getAddress()->getType(),"condtmp");
-    Builder.CreateStore(LHS.getAddress(), Temp);
-    EmitBranch(ContBlock);
+    LHSBlock = Builder.GetInsertBlock();
+    Builder.CreateBr(ContBlock);
     
     // Any temporaries created here are conditional.
-    BeginConditionalBranch();
     EmitBlock(RHSBlock);
+    eval.begin(*this);
     LValue RHS = EmitLValue(E->getRHS());
-    EndConditionalBranch();
+    eval.end(*this);
     if (!RHS.isSimple())
       return EmitUnsupportedLValue(E, "conditional operator");
-
-    Builder.CreateStore(RHS.getAddress(), Temp);
-    EmitBranch(ContBlock);
+    RHSBlock = Builder.GetInsertBlock();
 
     EmitBlock(ContBlock);
-    
-    Temp = Builder.CreateLoad(Temp, "lv");
-    return MakeAddrLValue(Temp, E->getType());
+
+    llvm::PHINode *phi = Builder.CreatePHI(LHS.getAddress()->getType(),
+                                           "cond-lvalue");
+    phi->reserveOperandSpace(2);
+    phi->addIncoming(LHS.getAddress(), LHSBlock);
+    phi->addIncoming(RHS.getAddress(), RHSBlock);
+    return MakeAddrLValue(phi, E->getType());
   }
   
   // ?: here should be an aggregate.

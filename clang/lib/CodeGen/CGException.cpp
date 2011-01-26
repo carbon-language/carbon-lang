@@ -172,6 +172,22 @@ void EHScopeStack::popNullFixups() {
     BranchFixups.pop_back();
 }
 
+llvm::Value *CodeGenFunction::initFullExprCleanup() {
+  // Create a variable to decide whether the cleanup needs to be run.
+  llvm::AllocaInst *run = CreateTempAlloca(Builder.getInt1Ty(), "cleanup.cond");
+
+  // Initialize it to false at a site that's guaranteed to be run
+  // before each evaluation.
+  llvm::BasicBlock *block = OutermostConditional->getStartingBlock();
+  new llvm::StoreInst(Builder.getFalse(), run,
+                      block->getFirstNonPHIOrDbg());
+
+  // Initialize it to true at the current location.
+  Builder.CreateStore(Builder.getTrue(), run);
+
+  return run;
+}
+
 static llvm::Constant *getAllocateExceptionFn(CodeGenFunction &CGF) {
   // void *__cxa_allocate_exception(size_t thrown_size);
   const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
@@ -1655,4 +1671,24 @@ CodeGenFunction::UnwindDest CodeGenFunction::getRethrowDest() {
 
 EHScopeStack::Cleanup::~Cleanup() {
   llvm_unreachable("Cleanup is indestructable");
+}
+
+void EHScopeStack::ConditionalCleanup::Emit(CodeGenFunction &CGF,
+                                            bool IsForEHCleanup) {
+  // Determine whether we should run the cleanup.
+  llvm::Value *condVal = CGF.Builder.CreateLoad(cond, "cond.should-run");
+
+  llvm::BasicBlock *cleanup = CGF.createBasicBlock("cond-cleanup.run");
+  llvm::BasicBlock *cont = CGF.createBasicBlock("cond-cleanup.cont");
+
+  // If we shouldn't run the cleanup, jump directly to the continuation block.
+  CGF.Builder.CreateCondBr(condVal, cleanup, cont);
+  CGF.EmitBlock(cleanup);
+
+  // Emit the core of the cleanup.
+  EmitImpl(CGF, IsForEHCleanup);
+  assert(CGF.HaveInsertPoint() && "cleanup didn't end with valid IP!");
+
+  // Fall into the continuation block.
+  CGF.EmitBlock(cont);
 }
