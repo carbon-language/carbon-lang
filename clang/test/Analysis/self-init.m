@@ -97,7 +97,7 @@ extern void *somePtr;
 }
 
 -(id)init6 {
-  [NSBundle loadNibNamed:@"Window" owner:myivar]; // expected-warning {{Using an ivar}}
+  [NSBundle loadNibNamed:@"Window" owner:myivar]; // expected-warning {{Instance variable used}}
   return [self initWithSomething:0];
 }
 
@@ -121,7 +121,7 @@ extern void *somePtr;
 }
 
 -(id)init10 {
-	myivar = 0; // expected-warning {{Using an ivar}}
+	myivar = 0; // expected-warning {{Instance variable used}}
     return self;
 }
 
@@ -136,7 +136,7 @@ extern void *somePtr;
 
 -(id)init13 {
 	if ((self == [super init])) {
-	  myivar = 0; // expected-warning {{Using an ivar}}
+	  myivar = 0; // expected-warning {{Instance variable used}}
 	}
 	return self; // expected-warning {{Returning 'self'}}
 }

@@ -102,8 +102,8 @@ namespace {
 class InitSelfBug : public BugType {
   const std::string desc;
 public:
-  InitSelfBug() : BugType("missing \"self = [{initializer}]\"",
-                          "missing \"self = [{initializer}]\"") {}
+  InitSelfBug() : BugType("missing \"self = [(super or self) init...]\"",
+                          "missing \"self = [(super or self) init...]\"") {}
 };
 
 } // end anonymous namespace
@@ -209,7 +209,8 @@ void ObjCSelfInitChecker::PostVisitObjCIvarRefExpr(CheckerContext &C,
     return;
 
   checkForInvalidSelf(E->getBase(), C,
-         "Using an ivar before setting 'self' to the result of an initializer");
+    "Instance variable used before setting 'self' to the result of "
+                                                 "'[(super or self) init...]'");
 }
 
 void ObjCSelfInitChecker::PreVisitReturnStmt(CheckerContext &C,
@@ -220,7 +221,8 @@ void ObjCSelfInitChecker::PreVisitReturnStmt(CheckerContext &C,
     return;
 
   checkForInvalidSelf(S->getRetValue(), C,
-          "Returning 'self' before setting it to the result of an initializer");
+    "Returning 'self' before setting it to the result of "
+                                                 "'[(super or self) init...]'");
 }
 
 // When a call receives a reference to 'self', [Pre/Post]VisitGenericCall pass
