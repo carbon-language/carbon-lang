@@ -831,6 +831,7 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
     }
     if (!hasTrunc)
       return getAddExpr(Operands, false, false);
+    UniqueSCEVs.FindNodeOrInsertPos(ID, IP);  // Mutates IP, returns NULL.
   }
 
   // trunc(x1*x2*...*xN) --> trunc(x1)*trunc(x2)*...*trunc(xN) if we can
@@ -845,6 +846,7 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
     }
     if (!hasTrunc)
       return getMulExpr(Operands, false, false);
+    UniqueSCEVs.FindNodeOrInsertPos(ID, IP);  // Mutates IP, returns NULL.
   }
 
   // If the input value is a chrec scev, truncate the chrec's operands.
