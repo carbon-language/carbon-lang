@@ -866,8 +866,8 @@ def : Pat<(X86tcret (i32 texternalsym:$dst), imm:$off),
           (TCRETURNdi texternalsym:$dst, imm:$off)>,
           Requires<[In32BitMode]>;
 
-def : Pat<(X86tcret GR64_TC:$dst, imm:$off),
-          (TCRETURNri64 GR64_TC:$dst, imm:$off)>,
+def : Pat<(X86tcret ptr_rc_tailcall:$dst, imm:$off),
+          (TCRETURNri64 ptr_rc_tailcall:$dst, imm:$off)>,
           Requires<[In64BitMode]>;
 
 def : Pat<(X86tcret (load addr:$dst), imm:$off),

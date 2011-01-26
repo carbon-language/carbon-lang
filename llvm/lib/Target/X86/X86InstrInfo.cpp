@@ -2025,6 +2025,7 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
   case X86::GR64_NOREX_NOSPRegClassID:
   case X86::GR64_NOSPRegClassID:
   case X86::GR64_TCRegClassID:
+  case X86::GR64_TCW64RegClassID:
     return load ? X86::MOV64rm : X86::MOV64mr;
   case X86::GR32RegClassID:
   case X86::GR32_ABCDRegClassID:

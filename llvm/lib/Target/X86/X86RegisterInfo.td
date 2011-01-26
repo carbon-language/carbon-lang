@@ -496,6 +496,9 @@ def GR64_TC   : RegisterClass<"X86", [i64], 64, [RAX, RCX, RDX, RSI, RDI,
                        (GR32_TC sub_32bit)];
 }
 
+def GR64_TCW64   : RegisterClass<"X86", [i64], 64, [RAX, RCX, RDX,
+                                                    R8, R9, R11]>;
+
 // GR8_NOREX - GR8 registers which do not require a REX prefix.
 def GR8_NOREX : RegisterClass<"X86", [i8], 8,
                               [AL, CL, DL, AH, CH, DH, BL, BH]> {

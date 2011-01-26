@@ -266,17 +266,18 @@ let isCall = 1, isCodeGenOnly = 1 in
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
     isCodeGenOnly = 1 in
-  let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
+  // AMD64 cc clobbers RSI, RDI, XMM6-XMM15.
+  let Defs = [RAX, RCX, RDX, R8, R9, R10, R11,
               FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0, ST1,
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-              XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-      Uses = [RSP] in {
+              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, EFLAGS],
+      Uses = [RSP],
+      usesCustomInserter = 1 in {
   def TCRETURNdi64 : PseudoI<(outs),
                       (ins i64i32imm_pcrel:$dst, i32imm:$offset, variable_ops),
                       []>;
   def TCRETURNri64 : PseudoI<(outs),
-                      (ins GR64_TC:$dst, i32imm:$offset, variable_ops), []>;
+                      (ins ptr_rc_tailcall:$dst, i32imm:$offset, variable_ops), []>;
   let mayLoad = 1 in
   def TCRETURNmi64 : PseudoI<(outs),
                        (ins i64mem_TC:$dst, i32imm:$offset, variable_ops), []>;
@@ -284,7 +285,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
   def TAILJMPd64 : Ii32PCRel<0xE9, RawFrm, (outs),
                                       (ins i64i32imm_pcrel:$dst, variable_ops),
                    "jmp\t$dst  # TAILCALL", []>;
-  def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins GR64_TC:$dst, variable_ops),
+  def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins ptr_rc_tailcall:$dst, variable_ops),
                      "jmp{q}\t{*}$dst  # TAILCALL", []>;
 
   let mayLoad = 1 in

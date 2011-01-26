@@ -320,6 +320,12 @@ X86RegisterInfo::getPointerRegClass(unsigned Kind) const {
     if (TM.getSubtarget<X86Subtarget>().is64Bit())
       return &X86::GR64_NOSPRegClass;
     return &X86::GR32_NOSPRegClass;
+  case 2: // Available for tailcall (not callee-saved GPRs).
+    if (TM.getSubtarget<X86Subtarget>().isTargetWin64())
+      return &X86::GR64_TCW64RegClass;
+    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+      return &X86::GR64_TCRegClass;
+    return &X86::GR32_TCRegClass;
   }
 }
 
