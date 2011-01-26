@@ -608,6 +608,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                 this_dispatch.stret_return 
                         = (flags & AppleObjCVTables::eOBJC_TRAMPOLINE_STRET) == AppleObjCVTables::eOBJC_TRAMPOLINE_STRET;
                 this_dispatch.is_super = false;
+                this_dispatch.is_super2 = false;
                 this_dispatch.fixedup = DispatchFunction::eFixUpFixed;
             }
         }
