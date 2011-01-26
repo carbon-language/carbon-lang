@@ -294,7 +294,9 @@ namespace clang {
       no_conversion,
       unrelated_class,
       suppressed_user,
-      bad_qualifiers
+      bad_qualifiers,
+      lvalue_ref_to_rvalue,
+      rvalue_ref_to_lvalue
     };
 
     // This can be null, e.g. for implicit object arguments.

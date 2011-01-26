@@ -268,6 +268,12 @@ public:
     bool isPRValue() const { return Kind >= CL_Function; }
     bool isRValue() const { return Kind >= CL_XValue; }
     bool isModifiable() const { return getModifiable() == CM_Modifiable; }
+    
+    /// \brief Create a simple, modifiably lvalue
+    static Classification makeSimpleLValue() {
+      return Classification(CL_LValue, CM_Modifiable);
+    }
+    
   };
   /// \brief Classify - Classify this expression according to the C++0x
   ///        expression taxonomy.
