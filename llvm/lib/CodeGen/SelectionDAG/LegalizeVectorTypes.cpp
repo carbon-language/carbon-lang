@@ -625,9 +625,9 @@ void DAGTypeLegalizer::SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo,
     EVT InNVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(),
                                  LoVT.getVectorNumElements());
     VLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                     DAG.getIntPtrConstant(0));
+                      DAG.getIntPtrConstant(0));
     VHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+                      DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
     break;
   }
   }

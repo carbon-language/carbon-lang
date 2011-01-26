@@ -191,10 +191,10 @@ def SDTVecInsert : SDTypeProfile<1, 3, [    // vector insert
 ]>;
 
 def SDTSubVecExtract : SDTypeProfile<1, 2, [// subvector extract
-  SDTCisSubVecOfVec<0,1>
+  SDTCisSubVecOfVec<0,1>, SDTCisInt<2>
 ]>;
 def SDTSubVecInsert : SDTypeProfile<1, 3, [ // subvector insert
-  SDTCisSubVecOfVec<2, 1>, SDTCisSameAs<0,1>
+  SDTCisSubVecOfVec<2, 1>, SDTCisSameAs<0,1>, SDTCisInt<3>
 ]>;
 
 def SDTPrefetch : SDTypeProfile<0, 3, [     // prefetch
@@ -435,11 +435,17 @@ def scalar_to_vector : SDNode<"ISD::SCALAR_TO_VECTOR", SDTypeProfile<1, 1, []>,
                               []>;
 def vector_extract : SDNode<"ISD::EXTRACT_VECTOR_ELT",
     SDTypeProfile<1, 2, [SDTCisPtrTy<2>]>, []>;
+def vector_insert : SDNode<"ISD::INSERT_VECTOR_ELT",
+    SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisPtrTy<3>]>, []>;
+
+// This operator does not do subvector type checking.  The ARM
+// backend, at least, needs it.
 def vector_extract_subvec : SDNode<"ISD::EXTRACT_SUBVECTOR",
     SDTypeProfile<1, 2, [SDTCisInt<2>, SDTCisVec<1>, SDTCisVec<0>]>, 
     []>;
-def vector_insert : SDNode<"ISD::INSERT_VECTOR_ELT",
-    SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisPtrTy<3>]>, []>;
+
+// This operator does subvector type checking.
+def extract_subvector : SDNode<"ISD::EXTRACT_SUBVECTOR", SDTSubVecExtract, []>;
 
 // Nodes for intrinsics, you should use the intrinsic itself and let tblgen use
 // these internally.  Don't reference these directly.

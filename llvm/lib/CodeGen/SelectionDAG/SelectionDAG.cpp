@@ -2864,10 +2864,29 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
       return getConstant(ShiftedVal.trunc(ElementSize), VT);
     }
     break;
-  case ISD::EXTRACT_SUBVECTOR:
-    if (N1.getValueType() == VT) // Trivial extraction.
-      return N1;
+  case ISD::EXTRACT_SUBVECTOR: {
+    SDValue Index = N2;
+    if (VT.isSimple() && N1.getValueType().isSimple()) {
+      assert(VT.isVector() && N1.getValueType().isVector() &&
+             "Extract subvector VTs must be a vectors!");
+      assert(VT.getVectorElementType() == N1.getValueType().getVectorElementType() &&
+             "Extract subvector VTs must have the same element type!");
+      assert(VT.getSimpleVT() <= N1.getValueType().getSimpleVT() &&
+             "Extract subvector must be from larger vector to smaller vector!");
+
+      if (ConstantSDNode *CSD = dyn_cast<ConstantSDNode>(Index.getNode())) {
+        uint64_t Idx = CSD->getZExtValue();
+        assert((VT.getVectorNumElements() + Idx
+                <= N1.getValueType().getVectorNumElements())
+               && "Extract subvector overflow!");
+      }
+
+      // Trivial extraction.
+      if (VT.getSimpleVT() == N1.getValueType().getSimpleVT())
+        return N1;
+    }
     break;
+  }
   }
 
   if (N1C) {
