@@ -2481,6 +2481,11 @@ def err_invalid_ref_qualifier_typedef_function_type_use : Error<
   "%select{static member|nonmember}0 function cannot have a ref-qualifier "
   "'%select{&&|&}1'">;
 
+def err_ref_qualifier_overload : Error<
+  "cannot overload a member function %select{without a ref-qualifier|with "
+  "ref-qualifier '&'|with ref-qualifier '&&'}0 with a member function %select{"
+  "without a ref-qualifier|with ref-qualifier '&'|with ref-qualifier '&&'}1">;
+
 def err_invalid_non_static_member_use : Error<
   "invalid use of nonstatic data member %0">;
 def err_invalid_incomplete_type_use : Error<

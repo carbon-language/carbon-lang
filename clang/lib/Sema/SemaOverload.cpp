@@ -694,8 +694,24 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
   if (OldMethod && NewMethod &&
       !OldMethod->isStatic() && !NewMethod->isStatic() &&
       (OldMethod->getTypeQualifiers() != NewMethod->getTypeQualifiers() ||
-       OldMethod->getRefQualifier() != NewMethod->getRefQualifier()))
+       OldMethod->getRefQualifier() != NewMethod->getRefQualifier())) {
+    if (!UseUsingDeclRules &&
+        OldMethod->getRefQualifier() != NewMethod->getRefQualifier() &&
+        (OldMethod->getRefQualifier() == RQ_None ||
+         NewMethod->getRefQualifier() == RQ_None)) {
+      // C++0x [over.load]p2:
+      //   - Member function declarations with the same name and the same 
+      //     parameter-type-list as well as member function template 
+      //     declarations with the same name, the same parameter-type-list, and 
+      //     the same template parameter lists cannot be overloaded if any of 
+      //     them, but not all, have a ref-qualifier (8.3.5).
+      Diag(NewMethod->getLocation(), diag::err_ref_qualifier_overload)
+        << NewMethod->getRefQualifier() << OldMethod->getRefQualifier();
+      Diag(OldMethod->getLocation(), diag::note_previous_declaration);
+    }
+        
     return true;
+  }
   
   // The signatures match; this is not an overload.
   return false;
