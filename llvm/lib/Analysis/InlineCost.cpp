@@ -343,12 +343,9 @@ int InlineCostAnalyzer::getSpecializationBonus(Function *Callee,
   if (CalleeFI->Metrics.NumBlocks == 0)
     CalleeFI->analyzeFunction(Callee);
 
-
-  for (unsigned i = 0, s = SpecializedArgNos.size();
-       i < s; ++i )
-  {
+  for (unsigned i = 0, s = SpecializedArgNos.size(); i < s; ++i )
     Bonus += CalleeFI->ArgumentWeights[SpecializedArgNos[i]].ConstantBonus;
-  }
+
   // Calls usually take a long time, so they make the specialization gain 
   // smaller.
   Bonus -= CalleeFI->Metrics.NumCalls * InlineConstants::CallPenalty;
@@ -514,9 +511,7 @@ InlineCost InlineCostAnalyzer::getSpecializationCost(Function *Callee,
   // away with the given arguments replaced by constants.
   for (SmallVectorImpl<unsigned>::iterator an = SpecializedArgNos.begin(),
        ae = SpecializedArgNos.end(); an != ae; ++an)
-  {
     Cost -= CalleeFI->ArgumentWeights[*an].ConstantWeight;
-  }
 
   return llvm::InlineCost::get(Cost);
 }
