@@ -393,12 +393,10 @@ bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
   if (const CallInst *CI = dyn_cast<CallInst>(I1))
     return CI->isTailCall() == cast<CallInst>(I2)->isTailCall() &&
            CI->getCallingConv() == cast<CallInst>(I2)->getCallingConv() &&
-           CI->getAttributes().getRawPointer() ==
-             cast<CallInst>(I2)->getAttributes().getRawPointer();
+           CI->getAttributes() == cast<CallInst>(I2)->getAttributes();
   if (const InvokeInst *CI = dyn_cast<InvokeInst>(I1))
     return CI->getCallingConv() == cast<InvokeInst>(I2)->getCallingConv() &&
-           CI->getAttributes().getRawPointer() ==
-             cast<InvokeInst>(I2)->getAttributes().getRawPointer();
+           CI->getAttributes() == cast<InvokeInst>(I2)->getAttributes();
   if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(I1)) {
     if (IVI->getNumIndices() != cast<InsertValueInst>(I2)->getNumIndices())
       return false;
