@@ -247,7 +247,8 @@ ThreadPlanRunToAddress::AtOurAddress ()
 {
     lldb::addr_t current_address = m_thread.GetRegisterContext()->GetPC();
     bool found_it = false;
-    for (size_t i = 0; i < m_addresses[i]; i++)
+    size_t num_addresses = m_addresses.size();
+    for (size_t i = 0; i < num_addresses; i++)
     {
         if (m_addresses[i] == current_address)
         {
