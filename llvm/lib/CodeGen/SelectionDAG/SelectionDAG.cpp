@@ -2875,6 +2875,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
              "Extract subvector must be from larger vector to smaller vector!");
 
       if (ConstantSDNode *CSD = dyn_cast<ConstantSDNode>(Index.getNode())) {
+        (void)CSD;
         assert((VT.getVectorNumElements() + CSD->getZExtValue()
                 <= N1.getValueType().getVectorNumElements())
                && "Extract subvector overflow!");
@@ -3093,6 +3094,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
       assert(N2.getValueType().getSimpleVT() <= N1.getValueType().getSimpleVT() &&
              "Insert subvector must be from smaller vector to larger vector!");
       if (ConstantSDNode *CSD = dyn_cast<ConstantSDNode>(Index.getNode())) {
+        (void)CSD;
         assert((N2.getValueType().getVectorNumElements() + CSD->getZExtValue()
                 <= VT.getVectorNumElements())
                && "Insert subvector overflow!");
