@@ -2219,6 +2219,8 @@ ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait UTT,
 
 static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
                                    SourceLocation KeyLoc) {
+  // FIXME: For many of these traits, we need a complete type before we can 
+  // check these properties.
   assert(!T->isDependentType() &&
          "Cannot evaluate traits for dependent types.");
   ASTContext &C = Self.Context;
