@@ -142,7 +142,7 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
       continue;
     }
     
-    // Figure out the consequtive range of bits covered by this operand, in
+    // Figure out the consecutive range of bits covered by this operand, in
     // order to generate better encoding code.
     int beginInstBit = bit;
     int beginVarBit = varBit;
