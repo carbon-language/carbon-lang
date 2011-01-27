@@ -431,8 +431,12 @@ void RALinScan::ComputeRelatedRegClasses() {
     for (DenseMap<unsigned, const TargetRegisterClass*>::iterator
          I = OneClassForEachPhysReg.begin(), E = OneClassForEachPhysReg.end();
          I != E; ++I)
-      for (const unsigned *AS = tri_->getAliasSet(I->first); *AS; ++AS)
-        RelatedRegClasses.unionSets(I->second, OneClassForEachPhysReg[*AS]);
+      for (const unsigned *AS = tri_->getAliasSet(I->first); *AS; ++AS) {
+        const TargetRegisterClass *AliasClass = 
+          OneClassForEachPhysReg.lookup(*AS);
+        if (AliasClass)
+          RelatedRegClasses.unionSets(I->second, AliasClass);
+      }
 }
 
 /// attemptTrivialCoalescing - If a simple interval is defined by a copy, try
