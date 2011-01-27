@@ -364,11 +364,11 @@ its availability, as it is not available in earlier versions of the analyzer:</p
   
 <pre class="code_example">
 #ifndef __has_feature
-#define __has_Feature(x) 0 // Compatibility with non-clang compilers.
+#define __has_feature(x) 0 // Compatibility with non-clang compilers.
 #endif
 
 #ifndef NS_CONSUMES_SELF
-#if __has_feature((attribute_ns_consumes_self))
+<span class="code_highlight">#if __has_feature((attribute_ns_consumes_self))</span>
 #else
 #define NS_CONSUMES_SELF
 #endif
@@ -376,7 +376,7 @@ its availability, as it is not available in earlier versions of the analyzer:</p
 
 @interface MyClass : NSObject
 - initWith:(MyClass *)x;
-- nonstandardInitWith:(MyClass *)x NS_CONSUMES_SELF NS_RETURNS_RETAINED;
+- nonstandardInitWith:(MyClass *)x <span class="code_highlight">NS_CONSUMES_SELF</span> NS_RETURNS_RETAINED;
 @end
 </pre>
 
