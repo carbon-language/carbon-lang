@@ -55,6 +55,29 @@ public:
     EmitThisParam(CGF);
     // TODO: 'for base' flag
   }
+
+  // ==== Notes on array cookies =========
+  //
+  // MSVC seems to only use cookies when the class has a destructor; a
+  // two-argument usual array deallocation function isn't sufficient.
+  //
+  // For example, this code prints "100" and "1":
+  //   struct A {
+  //     char x;
+  //     void *operator new[](size_t sz) {
+  //       printf("%u\n", sz);
+  //       return malloc(sz);
+  //     }
+  //     void operator delete[](void *p, size_t sz) {
+  //       printf("%u\n", sz);
+  //       free(p);
+  //     }
+  //   };
+  //   int main() {
+  //     A *p = new A[100];
+  //     delete[] p;
+  //   }
+  // Whereas it prints "104" and "104" if you give A a destructor.
 };
 
 }
