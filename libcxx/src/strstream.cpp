@@ -130,6 +130,7 @@ strstreambuf::operator=(strstreambuf&& __rhs)
     __pfree_ = __rhs.__pfree_;
     __rhs.setg(nullptr, nullptr, nullptr);
     __rhs.setp(nullptr, nullptr);
+    return *this;
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
