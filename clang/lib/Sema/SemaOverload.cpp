@@ -46,7 +46,8 @@ CreateFunctionRefExpr(Sema &S, FunctionDecl *Fn,
 
 static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                  bool InOverloadResolution,
-                                 StandardConversionSequence &SCS);
+                                 StandardConversionSequence &SCS,
+                                 bool CStyle);
 static OverloadingResult
 IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
                         UserDefinedConversionSequence& User,
@@ -744,10 +745,11 @@ static ImplicitConversionSequence
 TryImplicitConversion(Sema &S, Expr *From, QualType ToType,
                       bool SuppressUserConversions,
                       bool AllowExplicit, 
-                      bool InOverloadResolution) {
+                      bool InOverloadResolution,
+                      bool CStyle) {
   ImplicitConversionSequence ICS;
   if (IsStandardConversion(S, From, ToType, InOverloadResolution,
-                           ICS.Standard)) {
+                           ICS.Standard, CStyle)) {
     ICS.setStandard();
     return ICS;
   }
@@ -858,12 +860,14 @@ bool Sema::TryImplicitConversion(InitializationSequence &Sequence,
                                  Expr *Initializer,
                                  bool SuppressUserConversions,
                                  bool AllowExplicitConversions,
-                                 bool InOverloadResolution) {
+                                 bool InOverloadResolution,
+                                 bool CStyle) {
   ImplicitConversionSequence ICS
     = clang::TryImplicitConversion(*this, Initializer, Entity.getType(),
                                    SuppressUserConversions,
                                    AllowExplicitConversions, 
-                                   InOverloadResolution);
+                                   InOverloadResolution,
+                                   CStyle);
   if (ICS.isBad()) return true;
 
   // Perform the actual conversion.
@@ -891,7 +895,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   ICS = clang::TryImplicitConversion(*this, From, ToType,
                                      /*SuppressUserConversions=*/false,
                                      AllowExplicit,
-                                     /*InOverloadResolution=*/false);
+                                     /*InOverloadResolution=*/false,
+                                     /*CStyle=*/false);
   return PerformImplicitConversion(From, ToType, ICS, Action);
 }
   
@@ -999,7 +1004,8 @@ static bool IsVectorConversion(ASTContext &Context, QualType FromType,
 /// routine will return false and the value of SCS is unspecified.
 static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                  bool InOverloadResolution,
-                                 StandardConversionSequence &SCS) {
+                                 StandardConversionSequence &SCS,
+                                 bool CStyle) {
   QualType FromType = From->getType();
   
   // Standard conversions (C++ [conv])
@@ -1189,7 +1195,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   QualType CanonFrom;
   QualType CanonTo;
   // The third conversion can be a qualification conversion (C++ 4p1).
-  if (S.IsQualificationConversion(FromType, ToType)) {
+  if (S.IsQualificationConversion(FromType, ToType, CStyle)) {
     SCS.Third = ICK_Qualification;
     FromType = ToType;
     CanonFrom = S.Context.getCanonicalType(FromType);
@@ -1984,7 +1990,8 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
 /// an rvalue of type FromType to ToType is a qualification conversion
 /// (C++ 4.4).
 bool
-Sema::IsQualificationConversion(QualType FromType, QualType ToType) {
+Sema::IsQualificationConversion(QualType FromType, QualType ToType, 
+                                bool CStyle) {
   FromType = Context.getCanonicalType(FromType);
   ToType = Context.getCanonicalType(ToType);
 
@@ -2009,12 +2016,12 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType) {
 
     //   -- for every j > 0, if const is in cv 1,j then const is in cv
     //      2,j, and similarly for volatile.
-    if (!ToType.isAtLeastAsQualifiedAs(FromType))
+    if (!CStyle && !ToType.isAtLeastAsQualifiedAs(FromType))
       return false;
 
     //   -- if the cv 1,j and cv 2,j are different, then const is in
     //      every cv for 0 < k < j.
-    if (FromType.getCVRQualifiers() != ToType.getCVRQualifiers()
+    if (!CStyle && FromType.getCVRQualifiers() != ToType.getCVRQualifiers()
         && !PreviousToQualsIncludeConst)
       return false;
 
@@ -3156,7 +3163,8 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
   //   and does not constitute a conversion.
   ICS = TryImplicitConversion(S, Init, T1, SuppressUserConversions,
                               /*AllowExplicit=*/false,
-                              /*InOverloadResolution=*/false);
+                              /*InOverloadResolution=*/false,
+                              /*CStyle=*/false);
 
   // Of course, that's still a reference binding.
   if (ICS.isStandard()) {
@@ -3195,7 +3203,8 @@ TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
   return TryImplicitConversion(S, From, ToType,
                                SuppressUserConversions,
                                /*AllowExplicit=*/false,
-                               InOverloadResolution);
+                               InOverloadResolution,
+                               /*CStyle=*/false);
 }
 
 /// TryObjectArgumentInitialization - Try to initialize the object
@@ -3379,7 +3388,8 @@ TryContextuallyConvertToBool(Sema &S, Expr *From) {
                                // FIXME: Are these flags correct?
                                /*SuppressUserConversions=*/false,
                                /*AllowExplicit=*/true,
-                               /*InOverloadResolution=*/false);
+                               /*InOverloadResolution=*/false,
+                               /*CStyle=*/false);
 }
 
 /// PerformContextuallyConvertToBool - Perform a contextual conversion
@@ -3405,7 +3415,8 @@ TryContextuallyConvertToObjCId(Sema &S, Expr *From) {
                                // FIXME: Are these flags correct?
                                /*SuppressUserConversions=*/false,
                                /*AllowExplicit=*/true,
-                               /*InOverloadResolution=*/false);
+                               /*InOverloadResolution=*/false,
+                               /*CStyle=*/false);
 }
 
 /// PerformContextuallyConvertToObjCId - Perform a contextual conversion

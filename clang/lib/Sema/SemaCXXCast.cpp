@@ -320,7 +320,7 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
 
   // Test if they're compatible.
   return SrcConstruct != DestConstruct &&
-    !Self.IsQualificationConversion(SrcConstruct, DestConstruct);
+    !Self.IsQualificationConversion(SrcConstruct, DestConstruct, false);
 }
 
 /// CheckDynamicCast - Check that a dynamic_cast\<DestType\>(SrcExpr) is valid.
@@ -1035,8 +1035,7 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   
   InitializedEntity Entity = InitializedEntity::InitializeTemporary(DestType);
   InitializationKind InitKind
-    = InitializationKind::CreateCast(/*FIXME:*/OpRange, 
-                                                               CStyle);    
+    = InitializationKind::CreateCast(/*FIXME:*/OpRange, CStyle);    
   InitializationSequence InitSeq(Self, Entity, InitKind, &SrcExpr, 1);
 
   // At this point of CheckStaticCast, if the destination is a reference,

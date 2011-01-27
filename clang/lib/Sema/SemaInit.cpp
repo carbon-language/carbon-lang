@@ -2519,7 +2519,9 @@ static void TryReferenceInitialization(Sema &S,
   bool T1Function = T1->isFunctionType();
   if (isLValueRef || T1Function) {
     if (InitCategory.isLValue() && 
-        RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
+        (RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification ||
+         (Kind.isCStyleOrFunctionalCast() && 
+          RefRelationship == Sema::Ref_Related))) {
       //   - is an lvalue (but is not a bit-field), and "cv1 T1" is 
       //     reference-compatible with "cv2 T2," or
       //
@@ -2593,7 +2595,9 @@ static void TryReferenceInitialization(Sema &S,
   //        "cv1 T1" is reference-compatible with "cv2 T2"
   // Note: functions are handled below.
   if (!T1Function &&
-      RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification &&
+      (RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification ||
+       (Kind.isCStyleOrFunctionalCast() && 
+        RefRelationship == Sema::Ref_Related)) &&
       (InitCategory.isXValue() ||
        (InitCategory.isPRValue() && T2->isRecordType()) ||
        (InitCategory.isPRValue() && T2->isArrayType()))) {
@@ -2630,9 +2634,6 @@ static void TryReferenceInitialization(Sema &S,
   //         reference-related to T2, and can be implicitly converted to an 
   //         xvalue, class prvalue, or function lvalue of type "cv3 T3",
   //         where "cv1 T1" is reference-compatible with "cv3 T3",
-  //
-  // FIXME: Need to handle xvalue, class prvalue, etc. cases in 
-  // TryRefInitWithConversionFunction.
   if (T2->isRecordType()) {
     if (RefRelationship == Sema::Ref_Incompatible) {
       ConvOvlResult = TryRefInitWithConversionFunction(S, Entity,
@@ -2665,7 +2666,8 @@ static void TryReferenceInitialization(Sema &S,
   if (S.TryImplicitConversion(Sequence, TempEntity, Initializer,
                               /*SuppressUserConversions*/ false,
                               AllowExplicit,
-                              /*FIXME:InOverloadResolution=*/false)) {
+                              /*FIXME:InOverloadResolution=*/false,
+                              /*CStyle=*/Kind.isCStyleOrFunctionalCast())) {
     // FIXME: Use the conversion function set stored in ICS to turn
     // this into an overloading ambiguity diagnostic. However, we need
     // to keep that set as an OverloadCandidateSet rather than as some
@@ -3184,7 +3186,8 @@ InitializationSequence::InitializationSequence(Sema &S,
   if (S.TryImplicitConversion(*this, Entity, Initializer,
                               /*SuppressUserConversions*/ true,
                               /*AllowExplicitConversions*/ false,
-                              /*InOverloadResolution*/ false))
+                              /*InOverloadResolution*/ false,
+                              /*CStyle=*/Kind.isCStyleOrFunctionalCast()))
   {
     if (Initializer->getType() == Context.OverloadTy)
       SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
@@ -3844,11 +3847,9 @@ InitializationSequence::Perform(Sema &S,
     }
 
     case SK_ConversionSequence: {
-      bool IgnoreBaseAccess = Kind.isCStyleOrFunctionalCast();
-
       if (S.PerformImplicitConversion(CurInitExpr, Step->Type, *Step->ICS,
                                       getAssignmentAction(Entity),
-                                      IgnoreBaseAccess))
+                                      Kind.isCStyleOrFunctionalCast()))
         return ExprError();
         
       CurInit.release();
