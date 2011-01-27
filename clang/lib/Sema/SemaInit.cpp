@@ -120,7 +120,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
 /// responsible for moving that Index forward as it consumes elements.
 ///
 /// Each Check* routine also has a StructuredList/StructuredIndex
-/// arguments, which contains the current the "structured" (semantic)
+/// arguments, which contains the current "structured" (semantic)
 /// initializer list and the index into that initializer list where we
 /// are copying initializers as we map them over to the semantic
 /// list. Once we have completed our recursive walk of the subobject
@@ -3293,7 +3293,7 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
 ///
 /// \param S The Sema object used for type-checking.
 ///
-/// \param T The type of the temporary object, which must either by
+/// \param T The type of the temporary object, which must either be
 /// the type of the initializer expression or a superclass thereof.
 ///
 /// \param Enter The entity being initialized.

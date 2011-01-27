@@ -570,7 +570,7 @@ public:
   /// variable array of the specified element type.
   QualType getVariableArrayType(QualType EltTy, Expr *NumElts,
                                 ArrayType::ArraySizeModifier ASM,
-                                unsigned EltTypeQuals,
+                                unsigned IndexTypeQuals,
                                 SourceRange Brackets) const;
 
   /// getDependentSizedArrayType - Returns a non-unique reference to
@@ -579,20 +579,20 @@ public:
   /// comparable, at some point.
   QualType getDependentSizedArrayType(QualType EltTy, Expr *NumElts,
                                       ArrayType::ArraySizeModifier ASM,
-                                      unsigned EltTypeQuals,
+                                      unsigned IndexTypeQuals,
                                       SourceRange Brackets) const;
 
   /// getIncompleteArrayType - Returns a unique reference to the type for a
   /// incomplete array of the specified element type.
   QualType getIncompleteArrayType(QualType EltTy,
                                   ArrayType::ArraySizeModifier ASM,
-                                  unsigned EltTypeQuals) const;
+                                  unsigned IndexTypeQuals) const;
 
   /// getConstantArrayType - Return the unique reference to the type for a
   /// constant array of the specified element type.
   QualType getConstantArrayType(QualType EltTy, const llvm::APInt &ArySize,
                                 ArrayType::ArraySizeModifier ASM,
-                                unsigned EltTypeQuals) const;
+                                unsigned IndexTypeQuals) const;
   
   /// getVariableArrayDecayedType - Returns a vla type where known sizes
   /// are replaced with [*].

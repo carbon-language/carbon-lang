@@ -1440,7 +1440,7 @@ QualType ASTContext::getMemberPointerType(QualType T, const Type *Cls) const {
 QualType ASTContext::getConstantArrayType(QualType EltTy,
                                           const llvm::APInt &ArySizeIn,
                                           ArrayType::ArraySizeModifier ASM,
-                                          unsigned EltTypeQuals) const {
+                                          unsigned IndexTypeQuals) const {
   assert((EltTy->isDependentType() ||
           EltTy->isIncompleteType() || EltTy->isConstantSizeType()) &&
          "Constant array of VLAs is illegal!");
@@ -1452,7 +1452,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
     ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
 
   llvm::FoldingSetNodeID ID;
-  ConstantArrayType::Profile(ID, EltTy, ArySize, ASM, EltTypeQuals);
+  ConstantArrayType::Profile(ID, EltTy, ArySize, ASM, IndexTypeQuals);
 
   void *InsertPos = 0;
   if (ConstantArrayType *ATP =
@@ -1465,7 +1465,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   if (!EltTy.isCanonical() || EltTy.hasLocalQualifiers()) {
     SplitQualType canonSplit = getCanonicalType(EltTy).split();
     Canon = getConstantArrayType(QualType(canonSplit.first, 0), ArySize,
-                                 ASM, EltTypeQuals);
+                                 ASM, IndexTypeQuals);
     Canon = getQualifiedType(Canon, canonSplit.second);
 
     // Get the new insert position for the node we care about.
@@ -1475,7 +1475,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   }
 
   ConstantArrayType *New = new(*this,TypeAlignment)
-    ConstantArrayType(EltTy, Canon, ArySize, ASM, EltTypeQuals);
+    ConstantArrayType(EltTy, Canon, ArySize, ASM, IndexTypeQuals);
   ConstantArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
@@ -1610,7 +1610,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
 QualType ASTContext::getVariableArrayType(QualType EltTy,
                                           Expr *NumElts,
                                           ArrayType::ArraySizeModifier ASM,
-                                          unsigned EltTypeQuals,
+                                          unsigned IndexTypeQuals,
                                           SourceRange Brackets) const {
   // Since we don't unique expressions, it isn't possible to unique VLA's
   // that have an expression provided for their size.
@@ -1620,12 +1620,12 @@ QualType ASTContext::getVariableArrayType(QualType EltTy,
   if (!EltTy.isCanonical() || EltTy.hasLocalQualifiers()) {
     SplitQualType canonSplit = getCanonicalType(EltTy).split();
     Canon = getVariableArrayType(QualType(canonSplit.first, 0), NumElts, ASM,
-                                 EltTypeQuals, Brackets);
+                                 IndexTypeQuals, Brackets);
     Canon = getQualifiedType(Canon, canonSplit.second);
   }
   
   VariableArrayType *New = new(*this, TypeAlignment)
-    VariableArrayType(EltTy, Canon, NumElts, ASM, EltTypeQuals, Brackets);
+    VariableArrayType(EltTy, Canon, NumElts, ASM, IndexTypeQuals, Brackets);
 
   VariableArrayTypes.push_back(New);
   Types.push_back(New);
