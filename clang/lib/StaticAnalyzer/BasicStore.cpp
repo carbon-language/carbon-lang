@@ -592,4 +592,3 @@ Store BasicStoreManager::InvalidateRegion(Store store,
   SVal V = svalBuilder.getConjuredSymbolVal(R, E, T, Count);
   return Bind(store, loc::MemRegionVal(R), V);
 }
-

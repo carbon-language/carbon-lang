@@ -61,7 +61,7 @@ StmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
 
 void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
   DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
-  
+
   // If we have an invalid decl, just return.
   if (DG.isNull() || !DG.isSingleDecl()) return;
   // suppress any potential 'unused variable' warning.
@@ -114,7 +114,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
         Diag(Loc, diag::warn_unused_call) << R1 << R2 << "const";
         return;
       }
-    }        
+    }
   } else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
     const ObjCMethodDecl *MD = ME->getMethodDecl();
     if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
@@ -296,7 +296,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
   Expr *ConditionExpr = CondResult.takeAs<Expr>();
   if (!ConditionExpr)
     return StmtError();
-  
+
   DiagnoseUnusedExprResult(thenStmt);
 
   // Warn if the if block has a null body without an else value.
@@ -318,7 +318,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
 
   DiagnoseUnusedExprResult(elseStmt);
 
-  return Owned(new (Context) IfStmt(Context, IfLoc, ConditionVar, ConditionExpr, 
+  return Owned(new (Context) IfStmt(Context, IfLoc, ConditionVar, ConditionExpr,
                                     thenStmt, ElseLoc, elseStmt));
 }
 
@@ -356,7 +356,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
   } else if (NewSign != Val.isSigned()) {
     // Convert the sign to match the sign of the condition.  This can cause
     // overflow as well: unsigned(INTMIN)
-    // We don't diagnose this overflow, because it is implementation-defined 
+    // We don't diagnose this overflow, because it is implementation-defined
     // behavior.
     // FIXME: Introduce a second, default-ignored warning for this case?
     llvm::APSInt OldVal(Val);
@@ -425,7 +425,7 @@ static QualType GetTypeBeforeIntegralPromotion(const Expr* expr) {
 }
 
 StmtResult
-Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond, 
+Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
                              Decl *CondVar) {
   ExprResult CondResult;
 
@@ -435,15 +435,15 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
     CondResult = CheckConditionVariable(ConditionVar, SourceLocation(), false);
     if (CondResult.isInvalid())
       return StmtError();
-    
+
     Cond = CondResult.release();
   }
-  
+
   if (!Cond)
     return StmtError();
-  
+
   CondResult
-    = ConvertToIntegralOrEnumerationType(SwitchLoc, Cond, 
+    = ConvertToIntegralOrEnumerationType(SwitchLoc, Cond,
                           PDiag(diag::err_typecheck_statement_requires_integer),
                                    PDiag(diag::err_switch_incomplete_class_type)
                                      << Cond->getSourceRange(),
@@ -454,7 +454,7 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
                                          PDiag(0));
   if (CondResult.isInvalid()) return StmtError();
   Cond = CondResult.take();
-  
+
   if (!CondVar) {
     CheckImplicitConversions(Cond, SwitchLoc);
     CondResult = MaybeCreateExprWithCleanups(Cond);
@@ -464,7 +464,7 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   }
 
   getCurFunction()->setHasBranchIntoScope();
-    
+
   SwitchStmt *SS = new (Context) SwitchStmt(Context, ConditionVar, Cond);
   getCurFunction()->SwitchStack.push_back(SS);
   return Owned(SS);
@@ -490,7 +490,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
   if (SS->getCond() == 0)
     return StmtError();
-    
+
   Expr *CondExpr = SS->getCond();
   Expr *CondExprBeforePromotion = CondExpr;
   QualType CondTypeBeforePromotion =
@@ -510,7 +510,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   // the pre-promotion type of the switch condition.
   if (!CondExpr->isTypeDependent()) {
     // We have already converted the expression to an integral or enumeration
-    // type, when we started the switch statement. If we don't have an 
+    // type, when we started the switch statement. If we don't have an
     // appropriate type now, just return an error.
     if (!CondType->isIntegralOrEnumerationType())
       return StmtError();
@@ -787,7 +787,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
              RI != CaseRanges.end() && EI != EIend; RI++) {
           while (EI != EIend && EI->first < RI->first)
             EI++;
-        
+
           if (EI == EIend || EI->first != RI->first) {
             Diag(RI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
               << ED->getDeclName();
@@ -802,20 +802,20 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
               << ED->getDeclName();
         }
       }
-      
+
       // Check which enum vals aren't in switch
       CaseValsTy::const_iterator CI = CaseVals.begin();
       CaseRangesTy::const_iterator RI = CaseRanges.begin();
       bool hasCasesNotInSwitch = false;
 
       llvm::SmallVector<DeclarationName,8> UnhandledNames;
-      
+
       for (EnumValsTy::const_iterator EI = EnumVals.begin(); EI != EIend; EI++){
         // Drop unneeded case values
         llvm::APSInt CIVal;
         while (CI != CaseVals.end() && CI->first < EI->first)
           CI++;
-        
+
         if (CI != CaseVals.end() && CI->first == EI->first)
           continue;
 
@@ -833,7 +833,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
             UnhandledNames.push_back(EI->second->getDeclName());
         }
       }
-      
+
       // Produce a nice diagnostic if multiple values aren't handled.
       switch (UnhandledNames.size()) {
       case 0: break;
@@ -870,10 +870,10 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 }
 
 StmtResult
-Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, 
+Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
                      Decl *CondVar, Stmt *Body) {
   ExprResult CondResult(Cond.release());
-  
+
   VarDecl *ConditionVar = 0;
   if (CondVar) {
     ConditionVar = cast<VarDecl>(CondVar);
@@ -884,7 +884,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
   Expr *ConditionExpr = CondResult.take();
   if (!ConditionExpr)
     return StmtError();
-  
+
   DiagnoseUnusedExprResult(Body);
 
   return Owned(new (Context) WhileStmt(Context, ConditionVar, ConditionExpr,
@@ -905,7 +905,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
   if (CondResult.isInvalid())
     return StmtError();
   Cond = CondResult.take();
-  
+
   DiagnoseUnusedExprResult(Body);
 
   return Owned(new (Context) DoStmt(Body, Cond, DoLoc, WhileLoc, CondRParen));
@@ -941,16 +941,16 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
     if (SecondResult.isInvalid())
       return StmtError();
   }
-  
+
   Expr *Third  = third.release().takeAs<Expr>();
-  
+
   DiagnoseUnusedExprResult(First);
   DiagnoseUnusedExprResult(Third);
   DiagnoseUnusedExprResult(Body);
 
-  return Owned(new (Context) ForStmt(Context, First, 
-                                     SecondResult.take(), ConditionVar, 
-                                     Third, Body, ForLoc, LParenLoc, 
+  return Owned(new (Context) ForStmt(Context, First,
+                                     SecondResult.take(), ConditionVar,
+                                     Third, Body, ForLoc, LParenLoc,
                                      RParenLoc));
 }
 
@@ -1010,7 +1010,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
     else if (const ObjCObjectPointerType *OPT =
              SecondType->getAsObjCInterfacePointerType()) {
       llvm::SmallVector<IdentifierInfo *, 4> KeyIdents;
-      IdentifierInfo* selIdent = 
+      IdentifierInfo* selIdent =
         &Context.Idents.get("countByEnumeratingWithState");
       KeyIdents.push_back(selIdent);
       selIdent = &Context.Idents.get("objects");
@@ -1019,7 +1019,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       KeyIdents.push_back(selIdent);
       Selector CSelector = Context.Selectors.getSelector(3, &KeyIdents[0]);
       if (ObjCInterfaceDecl *IDecl = OPT->getInterfaceDecl()) {
-        if (!IDecl->isForwardDecl() && 
+        if (!IDecl->isForwardDecl() &&
             !IDecl->lookupInstanceMethod(CSelector)) {
           // Must further look into private implementation methods.
           if (!LookupPrivateInstanceMethod(CSelector, IDecl))
@@ -1089,7 +1089,7 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
   return Owned(new (Context) BreakStmt(BreakLoc));
 }
 
-/// \brief Determine whether the given expression is a candidate for 
+/// \brief Determine whether the given expression is a candidate for
 /// copy elision in either a return statement or a throw expression.
 ///
 /// \param ReturnType If we're determining the copy elision candidate for
@@ -1117,8 +1117,8 @@ const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
     if (!Context.hasSameUnqualifiedType(ReturnType, ExprType))
       return 0;
   }
-  
-  // ... the expression is the name of a non-volatile automatic object 
+
+  // ... the expression is the name of a non-volatile automatic object
   // (other than a function or catch-clause parameter)) ...
   const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E->IgnoreParens());
   if (!DR)
@@ -1126,14 +1126,14 @@ const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
   const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
   if (!VD)
     return 0;
-  
+
   if (VD->hasLocalStorage() && !VD->isExceptionVariable() &&
       !VD->getType()->isReferenceType() && !VD->hasAttr<BlocksAttr>() &&
       !VD->getType().isVolatileQualified() &&
       ((VD->getKind() == Decl::Var) ||
        (AllowFunctionParameter && VD->getKind() == Decl::ParmVar)))
     return VD;
-  
+
   return 0;
 }
 
@@ -1143,30 +1143,30 @@ const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
 /// This routine implements C++0x [class.copy]p33, which attempts to treat
 /// returned lvalues as rvalues in certain cases (to prefer move construction),
 /// then falls back to treating them as lvalues if that failed.
-ExprResult 
+ExprResult
 Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
                                       const VarDecl *NRVOCandidate,
                                       QualType ResultType,
                                       Expr *Value) {
   // C++0x [class.copy]p33:
-  //   When the criteria for elision of a copy operation are met or would 
-  //   be met save for the fact that the source object is a function 
-  //   parameter, and the object to be copied is designated by an lvalue, 
+  //   When the criteria for elision of a copy operation are met or would
+  //   be met save for the fact that the source object is a function
+  //   parameter, and the object to be copied is designated by an lvalue,
   //   overload resolution to select the constructor for the copy is first
   //   performed as if the object were designated by an rvalue.
   ExprResult Res = ExprError();
   if (NRVOCandidate || getCopyElisionCandidate(ResultType, Value, true)) {
-    ImplicitCastExpr AsRvalue(ImplicitCastExpr::OnStack, 
+    ImplicitCastExpr AsRvalue(ImplicitCastExpr::OnStack,
                               Value->getType(), CK_LValueToRValue,
                               Value, VK_XValue);
-    
+
     Expr *InitExpr = &AsRvalue;
-    InitializationKind Kind 
+    InitializationKind Kind
       = InitializationKind::CreateCopy(Value->getLocStart(),
                                        Value->getLocStart());
     InitializationSequence Seq(*this, Entity, Kind, &InitExpr, 1);
-    
-    //   [...] If overload resolution fails, or if the type of the first 
+
+    //   [...] If overload resolution fails, or if the type of the first
     //   parameter of the selected constructor is not an rvalue reference
     //   to the object's type (possibly cv-qualified), overload resolution
     //   is performed again, considering the object as an lvalue.
@@ -1174,42 +1174,42 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
       for (InitializationSequence::step_iterator Step = Seq.step_begin(),
            StepEnd = Seq.step_end();
            Step != StepEnd; ++Step) {
-        if (Step->Kind 
+        if (Step->Kind
             != InitializationSequence::SK_ConstructorInitialization)
           continue;
-        
-        CXXConstructorDecl *Constructor 
+
+        CXXConstructorDecl *Constructor
         = cast<CXXConstructorDecl>(Step->Function.Function);
-        
+
         const RValueReferenceType *RRefType
           = Constructor->getParamDecl(0)->getType()
                                                  ->getAs<RValueReferenceType>();
-        
+
         // If we don't meet the criteria, break out now.
-        if (!RRefType || 
+        if (!RRefType ||
             !Context.hasSameUnqualifiedType(RRefType->getPointeeType(),
                             Context.getTypeDeclType(Constructor->getParent())))
           break;
-        
+
         // Promote "AsRvalue" to the heap, since we now need this
         // expression node to persist.
         Value = ImplicitCastExpr::Create(Context, Value->getType(),
-                                         CK_LValueToRValue, Value, 0, 
+                                         CK_LValueToRValue, Value, 0,
                                          VK_XValue);
-        
+
         // Complete type-checking the initialization of the return type
         // using the constructor we found.
         Res = Seq.Perform(*this, Entity, Kind, MultiExprArg(&Value, 1));
       }
     }
   }
-  
+
   // Either we didn't meet the criteria for treating an lvalue as an rvalue,
-  // above, or overload resolution failed. Either way, we need to try 
+  // above, or overload resolution failed. Either way, we need to try
   // (again) now with the return value expression as written.
   if (Res.isInvalid())
     Res = PerformCopyInitialization(Entity, SourceLocation(), Value);
-  
+
   return Res;
 }
 
@@ -1258,7 +1258,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
   } else {
     const VarDecl *NRVOCandidate = 0;
-    
+
     if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
       // we have a non-void block with an expression, continue checking
 
@@ -1269,35 +1269,35 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       // In C++ the return statement is handled via a copy initialization.
       // the C version of which boils down to CheckSingleAssignmentConstraints.
       NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
-      InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc, 
+      InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,
                                                                      FnRetType,
                                                            NRVOCandidate != 0);
-      ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate, 
+      ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate,
                                                        FnRetType, RetValExp);
       if (Res.isInvalid()) {
         // FIXME: Cleanup temporaries here, anyway?
         return StmtError();
       }
-      
+
       if (RetValExp) {
         CheckImplicitConversions(RetValExp, ReturnLoc);
         RetValExp = MaybeCreateExprWithCleanups(RetValExp);
       }
 
       RetValExp = Res.takeAs<Expr>();
-      if (RetValExp) 
+      if (RetValExp)
         CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
     }
-    
+
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, NRVOCandidate);
   }
 
-  // If we need to check for the named return value optimization, save the 
+  // If we need to check for the named return value optimization, save the
   // return statement in our scope for later processing.
   if (getLangOptions().CPlusPlus && FnRetType->isRecordType() &&
       !CurContext->isDependentContext())
     FunctionScopes.back()->Returns.push_back(Result);
-  
+
   return Owned(Result);
 }
 
@@ -1342,7 +1342,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       CheckImplicitConversions(RetValExp, ReturnLoc);
       RetValExp = MaybeCreateExprWithCleanups(RetValExp);
     }
-    
+
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, 0);
   } else if (!RetValExp && !FnRetType->isDependentType()) {
     unsigned DiagID = diag::warn_return_missing_expr;  // C90 6.6.6.4p4
@@ -1366,10 +1366,10 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       // In C++ the return statement is handled via a copy initialization.
       // the C version of which boils down to CheckSingleAssignmentConstraints.
       NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
-      InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc, 
+      InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,
                                                                      FnRetType,
                                                                      NRVOCandidate != 0);
-      ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate, 
+      ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate,
                                                        FnRetType, RetValExp);
       if (Res.isInvalid()) {
         // FIXME: Cleanup temporaries here, anyway?
@@ -1377,23 +1377,23 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       }
 
       RetValExp = Res.takeAs<Expr>();
-      if (RetValExp) 
+      if (RetValExp)
         CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
     }
-    
+
     if (RetValExp) {
       CheckImplicitConversions(RetValExp, ReturnLoc);
       RetValExp = MaybeCreateExprWithCleanups(RetValExp);
     }
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, NRVOCandidate);
   }
-  
-  // If we need to check for the named return value optimization, save the 
+
+  // If we need to check for the named return value optimization, save the
   // return statement in our scope for later processing.
   if (getLangOptions().CPlusPlus && FnRetType->isRecordType() &&
       !CurContext->isDependentContext())
     FunctionScopes.back()->Returns.push_back(Result);
-  
+
   return Owned(Result);
 }
 
@@ -1408,7 +1408,7 @@ static bool CheckAsmLValue(const Expr *E, Sema &S) {
   // Type dependent expressions will be checked during instantiation.
   if (E->isTypeDependent())
     return false;
-  
+
   if (E->isLValue())
     return false;  // Cool, this is an lvalue.
 
@@ -1544,8 +1544,8 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   }
 
   AsmStmt *NS =
-    new (Context) AsmStmt(Context, AsmLoc, IsSimple, IsVolatile, MSAsm, 
-                          NumOutputs, NumInputs, Names, Constraints, Exprs, 
+    new (Context) AsmStmt(Context, AsmLoc, IsSimple, IsVolatile, MSAsm,
+                          NumOutputs, NumInputs, Names, Constraints, Exprs,
                           AsmString, NumClobbers, Clobbers, RParenLoc);
   // Validate the asm string, ensuring it makes sense given the operands we
   // have.
@@ -1579,7 +1579,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     enum AsmDomain {
       AD_Int, AD_FP, AD_Other
     } InputDomain, OutputDomain;
-    
+
     if (InTy->isIntegerType() || InTy->isPointerType())
       InputDomain = AD_Int;
     else if (InTy->isRealFloatingType())
@@ -1593,19 +1593,19 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       OutputDomain = AD_FP;
     else
       OutputDomain = AD_Other;
-    
+
     // They are ok if they are the same size and in the same domain.  This
     // allows tying things like:
     //   void* to int*
     //   void* to int            if they are the same size.
     //   double to long double   if they are the same size.
-    // 
+    //
     uint64_t OutSize = Context.getTypeSize(OutTy);
     uint64_t InSize = Context.getTypeSize(InTy);
     if (OutSize == InSize && InputDomain == OutputDomain &&
         InputDomain != AD_Other)
       continue;
-    
+
     // If the smaller input/output operand is not mentioned in the asm string,
     // then we can promote it and the asm string won't notice.  Check this
     // case now.
@@ -1657,7 +1657,7 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
   VarDecl *Var = cast_or_null<VarDecl>(Parm);
   if (Var && Var->isInvalidDecl())
     return StmtError();
-  
+
   return Owned(new (Context) ObjCAtCatchStmt(AtLoc, RParen, Var, Body));
 }
 
@@ -1667,7 +1667,7 @@ Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, Stmt *Body) {
 }
 
 StmtResult
-Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try, 
+Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
                          MultiStmtArg CatchStmts, Stmt *Finally) {
   getCurFunction()->setHasBranchProtectedScope();
   unsigned NumCatchStmts = CatchStmts.size();
@@ -1692,12 +1692,12 @@ StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,
                          << Throw->getType() << Throw->getSourceRange());
     }
   }
-  
+
   return Owned(new (Context) ObjCAtThrowStmt(AtLoc, Throw));
 }
 
 StmtResult
-Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw, 
+Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw,
                            Scope *CurScope) {
   if (!Throw) {
     // @throw without an expression designates a rethrow (which much occur
@@ -1707,8 +1707,8 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw,
       AtCatchParent = AtCatchParent->getParent();
     if (!AtCatchParent)
       return StmtError(Diag(AtLoc, diag::error_rethrow_used_outside_catch));
-  } 
-  
+  }
+
   return BuildObjCAtThrowStmt(AtLoc, Throw);
 }
 
