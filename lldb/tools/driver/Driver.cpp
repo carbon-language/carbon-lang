@@ -1431,7 +1431,7 @@ sigint_handler (int signo)
 }
 
 int
-main (int argc, char const *argv[])
+main (int argc, char const *argv[], const char *envp[])
 {
     SBDebugger::Initialize();
     
