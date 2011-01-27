@@ -170,7 +170,13 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
       OS << ", true";
     else
       OS << ", false";
-    
+
+    // Access control bit
+    if (R.getValueAsBit("AccessControl"))
+      OS << ", true";
+    else
+      OS << ", false";
+
     // Category number.
     OS << ", " << CategoryIDs.getID(getDiagnosticCategory(&R, DGParentMap));
     OS << ")\n";
