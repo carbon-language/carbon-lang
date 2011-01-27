@@ -44,8 +44,6 @@ private:
 
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
-  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
-
   X86Operand *ParseOperand();
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
@@ -71,6 +69,7 @@ public:
     setAvailableFeatures(ComputeAvailableFeatures(
                            &TM.getSubtarget<X86Subtarget>()));
   }
+  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);

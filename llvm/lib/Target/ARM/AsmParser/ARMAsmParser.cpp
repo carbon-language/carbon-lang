@@ -53,6 +53,7 @@ class ARMAsmParser : public TargetAsmParser {
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
   int TryParseRegister();
+  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
   bool TryParseCoprocessorOperandName(SmallVectorImpl<MCParsedAsmOperand*>&);
   bool TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
@@ -548,6 +549,12 @@ void ARMOperand::dump(raw_ostream &OS) const {
 static unsigned MatchRegisterName(StringRef Name);
 
 /// }
+
+bool ARMAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
+  RegNo = TryParseRegister();
+
+  return (RegNo == (unsigned)-1);
+}
 
 /// Try to parse a register name.  The token must be an Identifier when called,
 /// and if it is a register name the token is eaten and the register number is

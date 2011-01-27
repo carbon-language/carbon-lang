@@ -42,6 +42,8 @@ public:
   unsigned getAvailableFeatures() const { return AvailableFeatures; }
   void setAvailableFeatures(unsigned Value) { AvailableFeatures = Value; }
 
+  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) = 0;
+
   /// ParseInstruction - Parse one assembly instruction.
   ///
   /// The parser is positioned following the instruction name. The target
