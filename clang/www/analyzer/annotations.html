@@ -376,7 +376,7 @@ the <a href="#attr_cf_consumed">cf_consumed</a> attribute instead.</p>
 
 #ifndef NS_CONSUMED
 #if __has_feature(attribute_ns_consumed)
-<span class="code_highlight">#define NS_CONSUMED __attribute__((NS_CONSUMED))</span>
+<span class="code_highlight">#define NS_CONSUMED __attribute__((ns_consumed))</span>
 #else
 #define NS_CONSUMED
 #endif
@@ -428,7 +428,7 @@ collection (which is import for Core Foundation types, which are not automatical
 
 #ifndef CF_CONSUMED
 #if __has_feature(attribute_cf_consumed)
-<span class="code_highlight">#define CF_CONSUMED __attribute__((CF_CONSUMED))</span>
+<span class="code_highlight">#define CF_CONSUMED __attribute__((cf_consumed))</span>
 #else
 #define CF_CONSUMED
 #endif
