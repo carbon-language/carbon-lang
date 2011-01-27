@@ -158,8 +158,8 @@ static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
 llvm::BitVector &CFGBlockValues::getBitVector(const CFGBlock *block,
                                               const CFGBlock *dstBlock) {
   unsigned idx = block->getBlockID();
-  if (dstBlock && block->succ_size() == 2 && block->pred_size() == 2) {
-    assert(block->getTerminator());
+  if (dstBlock && block->succ_size() == 2 && block->pred_size() == 2 &&
+      block->getTerminator()) {
     if (getLogicalOperatorInChain(block)) {
       if (*block->succ_begin() == dstBlock)
         return lazyCreate(vals[idx].first);
