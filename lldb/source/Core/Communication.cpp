@@ -32,6 +32,7 @@ Communication::Communication(const char *name) :
     m_read_thread_enabled (false),
     m_bytes(),
     m_bytes_mutex (Mutex::eMutexTypeRecursive),
+    m_write_mutex (Mutex::eMutexTypeNormal),
     m_callback (NULL),
     m_callback_baton (NULL),
     m_close_on_eof (true)
@@ -205,6 +206,7 @@ Communication::Write (const void *src, size_t src_len, ConnectionStatus &status,
 {
     lldb::ConnectionSP connection_sp (m_connection_sp);
 
+    Mutex::Locker (m_write_mutex);
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
                                          "%p Communication::Write (src = %p, src_len = %zu) connection = %p",
                                          this, 

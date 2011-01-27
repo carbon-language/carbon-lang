@@ -383,7 +383,7 @@ RNBRemote::GetPacketPayload (std::string &return_packet)
                 }
             }
         }
-            break;
+        break;
 
         default:
             DNBLogThreadedIf (LOG_RNB_REMOTE, "%8u RNBRemote::%s tossing unexpected packet???? %s", (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), __FUNCTION__, return_packet.c_str());
@@ -403,9 +403,9 @@ RNBRemote::HandlePacket_UNIMPLEMENTED (const char* p)
 }
 
 rnb_err_t
-RNBRemote::HandlePacket_ILLFORMED (const char *description)
+RNBRemote::HandlePacket_ILLFORMED (const char *file, int line, const char *p, const char *description)
 {
-    DNBLogThreadedIf (LOG_RNB_MAX, "%8u RNBRemote::%s sending ILLFORMED", (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), __FUNCTION__);
+    DNBLogThreadedIf (LOG_RNB_PACKETS, "%8u %s:%i ILLFORMED: '%s' (%s)", (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), file, line, __FUNCTION__, p);
     return SendPacket ("E03");
 }
 
@@ -583,8 +583,9 @@ RNBRemote::CommDataReceived(const std::string& new_data)
                     }
                     else
                     {
-                        // Add two for the checksum bytes
-                        end_idx += 4;
+                        // Add two for the checksum bytes and 1 to point to the
+                        // byte just past the end of this packet
+                        end_idx += 2 + 1;
                     }
                     break;
 
@@ -1125,12 +1126,12 @@ RNBRemote::HandlePacket_A (const char *p)
 {
     if (p == NULL || *p == '\0')
     {
-        return HandlePacket_ILLFORMED ("Null packet for 'A' pkt");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Null packet for 'A' pkt");
     }
     p++;
     if (p == '\0' || !isdigit (*p))
     {
-        return HandlePacket_ILLFORMED ("arglen not specified on 'A' pkt");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "arglen not specified on 'A' pkt");
     }
 
     /* I promise I don't modify it anywhere in this function.  strtoul()'s
@@ -1150,11 +1151,11 @@ RNBRemote::HandlePacket_A (const char *p)
         arglen = strtoul (buf, &c, 10);
         if (errno != 0 && arglen == 0)
         {
-            return HandlePacket_ILLFORMED ("arglen not a number on 'A' pkt");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "arglen not a number on 'A' pkt");
         }
         if (*c != ',')
         {
-            return HandlePacket_ILLFORMED ("arglen not followed by comma on 'A' pkt");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "arglen not followed by comma on 'A' pkt");
         }
         buf = c + 1;
 
@@ -1162,11 +1163,11 @@ RNBRemote::HandlePacket_A (const char *p)
         argnum = strtoul (buf, &c, 10);
         if (errno != 0 && argnum == 0)
         {
-            return HandlePacket_ILLFORMED ("argnum not a number on 'A' pkt");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "argnum not a number on 'A' pkt");
         }
         if (*c != ',')
         {
-            return HandlePacket_ILLFORMED ("arglen not followed by comma on 'A' pkt");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "arglen not followed by comma on 'A' pkt");
         }
         buf = c + 1;
 
@@ -1183,7 +1184,7 @@ RNBRemote::HandlePacket_A (const char *p)
             int ch = strtoul (smallbuf, NULL, 16);
             if (errno != 0 && ch == 0)
             {
-                return HandlePacket_ILLFORMED ("non-hex char in arg on 'A' pkt");
+                return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'A' pkt");
             }
 
             arg.push_back(ch);
@@ -1209,7 +1210,7 @@ RNBRemote::HandlePacket_H (const char *p)
     p++;  // skip 'H'
     if (*p != 'c' && *p != 'g')
     {
-        return HandlePacket_ILLFORMED ("Missing 'c' or 'g' type in H packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Missing 'c' or 'g' type in H packet");
     }
 
     if (!m_ctx.HasValidProcessID())
@@ -1223,7 +1224,7 @@ RNBRemote::HandlePacket_H (const char *p)
     nub_thread_t tid = strtoul (p + 1, NULL, 16);
     if (errno != 0 && tid == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid thread number in H packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid thread number in H packet");
     }
     if (*p == 'c')
         SetContinueThread (tid);
@@ -1333,12 +1334,12 @@ RNBRemote::HandlePacket_qThreadExtraInfo (const char *p)
      sequence of letters encoded in as 2-hex-chars-per-letter.  */
     p += strlen ("qThreadExtraInfo");
     if (*p++ != ',')
-        return HandlePacket_ILLFORMED ("Ill formed qThreadExtraInfo packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Illformed qThreadExtraInfo packet");
     errno = 0;
     nub_thread_t tid = strtoul (p, NULL, 16);
     if (errno != 0 && tid == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid thread number in qThreadExtraInfo packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid thread number in qThreadExtraInfo packet");
     }
 
     const char * threadInfo = DNBThreadGetInfo(pid, tid);
@@ -1760,7 +1761,7 @@ RNBRemote::HandlePacket_QSetMaxPayloadSize (const char *p)
     uint32_t size = strtoul (p, NULL, 16);
     if (errno != 0 && size == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid length in QSetMaxPayloadSize packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in QSetMaxPayloadSize packet");
     }
     m_max_payload_size = size;
     return SendPacket ("OK");
@@ -1777,7 +1778,7 @@ RNBRemote::HandlePacket_QSetMaxPacketSize (const char *p)
     uint32_t size = strtoul (p, NULL, 16);
     if (errno != 0 && size == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid length in QSetMaxPacketSize packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in QSetMaxPacketSize packet");
     }
     m_max_payload_size = size - 5;
     return SendPacket ("OK");
@@ -2050,7 +2051,7 @@ RNBRemote::HandlePacket_M (const char *p)
 {
     if (p == NULL || p[0] == '\0' || strlen (p) < 3)
     {
-        return HandlePacket_ILLFORMED ("Too short M packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Too short M packet");
     }
 
     char *c;
@@ -2059,11 +2060,11 @@ RNBRemote::HandlePacket_M (const char *p)
     nub_addr_t addr = strtoull (p, &c, 16);
     if (errno != 0 && addr == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid address in M packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid address in M packet");
     }
     if (*c != ',')
     {
-        return HandlePacket_ILLFORMED ("Comma sep missing in M packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Comma sep missing in M packet");
     }
 
     /* Advance 'p' to the length part of the packet.  */
@@ -2073,7 +2074,7 @@ RNBRemote::HandlePacket_M (const char *p)
     uint32_t length = strtoul (p, &c, 16);
     if (errno != 0 && length == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid length in M packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in M packet");
     }
     if (length == 0)
     {
@@ -2082,7 +2083,7 @@ RNBRemote::HandlePacket_M (const char *p)
 
     if (*c != ':')
     {
-        return HandlePacket_ILLFORMED ("Missing colon in M packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Missing colon in M packet");
     }
     /* Advance 'p' to the data part of the packet.  */
     p += (c - p) + 1;
@@ -2090,7 +2091,7 @@ RNBRemote::HandlePacket_M (const char *p)
     int datalen = strlen (p);
     if (datalen & 0x1)
     {
-        return HandlePacket_ILLFORMED ("Uneven # of hex chars for data in M packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Uneven # of hex chars for data in M packet");
     }
     if (datalen == 0)
     {
@@ -2110,7 +2111,7 @@ RNBRemote::HandlePacket_M (const char *p)
         uint8_t byte = strtoul (hexbuf, NULL, 16);
         if (errno != 0 && byte == 0)
         {
-            return HandlePacket_ILLFORMED ("Invalid hex byte in M packet");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid hex byte in M packet");
         }
         *i++ = byte;
         p += 2;
@@ -2129,7 +2130,7 @@ RNBRemote::HandlePacket_m (const char *p)
 {
     if (p == NULL || p[0] == '\0' || strlen (p) < 3)
     {
-        return HandlePacket_ILLFORMED ("Too short m packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Too short m packet");
     }
 
     char *c;
@@ -2138,11 +2139,11 @@ RNBRemote::HandlePacket_m (const char *p)
     nub_addr_t addr = strtoull (p, &c, 16);
     if (errno != 0 && addr == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid address in m packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid address in m packet");
     }
     if (*c != ',')
     {
-        return HandlePacket_ILLFORMED ("Comma sep missing in m packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Comma sep missing in m packet");
     }
 
     /* Advance 'p' to the length part of the packet.  */
@@ -2152,7 +2153,7 @@ RNBRemote::HandlePacket_m (const char *p)
     uint32_t length = strtoul (p, NULL, 16);
     if (errno != 0 && length == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid length in m packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in m packet");
     }
     if (length == 0)
     {
@@ -2181,7 +2182,7 @@ RNBRemote::HandlePacket_X (const char *p)
 {
     if (p == NULL || p[0] == '\0' || strlen (p) < 3)
     {
-        return HandlePacket_ILLFORMED ("Too short X packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Too short X packet");
     }
 
     char *c;
@@ -2190,11 +2191,11 @@ RNBRemote::HandlePacket_X (const char *p)
     nub_addr_t addr = strtoull (p, &c, 16);
     if (errno != 0 && addr == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid address in X packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid address in X packet");
     }
     if (*c != ',')
     {
-        return HandlePacket_ILLFORMED ("Comma sep missing in X packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Comma sep missing in X packet");
     }
 
     /* Advance 'p' to the length part of the packet.  */
@@ -2204,7 +2205,7 @@ RNBRemote::HandlePacket_X (const char *p)
     int length = strtoul (p, NULL, 16);
     if (errno != 0 && length == 0)
     {
-        return HandlePacket_ILLFORMED ("Invalid length in m packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in m packet");
     }
 
     // I think gdb sends a zero length write request to test whether this
@@ -2250,7 +2251,7 @@ RNBRemote::HandlePacket_g (const char *p)
     nub_process_t pid = m_ctx.ProcessID ();
     nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p + 1);
     if (tid == INVALID_NUB_THREAD)
-        return HandlePacket_ILLFORMED ("No thread specified in p packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in p packet");
 
     if (m_use_native_regs)
     {
@@ -2298,7 +2299,7 @@ RNBRemote::HandlePacket_G (const char *p)
     nub_process_t pid = m_ctx.ProcessID();
     nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p);
     if (tid == INVALID_NUB_THREAD)
-        return HandlePacket_ILLFORMED ("No thread specified in p packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in p packet");
 
     if (m_use_native_regs)
     {
@@ -2491,7 +2492,7 @@ RNBRemote::HandlePacket_v (const char *p)
                     errno = 0;
                     thread_action.signal = strtoul (c, &c, 16);
                     if (errno != 0)
-                        return HandlePacket_ILLFORMED ("Could not parse signal in vCont packet");
+                        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse signal in vCont packet");
                     // Fall through to next case...
 
                 case 'c':
@@ -2503,7 +2504,7 @@ RNBRemote::HandlePacket_v (const char *p)
                     errno = 0;
                     thread_action.signal = strtoul (c, &c, 16);
                     if (errno != 0)
-                        return HandlePacket_ILLFORMED ("Could not parse signal in vCont packet");
+                        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse signal in vCont packet");
                     // Fall through to next case...
 
                 case 's':
@@ -2514,7 +2515,7 @@ RNBRemote::HandlePacket_v (const char *p)
                     break;
 
                 default:
-                    rnb_err = HandlePacket_ILLFORMED ("Unsupported action in vCont packet");
+                    rnb_err = HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Unsupported action in vCont packet");
                     break;
             }
             if (*c == ':')
@@ -2522,7 +2523,7 @@ RNBRemote::HandlePacket_v (const char *p)
                 errno = 0;
                 thread_action.tid = strtoul (++c, &c, 16);
                 if (errno != 0)
-                    return HandlePacket_ILLFORMED ("Could not parse thread number in vCont packet");
+                    return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse thread number in vCont packet");
             }
 
             thread_actions.Append (thread_action);
@@ -2553,7 +2554,7 @@ RNBRemote::HandlePacket_v (const char *p)
                 int ch = strtoul (smallbuf, NULL, 16);
                 if (errno != 0 && ch == 0)
                 {
-                    return HandlePacket_ILLFORMED ("non-hex char in arg on 'vAttachWait' pkt");
+                    return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachWait' pkt");
                 }
 
                 attach_name.push_back(ch);
@@ -2578,7 +2579,7 @@ RNBRemote::HandlePacket_v (const char *p)
                 int ch = strtoul (smallbuf, NULL, 16);
                 if (errno != 0 && ch == 0)
                 {
-                    return HandlePacket_ILLFORMED ("non-hex char in arg on 'vAttachWait' pkt");
+                    return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachWait' pkt");
                 }
 
                 attach_name.push_back(ch);
@@ -2638,7 +2639,7 @@ RNBRemote::HandlePacket_T (const char *p)
     p++;
     if (p == NULL || *p == '\0')
     {
-        return HandlePacket_ILLFORMED ("No thread specified in T packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in T packet");
     }
     if (!m_ctx.HasValidProcessID())
     {
@@ -2648,7 +2649,7 @@ RNBRemote::HandlePacket_T (const char *p)
     nub_thread_t tid = strtoul (p, NULL, 16);
     if (errno != 0 && tid == 0)
     {
-        return HandlePacket_ILLFORMED ("Could not parse thread number in T packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse thread number in T packet");
     }
 
     nub_state_t state = DNBThreadGetState (m_ctx.ProcessID(), tid);
@@ -2665,7 +2666,7 @@ rnb_err_t
 RNBRemote::HandlePacket_z (const char *p)
 {
     if (p == NULL || *p == '\0')
-        return HandlePacket_ILLFORMED ("No thread specified in z packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in z packet");
 
     if (!m_ctx.HasValidProcessID())
         return SendPacket ("E15");
@@ -2674,22 +2675,22 @@ RNBRemote::HandlePacket_z (const char *p)
     char break_type = *p++;
 
     if (*p++ != ',')
-        return HandlePacket_ILLFORMED ("Comma separator missing in z packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Comma separator missing in z packet");
 
     char *c = NULL;
     nub_process_t pid = m_ctx.ProcessID();
     errno = 0;
     nub_addr_t addr = strtoull (p, &c, 16);
     if (errno != 0 && addr == 0)
-        return HandlePacket_ILLFORMED ("Invalid address in z packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid address in z packet");
     p = c;
     if (*p++ != ',')
-        return HandlePacket_ILLFORMED ("Comma separator missing in z packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Comma separator missing in z packet");
 
     errno = 0;
     uint32_t byte_size = strtoul (p, &c, 16);
     if (errno != 0 && byte_size == 0)
-        return HandlePacket_ILLFORMED ("Invalid length in z packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in z packet");
 
     if (packet_cmd == 'Z')
     {
@@ -2912,7 +2913,7 @@ RNBRemote::HandlePacket_p (const char *p)
 
     if (p == NULL || *p == '\0')
     {
-        return HandlePacket_ILLFORMED ("No thread specified in p packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in p packet");
     }
     if (!m_ctx.HasValidProcessID())
     {
@@ -2924,12 +2925,12 @@ RNBRemote::HandlePacket_p (const char *p)
     uint32_t reg = strtoul (p + 1, &tid_cstr, 16);
     if (errno != 0 && reg == 0)
     {
-        return HandlePacket_ILLFORMED ("Could not parse register number in p packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse register number in p packet");
     }
 
     nub_thread_t tid = ExtractThreadIDFromThreadSuffix (tid_cstr);
     if (tid == INVALID_NUB_THREAD)
-        return HandlePacket_ILLFORMED ("No thread specified in p packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in p packet");
 
     const register_map_entry_t *reg_entry;
 
@@ -2978,7 +2979,7 @@ RNBRemote::HandlePacket_P (const char *p)
 
     if (p == NULL || *p == '\0')
     {
-        return HandlePacket_ILLFORMED ("Empty P packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Empty P packet");
     }
     if (!m_ctx.HasValidProcessID())
     {
@@ -2995,7 +2996,7 @@ RNBRemote::HandlePacket_P (const char *p)
     const char equal_char = packet.GetChar();
 
     if (cmd_char != 'P')
-        return HandlePacket_ILLFORMED ("Improperly formed P packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Improperly formed P packet");
 
     if (reg == UINT32_MAX)
         return SendPacket ("E29");
@@ -3022,7 +3023,7 @@ RNBRemote::HandlePacket_P (const char *p)
 
     nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p);
     if (tid == INVALID_NUB_THREAD)
-        return HandlePacket_ILLFORMED ("No thread specified in p packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "No thread specified in p packet");
 
     if (!DNBThreadSetRegisterValueByID (pid, tid, reg_entry->nub_info.set, reg_entry->nub_info.reg, &reg_value))
     {
@@ -3050,7 +3051,7 @@ RNBRemote::HandlePacket_c (const char *p)
         errno = 0;
         action.addr = strtoull (p + 1, NULL, 16);
         if (errno != 0 && action.addr == 0)
-            return HandlePacket_ILLFORMED ("Could not parse address in c packet");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse address in c packet");
     }
 
     DNBThreadResumeActions thread_actions;
@@ -3082,13 +3083,13 @@ RNBRemote::HandlePacket_C (const char *p)
         errno = 0;
         process_signo = strtoul (p + 1, &end, 16);
         if (errno != 0)
-            return HandlePacket_ILLFORMED ("Could not parse signal in C packet");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse signal in C packet");
         else if (*end == ';')
         {
             errno = 0;
             action.addr = strtoull (end + 1, NULL, 16);
             if (errno != 0 && action.addr == 0)
-                return HandlePacket_ILLFORMED ("Could not parse address in C packet");
+                return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse address in C packet");
         }
     }
 
@@ -3186,14 +3187,14 @@ RNBRemote::HandlePacket_S (const char *p)
         errno = 0;
         action.signal = strtoul (p + 1, &end, 16);
         if (errno != 0)
-            return HandlePacket_ILLFORMED ("Could not parse signal in S packet");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse signal in S packet");
         else if (*end == ';')
         {
             errno = 0;
             action.addr = strtoull (end + 1, NULL, 16);
             if (errno != 0 && action.addr == 0)
             {
-                return HandlePacket_ILLFORMED ("Could not parse address in S packet");
+                return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse address in S packet");
             }
         }
     }

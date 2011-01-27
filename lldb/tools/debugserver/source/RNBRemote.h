@@ -183,7 +183,7 @@ public:
     rnb_err_t HandlePacket_S (const char *p);
     rnb_err_t HandlePacket_v (const char *p);
     rnb_err_t HandlePacket_UNIMPLEMENTED (const char *p);
-    rnb_err_t HandlePacket_ILLFORMED (const char *description);
+    rnb_err_t HandlePacket_ILLFORMED (const char *file, int line, const char *p, const char *description);
     rnb_err_t HandlePacket_AllocateMemory (const char *p);
     rnb_err_t HandlePacket_DeallocateMemory (const char *p);
 

@@ -134,6 +134,7 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
     TimeValue timeout_time;
     timeout_time = TimeValue::Now();
     timeout_time.OffsetWithSeconds (timeout_seconds);
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
     if (GetSequenceMutex (locker))
     {
@@ -149,24 +150,53 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
             m_async_timeout = timeout_seconds;
             m_async_packet_predicate.SetValue (true, eBroadcastNever);
             
+            if (log) 
+                log->Printf ("async: async packet = %s", m_async_packet.c_str());
+
             bool timed_out = false;
             bool sent_interrupt = false;
             if (SendInterrupt(locker, 2, sent_interrupt, timed_out))
             {
-                if (m_async_packet_predicate.WaitForValueEqualTo (false, &timeout_time, &timed_out))
+                if (sent_interrupt)
                 {
-                    response = m_async_response;
-                    return response.GetStringRef().size();
+                    if (log) 
+                        log->Printf ("async: sent interrupt");
+                    if (m_async_packet_predicate.WaitForValueEqualTo (false, &timeout_time, &timed_out))
+                    {
+                        if (log) 
+                            log->Printf ("async: got response");
+                        response = m_async_response;
+                        return response.GetStringRef().size();
+                    }
+                    else
+                    {
+                        if (log) 
+                            log->Printf ("async: timed out waiting for response");
+                    }
+                    
+                    // Make sure we wait until the continue packet has been sent again...
+                    if (m_private_is_running.WaitForValueEqualTo (true, &timeout_time, &timed_out))
+                    {
+                        if (log) 
+                            log->Printf ("async: timed out waiting for process to resume");
+                    }
+                }
+                else
+                {
+                    // We had a racy condition where we went to send the interrupt
+                    // yet we were able to get the loc
                 }
             }
-//            if (timed_out)
-//                m_error.SetErrorString("Timeout.");
-//            else
-//                m_error.SetErrorString("Unknown error.");
+            else
+            {
+                if (log) 
+                    log->Printf ("async: failed to interrupt");
+            }
         }
         else
         {
-//            m_error.SetErrorString("Sequence mutex is locked.");
+            if (log) 
+                log->Printf ("mutex taken and send_async == false, aborting packet");
         }
     }
     return 0;
@@ -212,17 +242,23 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
     Mutex::Locker locker(m_sequence_mutex);
     StateType state = eStateRunning;
 
-    if (SendPacket(payload, packet_length) == 0)
-        state = eStateInvalid;
-
     BroadcastEvent(eBroadcastBitRunPacketSent, NULL);
     m_public_is_running.SetValue (true, eBroadcastNever);
-    m_private_is_running.SetValue (true, eBroadcastNever);
-
+    // Set the starting continue packet into "continue_packet". This packet
+    // make change if we are interrupted and we continue after an async packet...
+    std::string continue_packet(payload, packet_length);
+    
     while (state == eStateRunning)
     {
         if (log)
-            log->Printf ("GDBRemoteCommunication::%s () WaitForPacket(...)", __FUNCTION__);
+            log->Printf ("GDBRemoteCommunication::%s () sending continue packet: %s", __FUNCTION__, continue_packet.c_str());
+        if (SendPacket(continue_packet.c_str(), continue_packet.size()) == 0)
+            state = eStateInvalid;
+        
+        m_private_is_running.SetValue (true, eBroadcastNever);
+
+        if (log)
+            log->Printf ("GDBRemoteCommunication::%s () WaitForPacket(%.*s)", __FUNCTION__);
 
         if (WaitForPacket (response, (TimeValue*)NULL))
         {
@@ -280,32 +316,28 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                                                    Host::GetSignalAsCString (signo),
                                                    Host::GetSignalAsCString (async_signal));
 
-                            if (SendPacket(signal_packet, signal_packet_len) == 0)
-                            {
-                                if (log) 
-                                    log->Printf ("async: error: failed to resume with %s", 
-                                                       Host::GetSignalAsCString (async_signal));
-                                state = eStateExited;
-                                break;
-                            }
-                            else
-                            {
-                                m_private_is_running.SetValue (true, eBroadcastNever);
-                                continue;
-                            }
+                            // Set the continue packet to resume...
+                            continue_packet.assign(signal_packet, signal_packet_len);
+                            continue;
                         }
                     }
                     else if (m_async_packet_predicate.GetValue())
                     {
-                        if (log) 
-                            log->Printf ("async: send async packet: %s", 
-                                         m_async_packet.c_str());
-
                         // We are supposed to send an asynchronous packet while
                         // we are running. 
                         m_async_response.Clear();
-                        if (!m_async_packet.empty())
+                        if (m_async_packet.empty())
                         {
+                            if (log) 
+                                log->Printf ("async: error: empty async packet");                            
+
+                        }
+                        else
+                        {
+                            if (log) 
+                                log->Printf ("async: sending packet: %s", 
+                                             m_async_packet.c_str());
+                            
                             SendPacketAndWaitForResponse (&m_async_packet[0], 
                                                           m_async_packet.size(),
                                                           m_async_response,
@@ -313,25 +345,13 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                                                           false);
                         }
                         // Let the other thread that was trying to send the async
-                        // packet know that the packet has been sent.
+                        // packet know that the packet has been sent and response is
+                        // ready...
                         m_async_packet_predicate.SetValue(false, eBroadcastAlways);
 
-                        if (log) 
-                            log->Printf ("async: resume after async response received: %s", 
-                                         m_async_response.GetStringRef().c_str());
-
-                        // Continue again
-                        if (SendPacket("c", 1) == 0)
-                        {
-                            // Failed to send the continue packet
-                            state = eStateExited;
-                            break;
-                        }
-                        else
-                        {
-                            m_private_is_running.SetValue (true, eBroadcastNever);
-                            continue;
-                        }
+                        // Set the continue packet to resume...
+                        continue_packet.assign (1, 'c');
+                        continue;
                     }
                     // Stop with signal and thread info
                     state = eStateStopped;
@@ -477,8 +497,9 @@ GDBRemoteCommunication::SendInterrupt
 {
     sent_interrupt = false;
     timed_out = false;
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
-    if (IsConnected() && IsRunning())
+    if (IsRunning())
     {
         // Only send an interrupt if our debugserver is running...
         if (GetSequenceMutex (locker) == false)
@@ -493,14 +514,35 @@ GDBRemoteCommunication::SendInterrupt
                 timeout = TimeValue::Now();
                 timeout.OffsetWithSeconds (seconds_to_wait_for_stop);
             }
+            size_t bytes_written = Write (&ctrl_c, 1, status, NULL);
             ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS | GDBR_LOG_PROCESS, "send packet: \\x03");
-            if (Write (&ctrl_c, 1, status, NULL) > 0)
+            if (bytes_written > 0)
             {
                 sent_interrupt = true;
                 if (seconds_to_wait_for_stop)
+                {
                     m_private_is_running.WaitForValueEqualTo (false, &timeout, &timed_out);
+                    if (log)
+                        log->Printf ("GDBRemoteCommunication::%s () - sent interrupt, private state stopped", __FUNCTION__);
+
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("GDBRemoteCommunication::%s () - sent interrupt, not waiting for stop...", __FUNCTION__);                    
+                }
                 return true;
             }
+            else
+            {
+                if (log)
+                    log->Printf ("GDBRemoteCommunication::%s () - failed to write interrupt", __FUNCTION__);
+            }
+        }
+        else
+        {
+            if (log)
+                log->Printf ("GDBRemoteCommunication::%s () - got sequence mutex without having to interrupt", __FUNCTION__);
         }
     }
     return false;
