@@ -93,12 +93,12 @@ ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
 void
 ScriptInterpreter::Initialize ()
 {
-    ScriptInterpreterPython::Initialize ();
+//    ScriptInterpreterPython::Initialize ();
 }
 
 void
 ScriptInterpreter::Terminate ()
 {
-    ScriptInterpreterPython::Terminate ();
+//    ScriptInterpreterPython::Terminate ();
 }
 

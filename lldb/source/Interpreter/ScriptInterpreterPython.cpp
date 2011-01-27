@@ -224,6 +224,14 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_valid_session (true)
 {
 
+    static int g_initialized = false;
+    
+    if (!g_initialized)
+    {
+        g_initialized = true;
+        ScriptInterpreterPython::Initialize ();
+    }
+
     bool safe_to_run = false;
     bool need_to_release_lock = true;
     int interval = 5;          // Number of seconds to try getting the Python lock before timing out.

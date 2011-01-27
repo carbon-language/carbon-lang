@@ -151,36 +151,102 @@ SBTarget::Launch
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
-        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
 
-        if (sb_process.IsValid())
+        if (getenv("LLDB_LAUNCH_FLAG_DISABLE_ASLR"))
+            launch_flags |= eLaunchFlagDisableASLR;
+
+        if ((launch_flags & eLaunchFlagLaunchInTTY) || getenv("LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY"))
         {
-            error.SetError (sb_process->Launch (argv, envp, launch_flags, stdin_path, stdout_path, stderr_path, working_directory));
-            if (error.Success())
+            ArchSpec arch (m_opaque_sp->GetArchitecture ());
+            
+            Module *exe_module = m_opaque_sp->GetExecutableModule().get();
+            if (exe_module)
             {
-                // We we are stopping at the entry point, we can return now!
-                if (stop_at_entry)
-                    return sb_process;
-                
-                // Make sure we are stopped at the entry
-                StateType state = sb_process->WaitForProcessToStop (NULL);
-                if (state == eStateStopped)
+                char exec_file_path[PATH_MAX];
+                exe_module->GetFileSpec().GetPath(exec_file_path, sizeof(exec_file_path));
+                if (exe_module->GetFileSpec().Exists())
                 {
-                    // resume the process to skip the entry point
-                    error.SetError (sb_process->Resume());
-                    if (error.Success())
+                    // Make a new argument vector
+                    std::vector<const char *> exec_path_plus_argv;
+                    // Append the resolved executable path
+                    exec_path_plus_argv.push_back (exec_file_path);
+                        
+                    // Push all args if there are any
+                    if (argv)
                     {
-                        // If we are doing synchronous mode, then wait for the
-                        // process to stop yet again!
-                        if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
-                            sb_process->WaitForProcessToStop (NULL);
+                        for (int i = 0; argv[i]; ++i)
+                            exec_path_plus_argv.push_back(argv[i]);
+                    }
+                        
+                    // Push a NULL to terminate the args.
+                    exec_path_plus_argv.push_back(NULL);
+                        
+
+                    lldb::pid_t pid = Host::LaunchInNewTerminal (NULL,
+                                                             &exec_path_plus_argv[0],
+                                                             envp,
+                                                             working_directory,
+                                                             &arch,
+                                                             true,
+                                                             launch_flags & eLaunchFlagDisableASLR);
+                
+                    if (pid != LLDB_INVALID_PROCESS_ID)
+                    {
+                        sb_process = AttachToProcessWithID(pid, error);
+                    }
+                    else
+                    {
+                        error.SetErrorStringWithFormat("failed to launch process in terminal");
                     }
                 }
+                else
+                {
+                    error.SetErrorStringWithFormat("executable doesn't exist: \"%s\"", exec_file_path);
+                }
+            }            
+            else
+            {
+                error.SetErrorStringWithFormat("invalid executable");
             }
         }
         else
         {
-            error.SetErrorString ("unable to create lldb_private::Process");
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+
+            if (sb_process.IsValid())
+            {
+
+                if (getenv("LLDB_LAUNCH_FLAG_DISABLE_STDIO"))
+                    launch_flags |= eLaunchFlagDisableSTDIO;
+                
+
+                error.SetError (sb_process->Launch (argv, envp, launch_flags, stdin_path, stdout_path, stderr_path, working_directory));
+                if (error.Success())
+                {
+                    // We we are stopping at the entry point, we can return now!
+                    if (stop_at_entry)
+                        return sb_process;
+                    
+                    // Make sure we are stopped at the entry
+                    StateType state = sb_process->WaitForProcessToStop (NULL);
+                    if (state == eStateStopped)
+                    {
+                        // resume the process to skip the entry point
+                        error.SetError (sb_process->Resume());
+                        if (error.Success())
+                        {
+                            // If we are doing synchronous mode, then wait for the
+                            // process to stop yet again!
+                            if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
+                                sb_process->WaitForProcessToStop (NULL);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                error.SetErrorString ("unable to create lldb_private::Process");
+            }
         }
     }
     else
