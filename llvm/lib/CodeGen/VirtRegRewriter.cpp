@@ -216,7 +216,8 @@ public:
                    << SlotOrReMat-VirtRegMap::MAX_STACK_SLOT-1);
     else
       DEBUG(dbgs() << "Remembering SS#" << SlotOrReMat);
-    DEBUG(dbgs() << " in physreg " << TRI->getName(Reg) << "\n");
+    DEBUG(dbgs() << " in physreg " << TRI->getName(Reg)
+          << (CanClobber ? " canclobber" : "") << "\n");
   }
 
   /// canClobberPhysRegForSS - Return true if the spiller is allowed to change
@@ -462,25 +463,70 @@ static void findSinglePredSuccessor(MachineBasicBlock *MBB,
   }
 }
 
-/// InvalidateKill - Invalidate register kill information for a specific
-/// register. This also unsets the kills marker on the last kill operand.
-static void InvalidateKill(unsigned Reg,
-                           const TargetRegisterInfo* TRI,
-                           BitVector &RegKills,
-                           std::vector<MachineOperand*> &KillOps) {
-  if (RegKills[Reg]) {
-    KillOps[Reg]->setIsKill(false);
-    // KillOps[Reg] might be a def of a super-register.
-    unsigned KReg = KillOps[Reg]->getReg();
-    KillOps[KReg] = NULL;
-    RegKills.reset(KReg);
-    for (const unsigned *SR = TRI->getSubRegisters(KReg); *SR; ++SR) {
-      if (RegKills[*SR]) {
-        KillOps[*SR]->setIsKill(false);
-        KillOps[*SR] = NULL;
-        RegKills.reset(*SR);
-      }
-    }
+/// ResurrectConfirmedKill - Helper for ResurrectKill. This register is killed
+/// but not re-defined and it's being reused. Remove the kill flag for the
+/// register and unset the kill's marker and last kill operand.
+static void ResurrectConfirmedKill(unsigned Reg, const TargetRegisterInfo* TRI,
+                                   BitVector &RegKills,
+                                   std::vector<MachineOperand*> &KillOps) {
+  DEBUG(dbgs() << "Resurrect " << TRI->getName(Reg) << "\n");
+
+  MachineOperand *KillOp = KillOps[Reg];
+  KillOp->setIsKill(false);
+  // KillOps[Reg] might be a def of a super-register.
+  unsigned KReg = KillOp->getReg();
+  if (!RegKills[KReg])
+    return;
+
+  assert(KillOps[KReg] == KillOp && "invalid superreg kill flags");
+  KillOps[KReg] = NULL;
+  RegKills.reset(KReg);
+
+  // If it's a def of a super-register. Its other sub-regsters are no
+  // longer killed as well.
+  for (const unsigned *SR = TRI->getSubRegisters(KReg); *SR; ++SR) {
+    DEBUG(dbgs() << "  Resurrect subreg " << TRI->getName(*SR) << "\n");
+
+    assert(KillOps[*SR] == KillOp && "invalid subreg kill flags");
+    KillOps[*SR] = NULL;
+    RegKills.reset(*SR);
+  }
+}
+
+/// ResurrectKill - Invalidate kill info associated with a previous MI. An
+/// optimization may have decided that it's safe to reuse a previously killed
+/// register. If we fail to erase the invalid kill flags, then the register
+/// scavenger may later clobber the register used by this MI. Note that this
+/// must be done even if this MI is being deleted! Consider:
+///
+/// USE $r1 (vreg1) <kill>
+/// ...
+/// $r1(vreg3) = COPY $r1 (vreg2)
+///
+/// RegAlloc has smartly assigned all three vregs to the same physreg. Initially
+/// vreg1's only use is a kill. The rewriter doesn't know it should be live
+/// until it rewrites vreg2. At that points it sees that the copy is dead and
+/// deletes it. However, deleting the copy implicitly forwards liveness of $r1
+/// (it's copy coalescing). We must resurrect $r1 by removing the kill flag at
+/// vreg1 before deleting the copy.
+static void ResurrectKill(MachineInstr &MI, unsigned Reg,
+                          const TargetRegisterInfo* TRI, BitVector &RegKills,
+                          std::vector<MachineOperand*> &KillOps) {
+  if (RegKills[Reg] && KillOps[Reg]->getParent() != &MI) {
+    ResurrectConfirmedKill(Reg, TRI, RegKills, KillOps);
+    return;
+  }
+  // No previous kill for this reg. Check for subreg kills as well.
+  // d4 =
+  // store d4, fi#0
+  // ...
+  //    = s8<kill>
+  // ...
+  //    = d4  <avoiding reload>
+  for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR) {
+    unsigned SReg = *SR;
+    if (RegKills[SReg] && KillOps[SReg]->getParent() != &MI)
+      ResurrectConfirmedKill(SReg, TRI, RegKills, KillOps);
   }
 }
 
@@ -502,14 +548,21 @@ static void InvalidateKills(MachineInstr &MI,
       KillRegs->push_back(Reg);
     assert(Reg < KillOps.size());
     if (KillOps[Reg] == &MO) {
+      // This operand was the kill, now no longer.
       KillOps[Reg] = NULL;
       RegKills.reset(Reg);
       for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR) {
         if (RegKills[*SR]) {
+          assert(KillOps[*SR] == &MO && "bad subreg kill flags");
           KillOps[*SR] = NULL;
           RegKills.reset(*SR);
         }
       }
+    }
+    else {
+      // This operand may have reused a previously killed reg. Keep it live in
+      // case it continues to be used after erasing this instruction.
+      ResurrectKill(MI, Reg, TRI, RegKills, KillOps);
     }
   }
 }
@@ -578,44 +631,8 @@ static void UpdateKills(MachineInstr &MI, const TargetRegisterInfo* TRI,
     if (Reg == 0)
       continue;
 
-    if (RegKills[Reg] && KillOps[Reg]->getParent() != &MI) {
-      // That can't be right. Register is killed but not re-defined and it's
-      // being reused. Let's fix that.
-      KillOps[Reg]->setIsKill(false);
-      // KillOps[Reg] might be a def of a super-register.
-      unsigned KReg = KillOps[Reg]->getReg();
-      KillOps[KReg] = NULL;
-      RegKills.reset(KReg);
-
-      // Must be a def of a super-register. Its other sub-regsters are no
-      // longer killed as well.
-      for (const unsigned *SR = TRI->getSubRegisters(KReg); *SR; ++SR) {
-        KillOps[*SR] = NULL;
-        RegKills.reset(*SR);
-      }
-    } else {
-      // Check for subreg kills as well.
-      // d4 =
-      // store d4, fi#0
-      // ...
-      //    = s8<kill>
-      // ...
-      //    = d4  <avoiding reload>
-      for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR) {
-        unsigned SReg = *SR;
-        if (RegKills[SReg] && KillOps[SReg]->getParent() != &MI) {
-          KillOps[SReg]->setIsKill(false);
-          unsigned KReg = KillOps[SReg]->getReg();
-          KillOps[KReg] = NULL;
-          RegKills.reset(KReg);
-
-          for (const unsigned *SSR = TRI->getSubRegisters(KReg); *SSR; ++SSR) {
-            KillOps[*SSR] = NULL;
-            RegKills.reset(*SSR);
-          }
-        }
-      }
-    }
+    // This operand may have reused a previously killed reg. Keep it live.
+    ResurrectKill(MI, Reg, TRI, RegKills, KillOps);
 
     if (MO.isKill()) {
       RegKills.set(Reg);
@@ -770,7 +787,8 @@ void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB,
       NotAvailable.insert(Reg);
     else {
       MBB.addLiveIn(Reg);
-      InvalidateKill(Reg, TRI, RegKills, KillOps);
+      if (RegKills[Reg])
+        ResurrectConfirmedKill(Reg, TRI, RegKills, KillOps);
     }
 
     // Skip over the same register.
@@ -1774,6 +1792,10 @@ bool LocalRewriter::InsertRestores(MachineInstr *MI,
                    << TRI->getName(InReg) << " for vreg"
                    << VirtReg <<" instead of reloading into physreg "
                    << TRI->getName(Phys) << '\n');
+
+      // Reusing a physreg may resurrect it. But we expect ProcessUses to update
+      // the kill flags for the current instruction after processing it.
+
       ++NumOmitted;
       continue;
     } else if (InReg && InReg != Phys) {
@@ -1882,6 +1904,7 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
       continue;   // Ignore non-register operands.
 
     unsigned VirtReg = MO.getReg();
+
     if (TargetRegisterInfo::isPhysicalRegister(VirtReg)) {
       // Ignore physregs for spilling, but remember that it is used by this
       // function.
@@ -2021,6 +2044,9 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
         MI.getOperand(i).setReg(RReg);
         MI.getOperand(i).setSubReg(0);
 
+        // Reusing a physreg may resurrect it. But we expect ProcessUses to
+        // update the kill flags for the current instr after processing it.
+
         // The only technical detail we have is that we don't know that
         // PhysReg won't be clobbered by a reloaded stack slot that occurs
         // later in the instruction.  In particular, consider 'op V1, V2'.
@@ -2061,7 +2087,6 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
           MI.getOperand(i).setIsKill();
           KilledMIRegs.insert(VirtReg);
         }
-
         continue;
       }  // CanReuse
 
@@ -2135,7 +2160,7 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
       continue;
     } // if (PhysReg)
 
-      // Otherwise, reload it and remember that we have it.
+    // Otherwise, reload it and remember that we have it.
     PhysReg = VRM->getPhys(VirtReg);
     assert(PhysReg && "Must map virtreg to physreg!");
 
@@ -2204,7 +2229,6 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
       ++NumDSE;
     }
   }
-
 }
 
 /// rewriteMBB - Keep track of which spills are available even after the
@@ -2321,8 +2345,8 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
               BackTracked = true;
             } else {
               DEBUG(dbgs() << "Removing now-noop copy: " << MI);
-              // Unset last kill since it's being reused.
-              InvalidateKill(InReg, TRI, RegKills, KillOps);
+              // InvalidateKills resurrects any prior kill of the copy's source
+              // allowing the source reg to be reused in place of the copy.
               Spills.disallowClobberPhysReg(InReg);
             }
 
