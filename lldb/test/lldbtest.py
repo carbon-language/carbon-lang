@@ -625,7 +625,7 @@ class TestBase(unittest2.TestCase):
             print >> f, "Session info generated @", datetime.datetime.now().ctime()
             print >> f, self.session.getvalue()
             print >> f, "To rerun this test, issue the following command from the 'test' directory:\n"
-            print >> f, "%s ./dotest.py -v -t -f %s.%s" % (self.getRunSpec(),
+            print >> f, "./dotest.py %s -v -t -f %s.%s" % (self.getRunOptions(),
                                                            self.__class__.__name__,
                                                            self._testMethodName)
 
@@ -855,16 +855,27 @@ class TestBase(unittest2.TestCase):
             # End of while loop.
 
 
+    def getArchitecture(self):
+        """Returns the architecture in effect the test suite is now running with."""
+        module = __import__(sys.platform)
+        return module.getArchitecture()
+
     def getCompiler(self):
         """Returns the compiler in effect the test suite is now running with."""
         module = __import__(sys.platform)
         return module.getCompiler()
 
-    def getRunSpec(self):
-        """Environment variable spec to run this test again, invoked from within
-        dumpSessionInfo()."""
+    def getRunOptions(self):
+        """Command line option for -A and -C to run this test again, called from
+        within dumpSessionInfo()."""
         module = __import__(sys.platform)
-        return module.getRunSpec()
+        arch = self.getArchitecture()
+        comp = self.getCompiler()
+        if not arch and not comp:
+            return ""
+        else:
+            return "%s %s" % ("-A "+arch if arch else "",
+                              "-C "+comp if comp else "")
 
     def buildDefault(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build the default binaries."""

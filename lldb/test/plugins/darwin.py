@@ -17,14 +17,13 @@ import lldbtest
 
 #print "Hello, darwin plugin!"
 
+def getArchitecture():
+    """Returns the architecture in effect the test suite is now running with."""
+    return os.environ["ARCH"] if "ARCH" in os.environ else ""
+
 def getCompiler():
     """Returns the compiler in effect the test suite is now running with."""
     return os.environ["CC"] if "CC" in os.environ else ""
-
-def getRunSpec():
-    """Environment variable spec to run this test again, invoked from within
-    dumpSessionInfo()."""
-    return "%s%s" % (getArchSpec(None), getCCSpec(None))
 
 def getArchSpec(architecture):
     """
