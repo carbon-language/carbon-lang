@@ -433,6 +433,9 @@ public:
       else if (vdTy->isRealFloatingType()) {
         initialization = " = 0.0";
       }
+      else if (vdTy->isBooleanType()) {
+        initialization = " = false";
+      }
       else if (vdTy->isScalarType()) {
         initialization = " = 0";
       }
