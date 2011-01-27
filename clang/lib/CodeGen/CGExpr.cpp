@@ -1772,11 +1772,12 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   }
 
   case CK_NoOp:
-    if (!E->getSubExpr()->isRValue() || E->getType()->isRecordType())
+  case CK_LValueToRValue:
+    if (!E->getSubExpr()->Classify(getContext()).isPRValue() 
+        || E->getType()->isRecordType())
       return EmitLValue(E->getSubExpr());
     // Fall through to synthesize a temporary.
 
-  case CK_LValueToRValue:
   case CK_BitCast:
   case CK_ArrayToPointerDecay:
   case CK_FunctionToPointerDecay:

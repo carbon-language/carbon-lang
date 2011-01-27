@@ -34,3 +34,55 @@ int &&f1() { return static_cast<int&&>(getIntXValue()); }
 // CHECK-NEXT: store i32 {{.*}}, i32*
 // CHECK-NEXT: ret i32*
 int &&f2() { return static_cast<int&&>(getIntPRValue()); }
+
+bool ok;
+
+class C
+{
+   int* state_;
+
+   C(const C&) = delete;
+   C& operator=(const C&) = delete;
+public:
+  C(int state) : state_(new int(state)) { }
+  
+  C(C&& a) {
+    state_ = a.state_; 
+    a.state_ = 0;
+  }
+
+  ~C() {
+    delete state_; 
+    state_ = 0;
+  }
+};
+
+C test();
+
+// CHECK: define void @_Z15elide_copy_initv
+void elide_copy_init() {
+  ok = false;
+  // FIXME: We're doing an extra move here, when we shouldn't be!
+  // CHECK: call void @_Z4testv(%class.C* sret %ref.tmp)
+  // CHECK: call void @_ZN1CC1EOS_(%class.C* %a, %class.C* %ref.tmp)
+  // CHECK: call void @_ZN1CD1Ev(%class.C* %ref.tmp)
+  C a = test();
+  // CHECK: call void @_ZN1CD1Ev(%class.C* %a)
+  // CHECK: ret void
+}
+
+// CHECK: define void @_Z16test_move_returnv
+C test_move_return() {
+  // CHECK: call void @_ZN1CC1Ei
+  C a1(3);
+  // CHECK: call void @_ZN1CC1Ei
+  C a2(4);
+  if (ok)
+    // CHECK: call void @_ZN1CC1EOS_
+    return a1;
+  // CHECK: call void @_ZN1CC1EOS_
+  return a2;
+  // CHECK: call void @_ZN1CD1Ev
+  // CHECK: call void @_ZN1CD1Ev
+  //CHECK:  ret void
+}
