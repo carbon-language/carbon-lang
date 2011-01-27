@@ -368,7 +368,8 @@ its availability, as it is not available in earlier versions of the analyzer:</p
 #endif
 
 #ifndef NS_CONSUMES_SELF
-<span class="code_highlight">#if __has_feature((attribute_ns_consumes_self))</span>
+#if __has_feature((attribute_ns_consumes_self))
+<span class="code_highlight">#define NS_CONSUMES_SELF __attribute__((ns_consumes_self))</span>
 #else
 #define NS_CONSUMES_SELF
 #endif
