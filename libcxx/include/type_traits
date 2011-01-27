@@ -598,9 +598,22 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_abstract : public __libcpp_abstra
 
 // is_convertible
 
+#ifdef __clang__
+
+template <class _T1, class _T2> struct _LIBCPP_VISIBLE is_convertible
+    : public integral_constant<bool, __is_convertible_to(_T1, _T2)> {};
+{
+};
+
+#else  // __clang__
+
 namespace __is_convertible_imp
 {
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+template <class _Tp> char  __test(const volatile typename remove_reference<_Tp>::type&&);
+#else
 template <class _Tp> char  __test(_Tp);
+#endif
 template <class _Tp> __two __test(...);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> _Tp&& __source();
@@ -693,6 +706,8 @@ template <class _T1, class _T2> struct _LIBCPP_VISIBLE is_convertible
     static const size_t __complete_check1 = __is_convertible_check<_T1>::__v;
     static const size_t __complete_check2 = __is_convertible_check<_T2>::__v;
 };
+
+#endif  // __clang__
 
 // is_base_of
 
