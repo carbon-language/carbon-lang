@@ -468,6 +468,8 @@ bool FunctionComparator::Enumerate(const Value *V1, const Value *V2) {
     if (C1->isNullValue() && C2->isNullValue() &&
 	isEquivalentType(C1->getType(), C2->getType()))
       return true;
+    // Try bitcasting C2 to C1's type. If the bitcast is legal and returns C1
+    // then they must have equal bit patterns.
     return C1->getType()->canLosslesslyBitCastTo(C2->getType()) &&
       C1 == ConstantExpr::getBitCast(const_cast<Constant*>(C2), C1->getType());
   }
