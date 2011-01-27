@@ -831,27 +831,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::LOAD,               MVT::v8i32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v4f64, Legal);
     setOperationAction(ISD::LOAD,               MVT::v4i64, Legal);
+
     setOperationAction(ISD::FADD,               MVT::v8f32, Legal);
     setOperationAction(ISD::FSUB,               MVT::v8f32, Legal);
     setOperationAction(ISD::FMUL,               MVT::v8f32, Legal);
     setOperationAction(ISD::FDIV,               MVT::v8f32, Legal);
     setOperationAction(ISD::FSQRT,              MVT::v8f32, Legal);
     setOperationAction(ISD::FNEG,               MVT::v8f32, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,       MVT::v8f32, Custom);
-    //setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v8f32, Custom);
-    //setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8f32, Custom);
-    //setOperationAction(ISD::SELECT,             MVT::v8f32, Custom);
-    //setOperationAction(ISD::VSETCC,             MVT::v8f32, Custom);
 
-    // Operations to consider commented out -v16i16 v32i8
-    //setOperationAction(ISD::ADD,                MVT::v16i16, Legal);
-    setOperationAction(ISD::ADD,                MVT::v8i32, Custom);
-    setOperationAction(ISD::ADD,                MVT::v4i64, Custom);
-    //setOperationAction(ISD::SUB,                MVT::v32i8, Legal);
-    //setOperationAction(ISD::SUB,                MVT::v16i16, Legal);
-    setOperationAction(ISD::SUB,                MVT::v8i32, Custom);
-    setOperationAction(ISD::SUB,                MVT::v4i64, Custom);
-    //setOperationAction(ISD::MUL,                MVT::v16i16, Legal);
     setOperationAction(ISD::FADD,               MVT::v4f64, Legal);
     setOperationAction(ISD::FSUB,               MVT::v4f64, Legal);
     setOperationAction(ISD::FMUL,               MVT::v4f64, Legal);
@@ -859,74 +846,61 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FSQRT,              MVT::v4f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v4f64, Custom);
 
-    setOperationAction(ISD::VSETCC,             MVT::v4f64, Custom);
-    // setOperationAction(ISD::VSETCC,             MVT::v32i8, Custom);
-    // setOperationAction(ISD::VSETCC,             MVT::v16i16, Custom);
-    setOperationAction(ISD::VSETCC,             MVT::v8i32, Custom);
-
-    // setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v32i8, Custom);
-    // setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i16, Custom);
-    // setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v16i16, Custom);
-    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i32, Custom);
-    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8f32, Custom);
-
-    setOperationAction(ISD::BUILD_VECTOR,       MVT::v4f64, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,       MVT::v4i64, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f64, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4i64, Custom);
-    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f64, Custom);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f64, Custom);
-
-#if 0
-    // Not sure we want to do this since there are no 256-bit integer
-    // operations in AVX
-
-    // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
-    // This includes 256-bit vectors
-    for (unsigned i = (unsigned)MVT::v16i8; i != (unsigned)MVT::v4i64; ++i) {
-      EVT VT = (MVT::SimpleValueType)i;
-
-      // Do not attempt to custom lower non-power-of-2 vectors
-      if (!isPowerOf2_32(VT.getVectorNumElements()))
+    // Custom lower build_vector, vector_shuffle, scalar_to_vector,
+    // insert_vector_elt extract_subvector and extract_vector_elt for
+    // 256-bit types.
+    for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+         i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE;
+         ++i) {
+      MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
+      // Do not attempt to custom lower non-256-bit vectors
+      if (!isPowerOf2_32(MVT(VT).getVectorNumElements())
+          || (MVT(VT).getSizeInBits() < 256))
         continue;
-
       setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
       setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  VT, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+      setOperationAction(ISD::SCALAR_TO_VECTOR,   VT, Custom);
     }
-
-    if (Subtarget->is64Bit()) {
-      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i64, Custom);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i64, Custom);
-    }
-#endif
-
-#if 0
-    // Not sure we want to do this since there are no 256-bit integer
-    // operations in AVX
-
-    // Promote v32i8, v16i16, v8i32 load, select, and, or, xor to v4i64.
-    // Including 256-bit vectors
-    for (unsigned i = (unsigned)MVT::v16i8; i != (unsigned)MVT::v4i64; i++) {
-      EVT VT = (MVT::SimpleValueType)i;
-
-      if (!VT.is256BitVector()) {
+    // Custom-lower insert_subvector and extract_subvector based on
+    // the result type.
+    for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+         i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE;
+         ++i) {
+      MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
+      // Do not attempt to custom lower non-256-bit vectors
+      if (!isPowerOf2_32(MVT(VT).getVectorNumElements()))
         continue;
+
+      if (MVT(VT).getSizeInBits() == 128) {
+        setOperationAction(ISD::EXTRACT_SUBVECTOR,  VT, Custom);
       }
-      setOperationAction(ISD::AND,    VT, Promote);
-      AddPromotedToType (ISD::AND,    VT, MVT::v4i64);
-      setOperationAction(ISD::OR,     VT, Promote);
-      AddPromotedToType (ISD::OR,     VT, MVT::v4i64);
-      setOperationAction(ISD::XOR,    VT, Promote);
-      AddPromotedToType (ISD::XOR,    VT, MVT::v4i64);
-      setOperationAction(ISD::LOAD,   VT, Promote);
-      AddPromotedToType (ISD::LOAD,   VT, MVT::v4i64);
-      setOperationAction(ISD::SELECT, VT, Promote);
-      AddPromotedToType (ISD::SELECT, VT, MVT::v4i64);
+      else if (MVT(VT).getSizeInBits() == 256) {
+        setOperationAction(ISD::INSERT_SUBVECTOR,  VT, Custom);
+      }
     }
 
-    setTruncStoreAction(MVT::f64, MVT::f32, Expand);
-#endif
+    // Promote v32i8, v16i16, v8i32 select, and, or, xor to v4i64.
+    // Don't promote loads because we need them for VPERM vector index versions.
+
+    for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+         VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE;
+         VT++) {
+      if (!isPowerOf2_32(MVT((MVT::SimpleValueType)VT).getVectorNumElements())
+          || (MVT((MVT::SimpleValueType)VT).getSizeInBits() < 256))
+        continue;
+      setOperationAction(ISD::AND,    (MVT::SimpleValueType)VT, Promote);
+      AddPromotedToType (ISD::AND,    (MVT::SimpleValueType)VT, MVT::v4i64);
+      setOperationAction(ISD::OR,     (MVT::SimpleValueType)VT, Promote);
+      AddPromotedToType (ISD::OR,     (MVT::SimpleValueType)VT, MVT::v4i64);
+      setOperationAction(ISD::XOR,    (MVT::SimpleValueType)VT, Promote);
+      AddPromotedToType (ISD::XOR,    (MVT::SimpleValueType)VT, MVT::v4i64);
+      //setOperationAction(ISD::LOAD,   (MVT::SimpleValueType)VT, Promote);
+      //AddPromotedToType (ISD::LOAD,   (MVT::SimpleValueType)VT, MVT::v4i64);
+      setOperationAction(ISD::SELECT, (MVT::SimpleValueType)VT, Promote);
+      AddPromotedToType (ISD::SELECT, (MVT::SimpleValueType)VT, MVT::v4i64);
+    }
   }
 
   // We want to custom lower some of our intrinsics.
