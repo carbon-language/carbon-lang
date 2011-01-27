@@ -121,11 +121,6 @@
       support is as well.  The only major missing piece of C++'0x support is
       <code>&lt;atomic&gt;</code>.</p>
 
-   <p>libc++ is currently dependent upon a separate library for the low-level
-      ABI compatibility with gcc.  As a workaround it can be linked against
-      gcc's libstdc++, or on Mac OS X
-      <a href="http://home.roadrunner.com/~hinnant/libcppabi.zip">this library</a>.</p>
-
    <p><a href="libcxx_by_chapter.pdf">Here</a> is a by-chapter breakdown of what
    is passing tests and what isn't. This chart is currently based on testing
    against g++-4.4.0 with -std=c++0x. </p>
@@ -138,8 +133,42 @@
 
   <ul>
   <li><code>svn co http://llvm.org/svn/llvm-project/libcxx/trunk libcxx</code></li>
-  <li><code>cd libcxx/lib</code></li>
-  <li><code>./buildit</code></li>
+  </ul>
+
+  <p>To build on Mac OS X 10.6, you need a helper library and header 
+    <a href="http://home.roadrunner.com/~hinnant/libcppabi.zip">found here</a>.
+    cp cxxabi.h to /usr/include, and cp libc++abi.dylib to /usr/lib.
+    <p>
+    
+  <p>
+     Next:
+  </p>
+  
+  <ul>
+    <li><code>cd libcxx/lib</code></li>
+    <li><code>export TRIPLE=-apple-</code></li>
+    <li><code>./buildit</code></li>
+  </ul>
+  
+  <p>
+     That should result in a libc++.1.dylib.  To install it I like to use links
+     instead of copying, but either should work:
+  </p>
+
+  <ul>
+    <li><code>cd /usr/lib</code></li>
+    <li><code>sudo ln -sf path-to-libcxx/lib/libc++.1.dylib libc++.dylib</code></li>
+    <li><code>cd /usr/include/c++</code></li>
+    <li><code>sudo ln -sf path-to-libcxx/include v1</code></li>
+  </ul>
+
+  <p>
+  To use with clang you can:
+  </p>
+
+  <ul>
+    <li><code>clang++ -stdlib=libc++ test.cpp</code></li>
+    <li><code>clang++ -std=c++0x -stdlib=libc++ test.cpp</code></li>
   </ul>
 
   <p>To run the libc++ test suit (recommended):</p>
