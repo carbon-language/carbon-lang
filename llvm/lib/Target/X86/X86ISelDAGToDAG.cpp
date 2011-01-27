@@ -532,7 +532,7 @@ void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
   const TargetInstrInfo *TII = TM.getInstrInfo();
   if (Subtarget->isTargetCygMing()) {
     unsigned CallOp =
-      Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32;
+      Subtarget->is64Bit() ? X86::WINCALL64pcrel32 : X86::CALLpcrel32;
     BuildMI(BB, DebugLoc(),
             TII->get(CallOp)).addExternalSymbol("__main");
   }
