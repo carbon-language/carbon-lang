@@ -184,7 +184,7 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
         context.type = EmulateInstruction::eContextAdjustStackPointer;
         context.arg0 = eRegisterKindGeneric;
         context.arg1 = LLDB_REGNUM_GENERIC_SP;
-        context.arg2 = sp_offset;
+        context.arg2 = -sp_offset;
     
         if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
@@ -192,7 +192,7 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
-// Adjust r7 or ip to point to saved value residing within the stack.
+// Set r7 or ip to point to saved value residing within the stack.
 // ADD (SP plus immediate)
 static bool
 emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
@@ -253,6 +253,65 @@ emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
+// An add operation to adjust the SP.
+// ADD (SP plus register)
+static bool
+emulate_add_sp_rm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(SP, shifted, ‘0’);
+        if d == 15 then
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        uint32_t Rm; // the second operand
+        switch (encoding) {
+        case eEncodingT2:
+            Rm = Bits32(opcode, 6, 3);
+            break;
+        default:
+            return false;
+        }
+        int32_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        if (!success)
+            return false;
+
+        addr_t addr = (int32_t)sp + reg_value; // the adjusted stack pointer value
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextAdjustStackPointer,
+                                                eRegisterKindGeneric,
+                                                LLDB_REGNUM_GENERIC_SP,
+                                                reg_value };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
+            return false;
+    }
+    return true;
+}
+
 // A sub operation to adjust the SP -- allocate space for local storage.
 static bool
 emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
@@ -307,7 +366,7 @@ emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
         EmulateInstruction::Context context = { EmulateInstruction::eContextAdjustStackPointer,
                                                 eRegisterKindGeneric,
                                                 LLDB_REGNUM_GENERIC_SP,
-                                                sp_offset };
+                                                -sp_offset };
     
         if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
             return false;
@@ -380,7 +439,7 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
         context.type = EmulateInstruction::eContextAdjustStackPointer;
         context.arg0 = eRegisterKindGeneric;
         context.arg1 = LLDB_REGNUM_GENERIC_SP;
-        context.arg2 = sp_offset;
+        context.arg2 = -sp_offset;
     
         if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
@@ -473,7 +532,7 @@ emulate_vpush (EmulateInstructionARM *emulator, ARMEncoding encoding)
         context.type = EmulateInstruction::eContextAdjustStackPointer;
         context.arg0 = eRegisterKindGeneric;
         context.arg1 = LLDB_REGNUM_GENERIC_SP;
-        context.arg2 = sp_offset;
+        context.arg2 = -sp_offset;
     
         if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
@@ -487,9 +546,9 @@ static ARMOpcode g_arm_opcodes[] =
     { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, emulate_push, "push <registers>" },
     { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, emulate_push, "push <register>" },
 
-    // adjust r7 to point to a stack offset
+    // set r7 to point to a stack offset
     { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add r7, sp, #<const>" },
-    // adjust ip to point to a stack offset
+    // set ip to point to a stack offset
     { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add ip, sp, #<const>" },
 
     // adjust the stack pointer
@@ -510,12 +569,13 @@ static ARMOpcode g_thumb_opcodes[] =
     { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push, "push.w <registers>" },
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push, "push.w <register>" },
 
-    // adjust r7 to point to a stack offset
+    // set r7 to point to a stack offset
     { 0xffffff00, 0x000af00, ARMvAll,        eEncodingT1, eSize16, emulate_add_rd_sp_imm, "add r7, sp, #<imm>" },
 
     // adjust the stack pointer
-    { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm, "sub{s} sp, sp, #<imm>"},
-    { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm, "sub{s}.w sp, sp, #<const>"},
+    { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, emulate_add_sp_rm, "add sp, <Rm>"},
+    { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm, "add sp, sp, #<imm>"},
+    { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm, "sub.w sp, sp, #<const>"},
     { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_sub_sp_imm, "subw sp, sp, #<imm12>"},
 
     // vector push consecutive extension register(s)
