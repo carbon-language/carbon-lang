@@ -92,6 +92,17 @@ set(C_FLGS "${CMAKE_C_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
 set(CXX_FLGS "${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
 set(CPP_FLGS "${CMAKE_CPP_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
 
+# We don't want certain flags on the output of
+# llvm-config --cflags --cxxflags
+macro(remove_option_from_llvm_config option)
+  llvm_replace_compiler_option(C_FLGS "${option}" "")
+  llvm_replace_compiler_option(CXX_FLGS "${option}" "")
+  llvm_replace_compiler_option(CPP_FLGS "${option}" "")
+endmacro(remove_option_from_llvm_config)
+remove_option_from_llvm_config("-pedantic")
+remove_option_from_llvm_config("-Wall")
+remove_option_from_llvm_config("-W")
+
 add_custom_command(OUTPUT ${LLVM_CONFIG}
   COMMAND echo 's!@LLVM_CPPFLAGS@!${CPP_FLGS}!' > temp.sed
   COMMAND echo 's!@LLVM_CFLAGS@!${C_FLGS}!' >> temp.sed
