@@ -253,6 +253,71 @@ emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
+// PC relative immediate load into register, possibly followed by ADD (SP plus register).
+// LDR (literal)
+static bool
+emulate_ldr_rd_pc_rel (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations(); NullCheckIfThumbEE(15);
+        base = Align(PC,4);
+        address = if add then (base + imm32) else (base - imm32);
+        data = MemU[address,4];
+        if t == 15 then
+            if address<1:0> == ‘00’ then LoadWritePC(data); else UNPREDICTABLE;
+        elsif UnalignedSupport() || address<1:0> = ‘00’ then
+            R[t] = data;
+        else // Can only apply before ARMv7
+            if CurrentInstrSet() == InstrSet_ARM then
+                R[t] = ROR(data, 8*UInt(address<1:0>));
+            else
+                R[t] = bits(32) UNKNOWN;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const uint32_t pc = emulator->ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        if (!success)
+            return false;
+        uint32_t Rd; // the destination register
+        uint32_t imm32; // immediate offset from the PC
+        addr_t addr;    // the PC relative address
+        uint32_t data;  // the literal data value from the PC relative load
+        switch (encoding) {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 10, 8);
+            imm32 = Bits32(opcode, 7, 0) << 2; // imm32 = ZeroExtend(imm8:'00', 32);
+            addr = pc + 4 + imm32;
+            break;
+        default:
+            return false;
+        }
+        EmulateInstruction::Context read_data_context = {EmulateInstruction::eContextReadMemory, 0, 0, 0};
+        success = false;
+        data = emulator->ReadMemoryUnsigned(read_data_context, addr, 4, 0, &success);
+        if (!success)
+            return false;
+
+        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
+                                                eRegisterKindDWARF,
+                                                dwarf_r0 + Rd,
+                                                data };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, data))
+            return false;
+    }
+    return true;
+}
+
 // An add operation to adjust the SP.
 // ADD (SP plus register)
 static bool
@@ -555,7 +620,7 @@ static ARMOpcode g_arm_opcodes[] =
     { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_sp_imm, "sub sp, sp, #<const>"},
 
     // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
-    { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp, "str Rt, [sp, #-<imm12>]!" },
+    { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp, "str Rt, [sp, #-imm12]!" },
 
     // vector push consecutive extension register(s)
     { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, emulate_vpush, "vpush.64 <list>"},
@@ -570,13 +635,16 @@ static ARMOpcode g_thumb_opcodes[] =
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push, "push.w <register>" },
 
     // set r7 to point to a stack offset
-    { 0xffffff00, 0x000af00, ARMvAll,        eEncodingT1, eSize16, emulate_add_rd_sp_imm, "add r7, sp, #<imm>" },
+    { 0xffffff00, 0x000af00, ARMvAll,        eEncodingT1, eSize16, emulate_add_rd_sp_imm, "add r7, sp, #imm" },
+
+    // PC relative load into register (see also emulate_add_sp_rm)
+    { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, emulate_ldr_rd_pc_rel, "ldr <Rd>, [PC, #imm]"},
 
     // adjust the stack pointer
     { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, emulate_add_sp_rm, "add sp, <Rm>"},
-    { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm, "add sp, sp, #<imm>"},
+    { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm, "add sp, sp, #imm"},
     { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm, "sub.w sp, sp, #<const>"},
-    { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_sub_sp_imm, "subw sp, sp, #<imm12>"},
+    { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_sub_sp_imm, "subw sp, sp, #imm12"},
 
     // vector push consecutive extension register(s)
     { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, emulate_vpush, "vpush.64 <list>"},

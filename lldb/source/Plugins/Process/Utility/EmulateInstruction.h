@@ -21,6 +21,7 @@ public:
     {
         eContextInvalid = 0,
         eContextReadOpcode,
+        eContextReadMemory,
         eContextImmediate,
         eContextPushRegisterOnStack,
         eContextAdjustStackPointer,
