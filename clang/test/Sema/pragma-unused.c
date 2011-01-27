@@ -1,16 +1,16 @@
-// RUN: %clang_cc1 -fsyntax-only -Wunused-parameter -Wused-but-marked-unused -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wunused-parameter -Wused-but-marked-unused -Wunused -verify %s
 
 void f1(void) {
   int x, y, z;
   #pragma unused(x)
   #pragma unused(y, z)
   
-  int w; // FIXME: We should emit a warning that 'w' is unused.  
+  int w; // expected-warning {{unused}}
   #pragma unused w // expected-warning{{missing '(' after '#pragma unused' - ignoring}}
 }
 
 void f2(void) {
-  int x, y;
+  int x, y; // expected-warning {{unused}} expected-warning {{unused}}
   #pragma unused(x,) // expected-warning{{expected '#pragma unused' argument to be a variable name}}
   #pragma unused() // expected-warning{{expected '#pragma unused' argument to be a variable name}}
 }
@@ -20,13 +20,8 @@ void f3(void) {
 }
 
 void f4(void) {
-  int w; // FIXME: We should emit a warning that 'w' is unused.
+  int w; // expected-warning {{unused}}
   #pragma unused((w)) // expected-warning{{expected '#pragma unused' argument to be a variable name}}
-}
-
-int k;
-void f5(void) {
-  #pragma unused(k) // expected-warning{{only local variables can be arguments to '#pragma unused'}}
 }
 
 void f6(void) {
@@ -64,3 +59,7 @@ int f12(int x) {
   #pragma unused(x) // expected-warning{{'x' was marked unused but was used}}
   return y;
 }
+
+// rdar://8793832
+static int glob_var = 0;
+#pragma unused(glob_var)

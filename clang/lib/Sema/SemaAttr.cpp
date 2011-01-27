@@ -277,8 +277,8 @@ void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,
   }
 
   VarDecl *VD = Lookup.getAsSingle<VarDecl>();
-  if (!VD || !(VD->hasLocalStorage() || VD->isStaticLocal())) {
-    Diag(PragmaLoc, diag::warn_pragma_unused_expected_localvar)
+  if (!VD) {
+    Diag(PragmaLoc, diag::warn_pragma_unused_expected_var_arg)
       << Name << SourceRange(IdTok.getLocation());
     return;
   }
