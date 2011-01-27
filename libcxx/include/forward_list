@@ -106,15 +106,21 @@ public:
     void resize(size_type n, const value_type& v);
     void clear();
 
+    void splice_after(const_iterator p, forward_list& x);
     void splice_after(const_iterator p, forward_list&& x);
+    void splice_after(const_iterator p, forward_list& x, const_iterator i);
     void splice_after(const_iterator p, forward_list&& x, const_iterator i);
+    void splice_after(const_iterator p, forward_list& x,
+                      const_iterator first, const_iterator last);
     void splice_after(const_iterator p, forward_list&& x,
                       const_iterator first, const_iterator last);
     void remove(const value_type& v);
     template <class Predicate> void remove_if(Predicate pred);
     void unique();
     template <class BinaryPredicate> void unique(BinaryPredicate binary_pred);
+    void merge(forward_list& x);
     void merge(forward_list&& x);
+    template <class Compare> void merge(forward_list& x, Compare comp);
     template <class Compare> void merge(forward_list&& x, Compare comp);
     void sort();
     template <class Compare> void sort(Compare comp);
@@ -632,16 +638,18 @@ public:
     void clear() {base::clear();}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void splice_after(const_iterator __p, forward_list&& __x);
+    _LIBCPP_INLINE_VISIBILITY
     void splice_after(const_iterator __p, forward_list&& __x, const_iterator __i);
+    _LIBCPP_INLINE_VISIBILITY
     void splice_after(const_iterator __p, forward_list&& __x,
                       const_iterator __f, const_iterator __l);
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void splice_after(const_iterator __p, forward_list& __x);
     void splice_after(const_iterator __p, forward_list& __x, const_iterator __i);
     void splice_after(const_iterator __p, forward_list& __x,
                       const_iterator __f, const_iterator __l);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void remove(const value_type& __v);
     template <class _Predicate> void remove_if(_Predicate __pred);
     _LIBCPP_INLINE_VISIBILITY
@@ -649,13 +657,15 @@ public:
     template <class _BinaryPredicate> void unique(_BinaryPredicate __binary_pred);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    void merge(forward_list&& __x) {merge(_STD::move(__x), __less<value_type>());}
-    template <class _Compare> void merge(forward_list&& __x, _Compare __comp);
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    void merge(forward_list&& __x) {merge(__x, __less<value_type>());}
+    template <class _Compare>
+        _LIBCPP_INLINE_VISIBILITY
+        void merge(forward_list&& __x, _Compare __comp)
+        {merge(__x, _STD::move(__comp));}
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     void merge(forward_list& __x) {merge(__x, __less<value_type>());}
     template <class _Compare> void merge(forward_list& __x, _Compare __comp);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     void sort() {sort(__less<value_type>());}
     template <class _Compare> void sort(_Compare __comp);
@@ -1201,11 +1211,7 @@ forward_list<_Tp, _Alloc>::resize(size_type __n, const value_type& __v)
 template <class _Tp, class _Alloc>
 void
 forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-                                        forward_list&& __x)
-#else
                                         forward_list& __x)
-#endif
 {
     if (!__x.empty())
     {
@@ -1226,11 +1232,7 @@ forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
 template <class _Tp, class _Alloc>
 void
 forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-                                        forward_list&& __x,
-#else
                                         forward_list& __x,
-#endif
                                         const_iterator __i)
 {
     const_iterator __lm1 = next(__i);
@@ -1248,11 +1250,7 @@ forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
 template <class _Tp, class _Alloc>
 void
 forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-                                        forward_list&& __x,
-#else
                                         forward_list& __x,
-#endif
                                         const_iterator __f, const_iterator __l)
 {
     if (__f != __l && __p != __f)
@@ -1271,6 +1269,39 @@ forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
         }
     }
 }
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _Tp, class _Alloc>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
+                                        forward_list&& __x)
+{
+    splice_after(__p, __x);
+}
+
+template <class _Tp, class _Alloc>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
+                                        forward_list&& __x,
+                                        const_iterator __i)
+{
+    splice_after(__p, __x, __i);
+}
+
+template <class _Tp, class _Alloc>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
+                                        forward_list&& __x,
+                                        const_iterator __f, const_iterator __l)
+{
+    splice_after(__p, __x, __f, __l);
+}
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Alloc>
 void
@@ -1336,11 +1367,7 @@ forward_list<_Tp, _Alloc>::unique(_BinaryPredicate __binary_pred)
 template <class _Tp, class _Alloc>
 template <class _Compare>
 void
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-forward_list<_Tp, _Alloc>::merge(forward_list&& __x, _Compare __comp)
-#else
 forward_list<_Tp, _Alloc>::merge(forward_list& __x, _Compare __comp)
-#endif
 {
     if (this != &__x)
     {
