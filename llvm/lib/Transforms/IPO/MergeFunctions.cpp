@@ -460,9 +460,8 @@ bool FunctionComparator::Enumerate(const Value *V1, const Value *V2) {
   if (V1 == F2 && V2 == F1)
     return true;
 
-  if (isa<Constant>(V1)) {
+  if (Constant *C1 = dyn_cast<Constant>(V1)) {
     if (V1 == V2) return true;
-    const Constant *C1 = cast<Constant>(V1);
     const Constant *C2 = dyn_cast<Constant>(V2);
     if (!C2) return false;
     // TODO: constant expressions with GEP or references to F1 or F2.
