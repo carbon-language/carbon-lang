@@ -1149,6 +1149,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
   if (OldParams)
     OldParam = OldParams->begin();
 
+  bool RemoveDefaultArguments = false;
   for (TemplateParameterList::iterator NewParam = NewParams->begin(),
                                     NewParamEnd = NewParams->end();
        NewParam != NewParamEnd; ++NewParam) {
@@ -1317,13 +1318,14 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
     } else if (MissingDefaultArg) {
       // C++ [temp.param]p11:
       //   If a template-parameter of a class template has a default 
-      //   template-argument, each subsequent template- parameter shall either 
+      //   template-argument, each subsequent template-parameter shall either 
       //   have a default template-argument supplied or be a template parameter
       //   pack.
       Diag((*NewParam)->getLocation(),
            diag::err_template_param_default_arg_missing);
       Diag(PreviousDefaultArgLoc, diag::note_template_param_prev_default_arg);
       Invalid = true;
+      RemoveDefaultArguments = true;
     }
 
     // If we have an old template parameter list that we're merging
@@ -1332,6 +1334,22 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       ++OldParam;
   }
 
+  // We were missing some default arguments at the end of the list, so remove
+  // all of the default arguments.
+  if (RemoveDefaultArguments) {
+    for (TemplateParameterList::iterator NewParam = NewParams->begin(),
+                                      NewParamEnd = NewParams->end();
+         NewParam != NewParamEnd; ++NewParam) {
+      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*NewParam))
+        TTP->removeDefaultArgument();
+      else if (NonTypeTemplateParmDecl *NTTP 
+                                = dyn_cast<NonTypeTemplateParmDecl>(*NewParam))
+        NTTP->removeDefaultArgument();
+      else
+        cast<TemplateTemplateParmDecl>(*NewParam)->removeDefaultArgument();
+    }
+  }
+  
   return Invalid;
 }
 
