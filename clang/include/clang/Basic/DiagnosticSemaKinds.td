@@ -923,9 +923,9 @@ def err_enum_redeclare_scoped_mismatch : Error<
 
 // C++0x delegating constructors
 def err_delegation_0x_only : Error<
-  "Delegating constructors are permitted only in C++0x.">;
+  "delegating constructors are permitted only in C++0x">;
 def err_delegation_unimplemented : Error<
-  "Delegating constructors are not fully implemented.">;
+  "delegating constructors are not fully implemented">;
   
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<
