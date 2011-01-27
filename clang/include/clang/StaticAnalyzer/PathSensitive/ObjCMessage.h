@@ -78,7 +78,10 @@ public:
     assert(isValid() && "This ObjCMessage is uninitialized!");
     if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
       return msgE->getInstanceReceiver();
-    return cast<ObjCPropertyRefExpr>(MsgOrPropE)->getBase();
+    const ObjCPropertyRefExpr *propE = cast<ObjCPropertyRefExpr>(MsgOrPropE);
+    if (propE->isObjectReceiver())
+      return propE->getBase();
+    return 0;
   }
 
   bool isInstanceMessage() const {

@@ -133,3 +133,13 @@ void rdar6611873() {
   p.name = [[NSString string] retain]; // expected-warning {{leak}}
   p.name = [[NSString alloc] init]; // expected-warning {{leak}}
 }
+
+@interface SubPerson : Person
+-(NSString *)foo;
+@end
+
+@implementation SubPerson
+-(NSString *)foo {
+  return super.name;
+}
+@end

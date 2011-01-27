@@ -2073,12 +2073,13 @@ void ExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
 void ExprEngine::VisitObjCPropertyRefExpr(const ObjCPropertyRefExpr *Ex,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-
-  // Visit the base expression, which is needed for computing the lvalue
-  // of the ivar.
   ExplodedNodeSet dstBase;
-  const Expr *baseExpr = Ex->getBase();
-  Visit(baseExpr, Pred, dstBase);
+
+  // Visit the receiver (if any).
+  if (Ex->isObjectReceiver())
+    Visit(Ex->getBase(), Pred, dstBase);
+  else
+    dstBase = Pred;
 
   ExplodedNodeSet dstPropRef;
 
@@ -2087,7 +2088,6 @@ void ExprEngine::VisitObjCPropertyRefExpr(const ObjCPropertyRefExpr *Ex,
        I!=E; ++I) {
     ExplodedNode *nodeBase = *I;
     const GRState *state = GetState(nodeBase);
-    SVal baseVal = state->getSVal(baseExpr);
     MakeNode(dstPropRef, Ex, *I, state->BindExpr(Ex, loc::ObjCPropRef(Ex)));
   }
   
