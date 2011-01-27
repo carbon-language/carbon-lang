@@ -33,6 +33,9 @@ public:
   bool empty() const { return TheMap.empty(); }
   unsigned size() const { return TheMap.size(); }
 
+  /// Grow the denseset so that it has at least Size buckets. Does not shrink
+  void resize(size_t Size) { TheMap.resize(Size); }
+
   void clear() {
     TheMap.clear();
   }
