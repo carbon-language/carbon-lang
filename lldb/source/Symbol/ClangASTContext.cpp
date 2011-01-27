@@ -688,7 +688,7 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
 
         case DW_ATE_lo_user:
             // This has been seen to mean DW_AT_complex_integer
-            if (strcmp(type_name, "complex") == 0)
+            if (::strstr(type_name, "complex"))
             {
                 clang_type_t complex_int_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("int", DW_ATE_signed, bit_size/2);
                 return ast->getComplexType (QualType::getFromOpaquePtr(complex_int_clang_type)).getAsOpaquePtr();
