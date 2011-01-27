@@ -16,7 +16,7 @@ using namespace llvm;
 namespace llvm {
 
 std::ostream &operator<<(std::ostream &OS, const StringRef &S) {
-  OS << S;
+  OS << S.str();
   return OS;
 }
 
