@@ -1107,14 +1107,13 @@ multiclass APreLoad<bits<1> read, bits<1> data, string opc> {
     let Inst{22} = read;
     let Inst{21-20} = 0b01;
     let Inst{19-16} = addr{16-13};  // Rn
-    let Inst{15-12} = Rt;
+    let Inst{15-12} = 0b1111;
     let Inst{11-0}  = addr{11-0};   // imm12
   }
 
   def rs : AXI<(outs), (ins ldst_so_reg:$shift), MiscFrm, IIC_Preload,
                !strconcat(opc, "\t$shift"),
                [(ARMPreload ldst_so_reg:$shift, (i32 read), (i32 data))]> {
-    bits<4> Rt;
     bits<17> shift;
     let Inst{31-26} = 0b111101;
     let Inst{25} = 1; // 1 for register form
@@ -1123,6 +1122,7 @@ multiclass APreLoad<bits<1> read, bits<1> data, string opc> {
     let Inst{22} = read;
     let Inst{21-20} = 0b01;
     let Inst{19-16} = shift{16-13}; // Rn
+    let Inst{15-12} = 0b1111;
     let Inst{11-0}  = shift{11-0};
   }
 }
