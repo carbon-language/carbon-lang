@@ -591,10 +591,10 @@ ConstantVector::ConstantVector(const VectorType *T,
              OperandTraits<ConstantVector>::op_end(this) - V.size(),
              V.size()) {
   Use *OL = OperandList;
-    for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
-         I != E; ++I, ++OL) {
-      Constant *C = *I;
-      assert(C->getType() == T->getElementType() &&
+  for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
+       I != E; ++I, ++OL) {
+    Constant *C = *I;
+    assert(C->getType() == T->getElementType() &&
            "Initializer for vector element doesn't match vector element type!");
     *OL = C;
   }
@@ -603,10 +603,10 @@ ConstantVector::ConstantVector(const VectorType *T,
 // ConstantVector accessors.
 Constant* ConstantVector::get(const VectorType* T,
                               const std::vector<Constant*>& V) {
-   assert(!V.empty() && "Vectors can't be empty");
-   LLVMContext &Context = T->getContext();
-   LLVMContextImpl *pImpl = Context.pImpl;
-   
+  assert(!V.empty() && "Vectors can't be empty");
+  LLVMContext &Context = T->getContext();
+  LLVMContextImpl *pImpl = Context.pImpl;
+
   // If this is an all-undef or alll-zero vector, return a
   // ConstantAggregateZero or UndefValue.
   Constant *C = V[0];
@@ -1240,7 +1240,7 @@ Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
   if (SrcBits == DstBits)
     return C; // Avoid a useless cast
   Instruction::CastOps opcode =
-     (SrcBits > DstBits ? Instruction::FPTrunc : Instruction::FPExt);
+    (SrcBits > DstBits ? Instruction::FPTrunc : Instruction::FPExt);
   return getCast(opcode, C, Ty);
 }
 
