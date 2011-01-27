@@ -192,6 +192,67 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
+// Adjust r7 or ip to point to saved value residing within the stack.
+// ADD (SP plus immediate)
+static bool
+emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(SP, imm32, ‘0’);
+        if d == 15 then
+           ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        uint32_t Rd; // the destination register
+        uint32_t imm32;
+        switch (encoding) {
+        case eEncodingT1:
+            Rd = 7;
+            imm32 = Bits32(opcode, 7, 0) << 2; // imm32 = ZeroExtend(imm8:'00', 32)
+            break;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+            break;
+        default:
+            return false;
+        }
+        addr_t sp_offset = imm32;
+        addr_t addr = sp + sp_offset; // a pointer to the stack area
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindGeneric,
+                                                LLDB_REGNUM_GENERIC_SP,
+                                                sp_offset };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, addr))
+            return false;
+    }
+    return true;
+}
+
 // A sub operation to adjust the SP -- allocate space for local storage.
 static bool
 emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
@@ -423,49 +484,43 @@ emulate_vpush (EmulateInstructionARM *emulator, ARMEncoding encoding)
 static ARMOpcode g_arm_opcodes[] =
 {
     // push register(s)
-    { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, emulate_push,
-      "push <registers> ; <registers> contains more than one register" },
-    { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, emulate_push,
-      "push <registers> ; <registers> contains one register, <Rt>" },
+    { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, emulate_push, "push <registers>" },
+    { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, emulate_push, "push <register>" },
+
+    // adjust r7 to point to a stack offset
+    { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add r7, sp, #<const>" },
+    // adjust ip to point to a stack offset
+    { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add ip, sp, #<const>" },
 
     // adjust the stack pointer
-    { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_sp_imm,
-      "sub sp, sp, #<const>"},
+    { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_sp_imm, "sub sp, sp, #<const>"},
 
     // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
-    { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp,
-      "str Rt, [sp, #-<imm12>]!" },
+    { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp, "str Rt, [sp, #-<imm12>]!" },
 
     // vector push consecutive extension register(s)
-    { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, emulate_vpush,
-      "vpush.64 <list>"},
-    { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, emulate_vpush,
-      "vpush.32 <list>"}
+    { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, emulate_vpush, "vpush.64 <list>"},
+    { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, emulate_vpush, "vpush.32 <list>"}
 };
 
 static ARMOpcode g_thumb_opcodes[] =
 {
     // push register(s)
-    { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push,
-      "push <registers>" },
-    { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push,
-      "push.w <registers> ; <registers> contains more than one register" },
-    { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push,
-      "push.w <registers> ; <registers> contains one register, <Rt>" },
+    { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push, "push <registers>" },
+    { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push, "push.w <registers>" },
+    { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push, "push.w <register>" },
+
+    // adjust r7 to point to a stack offset
+    { 0xffffff00, 0x000af00, ARMvAll,        eEncodingT1, eSize16, emulate_add_rd_sp_imm, "add r7, sp, #<imm>" },
 
     // adjust the stack pointer
-    { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm,
-      "sub{s} sp, sp, #<imm>"},
-    { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm,
-      "sub{s}.w sp, sp, #<const>"},
-    { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_sub_sp_imm,
-      "subw sp, sp, #<imm12>"},
+    { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm, "sub{s} sp, sp, #<imm>"},
+    { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm, "sub{s}.w sp, sp, #<const>"},
+    { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_sub_sp_imm, "subw sp, sp, #<imm12>"},
 
     // vector push consecutive extension register(s)
-    { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, emulate_vpush,
-      "vpush.64 <list>"},
-    { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_vpush,
-      "vpush.32 <list>"}
+    { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, emulate_vpush, "vpush.64 <list>"},
+    { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_vpush, "vpush.32 <list>"}
 };
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);

@@ -30,9 +30,9 @@ public:
     struct Context
     {
         ContextType type;
-        lldb::addr_t arg0;
-        lldb::addr_t arg1;
-        lldb::addr_t arg2;
+        lldb::addr_t arg0;      // Register kind.
+        lldb::addr_t arg1;      // Register spec.
+        int64_t arg2;     // Possible negative value.
     };
 
     union Opcode
