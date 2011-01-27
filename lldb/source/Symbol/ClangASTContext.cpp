@@ -75,7 +75,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
     case clang::Type::Record:
     case clang::Type::Enum:
         {
-            clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
+            const clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
             if (tag_type)
             {
                 clang::TagDecl *tag_decl = tag_type->getDecl();
@@ -103,7 +103,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
     case clang::Type::ObjCObject:
     case clang::Type::ObjCInterface:
         {
-            clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type);
+            const clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type);
             if (objc_class_type)
             {
                 clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
@@ -1078,7 +1078,7 @@ ClangASTContext::SetHasExternalStorage (clang_type_t clang_type, bool has_extern
     case clang::Type::ObjCObject:
     case clang::Type::ObjCInterface:
         {
-            ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+            const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
             assert (objc_class_type);
             if (objc_class_type)
             {
@@ -1357,12 +1357,12 @@ ClangASTContext::AddMethodToCXXRecordType
 
     const bool is_implicitly_declared = false;
     
-    clang::FunctionType *function_Type = dyn_cast<FunctionType>(method_qual_type.getTypePtr());
+    const clang::FunctionType *function_Type = dyn_cast<FunctionType>(method_qual_type.getTypePtr());
     
     if (function_Type == NULL)
         return NULL;
 
-    FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(function_Type));
+    const FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(function_Type));
     
     if (!method_function_prototype)
         return NULL;
@@ -1494,7 +1494,7 @@ ClangASTContext::AddFieldToRecordType
 
     QualType record_qual_type(QualType::getFromOpaquePtr(record_clang_type));
 
-    clang::Type *clang_type = record_qual_type.getTypePtr();
+    const clang::Type *clang_type = record_qual_type.getTypePtr();
     if (clang_type)
     {
         const RecordType *record_type = dyn_cast<RecordType>(clang_type);
@@ -1527,7 +1527,7 @@ ClangASTContext::AddFieldToRecordType
         }
         else
         {
-            ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(clang_type);
+            const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(clang_type);
             if (objc_class_type)
             {
                 bool is_synthesized = false;
@@ -1610,7 +1610,7 @@ ClangASTContext::SetDefaultAccessForRecordFields (clang_type_t clang_type, int d
     {
         QualType qual_type(QualType::getFromOpaquePtr(clang_type));
 
-        RecordType *record_type = dyn_cast<RecordType>(qual_type.getTypePtr());
+        const RecordType *record_type = dyn_cast<RecordType>(qual_type.getTypePtr());
         if (record_type)
         {
             RecordDecl *record_decl = record_type->getDecl();
@@ -1710,12 +1710,12 @@ ClangASTContext::SetObjCSuperClass (clang_type_t class_opaque_type, clang_type_t
     {
         QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
         QualType super_qual_type(QualType::getFromOpaquePtr(super_opaque_type));
-        clang::Type *class_type = class_qual_type.getTypePtr();
-        clang::Type *super_type = super_qual_type.getTypePtr();
+        const clang::Type *class_type = class_qual_type.getTypePtr();
+        const clang::Type *super_type = super_qual_type.getTypePtr();
         if (class_type && super_type)
         {
-            ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
-            ObjCObjectType *objc_super_type = dyn_cast<ObjCObjectType>(super_type);
+            const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+            const ObjCObjectType *objc_super_type = dyn_cast<ObjCObjectType>(super_type);
             if (objc_class_type && objc_super_type)
             {
                 ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
@@ -1754,10 +1754,10 @@ ClangASTContext::AddObjCClassIVar
 
     QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
 
-    clang::Type *class_type = class_qual_type.getTypePtr();
+    const clang::Type *class_type = class_qual_type.getTypePtr();
     if (class_type)
     {
-        ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+        const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
 
         if (objc_class_type)
         {
@@ -1799,10 +1799,10 @@ ClangASTContext::ObjCTypeHasIVars (clang_type_t class_opaque_type, bool check_su
 {
     QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
 
-    clang::Type *class_type = class_qual_type.getTypePtr();
+    const clang::Type *class_type = class_qual_type.getTypePtr();
     if (class_type)
     {
-        ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+        const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
 
         if (objc_class_type)
             return ObjCDeclHasIVars (objc_class_type->getInterface(), check_superclass);
@@ -1846,11 +1846,11 @@ ClangASTContext::AddMethodToObjCObjectType
 
     QualType class_qual_type(QualType::getFromOpaquePtr(class_opaque_type));
 
-    clang::Type *class_type = class_qual_type.getTypePtr();
+    const clang::Type *class_type = class_qual_type.getTypePtr();
     if (class_type == NULL)
         return NULL;
 
-    ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
+    const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(class_type);
 
     if (objc_class_type == NULL)
         return NULL;
@@ -1897,12 +1897,12 @@ ClangASTContext::AddMethodToObjCObjectType
     QualType method_qual_type (QualType::getFromOpaquePtr (method_opaque_type));
 
     // Populate the method decl with parameter decls
-    clang::Type *method_type(method_qual_type.getTypePtr());
+    const clang::Type *method_type(method_qual_type.getTypePtr());
     
     if (method_type == NULL)
         return NULL;
     
-    FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(method_type));
+    const FunctionProtoType *method_function_prototype (dyn_cast<FunctionProtoType>(method_type));
     
     if (!method_function_prototype)
         return NULL;
@@ -2175,7 +2175,7 @@ ClangASTContext::GetNumChildren (clang::ASTContext *ast, clang_type_t clang_type
     case clang::Type::ObjCInterface:
         if (GetCompleteQualType (ast, qual_type))
         {
-            ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+            const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
             assert (objc_class_type);
             if (objc_class_type)
             {
@@ -2204,7 +2204,7 @@ ClangASTContext::GetNumChildren (clang::ASTContext *ast, clang_type_t clang_type
         
     case clang::Type::ObjCObjectPointer:
         {
-            ObjCObjectPointerType *pointer_type = cast<ObjCObjectPointerType>(qual_type.getTypePtr());
+            const ObjCObjectPointerType *pointer_type = cast<ObjCObjectPointerType>(qual_type.getTypePtr());
             QualType pointee_type = pointer_type->getPointeeType();
             uint32_t num_pointee_children = ClangASTContext::GetNumChildren (ast,
                                                                              pointee_type.getAsOpaquePtr(), 
@@ -2223,7 +2223,7 @@ ClangASTContext::GetNumChildren (clang::ASTContext *ast, clang_type_t clang_type
 
     case clang::Type::Pointer:
         {
-            PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
+            const PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
             QualType pointee_type (pointer_type->getPointeeType());
             uint32_t num_pointee_children = ClangASTContext::GetNumChildren (ast,
                                                                              pointee_type.getAsOpaquePtr(), 
@@ -2242,7 +2242,7 @@ ClangASTContext::GetNumChildren (clang::ASTContext *ast, clang_type_t clang_type
     case clang::Type::LValueReference:
     case clang::Type::RValueReference:
         {
-            ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
+            const ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
             QualType pointee_type = reference_type->getPointeeType();
             uint32_t num_pointee_children = ClangASTContext::GetNumChildren (ast,
                                                                              pointee_type.getAsOpaquePtr(), 
@@ -2533,7 +2533,7 @@ ClangASTContext::GetChildClangTypeAtIndex
         case clang::Type::ObjCInterface:
             if (GetCompleteQualType (ast, parent_qual_type))
             {
-                ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(parent_qual_type.getTypePtr());
+                const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(parent_qual_type.getTypePtr());
                 assert (objc_class_type);
                 if (objc_class_type)
                 {
@@ -2610,7 +2610,7 @@ ClangASTContext::GetChildClangTypeAtIndex
             
         case clang::Type::ObjCObjectPointer:
             {
-                ObjCObjectPointerType *pointer_type = cast<ObjCObjectPointerType>(parent_qual_type.getTypePtr());
+                const ObjCObjectPointerType *pointer_type = cast<ObjCObjectPointerType>(parent_qual_type.getTypePtr());
                 QualType pointee_type = pointer_type->getPointeeType();
 
                 if (transparent_pointers && ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
@@ -2679,7 +2679,7 @@ ClangASTContext::GetChildClangTypeAtIndex
 
         case clang::Type::Pointer:
             {
-                PointerType *pointer_type = cast<PointerType>(parent_qual_type.getTypePtr());
+                const PointerType *pointer_type = cast<PointerType>(parent_qual_type.getTypePtr());
                 QualType pointee_type = pointer_type->getPointeeType();
                 
                 // Don't dereference "void *" pointers
@@ -2730,7 +2730,7 @@ ClangASTContext::GetChildClangTypeAtIndex
         case clang::Type::LValueReference:
         case clang::Type::RValueReference:
             {
-                ReferenceType *reference_type = cast<ReferenceType>(parent_qual_type.getTypePtr());
+                const ReferenceType *reference_type = cast<ReferenceType>(parent_qual_type.getTypePtr());
                 QualType pointee_type(reference_type->getPointeeType());
                 clang_type_t pointee_clang_type = pointee_type.getAsOpaquePtr();
                 if (transparent_pointers && ClangASTContext::IsAggregateType (pointee_clang_type))
@@ -3078,7 +3078,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
             if (GetCompleteQualType (ast, qual_type))
             {
                 StringRef name_sref(name);
-                ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+                const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
                 assert (objc_class_type);
                 if (objc_class_type)
                 {
@@ -3182,7 +3182,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
         case clang::Type::LValueReference:
         case clang::Type::RValueReference:
             {
-                ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
+                const ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
                 QualType pointee_type = reference_type->getPointeeType();
 
                 if (ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
@@ -3198,7 +3198,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
 
         case clang::Type::Pointer:
             {
-                PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
+                const PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
                 QualType pointee_type = pointer_type->getPointeeType();
 
                 if (ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
@@ -3314,7 +3314,7 @@ ClangASTContext::GetIndexOfChildWithName
             if (GetCompleteQualType (ast, qual_type))
             {
                 StringRef name_sref(name);
-                ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+                const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
                 assert (objc_class_type);
                 if (objc_class_type)
                 {
@@ -3397,7 +3397,7 @@ ClangASTContext::GetIndexOfChildWithName
         case clang::Type::LValueReference:
         case clang::Type::RValueReference:
             {
-                ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
+                const ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
                 QualType pointee_type = reference_type->getPointeeType();
 
                 if (ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
@@ -3412,7 +3412,7 @@ ClangASTContext::GetIndexOfChildWithName
 
         case clang::Type::Pointer:
             {
-                PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
+                const PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
                 QualType pointee_type = pointer_type->getPointeeType();
 
                 if (ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
@@ -3464,10 +3464,10 @@ ClangASTContext::SetTagTypeKind (clang_type_t tag_clang_type, int kind)
     if (tag_clang_type)
     {
         QualType tag_qual_type(QualType::getFromOpaquePtr(tag_clang_type));
-        clang::Type *clang_type = tag_qual_type.getTypePtr();
+        const clang::Type *clang_type = tag_qual_type.getTypePtr();
         if (clang_type)
         {
-            TagType *tag_type = dyn_cast<TagType>(clang_type);
+            const TagType *tag_type = dyn_cast<TagType>(clang_type);
             if (tag_type)
             {
                 TagDecl *tag_decl = dyn_cast<TagDecl>(tag_type->getDecl());
@@ -3661,10 +3661,10 @@ ClangASTContext::StartTagDeclarationDefinition (clang_type_t clang_type)
     if (clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
-        clang::Type *t = qual_type.getTypePtr();
+        const clang::Type *t = qual_type.getTypePtr();
         if (t)
         {
-            TagType *tag_type = dyn_cast<TagType>(t);
+            const TagType *tag_type = dyn_cast<TagType>(t);
             if (tag_type)
             {
                 TagDecl *tag_decl = tag_type->getDecl();
@@ -3695,7 +3695,7 @@ ClangASTContext::CompleteTagDeclarationDefinition (clang_type_t clang_type)
             return true;
         }
         
-        ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type);
+        const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type);
         
         if (objc_class_type)
         {
@@ -3789,7 +3789,7 @@ ClangASTContext::GetEnumerationIntegerType (clang_type_t enum_clang_type)
 {
     QualType enum_qual_type (QualType::getFromOpaquePtr(enum_clang_type));
 
-    clang::Type *clang_type = enum_qual_type.getTypePtr();
+    const clang::Type *clang_type = enum_qual_type.getTypePtr();
     if (clang_type)
     {
         const EnumType *enum_type = dyn_cast<EnumType>(clang_type);
@@ -3824,7 +3824,7 @@ ClangASTContext::AddEnumerationValueToEnumerationType
         assert (identifier_table != NULL);
         QualType enum_qual_type (QualType::getFromOpaquePtr(enum_clang_type));
 
-        clang::Type *clang_type = enum_qual_type.getTypePtr();
+        const clang::Type *clang_type = enum_qual_type.getTypePtr();
         if (clang_type)
         {
             const EnumType *enum_type = dyn_cast<EnumType>(clang_type);
@@ -4177,7 +4177,7 @@ ClangASTContext::IsFunctionPointerType (clang_type_t clang_type)
         case clang::Type::LValueReference:
         case clang::Type::RValueReference:
             {
-                ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
+                const ReferenceType *reference_type = cast<ReferenceType>(qual_type.getTypePtr());
                 if (reference_type)
                     return ClangASTContext::IsFunctionPointerType (reference_type->getPointeeType().getAsOpaquePtr());
             }
@@ -4192,7 +4192,7 @@ ClangASTContext::GetArraySize (clang_type_t clang_type)
 {
     if (clang_type)
     {
-        ConstantArrayType *array = cast<ConstantArrayType>(QualType::getFromOpaquePtr(clang_type).getTypePtr());
+        const ConstantArrayType *array = cast<ConstantArrayType>(QualType::getFromOpaquePtr(clang_type).getTypePtr());
         if (array)
             return array->getSize().getLimitedValue();
     }

@@ -522,7 +522,7 @@ ClangASTType::DumpValue
             bool is_array_of_characters = false;
             clang::QualType element_qual_type = array->getElementType();
 
-            clang::Type *canonical_type = element_qual_type->getCanonicalTypeInternal().getTypePtr();
+            const clang::Type *canonical_type = element_qual_type->getCanonicalTypeInternal().getTypePtr();
             if (canonical_type)
                 is_array_of_characters = canonical_type->isCharType();
 
@@ -898,7 +898,7 @@ bool
 ClangASTType::IsDefined (clang_type_t clang_type)
 {
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-    clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
+    const clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
     if (tag_type)
     {
         clang::TagDecl *tag_decl = tag_type->getDecl();
@@ -908,7 +908,7 @@ ClangASTType::IsDefined (clang_type_t clang_type)
     }
     else
     {
-        clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type);
+        const clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type);
         if (objc_class_type)
         {
             clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
@@ -951,7 +951,7 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
         llvm::SmallVector<char, 1024> buf;
         llvm::raw_svector_ostream llvm_ostrm (buf);
 
-        clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
+        const clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
         if (tag_type)
         {
             clang::TagDecl *tag_decl = tag_type->getDecl();
@@ -966,7 +966,7 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
             case clang::Type::ObjCObject:
             case clang::Type::ObjCInterface:
                 {
-                    clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                    const clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                     assert (objc_class_type);
                     if (objc_class_type)
                     {

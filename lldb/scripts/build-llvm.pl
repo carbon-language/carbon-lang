@@ -25,7 +25,7 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "123723";
+our $llvm_revision = "124349";
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our $cc = "$ENV{DEVELOPER_BIN_DIR}/gcc-4.2";
 our $cxx = "$ENV{DEVELOPER_BIN_DIR}/g++-4.2";

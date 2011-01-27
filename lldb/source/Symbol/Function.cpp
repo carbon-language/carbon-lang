@@ -404,7 +404,7 @@ Function::GetReturnType ()
 {
     clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangType()));
     assert (clang_type->isFunctionType());
-    clang::FunctionType *function_type = dyn_cast<clang::FunctionType> (clang_type);
+    const clang::FunctionType *function_type = dyn_cast<clang::FunctionType> (clang_type);
     clang::QualType fun_return_qualtype = function_type->getResultType();
 
     const ConstString fun_return_name(ClangASTType::GetClangTypeName(fun_return_qualtype.getAsOpaquePtr()));
@@ -484,7 +484,7 @@ Function::GetArgumentTypeAtIndex (size_t idx)
 const char *
 Function::GetArgumentNameAtIndex (size_t idx)
 {
-   clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetClangType())->getTypePtr();
+   const clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetClangType())->getTypePtr();
    assert (clang_type->isFunctionType());
    if (!clang_type->isFunctionProtoType())
        return NULL;

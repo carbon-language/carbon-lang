@@ -290,7 +290,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         (last_expr->getObjectKind() == OK_Ordinary);
     
     QualType expr_qual_type = last_expr->getType();
-    clang::Type *expr_type = expr_qual_type.getTypePtr();
+    const clang::Type *expr_type = expr_qual_type.getTypePtr();
     
     if (!expr_type)
         return false;

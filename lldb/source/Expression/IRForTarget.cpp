@@ -271,8 +271,8 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     if (m_result_is_pointer)
     {
         clang::QualType pointer_qual_type = result_decl->getType();
-        clang::Type *pointer_type = pointer_qual_type.getTypePtr();
-        clang::PointerType *pointer_pointertype = dyn_cast<clang::PointerType>(pointer_type);
+        const clang::Type *pointer_type = pointer_qual_type.getTypePtr();
+        const clang::PointerType *pointer_pointertype = dyn_cast<clang::PointerType>(pointer_type);
         
         if (!pointer_pointertype)
         {
@@ -1252,6 +1252,7 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
         Value *val = llvm_call_inst->getCalledValue();
         
         ConstantExpr *const_expr = dyn_cast<ConstantExpr>(val);
+        LoadInst *load_inst = dyn_cast<LoadInst>(val);
         
         if (const_expr && const_expr->getOpcode() == Instruction::BitCast)
         {
@@ -1268,6 +1269,10 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
         else if (const_expr && const_expr->getOpcode() == Instruction::IntToPtr)
         {
             return true; // already resolved
+        }
+        else if (load_inst)
+        {
+            return true; // virtual method call
         }
         else
         {

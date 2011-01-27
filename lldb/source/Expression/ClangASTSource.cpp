@@ -244,7 +244,7 @@ NameSearchContext::AddTypeDecl(void *type)
     {
         QualType qual_type = QualType::getFromOpaquePtr(type);
 
-        if (TagType *tag_type = dyn_cast<clang::TagType>(qual_type))
+        if (const TagType *tag_type = dyn_cast<clang::TagType>(qual_type))
         {
             TagDecl *tag_decl = tag_type->getDecl();
             
@@ -252,7 +252,7 @@ NameSearchContext::AddTypeDecl(void *type)
             
             return tag_decl;
         }
-        else if (ObjCObjectType *objc_object_type = dyn_cast<clang::ObjCObjectType>(qual_type))
+        else if (const ObjCObjectType *objc_object_type = dyn_cast<clang::ObjCObjectType>(qual_type))
         {
             ObjCInterfaceDecl *interface_decl = objc_object_type->getInterface();
             
