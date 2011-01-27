@@ -1437,8 +1437,8 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     unsigned Arg = ArgRegs[VA.getValNo()];
     MVT ArgVT = ArgVTs[VA.getValNo()];
 
-    // We don't handle NEON parameters yet.
-    if (VA.getLocVT().isVector() && VA.getLocVT().getSizeInBits() > 64)
+    // We don't handle NEON/vector parameters yet.
+    if (ArgVT.isVector() || ArgVT.getSizeInBits() > 64)
       return false;
 
     // Handle arg promotion, etc.
