@@ -1901,8 +1901,16 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           
       if (FnTy->getRefQualifier()) {
         if (D.isFunctionDeclarator()) {
-          SourceLocation Loc
-            = D.getTypeObject(D.getNumTypeObjects()-1).Fun.getRefQualifierLoc();
+          SourceLocation Loc = D.getIdentifierLoc();
+          for (unsigned I = 0, N = D.getNumTypeObjects(); I != N; ++I) {
+            const DeclaratorChunk &Chunk = D.getTypeObject(N-I-1);
+            if (Chunk.Kind == DeclaratorChunk::Function &&
+                Chunk.Fun.hasRefQualifier()) {
+              Loc = Chunk.Fun.getRefQualifierLoc();
+              break;
+            }
+          }
+
           Diag(Loc, diag::err_invalid_ref_qualifier_function_type)
             << (FnTy->getRefQualifier() == RQ_LValue)
             << FixItHint::CreateRemoval(Loc);

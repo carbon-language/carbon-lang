@@ -24,3 +24,5 @@ struct Y {
 void (X::*mpf1)() & = &X::f0;
 void (X::*mpf2)() && = &X::f1;
 
+
+void (f() &&); // expected-error{{ref-qualifier '&&' is only allowed on non-static member functions, member function pointers, and typedefs of function types}}
