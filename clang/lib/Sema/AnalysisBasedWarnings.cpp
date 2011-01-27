@@ -433,7 +433,7 @@ public:
       else if (vdTy->isRealFloatingType()) {
         initialization = " = 0.0";
       }
-      else if (vdTy->isBooleanType()) {
+      else if (vdTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus) {
         initialization = " = false";
       }
       else if (vdTy->isScalarType()) {
