@@ -11,6 +11,7 @@
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
@@ -467,9 +468,15 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
     
     if (decl_map)
     {
+        Stream *error_stream = NULL;
+        
+        if (exe_ctx.target)
+            error_stream = &exe_ctx.target->GetDebugger().GetErrorStream();
+    
         IRForTarget ir_for_target(decl_map, 
                                   m_expr.NeedsVariableResolution(),
                                   const_result,
+                                  error_stream,
                                   function_name.c_str());
         
         if (!ir_for_target.runOnModule(*module))

@@ -12,6 +12,7 @@
 
 #include "lldb/lldb-include.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Stream.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "llvm/Pass.h"
 
@@ -55,17 +56,27 @@ public:
     ///     for use in looking up globals and allocating the argument
     ///     struct.  See the documentation for ClangExpressionDeclMap.
     ///
-    /// @param[in] func_name
-    ///     The name of the function to prepare for execution in the target.
-    ///
     /// @param[in] resolve_vars
     ///     True if the external variable references (including persistent
     ///     variables) should be resolved.  If not, only external functions
     ///     are resolved.
+    ///
+    /// @param[in] const_result
+    ///     If non-NULL, a shared pointer to a ClangExpressionVariable that
+    ///     is populated with the statically-computed result of the function,
+    ///     if it has no side-effects and the result can be computed
+    ///     statically.
+    ///
+    /// @param[in] error_stream
+    ///     If non-NULL, a stream on which errors can be printed.
+    ///
+    /// @param[in] func_name
+    ///     The name of the function to prepare for execution in the target.
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                 bool resolve_vars,
                 lldb::ClangExpressionVariableSP *const_result,
+                lldb_private::Stream *error_stream,
                 const char* func_name = "$__lldb_expr");
     
     //------------------------------------------------------------------
@@ -466,6 +477,7 @@ private:
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
     lldb::ClangExpressionVariableSP        *m_const_result;             ///< If non-NULL, this value should be set to the return value of the expression if it is constant and the expression has no side effects
+    lldb_private::Stream                   *m_error_stream;             ///< If non-NULL, the stream on which errors should be printed
     
     bool                                    m_has_side_effects;         ///< True if the function's result cannot be simply determined statically
     bool                                    m_result_is_pointer;        ///< True if the function's result in the AST is a pointer (see comments in ASTResultSynthesizer::SynthesizeBodyResult)

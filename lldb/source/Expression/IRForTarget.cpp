@@ -35,6 +35,7 @@ static char ID;
 IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
                           bool resolve_vars,
                           lldb::ClangExpressionVariableSP *const_result,
+                          lldb_private::Stream *error_stream,
                           const char *func_name) :
     ModulePass(ID),
     m_decl_map(decl_map),
@@ -44,7 +45,8 @@ IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
     m_resolve_vars(resolve_vars),
     m_const_result(const_result),
     m_has_side_effects(false),
-    m_result_is_pointer(false)
+    m_result_is_pointer(false),
+    m_error_stream(error_stream)
 {
 }
 
@@ -189,6 +191,9 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
         if (log)
             log->PutCString("Result variable had no data");
         
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Result variable's name (%s) exists, but not its definition\n", result_name);
+        
         return false;
     }
         
@@ -201,6 +206,10 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     {
         if (log)
             log->PutCString("Result variable isn't a GlobalVariable");
+        
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Result variable (%s) is defined, but is not a global variable\n", result_name);
+        
         return false;
     }
     
@@ -212,6 +221,9 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     {
         if (log)
             log->PutCString("No global metadata");
+        
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: No metadata\n");
         
         return false;
     }
@@ -238,6 +250,10 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     {
         if (log)
             log->PutCString("Couldn't find result metadata");
+        
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Result variable (%s) is a global variable, but has no metadata\n", result_name);
+        
         return false;
     }
         
@@ -262,6 +278,10 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
         {
             if (log)
                 log->PutCString("Expected result to have pointer type, but it did not");
+            
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Lvalue result (%s) is not a pointer variable\n", result_name);
+            
             return false;
         }
         
@@ -335,6 +355,10 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
         {
             if (log)
                 log->Printf("Couldn't find initializer for unused variable");
+            
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Result variable (%s) has no writes and no initializer\n", result_name);
+            
             return false;
         }
         
@@ -412,6 +436,9 @@ IRForTarget::RewriteObjCConstString (llvm::Module &llvm_module,
             if (log)
                 log->PutCString("Couldn't find CFStringCreateWithBytes in the target");
             
+            if (m_error_stream)
+                m_error_stream->Printf("Error [IRForTarget]: Rewriting an Objective-C constant string requires CFStringCreateWithBytes\n");
+            
             return false;
         }
             
@@ -478,6 +505,9 @@ IRForTarget::RewriteObjCConstString (llvm::Module &llvm_module,
         if (log)
             log->PutCString("Couldn't replace the NSString with the result of the call");
         
+        if (m_error_stream)
+            m_error_stream->Printf("Error [IRForTarget]: Couldn't replace an Objective-C constant string with a dynamic string\n");
+        
         return false;
     }
     
@@ -501,6 +531,9 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
         if (log)
             log->PutCString("Couldn't find first instruction for rewritten Objective-C strings");
         
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Couldn't find the location for calls to CFStringCreateWithBytes\n");
+        
         return false;
     }
     
@@ -518,6 +551,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString variable is not a GlobalVariable");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string is not a global variable\n");
+                
                 return false;
             }
             
@@ -525,6 +562,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString variable does not have an initializer");
+            
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string does not have an initializer\n");
+                
                 return false;
             }
             
@@ -534,6 +575,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString variable's initializer is not a ConstantStruct");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string is not a structure constant\n");
+                
                 return false;
             }
             
@@ -550,6 +595,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->Printf("NSString variable's initializer structure has an unexpected number of members.  Should be 4, is %d", nsstring_struct->getNumOperands());
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: The struct for an Objective-C constant string is not as expected\n");
+                
                 return false;
             }
             
@@ -559,6 +608,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString initializer's str element was empty");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string does not have a string initializer\n");
+                
                 return false;
             }
             
@@ -568,6 +621,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString initializer's str element is not a ConstantExpr");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string's string initializer is not constant\n");
+                
                 return false;
             }
             
@@ -575,6 +632,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->Printf("NSString initializer's str element is not a GetElementPtr expression, it's a %s", nsstring_expr->getOpcodeName());
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string's string initializer is not an array\n");
+                
                 return false;
             }
             
@@ -586,6 +647,9 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString initializer's str element is not a GlobalVariable");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string's string initializer doesn't point to a global\n");
                     
                 return false;
             }
@@ -594,6 +658,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString initializer's str element does not have an initializer");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string's string initializer doesn't point to initialized data\n");
+                
                 return false;
             }
             
@@ -603,6 +671,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString initializer's str element is not a ConstantArray");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string's string initializer doesn't point to an array\n");
+                
                 return false;
             }
             
@@ -610,6 +682,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("NSString initializer's str element is not a C string array");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: An Objective-C constant string's string initializer doesn't point to a C string\n");
+                
                 return false;
             }
             
@@ -617,13 +693,14 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
                 log->Printf("Found NSString constant %s, which contains \"%s\"", vi->first(), cstr_array->getAsString().c_str());
             
             if (!RewriteObjCConstString(llvm_module, nsstring_global, cstr_global, FirstEntryInstruction))
-            {
+            {                
                 if (log)
                     log->PutCString("Error rewriting the constant string");
+                
+                // We don't print an error message here because RewriteObjCConstString has done so for us.
+                
                 return false;
             }
-            
-            
         }
     }
     
@@ -639,6 +716,10 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
             {
                 if (log)
                     log->PutCString("__CFConstantStringClassReference is not a global variable");
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: Found a CFConstantStringClassReference, but it is not a global object\n");
+                
                 return false;
             }
                 
@@ -661,6 +742,7 @@ static bool IsObjCSelectorRef (Value *value)
     return true;
 }
 
+// This function does not report errors; its callers are responsible.
 bool 
 IRForTarget::RewriteObjCSelector (Instruction* selector_load, Module &llvm_module)
 {
@@ -803,8 +885,12 @@ IRForTarget::RewriteObjCSelectors (Module &llvm_module, BasicBlock &basic_block)
     {
         if (!RewriteObjCSelector(*iter, llvm_module))
         {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Couldn't change a static reference to an Objective-C selector to a dynamic reference\n");
+            
             if(log)
                 log->PutCString("Couldn't rewrite a reference to an Objective-C selector");
+            
             return false;
         }
     }
@@ -812,6 +898,7 @@ IRForTarget::RewriteObjCSelectors (Module &llvm_module, BasicBlock &basic_block)
     return true;
 }
 
+// This function does not report errors; its callers are responsible.
 bool 
 IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc,
                                      llvm::Module &llvm_module)
@@ -912,6 +999,9 @@ IRForTarget::RewritePersistentAllocs(llvm::Module &llvm_module, llvm::BasicBlock
                     if (log)
                         log->Printf("Rejecting a numeric persistent variable.");
                     
+                    if (m_error_stream)
+                        m_error_stream->Printf("Error [IRForTarget]: Names starting with $0, $1, ... are reserved for use as result names\n");
+                    
                     return false;
                 }
                 
@@ -928,8 +1018,12 @@ IRForTarget::RewritePersistentAllocs(llvm::Module &llvm_module, llvm::BasicBlock
     {
         if (!RewritePersistentAlloc(*iter, llvm_module))
         {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Couldn't rewrite the creation of a persistent variable\n");
+            
             if(log)
                 log->PutCString("Couldn't rewrite the creation of a persistent variable");
+            
             return false;
         }
     }
@@ -976,6 +1070,7 @@ DeclForGlobalValue(Module &module, GlobalValue *global_value)
     return NULL;
 }
 
+// This function does not report errors; its callers are responsible.
 bool 
 IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
 {
@@ -1011,6 +1106,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
             
             if (log)
                 log->Printf("Found global variable \"%s\" without metadata", global_variable->getName().str().c_str());
+            
             return false;
         }
         
@@ -1083,6 +1179,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
     return true;
 }
 
+// This function does not report errors; its callers are responsible.
 bool
 IRForTarget::HandleSymbol (Module &llvm_module,
                            Value *symbol)
@@ -1133,8 +1230,13 @@ IRForTarget::MaybeHandleCallArguments (Module &llvm_module, CallInst *Old)
          op_index < num_ops;
          ++op_index)
         if (!MaybeHandleVariable(llvm_module, Old->getArgOperand(op_index))) // conservatively believe that this is a store
+        {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Couldn't rewrite one of the arguments of a function call.\n");
+            
             return false;
-    
+        }
+            
     return true;
 }
 
@@ -1156,7 +1258,12 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
             fun = dyn_cast<Function>(const_expr->getOperand(0));
             
             if (!fun)
+            {
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: Called entity is a cast of something not a function\n");
+            
                 return false;
+            }
         }
         else if (const_expr && const_expr->getOpcode() == Instruction::IntToPtr)
         {
@@ -1164,6 +1271,9 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
         }
         else
         {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Called entity is not a function\n");
+            
             return false;
         }
     }
@@ -1179,6 +1289,10 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
         default:
             if (log)
                 log->Printf("Unresolved intrinsic \"%s\"", Intrinsic::getName(intrinsic_id).c_str());
+            
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Call to unhandled compiler intrinsic '%s'\n", Intrinsic::getName(intrinsic_id).c_str());
+                
             return false;
         case Intrinsic::memcpy:
             {
@@ -1211,6 +1325,9 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
                 if (log)
                     log->Printf("Function \"%s\" had no address", str.GetCString());
                 
+                if (m_error_stream)
+                    m_error_stream->Printf("Error [IRForTarget]: Call to a function '%s' that is not present in the target\n", str.GetCString());
+                
                 return false;
             }
         }
@@ -1221,6 +1338,11 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
         {
             if (log)
                 log->Printf ("Metadataless function \"%s\" had no address", str.GetCString());
+            
+            if (m_error_stream)
+                m_error_stream->Printf("Error [IRForTarget]: Call to a symbol-only function '%s' that is not present in the target\n", str.GetCString());
+            
+            return false;
         }
     }
         
@@ -1278,9 +1400,11 @@ IRForTarget::ResolveCalls(Module &llvm_module, BasicBlock &basic_block)
         
         CallInst *call = dyn_cast<CallInst>(&inst);
         
+        // MaybeHandleCall handles error reporting; we are silent here
         if (call && !MaybeHandleCall(llvm_module, call))
             return false;
         
+        // MaybeHandleCallArguments handles error reporting; we are silent here
         if (call && !MaybeHandleCallArguments(llvm_module, call))
             return false;
     }
@@ -1305,12 +1429,22 @@ IRForTarget::ResolveExternals (Module &llvm_module, Function &llvm_function)
         if ((*global).getName().str().find("OBJC_IVAR") == 0)
         {
             if (!HandleSymbol(llvm_module, global))
+            {
+                if (m_error_stream)
+                    m_error_stream->Printf("Error [IRForTarget]: Couldn't find Objective-C indirect ivar symbol %s\n", (*global).getName().str().c_str());
+                
                 return false;
+            }
         }
         else if (DeclForGlobalValue(llvm_module, global))
         {
             if (!MaybeHandleVariable (llvm_module, global))
+            {
+                if (m_error_stream)
+                    m_error_stream->Printf("Internal error [IRForTarget]: Couldn't rewrite external variable %s\n", (*global).getName().str().c_str());
+                
                 return false;
+            }
         }
     }
         
@@ -1415,6 +1549,7 @@ IRForTarget::RemoveGuards(Module &llvm_module, BasicBlock &basic_block)
     return true;
 }
 
+// This function does not report errors; its callers are responsible.
 bool
 IRForTarget::UnfoldConstant(Constant *old_constant, Value *new_constant, Instruction *first_entry_inst)
 {
@@ -1541,8 +1676,13 @@ IRForTarget::ReplaceVariables (Module &llvm_module, Function &llvm_function)
     Function::arg_iterator iter(llvm_function.getArgumentList().begin());
     
     if (iter == llvm_function.getArgumentList().end())
+    {
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Wrapper takes no arguments (should take at least a struct pointer)");
+        
         return false;
-    
+    }
+        
     Argument *argument = iter;
     
     if (argument->getName().equals("this"))
@@ -1550,7 +1690,12 @@ IRForTarget::ReplaceVariables (Module &llvm_module, Function &llvm_function)
         ++iter;
         
         if (iter == llvm_function.getArgumentList().end())
+        {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Wrapper takes only 'this' argument (should take a struct pointer too)");
+         
             return false;
+        }
         
         argument = iter;
     }
@@ -1559,22 +1704,42 @@ IRForTarget::ReplaceVariables (Module &llvm_module, Function &llvm_function)
         ++iter;
         
         if (iter == llvm_function.getArgumentList().end())
+        {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Wrapper takes only 'self' argument (should take '_cmd' and a struct pointer too)");
+            
             return false;
+        }
         
         if (!iter->getName().equals("_cmd"))
+        {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Wrapper takes '%s' after 'self' argument (should take '_cmd')", iter->getName().str().c_str());
+            
             return false;
+        }
         
         ++iter;
         
         if (iter == llvm_function.getArgumentList().end())
+        {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Wrapper takes only 'self' and '_cmd' arguments (should take a struct pointer too)");
+            
             return false;
+        }
         
         argument = iter;
     }
     
     if (!argument->getName().equals("$__lldb_arg"))
+    {
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Wrapper takes an argument named '%s' instead of the struct pointer", argument->getName().str().c_str());
+        
         return false;
-    
+    }
+        
     if (log)
         log->Printf("Arg: \"%s\"", PrintValue(argument).c_str());
     
@@ -1582,13 +1747,23 @@ IRForTarget::ReplaceVariables (Module &llvm_module, Function &llvm_function)
     Instruction *FirstEntryInstruction(entry_block.getFirstNonPHIOrDbg());
     
     if (!FirstEntryInstruction)
+    {
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Couldn't find the first instruction in the wrapper for use in rewriting");
+        
         return false;
+    }
     
     LLVMContext &context(llvm_module.getContext());
     const IntegerType *offset_type(Type::getInt32Ty(context));
     
     if (!offset_type)
+    {
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Couldn't produce an offset type");
+        
         return false;
+    }
         
     for (element_index = 0; element_index < num_elements; ++element_index)
     {
@@ -1598,8 +1773,13 @@ IRForTarget::ReplaceVariables (Module &llvm_module, Function &llvm_function)
         lldb_private::ConstString name;
         
         if (!m_decl_map->GetStructElement (decl, value, offset, name, element_index))
+        {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Structure information is incomplete");
+            
             return false;
-        
+        }
+            
         if (log)
             log->Printf("  \"%s\" [\"%s\"] (\"%s\") placed at %d",
                         value->getName().str().c_str(),
@@ -1656,6 +1836,9 @@ IRForTarget::runOnModule (Module &llvm_module)
     {
         if (log)
             log->Printf("Couldn't find \"%s()\" in the module", m_func_name.c_str());
+        
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Couldn't find wrapper '%s' in the mdoule", m_func_name.c_str());
 
         return false;
     }
@@ -1672,6 +1855,9 @@ IRForTarget::runOnModule (Module &llvm_module)
     {
         if (log)
             log->Printf("CreateResultVariable() failed");
+        
+        // CreateResultVariable() reports its own errors, so we don't do so here
+        
         return false;
     }
     
@@ -1683,6 +1869,9 @@ IRForTarget::runOnModule (Module &llvm_module)
     {
         if (log)
             log->Printf("RewriteObjCConstStrings() failed");
+        
+        // RewriteObjCConstStrings() reports its own errors, so we don't do so here
+        
         return false;
     }
     
@@ -1698,6 +1887,9 @@ IRForTarget::runOnModule (Module &llvm_module)
         {
             if (log)
                 log->Printf("RemoveGuards() failed");
+            
+            // RemoveGuards() reports its own errors, so we don't do so here
+            
             return false;
         }
         
@@ -1705,6 +1897,9 @@ IRForTarget::runOnModule (Module &llvm_module)
         {
             if (log)
                 log->Printf("RewritePersistentAllocs() failed");
+            
+            // RewritePersistentAllocs() reports its own errors, so we don't do so here
+            
             return false;
         }
         
@@ -1712,6 +1907,9 @@ IRForTarget::runOnModule (Module &llvm_module)
         {
             if (log)
                 log->Printf("RewriteObjCSelectors() failed");
+            
+            // RewriteObjCSelectors() reports its own errors, so we don't do so here
+            
             return false;
         }
 
@@ -1719,6 +1917,9 @@ IRForTarget::runOnModule (Module &llvm_module)
         {
             if (log)
                 log->Printf("ResolveCalls() failed");
+            
+            // ResolveCalls() reports its own errors, so we don't do so here
+            
             return false;
         }
     }
@@ -1731,6 +1932,9 @@ IRForTarget::runOnModule (Module &llvm_module)
     {
         if (log)
             log->Printf("ResolveExternals() failed");
+        
+        // ResolveExternals() reports its own errors, so we don't do so here
+        
         return false;
     }
     
@@ -1738,6 +1942,9 @@ IRForTarget::runOnModule (Module &llvm_module)
     {
         if (log)
             log->Printf("ReplaceVariables() failed");
+        
+        // ReplaceVariables() reports its own errors, so we don't do so here
+        
         return false;
     }
     
