@@ -460,9 +460,18 @@ bool FunctionComparator::Enumerate(const Value *V1, const Value *V2) {
   if (V1 == F2 && V2 == F1)
     return true;
 
-  // TODO: constant expressions with GEP or references to F1 or F2.
-  if (isa<Constant>(V1))
-    return V1 == V2;
+  if (isa<Constant>(V1)) {
+    if (V1 == V2) return true;
+    const Constant *C1 = cast<Constant>(V1);
+    const Constant *C2 = dyn_cast<Constant>(V2);
+    if (!C2) return false;
+    // TODO: constant expressions with GEP or references to F1 or F2.
+    if (C1->isNullValue() && C2->isNullValue() &&
+	isEquivalentType(C1->getType(), C2->getType()))
+      return true;
+    return C1->getType()->canLosslesslyBitCastTo(C2->getType()) &&
+      C1 == ConstantExpr::getBitCast(const_cast<Constant*>(C2), C1->getType());
+  }
 
   if (isa<InlineAsm>(V1) && isa<InlineAsm>(V2)) {
     const InlineAsm *IA1 = cast<InlineAsm>(V1);
