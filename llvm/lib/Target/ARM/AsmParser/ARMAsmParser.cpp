@@ -1481,7 +1481,7 @@ bool ARMAsmParser::ParseDirectiveSyntax(SMLoc L) {
   if (Mode == "unified" || Mode == "UNIFIED")
     Parser.Lex();
   else if (Mode == "divided" || Mode == "DIVIDED")
-    Parser.Lex();
+    return Error(L, "'.syntax divided' arm asssembly not supported");
   else
     return Error(L, "unrecognized syntax mode in .syntax directive");
 
