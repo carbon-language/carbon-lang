@@ -321,21 +321,88 @@ Module::FindGlobalVariables(const RegularExpression& regex, bool append, uint32_
 }
 
 uint32_t
-Module::FindFunctions(const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
+Module::FindFunctions (const ConstString &name, 
+                       uint32_t name_type_mask, 
+                       bool include_symbols, 
+                       bool append, 
+                       SymbolContextList& sc_list)
 {
+    if (!append)
+        sc_list.Clear();
+
+    const uint32_t start_size = sc_list.GetSize();
+
+    // Find all the functions (not symbols, but debug information functions...
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
-        return symbols->FindFunctions(name, name_type_mask, append, sc_list);
-    return 0;
+        symbols->FindFunctions(name, name_type_mask, append, sc_list);
+
+    // Now check our symbol table for symbols that are code symbols if requested
+    if (include_symbols)
+    {
+        ObjectFile *objfile = GetObjectFile();
+        if (objfile)
+        {
+            Symtab *symtab = objfile->GetSymtab();
+            if (symtab)
+            {
+                std::vector<uint32_t> symbol_indexes;
+                symtab->FindAllSymbolsWithNameAndType (name, eSymbolTypeCode, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
+                const uint32_t num_matches = symbol_indexes.size();
+                if (num_matches)
+                {
+                    SymbolContext sc(this);
+                    for (uint32_t i=0; i<num_matches; i++)
+                    {
+                        sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
+                        sc_list.AppendIfUnique (sc);
+                    }
+                }
+            }
+        }
+    }
+    return sc_list.GetSize() - start_size;
 }
 
 uint32_t
-Module::FindFunctions(const RegularExpression& regex, bool append, SymbolContextList& sc_list)
+Module::FindFunctions (const RegularExpression& regex, 
+                       bool include_symbols, 
+                       bool append, 
+                       SymbolContextList& sc_list)
 {
+    if (!append)
+        sc_list.Clear();
+    
+    const uint32_t start_size = sc_list.GetSize();
+    
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
         return symbols->FindFunctions(regex, append, sc_list);
-    return 0;
+    // Now check our symbol table for symbols that are code symbols if requested
+    if (include_symbols)
+    {
+        ObjectFile *objfile = GetObjectFile();
+        if (objfile)
+        {
+            Symtab *symtab = objfile->GetSymtab();
+            if (symtab)
+            {
+                std::vector<uint32_t> symbol_indexes;
+                symtab->AppendSymbolIndexesMatchingRegExAndType (regex, eSymbolTypeCode, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
+                const uint32_t num_matches = symbol_indexes.size();
+                if (num_matches)
+                {
+                    SymbolContext sc(this);
+                    for (uint32_t i=0; i<num_matches; i++)
+                    {
+                        sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
+                        sc_list.AppendIfUnique (sc);
+                    }
+                }
+            }
+        }
+    }
+    return sc_list.GetSize() - start_size;
 }
 
 uint32_t

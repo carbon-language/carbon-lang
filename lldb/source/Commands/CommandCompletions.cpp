@@ -599,35 +599,24 @@ CommandCompletions::SymbolCompleter::SearchCallback (
     bool complete
 )
 {
-    SymbolContextList func_list;
-    SymbolContextList sym_list;
-
-    if (context.module_sp != NULL)
+    if (context.module_sp)
     {
-        if (context.module_sp)
-        {
-            context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, lldb::eSymbolTypeCode, sym_list);
-            context.module_sp->FindFunctions (m_regex, true, func_list);
-        }
+        SymbolContextList sc_list;        
+        const bool include_symbols = true;
+        const bool append = true;
+        context.module_sp->FindFunctions (m_regex, include_symbols, append, sc_list);
 
         SymbolContext sc;
         // Now add the functions & symbols to the list - only add if unique:
-        for (uint32_t i = 0; i < func_list.GetSize(); i++)
+        for (uint32_t i = 0; i < sc_list.GetSize(); i++)
         {
-            if (func_list.GetContextAtIndex(i, sc))
+            if (sc_list.GetContextAtIndex(i, sc))
             {
                 if (sc.function)
                 {
                     m_match_set.insert (sc.function->GetMangled().GetDemangledName());
                 }
-            }
-        }
-
-        for (uint32_t i = 0; i < sym_list.GetSize(); i++)
-        {
-            if (sym_list.GetContextAtIndex(i, sc))
-            {
-                if (sc.symbol && sc.symbol->GetAddressRangePtr())
+                else if (sc.symbol && sc.symbol->GetAddressRangePtr())
                 {
                     m_match_set.insert (sc.symbol->GetMangled().GetDemangledName());
                 }

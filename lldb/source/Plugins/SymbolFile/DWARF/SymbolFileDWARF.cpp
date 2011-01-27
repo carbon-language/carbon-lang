@@ -3566,17 +3566,27 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         // in the DWARF for C++ methods... Default to public for now...
                                         if (accessibility == eAccessNone)
                                             accessibility = eAccessPublic;
-
-                                        clang::CXXMethodDecl *cxx_method_decl;
-                                        cxx_method_decl = ast.AddMethodToCXXRecordType (class_opaque_type, 
-                                                                                        type_name_cstr,
-                                                                                        clang_type,
-                                                                                        accessibility,
-                                                                                        is_virtual,
-                                                                                        is_static,
-                                                                                        is_inline,
-                                                                                        is_explicit);
-                                        type_handled = cxx_method_decl != NULL;
+                                        
+                                        if (!is_static && !die->HasChildren())
+                                        {
+                                            // We have a C++ member function with no children (this pointer!)
+                                            // and clang will get mad if we try and make a function that isn't
+                                            // well formed in the DWARF, so we will just skip it...
+                                            type_handled = true;
+                                        }
+                                        else
+                                        {
+                                            clang::CXXMethodDecl *cxx_method_decl;
+                                            cxx_method_decl = ast.AddMethodToCXXRecordType (class_opaque_type, 
+                                                                                            type_name_cstr,
+                                                                                            clang_type,
+                                                                                            accessibility,
+                                                                                            is_virtual,
+                                                                                            is_static,
+                                                                                            is_inline,
+                                                                                            is_explicit);
+                                            type_handled = cxx_method_decl != NULL;
+                                        }
                                     }
                                 }
                             }

@@ -289,6 +289,7 @@ public:
             
             SymbolContextList sc_list;
             ConstString name(m_options.symbol_name.c_str());
+            bool include_symbols = false;
             bool append = true;
             size_t num_matches = 0;
             
@@ -302,13 +303,13 @@ public:
                     {
                         matching_modules.Clear();
                         target->GetImages().FindModules (&module_spec, NULL, NULL, NULL, matching_modules);
-                        num_matches += matching_modules.FindFunctions (name, eFunctionNameTypeBase, append, sc_list);
+                        num_matches += matching_modules.FindFunctions (name, eFunctionNameTypeBase, include_symbols, append, sc_list);
                     }
                 }
             }
             else
             {
-                num_matches = target->GetImages().FindFunctions (name, eFunctionNameTypeBase, append, sc_list);
+                num_matches = target->GetImages().FindFunctions (name, eFunctionNameTypeBase, include_symbols, append, sc_list);
             }
             
             SymbolContext sc;

@@ -143,13 +143,18 @@ public:
     ///     NULL otherwise.
     //------------------------------------------------------------------
     const Symbol *
-    FindFirstSymbolWithNameAndType (const ConstString &name, lldb::SymbolType symbol_type = lldb::eSymbolTypeAny);
+    FindFirstSymbolWithNameAndType (const ConstString &name, 
+                                    lldb::SymbolType symbol_type = lldb::eSymbolTypeAny);
 
     size_t
-    FindSymbolsWithNameAndType (const ConstString &name, lldb::SymbolType symbol_type, SymbolContextList &sc_list);
+    FindSymbolsWithNameAndType (const ConstString &name, 
+                                lldb::SymbolType symbol_type, 
+                                SymbolContextList &sc_list);
 
     size_t
-    FindSymbolsMatchingRegExAndType (const RegularExpression &regex, lldb::SymbolType symbol_type, SymbolContextList &sc_list);
+    FindSymbolsMatchingRegExAndType (const RegularExpression &regex, 
+                                     lldb::SymbolType symbol_type, 
+                                     SymbolContextList &sc_list);
 
     //------------------------------------------------------------------
     /// Find functions by name.
@@ -176,7 +181,11 @@ public:
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
     uint32_t
-    FindFunctions (const ConstString &name, uint32_t name_type_mask, bool append, SymbolContextList& sc_list);
+    FindFunctions (const ConstString &name, 
+                   uint32_t name_type_mask, 
+                   bool symbols_ok, 
+                   bool append, 
+                   SymbolContextList& sc_list);
 
     //------------------------------------------------------------------
     /// Find functions by name.
@@ -197,7 +206,10 @@ public:
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
     uint32_t
-    FindFunctions (const RegularExpression& regex, bool append, SymbolContextList& sc_list);
+    FindFunctions (const RegularExpression& regex, 
+                   bool symbols_ok, 
+                   bool append, 
+                   SymbolContextList& sc_list);
 
     //------------------------------------------------------------------
     /// Find global and static variables by name.
@@ -223,7 +235,10 @@ public:
     ///     The number of matches added to \a variable_list.
     //------------------------------------------------------------------
     uint32_t
-    FindGlobalVariables (const ConstString &name, bool append, uint32_t max_matches, VariableList& variable_list);
+    FindGlobalVariables (const ConstString &name, 
+                         bool append, 
+                         uint32_t max_matches, 
+                         VariableList& variable_list);
 
     //------------------------------------------------------------------
     /// Find global and static variables by regular exression.
@@ -248,7 +263,10 @@ public:
     ///     The number of matches added to \a variable_list.
     //------------------------------------------------------------------
     uint32_t
-    FindGlobalVariables (const RegularExpression& regex, bool append, uint32_t max_matches, VariableList& variable_list);
+    FindGlobalVariables (const RegularExpression& regex, 
+                         bool append, 
+                         uint32_t max_matches, 
+                         VariableList& variable_list);
 
     //------------------------------------------------------------------
     /// Find types by name.
@@ -284,43 +302,11 @@ public:
     ///     The number of matches added to \a type_list.
     //------------------------------------------------------------------
     uint32_t
-    FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types);
-
-    //------------------------------------------------------------------
-    /// Find types by name.
-    ///
-    /// @param[in] sc
-    ///     A symbol context that scopes where to extract a type list
-    ///     from.
-    ///
-    /// @param[in] regex
-    ///     A regular expression to use when matching the name.
-    ///
-    /// @param[in] append
-    ///     If \b true, any matches will be appended to \a
-    ///     variable_list, else matches replace the contents of
-    ///     \a variable_list.
-    ///
-    /// @param[in] max_matches
-    ///     Allow the number of matches to be limited to \a
-    ///     max_matches. Specify UINT32_MAX to get all possible matches.
-    ///
-    /// @param[in] encoding
-    ///     Limit the search to specific types, or get all types if
-    ///     set to Type::invalid.
-    ///
-    /// @param[in] udt_name
-    ///     If the encoding is a user defined type, specify the name
-    ///     of the user defined type ("struct", "union", "class", etc).
-    ///
-    /// @param[out] type_list
-    ///     A type list gets populated with any matches.
-    ///
-    /// @return
-    ///     The number of matches added to \a type_list.
-    //------------------------------------------------------------------
-//  uint32_t
-//  FindTypes (const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, Type::Encoding encoding, const char *udt_name, TypeList& type_list);
+    FindTypes (const SymbolContext& sc, 
+               const ConstString &name, 
+               bool append, 
+               uint32_t max_matches, 
+               TypeList& types);
 
     //------------------------------------------------------------------
     /// Get const accessor for the module architecture.

@@ -155,6 +155,8 @@ BreakpointResolverName::SearchCallback
         return Searcher::eCallbackReturnStop;
     }
     
+    const bool include_symbols = false;
+    const bool append = false;
     switch (m_match_type)
     {
         case Breakpoint::Exact:
@@ -162,14 +164,21 @@ BreakpointResolverName::SearchCallback
             {
                 if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull))
                     context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
-                context.module_sp->FindFunctions (m_func_name, m_func_name_type_mask, false, func_list);
+                context.module_sp->FindFunctions (m_func_name, 
+                                                  m_func_name_type_mask, 
+                                                  include_symbols, 
+                                                  append, 
+                                                  func_list);
             }
             break;
         case Breakpoint::Regexp:
             if (context.module_sp)
             {
                 context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
-                context.module_sp->FindFunctions (m_regex, true, func_list);
+                context.module_sp->FindFunctions (m_regex, 
+                                                  include_symbols, 
+                                                  append, 
+                                                  func_list);
             }
             break;
         case Breakpoint::Glob:

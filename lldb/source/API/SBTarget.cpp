@@ -155,7 +155,28 @@ SBTarget::Launch
         if (getenv("LLDB_LAUNCH_FLAG_DISABLE_ASLR"))
             launch_flags |= eLaunchFlagDisableASLR;
 
-        if ((launch_flags & eLaunchFlagLaunchInTTY) || getenv("LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY"))
+        static const char *g_launch_tty = NULL;
+        static bool g_got_launch_tty = false;
+        if (!g_got_launch_tty)
+        {
+            // Get the LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY only once
+            g_got_launch_tty = true;
+            g_launch_tty = ::getenv ("LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY");
+            if (g_launch_tty)
+            {
+                // LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY is a path to a terminal to reuse
+                // if the first character is '/', else it is a boolean value.
+                if (g_launch_tty[0] != '/')
+                {
+                    if (Args::StringToBoolean(g_launch_tty, false, NULL))
+                        g_launch_tty = "";
+                    else
+                        g_launch_tty = NULL;
+                }
+            }
+        }
+        
+        if ((launch_flags & eLaunchFlagLaunchInTTY) || g_launch_tty)
         {
             ArchSpec arch (m_opaque_sp->GetArchitecture ());
             
@@ -182,14 +203,18 @@ SBTarget::Launch
                     exec_path_plus_argv.push_back(NULL);
                         
 
-                    lldb::pid_t pid = Host::LaunchInNewTerminal (NULL,
-                                                             &exec_path_plus_argv[0],
-                                                             envp,
-                                                             working_directory,
-                                                             &arch,
-                                                             true,
-                                                             launch_flags & eLaunchFlagDisableASLR);
-                
+                    const char *tty_name = NULL;
+                    if (g_launch_tty && g_launch_tty[0] == '/')
+                        tty_name = g_launch_tty;
+                    
+                    lldb::pid_t pid = Host::LaunchInNewTerminal (tty_name,
+                                                                 &exec_path_plus_argv[0],
+                                                                 envp,
+                                                                 working_directory,
+                                                                 &arch,
+                                                                 true,
+                                                                 launch_flags & eLaunchFlagDisableASLR);
+
                     if (pid != LLDB_INVALID_PROCESS_ID)
                     {
                         sb_process = AttachToProcessWithID(pid, error);

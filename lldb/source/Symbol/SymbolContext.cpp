@@ -345,23 +345,23 @@ SymbolContext::Dump(Stream *s, Target *target) const
 bool
 lldb_private::operator== (const SymbolContext& lhs, const SymbolContext& rhs)
 {
-    return lhs.target_sp.get() == rhs.target_sp.get() &&
-           lhs.module_sp.get() == rhs.module_sp.get() &&
-           lhs.comp_unit    == rhs.comp_unit &&
-           lhs.function     == rhs.function &&
-           LineEntry::Compare(lhs.line_entry, rhs.line_entry) == 0 &&
-           lhs.symbol       == rhs.symbol;
+    return  lhs.function == rhs.function
+            && lhs.symbol == rhs.symbol 
+            && lhs.module_sp.get() == rhs.module_sp.get()
+            && lhs.comp_unit == rhs.comp_unit
+            && lhs.target_sp.get() == rhs.target_sp.get() 
+            && LineEntry::Compare(lhs.line_entry, rhs.line_entry) == 0;
 }
 
 bool
 lldb_private::operator!= (const SymbolContext& lhs, const SymbolContext& rhs)
 {
-    return lhs.target_sp.get() != rhs.target_sp.get() ||
-           lhs.module_sp.get() != rhs.module_sp.get() ||
-           lhs.comp_unit    != rhs.comp_unit ||
-           lhs.function     != rhs.function ||
-           LineEntry::Compare(lhs.line_entry, rhs.line_entry) != 0 ||
-           lhs.symbol       != rhs.symbol;
+    return  lhs.function != rhs.function
+            && lhs.symbol != rhs.symbol 
+            && lhs.module_sp.get() != rhs.module_sp.get()
+            && lhs.comp_unit != rhs.comp_unit
+            && lhs.target_sp.get() != rhs.target_sp.get() 
+            && LineEntry::Compare(lhs.line_entry, rhs.line_entry) != 0;
 }
 
 bool
@@ -410,7 +410,10 @@ SymbolContext::FindNamespace (const ConstString &name) const
 }
 
 size_t
-SymbolContext::FindFunctionsByName (const ConstString &name, bool append, SymbolContextList &sc_list) const
+SymbolContext::FindFunctionsByName (const ConstString &name, 
+                                    bool include_symbols, 
+                                    bool append, 
+                                    SymbolContextList &sc_list) const
 {    
     if (!append)
         sc_list.Clear();
@@ -422,10 +425,10 @@ SymbolContext::FindFunctionsByName (const ConstString &name, bool append, Symbol
     }
 
     if (module_sp != NULL)
-        module_sp->FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, true, sc_list);
+        module_sp->FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, include_symbols, true, sc_list);
 
     if (target_sp)
-        target_sp->GetImages().FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, true, sc_list);
+        target_sp->GetImages().FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, include_symbols, true, sc_list);
 
     return sc_list.GetSize();
 }
@@ -473,6 +476,19 @@ void
 SymbolContextList::Append(const SymbolContext& sc)
 {
     m_symbol_contexts.push_back(sc);
+}
+
+bool
+SymbolContextList::AppendIfUnique (const SymbolContext& sc)
+{
+    collection::const_iterator pos, end = m_symbol_contexts.end();
+    for (pos = m_symbol_contexts.begin(); pos != end; ++pos)
+    {
+        if (*pos == sc)
+            return false;
+    }
+    m_symbol_contexts.push_back(sc);
+    return true;
 }
 
 void

@@ -99,38 +99,43 @@ Disassembler::Disassemble
     Stream &strm
 )
 {
-    if (exe_ctx.target == NULL && name)
-        return false;
-
     SymbolContextList sc_list;
-
-    if (module)
+    if (name)
     {
-        if (!module->FindFunctions (name, 
-                                    eFunctionNameTypeBase | 
-                                    eFunctionNameTypeFull | 
-                                    eFunctionNameTypeMethod | 
-                                    eFunctionNameTypeSelector, 
-                                    true,
-                                    sc_list))
-            return false;
-    }
-    else 
-    {
-        if (exe_ctx.target->GetImages().FindFunctions (name, 
+        const bool include_symbols = true;
+        if (module)
+        {
+            module->FindFunctions (name, 
+                                   eFunctionNameTypeBase | 
+                                   eFunctionNameTypeFull | 
+                                   eFunctionNameTypeMethod | 
+                                   eFunctionNameTypeSelector, 
+                                   include_symbols,
+                                   true,
+                                   sc_list);
+        }
+        else if (exe_ctx.target)
+        {
+            exe_ctx.target->GetImages().FindFunctions (name, 
                                                        eFunctionNameTypeBase | 
                                                        eFunctionNameTypeFull | 
                                                        eFunctionNameTypeMethod | 
                                                        eFunctionNameTypeSelector,
+                                                       include_symbols, 
                                                        false,
-                                                       sc_list))
-        {
-            return Disassemble (debugger, arch, exe_ctx, sc_list, num_mixed_context_lines, show_bytes, strm);
+                                                       sc_list);
         }
-        else if (exe_ctx.target->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list))
-        {
-            return Disassemble (debugger, arch, exe_ctx, sc_list, num_mixed_context_lines, show_bytes, strm);
-        }
+    }
+    
+    if (sc_list.GetSize ())
+    {
+        return Disassemble (debugger, 
+                            arch, 
+                            exe_ctx, 
+                            sc_list, 
+                            num_mixed_context_lines, 
+                            show_bytes, 
+                            strm);
     }
     return false;
 }

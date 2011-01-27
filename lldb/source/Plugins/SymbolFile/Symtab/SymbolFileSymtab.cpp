@@ -323,25 +323,11 @@ SymbolFileSymtab::FindFunctions(const ConstString &name, uint32_t name_type_mask
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileSymtab::FindFunctions (name = '%s')",
                         name.GetCString());
-
-    Symtab *symtab = m_obj_file->GetSymtab();
-    if (symtab)
-    {
-        const uint32_t start_size = sc_list.GetSize();
-        std::vector<uint32_t> symbol_indexes;
-        symtab->FindAllSymbolsWithNameAndType (name, eSymbolTypeCode, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
-        const uint32_t num_matches = symbol_indexes.size();
-        if (num_matches)
-        {
-            SymbolContext sc(m_obj_file->GetModule());
-            for (uint32_t i=0; i<num_matches; i++)
-            {
-                sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
-                sc_list.Append(sc);
-            }
-        }
-        return sc_list.GetSize() - start_size;
-    }
+    // If we ever support finding STABS or COFF debug info symbols, 
+    // we will need to add support here. We are not trying to find symbols
+    // here, just "lldb_private::Function" objects that come from complete 
+    // debug information. Any symbol queries should go through the symbol
+    // table itself in the module's object file.
     return 0;
 }
 
@@ -351,7 +337,11 @@ SymbolFileSymtab::FindFunctions(const RegularExpression& regex, bool append, Sym
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileSymtab::FindFunctions (regex = '%s')",
                         regex.GetText());
-
+    // If we ever support finding STABS or COFF debug info symbols, 
+    // we will need to add support here. We are not trying to find symbols
+    // here, just "lldb_private::Function" objects that come from complete 
+    // debug information. Any symbol queries should go through the symbol
+    // table itself in the module's object file.
     return 0;
 }
 

@@ -102,9 +102,11 @@ AddressResolverName::SearchCallback
         return Searcher::eCallbackReturnStop;
     }
 
+    const bool include_symbols = false;
+    const bool append = false;
     switch (m_match_type)
     {
-      case AddressResolver::Exact:
+    case AddressResolver::Exact:
         if (context.module_sp)
         {
             context.module_sp->FindSymbolsWithNameAndType (m_func_name, 
@@ -112,22 +114,26 @@ AddressResolverName::SearchCallback
                                                            sym_list);
             context.module_sp->FindFunctions (m_func_name, 
                                               eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector,
-                                              false, 
+                                              include_symbols,
+                                              append, 
                                               func_list);
         }
         break;
-      case AddressResolver::Regexp:
+
+    case AddressResolver::Regexp:
         if (context.module_sp)
         {
             context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, 
                                                                 eSymbolTypeCode, 
                                                                 sym_list);
             context.module_sp->FindFunctions (m_regex, 
-                                              true, 
+                                              include_symbols,
+                                              append, 
                                               func_list);
         }
         break;
-      case AddressResolver::Glob:
+
+    case AddressResolver::Glob:
         if (log)
             log->Warning ("glob is not supported yet.");
         break;

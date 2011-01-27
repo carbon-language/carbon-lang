@@ -429,8 +429,9 @@ ClangExpressionDeclMap::GetFunctionAddress
         return false;
 
     SymbolContextList sc_list;
-    
-    m_parser_vars->m_sym_ctx.FindFunctionsByName(name, false, sc_list);
+    const bool include_symbols = true;
+    const bool append = false;
+    m_parser_vars->m_sym_ctx.FindFunctionsByName(name, include_symbols, append, sc_list);
     
     if (!sc_list.GetSize())
         return false;
@@ -1557,7 +1558,12 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         }
         else
         {
-            m_parser_vars->m_sym_ctx.FindFunctionsByName (name, false, sc_list);
+            const bool include_symbols = true;
+            const bool append = false;
+            m_parser_vars->m_sym_ctx.FindFunctionsByName (name, 
+                                                          include_symbols, 
+                                                          append, 
+                                                          sc_list);
         
             bool found_specific = false;
             Symbol *generic_symbol = NULL;
@@ -1590,9 +1596,9 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             if (!found_specific)
             {
                 if (generic_symbol)
-                    AddOneFunction(context, NULL, generic_symbol);
+                    AddOneFunction (context, NULL, generic_symbol);
                 else if (non_extern_symbol)
-                    AddOneFunction(context, NULL, non_extern_symbol);
+                    AddOneFunction (context, NULL, non_extern_symbol);
             }
 
             ClangNamespaceDecl namespace_decl (m_parser_vars->m_sym_ctx.FindNamespace(name));

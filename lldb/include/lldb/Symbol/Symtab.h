@@ -24,8 +24,8 @@ class Symtab
 {
 public:
         typedef enum Debug {
-            eDebugNo,    // Not a debug symbol
-            eDebugYes,    // A debug symbol 
+            eDebugNo,   // Not a debug symbol
+            eDebugYes,  // A debug symbol 
             eDebugAny
         } Debug;
 

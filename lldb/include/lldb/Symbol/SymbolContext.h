@@ -206,6 +206,7 @@ public:
     //------------------------------------------------------------------
     size_t
     FindFunctionsByName (const ConstString &name, 
+                         bool include_symbols, 
                          bool append, 
                          SymbolContextList &sc_list) const;
 
@@ -277,7 +278,10 @@ public:
     ///     A symbol context to append to the list.
     //------------------------------------------------------------------
     void
-    Append(const SymbolContext& sc);
+    Append (const SymbolContext& sc);
+
+    bool
+    AppendIfUnique (const SymbolContext& sc);
 
     //------------------------------------------------------------------
     /// Clear the object's state.
