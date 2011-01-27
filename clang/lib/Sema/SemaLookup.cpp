@@ -1759,7 +1759,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
 
   // -- If T is a template-id, its associated namespaces and classes are
   //    the namespace in which the template is defined; for member
-  //    templates, the member template’s class; the namespaces and classes
+  //    templates, the member template's class; the namespaces and classes
   //    associated with the types of the template arguments provided for
   //    template type parameters (excluding template template parameters); the
   //    namespaces in which any template template arguments are defined; and
@@ -1886,7 +1886,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
 
     //     -- If T is an enumeration type, its associated namespace is
     //        the namespace in which it is defined. If it is class
-    //        member, its associated class is the member’s class; else
+    //        member, its associated class is the member's class; else
     //        it has no associated class.
     case Type::Enum: {
       EnumDecl *Enum = cast<EnumType>(T)->getDecl();

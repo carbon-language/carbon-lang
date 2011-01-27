@@ -3868,9 +3868,9 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
 
   // C++0x [temp.arg.template]p3:
   //   A template-argument matches a template template-parameter (call it P)
-  //   when each of the template parameters in the template-parameter-list of 
-  //   the template-argument’s corresponding class template or template alias
-  //   (call it A) matches the corresponding template parameter in the 
+  //   when each of the template parameters in the template-parameter-list of
+  //   the template-argument's corresponding class template or template alias
+  //   (call it A) matches the corresponding template parameter in the
   //   template-parameter-list of P. [...]
   TemplateParameterList::iterator NewParm = New->begin();
   TemplateParameterList::iterator NewParmEnd = New->end();
@@ -3896,9 +3896,9 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
     }
     
     // C++0x [temp.arg.template]p3:
-    //   [...] When P’s template- parameter-list contains a template parameter
-    //   pack (14.5.3), the template parameter pack will match zero or more 
-    //   template parameters or template parameter packs in the 
+    //   [...] When P's template- parameter-list contains a template parameter
+    //   pack (14.5.3), the template parameter pack will match zero or more
+    //   template parameters or template parameter packs in the
     //   template-parameter-list of A with the same type and form as the
     //   template parameter pack in P (ignoring whether those template
     //   parameters are template parameter packs).

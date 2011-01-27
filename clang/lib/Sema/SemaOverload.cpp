@@ -3242,9 +3242,9 @@ TryObjectArgumentInitialization(Sema &S, QualType OrigFromType,
   //   For non-static member functions, the type of the implicit object 
   //   parameter is
   //
-  //     — "lvalue reference to cv X" for functions declared without a 
-  //       ref-qualifier or with the & ref-qualifier
-  //     — "rvalue reference to cv X" for functions declared with the && 
+  //     - "lvalue reference to cv X" for functions declared without a
+  //        ref-qualifier or with the & ref-qualifier
+  //     - "rvalue reference to cv X" for functions declared with the &&
   //        ref-qualifier
   //
   // where X is the class of which the function is a member and cv is the 
@@ -3623,7 +3623,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     = dyn_cast<FunctionProtoType>(Function->getType()->getAs<FunctionType>());
   assert(Proto && "Functions without a prototype cannot be overloaded");
   assert(!Function->getDescribedFunctionTemplate() &&
-         "Use AddTemp∫lateOverloadCandidate for function templates");
+         "Use AddTemplateOverloadCandidate for function templates");
 
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Function)) {
     if (!isa<CXXConstructorDecl>(Method)) {

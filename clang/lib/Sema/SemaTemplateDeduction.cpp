@@ -913,7 +913,7 @@ DeduceTemplateArguments(Sema &S,
       //   which case the type of Pi is changed to be the template parameter 
       //   type (i.e., T&& is changed to simply T). [ Note: As a result, when
       //   Pi is T&& and Ai is X&, the adjusted Pi will be T, causing T to be
-      //   deduced as X&. — end note ]
+      //   deduced as X&. - end note ]
       TDF &= ~TDF_TopLevelParameterTypeList;
       
       if (const RValueReferenceType *ParamRef
@@ -2439,7 +2439,7 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
                                                       Expr *Arg,
                                                       unsigned &TDF) {
   // C++0x [temp.deduct.call]p3:
-  //   If P is a cv-qualified type, the top level cv-qualifiers of P’s type
+  //   If P is a cv-qualified type, the top level cv-qualifiers of P's type
   //   are ignored for type deduction.
   if (ParamType.getCVRQualifiers())
     ParamType = ParamType.getLocalUnqualifiedType();
@@ -2495,7 +2495,7 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
     else if (ArgType->isFunctionType())
       ArgType = S.Context.getPointerType(ArgType);
     else {
-      // - If A is a cv-qualified type, the top level cv-qualifiers of A’s
+      // - If A is a cv-qualified type, the top level cv-qualifiers of A's
       //   type are ignored for type deduction.
       if (ArgType.getCVRQualifiers())
         ArgType = ArgType.getUnqualifiedType();
@@ -2858,12 +2858,12 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     else if (P->isFunctionType())
       P = Context.getPointerType(P);
     //   - If P is a cv-qualified type, the top level cv-qualifiers of
-    //     P’s type are ignored for type deduction.
+    //     P's type are ignored for type deduction.
     else
       P = P.getUnqualifiedType();
 
     // C++0x [temp.deduct.conv]p3:
-    //   If A is a cv-qualified type, the top level cv-qualifiers of A’s
+    //   If A is a cv-qualified type, the top level cv-qualifiers of A's
     //   type are ignored for type deduction.
     A = A.getUnqualifiedType();
   }
@@ -2893,7 +2893,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   if (ToType->isReferenceType())
     TDF |= TDF_ParamWithReferenceType;
   //     - The deduced A can be another pointer or pointer to member
-  //       type that can be converted to A via a qualiﬁcation
+  //       type that can be converted to A via a qualification
   //       conversion.
   //
   // (C++0x [temp.deduct.conv]p6 clarifies that this only happens when
@@ -2963,7 +2963,7 @@ static void MaybeAddImplicitObjectParameterType(ASTContext &Context,
   //
   //   For non-static member functions, the type of the implicit
   //   object parameter is
-  //     — "lvalue reference to cv X" for functions declared without a
+  //     - "lvalue reference to cv X" for functions declared without a
   //       ref-qualifier or with the & ref-qualifier
   //     - "rvalue reference to cv X" for functions declared with the
   //       && ref-qualifier
@@ -3067,7 +3067,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     break;
     
   case TPOC_Other:
-    //   - In other contexts (14.6.6.2) the function template’s function type 
+    //   - In other contexts (14.6.6.2) the function template's function type
     //     is used.
     // FIXME: Don't we actually want to perform the adjustments on the parameter
     // types?

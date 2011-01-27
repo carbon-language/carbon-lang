@@ -1168,7 +1168,7 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
     
     //   [...] If overload resolution fails, or if the type of the first 
     //   parameter of the selected constructor is not an rvalue reference
-    //   to the object’s type (possibly cv-qualified), overload resolution 
+    //   to the object's type (possibly cv-qualified), overload resolution
     //   is performed again, considering the object as an lvalue.
     if (Seq.getKind() != InitializationSequence::FailedSequence) {
       for (InitializationSequence::step_iterator Step = Seq.step_begin(),

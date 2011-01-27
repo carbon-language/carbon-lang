@@ -2651,8 +2651,8 @@ static void TryReferenceInitialization(Sema &S,
     Sequence.SetFailed(InitializationSequence::FK_ReferenceInitDropsQualifiers);
     return;
   }
-    
-  //      - Otherwise, a temporary of type “cv1 T1” is created and initialized
+
+  //      - Otherwise, a temporary of type "cv1 T1" is created and initialized
   //        from the initializer expression using the rules for a non-reference
   //        copy initialization (8.5). The reference is then bound to the 
   //        temporary. [...]
@@ -2850,7 +2850,7 @@ static void TryValueInitialization(Sema &S,
       
       // -- if T is a (possibly cv-qualified) non-union class type
       //    without a user-provided constructor, then the object is
-      //    zero-initialized and, if T’s implicitly-declared default
+      //    zero-initialized and, if T's implicitly-declared default
       //    constructor is non-trivial, that constructor is called.
       if ((ClassDecl->getTagKind() == TTK_Class ||
            ClassDecl->getTagKind() == TTK_Struct)) {

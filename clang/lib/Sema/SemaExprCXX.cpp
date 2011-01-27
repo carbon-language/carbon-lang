@@ -78,13 +78,13 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
     //   If a pseudo-destructor-name (5.2.4) contains a nested-name-specifier, 
     //   the type-names are looked up as types in the scope designated by the
     //   nested-name-specifier. In a qualified-id of the form:
-    // 
-    //     ::[opt] nested-name-specifier  ̃ class-name 
+    //
+    //     ::[opt] nested-name-specifier  ~ class-name
     //
     //   where the nested-name-specifier designates a namespace scope, and in
     //   a qualified-id of the form:
     //
-    //     ::opt nested-name-specifier class-name ::  ̃ class-name 
+    //     ::opt nested-name-specifier class-name ::  ~ class-name
     //
     //   the class-names are looked up as types in the scope designated by 
     //   the nested-name-specifier.
@@ -1017,10 +1017,10 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
 
   // C++ [expr.new]p8:
   //   If the allocated type is a non-array type, the allocation
-  //   function’s name is operator new and the deallocation function’s
+  //   function's name is operator new and the deallocation function's
   //   name is operator delete. If the allocated type is an array
-  //   type, the allocation function’s name is operator new[] and the
-  //   deallocation function’s name is operator delete[].
+  //   type, the allocation function's name is operator new[] and the
+  //   deallocation function's name is operator delete[].
   DeclarationName NewName = Context.DeclarationNames.getCXXOperatorName(
                                         IsArray ? OO_Array_New : OO_New);
   DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
@@ -1061,12 +1061,12 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   // C++ [expr.new]p19:
   //
   //   If the new-expression begins with a unary :: operator, the
-  //   deallocation function’s name is looked up in the global
+  //   deallocation function's name is looked up in the global
   //   scope. Otherwise, if the allocated type is a class type T or an
-  //   array thereof, the deallocation function’s name is looked up in
+  //   array thereof, the deallocation function's name is looked up in
   //   the scope of T. If this lookup fails to find the name, or if
   //   the allocated type is not a class type or array thereof, the
-  //   deallocation function’s name is looked up in the global scope.
+  //   deallocation function's name is looked up in the global scope.
   LookupResult FoundDelete(*this, DeleteName, StartLoc, LookupOrdinaryName);
   if (AllocElemType->isRecordType() && !UseGlobal) {
     CXXRecordDecl *RD
