@@ -252,7 +252,7 @@ namespace {
     void RewriteTypeIntoString(QualType T, std::string &ResultStr,
                                const FunctionType *&FPRetType);
     void RewriteByRefString(std::string &ResultStr, const std::string &Name,
-                            ValueDecl *VD);
+                            ValueDecl *VD, bool def=false);
     void RewriteCategoryDecl(ObjCCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjCProtocolDecl *Dcl);
     void RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *Dcl);
@@ -4118,10 +4118,12 @@ void RewriteObjC::SynthesizeMetaDataIntoBuffer(std::string &Result) {
 
 void RewriteObjC::RewriteByRefString(std::string &ResultStr, 
                                      const std::string &Name,
-                                     ValueDecl *VD) {
+                                     ValueDecl *VD, bool def) {
   assert(BlockByRefDeclNo.count(VD) && 
          "RewriteByRefString: ByRef decl missing");
-  ResultStr += "struct __Block_byref_" + Name + 
+  if (def)
+    ResultStr += "struct ";
+  ResultStr += "__Block_byref_" + Name + 
     "_" + utostr(BlockByRefDeclNo[VD]) ;
 }
 
@@ -5112,7 +5114,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   const char *endBuf = SM->getCharacterData(X);
   std::string Name(ND->getNameAsString());
   std::string ByrefType;
-  RewriteByRefString(ByrefType, Name, ND);
+  RewriteByRefString(ByrefType, Name, ND, true);
   ByrefType += " {\n";
   ByrefType += "  void *__isa;\n";
   RewriteByRefString(ByrefType, Name, ND);
@@ -5405,7 +5407,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
       ValueDecl *ND = (*I);
       std::string Name(ND->getNameAsString());
       std::string RecName;
-      RewriteByRefString(RecName, Name, ND);
+      RewriteByRefString(RecName, Name, ND, true);
       IdentifierInfo *II = &Context->Idents.get(RecName.c_str() 
                                                 + sizeof("struct"));
       RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
