@@ -223,3 +223,9 @@ int test_34() {
   return x; // expected-note{{variable 'x' is possibly uninitialized when used here}}
 }
 
+// Test that this case doesn't crash.
+void test35(int x) {
+  __block int y = 0;
+  ^{ y = (x == 0); }();
+}
+

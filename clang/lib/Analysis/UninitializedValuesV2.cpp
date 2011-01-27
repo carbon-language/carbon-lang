@@ -25,9 +25,10 @@
 
 using namespace clang;
 
-static bool isTrackedVar(const VarDecl *vd) {
+static bool isTrackedVar(const VarDecl *vd, const DeclContext *dc) {
   return vd->isLocalVarDecl() && !vd->hasGlobalStorage() && 
-         vd->getType()->isScalarType();
+         vd->getType()->isScalarType() &&
+         vd->getDeclContext() == dc;
 }
 
 //------------------------------------------------------------------------====//
@@ -57,7 +58,7 @@ void DeclToBit::computeMap(const DeclContext &dc) {
                                                E(dc.decls_end());
   for ( ; I != E; ++I) {
     const VarDecl *vd = *I;
-    if (isTrackedVar(vd))
+    if (isTrackedVar(vd, &dc))
       map[vd] = count++;
   }
 }
@@ -312,6 +313,12 @@ public:
   void VisitCastExpr(CastExpr *ce);
   void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *se);
   void BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs);
+  
+  bool isTrackedVar(const VarDecl *vd) {
+    return ::isTrackedVar(vd, cast<DeclContext>(ac.getDecl()));
+  }
+  
+  FindVarResult findBlockVarDecl(Expr *ex);
 };
 }
 
@@ -320,12 +327,11 @@ void TransferFunctions::reportUninit(const DeclRefExpr *ex,
   if (handler) handler->handleUseOfUninitVariable(ex, vd);
 }
 
-static FindVarResult findBlockVarDecl(Expr* ex) {
+FindVarResult TransferFunctions::findBlockVarDecl(Expr* ex) {
   if (DeclRefExpr* dr = dyn_cast<DeclRefExpr>(ex->IgnoreParenCasts()))
     if (VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
       if (isTrackedVar(vd))
-        return FindVarResult(vd, dr);
-  
+        return FindVarResult(vd, dr);  
   return FindVarResult(0, 0);
 }
 
@@ -364,10 +370,11 @@ void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
   llvm::tie(i, e) = ac.getReferencedBlockVars(be->getBlockDecl());
   for ( ; i != e; ++i) {
     const VarDecl *vd = *i;
-    if (vd->getAttr<BlocksAttr>() || !vd->hasLocalStorage())
+    if (vd->getAttr<BlocksAttr>() || !vd->hasLocalStorage() || 
+        !isTrackedVar(vd))
       continue;
     if (vals[vd] == Uninitialized)
-      handler->handleUseOfUninitVariable(be, vd);      
+      handler->handleUseOfUninitVariable(be, vd);
   }
 }
 
