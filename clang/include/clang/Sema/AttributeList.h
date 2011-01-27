@@ -104,7 +104,6 @@ public:
     AT_dllimport,
     AT_ext_vector_type,
     AT_fastcall,
-    AT_forbid_temporaries,
     AT_format,
     AT_format_arg,
     AT_global,

@@ -25,7 +25,6 @@ td {
 <li><a href="#vectors">Vectors and Extended Vectors</a></li>
 <li><a href="#deprecated">Messages on <tt>deprecated</tt> and <tt>unavailable</tt> attributes</a></li>
 <li><a href="#attributes-on-enumerators">Attributes on enumerators</a></li>
-<li><a href="#forbid-temporaries-attribute">Attribute to forbid temporaries of a type</a></li>
 <li><a href="#checking_language_features">Checks for Standard Language Features</a></li>
   <ul>
   <li><a href="#cxx_exceptions">C++ exceptions</a></li>
@@ -341,33 +340,6 @@ initializer, like so:</p>
 individual enumerators.</p>
 
 <p>Query for this feature with <tt>__has_feature(enumerator_attributes)</tt>.</p>
-
-<!-- ======================================================================= -->
-<h2 id="forbid-temporaries-attribute">Attribute to forbid temporaries of a type</h2>
-<!-- ======================================================================= -->
-
-<p>Clang provides a <tt>forbid_temporaries</tt> attribute to forbid
-temporaries of a particular type.</p>
-
-<blockquote>
-<pre>class __attribute__((forbid_temporaries)) scoped_lock {
-  ...
-};</pre>
-</blockquote>
-
-<p>This prevents mistakes like</p>
-
-<blockquote>
-<pre>void foo() {
-  scoped_lock(my_mutex);
-  // Forgot the local variable name, so destructor runs here.
-  code_that_needs_lock_held();
-  // User expects destructor to run here.
-};</pre>
-</blockquote>
-
-<p>Query for this feature with <tt>__has_attribute(forbid_temporaries)</tt>.
-Use <tt>-Wno-forbid-temporaries</tt> to disable the resulting warning.</p>
 
 <!-- ======================================================================= -->
 <h2 id="checking_language_features">Checks for Standard Language Features</h2>

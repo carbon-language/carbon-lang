@@ -3294,12 +3294,9 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
     }
   }
 
-  CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-  if (RD->getAttr<ForbidTemporariesAttr>())
-    Diag(E->getExprLoc(), diag::warn_temporaries_forbidden) << E->getType();
-
   // That should be enough to guarantee that this type is complete.
   // If it has a trivial destructor, we can avoid the extra copy.
+  CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
   if (RD->isInvalidDecl() || RD->hasTrivialDestructor())
     return Owned(E);
 

@@ -861,9 +861,6 @@ def err_temp_copy_deleted : Error<
   "of type %1 invokes deleted constructor">;
 def err_temp_copy_incomplete : Error<
   "copying a temporary object of incomplete type %0">;
-def warn_temporaries_forbidden : Warning<
-  "must not create temporaries of type %0">,
-  InGroup<DiagGroup<"forbid-temporaries">>;
 
 // C++0x decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
