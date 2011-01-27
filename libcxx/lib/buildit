@@ -36,6 +36,7 @@ case $TRIPLE in
     SOEXT=dylib
 	if [ "$MACOSX_DEPLOYMENT_TARGET" == "10.6" ]
 	then
+	    EXTRA_FLAGS="-std=c++0x -U__STRICT_ANSI__"
 		LDSHARED_FLAGS="-o libc++.1.dylib \
 			-dynamiclib -nodefaultlibs -current_version 1 \
 			-compatibility_version 1 \
@@ -44,6 +45,7 @@ case $TRIPLE in
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
 			/usr/lib/libSystem.B.dylib"
 	else
+	    EXTRA_FLAGS="-std=c++0x"
 		LDSHARED_FLAGS="-o libc++.1.dylib \
 			-dynamiclib -nodefaultlibs  \
 			-current_version ${RC_ProjectSourceVersion} -compatibility_version 1 \
@@ -72,7 +74,7 @@ fi
 set -x
 
 for FILE in ../src/*.cpp; do
-	$CXX -c -g -Os $RC_CFLAGS -nostdinc++ -I../include $FILE
+	$CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -nostdinc++ -I../include $FILE
 done
 
 
