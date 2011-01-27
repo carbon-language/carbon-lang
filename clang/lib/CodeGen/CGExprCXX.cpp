@@ -395,7 +395,7 @@ static CharUnits CalculateCookiePadding(CodeGenFunction &CGF,
   if (IsPlacementOperatorNewArray(CGF.getContext(), OperatorNew))
     return CharUnits::Zero();
 
-  return CGF.CGM.getCXXABI().GetArrayCookieSize(E->getAllocatedType());
+  return CGF.CGM.getCXXABI().GetArrayCookieSize(E);
 }
 
 static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
@@ -1065,7 +1065,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   if (AllocSize != AllocSizeWithoutCookie) {
     assert(E->isArray());
     NewPtr = CGM.getCXXABI().InitializeArrayCookie(CGF, NewPtr, NumElements,
-                                                   AllocType);
+                                                   E, AllocType);
   }
 
   // If there's an operator delete, enter a cleanup to call it if an
@@ -1271,18 +1271,19 @@ namespace {
 
 /// Emit the code for deleting an array of objects.
 static void EmitArrayDelete(CodeGenFunction &CGF,
-                            const FunctionDecl *OperatorDelete,
+                            const CXXDeleteExpr *E,
                             llvm::Value *Ptr,
                             QualType ElementType) {
   llvm::Value *NumElements = 0;
   llvm::Value *AllocatedPtr = 0;
   CharUnits CookieSize;
-  CGF.CGM.getCXXABI().ReadArrayCookie(CGF, Ptr, ElementType,
+  CGF.CGM.getCXXABI().ReadArrayCookie(CGF, Ptr, E, ElementType,
                                       NumElements, AllocatedPtr, CookieSize);
 
   assert(AllocatedPtr && "ReadArrayCookie didn't set AllocatedPtr");
 
   // Make sure that we call delete even if one of the dtors throws.
+  const FunctionDecl *OperatorDelete = E->getOperatorDelete();
   CGF.EHStack.pushCleanup<CallArrayDelete>(NormalAndEHCleanup,
                                            AllocatedPtr, OperatorDelete,
                                            NumElements, ElementType,
@@ -1352,7 +1353,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
          cast<llvm::PointerType>(Ptr->getType())->getElementType());
 
   if (E->isArrayForm()) {
-    EmitArrayDelete(*this, E->getOperatorDelete(), Ptr, DeleteTy);
+    EmitArrayDelete(*this, E, Ptr, DeleteTy);
   } else {
     EmitObjectDelete(*this, E->getOperatorDelete(), Ptr, DeleteTy);
   }

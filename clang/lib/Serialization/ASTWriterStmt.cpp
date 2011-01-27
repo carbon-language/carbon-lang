@@ -1101,6 +1101,7 @@ void ASTStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   VisitExpr(E);
   Record.push_back(E->isGlobalNew());
   Record.push_back(E->hasInitializer());
+  Record.push_back(E->doesUsualArrayDeleteWantSize());
   Record.push_back(E->isArray());
   Record.push_back(E->getNumPlacementArgs());
   Record.push_back(E->getNumConstructorArgs());
@@ -1125,6 +1126,7 @@ void ASTStmtWriter::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   Record.push_back(E->isGlobalDelete());
   Record.push_back(E->isArrayForm());
   Record.push_back(E->isArrayFormAsWritten());
+  Record.push_back(E->doesUsualArrayDeleteWantSize());
   Writer.AddDeclRef(E->getOperatorDelete(), Record);
   Writer.AddStmt(E->getArgument());
   Writer.AddSourceLocation(E->getSourceRange().getBegin(), Record);

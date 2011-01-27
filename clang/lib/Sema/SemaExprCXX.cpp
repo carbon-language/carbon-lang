@@ -664,6 +664,61 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   return move(Result);
 }
 
+/// doesUsualArrayDeleteWantSize - Answers whether the usual
+/// operator delete[] for the given type has a size_t parameter.
+static bool doesUsualArrayDeleteWantSize(Sema &S, SourceLocation loc,
+                                         QualType allocType) {
+  const RecordType *record =
+    allocType->getBaseElementTypeUnsafe()->getAs<RecordType>();
+  if (!record) return false;
+
+  // Try to find an operator delete[] in class scope.
+
+  DeclarationName deleteName =
+    S.Context.DeclarationNames.getCXXOperatorName(OO_Array_Delete);
+  LookupResult ops(S, deleteName, loc, Sema::LookupOrdinaryName);
+  S.LookupQualifiedName(ops, record->getDecl());
+
+  // We're just doing this for information.
+  ops.suppressDiagnostics();
+
+  // Very likely: there's no operator delete[].
+  if (ops.empty()) return false;
+
+  // If it's ambiguous, it should be illegal to call operator delete[]
+  // on this thing, so it doesn't matter if we allocate extra space or not.
+  if (ops.isAmbiguous()) return false;
+
+  LookupResult::Filter filter = ops.makeFilter();
+  while (filter.hasNext()) {
+    NamedDecl *del = filter.next()->getUnderlyingDecl();
+
+    // C++0x [basic.stc.dynamic.deallocation]p2:
+    //   A template instance is never a usual deallocation function,
+    //   regardless of its signature.
+    if (isa<FunctionTemplateDecl>(del)) {
+      filter.erase();
+      continue;
+    }
+
+    // C++0x [basic.stc.dynamic.deallocation]p2:
+    //   If class T does not declare [an operator delete[] with one
+    //   parameter] but does declare a member deallocation function
+    //   named operator delete[] with exactly two parameters, the
+    //   second of which has type std::size_t, then this function
+    //   is a usual deallocation function.
+    if (!cast<CXXMethodDecl>(del)->isUsualDeallocationFunction()) {
+      filter.erase();
+      continue;
+    }
+  }
+  filter.done();
+
+  if (!ops.isSingleResult()) return false;
+
+  const FunctionDecl *del = cast<FunctionDecl>(ops.getFoundDecl());
+  return (del->getNumParams() == 2);
+}
 
 /// ActOnCXXNew - Parsed a C++ 'new' expression (C++ 5.3.4), as in e.g.:
 /// @code new (memory) int[size][4] @endcode
@@ -839,6 +894,14 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                               UseGlobal, AllocType, ArraySize, PlaceArgs,
                               NumPlaceArgs, OperatorNew, OperatorDelete))
     return ExprError();
+
+  // If this is an array allocation, compute whether the usual array
+  // deallocation function for the type has a size_t parameter.
+  bool UsualArrayDeleteWantsSize = false;
+  if (ArraySize && !AllocType->isDependentType())
+    UsualArrayDeleteWantsSize
+      = doesUsualArrayDeleteWantSize(*this, StartLoc, AllocType);
+
   llvm::SmallVector<Expr *, 8> AllPlaceArgs;
   if (OperatorNew) {
     // Add default arguments, if any.
@@ -938,6 +1001,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                                         PlaceArgs, NumPlaceArgs, TypeIdParens,
                                         ArraySize, Constructor, Init,
                                         ConsArgs, NumConsArgs, OperatorDelete,
+                                        UsualArrayDeleteWantsSize,
                                         ResultType, AllocTypeInfo,
                                         StartLoc,
                                         Init ? ConstructorRParen :
@@ -1492,6 +1556,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
   FunctionDecl *OperatorDelete = 0;
   bool ArrayFormAsWritten = ArrayForm;
+  bool UsualArrayDeleteWantsSize = false;
 
   if (!Ex->isTypeDependent()) {
     QualType Type = Ex->getType();
@@ -1587,6 +1652,21 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
           FindDeallocationFunction(StartLoc, RD, DeleteName, OperatorDelete))
         return ExprError();
 
+      // If we're allocating an array of records, check whether the
+      // usual operator delete[] has a size_t parameter.
+      if (ArrayForm) {
+        // If the user specifically asked to use the global allocator,
+        // we'll need to do the lookup into the class.
+        if (UseGlobal)
+          UsualArrayDeleteWantsSize =
+            doesUsualArrayDeleteWantSize(*this, StartLoc, PointeeElem);
+
+        // Otherwise, the usual operator delete[] should be the
+        // function we just found.
+        else if (isa<CXXMethodDecl>(OperatorDelete))
+          UsualArrayDeleteWantsSize = (OperatorDelete->getNumParams() == 2);
+      }
+
       if (!RD->hasTrivialDestructor())
         if (CXXDestructorDecl *Dtor = LookupDestructor(RD)) {
           MarkDeclarationReferenced(StartLoc,
@@ -1606,13 +1686,14 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     }
 
     MarkDeclarationReferenced(StartLoc, OperatorDelete);
-
+    
     // FIXME: Check access and ambiguity of operator delete and destructor.
   }
 
   return Owned(new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm,
-                                           ArrayFormAsWritten, OperatorDelete,
-                                           Ex, StartLoc));
+                                           ArrayFormAsWritten,
+                                           UsualArrayDeleteWantsSize,
+                                           OperatorDelete, Ex, StartLoc));
 }
 
 /// \brief Check the use of the given variable as a C++ condition in an if,

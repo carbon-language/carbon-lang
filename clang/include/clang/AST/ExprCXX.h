@@ -992,8 +992,11 @@ class CXXNewExpr : public Expr {
   bool Initializer : 1;
   // Do we allocate an array? If so, the first SubExpr is the size expression.
   bool Array : 1;
+  // If this is an array allocation, does the usual deallocation
+  // function for the allocated type want to know the allocated size?
+  bool UsualArrayDeleteWantsSize : 1;
   // The number of placement new arguments.
-  unsigned NumPlacementArgs : 15;
+  unsigned NumPlacementArgs : 14;
   // The number of constructor arguments. This may be 1 even for non-class
   // types; use the pseudo copy constructor.
   unsigned NumConstructorArgs : 14;
@@ -1029,8 +1032,8 @@ public:
              SourceRange TypeIdParens,
              Expr *arraySize, CXXConstructorDecl *constructor, bool initializer,
              Expr **constructorArgs, unsigned numConsArgs,
-             FunctionDecl *operatorDelete, QualType ty,
-             TypeSourceInfo *AllocatedTypeInfo,
+             FunctionDecl *operatorDelete, bool usualArrayDeleteWantsSize,
+             QualType ty, TypeSourceInfo *AllocatedTypeInfo,
              SourceLocation startLoc, SourceLocation endLoc,
              SourceLocation constructorLParen,
              SourceLocation constructorRParen);
@@ -1082,9 +1085,14 @@ public:
   SourceRange getTypeIdParens() const { return TypeIdParens; }
 
   bool isGlobalNew() const { return GlobalNew; }
-  void setGlobalNew(bool V) { GlobalNew = V; }
   bool hasInitializer() const { return Initializer; }
-  void setHasInitializer(bool V) { Initializer = V; }
+
+  /// Answers whether the usual array deallocation function for the
+  /// allocated type expects the size of the allocation as a
+  /// parameter.
+  bool doesUsualArrayDeleteWantSize() const {
+    return UsualArrayDeleteWantsSize;
+  }
 
   unsigned getNumConstructorArgs() const { return NumConstructorArgs; }
   
@@ -1169,6 +1177,9 @@ class CXXDeleteExpr : public Expr {
   // to pointer-to-array type (ArrayFormAsWritten will be false while ArrayForm
   // will be true).
   bool ArrayFormAsWritten : 1;
+  // Does the usual deallocation function for the element type require
+  // a size_t argument?
+  bool UsualArrayDeleteWantsSize : 1;
   // Points to the operator delete overload that is used. Could be a member.
   FunctionDecl *OperatorDelete;
   // The pointer expression to be deleted.
@@ -1177,12 +1188,13 @@ class CXXDeleteExpr : public Expr {
   SourceLocation Loc;
 public:
   CXXDeleteExpr(QualType ty, bool globalDelete, bool arrayForm,
-                bool arrayFormAsWritten, FunctionDecl *operatorDelete,
-                Expr *arg, SourceLocation loc)
+                bool arrayFormAsWritten, bool usualArrayDeleteWantsSize,
+                FunctionDecl *operatorDelete, Expr *arg, SourceLocation loc)
     : Expr(CXXDeleteExprClass, ty, VK_RValue, OK_Ordinary, false, false,
            arg->containsUnexpandedParameterPack()),
       GlobalDelete(globalDelete),
       ArrayForm(arrayForm), ArrayFormAsWritten(arrayFormAsWritten),
+      UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize),
       OperatorDelete(operatorDelete), Argument(arg), Loc(loc) { }
   explicit CXXDeleteExpr(EmptyShell Shell)
     : Expr(CXXDeleteExprClass, Shell), OperatorDelete(0), Argument(0) { }
@@ -1190,6 +1202,14 @@ public:
   bool isGlobalDelete() const { return GlobalDelete; }
   bool isArrayForm() const { return ArrayForm; }
   bool isArrayFormAsWritten() const { return ArrayFormAsWritten; }
+
+  /// Answers whether the usual array deallocation function for the
+  /// allocated type expects the size of the allocation as a
+  /// parameter.  This can be true even if the actual deallocation
+  /// function that we're using doesn't want a size.
+  bool doesUsualArrayDeleteWantSize() const {
+    return UsualArrayDeleteWantsSize;
+  }
 
   FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
 

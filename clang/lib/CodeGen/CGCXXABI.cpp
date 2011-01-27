@@ -142,13 +142,14 @@ void CGCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,
   CGF.EmitReturnOfRValue(RV, ResultType);
 }
 
-CharUnits CGCXXABI::GetArrayCookieSize(QualType ElementType) {
+CharUnits CGCXXABI::GetArrayCookieSize(const CXXNewExpr *expr) {
   return CharUnits::Zero();
 }
 
 llvm::Value *CGCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
                                              llvm::Value *NewPtr,
                                              llvm::Value *NumElements,
+                                             const CXXNewExpr *expr,
                                              QualType ElementType) {
   // Should never be called.
   ErrorUnsupportedABI(CGF, "array cookie initialization");
@@ -156,7 +157,8 @@ llvm::Value *CGCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
 }
 
 void CGCXXABI::ReadArrayCookie(CodeGenFunction &CGF, llvm::Value *Ptr,
-                               QualType ElementType, llvm::Value *&NumElements,
+                               const CXXDeleteExpr *expr, QualType ElementType,
+                               llvm::Value *&NumElements,
                                llvm::Value *&AllocPtr, CharUnits &CookieSize) {
   ErrorUnsupportedABI(CGF, "array cookie reading");
 
