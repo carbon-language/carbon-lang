@@ -1315,17 +1315,34 @@ public:
   /// type of a class template or class template partial specialization.
   CXXRecordDecl *getAsCXXRecordDecl() const;
   
-  // Member-template getAs<specific type>'.  Look through sugar for
-  // an instance of <specific type>.   This scheme will eventually
-  // replace the specific getAsXXXX methods above.
-  //
-  // There are some specializations of this member template listed
-  // immediately following this class.
+  /// Member-template getAs<specific type>'.  Look through sugar for
+  /// an instance of <specific type>.   This scheme will eventually
+  /// replace the specific getAsXXXX methods above.
+  ///
+  /// There are some specializations of this member template listed
+  /// immediately following this class.
   template <typename T> const T *getAs() const;
 
   /// A variant of getAs<> for array types which silently discards
   /// qualifiers from the outermost type.
   const ArrayType *getAsArrayTypeUnsafe() const;
+
+  /// Member-template castAs<specific type>.  Look through sugar for
+  /// the underlying instance of <specific type>.
+  ///
+  /// This method has the same relationship to getAs<T> as cast<T> has
+  /// to dyn_cast<T>; which is to say, the underlying type *must*
+  /// have the intended type, and this method will never return null.
+  template <typename T> const T *castAs() const;
+
+  /// A variant of castAs<> for array type which silently discards
+  /// qualifiers from the outermost type.
+  const ArrayType *castAsArrayTypeUnsafe() const;
+
+  /// getBaseElementTypeUnsafe - Get the base element type of this
+  /// type, potentially discarding type qualifiers.  This method
+  /// should never be used when type qualifiers are meaningful.
+  const Type *getBaseElementTypeUnsafe() const;
 
   /// getArrayElementTypeNoTypeQual - If this is an array type, return the
   /// element type of the array, potentially with type qualifiers missing.
@@ -1400,6 +1417,9 @@ template <> inline const TypedefType *Type::getAs() const {
 #define LEAF_TYPE(Class) \
 template <> inline const Class##Type *Type::getAs() const { \
   return dyn_cast<Class##Type>(CanonicalType); \
+} \
+template <> inline const Class##Type *Type::castAs() const { \
+  return cast<Class##Type>(CanonicalType); \
 }
 #include "clang/AST/TypeNodes.def"
 
@@ -1655,7 +1675,7 @@ public:
     // FIXME: this might strip inner qualifiers; okay?
     const ReferenceType *T = this;
     while (T->isInnerRef())
-      T = T->PointeeType->getAs<ReferenceType>();
+      T = T->PointeeType->castAs<ReferenceType>();
     return T->PointeeType;
   }
 
@@ -3737,7 +3757,7 @@ public:
   ///   would return 'A1P<Q>' (and we'd have to make iterating over
   ///   qualifiers more complicated).
   const ObjCObjectType *getObjectType() const {
-    return PointeeType->getAs<ObjCObjectType>();
+    return PointeeType->castAs<ObjCObjectType>();
   }
 
   /// getInterfaceType - If this pointer points to an Objective C
@@ -4050,7 +4070,7 @@ inline bool Type::isRValueReferenceType() const {
   return isa<RValueReferenceType>(CanonicalType);
 }
 inline bool Type::isFunctionPointerType() const {
-  if (const PointerType* T = getAs<PointerType>())
+  if (const PointerType *T = getAs<PointerType>())
     return T->getPointeeType()->isFunctionType();
   else
     return false;
@@ -4174,6 +4194,13 @@ inline bool Type::hasObjCPointerRepresentation() const {
   return isObjCObjectPointerType();
 }
 
+inline const Type *Type::getBaseElementTypeUnsafe() const {
+  const Type *type = this;
+  while (const ArrayType *arrayType = type->getAsArrayTypeUnsafe())
+    type = arrayType->getElementType().getTypePtr();
+  return type;
+}
+
 /// Insertion operator for diagnostics.  This allows sending QualType's into a
 /// diagnostic with <<.
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
@@ -4231,6 +4258,21 @@ inline const ArrayType *Type::getAsArrayTypeUnsafe() const {
 
   // If this is a typedef for the type, strip the typedef off without
   // losing all typedef information.
+  return cast<ArrayType>(getUnqualifiedDesugaredType());
+}
+
+template <typename T> const T *Type::castAs() const {
+  ArrayType_cannot_be_used_with_getAs<T> at;
+  (void) at;
+
+  assert(isa<T>(CanonicalType));
+  if (const T *ty = dyn_cast<T>(this)) return ty;
+  return cast<T>(getUnqualifiedDesugaredType());
+}
+
+inline const ArrayType *Type::castAsArrayTypeUnsafe() const {
+  assert(isa<ArrayType>(CanonicalType));
+  if (const ArrayType *arr = dyn_cast<ArrayType>(this)) return arr;
   return cast<ArrayType>(getUnqualifiedDesugaredType());
 }
 
