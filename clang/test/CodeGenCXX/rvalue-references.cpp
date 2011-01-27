@@ -62,13 +62,10 @@ C test();
 // CHECK: define void @_Z15elide_copy_initv
 void elide_copy_init() {
   ok = false;
-  // FIXME: We're doing an extra move here, when we shouldn't be!
-  // CHECK: call void @_Z4testv(%class.C* sret %ref.tmp)
-  // CHECK: call void @_ZN1CC1EOS_(%class.C* %a, %class.C* %ref.tmp)
-  // CHECK: call void @_ZN1CD1Ev(%class.C* %ref.tmp)
+  // CHECK: call void @_Z4testv
   C a = test();
-  // CHECK: call void @_ZN1CD1Ev(%class.C* %a)
-  // CHECK: ret void
+  // CHECK-NEXT: call void @_ZN1CD1Ev
+  // CHECK-NEXT: ret void
 }
 
 // CHECK: define void @_Z16test_move_returnv
