@@ -3,7 +3,7 @@
 f:
 	.cfi_startproc
         nop
-	.cfi_offset 6, -16
+	.cfi_offset %ebp, -16
         nop
 	.cfi_endproc
 

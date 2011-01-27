@@ -30,6 +30,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include <cctype>
 #include <vector>
@@ -273,6 +274,8 @@ public:
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLEB128>(".sleb128");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLEB128>(".uleb128");
   }
+
+  bool ParseRegisterOrRegisterNumber(int64_t &Register, SMLoc DirectiveLoc);
 
   bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc);
@@ -2181,12 +2184,28 @@ bool GenericAsmParser::ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc) {
   return getStreamer().EmitCFIEndProc();
 }
 
+/// ParseRegisterOrRegisterNumber - parse register name or number.
+bool GenericAsmParser::ParseRegisterOrRegisterNumber(int64_t &Register,
+                                                     SMLoc DirectiveLoc) {
+  unsigned RegNo;
+
+  if (getLexer().is(AsmToken::Percent)) {
+    if (getParser().getTargetParser().ParseRegister(RegNo, DirectiveLoc,
+      DirectiveLoc))
+      return true;
+    Register = getContext().getTargetAsmInfo().getDwarfRegNum(RegNo, true);
+  } else
+    return getParser().ParseAbsoluteExpression(Register);
+  
+  return false;
+}
+
 /// ParseDirectiveCFIDefCfa
 /// ::= .cfi_def_cfa register,  offset
 bool GenericAsmParser::ParseDirectiveCFIDefCfa(StringRef,
                                                SMLoc DirectiveLoc) {
   int64_t Register = 0;
-  if (getParser().ParseAbsoluteExpression(Register))
+  if (ParseRegisterOrRegisterNumber(Register, DirectiveLoc))
     return true;
 
   if (getLexer().isNot(AsmToken::Comma))
@@ -2216,7 +2235,7 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfaOffset(StringRef,
 bool GenericAsmParser::ParseDirectiveCFIDefCfaRegister(StringRef,
                                                        SMLoc DirectiveLoc) {
   int64_t Register = 0;
-  if (getParser().ParseAbsoluteExpression(Register))
+  if (ParseRegisterOrRegisterNumber(Register, DirectiveLoc))
     return true;
 
   return getStreamer().EmitCFIDefCfaRegister(Register);
@@ -2227,7 +2246,8 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfaRegister(StringRef,
 bool GenericAsmParser::ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc) {
   int64_t Register = 0;
   int64_t Offset = 0;
-  if (getParser().ParseAbsoluteExpression(Register))
+
+  if (ParseRegisterOrRegisterNumber(Register, DirectiveLoc))
     return true;
 
   if (getLexer().isNot(AsmToken::Comma))
