@@ -56,6 +56,7 @@ recognized by GCC. Their use can be conditioned using preprocessor macros
       <li><a href="#attr_ns_returns_not_retained">Attribute 'ns_returns_not_retained'</a></li>
       <li><a href="#attr_cf_returns_retained">Attribute 'cf_returns_retained'</a></li>
       <li><a href="#attr_cf_returns_not_retained">Attribute 'cf_returns_not_retained'</a></li>
+      <li><a href="#attr_ns_consumes_self">Attribute 'ns_consumes_self'</a></li>
     </ul>
     </li>
   </ul>
@@ -349,6 +350,38 @@ its availability, as it is not available in earlier versions of the analyzer:</p
 #endif
 #endif
 </pre>
+
+<h4 id="attr_ns_consumes_self">Attribute 'ns_consumes_self'
+(Clang-specific)</h4>
+
+<p>The 'ns_consumes_self' attribute can be placed only on an Objective-C method declaration.
+  It indicates that the receiver of the message is &quot;consumed&quot; (a single reference count decremented)
+  after the message is sent.  This matches the semantics of all &quot;init&quot; methods.
+</p>
+
+<p>One use of this attribute is declare your own init-like methods that do not follow the
+  standard Cocoa naming conventions.  For example:</p>
+  
+<pre class="code_example">
+#ifndef __has_feature
+#define __has_Feature(x) 0 // Compatibility with non-clang compilers.
+#endif
+
+#ifndef NS_CONSUMES_SELF
+#if __has_feature((attribute_ns_consumes_self))
+#else
+#define NS_CONSUMES_SELF
+#endif
+#endif
+
+@interface MyClass : NSObject
+- initWith:(MyClass *)x;
+- nonstandardInitWith:(MyClass *)x NS_CONSUMES_SELF NS_RETURNS_RETAINED;
+@end
+</pre>
+
+<p>In this example, <tt>nonstandardInitWith:</tt> has the same ownership semantics as the init method <tt>initWith:</tt>.
+  The static analyzer will observe that the method consumes the receiver, and then returns an object with a +1 retain count.</p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <h2 id="custom_assertions">Custom Assertion Handlers</h2>

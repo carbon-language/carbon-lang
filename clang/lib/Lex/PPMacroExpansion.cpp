@@ -536,6 +536,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("attribute_ext_vector_type", true)
            .Case("attribute_ns_returns_not_retained", true)
            .Case("attribute_ns_returns_retained", true)
+           .Case("attribute_ns_consumes_self", true)
            .Case("attribute_objc_ivar_unused", true)
            .Case("attribute_overloadable", true)
            .Case("attribute_unavailable_with_message", true)

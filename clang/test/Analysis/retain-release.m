@@ -13,6 +13,9 @@
 #if __has_feature(attribute_cf_returns_not_retained)
 #define CF_RETURNS_NOT_RETAINED __attribute__((cf_returns_not_retained))
 #endif
+#if __has_feature(attribute_ns_consumes_self)
+#define NS_CONSUMES_SELF __attribute__((ns_consumes_self))
+#endif
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from Mac OS X headers:
@@ -1211,6 +1214,7 @@ typedef NSString* MyStringTy;
 - (NSString*) newString NS_RETURNS_NOT_RETAINED; // no-warning
 - (NSString*) newStringNoAttr;
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to methods that return an Objective-C object}}
+- (id) pseudoInit NS_CONSUMES_SELF NS_RETURNS_RETAINED;
 @end
 
 static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions and methods}}
@@ -1226,6 +1230,19 @@ void test_attr_1b(TestOwnershipAttr *X) {
 void test_attr1c(TestOwnershipAttr *X) {
   NSString *str = [X newString]; // no-warning
   NSString *str2 = [X newStringNoAttr]; // expected-warning{{leak}}
+}
+
+void testattr2_a() {
+  TestOwnershipAttr *x = [TestOwnershipAttr alloc]; // expected-warning{{leak}}
+}
+
+void testattr2_b() {
+  TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit];  // expected-warning{{leak}}
+}
+
+void testattr2_c() {
+  TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit]; // no-warning
+  [x release];
 }
 
 @interface MyClassTestCFAttr : NSObject {}
@@ -1401,7 +1418,7 @@ static void rdar_8724287(CFErrorRef error)
     while (error_to_dump != ((void*)0)) {
         CFDictionaryRef info;
 
-        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line 1404 and stored into 'info'}}
+        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line 1421 and stored into 'info'}}
 
         if (info != ((void*)0)) {
         }

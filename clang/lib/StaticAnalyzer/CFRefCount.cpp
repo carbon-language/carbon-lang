@@ -467,6 +467,10 @@ public:
   ///  terminate the path.
   bool isEndPath() const { return EndPath; }
 
+  
+  /// Sets the effect on the receiver of the message.
+  void setReceiverEffect(ArgEffect e) { Receiver = e; }
+  
   /// getReceiverEffect - Returns the effect on the receiver of the call.
   ///  This is only meaningful if the summary applies to an ObjCMessageExpr*.
   ArgEffect getReceiverEffect() const { return Receiver; }
@@ -1219,6 +1223,11 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
 
   bool isTrackedLoc = false;
 
+  // Effects on the receiver.
+  if (MD->getAttr<NSConsumesSelfAttr>()) {
+    Summ.setReceiverEffect(DecRefMsg);      
+  }
+  
   // Determine if there is a special return effect for this method.
   if (cocoa::isCocoaObjectRef(MD->getResultType())) {
     if (MD->getAttr<NSReturnsRetainedAttr>()) {
