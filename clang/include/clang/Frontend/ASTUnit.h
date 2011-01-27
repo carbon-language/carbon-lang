@@ -84,6 +84,13 @@ private:
   /// LoadFromCommandLine available.
   llvm::OwningPtr<CompilerInvocation> Invocation;
   
+  /// \brief The set of target features.
+  ///
+  /// FIXME: each time we reparse, we need to restore the set of target
+  /// features from this vector, because TargetInfo::CreateTargetInfo()
+  /// mangles the target options in place. Yuck!
+  std::vector<std::string> TargetFeatures;
+  
   // OnlyLocalDecls - when true, walking this AST should only visit declarations
   // that come from the AST itself, not from included precompiled headers.
   // FIXME: This is temporary; eventually, CIndex will always do this.

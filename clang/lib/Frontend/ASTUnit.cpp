@@ -740,6 +740,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Clang.setDiagnostics(&getDiagnostics());
   
   // Create the target instance.
+  Clang.getTargetOpts().Features = TargetFeatures;
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
@@ -1229,6 +1230,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Clang.setDiagnostics(&getDiagnostics());
   
   // Create the target instance.
+  Clang.getTargetOpts().Features = TargetFeatures;
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
@@ -1418,6 +1420,9 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   Invocation->getFrontendOpts().DisableFree = false;
   ProcessWarningOptions(getDiagnostics(), Invocation->getDiagnosticOpts());
 
+  // Save the target features.
+  TargetFeatures = Invocation->getTargetOpts().Features;
+  
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (PrecompilePreamble) {
     PreambleRebuildCounter = 2;
@@ -1876,6 +1881,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                                     StoredDiagnostics);
   
   // Create the target instance.
+  Clang.getTargetOpts().Features = TargetFeatures;
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
