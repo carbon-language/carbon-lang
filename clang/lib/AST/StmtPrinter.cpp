@@ -1225,9 +1225,9 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
 
 static const char *getTypeTraitName(BinaryTypeTrait BTT) {
   switch (BTT) {
-  default: llvm_unreachable("Unknown binary type trait");
   case BTT_IsBaseOf:         return "__is_base_of";
   case BTT_TypeCompatible:   return "__builtin_types_compatible_p";
+  case BTT_IsConvertibleTo:  return "__is_convertible_to";
   }
   return "";
 }

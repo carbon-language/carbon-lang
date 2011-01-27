@@ -2499,6 +2499,52 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
   case BTT_TypeCompatible:
     return Self.Context.typesAreCompatible(LhsT.getUnqualifiedType(),
                                            RhsT.getUnqualifiedType());
+      
+  case BTT_IsConvertibleTo: {
+    // C++0x [meta.rel]p4:
+    //   Given the following function prototype:
+    //
+    //     template <class T> 
+    //       typename add_rvalue_reference<T>::type create();
+    //
+    //   the predicate condition for a template specialization 
+    //   is_convertible<From, To> shall be satisfied if and only if 
+    //   the return expression in the following code would be 
+    //   well-formed, including any implicit conversions to the return
+    //   type of the function:
+    //
+    //     To test() { 
+    //       return create<From>();
+    //     }
+    //
+    //   Access checking is performed as if in a context unrelated to To and 
+    //   From. Only the validity of the immediate context of the expression 
+    //   of the return-statement (including conversions to the return type)
+    //   is considered.
+    //
+    // We model the initialization as a copy-initialization of a temporary
+    // of the appropriate type, which for this expression is identical to the
+    // return statement (since NRVO doesn't apply).
+    if (LhsT->isObjectType() || LhsT->isFunctionType())
+      LhsT = Self.Context.getRValueReferenceType(LhsT);
+    
+    InitializedEntity To(InitializedEntity::InitializeTemporary(RhsT));
+    OpaqueValueExpr From(LhsT.getNonLValueExprType(Self.Context),
+                         Expr::getValueKindForType(LhsT));
+    Expr *FromPtr = &From;
+    InitializationKind Kind(InitializationKind::CreateCopy(KeyLoc, 
+                                                           SourceLocation()));
+    
+    // Perform the initialization within a SFINAE trap.
+    // FIXME: We don't implement the access-checking bits yet, because we don't
+    // handle access control as part of SFINAE.
+    Sema::SFINAETrap SFINAE(Self);
+    InitializationSequence Init(Self, To, Kind, &FromPtr, 1);
+    if (Init.getKind() == InitializationSequence::FailedSequence)
+      return false;
+    ExprResult Result = Init.Perform(Self, To, Kind, MultiExprArg(&FromPtr, 1));
+    return !Result.isInvalid() && !SFINAE.hasErrorOccurred();
+  }
   }
   llvm_unreachable("Unknown type trait or not implemented");
 }
@@ -2538,9 +2584,9 @@ ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
   // Select trait result type.
   QualType ResultType;
   switch (BTT) {
-  default: llvm_unreachable("Unknown type trait or not implemented");
   case BTT_IsBaseOf:       ResultType = Context.BoolTy; break;
   case BTT_TypeCompatible: ResultType = Context.IntTy; break;
+  case BTT_IsConvertibleTo: ResultType = Context.BoolTy; break;
   }
 
   return Owned(new (Context) BinaryTypeTraitExpr(KWLoc, BTT, LhsTSInfo,

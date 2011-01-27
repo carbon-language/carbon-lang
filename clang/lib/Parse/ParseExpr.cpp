@@ -537,8 +537,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///                   '__is_polymorphic'
 ///                   '__is_union'
 ///
-/// [GNU] binary-type-trait:
-///                   '__is_base_of'                          [TODO]
+///       binary-type-trait:
+/// [GNU]             '__is_base_of'       
+/// [MS]              '__is_convertible_to'
 ///
 ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
@@ -988,6 +989,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
   case tok::kw___builtin_types_compatible_p:
   case tok::kw___is_base_of:
+  case tok::kw___is_convertible_to:
     return ParseBinaryTypeTrait();
 
   case tok::at: {

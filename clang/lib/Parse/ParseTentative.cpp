@@ -655,6 +655,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___is_abstract:
   case tok::kw___is_base_of:
   case tok::kw___is_class:
+  case tok::kw___is_convertible_to:
   case tok::kw___is_empty:
   case tok::kw___is_enum:
   case tok::kw___is_pod:

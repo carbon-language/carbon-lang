@@ -497,3 +497,31 @@ void is_base_of() {
   isBaseOfT<BaseA<int>, DerivedB<int> >();
   isBaseOfF<DerivedB<int>, BaseA<int> >();
 }
+
+struct FromInt { FromInt(int); };
+struct ToInt { operator int(); };
+typedef void Function();
+
+void is_convertible_to() {
+  int t01[T(__is_convertible_to(Int, Int))];
+  int t02[F(__is_convertible_to(Int, IntAr))];
+  int t03[F(__is_convertible_to(IntAr, IntAr))];
+  int t04[T(__is_convertible_to(void, void))];
+  int t05[T(__is_convertible_to(cvoid, void))];
+  int t06[T(__is_convertible_to(void, cvoid))];
+  int t07[T(__is_convertible_to(cvoid, cvoid))];
+  int t08[T(__is_convertible_to(int, FromInt))];
+  int t09[T(__is_convertible_to(long, FromInt))];
+  int t10[T(__is_convertible_to(double, FromInt))];
+  int t11[T(__is_convertible_to(const int, FromInt))];
+  int t12[T(__is_convertible_to(const int&, FromInt))];
+  int t13[T(__is_convertible_to(ToInt, int))];
+  int t14[T(__is_convertible_to(ToInt, const int&))];
+  int t15[T(__is_convertible_to(ToInt, long))];
+  int t16[F(__is_convertible_to(ToInt, int&))];
+  int t17[F(__is_convertible_to(ToInt, FromInt))];
+  int t18[T(__is_convertible_to(IntAr&, IntAr&))];
+  int t19[T(__is_convertible_to(IntAr&, const IntAr&))];
+  int t20[F(__is_convertible_to(const IntAr&, IntAr&))];
+  int t21[F(__is_convertible_to(Function, Function))];
+}

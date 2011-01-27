@@ -1828,6 +1828,7 @@ static BinaryTypeTrait BinaryTypeTraitFromTokKind(tok::TokenKind kind) {
   default: llvm_unreachable("Not a known binary type trait");
   case tok::kw___is_base_of:                 return BTT_IsBaseOf;
   case tok::kw___builtin_types_compatible_p: return BTT_TypeCompatible;
+  case tok::kw___is_convertible_to:          return BTT_IsConvertibleTo;
   }
 }
 
