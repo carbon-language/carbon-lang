@@ -2396,6 +2396,9 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   }
   ToFunction->setAccess(D->getAccess());
   ToFunction->setLexicalDeclContext(LexicalDC);
+  ToFunction->setVirtualAsWritten(D->isVirtualAsWritten());
+  ToFunction->setTrivial(D->isTrivial());
+  ToFunction->setPure(D->isPure());
   Importer.Imported(D, ToFunction);
 
   // Set the parameters.
