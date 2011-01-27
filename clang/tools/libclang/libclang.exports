@@ -108,6 +108,7 @@ clang_getTranslationUnitSpelling
 clang_getTypeDeclaration
 clang_getTypeKindSpelling
 clang_hashCursor
+clang_isConstQualifiedType
 clang_isCursorDefinition
 clang_isDeclaration
 clang_isExpression
@@ -115,10 +116,12 @@ clang_isInvalid
 clang_isPODType
 clang_isPreprocessing
 clang_isReference
+clang_isRestrictQualifiedType
 clang_isStatement
 clang_isTranslationUnit
 clang_isUnexposed
 clang_isVirtualBase
+clang_isVolatileQualifiedType
 clang_parseTranslationUnit
 clang_reparseTranslationUnit
 clang_saveTranslationUnit

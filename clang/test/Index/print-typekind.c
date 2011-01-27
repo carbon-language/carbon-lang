@@ -1,7 +1,7 @@
 typedef int FooType;
 int *p;
 int *f(int *p, char *x, FooType z) {
-  FooType w = z;
+  const FooType w = z;
   return p + z;
 }
 typedef double OtherType;
@@ -16,7 +16,7 @@ typedef double OtherType;
 // CHECK: TypeRef=FooType:1:13 typekind=Typedef [canonical=Int] [isPOD=1]
 // CHECK: UnexposedStmt= typekind=Invalid [isPOD=0]
 // CHECK: UnexposedStmt= typekind=Invalid [isPOD=0]
-// CHECK: VarDecl=w:4:11 (Definition) typekind=Typedef [canonical=Int] [isPOD=1]
+// CHECK: VarDecl=w:4:17 (Definition) typekind=Typedef const [canonical=Int] [isPOD=1]
 // CHECK: TypeRef=FooType:1:13 typekind=Typedef [canonical=Int] [isPOD=1]
 // CHECK: DeclRefExpr=z:3:33 typekind=Typedef [canonical=Int] [isPOD=1]
 // CHECK: UnexposedStmt= typekind=Invalid [isPOD=0]

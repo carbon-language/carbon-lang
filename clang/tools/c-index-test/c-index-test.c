@@ -568,6 +568,12 @@ static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
     CXString S = clang_getTypeKindSpelling(T.kind);
     PrintCursor(cursor);
     printf(" typekind=%s", clang_getCString(S));
+    if (clang_isConstQualifiedType(T))
+      printf(" const");
+    if (clang_isVolatileQualifiedType(T))
+      printf(" volatile");
+    if (clang_isRestrictQualifiedType(T))
+      printf(" restrict");
     clang_disposeString(S);
     /* Print the canonical type if it is different. */
     {

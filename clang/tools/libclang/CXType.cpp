@@ -186,6 +186,21 @@ CXType clang_getCanonicalType(CXType CT) {
   return MakeCXType(AU->getASTContext().getCanonicalType(T), TU);
 }
 
+unsigned clang_isConstQualifiedType(CXType CT) {
+  QualType T = GetQualType(CT);
+  return T.isLocalConstQualified();
+}
+
+unsigned clang_isVolatileQualifiedType(CXType CT) {
+  QualType T = GetQualType(CT);
+  return T.isLocalVolatileQualified();
+}
+
+unsigned clang_isRestrictQualifiedType(CXType CT) {
+  QualType T = GetQualType(CT);
+  return T.isLocalRestrictQualified();
+}
+
 CXType clang_getPointeeType(CXType CT) {
   QualType T = GetQualType(CT);
   const Type *TP = T.getTypePtrOrNull();

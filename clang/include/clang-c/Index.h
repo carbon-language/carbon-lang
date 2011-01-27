@@ -1782,6 +1782,24 @@ CINDEX_LINKAGE unsigned clang_equalTypes(CXType A, CXType B);
 CINDEX_LINKAGE CXType clang_getCanonicalType(CXType T);
 
 /**
+ *  \determine Determine whether a CXType has the "const" qualifier set, 
+ *  without looking through typedefs that may have added "const" at a different level.
+ */
+CINDEX_LINKAGE unsigned clang_isConstQualifiedType(CXType T);
+
+/**
+ *  \determine Determine whether a CXType has the "volatile" qualifier set,
+ *  without looking through typedefs that may have added "volatile" at a different level.
+ */
+CINDEX_LINKAGE unsigned clang_isVolatileQualifiedType(CXType T);
+
+/**
+ *  \determine Determine whether a CXType has the "restrict" qualifier set,
+ *  without looking through typedefs that may have added "restrict" at a different level.
+ */
+CINDEX_LINKAGE unsigned clang_isRestrictQualifiedType(CXType T);
+
+/**
  * \brief For pointer types, returns the type of the pointee.
  *
  */
