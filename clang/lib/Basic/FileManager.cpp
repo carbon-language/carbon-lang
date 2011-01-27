@@ -350,18 +350,17 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
     FileEntries.GetOrCreateValue(Filename);
 
   // See if there is already an entry in the map.
-  if (NamedFileEnt.getValue())
-    return NamedFileEnt.getValue() == NON_EXISTENT_FILE
-                 ? 0 : NamedFileEnt.getValue();
+  if (NamedFileEnt.getValue() && NamedFileEnt.getValue() != NON_EXISTENT_FILE)
+    return NamedFileEnt.getValue();
 
   ++NumFileCacheMisses;
 
   // By default, initialize it to invalid.
   NamedFileEnt.setValue(NON_EXISTENT_FILE);
 
+  // We allow the directory to not exist. If it does exist we store it.
+  // 
   const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename);
-  if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
-    return 0;
 
   FileEntry *UFE = new FileEntry();
   VirtualFileEntries.push_back(UFE);
@@ -381,8 +380,13 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   // newly-created file entry.
   int FileDescriptor = -1;
   struct stat StatBuf;
-  if (getStatValue(InterndFileName, StatBuf, &FileDescriptor))
+  if (getStatValue(InterndFileName, StatBuf, &FileDescriptor)) {
+    // If the stat process opened the file, close it to avoid a FD leak.
+    if (FileDescriptor != -1)
+      close(FileDescriptor);
+
     return UFE;
+  }
   
   UFE->FD = FileDescriptor;
   llvm::SmallString<128> FilePath(UFE->Name);

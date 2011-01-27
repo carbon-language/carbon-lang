@@ -1232,6 +1232,9 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     std::string Filename(BlobStart, BlobStart + BlobLen);
     MaybeAddSystemRootToFilename(Filename);
     const FileEntry *File = FileMgr.getFile(Filename);
+    if (File == 0)
+      File = FileMgr.getVirtualFile(Filename, (off_t)Record[4],
+                                    (time_t)Record[5]);
     if (File == 0) {
       std::string ErrorStr = "could not find file '";
       ErrorStr += Filename;
