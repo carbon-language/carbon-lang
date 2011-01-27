@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Release notes for checker-XXX builds</title>
+  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css" />
+  <script type="text/javascript" src="scripts/menu.js"></script>
+</head>
+<body>
+
+<div id="page">
+<!--#include virtual="menu.html.incl"-->
+<div id="content">
+
+<h1>Release notes for <tt>checker-XXX</tt> builds</h1>
+
+<h4 id="checker_254">checker-254</h4>
+
+<p><b>built:</b> January 27, 2011<br>
+<b>download:</b> <a href="checker-254.tar.bz2">checker-254.tar.bz2</a></p>
+<p><b>highlights:</b></p>
+
+<ul>
+<li>Introduces new <tt>-init</tt> method checker to check if a super class's init method is properly called.</li>
+<li>Objective-C retain/release checker now reasons about calls to property accessor methods (setter/getter).</li>
+<li>Introduces new attribute <a href="annotations.html#attr_ns_consumes_self">ns_consumes_self</a> to educate the Objective-C retain/release checker about custom &quot;init-like&quot; methods that do not follow the standard Cocoa naming conventions.</li>
+<li>Introduces new attributes <a href="annotations.html#attr_ns_consumed">ns_consumed</a> and <a href="annotations.html#attr_cf_consumed">cf_consumed</a> to educate the Objective-C retain/release checker about methods/functions that decrement the reference count of a parameter.</li>
+</ul>
+
+</div>
+</div>
+</body>
+</html>
+
