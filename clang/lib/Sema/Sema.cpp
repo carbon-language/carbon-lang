@@ -452,10 +452,12 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
   
   if (TemplateDeductionInfo *Info = SemaRef.isSFINAEContext()) {
     switch (DiagnosticIDs::getDiagnosticSFINAEResponse(getDiagID())) {
+    case DiagnosticIDs::SFINAE_AccessControl:
     case DiagnosticIDs::SFINAE_Report:
       // Fall through; we'll report the diagnostic below.
       break;
       
+          
     case DiagnosticIDs::SFINAE_SubstitutionFailure:
       // Count this failure so that we know that template argument deduction
       // has failed.

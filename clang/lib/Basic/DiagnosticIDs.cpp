@@ -42,7 +42,8 @@ struct StaticDiagInfoRec {
   unsigned short DiagID;
   unsigned Mapping : 3;
   unsigned Class : 3;
-  bool SFINAE : 1;
+  unsigned SFINAE : 1;
+  unsigned AccessControl : 1;
   unsigned Category : 5;
   
   const char *Description;
@@ -56,8 +57,8 @@ struct StaticDiagInfoRec {
 }
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,SFINAE, CATEGORY)    \
-  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, CATEGORY, DESC, GROUP },
+#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,SFINAE,ACCESS,CATEGORY)    \
+  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS, CATEGORY, DESC, GROUP },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -66,7 +67,7 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticASTKinds.inc"
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
-  { 0, 0, 0, 0, 0, 0, 0}
+  { 0, 0, 0, 0, 0, 0, 0, 0}
 };
 #undef DIAG
 
@@ -92,7 +93,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 #endif
 
   // Search the diagnostic table with a binary search.
-  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0, 0 };
+  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0, 0, 0 };
 
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + NumDiagEntries, Find);
@@ -150,6 +151,9 @@ const char *DiagnosticIDs::getCategoryNameFromID(unsigned CategoryID) {
 DiagnosticIDs::SFINAEResponse 
 DiagnosticIDs::getDiagnosticSFINAEResponse(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID)) {
+    if (Info->AccessControl)
+      return SFINAE_AccessControl;
+    
     if (!Info->SFINAE)
       return SFINAE_Report;
 

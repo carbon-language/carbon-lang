@@ -56,6 +56,7 @@ class Diagnostic<string text, DiagClass DC, DiagMapping defaultmapping> {
   string      Text = text;
   DiagClass   Class = DC;
   bit         SFINAE = 1;
+  bit         AccessControl = 0;
   DiagMapping DefaultMapping = defaultmapping;
   DiagGroup   Group;
   string      CategoryName = "";
@@ -74,6 +75,7 @@ class DefaultError  { DiagMapping DefaultMapping = MAP_ERROR; }
 class DefaultFatal  { DiagMapping DefaultMapping = MAP_FATAL; }
 
 class NoSFINAE { bit SFINAE = 0; }
+class AccessControl { bit AccessControl = 1; }
 
 // Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"
