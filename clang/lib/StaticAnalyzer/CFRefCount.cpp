@@ -451,6 +451,10 @@ public:
 
     return DefaultArgEffect;
   }
+  
+  void addArg(ArgEffects::Factory &af, unsigned idx, ArgEffect e) {
+    Args = af.add(Args, idx, e);
+  }
 
   /// setDefaultArgEffect - Set the default argument effect.
   void setDefaultArgEffect(ArgEffect E) {
@@ -1191,6 +1195,20 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   if (!FD)
     return;
 
+  // Effects on the parameters.
+  unsigned parm_idx = 0;
+  for (FunctionDecl::param_const_iterator pi = FD->param_begin(), 
+       pe = FD->param_end(); pi != pe; ++pi) {
+    const ParmVarDecl *pd = *pi;
+    if (pd->getAttr<NSConsumedAttr>()) {
+      if (!GCEnabled)
+        Summ.addArg(AF, parm_idx, DecRef);      
+    }
+    else if(pd->getAttr<CFConsumedAttr>()) {
+      Summ.addArg(AF, parm_idx, DecRef);      
+    }   
+  }
+  
   QualType RetTy = FD->getResultType();
 
   // Determine if there is a special return effect for this method.
@@ -1225,7 +1243,22 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
 
   // Effects on the receiver.
   if (MD->getAttr<NSConsumesSelfAttr>()) {
-    Summ.setReceiverEffect(DecRefMsg);      
+    if (!GCEnabled)
+      Summ.setReceiverEffect(DecRefMsg);      
+  }
+  
+  // Effects on the parameters.
+  unsigned parm_idx = 0;
+  for (ObjCMethodDecl::param_iterator pi=MD->param_begin(), pe=MD->param_end();
+       pi != pe; ++pi, ++parm_idx) {
+    const ParmVarDecl *pd = *pi;
+    if (pd->getAttr<NSConsumedAttr>()) {
+      if (!GCEnabled)
+        Summ.addArg(AF, parm_idx, DecRef);      
+    }
+    else if(pd->getAttr<CFConsumedAttr>()) {
+      Summ.addArg(AF, parm_idx, DecRef);      
+    }   
   }
   
   // Determine if there is a special return effect for this method.

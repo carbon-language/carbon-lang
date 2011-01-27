@@ -16,6 +16,12 @@
 #if __has_feature(attribute_ns_consumes_self)
 #define NS_CONSUMES_SELF __attribute__((ns_consumes_self))
 #endif
+#if __has_feature(attribute_ns_consumed)
+#define NS_CONSUMED __attribute__((ns_consumed))
+#endif
+#if __has_feature(attribute_cf_consumed)
+#define CF_CONSUMED __attribute__((cf_consumed))
+#endif
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from Mac OS X headers:
@@ -1215,6 +1221,8 @@ typedef NSString* MyStringTy;
 - (NSString*) newStringNoAttr;
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to methods that return an Objective-C object}}
 - (id) pseudoInit NS_CONSUMES_SELF NS_RETURNS_RETAINED;
++ (void) consume:(id) NS_CONSUMED x;
++ (void) consume2:(id) CF_CONSUMED x;
 @end
 
 static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions and methods}}
@@ -1244,6 +1252,24 @@ void testattr2_c() {
   TestOwnershipAttr *x = [[TestOwnershipAttr alloc] pseudoInit]; // no-warning
   [x release];
 }
+
+void testattr3() {
+  TestOwnershipAttr *x = [TestOwnershipAttr alloc]; // no-warning
+  [TestOwnershipAttr consume:x];
+  TestOwnershipAttr *y = [TestOwnershipAttr alloc]; // no-warning
+  [TestOwnershipAttr consume2:y];
+}
+
+void consume_ns(id NS_CONSUMED x);
+void consume_cf(id CF_CONSUMED x);
+
+void testattr4() {
+  TestOwnershipAttr *x = [TestOwnershipAttr alloc]; // no-warning
+  consume_ns(x);
+  TestOwnershipAttr *y = [TestOwnershipAttr alloc]; // no-warning
+  consume_cf(y);
+}
+
 
 @interface MyClassTestCFAttr : NSObject {}
 - (NSDate*) returnsCFRetained CF_RETURNS_RETAINED;
@@ -1418,7 +1444,7 @@ static void rdar_8724287(CFErrorRef error)
     while (error_to_dump != ((void*)0)) {
         CFDictionaryRef info;
 
-        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line 1421 and stored into 'info'}}
+        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line 1447 and stored into 'info'}}
 
         if (info != ((void*)0)) {
         }
