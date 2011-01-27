@@ -2537,13 +2537,14 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
     InitializationKind Kind(InitializationKind::CreateCopy(KeyLoc, 
                                                            SourceLocation()));
     
-    // Perform the initialization within a SFINAE trap.
-    // FIXME: We don't implement the access-checking bits yet, because we don't
-    // handle access control as part of SFINAE.
-    Sema::SFINAETrap SFINAE(Self);
+    // Perform the initialization within a SFINAE trap at translation unit 
+    // scope.
+    Sema::SFINAETrap SFINAE(Self, /*AccessCheckingSFINAE=*/true);
+    Sema::ContextRAII TUContext(Self, Self.Context.getTranslationUnitDecl());
     InitializationSequence Init(Self, To, Kind, &FromPtr, 1);
     if (Init.getKind() == InitializationSequence::FailedSequence)
       return false;
+
     ExprResult Result = Init.Perform(Self, To, Kind, MultiExprArg(&FromPtr, 1));
     return !Result.isInvalid() && !SFINAE.hasErrorOccurred();
   }

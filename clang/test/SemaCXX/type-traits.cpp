@@ -502,6 +502,12 @@ struct FromInt { FromInt(int); };
 struct ToInt { operator int(); };
 typedef void Function();
 
+void is_convertible_to();
+class PrivateCopy {
+  PrivateCopy(const PrivateCopy&);
+  friend void is_convertible_to();
+};
+
 void is_convertible_to() {
   int t01[T(__is_convertible_to(Int, Int))];
   int t02[F(__is_convertible_to(Int, IntAr))];
@@ -524,4 +530,5 @@ void is_convertible_to() {
   int t19[T(__is_convertible_to(IntAr&, const IntAr&))];
   int t20[F(__is_convertible_to(const IntAr&, IntAr&))];
   int t21[F(__is_convertible_to(Function, Function))];
+  int t22[F(__is_convertible_to(PrivateCopy, PrivateCopy))];
 }
