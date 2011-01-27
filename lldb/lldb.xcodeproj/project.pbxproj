@@ -870,7 +870,6 @@
 		26C72C951243229A0068DC16 /* SBStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBStream.cpp; path = source/API/SBStream.cpp; sourceTree = "<group>"; };
 		26C81CA411335651004BDC5A /* UUID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UUID.h; path = include/lldb/Core/UUID.h; sourceTree = "<group>"; };
 		26C81CA511335651004BDC5A /* UUID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UUID.cpp; path = source/Core/UUID.cpp; sourceTree = "<group>"; };
-		26C9DF03113C5B93006B0F94 /* lldb */ = {isa = PBXFileReference; lastKnownFileType = folder; name = lldb; path = include/lldb; sourceTree = "<group>"; };
 		26D0DD5010FE554D00271C65 /* BreakpointResolverAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverAddress.h; path = include/lldb/Breakpoint/BreakpointResolverAddress.h; sourceTree = "<group>"; };
 		26D0DD5110FE554D00271C65 /* BreakpointResolverFileLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverFileLine.h; path = include/lldb/Breakpoint/BreakpointResolverFileLine.h; sourceTree = "<group>"; };
 		26D0DD5210FE554D00271C65 /* BreakpointResolverName.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverName.h; path = include/lldb/Breakpoint/BreakpointResolverName.h; sourceTree = "<group>"; };
@@ -1146,7 +1145,6 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
-				26C9DF02113C5B80006B0F94 /* Include */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				26F5C22410F3D950009D5894 /* Tools */,
@@ -2106,14 +2104,6 @@
 				2689B0B5113EE47E00A4AEDB /* Symbols.cpp */,
 			);
 			name = MacOSX;
-			sourceTree = "<group>";
-		};
-		26C9DF02113C5B80006B0F94 /* Include */ = {
-			isa = PBXGroup;
-			children = (
-				26C9DF03113C5B93006B0F94 /* lldb */,
-			);
-			name = Include;
 			sourceTree = "<group>";
 		};
 		26F5C22410F3D950009D5894 /* Tools */ = {
