@@ -985,7 +985,7 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveValue(8);
     if (IDVal == ".8byte")
       return ParseDirectiveValue(8);
-    if (IDVal == ".single")
+    if (IDVal == ".single" || IDVal == ".float")
       return ParseDirectiveRealValue(APFloat::IEEEsingle);
     if (IDVal == ".double")
       return ParseDirectiveRealValue(APFloat::IEEEdouble);

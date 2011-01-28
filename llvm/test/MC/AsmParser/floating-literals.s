@@ -5,6 +5,9 @@
 # CHECK: .long	1077936128
 # CHECK: .long	1082549862
 .single 1.2455, +2.3, 3, + 4.2
+
+# CHECK: .long  1067928519
+.float 1.307
         
 # CHECK: .quad	4617315517961601024
 # CHECK: .quad	4597526701198935065
