@@ -168,7 +168,7 @@ private:
   /// will be either the EndOfStatement or EOF.
   StringRef ParseStringToEndOfStatement();
 
-  bool ParseAssignment(StringRef Name);
+  bool ParseAssignment(StringRef Name, bool allow_redef);
 
   bool ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc);
   bool ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res, SMLoc &EndLoc);
@@ -187,7 +187,7 @@ private:
   bool ParseDirectiveFill(); // ".fill"
   bool ParseDirectiveSpace(); // ".space"
   bool ParseDirectiveZero(); // ".zero"
-  bool ParseDirectiveSet(StringRef IDVal); // ".set" or ".equ"
+  bool ParseDirectiveSet(StringRef IDVal, bool allow_redef); // ".set", ".equ", ".equiv"
   bool ParseDirectiveOrg(); // ".org"
   // ".align{,32}", ".p2align{,w,l}"
   bool ParseDirectiveAlign(bool IsPow2, unsigned ValueSize);
@@ -941,7 +941,7 @@ bool AsmParser::ParseStatement() {
     // identifier '=' ... -> assignment statement
     Lex();
 
-    return ParseAssignment(IDVal);
+    return ParseAssignment(IDVal, true);
 
   default: // Normal instruction or directive.
     break;
@@ -956,7 +956,9 @@ bool AsmParser::ParseStatement() {
   if (IDVal[0] == '.') {
     // Assembler features
     if (IDVal == ".set" || IDVal == ".equ")
-      return ParseDirectiveSet(IDVal);
+      return ParseDirectiveSet(IDVal, true);
+    if (IDVal == ".equiv")
+      return ParseDirectiveSet(IDVal, false);
 
     // Data directives
 
@@ -1263,7 +1265,7 @@ static void MarkUsed(const MCExpr *Value) {
   }
 }
 
-bool AsmParser::ParseAssignment(StringRef Name) {
+bool AsmParser::ParseAssignment(StringRef Name, bool allow_redef) {
   // FIXME: Use better location, we should use proper tokens.
   SMLoc EqualLoc = Lexer.getLoc();
 
@@ -1289,7 +1291,7 @@ bool AsmParser::ParseAssignment(StringRef Name) {
     // FIXME: Diagnose assignment to protected identifier (e.g., register name).
     if (Sym->isUndefined() && !Sym->isUsed() && !Sym->isVariable())
       ; // Allow redefinitions of undefined symbols only used in directives.
-    else if (!Sym->isUndefined() && !Sym->isAbsolute())
+    else if (!Sym->isUndefined() && (!Sym->isAbsolute() || !allow_redef))
       return Error(EqualLoc, "redefinition of '" + Name + "'");
     else if (!Sym->isVariable())
       return Error(EqualLoc, "invalid assignment to '" + Name + "'");
@@ -1350,8 +1352,10 @@ bool AsmParser::ParseIdentifier(StringRef &Res) {
 }
 
 /// ParseDirectiveSet:
+///   ::= .equ identifier ',' expression
+///   ::= .equiv identifier ',' expression
 ///   ::= .set identifier ',' expression
-bool AsmParser::ParseDirectiveSet(StringRef IDVal) {
+bool AsmParser::ParseDirectiveSet(StringRef IDVal, bool allow_redef) {
   StringRef Name;
 
   if (ParseIdentifier(Name))
@@ -1361,7 +1365,7 @@ bool AsmParser::ParseDirectiveSet(StringRef IDVal) {
     return TokError("unexpected token in '" + Twine(IDVal) + "'");
   Lex();
 
-  return ParseAssignment(Name);
+  return ParseAssignment(Name, allow_redef);
 }
 
 bool AsmParser::ParseEscapedString(std::string &Data) {
