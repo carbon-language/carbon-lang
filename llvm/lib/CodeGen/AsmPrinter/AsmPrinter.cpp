@@ -753,7 +753,20 @@ bool AsmPrinter::doFinalization(Module &M) {
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     EmitGlobalVariable(I);
-  
+
+  // Emit visibility info for declarations
+  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    const Function &F = *I;
+    if (!F.isDeclaration())
+      continue;
+    GlobalValue::VisibilityTypes V = F.getVisibility();
+    if (V == GlobalValue::DefaultVisibility)
+      continue;
+
+    MCSymbol *Name = Mang->getSymbol(&F);
+    EmitVisibility(Name, V);
+  }
+
   // Finalize debug and EH information.
   if (DE) {
     {
