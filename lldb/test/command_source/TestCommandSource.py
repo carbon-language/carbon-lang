@@ -4,7 +4,7 @@ Test that lldb command "command source" works correctly.
 See also http://llvm.org/viewvc/llvm-project?view=rev&revision=109673.
 """
 
-import os, time
+import os, sys
 import unittest2
 import lldb
 from lldbtest import *
