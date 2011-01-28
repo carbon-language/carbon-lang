@@ -253,6 +253,61 @@ emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
+// Set r7 or ip to the current stack pointer.
+// MOV (register)
+static bool
+emulate_mov_rd_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        result = R[m];
+        if d == 15 then
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                // APSR.C unchanged
+                // APSR.V unchanged
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        uint32_t Rd; // the destination register
+        switch (encoding) {
+        case eEncodingT1:
+            Rd = 7;
+            break;
+        case eEncodingA1:
+            Rd = 12;
+            break;
+        default:
+            return false;
+        }
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindGeneric,
+                                                LLDB_REGNUM_GENERIC_SP,
+                                                0 };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, sp))
+            return false;
+    }
+    return true;
+}
+
 // PC relative immediate load into register, possibly followed by ADD (SP plus register).
 // LDR (literal)
 static bool
@@ -722,14 +777,16 @@ static ARMOpcode g_arm_opcodes[] =
 
     // set r7 to point to a stack offset
     { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add r7, sp, #<const>" },
-    { 0x0ffff000, 0xe24c7000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_r7_ip_imm, "sub r7, ip, #<const>"},
+    { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_r7_ip_imm, "sub r7, ip, #<const>"},
     // set ip to point to a stack offset
+    { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, emulate_mov_rd_sp, "mov ip, sp" },
     { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add ip, sp, #<const>" },
-    { 0x0ffff000, 0xe24dc000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_ip_sp_imm, "sub ip, sp, #<const>"},
+    { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_ip_sp_imm, "sub ip, sp, #<const>"},
 
     // adjust the stack pointer
     { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_sp_imm, "sub sp, sp, #<const>"},
 
+    // push one register
     // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
     { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp, "str Rt, [sp, #-imm12]!" },
 
@@ -746,7 +803,8 @@ static ARMOpcode g_thumb_opcodes[] =
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push, "push.w <register>" },
 
     // set r7 to point to a stack offset
-    { 0xffffff00, 0x000af00, ARMvAll,        eEncodingT1, eSize16, emulate_add_rd_sp_imm, "add r7, sp, #imm" },
+    { 0xffffff00, 0x0000af00, ARMvAll,        eEncodingT1, eSize16, emulate_add_rd_sp_imm, "add r7, sp, #imm" },
+    { 0xffffffff, 0x0000466f, ARMvAll,        eEncodingT1, eSize16, emulate_mov_rd_sp, "mov r7, sp" },
 
     // PC relative load into register (see also emulate_add_sp_rm)
     { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, emulate_ldr_rd_pc_rel, "ldr <Rd>, [PC, #imm]"},
