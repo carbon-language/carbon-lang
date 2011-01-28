@@ -186,3 +186,8 @@ print-%:
 	@echo '  origin = $(origin $*)'
 	@echo '  flavor = $(flavor $*)'
 	@echo '   value = $(value  $*)'
+
+
+### Local Variables: ###
+### mode:makefile ###
+### End: ###
