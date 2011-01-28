@@ -29,13 +29,13 @@ class CommandSourceTestCase(TestBase):
         # Python should evaluate "my.date()" successfully.
         self.runCmd("script my.date()")
 
+        # Now restore stdout to the way we were. :-)
+        sys.stdout = old_stdout
+
         import datetime
         self.expect(session.getvalue(), "script my.date() runs successfully",
                     exe=False,
             substrs = [str(datetime.date.today())])
-
-        # Now restore stdout to the way we were. :-)
-        sys.stdout = old_stdout
 
 
 if __name__ == '__main__':
