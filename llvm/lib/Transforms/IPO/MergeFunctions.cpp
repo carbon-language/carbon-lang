@@ -90,6 +90,8 @@ static unsigned ProfileFunction(const Function *F) {
 
 namespace {
 
+/// ComparableFunction - A struct that pairs together functions with a
+/// TargetData so that we can keep them together as elements in the DenseSet.
 class ComparableFunction {
 public:
   static const ComparableFunction EmptyKey;
