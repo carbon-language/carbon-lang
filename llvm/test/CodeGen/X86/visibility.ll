@@ -1,4 +1,4 @@
-; RUN: llc  %s -o - | FileCheck %s
+; RUN: llc -mtriple=x86_64-unknown-linux-gnu %s -o - | FileCheck %s
 
 define hidden void @foo() nounwind {
 entry:
