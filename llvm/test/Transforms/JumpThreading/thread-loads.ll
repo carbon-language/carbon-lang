@@ -1,4 +1,4 @@
-; RUN: opt < %s -jump-threading -simplifycfg -S | grep {ret i32 1}
+; RUN: opt < %s -jump-threading -S | FileCheck %s
 ; rdar://6402033
 
 ; Test that we can thread through the block with the partially redundant load (%2).
@@ -6,12 +6,16 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 target triple = "i386-apple-darwin7"
 
 define i32 @foo(i32* %P) nounwind {
+; CHECK: foo
 entry:
 	%0 = tail call i32 (...)* @f1() nounwind		; <i32> [#uses=1]
 	%1 = icmp eq i32 %0, 0		; <i1> [#uses=1]
 	br i1 %1, label %bb1, label %bb
 
 bb:		; preds = %entry
+; CHECK: bb1.thread:
+; CHECK: store
+; CHECK: br label %bb3
 	store i32 42, i32* %P, align 4
 	br label %bb1
 
@@ -26,6 +30,9 @@ bb2:		; preds = %bb1
 	ret i32 %res.0
 
 bb3:		; preds = %bb1
+; CHECK: bb3:
+; CHECK: %res.01 = phi i32 [ 1, %bb1.thread ], [ 0, %bb1 ]
+; CHECK: ret i32 %res.01
 	ret i32 %res.0
 }
 

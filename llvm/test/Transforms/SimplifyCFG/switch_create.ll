@@ -147,7 +147,7 @@ UnifiedReturnBlock:             ; preds = %shortcirc_done.4, %shortcirc_next.4
 ; CHECK:       i32 16, label %UnifiedReturnBlock
 ; CHECK:       i32 17, label %UnifiedReturnBlock
 ; CHECK:       i32 18, label %UnifiedReturnBlock
-; CHECK:       i32 19, label %switch.edge
+; CHECK:       i32 19, label %UnifiedReturnBlock
 ; CHECK:     ]
 }
 
@@ -440,4 +440,30 @@ if.end:
 ; CHECK: @test15
 ; CHECK-NOT: switch
 ; CHECK: ret void
+}
+
+; PR8675
+; rdar://5134905
+define zeroext i1 @test16(i32 %x) nounwind {
+entry:
+; CHECK: @test16
+; CHECK: switch i32 %x, label %lor.rhs [
+; CHECK:   i32 1, label %lor.end
+; CHECK:   i32 2, label %lor.end
+; CHECK:   i32 3, label %lor.end
+; CHECK: ]
+  %cmp.i = icmp eq i32 %x, 1
+  br i1 %cmp.i, label %lor.end, label %lor.lhs.false
+
+lor.lhs.false:
+  %cmp.i2 = icmp eq i32 %x, 2
+  br i1 %cmp.i2, label %lor.end, label %lor.rhs
+
+lor.rhs:
+  %cmp.i1 = icmp eq i32 %x, 3
+  br label %lor.end
+
+lor.end:
+  %0 = phi i1 [ true, %lor.lhs.false ], [ true, %entry ], [ %cmp.i1, %lor.rhs ]
+  ret i1 %0
 }
