@@ -288,6 +288,12 @@ emulate_ldr_rd_pc_rel (EmulateInstructionARM *emulator, ARMEncoding encoding)
         const uint32_t pc = emulator->ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
         if (!success)
             return false;
+
+        // PC relative immediate load context
+        EmulateInstruction::Context context = {EmulateInstruction::eContextRegisterPlusOffset,
+                                               eRegisterKindGeneric,
+                                               LLDB_REGNUM_GENERIC_PC,
+                                               0};
         uint32_t Rd; // the destination register
         uint32_t imm32; // immediate offset from the PC
         addr_t addr;    // the PC relative address
@@ -297,21 +303,14 @@ emulate_ldr_rd_pc_rel (EmulateInstructionARM *emulator, ARMEncoding encoding)
             Rd = Bits32(opcode, 10, 8);
             imm32 = Bits32(opcode, 7, 0) << 2; // imm32 = ZeroExtend(imm8:'00', 32);
             addr = pc + 4 + imm32;
+            context.arg2 = 4 + imm32;
             break;
         default:
             return false;
         }
-        EmulateInstruction::Context read_data_context = {EmulateInstruction::eContextReadMemory, 0, 0, 0};
-        success = false;
-        data = emulator->ReadMemoryUnsigned(read_data_context, addr, 4, 0, &success);
+        data = emulator->ReadMemoryUnsigned(context, addr, 4, 0, &success);
         if (!success)
-            return false;
-
-        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
-                                                eRegisterKindDWARF,
-                                                dwarf_r0 + Rd,
-                                                data };
-    
+            return false;    
         if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, data))
             return false;
     }
