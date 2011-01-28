@@ -71,10 +71,10 @@ STATISTIC(NumThunksWritten, "Number of thunks generated");
 STATISTIC(NumAliasesWritten, "Number of aliases generated");
 STATISTIC(NumDoubleWeak, "Number of new functions created");
 
-/// ProfileFunction - Creates a hash-code for the function which is the same
-/// for any two functions that will compare equal, without looking at the
-/// instructions inside the function.
-static unsigned ProfileFunction(const Function *F) {
+/// Creates a hash-code for the function which is the same for any two
+/// functions that will compare equal, without looking at the instructions
+/// inside the function.
+static unsigned profileFunction(const Function *F) {
   const FunctionType *FTy = F->getFunctionType();
 
   FoldingSetNodeID ID;
@@ -98,7 +98,7 @@ public:
   static const ComparableFunction TombstoneKey;
 
   ComparableFunction(Function *Func, TargetData *TD)
-    : Func(Func), Hash(ProfileFunction(Func)), TD(TD) {}
+    : Func(Func), Hash(profileFunction(Func)), TD(TD) {}
 
   Function *getFunc() const { return Func; }
   unsigned getHash() const { return Hash; }
@@ -169,32 +169,32 @@ public:
                      const Function *F2)
     : F1(F1), F2(F2), TD(TD), IDMap1Count(0), IDMap2Count(0) {}
 
-  /// Compare - test whether the two functions have equivalent behaviour.
-  bool Compare();
+  /// Test whether the two functions have equivalent behaviour.
+  bool compare();
 
 private:
-  /// Compare - test whether two basic blocks have equivalent behaviour.
-  bool Compare(const BasicBlock *BB1, const BasicBlock *BB2);
+  /// Test whether two basic blocks have equivalent behaviour.
+  bool compare(const BasicBlock *BB1, const BasicBlock *BB2);
 
-  /// Enumerate - Assign or look up previously assigned numbers for the two
-  /// values, and return whether the numbers are equal. Numbers are assigned in
-  /// the order visited.
-  bool Enumerate(const Value *V1, const Value *V2);
+  /// Assign or look up previously assigned numbers for the two values, and
+  /// return whether the numbers are equal. Numbers are assigned in the order
+  /// visited.
+  bool enumerate(const Value *V1, const Value *V2);
 
-  /// isEquivalentOperation - Compare two Instructions for equivalence, similar
-  /// to Instruction::isSameOperationAs but with modifications to the type
+  /// Compare two Instructions for equivalence, similar to
+  /// Instruction::isSameOperationAs but with modifications to the type
   /// comparison.
   bool isEquivalentOperation(const Instruction *I1,
                              const Instruction *I2) const;
 
-  /// isEquivalentGEP - Compare two GEPs for equivalent pointer arithmetic.
+  /// Compare two GEPs for equivalent pointer arithmetic.
   bool isEquivalentGEP(const GEPOperator *GEP1, const GEPOperator *GEP2);
   bool isEquivalentGEP(const GetElementPtrInst *GEP1,
                        const GetElementPtrInst *GEP2) {
     return isEquivalentGEP(cast<GEPOperator>(GEP1), cast<GEPOperator>(GEP2));
   }
 
-  /// isEquivalentType - Compare two Types, treating all pointer types as equal.
+  /// Compare two Types, treating all pointer types as equal.
   bool isEquivalentType(const Type *Ty1, const Type *Ty2) const;
 
   // The two functions undergoing comparison.
@@ -209,8 +209,8 @@ private:
 
 }
 
-/// isEquivalentType - any two pointers in the same address space are
-/// equivalent. Otherwise, standard type equivalence rules apply.
+// Any two pointers in the same address space are equivalent, intptr_t and
+// pointers are equivalent. Otherwise, standard type equivalence rules apply.
 bool FunctionComparator::isEquivalentType(const Type *Ty1,
                                           const Type *Ty2) const {
   if (Ty1 == Ty2)
@@ -292,9 +292,9 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
   }
 }
 
-/// isEquivalentOperation - determine whether the two operations are the same
-/// except that pointer-to-A and pointer-to-B are equivalent. This should be
-/// kept in sync with Instruction::isSameOperationAs.
+// Determine whether the two operations are the same except that pointer-to-A
+// and pointer-to-B are equivalent. This should be kept in sync with
+// Instruction::isSameOperationAs.
 bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
                                                const Instruction *I2) const {
   if (I1->getOpcode() != I2->getOpcode() ||
@@ -346,8 +346,7 @@ bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
   return true;
 }
 
-/// isEquivalentGEP - determine whether two GEP operations perform the same
-/// underlying arithmetic.
+// Determine whether two GEP operations perform the same underlying arithmetic.
 bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
                                          const GEPOperator *GEP2) {
   // When we have target data, we can reduce the GEP down to the value in bytes
@@ -370,17 +369,17 @@ bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
     return false;
 
   for (unsigned i = 0, e = GEP1->getNumOperands(); i != e; ++i) {
-    if (!Enumerate(GEP1->getOperand(i), GEP2->getOperand(i)))
+    if (!enumerate(GEP1->getOperand(i), GEP2->getOperand(i)))
       return false;
   }
 
   return true;
 }
 
-/// Enumerate - Compare two values used by the two functions under pair-wise
-/// comparison. If this is the first time the values are seen, they're added to
-/// the mapping so that we will detect mismatches on next use.
-bool FunctionComparator::Enumerate(const Value *V1, const Value *V2) {
+// Compare two values used by the two functions under pair-wise comparison. If
+// this is the first time the values are seen, they're added to the mapping so
+// that we will detect mismatches on next use.
+bool FunctionComparator::enumerate(const Value *V1, const Value *V2) {
   // Check for function @f1 referring to itself and function @f2 referring to
   // itself, or referring to each other, or both referring to either of them.
   // They're all equivalent if the two functions are otherwise equivalent.
@@ -421,13 +420,13 @@ bool FunctionComparator::Enumerate(const Value *V1, const Value *V2) {
   return ID1 == ID2;
 }
 
-/// Compare - test whether two basic blocks have equivalent behaviour.
-bool FunctionComparator::Compare(const BasicBlock *BB1, const BasicBlock *BB2) {
+// Test whether two basic blocks have equivalent behaviour.
+bool FunctionComparator::compare(const BasicBlock *BB1, const BasicBlock *BB2) {
   BasicBlock::const_iterator F1I = BB1->begin(), F1E = BB1->end();
   BasicBlock::const_iterator F2I = BB2->begin(), F2E = BB2->end();
 
   do {
-    if (!Enumerate(F1I, F2I))
+    if (!enumerate(F1I, F2I))
       return false;
 
     if (const GetElementPtrInst *GEP1 = dyn_cast<GetElementPtrInst>(F1I)) {
@@ -435,7 +434,7 @@ bool FunctionComparator::Compare(const BasicBlock *BB1, const BasicBlock *BB2) {
       if (!GEP2)
         return false;
 
-      if (!Enumerate(GEP1->getPointerOperand(), GEP2->getPointerOperand()))
+      if (!enumerate(GEP1->getPointerOperand(), GEP2->getPointerOperand()))
         return false;
 
       if (!isEquivalentGEP(GEP1, GEP2))
@@ -449,7 +448,7 @@ bool FunctionComparator::Compare(const BasicBlock *BB1, const BasicBlock *BB2) {
         Value *OpF1 = F1I->getOperand(i);
         Value *OpF2 = F2I->getOperand(i);
 
-        if (!Enumerate(OpF1, OpF2))
+        if (!enumerate(OpF1, OpF2))
           return false;
 
         if (OpF1->getValueID() != OpF2->getValueID() ||
@@ -464,8 +463,8 @@ bool FunctionComparator::Compare(const BasicBlock *BB1, const BasicBlock *BB2) {
   return F1I == F1E && F2I == F2E;
 }
 
-/// Compare - test whether the two functions have equivalent behaviour.
-bool FunctionComparator::Compare() {
+// Test whether the two functions have equivalent behaviour.
+bool FunctionComparator::compare() {
   // We need to recheck everything, but check the things that weren't included
   // in the hash first.
 
@@ -502,7 +501,7 @@ bool FunctionComparator::Compare() {
   // passed in.
   for (Function::const_arg_iterator f1i = F1->arg_begin(),
          f2i = F2->arg_begin(), f1e = F1->arg_end(); f1i != f1e; ++f1i, ++f2i) {
-    if (!Enumerate(f1i, f2i))
+    if (!enumerate(f1i, f2i))
       llvm_unreachable("Arguments repeat!");
   }
 
@@ -521,7 +520,7 @@ bool FunctionComparator::Compare() {
     const BasicBlock *F1BB = F1BBs.pop_back_val();
     const BasicBlock *F2BB = F2BBs.pop_back_val();
 
-    if (!Enumerate(F1BB, F2BB) || !Compare(F1BB, F2BB))
+    if (!enumerate(F1BB, F2BB) || !compare(F1BB, F2BB))
       return false;
 
     const TerminatorInst *F1TI = F1BB->getTerminator();
@@ -565,37 +564,37 @@ private:
 
   /// Insert a ComparableFunction into the FnSet, or merge it away if it's
   /// equal to one that's already present.
-  bool Insert(ComparableFunction &NewF);
+  bool insert(ComparableFunction &NewF);
 
   /// Remove a Function from the FnSet and queue it up for a second sweep of
   /// analysis.
-  void Remove(Function *F);
+  void remove(Function *F);
 
   /// Find the functions that use this Value and remove them from FnSet and
   /// queue the functions.
-  void RemoveUsers(Value *V);
+  void removeUsers(Value *V);
 
   /// Replace all direct calls of Old with calls of New. Will bitcast New if
   /// necessary to make types match.
   void replaceDirectCallers(Function *Old, Function *New);
 
-  /// MergeTwoFunctions - Merge two equivalent functions. Upon completion, G
-  /// may be deleted, or may be converted into a thunk. In either case, it
-  /// should never be visited again.
-  void MergeTwoFunctions(Function *F, Function *G);
+  /// Merge two equivalent functions. Upon completion, G may be deleted, or may
+  /// be converted into a thunk. In either case, it should never be visited
+  /// again.
+  void mergeTwoFunctions(Function *F, Function *G);
 
-  /// WriteThunkOrAlias - Replace G with a thunk or an alias to F. Deletes G.
-  void WriteThunkOrAlias(Function *F, Function *G);
+  /// Replace G with a thunk or an alias to F. Deletes G.
+  void writeThunkOrAlias(Function *F, Function *G);
 
-  /// WriteThunk - Replace G with a simple tail call to bitcast(F). Also
-  /// replace direct uses of G with bitcast(F). Deletes G.
-  void WriteThunk(Function *F, Function *G);
+  /// Replace G with a simple tail call to bitcast(F). Also replace direct uses
+  /// of G with bitcast(F). Deletes G.
+  void writeThunk(Function *F, Function *G);
 
-  /// WriteAlias - Replace G with an alias to F. Deletes G.
-  void WriteAlias(Function *F, Function *G);
+  /// Replace G with an alias to F. Deletes G.
+  void writeAlias(Function *F, Function *G);
 
-  /// The set of all distinct functions. Use the Insert and Remove methods to
-  /// modify it.
+  /// The set of all distinct functions. Use the insert() and remove() methods
+  /// to modify it.
   FnSetType FnSet;
 
   /// TargetData for more accurate GEP comparisons. May be NULL.
@@ -640,7 +639,7 @@ bool MergeFunctions::runOnModule(Module &M) {
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
           !F->mayBeOverridden()) {
         ComparableFunction CF = ComparableFunction(F, TD);
-        Changed |= Insert(CF);
+        Changed |= insert(CF);
       }
     }
 
@@ -655,7 +654,7 @@ bool MergeFunctions::runOnModule(Module &M) {
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
           F->mayBeOverridden()) {
         ComparableFunction CF = ComparableFunction(F, TD);
-        Changed |= Insert(CF);
+        Changed |= insert(CF);
       }
     }
     DEBUG(dbgs() << "size of FnSet: " << FnSet.size() << '\n');
@@ -685,10 +684,10 @@ bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
     return result1 = result2;
 
   return result1 = result2 = FunctionComparator(LHS.getTD(), LHS.getFunc(),
-                                                RHS.getFunc()).Compare();
+                                                RHS.getFunc()).compare();
 }
 
-/// Replace direct callers of Old with New.
+// Replace direct callers of Old with New.
 void MergeFunctions::replaceDirectCallers(Function *Old, Function *New) {
   Constant *BitcastNew = ConstantExpr::getBitCast(New, Old->getType());
   for (Value::use_iterator UI = Old->use_begin(), UE = Old->use_end();
@@ -697,27 +696,28 @@ void MergeFunctions::replaceDirectCallers(Function *Old, Function *New) {
     ++UI;
     CallSite CS(*TheIter);
     if (CS && CS.isCallee(TheIter)) {
-      Remove(CS.getInstruction()->getParent()->getParent());
+      remove(CS.getInstruction()->getParent()->getParent());
       TheIter.getUse().set(BitcastNew);
     }
   }
 }
 
-void MergeFunctions::WriteThunkOrAlias(Function *F, Function *G) {
+// Replace G with an alias to F if possible, or else a thunk to F. Deletes G.
+void MergeFunctions::writeThunkOrAlias(Function *F, Function *G) {
   if (HasGlobalAliases && G->hasUnnamedAddr()) {
     if (G->hasExternalLinkage() || G->hasLocalLinkage() ||
         G->hasWeakLinkage()) {
-      WriteAlias(F, G);
+      writeAlias(F, G);
       return;
     }
   }
 
-  WriteThunk(F, G);
+  writeThunk(F, G);
 }
 
-/// WriteThunk - Replace G with a simple tail call to bitcast(F). Also replace
-/// direct uses of G with bitcast(F). Deletes G.
-void MergeFunctions::WriteThunk(Function *F, Function *G) {
+// Replace G with a simple tail call to bitcast(F). Also replace direct uses
+// of G with bitcast(F). Deletes G.
+void MergeFunctions::writeThunk(Function *F, Function *G) {
   if (!G->mayBeOverridden()) {
     // Redirect direct callers of G to F.
     replaceDirectCallers(G, F);
@@ -755,33 +755,32 @@ void MergeFunctions::WriteThunk(Function *F, Function *G) {
 
   NewG->copyAttributesFrom(G);
   NewG->takeName(G);
-  RemoveUsers(G);
+  removeUsers(G);
   G->replaceAllUsesWith(NewG);
   G->eraseFromParent();
 
-  DEBUG(dbgs() << "WriteThunk: " << NewG->getName() << '\n');
+  DEBUG(dbgs() << "writeThunk: " << NewG->getName() << '\n');
   ++NumThunksWritten;
 }
 
-/// WriteAlias - Replace G with an alias to F and delete G.
-void MergeFunctions::WriteAlias(Function *F, Function *G) {
+// Replace G with an alias to F and delete G.
+void MergeFunctions::writeAlias(Function *F, Function *G) {
   Constant *BitcastF = ConstantExpr::getBitCast(F, G->getType());
   GlobalAlias *GA = new GlobalAlias(G->getType(), G->getLinkage(), "",
                                     BitcastF, G->getParent());
   F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
   GA->takeName(G);
   GA->setVisibility(G->getVisibility());
-  RemoveUsers(G);
+  removeUsers(G);
   G->replaceAllUsesWith(GA);
   G->eraseFromParent();
 
-  DEBUG(dbgs() << "WriteAlias: " << GA->getName() << '\n');
+  DEBUG(dbgs() << "writeAlias: " << GA->getName() << '\n');
   ++NumAliasesWritten;
 }
 
-/// MergeTwoFunctions - Merge two equivalent functions. Upon completion,
-/// Function G is deleted.
-void MergeFunctions::MergeTwoFunctions(Function *F, Function *G) {
+// Merge two equivalent functions. Upon completion, Function G is deleted.
+void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
   if (F->mayBeOverridden()) {
     assert(G->mayBeOverridden());
 
@@ -791,13 +790,13 @@ void MergeFunctions::MergeTwoFunctions(Function *F, Function *G) {
                                      F->getParent());
       H->copyAttributesFrom(F);
       H->takeName(F);
-      RemoveUsers(F);
+      removeUsers(F);
       F->replaceAllUsesWith(H);
 
       unsigned MaxAlignment = std::max(G->getAlignment(), H->getAlignment());
 
-      WriteAlias(F, G);
-      WriteAlias(F, H);
+      writeAlias(F, G);
+      writeAlias(F, H);
 
       F->setAlignment(MaxAlignment);
       F->setLinkage(GlobalValue::PrivateLinkage);
@@ -809,15 +808,15 @@ void MergeFunctions::MergeTwoFunctions(Function *F, Function *G) {
 
     ++NumDoubleWeak;
   } else {
-    WriteThunkOrAlias(F, G);
+    writeThunkOrAlias(F, G);
   }
 
   ++NumFunctionsMerged;
 }
 
-// Insert - Insert a ComparableFunction into the FnSet, or merge it away if
-// equal to one that's already inserted.
-bool MergeFunctions::Insert(ComparableFunction &NewF) {
+// Insert a ComparableFunction into the FnSet, or merge it away if equal to one
+// that was already inserted.
+bool MergeFunctions::insert(ComparableFunction &NewF) {
   std::pair<FnSetType::iterator, bool> Result = FnSet.insert(NewF);
   if (Result.second)
     return false;
@@ -833,22 +832,22 @@ bool MergeFunctions::Insert(ComparableFunction &NewF) {
 
   Function *DeleteF = NewF.getFunc();
   NewF.release();
-  MergeTwoFunctions(OldF.getFunc(), DeleteF);
+  mergeTwoFunctions(OldF.getFunc(), DeleteF);
   return true;
 }
 
-// Remove - Remove a function from FnSet. If it was already in FnSet, add it to
-// Deferred so that we'll look at it in the next round.
-void MergeFunctions::Remove(Function *F) {
+// Remove a function from FnSet. If it was already in FnSet, add it to Deferred
+// so that we'll look at it in the next round.
+void MergeFunctions::remove(Function *F) {
   ComparableFunction CF = ComparableFunction(F, TD);
   if (FnSet.erase(CF)) {
     Deferred.push_back(F);
   }
 }
 
-// RemoveUsers - For each instruction used by the value, Remove() the function
-// that contains the instruction. This should happen right before a call to RAUW.
-void MergeFunctions::RemoveUsers(Value *V) {
+// For each instruction used by the value, remove() the function that contains
+// the instruction. This should happen right before a call to RAUW.
+void MergeFunctions::removeUsers(Value *V) {
   std::vector<Value *> Worklist;
   Worklist.push_back(V);
   while (!Worklist.empty()) {
@@ -859,7 +858,7 @@ void MergeFunctions::RemoveUsers(Value *V) {
          UI != UE; ++UI) {
       Use &U = UI.getUse();
       if (Instruction *I = dyn_cast<Instruction>(U.getUser())) {
-        Remove(I->getParent()->getParent());
+        remove(I->getParent()->getParent());
       } else if (isa<GlobalValue>(U.getUser())) {
         // do nothing
       } else if (Constant *C = dyn_cast<Constant>(U.getUser())) {
