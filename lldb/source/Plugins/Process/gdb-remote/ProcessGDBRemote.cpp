@@ -1845,14 +1845,27 @@ ProcessGDBRemote::StartDebugserverProcess
             lldb_utility::PseudoTerminal pty;
             const char *stdio_path = NULL;
             if (launch_process && 
-                stdin_path == NULL && 
-                stdout_path == NULL && 
-                stderr_path == NULL && 
+                (stdin_path == NULL || stdout_path == NULL || stderr_path == NULL) &&
                 m_local_debugserver &&
                 no_stdio == false)
             {
                 if (pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
-                    stdio_path = pty.GetSlaveName (NULL, 0);
+                {
+                    const char *slave_name = pty.GetSlaveName (NULL, 0);
+                    if (stdin_path == NULL
+                        && stdout_path == NULL
+                        && stderr_path == NULL)
+                        stdio_path = slave_name;
+                    else
+                    {
+                        if (stdin_path == NULL)
+                            stdin_path = slave_name;
+                        if (stdout_path == NULL)
+                            stdout_path = slave_name;
+                        if (stderr_path == NULL)
+                            stderr_path = slave_name;
+                    }
+                }
             }
 
             // Start args with "debugserver /file/path -r --"
