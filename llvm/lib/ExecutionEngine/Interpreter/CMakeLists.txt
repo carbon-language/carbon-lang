@@ -6,14 +6,6 @@ if( FFI_INCLUDE_PATH )
   include_directories( ${FFI_INCLUDE_PATH} )
 endif()
 
-# Make sure that the path to libffi archive is on the command
-# line. That path can be a linker's non-default path even when
-# FFI_LIBRARY_DIR was not used, because cmake has its own paths for
-# searching for libraries (CMAKE_SYSTEM_LIBRARY_PATH, for instance):
-if( FFI_LIBRARY_PATH )
-  link_directories( ${FFI_LIBRARY_PATH} )
-endif()
-
 add_llvm_library(LLVMInterpreter
   Execution.cpp
   ExternalFunctions.cpp
@@ -21,5 +13,5 @@ add_llvm_library(LLVMInterpreter
   )
 
 if( LLVM_ENABLE_FFI )
-  target_link_libraries( LLVMInterpreter ffi )
+  target_link_libraries( LLVMInterpreter ${FFI_LIBRARY_PATH} )
 endif()
