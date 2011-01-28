@@ -7,26 +7,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <array>
+// <deque>
 
-// iterator begin();
+// Test nested types and default template args:
 
-#include <array>
+// template <class T, class Allocator = allocator<T> >
+// class deque;
+
+// iterator, const_iterator
+
+#include <deque>
+#include <iterator>
 #include <cassert>
 
 int main()
 {
-    {
-        typedef double T;
-        typedef std::array<T, 3> C;
-        C c = {1, 2, 3.5};
-        C::iterator i;
-        i = c.begin();
-        assert(*i == 1);
-        assert(&*i == c.data());
-        *i = 5.5;
-        assert(c[0] == 5.5);
-    }
-    {
-    }
+    typedef std::deque<int> C;
+    C c;
+    C::iterator i;
+    i = c.begin();
+    C::const_iterator j;
+    j = c.cbegin();
+    assert(i == j);
 }

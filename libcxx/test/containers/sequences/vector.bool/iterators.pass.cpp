@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <forward_list>
+// <vector>
 
 // iterator       begin();
 // iterator       end();
@@ -16,15 +16,15 @@
 // const_iterator cbegin() const;
 // const_iterator cend()   const;
 
-#include <forward_list>
+#include <vector>
 #include <cassert>
 #include <iterator>
 
 int main()
 {
     {
-        typedef int T;
-        typedef std::forward_list<T> C;
+        typedef bool T;
+        typedef std::vector<T> C;
         C c;
         C::iterator i = c.begin();
         C::iterator j = c.end();
@@ -32,8 +32,8 @@ int main()
         assert(i == j);
     }
     {
-        typedef int T;
-        typedef std::forward_list<T> C;
+        typedef bool T;
+        typedef std::vector<T> C;
         const C c;
         C::const_iterator i = c.begin();
         C::const_iterator j = c.end();
@@ -41,8 +41,8 @@ int main()
         assert(i == j);
     }
     {
-        typedef int T;
-        typedef std::forward_list<T> C;
+        typedef bool T;
+        typedef std::vector<T> C;
         C c;
         C::const_iterator i = c.cbegin();
         C::const_iterator j = c.cend();
@@ -51,21 +51,8 @@ int main()
         assert(i == c.end());
     }
     {
-        typedef int T;
-        typedef std::forward_list<T> C;
-        const T t[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        C c(std::begin(t), std::end(t));
-        C::iterator i = c.begin();
-        assert(*i == 0);
-        ++i;
-        assert(*i == 1);
-        *i = 10;
-        assert(*i == 10);
-        assert(std::distance(c.begin(), c.end()) == 10);
-    }
-    {
-        typedef int T;
-        typedef std::forward_list<T> C;
+        typedef bool T;
+        typedef std::vector<T> C;
         C::iterator i;
         C::const_iterator j;
     }

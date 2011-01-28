@@ -43,6 +43,7 @@ int main()
         assert(c.size() == 4);
         assert(std::distance(c.begin(), c.end()) == c.size());
         assert(std::distance(c.cbegin(), c.cend()) == c.size());
+        C::iterator i;
     }
     {
         typedef std::unordered_map<int, std::string> C;
@@ -61,5 +62,6 @@ int main()
         assert(c.size() == 4);
         assert(std::distance(c.begin(), c.end()) == c.size());
         assert(std::distance(c.cbegin(), c.cend()) == c.size());
+        C::const_iterator i;
     }
 }

@@ -42,6 +42,7 @@ int main()
         assert(c.size() == 6);
         assert(std::distance(c.begin(), c.end()) == c.size());
         assert(std::distance(c.cbegin(), c.cend()) == c.size());
+        C::iterator i;
     }
     {
         typedef std::unordered_multiset<int> C;
@@ -60,5 +61,6 @@ int main()
         assert(c.size() == 6);
         assert(std::distance(c.begin(), c.end()) == c.size());
         assert(std::distance(c.cbegin(), c.cend()) == c.size());
+        C::const_iterator i;
     }
 }

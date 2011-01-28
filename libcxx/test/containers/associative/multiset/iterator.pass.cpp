@@ -63,7 +63,8 @@ int main()
         std::multiset<int> m(ar, ar+sizeof(ar)/sizeof(ar[0]));
         assert(std::distance(m.begin(), m.end()) == m.size());
         assert(std::distance(m.rbegin(), m.rend()) == m.size());
-        std::multiset<int>::iterator i = m.begin();
+        std::multiset<int>::iterator i;
+        i = m.begin();
         std::multiset<int>::const_iterator k = i;
         assert(i == k);
         for (int j = 1; j <= 8; ++j)
@@ -104,7 +105,8 @@ int main()
         assert(std::distance(m.cbegin(), m.cend()) == m.size());
         assert(std::distance(m.rbegin(), m.rend()) == m.size());
         assert(std::distance(m.crbegin(), m.crend()) == m.size());
-        std::multiset<int, double>::const_iterator i = m.begin();
+        std::multiset<int, double>::const_iterator i;
+        i = m.begin();
         for (int j = 1; j <= 8; ++j)
             for (int k = 0; k < 3; ++k, ++i)
                 assert(*i == j);

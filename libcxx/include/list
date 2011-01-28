@@ -237,6 +237,8 @@ public:
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
     _LIBCPP_INLINE_VISIBILITY
+    __list_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY
     reference operator*() const {return __ptr_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
     pointer operator->() const {return &(operator*());}
@@ -289,6 +291,8 @@ public:
                                              pointer;
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
+    _LIBCPP_INLINE_VISIBILITY
+    __list_const_iterator() {}
     _LIBCPP_INLINE_VISIBILITY
     __list_const_iterator(__list_iterator<_Tp, _VoidPtr> __p) : __ptr_(__p.__ptr_) {}
 
