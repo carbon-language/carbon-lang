@@ -721,101 +721,65 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
   StoreAnyExprIntoOneUnit(CGF, E, NewPtr);
 }
 
-namespace {
-/// A utility class for saving an rvalue.
-class SavedRValue {
-public:
-  enum Kind { ScalarLiteral, ScalarAddress,
-              AggregateLiteral, AggregateAddress,
-              Complex };
+bool DominatingValue<RValue>::saved_type::needsSaving(RValue rv) {
+  if (rv.isScalar())
+    return DominatingLLVMValue::needsSaving(rv.getScalarVal());
+  if (rv.isAggregate())
+    return DominatingLLVMValue::needsSaving(rv.getAggregateAddr());
+  return true;
+}
 
-private:
-  llvm::Value *Value;
-  Kind K;
-
-  SavedRValue(llvm::Value *V, Kind K) : Value(V), K(K) {}
-
-public:
-  SavedRValue() {}
-
-  static SavedRValue forScalarLiteral(llvm::Value *V) {
-    return SavedRValue(V, ScalarLiteral);
-  }
-
-  static SavedRValue forScalarAddress(llvm::Value *Addr) {
-    return SavedRValue(Addr, ScalarAddress);
-  }
-
-  static SavedRValue forAggregateLiteral(llvm::Value *V) {
-    return SavedRValue(V, AggregateLiteral);
-  }
-
-  static SavedRValue forAggregateAddress(llvm::Value *Addr) {
-    return SavedRValue(Addr, AggregateAddress);
-  }
-
-  static SavedRValue forComplexAddress(llvm::Value *Addr) {
-    return SavedRValue(Addr, Complex);
-  }
-
-  Kind getKind() const { return K; }
-  llvm::Value *getValue() const { return Value; }
-};
-} // end anonymous namespace
-
-/// Given an r-value, perform the code necessary to make sure that a
-/// future RestoreRValue will be able to load the value without
-/// domination concerns.
-static SavedRValue SaveRValue(CodeGenFunction &CGF, RValue RV) {
-  if (RV.isScalar()) {
-    llvm::Value *V = RV.getScalarVal();
+DominatingValue<RValue>::saved_type
+DominatingValue<RValue>::saved_type::save(CodeGenFunction &CGF, RValue rv) {
+  if (rv.isScalar()) {
+    llvm::Value *V = rv.getScalarVal();
 
     // These automatically dominate and don't need to be saved.
-    if (isa<llvm::Constant>(V) || isa<llvm::AllocaInst>(V))
-      return SavedRValue::forScalarLiteral(V);
+    if (!DominatingLLVMValue::needsSaving(V))
+      return saved_type(V, ScalarLiteral);
 
     // Everything else needs an alloca.
-    llvm::Value *Addr = CGF.CreateTempAlloca(V->getType(), "saved-rvalue");
-    CGF.Builder.CreateStore(V, Addr);
-    return SavedRValue::forScalarAddress(Addr);
+    llvm::Value *addr = CGF.CreateTempAlloca(V->getType(), "saved-rvalue");
+    CGF.Builder.CreateStore(V, addr);
+    return saved_type(addr, ScalarAddress);
   }
 
-  if (RV.isComplex()) {
-    CodeGenFunction::ComplexPairTy V = RV.getComplexVal();
+  if (rv.isComplex()) {
+    CodeGenFunction::ComplexPairTy V = rv.getComplexVal();
     const llvm::Type *ComplexTy =
       llvm::StructType::get(CGF.getLLVMContext(),
                             V.first->getType(), V.second->getType(),
                             (void*) 0);
-    llvm::Value *Addr = CGF.CreateTempAlloca(ComplexTy, "saved-complex");
-    CGF.StoreComplexToAddr(V, Addr, /*volatile*/ false);
-    return SavedRValue::forComplexAddress(Addr);
+    llvm::Value *addr = CGF.CreateTempAlloca(ComplexTy, "saved-complex");
+    CGF.StoreComplexToAddr(V, addr, /*volatile*/ false);
+    return saved_type(addr, ComplexAddress);
   }
 
-  assert(RV.isAggregate());
-  llvm::Value *V = RV.getAggregateAddr(); // TODO: volatile?
-  if (isa<llvm::Constant>(V) || isa<llvm::AllocaInst>(V))
-    return SavedRValue::forAggregateLiteral(V);
+  assert(rv.isAggregate());
+  llvm::Value *V = rv.getAggregateAddr(); // TODO: volatile?
+  if (!DominatingLLVMValue::needsSaving(V))
+    return saved_type(V, AggregateLiteral);
 
-  llvm::Value *Addr = CGF.CreateTempAlloca(V->getType(), "saved-rvalue");
-  CGF.Builder.CreateStore(V, Addr);
-  return SavedRValue::forAggregateAddress(Addr);
+  llvm::Value *addr = CGF.CreateTempAlloca(V->getType(), "saved-rvalue");
+  CGF.Builder.CreateStore(V, addr);
+  return saved_type(addr, AggregateAddress);  
 }
 
 /// Given a saved r-value produced by SaveRValue, perform the code
 /// necessary to restore it to usability at the current insertion
 /// point.
-static RValue RestoreRValue(CodeGenFunction &CGF, SavedRValue RV) {
-  switch (RV.getKind()) {
-  case SavedRValue::ScalarLiteral:
-    return RValue::get(RV.getValue());
-  case SavedRValue::ScalarAddress:
-    return RValue::get(CGF.Builder.CreateLoad(RV.getValue()));
-  case SavedRValue::AggregateLiteral:
-    return RValue::getAggregate(RV.getValue());
-  case SavedRValue::AggregateAddress:
-    return RValue::getAggregate(CGF.Builder.CreateLoad(RV.getValue()));
-  case SavedRValue::Complex:
-    return RValue::getComplex(CGF.LoadComplexFromAddr(RV.getValue(), false));
+RValue DominatingValue<RValue>::saved_type::restore(CodeGenFunction &CGF) {
+  switch (K) {
+  case ScalarLiteral:
+    return RValue::get(Value);
+  case ScalarAddress:
+    return RValue::get(CGF.Builder.CreateLoad(Value));
+  case AggregateLiteral:
+    return RValue::getAggregate(Value);
+  case AggregateAddress:
+    return RValue::getAggregate(CGF.Builder.CreateLoad(Value));
+  case ComplexAddress:
+    return RValue::getComplex(CGF.LoadComplexFromAddr(Value, false));
   }
 
   llvm_unreachable("bad saved r-value kind");
@@ -883,26 +847,26 @@ namespace {
   class CallDeleteDuringConditionalNew : public EHScopeStack::Cleanup {
     size_t NumPlacementArgs;
     const FunctionDecl *OperatorDelete;
-    SavedRValue Ptr;
-    SavedRValue AllocSize;
+    DominatingValue<RValue>::saved_type Ptr;
+    DominatingValue<RValue>::saved_type AllocSize;
 
-    SavedRValue *getPlacementArgs() {
-      return reinterpret_cast<SavedRValue*>(this+1);
+    DominatingValue<RValue>::saved_type *getPlacementArgs() {
+      return reinterpret_cast<DominatingValue<RValue>::saved_type*>(this+1);
     }
 
   public:
     static size_t getExtraSize(size_t NumPlacementArgs) {
-      return NumPlacementArgs * sizeof(SavedRValue);
+      return NumPlacementArgs * sizeof(DominatingValue<RValue>::saved_type);
     }
 
     CallDeleteDuringConditionalNew(size_t NumPlacementArgs,
                                    const FunctionDecl *OperatorDelete,
-                                   SavedRValue Ptr,
-                                   SavedRValue AllocSize) 
+                                   DominatingValue<RValue>::saved_type Ptr,
+                              DominatingValue<RValue>::saved_type AllocSize)
       : NumPlacementArgs(NumPlacementArgs), OperatorDelete(OperatorDelete),
         Ptr(Ptr), AllocSize(AllocSize) {}
 
-    void setPlacementArg(unsigned I, SavedRValue Arg) {
+    void setPlacementArg(unsigned I, DominatingValue<RValue>::saved_type Arg) {
       assert(I < NumPlacementArgs && "index out of range");
       getPlacementArgs()[I] = Arg;
     }
@@ -917,17 +881,17 @@ namespace {
 
       // The first argument is always a void*.
       FunctionProtoType::arg_type_iterator AI = FPT->arg_type_begin();
-      DeleteArgs.push_back(std::make_pair(RestoreRValue(CGF, Ptr), *AI++));
+      DeleteArgs.push_back(std::make_pair(Ptr.restore(CGF), *AI++));
 
       // A member 'operator delete' can take an extra 'size_t' argument.
       if (FPT->getNumArgs() == NumPlacementArgs + 2) {
-        RValue RV = RestoreRValue(CGF, AllocSize);
+        RValue RV = AllocSize.restore(CGF);
         DeleteArgs.push_back(std::make_pair(RV, *AI++));
       }
 
       // Pass the rest of the arguments, which must match exactly.
       for (unsigned I = 0; I != NumPlacementArgs; ++I) {
-        RValue RV = RestoreRValue(CGF, getPlacementArgs()[I]);
+        RValue RV = getPlacementArgs()[I].restore(CGF);
         DeleteArgs.push_back(std::make_pair(RV, *AI++));
       }
 
@@ -961,8 +925,10 @@ static void EnterNewDeleteCleanup(CodeGenFunction &CGF,
   }
 
   // Otherwise, we need to save all this stuff.
-  SavedRValue SavedNewPtr = SaveRValue(CGF, RValue::get(NewPtr));
-  SavedRValue SavedAllocSize = SaveRValue(CGF, RValue::get(AllocSize));
+  DominatingValue<RValue>::saved_type SavedNewPtr =
+    DominatingValue<RValue>::save(CGF, RValue::get(NewPtr));
+  DominatingValue<RValue>::saved_type SavedAllocSize =
+    DominatingValue<RValue>::save(CGF, RValue::get(AllocSize));
 
   CallDeleteDuringConditionalNew *Cleanup = CGF.EHStack
     .pushCleanupWithExtra<CallDeleteDuringConditionalNew>(InactiveEHCleanup,
@@ -971,7 +937,8 @@ static void EnterNewDeleteCleanup(CodeGenFunction &CGF,
                                                  SavedNewPtr,
                                                  SavedAllocSize);
   for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I)
-    Cleanup->setPlacementArg(I, SaveRValue(CGF, NewArgs[I+1].first));
+    Cleanup->setPlacementArg(I,
+                     DominatingValue<RValue>::save(CGF, NewArgs[I+1].first));
 
   CGF.ActivateCleanupBlock(CGF.EHStack.stable_begin());
 }
