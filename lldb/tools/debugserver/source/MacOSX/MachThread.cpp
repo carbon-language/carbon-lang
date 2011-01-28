@@ -672,11 +672,11 @@ bool
 MachThread::GetIdentifierInfo ()
 {
 #ifdef THREAD_IDENTIFIER_INFO_COUNT
-    if (m_ident_info.thread_id == 0)
-    {
+        // Don't try to get the thread info once and cache it for the life of the thread.  It changes over time, for instance
+        // if the thread name changes, then the thread_handle also changes...  So you have to refetch it every time.
         mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
-        return ::thread_info (ThreadID(), THREAD_IDENTIFIER_INFO, (thread_info_t) &m_ident_info, &count) == KERN_SUCCESS;
-    }
+        kern_return_t kret = ::thread_info (ThreadID(), THREAD_IDENTIFIER_INFO, (thread_info_t) &m_ident_info, &count);
+        return kret == KERN_SUCCESS;
 #endif
 
     return false;
