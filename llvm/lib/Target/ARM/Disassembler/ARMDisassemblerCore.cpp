@@ -801,8 +801,8 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   OpIdx = 0;
 
-  // BX_RET has only two predicate operands, do an early return.
-  if (Opcode == ARM::BX_RET)
+  // BX_RET and MOVPCLR have only two predicate operands; do an early return.
+  if (Opcode == ARM::BX_RET || Opcode == ARM::MOVPCLR)
     return true;
 
   // BLXr9 and BX take one GPR reg.
