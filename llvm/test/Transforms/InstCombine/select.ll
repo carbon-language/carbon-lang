@@ -695,6 +695,7 @@ define i64 @test50(i32 %a) nounwind {
 ; This select instruction can't be eliminated because trying to do so would
 ; change the number of vector elements. This used to assert.
 define i48 @test51(<3 x i1> %icmp, <3 x i16> %tmp) {
+; CHECK: @test51
   %select = select <3 x i1> %icmp, <3 x i16> zeroinitializer, <3 x i16> %tmp
 ; CHECK: select <3 x i1>
   %tmp2 = bitcast <3 x i16> %select to i48
@@ -703,15 +704,13 @@ define i48 @test51(<3 x i1> %icmp, <3 x i16> %tmp) {
 
 ; PR8575
 
-@g = common global i32 0, align 4
-define void @test52(i32 %n, i32 %m) nounwind {
-entry:
+define i32 @test52(i32 %n, i32 %m) nounwind {
+; CHECK: @test52
   %cmp = icmp sgt i32 %n, %m
   %. = select i1 %cmp, i32 1, i32 3
   %add = add nsw i32 %., 3
   %storemerge = select i1 %cmp, i32 %., i32 %add
 ; CHECK: select i1 %cmp, i32 1, i32 6
-  store i32 %storemerge, i32* @g, align 4
-  ret void
+  ret i32 %storemerge
 }
 
