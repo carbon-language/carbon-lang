@@ -16,4 +16,4 @@
 // RUN: %clang -ccc-host-triple x86_64-pc-freebsd8 -m32 -print-search-dirs %s > %t
 // RUN: FileCheck --check-prefix=CHECK-LIB32PATHS < %t %s
 //
-// CHECK-LIB32PATHS: libraries: ={{.*}}:/usr/lib32
+// CHECK-LIB32PATHS: libraries: ={{.*:?}}/usr/lib32
