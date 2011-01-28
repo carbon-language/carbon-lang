@@ -10,6 +10,7 @@ add_clang_library(clangCodeGen
   CGClass.cpp
   CGCXX.cpp
   CGCXXABI.cpp
+  CGCleanup.cpp
   CGDebugInfo.cpp
   CGDecl.cpp
   CGDeclCXX.cpp
