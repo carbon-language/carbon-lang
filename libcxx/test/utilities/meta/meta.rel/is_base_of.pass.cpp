@@ -46,5 +46,4 @@ int main()
     test_is_not_base_of<B&, D&>();
     test_is_not_base_of<B[3], D[3]>();
     test_is_not_base_of<int, int>();
-    test_is_not_base_of<int, int>();
 }

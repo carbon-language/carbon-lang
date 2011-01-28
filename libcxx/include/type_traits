@@ -709,6 +709,14 @@ template <class _T1, class _T2> struct _LIBCPP_VISIBLE is_convertible
 
 // is_base_of
 
+#ifdef __clang__
+
+template <class _Bp, class _Dp>
+struct _LIBCPP_VISIBLE is_base_of
+    : public integral_constant<bool, __is_base_of(_Bp, _Dp)> {};
+
+#else  // __clang__
+
 //  (C) Copyright Rani Sharoni 2003.
 //  Use, modification and distribution are subject to the Boost Software License,
 //  Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -754,6 +762,8 @@ struct _LIBCPP_VISIBLE is_base_of
     : public __libcpp_base_of<typename remove_cv<_Bp>::type, typename remove_cv<_Dp>::type>
 {
 };
+
+#endif  // __clang__
 
 // is_empty
 

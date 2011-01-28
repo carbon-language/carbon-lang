@@ -70,8 +70,7 @@ int main()
 
     static_assert((!std::is_convertible<Function, Function>::value), "");
 
-    static_assert((!std::is_convertible<Function, Function&>::value), "");
-    static_assert((!std::is_convertible<Function, Function&>::value), "");
+    static_assert(( std::is_convertible<Function, Function&>::value), "");
 
     static_assert(( std::is_convertible<Function, Function*>::value), "");
     static_assert(( std::is_convertible<Function, Function* const>::value), "");
@@ -98,7 +97,6 @@ int main()
     static_assert((!std::is_convertible<Function&, Function>::value), "");
 
     static_assert(( std::is_convertible<Function&, Function&>::value), "");
-    static_assert(( std::is_convertible<Function&, const Function&>::value), "");
 
     static_assert(( std::is_convertible<Function&, Function*>::value), "");
     static_assert(( std::is_convertible<Function&, Function* const>::value), "");
@@ -185,7 +183,7 @@ int main()
     static_assert((!std::is_convertible<Array, Array&>::value), "");
     static_assert(( std::is_convertible<Array, const Array&>::value), "");
     static_assert((!std::is_convertible<const Array, Array&>::value), "");
-    static_assert((!std::is_convertible<const Array, const Array&>::value), "");
+    static_assert(( std::is_convertible<const Array, const Array&>::value), "");
 
     static_assert((!std::is_convertible<Array, char>::value), "");
     static_assert((!std::is_convertible<Array, const char>::value), "");
