@@ -1095,7 +1095,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 ThreadGDBRemote *gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
 
                 gdb_thread->SetThreadDispatchQAddr (thread_dispatch_qaddr);
-                gdb_thread->SetName (thread_name.empty() ? thread_name.c_str() : NULL);
+                gdb_thread->SetName (thread_name.empty() ? NULL : thread_name.c_str());
                 if (exc_type != 0)
                 {
                     const size_t exc_data_size = exc_data.size();
