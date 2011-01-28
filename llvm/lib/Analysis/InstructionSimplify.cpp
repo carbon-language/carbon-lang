@@ -759,6 +759,8 @@ static Value *SimplifyDiv(unsigned Opcode, Value *Op0, Value *Op1,
     }
   }
 
+  bool isSigned = Opcode == Instruction::SDiv;
+
   // X / undef -> undef
   if (isa<UndefValue>(Op1))
     return Op1;
@@ -795,7 +797,6 @@ static Value *SimplifyDiv(unsigned Opcode, Value *Op0, Value *Op1,
     if (Y != Op1) std::swap(X, Y); // Ensure expression is (X * Y) / Y, Y = Op1
     BinaryOperator *Mul = dyn_cast<BinaryOperator>(Op0);
     // If the Mul knows it does not overflow, then we are good to go.
-    bool isSigned = Opcode == Instruction::SDiv;
     if ((isSigned && Mul->hasNoSignedWrap()) ||
         (!isSigned && Mul->hasNoUnsignedWrap()))
       return X;
@@ -804,6 +805,23 @@ static Value *SimplifyDiv(unsigned Opcode, Value *Op0, Value *Op1,
       if (Div->getOpcode() == Opcode && Div->getOperand(1) == Y)
         return X;
   }
+
+  // (X rem Y) / Y -> 0
+  if ((isSigned && match(Op0, m_SRem(m_Value(), m_Specific(Op1)))) ||
+      (!isSigned && match(Op0, m_URem(m_Value(), m_Specific(Op1)))))
+    return Constant::getNullValue(Op0->getType());
+
+  // If the operation is with the result of a select instruction, check whether
+  // operating on either branch of the select always yields the same value.
+  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
+    if (Value *V = ThreadBinOpOverSelect(Opcode, Op0, Op1, TD, DT, MaxRecurse))
+      return V;
+
+  // If the operation is with the result of a phi instruction, check whether
+  // operating on all incoming values of the phi always yields the same value.
+  if (isa<PHINode>(Op0) || isa<PHINode>(Op1))
+    if (Value *V = ThreadBinOpOverPHI(Opcode, Op0, Op1, TD, DT, MaxRecurse))
+      return V;
 
   return 0;
 }
@@ -814,10 +832,6 @@ static Value *SimplifySDivInst(Value *Op0, Value *Op1, const TargetData *TD,
                                const DominatorTree *DT, unsigned MaxRecurse) {
   if (Value *V = SimplifyDiv(Instruction::SDiv, Op0, Op1, TD, DT, MaxRecurse))
     return V;
-
-  // (X rem Y) / Y -> 0
-  if (match(Op0, m_SRem(m_Value(), m_Specific(Op1))))
-    return Constant::getNullValue(Op0->getType());
 
   return 0;
 }
@@ -833,10 +847,6 @@ static Value *SimplifyUDivInst(Value *Op0, Value *Op1, const TargetData *TD,
                                const DominatorTree *DT, unsigned MaxRecurse) {
   if (Value *V = SimplifyDiv(Instruction::UDiv, Op0, Op1, TD, DT, MaxRecurse))
     return V;
-
-  // (X rem Y) / Y -> 0
-  if (match(Op0, m_URem(m_Value(), m_Specific(Op1))))
-    return Constant::getNullValue(Op0->getType());
 
   return 0;
 }
