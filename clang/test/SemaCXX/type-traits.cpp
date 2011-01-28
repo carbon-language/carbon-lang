@@ -508,6 +508,11 @@ class PrivateCopy {
   friend void is_convertible_to();
 };
 
+template<typename T>
+struct X0 { 
+  template<typename U> X0(const X0<U>&);
+};
+
 void is_convertible_to() {
   int t01[T(__is_convertible_to(Int, Int))];
   int t02[F(__is_convertible_to(Int, IntAr))];
@@ -531,4 +536,5 @@ void is_convertible_to() {
   int t20[F(__is_convertible_to(const IntAr&, IntAr&))];
   int t21[F(__is_convertible_to(Function, Function))];
   int t22[F(__is_convertible_to(PrivateCopy, PrivateCopy))];
+  int t23[T(__is_convertible_to(X0<int>, X0<float>))];
 }

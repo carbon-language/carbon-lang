@@ -5507,12 +5507,13 @@ Sema::CheckObjCPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 }
 
 Sema::AssignConvertType
-Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
+Sema::CheckAssignmentConstraints(SourceLocation Loc,
+                                 QualType lhsType, QualType rhsType) {
   // Fake up an opaque expression.  We don't actually care about what
   // cast operations are required, so if CheckAssignmentConstraints
   // adds casts to this they'll be wasted, but fortunately that doesn't
   // usually happen on valid code.
-  OpaqueValueExpr rhs(rhsType, VK_RValue);
+  OpaqueValueExpr rhs(Loc, rhsType, VK_RValue);
   Expr *rhsPtr = &rhs;
   CastKind K = CK_Invalid;
 
@@ -6952,7 +6953,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
     }
   } else {
     // Compound assignment "x += y"
-    ConvTy = CheckAssignmentConstraints(LHSType, RHSType);
+    ConvTy = CheckAssignmentConstraints(Loc, LHSType, RHSType);
   }
 
   if (DiagnoseAssignmentResult(ConvTy, Loc, LHSType, RHSType,

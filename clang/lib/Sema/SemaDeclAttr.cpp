@@ -1472,7 +1472,8 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // If this ever proves to be a problem it should be easy to fix.
   QualType Ty = S.Context.getPointerType(VD->getType());
   QualType ParamTy = FD->getParamDecl(0)->getType();
-  if (S.CheckAssignmentConstraints(ParamTy, Ty) != Sema::Compatible) {
+  if (S.CheckAssignmentConstraints(FD->getParamDecl(0)->getLocation(),
+                                   ParamTy, Ty) != Sema::Compatible) {
     S.Diag(Attr.getParameterLoc(),
            diag::err_attribute_cleanup_func_arg_incompatible_type) <<
       Attr.getParameterName() << ParamTy << Ty;

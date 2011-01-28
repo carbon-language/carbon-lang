@@ -3625,15 +3625,22 @@ public:
 /// context.
 class OpaqueValueExpr : public Expr {
   friend class ASTStmtReader;
+  SourceLocation Loc;
+  
 public:
-  OpaqueValueExpr(QualType T, ExprValueKind VK, ExprObjectKind OK = OK_Ordinary)
+  OpaqueValueExpr(SourceLocation Loc, QualType T, ExprValueKind VK, 
+                  ExprObjectKind OK = OK_Ordinary)
     : Expr(OpaqueValueExprClass, T, VK, OK,
-           T->isDependentType(), T->isDependentType(), false) {
+           T->isDependentType(), T->isDependentType(), false), 
+      Loc(Loc) {
   }
 
   explicit OpaqueValueExpr(EmptyShell Empty)
     : Expr(OpaqueValueExprClass, Empty) { }
 
+  /// \brief Retrieve the location of this expression.
+  SourceLocation getLocation() const { return Loc; }
+  
   virtual SourceRange getSourceRange() const;
   virtual child_iterator child_begin();
   virtual child_iterator child_end();

@@ -440,9 +440,13 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
           Context.canAssignObjCInterfaces(
                                   PropType->getAs<ObjCObjectPointerType>(),
                                   IvarType->getAs<ObjCObjectPointerType>());
-      else 
-        compat = (CheckAssignmentConstraints(PropType, IvarType)
+      else {
+        SourceLocation Loc = PropertyIvarLoc;
+        if (Loc.isInvalid())
+          Loc = PropertyLoc;
+        compat = (CheckAssignmentConstraints(Loc, PropType, IvarType)
                     == Compatible);
+      }
       if (!compat) {
         Diag(PropertyLoc, diag::error_property_ivar_type)
           << property->getDeclName() << PropType
@@ -663,7 +667,7 @@ bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
       GetterMethod->getResultType() != property->getType()) {
     AssignConvertType result = Incompatible;
     if (property->getType()->isObjCObjectPointerType())
-      result = CheckAssignmentConstraints(GetterMethod->getResultType(),
+      result = CheckAssignmentConstraints(Loc, GetterMethod->getResultType(),
                                           property->getType());
     if (result != Compatible) {
       Diag(Loc, diag::warn_accessor_property_type_mismatch)

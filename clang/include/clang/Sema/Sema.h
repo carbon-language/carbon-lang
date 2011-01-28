@@ -4551,7 +4551,8 @@ public:
   /// CheckAssignmentConstraints - Perform type checking for assignment,
   /// argument passing, variable initialization, and function return values.
   /// C99 6.5.16.
-  AssignConvertType CheckAssignmentConstraints(QualType lhs, QualType rhs);
+  AssignConvertType CheckAssignmentConstraints(SourceLocation Loc,
+                                               QualType lhs, QualType rhs);
 
   /// Check assignment constraints and prepare for a conversion of the
   /// RHS to the LHS type.

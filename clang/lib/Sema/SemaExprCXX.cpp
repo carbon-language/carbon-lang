@@ -2531,7 +2531,7 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
       LhsT = Self.Context.getRValueReferenceType(LhsT);
     
     InitializedEntity To(InitializedEntity::InitializeTemporary(RhsT));
-    OpaqueValueExpr From(LhsT.getNonLValueExprType(Self.Context),
+    OpaqueValueExpr From(KeyLoc, LhsT.getNonLValueExprType(Self.Context),
                          Expr::getValueKindForType(LhsT));
     Expr *FromPtr = &From;
     InitializationKind Kind(InitializationKind::CreateCopy(KeyLoc, 

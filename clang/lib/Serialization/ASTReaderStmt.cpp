@@ -1327,6 +1327,7 @@ void ASTStmtReader::VisitSubstNonTypeTemplateParmPackExpr(
 
 void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
+  E->Loc = ReadSourceLocation(Record, Idx);
 }
 
 Stmt *ASTReader::ReadStmt(PerFileData &F) {

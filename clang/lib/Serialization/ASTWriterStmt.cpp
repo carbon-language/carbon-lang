@@ -1332,6 +1332,7 @@ void ASTStmtWriter::VisitSubstNonTypeTemplateParmPackExpr(
 
 void ASTStmtWriter::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
+  Writer.AddSourceLocation(E->getLocation(), Record);
   Code = serialization::EXPR_OPAQUE_VALUE;
 }
 
