@@ -1065,6 +1065,9 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".include")
       return ParseDirectiveInclude();
 
+    if (IDVal == ".code16")
+      return TokError(".code16 not supported yet");
+
     // Look up the handler in the handler table.
     std::pair<MCAsmParserExtension*, DirectiveHandler> Handler =
       DirectiveMap.lookup(IDVal);
