@@ -100,16 +100,7 @@ class ProcessLaunchIOTestCase(TestBase):
             i = 1
 
         if not success:
-            # This test failed, but we need to make the main testing
-            # mechanism realize something is wrong.
-            #
-            # First, print out the real error message.
             self.fail (err_msg)
-            #print err_msg
-
-            # Second, force a test case to fail:
-            #self.expect ("help quit",
-            #             patterns = ["Intentional failure .*"])
 
 if __name__ == '__main__':
     import atexit
