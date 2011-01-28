@@ -28,7 +28,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -36,10 +35,6 @@
 #include <set>
 #include <map>
 using namespace llvm;
-
-static cl::opt<bool>
-DupRet("simplifycfg-dup-ret", cl::Hidden, cl::init(false),
-       cl::desc("Duplicate return instructions into unconditional branches"));
 
 STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 
@@ -2032,7 +2027,7 @@ bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI) {
   }
   
   // If we found some, do the transformation!
-  if (!UncondBranchPreds.empty() && DupRet) {
+  if (!UncondBranchPreds.empty()) {
     while (!UncondBranchPreds.empty()) {
       BasicBlock *Pred = UncondBranchPreds.pop_back_val();
       DEBUG(dbgs() << "FOLDING: " << *BB
