@@ -2758,7 +2758,14 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
 
   // Add the VTable layout.
   uint64_t NumVTableComponents = Builder.getNumVTableComponents();
+  // -fapple-kext adds an extra entry at end of vtbl.
+  bool IsAppleKext = CGM.getContext().getLangOptions().AppleKext;
+  if (IsAppleKext)
+    NumVTableComponents += 1;
+
   uint64_t *LayoutData = new uint64_t[NumVTableComponents + 1];
+  if (IsAppleKext)
+    LayoutData[NumVTableComponents] = 0;
   Entry.setPointer(LayoutData);
 
   // Store the number of components.

@@ -195,6 +195,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
       Callee = BuildVirtualCall(MD, This, Ty); 
   } else {
     if (getContext().getLangOptions().AppleKext &&
+        MD->isVirtual() &&
         ME->hasQualifier())
       Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), This, Ty);
     else 

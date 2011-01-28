@@ -329,7 +329,9 @@ CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD,
   assert(VTable && "BuildVirtualCall = kext vtbl pointer is null");
   MD = MD->getCanonicalDecl();
   uint64_t VTableIndex = CGM.getVTables().getMethodVTableIndex(MD);
-  VTableIndex += 2;
+  uint64_t AddressPoint = 
+    CGM.getVTables().getAddressPoint(BaseSubobject(RD, 0), RD);
+  VTableIndex += AddressPoint;
   llvm::Value *VFuncPtr = 
     CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
   return CGF.Builder.CreateLoad(VFuncPtr);
