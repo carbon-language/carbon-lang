@@ -1197,6 +1197,8 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
   }
 
   // Make sure that we call delete even if the dtor throws.
+  // This doesn't have to a conditional cleanup because we're going
+  // to pop it off in a second.
   CGF.EHStack.pushCleanup<CallObjectDelete>(NormalAndEHCleanup,
                                             Ptr, OperatorDelete, ElementType);
 
@@ -1361,7 +1363,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   EmitBlock(DeleteEnd);
 }
 
-llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
+llvm::Value *CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
   QualType Ty = E->getType();
   const llvm::Type *LTy = ConvertType(Ty)->getPointerTo();
   

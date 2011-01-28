@@ -697,6 +697,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
       DidCallStackSave = true;
 
       // Push a cleanup block and restore the stack there.
+      // FIXME: in general circumstances, this should be an EH cleanup.
       EHStack.pushCleanup<CallStackRestore>(NormalCleanup, Stack);
     }
 

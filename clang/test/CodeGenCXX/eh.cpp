@@ -10,16 +10,10 @@ void test1() {
 }
 
 // CHECK:     define void @_Z5test1v()
-// CHECK:       [[FREEVAR:%.*]] = alloca i1
-// CHECK-NEXT:  [[EXNOBJVAR:%.*]] = alloca i8*
-// CHECK-NEXT:  store i1 false, i1* [[FREEVAR]]
-// CHECK-NEXT:  [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 8)
-// CHECK-NEXT:  store i8* [[EXNOBJ]], i8** [[EXNOBJVAR]]
-// CHECK-NEXT:  store i1 true, i1* [[FREEVAR]]
+// CHECK:       [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 8)
 // CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[DSTAR:%[^*]*\*]]
 // CHECK-NEXT:  [[EXN2:%.*]] = bitcast [[DSTAR]] [[EXN]] to i8*
 // CHECK-NEXT:  call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[EXN2]], i8* bitcast ([[DSTAR]] @d1 to i8*), i64 8, i32 8, i1 false)
-// CHECK-NEXT:  store i1 false, i1* [[FREEVAR]]
 // CHECK-NEXT:  call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast (%0* @_ZTI7test1_D to i8*), i8* null) noreturn
 // CHECK-NEXT:  unreachable
 
@@ -36,20 +30,14 @@ void test2() {
 }
 
 // CHECK:     define void @_Z5test2v()
-// CHECK:       [[FREEVAR:%.*]] = alloca i1
-// CHECK-NEXT:  [[EXNOBJVAR:%.*]] = alloca i8*
-// CHECK-NEXT:  [[EXNSLOTVAR:%.*]] = alloca i8*
+// CHECK:       [[EXNSLOTVAR:%.*]] = alloca i8*
 // CHECK-NEXT:  [[CLEANUPDESTVAR:%.*]] = alloca i32
-// CHECK-NEXT:  store i1 false, i1* [[FREEVAR]]
 // CHECK-NEXT:  [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 16)
-// CHECK-NEXT:  store i8* [[EXNOBJ]], i8** [[EXNOBJVAR]]
-// CHECK-NEXT:  store i1 true, i1* [[FREEVAR]]
 // CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[DSTAR:%[^*]*\*]]
 // CHECK-NEXT:  invoke void @_ZN7test2_DC1ERKS_([[DSTAR]] [[EXN]], [[DSTAR]] @d2)
 // CHECK-NEXT:     to label %[[CONT:.*]] unwind label %{{.*}}
 //      :     [[CONT]]:   (can't check this in Release-Asserts builds)
-// CHECK:       store i1 false, i1* [[FREEVAR]]
-// CHECK-NEXT:  call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast (%{{.*}}* @_ZTI7test2_D to i8*), i8* null) noreturn
+// CHECK:       call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast (%{{.*}}* @_ZTI7test2_D to i8*), i8* null) noreturn
 // CHECK-NEXT:  unreachable
 
 
@@ -64,15 +52,9 @@ void test3() {
 }
 
 // CHECK:     define void @_Z5test3v()
-// CHECK:       [[FREEVAR:%.*]] = alloca i1
-// CHECK-NEXT:  [[EXNOBJVAR:%.*]] = alloca i8*
-// CHECK-NEXT:  store i1 false, i1* [[FREEVAR]]
-// CHECK-NEXT:  [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 8)
-// CHECK-NEXT:  store i8* [[EXNOBJ]], i8** [[EXNOBJVAR]]
-// CHECK-NEXT:  store i1 true, i1* [[FREEVAR]]
-// CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[DSS:%[^*]*\*]]*
-// CHECK-NEXT:  store [[DSS]] null, [[DSS]]* [[EXN]]
-// CHECK-NEXT:  store i1 false, i1* [[FREEVAR]]
+// CHECK:       [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 8)
+// CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[D:%[^*]+]]**
+// CHECK-NEXT:  store [[D]]* null, [[D]]** [[EXN]]
 // CHECK-NEXT:  call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast (%1* @_ZTIPV7test3_D to i8*), i8* null) noreturn
 // CHECK-NEXT:  unreachable
 
@@ -121,20 +103,14 @@ namespace test6 {
 namespace test7 {
 // CHECK:      define i32 @_ZN5test73fooEv() 
   int foo() {
-// CHECK:      [[FREEEXNOBJ:%.*]] = alloca i1
-// CHECK-NEXT: [[EXNALLOCVAR:%.*]] = alloca i8*
-// CHECK-NEXT: [[CAUGHTEXNVAR:%.*]] = alloca i8*
+// CHECK:      [[CAUGHTEXNVAR:%.*]] = alloca i8*
 // CHECK-NEXT: [[INTCATCHVAR:%.*]] = alloca i32
 // CHECK-NEXT: [[EHCLEANUPDESTVAR:%.*]] = alloca i32
-// CHECK-NEXT: store i1 false, i1* [[FREEEXNOBJ]]
     try {
       try {
 // CHECK-NEXT: [[EXNALLOC:%.*]] = call i8* @__cxa_allocate_exception
-// CHECK-NEXT: store i8* [[EXNALLOC]], i8** [[EXNALLOCVAR]]
-// CHECK-NEXT: store i1 true, i1* [[FREEEXNOBJ]]
 // CHECK-NEXT: bitcast i8* [[EXNALLOC]] to i32*
 // CHECK-NEXT: store i32 1, i32*
-// CHECK-NEXT: store i1 false, i1* [[FREEEXNOBJ]]
 // CHECK-NEXT: invoke void @__cxa_throw(i8* [[EXNALLOC]], i8* bitcast (i8** @_ZTIi to i8*), i8* null
         throw 1;
       }
@@ -412,5 +388,51 @@ namespace test15 {
     } catch (int x) { }
 
     // CHECK: call void @_ZN6test151AD1Ev
+  }
+}
+
+namespace test16 {
+  struct A { A(); ~A(); };
+  struct B { int x; B(const A &); ~B(); };
+  void foo();
+  bool cond();
+
+  // CHECK: define void @_ZN6test163barEv()
+  void bar() {
+    // CHECK:      [[EXN_SAVE:%.*]] = alloca i8*
+    // CHECK-NEXT: [[EXN_ACTIVE:%.*]] = alloca i1
+    // CHECK-NEXT: [[TEMP:%.*]] = alloca [[A:%.*]],
+    // CHECK-NEXT: [[EXNSLOT:%.*]] = alloca i8*
+    // CHECK-NEXT: [[EHDEST:%.*]] = alloca i32
+    // CHECK-NEXT: [[TEMP_ACTIVE:%.*]] = alloca i1
+
+    cond() ? throw B(A()) : foo();
+
+    // CHECK-NEXT: [[COND:%.*]] = call zeroext i1 @_ZN6test164condEv()
+    // CHECK-NEXT: store i1 false, i1* [[EXN_ACTIVE]]
+    // CHECK-NEXT: store i1 false, i1* [[TEMP_ACTIVE]]
+    // CHECK-NEXT: br i1 [[COND]],
+
+    // CHECK:      [[EXN:%.*]] = call i8* @__cxa_allocate_exception(i64 4)
+    // CHECK-NEXT: store i8* [[EXN]], i8** [[EXN_SAVE]]
+    // CHECK-NEXT: store i1 true, i1* [[EXN_ACTIVE]]
+    // CHECK-NEXT: [[T0:%.*]] = bitcast i8* [[EXN]] to [[B:%.*]]*
+    // CHECK-NEXT: invoke void @_ZN6test161AC1Ev([[A]]* [[TEMP]])
+    // CHECK:      store i1 true, i1* [[TEMP_ACTIVE]]
+    // CHECK-NEXT: invoke void @_ZN6test161BC1ERKNS_1AE([[B]]* [[T0]], [[A]]* [[TEMP]])
+    // CHECK:      store i1 false, i1* [[EXN_ACTIVE]]
+    // CHECK-NEXT: invoke void @__cxa_throw(i8* [[EXN]],
+
+    // CHECK:      invoke void @_ZN6test163fooEv()
+    // CHECK:      br label
+
+    // CHECK:      invoke void @_ZN6test161AD1Ev([[A]]* [[TEMP]])
+    // CHECK:      ret void
+
+    // CHECK:      [[T0:%.*]] = load i1* [[EXN_ACTIVE]]
+    // CHECK-NEXT: br i1 [[T0]]
+    // CHECK:      [[T1:%.*]] = load i8** [[EXN_SAVE]]
+    // CHECK-NEXT: call void @__cxa_free_exception(i8* [[T1]])
+    // CHECK-NEXT: br label
   }
 }

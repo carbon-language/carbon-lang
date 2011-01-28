@@ -172,19 +172,26 @@ void EHScopeStack::popNullFixups() {
     BranchFixups.pop_back();
 }
 
-llvm::Value *CodeGenFunction::initFullExprCleanup() {
+void CodeGenFunction::initFullExprCleanup() {
   // Create a variable to decide whether the cleanup needs to be run.
-  llvm::AllocaInst *run = CreateTempAlloca(Builder.getInt1Ty(), "cleanup.cond");
+  llvm::AllocaInst *active
+    = CreateTempAlloca(Builder.getInt1Ty(), "cleanup.cond");
 
   // Initialize it to false at a site that's guaranteed to be run
   // before each evaluation.
   llvm::BasicBlock *block = OutermostConditional->getStartingBlock();
-  new llvm::StoreInst(Builder.getFalse(), run, &block->back());
+  new llvm::StoreInst(Builder.getFalse(), active, &block->back());
 
   // Initialize it to true at the current location.
-  Builder.CreateStore(Builder.getTrue(), run);
+  Builder.CreateStore(Builder.getTrue(), active);
 
-  return run;
+  // Set that as the active flag in the cleanup.
+  EHCleanupScope &cleanup = cast<EHCleanupScope>(*EHStack.begin());
+  assert(cleanup.getActiveFlag() == 0 && "cleanup already has active flag?");
+  cleanup.setActiveFlag(active);
+
+  if (cleanup.isNormalCleanup()) cleanup.setTestFlagInNormalCleanup();
+  if (cleanup.isEHCleanup()) cleanup.setTestFlagInEHCleanup();
 }
 
 static llvm::Constant *getAllocateExceptionFn(CodeGenFunction &CGF) {
@@ -483,26 +490,11 @@ static llvm::Constant *getCleanupValue(CodeGenFunction &CGF) {
 namespace {
   /// A cleanup to free the exception object if its initialization
   /// throws.
-  struct FreeExceptionCleanup : EHScopeStack::Cleanup {
-    FreeExceptionCleanup(llvm::Value *ShouldFreeVar,
-                         llvm::Value *ExnLocVar)
-      : ShouldFreeVar(ShouldFreeVar), ExnLocVar(ExnLocVar) {}
-
-    llvm::Value *ShouldFreeVar;
-    llvm::Value *ExnLocVar;
-    
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      llvm::BasicBlock *FreeBB = CGF.createBasicBlock("free-exnobj");
-      llvm::BasicBlock *DoneBB = CGF.createBasicBlock("free-exnobj.done");
-
-      llvm::Value *ShouldFree = CGF.Builder.CreateLoad(ShouldFreeVar,
-                                                       "should-free-exnobj");
-      CGF.Builder.CreateCondBr(ShouldFree, FreeBB, DoneBB);
-      CGF.EmitBlock(FreeBB);
-      llvm::Value *ExnLocLocal = CGF.Builder.CreateLoad(ExnLocVar, "exnobj");
-      CGF.Builder.CreateCall(getFreeExceptionFn(CGF), ExnLocLocal)
+  struct FreeException {
+    static void Emit(CodeGenFunction &CGF, bool forEH,
+                     llvm::Value *exn) {
+      CGF.Builder.CreateCall(getFreeExceptionFn(CGF), exn)
         ->setDoesNotThrow();
-      CGF.EmitBlock(DoneBB);
     }
   };
 }
@@ -511,41 +503,17 @@ namespace {
 // differs from EmitAnyExprToMem only in that, if a final copy-ctor
 // call is required, an exception within that copy ctor causes
 // std::terminate to be invoked.
-static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *E, 
-                             llvm::Value *ExnLoc) {
-  // We want to release the allocated exception object if this
-  // expression throws.  We do this by pushing an EH-only cleanup
-  // block which, furthermore, deactivates itself after the expression
-  // is complete.
-  llvm::AllocaInst *ShouldFreeVar =
-    CGF.CreateTempAlloca(llvm::Type::getInt1Ty(CGF.getLLVMContext()),
-                         "should-free-exnobj.var");
-  CGF.InitTempAlloca(ShouldFreeVar,
-                     llvm::ConstantInt::getFalse(CGF.getLLVMContext()));
-
-  // A variable holding the exception pointer.  This is necessary
-  // because the throw expression does not necessarily dominate the
-  // cleanup, for example if it appears in a conditional expression.
-  llvm::AllocaInst *ExnLocVar =
-    CGF.CreateTempAlloca(ExnLoc->getType(), "exnobj.var");
-
+static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *e,
+                             llvm::Value *addr) {
   // Make sure the exception object is cleaned up if there's an
   // exception during initialization.
-  // FIXME: stmt expressions might require this to be a normal
-  // cleanup, too.
-  CGF.EHStack.pushCleanup<FreeExceptionCleanup>(EHCleanup,
-                                                ShouldFreeVar,
-                                                ExnLocVar);
-  EHScopeStack::stable_iterator Cleanup = CGF.EHStack.stable_begin();
-
-  CGF.Builder.CreateStore(ExnLoc, ExnLocVar);
-  CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(CGF.getLLVMContext()),
-                          ShouldFreeVar);
+  CGF.pushFullExprCleanup<FreeException>(EHCleanup, addr);
+  EHScopeStack::stable_iterator cleanup = CGF.EHStack.stable_begin();
 
   // __cxa_allocate_exception returns a void*;  we need to cast this
   // to the appropriate type for the object.
-  const llvm::Type *Ty = CGF.ConvertTypeForMem(E->getType())->getPointerTo();
-  llvm::Value *TypedExnLoc = CGF.Builder.CreateBitCast(ExnLoc, Ty);
+  const llvm::Type *ty = CGF.ConvertTypeForMem(e->getType())->getPointerTo();
+  llvm::Value *typedAddr = CGF.Builder.CreateBitCast(addr, ty);
 
   // FIXME: this isn't quite right!  If there's a final unelided call
   // to a copy constructor, then according to [except.terminate]p1 we
@@ -554,22 +522,10 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *E,
   // evaluated but before the exception is caught.  But the best way
   // to handle that is to teach EmitAggExpr to do the final copy
   // differently if it can't be elided.
-  CGF.EmitAnyExprToMem(E, TypedExnLoc, /*Volatile*/ false, /*IsInit*/ true);
+  CGF.EmitAnyExprToMem(e, typedAddr, /*Volatile*/ false, /*IsInit*/ true);
 
-  CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(CGF.getLLVMContext()),
-                          ShouldFreeVar);
-
-  // Technically, the exception object is like a temporary; it has to
-  // be cleaned up when its full-expression is complete.
-  // Unfortunately, the AST represents full-expressions by creating a
-  // ExprWithCleanups, which it only does when there are actually
-  // temporaries.
-  //
-  // If any cleanups have been added since we pushed ours, they must
-  // be from temporaries;  this will get popped at the same time.
-  // Otherwise we need to pop ours off.  FIXME: this is very brittle.
-  if (Cleanup == CGF.EHStack.stable_begin())
-    CGF.PopCleanupBlock();
+  // Deactivate the cleanup block.
+  CGF.DeactivateCleanupBlock(cleanup);
 }
 
 llvm::Value *CodeGenFunction::getExceptionSlot() {
@@ -1670,24 +1626,4 @@ CodeGenFunction::UnwindDest CodeGenFunction::getRethrowDest() {
 
 EHScopeStack::Cleanup::~Cleanup() {
   llvm_unreachable("Cleanup is indestructable");
-}
-
-void EHScopeStack::ConditionalCleanup::Emit(CodeGenFunction &CGF,
-                                            bool IsForEHCleanup) {
-  // Determine whether we should run the cleanup.
-  llvm::Value *condVal = CGF.Builder.CreateLoad(cond, "cond.should-run");
-
-  llvm::BasicBlock *cleanup = CGF.createBasicBlock("cond-cleanup.run");
-  llvm::BasicBlock *cont = CGF.createBasicBlock("cond-cleanup.cont");
-
-  // If we shouldn't run the cleanup, jump directly to the continuation block.
-  CGF.Builder.CreateCondBr(condVal, cleanup, cont);
-  CGF.EmitBlock(cleanup);
-
-  // Emit the core of the cleanup.
-  EmitImpl(CGF, IsForEHCleanup);
-  assert(CGF.HaveInsertPoint() && "cleanup didn't end with valid IP!");
-
-  // Fall into the continuation block.
-  CGF.EmitBlock(cont);
 }
