@@ -747,6 +747,105 @@ Value *llvm::SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
   return ::SimplifyMulInst(Op0, Op1, TD, DT, RecursionLimit);
 }
 
+/// SimplifyDiv - Given operands for an SDiv or UDiv, see if we can
+/// fold the result.  If not, this returns null.
+static Value *SimplifyDiv(unsigned Opcode, Value *Op0, Value *Op1,
+                          const TargetData *TD, const DominatorTree *DT,
+                          unsigned MaxRecurse) {
+  if (Constant *C0 = dyn_cast<Constant>(Op0)) {
+    if (Constant *C1 = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { C0, C1 };
+      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, 2, TD);
+    }
+  }
+
+  // X / undef -> undef
+  if (isa<UndefValue>(Op1))
+    return Op1;
+
+  // undef / X -> 0
+  if (isa<UndefValue>(Op0))
+    return Constant::getNullValue(Op0->getType());
+
+  // 0 / X -> 0, we don't need to preserve faults!
+  if (match(Op0, m_Zero()))
+    return Op0;
+
+  // X / 1 -> X
+  if (match(Op1, m_One()))
+    return Op0;
+  // Vector case. TODO: Have m_One match vectors.
+  if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
+    if (ConstantInt *X = cast_or_null<ConstantInt>(Op1V->getSplatValue()))
+      if (X->isOne())
+        return Op0;
+  }
+
+  if (Op0->getType()->isIntegerTy(1))
+    // It can't be division by zero, hence it must be division by one.
+    return Op0;
+
+  // X / X -> 1
+  if (Op0 == Op1)
+    return ConstantInt::get(Op0->getType(), 1);
+
+  // (X * Y) / Y -> X if the multiplication does not overflow.
+  Value *X = 0, *Y = 0;
+  if (match(Op0, m_Mul(m_Value(X), m_Value(Y))) && (X == Op1 || Y == Op1)) {
+    if (Y != Op1) std::swap(X, Y); // Ensure expression is (X * Y) / Y, Y = Op1
+    BinaryOperator *Mul = dyn_cast<BinaryOperator>(Op0);
+    // If the Mul knows it does not overflow, then we are good to go.
+    bool isSigned = Opcode == Instruction::SDiv;
+    if ((isSigned && Mul->hasNoSignedWrap()) ||
+        (!isSigned && Mul->hasNoUnsignedWrap()))
+      return X;
+    // If X has the form X = A / Y then X * Y cannot overflow.
+    if (BinaryOperator *Div = dyn_cast<BinaryOperator>(X))
+      if (Div->getOpcode() == Opcode && Div->getOperand(1) == Y)
+        return X;
+  }
+
+  return 0;
+}
+
+/// SimplifySDivInst - Given operands for an SDiv, see if we can
+/// fold the result.  If not, this returns null.
+static Value *SimplifySDivInst(Value *Op0, Value *Op1, const TargetData *TD,
+                               const DominatorTree *DT, unsigned MaxRecurse) {
+  if (Value *V = SimplifyDiv(Instruction::SDiv, Op0, Op1, TD, DT, MaxRecurse))
+    return V;
+
+  // (X rem Y) / Y -> 0
+  if (match(Op0, m_SRem(m_Value(), m_Specific(Op1))))
+    return Constant::getNullValue(Op0->getType());
+
+  return 0;
+}
+
+Value *llvm::SimplifySDivInst(Value *Op0, Value *Op1, const TargetData *TD,
+                             const DominatorTree *DT) {
+  return ::SimplifySDivInst(Op0, Op1, TD, DT, RecursionLimit);
+}
+
+/// SimplifyUDivInst - Given operands for a UDiv, see if we can
+/// fold the result.  If not, this returns null.
+static Value *SimplifyUDivInst(Value *Op0, Value *Op1, const TargetData *TD,
+                               const DominatorTree *DT, unsigned MaxRecurse) {
+  if (Value *V = SimplifyDiv(Instruction::UDiv, Op0, Op1, TD, DT, MaxRecurse))
+    return V;
+
+  // (X rem Y) / Y -> 0
+  if (match(Op0, m_URem(m_Value(), m_Specific(Op1))))
+    return Constant::getNullValue(Op0->getType());
+
+  return 0;
+}
+
+Value *llvm::SimplifyUDivInst(Value *Op0, Value *Op1, const TargetData *TD,
+                             const DominatorTree *DT) {
+  return ::SimplifyUDivInst(Op0, Op1, TD, DT, RecursionLimit);
+}
+
 /// SimplifyShift - Given operands for an Shl, LShr or AShr, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyShift(unsigned Opcode, Value *Op0, Value *Op1,
@@ -1649,6 +1748,8 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
                                                 /* isNUW */ false, TD, DT,
                                                 MaxRecurse);
   case Instruction::Mul: return SimplifyMulInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::SDiv: return SimplifySDivInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::UDiv: return SimplifyUDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::Shl: return SimplifyShlInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::LShr: return SimplifyLShrInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::AShr: return SimplifyAShrInst(LHS, RHS, TD, DT, MaxRecurse);
@@ -1729,6 +1830,12 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     break;
   case Instruction::Mul:
     Result = SimplifyMulInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
+  case Instruction::SDiv:
+    Result = SimplifySDivInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
+  case Instruction::UDiv:
+    Result = SimplifyUDivInst(I->getOperand(0), I->getOperand(1), TD, DT);
     break;
   case Instruction::Shl:
     Result = SimplifyShlInst(I->getOperand(0), I->getOperand(1), TD, DT);

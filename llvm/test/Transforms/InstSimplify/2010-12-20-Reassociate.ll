@@ -90,3 +90,59 @@ define i32 @sub3(i32 %x, i32 %y) {
   ret i32 %r
 ; CHECK: ret i32 %x
 }
+
+define i32 @sdiv1(i32 %x, i32 %y) {
+; CHECK: @sdiv1
+; (no overflow X * Y) / Y -> X
+  %mul = mul nsw i32 %x, %y
+  %r = sdiv i32 %mul, %y
+  ret i32 %r
+; CHECK: ret i32 %x
+}
+
+define i32 @sdiv2(i32 %x, i32 %y) {
+; CHECK: @sdiv2
+; (((X / Y) * Y) / Y) -> X / Y
+  %div = sdiv i32 %x, %y
+  %mul = mul i32 %div, %y
+  %r = sdiv i32 %mul, %y
+  ret i32 %r
+; CHECK: ret i32 %div
+}
+
+define i32 @sdiv3(i32 %x, i32 %y) {
+; CHECK: @sdiv3
+; (X rem Y) / Y -> 0
+  %rem = srem i32 %x, %y
+  %div = sdiv i32 %rem, %y
+  ret i32 %div
+; CHECK: ret i32 0
+}
+
+define i32 @udiv1(i32 %x, i32 %y) {
+; CHECK: @udiv1
+; (no overflow X * Y) / Y -> X
+  %mul = mul nuw i32 %x, %y
+  %r = udiv i32 %mul, %y
+  ret i32 %r
+; CHECK: ret i32 %x
+}
+
+define i32 @udiv2(i32 %x, i32 %y) {
+; CHECK: @udiv2
+; (((X / Y) * Y) / Y) -> X / Y
+  %div = udiv i32 %x, %y
+  %mul = mul i32 %div, %y
+  %r = udiv i32 %mul, %y
+  ret i32 %r
+; CHECK: ret i32 %div
+}
+
+define i32 @udiv3(i32 %x, i32 %y) {
+; CHECK: @udiv3
+; (X rem Y) / Y -> 0
+  %rem = urem i32 %x, %y
+  %div = udiv i32 %rem, %y
+  ret i32 %div
+; CHECK: ret i32 0
+}

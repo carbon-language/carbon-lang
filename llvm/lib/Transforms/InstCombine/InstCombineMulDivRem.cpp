@@ -304,28 +304,6 @@ bool InstCombiner::SimplifyDivRemOfSelect(BinaryOperator &I) {
 }
 
 
-/// This function implements the transforms on div instructions that work
-/// regardless of the kind of div instruction it is (udiv, sdiv, or fdiv). It is
-/// used by the visitors to those instructions.
-/// @brief Transforms common to all three div instructions
-Instruction *InstCombiner::commonDivTransforms(BinaryOperator &I) {
-  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-
-  // undef / X -> 0        for integer.
-  // undef / X -> undef    for FP (the undef could be a snan).
-  if (isa<UndefValue>(Op0)) {
-    if (Op0->getType()->isFPOrFPVectorTy())
-      return ReplaceInstUsesWith(I, Op0);
-    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-  }
-
-  // X / undef -> undef
-  if (isa<UndefValue>(Op1))
-    return ReplaceInstUsesWith(I, Op1);
-
-  return 0;
-}
-
 /// This function implements the transforms common to both integer division
 /// instructions (udiv and sdiv). It is called by the visitors to those integer
 /// division instructions.
@@ -333,31 +311,12 @@ Instruction *InstCombiner::commonDivTransforms(BinaryOperator &I) {
 Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  // (sdiv X, X) --> 1     (udiv X, X) --> 1
-  if (Op0 == Op1) {
-    if (const VectorType *Ty = dyn_cast<VectorType>(I.getType())) {
-      Constant *CI = ConstantInt::get(Ty->getElementType(), 1);
-      std::vector<Constant*> Elts(Ty->getNumElements(), CI);
-      return ReplaceInstUsesWith(I, ConstantVector::get(Elts));
-    }
-
-    Constant *CI = ConstantInt::get(I.getType(), 1);
-    return ReplaceInstUsesWith(I, CI);
-  }
-  
-  if (Instruction *Common = commonDivTransforms(I))
-    return Common;
-  
   // Handle cases involving: [su]div X, (select Cond, Y, Z)
   // This does not apply for fdiv.
   if (isa<SelectInst>(Op1) && SimplifyDivRemOfSelect(I))
     return &I;
 
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
-    // div X, 1 == X
-    if (RHS->equalsInt(1))
-      return ReplaceInstUsesWith(I, Op0);
-
     // (X / C1) / C2  -> X / (C1*C2)
     if (Instruction *LHS = dyn_cast<Instruction>(Op0))
       if (Instruction::BinaryOps(LHS->getOpcode()) == I.getOpcode())
@@ -380,20 +339,13 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
     }
   }
 
-  // 0 / X == 0, we don't need to preserve faults!
-  if (ConstantInt *LHS = dyn_cast<ConstantInt>(Op0))
-    if (LHS->equalsInt(0))
-      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-
-  // It can't be division by zero, hence it must be division by one.
-  if (I.getType()->isIntegerTy(1))
-    return ReplaceInstUsesWith(I, Op0);
-
-  if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
-    if (ConstantInt *X = cast_or_null<ConstantInt>(Op1V->getSplatValue()))
-      // div X, 1 == X
-      if (X->isOne())
-        return ReplaceInstUsesWith(I, Op0);
+  // (X - (X rem Y)) / Y -> X / Y; usually originates as ((X / Y) * Y) / Y
+  Value *X = 0, *Z = 0;
+  if (match(Op0, m_Sub(m_Value(X), m_Value(Z)))) { // (X - Z) / Y; Y = Op1
+    bool isSigned = I.getOpcode() == Instruction::SDiv;
+    if ((isSigned && match(Z, m_SRem(m_Specific(X), m_Specific(Op1)))) ||
+        (!isSigned && match(Z, m_URem(m_Specific(X), m_Specific(Op1)))))
+      return BinaryOperator::Create(I.getOpcode(), X, Op1);
   }
 
   return 0;
@@ -401,6 +353,9 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
 
 Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (Value *V = SimplifyUDivInst(Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
 
   // Handle the integer div common cases
   if (Instruction *Common = commonIDivTransforms(I))
@@ -464,6 +419,9 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
 Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
+  if (Value *V = SimplifySDivInst(Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
+
   // Handle the integer div common cases
   if (Instruction *Common = commonIDivTransforms(I))
     return Common;
@@ -516,7 +474,17 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
-  return commonDivTransforms(I);
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  // undef / X -> undef    (the undef could be a snan).
+  if (isa<UndefValue>(Op0))
+    return ReplaceInstUsesWith(I, Op0);
+
+  // X / undef -> undef
+  if (isa<UndefValue>(Op1))
+    return ReplaceInstUsesWith(I, Op1);
+
+  return 0;
 }
 
 /// This function implements the transforms on rem instructions that work

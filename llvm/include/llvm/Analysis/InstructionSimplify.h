@@ -40,6 +40,16 @@ namespace llvm {
   Value *SimplifyMulInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
                          const DominatorTree *DT = 0);
 
+  /// SimplifySDivInst - Given operands for an SDiv, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifySDivInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
+                          const DominatorTree *DT = 0);
+
+  /// SimplifyUDivInst - Given operands for a UDiv, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyUDivInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
+                         const DominatorTree *DT = 0);
+
   /// SimplifyShlInst - Given operands for a Shl, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD = 0,
