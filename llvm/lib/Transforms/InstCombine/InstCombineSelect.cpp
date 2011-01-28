@@ -792,6 +792,19 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       if (Instruction *NV = FoldOpIntoPhi(SI))
         return NV;
 
+  if (SelectInst *TrueSI = dyn_cast<SelectInst>(TrueVal)) {
+    if (TrueSI->getCondition() == CondVal) {
+      SI.setOperand(1, TrueSI->getTrueValue());
+      return &SI;
+    }
+  }
+  if (SelectInst *FalseSI = dyn_cast<SelectInst>(FalseVal)) {
+    if (FalseSI->getCondition() == CondVal) {
+      SI.setOperand(2, FalseSI->getFalseValue());
+      return &SI;
+    }
+  }
+
   if (BinaryOperator::isNot(CondVal)) {
     SI.setOperand(0, BinaryOperator::getNotArgument(CondVal));
     SI.setOperand(1, FalseVal);
