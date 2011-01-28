@@ -157,80 +157,6 @@ namespace llvm {
 
 namespace {
 
-/// MergeFunctions finds functions which will generate identical machine code,
-/// by considering all pointer types to be equivalent. Once identified,
-/// MergeFunctions will fold them by replacing a call to one to a call to a
-/// bitcast of the other.
-///
-class MergeFunctions : public ModulePass {
-public:
-  static char ID;
-  MergeFunctions()
-    : ModulePass(ID), HasGlobalAliases(false) {
-    initializeMergeFunctionsPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool runOnModule(Module &M);
-
-private:
-  typedef DenseSet<ComparableFunction> FnSetType;
-
-  /// A work queue of functions that may have been modified and should be
-  /// analyzed again.
-  std::vector<WeakVH> Deferred;
-
-  /// Insert a ComparableFunction into the FnSet, or merge it away if it's
-  /// equal to one that's already present.
-  bool Insert(ComparableFunction &NewF);
-
-  /// Remove a Function from the FnSet and queue it up for a second sweep of
-  /// analysis.
-  void Remove(Function *F);
-
-  /// Find the functions that use this Value and remove them from FnSet and
-  /// queue the functions.
-  void RemoveUsers(Value *V);
-
-  /// Replace all direct calls of Old with calls of New. Will bitcast New if
-  /// necessary to make types match.
-  void replaceDirectCallers(Function *Old, Function *New);
-
-  /// MergeTwoFunctions - Merge two equivalent functions. Upon completion, G
-  /// may be deleted, or may be converted into a thunk. In either case, it
-  /// should never be visited again.
-  void MergeTwoFunctions(Function *F, Function *G);
-
-  /// WriteThunkOrAlias - Replace G with a thunk or an alias to F. Deletes G.
-  void WriteThunkOrAlias(Function *F, Function *G);
-
-  /// WriteThunk - Replace G with a simple tail call to bitcast(F). Also
-  /// replace direct uses of G with bitcast(F). Deletes G.
-  void WriteThunk(Function *F, Function *G);
-
-  /// WriteAlias - Replace G with an alias to F. Deletes G.
-  void WriteAlias(Function *F, Function *G);
-
-  /// The set of all distinct functions. Use the Insert and Remove methods to
-  /// modify it.
-  FnSetType FnSet;
-
-  /// TargetData for more accurate GEP comparisons. May be NULL.
-  TargetData *TD;
-
-  /// Whether or not the target supports global aliases.
-  bool HasGlobalAliases;
-};
-
-}  // end anonymous namespace
-
-char MergeFunctions::ID = 0;
-INITIALIZE_PASS(MergeFunctions, "mergefunc", "Merge Functions", false, false)
-
-ModulePass *llvm::createMergeFunctionsPass() {
-  return new MergeFunctions();
-}
-
-namespace {
 /// FunctionComparator - Compares two functions to determine whether or not
 /// they will generate machine code with the same behaviour. TargetData is
 /// used if available. The comparator always fails conservatively (erring on the
@@ -278,6 +204,7 @@ private:
   IDMap Map1, Map2;
   unsigned long IDMap1Count, IDMap2Count;
 };
+
 }
 
 /// isEquivalentType - any two pointers in the same address space are
@@ -610,6 +537,155 @@ bool FunctionComparator::Compare() {
   return true;
 }
 
+namespace {
+
+/// MergeFunctions finds functions which will generate identical machine code,
+/// by considering all pointer types to be equivalent. Once identified,
+/// MergeFunctions will fold them by replacing a call to one to a call to a
+/// bitcast of the other.
+///
+class MergeFunctions : public ModulePass {
+public:
+  static char ID;
+  MergeFunctions()
+    : ModulePass(ID), HasGlobalAliases(false) {
+    initializeMergeFunctionsPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool runOnModule(Module &M);
+
+private:
+  typedef DenseSet<ComparableFunction> FnSetType;
+
+  /// A work queue of functions that may have been modified and should be
+  /// analyzed again.
+  std::vector<WeakVH> Deferred;
+
+  /// Insert a ComparableFunction into the FnSet, or merge it away if it's
+  /// equal to one that's already present.
+  bool Insert(ComparableFunction &NewF);
+
+  /// Remove a Function from the FnSet and queue it up for a second sweep of
+  /// analysis.
+  void Remove(Function *F);
+
+  /// Find the functions that use this Value and remove them from FnSet and
+  /// queue the functions.
+  void RemoveUsers(Value *V);
+
+  /// Replace all direct calls of Old with calls of New. Will bitcast New if
+  /// necessary to make types match.
+  void replaceDirectCallers(Function *Old, Function *New);
+
+  /// MergeTwoFunctions - Merge two equivalent functions. Upon completion, G
+  /// may be deleted, or may be converted into a thunk. In either case, it
+  /// should never be visited again.
+  void MergeTwoFunctions(Function *F, Function *G);
+
+  /// WriteThunkOrAlias - Replace G with a thunk or an alias to F. Deletes G.
+  void WriteThunkOrAlias(Function *F, Function *G);
+
+  /// WriteThunk - Replace G with a simple tail call to bitcast(F). Also
+  /// replace direct uses of G with bitcast(F). Deletes G.
+  void WriteThunk(Function *F, Function *G);
+
+  /// WriteAlias - Replace G with an alias to F. Deletes G.
+  void WriteAlias(Function *F, Function *G);
+
+  /// The set of all distinct functions. Use the Insert and Remove methods to
+  /// modify it.
+  FnSetType FnSet;
+
+  /// TargetData for more accurate GEP comparisons. May be NULL.
+  TargetData *TD;
+
+  /// Whether or not the target supports global aliases.
+  bool HasGlobalAliases;
+};
+
+}  // end anonymous namespace
+
+char MergeFunctions::ID = 0;
+INITIALIZE_PASS(MergeFunctions, "mergefunc", "Merge Functions", false, false)
+
+ModulePass *llvm::createMergeFunctionsPass() {
+  return new MergeFunctions();
+}
+
+bool MergeFunctions::runOnModule(Module &M) {
+  bool Changed = false;
+  TD = getAnalysisIfAvailable<TargetData>();
+
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
+      Deferred.push_back(WeakVH(I));
+  }
+  FnSet.resize(Deferred.size());
+
+  do {
+    std::vector<WeakVH> Worklist;
+    Deferred.swap(Worklist);
+
+    DEBUG(dbgs() << "size of module: " << M.size() << '\n');
+    DEBUG(dbgs() << "size of worklist: " << Worklist.size() << '\n');
+
+    // Insert only strong functions and merge them. Strong function merging
+    // always deletes one of them.
+    for (std::vector<WeakVH>::iterator I = Worklist.begin(),
+           E = Worklist.end(); I != E; ++I) {
+      if (!*I) continue;
+      Function *F = cast<Function>(*I);
+      if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
+          !F->mayBeOverridden()) {
+        ComparableFunction CF = ComparableFunction(F, TD);
+        Changed |= Insert(CF);
+      }
+    }
+
+    // Insert only weak functions and merge them. By doing these second we
+    // create thunks to the strong function when possible. When two weak
+    // functions are identical, we create a new strong function with two weak
+    // weak thunks to it which are identical but not mergable.
+    for (std::vector<WeakVH>::iterator I = Worklist.begin(),
+           E = Worklist.end(); I != E; ++I) {
+      if (!*I) continue;
+      Function *F = cast<Function>(*I);
+      if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
+          F->mayBeOverridden()) {
+        ComparableFunction CF = ComparableFunction(F, TD);
+        Changed |= Insert(CF);
+      }
+    }
+    DEBUG(dbgs() << "size of FnSet: " << FnSet.size() << '\n');
+  } while (!Deferred.empty());
+
+  FnSet.clear();
+
+  return Changed;
+}
+
+bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
+                                               const ComparableFunction &RHS) {
+  if (LHS.getFunc() == RHS.getFunc() &&
+      LHS.getHash() == RHS.getHash())
+    return true;
+  if (!LHS.getFunc() || !RHS.getFunc())
+    return false;
+  assert(LHS.getTD() == RHS.getTD() &&
+         "Comparing functions for different targets");
+
+  bool inserted;
+  bool &result1 = LHS.getOrInsertCachedComparison(RHS, inserted);
+  if (!inserted)
+    return result1;
+  bool &result2 = RHS.getOrInsertCachedComparison(LHS, inserted);
+  if (!inserted)
+    return result1 = result2;
+
+  return result1 = result2 = FunctionComparator(LHS.getTD(), LHS.getFunc(),
+                                                RHS.getFunc()).Compare();
+}
+
 /// Replace direct callers of Old with New.
 void MergeFunctions::replaceDirectCallers(Function *Old, Function *New) {
   Constant *BitcastNew = ConstantExpr::getBitCast(New, Old->getType());
@@ -791,78 +867,4 @@ void MergeFunctions::RemoveUsers(Value *V) {
       }
     }
   }
-}
-
-bool MergeFunctions::runOnModule(Module &M) {
-  bool Changed = false;
-  TD = getAnalysisIfAvailable<TargetData>();
-
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
-      Deferred.push_back(WeakVH(I));
-  }
-  FnSet.resize(Deferred.size());
-
-  do {
-    std::vector<WeakVH> Worklist;
-    Deferred.swap(Worklist);
-
-    DEBUG(dbgs() << "size of module: " << M.size() << '\n');
-    DEBUG(dbgs() << "size of worklist: " << Worklist.size() << '\n');
-
-    // Insert only strong functions and merge them. Strong function merging
-    // always deletes one of them.
-    for (std::vector<WeakVH>::iterator I = Worklist.begin(),
-           E = Worklist.end(); I != E; ++I) {
-      if (!*I) continue;
-      Function *F = cast<Function>(*I);
-      if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
-          !F->mayBeOverridden()) {
-        ComparableFunction CF = ComparableFunction(F, TD);
-        Changed |= Insert(CF);
-      }
-    }
-
-    // Insert only weak functions and merge them. By doing these second we
-    // create thunks to the strong function when possible. When two weak
-    // functions are identical, we create a new strong function with two weak
-    // weak thunks to it which are identical but not mergable.
-    for (std::vector<WeakVH>::iterator I = Worklist.begin(),
-           E = Worklist.end(); I != E; ++I) {
-      if (!*I) continue;
-      Function *F = cast<Function>(*I);
-      if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
-          F->mayBeOverridden()) {
-        ComparableFunction CF = ComparableFunction(F, TD);
-        Changed |= Insert(CF);
-      }
-    }
-    DEBUG(dbgs() << "size of FnSet: " << FnSet.size() << '\n');
-  } while (!Deferred.empty());
-
-  FnSet.clear();
-
-  return Changed;
-}
-
-bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
-                                               const ComparableFunction &RHS) {
-  if (LHS.getFunc() == RHS.getFunc() &&
-      LHS.getHash() == RHS.getHash())
-    return true;
-  if (!LHS.getFunc() || !RHS.getFunc())
-    return false;
-  assert(LHS.getTD() == RHS.getTD() &&
-         "Comparing functions for different targets");
-
-  bool inserted;
-  bool &result1 = LHS.getOrInsertCachedComparison(RHS, inserted);
-  if (!inserted)
-    return result1;
-  bool &result2 = RHS.getOrInsertCachedComparison(LHS, inserted);
-  if (!inserted)
-    return result1 = result2;
-
-  return result1 = result2 = FunctionComparator(LHS.getTD(), LHS.getFunc(),
-                                                RHS.getFunc()).Compare();
 }
