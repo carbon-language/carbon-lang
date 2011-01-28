@@ -26,6 +26,7 @@
 #define LLVM_USE_H
 
 #include "llvm/ADT/PointerIntPair.h"
+#include <cstddef>
 #include <iterator>
 
 namespace llvm {
