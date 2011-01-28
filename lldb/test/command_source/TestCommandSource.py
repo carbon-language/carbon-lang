@@ -20,8 +20,22 @@ class CommandSourceTestCase(TestBase):
         # the "my" package that defines the date() function.
         self.runCmd("command source .lldb")
 
+        # Let's temporarily redirect the stdout to our StringIO session object
+        # in order to capture the script evaluation output.
+        old_stdout = sys.stdout
+        session = StringIO.StringIO()
+        sys.stdout = session
+
         # Python should evaluate "my.date()" successfully.
         self.runCmd("script my.date()")
+
+        import datetime
+        self.expect(session.getvalue(), "script my.date() runs successfully",
+                    exe=False,
+            substrs = [str(datetime.date.today())])
+
+        # Now restore stdout to the way we were. :-)
+        sys.stdout = old_stdout
 
 
 if __name__ == '__main__':
