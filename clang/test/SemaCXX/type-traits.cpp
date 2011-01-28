@@ -469,6 +469,9 @@ void isBaseOfF() {
   int t[F(__is_base_of(Base, Derived))];
 };
 
+template <class T> class DerivedTemp : Base {};
+template <class T> class NonderivedTemp {};
+template <class T> class UndefinedTemp; // expected-note {{declared here}}
 
 void is_base_of() {
   int t01[T(__is_base_of(Base, Derived))];
@@ -486,7 +489,14 @@ void is_base_of() {
   int t13[F(__is_base_of(Union, Union))];
   int t14[T(__is_base_of(Empty, Empty))];
   int t15[T(__is_base_of(class_forward, class_forward))];
-  int t16[F(__is_base_of(Empty, class_forward))]; // expected-error {{incomplete type 'class_forward' used in type trait expression}}   
+  int t16[F(__is_base_of(Empty, class_forward))]; // expected-error {{incomplete type 'class_forward' used in type trait expression}}
+  int t17[F(__is_base_of(Base&, Derived&))];
+  int t18[F(__is_base_of(Base[10], Derived[10]))];
+  int t19[F(__is_base_of(int, int))];
+  int t20[F(__is_base_of(long, int))];
+  int t21[T(__is_base_of(Base, DerivedTemp<int>))];
+  int t22[F(__is_base_of(Base, NonderivedTemp<int>))];
+  int t23[F(__is_base_of(Base, UndefinedTemp<int>))]; // expected-error {{implicit instantiation of undefined template 'UndefinedTemp<int>'}}
 
   isBaseOfT<Base, Derived>();
   isBaseOfF<Derived, Base>();

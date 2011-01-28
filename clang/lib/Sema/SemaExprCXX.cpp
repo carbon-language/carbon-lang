@@ -2487,17 +2487,36 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
          "Cannot evaluate traits for dependent types.");
 
   switch(BTT) {
-  case BTT_IsBaseOf:
+  case BTT_IsBaseOf: {
     // C++0x [meta.rel]p2
-    // Base is a base class of Derived  without regard to cv-qualifiers or
+    // Base is a base class of Derived without regard to cv-qualifiers or
     // Base and Derived are not unions and name the same class type without
     // regard to cv-qualifiers.
-    if (Self.IsDerivedFrom(RhsT, LhsT) ||
-        (!LhsT->isUnionType() &&  !RhsT->isUnionType()
-         && LhsT->getAsCXXRecordDecl() == RhsT->getAsCXXRecordDecl()))
-      return true;
 
-    return false;
+    const RecordType *lhsRecord = LhsT->getAs<RecordType>();
+    if (!lhsRecord) return false;
+
+    const RecordType *rhsRecord = RhsT->getAs<RecordType>();
+    if (!rhsRecord) return false;
+
+    assert(Self.Context.hasSameUnqualifiedType(LhsT, RhsT)
+             == (lhsRecord == rhsRecord));
+
+    if (lhsRecord == rhsRecord)
+      return !lhsRecord->getDecl()->isUnion();
+
+    // C++0x [meta.rel]p2:
+    //   If Base and Derived are class types and are different types
+    //   (ignoring possible cv-qualifiers) then Derived shall be a
+    //   complete type.
+    if (Self.RequireCompleteType(KeyLoc, RhsT, 
+                          diag::err_incomplete_type_used_in_type_trait_expr))
+      return false;
+
+    return cast<CXXRecordDecl>(rhsRecord->getDecl())
+      ->isDerivedFrom(cast<CXXRecordDecl>(lhsRecord->getDecl()));
+  }
+
   case BTT_TypeCompatible:
     return Self.Context.typesAreCompatible(LhsT.getUnqualifiedType(),
                                            RhsT.getUnqualifiedType());
@@ -2560,19 +2579,7 @@ ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
   QualType LhsT = LhsTSInfo->getType();
   QualType RhsT = RhsTSInfo->getType();
 
-  if (BTT == BTT_IsBaseOf) {
-    // C++0x [meta.rel]p2
-    // If Base and Derived are class types and are different types
-    // (ignoring possible cv-qualifiers) then Derived shall be a complete
-    // type. []
-    CXXRecordDecl *LhsDecl = LhsT->getAsCXXRecordDecl();
-    CXXRecordDecl *RhsDecl = RhsT->getAsCXXRecordDecl();
-    if (!LhsT->isDependentType() && !RhsT->isDependentType() &&
-        LhsDecl && RhsDecl && LhsT != RhsT &&
-        RequireCompleteType(KWLoc, RhsT,
-                            diag::err_incomplete_type_used_in_type_trait_expr))
-      return ExprError();
-  } else if (BTT == BTT_TypeCompatible) {
+  if (BTT == BTT_TypeCompatible) {
     if (getLangOptions().CPlusPlus) {
       Diag(KWLoc, diag::err_types_compatible_p_in_cplusplus)
         << SourceRange(KWLoc, RParen);
