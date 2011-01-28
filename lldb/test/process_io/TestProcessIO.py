@@ -24,6 +24,7 @@ class ProcessLaunchIOTestCase(TestBase):
         i = 1
 
     def process_io_test (self):
+        """Test that process launch I/O redirection flags work properly."""
         exe = os.path.join (os.getcwd(), "a.out")
         self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out" ])
