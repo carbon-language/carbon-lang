@@ -1531,6 +1531,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   }
 
   ParsingDeclarator DeclaratorInfo(*this, DS, Declarator::MemberContext);
+  VirtSpecifiers VS;
 
   if (Tok.isNot(tok::colon)) {
     // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
@@ -1546,6 +1547,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         ConsumeToken();
       return;
     }
+
+    ParseOptionalCXX0XVirtSpecifierSeq(VS);
 
     // If attributes exist after the declarator, but before an '{', parse them.
     MaybeParseGNUAttributes(DeclaratorInfo);
@@ -1579,7 +1582,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         return;
       }
 
-      ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo);
+      ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo, VS);
       // Consume the optional ';'
       if (Tok.is(tok::semi))
         ConsumeToken();
@@ -1609,7 +1612,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         SkipUntil(tok::comma, true, true);
     }
 
-    VirtSpecifiers VS;
     ParseOptionalCXX0XVirtSpecifierSeq(VS);
 
     // pure-specifier:
@@ -1689,6 +1691,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     // Parse the next declarator.
     DeclaratorInfo.clear();
+    VS.clear();
     BitfieldSize = 0;
     Init = 0;
     Deleted = false;

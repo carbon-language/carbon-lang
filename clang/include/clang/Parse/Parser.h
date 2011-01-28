@@ -910,7 +910,8 @@ private:
   void PopParsingClass();
 
   Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
-                                     const ParsedTemplateInfo &TemplateInfo);
+                                const ParsedTemplateInfo &TemplateInfo,
+                                const VirtSpecifiers& VS);
   void ParseLexedMethodDeclarations(ParsingClass &Class);
   void ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM);
   void ParseLexedMethodDefs(ParsingClass &Class);

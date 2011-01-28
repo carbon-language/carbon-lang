@@ -1513,6 +1513,8 @@ public:
   bool isNewSpecified() const { return Specifiers & VS_New; }
   SourceLocation getNewLoc() const { return VS_newLoc; }
 
+  void clear() { Specifiers = 0; }
+
   static const char *getSpecifierName(Specifier VS);
 
 private:

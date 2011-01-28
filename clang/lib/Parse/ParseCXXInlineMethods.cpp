@@ -21,7 +21,8 @@ using namespace clang;
 /// Declarator is a well formed C++ inline method definition. Now lex its body
 /// and store its tokens for parsing after the C++ class is complete.
 Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
-                                const ParsedTemplateInfo &TemplateInfo) {
+                                const ParsedTemplateInfo &TemplateInfo,
+                                const VirtSpecifiers& VS) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) &&
          "Current token not a '{', ':' or 'try'!");
@@ -35,11 +36,18 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
     // FIXME: Friend templates
     FnD = Actions.ActOnFriendFunctionDecl(getCurScope(), D, true,
                                           move(TemplateParams));
-  else // FIXME: pass template information through
+  else { // FIXME: pass template information through
+    if (VS.isOverrideSpecified())
+      Diag(VS.getOverrideLoc(), diag::ext_override_inline) << "override";
+    if (VS.isFinalSpecified())
+      Diag(VS.getFinalLoc(), diag::ext_override_inline) << "final";
+    if (VS.isNewSpecified())
+      Diag(VS.getNewLoc(), diag::ext_override_inline) << "new";
+
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
                                            move(TemplateParams), 0, 
-                                           VirtSpecifiers(), 0,
-                                           /*IsDefinition*/true);
+                                           VS, 0, /*IsDefinition*/true);
+  }
 
   HandleMemberFunctionDefaultArgs(D, FnD);
 
