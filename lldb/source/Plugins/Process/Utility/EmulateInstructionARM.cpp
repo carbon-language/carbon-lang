@@ -376,6 +376,116 @@ emulate_add_sp_rm (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
+// Set r7 to point to some ip offset.
+// SUB (immediate)
+static bool
+emulate_sub_r7_ip_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), ‘1’);
+        if d == 15 then // Can only occur for ARM encoding
+           ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const addr_t ip = emulator->ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r12, 0, &success);
+        if (!success)
+            return false;
+        uint32_t imm32;
+        switch (encoding) {
+        case eEncodingA1:
+            imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+            break;
+        default:
+            return false;
+        }
+        addr_t ip_offset = imm32;
+        addr_t addr = ip - ip_offset; // the adjusted ip value
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindDWARF,
+                                                dwarf_r12,
+                                                -ip_offset };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r7, addr))
+            return false;
+    }
+    return true;
+}
+
+// Set ip to point to some stack offset.
+// SUB (SP minus immediate)
+static bool
+emulate_sub_ip_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), ‘1’);
+        if d == 15 then // Can only occur for ARM encoding
+           ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        uint32_t imm32;
+        switch (encoding) {
+        case eEncodingA1:
+            imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+            break;
+        default:
+            return false;
+        }
+        addr_t sp_offset = imm32;
+        addr_t addr = sp - sp_offset; // the adjusted stack pointer value
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindGeneric,
+                                                LLDB_REGNUM_GENERIC_SP,
+                                                -sp_offset };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r12, addr))
+            return false;
+    }
+    return true;
+}
+
 // A sub operation to adjust the SP -- allocate space for local storage.
 static bool
 emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
@@ -612,8 +722,10 @@ static ARMOpcode g_arm_opcodes[] =
 
     // set r7 to point to a stack offset
     { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add r7, sp, #<const>" },
+    { 0x0ffff000, 0xe24c7000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_r7_ip_imm, "sub r7, ip, #<const>"},
     // set ip to point to a stack offset
     { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add ip, sp, #<const>" },
+    { 0x0ffff000, 0xe24dc000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_ip_sp_imm, "sub ip, sp, #<const>"},
 
     // adjust the stack pointer
     { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_sp_imm, "sub sp, sp, #<const>"},
