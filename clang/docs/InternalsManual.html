@@ -69,6 +69,11 @@ td {
   </ul>
 </li>
 <li><a href="libIndex.html">The Index Library</a></li>
+<li><a href="#Howtos">Howto guides</a>
+  <ul>
+    <li><a href="#AddingAttributes">How to add an attribute</a></li>
+  </ul>
+</li>
 </ul>
 
 
@@ -1711,7 +1716,78 @@ interacts with constant evaluation:</p>
 </ul>
 
 
+<!-- ======================================================================= -->
+<h2 id="Howtos">How to change Clang</h2>
+<!-- ======================================================================= -->
 
+<!-- ======================================================================= -->
+<h3 id="AddingAttributes">How to add an attribute</h3>
+<!-- ======================================================================= -->
+
+<p>To add an attribute, you'll have to add it to the list of attributes, add it
+to the parsing phase, and look for it in the AST scan.
+<a href="http://llvm.org/viewvc/llvm-project?view=rev&revision=124217">r124217</a>
+has a good example of adding a warning attribute.</p>
+
+<p>(Beware that this hasn't been reviewed/fixed by the people who designed the
+attributes system yet.)</p>
+
+<h4><a
+href="http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/Attr.td?view=markup">include/clang/Basic/Attr.td</a></h4>
+
+<p>Each attribute gets a <tt>def</tt> inheriting from <tt>Attr</tt> or one of
+its subclasses.  <tt>InheritableAttr</tt> means that the attribute also applies
+to subsequent declarations of the same name.</p>
+
+<p><tt>Spellings</tt> lists the strings that can appear in
+<tt>__attribute__((here))</tt> or <tt>[[here]]</tt>.  All such strings
+will be synonymous.  If you want to allow the <tt>[[]]</tt> C++0x
+syntax, you have to define a list of <tt>Namespaces</tt>, which will
+let users write <tt>[[namespace:spelling]]</tt>. Using the empty
+string for a namespace will allow users to write just the spelling
+with no "<tt>:</tt>".</p>
+
+<p><tt>Subjects</tt> restricts what kinds of AST node to which this attribute
+can appertain (roughly, attach).</p>
+
+<p><tt>Args</tt> names the arguments the attribute takes, in order. If
+<tt>Args</tt> is <tt>[StringArgument&lt;"Arg1">, IntArgument&lt;"Arg2">]</tt>
+then <tt>__attribute__((myattribute("Hello", 3)))</tt> will be a valid use.</p>
+
+<h4>Boilerplate</h4>
+
+<p>Add an element to the <tt>AttributeList::Kind</tt> enum in <a
+href="http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Sema/AttributeList.h?view=markup">include/clang/Sema/AttributeList.h</a>
+named <tt>AT_lower_with_underscores</tt>.  That is, a CamelCased
+<tt>AttributeName</tt> in <tt>Attr.td</tt> name should become
+<tt>AT_attribute_name</tt>.</p>
+
+<p>Add a case to the <tt>StringSwitch</tt> in <tt>AttributeList::getKind()</tt>
+in <a
+href="http://llvm.org/viewvc/llvm-project/cfe/trunk/lib/Sema/AttributeList.cpp?view=markup">lib/Sema/AttributeList.cpp</a>
+for each spelling of your attribute.  Less common attributes should come toward
+the end of that list.</p>
+
+<p>Write a new <tt>HandleYourAttr()</tt> function in <a
+href="http://llvm.org/viewvc/llvm-project/cfe/trunk/lib/Sema/SemaDeclAttr.cpp?view=markup">lib/Sema/SemaDeclAttr.cpp</a>,
+and add a case to the switch in <tt>ProcessNonInheritableDeclAttr()</tt> or
+<tt>ProcessInheritableDeclAttr()</tt> forwarding to it.</p>
+
+<p>If your attribute causes extra warnings to fire, define a <tt>DiagGroup</tt>
+in <a
+href="http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/DiagnosticGroups.td?view=markup">include/clang/Basic/DiagnosticGroups.td</a>
+named after the attribute's <tt>Spelling</tt> with "_"s replaced by "-"s.  If
+you're only defining one diagnostic, you can skip <tt>DiagnosticGroups.td</tt>
+and use <tt>InGroup&lt;DiagGroup&lt;"your-attribute">></tt> directly in <a
+href="http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/DiagnosticSemaKinds.td?view=markup">DiagnosticSemaKinds.td</a></p>
+
+<h4>The meat of your attribute</h4>
+
+<p>Find an appropriate place in Clang to do whatever your attribute needs to do.
+Check for the attribute's presence using <tt>Decl::getAttr&lt;YourAttr>()</tt>.</p>
+
+<p>Update the <a href="LanguageExtensions.html">Clang Language Extensions</a>
+document to describe your new attribute.</p>
 
 </div>
 </body>
