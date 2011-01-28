@@ -17,7 +17,7 @@
 #include "CGObjCRuntime.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
-#include "CGException.h"
+#include "CGCleanup.h"
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
