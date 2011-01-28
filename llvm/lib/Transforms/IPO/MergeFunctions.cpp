@@ -798,8 +798,10 @@ bool MergeFunctions::runOnModule(Module &M) {
   TD = getAnalysisIfAvailable<TargetData>();
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    Deferred.push_back(WeakVH(I));
+    if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
+      Deferred.push_back(WeakVH(I));
   }
+  FnSet.resize(Deferred.size());
 
   do {
     std::vector<WeakVH> Worklist;
