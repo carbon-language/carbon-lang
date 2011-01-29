@@ -2932,49 +2932,6 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
   return llvm::ConstantArray::get(ArrayType, Inits.data(), Inits.size());
 }
 
-/// GetGlobalVariable - Will return a global variable of the given type. 
-/// If a variable with a different type already exists then a new variable
-/// with the right type will be created.
-/// FIXME: We should move this to CodeGenModule and rename it to something 
-/// better and then use it in CGVTT and CGRTTI. 
-static llvm::GlobalVariable *
-GetGlobalVariable(llvm::Module &Module, llvm::StringRef Name,
-                  const llvm::Type *Ty,
-                  llvm::GlobalValue::LinkageTypes Linkage) {
-
-  llvm::GlobalVariable *GV = Module.getNamedGlobal(Name);
-  llvm::GlobalVariable *OldGV = 0;
-  
-  if (GV) {
-    // Check if the variable has the right type.
-    if (GV->getType()->getElementType() == Ty)
-      return GV;
-
-    assert(GV->isDeclaration() && "Declaration has wrong type!");
-    
-    OldGV = GV;
-  }
-  
-  // Create a new variable.
-  GV = new llvm::GlobalVariable(Module, Ty, /*isConstant=*/true,
-                                Linkage, 0, Name);
-  
-  if (OldGV) {
-    // Replace occurrences of the old variable if needed.
-    GV->takeName(OldGV);
-   
-    if (!OldGV->use_empty()) {
-      llvm::Constant *NewPtrForOldDecl =
-        llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
-      OldGV->replaceAllUsesWith(NewPtrForOldDecl);
-    }
-
-    OldGV->eraseFromParent();
-  }
-  
-  return GV;
-}
-
 llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   CGM.getCXXABI().getMangleContext().mangleCXXVTable(RD, OutName);
@@ -2987,8 +2944,8 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
     llvm::ArrayType::get(Int8PtrTy, getNumVTableComponents(RD));
 
   llvm::GlobalVariable *GV =
-    GetGlobalVariable(CGM.getModule(), Name, ArrayType,
-                      llvm::GlobalValue::ExternalLinkage);
+    CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, 
+                                          llvm::GlobalValue::ExternalLinkage);
   GV->setUnnamedAddr(true);
   return GV;
 }
@@ -3050,8 +3007,8 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 
   // Create the variable that will hold the construction vtable.
   llvm::GlobalVariable *VTable = 
-    GetGlobalVariable(CGM.getModule(), Name, ArrayType, 
-                      llvm::GlobalValue::InternalLinkage);
+    CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, 
+                                          llvm::GlobalValue::InternalLinkage);
 
   // Add the thunks.
   VTableThunksTy VTableThunks;

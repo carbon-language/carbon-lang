@@ -1000,7 +1000,7 @@ CodeGenModule::CreateOrReplaceCXXRuntimeVariable(llvm::StringRef Name,
 
     // Because C++ name mangling, the only way we can end up with an already
     // existing global with the same name is if it has been declared extern "C".
-    assert(GV->isDeclaration() && "Declaration has wrong type!");
+      assert(GV->isDeclaration() && "Declaration has wrong type!");
     OldGV = GV;
   }
   
