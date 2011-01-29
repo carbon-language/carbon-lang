@@ -1,4 +1,5 @@
-; RUN: opt < %s -simplifycfg -S | FileCheck %s
+; RUN: opt < %s -simplifycfg -S | not grep br
+
 
         %llvm.dbg.anchor.type = type { i32, i32 }
         %llvm.dbg.compile_unit.type = type { i32, { }*, i32, i8*, i8*, i8*, i1, i1, i8* }
@@ -12,16 +13,7 @@
 
 declare void @llvm.dbg.stoppoint(i32, i32, { }*) nounwind
 
-define i1 @t({ i32, i32 }* %I) {
-; CHECK: t
-; CHECK:  switch i32 %tmp.2.i, label %shortcirc_next.4 [
-; CHECK:    i32 14, label %UnifiedReturnBlock
-; CHECK:    i32 15, label %UnifiedReturnBlock
-; CHECK:    i32 16, label %UnifiedReturnBlock
-; CHECK:    i32 17, label %UnifiedReturnBlock
-; CHECK:    i32 18, label %UnifiedReturnBlock
-; CHECK:    i32 19, label %UnifiedReturnBlock
-; CHECK:  ]
+define i1 @_ZN4llvm11SetCondInst7classofEPKNS_11InstructionE({ i32, i32 }* %I) {
 entry:
         %tmp.1.i = getelementptr { i32, i32 }* %I, i64 0, i32 1         ; <i32*> [#uses=1]
         %tmp.2.i = load i32* %tmp.1.i           ; <i32> [#uses=6]

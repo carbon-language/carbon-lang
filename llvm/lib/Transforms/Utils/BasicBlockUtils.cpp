@@ -509,32 +509,7 @@ void llvm::FindFunctionBackedges(const Function &F,
       // Go up one level.
       InStack.erase(VisitStack.pop_back_val().first);
     }
-  } while (!VisitStack.empty()); 
-}
-
-/// FoldReturnIntoUncondBranch - This method duplicates the specified return
-/// instruction into a predecessor which ends in an unconditional branch. If
-/// the return instruction returns a value defined by a PHI, propagate the
-/// right value into the return. It returns the new return instruction in the
-/// predecessor.
-ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
-                                             BasicBlock *Pred) {
-  Instruction *UncondBranch = Pred->getTerminator();
-  // Clone the return and add it to the end of the predecessor.
-  Instruction *NewRet = RI->clone();
-  Pred->getInstList().push_back(NewRet);
-      
-  // If the return instruction returns a value, and if the value was a
-  // PHI node in "BB", propagate the right value into the return.
-  for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();
-       i != e; ++i)
-    if (PHINode *PN = dyn_cast<PHINode>(*i))
-      if (PN->getParent() == BB)
-        *i = PN->getIncomingValueForBlock(Pred);
-      
-  // Update any PHI nodes in the returning block to realize that we no
-  // longer branch to them.
-  BB->removePredecessor(Pred);
-  UncondBranch->eraseFromParent();
-  return cast<ReturnInst>(NewRet);
+  } while (!VisitStack.empty());
+  
+  
 }

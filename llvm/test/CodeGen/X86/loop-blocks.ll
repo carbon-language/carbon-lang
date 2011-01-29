@@ -70,7 +70,6 @@ exit:
 
 ; Same as slightly_more_involved, but block_a is now a CFG diamond with
 ; fallthrough edges which should be preserved.
-; "callq block_a_merge_func" is tail duped.
 
 ; CHECK: yet_more_involved:
 ;      CHECK:   jmp .LBB2_1
@@ -79,12 +78,12 @@ exit:
 ; CHECK-NEXT:   callq bar99
 ; CHECK-NEXT:   callq get
 ; CHECK-NEXT:   cmpl $2999, %eax
-; CHECK-NEXT:   jle .LBB2_5
-; CHECK-NEXT:   callq block_a_false_func
-; CHECK-NEXT:   callq block_a_merge_func
-; CHECK-NEXT:   jmp .LBB2_1
-; CHECK-NEXT: .LBB2_5:
+; CHECK-NEXT:   jg .LBB2_6
 ; CHECK-NEXT:   callq block_a_true_func
+; CHECK-NEXT:   jmp .LBB2_7
+; CHECK-NEXT: .LBB2_6:
+; CHECK-NEXT:   callq block_a_false_func
+; CHECK-NEXT: .LBB2_7:
 ; CHECK-NEXT:   callq block_a_merge_func
 ; CHECK-NEXT: .LBB2_1:
 ; CHECK-NEXT:   callq body

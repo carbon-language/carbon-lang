@@ -28,7 +28,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -36,10 +35,6 @@
 #include <set>
 #include <map>
 using namespace llvm;
-
-static cl::opt<bool>
-DupRet("simplifycfg-dup-ret", cl::Hidden, cl::init(false),
-       cl::desc("Duplicate return instructions into unconditional branches"));
 
 STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 
@@ -2032,12 +2027,28 @@ bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI) {
   }
   
   // If we found some, do the transformation!
-  if (!UncondBranchPreds.empty() && DupRet) {
+  if (!UncondBranchPreds.empty()) {
     while (!UncondBranchPreds.empty()) {
       BasicBlock *Pred = UncondBranchPreds.pop_back_val();
       DEBUG(dbgs() << "FOLDING: " << *BB
             << "INTO UNCOND BRANCH PRED: " << *Pred);
-      (void)FoldReturnIntoUncondBranch(RI, BB, Pred);
+      Instruction *UncondBranch = Pred->getTerminator();
+      // Clone the return and add it to the end of the predecessor.
+      Instruction *NewRet = RI->clone();
+      Pred->getInstList().push_back(NewRet);
+      
+      // If the return instruction returns a value, and if the value was a
+      // PHI node in "BB", propagate the right value into the return.
+      for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();
+           i != e; ++i)
+        if (PHINode *PN = dyn_cast<PHINode>(*i))
+          if (PN->getParent() == BB)
+            *i = PN->getIncomingValueForBlock(Pred);
+      
+      // Update any PHI nodes in the returning block to realize that we no
+      // longer branch to them.
+      BB->removePredecessor(Pred);
+      UncondBranch->eraseFromParent();
     }
     
     // If we eliminated all predecessors of the block, delete the block now.
