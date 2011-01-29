@@ -10,7 +10,7 @@ namespace Test1 {
   // A is explicitly marked hidden, so all RTTI data should also be marked hidden.
   // CHECK-TEST1: @_ZTSN5Test11AE = linkonce_odr hidden constant
   // CHECK-TEST1: @_ZTIN5Test11AE = linkonce_odr hidden unnamed_addr constant
-  // CHECK-TEST1: @_ZTSPN5Test11AE = linkonce_odr hidden constant
+  // CHECK-TEST1: @_ZTSPN5Test11AE = linkonce_odr constant
   // CHECK-TEST1: @_ZTIPN5Test11AE = linkonce_odr hidden unnamed_addr constant
   struct __attribute__((visibility("hidden"))) A { };
 
