@@ -3019,7 +3019,7 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
   VTable->setLinkage(Linkage);
   
   // Set the right visibility.
-  CGM.setTypeVisibility(VTable, RD, /*ForRTTI*/ false, /*ForDef*/ true);
+  CGM.setTypeVisibility(VTable, RD, /*ForRTTI=*/false);
 }
 
 llvm::GlobalVariable *

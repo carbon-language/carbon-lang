@@ -195,9 +195,8 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
 /// associated with the given type.
 void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
                                       const CXXRecordDecl *RD,
-                                      bool IsForRTTI,
-                                      bool IsForDefinition) const {
-  setGlobalVisibility(GV, RD, IsForDefinition);
+                                      bool IsForRTTI) const {
+  setGlobalVisibility(GV, RD, /*IsForDefinition=*/true);
 
   if (!CodeGenOpts.HiddenWeakVTables)
     return;
