@@ -16,7 +16,7 @@
 #ifndef LLVM_ANALYSIS_PROFILEINFOTYPES_H
 #define LLVM_ANALYSIS_PROFILEINFOTYPES_H
 
-// Included by libprofile.
+/* Included by libprofile. */
 #if defined(__cplusplus)
 extern "C" {
 #endif
