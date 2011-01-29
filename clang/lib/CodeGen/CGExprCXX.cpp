@@ -54,7 +54,23 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
 }
 
 static const CXXRecordDecl *getMostDerivedClassDecl(const Expr *Base) {
-  QualType DerivedType = Base->IgnoreParenCasts()->getType();
+  const Expr *E = Base;
+  
+  while (true) {
+    E = E->IgnoreParens();
+    if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
+      if (CE->getCastKind() == CK_DerivedToBase || 
+          CE->getCastKind() == CK_UncheckedDerivedToBase ||
+          CE->getCastKind() == CK_NoOp) {
+        E = CE->getSubExpr();
+        continue;
+      }
+    }
+
+    break;
+  }
+
+  QualType DerivedType = E->getType();
   if (const PointerType *PTy = DerivedType->getAs<PointerType>())
     DerivedType = PTy->getPointeeType();
 
