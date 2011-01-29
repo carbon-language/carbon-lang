@@ -112,7 +112,7 @@ ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
       if (it->getName() == CI.getFrontendOpts().AddPluginActions[i]) {
         llvm::OwningPtr<PluginASTAction> P(it->instantiate());
         FrontendAction* c = P.get();
-        if (P->ParseArgs(CI, CI.getFrontendOpts().PluginArgs))
+        if (P->ParseArgs(CI, CI.getFrontendOpts().AddPluginArgs[i]))
           Consumers.push_back(c->CreateASTConsumer(CI, InFile));
       }
     }

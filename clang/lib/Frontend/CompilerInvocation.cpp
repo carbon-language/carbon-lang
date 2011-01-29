@@ -438,6 +438,10 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
   for (unsigned i = 0, e = Opts.AddPluginActions.size(); i != e; ++i) {
     Res.push_back("-add-plugin");
     Res.push_back(Opts.AddPluginActions[i]);
+    for(unsigned ai = 0, ae = Opts.AddPluginArgs.size(); ai != ae; ++ai) {
+      Res.push_back("-plugin-arg-" + Opts.AddPluginActions[i]);
+      Res.push_back(Opts.AddPluginArgs[i][ai]);
+    }
   }
   for (unsigned i = 0, e = Opts.ASTMergeFiles.size(); i != e; ++i) {
     Res.push_back("-ast-merge");
@@ -1106,6 +1110,14 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   }
 
   Opts.AddPluginActions = Args.getAllArgValues(OPT_add_plugin);
+  Opts.AddPluginArgs.resize(Opts.AddPluginActions.size());
+  for (int i = 0, e = Opts.AddPluginActions.size(); i != e; ++i) {
+    for (arg_iterator it = Args.filtered_begin(OPT_plugin_arg),
+           end = Args.filtered_end(); it != end; ++it) {
+      if ((*it)->getValue(Args, 0) == Opts.AddPluginActions[i])
+        Opts.AddPluginArgs[i].push_back((*it)->getValue(Args, 1));
+    }
+  }
 
   if (const Arg *A = Args.getLastArg(OPT_code_completion_at)) {
     Opts.CodeCompletionAt =
