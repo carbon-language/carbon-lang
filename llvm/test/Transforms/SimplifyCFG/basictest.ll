@@ -25,16 +25,6 @@ define void @test3(i1 %T) {
 }
 
 
-define void @test4() {
-  br label %return
-return:
-  ret void
-; CHECK: @test4
-; CHECK-NEXT: ret void
-}
-@test4g = global i8* blockaddress(@test4, %return)
-
-
 ; PR5795
 define void @test5(i32 %A) {
   switch i32 %A, label %return [
