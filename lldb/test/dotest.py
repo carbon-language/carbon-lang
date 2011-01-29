@@ -72,6 +72,9 @@ config = {}
 # Delay startup in order for the debugger to attach.
 delay = False
 
+# Dump the Python sys.path variable.
+dumpSysPath = False
+
 # By default, failfast is False.  Use '-F' to overwrite it.
 failfast = False
 
@@ -123,6 +126,7 @@ where options:
 -h   : print this help message and exit (also --help)
 -A   : specify the architecture to launch for the inferior process
 -C   : specify the compiler used to build the inferior executable
+-D   : dump the Python sys.path variable
 -a   : don't do lldb Python API tests
        use @python_api_test to decorate a test case as lldb Python API test
 +a   : just do lldb Python API tests
@@ -252,6 +256,7 @@ def parseOptionsAndInitTestdirs():
     global configFile
     global count
     global delay
+    global dumpSysPath
     global failfast
     global filterspec
     global fs4all
@@ -291,6 +296,9 @@ def parseOptionsAndInitTestdirs():
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
                 usage()
             os.environ["CC"] = sys.argv[index]
+            index += 1
+        elif sys.argv[index].startswith('-D'):
+            dumpSysPath = True
             index += 1
         elif sys.argv[index].startswith('-a'):
             dont_do_python_api_test = True
@@ -453,6 +461,7 @@ def setupSysPath():
 
     global rdir
     global testdirs
+    global dumpSysPath
 
     # Get the directory containing the current script.
     if "DOTEST_PROFILE" in os.environ and "DOTEST_SCRIPT_DIR" in os.environ:
@@ -509,6 +518,8 @@ def setupSysPath():
 
     # This is to locate the lldb.py module.  Insert it right after sys.path[0].
     sys.path[1:1] = [lldbPath]
+    if dumpSysPath:
+        print "sys.path:", sys.path
 
 
 def doDelay(delta):
