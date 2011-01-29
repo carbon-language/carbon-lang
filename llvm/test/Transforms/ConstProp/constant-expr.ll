@@ -100,3 +100,12 @@
 ; CHECK: pr9011_14 = constant i128 0
 @pr9011_15 = constant i128 bitcast (<4 x i32> zeroinitializer to i128)
 ; CHECK: pr9011_15 = constant i128 0
+
+@select = internal constant
+          i32 select (i1 icmp ult (i32 ptrtoint (i8* @X to i32),
+                                   i32 ptrtoint (i8* @Y to i32)),
+            i32 select (i1 icmp ult (i32 ptrtoint (i8* @X to i32),
+                                     i32 ptrtoint (i8* @Y to i32)),
+               i32 10, i32 20),
+            i32 30)
+; CHECK: select = internal constant i32 select {{.*}} i32 10, i32 30
