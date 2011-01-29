@@ -108,3 +108,27 @@ define i1 @or(i32 %x) {
   ret i1 %c
 ; CHECK: ret i1 false
 }
+
+define i1 @shl(i32 %x) {
+; CHECK: @shl
+  %s = shl i32 1, %x
+  %c = icmp eq i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 false
+}
+
+define i1 @lshr(i32 %x) {
+; CHECK: @lshr
+  %s = lshr i32 -1, %x
+  %c = icmp eq i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 false
+}
+
+define i1 @ashr(i32 %x) {
+; CHECK: @ashr
+  %s = ashr i32 -1, %x
+  %c = icmp eq i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 false
+}

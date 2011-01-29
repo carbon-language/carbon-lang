@@ -715,16 +715,16 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
   if (isa<SExtInst>(V) || isa<ZExtInst>(V))
     return isKnownNonZero(cast<Instruction>(V)->getOperand(0), TD, Depth);
 
-  // shl X, A != 0 if X is odd.  Note that the value of the shift is undefined
+  // shl X, Y != 0 if X is odd.  Note that the value of the shift is undefined
   // if the lowest bit is shifted off the end.
   if (BitWidth && match(V, m_Shl(m_Value(X), m_Value(Y)))) {
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
-    ComputeMaskedBits(V, APInt(BitWidth, 1), KnownZero, KnownOne, TD, Depth);
+    ComputeMaskedBits(X, APInt(BitWidth, 1), KnownZero, KnownOne, TD, Depth);
     if (KnownOne[0])
       return true;
   }
-  // shr X, A != 0 if X is negative.  Note that the value of the shift is not
+  // shr X, Y != 0 if X is negative.  Note that the value of the shift is not
   // defined if the sign bit is shifted off the end.
   else if (match(V, m_Shr(m_Value(X), m_Value(Y)))) {
     bool XKnownNonNegative, XKnownNegative;
