@@ -72,7 +72,7 @@ config = {}
 # Delay startup in order for the debugger to attach.
 delay = False
 
-# Dump the Python sys.path variable.
+# Dump the Python sys.path variable.  Use '-D' to dump sys.path.
 dumpSysPath = False
 
 # By default, failfast is False.  Use '-F' to overwrite it.
