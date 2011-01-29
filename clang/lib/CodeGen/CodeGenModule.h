@@ -275,6 +275,16 @@ public:
   void setTypeVisibility(llvm::GlobalValue *GV, const CXXRecordDecl *D,
                          TypeVisibilityKind TVK) const;
 
+  static llvm::GlobalValue::VisibilityTypes GetLLVMVisibility(Visibility V) {
+    switch (V) {
+    case DefaultVisibility:   return llvm::GlobalValue::DefaultVisibility;
+    case HiddenVisibility:    return llvm::GlobalValue::HiddenVisibility;
+    case ProtectedVisibility: return llvm::GlobalValue::ProtectedVisibility;
+    }
+    llvm_unreachable("unknown visibility!");
+    return llvm::GlobalValue::DefaultVisibility;
+  }
+
   llvm::Constant *GetAddrOfGlobal(GlobalDecl GD) {
     if (isa<CXXConstructorDecl>(GD.getDecl()))
       return GetAddrOfCXXConstructor(cast<CXXConstructorDecl>(GD.getDecl()),

@@ -164,17 +164,6 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID) << Msg;
 }
 
-static llvm::GlobalValue::VisibilityTypes GetLLVMVisibility(Visibility V) {
-  switch (V) {
-  case DefaultVisibility:   return llvm::GlobalValue::DefaultVisibility;
-  case HiddenVisibility:    return llvm::GlobalValue::HiddenVisibility;
-  case ProtectedVisibility: return llvm::GlobalValue::ProtectedVisibility;
-  }
-  llvm_unreachable("unknown visibility!");
-  return llvm::GlobalValue::DefaultVisibility;
-}
-
-
 void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
                                         const NamedDecl *D) const {
   // Internal definitions always have default visibility.
