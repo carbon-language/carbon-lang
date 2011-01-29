@@ -384,6 +384,9 @@ CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
 
   // Set the correct linkage.
   VTT->setLinkage(Linkage);
+
+  // Set the right visibility.
+  CGM.setTypeVisibility(VTT, RD, /*ForRTTI=*/false);
 }
 
 llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {

@@ -32,7 +32,7 @@ struct B {
 
 B::B() { }
 
-struct C {
+struct C : virtual B {
   C();
   virtual void f() { } 
 };
@@ -106,9 +106,11 @@ void use_F() {
 // CHECK-2: @_ZTV1C = linkonce_odr unnamed_addr constant
 // CHECK-2: @_ZTS1C = linkonce_odr constant
 // CHECK-2: @_ZTI1C = linkonce_odr unnamed_addr constant
+// CHECK-2: @_ZTT1C = linkonce_odr unnamed_addr constant
 // CHECK-2-HIDDEN: @_ZTV1C = linkonce_odr hidden unnamed_addr constant
 // CHECK-2-HIDDEN: @_ZTS1C = linkonce_odr constant
 // CHECK-2-HIDDEN: @_ZTI1C = linkonce_odr hidden unnamed_addr constant
+// CHECK-2-HIDDEN: @_ZTT1C = linkonce_odr hidden unnamed_addr constant
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.
