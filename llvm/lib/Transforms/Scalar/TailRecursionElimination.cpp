@@ -67,6 +67,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
