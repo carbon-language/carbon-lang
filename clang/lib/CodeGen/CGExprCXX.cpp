@@ -53,15 +53,38 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
                   Callee, ReturnValue, Args, MD);
 }
 
+static const CXXRecordDecl *getMostDerivedClassDecl(const Expr *Base) {
+  QualType DerivedType = Base->IgnoreParenCasts()->getType();
+  if (const PointerType *PTy = DerivedType->getAs<PointerType>())
+    DerivedType = PTy->getPointeeType();
+
+  return cast<CXXRecordDecl>(DerivedType->castAs<RecordType>()->getDecl());
+}
+
 /// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
 /// expr can be devirtualized.
 static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
                                                const Expr *Base, 
                                                const CXXMethodDecl *MD) {
   
-  // Cannot divirtualize in kext mode.
+  // When building with -fapple-kext, all calls must go through the vtable since
+  // the kernel linker can do runtime patching of vtables.
   if (Context.getLangOptions().AppleKext)
     return false;
+
+  // If the most derived class is marked final, we know that no subclass can
+  // override this member function and so we can devirtualize it. For example:
+  //
+  // struct A { virtual void f(); }
+  // struct B final : A { };
+  //
+  // void f(B *b) {
+  //   b->f();
+  // }
+  //
+  const CXXRecordDecl *MostDerivedClassDecl = getMostDerivedClassDecl(Base);
+  if (MostDerivedClassDecl->hasAttr<FinalAttr>())
+    return true;
 
   // If the member function is marked 'final', we know that it can't be
   // overridden and can therefore devirtualize it.
