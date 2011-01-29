@@ -22,9 +22,10 @@
 
 namespace llvm {
 
+class AliasAnalysis;
 class Instruction;
 class Pass;
-class AliasAnalysis;
+class ReturnInst;
 
 /// DeleteDeadBlock - Delete the specified block, which must have no
 /// predecessors.
@@ -171,7 +172,15 @@ BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P);
 BasicBlock *SplitBlockPredecessors(BasicBlock *BB, BasicBlock *const *Preds,
                                    unsigned NumPreds, const char *Suffix,
                                    Pass *P = 0);
-  
+
+/// FoldReturnIntoUncondBranch - This method duplicates the specified return
+/// instruction into a predecessor which ends in an unconditional branch. If
+/// the return instruction returns a value defined by a PHI, propagate the
+/// right value into the return. It returns the new return instruction in the
+/// predecessor.
+ReturnInst *FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
+                                       BasicBlock *Pred);
+
 } // End llvm namespace
 
 #endif

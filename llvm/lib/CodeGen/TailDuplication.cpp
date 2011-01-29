@@ -465,9 +465,12 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
     MaxDuplicateCount = TailDuplicateSize;
 
   if (PreRegAlloc) {
-      // Pre-regalloc tail duplication hurts compile time and doesn't help
-      // much except for indirect branches.
-    if (TailBB->empty() || !TailBB->back().getDesc().isIndirectBranch())
+    if (TailBB->empty())
+      return false;
+    const TargetInstrDesc &TID = TailBB->back().getDesc();
+    // Pre-regalloc tail duplication hurts compile time and doesn't help
+    // much except for indirect branches and returns.
+    if (!TID.isIndirectBranch() && !TID.isReturn())
       return false;
     // If the target has hardware branch prediction that can handle indirect
     // branches, duplicating them can often make them predictable when there
@@ -502,7 +505,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   }
   // Heuristically, don't tail-duplicate calls if it would expand code size,
   // as it's less likely to be worth the extra cost.
-  if (InstrCount > 1 && HasCall)
+  if (InstrCount > 1 && (PreRegAlloc && HasCall))
     return false;
 
   DEBUG(dbgs() << "\n*** Tail-duplicating BB#" << TailBB->getNumber() << '\n');

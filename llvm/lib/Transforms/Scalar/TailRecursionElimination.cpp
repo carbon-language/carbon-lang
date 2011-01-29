@@ -52,11 +52,13 @@
 
 #define DEBUG_TYPE "tailcallelim"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/InlineCost.h"
@@ -64,7 +66,9 @@
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 STATISTIC(NumEliminated, "Number of tail calls removed");
@@ -80,6 +84,18 @@ namespace {
     virtual bool runOnFunction(Function &F);
 
   private:
+    CallInst *FindTRECandidate(Instruction *I,
+                               bool CannotTailCallElimCallsMarkedTail);
+    bool EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
+                                    BasicBlock *&OldEntry,
+                                    bool &TailCallsAreMarkedTail,
+                                    SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                    bool CannotTailCallElimCallsMarkedTail);
+    bool FoldReturnAndProcessPred(BasicBlock *BB,
+                                  ReturnInst *Ret, BasicBlock *&OldEntry,
+                                  bool &TailCallsAreMarkedTail,
+                                  SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                  bool CannotTailCallElimCallsMarkedTail);
     bool ProcessReturningBlock(ReturnInst *RI, BasicBlock *&OldEntry,
                                bool &TailCallsAreMarkedTail,
                                SmallVector<PHINode*, 8> &ArgumentPHIs,
@@ -136,7 +152,6 @@ bool TailCallElim::runOnFunction(Function &F) {
   bool TailCallsAreMarkedTail = false;
   SmallVector<PHINode*, 8> ArgumentPHIs;
   bool MadeChange = false;
-
   bool FunctionContainsEscapingAllocas = false;
 
   // CannotTCETailMarkedCall - If true, we cannot perform TCE on tail calls
@@ -163,10 +178,17 @@ bool TailCallElim::runOnFunction(Function &F) {
     return false;
 
   // Second pass, change any tail calls to loops.
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator()))
-      MadeChange |= ProcessReturningBlock(Ret, OldEntry, TailCallsAreMarkedTail,
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator())) {
+      bool Change = ProcessReturningBlock(Ret, OldEntry, TailCallsAreMarkedTail,
                                           ArgumentPHIs,CannotTCETailMarkedCall);
+      if (!Change && BB->getFirstNonPHIOrDbg() == Ret)
+        Change = FoldReturnAndProcessPred(BB, Ret, OldEntry,
+                                          TailCallsAreMarkedTail, ArgumentPHIs,
+                                          CannotTCETailMarkedCall);
+      MadeChange |= Change;
+    }
+  }
 
   // If we eliminated any tail recursions, it's possible that we inserted some
   // silly PHI nodes which just merge an initial value (the incoming operand)
@@ -325,41 +347,47 @@ Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
   return getCommonReturnValue(cast<ReturnInst>(I->use_back()), CI);
 }
 
-bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
-                                         bool &TailCallsAreMarkedTail,
-                                         SmallVector<PHINode*, 8> &ArgumentPHIs,
-                                       bool CannotTailCallElimCallsMarkedTail) {
-  BasicBlock *BB = Ret->getParent();
+static Instruction *FirstNonDbg(BasicBlock::iterator I) {
+  while (isa<DbgInfoIntrinsic>(I))
+    ++I;
+  return &*I;
+}
+
+CallInst*
+TailCallElim::FindTRECandidate(Instruction *TI,
+                               bool CannotTailCallElimCallsMarkedTail) {
+  BasicBlock *BB = TI->getParent();
   Function *F = BB->getParent();
 
-  if (&BB->front() == Ret) // Make sure there is something before the ret...
-    return false;
+  if (&BB->front() == TI) // Make sure there is something before the terminator.
+    return 0;
   
   // Scan backwards from the return, checking to see if there is a tail call in
   // this block.  If so, set CI to it.
-  CallInst *CI;
-  BasicBlock::iterator BBI = Ret;
-  while (1) {
+  CallInst *CI = 0;
+  BasicBlock::iterator BBI = TI;
+  while (true) {
     CI = dyn_cast<CallInst>(BBI);
     if (CI && CI->getCalledFunction() == F)
       break;
 
     if (BBI == BB->begin())
-      return false;          // Didn't find a potential tail call.
+      return 0;          // Didn't find a potential tail call.
     --BBI;
   }
 
   // If this call is marked as a tail call, and if there are dynamic allocas in
   // the function, we cannot perform this optimization.
   if (CI->isTailCall() && CannotTailCallElimCallsMarkedTail)
-    return false;
+    return 0;
 
   // As a special case, detect code like this:
   //   double fabs(double f) { return __builtin_fabs(f); } // a 'fabs' call
   // and disable this xform in this case, because the code generator will
   // lower the call to fabs into inline code.
   if (BB == &F->getEntryBlock() && 
-      &BB->front() == CI && &*++BB->begin() == Ret &&
+      FirstNonDbg(BB->front()) == CI &&
+      FirstNonDbg(llvm::next(BB->begin())) == TI &&
       callIsSmall(F)) {
     // A single-block function with just a call and a return. Check that
     // the arguments match.
@@ -370,9 +398,17 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     for (; I != E && FI != FE; ++I, ++FI)
       if (*I != &*FI) break;
     if (I == E && FI == FE)
-      return false;
+      return 0;
   }
 
+  return CI;
+}
+
+bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
+                                       BasicBlock *&OldEntry,
+                                       bool &TailCallsAreMarkedTail,
+                                       SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                       bool CannotTailCallElimCallsMarkedTail) {
   // If we are introducing accumulator recursion to eliminate operations after
   // the call instruction that are both associative and commutative, the initial
   // value for the accumulator is placed in this variable.  If this value is set
@@ -390,7 +426,8 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // tail call if all of the instructions between the call and the return are
   // movable to above the call itself, leaving the call next to the return.
   // Check that this is the case now.
-  for (BBI = CI, ++BBI; &*BBI != Ret; ++BBI) {
+  BasicBlock::iterator BBI = CI;
+  for (++BBI; &*BBI != Ret; ++BBI) {
     if (CanMoveAboveCall(BBI, CI)) continue;
     
     // If we can't move the instruction above the call, it might be because it
@@ -426,6 +463,9 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     if (!AccumulatorRecursionEliminationInitVal)
       return false;
   }
+
+  BasicBlock *BB = Ret->getParent();
+  Function *F = BB->getParent();
 
   // OK! We can transform this tail call.  If this is the first one found,
   // create the new entry block, allowing us to branch back to the old entry.
@@ -535,4 +575,50 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   BB->getInstList().erase(CI);   // Remove call.
   ++NumEliminated;
   return true;
+}
+
+bool TailCallElim::FoldReturnAndProcessPred(BasicBlock *BB,
+                                       ReturnInst *Ret, BasicBlock *&OldEntry,
+                                       bool &TailCallsAreMarkedTail,
+                                       SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                       bool CannotTailCallElimCallsMarkedTail) {
+  bool Change = false;
+
+  // If the return block contains nothing but the return and PHI's,
+  // there might be an opportunity to duplicate the return in its
+  // predecessors and perform TRC there. Look for predecessors that end
+  // in unconditional branch and recursive call(s).
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB);
+       PI != E; ++PI) {
+    BasicBlock *Pred = *PI;
+    TerminatorInst *PTI = Pred->getTerminator();
+    if (BranchInst *BI = dyn_cast<BranchInst>(PTI)) {
+      CallInst *CI = 0;
+      if (BI->isUnconditional() &&
+          (CI = FindTRECandidate(BI, CannotTailCallElimCallsMarkedTail))) {
+        DEBUG(dbgs() << "FOLDING: " << *BB
+              << "INTO UNCOND BRANCH PRED: " << *Pred);
+        EliminateRecursiveTailCall(CI,
+                                   FoldReturnIntoUncondBranch(Ret, BB, Pred),
+                                   OldEntry, TailCallsAreMarkedTail, ArgumentPHIs,
+                                   CannotTailCallElimCallsMarkedTail);
+        Change = true;
+      }
+    }
+  }
+
+  return Change;
+}
+
+bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
+                                         bool &TailCallsAreMarkedTail,
+                                         SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                       bool CannotTailCallElimCallsMarkedTail) {
+  CallInst *CI = FindTRECandidate(Ret, CannotTailCallElimCallsMarkedTail);
+  if (!CI)
+    return false;
+
+  return EliminateRecursiveTailCall(CI, Ret, OldEntry, TailCallsAreMarkedTail,
+                                    ArgumentPHIs,
+                                    CannotTailCallElimCallsMarkedTail);
 }
