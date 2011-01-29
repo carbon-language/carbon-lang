@@ -180,8 +180,17 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
 
   llvm::Value *VirtualOffset = 0;
 
-  if (VBase)
-    VirtualOffset = GetVirtualBaseClassOffset(Value, Derived, VBase);
+  if (VBase) {
+    if (Derived->hasAttr<FinalAttr>()) {
+      VirtualOffset = 0;
+
+      const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Derived);
+
+      uint64_t VBaseOffset = Layout.getVBaseClassOffsetInBits(VBase);
+      NonVirtualOffset += VBaseOffset / 8;
+    } else
+      VirtualOffset = GetVirtualBaseClassOffset(Value, Derived, VBase);
+  }
 
   // Apply the offsets.
   Value = ApplyNonVirtualAndVirtualOffset(*this, Value, NonVirtualOffset, 
