@@ -457,8 +457,8 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
 void CodeGenModule::SetCommonAttributes(const Decl *D,
                                         llvm::GlobalValue *GV) {
-  if (isa<NamedDecl>(D))
-    setGlobalVisibility(GV, cast<NamedDecl>(D));
+  if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
+    setGlobalVisibility(GV, ND);
   else
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
 
