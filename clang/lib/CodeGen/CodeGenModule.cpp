@@ -985,6 +985,45 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
 }
 
 
+llvm::GlobalVariable *
+CodeGenModule::CreateOrReplaceCXXRuntimeVariable(llvm::StringRef Name, 
+                                      const llvm::Type *Ty,
+                                      llvm::GlobalValue::LinkageTypes Linkage) {
+  llvm::GlobalVariable *GV = getModule().getNamedGlobal(Name);
+  llvm::GlobalVariable *OldGV = 0;
+
+  
+  if (GV) {
+    // Check if the variable has the right type.
+    if (GV->getType()->getElementType() == Ty)
+      return GV;
+
+    // Because C++ name mangling, the only way we can end up with an already
+    // existing global with the same name is if it has been declared extern "C".
+    assert(GV->isDeclaration() && "Declaration has wrong type!");
+    OldGV = GV;
+  }
+  
+  // Create a new variable.
+  GV = new llvm::GlobalVariable(getModule(), Ty, /*isConstant=*/true,
+                                Linkage, 0, Name);
+  
+  if (OldGV) {
+    // Replace occurrences of the old variable if needed.
+    GV->takeName(OldGV);
+    
+    if (!OldGV->use_empty()) {
+      llvm::Constant *NewPtrForOldDecl =
+      llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
+      OldGV->replaceAllUsesWith(NewPtrForOldDecl);
+    }
+    
+    OldGV->eraseFromParent();
+  }
+  
+  return GV;
+}
+
 /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
 /// given global variable.  If Ty is non-null and if the global doesn't exist,
 /// then it will be greated with the specified type instead of whatever the

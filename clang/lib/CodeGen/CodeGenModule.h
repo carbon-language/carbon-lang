@@ -280,6 +280,14 @@ public:
       return GetAddrOfGlobalVar(cast<VarDecl>(GD.getDecl()));
   }
 
+  /// CreateOrReplaceCXXRuntimeVariable - Will return a global variable of the given
+  /// type. If a variable with a different type already exists then a new 
+  /// variable with the right type will be created and all uses of the old
+  /// variable will be replaced with a bitcast to the new variable.
+  llvm::GlobalVariable *
+  CreateOrReplaceCXXRuntimeVariable(llvm::StringRef Name, const llvm::Type *Ty,
+                                    llvm::GlobalValue::LinkageTypes Linkage);
+
   /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
   /// given global variable.  If Ty is non-null and if the global doesn't exist,
   /// then it will be greated with the specified type instead of whatever the
