@@ -259,8 +259,7 @@ public:
 
   /// setGlobalVisibility - Set the visibility for the given LLVM
   /// GlobalValue.
-  void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D,
-                           bool IsForDefinition) const;
+  void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D) const;
 
   /// setTypeVisibility - Set the visibility for the given global
   /// value which holds information about a type.

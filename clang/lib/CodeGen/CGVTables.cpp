@@ -2505,7 +2505,7 @@ static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
 
 static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
                                const ThunkInfo &Thunk, llvm::Function *Fn) {
-  CGM.setGlobalVisibility(Fn, MD, /*ForDef*/ true);
+  CGM.setGlobalVisibility(Fn, MD);
 
   if (!CGM.getCodeGenOpts().HiddenWeakVTables)
     return;

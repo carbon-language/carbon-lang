@@ -176,8 +176,7 @@ static llvm::GlobalValue::VisibilityTypes GetLLVMVisibility(Visibility V) {
 
 
 void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
-                                        const NamedDecl *D,
-                                        bool IsForDefinition) const {
+                                        const NamedDecl *D) const {
   // Internal definitions always have default visibility.
   if (GV->hasLocalLinkage()) {
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
@@ -186,8 +185,7 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
 
   // Set visibility for definitions.
   NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
-  if (LV.visibilityExplicit() ||
-      (IsForDefinition && !GV->hasAvailableExternallyLinkage()))
+  if (LV.visibilityExplicit() || !GV->hasAvailableExternallyLinkage())
     GV->setVisibility(GetLLVMVisibility(LV.visibility()));
 }
 
@@ -196,7 +194,7 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
 void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
                                       const CXXRecordDecl *RD,
                                       bool IsForRTTI) const {
-  setGlobalVisibility(GV, RD, /*IsForDefinition=*/true);
+  setGlobalVisibility(GV, RD);
 
   if (!CodeGenOpts.HiddenWeakVTables)
     return;
@@ -460,7 +458,7 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 void CodeGenModule::SetCommonAttributes(const Decl *D,
                                         llvm::GlobalValue *GV) {
   if (isa<NamedDecl>(D))
-    setGlobalVisibility(GV, cast<NamedDecl>(D), /*ForDef*/ true);
+    setGlobalVisibility(GV, cast<NamedDecl>(D));
   else
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
 
@@ -1415,7 +1413,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   setFunctionLinkage(D, Fn);
 
   // FIXME: this is redundant with part of SetFunctionDefinitionAttributes
-  setGlobalVisibility(Fn, D, /*ForDef*/ true);
+  setGlobalVisibility(Fn, D);
 
   CodeGenFunction(*this).GenerateCode(D, Fn);
 
