@@ -22,12 +22,13 @@
 #include "llvm/Module.h"
 
 void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
-                                   GlobalValue *Array) {
+                                   GlobalValue *Array,
+                                   PointerType *arrayType) {
   LLVMContext &Context = MainFn->getContext();
-  const Type *ArgVTy = 
+  const Type *ArgVTy =
     PointerType::getUnqual(Type::getInt8PtrTy(Context));
-  const PointerType *UIntPtr =
-        Type::getInt32PtrTy(Context);
+  const PointerType *UIntPtr = arrayType ? arrayType :
+    Type::getInt32PtrTy(Context);
   Module &M = *MainFn->getParent();
   Constant *InitFn = M.getOrInsertFunction(FnName, Type::getInt32Ty(Context),
                                            Type::getInt32Ty(Context),
@@ -71,9 +72,9 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   case 2:
     AI = MainFn->arg_begin(); ++AI;
     if (AI->getType() != ArgVTy) {
-      Instruction::CastOps opcode = CastInst::getCastOpcode(AI, false, ArgVTy, 
+      Instruction::CastOps opcode = CastInst::getCastOpcode(AI, false, ArgVTy,
                                                             false);
-      InitCall->setArgOperand(1, 
+      InitCall->setArgOperand(1,
           CastInst::Create(opcode, AI, ArgVTy, "argv.cast", InitCall));
     } else {
       InitCall->setArgOperand(1, AI);
@@ -93,7 +94,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
       }
       opcode = CastInst::getCastOpcode(AI, true,
                                        Type::getInt32Ty(Context), true);
-      InitCall->setArgOperand(0, 
+      InitCall->setArgOperand(0,
           CastInst::Create(opcode, AI, Type::getInt32Ty(Context),
                            "argc.cast", InitCall));
     } else {
@@ -106,9 +107,10 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
 }
 
 void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
-                                   GlobalValue *CounterArray) {
+                                   GlobalValue *CounterArray, bool beginning) {
   // Insert the increment after any alloca or PHI instructions...
-  BasicBlock::iterator InsertPos = BB->getFirstNonPHI();
+  BasicBlock::iterator InsertPos = beginning ? BB->getFirstNonPHI() :
+                BB->getTerminator();
   while (isa<AllocaInst>(InsertPos))
     ++InsertPos;
 
@@ -118,7 +120,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
   std::vector<Constant*> Indices(2);
   Indices[0] = Constant::getNullValue(Type::getInt32Ty(Context));
   Indices[1] = ConstantInt::get(Type::getInt32Ty(Context), CounterNum);
-  Constant *ElementPtr = 
+  Constant *ElementPtr =
     ConstantExpr::getGetElementPtr(CounterArray, &Indices[0],
                                           Indices.size());
 

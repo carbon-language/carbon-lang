@@ -21,11 +21,14 @@ namespace llvm {
   class Function;
   class GlobalValue;
   class BasicBlock;
+  class PointerType;
 
   void InsertProfilingInitCall(Function *MainFn, const char *FnName,
-                               GlobalValue *Arr = 0);
+                               GlobalValue *Arr = 0,
+                               PointerType *arrayType = 0);
   void IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
-                               GlobalValue *CounterArray);
+                               GlobalValue *CounterArray,
+                               bool beginning = true);
 }
 
 #endif

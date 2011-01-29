@@ -22,6 +22,7 @@ using namespace llvm;
 void llvm::initializeInstrumentation(PassRegistry &Registry) {
   initializeEdgeProfilerPass(Registry);
   initializeOptimalEdgeProfilerPass(Registry);
+  initializePathProfilerPass(Registry);
 }
 
 /// LLVMInitializeInstrumentation - C binding for

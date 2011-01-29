@@ -52,12 +52,12 @@ namespace {
 }
 
 char OptimalEdgeProfiler::ID = 0;
-INITIALIZE_PASS_BEGIN(OptimalEdgeProfiler, "insert-optimal-edge-profiling", 
+INITIALIZE_PASS_BEGIN(OptimalEdgeProfiler, "insert-optimal-edge-profiling",
                 "Insert optimal instrumentation for edge profiling",
                 false, false)
 INITIALIZE_PASS_DEPENDENCY(ProfileEstimatorPass)
 INITIALIZE_AG_DEPENDENCY(ProfileInfo)
-INITIALIZE_PASS_END(OptimalEdgeProfiler, "insert-optimal-edge-profiling", 
+INITIALIZE_PASS_END(OptimalEdgeProfiler, "insert-optimal-edge-profiling",
                 "Insert optimal instrumentation for edge profiling",
                 false, false)
 
@@ -132,11 +132,11 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
     // Calculate a Maximum Spanning Tree with the edge weights determined by
     // ProfileEstimator. ProfileEstimator also assign weights to the virtual
     // edges (0,entry) and (BB,0) (for blocks with no successors) and this
-    // edges also participate in the maximum spanning tree calculation. 
+    // edges also participate in the maximum spanning tree calculation.
     // The third parameter of MaximumSpanningTree() has the effect that not the
     // actual MST is returned but the edges _not_ in the MST.
 
-    ProfileInfo::EdgeWeights ECs = 
+    ProfileInfo::EdgeWeights ECs =
       getAnalysis<ProfileInfo>(*F).getEdgeWeights(F);
     std::vector<ProfileInfo::EdgeWeight> EdgeVector(ECs.begin(), ECs.end());
     MaximumSpanningTree<BasicBlock> MST (EdgeVector);

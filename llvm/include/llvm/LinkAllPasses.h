@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header file pulls in all transformation and analysis passes for tools 
+// This header file pulls in all transformation and analysis passes for tools
 // like opt and bugpoint that need this functionality.
 //
 //===----------------------------------------------------------------------===//
@@ -70,6 +70,7 @@ namespace {
       (void) llvm::createDomViewerPass();
       (void) llvm::createEdgeProfilerPass();
       (void) llvm::createOptimalEdgeProfilerPass();
+      (void) llvm::createPathProfilerPass();
       (void) llvm::createFunctionInliningPass();
       (void) llvm::createAlwaysInlinerPass();
       (void) llvm::createGlobalDCEPass();
@@ -99,7 +100,9 @@ namespace {
       (void) llvm::createNoProfileInfoPass();
       (void) llvm::createProfileEstimatorPass();
       (void) llvm::createProfileVerifierPass();
+      (void) llvm::createPathProfileVerifierPass();
       (void) llvm::createProfileLoaderPass();
+      (void) llvm::createPathProfileLoaderPass();
       (void) llvm::createPromoteMemoryToRegisterPass();
       (void) llvm::createDemoteRegisterToMemoryPass();
       (void) llvm::createPruneEHPass();

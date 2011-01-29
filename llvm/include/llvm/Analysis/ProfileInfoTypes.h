@@ -1,4 +1,4 @@
-/*===-- ProfileInfoTypes.h - Profiling info shared constants ------*- C -*-===*\
+/*===-- ProfileInfoTypes.h - Profiling info shared constants --------------===*\
 |*
 |*                     The LLVM Compiler Infrastructure
 |*
@@ -16,6 +16,17 @@
 #ifndef LLVM_ANALYSIS_PROFILEINFOTYPES_H
 #define LLVM_ANALYSIS_PROFILEINFOTYPES_H
 
+// Included by libprofile.
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+/* IDs to distinguish between those path counters stored in hashses vs arrays */
+enum ProfilingStorageType {
+  ProfilingArray = 1,
+  ProfilingHash = 2
+};
+
 enum ProfilingType {
   ArgumentInfo  = 1,   /* The command line argument block */
   FunctionInfo  = 2,   /* Function profiling information  */
@@ -25,5 +36,25 @@ enum ProfilingType {
   BBTraceInfo   = 6,   /* Basic block trace information   */
   OptEdgeInfo   = 7    /* Edge profiling information, optimal version */
 };
+
+/*
+ * The header for tables that map path numbers to path counters.
+ */
+typedef struct {
+  unsigned fnNumber; /* function number for these counters */
+  unsigned numEntries;   /* number of entries stored */
+} PathProfileHeader;
+
+/*
+ * Describes an entry in a tagged table for path counters.
+ */
+typedef struct {
+  unsigned pathNumber;
+  unsigned pathCounter;
+} PathProfileTableEntry;
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* LLVM_ANALYSIS_PROFILEINFOTYPES_H */

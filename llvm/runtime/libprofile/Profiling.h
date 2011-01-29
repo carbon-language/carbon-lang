@@ -1,9 +1,9 @@
-/*===-- Profiling.h - Profiling support library support routines --*- C -*-===*\
+/*===-- Profiling.h - Profiling support library support routines ----------===*\
 |*
 |*                     The LLVM Compiler Infrastructure
 |*
-|* This file is distributed under the University of Illinois Open Source      
-|* License. See LICENSE.TXT for details.                                      
+|* This file is distributed under the University of Illinois Open Source
+|* License. See LICENSE.TXT for details.
 |*
 |*===----------------------------------------------------------------------===*|
 |*
@@ -21,6 +21,11 @@
  * we output.
  */
 int save_arguments(int argc, const char **argv);
+
+/*
+ * Retrieves the file descriptor for the profile file.
+ */
+int getOutFile();
 
 /* write_profiling_data - Write out a typed packet of profiling data to the
  * current output file.

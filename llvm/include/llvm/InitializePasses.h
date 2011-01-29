@@ -19,19 +19,19 @@ namespace llvm {
 
 class PassRegistry;
 
-/// initializeCore - Initialize all passes linked into the 
+/// initializeCore - Initialize all passes linked into the
 /// TransformUtils library.
 void initializeCore(PassRegistry&);
 
-/// initializeTransformUtils - Initialize all passes linked into the 
+/// initializeTransformUtils - Initialize all passes linked into the
 /// TransformUtils library.
 void initializeTransformUtils(PassRegistry&);
 
-/// initializeScalarOpts - Initialize all passes linked into the 
+/// initializeScalarOpts - Initialize all passes linked into the
 /// ScalarOpts library.
 void initializeScalarOpts(PassRegistry&);
 
-/// initializeInstCombine - Initialize all passes linked into the 
+/// initializeInstCombine - Initialize all passes linked into the
 /// ScalarOpts library.
 void initializeInstCombine(PassRegistry&);
 
@@ -93,6 +93,7 @@ void initializeDominanceFrontierPass(PassRegistry&);
 void initializeDominatorTreePass(PassRegistry&);
 void initializeEdgeBundlesPass(PassRegistry&);
 void initializeEdgeProfilerPass(PassRegistry&);
+void initializePathProfilerPass(PassRegistry&);
 void initializeEarlyCSEPass(PassRegistry&);
 void initializeExpandISelPseudosPass(PassRegistry&);
 void initializeFindUsedTypesPass(PassRegistry&);
@@ -125,6 +126,7 @@ void initializeLiveStacksPass(PassRegistry&);
 void initializeLiveValuesPass(PassRegistry&);
 void initializeLiveVariablesPass(PassRegistry&);
 void initializeLoaderPassPass(PassRegistry&);
+void initializePathProfileLoaderPassPass(PassRegistry&);
 void initializeLoopDeletionPass(PassRegistry&);
 void initializeLoopDependenceAnalysisPass(PassRegistry&);
 void initializeLoopExtractorPass(PassRegistry&);
@@ -157,6 +159,7 @@ void initializeMergeFunctionsPass(PassRegistry&);
 void initializeModuleDebugInfoPrinterPass(PassRegistry&);
 void initializeNoAAPass(PassRegistry&);
 void initializeNoProfileInfoPass(PassRegistry&);
+void initializeNoPathProfileInfoPass(PassRegistry&);
 void initializeOptimalEdgeProfilerPass(PassRegistry&);
 void initializeOptimizePHIsPass(PassRegistry&);
 void initializePEIPass(PassRegistry&);
@@ -177,6 +180,8 @@ void initializePrintModulePassPass(PassRegistry&);
 void initializeProcessImplicitDefsPass(PassRegistry&);
 void initializeProfileEstimatorPassPass(PassRegistry&);
 void initializeProfileInfoAnalysisGroup(PassRegistry&);
+void initializePathProfileInfoAnalysisGroup(PassRegistry&);
+void initializePathProfileVerifierPass(PassRegistry&);
 void initializeProfileVerifierPassPass(PassRegistry&);
 void initializePromotePassPass(PassRegistry&);
 void initializePruneEHPass(PassRegistry&);

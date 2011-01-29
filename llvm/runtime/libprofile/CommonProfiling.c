@@ -2,17 +2,18 @@
 |*
 |*                     The LLVM Compiler Infrastructure
 |*
-|* This file is distributed under the University of Illinois Open Source      
-|* License. See LICENSE.TXT for details.                                      
-|* 
+|* This file is distributed under the University of Illinois Open Source
+|* License. See LICENSE.TXT for details.
+|*
 |*===----------------------------------------------------------------------===*|
-|* 
+|*
 |* This file implements functions used by the various different types of
 |* profiling implementations.
 |*
 \*===----------------------------------------------------------------------===*/
 
 #include "Profiling.h"
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -74,26 +75,23 @@ int save_arguments(int argc, const char **argv) {
 }
 
 
-/* write_profiling_data - Write a raw block of profiling counters out to the
- * llvmprof.out file.  Note that we allow programs to be instrumented with
- * multiple different kinds of instrumentation.  For this reason, this function
- * may be called more than once.
+/*
+ * Retrieves the file descriptor for the profile file.
  */
-void write_profiling_data(enum ProfilingType PT, unsigned *Start,
-                          unsigned NumElements) {
+int getOutFile() {
   static int OutFile = -1;
-  int PTy;
-  
-  /* If this is the first time this function is called, open the output file for
-   * appending, creating it if it does not already exist.
+
+  /* If this is the first time this function is called, open the output file
+   * for appending, creating it if it does not already exist.
    */
   if (OutFile == -1) {
-    OutFile = open(OutputFilename, O_CREAT | O_WRONLY | O_APPEND, 0666);
+    OutFile = open(OutputFilename, O_CREAT | O_WRONLY, 0666);
+    lseek(OutFile, 0, SEEK_END); /* O_APPEND prevents seeking */
     if (OutFile == -1) {
       fprintf(stderr, "LLVM profiling runtime: while opening '%s': ",
               OutputFilename);
       perror("");
-      return;
+      return(OutFile);
     }
 
     /* Output the command line arguments to the file. */
@@ -108,10 +106,25 @@ void write_profiling_data(enum ProfilingType PT, unsigned *Start,
         write(OutFile, &Zeros, 4-(SavedArgsLength&3));
     }
   }
- 
+  return(OutFile);
+}
+
+/* write_profiling_data - Write a raw block of profiling counters out to the
+ * llvmprof.out file.  Note that we allow programs to be instrumented with
+ * multiple different kinds of instrumentation.  For this reason, this function
+ * may be called more than once.
+ */
+void write_profiling_data(enum ProfilingType PT, unsigned *Start,
+                          unsigned NumElements) {
+  int PTy;
+  int outFile = getOutFile();
+
   /* Write out this record! */
   PTy = PT;
-  write(OutFile, &PTy, sizeof(int));
-  write(OutFile, &NumElements, sizeof(unsigned));
-  write(OutFile, Start, NumElements*sizeof(unsigned));
+  if( write(outFile, &PTy, sizeof(int)) < 0 ||
+      write(outFile, &NumElements, sizeof(unsigned)) < 0 ||
+      write(outFile, Start, NumElements*sizeof(unsigned)) < 0 ) {
+    fprintf(stderr,"error: unable to write to output file.");
+    exit(0);
+  }
 }

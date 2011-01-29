@@ -17,6 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "insert-edge-profiling"
+
 #include "ProfilingUtils.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
@@ -100,7 +101,7 @@ bool EdgeProfiler::runOnModule(Module &M) {
           // otherwise insert it in the successor block.
           if (TI->getNumSuccessors() == 1) {
             // Insert counter at the start of the block
-            IncrementCounterInBlock(BB, i++, Counters);
+            IncrementCounterInBlock(BB, i++, Counters, false);
           } else {
             // Insert counter at the start of the block
             IncrementCounterInBlock(TI->getSuccessor(s), i++, Counters);
