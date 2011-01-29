@@ -182,10 +182,6 @@ class CodeGenVTables {
   
   void ComputeMethodVTableIndices(const CXXRecordDecl *RD);
 
-  llvm::GlobalVariable *GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
-                                    bool GenerateDefinition,
-                                    const CXXRecordDecl *RD);
-
   /// EmitThunk - Emit a single thunk.
   void EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk);
   
@@ -257,8 +253,15 @@ public:
   GenerateConstructionVTable(const CXXRecordDecl *RD, const BaseSubobject &Base, 
                              bool BaseIsVirtual, 
                              VTableAddressPointsMapTy& AddressPoints);
-  
-  llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
+
+    
+  /// GetAddrOfVTable - Get the address of the VTT for the given record decl.
+  llvm::GlobalVariable *GetAddrOfVTT(const CXXRecordDecl *RD);
+
+  /// EmitVTTDefinition - Emit the definition of the given vtable.
+  void EmitVTTDefinition(llvm::GlobalVariable *VTT,
+                         llvm::GlobalVariable::LinkageTypes Linkage,
+                         const CXXRecordDecl *RD);
 
   /// EmitThunks - Emit the associated thunks for the given global decl.
   void EmitThunks(GlobalDecl GD);

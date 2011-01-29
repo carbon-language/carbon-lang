@@ -318,7 +318,7 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
     VTT = CGF.Builder.CreateConstInBoundsGEP1_64(VTT, SubVTTIndex);
   } else {
     // We're the complete constructor, so get the VTT by name.
-    VTT = CGF.CGM.getVTables().getVTT(RD);
+    VTT = CGF.CGM.getVTables().GetAddrOfVTT(RD);
     VTT = CGF.Builder.CreateConstInBoundsGEP2_64(VTT, 0, SubVTTIndex);
   }
 

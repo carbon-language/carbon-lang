@@ -522,7 +522,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   llvm::SmallString<256> OutName;
   CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, OutName);
   llvm::StringRef Name = OutName.str();
-  
+
   llvm::GlobalVariable *OldGV = CGM.getModule().getNamedGlobal(Name);
   if (OldGV && !OldGV->isDeclaration())
     return llvm::ConstantExpr::getBitCast(OldGV, Int8PtrTy);

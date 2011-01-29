@@ -3040,7 +3040,10 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   VTable = GetAddrOfVTable(RD);
   EmitVTableDefinition(VTable, Linkage, RD);
 
-  GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
+  if (RD->getNumVBases()) {
+    llvm::GlobalVariable *VTT = GetAddrOfVTT(RD);
+    EmitVTTDefinition(VTT, Linkage, RD);
+  }
 
   // If this is the magic class __cxxabiv1::__fundamental_type_info,
   // we will emit the typeinfo for the fundamental types. This is the
