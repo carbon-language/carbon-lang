@@ -473,6 +473,15 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   return 0;
 }
 
+Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (Value *V = SimplifyFDivInst(Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
+
+  return 0;
+}
+
 /// This function implements the transforms on rem instructions that work
 /// regardless of the kind of rem instruction it is (urem, srem, or frem). It 
 /// is used by the visitors to those instructions.
