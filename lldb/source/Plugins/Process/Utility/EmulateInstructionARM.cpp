@@ -277,9 +277,9 @@ emulate_mov_rd_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
+    //const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    //if (!success)
+    //    return false;
 
     if (emulator->ConditionPassed())
     {
@@ -303,6 +303,62 @@ emulate_mov_rd_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 0 };
     
         if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, sp))
+            return false;
+    }
+    return true;
+}
+
+// Move from high register (r8-r15) to low register (r0-r7).
+// MOV (register)
+static bool
+emulate_mov_low_high (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        result = R[m];
+        if d == 15 then
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                // APSR.C unchanged
+                // APSR.V unchanged
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        uint32_t Rm; // the source register
+        uint32_t Rd; // the destination register
+        switch (encoding) {
+        case eEncodingT1:
+            Rm = Bits32(opcode, 6, 3);
+            Rd = Bits32(opcode, 2, 1); // bits(7) == 0
+            break;
+        default:
+            return false;
+        }
+        int32_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        if (!success)
+            return false;
+        
+        // The context specifies that Rm is to be moved into Rd.
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindDWARF,
+                                                dwarf_r0 + Rm,
+                                                0 };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, reg_value))
             return false;
     }
     return true;
@@ -801,6 +857,8 @@ static ARMOpcode g_thumb_opcodes[] =
     { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push, "push <registers>" },
     { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push, "push.w <registers>" },
     { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push, "push.w <register>" },
+    // move from high register to low register
+    { 0xffffffc0, 0x00004640, ARMvAll,        eEncodingT1, eSize16, emulate_mov_low_high, "mov r0-r7, r8-r15" },
 
     // set r7 to point to a stack offset
     { 0xffffff00, 0x0000af00, ARMvAll,        eEncodingT1, eSize16, emulate_add_rd_sp_imm, "add r7, sp, #imm" },
