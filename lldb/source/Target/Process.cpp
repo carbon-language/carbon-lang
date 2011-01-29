@@ -238,7 +238,7 @@ Process::Process(Target &target, Listener &listener) :
     m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
     m_memory_cache (),
-    m_next_event_action(NULL)
+    m_next_event_action_ap(NULL)
 {
     UpdateInstanceName();
 
@@ -274,8 +274,6 @@ Process::~Process()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Process::~Process()", this);
-    if (m_next_event_action)
-        SetNextEventAction(NULL);
     StopPrivateStateThread();
 }
 
@@ -2142,9 +2140,9 @@ Process::HandlePrivateEvent (EventSP &event_sp)
     const StateType new_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
     
     // First check to see if anybody wants a shot at this event:
-    if (m_next_event_action != NULL)
+    if (m_next_event_action_ap.get() != NULL)
     {
-        NextEventAction::EventActionResult action_result = m_next_event_action->PerformAction(event_sp);
+        NextEventAction::EventActionResult action_result = m_next_event_action_ap->PerformAction(event_sp);
         switch (action_result)
         {
             case NextEventAction::eEventActionSuccess:
@@ -2159,7 +2157,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
                 if (new_state != eStateExited)
                 {
                     // FIXME: should cons up an exited event, and discard this one.
-                    SetExitStatus(0, m_next_event_action->GetExitString());
+                    SetExitStatus(0, m_next_event_action_ap->GetExitString());
                     SetNextEventAction(NULL);
                     return;
                 }

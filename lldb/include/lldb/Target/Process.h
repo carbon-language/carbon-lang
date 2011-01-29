@@ -1823,12 +1823,10 @@ protected:
     
     void SetNextEventAction (Process::NextEventAction *next_event_action)
     {
-        if (m_next_event_action)
-        {
-            m_next_event_action->HandleBeingUnshipped();
-            delete m_next_event_action;
-        }
-        m_next_event_action = next_event_action;
+        if (m_next_event_action_ap.get())
+            m_next_event_action_ap->HandleBeingUnshipped();
+
+        m_next_event_action_ap.reset(next_event_action);
     }
     
     // This is the completer for Attaching:
@@ -1920,7 +1918,7 @@ protected:
 
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;
-    NextEventAction          *m_next_event_action;
+    std::auto_ptr<NextEventAction>          *m_next_event_action_ap;
 
     size_t
     RemoveBreakpointOpcodesFromBuffer (lldb::addr_t addr, size_t size, uint8_t *buf) const;
