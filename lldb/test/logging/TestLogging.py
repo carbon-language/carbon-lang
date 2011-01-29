@@ -14,18 +14,18 @@ class LogTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym (self):
         self.buildDsym ()
-        self.command_log_tests ()
+        self.command_log_tests ("dsym")
 
     def test_with_dwarf (self):
         self.buildDwarf ()
-        self.command_log_tests ()
+        self.command_log_tests ("dwarf")
 
-    def command_log_tests (self):
+    def command_log_tests (self, type):
         exe = os.path.join (os.getcwd(), "a.out")
         self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out" ])
 
-        log_file = os.path.join (os.getcwd(), "lldb-commands-log.txt")
+        log_file = os.path.join (os.getcwd(), "lldb-commands-log-%s.txt" % type)
 
         if (os.path.exists (log_file)):
             os.remove (log_file)
@@ -66,6 +66,7 @@ class LogTestCase(TestBase):
         f = open (log_file)
         log_lines = f.readlines()
         f.close ()
+        self.runCmd("log disable lldb")
         os.remove (log_file)
 
         err_msg = ""
