@@ -536,7 +536,8 @@ public:
              CommandReturnObject &result)
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-
+        bool synchronous_execution = m_interpreter.GetSynchronous ();
+        
         Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process)
         {
@@ -636,6 +637,24 @@ public:
                         result.SetStatus (eReturnStatusFailed);
                         return false;                
                     }
+                    // If we're synchronous, wait for the stopped event and report that.
+                    // Otherwise just return.  
+                    // FIXME: in the async case it will now be possible to get to the command
+                    // interpreter with a state eStateAttaching.  Make sure we handle that correctly.
+                    if (synchronous_execution)
+                    {
+                        StateType state = process->WaitForProcessToStop (NULL);
+
+                        result.SetDidChangeProcessState (true);
+                        result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
+                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                    }
+                    else
+                    {
+                        result.SetDidChangeProcessState (true);
+                        result.AppendMessageWithFormat ("Starting to attach to process.");
+                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                    }
                 }
                 else
                 {
@@ -680,6 +699,21 @@ public:
                                                          attach_pid, 
                                                          error.AsCString());
                             result.SetStatus (eReturnStatusFailed);
+                        }
+                        // See comment for synchronous_execution above.
+                        if (synchronous_execution)
+                        {
+                            StateType state = process->WaitForProcessToStop (NULL);
+
+                            result.SetDidChangeProcessState (true);
+                            result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
+                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                        }
+                        else
+                        {
+                            result.SetDidChangeProcessState (true);
+                            result.AppendMessageWithFormat ("Starting to attach to process.");
+                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
                         }
                     }
                     else

@@ -1795,6 +1795,59 @@ public:
     GetSP ();
     
 protected:
+    //------------------------------------------------------------------
+    // lldb::ExecutionContextScope pure virtual functions
+    //------------------------------------------------------------------
+    class NextEventAction
+    {
+    public:
+        typedef enum EventActionResult
+        {
+            eEventActionSuccess,
+            eEventActionRetry,
+            eEventActionExit
+        } EventActionResult;
+        
+        NextEventAction (Process *process) : 
+            m_process(process)
+        {}
+        virtual ~NextEventAction() {}
+        
+        virtual EventActionResult PerformAction (lldb::EventSP &event_sp) = 0;
+        virtual void HandleBeingUnshipped () {};
+        virtual EventActionResult HandleBeingInterrupted () = 0;
+        virtual const char *GetExitString() = 0;
+    protected:
+        Process *m_process;
+    };
+    
+    void SetNextEventAction (Process::NextEventAction *next_event_action)
+    {
+        if (m_next_event_action)
+        {
+            m_next_event_action->HandleBeingUnshipped();
+            delete m_next_event_action;
+        }
+        m_next_event_action = next_event_action;
+    }
+    
+    // This is the completer for Attaching:
+    class AttachCompletionHandler : public NextEventAction
+    {
+    public:
+        AttachCompletionHandler (Process *process) :
+            NextEventAction(process)
+        {}
+        virtual ~AttachCompletionHandler() {}
+        
+        virtual EventActionResult PerformAction (lldb::EventSP &event_sp);
+        virtual EventActionResult HandleBeingInterrupted ();
+        virtual const char *GetExitString();
+    private:
+        std::string m_exit_string;
+    };
+
+    
     class MemoryCache
     {
     public:
@@ -1867,6 +1920,7 @@ protected:
 
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;
+    NextEventAction          *m_next_event_action;
 
     size_t
     RemoveBreakpointOpcodesFromBuffer (lldb::addr_t addr, size_t size, uint8_t *buf) const;
@@ -1903,10 +1957,6 @@ protected:
 
     lldb::StateType
     WaitForProcessStopPrivate (const TimeValue *timeout, lldb::EventSP &event_sp);
-
-    Error
-    CompleteAttach ();
-
 
     // This waits for both the state change broadcaster, and the control broadcaster.
     // If control_only, it only waits for the control broadcaster.
