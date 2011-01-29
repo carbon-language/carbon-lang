@@ -4,7 +4,7 @@
 #include <typeinfo>
 
 // CHECK-WITH-HIDDEN: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
-// CHECK-WITH-HIDDEN: @_ZTSPK2T4 = linkonce_odr constant 
+// CHECK-WITH-HIDDEN: @_ZTSPK2T4 = linkonce_odr hidden constant 
 // CHECK-WITH-HIDDEN: @_ZTS2T4 = linkonce_odr hidden constant 
 // CHECK-WITH-HIDDEN: @_ZTI2T4 = linkonce_odr hidden unnamed_addr constant 
 // CHECK-WITH-HIDDEN: @_ZTIPK2T4 = linkonce_odr hidden unnamed_addr constant 

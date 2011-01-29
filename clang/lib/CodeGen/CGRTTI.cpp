@@ -570,11 +570,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   llvm::GlobalVariable *TypeName = GetAddrOfTypeName(Ty, Linkage);
 
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-  llvm::Constant *TypeNameAsInt8Ptr = 
-    llvm::ConstantExpr::getBitCast(TypeName, Int8PtrTy);
-
-  bool Hidden = DecideHidden(Ty);
-  Fields.push_back(TypeNameAsInt8Ptr);
+  Fields.push_back(llvm::ConstantExpr::getBitCast(TypeName, Int8PtrTy));
 
   switch (Ty->getTypeClass()) {
 #define TYPE(Class, Base)
@@ -677,12 +673,21 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
     CGM.setTypeVisibility(GV, RD, CodeGenModule::TVK_ForRTTI);
     CGM.setTypeVisibility(TypeName, RD, CodeGenModule::TVK_ForRTTIName);
+  } else {
+    Visibility TypeInfoVisibility = DefaultVisibility;
+    if (CGM.getCodeGenOpts().HiddenWeakVTables &&
+        Linkage == llvm::GlobalValue::LinkOnceODRLinkage)
+      TypeInfoVisibility = HiddenVisibility;
 
-  } else if (Hidden || 
-           (CGM.getCodeGenOpts().HiddenWeakVTables &&
-            Linkage == llvm::GlobalValue::LinkOnceODRLinkage)) {
-    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    // The type name should have the same visibility as the type itself.
+    Visibility ExplicitVisibility = Ty->getVisibility();
+    TypeName->setVisibility(CodeGenModule::
+                            GetLLVMVisibility(ExplicitVisibility));
+  
+    TypeInfoVisibility = minVisibility(TypeInfoVisibility, Ty->getVisibility());
+    GV->setVisibility(CodeGenModule::GetLLVMVisibility(TypeInfoVisibility));
   }
+
   GV->setUnnamedAddr(true);
 
   return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
