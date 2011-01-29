@@ -199,6 +199,10 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
   if (!CodeGenOpts.HiddenWeakVTables)
     return;
 
+  // We never want to drop the visibility for RTTI names.
+  if (TVK == TVK_ForRTTIName)
+    return;
+
   // We want to drop the visibility to hidden for weak type symbols.
   // This isn't possible if there might be unresolved references
   // elsewhere that rely on this symbol being visible.

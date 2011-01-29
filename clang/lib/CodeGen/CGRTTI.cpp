@@ -30,6 +30,10 @@ class RTTIBuilder {
   /// Fields - The fields of the RTTI descriptor currently being built.
   llvm::SmallVector<llvm::Constant *, 16> Fields;
 
+  /// GetAddrOfTypeName - Returns the mangled type name of the given type.
+  llvm::GlobalVariable *
+  GetAddrOfTypeName(QualType Ty, llvm::GlobalVariable::LinkageTypes Linkage);
+
   /// GetAddrOfExternalRTTIDescriptor - Returns the constant for the RTTI 
   /// descriptor of the given type.
   llvm::Constant *GetAddrOfExternalRTTIDescriptor(QualType Ty);
@@ -160,6 +164,26 @@ public:
   /// \param ForEH - true if this is for exception handling
   llvm::Constant *BuildTypeInfo(QualType Ty, bool Force = false);
 };
+}
+
+llvm::GlobalVariable *
+RTTIBuilder::GetAddrOfTypeName(QualType Ty, 
+                               llvm::GlobalVariable::LinkageTypes Linkage) {
+  llvm::SmallString<256> OutName;
+  CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, OutName);
+  llvm::StringRef Name = OutName.str();
+
+  // We know that the mangled name of the type starts at index 4 of the
+  // mangled name of the typename, so we can just index into it in order to
+  // get the mangled name of the type.
+  llvm::Constant *Init = llvm::ConstantArray::get(VMContext, Name.substr(4));
+
+  llvm::GlobalVariable *GV = 
+    CGM.CreateOrReplaceCXXRuntimeVariable(Name, Init->getType(), Linkage);
+
+  GV->setInitializer(Init);
+
+  return GV;
 }
 
 llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
@@ -543,8 +567,14 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   BuildVTablePointer(cast<Type>(Ty));
   
   // And the name.
+  llvm::GlobalVariable *TypeName = GetAddrOfTypeName(Ty, Linkage);
+
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  llvm::Constant *TypeNameAsInt8Ptr = 
+    llvm::ConstantExpr::getBitCast(TypeName, Int8PtrTy);
+
   bool Hidden = DecideHidden(Ty);
-  Fields.push_back(BuildName(Ty, Hidden, Linkage));
+  Fields.push_back(TypeNameAsInt8Ptr);
 
   switch (Ty->getTypeClass()) {
 #define TYPE(Class, Base)
@@ -642,10 +672,13 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // type_infos themselves, so we can emit these as hidden symbols.
   // But don't do this if we're worried about strict visibility
   // compatibility.
-  if (const RecordType *RT = dyn_cast<RecordType>(Ty))
-    CGM.setTypeVisibility(GV, cast<CXXRecordDecl>(RT->getDecl()),
-                          CodeGenModule::TVK_ForRTTI);
-  else if (Hidden || 
+  if (const RecordType *RT = dyn_cast<RecordType>(Ty)) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+
+    CGM.setTypeVisibility(GV, RD, CodeGenModule::TVK_ForRTTI);
+    CGM.setTypeVisibility(TypeName, RD, CodeGenModule::TVK_ForRTTIName);
+
+  } else if (Hidden || 
            (CGM.getCodeGenOpts().HiddenWeakVTables &&
             Linkage == llvm::GlobalValue::LinkOnceODRLinkage)) {
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
