@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o %t
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o %t.hidden
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm -o %t
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o %t.hidden
 // RUN: FileCheck --check-prefix=CHECK-TEST1 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-TEST2 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-TEST2-HIDDEN %s < %t.hidden
