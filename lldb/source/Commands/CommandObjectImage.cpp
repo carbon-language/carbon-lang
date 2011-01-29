@@ -240,7 +240,7 @@ LookupAddressInModule
 
         // If an offset was given, print out the address we ended up looking up
         if (offset)
-            strm.Printf("0x%llx: ", addr);
+            strm.Printf("File Address: 0x%llx\n", addr);
 
         ExecutionContextScope *exe_scope = interpreter.GetDebugger().GetExecutionContext().GetBestExecutionContextScope();
         strm.IndentMore();

@@ -167,10 +167,14 @@ public:
         Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process && process->IsAlive())
         {        
-            if (!m_interpreter.Confirm ("There is a running process, kill it and restart?", true))
+            char message[1024];
+            if (process->GetState() == eStateAttaching)
+                ::strncpy (message, "There is a pending attach, abort it and launch a new process?", sizeof(message));
+            else
+                ::strncpy (message, "There is a running process, kill it and restart?", sizeof(message));
+    
+            if (!m_interpreter.Confirm (message, true))
             {
-                result.AppendErrorWithFormat ("Process %u is currently being debugged, restart cancelled.\n",
-                                              process->GetID());
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
@@ -623,7 +627,7 @@ public:
                         return false;
                     }
 
-                    m_interpreter.GetDebugger().GetOutputStream().Printf("Waiting to attach to a process named \"%s\".\n", wait_name);
+                    result.AppendMessageWithFormat("Waiting to attach to a process named \"%s\".\n", wait_name);
                     error = process->Attach (wait_name, m_options.waitfor);
                     if (error.Success())
                     {
@@ -652,7 +656,6 @@ public:
                     else
                     {
                         result.SetDidChangeProcessState (true);
-                        result.AppendMessageWithFormat ("Starting to attach to process.");
                         result.SetStatus (eReturnStatusSuccessFinishNoResult);
                     }
                 }
@@ -712,7 +715,6 @@ public:
                         else
                         {
                             result.SetDidChangeProcessState (true);
-                            result.AppendMessageWithFormat ("Starting to attach to process.");
                             result.SetStatus (eReturnStatusSuccessFinishNoResult);
                         }
                     }
@@ -731,18 +733,20 @@ public:
         if (result.Succeeded())
         {
             // Okay, we're done.  Last step is to warn if the executable module has changed:
+            char new_path[PATH_MAX];
             if (!old_exec_module_sp)
             {
-                char new_path[PATH_MAX + 1];
-                target->GetExecutableModule()->GetFileSpec().GetPath(new_path, PATH_MAX);
-                
-                result.AppendMessageWithFormat("Executable module set to \"%s\".\n",
-                    new_path);
+                // We might not have a module if we attached to a raw pid...
+                ModuleSP new_module_sp (target->GetExecutableModule());
+                if (new_module_sp)
+                {
+                    new_module_sp->GetFileSpec().GetPath(new_path, PATH_MAX);
+                    result.AppendMessageWithFormat("Executable module set to \"%s\".\n", new_path);
+                }
             }
             else if (old_exec_module_sp->GetFileSpec() != target->GetExecutableModule()->GetFileSpec())
             {
-                char old_path[PATH_MAX + 1];
-                char new_path[PATH_MAX + 1];
+                char old_path[PATH_MAX];
                 
                 old_exec_module_sp->GetFileSpec().GetPath(old_path, PATH_MAX);
                 target->GetExecutableModule()->GetFileSpec().GetPath (new_path, PATH_MAX);

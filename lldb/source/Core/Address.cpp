@@ -576,7 +576,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         bool show_stop_context = true;
                         const bool show_module = (style == DumpStyleResolvedDescription);
                         const bool show_fullpaths = false; 
-                        const bool show_inlined_frames = false;
+                        const bool show_inlined_frames = true;
                         if (sc.function == NULL && sc.symbol != NULL)
                         {
                             // If we have just a symbol make sure it is in the right section

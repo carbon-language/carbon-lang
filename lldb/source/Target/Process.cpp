@@ -238,7 +238,7 @@ Process::Process(Target &target, Listener &listener) :
     m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
     m_memory_cache (),
-    m_next_event_action_ap(NULL)
+    m_next_event_action_ap()
 {
     UpdateInstanceName();
 
@@ -1590,37 +1590,46 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
     StateType state = ProcessEventData::GetStateFromEvent (event_sp.get());
     switch (state) 
     {
-      case eStateStopped:
-      case eStateCrashed:
-      {
-        m_process->DidAttach ();
-        // Figure out which one is the executable, and set that in our target:
-        ModuleList &modules = m_process->GetTarget().GetImages();
-    
-        size_t num_modules = modules.GetSize();
-        for (int i = 0; i < num_modules; i++)
+        case eStateRunning:
+            return eEventActionRetry;
+        
+        case eStateStopped:
+        case eStateCrashed:
         {
-            ModuleSP module_sp = modules.GetModuleAtIndex(i);
-            if (module_sp->IsExecutable())
+            // During attach, prior to sending the eStateStopped event, 
+            // lldb_private::Process subclasses must set the process must set
+            // the new process ID.
+            assert (m_process->GetID() != LLDB_INVALID_PROCESS_ID);
+            m_process->DidAttach ();
+            // Figure out which one is the executable, and set that in our target:
+            ModuleList &modules = m_process->GetTarget().GetImages();
+            
+            size_t num_modules = modules.GetSize();
+            for (int i = 0; i < num_modules; i++)
             {
-                ModuleSP exec_module = m_process->GetTarget().GetExecutableModule();
-                if (!exec_module || exec_module != module_sp)
+                ModuleSP module_sp = modules.GetModuleAtIndex(i);
+                if (module_sp->IsExecutable())
                 {
-                    
-                    m_process->GetTarget().SetExecutableModule (module_sp, false);
+                    ModuleSP exec_module = m_process->GetTarget().GetExecutableModule();
+                    if (!exec_module || exec_module != module_sp)
+                    {
+                        
+                        m_process->GetTarget().SetExecutableModule (module_sp, false);
+                    }
+                    break;
                 }
-                break;
             }
+            return eEventActionSuccess;
         }
-        return eEventActionSuccess;
-      }
-      break;
-      default:
-      case eStateExited:   
-      case eStateInvalid:
-        m_exit_string.assign ("No valid Process");
-        return eEventActionExit;
-        break;
+            
+            
+            break;
+        default:
+        case eStateExited:   
+        case eStateInvalid:
+            m_exit_string.assign ("No valid Process");
+            return eEventActionExit;
+            break;
     }
 }
 
@@ -1778,24 +1787,23 @@ Process::Halt ()
     PausePrivateStateThread();
 
     EventSP event_sp;
-    Error error;
+    Error error (WillHalt());
     
-    if (m_public_state.GetValue() == eStateAttaching)
+    if (error.Success())
     {
-        SetExitStatus(SIGKILL, "Cancelled async attach.");
-    }
-    else
-    {
-        error = WillHalt();
         
+        bool caused_stop = false;
+        
+        // Ask the process subclass to actually halt our process
+        error = DoHalt(caused_stop);
         if (error.Success())
         {
-            
-            bool caused_stop = false;
-            
-            // Ask the process subclass to actually halt our process
-            error = DoHalt(caused_stop);
-            if (error.Success())
+            if (m_public_state.GetValue() == eStateAttaching)
+            {
+                SetExitStatus(SIGKILL, "Cancelled async attach.");
+                Destroy ();
+            }
+            else
             {
                 // If "caused_stop" is true, then DoHalt stopped the process. If
                 // "caused_stop" is false, the process was already stopped.
@@ -1835,7 +1843,6 @@ Process::Halt ()
                     }
                 }
                 DidHalt();
-
             }
         }
     }

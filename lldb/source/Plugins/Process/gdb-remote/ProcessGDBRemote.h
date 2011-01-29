@@ -307,7 +307,7 @@ protected:
     KillDebugserverProcess ();
 
     void
-    BuildDynamicRegisterInfo ();
+    BuildDynamicRegisterInfo (bool force);
 
     GDBRemoteCommunication &
     GetGDBRemote()

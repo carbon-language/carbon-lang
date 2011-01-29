@@ -1918,7 +1918,7 @@ protected:
 
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;
-    std::auto_ptr<NextEventAction>          *m_next_event_action_ap;
+    std::auto_ptr<NextEventAction> m_next_event_action_ap;
 
     size_t
     RemoveBreakpointOpcodesFromBuffer (lldb::addr_t addr, size_t size, uint8_t *buf) const;

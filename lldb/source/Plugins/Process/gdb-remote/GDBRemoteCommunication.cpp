@@ -273,6 +273,17 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                 {
                 case 'T':
                 case 'S':
+                    if (process->GetStopID() == 0)
+                    {
+                        if (process->GetID() == LLDB_INVALID_PROCESS_ID)
+                        {
+                            lldb::pid_t pid = GetCurrentProcessID (1);
+                            if (pid != LLDB_INVALID_PROCESS_ID)
+                                process->SetID (pid);
+                        }
+                        process->BuildDynamicRegisterInfo (true);
+                    }
+
                     // Privately notify any internal threads that we have stopped
                     // in case we wanted to interrupt our process, yet we might
                     // send a packet and continue without returning control to the
