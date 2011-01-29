@@ -386,7 +386,7 @@ CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
   VTT->setLinkage(Linkage);
 
   // Set the right visibility.
-  CGM.setTypeVisibility(VTT, RD, /*ForRTTI=*/false);
+  CGM.setTypeVisibility(VTT, RD, CodeGenModule::TVK_ForVTT);
 }
 
 llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {

@@ -261,10 +261,19 @@ public:
   /// GlobalValue.
   void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D) const;
 
+  /// TypeVisibilityKind - The kind of global variable that is passed to 
+  /// setTypeVisibility
+  enum TypeVisibilityKind {
+    TVK_ForVTT,
+    TVK_ForVTable,
+    TVK_ForRTTI,
+    TVK_ForRTTIName
+  };
+
   /// setTypeVisibility - Set the visibility for the given global
   /// value which holds information about a type.
   void setTypeVisibility(llvm::GlobalValue *GV, const CXXRecordDecl *D,
-                         bool IsForRTTI) const;
+                         TypeVisibilityKind TVK) const;
 
   llvm::Constant *GetAddrOfGlobal(GlobalDecl GD) {
     if (isa<CXXConstructorDecl>(GD.getDecl()))

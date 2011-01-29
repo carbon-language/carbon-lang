@@ -193,7 +193,7 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
 /// associated with the given type.
 void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
                                       const CXXRecordDecl *RD,
-                                      bool IsForRTTI) const {
+                                      TypeVisibilityKind TVK) const {
   setGlobalVisibility(GV, RD);
 
   if (!CodeGenOpts.HiddenWeakVTables)
@@ -242,9 +242,10 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
   // If there's a key function, there may be translation units
   // that don't have the key function's definition.  But ignore
   // this if we're emitting RTTI under -fno-rtti.
-  if (!IsForRTTI || Features.RTTI)
+  if (!(TVK != TVK_ForRTTI) || Features.RTTI) {
     if (Context.getKeyFunction(RD))
       return;
+  }
 
   // Otherwise, drop the visibility to hidden.
   GV->setVisibility(llvm::GlobalValue::HiddenVisibility);

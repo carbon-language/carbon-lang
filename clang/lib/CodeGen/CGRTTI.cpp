@@ -644,7 +644,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // compatibility.
   if (const RecordType *RT = dyn_cast<RecordType>(Ty))
     CGM.setTypeVisibility(GV, cast<CXXRecordDecl>(RT->getDecl()),
-                          /*ForRTTI=*/true);
+                          CodeGenModule::TVK_ForRTTI);
   else if (Hidden || 
            (CGM.getCodeGenOpts().HiddenWeakVTables &&
             Linkage == llvm::GlobalValue::LinkOnceODRLinkage)) {
