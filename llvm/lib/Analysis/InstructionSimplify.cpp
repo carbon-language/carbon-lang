@@ -710,7 +710,7 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
   if (match(Op1, m_One()))
     return Op0;
 
-  /// i1 mul -> and.
+  // i1 mul -> and.
   if (MaxRecurse && Op0->getType()->isIntegerTy(1))
     if (Value *V = SimplifyAndInst(Op0, Op1, TD, DT, MaxRecurse-1))
       return V;
