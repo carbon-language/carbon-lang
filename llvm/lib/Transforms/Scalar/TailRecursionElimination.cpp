@@ -72,6 +72,7 @@
 using namespace llvm;
 
 STATISTIC(NumEliminated, "Number of tail calls removed");
+STATISTIC(NumRetDuped,   "Number of return duplicated");
 STATISTIC(NumAccumAdded, "Number of accumulators introduced");
 
 namespace {
@@ -606,6 +607,7 @@ bool TailCallElim::FoldReturnAndProcessPred(BasicBlock *BB,
       EliminateRecursiveTailCall(CI, FoldReturnIntoUncondBranch(Ret, BB, Pred),
                                  OldEntry, TailCallsAreMarkedTail, ArgumentPHIs,
                                  CannotTailCallElimCallsMarkedTail);
+      ++NumRetDuped;
       Change = true;
     }
   }
