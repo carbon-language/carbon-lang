@@ -2153,8 +2153,17 @@ Process::HandlePrivateEvent (EventSP &event_sp)
             case NextEventAction::eEventActionRetry:
                 break;
             case NextEventAction::eEventActionExit:
-                // Handle Exiting Here...
-                
+                // Handle Exiting Here.  If we already got an exited event,
+                // we should just propagate it.  Otherwise, swallow this event,
+                // and set our state to exit so the next event will kill us.
+                if (new_state != eStateExited)
+                {
+                    // FIXME: should cons up an exited event, and discard this one.
+                    SetExitStatus(0, m_next_event_action->GetExitString());
+                    SetNextEventAction(NULL);
+                    return;
+                }
+                SetNextEventAction(NULL);
                 break;
         }
     }
