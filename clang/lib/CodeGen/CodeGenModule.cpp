@@ -1717,15 +1717,16 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
 /// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
 std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
+  const ASTContext &Context = getContext();
   const ConstantArrayType *CAT =
-    getContext().getAsConstantArrayType(E->getType());
+    Context.getAsConstantArrayType(E->getType());
   assert(CAT && "String isn't pointer or array!");
 
   // Resize the string to the right size.
   uint64_t RealLen = CAT->getSize().getZExtValue();
 
   if (E->isWide())
-    RealLen *= getContext().Target.getWCharWidth()/8;
+    RealLen *= Context.Target.getWCharWidth() / Context.getCharWidth();
 
   std::string Str = E->getString().str();
   Str.resize(RealLen, '\0');
