@@ -63,64 +63,10 @@ class RTTIBuilder {
   void BuildPointerToMemberTypeInfo(const MemberPointerType *Ty);
   
 public:
-  RTTIBuilder(CodeGenModule &cgm)
-    : CGM(cgm), VMContext(cgm.getModule().getContext()),
-      Int8PtrTy(llvm::Type::getInt8PtrTy(VMContext)) { }
+  RTTIBuilder(CodeGenModule &CGM) : CGM(CGM), 
+    VMContext(CGM.getModule().getContext()),
+    Int8PtrTy(llvm::Type::getInt8PtrTy(VMContext)) { }
 
-  llvm::Constant *BuildName(QualType Ty, bool Hidden, 
-                            llvm::GlobalVariable::LinkageTypes Linkage) {
-    llvm::SmallString<256> OutName;
-    CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, OutName);
-    llvm::StringRef Name = OutName.str();
-
-    llvm::GlobalVariable *OGV = CGM.getModule().getNamedGlobal(Name);
-    if (OGV && !OGV->isDeclaration())
-      return llvm::ConstantExpr::getBitCast(OGV, Int8PtrTy);
-
-    llvm::Constant *C = llvm::ConstantArray::get(VMContext, Name.substr(4));
-
-    llvm::GlobalVariable *GV = 
-      new llvm::GlobalVariable(CGM.getModule(), C->getType(), true, Linkage,
-                               C, Name);
-    if (OGV) {
-      GV->takeName(OGV);
-      llvm::Constant *NewPtr = llvm::ConstantExpr::getBitCast(GV,
-                                                              OGV->getType());
-      OGV->replaceAllUsesWith(NewPtr);
-      OGV->eraseFromParent();
-    }
-    if (Hidden && Linkage != llvm::GlobalValue::InternalLinkage)
-      GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
-    return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-  }
-
-  // FIXME: unify with DecideExtern
-  bool DecideHidden(QualType Ty) {
-    // For this type, see if all components are never hidden.
-    if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
-      return (DecideHidden(MPT->getPointeeType())
-              && DecideHidden(QualType(MPT->getClass(), 0)));
-    if (const PointerType *PT = Ty->getAs<PointerType>())
-      return DecideHidden(PT->getPointeeType());
-    if (const FunctionType *FT = Ty->getAs<FunctionType>()) {
-      if (DecideHidden(FT->getResultType()) == false)
-        return false;
-      if (const FunctionProtoType *FPT = Ty->getAs<FunctionProtoType>()) {
-        for (unsigned i = 0; i <FPT->getNumArgs(); ++i)
-          if (DecideHidden(FPT->getArgType(i)) == false)
-            return false;
-        for (unsigned i = 0; i <FPT->getNumExceptions(); ++i)
-          if (DecideHidden(FPT->getExceptionType(i)) == false)
-            return false;
-        return true;
-      }
-    }
-    if (const RecordType *RT = Ty->getAs<RecordType>())
-      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-        return RD->getVisibility() == HiddenVisibility;
-    return false;
-  }
-  
   // Pointer type info flags.
   enum {
     /// PTI_Const - Type has const qualifier.
