@@ -48,7 +48,12 @@ namespace llvm {
   /// SimplifyUDivInst - Given operands for a UDiv, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyUDivInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
-                         const DominatorTree *DT = 0);
+                          const DominatorTree *DT = 0);
+
+  /// SimplifyFDivInst - Given operands for an FDiv, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyFDivInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
+                          const DominatorTree *DT = 0);
 
   /// SimplifyShlInst - Given operands for a Shl, see if we can
   /// fold the result.  If not, this returns null.

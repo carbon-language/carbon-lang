@@ -837,7 +837,7 @@ static Value *SimplifySDivInst(Value *Op0, Value *Op1, const TargetData *TD,
 }
 
 Value *llvm::SimplifySDivInst(Value *Op0, Value *Op1, const TargetData *TD,
-                             const DominatorTree *DT) {
+                              const DominatorTree *DT) {
   return ::SimplifySDivInst(Op0, Op1, TD, DT, RecursionLimit);
 }
 
@@ -852,8 +852,26 @@ static Value *SimplifyUDivInst(Value *Op0, Value *Op1, const TargetData *TD,
 }
 
 Value *llvm::SimplifyUDivInst(Value *Op0, Value *Op1, const TargetData *TD,
-                             const DominatorTree *DT) {
+                              const DominatorTree *DT) {
   return ::SimplifyUDivInst(Op0, Op1, TD, DT, RecursionLimit);
+}
+
+static Value *SimplifyFDivInst(Value *Op0, Value *Op1, const TargetData *TD,
+                               const DominatorTree *DT, unsigned MaxRecurse) {
+  // undef / X -> undef    (the undef could be a snan).
+  if (isa<UndefValue>(Op0))
+    return Op0;
+
+  // X / undef -> undef
+  if (isa<UndefValue>(Op1))
+    return Op1;
+
+  return 0;
+}
+
+Value *llvm::SimplifyFDivInst(Value *Op0, Value *Op1, const TargetData *TD,
+                              const DominatorTree *DT) {
+  return ::SimplifyFDivInst(Op0, Op1, TD, DT, RecursionLimit);
 }
 
 /// SimplifyShift - Given operands for an Shl, LShr or AShr, see if we can
@@ -1760,6 +1778,7 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
   case Instruction::Mul: return SimplifyMulInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::SDiv: return SimplifySDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::UDiv: return SimplifyUDivInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::FDiv: return SimplifyFDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::Shl: return SimplifyShlInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::LShr: return SimplifyLShrInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::AShr: return SimplifyAShrInst(LHS, RHS, TD, DT, MaxRecurse);
@@ -1846,6 +1865,9 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     break;
   case Instruction::UDiv:
     Result = SimplifyUDivInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
+  case Instruction::FDiv:
+    Result = SimplifyFDivInst(I->getOperand(0), I->getOperand(1), TD, DT);
     break;
   case Instruction::Shl:
     Result = SimplifyShlInst(I->getOperand(0), I->getOperand(1), TD, DT);

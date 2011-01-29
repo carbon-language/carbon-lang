@@ -118,7 +118,6 @@ public:
   Instruction *commonIDivTransforms(BinaryOperator &I);
   Instruction *visitUDiv(BinaryOperator &I);
   Instruction *visitSDiv(BinaryOperator &I);
-  Instruction *visitFDiv(BinaryOperator &I);
   Value *FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS);
   Value *FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS);
   Instruction *visitAnd(BinaryOperator &I);
