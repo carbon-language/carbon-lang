@@ -2341,7 +2341,17 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (match(Op1, m_Sub(m_Specific(Op0), m_Value(B))))
       return new ICmpInst(I.getPredicate(), B,
                           Constant::getNullValue(B->getType()));
-    
+
+    // (A+B) == A  ->  B == 0
+    if (match(Op0, m_Add(m_Specific(Op1), m_Value(B))))
+      return new ICmpInst(I.getPredicate(), B,
+                          Constant::getNullValue(B->getType()));
+
+    // A == (A+B)  ->  B == 0
+    if (match(Op1, m_Add(m_Specific(Op0), m_Value(B))))
+      return new ICmpInst(I.getPredicate(), B,
+                          Constant::getNullValue(B->getType()));
+
     // (X&Z) == (Y&Z) -> (X^Y) & Z == 0
     if (Op0->hasOneUse() && Op1->hasOneUse() &&
         match(Op0, m_And(m_Value(A), m_Value(B))) && 
