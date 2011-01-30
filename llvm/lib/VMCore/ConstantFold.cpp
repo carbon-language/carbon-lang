@@ -1423,7 +1423,7 @@ static bool isMaybeZeroSizedType(const Type *Ty) {
 /// first is less than the second, return -1, if the second is less than the
 /// first, return 1.  If the constants are not integral, return -2.
 ///
-static int IdxCompare(Constant *C1, Constant *C2,  const Type *ElTy) {
+static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
   if (C1 == C2) return 0;
 
   // Ok, we found a different index.  If they are not ConstantInt, we can't do
@@ -2130,8 +2130,8 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
       const Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs,
                                                          Idxs+NumIdx);
       assert(Ty != 0 && "Invalid indices for GEP!");
-      return  ConstantPointerNull::get(
-                            PointerType::get(Ty,Ptr->getAddressSpace()));
+      return ConstantPointerNull::get(PointerType::get(Ty,
+                                                       Ptr->getAddressSpace()));
     }
   }
 
@@ -2182,9 +2182,9 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
     }
 
     // Implement folding of:
-    //    int* getelementptr ([2 x int]* bitcast ([3 x int]* %X to [2 x int]*),
-    //                        long 0, long 0)
-    // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
+    //    i32* getelementptr ([2 x i32]* bitcast ([3 x i32]* %X to [2 x i32]*),
+    //                        i64 0, i64 0)
+    // To: i32* getelementptr ([3 x i32]* %X, i64 0, i64 0)
     //
     if (CE->isCast() && NumIdx > 1 && Idx0->isNullValue()) {
       if (const PointerType *SPT =
