@@ -10,6 +10,7 @@
 #include "EmulateInstructionARM.h"
 #include "ARMDefines.h"
 #include "ARMUtils.h"
+#include "lldb/Core/ConstString.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -880,6 +881,44 @@ static ARMOpcode g_thumb_opcodes[] =
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
 static const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);
+
+bool
+EmulateInstructionARM::SetTargetTriple (const ConstString &triple)
+{
+    m_arm_isa = 0;
+    const char *triple_cstr = triple.GetCString();
+    if (triple_cstr)
+    {
+        const char *dash = ::strchr (triple_cstr, '-');
+        if (dash)
+        {
+            std::string arch (triple_cstr, dash);
+            const char *arch_cstr = arch.c_str();
+            if (strcasecmp(arch_cstr, "armv4t") == 0)
+                m_arm_isa = ARMv4T;
+            else if (strcasecmp(arch_cstr, "armv4") == 0)
+                m_arm_isa = ARMv4;
+            else if (strcasecmp(arch_cstr, "armv5tej") == 0)
+                m_arm_isa = ARMv5TEJ;
+            else if (strcasecmp(arch_cstr, "armv5te") == 0)
+                m_arm_isa = ARMv5TE;
+            else if (strcasecmp(arch_cstr, "armv5t") == 0)
+                m_arm_isa = ARMv5T;
+            else if (strcasecmp(arch_cstr, "armv6k") == 0)
+                m_arm_isa = ARMv6K;
+            else if (strcasecmp(arch_cstr, "armv6") == 0)
+                m_arm_isa = ARMv6;
+            else if (strcasecmp(arch_cstr, "armv6t2") == 0)
+                m_arm_isa = ARMv6T2;
+            else if (strcasecmp(arch_cstr, "armv7") == 0)
+                m_arm_isa = ARMv7;
+            else if (strcasecmp(arch_cstr, "armv8") == 0)
+                m_arm_isa = ARMv8;
+        }
+    }
+    return m_arm_isa != 0;
+}
+
 
 bool 
 EmulateInstructionARM::ReadInstruction ()

@@ -11,7 +11,7 @@
 #define lldb_EmulateInstruction_h_
 
 #include "lldb/lldb-include.h"
-
+#include "lldb/Core/PluginInterface.h"
 
 //----------------------------------------------------------------------
 /// @class EmulateInstruction EmulateInstruction.h "lldb/Core/EmulateInstruction.h"
@@ -75,9 +75,14 @@
 
 namespace lldb_private {
 
-class EmulateInstruction
+class EmulateInstruction :
+    public PluginInterface
 {
-public: 
+public:
+
+    static Disassembler*
+    FindPlugin (const ArchSpec &arch);
+
     enum ContextType
     {
         eContextInvalid = 0,
@@ -187,6 +192,9 @@ public:
     virtual ~EmulateInstruction()
     {
     }
+    
+    virtual bool
+    SetTargetTriple (const ConstString &triple) = 0;
     
     virtual bool 
     ReadInstruction () = 0;
