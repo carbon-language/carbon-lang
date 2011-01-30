@@ -119,6 +119,24 @@ define i32 @sdiv3(i32 %x, i32 %y) {
 ; CHECK: ret i32 0
 }
 
+define i32 @sdiv4(i32 %x, i32 %y) {
+; CHECK: @sdiv4
+; (X / Y) * Y -> X if the division is exact
+  %div = sdiv exact i32 %x, %y
+  %mul = mul i32 %div, %y
+  ret i32 %mul
+; CHECK: ret i32 %x
+}
+
+define i32 @sdiv5(i32 %x, i32 %y) {
+; CHECK: @sdiv5
+; Y * (X / Y) -> X if the division is exact
+  %div = sdiv exact i32 %x, %y
+  %mul = mul i32 %y, %div
+  ret i32 %mul
+; CHECK: ret i32 %x
+}
+
 define i32 @udiv1(i32 %x, i32 %y) {
 ; CHECK: @udiv1
 ; (no overflow X * Y) / Y -> X
