@@ -1958,7 +1958,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
       else if (pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT) 
         Result = 1;
       break;
-    case ICmpInst::ICMP_NE: // We know that C1 != C2
+    case FCmpInst::FCMP_ONE: // We know that C1 != C2
       // We can only partially decide this relation.
       if (pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ) 
         Result = 0;
