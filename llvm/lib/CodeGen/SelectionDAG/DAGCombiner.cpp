@@ -3154,6 +3154,29 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     }
   }
 
+  // fold (sra (trunc (sr x, c1)), c2) -> (trunc (sra x, c1+c2))
+  //      if c1 is equal to the number of bits the trunc removes
+  if (N0.getOpcode() == ISD::TRUNCATE &&
+      (N0.getOperand(0).getOpcode() == ISD::SRL ||
+       N0.getOperand(0).getOpcode() == ISD::SRA) &&
+      N0.getOperand(0).hasOneUse() &&
+      N0.getOperand(0).getOperand(1).hasOneUse() &&
+      N1C && isa<ConstantSDNode>(N0.getOperand(0).getOperand(1))) {
+    EVT LargeVT = N0.getOperand(0).getValueType();
+    ConstantSDNode *LargeShiftAmt =
+      cast<ConstantSDNode>(N0.getOperand(0).getOperand(1));
+
+    if (LargeVT.getScalarType().getSizeInBits() - OpSizeInBits ==
+        LargeShiftAmt->getZExtValue()) {
+      SDValue Amt =
+        DAG.getConstant(LargeShiftAmt->getZExtValue() + N1C->getZExtValue(),
+                        getShiftAmountTy());
+      SDValue SRA = DAG.getNode(ISD::SRA, N->getDebugLoc(), LargeVT,
+                                N0.getOperand(0).getOperand(0), Amt);
+      return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, SRA);
+    }
+  }
+
   // Simplify, based on bits shifted out of the LHS.
   if (N1C && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);

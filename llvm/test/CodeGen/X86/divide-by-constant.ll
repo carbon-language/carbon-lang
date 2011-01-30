@@ -51,3 +51,12 @@ define i32 @test5(i32 %A) nounwind {
 ; CHECK: mull	4(%esp)
 }
 
+define signext i16 @test6(i16 signext %x) nounwind {
+entry:
+  %div = sdiv i16 %x, 10
+  ret i16 %div
+; CHECK: test6:
+; CHECK: imull	$26215, %eax, %eax
+; CHECK: shrl	$31, %ecx
+; CHECK: sarl	$18, %eax
+}
