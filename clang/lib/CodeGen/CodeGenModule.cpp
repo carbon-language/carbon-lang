@@ -1082,6 +1082,12 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
     switch (KeyFunction->getTemplateSpecializationKind()) {
       case TSK_Undeclared:
       case TSK_ExplicitSpecialization:
+        // When compiling with optimizations turned on, we emit all vtables,
+        // even if the key function is not defined in the current translation
+        // unit. If this is the case, use available_externally linkage.
+        if (!Def && CodeGenOpts.OptimizationLevel)
+          return llvm::GlobalVariable::AvailableExternallyLinkage;
+
         if (KeyFunction->isInlined())
           return llvm::GlobalVariable::LinkOnceODRLinkage;
         
