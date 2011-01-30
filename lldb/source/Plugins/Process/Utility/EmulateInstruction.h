@@ -12,6 +12,67 @@
 
 #include "lldb/lldb-include.h"
 
+
+//----------------------------------------------------------------------
+/// @class EmulateInstruction EmulateInstruction.h "lldb/Core/EmulateInstruction.h"
+/// @brief A class that allows emulation of CPU opcodes.
+///
+/// This class is a plug-in interface that is accessed through the 
+/// standard static FindPlugin function call in the EmulateInstruction
+/// class. The FindPlugin takes a target triple and returns a new object
+/// if there is a plug-in that supports the architecture and OS. Four
+/// callbacks and a baton are provided. The four callbacks are read 
+/// register, write register, read memory and write memory.
+///
+/// This class is currently designed for these main use cases:
+/// - Auto generation of Call Frame Information (CFI) from assembly code
+/// - Predicting single step breakpoint locations
+/// - Emulating instructions for breakpoint traps
+///
+/// Objects can be asked to read and instruction which will cause a call
+/// to the read register callback to get the PC, followed by a read 
+/// memory call to read the opcode. If ReadInstruction () returns true, 
+/// then a call to EmulateInstruction::EvaluateInstruction () can be 
+/// made. At this point the EmulateInstruction subclass will use all of
+/// the callbacks to emulate an instruction.
+///
+/// Clients that provide the callbacks can either do the read/write 
+/// registers/memory to actually emulate the instruction on a real or
+/// virtual CPU, or watch to the EmulateInstruction::Context which
+/// is context for the read/write register/memory which explains why
+/// the callback is being called. Examples of a context are:
+/// "pushing register 3 onto to stack at offset -12", or "adjusting
+/// stack pointer by -16". This extra context allows the generation of
+/// CFI information from assembly code without having to actually do
+/// the read/write register/memory.
+///
+/// Clients must be prepared that not all instructions for an 
+/// Instruction Set Architecture (ISA) will be emulated. 
+///
+/// Subclasses at the very least should implement the instructions that
+/// save and restore regiters onto the stack and adjustment to the stack
+/// pointer. By just implementing a few instructions for an ISA that are
+/// the typical prologue opcodes, you can then generate CFI using a 
+/// class that will soon be available.
+/// 
+/// Implmenting all of the instructions that affect the PC can then
+/// can then allow single step prediction support.
+///
+/// Implmenting all of the instructions allows for emulation of opcodes
+/// for breakpoint traps and will pave the way for "thread centric"
+/// debugging. The current debugging model is "process centric" where
+/// all threads must be stopped when any thread is stopped since when
+/// hitting software breakpoints once must disable the breakpoint by
+/// restoring the original breakpoint opcde, single stepping and 
+/// restoring the breakpoint trap. If all threads were allowed to run
+/// then other threads could miss the breakpoint. 
+///
+/// This class centralizes the code that usually is done in separate 
+/// code paths in a debugger (single step prediction, finding save
+/// restore locations of registers for unwinding stack frame variables,
+/// and emulating the intruction is just a bonus.
+//----------------------------------------------------------------------
+
 namespace lldb_private {
 
 class EmulateInstruction
@@ -20,11 +81,39 @@ public:
     enum ContextType
     {
         eContextInvalid = 0,
+        // Read an instruciton opcode from memory
         eContextReadOpcode,
-        eContextReadMemory,
+        
+        // Usually used for writing a register value whose source value in an 
+        // immediate
         eContextImmediate,
+
+        // Exclusively used when saving a register to the stack as part of the 
+        // prologue
+        // arg0 = register kind
+        // arg1 = register number
+        // arg2 = signed offset from current SP value where register is being 
+        //        stored
         eContextPushRegisterOnStack,
+
+        // Exclusively used when restoring a register to the stack as part of 
+        // the epilogue
+        // arg0 = register kind
+        // arg1 = register number
+        // arg2 = signed offset from current SP value where register is being 
+        //        restored
+        eContextPopRegisterOffStack,
+
+        // Add or subtract a value from the stack
+        // arg0 = register kind for SP
+        // arg1 = register number for SP
+        // arg2 = signed offset being applied to the SP value
         eContextAdjustStackPointer,
+
+        // Used in WriteRegister callbacks to indicate where the 
+        // arg0 = source register kind
+        // arg1 = source register number
+        // arg2 = source signed offset
         eContextRegisterPlusOffset,
     };
     
