@@ -92,12 +92,10 @@ define i32 @sub3(i32 %x, i32 %y) {
 }
 
 define i32 @sdiv1(i32 %x, i32 %y) {
-; CHECK: @sdiv1
 ; (no overflow X * Y) / Y -> X
   %mul = mul nsw i32 %x, %y
   %r = sdiv i32 %mul, %y
   ret i32 %r
-; CHECK: ret i32 %x
 }
 
 define i32 @sdiv2(i32 %x, i32 %y) {
@@ -138,12 +136,10 @@ define i32 @sdiv5(i32 %x, i32 %y) {
 }
 
 define i32 @udiv1(i32 %x, i32 %y) {
-; CHECK: @udiv1
 ; (no overflow X * Y) / Y -> X
   %mul = mul nuw i32 %x, %y
   %r = udiv i32 %mul, %y
   ret i32 %r
-; CHECK: ret i32 %x
 }
 
 define i32 @udiv2(i32 %x, i32 %y) {

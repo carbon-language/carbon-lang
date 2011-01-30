@@ -804,11 +804,11 @@ static Value *SimplifyDiv(unsigned Opcode, Value *Op0, Value *Op1,
   Value *X = 0, *Y = 0;
   if (match(Op0, m_Mul(m_Value(X), m_Value(Y))) && (X == Op1 || Y == Op1)) {
     if (Y != Op1) std::swap(X, Y); // Ensure expression is (X * Y) / Y, Y = Op1
-    BinaryOperator *Mul = cast<BinaryOperator>(Op0);
-    // If the Mul knows it does not overflow, then we are good to go.
-    if ((isSigned && Mul->hasNoSignedWrap()) ||
-        (!isSigned && Mul->hasNoUnsignedWrap()))
-      return X;
+//    BinaryOperator *Mul = cast<BinaryOperator>(Op0);
+//    // If the Mul knows it does not overflow, then we are good to go.
+//    if ((isSigned && Mul->hasNoSignedWrap()) ||
+//        (!isSigned && Mul->hasNoUnsignedWrap()))
+//      return X;
     // If X has the form X = A / Y then X * Y cannot overflow.
     if (BinaryOperator *Div = dyn_cast<BinaryOperator>(X))
       if (Div->getOpcode() == Opcode && Div->getOperand(1) == Y)
