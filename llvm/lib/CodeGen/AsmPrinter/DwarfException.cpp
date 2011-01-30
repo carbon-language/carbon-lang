@@ -451,6 +451,8 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Begin the exception table.
+  // Sometimes we want not to emit the data into separate section (e.g. ARM
+  // EHABI). In this case LSDASection will be NULL.
   if (LSDASection)
     Asm->OutStreamer.SwitchSection(LSDASection);
   Asm->EmitAlignment(2);
