@@ -95,6 +95,10 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// HasITBlocks - True if IT blocks have been inserted.
   bool HasITBlocks;
 
+  /// CPEClones - Track constant pool entries clones created by Constant Island
+  /// pass.
+  DenseMap<unsigned, unsigned> CPEClones;
+
 public:
   ARMFunctionInfo() :
     isThumb(false),
@@ -244,6 +248,19 @@ public:
 
   bool hasITBlocks() const { return HasITBlocks; }
   void setHasITBlocks(bool h) { HasITBlocks = h; }
+
+  void recordCPEClone(unsigned CPIdx, unsigned CPCloneIdx) {
+    if (!CPEClones.insert(std::make_pair(CPCloneIdx, CPIdx)).second)
+      assert(0 && "Duplicate entries!");
+  }
+
+  unsigned getOriginalCPIdx(unsigned CloneIdx) const {
+    DenseMap<unsigned, unsigned>::const_iterator I = CPEClones.find(CloneIdx);
+    if (I != CPEClones.end())
+      return I->second;
+    else
+      return -1U;
+  }
 };
 } // End llvm namespace
 

@@ -368,6 +368,14 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   if (isThumb && !HasFarJump && AFI->isLRSpilledForFarJump())
     MadeChange |= UndoLRSpillRestore();
 
+  // Save the mapping between original and cloned constpool entries.
+  for (unsigned i = 0, e = CPEntries.size(); i != e; ++i) {
+    for (unsigned j = 0, je = CPEntries[i].size(); j != je; ++j) {
+      const CPEntry & CPE = CPEntries[i][j];
+      AFI->recordCPEClone(i, CPE.CPI);
+    }
+  }
+
   DEBUG(errs() << '\n'; dumpBBs());
 
   BBSizes.clear();
