@@ -381,16 +381,17 @@ CompilerInstance::createDefaultOutputFile(bool Binary,
                                           llvm::StringRef InFile,
                                           llvm::StringRef Extension) {
   return createOutputFile(getFrontendOpts().OutputFile, Binary,
-                          InFile, Extension);
+                          /*RemoveFileOnSignal=*/true, InFile, Extension);
 }
 
 llvm::raw_fd_ostream *
 CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
-                                   bool Binary,
+                                   bool Binary, bool RemoveFileOnSignal,
                                    llvm::StringRef InFile,
                                    llvm::StringRef Extension) {
   std::string Error, OutputPathName, TempPathName;
   llvm::raw_fd_ostream *OS = createOutputFile(OutputPath, Error, Binary,
+                                              RemoveFileOnSignal,
                                               InFile, Extension,
                                               &OutputPathName,
                                               &TempPathName);
@@ -412,6 +413,7 @@ llvm::raw_fd_ostream *
 CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
                                    std::string &Error,
                                    bool Binary,
+                                   bool RemoveFileOnSignal,
                                    llvm::StringRef InFile,
                                    llvm::StringRef Extension,
                                    std::string *ResultPathName,
@@ -455,7 +457,8 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
     return 0;
 
   // Make sure the out stream file gets removed if we crash.
-  llvm::sys::RemoveFileOnSignal(llvm::sys::Path(OSFile));
+  if (RemoveFileOnSignal)
+    llvm::sys::RemoveFileOnSignal(llvm::sys::Path(OSFile));
 
   if (ResultPathName)
     *ResultPathName = OutFile;
