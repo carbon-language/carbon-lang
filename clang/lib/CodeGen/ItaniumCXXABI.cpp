@@ -493,17 +493,41 @@ ItaniumCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
                                    /*Packed=*/false);
 }
 
+static uint64_t getFieldOffset(const FieldDecl *FD, CodeGenModule &CGM) {
+  const CGRecordLayout &RL = CGM.getTypes().getCGRecordLayout(FD->getParent());
+  const llvm::StructType *ClassLTy = RL.getLLVMType();
+
+  unsigned FieldNo = RL.getLLVMFieldNo(FD);
+  return
+       CGM.getTargetData().getStructLayout(ClassLTy)->getElementOffset(FieldNo);
+}
+
 llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const FieldDecl *FD) {
   // Itanium C++ ABI 2.3:
   //   A pointer to data member is an offset from the base address of
   //   the class object containing it, represented as a ptrdiff_t
 
-  const CGRecordLayout &RL = CGM.getTypes().getCGRecordLayout(FD->getParent());
-  const llvm::StructType *ClassLTy = RL.getLLVMType();
+  const RecordDecl *parent = FD->getParent();
+  if (!parent->isAnonymousStructOrUnion())
+    return llvm::ConstantInt::get(getPtrDiffTy(), getFieldOffset(FD, CGM));
 
-  unsigned FieldNo = RL.getLLVMFieldNo(FD);
-  uint64_t Offset = 
-    CGM.getTargetData().getStructLayout(ClassLTy)->getElementOffset(FieldNo);
+  // Handle a field injected from an anonymous struct or union.
+
+  assert(FD->getDeclName() && "Requested pointer to member with no name!");
+
+  // Find the record which the field was injected into.
+  while (parent->isAnonymousStructOrUnion())
+    parent = cast<RecordDecl>(parent->getParent());
+
+  RecordDecl::lookup_const_result lookup = parent->lookup(FD->getDeclName());
+  assert(lookup.first != lookup.second && "Didn't find the field!");
+  const IndirectFieldDecl *indirectFD = cast<IndirectFieldDecl>(*lookup.first);
+
+  uint64_t Offset = 0;
+  for (IndirectFieldDecl::chain_iterator
+         I= indirectFD->chain_begin(), E= indirectFD->chain_end(); I!=E; ++I) {
+    Offset += getFieldOffset(cast<FieldDecl>(*I), CGM);
+  }
 
   return llvm::ConstantInt::get(getPtrDiffTy(), Offset);
 }

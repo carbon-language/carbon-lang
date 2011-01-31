@@ -1,5 +1,19 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
 
+// rdar://8818236
+namespace rdar8818236 {
+struct S {
+  char c2;
+  union {
+    char c;
+    int i;
+  };
+};
+
+// CHECK: @_ZN11rdar88182363fooE = global i64 4
+char S::*foo  = &S::c;
+}
+
 struct A {
   union {
     int a;

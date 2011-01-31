@@ -1784,6 +1784,7 @@ public:
                               const CXXScopeSpec *SS = 0);
   ExprResult
   BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
+                                           const CXXScopeSpec &SS,
                                            IndirectFieldDecl *IndirectField,
                                            Expr *BaseObjectExpr = 0,
                                       SourceLocation OpLoc = SourceLocation());
