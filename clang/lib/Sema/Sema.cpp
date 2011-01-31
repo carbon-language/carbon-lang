@@ -388,25 +388,29 @@ void Sema::ActOnEndOfTranslationUnit() {
       Consumer.CompleteTentativeDefinition(VD);
 
   }
-  
-  // Output warning for unused file scoped decls.
-  for (llvm::SmallVectorImpl<const DeclaratorDecl*>::iterator
-         I = UnusedFileScopedDecls.begin(),
-         E = UnusedFileScopedDecls.end(); I != E; ++I) {
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
-      const FunctionDecl *DiagD;
-      if (!FD->hasBody(DiagD))
-        DiagD = FD;
-      Diag(DiagD->getLocation(),
-           isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_member_function
-                                     : diag::warn_unused_function)
-            << DiagD->getDeclName();
-    } else {
-      const VarDecl *DiagD = cast<VarDecl>(*I)->getDefinition();
-      if (!DiagD)
-        DiagD = cast<VarDecl>(*I);
-      Diag(DiagD->getLocation(), diag::warn_unused_variable)
-            << DiagD->getDeclName();
+
+  // If there were errors, disable 'unused' warnings since they will mostly be
+  // noise.
+  if (!Diags.hasErrorOccurred()) {
+    // Output warning for unused file scoped decls.
+    for (llvm::SmallVectorImpl<const DeclaratorDecl*>::iterator
+           I = UnusedFileScopedDecls.begin(),
+           E = UnusedFileScopedDecls.end(); I != E; ++I) {
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
+        const FunctionDecl *DiagD;
+        if (!FD->hasBody(DiagD))
+          DiagD = FD;
+        Diag(DiagD->getLocation(),
+             isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_member_function
+                                       : diag::warn_unused_function)
+              << DiagD->getDeclName();
+      } else {
+        const VarDecl *DiagD = cast<VarDecl>(*I)->getDefinition();
+        if (!DiagD)
+          DiagD = cast<VarDecl>(*I);
+        Diag(DiagD->getLocation(), diag::warn_unused_variable)
+              << DiagD->getDeclName();
+      }
     }
   }
 
