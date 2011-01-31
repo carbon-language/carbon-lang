@@ -2475,6 +2475,10 @@ def err_invalid_qualified_function_type : Error<
 def err_invalid_ref_qualifier_function_type : Error<
   "ref-qualifier '%select{&&|&}0' is only allowed on non-static member functions,"
   " member function pointers, and typedefs of function types">;
+def ext_qualified_function_type_template_arg : ExtWarn<
+  "template argument of '%0' qualified function type is a GNU extension">, 
+  InGroup<GNU>;
+
 def err_invalid_qualified_function_pointer : Error<
   "type qualifier is not allowed on this function %select{pointer|reference}0">;
 def err_invalid_qualified_typedef_function_type_use : Error<

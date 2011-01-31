@@ -1512,6 +1512,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::ForContext:
     case Declarator::ConditionContext:
     case Declarator::TypeNameContext:
+    case Declarator::TemplateTypeArgContext:
       break;
     }
 
@@ -1872,6 +1873,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     //   for a nonstatic member function, the function type to which a pointer
     //   to member refers, or the top-level function type of a function typedef
     //   declaration.
+    //
+    // Core issue 547 also allows cv-qualifiers on function types that are
+    // top-level template type arguments.
     bool FreeFunction;
     if (!D.getCXXScopeSpec().isSet()) {
       FreeFunction = (D.getContext() != Declarator::MemberContext ||
@@ -1887,48 +1891,81 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     //   member refers, or the top-level function type of a function typedef 
     //   declaration.
     if ((FnTy->getTypeQuals() != 0 || FnTy->getRefQualifier()) &&
+        !(D.getContext() == Declarator::TemplateTypeArgContext &&
+          !D.isFunctionDeclarator()) &&
         D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
         (FreeFunction ||
          D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)) {
-      if (FnTy->getTypeQuals() != 0) {
-        if (D.isFunctionDeclarator())
-          Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_function_type);
-        else
-          Diag(D.getIdentifierLoc(),
-               diag::err_invalid_qualified_typedef_function_type_use)
-            << FreeFunction;
-      }
+      if (D.getContext() == Declarator::TemplateTypeArgContext) {
+        // Accept qualified function types as template type arguments as a GNU
+        // extension. This is also the subject of C++ core issue 547.
+        std::string Quals;
+        if (FnTy->getTypeQuals() != 0)
+          Quals = Qualifiers::fromCVRMask(FnTy->getTypeQuals()).getAsString();
+        
+        switch (FnTy->getRefQualifier()) {
+        case RQ_None:
+          break;
+            
+        case RQ_LValue:
+          if (!Quals.empty())
+            Quals += ' ';
+          Quals += '&';
+          break;
           
-      if (FnTy->getRefQualifier()) {
-        if (D.isFunctionDeclarator()) {
-          SourceLocation Loc = D.getIdentifierLoc();
-          for (unsigned I = 0, N = D.getNumTypeObjects(); I != N; ++I) {
-            const DeclaratorChunk &Chunk = D.getTypeObject(N-I-1);
-            if (Chunk.Kind == DeclaratorChunk::Function &&
-                Chunk.Fun.hasRefQualifier()) {
-              Loc = Chunk.Fun.getRefQualifierLoc();
-              break;
-            }
-          }
-
-          Diag(Loc, diag::err_invalid_ref_qualifier_function_type)
-            << (FnTy->getRefQualifier() == RQ_LValue)
-            << FixItHint::CreateRemoval(Loc);
-        } else {
-          Diag(D.getIdentifierLoc(), 
-               diag::err_invalid_ref_qualifier_typedef_function_type_use)
-            << FreeFunction
-            << (FnTy->getRefQualifier() == RQ_LValue);
+        case RQ_RValue:
+          if (!Quals.empty())
+            Quals += ' ';
+          Quals += "&&";
+          break;
         }
+        
+        Diag(D.getIdentifierLoc(), 
+             diag::ext_qualified_function_type_template_arg)
+          << Quals;
+      } else {
+        if (FnTy->getTypeQuals() != 0) {
+          if (D.isFunctionDeclarator())
+            Diag(D.getIdentifierLoc(), 
+                 diag::err_invalid_qualified_function_type);
+          else
+            Diag(D.getIdentifierLoc(),
+                 diag::err_invalid_qualified_typedef_function_type_use)
+              << FreeFunction;
+        }
+          
+        if (FnTy->getRefQualifier()) {
+          if (D.isFunctionDeclarator()) {
+            SourceLocation Loc = D.getIdentifierLoc();
+            for (unsigned I = 0, N = D.getNumTypeObjects(); I != N; ++I) {
+              const DeclaratorChunk &Chunk = D.getTypeObject(N-I-1);
+              if (Chunk.Kind == DeclaratorChunk::Function &&
+                  Chunk.Fun.hasRefQualifier()) {
+                Loc = Chunk.Fun.getRefQualifierLoc();
+                break;
+              }
+            }
+
+            Diag(Loc, diag::err_invalid_ref_qualifier_function_type)
+              << (FnTy->getRefQualifier() == RQ_LValue)
+              << FixItHint::CreateRemoval(Loc);
+          } else {
+            Diag(D.getIdentifierLoc(), 
+                 diag::err_invalid_ref_qualifier_typedef_function_type_use)
+              << FreeFunction
+              << (FnTy->getRefQualifier() == RQ_LValue);
+          }
+        }
+          
+        // Strip the cv-qualifiers and ref-qualifiers from the type.
+        FunctionProtoType::ExtProtoInfo EPI = FnTy->getExtProtoInfo();
+        EPI.TypeQuals = 0;
+        EPI.RefQualifier = RQ_None;
+          
+        T = Context.getFunctionType(FnTy->getResultType(), 
+                                    FnTy->arg_type_begin(),
+                                    FnTy->getNumArgs(), EPI);
       }
-          
-      // Strip the cv-quals and ref-qualifier from the type.
-      FunctionProtoType::ExtProtoInfo EPI = FnTy->getExtProtoInfo();
-      EPI.TypeQuals = 0;
-      EPI.RefQualifier = RQ_None;
-          
-      T = Context.getFunctionType(FnTy->getResultType(), FnTy->arg_type_begin(),
-                                  FnTy->getNumArgs(), EPI);
     }
   }
 
@@ -1997,6 +2034,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::ConditionContext:
     case Declarator::CXXCatchContext:
     case Declarator::BlockLiteralContext:
+    case Declarator::TemplateTypeArgContext:
       // FIXME: We may want to allow parameter packs in block-literal contexts
       // in the future.
       Diag(D.getEllipsisLoc(), diag::err_ellipsis_in_declarator_not_parameter);

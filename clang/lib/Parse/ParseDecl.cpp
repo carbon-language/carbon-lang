@@ -29,13 +29,14 @@ using namespace clang;
 ///         specifier-qualifier-list abstract-declarator[opt]
 ///
 /// Called type-id in C++.
-TypeResult Parser::ParseTypeName(SourceRange *Range) {
+TypeResult Parser::ParseTypeName(SourceRange *Range,
+                                 Declarator::TheContext Context) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseSpecifierQualifierList(DS);
 
   // Parse the abstract-declarator, if present.
-  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  Declarator DeclaratorInfo(DS, Context);
   ParseDeclarator(DeclaratorInfo);
   if (Range)
     *Range = DeclaratorInfo.getSourceRange();

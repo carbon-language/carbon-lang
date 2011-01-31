@@ -1464,7 +1464,9 @@ private:
   TPResult TryParseFunctionDeclarator();
   TPResult TryParseBracketDeclarator();
 
-  TypeResult ParseTypeName(SourceRange *Range = 0);
+  TypeResult ParseTypeName(SourceRange *Range = 0,
+                           Declarator::TheContext Context
+                                                 = Declarator::TypeNameContext);
   void ParseBlockId();
 
   void ProhibitAttributes(ParsedAttributesWithRange &attrs) {

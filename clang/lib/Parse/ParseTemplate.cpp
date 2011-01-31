@@ -992,7 +992,8 @@ ParsedTemplateArgument Parser::ParseTemplateArgument() {
   // Therefore, we initially try to parse a type-id.  
   if (isCXXTypeId(TypeIdAsTemplateArgument)) {
     SourceLocation Loc = Tok.getLocation();
-    TypeResult TypeArg = ParseTypeName();
+    TypeResult TypeArg = ParseTypeName(/*Range=*/0, 
+                                       Declarator::TemplateTypeArgContext);
     if (TypeArg.isInvalid())
       return ParsedTemplateArgument();
     
