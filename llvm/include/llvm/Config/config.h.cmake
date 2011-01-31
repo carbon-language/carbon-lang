@@ -169,7 +169,7 @@
 #cmakedefine HAVE_GV ${HAVE_GV}
 
 /* Define to 1 if you have the `index' function. */
-#undef HAVE_INDEX
+#cmakedefine HAVE_INDEX ${HAVE_INDEX}
 
 /* Define to 1 if the system has the type `int64_t'. */
 #cmakedefine HAVE_INT64_T ${HAVE_INT64_T}
@@ -224,7 +224,7 @@
 #undef HAVE_LINK_R
 
 /* Define to 1 if you have the `longjmp' function. */
-#undef HAVE_LONGJMP
+#cmakedefine HAVE_LONGJMP ${HAVE_LONGJMP}
 
 /* Define to 1 if you have the <mach/mach.h> header file. */
 #cmakedefine HAVE_MACH_MACH_H ${HAVE_MACH_MACH_H}
@@ -309,16 +309,16 @@
 #cmakedefine HAVE_PTHREAD_RWLOCK_INIT ${HAVE_PTHREAD_RWLOCK_INIT}
 
 /* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
-#undef HAVE_RAND48
+#cmakedefine HAVE_RAND48 ${HAVE_RAND48}
 
 /* Define to 1 if you have the `readdir' function. */
-#undef HAVE_READDIR
+#cmakedefine HAVE_READDIR ${HAVE_READDIR}
 
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
 
 /* Define to 1 if you have the `rindex' function. */
-#undef HAVE_RINDEX
+#cmakedefine HAVE_RINDEX ${HAVE_RINDEX}
 
 /* Define to 1 if you have the `rintf' function. */
 #undef HAVE_RINTF
@@ -336,7 +336,7 @@
 #cmakedefine HAVE_SETENV ${HAVE_SETENV}
 
 /* Define to 1 if you have the `setjmp' function. */
-#undef HAVE_SETJMP
+#cmakedefine HAVE_SETJMP ${HAVE_SETJMP}
 
 /* Define to 1 if you have the <setjmp.h> header file. */
 #cmakedefine HAVE_SETJMP_H ${HAVE_SETJMP_H}
@@ -348,13 +348,13 @@
 #undef HAVE_SHL_LOAD
 
 /* Define to 1 if you have the `siglongjmp' function. */
-#undef HAVE_SIGLONGJMP
+#cmakedefine HAVE_SIGLONGJMP ${HAVE_SIGLONGJMP}
 
 /* Define to 1 if you have the <signal.h> header file. */
 #cmakedefine HAVE_SIGNAL_H ${HAVE_SIGNAL_H}
 
 /* Define to 1 if you have the `sigsetjmp' function. */
-#undef HAVE_SIGSETJMP
+#cmakedefine HAVE_SIGSETJMP ${HAVE_SIGSETJMP}
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
@@ -405,7 +405,7 @@
 #cmakedefine HAVE_STRTOLL ${HAVE_STRTOLL}
 
 /* Define to 1 if you have the `strtoq' function. */
-#undef HAVE_STRTOQ
+#cmakedefine HAVE_STRTOQ ${HAVE_STRTOQ}
 
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
