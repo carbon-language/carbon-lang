@@ -3129,20 +3129,31 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
   if (!isa<VarDecl>(ShadowedDecl) && !isa<FieldDecl>(ShadowedDecl))
     return;
 
-  DeclContext *OldDC = ShadowedDecl->getDeclContext();
-
-  // Don't warn for this case:
-  //
-  // @code
-  // extern int bob;
-  // void f() {
-  //   extern int bob;
-  // }
-  // @endcode
-  if (D->isExternC() && NewDC->isFunctionOrMethod())
-    if (VarDecl *shadowedVar = dyn_cast<VarDecl>(ShadowedDecl))
-      if (shadowedVar->isExternC())
+  if (VarDecl *shadowedVar = dyn_cast<VarDecl>(ShadowedDecl))
+    if (shadowedVar->isExternC()) {
+      // Don't warn for this case:
+      //
+      // @code
+      // extern int bob;
+      // void f() {
+      //   extern int bob;
+      // }
+      // @endcode
+      if (D->isExternC())
         return;
+
+      // For shadowing external vars, make sure that we point to the global
+      // declaration, not a locally scoped extern declaration.
+      for (VarDecl::redecl_iterator
+             I = shadowedVar->redecls_begin(), E = shadowedVar->redecls_end();
+           I != E; ++I)
+        if (I->isFileVarDecl()) {
+          ShadowedDecl = *I;
+          break;
+        }
+    }
+
+  DeclContext *OldDC = ShadowedDecl->getDeclContext();
 
   // Only warn about certain kinds of shadowing for class members.
   if (NewDC && NewDC->isRecord()) {
