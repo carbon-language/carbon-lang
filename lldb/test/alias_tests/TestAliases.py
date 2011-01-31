@@ -80,6 +80,12 @@ class AliasTestCase(TestBase):
                                  "print frame; print bp_loc",
                                  "2: name = 'sum', locations = 1",
                                  "frame variable b" ])
+
+
+        self.expect ("help run",
+                     substrs = [ "'run' is an abbreviation for 'process launch --'" ])
+
+
         self.expect ("run",
                      patterns = [ "Process .* launched: .*a.out" ])
 
