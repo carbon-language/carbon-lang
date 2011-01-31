@@ -3117,6 +3117,19 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
 
   DeclContext *OldDC = ShadowedDecl->getDeclContext();
 
+  // Don't warn for this case:
+  //
+  // @code
+  // extern int bob;
+  // void f() {
+  //   extern int bob;
+  // }
+  // @endcode
+  if (D->isExternC() && NewDC->isFunctionOrMethod())
+    if (VarDecl *shadowedVar = dyn_cast<VarDecl>(ShadowedDecl))
+      if (shadowedVar->isExternC())
+        return;
+
   // Only warn about certain kinds of shadowing for class members.
   if (NewDC && NewDC->isRecord()) {
     // In particular, don't warn about shadowing non-class members.
