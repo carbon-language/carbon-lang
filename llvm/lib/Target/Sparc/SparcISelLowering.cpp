@@ -194,7 +194,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
                               false, false, 0);
         } else {
           unsigned loReg = MF.addLiveIn(NextVA.getLocReg(),
-                                        &SP::IntRegsRegClass);
+                                        &SP::IntRegsRegClass, dl);
           LoVal = DAG.getCopyFromReg(Chain, dl, loReg, MVT::i32);
         }
         SDValue WholeValue =

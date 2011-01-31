@@ -2212,7 +2212,7 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
     RC = ARM::GPRRegisterClass;
 
   // Transform the arguments stored in physical registers into virtual ones.
-  unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
+  unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC, dl);
   SDValue ArgValue = DAG.getCopyFromReg(Root, dl, Reg, MVT::i32);
 
   SDValue ArgValue2;
@@ -2226,7 +2226,7 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
                             MachinePointerInfo::getFixedStack(FI),
                             false, false, 0);
   } else {
-    Reg = MF.addLiveIn(NextVA.getLocReg(), RC);
+    Reg = MF.addLiveIn(NextVA.getLocReg(), RC, dl);
     ArgValue2 = DAG.getCopyFromReg(Root, dl, Reg, MVT::i32);
   }
 
@@ -2307,7 +2307,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           llvm_unreachable("RegVT not supported by FORMAL_ARGUMENTS Lowering");
 
         // Transform the arguments in physical registers into virtual ones.
-        unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
+        unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC, dl);
         ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, RegVT);
       }
 
@@ -2384,7 +2384,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
         else
           RC = ARM::GPRRegisterClass;
 
-        unsigned VReg = MF.addLiveIn(GPRArgRegs[NumGPRs], RC);
+        unsigned VReg = MF.addLiveIn(GPRArgRegs[NumGPRs], RC, dl);
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
@@ -2839,7 +2839,7 @@ SDValue ARMTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const{
   }
 
   // Return LR, which contains the return address. Mark it an implicit live-in.
-  unsigned Reg = MF.addLiveIn(ARM::LR, getRegClassFor(MVT::i32));
+  unsigned Reg = MF.addLiveIn(ARM::LR, getRegClassFor(MVT::i32), dl);
   return DAG.getCopyFromReg(DAG.getEntryNode(), dl, Reg, VT);
 }
 
