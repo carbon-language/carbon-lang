@@ -127,7 +127,7 @@ public:
         ContextType type;
         lldb::addr_t arg0;      // Register kind.
         lldb::addr_t arg1;      // Register spec.
-        int64_t arg2;     // Possible negative value.
+        int64_t arg2;           // Possible negative value.
     };
 
     union Opcode
