@@ -1167,10 +1167,10 @@ class XSHWRegInst<RegisterClass rclass>:
              [(set rclass:$rDest, (sext R16C:$rSrc))]>;
 
 multiclass ExtendHalfwordWord {
-  def v4i32: XSHWVecInst<v4i32, v8i16>;
-  
+  def v4i32: XSHWVecInst<v8i16, v4i32>;
+
   def r16:   XSHWRegInst<R32C>;
-  
+
   def r32:   XSHWInRegInst<R32C,
                           [(set R32C:$rDest, (sext_inreg R32C:$rSrc, i16))]>;
   def r64:   XSHWInRegInst<R64C, [/* no pattern */]>;
