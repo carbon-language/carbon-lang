@@ -62,6 +62,13 @@ Diagnostic::~Diagnostic() {
     delete Client;
 }
 
+void Diagnostic::setClient(DiagnosticClient *client, bool ShouldOwnClient) {
+  if (OwnsDiagClient && Client)
+    delete Client;
+  
+  Client = client;
+  OwnsDiagClient = ShouldOwnClient;
+}
 
 void Diagnostic::pushMappings(SourceLocation Loc) {
   DiagStateOnPushStack.push_back(GetCurDiagState());

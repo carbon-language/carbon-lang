@@ -335,10 +335,7 @@ public:
   ///
   /// \param ShouldOwnClient true if the diagnostic object should take
   /// ownership of \c client.
-  void setClient(DiagnosticClient *client, bool ShouldOwnClient = true) {
-    Client = client;
-    OwnsDiagClient = ShouldOwnClient;
-  }
+  void setClient(DiagnosticClient *client, bool ShouldOwnClient = true);
 
   /// setErrorLimit - Specify a limit for the number of errors we should
   /// emit before giving up.  Zero disables the limit.

@@ -827,6 +827,8 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
   }
 
   fclose(fp);
+  clang_disposeTranslationUnit(TU);
+  clang_disposeIndex(Idx);
   return 0;
 }
 
