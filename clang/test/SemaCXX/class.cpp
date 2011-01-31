@@ -176,3 +176,15 @@ namespace rdar8367341 {
     static const float y = foo(); // expected-warning {{in-class initializer for static data member of type 'const float' is a C++0x extension}} expected-error {{in-class initializer is not a constant expression}}
   };
 }
+
+namespace with_anon {
+struct S {
+  union {
+    char c;
+  };
+};
+
+void f() {
+    S::c; // expected-error {{invalid use of nonstatic data member}}
+}
+}

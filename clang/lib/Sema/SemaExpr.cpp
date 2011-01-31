@@ -1154,7 +1154,7 @@ static void DiagnoseInstanceReference(Sema &SemaRef,
   SourceRange Range(Loc);
   if (SS.isSet()) Range.setBegin(SS.getRange().getBegin());
 
-  if (R.getAsSingle<FieldDecl>()) {
+  if (R.getAsSingle<FieldDecl>() || R.getAsSingle<IndirectFieldDecl>()) {
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(SemaRef.CurContext)) {
       if (MD->isStatic()) {
         // "invalid use of member 'x' in static member function"
