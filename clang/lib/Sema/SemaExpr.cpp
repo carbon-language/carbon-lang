@@ -5557,16 +5557,9 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
   lhsType = Context.getCanonicalType(lhsType).getUnqualifiedType();
   rhsType = Context.getCanonicalType(rhsType).getUnqualifiedType();
 
+  // Common case: no conversion required.
   if (lhsType == rhsType) {
     Kind = CK_NoOp;
-    return Compatible; // Common case: fast path an exact match.
-  }
-
-  if ((lhsType->isObjCClassType() &&
-       (Context.hasSameType(rhsType, Context.ObjCClassRedefinitionType))) ||
-     (rhsType->isObjCClassType() &&
-       (Context.hasSameType(lhsType, Context.ObjCClassRedefinitionType)))) {
-    Kind = CK_BitCast;
     return Compatible;
   }
 
@@ -5584,6 +5577,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
     }
     return Incompatible;
   }
+
   // Allow scalar to ExtVector assignments, and assignments of an ExtVector type
   // to the same ExtVector type.
   if (lhsType->isExtVectorType()) {
@@ -5602,6 +5596,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
     }
   }
 
+  // Conversions to or from vector type.
   if (lhsType->isVectorType() || rhsType->isVectorType()) {
     if (lhsType->isVectorType() && rhsType->isVectorType()) {
       // Allow assignments of an AltiVec vector type to an equivalent GCC
@@ -5623,146 +5618,173 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
     return Incompatible;
   }
 
+  // Arithmetic conversions.
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType() &&
       !(getLangOptions().CPlusPlus && lhsType->isEnumeralType())) {
     Kind = PrepareScalarCast(*this, rhs, lhsType);
     return Compatible;
   }
 
-  if (isa<PointerType>(lhsType)) {
-    if (rhsType->isIntegerType()) {
-      Kind = CK_IntegralToPointer; // FIXME: null?
-      return IntToPointer;
-    }
-
+  // Conversions to normal pointers.
+  if (const PointerType *lhsPointer = dyn_cast<PointerType>(lhsType)) {
+    // U* -> T*
     if (isa<PointerType>(rhsType)) {
       Kind = CK_BitCast;
       return CheckPointerTypesForAssignment(lhsType, rhsType);
     }
 
-    // In general, C pointers are not compatible with ObjC object pointers.
-    if (isa<ObjCObjectPointerType>(rhsType)) {
-      Kind = CK_AnyPointerToObjCPointerCast;
-      if (lhsType->isVoidPointerType()) // an exception to the rule.
-        return Compatible;
-      return IncompatiblePointer;
+    // int -> T*
+    if (rhsType->isIntegerType()) {
+      Kind = CK_IntegralToPointer; // FIXME: null?
+      return IntToPointer;
     }
-    if (rhsType->getAs<BlockPointerType>()) {
-      if (lhsType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
+
+    // C pointers are not compatible with ObjC object pointers,
+    // with two exceptions:
+    if (isa<ObjCObjectPointerType>(rhsType)) {
+      //  - conversions to void*
+      if (lhsPointer->getPointeeType()->isVoidType()) {
+        Kind = CK_AnyPointerToObjCPointerCast;
+        return Compatible;
+      }
+
+      //  - conversions from 'Class' to the redefinition type
+      if (rhsType->isObjCClassType() &&
+          Context.hasSameType(lhsType, Context.ObjCClassRedefinitionType)) {
         Kind = CK_BitCast;
         return Compatible;
       }
 
-      // Treat block pointers as objects.
-      if (getLangOptions().ObjC1 && lhsType->isObjCIdType()) {
-        Kind = CK_AnyPointerToObjCPointerCast;
+      Kind = CK_BitCast;
+      return IncompatiblePointer;
+    }
+
+    // U^ -> void*
+    if (rhsType->getAs<BlockPointerType>()) {
+      if (lhsPointer->getPointeeType()->isVoidType()) {
+        Kind = CK_BitCast;
         return Compatible;
       }
     }
+
     return Incompatible;
   }
 
+  // Conversions to block pointers.
   if (isa<BlockPointerType>(lhsType)) {
+    // U^ -> T^
+    if (rhsType->isBlockPointerType()) {
+      Kind = CK_AnyPointerToBlockPointerCast;
+      return CheckBlockPointerTypesForAssignment(lhsType, rhsType);
+    }
+
+    // int or null -> T^
     if (rhsType->isIntegerType()) {
       Kind = CK_IntegralToPointer; // FIXME: null
       return IntToBlockPointer;
     }
 
-    Kind = CK_AnyPointerToObjCPointerCast;
-
-    // Treat block pointers as objects.
-    if (getLangOptions().ObjC1 && rhsType->isObjCIdType())
+    // id -> T^
+    if (getLangOptions().ObjC1 && rhsType->isObjCIdType()) {
+      Kind = CK_AnyPointerToBlockPointerCast;
       return Compatible;
+    }
 
-    if (rhsType->isBlockPointerType())
-      return CheckBlockPointerTypesForAssignment(lhsType, rhsType);
-
+    // void* -> T^
     if (const PointerType *RHSPT = rhsType->getAs<PointerType>())
-      if (RHSPT->getPointeeType()->isVoidType())
+      if (RHSPT->getPointeeType()->isVoidType()) {
+        Kind = CK_AnyPointerToBlockPointerCast;
         return Compatible;
+      }
 
     return Incompatible;
   }
 
+  // Conversions to Objective-C pointers.
   if (isa<ObjCObjectPointerType>(lhsType)) {
+    // A* -> B*
+    if (rhsType->isObjCObjectPointerType()) {
+      Kind = CK_BitCast;
+      return CheckObjCPointerTypesForAssignment(lhsType, rhsType);
+    }
+
+    // int or null -> A*
     if (rhsType->isIntegerType()) {
       Kind = CK_IntegralToPointer; // FIXME: null
       return IntToPointer;
     }
 
-    Kind = CK_BitCast;
-
-    // In general, C pointers are not compatible with ObjC object pointers.
+    // In general, C pointers are not compatible with ObjC object pointers,
+    // with two exceptions:
     if (isa<PointerType>(rhsType)) {
-      if (rhsType->isVoidPointerType()) // an exception to the rule.
+      //  - conversions from 'void*'
+      if (rhsType->isVoidPointerType()) {
+        Kind = CK_AnyPointerToObjCPointerCast;
         return Compatible;
+      }
+
+      //  - conversions to 'Class' from its redefinition type
+      if (lhsType->isObjCClassType() &&
+          Context.hasSameType(rhsType, Context.ObjCClassRedefinitionType)) {
+        Kind = CK_BitCast;
+        return Compatible;
+      }
+
+      Kind = CK_AnyPointerToObjCPointerCast;
       return IncompatiblePointer;
     }
-    if (rhsType->isObjCObjectPointerType()) {
-      return CheckObjCPointerTypesForAssignment(lhsType, rhsType);
-    }
-    if (const PointerType *RHSPT = rhsType->getAs<PointerType>()) {
-      if (RHSPT->getPointeeType()->isVoidType())
-        return Compatible;
-    }
-    // Treat block pointers as objects.
-    if (rhsType->isBlockPointerType())
+
+    // T^ -> A*
+    if (rhsType->isBlockPointerType()) {
+      Kind = CK_AnyPointerToObjCPointerCast;
       return Compatible;
+    }
+
     return Incompatible;
   }
+
+  // Conversions from pointers that are not covered by the above.
   if (isa<PointerType>(rhsType)) {
-    // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
+    // T* -> _Bool
     if (lhsType == Context.BoolTy) {
       Kind = CK_PointerToBoolean;
       return Compatible;
     }
 
+    // T* -> int
     if (lhsType->isIntegerType()) {
       Kind = CK_PointerToIntegral;
       return PointerToInt;
     }
 
-    if (isa<BlockPointerType>(lhsType) &&
-        rhsType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
-      Kind = CK_AnyPointerToBlockPointerCast;
-      return Compatible;
-    }
     return Incompatible;
   }
+
+  // Conversions from Objective-C pointers that are not covered by the above.
   if (isa<ObjCObjectPointerType>(rhsType)) {
-    // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
+    // T* -> _Bool
     if (lhsType == Context.BoolTy) {
       Kind = CK_PointerToBoolean;
       return Compatible;
     }
 
+    // T* -> int
     if (lhsType->isIntegerType()) {
       Kind = CK_PointerToIntegral;
       return PointerToInt;
     }
 
-    Kind = CK_BitCast;
-
-    // In general, C pointers are not compatible with ObjC object pointers.
-    if (isa<PointerType>(lhsType)) {
-      if (lhsType->isVoidPointerType()) // an exception to the rule.
-        return Compatible;
-      return IncompatiblePointer;
-    }
-    if (isa<BlockPointerType>(lhsType) &&
-        rhsType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
-      Kind = CK_AnyPointerToBlockPointerCast;
-      return Compatible;
-    }
     return Incompatible;
   }
 
+  // struct A -> struct B
   if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
     if (Context.typesAreCompatible(lhsType, rhsType)) {
       Kind = CK_NoOp;
       return Compatible;
     }
   }
+
   return Incompatible;
 }
 
