@@ -433,6 +433,61 @@ emulate_ldr_rd_pc_rel (EmulateInstructionARM *emulator, ARMEncoding encoding)
 }
 
 // An add operation to adjust the SP.
+// ADD (SP plus immediate)
+static bool
+emulate_add_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(SP, imm32, ‘0’);
+        if d == 15 then // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        uint32_t imm32; // the immediate operand
+        switch (encoding) {
+        case eEncodingT2:
+            imm32 = ThumbImmScaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
+            break;
+        default:
+            return false;
+        }
+        addr_t sp_offset = imm32;
+        addr_t addr = sp + sp_offset; // the adjusted stack pointer value
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextAdjustStackPointer,
+                                                eRegisterKindGeneric,
+                                                LLDB_REGNUM_GENERIC_SP,
+                                                sp_offset };
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
+            return false;
+    }
+    return true;
+}
+
+// An add operation to adjust the SP.
 // ADD (SP plus register)
 static bool
 emulate_add_sp_rm (EmulateInstructionARM *emulator, ARMEncoding encoding)
@@ -833,6 +888,10 @@ emulate_vpush (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 static ARMOpcode g_arm_opcodes[] =
 {
+    ///////////////////////////
+    // Prologue instructions //
+    ///////////////////////////
+
     // push register(s)
     { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, emulate_push, "push <registers>" },
     { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, emulate_push, "push <register>" },
@@ -859,6 +918,10 @@ static ARMOpcode g_arm_opcodes[] =
 
 static ARMOpcode g_thumb_opcodes[] =
 {
+    ///////////////////////////
+    // Prologue instructions //
+    ///////////////////////////
+
     // push register(s)
     { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push, "push <registers>" },
     { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push, "push.w <registers>" },
@@ -881,7 +944,13 @@ static ARMOpcode g_thumb_opcodes[] =
 
     // vector push consecutive extension register(s)
     { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, emulate_vpush, "vpush.64 <list>"},
-    { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_vpush, "vpush.32 <list>"}
+    { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_vpush, "vpush.32 <list>"},
+
+    ///////////////////////////
+    // Epilogue instructions //
+    ///////////////////////////
+
+    { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, emulate_add_sp_imm, "add sp, #imm"}
 };
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
