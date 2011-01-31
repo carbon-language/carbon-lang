@@ -3129,6 +3129,12 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
   if (!isa<VarDecl>(ShadowedDecl) && !isa<FieldDecl>(ShadowedDecl))
     return;
 
+  // Fields are not shadowed by variables in C++ static methods.
+  if (isa<FieldDecl>(ShadowedDecl))
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewDC))
+      if (MD->isStatic())
+        return;
+
   if (VarDecl *shadowedVar = dyn_cast<VarDecl>(ShadowedDecl))
     if (shadowedVar->isExternC()) {
       // Don't warn for this case:

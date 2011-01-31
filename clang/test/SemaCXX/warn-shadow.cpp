@@ -42,3 +42,16 @@ class B : A {
   int data;
   static int field;
 };
+
+// rdar://8900456
+namespace rdar8900456 {
+struct Foo {
+  static void Baz();
+private:
+  int Bar;
+};
+
+void Foo::Baz() {
+  double Bar = 12; // Don't warn.
+}
+}
