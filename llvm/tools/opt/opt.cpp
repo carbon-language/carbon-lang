@@ -349,34 +349,19 @@ struct BreakpointPrinter : public FunctionPass {
     }
 
   virtual bool runOnFunction(Function &F) {
-    for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-      BasicBlock::const_iterator BI = I->end();
-      --BI;
-      do {
-        const Instruction *In = BI;
-        const DebugLoc DL = In->getDebugLoc();
-        if (!DL.isUnknown()) {
-          DIScope S(DL.getScope(getGlobalContext()));
-          Out << S.getFilename() << " " << DL.getLine() << "\n";
-          break;
-        }
-        --BI;
-      } while (BI != I->begin());
-      break;
-    }
     BasicBlock &EntryBB = F.getEntryBlock();
-    for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-      BasicBlock *BB = I;
-      if (BB == &EntryBB) continue;
-      for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI)
-        if (CallInst *CI = dyn_cast<CallInst>(BI)) {
-          const DebugLoc DL = CI->getDebugLoc();
-          if (!DL.isUnknown()) {
-            DIScope S(DL.getScope(getGlobalContext()));
-            Out << S.getFilename() << " " << DL.getLine() << "\n";
-          }
-        }
-    }
+    BasicBlock::const_iterator BI = EntryBB.end();
+    --BI;
+    do {
+      const Instruction *In = BI;
+      const DebugLoc DL = In->getDebugLoc();
+      if (!DL.isUnknown()) {
+        DIScope S(DL.getScope(getGlobalContext()));
+        Out << S.getFilename() << " " << DL.getLine() << "\n";
+        break;
+      }
+      --BI;
+    } while (BI != EntryBB.begin());
     return false;
   }
 
