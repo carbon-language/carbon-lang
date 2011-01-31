@@ -147,4 +147,16 @@ struct B {
 struct S5 : public B {
   virtual void m();
 };
+
+struct S6 {
+  virtual void m();
+private:
+  ~S6();
+};
+
+struct S7 {
+  virtual void m();
+protected:
+  ~S7();
+};
 }

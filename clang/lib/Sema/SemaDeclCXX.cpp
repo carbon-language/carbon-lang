@@ -2770,10 +2770,10 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
-  // Warn if the class has virtual methods but non-virtual destructor.
+  // Warn if the class has virtual methods but non-virtual public destructor.
   if (Record->isDynamicClass()) {
     CXXDestructorDecl *dtor = Record->getDestructor();
-    if (!(dtor && dtor->isVirtual()))
+    if (!dtor || (!dtor->isVirtual() && dtor->getAccess() == AS_public))
       Diag(dtor ? dtor->getLocation() : Record->getLocation(),
            diag::warn_non_virtual_dtor) << Context.getRecordType(Record);
   }
