@@ -2651,9 +2651,6 @@ CompareDerivedToBaseConversions(Sema &S,
   //   If class B is derived directly or indirectly from class A and
   //   class C is derived directly or indirectly from B,
   //
-  // For Objective-C, we let A, B, and C also be Objective-C
-  // interfaces.
-
   // Compare based on pointer conversions.
   if (SCS1.Second == ICK_Pointer_Conversion &&
       SCS2.Second == ICK_Pointer_Conversion &&
@@ -2669,24 +2666,12 @@ CompareDerivedToBaseConversions(Sema &S,
     QualType ToPointee2
       = ToType2->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
 
-    const ObjCObjectType* FromIface1 = FromPointee1->getAs<ObjCObjectType>();
-    const ObjCObjectType* FromIface2 = FromPointee2->getAs<ObjCObjectType>();
-    const ObjCObjectType* ToIface1 = ToPointee1->getAs<ObjCObjectType>();
-    const ObjCObjectType* ToIface2 = ToPointee2->getAs<ObjCObjectType>();
-
     //   -- conversion of C* to B* is better than conversion of C* to A*,
     if (FromPointee1 == FromPointee2 && ToPointee1 != ToPointee2) {
       if (S.IsDerivedFrom(ToPointee1, ToPointee2))
         return ImplicitConversionSequence::Better;
       else if (S.IsDerivedFrom(ToPointee2, ToPointee1))
         return ImplicitConversionSequence::Worse;
-
-      if (ToIface1 && ToIface2) {
-        if (S.Context.canAssignObjCInterfaces(ToIface2, ToIface1))
-          return ImplicitConversionSequence::Better;
-        else if (S.Context.canAssignObjCInterfaces(ToIface1, ToIface2))
-          return ImplicitConversionSequence::Worse;
-      }
     }
 
     //   -- conversion of B* to A* is better than conversion of C* to A*,
@@ -2695,16 +2680,79 @@ CompareDerivedToBaseConversions(Sema &S,
         return ImplicitConversionSequence::Better;
       else if (S.IsDerivedFrom(FromPointee1, FromPointee2))
         return ImplicitConversionSequence::Worse;
+    }
+  } else if (SCS1.Second == ICK_Pointer_Conversion &&
+             SCS2.Second == ICK_Pointer_Conversion) {
+    const ObjCObjectPointerType *FromPtr1
+      = FromType1->getAs<ObjCObjectPointerType>();
+    const ObjCObjectPointerType *FromPtr2
+      = FromType2->getAs<ObjCObjectPointerType>();
+    const ObjCObjectPointerType *ToPtr1
+      = ToType1->getAs<ObjCObjectPointerType>();
+    const ObjCObjectPointerType *ToPtr2
+      = ToType2->getAs<ObjCObjectPointerType>();
+    
+    if (FromPtr1 && FromPtr2 && ToPtr1 && ToPtr2) {
+      // Apply the same conversion ranking rules for Objective-C pointer types
+      // that we do for C++ pointers to class types. However, we employ the
+      // Objective-C pseudo-subtyping relationship used for assignment of
+      // Objective-C pointer types.
+      bool FromAssignLeft
+        = S.Context.canAssignObjCInterfaces(FromPtr1, FromPtr2);
+      bool FromAssignRight
+        = S.Context.canAssignObjCInterfaces(FromPtr2, FromPtr1);
+      bool ToAssignLeft
+        = S.Context.canAssignObjCInterfaces(ToPtr1, ToPtr2);
+      bool ToAssignRight
+        = S.Context.canAssignObjCInterfaces(ToPtr2, ToPtr1);
+      
+      // A conversion to an a non-id object pointer type or qualified 'id' 
+      // type is better than a conversion to 'id'.
+      if (ToPtr1->isObjCIdType() &&
+          (ToPtr2->isObjCQualifiedIdType() || ToPtr2->getInterfaceDecl()))
+        return ImplicitConversionSequence::Worse;
+      if (ToPtr2->isObjCIdType() &&
+          (ToPtr1->isObjCQualifiedIdType() || ToPtr1->getInterfaceDecl()))
+        return ImplicitConversionSequence::Better;
+      
+      // A conversion to a non-id object pointer type is better than a 
+      // conversion to a qualified 'id' type 
+      if (ToPtr1->isObjCQualifiedIdType() && ToPtr2->getInterfaceDecl())
+        return ImplicitConversionSequence::Worse;
+      if (ToPtr2->isObjCQualifiedIdType() && ToPtr1->getInterfaceDecl())
+        return ImplicitConversionSequence::Better;
+  
+      // A conversion to an a non-Class object pointer type or qualified 'Class' 
+      // type is better than a conversion to 'Class'.
+      if (ToPtr1->isObjCClassType() &&
+          (ToPtr2->isObjCQualifiedClassType() || ToPtr2->getInterfaceDecl()))
+        return ImplicitConversionSequence::Worse;
+      if (ToPtr2->isObjCClassType() &&
+          (ToPtr1->isObjCQualifiedClassType() || ToPtr1->getInterfaceDecl()))
+        return ImplicitConversionSequence::Better;
+      
+      // A conversion to a non-Class object pointer type is better than a 
+      // conversion to a qualified 'Class' type.
+      if (ToPtr1->isObjCQualifiedClassType() && ToPtr2->getInterfaceDecl())
+        return ImplicitConversionSequence::Worse;
+      if (ToPtr2->isObjCQualifiedClassType() && ToPtr1->getInterfaceDecl())
+        return ImplicitConversionSequence::Better;
 
-      if (FromIface1 && FromIface2) {
-        if (S.Context.canAssignObjCInterfaces(FromIface1, FromIface2))
-          return ImplicitConversionSequence::Better;
-        else if (S.Context.canAssignObjCInterfaces(FromIface2, FromIface1))
-          return ImplicitConversionSequence::Worse;
-      }
+      //   -- "conversion of C* to B* is better than conversion of C* to A*,"
+      if (S.Context.hasSameType(FromType1, FromType2) && 
+          !FromPtr1->isObjCIdType() && !FromPtr1->isObjCClassType() &&
+          (ToAssignLeft != ToAssignRight))
+        return ToAssignLeft? ImplicitConversionSequence::Worse
+                           : ImplicitConversionSequence::Better;
+
+      //   -- "conversion of B* to A* is better than conversion of C* to A*,"
+      if (S.Context.hasSameUnqualifiedType(ToType1, ToType2) &&
+          (FromAssignLeft != FromAssignRight))
+        return FromAssignLeft? ImplicitConversionSequence::Better
+        : ImplicitConversionSequence::Worse;
     }
   }
-
+  
   // Ranking of member-pointer types.
   if (SCS1.Second == ICK_Pointer_Member && SCS2.Second == ICK_Pointer_Member &&
       FromType1->isMemberPointerType() && FromType2->isMemberPointerType() &&

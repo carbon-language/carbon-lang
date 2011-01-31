@@ -31,8 +31,8 @@ int& f(A*); // expected-note {{candidate}}
 float& f(B*); // expected-note {{candidate}}
 void g(A*);
 
-int& h(A*); // expected-note{{candidate}}
-float& h(id); // expected-note{{candidate}}
+int& h(A*);
+float& h(id);
 
 void test0(A* a, B* b, id val) {
   int& i1 = f(a);
@@ -47,8 +47,7 @@ void test0(A* a, B* b, id val) {
   int& i2 = h(a);
   float& f3 = h(val);
 
-  // FIXME: we match GCC here, but shouldn't this work?
-  int& i3 = h(b); // expected-error{{call to 'h' is ambiguous}}
+  int& i3 = h(b);
 }
 
 void test1(A* a) {
@@ -114,13 +113,12 @@ namespace test5 {
 }
 
 // rdar://problem/8592139
-// FIXME: this should resolve to the unavailable candidate
 namespace test6 {
-  void foo(id); // expected-note {{candidate}}
+  void foo(id); // expected-note{{candidate function}}
   void foo(A*) __attribute__((unavailable)); // expected-note {{explicitly made unavailable}}
 
   void test(B *b) {
-    foo(b); // expected-error {{call to 'foo' is ambiguous}}
+    foo(b); // expected-error {{call to unavailable function 'foo'}}
   }
 }
 
