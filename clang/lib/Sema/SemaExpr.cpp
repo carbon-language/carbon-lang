@@ -5346,38 +5346,30 @@ ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
                                                  result, VK, OK));
 }
 
-// CheckPointerTypesForAssignment - This is a very tricky routine (despite
+// checkPointerTypesForAssignment - This is a very tricky routine (despite
 // being closely modeled after the C99 spec:-). The odd characteristic of this
 // routine is it effectively iqnores the qualifiers on the top level pointee.
 // This circumvents the usual type rules specified in 6.2.7p1 & 6.7.5.[1-3].
 // FIXME: add a couple examples in this comment.
-Sema::AssignConvertType
-Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
-  QualType lhptee, rhptee;
+static Sema::AssignConvertType
+checkPointerTypesForAssignment(Sema &S, QualType lhsType, QualType rhsType) {
+  assert(lhsType.isCanonical() && "LHS not canonicalized!");
+  assert(rhsType.isCanonical() && "RHS not canonicalized!");
 
-  if ((lhsType->isObjCClassType() &&
-       (Context.hasSameType(rhsType, Context.ObjCClassRedefinitionType))) ||
-     (rhsType->isObjCClassType() &&
-       (Context.hasSameType(lhsType, Context.ObjCClassRedefinitionType)))) {
-      return Compatible;
-  }
+  QualType lhptee, rhptee;
 
   // get the "pointed to" type (ignoring qualifiers at the top level)
   lhptee = lhsType->getAs<PointerType>()->getPointeeType();
   rhptee = rhsType->getAs<PointerType>()->getPointeeType();
 
-  // make sure we operate on the canonical type
-  lhptee = Context.getCanonicalType(lhptee);
-  rhptee = Context.getCanonicalType(rhptee);
-
-  AssignConvertType ConvTy = Compatible;
+  Sema::AssignConvertType ConvTy = Sema::Compatible;
 
   // C99 6.5.16.1p1: This following citation is common to constraints
   // 3 & 4 (below). ...and the type *pointed to* by the left has all the
   // qualifiers of the type *pointed to* by the right;
   // FIXME: Handle ExtQualType
   if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
-    ConvTy = CompatiblePointerDiscardsQualifiers;
+    ConvTy = Sema::CompatiblePointerDiscardsQualifiers;
 
   // C99 6.5.16.1p1 (constraint 4): If one operand is a pointer to an object or
   // incomplete type and the other is a pointer to a qualified or unqualified
@@ -5388,7 +5380,7 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 
     // As an extension, we allow cast to/from void* to function pointer.
     assert(rhptee->isFunctionType());
-    return FunctionVoidPointer;
+    return Sema::FunctionVoidPointer;
   }
 
   if (rhptee->isVoidType()) {
@@ -5397,123 +5389,121 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 
     // As an extension, we allow cast to/from void* to function pointer.
     assert(lhptee->isFunctionType());
-    return FunctionVoidPointer;
+    return Sema::FunctionVoidPointer;
   }
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or
   // unqualified versions of compatible types, ...
   lhptee = lhptee.getUnqualifiedType();
   rhptee = rhptee.getUnqualifiedType();
-  if (!Context.typesAreCompatible(lhptee, rhptee)) {
+  if (!S.Context.typesAreCompatible(lhptee, rhptee)) {
     // Check if the pointee types are compatible ignoring the sign.
     // We explicitly check for char so that we catch "char" vs
     // "unsigned char" on systems where "char" is unsigned.
     if (lhptee->isCharType())
-      lhptee = Context.UnsignedCharTy;
+      lhptee = S.Context.UnsignedCharTy;
     else if (lhptee->hasSignedIntegerRepresentation())
-      lhptee = Context.getCorrespondingUnsignedType(lhptee);
+      lhptee = S.Context.getCorrespondingUnsignedType(lhptee);
 
     if (rhptee->isCharType())
-      rhptee = Context.UnsignedCharTy;
+      rhptee = S.Context.UnsignedCharTy;
     else if (rhptee->hasSignedIntegerRepresentation())
-      rhptee = Context.getCorrespondingUnsignedType(rhptee);
+      rhptee = S.Context.getCorrespondingUnsignedType(rhptee);
 
     if (lhptee == rhptee) {
       // Types are compatible ignoring the sign. Qualifier incompatibility
       // takes priority over sign incompatibility because the sign
       // warning can be disabled.
-      if (ConvTy != Compatible)
+      if (ConvTy != Sema::Compatible)
         return ConvTy;
-      return IncompatiblePointerSign;
+      return Sema::IncompatiblePointerSign;
     }
 
     // If we are a multi-level pointer, it's possible that our issue is simply
     // one of qualification - e.g. char ** -> const char ** is not allowed. If
     // the eventual target type is the same and the pointers have the same
     // level of indirection, this must be the issue.
-    if (lhptee->isPointerType() && rhptee->isPointerType()) {
+    if (isa<PointerType>(lhptee) && isa<PointerType>(rhptee)) {
       do {
-        lhptee = lhptee->getAs<PointerType>()->getPointeeType();
-        rhptee = rhptee->getAs<PointerType>()->getPointeeType();
+        lhptee = cast<PointerType>(lhptee)->getPointeeType();
+        rhptee = cast<PointerType>(rhptee)->getPointeeType();
+      } while (isa<PointerType>(lhptee) && isa<PointerType>(rhptee));
 
-        lhptee = Context.getCanonicalType(lhptee);
-        rhptee = Context.getCanonicalType(rhptee);
-      } while (lhptee->isPointerType() && rhptee->isPointerType());
-
-      if (Context.hasSameUnqualifiedType(lhptee, rhptee))
-        return IncompatibleNestedPointerQualifiers;
+      if (S.Context.hasSameUnqualifiedType(lhptee, rhptee))
+        return Sema::IncompatibleNestedPointerQualifiers;
     }
 
     // General pointer incompatibility takes priority over qualifiers.
-    return IncompatiblePointer;
+    return Sema::IncompatiblePointer;
   }
   return ConvTy;
 }
 
-/// CheckBlockPointerTypesForAssignment - This routine determines whether two
+/// checkBlockPointerTypesForAssignment - This routine determines whether two
 /// block pointer types are compatible or whether a block and normal pointer
 /// are compatible. It is more restrict than comparing two function pointer
 // types.
-Sema::AssignConvertType
-Sema::CheckBlockPointerTypesForAssignment(QualType lhsType,
-                                          QualType rhsType) {
+static Sema::AssignConvertType
+checkBlockPointerTypesForAssignment(Sema &S, QualType lhsType,
+                                    QualType rhsType) {
+  assert(lhsType.isCanonical() && "LHS not canonicalized!");
+  assert(rhsType.isCanonical() && "RHS not canonicalized!");
+
   QualType lhptee, rhptee;
 
   // get the "pointed to" type (ignoring qualifiers at the top level)
-  lhptee = lhsType->getAs<BlockPointerType>()->getPointeeType();
-  rhptee = rhsType->getAs<BlockPointerType>()->getPointeeType();
+  lhptee = cast<BlockPointerType>(lhsType)->getPointeeType();
+  rhptee = cast<BlockPointerType>(rhsType)->getPointeeType();
 
-  // make sure we operate on the canonical type
-  lhptee = Context.getCanonicalType(lhptee);
-  rhptee = Context.getCanonicalType(rhptee);
+  // In C++, the types have to match exactly.
+  if (S.getLangOptions().CPlusPlus)
+    return Sema::IncompatibleBlockPointer;
 
-  AssignConvertType ConvTy = Compatible;
+  Sema::AssignConvertType ConvTy = Sema::Compatible;
 
   // For blocks we enforce that qualifiers are identical.
-  if (lhptee.getLocalCVRQualifiers() != rhptee.getLocalCVRQualifiers())
-    ConvTy = CompatiblePointerDiscardsQualifiers;
+  if (lhptee.getLocalQualifiers() != rhptee.getLocalQualifiers())
+    ConvTy = Sema::CompatiblePointerDiscardsQualifiers;
 
-  if (!getLangOptions().CPlusPlus) {
-    if (!Context.typesAreBlockPointerCompatible(lhsType, rhsType))
-      return IncompatibleBlockPointer;
-  }
-  else if (!Context.typesAreCompatible(lhptee, rhptee))
-    return IncompatibleBlockPointer;
+  if (!S.Context.typesAreBlockPointerCompatible(lhsType, rhsType))
+    return Sema::IncompatibleBlockPointer;
+
   return ConvTy;
 }
 
-/// CheckObjCPointerTypesForAssignment - Compares two objective-c pointer types
+/// checkObjCPointerTypesForAssignment - Compares two objective-c pointer types
 /// for assignment compatibility.
-Sema::AssignConvertType
-Sema::CheckObjCPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
+static Sema::AssignConvertType
+checkObjCPointerTypesForAssignment(Sema &S, QualType lhsType, QualType rhsType) {
+  assert(lhsType.isCanonical() && "LHS was not canonicalized!");
+  assert(rhsType.isCanonical() && "RHS was not canonicalized!");
+
   if (lhsType->isObjCBuiltinType()) {
     // Class is not compatible with ObjC object pointers.
     if (lhsType->isObjCClassType() && !rhsType->isObjCBuiltinType() &&
         !rhsType->isObjCQualifiedClassType())
-      return IncompatiblePointer;
-    return Compatible;
+      return Sema::IncompatiblePointer;
+    return Sema::Compatible;
   }
   if (rhsType->isObjCBuiltinType()) {
     // Class is not compatible with ObjC object pointers.
     if (rhsType->isObjCClassType() && !lhsType->isObjCBuiltinType() &&
         !lhsType->isObjCQualifiedClassType())
-      return IncompatiblePointer;
-    return Compatible;
+      return Sema::IncompatiblePointer;
+    return Sema::Compatible;
   }
   QualType lhptee =
   lhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
   QualType rhptee =
   rhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
-  // make sure we operate on the canonical type
-  lhptee = Context.getCanonicalType(lhptee);
-  rhptee = Context.getCanonicalType(rhptee);
-  if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
-    return CompatiblePointerDiscardsQualifiers;
 
-  if (Context.typesAreCompatible(lhsType, rhsType))
-    return Compatible;
+  if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
+    return Sema::CompatiblePointerDiscardsQualifiers;
+
+  if (S.Context.typesAreCompatible(lhsType, rhsType))
+    return Sema::Compatible;
   if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType())
-    return IncompatibleObjCQualifiedId;
-  return IncompatiblePointer;
+    return Sema::IncompatibleObjCQualifiedId;
+  return Sema::IncompatiblePointer;
 }
 
 Sema::AssignConvertType
@@ -5630,7 +5620,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
     // U* -> T*
     if (isa<PointerType>(rhsType)) {
       Kind = CK_BitCast;
-      return CheckPointerTypesForAssignment(lhsType, rhsType);
+      return checkPointerTypesForAssignment(*this, lhsType, rhsType);
     }
 
     // int -> T*
@@ -5675,7 +5665,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
     // U^ -> T^
     if (rhsType->isBlockPointerType()) {
       Kind = CK_AnyPointerToBlockPointerCast;
-      return CheckBlockPointerTypesForAssignment(lhsType, rhsType);
+      return checkBlockPointerTypesForAssignment(*this, lhsType, rhsType);
     }
 
     // int or null -> T^
@@ -5705,7 +5695,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
     // A* -> B*
     if (rhsType->isObjCObjectPointerType()) {
       Kind = CK_BitCast;
-      return CheckObjCPointerTypesForAssignment(lhsType, rhsType);
+      return checkObjCPointerTypesForAssignment(*this, lhsType, rhsType);
     }
 
     // int or null -> A*
@@ -8695,10 +8685,10 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     // (deprecated) C++ conversion from a string literal to a char*
     // (or wchar_t*), then there was no error (C++ 4.2p2).  FIXME:
     // Ideally, this check would be performed in
-    // CheckPointerTypesForAssignment. However, that would require a
+    // checkPointerTypesForAssignment. However, that would require a
     // bit of refactoring (so that the second argument is an
     // expression, rather than a type), which should be done as part
-    // of a larger effort to fix CheckPointerTypesForAssignment for
+    // of a larger effort to fix checkPointerTypesForAssignment for
     // C++ semantics.
     if (getLangOptions().CPlusPlus &&
         IsStringLiteralToNonConstPointerConversion(SrcExpr, DstType))

@@ -4571,18 +4571,6 @@ public:
   AssignConvertType CheckTransparentUnionArgumentConstraints(QualType lhs,
                                                              Expr *&rExpr);
 
-  // Helper function for CheckAssignmentConstraints (C99 6.5.16.1p1)
-  AssignConvertType CheckPointerTypesForAssignment(QualType lhsType,
-                                                   QualType rhsType);
-
-  AssignConvertType CheckObjCPointerTypesForAssignment(QualType lhsType,
-                                                       QualType rhsType);
-
-  // Helper function for CheckAssignmentConstraints involving two
-  // block pointer types.
-  AssignConvertType CheckBlockPointerTypesForAssignment(QualType lhsType,
-                                                        QualType rhsType);
-
   bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
 
   bool CheckExceptionSpecCompatibility(Expr *From, QualType ToType);
