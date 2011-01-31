@@ -119,7 +119,7 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
             registers = Bits32(opcode, 7, 0);
             // The M bit represents LR.
             if (Bits32(opcode, 8, 8))
-                registers |= 0x000eu;
+                registers |= (1u << 14);
             // if BitCount(registers) < 1 then UNPREDICTABLE;
             if (BitCount(registers) < 1)
                 return false;
@@ -191,6 +191,131 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
         context.arg2 = -sp_offset;
     
         if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
+            return false;
+    }
+    return true;
+}
+
+// Pop Multiple Registers loads multiple registers from the stack, loading from
+// consecutive memory locations staring at the address in SP, and updates
+// SP to point just above the loaded data.
+static bool 
+emulate_pop (EmulateInstructionARM *emulator, ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations(); NullCheckIfThumbEE(13);
+        address = SP;
+        for i = 0 to 14
+            if registers<i> == ‘1’ then
+                R[i} = if UnalignedAllowed then MemU[address,4] else MemA[address,4]; address = address + 4;
+        if registers<15> == ‘1’ then
+            if UnalignedAllowed then
+                LoadWritePC(MemU[address,4]);
+            else 
+                LoadWritePC(MemA[address,4]);
+        if registers<13> == ‘0’ then SP = SP + 4*BitCount(registers);
+        if registers<13> == ‘1’ then SP = bits(32) UNKNOWN;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (emulator->ConditionPassed())
+    {
+        const uint32_t addr_byte_size = emulator->GetAddressByteSize();
+        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        uint32_t registers = 0;
+        uint32_t Rt; // the destination register
+        switch (encoding) {
+        case eEncodingT1:
+            registers = Bits32(opcode, 7, 0);
+            // The P bit represents PC.
+            if (Bits32(opcode, 8, 8))
+                registers |= (1u << 15);
+            // if BitCount(registers) < 1 then UNPREDICTABLE;
+            if (BitCount(registers) < 1)
+                return false;
+            break;
+        case eEncodingT2:
+            // Ignore bit 13.
+            registers = Bits32(opcode, 15, 0) & ~0x2000;
+            // if BitCount(registers) < 2 || (P == '1' && M == '1') then UNPREDICTABLE;
+            if (BitCount(registers) < 2 || (Bits32(opcode, 15, 15) && Bits32(opcode, 14, 14)))
+                return false;
+            break;
+        case eEncodingT3:
+            Rt = Bits32(opcode, 15, 12);
+            // if t == 13 || (t == 15 && InITBlock() && !LastInITBlock()) then UNPREDICTABLE;
+            if (Rt == dwarf_sp)
+                return false;
+            registers = (1u << Rt);
+            break;
+        case eEncodingA1:
+            registers = Bits32(opcode, 15, 0);
+            // Instead of return false, let's handle the following case as well,
+            // which amounts to popping one reg from the full descending stacks.
+            // if BitCount(register_list) < 2 then SEE LDM / LDMIA / LDMFD;
+
+            // if registers<13> == ‘1’ && ArchVersion() >= 7 then UNPREDICTABLE;
+            if (Bits32(opcode, 13, 13))
+                return false;
+            break;
+        case eEncodingA2:
+            Rt = Bits32(opcode, 15, 12);
+            // if t == 13 then UNPREDICTABLE;
+            if (Rt == dwarf_sp)
+                return false;
+            registers = (1u << Rt);
+            break;
+        default:
+            return false;
+        }
+        addr_t sp_offset = addr_byte_size * BitCount (registers);
+        addr_t addr = sp;
+        uint32_t i, data;
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextPopRegisterOffStack, eRegisterKindDWARF, 0, 0 };
+        for (i=0; i<15; ++i)
+        {
+            if (BitIsSet (registers, 1u << i))
+            {
+                context.arg1 = dwarf_r0 + i;    // arg1 in the context is the DWARF register number
+                context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
+                data = emulator->ReadMemoryUnsigned(context, addr, 4, 0, &success);
+                if (!success)
+                    return false;    
+                if (!emulator->WriteRegisterUnsigned(context, eRegisterKindDWARF, context.arg1, data))
+                    return false;
+                addr += addr_byte_size;
+            }
+        }
+        
+        if (BitIsSet (registers, 1u << 15))
+        {
+            context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
+            context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
+            data = emulator->ReadMemoryUnsigned(context, addr, 4, 0, &success);
+            if (!success)
+                return false;
+            if (!emulator->WriteRegisterUnsigned(context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+                return false;
+            addr += addr_byte_size;
+        }
+        
+        context.type = EmulateInstruction::eContextAdjustStackPointer;
+        context.arg0 = eRegisterKindGeneric;
+        context.arg1 = LLDB_REGNUM_GENERIC_SP;
+        context.arg2 = sp_offset;
+    
+        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp + sp_offset))
             return false;
     }
     return true;
@@ -913,7 +1038,14 @@ static ARMOpcode g_arm_opcodes[] =
 
     // vector push consecutive extension register(s)
     { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, emulate_vpush, "vpush.64 <list>"},
-    { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, emulate_vpush, "vpush.32 <list>"}
+    { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, emulate_vpush, "vpush.32 <list>"},
+
+    ///////////////////////////
+    // Epilogue instructions //
+    ///////////////////////////
+
+    { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, emulate_pop, "pop <registers>"},
+    { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, emulate_pop, "pop <register>"}
 };
 
 static ARMOpcode g_thumb_opcodes[] =
@@ -950,7 +1082,10 @@ static ARMOpcode g_thumb_opcodes[] =
     // Epilogue instructions //
     ///////////////////////////
 
-    { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, emulate_add_sp_imm, "add sp, #imm"}
+    { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, emulate_add_sp_imm, "add sp, #imm"},
+    { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, emulate_pop, "pop <registers>"},
+    { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_pop, "pop.w <registers>" },
+    { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_pop, "pop.w <register>" }
 };
 
 static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);

@@ -101,7 +101,7 @@ public:
         //        stored
         eContextPushRegisterOnStack,
 
-        // Exclusively used when restoring a register to the stack as part of 
+        // Exclusively used when restoring a register off the stack as part of 
         // the epilogue
         // arg0 = register kind
         // arg1 = register number
