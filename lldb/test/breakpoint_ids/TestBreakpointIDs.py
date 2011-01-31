@@ -31,6 +31,9 @@ class BreakpointIDTestCase(TestBase):
         self.expect ("breakpoint set -n sum",
                      startstr = "Breakpoint created: 2: name = 'sum', locations = 3")
 
+        self.expect ("breakpoint set -n junk",
+                     startstr = "Breakpoint created: 3: name = 'junk', locations = 0 (pending)",
+                     substrs = [ "WARNING:  Unable to resolve breakpoint to any actual locations." ] )
 
         self.expect ("breakpoint disable 1.2 - 2.2 ",
                      COMMAND_FAILED_AS_EXPECTED, error = True,
