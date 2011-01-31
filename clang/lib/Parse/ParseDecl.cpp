@@ -2512,6 +2512,10 @@ bool Parser::isConstructorDeclarator() {
   if (SS.isSet() && Actions.ShouldEnterDeclaratorScope(getCurScope(), SS))
     DeclScopeObj.EnterDeclaratorScope();
 
+  // Optionally skip Microsoft attributes.
+  ParsedAttributes Attrs;
+  MaybeParseMicrosoftAttributes(Attrs);
+
   // Check whether the next token(s) are part of a declaration
   // specifier, in which case we have the start of a parameter and,
   // therefore, we know that this is a constructor.

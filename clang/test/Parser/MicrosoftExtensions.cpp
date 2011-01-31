@@ -22,6 +22,14 @@ extern "C" {
   int foo5([SA_Post(attr=1)] void *param);
 }
 
+class class_attr {
+public:
+  class_attr([SA_Pre(Null=SA_No,NullTerminated=SA_Yes)]  int a)
+  {
+  }
+};
+
+
 
 void uuidof_test1()
 {  
