@@ -47,7 +47,7 @@
 #cmakedefine LLVM_MANDIR "${LLVM_MANDIR}"
 
 /* Build multithreading support into LLVM */
-#cmakedefine LLVM_MULTITHREADED
+#cmakedefine LLVM_MULTITHREADED ${LLVM_MULTITHREADED}
 
 /* LLVM architecture name for the native architecture, if available */
 #cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}
@@ -62,10 +62,10 @@
 #cmakedefine LLVM_NATIVE_ASMPRINTER LLVMInitialize${LLVM_NATIVE_ARCH}AsmPrinter
 
 /* Define if this is Unixish platform */
-#cmakedefine LLVM_ON_UNIX
+#cmakedefine LLVM_ON_UNIX ${LLVM_ON_UNIX}
 
 /* Define if this is Win32ish platform */
-#cmakedefine LLVM_ON_WIN32
+#cmakedefine LLVM_ON_WIN32 ${LLVM_ON_WIN32}
 
 /* Define to path to circo program if found or 'echo circo' otherwise */
 #cmakedefine LLVM_PATH_CIRCO "${LLVM_PATH_CIRCO}"
