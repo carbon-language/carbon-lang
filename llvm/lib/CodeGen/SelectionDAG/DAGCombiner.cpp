@@ -4244,8 +4244,6 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   if (Opc == ISD::SIGN_EXTEND_INREG) {
     ExtType = ISD::SEXTLOAD;
     ExtVT = cast<VTSDNode>(N->getOperand(1))->getVT();
-    if (LegalOperations && !TLI.isLoadExtLegal(ISD::SEXTLOAD, ExtVT))
-      return SDValue();
   } else if (Opc == ISD::SRL) {
     // Another special-case: SRL is basically zero-extending a narrower value.
     ExtType = ISD::ZEXTLOAD;
@@ -4255,6 +4253,8 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     ExtVT = EVT::getIntegerVT(*DAG.getContext(),
                               VT.getSizeInBits() - N01->getZExtValue());
   }
+  if (LegalOperations && !TLI.isLoadExtLegal(ExtType, ExtVT))
+    return SDValue();
 
   unsigned EVTBits = ExtVT.getSizeInBits();
   
