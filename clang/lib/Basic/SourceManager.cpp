@@ -531,12 +531,21 @@ void SourceManager::overrideFileContents(const FileEntry *SourceFile,
 
 llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
   bool MyInvalid = false;
-  const llvm::MemoryBuffer *Buf = getBuffer(FID, &MyInvalid);
+  const SLocEntry &SLoc = getSLocEntry(FID.ID);
+  if (!SLoc.isFile()) {
+    if (Invalid) 
+      *Invalid = true;
+    return "<<<<<INVALID SOURCE LOCATION>>>>>";
+  }
+  
+  const llvm::MemoryBuffer *Buf
+    = SLoc.getFile().getContentCache()->getBuffer(Diag, *this, SourceLocation(), 
+                                                  &MyInvalid);
   if (Invalid)
     *Invalid = MyInvalid;
 
   if (MyInvalid)
-    return "";
+    return "<<<<<INVALID SOURCE LOCATION>>>>>";
   
   return Buf->getBuffer();
 }

@@ -357,6 +357,9 @@ SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
                                           const SourceManager &SM,
                                           const LangOptions &LangOpts) {
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
+  if (LocInfo.first.isInvalid())
+    return Loc;
+  
   bool Invalid = false;
   llvm::StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
@@ -365,6 +368,9 @@ SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
   // Back up from the current location until we hit the beginning of a line
   // (or the buffer). We'll relex from that point.
   const char *BufStart = Buffer.data();
+  if (LocInfo.second >= Buffer.size())
+    return Loc;
+  
   const char *StrData = BufStart+LocInfo.second;
   if (StrData[0] == '\n' || StrData[0] == '\r')
     return Loc;
