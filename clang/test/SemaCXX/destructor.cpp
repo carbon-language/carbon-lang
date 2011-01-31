@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -Wnon-virtual-dtor -verify %s
 class A {
 public:
   ~A();
@@ -119,4 +119,32 @@ namespace test7 {
     B *b;
     b->~B();
   }
+}
+
+namespace nonvirtualdtor {
+struct S1 { // expected-warning {{has virtual functions but non-virtual destructor}}
+  virtual void m();
+};
+
+struct S2 {
+  ~S2(); // expected-warning {{has virtual functions but non-virtual destructor}}
+  virtual void m();
+};
+
+struct S3 : public S1 {  // expected-warning {{has virtual functions but non-virtual destructor}}
+  virtual void m();
+};
+
+struct S4 : public S2 {  // expected-warning {{has virtual functions but non-virtual destructor}}
+  virtual void m();
+};
+
+struct B {
+  virtual ~B();
+  virtual void m();
+};
+
+struct S5 : public B {
+  virtual void m();
+};
 }

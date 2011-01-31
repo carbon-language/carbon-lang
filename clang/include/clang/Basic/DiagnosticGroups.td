@@ -80,7 +80,7 @@ def NullDereference : DiagGroup<"null-dereference">;
 def InitializerOverrides : DiagGroup<"initializer-overrides">;
 def NonNull : DiagGroup<"nonnull">;
 def : DiagGroup<"nonportable-cfstrings">;
-def : DiagGroup<"non-virtual-dtor">;
+def NonVirtualDtor : DiagGroup<"non-virtual-dtor">;
 def : DiagGroup<"old-style-cast">;
 def : DiagGroup<"old-style-definition">;
 def OutOfLineDeclaration : DiagGroup<"out-of-line-declaration">;

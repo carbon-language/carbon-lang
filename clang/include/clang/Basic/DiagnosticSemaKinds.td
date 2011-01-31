@@ -2756,6 +2756,9 @@ def err_bad_memptr_lhs : Error<
 def warn_exception_caught_by_earlier_handler : Warning<
   "exception of type %0 will be caught by earlier handler">;
 def note_previous_exception_handler : Note<"for type %0">;
+def warn_non_virtual_dtor : Warning<
+  "%0 has virtual functions but non-virtual destructor">,
+  InGroup<NonVirtualDtor>, DefaultIgnore;
 
 def err_conditional_void_nonvoid : Error<
   "%select{left|right}1 operand to ? is void, but %select{right|left}1 operand "

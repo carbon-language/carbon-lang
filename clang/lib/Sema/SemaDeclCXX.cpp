@@ -2769,6 +2769,14 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
       }
     }
   }
+
+  // Warn if the class has virtual methods but non-virtual destructor.
+  if (Record->isDynamicClass()) {
+    CXXDestructorDecl *dtor = Record->getDestructor();
+    if (!(dtor && dtor->isVirtual()))
+      Diag(dtor ? dtor->getLocation() : Record->getLocation(),
+           diag::warn_non_virtual_dtor) << Context.getRecordType(Record);
+  }
 }
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
