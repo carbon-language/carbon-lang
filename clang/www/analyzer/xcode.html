@@ -102,6 +102,14 @@ specify for static analysis.  Within this model it provides you two basic modes:
   <li><b>--use-checker-build</b>: Switch Xcode to using the <tt>clang</tt> provided by the specified analyzer build.</li>
 </ul>
 
+<h4>Things to keep in mind</h4>
+
+<ul>
+<li>You should quit Xcode prior to running <tt>set-xcode-analyzer</tt>.</li>
+<li>You will need to run <tt>set-xcode-analyzer</tt> under <b><tt>sudo</tt></b>
+  in order to have write privileges to modify the Xcode configuration files.</li>
+</ul>
+
 <h4>Examples</h4>
 
 <p><b>Example 1</b>: Telling Xcode to use checker-235 for <i>Build and Analyze</i>:</p>
@@ -110,7 +118,7 @@ specify for static analysis.  Within this model it provides you two basic modes:
 $ pwd
 /tmp
 $ tar xjf checker-235.tar.bz2
-$ checker-235/set-xcode-analyzer --use-checker-build=/tmp/checker-235
+$ sudo checker-235/set-xcode-analyzer --use-checker-build=/tmp/checker-235
 </pre>
 
 <p>Note that you typically won't install an analyzer build in <tt>/tmp</tt>, but
@@ -120,13 +128,13 @@ path to an untarred analyzer build.</p>
 <p><b>Example 2</b>: Telling Xcode to use a very specific version of <tt>clang</tt>:</p>
 
 <pre class="code_example">
-$ set-xcode-analyzer --use-checker-build=~/mycrazyclangbuild/bin/clang
+$ sudo set-xcode-analyzer --use-checker-build=~/mycrazyclangbuild/bin/clang
 </pre>
 
 <p><b>Example 3</b>: Resetting Xcode to its default behavior:</p>
 
 <pre class="code_example">
-$ set-xcode-analyzer --use-xcode-clang
+$ sudo set-xcode-analyzer --use-xcode-clang
 </pre>
 
 </div>
