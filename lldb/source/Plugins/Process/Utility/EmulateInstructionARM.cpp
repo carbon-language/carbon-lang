@@ -68,6 +68,9 @@ typedef struct
     const char *name;
 }  ARMOpcode;
 
+// Push Multiple Registers stores multiple registers to the stack, storing to
+// consecutive memory locations ending just below the address in SP, and updates
+// SP to point to the start of the stored data.
 static bool 
 emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
 {
@@ -660,7 +663,7 @@ emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
-// A store operation to the stacks that also updates the SP.
+// A store operation to the stack that also updates the SP.
 static bool
 emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 {
@@ -733,6 +736,8 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
     return true;
 }
 
+// Vector Push stores multiple extension registers to the stack.
+// It also updates SP to point to the start of the stored data.
 static bool 
 emulate_vpush (EmulateInstructionARM *emulator, ARMEncoding encoding)
 {
