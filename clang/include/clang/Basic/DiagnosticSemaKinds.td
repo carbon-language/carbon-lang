@@ -386,6 +386,10 @@ def warn_objc_property_copy_missing_on_block : Warning<
 def warn_atomic_property_rule : Warning<
   "writable atomic property %0 cannot pair a synthesized setter/getter "
   "with a user defined setter/getter">;
+def warn_default_atomic_custom_getter_setter : Warning<
+  "atomic by default property %0 has a user defined setter/getter "
+  "(property should be marked 'atomic' if this is intended)">,
+  InGroup<CustomAtomic>, DefaultIgnore;
 def err_use_continuation_class : Error<
   "illegal redeclaration of property in continuation class %0"
   " (attribute must be 'readwrite', while its primary must be 'readonly')">;

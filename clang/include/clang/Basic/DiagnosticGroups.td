@@ -151,6 +151,9 @@ def ReadOnlySetterAttrs : DiagGroup<"readonly-setter-attrs">;
 def Reorder : DiagGroup<"reorder">;
 def UndeclaredSelector : DiagGroup<"undeclared-selector">;
 def ImplicitAtomic : DiagGroup<"implicit-atomic-properties">;
+def CustomAtomic : DiagGroup<"custom-atomic-properties">;
+def AtomicProperties : DiagGroup<"atomic-properties",
+                                 [ImplicitAtomic, CustomAtomic]>;
 def Selector : DiagGroup<"selector">;
 def NonfragileAbi2 : DiagGroup<"nonfragile-abi2">;
 def Protocol : DiagGroup<"protocol">;
