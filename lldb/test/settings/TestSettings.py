@@ -189,6 +189,37 @@ class SettingsCommandTestCase(TestBase):
         self.expect(output, exe=False,
             startstr = "This message should go to standard out.")
 
+    def test_print_dictionary_setting(self):
+        self.runCmd ("settings set -r target.process.env-vars")
+        self.runCmd ("settings set target.process.env-vars [\"MY_VAR\"]=some-value")
+        self.expect ("settings show target.process.env-vars",
+                     substrs = [ "'MY_VAR=some-value'" ])
+        self.runCmd ("settings set -r target.process.env-vars")
+
+    def test_print_array_setting(self):
+        self.runCmd ("settings set -r target.process.run-args")
+        self.runCmd ("settings set target.process.run-args gobbledy-gook")
+        self.expect ("settings show target.process.run-args",
+                     substrs = [ "[0]: 'gobbledy-gook'" ])
+        self.runCmd ("settings set -r target.process.run-args")
+
+    def test_settings_with_quotes (self):
+        self.runCmd ("settings set -r target.process.run-args")
+        self.runCmd ("settings set target.process.run-args a b c")
+        self.expect ("settings show target.process.run-args",
+                     substrs = [ "[0]: 'a'",
+                                 "[1]: 'b'",
+                                 "[2]: 'c'" ])
+        self.runCmd ("settings set target.process.run-args 'a b c'")
+        self.expect ("settings show target.process.run-args",
+                     substrs = [ "[0]: 'a b c'" ])
+        self.runCmd ("settings set -r target.process.run-args")
+        self.runCmd ("settings set -r target.process.env-vars")
+        self.runCmd ("settings set target.process.env-vars [\"MY_FILE\"]='this is a file name with spaces.txt'")
+        self.expect ("settings show target.process.env-vars",
+                     substrs = [ "'MY_FILE=this is a file name with spaces.txt'" ])
+        self.runCmd ("settings set -r target.process.env-vars")
+
 
 if __name__ == '__main__':
     import atexit
