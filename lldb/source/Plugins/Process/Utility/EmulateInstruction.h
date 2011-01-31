@@ -29,7 +29,7 @@
 /// - Predicting single step breakpoint locations
 /// - Emulating instructions for breakpoint traps
 ///
-/// Objects can be asked to read and instruction which will cause a call
+/// Objects can be asked to read an instruction which will cause a call
 /// to the read register callback to get the PC, followed by a read 
 /// memory call to read the opcode. If ReadInstruction () returns true, 
 /// then a call to EmulateInstruction::EvaluateInstruction () can be 
@@ -38,10 +38,10 @@
 ///
 /// Clients that provide the callbacks can either do the read/write 
 /// registers/memory to actually emulate the instruction on a real or
-/// virtual CPU, or watch to the EmulateInstruction::Context which
+/// virtual CPU, or watch for the EmulateInstruction::Context which
 /// is context for the read/write register/memory which explains why
 /// the callback is being called. Examples of a context are:
-/// "pushing register 3 onto to stack at offset -12", or "adjusting
+/// "pushing register 3 onto the stack at offset -12", or "adjusting
 /// stack pointer by -16". This extra context allows the generation of
 /// CFI information from assembly code without having to actually do
 /// the read/write register/memory.
@@ -56,7 +56,7 @@
 /// class that will soon be available.
 /// 
 /// Implmenting all of the instructions that affect the PC can then
-/// can then allow single step prediction support.
+/// allow single step prediction support.
 ///
 /// Implmenting all of the instructions allows for emulation of opcodes
 /// for breakpoint traps and will pave the way for "thread centric"
