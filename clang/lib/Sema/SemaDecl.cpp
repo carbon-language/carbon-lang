@@ -1548,6 +1548,20 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     return New->setInvalidDecl();
   }
 
+  // Check if extern is followed by non-extern and vice-versa.
+  if (New->hasExternalStorage() &&
+      !Old->hasLinkage() && Old->isLocalVarDecl()) {
+    Diag(New->getLocation(), diag::err_extern_non_extern) << New->getDeclName();
+    Diag(Old->getLocation(), diag::note_previous_definition);
+    return New->setInvalidDecl();
+  }
+  if (Old->hasExternalStorage() &&
+      !New->hasLinkage() && New->isLocalVarDecl()) {
+    Diag(New->getLocation(), diag::err_non_extern_extern) << New->getDeclName();
+    Diag(Old->getLocation(), diag::note_previous_definition);
+    return New->setInvalidDecl();
+  }
+
   // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
 
   // FIXME: The test for external storage here seems wrong? We still

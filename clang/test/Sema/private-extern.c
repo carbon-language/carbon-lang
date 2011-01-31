@@ -19,27 +19,23 @@ __private_extern__ int g5; // expected-note{{previous definition}}
 static int g5; // expected-error{{static declaration of 'g5' follows non-static declaration}}
 
 void f0() {
-  // FIXME: Diagnose this?
-  int g6;
-  extern int g6;
+  int g6; // expected-note {{previous}}
+  extern int g6; // expected-error {{extern declaration of 'g6' follows non-extern declaration}}
 }
 
 void f1() {
-  // FIXME: Diagnose this?
-  int g7;
-  __private_extern__ int g7;
+  int g7; // expected-note {{previous}}
+  __private_extern__ int g7; // expected-error {{extern declaration of 'g7' follows non-extern declaration}}
 }
 
 void f2() {
   extern int g8; // expected-note{{previous definition}}
-  // FIXME: Improve this diagnostic.
-  int g8; // expected-error{{redefinition of 'g8'}}
+  int g8; // expected-error {{non-extern declaration of 'g8' follows extern declaration}}
 }
 
 void f3() {
   __private_extern__ int g9; // expected-note{{previous definition}}
-  // FIXME: Improve this diagnostic.
-  int g9; // expected-error{{redefinition of 'g9'}}
+  int g9; // expected-error {{non-extern declaration of 'g9' follows extern declaration}}
 }
 
 void f4() {

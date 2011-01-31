@@ -1963,6 +1963,10 @@ def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;
 def err_non_static_static : Error<
   "non-static declaration of %0 follows static declaration">;
+def err_extern_non_extern : Error<
+  "extern declaration of %0 follows non-extern declaration">;
+def err_non_extern_extern : Error<
+  "non-extern declaration of %0 follows extern declaration">;
 def err_non_thread_thread : Error<
   "non-thread-local declaration of %0 follows thread-local declaration">;
 def err_thread_non_thread : Error<
