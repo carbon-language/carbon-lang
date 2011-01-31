@@ -172,8 +172,8 @@ if target.IsValid():
                 line = frame.GetLineEntry().GetLine()
                 vars = frame.GetVariables(1,0,0,0)
                 print_vars ("#Argument ", vars, fname, line, file, frame, target, thread)
-                vars = frame.GetVariables(0,1,0,0)
-                print_vars ("#Variables ", vars, fname, line, file, frame, target, thread)
+                # vars = frame.GetVariables(0,1,0,0)
+                # print_vars ("#Variables ", vars, fname, line, file, frame, target, thread)
 
         process.Continue()
     file.close()
