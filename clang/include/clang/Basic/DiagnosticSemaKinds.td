@@ -387,7 +387,7 @@ def warn_atomic_property_rule : Warning<
   "writable atomic property %0 cannot pair a synthesized setter/getter "
   "with a user defined setter/getter">;
 def warn_default_atomic_custom_getter_setter : Warning<
-  "atomic by default property %0 has a user defined setter/getter "
+  "atomic by default property %0 has a user defined %select{getter|setter}1 "
   "(property should be marked 'atomic' if this is intended)">,
   InGroup<CustomAtomic>, DefaultIgnore;
 def err_use_continuation_class : Error<

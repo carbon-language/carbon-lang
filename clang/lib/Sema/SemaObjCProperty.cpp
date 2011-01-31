@@ -1096,13 +1096,13 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
       if (GetterMethod) {
         Diag(GetterMethod->getLocation(),
              diag::warn_default_atomic_custom_getter_setter)
-          << Property->getIdentifier();
+          << Property->getIdentifier() << 0;
         Diag(Property->getLocation(), diag::note_property_declare);
       }
       if (SetterMethod) {
         Diag(SetterMethod->getLocation(),
              diag::warn_default_atomic_custom_getter_setter)
-          << Property->getIdentifier();
+          << Property->getIdentifier() << 1;
         Diag(Property->getLocation(), diag::note_property_declare);
       }
     }
