@@ -104,7 +104,10 @@ bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
     return true;
   }
 
-  OS = CI.createDefaultOutputFile(true, InFile);
+  // We use createOutputFile here because this is exposed via libclang, and we
+  // must disable the RemoveFileOnSignal behavior.
+  OS = CI.createOutputFile(CI.getFrontendOpts().OutputFile, /*Binary=*/true,
+                           /*RemoveFileOnSignal=*/false, InFile);
   if (!OS)
     return true;
 
