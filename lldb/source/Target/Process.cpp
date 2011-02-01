@@ -230,7 +230,7 @@ Process::Process(Target &target, Listener &listener) :
     m_dynamic_checkers_ap (),
     m_unix_signals (),
     m_target_triple (),
-    m_byte_order (eByteOrderHost),
+    m_byte_order (lldb::endian::InlHostByteOrder()),
     m_addr_byte_size (0),
     m_abi_sp (),
     m_process_input_reader (),

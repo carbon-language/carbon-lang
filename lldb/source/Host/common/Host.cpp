@@ -14,6 +14,7 @@
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Host/Endian.h"
 #include "lldb/Host/Mutex.h"
 
 #include <dlfcn.h>
@@ -212,26 +213,6 @@ size_t
 Host::GetPageSize()
 {
     return ::getpagesize();
-}
-
-//------------------------------------------------------------------
-// Returns true if the host system is Big Endian.
-//------------------------------------------------------------------
-ByteOrder
-Host::GetByteOrder ()
-{
-    union EndianTest
-    {
-        uint32_t num;
-        uint8_t  bytes[sizeof(uint32_t)];
-    } endian = { (uint16_t)0x11223344 };
-    switch (endian.bytes[0])
-    {
-        case 0x11: return eByteOrderLittle;
-        case 0x44: return eByteOrderBig;
-        case 0x33: return eByteOrderPDP;
-    }
-    return eByteOrderInvalid;
 }
 
 const ArchSpec &

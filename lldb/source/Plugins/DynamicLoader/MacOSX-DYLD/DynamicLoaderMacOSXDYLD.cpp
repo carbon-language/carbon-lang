@@ -785,7 +785,7 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, mach_header *header,
         ::memset (header, 0, sizeof(header));
 
         // Get the magic byte unswapped so we can figure out what we are dealing with
-        DataExtractor data(header_bytes.GetBytes(), header_bytes.GetByteSize(), eByteOrderHost, 4);
+        DataExtractor data(header_bytes.GetBytes(), header_bytes.GetByteSize(), lldb::endian::InlHostByteOrder(), 4);
         header->magic = data.GetU32(&offset);
         lldb::addr_t load_cmd_addr = addr;
         data.SetByteOrder(DynamicLoaderMacOSXDYLD::GetByteOrderFromMagic(header->magic));

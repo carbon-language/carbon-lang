@@ -18,6 +18,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Scalar.h"
+#include "lldb/Host/Endian.h"
 
 // Project includes
 #include "ARM_GCC_Registers.h"
@@ -837,7 +838,7 @@ RegisterContextMach_arm::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
     case gpr_lr:
     case gpr_pc:
     case gpr_cpsr:
-        data.SetData(&gpr.r[reg - gpr_r0], reg_info->byte_size, eByteOrderHost);
+        data.SetData(&gpr.r[reg - gpr_r0], reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_s0:
@@ -872,23 +873,23 @@ RegisterContextMach_arm::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
     case fpu_s29:
     case fpu_s30:
     case fpu_s31:
-        data.SetData(&fpu.floats.s[reg - fpu_s0], reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.floats.s[reg - fpu_s0], reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_fpscr:
-        data.SetData(&fpu.fpscr, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.fpscr, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case exc_exception:
-        data.SetData(&exc.exception, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&exc.exception, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case exc_fsr:
-        data.SetData(&exc.fsr, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&exc.fsr, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case exc_far:
-        data.SetData(&exc.far, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&exc.far, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     default:

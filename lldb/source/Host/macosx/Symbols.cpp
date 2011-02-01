@@ -24,6 +24,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
+#include "lldb/Host/Endian.h"
 
 #include "Host/macosx/cfcpp/CFCReleaser.h"
 #include "mach/machine.h"
@@ -53,8 +54,8 @@ SkinnyMachOFileContainsArchAndUUID
 {
     assert(magic == HeaderMagic32 || magic == HeaderMagic32Swapped || magic == HeaderMagic64 || magic == HeaderMagic64Swapped);
     if (magic == HeaderMagic32 || magic == HeaderMagic64)
-        data.SetByteOrder (eByteOrderHost);
-    else if (eByteOrderHost == eByteOrderBig)
+        data.SetByteOrder (lldb::endian::InlHostByteOrder());
+    else if (lldb::endian::InlHostByteOrder() == eByteOrderBig)
         data.SetByteOrder (eByteOrderLittle);
     else
         data.SetByteOrder (eByteOrderBig);

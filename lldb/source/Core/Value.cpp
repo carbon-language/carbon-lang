@@ -522,7 +522,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
         break;
 
     case eValueTypeScalar:
-        data.SetByteOrder (eByteOrderHost);
+        data.SetByteOrder (lldb::endian::InlHostByteOrder());
         data.SetAddressByteSize(sizeof(void *));
         if (m_value.GetData (data))
             return error;   // Success;
@@ -603,7 +603,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
 
     case eValueTypeHostAddress:
         address = m_value.ULongLong(LLDB_INVALID_ADDRESS);
-        data.SetByteOrder(eByteOrderHost);
+        data.SetByteOrder(lldb::endian::InlHostByteOrder());
         data.SetAddressByteSize(sizeof(void *));
         address_type = eAddressTypeHost;
         break;

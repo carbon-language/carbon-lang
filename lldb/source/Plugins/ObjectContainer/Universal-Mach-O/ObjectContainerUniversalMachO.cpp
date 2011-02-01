@@ -73,7 +73,7 @@ ObjectContainerUniversalMachO::CreateInstance
 bool
 ObjectContainerUniversalMachO::MagicBytesMatch (DataBufferSP& dataSP)
 {
-    DataExtractor data(dataSP, eByteOrderHost, 4);
+    DataExtractor data(dataSP, lldb::endian::InlHostByteOrder(), 4);
     uint32_t offset = 0;
     uint32_t magic = data.GetU32(&offset);
     return magic == UniversalMagic || magic == UniversalMagicSwapped;

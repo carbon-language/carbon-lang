@@ -20,6 +20,7 @@
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Host/Endian.h"
 
 namespace lldb_private {
 
@@ -55,7 +56,7 @@ public:
         m_file (),  // This file can be different than the module's file spec
         m_offset (offset),
         m_length (length),
-        m_data (headerDataSP, lldb::eByteOrderHost, 4)
+        m_data (headerDataSP, lldb::endian::InlHostByteOrder(), 4)
     {
         if (file)
             m_file = *file;

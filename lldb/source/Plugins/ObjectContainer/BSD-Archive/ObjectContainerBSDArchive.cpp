@@ -288,7 +288,7 @@ ObjectContainerBSDArchive::CreateInstance
 bool
 ObjectContainerBSDArchive::MagicBytesMatch (DataBufferSP& dataSP)
 {
-    DataExtractor data(dataSP, eByteOrderHost, 4);
+    DataExtractor data(dataSP, lldb::endian::InlHostByteOrder(), 4);
     uint32_t offset = 0;
     const char* armag = (const char* )data.PeekData (offset, sizeof(ar_hdr));
     if (armag && ::strncmp(armag, ARMAG, SARMAG) == 0)

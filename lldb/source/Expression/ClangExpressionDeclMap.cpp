@@ -23,6 +23,7 @@
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
+#include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -861,13 +862,13 @@ static bool WriteAddressInto
         case 4:
         {
             uint32_t address32 = address & 0xffffffffll;
-            str.PutRawBytes(&address32, sizeof(address32), eByteOrderHost, eByteOrderInvalid);
+            str.PutRawBytes(&address32, sizeof(address32), endian::InlHostByteOrder(), eByteOrderInvalid);
         }
         break;
         case 8:
         {
             uint64_t address64 = address;
-            str.PutRawBytes(&address64, sizeof(address64), eByteOrderHost, eByteOrderInvalid);
+            str.PutRawBytes(&address64, sizeof(address64), endian::InlHostByteOrder(), eByteOrderInvalid);
         }
         break;
     }

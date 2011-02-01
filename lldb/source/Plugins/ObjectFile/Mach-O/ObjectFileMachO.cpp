@@ -93,7 +93,7 @@ MachHeaderSizeFromMagic(uint32_t magic)
 bool
 ObjectFileMachO::MagicBytesMatch (DataBufferSP& dataSP)
 {
-    DataExtractor data(dataSP, eByteOrderHost, 4);
+    DataExtractor data(dataSP, lldb::endian::InlHostByteOrder(), 4);
     uint32_t offset = 0;
     uint32_t magic = data.GetU32(&offset);
     return MachHeaderSizeFromMagic(magic) != 0;
@@ -123,31 +123,31 @@ ObjectFileMachO::ParseHeader ()
     lldb_private::Mutex::Locker locker(m_mutex);
     bool can_parse = false;
     uint32_t offset = 0;
-    m_data.SetByteOrder (eByteOrderHost);
+    m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
     // Leave magic in the original byte order
     m_header.magic = m_data.GetU32(&offset);
     switch (m_header.magic)
     {
     case HeaderMagic32:
-        m_data.SetByteOrder (eByteOrderHost);
+        m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
         m_data.SetAddressByteSize(4);
         can_parse = true;
         break;
 
     case HeaderMagic64:
-        m_data.SetByteOrder (eByteOrderHost);
+        m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
         m_data.SetAddressByteSize(8);
         can_parse = true;
         break;
 
     case HeaderMagic32Swapped:
-        m_data.SetByteOrder(eByteOrderHost == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
+        m_data.SetByteOrder(lldb::endian::InlHostByteOrder() == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
         m_data.SetAddressByteSize(4);
         can_parse = true;
         break;
 
     case HeaderMagic64Swapped:
-        m_data.SetByteOrder(eByteOrderHost == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
+        m_data.SetByteOrder(lldb::endian::InlHostByteOrder() == eByteOrderBig ? eByteOrderLittle : eByteOrderBig);
         m_data.SetAddressByteSize(8);
         can_parse = true;
         break;
@@ -652,7 +652,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 assert (symtab_data_sp->GetByteSize()/nlist_size >= symtab_load_command.nsyms);
 
 
-                if (endian != eByteOrderHost)
+                if (endian != lldb::endian::InlHostByteOrder())
                 {
                     // ...
                     assert (!"UNIMPLEMENTED: Swap all nlist entries");

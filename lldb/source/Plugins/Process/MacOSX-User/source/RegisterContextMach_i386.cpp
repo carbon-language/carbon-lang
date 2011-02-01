@@ -16,6 +16,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Scalar.h"
+#include "lldb/Host/Endian.h"
 
 // Project includes
 #include "RegisterContextMach_i386.h"
@@ -817,47 +818,47 @@ RegisterContextMach_i386::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
     case gpr_es:
     case gpr_fs:
     case gpr_gs:
-        data.SetData(&gpr.eax + reg - gpr_eax, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&gpr.eax + reg - gpr_eax, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_fcw:
-        data.SetData(&fpu.fcw, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.fcw, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_fsw:
-        data.SetData(&fpu.fsw, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.fsw, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_ftw:
-        data.SetData(&fpu.ftw, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.ftw, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_fop:
-        data.SetData(&fpu.fop, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.fop, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_ip:
-        data.SetData(&fpu.ip, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.ip, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_cs:
-        data.SetData(&fpu.cs, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.cs, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_dp:
-        data.SetData(&fpu.dp, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.dp, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_ds:
-        data.SetData(&fpu.ds, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.ds, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_mxcsr:
-        data.SetData(&fpu.mxcsr, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.mxcsr, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_mxcsrmask:
-        data.SetData(&fpu.mxcsrmask, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&fpu.mxcsrmask, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_stmm0:
@@ -868,7 +869,7 @@ RegisterContextMach_i386::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
     case fpu_stmm5:
     case fpu_stmm6:
     case fpu_stmm7:
-        data.SetData(fpu.stmm[reg - fpu_stmm0].bytes, reg_info->byte_size, eByteOrderHost);
+        data.SetData(fpu.stmm[reg - fpu_stmm0].bytes, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case fpu_xmm0:
@@ -879,19 +880,19 @@ RegisterContextMach_i386::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
     case fpu_xmm5:
     case fpu_xmm6:
     case fpu_xmm7:
-        data.SetData(fpu.xmm[reg - fpu_xmm0].bytes, reg_info->byte_size, eByteOrderHost);
+        data.SetData(fpu.xmm[reg - fpu_xmm0].bytes, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case exc_trapno:
-        data.SetData(&exc.trapno, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&exc.trapno, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case exc_err:
-        data.SetData(&exc.err, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&exc.err, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     case exc_faultvaddr:
-        data.SetData(&exc.faultvaddr, reg_info->byte_size, eByteOrderHost);
+        data.SetData(&exc.faultvaddr, reg_info->byte_size, lldb::endian::InlHostByteOrder());
         break;
 
     default:

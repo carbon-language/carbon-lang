@@ -707,35 +707,35 @@ RegisterContextLLDB::ReadRegisterBytesFromRegisterLocation (uint32_t regnum, Reg
 
     if (regloc.type == eRegisterValueInferred)
     {
-        data.SetByteOrder (eByteOrderHost);
+        data.SetByteOrder (lldb::endian::InlHostByteOrder());
         switch (reg_info->byte_size)
         {
             case 1:
             {
                 uint8_t val = regloc.location.register_value;
                 memcpy (data_sp->GetBytes(), &val, sizeof (val));
-                data.SetByteOrder (eByteOrderHost);
+                data.SetByteOrder (lldb::endian::InlHostByteOrder());
                 return true;
             }
             case 2:
             {
                 uint16_t val = regloc.location.register_value;
                 memcpy (data_sp->GetBytes(), &val, sizeof (val));
-                data.SetByteOrder (eByteOrderHost);
+                data.SetByteOrder (lldb::endian::InlHostByteOrder());
                 return true;
             }
             case 4:
             {
                 uint32_t val = regloc.location.register_value;
                 memcpy (data_sp->GetBytes(), &val, sizeof (val));
-                data.SetByteOrder (eByteOrderHost);
+                data.SetByteOrder (lldb::endian::InlHostByteOrder());
                 return true;
             }
             case 8:
             {
                 uint64_t val = regloc.location.register_value;
                 memcpy (data_sp->GetBytes(), &val, sizeof (val));
-                data.SetByteOrder (eByteOrderHost);
+                data.SetByteOrder (lldb::endian::InlHostByteOrder());
                 return true;
             }
         }

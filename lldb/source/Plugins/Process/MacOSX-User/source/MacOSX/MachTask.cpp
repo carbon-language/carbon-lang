@@ -21,6 +21,7 @@
 
 #endif
 
+#include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Core/DataExtractor.h"
 
@@ -165,7 +166,7 @@ MachTask::ReadMemory (lldb::addr_t addr, void *buf, size_t size, Error& error)
             log->Printf ("MachTask::ReadMemory ( addr = 0x%16.16llx, size = %zu, buf = %8.8p) => %u bytes read", (uint64_t)addr, size, buf, n);
             if (log->GetMask().Test(PD_LOG_MEMORY_DATA_LONG) || (log->GetMask().Test(PD_LOG_MEMORY_DATA_SHORT) && size <= 8))
             {
-                DataExtractor data((uint8_t*)buf, n, eByteOrderHost, 4);
+                DataExtractor data((uint8_t*)buf, n, lldb::endian::InlHostByteOrder(), 4);
                 data.PutToLog(log.get(), 0, n, addr, 16, DataExtractor::TypeUInt8);
             }
         }
@@ -191,7 +192,7 @@ MachTask::WriteMemory (lldb::addr_t addr, const void *buf, size_t size, Error& e
             log->Printf ("MachTask::WriteMemory ( addr = 0x%16.16llx, size = %zu, buf = %8.8p) => %u bytes written", (uint64_t)addr, size, buf, n);
             if (log->GetMask().Test(PD_LOG_MEMORY_DATA_LONG) || (log->GetMask().Test(PD_LOG_MEMORY_DATA_SHORT) && size <= 8))
             {
-                DataExtractor data((uint8_t*)buf, n, eByteOrderHost, 4);
+                DataExtractor data((uint8_t*)buf, n, lldb::endian::InlHostByteOrder(), 4);
                 data.PutToLog(log.get(), 0, n, addr, 16, DataExtractor::TypeUInt8);
             }
         }

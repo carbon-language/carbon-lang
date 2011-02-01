@@ -43,6 +43,7 @@
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/TargetList.h"

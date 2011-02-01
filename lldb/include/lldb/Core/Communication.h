@@ -19,9 +19,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
-#include "lldb/Host/Predicate.h"
 #include "lldb/lldb-private.h"
 
 namespace lldb_private {

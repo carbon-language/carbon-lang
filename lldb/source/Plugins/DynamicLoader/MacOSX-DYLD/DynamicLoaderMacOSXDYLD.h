@@ -154,11 +154,11 @@ protected:
         {
             case llvm::MachO::HeaderMagic32:
             case llvm::MachO::HeaderMagic64:
-                return lldb::eByteOrderHost;
+                return lldb::endian::InlHostByteOrder();
 
             case llvm::MachO::HeaderMagic32Swapped:
             case llvm::MachO::HeaderMagic64Swapped:
-                if (lldb::eByteOrderHost == lldb::eByteOrderBig)
+                if (lldb::endian::InlHostByteOrder() == lldb::eByteOrderBig)
                     return lldb::eByteOrderLittle;
                 else
                     return lldb::eByteOrderBig;
@@ -274,11 +274,11 @@ protected:
             {
             case llvm::MachO::HeaderMagic32:        // MH_MAGIC
             case llvm::MachO::HeaderMagic64:        // MH_MAGIC_64
-                return lldb::eByteOrderHost;
+                return lldb::endian::InlHostByteOrder();
 
             case llvm::MachO::HeaderMagic32Swapped: // MH_CIGAM
             case llvm::MachO::HeaderMagic64Swapped: // MH_CIGAM_64
-                if (lldb::eByteOrderHost == lldb::eByteOrderLittle)
+                if (lldb::endian::InlHostByteOrder() == lldb::eByteOrderLittle)
                     return lldb::eByteOrderBig;
                 else
                     return lldb::eByteOrderLittle;
@@ -286,7 +286,7 @@ protected:
                 assert (!"invalid header.magic value");
                 break;
             }
-            return lldb::eByteOrderHost;
+            return lldb::endian::InlHostByteOrder();
         }
 
         const Segment *

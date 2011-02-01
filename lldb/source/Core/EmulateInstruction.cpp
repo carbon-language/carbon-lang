@@ -11,6 +11,7 @@
 
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Host/Endian.h"
 using namespace lldb;
 using namespace lldb_private;
 
@@ -25,7 +26,7 @@ EmulateInstruction::EmulateInstruction
     ReadRegister read_reg_callback,
     WriteRegister write_reg_callback
 ) :
-    m_byte_order (lldb::eByteOrderHost),
+    m_byte_order (endian::InlHostByteOrder()),
     m_addr_byte_size (sizeof (void *)),
     m_baton (baton),
     m_read_mem_callback (read_mem_callback),

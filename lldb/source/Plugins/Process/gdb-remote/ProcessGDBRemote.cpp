@@ -758,7 +758,7 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
                 else
                     packet.PutCString("vAttachName");
                 packet.PutChar(';');
-                packet.PutBytesAsRawHex8(process_name, strlen(process_name), eByteOrderHost, eByteOrderHost);
+                packet.PutBytesAsRawHex8(process_name, strlen(process_name), lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
                 
                 m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (packet.GetData(), packet.GetSize()));
 
@@ -1324,7 +1324,7 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
 {
     StreamString packet;
     packet.Printf("M%llx,%zx:", addr, size);
-    packet.PutBytesAsRawHex8(buf, size, eByteOrderHost, eByteOrderHost);
+    packet.PutBytesAsRawHex8(buf, size, lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetData(), packet.GetSize(), response, 2, true))
     {

@@ -30,6 +30,7 @@
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/SearchFilter.h"
 #include "lldb/Core/STLUtils.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"

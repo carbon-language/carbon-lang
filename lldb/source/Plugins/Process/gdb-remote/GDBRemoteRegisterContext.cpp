@@ -341,8 +341,8 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
 
                     packet.PutBytesAsRawHex8 (m_reg_data.GetDataStart(),
                                               m_reg_data.GetByteSize(),
-                                              eByteOrderHost,
-                                              eByteOrderHost);
+                                              lldb::endian::InlHostByteOrder(),
+                                              lldb::endian::InlHostByteOrder());
                     
                     if (thread_suffix_supported)
                         packet.Printf (";thread:%4.4x;", m_thread.GetID());
@@ -369,8 +369,8 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
                     packet.Printf ("P%x=", reg);
                     packet.PutBytesAsRawHex8 (m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size),
                                               reg_info->byte_size,
-                                              eByteOrderHost,
-                                              eByteOrderHost);
+                                              lldb::endian::InlHostByteOrder(),
+                                              lldb::endian::InlHostByteOrder());
 
                     if (thread_suffix_supported)
                         packet.Printf (";thread:%4.4x;", m_thread.GetID());

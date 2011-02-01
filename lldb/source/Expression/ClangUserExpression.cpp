@@ -275,7 +275,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     //
 
     m_dwarf_opcodes.reset(new StreamString);
-    m_dwarf_opcodes->SetByteOrder (lldb::eByteOrderHost);
+    m_dwarf_opcodes->SetByteOrder (lldb::endian::InlHostByteOrder());
     m_dwarf_opcodes->GetFlags ().Set (Stream::eBinary);
     
     m_local_variables.reset(new ClangExpressionVariableList());

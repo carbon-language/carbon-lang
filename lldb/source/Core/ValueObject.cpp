@@ -24,6 +24,8 @@
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectList.h"
 
+#include "lldb/Host/Endian.h"
+
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
@@ -460,7 +462,7 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                             if (cstr_len > 0)
                             {
                                 data_buffer.resize(cstr_len);
-                                data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
+                                data.SetData (&data_buffer.front(), data_buffer.size(), lldb::endian::InlHostByteOrder());
                                 bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), cstr_len, error);
                                 if (bytes_read > 0)
                                 {
@@ -486,7 +488,7 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
 
                                 sstr << '"';
 
-                                data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
+                                data.SetData (&data_buffer.front(), data_buffer.size(), endian::InlHostByteOrder());
                                 while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
                                 {
                                     size_t len = strlen(&data_buffer.front());
@@ -796,7 +798,7 @@ ValueObject::SetValueFromCString (ExecutionContextScope *exe_scope, const char *
             {
                 // We are decoding a float into host byte order below, so make
                 // sure m_data knows what it contains.
-                m_data.SetByteOrder(eByteOrderHost);
+                m_data.SetByteOrder(lldb::endian::InlHostByteOrder());
                 const size_t converted_byte_size = ClangASTContext::ConvertStringToFloatValue (
                                                         GetClangAST(),
                                                         GetClangType(),

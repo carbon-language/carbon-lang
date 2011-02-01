@@ -17,6 +17,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/Event.h"
+#include "lldb/Host/Host.h"
 #include <string.h>
 
 using namespace lldb;

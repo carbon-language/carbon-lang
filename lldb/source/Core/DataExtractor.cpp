@@ -22,6 +22,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Core/dwarf.h"
+#include "lldb/Host/Endian.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -67,7 +68,7 @@ ReadSwapInt64(const unsigned char* ptr, unsigned offset)
 DataExtractor::DataExtractor () :
     m_start     (NULL),
     m_end       (NULL),
-    m_byte_order(eByteOrderHost),
+    m_byte_order(lldb::endian::InlHostByteOrder()),
     m_addr_size (4),
     m_data_sp   ()
 {
@@ -160,7 +161,7 @@ DataExtractor::Clear ()
 {
     m_start = NULL;
     m_end = NULL;
-    m_byte_order = eByteOrderHost;
+    m_byte_order = lldb::endian::InlHostByteOrder();
     m_addr_size = 4;
     m_data_sp.reset();
 }
@@ -460,7 +461,7 @@ DataExtractor::GetU16 (uint32_t *offset_ptr) const
     register uint32_t offset = *offset_ptr;
     if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
     {
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
             val = ReadSwapInt16(m_start, offset);
         else
             val = ReadInt16 (m_start, offset);
@@ -474,7 +475,7 @@ DataExtractor::GetU16 (uint32_t *offset_ptr) const
 uint16_t
 DataExtractor::GetU16_unchecked (uint32_t *offset_ptr) const
 {
-    uint16_t val = (m_byte_order == eByteOrderHost) ? 
+    uint16_t val = (m_byte_order == lldb::endian::InlHostByteOrder()) ? 
                         ReadInt16 (m_start, *offset_ptr) :
                         ReadSwapInt16(m_start, *offset_ptr);
     *offset_ptr += sizeof(val);
@@ -484,7 +485,7 @@ DataExtractor::GetU16_unchecked (uint32_t *offset_ptr) const
 uint32_t
 DataExtractor::GetU32_unchecked (uint32_t *offset_ptr) const
 {
-    uint32_t val = (m_byte_order == eByteOrderHost) ? 
+    uint32_t val = (m_byte_order == lldb::endian::InlHostByteOrder()) ? 
                         ReadInt32 (m_start, *offset_ptr) :
                         ReadSwapInt32 (m_start, *offset_ptr);
     *offset_ptr += sizeof(val);
@@ -494,7 +495,7 @@ DataExtractor::GetU32_unchecked (uint32_t *offset_ptr) const
 uint64_t
 DataExtractor::GetU64_unchecked (uint32_t *offset_ptr) const
 {
-    uint64_t val = (m_byte_order == eByteOrderHost) ? 
+    uint64_t val = (m_byte_order == lldb::endian::InlHostByteOrder()) ? 
                         ReadInt64 (m_start, *offset_ptr) :
                         ReadSwapInt64 (m_start, *offset_ptr);
     *offset_ptr += sizeof(val);
@@ -522,7 +523,7 @@ DataExtractor::GetU16 (uint32_t *offset_ptr, void *void_dst, uint32_t count) con
     {
         uint16_t *value_ptr;
         uint16_t *end = dst + count;
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
                 *value_ptr = ReadSwapInt16 (m_start, offset);
@@ -555,7 +556,7 @@ DataExtractor::GetU32 (uint32_t *offset_ptr) const
 
     if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
     {
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
             val = ReadSwapInt32 (m_start, offset);
         else
             val = ReadInt32 (m_start, offset);
@@ -586,7 +587,7 @@ DataExtractor::GetU32 (uint32_t *offset_ptr, void *void_dst, uint32_t count) con
     {
         uint32_t *value_ptr;
         uint32_t *end = dst + count;
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
                 *value_ptr = ReadSwapInt32 (m_start, offset);
@@ -619,7 +620,7 @@ DataExtractor::GetU64 (uint32_t *offset_ptr) const
     register uint32_t offset = *offset_ptr;
     if ( ValidOffsetForDataOfSize(offset, sizeof(val)) )
     {
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
             val = ReadSwapInt64 (m_start, offset);
         else
             val = ReadInt64 (m_start, offset);
@@ -648,7 +649,7 @@ DataExtractor::GetU64 (uint32_t *offset_ptr, void *void_dst, uint32_t count) con
     {
         uint64_t *value_ptr;
         uint64_t *end = dst + count;
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
         {
             for (value_ptr = dst; value_ptr < end; ++value_ptr, offset += value_size)
                 *value_ptr = ReadSwapInt64 (m_start, offset);
@@ -776,7 +777,7 @@ DataExtractor::GetFloat (uint32_t *offset_ptr) const
     
     if (src_data)
     {
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
         {
             uint8_t *dst_data = (uint8_t *)&val;
             for (int i=0; i<sizeof(float_type); ++i)
@@ -802,7 +803,7 @@ DataExtractor::GetDouble (uint32_t *offset_ptr) const
     
     if (src_data)
     {
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
         {
             uint8_t *dst_data = (uint8_t *)&val;
             for (int i=0; i<sizeof(float_type); ++i)
@@ -829,7 +830,7 @@ DataExtractor::GetLongDouble (uint32_t *offset_ptr) const
     
     if (src_data)
     {
-        if (m_byte_order != eByteOrderHost)
+        if (m_byte_order != lldb::endian::InlHostByteOrder())
         {
             uint8_t *dst_data = (uint8_t *)&val;
             for (int i=0; i<sizeof(float_type); ++i)

@@ -15,6 +15,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Host/Endian.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -134,25 +135,25 @@ Scalar::GetData (DataExtractor &data, size_t limit_byte_size) const
     {
         if (limit_byte_size < byte_size)
         {
-            if (eByteOrderHost == eByteOrderLittle)
+            if (lldb::endian::InlHostByteOrder() == eByteOrderLittle)
             {
                 // On little endian systems if we want fewer bytes from the
                 // current type we just specify fewer bytes since the LSByte
                 // is first...
-                data.SetData((uint8_t*)&m_data, limit_byte_size, eByteOrderHost);
+                data.SetData((uint8_t*)&m_data, limit_byte_size, lldb::endian::InlHostByteOrder());
             }
-            else if (eByteOrderHost == eByteOrderBig)
+            else if (lldb::endian::InlHostByteOrder() == eByteOrderBig)
             {
                 // On big endian systems if we want fewer bytes from the
                 // current type have to advance our initial byte pointer and
                 // trim down the number of bytes since the MSByte is first
-                data.SetData(((uint8_t*)&m_data) + byte_size - limit_byte_size, limit_byte_size, eByteOrderHost);
+                data.SetData(((uint8_t*)&m_data) + byte_size - limit_byte_size, limit_byte_size, lldb::endian::InlHostByteOrder());
             }
         }
         else
         {
             // We want all of the data
-            data.SetData((uint8_t*)&m_data, byte_size, eByteOrderHost);
+            data.SetData((uint8_t*)&m_data, byte_size, lldb::endian::InlHostByteOrder());
         }
         return true;
     }

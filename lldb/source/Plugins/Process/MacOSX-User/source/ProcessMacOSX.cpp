@@ -32,6 +32,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
@@ -48,7 +49,6 @@
 #endif  // #if defined (__arm__)
 
 // Project includes
-#include "lldb/Host/Host.h"
 #include "ProcessMacOSX.h"
 #include "ProcessMacOSXLog.h"
 #include "ThreadMacOSX.h"

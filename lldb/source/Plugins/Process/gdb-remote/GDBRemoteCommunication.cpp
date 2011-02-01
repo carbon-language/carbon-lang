@@ -18,6 +18,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
 
 // Project includes
@@ -48,7 +49,7 @@ GDBRemoteCommunication::GDBRemoteCommunication() :
     m_arch(),
     m_os(),
     m_vendor(),
-    m_byte_order(eByteOrderHost),
+    m_byte_order(lldb::endian::InlHostByteOrder()),
     m_pointer_byte_size(0)
 {
     m_rx_packet_listener.StartListeningForEvents(this,
@@ -773,7 +774,7 @@ GDBRemoteCommunication::SendArgumentsPacket (char const *argv[], uint32_t timeou
             if (i > 0)
                 packet.PutChar(',');
             packet.Printf("%i,%i,", arg_len * 2, i);
-            packet.PutBytesAsRawHex8(arg, arg_len, eByteOrderHost, eByteOrderHost);
+            packet.PutBytesAsRawHex8(arg, arg_len, lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
         }
 
         StringExtractorGDBRemote response;
@@ -815,7 +816,7 @@ GDBRemoteCommunication::GetHostInfo (uint32_t timeout_seconds)
     m_arch.Clear();
     m_os.Clear();
     m_vendor.Clear();
-    m_byte_order = eByteOrderHost;
+    m_byte_order = lldb::endian::InlHostByteOrder();
     m_pointer_byte_size = 0;
 
     StringExtractorGDBRemote response;

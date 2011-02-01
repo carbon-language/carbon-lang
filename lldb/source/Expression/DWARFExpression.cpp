@@ -21,7 +21,7 @@
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
 
-#include "lldb/Host/Host.h"
+#include "lldb/Host/Endian.h"
 
 #include "lldb/lldb-private-log.h"
 
@@ -2272,7 +2272,7 @@ DWARFExpression::Evaluate
                 tmp = stack.back();
                 stack.pop_back();
                 Value::ContextType context_type = stack.back().GetContextType();
-                StreamString new_value(Stream::eBinary, 4, eByteOrderHost);
+                StreamString new_value(Stream::eBinary, 4, lldb::endian::InlHostByteOrder());
                 switch (context_type)
                 {
                 case Value::eContextTypeClangType:
@@ -2316,7 +2316,7 @@ DWARFExpression::Evaluate
                                     }
                                     break;
                                 case Value::eValueTypeHostAddress:
-                                    if (exe_ctx->process->GetByteOrder() != Host::GetByteOrder())
+                                    if (exe_ctx->process->GetByteOrder() != lldb::endian::InlHostByteOrder())
                                     {
                                         if (error_ptr)
                                             error_ptr->SetErrorStringWithFormat ("Copy of composite types between incompatible byte orders is unimplemented");
@@ -2341,7 +2341,7 @@ DWARFExpression::Evaluate
                                 switch (target_value_type)
                                 {
                                 case Value::eValueTypeLoadAddress:
-                                    if (exe_ctx->process->GetByteOrder() != Host::GetByteOrder())
+                                    if (exe_ctx->process->GetByteOrder() != lldb::endian::InlHostByteOrder())
                                     {
                                         if (error_ptr)
                                             error_ptr->SetErrorStringWithFormat ("Copy of composite types between incompatible byte orders is unimplemented");
