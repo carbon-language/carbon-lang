@@ -154,7 +154,8 @@ if target.IsValid():
 
     # Launch the process. Since we specified synchronous mode, we won't return
     # from this function until we hit the breakpoint at main
-    process = target.LaunchProcess ([''], [''], "/dev/stdout", 0, False)
+    sberror = lldb.SBError()
+    process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, sberror)
     # Make sure the launch went ok
     while stopped_at_breakpoint(process):
         thread = process.GetThreadAtIndex (0)
