@@ -221,7 +221,7 @@ void ObjCSelfInitChecker::PreVisitReturnStmt(CheckerContext &C,
     return;
 
   checkForInvalidSelf(S->getRetValue(), C,
-    "Returning 'self' while it is not set it to the result of "
+    "Returning 'self' while it is not set to the result of "
                                                  "'[(super or self) init...]'");
 }
 
