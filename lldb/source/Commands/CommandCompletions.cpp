@@ -19,13 +19,13 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Core/FileSpecList.h"
-#include "lldb/Target/Target.h"
-#include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Core/FileSpec.h"
-
+#include "lldb/Core/FileSpecList.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/CommandCompletions.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Utility/CleanUp.h"
 
 using namespace lldb_private;
 
@@ -246,18 +246,16 @@ DiskFilesOrDirectories
     }
     
     // Okay, containing_part is now the directory we want to open and look for files:
-    
-    DIR *dir_stream;
-    
-    dir_stream = opendir(containing_part);
-    if (dir_stream == NULL)
+
+    lldb_utility::CleanUp <DIR *, int> dir_stream (opendir(containing_part), NULL, closedir);
+    if (!dir_stream.is_valid())
         return matches.GetSize();
-        
+    
     struct dirent *dirent_buf;
     
     size_t baselen = end_ptr - partial_name_copy;
     
-    while ((dirent_buf = readdir(dir_stream)) != NULL) 
+    while ((dirent_buf = readdir(dir_stream.get())) != NULL) 
     {
         char *name = dirent_buf->d_name;
         
