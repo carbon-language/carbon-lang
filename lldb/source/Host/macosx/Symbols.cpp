@@ -25,6 +25,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Endian.h"
+#include "lldb/Utility/CleanUp.h"
 
 #include "Host/macosx/cfcpp/CFCReleaser.h"
 #include "mach/machine.h"
@@ -237,12 +238,12 @@ LocateDSYMMachFileInDSYMBundle
     {
         ::strncat (path, "/Contents/Resources/DWARF", sizeof(path) - strlen(path) - 1);
 
-        DIR* dirp = ::opendir(path);
-        if (dirp != NULL)
+        lldb_utility::CleanUp <DIR *, int> dirp (opendir("containing_part"), NULL, closedir);
+        if (dirp.is_valid())
         {
             dsym_fspec.GetDirectory().SetCString(path);
             struct dirent* dp;
-            while ((dp = readdir(dirp)) != NULL)
+            while ((dp = readdir(dirp.get())) != NULL)
             {
                 // Only search directories
                 if (dp->d_type == DT_DIR || dp->d_type == DT_UNKNOWN)
