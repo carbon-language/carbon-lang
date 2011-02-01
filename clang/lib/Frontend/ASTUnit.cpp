@@ -1661,7 +1661,7 @@ namespace {
       Next.ProcessOverloadCandidates(S, CurrentArg, Candidates, NumCandidates);
     }
     
-    virtual llvm::BumpPtrAllocator &getAllocator() {
+    virtual CodeCompletionAllocator &getAllocator() {
       return Next.getAllocator();
     }
   };

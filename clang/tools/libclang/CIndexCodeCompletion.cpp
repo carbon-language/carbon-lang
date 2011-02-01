@@ -230,7 +230,7 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   llvm::SmallVector<const llvm::MemoryBuffer *, 1> TemporaryBuffers;
   
   /// \brief Allocator used to store code completion results.
-  llvm::BumpPtrAllocator CodeCompletionAllocator;
+  CodeCompletionAllocator CodeCompletionAllocator;
 };
 
 /// \brief Tracks the number of code-completion result objects that are 
@@ -310,7 +310,7 @@ namespace {
       }
     }
     
-    virtual llvm::BumpPtrAllocator &getAllocator() { 
+    virtual CodeCompletionAllocator &getAllocator() { 
       return AllocatedResults.CodeCompletionAllocator;
     }
     

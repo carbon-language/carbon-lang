@@ -421,13 +421,20 @@ public:
   std::string getAsString() const;   
 };
 
+/// \brief An allocator used specifically for the purpose of code completion.
+class CodeCompletionAllocator : public llvm::BumpPtrAllocator { 
+public:
+  /// \brief Copy the given string into this allocator.
+  const char *CopyString(llvm::StringRef String);
+};
+  
 /// \brief A builder class used to construct new code-completion strings.
 class CodeCompletionBuilder {
 public:  
   typedef CodeCompletionString::Chunk Chunk;
   
 private:
-  llvm::BumpPtrAllocator &Allocator;
+  CodeCompletionAllocator &Allocator;
   unsigned Priority;
   CXAvailabilityKind Availability;
   
@@ -435,17 +442,17 @@ private:
   llvm::SmallVector<Chunk, 4> Chunks;
   
 public:
-  CodeCompletionBuilder(llvm::BumpPtrAllocator &Allocator) 
+  CodeCompletionBuilder(CodeCompletionAllocator &Allocator) 
     : Allocator(Allocator), Priority(0), Availability(CXAvailability_Available){
   }
   
-  CodeCompletionBuilder(llvm::BumpPtrAllocator &Allocator,
+  CodeCompletionBuilder(CodeCompletionAllocator &Allocator,
                         unsigned Priority, CXAvailabilityKind Availability) 
     : Allocator(Allocator), Priority(Priority), Availability(Availability) { }
 
   /// \brief Retrieve the allocator into which the code completion
   /// strings will be 
-  llvm::BumpPtrAllocator &getAllocator() const { return Allocator; }
+  CodeCompletionAllocator &getAllocator() const { return Allocator; }
   
   /// \brief Take the resulting completion string. 
   ///
@@ -630,7 +637,7 @@ public:
   /// \param Allocator The allocator that will be used to allocate the
   /// string itself.
   CodeCompletionString *CreateCodeCompletionString(Sema &S,
-                                             llvm::BumpPtrAllocator &Allocator);
+                                           CodeCompletionAllocator &Allocator);
     
   /// \brief Determine a base priority for the given declaration.
   static unsigned getPriorityFromDecl(NamedDecl *ND);
@@ -742,7 +749,7 @@ public:
     /// signature of this overload candidate.
     CodeCompletionString *CreateSignatureString(unsigned CurrentArg, 
                                                 Sema &S,
-                                      llvm::BumpPtrAllocator &Allocator) const;
+                                      CodeCompletionAllocator &Allocator) const;
   };
   
   CodeCompleteConsumer() : IncludeMacros(false), IncludeCodePatterns(false),
@@ -791,7 +798,7 @@ public:
   
   /// \brief Retrieve the allocator that will be used to allocate
   /// code completion strings.
-  virtual llvm::BumpPtrAllocator &getAllocator() = 0;
+  virtual CodeCompletionAllocator &getAllocator() = 0;
 };
 
 /// \brief A simple code-completion consumer that prints the results it 
@@ -800,7 +807,7 @@ class PrintingCodeCompleteConsumer : public CodeCompleteConsumer {
   /// \brief The raw output stream.
   llvm::raw_ostream &OS;
     
-  llvm::BumpPtrAllocator Allocator;
+  CodeCompletionAllocator Allocator;
   
 public:
   /// \brief Create a new printing code-completion consumer that prints its
@@ -821,7 +828,7 @@ public:
                                          OverloadCandidate *Candidates,
                                          unsigned NumCandidates);  
   
-  virtual llvm::BumpPtrAllocator &getAllocator() { return Allocator; }
+  virtual CodeCompletionAllocator &getAllocator() { return Allocator; }
 };
   
 } // end namespace clang

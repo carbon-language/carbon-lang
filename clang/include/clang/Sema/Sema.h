@@ -63,6 +63,7 @@ namespace clang {
   class ClassTemplatePartialSpecializationDecl;
   class ClassTemplateSpecializationDecl;
   class CodeCompleteConsumer;
+  class CodeCompletionAllocator;
   class CodeCompletionResult;
   class Decl;
   class DeclAccessPair;
@@ -4909,7 +4910,7 @@ public:
                                              MacroInfo *MacroInfo,
                                              unsigned Argument);
   void CodeCompleteNaturalLanguage();
-  void GatherGlobalCodeCompletions(llvm::BumpPtrAllocator &Allocator,
+  void GatherGlobalCodeCompletions(CodeCompletionAllocator &Allocator,
                   llvm::SmallVectorImpl<CodeCompletionResult> &Results);
   //@}
 

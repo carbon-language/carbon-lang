@@ -220,6 +220,13 @@ const char *CodeCompletionString::getTypedText() const {
   return 0;
 }
 
+const char *CodeCompletionAllocator::CopyString(llvm::StringRef String) {
+  char *Mem = (char *)Allocate(String.size() + 1, 1);
+  std::copy(String.begin(), String.end(), Mem);
+  Mem[String.size()] = 0;
+  return Mem;
+}
+
 CodeCompletionString *CodeCompletionBuilder::TakeString() {
   void *Mem = Allocator.Allocate(
                   sizeof(CodeCompletionString) + sizeof(Chunk) * Chunks.size(), 
