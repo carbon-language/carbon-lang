@@ -192,6 +192,10 @@ public:
     return Is64Bit && (isTargetMingw() || isTargetWindows());
   }
 
+  bool isTargetEnvMacho() const {
+    return isTargetDarwin() || (TargetTriple.getEnvironment() == Triple::MachO);
+  }
+
   bool isTargetWin32() const {
     return !Is64Bit && (isTargetMingw() || isTargetWindows());
   }

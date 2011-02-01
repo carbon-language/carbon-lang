@@ -61,21 +61,21 @@ static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
 
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
-
-  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
-
-  if (TM.getSubtarget<X86Subtarget>().isTargetDarwin()) {
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+  bool is64Bit = Subtarget->is64Bit();
+ 
+  if (Subtarget->isTargetEnvMacho()) {
     if (is64Bit)
       return new X8664_MachoTargetObjectFile();
     return new TargetLoweringObjectFileMachO();
   }
 
-  if (TM.getSubtarget<X86Subtarget>().isTargetELF() ){
+  if (Subtarget->isTargetELF()) {
     if (is64Bit)
       return new X8664_ELFTargetObjectFile(TM);
     return new X8632_ELFTargetObjectFile(TM);
   }
-  if (TM.getSubtarget<X86Subtarget>().isTargetCOFF())
+  if (Subtarget->isTargetCOFF() && !Subtarget->isTargetEnvMacho())
     return new TargetLoweringObjectFileCOFF();
   llvm_unreachable("unknown subtarget type");
 }

@@ -556,7 +556,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // responsible for adjusting the stack pointer.  Touching the stack at 4K
   // increments is necessary to ensure that the guard pages used by the OS
   // virtual memory manager are allocated in correct sequence.
-  if (NumBytes >= 4096 && (STI.isTargetCygMing() || STI.isTargetWin32())) {
+  if (NumBytes >= 4096 &&
+      (STI.isTargetCygMing() || STI.isTargetWin32()) &&
+      !STI.isTargetEnvMacho()) {
     // Check whether EAX is livein for this function.
     bool isEAXAlive = isEAXLiveIn(MF);
 
@@ -592,7 +594,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
                                       StackPtr, false, NumBytes - 4);
       MBB.insert(MBBI, MI);
     }
-  } else if (NumBytes >= 4096 && STI.isTargetWin64()) {
+  } else if (NumBytes >= 4096 && 
+             STI.isTargetWin64() && 
+             !STI.isTargetEnvMacho()) {
     // Sanity check that EAX is not livein for this function.  It should
     // should not be, so throw an assert.
     assert(!isEAXLiveIn(MF) && "EAX is livein in the Win64 case!");

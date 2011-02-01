@@ -101,7 +101,8 @@ public:
 
     GNU,
     GNUEABI,
-    EABI
+    EABI,
+    MachO
   };
 
 private:

@@ -33,7 +33,10 @@ static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   case Triple::MinGW64:
   case Triple::Cygwin:
   case Triple::Win32:
-    return new X86MCAsmInfoCOFF(TheTriple);
+    if (TheTriple.getEnvironment() == Triple::MachO)
+      return new X86MCAsmInfoDarwin(TheTriple);
+    else
+      return new X86MCAsmInfoCOFF(TheTriple);
   default:
     return new X86ELFMCAsmInfo(TheTriple);
   }
@@ -53,7 +56,10 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   case Triple::MinGW64:
   case Triple::Cygwin:
   case Triple::Win32:
-    return createWinCOFFStreamer(Ctx, TAB, *_Emitter, _OS, RelaxAll);
+    if (TheTriple.getEnvironment() == Triple::MachO)
+      return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
+    else
+      return createWinCOFFStreamer(Ctx, TAB, *_Emitter, _OS, RelaxAll);
   default:
     return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
   }
