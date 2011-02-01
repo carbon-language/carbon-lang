@@ -69,6 +69,7 @@ class   Debugger;
 class   Declaration;
 class   Disassembler;
 class   DynamicLoader;
+class   EmulateInstruction;
 class   Error;
 class   Event;
 class   EventData;

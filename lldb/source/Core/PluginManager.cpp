@@ -391,6 +391,128 @@ PluginManager::GetDynamicLoaderCreateCallbackForPluginName (const char *name)
     return NULL;
 }
 
+#pragma mark EmulateInstruction
+
+
+struct EmulateInstructionInstance
+{
+    EmulateInstructionInstance() :
+    name(),
+    description(),
+    create_callback(NULL)
+    {
+    }
+    
+    std::string name;
+    std::string description;
+    EmulateInstructionCreateInstance create_callback;
+};
+
+typedef std::vector<EmulateInstructionInstance> EmulateInstructionInstances;
+
+static bool
+AccessEmulateInstructionInstances (PluginAction action, EmulateInstructionInstance &instance, uint32_t index)
+{
+    static EmulateInstructionInstances g_plugin_instances;
+    
+    switch (action)
+    {
+        case ePluginRegisterInstance:
+            if (instance.create_callback)
+            {
+                g_plugin_instances.push_back (instance);
+                return true;
+            }
+            break;
+            
+        case ePluginUnregisterInstance:
+            if (instance.create_callback)
+            {
+                EmulateInstructionInstances::iterator pos, end = g_plugin_instances.end();
+                for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
+                {
+                    if (pos->create_callback == instance.create_callback)
+                    {
+                        g_plugin_instances.erase(pos);
+                        return true;
+                    }
+                }
+            }
+            break;
+            
+        case ePluginGetInstanceAtIndex:
+            if (index < g_plugin_instances.size())
+            {
+                instance = g_plugin_instances[index];
+                return true;
+            }
+            break;
+            
+        default:
+            break;
+    }
+    return false;
+}
+
+
+bool
+PluginManager::RegisterPlugin
+(
+ const char *name,
+ const char *description,
+ EmulateInstructionCreateInstance create_callback
+ )
+{
+    if (create_callback)
+    {
+        EmulateInstructionInstance instance;
+        assert (name && name[0]);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        return AccessEmulateInstructionInstances (ePluginRegisterInstance, instance, 0);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (EmulateInstructionCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        EmulateInstructionInstance instance;
+        instance.create_callback = create_callback;
+        return AccessEmulateInstructionInstances (ePluginUnregisterInstance, instance, 0);
+    }
+    return false;
+}
+
+EmulateInstructionCreateInstance
+PluginManager::GetEmulateInstructionCreateCallbackAtIndex (uint32_t idx)
+{
+    EmulateInstructionInstance instance;
+    if (AccessEmulateInstructionInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.create_callback;
+    return NULL;
+}
+
+EmulateInstructionCreateInstance
+PluginManager::GetEmulateInstructionCreateCallbackForPluginName (const char *name)
+{
+    if (name && name[0])
+    {
+        EmulateInstructionInstance instance;
+        std::string ss_name(name);
+        for (uint32_t idx = 0; AccessEmulateInstructionInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        {
+            if (instance.name == ss_name)
+                return instance.create_callback;
+        }
+    }
+    return NULL;
+}
+
 
 #pragma mark LanguageRuntime
 

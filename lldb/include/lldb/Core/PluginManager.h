@@ -73,6 +73,23 @@ public:
 
 
     //------------------------------------------------------------------
+    // EmulateInstruction
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const char *name,
+                    const char *description,
+                    EmulateInstructionCreateInstance create_callback);
+    
+    static bool
+    UnregisterPlugin (EmulateInstructionCreateInstance create_callback);
+    
+    static EmulateInstructionCreateInstance
+    GetEmulateInstructionCreateCallbackAtIndex (uint32_t idx);
+    
+    static EmulateInstructionCreateInstance
+    GetEmulateInstructionCreateCallbackForPluginName (const char *name);
+
+    //------------------------------------------------------------------
     // LanguageRuntime
     //------------------------------------------------------------------
     static bool
