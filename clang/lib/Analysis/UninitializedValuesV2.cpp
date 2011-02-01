@@ -92,10 +92,8 @@ public:
   llvm::BitVector &getBitVector(const CFGBlock *block,
                                 const CFGBlock *dstBlock);
 
-  BVPair &getBitVectors(const CFGBlock *block);
+  BVPair &getBitVectors(const CFGBlock *block, bool shouldLazyCreate);
 
-  BVPair getPredBitVectors(const CFGBlock *block);
-  
   void mergeIntoScratch(llvm::BitVector const &source, bool isFirst);
   bool updateBitVectorWithScratch(const CFGBlock *block);
   bool updateBitVectors(const CFGBlock *block, const BVPair &newVals);
@@ -147,44 +145,42 @@ llvm::BitVector &CFGBlockValues::lazyCreate(llvm::BitVector *&bv) {
 static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
   if (block->empty())
     return 0;
-  
+
   CFGStmt cstmt = block->front().getAs<CFGStmt>();
   BinaryOperator *b = llvm::dyn_cast_or_null<BinaryOperator>(cstmt.getStmt());
-  if (!b || !b->isLogicalOp() || block->getTerminatorCondition() != b)
+  
+  if (!b || !b->isLogicalOp())
     return 0;
-  return b;
+  
+  if (block->pred_size() == 2 &&
+      ((block->succ_size() == 2 && block->getTerminatorCondition() == b) ||
+       block->size() == 1))
+    return b;
+  
+  return 0;
 }
 
 llvm::BitVector &CFGBlockValues::getBitVector(const CFGBlock *block,
                                               const CFGBlock *dstBlock) {
   unsigned idx = block->getBlockID();
-  if (dstBlock && block->succ_size() == 2 && block->pred_size() == 2 &&
-      block->getTerminator()) {
-    if (getLogicalOperatorInChain(block)) {
-      if (*block->succ_begin() == dstBlock)
-        return lazyCreate(vals[idx].first);
-      assert(*(block->succ_begin()+1) == dstBlock);
-      return lazyCreate(vals[idx].second);
-    }
+  if (dstBlock && getLogicalOperatorInChain(block)) {
+    if (*block->succ_begin() == dstBlock)
+      return lazyCreate(vals[idx].first);
+    assert(*(block->succ_begin()+1) == dstBlock);
+    return lazyCreate(vals[idx].second);
   }
 
   assert(vals[idx].second == 0);
   return lazyCreate(vals[idx].first);
 }
 
-BVPair &CFGBlockValues::getBitVectors(const clang::CFGBlock *block) {
+BVPair &CFGBlockValues::getBitVectors(const clang::CFGBlock *block,
+                                      bool shouldLazyCreate) {
   unsigned idx = block->getBlockID();
   lazyCreate(vals[idx].first);
-  lazyCreate(vals[idx].second);
+  if (shouldLazyCreate)
+    lazyCreate(vals[idx].second);
   return vals[idx];
-}
-
-BVPair CFGBlockValues::getPredBitVectors(const clang::CFGBlock *block) {
-  assert(block->pred_size() == 2);
-  CFGBlock::const_pred_iterator itr = block->pred_begin();
-  llvm::BitVector &bvA = getBitVector(*itr, block);
-  ++itr;
-  return BVPair(&bvA, &getBitVector(*itr, block));
 }
 
 void CFGBlockValues::mergeIntoScratch(llvm::BitVector const &source,
@@ -194,23 +190,40 @@ void CFGBlockValues::mergeIntoScratch(llvm::BitVector const &source,
   else
     scratch |= source;  
 }
+#if 0
+static void printVector(const CFGBlock *block, llvm::BitVector &bv,
+                        unsigned num) {
+  
+  llvm::errs() << block->getBlockID() << " :";
+  for (unsigned i = 0; i < bv.size(); ++i) {
+    llvm::errs() << ' ' << bv[i];
+  }
+  llvm::errs() << " : " << num << '\n';
+}
+#endif
 
 bool CFGBlockValues::updateBitVectorWithScratch(const CFGBlock *block) {
   llvm::BitVector &dst = getBitVector(block, 0);
   bool changed = (dst != scratch);
   if (changed)
     dst = scratch;
-  
+#if 0
+  printVector(block, scratch, 0);
+#endif
   return changed;
 }
 
 bool CFGBlockValues::updateBitVectors(const CFGBlock *block,
                                       const BVPair &newVals) {
-  BVPair &vals = getBitVectors(block);
+  BVPair &vals = getBitVectors(block, true);
   bool changed = *newVals.first != *vals.first ||
                  *newVals.second != *vals.second;
   *vals.first = *newVals.first;
   *vals.second = *newVals.second;
+#if 0
+  printVector(block, *vals.first, 1);
+  printVector(block, *vals.second, 2);
+#endif
   return changed;
 }
 
@@ -522,22 +535,32 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
                        bool flagBlockUses = false) {
   
   if (const BinaryOperator *b = getLogicalOperatorInChain(block)) {
-    if (block->pred_size() == 2 && block->succ_size() == 2) {
-      assert(block->getTerminatorCondition() == b);    
-      BVPair valsAB = vals.getPredBitVectors(block);
-      vals.mergeIntoScratch(*valsAB.first, true);
-      vals.mergeIntoScratch(*valsAB.second, false);
+    CFGBlock::const_pred_iterator itr = block->pred_begin();
+    BVPair vA = vals.getBitVectors(*itr, false);
+    ++itr;
+    BVPair vB = vals.getBitVectors(*itr, false);
+
+    BVPair valsAB;
+    
+    if (b->getOpcode() == BO_LAnd) {
+      // Merge the 'F' bits from the first and second.
+      vals.mergeIntoScratch(*(vA.second ? vA.second : vA.first), true);
+      vals.mergeIntoScratch(*(vB.second ? vB.second : vB.first), false);
+      valsAB.first = vA.first;
       valsAB.second = &vals.getScratch();
-      if (b->getOpcode() == BO_LOr) {
-        // Ensure the invariant that 'first' corresponds to the true
-        // branch and 'second' to the false.
-        std::swap(valsAB.first, valsAB.second);
-      }
-      return vals.updateBitVectors(block, valsAB);
     }
+    else {
+      // Merge the 'T' bits from the first and second.
+      assert(b->getOpcode() == BO_LOr);
+      vals.mergeIntoScratch(*vA.first, true);
+      vals.mergeIntoScratch(*vB.first, false);
+      valsAB.first = &vals.getScratch();
+      valsAB.second = vA.second ? vA.second : vA.first;
+    }
+    return vals.updateBitVectors(block, valsAB);
   }
 
-  // Default behavior: merge in values of predecessor blocks.    
+  // Default behavior: merge in values of predecessor blocks.
   vals.resetScratch();
   bool isFirst = true;
   for (CFGBlock::const_pred_iterator I = block->pred_begin(),

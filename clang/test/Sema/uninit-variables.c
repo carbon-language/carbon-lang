@@ -240,3 +240,23 @@ void test36()
     goto *pc;
 }
 
+// Test && nested in ||.
+int test37_a();
+int test37_b();
+int test37()
+{
+    int identifier;
+    if ((test37_a() && (identifier = 1)) ||
+        (test37_b() && (identifier = 2))) {
+        return identifier; // no-warning
+    }
+    return 0;
+}
+
+// Test merging of path-specific dataflow values (without asserting).
+int test38(int r, int x, int y)
+{
+  int z;
+  return ((r < 0) || ((r == 0) && (x < y)));
+}
+
