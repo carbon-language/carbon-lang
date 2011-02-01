@@ -96,6 +96,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(AltiVec, diag::warn_pch_altivec);
   PARSE_LANGOPT_IMPORTANT(Exceptions, diag::warn_pch_exceptions);
   PARSE_LANGOPT_IMPORTANT(SjLjExceptions, diag::warn_pch_sjlj_exceptions);
+  PARSE_LANGOPT_IMPORTANT(MSBitfields, diag::warn_pch_ms_bitfields);
   PARSE_LANGOPT_IMPORTANT(NeXTRuntime, diag::warn_pch_objc_runtime);
   PARSE_LANGOPT_IMPORTANT(Freestanding, diag::warn_pch_freestanding);
   PARSE_LANGOPT_IMPORTANT(NoBuiltin, diag::warn_pch_builtins);
@@ -2613,6 +2614,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(AltiVec);
     PARSE_LANGOPT(Exceptions);
     PARSE_LANGOPT(SjLjExceptions);
+    PARSE_LANGOPT(MSBitfields);
     PARSE_LANGOPT(NeXTRuntime);
     PARSE_LANGOPT(Freestanding);
     PARSE_LANGOPT(NoBuiltin);

@@ -183,6 +183,8 @@ def munwind_tables : Flag<"-munwind-tables">,
   HelpText<"Generate unwinding tables for all functions">;
 def mconstructor_aliases : Flag<"-mconstructor-aliases">,
   HelpText<"Emit complete constructors and destructors as aliases when possible">;
+def mms_bitfields : Flag<"-mms-bitfields">,
+  HelpText<"Set the default structure layout to be compatible with the Microsoft compiler standard.">;
 def O : Joined<"-O">, HelpText<"Optimization level">;
 def Os : Flag<"-Os">, HelpText<"Optimize for size">;
 

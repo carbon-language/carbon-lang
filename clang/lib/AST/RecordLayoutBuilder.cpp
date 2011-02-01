@@ -1402,6 +1402,20 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     std::pair<uint64_t, unsigned> FieldInfo = Context.getTypeInfo(D->getType());
     FieldSize = FieldInfo.first;
     FieldAlign = FieldInfo.second;
+
+    if (Context.getLangOptions().MSBitfields) {
+      // If MS bitfield layout is required, figure out what type is being
+      // laid out and align the field to the width of that type.
+      
+      // Resolve all typedefs down to their base type and round up the field
+      // alignment if necessary.
+      QualType T = Context.getBaseElementType(D->getType());
+      if (const BuiltinType *BTy = T->getAs<BuiltinType>()) {
+        uint64_t TypeSize = Context.getTypeSize(BTy);
+        if (TypeSize > FieldAlign)
+          FieldAlign = TypeSize;
+      }
+    }
   }
 
   // The align if the field is not packed. This is to check if the attribute

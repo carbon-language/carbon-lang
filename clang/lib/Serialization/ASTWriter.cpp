@@ -911,6 +911,7 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.Exceptions);  // Support exception handling.
   Record.push_back(LangOpts.SjLjExceptions);
 
+  Record.push_back(LangOpts.MSBitfields); // MS-compatible structure layout
   Record.push_back(LangOpts.NeXTRuntime); // Use NeXT runtime.
   Record.push_back(LangOpts.Freestanding); // Freestanding implementation
   Record.push_back(LangOpts.NoBuiltin); // Do not use builtin functions (-fno-builtin)

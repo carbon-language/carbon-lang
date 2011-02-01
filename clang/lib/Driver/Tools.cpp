@@ -1028,6 +1028,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // work around a linker bug;  see <rdar://problem/7651567>.
   if (getToolChain().getTriple().getOS() != llvm::Triple::Darwin)
     CmdArgs.push_back("-mconstructor-aliases");
+    
+  if (Args.hasArg(options::OPT_mms_bitfields)) {
+    CmdArgs.push_back("-mms-bitfields");
+  }
 
   // This is a coarse approximation of what llvm-gcc actually does, both
   // -fasynchronous-unwind-tables and -fnon-call-exceptions interact in more

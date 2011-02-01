@@ -85,7 +85,8 @@ def err_verify_missing_end : Error<
 def err_verify_invalid_content : Error<
     "invalid expected %0: %1">;
 def err_verify_inconsistent_diags : Error<
-    "'%0' diagnostics %select{expected|seen}1 but not %select{seen|expected}1: %2">;
+    "'%0' diagnostics %select{expected|seen}1 but not %select{seen|expected}1: "
+    "%2">;
 
 def note_fixit_applied : Note<"FIX-IT applied suggested code changes">;
 def note_fixit_in_macro : Note<
@@ -150,6 +151,9 @@ def warn_pch_gnu_keywords : Error<
 def warn_pch_microsoft_extensions : Error<
     "Microsoft extensions were %select{disabled|enabled}0 in PCH file but are "
     "currently %select{disabled|enabled}1">;
+def warn_pch_ms_bitfields : Error<
+    "Microsoft-compatible structure layout was %select{disabled|enabled}0 in "
+    "PCH file but is currently %select{disabled|enabled}1">;
 def warn_pch_heinous_extensions : Error<
     "heinous extensions were %select{disabled|enabled}0 in PCH file but are "
     "currently %select{disabled|enabled}1">;

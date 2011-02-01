@@ -56,6 +56,7 @@ public:
   unsigned SjLjExceptions    : 1;  // Use setjmp-longjump exception handling.
   unsigned RTTI              : 1;  // Support RTTI information.
 
+  unsigned MSBitfields       : 1; // MS-compatible structure layout
   unsigned NeXTRuntime       : 1; // Use NeXT runtime.
   unsigned Freestanding      : 1; // Freestanding implementation
   unsigned NoBuiltin         : 1; // Do not use builtin functions (-fno-builtin)
@@ -163,6 +164,7 @@ public:
     C99 = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
     Exceptions = SjLjExceptions = Freestanding = NoBuiltin = 0;
+    MSBitfields = 0;
     NeXTRuntime = 1;
     RTTI = 1;
     LaxVectorConversions = 1;

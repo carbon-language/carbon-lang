@@ -583,6 +583,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fsjlj-exceptions");
   if (!Opts.RTTI)
     Res.push_back("-fno-rtti");
+  if (Opts.MSBitfields)
+    Res.push_back("-mms-bitfields");
   if (!Opts.NeXTRuntime)
     Res.push_back("-fgnu-runtime");
   if (Opts.Freestanding)
@@ -1445,6 +1447,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
                                                Diags);
   Opts.NumLargeByValueCopy = Args.getLastArgIntValue(OPT_Wlarge_by_value_copy,
                                                     0, Diags);
+  Opts.MSBitfields = Args.hasArg(OPT_mms_bitfields);
   Opts.NeXTRuntime = !Args.hasArg(OPT_fgnu_runtime);
   Opts.ObjCConstantStringClass =
     Args.getLastArgValue(OPT_fconstant_string_class);
