@@ -666,9 +666,7 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
 
   // (signbit) >>l X is clearly a power of two if the one is not shifted off the
   // bottom.  If it is shifted off the bottom then the result is undefined.
-  ConstantInt *CI;
-  if (match(V, m_LShr(m_ConstantInt(CI), m_Value())) &&
-      CI->getValue().isSignBit())
+  if (match(V, m_LShr(m_SignBit(), m_Value())))
     return true;
 
   // The remaining tests are all recursive, so bail out if we hit the limit.
