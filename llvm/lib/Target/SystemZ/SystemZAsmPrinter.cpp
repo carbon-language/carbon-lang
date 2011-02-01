@@ -55,8 +55,14 @@ namespace {
     void printS16ImmOperand(const MachineInstr *MI, int OpNum, raw_ostream &O) {
       O << (int16_t)MI->getOperand(OpNum).getImm();
     }
+    void printU16ImmOperand(const MachineInstr *MI, int OpNum, raw_ostream &O) {
+      O << (uint16_t)MI->getOperand(OpNum).getImm();
+    }
     void printS32ImmOperand(const MachineInstr *MI, int OpNum, raw_ostream &O) {
       O << (int32_t)MI->getOperand(OpNum).getImm();
+    }
+    void printU32ImmOperand(const MachineInstr *MI, int OpNum, raw_ostream &O) {
+      O << (uint32_t)MI->getOperand(OpNum).getImm();
     }
 
     void printInstruction(const MachineInstr *MI, raw_ostream &O);

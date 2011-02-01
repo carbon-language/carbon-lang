@@ -229,19 +229,19 @@ def MOV64ri16 : RII<0x9A7,
                     [(set GR64:$dst, immSExt16:$src)]>;
 
 def MOV64rill16 : RII<0xFA5,
-                      (outs GR64:$dst), (ins i64imm:$src),
+                      (outs GR64:$dst), (ins u16imm:$src),
                       "llill\t{$dst, $src}",
                       [(set GR64:$dst, i64ll16:$src)]>;
 def MOV64rilh16 : RII<0xEA5,
-                      (outs GR64:$dst), (ins i64imm:$src),
+                      (outs GR64:$dst), (ins u16imm:$src),
                       "llilh\t{$dst, $src}",
                       [(set GR64:$dst, i64lh16:$src)]>;
 def MOV64rihl16 : RII<0xDA5,
-                      (outs GR64:$dst), (ins i64imm:$src),
+                      (outs GR64:$dst), (ins u16imm:$src),
                       "llihl\t{$dst, $src}",
                       [(set GR64:$dst, i64hl16:$src)]>;
 def MOV64rihh16 : RII<0xCA5,
-                      (outs GR64:$dst), (ins i64imm:$src),
+                      (outs GR64:$dst), (ins u16imm:$src),
                       "llihh\t{$dst, $src}",
                       [(set GR64:$dst, i64hh16:$src)]>;
 
@@ -250,10 +250,10 @@ def MOV64ri32 : RILI<0x1C0,
                      "lgfi\t{$dst, $src}",
                      [(set GR64:$dst, immSExt32:$src)]>;
 def MOV64rilo32 : RILI<0xFC0,
-                       (outs GR64:$dst), (ins i64imm:$src),
+                       (outs GR64:$dst), (ins u32imm:$src),
                        "llilf\t{$dst, $src}",
                        [(set GR64:$dst, i64lo32:$src)]>;
-def MOV64rihi32 : RILI<0xEC0, (outs GR64:$dst), (ins i64imm:$src),
+def MOV64rihi32 : RILI<0xEC0, (outs GR64:$dst), (ins u32imm:$src),
                        "llihf\t{$dst, $src}",
                        [(set GR64:$dst, i64hi32:$src)]>;
 }
@@ -642,42 +642,42 @@ def AND64rm   : RXYI<0xE360, (outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
                       (implicit PSW)]>;
 
 def AND32rill16 : RII<0xA57,
-                      (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                      (outs GR32:$dst), (ins GR32:$src1, u16imm:$src2),
                       "nill\t{$dst, $src2}",
                       [(set GR32:$dst, (and GR32:$src1, i32ll16c:$src2))]>;
 def AND64rill16 : RII<0xA57,
-                      (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                      (outs GR64:$dst), (ins GR64:$src1, u16imm:$src2),
                       "nill\t{$dst, $src2}",
                       [(set GR64:$dst, (and GR64:$src1, i64ll16c:$src2))]>;
 
 def AND32rilh16 : RII<0xA56,
-                      (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                      (outs GR32:$dst), (ins GR32:$src1, u16imm:$src2),
                       "nilh\t{$dst, $src2}",
                       [(set GR32:$dst, (and GR32:$src1, i32lh16c:$src2))]>;
 def AND64rilh16 : RII<0xA56,
-                      (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                      (outs GR64:$dst), (ins GR64:$src1, u16imm:$src2),
                       "nilh\t{$dst, $src2}",
                       [(set GR64:$dst, (and GR64:$src1, i64lh16c:$src2))]>;
 
 def AND64rihl16 : RII<0xA55,
-                      (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                      (outs GR64:$dst), (ins GR64:$src1, u16imm:$src2),
                       "nihl\t{$dst, $src2}",
                       [(set GR64:$dst, (and GR64:$src1, i64hl16c:$src2))]>;
 def AND64rihh16 : RII<0xA54,
-                      (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                      (outs GR64:$dst), (ins GR64:$src1, u16imm:$src2),
                       "nihh\t{$dst, $src2}",
                       [(set GR64:$dst, (and GR64:$src1, i64hh16c:$src2))]>;
 
 def AND32ri     : RILI<0xC0B,
-                       (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                       (outs GR32:$dst), (ins GR32:$src1, u32imm:$src2),
                        "nilf\t{$dst, $src2}",
                        [(set GR32:$dst, (and GR32:$src1, imm:$src2))]>;
 def AND64rilo32 : RILI<0xC0B,
-                       (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                       (outs GR64:$dst), (ins GR64:$src1, u32imm:$src2),
                        "nilf\t{$dst, $src2}",
                        [(set GR64:$dst, (and GR64:$src1, i64lo32c:$src2))]>;
 def AND64rihi32 : RILI<0xC0A,
-                       (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                       (outs GR64:$dst), (ins GR64:$src1, u32imm:$src2),
                        "nihf\t{$dst, $src2}",
                        [(set GR64:$dst, (and GR64:$src1, i64hi32c:$src2))]>;
 
@@ -707,41 +707,41 @@ def OR64rm   : RXYI<0xE381, (outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
 
  // FIXME: Provide proper encoding!
 def OR32ri16  : RII<0xA5B,
-                    (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                    (outs GR32:$dst), (ins GR32:$src1, u32imm:$src2),
                     "oill\t{$dst, $src2}",
                     [(set GR32:$dst, (or GR32:$src1, i32ll16:$src2))]>;
 def OR32ri16h : RII<0xA5A,
-                    (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                    (outs GR32:$dst), (ins GR32:$src1, u32imm:$src2),
                     "oilh\t{$dst, $src2}",
                     [(set GR32:$dst, (or GR32:$src1, i32lh16:$src2))]>;
 def OR32ri : RILI<0xC0D,
-                  (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                  (outs GR32:$dst), (ins GR32:$src1, u32imm:$src2),
                   "oilf\t{$dst, $src2}",
                   [(set GR32:$dst, (or GR32:$src1, imm:$src2))]>;
 
 def OR64rill16 : RII<0xA5B,
-                     (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                     (outs GR64:$dst), (ins GR64:$src1, u16imm:$src2),
                      "oill\t{$dst, $src2}",
                      [(set GR64:$dst, (or GR64:$src1, i64ll16:$src2))]>;
 def OR64rilh16 : RII<0xA5A,
-                     (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                     (outs GR64:$dst), (ins GR64:$src1, u16imm:$src2),
                      "oilh\t{$dst, $src2}",
                      [(set GR64:$dst, (or GR64:$src1, i64lh16:$src2))]>;
 def OR64rihl16 : RII<0xA59,
-                     (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                     (outs GR64:$dst), (ins GR64:$src1, u16imm:$src2),
                      "oihl\t{$dst, $src2}",
                      [(set GR64:$dst, (or GR64:$src1, i64hl16:$src2))]>;
 def OR64rihh16 : RII<0xA58,
-                     (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                     (outs GR64:$dst), (ins GR64:$src1, u16imm:$src2),
                      "oihh\t{$dst, $src2}",
                      [(set GR64:$dst, (or GR64:$src1, i64hh16:$src2))]>;
 
 def OR64rilo32 : RILI<0xC0D,
-                      (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                      (outs GR64:$dst), (ins GR64:$src1, u32imm:$src2),
                       "oilf\t{$dst, $src2}",
                       [(set GR64:$dst, (or GR64:$src1, i64lo32:$src2))]>;
 def OR64rihi32 : RILI<0xC0C,
-                      (outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                      (outs GR64:$dst), (ins GR64:$src1, u32imm:$src2),
                       "oihf\t{$dst, $src2}",
                       [(set GR64:$dst, (or GR64:$src1, i64hi32:$src2))]>;
 

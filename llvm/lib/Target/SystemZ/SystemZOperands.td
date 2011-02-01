@@ -246,6 +246,14 @@ def s16imm : Operand<i32> {
 def s16imm64 : Operand<i64> {
   let PrintMethod = "printS16ImmOperand";
 }
+// Unsigned i16
+def u16imm : Operand<i32> {
+  let PrintMethod = "printU16ImmOperand";
+}
+def u16imm64 : Operand<i64> {
+  let PrintMethod = "printU16ImmOperand";
+}
+
 // Signed i20
 def s20imm : Operand<i32> {
   let PrintMethod = "printS20ImmOperand";
@@ -259,6 +267,13 @@ def s32imm : Operand<i32> {
 }
 def s32imm64 : Operand<i64> {
   let PrintMethod = "printS32ImmOperand";
+}
+// Unsigned i32
+def u32imm : Operand<i32> {
+  let PrintMethod = "printU32ImmOperand";
+}
+def u32imm64 : Operand<i64> {
+  let PrintMethod = "printU32ImmOperand";
 }
 
 def imm_pcrel : Operand<i64> {
