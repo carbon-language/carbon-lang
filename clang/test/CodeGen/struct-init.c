@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o -
+// RUN: %clang_cc1 %s -emit-llvm-only
 
 typedef struct _zend_ini_entry zend_ini_entry;
 struct _zend_ini_entry {
@@ -18,3 +18,14 @@ struct GLGENH {
 };
 
 struct GLGENH ABHFBF = {1};
+
+typedef __attribute__(( ext_vector_type(2) )) unsigned int uint2;
+typedef __attribute__(( __vector_size__(8) )) unsigned int __neon_uint32x2_t;
+
+// rdar://8183908
+typedef struct __simd64_uint32_t {
+  __neon_uint32x2_t val;
+} uint32x2_t;
+void foo() {
+    const uint32x2_t signBit = { (uint2) 0x80000000 };
+}

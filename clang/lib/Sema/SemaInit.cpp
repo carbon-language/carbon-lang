@@ -697,7 +697,8 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
       //   initial value of the object, including unnamed members, is
       //   that of the expression.
       if ((ElemType->isRecordType() || ElemType->isVectorType()) &&
-          SemaRef.Context.hasSameUnqualifiedType(expr->getType(), ElemType)) {
+          SemaRef.CheckSingleAssignmentConstraints(ElemType, expr)
+              == Sema::Compatible) {
         SemaRef.DefaultFunctionArrayLvalueConversion(expr);
         UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
         ++Index;
