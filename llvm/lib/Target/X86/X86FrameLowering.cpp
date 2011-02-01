@@ -598,7 +598,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
              STI.isTargetWin64() && 
              !STI.isTargetEnvMacho()) {
     // Sanity check that EAX is not livein for this function.  It should
-    // should not be, so throw an assert.
+    // not be, so throw an assert.
     assert(!isEAXLiveIn(MF) && "EAX is livein in the Win64 case!");
 
     // Handle the 64-bit Windows ABI case where we need to call __chkstk.
