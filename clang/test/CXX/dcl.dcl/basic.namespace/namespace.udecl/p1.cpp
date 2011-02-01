@@ -89,6 +89,7 @@ namespace test2 {
 
 namespace test3 {
   class A {
+  public:
     ~A();
   };
 

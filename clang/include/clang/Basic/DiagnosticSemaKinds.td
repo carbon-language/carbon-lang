@@ -564,6 +564,9 @@ def err_access_field: Error<
 def err_access_ctor_field :
     Error<"field of type %1 has %select{private|protected}2 constructor">,
     AccessControl;
+def err_access_dtor : Error<
+  "calling a %select{private|protected}1 destructor of class %0">, 
+  AccessControl;
 def err_access_dtor_base :
     Error<"base class %0 has %select{private|protected}1 destructor">,
     AccessControl;

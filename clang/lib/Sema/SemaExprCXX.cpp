@@ -1687,7 +1687,15 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
     MarkDeclarationReferenced(StartLoc, OperatorDelete);
     
-    // FIXME: Check access and ambiguity of operator delete and destructor.
+    // Check access and ambiguity of operator delete and destructor.
+    if (const RecordType *RT = PointeeElem->getAs<RecordType>()) {
+      CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+      if (CXXDestructorDecl *Dtor = LookupDestructor(RD)) {
+          CheckDestructorAccess(Ex->getExprLoc(), Dtor, 
+                      PDiag(diag::err_access_dtor) << PointeeElem);
+      }
+    }
+
   }
 
   return Owned(new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm,

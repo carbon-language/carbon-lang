@@ -234,6 +234,17 @@ void f(X14 *x14a, X14 *x14b) {
   delete x14a;
 }
 
+class X15 {
+private:
+  X15(); // expected-note {{declared private here}}
+  ~X15(); // expected-note {{declared private here}}
+};
+
+void f(X15* x) {
+  new X15(); // expected-error {{calling a private constructor}}
+  delete x; // expected-error {{calling a private destructor}}
+}
+
 namespace PR5918 { // Look for template operator new overloads.
   struct S { template<typename T> static void* operator new(size_t, T); };
   void test() {
