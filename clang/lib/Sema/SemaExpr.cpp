@@ -9225,8 +9225,30 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
     << FixItHint::CreateInsertion(Close, ")");
 }
 
+/// \brief Redundant parentheses over an equality comparison can indicate
+/// that the user intended an assignment used as condition.
+void Sema::DiagnoseEqualityWithExtraParens(ParenExpr *parenE) {
+  Expr *E = parenE->IgnoreParens();
+
+  if (BinaryOperator *opE = dyn_cast<BinaryOperator>(E))
+    if (opE->getOpcode() == BO_EQ) {
+      SourceLocation Loc = opE->getOperatorLoc();
+
+      Diag(Loc, diag::warn_equality_with_extra_parens) << E->getSourceRange();
+
+      Diag(Loc, diag::note_equality_comparison_to_assign)
+        << FixItHint::CreateReplacement(Loc, "=");
+
+      Diag(Loc, diag::note_equality_comparison_silence)
+        << FixItHint::CreateRemoval(parenE->getSourceRange().getBegin())
+        << FixItHint::CreateRemoval(parenE->getSourceRange().getEnd());
+    }
+}
+
 bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
   DiagnoseAssignmentAsCondition(E);
+  if (ParenExpr *parenE = dyn_cast<ParenExpr>(E))
+    DiagnoseEqualityWithExtraParens(parenE);
 
   if (!E->isTypeDependent()) {
     if (E->isBoundMemberFunction(Context))

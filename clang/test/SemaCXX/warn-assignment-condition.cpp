@@ -105,4 +105,8 @@ void test() {
   if (a |= b) {} // expected-warning {{using the result of an assignment as a condition without parentheses}} \
                 // expected-note{{use '!=' to turn this compound assignment into an inequality comparison}} \
   // expected-note{{place parentheses around the assignment to silence this warning}}
+
+  if ((x == 5)) {} // expected-warning {{equality comparison with extraneous parentheses}} \
+                   // expected-note {{use '=' to turn this equality comparison into an assignment}} \
+                   // expected-note {{remove extraneous parentheses around the comparison to silence this warning}}
 }

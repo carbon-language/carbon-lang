@@ -135,7 +135,7 @@ extern void *somePtr;
 }
 
 -(id)init13 {
-	if ((self == [super init])) {
+	if (self == [super init]) {
 	  myivar = 0; // expected-warning {{Instance variable used}}
 	}
 	return self; // expected-warning {{Returning 'self'}}

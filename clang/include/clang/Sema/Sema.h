@@ -4734,6 +4734,10 @@ public:
   /// being used as a boolean condition, warn if it's an assignment.
   void DiagnoseAssignmentAsCondition(Expr *E);
 
+  /// \brief Redundant parentheses over an equality comparison can indicate
+  /// that the user intended an assignment used as condition.
+  void DiagnoseEqualityWithExtraParens(ParenExpr *parenE);
+
   /// CheckCXXBooleanCondition - Returns true if conversion to bool is invalid.
   bool CheckCXXBooleanCondition(Expr *&CondExpr);
 
