@@ -2874,9 +2874,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
       assert(VT.getSimpleVT() <= N1.getValueType().getSimpleVT() &&
              "Extract subvector must be from larger vector to smaller vector!");
 
-      if (ConstantSDNode *CSD = dyn_cast<ConstantSDNode>(Index.getNode())) {
-        (void)CSD;
-        assert((VT.getVectorNumElements() + CSD->getZExtValue()
+      if (isa<ConstantSDNode>(Index.getNode())) {
+        assert((VT.getVectorNumElements() +
+                cast<ConstantSDNode>(Index.getNode())->getZExtValue()
                 <= N1.getValueType().getVectorNumElements())
                && "Extract subvector overflow!");
       }
@@ -3093,9 +3093,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
              "Dest and insert subvector source types must match!");
       assert(N2.getValueType().getSimpleVT() <= N1.getValueType().getSimpleVT() &&
              "Insert subvector must be from smaller vector to larger vector!");
-      if (ConstantSDNode *CSD = dyn_cast<ConstantSDNode>(Index.getNode())) {
-        (void)CSD;
-        assert((N2.getValueType().getVectorNumElements() + CSD->getZExtValue()
+      if (isa<ConstantSDNode>(Index.getNode())) {
+        assert((N2.getValueType().getVectorNumElements() +
+                cast<ConstantSDNode>(Index.getNode())->getZExtValue()
                 <= VT.getVectorNumElements())
                && "Insert subvector overflow!");
       }
