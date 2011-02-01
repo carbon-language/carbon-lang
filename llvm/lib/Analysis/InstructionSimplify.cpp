@@ -785,12 +785,6 @@ static Value *SimplifyDiv(unsigned Opcode, Value *Op0, Value *Op1,
   // X / 1 -> X
   if (match(Op1, m_One()))
     return Op0;
-  // Vector case. TODO: Have m_One match vectors.
-  if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
-    if (ConstantInt *X = cast_or_null<ConstantInt>(Op1V->getSplatValue()))
-      if (X->isOne())
-        return Op0;
-  }
 
   if (Op0->getType()->isIntegerTy(1))
     // It can't be division by zero, hence it must be division by one.

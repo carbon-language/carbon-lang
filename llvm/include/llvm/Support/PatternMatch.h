@@ -90,13 +90,16 @@ inline zero_ty m_Zero() { return zero_ty(); }
 struct one_ty {
   template<typename ITy>
   bool match(ITy *V) {
-    if (const ConstantInt *C = dyn_cast<ConstantInt>(V))
-      return C->isOne();
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
+      return CI->isOne();
+    if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
+      if (ConstantInt *CI = cast_or_null<ConstantInt>(CV->getSplatValue()))
+        return CI->isOne();
     return false;
   }
 };
 
-/// m_One() - Match an integer 1.
+/// m_One() - Match an integer 1 or a vector with all elements equal to 1.
 inline one_ty m_One() { return one_ty(); }
   
 struct all_ones_ty {

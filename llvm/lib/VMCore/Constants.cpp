@@ -1033,7 +1033,7 @@ bool ConstantVector::isAllOnesValue() const {
 
 /// getSplatValue - If this is a splat constant, where all of the
 /// elements have the same value, return that value. Otherwise return null.
-Constant *ConstantVector::getSplatValue() {
+Constant *ConstantVector::getSplatValue() const {
   // Check out first element.
   Constant *Elt = getOperand(0);
   // Then make sure all remaining elements point to the same value.
