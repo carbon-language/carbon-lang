@@ -8,9 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "EmulateInstructionARM.h"
+#include "lldb/Core/ConstString.h"
+
 #include "ARMDefines.h"
 #include "ARMUtils.h"
-#include "lldb/Core/ConstString.h"
+#include "ARM_DWARF_Registers.h"
 
 using namespace lldb;
 using namespace lldb_private;

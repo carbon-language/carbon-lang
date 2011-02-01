@@ -15,10 +15,6 @@
 		2618D7921240116900F2B8FE /* SectionLoadList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618D7911240116900F2B8FE /* SectionLoadList.cpp */; };
 		2618D9EB12406FE600F2B8FE /* NameToDIE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618D9EA12406FE600F2B8FE /* NameToDIE.cpp */; };
 		261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */; };
-		2621C9CD12EA009300711A30 /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2621C9CB12EA009300711A30 /* EmulateInstructionARM.cpp */; };
-		2621C9CE12EA009300711A30 /* EmulateInstruction.h in Headers */ = {isa = PBXBuildFile; fileRef = 2621C9CC12EA009300711A30 /* EmulateInstruction.h */; };
-		2621C9D012EA066500711A30 /* EmulateInstructionARM.h in Headers */ = {isa = PBXBuildFile; fileRef = 2621C9CF12EA066500711A30 /* EmulateInstructionARM.h */; };
-		2621CA0B12EA107700711A30 /* EmulateInstruction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2621CA0A12EA107700711A30 /* EmulateInstruction.cpp */; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
 		2635DA87127D0D0400675BC1 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
@@ -291,6 +287,10 @@
 		26D5B15611B07550009A862E /* CommandObjectArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */; };
 		26D5B15A11B07550009A862E /* UnwindMacOSXFrameBackchain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */; };
 		26D5B15B11B07550009A862E /* RegisterContextMacOSXFrameBackchain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */; };
+		26D9FDC712F784E60003F2EE /* EmulateInstruction.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D9FDC612F784E60003F2EE /* EmulateInstruction.h */; };
+		26D9FDC912F784FD0003F2EE /* EmulateInstruction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D9FDC812F784FD0003F2EE /* EmulateInstruction.cpp */; };
+		26D9FDCE12F7853F0003F2EE /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D9FDCC12F7853F0003F2EE /* EmulateInstructionARM.cpp */; };
+		26D9FDCF12F7853F0003F2EE /* EmulateInstructionARM.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D9FDCD12F7853F0003F2EE /* EmulateInstructionARM.h */; };
 		26DE1E6B11616C2E00A093E2 /* lldb-forward-rtti.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DE1E6911616C2E00A093E2 /* lldb-forward-rtti.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26DE1E6C11616C2E00A093E2 /* lldb-forward.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DE1E6A11616C2E00A093E2 /* lldb-forward.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26DE204111618AB900A093E2 /* SBSymbolContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DE204011618AB900A093E2 /* SBSymbolContext.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -547,10 +547,6 @@
 		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = include/lldb/Utility/SharingPtr.h; sourceTree = "<group>"; };
 		261E18CC1148966100BADCD3 /* GDBRemoteRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GDBRemoteRegisterContext.h; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.h"; sourceTree = "<group>"; };
 		261E18CD1148966100BADCD3 /* GDBRemoteRegisterContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GDBRemoteRegisterContext.cpp; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.cpp"; sourceTree = "<group>"; };
-		2621C9CB12EA009300711A30 /* EmulateInstructionARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstructionARM.cpp; path = Utility/EmulateInstructionARM.cpp; sourceTree = "<group>"; };
-		2621C9CC12EA009300711A30 /* EmulateInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstruction.h; path = Utility/EmulateInstruction.h; sourceTree = "<group>"; };
-		2621C9CF12EA066500711A30 /* EmulateInstructionARM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstructionARM.h; path = Utility/EmulateInstructionARM.h; sourceTree = "<group>"; };
-		2621CA0A12EA107700711A30 /* EmulateInstruction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstruction.cpp; path = Utility/EmulateInstruction.cpp; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; };
 		26368A3B126B697600E8659F /* darwin-debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "darwin-debug.cpp"; path = "tools/darwin-debug/darwin-debug.cpp"; sourceTree = "<group>"; };
@@ -878,6 +874,10 @@
 		26D0DD5510FE555900271C65 /* BreakpointResolverName.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BreakpointResolverName.cpp; path = source/Breakpoint/BreakpointResolverName.cpp; sourceTree = "<group>"; };
 		26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ELFHeader.cpp; sourceTree = "<group>"; };
 		26D27C9E11ED3A4E0024D721 /* ELFHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELFHeader.h; sourceTree = "<group>"; };
+		26D9FDC612F784E60003F2EE /* EmulateInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstruction.h; path = include/lldb/Core/EmulateInstruction.h; sourceTree = "<group>"; };
+		26D9FDC812F784FD0003F2EE /* EmulateInstruction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstruction.cpp; path = source/Core/EmulateInstruction.cpp; sourceTree = "<group>"; };
+		26D9FDCC12F7853F0003F2EE /* EmulateInstructionARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstructionARM.cpp; path = Instruction/ARM/EmulateInstructionARM.cpp; sourceTree = "<group>"; };
+		26D9FDCD12F7853F0003F2EE /* EmulateInstructionARM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstructionARM.h; path = Instruction/ARM/EmulateInstructionARM.h; sourceTree = "<group>"; };
 		26DAFD9711529BC7005A394E /* ExecutionContextScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExecutionContextScope.h; path = include/lldb/Target/ExecutionContextScope.h; sourceTree = "<group>"; };
 		26DE1E6911616C2E00A093E2 /* lldb-forward-rtti.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-forward-rtti.h"; path = "include/lldb/lldb-forward-rtti.h"; sourceTree = "<group>"; };
 		26DE1E6A11616C2E00A093E2 /* lldb-forward.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-forward.h"; path = "include/lldb/lldb-forward.h"; sourceTree = "<group>"; };
@@ -1195,6 +1195,7 @@
 				493C63D711891A8000914D5E /* ABI */,
 				260C897210F57C5600BB2B04 /* Disassembler */,
 				260C897810F57C5600BB2B04 /* DynamicLoader */,
+				26D9FDCA12F785120003F2EE /* Instruction */,
 				4CB443651249446F00C13DC2 /* LanguageRuntime */,
 				260C897E10F57C5600BB2B04 /* ObjectContainer */,
 				260C898210F57C5600BB2B04 /* ObjectFile */,
@@ -1616,10 +1617,6 @@
 				B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */,
 				B287E63E12EFAE2C00C9BEFE /* ARMDefines.h */,
 				B23DD24F12EDFAC1000C3894 /* ARMUtils.h */,
-				2621C9CC12EA009300711A30 /* EmulateInstruction.h */,
-				2621CA0A12EA107700711A30 /* EmulateInstruction.cpp */,
-				2621C9CF12EA066500711A30 /* EmulateInstructionARM.h */,
-				2621C9CB12EA009300711A30 /* EmulateInstructionARM.cpp */,
 				AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */,
 				AF68D3301255A110002FF25B /* UnwindLLDB.h */,
 				AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */,
@@ -1681,6 +1678,8 @@
 				26BC7E7610F1B85900F91463 /* Disassembler.cpp */,
 				26BC7D5F10F1B77400F91463 /* dwarf.h */,
 				26BC7E7710F1B85900F91463 /* DynamicLoader.cpp */,
+				26D9FDC612F784E60003F2EE /* EmulateInstruction.h */,
+				26D9FDC812F784FD0003F2EE /* EmulateInstruction.cpp */,
 				26BC7D6010F1B77400F91463 /* Error.h */,
 				26BC7E7810F1B85900F91463 /* Error.cpp */,
 				26BC7D6110F1B77400F91463 /* Event.h */,
@@ -2106,6 +2105,23 @@
 			name = MacOSX;
 			sourceTree = "<group>";
 		};
+		26D9FDCA12F785120003F2EE /* Instruction */ = {
+			isa = PBXGroup;
+			children = (
+				26D9FDCB12F785270003F2EE /* ARM */,
+			);
+			name = Instruction;
+			sourceTree = "<group>";
+		};
+		26D9FDCB12F785270003F2EE /* ARM */ = {
+			isa = PBXGroup;
+			children = (
+				26D9FDCD12F7853F0003F2EE /* EmulateInstructionARM.h */,
+				26D9FDCC12F7853F0003F2EE /* EmulateInstructionARM.cpp */,
+			);
+			name = ARM;
+			sourceTree = "<group>";
+		};
 		26F5C22410F3D950009D5894 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
@@ -2310,11 +2326,11 @@
 				266A42D8128E40040090CF7C /* ClangNamespaceDecl.h in Headers */,
 				26E6902F129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h in Headers */,
 				4C7CF7E41295E10E00B4FBB5 /* ThreadPlanCallUserExpression.h in Headers */,
-				2621C9CE12EA009300711A30 /* EmulateInstruction.h in Headers */,
-				2621C9D012EA066500711A30 /* EmulateInstructionARM.h in Headers */,
 				B23DD25012EDFAC1000C3894 /* ARMUtils.h in Headers */,
 				B2D3033712EFA5C500F84EB3 /* InstructionUtils.h in Headers */,
 				B287E63F12EFAE2C00C9BEFE /* ARMDefines.h in Headers */,
+				26D9FDC712F784E60003F2EE /* EmulateInstruction.h in Headers */,
+				26D9FDCF12F7853F0003F2EE /* EmulateInstructionARM.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2816,8 +2832,8 @@
 				26E69031129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp in Sources */,
 				4C7CF7E61295E12B00B4FBB5 /* ThreadPlanCallUserExpression.cpp in Sources */,
 				B296983712C2FB98002D92C3 /* CommandObjectVersion.cpp in Sources */,
-				2621C9CD12EA009300711A30 /* EmulateInstructionARM.cpp in Sources */,
-				2621CA0B12EA107700711A30 /* EmulateInstruction.cpp in Sources */,
+				26D9FDC912F784FD0003F2EE /* EmulateInstruction.cpp in Sources */,
+				26D9FDCE12F7853F0003F2EE /* EmulateInstructionARM.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -10,9 +10,7 @@
 #ifndef lldb_EmulateInstructionARM_h_
 #define lldb_EmulateInstructionARM_h_
 
-#include "EmulateInstruction.h"
-#include "ARM_DWARF_Registers.h"
-
+#include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Error.h"
 
 namespace lldb_private {

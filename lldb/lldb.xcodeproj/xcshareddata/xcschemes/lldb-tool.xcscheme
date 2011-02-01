@@ -28,6 +28,12 @@
       buildConfiguration = "Debug">
       <Testables>
       </Testables>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "/Volumes/work/gclayton/Documents/src/attach/a.out"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "LLDB_LAUNCH_FLAG_DISABLE_ASLR"
@@ -56,7 +62,7 @@
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "LLDB_DEBUGSERVER_LOG_FLAGS"
-            value = "0x800e0e"
+            value = "0x802e0e"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
@@ -78,6 +84,12 @@
             ReferencedContainer = "container:lldb.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "/Volumes/work/gclayton/Documents/src/attach/a.out"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "LLDB_LAUNCH_FLAG_DISABLE_ASLR"
@@ -106,7 +118,7 @@
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "LLDB_DEBUGSERVER_LOG_FLAGS"
-            value = "0x800e0e"
+            value = "0x802e0e"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
@@ -129,6 +141,12 @@
             ReferencedContainer = "container:lldb.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "/Volumes/work/gclayton/Documents/src/attach/a.out"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "LLDB_LAUNCH_FLAG_DISABLE_ASLR"
@@ -157,7 +175,7 @@
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "LLDB_DEBUGSERVER_LOG_FLAGS"
-            value = "0x800e0e"
+            value = "0x802e0e"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
