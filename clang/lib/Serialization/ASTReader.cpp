@@ -2964,7 +2964,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   }
 
   case TYPE_PACK_EXPANSION: {
-    if (Record.size() != 1) {
+    if (Record.size() != 2) {
       Error("incorrect encoding of pack expansion type");
       return QualType();
     }
