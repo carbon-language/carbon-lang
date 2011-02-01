@@ -5356,20 +5356,28 @@ checkPointerTypesForAssignment(Sema &S, QualType lhsType, QualType rhsType) {
   assert(lhsType.isCanonical() && "LHS not canonicalized!");
   assert(rhsType.isCanonical() && "RHS not canonicalized!");
 
-  QualType lhptee, rhptee;
-
   // get the "pointed to" type (ignoring qualifiers at the top level)
-  lhptee = lhsType->getAs<PointerType>()->getPointeeType();
-  rhptee = rhsType->getAs<PointerType>()->getPointeeType();
+  const Type *lhptee, *rhptee;
+  Qualifiers lhq, rhq;
+  llvm::tie(lhptee, lhq) = cast<PointerType>(lhsType)->getPointeeType().split();
+  llvm::tie(rhptee, rhq) = cast<PointerType>(rhsType)->getPointeeType().split();
 
   Sema::AssignConvertType ConvTy = Sema::Compatible;
 
   // C99 6.5.16.1p1: This following citation is common to constraints
   // 3 & 4 (below). ...and the type *pointed to* by the left has all the
   // qualifiers of the type *pointed to* by the right;
-  // FIXME: Handle ExtQualType
-  if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
-    ConvTy = Sema::CompatiblePointerDiscardsQualifiers;
+  Qualifiers lq;
+
+  if (!lhq.compatiblyIncludes(rhq)) {
+    // Treat address-space mismatches as fatal.  TODO: address subspaces
+    if (lhq.getAddressSpace() != rhq.getAddressSpace())
+      ConvTy = Sema::IncompatiblePointerDiscardsQualifiers;
+
+    // For GCC compatibility, other qualifier mismatches are treated
+    // as still compatible in C.
+    else ConvTy = Sema::CompatiblePointerDiscardsQualifiers;
+  }
 
   // C99 6.5.16.1p1 (constraint 4): If one operand is a pointer to an object or
   // incomplete type and the other is a pointer to a qualified or unqualified
@@ -5391,30 +5399,31 @@ checkPointerTypesForAssignment(Sema &S, QualType lhsType, QualType rhsType) {
     assert(lhptee->isFunctionType());
     return Sema::FunctionVoidPointer;
   }
+
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or
   // unqualified versions of compatible types, ...
-  lhptee = lhptee.getUnqualifiedType();
-  rhptee = rhptee.getUnqualifiedType();
-  if (!S.Context.typesAreCompatible(lhptee, rhptee)) {
+  QualType ltrans = QualType(lhptee, 0), rtrans = QualType(rhptee, 0);
+  if (!S.Context.typesAreCompatible(ltrans, rtrans)) {
     // Check if the pointee types are compatible ignoring the sign.
     // We explicitly check for char so that we catch "char" vs
     // "unsigned char" on systems where "char" is unsigned.
     if (lhptee->isCharType())
-      lhptee = S.Context.UnsignedCharTy;
+      ltrans = S.Context.UnsignedCharTy;
     else if (lhptee->hasSignedIntegerRepresentation())
-      lhptee = S.Context.getCorrespondingUnsignedType(lhptee);
+      ltrans = S.Context.getCorrespondingUnsignedType(ltrans);
 
     if (rhptee->isCharType())
-      rhptee = S.Context.UnsignedCharTy;
+      rtrans = S.Context.UnsignedCharTy;
     else if (rhptee->hasSignedIntegerRepresentation())
-      rhptee = S.Context.getCorrespondingUnsignedType(rhptee);
+      rtrans = S.Context.getCorrespondingUnsignedType(rtrans);
 
-    if (lhptee == rhptee) {
+    if (ltrans == rtrans) {
       // Types are compatible ignoring the sign. Qualifier incompatibility
       // takes priority over sign incompatibility because the sign
       // warning can be disabled.
       if (ConvTy != Sema::Compatible)
         return ConvTy;
+
       return Sema::IncompatiblePointerSign;
     }
 
@@ -5424,11 +5433,11 @@ checkPointerTypesForAssignment(Sema &S, QualType lhsType, QualType rhsType) {
     // level of indirection, this must be the issue.
     if (isa<PointerType>(lhptee) && isa<PointerType>(rhptee)) {
       do {
-        lhptee = cast<PointerType>(lhptee)->getPointeeType();
-        rhptee = cast<PointerType>(rhptee)->getPointeeType();
+        lhptee = cast<PointerType>(lhptee)->getPointeeType().getTypePtr();
+        rhptee = cast<PointerType>(rhptee)->getPointeeType().getTypePtr();
       } while (isa<PointerType>(lhptee) && isa<PointerType>(rhptee));
 
-      if (S.Context.hasSameUnqualifiedType(lhptee, rhptee))
+      if (lhptee == rhptee)
         return Sema::IncompatibleNestedPointerQualifiers;
     }
 
@@ -8680,6 +8689,17 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   case FunctionVoidPointer:
     DiagKind = diag::ext_typecheck_convert_pointer_void_func;
     break;
+  case IncompatiblePointerDiscardsQualifiers: {
+    Qualifiers lhq = SrcType->getPointeeType().getQualifiers();
+    Qualifiers rhq = DstType->getPointeeType().getQualifiers();
+    if (lhq.getAddressSpace() != rhq.getAddressSpace()) {
+      DiagKind = diag::err_typecheck_incompatible_address_space;
+      break;
+    }
+
+    llvm_unreachable("unknown error case for discarding qualifiers!");
+    // fallthrough
+  }
   case CompatiblePointerDiscardsQualifiers:
     // If the qualifiers lost were because we were applying the
     // (deprecated) C++ conversion from a string literal to a char*

@@ -11,8 +11,7 @@ INT int_value;
 __attribute__((address_space(1))) int int_as_one;
 
 // TYPE_EXT_QUAL
-ASInt *as_int_ptr1 = &int_value;  // expected-error{{different address spaces}} \
-                             // FIXME: expected-warning{{discards qualifiers}}
+ASInt *as_int_ptr1 = &int_value;  // expected-error{{changes address space of pointer}}
 ASInt *as_int_ptr2 = &int_as_one;
 
 // FIXME: TYPE_FIXED_WIDTH_INT

@@ -206,15 +206,6 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   if (ExprTy == TypeTy)
     return;
 
-  if (Expr->getType()->isPointerType() && Ty->isPointerType()) {
-    QualType ExprBaseType = cast<PointerType>(ExprTy)->getPointeeType();
-    QualType BaseType = cast<PointerType>(TypeTy)->getPointeeType();
-    if (ExprBaseType.getAddressSpace() != BaseType.getAddressSpace()) {
-      Diag(Expr->getExprLoc(), diag::err_implicit_pointer_address_space_cast)
-        << Expr->getSourceRange();
-    }
-  }
-
   // If this is a derived-to-base cast to a through a virtual base, we
   // need a vtable.
   if (Kind == CK_DerivedToBase && 
