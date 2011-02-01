@@ -304,6 +304,10 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
   if (def->getName().startswith("llvm."))
     return;
 
+  // ignore available_externally
+  if (def->hasAvailableExternallyLinkage())
+    return;
+
   // string is owned by _defines
   const char *symbolName = ::strdup(mangler.getNameWithPrefix(def).c_str());
 
