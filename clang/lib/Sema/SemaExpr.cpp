@@ -9231,7 +9231,9 @@ void Sema::DiagnoseEqualityWithExtraParens(ParenExpr *parenE) {
   Expr *E = parenE->IgnoreParens();
 
   if (BinaryOperator *opE = dyn_cast<BinaryOperator>(E))
-    if (opE->getOpcode() == BO_EQ) {
+    if (opE->getOpcode() == BO_EQ &&
+        opE->getLHS()->IgnoreParenImpCasts()->isModifiableLvalue(Context)
+                                                           == Expr::MLV_Valid) {
       SourceLocation Loc = opE->getOperatorLoc();
 
       Diag(Loc, diag::warn_equality_with_extra_parens) << E->getSourceRange();

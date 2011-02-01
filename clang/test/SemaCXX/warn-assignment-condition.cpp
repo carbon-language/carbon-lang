@@ -109,4 +109,14 @@ void test() {
   if ((x == 5)) {} // expected-warning {{equality comparison with extraneous parentheses}} \
                    // expected-note {{use '=' to turn this equality comparison into an assignment}} \
                    // expected-note {{remove extraneous parentheses around the comparison to silence this warning}}
+  if ((5 == x)) {}
+}
+
+void (*fn)();
+
+void test2() {
+    if ((fn == test2)) {} // expected-warning {{equality comparison with extraneous parentheses}} \
+                          // expected-note {{use '=' to turn this equality comparison into an assignment}} \
+                          // expected-note {{remove extraneous parentheses around the comparison to silence this warning}}
+    if ((test2 == fn)) {}
 }
