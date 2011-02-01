@@ -510,7 +510,7 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   }
 
   // X + undef -> undef
-  if (isa<UndefValue>(Op1))
+  if (match(Op1, m_Undef()))
     return Op1;
 
   // X + 0 -> X
@@ -576,7 +576,7 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 
   // X - undef -> undef
   // undef - X -> undef
-  if (isa<UndefValue>(Op0) || isa<UndefValue>(Op1))
+  if (match(Op0, m_Undef()) || match(Op1, m_Undef()))
     return UndefValue::get(Op0->getType());
 
   // X - 0 -> X
@@ -699,7 +699,7 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
   }
 
   // X * undef -> 0
-  if (isa<UndefValue>(Op1))
+  if (match(Op1, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
   // X * 0 -> 0
@@ -771,11 +771,11 @@ static Value *SimplifyDiv(unsigned Opcode, Value *Op0, Value *Op1,
   bool isSigned = Opcode == Instruction::SDiv;
 
   // X / undef -> undef
-  if (isa<UndefValue>(Op1))
+  if (match(Op1, m_Undef()))
     return Op1;
 
   // undef / X -> 0
-  if (isa<UndefValue>(Op0))
+  if (match(Op0, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
   // 0 / X -> 0, we don't need to preserve faults!
@@ -859,14 +859,14 @@ Value *llvm::SimplifyUDivInst(Value *Op0, Value *Op1, const TargetData *TD,
   return ::SimplifyUDivInst(Op0, Op1, TD, DT, RecursionLimit);
 }
 
-static Value *SimplifyFDivInst(Value *Op0, Value *Op1, const TargetData *TD,
-                               const DominatorTree *DT, unsigned MaxRecurse) {
+static Value *SimplifyFDivInst(Value *Op0, Value *Op1, const TargetData *,
+                               const DominatorTree *, unsigned) {
   // undef / X -> undef    (the undef could be a snan).
-  if (isa<UndefValue>(Op0))
+  if (match(Op0, m_Undef()))
     return Op0;
 
   // X / undef -> undef
-  if (isa<UndefValue>(Op1))
+  if (match(Op1, m_Undef()))
     return Op1;
 
   return 0;
@@ -898,7 +898,7 @@ static Value *SimplifyShift(unsigned Opcode, Value *Op0, Value *Op1,
     return Op0;
 
   // X shift by undef -> undef because it may shift by the bitwidth.
-  if (isa<UndefValue>(Op1))
+  if (match(Op1, m_Undef()))
     return Op1;
 
   // Shifting by the bitwidth or more is undefined.
@@ -930,7 +930,7 @@ static Value *SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD,
     return V;
 
   // undef << X -> 0
-  if (isa<UndefValue>(Op0))
+  if (match(Op0, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
   return 0;
@@ -949,7 +949,7 @@ static Value *SimplifyLShrInst(Value *Op0, Value *Op1, const TargetData *TD,
     return V;
 
   // undef >>l X -> 0
-  if (isa<UndefValue>(Op0))
+  if (match(Op0, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
   return 0;
@@ -972,7 +972,7 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Op0;
 
   // undef >>a X -> all ones
-  if (isa<UndefValue>(Op0))
+  if (match(Op0, m_Undef()))
     return Constant::getAllOnesValue(Op0->getType());
 
   return 0;
@@ -999,7 +999,7 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
   }
 
   // X & undef -> 0
-  if (isa<UndefValue>(Op1))
+  if (match(Op1, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
   // X & X = X
@@ -1088,7 +1088,7 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
   }
 
   // X | undef -> -1
-  if (isa<UndefValue>(Op1))
+  if (match(Op1, m_Undef()))
     return Constant::getAllOnesValue(Op0->getType());
 
   // X | X = X
@@ -1172,7 +1172,7 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
   }
 
   // A ^ undef -> undef
-  if (isa<UndefValue>(Op1))
+  if (match(Op1, m_Undef()))
     return Op1;
 
   // A ^ 0 = A

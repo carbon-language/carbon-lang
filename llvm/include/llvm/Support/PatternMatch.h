@@ -75,6 +75,16 @@ inline constantint_ty<Val> m_ConstantInt() {
   return constantint_ty<Val>();
 }
 
+struct undef_ty {
+  template<typename ITy>
+  bool match(ITy *V) {
+    return isa<UndefValue>(V);
+  }
+};
+
+/// m_Undef() - Match an arbitrary undef constant.
+inline undef_ty m_Undef() { return undef_ty(); }
+
 struct zero_ty {
   template<typename ITy>
   bool match(ITy *V) {
