@@ -18,6 +18,26 @@ namespace lldb_private {
 class EmulateInstructionARM : public EmulateInstruction
 {
 public: 
+    typedef enum
+    {
+        eEncodingA1,
+        eEncodingA2,
+        eEncodingA3,
+        eEncodingA4,
+        eEncodingA5,
+        eEncodingT1,
+        eEncodingT2,
+        eEncodingT3,
+        eEncodingT4,
+        eEncodingT5,
+    } ARMEncoding;
+    
+
+    static void
+    Initialize ();
+    
+    static void
+    Terminate ();
 
     virtual const char *
     GetPluginName()
@@ -98,10 +118,75 @@ public:
     CurrentCond ();
 
 protected:
+
+    // Typedef for the callback function used during the emulation.
+    // Pass along (ARMEncoding)encoding as the callback data.
+    typedef enum
+    {
+        eSize16,
+        eSize32
+    } ARMInstrSize;
+
+    typedef struct
+    {
+        uint32_t mask;
+        uint32_t value;
+        uint32_t variants;
+        EmulateInstructionARM::ARMEncoding encoding;
+        ARMInstrSize size;
+        bool (EmulateInstructionARM::*callback) (EmulateInstructionARM::ARMEncoding encoding);
+        const char *name;
+    }  ARMOpcode;
+    
+
+    static ARMOpcode*
+    GetARMOpcodeForInstruction (const uint32_t opcode);
+
+    static ARMOpcode*
+    GetThumbOpcodeForInstruction (const uint32_t opcode);
+
+    bool
+    EmulatePush (ARMEncoding encoding);
+    
+    bool 
+    EmulatePop (ARMEncoding encoding);
+    
+    bool
+    EmulateAddRdSPImmediate (ARMEncoding encoding);
+
+    bool
+    EmulateMovRdSP (ARMEncoding encoding);
+
+    bool
+    EmulateMovLowHigh (ARMEncoding encoding);
+
+    bool
+    EmulateLDRRdPCRelative (ARMEncoding encoding);
+
+    bool
+    EmulateAddSPImmediate (ARMEncoding encoding);
+
+    bool
+    EmulateAddSPRm (ARMEncoding encoding);
+
+    bool
+    EmulateSubR7IPImmediate (ARMEncoding encoding);
+
+    bool
+    EmulateSubIPSPImmediate (ARMEncoding encoding);
+
+    bool
+    EmulateSubSPImmdiate (ARMEncoding encoding);
+
+    bool
+    EmulateSTRRtSP (ARMEncoding encoding);
+
+    bool
+    EmulateVPUSH (ARMEncoding encoding);
+
     uint32_t m_arm_isa;
     Mode m_inst_mode;
     uint32_t m_inst_cpsr;
-
 };
 
 }   // namespace lldb_private

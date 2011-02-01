@@ -35,46 +35,23 @@ using namespace lldb_private;
 #define ARMv8     (1u << 9)
 #define ARMvAll   (0xffffffffu)
 
-typedef enum
-{
-    eEncodingA1,
-    eEncodingA2,
-    eEncodingA3,
-    eEncodingA4,
-    eEncodingA5,
-    eEncodingT1,
-    eEncodingT2,
-    eEncodingT3,
-    eEncodingT4,
-    eEncodingT5,
-} ARMEncoding;
 
-typedef enum
+void
+EmulateInstructionARM::Initialize ()
 {
-    eSize16,
-    eSize32
-} ARMInstrSize;
+}
 
-// Typedef for the callback function used during the emulation.
-// Pass along (ARMEncoding)encoding as the callback data.
-typedef bool (*EmulateCallback) (EmulateInstructionARM *emulator, ARMEncoding encoding);
-    
-typedef struct
+void
+EmulateInstructionARM::Terminate ()
 {
-    uint32_t mask;
-    uint32_t value;
-    uint32_t variants;
-    ARMEncoding encoding;
-    ARMInstrSize size;
-    EmulateCallback callback;
-    const char *name;
-}  ARMOpcode;
+}
+
 
 // Push Multiple Registers stores multiple registers to the stack, storing to
 // consecutive memory locations ending just below the address in SP, and updates
 // SP to point to the start of the stored data.
-static bool 
-emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool 
+EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -104,14 +81,14 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const uint32_t addr_byte_size = emulator->GetAddressByteSize();
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t registers = 0;
@@ -167,10 +144,10 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
             {
                 context.arg1 = dwarf_r0 + i;    // arg1 in the context is the DWARF register number
                 context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
-                uint32_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
+                uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
                 if (!success)
                     return false;
-                if (!emulator->WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
+                if (!WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
                     return false;
                 addr += addr_byte_size;
             }
@@ -180,10 +157,10 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
         {
             context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
             context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
-            const uint32_t pc = emulator->ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
             if (!success)
                 return false;
-            if (!emulator->WriteMemoryUnsigned (context, addr, pc + 8, addr_byte_size))
+            if (!WriteMemoryUnsigned (context, addr, pc + 8, addr_byte_size))
                 return false;
         }
         
@@ -192,7 +169,7 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
         context.arg1 = LLDB_REGNUM_GENERIC_SP;
         context.arg2 = -sp_offset;
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
     }
     return true;
@@ -201,8 +178,8 @@ emulate_push (EmulateInstructionARM *emulator, ARMEncoding encoding)
 // Pop Multiple Registers loads multiple registers from the stack, loading from
 // consecutive memory locations staring at the address in SP, and updates
 // SP to point just above the loaded data.
-static bool 
-emulate_pop (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool 
+EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -224,14 +201,14 @@ emulate_pop (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const uint32_t addr_byte_size = emulator->GetAddressByteSize();
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t registers = 0;
@@ -291,10 +268,10 @@ emulate_pop (EmulateInstructionARM *emulator, ARMEncoding encoding)
             {
                 context.arg1 = dwarf_r0 + i;    // arg1 in the context is the DWARF register number
                 context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
-                data = emulator->ReadMemoryUnsigned(context, addr, 4, 0, &success);
+                data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
                 if (!success)
                     return false;    
-                if (!emulator->WriteRegisterUnsigned(context, eRegisterKindDWARF, context.arg1, data))
+                if (!WriteRegisterUnsigned(context, eRegisterKindDWARF, context.arg1, data))
                     return false;
                 addr += addr_byte_size;
             }
@@ -304,10 +281,10 @@ emulate_pop (EmulateInstructionARM *emulator, ARMEncoding encoding)
         {
             context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
             context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
-            data = emulator->ReadMemoryUnsigned(context, addr, 4, 0, &success);
+            data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
             if (!success)
                 return false;
-            if (!emulator->WriteRegisterUnsigned(context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+            if (!WriteRegisterUnsigned(context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
                 return false;
             addr += addr_byte_size;
         }
@@ -317,7 +294,7 @@ emulate_pop (EmulateInstructionARM *emulator, ARMEncoding encoding)
         context.arg1 = LLDB_REGNUM_GENERIC_SP;
         context.arg2 = sp_offset;
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp + sp_offset))
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp + sp_offset))
             return false;
     }
     return true;
@@ -325,8 +302,8 @@ emulate_pop (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // Set r7 or ip to point to saved value residing within the stack.
 // ADD (SP plus immediate)
-static bool
-emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateAddRdSPImmediate (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -347,13 +324,13 @@ emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t Rd; // the destination register
@@ -378,7 +355,7 @@ emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 LLDB_REGNUM_GENERIC_SP,
                                                 sp_offset };
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, addr))
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, addr))
             return false;
     }
     return true;
@@ -386,8 +363,8 @@ emulate_add_rd_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // Set r7 or ip to the current stack pointer.
 // MOV (register)
-static bool
-emulate_mov_rd_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateMovRdSP (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -408,13 +385,13 @@ emulate_mov_rd_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    //const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    //const uint32_t opcode = OpcodeAsUnsigned (&success);
     //if (!success)
     //    return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t Rd; // the destination register
@@ -433,7 +410,7 @@ emulate_mov_rd_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 LLDB_REGNUM_GENERIC_SP,
                                                 0 };
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, sp))
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, sp))
             return false;
     }
     return true;
@@ -441,8 +418,8 @@ emulate_mov_rd_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // Move from high register (r8-r15) to low register (r0-r7).
 // MOV (register)
-static bool
-emulate_mov_low_high (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateMovLowHigh (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -463,11 +440,11 @@ emulate_mov_low_high (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
         uint32_t Rm; // the source register
         uint32_t Rd; // the destination register
@@ -479,7 +456,7 @@ emulate_mov_low_high (EmulateInstructionARM *emulator, ARMEncoding encoding)
         default:
             return false;
         }
-        int32_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        int32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
         if (!success)
             return false;
         
@@ -489,7 +466,7 @@ emulate_mov_low_high (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 dwarf_r0 + Rm,
                                                 0 };
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, reg_value))
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, reg_value))
             return false;
     }
     return true;
@@ -497,8 +474,8 @@ emulate_mov_low_high (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // PC relative immediate load into register, possibly followed by ADD (SP plus register).
 // LDR (literal)
-static bool
-emulate_ldr_rd_pc_rel (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateLDRRdPCRelative (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -521,13 +498,13 @@ emulate_ldr_rd_pc_rel (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const uint32_t pc = emulator->ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
         if (!success)
             return false;
 
@@ -550,10 +527,10 @@ emulate_ldr_rd_pc_rel (EmulateInstructionARM *emulator, ARMEncoding encoding)
         default:
             return false;
         }
-        data = emulator->ReadMemoryUnsigned(context, addr, 4, 0, &success);
+        data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
         if (!success)
             return false;    
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, data))
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, data))
             return false;
     }
     return true;
@@ -561,8 +538,8 @@ emulate_ldr_rd_pc_rel (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // An add operation to adjust the SP.
 // ADD (SP plus immediate)
-static bool
-emulate_add_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateAddSPImmediate (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -583,13 +560,13 @@ emulate_add_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t imm32; // the immediate operand
@@ -608,7 +585,7 @@ emulate_add_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 LLDB_REGNUM_GENERIC_SP,
                                                 sp_offset };
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
             return false;
     }
     return true;
@@ -616,8 +593,8 @@ emulate_add_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // An add operation to adjust the SP.
 // ADD (SP plus register)
-static bool
-emulate_add_sp_rm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateAddSPRm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -639,13 +616,13 @@ emulate_add_sp_rm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t Rm; // the second operand
@@ -656,7 +633,7 @@ emulate_add_sp_rm (EmulateInstructionARM *emulator, ARMEncoding encoding)
         default:
             return false;
         }
-        int32_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        int32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
         if (!success)
             return false;
 
@@ -667,7 +644,7 @@ emulate_add_sp_rm (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 LLDB_REGNUM_GENERIC_SP,
                                                 reg_value };
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
             return false;
     }
     return true;
@@ -675,8 +652,8 @@ emulate_add_sp_rm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // Set r7 to point to some ip offset.
 // SUB (immediate)
-static bool
-emulate_sub_r7_ip_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateSubR7IPImmediate (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -697,13 +674,13 @@ emulate_sub_r7_ip_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const addr_t ip = emulator->ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r12, 0, &success);
+        const addr_t ip = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r12, 0, &success);
         if (!success)
             return false;
         uint32_t imm32;
@@ -722,7 +699,7 @@ emulate_sub_r7_ip_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 dwarf_r12,
                                                 -ip_offset };
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r7, addr))
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r7, addr))
             return false;
     }
     return true;
@@ -730,8 +707,8 @@ emulate_sub_r7_ip_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // Set ip to point to some stack offset.
 // SUB (SP minus immediate)
-static bool
-emulate_sub_ip_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateSubIPSPImmediate (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -752,13 +729,13 @@ emulate_sub_ip_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t imm32;
@@ -777,15 +754,15 @@ emulate_sub_ip_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 LLDB_REGNUM_GENERIC_SP,
                                                 -sp_offset };
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r12, addr))
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r12, addr))
             return false;
     }
     return true;
 }
 
 // A sub operation to adjust the SP -- allocate space for local storage.
-static bool
-emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateSubSPImmdiate (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -806,13 +783,13 @@ emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t imm32;
@@ -839,15 +816,15 @@ emulate_sub_sp_imm (EmulateInstructionARM *emulator, ARMEncoding encoding)
                                                 LLDB_REGNUM_GENERIC_SP,
                                                 -sp_offset };
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
             return false;
     }
     return true;
 }
 
 // A store operation to the stack that also updates the SP.
-static bool
-emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool
+EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -862,14 +839,14 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const uint32_t addr_byte_size = emulator->GetAddressByteSize();
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         uint32_t Rt; // the source register
@@ -890,20 +867,20 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
         {
             context.arg1 = dwarf_r0 + Rt;    // arg1 in the context is the DWARF register number
             context.arg2 = addr - sp;        // arg2 in the context is the stack pointer offset
-            uint32_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
+            uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
             if (!success)
                 return false;
-            if (!emulator->WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
+            if (!WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
                 return false;
         }
         else
         {
             context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
             context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
-            const uint32_t pc = emulator->ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
             if (!success)
                 return false;
-            if (!emulator->WriteMemoryUnsigned (context, addr, pc + 8, addr_byte_size))
+            if (!WriteMemoryUnsigned (context, addr, pc + 8, addr_byte_size))
                 return false;
         }
         
@@ -912,7 +889,7 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
         context.arg1 = LLDB_REGNUM_GENERIC_SP;
         context.arg2 = -sp_offset;
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
     }
     return true;
@@ -920,8 +897,8 @@ emulate_str_rt_sp (EmulateInstructionARM *emulator, ARMEncoding encoding)
 
 // Vector Push stores multiple extension registers to the stack.
 // It also updates SP to point to the start of the stored data.
-static bool 
-emulate_vpush (EmulateInstructionARM *emulator, ARMEncoding encoding)
+bool 
+EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -943,14 +920,14 @@ emulate_vpush (EmulateInstructionARM *emulator, ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = emulator->OpcodeAsUnsigned (&success);
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
         return false;
 
-    if (emulator->ConditionPassed())
+    if (ConditionPassed())
     {
-        const uint32_t addr_byte_size = emulator->GetAddressByteSize();
-        const addr_t sp = emulator->ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
         if (!success)
             return false;
         bool single_regs;
@@ -994,10 +971,10 @@ emulate_vpush (EmulateInstructionARM *emulator, ARMEncoding encoding)
             context.arg1 = start_reg + i;    // arg1 in the context is the DWARF register number
             context.arg2 = addr - sp;        // arg2 in the context is the stack pointer offset
             // uint64_t to accommodate 64-bit registers.
-            uint64_t reg_value = emulator->ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
+            uint64_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
             if (!success)
                 return false;
-            if (!emulator->WriteMemoryUnsigned (context, addr, reg_value, reg_byte_size))
+            if (!WriteMemoryUnsigned (context, addr, reg_value, reg_byte_size))
                 return false;
             addr += reg_byte_size;
         }
@@ -1007,91 +984,116 @@ emulate_vpush (EmulateInstructionARM *emulator, ARMEncoding encoding)
         context.arg1 = LLDB_REGNUM_GENERIC_SP;
         context.arg2 = -sp_offset;
     
-        if (!emulator->WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
     }
     return true;
 }
 
-static ARMOpcode g_arm_opcodes[] =
+EmulateInstructionARM::ARMOpcode*
+EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
-    ///////////////////////////
-    // Prologue instructions //
-    ///////////////////////////
+    static ARMOpcode 
+    g_arm_opcodes[] = 
+    {
+        //----------------------------------------------------------------------
+        // Prologue instructions
+        //----------------------------------------------------------------------
 
-    // push register(s)
-    { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, emulate_push, "push <registers>" },
-    { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, emulate_push, "push <register>" },
+        // push register(s)
+        { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulatePush, "push <registers>" },
+        { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePush, "push <register>" },
 
-    // set r7 to point to a stack offset
-    { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add r7, sp, #<const>" },
-    { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_r7_ip_imm, "sub r7, ip, #<const>"},
-    // set ip to point to a stack offset
-    { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, emulate_mov_rd_sp, "mov ip, sp" },
-    { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, emulate_add_rd_sp_imm, "add ip, sp, #<const>" },
-    { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_ip_sp_imm, "sub ip, sp, #<const>"},
+        // set r7 to point to a stack offset
+        { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateAddRdSPImmediate, "add r7, sp, #<const>" },
+        { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubR7IPImmediate, "sub r7, ip, #<const>"},
+        // set ip to point to a stack offset
+        { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateMovRdSP, "mov ip, sp" },
+        { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateAddRdSPImmediate, "add ip, sp, #<const>" },
+        { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubIPSPImmediate, "sub ip, sp, #<const>"},
 
-    // adjust the stack pointer
-    { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, emulate_sub_sp_imm, "sub sp, sp, #<const>"},
+        // adjust the stack pointer
+        { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubSPImmdiate, "sub sp, sp, #<const>"},
 
-    // push one register
-    // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
-    { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, emulate_str_rt_sp, "str Rt, [sp, #-imm12]!" },
+        // push one register
+        // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
+        { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
 
-    // vector push consecutive extension register(s)
-    { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, emulate_vpush, "vpush.64 <list>"},
-    { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, emulate_vpush, "vpush.32 <list>"},
+        // vector push consecutive extension register(s)
+        { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
+        { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
-    ///////////////////////////
-    // Epilogue instructions //
-    ///////////////////////////
+        //----------------------------------------------------------------------
+        // Epilogue instructions //
+        //----------------------------------------------------------------------
 
-    { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, emulate_pop, "pop <registers>"},
-    { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, emulate_pop, "pop <register>"}
-};
+        { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <registers>"},
+        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <register>"}
+    };
+    static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
+                  
+    for (size_t i=0; i<k_num_arm_opcodes; ++i)
+    {
+        if ((g_arm_opcodes[i].mask & opcode) == g_arm_opcodes[i].value)
+            return &g_arm_opcodes[i];
+    }
+    return NULL;
+}
 
-static ARMOpcode g_thumb_opcodes[] =
+    
+EmulateInstructionARM::ARMOpcode*
+EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
 {
-    ///////////////////////////
-    // Prologue instructions //
-    ///////////////////////////
 
-    // push register(s)
-    { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, emulate_push, "push <registers>" },
-    { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_push, "push.w <registers>" },
-    { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_push, "push.w <register>" },
-    // move from high register to low register
-    { 0xffffffc0, 0x00004640, ARMvAll,        eEncodingT1, eSize16, emulate_mov_low_high, "mov r0-r7, r8-r15" },
+    static ARMOpcode 
+    g_thumb_opcodes[] =
+    {
+        //----------------------------------------------------------------------
+        // Prologue instructions
+        //----------------------------------------------------------------------
 
-    // set r7 to point to a stack offset
-    { 0xffffff00, 0x0000af00, ARMvAll,        eEncodingT1, eSize16, emulate_add_rd_sp_imm, "add r7, sp, #imm" },
-    { 0xffffffff, 0x0000466f, ARMvAll,        eEncodingT1, eSize16, emulate_mov_rd_sp, "mov r7, sp" },
+        // push register(s)
+        { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulatePush, "push <registers>" },
+        { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePush, "push.w <registers>" },
+        { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &lldb_private::EmulateInstructionARM::EmulatePush, "push.w <register>" },
+        // move from high register to low register
+        { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateMovLowHigh, "mov r0-r7, r8-r15" },
 
-    // PC relative load into register (see also emulate_add_sp_rm)
-    { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, emulate_ldr_rd_pc_rel, "ldr <Rd>, [PC, #imm]"},
+        // set r7 to point to a stack offset
+        { 0xffffff00, 0x0000af00, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateAddRdSPImmediate, "add r7, sp, #imm" },
+        { 0xffffffff, 0x0000466f, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateMovRdSP, "mov r7, sp" },
 
-    // adjust the stack pointer
-    { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, emulate_add_sp_rm, "add sp, <Rm>"},
-    { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, emulate_sub_sp_imm, "add sp, sp, #imm"},
-    { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_sub_sp_imm, "sub.w sp, sp, #<const>"},
-    { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_sub_sp_imm, "subw sp, sp, #imm12"},
+        // PC relative load into register (see also EmulateAddSPRm)
+        { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateLDRRdPCRelative, "ldr <Rd>, [PC, #imm]"},
 
-    // vector push consecutive extension register(s)
-    { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, emulate_vpush, "vpush.64 <list>"},
-    { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_vpush, "vpush.32 <list>"},
+        // adjust the stack pointer
+        { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &lldb_private::EmulateInstructionARM::EmulateAddSPRm, "add sp, <Rm>"},
+        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateSubSPImmdiate, "add sp, sp, #imm"},
+        { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubSPImmdiate, "sub.w sp, sp, #<const>"},
+        { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubSPImmdiate, "subw sp, sp, #imm12"},
 
-    ///////////////////////////
-    // Epilogue instructions //
-    ///////////////////////////
+        // vector push consecutive extension register(s)
+        { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
+        { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
-    { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, emulate_add_sp_imm, "add sp, #imm"},
-    { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, emulate_pop, "pop <registers>"},
-    { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, emulate_pop, "pop.w <registers>" },
-    { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, emulate_pop, "pop.w <register>" }
-};
+        //----------------------------------------------------------------------
+        // Epilogue instructions
+        //----------------------------------------------------------------------
 
-static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
-static const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);
+        { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &lldb_private::EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
+        { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <registers>"},
+        { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
+        { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop.w <register>" }
+    };
+
+    const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);
+    for (size_t i=0; i<k_num_thumb_opcodes; ++i)
+    {
+        if ((g_thumb_opcodes[i].mask & opcode) == g_thumb_opcodes[i].value)
+            return &g_thumb_opcodes[i];
+    }
+    return NULL;
+}
 
 bool
 EmulateInstructionARM::SetTargetTriple (const ConstString &triple)
