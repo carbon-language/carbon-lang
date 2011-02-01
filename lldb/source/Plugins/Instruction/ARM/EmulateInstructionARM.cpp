@@ -931,14 +931,14 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
         if (!success)
             return false;
         bool single_regs;
-        uint32_t d;     // UInt(Vd:D) starting register
+        uint32_t d;     // UInt(D:Vd) or UInt(Vd:D) starting register
         uint32_t imm32; // stack offset
         uint32_t regs;  // number of registers
         switch (encoding) {
         case eEncodingT1:
         case eEncodingA1:
             single_regs = false;
-            d = Bits32(opcode, 15, 12) << 1 | Bits32(opcode, 22, 22);
+            d = Bits32(opcode, 22, 22) << 4 | Bits32(opcode, 15, 12);
             imm32 = Bits32(opcode, 7, 0) * addr_byte_size;
             // If UInt(imm8) is odd, see "FSTMX".
             regs = Bits32(opcode, 7, 0) / 2;
@@ -990,6 +990,100 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
     return true;
 }
 
+// Vector Pop loads multiple extension registers from the stack.
+// It also updates SP to point just above the loaded data.
+bool 
+EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations(); CheckVFPEnabled(TRUE); NullCheckIfThumbEE(13);
+        address = SP;
+        SP = SP + imm32;
+        if single_regs then
+            for r = 0 to regs-1
+                S[d+r] = MemA[address,4]; address = address+4;
+        else
+            for r = 0 to regs-1
+                word1 = MemA[address,4]; word2 = MemA[address+4,4]; address = address+8;
+                // Combine the word-aligned words in the correct order for current endianness.
+                D[d+r] = if BigEndian() then word1:word2 else word2:word1;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        if (!success)
+            return false;
+        bool single_regs;
+        uint32_t d;     // UInt(D:Vd) or UInt(Vd:D) starting register
+        uint32_t imm32; // stack offset
+        uint32_t regs;  // number of registers
+        switch (encoding) {
+        case eEncodingT1:
+        case eEncodingA1:
+            single_regs = false;
+            d = Bits32(opcode, 22, 22) << 4 | Bits32(opcode, 15, 12);
+            imm32 = Bits32(opcode, 7, 0) * addr_byte_size;
+            // If UInt(imm8) is odd, see "FLDMX".
+            regs = Bits32(opcode, 7, 0) / 2;
+            // if regs == 0 || regs > 16 || (d+regs) > 32 then UNPREDICTABLE;
+            if (regs == 0 || regs > 16 || (d + regs) > 32)
+                return false;
+            break;
+        case eEncodingT2:
+        case eEncodingA2:
+            single_regs = true;
+            d = Bits32(opcode, 15, 12) << 1 | Bits32(opcode, 22, 22);
+            imm32 = Bits32(opcode, 7, 0) * addr_byte_size;
+            regs = Bits32(opcode, 7, 0);
+            // if regs == 0 || regs > 16 || (d+regs) > 32 then UNPREDICTABLE;
+            if (regs == 0 || regs > 16 || (d + regs) > 32)
+                return false;
+            break;
+        default:
+            return false;
+        }
+        uint32_t start_reg = single_regs ? dwarf_s0 : dwarf_d0;
+        uint32_t reg_byte_size = single_regs ? addr_byte_size : addr_byte_size * 2;
+        addr_t sp_offset = imm32;
+        addr_t addr = sp;
+        uint32_t i;
+        uint64_t data; // uint64_t to accomodate 64-bit registers.
+        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextPopRegisterOffStack, eRegisterKindDWARF, 0, 0 };
+        for (i=d; i<regs; ++i)
+        {
+            context.arg1 = start_reg + i;    // arg1 in the context is the DWARF register number
+            context.arg2 = addr - sp;        // arg2 in the context is the stack pointer offset
+            data = ReadMemoryUnsigned(context, addr, reg_byte_size, 0, &success);
+            if (!success)
+                return false;    
+            if (!WriteRegisterUnsigned(context, eRegisterKindDWARF, context.arg1, data))
+                return false;
+            addr += reg_byte_size;
+        }
+        
+        context.type = EmulateInstruction::eContextAdjustStackPointer;
+        context.arg0 = eRegisterKindGeneric;
+        context.arg1 = LLDB_REGNUM_GENERIC_SP;
+        context.arg2 = sp_offset;
+    
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp + sp_offset))
+            return false;
+    }
+    return true;
+}
+
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -1024,11 +1118,13 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
         //----------------------------------------------------------------------
-        // Epilogue instructions //
+        // Epilogue instructions
         //----------------------------------------------------------------------
 
         { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <registers>"},
-        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <register>"}
+        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <register>"},
+        { 0x0fbf0f00, 0x0cbd0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
+        { 0x0fbf0f00, 0x0cbd0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
                   
@@ -1083,7 +1179,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &lldb_private::EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
         { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <registers>"},
         { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
-        { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop.w <register>" }
+        { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop.w <register>" },
+        { 0xffbf0f00, 0xecbd0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
+        { 0xffbf0f00, 0xecbd0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
     };
 
     const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);
