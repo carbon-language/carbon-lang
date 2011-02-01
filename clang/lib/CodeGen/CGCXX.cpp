@@ -323,6 +323,10 @@ CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD,
   const RecordType *RT = T->getAs<RecordType>();
   assert(RT && "BuildAppleKextVirtualCall - Qual type must be record");
   const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+  
+  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD))
+    return BuildAppleKextVirtualDestructorCall(DD, Dtor_Complete, RD);
+  
   VTable = CGM.getVTables().GetAddrOfVTable(RD);
   Ty = Ty->getPointerTo()->getPointerTo();
   VTable = Builder.CreateBitCast(VTable, Ty);
@@ -335,6 +339,44 @@ CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD,
   llvm::Value *VFuncPtr = 
     CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
   return CGF.Builder.CreateLoad(VFuncPtr);
+}
+
+/// BuildVirtualCall - This routine makes indirect vtable call for
+/// call to virtual destructors. It returns 0 if it could not do it.
+llvm::Value *
+CodeGenFunction::BuildAppleKextVirtualDestructorCall(
+                                            const CXXDestructorDecl *DD,
+                                            CXXDtorType Type,
+                                            const CXXRecordDecl *RD) {
+  llvm::Value * Callee = 0;
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(DD);
+  // FIXME. Dtor_Base dtor is always direct!!
+  // It need be somehow inline expanded into the caller.
+  // -O does that. But need to support -O0 as well.
+  if (MD->isVirtual() && Type != Dtor_Base) {
+    DD = cast<CXXDestructorDecl>(DD->getCanonicalDecl());
+    // Compute the function type we're calling.
+    const CGFunctionInfo *FInfo = 
+    &CGM.getTypes().getFunctionInfo(cast<CXXDestructorDecl>(MD),
+                                    Dtor_Complete);
+    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+    const llvm::Type *Ty
+      = CGM.getTypes().GetFunctionType(*FInfo, FPT->isVariadic());
+    if (!RD)
+      RD = DD->getParent();
+    llvm::Value *VTable = CGM.getVTables().GetAddrOfVTable(RD);
+    Ty = Ty->getPointerTo()->getPointerTo();
+    VTable = Builder.CreateBitCast(VTable, Ty);
+    uint64_t VTableIndex = 
+    CGM.getVTables().getMethodVTableIndex(GlobalDecl(DD, Type));
+    uint64_t AddressPoint =
+    CGM.getVTables().getAddressPoint(BaseSubobject(RD, 0), RD);
+    VTableIndex += AddressPoint;
+    llvm::Value *VFuncPtr =
+    CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
+    Callee = CGF.Builder.CreateLoad(VFuncPtr);
+  }
+  return Callee;
 }
 
 llvm::Value *

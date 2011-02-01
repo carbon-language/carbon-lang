@@ -225,7 +225,12 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     if (UseVirtualCall) {
       Callee = BuildVirtualCall(Dtor, Dtor_Complete, This, Ty);
     } else {
-      Callee = CGM.GetAddrOfFunction(GlobalDecl(Dtor, Dtor_Complete), Ty);
+      if (getContext().getLangOptions().AppleKext &&
+          MD->isVirtual() &&
+          ME->hasQualifier())
+        Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), This, Ty);
+      else
+        Callee = CGM.GetAddrOfFunction(GlobalDecl(Dtor, Dtor_Complete), Ty);
     }
   } else if (const CXXConstructorDecl *Ctor =
                dyn_cast<CXXConstructorDecl>(MD)) {

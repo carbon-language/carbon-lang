@@ -1663,6 +1663,10 @@ public:
                                          NestedNameSpecifier *Qual,
                                          llvm::Value *This,
                                          const llvm::Type *Ty);
+  
+  llvm::Value *BuildAppleKextVirtualDestructorCall(const CXXDestructorDecl *DD,
+                                                   CXXDtorType Type, 
+                                                   const CXXRecordDecl *RD=0);
 
   RValue EmitCXXMemberCall(const CXXMethodDecl *MD,
                            llvm::Value *Callee,
