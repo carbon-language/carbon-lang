@@ -622,6 +622,8 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
                                 "x86_64-linux-gnu", "32", "", triple);
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
                                 "i486-linux-gnu", "", "64", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
+                                "arm-linux-gnueabi", "", "", triple);
     // Ubuntu 9.04 "Jaunty Jackalope" -- gcc-4.3.3
     // Ubuntu 8.10 "Intrepid Ibex"    -- gcc-4.3.2
     // Debian 5.0 "lenny"             -- gcc-4.3.2
