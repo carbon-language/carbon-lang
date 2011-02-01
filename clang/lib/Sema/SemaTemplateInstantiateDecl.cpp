@@ -143,13 +143,15 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   if (Invalid)
     Typedef->setInvalidDecl();
 
-  if (const TagType *TT = DI->getType()->getAs<TagType>()) {
-    TagDecl *TD = TT->getDecl();
-    
-    // If the TagDecl that the TypedefDecl points to is an anonymous decl
-    // keep track of the TypedefDecl.
-    if (!TD->getIdentifier() && !TD->getTypedefForAnonDecl())
-      TD->setTypedefForAnonDecl(Typedef);
+  // If the old typedef was the name for linkage purposes of an anonymous
+  // tag decl, re-establish that relationship for the new typedef.
+  if (const TagType *oldTagType = D->getUnderlyingType()->getAs<TagType>()) {
+    TagDecl *oldTag = oldTagType->getDecl();
+    if (oldTag->getTypedefForAnonDecl() == D) {
+      TagDecl *newTag = DI->getType()->castAs<TagType>()->getDecl();
+      assert(!newTag->getIdentifier() && !newTag->getTypedefForAnonDecl());
+      newTag->setTypedefForAnonDecl(Typedef);
+    }
   }
   
   if (TypedefDecl *Prev = D->getPreviousDeclaration()) {

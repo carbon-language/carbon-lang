@@ -5697,17 +5697,46 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                            D.getIdentifier(),
                                            TInfo);
 
-  if (const TagType *TT = T->getAs<TagType>()) {
-    TagDecl *TD = TT->getDecl();
-
-    // If the TagDecl that the TypedefDecl points to is an anonymous decl
-    // keep track of the TypedefDecl.
-    if (!TD->getIdentifier() && !TD->getTypedefForAnonDecl())
-      TD->setTypedefForAnonDecl(NewTD);
+  // Bail out immediately if we have an invalid declaration.
+  if (D.isInvalidType()) {
+    NewTD->setInvalidDecl();
+    return NewTD;
   }
 
-  if (D.isInvalidType())
-    NewTD->setInvalidDecl();
+  // C++ [dcl.typedef]p8:
+  //   If the typedef declaration defines an unnamed class (or
+  //   enum), the first typedef-name declared by the declaration
+  //   to be that class type (or enum type) is used to denote the
+  //   class type (or enum type) for linkage purposes only.
+  // We need to check whether the type was declared in the declaration.
+  switch (D.getDeclSpec().getTypeSpecType()) {
+  case TST_enum:
+  case TST_struct:
+  case TST_union:
+  case TST_class: {
+    TagDecl *tagFromDeclSpec = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
+
+    // Do nothing if the tag is not anonymous or already has an
+    // associated typedef (from an earlier typedef in this decl group).
+    if (tagFromDeclSpec->getIdentifier()) break;
+    if (tagFromDeclSpec->getTypedefForAnonDecl()) break;
+
+    // A well-formed anonymous tag must always be a TUK_Definition.
+    assert(tagFromDeclSpec->isThisDeclarationADefinition());
+
+    // The type must match the tag exactly;  no qualifiers allowed.
+    if (!Context.hasSameType(T, Context.getTagDeclType(tagFromDeclSpec)))
+      break;
+
+    // Otherwise, set this is the anon-decl typedef for the tag.
+    tagFromDeclSpec->setTypedefForAnonDecl(NewTD);
+    break;
+  }
+    
+  default:
+    break;
+  }
+
   return NewTD;
 }
 
