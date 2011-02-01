@@ -434,8 +434,10 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   }
 
   // Check visibility
-  if (Dest && Src->getVisibility() != Dest->getVisibility())
-    if (!Src->isDeclaration() && !Dest->isDeclaration())
+  if (Dest && Src->getVisibility() != Dest->getVisibility() &&
+      !Src->isDeclaration() && !Dest->isDeclaration() &&
+      !Src->hasAvailableExternallyLinkage() &&
+      !Dest->hasAvailableExternallyLinkage())
       return Error(Err, "Linking globals named '" + Src->getName() +
                    "': symbols have different visibilities!");
   return false;
