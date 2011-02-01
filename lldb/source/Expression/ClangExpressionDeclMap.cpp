@@ -21,6 +21,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Expression/ASTDumper.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Host/Endian.h"
@@ -1904,6 +1905,13 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, Variable* va
         var_decl_print_stream.flush();
         
         log->Printf("Found variable %s, returned %s", decl_name.c_str(), var_decl_print_string.c_str());
+
+        if (log->GetVerbose())
+        {
+            StreamString var_decl_dump_string;
+            ASTDumper::DumpDecl(var_decl_dump_string, var_decl);
+            log->Printf("%s\n", var_decl_dump_string.GetData());
+        }
     }
 }
 
