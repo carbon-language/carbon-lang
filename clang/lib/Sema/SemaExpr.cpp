@@ -8690,6 +8690,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::ext_typecheck_convert_pointer_void_func;
     break;
   case IncompatiblePointerDiscardsQualifiers: {
+    // Perform array-to-pointer decay if necessary.
+    if (SrcType->isArrayType()) SrcType = Context.getArrayDecayedType(SrcType);
+
     Qualifiers lhq = SrcType->getPointeeType().getQualifiers();
     Qualifiers rhq = DstType->getPointeeType().getQualifiers();
     if (lhq.getAddressSpace() != rhq.getAddressSpace()) {
