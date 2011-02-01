@@ -209,7 +209,7 @@ void ObjCSelfInitChecker::PostVisitObjCIvarRefExpr(CheckerContext &C,
     return;
 
   checkForInvalidSelf(E->getBase(), C,
-    "Instance variable used before setting 'self' to the result of "
+    "Instance variable used while 'self' is not set to the result of "
                                                  "'[(super or self) init...]'");
 }
 
@@ -221,7 +221,7 @@ void ObjCSelfInitChecker::PreVisitReturnStmt(CheckerContext &C,
     return;
 
   checkForInvalidSelf(S->getRetValue(), C,
-    "Returning 'self' before setting it to the result of "
+    "Returning 'self' while it is not set it to the result of "
                                                  "'[(super or self) init...]'");
 }
 
