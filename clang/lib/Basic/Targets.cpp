@@ -2675,7 +2675,10 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     case llvm::Triple::MinGW64:
       return new MinGWX86_64TargetInfo(T);
     case llvm::Triple::Win32:   // This is what Triple.h supports now.
-      return new VisualStudioWindowsX86_64TargetInfo(T);
+      if (Triple.getEnvironment() == llvm::Triple::MachO)
+        return new DarwinX86_64TargetInfo(T);
+      else
+        return new VisualStudioWindowsX86_64TargetInfo(T);
     default:
       return new X86_64TargetInfo(T);
     }
