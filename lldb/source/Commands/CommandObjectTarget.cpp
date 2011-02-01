@@ -11,7 +11,7 @@
 
 // C Includes
 #include <errno.h>
-#include <sys/errno.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
