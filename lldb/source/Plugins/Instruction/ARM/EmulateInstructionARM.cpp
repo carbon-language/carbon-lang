@@ -1095,36 +1095,36 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         // push register(s)
-        { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulatePush, "push <registers>" },
-        { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePush, "push <register>" },
+        { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePush, "push <registers>" },
+        { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePush, "push <register>" },
 
         // set r7 to point to a stack offset
-        { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateAddRdSPImmediate, "add r7, sp, #<const>" },
-        { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubR7IPImmediate, "sub r7, ip, #<const>"},
+        { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateAddRdSPImmediate, "add r7, sp, #<const>" },
+        { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSubR7IPImmediate, "sub r7, ip, #<const>"},
         // set ip to point to a stack offset
-        { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateMovRdSP, "mov ip, sp" },
-        { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateAddRdSPImmediate, "add ip, sp, #<const>" },
-        { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubIPSPImmediate, "sub ip, sp, #<const>"},
+        { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMovRdSP, "mov ip, sp" },
+        { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateAddRdSPImmediate, "add ip, sp, #<const>" },
+        { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSubIPSPImmediate, "sub ip, sp, #<const>"},
 
         // adjust the stack pointer
-        { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubSPImmdiate, "sub sp, sp, #<const>"},
+        { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "sub sp, sp, #<const>"},
 
         // push one register
         // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
-        { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
+        { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
 
         // vector push consecutive extension register(s)
-        { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
-        { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
+        { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
+        { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
         //----------------------------------------------------------------------
         // Epilogue instructions
         //----------------------------------------------------------------------
 
-        { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <registers>"},
-        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <register>"},
-        { 0x0fbf0f00, 0x0cbd0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
-        { 0x0fbf0f00, 0x0cbd0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
+        { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
+        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePop, "pop <register>"},
+        { 0x0fbf0f00, 0x0cbd0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
+        { 0x0fbf0f00, 0x0cbd0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
                   
@@ -1149,39 +1149,39 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         // push register(s)
-        { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulatePush, "push <registers>" },
-        { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePush, "push.w <registers>" },
-        { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &lldb_private::EmulateInstructionARM::EmulatePush, "push.w <register>" },
+        { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePush, "push <registers>" },
+        { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePush, "push.w <registers>" },
+        { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePush, "push.w <register>" },
         // move from high register to low register
-        { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateMovLowHigh, "mov r0-r7, r8-r15" },
+        { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovLowHigh, "mov r0-r7, r8-r15" },
 
         // set r7 to point to a stack offset
-        { 0xffffff00, 0x0000af00, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateAddRdSPImmediate, "add r7, sp, #imm" },
-        { 0xffffffff, 0x0000466f, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateMovRdSP, "mov r7, sp" },
+        { 0xffffff00, 0x0000af00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateAddRdSPImmediate, "add r7, sp, #imm" },
+        { 0xffffffff, 0x0000466f, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdSP, "mov r7, sp" },
 
         // PC relative load into register (see also EmulateAddSPRm)
-        { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateLDRRdPCRelative, "ldr <Rd>, [PC, #imm]"},
+        { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRdPCRelative, "ldr <Rd>, [PC, #imm]"},
 
         // adjust the stack pointer
-        { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &lldb_private::EmulateInstructionARM::EmulateAddSPRm, "add sp, <Rm>"},
-        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulateSubSPImmdiate, "add sp, sp, #imm"},
-        { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubSPImmdiate, "sub.w sp, sp, #<const>"},
-        { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, &lldb_private::EmulateInstructionARM::EmulateSubSPImmdiate, "subw sp, sp, #imm12"},
+        { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPRm, "add sp, <Rm>"},
+        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSubSPImmdiate, "add sp, sp, #imm"},
+        { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "sub.w sp, sp, #<const>"},
+        { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "subw sp, sp, #imm12"},
 
         // vector push consecutive extension register(s)
-        { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
-        { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
+        { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
+        { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
         //----------------------------------------------------------------------
         // Epilogue instructions
         //----------------------------------------------------------------------
 
-        { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &lldb_private::EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
-        { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &lldb_private::EmulateInstructionARM::EmulatePop, "pop <registers>"},
-        { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
-        { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &lldb_private::EmulateInstructionARM::EmulatePop, "pop.w <register>" },
-        { 0xffbf0f00, 0xecbd0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
-        { 0xffbf0f00, 0xecbd0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &lldb_private::EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
+        { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
+        { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
+        { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
+        { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <register>" },
+        { 0xffbf0f00, 0xecbd0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
+        { 0xffbf0f00, 0xecbd0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
     };
 
     const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);
