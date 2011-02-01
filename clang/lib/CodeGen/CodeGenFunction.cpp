@@ -530,6 +530,57 @@ void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type,
   CGM.ErrorUnsupported(S, Type, OmitOnError);
 }
 
+/// emitNonZeroVLAInit - Emit the "zero" initialization of a
+/// variable-length array whose elements have a non-zero bit-pattern.
+///
+/// \param src - a char* pointing to the bit-pattern for a single
+/// base element of the array
+/// \param sizeInChars - the total size of the VLA, in chars
+/// \param align - the total alignment of the VLA
+static void emitNonZeroVLAInit(CodeGenFunction &CGF, QualType baseType,
+                               llvm::Value *dest, llvm::Value *src, 
+                               llvm::Value *sizeInChars) {
+  std::pair<CharUnits,CharUnits> baseSizeAndAlign
+    = CGF.getContext().getTypeInfoInChars(baseType);
+
+  CGBuilderTy &Builder = CGF.Builder;
+
+  llvm::Value *baseSizeInChars
+    = llvm::ConstantInt::get(CGF.IntPtrTy, baseSizeAndAlign.first.getQuantity());
+
+  const llvm::Type *i8p = Builder.getInt8PtrTy();
+
+  llvm::Value *begin = Builder.CreateBitCast(dest, i8p, "vla.begin");
+  llvm::Value *end = Builder.CreateInBoundsGEP(dest, sizeInChars, "vla.end");
+
+  llvm::BasicBlock *originBB = CGF.Builder.GetInsertBlock();
+  llvm::BasicBlock *loopBB = CGF.createBasicBlock("vla-init.loop");
+  llvm::BasicBlock *contBB = CGF.createBasicBlock("vla-init.cont");
+
+  // Make a loop over the VLA.  C99 guarantees that the VLA element
+  // count must be nonzero.
+  CGF.EmitBlock(loopBB);
+
+  llvm::PHINode *cur = Builder.CreatePHI(i8p, "vla.cur");
+  cur->reserveOperandSpace(2);
+  cur->addIncoming(begin, originBB);
+
+  // memcpy the individual element bit-pattern.
+  Builder.CreateMemCpy(cur, src, baseSizeInChars,
+                       baseSizeAndAlign.second.getQuantity(),
+                       /*volatile*/ false);
+
+  // Go to the next element.
+  llvm::Value *next = Builder.CreateConstInBoundsGEP1_32(cur, 1, "vla.next");
+
+  // Leave if that's the end of the VLA.
+  llvm::Value *done = Builder.CreateICmpEQ(next, end, "vla-init.isdone");
+  Builder.CreateCondBr(done, contBB, loopBB);
+  cur->addIncoming(next, loopBB);
+
+  CGF.EmitBlock(contBB);
+} 
+
 void
 CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
   // Ignore empty classes in C++.
@@ -553,7 +604,7 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
   unsigned Align = TypeInfo.second / 8;
 
   llvm::Value *SizeVal;
-  bool vla;
+  const VariableArrayType *vla;
 
   // Don't bother emitting a zero-byte memset.
   if (Size == 0) {
@@ -562,20 +613,22 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
           dyn_cast_or_null<VariableArrayType>(
                                           getContext().getAsArrayType(Ty))) {
       SizeVal = GetVLASize(vlaType);
-      vla = true;
+      vla = vlaType;
     } else {
       return;
     }
   } else {
     SizeVal = llvm::ConstantInt::get(IntPtrTy, Size);
-    vla = false;
+    vla = 0;
   }
 
   // If the type contains a pointer to data member we can't memset it to zero.
   // Instead, create a null constant and copy it to the destination.
+  // TODO: there are other patterns besides zero that we can usefully memset,
+  // like -1, which happens to be the pattern used by member-pointers.
   if (!CGM.getTypes().isZeroInitializable(Ty)) {
-    // FIXME: variable-size types!
-    if (vla) return;
+    // For a VLA, emit a single element, then splat that over the VLA.
+    if (vla) Ty = getContext().getBaseElementType(vla);
 
     llvm::Constant *NullConstant = CGM.EmitNullConstant(Ty);
 
@@ -586,6 +639,8 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
                                NullConstant, llvm::Twine());
     llvm::Value *SrcPtr =
       Builder.CreateBitCast(NullVariable, Builder.getInt8PtrTy());
+
+    if (vla) return emitNonZeroVLAInit(*this, Ty, DestPtr, SrcPtr, SizeVal);
 
     // Get and call the appropriate llvm.memcpy overload.
     Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal, Align, false);
