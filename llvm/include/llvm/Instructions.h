@@ -2247,7 +2247,8 @@ public:
 
   /// removeCase - This method removes the specified successor from the switch
   /// instruction.  Note that this cannot be used to remove the default
-  /// destination (successor #0).
+  /// destination (successor #0). Also note that this operation may reorder the
+  /// remaining cases at index idx and above.
   ///
   void removeCase(unsigned idx);
 
