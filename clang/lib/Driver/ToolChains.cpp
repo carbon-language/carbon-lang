@@ -1350,6 +1350,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     else if (!llvm::sys::fs::exists("/usr/lib64/gcc/x86_64-suse-linux",
              Exists) && Exists)
       GccTriple = "x86_64-suse-linux";
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-manbo-linux-gnu",
+             Exists) && Exists)
+      GccTriple = "x86_64-manbo-linux-gnu";
   } else if (Arch == llvm::Triple::x86) {
     if (!llvm::sys::fs::exists("/usr/lib/gcc/i686-linux-gnu", Exists) && Exists)
       GccTriple = "i686-linux-gnu";
