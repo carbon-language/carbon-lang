@@ -28,6 +28,7 @@
       <li><a href="#environment">Setting Up Your Environment</a></li>
       <li><a href="#unpack">Unpacking the LLVM Archives</a></li>
       <li><a href="#checkout">Checkout LLVM from Subversion</a></li>
+      <li><a href="#git_mirror">LLVM GIT mirror</a></li>
       <li><a href="#installcf">Install the GCC Front End</a></li>
       <li><a href="#config">Local LLVM Configuration</a></li>
       <li><a href="#compile">Compiling the LLVM Suite Source Code</a></li>
@@ -773,6 +774,25 @@ you run <tt>svn update</tt>.</p>
 <p>If you would like to get the GCC front end source code, you can also get it 
 and build it yourself.  Please follow <a href="GCCFEBuildInstrs.html">these 
 instructions</a> to successfully get and build the LLVM GCC front-end.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="git_mirror">GIT mirror</a>
+</div>
+
+<div class="doc_text">
+
+<p>GIT mirrors are available for a number of LLVM subprojects. These mirrors
+  sync automatically with each Subversion commit and contain all necessary
+  git-svn marks (so, you can recreate git-svn metadata locally). Note that right
+  now mirrors reflect only <tt>trunk</tt> for each project. You can do the
+  read-only GIT clone of LLVM via: 
+<pre>
+% git clone http://llvm.org/git/llvm.git
+</pre>
+</p>
 
 </div>
 
