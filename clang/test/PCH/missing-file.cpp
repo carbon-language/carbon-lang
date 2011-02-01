@@ -8,15 +8,15 @@
 // RUN: rm %t.h
 
 // Check diagnostic with location in original source:
-// RUN: %clang_cc1 -include-pch %t.h.pch -Wpadded -emit-obj %s 2> %t.stderr
+// RUN: %clang_cc1 -include-pch %t.h.pch -Wpadded -emit-obj -o %t.o %s 2> %t.stderr
 // RUN: grep 'bytes to align' %t.stderr
 
 // Check diagnostic with 2nd location in original source:
-// RUN: not %clang_cc1 -DREDECL -include-pch %t.h.pch -emit-obj %s 2> %t.stderr
+// RUN: not %clang_cc1 -DREDECL -include-pch %t.h.pch -emit-obj -o %t.o %s 2> %t.stderr
 // RUN: grep 'previous definition is here' %t.stderr
 
 // Check diagnostic with instantiation location in original source:
-// RUN: not %clang_cc1 -DINSTANTIATION -include-pch %t.h.pch -emit-obj %s 2> %t.stderr
+// RUN: not %clang_cc1 -DINSTANTIATION -include-pch %t.h.pch -emit-obj -o %t.o %s 2> %t.stderr
 // RUN: grep 'cannot be used prior to' %t.stderr
 
 void qq(S*) {}
