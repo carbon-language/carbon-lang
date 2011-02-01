@@ -9228,6 +9228,11 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
 /// \brief Redundant parentheses over an equality comparison can indicate
 /// that the user intended an assignment used as condition.
 void Sema::DiagnoseEqualityWithExtraParens(ParenExpr *parenE) {
+  // Don't warn if the parens came from a macro.
+  SourceLocation parenLoc = parenE->getLocStart();
+  if (parenLoc.isInvalid() || parenLoc.isMacroID())
+    return;
+
   Expr *E = parenE->IgnoreParens();
 
   if (BinaryOperator *opE = dyn_cast<BinaryOperator>(E))

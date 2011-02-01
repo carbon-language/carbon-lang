@@ -110,6 +110,10 @@ void test() {
                    // expected-note {{use '=' to turn this equality comparison into an assignment}} \
                    // expected-note {{remove extraneous parentheses around the comparison to silence this warning}}
   if ((5 == x)) {}
+
+#define EQ(x,y) ((x) == (y))
+  if (EQ(x, 5)) {}
+#undef EQ
 }
 
 void (*fn)();
