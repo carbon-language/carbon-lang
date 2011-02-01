@@ -4909,7 +4909,7 @@ public:
                                              MacroInfo *MacroInfo,
                                              unsigned Argument);
   void CodeCompleteNaturalLanguage();
-  void GatherGlobalCodeCompletions(
+  void GatherGlobalCodeCompletions(llvm::BumpPtrAllocator &Allocator,
                   llvm::SmallVectorImpl<CodeCompletionResult> &Results);
   //@}
 

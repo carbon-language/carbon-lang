@@ -288,6 +288,12 @@ public:
   }
   
 private:
+  /// \brief Allocator used to store temporary code completion results.
+  llvm::BumpPtrAllocator CompletionAllocator;
+
+  /// \brief Allocator used to store cached code completions.
+  llvm::BumpPtrAllocator CachedCompletionAllocator;
+
   /// \brief The set of cached code-completion results.
   std::vector<CachedCodeCompletionResult> CachedCompletionResults;
   

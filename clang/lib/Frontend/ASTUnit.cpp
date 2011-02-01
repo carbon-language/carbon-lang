@@ -222,7 +222,7 @@ void ASTUnit::CacheCodeCompletionResults() {
   // Gather the set of global code completions.
   typedef CodeCompletionResult Result;
   llvm::SmallVector<Result, 8> Results;
-  TheSema->GatherGlobalCodeCompletions(Results);
+  TheSema->GatherGlobalCodeCompletions(CachedCompletionAllocator, Results);
   
   // Translate global code completions into cached completions.
   llvm::DenseMap<CanQualType, unsigned> CompletionTypes;
@@ -232,7 +232,8 @@ void ASTUnit::CacheCodeCompletionResults() {
     case Result::RK_Declaration: {
       bool IsNestedNameSpecifier = false;
       CachedCodeCompletionResult CachedResult;
-      CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema);
+      CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema,
+                                                     CachedCompletionAllocator);
       CachedResult.ShowInContexts = getDeclShowContexts(Results[I].Declaration,
                                                         Ctx->getLangOptions(),
                                                         IsNestedNameSpecifier);
@@ -294,7 +295,9 @@ void ASTUnit::CacheCodeCompletionResults() {
           // nested-name-specifier but isn't already an option, create a 
           // nested-name-specifier completion.
           Results[I].StartsNestedNameSpecifier = true;
-          CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema);
+          CachedResult.Completion 
+            = Results[I].CreateCodeCompletionString(*TheSema,
+                                                    CachedCompletionAllocator);
           CachedResult.ShowInContexts = RemainingContexts;
           CachedResult.Priority = CCP_NestedNameSpecifier;
           CachedResult.TypeClass = STC_Void;
@@ -313,7 +316,9 @@ void ASTUnit::CacheCodeCompletionResults() {
       
     case Result::RK_Macro: {
       CachedCodeCompletionResult CachedResult;
-      CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema);
+      CachedResult.Completion 
+        = Results[I].CreateCodeCompletionString(*TheSema,
+                                                CachedCompletionAllocator);
       CachedResult.ShowInContexts
         = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
         | (1 << (CodeCompletionContext::CCC_ObjCInterface - 1))
@@ -337,7 +342,6 @@ void ASTUnit::CacheCodeCompletionResults() {
       break;
     }
     }
-    Results[I].Destroy();
   }
 
   // Make a note of the state when we performed this caching.
@@ -345,10 +349,9 @@ void ASTUnit::CacheCodeCompletionResults() {
 }
 
 void ASTUnit::ClearCachedCompletionResults() {
-  for (unsigned I = 0, N = CachedCompletionResults.size(); I != N; ++I)
-    delete CachedCompletionResults[I].Completion;
   CachedCompletionResults.clear();
   CachedCompletionTypes.clear();
+  CachedCompletionAllocator.Reset();
 }
 
 namespace {
@@ -1657,6 +1660,10 @@ namespace {
                                            unsigned NumCandidates) { 
       Next.ProcessOverloadCandidates(S, CurrentArg, Candidates, NumCandidates);
     }
+    
+    virtual llvm::BumpPtrAllocator &getAllocator() {
+      return Next.getAllocator();
+    }
   };
 }
 
@@ -1750,7 +1757,6 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
 
   // Contains the set of names that are hidden by "local" completion results.
   llvm::StringSet<llvm::BumpPtrAllocator> HiddenNames;
-  llvm::SmallVector<CodeCompletionString *, 4> StringsToDestroy;
   typedef CodeCompletionResult Result;
   llvm::SmallVector<Result, 8> AllResults;
   for (ASTUnit::cached_completion_iterator 
@@ -1809,11 +1815,12 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
         Context.getKind() == CodeCompletionContext::CCC_MacroNameUse) {
       // Create a new code-completion string that just contains the
       // macro name, without its arguments.
-      Completion = new CodeCompletionString;
-      Completion->AddTypedTextChunk(C->Completion->getTypedText());
-      StringsToDestroy.push_back(Completion);
+      CodeCompletionBuilder Builder(getAllocator(), CCP_CodePattern,
+                                    C->Availability);
+      Builder.AddTypedTextChunk(C->Completion->getTypedText());
       CursorKind = CXCursor_NotImplemented;
       Priority = CCP_CodePattern;
+      Completion = Builder.TakeString();
     }
     
     AllResults.push_back(Result(Completion, Priority, CursorKind, 
@@ -1829,9 +1836,6 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
   
   Next.ProcessCodeCompleteResults(S, Context, AllResults.data(),
                                   AllResults.size());
-  
-  for (unsigned I = 0, N = StringsToDestroy.size(); I != N; ++I)
-    delete StringsToDestroy[I];
 }
 
 
