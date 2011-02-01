@@ -185,8 +185,8 @@ public:
     if (is64Bit())
       Write32(0); // reserved
 
-    assert(OS.tell() - Start == is64Bit() ? 
-           macho::Header64Size : macho::Header32Size);
+    assert(OS.tell() - Start ==
+           (is64Bit() ? macho::Header64Size : macho::Header32Size));
   }
 
   /// WriteSegmentLoadCommand - Write a segment load command.
