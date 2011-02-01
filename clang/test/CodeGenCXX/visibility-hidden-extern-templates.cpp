@@ -20,7 +20,7 @@ void test_X(X<int> xi, X<char> xc) {
   xi.g();
   // CHECK: declare void @_ZN1XIcE1fEv
   xc.f();
-  // CHECK: define available_externally void @_ZN1XIcE1gEv
+  // CHECK: define available_externally hidden void @_ZN1XIcE1gEv
   xc.g();
 }
 
