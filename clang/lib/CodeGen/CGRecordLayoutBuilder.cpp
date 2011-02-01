@@ -500,12 +500,12 @@ void CGRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *BaseDecl,
   const ASTRecordLayout &Layout = 
     Types.getContext().getASTRecordLayout(BaseDecl);
   
-  uint64_t NonVirtualSize = Layout.getNonVirtualSize();
+  CharUnits NonVirtualSize = Layout.getNonVirtualSize();
   
   AppendPadding(BaseOffset / 8, 1);
   
   // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
-  AppendBytes(NonVirtualSize / 8);
+  AppendBytes(NonVirtualSize.getQuantity());
 }
 
 void
@@ -520,12 +520,12 @@ CGRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *BaseDecl,
   const ASTRecordLayout &Layout = 
     Types.getContext().getASTRecordLayout(BaseDecl);
 
-  uint64_t NonVirtualSize = Layout.getNonVirtualSize();
+  CharUnits NonVirtualSize = Layout.getNonVirtualSize();
 
   AppendPadding(BaseOffset / 8, 1);
   
   // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
-  AppendBytes(NonVirtualSize / 8);
+  AppendBytes(NonVirtualSize.getQuantity());
 
   // FIXME: Add the vbase field info.
 }
@@ -616,8 +616,9 @@ bool
 CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(RD);
 
+
   uint64_t AlignedNonVirtualTypeSize =
-    llvm::RoundUpToAlignment(Layout.getNonVirtualSize(),
+    llvm::RoundUpToAlignment(Layout.getNonVirtualSize().getQuantity() * 8,
                              Layout.getNonVirtualAlign()) / 8;
   
   
@@ -855,7 +856,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 
   if (BaseTy) {
     uint64_t AlignedNonVirtualTypeSizeInBits =
-      llvm::RoundUpToAlignment(Layout.getNonVirtualSize(),
+      llvm::RoundUpToAlignment(Layout.getNonVirtualSize().getQuantity() * 8,
                                Layout.getNonVirtualAlign());
 
     assert(AlignedNonVirtualTypeSizeInBits == 

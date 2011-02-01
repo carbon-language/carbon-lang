@@ -52,7 +52,7 @@ class ASTRecordLayout {
   struct CXXRecordLayoutInfo {
     /// NonVirtualSize - The non-virtual size (in bits) of an object, which is
     /// the size of the object without virtual bases.
-    uint64_t NonVirtualSize;
+    CharUnits NonVirtualSize;
 
     /// NonVirtualAlign - The non-virtual alignment (in bits) of an object,
     /// which is the alignment of the object without virtual bases.
@@ -91,7 +91,7 @@ class ASTRecordLayout {
   ASTRecordLayout(const ASTContext &Ctx,
                   uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
-                  uint64_t nonvirtualsize, unsigned nonvirtualalign,
+                  CharUnits nonvirtualsize, unsigned nonvirtualalign,
                   CharUnits SizeOfLargestEmptySubobject,
                   const CXXRecordDecl *PrimaryBase,
                   bool IsPrimaryBaseVirtual,
@@ -128,9 +128,9 @@ public:
     return DataSize;
   }
 
-  /// getNonVirtualSize - Get the non-virtual size (in bits) of an object,
+  /// getNonVirtualSize - Get the non-virtual size (in chars) of an object,
   /// which is the size of the object without virtual bases.
-  uint64_t getNonVirtualSize() const {
+  CharUnits getNonVirtualSize() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
 
     return CXXInfo->NonVirtualSize;

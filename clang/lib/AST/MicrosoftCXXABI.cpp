@@ -44,8 +44,10 @@ public:
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
     
     // In the Microsoft ABI, classes can have one or two vtable pointers.
-    return Layout.getNonVirtualSize() == Context.Target.getPointerWidth(0) ||
-      Layout.getNonVirtualSize() == Context.Target.getPointerWidth(0) * 2;
+    CharUnits PointerSize = 
+      Context.toCharUnitsFromBits(Context.Target.getPointerWidth(0));
+    return Layout.getNonVirtualSize() == PointerSize ||
+      Layout.getNonVirtualSize() == PointerSize * 2;
   }    
 };
 }

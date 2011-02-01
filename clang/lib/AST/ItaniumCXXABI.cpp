@@ -52,7 +52,9 @@ public:
       return false;
 
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-    return Layout.getNonVirtualSize() == Context.Target.getPointerWidth(0);
+    CharUnits PointerSize = 
+      Context.toCharUnitsFromBits(Context.Target.getPointerWidth(0));
+    return Layout.getNonVirtualSize() == PointerSize;
   }
 };
 

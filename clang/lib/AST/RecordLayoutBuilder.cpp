@@ -1115,7 +1115,8 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
 
   if (!Base->Class->isEmpty()) {
     // Update the data size.
-    DataSize = Offset + Layout.getNonVirtualSize();
+    DataSize = Offset + 
+      (Layout.getNonVirtualSize().getQuantity() * Context.getCharWidth());
 
     Size = std::max(Size, DataSize);
   } else
@@ -1665,7 +1666,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
       new (*this) ASTRecordLayout(*this, Builder->Size, Builder->Alignment,
                                   DataSize, Builder->FieldOffsets.data(),
                                   Builder->FieldOffsets.size(),
-                                  NonVirtualSize,
+                                  toCharUnitsFromBits(NonVirtualSize),
                                   Builder->NonVirtualAlignment,
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
                                   Builder->PrimaryBase,
@@ -1834,7 +1835,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
   OS << "  sizeof=" << Layout.getSize() / 8;
   OS << ", dsize=" << Layout.getDataSize() / 8;
   OS << ", align=" << Layout.getAlignment() / 8 << '\n';
-  OS << "  nvsize=" << Layout.getNonVirtualSize() / 8;
+  OS << "  nvsize=" << Layout.getNonVirtualSize().getQuantity();
   OS << ", nvalign=" << Layout.getNonVirtualAlign() / 8 << '\n';
   OS << '\n';
 }
