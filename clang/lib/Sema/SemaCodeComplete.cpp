@@ -1787,6 +1787,41 @@ CopyString(llvm::BumpPtrAllocator &Allocator, llvm::StringRef Text) {
   return Mem;
 }
 
+/// \brief Retrieve the string representation of the given type as a string
+/// that has the appropriate lifetime for code completion.
+///
+/// This routine provides a fast path where we provide constant strings for
+/// common type names.
+const char *GetCompletionTypeString(QualType T,
+                                    ASTContext &Context,
+                                    llvm::BumpPtrAllocator &Allocator) {
+  PrintingPolicy Policy(Context.PrintingPolicy);
+  Policy.AnonymousTagLocations = false;
+
+  if (!T.getLocalQualifiers()) {
+    // Built-in type names are constant strings.
+    if (const BuiltinType *BT = dyn_cast<BuiltinType>(T))
+      return BT->getName(Context.getLangOptions());
+    
+    // Anonymous tag types are constant strings.
+    if (const TagType *TagT = dyn_cast<TagType>(T))
+      if (TagDecl *Tag = TagT->getDecl())
+        if (!Tag->getIdentifier() && !Tag->getTypedefForAnonDecl()) {
+          switch (Tag->getTagKind()) {
+          case TTK_Struct: return "struct <anonymous>";
+          case TTK_Class:  return "class <anonymous>";            
+          case TTK_Union:  return "union <anonymous>";
+          case TTK_Enum:   return "enum <anonymous>";
+          }
+        }
+  }
+  
+  // Slow path: format the type as a string.
+  std::string Result;
+  T.getAsStringInternal(Result, Policy);
+  return CopyString(Allocator, Result);
+}
+
 /// \brief If the given declaration has an associated type, add it as a result 
 /// type chunk.
 static void AddResultTypeChunk(ASTContext &Context,
@@ -1820,13 +1855,8 @@ static void AddResultTypeChunk(ASTContext &Context,
   if (T.isNull() || Context.hasSameType(T, Context.DependentTy))
     return;
   
-  PrintingPolicy Policy(Context.PrintingPolicy);
-  Policy.AnonymousTagLocations = false;
-  
-  // FIXME: Fast-path common strings.
-  std::string TypeStr;
-  T.getAsStringInternal(TypeStr, Policy);
-  Result.AddResultTypeChunk(CopyString(Result.getAllocator(), TypeStr));
+  Result.AddResultTypeChunk(GetCompletionTypeString(T, Context, 
+                                                    Result.getAllocator()));
 }
 
 static void MaybeAddSentinel(ASTContext &Context, NamedDecl *FunctionOrMethod,
@@ -2107,7 +2137,25 @@ AddFunctionTypeQualsToCompletionString(CodeCompletionBuilder &Result,
   if (!Proto || !Proto->getTypeQuals())
     return;
 
-  // FIXME: Fast-path single-qualifier strings.
+  // FIXME: Add ref-qualifier!
+  
+  // Handle single qualifiers without copying
+  if (Proto->getTypeQuals() == Qualifiers::Const) {
+    Result.AddInformativeChunk(" const");
+    return;
+  }
+
+  if (Proto->getTypeQuals() == Qualifiers::Volatile) {
+    Result.AddInformativeChunk(" volatile");
+    return;
+  }
+
+  if (Proto->getTypeQuals() == Qualifiers::Restrict) {
+    Result.AddInformativeChunk(" restrict");
+    return;
+  }
+
+  // Handle multiple qualifiers.
   std::string QualsStr;
   if (Proto->getTypeQuals() & Qualifiers::Const)
     QualsStr += " const";
@@ -2128,12 +2176,35 @@ static void AddTypedNameChunk(ASTContext &Context, NamedDecl *ND,
     return;
   
   switch (Name.getNameKind()) {
+    case DeclarationName::CXXOperatorName: {
+      const char *OperatorName = 0;
+      switch (Name.getCXXOverloadedOperator()) {
+      case OO_None: 
+      case OO_Conditional:
+      case NUM_OVERLOADED_OPERATORS:
+        OperatorName = "operator"; 
+        break;
+    
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
+      case OO_##Name: OperatorName = "operator" Spelling; break;
+#define OVERLOADED_OPERATOR_MULTI(Name,Spelling,Unary,Binary,MemberOnly)
+#include "clang/Basic/OperatorKinds.def"
+          
+      case OO_New:          OperatorName = "operator new"; break;
+      case OO_Delete:       OperatorName = "operator delete"; break;
+      case OO_Array_New:    OperatorName = "operator new[]"; break;
+      case OO_Array_Delete: OperatorName = "operator delete[]"; break;
+      case OO_Call:         OperatorName = "operator()"; break;
+      case OO_Subscript:    OperatorName = "operator[]"; break;
+      }
+      Result.AddTypedTextChunk(OperatorName);
+      break;
+    }
+      
   case DeclarationName::Identifier:
   case DeclarationName::CXXConversionFunctionName:
-  case DeclarationName::CXXOperatorName:
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXLiteralOperatorName:
-      // FIXME: Fast-path operator names?
     Result.AddTypedTextChunk(CopyString(Result.getAllocator(), 
                                         ND->getNameAsString()));
     break;
@@ -2426,10 +2497,10 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
   if (!FDecl && !Proto) {
     // Function without a prototype. Just give the return type and a 
     // highlighted ellipsis.
-    // FIXME: Fast-path common types?
     const FunctionType *FT = getFunctionType();
-    Result.AddTextChunk(CopyString(Result.getAllocator(), 
-            FT->getResultType().getAsString(S.Context.PrintingPolicy)));
+    Result.AddTextChunk(GetCompletionTypeString(FT->getResultType(),
+                                                S.Context, 
+                                                Result.getAllocator()));
     Result.AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     Result.AddChunk(Chunk(CodeCompletionString::CK_CurrentParameter, "..."));
     Result.AddChunk(Chunk(CodeCompletionString::CK_RightParen));
@@ -5380,11 +5451,10 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
     // If the result type was not already provided, add it to the
     // pattern as (type).
     if (ReturnType.isNull()) {
-      std::string TypeStr;
-      Method->getResultType().getAsStringInternal(TypeStr, Policy);
       Builder.AddChunk(CodeCompletionString::CK_LeftParen);
-      // FIXME: Fast-path common type names
-      Builder.AddTextChunk(CopyString(Builder.getAllocator(), TypeStr));
+      Builder.AddTextChunk(GetCompletionTypeString(Method->getResultType(),
+                                                   Context, 
+                                                   Builder.getAllocator()));
       Builder.AddChunk(CodeCompletionString::CK_RightParen);
     }
 
@@ -5412,12 +5482,10 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
         break;
 
       // Add the parameter type.
-      std::string TypeStr;
-      (*P)->getOriginalType().getAsStringInternal(TypeStr, Policy);
       Builder.AddChunk(CodeCompletionString::CK_LeftParen);
-      // FIXME: Fast-path common type names
-      Builder.AddTextChunk(CopyString(Builder.getAllocator(),
-                                      TypeStr));
+      Builder.AddTextChunk(GetCompletionTypeString((*P)->getOriginalType(), 
+                                                   Context,
+                                                   Builder.getAllocator()));
       Builder.AddChunk(CodeCompletionString::CK_RightParen);
       
       if (IdentifierInfo *Id = (*P)->getIdentifier())
