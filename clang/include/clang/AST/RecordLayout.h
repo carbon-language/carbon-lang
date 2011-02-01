@@ -50,7 +50,7 @@ class ASTRecordLayout {
 
   /// CXXRecordLayoutInfo - Contains C++ specific layout information.
   struct CXXRecordLayoutInfo {
-    /// NonVirtualSize - The non-virtual size (in bits) of an object, which is
+    /// NonVirtualSize - The non-virtual size (in chars) of an object, which is
     /// the size of the object without virtual bases.
     CharUnits NonVirtualSize;
 
