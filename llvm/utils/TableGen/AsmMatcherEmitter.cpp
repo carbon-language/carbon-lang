@@ -2098,10 +2098,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "        continue;\n";
   OS << "      // If this operand is broken for all of the instances of this\n";
   OS << "      // mnemonic, keep track of it so we can report loc info.\n";
-  OS << "      if (it == MnemonicRange.first || ErrorInfo == i+1)\n";
+  OS << "      if (it == MnemonicRange.first || ErrorInfo <= i+1)\n";
   OS << "        ErrorInfo = i+1;\n";
-  OS << "      else\n";
-  OS << "        ErrorInfo = ~0U;";
   OS << "      // Otherwise, just reject this instance of the mnemonic.\n";
   OS << "      OperandsValid = false;\n";
   OS << "      break;\n";
