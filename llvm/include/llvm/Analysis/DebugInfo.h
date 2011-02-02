@@ -123,6 +123,7 @@ namespace llvm {
     bool isGlobal() const;
     bool isUnspecifiedParameter() const;
     bool isTemplateTypeParameter() const;
+    bool isTemplateValueParameter() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -385,6 +386,25 @@ namespace llvm {
     }
     unsigned getLineNumber() const   { return getUnsignedField(5); }
     unsigned getColumnNumber() const { return getUnsignedField(6); }
+  };
+
+  /// DITemplateValueParameter - This is a wrapper for template value parameter.
+  class DITemplateValueParameter : public DIDescriptor {
+  public:
+    explicit DITemplateValueParameter(const MDNode *N = 0) : DIDescriptor(N) {}
+
+    DIScope getContext() const       { return getFieldAs<DIScope>(1); }
+    StringRef getName() const        { return getStringField(2); }
+    DIType getType() const           { return getFieldAs<DIType>(3); }
+    uint64_t getValue() const         { return getUInt64Field(4); }
+    StringRef getFilename() const    { 
+      return getFieldAs<DIFile>(5).getFilename();
+    }
+    StringRef getDirectory() const   { 
+      return getFieldAs<DIFile>(5).getDirectory();
+    }
+    unsigned getLineNumber() const   { return getUnsignedField(6); }
+    unsigned getColumnNumber() const { return getUnsignedField(7); }
   };
 
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).

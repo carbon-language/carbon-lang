@@ -227,6 +227,12 @@ bool DIDescriptor::isTemplateTypeParameter() const {
   return DbgNode && getTag() == dwarf::DW_TAG_template_type_parameter;
 }
 
+/// isTemplateValueParameter - Return true if the specified tag is
+/// DW_TAG_template_value_parameter.
+bool DIDescriptor::isTemplateValueParameter() const {
+  return DbgNode && getTag() == dwarf::DW_TAG_template_value_parameter;
+}
+
 /// isCompileUnit - Return true if the specified tag is DW_TAG_compile_unit.
 bool DIDescriptor::isCompileUnit() const {
   return DbgNode && getTag() == dwarf::DW_TAG_compile_unit;

@@ -282,6 +282,27 @@ DIBuilder::CreateTemplateTypeParameter(DIDescriptor Context, StringRef Name,
                                              array_lengthof(Elts)));
 }
 
+/// CreateTemplateValueParameter - Create debugging information for template
+/// value parameter.
+DITemplateValueParameter 
+DIBuilder::CreateTemplateValueParameter(DIDescriptor Context, StringRef Name,
+                                        DIType Ty, uint64_t Val,
+                                        MDNode *File, unsigned LineNo,
+                                        unsigned ColumnNo) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_template_value_parameter),
+    Context,
+    MDString::get(VMContext, Name),
+    Ty,
+    ConstantInt::get(Type::getInt64Ty(VMContext), Val),
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
+    ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo)
+  };
+  return DITemplateValueParameter(MDNode::get(VMContext, &Elts[0], 
+                                              array_lengthof(Elts)));
+}
+
 /// CreateStructType - Create debugging information entry for a struct.
 DIType DIBuilder::CreateStructType(DIDescriptor Context, StringRef Name, 
                                    DIFile File, unsigned LineNumber, 

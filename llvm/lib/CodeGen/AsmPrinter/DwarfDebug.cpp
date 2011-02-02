@@ -1161,6 +1161,9 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         if (Element.isTemplateTypeParameter())
           Buffer.addChild(getOrCreateTemplateTypeParameterDIE(
                             DITemplateTypeParameter(Element)));
+        else if (Element.isTemplateValueParameter())
+          Buffer.addChild(getOrCreateTemplateValueParameterDIE(
+                            DITemplateValueParameter(Element)));
       }
     }
     break;
@@ -1205,6 +1208,23 @@ DwarfDebug::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
   ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
   addType(ParamDIE, TP.getType());
   addString(ParamDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string, TP.getName());
+  return ParamDIE;
+}
+
+/// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE 
+/// for the given DITemplateValueParameter.
+DIE *
+DwarfDebug::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV) {
+  CompileUnit *TVCU = getCompileUnit(TPV);
+  DIE *ParamDIE = TVCU->getDIE(TPV);
+  if (ParamDIE)
+    return ParamDIE;
+
+  ParamDIE = new DIE(dwarf::DW_TAG_template_value_parameter);
+  addType(ParamDIE, TPV.getType());
+  addString(ParamDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string, TPV.getName());
+  addUInt(ParamDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata, 
+          TPV.getValue());
   return ParamDIE;
 }
 

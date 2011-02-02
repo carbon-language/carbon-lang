@@ -39,6 +39,7 @@ namespace llvm {
   class DILexicalBlock;
   class DISubprogram;
   class DITemplateTypeParameter;
+  class DITemplateValueParameter;
 
   class DIBuilder {
     private:
@@ -198,7 +199,7 @@ namespace llvm {
 
     /// CreateTemplateTypeParameter - Create debugging information for template
     /// type parameter.
-    /// @param Scope        Scope in which this type is dfiend
+    /// @param Scope        Scope in which this type is defined.
     /// @param Name         Type parameter name.
     /// @param Ty           Parameter type.
     /// @param File         File where this type parameter is defined.
@@ -208,6 +209,21 @@ namespace llvm {
     CreateTemplateTypeParameter(DIDescriptor Scope, StringRef Name, DIType Ty,
                                 MDNode *File = 0, unsigned LineNo = 0,
                                 unsigned ColumnNo = 0);
+
+    /// CreateTemplateValueParameter - Create debugging information for template
+    /// value parameter.
+    /// @param Scope        Scope in which this type is defined.
+    /// @param Name         Value parameter name.
+    /// @param Ty           Parameter type.
+    /// @param Value        Constant parameter value.
+    /// @param File         File where this type parameter is defined.
+    /// @param LineNo       Line number.
+    /// @param ColumnNo     Column Number.
+    DITemplateValueParameter
+    CreateTemplateValueParameter(DIDescriptor Scope, StringRef Name, DIType Ty,
+                                 uint64_t Value,
+                                 MDNode *File = 0, unsigned LineNo = 0,
+                                 unsigned ColumnNo = 0);
 
     /// CreateArrayType - Create debugging information entry for an array.
     /// @param Size         Array size.
