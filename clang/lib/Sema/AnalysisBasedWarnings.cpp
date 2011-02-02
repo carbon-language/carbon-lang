@@ -393,14 +393,13 @@ public:
   void flushDiagnostics() {
     if (!uses)
       return;
-
+    
     for (UsesMap::iterator i = uses->begin(), e = uses->end(); i != e; ++i) {
       const VarDecl *vd = i->first;
       UsesVec *vec = i->second;
-      
-      S.Diag(vd->getLocStart(), diag::warn_uninit_var)
-        << vd->getDeclName() << vd->getSourceRange();
-      
+
+      bool fixitIssued = false;
+            
       // Sort the uses by their SourceLocations.  While not strictly
       // guaranteed to produce them in line/column order, this will provide
       // a stable ordering.
@@ -409,43 +408,49 @@ public:
       for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve; ++vi)
       {
         if (const DeclRefExpr *dr = dyn_cast<DeclRefExpr>(*vi)) {
-          S.Diag(dr->getLocStart(), diag::note_uninit_var)
-            << vd->getDeclName() << dr->getSourceRange();
+          S.Diag(dr->getLocStart(), diag::warn_uninit_var)
+            << vd->getDeclName() << dr->getSourceRange();          
         }
         else {
           const BlockExpr *be = cast<BlockExpr>(*vi);
-          S.Diag(be->getLocStart(), diag::note_uninit_var_captured_by_block)
+          S.Diag(be->getLocStart(), diag::warn_uninit_var_captured_by_block)
             << vd->getDeclName();
         }
-      }
+        
+        // Report where the variable was declared.
+        S.Diag(vd->getLocStart(), diag::note_uninit_var_def)
+          << vd->getDeclName();
 
-      // Suggest possible initialization (if any).
-      const char *initialization = 0;
-      QualType vdTy = vd->getType().getCanonicalType();
+        // Only report the fixit once.
+        if (fixitIssued)
+          continue;
       
-      if (vdTy->getAs<ObjCObjectPointerType>()) {
-        // Check if 'nil' is defined.
-        if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
-          initialization = " = nil";
-        else
+        fixitIssued = true;
+
+        // Suggest possible initialization (if any).
+        const char *initialization = 0;
+        QualType vdTy = vd->getType().getCanonicalType();
+      
+        if (vdTy->getAs<ObjCObjectPointerType>()) {
+          // Check if 'nil' is defined.
+          if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
+            initialization = " = nil";
+          else
+            initialization = " = 0";
+        }
+        else if (vdTy->isRealFloatingType())
+          initialization = " = 0.0";
+        else if (vdTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus)
+          initialization = " = false";
+        else if (vdTy->isScalarType())
           initialization = " = 0";
-      }
-      else if (vdTy->isRealFloatingType()) {
-        initialization = " = 0.0";
-      }
-      else if (vdTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus) {
-        initialization = " = false";
-      }
-      else if (vdTy->isScalarType()) {
-        initialization = " = 0";
-      }
       
-      if (initialization) {
-        SourceLocation loc = S.PP.getLocForEndOfToken(vd->getLocEnd());
-        S.Diag(loc, diag::note_var_fixit_add_initialization)
-          << FixItHint::CreateInsertion(loc, initialization);
+        if (initialization) {
+          SourceLocation loc = S.PP.getLocForEndOfToken(vd->getLocEnd());
+          S.Diag(loc, diag::note_var_fixit_add_initialization)
+            << FixItHint::CreateInsertion(loc, initialization);
+        }
       }
-
       delete vec;
     }
     delete uses;

@@ -3,8 +3,8 @@
 // Duplicated from uninit-variables.c.
 // Test just to ensure the analysis is working.
 int test1() {
-  int x; // expected-warning{{use of uninitialized variable 'x'}} expected-note{{add initialization to silence this warning}}
-  return x; // expected-note{{variable 'x' is possibly uninitialized when used here}}
+  int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization}}
+  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
 }
 
 // Test ObjC fast enumeration.
