@@ -147,6 +147,7 @@ namespace llvm {
     SDValue LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
   
     // Inline asm support
     std::vector<unsigned>

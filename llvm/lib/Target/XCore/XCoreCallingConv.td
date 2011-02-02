@@ -24,6 +24,9 @@ def CC_XCore : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
+  // The 'nest' parameter, if any, is passed in R11.
+  CCIfNest<CCAssignToReg<[R11]>>,
+
   // The first 4 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[R0, R1, R2, R3]>>,
 

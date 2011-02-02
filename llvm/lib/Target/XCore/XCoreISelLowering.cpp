@@ -148,7 +148,10 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
-  
+
+  // TRAMPOLINE is custom lowered.
+  setOperationAction(ISD::TRAMPOLINE, MVT::Other, Custom);
+
   maxStoresPerMemset = maxStoresPerMemsetOptSize = 4;
   maxStoresPerMemmove = maxStoresPerMemmoveOptSize
     = maxStoresPerMemcpy = maxStoresPerMemcpyOptSize = 2;
@@ -178,6 +181,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADD:
   case ISD::SUB:              return ExpandADDSUB(Op.getNode(), DAG);
   case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
+  case ISD::TRAMPOLINE:       return LowerTRAMPOLINE(Op, DAG);
   default:
     llvm_unreachable("unimplemented operand");
     return SDValue();
@@ -792,6 +796,64 @@ SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op,
   const TargetRegisterInfo *RegInfo = getTargetMachine().getRegisterInfo();
   return DAG.getCopyFromReg(DAG.getEntryNode(), dl, 
                             RegInfo->getFrameRegister(MF), MVT::i32);
+}
+
+SDValue XCoreTargetLowering::
+LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  SDValue Trmp = Op.getOperand(1); // trampoline
+  SDValue FPtr = Op.getOperand(2); // nested function
+  SDValue Nest = Op.getOperand(3); // 'nest' parameter value
+
+  const Value *TrmpAddr = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
+
+  // .align 4
+  // LDAPF_u10 r11, nest
+  // LDW_2rus r11, r11[0]
+  // STWSP_ru6 r11, sp[0]
+  // LDAPF_u10 r11, fptr
+  // LDW_2rus r11, r11[0]
+  // BAU_1r r11
+  // nest:
+  // .word nest
+  // fptr:
+  // .word fptr
+  SDValue OutChains[5];
+
+  SDValue Addr = Trmp;
+
+  DebugLoc dl = Op.getDebugLoc();
+  OutChains[0] = DAG.getStore(Chain, dl, DAG.getConstant(0x0a3cd805, MVT::i32),
+                              Addr, MachinePointerInfo(TrmpAddr), false, false,
+                              0);
+
+  Addr = DAG.getNode(ISD::ADD, dl, MVT::i32, Trmp,
+                     DAG.getConstant(4, MVT::i32));
+  OutChains[1] = DAG.getStore(Chain, dl, DAG.getConstant(0xd80456c0, MVT::i32),
+                              Addr, MachinePointerInfo(TrmpAddr, 4), false,
+                              false, 0);
+
+  Addr = DAG.getNode(ISD::ADD, dl, MVT::i32, Trmp,
+                     DAG.getConstant(8, MVT::i32));
+  OutChains[2] = DAG.getStore(Chain, dl, DAG.getConstant(0x27fb0a3c, MVT::i32),
+                              Addr, MachinePointerInfo(TrmpAddr, 8), false,
+                              false, 0);
+
+  Addr = DAG.getNode(ISD::ADD, dl, MVT::i32, Trmp,
+                     DAG.getConstant(12, MVT::i32));
+  OutChains[3] = DAG.getStore(Chain, dl, Nest, Addr,
+                              MachinePointerInfo(TrmpAddr, 12), false, false,
+                              0);
+
+  Addr = DAG.getNode(ISD::ADD, dl, MVT::i32, Trmp,
+                     DAG.getConstant(16, MVT::i32));
+  OutChains[4] = DAG.getStore(Chain, dl, FPtr, Addr,
+                              MachinePointerInfo(TrmpAddr, 16), false, false,
+                              0);
+
+  SDValue Ops[] =
+    { Trmp, DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains, 5) };
+  return DAG.getMergeValues(Ops, 2, dl);
 }
 
 //===----------------------------------------------------------------------===//
