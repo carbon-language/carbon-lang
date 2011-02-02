@@ -347,6 +347,11 @@ int main(int argc_, const char **argv_) {
   if (TheDriver.CCPrintOptions)
     TheDriver.CCPrintOptionsFilename = ::getenv("CC_PRINT_OPTIONS_FILE");
 
+  // Handle CC_PRINT_HEADERS and CC_PRINT_HEADERS_FILE.
+  TheDriver.CCPrintHeaders = !!::getenv("CC_PRINT_HEADERS");
+  if (TheDriver.CCPrintHeaders)
+    TheDriver.CCPrintHeadersFilename = ::getenv("CC_PRINT_HEADERS_FILE");
+
   // Handle QA_OVERRIDE_GCC3_OPTIONS and CCC_ADD_ARGS, used for editing a
   // command line behind the scenes.
   if (const char *OverrideStr = ::getenv("QA_OVERRIDE_GCC3_OPTIONS")) {

@@ -1127,6 +1127,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_v);
   Args.AddLastArg(CmdArgs, options::OPT_H);
+  if (D.CCPrintHeaders) {
+    CmdArgs.push_back("-header-include-file");
+    CmdArgs.push_back(D.CCPrintHeadersFilename ?
+                      D.CCPrintHeadersFilename : "-");
+  }
   Args.AddLastArg(CmdArgs, options::OPT_P);
   Args.AddLastArg(CmdArgs, options::OPT_print_ivar_layout);
 
