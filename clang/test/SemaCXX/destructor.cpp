@@ -159,4 +159,16 @@ struct S7 {
 protected:
   ~S7();
 };
+
+template<class T> class TS : public B {
+  virtual void m();
+};
+
+TS<int> baz;
+
+template<class T> class TS2 { // expected-warning {{'nonvirtualdtor::TS2<int>' has virtual functions but non-virtual destructor}}
+  virtual void m();
+};
+
+TS2<int> foo; // expected-note {{instantiation}}
 }
