@@ -579,7 +579,7 @@ basic_filebuf<_CharT, _Traits>::underflow()
                 this->setg(this->eback(),
                            this->eback() + __unget_sz,
                            this->eback() + __unget_sz + __nmemb);
-                __c = *this->gptr();
+                __c = traits_type::to_int_type(*this->gptr());
             }
         }
         else
@@ -602,18 +602,18 @@ basic_filebuf<_CharT, _Traits>::underflow()
                 if (__r == codecvt_base::noconv)
                 {
                     this->setg((char_type*)__extbuf_, (char_type*)__extbuf_, (char_type*)__extbufend_);
-                    __c = *this->gptr();
+                    __c = traits_type::to_int_type(*this->gptr());
                 }
                 else if (__inext != this->eback() + __unget_sz)
                 {
                     this->setg(this->eback(), this->eback() + __unget_sz, __inext);
-                    __c = *this->gptr();
+                    __c = traits_type::to_int_type(*this->gptr());
                 }
             }
         }
     }
     else
-        __c = *this->gptr();
+        __c = traits_type::to_int_type(*this->gptr());
     if (this->eback() == &__1buf)
         this->setg(0, 0, 0);
     return __c;
