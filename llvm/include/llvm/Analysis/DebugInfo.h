@@ -122,6 +122,7 @@ namespace llvm {
     bool isType() const;
     bool isGlobal() const;
     bool isUnspecifiedParameter() const;
+    bool isTemplateTypeParameter() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -356,6 +357,7 @@ namespace llvm {
     DICompositeType getContainingType() const {
       return getFieldAs<DICompositeType>(12);
     }
+    DIArray getTemplateParams() const { return getFieldAs<DIArray>(13); }
 
     /// Verify - Verify that a composite type descriptor is well formed.
     bool Verify() const;
@@ -365,6 +367,24 @@ namespace llvm {
 
     /// dump - print composite type to dbgs() with a newline.
     void dump() const;
+  };
+
+  /// DITemplateTypeParameter - This is a wrapper for template type parameter.
+  class DITemplateTypeParameter : public DIDescriptor {
+  public:
+    explicit DITemplateTypeParameter(const MDNode *N = 0) : DIDescriptor(N) {}
+
+    DIScope getContext() const       { return getFieldAs<DIScope>(1); }
+    StringRef getName() const        { return getStringField(2); }
+    DIType getType() const           { return getFieldAs<DIType>(3); }
+    StringRef getFilename() const    { 
+      return getFieldAs<DIFile>(4).getFilename();
+    }
+    StringRef getDirectory() const   { 
+      return getFieldAs<DIFile>(4).getDirectory();
+    }
+    unsigned getLineNumber() const   { return getUnsignedField(5); }
+    unsigned getColumnNumber() const { return getUnsignedField(6); }
   };
 
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).

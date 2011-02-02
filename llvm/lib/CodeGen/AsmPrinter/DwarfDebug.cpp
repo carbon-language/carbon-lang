@@ -1151,6 +1151,18 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       DIDescriptor Context = CTy.getContext();
       addToContextOwner(&Buffer, Context);
     }
+
+    if (Tag == dwarf::DW_TAG_class_type) {
+      DIArray TParams = CTy.getTemplateParams();
+      unsigned N = TParams.getNumElements();
+      // Add template parameters.
+      for (unsigned i = 0; i < N; ++i) {
+        DIDescriptor Element = TParams.getElement(i);
+        if (Element.isTemplateTypeParameter())
+          Buffer.addChild(getOrCreateTemplateTypeParameterDIE(
+                            DITemplateTypeParameter(Element)));
+      }
+    }
     break;
   }
   default:
@@ -1179,6 +1191,21 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (!CTy.isForwardDecl())
       addSourceLine(&Buffer, CTy);
   }
+}
+
+/// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE 
+/// for the given DITemplateTypeParameter.
+DIE *
+DwarfDebug::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
+  CompileUnit *TypeCU = getCompileUnit(TP);
+  DIE *ParamDIE = TypeCU->getDIE(TP);
+  if (ParamDIE)
+    return ParamDIE;
+
+  ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
+  addType(ParamDIE, TP.getType());
+  addString(ParamDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string, TP.getName());
+  return ParamDIE;
 }
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.

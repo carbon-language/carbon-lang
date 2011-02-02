@@ -52,6 +52,7 @@ class DIType;
 class DINameSpace;
 class DISubrange;
 class DICompositeType;
+class DITemplateTypeParameter;
 
 //===----------------------------------------------------------------------===//
 /// SrcLineInfo - This class is used to record source line correspondence.
@@ -341,6 +342,10 @@ private:
   /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
   /// given DIType.
   DIE *getOrCreateTypeDIE(DIType Ty);
+
+  /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE 
+  /// for the given DITemplateTypeParameter.
+  DIE *getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP);
 
   void addPubTypes(DISubprogram SP);
 

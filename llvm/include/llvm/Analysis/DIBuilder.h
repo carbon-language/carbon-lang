@@ -38,6 +38,7 @@ namespace llvm {
   class DISubrange;
   class DILexicalBlock;
   class DISubprogram;
+  class DITemplateTypeParameter;
 
   class DIBuilder {
     private:
@@ -157,11 +158,13 @@ namespace llvm {
     ///                     for this type. This is used in 
     ///                     DW_AT_containing_type. See DWARF documentation
     ///                     for more info.
+    /// @param TemplateParms Template type parameters.
     DIType CreateClassType(DIDescriptor Scope, StringRef Name, DIFile File,
                            unsigned LineNumber, uint64_t SizeInBits,
                            uint64_t AlignInBits, uint64_t OffsetInBits,
                            unsigned Flags, DIType DerivedFrom, 
-                           DIArray Elements, MDNode *VTableHolder = 0);
+                           DIArray Elements, MDNode *VTableHolder = 0,
+                           MDNode *TemplateParms = 0);
 
     /// CreateStructType - Create debugging information entry for a struct.
     /// @param Scope        Scope in which this struct is defined.
@@ -192,6 +195,19 @@ namespace llvm {
                            unsigned LineNumber, uint64_t SizeInBits,
                            uint64_t AlignInBits, unsigned Flags,
                            DIArray Elements, unsigned RunTimeLang = 0);
+
+    /// CreateTemplateTypeParameter - Create debugging information for template
+    /// type parameter.
+    /// @param Scope        Scope in which this type is dfiend
+    /// @param Name         Type parameter name.
+    /// @param Ty           Parameter type.
+    /// @param File         File where this type parameter is defined.
+    /// @param LineNo       Line number.
+    /// @param ColumnNo     Column Number.
+    DITemplateTypeParameter
+    CreateTemplateTypeParameter(DIDescriptor Scope, StringRef Name, DIType Ty,
+                                MDNode *File = 0, unsigned LineNo = 0,
+                                unsigned ColumnNo = 0);
 
     /// CreateArrayType - Create debugging information entry for an array.
     /// @param Size         Array size.

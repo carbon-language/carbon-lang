@@ -242,7 +242,7 @@ DIType DIBuilder::CreateClassType(DIDescriptor Context, StringRef Name,
                                   uint64_t SizeInBits, uint64_t AlignInBits,
                                   uint64_t OffsetInBits, unsigned Flags,
                                   DIType DerivedFrom, DIArray Elements,
-                                  MDNode *VTableHoder) {
+                                  MDNode *VTableHoder, MDNode *TemplateParams) {
  // TAG_class_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_class_type),
@@ -257,9 +257,29 @@ DIType DIBuilder::CreateClassType(DIDescriptor Context, StringRef Name,
     DerivedFrom,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    VTableHoder
+    VTableHoder,
+    TemplateParams
   };
   return DIType(MDNode::get(VMContext, &Elts[0], array_lengthof(Elts)));
+}
+
+/// CreateTemplateTypeParameter - Create debugging information for template
+/// type parameter.
+DITemplateTypeParameter 
+DIBuilder::CreateTemplateTypeParameter(DIDescriptor Context, StringRef Name,
+                                       DIType Ty, MDNode *File, unsigned LineNo,
+                                       unsigned ColumnNo) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_template_type_parameter),
+    Context,
+    MDString::get(VMContext, Name),
+    Ty,
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
+    ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo)
+  };
+  return DITemplateTypeParameter(MDNode::get(VMContext, &Elts[0], 
+                                             array_lengthof(Elts)));
 }
 
 /// CreateStructType - Create debugging information entry for a struct.
