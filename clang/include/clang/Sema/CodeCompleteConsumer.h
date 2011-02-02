@@ -15,9 +15,7 @@
 
 #include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include "clang-c/Index.h"
@@ -423,47 +421,11 @@ public:
   std::string getAsString() const;   
 };
 
-/// \brief \c DenseMap information object for StringRefs.
-struct DenseMapStringRefInfo {
-  static inline llvm::StringRef getEmptyKey() {
-    return llvm::StringRef(reinterpret_cast<const char*>((intptr_t)-1), 0);
-  }
-  static inline llvm::StringRef getTombstoneKey() {
-    return llvm::StringRef(reinterpret_cast<const char *>((intptr_t)-2), 0);
-  }
-  static unsigned getHashValue(llvm::StringRef Str) {
-    return llvm::HashString(Str);
-  }
-  static bool isEqual(llvm::StringRef LHS, llvm::StringRef RHS) { 
-    if (LHS.size() == 0 && RHS.size() == 0) {
-      intptr_t LHSVal = reinterpret_cast<intptr_t>(LHS.data());
-      intptr_t RHSVal = reinterpret_cast<intptr_t>(RHS.data());
-      if (LHSVal == -1 || LHSVal == -2 || RHSVal == -1 || RHSVal == -2)
-        return LHSVal == RHSVal;
-      
-      return true;
-    }
-    
-    return LHS == RHS;
-  }
-};
-
 /// \brief An allocator used specifically for the purpose of code completion.
 class CodeCompletionAllocator : public llvm::BumpPtrAllocator { 
-  llvm::DenseSet<llvm::StringRef, DenseMapStringRefInfo> UniqueStrings;
-  unsigned StringBytesAllocated;
-  unsigned StringBytesUniqued;
-  unsigned StringsAllocated;
-  unsigned StringsUniqued;
-  
 public:
-  CodeCompletionAllocator();
-  ~CodeCompletionAllocator();
-  
   /// \brief Copy the given string into this allocator.
   const char *CopyString(llvm::StringRef String);
-  
-  void PrintStats();
 };
   
 /// \brief A builder class used to construct new code-completion strings.

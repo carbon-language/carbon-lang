@@ -220,41 +220,10 @@ const char *CodeCompletionString::getTypedText() const {
   return 0;
 }
 
-CodeCompletionAllocator::CodeCompletionAllocator()
-  : llvm::BumpPtrAllocator(), StringBytesAllocated(0), StringBytesUniqued(0), 
-    StringsAllocated(0), StringsUniqued(0)
-{
-}
-
-CodeCompletionAllocator::~CodeCompletionAllocator() { }
-
-void CodeCompletionAllocator::PrintStats() {
-  llvm::errs() << "---Code completion memory allocation---\n" 
-    << "String bytes uniqued: " << StringBytesUniqued << "/"
-    << StringBytesAllocated << " (" 
-    << ((float)StringBytesUniqued*100/StringBytesAllocated)
-    << ")\nStrings uniqued: " << StringsUniqued << "/" << StringsAllocated
-    << " (" << ((float)StringsUniqued*100/StringsAllocated)
-  << ")\n";
-  
-  llvm::BumpPtrAllocator::PrintStats();
-}
-
 const char *CodeCompletionAllocator::CopyString(llvm::StringRef String) {
-  llvm::DenseSet<llvm::StringRef, DenseMapStringRefInfo>::iterator Uniqued
-    = UniqueStrings.find(String);
-  ++StringsAllocated;
-  StringBytesAllocated += String.size() + 1;
-  if (Uniqued != UniqueStrings.end()) {
-    StringBytesUniqued += String.size() + 1;
-    ++StringsUniqued;
-    return Uniqued->data();
-  }
-  
   char *Mem = (char *)Allocate(String.size() + 1, 1);
   std::copy(String.begin(), String.end(), Mem);
   Mem[String.size()] = 0;
-  UniqueStrings.insert(llvm::StringRef(Mem, String.size()));
   return Mem;
 }
 
