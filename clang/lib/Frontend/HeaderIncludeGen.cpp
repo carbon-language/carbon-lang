@@ -10,40 +10,28 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
-/*
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Frontend/PreprocessorOutputOptions.h"
-#include "clang/Lex/MacroInfo.h"
-#include "clang/Lex/PPCallbacks.h"
-#include "clang/Lex/Pragma.h"
-#include "clang/Lex/TokenConcatenation.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Config/config.h"
-#include "llvm/Support/raw_ostream.h"
-#include <cstdio>
-*/
 using namespace clang;
 
 namespace {
 class HeaderIncludesCallback : public PPCallbacks {
   SourceManager &SM;
   unsigned CurrentIncludeDepth;
+  bool ShowAllHeaders;
   bool HasProcessedPredefines;
 
 public:
-  HeaderIncludesCallback(const Preprocessor *PP)
+  HeaderIncludesCallback(const Preprocessor *PP, bool ShowAllHeaders_)
     : SM(PP->getSourceManager()), CurrentIncludeDepth(0),
-      HasProcessedPredefines(false) {}
+      ShowAllHeaders(ShowAllHeaders_), HasProcessedPredefines(false) {}
 
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType);
 };
 }
 
-void clang::AttachHeaderIncludeGen(Preprocessor &PP) {
-  PP.addPPCallbacks(new HeaderIncludesCallback(&PP));
+void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
+                                   llvm::StringRef OutputPath) {
+  PP.addPPCallbacks(new HeaderIncludesCallback(&PP, ShowAllHeaders));
 }
 
 void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
@@ -67,9 +55,16 @@ void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
     if (CurrentIncludeDepth == 0 && !HasProcessedPredefines)
       HasProcessedPredefines = true;
   }
-  
-  // Dump the header include information we are past the predefines buffer.
-  if (HasProcessedPredefines && Reason == PPCallbacks::EnterFile) {
+
+  // Show the header if we are (a) past the predefines, or (b) showing all
+  // headers and in the predefines at a depth past the initial file and command
+  // line buffers.
+  bool ShowHeader = (HasProcessedPredefines ||
+                     (ShowAllHeaders && CurrentIncludeDepth > 2));
+
+  // Dump the header include information we are past the predefines buffer or
+  // are showing all headers.
+  if (ShowHeader && Reason == PPCallbacks::EnterFile) {
     // Write to a temporary string to avoid unnecessary flushing on errs().
     llvm::SmallString<512> Filename(UserLoc.getFilename());
     Lexer::Stringify(Filename);

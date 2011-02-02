@@ -75,7 +75,15 @@ void AttachDependencyFileGen(Preprocessor &PP,
 
 /// AttachHeaderIncludeGen - Create a header include list generator, and attach
 /// it to the given preprocessor.
-void AttachHeaderIncludeGen(Preprocessor &PP);
+///
+/// \param ShowAllHeaders - If true, show all header information instead of just
+/// headers following the predefines buffer. This is useful for making sure
+/// includes mentioned on the command line are also reported, but differs from
+/// the default behavior used by -H.
+/// \param OutputPath - If non-empty, a path to write the header include
+/// information to, instead of writing to stderr.
+void AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders = false,
+                            llvm::StringRef OutputPath = "");
 
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.
