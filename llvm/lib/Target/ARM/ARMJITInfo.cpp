@@ -97,8 +97,8 @@ extern "C" {
     "str  r0, [sp,#16]\n"
     // Return to the (newly modified) stub to invoke the real function.
     // The above twiddling of the saved return addresses allows us to
-    // deallocate everything, including the LR the stub saved, all in one
-    // pop instruction.
+    // deallocate everything, including the LR the stub saved, with two
+    // updating load instructions.
     "ldmia  sp!, {r0, r1, r2, r3, lr}\n"
     "ldr    pc, [sp], #4\n"
       );
