@@ -258,6 +258,19 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
                 result.SetStatus (eReturnStatusFailed);
                 return;
             }
+            
+
+            if (((start_loc_id == LLDB_INVALID_BREAK_ID)
+                 && (end_loc_id != LLDB_INVALID_BREAK_ID))
+                || ((start_loc_id != LLDB_INVALID_BREAK_ID)
+                    && (end_loc_id == LLDB_INVALID_BREAK_ID)))
+            {
+                new_args.Clear ();
+                result.AppendErrorWithFormat ("Invalid breakpoint id range:  Either both ends of range must specify"
+                                              " a breakpoint location, or neither can specify a breakpoint location.\n");
+                result.SetStatus (eReturnStatusFailed);
+                return;
+            }
 
             // We have valid range starting & ending breakpoint IDs.  Go through all the breakpoints in the
             // target and find all the breakpoints that fit into this range, and add them to new_args.
@@ -298,7 +311,7 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args, Target *target, Comman
                     for (size_t k = 0; k < num_locations; ++k)
                     {
                         BreakpointLocation * bp_loc = breakpoint->GetLocationAtIndex(k).get();
-                        if (bp_loc->GetID() >= start_loc_id)
+                        if ((bp_loc->GetID() >= start_loc_id) && (bp_loc->GetID() <= end_loc_id))
                         {
                             StreamString canonical_id_str;
                             BreakpointID::GetCanonicalReference (&canonical_id_str, cur_bp_id, bp_loc->GetID());

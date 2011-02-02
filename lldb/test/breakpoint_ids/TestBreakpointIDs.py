@@ -26,24 +26,32 @@ class BreakpointIDTestCase(TestBase):
                     patterns = [ "Current executable set to .*a.out" ])
 
         self.expect ("breakpoint set -n product",
-                     startstr = "Breakpoint created: 1: name = 'product', locations = 2")
+                     startstr = "Breakpoint created: 1: name = 'product', locations =")
 
         self.expect ("breakpoint set -n sum",
-                     startstr = "Breakpoint created: 2: name = 'sum', locations = 3")
+                     startstr = "Breakpoint created: 2: name = 'sum', locations =")
 
         self.expect ("breakpoint set -n junk",
                      startstr = "Breakpoint created: 3: name = 'junk', locations = 0 (pending)",
                      substrs = [ "WARNING:  Unable to resolve breakpoint to any actual locations." ] )
 
-        self.expect ("breakpoint disable 1.2 - 2.2 ",
+        self.expect ("breakpoint disable 1.1 - 2.2 ",
                      COMMAND_FAILED_AS_EXPECTED, error = True,
                      startstr = "error: Invalid range: Ranges that specify particular breakpoint locations must be within the same major breakpoint; you specified two different major breakpoints, 1 and 2.")
 
-        self.expect ("breakpoint disable 1.1 - 1.2",
+        self.expect ("breakpoint disable 2 - 2.2",
+                     COMMAND_FAILED_AS_EXPECTED, error = True,
+                     startstr = "error: Invalid breakpoint id range:  Either both ends of range must specify a breakpoint location, or neither can specify a breakpoint location.")
+
+        self.expect ("breakpoint disable 2.1 - 2",
+                     COMMAND_FAILED_AS_EXPECTED, error = True,
+                     startstr = "error: Invalid breakpoint id range:  Either both ends of range must specify a breakpoint location, or neither can specify a breakpoint location.")
+
+        self.expect ("breakpoint disable 2.1 - 2.2",
                      startstr = "2 breakpoints disabled.")
 
-        self.expect ("breakpoint enable 1.*",
-                     startstr = "2 breakpoints enabled.")
+        self.expect ("breakpoint enable 2.*",
+                     patterns = [ ".* breakpoints enabled."] )
 
 if __name__ == '__main__':
     import atexit
