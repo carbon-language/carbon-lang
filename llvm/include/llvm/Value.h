@@ -252,6 +252,12 @@ public:
     return SubclassOptionalData;
   }
 
+  /// clearSubclassOptionalData - Clear the optional flags contained in
+  /// this value.
+  void clearSubclassOptionalData() {
+    SubclassOptionalData = 0;
+  }
+
   /// hasSameSubclassOptionalData - Test whether the optional flags contained
   /// in this value are equal to the optional flags in the given value.
   bool hasSameSubclassOptionalData(const Value *V) const {

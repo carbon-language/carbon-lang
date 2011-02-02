@@ -240,6 +240,12 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
   RHS->setOperand(0, LHS);
   I->setOperand(0, RHS);
 
+  // Conservatively clear all the optional flags, which may not hold
+  // after the reassociation.
+  I->clearSubclassOptionalData();
+  LHS->clearSubclassOptionalData();
+  RHS->clearSubclassOptionalData();
+
   ++NumLinear;
   MadeChange = true;
   DEBUG(dbgs() << "Linearized: " << *I << '\n');
@@ -341,6 +347,11 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
       DEBUG(dbgs() << "RA: " << *I << '\n');
       I->setOperand(0, Ops[i].Op);
       I->setOperand(1, Ops[i+1].Op);
+
+      // Conservatively clear all the optional flags, which may not hold
+      // after the reassociation.
+      I->clearSubclassOptionalData();
+
       DEBUG(dbgs() << "TO: " << *I << '\n');
       MadeChange = true;
       ++NumChanged;
@@ -356,6 +367,11 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
   if (I->getOperand(1) != Ops[i].Op) {
     DEBUG(dbgs() << "RA: " << *I << '\n');
     I->setOperand(1, Ops[i].Op);
+
+    // Conservatively clear all the optional flags, which may not hold
+    // after the reassociation.
+    I->clearSubclassOptionalData();
+
     DEBUG(dbgs() << "TO: " << *I << '\n');
     MadeChange = true;
     ++NumChanged;
