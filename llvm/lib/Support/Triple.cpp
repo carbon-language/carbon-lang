@@ -84,7 +84,6 @@ const char *Triple::getVendorTypeName(VendorType Kind) {
 
   case Apple: return "apple";
   case PC: return "pc";
-  case NoVendor: return "none";
   }
 
   return "<invalid>";
@@ -110,7 +109,6 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case Win32: return "win32";
   case Haiku: return "haiku";
   case Minix: return "minix";
-  case NoOS: return "none";
   }
 
   return "<invalid>";
@@ -299,8 +297,6 @@ Triple::VendorType Triple::ParseVendor(StringRef VendorName) {
     return Apple;
   else if (VendorName == "pc")
     return PC;
-  else if (VendorName == "none")
-    return NoVendor;
   else
     return UnknownVendor;
 }
@@ -338,8 +334,6 @@ Triple::OSType Triple::ParseOS(StringRef OSName) {
     return Haiku;
   else if (OSName.startswith("minix"))
     return Minix;
-  else if (OSName.startswith("eabi"))
-    return NoOS;
   else
     return UnknownOS;
 }
@@ -363,12 +357,7 @@ void Triple::Parse() const {
   Arch = ParseArch(getArchName());
   Vendor = ParseVendor(getVendorName());
   OS = ParseOS(getOSName());
-  if (OS == NoOS) {
-    // Some targets don't have an OS (embedded systems)
-    Environment = ParseEnvironment(getOSName());
-  } else {
-    Environment = ParseEnvironment(getEnvironmentName());
-  }
+  Environment = ParseEnvironment(getEnvironmentName());
 
   assert(isInitialized() && "Failed to initialize!");
 }
@@ -435,13 +424,7 @@ std::string Triple::normalize(StringRef Str) {
         break;
       case 2:
         OS = ParseOS(Comp);
-        // Some targets don't have an OS (embedded systems)
-        if (OS == NoOS) {
-          Environment = ParseEnvironment(Comp);
-          Valid = Environment != UnknownEnvironment;
-        } else {
-          Valid = OS != UnknownOS;
-        }
+        Valid = OS != UnknownOS;
         break;
       case 3:
         Environment = ParseEnvironment(Comp);
@@ -477,18 +460,15 @@ std::string Triple::normalize(StringRef Str) {
         do {
           // Insert one empty component at Idx.
           StringRef CurrentComponent(""); // The empty component.
-          for (unsigned i = Idx; i < Components.size(); ++i) {
-            // Skip over any fixed components.
-            while (i < array_lengthof(Found) && Found[i]) ++i;
-            // Fix problem when Components vector is not big enough
-            if (i >= Components.size())
-              Components.push_back(StringRef(""));
+          for (unsigned i = Idx; i < Components.size();) {
             // Place the component at the new position, getting the component
             // that was at this position - it will be moved right.
             std::swap(CurrentComponent, Components[i]);
             // If it was placed on top of an empty component then we are done.
             if (CurrentComponent.empty())
               break;
+            // Advance to the next component, skipping any fixed components.
+            while (++i < array_lengthof(Found) && Found[i]);
           }
           // The last component was pushed off the end - append it.
           if (!CurrentComponent.empty())
