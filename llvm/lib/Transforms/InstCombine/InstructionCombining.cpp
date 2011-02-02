@@ -157,6 +157,9 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           // It simplifies to V.  Form "A op V".
           I.setOperand(0, A);
           I.setOperand(1, V);
+          // Conservatively clear the optional flags, since they may not be
+          // preserved by the reassociation.
+          I.clearSubclassOptionalData();
           Changed = true;
           ++NumReassoc;
           continue;
@@ -174,6 +177,9 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           // It simplifies to V.  Form "V op C".
           I.setOperand(0, V);
           I.setOperand(1, C);
+          // Conservatively clear the optional flags, since they may not be
+          // preserved by the reassociation.
+          I.clearSubclassOptionalData();
           Changed = true;
           ++NumReassoc;
           continue;
@@ -193,6 +199,9 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           // It simplifies to V.  Form "V op B".
           I.setOperand(0, V);
           I.setOperand(1, B);
+          // Conservatively clear the optional flags, since they may not be
+          // preserved by the reassociation.
+          I.clearSubclassOptionalData();
           Changed = true;
           ++NumReassoc;
           continue;
@@ -210,6 +219,9 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           // It simplifies to V.  Form "B op V".
           I.setOperand(0, B);
           I.setOperand(1, V);
+          // Conservatively clear the optional flags, since they may not be
+          // preserved by the reassociation.
+          I.clearSubclassOptionalData();
           Changed = true;
           ++NumReassoc;
           continue;
@@ -234,6 +246,9 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         Worklist.Add(New);
         I.setOperand(0, New);
         I.setOperand(1, Folded);
+        // Conservatively clear the optional flags, since they may not be
+        // preserved by the reassociation.
+        I.clearSubclassOptionalData();
         Changed = true;
         continue;
       }
