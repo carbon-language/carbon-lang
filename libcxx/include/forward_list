@@ -492,7 +492,7 @@ __forward_list_base<_Tp, _Alloc>::clear()
     for (__node_pointer __p = __before_begin()->__next_; __p != nullptr;)
     {
         __node_pointer __next = __p->__next_;
-        __node_traits::destroy(__a, addressof(__p->__value_));
+        __node_traits::destroy(__a, _STD::addressof(__p->__value_));
         __node_traits::deallocate(__a, __p, 1);
         __p = __next;
     }
@@ -712,7 +712,7 @@ forward_list<_Tp, _Alloc>::forward_list(size_type __n)
                                                              __p = __p->__next_)
         {
             __h.reset(__node_traits::allocate(__a, 1));
-            __node_traits::construct(__a, addressof(__h->__value_));
+            __node_traits::construct(__a, _STD::addressof(__h->__value_));
             __h->__next_ = nullptr;
             __p->__next_ = __h.release();
         }
@@ -915,7 +915,7 @@ forward_list<_Tp, _Alloc>::emplace_front(_Args&&... __args)
     __node_allocator& __a = base::__alloc();
     typedef __allocator_destructor<__node_allocator> _D;
     unique_ptr<__node, _D> __h(__node_traits::allocate(__a, 1), _D(__a, 1));
-    __node_traits::construct(__a, addressof(__h->__value_),
+    __node_traits::construct(__a, _STD::addressof(__h->__value_),
                                   _STD::forward<_Args>(__args)...);
     __h->__next_ = base::__before_begin()->__next_;
     base::__before_begin()->__next_ = __h.release();
@@ -930,7 +930,7 @@ forward_list<_Tp, _Alloc>::push_front(value_type&& __v)
     __node_allocator& __a = base::__alloc();
     typedef __allocator_destructor<__node_allocator> _D;
     unique_ptr<__node, _D> __h(__node_traits::allocate(__a, 1), _D(__a, 1));
-    __node_traits::construct(__a, addressof(__h->__value_), _STD::move(__v));
+    __node_traits::construct(__a, _STD::addressof(__h->__value_), _STD::move(__v));
     __h->__next_ = base::__before_begin()->__next_;
     base::__before_begin()->__next_ = __h.release();
 }
@@ -944,7 +944,7 @@ forward_list<_Tp, _Alloc>::push_front(const value_type& __v)
     __node_allocator& __a = base::__alloc();
     typedef __allocator_destructor<__node_allocator> _D;
     unique_ptr<__node, _D> __h(__node_traits::allocate(__a, 1), _D(__a, 1));
-    __node_traits::construct(__a, addressof(__h->__value_), __v);
+    __node_traits::construct(__a, _STD::addressof(__h->__value_), __v);
     __h->__next_ = base::__before_begin()->__next_;
     base::__before_begin()->__next_ = __h.release();
 }
@@ -956,7 +956,7 @@ forward_list<_Tp, _Alloc>::pop_front()
     __node_allocator& __a = base::__alloc();
     __node_pointer __p = base::__before_begin()->__next_;
     base::__before_begin()->__next_ = __p->__next_;
-    __node_traits::destroy(__a, addressof(__p->__value_));
+    __node_traits::destroy(__a, _STD::addressof(__p->__value_));
     __node_traits::deallocate(__a, __p, 1);
 }
 
@@ -972,7 +972,7 @@ forward_list<_Tp, _Alloc>::emplace_after(const_iterator __p, _Args&&... __args)
     __node_allocator& __a = base::__alloc();
     typedef __allocator_destructor<__node_allocator> _D;
     unique_ptr<__node, _D> __h(__node_traits::allocate(__a, 1), _D(__a, 1));
-    __node_traits::construct(__a, addressof(__h->__value_),
+    __node_traits::construct(__a, _STD::addressof(__h->__value_),
                                   _STD::forward<_Args>(__args)...);
     __h->__next_ = __r->__next_;
     __r->__next_ = __h.release();
@@ -989,7 +989,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, value_type&& __v)
     __node_allocator& __a = base::__alloc();
     typedef __allocator_destructor<__node_allocator> _D;
     unique_ptr<__node, _D> __h(__node_traits::allocate(__a, 1), _D(__a, 1));
-    __node_traits::construct(__a, addressof(__h->__value_), _STD::move(__v));
+    __node_traits::construct(__a, _STD::addressof(__h->__value_), _STD::move(__v));
     __h->__next_ = __r->__next_;
     __r->__next_ = __h.release();
     return iterator(__r->__next_);
@@ -1005,7 +1005,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, const value_type& __
     __node_allocator& __a = base::__alloc();
     typedef __allocator_destructor<__node_allocator> _D;
     unique_ptr<__node, _D> __h(__node_traits::allocate(__a, 1), _D(__a, 1));
-    __node_traits::construct(__a, addressof(__h->__value_), __v);
+    __node_traits::construct(__a, _STD::addressof(__h->__value_), __v);
     __h->__next_ = __r->__next_;
     __r->__next_ = __h.release();
     return iterator(__r->__next_);
@@ -1022,7 +1022,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, size_type __n,
         __node_allocator& __a = base::__alloc();
         typedef __allocator_destructor<__node_allocator> _D;
         unique_ptr<__node, _D> __h(__node_traits::allocate(__a, 1), _D(__a, 1));
-        __node_traits::construct(__a, addressof(__h->__value_), __v);
+        __node_traits::construct(__a, _STD::addressof(__h->__value_), __v);
         __node_pointer __first = __h.release();
         __node_pointer __last = __first;
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -1032,7 +1032,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, size_type __n,
             for (--__n; __n != 0; --__n, __last = __last->__next_)
             {
                 __h.reset(__node_traits::allocate(__a, 1));
-                __node_traits::construct(__a, addressof(__h->__value_), __v);
+                __node_traits::construct(__a, _STD::addressof(__h->__value_), __v);
                 __last->__next_ = __h.release();
             }
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -1042,7 +1042,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p, size_type __n,
             while (__first != nullptr)
             {
                 __node_pointer __next = __first->__next_;
-                __node_traits::destroy(__a, addressof(__first->__value_));
+                __node_traits::destroy(__a, _STD::addressof(__first->__value_));
                 __node_traits::deallocate(__a, __first, 1);
                 __first = __next;
             }
@@ -1072,7 +1072,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
         __node_allocator& __a = base::__alloc();
         typedef __allocator_destructor<__node_allocator> _D;
         unique_ptr<__node, _D> __h(__node_traits::allocate(__a, 1), _D(__a, 1));
-        __node_traits::construct(__a, addressof(__h->__value_), *__f);
+        __node_traits::construct(__a, _STD::addressof(__h->__value_), *__f);
         __node_pointer __first = __h.release();
         __node_pointer __last = __first;
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -1082,7 +1082,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
             for (++__f; __f != __l; ++__f, __last = __last->__next_)
             {
                 __h.reset(__node_traits::allocate(__a, 1));
-                __node_traits::construct(__a, addressof(__h->__value_), *__f);
+                __node_traits::construct(__a, _STD::addressof(__h->__value_), *__f);
                 __last->__next_ = __h.release();
             }
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -1092,7 +1092,7 @@ forward_list<_Tp, _Alloc>::insert_after(const_iterator __p,
             while (__first != nullptr)
             {
                 __node_pointer __next = __first->__next_;
-                __node_traits::destroy(__a, addressof(__first->__value_));
+                __node_traits::destroy(__a, _STD::addressof(__first->__value_));
                 __node_traits::deallocate(__a, __first, 1);
                 __first = __next;
             }
@@ -1114,7 +1114,7 @@ forward_list<_Tp, _Alloc>::erase_after(const_iterator __f)
     __node_pointer __n = __p->__next_;
     __p->__next_ = __n->__next_;
     __node_allocator& __a = base::__alloc();
-    __node_traits::destroy(__a, addressof(__n->__value_));
+    __node_traits::destroy(__a, _STD::addressof(__n->__value_));
     __node_traits::deallocate(__a, __n, 1);
     return iterator(__p->__next_);
 }
@@ -1135,7 +1135,7 @@ forward_list<_Tp, _Alloc>::erase_after(const_iterator __f, const_iterator __l)
             do
             {
                 __p = __n->__next_;
-                __node_traits::destroy(__a, addressof(__n->__value_));
+                __node_traits::destroy(__a, _STD::addressof(__n->__value_));
                 __node_traits::deallocate(__a, __n, 1);
                 __n = __p;
             } while (__n != __e);
@@ -1168,7 +1168,7 @@ forward_list<_Tp, _Alloc>::resize(size_type __n)
                                                          __ptr = __ptr->__next_)
             {
                 __h.reset(__node_traits::allocate(__a, 1));
-                __node_traits::construct(__a, addressof(__h->__value_));
+                __node_traits::construct(__a, _STD::addressof(__h->__value_));
                 __h->__next_ = nullptr;
                 __ptr->__next_ = __h.release();
             }
@@ -1200,7 +1200,7 @@ forward_list<_Tp, _Alloc>::resize(size_type __n, const value_type& __v)
                                                          __ptr = __ptr->__next_)
             {
                 __h.reset(__node_traits::allocate(__a, 1));
-                __node_traits::construct(__a, addressof(__h->__value_), __v);
+                __node_traits::construct(__a, _STD::addressof(__h->__value_), __v);
                 __h->__next_ = nullptr;
                 __ptr->__next_ = __h.release();
             }

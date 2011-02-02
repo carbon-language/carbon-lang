@@ -424,9 +424,9 @@ public:
     void operator()(pointer __p)
     {
         if (__second_constructed)
-            __alloc_traits::destroy(__na_, addressof(__p->__value_.second));
+            __alloc_traits::destroy(__na_, _STD::addressof(__p->__value_.second));
         if (__first_constructed)
-            __alloc_traits::destroy(__na_, addressof(__p->__value_.first));
+            __alloc_traits::destroy(__na_, _STD::addressof(__p->__value_.first));
         if (__p)
             __alloc_traits::deallocate(__na_, __p, 1);
     }
@@ -979,10 +979,10 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0,
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_.first),
+    __node_traits::construct(__na, _STD::addressof(__h->__value_.first),
                              _STD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, addressof(__h->__value_.second),
+    __node_traits::construct(__na, _STD::addressof(__h->__value_.second),
                              _STD::forward<_Args>(__args)...);
     __h.get_deleter().__second_constructed = true;
     return __h;
@@ -999,7 +999,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_),
+    __node_traits::construct(__na, _STD::addressof(__h->__value_),
                              _STD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
     __h.get_deleter().__second_constructed = true;
@@ -1032,9 +1032,9 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(const key_type&
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_.first), __k);
+    __node_traits::construct(__na, _STD::addressof(__h->__value_.first), __k);
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, addressof(__h->__value_.second));
+    __node_traits::construct(__na, _STD::addressof(__h->__value_.second));
     __h.get_deleter().__second_constructed = true;
     return _STD::move(__h);
 }
@@ -1560,10 +1560,10 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_.first),
+    __node_traits::construct(__na, _STD::addressof(__h->__value_.first),
                              _STD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, addressof(__h->__value_.second),
+    __node_traits::construct(__na, _STD::addressof(__h->__value_.second),
                              _STD::forward<_Args>(__args)...);
     __h.get_deleter().__second_constructed = true;
     return __h;
@@ -1580,7 +1580,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_),
+    __node_traits::construct(__na, _STD::addressof(__h->__value_),
                              _STD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
     __h.get_deleter().__second_constructed = true;

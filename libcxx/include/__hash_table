@@ -85,7 +85,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
-        pointer operator->() const {return addressof(__node_->__value_);}
+        pointer operator->() const {return _STD::addressof(__node_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_iterator& operator++()
@@ -163,7 +163,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
-        pointer operator->() const {return addressof(__node_->__value_);}
+        pointer operator->() const {return _STD::addressof(__node_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_const_iterator& operator++()
@@ -433,7 +433,7 @@ public:
     void operator()(pointer __p)
     {
         if (__value_constructed)
-            __alloc_traits::destroy(__na_, addressof(__p->__value_));
+            __alloc_traits::destroy(__na_, _STD::addressof(__p->__value_));
         if (__p)
             __alloc_traits::deallocate(__na_, __p, 1);
     }
@@ -798,7 +798,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u)
     if (size() > 0)
     {
         __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-            static_cast<__node_pointer>(addressof(__p1_.first()));
+            static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
         __u.__p1_.first().__next_ = nullptr;
         __u.size() = 0;
     }
@@ -822,7 +822,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u,
             __p1_.first().__next_ = __u.__p1_.first().__next_;
             __u.__p1_.first().__next_ = nullptr;
             __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-                static_cast<__node_pointer>(addressof(__p1_.first()));
+                static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
             size() = __u.size();
             __u.size() = 0;
         }
@@ -875,7 +875,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__deallocate(__node_pointer __np)
     while (__np != nullptr)
     {
         __node_pointer __next = __np->__next_;
-        __node_traits::destroy(__na, addressof(__np->__value_));
+        __node_traits::destroy(__na, _STD::addressof(__np->__value_));
         __node_traits::deallocate(__na, __np, 1);
         __np = __next;
     }
@@ -914,7 +914,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
     if (size() > 0)
     {
         __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-            static_cast<__node_pointer>(addressof(__p1_.first()));
+            static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
         __u.__p1_.first().__next_ = nullptr;
         __u.size() = 0;
     }
@@ -1131,7 +1131,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_unique(__node_pointer __
         __node_pointer __pn = __bucket_list_[__chash];
         if (__pn == nullptr)
         {
-            __pn = static_cast<__node_pointer>(addressof(__p1_.first()));
+            __pn = static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
             __nd->__next_ = __pn->__next_;
             __pn->__next_ = __nd;
             // fix up __bucket_list_
@@ -1169,7 +1169,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(__node_pointer __c
     __node_pointer __pn = __bucket_list_[__chash];
     if (__pn == nullptr)
     {
-        __pn = static_cast<__node_pointer>(addressof(__p1_.first()));
+        __pn = static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
         __cp->__next_ = __pn->__next_;
         __pn->__next_ = __cp;
         // fix up __bucket_list_
@@ -1275,7 +1275,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
         __node_pointer __pn = __bucket_list_[__chash];
         if (__pn == nullptr)
         {
-            __pn = static_cast<__node_pointer>(addressof(__p1_.first()));
+            __pn = static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
             __h->__next_ = __pn->__next_;
             __pn->__next_ = __h.get();
             // fix up __bucket_list_
@@ -1433,7 +1433,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__rehash(size_type __nbc)
     {
         for (size_type __i = 0; __i < __nbc; ++__i)
             __bucket_list_[__i] = nullptr;
-        __node_pointer __pp(static_cast<__node_pointer>(addressof(__p1_.first())));
+        __node_pointer __pp(static_cast<__node_pointer>(_STD::addressof(__p1_.first())));
         __node_pointer __cp = __pp->__next_;
         if (__cp != nullptr)
         {
@@ -1533,7 +1533,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(_Args&& ...__args)
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_), _STD::forward<_Args>(__args)...);
+    __node_traits::construct(__na, _STD::addressof(__h->__value_), _STD::forward<_Args>(__args)...);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = hash_function()(__h->__value_);
     __h->__next_ = nullptr;
@@ -1549,7 +1549,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(value_type&& __v,
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_), _STD::move(__v));
+    __node_traits::construct(__na, _STD::addressof(__h->__value_), _STD::move(__v));
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = __hash;
     __h->__next_ = nullptr;
@@ -1564,7 +1564,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_), __v);
+    __node_traits::construct(__na, _STD::addressof(__h->__value_), __v);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = hash_function()(__h->__value_);
     __h->__next_ = nullptr;
@@ -1580,7 +1580,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_), __v);
+    __node_traits::construct(__na, _STD::addressof(__h->__value_), __v);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = __hash;
     __h->__next_ = nullptr;
@@ -1658,7 +1658,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p)
     // Fix up __bucket_list_
         // if __pn is not in same bucket (before begin is not in same bucket) &&
         //    if __cn->__next_ is not in same bucket (nullptr is not in same bucket)
-    if (__pn == addressof(__p1_.first()) || __pn->__hash_ % __bc != __chash)
+    if (__pn == _STD::addressof(__p1_.first()) || __pn->__hash_ % __bc != __chash)
     {
         if (__cn->__next_ == nullptr || __cn->__next_->__hash_ % __bc != __chash)
             __bucket_list_[__chash] = nullptr;
@@ -1791,10 +1791,10 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::swap(__hash_table& __u)
     __p3_.swap(__u.__p3_);
     if (size() > 0)
         __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-            static_cast<__node_pointer>(addressof(__p1_.first()));
+            static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
     if (__u.size() > 0)
         __u.__bucket_list_[__u.__p1_.first().__next_->__hash_ % __u.bucket_count()] =
-            static_cast<__node_pointer>(addressof(__u.__p1_.first()));
+            static_cast<__node_pointer>(_STD::addressof(__u.__p1_.first()));
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>

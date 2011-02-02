@@ -1525,8 +1525,8 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY allocator() throw() {}
     template <class _Up> _LIBCPP_INLINE_VISIBILITY allocator(const allocator<_Up>&) throw() {}
-    _LIBCPP_INLINE_VISIBILITY pointer address(reference __x) const             {return addressof(__x);}
-    _LIBCPP_INLINE_VISIBILITY const_pointer address(const_reference __x) const {return addressof(__x);}
+    _LIBCPP_INLINE_VISIBILITY pointer address(reference __x) const             {return _STD::addressof(__x);}
+    _LIBCPP_INLINE_VISIBILITY const_pointer address(const_reference __x) const {return _STD::addressof(__x);}
     _LIBCPP_INLINE_VISIBILITY pointer allocate(size_type __n, allocator<void>::const_pointer = 0)
         {return static_cast<pointer>(::operator new(__n * sizeof(_Tp)));}
     _LIBCPP_INLINE_VISIBILITY void deallocate(pointer __p, size_type) {::operator delete((void*)__p);}

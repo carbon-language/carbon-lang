@@ -523,7 +523,7 @@ public:
     void operator()(pointer __p)
     {
         if (__value_constructed)
-            __alloc_traits::destroy(__na_, addressof(__p->__value_));
+            __alloc_traits::destroy(__na_, _STD::addressof(__p->__value_));
         if (__p)
             __alloc_traits::deallocate(__na_, __p, 1);
     }
@@ -1373,7 +1373,7 @@ __tree<_Tp, _Compare, _Allocator>::destroy(__node_pointer __nd)
         destroy(static_cast<__node_pointer>(__nd->__left_));
         destroy(static_cast<__node_pointer>(__nd->__right_));
         __node_allocator& __na = __node_alloc();
-        __node_traits::destroy(__na, addressof(__nd->__value_));
+        __node_traits::destroy(__na, _STD::addressof(__nd->__value_));
         __node_traits::deallocate(__na, __nd, 1);
     }
 }
@@ -1655,7 +1655,7 @@ __tree<_Tp, _Compare, _Allocator>::__construct_node(_Args&& ...__args)
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_), _STD::forward<_Args>(__args)...);
+    __node_traits::construct(__na, _STD::addressof(__h->__value_), _STD::forward<_Args>(__args)...);
     __h.get_deleter().__value_constructed = true;
     return __h;
 }
@@ -1791,7 +1791,7 @@ __tree<_Tp, _Compare, _Allocator>::__construct_node(const value_type& __v)
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, addressof(__h->__value_), __v);
+    __node_traits::construct(__na, _STD::addressof(__h->__value_), __v);
     __h.get_deleter().__value_constructed = true;
     return _STD::move(__h);
 }
@@ -1919,7 +1919,7 @@ __tree<_Tp, _Compare, _Allocator>::erase(const_iterator __p)
         __begin_node() = __r.__ptr_;
     --size();
     __node_allocator& __na = __node_alloc();
-    __node_traits::destroy(__na, const_cast<value_type*>(addressof(*__p)));
+    __node_traits::destroy(__na, const_cast<value_type*>(_STD::addressof(*__p)));
     __tree_remove(__end_node()->__left_,
                   static_cast<__node_base_pointer>(__np));
     __node_traits::deallocate(__na, __np, 1);
