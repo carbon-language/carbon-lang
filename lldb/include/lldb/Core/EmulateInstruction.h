@@ -120,6 +120,18 @@ public:
         // arg1 = source register number
         // arg2 = source signed offset
         eContextRegisterPlusOffset,
+
+        // Used when performing a PC-relative branch where the
+        // arg0 = don't care
+        // arg1 = target instruction set or don't care
+        // arg2 = imm32 (signed offset)
+        eContextRelativeBranchImmediate,
+
+        // Used when performing an absolute branch where the
+        // arg0 = target register kind
+        // arg1 = target register number
+        // arg2 = target instruction set or don't care
+        eContextAbsoluteBranchRegister,
     };
     
     struct Context

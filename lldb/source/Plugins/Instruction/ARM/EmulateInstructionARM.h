@@ -170,6 +170,12 @@ protected:
     EmulateAddSPRm (ARMEncoding encoding);
 
     bool
+    EmulateBLXImmediate (ARMEncoding encoding);
+
+    bool
+    EmulateBLXRm (ARMEncoding encoding);
+
+    bool
     EmulateSubR7IPImmediate (ARMEncoding encoding);
 
     bool

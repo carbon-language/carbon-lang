@@ -13,6 +13,7 @@
 #include "ARMDefines.h"
 #include "ARMUtils.h"
 #include "ARM_DWARF_Registers.h"
+#include "llvm/Support/MathExtras.h" // for SignExtend32 template function
 
 using namespace lldb;
 using namespace lldb_private;
@@ -35,6 +36,9 @@ using namespace lldb_private;
 #define ARMv8     (1u << 9)
 #define ARMvAll   (0xffffffffu)
 
+#define ARMV4T_ABOVE  (ARMv4T|ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
+#define ARMV5_ABOVE   (ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
+#define ARMV6T2_ABOVE (ARMv6T2|ARMv7|ARMv8)
 
 void
 EmulateInstructionARM::Initialize ()
@@ -650,6 +654,154 @@ EmulateInstructionARM::EmulateAddSPRm (ARMEncoding encoding)
     return true;
 }
 
+// Branch with Link and Exchange Instruction Sets (immediate) calls a subroutine
+// at a PC-relative address, and changes instruction set from ARM to Thumb, or
+// from Thumb to ARM.
+// BLX (immediate)
+bool
+EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        if CurrentInstrSet() == InstrSet_ARM then
+            LR = PC - 4;
+        else
+            LR = PC<31:1> : '1';
+        if targetInstrSet == InstrSet_ARM then
+            targetAddress = Align(PC,4) + imm32;
+        else
+            targetAddress = PC + imm32;
+        SelectInstrSet(targetInstrSet);
+        BranchWritePC(targetAddress);
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRelativeBranchImmediate, 0, 0, 0};
+        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        addr_t lr; // next instruction address
+        addr_t target; // target address
+        if (!success)
+            return false;
+        int32_t imm32; // PC-relative offset
+        switch (encoding) {
+        case eEncodingT2:
+            {
+            lr = (pc + 4) | 1u; // return address
+            uint32_t S = Bits32(opcode, 26, 26);
+            uint32_t imm10H = Bits32(opcode, 25, 16);
+            uint32_t J1 = Bits32(opcode, 13, 13);
+            uint32_t J2 = Bits32(opcode, 11, 11);
+            uint32_t imm10L = Bits32(opcode, 10, 1);
+            uint32_t I1 = !(J1 ^ S);
+            uint32_t I2 = !(J2 ^ S);
+            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10H << 12) + (imm10L << 2);
+            imm32 = llvm::SignExtend32<25>(imm25);
+            target = (pc & 0xfffffffc) + 4 + imm32;
+            context.arg1 = eModeARM;   // target instruction set
+            context.arg2 = 4 + imm32;  // signed offset
+            break;
+            }
+        case eEncodingA2:
+            lr = pc + 4; // return address
+            imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2 | Bits32(opcode, 24, 24) << 1);
+            target = pc + 8 + imm32;
+            context.arg1 = eModeThumb; // target instruction set
+            context.arg2 = 8 + imm32;  // signed offset
+            break;
+        default:
+            return false;
+        }
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
+            return false;
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
+            return false;
+    }
+    return true;
+}
+
+// Branch with Link and Exchange (register) calls a subroutine at an address and
+// instruction set specified by a register.
+// BLX (register)
+bool
+EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        target = R[m];
+        if CurrentInstrSet() == InstrSet_ARM then
+            next_instr_addr = PC - 4;
+            LR = next_instr_addr;
+        else
+            next_instr_addr = PC - 2;
+            LR = next_instr_addr<31:1> : ‘1’;
+        BXWritePC(target);
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        EmulateInstruction::Context context = { EmulateInstruction::eContextAbsoluteBranchRegister, 0, 0, 0};
+        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        addr_t lr; // next instruction address
+        addr_t target; // target address
+        if (!success)
+            return false;
+        uint32_t Rm; // the register with the target address
+        switch (encoding) {
+        case eEncodingT1:
+            lr = (pc + 2) | 1u; // return address
+            Rm = Bits32(opcode, 6, 3);
+            // if m == 15 then UNPREDICTABLE;
+            if (Rm == 15)
+                return false;
+            target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+            break;
+        case eEncodingA1:
+            lr = pc + 4; // return address
+            Rm = Bits32(opcode, 3, 0);
+            // if m == 15 then UNPREDICTABLE;
+            if (Rm == 15)
+                return false;
+            target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        default:
+            return false;
+        }
+        bool toThumb;
+        if (BitIsSet(target, 0))
+            toThumb = true;
+        else if (BitIsClear(target, 1))
+            toThumb = false;
+        else
+            return false; // address<1:0> == ‘10’ => UNPREDICTABLE
+        context.arg0 = eRegisterKindDWARF;
+        context.arg1 = dwarf_r0 + Rm;
+        context.arg2 = toThumb ? eModeThumb : eModeARM;
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
+            return false;
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
+            return false;
+    }
+    return true;
+}
+
 // Set r7 to point to some ip offset.
 // SUB (immediate)
 bool
@@ -1114,17 +1266,21 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
 
         // vector push consecutive extension register(s)
-        { 0x0fbf0f00, 0x0d2d0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
-        { 0x0fbf0f00, 0x0d2d0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
+        { 0x0fbf0f00, 0x0d2d0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
+        { 0x0fbf0f00, 0x0d2d0a00, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
         //----------------------------------------------------------------------
         // Epilogue instructions
         //----------------------------------------------------------------------
 
+        // To resolve ambiguity, "blx <label>" should come before "bl <label>".
+        { 0xfe000000, 0xfa000000, ARMV5_ABOVE,   eEncodingA2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
+        { 0x0f000000, 0x0b000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
+        { 0x0ffffff0, 0x012fff30, ARMV5_ABOVE,   eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
         { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePop, "pop <register>"},
-        { 0x0fbf0f00, 0x0cbd0b00, ARMv6T2|ARMv7, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
-        { 0x0fbf0f00, 0x0cbd0a00, ARMv6T2|ARMv7, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
+        { 0x0fbf0f00, 0x0cbd0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
+        { 0x0fbf0f00, 0x0cbd0a00, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
                   
@@ -1177,6 +1333,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
+        { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
+        // J1 == J2 == 1
+        { 0xf800e801, 0xf000e800, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
         { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
         { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
         { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <register>" },
