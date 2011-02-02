@@ -125,12 +125,3 @@ void test2() {
     if ((test2 == fn)) {}
 }
 
-// Do not warn about extra '()' used within a macro.  This pattern
-// occurs frequently.
-#define COMPARE(x,y) (x == y)
-int test3(int x, int y) {
-  if (COMPARE(x, y)) // no-warning
-    return 0;
-  return 1;
-}
-

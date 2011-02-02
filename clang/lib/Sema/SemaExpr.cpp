@@ -9244,17 +9244,12 @@ void Sema::DiagnoseEqualityWithExtraParens(ParenExpr *parenE) {
                                                            == Expr::MLV_Valid) {
       SourceLocation Loc = opE->getOperatorLoc();
       
-      // Don't emit a warning if the operation occurs within a macro.
-      // Sometimes extra parentheses are used within macros to make the
-      // instantiation of the macro less error prone.
-      if (!Loc.isMacroID()) {
-        Diag(Loc, diag::warn_equality_with_extra_parens) << E->getSourceRange();
-        Diag(Loc, diag::note_equality_comparison_to_assign)
-          << FixItHint::CreateReplacement(Loc, "=");
-        Diag(Loc, diag::note_equality_comparison_silence)
-          << FixItHint::CreateRemoval(parenE->getSourceRange().getBegin())
-          << FixItHint::CreateRemoval(parenE->getSourceRange().getEnd());
-      }
+      Diag(Loc, diag::warn_equality_with_extra_parens) << E->getSourceRange();
+      Diag(Loc, diag::note_equality_comparison_to_assign)
+        << FixItHint::CreateReplacement(Loc, "=");
+      Diag(Loc, diag::note_equality_comparison_silence)
+        << FixItHint::CreateRemoval(parenE->getSourceRange().getBegin())
+        << FixItHint::CreateRemoval(parenE->getSourceRange().getEnd());
     }
 }
 
