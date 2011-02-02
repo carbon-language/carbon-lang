@@ -305,6 +305,13 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
+class LLVM_LIBRARY_VISIBILITY NetBSD : public Generic_ELF {
+public:
+  NetBSD(const HostInfo &Host, const llvm::Triple& Triple);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+};
+
 class LLVM_LIBRARY_VISIBILITY Minix : public Generic_GCC {
 public:
   Minix(const HostInfo &Host, const llvm::Triple& Triple);

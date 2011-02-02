@@ -372,6 +372,65 @@ ToolChain *FreeBSDHostInfo::CreateToolChain(const ArgList &Args,
   return TC;
 }
 
+// NetBSD Host Info
+
+/// NetBSDHostInfo -  NetBSD host information implementation.
+class NetBSDHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  NetBSDHostInfo(const Driver &D, const llvm::Triple& Triple)
+    : HostInfo(D, Triple) {}
+  ~NetBSDHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
+};
+
+NetBSDHostInfo::~NetBSDHostInfo() {
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
+}
+
+bool NetBSDHostInfo::useDriverDriver() const {
+  return false;
+}
+
+ToolChain *NetBSDHostInfo::CreateToolChain(const ArgList &Args,
+                                            const char *ArchName) const {
+  assert(!ArchName &&
+         "Unexpected arch name on platform without driver driver support.");
+
+  // Automatically handle some instances of -m32/-m64 we know about.
+  std::string Arch = getArchName();
+  ArchName = Arch.c_str();
+  if (Arg *A = Args.getLastArg(options::OPT_m32, options::OPT_m64)) {
+    if (Triple.getArch() == llvm::Triple::x86 ||
+        Triple.getArch() == llvm::Triple::x86_64) {
+      ArchName =
+        (A->getOption().matches(options::OPT_m32)) ? "i386" : "x86_64";
+    } else if (Triple.getArch() == llvm::Triple::ppc ||
+               Triple.getArch() == llvm::Triple::ppc64) {
+      ArchName =
+        (A->getOption().matches(options::OPT_m32)) ? "powerpc" : "powerpc64";
+    }
+  }
+
+  ToolChain *&TC = ToolChains[ArchName];
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(ArchName);
+
+    TC = new toolchains::NetBSD(*this, TCTriple);
+  }
+
+  return TC;
+}
+
 // Minix Host Info
 
 /// MinixHostInfo -  Minix host information implementation.
@@ -621,6 +680,12 @@ const HostInfo *
 clang::driver::createFreeBSDHostInfo(const Driver &D,
                                      const llvm::Triple& Triple) {
   return new FreeBSDHostInfo(D, Triple);
+}
+
+const HostInfo *
+clang::driver::createNetBSDHostInfo(const Driver &D,
+                                     const llvm::Triple& Triple) {
+  return new NetBSDHostInfo(D, Triple);
 }
 
 const HostInfo *

@@ -418,8 +418,16 @@ static bool getWindowsSDKDir(std::string &path) {
 
 void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
                                             const HeaderSearchOptions &HSOpts) {
-  // FIXME: temporary hack: hard-coded paths.
-  AddPath("/usr/local/include", System, true, false, false);
+  llvm::Triple::OSType os = triple.getOS();
+
+  switch (os) {
+  case llvm::Triple::NetBSD:
+    break;
+  default:
+    // FIXME: temporary hack: hard-coded paths.
+    AddPath("/usr/local/include", System, true, false, false);
+    break;
+  }
 
   // Builtin includes use #include_next directives and should be positioned
   // just prior C include dirs.
@@ -442,7 +450,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       AddPath(*i, System, false, false, false);
     return;
   }
-  llvm::Triple::OSType os = triple.getOS();
+
   switch (os) {
   case llvm::Triple::Win32: {
     std::string VSDir;
