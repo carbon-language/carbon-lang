@@ -953,9 +953,23 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     }
 
   CollectRecordFields(RD, Unit, EltTys);
+  llvm::SmallVector<llvm::Value *, 16> TemplateParams;
   if (CXXDecl) {
     CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
     CollectCXXFriends(CXXDecl, Unit, EltTys, FwdDecl);
+    if (ClassTemplateSpecializationDecl *TSpecial
+        = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
+      const TemplateArgumentList &TAL = TSpecial->getTemplateArgs();
+      for (unsigned i = 0, e = TAL.size(); i != e; ++i) {
+        const TemplateArgument &TA = TAL[i];
+        if (TA.getKind() == TemplateArgument::Type) {
+          llvm::DIType TTy = getOrCreateType(TA.getAsType(), Unit);
+          llvm::DITemplateTypeParameter TTP =
+            DBuilder.CreateTemplateTypeParameter(TheCU, TTy.getName(), TTy);
+          TemplateParams.push_back(TTP);
+        }
+      }
+    }
   }
 
   RegionStack.pop_back();
@@ -1000,9 +1014,12 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     }
     else if (CXXDecl->isDynamicClass()) 
       ContainingType = FwdDecl;
+    llvm::DIArray TParamsArray = 
+      DBuilder.GetOrCreateArray(TemplateParams.data(), TemplateParams.size());
    RealDecl = DBuilder.CreateClassType(RDContext, RDName, DefUnit, Line,
                                        Size, Align, 0, 0, llvm::DIType(),
-                                       Elements, ContainingType);
+                                       Elements, ContainingType,
+                                       TParamsArray);
   }
 
   // Now that we have a real decl for the struct, replace anything using the

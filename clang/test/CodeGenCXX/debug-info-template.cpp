@@ -1,4 +1,8 @@
-// RUN: %clang_cc1 -emit-llvm-only -g -S %s -o - | grep "TC<int>"
+// RUN: %clang -emit-llvm -g -S %s -o - | FileCheck %s
+
+//CHECK: TC<int>
+//CHECK: DW_TAG_template_type_parameter
+
 template<typename T>
 class TC {
 public:
