@@ -2495,6 +2495,7 @@ public:
 class BlockDecl : public Decl, public DeclContext {
   // FIXME: This can be packed into the bitfields in Decl.
   bool IsVariadic : 1;
+  bool CapturesCXXThis : 1;
   /// ParamInfo - new[]'d array of pointers to ParmVarDecls for the formal
   /// parameters of this function.  This is null if a prototype or if there are
   /// no formals.
@@ -2504,11 +2505,15 @@ class BlockDecl : public Decl, public DeclContext {
   Stmt *Body;
   TypeSourceInfo *SignatureAsWritten;
 
+  VarDecl **CapturedDecls;
+  unsigned NumCapturedDecls;
+
 protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
     : Decl(Block, DC, CaretLoc), DeclContext(Block),
-      IsVariadic(false), ParamInfo(0), NumParams(0), Body(0),
-      SignatureAsWritten(0) {}
+      IsVariadic(false), CapturesCXXThis(false),
+      ParamInfo(0), NumParams(0), Body(0),
+      SignatureAsWritten(0), CapturedDecls(0), NumCapturedDecls(0) {}
 
 public:
   static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L);
@@ -2537,7 +2542,7 @@ public:
   param_const_iterator param_begin() const { return ParamInfo; }
   param_const_iterator param_end() const   { return ParamInfo+param_size(); }
 
-  unsigned getNumParams() const;
+  unsigned getNumParams() const { return NumParams; }
   const ParmVarDecl *getParamDecl(unsigned i) const {
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
@@ -2547,6 +2552,28 @@ public:
     return ParamInfo[i];
   }
   void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+
+  /// hasCaptures - True if this block (or its nested blocks) captures
+  /// anything of local storage from its enclosing scopes.
+  bool hasCaptures() const { return NumCapturedDecls != 0 || CapturesCXXThis; }
+
+  unsigned getNumCapturedDecls() const { return NumCapturedDecls; }
+
+  typedef VarDecl * const *capture_iterator;
+  typedef VarDecl const * const *capture_const_iterator;
+  capture_iterator capture_begin() { return CapturedDecls; }
+  capture_iterator capture_end() { return CapturedDecls + NumCapturedDecls; }
+  capture_const_iterator capture_begin() const { return CapturedDecls; }
+  capture_const_iterator capture_end() const {
+    return CapturedDecls + NumCapturedDecls;
+  }
+
+  bool capturesCXXThis() const { return CapturesCXXThis; }
+
+  void setCapturedDecls(ASTContext &Context,
+                        VarDecl * const *begin,
+                        VarDecl * const *end,
+                        bool capturesCXXThis);
 
   virtual SourceRange getSourceRange() const;
   

@@ -3417,7 +3417,7 @@ void RetainReleaseChecker::PostVisitBlockExpr(CheckerContext &C,
 
   // Scan the BlockDecRefExprs for any object the retain/release checker
   // may be tracking.
-  if (!BE->hasBlockDeclRefExprs())
+  if (!BE->getBlockDecl()->hasCaptures())
     return;
 
   const GRState *state = C.getState();

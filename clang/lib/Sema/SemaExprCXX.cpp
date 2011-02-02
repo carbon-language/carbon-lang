@@ -16,6 +16,7 @@
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
@@ -563,14 +564,23 @@ ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
   /// is a non-lvalue expression whose value is the address of the object for
   /// which the function is called.
 
-  DeclContext *DC = getFunctionLevelDeclContext();
-  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC))
-    if (MD->isInstance())
-      return Owned(new (Context) CXXThisExpr(ThisLoc,
-                                             MD->getThisType(Context),
-                                             /*isImplicit=*/false));
+  // Ignore block scopes (but nothing else).
+  DeclContext *DC = CurContext;
+  while (isa<BlockDecl>(DC)) DC = cast<BlockDecl>(DC)->getDeclContext();
 
-  return ExprError(Diag(ThisLoc, diag::err_invalid_this_use));
+  // If we're not an instance method, error out.
+  CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(DC);
+  if (!method || !method->isInstance())
+    return ExprError(Diag(ThisLoc, diag::err_invalid_this_use));
+
+  // Mark that we're closing on 'this' in all the block scopes, if applicable.
+  for (unsigned idx = FunctionScopes.size() - 1;
+       isa<BlockScopeInfo>(FunctionScopes[idx]);
+       --idx)
+    cast<BlockScopeInfo>(FunctionScopes[idx])->CapturesCXXThis = true;
+
+  return Owned(new (Context) CXXThisExpr(ThisLoc, method->getThisType(Context),
+                                         /*isImplicit=*/false));
 }
 
 ExprResult

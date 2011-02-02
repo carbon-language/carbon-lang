@@ -761,7 +761,6 @@ void ASTStmtWriter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
 void ASTStmtWriter::VisitBlockExpr(BlockExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getBlockDecl(), Record);
-  Record.push_back(E->hasBlockDeclRefExprs());
   Code = serialization::EXPR_BLOCK;
 }
 

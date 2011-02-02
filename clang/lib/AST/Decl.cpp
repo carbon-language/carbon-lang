@@ -2104,8 +2104,21 @@ void BlockDecl::setParams(ParmVarDecl **NewParamInfo,
   }
 }
 
-unsigned BlockDecl::getNumParams() const {
-  return NumParams;
+void BlockDecl::setCapturedDecls(ASTContext &Context,
+                                 VarDecl * const *begin,
+                                 VarDecl * const *end,
+                                 bool capturesCXXThis) {
+  CapturesCXXThis = capturesCXXThis;
+
+  if (begin == end) {
+    NumCapturedDecls = 0;
+    CapturedDecls = 0;
+    return;
+  }
+
+  NumCapturedDecls = end - begin;
+  CapturedDecls = new (Context) VarDecl*[NumCapturedDecls];
+  memcpy(CapturedDecls, begin, NumCapturedDecls * sizeof(VarDecl*));
 }
 
 SourceRange BlockDecl::getSourceRange() const {

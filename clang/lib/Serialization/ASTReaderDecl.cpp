@@ -696,6 +696,15 @@ void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
   BD->setParams(Params.data(), NumParams);
+
+  bool capturesCXXThis = Record[Idx++];
+  unsigned numCapturedDecls = Record[Idx++];
+  llvm::SmallVector<VarDecl*, 16> capturedDecls;
+  capturedDecls.reserve(numCapturedDecls);
+  for (unsigned i = 0; i != numCapturedDecls; ++i)
+    capturedDecls.push_back(cast<VarDecl>(Reader.GetDecl(Record[Idx++])));
+  BD->setCapturedDecls(*Reader.getContext(), capturedDecls.begin(),
+                       capturedDecls.end(), capturesCXXThis);
 }
 
 void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {

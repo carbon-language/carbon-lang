@@ -1935,7 +1935,7 @@ static Expr *EvalAddr(Expr *E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars) {
   }
   
   case Stmt::BlockExprClass:
-    if (cast<BlockExpr>(E)->hasBlockDeclRefExprs())
+    if (cast<BlockExpr>(E)->getBlockDecl()->hasCaptures())
       return E; // local block.
     return NULL;
 

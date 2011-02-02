@@ -462,7 +462,7 @@ public:
       { return Success(E); }
   bool VisitCallExpr(CallExpr *E);
   bool VisitBlockExpr(BlockExpr *E) {
-    if (!E->hasBlockDeclRefExprs())
+    if (!E->getBlockDecl()->hasCaptures())
       return Success(E);
     return false;
   }

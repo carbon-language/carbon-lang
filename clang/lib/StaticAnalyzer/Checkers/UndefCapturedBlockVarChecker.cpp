@@ -56,7 +56,7 @@ static const BlockDeclRefExpr *FindBlockDeclRefExpr(const Stmt *S,
 void
 UndefCapturedBlockVarChecker::PostVisitBlockExpr(CheckerContext &C,
                                                  const BlockExpr *BE) {
-  if (!BE->hasBlockDeclRefExprs())
+  if (!BE->getBlockDecl()->hasCaptures())
     return;
 
   const GRState *state = C.getState();

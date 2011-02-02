@@ -3528,12 +3528,11 @@ public:
 class BlockExpr : public Expr {
 protected:
   BlockDecl *TheBlock;
-  bool HasBlockDeclRefExprs;
 public:
-  BlockExpr(BlockDecl *BD, QualType ty, bool hasBlockDeclRefExprs)
+  BlockExpr(BlockDecl *BD, QualType ty)
     : Expr(BlockExprClass, ty, VK_RValue, OK_Ordinary,
            ty->isDependentType(), false, false),
-      TheBlock(BD), HasBlockDeclRefExprs(hasBlockDeclRefExprs) {}
+      TheBlock(BD) {}
 
   /// \brief Build an empty block expression.
   explicit BlockExpr(EmptyShell Empty) : Expr(BlockExprClass, Empty) { }
@@ -3553,11 +3552,6 @@ public:
 
   /// getFunctionType - Return the underlying function type for this block.
   const FunctionType *getFunctionType() const;
-
-  /// hasBlockDeclRefExprs - Return true iff the block has BlockDeclRefExpr
-  /// inside of the block that reference values outside the block.
-  bool hasBlockDeclRefExprs() const { return HasBlockDeclRefExprs; }
-  void setHasBlockDeclRefExprs(bool BDRE) { HasBlockDeclRefExprs = BDRE; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == BlockExprClass;

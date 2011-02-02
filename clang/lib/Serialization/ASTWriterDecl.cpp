@@ -623,6 +623,12 @@ void ASTDeclWriter::VisitBlockDecl(BlockDecl *D) {
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
        P != PEnd; ++P)
     Writer.AddDeclRef(*P, Record);
+  Record.push_back(D->capturesCXXThis());
+  Record.push_back(D->getNumCapturedDecls());
+  for (BlockDecl::capture_iterator
+         i = D->capture_begin(), e = D->capture_end(); i != e; ++i)
+    Writer.AddDeclRef(*i, Record);
+
   Code = serialization::DECL_BLOCK;
 }
 

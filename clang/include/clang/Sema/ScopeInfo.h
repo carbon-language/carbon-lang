@@ -17,6 +17,7 @@
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SetVector.h"
 
 namespace clang {
 
@@ -101,8 +102,6 @@ public:
 /// \brief Retains information about a block that is currently being parsed.
 class BlockScopeInfo : public FunctionScopeInfo {
 public:
-  bool hasBlockDeclRefExprs;
-
   BlockDecl *TheDecl;
   
   /// TheScope - This is the scope for the block itself, which contains
@@ -117,9 +116,15 @@ public:
   /// Its return type may be BuiltinType::Dependent.
   QualType FunctionType;
 
+  /// Captures - The set of variables captured by this block.
+  llvm::SmallSetVector<VarDecl*, 4> Captures;
+
+  /// CapturesCXXThis - Whether this block captures 'this'.
+  bool CapturesCXXThis;
+
   BlockScopeInfo(Diagnostic &Diag, Scope *BlockScope, BlockDecl *Block)
-    : FunctionScopeInfo(Diag), hasBlockDeclRefExprs(false),
-      TheDecl(Block), TheScope(BlockScope)
+    : FunctionScopeInfo(Diag), TheDecl(Block), TheScope(BlockScope),
+      CapturesCXXThis(false)
   {
     IsBlockInfo = true;
   }
