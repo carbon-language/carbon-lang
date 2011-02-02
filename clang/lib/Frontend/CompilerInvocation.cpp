@@ -222,6 +222,10 @@ static void DependencyOutputOptsToArgs(const DependencyOutputOptions &Opts,
     Res.push_back("-sys-header-deps");
   if (Opts.ShowHeaderIncludes)
     Res.push_back("-H");
+  if (!Opts.HeaderIncludeOutputFile.empty()) {
+    Res.push_back("-header-include-file");
+    Res.push_back(Opts.HeaderIncludeOutputFile);
+  }
   if (Opts.UsePhonyTargets)
     Res.push_back("-MP");
   if (!Opts.OutputFile.empty()) {
@@ -961,6 +965,7 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   Opts.IncludeSystemHeaders = Args.hasArg(OPT_sys_header_deps);
   Opts.UsePhonyTargets = Args.hasArg(OPT_MP);
   Opts.ShowHeaderIncludes = Args.hasArg(OPT_H);
+  Opts.HeaderIncludeOutputFile = Args.getLastArgValue(OPT_header_include_file);
 }
 
 static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,

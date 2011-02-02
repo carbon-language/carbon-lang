@@ -20,13 +20,19 @@ namespace clang {
 class DependencyOutputOptions {
 public:
   unsigned IncludeSystemHeaders : 1; ///< Include system header dependencies.
-  unsigned ShowHeaderIncludes : 1; ///< Show header inclusions (-H).
+  unsigned ShowHeaderIncludes : 1;   ///< Show header inclusions (-H).
   unsigned UsePhonyTargets : 1;      ///< Include phony targets for each
                                      /// dependency, which can avoid some 'make'
                                      /// problems.
 
   /// The file to write dependency output to.
   std::string OutputFile;
+
+  /// The file to write header include output to. This is orthogonal to
+  /// ShowHeaderIncludes (-H) and will include headers mentioned in the
+  /// predefines buffer. If the output file is "-", output will be sent to
+  /// stderr.
+  std::string HeaderIncludeOutputFile;
 
   /// A list of names to use as the targets in the dependency file; this list
   /// must contain at least one entry.

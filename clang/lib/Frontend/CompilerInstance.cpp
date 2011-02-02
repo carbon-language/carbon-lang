@@ -210,6 +210,12 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
   // Handle generating header include information, if requested.
   if (DepOpts.ShowHeaderIncludes)
     AttachHeaderIncludeGen(*PP);
+  if (!DepOpts.HeaderIncludeOutputFile.empty()) {
+    llvm::StringRef OutputPath = DepOpts.HeaderIncludeOutputFile;
+    if (OutputPath == "-")
+      OutputPath = "";
+    AttachHeaderIncludeGen(*PP, /*ShowAllHeaders=*/true, OutputPath);
+  }
 
   return PP;
 }

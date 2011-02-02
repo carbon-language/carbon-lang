@@ -10,19 +10,29 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
+#include <cstdio>
 using namespace clang;
 
 namespace {
 class HeaderIncludesCallback : public PPCallbacks {
   SourceManager &SM;
+  FILE *OutputFile;
   unsigned CurrentIncludeDepth;
-  bool ShowAllHeaders;
   bool HasProcessedPredefines;
+  bool OwnsOutputFile;
+  bool ShowAllHeaders;
 
 public:
-  HeaderIncludesCallback(const Preprocessor *PP, bool ShowAllHeaders_)
-    : SM(PP->getSourceManager()), CurrentIncludeDepth(0),
-      ShowAllHeaders(ShowAllHeaders_), HasProcessedPredefines(false) {}
+  HeaderIncludesCallback(const Preprocessor *PP, bool ShowAllHeaders_,
+                         FILE *OutputFile_, bool OwnsOutputFile_)
+    : SM(PP->getSourceManager()), OutputFile(OutputFile_),
+      CurrentIncludeDepth(0), HasProcessedPredefines(false),
+      OwnsOutputFile(OwnsOutputFile_), ShowAllHeaders(ShowAllHeaders_) {}
+
+  ~HeaderIncludesCallback() {
+    if (OwnsOutputFile)
+      fclose(OutputFile);
+  }
 
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType);
@@ -31,7 +41,20 @@ public:
 
 void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
                                    llvm::StringRef OutputPath) {
-  PP.addPPCallbacks(new HeaderIncludesCallback(&PP, ShowAllHeaders));
+  FILE *OutputFile;
+  bool OwnsOutputFile;
+
+  // Open the output file, if used.
+  if (OutputPath.empty()) {
+    OutputFile = stderr;
+    OwnsOutputFile = false;
+  } else {
+    OutputFile = fopen(OutputPath.str().c_str(), "a");
+    OwnsOutputFile = true;
+  }
+
+  PP.addPPCallbacks(new HeaderIncludesCallback(&PP, ShowAllHeaders,
+                                               OutputFile, OwnsOutputFile));
 }
 
 void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
@@ -42,7 +65,7 @@ void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
   PresumedLoc UserLoc = SM.getPresumedLoc(Loc);
   if (UserLoc.isInvalid())
     return;
-  
+
   // Adjust the current include depth.
   if (Reason == PPCallbacks::EnterFile) {
     ++CurrentIncludeDepth;
@@ -76,7 +99,7 @@ void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
     Msg += Filename;
     Msg += '\n';
 
-    llvm::errs() << Msg;
+    fwrite(Msg.data(), Msg.size(), 1, OutputFile);
   }
 }
 
