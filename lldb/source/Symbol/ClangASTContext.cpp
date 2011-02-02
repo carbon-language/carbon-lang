@@ -4227,6 +4227,7 @@ ClangASTContext::IsArrayType (clang_type_t clang_type, clang_type_t*member_type,
             *member_type = cast<VariableArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
             *size = 0;
+        return true;
     case clang::Type::DependentSizedArray:
         if (member_type)
             *member_type = cast<DependentSizedArrayType>(qual_type)->getElementType().getAsOpaquePtr();
