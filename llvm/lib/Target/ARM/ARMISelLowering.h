@@ -213,13 +213,15 @@ namespace llvm {
     virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
                                     SelectionDAG &DAG) const;
 
-    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
-
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     virtual MachineBasicBlock *
       EmitInstrWithCustomInserter(MachineInstr *MI,
                                   MachineBasicBlock *MBB) const;
+
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
+    bool isDesirableToTransformToIntegerOp(unsigned Opc, EVT VT) const;
 
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses. of the specified type.

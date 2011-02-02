@@ -5724,6 +5724,11 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   return SDValue();
 }
 
+bool ARMTargetLowering::isDesirableToTransformToIntegerOp(unsigned Opc,
+                                                          EVT VT) const {
+  return (VT == MVT::f32) && (Opc == ISD::LOAD || Opc == ISD::STORE);
+}
+
 bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   if (!Subtarget->allowsUnalignedMem())
     return false;

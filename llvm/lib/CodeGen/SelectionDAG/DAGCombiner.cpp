@@ -42,6 +42,7 @@ STATISTIC(NodesCombined   , "Number of dag nodes combined");
 STATISTIC(PreIndexedNodes , "Number of pre-indexed nodes created");
 STATISTIC(PostIndexedNodes, "Number of post-indexed nodes created");
 STATISTIC(OpsNarrowed     , "Number of load/op/store narrowed");
+STATISTIC(LdStFP2Int      , "Number of fp load/store pairs transformed to int");
 
 namespace {
   static cl::opt<bool>
@@ -234,6 +235,7 @@ namespace {
     SDNode *MatchRotate(SDValue LHS, SDValue RHS, DebugLoc DL);
     SDValue ReduceLoadWidth(SDNode *N);
     SDValue ReduceLoadOpStoreWidth(SDNode *N);
+    SDValue TransformFPLoadStorePair(SDNode *N);
 
     SDValue GetDemandedBits(SDValue V, const APInt &Mask);
 
@@ -6111,6 +6113,63 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
   return SDValue();
 }
 
+/// TransformFPLoadStorePair - For a given floating point load / store pair,
+/// if the load value isn't used by any other operations, then consider
+/// transforming the pair to integer load / store operations if the target
+/// deems the transformation profitable.
+SDValue DAGCombiner::TransformFPLoadStorePair(SDNode *N) {
+  StoreSDNode *ST  = cast<StoreSDNode>(N);
+  SDValue Chain = ST->getChain();
+  SDValue Value = ST->getValue();
+  if (ISD::isNormalStore(ST) && ISD::isNormalLoad(Value.getNode()) &&
+      Value.hasOneUse() &&
+      Chain == SDValue(Value.getNode(), 1)) {
+    LoadSDNode *LD = cast<LoadSDNode>(Value);
+    EVT VT = LD->getMemoryVT();
+    if (!VT.isFloatingPoint() ||
+        VT != ST->getMemoryVT() ||
+        LD->isNonTemporal() ||
+        ST->isNonTemporal() ||
+        LD->getPointerInfo().getAddrSpace() != 0 ||
+        ST->getPointerInfo().getAddrSpace() != 0)
+      return SDValue();
+
+    EVT IntVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits());
+    if (!TLI.isOperationLegal(ISD::LOAD, IntVT) ||
+        !TLI.isOperationLegal(ISD::STORE, IntVT) ||
+        !TLI.isDesirableToTransformToIntegerOp(ISD::LOAD, VT) ||
+        !TLI.isDesirableToTransformToIntegerOp(ISD::STORE, VT))
+      return SDValue();
+
+    unsigned LDAlign = LD->getAlignment();
+    unsigned STAlign = ST->getAlignment();
+    const Type *IntVTTy = IntVT.getTypeForEVT(*DAG.getContext());
+    unsigned ABIAlign = TLI.getTargetData()->getABITypeAlignment(IntVTTy);
+    if (LDAlign < ABIAlign || STAlign < ABIAlign)
+      return SDValue();
+
+    SDValue NewLD = DAG.getLoad(IntVT, Value.getDebugLoc(),
+                                LD->getChain(), LD->getBasePtr(),
+                                LD->getPointerInfo(),
+                                false, false, LDAlign);
+
+    SDValue NewST = DAG.getStore(NewLD.getValue(1), N->getDebugLoc(),
+                                 NewLD, ST->getBasePtr(),
+                                 ST->getPointerInfo(),
+                                 false, false, STAlign);
+
+    AddToWorkList(NewLD.getNode());
+    AddToWorkList(NewST.getNode());
+    WorkListRemover DeadNodes(*this);
+    DAG.ReplaceAllUsesOfValueWith(Value.getValue(1), NewLD.getValue(1),
+                                  &DeadNodes);
+    ++LdStFP2Int;
+    return NewST;
+  }
+
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitSTORE(SDNode *N) {
   StoreSDNode *ST  = cast<StoreSDNode>(N);
   SDValue Chain = ST->getChain();
@@ -6209,6 +6268,12 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
                                  ST->isVolatile(), ST->isNonTemporal(), Align);
     }
   }
+
+  // Try transforming a pair floating point load / store ops to integer
+  // load / store ops.
+  SDValue NewST = TransformFPLoadStorePair(N);
+  if (NewST.getNode())
+    return NewST;
 
   if (CombinerAA) {
     // Walk up chain skipping non-aliasing memory nodes.

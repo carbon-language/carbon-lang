@@ -963,6 +963,13 @@ public:
     return isTypeLegal(VT);
   }
 
+  /// isDesirableToPromoteOp - Return true if it is profitable for dag combiner
+  /// to transform a floating point op of specified opcode to a equivalent op of
+  /// an integer type. e.g. f32 load -> i32 load can be profitable on ARM.
+  virtual bool isDesirableToTransformToIntegerOp(unsigned Opc, EVT VT) const {
+    return false;
+  }
+
   /// IsDesirableToPromoteOp - This method query the target whether it is
   /// beneficial for dag combiner to promote the specified node. If true, it
   /// should return the desired promotion type by reference.
