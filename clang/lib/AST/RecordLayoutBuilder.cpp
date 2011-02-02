@@ -1469,8 +1469,17 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 
 void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
   // In C++, records cannot be of size 0.
-  if (Context.getLangOptions().CPlusPlus && Size == 0)
-    Size = 8;
+  if (Context.getLangOptions().CPlusPlus && Size == 0) {
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
+      // Compatibility with gcc requires a class (pod or non-pod)
+      // which is not empty but of size 0; such as having fields of
+      // array of zero-length, remains of Size 0
+      if (RD->isEmpty())
+        Size = 8;
+    }
+    else
+      Size = 8;
+  }
   // Finally, round the size of the record up to the alignment of the
   // record itself.
   uint64_t UnpaddedSize = Size - UnfilledBitsInLastByte;
