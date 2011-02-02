@@ -1117,7 +1117,10 @@ CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
         if (out_fh)
         {
             if (reader.GetPrompt())
+            {
                 ::fprintf (out_fh, "%s", reader.GetPrompt());
+                ::fflush (out_fh);
+            }
         }
         break;
 
@@ -1126,7 +1129,10 @@ CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
 
     case eInputReaderReactivate:
         if (out_fh && reader.GetPrompt())
+        {
             ::fprintf (out_fh, "%s", reader.GetPrompt());
+            ::fflush (out_fh);
+        }
         break;
 
     case eInputReaderGotToken:
@@ -1150,6 +1156,7 @@ CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
             {
                 ::fprintf (out_fh, "Please answer \"y\" or \"n\"\n");
                 ::fprintf (out_fh, "%s", reader.GetPrompt());
+                ::fflush (out_fh);
             }
         }
         break;
