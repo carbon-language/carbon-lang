@@ -967,6 +967,13 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
           llvm::DITemplateTypeParameter TTP =
             DBuilder.CreateTemplateTypeParameter(TheCU, TTy.getName(), TTy);
           TemplateParams.push_back(TTP);
+        } else if (TA.getKind() == TemplateArgument::Integral) {
+          llvm::DIType TTy = getOrCreateType(TA.getIntegralType(), Unit);
+          // FIXME: Get parameter name, instead of parameter type name.
+          llvm::DITemplateValueParameter TVP =
+            DBuilder.CreateTemplateValueParameter(TheCU, TTy.getName(), TTy,
+                                                  TA.getAsIntegral()->getZExtValue());
+          TemplateParams.push_back(TVP);          
         }
       }
     }
