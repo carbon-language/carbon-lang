@@ -141,14 +141,8 @@ UnifiedReturnBlock:             ; preds = %shortcirc_done.4, %shortcirc_next.4
         ret i1 %UnifiedRetVal
         
 ; CHECK: @test6
-; CHECK:   switch i32 %tmp.2.i, label %shortcirc_next.4 [
-; CHECK:       i32 14, label %UnifiedReturnBlock
-; CHECK:       i32 15, label %UnifiedReturnBlock
-; CHECK:       i32 16, label %UnifiedReturnBlock
-; CHECK:       i32 17, label %UnifiedReturnBlock
-; CHECK:       i32 18, label %UnifiedReturnBlock
-; CHECK:       i32 19, label %UnifiedReturnBlock
-; CHECK:     ]
+; CHECK: %off = add i32 %tmp.2.i, -14
+; CHECK: %switch = icmp ult i32 %off, 6
 }
 
 define void @test7(i8 zeroext %c, i32 %x) nounwind ssp noredzone {
@@ -447,11 +441,8 @@ if.end:
 define zeroext i1 @test16(i32 %x) nounwind {
 entry:
 ; CHECK: @test16
-; CHECK: switch i32 %x, label %lor.rhs [
-; CHECK:   i32 1, label %lor.end
-; CHECK:   i32 2, label %lor.end
-; CHECK:   i32 3, label %lor.end
-; CHECK: ]
+; CHECK: %off = add i32 %x, -1
+; CHECK: %switch = icmp ult i32 %off, 3
   %cmp.i = icmp eq i32 %x, 1
   br i1 %cmp.i, label %lor.end, label %lor.lhs.false
 

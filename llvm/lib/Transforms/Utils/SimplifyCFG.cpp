@@ -2237,6 +2237,34 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
   return Changed;
 }
 
+/// TurnSwitchRangeIntoICmp - Turns a switch with that contains only a
+/// integer range comparison into a sub, an icmp and a branch.
+static bool TurnSwitchRangeIntoICmp(SwitchInst *SI) {
+  assert(SI->getNumCases() > 2 && "Degenerate switch?");
+  // We can do this transform if the switch consists of an ascending series
+  // and all cases point to the same destination.
+  for (unsigned I = 2, E = SI->getNumCases(); I != E; ++I)
+    if (SI->getSuccessor(I-1) != SI->getSuccessor(I) ||
+        SI->getCaseValue(I-1)->getValue()+1 != SI->getCaseValue(I)->getValue())
+      return false;
+
+  Constant *Offset = ConstantExpr::getNeg(SI->getCaseValue(1));
+  Constant *NumCases = ConstantInt::get(Offset->getType(), SI->getNumCases()-1);
+
+  Value *Sub = BinaryOperator::CreateAdd(SI->getCondition(), Offset, "off", SI);
+  Value *Cmp = new ICmpInst(SI, ICmpInst::ICMP_ULT, Sub, NumCases, "switch");
+  BranchInst::Create(SI->getSuccessor(1), SI->getDefaultDest(), Cmp, SI);
+
+  // Prune obsolete incoming values off the successor's PHI nodes.
+  for (BasicBlock::iterator BBI = SI->getSuccessor(1)->begin();
+       isa<PHINode>(BBI); ++BBI) {
+    for (unsigned I = 0, E = SI->getNumCases()-2; I != E; ++I)
+      cast<PHINode>(BBI)->removeIncomingValue(SI->getParent());
+  }
+  SI->eraseFromParent();
+
+  return true;
+}
 
 bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
   // If this switch is too complex to want to look at, ignore it.
@@ -2260,6 +2288,10 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
   if (SI == &*BBI)
     if (FoldValueComparisonIntoPredecessors(SI))
       return SimplifyCFG(BB) | true;
+
+  // Try to transform the switch into an icmp and a branch.
+  if (TurnSwitchRangeIntoICmp(SI))
+    return SimplifyCFG(BB) | true;
   
   return false;
 }
