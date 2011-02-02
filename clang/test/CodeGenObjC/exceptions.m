@@ -56,7 +56,7 @@ int f2() {
     // If the optimizers ever figure out how to make this store 6,
     // that's okay.
     // CHECK:      [[T1:%.*]] = load i32* [[X]]
-    // CHECK-NEXT: [[T2:%.*]] = add nsw i32 [[T1]], 1
+    // CHECK-NEXT: [[T2:%.*]] = add i32 [[T1]], 1
     // CHECK-NEXT: store i32 [[T2]], i32* [[X]]
     x++;
     // CHECK-NEXT: call void asm sideeffect "", "*m,*m"(i32* [[X]]
@@ -69,7 +69,7 @@ int f2() {
     // CHECK:      call void asm sideeffect "", "=*m,=*m"(i32* [[X]]
     // CHECK-NEXT: call i8* @objc_exception_extract
     // CHECK-NEXT: [[T1:%.*]] = load i32* [[X]]
-    // CHECK-NEXT: [[T2:%.*]] = add nsw i32 [[T1]], -1
+    // CHECK-NEXT: [[T2:%.*]] = add i32 [[T1]], -1
 
     // This store is dead.
     // CHECK-NEXT: store i32 [[T2]], i32* [[X]]
