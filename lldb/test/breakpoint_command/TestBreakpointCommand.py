@@ -163,7 +163,7 @@ class BreakpointCommandTestCase(TestBase):
 
         self.expect (output, "File 'output-2.txt' and the content matches", exe=False,
                      startstr = "frame #0:",
-                     patterns = ["1.* where = .*main .* 11.* resolved, hit count = 1" ])
+                     patterns = ["1.* where = .*main .* resolved, hit count = 1" ])
 
         # Now remove 'output-2.txt'
         os.remove ('output-2.txt')
