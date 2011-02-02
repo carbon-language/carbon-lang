@@ -12,6 +12,12 @@
 #include <string>
 #include <vector>
 
+#include "lldb/Core/Error.h"
+#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/Host.h"
+#include "lldb/Host/Mutex.h"
+
+using namespace lldb;
 using namespace lldb_private;
 
 enum PluginAction
@@ -20,6 +26,181 @@ enum PluginAction
     ePluginUnregisterInstance,
     ePluginGetInstanceAtIndex
 };
+
+struct PluginInfo
+{
+    void *plugin_handle;
+    void *plugin_init_callback;
+    void *plugin_term_callback;
+};
+
+typedef std::map<FileSpec, PluginInfo> PluginTerminateMap;
+
+static Mutex &
+GetPluginMapMutex ()
+{
+    static Mutex g_plugin_map_mutex (Mutex::eMutexTypeRecursive);
+    return g_plugin_map_mutex;
+}
+
+static PluginTerminateMap &
+GetPluginMap ()
+{
+    static PluginTerminateMap g_plugin_map;
+    return g_plugin_map;
+}
+
+static bool
+PluginIsLoaded (const FileSpec &plugin_file_spec)
+{
+    Mutex::Locker locker (GetPluginMapMutex ());
+    PluginTerminateMap &plugin_map = GetPluginMap ();
+    return plugin_map.find (plugin_file_spec) != plugin_map.end();
+}
+    
+static void
+SetPluginInfo (const FileSpec &plugin_file_spec, const PluginInfo &plugin_info)
+{
+    Mutex::Locker locker (GetPluginMapMutex ());
+    PluginTerminateMap &plugin_map = GetPluginMap ();
+    assert (plugin_map.find (plugin_file_spec) != plugin_map.end());
+    plugin_map[plugin_file_spec] = plugin_info;
+}
+
+
+static FileSpec::EnumerateDirectoryResult 
+LoadPluginCallback 
+(
+    void *baton,
+    FileSpec::FileType file_type,
+    const FileSpec &file_spec
+)
+{
+//    PluginManager *plugin_manager = (PluginManager *)baton;
+    Error error;
+    
+    // If we have a regular file, a symbolic link or unknown file type, try
+    // and process the file. We must handle unknown as sometimes the directory 
+    // enumeration might be enumerating a file system that doesn't have correct
+    // file type information.
+    if (file_type == FileSpec::eFileTypeRegular         ||
+        file_type == FileSpec::eFileTypeSymbolicLink    ||
+        file_type == FileSpec::eFileTypeUnknown          )
+    {
+        FileSpec plugin_file_spec (file_spec);
+        plugin_file_spec.ResolvePath();
+        
+        if (PluginIsLoaded (plugin_file_spec))
+            return FileSpec::eEnumerateDirectoryResultNext;
+        else
+        {
+            PluginInfo plugin_info = { NULL, NULL, NULL };
+            plugin_info.plugin_handle = Host::DynamicLibraryOpen (plugin_file_spec, error);
+            if (plugin_info.plugin_handle)
+            {
+                bool success = false;
+                plugin_info.plugin_init_callback = Host::DynamicLibraryGetSymbol (plugin_info.plugin_handle, "LLDBPluginInitialize", error);
+                if (plugin_info.plugin_init_callback)
+                {
+                    // Call the plug-in "bool LLDBPluginInitialize(void)" function
+                    success = ((bool (*)(void))plugin_info.plugin_init_callback)();
+                }
+
+                if (success)
+                {
+                    // It is ok for the "LLDBPluginTerminate" symbol to be NULL
+                    plugin_info.plugin_term_callback = Host::DynamicLibraryGetSymbol (plugin_info.plugin_handle, "LLDBPluginTerminate", error);
+                }
+                else 
+                {
+                    // The initialize function returned FALSE which means the
+                    // plug-in might not be compatible, or might be too new or
+                    // too old, or might not want to run on this machine.
+                    Host::DynamicLibraryClose (plugin_info.plugin_handle);
+                    plugin_info.plugin_handle = NULL;
+                    plugin_info.plugin_init_callback = NULL;
+                }
+
+                // Regardless of success or failure, cache the plug-in load
+                // in our plug-in info so we don't try to load it again and 
+                // again.
+                SetPluginInfo (plugin_file_spec, plugin_info);
+
+                return FileSpec::eEnumerateDirectoryResultNext;
+            }
+        }
+    }
+    
+    if (file_type == FileSpec::eFileTypeUnknown     ||
+        file_type == FileSpec::eFileTypeDirectory   ||
+        file_type == FileSpec::eFileTypeSymbolicLink )
+    {
+        // Try and recurse into anything that a directory or symbolic link. 
+        // We must also do this for unknown as sometimes the directory enumeration
+        // might be enurating a file system that doesn't have correct file type
+        // information.
+        return FileSpec::eEnumerateDirectoryResultEnter;
+    }
+
+    return FileSpec::eEnumerateDirectoryResultNext;
+}
+
+
+void
+PluginManager::Initialize ()
+{
+    FileSpec dir_spec;
+    const bool find_directories = true;
+    const bool find_files = true;
+    const bool find_other = true;
+    char dir_path[PATH_MAX];
+    if (Host::GetLLDBPath (ePathTypeLLDBSystemPlugins, dir_spec))
+    {
+        if (dir_spec.Exists() && dir_spec.GetPath(dir_path, sizeof(dir_path)))
+        {
+            FileSpec::EnumerateDirectory (dir_path, 
+                                          find_directories,
+                                          find_files,
+                                          find_other,
+                                          LoadPluginCallback,
+                                          NULL);
+        }
+    }
+
+    if (Host::GetLLDBPath (ePathTypeLLDBUserPlugins, dir_spec))
+    {
+        if (dir_spec.Exists() && dir_spec.GetPath(dir_path, sizeof(dir_path)))
+        {
+            FileSpec::EnumerateDirectory (dir_path, 
+                                          find_directories,
+                                          find_files,
+                                          find_other,
+                                          LoadPluginCallback,
+                                          NULL);
+        }
+    }
+}
+
+void
+PluginManager::Terminate ()
+{
+    Mutex::Locker locker (GetPluginMapMutex ());
+    PluginTerminateMap &plugin_map = GetPluginMap ();
+    
+    PluginTerminateMap::const_iterator pos, end = plugin_map.end();
+    for (pos = plugin_map.begin(); pos != end; ++pos)
+    {
+        // Call the plug-in "void LLDBPluginTerminate (void)" function if there
+        // is one (if the symbol was not NULL).
+        if (pos->second.plugin_handle)
+        {
+            if (pos->second.plugin_term_callback)
+                ((void (*)(void))pos->second.plugin_term_callback)();
+            Host::DynamicLibraryClose (pos->second.plugin_handle);
+        }
+    }
+    plugin_map.clear();
+}
 
 
 #pragma mark ABI
@@ -88,11 +269,11 @@ AccessABIInstances (PluginAction action, ABIInstance &instance, uint32_t index)
 
 bool
 PluginManager::RegisterPlugin
-    (
-        const char *name,
-        const char *description,
-        ABICreateInstance create_callback
-     )
+(
+    const char *name,
+    const char *description,
+    ABICreateInstance create_callback
+)
 {
     if (create_callback)
     {
@@ -458,10 +639,10 @@ AccessEmulateInstructionInstances (PluginAction action, EmulateInstructionInstan
 bool
 PluginManager::RegisterPlugin
 (
- const char *name,
- const char *description,
- EmulateInstructionCreateInstance create_callback
- )
+    const char *name,
+    const char *description,
+    EmulateInstructionCreateInstance create_callback
+)
 {
     if (create_callback)
     {
@@ -580,11 +761,11 @@ AccessLanguageRuntimeInstances (PluginAction action, LanguageRuntimeInstance &in
 
 bool
 PluginManager::RegisterPlugin
-    (
-        const char *name,
-        const char *description,
-        LanguageRuntimeCreateInstance create_callback
-     )
+(
+    const char *name,
+    const char *description,
+    LanguageRuntimeCreateInstance create_callback
+)
 {
     if (create_callback)
     {

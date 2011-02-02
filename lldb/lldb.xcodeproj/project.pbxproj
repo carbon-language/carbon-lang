@@ -69,6 +69,7 @@
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42B1E1187A92B0079C8C8 /* lldb-include.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		26B8B42512EEC52A00A831B2 /* UniqueDWARFASTType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B8B42312EEC52A00A831B2 /* UniqueDWARFASTType.cpp */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
 		26D27C9F11ED3A4E0024D721 /* ELFHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */; };
@@ -605,6 +606,8 @@
 		26B42B1E1187A92B0079C8C8 /* lldb-include.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-include.h"; path = "include/lldb/lldb-include.h"; sourceTree = "<group>"; };
 		26B42C4C1187ABA50079C8C8 /* LLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LLDB.h; path = include/lldb/API/LLDB.h; sourceTree = "<group>"; };
 		26B4E26E112F35F700AB3F64 /* TimeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimeValue.h; path = include/lldb/Host/TimeValue.h; sourceTree = "<group>"; };
+		26B8B42212EEC52A00A831B2 /* UniqueDWARFASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UniqueDWARFASTType.h; sourceTree = "<group>"; };
+		26B8B42312EEC52A00A831B2 /* UniqueDWARFASTType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UniqueDWARFASTType.cpp; sourceTree = "<group>"; };
 		26BC7C2510F1B3BC00F91463 /* lldb-defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-defines.h"; path = "include/lldb/lldb-defines.h"; sourceTree = "<group>"; };
 		26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-enumerations.h"; path = "include/lldb/lldb-enumerations.h"; sourceTree = "<group>"; };
 		26BC7C2810F1B3BC00F91463 /* lldb-private-interfaces.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-private-interfaces.h"; path = "include/lldb/lldb-private-interfaces.h"; sourceTree = "<group>"; };
@@ -1420,6 +1423,8 @@
 				26109B3C1155D70100CC3529 /* LogChannelDWARF.h */,
 				260C89DB10F57C5600BB2B04 /* SymbolFileDWARFDebugMap.cpp */,
 				260C89DC10F57C5600BB2B04 /* SymbolFileDWARFDebugMap.h */,
+				26B8B42212EEC52A00A831B2 /* UniqueDWARFASTType.h */,
+				26B8B42312EEC52A00A831B2 /* UniqueDWARFASTType.cpp */,
 			);
 			path = DWARF;
 			sourceTree = "<group>";
@@ -1680,7 +1685,6 @@
 				26BC7D5E10F1B77400F91463 /* Disassembler.h */,
 				26BC7E7610F1B85900F91463 /* Disassembler.cpp */,
 				26BC7D5F10F1B77400F91463 /* dwarf.h */,
-				26BC7E7710F1B85900F91463 /* DynamicLoader.cpp */,
 				26D9FDC612F784E60003F2EE /* EmulateInstruction.h */,
 				26D9FDC812F784FD0003F2EE /* EmulateInstruction.cpp */,
 				26BC7D6010F1B77400F91463 /* Error.h */,
@@ -2016,6 +2020,7 @@
 				4CB443BB1249920C00C13DC2 /* CPPLanguageRuntime.h */,
 				4CB443BC1249920C00C13DC2 /* CPPLanguageRuntime.cpp */,
 				26BC7DF110F1B81A00F91463 /* DynamicLoader.h */,
+				26BC7E7710F1B85900F91463 /* DynamicLoader.cpp */,
 				26BC7DF210F1B81A00F91463 /* ExecutionContext.h */,
 				26BC7F3510F1B90C00F91463 /* ExecutionContext.cpp */,
 				26DAFD9711529BC7005A394E /* ExecutionContextScope.h */,
@@ -2839,6 +2844,7 @@
 				B296983712C2FB98002D92C3 /* CommandObjectVersion.cpp in Sources */,
 				26D9FDC912F784FD0003F2EE /* EmulateInstruction.cpp in Sources */,
 				26D9FDCE12F7853F0003F2EE /* EmulateInstructionARM.cpp in Sources */,
+				26B8B42512EEC52A00A831B2 /* UniqueDWARFASTType.cpp in Sources */,
 				4906FD4212F2255300A2A77C /* ASTDumper.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

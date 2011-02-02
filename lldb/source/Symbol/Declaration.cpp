@@ -12,50 +12,6 @@
 
 using namespace lldb_private;
 
-Declaration::Declaration() :
-    m_file(),
-    m_line(0),
-    m_column(0)
-{
-}
-
-Declaration::Declaration(const FileSpec& f, uint32_t l, uint32_t c) :
-    m_file(f),
-    m_line(l),
-    m_column(c)
-{
-}
-
-Declaration::Declaration(const Declaration& rhs) :
-    m_file(rhs.m_file),
-    m_line(rhs.m_line),
-    m_column(rhs.m_column)
-{
-}
-
-Declaration::Declaration(const Declaration* decl_ptr) :
-    m_file(),
-    m_line(0),
-    m_column(0)
-{
-    if (decl_ptr != NULL)
-        *this = *decl_ptr;
-}
-
-bool
-Declaration::IsValid() const
-{
-    return m_file && m_line != 0;
-}
-
-void
-Declaration::Clear()
-{
-    m_file.Clear();
-    m_line= 0;
-    m_column = 0;
-}
-
 void
 Declaration::Dump(Stream *s, bool show_fullpaths) const
 {
@@ -68,19 +24,25 @@ Declaration::Dump(Stream *s, bool show_fullpaths) const
             *s << m_file.GetFilename();
         if (m_line > 0)
             s->Printf(":%u", m_line);
+#ifdef LLDB_ENABLE_DECLARATION_COLUMNS
         if (m_column > 0)
             s->Printf(":%u", m_column);
+#endif
     }
     else
     {
         if (m_line > 0)
         {
             s->Printf(", line = %u", m_line);
+#ifdef LLDB_ENABLE_DECLARATION_COLUMNS
             if (m_column > 0)
                 s->Printf(":%u", m_column);
+#endif
         }
+#ifdef LLDB_ENABLE_DECLARATION_COLUMNS
         else if (m_column > 0)
             s->Printf(", column = %u", m_column);
+#endif
     }
 }
 
@@ -96,39 +58,19 @@ Declaration::DumpStopContext (Stream *s, bool show_fullpaths) const
 
         if (m_line > 0)
             s->Printf(":%u", m_line);
+#ifdef LLDB_ENABLE_DECLARATION_COLUMNS
         if (m_column > 0)
             s->Printf(":%u", m_column);
+#endif
     }
     else
     {
         s->Printf(" line %u", m_line);
+#ifdef LLDB_ENABLE_DECLARATION_COLUMNS
         if (m_column > 0)
             s->Printf(":%u", m_column);
+#endif
     }
-}
-
-uint32_t
-Declaration::GetColumn() const
-{
-    return m_column;
-}
-
-FileSpec&
-Declaration::GetFile()
-{
-    return m_file;
-}
-
-const FileSpec&
-Declaration::GetFile() const
-{
-    return m_file;
-}
-
-uint32_t
-Declaration::GetLine() const
-{
-    return m_line;
 }
 
 size_t
@@ -136,26 +78,6 @@ Declaration::MemorySize() const
 {
     return sizeof(Declaration);
 }
-
-void
-Declaration::SetColumn(uint32_t col)
-{
-    m_column = col;
-}
-
-void
-Declaration::SetFile(const FileSpec& file)
-{
-    m_file = file;
-}
-
-void
-Declaration::SetLine(uint32_t line)
-{
-    m_line = line;
-}
-
-
 
 int
 Declaration::Compare(const Declaration& a, const Declaration& b)
@@ -167,9 +89,26 @@ Declaration::Compare(const Declaration& a, const Declaration& b)
         return -1;
     else if (a.m_line > b.m_line)
         return 1;
+#ifdef LLDB_ENABLE_DECLARATION_COLUMNS
     if (a.m_column < b.m_column)
         return -1;
     else if (a.m_column > b.m_column)
         return 1;
+#endif
     return 0;
 }
+
+bool
+lldb_private::operator == (const Declaration &lhs, const Declaration &rhs)
+{
+#ifdef LLDB_ENABLE_DECLARATION_COLUMNS
+    if (lhs.GetColumn () == rhs.GetColumn ())
+        if (lhs.GetLine () == rhs.GetLine ())
+            return lhs.GetFile() == rhs.GetFile();
+#else
+    if (lhs.GetLine () == rhs.GetLine ())
+        return lhs.GetFile() == rhs.GetFile();
+#endif
+    return false;
+}
+

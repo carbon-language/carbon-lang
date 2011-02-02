@@ -179,7 +179,8 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_namespace_index(),
     m_indexed (false),
     m_is_external_ast_source (false),
-    m_ranges()
+    m_ranges()//,
+    //m_unique_ast_type_map ()
 {
 }
 
@@ -3168,101 +3169,134 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
                     }
 
-                    DEBUG_PRINTF ("0x%8.8x: %s (\"%s\")\n", die->GetOffset(), DW_TAG_value_to_name(tag), type_name_cstr);
-
-                    int tag_decl_kind = -1;
-                    AccessType default_accessibility = eAccessNone;
-                    if (tag == DW_TAG_structure_type)
+//                    UniqueDWARFASTType unique_ast_entry;
+//                    if (decl.IsValid())
+//                    {
+//                        if (m_unique_ast_type_map.Find (type_name_const_str,
+//                                                        die,
+//                                                        decl,
+//                                                        unique_ast_entry))
+//                        {
+//                            // We have already parsed this type or from another 
+//                            // compile unit. GCC loves to use the "one definition
+//                            // rule" which can result in multiple definitions
+//                            // of the same class over and over in each compile
+//                            // unit.
+//                            type_sp = unique_ast_entry.m_type_sp;
+//                        }
+//                    }
+//                    
+//                    if (type_sp)
+//                    {
+//                        m_die_to_type[die] = type_sp.get();
+//
+//                    }
+//                    else
                     {
-                        tag_decl_kind = clang::TTK_Struct;
-                        default_accessibility = eAccessPublic;
-                    }
-                    else if (tag == DW_TAG_union_type)
-                    {
-                        tag_decl_kind = clang::TTK_Union;
-                        default_accessibility = eAccessPublic;
-                    }
-                    else if (tag == DW_TAG_class_type)
-                    {
-                        tag_decl_kind = clang::TTK_Class;
-                        default_accessibility = eAccessPrivate;
-                    }
+                        DEBUG_PRINTF ("0x%8.8x: %s (\"%s\")\n", die->GetOffset(), DW_TAG_value_to_name(tag), type_name_cstr);
 
-
-                    if (is_forward_declaration)
-                    {
-                        // We have a forward declaration to a type and we need
-                        // to try and find a full declaration. We look in the
-                        // current type index just in case we have a forward
-                        // declaration followed by an actual declarations in the
-                        // DWARF. If this fails, we need to look elsewhere...
-                    
-                        type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
-
-                        if (!type_sp && m_debug_map_symfile)
+                        int tag_decl_kind = -1;
+                        AccessType default_accessibility = eAccessNone;
+                        if (tag == DW_TAG_structure_type)
                         {
-                            // We weren't able to find a full declaration in
-                            // this DWARF, see if we have a declaration anywhere    
-                            // else...
-                            type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                            tag_decl_kind = clang::TTK_Struct;
+                            default_accessibility = eAccessPublic;
+                        }
+                        else if (tag == DW_TAG_union_type)
+                        {
+                            tag_decl_kind = clang::TTK_Union;
+                            default_accessibility = eAccessPublic;
+                        }
+                        else if (tag == DW_TAG_class_type)
+                        {
+                            tag_decl_kind = clang::TTK_Class;
+                            default_accessibility = eAccessPrivate;
                         }
 
-                        if (type_sp)
+
+                        if (is_forward_declaration)
                         {
-                            // We found a real definition for this type elsewhere
-                            // so lets use it and cache the fact that we found
-                            // a complete type for this die
-                            m_die_to_type[die] = type_sp.get();
-                            return type_sp;
+                            // We have a forward declaration to a type and we need
+                            // to try and find a full declaration. We look in the
+                            // current type index just in case we have a forward
+                            // declaration followed by an actual declarations in the
+                            // DWARF. If this fails, we need to look elsewhere...
+                        
+                            type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+
+                            if (!type_sp && m_debug_map_symfile)
+                            {
+                                // We weren't able to find a full declaration in
+                                // this DWARF, see if we have a declaration anywhere    
+                                // else...
+                                type_sp = m_debug_map_symfile->FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                            }
+
+                            if (type_sp)
+                            {
+                                // We found a real definition for this type elsewhere
+                                // so lets use it and cache the fact that we found
+                                // a complete type for this die
+                                m_die_to_type[die] = type_sp.get();
+                                return type_sp;
+                            }
+                        }
+                        assert (tag_decl_kind != -1);
+                        bool clang_type_was_created = false;
+                        clang_type = m_forward_decl_die_to_clang_type.lookup (die);
+                        if (clang_type == NULL)
+                        {
+                            clang_type_was_created = true;
+                            clang_type = ast.CreateRecordType (type_name_cstr, 
+                                                               tag_decl_kind, 
+                                                               GetClangDeclContextForDIE (dwarf_cu, die), 
+                                                               class_language);
+                        }
+
+                        // Store a forward declaration to this class type in case any 
+                        // parameters in any class methods need it for the clang 
+                        // types for function prototypes. 
+                        m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
+                        type_sp.reset (new Type (die->GetOffset(), 
+                                                 this, 
+                                                 type_name_const_str, 
+                                                 byte_size, 
+                                                 NULL, 
+                                                 LLDB_INVALID_UID, 
+                                                 Type::eEncodingIsUID, 
+                                                 &decl, 
+                                                 clang_type, 
+                                                 Type::eResolveStateForward));
+
+                        m_die_to_type[die] = type_sp.get();
+
+                        // Add our type to the unique type map so we don't
+                        // end up creating many copies of the same type over
+                        // and over in the ASTContext for our module
+//                        unique_ast_entry.m_type_sp = type_sp;
+//                        unique_ast_entry.m_die = die;
+//                        unique_ast_entry.m_declaration = decl;
+//                        m_unique_ast_type_map.Insert (type_name_const_str, 
+//                                                      unique_ast_entry);
+                        
+                        if (die->HasChildren() == false && is_forward_declaration == false)
+                        {
+                            // No children for this struct/union/class, lets finish it
+                            ast.StartTagDeclarationDefinition (clang_type);
+                            ast.CompleteTagDeclarationDefinition (clang_type);
+                        }
+                        else if (clang_type_was_created)
+                        {
+                            // Leave this as a forward declaration until we need
+                            // to know the details of the type. lldb_private::Type
+                            // will automatically call the SymbolFile virtual function
+                            // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
+                            // When the definition needs to be defined.
+                            m_forward_decl_die_to_clang_type[die] = clang_type;
+                            m_forward_decl_clang_type_to_die[ClangASTType::RemoveFastQualifiers (clang_type)] = die;
+                            ClangASTContext::SetHasExternalStorage (clang_type, true);
                         }
                     }
-                    assert (tag_decl_kind != -1);
-                    bool clang_type_was_created = false;
-                    clang_type = m_forward_decl_die_to_clang_type.lookup (die);
-                    if (clang_type == NULL)
-                    {
-                        clang_type_was_created = true;
-                        clang_type = ast.CreateRecordType (type_name_cstr, 
-                                                           tag_decl_kind, 
-                                                           GetClangDeclContextForDIE (dwarf_cu, die), 
-                                                           class_language);
-                    }
-
-                    // Store a forward declaration to this class type in case any 
-                    // parameters in any class methods need it for the clang 
-                    // types for function prototypes. 
-                    m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
-                    type_sp.reset (new Type (die->GetOffset(), 
-                                             this, 
-                                             type_name_const_str, 
-                                             byte_size, 
-                                             NULL, 
-                                             LLDB_INVALID_UID, 
-                                             Type::eEncodingIsUID, 
-                                             &decl, 
-                                             clang_type, 
-                                             Type::eResolveStateForward));
-                    
-                    m_die_to_type[die] = type_sp.get();
-
-                    if (die->HasChildren() == false && is_forward_declaration == false)
-                    {
-                        // No children for this struct/union/class, lets finish it
-                        ast.StartTagDeclarationDefinition (clang_type);
-                        ast.CompleteTagDeclarationDefinition (clang_type);
-                    }
-                    else if (clang_type_was_created)
-                    {
-                        // Leave this as a forward declaration until we need
-                        // to know the details of the type. lldb_private::Type
-                        // will automatically call the SymbolFile virtual function
-                        // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
-                        // When the definition needs to be defined.
-                        m_forward_decl_die_to_clang_type[die] = clang_type;
-                        m_forward_decl_clang_type_to_die[ClangASTType::RemoveFastQualifiers (clang_type)] = die;
-                        ClangASTContext::SetHasExternalStorage (clang_type, true);
-                    }
-                    
                 }
                 break;
 

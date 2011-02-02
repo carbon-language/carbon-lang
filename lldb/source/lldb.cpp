@@ -11,6 +11,7 @@
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
@@ -97,6 +98,8 @@ lldb_private::Initialize ()
         ProcessLinux::Initialize();
         DynamicLoaderLinuxDYLD::Initialize();
 #endif
+        // Scan for any system or user LLDB plug-ins
+        PluginManager::Initialize();
     }
 }
 
@@ -110,6 +113,10 @@ void
 lldb_private::Terminate ()
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
+    
+    // Terminate and unload and loaded system or user LLDB plug-ins
+    PluginManager::Terminate();
+
     DisassemblerLLVM::Terminate();
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();

@@ -80,8 +80,8 @@ class EmulateInstruction :
 {
 public:
 
-    static Disassembler*
-    FindPlugin (const ArchSpec &arch);
+    static EmulateInstruction*
+    FindPlugin (const ConstString &triple, const char *plugin_name);
 
     enum ContextType
     {

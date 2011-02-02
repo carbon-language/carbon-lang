@@ -10,11 +10,37 @@
 #include "EmulateInstruction.h"
 
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Endian.h"
 using namespace lldb;
 using namespace lldb_private;
 
+EmulateInstruction*
+EmulateInstruction::FindPlugin (const ConstString &triple, const char *plugin_name)
+{
+    EmulateInstructionCreateInstance create_callback = NULL;
+    if (plugin_name)
+    {
+        create_callback  = PluginManager::GetEmulateInstructionCreateCallbackForPluginName (plugin_name);
+        if (create_callback)
+        {
+            std::auto_ptr<EmulateInstruction> instance_ap(create_callback(triple));
+            if (instance_ap.get())
+                return instance_ap.release();
+        }
+    }
+    else
+    {
+        for (uint32_t idx = 0; (create_callback = PluginManager::GetEmulateInstructionCreateCallbackAtIndex(idx)) != NULL; ++idx)
+        {
+            std::auto_ptr<EmulateInstruction> instance_ap(create_callback(triple));
+            if (instance_ap.get())
+                return instance_ap.release();
+        }
+    }
+    return NULL;
+}
 
 EmulateInstruction::EmulateInstruction 
 (

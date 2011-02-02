@@ -12,12 +12,19 @@
 #define liblldb_PluginManager_h_
 
 #include "lldb/lldb-private.h"
+#include "lldb/Core/FileSpec.h"
 
 namespace lldb_private {
 
 class PluginManager
 {
 public:
+    static void
+    Initialize ();
+    
+    static void
+    Terminate ();
+
     //------------------------------------------------------------------
     // ABI
     //------------------------------------------------------------------

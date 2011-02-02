@@ -238,7 +238,7 @@ LocateDSYMMachFileInDSYMBundle
     {
         ::strncat (path, "/Contents/Resources/DWARF", sizeof(path) - strlen(path) - 1);
 
-        lldb_utility::CleanUp <DIR *, int> dirp (opendir("containing_part"), NULL, closedir);
+        lldb_utility::CleanUp <DIR *, int> dirp (opendir(path), NULL, closedir);
         if (dirp.is_valid())
         {
             dsym_fspec.GetDirectory().SetCString(path);

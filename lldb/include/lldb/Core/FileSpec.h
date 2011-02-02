@@ -42,12 +42,13 @@ public:
     typedef enum FileType
     {
         eFileTypeInvalid = -1,
-        eFileTypeUknown = 0,
+        eFileTypeUnknown = 0,
         eFileTypeDirectory,
         eFileTypePipe,
         eFileTypeRegular,
         eFileTypeSocket,
-        eFileTypeSymbolicLink
+        eFileTypeSymbolicLink,
+        eFileTypeOther
     } FileType;
 
     FileSpec();
@@ -543,6 +544,26 @@ public:
     static size_t
     ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
 
+    typedef enum EnumerateDirectoryResult
+    {
+        eEnumerateDirectoryResultNext,  // Enumerate next entry in the current directory
+        eEnumerateDirectoryResultEnter, // Recurse into the current entry if it is a directory or symlink, or next if not
+        eEnumerateDirectoryResultExit,  // Exit from the current directory at the current level.
+        eEnumerateDirectoryResultQuit   // Stop directory enumerations at any level
+    };
+
+    typedef EnumerateDirectoryResult (*EnumerateDirectoryCallbackType) (void *baton,
+                                                                        FileType file_type,
+                                                                        const FileSpec &spec
+);
+
+    static EnumerateDirectoryResult
+    EnumerateDirectory (const char *dir_path,
+                        bool find_directories,
+                        bool find_files,
+                        bool find_other,
+                        EnumerateDirectoryCallbackType callback,
+                        void *callback_baton);
 
 protected:
     //------------------------------------------------------------------

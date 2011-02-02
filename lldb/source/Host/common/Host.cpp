@@ -387,14 +387,14 @@ Host::ThreadCreated (const char *thread_name)
 void
 Host::Backtrace (Stream &strm, uint32_t max_frames)
 {
-    // TODO: Is there a way to backtrace the current process on linux?
+    // TODO: Is there a way to backtrace the current process on linux? Other systems?
 }
 
 
 size_t
 Host::GetEnvironment (StringList &env)
 {
-    // TODO: Is there a way to the host environment for this process on linux?
+    // TODO: Is there a way to the host environment for this process on linux? Other systems?
     return 0;
 }
 
@@ -642,6 +642,62 @@ Host::ResolveExecutableInBundle (FileSpec &file)
 }
 #endif
 
+void *
+Host::DynamicLibraryOpen (const FileSpec &file_spec, Error &error)
+{
+    void *dynamic_library_handle = NULL;
+    char path[PATH_MAX];
+    if (file_spec.GetPath(path, sizeof(path)))
+    {
+        dynamic_library_handle = ::dlopen (path, RTLD_LAZY | RTLD_GLOBAL | RTLD_FIRST);
+        if (dynamic_library_handle)
+        {
+            error.Clear();
+        }
+        else
+        {
+            error.SetErrorString(::dlerror());
+        }
+    }
+    else 
+    {
+        error.SetErrorString("failed to extract path");
+    }
+
+    return dynamic_library_handle;
+}
+
+Error
+Host::DynamicLibraryClose (void *dynamic_library_handle)
+{
+    Error error;
+    if (dynamic_library_handle == NULL)
+    {
+        error.SetErrorString ("invalid dynamic library handle");
+    }
+    else if (::dlclose(dynamic_library_handle) != 0)
+    {
+        error.SetErrorString(::dlerror());
+    }
+    return error;
+}
+
+void *
+Host::DynamicLibraryGetSymbol (void *dynamic_library_handle, const char *symbol_name, Error &error)
+{
+    if (dynamic_library_handle == NULL)
+    {
+        error.SetErrorString ("invalid dynamic library handle");
+        return NULL;
+    }
+    
+    void *symbol_addr = ::dlsym (dynamic_library_handle, symbol_name);
+    if (symbol_addr == NULL)
+        error.SetErrorString(::dlerror());
+    else
+        error.Clear();
+    return symbol_addr;
+}
 
 bool
 Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
@@ -719,7 +775,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     g_lldb_headers_dir.SetCString(resolved_path);
                 }
 #else
-                // TODO: Anyone know how we can determine this for linux??
+                // TODO: Anyone know how we can determine this for linux? Other systems??
                 g_lldb_headers_dir.SetCString ("/opt/local/include/lldb");
 #endif
             }
@@ -730,7 +786,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
 
     case ePathTypePythonDir:                
         {
-            // TODO: Anyone know how we can determine this for linux??
+            // TODO: Anyone know how we can determine this for linux? Other systems?
             // For linux we are currently assuming the location of the lldb
             // binary that contains this function is the directory that will 
             // contain lldb.so, lldb.py and embedded_interpreter.py...
@@ -762,6 +818,57 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
         }
         break;
     
+    case ePathTypeLLDBSystemPlugins:    // System plug-ins directory
+        {
+#if defined (__APPLE__)
+            static ConstString g_lldb_system_plugin_dir;
+            if (!g_lldb_system_plugin_dir)
+            {
+                FileSpec lldb_file_spec;
+                if (GetLLDBPath (ePathTypeLLDBShlibDir, lldb_file_spec))
+                {
+                    char raw_path[PATH_MAX];
+                    char resolved_path[PATH_MAX];
+                    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+
+                    char *framework_pos = ::strstr (raw_path, "LLDB.framework");
+                    if (framework_pos)
+                    {
+                        framework_pos += strlen("LLDB.framework");
+                        ::strncpy (framework_pos, "/Resources/PlugIns", PATH_MAX - (framework_pos - raw_path));
+                    }
+                    FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
+                    g_lldb_system_plugin_dir.SetCString(resolved_path);
+                }
+            }
+            file_spec.GetDirectory() = g_lldb_system_plugin_dir;
+            return file_spec.GetDirectory();
+#endif
+            // TODO: where would system LLDB plug-ins be located on linux? Other systems?
+            return false;
+        }
+        break;
+
+    case ePathTypeLLDBUserPlugins:      // User plug-ins directory
+        {
+#if defined (__APPLE__)
+            static ConstString g_lldb_user_plugin_dir;
+            if (!g_lldb_user_plugin_dir)
+            {
+                char user_plugin_path[PATH_MAX];
+                if (FileSpec::Resolve ("~/Library/Application Support/LLDB/PlugIns", 
+                                       user_plugin_path, 
+                                       sizeof(user_plugin_path)))
+                {
+                    g_lldb_user_plugin_dir.SetCString(user_plugin_path);
+                }
+            }
+            file_spec.GetDirectory() = g_lldb_user_plugin_dir;
+            return file_spec.GetDirectory();
+#endif
+            // TODO: where would user LLDB plug-ins be located on linux? Other systems?
+            return false;
+        }
     default:
         assert (!"Unhandled PathType");
         break;

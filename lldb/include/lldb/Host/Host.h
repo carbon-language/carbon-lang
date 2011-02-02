@@ -337,13 +337,26 @@ public:
                          bool disable_aslr);
     
     static bool
-    OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no);
+    OpenFileInExternalEditor (const FileSpec &file_spec, 
+                              uint32_t line_no);
 
     static void
     Backtrace (Stream &strm, uint32_t max_frames);
     
     static size_t
     GetEnvironment (StringList &env);
+
+    static void *
+    DynamicLibraryOpen (const FileSpec &file_spec, 
+                        Error &error);
+
+    static Error
+    DynamicLibraryClose (void *dynamic_library_handle);
+
+    static void *
+    DynamicLibraryGetSymbol (void *dynamic_library_handle, 
+                             const char *symbol_name, 
+                             Error &error);
 };
 
 } // namespace lldb_private

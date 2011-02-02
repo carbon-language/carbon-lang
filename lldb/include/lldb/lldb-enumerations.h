@@ -577,7 +577,9 @@ typedef enum PathType
     ePathTypeLLDBShlibDir,          // The directory where the lldb.so (unix) or LLDB mach-o file in LLDB.framework (MacOSX) exists
     ePathTypeSupportExecutableDir,  // Find LLDB support executable directory (debugserver, etc)
     ePathTypeHeaderDir,             // Find LLDB header file directory
-    ePathTypePythonDir              // Find Python modules (PYTHONPATH) directory
+    ePathTypePythonDir,             // Find Python modules (PYTHONPATH) directory
+    ePathTypeLLDBSystemPlugins,     // System plug-ins directory
+    ePathTypeLLDBUserPlugins        // User plug-ins directory
 } PathType;
 
 
