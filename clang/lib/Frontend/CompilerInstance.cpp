@@ -207,6 +207,10 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
   if (!DepOpts.OutputFile.empty())
     AttachDependencyFileGen(*PP, DepOpts);
 
+  // Handle generating header include information, if requested.
+  if (DepOpts.ShowHeaderIncludes)
+    AttachHeaderIncludeGen(*PP);
+
   return PP;
 }
 

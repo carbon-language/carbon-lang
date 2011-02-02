@@ -73,6 +73,10 @@ bool CheckDiagnostics(Preprocessor &PP);
 void AttachDependencyFileGen(Preprocessor &PP,
                              const DependencyOutputOptions &Opts);
 
+/// AttachHeaderIncludeGen - Create a header include list generator, and attach
+/// it to the given preprocessor.
+void AttachHeaderIncludeGen(Preprocessor &PP);
+
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.
 void CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS);

@@ -20,6 +20,7 @@ namespace clang {
 class DependencyOutputOptions {
 public:
   unsigned IncludeSystemHeaders : 1; ///< Include system header dependencies.
+  unsigned ShowHeaderIncludes : 1; ///< Show header inclusions (-H).
   unsigned UsePhonyTargets : 1;      ///< Include phony targets for each
                                      /// dependency, which can avoid some 'make'
                                      /// problems.
@@ -34,6 +35,7 @@ public:
 public:
   DependencyOutputOptions() {
     IncludeSystemHeaders = 0;
+    ShowHeaderIncludes = 0;
     UsePhonyTargets = 0;
   }
 };

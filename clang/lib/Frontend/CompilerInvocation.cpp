@@ -220,6 +220,8 @@ static void DependencyOutputOptsToArgs(const DependencyOutputOptions &Opts,
                                        std::vector<std::string> &Res) {
   if (Opts.IncludeSystemHeaders)
     Res.push_back("-sys-header-deps");
+  if (Opts.ShowHeaderIncludes)
+    Res.push_back("-H");
   if (Opts.UsePhonyTargets)
     Res.push_back("-MP");
   if (!Opts.OutputFile.empty()) {
@@ -732,8 +734,6 @@ static void PreprocessorOutputOptsToArgs(const PreprocessorOutputOptions &Opts,
   else if (!Opts.ShowCPP && Opts.ShowMacros)
     Res.push_back("-dM");
 
-  if (Opts.ShowHeaderIncludes)
-    Res.push_back("-H");
   if (!Opts.ShowLineMarkers)
     Res.push_back("-P");
   if (Opts.ShowComments)
@@ -960,6 +960,7 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   Opts.Targets = Args.getAllArgValues(OPT_MT);
   Opts.IncludeSystemHeaders = Args.hasArg(OPT_sys_header_deps);
   Opts.UsePhonyTargets = Args.hasArg(OPT_MP);
+  Opts.ShowHeaderIncludes = Args.hasArg(OPT_H);
 }
 
 static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
@@ -1581,7 +1582,6 @@ static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
   using namespace cc1options;
   Opts.ShowCPP = !Args.hasArg(OPT_dM);
   Opts.ShowComments = Args.hasArg(OPT_C);
-  Opts.ShowHeaderIncludes = Args.hasArg(OPT_H);
   Opts.ShowLineMarkers = !Args.hasArg(OPT_P);
   Opts.ShowMacroComments = Args.hasArg(OPT_CC);
   Opts.ShowMacros = Args.hasArg(OPT_dM) || Args.hasArg(OPT_dD);
