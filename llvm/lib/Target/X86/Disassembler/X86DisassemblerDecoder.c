@@ -388,6 +388,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
     }
   } else {
     unconsumeByte(insn);
+    insn->necessaryPrefixLocation = insn->readerCursor - 1;
   }
   
   if (insn->mode == MODE_16BIT) {
