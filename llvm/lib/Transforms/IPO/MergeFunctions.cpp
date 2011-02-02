@@ -112,22 +112,9 @@ public:
     Func = NULL;
   }
 
-  bool &getOrInsertCachedComparison(const ComparableFunction &Other,
-                                    bool &inserted) const {
-    typedef DenseMap<Function *, bool>::iterator iterator;
-    std::pair<iterator, bool> p =
-        CompareResultCache.insert(std::make_pair(Other.getFunc(), false));
-    inserted = p.second;
-    return p.first->second;
-  }
-
 private:
   explicit ComparableFunction(unsigned Hash)
     : Func(NULL), Hash(Hash), TD(NULL) {}
-
-  // DenseMap::grow() triggers a recomparison of all keys in the map, which is
-  // wildly expensive. This cache tries to preserve known results.
-  mutable DenseMap<Function *, bool> CompareResultCache;
 
   AssertingVH<Function> Func;
   unsigned Hash;
@@ -675,16 +662,8 @@ bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
   assert(LHS.getTD() == RHS.getTD() &&
          "Comparing functions for different targets");
 
-  bool inserted;
-  bool &result1 = LHS.getOrInsertCachedComparison(RHS, inserted);
-  if (!inserted)
-    return result1;
-  bool &result2 = RHS.getOrInsertCachedComparison(LHS, inserted);
-  if (!inserted)
-    return result1 = result2;
-
-  return result1 = result2 = FunctionComparator(LHS.getTD(), LHS.getFunc(),
-                                                RHS.getFunc()).compare();
+  return FunctionComparator(LHS.getTD(), LHS.getFunc(),
+                            RHS.getFunc()).compare();
 }
 
 // Replace direct callers of Old with New.
