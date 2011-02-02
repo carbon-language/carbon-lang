@@ -1089,9 +1089,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
-  // -mno-omit-leaf-frame-pointer is default.
+  // -mno-omit-leaf-frame-pointer is the default on Darwin.
   if (Args.hasFlag(options::OPT_momit_leaf_frame_pointer,
-                   options::OPT_mno_omit_leaf_frame_pointer, false))
+                   options::OPT_mno_omit_leaf_frame_pointer,
+                   getToolChain().getTriple().getOS() != llvm::Triple::Darwin))
     CmdArgs.push_back("-momit-leaf-frame-pointer");
 
   // -fno-math-errno is default.
