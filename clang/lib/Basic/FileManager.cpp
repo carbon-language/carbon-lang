@@ -271,10 +271,84 @@ const DirectoryEntry *FileManager::getDirectory(llvm::StringRef Filename) {
   return &UDE;
 }
 
+/// \brief Canonicalize a file or path name by eliminating redundant
+/// "foo/.." and "./" path components.
+///
+/// Uses the given scratch space to store the resulting string, if needed.
+static llvm::StringRef CanonicalizeFileName(llvm::StringRef Filename, 
+                                            llvm::SmallVectorImpl<char> &Scratch) {
+  size_t Start = 0;
+  bool Changed = false;
+  do {
+    size_t FirstSlash = Filename.find('/', Start);
+    if (FirstSlash == llvm::StringRef::npos) {
+      // No more components. Just copy the rest of the file name, if
+      // we need to.
+      if (Changed)
+        Scratch.append(Filename.begin() + Start, Filename.end());
+      break;
+    }
+
+    if (Start + 1 == FirstSlash && Filename[Start] == '.') {
+      // We have './'; remove it.
+      
+      // If we haven't changed anything previously, copy the
+      // starting bits here.
+      if (!Changed) {
+        Scratch.clear();
+        Scratch.append(Filename.begin(), Filename.begin() + Start);
+        Changed = true;
+      }
+      
+      // Skip over the './'.
+      Start = FirstSlash + 1;
+      continue;
+    }
+    
+    size_t SecondSlash = Filename.find('/', FirstSlash + 1);
+    if (SecondSlash != llvm::StringRef::npos &&
+        SecondSlash - FirstSlash == 3 &&
+        Filename[FirstSlash + 1] == '.' &&
+        Filename[FirstSlash + 2] == '.') {
+      // We have 'foo/../'; remove it.
+      
+      // If we haven't changed anything previously, copy the
+      // starting bits here.
+      if (!Changed) {
+        Scratch.clear();
+        Scratch.append(Filename.begin(), Filename.begin() + Start);
+        Changed = true;
+      }
+      
+      // Skip over the 'foo/..'.
+      Start = SecondSlash + 1;
+      continue;
+    }
+
+    if (Changed)
+      Scratch.append(Filename.begin() + Start, 
+                     Filename.begin() + FirstSlash + 1);
+    Start = FirstSlash + 1;
+  } while (true);
+
+  if (Changed) {
+#if 0
+    llvm::errs() << "Canonicalized \"" << Filename << "\" to \""
+                 << llvm::StringRef(Scratch.data(), Scratch.size()) << "\"\n";
+#endif
+    return llvm::StringRef(Scratch.data(), Scratch.size());
+  }
+
+  return Filename;
+}
+
 /// getFile - Lookup, cache, and verify the specified file.  This returns null
 /// if the file doesn't exist.
 ///
 const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
+  llvm::SmallString<128> FilenameScratch;
+  Filename = CanonicalizeFileName(Filename, FilenameScratch);
+
   ++NumFileLookups;
 
   // See if there is already an entry in the map.
@@ -343,6 +417,9 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
 const FileEntry *
 FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
                             time_t ModificationTime) {
+  llvm::SmallString<128> FilenameScratch;
+  Filename = CanonicalizeFileName(Filename, FilenameScratch);
+
   ++NumFileLookups;
 
   // See if there is already an entry in the map.
