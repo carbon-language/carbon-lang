@@ -533,23 +533,31 @@ GDBRemoteCommunication::SendInterrupt
                 sent_interrupt = true;
                 if (seconds_to_wait_for_stop)
                 {
-                    m_private_is_running.WaitForValueEqualTo (false, &timeout, &timed_out);
-                    if (log)
-                        log->Printf ("GDBRemoteCommunication::%s () - sent interrupt, private state stopped", __FUNCTION__);
-
+                    if (m_private_is_running.WaitForValueEqualTo (false, &timeout, &timed_out))
+                    {
+                        if (log)
+                            log->Printf ("GDBRemoteCommunication::%s () - sent interrupt, private state stopped", __FUNCTION__);
+                        return true;
+                    }
+                    else
+                    {
+                        if (log)
+                            log->Printf ("GDBRemoteCommunication::%s () - sent interrupt, timed out wating for async thread resume", __FUNCTION__);
+                    }
                 }
                 else
                 {
                     if (log)
                         log->Printf ("GDBRemoteCommunication::%s () - sent interrupt, not waiting for stop...", __FUNCTION__);                    
+                    return true;
                 }
-                return true;
             }
             else
             {
                 if (log)
                     log->Printf ("GDBRemoteCommunication::%s () - failed to write interrupt", __FUNCTION__);
             }
+            return false;
         }
         else
         {
@@ -557,7 +565,7 @@ GDBRemoteCommunication::SendInterrupt
                 log->Printf ("GDBRemoteCommunication::%s () - got sequence mutex without having to interrupt", __FUNCTION__);
         }
     }
-    return false;
+    return true;
 }
 
 bool
