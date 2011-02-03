@@ -680,16 +680,14 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       }
       if (!BI.LiveThrough) {
         DEBUG(dbgs() << ", not live-through.\n");
-        SE.enterIntvBefore(BI.Def);
-        SE.useIntv(BI.Def, Stop);
+        SE.useIntv(SE.enterIntvBefore(BI.Def), Stop);
         continue;
       }
       if (!RegIn) {
         // Block is live-through, but entry bundle is on the stack.
         // Reload just before the first use.
         DEBUG(dbgs() << ", not live-in, enter before first use.\n");
-        SE.enterIntvBefore(BI.FirstUse);
-        SE.useIntv(BI.FirstUse, Stop);
+        SE.useIntv(SE.enterIntvBefore(BI.FirstUse), Stop);
         continue;
       }
       DEBUG(dbgs() << ", live-through.\n");
@@ -713,8 +711,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       SlotIndex Use = *UI;
       DEBUG(dbgs() << ", free use at " << Use << ".\n");
       assert(Use <= BI.LastUse && "Couldn't find last use");
-      SE.enterIntvBefore(Use);
-      SE.useIntv(Use, Stop);
+      SE.useIntv(SE.enterIntvBefore(Use), Stop);
       continue;
     }
 
@@ -759,16 +756,14 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       }
       if (!BI.LiveThrough) {
         DEBUG(dbgs() << ", killed in block.\n");
-        SE.useIntv(Start, BI.Kill.getBoundaryIndex());
-        SE.leaveIntvAfter(BI.Kill);
+        SE.useIntv(Start, SE.leaveIntvAfter(BI.Kill));
         continue;
       }
       if (!RegOut) {
         // Block is live-through, but exit bundle is on the stack.
         // Spill immediately after the last use.
         DEBUG(dbgs() << ", uses, stack-out.\n");
-        SE.useIntv(Start, BI.LastUse.getBoundaryIndex());
-        SE.leaveIntvAfter(BI.LastUse);
+        SE.useIntv(Start, SE.leaveIntvAfter(BI.LastUse));
         continue;
       }
       // Register is live-through.
@@ -794,8 +789,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       SlotIndex Use = (--UI)->getBoundaryIndex();
       DEBUG(dbgs() << ", free use at " << *UI << ".\n");
       assert(Use >= BI.FirstUse && Use < IP.first);
-      SE.useIntv(Start, Use);
-      SE.leaveIntvAfter(Use);
+      SE.useIntv(Start, SE.leaveIntvAfter(Use));
       continue;
     }
 
@@ -875,6 +869,8 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
     SmallVector<LiveInterval*, 4> SpillRegs;
     LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
     SplitEditor(*SA, *LIS, *VRM, *DomTree, LREdit).splitSingleBlocks(Blocks);
+    if (VerifyEnabled)
+      MF->verify(this, "After splitting live range around basic blocks");
   }
 
   // Don't assign any physregs.

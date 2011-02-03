@@ -776,12 +776,6 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
 
   // Add minimal liveness for the new value.
   Edit.get(RegIdx)->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
-
-  if (RegIdx) {
-    if (UseIdx < Def)
-      UseIdx = Def;
-    RegAssign.insert(Def, UseIdx.getNextSlot(), RegIdx);
-  }
   return VNI;
 }
 
@@ -803,38 +797,39 @@ void SplitEditor::openIntv() {
   LIMappers[OpenIdx].reset(Edit.get(OpenIdx));
 }
 
-/// enterIntvBefore - Enter OpenLI before the instruction at Idx. If CurLI is
-/// not live before Idx, a COPY is not inserted.
-void SplitEditor::enterIntvBefore(SlotIndex Idx) {
+SlotIndex SplitEditor::enterIntvBefore(SlotIndex Idx) {
   assert(OpenIdx && "openIntv not called before enterIntvBefore");
-  Idx = Idx.getUseIndex();
   DEBUG(dbgs() << "    enterIntvBefore " << Idx);
+  Idx = Idx.getBaseIndex();
   VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Idx);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
-    return;
+    return Idx;
   }
-  DEBUG(dbgs() << ": valno " << ParentVNI->id);
+  DEBUG(dbgs() << ": valno " << ParentVNI->id << '\n');
   MachineInstr *MI = LIS.getInstructionFromIndex(Idx);
   assert(MI && "enterIntvBefore called with invalid index");
 
-  defFromParent(OpenIdx, ParentVNI, Idx, *MI->getParent(), MI);
-  DEBUG(dump());
+  VNInfo *VNI = defFromParent(OpenIdx, ParentVNI, Idx, *MI->getParent(), MI);
+  return VNI->def;
 }
 
-/// enterIntvAtEnd - Enter OpenLI at the end of MBB.
-void SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
+SlotIndex SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   assert(OpenIdx && "openIntv not called before enterIntvAtEnd");
-  SlotIndex End = LIS.getMBBEndIdx(&MBB).getPrevSlot();
-  DEBUG(dbgs() << "    enterIntvAtEnd BB#" << MBB.getNumber() << ", " << End);
-  VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(End);
+  SlotIndex End = LIS.getMBBEndIdx(&MBB);
+  SlotIndex Last = End.getPrevSlot();
+  DEBUG(dbgs() << "    enterIntvAtEnd BB#" << MBB.getNumber() << ", " << Last);
+  VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Last);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
-    return;
+    return End;
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
-  defFromParent(OpenIdx, ParentVNI, End, MBB, MBB.getFirstTerminator());
+  VNInfo *VNI = defFromParent(OpenIdx, ParentVNI, Last, MBB,
+                              MBB.getFirstTerminator());
+  RegAssign.insert(VNI->def, End, OpenIdx);
   DEBUG(dump());
+  return VNI->def;
 }
 
 /// useIntv - indicate that all instructions in MBB should use OpenLI.
@@ -849,8 +844,7 @@ void SplitEditor::useIntv(SlotIndex Start, SlotIndex End) {
   DEBUG(dump());
 }
 
-/// leaveIntvAfter - Leave OpenLI after the instruction at Idx.
-void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
+SlotIndex SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   assert(OpenIdx && "openIntv not called before leaveIntvAfter");
   DEBUG(dbgs() << "    leaveIntvAfter " << Idx);
 
@@ -859,21 +853,17 @@ void SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Idx);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
-    return;
+    return Idx.getNextSlot();
   }
-  DEBUG(dbgs() << ": valno " << ParentVNI->id);
+  DEBUG(dbgs() << ": valno " << ParentVNI->id << '\n');
 
   MachineBasicBlock::iterator MII = LIS.getInstructionFromIndex(Idx);
   VNInfo *VNI = defFromParent(0, ParentVNI, Idx,
                               *MII->getParent(), llvm::next(MII));
-
-  RegAssign.insert(Idx, VNI->def, OpenIdx);
-  DEBUG(dump());
+  return VNI->def;
 }
 
-/// leaveIntvAtTop - Leave the interval at the top of MBB.
-/// Currently, only one value can leave the interval.
-void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
+SlotIndex SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   assert(OpenIdx && "openIntv not called before leaveIntvAtTop");
   SlotIndex Start = LIS.getMBBStartIdx(&MBB);
   DEBUG(dbgs() << "    leaveIntvAtTop BB#" << MBB.getNumber() << ", " << Start);
@@ -881,13 +871,14 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Start);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
-    return;
+    return Start;
   }
 
   VNInfo *VNI = defFromParent(0, ParentVNI, Start, MBB,
                               MBB.SkipPHIsAndLabels(MBB.begin()));
   RegAssign.insert(Start, VNI->def, OpenIdx);
   DEBUG(dump());
+  return VNI->def;
 }
 
 /// closeIntv - Indicate that we are done editing the currently open
@@ -1148,9 +1139,7 @@ void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
     assert(IP.first.isValid() && IP.second.isValid());
 
     openIntv();
-    enterIntvBefore(IP.first);
-    useIntv(IP.first.getBaseIndex(), IP.second.getBoundaryIndex());
-    leaveIntvAfter(IP.second);
+    useIntv(enterIntvBefore(IP.first), leaveIntvAfter(IP.second));
     closeIntv();
   }
   finish();
@@ -1211,18 +1200,14 @@ void SplitEditor::splitInsideBlock(const MachineBasicBlock *MBB) {
   // First interval before the gap. Don't create single-instr intervals.
   if (bestPos > 1) {
     openIntv();
-    enterIntvBefore(Uses.front());
-    useIntv(Uses.front().getBaseIndex(), Uses[bestPos-1].getBoundaryIndex());
-    leaveIntvAfter(Uses[bestPos-1]);
+    useIntv(enterIntvBefore(Uses.front()), leaveIntvAfter(Uses[bestPos-1]));
     closeIntv();
   }
 
   // Second interval after the gap.
   if (bestPos < Uses.size()-1) {
     openIntv();
-    enterIntvBefore(Uses[bestPos]);
-    useIntv(Uses[bestPos].getBaseIndex(), Uses.back().getBoundaryIndex());
-    leaveIntvAfter(Uses.back());
+    useIntv(enterIntvBefore(Uses[bestPos]), leaveIntvAfter(Uses.back()));
     closeIntv();
   }
 

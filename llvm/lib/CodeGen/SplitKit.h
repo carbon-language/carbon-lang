@@ -352,12 +352,15 @@ public:
   /// Create a new virtual register and live interval.
   void openIntv();
 
-  /// enterIntvBefore - Enter OpenLI before the instruction at Idx. If CurLI is
-  /// not live before Idx, a COPY is not inserted.
-  void enterIntvBefore(SlotIndex Idx);
+  /// enterIntvBefore - Enter the open interval before the instruction at Idx.
+  /// If the parent interval is not live before Idx, a COPY is not inserted.
+  /// Return the beginning of the new live range.
+  SlotIndex enterIntvBefore(SlotIndex Idx);
 
-  /// enterIntvAtEnd - Enter OpenLI at the end of MBB.
-  void enterIntvAtEnd(MachineBasicBlock &MBB);
+  /// enterIntvAtEnd - Enter the open interval at the end of MBB.
+  /// Use the open interval from he inserted copy to the MBB end.
+  /// Return the beginning of the new live range.
+  SlotIndex enterIntvAtEnd(MachineBasicBlock &MBB);
 
   /// useIntv - indicate that all instructions in MBB should use OpenLI.
   void useIntv(const MachineBasicBlock &MBB);
@@ -365,12 +368,14 @@ public:
   /// useIntv - indicate that all instructions in range should use OpenLI.
   void useIntv(SlotIndex Start, SlotIndex End);
 
-  /// leaveIntvAfter - Leave OpenLI after the instruction at Idx.
-  void leaveIntvAfter(SlotIndex Idx);
+  /// leaveIntvAfter - Leave the open interval after the instruction at Idx.
+  /// Return the end of the live range.
+  SlotIndex leaveIntvAfter(SlotIndex Idx);
 
   /// leaveIntvAtTop - Leave the interval at the top of MBB.
-  /// Currently, only one value can leave the interval.
-  void leaveIntvAtTop(MachineBasicBlock &MBB);
+  /// Add liveness from the MBB top to the copy.
+  /// Return the end of the live range.
+  SlotIndex leaveIntvAtTop(MachineBasicBlock &MBB);
 
   /// closeIntv - Indicate that we are done editing the currently open
   /// LiveInterval, and ranges can be trimmed.
