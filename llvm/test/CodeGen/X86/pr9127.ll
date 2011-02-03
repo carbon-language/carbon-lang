@@ -1,4 +1,4 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -march=x86-64 < %s | FileCheck %s
 
 define i8 @foobar(double %d, double* %x) {
 entry:
