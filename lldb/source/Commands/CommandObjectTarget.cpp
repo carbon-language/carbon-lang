@@ -92,6 +92,7 @@ public:
                         target->GetImageSearchPathList().Append (ConstString(from),
                                                                  ConstString(to),
                                                                  last_pair); // Notify if this is the last pair
+                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
                     }
                     else
                     {
@@ -138,6 +139,7 @@ public:
         {
             bool notify = true;
             target->GetImageSearchPathList().Clear(notify);
+            result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
         {
@@ -233,6 +235,7 @@ public:
                                                                  ConstString(to),
                                                                  insert_idx,
                                                                  last_pair);
+                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
                     }
                     else
                     {
@@ -293,6 +296,7 @@ public:
             }
 
             target->GetImageSearchPathList().Dump(&result.GetOutputStream());
+            result.SetStatus (eReturnStatusSuccessFinishResult);
         }
         else
         {
@@ -351,6 +355,8 @@ public:
                 result.GetOutputStream().Printf("%s\n", transformed.GetCString());
             else
                 result.GetOutputStream().Printf("%s\n", orig.GetCString());
+
+            result.SetStatus (eReturnStatusSuccessFinishResult);
         }
         else
         {

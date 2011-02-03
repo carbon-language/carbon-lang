@@ -21,6 +21,41 @@ class LoadUnloadTestCase(TestBase):
         self.line_d_function = line_number('d.c',
                                            '// Find this line number within d_dunction().')
 
+    def test_image_search_paths(self):
+        """Test image list after moving libd.dylib, and verifies that it works with 'target image-search-paths add'."""
+
+        # Invoke the default build rule.
+        self.buildDefault()
+
+        if sys.platform.startswith("darwin"):
+            dylibName = 'libd.dylib'
+
+        # Now let's move the dynamic library to a different directory than $CWD.
+
+        # The directory to relocate the dynamic library to.
+        new_dir = os.path.join(os.getcwd(), "dyld_path")
+
+        # This is the function to remove the dyld_path directory after the test.
+        def remove_dyld_dir():
+            import shutil
+            shutil.rmtree(new_dir)
+
+        old_dylib = os.path.join(os.getcwd(), dylibName)
+        new_dylib = os.path.join(new_dir, dylibName)
+
+        os.mkdir(new_dir)
+        os.rename(old_dylib, new_dylib)
+        self.addTearDownHook(remove_dyld_dir)
+
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        self.expect("image list",
+            substrs = [old_dylib])
+        self.runCmd("target image-search-paths add %s %s" % (os.getcwd(), new_dir))
+        self.expect("image list", "LLDB successfully locates the relocated dynamic library",
+            substrs = [new_dylib])
+
+        
     def test_dyld_library_path(self):
         """Test DYLD_LIBRARY_PATH after moving libd.dylib, which defines d_function, somewhere else."""
 
