@@ -2712,8 +2712,8 @@ static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
   // First determine if it is required or is profitable to flip the operands.
 
   // If LHS is a foldable load, but RHS is not, flip the condition.
-  if ((ISD::isNON_EXTLoad(LHS.getNode()) && LHS.hasOneUse()) &&
-      !(ISD::isNON_EXTLoad(RHS.getNode()) && RHS.hasOneUse())) {
+  if (ISD::isNON_EXTLoad(LHS.getNode()) &&
+      !ISD::isNON_EXTLoad(RHS.getNode())) {
     SetCCOpcode = getSetCCSwappedOperands(SetCCOpcode);
     std::swap(LHS, RHS);
   }
