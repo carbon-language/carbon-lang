@@ -65,7 +65,7 @@
       <li><a href="#implicit-downcasts">Implicit downcasts</a></li>
     </ul>
     <ul>
-      <li><a href="#Use of class as method name">Use of class as method name</a></li>
+      <li><a href="#class-as-property-name">Using <code>class</code> as a property name</a></li>
     </ul>
   </li>
 </ul>
@@ -418,8 +418,8 @@ compatibility with GNU C and C99 programs:</p>
 <ul>  
   <li>The element type of a variable length array must be a POD
   ("plain old data") type, which means that it cannot have any
-  user-declared constructors or destructors, base classes, or any
-  members if non-POD type. All C types are POD types.</li>
+  user-declared constructors or destructors, any base classes, or any
+  members of non-POD type. All C types are POD types.</li>
 
   <li>Variable length arrays cannot be used as the type of a non-type
 template parameter.</li> </ul>
@@ -428,12 +428,9 @@ template parameter.</li> </ul>
 
 <ol>
 <li>replace the variable length array with a fixed-size array if you can
-    determine a
-    reasonable upper bound at compile time; sometimes this is as
+    determine a reasonable upper bound at compile time; sometimes this is as
     simple as changing <tt>int size = ...;</tt> to <tt>const int size
-    = ...;</tt> (if the definition of <tt>size</tt> is a compile-time
-    integral constant);</li>
-<li>use <tt>std::string</tt> instead of a <tt>char []</tt>;</li>
+    = ...;</tt> (if the initializer is a compile-time constant);</li>
 <li>use <tt>std::vector</tt> or some other suitable container type;
     or</li>
 <li>allocate the array on the heap instead using <tt>new Type[]</tt> -
@@ -762,18 +759,18 @@ void f(int a, int a);
 <!-- ======================================================================= -->
 
 <p>Due to a bug in its implementation, GCC allows implicit downcasts
-(from base class to a derived class) when calling functions. Such code is
-inherently unsafe, since the object might not actually be an instance
-of the derived class, and is rejected by Clang. For example, given
-this code:</p>
+of Objective-C pointers (from a base class to a derived class) when
+calling functions. Such code is inherently unsafe, since the object
+might not actually be an instance of the derived class, and is
+rejected by Clang. For example, given this code:</p>
 
 <pre>
 @interface Base @end
 @interface Derived : Base @end
 
-void f(Derived *);
-void g(Base *base) {
-  f(base);
+void f(Derived *p);
+void g(Base *p) {
+  f(p);
 }
 </pre>
 
@@ -781,11 +778,11 @@ void g(Base *base) {
 
 <pre>
 downcast.mm:6:3: error: no matching function for call to 'f'
-  f(base);
+  f(p);
   ^
 downcast.mm:4:6: note: candidate function not viable: cannot convert from
       superclass 'Base *' to subclass 'Derived *' for 1st argument
-void f(Derived *);
+void f(Derived *p);
      ^
 </pre>
 
@@ -798,13 +795,17 @@ explicit cast:</p>
 </pre>
 
 <!-- ======================================================================= -->
-<h3 id="Use of class as method name">Use of class as method name</h3>
+<h3 id="class-as-property-name">Using <code>class</code> as a property name</h3>
 <!-- ======================================================================= -->
 
-<p>Use of 'class' name to declare a method is allowed in objective-c++ mode to
-be compatible with GCC. However, use of property dot syntax notation to call
-this method is not allowed in clang++, as [I class] is a suitable syntax that 
-will work. So, this test will fail in clang++.
+<p>In C and Objective-C, <code>class</code> is a normal identifier and
+can be used to name fields, ivars, methods, and so on.  In
+C++, <code>class</code> is a keyword.  For compatibility with existing
+code, Clang permits <code>class</code> to be used as part of a method
+selector in Objective-C++, but this does not extend to any other part
+of the language.  In particular, it is impossible to use property dot
+syntax in Objective-C++ with the property name <code>class</code>, so
+the following code will fail to parse:</p>
 
 <pre>
 @interface I {
@@ -818,6 +819,7 @@ int cls;
 @end
 <pre>
 
+<p>Use explicit message-send syntax instead, i.e. <code>[I class]</code>.</p>
 
 </div>
 </body>
