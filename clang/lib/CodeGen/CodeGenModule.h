@@ -438,6 +438,8 @@ public:
     Types.UpdateCompletedType(TD);
   }
 
+  llvm::Constant *getMemberPointerConstant(const UnaryOperator *e);
+
   /// EmitConstantExpr - Try to emit the given expression as a
   /// constant; returns 0 if the expression cannot be emitted as a
   /// constant.

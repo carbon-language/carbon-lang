@@ -559,19 +559,22 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   return false;
 }
 
-ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
-  /// C++ 9.3.2: In the body of a non-static member function, the keyword this
-  /// is a non-lvalue expression whose value is the address of the object for
-  /// which the function is called.
-
-  // Ignore block scopes (but nothing else).
+CXXMethodDecl *Sema::tryCaptureCXXThis() {
+  // Ignore block scopes: we can capture through them.
+  // Ignore nested enum scopes: we'll diagnose non-constant expressions
+  // where they're invalid, and other uses are legitimate.
+  // Don't ignore nested class scopes: you can't use 'this' in a local class.
   DeclContext *DC = CurContext;
-  while (isa<BlockDecl>(DC)) DC = cast<BlockDecl>(DC)->getDeclContext();
+  while (true) {
+    if (isa<BlockDecl>(DC)) DC = cast<BlockDecl>(DC)->getDeclContext();
+    else if (isa<EnumDecl>(DC)) DC = cast<EnumDecl>(DC)->getDeclContext();
+    else break;
+  }
 
-  // If we're not an instance method, error out.
+  // If we're not in an instance method, error out.
   CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(DC);
   if (!method || !method->isInstance())
-    return ExprError(Diag(ThisLoc, diag::err_invalid_this_use));
+    return 0;
 
   // Mark that we're closing on 'this' in all the block scopes, if applicable.
   for (unsigned idx = FunctionScopes.size() - 1;
@@ -579,7 +582,18 @@ ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
        --idx)
     cast<BlockScopeInfo>(FunctionScopes[idx])->CapturesCXXThis = true;
 
-  return Owned(new (Context) CXXThisExpr(ThisLoc, method->getThisType(Context),
+  return method;
+}
+
+ExprResult Sema::ActOnCXXThis(SourceLocation loc) {
+  /// C++ 9.3.2: In the body of a non-static member function, the keyword this
+  /// is a non-lvalue expression whose value is the address of the object for
+  /// which the function is called.
+
+  CXXMethodDecl *method = tryCaptureCXXThis();
+  if (!method) return Diag(loc, diag::err_invalid_this_use);
+
+  return Owned(new (Context) CXXThisExpr(loc, method->getThisType(Context),
                                          /*isImplicit=*/false));
 }
 

@@ -122,7 +122,8 @@ public:
   virtual llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD);
 
   /// Create a member pointer for the given field.
-  virtual llvm::Constant *EmitMemberPointer(const FieldDecl *FD);
+  virtual llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
+                                                CharUnits offset);
 
   /// Emit a comparison between two member pointers.  Returns an i1.
   virtual llvm::Value *

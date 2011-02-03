@@ -254,7 +254,7 @@ public:
   static LValue MakeAddr(llvm::Value *V, QualType T, unsigned Alignment,
                          ASTContext &Context,
                          llvm::MDNode *TBAAInfo = 0) {
-    Qualifiers Quals = Context.getCanonicalType(T).getQualifiers();
+    Qualifiers Quals = T.getQualifiers();
     Quals.setObjCGCAttr(Context.getObjCGCAttrKind(T));
 
     LValue R;

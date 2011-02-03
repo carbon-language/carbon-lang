@@ -307,9 +307,9 @@ public:
 
     
   Value *VisitUnaryAddrOf(const UnaryOperator *E) {
-    // If the sub-expression is an instance member reference,
-    // EmitDeclRefLValue will magically emit it with the appropriate
-    // value as the "address".
+    if (isa<MemberPointerType>(E->getType())) // never sugared
+      return CGF.CGM.getMemberPointerConstant(E);
+
     return EmitLValue(E->getSubExpr()).getAddress();
   }
   Value *VisitUnaryDeref(const UnaryOperator *E) {

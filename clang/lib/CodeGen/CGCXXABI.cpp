@@ -105,10 +105,9 @@ llvm::Constant *CGCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
                                          MD->getParent()->getTypeForDecl()));
 }
 
-llvm::Constant *CGCXXABI::EmitMemberPointer(const FieldDecl *FD) {
-  return GetBogusMemberPointer(CGM,
-                         CGM.getContext().getMemberPointerType(FD->getType(),
-                                         FD->getParent()->getTypeForDecl()));
+llvm::Constant *CGCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
+                                                CharUnits offset) {
+  return GetBogusMemberPointer(CGM, QualType(MPT, 0));
 }
 
 bool CGCXXABI::isZeroInitializable(const MemberPointerType *MPT) {

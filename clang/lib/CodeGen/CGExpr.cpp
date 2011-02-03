@@ -1178,24 +1178,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   }
-  
-  // If we're emitting an instance method as an independent lvalue,
-  // we're actually emitting a member pointer.
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
-    if (MD->isInstance()) {
-      llvm::Value *V = CGM.getCXXABI().EmitMemberPointer(MD);
-      return MakeAddrLValue(V, MD->getType(), Alignment);
-    }
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
-    return EmitFunctionDeclLValue(*this, E, FD);
-  
-  // If we're emitting a field as an independent lvalue, we're
-  // actually emitting a member pointer.
-  if (const FieldDecl *FD = dyn_cast<FieldDecl>(ND)) {
-    llvm::Value *V = CGM.getCXXABI().EmitMemberPointer(FD);
-    return MakeAddrLValue(V, FD->getType(), Alignment);
-  }
-  
+
+  if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(ND))
+    return EmitFunctionDeclLValue(*this, E, fn);
+
   assert(false && "Unhandled DeclRefExpr");
   
   // an invalid LValue, but the assert will
