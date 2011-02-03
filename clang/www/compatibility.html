@@ -78,8 +78,9 @@
 <h3 id="inline">C99 inline functions</h3>
 <!-- ======================================================================= -->
 <p>By default, Clang builds C code according to the C99 standard,
-which provides different inlining semantics than GCC's default
-behavior. For example, when compiling the following code with no optimization:</p>
+which provides different semantics for the <code>inline</code> keyword
+than GCC's default behavior. For example, consider the following
+code:</p>
 <pre>
 inline int add(int i, int j) { return i + j; }
 
@@ -89,11 +90,13 @@ int main() {
 }
 </pre>
 
-<p>In C99, this is an incomplete (incorrect) program because there is
-no external definition of the <code>add</code> function: the inline
-definition is only used for optimization, if the compiler decides to
-perform inlining. Therefore, we will get a (correct) link-time error
-with Clang, e.g.:</p>
+<p>In C99, <code>inline</code> means that a function's definition is
+provided only for inlining, and that there is another definition
+(without <code>inline</code>) somewhere else in the program.  That
+means that this program is incomplete, because if <code>add</code>
+isn't inlined (for example, when compiling without optimization), then
+<code>main</code> will have an unresolved reference to that other
+definition.  Therefore we'll get a (correct) link-time error like this:</p>
 
 <pre>
 Undefined symbols:
@@ -101,17 +104,31 @@ Undefined symbols:
       _main in cc-y1jXIr.o
 </pre>
 
+<p>By contrast, GCC's default behavior follows the GNU89 dialect,
+which is the C89 standard plus a lot of extensions.  C89 doesn't have
+an <code>inline</code> keyword, but GCC recognizes it as an extension
+and just treats it as a hint to the optimizer.</p>
+
 <p>There are several ways to fix this problem:</p>
 
 <ul>
   <li>Change <code>add</code> to a <code>static inline</code>
-  function. Static inline functions are always resolved within the
-  translation unit, so you won't have to add an external, non-inline
-  definition of the function elsewhere in your program.</li>
-  
-  <li>Provide an external (non-inline) definition of <code>add</code>
-  somewhere in your program.</li>
-   
+  function.  This is usually the right solution if only one
+  translation unit needs to use the function.  <code>static
+  inline</code> functions are always resolved within the translation
+  unit, so you won't have to add a non-<code>inline</code> definition
+  of the function elsewhere in your program.</li>
+
+  <li>Remove the <code>inline</code> keyword from this definition of
+  <code>add</code>.  The <code>inline</code> keyword is not required
+  for a function to be inlined, nor does it guarantee that it will be.
+  Some compilers ignore it completely.  Clang treats it as a mild
+  suggestion from the programmer.</li>
+     
+  <li>Provide an external (non-<code>inline</code>) definition
+  of <code>add</code> somewhere else in your program.  The two
+  definitions must be equivalent!</li>
+
   <li>Compile with the GNU89 dialect by adding
   <code>-std=gnu89</code> to the set of Clang options. This option is
   only recommended if the program source cannot be changed or if the
@@ -119,6 +136,8 @@ Undefined symbols:
   be changed.</li>
 </ul>
 
+<p>All of this only applies to C code; the meaning of <code>inline</code>
+in C++ is very different from its meaning in either GNU89 or C99.</p>
 
 <!-- ======================================================================= -->
 <h3 id="vector_builtins">"missing" vector __builtin functions</h3>
