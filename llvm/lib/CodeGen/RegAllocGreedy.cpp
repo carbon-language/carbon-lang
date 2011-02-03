@@ -626,6 +626,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         IntI.advanceTo(Start);
         if (!IntI.valid())
           break;
+        if (IntI.start() >= Stop)
+          continue;
         if (!IP.first.isValid() || IntI.start() < IP.first)
           IP.first = IntI.start();
       }
@@ -635,6 +637,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         IntI.advanceTo(Stop);
         if (!IntI.valid() || IntI.start() >= Stop)
           --IntI;
+        if (IntI.stop() <= Start)
+          continue;
         if (!IP.second.isValid() || IntI.stop() > IP.second)
           IP.second = IntI.stop();
       }
@@ -663,10 +667,15 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
 
     DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " -> EB#"
-                 << Bundles->getBundle(BI.MBB->getNumber(), 1));
+                 << Bundles->getBundle(BI.MBB->getNumber(), 1)
+                 << " intf [" << IP.first << ';' << IP.second << ')');
+
+    // The interference interval should either be invalid or overlap MBB.
+    assert((!IP.first.isValid() || IP.first < Stop) && "Bad interference");
+    assert((!IP.second.isValid() || IP.second > Start) && "Bad interference");
 
     // Check interference leaving the block.
-    if (!IP.second.isValid() || IP.second < Start) {
+    if (!IP.second.isValid()) {
       // Block is interference-free.
       DEBUG(dbgs() << ", no interference");
       if (!BI.Uses) {
@@ -739,7 +748,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
                  << " -> BB#" << BI.MBB->getNumber());
 
     // Check interference entering the block.
-    if (!IP.first.isValid() || IP.first > Stop) {
+    if (!IP.first.isValid()) {
       // Block is interference-free.
       DEBUG(dbgs() << ", no interference");
       if (!BI.Uses) {
