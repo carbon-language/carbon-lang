@@ -86,7 +86,7 @@ SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
 /// a specified operand is a physical register dependency. If so, returns the
 /// register and the cost of copying the register.
 static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
-                                      const TargetRegisterInfo *TRI, 
+                                      const TargetRegisterInfo *TRI,
                                       const TargetInstrInfo *TII,
                                       unsigned &PhysReg, int &Cost) {
   if (Op != 2 || User->getOpcode() != ISD::CopyToReg)
@@ -266,33 +266,33 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
   // FIXME: Multiply by 2 because we may clone nodes during scheduling.
   // This is a temporary workaround.
   SUnits.reserve(NumNodes * 2);
-  
+
   // Add all nodes in depth first order.
   SmallVector<SDNode*, 64> Worklist;
   SmallPtrSet<SDNode*, 64> Visited;
   Worklist.push_back(DAG->getRoot().getNode());
   Visited.insert(DAG->getRoot().getNode());
-  
+
   while (!Worklist.empty()) {
     SDNode *NI = Worklist.pop_back_val();
-    
+
     // Add all operands to the worklist unless they've already been added.
     for (unsigned i = 0, e = NI->getNumOperands(); i != e; ++i)
       if (Visited.insert(NI->getOperand(i).getNode()))
         Worklist.push_back(NI->getOperand(i).getNode());
-  
+
     if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
       continue;
-    
+
     // If this node has already been processed, stop now.
     if (NI->getNodeId() != -1) continue;
-    
+
     SUnit *NodeSUnit = NewSUnit(NI);
-    
+
     // See if anything is glued to this node, if so, add them to glued
     // nodes.  Nodes can have at most one glue input and one glue output.  Glue
     // is required to be the last operand and result of a node.
-    
+
     // Scan up to find glued preds.
     SDNode *N = NI;
     while (N->getNumOperands() &&
@@ -303,15 +303,15 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
       if (N->isMachineOpcode() && TII->get(N->getMachineOpcode()).isCall())
         NodeSUnit->isCall = true;
     }
-    
+
     // Scan down to find any glued succs.
     N = NI;
     while (N->getValueType(N->getNumValues()-1) == MVT::Glue) {
       SDValue GlueVal(N, N->getNumValues()-1);
-      
+
       // There are either zero or one users of the Glue result.
       bool HasGlueUse = false;
-      for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
+      for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end();
            UI != E; ++UI)
         if (GlueVal.isOperandOf(*UI)) {
           HasGlueUse = true;
@@ -324,7 +324,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
         }
       if (!HasGlueUse) break;
     }
-    
+
     // If there are glue operands involved, N is now the bottom-most node
     // of the sequence of nodes that are glued together.
     // Update the SUnit.
@@ -347,7 +347,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
   for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
     SUnit *SU = &SUnits[su];
     SDNode *MainNode = SU->getNode();
-    
+
     if (MainNode->isMachineOpcode()) {
       unsigned Opc = MainNode->getMachineOpcode();
       const TargetInstrDesc &TID = TII->get(Opc);
@@ -360,7 +360,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
       if (TID.isCommutable())
         SU->isCommutable = true;
     }
-    
+
     // Find all predecessors and successors of the group.
     for (SDNode *N = SU->getNode(); N; N = N->getGluedNode()) {
       if (N->isMachineOpcode() &&
@@ -372,7 +372,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         if (NumUsed > TII->get(N->getMachineOpcode()).getNumDefs())
           SU->hasPhysRegDefs = true;
       }
-      
+
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
         SDNode *OpN = N->getOperand(i).getNode();
         if (isPassiveNode(OpN)) continue;   // Not scheduled.
@@ -437,7 +437,7 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
     SU->Latency = 1;
     return;
   }
-  
+
   // Compute the latency for the node.  We use the sum of the latencies for
   // all nodes glued together into this SUnit.
   SU->Latency = 0;
@@ -502,7 +502,7 @@ namespace {
 }
 
 /// ProcessSDDbgValues - Process SDDbgValues assoicated with this node.
-static void ProcessSDDbgValues(SDNode *N, SelectionDAG *DAG, 
+static void ProcessSDDbgValues(SDNode *N, SelectionDAG *DAG,
                                InstrEmitter &Emitter,
                     SmallVector<std::pair<unsigned, MachineInstr*>, 32> &Orders,
                             DenseMap<SDValue, unsigned> &VRBaseMap,
