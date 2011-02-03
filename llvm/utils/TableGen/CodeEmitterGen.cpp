@@ -206,7 +206,6 @@ void CodeEmitterGen::run(raw_ostream &o) {
   if (Target.isLittleEndianEncoding()) reverseBits(Insts);
 
   EmitSourceFileHeader("Machine Code Emitter", o);
-  std::string Namespace = Insts[0]->getValueAsString("Namespace") + "::";
 
   const std::vector<const CodeGenInstruction*> &NumberedInstructions =
     Target.getInstructionsByEnumValue();
@@ -254,7 +253,8 @@ void CodeEmitterGen::run(raw_ostream &o) {
     Record *R = *IC;
     if (R->getValueAsString("Namespace") == "TargetOpcode")
       continue;
-    const std::string &InstName = R->getName();
+    const std::string &InstName = R->getValueAsString("Namespace") + "::"
+      + R->getName();
     std::string Case = getInstructionCase(R, Target);
 
     CaseMap[Case].push_back(InstName);
@@ -275,7 +275,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
 
     for (int i = 0, N = InstList.size(); i < N; i++) {
       if (i) o << "\n";
-      o << "    case " << Namespace << InstList[i]  << ":";
+      o << "    case " << InstList[i]  << ":";
     }
     o << " {\n";
     o << Case;
