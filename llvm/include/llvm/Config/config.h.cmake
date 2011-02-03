@@ -442,6 +442,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #cmakedefine HAVE_SYS_TYPES_H ${HAVE_SYS_TYPES_H}
 
+/* Define to 1 if you have the <sys/uio.h> header file. */
+#cmakedefine HAVE_SYS_UIO_H ${HAVE_SYS_UIO_H}
+
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #cmakedefine HAVE_SYS_WAIT_H ${HAVE_SYS_WAIT_H}
 
@@ -462,6 +465,9 @@
 
 /* Define to 1 if you have the <windows.h> header file. */
 #cmakedefine HAVE_WINDOWS_H ${HAVE_WINDOWS_H}
+
+/* Define to 1 if you have the `writev' function. */
+#cmakedefine HAVE_WRITEV ${HAVE_WRITEV}
 
 /* Define if the xdot.py program is available */
 #undef HAVE_XDOT_PY
