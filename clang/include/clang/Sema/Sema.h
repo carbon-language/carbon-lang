@@ -4269,6 +4269,8 @@ public:
                             SourceLocation receiverNameLoc,
                             SourceLocation propertyNameLoc);
 
+  ObjCMethodDecl *tryCaptureObjCSelf();
+
   /// \brief Describes the kind of message expression indicated by a message
   /// send that starts with an identifier.
   enum ObjCMessageKind {
