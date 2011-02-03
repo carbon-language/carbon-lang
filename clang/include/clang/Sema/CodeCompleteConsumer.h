@@ -383,7 +383,7 @@ private:
   unsigned Priority : 30;
   
   /// \brief The availability of this code-completion result.
-  CXAvailabilityKind Availability : 2;
+  unsigned Availability : 2;
   
   CodeCompletionString(const CodeCompletionString &); // DO NOT IMPLEMENT
   CodeCompletionString &operator=(const CodeCompletionString &); // DITTO
