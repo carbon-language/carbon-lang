@@ -317,8 +317,7 @@ public:
   /// non-null, then this function will use the specified type if it has to
   /// create it.
   llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
-                                    const llvm::Type *Ty = 0,
-                                    bool ForVTable = false);
+                                    const llvm::Type *Ty = 0);
 
   /// GetAddrOfRTTIDescriptor - Get the address of the RTTI descriptor 
   /// for the given type.
@@ -542,8 +541,7 @@ private:
 
   llvm::Constant *GetOrCreateLLVMFunction(llvm::StringRef MangledName,
                                           const llvm::Type *Ty,
-                                          GlobalDecl D,
-                                          bool ForVTable);
+                                          GlobalDecl D);
   llvm::Constant *GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
                                         const llvm::PointerType *PTy,
                                         const VarDecl *D,

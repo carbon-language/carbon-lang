@@ -227,8 +227,7 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
   const llvm::FunctionType *FTy =
     getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), 
                                FPT->isVariadic());
-  return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD,
-                                                      /*ForVTable=*/false));
+  return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD));
 }
 
 void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
@@ -285,8 +284,7 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
   const llvm::FunctionType *FTy =
     getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), false);
 
-  return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD,
-                                                      /*ForVTable=*/false));
+  return cast<llvm::Function>(GetOrCreateLLVMFunction(Name, FTy, GD));
 }
 
 static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VTableIndex, 

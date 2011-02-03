@@ -650,8 +650,7 @@ llvm::Constant *CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {
 
   llvm::Constant *Aliasee;
   if (isa<llvm::FunctionType>(DeclTy))
-    Aliasee = GetOrCreateLLVMFunction(AA->getAliasee(), DeclTy, GlobalDecl(),
-                                      /*ForVTable=*/false);
+    Aliasee = GetOrCreateLLVMFunction(AA->getAliasee(), DeclTy, GlobalDecl());
   else
     Aliasee = GetOrCreateLLVMGlobal(AA->getAliasee(),
                                     llvm::PointerType::getUnqual(DeclTy), 0);
@@ -783,7 +782,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
 llvm::Constant *
 CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
                                        const llvm::Type *Ty,
-                                       GlobalDecl D, bool ForVTable) {
+                                       GlobalDecl D) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
@@ -841,11 +840,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
   //   - special member functions with implicit definitions
   // If we ever change our AST traversal to walk into class methods,
   // this will be unnecessary.
-  //
-  // We also don't emit a definition for a function if it's going to be an entry
-  // in a vtable, unless it's already marked as used.
-  } else if (getLangOptions().CPlusPlus && D.getDecl() && 
-             !(ForVTable && !D.getDecl()->isUsed())) {
+  } else if (getLangOptions().CPlusPlus && D.getDecl()) {
     // Look for a declaration that's lexically in a record.
     const FunctionDecl *FD = cast<FunctionDecl>(D.getDecl());
     do {
@@ -877,14 +872,13 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
 /// non-null, then this function will use the specified type if it has to
 /// create it (this occurs when we see a definition of the function).
 llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
-                                                 const llvm::Type *Ty,
-                                                 bool ForVTable) {
+                                                 const llvm::Type *Ty) {
   // If there was no specific requested type, just convert it now.
   if (!Ty)
     Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
   
   llvm::StringRef MangledName = getMangledName(GD);
-  return GetOrCreateLLVMFunction(MangledName, Ty, GD, ForVTable);
+  return GetOrCreateLLVMFunction(MangledName, Ty, GD);
 }
 
 /// CreateRuntimeFunction - Create a new runtime function with the specified
@@ -892,7 +886,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
 llvm::Constant *
 CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
                                      llvm::StringRef Name) {
-  return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(), /*ForVTable=*/false);
+  return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl());
 }
 
 static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D) {
@@ -1451,8 +1445,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   // if a deferred decl.
   llvm::Constant *Aliasee;
   if (isa<llvm::FunctionType>(DeclTy))
-    Aliasee = GetOrCreateLLVMFunction(AA->getAliasee(), DeclTy, GlobalDecl(),
-                                      /*ForVTable=*/false);
+    Aliasee = GetOrCreateLLVMFunction(AA->getAliasee(), DeclTy, GlobalDecl());
   else
     Aliasee = GetOrCreateLLVMGlobal(AA->getAliasee(),
                                     llvm::PointerType::getUnqual(DeclTy), 0);
@@ -1518,7 +1511,7 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
   const llvm::FunctionType *Ty =
     cast<llvm::FunctionType>(getTypes().ConvertType(FD->getType()));
 
-  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl(FD), /*ForVTable=*/false);
+  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl(FD));
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,
