@@ -109,6 +109,9 @@ private:
     get() const;
 
     lldb_private::Listener &
+    ref() const;
+        
+    lldb_private::Listener &
     operator *();
 
     const lldb_private::Listener &

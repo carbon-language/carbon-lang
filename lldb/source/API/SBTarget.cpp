@@ -121,6 +121,7 @@ SBTarget::GetDebugger () const
 SBProcess
 SBTarget::Launch 
 (
+    SBListener &listener, 
     char const **argv,
     char const **envp,
     const char *stdin_path,
@@ -218,7 +219,7 @@ SBTarget::Launch
 
                     if (pid != LLDB_INVALID_PROCESS_ID)
                     {
-                        sb_process = AttachToProcessWithID(pid, error);
+                        sb_process = AttachToProcessWithID(listener, pid, error);
                     }
                     else
                     {
@@ -237,7 +238,10 @@ SBTarget::Launch
         }
         else
         {
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+            if (listener.IsValid())
+                sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+            else
+                sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
 
             if (sb_process.IsValid())
             {
@@ -294,6 +298,7 @@ SBTarget::Launch
 lldb::SBProcess
 SBTarget::AttachToProcessWithID 
 (
+    SBListener &listener, 
     lldb::pid_t pid,// The process ID to attach to
     SBError& error  // An error explaining what went wrong if attach fails
 )
@@ -302,7 +307,11 @@ SBTarget::AttachToProcessWithID
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
-        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        if (listener.IsValid())
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+        else
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        
 
         if (sb_process.IsValid())
         {
@@ -324,6 +333,7 @@ SBTarget::AttachToProcessWithID
 lldb::SBProcess
 SBTarget::AttachToProcessWithName 
 (
+    SBListener &listener, 
     const char *name,   // basename of process to attach to
     bool wait_for,      // if true wait for a new instance of "name" to be launched
     SBError& error      // An error explaining what went wrong if attach fails
@@ -334,7 +344,10 @@ SBTarget::AttachToProcessWithName
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
 
-        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        if (listener.IsValid())
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+        else
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
 
         if (sb_process.IsValid())
         {

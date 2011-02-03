@@ -386,6 +386,11 @@ SBListener::reset(Listener *listener, bool owns)
     m_opaque_ptr = listener;
 }
 
+Listener &
+SBListener::ref() const
+{
+    return *m_opaque_ptr;    
+}
 
 Listener &
 SBListener::operator *()
