@@ -395,17 +395,39 @@ static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
   assert(isa<SelectInst>(LHS) && "Not comparing with a select instruction!");
   SelectInst *SI = cast<SelectInst>(LHS);
 
-  // Now that we have "cmp select(cond, TV, FV), RHS", analyse it.
+  // Now that we have "cmp select(Cond, TV, FV), RHS", analyse it.
   // Does "cmp TV, RHS" simplify?
   if (Value *TCmp = SimplifyCmpInst(Pred, SI->getTrueValue(), RHS, TD, DT,
-                                    MaxRecurse))
+                                    MaxRecurse)) {
     // It does!  Does "cmp FV, RHS" simplify?
     if (Value *FCmp = SimplifyCmpInst(Pred, SI->getFalseValue(), RHS, TD, DT,
-                                      MaxRecurse))
+                                      MaxRecurse)) {
       // It does!  If they simplified to the same value, then use it as the
       // result of the original comparison.
       if (TCmp == FCmp)
         return TCmp;
+      Value *Cond = SI->getCondition();
+      // If the false value simplified to false, then the result of the compare
+      // is equal to "Cond && TCmp".  This also catches the case when the false
+      // value simplified to false and the true value to true, returning "Cond".
+      if (match(FCmp, m_Zero()))
+        if (Value *V = SimplifyAndInst(Cond, TCmp, TD, DT, MaxRecurse))
+          return V;
+      // If the true value simplified to true, then the result of the compare
+      // is equal to "Cond || FCmp".
+      if (match(TCmp, m_One()))
+        if (Value *V = SimplifyOrInst(Cond, FCmp, TD, DT, MaxRecurse))
+          return V;
+      // Finally, if the false value simplified to true and the true value to
+      // false, then the result of the compare is equal to "!Cond".
+      if (match(FCmp, m_One()) && match(TCmp, m_Zero()))
+        if (Value *V =
+            SimplifyXorInst(Cond, Constant::getAllOnesValue(Cond->getType()),
+                            TD, DT, MaxRecurse))
+          return V;
+    }
+  }
+
   return 0;
 }
 

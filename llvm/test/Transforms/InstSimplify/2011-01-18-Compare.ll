@@ -132,3 +132,38 @@ define i1 @ashr(i32 %x) {
   ret i1 %c
 ; CHECK: ret i1 false
 }
+
+define i1 @select1(i1 %cond) {
+; CHECK: @select1
+  %s = select i1 %cond, i32 1, i32 0
+  %c = icmp eq i32 %s, 1
+  ret i1 %c
+; CHECK: ret i1 %cond
+}
+
+define i1 @select2(i1 %cond) {
+; CHECK: @select2
+  %x = zext i1 %cond to i32
+  %s = select i1 %cond, i32 %x, i32 0
+  %c = icmp ne i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 %cond
+}
+
+define i1 @select3(i1 %cond) {
+; CHECK: @select3
+  %x = zext i1 %cond to i32
+  %s = select i1 %cond, i32 1, i32 %x
+  %c = icmp ne i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 %cond
+}
+
+define i1 @select4(i1 %cond) {
+; CHECK: @select4
+  %invert = xor i1 %cond, 1
+  %s = select i1 %invert, i32 0, i32 1
+  %c = icmp ne i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 %cond
+}
