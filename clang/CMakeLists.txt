@@ -54,6 +54,12 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   add_definitions( -D__STDC_CONSTANT_MACROS )
 endif()
 
+set(CLANG_RESOURCE_DIR "" CACHE STRING
+  "Relative directory from the Clang binary to its resource files.")
+
+set(C_INCLUDE_DIRS "" CACHE STRING
+  "Colon separated list of directories clang will search for headers.")
+
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -107,6 +113,10 @@ endif ()
 if (APPLE)
   set(CMAKE_MODULE_LINKER_FLAGS "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
 endif ()
+
+configure_file(
+  ${CLANG_SOURCE_DIR}/include/clang/Config/config.h.cmake
+  ${CLANG_BINARY_DIR}/include/clang/Config/config.h)
 
 macro(add_clang_library name)
   llvm_process_sources(srcs ${ARGN})
@@ -186,7 +196,7 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
   PATTERN "*.inc"
   )
 
-add_definitions( -D_GNU_SOURCE )
+add_definitions( -D_GNU_SOURCE -DHAVE_CLANG_CONFIG_H )
 
 option(CLANG_BUILD_EXAMPLES "Build CLANG example programs." OFF)
 if(CLANG_BUILD_EXAMPLES)

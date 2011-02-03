@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifdef HAVE_CLANG_CONFIG_H
+# include "clang/Config/config.h"
+#endif
+
 #include "clang/Driver/Driver.h"
 
 #include "clang/Driver/Action.h"
