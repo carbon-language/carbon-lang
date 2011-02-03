@@ -11,4 +11,3 @@ macro(add_llvm_definitions)
   endforeach(arg)
   add_definitions( ${ARGN} )
 endmacro(add_llvm_definitions)
-
