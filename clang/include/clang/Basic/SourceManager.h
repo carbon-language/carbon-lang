@@ -783,7 +783,7 @@ public:
   /// If the source file is included multiple times, the source location will
   /// be based upon the first inclusion.
   SourceLocation getLocation(const FileEntry *SourceFile,
-                             unsigned Line, unsigned Col) const;
+                             unsigned Line, unsigned Col);
 
   /// \brief Determines the order of 2 source locations in the translation unit.
   ///

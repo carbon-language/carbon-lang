@@ -2483,12 +2483,22 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
   if (!tu || !file)
     return clang_getNullLocation();
   
+  bool Logging = ::getenv("LIBCLANG_LOGGING");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
+  const FileEntry *File = static_cast<const FileEntry *>(file);
   SourceLocation SLoc
-    = CXXUnit->getSourceManager().getLocation(
-                                        static_cast<const FileEntry *>(file),
-                                              line, column);
-  if (SLoc.isInvalid()) return clang_getNullLocation();
+    = CXXUnit->getSourceManager().getLocation(File, line, column);
+  if (SLoc.isInvalid()) {
+    if (Logging)
+      llvm::errs() << "clang_getLocation(\"" << File->getName() 
+                   << "\", " << line << ", " << column << ") = invalid\n";
+    return clang_getNullLocation();
+  }
+
+  if (Logging)
+    llvm::errs() << "clang_getLocation(\"" << File->getName() 
+                 << "\", " << line << ", " << column << ") = " 
+                 << SLoc.getRawEncoding() << "\n";
 
   return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);
 }

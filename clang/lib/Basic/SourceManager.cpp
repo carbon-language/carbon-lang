@@ -16,6 +16,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -23,6 +24,7 @@
 #include <algorithm>
 #include <string>
 #include <cstring>
+#include <sys/stat.h>
 
 using namespace clang;
 using namespace SrcMgr;
@@ -1107,20 +1109,110 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
 // Other miscellaneous methods.
 //===----------------------------------------------------------------------===//
 
+/// \brief Retrieve the inode for the given file entry, if possible.
+///
+/// This routine involves a system call, and therefore should only be used
+/// in non-performance-critical code.
+static llvm::Optional<ino_t> getActualFileInode(const FileEntry *File) {
+  if (!File)
+    return llvm::Optional<ino_t>();
+  
+  struct stat StatBuf;
+  if (::stat(File->getName(), &StatBuf))
+    return llvm::Optional<ino_t>();
+    
+  return StatBuf.st_ino;
+}
+
 /// \brief Get the source location for the given file:line:col triplet.
 ///
 /// If the source file is included multiple times, the source location will
 /// be based upon the first inclusion.
 SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
-                                          unsigned Line, unsigned Col) const {
+                                          unsigned Line, unsigned Col) {
   assert(SourceFile && "Null source file!");
   assert(Line && Col && "Line and column should start from 1!");
 
-  fileinfo_iterator FI = FileInfos.find(SourceFile);
-  if (FI == FileInfos.end())
-    return SourceLocation();
-  ContentCache *Content = FI->second;
+  // Find the first file ID that corresponds to the given file.
+  FileID FirstFID;
 
+  // First, check the main file ID, since it is common to look for a
+  // location in the main file.
+  llvm::Optional<ino_t> SourceFileInode;
+  llvm::Optional<llvm::StringRef> SourceFileName;
+  if (!MainFileID.isInvalid()) {
+    const SLocEntry &MainSLoc = getSLocEntry(MainFileID);
+    if (MainSLoc.isFile()) {
+      const ContentCache *MainContentCache
+        = MainSLoc.getFile().getContentCache();
+      if (MainContentCache->Entry == SourceFile)
+        FirstFID = MainFileID;
+      else if (MainContentCache) {
+        // Fall back: check whether we have the same base name and inode
+        // as the main file.
+        const FileEntry *MainFile = MainContentCache->Entry;
+        SourceFileName = llvm::sys::path::filename(SourceFile->getName());
+        if (*SourceFileName == llvm::sys::path::filename(MainFile->getName())) {
+          SourceFileInode = getActualFileInode(SourceFile);
+          if (SourceFileInode == getActualFileInode(MainFile)) {
+            FirstFID = MainFileID;
+            SourceFile = MainFile;
+          }
+        }
+      }
+    }
+  }
+
+  if (FirstFID.isInvalid()) {
+    // The location we're looking for isn't in the main file; look
+    // through all of the source locations.
+    for (unsigned I = 0, N = sloc_entry_size(); I != N; ++I) {
+      const SLocEntry &SLoc = getSLocEntry(I);
+      if (SLoc.isFile() && 
+          SLoc.getFile().getContentCache() &&
+          SLoc.getFile().getContentCache()->Entry == SourceFile) {
+        FirstFID = FileID::get(I);
+        break;
+      }
+    }
+  }
+
+  // If we haven't found what we want yet, try again, but this time stat()
+  // each of the files in case the files have changed since we originally 
+  // parsed the file. 
+  if (FirstFID.isInvalid() &&
+      (SourceFileName || 
+       (SourceFileName = llvm::sys::path::filename(SourceFile->getName()))) &&
+      (SourceFileInode ||
+       (SourceFileInode = getActualFileInode(SourceFile)))) {
+    for (unsigned I = 0, N = sloc_entry_size(); I != N; ++I) {
+      const SLocEntry &SLoc = getSLocEntry(I);
+      if (SLoc.isFile()) { 
+        const ContentCache *FileContentCache 
+          = SLoc.getFile().getContentCache();
+        const FileEntry *Entry =FileContentCache? FileContentCache->Entry : 0;
+        if (Entry && 
+            *SourceFileName == llvm::sys::path::filename(Entry->getName()) &&
+            SourceFileInode == getActualFileInode(Entry)) {
+          FirstFID = FileID::get(I);
+          SourceFile = Entry;
+          break;
+        }
+      }
+    }      
+  }
+    
+  if (FirstFID.isInvalid())
+    return SourceLocation();
+
+  if (Line == 1 && Col == 1)
+    return getLocForStartOfFile(FirstFID);
+
+  ContentCache *Content
+    = const_cast<ContentCache *>(getOrCreateContentCache(SourceFile));
+  if (!Content)
+    return SourceLocation();
+    
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
   if (Content->SourceLineCache == 0) {
@@ -1129,32 +1221,6 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
     if (MyInvalid)
       return SourceLocation();
   }
-
-  // Find the first file ID that corresponds to the given file.
-  FileID FirstFID;
-
-  // First, check the main file ID, since it is common to look for a
-  // location in the main file.
-  if (!MainFileID.isInvalid()) {
-    const SLocEntry &MainSLoc = getSLocEntry(MainFileID);
-    if (MainSLoc.isFile() && MainSLoc.getFile().getContentCache() == Content)
-      FirstFID = MainFileID;
-  }
-
-  if (FirstFID.isInvalid()) {
-    // The location we're looking for isn't in the main file; look
-    // through all of the source locations.
-    for (unsigned I = 0, N = sloc_entry_size(); I != N; ++I) {
-      const SLocEntry &SLoc = getSLocEntry(I);
-      if (SLoc.isFile() && SLoc.getFile().getContentCache() == Content) {
-        FirstFID = FileID::get(I);
-        break;
-      }
-    }
-  }
-    
-  if (FirstFID.isInvalid())
-    return SourceLocation();
 
   if (Line > Content->NumLines) {
     unsigned Size = Content->getBuffer(Diag, *this)->getBufferSize();
