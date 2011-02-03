@@ -279,8 +279,8 @@ static llvm::StringRef CanonicalizeFileName(llvm::StringRef Filename,
                                             llvm::SmallVectorImpl<char> &Scratch) {
   size_t Start = 0;
   bool Changed = false;
+  size_t FirstSlash = Filename.find('/', Start);
   do {
-    size_t FirstSlash = Filename.find('/', Start);
     if (FirstSlash == llvm::StringRef::npos) {
       // No more components. Just copy the rest of the file name, if
       // we need to.
@@ -302,6 +302,7 @@ static llvm::StringRef CanonicalizeFileName(llvm::StringRef Filename,
       
       // Skip over the './'.
       Start = FirstSlash + 1;
+      FirstSlash = Filename.find('/', Start);
       continue;
     }
     
@@ -322,6 +323,7 @@ static llvm::StringRef CanonicalizeFileName(llvm::StringRef Filename,
       
       // Skip over the 'foo/..'.
       Start = SecondSlash + 1;
+      FirstSlash = Filename.find('/', Start);
       continue;
     }
 
@@ -329,6 +331,11 @@ static llvm::StringRef CanonicalizeFileName(llvm::StringRef Filename,
       Scratch.append(Filename.begin() + Start, 
                      Filename.begin() + FirstSlash + 1);
     Start = FirstSlash + 1;
+
+    if (SecondSlash == llvm::StringRef::npos)
+      FirstSlash = Filename.find('/', Start);
+    else
+      FirstSlash = SecondSlash;
   } while (true);
 
   if (Changed) {
