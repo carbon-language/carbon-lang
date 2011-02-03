@@ -7118,13 +7118,6 @@ bool Sema::DefineUsedVTables() {
       switch (KeyFunction->getTemplateSpecializationKind()) {
       case TSK_Undeclared:
       case TSK_ExplicitSpecialization:
-        // The key function is in another translation unit. Mark all of the
-        // virtual members of this class as referenced so that we can build a
-        // vtable anyway (in order to do devirtualization when optimizations
-        // are turned on for example.
-        MarkVirtualMembersReferenced(Loc, Class);
-        continue;
-
       case TSK_ExplicitInstantiationDeclaration:
         // The key function is in another translation unit.
         continue;
