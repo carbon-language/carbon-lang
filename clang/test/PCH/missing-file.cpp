@@ -3,7 +3,6 @@
 // Generate the PCH, removing the original file:
 // RUN: echo 'struct S{char c; int i; }; void foo() {}' > %t.h
 // RUN: echo 'template <typename T> void tf() { T::foo(); }' >> %t.h
-// RUN: echo '#define RETURN return &i' >> %t.h
 // RUN: %clang_cc1 -x c++ -emit-pch -o %t.h.pch %t.h
 // RUN: rm %t.h
 
