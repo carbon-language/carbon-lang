@@ -720,9 +720,8 @@ def NEG : _F2R<(outs GRRegs:$dst), (ins GRRegs:$b),
                  "neg $dst, $b",
                  [(set GRRegs:$dst, (ineg GRRegs:$b))]>;
 
-// TODO setd, eet, eef, getts, setpt, outct, inct, chkct, outt, intt, out,
-// in, outshr, inshr, testct, testwct, tinitpc, tinitdp, tinitsp, tinitcp,
-// tsetmr, sext (reg), zext (reg)
+// TODO setd, eet, eef, getts, setpt, outshr, inshr, testwct, tinitpc, tinitdp,
+// tinitsp, tinitcp, tsetmr, sext (reg), zext (reg)
 let Constraints = "$src1 = $dst" in {
 let neverHasSideEffects = 1 in
 def SEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
@@ -748,6 +747,50 @@ def MKMSK_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$size),
                  "mkmsk $dst, $size",
                  [(set GRRegs:$dst, (add (shl 1, GRRegs:$size), 0xffffffff))]>;
 
+def GETR_rus : _FRUS<(outs GRRegs:$dst), (ins i32imm:$type),
+                 "getr $dst, $type",
+                 [(set GRRegs:$dst, (int_xcore_getr immUs:$type))]>;
+
+def OUTCT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
+                 "outct res[$r], $val",
+                 [(int_xcore_outct GRRegs:$r, GRRegs:$val)]>;
+
+def OUTCT_rus : _F2R<(outs), (ins GRRegs:$r, i32imm:$val),
+                 "outct res[$r], $val",
+                 [(int_xcore_outct GRRegs:$r, immUs:$val)]>;
+
+def OUTT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
+                 "outt res[$r], $val",
+                 [(int_xcore_outt GRRegs:$r, GRRegs:$val)]>;
+
+def OUT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
+                 "out res[$r], $val",
+                 [(int_xcore_out GRRegs:$r, GRRegs:$val)]>;
+
+def INCT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
+                 "inct $dst, res[$r]",
+                 [(set GRRegs:$dst, (int_xcore_inct GRRegs:$r))]>;
+
+def INT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
+                 "int $dst, res[$r]",
+                 [(set GRRegs:$dst, (int_xcore_int GRRegs:$r))]>;
+
+def IN_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
+                 "in $dst, res[$r]",
+                 [(set GRRegs:$dst, (int_xcore_in GRRegs:$r))]>;
+
+def CHKCT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
+                 "chkct res[$r], $val",
+                 [(int_xcore_chkct GRRegs:$r, GRRegs:$val)]>;
+
+def CHKCT_rus : _F2R<(outs), (ins GRRegs:$r, i32imm:$val),
+                 "chkct res[$r], $val",
+                 [(int_xcore_chkct GRRegs:$r, immUs:$val)]>;
+
+def SETD_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
+                 "setd res[$r], $val",
+                 [(int_xcore_setd GRRegs:$r, GRRegs:$val)]>;
+
 // Two operand long
 // TODO settw, setclk, setrdy, setpsc, endin, peek,
 // getd, testlcl, tinitlr, getps, setps
@@ -764,7 +807,7 @@ def CLZ_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
                  [(set GRRegs:$dst, (ctlz GRRegs:$src))]>;
 
 // One operand short
-// TODO edu, eeu, waitet, waitef, freer, tstart, msync, mjoin, syncr, clrtp
+// TODO edu, eeu, waitet, waitef, tstart, msync, mjoin, syncr, clrtp
 // setdp, setcp, setv, setev, kcall
 // dgetreg
 let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
@@ -804,6 +847,10 @@ def BLA_1r : _F1R<(outs), (ins GRRegs:$addr, variable_ops),
                  "bla $addr",
                  [(XCoreBranchLink GRRegs:$addr)]>;
 }
+
+def FREER_1r : _F1R<(outs), (ins GRRegs:$r),
+               "freer res[$r]",
+               [(int_xcore_freer GRRegs:$r)]>;
 
 // Zero operand short
 // TODO waiteu, clre, ssync, freet, ldspc, stspc, ldssr, stssr, ldsed, stsed,
