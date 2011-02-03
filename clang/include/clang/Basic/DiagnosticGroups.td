@@ -86,7 +86,7 @@ def : DiagGroup<"old-style-definition">;
 def OutOfLineDeclaration : DiagGroup<"out-of-line-declaration">;
 def : DiagGroup<"overflow">;
 def OverlengthStrings : DiagGroup<"overlength-strings">;
-def : DiagGroup<"overloaded-virtual">;
+def OverloadedVirtual : DiagGroup<"overloaded-virtual">;
 def Packed : DiagGroup<"packed">;
 def Padded : DiagGroup<"padded">;
 def PointerArith : DiagGroup<"pointer-arith">;
@@ -228,7 +228,8 @@ def Most : DiagGroup<"most", [
     UnknownPragmas,
     Unused,
     VectorConversions,
-    VolatileRegisterVar
+    VolatileRegisterVar,
+    OverloadedVirtual
  ]>;
 
 // -Wall is -Wmost -Wparentheses

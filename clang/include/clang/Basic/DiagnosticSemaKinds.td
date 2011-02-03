@@ -2768,6 +2768,11 @@ def note_previous_exception_handler : Note<"for type %0">;
 def warn_non_virtual_dtor : Warning<
   "%0 has virtual functions but non-virtual destructor">,
   InGroup<NonVirtualDtor>, DefaultIgnore;
+def warn_overloaded_virtual : Warning<
+  "%q0 hides overloaded virtual %select{function|functions}1">,
+  InGroup<OverloadedVirtual>, DefaultIgnore;
+def note_hidden_overloaded_virtual_declared_here : Note<
+  "hidden overloaded virtual function %q0 declared here">;
 
 def err_conditional_void_nonvoid : Error<
   "%select{left|right}1 operand to ? is void, but %select{right|left}1 operand "

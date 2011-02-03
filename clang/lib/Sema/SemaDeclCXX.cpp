@@ -2777,6 +2777,108 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
       Diag(dtor ? dtor->getLocation() : Record->getLocation(),
            diag::warn_non_virtual_dtor) << Context.getRecordType(Record);
   }
+
+  // See if a method overloads virtual methods in a base
+  /// class without overriding any.
+  if (!Record->isDependentType()) {
+    for (CXXRecordDecl::method_iterator M = Record->method_begin(),
+                                     MEnd = Record->method_end();
+         M != MEnd; ++M) {
+      DiagnoseHiddenVirtualMethods(Record, *M);
+    }
+  }
+}
+
+/// \brief Data used with FindHiddenVirtualMethod
+struct FindHiddenVirtualMethodData {
+  Sema *S;
+  CXXMethodDecl *Method;
+  llvm::SmallPtrSet<const CXXMethodDecl *, 8> OverridenAndUsingBaseMethods;
+  llvm::SmallVector<CXXMethodDecl *, 8> OverloadedMethods;
+};
+
+/// \brief Member lookup function that determines whether a given C++
+/// method overloads virtual methods in a base class without overriding any,
+/// to be used with CXXRecordDecl::lookupInBases().
+static bool FindHiddenVirtualMethod(const CXXBaseSpecifier *Specifier,
+                                    CXXBasePath &Path,
+                                    void *UserData) {
+  RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
+
+  FindHiddenVirtualMethodData &Data
+    = *static_cast<FindHiddenVirtualMethodData*>(UserData);
+
+  DeclarationName Name = Data.Method->getDeclName();
+  assert(Name.getNameKind() == DeclarationName::Identifier);
+
+  bool foundSameNameMethod = false;
+  llvm::SmallVector<CXXMethodDecl *, 8> overloadedMethods;
+  for (Path.Decls = BaseRecord->lookup(Name);
+       Path.Decls.first != Path.Decls.second;
+       ++Path.Decls.first) {
+    NamedDecl *D = *Path.Decls.first;
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+      foundSameNameMethod = true;
+      // Interested only in hidden virtual methods.
+      if (!MD->isVirtual())
+        continue;
+      // If the method we are checking overrides a method from its base
+      // don't warn about the other overloaded methods.
+      if (!Data.S->IsOverload(Data.Method, MD, false))
+        return true;
+      // Collect the overload only if its hidden.
+      if (!Data.OverridenAndUsingBaseMethods.count(MD))
+        overloadedMethods.push_back(MD);
+    }
+  }
+
+  if (foundSameNameMethod)
+    Data.OverloadedMethods.append(overloadedMethods.begin(),
+                                   overloadedMethods.end());
+  return foundSameNameMethod;
+}
+
+/// \brief See if a method overloads virtual methods in a base class without
+/// overriding any.
+void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
+  if (Diags.getDiagnosticLevel(diag::warn_overloaded_virtual,
+                               MD->getLocation()) == Diagnostic::Ignored)
+    return;
+  if (MD->getDeclName().getNameKind() != DeclarationName::Identifier)
+    return;
+
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, // true to look in all bases.
+                     /*bool RecordPaths=*/false,
+                     /*bool DetectVirtual=*/false);
+  FindHiddenVirtualMethodData Data;
+  Data.Method = MD;
+  Data.S = this;
+
+  // Keep the base methods that were overriden or introduced in the subclass
+  // by 'using' in a set. A base method not in this set is hidden.
+  for (DeclContext::lookup_result res = DC->lookup(MD->getDeclName());
+       res.first != res.second; ++res.first) {
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*res.first))
+      for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+                                          E = MD->end_overridden_methods();
+           I != E; ++I)
+        Data.OverridenAndUsingBaseMethods.insert(*I);
+    if (UsingShadowDecl *shad = dyn_cast<UsingShadowDecl>(*res.first))
+      if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(shad->getTargetDecl()))
+        Data.OverridenAndUsingBaseMethods.insert(MD);
+  }
+
+  if (DC->lookupInBases(&FindHiddenVirtualMethod, &Data, Paths) &&
+      !Data.OverloadedMethods.empty()) {
+    Diag(MD->getLocation(), diag::warn_overloaded_virtual)
+      << MD << (Data.OverloadedMethods.size() > 1);
+
+    for (unsigned i = 0, e = Data.OverloadedMethods.size(); i != e; ++i) {
+      CXXMethodDecl *overloadedMD = Data.OverloadedMethods[i];
+      Diag(overloadedMD->getLocation(),
+           diag::note_hidden_overloaded_virtual_declared_here) << overloadedMD;
+    }
+  }
 }
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,

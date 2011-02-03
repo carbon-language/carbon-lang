@@ -4276,7 +4276,7 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                    diag::note_overridden_virtual_function);
             }
           }
-        }        
+        }
       }
     }
 
