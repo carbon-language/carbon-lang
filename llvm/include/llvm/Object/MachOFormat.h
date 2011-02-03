@@ -347,7 +347,7 @@ namespace macho {
     RIT_X86_64_TLV        = 9
   };
 
-  /// ARM also has its own relocation types.
+  /// ARM uses its own relocation types.
   enum RelocationInfoTypeARM {
     RIT_ARM_LocalDifference = 3,
     RIT_ARM_PreboundLazyPointer = 4,
