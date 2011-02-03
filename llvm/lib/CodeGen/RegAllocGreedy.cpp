@@ -645,9 +645,6 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
   SplitEditor SE(*SA, *LIS, *VRM, *DomTree, LREdit);
 
-  // Ranges to add to the register interval after all defs are in place.
-  SmallVector<IndexPair, 8> UseRanges;
-
   // Create the main cross-block interval.
   SE.openIntv();
 
@@ -684,7 +681,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       if (!BI.LiveThrough) {
         DEBUG(dbgs() << ", not live-through.\n");
         SE.enterIntvBefore(BI.Def);
-        UseRanges.push_back(IndexPair(BI.Def, Stop));
+        SE.useIntv(BI.Def, Stop);
         continue;
       }
       if (!RegIn) {
@@ -692,7 +689,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         // Reload just before the first use.
         DEBUG(dbgs() << ", not live-in, enter before first use.\n");
         SE.enterIntvBefore(BI.FirstUse);
-        UseRanges.push_back(IndexPair(BI.FirstUse, Stop));
+        SE.useIntv(BI.FirstUse, Stop);
         continue;
       }
       DEBUG(dbgs() << ", live-through.\n");
@@ -717,7 +714,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       DEBUG(dbgs() << ", free use at " << Use << ".\n");
       assert(Use <= BI.LastUse && "Couldn't find last use");
       SE.enterIntvBefore(Use);
-      UseRanges.push_back(IndexPair(Use, Stop));
+      SE.useIntv(Use, Stop);
       continue;
     }
 
@@ -725,12 +722,6 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     DEBUG(dbgs() << " after last use.\n");
     SE.enterIntvAtEnd(*BI.MBB);
   }
-
-  // Add the live-out ranges following the defs.
-  // We must wait until all defs have been inserted, otherwise SplitKit gets
-  // confused about the value mapping.
-  for (unsigned i = 0, e = UseRanges.size(); i != e; ++i)
-    SE.useIntv(UseRanges[i].first, UseRanges[i].second);
 
   // Now all defs leading to live bundles are handled, do everything else.
   for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
