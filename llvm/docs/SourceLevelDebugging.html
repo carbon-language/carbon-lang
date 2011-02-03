@@ -588,9 +588,8 @@ DW_TAG_restrict_type    = 55
    the bit offset if embedded in a <a href="#format_composite_type">composite
    type</a>.</p>
 
-<p>Note that the <tt>void *</tt> type is expressed as a
-   <tt>llvm.dbg.derivedtype.type</tt> with tag of <tt>DW_TAG_pointer_type</tt>
-   and <tt>NULL</tt> derived type.</p>
+<p>Note that the <tt>void *</tt> type is expressed as a type derived from NULL.
+</p>
 
 </div>
 
@@ -689,7 +688,7 @@ DW_TAG_inheritance      = 28
 
 <div class="doc_code">
 <pre>
-%<a href="#format_subrange">llvm.dbg.subrange.type</a> = type {
+!42 = metadata !{
   i32,    ;; Tag = 33 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> (DW_TAG_subrange_type)
   i64,    ;; Low value
   i64     ;; High value
@@ -859,13 +858,13 @@ entry:
   %Y = alloca i32, align 4                        ; &lt;i32*&gt; [#uses=4]
   %Z = alloca i32, align 4                        ; &lt;i32*&gt; [#uses=3]
   %0 = bitcast i32* %X to {}*                     ; &lt;{}*&gt; [#uses=1]
-  call void @llvm.dbg.declare({}* %0, metadata !0), !dbg !7
+  call void @llvm.dbg.declare(metadata !{i32 * %X}, metadata !0), !dbg !7
   store i32 21, i32* %X, !dbg !8
   %1 = bitcast i32* %Y to {}*                     ; &lt;{}*&gt; [#uses=1]
-  call void @llvm.dbg.declare({}* %1, metadata !9), !dbg !10
+  call void @llvm.dbg.declare(metadata !{i32 * %Y}, metadata !9), !dbg !10
   store i32 22, i32* %Y, !dbg !11
   %2 = bitcast i32* %Z to {}*                     ; &lt;{}*&gt; [#uses=1]
-  call void @llvm.dbg.declare({}* %2, metadata !12), !dbg !14
+  call void @llvm.dbg.declare(metadata !{i32 * %Z}, metadata !12), !dbg !14
   store i32 23, i32* %Z, !dbg !15
   %tmp = load i32* %X, !dbg !16                   ; &lt;i32&gt; [#uses=1]
   %tmp1 = load i32* %Y, !dbg !16                  ; &lt;i32&gt; [#uses=1]
@@ -876,7 +875,7 @@ entry:
   ret void, !dbg !18
 }
 
-declare void @llvm.dbg.declare({}*, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !0 = metadata !{i32 459008, metadata !1, metadata !"X", 
                 metadata !3, i32 2, metadata !6}; [ DW_TAG_auto_variable ]
@@ -918,7 +917,7 @@ declare void @llvm.dbg.declare({}*, metadata) nounwind readnone
 
 <div class="doc_code">
 <pre>
-call void @llvm.dbg.declare({}* %0, metadata !0), !dbg !7   
+call void @llvm.dbg.declare(metadata, metadata !0), !dbg !7   
 </pre>
 </div>
 
@@ -953,7 +952,7 @@ call void @llvm.dbg.declare({}* %0, metadata !0), !dbg !7
 
 <div class="doc_code">
 <pre>
-call void @llvm.dbg.declare({}* %2, metadata !12), !dbg !14
+call void @llvm.dbg.declare(metadata, metadata !12), !dbg !14
 </pre>
 </div>
 
