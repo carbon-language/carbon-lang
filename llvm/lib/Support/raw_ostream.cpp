@@ -32,6 +32,9 @@
 #if defined(HAVE_FCNTL_H)
 # include <fcntl.h>
 #endif
+#if defined(HAVE_SYS_UIO_H) && defined(HAVE_WRITEV)
+#  include <sys/uio.h>
+#endif
 
 #if defined(__CYGWIN__)
 #include <io.h>
@@ -375,7 +378,9 @@ void format_object_base::home() {
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
 raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
-                               unsigned Flags) : Error(false), pos(0) {
+                               unsigned Flags)
+  : Error(false), UseAtomicWrites(false), pos(0)
+{
   assert(Filename != 0 && "Filename is null");
   // Verify that we don't have both "append" and "excl".
   assert((!(Flags & F_Excl) || !(Flags & F_Append)) &&
@@ -426,7 +431,7 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
 /// ShouldClose is true, this closes the file when the stream is destroyed.
 raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
   : raw_ostream(unbuffered), FD(fd),
-    ShouldClose(shouldClose), Error(false) {
+    ShouldClose(shouldClose), Error(false), UseAtomicWrites(false) {
 #ifdef O_BINARY
   // Setting STDOUT and STDERR to binary mode is necessary in Win32
   // to avoid undesirable linefeed conversion.
@@ -467,7 +472,20 @@ void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
   pos += Size;
 
   do {
-    ssize_t ret = ::write(FD, Ptr, Size);
+    ssize_t ret;
+
+    // Check whether we should attempt to use atomic writes.
+    if (BUILTIN_EXPECT(!UseAtomicWrites, true)) {
+      ret = ::write(FD, Ptr, Size);
+    } else {
+      // Use ::writev() where available.
+#if defined(HAVE_WRITEV)
+      struct iovec IOV = { (void*) Ptr, Size };
+      ret = ::writev(FD, &IOV, 1);
+#else
+      ret = ::write(FD, Ptr, Size);
+#endif
+    }
 
     if (ret < 0) {
       // If it's a recoverable error, swallow it and retry the write.

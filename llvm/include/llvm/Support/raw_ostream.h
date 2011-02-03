@@ -301,6 +301,10 @@ class raw_fd_ostream : public raw_ostream {
   ///
   bool Error;
 
+  /// Controls whether the stream should attempt to use atomic writes, when
+  /// possible.
+  bool UseAtomicWrites;
+
   uint64_t pos;
 
   /// write_impl - See raw_ostream::write_impl.
@@ -360,6 +364,16 @@ public:
   /// seek - Flushes the stream and repositions the underlying file descriptor
   /// position to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
+
+  /// SetUseAtomicWrite - Set the stream to attempt to use atomic writes for
+  /// individual output routines where possible.
+  ///
+  /// Note that because raw_ostream's are typically buffered, this flag is only
+  /// sensible when used on unbuffered streams which will flush their output
+  /// immediately.
+  void SetUseAtomicWrites(bool Value) {
+    UseAtomicWrites = Value;
+  }
 
   virtual raw_ostream &changeColor(enum Colors colors, bool bold=false,
                                    bool bg=false);
