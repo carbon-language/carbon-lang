@@ -154,7 +154,7 @@ struct SpillPlacement::Node {
     //  1. It avoids arbitrary bias when all links are 0 as is possible during
     //     initial iterations.
     //  2. It helps tame rounding errors when the links nominally sum to 0.
-    const float Thres = 1e-4;
+    const float Thres = 1e-4f;
     bool Before = preferReg();
     if (Sum < -Thres)
       Value = -1;
