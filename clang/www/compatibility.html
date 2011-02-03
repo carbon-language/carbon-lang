@@ -383,19 +383,21 @@ void f(id x);
 instead of the internal types.</p>
 
 <!-- ======================================================================= -->
-<h3 id="c_variables-class">C variables in @class or @protocol</h3>
+<h3 id="c_variables-class">C variables in @interface or @protocol</h3>
 <!-- ======================================================================= -->
 
-<p>GCC allows declaration of C variables in a @class or @protocol, but not 
-C functions. Clang does not allow variable or C function declarations. External
-declarations, however, is allowed. Variables may only be declared in an
-@implementation.
+<p>GCC allows the declaration of C variables in
+an <code>@interface</code> or <code>@protocol</code>
+declaration. Clang does not allow variable declarations to appear
+within these declarations unless they are marked <code>extern</code>.</p>
+
+<p>Variables may still be declared in an @implementation.</p>
 
 <pre>
 @interface XX
-int x;  //  not allowed in clang
-int one=1;  //  not allowed in clang
-extern int OK;
+int a;         // not allowed in clang
+int b = 1;     // not allowed in clang
+extern int c;  // allowed 
 @end
 
 </pre>
@@ -431,7 +433,7 @@ template parameter.</li> </ul>
     simple as changing <tt>int size = ...;</tt> to <tt>const int size
     = ...;</tt> (if the definition of <tt>size</tt> is a compile-time
     integral constant);</li>
-<li>use an <tt>std::string</tt> instead of a <tt>char []</tt>;</li>
+<li>use <tt>std::string</tt> instead of a <tt>char []</tt>;</li>
 <li>use <tt>std::vector</tt> or some other suitable container type;
     or</li>
 <li>allocate the array on the heap instead using <tt>new Type[]</tt> -
