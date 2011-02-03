@@ -64,7 +64,7 @@ LIT_ALL_TESTSUITES += $(PROJ_OBJ_DIR)/../tools/clang/test
 
 # Force creation of Clang's lit.site.cfg.
 clang-lit-site-cfg: FORCE
-	$(MAKE) -C $(PROJ_OBJ_DIR)/../tools/clang/test lit.site.cfg
+	$(MAKE) -C $(PROJ_OBJ_DIR)/../tools/clang/test lit.site.cfg Unit/lit.site.cfg
 extra-lit-site-cfgs:: clang-lit-site-cfg
 endif
 endif
