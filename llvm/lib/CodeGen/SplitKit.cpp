@@ -978,16 +978,27 @@ void SplitEditor::finish() {
     const VNInfo *PHIVNI = *I;
     if (!PHIVNI->isPHIDef())
       continue;
-    LiveIntervalMap &LIM = LIMappers[RegAssign.lookup(PHIVNI->def)];
+    unsigned RegIdx = RegAssign.lookup(PHIVNI->def);
+    LiveIntervalMap &LIM = LIMappers[RegIdx];
     MachineBasicBlock *MBB = LIS.getMBBFromIndex(PHIVNI->def);
+    DEBUG(dbgs() << "  map phi in BB#" << MBB->getNumber() << '@' << PHIVNI->def
+                 << " -> " << RegIdx << '\n');
     for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
          PE = MBB->pred_end(); PI != PE; ++PI) {
       SlotIndex End = LIS.getMBBEndIdx(*PI).getPrevSlot();
+      DEBUG(dbgs() << "    pred BB#" << (*PI)->getNumber() << '@' << End);
       // The predecessor may not have a live-out value. That is OK, like an
       // undef PHI operand.
-      if (VNInfo *VNI = Edit.getParent().getVNInfoAt(End))
+      if (VNInfo *VNI = Edit.getParent().getVNInfoAt(End)) {
+        DEBUG(dbgs() << " has parent valno #" << VNI->id << " live out\n");
+        assert(RegAssign.lookup(End) == RegIdx &&
+               "Different register assignment in phi predecessor");
         LIM.mapValue(VNI, End);
+      }
+      else
+        DEBUG(dbgs() << " is not live-out\n");
     }
+    DEBUG(dbgs() << "    " << *LIM.getLI() << '\n');
   }
 
   // Rewrite instructions.
