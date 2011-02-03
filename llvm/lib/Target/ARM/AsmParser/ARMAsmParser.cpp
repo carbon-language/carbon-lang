@@ -550,7 +550,8 @@ static unsigned MatchRegisterName(StringRef Name);
 
 /// }
 
-bool ARMAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
+bool ARMAsmParser::ParseRegister(unsigned &RegNo,
+                                 SMLoc &StartLoc, SMLoc &EndLoc) {
   RegNo = TryParseRegister();
 
   return (RegNo == (unsigned)-1);
@@ -578,11 +579,10 @@ int ARMAsmParser::TryParseRegister() {
       .Default(0);
   }
   if (!RegNum) return -1;
-  
+
   Parser.Lex(); // Eat identifier token.
   return RegNum;
 }
-
 
 /// Try to parse a register name.  The token must be an Identifier when called.
 /// If it's a register, an AsmOperand is created. Another AsmOperand is created

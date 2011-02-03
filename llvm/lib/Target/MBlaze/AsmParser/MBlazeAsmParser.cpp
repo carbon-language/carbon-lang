@@ -386,7 +386,8 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return Op;
 }
 
-bool MBlazeAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
+bool MBlazeAsmParser::ParseRegister(unsigned &RegNo,
+                                    SMLoc &StartLoc, SMLoc &EndLoc) {
   return (ParseRegister(RegNo) == 0);
 }
 
