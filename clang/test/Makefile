@@ -29,7 +29,7 @@ ifdef VG
   LIT_ARGS += "--vg"
 endif
 
-all:: lit.site.cfg
+all:: lit.site.cfg Unit/lit.site.cfg
 	@ echo '--- Running clang tests for $(TARGET_TRIPLE) ---'
 	@ $(PYTHON) $(LLVM_SRC_ROOT)/utils/lit/lit.py \
 	  $(LIT_ARGS) $(TESTARGS) $(TESTDIRS)
@@ -46,6 +46,22 @@ lit.site.cfg: FORCE
 	     -e "s#@CLANG_BINARY_DIR@#$(PROJ_OBJ_DIR)/..#g" \
 	     -e "s#@TARGET_TRIPLE@#$(TARGET_TRIPLE)#g" \
 	     $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
+
+Unit/lit.site.cfg: FORCE
+	@echo "Making Clang 'Unit/lit.site.cfg' file..."
+	@$(MKDIR) $(dir $@)
+	@sed -e "s#@LLVM_SOURCE_DIR@#$(LLVM_SRC_ROOT)#g" \
+	     -e "s#@LLVM_BINARY_DIR@#$(LLVM_OBJ_ROOT)#g" \
+	     -e "s#@LLVM_TOOLS_DIR@#$(ToolDir)#g" \
+	     -e "s#@LLVM_LIBS_DIR@#$(LibDir)#g" \
+	     -e "s#@CLANG_SOURCE_DIR@#$(PROJ_SRC_DIR)/..#g" \
+	     -e "s#@CLANG_BINARY_DIR@#$(PROJ_OBJ_DIR)/..#g" \
+	     -e "s#@TARGET_TRIPLE@#$(TARGET_TRIPLE)#g" \
+	     -e "s#@LLVM_BUILD_MODE@#$(BuildMode)#g" \
+	     -e "s#@ENABLE_SHARED@#$(ENABLE_SHARED)#g" \
+	     -e "s#@SHLIBDIR@#$(SharedLibDir)#g" \
+	     -e "s#@SHLIBPATH_VAR@#$(SHLIBPATH_VAR)#g" \
+	     $(PROJ_SRC_DIR)/Unit/lit.site.cfg.in > $@
 
 clean::
 	@ find . -name Output | xargs rm -fr
