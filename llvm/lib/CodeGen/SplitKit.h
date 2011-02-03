@@ -13,13 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 
 namespace llvm {
 
-class ConnectedVNInfoEqClasses;
 class LiveInterval;
 class LiveIntervals;
 class LiveRangeEdit;
@@ -265,10 +263,6 @@ public:
   /// with defValue.
   bool isComplexMapped(const VNInfo *ParentVNI) const;
 
-  /// markComplexMapped - Mark ParentVNI as complex mapped regardless of the
-  /// number of definitions.
-  void markComplexMapped(const VNInfo *ParentVNI) { Values[ParentVNI] = 0; }
-
   // addSimpleRange - Add a simple range from ParentLI to LI.
   // ParentVNI must be live in the [Start;End) interval.
   void addSimpleRange(SlotIndex Start, SlotIndex End, const VNInfo *ParentVNI);
@@ -296,49 +290,49 @@ class SplitEditor {
   LiveIntervals &LIS;
   VirtRegMap &VRM;
   MachineRegisterInfo &MRI;
-  MachineDominatorTree &MDT;
   const TargetInstrInfo &TII;
   const TargetRegisterInfo &TRI;
 
   /// Edit - The current parent register and new intervals created.
   LiveRangeEdit &Edit;
 
-  /// Index into Edit of the currently open interval.
-  /// The index 0 is used for the complement, so the first interval started by
-  /// openIntv will be 1.
-  unsigned OpenIdx;
+  /// DupLI - Created as a copy of CurLI, ranges are carved out as new
+  /// intervals get added through openIntv / closeIntv. This is used to avoid
+  /// editing CurLI.
+  LiveIntervalMap DupLI;
 
-  typedef IntervalMap<SlotIndex, unsigned> RegAssignMap;
-
-  /// Allocator for the interval map. This will eventually be shared with
-  /// SlotIndexes and LiveIntervals.
-  RegAssignMap::Allocator Allocator;
-
-  /// RegAssign - Map of the assigned register indexes.
-  /// Edit.get(RegAssign.lookup(Idx)) is the register that should be live at
-  /// Idx.
-  RegAssignMap RegAssign;
-
-  /// LIMappers - One LiveIntervalMap or each interval in Edit.
-  SmallVector<LiveIntervalMap, 4> LIMappers;
+  /// Currently open LiveInterval.
+  LiveIntervalMap OpenLI;
 
   /// defFromParent - Define Reg from ParentVNI at UseIdx using either
   /// rematerialization or a COPY from parent. Return the new value.
-  VNInfo *defFromParent(unsigned RegIdx,
+  VNInfo *defFromParent(LiveIntervalMap &Reg,
                         VNInfo *ParentVNI,
                         SlotIndex UseIdx,
                         MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator I);
 
-  /// rewriteAssigned - Rewrite all uses of Edit.getReg() to assigned registers.
-  void rewriteAssigned();
+  /// intervalsLiveAt - Return true if any member of intervals_ is live at Idx.
+  bool intervalsLiveAt(SlotIndex Idx) const;
 
-  /// rewriteComponents - Rewrite all uses of Intv[0] according to the eq
-  /// classes in ConEQ.
-  /// This must be done when Intvs[0] is styill live at all uses, before calling
-  /// ConEq.Distribute().
-  void rewriteComponents(const SmallVectorImpl<LiveInterval*> &Intvs,
-                         const ConnectedVNInfoEqClasses &ConEq);
+  /// Values in CurLI whose live range has been truncated when entering an open
+  /// li.
+  SmallPtrSet<const VNInfo*, 8> truncatedValues;
+
+  /// addTruncSimpleRange - Add the given simple range to DupLI after
+  /// truncating any overlap with intervals_.
+  void addTruncSimpleRange(SlotIndex Start, SlotIndex End, VNInfo *VNI);
+
+  /// criticalPreds_ - Set of basic blocks where both dupli and OpenLI should be
+  /// live out because of a critical edge.
+  SplitAnalysis::BlockPtrSet criticalPreds_;
+
+  /// computeRemainder - Compute the dupli liveness as the complement of all the
+  /// new intervals.
+  void computeRemainder();
+
+  /// rewrite - Rewrite all uses of reg to use the new registers.
+  void rewrite(unsigned reg);
 
 public:
   /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
@@ -379,9 +373,6 @@ public:
   /// finish - after all the new live ranges have been created, compute the
   /// remaining live range, and rewrite instructions to use the new registers.
   void finish();
-
-  /// dump - print the current interval maping to dbgs().
-  void dump() const;
 
   // ===--- High level methods ---===
 
