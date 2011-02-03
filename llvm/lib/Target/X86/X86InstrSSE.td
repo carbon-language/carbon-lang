@@ -5443,6 +5443,23 @@ def : Pat<(int_x86_avx_vextractf128_ps_256 VR256:$src1, imm:$src2),
 def : Pat<(int_x86_avx_vextractf128_si_256 VR256:$src1, imm:$src2),
           (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
 
+def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
+          (v4f32 (VEXTRACTF128rr
+                    (v8f32 VR256:$src1),
+                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
+          (v2f64 (VEXTRACTF128rr
+                    (v4f64 VR256:$src1),
+                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
+          (v4i32 (VEXTRACTF128rr
+                    (v8i32 VR256:$src1),
+                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
+          (v2i64 (VEXTRACTF128rr
+                    (v4i64 VR256:$src1),
+                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+
 def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
           (VBROADCASTF128 addr:$src)>;
 

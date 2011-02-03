@@ -408,6 +408,11 @@ namespace llvm {
     /// specifies a shuffle of elements that is suitable for input to PALIGNR.
     bool isPALIGNRMask(ShuffleVectorSDNode *N);
 
+    /// isVEXTRACTF128Index - Return true if the specified
+    /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
+    /// suitable for input to VEXTRACTF128.
+    bool isVEXTRACTF128Index(SDNode *N);
+
     /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
     /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
     /// instructions.
@@ -424,6 +429,11 @@ namespace llvm {
     /// getShufflePALIGNRImmediate - Return the appropriate immediate to shuffle
     /// the specified VECTOR_SHUFFLE mask with the PALIGNR instruction.
     unsigned getShufflePALIGNRImmediate(SDNode *N);
+
+    /// getExtractVEXTRACTF128Immediate - Return the appropriate
+    /// immediate to extract the specified EXTRACT_SUBVECTOR index
+    /// with VEXTRACTF128 instructions.
+    unsigned getExtractVEXTRACTF128Immediate(SDNode *N);
 
     /// isZeroNode - Returns true if Elt is a constant zero or a floating point
     /// constant +0.0.

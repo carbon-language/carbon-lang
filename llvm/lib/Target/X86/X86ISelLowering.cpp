@@ -3262,6 +3262,25 @@ bool X86::isMOVDDUPMask(ShuffleVectorSDNode *N) {
   return true;
 }
 
+/// isVEXTRACTF128Index - Return true if the specified
+/// EXTRACT_SUBVECTOR operand specifies a vector extract that is
+/// suitable for input to VEXTRACTF128.
+bool X86::isVEXTRACTF128Index(SDNode *N) {
+  if (!isa<ConstantSDNode>(N->getOperand(1).getNode()))
+    return false;
+
+  // The index should be aligned on a 128-bit boundary.
+  uint64_t Index =
+    cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
+
+  unsigned VL = N->getValueType(0).getVectorNumElements();
+  unsigned VBits = N->getValueType(0).getSizeInBits();
+  unsigned ElSize = VBits / VL;
+  bool Result = (Index * ElSize) % 128 == 0;
+
+  return Result;
+}
+
 /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_SHUFFLE mask with PSHUF* and SHUFP* instructions.
 unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
@@ -3328,6 +3347,24 @@ unsigned X86::getShufflePALIGNRImmediate(SDNode *N) {
       break;
   }
   return (Val - i) * EltSize;
+}
+
+/// getExtractVEXTRACTF128Immediate - Return the appropriate immediate
+/// to extract the specified EXTRACT_SUBVECTOR index with VEXTRACTF128
+/// instructions.
+unsigned X86::getExtractVEXTRACTF128Immediate(SDNode *N) {
+  if (!isa<ConstantSDNode>(N->getOperand(1).getNode()))
+    llvm_unreachable("Illegal extract subvector for VEXTRACTF128");
+
+  uint64_t Index =
+    cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
+
+  EVT VecVT = N->getOperand(0).getValueType();
+  EVT ElVT = VecVT.getVectorElementType();
+
+  unsigned NumElemsPerChunk = 128 / ElVT.getSizeInBits();
+
+  return Index / NumElemsPerChunk;
 }
 
 /// isZeroNode - Returns true if Elt is a constant zero or a floating point
