@@ -1,4 +1,58 @@
-# Clang version information
+# If we are not building as a part of LLVM, build Clang as an
+# standalone project, using LLVM as an external library:
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
+  project(Clang)
+  cmake_minimum_required(VERSION 2.8)
+
+  set(CLANG_PATH_TO_LLVM_SOURCE "" CACHE PATH
+    "Path to LLVM source code. Not necessary if using an installed LLVM.")
+  set(CLANG_PATH_TO_LLVM_BUILD "" CACHE PATH
+    "Path to the directory where LLVM was built or installed.")
+
+  if( CLANG_PATH_TO_LLVM_SOURCE )
+    if( NOT EXISTS "${CLANG_PATH_TO_LLVM_SOURCE}/cmake/config-ix.cmake" )
+      message(FATAL_ERROR "Please set CLANG_PATH_TO_LLVM_SOURCE to the root directory of LLVM source code.")
+    else()
+      get_filename_component(LLVM_MAIN_SRC_DIR ${CLANG_PATH_TO_LLVM_SOURCE}
+	ABSOLUTE)
+      list(APPEND CMAKE_MODULE_PATH "${LLVM_MAIN_SRC_DIR}/cmake/modules")
+    endif()
+  endif()
+
+  if( NOT EXISTS "${CLANG_PATH_TO_LLVM_BUILD}/bin/tblgen${CMAKE_EXECUTABLE_SUFFIX}" )
+    message(FATAL_ERROR "Please set CLANG_PATH_TO_LLVM_BUILD to a directory containing a LLVM build.")
+  endif()
+
+  list(APPEND CMAKE_MODULE_PATH "${CLANG_PATH_TO_LLVM_BUILD}/share/llvm/cmake")
+
+  get_filename_component(PATH_TO_LLVM_BUILD ${CLANG_PATH_TO_LLVM_BUILD}
+    ABSOLUTE)
+
+  include(AddLLVM)
+  include(TableGen)
+  include("${CLANG_PATH_TO_LLVM_BUILD}/share/llvm/cmake/LLVM.cmake")
+  include(HandleLLVMOptions)
+
+  set(PACKAGE_VERSION "${LLVM_PACKAGE_VERSION}")
+
+  set(LLVM_MAIN_INCLUDE_DIR "${LLVM_MAIN_SRC_DIR}/include")
+  set(LLVM_BINARY_DIR ${CMAKE_BINARY_DIR})
+
+  include_directories("${PATH_TO_LLVM_BUILD}/include" "${LLVM_MAIN_INCLUDE_DIR}")
+  if( NOT PATH_TO_LLVM_BUILD STREQUAL LLVM_MAIN_SRC_DIR )
+    include_directories("${LLVM_MAIN_INCLUDE_DIR}")
+  endif()
+  link_directories("${PATH_TO_LLVM_BUILD}/lib")
+
+  set(LLVM_TABLEGEN_EXE "${PATH_TO_LLVM_BUILD}/bin/tblgen")
+
+  set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
+  set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+  set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+
+  add_definitions( -D__STDC_LIMIT_MACROS )
+  add_definitions( -D__STDC_CONSTANT_MACROS )
+endif()
 
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
