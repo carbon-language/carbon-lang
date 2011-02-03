@@ -1270,7 +1270,8 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
                                      ForVirtualBase);
   llvm::Value *Callee = 0;
   if (getContext().getLangOptions().AppleKext)
-    Callee = BuildAppleKextVirtualDestructorCall(DD, Type);
+    Callee = BuildAppleKextVirtualDestructorCall(DD, Type, 
+                                                 DD->getParent());
     
   if (!Callee)
     Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
