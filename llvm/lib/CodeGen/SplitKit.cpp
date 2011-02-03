@@ -607,14 +607,14 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
   for (unsigned i = 0, e = LiveIn.size(); i != e; ++i) {
     MachineBasicBlock *MBB = LiveIn[i]->getBlock();
     SlotIndex Start = LIS.getMBBStartIdx(MBB);
-    if (MBB == IdxMBB) {
-      LI->addRange(LiveRange(Start, Idx.getNextSlot(), IdxVNI));
-      continue;
-    }
-    // Anything in LiveIn other than IdxMBB is live-through.
     VNInfo *VNI = LiveOutCache.lookup(MBB).first;
-    assert(VNI && "Missing block value");
-    LI->addRange(LiveRange(Start, LIS.getMBBEndIdx(MBB), VNI));
+
+    // Anything in LiveIn other than IdxMBB is live-through.
+    // In IdxMBB, we should stop at Idx unless the same value is live-out.
+    if (MBB == IdxMBB && IdxVNI != VNI)
+      LI->addRange(LiveRange(Start, Idx.getNextSlot(), IdxVNI));
+    else
+      LI->addRange(LiveRange(Start, LIS.getMBBEndIdx(MBB), VNI));
   }
 
   return IdxVNI;
