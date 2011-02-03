@@ -193,8 +193,8 @@ int test28() {
 }
 
 void test29() {
-  int x;
-  (void) ^{ (void) x; };
+  int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
+  (void) ^{ (void) x; }; // expected-warning{{variable 'x' is possibly uninitialized when captured by block}}
 }
 
 void test30() {
