@@ -568,7 +568,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   }
   case AsmToken::Real: {
     APFloat RealVal(APFloat::IEEEdouble, getTok().getString());
-    int64_t IntVal = RealVal.bitcastToAPInt().getSExtValue();
+    uint64_t IntVal = RealVal.bitcastToAPInt().getZExtValue();
     Res = MCConstantExpr::Create(IntVal, getContext());
     Lex(); // Eat token.
     return false;
