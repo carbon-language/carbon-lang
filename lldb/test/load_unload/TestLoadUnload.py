@@ -52,6 +52,8 @@ class LoadUnloadTestCase(TestBase):
         self.expect("image list",
             substrs = [old_dylib])
         self.runCmd("target image-search-paths add %s %s" % (os.getcwd(), new_dir))
+        # Add teardown hook to clear image-search-paths after the test.
+        self.addTearDownHook(lambda: self.runCmd("target image-search-paths clear"))
         self.expect("image list", "LLDB successfully locates the relocated dynamic library",
             substrs = [new_dylib])
 
