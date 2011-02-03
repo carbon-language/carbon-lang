@@ -575,8 +575,7 @@ ScriptInterpreterPython::InputReaderCallback
         {
             if (out_fh)
             {
-                ::fprintf (out_fh, "Python Interactive Interpreter. To exit Python, type 'quit()' or 'exit()'.\n");
-                ::fprintf (out_fh, "Do NOT use Ctrl-D (EOF) to exit, as that will cause the lldb debugger to hang.\n");
+                ::fprintf (out_fh, "Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.\n");
             }
             // Save terminal settings if we can
             int input_fd;
