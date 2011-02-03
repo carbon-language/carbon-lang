@@ -1716,7 +1716,11 @@ void ExprEngine::VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred,
     const GRState* state = GetState(*I);
     SVal baseExprVal = state->getSVal(baseExpr);
     if (isa<nonloc::LazyCompoundVal>(baseExprVal) ||
-        isa<nonloc::CompoundVal>(baseExprVal)) {
+        isa<nonloc::CompoundVal>(baseExprVal) ||
+        // FIXME: This can originate by conjuring a symbol for an unknown
+        // temporary struct object, see test/Analysis/fields.c:
+        // (p = getit()).x
+        isa<nonloc::SymbolVal>(baseExprVal)) {
       MakeNode(Dst, M, *I, state->BindExpr(M, UnknownVal()));
       continue;
     }

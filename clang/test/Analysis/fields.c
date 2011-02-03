@@ -17,3 +17,13 @@ void f() {
   struct s a;
   int *p = &(a.n) + 1;
 }
+
+typedef struct {
+  int x,y;
+} Point;
+
+Point getit(void);
+void test() {
+  Point p;
+  (void)(p = getit()).x;
+}
