@@ -101,9 +101,6 @@ else( MSVC )
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 endif( MSVC )
 
-set(CLANG_RESOURCE_DIR "" CACHE STRING
-  "Relative directory from the Clang binary to its resource files.")
-
 option(LLVM_ENABLE_CBE_PRINTF_A "Set to ON if CBE is enabled for printf %a output" ON)
 if(LLVM_ENABLE_CBE_PRINTF_A)
   set(ENABLE_CBE_PRINTF_A 1)
@@ -117,9 +114,6 @@ endif()
 option(LLVM_ENABLE_FFI "Use libffi to call external functions from the interpreter" OFF)
 set(FFI_LIBRARY_DIR "" CACHE PATH "Additional directory, where CMake should search for libffi.so")
 set(FFI_INCLUDE_DIR "" CACHE PATH "Additional directory, where CMake should search for ffi.h or ffi/ffi.h")
-
-set(C_INCLUDE_DIRS "" CACHE STRING
-  "Colon separated list of directories clang will search for headers.")
 
 set(LLVM_TARGET_ARCH "host"
   CACHE STRING "Set target to use for LLVM JIT or use \"host\" for automatic detection.")
