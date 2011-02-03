@@ -9,14 +9,15 @@
 
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
-#include <cstdio>
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 namespace {
 class HeaderIncludesCallback : public PPCallbacks {
   SourceManager &SM;
-  FILE *OutputFile;
+  llvm::raw_ostream *OutputFile;
   unsigned CurrentIncludeDepth;
   bool HasProcessedPredefines;
   bool OwnsOutputFile;
@@ -24,14 +25,14 @@ class HeaderIncludesCallback : public PPCallbacks {
 
 public:
   HeaderIncludesCallback(const Preprocessor *PP, bool ShowAllHeaders_,
-                         FILE *OutputFile_, bool OwnsOutputFile_)
+                         llvm::raw_ostream *OutputFile_, bool OwnsOutputFile_)
     : SM(PP->getSourceManager()), OutputFile(OutputFile_),
       CurrentIncludeDepth(0), HasProcessedPredefines(false),
       OwnsOutputFile(OwnsOutputFile_), ShowAllHeaders(ShowAllHeaders_) {}
 
   ~HeaderIncludesCallback() {
     if (OwnsOutputFile)
-      fclose(OutputFile);
+      delete OutputFile;
   }
 
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
@@ -41,16 +42,24 @@ public:
 
 void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
                                    llvm::StringRef OutputPath) {
-  FILE *OutputFile;
-  bool OwnsOutputFile;
+  llvm::raw_ostream *OutputFile = &llvm::errs();
+  bool OwnsOutputFile = false;
 
   // Open the output file, if used.
-  if (OutputPath.empty()) {
-    OutputFile = stderr;
-    OwnsOutputFile = false;
-  } else {
-    OutputFile = fopen(OutputPath.str().c_str(), "a");
-    OwnsOutputFile = true;
+  if (!OutputPath.empty()) {
+    std::string Error;
+    llvm::raw_fd_ostream *OS = new llvm::raw_fd_ostream(
+      OutputPath.str().c_str(), Error, llvm::raw_fd_ostream::F_Append);
+    if (!Error.empty()) {
+      PP.getDiagnostics().Report(
+        clang::diag::warn_fe_cc_print_header_failure) << Error;
+      delete OS;
+    } else {
+      OS->SetUnbuffered();
+      OS->SetUseAtomicWrites(true);
+      OutputFile = OS;
+      OwnsOutputFile = true;
+    }
   }
 
   PP.addPPCallbacks(new HeaderIncludesCallback(&PP, ShowAllHeaders,
@@ -99,7 +108,6 @@ void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
     Msg += Filename;
     Msg += '\n';
 
-    fwrite(Msg.data(), Msg.size(), 1, OutputFile);
+    OutputFile->write(Msg.data(), Msg.size());
   }
 }
-
