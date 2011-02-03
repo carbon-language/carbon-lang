@@ -1,6 +1,8 @@
 set(LLVM_REQUIRES_EH 1)
 set(LLVM_REQUIRES_RTTI 1)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR})
+
 add_executable(tblgen
   ARMDecoderEmitter.cpp
   AsmMatcherEmitter.cpp
@@ -48,3 +50,5 @@ endif( MINGW )
 if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD AND NOT BEOS )
   target_link_libraries(tblgen pthread)
 endif()
+
+install(TARGETS tblgen RUNTIME DESTINATION bin)

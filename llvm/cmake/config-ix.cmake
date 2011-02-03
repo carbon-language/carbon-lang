@@ -357,19 +357,3 @@ else( ENABLE_THREADS )
 endif()
 
 set(LLVM_PREFIX ${CMAKE_INSTALL_PREFIX})
-
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/config.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Config/config.h
-  )
-
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/llvm-config.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Config/llvm-config.h
-  )
-
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support/DataTypes.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Support/DataTypes.h
-  )
-

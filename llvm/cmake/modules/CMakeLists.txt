@@ -10,3 +10,20 @@ install(FILES
   LLVMConfig.cmake
   LLVMLibDeps.cmake
   DESTINATION share/llvm/cmake)
+
+install(DIRECTORY .
+  DESTINATION share/llvm/cmake
+  PATTERN *.cmake
+  PATTERN LLVM.cmake EXCLUDE
+  PATTERN LLVMConfig.cmake EXCLUDE
+  PATTERN LLVMLibDeps.cmake EXCLUDE
+  PATTERN FindBison.cmake EXCLUDE
+  PATTERN GetTargetTriple.cmake EXCLUDE
+  PATTERN VersionFromVCS.cmake EXCLUDE
+  PATTERN CheckAtomic.cmake EXCLUDE)
+
+install(FILES
+  ${llvm_cmake_builddir}/LLVM.cmake
+  LLVMConfig.cmake
+  LLVMLibDeps.cmake
+  DESTINATION share/llvm/cmake)
