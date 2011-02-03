@@ -2241,14 +2241,25 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
 /// integer range comparison into a sub, an icmp and a branch.
 static bool TurnSwitchRangeIntoICmp(SwitchInst *SI) {
   assert(SI->getNumCases() > 2 && "Degenerate switch?");
-  // We can do this transform if the switch consists of an ascending series
-  // and all cases point to the same destination.
-  for (unsigned I = 2, E = SI->getNumCases(); I != E; ++I)
-    if (SI->getSuccessor(I-1) != SI->getSuccessor(I) ||
-        SI->getCaseValue(I-1)->getValue()+1 != SI->getCaseValue(I)->getValue())
-      return false;
 
-  Constant *Offset = ConstantExpr::getNeg(SI->getCaseValue(1));
+  // Make sure all cases point to the same destination and gather the values.
+  SmallVector<ConstantInt *, 16> Cases;
+  Cases.push_back(SI->getCaseValue(1));
+  for (unsigned I = 2, E = SI->getNumCases(); I != E; ++I) {
+    if (SI->getSuccessor(I-1) != SI->getSuccessor(I))
+      return false;
+    Cases.push_back(SI->getCaseValue(I));
+  }
+  assert(Cases.size() == SI->getNumCases()-1 && "Not all cases gathered");
+
+  // Sort the case values, then check if they form a range we can transform.
+  array_pod_sort(Cases.begin(), Cases.end(), ConstantIntSortPredicate);
+  for (unsigned I = 1, E = Cases.size(); I != E; ++I) {
+    if (Cases[I-1]->getValue() != Cases[I]->getValue()+1)
+      return false;
+  }
+
+  Constant *Offset = ConstantExpr::getNeg(Cases.back());
   Constant *NumCases = ConstantInt::get(Offset->getType(), SI->getNumCases()-1);
 
   Value *Sub = BinaryOperator::CreateAdd(SI->getCondition(), Offset, "off", SI);
