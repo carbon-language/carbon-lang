@@ -1083,12 +1083,14 @@ ifdef LIBRARYNAME
 # Make sure there isn't any extraneous whitespace on the LIBRARYNAME option
 LIBRARYNAME := $(strip $(LIBRARYNAME))
 ifdef LOADABLE_MODULE
-LibName.A  := $(LibDir)/$(LIBRARYNAME).a
-LibName.SO := $(SharedLibDir)/$(LIBRARYNAME)$(SHLIBEXT)
+BaseLibName.A  := $(LIBRARYNAME).a
+BaseLibName.SO := $(LIBRARYNAME)$(SHLIBEXT)
 else
-LibName.A  := $(LibDir)/lib$(LIBRARYNAME).a
-LibName.SO := $(SharedLibDir)/$(SharedPrefix)$(LIBRARYNAME)$(SHLIBEXT)
+BaseLibName.A  := lib$(LIBRARYNAME).a
+BaseLibName.SO := $(SharedPrefix)$(LIBRARYNAME)$(SHLIBEXT)
 endif
+LibName.A  := $(LibDir)/$(BaseLibName.A)
+LibName.SO := $(SharedLibDir)/$(BaseLibName.SO)
 LibName.O  := $(LibDir)/$(LIBRARYNAME).o
 LibName.BCA:= $(LibDir)/lib$(LIBRARYNAME).bca
 
@@ -1142,7 +1144,7 @@ DestSharedLibDir := $(DESTDIR)$(PROJ_bindir)
 else
 DestSharedLibDir := $(DESTDIR)$(PROJ_libdir)
 endif
-DestSharedLib := $(DestSharedLibDir)/$(SharedPrefix)$(LIBRARYNAME)$(SHLIBEXT)
+DestSharedLib := $(DestSharedLibDir)/$(BaseLibName.SO)
 
 install-local:: $(DestSharedLib)
 
