@@ -101,7 +101,7 @@ class BasicExprCommandsTestCase(TestBase):
         # Launch the process, and do not stop at the entry point.
         # Pass 'X Y Z' as the args, which makes argc == 4.
         error = lldb.SBError()
-        self.process = target.Launch(['X', 'Y', 'Z'], None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.Launch(self.dbg.GetListener(), ['X', 'Y', 'Z'], None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
         if not error.Success() or not self.process.IsValid():
             self.fail("SBTarget.LaunchProcess() failed")

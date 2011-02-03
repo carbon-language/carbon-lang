@@ -59,9 +59,12 @@ class EventAPITestCase(TestBase):
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
+        # Get the debugger listener.
+        listener = self.dbg.GetListener()
+
         # Now launch the process, and do not stop at entry point.
         error = lldb.SBError()
-        self.process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.Launch (listener, None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
@@ -73,9 +76,6 @@ class EventAPITestCase(TestBase):
         # Create an empty event object.
         event = lldb.SBEvent()
         self.assertFalse(event.IsValid(), "Event should not be valid initially")
-
-        # Get the debugger listener.
-        listener = self.dbg.GetListener()
 
         # Create MyListeningThread to wait for any kind of event.
         import threading
@@ -123,7 +123,7 @@ class EventAPITestCase(TestBase):
 
         # Now launch the process, and do not stop at the entry point.
         error = lldb.SBError()
-        self.process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
         self.process = target.GetProcess()
         self.assertTrue(self.process.GetState() == lldb.eStateStopped,

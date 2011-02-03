@@ -53,7 +53,7 @@ class HelloWorldTestCase(TestBase):
 
         if useLaunchAPI:
             error = lldb.SBError()
-            process = target.Launch (None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+            process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
             # The following isn't needed anymore, rdar://8364687 is fixed.
             #
             # Apply some dances after LaunchProcess() in order to break at "main".
