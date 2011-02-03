@@ -46,13 +46,14 @@ td {
   <li><a href="#cxx_strong_enums">C++0x strongly-typed enumerations</a></li>
   <li><a href="#cxx_trailing_return">C++0x trailing return type</a></li>
   </ul>
+<li><a href="#checking_type_traits">Checks for Type Traits</a></li>
 <li><a href="#blocks">Blocks</a></li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
 <li><a href="#builtins">Builtin Functions</a>
   <ul>
   <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
   <li><a href="#__builtin_unreachable">__builtin_unreachable</a></li>
-  </ul>
+ </ul>
 </li>
 <li><a href="#targetspecific">Target-Specific Extensions</a>
   <ul>
@@ -435,6 +436,46 @@ the alternate function declaration syntax with trailing return type is enabled.<
 
 <p>Use <tt>__has_feature(cxx_strong_enums)</tt> to determine if support for
 strongly typed, scoped enumerations is enabled.</p>
+
+<!-- ======================================================================= -->
+<h2 id="checking_type_traits">Checks for Type Traits</h2>
+<!-- ======================================================================= -->
+
+<p>Clang supports the <a hef="http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html">GNU C++ type traits</a> and a subset of the <a href="http://msdn.microsoft.com/en-us/library/ms177194(v=VS.100).aspx">Microsoft Visual C++ Type traits</a>. For each supported type trait <code>__X</code>, <code>__has_feature(X)</code> indicates the presence of the type trait. For example:
+<blockquote>
+<pre>
+#if __has_feature(is_convertible_to)
+template&lt;typename From, typename To&gt;
+struct is_convertible_to {
+  static const bool value = __is_convertible_to(From, To);
+};
+#else
+// Emulate type trait
+#endif
+</pre>
+</blockquote>
+
+<p>The following type traits are supported by Clang:</p>
+<ul>
+  <li><code>__has_nothrow_assign</code> (GNU, Microsoft)</li>
+  <li><code>__has_nothrow_copy</code> (GNU, Microsoft)</li>
+  <li><code>__has_nothrow_constructor</code> (GNU, Microsoft)</li>
+  <li><code>__has_trivial_assign</code> (GNU, Microsoft)</li>
+  <li><code>__has_trivial_copy</code> (GNU, Microsoft)</li>
+  <li><code>__has_trivial_constructor</code> (GNU, Microsoft)</li>
+  <li><code>__has_trivial_destructor</code> (GNU, Microsoft)</li>
+  <li><code>__has_virtual_destructor</code> (GNU, Microsoft)</li>
+  <li><code>__is_abstract</code> (GNU, Microsoft)</li>
+  <li><code>__is_base_of</code> (GNU, Microsoft)</li>
+  <li><code>__is_class</code> (GNU, Microsoft)</li>
+  <li><code>__is_convertible_to</code> (Microsoft)</li>
+  <li><code>__is_empty</code> (GNU, Microsoft)</li>
+  <li><code>__is_enum</code> (GNU, Microsoft)</li>
+  <li><code>__is_pod</code> (GNU, Microsoft)</li>
+  <li><code>__is_polymorphic</code> (GNU, Microsoft)</li>
+  <li><code>__is_union</code> (GNU, Microsoft)</li>
+  <li><code>__is_literal(type)</code>: Determines whether the given type is a literal type</li>
+</ul>
 
 <!-- ======================================================================= -->
 <h2 id="blocks">Blocks</h2>
