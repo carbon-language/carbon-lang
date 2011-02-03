@@ -161,26 +161,28 @@ TEST(TripleTest, Normalization) {
       C[1] = Triple::getVendorTypeName(Triple::VendorType(Vendor));
       for (int OS = 1+Triple::UnknownOS; OS <= Triple::Minix; ++OS) {
         C[2] = Triple::getOSTypeName(Triple::OSType(OS));
+
+        // If a value has multiple interpretations, then the permutation
+        // test will inevitably fail.  Currently this is only the case for
+        // "psp" which parses as both an architecture and an O/S.
+        if (OS == Triple::Psp)
+          continue;
+
+        std::string E = Join(C[0], C[1], C[2]);
+        EXPECT_EQ(E, Triple::normalize(Join(C[0], C[1], C[2])));
+
+        EXPECT_EQ(E, Triple::normalize(Join(C[0], C[2], C[1])));
+        EXPECT_EQ(E, Triple::normalize(Join(C[1], C[2], C[0])));
+        EXPECT_EQ(E, Triple::normalize(Join(C[1], C[0], C[2])));
+        EXPECT_EQ(E, Triple::normalize(Join(C[2], C[0], C[1])));
+        EXPECT_EQ(E, Triple::normalize(Join(C[2], C[1], C[0])));
+
         for (int Env = 1+Triple::UnknownEnvironment; Env <= Triple::MachO;
              ++Env) {
           C[3] = Triple::getEnvironmentTypeName(Triple::EnvironmentType(Env));
 
-          std::string E = Join(C[0], C[1], C[2]);
           std::string F = Join(C[0], C[1], C[2], C[3]);
-          EXPECT_EQ(E, Triple::normalize(Join(C[0], C[1], C[2])));
           EXPECT_EQ(F, Triple::normalize(Join(C[0], C[1], C[2], C[3])));
-
-          // If a value has multiple interpretations, then the permutation
-          // test will inevitably fail.  Currently this is only the case for
-          // "psp" which parses as both an architecture and an O/S.
-          if (OS == Triple::Psp)
-            continue;
-
-          EXPECT_EQ(E, Triple::normalize(Join(C[0], C[2], C[1])));
-          EXPECT_EQ(E, Triple::normalize(Join(C[1], C[2], C[0])));
-          EXPECT_EQ(E, Triple::normalize(Join(C[1], C[0], C[2])));
-          EXPECT_EQ(E, Triple::normalize(Join(C[2], C[0], C[1])));
-          EXPECT_EQ(E, Triple::normalize(Join(C[2], C[1], C[0])));
 
           EXPECT_EQ(F, Triple::normalize(Join(C[0], C[1], C[3], C[2])));
           EXPECT_EQ(F, Triple::normalize(Join(C[0], C[2], C[3], C[1])));
