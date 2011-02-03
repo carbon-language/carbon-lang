@@ -1174,18 +1174,17 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
                     return;
                 }
                 
-                DataBufferMemoryMap buf;
+                DataBufferSP data_sp (file_spec.ReadFileContents());
                 
-                if (!buf.MemoryMapFromFileSpec(&file_spec) &&
-                    buf.GetError().Fail())
+                if (!data_sp && data_sp->GetByteSize() == 0)
                 {
                     err.SetErrorToGenericError ();
-                    err.SetErrorStringWithFormat ("Couldn't read from %s: %s\n", value, buf.GetError().AsCString());
+                    err.SetErrorStringWithFormat ("Couldn't read from %s\n", value);
                     return;
                 }
                 
                 m_expr_prefix_path = value;
-                m_expr_prefix_contents.assign(reinterpret_cast<const char *>(buf.GetBytes()), buf.GetByteSize());
+                m_expr_prefix_contents.assign(reinterpret_cast<const char *>(data_sp->GetBytes()), data_sp->GetByteSize());
             }
             return;
         case lldb::eVarSetOperationAppend:
