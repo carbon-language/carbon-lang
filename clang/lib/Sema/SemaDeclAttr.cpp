@@ -255,7 +255,7 @@ static void HandleIBAction(Decl *d, const AttributeList &Attr, Sema &S) {
       return;
     }
 
-  S.Diag(Attr.getLoc(), diag::err_attribute_ibaction) << Attr.getName();
+  S.Diag(Attr.getLoc(), diag::warn_attribute_ibaction) << Attr.getName();
 }
 
 static void HandleIBOutlet(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -272,7 +272,7 @@ static void HandleIBOutlet(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet) << Attr.getName();
+  S.Diag(Attr.getLoc(), diag::warn_attribute_iboutlet) << Attr.getName();
 }
 
 static void HandleIBOutletCollection(Decl *d, const AttributeList &Attr,
@@ -287,7 +287,7 @@ static void HandleIBOutletCollection(Decl *d, const AttributeList &Attr,
   // The IBOutletCollection attributes only apply to instance variables of
   // Objective-C classes.
   if (!(isa<ObjCIvarDecl>(d) || isa<ObjCPropertyDecl>(d))) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet) << Attr.getName();
+    S.Diag(Attr.getLoc(), diag::warn_attribute_iboutlet) << Attr.getName();
     return;
   }
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(d))

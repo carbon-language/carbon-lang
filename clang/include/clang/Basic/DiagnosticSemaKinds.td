@@ -1179,9 +1179,9 @@ def err_attribute_regparm_invalid_number : Error<
 
 
 // Clang-Specific Attributes
-def err_attribute_iboutlet : Error<
+def warn_attribute_iboutlet : Warning<
   "%0 attribute can only be applied to instance variables or properties">;
-def err_attribute_ibaction: Error<
+def warn_attribute_ibaction: Warning<
   "ibaction attribute can only be applied to Objective-C instance methods">;
 def err_attribute_overloadable_not_function : Error<
   "'overloadable' attribute can only be applied to a function">;
