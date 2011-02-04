@@ -428,13 +428,16 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     ABIName = A->getValue(Args);
   } else {
     // Select the default based on the platform.
-    llvm::StringRef env = Triple.getEnvironmentName();
-    if (env == "gnueabi")
+    switch(Triple.getEnvironment()) {
+    case llvm::Triple::GNUEABI:
       ABIName = "aapcs-linux";
-    else if (env == "eabi")
+      break;
+    case llvm::Triple::EABI:
       ABIName = "aapcs";
-    else
+      break;
+    default:
       ABIName = "apcs-gnu";
+    }
   }
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName);
@@ -481,8 +484,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     }
 
     case llvm::Triple::Linux: {
-      llvm::StringRef Env = getToolChain().getTriple().getEnvironmentName();
-      if (Env == "gnueabi") {
+      if (getToolChain().getTriple().getEnvironment() == llvm::Triple::GNUEABI) {
         FloatABI = "softfp";
         break;
       }
@@ -490,10 +492,20 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     // fall through
 
     default:
-      // Assume "soft", but warn the user we are guessing.
-      FloatABI = "soft";
-      D.Diag(clang::diag::warn_drv_assuming_mfloat_abi_is) << "soft";
-      break;
+      switch(Triple.getEnvironment()) {
+      case llvm::Triple::GNUEABI:
+        FloatABI = "softfp";
+        break;
+      case llvm::Triple::EABI:
+        // EABI is always AAPCS, and if it was not marked 'hard', it's softfp
+        FloatABI = "softfp";
+        break;
+      default:
+        // Assume "soft", but warn the user we are guessing.
+        FloatABI = "soft";
+        D.Diag(clang::diag::warn_drv_assuming_mfloat_abi_is) << "soft";
+        break;
+      }
     }
   }
 
