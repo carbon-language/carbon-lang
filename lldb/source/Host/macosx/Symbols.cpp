@@ -46,7 +46,7 @@ SkinnyMachOFileContainsArchAndUUID
 (
     const FileSpec &file_spec,
     const ArchSpec *arch,
-    const UUID *uuid,   // the UUID we are looking for
+    const lldb_private::UUID *uuid,   // the UUID we are looking for
     off_t file_offset,
     DataExtractor& data,
     uint32_t data_offset,
@@ -112,7 +112,7 @@ SkinnyMachOFileContainsArchAndUUID
         uint32_t cmd_size   = data.GetU32(&data_offset);
         if (cmd == LoadCommandUUID)
         {
-            UUID file_uuid (data.GetData(&data_offset, 16), 16);
+            lldb_private::UUID file_uuid (data.GetData(&data_offset, 16), 16);
             return file_uuid == *uuid;
         }
         data_offset = cmd_offset + cmd_size;
@@ -125,7 +125,7 @@ UniversalMachOFileContainsArchAndUUID
 (
     const FileSpec &file_spec,
     const ArchSpec *arch,
-    const UUID *uuid,
+    const lldb_private::UUID *uuid,
     off_t file_offset,
     DataExtractor& data,
     uint32_t data_offset,
@@ -188,7 +188,7 @@ FileAtPathContainsArchAndUUID
 (
     const FileSpec &file_spec,
     const ArchSpec *arch,
-    const UUID *uuid
+    const lldb_private::UUID *uuid
 )
 {
     DataExtractor data;
@@ -227,7 +227,7 @@ static FileSpec
 LocateDSYMMachFileInDSYMBundle
 (
     const FileSpec& dsym_bundle_fspec,
-    const UUID *uuid,
+    const lldb_private::UUID *uuid,
     const ArchSpec *arch)
 {
     char path[PATH_MAX];
@@ -273,7 +273,7 @@ LocateMacOSXFilesUsingDebugSymbols
 (
     const FileSpec *exec_fspec, // An executable path that may or may not be correct if UUID is specified
     const ArchSpec* arch,       // Limit the search to files with this architecture if non-NULL
-    const UUID *uuid,           // Match the UUID value if non-NULL,
+    const lldb_private::UUID *uuid,           // Match the UUID value if non-NULL,
     FileSpec *out_exec_fspec,   // If non-NULL, try and find the executable
     FileSpec *out_dsym_fspec    // If non-NULL try and find the debug symbol file
 )
@@ -369,7 +369,7 @@ LocateMacOSXFilesUsingDebugSymbols
 }
 
 static bool
-LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* arch, const UUID *uuid, FileSpec &dsym_fspec)
+LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* arch, const lldb_private::UUID *uuid, FileSpec &dsym_fspec)
 {
     if (exec_fspec)
     {
@@ -429,7 +429,7 @@ LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* a
 }
 
 FileSpec
-Symbols::LocateExecutableObjectFile (const FileSpec *exec_fspec, const ArchSpec* arch, const UUID *uuid)
+Symbols::LocateExecutableObjectFile (const FileSpec *exec_fspec, const ArchSpec* arch, const lldb_private::UUID *uuid)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "LocateExecutableObjectFile (file = %s, arch = %s, uuid = %p)",
@@ -446,7 +446,7 @@ Symbols::LocateExecutableObjectFile (const FileSpec *exec_fspec, const ArchSpec*
 }
 
 FileSpec
-Symbols::LocateExecutableSymbolFile (const FileSpec *exec_fspec, const ArchSpec* arch, const UUID *uuid)
+Symbols::LocateExecutableSymbolFile (const FileSpec *exec_fspec, const ArchSpec* arch, const lldb_private::UUID *uuid)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "LocateExecutableSymbolFile (file = %s, arch = %s, uuid = %p)",

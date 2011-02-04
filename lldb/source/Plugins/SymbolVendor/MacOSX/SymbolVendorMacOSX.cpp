@@ -43,7 +43,7 @@ UUIDsMatch(Module *module, ObjectFile *ofile)
     if (module && ofile)
     {
         // Make sure the UUIDs match
-        UUID dsym_uuid;
+        lldb_private::UUID dsym_uuid;
         if (ofile->GetUUID(&dsym_uuid))
             return dsym_uuid == module->GetUUID();
     }

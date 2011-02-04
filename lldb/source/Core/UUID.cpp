@@ -18,7 +18,7 @@
 // Project includes
 #include "lldb/Core/Stream.h"
 
-using namespace lldb_private;
+namespace lldb_private {
 
 UUID::UUID()
 {
@@ -175,40 +175,40 @@ UUID::SetfromCString (const char *cstr)
     return 0;
 }
 
-
-
-bool
-lldb_private::operator == (const UUID &lhs, const UUID &rhs)
-{
-    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), UUID::GetByteSize()) == 0;
 }
 
 bool
-lldb_private::operator != (const UUID &lhs, const UUID &rhs)
+lldb_private::operator == (const lldb_private::UUID &lhs, const lldb_private::UUID &rhs)
+{
+    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), lldb_private::UUID::GetByteSize()) == 0;
+}
+
+bool
+lldb_private::operator != (const lldb_private::UUID &lhs, const lldb_private::UUID &rhs)
 {
     return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), UUID::GetByteSize()) != 0;
 }
 
 bool
-lldb_private::operator <  (const UUID &lhs, const UUID &rhs)
+lldb_private::operator <  (const lldb_private::UUID &lhs, const lldb_private::UUID &rhs)
 {
-    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), UUID::GetByteSize()) <  0;
+    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), lldb_private::UUID::GetByteSize()) <  0;
 }
 
 bool
-lldb_private::operator <= (const UUID &lhs, const UUID &rhs)
+lldb_private::operator <= (const lldb_private::UUID &lhs, const lldb_private::UUID &rhs)
 {
-    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), UUID::GetByteSize()) <= 0;
+    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), lldb_private::UUID::GetByteSize()) <= 0;
 }
 
 bool
-lldb_private::operator >  (const UUID &lhs, const UUID &rhs)
+lldb_private::operator >  (const lldb_private::UUID &lhs, const lldb_private::UUID &rhs)
 {
-    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), UUID::GetByteSize()) >  0;
+    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), lldb_private::UUID::GetByteSize()) >  0;
 }
 
 bool
-lldb_private::operator >= (const UUID &lhs, const UUID &rhs)
+lldb_private::operator >= (const lldb_private::UUID &lhs, const lldb_private::UUID &rhs)
 {
-    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), UUID::GetByteSize()) >= 0;
+    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), lldb_private::UUID::GetByteSize()) >= 0;
 }

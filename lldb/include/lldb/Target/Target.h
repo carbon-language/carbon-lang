@@ -154,7 +154,7 @@ public:
     lldb::ModuleSP
     GetSharedModule (const FileSpec& file_spec,
                      const ArchSpec& arch,
-                     const UUID *uuid = NULL,
+                     const lldb_private::UUID *uuid = NULL,
                      const ConstString *object_name = NULL,
                      off_t object_offset = 0,
                      Error *error_ptr = NULL);

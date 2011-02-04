@@ -207,7 +207,7 @@ ObjectFileELF::ParseHeader()
 }
 
 bool
-ObjectFileELF::GetUUID(UUID* uuid)
+ObjectFileELF::GetUUID(lldb_private::UUID* uuid)
 {
     // FIXME: Return MD5 sum here.  See comment in ObjectFile.h.
     return false;

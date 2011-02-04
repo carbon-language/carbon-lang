@@ -78,7 +78,7 @@ Module::GetSP ()
     return ModuleList::GetModuleSP (this);
 }
 
-const UUID&
+const lldb_private::UUID&
 Module::GetUUID()
 {
     Mutex::Locker locker (m_mutex);

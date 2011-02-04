@@ -1657,7 +1657,7 @@ DataExtractor::DumpUUID (Stream *s, uint32_t offset) const
         const uint8_t *uuid_data = PeekData(offset, 16);
         if ( uuid_data )
         {
-            UUID uuid(uuid_data, 16);
+            lldb_private::UUID uuid(uuid_data, 16);
             uuid.Dump(s);
         }
         else

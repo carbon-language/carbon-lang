@@ -215,7 +215,7 @@ public:
     //--------------------------------------------------------------
     ModuleMatches (const FileSpec *file_spec_ptr,
                    const ArchSpec *arch_ptr,
-                   const UUID *uuid_ptr,
+                   const lldb_private::UUID *uuid_ptr,
                    const ConstString *object_name) :
         m_file_spec_ptr (file_spec_ptr),
         m_arch_ptr (arch_ptr),
@@ -260,10 +260,10 @@ private:
     //--------------------------------------------------------------
     // Member variables.
     //--------------------------------------------------------------
-    const FileSpec *    m_file_spec_ptr;
-    const ArchSpec *    m_arch_ptr;
-    const UUID *        m_uuid_ptr;
-    const ConstString * m_object_name;
+    const FileSpec *            m_file_spec_ptr;
+    const ArchSpec *            m_arch_ptr;
+    const lldb_private::UUID *  m_uuid_ptr;
+    const ConstString *         m_object_name;
 };
 
 size_t
@@ -271,7 +271,7 @@ ModuleList::FindModules
 (
     const FileSpec *file_spec_ptr,
     const ArchSpec *arch_ptr,
-    const UUID *uuid_ptr,
+    const lldb_private::UUID *uuid_ptr,
     const ConstString *object_name,
     ModuleList& matching_module_list
 ) const
@@ -534,7 +534,7 @@ ModuleList::FindSharedModules
 (
     const FileSpec& in_file_spec,
     const ArchSpec& arch,
-    const UUID *uuid_ptr,
+    const lldb_private::UUID *uuid_ptr,
     const ConstString *object_name_ptr,
     ModuleList &matching_module_list
 )
@@ -549,7 +549,7 @@ ModuleList::GetSharedModule
 (
     const FileSpec& in_file_spec,
     const ArchSpec& arch,
-    const UUID *uuid_ptr,
+    const lldb_private::UUID *uuid_ptr,
     const ConstString *object_name_ptr,
     off_t object_offset,
     ModuleSP &module_sp,

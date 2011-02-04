@@ -1362,7 +1362,7 @@ ObjectFileMachO::Dump (Stream *s)
 
 
 bool
-ObjectFileMachO::GetUUID (UUID* uuid)
+ObjectFileMachO::GetUUID (lldb_private::UUID* uuid)
 {
     lldb_private::Mutex::Locker locker(m_mutex);
     struct uuid_command load_cmd;

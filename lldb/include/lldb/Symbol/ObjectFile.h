@@ -279,7 +279,7 @@ public:
     ///     \a uuid, \b false otherwise.
     //------------------------------------------------------------------
     virtual bool
-    GetUUID (UUID* uuid) = 0;
+    GetUUID (lldb_private::UUID* uuid) = 0;
 
     //------------------------------------------------------------------
     /// Gets whether endian swapping should occur when extracting data

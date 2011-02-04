@@ -42,7 +42,7 @@ using namespace llvm::MachO;
 
 
 DynamicLoaderMacOSXDYLD::DYLDImageInfo *
-DynamicLoaderMacOSXDYLD::GetImageInfo (const FileSpec &file_spec, const UUID &uuid)
+DynamicLoaderMacOSXDYLD::GetImageInfo (const FileSpec &file_spec, const lldb_private::UUID &uuid)
 {
     DYLDImageInfo::collection::iterator pos, end = m_dyld_image_infos.end();
     for (pos = m_dyld_image_infos.begin(); pos != end; ++pos)

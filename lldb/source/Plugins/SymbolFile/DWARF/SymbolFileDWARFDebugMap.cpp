@@ -168,7 +168,7 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
 
             ModuleList::GetSharedModule (oso_file_spec,
                                          m_obj_file->GetModule()->GetArchitecture(),
-                                         NULL,  // UUID pointer
+                                         NULL,  // lldb_private::UUID pointer
                                          NULL,  // object name
                                          0,     // object offset
                                          comp_unit_info->oso_module_sp,

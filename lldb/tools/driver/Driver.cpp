@@ -935,7 +935,7 @@ Driver::HandleIOEvent (const SBEvent &event)
 //{
 //    std::string path;
 //    VMRange text_range;
-//    UUID uuid;
+//    lldb_private::UUID uuid;
 //};
 //
 //void

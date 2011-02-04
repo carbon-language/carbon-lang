@@ -259,7 +259,7 @@ public:
     size_t
     FindModules (const FileSpec *file_spec_ptr,
                  const ArchSpec *arch_ptr,
-                 const UUID *uuid_ptr,
+                 const lldb_private::UUID *uuid_ptr,
                  const ConstString *object_name,
                  ModuleList& matching_module_list) const;
 
@@ -368,7 +368,7 @@ public:
     static Error
     GetSharedModule (const FileSpec& file_spec,
                      const ArchSpec& arch,
-                     const UUID *uuid_ptr,
+                     const lldb_private::UUID *uuid_ptr,
                      const ConstString *object_name,
                      off_t object_offset,
                      lldb::ModuleSP &module_sp,
@@ -378,7 +378,7 @@ public:
     static size_t
     FindSharedModules (const FileSpec& in_file_spec,
                        const ArchSpec& arch,
-                       const UUID *uuid_ptr,
+                       const lldb_private::UUID *uuid_ptr,
                        const ConstString *object_name_ptr,
                        ModuleList &matching_module_list);
 

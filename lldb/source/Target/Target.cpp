@@ -700,7 +700,7 @@ Target::GetSharedModule
 (
     const FileSpec& file_spec,
     const ArchSpec& arch,
-    const UUID *uuid_ptr,
+    const lldb_private::UUID *uuid_ptr,
     const ConstString *object_name,
     off_t object_offset,
     Error *error_ptr

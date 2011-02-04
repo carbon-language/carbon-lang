@@ -82,7 +82,7 @@ public:
     CreateTarget (Debugger &debugger,
                   const FileSpec& file_spec,
                   const ArchSpec& arch,
-                  const UUID *uuid_ptr,
+                  const lldb_private::UUID *uuid_ptr,
                   bool get_dependent_files,
                   lldb::TargetSP &target_sp);
 

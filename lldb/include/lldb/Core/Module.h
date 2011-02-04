@@ -416,7 +416,7 @@ public:
     ///     this module if this module has a valid UUID value, NULL
     ///     otherwise.
     //------------------------------------------------------------------
-    const UUID &
+    const lldb_private::UUID &
     GetUUID ();
 
     //------------------------------------------------------------------
@@ -559,7 +559,7 @@ protected:
     mutable Mutex               m_mutex;        ///< A mutex to keep this object happy in multi-threaded environments.
     TimeValue                   m_mod_time;     ///< The modification time for this module when it was created.
     ArchSpec                    m_arch;         ///< The architecture for this module.
-    UUID                        m_uuid;         ///< Each module is assumed to have a unique identifier to help match it up to debug symbols.
+    lldb_private::UUID          m_uuid;         ///< Each module is assumed to have a unique identifier to help match it up to debug symbols.
     FileSpec                    m_file;         ///< The file representation on disk for this module (if there is one).
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     std::auto_ptr<ObjectFile>   m_objfile_ap;   ///< A pointer to the object file parser for this module.
