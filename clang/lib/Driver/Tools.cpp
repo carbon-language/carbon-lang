@@ -1358,7 +1358,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // these by hand.
 
   if (Args.hasArg(options::OPT_mkernel)) {
-    if (!Args.hasArg(options::OPT_fapple_kext))
+    if (!Args.hasArg(options::OPT_fapple_kext) && types::isCXX(InputType))
       CmdArgs.push_back("-fapple-kext");
     if (!Args.hasArg(options::OPT_fbuiltin))
       CmdArgs.push_back("-fno-builtin");
