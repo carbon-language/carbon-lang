@@ -764,7 +764,7 @@ LiveIntervals::getLastSplitPoint(const LiveInterval &li,
     if (I->getDesc().isCall())
       return I;
   }
-  assert(0 && "Block with landing pad successor contains no call instruction");
+  // The block contains no calls that can throw, so use the first terminator.
   return mbb->getFirstTerminator();
 }
 
