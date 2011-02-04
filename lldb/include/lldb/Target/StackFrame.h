@@ -30,7 +30,7 @@ class StackFrame :
     public ExecutionContextScope
 {
 public:
-    typedef enum ExpressionPathOption
+    enum ExpressionPathOption
     {
         eExpressionPathOptionCheckPtrVsMember   = (1u << 0),
         eExpressionPathOptionsNoFragileObjcIvar = (1u << 1)

@@ -114,7 +114,7 @@ ThreadPlanStepOut::PlanExplainsStop ()
             if (site_sp && site_sp->IsBreakpointAtThisSite (m_return_bp_id))
             {
                 const uint32_t num_frames = m_thread.GetStackFrameCount();
-                if (m_stack_depth > num_frames);
+                if (m_stack_depth > num_frames)
                     SetPlanComplete();
 
                 // If there was only one owner, then we're done.  But if we also hit some

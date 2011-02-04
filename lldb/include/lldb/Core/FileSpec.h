@@ -544,7 +544,7 @@ public:
     static size_t
     ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
 
-    typedef enum EnumerateDirectoryResult
+    enum EnumerateDirectoryResult
     {
         eEnumerateDirectoryResultNext,  // Enumerate next entry in the current directory
         eEnumerateDirectoryResultEnter, // Recurse into the current entry if it is a directory or symlink, or next if not
