@@ -40,9 +40,12 @@ enum Fixups {
   // fixup_t2_adr_pcrel_12 - 12-bit PC relative relocation for the ADR
   // instruction.
   fixup_t2_adr_pcrel_12,
-  // fixup_arm_branch - 24-bit PC relative relocation for direct branch
-  // instructions.
-  fixup_arm_branch,
+  // fixup_arm_condbranch - 24-bit PC relative relocation for conditional branch
+  // instructions. 
+  fixup_arm_condbranch,
+  // fixup_arm_uncondbranch - 24-bit PC relative relocation for 
+  // branch instructions. (unconditional)
+  fixup_arm_uncondbranch,
   // fixup_t2_condbranch - 20-bit PC relative relocation for Thumb2 direct
   // uconditional branch instructions.
   fixup_t2_condbranch,

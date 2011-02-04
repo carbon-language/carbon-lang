@@ -67,7 +67,8 @@ public:
 { "fixup_arm_adr_pcrel_12",  1,            24,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_adr_pcrel_12",   0,            32,  MCFixupKindInfo::FKF_IsPCRel |
                                    MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
-{ "fixup_arm_branch",        0,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_condbranch",    0,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_uncondbranch",  0,            24,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_condbranch",     0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_uncondbranch",   0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_br",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
@@ -254,7 +255,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     return swapped;
   }
 
-  case ARM::fixup_arm_branch:
+  case ARM::fixup_arm_condbranch:
+  case ARM::fixup_arm_uncondbranch:
     // These values don't encode the low two bits since they're always zero.
     // Offset by 8 just as above.
     return 0xffffff & ((Value - 8) >> 2);
@@ -454,7 +456,8 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_arm_ldst_pcrel_12:
   case ARM::fixup_arm_pcrel_10:
   case ARM::fixup_arm_adr_pcrel_12:
-  case ARM::fixup_arm_branch:
+  case ARM::fixup_arm_condbranch:
+  case ARM::fixup_arm_uncondbranch:
     return 3;
 
   case FK_Data_4:

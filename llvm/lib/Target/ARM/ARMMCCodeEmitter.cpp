@@ -99,6 +99,10 @@ public:
   uint32_t getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                   SmallVectorImpl<MCFixup> &Fixups) const;
   
+  /// getARMBranchTargetOpValue - Return encoding info for 24-bit immediate
+  /// branch target.
+  uint32_t getARMBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                                     SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getAdrLabelOpValue - Return encoding info for 12-bit immediate
   /// ADR label target.
@@ -473,6 +477,23 @@ getThumbCBTargetOpValue(const MCInst &MI, unsigned OpIdx,
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_cb, Fixups);
 }
 
+/// Return true if this branch has a non-always predication
+static bool HasConditionalBranch(const MCInst &MI) {
+  int NumOp = MI.getNumOperands();
+  if (NumOp >= 2) {
+    for (int i = 0; i < NumOp-1; ++i) {
+      const MCOperand &MCOp1 = MI.getOperand(i);
+      const MCOperand &MCOp2 = MI.getOperand(i + 1);
+      if (MCOp1.isImm() && MCOp2.isReg() && 
+          (MCOp2.getReg() == 0 || MCOp2.getReg() == ARM::CPSR)) {
+        if (ARMCC::CondCodes(MCOp1.getImm()) != ARMCC::AL) 
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
 /// getBranchTargetOpValue - Return encoding info for 24-bit immediate branch
 /// target.
 uint32_t ARMMCCodeEmitter::
@@ -483,8 +504,23 @@ getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   if (Subtarget->isThumb2())
     return
       ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_condbranch, Fixups);
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_branch, Fixups);
+  return getARMBranchTargetOpValue(MI, OpIdx, Fixups);
 }
+
+/// getBranchTargetOpValue - Return encoding info for 24-bit immediate branch
+/// target.
+uint32_t ARMMCCodeEmitter::
+getARMBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                          SmallVectorImpl<MCFixup> &Fixups) const {
+  if (HasConditionalBranch(MI)) 
+    return ::getBranchTargetOpValue(MI, OpIdx,
+                                    ARM::fixup_arm_condbranch, Fixups);
+  return ::getBranchTargetOpValue(MI, OpIdx, 
+                                  ARM::fixup_arm_uncondbranch, Fixups);
+}
+
+
+
 
 /// getUnconditionalBranchTargetOpValue - Return encoding info for 24-bit
 /// immediate branch target.

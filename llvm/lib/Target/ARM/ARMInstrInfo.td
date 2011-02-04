@@ -293,19 +293,35 @@ def fsub_mlx : PatFrag<(ops node:$lhs, node:$rhs),(fsub node:$lhs, node:$rhs),[{
 //
 
 // Branch target.
+// FIXME: rename brtarget to t2_brtarget
 def brtarget : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
 }
 
+// FIXME: get rid of this one?
 def uncondbrtarget : Operand<OtherVT> {
   let EncoderMethod = "getUnconditionalBranchTargetOpValue";
 }
 
+// Branch target for ARM. Handles conditional/unconditional
+def br_target : Operand<OtherVT> {
+  let EncoderMethod = "getARMBranchTargetOpValue";
+}
+
 // Call target.
+// FIXME: rename bltarget to t2_bl_target?
 def bltarget : Operand<i32> {
   // Encoded the same as branch targets.
   let EncoderMethod = "getBranchTargetOpValue";
 }
+
+// Call target for ARM. Handles conditional/unconditional
+// FIXME: rename bl_target to t2_bltarget?
+def bl_target : Operand<i32> {
+  // Encoded the same as branch targets.
+  let EncoderMethod = "getARMBranchTargetOpValue";
+}
+
 
 // A list of registers separated by comma. Used by load/store multiple.
 def RegListAsmOperand : AsmOperandClass {
@@ -1271,7 +1287,7 @@ let isCall = 1,
           D16, D17, D18, D19, D20, D21, D22, D23,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR],
   Uses = [SP] in {
-  def BL  : ABXI<0b1011, (outs), (ins bltarget:$func, variable_ops),
+  def BL  : ABXI<0b1011, (outs), (ins bl_target:$func, variable_ops),
                 IIC_Br, "bl\t$func",
                 [(ARMcall tglobaladdr:$func)]>,
             Requires<[IsARM, IsNotDarwin]> {
@@ -1280,7 +1296,7 @@ let isCall = 1,
     let Inst{23-0} = func;
   }
 
-  def BL_pred : ABI<0b1011, (outs), (ins bltarget:$func, variable_ops),
+  def BL_pred : ABI<0b1011, (outs), (ins bl_target:$func, variable_ops),
                    IIC_Br, "bl", "\t$func",
                    [(ARMcall_pred tglobaladdr:$func)]>,
                 Requires<[IsARM, IsNotDarwin]> {
@@ -1456,7 +1472,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
   // a two-value operand where a dag node expects two operands. :(
-  def Bcc : ABI<0b1010, (outs), (ins brtarget:$target),
+  def Bcc : ABI<0b1010, (outs), (ins br_target:$target),
                IIC_Br, "b", "\t$target",
                [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]> {
     bits<24> target;

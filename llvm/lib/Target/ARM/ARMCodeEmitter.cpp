@@ -187,6 +187,8 @@ namespace {
       const { return 0; }
     unsigned getUnconditionalBranchTargetOpValue(const MachineInstr &MI,
       unsigned Op) const { return 0; }
+    unsigned getARMBranchTargetOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
     unsigned getCCOutOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getSOImmOpValue(const MachineInstr &MI, unsigned Op)
