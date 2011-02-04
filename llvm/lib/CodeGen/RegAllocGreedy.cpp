@@ -611,9 +611,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     if (!IntI.valid())
       continue;
     for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
-      BlockInfo &BI = LiveBlocks[i];
-      if (!BI.Uses)
-        continue;
+      const BlockInfo &BI = LiveBlocks[i];
       IndexPair &IP = InterferenceRanges[i];
       SlotIndex Start, Stop;
       tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
