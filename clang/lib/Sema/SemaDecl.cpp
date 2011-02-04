@@ -3967,8 +3967,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       FunctionTemplateDecl *PrevTemplate = FunctionTemplate->getPreviousDeclaration();
       CheckTemplateParameterList(FunctionTemplate->getTemplateParameters(),
                                  PrevTemplate? PrevTemplate->getTemplateParameters() : 0,
-                                 D.getDeclSpec().isFriendSpecified()? TPC_FriendFunctionTemplate
-                                                  : TPC_FunctionTemplate);
+                            D.getDeclSpec().isFriendSpecified()
+                              ? (IsFunctionDefinition 
+                                   ? TPC_FriendFunctionTemplateDefinition
+                                   : TPC_FriendFunctionTemplate)
+                              : (D.getCXXScopeSpec().isSet() && 
+                                 DC && DC->isRecord())
+                                  ? TPC_ClassTemplateMember
+                                  : TPC_FunctionTemplate);
     }
 
     if (NewFD->isInvalidDecl()) {

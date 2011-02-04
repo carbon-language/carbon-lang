@@ -2914,7 +2914,8 @@ public:
     TPC_ClassTemplate,
     TPC_FunctionTemplate,
     TPC_ClassTemplateMember,
-    TPC_FriendFunctionTemplate
+    TPC_FriendFunctionTemplate,
+    TPC_FriendFunctionTemplateDefinition
   };
 
   bool CheckTemplateParameterList(TemplateParameterList *NewParams,

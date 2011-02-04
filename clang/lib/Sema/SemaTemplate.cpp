@@ -946,7 +946,10 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // template declaration.
   if (CheckTemplateParameterList(TemplateParams,
             PrevClassTemplate? PrevClassTemplate->getTemplateParameters() : 0,
-                                 TPC_ClassTemplate))
+                                 (SS.isSet() && SemanticContext &&
+                                  SemanticContext->isRecord())
+                                   ? TPC_ClassTemplateMember
+                                   : TPC_ClassTemplate))
     Invalid = true;
 
   if (SS.isSet()) {
@@ -1045,11 +1048,15 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
     return false;
 
   case Sema::TPC_FunctionTemplate:
+  case Sema::TPC_FriendFunctionTemplateDefinition:
     // C++ [temp.param]p9:
     //   A default template-argument shall not be specified in a
     //   function template declaration or a function template
     //   definition [...]
-    // (This sentence is not in C++0x, per DR226).
+    //   If a friend function template declaration specifies a default 
+    //   template-argument, that declaration shall be a definition and shall be
+    //   the only declaration of the function template in the translation unit.
+    // (C++98/03 doesn't have this wording; see DR226).
     if (!S.getLangOptions().CPlusPlus0x)
       S.Diag(ParamLoc,
              diag::ext_template_parameter_default_in_function_template)
