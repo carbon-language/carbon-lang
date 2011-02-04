@@ -504,8 +504,9 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
     if (!I->isPHI() && !I->isDebugValue())
       InstrCount += 1;
   }
-  // Heuristically, don't tail-duplicate calls if it would expand code size,
-  // as it's less likely to be worth the extra cost.
+  // Don't tail-duplicate calls before register allocation. Calls presents a
+  // barrier to register allocation so duplicating them may end up increasing
+  // spills.
   if (InstrCount > 1 && (PreRegAlloc && HasCall))
     return false;
 
