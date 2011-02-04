@@ -14,7 +14,9 @@
 # Set up variables for building a unit test.
 ifdef TESTNAME
 
+ifndef MAKEFILE_UNITTEST_NO_INCLUDE_COMMON
 include $(LEVEL)/Makefile.common
+endif
 
 LLVMUnitTestExe = $(BuildMode)/$(TESTNAME)Tests$(EXEEXT)
 
