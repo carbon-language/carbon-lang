@@ -781,6 +781,7 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
             if (Rm == 15)
                 return false;
             target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+            break;
         default:
             return false;
         }
@@ -1236,6 +1237,53 @@ EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
     return true;
 }
 
+// SVC (previously SWI)
+bool
+EmulateInstructionARM::EmulateSVC (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        CallSupervisor();
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        addr_t lr; // next instruction address
+        if (!success)
+            return false;
+        uint32_t imm32; // the immediate constant
+        uint32_t mode;  // ARM or Thumb mode
+        switch (encoding) {
+        case eEncodingT1:
+            lr = (pc + 2) | 1u; // return address
+            imm32 = Bits32(opcode, 7, 0);
+            mode = eModeThumb;
+            break;
+        case eEncodingA1:
+            lr = pc + 4; // return address
+            imm32 = Bits32(opcode, 23, 0);
+            mode = eModeARM;
+            break;
+        default:
+            return false;
+        }
+        EmulateInstruction::Context context = { EmulateInstruction::eContextSupervisorCall, mode, imm32, 0};
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
+            return false;
+    }
+    return true;
+}
+
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -1280,7 +1328,13 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
         { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePop, "pop <register>"},
         { 0x0fbf0f00, 0x0cbd0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
-        { 0x0fbf0f00, 0x0cbd0a00, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
+        { 0x0fbf0f00, 0x0cbd0a00, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
+
+        //----------------------------------------------------------------------
+        // Supervisor Call (previously Software Interrupt)
+        //----------------------------------------------------------------------
+        { 0x0f000000, 0x0f000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "svc #imm24"}
+
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
                   
@@ -1340,7 +1394,13 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
         { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <register>" },
         { 0xffbf0f00, 0xecbd0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
-        { 0xffbf0f00, 0xecbd0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"}
+        { 0xffbf0f00, 0xecbd0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
+
+        //----------------------------------------------------------------------
+        // Supervisor Call (previously Software Interrupt)
+        //----------------------------------------------------------------------
+        { 0xffffff00, 0x0000df00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSVC, "svc #imm8"}
+
     };
 
     const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);

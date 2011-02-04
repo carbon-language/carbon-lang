@@ -132,6 +132,13 @@ public:
         // arg1 = target register number
         // arg2 = target instruction set or don't care
         eContextAbsoluteBranchRegister,
+
+        // Used when performing a supervisor call to an operating system to
+        // provide a service:
+        // arg0 = current instruction set or don't care
+        // arg1 = immediate data or don't care
+        // arg2 = don't care
+        eContextSupervisorCall
     };
     
     struct Context
