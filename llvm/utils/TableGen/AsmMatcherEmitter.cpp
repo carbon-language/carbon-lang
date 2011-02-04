@@ -1356,7 +1356,7 @@ void MatchableInfo::BuildAliasResultOperands() {
   }
 }
 
-static void EmitConvertToMCInst(CodeGenTarget &Target,
+static void EmitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
                                 std::vector<MatchableInfo*> &Infos,
                                 raw_ostream &OS) {
   // Write the convert function to a separate stream, so we can drop it after
@@ -1368,7 +1368,8 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
   std::set<std::string> GeneratedFns;
 
   // Start the unified conversion function.
-  CvtOS << "static bool ConvertToMCInst(ConversionKind Kind, MCInst &Inst, "
+  CvtOS << "bool " << Target.getName() << ClassName << "::\n";
+  CvtOS << "ConvertToMCInst(unsigned Kind, MCInst &Inst, "
         << "unsigned Opcode,\n"
         << "                      const SmallVectorImpl<MCParsedAsmOperand*"
         << "> &Operands) {\n";
@@ -1921,6 +1922,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    Match_MnemonicFail,\n";
   OS << "    Match_Success\n";
   OS << "  };\n";
+  OS << "  bool ConvertToMCInst(unsigned Kind, MCInst &Inst, "
+     << "unsigned Opcode,\n"
+     << "                       const SmallVectorImpl<MCParsedAsmOperand*> "
+     << "&Operands);\n";
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
   OS << "  MatchResultTy MatchInstructionImpl(\n";
   OS << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
@@ -1946,7 +1951,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   bool HasMnemonicAliases = EmitMnemonicAliases(OS, Info);
 
   // Generate the unified function to convert operands into an MCInst.
-  EmitConvertToMCInst(Target, Info.Matchables, OS);
+  EmitConvertToMCInst(Target, ClassName, Info.Matchables, OS);
 
   // Emit the enumeration for classes which participate in matching.
   EmitMatchClassEnumeration(Target, Info.Classes, OS);
