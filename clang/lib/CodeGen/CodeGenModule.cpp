@@ -1119,6 +1119,9 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
     }
   }
   
+  if (Context.getLangOptions().AppleKext)
+    return llvm::Function::InternalLinkage;
+  
   switch (RD->getTemplateSpecializationKind()) {
   case TSK_Undeclared:
   case TSK_ExplicitSpecialization:
@@ -1127,19 +1130,14 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
     // breaks LLVM's build due to undefined symbols.
     //   return llvm::GlobalVariable::AvailableExternallyLinkage;
   case TSK_ExplicitInstantiationDeclaration:
-    break;
+    return llvm::GlobalVariable::LinkOnceODRLinkage;
 
   case TSK_ExplicitInstantiationDefinition:
-    return !Context.getLangOptions().AppleKext ?
-             llvm::GlobalVariable::WeakODRLinkage :
-             llvm::Function::InternalLinkage;
-    
+      return llvm::GlobalVariable::WeakODRLinkage;
   }
   
   // Silence GCC warning.
-  return !Context.getLangOptions().AppleKext ?
-           llvm::GlobalVariable::LinkOnceODRLinkage :
-           llvm::Function::InternalLinkage;
+  return llvm::GlobalVariable::LinkOnceODRLinkage;
 }
 
 CharUnits CodeGenModule::GetTargetTypeStoreSize(const llvm::Type *Ty) const {
