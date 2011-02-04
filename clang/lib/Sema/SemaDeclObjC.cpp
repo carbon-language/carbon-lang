@@ -1994,7 +1994,11 @@ void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
 }
 
 void Sema::DiagnoseUseOfUnimplementedSelectors() {
-  if (ReferencedSelectors.empty())
+  // Warning will be issued only when selector table is
+  // generated (which means there is at lease one implementation
+  // in the TU). This is to match gcc's behavior.
+  if (ReferencedSelectors.empty() || 
+      !Context.AnyObjCImplementation())
     return;
   for (llvm::DenseMap<Selector, SourceLocation>::iterator S = 
         ReferencedSelectors.begin(),

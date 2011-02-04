@@ -1381,6 +1381,11 @@ public:
   /// \brief Get the implementation of ObjCCategoryDecl, or NULL if none exists.
   ObjCCategoryImplDecl   *getObjCImplementation(ObjCCategoryDecl *D);
 
+  /// \brief returns true if there is at lease one @implementation in TU.
+  bool AnyObjCImplementation() {
+    return !ObjCImpls.empty();
+  }
+
   /// \brief Set the implementation of ObjCInterfaceDecl.
   void setObjCImplementation(ObjCInterfaceDecl *IFaceD,
                              ObjCImplementationDecl *ImplD);
