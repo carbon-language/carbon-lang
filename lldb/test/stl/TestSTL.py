@@ -56,7 +56,7 @@ class STLTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
-        self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
+        self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
         # Now do 'thread step-in', we should stop on the basic_string template.

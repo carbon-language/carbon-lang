@@ -47,7 +47,7 @@ class EnumTypesTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
-        self.expect("breakpoint list", BREAKPOINT_HIT_ONCE,
+        self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
         # Look up information about the 'days' enum type.

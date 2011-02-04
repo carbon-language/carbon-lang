@@ -59,6 +59,10 @@ class BreakpointCommandTestCase(TestBase):
         # The breakpoint list now only contains breakpoint 1.
         self.expect("breakpoint list", "Breakpoints 1 & 2 created",
             substrs = ["1: file ='main.c', line = %d, locations = 1" % self.line,
+                       "2: file ='main.c', line = %d, locations = 1" % self.line] )
+
+        self.expect("breakpoint list -f", "Breakpoints 1 & 2 created",
+            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.line,
                        "2: file ='main.c', line = %d, locations = 1" % self.line],
             patterns = ["1.1: .+at main.c:%d, .+unresolved, hit count = 0" % self.line,
                         "2.1: .+at main.c:%d, .+unresolved, hit count = 0" % self.line])
@@ -105,13 +109,13 @@ class BreakpointCommandTestCase(TestBase):
             startstr = "error: '2' is not a currently valid breakpoint id.")
 
         # The breakpoint list now only contains breakpoint 1.
-        self.expect("breakpoint list", "Breakpoint 1 exists",
+        self.expect("breakpoint list -f", "Breakpoint 1 exists",
             substrs = ["1: file ='main.c', line = %d, locations = 1, resolved = 1" %
                         self.line,
                        "hit count = 1"])
 
         # Not breakpoint 2.
-        self.expect("breakpoint list", "No more breakpoint 2", matching=False,
+        self.expect("breakpoint list -f", "No more breakpoint 2", matching=False,
             substrs = ["2: file ='main.c', line = %d, locations = 1, resolved = 1" %
                         self.line])
 
@@ -126,7 +130,7 @@ class BreakpointCommandTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 2.
-        self.expect("breakpoint list", BREAKPOINT_HIT_TWICE,
+        self.expect("breakpoint list -f", BREAKPOINT_HIT_TWICE,
             substrs = ['resolved, hit count = 2'])
 
     def breakpoint_command_script_parameters (self):

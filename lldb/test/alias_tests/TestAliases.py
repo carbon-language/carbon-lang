@@ -74,7 +74,7 @@ class AliasTestCase(TestBase):
 
         self.runCmd ("bpa -p 1 -o 'print frame; print bp_loc'")
         self.runCmd ("bpa -c 2 -o 'frame variable b'")
-        self.expect ("bpi",
+        self.expect ("bpi -f",
                      substrs = [ "Current breakpoints:",
                                  "1: name = 'foo', locations = 1",
                                  "print frame; print bp_loc",

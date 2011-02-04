@@ -67,7 +67,7 @@ class BreakpointConditionsTestCase(TestBase):
             startstr = '(int) val = 3')
 
         # Also check the hit count, which should be 3, by design.
-        self.expect("breakpoint list", BREAKPOINT_HIT_THRICE,
+        self.expect("breakpoint list -f", BREAKPOINT_HIT_THRICE,
             substrs = ["resolved = 1",
                        "Condition: val == 3",
                        "hit count = 3"])
@@ -83,7 +83,7 @@ class BreakpointConditionsTestCase(TestBase):
         # created breakpoint, so that when the breakpoint hits, val == 1.
         self.runCmd("process kill")
         self.runCmd("breakpoint modify -c ''")
-        self.expect("breakpoint list", BREAKPOINT_STATE_CORRECT, matching=False,
+        self.expect("breakpoint list -f", BREAKPOINT_STATE_CORRECT, matching=False,
             substrs = ["Condition:"])
 
         # Now run the program again.

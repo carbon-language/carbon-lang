@@ -63,7 +63,7 @@ class BreakpointIgnoreCountTestCase(TestBase):
             patterns = ['Process .* stopped'])
 
         # Also check the hit count, which should be 2, due to ignore count of 1.
-        self.expect("breakpoint list", BREAKPOINT_HIT_THRICE,
+        self.expect("breakpoint list -f", BREAKPOINT_HIT_THRICE,
             substrs = ["resolved = 1",
                        "hit count = 2"])
 

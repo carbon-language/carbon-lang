@@ -48,7 +48,7 @@ class DeadStripTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
-        self.expect("breakpoint list 1", BREAKPOINT_HIT_ONCE,
+        self.expect("breakpoint list -f 1", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
         self.runCmd("continue")
@@ -60,7 +60,7 @@ class DeadStripTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         # The breakpoint should have a hit count of 1.
-        self.expect("breakpoint list 3", BREAKPOINT_HIT_ONCE,
+        self.expect("breakpoint list -f 3", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
 

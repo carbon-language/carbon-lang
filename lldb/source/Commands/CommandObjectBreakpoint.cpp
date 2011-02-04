@@ -641,7 +641,7 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
 
 CommandObjectBreakpointList::CommandOptions::CommandOptions() :
     Options (),
-    m_level (lldb::eDescriptionLevelFull)  // Breakpoint List defaults to brief descriptions
+    m_level (lldb::eDescriptionLevelBrief)  // Breakpoint List defaults to brief descriptions
 {
 }
 
@@ -708,7 +708,7 @@ CommandObjectBreakpointList::CommandOptions::ResetOptionValues ()
 {
     Options::ResetOptionValues();
 
-    m_level = lldb::eDescriptionLevelFull;
+    m_level = lldb::eDescriptionLevelBrief;
     m_internal = false;
 }
 

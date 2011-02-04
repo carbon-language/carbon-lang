@@ -40,7 +40,7 @@ class BreakpointLocationsTestCase(TestBase):
                         self.line)
 
         # The breakpoint list should show 3 locations.
-        self.expect("breakpoint list", "Breakpoint locations shown correctly",
+        self.expect("breakpoint list -f", "Breakpoint locations shown correctly",
             substrs = ["1: file ='main.c', line = %d, locations = 3" % self.line],
             patterns = ["where = a.out`func_inlined .+unresolved, hit count = 0",
                         "where = a.out`main .+\[inlined\].+unresolved, hit count = 0"])
@@ -85,7 +85,7 @@ class BreakpointLocationsTestCase(TestBase):
             substrs = ["stop reason = breakpoint 1."])
 
         # At this point, 1.1 has a hit count of 0 and the other a hit count of 1".
-        self.expect("breakpoint list", "The breakpoints should report correct hit counts",
+        self.expect("breakpoint list -f", "The breakpoints should report correct hit counts",
             patterns = ["1\.1: .+ unresolved, hit count = 0 +Options: disabled",
                         "1\.2: .+ resolved, hit count = 1",
                         "1\.3: .+ resolved, hit count = 1"])
