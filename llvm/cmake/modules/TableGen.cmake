@@ -35,6 +35,11 @@ macro(tablegen ofn)
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
     COMMENT ""
     )
+
+  # `make clean' must remove all those generated files:
+  set_property(DIRECTORY APPEND
+    PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${ofn}.tmp ${ofn})
+
   set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn})
   set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn} 
     PROPERTIES GENERATED 1)
