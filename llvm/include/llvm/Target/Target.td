@@ -248,6 +248,13 @@ class Instruction {
 
   /// Target-specific flags. This becomes the TSFlags field in TargetInstrDesc.
   bits<64> TSFlags = 0;
+
+  ///@name Assembler Parser Support
+  ///@{
+
+  string AsmMatchConverter = "";
+
+  ///@}
 }
 
 /// Predicates - These are extra conditionals which are turned into instruction

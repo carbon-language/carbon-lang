@@ -1388,6 +1388,26 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
          ie = Infos.end(); it != ie; ++it) {
     MatchableInfo &II = **it;
 
+    // Check if we have a custom match function.
+    StringRef AsmMatchConverter = II.getResultInst()->TheDef->getValueAsString(
+      "AsmMatchConverter");
+    if (!AsmMatchConverter.empty()) {
+      std::string Signature = "ConvertCustom_" + AsmMatchConverter.str();
+      II.ConversionFnKind = Signature;
+
+      // Check if we have already generated this signature.
+      if (!GeneratedFns.insert(Signature).second)
+        continue;
+
+      // If not, emit it now.  Add to the enum list.
+      OS << "  " << Signature << ",\n";
+
+      CvtOS << "  case " << Signature << ":\n";
+      CvtOS << "    " << AsmMatchConverter << "(Inst, Opcode, Operands);\n";
+      CvtOS << "    return;\n";
+      continue;
+    }
+
     // Build the conversion function signature.
     std::string Signature = "Convert";
     std::string CaseBody;
@@ -1987,7 +2007,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
        Info.Matchables.begin(), ie = Info.Matchables.end();
        it != ie; ++it) {
     MatchableInfo &II = **it;
-
 
     OS << "  { " << Target.getName() << "::"
        << II.getResultInst()->TheDef->getName() << ", \"" << II.Mnemonic << "\""
