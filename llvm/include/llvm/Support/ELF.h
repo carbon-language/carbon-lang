@@ -290,6 +290,10 @@ enum {
   R_MICROBLAZE_COPY           = 21
 };
 
+
+// ARM Specific e_flags
+enum { EF_ARM_EABIMASK = 0xFF000000U };
+
 // ELF Relocation types for ARM
 // Meets 2.08 ABI Specs.
 

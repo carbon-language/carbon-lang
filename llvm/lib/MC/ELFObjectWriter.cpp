@@ -276,6 +276,9 @@ namespace {
 
     virtual void WriteHeader(uint64_t SectionDataSize, unsigned NumberOfSections);
 
+    /// Default e_flags = 0
+    virtual void WriteEFlags() { Write32(0); }
+
     virtual void WriteSymbolEntry(MCDataFragment *SymtabF, MCDataFragment *ShndxF,
                           uint64_t name, uint8_t info,
                           uint64_t value, uint64_t size,
@@ -387,11 +390,16 @@ namespace {
 
   class ARMELFObjectWriter : public ELFObjectWriter {
   public:
+    // FIXME: MCAssembler can't yet return the Subtarget,
+    enum { DefaultEABIVersion = 0x05000000U };
+
     ARMELFObjectWriter(MCELFObjectTargetWriter *MOTW,
                        raw_ostream &_OS,
                        bool IsLittleEndian);
 
     virtual ~ARMELFObjectWriter();
+
+    virtual void WriteEFlags();
   protected:
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
@@ -459,8 +467,8 @@ void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
   WriteWord(SectionDataSize + (is64Bit() ? sizeof(ELF::Elf64_Ehdr) :
             sizeof(ELF::Elf32_Ehdr)));  // e_shoff = sec hdr table off in bytes
 
-  // FIXME: Make this configurable.
-  Write32(0);   // e_flags = whatever the target wants
+  // e_flags = whatever the target wants
+  WriteEFlags();
 
   // e_ehsize = ELF header size
   Write16(is64Bit() ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr));
@@ -1476,6 +1484,11 @@ ARMELFObjectWriter::ARMELFObjectWriter(MCELFObjectTargetWriter *MOTW,
 
 ARMELFObjectWriter::~ARMELFObjectWriter()
 {}
+
+// FIXME: get the real EABI Version from the Triple.
+void ARMELFObjectWriter::WriteEFlags() {
+  Write32(ELF::EF_ARM_EABIMASK & DefaultEABIVersion);
+}
 
 unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
                                           const MCFixup &Fixup,
