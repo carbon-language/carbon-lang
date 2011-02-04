@@ -88,6 +88,8 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
     SlotIndex LastUse;    ///< Last instr using current reg.
     SlotIndex Kill;       ///< Interval end point inside block.
     SlotIndex Def;        ///< Interval start point inside block.
+    /// Last possible point for splitting live ranges.
+    SlotIndex LastSplitPoint;
     bool Uses;            ///< Current reg has uses or defs in block.
     bool LiveThrough;     ///< Live in whole block (Templ 5. or 6. above).
     bool LiveIn;          ///< Current reg is live in.
@@ -356,6 +358,16 @@ void RAGreedy::calcLiveBlockInfo(LiveInterval &VirtReg) {
     SlotIndex Start, Stop;
     tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
 
+    // The last split point is the latest possible insertion point that dominates
+    // all successor blocks. If interference reaches LastSplitPoint, it is not
+    // possible to insert a split or reload that makes VirtReg live in the
+    // outgoing bundle.
+    MachineBasicBlock::iterator LSP = LIS->getLastSplitPoint(VirtReg, BI.MBB);
+    if (LSP == BI.MBB->end())
+      BI.LastSplitPoint = Stop;
+    else
+      BI.LastSplitPoint = Indexes->getInstructionIndex(LSP);
+
     // LVI is the first live segment overlapping MBB.
     BI.LiveIn = LVI->start <= Start;
     if (!BI.LiveIn)
@@ -462,7 +474,8 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
         // Check if interference is live-out - force spill.
         if (BC.Exit != SpillPlacement::MustSpill) {
           BC.Exit = SpillPlacement::PrefSpill;
-          IntI.advanceTo(Stop);
+          // Any interference overlapping [LastSplitPoint;Stop) forces a spill.
+          IntI.advanceTo(BI.LastSplitPoint.getPrevSlot());
           if (IntI.valid() && IntI.start() < Stop)
             BC.Exit = SpillPlacement::MustSpill;
         }
@@ -522,8 +535,8 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
           if (IntI.start() < Stop)
             BC.Exit = SpillPlacement::PrefSpill;
         }
-        // Is the interference live-out?
-        IntI.advanceTo(Stop);
+        // Is the interference overlapping the last split point?
+        IntI.advanceTo(BI.LastSplitPoint.getPrevSlot());
         if (!IntI.valid())
           break;
         if (IntI.start() < Stop)
@@ -709,7 +722,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       SE.enterIntvAtEnd(*BI.MBB);
       continue;
     }
-    if (IP.second < BI.LastUse) {
+    if (IP.second < BI.LastUse && IP.second <= BI.LastSplitPoint) {
       // There are interference-free uses at the end of the block.
       // Find the first use that can get the live-out register.
       SmallVectorImpl<SlotIndex>::const_iterator UI =
