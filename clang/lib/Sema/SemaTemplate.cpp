@@ -1052,7 +1052,7 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
     // (This sentence is not in C++0x, per DR226).
     if (!S.getLangOptions().CPlusPlus0x)
       S.Diag(ParamLoc,
-             diag::err_template_parameter_default_in_function_template)
+             diag::ext_template_parameter_default_in_function_template)
         << DefArgRange;
     return false;
 
@@ -1315,7 +1315,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       Diag(NewDefaultLoc, diag::err_template_param_default_arg_redefinition);
       Diag(OldDefaultLoc, diag::note_template_param_prev_default_arg);
       Invalid = true;
-    } else if (MissingDefaultArg) {
+    } else if (MissingDefaultArg && TPC != TPC_FunctionTemplate) {
       // C++ [temp.param]p11:
       //   If a template-parameter of a class template has a default
       //   template-argument, each subsequent template-parameter shall either

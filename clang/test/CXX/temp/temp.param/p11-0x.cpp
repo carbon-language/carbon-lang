@@ -46,3 +46,16 @@ void f1nt(X1nt<V, Values...>);
 
 template<template<int> class... Meta, template<int> class M> 
 void f1tt(X1tt<M, Meta...>);
+
+namespace DefaultTemplateArgsInFunction {
+  template<typename T = int, typename U>  T &f0(U) { T *x = 0; return *x; }
+
+  void test_f0() {
+    int &ir0 = f0(3.14159);
+    int &ir1 = f0<int>(3.14159);
+    float &fr0 = f0<float>(3.14159);
+  }
+
+  template<> int &f0(int*);
+  template int &f0(double&);
+}

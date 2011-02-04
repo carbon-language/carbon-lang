@@ -2,9 +2,9 @@
 
 // A default template-argument shall not be specified in a function
 // template declaration or a function template definition
-template<typename T = int> // expected-error{{cannot have a default argument}}
+template<typename T = int> // expected-warning{{default template arguments for a function template are a C++0x extension}}
   void foo0(T); 
-template<typename T = int> // expected-error{{cannot have a default argument}} 
+template<typename T = int> // expected-warning{{default template arguments for a function template are a C++0x extension}} 
   void foo1(T) { } 
 
 // [...] nor in the template-parameter-list of the definition of a

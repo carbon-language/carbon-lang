@@ -1476,9 +1476,9 @@ def note_template_param_prev_default_arg : Note<
   "previous default template argument defined here">;
 def err_template_param_default_arg_missing : Error<
   "template parameter missing a default argument">;
-def err_template_parameter_default_in_function_template : Error<
-  "a template parameter of a function template cannot have a default argument "
-  "in C++98">;
+def ext_template_parameter_default_in_function_template : ExtWarn<
+  "default template arguments for a function template are a C++0x extension">,
+  InGroup<CXX0x>;
 def err_template_parameter_default_template_member : Error<
   "cannot add a default template argument to the definition of a member of a "
   "class template">;
