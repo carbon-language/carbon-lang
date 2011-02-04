@@ -647,24 +647,11 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
             report("No live range at use", MO, MONum);
             *OS << UseIdx << " is not live in " << LI << '\n';
           }
-          // Verify isKill == LI.killedAt.
-          // Two-address instrs don't have kill flags on the tied operands, and
-          // we even allow
-          //   %r1 = add %r1, %r1
-          // without a kill flag on the untied operand.
-          // MI->findRegisterUseOperandIdx finds the first operand using reg.
-          if (!MI->isRegTiedToDefOperand(MI->findRegisterUseOperandIdx(Reg))) {
-            // MI could kill register without a kill flag on MO.
-            bool miKill = MI->killsRegister(Reg);
-            bool liKill = LI.killedAt(UseIdx.getDefIndex());
-            if (miKill && !liKill) {
-              report("Live range continues after kill flag", MO, MONum);
-              *OS << "Live range: " << LI << '\n';
-            }
-            if (!miKill && liKill) {
-              report("Live range ends without kill flag", MO, MONum);
-              *OS << "Live range: " << LI << '\n';
-            }
+          // Check for extra kill flags.
+          // Note that we allow missing kill flags for now.
+          if (MO->isKill() && !LI.killedAt(UseIdx.getDefIndex())) {
+            report("Live range continues after kill flag", MO, MONum);
+            *OS << "Live range: " << LI << '\n';
           }
         } else {
           report("Virtual register has no Live interval", MO, MONum);
