@@ -812,8 +812,22 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   // separate into connected components. Some components may be allocatable.
   SE.finish();
 
-  if (VerifyEnabled)
+  if (VerifyEnabled) {
     MF->verify(this, "After splitting live range around region");
+
+#ifndef NDEBUG
+    // Make sure that at least one of the new intervals can allocate to PhysReg.
+    // That was the whole point of splitting the live range.
+    bool found = false;
+    for (LiveRangeEdit::iterator I = LREdit.begin(), E = LREdit.end(); I != E;
+         ++I)
+      if (!checkUncachedInterference(**I, PhysReg)) {
+        found = true;
+        break;
+      }
+    assert(found && "No allocatable intervals after pointless splitting");
+#endif
+  }
 }
 
 unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
