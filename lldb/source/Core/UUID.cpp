@@ -22,7 +22,7 @@ namespace lldb_private {
 
 UUID::UUID()
 {
-    ::bzero (m_uuid, sizeof(m_uuid));
+    ::memset (m_uuid, 0, sizeof(m_uuid));
 }
 
 UUID::UUID(const UUID& rhs)
@@ -35,7 +35,7 @@ UUID::UUID (const void *uuid_bytes, uint32_t num_uuid_bytes)
     if (uuid_bytes && num_uuid_bytes >= 16)
         ::memcpy (m_uuid, uuid_bytes, sizeof (m_uuid));
     else
-        ::bzero (m_uuid, sizeof(m_uuid));
+        ::memset (m_uuid, 0, sizeof(m_uuid));
 }
 
 const UUID&
@@ -53,7 +53,7 @@ UUID::~UUID()
 void
 UUID::Clear()
 {
-    ::bzero (m_uuid, sizeof(m_uuid));
+    ::memset (m_uuid, 0, sizeof(m_uuid));
 }
 
 const void *
@@ -85,7 +85,7 @@ UUID::SetBytes (const void *uuid_bytes)
     if (uuid_bytes)
         ::memcpy (m_uuid, uuid_bytes, sizeof (m_uuid));
     else
-        ::bzero (m_uuid, sizeof(m_uuid));
+        ::memset (m_uuid, 0, sizeof(m_uuid));
 }
 
 size_t

@@ -356,7 +356,7 @@ Log::GetLogChannelCallbacks (const char *channel, Log::Callbacks &log_callbacks)
         log_callbacks = pos->second;
         return true;
     }
-    ::bzero (&log_callbacks, sizeof(log_callbacks));
+    ::memset (&log_callbacks, 0, sizeof(log_callbacks));
     return false;
 }
 

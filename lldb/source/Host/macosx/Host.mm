@@ -137,7 +137,7 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
     app_file_spec.GetPath(app_path, sizeof(app_path));
 
     LSApplicationParameters app_params;
-    ::bzero (&app_params, sizeof (app_params));
+    ::memset (&app_params, 0, sizeof (app_params));
     app_params.flags = kLSLaunchDefaults | 
                        kLSLaunchDontAddToRecents | 
                        kLSLaunchNewInstance;
@@ -176,7 +176,7 @@ AcceptPIDFromInferior (void *arg)
     if (file_conn.Connect (connect_url, &error) == eConnectionStatusSuccess)
     {
         char pid_str[256];
-        ::bzero (pid_str, sizeof(pid_str));
+        ::memset (pid_str, 0, sizeof(pid_str));
         ConnectionStatus status;
         const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), status, NULL);
         if (pid_str_len > 0)
@@ -316,7 +316,7 @@ LaunchInNewTerminalWithCommandFile
     }
     
     LSApplicationParameters app_params;
-    ::bzero (&app_params, sizeof (app_params));
+    ::memset (&app_params, 0, sizeof (app_params));
     app_params.flags = kLSLaunchDontAddToRecents | kLSLaunchAsync;
     app_params.argv = NULL;
     app_params.environment = (CFDictionaryRef)cf_env_dict.get();
@@ -638,7 +638,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     static FSRef g_app_fsref;
 
     LSApplicationParameters app_params;
-    ::bzero (&app_params, sizeof (app_params));
+    ::memset (&app_params, 0, sizeof (app_params));
     app_params.flags = kLSLaunchDefaults | 
                        kLSLaunchDontAddToRecents | 
                        kLSLaunchDontSwitch;
@@ -691,7 +691,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     }
     
     ProcessInfoRec which_process;
-    bzero(&which_process, sizeof(which_process));
+    ::memset(&which_process, 0, sizeof(which_process));
     unsigned char ap_name[PATH_MAX];
     which_process.processName = ap_name;
     error = ::GetProcessInformation (&psn, &which_process);

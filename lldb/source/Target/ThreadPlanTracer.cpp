@@ -192,7 +192,7 @@ ThreadPlanAssemblyTracer::Log ()
     
     if (m_disassembler)
     {        
-        bzero(m_buffer_sp->GetBytes(), m_buffer_sp->GetByteSize());
+        ::memset(m_buffer_sp->GetBytes(), 0, m_buffer_sp->GetByteSize());
         
         Error err;
         m_process.ReadMemory(pc, m_buffer_sp->GetBytes(), m_buffer_sp->GetByteSize(), err);

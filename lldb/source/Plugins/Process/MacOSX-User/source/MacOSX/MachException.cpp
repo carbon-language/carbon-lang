@@ -455,10 +455,10 @@ MachException::Data::PutToLog(Log *log) const
 MachException::PortInfo::PortInfo() :
     count(0)
 {
-    ::bzero (masks, sizeof(masks));
-    ::bzero (ports, sizeof(ports));
-    ::bzero (behaviors, sizeof(behaviors));
-    ::bzero (flavors, sizeof(flavors));
+    ::memset (masks, 0, sizeof(masks));
+    ::memset (ports, 0, sizeof(ports));
+    ::memset (behaviors, 0, sizeof(behaviors));
+    ::memset (flavors, 0, sizeof(flavors));
 }
 
 

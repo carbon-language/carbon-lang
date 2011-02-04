@@ -571,7 +571,7 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
     SetSocketOption (m_fd, SOL_SOCKET, SO_REUSEADDR, 1);
 
     struct sockaddr_in sa;
-    ::bzero (&sa, sizeof (sa));
+    ::memset (&sa, 0, sizeof (sa));
     sa.sin_family = AF_INET;
     sa.sin_port = htons (port);
 

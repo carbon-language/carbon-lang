@@ -107,8 +107,8 @@ ObjectFileMachO::ObjectFileMachO(Module* module, DataBufferSP& dataSP, const Fil
     m_sections_ap(),
     m_symtab_ap()
 {
-    ::bzero (&m_header, sizeof(m_header));
-    ::bzero (&m_dysymtab, sizeof(m_dysymtab));
+    ::memset (&m_header, 0, sizeof(m_header));
+    ::memset (&m_dysymtab, 0, sizeof(m_dysymtab));
 }
 
 
@@ -280,7 +280,7 @@ ObjectFileMachO::ParseSections ()
                     }
 
                     struct section_64 sect64;
-                    ::bzero (&sect64, sizeof(sect64));
+                    ::memset (&sect64, 0, sizeof(sect64));
                     // Push a section into our mach sections for the section at
                     // index zero (NListSectionNoSection) if we don't have any 
                     // mach sections yet...

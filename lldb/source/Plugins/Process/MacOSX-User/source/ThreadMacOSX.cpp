@@ -45,9 +45,9 @@ ThreadMacOSX::ThreadMacOSX (ProcessMacOSX &process, lldb::tid_t tid) :
     m_context.reset(create_arch_callback(process.GetArchSpec(), *this));
     assert(m_context.get() != NULL);
     m_context->InitializeInstance();
-    ::bzero (&m_basic_info, sizeof (m_basic_info));
-    ::bzero (&m_ident_info, sizeof (m_ident_info));
-    ::bzero (&m_proc_threadinfo, sizeof (m_proc_threadinfo));
+    ::memset (&m_basic_info, 0, sizeof (m_basic_info));
+    ::memset (&m_ident_info, 0, sizeof (m_ident_info));
+    ::memset (&m_proc_threadinfo, 0, sizeof (m_proc_threadinfo));
     ProcessMacOSXLog::LogIf(PD_LOG_THREAD | PD_LOG_VERBOSE, "ThreadMacOSX::ThreadMacOSX ( pid = %i, tid = 0x%4.4x, )", m_process.GetID(), GetID());
 }
 
