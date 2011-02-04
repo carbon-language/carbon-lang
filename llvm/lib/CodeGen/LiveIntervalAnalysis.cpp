@@ -746,6 +746,28 @@ LiveInterval* LiveIntervals::dupInterval(LiveInterval *li) {
 // Register allocator hooks.
 //
 
+MachineBasicBlock::iterator
+LiveIntervals::getLastSplitPoint(const LiveInterval &li,
+                                 MachineBasicBlock *mbb) {
+  const MachineBasicBlock *lpad = mbb->getLandingPadSuccessor();
+
+  // If li is not live into a landing pad, we can insert spill code before the
+  // first terminator.
+  if (!lpad || !isLiveInToMBB(li, lpad))
+    return mbb->getFirstTerminator();
+
+  // When there is a landing pad, spill code must go before the call instruction
+  // that can throw.
+  MachineBasicBlock::iterator I = mbb->end(), B = mbb->begin();
+  while (I != B) {
+    --I;
+    if (I->getDesc().isCall())
+      return I;
+  }
+  assert(0 && "Block with landing pad successor contains no call instruction");
+  return mbb->getFirstTerminator();
+}
+
 /// getReMatImplicitUse - If the remat definition MI has one (for now, we only
 /// allow one) virtual register operand, then its uses are implicitly using
 /// the register. Returns the virtual register.

@@ -175,6 +175,16 @@ MachineBasicBlock::iterator MachineBasicBlock::getLastNonDebugInstr() {
   return end();
 }
 
+const MachineBasicBlock *MachineBasicBlock::getLandingPadSuccessor() const {
+  // A block with a landing pad successor only has one other successor.
+  if (succ_size() > 2)
+    return 0;
+  for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I)
+    if ((*I)->isLandingPad())
+      return *I;
+  return 0;
+}
+
 void MachineBasicBlock::dump() const {
   print(dbgs());
 }

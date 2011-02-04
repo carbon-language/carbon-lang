@@ -308,6 +308,12 @@ namespace llvm {
     /// within a single basic block.
     bool intervalIsInOneMBB(const LiveInterval &li) const;
 
+    /// getLastSplitPoint - Return the last possible insertion point in mbb for
+    /// spilling and splitting code. This is the first terminator, or the call
+    /// instruction if li is live into a landing pad successor.
+    MachineBasicBlock::iterator getLastSplitPoint(const LiveInterval &li,
+                                                  MachineBasicBlock *mbb);
+
   private:
     /// computeIntervals - Compute live intervals.
     void computeIntervals();

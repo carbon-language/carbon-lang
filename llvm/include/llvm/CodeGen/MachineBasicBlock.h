@@ -224,6 +224,10 @@ public:
   /// this basic block is entered via an exception handler.
   void setIsLandingPad() { IsLandingPad = true; }
 
+  /// getLandingPadSuccessor - If this block has a successor that is a landing
+  /// pad, return it. Otherwise return NULL.
+  const MachineBasicBlock *getLandingPadSuccessor() const;
+
   // Code Layout methods.
   
   /// moveBefore/moveAfter - move 'this' block before or after the specified

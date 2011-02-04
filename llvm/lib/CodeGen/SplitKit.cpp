@@ -826,7 +826,7 @@ SlotIndex SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
   VNInfo *VNI = defFromParent(OpenIdx, ParentVNI, Last, MBB,
-                              MBB.getFirstTerminator());
+                              LIS.getLastSplitPoint(Edit.getParent(), &MBB));
   RegAssign.insert(VNI->def, End, OpenIdx);
   DEBUG(dump());
   return VNI->def;
