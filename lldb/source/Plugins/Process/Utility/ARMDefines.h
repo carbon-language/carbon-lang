@@ -16,25 +16,47 @@
 
 namespace lldb_private {
 
-// ARM conditions
-#define COND_EQ     0x0
-#define COND_NE     0x1
-#define COND_CS     0x2
+// ARM conditions          // Meaning (integer)         Meaning (floating-point)      Condition flags
+#define COND_EQ     0x0    // Equal                     Equal                         Z == 1
+#define COND_NE     0x1    // Not equal                 Not equal, or unordered       Z == 0
+#define COND_CS     0x2    // Carry set                 >, ==, or unordered           C == 1
 #define COND_HS     0x2
-#define COND_CC     0x3
+#define COND_CC     0x3    // Carry clear               Less than                     C == 0
 #define COND_LO     0x3
-#define COND_MI     0x4
-#define COND_PL     0x5
-#define COND_VS     0x6
-#define COND_VC     0x7
-#define COND_HI     0x8
-#define COND_LS     0x9
-#define COND_GE     0xA
-#define COND_LT     0xB
-#define COND_GT     0xC
-#define COND_LE     0xD
-#define COND_AL     0xE
+#define COND_MI     0x4    // Minus, negative           Less than                     N == 1
+#define COND_PL     0x5    // Plus, positive or zero    >, ==, or unordered           N == 0
+#define COND_VS     0x6    // Overflow                  Unordered                     V == 1
+#define COND_VC     0x7    // No overflow               Not unordered                 V == 0
+#define COND_HI     0x8    // Unsigned higher           Greater than, or unordered    C == 1 and Z == 0
+#define COND_LS     0x9    // Unsigned lower or same    Less than or equal            C == 0 or Z == 1
+#define COND_GE     0xA    // Greater than or equal     Greater than or equal         N == V
+#define COND_LT     0xB    // Less than                 Less than, or unordered       N != V
+#define COND_GT     0xC    // Greater than              Greater than                  Z == 0 and N == V
+#define COND_LE     0xD    // Less than or equal        <, ==, or unordered           Z == 1 or N != V
+#define COND_AL     0xE    // Always (unconditional)    Always (unconditional)        Any
 #define COND_UNCOND 0xF
+
+static inline const char *ARMCondCodeToString(uint32_t CC)
+{
+    switch (CC) {
+    default: assert(0 && "Unknown condition code");
+    case COND_EQ:  return "eq";
+    case COND_NE:  return "ne";
+    case COND_HS:  return "hs";
+    case COND_LO:  return "lo";
+    case COND_MI:  return "mi";
+    case COND_PL:  return "pl";
+    case COND_VS:  return "vs";
+    case COND_VC:  return "vc";
+    case COND_HI:  return "hi";
+    case COND_LS:  return "ls";
+    case COND_GE:  return "ge";
+    case COND_LT:  return "lt";
+    case COND_GT:  return "gt";
+    case COND_LE:  return "le";
+    case COND_AL:  return "al";
+    }
+}
 
 // Masks for CPSR
 #define MASK_CPSR_MODE_MASK     (0x0000001fu)
