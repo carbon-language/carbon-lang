@@ -706,6 +706,8 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     } else {
       LoadSU = CreateNewSUnit(LoadNode);
       LoadNode->setNodeId(LoadSU->NodeNum);
+
+      InitNumRegDefsLeft(LoadSU);
       ComputeLatency(LoadSU);
     }
 
@@ -722,6 +724,8 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     }
     if (TID.isCommutable())
       NewSU->isCommutable = true;
+
+    InitNumRegDefsLeft(NewSU);
     ComputeLatency(NewSU);
 
     // Record all the edges to and from the old SU, by category.
@@ -772,6 +776,10 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
       RemovePred(SuccDep, D);
       D.setSUnit(NewSU);
       AddPred(SuccDep, D);
+      // Balance register pressure.
+      if (AvailableQueue->tracksRegPressure() && SuccDep->isScheduled
+          && !D.isCtrl() && NewSU->NumRegDefsLeft > 0)
+        --NewSU->NumRegDefsLeft;
     }
     for (unsigned i = 0, e = ChainSuccs.size(); i != e; ++i) {
       SDep D = ChainSuccs[i];
@@ -1436,6 +1444,8 @@ public:
     SU->NodeQueueId = 0;
   }
 
+  bool tracksRegPressure() const { return TracksRegPressure; }
+
   void dumpRegPressure() const;
 
   bool HighRegPressure(const SUnit *SU) const;
@@ -1571,7 +1581,8 @@ void RegReductionPQBase::initNodes(std::vector<SUnit> &sunits) {
   // Add pseudo dependency edges for two-address nodes.
   AddPseudoTwoAddrDeps();
   // Reroute edges to nodes with multiple uses.
-  PrescheduleNodesWithMultipleUses();
+  if (!TracksRegPressure)
+    PrescheduleNodesWithMultipleUses();
   // Calculate node priorities.
   CalculateSethiUllmanNumbers();
 }
@@ -1642,64 +1653,20 @@ bool RegReductionPQBase::HighRegPressure(const SUnit *SU) const {
     if (I->isCtrl())
       continue;
     SUnit *PredSU = I->getSUnit();
-    // NumSuccsLeft counts all deps. Don't compare it with NumSuccs which only
-    // counts data deps.  To be more precise, we could maintain a
-    // NumDataSuccsLeft count.
-    if (PredSU->NumSuccsLeft != PredSU->Succs.size()) {
-      DEBUG(dbgs() << "  SU(" << PredSU->NodeNum << ") live across SU("
-            << SU->NodeNum << ")\n");
+    // NumRegDefsLeft is zero when enough uses of this node have been scheduled
+    // to cover the number of registers defined (they are all live).
+    if (PredSU->NumRegDefsLeft == 0) {
       continue;
     }
-    const SDNode *PN = PredSU->getNode();
-    if (!PN->isMachineOpcode()) {
-      if (PN->getOpcode() == ISD::CopyFromReg) {
-        EVT VT = PN->getValueType(0);
-        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        unsigned Cost = TLI->getRepRegClassCostFor(VT);
-        if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
-          return true;
-      }
-      continue;
-    }
-    unsigned POpc = PN->getMachineOpcode();
-    if (POpc == TargetOpcode::IMPLICIT_DEF)
-      continue;
-    if (POpc == TargetOpcode::EXTRACT_SUBREG) {
-      EVT VT = PN->getOperand(0).getValueType();
+    for (ScheduleDAGSDNodes::RegDefIter RegDefPos(PredSU, scheduleDAG);
+         RegDefPos.IsValid(); RegDefPos.Advance()) {
+      EVT VT = RegDefPos.GetValue();
       unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
       unsigned Cost = TLI->getRepRegClassCostFor(VT);
-      // Check if this increases register pressure of the specific register
-      // class to the point where it would cause spills.
-      if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
-        return true;
-      continue;
-    } else if (POpc == TargetOpcode::INSERT_SUBREG ||
-               POpc == TargetOpcode::SUBREG_TO_REG) {
-      EVT VT = PN->getValueType(0);
-      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-      unsigned Cost = TLI->getRepRegClassCostFor(VT);
-      // Check if this increases register pressure of the specific register
-      // class to the point where it would cause spills.
-      if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
-        return true;
-      continue;
-    }
-    unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
-    for (unsigned i = 0; i != NumDefs; ++i) {
-      EVT VT = PN->getValueType(i);
-      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-      if (RegPressure[RCId] >= RegLimit[RCId])
-        return true; // Reg pressure already high.
-      unsigned Cost = TLI->getRepRegClassCostFor(VT);
-      if (!PN->hasAnyUseOfValue(i))
-        continue;
-      // Check if this increases register pressure of the specific register
-      // class to the point where it would cause spills.
       if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
         return true;
     }
   }
-
   return false;
 }
 
@@ -1725,80 +1692,64 @@ void RegReductionPQBase::ScheduledNode(SUnit *SU) {
   if (!TracksRegPressure)
     return;
 
-  const SDNode *N = SU->getNode();
-  if (!N->isMachineOpcode()) {
-    if (N->getOpcode() != ISD::CopyToReg)
-      return;
-  } else {
-    unsigned Opc = N->getMachineOpcode();
-    if (Opc == TargetOpcode::EXTRACT_SUBREG ||
-        Opc == TargetOpcode::INSERT_SUBREG ||
-        Opc == TargetOpcode::SUBREG_TO_REG ||
-        Opc == TargetOpcode::REG_SEQUENCE ||
-        Opc == TargetOpcode::IMPLICIT_DEF)
-      return;
-  }
-
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isCtrl())
       continue;
     SUnit *PredSU = I->getSUnit();
-    // NumSuccsLeft counts all deps. Don't compare it with NumSuccs which only
-    // counts data deps.
-    if (PredSU->NumSuccsLeft != PredSU->Succs.size())
-      continue;
-    const SDNode *PN = PredSU->getNode();
-    if (!PN->isMachineOpcode()) {
-      if (PN->getOpcode() == ISD::CopyFromReg) {
-        EVT VT = PN->getValueType(0);
-        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-      }
+    // NumRegDefsLeft is zero when enough uses of this node have been scheduled
+    // to cover the number of registers defined (they are all live).
+    if (PredSU->NumRegDefsLeft == 0) {
       continue;
     }
-    unsigned POpc = PN->getMachineOpcode();
-    if (POpc == TargetOpcode::IMPLICIT_DEF)
-      continue;
-    if (POpc == TargetOpcode::EXTRACT_SUBREG) {
-      EVT VT = PN->getOperand(0).getValueType();
-      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-      continue;
-    } else if (POpc == TargetOpcode::INSERT_SUBREG ||
-               POpc == TargetOpcode::SUBREG_TO_REG) {
-      EVT VT = PN->getValueType(0);
-      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-      continue;
-    }
-    unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
-    for (unsigned i = 0; i != NumDefs; ++i) {
-      EVT VT = PN->getValueType(i);
-      if (!PN->hasAnyUseOfValue(i))
+    // FIXME: The ScheduleDAG currently loses information about which of a
+    // node's values is consumed by each dependence. Consequently, if the node
+    // defines multiple register classes, we don't know which to pressurize
+    // here. Instead the following loop consumes the register defs in an
+    // arbitrary order. At least it handles the common case of clustered loads
+    // to the same class. For precise liveness, each SDep needs to indicate the
+    // result number. But that tightly couples the ScheduleDAG with the
+    // SelectionDAG making updates tricky. A simpler hack would be to attach a
+    // value type or register class to SDep.
+    //
+    // The most important aspect of register tracking is balancing the increase
+    // here with the reduction further below. Note that this SU may use multiple
+    // defs in PredSU. The can't be determined here, but we've already
+    // compensated by reducing NumRegDefsLeft in PredSU during
+    // ScheduleDAGSDNodes::AddSchedEdges.
+    --PredSU->NumRegDefsLeft;
+    unsigned SkipRegDefs = PredSU->NumRegDefsLeft;
+    for (ScheduleDAGSDNodes::RegDefIter RegDefPos(PredSU, scheduleDAG);
+         RegDefPos.IsValid(); RegDefPos.Advance(), --SkipRegDefs) {
+      if (SkipRegDefs)
         continue;
+      EVT VT = RegDefPos.GetValue();
       unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
       RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+      break;
     }
   }
 
-  // Check for isMachineOpcode() as PrescheduleNodesWithMultipleUses()
-  // may transfer data dependencies to CopyToReg.
-  if (SU->NumSuccs && N->isMachineOpcode()) {
-    unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
-    for (unsigned i = 0; i != NumDefs; ++i) {
-      EVT VT = N->getValueType(i);
-      if (!N->hasAnyUseOfValue(i))
-        continue;
-      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-      if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
-        // Register pressure tracking is imprecise. This can happen.
-        RegPressure[RCId] = 0;
-      else
-        RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
+  // We should have this assert, but there may be dead SDNodes that never
+  // materialize as SUnits, so they don't appear to generate liveness.
+  //assert(SU->NumRegDefsLeft == 0 && "not all regdefs have scheduled uses");
+  int SkipRegDefs = (int)SU->NumRegDefsLeft;
+  for (ScheduleDAGSDNodes::RegDefIter RegDefPos(SU, scheduleDAG);
+       RegDefPos.IsValid(); RegDefPos.Advance(), --SkipRegDefs) {
+    if (SkipRegDefs > 0)
+      continue;
+    EVT VT = RegDefPos.GetValue();
+    unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+    if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT)) {
+      // Register pressure tracking is imprecise. This can happen. But we try
+      // hard not to let it happen because it likely results in poor scheduling.
+      DEBUG(dbgs() << "  SU(" << SU->NodeNum << ") has too many regdefs\n");
+      RegPressure[RCId] = 0;
+    }
+    else {
+      RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
     }
   }
-
   dumpRegPressure();
 }
 
@@ -2314,7 +2265,7 @@ void RegReductionPQBase::PrescheduleNodesWithMultipleUses() {
     if (PredSU->NumSuccs == 1)
       continue;
     // Avoid prescheduling to copies from virtual registers, which don't behave
-    // like other nodes from the perspective of scheduling // heuristics.
+    // like other nodes from the perspective of scheduling heuristics.
     if (SDNode *N = SU->getNode())
       if (N->getOpcode() == ISD::CopyFromReg &&
           TargetRegisterInfo::isVirtualRegister

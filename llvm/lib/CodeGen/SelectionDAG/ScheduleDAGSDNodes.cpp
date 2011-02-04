@@ -332,6 +332,9 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NodeSUnit->NodeNum);
 
+    // Compute NumRegDefsLeft. This must be done before AddSchedEdges.
+    InitNumRegDefsLeft(NodeSUnit);
+
     // Assign the Latency field of NodeSUnit using target-provided information.
     ComputeLatency(NodeSUnit);
   }
@@ -407,7 +410,13 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
           ST.adjustSchedDependency(OpSU, SU, const_cast<SDep &>(dep));
         }
 
-        SU->addPred(dep);
+        if (!SU->addPred(dep) && !dep.isCtrl() && OpSU->NumRegDefsLeft > 0) {
+          // Multiple register uses are combined in the same SUnit. For example,
+          // we could have a set of glued nodes with all their defs consumed by
+          // another set of glued nodes. Register pressure tracking sees this as
+          // a single use, so to keep pressure balanced we reduce the defs.
+          --OpSU->NumRegDefsLeft;
+        }
       }
     }
   }
@@ -424,6 +433,69 @@ void ScheduleDAGSDNodes::BuildSchedGraph(AliasAnalysis *AA) {
   BuildSchedUnits();
   // Compute all the scheduling dependencies between nodes.
   AddSchedEdges();
+}
+
+// Initialize NumNodeDefs for the current Node's opcode.
+void ScheduleDAGSDNodes::RegDefIter::InitNodeNumDefs() {
+  if (!Node->isMachineOpcode()) {
+    if (Node->getOpcode() == ISD::CopyFromReg)
+      NodeNumDefs = 1;
+    else
+      NodeNumDefs = 0;
+    return;
+  }
+  unsigned POpc = Node->getMachineOpcode();
+  if (POpc == TargetOpcode::IMPLICIT_DEF) {
+    // No register need be allocated for this.
+    NodeNumDefs = 0;
+    return;
+  }
+  unsigned NRegDefs = SchedDAG->TII->get(Node->getMachineOpcode()).getNumDefs();
+  // Some instructions define regs that are not represented in the selection DAG
+  // (e.g. unused flags). See tMOVi8. Make sure we don't access past NumValues.
+  NodeNumDefs = std::min(Node->getNumValues(), NRegDefs);
+  DefIdx = 0;
+}
+
+// Construct a RegDefIter for this SUnit and find the first valid value.
+ScheduleDAGSDNodes::RegDefIter::RegDefIter(const SUnit *SU,
+                                           const ScheduleDAGSDNodes *SD)
+  : SchedDAG(SD), Node(SU->getNode()), DefIdx(0), NodeNumDefs(0) {
+  InitNodeNumDefs();
+  Advance();
+}
+
+// Advance to the next valid value defined by the SUnit.
+void ScheduleDAGSDNodes::RegDefIter::Advance() {
+  for (;Node;) { // Visit all glued nodes.
+    for (;DefIdx < NodeNumDefs; ++DefIdx) {
+      if (!Node->hasAnyUseOfValue(DefIdx))
+        continue;
+      if (Node->isMachineOpcode() &&
+          Node->getMachineOpcode() == TargetOpcode::EXTRACT_SUBREG) {
+        // Propagate the incoming (full-register) type. I doubt it's needed.
+        ValueType = Node->getOperand(0).getValueType();
+      }
+      else {
+        ValueType = Node->getValueType(DefIdx);
+      }
+      ++DefIdx;
+      return; // Found a normal regdef.
+    }
+    Node = Node->getGluedNode();
+    if (Node == NULL) {
+      return; // No values left to visit.
+    }
+    InitNodeNumDefs();
+  }
+}
+
+void ScheduleDAGSDNodes::InitNumRegDefsLeft(SUnit *SU) {
+  assert(SU->NumRegDefsLeft == 0 && "expect a new node");
+  for (RegDefIter I(SU, this); I.IsValid(); I.Advance()) {
+    assert(SU->NumRegDefsLeft < USHRT_MAX && "overflow is ok but unexpected");
+    ++SU->NumRegDefsLeft;
+  }
 }
 
 void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
