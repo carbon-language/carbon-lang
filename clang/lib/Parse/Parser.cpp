@@ -739,8 +739,9 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
 
   // We should have either an opening brace or, in a C++ constructor,
   // we may have a colon.
-  if (Tok.isNot(tok::l_brace) && Tok.isNot(tok::colon) &&
-      Tok.isNot(tok::kw_try)) {
+  if (Tok.isNot(tok::l_brace) && 
+      (!getLang().CPlusPlus ||
+       (Tok.isNot(tok::colon) && Tok.isNot(tok::kw_try)))) {
     Diag(Tok, diag::err_expected_fn_body);
 
     // Skip over garbage, until we get to '{'.  Don't eat the '{'.
