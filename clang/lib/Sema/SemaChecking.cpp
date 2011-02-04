@@ -2643,6 +2643,13 @@ bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
   if (Bitfield->getType()->isBooleanType())
     return false;
 
+  // Ignore value- or type-dependent expressions.
+  if (Bitfield->getBitWidth()->isValueDependent() ||
+      Bitfield->getBitWidth()->isTypeDependent() ||
+      Init->isValueDependent() ||
+      Init->isTypeDependent())
+    return false;
+
   Expr *OriginalInit = Init->IgnoreParenImpCasts();
 
   llvm::APSInt Width(32);

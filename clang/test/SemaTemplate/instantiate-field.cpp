@@ -90,3 +90,15 @@ namespace PR7355 {
 
   A<int> ai; // expected-note{{in instantiation of}}
 }
+
+namespace PR8712 {
+  template <int dim>
+  class B {
+  public:
+    B(const unsigned char i);
+    unsigned char value : (dim > 0 ? dim : 1);
+  };
+
+  template <int dim>
+  inline B<dim>::B(const unsigned char i) : value(i) {}
+}
