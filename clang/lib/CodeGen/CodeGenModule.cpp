@@ -374,9 +374,7 @@ CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
   // In C99 mode, 'inline' functions are guaranteed to have a strong
   // definition somewhere else, so we can use available_externally linkage.
   if (Linkage == GVA_C99Inline)
-    return !Context.getLangOptions().AppleKext
-             ? llvm::Function::AvailableExternallyLinkage
-             : llvm::Function::InternalLinkage;
+    return llvm::Function::AvailableExternallyLinkage;
   
   // In C++, the compiler has to emit a definition in every translation unit
   // that references the function.  We should use linkonce_odr because
