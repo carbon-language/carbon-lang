@@ -383,7 +383,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
 
   // Okay, find the smallest type from the current set and remove it from the
   // largest set.
-  MVT::SimpleValueType SmallestInt;
+  MVT::SimpleValueType SmallestInt = MVT::LAST_VALUETYPE;
   for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
     if (isInteger(TypeVec[i])) {
       SmallestInt = TypeVec[i];
@@ -393,7 +393,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
     if (isInteger(TypeVec[i]) && TypeVec[i] < SmallestInt)
       SmallestInt = TypeVec[i];
 
-  MVT::SimpleValueType SmallestFP;
+  MVT::SimpleValueType SmallestFP = MVT::LAST_VALUETYPE;
   for (unsigned i = 0, e = TypeVec.size(); i != e; ++i)
     if (isFloatingPoint(TypeVec[i])) {
       SmallestFP = TypeVec[i];
@@ -439,7 +439,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
 
   // Okay, find the largest type in the Other set and remove it from the
   // current set.
-  MVT::SimpleValueType LargestInt = Other.TypeVec[0];
+  MVT::SimpleValueType LargestInt = MVT::Other;
   for (unsigned i = 0, e = Other.TypeVec.size(); i != e; ++i)
     if (isInteger(Other.TypeVec[i])) {
       LargestInt = Other.TypeVec[i];
@@ -449,7 +449,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
     if (isInteger(Other.TypeVec[i]) && Other.TypeVec[i] > LargestInt)
       LargestInt = Other.TypeVec[i];
 
-  MVT::SimpleValueType LargestFP;
+  MVT::SimpleValueType LargestFP = MVT::Other;
   for (unsigned i = 0, e = Other.TypeVec.size(); i != e; ++i)
     if (isFloatingPoint(Other.TypeVec[i])) {
       LargestFP = Other.TypeVec[i];
