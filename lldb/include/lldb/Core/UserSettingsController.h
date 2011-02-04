@@ -147,6 +147,13 @@ public:
                               const char *search_name,
                               StreamString &result_stream,
                               Error &err);
+    
+    static void
+    SearchAllSettingsDescriptions (CommandInterpreter &interpreter,
+                                   lldb::UserSettingsControllerSP root,
+                                   std::string &current_prefix,
+                                   const char *search_word,
+                                   StreamString &result_stream);
 
     static void
     GetAllVariableValues (CommandInterpreter &interpreter,

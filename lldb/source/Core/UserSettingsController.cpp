@@ -1353,6 +1353,75 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
 }
 
 void
+UserSettingsController::SearchAllSettingsDescriptions (CommandInterpreter &interpreter,
+                                                       lldb::UserSettingsControllerSP root,
+                                                       std::string &current_prefix,
+                                                       const char *search_word,
+                                                       StreamString &result_stream)
+{
+    if ((search_word == NULL) || (strlen (search_word) == 0))
+        return;
+    
+    int num_entries = root->m_settings.global_settings.size();
+
+    if (num_entries > 0)
+    {
+        for (int i = 0; i < num_entries; ++i)
+        {
+            SettingEntry &entry = root->m_settings.global_settings[i];
+            if (strcasestr (entry.description, search_word) != NULL)
+            {
+                StreamString var_name;
+                if (current_prefix.size() > 0)
+                    var_name.Printf ("%s.%s", current_prefix.c_str(), entry.var_name);
+                else
+                    var_name.Printf ("%s", entry.var_name);
+                interpreter.OutputFormattedHelpText (result_stream, var_name.GetData(), "--", entry.description,
+                                                     var_name.GetSize());
+            }
+        }
+    }
+    
+    num_entries = root->m_settings.instance_settings.size();
+    if (num_entries > 0)
+    {
+        for (int i = 0; i < num_entries; ++i)
+        {
+            SettingEntry &entry = root->m_settings.instance_settings[i];
+            if (strcasestr (entry.description, search_word) != NULL)
+            {
+                StreamString var_name;
+                if (current_prefix.size() > 0)
+                    var_name.Printf ("%s.%s", current_prefix.c_str(), entry.var_name);
+                else
+                    var_name.Printf ("%s", entry.var_name);
+                interpreter.OutputFormattedHelpText (result_stream, var_name.GetData(), "--", entry.description,
+                                                     var_name.GetSize());
+            }
+        }
+    }
+    
+    int num_children = root->GetNumChildren ();
+    for (int i = 0; i < num_children; ++i)
+    {
+        lldb::UserSettingsControllerSP child = root->GetChildAtIndex (i);
+        
+        if (child)
+        {
+            ConstString child_prefix = child->GetLevelName();
+            StreamString new_prefix;
+            if (! current_prefix.empty())
+                new_prefix.Printf ("%s.%s", current_prefix.c_str(), child_prefix.AsCString());
+            else
+                new_prefix.Printf ("%s", child_prefix.AsCString());
+            std::string new_prefix_str = new_prefix.GetData();
+            UserSettingsController::SearchAllSettingsDescriptions (interpreter, child, new_prefix_str, search_word,
+                                                                   result_stream);
+        }
+    }
+}
+
+void
 UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
                                               lldb::UserSettingsControllerSP root,
                                               std::string &current_prefix,

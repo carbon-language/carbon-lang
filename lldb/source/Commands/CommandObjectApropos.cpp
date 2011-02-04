@@ -95,6 +95,21 @@ CommandObjectApropos::Execute
                                                            max_len);
                 
             }
+            
+            
+            StreamString settings_search_results;
+            lldb::UserSettingsControllerSP root = Debugger::GetSettingsController ();
+            std::string settings_prefix = root->GetLevelName().AsCString();
+             
+            UserSettingsController::SearchAllSettingsDescriptions (m_interpreter, root, settings_prefix, search_word,
+                                                                   settings_search_results);
+            
+            if (settings_search_results.GetSize() > 0)
+            {
+                result.AppendMessageWithFormat ("\nThe following settings variables may relate to '%s': \n\n", search_word);
+                result.AppendMessageWithFormat ("%s", settings_search_results.GetData());
+            }
+            
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
