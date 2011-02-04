@@ -22,6 +22,7 @@ include $(CLANG_LEVEL)/Makefile
 
 ifndef IS_UNITTEST_LEVEL
 
+MAKEFILE_UNITTEST_NO_INCLUDE_COMMON := 1
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
 
 endif  # IS_UNITTEST_LEVEL
