@@ -4328,6 +4328,26 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
           QualType ResultTy = FPT->getCallResultType(Context);
           ExprValueKind VK = Expr::getValueKindForType(FPT->getResultType());
 
+          // Check that the object type isn't more qualified than the
+          // member function we're calling.
+          Qualifiers FuncQuals = Qualifiers::fromCVRMask(FPT->getTypeQuals());
+          Qualifiers ObjectQuals 
+            = BO->getOpcode() == BO_PtrMemD
+                ? BO->getLHS()->getType().getQualifiers()
+                : BO->getLHS()->getType()->getAs<PointerType>()
+                                            ->getPointeeType().getQualifiers();
+
+          Qualifiers Difference = ObjectQuals - FuncQuals;
+          Difference.removeObjCGCAttr();
+          Difference.removeAddressSpace();
+          if (Difference) {
+            std::string QualsString = Difference.getAsString();
+            Diag(LParenLoc, diag::err_pointer_to_member_call_drops_quals)
+              << BO->getType().getUnqualifiedType()
+              << QualsString
+              << (QualsString.find(' ') == std::string::npos? 1 : 2);
+          }
+              
           CXXMemberCallExpr *TheCall
             = new (Context) CXXMemberCallExpr(Context, Fn, Args,
                                               NumArgs, ResultTy, VK,

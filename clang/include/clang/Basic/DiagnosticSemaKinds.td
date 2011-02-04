@@ -1585,6 +1585,8 @@ def ext_template_arg_extra_parens : ExtWarn<
   "address non-type template argument cannot be surrounded by parentheses">;
 def err_pointer_to_member_type : Error<
   "invalid use of pointer to member type after %select{.*|->*}0">;
+def err_pointer_to_member_call_drops_quals : Error<
+  "call to pointer to member function of type %0 drops '%1' qualifier%s2">;
 def err_pointer_to_member_oper_value_classify: Error<
   "pointer-to-member function type %0 can only be called on an "
   "%select{rvalue|lvalue}1">;
