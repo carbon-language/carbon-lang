@@ -19,6 +19,14 @@ class SettingsCommandTestCase(TestBase):
         system(["/bin/sh", "-c", "rm -f stderr.txt"])
         system(["/bin/sh", "-c", "rm -f stdout.txt"])
 
+    def test_apropos_should_also_search_settings_description(self):
+        """Test that 'apropos' command should also search descriptions for the settings variables."""
+
+        self.expect("apropos 'environment variable'",
+            substrs = ["target.process.env-vars",
+                       "environment variables",
+                       "executable's environment"])
+
     def test_set_prompt(self):
         """Test that 'set prompt' actually changes the prompt."""
 
