@@ -79,7 +79,8 @@ namespace {
 class UserValue {
   const MDNode *variable; ///< The debug info variable we are part of.
   unsigned offset;        ///< Byte offset into variable.
-
+  DebugLoc dl;            ///< The debug location for the variable. This is
+                          ///< used by dwarf writer to find lexical scope.
   UserValue *leader;      ///< Equivalence class leader.
   UserValue *next;        ///< Next value in equivalence class, or null.
 
@@ -104,8 +105,9 @@ class UserValue {
 
 public:
   /// UserValue - Create a new UserValue.
-  UserValue(const MDNode *var, unsigned o, LocMap::Allocator &alloc)
-    : variable(var), offset(o), leader(this), next(0), locInts(alloc)
+  UserValue(const MDNode *var, unsigned o, DebugLoc L, 
+            LocMap::Allocator &alloc)
+    : variable(var), offset(o), dl(L), leader(this), next(0), locInts(alloc)
   {}
 
   /// getLeader - Get the leader of this value's equivalence class.
@@ -192,6 +194,11 @@ public:
   void emitDebugValues(VirtRegMap *VRM,
                        LiveIntervals &LIS, const TargetInstrInfo &TRI);
 
+  /// findDebugLoc - Return DebugLoc used for this DBG_VALUE instruction. A
+  /// variable may have more than one corresponding DBG_VALUE instructions. 
+  /// Only first one needs DebugLoc to identify variable's lexical scope
+  /// in source file.
+  DebugLoc findDebugLoc();
   void print(raw_ostream&, const TargetRegisterInfo*);
 };
 } // namespace
@@ -218,7 +225,7 @@ class LDVImpl {
   UVMap userVarMap;
 
   /// getUserValue - Find or create a UserValue.
-  UserValue *getUserValue(const MDNode *Var, unsigned Offset);
+  UserValue *getUserValue(const MDNode *Var, unsigned Offset, DebugLoc DL);
 
   /// lookupVirtReg - Find the EC leader for VirtReg or null.
   UserValue *lookupVirtReg(unsigned VirtReg);
@@ -315,7 +322,8 @@ void UserValue::coalesceLocation(unsigned LocNo) {
   }
 }
 
-UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset) {
+UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset,
+                                 DebugLoc DL) {
   UserValue *&Leader = userVarMap[Var];
   if (Leader) {
     UserValue *UV = Leader->getLeader();
@@ -325,7 +333,7 @@ UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset) {
         return UV;
   }
 
-  UserValue *UV = new UserValue(Var, Offset, allocator);
+  UserValue *UV = new UserValue(Var, Offset, DL, allocator);
   userValues.push_back(UV);
   Leader = UserValue::merge(Leader, UV);
   return UV;
@@ -354,7 +362,7 @@ bool LDVImpl::handleDebugValue(MachineInstr *MI, SlotIndex Idx) {
   // Get or create the UserValue for (variable,offset).
   unsigned Offset = MI->getOperand(1).getImm();
   const MDNode *Var = MI->getOperand(2).getMetadata();
-  UserValue *UV = getUserValue(Var, Offset);
+  UserValue *UV = getUserValue(Var, Offset, MI->getDebugLoc());
 
   // If the location is a virtual register, make sure it is mapped.
   if (MI->getOperand(0).isReg()) {
@@ -581,10 +589,10 @@ UserValue::rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI) {
   DEBUG(print(dbgs(), &TRI));
 }
 
-/// findInsertLocation - Find an iterator and DebugLoc for inserting a DBG_VALUE
+/// findInsertLocation - Find an iterator for inserting a DBG_VALUE
 /// instruction.
 static MachineBasicBlock::iterator
-findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx, DebugLoc &DL,
+findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx,
                    LiveIntervals &LIS) {
   SlotIndex Start = LIS.getMBBStartIdx(MBB);
   Idx = Idx.getBaseIndex();
@@ -595,46 +603,47 @@ findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx, DebugLoc &DL,
     // We've reached the beginning of MBB.
     if (Idx == Start) {
       MachineBasicBlock::iterator I = MBB->SkipPHIsAndLabels(MBB->begin());
-      if (I != MBB->end())
-        DL = I->getDebugLoc();
       return I;
     }
     Idx = Idx.getPrevIndex();
   }
-  // We found an instruction. The insert point is after the instr.
-  DL = MI->getDebugLoc();
+
   // Don't insert anything after the first terminator, though.
   return MI->getDesc().isTerminator() ? MBB->getFirstTerminator() :
                                     llvm::next(MachineBasicBlock::iterator(MI));
 }
 
+DebugLoc UserValue::findDebugLoc() {
+  DebugLoc D = dl;
+  dl = DebugLoc();
+  return D;
+}
 void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
                                  unsigned LocNo,
                                  LiveIntervals &LIS,
                                  const TargetInstrInfo &TII) {
-  DebugLoc DL;
-  MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, DL, LIS);
+  MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, LIS);
   MachineOperand &Loc = locations[LocNo];
 
   // Frame index locations may require a target callback.
   if (Loc.isFI()) {
     MachineInstr *MI = TII.emitFrameIndexDebugValue(*MBB->getParent(),
-                                          Loc.getIndex(), offset, variable, DL);
+                                          Loc.getIndex(), offset, variable, 
+                                                    findDebugLoc());
     if (MI) {
       MBB->insert(I, MI);
       return;
     }
   }
   // This is not a frame index, or the target is happy with a standard FI.
-  BuildMI(*MBB, I, DL, TII.get(TargetOpcode::DBG_VALUE))
+  BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE))
     .addOperand(Loc).addImm(offset).addMetadata(variable);
 }
 
 void UserValue::insertDebugKill(MachineBasicBlock *MBB, SlotIndex Idx,
                                LiveIntervals &LIS, const TargetInstrInfo &TII) {
-  DebugLoc DL;
-  MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, DL, LIS);
-  BuildMI(*MBB, I, DL, TII.get(TargetOpcode::DBG_VALUE)).addReg(0)
+  MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, LIS);
+  BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE)).addReg(0)
     .addImm(offset).addMetadata(variable);
 }
 
