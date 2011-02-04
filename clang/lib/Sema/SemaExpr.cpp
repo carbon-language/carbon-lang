@@ -1035,28 +1035,6 @@ static void DecomposeUnqualifiedId(Sema &SemaRef,
   }
 }
 
-/// Determines whether the given record is "fully-formed" at the given
-/// location, i.e. whether a qualified lookup into it is assured of
-/// getting consistent results already.
-static bool IsFullyFormedScope(Sema &SemaRef, CXXRecordDecl *Record) {
-  if (!Record->hasDefinition())
-    return false;
-
-  for (CXXRecordDecl::base_class_iterator I = Record->bases_begin(),
-         E = Record->bases_end(); I != E; ++I) {
-    CanQualType BaseT = SemaRef.Context.getCanonicalType((*I).getType());
-    CanQual<RecordType> BaseRT = BaseT->getAs<RecordType>();
-    if (!BaseRT) return false;
-
-    CXXRecordDecl *BaseRecord = cast<CXXRecordDecl>(BaseRT->getDecl());
-    if (!BaseRecord->hasDefinition() ||
-        !IsFullyFormedScope(SemaRef, BaseRecord))
-      return false;
-  }
-
-  return true;
-}
-
 /// Determines if the given class is provably not derived from all of
 /// the prospective base classes.
 static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
@@ -1489,9 +1467,6 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
     if (DC) {
       if (RequireCompleteDeclContext(SS, DC))
         return ExprError();
-      // FIXME: We should be checking whether DC is the current instantiation.
-      if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC))
-        DependentID = !IsFullyFormedScope(*this, RD);
     } else {
       DependentID = true;
     }
@@ -1513,10 +1488,21 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
     bool MemberOfUnknownSpecialization;
     LookupTemplateName(R, S, SS, QualType(), /*EnteringContext=*/false,
                        MemberOfUnknownSpecialization);
+    
+    if (MemberOfUnknownSpecialization ||
+        (R.getResultKind() == LookupResult::NotFoundInCurrentInstantiation))
+      return ActOnDependentIdExpression(SS, NameInfo, isAddressOfOperand,
+                                        TemplateArgs);
   } else {
     IvarLookupFollowUp = (!SS.isSet() && II && getCurMethodDecl());
     LookupParsedName(R, S, &SS, !IvarLookupFollowUp);
 
+    // If the result might be in a dependent base class, this is a dependent 
+    // id-expression.
+    if (R.getResultKind() == LookupResult::NotFoundInCurrentInstantiation)
+      return ActOnDependentIdExpression(SS, NameInfo, isAddressOfOperand,
+                                        TemplateArgs);
+      
     // If this reference is in an Objective-C method, then we need to do
     // some special Objective-C lookup, too.
     if (IvarLookupFollowUp) {

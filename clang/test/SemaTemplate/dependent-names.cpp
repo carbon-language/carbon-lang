@@ -102,3 +102,30 @@ namespace test1 {
 
   template struct Derived<int>; // expected-note {{requested here}}
 }
+
+namespace PR8966 {
+  template <class T>
+  class MyClassCore
+  {
+  };
+
+  template <class T>
+  class MyClass : public MyClassCore<T>
+  {
+  public:
+    enum  {
+      N
+    };
+
+    // static member declaration
+    static const char* array [N];
+
+    void f() {
+      MyClass<T>::InBase = 17;
+    }
+  };
+
+  // static member definition
+  template <class T>
+  const char* MyClass<T>::array [MyClass<T>::N] = { "A", "B", "C" };
+}
