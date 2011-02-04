@@ -113,27 +113,27 @@ lldb_private::DisableLog (Args &args, Stream *feedback_strm)
             {
                 const char *arg = args.GetArgumentAtIndex (i);
 
-                if      (strcasecmp(arg, "all")     == 0  ) flag_bits &= ~LIBLLDB_LOG_ALL;
-                else if (strcasecmp(arg, "api")     == 0)   flag_bits &= ~LIBLLDB_LOG_API;
-                else if (strcasestr(arg, "break")   == arg) flag_bits &= ~LIBLLDB_LOG_BREAKPOINTS;
-                else if (strcasecmp(arg, "commands")== 0)   flag_bits &= ~LIBLLDB_LOG_COMMANDS;
-                else if (strcasecmp(arg, "default") == 0  ) flag_bits &= ~LIBLLDB_LOG_DEFAULT;
-                else if (strcasecmp(arg, "dyld")    == 0  ) flag_bits &= ~LIBLLDB_LOG_DYNAMIC_LOADER;
-                else if (strcasestr(arg, "event")   == arg) flag_bits &= ~LIBLLDB_LOG_EVENTS;
-                else if (strcasestr(arg, "expr")    == arg) flag_bits &= ~LIBLLDB_LOG_EXPRESSIONS;
-                else if (strcasestr(arg, "object")  == arg) flag_bits &= ~LIBLLDB_LOG_OBJECT;
-                else if (strcasecmp(arg, "process") == 0  ) flag_bits &= ~LIBLLDB_LOG_PROCESS;
-                else if (strcasecmp(arg, "script") == 0)    flag_bits &= ~LIBLLDB_LOG_SCRIPT;
-                else if (strcasecmp(arg, "state")   == 0  ) flag_bits &= ~LIBLLDB_LOG_STATE;
-                else if (strcasecmp(arg, "step")    == 0  ) flag_bits &= ~LIBLLDB_LOG_STEP;
-                else if (strcasecmp(arg, "thread")  == 0  ) flag_bits &= ~LIBLLDB_LOG_THREAD;
-                else if (strcasecmp(arg, "verbose") == 0  ) flag_bits &= ~LIBLLDB_LOG_VERBOSE;
-                else if (strcasestr(arg, "watch")   == arg) flag_bits &= ~LIBLLDB_LOG_WATCHPOINTS;
-                else if (strcasestr(arg, "temp")   == arg)  flag_bits &= ~LIBLLDB_LOG_TEMPORARY;
-                else if (strcasestr(arg, "comm")   == arg)  flag_bits &= ~LIBLLDB_LOG_COMMUNICATION;
-                else if (strcasestr(arg, "conn")   == arg)  flag_bits &= ~LIBLLDB_LOG_CONNECTION;
-                else if (strcasestr(arg, "host")   == arg)  flag_bits &= ~LIBLLDB_LOG_HOST;
-                else if (strcasestr(arg, "unwind") == arg)  flag_bits &= ~LIBLLDB_LOG_UNWIND;
+                if      (0 == ::strcasecmp(arg, "all"))         flag_bits &= ~LIBLLDB_LOG_ALL;
+                else if (0 == ::strcasecmp(arg, "api"))         flag_bits &= ~LIBLLDB_LOG_API;
+                else if (0 == ::strncasecmp(arg, "break", 5))   flag_bits &= ~LIBLLDB_LOG_BREAKPOINTS;
+                else if (0 == ::strcasecmp(arg, "commands"))    flag_bits &= ~LIBLLDB_LOG_COMMANDS;
+                else if (0 == ::strcasecmp(arg, "default"))     flag_bits &= ~LIBLLDB_LOG_DEFAULT;
+                else if (0 == ::strcasecmp(arg, "dyld"))        flag_bits &= ~LIBLLDB_LOG_DYNAMIC_LOADER;
+                else if (0 == ::strncasecmp(arg, "event", 5))   flag_bits &= ~LIBLLDB_LOG_EVENTS;
+                else if (0 == ::strncasecmp(arg, "expr", 4))    flag_bits &= ~LIBLLDB_LOG_EXPRESSIONS;
+                else if (0 == ::strncasecmp(arg, "object", 6))  flag_bits &= ~LIBLLDB_LOG_OBJECT;
+                else if (0 == ::strcasecmp(arg, "process"))     flag_bits &= ~LIBLLDB_LOG_PROCESS;
+                else if (0 == ::strcasecmp(arg, "script"))      flag_bits &= ~LIBLLDB_LOG_SCRIPT;
+                else if (0 == ::strcasecmp(arg, "state"))       flag_bits &= ~LIBLLDB_LOG_STATE;
+                else if (0 == ::strcasecmp(arg, "step"))        flag_bits &= ~LIBLLDB_LOG_STEP;
+                else if (0 == ::strcasecmp(arg, "thread"))      flag_bits &= ~LIBLLDB_LOG_THREAD;
+                else if (0 == ::strcasecmp(arg, "verbose"))     flag_bits &= ~LIBLLDB_LOG_VERBOSE;
+                else if (0 == ::strncasecmp(arg, "watch", 5))   flag_bits &= ~LIBLLDB_LOG_WATCHPOINTS;
+                else if (0 == ::strncasecmp(arg, "temp", 4))    flag_bits &= ~LIBLLDB_LOG_TEMPORARY;
+                else if (0 == ::strncasecmp(arg, "comm", 4))    flag_bits &= ~LIBLLDB_LOG_COMMUNICATION;
+                else if (0 == ::strncasecmp(arg, "conn", 4))    flag_bits &= ~LIBLLDB_LOG_CONNECTION;
+                else if (0 == ::strncasecmp(arg, "host", 4))    flag_bits &= ~LIBLLDB_LOG_HOST;
+                else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits &= ~LIBLLDB_LOG_UNWIND;
                 else
                 {
                     feedback_strm->Printf ("error:  unrecognized log category '%s'\n", arg);
@@ -179,27 +179,27 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
         {
             const char *arg = args.GetArgumentAtIndex(i);
 
-            if      (strcasecmp(arg, "all")     == 0  ) flag_bits |= LIBLLDB_LOG_ALL;
-            else if (strcasecmp(arg, "api")     == 0)   flag_bits |= LIBLLDB_LOG_API;
-            else if (strcasestr(arg, "break")   == arg) flag_bits |= LIBLLDB_LOG_BREAKPOINTS;
-            else if (strcasecmp(arg, "commands")== 0)   flag_bits |= LIBLLDB_LOG_COMMANDS;
-            else if (strcasecmp(arg, "default") == 0  ) flag_bits |= LIBLLDB_LOG_DEFAULT;
-            else if (strcasecmp(arg, "dyld")    == 0  ) flag_bits |= LIBLLDB_LOG_DYNAMIC_LOADER;
-            else if (strcasestr(arg, "event")   == arg) flag_bits |= LIBLLDB_LOG_EVENTS;
-            else if (strcasestr(arg, "expr")    == arg) flag_bits |= LIBLLDB_LOG_EXPRESSIONS;
-            else if (strcasestr(arg, "object")  == arg) flag_bits |= LIBLLDB_LOG_OBJECT;
-            else if (strcasecmp(arg, "process") == 0  ) flag_bits |= LIBLLDB_LOG_PROCESS;
-            else if (strcasecmp(arg, "script") == 0)    flag_bits |= LIBLLDB_LOG_SCRIPT;
-            else if (strcasecmp(arg, "state")   == 0  ) flag_bits |= LIBLLDB_LOG_STATE;
-            else if (strcasecmp(arg, "step")    == 0  ) flag_bits |= LIBLLDB_LOG_STEP;
-            else if (strcasecmp(arg, "thread")  == 0  ) flag_bits |= LIBLLDB_LOG_THREAD;
-            else if (strcasecmp(arg, "verbose") == 0  ) flag_bits |= LIBLLDB_LOG_VERBOSE;
-            else if (strcasestr(arg, "watch")   == arg) flag_bits |= LIBLLDB_LOG_WATCHPOINTS;
-            else if (strcasestr(arg, "temp")   == arg)  flag_bits |= LIBLLDB_LOG_TEMPORARY;
-            else if (strcasestr(arg, "comm")   == arg)  flag_bits |= LIBLLDB_LOG_COMMUNICATION;
-            else if (strcasestr(arg, "conn")   == arg)  flag_bits |= LIBLLDB_LOG_CONNECTION;
-            else if (strcasestr(arg, "host")   == arg)  flag_bits |= LIBLLDB_LOG_HOST;
-            else if (strcasestr(arg, "unwind") == arg)  flag_bits |= LIBLLDB_LOG_UNWIND;
+            if      (0 == ::strcasecmp(arg, "all"))         flag_bits |= LIBLLDB_LOG_ALL;
+            else if (0 == ::strcasecmp(arg, "api"))         flag_bits |= LIBLLDB_LOG_API;
+            else if (0 == ::strncasecmp(arg, "break", 5))   flag_bits |= LIBLLDB_LOG_BREAKPOINTS;
+            else if (0 == ::strcasecmp(arg, "commands"))    flag_bits |= LIBLLDB_LOG_COMMANDS;
+            else if (0 == ::strcasecmp(arg, "default"))     flag_bits |= LIBLLDB_LOG_DEFAULT;
+            else if (0 == ::strcasecmp(arg, "dyld"))        flag_bits |= LIBLLDB_LOG_DYNAMIC_LOADER;
+            else if (0 == ::strncasecmp(arg, "event", 5))   flag_bits |= LIBLLDB_LOG_EVENTS;
+            else if (0 == ::strncasecmp(arg, "expr", 4))    flag_bits |= LIBLLDB_LOG_EXPRESSIONS;
+            else if (0 == ::strncasecmp(arg, "object", 6))  flag_bits |= LIBLLDB_LOG_OBJECT;
+            else if (0 == ::strcasecmp(arg, "process"))     flag_bits |= LIBLLDB_LOG_PROCESS;
+            else if (0 == ::strcasecmp(arg, "script"))      flag_bits |= LIBLLDB_LOG_SCRIPT;
+            else if (0 == ::strcasecmp(arg, "state"))       flag_bits |= LIBLLDB_LOG_STATE;
+            else if (0 == ::strcasecmp(arg, "step"))        flag_bits |= LIBLLDB_LOG_STEP;
+            else if (0 == ::strcasecmp(arg, "thread"))      flag_bits |= LIBLLDB_LOG_THREAD;
+            else if (0 == ::strcasecmp(arg, "verbose"))     flag_bits |= LIBLLDB_LOG_VERBOSE;
+            else if (0 == ::strncasecmp(arg, "watch", 5))   flag_bits |= LIBLLDB_LOG_WATCHPOINTS;
+            else if (0 == ::strncasecmp(arg, "temp", 4))    flag_bits |= LIBLLDB_LOG_TEMPORARY;
+            else if (0 == ::strncasecmp(arg, "comm", 4))    flag_bits |= LIBLLDB_LOG_COMMUNICATION;
+            else if (0 == ::strncasecmp(arg, "conn", 4))    flag_bits |= LIBLLDB_LOG_CONNECTION;
+            else if (0 == ::strncasecmp(arg, "host", 4))    flag_bits |= LIBLLDB_LOG_HOST;
+            else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits |= LIBLLDB_LOG_UNWIND;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);

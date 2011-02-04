@@ -360,9 +360,9 @@ SyntaxForArchSpec (const ArchSpec &arch)
 {
     const char *arch_name = arch.AsCString();
 
-    if (arch_name != NULL && 
-       ((strcasestr (arch_name, "i386") == arch_name) || 
-        (strcasestr (arch_name, "x86_64") == arch_name)))
+    if (arch_name != NULL
+        && (   (0 == ::strncasecmp (arch_name, "i386", 4))
+            || (0 == ::strncasecmp (arch_name, "x86_64", 6))))
         return kEDAssemblySyntaxX86ATT;
     
     return (EDAssemblySyntax_t)0;   // default
