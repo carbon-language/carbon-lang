@@ -595,6 +595,8 @@ public:
     virtual Error
     Attach (const char *process_name, bool wait_for_launch);
     
+    virtual Error
+    ConnectRemote (const char *remote_url);
     //------------------------------------------------------------------
     /// List the processes matching the given partial name.
     ///
@@ -854,6 +856,14 @@ public:
     WillAttachToProcessWithName (const char *process_name, bool wait_for_launch) 
     { 
         return Error(); 
+    }
+
+    virtual Error
+    DoConnectRemote (const char *remote_url)
+    {
+        Error error;
+        error.SetErrorString ("remote connections are not supported");
+        return error;
     }
 
     //------------------------------------------------------------------

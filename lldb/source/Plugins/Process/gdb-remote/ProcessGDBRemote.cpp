@@ -354,6 +354,56 @@ ProcessGDBRemote::WillAttachToProcessWithName (const char *process_name, bool wa
 }
 
 Error
+ProcessGDBRemote::DoConnectRemote (const char *remote_url)
+{
+    Error error (WillLaunchOrAttach ());
+    
+    if (error.Fail())
+        return error;
+
+    if (strncmp (remote_url, "connect://", strlen ("connect://")) == 0)
+    {
+        error = ConnectToDebugserver (remote_url);
+    }
+    else
+    {
+        error.SetErrorStringWithFormat ("unsupported remote url: %s", remote_url);
+    }
+
+    if (error.Fail())
+        return error;
+    StartAsyncThread ();
+
+    lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID (m_packet_timeout);
+    if (pid == LLDB_INVALID_PROCESS_ID)
+    {
+        // We don't have a valid process ID, so note that we are connected
+        // and could now request to launch or attach, or get remote process 
+        // listings...
+        SetPrivateState (eStateConnected);
+    }
+    else
+    {
+        // We have a valid process
+        SetID (pid);
+        StringExtractorGDBRemote response;
+        if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, m_packet_timeout, false))
+        {
+            const StateType state = SetThreadStopInfo (response);
+            if (state == eStateStopped)
+            {
+                SetPrivateState (state);
+            }
+            else
+                error.SetErrorStringWithFormat ("Process %i was reported after connecting to '%s', but state was not stopped: %s", pid, remote_url, StateAsCString (state));
+        }
+        else
+            error.SetErrorStringWithFormat ("Process %i was reported after connecting to '%s', but no stop reply packet was received", pid, remote_url);
+    }
+    return error;
+}
+
+Error
 ProcessGDBRemote::WillLaunchOrAttach ()
 {
     Error error;
@@ -394,6 +444,8 @@ ProcessGDBRemote::DoLaunch
         ArchSpec inferior_arch(module->GetArchitecture());
         char host_port[128];
         snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
+        char connect_url[128];
+        snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
 
         const bool launch_process = true;
         bool start_debugserver_with_inferior_args = false;
@@ -417,7 +469,7 @@ ProcessGDBRemote::DoLaunch
             if (error.Fail())
                 return error;
 
-            error = ConnectToDebugserver (host_port);
+            error = ConnectToDebugserver (connect_url);
             if (error.Success())
             {
                 SetID (m_gdb_comm.GetCurrentProcessID (m_packet_timeout));
@@ -441,7 +493,7 @@ ProcessGDBRemote::DoLaunch
             if (error.Fail())
                 return error;
 
-            error = ConnectToDebugserver (host_port);
+            error = ConnectToDebugserver (connect_url);
             if (error.Success())
             {
                 // Send the environment and the program + arguments after we connect
@@ -515,20 +567,18 @@ ProcessGDBRemote::DoLaunch
 
 
 Error
-ProcessGDBRemote::ConnectToDebugserver (const char *host_port)
+ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
 {
     Error error;
     // Sleep and wait a bit for debugserver to start to listen...
     std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
     if (conn_ap.get())
     {
-        std::string connect_url("connect://");
-        connect_url.append (host_port);
         const uint32_t max_retry_count = 50;
         uint32_t retry_count = 0;
         while (!m_gdb_comm.IsConnected())
         {
-            if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
+            if (conn_ap->Connect(connect_url, &error) == eConnectionStatusSuccess)
             {
                 m_gdb_comm.SetConnection (conn_ap.release());
                 break;
@@ -596,21 +646,31 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 
         StreamString strm;
 
-        ArchSpec inferior_arch;
+        ArchSpec inferior_arch (m_gdb_comm.GetHostArchitecture());
+
         // See if the GDB server supports the qHostInfo information
         const char *vendor = m_gdb_comm.GetVendorString().AsCString();
         const char *os_type = m_gdb_comm.GetOSString().AsCString();
-        ArchSpec arch_spec (GetTarget().GetArchitecture());
-        
-        if (arch_spec.IsValid() && arch_spec == ArchSpec ("arm"))
+        const ArchSpec target_arch (GetTarget().GetArchitecture());
+        const ArchSpec arm_any("arm");
+        bool set_target_arch = true;
+        if (target_arch.IsValid())
         {
-            // For ARM we can't trust the arch of the process as it could
-            // have an armv6 object file, but be running on armv7 kernel.
-            inferior_arch = m_gdb_comm.GetHostArchitecture();
+            if (inferior_arch == arm_any)
+            {
+                // For ARM we can't trust the arch of the process as it could
+                // have an armv6 object file, but be running on armv7 kernel.
+                // So we only set the ARM architecture if the target isn't set
+                // to ARM already...
+                if (target_arch == arm_any)
+                {
+                    inferior_arch = target_arch;
+                    set_target_arch = false;
+                }
+            }
         }
-        
-        if (!inferior_arch.IsValid())
-            inferior_arch = arch_spec;
+        if (set_target_arch)
+            GetTarget().SetArchitecture (inferior_arch);
 
         if (vendor == NULL)
             vendor = Host::GetVendorString().AsCString("apple");
@@ -652,6 +712,9 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     {
         char host_port[128];
         snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
+        char connect_url[128];
+        snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
+
         error = StartDebugserverProcess (host_port,                 // debugserver_url
                                          NULL,                      // inferior_argv
                                          NULL,                      // inferior_envp
@@ -676,7 +739,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
         }
         else
         {
-            error = ConnectToDebugserver (host_port);
+            error = ConnectToDebugserver (connect_url);
             if (error.Success())
             {
                 char packet[64];
@@ -722,9 +785,13 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
     //LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (process_name && process_name[0])
     {
-        char host_port[128];
         ArchSpec arch_spec = GetTarget().GetArchitecture();
+
+        char host_port[128];
         snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
+        char connect_url[128];
+        snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
+
         error = StartDebugserverProcess (host_port,                 // debugserver_url
                                          NULL,                      // inferior_argv
                                          NULL,                      // inferior_envp
@@ -748,7 +815,7 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
         }
         else
         {
-            error = ConnectToDebugserver (host_port);
+            error = ConnectToDebugserver (connect_url);
             if (error.Success())
             {
                 StreamString packet;
@@ -772,9 +839,9 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
 void
 ProcessGDBRemote::DidAttach ()
 {
+    DidLaunchOrAttach ();
     if (m_dynamic_loader_ap.get())
         m_dynamic_loader_ap->DidAttach();
-    DidLaunchOrAttach ();
 }
 
 Error

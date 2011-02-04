@@ -18,16 +18,19 @@ namespace lldb {
 typedef enum StateType
 {
     eStateInvalid = 0,
-    eStateUnloaded,
-    eStateAttaching,
-    eStateLaunching,
-    eStateStopped,
-    eStateRunning,
-    eStateStepping,
-    eStateCrashed,
-    eStateDetached,
-    eStateExited,
-    eStateSuspended
+    eStateUnloaded,     ///< Process is object is valid, but not currently loaded
+    eStateConnected,    ///< Process is connected to remote debug services, but not launched or attached to anything yet
+    eStateAttaching,    ///< Process is currently trying to attach
+    eStateLaunching,    ///< Process is in the process of launching
+    eStateStopped,      ///< Process or thread is stopped and can be examined.
+    eStateRunning,      ///< Process or thread is running and can't be examined.
+    eStateStepping,     ///< Process or thread is in the process of stepping and can not be examined.
+    eStateCrashed,      ///< Process or thread has crashed and can be examined.
+    eStateDetached,     ///< Process has been detached and can't be examined.
+    eStateExited,       ///< Process has exited and can't be examined.
+    eStateSuspended     ///< Process or thread is in a suspended state as far
+                        ///< as the debugger is concerned while other processes
+                        ///< or threads get the chance to run.
 } StateType;
 
 //----------------------------------------------------------------------

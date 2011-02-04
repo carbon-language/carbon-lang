@@ -24,6 +24,7 @@ lldb_private::StateAsCString (StateType state)
     {
     case eStateInvalid:     return "invalid";
     case eStateUnloaded:    return "unloaded";
+    case eStateConnected:   return "connected";
     case eStateAttaching:   return "attaching";
     case eStateLaunching:   return "launching";
     case eStateStopped:     return "stopped";
@@ -50,6 +51,7 @@ lldb_private::StateIsRunningState (StateType state)
     case eStateStepping:
         return true;
 
+    case eStateConnected:
     case eStateDetached:
     case eStateInvalid:
     case eStateUnloaded:
@@ -69,6 +71,7 @@ lldb_private::StateIsStoppedState (StateType state)
     switch (state)
     {
     case eStateInvalid:
+    case eStateConnected:
     case eStateAttaching:
     case eStateLaunching:
     case eStateRunning:

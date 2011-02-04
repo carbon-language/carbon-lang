@@ -1106,6 +1106,7 @@ DynamicLoaderMacOSXDYLD::PrivateProcessStateChanged (Process *process, StateType
     DEBUG_PRINTF("DynamicLoaderMacOSXDYLD::%s(%s)\n", __FUNCTION__, StateAsCString(state));
     switch (state)
     {
+    case eStateConnected:
     case eStateAttaching:
     case eStateLaunching:
     case eStateInvalid:

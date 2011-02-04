@@ -1776,34 +1776,6 @@ ArchSpec::SetArch (const char *arch_name)
     return false;
 }
 
-//----------------------------------------------------------------------
-// CPU type and subtype set accessor.
-//----------------------------------------------------------------------
-void
-ArchSpec::SetArch (uint32_t cpu_type, uint32_t cpu_subtype)
-{
-    m_cpu = cpu_type;
-    m_sub = cpu_subtype;
-}
-
-//----------------------------------------------------------------------
-// CPU type set accessor.
-//----------------------------------------------------------------------
-void
-ArchSpec::SetCPUType (uint32_t cpu)
-{
-    m_cpu = cpu;
-}
-
-//----------------------------------------------------------------------
-// CPU subtype set accessor.
-//----------------------------------------------------------------------
-void
-ArchSpec::SetCPUSubtype (uint32_t subtype)
-{
-    m_sub = subtype;
-}
-
 ByteOrder
 ArchSpec::GetDefaultEndian () const
 {

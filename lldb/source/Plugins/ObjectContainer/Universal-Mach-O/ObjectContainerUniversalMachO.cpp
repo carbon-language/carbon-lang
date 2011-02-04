@@ -190,7 +190,7 @@ ObjectContainerUniversalMachO::GetArchitectureAtIndex (uint32_t idx, ArchSpec& a
 {
     if (idx < m_header.nfat_arch)
     {
-        arch.SetArch(m_fat_archs[idx].cputype, m_fat_archs[idx].cpusubtype);
+        arch.SetMachOArch (m_fat_archs[idx].cputype, m_fat_archs[idx].cpusubtype);
         return true;
     }
     return false;

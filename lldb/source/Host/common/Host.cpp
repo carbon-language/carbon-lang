@@ -229,7 +229,7 @@ Host::GetArchitecture ()
         {
             len = sizeof(cpusubtype);
             if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
-                g_host_arch.SetArch(cputype, cpusubtype);
+                g_host_arch.SetMachOArch (cputype, cpusubtype);
             
             len = sizeof (is_64_bit_capable);
             if  (::sysctlbyname("hw.cpu64bit_capable", &is_64_bit_capable, &len, NULL, 0) == 0)

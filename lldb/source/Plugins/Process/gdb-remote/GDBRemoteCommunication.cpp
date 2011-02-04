@@ -836,17 +836,20 @@ GDBRemoteCommunication::GetHostInfo (uint32_t timeout_seconds)
         
         std::string name;
         std::string value;
+        uint32_t cpu = LLDB_INVALID_CPUTYPE;
+        uint32_t sub = 0;
+    
         while (response.GetNameColonValue(name, value))
         {
             if (name.compare("cputype") == 0)
             {
                 // exception type in big endian hex
-                m_arch.SetCPUType(Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 0));
+                cpu = Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 0);
             }
             else if (name.compare("cpusubtype") == 0)
             {
                 // exception count in big endian hex
-                m_arch.SetCPUSubtype(Args::StringToUInt32 (value.c_str(), 0, 0));
+                sub = Args::StringToUInt32 (value.c_str(), 0, 0);
             }
             else if (name.compare("ostype") == 0)
             {
@@ -871,6 +874,9 @@ GDBRemoteCommunication::GetHostInfo (uint32_t timeout_seconds)
                 m_pointer_byte_size = Args::StringToUInt32 (value.c_str(), 0, 0);
             }
         }
+        
+        if (cpu != LLDB_INVALID_CPUTYPE)
+            m_arch.SetMachOArch (cpu, sub);
     }
     return HostInfoIsValid();
 }

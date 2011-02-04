@@ -822,6 +822,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
         {
         case eStateInvalid:
         case eStateUnloaded:
+        case eStateConnected:
         case eStateAttaching:
         case eStateLaunching:
         case eStateStepping:

@@ -572,7 +572,7 @@ public:
             target = new_target_sp.get();
             if (target == NULL || error.Fail())
             {
-                result.AppendError(error.AsCString("Error creating empty target"));
+                result.AppendError(error.AsCString("Error creating target"));
                 return false;
             }
             m_interpreter.GetDebugger().GetTargetList().SetSelectedTarget(target);
@@ -927,6 +927,182 @@ public:
         }
         return result.Succeeded();
     }
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectProcessConnect
+//-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessConnect
+
+class CommandObjectProcessConnect : public CommandObject
+{
+public:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions () :
+        Options()
+        {
+            // Keep default values of all options in one place: ResetOptionValues ()
+            ResetOptionValues ();
+        }
+        
+        ~CommandOptions ()
+        {
+        }
+        
+        Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+            case 'p':   
+                plugin_name.assign (option_arg);    
+                break;
+
+            default:
+                error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+                break;
+            }
+            return error;
+        }
+        
+        void
+        ResetOptionValues ()
+        {
+            Options::ResetOptionValues();
+            plugin_name.clear();
+        }
+        
+        const lldb::OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static lldb::OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        std::string plugin_name;        
+    };
+
+    CommandObjectProcessConnect (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "process connect",
+                   "Connect to a remote debug service.",
+                   "process connect <remote-url>",
+                   0)
+    {
+    }
+    
+    ~CommandObjectProcessConnect ()
+    {
+    }
+
+    
+    bool
+    Execute (Args& command,
+             CommandReturnObject &result)
+    {
+        
+        TargetSP target_sp (m_interpreter.GetDebugger().GetSelectedTarget());
+        Error error;        
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        if (process)
+        {
+            if (process->IsAlive())
+            {
+                result.AppendErrorWithFormat ("Process %u is currently being debugged, kill the process before connecting.\n", 
+                                              process->GetID());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+        
+        if (!target_sp)
+        {
+            // If there isn't a current target create one.
+            FileSpec emptyFileSpec;
+            ArchSpec emptyArchSpec;
+            
+            error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
+                                                                              emptyFileSpec,
+                                                                              emptyArchSpec, 
+                                                                              NULL, 
+                                                                              false,
+                                                                              target_sp);
+            if (!target_sp || error.Fail())
+            {
+                result.AppendError(error.AsCString("Error creating target"));
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            m_interpreter.GetDebugger().GetTargetList().SetSelectedTarget(target_sp.get());
+        }
+        
+        if (command.GetArgumentCount() == 1)
+        {
+            const char *plugin_name = NULL;
+            if (!m_options.plugin_name.empty())
+                plugin_name = m_options.plugin_name.c_str();
+
+            const char *remote_url = command.GetArgumentAtIndex(0);
+            process = target_sp->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name).get();
+            
+            if (process)
+            {
+                error = process->ConnectRemote (remote_url);
+
+                if (error.Fail())
+                {
+                    result.AppendError(error.AsCString("Remote connect failed"));
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+            else
+            {
+                result.AppendErrorWithFormat ("Unable to find process plug-in for remote URL '%s'.\nPlease specify a process plug-in name with the --plugin option, or specify an object file using the \"file\" command: \n", 
+                                              m_cmd_name.c_str(),
+                                              m_cmd_syntax.c_str());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("'%s' takes exactly one argument:\nUsage: \n", 
+                                          m_cmd_name.c_str(),
+                                          m_cmd_syntax.c_str());
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+protected:
+    
+    CommandOptions m_options;
+};
+
+
+lldb::OptionDefinition
+CommandObjectProcessConnect::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "plugin", 'p', required_argument, NULL, 0, eArgTypePlugin, "Name of the process plugin you want to use."},
+    { 0,                false, NULL,      0 , 0,                 NULL, 0, eArgTypeNone,   NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -1656,6 +1832,7 @@ CommandObjectMultiwordProcess::CommandObjectMultiwordProcess (CommandInterpreter
     LoadSubCommand ("attach",      CommandObjectSP (new CommandObjectProcessAttach (interpreter)));
     LoadSubCommand ("launch",      CommandObjectSP (new CommandObjectProcessLaunch (interpreter)));
     LoadSubCommand ("continue",    CommandObjectSP (new CommandObjectProcessContinue (interpreter)));
+    LoadSubCommand ("connect",     CommandObjectSP (new CommandObjectProcessConnect (interpreter)));
     LoadSubCommand ("detach",      CommandObjectSP (new CommandObjectProcessDetach (interpreter)));
     LoadSubCommand ("load",        CommandObjectSP (new CommandObjectProcessLoad (interpreter)));
     LoadSubCommand ("unload",      CommandObjectSP (new CommandObjectProcessUnload (interpreter)));

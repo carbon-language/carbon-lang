@@ -217,48 +217,49 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
             args.ReplaceArgumentAtIndex (i, m_interpreter.ProcessEmbeddedScriptCommands (tmp_str));
     }
 
-    Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
-    if (process == NULL)
+    if (GetFlags().AnySet (CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
     {
-        if (GetFlags().AnySet (CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
+        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        if (process == NULL)
         {
             result.AppendError ("Process must exist.");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-    }
-    else
-    {
-        StateType state = process->GetState();
-        
-        switch (state)
+        else
         {
-        
-        case eStateAttaching:
-        case eStateLaunching:
-        case eStateSuspended:
-        case eStateCrashed:
-        case eStateStopped:
-            break;
-        
-        case eStateDetached:
-        case eStateExited:
-        case eStateUnloaded:
-            if (GetFlags().Test(CommandObject::eFlagProcessMustBeLaunched))
+            StateType state = process->GetState();
+            
+            switch (state)
             {
-                result.AppendError ("Process must be launched.");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            break;
+            
+            case eStateSuspended:
+            case eStateCrashed:
+            case eStateStopped:
+                break;
+            
+            case eStateConnected:
+            case eStateAttaching:
+            case eStateLaunching:
+            case eStateDetached:
+            case eStateExited:
+            case eStateUnloaded:
+                if (GetFlags().Test(CommandObject::eFlagProcessMustBeLaunched))
+                {
+                    result.AppendError ("Process must be launched.");
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                break;
 
-        case eStateRunning:
-        case eStateStepping:
-            if (GetFlags().Test(CommandObject::eFlagProcessMustBePaused))
-            {
-                result.AppendError ("Process is running.  Use 'process interrupt' to pause execution.");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
+            case eStateRunning:
+            case eStateStepping:
+                if (GetFlags().Test(CommandObject::eFlagProcessMustBePaused))
+                {
+                    result.AppendError ("Process is running.  Use 'process interrupt' to pause execution.");
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
             }
         }
     }

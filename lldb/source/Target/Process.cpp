@@ -1737,6 +1737,49 @@ Process::Attach (const char *process_name, bool wait_for_launch)
 }
 
 Error
+Process::ConnectRemote (const char *remote_url)
+{
+    m_target_triple.Clear();
+    m_abi_sp.reset();
+    m_process_input_reader.reset();
+    
+    // Find the process and its architecture.  Make sure it matches the architecture
+    // of the current Target, and if not adjust it.
+    
+    Error error (DoConnectRemote (remote_url));
+    if (error.Success())
+    {
+        SetNextEventAction(new Process::AttachCompletionHandler(this));
+        StartPrivateStateThread();
+//        TimeValue timeout;
+//        timeout = TimeValue::Now();
+//        timeout.OffsetWithMicroSeconds(000);
+//        EventSP event_sp;
+//        StateType state = WaitForProcessStopPrivate(NULL, event_sp);
+//        
+//        if (state == eStateStopped || state == eStateCrashed)
+//        {
+//            DidLaunch ();
+//            
+//            // This delays passing the stopped event to listeners till DidLaunch gets
+//            // a chance to complete...
+//            HandlePrivateEvent (event_sp);
+//            StartPrivateStateThread ();
+//        }
+//        else if (state == eStateExited)
+//        {
+//            // We exited while trying to launch somehow.  Don't call DidLaunch as that's
+//            // not likely to work, and return an invalid pid.
+//            HandlePrivateEvent (event_sp);
+//        }
+//
+//        StartPrivateStateThread();
+    }
+    return error;
+}
+
+
+Error
 Process::Resume ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
@@ -1948,6 +1991,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
 
     switch (state)
     {
+        case eStateConnected:
         case eStateAttaching:
         case eStateLaunching:
         case eStateDetached:

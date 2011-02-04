@@ -262,23 +262,12 @@ public:
     /// @param[in] subtype The new CPU subtype
     //------------------------------------------------------------------
     void
-    SetArch (uint32_t cpu, uint32_t subtype);
-
-    //------------------------------------------------------------------
-    /// Change the CPU subtype given a new value of the CPU subtype.
-    ///
-    /// @param[in] subtype The new CPU subtype.
-    //------------------------------------------------------------------
-    void
-    SetCPUSubtype (uint32_t subtype);
-
-    //------------------------------------------------------------------
-    /// Change the CPU type given a new value of the CPU type.
-    ///
-    /// @param[in] cpu The new CPU type.
-    //------------------------------------------------------------------
-    void
-    SetCPUType (uint32_t cpu);
+    SetMachOArch (uint32_t cpu, uint32_t sub)
+    {
+        m_type = lldb::eArchTypeMachO;
+        m_cpu = cpu;
+        m_sub = sub;
+    }
 
     //------------------------------------------------------------------
     /// Returns the default endianness of the architecture.
