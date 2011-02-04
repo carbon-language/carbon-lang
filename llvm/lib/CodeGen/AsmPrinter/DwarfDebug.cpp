@@ -3580,6 +3580,14 @@ void DwarfDebug::emitDebugLoc() {
   if (DotDebugLocEntries.empty())
     return;
 
+  for (SmallVector<DotDebugLocEntry, 4>::iterator
+         I = DotDebugLocEntries.begin(), E = DotDebugLocEntries.end();
+       I != E; ++I) {
+    DotDebugLocEntry &Entry = *I;
+    if (I + 1 != DotDebugLocEntries.end())
+      Entry.Merge(I+1);
+  }
+
   // Start the dwarf loc section.
   Asm->OutStreamer.SwitchSection(
     Asm->getObjFileLowering().getDwarfLocSection());
@@ -3589,7 +3597,8 @@ void DwarfDebug::emitDebugLoc() {
   for (SmallVector<DotDebugLocEntry, 4>::iterator
          I = DotDebugLocEntries.begin(), E = DotDebugLocEntries.end();
        I != E; ++I, ++index) {
-    DotDebugLocEntry Entry = *I;
+    DotDebugLocEntry &Entry = *I;
+    if (Entry.isMerged()) continue;
     if (Entry.isEmpty()) {
       Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
       Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);

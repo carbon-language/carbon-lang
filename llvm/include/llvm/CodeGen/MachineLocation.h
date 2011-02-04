@@ -41,6 +41,11 @@ public:
   : IsRegister(true), Register(R), Offset(0) {}
   MachineLocation(unsigned R, int O)
   : IsRegister(false), Register(R), Offset(O) {}
+
+  bool operator==(const MachineLocation &Other) const {
+      return IsRegister == Other.IsRegister && Register == Other.Register &&
+        Offset == Other.Offset;
+  }
   
   // Accessors
   bool isReg()           const { return IsRegister; }
