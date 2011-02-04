@@ -176,6 +176,13 @@ public:
             getTriple().getArch() == llvm::Triple::x86_64);
 #endif
   }
+  virtual bool IsStrictAliasingDefault() const {
+#ifdef DISABLE_DEFAULT_STRICT_ALIASING
+    return false;
+#else
+    return ToolChain::IsStrictAliasingDefault();
+#endif
+  }
   
   virtual bool IsObjCDefaultSynthPropertiesDefault() const {
     // Always allow default synthesized properties on Darwin.
