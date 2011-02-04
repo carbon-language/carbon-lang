@@ -60,6 +60,128 @@ STATISTIC(NumTailCalls, "Number of tail calls");
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
 
+static SDValue Insert128BitVector(SDValue Result,
+                                  SDValue Vec,
+                                  SDValue Idx,
+                                  SelectionDAG &DAG,
+                                  DebugLoc dl);
+static SDValue Extract128BitVector(SDValue Vec,
+                                   SDValue Idx,
+                                   SelectionDAG &DAG,
+                                   DebugLoc dl);
+
+static SDValue ConcatVectors(SDValue Lower, SDValue Upper, SelectionDAG &DAG);
+
+/// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
+/// sets things up to match to an AVX VEXTRACTF128 instruction or a
+/// simple subregister reference.
+static SDValue Extract128BitVector(SDValue Vec,
+                                   SDValue Idx,
+                                   SelectionDAG &DAG,
+                                   DebugLoc dl) {
+  EVT VT = Vec.getValueType();
+  assert(VT.getSizeInBits() == 256 && "Unexpected vector size!");
+
+  EVT ElVT = VT.getVectorElementType();
+
+  int Factor = VT.getSizeInBits() / 128;
+
+  EVT ResultVT = EVT::getVectorVT(*DAG.getContext(),
+                                  ElVT,
+                                  VT.getVectorNumElements() / Factor);
+
+  // Extract from UNDEF is UNDEF.
+  if (Vec.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, dl, ResultVT);
+
+  if (isa<ConstantSDNode>(Idx)) {
+    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+
+    // Extract the relevant 128 bits.  Generate an EXTRACT_SUBVECTOR
+    // we can match to VEXTRACTF128.
+    unsigned ElemsPerChunk = 128 / ElVT.getSizeInBits();
+
+    // This is the index of the first element of the 128-bit chunk
+    // we want.
+    unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits()) / 128)
+                                 * ElemsPerChunk);
+
+    SDValue VecIdx = DAG.getConstant(NormalizedIdxVal, MVT::i32);
+
+    SDValue Result = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResultVT, Vec,
+                                 VecIdx);
+
+    return Result;
+  }
+
+  return SDValue();
+}
+
+/// Generate a DAG to put 128-bits into a vector > 128 bits.  This
+/// sets things up to match to an AVX VINSERTF128 instruction or a
+/// simple superregister reference.
+static SDValue Insert128BitVector(SDValue Result,
+                                  SDValue Vec,
+                                  SDValue Idx,
+                                  SelectionDAG &DAG,
+                                  DebugLoc dl) {
+  if (isa<ConstantSDNode>(Idx)) {
+    EVT VT = Vec.getValueType();
+    assert(VT.getSizeInBits() == 128 && "Unexpected vector size!");
+
+    EVT ElVT = VT.getVectorElementType();
+
+    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+
+    EVT ResultVT = Result.getValueType();
+
+    // Insert the relevant 128 bits.
+    unsigned ElemsPerChunk = 128 / ElVT.getSizeInBits();
+
+    // This is the index of the first element of the 128-bit chunk
+    // we want.
+    unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits()) / 128)
+                                 * ElemsPerChunk);
+
+    SDValue VecIdx = DAG.getConstant(NormalizedIdxVal, MVT::i32);
+
+    Result = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec,
+                         VecIdx);
+    return Result;
+  }
+
+  return SDValue();
+}
+
+/// Given two vectors, concat them.
+static SDValue ConcatVectors(SDValue Lower, SDValue Upper, SelectionDAG &DAG) {
+  DebugLoc dl = Lower.getDebugLoc();
+
+  assert(Lower.getValueType() == Upper.getValueType() && "Mismatched vectors!");
+
+  EVT VT = EVT::getVectorVT(*DAG.getContext(),
+                            Lower.getValueType().getVectorElementType(),
+                            Lower.getValueType().getVectorNumElements() * 2);
+
+  // TODO: Generalize to arbitrary vector length (this assumes 256-bit vectors).
+  assert(VT.getSizeInBits() == 256 && "Unsupported vector concat!");
+
+  // Insert the upper subvector.
+  SDValue Vec = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Upper,
+                                   DAG.getConstant(
+                                     // This is half the length of the result
+                                     // vector.  Start inserting the upper 128
+                                     // bits here.
+                                     Lower.getValueType().
+                                       getVectorNumElements(),
+                                     MVT::i32),
+                                   DAG, dl);
+
+  // Insert the lower subvector.
+  Vec = Insert128BitVector(Vec, Lower, DAG.getConstant(0, MVT::i32), DAG, dl);
+  return Vec;
+}
+
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
