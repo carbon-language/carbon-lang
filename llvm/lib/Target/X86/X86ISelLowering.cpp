@@ -3281,6 +3281,25 @@ bool X86::isVEXTRACTF128Index(SDNode *N) {
   return Result;
 }
 
+/// isVINSERTF128Index - Return true if the specified INSERT_SUBVECTOR
+/// operand specifies a subvector insert that is suitable for input to
+/// VINSERTF128.
+bool X86::isVINSERTF128Index(SDNode *N) {
+  if (!isa<ConstantSDNode>(N->getOperand(2).getNode()))
+    return false;
+
+  // The index should be aligned on a 128-bit boundary.
+  uint64_t Index =
+    cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();
+
+  unsigned VL = N->getValueType(0).getVectorNumElements();
+  unsigned VBits = N->getValueType(0).getSizeInBits();
+  unsigned ElSize = VBits / VL;
+  bool Result = (Index * ElSize) % 128 == 0;
+
+  return Result;
+}
+
 /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_SHUFFLE mask with PSHUF* and SHUFP* instructions.
 unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
@@ -3360,6 +3379,24 @@ unsigned X86::getExtractVEXTRACTF128Immediate(SDNode *N) {
     cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
 
   EVT VecVT = N->getOperand(0).getValueType();
+  EVT ElVT = VecVT.getVectorElementType();
+
+  unsigned NumElemsPerChunk = 128 / ElVT.getSizeInBits();
+
+  return Index / NumElemsPerChunk;
+}
+
+/// getInsertVINSERTF128Immediate - Return the appropriate immediate
+/// to insert at the specified INSERT_SUBVECTOR index with VINSERTF128
+/// instructions.
+unsigned X86::getInsertVINSERTF128Immediate(SDNode *N) {
+  if (!isa<ConstantSDNode>(N->getOperand(2).getNode()))
+    llvm_unreachable("Illegal insert subvector for VINSERTF128");
+
+  uint64_t Index =
+    cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();  
+
+  EVT VecVT = N->getValueType(0);
   EVT ElVT = VecVT.getVectorElementType();
 
   unsigned NumElemsPerChunk = 128 / ElVT.getSizeInBits();

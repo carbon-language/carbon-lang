@@ -413,6 +413,11 @@ namespace llvm {
     /// suitable for input to VEXTRACTF128.
     bool isVEXTRACTF128Index(SDNode *N);
 
+    /// isVINSERTF128Index - Return true if the specified
+    /// INSERT_SUBVECTOR operand specifies a subvector insert that is
+    /// suitable for input to VINSERTF128.
+    bool isVINSERTF128Index(SDNode *N);
+
     /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
     /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
     /// instructions.
@@ -434,6 +439,11 @@ namespace llvm {
     /// immediate to extract the specified EXTRACT_SUBVECTOR index
     /// with VEXTRACTF128 instructions.
     unsigned getExtractVEXTRACTF128Immediate(SDNode *N);
+
+    /// getInsertVINSERTF128Immediate - Return the appropriate
+    /// immediate to insert at the specified INSERT_SUBVECTOR index
+    /// with VINSERTF128 instructions.
+    unsigned getInsertVINSERTF128Immediate(SDNode *N);
 
     /// isZeroNode - Returns true if Elt is a constant zero or a floating point
     /// constant +0.0.
