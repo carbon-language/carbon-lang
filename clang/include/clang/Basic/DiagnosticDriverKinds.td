@@ -77,6 +77,8 @@ def err_drv_cc_print_options_failure : Error<
 def err_drv_preamble_format : Error<
     "incorrect format for -preamble-bytes=N,END">;
 
+def warn_c_kext : Warning<
+  "ignoring -fapple-kext which is valid for c++ and objective-c++ only">;
 def warn_drv_unsupported_option_argument : Warning<
   "ignoring unsupported argument '%1' to option '%0'">;
 def warn_drv_input_file_unused : Warning<

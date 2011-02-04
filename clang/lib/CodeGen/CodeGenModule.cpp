@@ -374,7 +374,9 @@ CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
   // In C99 mode, 'inline' functions are guaranteed to have a strong
   // definition somewhere else, so we can use available_externally linkage.
   if (Linkage == GVA_C99Inline)
-    return llvm::Function::AvailableExternallyLinkage;
+    return !Context.getLangOptions().AppleKext
+             ? llvm::Function::AvailableExternallyLinkage
+             : llvm::Function::InternalLinkage;
   
   // In C++, the compiler has to emit a definition in every translation unit
   // that references the function.  We should use linkonce_odr because
@@ -383,14 +385,18 @@ CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
   // merged with other definitions. c) C++ has the ODR, so we know the
   // definition is dependable.
   if (Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation)
-    return llvm::Function::LinkOnceODRLinkage;
+    return !Context.getLangOptions().AppleKext 
+             ? llvm::Function::LinkOnceODRLinkage 
+             : llvm::Function::InternalLinkage;
   
   // An explicit instantiation of a template has weak linkage, since
   // explicit instantiations can occur in multiple translation units
   // and must all be equivalent. However, we are not allowed to
   // throw away these explicit instantiations.
   if (Linkage == GVA_ExplicitTemplateInstantiation)
-    return llvm::Function::WeakODRLinkage;
+    return !Context.getLangOptions().AppleKext
+             ? llvm::Function::WeakODRLinkage
+             : llvm::Function::InternalLinkage;
   
   // Otherwise, we have strong external linkage.
   assert(Linkage == GVA_StrongExternal);
@@ -1089,21 +1095,29 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
           return llvm::GlobalVariable::AvailableExternallyLinkage;
 
         if (KeyFunction->isInlined())
-          return llvm::GlobalVariable::LinkOnceODRLinkage;
+          return !Context.getLangOptions().AppleKext ?
+                   llvm::GlobalVariable::LinkOnceODRLinkage :
+                   llvm::Function::InternalLinkage;
         
         return llvm::GlobalVariable::ExternalLinkage;
         
       case TSK_ImplicitInstantiation:
-        return llvm::GlobalVariable::LinkOnceODRLinkage;
+        return !Context.getLangOptions().AppleKext ?
+                 llvm::GlobalVariable::LinkOnceODRLinkage :
+                 llvm::Function::InternalLinkage;
 
       case TSK_ExplicitInstantiationDefinition:
-        return llvm::GlobalVariable::WeakODRLinkage;
+        return !Context.getLangOptions().AppleKext ?
+                 llvm::GlobalVariable::WeakODRLinkage :
+                 llvm::Function::InternalLinkage;
   
       case TSK_ExplicitInstantiationDeclaration:
         // FIXME: Use available_externally linkage. However, this currently
         // breaks LLVM's build due to undefined symbols.
         //      return llvm::GlobalVariable::AvailableExternallyLinkage;
-        return llvm::GlobalVariable::LinkOnceODRLinkage;
+        return !Context.getLangOptions().AppleKext ?
+                 llvm::GlobalVariable::LinkOnceODRLinkage :
+                 llvm::Function::InternalLinkage;
     }
   }
   
@@ -1111,20 +1125,23 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
   case TSK_Undeclared:
   case TSK_ExplicitSpecialization:
   case TSK_ImplicitInstantiation:
-    return llvm::GlobalVariable::LinkOnceODRLinkage;
-
-  case TSK_ExplicitInstantiationDefinition:
-    return llvm::GlobalVariable::WeakODRLinkage;
-    
-  case TSK_ExplicitInstantiationDeclaration:
     // FIXME: Use available_externally linkage. However, this currently
     // breaks LLVM's build due to undefined symbols.
     //   return llvm::GlobalVariable::AvailableExternallyLinkage;
-    return llvm::GlobalVariable::LinkOnceODRLinkage;
+  case TSK_ExplicitInstantiationDeclaration:
+    break;
+
+  case TSK_ExplicitInstantiationDefinition:
+    return !Context.getLangOptions().AppleKext ?
+             llvm::GlobalVariable::WeakODRLinkage :
+             llvm::Function::InternalLinkage;
+    
   }
   
   // Silence GCC warning.
-  return llvm::GlobalVariable::LinkOnceODRLinkage;
+  return !Context.getLangOptions().AppleKext ?
+           llvm::GlobalVariable::LinkOnceODRLinkage :
+           llvm::Function::InternalLinkage;
 }
 
 CharUnits CodeGenModule::GetTargetTypeStoreSize(const llvm::Type *Ty) const {

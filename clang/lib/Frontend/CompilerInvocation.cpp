@@ -1384,8 +1384,13 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   else if (Args.hasArg(OPT_fobjc_gc))
     Opts.setGCMode(LangOptions::HybridGC);
   
-  if (Args.hasArg(OPT_fapple_kext))
-    Opts.AppleKext = 1;
+  if (Args.hasArg(OPT_fapple_kext)) {
+    if (!Opts.CPlusPlus)
+      Diags.Report(diag::warn_c_kext);
+    else
+      Opts.AppleKext = 1;
+  }
+
   if (Args.hasArg(OPT_print_ivar_layout))
     Opts.ObjCGCBitmapPrint = 1;
   if (Args.hasArg(OPT_fno_constant_cfstrings))
