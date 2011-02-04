@@ -735,6 +735,27 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
 void RAFast::AllocateBasicBlock() {
   DEBUG(dbgs() << "\nAllocating " << *MBB);
 
+  // FIXME: This should probably be added by instruction selection instead?
+  // If the last instruction in the block is a return, make sure to mark it as
+  // using all of the live-out values in the function.  Things marked both call
+  // and return are tail calls; do not do this for them.  The tail callee need
+  // not take the same registers as input that it produces as output, and there
+  // are dependencies for its input registers elsewhere.
+  if (!MBB->empty() && MBB->back().getDesc().isReturn() &&
+      !MBB->back().getDesc().isCall()) {
+    MachineInstr *Ret = &MBB->back();
+
+    for (MachineRegisterInfo::liveout_iterator
+         I = MF->getRegInfo().liveout_begin(),
+         E = MF->getRegInfo().liveout_end(); I != E; ++I) {
+      assert(TargetRegisterInfo::isPhysicalRegister(*I) &&
+             "Cannot have a live-out virtual register.");
+
+      // Add live-out registers as implicit uses.
+      Ret->addRegisterKilled(*I, TRI, true);
+    }
+  }
+
   PhysRegState.assign(TRI->getNumRegs(), regDisabled);
   assert(LiveVirtRegs.empty() && "Mapping not cleared form last block?");
 
