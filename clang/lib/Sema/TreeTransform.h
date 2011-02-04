@@ -7136,70 +7136,92 @@ TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
-  SourceLocation CaretLoc(E->getExprLoc());
+  BlockDecl *oldBlock = E->getBlockDecl();
   
-  SemaRef.ActOnBlockStart(CaretLoc, /*Scope=*/0);
-  BlockScopeInfo *CurBlock = SemaRef.getCurBlock();
-  CurBlock->TheDecl->setIsVariadic(E->getBlockDecl()->isVariadic());
-  llvm::SmallVector<ParmVarDecl*, 4> Params;
-  llvm::SmallVector<QualType, 4> ParamTypes;
+  SemaRef.ActOnBlockStart(E->getCaretLocation(), /*Scope=*/0);
+  BlockScopeInfo *blockScope = SemaRef.getCurBlock();
+
+  blockScope->TheDecl->setIsVariadic(oldBlock->isVariadic());
+  llvm::SmallVector<ParmVarDecl*, 4> params;
+  llvm::SmallVector<QualType, 4> paramTypes;
   
   // Parameter substitution.
-  BlockDecl *BD = E->getBlockDecl();
-  if (getDerived().TransformFunctionTypeParams(E->getLocStart(), 
-                                               BD->param_begin(),
-                                               BD->param_size(), 0, ParamTypes,
-                                               &Params))
+  if (getDerived().TransformFunctionTypeParams(E->getCaretLocation(),
+                                               oldBlock->param_begin(),
+                                               oldBlock->param_size(),
+                                               0, paramTypes, &params))
     return true;
-  
-  
-  const FunctionType *BExprFunctionType = E->getFunctionType();
-  QualType BExprResultType = BExprFunctionType->getResultType();
-  if (!BExprResultType.isNull()) {
-    if (!BExprResultType->isDependentType())
-      CurBlock->ReturnType = BExprResultType;
-    else if (BExprResultType != SemaRef.Context.DependentTy)
-      CurBlock->ReturnType = getDerived().TransformType(BExprResultType);
+
+  const FunctionType *exprFunctionType = E->getFunctionType();
+  QualType exprResultType = exprFunctionType->getResultType();
+  if (!exprResultType.isNull()) {
+    if (!exprResultType->isDependentType())
+      blockScope->ReturnType = exprResultType;
+    else if (exprResultType != getSema().Context.DependentTy)
+      blockScope->ReturnType = getDerived().TransformType(exprResultType);
   }
   
   // If the return type has not been determined yet, leave it as a dependent
   // type; it'll get set when we process the body.
-  if (CurBlock->ReturnType.isNull())
-    CurBlock->ReturnType = getSema().Context.DependentTy;
+  if (blockScope->ReturnType.isNull())
+    blockScope->ReturnType = getSema().Context.DependentTy;
 
   // Don't allow returning a objc interface by value.
-  if (CurBlock->ReturnType->isObjCObjectType()) {
-    getSema().Diag(E->getLocStart(), 
+  if (blockScope->ReturnType->isObjCObjectType()) {
+    getSema().Diag(E->getCaretLocation(), 
                    diag::err_object_cannot_be_passed_returned_by_value) 
-      << 0 << CurBlock->ReturnType;
+      << 0 << blockScope->ReturnType;
     return ExprError();
   }
 
-  QualType FunctionType = getDerived().RebuildFunctionProtoType(
-                                                        CurBlock->ReturnType,
-                                                        ParamTypes.data(),
-                                                        ParamTypes.size(),
-                                                        BD->isVariadic(),
+  QualType functionType = getDerived().RebuildFunctionProtoType(
+                                                        blockScope->ReturnType,
+                                                        paramTypes.data(),
+                                                        paramTypes.size(),
+                                                        oldBlock->isVariadic(),
                                                         0, RQ_None,
-                                               BExprFunctionType->getExtInfo());
-  CurBlock->FunctionType = FunctionType;
+                                               exprFunctionType->getExtInfo());
+  blockScope->FunctionType = functionType;
 
   // Set the parameters on the block decl.
-  if (!Params.empty())
-    CurBlock->TheDecl->setParams(Params.data(), Params.size());
+  if (!params.empty())
+    blockScope->TheDecl->setParams(params.data(), params.size());
   
   // If the return type wasn't explicitly set, it will have been marked as a 
   // dependent type (DependentTy); clear out the return type setting so 
   // we will deduce the return type when type-checking the block's body.
-  if (CurBlock->ReturnType == getSema().Context.DependentTy)
-    CurBlock->ReturnType = QualType();
+  if (blockScope->ReturnType == getSema().Context.DependentTy)
+    blockScope->ReturnType = QualType();
   
   // Transform the body
-  StmtResult Body = getDerived().TransformStmt(E->getBody());
-  if (Body.isInvalid())
+  StmtResult body = getDerived().TransformStmt(E->getBody());
+  if (body.isInvalid())
     return ExprError();
 
-  return SemaRef.ActOnBlockStmtExpr(CaretLoc, Body.get(), /*Scope=*/0);
+#ifndef NDEBUG
+  // In builds with assertions, make sure that we captured everything we
+  // captured before.
+
+  if (oldBlock->capturesCXXThis()) assert(blockScope->CapturesCXXThis);
+
+  for (BlockDecl::capture_iterator i = oldBlock->capture_begin(),
+         e = oldBlock->capture_end(); i != e; ++i) {
+    VarDecl *oldCapture = *i;
+
+    // Ignore parameter packs.
+    if (isa<ParmVarDecl>(oldCapture) &&
+        cast<ParmVarDecl>(oldCapture)->isParameterPack())
+      continue;
+
+    VarDecl *newCapture =
+      cast<VarDecl>(getDerived().TransformDecl(E->getCaretLocation(),
+                                               oldCapture));
+    assert(blockScope->Captures.count(newCapture));
+  }
+#endif
+
+  return SemaRef.ActOnBlockStmtExpr(E->getCaretLocation(), body.get(),
+                                    /*Scope=*/0);
 }
 
 template<typename Derived>
