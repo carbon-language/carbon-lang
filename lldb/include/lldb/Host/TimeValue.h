@@ -14,6 +14,12 @@
 #include <stdint.h>
 #include <sys/time.h>
 
+// BEGIN: MinGW work around
+#if !defined(_STRUCT_TIMESPEC) && !defined(HAVE_STRUCT_TIMESPEC)
+#include <pthread.h>
+#endif
+// END: MinGW work around
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
