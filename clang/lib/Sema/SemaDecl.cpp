@@ -3972,7 +3972,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                    ? TPC_FriendFunctionTemplateDefinition
                                    : TPC_FriendFunctionTemplate)
                               : (D.getCXXScopeSpec().isSet() && 
-                                 DC && DC->isRecord())
+                                 DC && DC->isRecord() && 
+                                 DC->isDependentContext())
                                   ? TPC_ClassTemplateMember
                                   : TPC_FunctionTemplate);
     }

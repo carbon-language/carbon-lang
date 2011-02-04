@@ -22,10 +22,10 @@ struct X3 {
   }
 };
 
-namespace PR8747 {
+namespace PR8748 {
   // Testcase 1
   struct A0 { template<typename U> struct B; }; 
-  template<typename U = int> struct A0::B { }; // expected-error{{cannot add a default template argument to the definition of a member of a class template}}
+  template<typename U = int> struct A0::B { };
   
   // Testcase 2
   template<typename T> struct A1 { template<typename U> struct B; }; 

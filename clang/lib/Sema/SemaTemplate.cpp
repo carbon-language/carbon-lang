@@ -947,7 +947,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (CheckTemplateParameterList(TemplateParams,
             PrevClassTemplate? PrevClassTemplate->getTemplateParameters() : 0,
                                  (SS.isSet() && SemanticContext &&
-                                  SemanticContext->isRecord())
+                                  SemanticContext->isRecord() &&
+                                  SemanticContext->isDependentContext())
                                    ? TPC_ClassTemplateMember
                                    : TPC_ClassTemplate))
     Invalid = true;
