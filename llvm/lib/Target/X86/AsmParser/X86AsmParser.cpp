@@ -842,6 +842,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   case Match_MissingFeature:
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");
     return true;
+  case Match_ConversionFail:
+    return Error(IDLoc, "unable to convert operands to instruction");
   case Match_InvalidOperand:
     WasOriginallyInvalidOperand = true;
     break;

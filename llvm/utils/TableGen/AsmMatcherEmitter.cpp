@@ -1368,7 +1368,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
   std::set<std::string> GeneratedFns;
 
   // Start the unified conversion function.
-  CvtOS << "static void ConvertToMCInst(ConversionKind Kind, MCInst &Inst, "
+  CvtOS << "static bool ConvertToMCInst(ConversionKind Kind, MCInst &Inst, "
         << "unsigned Opcode,\n"
         << "                      const SmallVectorImpl<MCParsedAsmOperand*"
         << "> &Operands) {\n";
@@ -1403,8 +1403,8 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       OS << "  " << Signature << ",\n";
 
       CvtOS << "  case " << Signature << ":\n";
-      CvtOS << "    " << AsmMatchConverter << "(Inst, Opcode, Operands);\n";
-      CvtOS << "    return;\n";
+      CvtOS << "    return " << AsmMatchConverter
+            << "(Inst, Opcode, Operands);\n";
       continue;
     }
 
@@ -1479,12 +1479,13 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
     CvtOS << "  case " << Signature << ":\n";
     CvtOS << CaseOS.str();
-    CvtOS << "    return;\n";
+    CvtOS << "    return true;\n";
   }
 
   // Finish the convert function.
 
   CvtOS << "  }\n";
+  CvtOS << "  return false;\n";
   CvtOS << "}\n\n";
 
   // Finish the enum, and drop the convert function after it.
@@ -1914,8 +1915,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  unsigned ComputeAvailableFeatures(const " <<
            Target.getName() << "Subtarget *Subtarget) const;\n";
   OS << "  enum MatchResultTy {\n";
-  OS << "    Match_Success, Match_MnemonicFail, Match_InvalidOperand,\n";
-  OS << "    Match_MissingFeature\n";
+  OS << "    Match_ConversionFail,\n";
+  OS << "    Match_InvalidOperand,\n";
+  OS << "    Match_MissingFeature,\n";
+  OS << "    Match_MnemonicFail,\n";
+  OS << "    Match_Success\n";
   OS << "  };\n";
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
   OS << "  MatchResultTy MatchInstructionImpl(\n";
@@ -2132,9 +2136,14 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "      HadMatchOtherThanFeatures = true;\n";
   OS << "      continue;\n";
   OS << "    }\n";
-
   OS << "\n";
-  OS << "    ConvertToMCInst(it->ConvertFn, Inst, it->Opcode, Operands);\n";
+  OS << "    // We have selected a definite instruction, convert the parsed\n"
+     << "    // operands into the appropriate MCInst.\n";
+  OS << "    if (!ConvertToMCInst(it->ConvertFn, Inst,\n"
+     << "                         it->Opcode, Operands))\n";
+  OS << "      return Match_ConversionFail;\n";
+  OS << "\n";
+  OS << "    return Match_Success;\n";
 
   // Call the post-processing function, if used.
   std::string InsnCleanupFn =

@@ -1393,6 +1393,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   }
   case Match_MnemonicFail:
     return Error(IDLoc, "unrecognized instruction mnemonic");
+  case Match_ConversionFail:
+    return Error(IDLoc, "unable to convert operands to instruction");
   }
 
   llvm_unreachable("Implement any new match types added!");
