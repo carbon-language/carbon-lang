@@ -948,6 +948,8 @@ void SplitEditor::finish() {
   for (LiveInterval::const_vni_iterator I = Edit.getParent().vni_begin(),
          E = Edit.getParent().vni_end(); I != E; ++I) {
     const VNInfo *ParentVNI = *I;
+    if (ParentVNI->isUnused())
+      continue;
     LiveIntervalMap &LIM = LIMappers[RegAssign.lookup(ParentVNI->def)];
     VNInfo *VNI = LIM.defValue(ParentVNI, ParentVNI->def);
     LIM.getLI()->addRange(LiveRange(ParentVNI->def,
@@ -976,7 +978,7 @@ void SplitEditor::finish() {
   for (LiveInterval::const_vni_iterator I = Edit.getParent().vni_begin(),
        E = Edit.getParent().vni_end(); I != E; ++I) {
     const VNInfo *PHIVNI = *I;
-    if (!PHIVNI->isPHIDef())
+    if (PHIVNI->isUnused() || !PHIVNI->isPHIDef())
       continue;
     unsigned RegIdx = RegAssign.lookup(PHIVNI->def);
     LiveIntervalMap &LIM = LIMappers[RegIdx];
