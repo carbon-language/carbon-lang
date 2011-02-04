@@ -17,8 +17,8 @@
 //===          is guaranteed to work on *all* Windows variants.
 //===----------------------------------------------------------------------===//
 
-#include <Windows.h>
-#include <WinError.h>
+#include <windows.h>
+#include <winerror.h>
 
 using namespace llvm;
 

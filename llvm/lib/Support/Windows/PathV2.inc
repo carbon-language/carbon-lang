@@ -17,7 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Windows.h"
-#include <WinCrypt.h>
+#include <wincrypt.h>
 #include <fcntl.h>
 #include <io.h>
 #include <sys/stat.h>

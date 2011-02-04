@@ -13,7 +13,7 @@
 
 
 #if defined(LLVM_ON_WIN32)
-# include <Windows.h>
+# include <windows.h>
 # if defined(_MSC_VER)
 #   include <crtdbg.h>
 # endif

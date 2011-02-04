@@ -22,8 +22,8 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include "llvm/Config/config.h" // Get build system configuration settings
-#include <Windows.h>
-#include <ShlObj.h>
+#include <windows.h>
+#include <shlobj.h>
 #include <cassert>
 #include <string>
 
