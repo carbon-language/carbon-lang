@@ -1762,6 +1762,7 @@ public:
                                       UnresolvedSetIterator End);
 
   static UnresolvedLookupExpr *CreateEmpty(ASTContext &C,
+                                           bool HasExplicitTemplateArgs,
                                            unsigned NumTemplateArgs);
 
   /// True if this declaration should be extended by
@@ -1883,6 +1884,7 @@ public:
                               const TemplateArgumentListInfo *TemplateArgs = 0);
 
   static DependentScopeDeclRefExpr *CreateEmpty(ASTContext &C,
+                                                bool HasExplicitTemplateArgs,
                                                 unsigned NumTemplateArgs);
 
   /// \brief Retrieve the name that this expression refers to.
@@ -2223,7 +2225,8 @@ public:
          const TemplateArgumentListInfo *TemplateArgs);
 
   static CXXDependentScopeMemberExpr *
-  CreateEmpty(ASTContext &C, unsigned NumTemplateArgs);
+  CreateEmpty(ASTContext &C, bool HasExplicitTemplateArgs, 
+              unsigned NumTemplateArgs);
 
   /// \brief True if this is an implicit access, i.e. one in which the
   /// member being accessed was not written in the source.  The source
@@ -2445,7 +2448,8 @@ public:
          UnresolvedSetIterator Begin, UnresolvedSetIterator End);
 
   static UnresolvedMemberExpr *
-  CreateEmpty(ASTContext &C, unsigned NumTemplateArgs);
+  CreateEmpty(ASTContext &C, bool HasExplicitTemplateArgs,
+              unsigned NumTemplateArgs);
 
   /// \brief True if this is an implicit access, i.e. one in which the
   /// member being accessed was not written in the source.  The source

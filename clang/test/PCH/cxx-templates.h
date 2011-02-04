@@ -169,3 +169,27 @@ template<typename T>
 
 template<unsigned N>
 struct S7<int[N]> : S6<const int[N]> { };
+
+// Zero-length template argument lists
+namespace ZeroLengthExplicitTemplateArgs {
+  template<typename T> void h();
+
+  struct Y { 
+    template<typename T> void f();
+  };
+
+  template<typename T>
+    void f(T *ptr) {
+    T::template g<>(17);
+    ptr->template g2<>(17);
+    h<T>();
+    h<int>();
+    Y y;
+    y.f<int>();
+  }
+
+  struct X {
+    template<typename T> static void g(T);
+    template<typename T> void g2(T);
+  };
+}

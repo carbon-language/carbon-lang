@@ -39,3 +39,7 @@ void test(const int (&a6)[17]) {
 template struct S4<int>;
 
 S7<int[5]> s7_5;
+
+namespace ZeroLengthExplicitTemplateArgs {
+  template void f<X>(X*);
+}

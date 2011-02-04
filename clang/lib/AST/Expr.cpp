@@ -319,13 +319,15 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                TemplateArgs, T, VK);
 }
 
-DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context, bool HasQualifier,
+DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context, 
+                                      bool HasQualifier,
+                                      bool HasExplicitTemplateArgs,
                                       unsigned NumTemplateArgs) {
   std::size_t Size = sizeof(DeclRefExpr);
   if (HasQualifier)
     Size += sizeof(NameQualifier);
   
-  if (NumTemplateArgs)
+  if (HasExplicitTemplateArgs)
     Size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
   
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());

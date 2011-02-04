@@ -668,7 +668,9 @@ public:
 
   /// \brief Construct an empty declaration reference expression.
   static DeclRefExpr *CreateEmpty(ASTContext &Context,
-                                  bool HasQualifier, unsigned NumTemplateArgs);
+                                  bool HasQualifier, 
+                                  bool HasExplicitTemplateArgs,
+                                  unsigned NumTemplateArgs);
   
   ValueDecl *getDecl() { return DecoratedD.getPointer(); }
   const ValueDecl *getDecl() const { return DecoratedD.getPointer(); }

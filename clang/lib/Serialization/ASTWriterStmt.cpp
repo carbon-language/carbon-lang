@@ -379,18 +379,18 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
 
   Record.push_back(E->hasQualifier());
-  unsigned NumTemplateArgs = E->getNumTemplateArgs();
-  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
-         "Template args list with no args ?");
-  Record.push_back(NumTemplateArgs);
+  Record.push_back(E->hasExplicitTemplateArgs());
 
   if (E->hasQualifier()) {
     Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
     Writer.AddSourceRange(E->getQualifierRange(), Record);
   }
 
-  if (NumTemplateArgs)
+  if (E->hasExplicitTemplateArgs()) {
+    unsigned NumTemplateArgs = E->getNumTemplateArgs();
+    Record.push_back(NumTemplateArgs);
     AddExplicitTemplateArgumentList(E->getExplicitTemplateArgs());
+  }
 
   Writer.AddDeclRef(E->getDecl(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
@@ -545,11 +545,10 @@ void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
     Writer.AddSourceRange(E->getQualifierRange(), Record);
   }
 
-  unsigned NumTemplateArgs = E->getNumTemplateArgs();
-  assert((NumTemplateArgs != 0) == E->hasExplicitTemplateArgs() &&
-         "Template args list with no args ?");
-  Record.push_back(NumTemplateArgs);
-  if (NumTemplateArgs) {
+  Record.push_back(E->hasExplicitTemplateArgs());
+  if (E->hasExplicitTemplateArgs()) {
+    unsigned NumTemplateArgs = E->getNumTemplateArgs();
+    Record.push_back(NumTemplateArgs);
     Writer.AddSourceLocation(E->getLAngleLoc(), Record);
     Writer.AddSourceLocation(E->getRAngleLoc(), Record);
     for (unsigned i=0; i != NumTemplateArgs; ++i)
@@ -1169,16 +1168,14 @@ void
 ASTStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   VisitExpr(E);
   
-  // Don't emit anything here, NumTemplateArgs must be emitted first.
+  // Don't emit anything here, hasExplicitTemplateArgs() must be
+  // emitted first.
 
+  Record.push_back(E->hasExplicitTemplateArgs());
   if (E->hasExplicitTemplateArgs()) {
     const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
-    assert(Args.NumTemplateArgs &&
-           "Num of template args was zero! AST reading will mess up!");
     Record.push_back(Args.NumTemplateArgs);
     AddExplicitTemplateArgumentList(Args);
-  } else {
-    Record.push_back(0);
   }
   
   if (!E->isImplicitAccess())
@@ -1199,16 +1196,13 @@ void
 ASTStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
   VisitExpr(E);
   
-  // Don't emit anything here, NumTemplateArgs must be emitted first.
-
+  // Don't emit anything here, hasExplicitTemplateArgs() must be
+  // emitted first.
+  Record.push_back(E->hasExplicitTemplateArgs());
   if (E->hasExplicitTemplateArgs()) {
     const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
-    assert(Args.NumTemplateArgs &&
-           "Num of template args was zero! AST reading will mess up!");
     Record.push_back(Args.NumTemplateArgs);
     AddExplicitTemplateArgumentList(Args);
-  } else {
-    Record.push_back(0);
   }
 
   Writer.AddDeclarationNameInfo(E->NameInfo, Record);
@@ -1233,16 +1227,12 @@ ASTStmtWriter::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
 void ASTStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
   VisitExpr(E);
   
-  // Don't emit anything here, NumTemplateArgs must be emitted first.
-
+  // Don't emit anything here, hasExplicitTemplateArgs() must be emitted first.
+  Record.push_back(E->hasExplicitTemplateArgs());
   if (E->hasExplicitTemplateArgs()) {
     const ExplicitTemplateArgumentList &Args = E->getExplicitTemplateArgs();
-    assert(Args.NumTemplateArgs &&
-           "Num of template args was zero! AST reading will mess up!");
     Record.push_back(Args.NumTemplateArgs);
     AddExplicitTemplateArgumentList(Args);
-  } else {
-    Record.push_back(0);
   }
 
   Record.push_back(E->getNumDecls());
