@@ -14,9 +14,73 @@
 #include "ARMUtils.h"
 #include "ARM_DWARF_Registers.h"
 #include "llvm/Support/MathExtras.h" // for SignExtend32 template function
+                                     // and CountTrailingZeros_32 function
 
 using namespace lldb;
 using namespace lldb_private;
+
+// A8.6.50
+// Valid return values are {1, 2, 3, 4}, with 0 signifying an error condition.
+static unsigned short CountITSize(unsigned ITMask) {
+    // First count the trailing zeros of the IT mask.
+    unsigned TZ = llvm::CountTrailingZeros_32(ITMask);
+    if (TZ > 3)
+    {
+        printf("Encoding error: IT Mask '0000'\n");
+        return 0;
+    }
+    return (4 - TZ);
+}
+
+// Init ITState.  Note that at least one bit is always 1 in mask.
+bool ITSession::InitIT(unsigned short bits7_0)
+{
+    ITCounter = CountITSize(Bits32(bits7_0, 3, 0));
+    if (ITCounter == 0)
+        return false;
+
+    // A8.6.50 IT
+    unsigned short FirstCond = Bits32(bits7_0, 7, 4);
+    if (FirstCond == 0xF)
+    {
+        printf("Encoding error: IT FirstCond '1111'\n");
+        return false;
+    }
+    if (FirstCond == 0xE && ITCounter != 1)
+    {
+        printf("Encoding error: IT FirstCond '1110' && Mask != '1000'\n");
+        return false;
+    }
+
+    ITState = bits7_0;
+    return true;
+}
+
+// Update ITState if necessary.
+void ITSession::ITAdvance()
+{
+    assert(ITCounter);
+    --ITCounter;
+    if (ITCounter == 0)
+        ITState = 0;
+    else
+    {
+        unsigned short NewITState4_0 = Bits32(ITState, 4, 0) << 1;
+        SetBits32(ITState, 4, 0, NewITState4_0);
+    }
+}
+
+// Return true if we're inside an IT Block.
+bool ITSession::InITBlock()
+{
+    return ITCounter != 0;
+}
+
+// Get condition bits for the current thumb instruction.
+uint32_t ITSession::GetCond()
+{
+    return Bits32(ITState, 7, 4);
+}
 
 // ARM constants used during decoding
 #define REG_RD          0

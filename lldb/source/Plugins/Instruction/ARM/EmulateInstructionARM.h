@@ -15,6 +15,30 @@
 
 namespace lldb_private {
 
+// ITSession - Keep track of the IT Block progression.
+class ITSession
+{
+public:
+    ITSession() : ITCounter(0), ITState(0) {}
+    ~ITSession() {}
+
+    // InitIT - Initializes ITCounter/ITState.
+    bool InitIT(unsigned short bits7_0);
+
+    // ITAdvance - Updates ITCounter/ITState as IT Block progresses.
+    void ITAdvance();
+
+    // InITBlock - Returns true if we're inside an IT Block.
+    bool InITBlock();
+
+    // GetCond - Gets condition bits for the current thumb instruction.
+    uint32_t GetCond();
+
+private:
+    uint32_t ITCounter; // Possible values: 0, 1, 2, 3, 4.
+    uint32_t ITState;   // A2.5.2 Consists of IT[7:5] and IT[4:0] initially.
+};
+
 class EmulateInstructionARM : public EmulateInstruction
 {
 public: 

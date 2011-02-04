@@ -21,6 +21,15 @@ Bits32 (const uint32_t value, const uint32_t msbit, const uint32_t lsbit)
     return (value >> lsbit) & ((1u << (msbit - lsbit + 1)) - 1);
 }
 
+static inline void
+SetBits32(uint32_t &bits, unsigned msbit, unsigned lsbit, unsigned val)
+{
+    assert(msbit < 32 && lsbit < 32 && msbit >= lsbit);
+    uint32_t mask = ((1 << (msbit - lsbit + 1)) - 1);
+    bits &= ~(mask << lsbit);
+    bits |= (val & mask) << lsbit;
+}
+
 // Create a mask that starts at bit zero and includes "bit"
 static inline uint64_t
 MaskUpToBit (const uint64_t bit)
