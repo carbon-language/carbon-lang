@@ -47,7 +47,13 @@ configure_file(
 
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
-  set(CLANG_TEST_EXTRA_ARGS)
+  if( LLVM_MAIN_SRC_DIR )
+    set(LIT "${LLVM_SOURCE_DIR}/utils/lit/lit.py")
+  else()
+    set(LIT "${PATH_TO_LLVM_BUILD}/bin/llvm-lit")
+  endif()
+
+  set(CLANG_TEST_EXTRA_ARGS "--path=${CLANG_BINARY_DIR}/bin")
 
   option(CLANG_TEST_USE_VG "Run Clang tests under Valgrind" OFF)
   if(CLANG_TEST_USE_VG)
@@ -60,7 +66,7 @@ if(PYTHONINTERP_FOUND)
   foreach(testdir ${CLANG_TEST_DIRECTORIES})
     add_custom_target(clang-test-${testdir}
       COMMAND ${PYTHON_EXECUTABLE}
-                  ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+                  ${LIT}
                   --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                   --param build_config=${CMAKE_CFG_INTDIR}
                   ${LIT_ARGS}
@@ -71,7 +77,7 @@ if(PYTHONINTERP_FOUND)
 
   add_custom_target(clang-test
     COMMAND ${PYTHON_EXECUTABLE}
-                ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+                ${LIT}
                 --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                 --param build_config=${CMAKE_CFG_INTDIR}
                 ${LIT_ARGS}
@@ -80,7 +86,7 @@ if(PYTHONINTERP_FOUND)
 
   add_custom_target(clang-c++tests
     COMMAND ${PYTHON_EXECUTABLE}
-                ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+                ${LIT}
                 --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                 --param build_config=${CMAKE_CFG_INTDIR}
                 ${LIT_ARGS}
@@ -90,7 +96,7 @@ if(PYTHONINTERP_FOUND)
 
   add_custom_target(check-all
     COMMAND ${PYTHON_EXECUTABLE}
-                ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+                ${LIT}
                 --param build_config=${CMAKE_CFG_INTDIR}
                 --param build_mode=${RUNTIME_BUILD_MODE}
                 ${LIT_ARGS}
