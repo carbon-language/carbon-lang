@@ -2463,7 +2463,7 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
     getCXXABI().getMangleContext().mangleThunk(MD, Thunk, Name);
   
   const llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(GD);
-  return GetOrCreateLLVMFunction(Name, Ty, GD);
+  return GetOrCreateLLVMFunction(Name, Ty, GD, /*ForVTable=*/false);
 }
 
 static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
@@ -2918,7 +2918,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
         } else {
           const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVTable(GD);
         
-          Init = CGM.GetAddrOfFunction(GD, Ty);
+          Init = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
         }
 
         Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);

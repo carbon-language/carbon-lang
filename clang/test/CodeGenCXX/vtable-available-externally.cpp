@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm -O3 -o %t 
 // RUN: FileCheck --check-prefix=CHECK-TEST1 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-TEST2 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-TEST5 %s < %t
 
 #include <typeinfo>
 
@@ -52,4 +53,68 @@ namespace Test2 {
   };
 
   void A::f() { }
+}
+
+// Test that we don't assert on this test.
+namespace Test3 {
+
+struct A {
+  virtual void f();
+  virtual ~A() { }
+};
+
+struct B : A {
+  B();
+  virtual void f();
+};
+
+B::B() { }
+
+void g(A* a) {
+  a->f();
+};
+
+}
+
+// PR9114, test that we don't try to instantiate RefPtr<Node>.
+namespace Test4 {
+
+template <class T> struct RefPtr {
+  T* p;
+  ~RefPtr() {
+    p->deref();
+  }
+};
+
+struct A {
+  virtual ~A();
+};
+
+struct Node;
+
+struct B : A {
+  virtual void deref();
+  RefPtr<Node> m;
+};
+
+void f() {
+  RefPtr<B> b;
+}
+
+}
+
+// PR9130, test that we emit a definition of A::f.
+// CHECK-TEST5: define linkonce_odr void @_ZN5Test51A1fEv
+namespace Test5 {
+
+struct A {
+  virtual void f() { }
+};
+
+struct B : A { 
+  virtual ~B();
+};
+
+B::~B() { }
+
 }
