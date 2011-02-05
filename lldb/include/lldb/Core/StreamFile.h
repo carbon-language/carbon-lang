@@ -61,9 +61,11 @@ public:
 
     const char *
     GetFilePathname ();
-    
+
+#if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
     void
     SetLineBuffered();
+#endif // #if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
 
 protected:
     //------------------------------------------------------------------

@@ -94,12 +94,16 @@ StreamFile::Open (const char *path, const char *permissions)
     return m_file != NULL;
 }
 
+#if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
+
 void
 StreamFile::SetLineBuffered ()
 {
     if (m_file != NULL)
         setlinebuf (m_file);
 }
+
+#endif // #if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
 
 void
 StreamFile::Flush ()
