@@ -109,3 +109,12 @@ int no_reference_qualified_functions();
 // CHECK-0X: has_reference_qualified_functions
 // CHECK-NO-0X: no_reference_qualified_functions
 
+#if __has_feature(cxx_default_function_template_args)
+int has_default_function_template_args();
+#else
+int no_default_function_template_args();
+#endif
+
+// CHECK-0X: has_default_function_template_args
+// CHECK-NO-0X: no_default_function_template_args
+
