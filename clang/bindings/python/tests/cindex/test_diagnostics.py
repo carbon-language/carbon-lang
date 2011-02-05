@@ -46,3 +46,26 @@ def test_diagnostic_fixit():
     assert tu.diagnostics[0].fixits[0].range.end.line == 1
     assert tu.diagnostics[0].fixits[0].range.end.column == 30
     assert tu.diagnostics[0].fixits[0].value == '.f0 = '
+
+def test_diagnostic_range():
+    index = Index.create()
+    tu = tu_from_source("""void f() { int i = "a" + 1; }""")
+    assert len(tu.diagnostics) == 1
+    assert tu.diagnostics[0].severity == Diagnostic.Warning
+    assert tu.diagnostics[0].location.line == 1
+    assert tu.diagnostics[0].location.column == 16
+    assert tu.diagnostics[0].spelling.startswith('incompatible pointer to')
+    assert len(tu.diagnostics[0].fixits) == 0
+    assert len(tu.diagnostics[0].ranges) == 1
+    assert tu.diagnostics[0].ranges[0].start.line == 1
+    assert tu.diagnostics[0].ranges[0].start.column == 20
+    assert tu.diagnostics[0].ranges[0].end.line == 1
+    assert tu.diagnostics[0].ranges[0].end.column == 27
+    try:
+      tu.diagnostics[0].ranges[1].start.line
+    except IndexError:
+      assert True
+    else:
+      assert False
+      
+

@@ -215,6 +215,8 @@ class Diagnostic(object):
                 return int(_clang_getDiagnosticNumRanges(self.diag))
 
             def __getitem__(self, key):
+		if (key >= len(self)):
+			raise IndexError
                 return _clang_getDiagnosticRange(self.diag, key)
 
         return RangeIterator(self)
