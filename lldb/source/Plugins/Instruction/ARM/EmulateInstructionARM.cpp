@@ -1606,6 +1606,23 @@ EmulateInstructionARM::CurrentCond ()
         return UnsignedBits(m_inst.opcode.inst32, 31, 28);
     
     case eModeThumb:
+        // For T1 and T3 encodings of the Branch instruction, it returns the 4-bit
+        // 'cond' field of the encoding.
+        if (m_inst.opcode_type == eOpcode16 &&
+            Bits32(m_inst.opcode.inst16, 15, 12) == 0x0d &&
+            Bits32(m_inst.opcode.inst16, 11, 7) != 0x0f)
+        {
+            return Bits32(m_inst.opcode.inst16, 11, 7);
+        }
+        else if (m_inst.opcode_type == eOpcode32 &&
+                 Bits32(m_inst.opcode.inst32, 31, 27) == 0x1e &&
+                 Bits32(m_inst.opcode.inst32, 15, 14) == 0x02 &&
+                 Bits32(m_inst.opcode.inst32, 12, 12) == 0x00 &&
+                 Bits32(m_inst.opcode.inst32, 25, 22) <= 0x0d)
+        {
+            return Bits32(m_inst.opcode.inst32, 25, 22);
+        }
+        
         return m_it_session.GetCond();
     }
     return UINT32_MAX;  // Return invalid value
