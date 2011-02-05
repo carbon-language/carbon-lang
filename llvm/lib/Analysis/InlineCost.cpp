@@ -330,7 +330,7 @@ int InlineCostAnalyzer::CountBonusForConstant(Value *V, Constant *C) {
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
       // Turning an indirect call into a direct call is a BIG win
       if (II->getCalledValue() == V)
-        Bonus += ConstantFunctionBonus(CallSite(CI), C);
+        Bonus += ConstantFunctionBonus(CallSite(II), C);
     }
     // FIXME: Eliminating conditional branches and switches should
     // also yield a per-call performance boost.
