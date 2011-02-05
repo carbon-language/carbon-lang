@@ -76,6 +76,10 @@ int test_multi_declaration(void) {
   return 0;
 }
 
+@protocol P1
+- (void)method;
+@end
+
 // CHECK: usrs.m c:usrs.m@85@F@my_helper Extent=[3:19 - 3:60]
 // CHECK: usrs.m c:usrs.m@95@F@my_helper@x Extent=[3:29 - 3:34]
 // CHECK: usrs.m c:usrs.m@102@F@my_helper@y Extent=[3:36 - 3:41]
@@ -131,6 +135,8 @@ int test_multi_declaration(void) {
 // CHECK: usrs.m c:usrs.m@980@F@test_multi_declaration@foo Extent=[74:3 - 74:14]
 // CHECK: usrs.m c:usrs.m@980@F@test_multi_declaration@bar Extent=[74:16 - 74:23]
 // CHECK: usrs.m c:usrs.m@980@F@test_multi_declaration@baz Extent=[74:25 - 74:32]
+// CHECK: usrs.m c:objc(pl)P1 Extent=[79:1 - 81:5]
+// CHECK: usrs.m c:objc(pl)P1(im)method Extent=[80:1 - 80:16]
 
 // RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-source %s
 // CHECK-source: usrs.m:3:19: FunctionDecl=my_helper:3:19 (Definition) Extent=[3:19 - 3:60]
@@ -259,6 +265,6 @@ int test_multi_declaration(void) {
 // CHECK-source: usrs.m:75:19: DeclRefExpr=baz:74:25 Extent=[75:19 - 75:22]
 // CHECK-source: usrs.m:76:3: UnexposedStmt= Extent=[76:3 - 76:11]
 // CHECK-source: usrs.m:76:10: UnexposedExpr= Extent=[76:10 - 76:11]
-
-
+// CHECK-source: usrs.m:79:1: ObjCProtocolDecl=P1:79:1 (Definition) Extent=[79:1 - 81:5]
+// CHECK-source: usrs.m:80:1: ObjCInstanceMethodDecl=method:80:1 Extent=[80:1 - 80:16]
 

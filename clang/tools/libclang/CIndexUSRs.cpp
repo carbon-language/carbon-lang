@@ -283,15 +283,20 @@ void USRGenerator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
 }
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
-  // The USR for a method declared in a class extension or category is based on
-  // the ObjCInterfaceDecl, not the ObjCCategoryDecl.
-  ObjCInterfaceDecl *ID = D->getClassInterface();
-  if (!ID) {
-    IgnoreResults = true;
-    return;
+  DeclContext *container = D->getDeclContext();
+  if (ObjCProtocolDecl *pd = dyn_cast<ObjCProtocolDecl>(container)) {
+    Visit(pd);
   }
-  Visit(ID);
-  
+  else {
+    // The USR for a method declared in a class extension or category is based on
+    // the ObjCInterfaceDecl, not the ObjCCategoryDecl.
+    ObjCInterfaceDecl *ID = D->getClassInterface();
+    if (!ID) {
+      IgnoreResults = true;
+      return;
+    }
+    Visit(ID);
+  }
   // Ideally we would use 'GenObjCMethod', but this is such a hot path
   // for Objective-C code that we don't want to use
   // DeclarationName::getAsString().
