@@ -23,8 +23,11 @@
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
 #include "Utility/StringExtractorGDBRemote.h"
-#include "UnwindMacOSXFrameBackchain.h"
 #include "UnwindLLDB.h"
+
+#ifdef __APPLE__
+#include "UnwindMacOSXFrameBackchain.h"
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -138,10 +141,12 @@ ThreadGDBRemote::GetUnwinder ()
         {
             m_unwinder_ap.reset (new UnwindLLDB (*this));
         }
+#ifdef __APPLE__
         else
         {
             m_unwinder_ap.reset (new UnwindMacOSXFrameBackchain (*this));
         }
+#endif
     }
     return m_unwinder_ap.get();
 }
