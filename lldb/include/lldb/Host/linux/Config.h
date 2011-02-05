@@ -19,4 +19,6 @@
 
 #define LLDB_CONFIG_TERMIOS_SUPPORTED 1
 
+#define LLDB_CONFIG_TILDE_RESOLVES_TO_USER 1
+
 #endif // #ifndef liblldb_Platform_Config_h_

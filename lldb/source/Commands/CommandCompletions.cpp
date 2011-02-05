@@ -11,10 +11,9 @@
 // C Includes
 #include <sys/stat.h>
 #include <dirent.h>
-#include <libgen.h>
-#include <glob.h>
+#if defined(__APPLE__) || defined(__linux__)
 #include <pwd.h>
-#include <sys/types.h>
+#endif
 
 // C++ Includes
 // Other libraries and framework includes
@@ -154,6 +153,8 @@ DiskFilesOrDirectories
     
     if (end_ptr == NULL)
     {
+#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+
         // There's no directory.  If the thing begins with a "~" then this is a bare
         // user name.
         if (*partial_name_copy == '~')
@@ -168,7 +169,7 @@ DiskFilesOrDirectories
            // Not sure how this would happen, a username longer than PATH_MAX?  Still...
             if (resolved_username_len >= sizeof (resolved_username))
                 return matches.GetSize();
-            else if (resolved_username_len == 0)
+            if (resolved_username_len == 0)
             {
                 // The user name didn't resolve, let's look in the password database for matches.
                 // The user name database contains duplicates, and is not in alphabetical order, so
@@ -197,7 +198,6 @@ DiskFilesOrDirectories
                 }
                 return matches.GetSize();
             }    
-            
             //The thing exists, put a '/' on the end, and return it...
             // FIXME: complete user names here:
             partial_name_copy[partial_name_len] = '/';
@@ -207,6 +207,8 @@ DiskFilesOrDirectories
             return matches.GetSize();
         }
         else
+#endif // LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+
         {
             // The containing part is the CWD, and the whole string is the remainder.
             containing_part[0] = '.';
@@ -236,7 +238,8 @@ DiskFilesOrDirectories
     
     // Look for a user name in the containing part, and if it's there, resolve it and stick the
     // result back into the containing_part:
-    
+
+#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
     if (*partial_name_copy == '~')
     {
         size_t resolved_username_len = FileSpec::ResolveUsername(containing_part, containing_part, sizeof (containing_part));
@@ -244,7 +247,8 @@ DiskFilesOrDirectories
         if (resolved_username_len == 0 || resolved_username_len >= sizeof (containing_part))
             return matches.GetSize();
     }
-    
+#endif // #if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+
     // Okay, containing_part is now the directory we want to open and look for files:
 
     lldb_utility::CleanUp <DIR *, int> dir_stream (opendir(containing_part), NULL, closedir);

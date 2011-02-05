@@ -11,11 +11,11 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <stdlib.h>
-#include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/types.h>
+
+#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 #include <pwd.h>
+#endif
 
 #include <fstream>
 
@@ -42,6 +42,8 @@ GetFileStats (const FileSpec *file_spec, struct stat *stats_ptr)
         return ::stat (resolved_path, stats_ptr) == 0;
     return false;
 }
+
+#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 
 static const char*
 GetCachedGlobTildeSlash()
@@ -131,6 +133,7 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
     else 
         return ::snprintf (dst_path, dst_len, "%s%s", home_dir, remainder);
 }
+#endif // #if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 
 size_t
 FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
@@ -140,6 +143,7 @@ FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
 
     // Glob if needed for ~/, otherwise copy in case src_path is same as dst_path...
     char unglobbed_path[PATH_MAX];
+#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
     if (src_path[0] == '~')
     {
         size_t return_count = ResolveUsername(src_path, unglobbed_path, sizeof(unglobbed_path));
@@ -150,7 +154,10 @@ FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
             ::snprintf (unglobbed_path, sizeof(unglobbed_path), "%s", src_path);
     }
     else
-        ::snprintf(unglobbed_path, sizeof(unglobbed_path), "%s", src_path);
+#endif // LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+    {
+    	::snprintf(unglobbed_path, sizeof(unglobbed_path), "%s", src_path);
+    }
 
     // Now resolve the path if needed
     char resolved_path[PATH_MAX];
