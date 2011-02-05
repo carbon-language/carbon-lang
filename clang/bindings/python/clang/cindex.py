@@ -397,6 +397,51 @@ CursorKind.OBJC_CATEGORY_IMPL_DECL = CursorKind(19)
 # A typedef.
 CursorKind.TYPEDEF_DECL = CursorKind(20)
 
+# A C++ class method.
+CursorKind.CXX_METHOD = CursorKind(21)
+
+# A C++ namespace.
+CursorKind.NAMESPACE = CursorKind(22)
+
+# A linkage specification, e.g. 'extern "C"'.
+CursorKind.LINKAGE_SPEC = CursorKind(23)
+
+# A C++ constructor.
+CursorKind.CONSTRUCTOR = CursorKind(24)
+
+# A C++ destructor.
+CursorKind.DESTRUCTOR = CursorKind(25)
+
+# A C++ conversion function.
+CursorKind.CONVERSION_FUNCTION = CursorKind(26)
+
+# A C++ template type parameter
+CursorKind.TEMPLATE_TYPE_PARAMETER = CursorKind(27)
+
+# A C++ non-type template paramater.
+CursorKind.TEMPLATE_NON_TYPE_PARAMETER = CursorKind(28)
+
+# A C++ template template parameter.
+CursorKind.TEMPLATE_TEMPLATE_PARAMTER = CursorKind(29)
+
+# A C++ function template.
+CursorKind.FUNCTION_TEMPLATE = CursorKind(30)
+
+# A C++ class template.
+CursorKind.CLASS_TEMPLATE = CursorKind(31)
+
+# A C++ class template partial specialization.
+CursorKind.CLASS_TEMPLATE_PARTIAL_SPECIALIZATION = CursorKind(32)
+
+# A C++ namespace alias declaration.
+CursorKind.NAMESPACE_ALIAS = CursorKind(33)
+
+# A C++ using directive
+CursorKind.USING_DIRECTIVE = CursorKind(34)
+
+# A C++ using declaration
+CursorKind.USING_DECLARATION = CursorKind(35)
+
 ###
 # Reference Kinds
 
@@ -415,6 +460,25 @@ CursorKind.OBJC_CLASS_REF = CursorKind(42)
 # while the type of the variable "size" is referenced. The cursor
 # referenced by the type of size is the typedef for size_type.
 CursorKind.TYPE_REF = CursorKind(43)
+CursorKind.CXX_BASE_SPECIFIER = CursorKind(44)
+
+# A reference to a class template, function template, template
+# template parameter, or class template partial specialization.
+CursorKind.TEMPLATE_REF = CursorKind(45)
+
+# A reference to a namespace or namepsace alias.
+CursorKind.NAMESPACE_REF = CursorKind(46)
+
+# A reference to a member of a struct, union, or class that occurs in
+# some non-expression context, e.g., a designated initializer.
+CursorKind.MEMBER_REF = CursorKind(47)
+
+# A reference to a labeled statement.
+CursorKind.LABEL_REF = CursorKind(48)
+
+# A reference toa a set of overloaded functions or function templates
+# that has not yet been resolved to a specific function or function template.
+CursorKind.OVERLOADED_DECL_REF = CursorKind(49)
 
 ###
 # Invalid/Error Kinds
@@ -422,6 +486,7 @@ CursorKind.TYPE_REF = CursorKind(43)
 CursorKind.INVALID_FILE = CursorKind(70)
 CursorKind.NO_DECL_FOUND = CursorKind(71)
 CursorKind.NOT_IMPLEMENTED = CursorKind(72)
+CursorKind.INVALID_CODE = CursorKind(73)
 
 ###
 # Expression Kinds
@@ -447,12 +512,19 @@ CursorKind.CALL_EXPR = CursorKind(103)
 # An expression that sends a message to an Objective-C object or class.
 CursorKind.OBJC_MESSAGE_EXPR = CursorKind(104)
 
+# An expression that represents a block literal.
+CursorKind.BLOCK_EXPR = CursorKind(105)
+
 # A statement whose specific kind is not exposed via this interface.
 #
 # Unexposed statements have the same operations as any other kind of statement;
 # one can extract their location information, spelling, children, etc. However,
 # the specific kind of the statement is not reported.
 CursorKind.UNEXPOSED_STMT = CursorKind(200)
+
+# A labelled statement in a function.
+CursorKind.LABEL_STMT = CursorKind(201)
+
 
 ###
 # Other Kinds
@@ -462,6 +534,23 @@ CursorKind.UNEXPOSED_STMT = CursorKind(200)
 # The translation unit cursor exists primarily to act as the root cursor for
 # traversing the contents of a translation unit.
 CursorKind.TRANSLATION_UNIT = CursorKind(300)
+
+###
+# Attributes
+
+# An attribute whoe specific kind is note exposed via this interface
+CursorKind.UNEXPOSED_ATTR = CursorKind(400)
+
+CursorKind.IB_ACTION_ATTR = CursorKind(401)
+CursorKind.IB_OUTLET_ATTR = CursorKind(402)
+CursorKind.IB_OUTLET_COLLECTION_ATTR = CursorKind(403)
+
+###
+# Preprocessing
+CursorKind.PREPROCESSING_DIRECTIVE = CursorKind(500)
+CursorKind.MACRO_DEFINITION = CursorKind(501)
+CursorKind.MACRO_INSTANTIATION = CursorKind(502)
+CursorKind.INCLUSION_DIRECTIVE = CursorKind(503)
 
 ### Cursors ###
 
