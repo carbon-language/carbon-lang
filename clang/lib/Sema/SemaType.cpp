@@ -505,8 +505,6 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
         break;
       }
     }
-    assert(!isOnlyParens &&
-           "non-empty abstract-declarator contained only parens!");
   }
 #endif
 

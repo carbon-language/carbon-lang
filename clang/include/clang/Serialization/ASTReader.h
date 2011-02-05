@@ -590,6 +590,9 @@ private:
   /// headers when they are loaded.
   bool DisableValidation;
       
+  /// \brief Whether to disable the use of stat caches in AST files.
+  bool DisableStatCache;
+
   /// \brief Mapping from switch-case IDs in the chain to switch-case statements
   ///
   /// Statements usually don't have IDs, but switch cases need them, so that the
@@ -783,8 +786,14 @@ public:
   /// \param DisableValidation If true, the AST reader will suppress most
   /// of its regular consistency checking, allowing the use of precompiled
   /// headers that cannot be determined to be compatible.
+  ///
+  /// \param DisableStatCache If true, the AST reader will ignore the
+  /// stat cache in the AST files. This performance pessimization can
+  /// help when an AST file is being used in cases where the
+  /// underlying files in the file system may have changed, but
+  /// parsing should still continue.
   ASTReader(Preprocessor &PP, ASTContext *Context, const char *isysroot = 0,
-            bool DisableValidation = false);
+            bool DisableValidation = false, bool DisableStatCache = false);
 
   /// \brief Load the AST file without using any pre-initialized Preprocessor.
   ///
@@ -805,9 +814,15 @@ public:
   /// \param DisableValidation If true, the AST reader will suppress most
   /// of its regular consistency checking, allowing the use of precompiled
   /// headers that cannot be determined to be compatible.
+  ///
+  /// \param DisableStatCache If true, the AST reader will ignore the
+  /// stat cache in the AST files. This performance pessimization can
+  /// help when an AST file is being used in cases where the
+  /// underlying files in the file system may have changed, but
+  /// parsing should still continue.
   ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
             Diagnostic &Diags, const char *isysroot = 0,
-            bool DisableValidation = false);
+            bool DisableValidation = false, bool DisableStatCache = false);
   ~ASTReader();
 
   /// \brief Load the precompiled header designated by the given file

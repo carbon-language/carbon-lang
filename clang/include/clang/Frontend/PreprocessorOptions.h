@@ -48,6 +48,10 @@ public:
   /// precompiled headers.
   bool DisablePCHValidation;
 
+  /// \brief When true, disables the use of the stat cache within a
+  /// precompiled header or AST file.
+  bool DisableStatCache;
+
   /// \brief Dump declarations that are deserialized from PCH, for testing.
   bool DumpDeserializedPCHDecls;
 
@@ -125,7 +129,7 @@ public:
   
 public:
   PreprocessorOptions() : UsePredefines(true), DetailedRecord(false),
-                          DisablePCHValidation(false),
+                          DisablePCHValidation(false), DisableStatCache(false),
                           DumpDeserializedPCHDecls(false),
                           PrecompiledPreambleBytes(0, true),
                           RetainRemappedFileBuffers(false) { }

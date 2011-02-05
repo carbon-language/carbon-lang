@@ -1580,6 +1580,7 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
 
   // Remap files.
   PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();
+  PPOpts.DisableStatCache = true;
   for (PreprocessorOptions::remapped_file_buffer_iterator 
          R = PPOpts.remapped_file_buffer_begin(),
          REnd = PPOpts.remapped_file_buffer_end();
@@ -1948,6 +1949,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
 
   // If the main file has been overridden due to the use of a preamble,
   // make that override happen and introduce the preamble.
+  PreprocessorOpts.DisableStatCache = true;
   StoredDiagnostics.insert(StoredDiagnostics.end(),
                            this->StoredDiagnostics.begin(),
              this->StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver);

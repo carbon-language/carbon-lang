@@ -359,12 +359,43 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   NamedFileEnt.setValue(NON_EXISTENT_FILE);
 
   // We allow the directory to not exist. If it does exist we store it.
-  // 
+  FileEntry *UFE = 0;
   const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename);
+  if (DirInfo) {
+    // Check to see if the file exists. If so, drop the virtual file
+    int FileDescriptor = -1;
+    struct stat StatBuf;
+    const char *InterndFileName = NamedFileEnt.getKeyData();
+    if (getStatValue(InterndFileName, StatBuf, &FileDescriptor) == 0) {
+      // If the stat process opened the file, close it to avoid a FD leak.
+      if (FileDescriptor != -1)
+        close(FileDescriptor);
 
-  FileEntry *UFE = new FileEntry();
-  VirtualFileEntries.push_back(UFE);
-  NamedFileEnt.setValue(UFE);
+      StatBuf.st_size = Size;
+      StatBuf.st_mtime = ModificationTime;
+      UFE = &UniqueFiles.getFile(InterndFileName, StatBuf);
+
+      NamedFileEnt.setValue(UFE);
+
+      // If we had already opened this file, close it now so we don't
+      // leak the descriptor. We're not going to use the file
+      // descriptor anyway, since this is a virtual file.
+      if (UFE->FD != -1) {
+        close(UFE->FD); 
+        UFE->FD = -1;
+      }
+
+      // If we already have an entry with this inode, return it.
+      if (UFE->getName()) 
+        return UFE;
+    }
+  }
+
+  if (!UFE) {
+    UFE = new FileEntry();
+    VirtualFileEntries.push_back(UFE);
+    NamedFileEnt.setValue(UFE);
+  }
 
   // Get the null-terminated file name as stored as the key of the
   // FileEntries map.
@@ -375,23 +406,7 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   UFE->ModTime = ModificationTime;
   UFE->Dir     = DirInfo;
   UFE->UID     = NextFileUID++;
-  
-  // If this virtual file resolves to a file, also map that file to the 
-  // newly-created file entry.
-  int FileDescriptor = -1;
-  struct stat StatBuf;
-  if (getStatValue(InterndFileName, StatBuf, &FileDescriptor)) {
-    // If the stat process opened the file, close it to avoid a FD leak.
-    if (FileDescriptor != -1)
-      close(FileDescriptor);
-
-    return UFE;
-  }
-  
-  UFE->FD = FileDescriptor;
-  llvm::SmallString<128> FilePath(UFE->Name);
-  llvm::sys::fs::make_absolute(FilePath);
-  FileEntries[FilePath] = UFE;
+  UFE->FD      = -1;
   return UFE;
 }
 

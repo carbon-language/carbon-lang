@@ -2034,12 +2034,14 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
 
     case STAT_CACHE: {
-      ASTStatCache *MyStatCache =
-        new ASTStatCache((const unsigned char *)BlobStart + Record[0],
-                         (const unsigned char *)BlobStart,
-                         NumStatHits, NumStatMisses);
-      FileMgr.addStatCache(MyStatCache);
-      F.StatCache = MyStatCache;
+      if (!DisableStatCache) {
+        ASTStatCache *MyStatCache =
+          new ASTStatCache((const unsigned char *)BlobStart + Record[0],
+                           (const unsigned char *)BlobStart,
+                           NumStatHits, NumStatMisses);
+        FileMgr.addStatCache(MyStatCache);
+        F.StatCache = MyStatCache;
+      }
       break;
     }
 
@@ -4668,28 +4670,32 @@ void ASTReader::FinishedDeserializing() {
 }
 
 ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
-                     const char *isysroot, bool DisableValidation)
+                     const char *isysroot, bool DisableValidation,
+                     bool DisableStatCache)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
     Consumer(0), isysroot(isysroot), DisableValidation(DisableValidation),
-    NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0),
-    TotalNumSLocEntries(0), NextSLocOffset(0), NumStatementsRead(0),
-    TotalNumStatements(0), NumMacrosRead(0), TotalNumMacros(0),
-    NumSelectorsRead(0), NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
-    TotalNumMethodPoolEntries(0), NumLexicalDeclContextsRead(0),
-    TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
-    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
+    DisableStatCache(DisableStatCache), NumStatHits(0), NumStatMisses(0), 
+    NumSLocEntriesRead(0), TotalNumSLocEntries(0), NextSLocOffset(0), 
+    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0), 
+    TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0), 
+    NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0), 
+    NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0), 
+    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0), 
+    NumCurrentElementsDeserializing(0) 
+{
   RelocatablePCH = false;
 }
 
 ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, const char *isysroot,
-                     bool DisableValidation)
+                     bool DisableValidation, bool DisableStatCache)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
-    isysroot(isysroot), DisableValidation(DisableValidation), NumStatHits(0),
-    NumStatMisses(0), NumSLocEntriesRead(0), TotalNumSLocEntries(0),
+    isysroot(isysroot), DisableValidation(DisableValidation), 
+    DisableStatCache(DisableStatCache), NumStatHits(0), NumStatMisses(0), 
+    NumSLocEntriesRead(0), TotalNumSLocEntries(0),
     NextSLocOffset(0), NumStatementsRead(0), TotalNumStatements(0),
     NumMacrosRead(0), TotalNumMacros(0), NumSelectorsRead(0),
     NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
