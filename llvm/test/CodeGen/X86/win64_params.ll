@@ -4,8 +4,8 @@
 ; on the stack.
 define i32 @f6(i32 %p1, i32 %p2, i32 %p3, i32 %p4, i32 %p5, i32 %p6) nounwind readnone optsize {
 entry:
-; CHECK: movl    80(%rsp), %eax
-; CHECK: addl    72(%rsp), %eax
+; CHECK: movl    48(%rsp), %eax
+; CHECK: addl    40(%rsp), %eax
   %add = add nsw i32 %p6, %p5
   ret i32 %add
 }
