@@ -90,7 +90,9 @@ GDBRemoteCommunication::CalculcateChecksum (const char *payload, size_t payload_
 size_t
 GDBRemoteCommunication::SendAck ()
 {
-    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "send packet: +");
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+    if (log)
+        log->Printf ("send packet: +");
     ConnectionStatus status = eConnectionStatusSuccess;
     char ack_char = '+';
     return Write (&ack_char, 1, status, NULL) == 1;
@@ -99,7 +101,9 @@ GDBRemoteCommunication::SendAck ()
 size_t
 GDBRemoteCommunication::SendNack ()
 {
-    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "send packet: -");
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+    if (log)
+        log->Printf ("send packet: -");
     ConnectionStatus status = eConnectionStatusSuccess;
     char nack_char = '-';
     return Write (&nack_char, 1, status, NULL) == 1;
@@ -440,7 +444,9 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
         packet.PutChar('#');
         packet.PutHex8(CalculcateChecksum (payload, payload_length));
 
-        ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "send packet: %s", packet.GetData());
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+        if (log)
+            log->Printf ("send packet: %s", packet.GetData());
         ConnectionStatus status = eConnectionStatusSuccess;
         size_t bytes_written = Write (packet.GetData(), packet.GetSize(), status, NULL);
         if (bytes_written == packet.GetSize())
@@ -453,7 +459,9 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
         }
         else
         {
-            ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "error: failed to send packet: %s", packet.GetData());
+            LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+            if (log)
+                log->Printf ("error: failed to send packet: %s", packet.GetData());
         }
         return bytes_written;
     }
@@ -614,7 +622,9 @@ GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &response,
             if (event_bytes)
             {
                 const char * packet_data =  (const char *)event_bytes->GetBytes();
-                ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS, "read packet: %s", packet_data);
+                LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+                if (log)
+                    log->Printf ("read packet: %s", packet_data);
                 const size_t packet_size =  event_bytes->GetByteSize();
                 if (packet_data && packet_size > 0)
                 {

@@ -631,7 +631,9 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
 void
 ProcessGDBRemote::DidLaunchOrAttach ()
 {
-    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::DidLaunch()");
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    if (log)
+        log->Printf ("ProcessGDBRemote::DidLaunch()");
     if (GetID() == LLDB_INVALID_PROCESS_ID)
     {
         m_dynamic_loader_ap.reset();
@@ -704,10 +706,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     // Clear out and clean up from any current state
     Clear();
     ArchSpec arch_spec = GetTarget().GetArchitecture();
-    
-    //LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
-    
-    
+
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
     {
         char host_port[128];
@@ -782,7 +781,6 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
     // HACK: require arch be set correctly at the target level until we can
     // figure out a good way to determine the arch of what we are attaching to
 
-    //LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (process_name && process_name[0])
     {
         ArchSpec arch_spec = GetTarget().GetArchitecture();
@@ -860,7 +858,9 @@ Error
 ProcessGDBRemote::DoResume ()
 {
     Error error;
-    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::Resume()");
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    if (log)
+        log->Printf ("ProcessGDBRemote::Resume()");
     
     Listener listener ("gdb-remote.resume-packet-sent");
     if (listener.StartListeningForEvents (&m_gdb_comm, GDBRemoteCommunication::eBroadcastBitRunPacketSent))
@@ -1446,7 +1446,9 @@ ProcessGDBRemote::GetSTDOUT (char *buf, size_t buf_size, Error &error)
     size_t bytes_available = m_stdout_data.size();
     if (bytes_available > 0)
     {
-        ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::%s (&%p[%u]) ...", __FUNCTION__, buf, buf_size);
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+        if (log)
+            log->Printf ("ProcessGDBRemote::%s (&%p[%u]) ...", __FUNCTION__, buf, buf_size);
         if (bytes_available > buf_size)
         {
             memcpy(buf, m_stdout_data.c_str(), buf_size);
@@ -1708,25 +1710,6 @@ ProcessGDBRemote::DoSignal (int signo)
         error.SetErrorStringWithFormat("failed to send signal %i", signo);
     return error;
 }
-
-//void
-//ProcessGDBRemote::STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len)
-//{
-//    ProcessGDBRemote *process = (ProcessGDBRemote *)baton;
-//    process->AppendSTDOUT(static_cast<const char *>(src), src_len);
-//}
-
-//void
-//ProcessGDBRemote::AppendSTDOUT (const char* s, size_t len)
-//{
-//    ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::%s (<%d> %s) ...", __FUNCTION__, len, s);
-//    Mutex::Locker locker(m_stdio_mutex);
-//    m_stdout_data.append(s, len);
-//
-//    // FIXME: Make a real data object for this and put it out.
-//    BroadcastEventIfUnique (eBroadcastBitSTDOUT);
-//}
-
 
 Error
 ProcessGDBRemote::StartDebugserverProcess
@@ -2231,7 +2214,6 @@ ProcessGDBRemote::AsyncThread (void *arg)
         bool done = false;
         while (!done)
         {
-            log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
             if (log)
                 log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) listener.WaitForEvent (NULL, event_sp)...", __FUNCTION__, arg, process->GetID());
             if (listener.WaitForEvent (NULL, event_sp))
@@ -2250,7 +2232,6 @@ ProcessGDBRemote::AsyncThread (void *arg)
                             {
                                 const char *continue_cstr = (const char *)continue_packet->GetBytes ();
                                 const size_t continue_cstr_len = continue_packet->GetByteSize ();
-                                log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
                                 if (log)
                                     log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncContinue: %s", __FUNCTION__, arg, process->GetID(), continue_cstr);
 
@@ -2289,14 +2270,12 @@ ProcessGDBRemote::AsyncThread (void *arg)
                         break;
 
                     case eBroadcastBitAsyncThreadShouldExit:
-                        log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
                         if (log)
                             log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
                         done = true;
                         break;
 
                     default:
-                        log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
                         if (log)
                             log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
                         done = true;
@@ -2305,7 +2284,6 @@ ProcessGDBRemote::AsyncThread (void *arg)
             }
             else
             {
-                log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
                 if (log)
                     log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) listener.WaitForEvent (NULL, event_sp) => false", __FUNCTION__, arg, process->GetID());
                 done = true;
@@ -2313,7 +2291,6 @@ ProcessGDBRemote::AsyncThread (void *arg)
         }
     }
 
-    log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS);
     if (log)
         log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) thread exiting...", __FUNCTION__, arg, process->GetID());
 

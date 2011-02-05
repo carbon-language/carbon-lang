@@ -15,6 +15,7 @@
 #include <map>
 
 // Other libraries and framework includes
+#include "llvm/ADT/DenseMap.h"
 // Project includes
 #include "lldb/lldb-include.h"
 #include "lldb/Host/Mutex.h"
@@ -28,7 +29,8 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     SectionLoadList () :
-        m_collection (),
+        m_addr_to_sect (),
+        m_sect_to_addr (),
         m_mutex (Mutex::eMutexTypeRecursive)
 
     {
@@ -69,8 +71,10 @@ public:
     Dump (Stream &s, Target *target);
 
 protected:
-    typedef std::map<lldb::addr_t, const Section *> collection;
-    collection m_collection;
+    typedef std::map<lldb::addr_t, const Section *> addr_to_sect_collection;
+    typedef llvm::DenseMap<const Section *, lldb::addr_t> sect_to_addr_collection;
+    addr_to_sect_collection m_addr_to_sect;
+    sect_to_addr_collection m_sect_to_addr;
     mutable Mutex m_mutex;
 
 private:

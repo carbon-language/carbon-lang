@@ -29,14 +29,15 @@ bool
 SectionLoadList::IsEmpty() const
 {
     Mutex::Locker locker(m_mutex);
-    return m_collection.empty();
+    return m_addr_to_sect.empty();
 }
 
 void
 SectionLoadList::Clear ()
 {
     Mutex::Locker locker(m_mutex);
-    return m_collection.clear();
+    m_addr_to_sect.clear();
+    m_sect_to_addr.clear();
 }
 
 addr_t
@@ -47,17 +48,10 @@ SectionLoadList::GetSectionLoadAddress (const Section *section) const
     if (section)
     {
         Mutex::Locker locker(m_mutex);
-        collection::const_iterator pos, end = m_collection.end();
-        for (pos = m_collection.begin(); pos != end; ++pos)
-        {
-            const addr_t pos_load_addr = pos->first;
-            const Section *pos_section = pos->second;
-            if (pos_section == section)
-            {
-                section_load_addr = pos_load_addr;
-                break;
-            }
-        }
+        sect_to_addr_collection::const_iterator pos = m_sect_to_addr.find (section);
+        
+        if (pos != m_sect_to_addr.end())
+            section_load_addr = pos->second;
     }
     return section_load_addr;
 }
@@ -81,18 +75,26 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
     }
 
     Mutex::Locker locker(m_mutex);
-    collection::iterator pos = m_collection.find(load_addr);
-    if (pos != m_collection.end())
+    sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section);
+    if (sta_pos != m_sect_to_addr.end())
     {
-        if (section == pos->second)
+        if (load_addr == sta_pos->second)
             return false; // No change...
         else
-            pos->second = section;
+            sta_pos->second = load_addr;
     }
     else
+        m_sect_to_addr[section] = load_addr;
+
+    addr_to_sect_collection::iterator ats_pos = m_addr_to_sect.find(load_addr);
+    if (ats_pos != m_addr_to_sect.end())
     {
-        m_collection[load_addr] = section;
+        assert (section != ats_pos->second);
+        ats_pos->second = section;
     }
+    else
+        m_addr_to_sect[load_addr] = section;
+
     return true;    // Changed
 }
 
@@ -115,19 +117,17 @@ SectionLoadList::SetSectionUnloaded (const Section *section)
 
     size_t unload_count = 0;
     Mutex::Locker locker(m_mutex);
-    bool erased = false;
-    do 
+    
+    sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section);
+    if (sta_pos != m_sect_to_addr.end())
     {
-        erased = false;
-        for (collection::iterator pos = m_collection.begin(); pos != m_collection.end(); ++pos)
-        {
-            if (pos->second == section)
-            {
-                m_collection.erase(pos);
-                erased = true;
-            }
-        }
-    } while (erased);
+        addr_t load_addr = sta_pos->second;
+        m_sect_to_addr.erase (sta_pos);
+
+        addr_to_sect_collection::iterator ats_pos = m_addr_to_sect.find(load_addr);
+        if (ats_pos != m_addr_to_sect.end())
+            m_addr_to_sect.erase (ats_pos);
+    }
     
     return unload_count;
 }
@@ -149,8 +149,23 @@ SectionLoadList::SetSectionUnloaded (const Section *section, addr_t load_addr)
                      section->GetName().AsCString(),
                      load_addr);
     }
+    bool erased = false;
     Mutex::Locker locker(m_mutex);
-    return m_collection.erase (load_addr) != 0;
+    sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section);
+    if (sta_pos != m_sect_to_addr.end())
+    {
+        erased = true;
+        m_sect_to_addr.erase (sta_pos);
+    }
+        
+    addr_to_sect_collection::iterator ats_pos = m_addr_to_sect.find(load_addr);
+    if (ats_pos != m_addr_to_sect.end())
+    {
+        erased = true;
+        m_addr_to_sect.erase (ats_pos);
+    }
+
+    return erased;
 }
 
 
@@ -159,10 +174,10 @@ SectionLoadList::ResolveLoadAddress (addr_t load_addr, Address &so_addr) const
 {
     // First find the top level section that this load address exists in    
     Mutex::Locker locker(m_mutex);
-    collection::const_iterator pos = m_collection.lower_bound (load_addr);
-    if (pos != m_collection.end())
+    addr_to_sect_collection::const_iterator pos = m_addr_to_sect.lower_bound (load_addr);
+    if (pos != m_addr_to_sect.end())
     {
-        if (load_addr != pos->first && pos != m_collection.begin())
+        if (load_addr != pos->first && pos != m_addr_to_sect.begin())
             --pos;
         if (load_addr >= pos->first)
         {
@@ -183,8 +198,8 @@ void
 SectionLoadList::Dump (Stream &s, Target *target)
 {
     Mutex::Locker locker(m_mutex);
-    collection::const_iterator pos, end;
-    for (pos = m_collection.begin(), end = m_collection.end(); pos != end; ++pos)
+    addr_to_sect_collection::const_iterator pos, end;
+    for (pos = m_addr_to_sect.begin(), end = m_addr_to_sect.end(); pos != end; ++pos)
     {
         s.Printf("addr = 0x%16.16llx, section = %p: ", pos->first, pos->second);
         pos->second->Dump (&s, target, 0);
