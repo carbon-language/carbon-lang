@@ -16,6 +16,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ADT/SmallPtrSet.h"
+
 using namespace llvm;
 
 /// callIsSmall - If a call is likely to lower to a single target instruction,
@@ -298,22 +299,38 @@ int InlineCostAnalyzer::getSpecializationBonus(Function *Callee,
   return Bonus;
 }
 
+// ConstantFunctionBonus - Figure out how much of a bonus we can get for
+// possibly devirtualizing a function. We'll subtract the size of the function
+// we may wish to inline from the indirect call bonus providing a limit on
+// growth. Leave an upper limit of 0 for the bonus - we don't want to penalize
+// inlining because we decide we don't want to give a bonus for
+// devirtualizing.
+int InlineCostAnalyzer::ConstantFunctionBonus(CallSite CS, Constant *C) {
+  
+  // This could just be NULL.
+  if (!C) return 0;
+  
+  Function *F = dyn_cast<Function>(C);
+  if (!F) return 0;
+  
+  int Bonus = InlineConstants::IndirectCallBonus + getInlineSize(CS, F);
+  return (Bonus > 0) ? 0 : Bonus;
+}
+
 // CountBonusForConstant - Figure out an approximation for how much per-call
 // performance boost we can expect if the specified value is constant.
-unsigned InlineCostAnalyzer::CountBonusForConstant(Value *V) {
+int InlineCostAnalyzer::CountBonusForConstant(Value *V, Constant *C) {
   unsigned Bonus = 0;
-  bool indirectCallBonus = false;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
     User *U = *UI;
     if (CallInst *CI = dyn_cast<CallInst>(U)) {
       // Turning an indirect call into a direct call is a BIG win
       if (CI->getCalledValue() == V)
-        indirectCallBonus = true;
-    }
-    else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
+        Bonus += ConstantFunctionBonus(CallSite(CI), C);
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(U)) {
       // Turning an indirect call into a direct call is a BIG win
       if (II->getCalledValue() == V)
-        indirectCallBonus = true;
+        Bonus += ConstantFunctionBonus(CallSite(CI), C);
     }
     // FIXME: Eliminating conditional branches and switches should
     // also yield a per-call performance boost.
@@ -345,13 +362,106 @@ unsigned InlineCostAnalyzer::CountBonusForConstant(Value *V) {
     }
   }
   
-  // FIXME: The only reason we're applying the bonus once is while it's great
-  // to devirtualize calls the magnitude of the bonus x number of call sites
-  // can lead to a huge code explosion when we prefer to inline 1000 instruction
-  // functions that have 10 call sites. This should be made a function of the
-  // estimated inline penalty/benefit + the indirect call bonus.
-  if (indirectCallBonus) Bonus += InlineConstants::IndirectCallBonus;
+  return Bonus;
+}
+
+int InlineCostAnalyzer::getInlineSize(CallSite CS, Function *Callee) {
+  // Get information about the callee.
+  FunctionInfo *CalleeFI = &CachedFunctionInfo[Callee];
   
+  // If we haven't calculated this information yet, do so now.
+  if (CalleeFI->Metrics.NumBlocks == 0)
+    CalleeFI->analyzeFunction(Callee);
+  
+  // InlineCost - This value measures how good of an inline candidate this call
+  // site is to inline.  A lower inline cost make is more likely for the call to
+  // be inlined.  This value may go negative.
+  //
+  int InlineCost = 0;
+
+  // Compute any size reductions we can expect due to arguments being passed into
+  // the function.
+  //
+  unsigned ArgNo = 0;
+  CallSite::arg_iterator I = CS.arg_begin();
+  for (Function::arg_iterator FI = Callee->arg_begin(), FE = Callee->arg_end();
+       FI != FE; ++I, ++FI, ++ArgNo) {
+
+    // If an alloca is passed in, inlining this function is likely to allow
+    // significant future optimization possibilities (like scalar promotion, and
+    // scalarization), so encourage the inlining of the function.
+    //
+    if (isa<AllocaInst>(I))
+      InlineCost -= CalleeFI->ArgumentWeights[ArgNo].AllocaWeight;
+
+    // If this is a constant being passed into the function, use the argument
+    // weights calculated for the callee to determine how much will be folded
+    // away with this information.
+    else if (isa<Constant>(I))
+      InlineCost -= CalleeFI->ArgumentWeights[ArgNo].ConstantWeight;       
+  }
+  
+  // Each argument passed in has a cost at both the caller and the callee
+  // sides.  Measurements show that each argument costs about the same as an
+  // instruction.
+  InlineCost -= (CS.arg_size() * InlineConstants::InstrCost);
+
+  // Now that we have considered all of the factors that make the call site more
+  // likely to be inlined, look at factors that make us not want to inline it.
+
+  // Calls usually take a long time, so they make the inlining gain smaller.
+  InlineCost += CalleeFI->Metrics.NumCalls * InlineConstants::CallPenalty;
+
+  // Look at the size of the callee. Each instruction counts as 5.
+  InlineCost += CalleeFI->Metrics.NumInsts*InlineConstants::InstrCost;
+  
+  return InlineCost;
+}
+
+int InlineCostAnalyzer::getInlineBonuses(CallSite CS, Function *Callee) {
+  // Get information about the callee.
+  FunctionInfo *CalleeFI = &CachedFunctionInfo[Callee];
+  
+  // If we haven't calculated this information yet, do so now.
+  if (CalleeFI->Metrics.NumBlocks == 0)
+    CalleeFI->analyzeFunction(Callee);
+    
+  bool isDirectCall = CS.getCalledFunction() == Callee;
+  Instruction *TheCall = CS.getInstruction();
+  int Bonus = 0;
+  
+  // If there is only one call of the function, and it has internal linkage,
+  // make it almost guaranteed to be inlined.
+  //
+  if (Callee->hasLocalLinkage() && Callee->hasOneUse() && isDirectCall)
+    Bonus += InlineConstants::LastCallToStaticBonus;
+  
+  // If the instruction after the call, or if the normal destination of the
+  // invoke is an unreachable instruction, the function is noreturn.  As such,
+  // there is little point in inlining this.
+  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
+    if (isa<UnreachableInst>(II->getNormalDest()->begin()))
+      Bonus += InlineConstants::NoreturnPenalty;
+  } else if (isa<UnreachableInst>(++BasicBlock::iterator(TheCall)))
+    Bonus += InlineConstants::NoreturnPenalty;
+  
+  // If this function uses the coldcc calling convention, prefer not to inline
+  // it.
+  if (Callee->getCallingConv() == CallingConv::Cold)
+    Bonus += InlineConstants::ColdccPenalty;
+  
+  // Add to the inline quality for properties that make the call valuable to
+  // inline.  This includes factors that indicate that the result of inlining
+  // the function will be optimizable.  Currently this just looks at arguments
+  // passed into the function.
+  //
+  CallSite::arg_iterator I = CS.arg_begin();
+  for (Function::arg_iterator FI = Callee->arg_begin(), FE = Callee->arg_end();
+       FI != FE; ++I, ++FI)
+    // Compute any constant bonus due to inlining we want to give here.
+    if (isa<Constant>(I))
+      Bonus += CountBonusForConstant(FI, cast<Constant>(I));
+      
   return Bonus;
 }
 
@@ -368,7 +478,6 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
                                SmallPtrSet<const Function*, 16> &NeverInline) {
   Instruction *TheCall = CS.getInstruction();
   Function *Caller = TheCall->getParent()->getParent();
-  bool isDirectCall = CS.getCalledFunction() == Callee;
 
   // Don't inline functions which can be redefined at link-time to mean
   // something else.  Don't inline functions marked noinline or call sites
@@ -418,72 +527,10 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
 
   // InlineCost - This value measures how good of an inline candidate this call
   // site is to inline.  A lower inline cost make is more likely for the call to
-  // be inlined.  This value may go negative.
+  // be inlined.  This value may go negative due to the fact that bonuses
+  // are negative numbers.
   //
-  int InlineCost = 0;
-
-  // Add to the inline quality for properties that make the call valuable to
-  // inline.  This includes factors that indicate that the result of inlining
-  // the function will be optimizable.  Currently this just looks at arguments
-  // passed into the function.
-  //
-  unsigned ArgNo = 0;
-  CallSite::arg_iterator I = CS.arg_begin();
-  for (Function::arg_iterator FI = Callee->arg_begin(), FE = Callee->arg_end();
-       FI != FE; ++I, ++FI, ++ArgNo) {
-
-    // If an alloca is passed in, inlining this function is likely to allow
-    // significant future optimization possibilities (like scalar promotion, and
-    // scalarization), so encourage the inlining of the function.
-    //
-    if (isa<AllocaInst>(I))
-      InlineCost -= CalleeFI->ArgumentWeights[ArgNo].AllocaWeight;
-
-    // If this is a constant being passed into the function, use the argument
-    // weights calculated for the callee to determine how much will be folded
-    // away with this information.
-    else if (isa<Constant>(I)) {
-      InlineCost -= CalleeFI->ArgumentWeights[ArgNo].ConstantWeight;
-       
-      // Compute any constant bonus due to inlining we want to give here.
-      InlineCost -= CountBonusForConstant(FI);
-    }
-  }
-  
-  // Each argument passed in has a cost at both the caller and the callee
-  // sides.  Measurements show that each argument costs about the same as an
-  // instruction.
-  InlineCost -= (CS.arg_size() * InlineConstants::InstrCost);
-
-  // If there is only one call of the function, and it has internal linkage,
-  // make it almost guaranteed to be inlined.
-  //
-  if (Callee->hasLocalLinkage() && Callee->hasOneUse() && isDirectCall)
-    InlineCost += InlineConstants::LastCallToStaticBonus;
-
-  // Now that we have considered all of the factors that make the call site more
-  // likely to be inlined, look at factors that make us not want to inline it.
-
-  // If the instruction after the call, or if the normal destination of the
-  // invoke is an unreachable instruction, the function is noreturn.  As such,
-  // there is little point in inlining this.
-  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
-    if (isa<UnreachableInst>(II->getNormalDest()->begin()))
-      InlineCost += InlineConstants::NoreturnPenalty;
-  } else if (isa<UnreachableInst>(++BasicBlock::iterator(TheCall)))
-    InlineCost += InlineConstants::NoreturnPenalty;
-  
-  // If this function uses the coldcc calling convention, prefer not to inline
-  // it.
-  if (Callee->getCallingConv() == CallingConv::Cold)
-    InlineCost += InlineConstants::ColdccPenalty;
-
-  // Calls usually take a long time, so they make the inlining gain smaller.
-  InlineCost += CalleeFI->Metrics.NumCalls * InlineConstants::CallPenalty;
-
-  // Look at the size of the callee. Each instruction counts as 5.
-  InlineCost += CalleeFI->Metrics.NumInsts*InlineConstants::InstrCost;
-
+  int InlineCost = getInlineSize(CS, Callee) + getInlineBonuses(CS, Callee);
   return llvm::InlineCost::get(InlineCost);
 }
 

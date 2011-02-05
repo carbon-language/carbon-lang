@@ -33,7 +33,7 @@ namespace llvm {
   namespace InlineConstants {
     // Various magic constants used to adjust heuristics.
     const int InstrCost = 5;
-    const int IndirectCallBonus = 500;
+    const int IndirectCallBonus = -100;
     const int CallPenalty = 25;
     const int LastCallToStaticBonus = -15000;
     const int ColdccPenalty = 2000;
@@ -124,7 +124,10 @@ namespace llvm {
     // the ValueMap will update itself when this happens.
     ValueMap<const Function *, FunctionInfo> CachedFunctionInfo;
 
-    unsigned CountBonusForConstant(Value *V);
+    int CountBonusForConstant(Value *V, Constant *C = NULL);
+    int ConstantFunctionBonus(CallSite CS, Constant *C);
+    int getInlineSize(CallSite CS, Function *Callee);
+    int getInlineBonuses(CallSite CS, Function *Callee);
   public:
 
     /// getInlineCost - The heuristic used to determine if we should inline the
