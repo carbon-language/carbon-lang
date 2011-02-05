@@ -430,7 +430,7 @@ public:
         // Suggest possible initialization (if any).
         const char *initialization = 0;
         QualType vdTy = vd->getType().getCanonicalType();
-      
+
         if (vdTy->getAs<ObjCObjectPointerType>()) {
           // Check if 'nil' is defined.
           if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
@@ -442,6 +442,8 @@ public:
           initialization = " = 0.0";
         else if (vdTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus)
           initialization = " = false";
+        else if (vdTy->isEnumeralType())
+          continue;
         else if (vdTy->isScalarType())
           initialization = " = 0";
       

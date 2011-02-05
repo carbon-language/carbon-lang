@@ -41,3 +41,11 @@ unsigned test3_c() {
   return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
 }
 
+enum test4_A {
+ test4_A_a, test_4_A_b
+};
+test4_A test4() {
+ test4_A a; // expected-note{{variable 'a' is declared here}}
+ return a; // expected-warning{{variable 'a' is possibly uninitialized when used here}}
+}
+
