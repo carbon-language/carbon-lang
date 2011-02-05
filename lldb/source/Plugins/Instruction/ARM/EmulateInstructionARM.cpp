@@ -76,10 +76,19 @@ bool ITSession::InITBlock()
     return ITCounter != 0;
 }
 
+// Return true if we're the last instruction inside an IT Block.
+bool ITSession::LastInITBlock()
+{
+    return ITCounter == 1;
+}
+
 // Get condition bits for the current thumb instruction.
 uint32_t ITSession::GetCond()
 {
-    return Bits32(ITState, 7, 4);
+    if (InITBlock())
+        return Bits32(ITState, 7, 4);
+    else
+        return COND_AL;
 }
 
 // ARM constants used during decoding
@@ -1348,6 +1357,25 @@ EmulateInstructionARM::EmulateSVC (ARMEncoding encoding)
     return true;
 }
 
+// If Then makes up to four following instructions (the IT block) conditional.
+bool
+EmulateInstructionARM::EmulateIT (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    EncodingSpecificOperations();
+    ITSTATE.IT<7:0> = firstcond:mask;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    m_it_session.InitIT(Bits32(opcode, 7, 0));
+    return true;
+}
+
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -1463,7 +1491,12 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Supervisor Call (previously Software Interrupt)
         //----------------------------------------------------------------------
-        { 0xffffff00, 0x0000df00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSVC, "svc #imm8"}
+        { 0xffffff00, 0x0000df00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSVC, "svc #imm8"},
+
+        //----------------------------------------------------------------------
+        // If Then makes up to four following instructions conditional.
+        //----------------------------------------------------------------------
+        { 0xffffff00, 0x0000bf00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateIT, "it{<x>{<y>{<z>}}} <firstcond>"}
 
     };
 
@@ -1573,7 +1606,7 @@ EmulateInstructionARM::CurrentCond ()
         return UnsignedBits(m_inst.opcode.inst32, 31, 28);
     
     case eModeThumb:
-        return 0x0000000Eu; // Return always for now, we need to handl IT instructions later
+        return m_it_session.GetCond();
     }
     return UINT32_MAX;  // Return invalid value
 }
@@ -1624,5 +1657,9 @@ EmulateInstructionARM::ConditionPassed ()
 bool
 EmulateInstructionARM::EvaluateInstruction ()
 {
+    // Advance the ITSTATE bits to their values for the next instruction.
+    if (m_inst_mode == eModeThumb && m_it_session.InITBlock())
+        m_it_session.ITAdvance();
+
     return false;
 }

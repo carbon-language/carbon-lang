@@ -31,6 +31,9 @@ public:
     // InITBlock - Returns true if we're inside an IT Block.
     bool InITBlock();
 
+    // LastInITBlock - Returns true if we're the last instruction inside an IT Block.
+    bool LastInITBlock();
+
     // GetCond - Gets condition bits for the current thumb instruction.
     uint32_t GetCond();
 
@@ -121,7 +124,8 @@ public:
                             write_reg_callback),
         m_arm_isa (0),
         m_inst_mode (eModeInvalid),
-        m_inst_cpsr (0)
+        m_inst_cpsr (0),
+        m_it_session ()
     {
     }
     
@@ -220,9 +224,13 @@ protected:
     bool
     EmulateSVC (ARMEncoding encoding);
 
+    bool
+    EmulateIT (ARMEncoding encoding);
+
     uint32_t m_arm_isa;
     Mode m_inst_mode;
     uint32_t m_inst_cpsr;
+    ITSession m_it_session;
 };
 
 }   // namespace lldb_private
