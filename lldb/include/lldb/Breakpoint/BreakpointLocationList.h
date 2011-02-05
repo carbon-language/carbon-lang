@@ -59,21 +59,7 @@ public:
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointLocationSP
-    FindByAddress (Address &addr) const;
-
-    //------------------------------------------------------------------
-    /// Returns a shared pointer to the breakpoint location with id \a
-    /// breakID.
-    ///
-    /// @param[in] breakID
-    ///     The breakpoint location ID to seek for.
-    ///
-    /// @result
-    ///     A shared pointer to the breakpoint.  May contain a NULL
-    ///     pointer if the breakpoint doesn't exist.
-    //------------------------------------------------------------------
-    lldb::BreakpointLocationSP
-    FindByID (lldb::break_id_t breakID);
+    FindByAddress (const Address &addr) const;
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint location with id
@@ -86,7 +72,7 @@ public:
     ///     A shared pointer to the breakpoint.  May contain a NULL
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
-    const lldb::BreakpointLocationSP
+    lldb::BreakpointLocationSP
     FindByID (lldb::break_id_t breakID) const;
 
     //------------------------------------------------------------------
@@ -100,7 +86,7 @@ public:
     ///     The ID of the breakpoint location, or LLDB_INVALID_BREAK_ID.
     //------------------------------------------------------------------
     lldb::break_id_t
-    FindIDByAddress (Address &addr);
+    FindIDByAddress (const Address &addr);
 
     //------------------------------------------------------------------
     /// Returns a breakpoint location list of the breakpoint locations
@@ -183,19 +169,6 @@ public:
     GetHitCount () const;
 
     //------------------------------------------------------------------
-    /// Removes the breakpoint location given by \b breakID from this
-    /// list.
-    ///
-    /// @param[in] breakID
-    ///     The breakpoint location index to remove.
-    ///
-    /// @result
-    ///     \b true if the breakpoint \a breakID was in the list.
-    //------------------------------------------------------------------
-    bool
-    Remove (lldb::break_id_t breakID);
-
-    //------------------------------------------------------------------
     /// Enquires of the breakpoint location in this list with ID \a
     /// breakID whether we should stop.
     ///
@@ -262,27 +235,14 @@ protected:
     /// @result
     ///     Returns breakpoint location id.
     //------------------------------------------------------------------
-    virtual lldb::break_id_t
-    Add (lldb::BreakpointLocationSP& bp_loc_sp);
+    lldb::BreakpointLocationSP
+    Create (Breakpoint &owner, const Address &addr);
+//    Add (lldb::BreakpointLocationSP& bp_loc_sp);
 
     typedef std::vector<lldb::BreakpointLocationSP> collection;
     typedef std::map<lldb_private::Address,
                      lldb::BreakpointLocationSP,
                      Address::ModulePointerAndOffsetLessThanFunctionObject> addr_map;
-
-    // The breakpoint locations are stored in their Parent Breakpoint's location list by an
-    // index that is unique to this list, and not across all breakpoint location lists.
-    // This is only set in the Breakpoint's AddLocation method.
-    // There is another breakpoint location list, the owner's list in the BreakpointSite,
-    // but that should not reset the ID.  Unfortunately UserID's SetID method is public.
-    lldb::break_id_t
-    GetNextID();
-
-    collection::iterator
-    GetIDIterator(lldb::break_id_t breakID);
-
-    collection::const_iterator
-    GetIDConstIterator(lldb::break_id_t breakID) const;
 
     collection m_locations;
     addr_map m_address_to_location;

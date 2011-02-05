@@ -232,7 +232,7 @@ public:
     ///    Returns a pointer to the new location.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    AddLocation (Address &addr,
+    AddLocation (const Address &addr,
                  bool *new_location = NULL);
 
     //------------------------------------------------------------------
@@ -245,7 +245,7 @@ public:
     ///    in the shared pointer will be NULL if there is no location at that address.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    FindLocationByAddress (Address &addr);
+    FindLocationByAddress (const Address &addr);
 
     //------------------------------------------------------------------
     /// Find a breakpoint location ID by Address.
@@ -257,7 +257,7 @@ public:
     ///    there is no breakpoint location at that address.
     //------------------------------------------------------------------
     lldb::break_id_t
-    FindLocationIDByAddress (Address &addr);
+    FindLocationIDByAddress (const Address &addr);
 
     //------------------------------------------------------------------
     /// Find a breakpoint location for a given breakpoint location ID.

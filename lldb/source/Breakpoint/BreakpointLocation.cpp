@@ -32,7 +32,7 @@ BreakpointLocation::BreakpointLocation
 (
     break_id_t loc_id,
     Breakpoint &owner,
-    Address &addr,
+    const Address &addr,
     lldb::tid_t tid,
     bool hardware
 ) :

@@ -312,7 +312,7 @@ public:
     InvokeCallback (StoppointCallbackContext *context);
 
 protected:
-    friend class Breakpoint;
+    friend class BreakpointLocationList;
     friend class CommandObjectBreakpointCommandAdd;
     friend class Process;
 
@@ -357,7 +357,7 @@ private:
 
     BreakpointLocation (lldb::break_id_t bid,
                         Breakpoint &owner,
-                        Address &addr,
+                        const Address &addr,
                         lldb::tid_t tid = LLDB_INVALID_THREAD_ID,
                         bool hardware = false);
 

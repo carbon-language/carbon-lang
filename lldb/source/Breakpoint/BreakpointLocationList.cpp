@@ -23,8 +23,7 @@ using namespace lldb_private;
 BreakpointLocationList::BreakpointLocationList() :
     m_locations(),
     m_address_to_location (),
-    m_mutex (Mutex::eMutexTypeRecursive),
-    m_next_id (0)
+    m_mutex (Mutex::eMutexTypeRecursive)
 {
 }
 
@@ -32,17 +31,16 @@ BreakpointLocationList::~BreakpointLocationList()
 {
 }
 
-lldb::break_id_t
-BreakpointLocationList::Add (BreakpointLocationSP &bp_loc_sp)
+BreakpointLocationSP
+BreakpointLocationList::Create (Breakpoint &bp, const Address &addr)
 {
-    if (bp_loc_sp)
-    {
-        Mutex::Locker locker (m_mutex);
-        m_locations.push_back (bp_loc_sp);
-        m_address_to_location[bp_loc_sp->GetAddress()] = bp_loc_sp;
-        return bp_loc_sp->GetID();
-    }
-    return LLDB_INVALID_BREAK_ID;
+    Mutex::Locker locker (m_mutex);
+    // The location ID is just the size of the location list + 1
+    lldb::break_id_t bp_loc_id = m_locations.size() + 1;
+    BreakpointLocationSP bp_loc_sp (new BreakpointLocation (bp_loc_id, bp, addr));
+    m_locations.push_back (bp_loc_sp);
+    m_address_to_location[addr] = bp_loc_sp;
+    return bp_loc_sp;
 }
 
 bool
@@ -62,7 +60,7 @@ BreakpointLocationList::ShouldStop (StoppointCallbackContext *context, lldb::bre
 }
 
 lldb::break_id_t
-BreakpointLocationList::FindIDByAddress (Address &addr)
+BreakpointLocationList::FindIDByAddress (const Address &addr)
 {
     BreakpointLocationSP bp_loc_sp = FindByAddress (addr);
     if (bp_loc_sp)
@@ -72,95 +70,19 @@ BreakpointLocationList::FindIDByAddress (Address &addr)
     return LLDB_INVALID_BREAK_ID;
 }
 
-bool
-BreakpointLocationList::Remove (lldb::break_id_t break_id)
-{
-    Mutex::Locker locker (m_mutex);
-    collection::iterator pos = GetIDIterator(break_id);    // Predicate
-    if (pos != m_locations.end())
-    {
-        m_address_to_location.erase ((*pos)->GetAddress());
-        m_locations.erase(pos);
-        return true;
-    }
-    return false;
-}
-
-
-class BreakpointLocationIDMatches
-{
-public:
-    BreakpointLocationIDMatches (lldb::break_id_t break_id) :
-        m_break_id(break_id)
-    {
-    }
-
-    bool operator() (const BreakpointLocationSP &bp_loc_sp) const
-    {
-        return m_break_id == bp_loc_sp->GetID();
-    }
-
-private:
-   const lldb::break_id_t m_break_id;
-};
-
-class BreakpointLocationAddressMatches
-{
-public:
-    BreakpointLocationAddressMatches (Address& addr) :
-        m_addr(addr)
-    {
-    }
-
-    bool operator() (const BreakpointLocationSP& bp_loc_sp) const
-    {
-        return Address::CompareFileAddress(m_addr, bp_loc_sp->GetAddress()) == 0;
-    }
-
-private:
-   const Address &m_addr;
-};
-
-BreakpointLocationList::collection::iterator
-BreakpointLocationList::GetIDIterator (lldb::break_id_t break_id)
-{
-    Mutex::Locker locker (m_mutex);
-    return std::find_if (m_locations.begin(),
-                         m_locations.end(),
-                         BreakpointLocationIDMatches(break_id));
-}
-
-BreakpointLocationList::collection::const_iterator
-BreakpointLocationList::GetIDConstIterator (lldb::break_id_t break_id) const
-{
-    Mutex::Locker locker (m_mutex);
-    return std::find_if (m_locations.begin(),
-                         m_locations.end(),
-                         BreakpointLocationIDMatches(break_id));
-}
-
 BreakpointLocationSP
-BreakpointLocationList::FindByID (lldb::break_id_t break_id)
-{
-    Mutex::Locker locker (m_mutex);
-    BreakpointLocationSP stop_sp;
-    collection::iterator pos = GetIDIterator(break_id);
-    if (pos != m_locations.end())
-        stop_sp = *pos;
-
-    return stop_sp;
-}
-
-const BreakpointLocationSP
 BreakpointLocationList::FindByID (lldb::break_id_t break_id) const
 {
+    BreakpointLocationSP bp_loc_sp;
     Mutex::Locker locker (m_mutex);
-    BreakpointLocationSP stop_sp;
-    collection::const_iterator pos = GetIDConstIterator(break_id);
-    if (pos != m_locations.end())
-        stop_sp = *pos;
-
-    return stop_sp;
+    // We never remove a breakpoint locations, so the ID can be translated into
+    // the location index by subtracting 1
+    uint32_t idx = break_id - 1;
+    if (idx <= m_locations.size())
+    {
+        bp_loc_sp = m_locations[idx];
+    }
+    return bp_loc_sp;
 }
 
 size_t
@@ -193,18 +115,18 @@ BreakpointLocationList::FindInModule (Module *module,
 }
 
 const BreakpointLocationSP
-BreakpointLocationList::FindByAddress (Address &addr) const
+BreakpointLocationList::FindByAddress (const Address &addr) const
 {
     Mutex::Locker locker (m_mutex);
-    BreakpointLocationSP stop_sp;
+    BreakpointLocationSP bp_loc_sp;
     if (!m_locations.empty())
     {
         addr_map::const_iterator pos = m_address_to_location.find (addr);
         if (pos != m_address_to_location.end())
-            stop_sp = pos->second;
+            bp_loc_sp = pos->second;
     }
 
-    return stop_sp;
+    return bp_loc_sp;
 }
 
 void
@@ -226,22 +148,22 @@ BreakpointLocationSP
 BreakpointLocationList::GetByIndex (uint32_t i)
 {
     Mutex::Locker locker (m_mutex);
-    BreakpointLocationSP stop_sp;
+    BreakpointLocationSP bp_loc_sp;
     if (i < m_locations.size())
-        stop_sp = m_locations[i];
+        bp_loc_sp = m_locations[i];
 
-    return stop_sp;
+    return bp_loc_sp;
 }
 
 const BreakpointLocationSP
 BreakpointLocationList::GetByIndex (uint32_t i) const
 {
     Mutex::Locker locker (m_mutex);
-    BreakpointLocationSP stop_sp;
+    BreakpointLocationSP bp_loc_sp;
     if (i < m_locations.size())
-        stop_sp = m_locations[i];
+        bp_loc_sp = m_locations[i];
 
-    return stop_sp;
+    return bp_loc_sp;
 }
 
 void
@@ -289,12 +211,6 @@ BreakpointLocationList::GetNumResolvedLocations() const
             ++resolve_count;
     }
     return resolve_count;
-}
-
-break_id_t
-BreakpointLocationList::GetNextID()
-{
-    return ++m_next_id;
 }
 
 void

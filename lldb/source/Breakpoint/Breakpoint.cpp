@@ -81,33 +81,33 @@ Breakpoint::GetTarget () const
 }
 
 BreakpointLocationSP
-Breakpoint::AddLocation (Address &addr, bool *new_location)
+Breakpoint::AddLocation (const Address &addr, bool *new_location)
 {
-    BreakpointLocationSP bp_loc_sp (m_locations.FindByAddress(addr));
-    if (bp_loc_sp)
-    {
-        if (new_location)
-            *new_location = false;
-        return bp_loc_sp;
-    }
-
-    bp_loc_sp.reset (new BreakpointLocation (m_locations.GetNextID(), *this, addr));
-    m_locations.Add (bp_loc_sp);
-    bp_loc_sp->ResolveBreakpointSite();
-
     if (new_location)
-        *new_location = true;
+        *new_location = false;
+    BreakpointLocationSP bp_loc_sp (m_locations.FindByAddress(addr));
+    if (!bp_loc_sp)
+	{
+		bp_loc_sp = m_locations.Create (*this, addr);
+		if (bp_loc_sp)
+		{
+	    	bp_loc_sp->ResolveBreakpointSite();
+
+		    if (new_location)
+	    	    *new_location = true;
+		}
+	}
     return bp_loc_sp;
 }
 
 BreakpointLocationSP
-Breakpoint::FindLocationByAddress (Address &addr)
+Breakpoint::FindLocationByAddress (const Address &addr)
 {
     return m_locations.FindByAddress(addr);
 }
 
 break_id_t
-Breakpoint::FindLocationIDByAddress (Address &addr)
+Breakpoint::FindLocationIDByAddress (const Address &addr)
 {
     return m_locations.FindIDByAddress(addr);
 }
@@ -127,7 +127,6 @@ Breakpoint::GetLocationAtIndex (uint32_t index)
 BreakpointLocationSP
 Breakpoint::GetLocationSP (BreakpointLocation *bp_loc_ptr)
 {
-    assert (bp_loc_ptr->GetBreakpoint().GetID() == GetID());
     return m_locations.FindByID(bp_loc_ptr->GetID());
 }
 
@@ -280,24 +279,25 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
         // 3) If we don't see this module in our breakpoint location list, call ResolveInModules.
 
         ModuleList new_modules;  // We'll stuff the "unseen" modules in this list, and then resolve
-                                   // them after the locations pass.  Have to do it this way because
-                                   // resolving breakpoints will add new locations potentially.
+                                 // them after the locations pass.  Have to do it this way because
+                                 // resolving breakpoints will add new locations potentially.
+
+        const size_t num_locs = m_locations.GetSize();
 
         for (size_t i = 0; i < module_list.GetSize(); i++)
         {
             bool seen = false;
             ModuleSP module_sp (module_list.GetModuleAtIndex (i));
-            Module *module = module_sp.get();
             if (!m_filter_sp->ModulePasses (module_sp))
                 continue;
 
-            for (size_t loc_idx = 0; loc_idx < m_locations.GetSize(); loc_idx++)
+            for (size_t loc_idx = 0; loc_idx < num_locs; loc_idx++)
             {
                 BreakpointLocationSP break_loc = m_locations.GetByIndex(loc_idx);
                 if (!break_loc->IsEnabled())
                     continue;
                 const Section *section = break_loc->GetAddress().GetSection();
-                if (section == NULL || section->GetModule() == module)
+                if (section == NULL || section->GetModule() == module_sp.get())
                 {
                     if (!seen)
                         seen = true;
