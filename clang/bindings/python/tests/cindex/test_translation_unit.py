@@ -27,14 +27,13 @@ def test_parse_arguments():
 
 def test_unsaved_files():
     index = Index.create()
-    # FIXME: Why can't we just use "fake.h" here (instead of /tmp/fake.h)?
-    tu = index.parse('fake.c', unsaved_files = [
+    tu = index.parse('fake.c', ['-I./'], unsaved_files = [
             ('fake.c', """
-#include "/tmp/fake.h"
+#include "fake.h"
 int x;
 int SOME_DEFINE;
 """),
-            ('/tmp/fake.h', """
+            ('./fake.h', """
 #define SOME_DEFINE y
 """)
             ])
