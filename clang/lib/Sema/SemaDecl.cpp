@@ -1201,7 +1201,11 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
           && OldReturnType->isObjCObjectPointerType())
         ResQT = Context.mergeObjCGCQualifiers(NewQType, OldQType);
       if (ResQT.isNull()) {
-        Diag(New->getLocation(), diag::err_ovl_diff_return_type);
+        if (New->isCXXClassMember() && New->isOutOfLine())
+          Diag(New->getLocation(),
+               diag::err_member_def_does_not_match_ret_type) << New;
+        else
+          Diag(New->getLocation(), diag::err_ovl_diff_return_type);
         Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
         return true;
       }
