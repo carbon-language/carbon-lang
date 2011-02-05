@@ -60,5 +60,6 @@ endif(MSVC)
 
 set_target_properties(libclang
   PROPERTIES
+  PREFIX ""  # Otherwise we get liblibclang.so
   LINKER_LANGUAGE CXX
   DEFINE_SYMBOL _CINDEX_LIB_)
