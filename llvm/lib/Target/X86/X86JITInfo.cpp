@@ -127,9 +127,17 @@ extern "C" {
     "movaps  %xmm6, 96(%rsp)\n"
     "movaps  %xmm7, 112(%rsp)\n"
     // JIT callee
+#ifdef _WIN64
+    "subq    $32, %rsp\n"
+    "movq    %rbp, %rcx\n"    // Pass prev frame and return address
+    "movq    8(%rbp), %rdx\n"
+    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "addq    $32, %rsp\n"
+#else
     "movq    %rbp, %rdi\n"    // Pass prev frame and return address
     "movq    8(%rbp), %rsi\n"
     "call    " ASMPREFIX "X86CompilationCallback2\n"
+#endif
     // Restore all XMM arg registers
     "movaps  112(%rsp), %xmm7\n"
     "movaps  96(%rsp), %xmm6\n"
