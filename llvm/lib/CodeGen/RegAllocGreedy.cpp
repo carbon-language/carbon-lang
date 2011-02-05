@@ -716,6 +716,15 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
 
     // Block has interference.
     DEBUG(dbgs() << ", interference to " << IP.second);
+
+    if (!BI.LiveThrough && IP.second <= BI.Def) {
+      // The interference doesn't reach the outgoing segment.
+      DEBUG(dbgs() << " doesn't affect def from " << BI.Def << '\n');
+      SE.useIntv(BI.Def, Stop);
+      continue;
+    }
+
+
     if (!BI.Uses) {
       // No uses in block, avoid interference by reloading as late as possible.
       DEBUG(dbgs() << ", no uses.\n");
@@ -723,11 +732,14 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       assert(SegStart >= IP.second && "Couldn't avoid interference");
       continue;
     }
-    if (IP.second < BI.LastUse && IP.second <= BI.LastSplitPoint) {
+
+    if (IP.second.getBoundaryIndex() < BI.LastUse &&
+        IP.second.getBoundaryIndex() <= BI.LastSplitPoint) {
       // There are interference-free uses at the end of the block.
       // Find the first use that can get the live-out register.
       SmallVectorImpl<SlotIndex>::const_iterator UI =
-        std::lower_bound(SA->UseSlots.begin(), SA->UseSlots.end(), IP.second);
+        std::lower_bound(SA->UseSlots.begin(), SA->UseSlots.end(),
+                         IP.second.getBoundaryIndex());
       assert(UI != SA->UseSlots.end() && "Couldn't find last use");
       SlotIndex Use = *UI;
       DEBUG(dbgs() << ", free use at " << Use << ".\n");
@@ -798,6 +810,14 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
 
     // Block has interference.
     DEBUG(dbgs() << ", interference from " << IP.first);
+
+    if (!BI.LiveThrough && IP.first >= BI.Kill) {
+      // The interference doesn't reach the outgoing segment.
+      DEBUG(dbgs() << " doesn't affect kill at " << BI.Kill << '\n');
+      SE.useIntv(Start, BI.Kill);
+      continue;
+    }
+
     if (!BI.Uses) {
       // No uses in block, avoid interference by spilling as soon as possible.
       DEBUG(dbgs() << ", no uses.\n");
@@ -805,11 +825,12 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       assert(SegEnd <= IP.first && "Couldn't avoid interference");
       continue;
     }
-    if (IP.first > BI.FirstUse) {
+    if (IP.first.getBaseIndex() > BI.FirstUse) {
       // There are interference-free uses at the beginning of the block.
       // Find the last use that can get the register.
       SmallVectorImpl<SlotIndex>::const_iterator UI =
-        std::lower_bound(SA->UseSlots.begin(), SA->UseSlots.end(), IP.first);
+        std::lower_bound(SA->UseSlots.begin(), SA->UseSlots.end(),
+                         IP.first.getBaseIndex());
       assert(UI != SA->UseSlots.begin() && "Couldn't find first use");
       SlotIndex Use = (--UI)->getBoundaryIndex();
       DEBUG(dbgs() << ", free use at " << *UI << ".\n");
