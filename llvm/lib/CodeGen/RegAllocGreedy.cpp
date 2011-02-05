@@ -719,7 +719,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     if (!BI.Uses) {
       // No uses in block, avoid interference by reloading as late as possible.
       DEBUG(dbgs() << ", no uses.\n");
-      SE.enterIntvAtEnd(*BI.MBB);
+      SlotIndex SegStart = SE.enterIntvAtEnd(*BI.MBB);
+      assert(SegStart >= IP.second && "Couldn't avoid interference");
       continue;
     }
     if (IP.second < BI.LastUse && IP.second <= BI.LastSplitPoint) {
@@ -731,13 +732,16 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       SlotIndex Use = *UI;
       DEBUG(dbgs() << ", free use at " << Use << ".\n");
       assert(Use <= BI.LastUse && "Couldn't find last use");
-      SE.useIntv(SE.enterIntvBefore(Use), Stop);
+      SlotIndex SegStart = SE.enterIntvBefore(Use);
+      assert(SegStart >= IP.second && "Couldn't avoid interference");
+      SE.useIntv(SegStart, Stop);
       continue;
     }
 
     // Interference is after the last use.
     DEBUG(dbgs() << " after last use.\n");
-    SE.enterIntvAtEnd(*BI.MBB);
+    SlotIndex SegStart = SE.enterIntvAtEnd(*BI.MBB);
+    assert(SegStart >= IP.second && "Couldn't avoid interference");
   }
 
   // Now all defs leading to live bundles are handled, do everything else.
@@ -797,7 +801,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     if (!BI.Uses) {
       // No uses in block, avoid interference by spilling as soon as possible.
       DEBUG(dbgs() << ", no uses.\n");
-      SE.leaveIntvAtTop(*BI.MBB);
+      SlotIndex SegEnd = SE.leaveIntvAtTop(*BI.MBB);
+      assert(SegEnd <= IP.first && "Couldn't avoid interference");
       continue;
     }
     if (IP.first > BI.FirstUse) {
@@ -808,14 +813,16 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       assert(UI != SA->UseSlots.begin() && "Couldn't find first use");
       SlotIndex Use = (--UI)->getBoundaryIndex();
       DEBUG(dbgs() << ", free use at " << *UI << ".\n");
-      assert(Use >= BI.FirstUse && Use < IP.first);
-      SE.useIntv(Start, SE.leaveIntvAfter(Use));
+      SlotIndex SegEnd = SE.leaveIntvAfter(Use);
+      assert(SegEnd <= IP.first && "Couldn't avoid interference");
+      SE.useIntv(Start, SegEnd);
       continue;
     }
 
     // Interference is before the first use.
     DEBUG(dbgs() << " before first use.\n");
-    SE.leaveIntvAtTop(*BI.MBB);
+    SlotIndex SegEnd = SE.leaveIntvAtTop(*BI.MBB);
+    assert(SegEnd <= IP.first && "Couldn't avoid interference");
   }
 
   SE.closeIntv();
