@@ -2451,7 +2451,8 @@ CodeGenVTables::getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD) {
 }
 
 llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD, 
-                                              const ThunkInfo &Thunk) {
+                                              const ThunkInfo &Thunk,
+                                              bool ForVTable) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
   // Compute the mangled name.
@@ -2463,7 +2464,7 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
     getCXXABI().getMangleContext().mangleThunk(MD, Thunk, Name);
   
   const llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(GD);
-  return GetOrCreateLLVMFunction(Name, Ty, GD, /*ForVTable=*/false);
+  return GetOrCreateLLVMFunction(Name, Ty, GD, ForVTable);
 }
 
 static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
@@ -2681,7 +2682,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
 
 void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 {
-  llvm::Constant *Entry = CGM.GetAddrOfThunk(GD, Thunk);
+  llvm::Constant *Entry = CGM.GetAddrOfThunk(GD, Thunk, /*ForVTable=*/false);
   
   // Strip off a bitcast if we got one back.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
@@ -2701,7 +2702,7 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 
     // Remove the name from the old thunk function and get a new thunk.
     OldThunkFn->setName(llvm::StringRef());
-    Entry = CGM.GetAddrOfThunk(GD, Thunk);
+    Entry = CGM.GetAddrOfThunk(GD, Thunk, /*ForVTable=*/false);
     
     // If needed, replace the old thunk with a bitcast.
     if (!OldThunkFn->use_empty()) {
@@ -2912,7 +2913,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
             VTableThunks[NextVTableThunkIndex].first == I) {
           const ThunkInfo &Thunk = VTableThunks[NextVTableThunkIndex].second;
         
-          Init = CGM.GetAddrOfThunk(GD, Thunk);
+          Init = CGM.GetAddrOfThunk(GD, Thunk, /*ForVTable=*/true);
         
           NextVTableThunkIndex++;
         } else {

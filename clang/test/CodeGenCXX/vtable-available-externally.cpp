@@ -118,3 +118,29 @@ struct B : A {
 B::~B() { }
 
 }
+
+// Check that we don't assert on this test.
+namespace Test6 {
+
+struct A {
+  virtual ~A();
+  int a;
+};
+
+struct B {
+  virtual ~B();
+  int b;
+};
+
+struct C : A, B { 
+  C();
+};
+
+struct D : C {
+  virtual void f();
+  D();
+};
+
+D::D() { }
+
+}
