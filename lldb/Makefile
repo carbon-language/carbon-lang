@@ -28,12 +28,15 @@ LEVEL := $(LLDB_LEVEL)/../..
 # Include LLVM common makefile.
 include $(LEVEL)/Makefile.common
 
+# Set Python include directory
+PYTHON_INC_DIR = /usr/include/python2.6
+
 # Set common LLDB build flags.
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include 
 CPP.Flags += -I$(PROJ_OBJ_DIR)/$(LLDB_LEVEL)/include
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/../clang/include
 CPP.Flags += -I$(PROJ_OBJ_DIR)/$(LLDB_LEVEL)/../clang/include
-CPP.Flags += -I/usr/include/python2.6
+CPP.Flags += -I$(PYTHON_INC_DIR)
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Utility
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/Utility

@@ -17,6 +17,8 @@ NO_BUILD_ARCHIVE = 1
 LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
+PYTHON_BUILD_FLAGS = -lpython2.6
+
 # Include all archives in liblldb.a files
 USEDLIBS = lldbAPI.a \
 	lldbBreakpoint.a \
@@ -84,7 +86,7 @@ ifeq ($(HOST_OS),Darwin)
     LLVMLibsOptions += -avoid-version
 	LLVMLibsOptions += -F/System/Library/Frameworks -F/System/Library/PrivateFrameworks
 	LLVMLibsOptions += -framework Foundation -framework CoreFoundation 
-	LLVMLibsOptions += -framework DebugSymbols -lpython2.6 -lobjc
+	LLVMLibsOptions += -framework DebugSymbols $(PYTHON_BUILD_FLAGS) -lobjc
 	LLVMLibsOptions += -Wl,-exported_symbols_list -Wl,"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/resources/lldb-framework-exports" 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
@@ -101,5 +103,5 @@ ifeq ($(HOST_OS), Linux)
     # Don't allow unresolved symbols.
     LLVMLibsOptions += -Wl,--no-undefined
     # Link in python
-    LD.Flags += -lpython2.6
+    LD.Flags += $(PYTHON_BUILD_FLAGS)
 endif
