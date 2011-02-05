@@ -468,7 +468,8 @@ std::string Triple::normalize(StringRef Str) {
             if (CurrentComponent.empty())
               break;
             // Advance to the next component, skipping any fixed components.
-            while (++i < array_lengthof(Found) && Found[i]);
+            while (++i < array_lengthof(Found) && Found[i])
+              ;
           }
           // The last component was pushed off the end - append it.
           if (!CurrentComponent.empty())
