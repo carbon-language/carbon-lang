@@ -191,19 +191,19 @@ class Diagnostic(object):
         self.ptr = ptr
 
     def __del__(self):
-        _clang_disposeDiagnostic(self.ptr)
+        _clang_disposeDiagnostic(self)
 
     @property
     def severity(self):
-        return _clang_getDiagnosticSeverity(self.ptr)
+        return _clang_getDiagnosticSeverity(self)
 
     @property
     def location(self):
-        return _clang_getDiagnosticLocation(self.ptr)
+        return _clang_getDiagnosticLocation(self)
 
     @property
     def spelling(self):
-        return _clang_getDiagnosticSpelling(self.ptr)
+        return _clang_getDiagnosticSpelling(self)
 
     @property
     def ranges(self):
@@ -217,7 +217,7 @@ class Diagnostic(object):
             def __getitem__(self, key):
                 return _clang_getDiagnosticRange(self.diag, key)
 
-        return RangeIterator(self.ptr)
+        return RangeIterator(self)
 
     @property
     def fixits(self):
@@ -236,11 +236,14 @@ class Diagnostic(object):
 
                 return FixIt(range, value)
 
-        return FixItIterator(self.ptr)
+        return FixItIterator(self)
 
     def __repr__(self):
         return "<Diagnostic severity %r, location %r, spelling %r>" % (
             self.severity, self.location, self.spelling)
+
+    def from_param(self):
+      return self.ptr
 
 class FixIt(object):
     """
@@ -681,35 +684,35 @@ _clang_getDiagnostic.argtypes = [c_object_p, c_uint]
 _clang_getDiagnostic.restype = c_object_p
 
 _clang_disposeDiagnostic = lib.clang_disposeDiagnostic
-_clang_disposeDiagnostic.argtypes = [c_object_p]
+_clang_disposeDiagnostic.argtypes = [Diagnostic]
 
 _clang_getDiagnosticSeverity = lib.clang_getDiagnosticSeverity
-_clang_getDiagnosticSeverity.argtypes = [c_object_p]
+_clang_getDiagnosticSeverity.argtypes = [Diagnostic]
 _clang_getDiagnosticSeverity.restype = c_int
 
 _clang_getDiagnosticLocation = lib.clang_getDiagnosticLocation
-_clang_getDiagnosticLocation.argtypes = [c_object_p]
+_clang_getDiagnosticLocation.argtypes = [Diagnostic]
 _clang_getDiagnosticLocation.restype = SourceLocation
 
 _clang_getDiagnosticSpelling = lib.clang_getDiagnosticSpelling
-_clang_getDiagnosticSpelling.argtypes = [c_object_p]
+_clang_getDiagnosticSpelling.argtypes = [Diagnostic]
 _clang_getDiagnosticSpelling.restype = _CXString
 _clang_getDiagnosticSpelling.errcheck = _CXString.from_result
 
 _clang_getDiagnosticNumRanges = lib.clang_getDiagnosticNumRanges
-_clang_getDiagnosticNumRanges.argtypes = [c_object_p]
+_clang_getDiagnosticNumRanges.argtypes = [Diagnostic]
 _clang_getDiagnosticNumRanges.restype = c_uint
 
 _clang_getDiagnosticRange = lib.clang_getDiagnosticRange
-_clang_getDiagnosticRange.argtypes = [c_object_p, c_uint]
+_clang_getDiagnosticRange.argtypes = [Diagnostic, c_uint]
 _clang_getDiagnosticRange.restype = SourceRange
 
 _clang_getDiagnosticNumFixIts = lib.clang_getDiagnosticNumFixIts
-_clang_getDiagnosticNumFixIts.argtypes = [c_object_p]
+_clang_getDiagnosticNumFixIts.argtypes = [Diagnostic]
 _clang_getDiagnosticNumFixIts.restype = c_uint
 
 _clang_getDiagnosticFixIt = lib.clang_getDiagnosticFixIt
-_clang_getDiagnosticFixIt.argtypes = [c_object_p, c_uint, POINTER(SourceRange)]
+_clang_getDiagnosticFixIt.argtypes = [Diagnostic, c_uint, POINTER(SourceRange)]
 _clang_getDiagnosticFixIt.restype = _CXString
 _clang_getDiagnosticFixIt.errcheck = _CXString.from_result
 
