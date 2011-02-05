@@ -110,35 +110,14 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
 
 // Stack probing routines are in the support library (e.g. libgcc), but we don't
 // have dynamic linking on windows. Provide a hook.
-#if defined(__MINGW32__) || defined (_MSC_VER)
-  #define EXPLICIT_SYMBOL(SYM)                    \
-    if (!strcmp(symbolName, #SYM)) return (void*)&SYM
-  #define EXPLICIT_SYMBOL2(SYMFROM, SYMTO)        \
-    if (!strcmp(symbolName, #SYMFROM)) return (void*)&SYMTO
-  #define EXPLICIT_SYMBOL_DEF(SYM)                \
-    extern "C" { extern void *SYM; }
+#define EXPLICIT_SYMBOL(SYM)                    \
+  extern "C" { extern void *SYM; }
+#define EXPLICIT_SYMBOL2(SYMFROM, SYMTO) EXPLICIT_SYMBOL(SYMTO)
 
-  #if defined(__MINGW32__)
-    EXPLICIT_SYMBOL_DEF(_alloca)
-    EXPLICIT_SYMBOL_DEF(__main)
-    EXPLICIT_SYMBOL_DEF(__ashldi3)
-    EXPLICIT_SYMBOL_DEF(__ashrdi3)
-    EXPLICIT_SYMBOL_DEF(__cmpdi2)
-    EXPLICIT_SYMBOL_DEF(__divdi3)
-    EXPLICIT_SYMBOL_DEF(__fixdfdi)
-    EXPLICIT_SYMBOL_DEF(__fixsfdi)
-    EXPLICIT_SYMBOL_DEF(__fixunsdfdi)
-    EXPLICIT_SYMBOL_DEF(__fixunssfdi)
-    EXPLICIT_SYMBOL_DEF(__floatdidf)
-    EXPLICIT_SYMBOL_DEF(__floatdisf)
-    EXPLICIT_SYMBOL_DEF(__lshrdi3)
-    EXPLICIT_SYMBOL_DEF(__moddi3)
-    EXPLICIT_SYMBOL_DEF(__udivdi3)
-    EXPLICIT_SYMBOL_DEF(__umoddi3)
-  #elif defined(_MSC_VER)
-    EXPLICIT_SYMBOL_DEF(_alloca_probe)
-  #endif
-#endif
+#include "explicit_symbols.inc"
+
+#undef EXPLICIT_SYMBOL
+#undef EXPLICIT_SYMBOL2
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   // First check symbols added via AddSymbol().
@@ -159,39 +138,17 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
     }
   }
 
-#if defined(__MINGW32__)
-  {
-    EXPLICIT_SYMBOL(_alloca);
-    EXPLICIT_SYMBOL(__main);
-    EXPLICIT_SYMBOL(__ashldi3);
-    EXPLICIT_SYMBOL(__ashrdi3);
-    EXPLICIT_SYMBOL(__cmpdi2);
-    EXPLICIT_SYMBOL(__divdi3);
-    EXPLICIT_SYMBOL(__fixdfdi);
-    EXPLICIT_SYMBOL(__fixsfdi);
-    EXPLICIT_SYMBOL(__fixunsdfdi);
-    EXPLICIT_SYMBOL(__fixunssfdi);
-    EXPLICIT_SYMBOL(__floatdidf);
-    EXPLICIT_SYMBOL(__floatdisf);
-    EXPLICIT_SYMBOL(__lshrdi3);
-    EXPLICIT_SYMBOL(__moddi3);
-    EXPLICIT_SYMBOL(__udivdi3);
-    EXPLICIT_SYMBOL(__umoddi3);
+  #define EXPLICIT_SYMBOL(SYM)                    \
+    if (!strcmp(symbolName, #SYM)) return (void*)&SYM;
+  #define EXPLICIT_SYMBOL2(SYMFROM, SYMTO)        \
+    if (!strcmp(symbolName, #SYMFROM)) return (void*)&SYMTO;
 
-    EXPLICIT_SYMBOL2(alloca, _alloca);
-#undef EXPLICIT_SYMBOL
-#undef EXPLICIT_SYMBOL2
-#undef EXPLICIT_SYMBOL_DEF
-  }
-#elif defined(_MSC_VER)
   {
-    EXPLICIT_SYMBOL2(alloca, _alloca_probe);
-    EXPLICIT_SYMBOL2(_alloca, _alloca_probe);
-#undef EXPLICIT_SYMBOL
-#undef EXPLICIT_SYMBOL2
-#undef EXPLICIT_SYMBOL_DEF
+    #include "explicit_symbols.inc"
   }
-#endif
+
+  #undef EXPLICIT_SYMBOL
+  #undef EXPLICIT_SYMBOL2
 
   return 0;
 }

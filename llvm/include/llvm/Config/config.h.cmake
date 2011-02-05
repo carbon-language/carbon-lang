@@ -454,8 +454,56 @@
 /* Define if the xdot.py program is available */
 #undef HAVE_XDOT_PY
 
+/* Have host's _alloca */
+#cmakedefine HAVE__ALLOCA ${HAVE__ALLOCA}
+
+/* Have host's __alloca */
+#cmakedefine HAVE___ALLOCA ${HAVE___ALLOCA}
+
+/* Have host's __ashldi3 */
+#cmakedefine HAVE___ASHLDI3 ${HAVE___ASHLDI3}
+
+/* Have host's __ashrdi3 */
+#cmakedefine HAVE___ASHRDI3 ${HAVE___ASHRDI3}
+
+/* Have host's __chkstk */
+#cmakedefine HAVE___CHKSTK ${HAVE___CHKSTK}
+
+/* Have host's __cmpdi2 */
+#cmakedefine HAVE___CMPDI2 ${HAVE___CMPDI2}
+
+/* Have host's __divdi3 */
+#cmakedefine HAVE___DIVDI3 ${HAVE___DIVDI3}
+
 /* Define to 1 if you have the `__dso_handle' function. */
 #undef HAVE___DSO_HANDLE
+
+/* Have host's __fixdfdi */
+#cmakedefine HAVE___FIXDFDI ${HAVE___FIXDFDI}
+
+/* Have host's __fixsfdi */
+#cmakedefine HAVE___FIXSFDI ${HAVE___FIXSFDI}
+
+/* Have host's __floatdidf */
+#cmakedefine HAVE___FLOATDIDF ${HAVE___FLOATDIDF}
+
+/* Have host's __lshrdi3 */
+#cmakedefine HAVE___LSHRDI3 ${HAVE___LSHRDI3}
+
+/* Have host's __main */
+#cmakedefine HAVE___MAIN ${HAVE___MAIN}
+
+/* Have host's __moddi3 */
+#cmakedefine HAVE___MODDI3 ${HAVE___MODDI3}
+
+/* Have host's __udivdi3 */
+#cmakedefine HAVE___UDIVDI3 ${HAVE___UDIVDI3}
+
+/* Have host's __umoddi3 */
+#cmakedefine HAVE___UMODDI3 ${HAVE___UMODDI3}
+
+/* Have host's ___chkstk */
+#cmakedefine HAVE____CHKSTK ${HAVE____CHKSTK}
 
 /* Linker version detected at compile time. */
 #undef HOST_LINK_VERSION

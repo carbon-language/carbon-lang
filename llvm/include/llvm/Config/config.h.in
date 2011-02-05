@@ -476,8 +476,56 @@
 /* Define if the xdot.py program is available */
 #undef HAVE_XDOT_PY
 
+/* Have host's _alloca */
+#undef HAVE__ALLOCA
+
+/* Have host's __alloca */
+#undef HAVE___ALLOCA
+
+/* Have host's __ashldi3 */
+#undef HAVE___ASHLDI3
+
+/* Have host's __ashrdi3 */
+#undef HAVE___ASHRDI3
+
+/* Have host's __chkstk */
+#undef HAVE___CHKSTK
+
+/* Have host's __cmpdi2 */
+#undef HAVE___CMPDI2
+
+/* Have host's __divdi3 */
+#undef HAVE___DIVDI3
+
 /* Define to 1 if you have the `__dso_handle' function. */
 #undef HAVE___DSO_HANDLE
+
+/* Have host's __fixdfdi */
+#undef HAVE___FIXDFDI
+
+/* Have host's __fixsfdi */
+#undef HAVE___FIXSFDI
+
+/* Have host's __floatdidf */
+#undef HAVE___FLOATDIDF
+
+/* Have host's __lshrdi3 */
+#undef HAVE___LSHRDI3
+
+/* Have host's __main */
+#undef HAVE___MAIN
+
+/* Have host's __moddi3 */
+#undef HAVE___MODDI3
+
+/* Have host's __udivdi3 */
+#undef HAVE___UDIVDI3
+
+/* Have host's __umoddi3 */
+#undef HAVE___UMODDI3
+
+/* Have host's ___chkstk */
+#undef HAVE____CHKSTK
 
 /* Linker version detected at compile time. */
 #undef HOST_LINK_VERSION
