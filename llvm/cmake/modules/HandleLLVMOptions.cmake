@@ -1,5 +1,26 @@
 include(AddLLVMDefinitions)
 
+# Run-time build mode; It is used for unittests.
+if(MSVC_IDE)
+  # Expect "$(Configuration)", "$(OutDir)", etc.
+  # It is expanded by msbuild or similar.
+  set(RUNTIME_BUILD_MODE "${CMAKE_CFG_INTDIR}")
+elseif(NOT CMAKE_BUILD_TYPE STREQUAL "")
+  # Expect "Release" "Debug", etc.
+  # Or unittests could not run.
+  set(RUNTIME_BUILD_MODE ${CMAKE_BUILD_TYPE})
+else()
+  # It might be "."
+  set(RUNTIME_BUILD_MODE "${CMAKE_CFG_INTDIR}")
+endif()
+
+set(LIT_ARGS_DEFAULT "-sv")
+if (MSVC OR XCODE)
+  set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+endif()
+set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}"
+    CACHE STRING "Default options for lit")
+
 if( LLVM_ENABLE_ASSERTIONS )
   # MSVC doesn't like _DEBUG on release builds. See PR 4379.
   if( NOT MSVC )
