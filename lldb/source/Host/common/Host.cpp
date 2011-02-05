@@ -19,13 +19,12 @@
 
 #include <dlfcn.h>
 #include <errno.h>
-#include <sys/sysctl.h>
-#include <sys/wait.h>
 
 #if defined (__APPLE__)
 #include <dispatch/dispatch.h>
 #include <libproc.h>
 #include <mach-o/dyld.h>
+#include <sys/sysctl.h>
 #endif
 
 using namespace lldb;
