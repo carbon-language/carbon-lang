@@ -318,7 +318,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
     // move" for this extra "PUSH", the linker will lose track of the fact that
     // the frame pointer should have the value of the first "PUSH" when it's
     // trying to unwind.
-    // 
+    //
     // FIXME: This looks inelegant. It's possibly correct, but it's covering up
     //        another bug. I.e., one where we generate a prolog like this:
     //
@@ -594,8 +594,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
                                       StackPtr, false, NumBytes - 4);
       MBB.insert(MBBI, MI);
     }
-  } else if (NumBytes >= 4096 && 
-             STI.isTargetWin64() && 
+  } else if (NumBytes >= 4096 &&
+             STI.isTargetWin64() &&
              !STI.isTargetEnvMacho()) {
     // Sanity check that EAX is not livein for this function.  It should
     // not be, so throw an assert.

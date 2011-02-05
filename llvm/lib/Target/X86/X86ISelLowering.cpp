@@ -63,7 +63,7 @@ static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
- 
+
   if (Subtarget->isTargetEnvMacho()) {
     if (is64Bit)
       return new X8664_MachoTargetObjectFile();
@@ -3394,7 +3394,7 @@ unsigned X86::getInsertVINSERTF128Immediate(SDNode *N) {
     llvm_unreachable("Illegal insert subvector for VINSERTF128");
 
   uint64_t Index =
-    cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();  
+    cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();
 
   EVT VecVT = N->getValueType(0);
   EVT ElVT = VecVT.getVectorElementType();

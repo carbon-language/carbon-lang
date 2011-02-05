@@ -333,7 +333,7 @@ extern "C" {
 extern "C" {
 #if !(defined (X86_64_JIT) && defined(_MSC_VER))
  // the following function is called only from this translation unit,
- // unless we are under 64bit Windows with MSC, where there is 
+ // unless we are under 64bit Windows with MSC, where there is
  // no support for inline assembly
 static
 #endif
@@ -462,7 +462,7 @@ TargetJITInfo::StubLayout X86JITInfo::getStubLayout() {
 
 void *X86JITInfo::emitFunctionStub(const Function* F, void *Target,
                                    JITCodeEmitter &JCE) {
-  // Note, we cast to intptr_t here to silence a -pedantic warning that 
+  // Note, we cast to intptr_t here to silence a -pedantic warning that
   // complains about casting a function pointer to a normal pointer.
 #if defined (X86_32_JIT) && !defined (_MSC_VER)
   bool NotCC = (Target != (void*)(intptr_t)X86CompilationCallback &&
