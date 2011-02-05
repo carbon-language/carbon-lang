@@ -720,13 +720,23 @@ _clang_getDiagnosticFixIt.errcheck = _CXString.from_result
 
 ###
 
-class CodeCompletionChunk:
+class CompletionChunk:
+    class Kind:
+        def __init__(self, name):
+            self.name = name
+
+        def __str__(self):
+            return self.name
+
+        def __repr__(self):
+            return "<ChunkKind: %s>" % self
+
     def __init__(self, completionString, key):
         self.cs = completionString
         self.key = key
 
     def __repr__(self):
-        return self.spelling
+        return "{'" + self.spelling + "', " + str(self.kind) + "}"
 
     @property
     def spelling(self):
@@ -734,7 +744,8 @@ class CodeCompletionChunk:
 
     @property
     def kind(self):
-        return _clang_getCompletionChunkKind(self.cs, self.key)
+        res = _clang_getCompletionChunkKind(self.cs, self.key)
+        return completionChunkKindMap[res]
 
     @property
     def string(self):
@@ -745,14 +756,62 @@ class CodeCompletionChunk:
         else:
           None
 
+    def isKindOptional(self):
+      return self.kind == completionChunkKindMap[0]
+
+    def isKindTypedText(self):
+      return self.kind == completionChunkKindMap[1]
+
+    def isKindPlaceHolder(self):
+      return self.kind == completionChunkKindMap[3]
+
+    def isKindInformative(self):
+      return self.kind == completionChunkKindMap[4]
+
+    def isKindResultType(self):
+      return self.kind == completionChunkKindMap[15]
+
+completionChunkKindMap = {
+            0: CompletionChunk.Kind("Optional"),
+            1: CompletionChunk.Kind("TypedText"),
+            2: CompletionChunk.Kind("Text"),
+            3: CompletionChunk.Kind("Placeholder"),
+            4: CompletionChunk.Kind("Informative"),
+            5: CompletionChunk.Kind("CurrentParameter"),
+            6: CompletionChunk.Kind("LeftParen"),
+            7: CompletionChunk.Kind("RightParen"),
+            8: CompletionChunk.Kind("LeftBracket"),
+            9: CompletionChunk.Kind("RightBracket"),
+            10: CompletionChunk.Kind("LeftBrace"),
+            11: CompletionChunk.Kind("RightBrace"),
+            12: CompletionChunk.Kind("LeftAngle"),
+            13: CompletionChunk.Kind("RightAngle"),
+            14: CompletionChunk.Kind("Comma"),
+            15: CompletionChunk.Kind("ResultType"),
+            16: CompletionChunk.Kind("Colon"),
+            17: CompletionChunk.Kind("SemiColon"),
+            18: CompletionChunk.Kind("Equal"),
+            19: CompletionChunk.Kind("HorizontalSpace"),
+            20: CompletionChunk.Kind("VerticalSpace")}
+
 class CompletionString(ClangObject):
+    class Availability:
+        def __init__(self, name):
+            self.name = name
+
+        def __str__(self):
+            return self.name
+
+        def __repr__(self):
+            return "<Availability: %s>" % self
+
     def __len__(self):
         return _clang_getNumCompletionChunks(self.obj)
 
     def __getitem__(self, key):
         if len(self) <= key:
             raise IndexError
-        return CodeCompletionChunk(self.obj, key)
+        return CompletionChunk(self.obj, key)
 
     @property
     def priority(self):
@@ -760,10 +819,18 @@ class CompletionString(ClangObject):
 
     @property
     def availability(self):
-        return _clang_getCompletionAvailability(self.obj)
+        res = _clang_getCompletionAvailability(self.obj)
+        return availabilityKinds[res]
 
     def __repr__(self):
-        return "".join([str(a) for a in self])
+        return " | ".join([str(a) for a in self]) \
+               + " || Priority: " + str(self.priority) \
+               + " || Availability: " + str(self.availability)
+
+availabilityKinds = {
+            0: CompletionChunk.Kind("Available"),
+            1: CompletionChunk.Kind("Deprecated"),
+            2: CompletionChunk.Kind("NotAvailable")}
 
 class CodeCompletionResult(Structure):
     _fields_ = [('cursorKind', c_int), ('completionString', c_object_p)]
@@ -1208,6 +1275,14 @@ _clang_codeCompleteGetDiagnostic.restype = Diagnostic
 _clang_getCompletionChunkText = lib.clang_getCompletionChunkText
 _clang_getCompletionChunkText.argtypes = [c_void_p, c_int]
 _clang_getCompletionChunkText.restype = _CXString
+
+_clang_getCompletionChunkKind = lib.clang_getCompletionChunkKind
+_clang_getCompletionChunkKind.argtypes = [c_void_p, c_int]
+_clang_getCompletionChunkKind.restype = c_int
+
+_clang_getCompletionChunkCompletionString = lib.clang_getCompletionChunkCompletionString
+_clang_getCompletionChunkCompletionString.argtypes = [c_void_p, c_int]
+_clang_getCompletionChunkCompletionString.restype = c_object_p
 
 _clang_getNumCompletionChunks = lib.clang_getNumCompletionChunks
 _clang_getNumCompletionChunks.argtypes = [c_void_p]
