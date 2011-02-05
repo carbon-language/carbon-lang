@@ -25,6 +25,15 @@ def test_parse_arguments():
     assert spellings[-2] == 'hello'
     assert spellings[-1] == 'hi'
 
+def test_reparse_arguments():
+    path = os.path.join(kInputsDir, 'parse_arguments.c')
+    index = Index.create()
+    tu = index.parse(path, ['-DDECL_ONE=hello', '-DDECL_TWO=hi'])
+    tu.reparse()
+    spellings = [c.spelling for c in tu.cursor.get_children()]
+    assert spellings[-2] == 'hello'
+    assert spellings[-1] == 'hi'
+
 def test_unsaved_files():
     index = Index.create()
     tu = index.parse('fake.c', ['-I./'], unsaved_files = [

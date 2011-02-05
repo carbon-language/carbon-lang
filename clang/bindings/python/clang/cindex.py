@@ -744,7 +744,7 @@ class Index(ClangObject):
         ptr = TranslationUnit_read(self, path)
         return TranslationUnit(ptr) if ptr else None
 
-    def parse(self, path, args = [], unsaved_files = []):
+    def parse(self, path, args = [], unsaved_files = [], options = 0):
         """
         Load the translation unit from the given source code file by running
         clang and generating the AST before loading. Additional command line
@@ -772,8 +772,9 @@ class Index(ClangObject):
                 unsaved_files_array[i].name = name
                 unsaved_files_array[i].contents = value
                 unsaved_files_array[i].length = len(value)
-        ptr = TranslationUnit_parse(self, path, len(args), arg_array,
-                                    len(unsaved_files), unsaved_files_array)
+        ptr = TranslationUnit_parse(self, path, arg_array, len(args),
+                                    unsaved_files_array, len(unsaved_files),
+                                    options)
         return TranslationUnit(ptr) if ptr else None
 
 
@@ -837,6 +838,33 @@ class TranslationUnit(ClangObject):
                 return Diagnostic(diag)
 
         return DiagIterator(self)
+
+    def reparse(self, unsaved_files = [], options = 0):
+        """
+        Reparse an already parsed translation unit.
+
+        In-memory contents for files can be provided by passing a list of pairs
+        as unsaved_files, the first items should be the filenames to be mapped
+        and the second should be the contents to be substituted for the
+        file. The contents may be passed as strings or file objects.
+        """
+        unsaved_files_array = 0
+        if len(unsaved_files):
+            unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
+            for i,(name,value) in enumerate(unsaved_files):
+                if not isinstance(value, str):
+                    # FIXME: It would be great to support an efficient version
+                    # of this, one day.
+                    value = value.read()
+                    print value
+                if not isinstance(value, str):
+                    raise TypeError,'Unexpected unsaved file contents.'
+                unsaved_files_array[i].name = name
+                unsaved_files_array[i].contents = value
+                unsaved_files_array[i].length = len(value)
+        ptr = TranslationUnit_reparse(self, len(unsaved_files),
+                                      unsaved_files_array,
+                                      options)
 
 class File(ClangObject):
     """
@@ -987,10 +1015,14 @@ TranslationUnit_read = lib.clang_createTranslationUnit
 TranslationUnit_read.argtypes = [Index, c_char_p]
 TranslationUnit_read.restype = c_object_p
 
-TranslationUnit_parse = lib.clang_createTranslationUnitFromSourceFile
-TranslationUnit_parse.argtypes = [Index, c_char_p, c_int, c_void_p,
-                                  c_int, c_void_p]
+TranslationUnit_parse = lib.clang_parseTranslationUnit
+TranslationUnit_parse.argtypes = [Index, c_char_p, c_void_p,
+                                  c_int, c_void_p, c_int, c_int]
 TranslationUnit_parse.restype = c_object_p
+
+TranslationUnit_reparse = lib.clang_reparseTranslationUnit
+TranslationUnit_reparse.argtypes = [TranslationUnit, c_int, c_void_p, c_int]
+TranslationUnit_reparse.restype = c_int
 
 TranslationUnit_cursor = lib.clang_getTranslationUnitCursor
 TranslationUnit_cursor.argtypes = [TranslationUnit]
