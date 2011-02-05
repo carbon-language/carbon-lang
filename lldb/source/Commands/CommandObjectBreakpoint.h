@@ -284,7 +284,7 @@ public:
     typedef enum BreakpointClearType
     {
         eClearTypeInvalid,
-        eClearTypeFileAndLine,
+        eClearTypeFileAndLine
     } BreakpointClearType;
 
     CommandObjectBreakpointClear (CommandInterpreter &interpreter);

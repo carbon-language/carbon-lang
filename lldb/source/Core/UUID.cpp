@@ -186,7 +186,7 @@ lldb_private::operator == (const lldb_private::UUID &lhs, const lldb_private::UU
 bool
 lldb_private::operator != (const lldb_private::UUID &lhs, const lldb_private::UUID &rhs)
 {
-    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), UUID::GetByteSize()) != 0;
+    return ::memcmp (lhs.GetBytes(), rhs.GetBytes(), lldb_private::UUID::GetByteSize()) != 0;
 }
 
 bool

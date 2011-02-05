@@ -10,8 +10,6 @@
 #ifndef liblldb_InputReader_h_
 #define liblldb_InputReader_h_
 
-#include <termios.h>
-
 #include "lldb/lldb-include.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/Debugger.h"

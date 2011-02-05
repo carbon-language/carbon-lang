@@ -56,7 +56,7 @@ public:
         eEncodingT2,
         eEncodingT3,
         eEncodingT4,
-        eEncodingT5,
+        eEncodingT5
     } ARMEncoding;
     
 

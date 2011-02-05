@@ -168,7 +168,7 @@ public:
         eOpcode16,
         eOpcode32,
         eOpcode64,
-        eOpcodeBytes,
+        eOpcodeBytes
     };
 
     struct Instruction

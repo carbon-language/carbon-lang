@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "EmulateInstruction.h"
+#include "lldb/Core/EmulateInstruction.h"
 
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/PluginManager.h"

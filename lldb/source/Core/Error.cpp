@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
-#include <sys/errno.h>
+#include <errno.h>
 
 // C++ Includes
 // Other libraries and framework includes

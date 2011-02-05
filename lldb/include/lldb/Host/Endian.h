@@ -10,7 +10,7 @@
 #ifndef liblldb_host_endian_h_
 #define liblldb_host_endian_h_
 
-#include <lldb-enumerations.h>
+#include "lldb/lldb-enumerations.h"
 
 namespace lldb {
 

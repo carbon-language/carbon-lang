@@ -21,6 +21,7 @@
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Thread.h"
 
+#include <termios.h>
 
 using namespace lldb;
 using namespace lldb_private;

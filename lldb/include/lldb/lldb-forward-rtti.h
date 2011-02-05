@@ -13,7 +13,6 @@
 #if defined(__cplusplus)
 
 #include "lldb/lldb-types.h"
-#include "lldb/lldb-forward.h"
 
 //----------------------------------------------------------------------
 // lldb forward declarations

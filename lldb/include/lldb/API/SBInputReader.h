@@ -12,8 +12,6 @@
 
 #include "lldb/API/SBDefines.h"
 
-#include <termios.h>
-
 namespace lldb {
 
 class SBInputReader

@@ -13,7 +13,6 @@
 
 
 #include <fcntl.h>
-#include <termios.h>
 #include <string>
 
 #include "lldb/lldb-defines.h"

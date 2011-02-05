@@ -17,6 +17,8 @@
 #include <Python.h>
 #endif
 
+#include <termios.h>
+
 #include "lldb/lldb-private.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/InputReader.h"

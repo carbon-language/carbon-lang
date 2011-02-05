@@ -31,7 +31,7 @@ public:
         eLocation = 0,
         eStateChange,
         eCheckFrames,
-        ePython,
+        ePython
     } ThreadPlanTracerStyle;
     ThreadPlanTracer (Thread &thread, lldb::StreamSP &stream_sp);    
     ThreadPlanTracer (Thread &thread);
