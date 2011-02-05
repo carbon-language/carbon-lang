@@ -42,6 +42,11 @@ extern NSString * const NSConnectionReplyMode;
 void log(void *obj);
 extern void *somePtr;
 
+@class MyObj;
+static id _commonInit(MyObj *self) {
+  return self;
+}
+
 @interface MyObj : NSObject {
 	id myivar;
 	int myint;
@@ -139,6 +144,14 @@ extern void *somePtr;
 	  myivar = 0; // expected-warning {{Instance variable used}}
 	}
 	return self; // expected-warning {{Returning 'self'}}
+}
+
+-(id)init14 {
+  if (!(self = [super init]))
+    return 0;
+  if (!(self = _commonInit(self)))
+    return 0;
+  return self;
 }
 
 -(void)doSomething {}

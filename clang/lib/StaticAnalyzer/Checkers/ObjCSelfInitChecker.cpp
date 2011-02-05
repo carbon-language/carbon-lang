@@ -135,9 +135,7 @@ static SelfFlagEnum getSelfFlags(SVal val, CheckerContext &C) {
 
 static void addSelfFlag(SVal val, SelfFlagEnum flag, CheckerContext &C) {
   const GRState *state = C.getState();
-  // FIXME: We tag the symbol that the SVal wraps but this is conceptually
-  // wrong, we should tag the SVal; the fact that there is a symbol behind the
-  // SVal is irrelevant.
+  // We tag the symbol that the SVal wraps.
   if (SymbolRef sym = val.getAsSymbol())
     C.addTransition(state->set<SelfFlag>(sym, getSelfFlags(val, C) | flag));
 }
@@ -227,7 +225,19 @@ void ObjCSelfInitChecker::PreVisitReturnStmt(CheckerContext &C,
 
 // When a call receives a reference to 'self', [Pre/Post]VisitGenericCall pass
 // the SelfFlags from the object 'self' point to before the call, to the new
-// object after the call.
+// object after the call. This is to avoid invalidation of 'self' by logging
+// functions.
+// Another common pattern in classes with multiple initializers is to put the
+// subclass's common initialization bits into a static function that receives
+// the value of 'self', e.g:
+// @code
+//   if (!(self = [super init]))
+//     return nil;
+//   if (!(self = _commonInit(self)))
+//     return nil;
+// @endcode
+// Until we can use inter-procedural analysis, in such a call, transfer the
+// SelfFlags to the result of the call.
 
 void ObjCSelfInitChecker::PreVisitGenericCall(CheckerContext &C,
                                               const CallExpr *CE) {
@@ -237,6 +247,9 @@ void ObjCSelfInitChecker::PreVisitGenericCall(CheckerContext &C,
     SVal argV = state->getSVal(*I);
     if (isSelfVar(argV, C)) {
       preCallSelfFlags = getSelfFlags(state->getSVal(cast<Loc>(argV)), C);
+      return;
+    } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
+      preCallSelfFlags = getSelfFlags(argV, C);
       return;
     }
   }
@@ -250,6 +263,9 @@ void ObjCSelfInitChecker::PostVisitGenericCall(CheckerContext &C,
     SVal argV = state->getSVal(*I);
     if (isSelfVar(argV, C)) {
       addSelfFlag(state->getSVal(cast<Loc>(argV)), preCallSelfFlags, C);
+      return;
+    } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
+      addSelfFlag(state->getSVal(CE), preCallSelfFlags, C);
       return;
     }
   }
