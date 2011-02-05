@@ -3,8 +3,6 @@ from clang.cindex import *
 def tu_from_source(source):
     index = Index.create()
     tu = index.parse('INPUT.c', unsaved_files = [('INPUT.c', source)])
-    # FIXME: Remove the need for this.
-    tu.index = index
     return tu
 
 # FIXME: We need support for invalid translation units to test better.
