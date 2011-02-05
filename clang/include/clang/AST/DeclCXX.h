@@ -187,6 +187,10 @@ class CXXBaseSpecifier {
   /// VC++ bug.
   unsigned Access : 2;
 
+  /// InheritConstructors - Whether the class contains a using declaration
+  /// to inherit the named class's constructors.
+  bool InheritConstructors : 1;
+
   /// BaseTypeInfo - The type of the base class. This will be a class or struct
   /// (or a typedef of such). The source code range does not include the
   /// "virtual" or access specifier.
@@ -198,7 +202,7 @@ public:
   CXXBaseSpecifier(SourceRange R, bool V, bool BC, AccessSpecifier A,
                    TypeSourceInfo *TInfo, SourceLocation EllipsisLoc)
     : Range(R), EllipsisLoc(EllipsisLoc), Virtual(V), BaseOfClass(BC), 
-      Access(A), BaseTypeInfo(TInfo) { }
+      Access(A), InheritConstructors(false), BaseTypeInfo(TInfo) { }
 
   /// getSourceRange - Retrieves the source range that contains the
   /// entire base specifier.
@@ -214,12 +218,20 @@ public:
   
   /// \brief Determine whether this base specifier is a pack expansion.
   bool isPackExpansion() const { return EllipsisLoc.isValid(); }
-  
+
+  /// \brief Determine whether this base class's constructors get inherited.
+  bool getInheritConstructors() const { return InheritConstructors; }
+
+  /// \brief Set that this base class's constructors should be inherited.
+  void setInheritConstructors(bool Inherit = true) {
+    InheritConstructors = Inherit;
+  }
+
   /// \brief For a pack expansion, determine the location of the ellipsis.
   SourceLocation getEllipsisLoc() const {
     return EllipsisLoc;
   }
-  
+
   /// getAccessSpecifier - Returns the access specifier for this base
   /// specifier. This is the actual base specifier as used for
   /// semantic analysis, so the result can never be AS_none. To
@@ -1519,6 +1531,12 @@ public:
   /// would copy the object to itself. Such constructors are never used to copy
   /// an object.
   bool isSpecializationCopyingObject() const;
+
+  /// \brief Get the constructor that this inheriting constructor is based on.
+  const CXXConstructorDecl *getInheritedConstructor() const;
+
+  /// \brief Set the constructor that this inheriting constructor is based on.
+  void setInheritedConstructor(const CXXConstructorDecl *BaseCtor);
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

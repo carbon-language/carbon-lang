@@ -2091,6 +2091,8 @@ public:
                                    bool IsTypeName,
                                    SourceLocation TypenameLoc);
 
+  bool CheckInheritedConstructorUsingDecl(UsingDecl *UD);
+
   Decl *ActOnUsingDeclaration(Scope *CurScope,
                               AccessSpecifier AS,
                               bool HasUsingKeyword,
@@ -2170,6 +2172,12 @@ public:
   /// defining this destructor as the default destructor.
   void DefineImplicitDestructor(SourceLocation CurrentLocation,
                                 CXXDestructorDecl *Destructor);
+
+  /// \brief Declare all inherited constructors for the given class.
+  ///
+  /// \param ClassDecl The class declaration into which the inherited
+  /// constructors will be added.
+  void DeclareInheritedConstructors(CXXRecordDecl *ClassDecl);
 
   /// \brief Declare the implicit copy constructor for the given class.
   ///

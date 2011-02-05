@@ -2787,6 +2787,15 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
       DiagnoseHiddenVirtualMethods(Record, *M);
     }
   }
+
+  // Declare inherited constructors. We do this eagerly here because:
+  // - The standard requires an eager diagnostic for conflicting inherited
+  //   constructors from different classes.
+  // - The lazy declaration of the other implicit constructors is so as to not
+  //   waste space and performance on classes that are not meant to be
+  //   instantiated (e.g. meta-functions). This doesn't apply to classes that
+  //   have inherited constructors.
+  DeclareInheritedConstructors(Record);
 }
 
 /// \brief Data used with FindHiddenVirtualMethod
@@ -4122,8 +4131,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     LookupQualifiedName(Previous, CurContext);
   }
 
-  NestedNameSpecifier *NNS =
-    static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  NestedNameSpecifier *NNS = SS.getScopeRep();
 
   // Check for invalid redeclarations.
   if (CheckUsingDeclRedeclaration(UsingLoc, IsTypeName, SS, IdentLoc, Previous))
@@ -4163,7 +4171,14 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     return UD;
   }
 
-  // Look up the target name.
+  // Constructor inheriting using decls get special treatment.
+  if (NameInfo.getName().getNameKind() == DeclarationName::CXXConstructorName) {
+    if (CheckInheritedConstructorUsingDecl(UD))
+      UD->setInvalidDecl();
+    return UD;
+  }
+
+  // Otherwise, look up the target name.
 
   LookupResult R(*this, NameInfo, LookupOrdinaryName);
 
@@ -4225,6 +4240,42 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   }
 
   return UD;
+}
+
+/// Additional checks for a using declaration referring to a constructor name.
+bool Sema::CheckInheritedConstructorUsingDecl(UsingDecl *UD) {
+  if (UD->isTypeName()) {
+    // FIXME: Cannot specify typename when specifying constructor
+    return true;
+  }
+
+  const Type *SourceType = UD->getTargetNestedNameDecl()->getAsType();
+  assert(SourceType &&
+         "Using decl naming constructor doesn't have type in scope spec.");
+  CXXRecordDecl *TargetClass = cast<CXXRecordDecl>(CurContext);
+
+  // Check whether the named type is a direct base class.
+  CanQualType CanonicalSourceType = SourceType->getCanonicalTypeUnqualified();
+  CXXRecordDecl::base_class_iterator BaseIt, BaseE;
+  for (BaseIt = TargetClass->bases_begin(), BaseE = TargetClass->bases_end();
+       BaseIt != BaseE; ++BaseIt) {
+    CanQualType BaseType = BaseIt->getType()->getCanonicalTypeUnqualified();
+    if (CanonicalSourceType == BaseType)
+      break;
+  }
+
+  if (BaseIt == BaseE) {
+    // Did not find SourceType in the bases.
+    Diag(UD->getUsingLocation(),
+         diag::err_using_decl_constructor_not_in_direct_base)
+      << UD->getNameInfo().getSourceRange()
+      << QualType(SourceType, 0) << TargetClass;
+    return true;
+  }
+
+  BaseIt->setInheritConstructors();
+
+  return false;
 }
 
 /// Checks that the given using declaration is not an invalid
@@ -4668,6 +4719,180 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
 
   Constructor->setUsed();
   MarkVTableUsed(CurrentLocation, ClassDecl);
+}
+
+void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
+  // We start with an initial pass over the base classes to collect those that
+  // inherit constructors from. If there are none, we can forgo all further
+  // processing.
+  typedef llvm::SmallVector<const RecordType *, 4> BasesVector;
+  BasesVector BasesToInheritFrom;
+  for (CXXRecordDecl::base_class_iterator BaseIt = ClassDecl->bases_begin(),
+                                          BaseE = ClassDecl->bases_end();
+         BaseIt != BaseE; ++BaseIt) {
+    if (BaseIt->getInheritConstructors()) {
+      QualType Base = BaseIt->getType();
+      if (Base->isDependentType()) {
+        // If we inherit constructors from anything that is dependent, just
+        // abort processing altogether. We'll get another chance for the
+        // instantiations.
+        return;
+      }
+      BasesToInheritFrom.push_back(Base->castAs<RecordType>());
+    }
+  }
+  if (BasesToInheritFrom.empty())
+    return;
+
+  // Now collect the constructors that we already have in the current class.
+  // Those take precedence over inherited constructors.
+  // C++0x [class.inhctor]p3: [...] a constructor is implicitly declared [...]
+  //   unless there is a user-declared constructor with the same signature in
+  //   the class where the using-declaration appears.
+  llvm::SmallSet<const Type *, 8> ExistingConstructors;
+  for (CXXRecordDecl::ctor_iterator CtorIt = ClassDecl->ctor_begin(),
+                                    CtorE = ClassDecl->ctor_end();
+       CtorIt != CtorE; ++CtorIt) {
+    ExistingConstructors.insert(
+        Context.getCanonicalType(CtorIt->getType()).getTypePtr());
+  }
+
+  Scope *S = getScopeForContext(ClassDecl);
+  DeclarationName CreatedCtorName =
+      Context.DeclarationNames.getCXXConstructorName(
+          ClassDecl->getTypeForDecl()->getCanonicalTypeUnqualified());
+
+  // Now comes the true work.
+  // First, we keep a map from constructor types to the base that introduced
+  // them. Needed for finding conflicting constructors. We also keep the
+  // actually inserted declarations in there, for pretty diagnostics.
+  typedef std::pair<CanQualType, CXXConstructorDecl *> ConstructorInfo;
+  typedef llvm::DenseMap<const Type *, ConstructorInfo> ConstructorToSourceMap;
+  ConstructorToSourceMap InheritedConstructors;
+  for (BasesVector::iterator BaseIt = BasesToInheritFrom.begin(),
+                             BaseE = BasesToInheritFrom.end();
+       BaseIt != BaseE; ++BaseIt) {
+    const RecordType *Base = *BaseIt;
+    CanQualType CanonicalBase = Base->getCanonicalTypeUnqualified();
+    CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(Base->getDecl());
+    for (CXXRecordDecl::ctor_iterator CtorIt = BaseDecl->ctor_begin(),
+                                      CtorE = BaseDecl->ctor_end();
+         CtorIt != CtorE; ++CtorIt) {
+      // Find the using declaration for inheriting this base's constructors.
+      DeclarationName Name =
+          Context.DeclarationNames.getCXXConstructorName(CanonicalBase);
+      UsingDecl *UD = dyn_cast_or_null<UsingDecl>(
+          LookupSingleName(S, Name,SourceLocation(), LookupUsingDeclName));
+      SourceLocation UsingLoc = UD ? UD->getLocation() :
+                                     ClassDecl->getLocation();
+
+      // C++0x [class.inhctor]p1: The candidate set of inherited constructors
+      //   from the class X named in the using-declaration consists of actual
+      //   constructors and notional constructors that result from the
+      //   transformation of defaulted parameters as follows:
+      //   - all non-template default constructors of X, and
+      //   - for each non-template constructor of X that has at least one
+      //     parameter with a default argument, the set of constructors that
+      //     results from omitting any ellipsis parameter specification and
+      //     successively omitting parameters with a default argument from the
+      //     end of the parameter-type-list.
+      CXXConstructorDecl *BaseCtor = *CtorIt;
+      bool CanBeCopyOrMove = BaseCtor->isCopyOrMoveConstructor();
+      const FunctionProtoType *BaseCtorType =
+          BaseCtor->getType()->getAs<FunctionProtoType>();
+
+      for (unsigned params = BaseCtor->getMinRequiredArguments(),
+                    maxParams = BaseCtor->getNumParams();
+           params <= maxParams; ++params) {
+        // Skip default constructors. They're never inherited.
+        if (params == 0)
+          continue;
+        // Skip copy and move constructors for the same reason.
+        if (CanBeCopyOrMove && params == 1)
+          continue;
+
+        // Build up a function type for this particular constructor.
+        // FIXME: The working paper does not consider that the exception spec
+        // for the inheriting constructor might be larger than that of the
+        // source. This code doesn't yet, either.
+        const Type *NewCtorType;
+        if (params == maxParams)
+          NewCtorType = BaseCtorType;
+        else {
+          llvm::SmallVector<QualType, 16> Args;
+          for (unsigned i = 0; i < params; ++i) {
+            Args.push_back(BaseCtorType->getArgType(i));
+          }
+          FunctionProtoType::ExtProtoInfo ExtInfo =
+              BaseCtorType->getExtProtoInfo();
+          ExtInfo.Variadic = false;
+          NewCtorType = Context.getFunctionType(BaseCtorType->getResultType(),
+                                                Args.data(), params, ExtInfo)
+                       .getTypePtr();
+        }
+        const Type *CanonicalNewCtorType =
+            Context.getCanonicalType(NewCtorType);
+
+        // Now that we have the type, first check if the class already has a
+        // constructor with this signature.
+        if (ExistingConstructors.count(CanonicalNewCtorType))
+          continue;
+
+        // Then we check if we have already declared an inherited constructor
+        // with this signature.
+        std::pair<ConstructorToSourceMap::iterator, bool> result =
+            InheritedConstructors.insert(std::make_pair(
+                CanonicalNewCtorType,
+                std::make_pair(CanonicalBase, (CXXConstructorDecl*)0)));
+        if (!result.second) {
+          // Already in the map. If it came from a different class, that's an
+          // error. Not if it's from the same.
+          CanQualType PreviousBase = result.first->second.first;
+          if (CanonicalBase != PreviousBase) {
+            const CXXConstructorDecl *PrevCtor = result.first->second.second;
+            const CXXConstructorDecl *PrevBaseCtor =
+                PrevCtor->getInheritedConstructor();
+            assert(PrevBaseCtor && "Conflicting constructor was not inherited");
+
+            Diag(UsingLoc, diag::err_using_decl_constructor_conflict);
+            Diag(BaseCtor->getLocation(),
+                 diag::note_using_decl_constructor_conflict_current_ctor);
+            Diag(PrevBaseCtor->getLocation(),
+                 diag::note_using_decl_constructor_conflict_previous_ctor);
+            Diag(PrevCtor->getLocation(),
+                 diag::note_using_decl_constructor_conflict_previous_using);
+          }
+          continue;
+        }
+
+        // OK, we're there, now add the constructor.
+        // C++0x [class.inhctor]p8: [...] that would be performed by a
+        //   user-writtern inline constructor [...]
+        DeclarationNameInfo DNI(CreatedCtorName, UsingLoc);
+        CXXConstructorDecl *NewCtor = CXXConstructorDecl::Create(
+            Context, ClassDecl, DNI, QualType(NewCtorType, 0), /*TInfo=*/0,
+            BaseCtor->isExplicit(), /*Inline=*/true,
+            /*ImplicitlyDeclared=*/true);
+        NewCtor->setAccess(BaseCtor->getAccess());
+
+        // Build up the parameter decls and add them.
+        llvm::SmallVector<ParmVarDecl *, 16> ParamDecls;
+        for (unsigned i = 0; i < params; ++i) {
+          ParamDecls.push_back(ParmVarDecl::Create(Context, NewCtor, UsingLoc,
+                                                   /*IdentifierInfo=*/0,
+                                                   BaseCtorType->getArgType(i),
+                                                   /*TInfo=*/0, SC_None,
+                                                   SC_None, /*DefaultArg=*/0));
+        }
+        NewCtor->setParams(ParamDecls.data(), ParamDecls.size());
+        NewCtor->setInheritedConstructor(BaseCtor);
+
+        PushOnScopeChains(NewCtor, S, false);
+        ClassDecl->addDecl(NewCtor);
+        result.first->second.second = NewCtor;
+      }
+    }
+  }
 }
 
 CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
@@ -5590,7 +5815,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                  /*isInline=*/true,
                                  /*isImplicitlyDeclared=*/true);
   CopyConstructor->setAccess(AS_public);
-  CopyConstructor->setImplicit();
   CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
   
   // Note that we have declared this constructor.

@@ -1204,6 +1204,22 @@ bool CXXConstructorDecl::isSpecializationCopyingObject() const {
   return true;  
 }
 
+const CXXConstructorDecl *CXXConstructorDecl::getInheritedConstructor() const {
+  // Hack: we store the inherited constructor in the overridden method table
+  method_iterator It = begin_overridden_methods();
+  if (It == end_overridden_methods())
+    return 0;
+
+  return cast<CXXConstructorDecl>(*It);
+}
+
+void
+CXXConstructorDecl::setInheritedConstructor(const CXXConstructorDecl *BaseCtor){
+  // Hack: we store the inherited constructor in the overridden method table
+  assert(size_overridden_methods() == 0 && "Base ctor already set.");
+  addOverriddenMethod(BaseCtor);
+}
+
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) CXXDestructorDecl(0, DeclarationNameInfo(),

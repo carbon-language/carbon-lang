@@ -3304,6 +3304,7 @@ void ASTWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   Record.push_back(Base.isVirtual());
   Record.push_back(Base.isBaseOfClass());
   Record.push_back(Base.getAccessSpecifierAsWritten());
+  Record.push_back(Base.getInheritConstructors());
   AddTypeSourceInfo(Base.getTypeSourceInfo(), Record);
   AddSourceRange(Base.getSourceRange(), Record);
   AddSourceLocation(Base.isPackExpansion()? Base.getEllipsisLoc() 

@@ -162,6 +162,17 @@ def err_using_decl_nested_name_specifier_is_current_class : Error<
   "using declaration refers to its own class">;
 def err_using_decl_nested_name_specifier_is_not_base_class : Error<
   "using declaration refers into '%0', which is not a base class of %1">;
+def err_using_decl_constructor_not_in_direct_base : Error<
+  "%0 is not a direct base of %1, can not inherit constructors">;
+def err_using_decl_constructor_conflict : Error<
+  "can not inherit constructor, already inherited constructor with "
+  "the same signature">;
+def note_using_decl_constructor_conflict_current_ctor : Note<
+  "conflicting constructor">;
+def note_using_decl_constructor_conflict_previous_ctor : Note<
+  "previous constructor">;
+def note_using_decl_constructor_conflict_previous_using : Note<
+  "previously inherited here">;
 def err_using_decl_can_not_refer_to_class_member : Error<
   "using declaration can not refer to class member">;
 def err_using_decl_can_not_refer_to_namespace : Error<
@@ -1282,12 +1293,14 @@ def note_ovl_candidate : Note<"candidate "
     "function |function |constructor |"
     "is the implicit default constructor|"
     "is the implicit copy constructor|"
-    "is the implicit copy assignment operator}0%1">;
+    "is the implicit copy assignment operator|"
+    "is an inherited constructor}0%1">;
 
 def warn_init_pointer_from_false : Warning<
     "initialization of pointer of type %0 from literal 'false'">,
     InGroup<BoolConversions>;
 
+def note_ovl_candidate_inherited_constructor : Note<"inherited from here">;
 def note_ovl_candidate_bad_deduction : Note<
     "candidate template ignored: failed template argument deduction">;
 def note_ovl_candidate_incomplete_deduction : Note<"candidate template ignored: "
@@ -1315,14 +1328,15 @@ def note_ovl_candidate_arity : Note<"candidate "
     "%select{function|function|constructor|function|function|constructor|"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
-    "function (the implicit copy assignment operator)}0 %select{|template }1"
+    "function (the implicit copy assignment operator)|"
+    "constructor (inherited)}0 %select{|template }1"
     "not viable: requires%select{ at least| at most|}2 %3 argument%s3, but %4 "
     "%plural{1:was|:were}4 provided">;
 
 def note_ovl_candidate_deleted : Note<
-  "candidate %select{function|function|constructor|"
-  "function |function |constructor |||}0%1 "
-  "has been explicitly %select{made unavailable|deleted}2">;
+    "candidate %select{function|function|constructor|"
+    "function |function |constructor ||||constructor (inherited)}0%1 "
+    "has been explicitly %select{made unavailable|deleted}2">;
 
 // Giving the index of the bad argument really clutters this message, and
 // it's relatively unimportant because 1) it's generally obvious which
@@ -1334,21 +1348,24 @@ def note_ovl_candidate_bad_conv_incomplete : Note<"candidate "
     "function |function |constructor |"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
-    "function (the implicit copy assignment operator)}0%1 "
+    "function (the implicit copy assignment operator)|"
+    "constructor (inherited)}0%1 "
     "not viable: cannot convert argument of incomplete type %2 to %3">;
 def note_ovl_candidate_bad_overload : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
-    "function (the implicit copy assignment operator)}0%1"
+    "function (the implicit copy assignment operator)|"
+    "constructor (inherited)}0%1"
     " not viable: no overload of %3 matching %2 for %ordinal4 argument">;
 def note_ovl_candidate_bad_conv : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
-    "function (the implicit copy assignment operator)}0%1"
+    "function (the implicit copy assignment operator)|"
+    "constructor (inherited)}0%1"
     " not viable: no known conversion from %2 to %3 for "
     "%select{%ordinal5 argument|object argument}4">;
 def note_ovl_candidate_bad_addrspace : Note<"candidate "
@@ -1356,12 +1373,13 @@ def note_ovl_candidate_bad_addrspace : Note<"candidate "
     "function |function |constructor |"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
-    "function (the implicit copy assignment operator)}0%1 not viable: "
+    "function (the implicit copy assignment operator)|"
+    "constructor (inherited)}0%1 not viable: "
     "%select{%ordinal6|'this'}5 argument (%2) is in "
     "address space %3, but parameter must be in address space %4">;
 def note_ovl_candidate_bad_cvr_this : Note<"candidate "
     "%select{|function|||function||||"
-    "function (the implicit copy assignment operator)}0 not viable: "
+    "function (the implicit copy assignment operator)|}0 not viable: "
     "'this' argument has type %2, but method is not marked "
     "%select{const|restrict|const or restrict|volatile|const or volatile|"
     "volatile or restrict|const, volatile, or restrict}3">;
@@ -1370,7 +1388,8 @@ def note_ovl_candidate_bad_cvr : Note<"candidate "
     "function |function |constructor |"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
-    "function (the implicit copy assignment operator)}0%1 not viable: "
+    "function (the implicit copy assignment operator)|"
+    "constructor (inherited)}0%1 not viable: "
     "%ordinal4 argument (%2) would lose "
     "%select{const|restrict|const and restrict|volatile|const and volatile|"
     "volatile and restrict|const, volatile, and restrict}3 qualifier"
@@ -1380,7 +1399,8 @@ def note_ovl_candidate_bad_base_to_derived_conv : Note<"candidate "
     "function |function |constructor |"
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
-    "function (the implicit copy assignment operator)}0%1"
+    "function (the implicit copy assignment operator)|"
+    "constructor (inherited)}0%1"
     " not viable: cannot %select{convert from|convert from|bind}2 "
     "%select{base class pointer|superclass|base class object of type}2 %3 to "
     "%select{derived class pointer|subclass|derived class reference}2 %4 for "

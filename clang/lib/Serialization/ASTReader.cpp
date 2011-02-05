@@ -4381,11 +4381,14 @@ ASTReader::ReadCXXBaseSpecifier(PerFileData &F,
   bool isVirtual = static_cast<bool>(Record[Idx++]);
   bool isBaseOfClass = static_cast<bool>(Record[Idx++]);
   AccessSpecifier AS = static_cast<AccessSpecifier>(Record[Idx++]);
+  bool inheritConstructors = static_cast<bool>(Record[Idx++]);
   TypeSourceInfo *TInfo = GetTypeSourceInfo(F, Record, Idx);
   SourceRange Range = ReadSourceRange(F, Record, Idx);
   SourceLocation EllipsisLoc = ReadSourceLocation(F, Record, Idx);
-  return CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, TInfo, 
+  CXXBaseSpecifier Result(Range, isVirtual, isBaseOfClass, AS, TInfo, 
                           EllipsisLoc);
+  Result.setInheritConstructors(inheritConstructors);
+  return Result;
 }
 
 std::pair<CXXCtorInitializer **, unsigned>
