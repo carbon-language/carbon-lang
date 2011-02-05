@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Host/Config.h"
 #include <stdio.h>
 
 // C Includes
@@ -94,16 +95,14 @@ StreamFile::Open (const char *path, const char *permissions)
     return m_file != NULL;
 }
 
-#if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
-
 void
 StreamFile::SetLineBuffered ()
 {
+#if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
     if (m_file != NULL)
         setlinebuf (m_file);
-}
-
 #endif // #if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
+}
 
 void
 StreamFile::Flush ()
