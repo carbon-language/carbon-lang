@@ -334,7 +334,6 @@ CriticalAntiDepBreaker::isNewRegModifiedByRefs(RegRefIter RegRefBegin,
 {
   for (RegRefIter I = RegRefBegin; I != RegRefEnd; ++I ) {
     MachineOperand *MO = I->second;
-    if (MO->isDef()) continue;
     if (MO->getParent()->modifiesRegister(NewReg, TRI))
       return true;
   }
