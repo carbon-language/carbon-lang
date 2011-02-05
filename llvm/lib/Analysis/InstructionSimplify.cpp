@@ -780,7 +780,7 @@ Value *llvm::SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
 
 /// SimplifyDiv - Given operands for an SDiv or UDiv, see if we can
 /// fold the result.  If not, this returns null.
-static Value *SimplifyDiv(unsigned Opcode, Value *Op0, Value *Op1,
+static Value *SimplifyDiv(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
                           const TargetData *TD, const DominatorTree *DT,
                           unsigned MaxRecurse) {
   if (Constant *C0 = dyn_cast<Constant>(Op0)) {
