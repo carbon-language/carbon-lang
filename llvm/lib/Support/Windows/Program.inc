@@ -137,7 +137,7 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
 /// ArgNeedsQuotes - Check whether argument needs to be quoted when calling
 /// CreateProcess.
 static bool ArgNeedsQuotes(const char *Str) {
-  return Str[0] == '\0' || strchr(Str, ' ') != 0;
+  return Str[0] == '\0' || strpbrk(Str, "\t \"&\'()*<>\\`^|") != 0;
 }
 
 
