@@ -720,6 +720,50 @@ _clang_getDiagnosticFixIt.errcheck = _CXString.from_result
 
 ###
 
+class CodeCompletionResult(Structure):
+    _fields_ = [('cursorKind', c_int), ('completionString', c_void_p)]
+
+class CCRStructure(Structure):
+    _fields_ = [('results', POINTER(CodeCompletionResult)),
+                ('numResults', c_int)]
+
+class CodeCompletionResults(ClangObject):
+    def __init__(self, ptr):
+        assert isinstance(ptr, POINTER(CCRStructure)) and ptr
+        self.ptr = self._as_parameter_ = ptr
+
+    def from_param(self):
+        return self._as_parameter_
+
+    def __del__(self):
+        CodeCompletionResults_dispose(self)
+
+    @property
+    def results(self):
+        class ResultsItr:
+            def __init__(self, ccr):
+                self.ccr = ccr
+
+            def __len__(self):
+                return self.ccr.ptr.contents.numResults
+
+        return ResultsItr(self)
+
+    @property
+    def diagnostics(self):
+        class DiagnosticsItr:
+            def __init__(self, ccr):
+                self.ccr= ccr
+
+            def __len__(self):
+                return int(_clang_codeCompleteGetNumDiagnostics(self.ccr))
+
+            def __getitem__(self, key):
+                return _clang_codeCompleteGetDiagnostic(self.ccr, key)
+
+        return DiagnosticsItr(self)
+
+
 class Index(ClangObject):
     """
     The Index type provides the primary interface to the Clang CIndex library,
@@ -865,6 +909,36 @@ class TranslationUnit(ClangObject):
         ptr = TranslationUnit_reparse(self, len(unsaved_files),
                                       unsaved_files_array,
                                       options)
+    def codeComplete(self, path, line, column, unsaved_files = [], options = 0):
+        """
+        Code complete in this translation unit.
+
+        In-memory contents for files can be provided by passing a list of pairs
+        as unsaved_files, the first items should be the filenames to be mapped
+        and the second should be the contents to be substituted for the
+        file. The contents may be passed as strings or file objects.
+        """
+        unsaved_files_array = 0
+        if len(unsaved_files):
+            unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
+            for i,(name,value) in enumerate(unsaved_files):
+                if not isinstance(value, str):
+                    # FIXME: It would be great to support an efficient version
+                    # of this, one day.
+                    value = value.read()
+                    print value
+                if not isinstance(value, str):
+                    raise TypeError,'Unexpected unsaved file contents.'
+                unsaved_files_array[i].name = name
+                unsaved_files_array[i].contents = value
+                unsaved_files_array[i].length = len(value)
+        ptr = TranslationUnit_codeComplete(self, path,
+                                           line, column,
+                                           unsaved_files_array,
+                                           len(unsaved_files),
+                                           options)
+        return CodeCompletionResults(ptr) if ptr else None
+
 
 class File(ClangObject):
     """
@@ -1024,6 +1098,11 @@ TranslationUnit_reparse = lib.clang_reparseTranslationUnit
 TranslationUnit_reparse.argtypes = [TranslationUnit, c_int, c_void_p, c_int]
 TranslationUnit_reparse.restype = c_int
 
+TranslationUnit_codeComplete = lib.clang_codeCompleteAt
+TranslationUnit_codeComplete.argtypes = [TranslationUnit, c_char_p, c_int,
+                                         c_int, c_void_p, c_int, c_int]
+TranslationUnit_codeComplete.restype = POINTER(CCRStructure)
+
 TranslationUnit_cursor = lib.clang_getTranslationUnitCursor
 TranslationUnit_cursor.argtypes = [TranslationUnit]
 TranslationUnit_cursor.restype = Cursor
@@ -1055,7 +1134,21 @@ File_time = lib.clang_getFileTime
 File_time.argtypes = [File]
 File_time.restype = c_uint
 
+# Code completion
+
+CodeCompletionResults_dispose = lib.clang_disposeCodeCompleteResults
+CodeCompletionResults_dispose.argtypes = [CodeCompletionResults]
+
+_clang_codeCompleteGetNumDiagnostics = lib.clang_codeCompleteGetNumDiagnostics
+_clang_codeCompleteGetNumDiagnostics.argtypes = [CodeCompletionResults]
+_clang_codeCompleteGetNumDiagnostics.restype = c_int
+
+_clang_codeCompleteGetDiagnostic = lib.clang_codeCompleteGetDiagnostic
+_clang_codeCompleteGetDiagnostic.argtypes = [CodeCompletionResults, c_int]
+_clang_codeCompleteGetDiagnostic.restype = Diagnostic
+
 ###
 
 __all__ = ['Index', 'TranslationUnit', 'Cursor', 'CursorKind',
-           'Diagnostic', 'FixIt', 'SourceRange', 'SourceLocation', 'File']
+           'Diagnostic', 'FixIt', 'CodeCompletionResults', 'SourceRange',
+           'SourceLocation', 'File']
