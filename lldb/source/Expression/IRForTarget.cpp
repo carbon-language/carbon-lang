@@ -374,9 +374,9 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
                                     result_decl_type);
         }
                 
-        StoreInst *synthesized_store = new StoreInst::StoreInst(initializer,
-                                                                new_result_global,
-                                                                first_entry_instruction);
+        StoreInst *synthesized_store = new StoreInst(initializer,
+                                                     new_result_global,
+                                                     first_entry_instruction);
         
         if (log)
             log->Printf("Synthesized result store \"%s\"\n", PrintValue(synthesized_store).c_str());
