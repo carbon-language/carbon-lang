@@ -41,10 +41,10 @@ else()
 endif()
 
 # Create the clang++ symlink in the build directory.
-set(clang_pp "${CLANG_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/clang++${CMAKE_EXECUTABLE_SUFFIX}")
+set(clang_pp "${LLVM_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/clang++${CMAKE_EXECUTABLE_SUFFIX}")
 add_custom_target(clang++ ALL
   ${CMAKE_COMMAND} -E ${CLANGXX_LINK_OR_COPY}
-    "${CLANG_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/clang${CMAKE_EXECUTABLE_SUFFIX}"
+    "${LLVM_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/clang${CMAKE_EXECUTABLE_SUFFIX}"
     "${clang_pp}"
   DEPENDS clang)
 set_property(DIRECTORY APPEND
