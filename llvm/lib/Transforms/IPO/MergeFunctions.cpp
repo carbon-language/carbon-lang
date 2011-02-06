@@ -284,6 +284,10 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
 // Instruction::isSameOperationAs.
 bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
                                                const Instruction *I2) const {
+  // Differences from Instruction::isSameOperationAs:
+  //  * replace type comparison with calls to isEquivalentType.
+  //  * we test for I->hasSameSubclassOptionalData (nuw/nsw/tail) at the top
+  //  * because of the above, we don't test for the tail bit on calls later on
   if (I1->getOpcode() != I2->getOpcode() ||
       I1->getNumOperands() != I2->getNumOperands() ||
       !isEquivalentType(I1->getType(), I2->getType()) ||
@@ -307,8 +311,7 @@ bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
   if (const CmpInst *CI = dyn_cast<CmpInst>(I1))
     return CI->getPredicate() == cast<CmpInst>(I2)->getPredicate();
   if (const CallInst *CI = dyn_cast<CallInst>(I1))
-    return CI->isTailCall() == cast<CallInst>(I2)->isTailCall() &&
-           CI->getCallingConv() == cast<CallInst>(I2)->getCallingConv() &&
+    return CI->getCallingConv() == cast<CallInst>(I2)->getCallingConv() &&
            CI->getAttributes() == cast<CallInst>(I2)->getAttributes();
   if (const InvokeInst *CI = dyn_cast<InvokeInst>(I1))
     return CI->getCallingConv() == cast<InvokeInst>(I2)->getCallingConv() &&
