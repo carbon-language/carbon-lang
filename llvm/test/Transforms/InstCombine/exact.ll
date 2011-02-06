@@ -50,3 +50,11 @@ define i32 @b1(i32 %x) {
   %z = mul i32 %y, -3
   ret i32 %z
 }
+
+; CHECK: i32 @b2
+; CHECK: ret i32 %x
+define i32 @b2(i32 %x, i32 %w) {
+  %y = udiv exact i32 %x, %w
+  %z = mul i32 %y, %w
+  ret i32 %z
+}

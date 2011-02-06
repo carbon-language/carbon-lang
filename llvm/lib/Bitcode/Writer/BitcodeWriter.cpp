@@ -470,9 +470,10 @@ static uint64_t GetOptimizationFlags(const Value *V) {
       Flags |= 1 << bitc::OBO_NO_SIGNED_WRAP;
     if (OBO->hasNoUnsignedWrap())
       Flags |= 1 << bitc::OBO_NO_UNSIGNED_WRAP;
-  } else if (const SDivOperator *Div = dyn_cast<SDivOperator>(V)) {
-    if (Div->isExact())
-      Flags |= 1 << bitc::SDIV_EXACT;
+  } else if (const PossiblyExactOperator *PEO =
+               dyn_cast<PossiblyExactOperator>(V)) {
+    if (PEO->isExact())
+      Flags |= 1 << bitc::PEO_EXACT;
   }
 
   return Flags;

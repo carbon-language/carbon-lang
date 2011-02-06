@@ -683,7 +683,12 @@ Constant* ConstantExpr::getNUWMul(Constant* C1, Constant* C2) {
 
 Constant* ConstantExpr::getExactSDiv(Constant* C1, Constant* C2) {
   return getTy(C1->getType(), Instruction::SDiv, C1, C2,
-               SDivOperator::IsExact);
+               PossiblyExactOperator::IsExact);
+}
+
+Constant* ConstantExpr::getExactUDiv(Constant* C1, Constant* C2) {
+  return getTy(C1->getType(), Instruction::UDiv, C1, C2,
+               PossiblyExactOperator::IsExact);
 }
 
 // Utility function for determining if a ConstantExpr is a CastOp or not. This

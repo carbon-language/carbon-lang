@@ -341,7 +341,7 @@ public:
     BO->setIsExact(true);
     return BO;
   }
-
+  
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:
   ///

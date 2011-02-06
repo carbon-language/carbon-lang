@@ -3441,7 +3441,8 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = udiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = udiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;         <i>; yields {ty}:result</i>
+  &lt;result&gt; = udiv exact &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -3459,6 +3460,11 @@ Instruction</a> </div>
    operations; for signed integer division, use '<tt>sdiv</tt>'.</p>
 
 <p>Division by zero leads to undefined behavior.</p>
+
+<p>If the <tt>exact</tt> keyword is present, the result value of the
+   <tt>udiv</tt> is a <a href="#trapvalues">trap value</a> if %op1 is not a
+  multiple of %op2 (as such, "((a udiv exact b) mul b) == a").</p>
+
 
 <h5>Example:</h5>
 <pre>

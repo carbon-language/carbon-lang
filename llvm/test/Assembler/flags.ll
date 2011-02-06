@@ -104,6 +104,19 @@ define i64 @sdiv_plain(i64 %x, i64 %y) {
 	ret i64 %z
 }
 
+define i64 @udiv_exact(i64 %x, i64 %y) {
+; CHECK: %z = udiv exact i64 %x, %y
+	%z = udiv exact i64 %x, %y
+	ret i64 %z
+}
+
+define i64 @udiv_plain(i64 %x, i64 %y) {
+; CHECK: %z = udiv i64 %x, %y
+	%z = udiv i64 %x, %y
+	ret i64 %z
+}
+
+
 define i64* @gep_nw(i64* %p, i64 %x) {
 ; CHECK: %z = getelementptr inbounds i64* %p, i64 %x
 	%z = getelementptr inbounds i64* %p, i64 %x
@@ -134,6 +147,11 @@ define i64 @mul_both_ce() {
 define i64 @sdiv_exact_ce() {
 ; CHECK: ret i64 sdiv exact (i64 ptrtoint (i64* @addr to i64), i64 91)
 	ret i64 sdiv exact (i64 ptrtoint (i64* @addr to i64), i64 91)
+}
+
+define i64 @udiv_exact_ce() {
+; CHECK: ret i64 udiv exact (i64 ptrtoint (i64* @addr to i64), i64 91)
+	ret i64 udiv exact (i64 ptrtoint (i64* @addr to i64), i64 91)
 }
 
 define i64* @gep_nw_ce() {
@@ -210,3 +228,4 @@ define i64 @mul_unsigned_ce() {
 ; CHECK: ret i64 mul nuw (i64 ptrtoint (i64* @addr to i64), i64 91)
 	ret i64 mul nuw (i64 ptrtoint (i64* @addr to i64), i64 91)
 }
+

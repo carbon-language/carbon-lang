@@ -1822,7 +1822,7 @@ void BinaryOperator::setHasNoSignedWrap(bool b) {
 }
 
 void BinaryOperator::setIsExact(bool b) {
-  cast<SDivOperator>(this)->setIsExact(b);
+  cast<PossiblyExactOperator>(this)->setIsExact(b);
 }
 
 bool BinaryOperator::hasNoUnsignedWrap() const {
@@ -1834,7 +1834,7 @@ bool BinaryOperator::hasNoSignedWrap() const {
 }
 
 bool BinaryOperator::isExact() const {
-  return cast<SDivOperator>(this)->isExact();
+  return cast<PossiblyExactOperator>(this)->isExact();
 }
 
 //===----------------------------------------------------------------------===//

@@ -199,10 +199,10 @@ namespace bitc {
     OBO_NO_SIGNED_WRAP = 1
   };
 
-  /// SDivOperatorOptionalFlags - Flags for serializing SDivOperator's
-  /// SubclassOptionalData contents.
-  enum SDivOperatorOptionalFlags {
-    SDIV_EXACT = 0
+  /// PossiblyExactOperatorOptionalFlags - Flags for serializing 
+  /// PossiblyExactOperator's SubclassOptionalData contents.
+  enum PossiblyExactOperatorOptionalFlags {
+    PEO_EXACT = 0
   };
 
   // The function body block (FUNCTION_BLOCK_ID) describes function bodies.  It

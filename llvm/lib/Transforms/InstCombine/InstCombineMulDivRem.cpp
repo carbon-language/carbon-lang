@@ -135,8 +135,8 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
          BO->getOpcode() == Instruction::SDiv)) {
       Value *Op0BO = BO->getOperand(0), *Op1BO = BO->getOperand(1);
 
-      // If the division is exact, X % Y is zero.
-      if (SDivOperator *SDiv = dyn_cast<SDivOperator>(BO))
+      // If the division is exact, X % Y is zero, so we end up with X or -X.
+      if (PossiblyExactOperator *SDiv = dyn_cast<PossiblyExactOperator>(BO))
         if (SDiv->isExact()) {
           if (Op1BO == Op1C)
             return ReplaceInstUsesWith(I, Op0BO);

@@ -831,7 +831,8 @@ static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
       Out << " nuw";
     if (OBO->hasNoSignedWrap())
       Out << " nsw";
-  } else if (const SDivOperator *Div = dyn_cast<SDivOperator>(U)) {
+  } else if (const PossiblyExactOperator *Div =
+               dyn_cast<PossiblyExactOperator>(U)) {
     if (Div->isExact())
       Out << " exact";
   } else if (const GEPOperator *GEP = dyn_cast<GEPOperator>(U)) {

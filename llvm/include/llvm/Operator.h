@@ -173,30 +173,47 @@ public:
   }
 };
 
-/// SDivOperator - An Operator with opcode Instruction::SDiv.
-///
-class SDivOperator : public Operator {
+/// PossiblyExactOperator - A udiv or sdiv instruction, which can be marked as
+/// "exact", indicating that no bits are destroyed.
+class PossiblyExactOperator : public Operator {
 public:
   enum {
     IsExact = (1 << 0)
   };
-
-private:
-  ~SDivOperator(); // do not implement
-
+  
   friend class BinaryOperator;
   friend class ConstantExpr;
   void setIsExact(bool B) {
     SubclassOptionalData = (SubclassOptionalData & ~IsExact) | (B * IsExact);
   }
-
+  
+private:
+  ~PossiblyExactOperator(); // do not implement
 public:
   /// isExact - Test whether this division is known to be exact, with
   /// zero remainder.
   bool isExact() const {
     return SubclassOptionalData & IsExact;
   }
-
+  
+  static inline bool classof(const ConstantExpr *CE) {
+    return CE->getOpcode() == Instruction::SDiv ||
+           CE->getOpcode() == Instruction::UDiv;
+  }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::SDiv ||
+           I->getOpcode() == Instruction::UDiv;
+  }
+  static inline bool classof(const Value *V) {
+    return (isa<Instruction>(V) && classof(cast<Instruction>(V))) ||
+    (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
+  }
+};
+  
+/// SDivOperator - An Operator with opcode Instruction::SDiv.
+///
+class SDivOperator : public PossiblyExactOperator {
+public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SDivOperator *) { return true; }
   static inline bool classof(const ConstantExpr *CE) {
@@ -211,6 +228,24 @@ public:
   }
 };
 
+/// UDivOperator - An Operator with opcode Instruction::SDiv.
+///
+class UDivOperator : public PossiblyExactOperator {
+public:
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const UDivOperator *) { return true; }
+  static inline bool classof(const ConstantExpr *CE) {
+    return CE->getOpcode() == Instruction::UDiv;
+  }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::UDiv;
+  }
+  static inline bool classof(const Value *V) {
+    return (isa<Instruction>(V) && classof(cast<Instruction>(V))) ||
+    (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
+  }
+};
+  
 class GEPOperator : public Operator {
   enum {
     IsInBounds = (1 << 0)

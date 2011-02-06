@@ -2304,7 +2304,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         if (EatIfPresent(lltok::kw_nuw))
           NUW = true;
       }
-    } else if (Opc == Instruction::SDiv) {
+    } else if (Opc == Instruction::SDiv || Opc == Instruction::UDiv) {
       if (EatIfPresent(lltok::kw_exact))
         Exact = true;
     }
@@ -2347,7 +2347,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     unsigned Flags = 0;
     if (NUW)   Flags |= OverflowingBinaryOperator::NoUnsignedWrap;
     if (NSW)   Flags |= OverflowingBinaryOperator::NoSignedWrap;
-    if (Exact) Flags |= SDivOperator::IsExact;
+    if (Exact) Flags |= PossiblyExactOperator::IsExact;
     Constant *C = ConstantExpr::get(Opc, Val0, Val1, Flags);
     ID.ConstantVal = C;
     ID.Kind = ValID::t_Constant;
@@ -3032,7 +3032,8 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_fsub:
   case lltok::kw_fmul:    return ParseArithmetic(Inst, PFS, KeywordVal, 2);
 
-  case lltok::kw_sdiv: {
+  case lltok::kw_sdiv:
+  case lltok::kw_udiv: {
     bool Exact = false;
     if (EatIfPresent(lltok::kw_exact))
       Exact = true;
@@ -3043,7 +3044,6 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
     return Result;
   }
 
-  case lltok::kw_udiv:
   case lltok::kw_urem:
   case lltok::kw_srem:   return ParseArithmetic(Inst, PFS, KeywordVal, 1);
   case lltok::kw_fdiv:
