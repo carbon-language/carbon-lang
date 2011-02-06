@@ -183,8 +183,15 @@ class CodeGenVTables {
   void ComputeMethodVTableIndices(const CXXRecordDecl *RD);
 
   /// EmitThunk - Emit a single thunk.
-  void EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk);
-  
+  void EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk, 
+                 bool UseAvailableExternallyLinkage);
+
+  /// MaybeEmitThunkAvailableExternally - Try to emit the given thunk with
+  /// available_externally linkage to allow for inlining of thunks.
+  /// This will be done iff optimizations are enabled and the member function
+  /// doesn't contain any incomplete types.
+  void MaybeEmitThunkAvailableExternally(GlobalDecl GD, const ThunkInfo &Thunk);
+
   /// ComputeVTableRelatedInformation - Compute and store all vtable related
   /// information (vtable layout, vbase offset offsets, thunks etc) for the
   /// given record decl.

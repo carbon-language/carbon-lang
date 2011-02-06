@@ -2679,7 +2679,8 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   setThunkVisibility(CGM, MD, Thunk, Fn);
 }
 
-void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
+void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk, 
+                               bool UseAvailableExternallyLinkage)
 {
   llvm::Constant *Entry = CGM.GetAddrOfThunk(GD, Thunk);
   
@@ -2714,9 +2715,37 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
     OldThunkFn->eraseFromParent();
   }
 
-  // Actually generate the thunk body.
   llvm::Function *ThunkFn = cast<llvm::Function>(Entry);
+
+  if (!ThunkFn->isDeclaration()) {
+    if (UseAvailableExternallyLinkage) {
+      // There is already a thunk emitted for this function, do nothing.
+      return;
+    }
+
+    // We should never be able to get a function with a definition here.
+    assert(false && "Shouldn't have an already existing definition");
+  }
+
+  // Actually generate the thunk body.
   CodeGenFunction(CGM).GenerateThunk(ThunkFn, GD, Thunk);
+
+  if (UseAvailableExternallyLinkage)
+    ThunkFn->setLinkage(llvm::GlobalValue::AvailableExternallyLinkage);
+}
+
+void CodeGenVTables::MaybeEmitThunkAvailableExternally(GlobalDecl GD,
+                                                       const ThunkInfo &Thunk) {
+  // We only want to do this when building with optimizations.
+  if (!CGM.getCodeGenOpts().OptimizationLevel)
+    return;
+
+  // We can't emit thunks for member functions with incomplete types.
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  if (CGM.getTypes().VerifyFuncTypeComplete(MD->getType().getTypePtr()))
+    return;
+
+  EmitThunk(GD, Thunk, /*UseAvailableExternallyLinkage=*/true);
 }
 
 void CodeGenVTables::EmitThunks(GlobalDecl GD)
@@ -2741,7 +2770,7 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
 
   const ThunkInfoVectorTy &ThunkInfoVector = I->second;
   for (unsigned I = 0, E = ThunkInfoVector.size(); I != E; ++I)
-    EmitThunk(GD, ThunkInfoVector[I]);
+    EmitThunk(GD, ThunkInfoVector[I], /*UseAvailableExternallyLinkage=*/false);
 }
 
 void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
@@ -2913,7 +2942,8 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
           const ThunkInfo &Thunk = VTableThunks[NextVTableThunkIndex].second;
         
           Init = CGM.GetAddrOfThunk(GD, Thunk);
-        
+          MaybeEmitThunkAvailableExternally(GD, Thunk);
+
           NextVTableThunkIndex++;
         } else {
           const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVTable(GD);
