@@ -120,3 +120,20 @@ define i1 @test13() {
 ; CHECK: @test13
 ; CHECK: ret i1 false
 }
+
+@g6 = constant [2 x i8*] [i8* inttoptr (i64 1 to i8*), i8* inttoptr (i64 2 to i8*)]
+define i64 @test14() nounwind {
+entry:
+  %tmp = load i64* bitcast ([2 x i8*]* @g6 to i64*)
+  ret i64 %tmp
+; CHECK: @test14
+; CHECK: ret i64 1
+}
+
+define i64 @test15() nounwind {
+entry:
+  %tmp = load i64* bitcast (i8** getelementptr inbounds ([2 x i8*]* @g6, i32 0, i64 1) to i64*)
+  ret i64 %tmp
+; CHECK: @test15
+; CHECK: ret i64 2
+}
