@@ -341,14 +341,10 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
   }
   
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-    if (CE->getOpcode() == Instruction::IntToPtr) {
-      uint64_t PtrSize = TD.getTypeAllocSize(C->getType());
-      uint64_t IntSize = TD.getTypeAllocSize(C->getOperand(0)->getType());
-
-      if (PtrSize == IntSize)
+    if (CE->getOpcode() == Instruction::IntToPtr &&
+        CE->getOperand(0)->getType() == TD.getIntPtrType(CE->getContext())) 
         return ReadDataFromGlobal(CE->getOperand(0), ByteOffset, CurPtr, 
                                   BytesLeft, TD);
-    }
   }
 
   // Otherwise, unknown initializer type.
