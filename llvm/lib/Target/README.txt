@@ -1866,27 +1866,6 @@ bb3:            ; preds = %entry
 }
 //===---------------------------------------------------------------------===//
 
-clang -O3 fails to devirtualize this virtual inheritance case: (GCC PR45875)
-Looks related to PR3100
-
-struct c1 {};
-struct c10 : c1{
-  virtual void foo ();
-};
-struct c11 : c10, c1{
-  virtual void f6 ();
-};
-struct c28 : virtual c11{
-  void f6 ();
-};
-void check_c28 () {
-  c28 obj;
-  c11 *ptr = &obj;
-  ptr->f6 ();
-}
-
-//===---------------------------------------------------------------------===//
-
 We compile this:
 
 int foo(int a) { return (a & (~15)) / 16; }
