@@ -2723,8 +2723,13 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
       return;
     }
 
-    // We should never be able to get a function with a definition here.
-    assert(false && "Shouldn't have an already existing definition");
+    // If a function has a body, it should have available_externally linkage.
+    assert(ThunkFn->hasAvailableExternallyLinkage() &&
+           "Function should have available_externally linkage!");
+
+    // Change the linkage.
+    CGM.setFunctionLinkage(cast<CXXMethodDecl>(GD.getDecl()), ThunkFn);
+    return;
   }
 
   // Actually generate the thunk body.

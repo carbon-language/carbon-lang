@@ -68,3 +68,21 @@ void f() {
 }
 
 }
+
+// Test that we don't assert.
+namespace Test3 {
+
+struct A {
+  virtual ~A();
+
+  int a;
+};
+
+struct B : A { };
+struct C : virtual B { };
+
+void f() {
+  C c;
+}
+
+}
