@@ -2,6 +2,7 @@
 // RUN: FileCheck --check-prefix=CHECK-TEST1 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-TEST2 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-TEST5 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-TEST7 %s < %t
 
 #include <typeinfo>
 
@@ -142,5 +143,29 @@ struct D : C {
 };
 
 D::D() { }
+
+}
+
+namespace Test7 {
+
+struct c1 {};
+struct c10 : c1{
+  virtual void foo ();
+};
+struct c11 : c10, c1{
+  virtual void f6 ();
+};
+struct c28 : virtual c11{
+  void f6 ();
+};
+
+// CHECK-TEST7: define void @_ZN5Test79check_c28Ev
+// CHECK-TEST7: call void @_ZN5Test73c282f6Ev
+// CHECK-TEST7: ret void
+void check_c28 () {
+  c28 obj;
+  c11 *ptr = &obj;
+  ptr->f6 ();
+}
 
 }
