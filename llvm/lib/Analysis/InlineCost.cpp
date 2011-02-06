@@ -242,11 +242,6 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
   if (Metrics.NumRets==1)
     --Metrics.NumInsts;
 
-  // Don't bother calculating argument weights if we are never going to inline
-  // the function anyway.
-  if (NeverInline())
-    return;
-
   // Check out all of the arguments to the function, figuring out how much
   // code can be eliminated if one of the arguments is a constant.
   ArgumentWeights.reserve(F->arg_size());
