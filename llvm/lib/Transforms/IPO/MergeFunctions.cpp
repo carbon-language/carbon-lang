@@ -389,12 +389,8 @@ bool FunctionComparator::enumerate(const Value *V1, const Value *V2) {
       C1 == ConstantExpr::getBitCast(const_cast<Constant*>(C2), C1->getType());
   }
 
-  if (isa<InlineAsm>(V1) && isa<InlineAsm>(V2)) {
-    const InlineAsm *IA1 = cast<InlineAsm>(V1);
-    const InlineAsm *IA2 = cast<InlineAsm>(V2);
-    return IA1->getAsmString() == IA2->getAsmString() &&
-           IA1->getConstraintString() == IA2->getConstraintString();
-  }
+  if (isa<InlineAsm>(V1) || isa<InlineAsm>(V2))
+    return V1 == V2;
 
   unsigned long &ID1 = Map1[V1];
   if (!ID1)
