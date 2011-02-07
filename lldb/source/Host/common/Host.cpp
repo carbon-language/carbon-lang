@@ -25,6 +25,8 @@
 #include <libproc.h>
 #include <mach-o/dyld.h>
 #include <sys/sysctl.h>
+#elif defined (__linux__)
+#include <sys/wait.h>
 #endif
 
 using namespace lldb;
@@ -243,7 +245,7 @@ Host::GetArchitecture ()
             }
         }
 #elif defined (__linux__)
-        g_host_arch.SetArch(7u, 144u);
+        g_host_arch.SetElfArch(7u, 144u);
 #endif
     }
     return g_host_arch;
@@ -648,7 +650,11 @@ Host::DynamicLibraryOpen (const FileSpec &file_spec, Error &error)
     char path[PATH_MAX];
     if (file_spec.GetPath(path, sizeof(path)))
     {
+#if defined (__linux__)
+        dynamic_library_handle = ::dlopen (path, RTLD_LAZY | RTLD_GLOBAL);
+#else
         dynamic_library_handle = ::dlopen (path, RTLD_LAZY | RTLD_GLOBAL | RTLD_FIRST);
+#endif
         if (dynamic_library_handle)
         {
             error.Clear();

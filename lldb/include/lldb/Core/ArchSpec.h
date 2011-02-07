@@ -269,6 +269,14 @@ public:
         m_sub = sub;
     }
 
+    void
+    SetElfArch (uint32_t cpu, uint32_t sub)
+    {
+        m_type = lldb::eArchTypeELF;
+        m_cpu = cpu;
+        m_sub = sub;
+    }
+
     //------------------------------------------------------------------
     /// Returns the default endianness of the architecture.
     ///
