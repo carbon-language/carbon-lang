@@ -77,6 +77,9 @@ public:
   Instruction *CreateUDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateUDiv(LHS, RHS);
   }
+  Instruction *CreateExactUDiv(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateExactUDiv(LHS, RHS);
+  }
   Instruction *CreateSDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateSDiv(LHS, RHS);
   }

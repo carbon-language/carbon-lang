@@ -72,6 +72,9 @@ public:
   Constant *CreateUDiv(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getUDiv(LHS, RHS);
   }
+  Constant *CreateExactUDiv(Constant *LHS, Constant *RHS) const {
+    return ConstantExpr::getExactUDiv(LHS, RHS);
+  }
   Constant *CreateSDiv(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getSDiv(LHS, RHS);
   }

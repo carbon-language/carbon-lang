@@ -527,6 +527,12 @@ public:
         return Insert(Folder.CreateUDiv(LC, RC), Name);
     return Insert(BinaryOperator::CreateUDiv(LHS, RHS), Name);
   }
+  Value *CreateExactUDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Insert(Folder.CreateExactUDiv(LC, RC), Name);
+    return Insert(BinaryOperator::CreateExactUDiv(LHS, RHS), Name);
+  }
   Value *CreateSDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))

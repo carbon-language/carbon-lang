@@ -228,7 +228,7 @@ public:
   }
 };
 
-/// UDivOperator - An Operator with opcode Instruction::SDiv.
+/// UDivOperator - An Operator with opcode Instruction::UDiv.
 ///
 class UDivOperator : public PossiblyExactOperator {
 public:

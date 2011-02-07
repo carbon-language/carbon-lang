@@ -85,6 +85,9 @@ public:
   Constant *CreateUDiv(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getUDiv(LHS, RHS));
   }
+  Constant *CreateExactUDiv(Constant *LHS, Constant *RHS) const {
+    return Fold(ConstantExpr::getExactUDiv(LHS, RHS));
+  }
   Constant *CreateSDiv(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getSDiv(LHS, RHS));
   }

@@ -321,6 +321,27 @@ public:
     return BO;
   }
 
+  /// CreateExactUDiv - Create a UDiv operator with the exact flag set.
+  ///
+  static BinaryOperator *CreateExactUDiv(Value *V1, Value *V2,
+                                         const Twine &Name = "") {
+    BinaryOperator *BO = CreateUDiv(V1, V2, Name);
+    BO->setIsExact(true);
+    return BO;
+  }
+  static BinaryOperator *CreateExactUDiv(Value *V1, Value *V2,
+                                         const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = CreateUDiv(V1, V2, Name, BB);
+    BO->setIsExact(true);
+    return BO;
+  }
+  static BinaryOperator *CreateExactUDiv(Value *V1, Value *V2,
+                                         const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = CreateUDiv(V1, V2, Name, I);
+    BO->setIsExact(true);
+    return BO;
+  }
+
   /// CreateExactSDiv - Create an SDiv operator with the exact flag set.
   ///
   static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
