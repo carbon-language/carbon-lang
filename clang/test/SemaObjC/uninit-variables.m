@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wuninitialized -fsyntax-only -fblocks %s -verify
+// RUN: %clang_cc1 -fsyntax-only -Wuninitialized-experimental -fsyntax-only -fblocks %s -verify
 
 // Duplicated from uninit-variables.c.
 // Test just to ensure the analysis is working.

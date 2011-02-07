@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wuninitialized -fsyntax-only -fblocks %s -verify
+// RUN: %clang_cc1 -fsyntax-only -Wuninitialized-experimental -fsyntax-only -fblocks %s -verify
 
 int test1() {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
