@@ -60,6 +60,97 @@ STATISTIC(NumTailCalls, "Number of tail calls");
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
 
+static SDValue Insert128BitVector(SDValue Result,
+                                  SDValue Vec,
+                                  SDValue Idx,
+                                  SelectionDAG &DAG,
+                                  DebugLoc dl);
+static SDValue Extract128BitVector(SDValue Vec,
+                                   SDValue Idx,
+                                   SelectionDAG &DAG,
+                                   DebugLoc dl);
+
+/// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
+/// sets things up to match to an AVX VEXTRACTF128 instruction or a
+/// simple subregister reference.
+static SDValue Extract128BitVector(SDValue Vec,
+                                   SDValue Idx,
+                                   SelectionDAG &DAG,
+                                   DebugLoc dl) {
+  EVT VT = Vec.getValueType();
+  assert(VT.getSizeInBits() == 256 && "Unexpected vector size!");
+
+  EVT ElVT = VT.getVectorElementType();
+
+  int Factor = VT.getSizeInBits() / 128;
+
+  EVT ResultVT = EVT::getVectorVT(*DAG.getContext(),
+                                  ElVT,
+                                  VT.getVectorNumElements() / Factor);
+
+  // Extract from UNDEF is UNDEF.
+  if (Vec.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, dl, ResultVT);
+
+  if (isa<ConstantSDNode>(Idx)) {
+    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+
+    // Extract the relevant 128 bits.  Generate an EXTRACT_SUBVECTOR
+    // we can match to VEXTRACTF128.
+    unsigned ElemsPerChunk = 128 / ElVT.getSizeInBits();
+
+    // This is the index of the first element of the 128-bit chunk
+    // we want.
+    unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits()) / 128)
+                                 * ElemsPerChunk);
+
+    SDValue VecIdx = DAG.getConstant(NormalizedIdxVal, MVT::i32);
+
+    SDValue Result = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResultVT, Vec,
+                                 VecIdx);
+
+    return Result;
+  }
+
+  return SDValue();
+}
+
+/// Generate a DAG to put 128-bits into a vector > 128 bits.  This
+/// sets things up to match to an AVX VINSERTF128 instruction or a
+/// simple superregister reference.
+static SDValue Insert128BitVector(SDValue Result,
+                                  SDValue Vec,
+                                  SDValue Idx,
+                                  SelectionDAG &DAG,
+                                  DebugLoc dl) {
+  if (isa<ConstantSDNode>(Idx)) {
+    EVT VT = Vec.getValueType();
+    assert(VT.getSizeInBits() == 128 && "Unexpected vector size!");
+
+    EVT ElVT = VT.getVectorElementType();
+
+    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+
+    EVT ResultVT = Result.getValueType();
+
+    // Insert the relevant 128 bits.
+    unsigned ElemsPerChunk = 128 / ElVT.getSizeInBits();
+
+    // This is the index of the first element of the 128-bit chunk
+    // we want.
+    unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits()) / 128)
+                                 * ElemsPerChunk);
+
+    SDValue VecIdx = DAG.getConstant(NormalizedIdxVal, MVT::i32);
+
+    Result = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec,
+                         VecIdx);
+    return Result;
+  }
+
+  return SDValue();
+}
+
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
@@ -4189,6 +4280,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
+
   // All zero's are handled with pxor in SSE2 and above, xorps in SSE1.
   // All one's are handled with pcmpeqd. In AVX, zero's are handled with
   // vpxor in 128-bit and xor{pd,ps} in 256-bit, but no 256 version of pcmpeqd
@@ -5918,7 +6010,14 @@ X86TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 X86TargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op, SelectionDAG &DAG) const {
   if (Subtarget->hasAVX()) {
-    // TODO
+    DebugLoc dl = Op.getNode()->getDebugLoc();
+    SDValue Vec = Op.getNode()->getOperand(0);
+    SDValue Idx = Op.getNode()->getOperand(1);
+
+    if (Op.getNode()->getValueType(0).getSizeInBits() == 128
+        && Vec.getNode()->getValueType(0).getSizeInBits() == 256) {
+        return Extract128BitVector(Vec, Idx, DAG, dl);
+    }
   }
   return SDValue();
 }
@@ -5936,7 +6035,7 @@ X86TargetLowering::LowerINSERT_SUBVECTOR(SDValue Op, SelectionDAG &DAG) const {
 
     if (Op.getNode()->getValueType(0).getSizeInBits() == 256
         && SubVec.getNode()->getValueType(0).getSizeInBits() == 128) {
-      // TODO
+      return Insert128BitVector(Vec, SubVec, Idx, DAG, dl);
     }
   }
   return SDValue();
