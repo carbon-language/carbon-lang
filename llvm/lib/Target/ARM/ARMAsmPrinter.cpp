@@ -66,6 +66,7 @@ namespace {
   public:
     virtual void MaybeSwitchVendor(StringRef Vendor) = 0;
     virtual void EmitAttribute(unsigned Attribute, unsigned Value) = 0;
+    virtual void EmitTextAttribute(unsigned Attribute, StringRef String) = 0;
     virtual void Finish() = 0;
     virtual ~AttributeEmitter() {}
   };
@@ -82,6 +83,14 @@ namespace {
                            Twine(Attribute) + ", " + Twine(Value));
     }
 
+    void EmitTextAttribute(unsigned Attribute, StringRef String) {
+      switch (Attribute) {
+      case ARMBuildAttrs::CPU_name:
+        Streamer.EmitRawText(StringRef("\t.cpu ") + String);
+        break;
+      default: assert(0 && "Unsupported Text attribute in ASM Mode"); break;
+      }
+    }
     void Finish() { }
   };
 
@@ -113,6 +122,12 @@ namespace {
       // FIXME: should be ULEB
       Contents += Attribute;
       Contents += Value;
+    }
+
+    void EmitTextAttribute(unsigned Attribute, StringRef String) {
+      Contents += Attribute;
+      Contents += String;
+      Contents += 0;
     }
 
     void Finish() {
@@ -449,32 +464,53 @@ void ARMAsmPrinter::emitAttributes() {
   AttrEmitter->MaybeSwitchVendor("aeabi");
 
   std::string CPUString = Subtarget->getCPUString();
-  if (OutStreamer.hasRawTextSupport()) {
-    if (CPUString != "generic")
-      OutStreamer.EmitRawText(StringRef("\t.cpu ") + CPUString);
-  } else {
-    assert(CPUString == "generic" && "Unsupported .cpu attribute for ELF/.o");
+
+  if (CPUString == "cortex-a8" ||
+      Subtarget->isCortexA8()) {
+    AttrEmitter->EmitTextAttribute(ARMBuildAttrs::CPU_name, "CORTEX-A8");
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v7);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch_profile,
+                               ARMBuildAttrs::ApplicationProfile);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use,
+                               ARMBuildAttrs::Allowed);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
+                               ARMBuildAttrs::AllowThumb32);
+    // Fixme: figure out when this is emitted.
+    //AttrEmitter->EmitAttribute(ARMBuildAttrs::WMMX_arch,
+    //                           ARMBuildAttrs::AllowWMMXv1);
+    //
+
+    /// ADD additional Else-cases here!
+  } else if (CPUString == "generic") {
     // FIXME: Why these defaults?
     AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v4T);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use, 1);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use, 1);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use,
+                               ARMBuildAttrs::Allowed);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
+                               ARMBuildAttrs::Allowed);
   }
 
   // FIXME: Emit FPU type
   if (Subtarget->hasVFP2())
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch, 2);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
+                               ARMBuildAttrs::AllowFPv2);
 
   // Signal various FP modes.
   if (!UnsafeFPMath) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal, 1);
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions, 1);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal,
+                               ARMBuildAttrs::Allowed);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
+                               ARMBuildAttrs::Allowed);
   }
 
   if (NoInfsFPMath && NoNaNsFPMath)
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model, 1);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
+                               ARMBuildAttrs::Allowed);
   else
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model, 3);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
+                               ARMBuildAttrs::AllowIEE754);
 
+  // FIXME: add more flags to ARMBuildAttrs.h
   // 8-bytes alignment stuff.
   AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_align8_needed, 1);
   AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_align8_preserved, 1);
@@ -486,7 +522,8 @@ void ARMAsmPrinter::emitAttributes() {
   }
   // FIXME: Should we signal R9 usage?
 
-  AttrEmitter->EmitAttribute(ARMBuildAttrs::DIV_use, 1);
+  if (Subtarget->hasDivide())
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::DIV_use, 1);
 
   AttrEmitter->Finish();
   delete AttrEmitter;
