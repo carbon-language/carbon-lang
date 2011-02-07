@@ -58,6 +58,7 @@ class ARMAsmParser : public TargetAsmParser {
   bool ParseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*>&);
   bool ParseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*>&);
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool ParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &, StringRef Mnemonic);
   bool ParsePrefix(ARMMCExpr::VariantKind &RefKind);
@@ -119,6 +120,7 @@ class ARMOperand : public MCParsedAsmOperand {
     CoprocNum,
     CoprocReg,
     Immediate,
+    MemBarrierOpt,
     Memory,
     Register,
     RegisterList,
@@ -134,6 +136,10 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       ARMCC::CondCodes Val;
     } CC;
+
+    struct {
+      ARM_MB::MemBOpt Val;
+    } MBOpt;
 
     struct {
       unsigned Val;
@@ -199,6 +205,9 @@ public:
     case Immediate:
       Imm = o.Imm;
       break;
+    case MemBarrierOpt:
+      MBOpt = o.MBOpt;
+      break;
     case Memory:
       Mem = o.Mem;
       break;
@@ -239,6 +248,11 @@ public:
   const MCExpr *getImm() const {
     assert(Kind == Immediate && "Invalid access!");
     return Imm.Val;
+  }
+
+  ARM_MB::MemBOpt getMemBarrierOpt() const {
+    assert(Kind == MemBarrierOpt && "Invalid access!");
+    return MBOpt.Val;
   }
 
   /// @name Memory Operand Accessors
@@ -285,6 +299,7 @@ public:
   bool isDPRRegList() const { return Kind == DPRRegisterList; }
   bool isSPRRegList() const { return Kind == SPRRegisterList; }
   bool isToken() const { return Kind == Token; }
+  bool isMemBarrierOpt() const { return Kind == MemBarrierOpt; }
   bool isMemory() const { return Kind == Memory; }
   bool isMemMode5() const {
     if (!isMemory() || getMemOffsetIsReg() || getMemWriteback() ||
@@ -371,6 +386,11 @@ public:
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+
+  void addMemBarrierOptOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(unsigned(getMemBarrierOpt())));
   }
 
   void addMemMode5Operands(MCInst &Inst, unsigned N) const {
@@ -524,6 +544,14 @@ public:
     Op->EndLoc = E;
     return Op;
   }
+
+  static ARMOperand *CreateMemBarrierOpt(ARM_MB::MemBOpt Opt, SMLoc S) {
+    ARMOperand *Op = new ARMOperand(MemBarrierOpt);
+    Op->MBOpt.Val = Opt;
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+    return Op;
+  }
 };
 
 } // end anonymous namespace.
@@ -544,6 +572,9 @@ void ARMOperand::dump(raw_ostream &OS) const {
     break;
   case Immediate:
     getImm()->print(OS);
+    break;
+  case MemBarrierOpt:
+    OS << "<ARM_MB::" << MemBOptToString(getMemBarrierOpt()) << ">";
     break;
   case Memory:
     OS << "<memory "
@@ -820,6 +851,33 @@ ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   }
 
   Operands.push_back(ARMOperand::CreateRegList(Registers, S, E));
+  return false;
+}
+
+/// ParseMemBarrierOptOperand - Try to parse DSB/DMB data barrier options.
+bool ARMAsmParser::
+ParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+  const AsmToken &Tok = Parser.getTok();
+  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  StringRef OptStr = Tok.getString();
+
+  unsigned Opt = StringSwitch<unsigned>(OptStr.slice(0, OptStr.size()))
+    .Case("sy",    ARM_MB::SY)
+    .Case("st",    ARM_MB::ST)
+    .Case("ish",   ARM_MB::ISH)
+    .Case("ishst", ARM_MB::ISHST)
+    .Case("nsh",   ARM_MB::NSH)
+    .Case("nshst", ARM_MB::NSHST)
+    .Case("osh",   ARM_MB::OSH)
+    .Case("oshst", ARM_MB::OSHST)
+    .Default(~0U);
+
+  if (Opt == ~0U)
+    return true;
+
+  Parser.Lex(); // Eat identifier token.
+  Operands.push_back(ARMOperand::CreateMemBarrierOpt((ARM_MB::MemBOpt)Opt, S));
   return false;
 }
 

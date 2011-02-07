@@ -3191,6 +3191,7 @@ def MVNCCi : AI1<0b1111, (outs GPR:$Rd),
 
 def memb_opt : Operand<i32> {
   let PrintMethod = "printMemBOption";
+  let ParserMatchClass = MemBarrierOptOperand;
 }
 
 // memory barriers protect the atomic sequences

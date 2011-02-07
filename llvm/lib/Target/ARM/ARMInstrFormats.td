@@ -149,6 +149,12 @@ def CCOutOperand : AsmOperandClass {
   let SuperClasses = [];
 }
 
+def MemBarrierOptOperand : AsmOperandClass {
+  let Name = "MemBarrierOpt";
+  let SuperClasses = [];
+  let ParserMethod = "ParseMemBarrierOptOperand";
+}
+
 // ARM Predicate operand. Default to 14 = always (AL). Second part is CC
 // register whose default is 0 (no register).
 def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
