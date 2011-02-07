@@ -141,8 +141,8 @@ UnifiedReturnBlock:             ; preds = %shortcirc_done.4, %shortcirc_next.4
         ret i1 %UnifiedRetVal
         
 ; CHECK: @test6
-; CHECK: %off = add i32 %tmp.2.i, -14
-; CHECK: %switch = icmp ult i32 %off, 6
+; CHECK: %tmp.2.i.off = add i32 %tmp.2.i, -14
+; CHECK: %switch = icmp ult i32 %tmp.2.i.off, 6
 }
 
 define void @test7(i8 zeroext %c, i32 %x) nounwind ssp noredzone {
@@ -441,8 +441,8 @@ if.end:
 define zeroext i1 @test16(i32 %x) nounwind {
 entry:
 ; CHECK: @test16
-; CHECK: %off = add i32 %x, -1
-; CHECK: %switch = icmp ult i32 %off, 3
+; CHECK: %x.off = add i32 %x, -1
+; CHECK: %switch = icmp ult i32 %x.off, 3
   %cmp.i = icmp eq i32 %x, 1
   br i1 %cmp.i, label %lor.end, label %lor.lhs.false
 
@@ -458,3 +458,24 @@ lor.end:
   %0 = phi i1 [ true, %lor.lhs.false ], [ true, %entry ], [ %cmp.i1, %lor.rhs ]
   ret i1 %0
 }
+
+; Check that we don't turn an icmp into a switch where it's not useful.
+define void @test17(i32 %x, i32 %y) {
+  %cmp = icmp ult i32 %x, 3
+  %switch = icmp ult i32 %y, 2
+  %or.cond775 = or i1 %cmp, %switch
+  br i1 %or.cond775, label %lor.lhs.false8, label %return
+
+lor.lhs.false8:
+  tail call void @foo1()
+  ret void
+
+return:
+  ret void
+
+; CHECK: @test17
+; CHECK-NOT: switch.early.test
+; CHECK-NOT: switch i32
+; CHECK: ret void
+}
+

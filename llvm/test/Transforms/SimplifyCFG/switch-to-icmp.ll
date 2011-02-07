@@ -16,8 +16,8 @@ lor.end:
  ret i1 %0
 
 ; CHECK: @test1
-; CHECK: %off = add i32 %x, -1
-; CHECK: %switch = icmp ult i32 %off, 3
+; CHECK: %x.off = add i32 %x, -1
+; CHECK: %switch = icmp ult i32 %x.off, 3
 }
 
 define zeroext i1 @test2(i32 %x) nounwind readnone ssp noredzone {
@@ -35,6 +35,5 @@ lor.end:
  ret i1 %0
 
 ; CHECK: @test2
-; CHECK: %off = add i32 %x, 0
-; CHECK: %switch = icmp ult i32 %off, 2
+; CHECK: %switch = icmp ult i32 %x, 2
 }

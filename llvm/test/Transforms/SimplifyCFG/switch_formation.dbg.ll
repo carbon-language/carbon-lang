@@ -14,8 +14,8 @@ declare void @llvm.dbg.stoppoint(i32, i32, { }*) nounwind
 
 define i1 @t({ i32, i32 }* %I) {
 ; CHECK: @t
-; CHECK: %off = add i32 %tmp.2.i, -14
-; CHECK: %switch = icmp ult i32 %off, 6
+; CHECK: %tmp.2.i.off = add i32 %tmp.2.i, -14
+; CHECK: %switch = icmp ult i32 %tmp.2.i.off, 6
 entry:
         %tmp.1.i = getelementptr { i32, i32 }* %I, i64 0, i32 1         ; <i32*> [#uses=1]
         %tmp.2.i = load i32* %tmp.1.i           ; <i32> [#uses=6]

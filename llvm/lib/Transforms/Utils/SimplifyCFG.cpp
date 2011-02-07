@@ -305,7 +305,7 @@ static ConstantInt *GetConstantInt(Value *V, const TargetData *TD) {
 /// Values vector.
 static Value *
 GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
-                       const TargetData *TD, bool isEQ) {
+                       const TargetData *TD, bool isEQ, unsigned &UsedICmps) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) return 0;
   
@@ -313,6 +313,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
   if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
     if (ConstantInt *C = GetConstantInt(I->getOperand(1), TD)) {
       if (ICI->getPredicate() == (isEQ ? ICmpInst::ICMP_EQ:ICmpInst::ICMP_NE)) {
+        UsedICmps++;
         Vals.push_back(C);
         return I->getOperand(0);
       }
@@ -335,6 +336,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
       
       for (APInt Tmp = Span.getLower(); Tmp != Span.getUpper(); ++Tmp)
         Vals.push_back(ConstantInt::get(V->getContext(), Tmp));
+      UsedICmps++;
       return I->getOperand(0);
     }
     return 0;
@@ -345,14 +347,17 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
     return 0;
   
   unsigned NumValsBeforeLHS = Vals.size();
+  unsigned UsedICmpsBeforeLHS = UsedICmps;
   if (Value *LHS = GatherConstantCompares(I->getOperand(0), Vals, Extra, TD,
-                                          isEQ)) {
+                                          isEQ, UsedICmps)) {
     unsigned NumVals = Vals.size();
+    unsigned UsedICmpsBeforeRHS = UsedICmps;
     if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, TD,
-                                            isEQ)) {
+                                            isEQ, UsedICmps)) {
       if (LHS == RHS)
         return LHS;
       Vals.resize(NumVals);
+      UsedICmps = UsedICmpsBeforeRHS;
     }
 
     // The RHS of the or/and can't be folded in and we haven't used "Extra" yet,
@@ -363,6 +368,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
     }
     
     Vals.resize(NumValsBeforeLHS);
+    UsedICmps = UsedICmpsBeforeLHS;
     return 0;
   }
   
@@ -372,7 +378,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
     Value *OldExtra = Extra;
     Extra = I->getOperand(0);
     if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, TD,
-                                            isEQ))
+                                            isEQ, UsedICmps))
       return RHS;
     assert(Vals.size() == NumValsBeforeLHS);
     Extra = OldExtra;
@@ -1926,16 +1932,23 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   std::vector<ConstantInt*> Values;
   bool TrueWhenEqual = true;
   Value *ExtraCase = 0;
+  unsigned UsedICmps = 0;
   
   if (Cond->getOpcode() == Instruction::Or) {
-    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, true);
+    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, true,
+                                     UsedICmps);
   } else if (Cond->getOpcode() == Instruction::And) {
-    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, false);
+    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, false,
+                                     UsedICmps);
     TrueWhenEqual = false;
   }
   
   // If we didn't have a multiply compared value, fail.
   if (CompVal == 0) return false;
+
+  // Avoid turning single icmps into a switch.
+  if (UsedICmps <= 1)
+    return false;
 
   // There might be duplicate constants in the list, which the switch
   // instruction can't handle, remove them now.
@@ -2262,7 +2275,9 @@ static bool TurnSwitchRangeIntoICmp(SwitchInst *SI) {
   Constant *Offset = ConstantExpr::getNeg(Cases.back());
   Constant *NumCases = ConstantInt::get(Offset->getType(), SI->getNumCases()-1);
 
-  Value *Sub = BinaryOperator::CreateAdd(SI->getCondition(), Offset, "off", SI);
+  Value *Sub = SI->getCondition();
+  if (!Offset->isNullValue())
+    Sub = BinaryOperator::CreateAdd(Sub, Offset, Sub->getName()+".off", SI);
   Value *Cmp = new ICmpInst(SI, ICmpInst::ICMP_ULT, Sub, NumCases, "switch");
   BranchInst::Create(SI->getSuccessor(1), SI->getDefaultDest(), Cmp, SI);
 
