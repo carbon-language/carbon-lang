@@ -855,9 +855,9 @@ public:
   void getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, std::string &S)
     const;
 
-  /// getObjCEncodingForBlockDecl - Return the encoded type for this block
+  /// getObjCEncodingForBlock - Return the encoded type for this block
   /// declaration.
-  void getObjCEncodingForBlock(const BlockExpr *Expr, std::string& S) const;
+  std::string getObjCEncodingForBlock(const BlockExpr *blockExpr) const;
   
   /// getObjCEncodingForPropertyDecl - Return the encoded type for
   /// this method declaration. If non-NULL, Container must be either

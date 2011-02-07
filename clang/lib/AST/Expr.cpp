@@ -2961,13 +2961,12 @@ Stmt::child_iterator ObjCMessageExpr::child_end() {
 }
 
 // Blocks
-BlockDeclRefExpr::BlockDeclRefExpr(ValueDecl *d, QualType t, ExprValueKind VK,
+BlockDeclRefExpr::BlockDeclRefExpr(VarDecl *d, QualType t, ExprValueKind VK,
                                    SourceLocation l, bool ByRef, 
-                                   bool constAdded, Stmt *copyConstructorVal)
+                                   bool constAdded)
   : Expr(BlockDeclRefExprClass, t, VK, OK_Ordinary, false, false,
          d->isParameterPack()),
-    D(d), Loc(l), IsByRef(ByRef),
-    ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) 
+    D(d), Loc(l), IsByRef(ByRef), ConstQualAdded(constAdded)
 {
   bool TypeDependent = false;
   bool ValueDependent = false;

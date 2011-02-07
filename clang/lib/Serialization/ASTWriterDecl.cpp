@@ -624,10 +624,20 @@ void ASTDeclWriter::VisitBlockDecl(BlockDecl *D) {
        P != PEnd; ++P)
     Writer.AddDeclRef(*P, Record);
   Record.push_back(D->capturesCXXThis());
-  Record.push_back(D->getNumCapturedDecls());
+  Record.push_back(D->getNumCaptures());
   for (BlockDecl::capture_iterator
-         i = D->capture_begin(), e = D->capture_end(); i != e; ++i)
-    Writer.AddDeclRef(*i, Record);
+         i = D->capture_begin(), e = D->capture_end(); i != e; ++i) {
+    const BlockDecl::Capture &capture = *i;
+    Writer.AddDeclRef(capture.getVariable(), Record);
+
+    unsigned flags = 0;
+    if (capture.isByRef()) flags |= 1;
+    if (capture.isNested()) flags |= 2;
+    if (capture.hasCopyExpr()) flags |= 4;
+    Record.push_back(flags);
+
+    if (capture.hasCopyExpr()) Writer.AddStmt(capture.getCopyExpr());
+  }
 
   Code = serialization::DECL_BLOCK;
 }

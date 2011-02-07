@@ -37,6 +37,7 @@ namespace CodeGen {
   class CodeGenModule;
   class CodeGenFunction;
   class GlobalDecl;
+  class CGBlockInfo;
 
 /// CGDebugInfo - This class gathers all debug information during compilation
 /// and is responsible for emitting to llvm globals or pass directly to
@@ -169,10 +170,10 @@ public:
 
   /// EmitDeclareOfBlockDeclRefVariable - Emit call to llvm.dbg.declare for an
   /// imported variable declaration in a block.
-  void EmitDeclareOfBlockDeclRefVariable(const BlockDeclRefExpr *BDRE,
-                                         llvm::Value *AI,
+  void EmitDeclareOfBlockDeclRefVariable(const VarDecl *variable,
+                                         llvm::Value *storage,
                                          CGBuilderTy &Builder,
-                                         CodeGenFunction *CGF);
+                                         const CGBlockInfo &blockInfo);
 
   /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
   /// variable declaration.
@@ -195,9 +196,10 @@ private:
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
                    CGBuilderTy &Builder);
 
-  /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
-  void EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag, llvm::Value *AI,
-                   CGBuilderTy &Builder, CodeGenFunction *CGF);
+  /// EmitDeclare - Emit call to llvm.dbg.declare for a variable
+  /// declaration from an enclosing block.
+  void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
+                   CGBuilderTy &Builder, const CGBlockInfo &blockInfo);
 
   // EmitTypeForVarWithBlocksAttr - Build up structure info for the byref.  
   // See BuildByRefType.

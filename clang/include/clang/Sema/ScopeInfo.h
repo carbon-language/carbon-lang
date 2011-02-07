@@ -116,8 +116,11 @@ public:
   /// Its return type may be BuiltinType::Dependent.
   QualType FunctionType;
 
-  /// Captures - The set of variables captured by this block.
-  llvm::SmallSetVector<VarDecl*, 4> Captures;
+  /// CaptureMap - A map of captured variables to (index+1) into Captures.
+  llvm::DenseMap<VarDecl*, unsigned> CaptureMap;
+
+  /// Captures - The captured variables.
+  llvm::SmallVector<BlockDecl::Capture, 4> Captures;
 
   /// CapturesCXXThis - Whether this block captures 'this'.
   bool CapturesCXXThis;

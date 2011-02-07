@@ -3693,10 +3693,11 @@ std::string charUnitsToString(const CharUnits &CU) {
   return llvm::itostr(CU.getQuantity());
 }
 
-/// getObjCEncodingForBlockDecl - Return the encoded type for this block
+/// getObjCEncodingForBlock - Return the encoded type for this block
 /// declaration.
-void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr, 
-                                             std::string& S) const {
+std::string ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr) const {
+  std::string S;
+
   const BlockDecl *Decl = Expr->getBlockDecl();
   QualType BlockTy =
       Expr->getType()->getAs<BlockPointerType>()->getPointeeType();
@@ -3739,6 +3740,8 @@ void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr,
     S += charUnitsToString(ParmOffset);
     ParmOffset += getObjCEncodingTypeSize(PType);
   }
+
+  return S;
 }
 
 void ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,

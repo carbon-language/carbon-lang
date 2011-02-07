@@ -1300,7 +1300,9 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
       CurDecl = getContext().getTranslationUnitDecl();
 
     std::string FunctionName =
-      PredefinedExpr::ComputeName((PredefinedExpr::IdentType)Type, CurDecl);
+        (isa<BlockDecl>(CurDecl)
+         ? FnName.str()
+         : PredefinedExpr::ComputeName((PredefinedExpr::IdentType)Type, CurDecl));
 
     llvm::Constant *C =
       CGM.GetAddrOfConstantCString(FunctionName, GlobalVarName.c_str());

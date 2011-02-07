@@ -56,6 +56,7 @@ namespace CodeGen {
 
 namespace CodeGen {
   class CodeGenModule;
+  class CGBlockInfo;
 
 // FIXME: Several methods should be pure virtual but aren't to avoid the
 // partially-implemented subclass breaking.
@@ -221,9 +222,8 @@ public:
                                         llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr,
                                         llvm::Value *Size) = 0;
-  virtual llvm::Constant *GCBlockLayout(CodeGen::CodeGenFunction &CGF,
-                  const llvm::SmallVectorImpl<const Expr *> &) = 0;
-                                        
+  virtual llvm::Constant *BuildGCBlockLayout(CodeGen::CodeGenModule &CGM,
+                                  const CodeGen::CGBlockInfo &blockInfo) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.

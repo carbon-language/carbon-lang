@@ -769,7 +769,6 @@ void ASTStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->isByRef());
   Record.push_back(E->isConstQualAdded());
-  Writer.AddStmt(E->getCopyConstructorExpr());
   Code = serialization::EXPR_BLOCK_DECL_REF;
 }
 

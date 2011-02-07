@@ -216,8 +216,8 @@ public:
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar);
-  virtual llvm::Constant *GCBlockLayout(CodeGen::CodeGenFunction &CGF,
-              const llvm::SmallVectorImpl<const Expr *> &) {
+  virtual llvm::Constant *BuildGCBlockLayout(CodeGen::CodeGenModule &CGM,
+                                             const CGBlockInfo &blockInfo) {
     return NULLPtr;
   }
 };

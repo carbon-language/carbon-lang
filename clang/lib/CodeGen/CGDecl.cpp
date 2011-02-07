@@ -328,7 +328,7 @@ llvm::Value *CodeGenFunction::BuildBlockByrefAddress(llvm::Value *BaseAddr,
 ///        T x;
 ///      } x
 ///
-const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
+const llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
   std::pair<const llvm::Type *, unsigned> &Info = ByRefValueInfo[D];
   if (Info.first)
     return Info.first;
@@ -353,7 +353,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   // int32_t __size;
   Types.push_back(Int32Ty);
 
-  bool HasCopyAndDispose = BlockRequiresCopying(Ty);
+  bool HasCopyAndDispose = getContext().BlockRequiresCopying(Ty);
   if (HasCopyAndDispose) {
     /// void *__copy_helper;
     Types.push_back(Int8PtrTy);
@@ -507,7 +507,7 @@ namespace {
     void Emit(CodeGenFunction &CGF, bool IsForEH) {
       llvm::Value *V = CGF.Builder.CreateStructGEP(Addr, 1, "forwarding");
       V = CGF.Builder.CreateLoad(V);
-      CGF.BuildBlockRelease(V);
+      CGF.BuildBlockRelease(V, BlockFunction::BLOCK_FIELD_IS_BYREF);
     }
   };
 }
@@ -788,7 +788,6 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
     Builder.CreateStore(V, size_field);
 
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
-      SynthesizeCopyDisposeHelpers = true;
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
       Builder.CreateStore(BuildbyrefCopyHelper(DeclPtr->getType(), flag, 
                                                Align.getQuantity(), &D),

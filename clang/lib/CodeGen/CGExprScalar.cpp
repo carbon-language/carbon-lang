@@ -2532,8 +2532,8 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   return Builder.CreateLoad(ArgPtr);
 }
 
-Value *ScalarExprEmitter::VisitBlockExpr(const BlockExpr *BE) {
-  return CGF.BuildBlockLiteralTmp(BE);
+Value *ScalarExprEmitter::VisitBlockExpr(const BlockExpr *block) {
+  return CGF.EmitBlockLiteral(block);
 }
 
 //===----------------------------------------------------------------------===//

@@ -2493,6 +2493,46 @@ public:
 /// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
 ///
 class BlockDecl : public Decl, public DeclContext {
+public:
+  /// A class which contains all the information about a particular
+  /// captured value.
+  class Capture {
+    enum {
+      flag_isByRef = 0x1,
+      flag_isNested = 0x2
+    };
+
+    /// The variable being captured.
+    llvm::PointerIntPair<VarDecl*, 2> VariableAndFlags;
+
+    /// The copy expression, expressed in terms of a DeclRef (or
+    /// BlockDeclRef) to the captured variable.  Only required if the
+    /// variable has a C++ class type.
+    Expr *CopyExpr;
+
+  public:
+    Capture(VarDecl *variable, bool byRef, bool nested, Expr *copy)
+      : VariableAndFlags(variable,
+                  (byRef ? flag_isByRef : 0) | (nested ? flag_isNested : 0)),
+        CopyExpr(copy) {}
+
+    /// The variable being captured.
+    VarDecl *getVariable() const { return VariableAndFlags.getPointer(); }
+
+    /// Whether this is a "by ref" capture, i.e. a capture of a __block
+    /// variable.
+    bool isByRef() const { return VariableAndFlags.getInt() & flag_isByRef; }
+
+    /// Whether this is a nested capture, i.e. the variable captured
+    /// is not from outside the immediately enclosing function/block.
+    bool isNested() const { return VariableAndFlags.getInt() & flag_isNested; }
+
+    bool hasCopyExpr() const { return CopyExpr != 0; }
+    Expr *getCopyExpr() const { return CopyExpr; }
+    void setCopyExpr(Expr *e) { CopyExpr = e; }
+  };
+
+private:
   // FIXME: This can be packed into the bitfields in Decl.
   bool IsVariadic : 1;
   bool CapturesCXXThis : 1;
@@ -2505,15 +2545,15 @@ class BlockDecl : public Decl, public DeclContext {
   Stmt *Body;
   TypeSourceInfo *SignatureAsWritten;
 
-  VarDecl **CapturedDecls;
-  unsigned NumCapturedDecls;
+  Capture *Captures;
+  unsigned NumCaptures;
 
 protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
     : Decl(Block, DC, CaretLoc), DeclContext(Block),
       IsVariadic(false), CapturesCXXThis(false),
       ParamInfo(0), NumParams(0), Body(0),
-      SignatureAsWritten(0), CapturedDecls(0), NumCapturedDecls(0) {}
+      SignatureAsWritten(0), Captures(0), NumCaptures(0) {}
 
 public:
   static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L);
@@ -2555,25 +2595,25 @@ public:
 
   /// hasCaptures - True if this block (or its nested blocks) captures
   /// anything of local storage from its enclosing scopes.
-  bool hasCaptures() const { return NumCapturedDecls != 0 || CapturesCXXThis; }
+  bool hasCaptures() const { return NumCaptures != 0 || CapturesCXXThis; }
 
-  unsigned getNumCapturedDecls() const { return NumCapturedDecls; }
+  /// getNumCaptures - Returns the number of captured variables.
+  /// Does not include an entry for 'this'.
+  unsigned getNumCaptures() const { return NumCaptures; }
 
-  typedef VarDecl * const *capture_iterator;
-  typedef VarDecl const * const *capture_const_iterator;
-  capture_iterator capture_begin() { return CapturedDecls; }
-  capture_iterator capture_end() { return CapturedDecls + NumCapturedDecls; }
-  capture_const_iterator capture_begin() const { return CapturedDecls; }
-  capture_const_iterator capture_end() const {
-    return CapturedDecls + NumCapturedDecls;
-  }
+  typedef const Capture *capture_iterator;
+  typedef const Capture *capture_const_iterator;
+  capture_iterator capture_begin() { return Captures; }
+  capture_iterator capture_end() { return Captures + NumCaptures; }
+  capture_const_iterator capture_begin() const { return Captures; }
+  capture_const_iterator capture_end() const { return Captures + NumCaptures; }
 
   bool capturesCXXThis() const { return CapturesCXXThis; }
 
-  void setCapturedDecls(ASTContext &Context,
-                        VarDecl * const *begin,
-                        VarDecl * const *end,
-                        bool capturesCXXThis);
+  void setCaptures(ASTContext &Context,
+                   const Capture *begin,
+                   const Capture *end,
+                   bool capturesCXXThis);
 
   virtual SourceRange getSourceRange() const;
   

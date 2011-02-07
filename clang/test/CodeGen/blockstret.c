@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin9 %s -emit-llvm -o - | FileCheck %s -check-prefix=X64
 // RUN: %clang_cc1 -fblocks -triple i686-apple-darwin9 %s -emit-llvm -o - | FileCheck %s -check-prefix=X32
 
-// X64:   internal constant %2 { i8** @_NSConcreteGlobalBlock, i32 1879048192
+// X64:   internal constant {{%.*}} { i8** @_NSConcreteGlobalBlock, i32 1879048192
 // X64:     store i32 1610612736, i32* %want
 
 // X32:   @_NSConcreteGlobalBlock, i32 1879048192, i32 0,

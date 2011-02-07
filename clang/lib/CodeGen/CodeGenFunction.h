@@ -858,7 +858,8 @@ private:
 
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
-  llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
+  typedef llvm::DenseMap<const Decl*, llvm::Value*> DeclMapTy;
+  DeclMapTy LocalDeclMap;
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   llvm::DenseMap<const LabelStmt*, JumpDest> LabelMap;
@@ -979,7 +980,7 @@ public:
   //                                  Block Bits
   //===--------------------------------------------------------------------===//
 
-  llvm::Value *BuildBlockLiteralTmp(const BlockExpr *);
+  llvm::Value *EmitBlockLiteral(const BlockExpr *);
   llvm::Constant *BuildDescriptorBlockDecl(const BlockExpr *,
                                            const CGBlockInfo &Info,
                                            const llvm::StructType *,
@@ -987,21 +988,22 @@ public:
                                            std::vector<HelperInfo> *);
 
   llvm::Function *GenerateBlockFunction(GlobalDecl GD,
-                                        const BlockExpr *BExpr,
-                                        CGBlockInfo &Info,
+                                        const CGBlockInfo &Info,
                                         const Decl *OuterFuncDecl,
-                                        llvm::Constant *& BlockVarLayout,
-                                  llvm::DenseMap<const Decl*, llvm::Value*> ldm);
+                                        const DeclMapTy &ldm);
 
-  llvm::Value *LoadBlockStruct();
+  llvm::Value *LoadBlockStruct() {
+    assert(BlockPointer && "no block pointer set!");
+    return BlockPointer;
+  }
 
   void AllocateBlockCXXThisPointer(const CXXThisExpr *E);
   void AllocateBlockDecl(const BlockDeclRefExpr *E);
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
     return GetAddrOfBlockDecl(E->getDecl(), E->isByRef());
   }
-  llvm::Value *GetAddrOfBlockDecl(const ValueDecl *D, bool ByRef);
-  const llvm::Type *BuildByRefType(const ValueDecl *D);
+  llvm::Value *GetAddrOfBlockDecl(const VarDecl *var, bool ByRef);
+  const llvm::Type *BuildByRefType(const VarDecl *var);
 
   void GenerateCode(GlobalDecl GD, llvm::Function *Fn);
   void StartFunction(GlobalDecl GD, QualType RetTy,
@@ -2026,32 +2028,68 @@ public:
   /// Name - The name of the block, kindof.
   const char *Name;
 
-  /// DeclRefs - Variables from parent scopes that have been
-  /// imported into this block.
-  llvm::SmallVector<const BlockDeclRefExpr *, 8> DeclRefs;
+  /// The field index of 'this' within the block, if there is one.
+  unsigned CXXThisIndex;
 
-  /// InnerBlocks - This block and the blocks it encloses.
-  llvm::SmallPtrSet<const DeclContext *, 4> InnerBlocks;
+  class Capture {
+    uintptr_t Data;
 
-  /// CXXThisRef - Non-null if 'this' was required somewhere, in
-  /// which case this is that expression.
-  const CXXThisExpr *CXXThisRef;
+  public:
+    bool isIndex() const { return (Data & 1) != 0; }
+    bool isConstant() const { return !isIndex(); }
+    unsigned getIndex() const { assert(isIndex()); return Data >> 1; }
+    llvm::Value *getConstant() const {
+      assert(isConstant());
+      return reinterpret_cast<llvm::Value*>(Data);
+    }
 
-  /// NeedsObjCSelf - True if something in this block has an implicit
-  /// reference to 'self'.
-  bool NeedsObjCSelf : 1;
-  
-  /// HasCXXObject - True if block has imported c++ object requiring copy
-  /// construction in copy helper and destruction in copy dispose helpers.
+    static Capture makeIndex(unsigned index) {
+      Capture v;
+      v.Data = (index << 1) | 1;
+      return v;
+    }
+
+    static Capture makeConstant(llvm::Value *value) {
+      Capture v;
+      v.Data = reinterpret_cast<uintptr_t>(value);
+      return v;
+    }    
+  };
+
+  /// The mapping of allocated indexes within the block.
+  llvm::DenseMap<const VarDecl*, Capture> Captures;  
+
+  /// CanBeGlobal - True if the block can be global, i.e. it has
+  /// no non-constant captures.
+  bool CanBeGlobal : 1;
+
+  /// True if the block needs a custom copy or dispose function.
+  bool NeedsCopyDispose : 1;
+
+  /// HasCXXObject - True if the block's custom copy/dispose functions
+  /// need to be run even in GC mode.
   bool HasCXXObject : 1;
+
+  /// HasWeakBlockVariable - True if block captures a weak __block variable.
+  bool HasWeakBlockVariable : 1;
   
-  /// These are initialized by GenerateBlockFunction.
-  bool BlockHasCopyDispose : 1;
+  const llvm::StructType *StructureType;
+  const BlockExpr *Block;
   CharUnits BlockSize;
   CharUnits BlockAlign;
   llvm::SmallVector<const Expr*, 8> BlockLayout;
 
-  CGBlockInfo(const char *Name);
+  const Capture &getCapture(const VarDecl *var) const {
+    llvm::DenseMap<const VarDecl*, Capture>::const_iterator
+      it = Captures.find(var);
+    assert(it != Captures.end() && "no entry for variable!");
+    return it->second;
+  }
+
+  const BlockDecl *getBlockDecl() const { return Block->getBlockDecl(); }
+  const BlockExpr *getBlockExpr() const { return Block; }
+
+  CGBlockInfo(const BlockExpr *blockExpr, const char *Name);
 };
 
 }  // end namespace CodeGen

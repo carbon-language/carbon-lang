@@ -220,9 +220,16 @@ ObjCMethodDecl *Sema::tryCaptureObjCSelf() {
   // Mark that we're closing on 'this' in all the block scopes, if applicable.
   for (unsigned idx = FunctionScopes.size() - 1;
        isa<BlockScopeInfo>(FunctionScopes[idx]);
-       --idx)
-    if (!cast<BlockScopeInfo>(FunctionScopes[idx])->Captures.insert(self))
-      break;
+       --idx) {
+    BlockScopeInfo *blockScope = cast<BlockScopeInfo>(FunctionScopes[idx]);
+    unsigned &captureIndex = blockScope->CaptureMap[self];
+    if (captureIndex) break;
+
+    bool nested = isa<BlockScopeInfo>(FunctionScopes[idx-1]);
+    blockScope->Captures.push_back(
+              BlockDecl::Capture(self, /*byref*/ false, nested, /*copy*/ 0));
+    captureIndex = blockScope->Captures.size(); // +1
+  }
 
   return method;
 }

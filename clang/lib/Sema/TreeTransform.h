@@ -7206,7 +7206,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
 
   for (BlockDecl::capture_iterator i = oldBlock->capture_begin(),
          e = oldBlock->capture_end(); i != e; ++i) {
-    VarDecl *oldCapture = *i;
+    VarDecl *oldCapture = i->getVariable();
 
     // Ignore parameter packs.
     if (isa<ParmVarDecl>(oldCapture) &&
@@ -7216,7 +7216,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
     VarDecl *newCapture =
       cast<VarDecl>(getDerived().TransformDecl(E->getCaretLocation(),
                                                oldCapture));
-    assert(blockScope->Captures.count(newCapture));
+    assert(blockScope->CaptureMap.count(newCapture));
   }
 #endif
 

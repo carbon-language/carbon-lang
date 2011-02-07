@@ -4562,7 +4562,8 @@ void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
   else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S))
     if (HasLocalVariableExternalStorage(DRE->getDecl())) {
         BlockDeclRefExpr *BDRE = 
-          new (Context)BlockDeclRefExpr(DRE->getDecl(), DRE->getType(), 
+          new (Context)BlockDeclRefExpr(cast<VarDecl>(DRE->getDecl()),
+                                        DRE->getType(), 
                                         VK_LValue, DRE->getLocation(), false);
         BlockDeclRefs.push_back(BDRE);
     }

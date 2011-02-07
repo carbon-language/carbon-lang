@@ -1000,8 +1000,8 @@ public:
   /// forward references will be filled in with empty bodies if no
   /// definition is seen. The return value has type ProtocolPtrTy.
   virtual llvm::Constant *GetOrEmitProtocolRef(const ObjCProtocolDecl *PD)=0;
-  virtual llvm::Constant *GCBlockLayout(CodeGen::CodeGenFunction &CGF,
-                      const llvm::SmallVectorImpl<const Expr *> &);
+  virtual llvm::Constant *BuildGCBlockLayout(CodeGen::CodeGenModule &CGM,
+                                             const CGBlockInfo &blockInfo);
   
 };
 
@@ -1667,12 +1667,14 @@ static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
   return Qualifiers::GCNone;
 }
 
-llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
-              const llvm::SmallVectorImpl<const Expr *> &BlockLayout) {
-  llvm::Constant *NullPtr = 
+llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
+                                                const CGBlockInfo &blockInfo) {
+  llvm::Constant *nullPtr = 
     llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
+
   if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
-    return NullPtr;
+    return nullPtr;
+
   bool hasUnion = false;
   SkipIvars.clear();
   IvarsInfo.clear();
@@ -1682,47 +1684,59 @@ llvm::Constant *CGObjCCommonMac::GCBlockLayout(CodeGen::CodeGenFunction &CGF,
   // __isa is the first field in block descriptor and must assume by runtime's
   // convention that it is GC'able.
   IvarsInfo.push_back(GC_IVAR(0, 1));
-  for (size_t i = 0; i < BlockLayout.size(); ++i) {
-    const Expr *E = BlockLayout[i];
-    const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
-    if (!BDRE)
+
+  const BlockDecl *blockDecl = blockInfo.getBlockDecl();
+
+  // Calculate the basic layout of the block structure.
+  const llvm::StructLayout *layout =
+    CGM.getTargetData().getStructLayout(blockInfo.StructureType);
+
+  // Ignore the optional 'this' capture: C++ objects are not assumed
+  // to be GC'ed.
+
+  // Walk the captured variables.
+  for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
+         ce = blockDecl->capture_end(); ci != ce; ++ci) {
+    const VarDecl *variable = ci->getVariable();
+    QualType type = variable->getType();
+
+    const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
+
+    // Ignore constant captures.
+    if (capture.isConstant()) continue;
+
+    uint64_t fieldOffset = layout->getElementOffset(capture.getIndex());
+
+    // __block variables are passed by their descriptor address.
+    if (ci->isByRef()) {
+      IvarsInfo.push_back(GC_IVAR(fieldOffset, /*size in words*/ 1));
       continue;
-    const ValueDecl *VD = BDRE->getDecl();
-    CharUnits Offset = CGF.BlockDecls[VD];
-    uint64_t FieldOffset = Offset.getQuantity();
-    QualType Ty = VD->getType();
-    assert(!Ty->isArrayType() && 
-           "Array block variable should have been caught");
-    if ((Ty->isRecordType() || Ty->isUnionType()) && !BDRE->isByRef()) {
-      BuildAggrIvarRecordLayout(Ty->getAs<RecordType>(),
-                                FieldOffset,
-                                true,
-                                hasUnion);
+    }
+
+    assert(!type->isArrayType() && "array variable should not be caught");
+    if (const RecordType *record = type->getAs<RecordType>()) {
+      BuildAggrIvarRecordLayout(record, fieldOffset, true, hasUnion);
       continue;
     }
       
-    Qualifiers::GC GCAttr = GetGCAttrTypeForType(CGM.getContext(), Ty);
-    unsigned FieldSize = CGM.getContext().getTypeSize(Ty);
-    // __block variables are passed by their descriptior address. So, size
-    // must reflect this.
-    if (BDRE->isByRef())
-      FieldSize = WordSizeInBits;
-    if (GCAttr == Qualifiers::Strong || BDRE->isByRef())
-      IvarsInfo.push_back(GC_IVAR(FieldOffset,
-                                  FieldSize / WordSizeInBits));
+    Qualifiers::GC GCAttr = GetGCAttrTypeForType(CGM.getContext(), type);
+    unsigned fieldSize = CGM.getContext().getTypeSize(type);
+
+    if (GCAttr == Qualifiers::Strong)
+      IvarsInfo.push_back(GC_IVAR(fieldOffset,
+                                  fieldSize / WordSizeInBits));
     else if (GCAttr == Qualifiers::GCNone || GCAttr == Qualifiers::Weak)
-      SkipIvars.push_back(GC_IVAR(FieldOffset,
-                                  FieldSize / ByteSizeInBits));
+      SkipIvars.push_back(GC_IVAR(fieldOffset,
+                                  fieldSize / ByteSizeInBits));
   }
   
   if (IvarsInfo.empty())
-    return NullPtr;
-  // Sort on byte position in case we encounterred a union nested in
-  // block variable type's aggregate type.
-  if (hasUnion && !IvarsInfo.empty())
-    std::sort(IvarsInfo.begin(), IvarsInfo.end());
-  if (hasUnion && !SkipIvars.empty())
-    std::sort(SkipIvars.begin(), SkipIvars.end());
+    return nullPtr;
+
+  // Sort on byte position; captures might not be allocated in order,
+  // and unions can do funny things.
+  llvm::array_pod_sort(IvarsInfo.begin(), IvarsInfo.end());
+  llvm::array_pod_sort(SkipIvars.begin(), SkipIvars.end());
   
   std::string BitMap;
   llvm::Constant *C = BuildIvarLayoutBitmap(BitMap);

@@ -425,8 +425,6 @@ void StmtProfiler::VisitBlockDeclRefExpr(BlockDeclRefExpr *S) {
   VisitDecl(S->getDecl());
   ID.AddBoolean(S->isByRef());
   ID.AddBoolean(S->isConstQualAdded());
-  if (S->getCopyConstructorExpr())
-    Visit(S->getCopyConstructorExpr());
 }
 
 static Stmt::StmtClass DecodeOperatorCall(CXXOperatorCallExpr *S,

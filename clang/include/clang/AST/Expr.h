@@ -3565,27 +3565,25 @@ public:
   virtual child_iterator child_end();
 };
 
-/// BlockDeclRefExpr - A reference to a declared variable, function,
-/// enum, etc.
+/// BlockDeclRefExpr - A reference to a local variable declared in an
+/// enclosing scope.
 class BlockDeclRefExpr : public Expr {
-  ValueDecl *D;
+  VarDecl *D;
   SourceLocation Loc;
   bool IsByRef : 1;
   bool ConstQualAdded : 1;
-  Stmt *CopyConstructorVal;
 public:
-  BlockDeclRefExpr(ValueDecl *d, QualType t, ExprValueKind VK,
-                   SourceLocation l, bool ByRef, bool constAdded = false,
-                   Stmt *copyConstructorVal = 0);
+  BlockDeclRefExpr(VarDecl *d, QualType t, ExprValueKind VK,
+                   SourceLocation l, bool ByRef, bool constAdded = false);
 
   // \brief Build an empty reference to a declared variable in a
   // block.
   explicit BlockDeclRefExpr(EmptyShell Empty)
     : Expr(BlockDeclRefExprClass, Empty) { }
 
-  ValueDecl *getDecl() { return D; }
-  const ValueDecl *getDecl() const { return D; }
-  void setDecl(ValueDecl *VD) { D = VD; }
+  VarDecl *getDecl() { return D; }
+  const VarDecl *getDecl() const { return D; }
+  void setDecl(VarDecl *VD) { D = VD; }
 
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
@@ -3598,12 +3596,6 @@ public:
   bool isConstQualAdded() const { return ConstQualAdded; }
   void setConstQualAdded(bool C) { ConstQualAdded = C; }
   
-  const Expr *getCopyConstructorExpr() const 
-    { return cast_or_null<Expr>(CopyConstructorVal); }
-  Expr *getCopyConstructorExpr() 
-    { return cast_or_null<Expr>(CopyConstructorVal); }
-  void setCopyConstructorExpr(Expr *E) { CopyConstructorVal = E; }
-
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == BlockDeclRefExprClass;
   }

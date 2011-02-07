@@ -47,6 +47,7 @@ namespace clang {
 
 namespace CodeGen {
 class CodeGenModule;
+class CGBlockInfo;
 
 class BlockBase {
 public:
@@ -100,12 +101,6 @@ public:
     Block.GlobalUniqueCount = 0;
     PtrToInt8Ty = llvm::Type::getInt8PtrTy(M.getContext());
   }
-
-  bool BlockRequiresCopying(QualType Ty)
-    { return getContext().BlockRequiresCopying(Ty); }
-  bool BlockRequiresCopying(const BlockDeclRefExpr *E)
-  { return E->getCopyConstructorExpr() != 0 ||
-           getContext().BlockRequiresCopying(E->getType()); }
 };
 
 class BlockFunction : public BlockBase {
@@ -117,6 +112,9 @@ protected:
 
 public:
   CodeGenFunction &CGF;
+
+  const CodeGen::CGBlockInfo *BlockInfo;
+  llvm::Value *BlockPointer;
 
   const llvm::PointerType *PtrToInt8Ty;
   struct HelperInfo {
@@ -143,51 +141,8 @@ public:
 
   BlockFunction(CodeGenModule &cgm, CodeGenFunction &cgf, CGBuilderTy &B);
 
-  /// BlockOffset - The offset in bytes for the next allocation of an
-  /// imported block variable.
-  CharUnits BlockOffset;
-  /// BlockAlign - Maximal alignment needed for the Block expressed in 
-  /// characters.
-  CharUnits BlockAlign;
-
-  /// getBlockOffset - Allocate a location within the block's storage
-  /// for a value with the given size and alignment requirements.
-  CharUnits getBlockOffset(CharUnits Size, CharUnits Align);
-
-  /// SynthesizeCopyDisposeHelpers - True iff the block uses copy/dispose.
-  bool SynthesizeCopyDisposeHelpers;
-
-  /// BlockLayout - The layout of the block's storage, represented as
-  /// a sequence of expressions which require such storage.  The
-  /// expressions can be:
-  /// - a BlockDeclRefExpr, indicating that the given declaration
-  ///   from an enclosing scope is needed by the block;
-  /// - a DeclRefExpr, which always wraps an anonymous VarDecl with
-  ///   array type, used to insert padding into the block; or
-  /// - a CXXThisExpr, indicating that the C++ 'this' value should
-  ///   propagate from the parent to the block.
-  /// This is a really silly representation.
-  llvm::SmallVector<const Expr *, 8> BlockLayout;
-
-  /// BlockDecls - Offsets for all Decls in BlockDeclRefExprs.
-  llvm::DenseMap<const Decl*, CharUnits> BlockDecls;
-  
-  /// BlockCXXThisOffset - The offset of the C++ 'this' value within
-  /// the block structure.
-  CharUnits BlockCXXThisOffset;
-
-  ImplicitParamDecl *BlockStructDecl;
-  ImplicitParamDecl *getBlockStructDecl() { return BlockStructDecl; }
-
-  llvm::Constant *GenerateCopyHelperFunction(const llvm::StructType *,
-                                             std::vector<HelperInfo> *);
-  llvm::Constant *GenerateDestroyHelperFunction(const llvm::StructType *,
-                                                std::vector<HelperInfo> *);
-
-  llvm::Constant *BuildCopyHelper(const llvm::StructType *,
-                                  std::vector<HelperInfo> *);
-  llvm::Constant *BuildDestroyHelper(const llvm::StructType *,
-                                     std::vector<HelperInfo> *);
+  llvm::Constant *GenerateCopyHelperFunction(const CGBlockInfo &blockInfo);
+  llvm::Constant *GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo);
 
   llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *, int flag,
                                                   const VarDecl *BD);
@@ -195,18 +150,12 @@ public:
                                                      int flag, 
                                                      const VarDecl *BD);
 
-  llvm::Constant *BuildbyrefCopyHelper(const llvm::Type *T, int flag,
+  llvm::Constant *BuildbyrefCopyHelper(const llvm::Type *T, uint32_t flags,
                                        unsigned Align, const VarDecl *BD);
-  llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type *T, int flag,
+  llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type *T, uint32_t flags,
                                           unsigned Align, const VarDecl *BD);
 
-  void BuildBlockRelease(llvm::Value *DeclPtr, int flag = BLOCK_FIELD_IS_BYREF);
-
-  bool BlockRequiresCopying(QualType Ty)
-    { return getContext().BlockRequiresCopying(Ty); }
-  bool BlockRequiresCopying(const BlockDeclRefExpr *E)
-  { return E->getCopyConstructorExpr() != 0 ||
-           getContext().BlockRequiresCopying(E->getType()); }
+  void BuildBlockRelease(llvm::Value *DeclPtr, uint32_t flags);
 };
 
 }  // end namespace CodeGen

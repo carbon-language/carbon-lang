@@ -2104,21 +2104,26 @@ void BlockDecl::setParams(ParmVarDecl **NewParamInfo,
   }
 }
 
-void BlockDecl::setCapturedDecls(ASTContext &Context,
-                                 VarDecl * const *begin,
-                                 VarDecl * const *end,
-                                 bool capturesCXXThis) {
+void BlockDecl::setCaptures(ASTContext &Context,
+                            const Capture *begin,
+                            const Capture *end,
+                            bool capturesCXXThis) {
   CapturesCXXThis = capturesCXXThis;
 
   if (begin == end) {
-    NumCapturedDecls = 0;
-    CapturedDecls = 0;
+    NumCaptures = 0;
+    Captures = 0;
     return;
   }
 
-  NumCapturedDecls = end - begin;
-  CapturedDecls = new (Context) VarDecl*[NumCapturedDecls];
-  memcpy(CapturedDecls, begin, NumCapturedDecls * sizeof(VarDecl*));
+  NumCaptures = end - begin;
+
+  // Avoid new Capture[] because we don't want to provide a default
+  // constructor.
+  size_t allocationSize = NumCaptures * sizeof(Capture);
+  void *buffer = Context.Allocate(allocationSize, /*alignment*/sizeof(void*));
+  memcpy(buffer, begin, allocationSize);
+  Captures = static_cast<Capture*>(buffer);
 }
 
 SourceRange BlockDecl::getSourceRange() const {

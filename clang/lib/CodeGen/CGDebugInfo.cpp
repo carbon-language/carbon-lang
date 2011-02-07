@@ -33,6 +33,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace clang;
 using namespace clang::CodeGen;
@@ -1685,7 +1686,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
   EltTys.push_back(CreateMemberType(Unit, FType, "__flags", &FieldOffset));
   EltTys.push_back(CreateMemberType(Unit, FType, "__size", &FieldOffset));
 
-  bool HasCopyAndDispose = CGM.BlockRequiresCopying(Type);
+  bool HasCopyAndDispose = CGM.getContext().BlockRequiresCopying(Type);
   if (HasCopyAndDispose) {
     FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
     EltTys.push_back(CreateMemberType(Unit, FType, "__copy_helper",
@@ -1834,19 +1835,20 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
-void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
+void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
                               llvm::Value *Storage, CGBuilderTy &Builder,
-                              CodeGenFunction *CGF) {
-  const ValueDecl *VD = BDRE->getDecl();
+                              const CGBlockInfo &blockInfo) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
   if (Builder.GetInsertBlock() == 0)
     return;
 
+  bool isByRef = VD->hasAttr<BlocksAttr>();
+
   uint64_t XOffset = 0;
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
   llvm::DIType Ty;
-  if (VD->hasAttr<BlocksAttr>())
+  if (isByRef)
     Ty = EmitTypeForVarWithBlocksAttr(VD, &XOffset);
   else 
     Ty = getOrCreateType(VD->getType(), Unit);
@@ -1855,17 +1857,22 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   unsigned Line = getLineNumber(VD->getLocation());
   unsigned Column = getColumnNumber(VD->getLocation());
 
-  CharUnits offset = CGF->BlockDecls[VD];
+  const llvm::TargetData &target = CGM.getTargetData();
+
+  CharUnits offset = CharUnits::fromQuantity(
+    target.getStructLayout(blockInfo.StructureType)
+          ->getElementOffset(blockInfo.getCapture(VD).getIndex()));
+
   llvm::SmallVector<llvm::Value *, 9> addr;
   const llvm::Type *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
   addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
   addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
   addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
-  if (BDRE->isByRef()) {
+  if (isByRef) {
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
     // offset of __forwarding field
-    offset = CharUnits::fromQuantity(CGF->LLVMPointerWidth/8);
+    offset = CharUnits::fromQuantity(target.getPointerSize()/8);
     addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
@@ -1894,9 +1901,10 @@ void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
 }
 
 void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
-  const BlockDeclRefExpr *BDRE, llvm::Value *Storage, CGBuilderTy &Builder,
-  CodeGenFunction *CGF) {
-  EmitDeclare(BDRE, llvm::dwarf::DW_TAG_auto_variable, Storage, Builder, CGF);
+  const VarDecl *variable, llvm::Value *Storage, CGBuilderTy &Builder,
+  const CGBlockInfo &blockInfo) {
+  EmitDeclare(variable, llvm::dwarf::DW_TAG_auto_variable, Storage, Builder,
+              blockInfo);
 }
 
 /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument

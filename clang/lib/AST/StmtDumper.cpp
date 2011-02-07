@@ -100,6 +100,7 @@ namespace  {
           OS << ":'" << QualType::getAsString(D_split) << "'";
       }
     }
+    void DumpDeclRef(Decl *node);
     void DumpStmt(const Stmt *Node) {
       Indent();
       OS << "(" << Node->getStmtClassName()
@@ -153,6 +154,7 @@ namespace  {
     void VisitBinaryOperator(BinaryOperator *Node);
     void VisitCompoundAssignOperator(CompoundAssignOperator *Node);
     void VisitAddrLabelExpr(AddrLabelExpr *Node);
+    void VisitBlockExpr(BlockExpr *Node);
 
     // C++
     void VisitCXXNamedCastExpr(CXXNamedCastExpr *Node);
@@ -362,21 +364,21 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
   DumpExpr(Node);
 
   OS << " ";
-  switch (Node->getDecl()->getKind()) {
-  default: OS << "Decl"; break;
-  case Decl::Function: OS << "FunctionDecl"; break;
-  case Decl::Var: OS << "Var"; break;
-  case Decl::ParmVar: OS << "ParmVar"; break;
-  case Decl::EnumConstant: OS << "EnumConstant"; break;
-  case Decl::Typedef: OS << "Typedef"; break;
-  case Decl::Record: OS << "Record"; break;
-  case Decl::Enum: OS << "Enum"; break;
-  case Decl::CXXRecord: OS << "CXXRecord"; break;
-  case Decl::ObjCInterface: OS << "ObjCInterface"; break;
-  case Decl::ObjCClass: OS << "ObjCClass"; break;
+  DumpDeclRef(Node->getDecl());
+}
+
+void StmtDumper::DumpDeclRef(Decl *d) {
+  OS << d->getDeclKindName() << ' ' << (void*) d;
+
+  if (NamedDecl *nd = dyn_cast<NamedDecl>(d)) {
+    OS << " '";
+    nd->getDeclName().printName(OS);
+    OS << "'";
   }
 
-  OS << "='" << Node->getDecl() << "' " << (void*)Node->getDecl();
+  if (ValueDecl *vd = dyn_cast<ValueDecl>(d)) {
+    OS << ' '; DumpType(vd->getType());
+  }
 }
 
 void StmtDumper::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node) {
@@ -472,6 +474,30 @@ void StmtDumper::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
   DumpType(Node->getComputationLHSType());
   OS << " ComputeResultTy=";
   DumpType(Node->getComputationResultType());
+}
+
+void StmtDumper::VisitBlockExpr(BlockExpr *Node) {
+  DumpExpr(Node);
+
+  IndentLevel++;
+  BlockDecl *block = Node->getBlockDecl();
+  if (block->capturesCXXThis()) {
+    OS << '\n'; Indent(); OS << "(capture this)";
+  }
+  for (BlockDecl::capture_iterator
+         i = block->capture_begin(), e = block->capture_end(); i != e; ++i) {
+    OS << '\n';
+    Indent();
+    OS << "(capture ";
+    if (i->isByRef()) OS << "byref ";
+    if (i->isNested()) OS << "nested ";
+    DumpDeclRef(i->getVariable());
+    if (i->hasCopyExpr()) DumpSubTree(i->getCopyExpr());
+    OS << ")";
+  }
+  IndentLevel--;
+
+  DumpSubTree(block->getBody());
 }
 
 // GNU extensions.

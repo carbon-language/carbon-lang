@@ -798,11 +798,10 @@ void ASTStmtReader::VisitBlockExpr(BlockExpr *E) {
 
 void ASTStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   VisitExpr(E);
-  E->setDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setDecl(cast<VarDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(ReadSourceLocation(Record, Idx));
   E->setByRef(Record[Idx++]);
   E->setConstQualAdded(Record[Idx++]);
-  E->setCopyConstructorExpr(Reader.ReadSubExpr());
 }
 
 //===----------------------------------------------------------------------===//
