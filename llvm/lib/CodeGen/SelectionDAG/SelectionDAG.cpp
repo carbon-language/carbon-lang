@@ -3879,7 +3879,6 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
 }
 
 /// getMergeValues - Create a MERGE_VALUES node from the given operands.
-/// Allowed to return something different (and simpler) if Simplify is true.
 SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
                                      DebugLoc dl) {
   if (NumOps == 1)
