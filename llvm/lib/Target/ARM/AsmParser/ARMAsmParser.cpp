@@ -54,11 +54,12 @@ class ARMAsmParser : public TargetAsmParser {
 
   int TryParseRegister();
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
-  bool TryParseCoprocessorOperandName(SmallVectorImpl<MCParsedAsmOperand*>&);
   bool TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool ParseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*>&);
+  bool ParseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*>&);
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &, bool hasCoprocOp);
+  bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &, StringRef Mnemonic);
   bool ParsePrefix(ARMMCExpr::VariantKind &RefKind);
   const MCExpr *ApplyPrefixToExpr(const MCExpr *E,
                                   MCSymbolRefExpr::VariantKind Variant);
@@ -115,6 +116,8 @@ class ARMOperand : public MCParsedAsmOperand {
   enum KindTy {
     CondCode,
     CCOut,
+    CoprocNum,
+    CoprocReg,
     Immediate,
     Memory,
     Register,
@@ -131,6 +134,10 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       ARMCC::CondCodes Val;
     } CC;
+
+    struct {
+      unsigned Val;
+    } Cop;
 
     struct {
       const char *Data;
@@ -185,6 +192,10 @@ public:
     case SPRRegisterList:
       Registers = o.Registers;
       break;
+    case CoprocNum:
+    case CoprocReg:
+      Cop = o.Cop;
+      break;
     case Immediate:
       Imm = o.Imm;
       break;
@@ -202,6 +213,11 @@ public:
   ARMCC::CondCodes getCondCode() const {
     assert(Kind == CondCode && "Invalid access!");
     return CC.Val;
+  }
+
+  unsigned getCoproc() const {
+    assert((Kind == CoprocNum || Kind == CoprocReg) && "Invalid access!");
+    return Cop.Val;
   }
 
   StringRef getToken() const {
@@ -259,6 +275,8 @@ public:
 
   /// @}
 
+  bool isCoprocNum() const { return Kind == CoprocNum; }
+  bool isCoprocReg() const { return Kind == CoprocReg; }
   bool isCondCode() const { return Kind == CondCode; }
   bool isCCOut() const { return Kind == CCOut; }
   bool isImm() const { return Kind == Immediate; }
@@ -312,6 +330,16 @@ public:
     Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
     unsigned RegNum = getCondCode() == ARMCC::AL ? 0: ARM::CPSR;
     Inst.addOperand(MCOperand::CreateReg(RegNum));
+  }
+
+  void addCoprocNumOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getCoproc()));
+  }
+
+  void addCoprocRegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getCoproc()));
   }
 
   void addCCOutOperands(MCInst &Inst, unsigned N) const {
@@ -386,6 +414,22 @@ public:
   static ARMOperand *CreateCondCode(ARMCC::CondCodes CC, SMLoc S) {
     ARMOperand *Op = new ARMOperand(CondCode);
     Op->CC.Val = CC;
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+    return Op;
+  }
+
+  static ARMOperand *CreateCoprocNum(unsigned CopVal, SMLoc S) {
+    ARMOperand *Op = new ARMOperand(CoprocNum);
+    Op->Cop.Val = CopVal;
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+    return Op;
+  }
+
+  static ARMOperand *CreateCoprocReg(unsigned CopVal, SMLoc S) {
+    ARMOperand *Op = new ARMOperand(CoprocReg);
+    Op->Cop.Val = CopVal;
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -491,6 +535,12 @@ void ARMOperand::dump(raw_ostream &OS) const {
     break;
   case CCOut:
     OS << "<ccout " << getReg() << ">";
+    break;
+  case CoprocNum:
+    OS << "<coprocessor number: " << getCoproc() << ">";
+    break;
+  case CoprocReg:
+    OS << "<coprocessor register: " << getCoproc() << ">";
     break;
   case Immediate:
     getImm()->print(OS);
@@ -609,13 +659,16 @@ TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return false;
 }
 
-static int MatchCoprocessorOperandName(StringRef Name) {
+/// MatchCoprocessorOperandName - Try to parse an coprocessor related
+/// instruction with a symbolic operand name. Example: "p1", "p7", "c3",
+/// "c5", ...
+static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
   // Use the same layout as the tablegen'erated register name matcher. Ugly,
   // but efficient.
   switch (Name.size()) {
   default: break;
   case 2:
-    if (Name[0] != 'p' && Name[0] != 'c')
+    if (Name[0] != CoprocOp)
       return -1;
     switch (Name[1]) {
     default:  return -1;
@@ -632,7 +685,7 @@ static int MatchCoprocessorOperandName(StringRef Name) {
     }
     break;
   case 3:
-    if ((Name[0] != 'p' && Name[0] != 'c') || Name[1] != '1')
+    if (Name[0] != CoprocOp || Name[1] != '1')
       return -1;
     switch (Name[2]) {
     default:  return -1;
@@ -650,24 +703,39 @@ static int MatchCoprocessorOperandName(StringRef Name) {
   return -1;
 }
 
-/// TryParseCoprocessorOperandName - Try to parse an coprocessor related
-/// instruction with a symbolic operand name.  The token must be an Identifier
-/// when called, and if it is a coprocessor related operand name, the token is
-/// eaten and the operand is added to the operand list. Example: operands like
-/// "p1", "p7", "c3", "c5", ...
+/// ParseCoprocNumOperand - Try to parse an coprocessor number operand. The
+/// token must be an Identifier when called, and if it is a coprocessor
+/// number, the token is eaten and the operand is added to the operand list.
 bool ARMAsmParser::
-TryParseCoprocessorOperandName(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+ParseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
 
-  int Num = MatchCoprocessorOperandName(Tok.getString());
+  int Num = MatchCoprocessorOperandName(Tok.getString(), 'p');
   if (Num == -1)
     return true;
 
   Parser.Lex(); // Eat identifier token.
-  Operands.push_back(ARMOperand::CreateImm(
-       MCConstantExpr::Create(Num, getContext()), S, Parser.getTok().getLoc()));
+  Operands.push_back(ARMOperand::CreateCoprocNum(Num, S));
+  return false;
+}
+
+/// ParseCoprocRegOperand - Try to parse an coprocessor register operand. The
+/// token must be an Identifier when called, and if it is a coprocessor
+/// number, the token is eaten and the operand is added to the operand list.
+bool ARMAsmParser::
+ParseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+  const AsmToken &Tok = Parser.getTok();
+  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+
+  int Reg = MatchCoprocessorOperandName(Tok.getString(), 'c');
+  if (Reg == -1)
+    return true;
+
+  Parser.Lex(); // Eat identifier token.
+  Operands.push_back(ARMOperand::CreateCoprocReg(Reg, S));
   return false;
 }
 
@@ -974,16 +1042,21 @@ bool ARMAsmParser::ParseShift(ShiftType &St, const MCExpr *&ShiftAmount,
 /// Parse a arm instruction operand.  For now this parses the operand regardless
 /// of the mnemonic.
 bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                                bool hasCoprocOp){
+                                StringRef Mnemonic) {
   SMLoc S, E;
+
+  // Check if the current operand has a custom associated parser, if so, try to
+  // custom parse the operand, or fallback to the general approach.
+  MatchResultTy ResTy = MatchOperandParserImpl(Operands, Mnemonic);
+  if (ResTy == Match_Success)
+    return false;
+
   switch (getLexer().getKind()) {
   default:
     Error(Parser.getTok().getLoc(), "unexpected token in operand");
     return true;
   case AsmToken::Identifier:
     if (!TryParseRegisterWithWriteBack(Operands))
-      return false;
-    if (hasCoprocOp && !TryParseCoprocessorOperandName(Operands))
       return false;
 
     // Fall though for the Identifier case that is not a register or a
@@ -1273,22 +1346,10 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
   }
 
-  // Enable the parsing of instructions containing coprocessor related
-  // asm syntax, such as coprocessor names "p7, p15, ..." and coprocessor
-  // registers "c1, c3, ..."
-  // FIXME: we probably want AsmOperandClass and ParserMatchClass declarations
-  // in the .td file rather than hacking the ASMParser for every symbolic
-  // operand type.
-  bool hasCoprocOp = (Head == "mcr"  || Head == "mcr2" ||
-                      Head == "mcrr" || Head == "mcrr2" ||
-                      Head == "mrc"  || Head == "mrc2" ||
-                      Head == "mrrc" || Head == "mrrc2" ||
-                      Head == "cdp"  || Head == "cdp2");
-
   // Read the remaining operands.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
-    if (ParseOperand(Operands, hasCoprocOp)) {
+    if (ParseOperand(Operands, Head)) {
       Parser.EatToEndOfStatement();
       return true;
     }
@@ -1297,7 +1358,7 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
       Parser.Lex();  // Eat the comma.
 
       // Parse and remember the operand.
-      if (ParseOperand(Operands, hasCoprocOp)) {
+      if (ParseOperand(Operands, Head)) {
         Parser.EatToEndOfStatement();
         return true;
       }

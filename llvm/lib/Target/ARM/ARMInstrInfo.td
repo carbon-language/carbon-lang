@@ -588,12 +588,26 @@ def nohash_imm : Operand<i32> {
   let PrintMethod = "printNoHashImmediate";
 }
 
+def CoprocNumAsmOperand : AsmOperandClass {
+  let Name = "CoprocNum";
+  let SuperClasses = [];
+  let ParserMethod = "ParseCoprocNumOperand";
+}
+
+def CoprocRegAsmOperand : AsmOperandClass {
+  let Name = "CoprocReg";
+  let SuperClasses = [];
+  let ParserMethod = "ParseCoprocRegOperand";
+}
+
 def p_imm : Operand<i32> {
   let PrintMethod = "printPImmediate";
+  let ParserMatchClass = CoprocNumAsmOperand;
 }
 
 def c_imm : Operand<i32> {
   let PrintMethod = "printCImmediate";
+  let ParserMatchClass = CoprocRegAsmOperand;
 }
 
 //===----------------------------------------------------------------------===//
