@@ -552,7 +552,7 @@ def addrmode5 : Operand<i32>,
   let EncoderMethod = "getAddrMode5OpValue";
 }
 
-// addrmode6 := reg with optional writeback
+// addrmode6 := reg with optional alignment
 //
 def addrmode6 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode6", [], [SDNPWantParent]>{
