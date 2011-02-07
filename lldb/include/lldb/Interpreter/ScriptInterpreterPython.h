@@ -17,15 +17,10 @@
 #include <Python.h>
 #endif
 
-#include "lldb/Host/Config.h"
-
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-#include <termios.h>
-#endif
-
 #include "lldb/lldb-private.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/InputReader.h"
+#include "lldb/Host/Terminal.h"
 
 namespace lldb_private {
 
@@ -102,6 +97,12 @@ protected:
     void
     LeaveSession ();
     
+    void
+    SaveTerminalState (int fd);
+
+    void
+    RestoreTerminalState ();
+    
 private:
 
     static size_t
@@ -117,10 +118,7 @@ private:
     FILE *m_dbg_stdout;
     PyObject *m_new_sysout;
     std::string m_dictionary_name;
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-    struct termios m_termios;
-    bool m_termios_valid;
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+    TerminalState m_terminal_state;
     bool m_session_is_active;
     bool m_pty_slave_is_open;
     bool m_valid_session;

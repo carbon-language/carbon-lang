@@ -14,7 +14,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Host/Config.h"
+#include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Process.h"
@@ -22,9 +22,6 @@
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Thread.h"
 
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-#include <termios.h>
-#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -550,39 +547,31 @@ Debugger::CheckIfTopInputReaderIsDone ()
 void
 Debugger::ActivateInputReader (const InputReaderSP &reader_sp)
 {
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
     FILE *in_fh = GetInputFileHandle();
 
     if (in_fh)
     {
-        struct termios in_fh_termios;
         int in_fd = fileno (in_fh);
-        if (::tcgetattr(in_fd, &in_fh_termios) == 0)
-        {    
-            if (reader_sp->GetEcho())
-                in_fh_termios.c_lflag |= ECHO;  // Turn on echoing
-            else
-                in_fh_termios.c_lflag &= ~ECHO; // Turn off echoing
+        Terminal tty(in_fd);
+        
+        tty.SetEcho(reader_sp->GetEcho());
                 
-            switch (reader_sp->GetGranularity())
-            {
-            case eInputReaderGranularityByte:
-            case eInputReaderGranularityWord:
-                in_fh_termios.c_lflag &= ~ICANON;   // Get one char at a time
-                break;
+        switch (reader_sp->GetGranularity())
+        {
+        case eInputReaderGranularityByte:
+        case eInputReaderGranularityWord:
+            tty.SetCanonical (false);
+            break;
 
-            case eInputReaderGranularityLine:
-            case eInputReaderGranularityAll:
-                in_fh_termios.c_lflag |= ICANON;   // Get lines at a time
-                break;
+        case eInputReaderGranularityLine:
+        case eInputReaderGranularityAll:
+            tty.SetCanonical (true);
+            break;
 
-            default:
-                break;
-            }
-            ::tcsetattr (in_fd, TCSANOW, &in_fh_termios);
+        default:
+            break;
         }
     }
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
 }
 
 void

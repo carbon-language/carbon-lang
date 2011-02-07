@@ -1,4 +1,4 @@
-//===-- TTYState.h ----------------------------------------------*- C++ -*-===//
+//===-- Terminal.h ----------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,39 +7,86 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_TTYState_h_
-#define liblldb_TTYState_h_
+#ifndef liblldb_Terminal_h_
+#define liblldb_Terminal_h_
 #if defined(__cplusplus)
-
-#include "lldb/Host/Config.h"
-
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-#include <termios.h>
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
 
 #include "lldb/lldb-private.h"
 
+struct termios;
+
 namespace lldb_private {
 
+class Terminal
+{
+public:
+
+    Terminal (int fd = -1) :
+        m_fd (fd)
+    {
+    }
+    
+    ~Terminal ()
+    {
+    }
+
+    bool
+    IsATerminal () const;
+
+    int
+    GetFileDescriptor () const
+    {
+        return m_fd;
+    }
+
+    void
+    SetFileDescriptor (int fd)
+    {
+        m_fd = fd;
+    }
+
+    bool
+    FileDescriptorIsValid () const
+    {
+        return m_fd != -1;
+    }
+
+    void
+    Clear ()
+    {
+        m_fd = -1;
+    }
+
+    bool
+    SetEcho (bool enabled);
+
+    bool
+    SetCanonical (bool enabled);
+
+protected:
+    int m_fd;   // This may or may not be a terminal file descriptor
+};
+
+
 //----------------------------------------------------------------------
-/// @class TTYState TTYState.h "lldb/Core/TTYState.h"
-/// @brief A TTY state managment class.
+/// @class State Terminal.h "lldb/Host/Terminal.h"
+/// @brief A terminal state saving/restoring class.
 ///
-/// This class can be used to remember the TTY state for a file
+/// This class can be used to remember the terminal state for a file
 /// descriptor and later restore that state as it originally was.
 //----------------------------------------------------------------------
-class TTYState
+class TerminalState
 {
 public:
     //------------------------------------------------------------------
     /// Default constructor
     //------------------------------------------------------------------
-    TTYState();
+    TerminalState();
 
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    ~TTYState();
+    ~TerminalState();
 
     //------------------------------------------------------------------
     /// Save the TTY state for \a fd.
@@ -66,7 +113,7 @@ public:
     /// Restore the TTY state to the cached state.
     ///
     /// Restore the state of the TTY using the cached values from a
-    /// previous call to TTYState::Save(int,bool).
+    /// previous call to TerminalState::Save(int,bool).
     ///
     /// @return
     ///     Returns \b true if the TTY state was successfully restored,
@@ -121,35 +168,32 @@ protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    int             m_fd;           ///< File descriptor of the TTY.
+    Terminal        m_tty;          ///< A terminal
     int             m_tflags;       ///< Cached tflags information.
-    int             m_ttystate_err; ///< Error value from call to save tflags.
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-    struct termios  m_ttystate;     ///< Cached ttystate information.
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+    std::auto_ptr<struct termios> m_termios_ap; ///< Cached terminal state information.
     lldb::pid_t     m_process_group;///< Cached process group information.
 
 };
 
 //----------------------------------------------------------------------
-/// @class TTYStateSwitcher TTYState.h "lldb/Core/TTYState.h"
+/// @class TerminalStateSwitcher Terminal.h "lldb/Host/Terminal.h"
 /// @brief A TTY state switching class.
 ///
 /// This class can be used to remember 2 TTY states for a given file
 /// descriptor and switch between the two states.
 //----------------------------------------------------------------------
-class TTYStateSwitcher
+class TerminalStateSwitcher
 {
 public:
     //------------------------------------------------------------------
     /// Constructor
     //------------------------------------------------------------------
-    TTYStateSwitcher();
+    TerminalStateSwitcher();
 
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    ~TTYStateSwitcher();
+    ~TerminalStateSwitcher();
 
     //------------------------------------------------------------------
     /// Get the number of possible states to save.
@@ -198,10 +242,10 @@ protected:
     // Member variables
     //------------------------------------------------------------------
     mutable uint32_t m_currentState; ///< The currently active TTY state index.
-    TTYState m_ttystates[2]; ///< The array of TTY states that holds saved TTY info.
+    TerminalState m_ttystates[2]; ///< The array of TTY states that holds saved TTY info.
 };
 
 } // namespace lldb_private
 
 #endif  // #if defined(__cplusplus)
-#endif  // #ifndef liblldb_TTYState_h_
+#endif  // #ifndef liblldb_Terminal_h_

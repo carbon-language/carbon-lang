@@ -201,10 +201,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_dbg_stdout (interpreter.GetDebugger().GetOutputFileHandle()),
     m_new_sysout (NULL),
     m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-    m_termios (),
-    m_termios_valid (false),
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+    m_terminal_state (),
     m_session_is_active (false),
     m_pty_slave_is_open (false),
     m_valid_session (true)
@@ -344,6 +341,28 @@ ScriptInterpreterPython::ResetOutputFileHandle (FILE *fh)
         LeaveSession ();
     }
 }
+
+void
+ScriptInterpreterPython::SaveTerminalState (int fd)
+{
+    // Python mucks with the terminal state of STDIN. If we can possibly avoid
+    // this by setting the file handles up correctly prior to entering the
+    // interpreter we should. For now we save and restore the terminal state
+    // on the input file handle.
+    m_terminal_state.Save (fd, false);
+}
+
+void
+ScriptInterpreterPython::RestoreTerminalState ()
+{
+    // Python mucks with the terminal state of STDIN. If we can possibly avoid
+    // this by setting the file handles up correctly prior to entering the
+    // interpreter we should. For now we save and restore the terminal state
+    // on the input file handle.
+    m_terminal_state.Restore();
+}
+
+
 
 void
 ScriptInterpreterPython::LeaveSession ()
@@ -571,9 +590,7 @@ ScriptInterpreterPython::InputReaderCallback
             else
                 input_fd = STDIN_FILENO;
 
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-            script_interpreter->m_termios_valid = ::tcgetattr (input_fd, &script_interpreter->m_termios) == 0;
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+            script_interpreter->SaveTerminalState(input_fd);
 
             if (!CurrentThreadHasPythonLock())
             {
@@ -678,19 +695,9 @@ ScriptInterpreterPython::InputReaderCallback
         // Restore terminal settings if they were validly saved
         if (log)
             log->Printf ("ScriptInterpreterPython::InputReaderCallback, Done, closing down input reader.");
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-        if (script_interpreter->m_termios_valid)
-        {
-            int input_fd;
-            FILE *input_fh = reader.GetDebugger().GetInputFileHandle();
-            if (input_fh != NULL)
-                input_fd = ::fileno (input_fh);
-            else
-                input_fd = STDIN_FILENO;
             
-            ::tcsetattr (input_fd, TCSANOW, &script_interpreter->m_termios);
-        }
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+        script_interpreter->RestoreTerminalState ();
+
         script_interpreter->m_embedded_python_pty.CloseMasterFileDescriptor();
         break;
     }
@@ -1436,11 +1443,10 @@ ScriptInterpreterPython::Initialize ()
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-    int input_fd = STDIN_FILENO;
-    struct termios stdin_termios;
-    bool valid_termios = ::tcgetattr (input_fd, &stdin_termios) == 0;
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+    // Python will muck with STDIN terminal state, so save off any current TTY
+    // settings so we can restore them.
+    TerminalState stdin_tty_state;
+    stdin_tty_state.Save(STDIN_FILENO, false);
 
     // Find the module that owns this code and use that path we get to
     // set the PYTHONPATH appropriately.
@@ -1518,10 +1524,7 @@ ScriptInterpreterPython::Initialize ()
         Py_DECREF (pmod);
     }
 
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
-    if (valid_termios)
-        ::tcsetattr (input_fd, TCSANOW, &stdin_termios);
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+    stdin_tty_state.Restore();
 }
 
 void

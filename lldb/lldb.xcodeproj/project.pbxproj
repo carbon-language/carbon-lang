@@ -66,6 +66,8 @@
 		266A42D6128E3FFB0090CF7C /* ClangNamespaceDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */; };
 		266A42D8128E40040090CF7C /* ClangNamespaceDecl.h in Headers */ = {isa = PBXBuildFile; fileRef = 266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */; };
 		266F5CBC12FC846200DFCE33 /* Config.h in Headers */ = {isa = PBXBuildFile; fileRef = 266F5CBB12FC846200DFCE33 /* Config.h */; };
+		268DA872130095D000C9483A /* Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 268DA871130095D000C9483A /* Terminal.h */; };
+		268DA874130095ED00C9483A /* Terminal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268DA873130095ED00C9483A /* Terminal.cpp */; };
 		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		26B42B1F1187A92B0079C8C8 /* lldb-include.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42B1E1187A92B0079C8C8 /* lldb-include.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -143,7 +145,6 @@
 		26D5B0B211B07550009A862E /* StreamString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9310F1B85900F91463 /* StreamString.cpp */; };
 		26D5B0B311B07550009A862E /* ConstString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9410F1B85900F91463 /* ConstString.cpp */; };
 		26D5B0B411B07550009A862E /* Timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9610F1B85900F91463 /* Timer.cpp */; };
-		26D5B0B511B07550009A862E /* TTYState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9710F1B85900F91463 /* TTYState.cpp */; };
 		26D5B0B611B07550009A862E /* UserID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9810F1B85900F91463 /* UserID.cpp */; };
 		26D5B0B711B07550009A862E /* Value.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9910F1B85900F91463 /* Value.cpp */; };
 		26D5B0B811B07550009A862E /* ValueObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E9A10F1B85900F91463 /* ValueObject.cpp */; };
@@ -592,6 +593,8 @@
 		2689B0A4113EE3CD00A4AEDB /* Symbols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Symbols.h; path = include/lldb/Host/Symbols.h; sourceTree = "<group>"; };
 		2689B0B5113EE47E00A4AEDB /* Symbols.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Symbols.cpp; path = source/Host/macosx/Symbols.cpp; sourceTree = "<group>"; };
 		268A813F115B19D000F645B0 /* UniqueCStringMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UniqueCStringMap.h; path = include/lldb/Core/UniqueCStringMap.h; sourceTree = "<group>"; };
+		268DA871130095D000C9483A /* Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Terminal.h; path = include/lldb/Host/Terminal.h; sourceTree = "<group>"; };
+		268DA873130095ED00C9483A /* Terminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Terminal.cpp; sourceTree = "<group>"; };
 		268F9D52123AA15200B91E9B /* SBSymbolContextList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBSymbolContextList.h; path = include/lldb/API/SBSymbolContextList.h; sourceTree = "<group>"; };
 		268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbolContextList.cpp; path = source/API/SBSymbolContextList.cpp; sourceTree = "<group>"; };
 		269416AD119A024800FF2715 /* CommandObjectTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTarget.cpp; path = source/Commands/CommandObjectTarget.cpp; sourceTree = "<group>"; };
@@ -709,7 +712,6 @@
 		26BC7D7B10F1B77400F91463 /* StreamString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamString.h; path = include/lldb/Core/StreamString.h; sourceTree = "<group>"; };
 		26BC7D7C10F1B77400F91463 /* ConstString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConstString.h; path = include/lldb/Core/ConstString.h; sourceTree = "<group>"; };
 		26BC7D7E10F1B77400F91463 /* Timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Timer.h; path = include/lldb/Core/Timer.h; sourceTree = "<group>"; };
-		26BC7D7F10F1B77400F91463 /* TTYState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TTYState.h; path = include/lldb/Core/TTYState.h; sourceTree = "<group>"; };
 		26BC7D8010F1B77400F91463 /* UserID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UserID.h; path = include/lldb/Core/UserID.h; sourceTree = "<group>"; };
 		26BC7D8110F1B77400F91463 /* Value.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Value.h; path = include/lldb/Core/Value.h; sourceTree = "<group>"; };
 		26BC7D8210F1B77400F91463 /* ValueObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObject.h; path = include/lldb/Core/ValueObject.h; sourceTree = "<group>"; };
@@ -811,7 +813,6 @@
 		26BC7E9310F1B85900F91463 /* StreamString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StreamString.cpp; path = source/Core/StreamString.cpp; sourceTree = "<group>"; };
 		26BC7E9410F1B85900F91463 /* ConstString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConstString.cpp; path = source/Core/ConstString.cpp; sourceTree = "<group>"; };
 		26BC7E9610F1B85900F91463 /* Timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Timer.cpp; path = source/Core/Timer.cpp; sourceTree = "<group>"; };
-		26BC7E9710F1B85900F91463 /* TTYState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TTYState.cpp; path = source/Core/TTYState.cpp; sourceTree = "<group>"; };
 		26BC7E9810F1B85900F91463 /* UserID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UserID.cpp; path = source/Core/UserID.cpp; sourceTree = "<group>"; };
 		26BC7E9910F1B85900F91463 /* Value.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Value.cpp; path = source/Core/Value.cpp; sourceTree = "<group>"; };
 		26BC7E9A10F1B85900F91463 /* ValueObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObject.cpp; path = source/Core/ValueObject.cpp; sourceTree = "<group>"; };
@@ -1743,8 +1744,6 @@
 				263FEDA5112CC1DA00E4C208 /* ThreadSafeSTLMap.h */,
 				26BC7D7E10F1B77400F91463 /* Timer.h */,
 				26BC7E9610F1B85900F91463 /* Timer.cpp */,
-				26BC7D7F10F1B77400F91463 /* TTYState.h */,
-				26BC7E9710F1B85900F91463 /* TTYState.cpp */,
 				268A813F115B19D000F645B0 /* UniqueCStringMap.h */,
 				26BC7D8010F1B77400F91463 /* UserID.h */,
 				26BC7E9810F1B85900F91463 /* UserID.cpp */,
@@ -1978,6 +1977,7 @@
 				26BC7DD510F1B7D500F91463 /* Mutex.h */,
 				26BC7DD610F1B7D500F91463 /* Predicate.h */,
 				2689B0A4113EE3CD00A4AEDB /* Symbols.h */,
+				268DA871130095D000C9483A /* Terminal.h */,
 				26B4E26E112F35F700AB3F64 /* TimeValue.h */,
 			);
 			name = Host;
@@ -2277,6 +2277,7 @@
 				69A01E1C1236C5D400C660B5 /* Host.cpp */,
 				69A01E1E1236C5D400C660B5 /* Mutex.cpp */,
 				69A01E1F1236C5D400C660B5 /* Symbols.cpp */,
+				268DA873130095ED00C9483A /* Terminal.cpp */,
 				69A01E201236C5D400C660B5 /* TimeValue.cpp */,
 			);
 			name = common;
@@ -2345,6 +2346,7 @@
 				26D9FDC712F784E60003F2EE /* EmulateInstruction.h in Headers */,
 				26D9FDCF12F7853F0003F2EE /* EmulateInstructionARM.h in Headers */,
 				266F5CBC12FC846200DFCE33 /* Config.h in Headers */,
+				268DA872130095D000C9483A /* Terminal.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2611,7 +2613,6 @@
 				26D5B0B211B07550009A862E /* StreamString.cpp in Sources */,
 				26D5B0B311B07550009A862E /* ConstString.cpp in Sources */,
 				26D5B0B411B07550009A862E /* Timer.cpp in Sources */,
-				26D5B0B511B07550009A862E /* TTYState.cpp in Sources */,
 				26D5B0B611B07550009A862E /* UserID.cpp in Sources */,
 				26D5B0B711B07550009A862E /* Value.cpp in Sources */,
 				26D5B0B811B07550009A862E /* ValueObject.cpp in Sources */,
@@ -2850,6 +2851,7 @@
 				26D9FDCE12F7853F0003F2EE /* EmulateInstructionARM.cpp in Sources */,
 				26B8B42512EEC52A00A831B2 /* UniqueDWARFASTType.cpp in Sources */,
 				4906FD4212F2255300A2A77C /* ASTDumper.cpp in Sources */,
+				268DA874130095ED00C9483A /* Terminal.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
