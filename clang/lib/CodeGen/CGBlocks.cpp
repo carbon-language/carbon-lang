@@ -583,10 +583,18 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
 
     // Otherwise, fake up a POD copy into the block field.
     } else {
-      DeclRefExpr declRef(const_cast<VarDecl*>(variable), type, VK_LValue,
-                          SourceLocation());
+      // We use one of these or the other depending on whether the
+      // reference is nested.
+      DeclRefExpr notNested(const_cast<VarDecl*>(variable), type, VK_LValue,
+                            SourceLocation());
+      BlockDeclRefExpr nested(const_cast<VarDecl*>(variable), type,
+                              VK_LValue, SourceLocation(), /*byref*/ false);
+
+      Expr *declRef = 
+        (ci->isNested() ? static_cast<Expr*>(&nested) : &notNested);
+
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
-                           &declRef, VK_RValue);
+                           declRef, VK_RValue);
       EmitAnyExprToMem(&l2r, blockField, /*volatile*/ false, /*init*/ true);
     }
 
