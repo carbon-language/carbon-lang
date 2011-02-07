@@ -176,6 +176,8 @@ class VLDQQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs QQPR:$dst, GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset), itin,
                 "$addr.addr = $wb">;
+class VLDQQQQPseudo<InstrItinClass itin>
+  : PseudoNLdSt<(outs QQQQPR:$dst), (ins addrmode6:$addr, QQQQPR:$src), itin,"">;
 class VLDQQQQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs QQQQPR:$dst, GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset, QQQQPR:$src), itin,
@@ -412,7 +414,7 @@ def VLD3d8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD3u>;
 def VLD3d16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3u>;
 def VLD3d32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3u>;
 
-// ...with double-spaced registers (non-updating versions for disassembly only):
+// ...with double-spaced registers:
 def VLD3q8      : VLD3D<0b0101, {0,0,0,?}, "8">;
 def VLD3q16     : VLD3D<0b0101, {0,1,0,?}, "16">;
 def VLD3q32     : VLD3D<0b0101, {1,0,0,?}, "32">;
@@ -425,6 +427,10 @@ def VLD3q16Pseudo_UPD : VLDQQQQWBPseudo<IIC_VLD3u>;
 def VLD3q32Pseudo_UPD : VLDQQQQWBPseudo<IIC_VLD3u>;
 
 // ...alternate versions to be allocated odd register numbers:
+def VLD3q8oddPseudo   : VLDQQQQPseudo<IIC_VLD3>;
+def VLD3q16oddPseudo  : VLDQQQQPseudo<IIC_VLD3>;
+def VLD3q32oddPseudo  : VLDQQQQPseudo<IIC_VLD3>;
+
 def VLD3q8oddPseudo_UPD  : VLDQQQQWBPseudo<IIC_VLD3u>;
 def VLD3q16oddPseudo_UPD : VLDQQQQWBPseudo<IIC_VLD3u>;
 def VLD3q32oddPseudo_UPD : VLDQQQQWBPseudo<IIC_VLD3u>;
@@ -465,7 +471,7 @@ def VLD4d8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD4u>;
 def VLD4d16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD4u>;
 def VLD4d32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD4u>;
 
-// ...with double-spaced registers (non-updating versions for disassembly only):
+// ...with double-spaced registers:
 def VLD4q8      : VLD4D<0b0001, {0,0,?,?}, "8">;
 def VLD4q16     : VLD4D<0b0001, {0,1,?,?}, "16">;
 def VLD4q32     : VLD4D<0b0001, {1,0,?,?}, "32">;
@@ -1017,6 +1023,8 @@ class VSTQQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset, QQPR:$src), itin,
                 "$addr.addr = $wb">;
+class VSTQQQQPseudo<InstrItinClass itin>
+  : PseudoNLdSt<(outs), (ins addrmode6:$addr, QQQQPR:$src), itin, "">;
 class VSTQQQQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset, QQQQPR:$src), itin,
@@ -1252,7 +1260,7 @@ def VST3d8Pseudo_UPD  : VSTQQWBPseudo<IIC_VST3u>;
 def VST3d16Pseudo_UPD : VSTQQWBPseudo<IIC_VST3u>;
 def VST3d32Pseudo_UPD : VSTQQWBPseudo<IIC_VST3u>;
 
-// ...with double-spaced registers (non-updating versions for disassembly only):
+// ...with double-spaced registers:
 def VST3q8      : VST3D<0b0101, {0,0,0,?}, "8">;
 def VST3q16     : VST3D<0b0101, {0,1,0,?}, "16">;
 def VST3q32     : VST3D<0b0101, {1,0,0,?}, "32">;
@@ -1265,6 +1273,10 @@ def VST3q16Pseudo_UPD : VSTQQQQWBPseudo<IIC_VST3u>;
 def VST3q32Pseudo_UPD : VSTQQQQWBPseudo<IIC_VST3u>;
 
 // ...alternate versions to be allocated odd register numbers:
+def VST3q8oddPseudo   : VSTQQQQPseudo<IIC_VST3>;
+def VST3q16oddPseudo  : VSTQQQQPseudo<IIC_VST3>;
+def VST3q32oddPseudo  : VSTQQQQPseudo<IIC_VST3>;
+
 def VST3q8oddPseudo_UPD  : VSTQQQQWBPseudo<IIC_VST3u>;
 def VST3q16oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST3u>;
 def VST3q32oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST3u>;
@@ -1305,7 +1317,7 @@ def VST4d8Pseudo_UPD  : VSTQQWBPseudo<IIC_VST4u>;
 def VST4d16Pseudo_UPD : VSTQQWBPseudo<IIC_VST4u>;
 def VST4d32Pseudo_UPD : VSTQQWBPseudo<IIC_VST4u>;
 
-// ...with double-spaced registers (non-updating versions for disassembly only):
+// ...with double-spaced registers:
 def VST4q8      : VST4D<0b0001, {0,0,?,?}, "8">;
 def VST4q16     : VST4D<0b0001, {0,1,?,?}, "16">;
 def VST4q32     : VST4D<0b0001, {1,0,?,?}, "32">;
@@ -1318,6 +1330,10 @@ def VST4q16Pseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
 def VST4q32Pseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
 
 // ...alternate versions to be allocated odd register numbers:
+def VST4q8oddPseudo   : VSTQQQQPseudo<IIC_VST4>;
+def VST4q16oddPseudo  : VSTQQQQPseudo<IIC_VST4>;
+def VST4q32oddPseudo  : VSTQQQQPseudo<IIC_VST4>;
+
 def VST4q8oddPseudo_UPD  : VSTQQQQWBPseudo<IIC_VST4u>;
 def VST4q16oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
 def VST4q32oddPseudo_UPD : VSTQQQQWBPseudo<IIC_VST4u>;
