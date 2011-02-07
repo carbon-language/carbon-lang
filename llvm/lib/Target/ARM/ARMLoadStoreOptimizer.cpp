@@ -1327,17 +1327,6 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   return NumMerges > 0;
 }
 
-namespace {
-  struct OffsetCompare {
-    bool operator()(const MachineInstr *LHS, const MachineInstr *RHS) const {
-      int LOffset = getMemoryOpOffset(LHS);
-      int ROffset = getMemoryOpOffset(RHS);
-      assert(LHS == RHS || LOffset != ROffset);
-      return LOffset > ROffset;
-    }
-  };
-}
-
 /// MergeReturnIntoLDM - If this is a exit BB, try merging the return ops
 /// ("bx lr" and "mov pc, lr") into the preceeding stack restore so it
 /// directly restore the value of LR into pc.
@@ -1576,6 +1565,17 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   Pred = llvm::getInstrPredicate(Op0, PredReg);
   dl = Op0->getDebugLoc();
   return true;
+}
+
+namespace {
+  struct OffsetCompare {
+    bool operator()(const MachineInstr *LHS, const MachineInstr *RHS) const {
+      int LOffset = getMemoryOpOffset(LHS);
+      int ROffset = getMemoryOpOffset(RHS);
+      assert(LHS == RHS || LOffset != ROffset);
+      return LOffset > ROffset;
+    }
+  };
 }
 
 bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
