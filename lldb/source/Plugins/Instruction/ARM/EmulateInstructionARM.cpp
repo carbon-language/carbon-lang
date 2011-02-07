@@ -1376,6 +1376,27 @@ EmulateInstructionARM::EmulateIT (ARMEncoding encoding)
     return true;
 }
 
+// Branch causes a branch to a target address.
+bool
+EmulateInstructionARM::EmulateB (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        BranchWritePC(PC + imm32);
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    return false;
+}
+
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -1425,7 +1446,12 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Supervisor Call (previously Software Interrupt)
         //----------------------------------------------------------------------
-        { 0x0f000000, 0x0f000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "svc #imm24"}
+        { 0x0f000000, 0x0f000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "svc #imm24"},
+
+        //----------------------------------------------------------------------
+        // Branch instructions
+        //----------------------------------------------------------------------
+        { 0x0f000000, 0x0a000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "b #imm24"}
 
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
@@ -1496,7 +1522,16 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // If Then makes up to four following instructions conditional.
         //----------------------------------------------------------------------
-        { 0xffffff00, 0x0000bf00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateIT, "it{<x>{<y>{<z>}}} <firstcond>"}
+        { 0xffffff00, 0x0000bf00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateIT, "it{<x>{<y>{<z>}}} <firstcond>"},
+
+        //----------------------------------------------------------------------
+        // Branch instructions
+        //----------------------------------------------------------------------
+        // To resolve ambiguity, "b<c> #imm8" should come after "svc #imm8".
+        { 0xfffff000, 0x0000d000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm8 (outside IT)"},
+        { 0xffff8000, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b #imm11 (outside or last in IT)"},
+        { 0xf800d000, 0x00008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
+        { 0xf800d000, 0x00009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b.w #imm8 (outside or last in IT)"}
 
     };
 
