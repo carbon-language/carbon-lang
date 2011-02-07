@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 #include <pwd.h>
@@ -837,10 +838,12 @@ FileSpec::EnumerateDirectory
                 // Only search directories
                 if (dp->d_type == DT_DIR || dp->d_type == DT_UNKNOWN)
                 {
-                    if (dp->d_namlen == 1 && dp->d_name[0] == '.')
+                    size_t len = strlen(dp->d_name);
+
+                    if (len == 1 && dp->d_name[0] == '.')
                         continue;
 
-                    if (dp->d_namlen == 2 && dp->d_name[0] == '.' && dp->d_name[1] == '.')
+                    if (len == 2 && dp->d_name[0] == '.' && dp->d_name[1] == '.')
                         continue;
                 }
             
