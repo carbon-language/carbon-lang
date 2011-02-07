@@ -30,6 +30,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Target/TargetAsmBackend.h"
+#include "llvm/ADT/StringSwitch.h"
 
 #include "../Target/X86/X86FixupKinds.h"
 #include "../Target/ARM/ARMFixupKinds.h"
@@ -188,6 +189,14 @@ namespace {
     const MCSymbol *SymbolToReloc(const MCAssembler &Asm,
                                   const MCValue &Target,
                                   const MCFragment &F) const;
+
+    // For arch-specific emission of explicit reloc symbol
+    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
+                                           const MCValue &Target,
+                                           const MCFragment &F,
+                                           bool IsBSS) const {
+      return NULL;
+    }
 
     bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
     bool hasRelocationAddend() const {
@@ -401,6 +410,11 @@ namespace {
 
     virtual void WriteEFlags();
   protected:
+    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
+                                           const MCValue &Target,
+                                           const MCFragment &F,
+                                           bool IsBSS) const;
+
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend);
@@ -704,7 +718,7 @@ const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
   const SectionKind secKind = Section.getKind();
 
   if (secKind.isBSS())
-    return NULL;
+    return ExplicitRelSym(Asm, Target, F, true);
 
   if (secKind.isThreadLocal()) {
     if (Renamed)
@@ -733,7 +747,7 @@ const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
     return &Symbol;
   }
 
-  return NULL;
+  return ExplicitRelSym(Asm, Target, F, false);
 }
 
 
@@ -1490,6 +1504,34 @@ void ARMELFObjectWriter::WriteEFlags() {
   Write32(ELF::EF_ARM_EABIMASK & DefaultEABIVersion);
 }
 
+// In ARM, _MergedGlobals and other most symbols get emitted directly.
+// I.e. not as an offset to a section symbol.
+// This code is a first-cut approximation of what ARM/gcc does.
+
+const MCSymbol *ARMELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
+                                                   const MCValue &Target,
+                                                   const MCFragment &F,
+                                                   bool IsBSS) const {
+  const MCSymbol &Symbol = Target.getSymA()->getSymbol();
+  bool EmitThisSym = false;
+
+  if (IsBSS) {
+    EmitThisSym = StringSwitch<bool>(Symbol.getName())
+      .Case("_MergedGlobals", true)
+      .Default(false);
+  } else {
+    EmitThisSym = StringSwitch<bool>(Symbol.getName())
+      .Case("_MergedGlobals", true)
+      .StartsWith(".L.str", true)
+      .Default(false);
+  }
+  if (EmitThisSym)
+    return &Symbol;
+  if (! Symbol.isTemporary())
+    return &Symbol;
+  return NULL;
+}
+
 unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel,
@@ -1604,7 +1646,7 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
 
   if (RelocNeedsGOT(Modifier))
     NeedsGOT = true;
-  
+
   return Type;
 }
 
