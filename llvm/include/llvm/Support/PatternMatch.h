@@ -347,6 +347,40 @@ inline Shr_match<LHS, RHS> m_Shr(const LHS &L, const RHS &R) {
 }
 
 //===----------------------------------------------------------------------===//
+// Matchers for either SDiv or UDiv .. for convenience
+//
+template<typename LHS_t, typename RHS_t, typename ConcreteTy = BinaryOperator>
+struct Div_match {
+  LHS_t L;
+  RHS_t R;
+
+  Div_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (V->getValueID() == Value::InstructionVal + Instruction::SDiv ||
+        V->getValueID() == Value::InstructionVal + Instruction::UDiv) {
+      ConcreteTy *I = cast<ConcreteTy>(V);
+      return (I->getOpcode() == Instruction::UDiv ||
+              I->getOpcode() == Instruction::SDiv) &&
+             L.match(I->getOperand(0)) &&
+             R.match(I->getOperand(1));
+    }
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+      return (CE->getOpcode() == Instruction::SDiv ||
+              CE->getOpcode() == Instruction::UDiv) &&
+             L.match(CE->getOperand(0)) &&
+             R.match(CE->getOperand(1));
+    return false;
+  }
+};
+
+template<typename LHS, typename RHS>
+inline Div_match<LHS, RHS> m_Div(const LHS &L, const RHS &R) {
+  return Div_match<LHS, RHS>(L, R);
+}
+
+//===----------------------------------------------------------------------===//
 // Matchers for binary classes
 //
 

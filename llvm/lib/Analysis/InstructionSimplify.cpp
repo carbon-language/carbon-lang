@@ -734,10 +734,8 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
 
   // (X / Y) * Y -> X if the division is exact.
   Value *X = 0, *Y = 0;
-  if ((match(Op0, m_SDiv(m_Value(X), m_Value(Y))) && Y == Op1) || // (X / Y) * Y
-      (match(Op0, m_UDiv(m_Value(X), m_Value(Y))) && Y == Op1) ||
-      (match(Op1, m_SDiv(m_Value(X), m_Value(Y))) && Y == Op0) || // Y * (X / Y)
-      (match(Op1, m_UDiv(m_Value(X), m_Value(Y))) && Y == Op0)) {
+  if ((match(Op0, m_Div(m_Value(X), m_Value(Y))) && Y == Op1) || // (X / Y) * Y
+      (match(Op1, m_Div(m_Value(X), m_Value(Y))) && Y == Op0)) { // Y * (X / Y)
     BinaryOperator *Div = cast<BinaryOperator>(Y == Op1 ? Op0 : Op1);
     if (Div->isExact())
       return X;
