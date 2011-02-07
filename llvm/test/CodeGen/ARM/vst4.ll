@@ -9,6 +9,18 @@ define void @vst4i8(i8* %A, <8 x i8>* %B) nounwind {
 	ret void
 }
 
+;Check for a post-increment updating store with register increment.
+define void @vst4i8_update(i8** %ptr, <8 x i8>* %B, i32 %inc) nounwind {
+;CHECK: vst4i8_update:
+;CHECK: vst4.8 {d16, d17, d18, d19}, [r1, :128], r2
+	%A = load i8** %ptr
+	%tmp1 = load <8 x i8>* %B
+	call void @llvm.arm.neon.vst4.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 16)
+	%tmp2 = getelementptr i8* %A, i32 %inc
+	store i8* %tmp2, i8** %ptr
+	ret void
+}
+
 define void @vst4i16(i16* %A, <4 x i16>* %B) nounwind {
 ;CHECK: vst4i16:
 ;Check the alignment value.  Max for this instruction is 256 bits:
@@ -86,6 +98,20 @@ define void @vst4Qf(float* %A, <4 x float>* %B) nounwind {
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <4 x float>* %B
 	call void @llvm.arm.neon.vst4.v4f32(i8* %tmp0, <4 x float> %tmp1, <4 x float> %tmp1, <4 x float> %tmp1, <4 x float> %tmp1, i32 1)
+	ret void
+}
+
+;Check for a post-increment updating store.
+define void @vst4Qf_update(float** %ptr, <4 x float>* %B) nounwind {
+;CHECK: vst4Qf_update:
+;CHECK: vst4.32 {d16, d18, d20, d22}, [r1]!
+;CHECK: vst4.32 {d17, d19, d21, d23}, [r1]!
+	%A = load float** %ptr
+	%tmp0 = bitcast float* %A to i8*
+	%tmp1 = load <4 x float>* %B
+	call void @llvm.arm.neon.vst4.v4f32(i8* %tmp0, <4 x float> %tmp1, <4 x float> %tmp1, <4 x float> %tmp1, <4 x float> %tmp1, i32 1)
+	%tmp2 = getelementptr float* %A, i32 16
+	store float* %tmp2, float** %ptr
 	ret void
 }
 

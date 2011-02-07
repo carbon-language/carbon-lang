@@ -28,6 +28,19 @@ define void @vst3i32(i32* %A, <2 x i32>* %B) nounwind {
 	ret void
 }
 
+;Check for a post-increment updating store.
+define void @vst3i32_update(i32** %ptr, <2 x i32>* %B) nounwind {
+;CHECK: vst3i32_update:
+;CHECK: vst3.32 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}]!
+	%A = load i32** %ptr
+	%tmp0 = bitcast i32* %A to i8*
+	%tmp1 = load <2 x i32>* %B
+	call void @llvm.arm.neon.vst3.v2i32(i8* %tmp0, <2 x i32> %tmp1, <2 x i32> %tmp1, <2 x i32> %tmp1, i32 1)
+	%tmp2 = getelementptr i32* %A, i32 6
+	store i32* %tmp2, i32** %ptr
+	ret void
+}
+
 define void @vst3f(float* %A, <2 x float>* %B) nounwind {
 ;CHECK: vst3f:
 ;CHECK: vst3.32
@@ -66,6 +79,20 @@ define void @vst3Qi16(i16* %A, <8 x i16>* %B) nounwind {
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
 	call void @llvm.arm.neon.vst3.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1)
+	ret void
+}
+
+;Check for a post-increment updating store.
+define void @vst3Qi16_update(i16** %ptr, <8 x i16>* %B) nounwind {
+;CHECK: vst3Qi16_update:
+;CHECK: vst3.16 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}]!
+;CHECK: vst3.16 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}]!
+	%A = load i16** %ptr
+	%tmp0 = bitcast i16* %A to i8*
+	%tmp1 = load <8 x i16>* %B
+	call void @llvm.arm.neon.vst3.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1)
+	%tmp2 = getelementptr i16* %A, i32 24
+	store i16* %tmp2, i16** %ptr
 	ret void
 }
 

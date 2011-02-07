@@ -181,7 +181,28 @@ namespace llvm {
       // Vector load N-element structure to all lanes:
       VLD2DUP = ISD::FIRST_TARGET_MEMORY_OPCODE,
       VLD3DUP,
-      VLD4DUP
+      VLD4DUP,
+
+      // NEON loads with post-increment base updates:
+      VLD1_UPD,
+      VLD2_UPD,
+      VLD3_UPD,
+      VLD4_UPD,
+      VLD2LN_UPD,
+      VLD3LN_UPD,
+      VLD4LN_UPD,
+      VLD2DUP_UPD,
+      VLD3DUP_UPD,
+      VLD4DUP_UPD,
+
+      // NEON stores with post-increment base updates:
+      VST1_UPD,
+      VST2_UPD,
+      VST3_UPD,
+      VST4_UPD,
+      VST2LN_UPD,
+      VST3LN_UPD,
+      VST4LN_UPD
     };
   }
 

@@ -36,6 +36,19 @@ define void @vst1f(float* %A, <2 x float>* %B) nounwind {
 	ret void
 }
 
+;Check for a post-increment updating store.
+define void @vst1f_update(float** %ptr, <2 x float>* %B) nounwind {
+;CHECK: vst1f_update:
+;CHECK: vst1.32 {d16}, [r1]!
+	%A = load float** %ptr
+	%tmp0 = bitcast float* %A to i8*
+	%tmp1 = load <2 x float>* %B
+	call void @llvm.arm.neon.vst1.v2f32(i8* %tmp0, <2 x float> %tmp1, i32 1)
+	%tmp2 = getelementptr float* %A, i32 2
+	store float* %tmp2, float** %ptr
+	ret void
+}
+
 define void @vst1i64(i64* %A, <1 x i64>* %B) nounwind {
 ;CHECK: vst1i64:
 ;CHECK: vst1.64
@@ -61,6 +74,19 @@ define void @vst1Qi16(i16* %A, <8 x i16>* %B) nounwind {
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
 	call void @llvm.arm.neon.vst1.v8i16(i8* %tmp0, <8 x i16> %tmp1, i32 32)
+	ret void
+}
+
+;Check for a post-increment updating store with register increment.
+define void @vst1Qi16_update(i16** %ptr, <8 x i16>* %B, i32 %inc) nounwind {
+;CHECK: vst1Qi16_update:
+;CHECK: vst1.16 {d16, d17}, [r1, :64], r2
+	%A = load i16** %ptr
+	%tmp0 = bitcast i16* %A to i8*
+	%tmp1 = load <8 x i16>* %B
+	call void @llvm.arm.neon.vst1.v8i16(i8* %tmp0, <8 x i16> %tmp1, i32 8)
+	%tmp2 = getelementptr i16* %A, i32 %inc
+	store i16* %tmp2, i16** %ptr
 	ret void
 }
 

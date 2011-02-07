@@ -457,6 +457,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::VSETCC, MVT::v1i64, Expand);
     setOperationAction(ISD::VSETCC, MVT::v2i64, Expand);
 
+    setTargetDAGCombine(ISD::INTRINSIC_VOID);
+    setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
     setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
     setTargetDAGCombine(ISD::SHL);
     setTargetDAGCombine(ISD::SRL);
@@ -857,6 +859,23 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VLD2DUP:       return "ARMISD::VLD2DUP";
   case ARMISD::VLD3DUP:       return "ARMISD::VLD3DUP";
   case ARMISD::VLD4DUP:       return "ARMISD::VLD4DUP";
+  case ARMISD::VLD1_UPD:      return "ARMISD::VLD1_UPD";
+  case ARMISD::VLD2_UPD:      return "ARMISD::VLD2_UPD";
+  case ARMISD::VLD3_UPD:      return "ARMISD::VLD3_UPD";
+  case ARMISD::VLD4_UPD:      return "ARMISD::VLD4_UPD";
+  case ARMISD::VLD2LN_UPD:    return "ARMISD::VLD2LN_UPD";
+  case ARMISD::VLD3LN_UPD:    return "ARMISD::VLD3LN_UPD";
+  case ARMISD::VLD4LN_UPD:    return "ARMISD::VLD4LN_UPD";
+  case ARMISD::VLD2DUP_UPD:   return "ARMISD::VLD2DUP_UPD";
+  case ARMISD::VLD3DUP_UPD:   return "ARMISD::VLD3DUP_UPD";
+  case ARMISD::VLD4DUP_UPD:   return "ARMISD::VLD4DUP_UPD";
+  case ARMISD::VST1_UPD:      return "ARMISD::VST1_UPD";
+  case ARMISD::VST2_UPD:      return "ARMISD::VST2_UPD";
+  case ARMISD::VST3_UPD:      return "ARMISD::VST3_UPD";
+  case ARMISD::VST4_UPD:      return "ARMISD::VST4_UPD";
+  case ARMISD::VST2LN_UPD:    return "ARMISD::VST2LN_UPD";
+  case ARMISD::VST3LN_UPD:    return "ARMISD::VST3LN_UPD";
+  case ARMISD::VST4LN_UPD:    return "ARMISD::VST4LN_UPD";
   }
 }
 
@@ -5210,6 +5229,138 @@ static SDValue PerformVECTOR_SHUFFLECombine(SDNode *N, SelectionDAG &DAG) {
                               DAG.getUNDEF(VT), NewMask.data());
 }
 
+/// CombineBaseUpdate - Target-specific DAG combine function for VLDDUP and
+/// NEON load/store intrinsics to merge base address updates.
+static SDValue CombineBaseUpdate(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  bool isIntrinsic = (N->getOpcode() == ISD::INTRINSIC_VOID ||
+                      N->getOpcode() == ISD::INTRINSIC_W_CHAIN);
+  unsigned AddrOpIdx = (isIntrinsic ? 2 : 1);
+  SDValue Addr = N->getOperand(AddrOpIdx);
+
+  // Search for a use of the address operand that is an increment.
+  for (SDNode::use_iterator UI = Addr.getNode()->use_begin(),
+         UE = Addr.getNode()->use_end(); UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (User->getOpcode() != ISD::ADD ||
+        UI.getUse().getResNo() != Addr.getResNo())
+      continue;
+
+    // Check that the add is independent of the load/store.  Otherwise, folding
+    // it would create a cycle.
+    if (User->isPredecessorOf(N) || N->isPredecessorOf(User))
+      continue;
+
+    // Find the new opcode for the updating load/store.
+    bool isLoad = true;
+    bool isLaneOp = false;
+    unsigned NewOpc = 0;
+    unsigned NumVecs = 0;
+    if (isIntrinsic) {
+      unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+      switch (IntNo) {
+      default: assert(0 && "unexpected intrinsic for Neon base update");
+      case Intrinsic::arm_neon_vld1:     NewOpc = ARMISD::VLD1_UPD;
+        NumVecs = 1; break;
+      case Intrinsic::arm_neon_vld2:     NewOpc = ARMISD::VLD2_UPD;
+        NumVecs = 2; break;
+      case Intrinsic::arm_neon_vld3:     NewOpc = ARMISD::VLD3_UPD;
+        NumVecs = 3; break;
+      case Intrinsic::arm_neon_vld4:     NewOpc = ARMISD::VLD4_UPD;
+        NumVecs = 4; break;
+      case Intrinsic::arm_neon_vld2lane: NewOpc = ARMISD::VLD2LN_UPD;
+        NumVecs = 2; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vld3lane: NewOpc = ARMISD::VLD3LN_UPD;
+        NumVecs = 3; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vld4lane: NewOpc = ARMISD::VLD4LN_UPD;
+        NumVecs = 4; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vst1:     NewOpc = ARMISD::VST1_UPD;
+        NumVecs = 1; isLoad = false; break;
+      case Intrinsic::arm_neon_vst2:     NewOpc = ARMISD::VST2_UPD;
+        NumVecs = 2; isLoad = false; break;
+      case Intrinsic::arm_neon_vst3:     NewOpc = ARMISD::VST3_UPD;
+        NumVecs = 3; isLoad = false; break;
+      case Intrinsic::arm_neon_vst4:     NewOpc = ARMISD::VST4_UPD;
+        NumVecs = 4; isLoad = false; break;
+      case Intrinsic::arm_neon_vst2lane: NewOpc = ARMISD::VST2LN_UPD;
+        NumVecs = 2; isLoad = false; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vst3lane: NewOpc = ARMISD::VST3LN_UPD;
+        NumVecs = 3; isLoad = false; isLaneOp = true; break;
+      case Intrinsic::arm_neon_vst4lane: NewOpc = ARMISD::VST4LN_UPD;
+        NumVecs = 4; isLoad = false; isLaneOp = true; break;
+      }
+    } else {
+      isLaneOp = true;
+      switch (N->getOpcode()) {
+      default: assert(0 && "unexpected opcode for Neon base update");
+      case ARMISD::VLD2DUP: NewOpc = ARMISD::VLD2DUP_UPD; NumVecs = 2; break;
+      case ARMISD::VLD3DUP: NewOpc = ARMISD::VLD3DUP_UPD; NumVecs = 3; break;
+      case ARMISD::VLD4DUP: NewOpc = ARMISD::VLD4DUP_UPD; NumVecs = 4; break;
+      }
+    }
+
+    // Find the size of memory referenced by the load/store.
+    EVT VecTy;
+    if (isLoad)
+      VecTy = N->getValueType(0);
+    else 
+      VecTy = N->getOperand(AddrOpIdx+1).getValueType();
+    unsigned NumBytes = NumVecs * VecTy.getSizeInBits() / 8;
+    if (isLaneOp)
+      NumBytes /= VecTy.getVectorNumElements();
+
+    // If the increment is a constant, it must match the memory ref size.
+    SDValue Inc = User->getOperand(User->getOperand(0) == Addr ? 1 : 0);
+    if (ConstantSDNode *CInc = dyn_cast<ConstantSDNode>(Inc.getNode())) {
+      uint64_t IncVal = CInc->getZExtValue();
+      if (IncVal != NumBytes)
+        continue;
+    } else if (NumBytes >= 3 * 16) {
+      // VLD3/4 and VST3/4 for 128-bit vectors are implemented with two
+      // separate instructions that make it harder to use a non-constant update.
+      continue;
+    }
+
+    // Create the new updating load/store node.
+    EVT Tys[6];
+    unsigned NumResultVecs = (isLoad ? NumVecs : 0);
+    unsigned n;
+    for (n = 0; n < NumResultVecs; ++n)
+      Tys[n] = VecTy;
+    Tys[n++] = MVT::i32;
+    Tys[n] = MVT::Other;
+    SDVTList SDTys = DAG.getVTList(Tys, NumResultVecs+2);
+    SmallVector<SDValue, 8> Ops;
+    Ops.push_back(N->getOperand(0)); // incoming chain
+    Ops.push_back(N->getOperand(AddrOpIdx));
+    Ops.push_back(Inc);
+    for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i) {
+      Ops.push_back(N->getOperand(i));
+    }
+    MemIntrinsicSDNode *MemInt = cast<MemIntrinsicSDNode>(N);
+    SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, N->getDebugLoc(), SDTys,
+                                           Ops.data(), Ops.size(),
+                                           MemInt->getMemoryVT(),
+                                           MemInt->getMemOperand());
+
+    // Update the uses.
+    std::vector<SDValue> NewResults;
+    for (unsigned i = 0; i < NumResultVecs; ++i) {
+      NewResults.push_back(SDValue(UpdN.getNode(), i));
+    }
+    NewResults.push_back(SDValue(UpdN.getNode(), NumResultVecs+1)); // chain
+    DCI.CombineTo(N, NewResults);
+    DCI.CombineTo(User, SDValue(UpdN.getNode(), NumResultVecs));
+
+    break;
+  } 
+  return SDValue();
+}
+
 /// CombineVLDDUP - For a VDUPLANE node N, check if its source operand is a
 /// vldN-lane (N > 1) intrinsic, and if all the other uses of that intrinsic
 /// are also VDUPLANEs.  If so, combine them to a vldN-dup operation and
@@ -5720,6 +5871,31 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND: return PerformExtendCombine(N, DCI.DAG, Subtarget);
   case ISD::SELECT_CC:  return PerformSELECT_CCCombine(N, DCI.DAG, Subtarget);
+  case ARMISD::VLD2DUP:
+  case ARMISD::VLD3DUP:
+  case ARMISD::VLD4DUP:
+    return CombineBaseUpdate(N, DCI);
+  case ISD::INTRINSIC_VOID:
+  case ISD::INTRINSIC_W_CHAIN:
+    switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
+    case Intrinsic::arm_neon_vld1:
+    case Intrinsic::arm_neon_vld2:
+    case Intrinsic::arm_neon_vld3:
+    case Intrinsic::arm_neon_vld4:
+    case Intrinsic::arm_neon_vld2lane:
+    case Intrinsic::arm_neon_vld3lane:
+    case Intrinsic::arm_neon_vld4lane:
+    case Intrinsic::arm_neon_vst1:
+    case Intrinsic::arm_neon_vst2:
+    case Intrinsic::arm_neon_vst3:
+    case Intrinsic::arm_neon_vst4:
+    case Intrinsic::arm_neon_vst2lane:
+    case Intrinsic::arm_neon_vst3lane:
+    case Intrinsic::arm_neon_vst4lane:
+      return CombineBaseUpdate(N, DCI);
+    default: break;
+    }
+    break;
   }
   return SDValue();
 }

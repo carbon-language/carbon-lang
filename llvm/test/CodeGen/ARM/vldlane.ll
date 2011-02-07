@@ -121,6 +121,22 @@ define <2 x i32> @vld2lanei32(i32* %A, <2 x i32>* %B) nounwind {
 	ret <2 x i32> %tmp5
 }
 
+;Check for a post-increment updating load.
+define <2 x i32> @vld2lanei32_update(i32** %ptr, <2 x i32>* %B) nounwind {
+;CHECK: vld2lanei32_update:
+;CHECK: vld2.32 {d16[1], d17[1]}, [r1]!
+	%A = load i32** %ptr
+	%tmp0 = bitcast i32* %A to i8*
+	%tmp1 = load <2 x i32>* %B
+	%tmp2 = call %struct.__neon_int32x2x2_t @llvm.arm.neon.vld2lane.v2i32(i8* %tmp0, <2 x i32> %tmp1, <2 x i32> %tmp1, i32 1, i32 1)
+	%tmp3 = extractvalue %struct.__neon_int32x2x2_t %tmp2, 0
+	%tmp4 = extractvalue %struct.__neon_int32x2x2_t %tmp2, 1
+	%tmp5 = add <2 x i32> %tmp3, %tmp4
+	%tmp6 = getelementptr i32* %A, i32 2
+	store i32* %tmp6, i32** %ptr
+	ret <2 x i32> %tmp5
+}
+
 define <2 x float> @vld2lanef(float* %A, <2 x float>* %B) nounwind {
 ;CHECK: vld2lanef:
 ;CHECK: vld2.32
@@ -260,6 +276,24 @@ define <8 x i16> @vld3laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 	ret <8 x i16> %tmp7
 }
 
+;Check for a post-increment updating load with register increment.
+define <8 x i16> @vld3laneQi16_update(i16** %ptr, <8 x i16>* %B, i32 %inc) nounwind {
+;CHECK: vld3laneQi16_update:
+;CHECK: vld3.16 {d16[1], d18[1], d20[1]}, [r2], r1
+	%A = load i16** %ptr
+	%tmp0 = bitcast i16* %A to i8*
+	%tmp1 = load <8 x i16>* %B
+	%tmp2 = call %struct.__neon_int16x8x3_t @llvm.arm.neon.vld3lane.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1, i32 8)
+	%tmp3 = extractvalue %struct.__neon_int16x8x3_t %tmp2, 0
+	%tmp4 = extractvalue %struct.__neon_int16x8x3_t %tmp2, 1
+	%tmp5 = extractvalue %struct.__neon_int16x8x3_t %tmp2, 2
+	%tmp6 = add <8 x i16> %tmp3, %tmp4
+	%tmp7 = add <8 x i16> %tmp5, %tmp6
+	%tmp8 = getelementptr i16* %A, i32 %inc
+	store i16* %tmp8, i16** %ptr
+	ret <8 x i16> %tmp7
+}
+
 define <4 x i32> @vld3laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 ;CHECK: vld3laneQi32:
 ;CHECK: vld3.32
@@ -319,6 +353,25 @@ define <8 x i8> @vld4lanei8(i8* %A, <8 x i8>* %B) nounwind {
         %tmp7 = add <8 x i8> %tmp3, %tmp4
         %tmp8 = add <8 x i8> %tmp5, %tmp6
         %tmp9 = add <8 x i8> %tmp7, %tmp8
+	ret <8 x i8> %tmp9
+}
+
+;Check for a post-increment updating load.
+define <8 x i8> @vld4lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
+;CHECK: vld4lanei8_update:
+;CHECK: vld4.8 {d16[1], d17[1], d18[1], d19[1]}, [r1, :32]!
+	%A = load i8** %ptr
+	%tmp1 = load <8 x i8>* %B
+	%tmp2 = call %struct.__neon_int8x8x4_t @llvm.arm.neon.vld4lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 8)
+	%tmp3 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 0
+	%tmp4 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 1
+	%tmp5 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 2
+	%tmp6 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 3
+	%tmp7 = add <8 x i8> %tmp3, %tmp4
+	%tmp8 = add <8 x i8> %tmp5, %tmp6
+	%tmp9 = add <8 x i8> %tmp7, %tmp8
+	%tmp10 = getelementptr i8* %A, i32 4
+	store i8* %tmp10, i8** %ptr
 	ret <8 x i8> %tmp9
 }
 
