@@ -14,6 +14,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Host/Config.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Process.h"
@@ -554,7 +555,7 @@ Debugger::ActivateInputReader (const InputReaderSP &reader_sp)
 
     if (in_fh)
     {
-    	struct termios in_fh_termios;
+        struct termios in_fh_termios;
         int in_fd = fileno (in_fh);
         if (::tcgetattr(in_fd, &in_fh_termios) == 0)
         {    

@@ -11,6 +11,8 @@
 #define liblldb_TTYState_h_
 #if defined(__cplusplus)
 
+#include "lldb/Host/Config.h"
+
 #if LLDB_CONFIG_TERMIOS_SUPPORTED
 #include <termios.h>
 #endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED

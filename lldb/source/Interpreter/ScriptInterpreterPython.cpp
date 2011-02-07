@@ -203,8 +203,8 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),
 #if LLDB_CONFIG_TERMIOS_SUPPORTED
     m_termios (),
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
     m_termios_valid (false),
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
     m_session_is_active (false),
     m_pty_slave_is_open (false),
     m_valid_session (true)
@@ -1434,12 +1434,10 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
 void
 ScriptInterpreterPython::Initialize ()
 {
-
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
-    int input_fd = STDIN_FILENO;
-
 #if LLDB_CONFIG_TERMIOS_SUPPORTED
+    int input_fd = STDIN_FILENO;
     struct termios stdin_termios;
     bool valid_termios = ::tcgetattr (input_fd, &stdin_termios) == 0;
 #endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
