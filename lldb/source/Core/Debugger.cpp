@@ -21,7 +21,9 @@
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Thread.h"
 
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
 #include <termios.h>
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -547,11 +549,12 @@ Debugger::CheckIfTopInputReaderIsDone ()
 void
 Debugger::ActivateInputReader (const InputReaderSP &reader_sp)
 {
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
     FILE *in_fh = GetInputFileHandle();
 
     if (in_fh)
     {
-        struct termios in_fh_termios;
+    	struct termios in_fh_termios;
         int in_fd = fileno (in_fh);
         if (::tcgetattr(in_fd, &in_fh_termios) == 0)
         {    
@@ -578,6 +581,7 @@ Debugger::ActivateInputReader (const InputReaderSP &reader_sp)
             ::tcsetattr (in_fd, TCSANOW, &in_fh_termios);
         }
     }
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
 }
 
 void

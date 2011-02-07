@@ -10,7 +10,7 @@
 #include "lldb/Core/TTYState.h"
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/signal.h>
+#include <signal.h>
 
 using namespace lldb_private;
 
@@ -21,7 +21,9 @@ TTYState::TTYState() :
     m_fd(-1),
     m_tflags(-1),
     m_ttystate_err(-1),
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
     m_ttystate(),
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
     m_process_group(-1)
 {
 }
@@ -45,7 +47,9 @@ TTYState::Save (int fd, bool save_process_group)
     {
         m_fd = fd;
         m_tflags = ::fcntl (fd, F_GETFL, 0);
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
         m_ttystate_err = ::tcgetattr (fd, &m_ttystate);
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
         if (save_process_group)
             m_process_group = ::tcgetpgrp (0);
         else
@@ -74,8 +78,10 @@ TTYState::Restore () const
         if (TFlagsIsValid())
             result = fcntl (m_fd, F_SETFL, m_tflags);
 
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
         if (TTYStateIsValid())
             result = tcsetattr (m_fd, TCSANOW, &m_ttystate);
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
 
         if (ProcessGroupIsValid())
         {

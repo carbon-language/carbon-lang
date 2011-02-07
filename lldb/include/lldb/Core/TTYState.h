@@ -11,8 +11,9 @@
 #define liblldb_TTYState_h_
 #if defined(__cplusplus)
 
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
 #include <termios.h>
-#include <stdint.h>
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
 
 #include "lldb/lldb-private.h"
 
@@ -121,7 +122,9 @@ protected:
     int             m_fd;           ///< File descriptor of the TTY.
     int             m_tflags;       ///< Cached tflags information.
     int             m_ttystate_err; ///< Error value from call to save tflags.
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
     struct termios  m_ttystate;     ///< Cached ttystate information.
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
     lldb::pid_t     m_process_group;///< Cached process group information.
 
 };

@@ -201,7 +201,9 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_dbg_stdout (interpreter.GetDebugger().GetOutputFileHandle()),
     m_new_sysout (NULL),
     m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
     m_termios (),
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
     m_termios_valid (false),
     m_session_is_active (false),
     m_pty_slave_is_open (false),
@@ -569,8 +571,10 @@ ScriptInterpreterPython::InputReaderCallback
             else
                 input_fd = STDIN_FILENO;
 
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
             script_interpreter->m_termios_valid = ::tcgetattr (input_fd, &script_interpreter->m_termios) == 0;
-            
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+
             if (!CurrentThreadHasPythonLock())
             {
                 while (!GetPythonLock(1)) 
@@ -674,6 +678,7 @@ ScriptInterpreterPython::InputReaderCallback
         // Restore terminal settings if they were validly saved
         if (log)
             log->Printf ("ScriptInterpreterPython::InputReaderCallback, Done, closing down input reader.");
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
         if (script_interpreter->m_termios_valid)
         {
             int input_fd;
@@ -685,6 +690,7 @@ ScriptInterpreterPython::InputReaderCallback
             
             ::tcsetattr (input_fd, TCSANOW, &script_interpreter->m_termios);
         }
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
         script_interpreter->m_embedded_python_pty.CloseMasterFileDescriptor();
         break;
     }
@@ -1433,8 +1439,10 @@ ScriptInterpreterPython::Initialize ()
 
     int input_fd = STDIN_FILENO;
 
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
     struct termios stdin_termios;
     bool valid_termios = ::tcgetattr (input_fd, &stdin_termios) == 0;
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
 
     // Find the module that owns this code and use that path we get to
     // set the PYTHONPATH appropriately.
@@ -1511,9 +1519,11 @@ ScriptInterpreterPython::Initialize ()
         PyRun_SimpleString ("from termios import *");
         Py_DECREF (pmod);
     }
-    
+
+#if LLDB_CONFIG_TERMIOS_SUPPORTED
     if (valid_termios)
         ::tcsetattr (input_fd, TCSANOW, &stdin_termios);
+#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
 }
 
 void
