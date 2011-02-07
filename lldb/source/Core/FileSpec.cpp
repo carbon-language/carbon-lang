@@ -13,12 +13,12 @@
 #include <libgen.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <fstream>
 
+#include "lldb/Host/Config.h" // Have to include this before we test the define...
 #if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 #include <pwd.h>
 #endif
-
-#include <fstream>
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Path.h"

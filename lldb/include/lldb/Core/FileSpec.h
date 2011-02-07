@@ -15,6 +15,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/STLUtils.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Host/Config.h"
 
 namespace lldb_private {
 
