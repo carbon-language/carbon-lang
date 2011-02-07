@@ -407,10 +407,7 @@ def shift_so_reg : Operand<i32>,    // reg reg imm
 }
 
 // so_imm - Match a 32-bit shifter_operand immediate operand, which is an
-// 8-bit immediate rotated by an arbitrary number of bits.  so_imm values are
-// represented in the imm field in the same 12-bit form that they are encoded
-// into so_imm instructions: the 8-bit immediate is the least significant bits
-// [bits 0-7], the 4-bit shift amount is the next 4 bits [bits 8-11].
+// 8-bit immediate rotated by an arbitrary number of bits.
 def so_imm : Operand<i32>, PatLeaf<(imm), [{ return Pred_so_imm(N); }]> {
   let EncoderMethod = "getSOImmOpValue";
   let PrintMethod = "printSOImmOperand";
