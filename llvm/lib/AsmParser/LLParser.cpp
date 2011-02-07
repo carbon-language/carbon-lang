@@ -2286,7 +2286,10 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
   case lltok::kw_fdiv:
   case lltok::kw_urem:
   case lltok::kw_srem:
-  case lltok::kw_frem: {
+  case lltok::kw_frem:
+  case lltok::kw_shl:
+  case lltok::kw_lshr:
+  case lltok::kw_ashr: {
     bool NUW = false;
     bool NSW = false;
     bool Exact = false;
@@ -2294,9 +2297,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     Constant *Val0, *Val1;
     Lex.Lex();
     LocTy ModifierLoc = Lex.getLoc();
-    if (Opc == Instruction::Add ||
-        Opc == Instruction::Sub ||
-        Opc == Instruction::Mul) {
+    if (Opc == Instruction::Add || Opc == Instruction::Sub ||
+        Opc == Instruction::Mul || Opc == Instruction::Shl) {
       if (EatIfPresent(lltok::kw_nuw))
         NUW = true;
       if (EatIfPresent(lltok::kw_nsw)) {
@@ -2304,7 +2306,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         if (EatIfPresent(lltok::kw_nuw))
           NUW = true;
       }
-    } else if (Opc == Instruction::SDiv || Opc == Instruction::UDiv) {
+    } else if (Opc == Instruction::SDiv || Opc == Instruction::UDiv ||
+               Opc == Instruction::LShr || Opc == Instruction::AShr) {
       if (EatIfPresent(lltok::kw_exact))
         Exact = true;
     }
@@ -2331,6 +2334,9 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     case Instruction::SDiv:
     case Instruction::URem:
     case Instruction::SRem:
+    case Instruction::Shl:
+    case Instruction::AShr:
+    case Instruction::LShr:
       if (!Val0->getType()->isIntOrIntVectorTy())
         return Error(ID.Loc, "constexpr requires integer operands");
       break;
@@ -2355,9 +2361,6 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
   }
 
   // Logical Operations
-  case lltok::kw_shl:
-  case lltok::kw_lshr:
-  case lltok::kw_ashr:
   case lltok::kw_and:
   case lltok::kw_or:
   case lltok::kw_xor: {
@@ -3002,55 +3005,38 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   // Binary Operators.
   case lltok::kw_add:
   case lltok::kw_sub:
-  case lltok::kw_mul: {
-    bool NUW = false;
-    bool NSW = false;
+  case lltok::kw_mul:
+  case lltok::kw_shl: {
     LocTy ModifierLoc = Lex.getLoc();
-    if (EatIfPresent(lltok::kw_nuw))
-      NUW = true;
-    if (EatIfPresent(lltok::kw_nsw)) {
-      NSW = true;
-      if (EatIfPresent(lltok::kw_nuw))
-        NUW = true;
-    }
-    bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 1);
-    if (!Result) {
-      if (!Inst->getType()->isIntOrIntVectorTy()) {
-        if (NUW)
-          return Error(ModifierLoc, "nuw only applies to integer operations");
-        if (NSW)
-          return Error(ModifierLoc, "nsw only applies to integer operations");
-      }
-      if (NUW)
-        cast<BinaryOperator>(Inst)->setHasNoUnsignedWrap(true);
-      if (NSW)
-        cast<BinaryOperator>(Inst)->setHasNoSignedWrap(true);
-    }
-    return Result;
+    bool NUW = EatIfPresent(lltok::kw_nuw);
+    bool NSW = EatIfPresent(lltok::kw_nsw);
+    if (!NUW) NUW = EatIfPresent(lltok::kw_nuw);
+    
+    if (ParseArithmetic(Inst, PFS, KeywordVal, 1)) return true;
+    
+    if (NUW) cast<BinaryOperator>(Inst)->setHasNoUnsignedWrap(true);
+    if (NSW) cast<BinaryOperator>(Inst)->setHasNoSignedWrap(true);
+    return false;
   }
   case lltok::kw_fadd:
   case lltok::kw_fsub:
   case lltok::kw_fmul:    return ParseArithmetic(Inst, PFS, KeywordVal, 2);
 
   case lltok::kw_sdiv:
-  case lltok::kw_udiv: {
-    bool Exact = false;
-    if (EatIfPresent(lltok::kw_exact))
-      Exact = true;
-    bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 1);
-    if (!Result)
-      if (Exact)
-        cast<BinaryOperator>(Inst)->setIsExact(true);
-    return Result;
+  case lltok::kw_udiv:
+  case lltok::kw_lshr:
+  case lltok::kw_ashr: {
+    bool Exact = EatIfPresent(lltok::kw_exact);
+
+    if (ParseArithmetic(Inst, PFS, KeywordVal, 1)) return true;
+    if (Exact) cast<BinaryOperator>(Inst)->setIsExact(true);
+    return false;
   }
 
   case lltok::kw_urem:
   case lltok::kw_srem:   return ParseArithmetic(Inst, PFS, KeywordVal, 1);
   case lltok::kw_fdiv:
   case lltok::kw_frem:   return ParseArithmetic(Inst, PFS, KeywordVal, 2);
-  case lltok::kw_shl:
-  case lltok::kw_lshr:
-  case lltok::kw_ashr:
   case lltok::kw_and:
   case lltok::kw_or:
   case lltok::kw_xor:    return ParseLogical(Inst, PFS, KeywordVal);

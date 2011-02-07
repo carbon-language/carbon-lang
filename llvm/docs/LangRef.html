@@ -3684,7 +3684,10 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = shl &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = shl &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;           <i>; yields {ty}:result</i>
+  &lt;result&gt; = shl nuw &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;       <i>; yields {ty}:result</i>
+  &lt;result&gt; = shl nsw &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;       <i>; yields {ty}:result</i>
+  &lt;result&gt; = shl nuw nsw &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -3703,6 +3706,14 @@ Instruction</a> </div>
    of bits in <tt>op1</tt>, the result is undefined.  If the arguments are
    vectors, each vector element of <tt>op1</tt> is shifted by the corresponding
    shift amount in <tt>op2</tt>.</p>
+
+<p>If the <tt>nuw</tt> keyword is present, then the shift produces a 
+   <a href="#trapvalues">trap value</a> if it shifts out any non-zero bits.  If
+   the <tt>nsw</tt> keywrod is present, then the shift produces a
+   <a href="#trapvalues">trap value</a> if it shifts out any bits that disagree
+   with the resultant sign bit.  As such, NUW/NSW have the same semantics as
+   they would if the shift were expressed as a mul instruction with the same
+   nsw/nuw bits in (mul %op1, (shl 1, %op2)).</p>
 
 <h5>Example:</h5>
 <pre>
@@ -3723,7 +3734,8 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = lshr &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = lshr &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;         <i>; yields {ty}:result</i>
+  &lt;result&gt; = lshr exact &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -3742,6 +3754,11 @@ Instruction</a> </div>
    number of bits in <tt>op1</tt>, the result is undefined. If the arguments are
    vectors, each vector element of <tt>op1</tt> is shifted by the corresponding
    shift amount in <tt>op2</tt>.</p>
+
+<p>If the <tt>exact</tt> keyword is present, the result value of the
+   <tt>lshr</tt> is a <a href="#trapvalues">trap value</a> if any of the bits
+   shifted out are non-zero.</p>
+
 
 <h5>Example:</h5>
 <pre>
@@ -3762,7 +3779,8 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = ashr &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = ashr &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;         <i>; yields {ty}:result</i>
+  &lt;result&gt; = ashr exact &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -3782,6 +3800,10 @@ Instruction</a> </div>
    larger than the number of bits in <tt>op1</tt>, the result is undefined. If
    the arguments are vectors, each vector element of <tt>op1</tt> is shifted by
    the corresponding shift amount in <tt>op2</tt>.</p>
+
+<p>If the <tt>exact</tt> keyword is present, the result value of the
+   <tt>ashr</tt> is a <a href="#trapvalues">trap value</a> if any of the bits
+   shifted out are non-zero.</p>
 
 <h5>Example:</h5>
 <pre>

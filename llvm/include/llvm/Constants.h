@@ -724,8 +724,12 @@ public:
   static Constant *getNUWSub(Constant *C1, Constant *C2);
   static Constant *getNSWMul(Constant *C1, Constant *C2);
   static Constant *getNUWMul(Constant *C1, Constant *C2);
+  static Constant *getNSWShl(Constant *C1, Constant *C2);
+  static Constant *getNUWShl(Constant *C1, Constant *C2);
   static Constant *getExactSDiv(Constant *C1, Constant *C2);
   static Constant *getExactUDiv(Constant *C1, Constant *C2);
+  static Constant *getExactAShr(Constant *C1, Constant *C2);
+  static Constant *getExactLShr(Constant *C1, Constant *C2);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

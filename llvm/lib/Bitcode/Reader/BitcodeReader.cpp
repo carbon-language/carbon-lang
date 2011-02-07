@@ -1085,13 +1085,16 @@ bool BitcodeReader::ParseConstants() {
         if (Record.size() >= 4) {
           if (Opc == Instruction::Add ||
               Opc == Instruction::Sub ||
-              Opc == Instruction::Mul) {
+              Opc == Instruction::Mul ||
+              Opc == Instruction::Shl) {
             if (Record[3] & (1 << bitc::OBO_NO_SIGNED_WRAP))
               Flags |= OverflowingBinaryOperator::NoSignedWrap;
             if (Record[3] & (1 << bitc::OBO_NO_UNSIGNED_WRAP))
               Flags |= OverflowingBinaryOperator::NoUnsignedWrap;
           } else if (Opc == Instruction::SDiv ||
-                     Opc == Instruction::UDiv) {
+                     Opc == Instruction::UDiv ||
+                     Opc == Instruction::LShr ||
+                     Opc == Instruction::AShr) {
             if (Record[3] & (1 << bitc::PEO_EXACT))
               Flags |= SDivOperator::IsExact;
           }
@@ -1901,13 +1904,16 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (OpNum < Record.size()) {
         if (Opc == Instruction::Add ||
             Opc == Instruction::Sub ||
-            Opc == Instruction::Mul) {
+            Opc == Instruction::Mul ||
+            Opc == Instruction::Shl) {
           if (Record[OpNum] & (1 << bitc::OBO_NO_SIGNED_WRAP))
             cast<BinaryOperator>(I)->setHasNoSignedWrap(true);
           if (Record[OpNum] & (1 << bitc::OBO_NO_UNSIGNED_WRAP))
             cast<BinaryOperator>(I)->setHasNoUnsignedWrap(true);
         } else if (Opc == Instruction::SDiv ||
-                   Opc == Instruction::UDiv) {
+                   Opc == Instruction::UDiv ||
+                   Opc == Instruction::LShr ||
+                   Opc == Instruction::AShr) {
           if (Record[OpNum] & (1 << bitc::PEO_EXACT))
             cast<BinaryOperator>(I)->setIsExact(true);
         }

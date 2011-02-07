@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Constant* classes.
+// This file implements the Constant *classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -72,7 +72,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
   }
 }
 
-Constant* Constant::getIntegerValue(const Type *Ty, const APInt &V) {
+Constant *Constant::getIntegerValue(const Type *Ty, const APInt &V) {
   const Type *ScalarTy = Ty->getScalarType();
 
   // Create the base integer constant.
@@ -89,7 +89,7 @@ Constant* Constant::getIntegerValue(const Type *Ty, const APInt &V) {
   return C;
 }
 
-Constant* Constant::getAllOnesValue(const Type *Ty) {
+Constant *Constant::getAllOnesValue(const Type *Ty) {
   if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty))
     return ConstantInt::get(Ty->getContext(),
                             APInt::getAllOnesValue(ITy->getBitWidth()));
@@ -296,7 +296,7 @@ ConstantInt *ConstantInt::get(LLVMContext &Context, const APInt& V) {
   return Slot;
 }
 
-Constant* ConstantInt::get(const Type* Ty, uint64_t V, bool isSigned) {
+Constant *ConstantInt::get(const Type* Ty, uint64_t V, bool isSigned) {
   Constant *C = get(cast<IntegerType>(Ty->getScalarType()),
                                V, isSigned);
 
@@ -321,7 +321,7 @@ Constant *ConstantInt::getSigned(const Type *Ty, int64_t V) {
   return get(Ty, V, true);
 }
 
-Constant* ConstantInt::get(const Type* Ty, const APInt& V) {
+Constant *ConstantInt::get(const Type* Ty, const APInt& V) {
   ConstantInt *C = get(Ty->getContext(), V);
   assert(C->getType() == Ty->getScalarType() &&
          "ConstantInt type doesn't match the type implied by its value!");
@@ -360,7 +360,7 @@ static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
 /// get() - This returns a constant fp for the specified value in the
 /// specified type.  This should only be used for simple constant values like
 /// 2.0/1.0 etc, that are known-valid both as double and as the target format.
-Constant* ConstantFP::get(const Type* Ty, double V) {
+Constant *ConstantFP::get(const Type* Ty, double V) {
   LLVMContext &Context = Ty->getContext();
   
   APFloat FV(V);
@@ -378,7 +378,7 @@ Constant* ConstantFP::get(const Type* Ty, double V) {
 }
 
 
-Constant* ConstantFP::get(const Type* Ty, StringRef Str) {
+Constant *ConstantFP::get(const Type* Ty, StringRef Str) {
   LLVMContext &Context = Ty->getContext();
 
   APFloat FV(*TypeToFloatSemantics(Ty->getScalarType()), Str);
@@ -401,7 +401,7 @@ ConstantFP* ConstantFP::getNegativeZero(const Type* Ty) {
 }
 
 
-Constant* ConstantFP::getZeroValueForNegation(const Type* Ty) {
+Constant *ConstantFP::getZeroValueForNegation(const Type* Ty) {
   if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
     if (PTy->getElementType()->isFloatingPointTy()) {
       std::vector<Constant*> zeros(PTy->getNumElements(),
@@ -509,7 +509,7 @@ Constant *ConstantArray::get(const ArrayType *Ty,
 }
 
 
-Constant* ConstantArray::get(const ArrayType* T, Constant* const* Vals,
+Constant *ConstantArray::get(const ArrayType* T, Constant *const* Vals,
                              unsigned NumVals) {
   // FIXME: make this the primary ctor method.
   return get(T, std::vector<Constant*>(Vals, Vals+NumVals));
@@ -521,7 +521,7 @@ Constant* ConstantArray::get(const ArrayType* T, Constant* const* Vals,
 /// Otherwise, the length parameter specifies how much of the string to use 
 /// and it won't be null terminated.
 ///
-Constant* ConstantArray::get(LLVMContext &Context, StringRef Str,
+Constant *ConstantArray::get(LLVMContext &Context, StringRef Str,
                              bool AddNull) {
   std::vector<Constant*> ElementVals;
   ElementVals.reserve(Str.size() + size_t(AddNull));
@@ -557,7 +557,7 @@ ConstantStruct::ConstantStruct(const StructType *T,
 }
 
 // ConstantStruct accessors.
-Constant* ConstantStruct::get(const StructType* T,
+Constant *ConstantStruct::get(const StructType* T,
                               const std::vector<Constant*>& V) {
   LLVMContextImpl* pImpl = T->getContext().pImpl;
   
@@ -569,7 +569,7 @@ Constant* ConstantStruct::get(const StructType* T,
   return ConstantAggregateZero::get(T);
 }
 
-Constant* ConstantStruct::get(LLVMContext &Context,
+Constant *ConstantStruct::get(LLVMContext &Context,
                               const std::vector<Constant*>& V, bool packed) {
   std::vector<const Type*> StructEls;
   StructEls.reserve(V.size());
@@ -578,8 +578,8 @@ Constant* ConstantStruct::get(LLVMContext &Context,
   return get(StructType::get(Context, StructEls, packed), V);
 }
 
-Constant* ConstantStruct::get(LLVMContext &Context,
-                              Constant* const *Vals, unsigned NumVals,
+Constant *ConstantStruct::get(LLVMContext &Context,
+                              Constant *const *Vals, unsigned NumVals,
                               bool Packed) {
   // FIXME: make this the primary ctor method.
   return get(Context, std::vector<Constant*>(Vals, Vals+NumVals), Packed);
@@ -601,7 +601,7 @@ ConstantVector::ConstantVector(const VectorType *T,
 }
 
 // ConstantVector accessors.
-Constant* ConstantVector::get(const VectorType* T,
+Constant *ConstantVector::get(const VectorType* T,
                               const std::vector<Constant*>& V) {
   assert(!V.empty() && "Vectors can't be empty");
   LLVMContext &Context = T->getContext();
@@ -629,67 +629,88 @@ Constant* ConstantVector::get(const VectorType* T,
   return pImpl->VectorConstants.getOrCreate(T, V);
 }
 
-Constant* ConstantVector::get(const std::vector<Constant*>& V) {
+Constant *ConstantVector::get(const std::vector<Constant*>& V) {
   assert(!V.empty() && "Cannot infer type if V is empty");
   return get(VectorType::get(V.front()->getType(),V.size()), V);
 }
 
-Constant* ConstantVector::get(Constant* const* Vals, unsigned NumVals) {
+Constant *ConstantVector::get(Constant *const* Vals, unsigned NumVals) {
   // FIXME: make this the primary ctor method.
   return get(std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
-Constant* ConstantExpr::getNSWNeg(Constant* C) {
+Constant *ConstantExpr::getNSWNeg(Constant *C) {
   assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NEG a nonintegral value!");
   return getNSWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
 }
 
-Constant* ConstantExpr::getNUWNeg(Constant* C) {
+Constant *ConstantExpr::getNUWNeg(Constant *C) {
   assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NEG a nonintegral value!");
   return getNUWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
 }
 
-Constant* ConstantExpr::getNSWAdd(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getNSWAdd(Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Instruction::Add, C1, C2,
                OverflowingBinaryOperator::NoSignedWrap);
 }
 
-Constant* ConstantExpr::getNUWAdd(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getNUWAdd(Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Instruction::Add, C1, C2,
                OverflowingBinaryOperator::NoUnsignedWrap);
 }
 
-Constant* ConstantExpr::getNSWSub(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getNSWSub(Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Instruction::Sub, C1, C2,
                OverflowingBinaryOperator::NoSignedWrap);
 }
 
-Constant* ConstantExpr::getNUWSub(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getNUWSub(Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Instruction::Sub, C1, C2,
                OverflowingBinaryOperator::NoUnsignedWrap);
 }
 
-Constant* ConstantExpr::getNSWMul(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getNSWMul(Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Instruction::Mul, C1, C2,
                OverflowingBinaryOperator::NoSignedWrap);
 }
 
-Constant* ConstantExpr::getNUWMul(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getNUWMul(Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Instruction::Mul, C1, C2,
                OverflowingBinaryOperator::NoUnsignedWrap);
 }
 
-Constant* ConstantExpr::getExactSDiv(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getNSWShl(Constant *C1, Constant *C2) {
+  return getTy(C1->getType(), Instruction::Shl, C1, C2,
+               OverflowingBinaryOperator::NoSignedWrap);
+}
+
+Constant *ConstantExpr::getNUWShl(Constant *C1, Constant *C2) {
+  return getTy(C1->getType(), Instruction::Shl, C1, C2,
+               OverflowingBinaryOperator::NoUnsignedWrap);
+}
+
+Constant *ConstantExpr::getExactSDiv(Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Instruction::SDiv, C1, C2,
                PossiblyExactOperator::IsExact);
 }
 
-Constant* ConstantExpr::getExactUDiv(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getExactUDiv(Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Instruction::UDiv, C1, C2,
                PossiblyExactOperator::IsExact);
 }
+
+Constant *ConstantExpr::getExactAShr(Constant *C1, Constant *C2) {
+  return getTy(C1->getType(), Instruction::AShr, C1, C2,
+               PossiblyExactOperator::IsExact);
+}
+
+Constant *ConstantExpr::getExactLShr(Constant *C1, Constant *C2) {
+  return getTy(C1->getType(), Instruction::LShr, C1, C2,
+               PossiblyExactOperator::IsExact);
+}
+
 
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
 // can't be inline because we don't want to #include Instruction.h into
@@ -816,7 +837,7 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
 /// operands replaced with the specified values.  The specified operands must
 /// match count and type with the existing ones.
 Constant *ConstantExpr::
-getWithOperands(Constant* const *Ops, unsigned NumOps) const {
+getWithOperands(Constant *const *Ops, unsigned NumOps) const {
   assert(NumOps == getNumOperands() && "Operand count mismatch!");
   bool AnyChange = false;
   for (unsigned i = 0; i != NumOps; ++i) {
@@ -1486,7 +1507,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
   return getTy(C1->getType(), Opcode, C1, C2, Flags);
 }
 
-Constant* ConstantExpr::getSizeOf(const Type* Ty) {
+Constant *ConstantExpr::getSizeOf(const Type* Ty) {
   // sizeof is implemented as: (i64) gep (Ty*)null, 1
   // Note that a non-inbounds gep is used, as null isn't within any object.
   Constant *GEPIdx = ConstantInt::get(Type::getInt32Ty(Ty->getContext()), 1);
@@ -1496,7 +1517,7 @@ Constant* ConstantExpr::getSizeOf(const Type* Ty) {
                      Type::getInt64Ty(Ty->getContext()));
 }
 
-Constant* ConstantExpr::getAlignOf(const Type* Ty) {
+Constant *ConstantExpr::getAlignOf(const Type* Ty) {
   // alignof is implemented as: (i64) gep ({i1,Ty}*)null, 0, 1
   // Note that a non-inbounds gep is used, as null isn't within any object.
   const Type *AligningTy = StructType::get(Ty->getContext(),
@@ -1510,12 +1531,12 @@ Constant* ConstantExpr::getAlignOf(const Type* Ty) {
                      Type::getInt64Ty(Ty->getContext()));
 }
 
-Constant* ConstantExpr::getOffsetOf(const StructType* STy, unsigned FieldNo) {
+Constant *ConstantExpr::getOffsetOf(const StructType* STy, unsigned FieldNo) {
   return getOffsetOf(STy, ConstantInt::get(Type::getInt32Ty(STy->getContext()),
                                            FieldNo));
 }
 
-Constant* ConstantExpr::getOffsetOf(const Type* Ty, Constant *FieldNo) {
+Constant *ConstantExpr::getOffsetOf(const Type* Ty, Constant *FieldNo) {
   // offsetof is implemented as: (i64) gep (Ty*)null, 0, FieldNo
   // Note that a non-inbounds gep is used, as null isn't within any object.
   Constant *GEPIdx[] = {
@@ -1823,7 +1844,7 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
   return getExtractValueTy(ReqTy, Agg, IdxList, NumIdx);
 }
 
-Constant* ConstantExpr::getNeg(Constant* C) {
+Constant *ConstantExpr::getNeg(Constant *C) {
   assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NEG a nonintegral value!");
   return get(Instruction::Sub,
@@ -1831,7 +1852,7 @@ Constant* ConstantExpr::getNeg(Constant* C) {
              C);
 }
 
-Constant* ConstantExpr::getFNeg(Constant* C) {
+Constant *ConstantExpr::getFNeg(Constant *C) {
   assert(C->getType()->isFPOrFPVectorTy() &&
          "Cannot FNEG a non-floating-point value!");
   return get(Instruction::FSub,
@@ -1839,81 +1860,81 @@ Constant* ConstantExpr::getFNeg(Constant* C) {
              C);
 }
 
-Constant* ConstantExpr::getNot(Constant* C) {
+Constant *ConstantExpr::getNot(Constant *C) {
   assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NOT a nonintegral value!");
   return get(Instruction::Xor, C, Constant::getAllOnesValue(C->getType()));
 }
 
-Constant* ConstantExpr::getAdd(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
   return get(Instruction::Add, C1, C2);
 }
 
-Constant* ConstantExpr::getFAdd(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getFAdd(Constant *C1, Constant *C2) {
   return get(Instruction::FAdd, C1, C2);
 }
 
-Constant* ConstantExpr::getSub(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getSub(Constant *C1, Constant *C2) {
   return get(Instruction::Sub, C1, C2);
 }
 
-Constant* ConstantExpr::getFSub(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getFSub(Constant *C1, Constant *C2) {
   return get(Instruction::FSub, C1, C2);
 }
 
-Constant* ConstantExpr::getMul(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getMul(Constant *C1, Constant *C2) {
   return get(Instruction::Mul, C1, C2);
 }
 
-Constant* ConstantExpr::getFMul(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getFMul(Constant *C1, Constant *C2) {
   return get(Instruction::FMul, C1, C2);
 }
 
-Constant* ConstantExpr::getUDiv(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getUDiv(Constant *C1, Constant *C2) {
   return get(Instruction::UDiv, C1, C2);
 }
 
-Constant* ConstantExpr::getSDiv(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getSDiv(Constant *C1, Constant *C2) {
   return get(Instruction::SDiv, C1, C2);
 }
 
-Constant* ConstantExpr::getFDiv(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getFDiv(Constant *C1, Constant *C2) {
   return get(Instruction::FDiv, C1, C2);
 }
 
-Constant* ConstantExpr::getURem(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getURem(Constant *C1, Constant *C2) {
   return get(Instruction::URem, C1, C2);
 }
 
-Constant* ConstantExpr::getSRem(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getSRem(Constant *C1, Constant *C2) {
   return get(Instruction::SRem, C1, C2);
 }
 
-Constant* ConstantExpr::getFRem(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getFRem(Constant *C1, Constant *C2) {
   return get(Instruction::FRem, C1, C2);
 }
 
-Constant* ConstantExpr::getAnd(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getAnd(Constant *C1, Constant *C2) {
   return get(Instruction::And, C1, C2);
 }
 
-Constant* ConstantExpr::getOr(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getOr(Constant *C1, Constant *C2) {
   return get(Instruction::Or, C1, C2);
 }
 
-Constant* ConstantExpr::getXor(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getXor(Constant *C1, Constant *C2) {
   return get(Instruction::Xor, C1, C2);
 }
 
-Constant* ConstantExpr::getShl(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
   return get(Instruction::Shl, C1, C2);
 }
 
-Constant* ConstantExpr::getLShr(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getLShr(Constant *C1, Constant *C2) {
   return get(Instruction::LShr, C1, C2);
 }
 
-Constant* ConstantExpr::getAShr(Constant* C1, Constant* C2) {
+Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2) {
   return get(Instruction::AShr, C1, C2);
 }
 
