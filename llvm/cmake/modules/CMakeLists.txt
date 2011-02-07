@@ -13,7 +13,8 @@ install(FILES
 
 install(DIRECTORY .
   DESTINATION share/llvm/cmake
-  PATTERN *.cmake
+  FILES_MATCHING PATTERN *.cmake
+  PATTERN .svn EXCLUDE
   PATTERN LLVM.cmake EXCLUDE
   PATTERN LLVMConfig.cmake EXCLUDE
   PATTERN LLVMLibDeps.cmake EXCLUDE
