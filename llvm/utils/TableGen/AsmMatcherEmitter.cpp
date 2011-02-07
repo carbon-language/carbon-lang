@@ -8,7 +8,11 @@
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend emits a target specifier matcher for converting parsed
-// assembly operands in the MCInst structures.
+// assembly operands in the MCInst structures. It also emits a matcher for
+// custom operand parsing.
+//
+// Converting assembly operands into MCInst structures
+// ---------------------------------------------------
 //
 // The input to the target specific matcher is a list of literal tokens and
 // operands. The target specific parser should generally eliminate any syntax
@@ -67,6 +71,28 @@
 //      simple singleton sets). Each such tuple should generally map to a single
 //      instruction (we currently ignore cases where this isn't true, whee!!!),
 //      which we can emit a simple matcher for.
+//
+// Custom Operand Parsing
+// ----------------------
+//
+//  Some targets need a custom way to parse operands, some specific instructions
+//  can contain arguments that can represent processor flags and other kinds of
+//  identifiers that need to be mapped to specific valeus in the final encoded
+//  instructions. The target specific custom operand parsing works in the
+//  following way:
+//
+//   1. A operand match table is built, each entry contains a mnemonic, an
+//      operand class, a mask for all operand positions for that same
+//      class/mnemonic and target features to be checked while trying to match.
+//
+//   2. The operand matcher will try every possible entry with the same
+//      mnemonic and will check if the target feature for this mnemonic also
+//      matches. After that, if the operand to be matched has its index
+//      present in the mask, a successfull match occurs. Otherwise, fallback
+//      to the regular operand parsing.
+//
+//   3. For a match success, each operand class that has a 'ParserMethod'
+//      becomes part of a switch from where the custom method is called.
 //
 //===----------------------------------------------------------------------===//
 
@@ -140,6 +166,10 @@ struct ClassInfo {
   /// RenderMethod - The name of the operand method to add this operand to an
   /// MCInst; this is not valid for Token or register kinds.
   std::string RenderMethod;
+
+  /// ParserMethod - The name of the operand method to do a target specific
+  /// parsing on the operand.
+  std::string ParserMethod;
 
   /// For register classes, the records for all the registers in this class.
   std::set<Record*> Registers;
@@ -499,6 +529,22 @@ struct SubtargetFeatureInfo {
   }
 };
 
+struct OperandMatchEntry {
+  unsigned OperandMask;
+  MatchableInfo* MI;
+  ClassInfo *CI;
+
+  static OperandMatchEntry Create(MatchableInfo* mi, ClassInfo *ci,
+                                  unsigned opMask) {
+    OperandMatchEntry X;
+    X.OperandMask = opMask;
+    X.CI = ci;
+    X.MI = mi;
+    return X;
+  }
+};
+
+
 class AsmMatcherInfo {
 public:
   /// Tracked Records
@@ -518,6 +564,9 @@ public:
 
   /// The information on the matchables to match.
   std::vector<MatchableInfo*> Matchables;
+
+  /// Info for custom matching operands by user defined methods.
+  std::vector<OperandMatchEntry> OperandMatchInfo;
 
   /// Map of Register records to their class information.
   std::map<Record*, ClassInfo*> RegisterClasses;
@@ -563,6 +612,10 @@ public:
 
   /// BuildInfo - Construct the various tables used during matching.
   void BuildInfo();
+
+  /// BuildOperandMatchInfo - Build the necessary information to handle user
+  /// defined operand parsing methods.
+  void BuildOperandMatchInfo();
 
   /// getSubtargetFeature - Lookup or create the subtarget feature info for the
   /// given operand.
@@ -803,6 +856,7 @@ ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
     Entry->ValueName = Token;
     Entry->PredicateMethod = "<invalid>";
     Entry->RenderMethod = "<invalid>";
+    Entry->ParserMethod = "";
     Classes.push_back(Entry);
   }
 
@@ -1003,6 +1057,11 @@ void AsmMatcherInfo::BuildOperandClasses() {
       CI->RenderMethod = "add" + CI->ClassName + "Operands";
     }
 
+    // Get the parse method name or leave it as empty.
+    Init *PRMName = (*it)->getValueInit("ParserMethod");
+    if (StringInit *SI = dynamic_cast<StringInit*>(PRMName))
+      CI->ParserMethod = SI->getValue();
+
     AsmOperandClasses[*it] = CI;
     Classes.push_back(CI);
   }
@@ -1013,6 +1072,40 @@ AsmMatcherInfo::AsmMatcherInfo(Record *asmParser,
                                RecordKeeper &records)
   : Records(records), AsmParser(asmParser), Target(target),
     RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix")) {
+}
+
+/// BuildOperandMatchInfo - Build the necessary information to handle user
+/// defined operand parsing methods.
+void AsmMatcherInfo::BuildOperandMatchInfo() {
+
+  /// Map containing a mask with all operands indicies that can be found for
+  /// that class inside a instruction.
+  std::map<ClassInfo*, unsigned> OpClassMask;
+
+  for (std::vector<MatchableInfo*>::const_iterator it =
+       Matchables.begin(), ie = Matchables.end();
+       it != ie; ++it) {
+    MatchableInfo &II = **it;
+    OpClassMask.clear();
+
+    // Keep track of all operands of this instructions which belong to the
+    // same class.
+    for (unsigned i = 0, e = II.AsmOperands.size(); i != e; ++i) {
+      MatchableInfo::AsmOperand &Op = II.AsmOperands[i];
+      if (Op.Class->ParserMethod.empty())
+        continue;
+      unsigned &OperandMask = OpClassMask[Op.Class];
+      OperandMask |= (1 << i);
+    }
+
+    // Generate operand match info for each mnemonic/operand class pair.
+    for (std::map<ClassInfo*, unsigned>::iterator iit = OpClassMask.begin(),
+         iie = OpClassMask.end(); iit != iie; ++iit) {
+      unsigned OpMask = iit->second;
+      ClassInfo *CI = iit->first;
+      OperandMatchInfo.push_back(OperandMatchEntry::Create(&II, CI, OpMask));
+    }
+  }
 }
 
 void AsmMatcherInfo::BuildInfo() {
@@ -1859,6 +1952,155 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
   return true;
 }
 
+static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
+                              const AsmMatcherInfo &Info, StringRef ClassName) {
+  // Emit the static custom operand parsing table;
+  OS << "namespace {\n";
+  OS << "  struct OperandMatchEntry {\n";
+  OS << "    const char *Mnemonic;\n";
+  OS << "    unsigned OperandMask;\n";
+  OS << "    MatchClassKind Class;\n";
+  OS << "    unsigned RequiredFeatures;\n";
+  OS << "  };\n\n";
+
+  OS << "  // Predicate for searching for an opcode.\n";
+  OS << "  struct LessOpcodeOperand {\n";
+  OS << "    bool operator()(const OperandMatchEntry &LHS, StringRef RHS) {\n";
+  OS << "      return StringRef(LHS.Mnemonic) < RHS;\n";
+  OS << "    }\n";
+  OS << "    bool operator()(StringRef LHS, const OperandMatchEntry &RHS) {\n";
+  OS << "      return LHS < StringRef(RHS.Mnemonic);\n";
+  OS << "    }\n";
+  OS << "    bool operator()(const OperandMatchEntry &LHS,";
+  OS << " const OperandMatchEntry &RHS) {\n";
+  OS << "      return StringRef(LHS.Mnemonic) < StringRef(RHS.Mnemonic);\n";
+  OS << "    }\n";
+  OS << "  };\n";
+
+  OS << "} // end anonymous namespace.\n\n";
+
+  OS << "static const OperandMatchEntry OperandMatchTable["
+     << Info.OperandMatchInfo.size() << "] = {\n";
+
+  OS << "  /* Mnemonic, Operand List Mask, Operand Class, Features */\n";
+  for (std::vector<OperandMatchEntry>::const_iterator it =
+       Info.OperandMatchInfo.begin(), ie = Info.OperandMatchInfo.end();
+       it != ie; ++it) {
+    const OperandMatchEntry &OMI = *it;
+    const MatchableInfo &II = *OMI.MI;
+
+    OS << "  { \"" << II.Mnemonic << "\""
+       << ", " << OMI.OperandMask;
+
+    OS << " /* ";
+    bool printComma = false;
+    for (int i = 0, e = 31; i !=e; ++i)
+      if (OMI.OperandMask & (1 << i)) {
+        if (printComma)
+          OS << ", ";
+        OS << i;
+        printComma = true;
+      }
+    OS << " */";
+
+    OS << ", " << OMI.CI->Name
+       << ", ";
+
+    // Write the required features mask.
+    if (!II.RequiredFeatures.empty()) {
+      for (unsigned i = 0, e = II.RequiredFeatures.size(); i != e; ++i) {
+        if (i) OS << "|";
+        OS << II.RequiredFeatures[i]->getEnumName();
+      }
+    } else
+      OS << "0";
+    OS << " },\n";
+  }
+  OS << "};\n\n";
+
+  // Emit the operand class switch to call the correct custom parser for
+  // the found operand class.
+  OS << "bool " << Target.getName() << ClassName << "::\n"
+     << "TryCustomParseOperand(SmallVectorImpl<MCParsedAsmOperand*>"
+     << " &Operands,\n                      unsigned MCK) {\n\n"
+     << "  switch(MCK) {\n";
+
+  for (std::vector<ClassInfo*>::const_iterator it = Info.Classes.begin(),
+       ie = Info.Classes.end(); it != ie; ++it) {
+    ClassInfo *CI = *it;
+    if (CI->ParserMethod.empty())
+      continue;
+    OS << "  case " << CI->Name << ":\n"
+       << "    return " << CI->ParserMethod << "(Operands);\n";
+  }
+
+  OS << "  default:\n";
+  OS << "    return true;\n";
+  OS << "  }\n";
+  OS << "  return true;\n";
+  OS << "}\n\n";
+
+  // Emit the static custom operand parser. This code is very similar with
+  // the other matcher. Also use MatchResultTy here just in case we go for
+  // a better error handling.
+  OS << Target.getName() << ClassName << "::MatchResultTy "
+     << Target.getName() << ClassName << "::\n"
+     << "MatchOperandParserImpl(SmallVectorImpl<MCParsedAsmOperand*>"
+     << " &Operands,\n                       StringRef Mnemonic) {\n";
+
+  // Emit code to get the available features.
+  OS << "  // Get the current feature set.\n";
+  OS << "  unsigned AvailableFeatures = getAvailableFeatures();\n\n";
+
+  OS << "  // Get the next operand index.\n";
+  OS << "  unsigned NextOpNum = Operands.size()-1;\n";
+
+  OS << "  // Some state to try to produce better error messages.\n";
+  OS << "  bool HadMatchOtherThanFeatures = false;\n\n";
+
+  // Emit code to search the table.
+  OS << "  // Search the table.\n";
+  OS << "  std::pair<const OperandMatchEntry*, const OperandMatchEntry*>";
+  OS << " MnemonicRange =\n";
+  OS << "    std::equal_range(OperandMatchTable, OperandMatchTable+"
+     << Info.OperandMatchInfo.size() << ", Mnemonic,\n"
+     << "                     LessOpcodeOperand());\n\n";
+
+  OS << "  // Return a more specific error code if no mnemonics match.\n";
+  OS << "  if (MnemonicRange.first == MnemonicRange.second)\n";
+  OS << "    return Match_MnemonicFail;\n\n";
+
+  OS << "  for (const OperandMatchEntry *it = MnemonicRange.first,\n"
+     << "       *ie = MnemonicRange.second; it != ie; ++it) {\n";
+
+  OS << "    // equal_range guarantees that instruction mnemonic matches.\n";
+  OS << "    assert(Mnemonic == it->Mnemonic);\n\n";
+
+  // Emit check that the required features are available.
+  OS << "    // check if the available features match\n";
+  OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
+     << "!= it->RequiredFeatures) {\n";
+  OS << "      HadMatchOtherThanFeatures = true;\n";
+  OS << "      continue;\n";
+  OS << "    }\n\n";
+
+  // Emit check to ensure the operand number matches.
+  OS << "    // check if the operand in question has a custom parser.\n";
+  OS << "    if (!(it->OperandMask & (1 << NextOpNum)))\n";
+  OS << "      continue;\n\n";
+
+  // Emit call to the custom parser method
+  OS << "    // call custom parse method to handle the operand\n";
+  OS << "    if (!TryCustomParseOperand(Operands, it->Class))\n";
+  OS << "      return Match_Success;\n";
+  OS << "  }\n\n";
+
+  OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
+  OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
+  OS << "  return Match_InvalidOperand;\n";
+  OS << "}\n\n";
+}
+
 void AsmMatcherEmitter::run(raw_ostream &OS) {
   CodeGenTarget Target(Records);
   Record *AsmParser = Target.getAsmParser();
@@ -1904,6 +2146,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
              << " ambiguous matchables!\n";
   });
 
+  // Compute the information on the custom operand parsing.
+  Info.BuildOperandMatchInfo();
+
   // Write the output.
 
   EmitSourceFileHeader("Assembly Matcher Source Fragment", OS);
@@ -1929,7 +2174,18 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
   OS << "  MatchResultTy MatchInstructionImpl(\n";
   OS << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
-  OS << "    MCInst &Inst, unsigned &ErrorInfo);\n\n";
+  OS << "    MCInst &Inst, unsigned &ErrorInfo);\n";
+
+  if (Info.OperandMatchInfo.size()) {
+    OS << "  MatchResultTy MatchOperandParserImpl(\n";
+    OS << "    SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
+    OS << "    StringRef Mnemonic);\n";
+
+    OS << "  bool TryCustomParseOperand(\n";
+    OS << "    SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
+    OS << "    unsigned MCK);\n\n";
+  }
+
   OS << "#endif // GET_ASSEMBLER_HEADER_INFO\n\n";
 
   OS << "\n#ifdef GET_REGISTER_MATCHER\n";
@@ -1994,7 +2250,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    unsigned RequiredFeatures;\n";
   OS << "  };\n\n";
 
-  OS << "// Predicate for searching for an opcode.\n";
+  OS << "  // Predicate for searching for an opcode.\n";
   OS << "  struct LessOpcode {\n";
   OS << "    bool operator()(const MatchEntry &LHS, StringRef RHS) {\n";
   OS << "      return StringRef(LHS.Mnemonic) < RHS;\n";
@@ -2163,6 +2419,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
   OS << "  return Match_InvalidOperand;\n";
   OS << "}\n\n";
+
+  if (Info.OperandMatchInfo.size())
+    EmitCustomOperandParsing(OS, Target, Info, ClassName);
 
   OS << "#endif // GET_MATCHER_IMPLEMENTATION\n\n";
 }

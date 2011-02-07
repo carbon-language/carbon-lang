@@ -341,6 +341,12 @@ class AsmOperandClass {
   /// signature should be:
   ///   void addFooOperands(MCInst &Inst, unsigned N) const;
   string RenderMethod = ?;
+
+  /// The name of the method on the target specific operand to call to custom
+  /// handle the operand parsing. This is useful when the operands do not relate
+  /// to immediates or registers and are very instruction specific (as flags to
+  /// set in a processor register, coprocessor number, ...).
+  string ParserMethod = ?;
 }
 
 def ImmAsmOperand : AsmOperandClass {
