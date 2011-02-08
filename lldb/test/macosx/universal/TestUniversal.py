@@ -67,9 +67,12 @@ class UniversalTestCase(TestBase):
         # Check whether we have a 32-bit process launched.
         target = self.dbg.GetSelectedTarget()
         process = target.GetProcess()
-        self.assertTrue(target.IsValid() and process.IsValid() and
-                        self.invoke(process, 'GetAddressByteSize') == 4,
+        self.assertTrue(target.IsValid() and process.IsValid(),
                         "32-bit process launched")
+
+        pointerSize = self.invoke(process, 'GetAddressByteSize')
+        self.assertTrue(pointerSize == 4,
+                        "AddressByteSize of 32-bit process should be 4, got %d instead." % pointerSize)
 
         self.runCmd("continue")
 
