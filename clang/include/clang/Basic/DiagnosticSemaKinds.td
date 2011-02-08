@@ -1051,11 +1051,11 @@ def warn_attribute_weak_on_local : Warning<
 def warn_weak_identifier_undeclared : Warning<
   "weak identifier %0 never declared">;
 def err_attribute_weak_static : Error<
-  "weak declaration of '%0' must be public">;
+  "weak declaration cannot have internal linkage">;
 def warn_attribute_weak_import_invalid_on_definition : Warning<
   "'weak_import' attribute cannot be specified on a definition">;
 def err_attribute_weakref_not_static : Error<
-  "weakref declaration of '%0' must be static">;
+  "weakref declaration must have internal linkage">;
 def err_attribute_weakref_not_global_context : Error<
   "weakref declaration of '%0' must be in a global context">;
 def err_attribute_weakref_without_alias : Error<

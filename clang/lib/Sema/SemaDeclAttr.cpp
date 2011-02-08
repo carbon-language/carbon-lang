@@ -586,11 +586,23 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
                                              start, size));
 }
 
-static bool isStaticVarOrStaticFunction(Decl *D) {
-  if (VarDecl *VD = dyn_cast<VarDecl>(D))
-    return VD->getStorageClass() == SC_Static;
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return FD->getStorageClass() == SC_Static;
+/// Whether this declaration has internal linkage for the purposes of
+/// things that want to complain about things not have internal linkage.
+static bool hasEffectivelyInternalLinkage(NamedDecl *D) {
+  switch (D->getLinkage()) {
+  case NoLinkage:
+  case InternalLinkage:
+    return true;
+
+  // Template instantiations that go from external to unique-external
+  // shouldn't get diagnosed.
+  case UniqueExternalLinkage:
+    return true;
+
+  case ExternalLinkage:
+    return false;
+  }
+  llvm_unreachable("unknown linkage kind!");
   return false;
 }
 
@@ -600,6 +612,14 @@ static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
+
+  if (!isa<VarDecl>(d) && !isa<FunctionDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << 2 /*variables and functions*/;
+    return;
+  }
+
+  NamedDecl *nd = cast<NamedDecl>(d);
 
   // gcc rejects
   // class c {
@@ -614,7 +634,7 @@ static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   const DeclContext *Ctx = d->getDeclContext()->getRedeclContext();
   if (!Ctx->isFileContext()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_global_context) <<
-        dyn_cast<NamedDecl>(d)->getNameAsString();
+        nd->getNameAsString();
     return;
   }
 
@@ -636,9 +656,8 @@ static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // This looks like a bug in gcc. We reject that for now. We should revisit
   // it if this behaviour is actually used.
 
-  if (!isStaticVarOrStaticFunction(d)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_static) <<
-      dyn_cast<NamedDecl>(d)->getNameAsString();
+  if (!hasEffectivelyInternalLinkage(nd)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_static);
     return;
   }
 
@@ -1274,28 +1293,28 @@ static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) 
   D->addAttr(::new (S.Context) WarnUnusedResultAttr(Attr.getLoc(), S.Context));
 }
 
-static void HandleWeakAttr(Decl *D, const AttributeList &Attr, Sema &S) {
+static void HandleWeakAttr(Decl *d, const AttributeList &attr, Sema &S) {
   // check the attribute arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+  if (attr.getNumArgs() != 0) {
+    S.Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
 
-  /* weak only applies to non-static declarations */
-  if (isStaticVarOrStaticFunction(D)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_weak_static) <<
-      dyn_cast<NamedDecl>(D)->getNameAsString();
+  if (!isa<VarDecl>(d) && !isa<FunctionDecl>(d)) {
+    S.Diag(attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << attr.getName() << 2 /*variables and functions*/;
     return;
   }
 
-  // TODO: could also be applied to methods?
-  if (!isa<FunctionDecl>(D) && !isa<VarDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 2 /*variable and function*/;
+  NamedDecl *nd = cast<NamedDecl>(d);
+
+  // 'weak' only applies to declarations with external linkage.
+  if (hasEffectivelyInternalLinkage(nd)) {
+    S.Diag(attr.getLoc(), diag::err_attribute_weak_static);
     return;
   }
 
-  D->addAttr(::new (S.Context) WeakAttr(Attr.getLoc(), S.Context));
+  nd->addAttr(::new (S.Context) WeakAttr(attr.getLoc(), S.Context));
 }
 
 static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {

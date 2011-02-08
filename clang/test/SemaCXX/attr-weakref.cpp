@@ -24,8 +24,8 @@ class c {
   static int a __attribute__((weakref ("v2"))); // expected-error {{declaration of 'a' must be in a global context}}
   static int b() __attribute__((weakref ("f3"))); // expected-error {{declaration of 'b' must be in a global context}}
 };
-int a7() __attribute__((weakref ("f1"))); // expected-error {{declaration of 'a7' must be static}}
-int a8 __attribute__((weakref ("v1"))); // expected-error {{declaration of 'a8' must be static}}
+int a7() __attribute__((weakref ("f1"))); // expected-error {{weakref declaration must have internal linkage}}
+int a8 __attribute__((weakref ("v1"))); // expected-error {{weakref declaration must have internal linkage}}
 
 // gcc accepts this
-int a9 __attribute__((weakref)); // expected-error {{declaration of 'a9' must be static}}
+int a9 __attribute__((weakref)); // expected-error {{weakref declaration must have internal linkage}}
