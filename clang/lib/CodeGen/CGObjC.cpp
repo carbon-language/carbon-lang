@@ -585,7 +585,17 @@ void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
   } else {
     ArgType = E->getType();
   }
-
+  // FIXME. Other than scalars, AST is not adequate for setter and
+  // getter type mismatches which require conversion.
+  if (Src.isScalar()) {
+    llvm::Value *SrcVal = Src.getScalarVal();
+    QualType DstType = getContext().getCanonicalType(ArgType);
+    const llvm::Type *DstTy = ConvertType(DstType);
+    if (SrcVal->getType() != DstTy)
+      Src = 
+        RValue::get(EmitScalarConversion(SrcVal, E->getType(), DstType));
+  }
+  
   CallArgList Args;
   Args.push_back(std::make_pair(Src, ArgType));
 
