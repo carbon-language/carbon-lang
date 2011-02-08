@@ -432,8 +432,8 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
                                            Entry->getSize());
       if (ErrorStr)
         *ErrorStr = ec.message();
-      // getOpenFile will have closed the file descriptor, don't reuse or
-      // reclose it.
+
+      close(Entry->FD);
       Entry->FD = -1;
       return Result.take();
     }
