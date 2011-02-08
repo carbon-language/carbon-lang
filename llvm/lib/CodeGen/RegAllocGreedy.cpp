@@ -449,6 +449,40 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
     if (!IntI.valid())
       continue;
 
+    // Determine which blocks have interference live in or after the last split
+    // point.
+    for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
+      BlockInfo &BI = LiveBlocks[i];
+      SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
+      SlotIndex Start, Stop;
+      tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
+
+      // Skip interference-free blocks.
+      if (IntI.start() >= Stop)
+        continue;
+
+      // Is the interference live-in?
+      if (BI.LiveIn) {
+        IntI.advanceTo(Start);
+        if (!IntI.valid())
+          break;
+        if (IntI.start() <= Start)
+          BC.Entry = SpillPlacement::MustSpill;
+      }
+
+      // Is the interference overlapping the last split point?
+      if (BI.LiveOut) {
+        if (IntI.stop() < BI.LastSplitPoint)
+          IntI.advanceTo(BI.LastSplitPoint.getPrevSlot());
+        if (!IntI.valid())
+          break;
+        if (IntI.start() < Stop)
+          BC.Exit = SpillPlacement::MustSpill;
+      }
+    }
+
+    // Rewind iterator and check other interferences.
+    IntI.find(VirtReg.beginIndex());
     for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
       BlockInfo &BI = LiveBlocks[i];
       SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
@@ -462,26 +496,16 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
       // Handle transparent blocks with interference separately.
       // Transparent blocks never incur any fixed cost.
       if (BI.LiveThrough && !BI.Uses) {
-        // Check if interference is live-in - force spill.
-        if (BC.Entry != SpillPlacement::MustSpill) {
-          BC.Entry = SpillPlacement::PrefSpill;
-          IntI.advanceTo(Start);
-          if (IntI.valid() && IntI.start() <= Start)
-            BC.Entry = SpillPlacement::MustSpill;
-        }
-
-        // Check if interference is live-out - force spill.
-        if (BC.Exit != SpillPlacement::MustSpill) {
-          BC.Exit = SpillPlacement::PrefSpill;
-          // Any interference overlapping [LastSplitPoint;Stop) forces a spill.
-          IntI.advanceTo(BI.LastSplitPoint.getPrevSlot());
-          if (IntI.valid() && IntI.start() < Stop)
-            BC.Exit = SpillPlacement::MustSpill;
-        }
-
-        // Nothing more to do for this transparent block.
+        IntI.advanceTo(Start);
         if (!IntI.valid())
           break;
+        if (IntI.start() >= Stop)
+          continue;
+
+        if (BC.Entry != SpillPlacement::MustSpill)
+          BC.Entry = SpillPlacement::PrefSpill;
+        if (BC.Exit != SpillPlacement::MustSpill)
+          BC.Exit = SpillPlacement::PrefSpill;
         continue;
       }
 
@@ -494,12 +518,8 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
         IntI.advanceTo(Start);
         if (!IntI.valid())
           break;
-
-        // Interference is live-in - force spill.
-        if (IntI.start() <= Start)
-          BC.Entry = SpillPlacement::MustSpill;
         // Not live in, but before the first use.
-        else if (IntI.start() < BI.FirstUse)
+        if (IntI.start() < BI.FirstUse)
           BC.Entry = SpillPlacement::PrefSpill;
       }
 
@@ -534,12 +554,6 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
           if (IntI.start() < Stop)
             BC.Exit = SpillPlacement::PrefSpill;
         }
-        // Is the interference overlapping the last split point?
-        IntI.advanceTo(BI.LastSplitPoint.getPrevSlot());
-        if (!IntI.valid())
-          break;
-        if (IntI.start() < Stop)
-          BC.Exit = SpillPlacement::MustSpill;
       }
     }
   }
