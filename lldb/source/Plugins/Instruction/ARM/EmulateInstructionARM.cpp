@@ -784,6 +784,13 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             context.arg2 = eModeARM;   // target instruction set
             break;
             }
+        case eEncodingA1:
+            lr = pc + 4; // return address
+            imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
+            target = pc + 8 + imm32;
+            context.arg1 = 8 + imm32;  // signed offset
+            context.arg2 = eModeARM; // target instruction set
+            break;
         case eEncodingA2:
             lr = pc + 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2 | Bits32(opcode, 24, 24) << 1);
