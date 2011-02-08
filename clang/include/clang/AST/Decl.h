@@ -274,7 +274,7 @@ public:
 
   /// \brief Clear the linkage cache in response to a change
   /// to the declaration. 
-  void ClearLinkageCache() { HasCachedLinkage = 0; }
+  void ClearLinkageCache();
 
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
