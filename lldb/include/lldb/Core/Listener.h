@@ -46,6 +46,12 @@ public:
     void
     Clear ();
 
+    const char *
+    GetName ()
+    {
+        return m_name.c_str();
+    }
+
     uint32_t
     StartListeningForEvents (Broadcaster* broadcaster,
                              uint32_t event_mask);
