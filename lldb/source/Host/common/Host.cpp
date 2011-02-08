@@ -673,6 +673,9 @@ Host::DynamicLibraryOpen (const FileSpec &file_spec, uint32_t options, Error &er
         
         if (options & eDynamicLibraryOpenOptionLazy)
             mode |= RTLD_LAZY;
+        else
+            mode |= RTLD_NOW;
+
     
         if (options & eDynamicLibraryOpenOptionLocal)
             mode |= RTLD_LOCAL;
@@ -744,7 +747,7 @@ Host::DynamicLibraryGetSymbol (void *opaque, const char *symbol_name, Error &err
             // This host doesn't support limiting searches to this shared library
             // so we need to verify that the match came from this shared library
             // if it was requested in the Host::DynamicLibraryOpen() function.
-            if (dylib_info->options & eDynamicLibraryOpenOptionLimitGetSymbol)
+            if (dylib_info->open_options & eDynamicLibraryOpenOptionLimitGetSymbol)
             {
                 FileSpec match_dylib_spec (Host::GetModuleFileSpecForHostAddress (symbol_addr));
                 if (match_dylib_spec != dylib_info->file_spec)
