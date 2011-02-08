@@ -221,7 +221,7 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
         EmulateInstruction::Context context = { EmulateInstruction::eContextPushRegisterOnStack, eRegisterKindDWARF, 0, 0 };
         for (i=0; i<15; ++i)
         {
-            if (BitIsSet (registers, 1u << i))
+            if (BitIsSet (registers, i))
             {
                 context.arg1 = dwarf_r0 + i;    // arg1 in the context is the DWARF register number
                 context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
@@ -234,7 +234,7 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
             }
         }
         
-        if (BitIsSet (registers, 1u << 15))
+        if (BitIsSet (registers, 15))
         {
             context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
             context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
@@ -345,7 +345,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
         EmulateInstruction::Context context = { EmulateInstruction::eContextPopRegisterOffStack, eRegisterKindDWARF, 0, 0 };
         for (i=0; i<15; ++i)
         {
-            if (BitIsSet (registers, 1u << i))
+            if (BitIsSet (registers, i))
             {
                 context.arg1 = dwarf_r0 + i;    // arg1 in the context is the DWARF register number
                 context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
@@ -358,7 +358,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
             }
         }
         
-        if (BitIsSet (registers, 1u << 15))
+        if (BitIsSet (registers, 15))
         {
             context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
             context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
