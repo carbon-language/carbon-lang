@@ -2405,6 +2405,7 @@ ProcessGDBRemote::StartNoticingNewThreads()
     static const char *bp_names[] =
     {
         "start_wqthread",
+        "_pthread_wqthread",
         "_pthread_start",
         NULL
     };
@@ -2451,18 +2452,18 @@ ProcessGDBRemote::StartNoticingNewThreads()
 bool
 ProcessGDBRemote::StopNoticingNewThreads()
 {   
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    if (log)
+        log->Printf ("Disabling new thread notification breakpoint.");
     size_t num_bps = m_thread_observation_bps.size();
     if (num_bps != 0)
     {
         for (int i = 0; i < num_bps; i++)
         {
-            LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             
             lldb::BreakpointSP break_sp = m_target.GetBreakpointByID(m_thread_observation_bps[i]);
             if (break_sp)
             {
-                if (log)
-                    log->Printf ("Disabling new thread notification breakpoint.");
                 break_sp->SetEnabled(false);
             }
         }
