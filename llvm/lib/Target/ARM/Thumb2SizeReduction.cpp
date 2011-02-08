@@ -294,14 +294,11 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
       HasImmOffset = true;
       HasOffReg = false;
     } else {
-      if (Entry.WideOpc == ARM::t2LDRi12) {
-        Opc = ARM::tLDRpci;
-        OpNum = 2;
-      }
-
-      HasImmOffset = false;
-      HasBaseReg = false;
-      HasOffReg = false;
+      // FIXME: Temporary workaround for a  bug introduced by r121082.
+      // We should use t2LDRpci for loads from constantpools.
+      // We don't want to narrow this to tLDRpci until constant island pass
+      // for fear of pessimizing code.
+      return false;
     }
     break;
   case ARM::t2LDRBi12:
