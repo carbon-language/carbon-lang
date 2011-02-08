@@ -13,6 +13,7 @@
 #include <fcntl.h>
 
 #include "lldb/Core/Error.h"
+#include "lldb/Host/FileSpec.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -186,6 +187,7 @@ File::Sync ()
     }
     return error;
 }
+
 Error
 File::Read (void *buf, size_t &num_bytes)
 {
@@ -231,4 +233,59 @@ File::Write (const void *buf, size_t &num_bytes)
     }
     return error;
 }
+
+
+Error
+File::Read (void *buf, size_t &num_bytes, off_t &offset)
+{
+    Error error;
+    if (IsValid ())
+    {
+        ssize_t bytes_read = ::pread (m_file_desc, buf, num_bytes, offset);
+        if (bytes_read < 0)
+        {
+            num_bytes = 0;
+            error.SetErrorToErrno();
+        }
+        else
+        {
+            offset += bytes_read;
+            num_bytes = bytes_read;
+        }
+    }
+    else 
+    {
+        num_bytes = 0;
+        error.SetErrorString("invalid file handle");
+    }
+    return error;
+}
+
+Error
+File::Write (const void *buf, size_t &num_bytes, off_t &offset)
+{
+    Error error;
+    if (IsValid())
+    {
+        ssize_t bytes_written = ::pwrite (m_file_desc, buf, num_bytes, offset);
+        if (bytes_written < 0)
+        {
+            num_bytes = 0;
+            error.SetErrorToErrno();
+        }
+        else
+        {
+            offset += bytes_written;
+            num_bytes = bytes_written;
+        }
+    }
+    else 
+    {
+        num_bytes = 0;
+        error.SetErrorString("invalid file handle");
+    }
+    return error;
+}
+
+
 

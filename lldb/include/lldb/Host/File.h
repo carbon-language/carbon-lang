@@ -12,7 +12,6 @@
 #if defined(__cplusplus)
 
 #include "lldb/lldb-private.h"
-#include "lldb/Host/FileSpec.h"
 
 namespace lldb_private {
 
@@ -62,18 +61,18 @@ public:
     ///
     /// Takes a path to a file which can be just a filename, or a full
     /// path. If \a path is not NULL or empty, this function will call
-    /// FileSpec::SetFile (const char *path, bool resolve).
+    /// File::Open (const char *path, uint32_t options, uint32_t permissions).
     ///
     /// @param[in] path
     ///     The full or partial path to a file.
     ///
     /// @param[in] options
-    ///     Options to use when opening (see OpenOptions)
+    ///     Options to use when opening (see File::OpenOptions)
     ///
     /// @param[in] permissions
-    ///     Options to use when opening (see OpenOptions)
+    ///     Options to use when opening (see File::Permissions)
     ///
-    /// @see FileSpec::SetFile (const char *path, bool resolve)
+    /// @see File::Open (const char *path, uint32_t options, uint32_t permissions)
     //------------------------------------------------------------------
     File (const char *path,
           uint32_t options,
@@ -146,6 +145,21 @@ public:
     Error
     GetFileSpec (FileSpec &file_spec) const;
     
+    //------------------------------------------------------------------
+    /// Open a file for read/writing with the specified options.
+    ///
+    /// Takes a path to a file which can be just a filename, or a full
+    /// path.
+    ///
+    /// @param[in] path
+    ///     The full or partial path to a file.
+    ///
+    /// @param[in] options
+    ///     Options to use when opening (see File::OpenOptions)
+    ///
+    /// @param[in] permissions
+    ///     Options to use when opening (see File::Permissions)
+    //------------------------------------------------------------------
     Error
     Open (const char *path,
           uint32_t options,
@@ -154,21 +168,174 @@ public:
     Error
     Close ();
     
+    //------------------------------------------------------------------
+    /// Read bytes from a file from the current file position.
+    ///
+    /// NOTE: This function is NOT thread safe. Use the read function
+    /// that takes an "off_t &offset" to ensure correct operation in
+    /// multi-threaded environments.
+    ///
+    /// @param[in] buf
+    ///     A buffer where to put the bytes that are read.
+    ///
+    /// @param[in/out] num_bytes
+    ///     The number of bytes to read form the current file position
+    ///     which gets modified with the number of bytes that were read.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
     Error
-    Read (void *dst, size_t &num_bytes);
+    Read (void *buf, size_t &num_bytes);
           
+    //------------------------------------------------------------------
+    /// Write bytes to a file at the current file position.
+    ///
+    /// NOTE: This function is NOT thread safe. Use the write function
+    /// that takes an "off_t &offset" to ensure correct operation in
+    /// multi-threaded environments.
+    ///
+    /// @param[in] buf
+    ///     A buffer where to put the bytes that are read.
+    ///
+    /// @param[in/out] num_bytes
+    ///     The number of bytes to write to the current file position
+    ///     which gets modified with the number of bytes that were 
+    ///     written.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
     Error
-    Write (const void *src, size_t &num_bytes);
+    Write (const void *buf, size_t &num_bytes);
 
+    //------------------------------------------------------------------
+    /// Seek to an offset relative to the beginning of the file.
+    ///
+    /// NOTE: This function is NOT thread safe, other threads that 
+    /// access this object might also change the current file position.
+    /// For thread safe reads and writes see the following functions:
+    /// @see File::Read (void *, size_t, off_t &)
+    /// @see File::Write (const void *, size_t, off_t &)
+    ///
+    /// @param[in/out] offset
+    ///     The offset to seek to within the file relative to the 
+    ///     beginning of the file which gets filled in the the resulting
+    ///     absolute file offset.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
     Error
     SeekFromStart (off_t& offset);
     
+    //------------------------------------------------------------------
+    /// Seek to an offset relative to the current file position.
+    ///
+    /// NOTE: This function is NOT thread safe, other threads that 
+    /// access this object might also change the current file position.
+    /// For thread safe reads and writes see the following functions:
+    /// @see File::Read (void *, size_t, off_t &)
+    /// @see File::Write (const void *, size_t, off_t &)
+    ///
+    /// @param[in/out] offset
+    ///     The offset to seek to within the file relative to the 
+    ///     current file position. On return this parameter gets filled 
+    ///     in the the resulting absolute file offset.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
     Error
     SeekFromCurrent (off_t& offset);
     
+    //------------------------------------------------------------------
+    /// Seek to an offset relative to the end of the file.
+    ///
+    /// NOTE: This function is NOT thread safe, other threads that 
+    /// access this object might also change the current file position.
+    /// For thread safe reads and writes see the following functions:
+    /// @see File::Read (void *, size_t, off_t &)
+    /// @see File::Write (const void *, size_t, off_t &)
+    ///
+    /// @param[in/out] offset
+    ///     The offset to seek to within the file relative to the 
+    ///     end of the file which gets filled in the the resulting
+    ///     absolute file offset.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
     Error
     SeekFromEnd (off_t& offset);
 
+    //------------------------------------------------------------------
+    /// Read bytes from a file from the specified file offset.
+    ///
+    /// NOTE: This function is thread safe in that clients manager their
+    /// own file position markers and reads on other threads won't mess
+    /// up the current read.
+    ///
+    /// @param[in] buf
+    ///     A buffer where to put the bytes that are read.
+    ///
+    /// @param[in/out] num_bytes
+    ///     The number of bytes to read form the current file position
+    ///     which gets modified with the number of bytes that were read.
+    ///
+    /// @param[in/out] offset
+    ///     The offset within the file from which to read \a num_bytes
+    ///     bytes. This offset gets incremented by the number of bytes
+    ///     that were read.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
+    Error
+    Read (void *dst, size_t &num_bytes, off_t &offset);
+    
+    //------------------------------------------------------------------
+    /// Write bytes to a file at the specified file offset.
+    ///
+    /// NOTE: This function is thread safe in that clients manager their
+    /// own file position markers, though clients will need to implement
+    /// their own locking externally to avoid multiple people writing
+    /// to the file at the same time.
+    ///
+    /// @param[in] buf
+    ///     A buffer containing the bytes to write.
+    ///
+    /// @param[in/out] num_bytes
+    ///     The number of bytes to write to the file at offset \a offset.
+    ///     \a num_bytes gets modified with the number of bytes that 
+    ///     were read.
+    ///
+    /// @param[in/out] offset
+    ///     The offset within the file at which to write \a num_bytes
+    ///     bytes. This offset gets incremented by the number of bytes
+    ///     that were written.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
+    Error
+    Write (const void *src, size_t &num_bytes, off_t &offset);
+
+    
+    //------------------------------------------------------------------
+    /// Sync to disk.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
     Error
     Sync ();
 
@@ -182,4 +349,4 @@ protected:
 } // namespace lldb_private
 
 #endif  // #if defined(__cplusplus)
-#endif  // liblldb_FileSpec_h_
+#endif  // liblldb_File_h_
