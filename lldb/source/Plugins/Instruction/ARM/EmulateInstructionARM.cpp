@@ -1607,16 +1607,18 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
         const addr_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
         if (!success)
             return false;
+
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindDWARF,
+                                                dwarf_r0 + n,
+                                                offset };
                   
         for (int i = 0; i < 14; ++i)
         {
             if (BitIsSet (registers, i))
             {
-                EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                        eRegisterKindDWARF,
-                                                        dwarf_r0 + n,
-                                                        offset };
-                  
+                context.type = EmulateInstruction::eContextRegisterPlusOffset;
+                context.arg2 = offset;
                 if (wback && (n == 13)) // Pop Instruction
                     context.type = EmulateInstruction::eContextPopRegisterOffStack;
 
@@ -1635,11 +1637,8 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
         if (BitIsSet (registers, 15))
         {
             //LoadWritePC (MemA [address, 4]);
-            EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                    eRegisterKindDWARF,
-                                                    dwarf_r0 + n,
-                                                    offset };
-                                                    
+            context.type = EmulateInstruction::eContextRegisterPlusOffset;
+            context.arg2 = offset;
             uint32_t data = ReadMemoryUnsigned (context, base_address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
@@ -1650,10 +1649,8 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
         if (wback && BitIsClear (registers, n))
         {
             addr_t offset = addr_byte_size * BitCount (registers);
-            EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                    eRegisterKindDWARF,
-                                                    dwarf_r0 + n,
-                                                    offset };
+            context.type = EmulateInstruction::eContextRegisterPlusOffset;
+            context.arg2 = offset;
                 
             // R[n] = R[n] + 4 * BitCount (registers)
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, base_address + offset))
@@ -1741,17 +1738,17 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
         int32_t offset = 0;
         addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success) 
                                                                              - (addr_byte_size * BitCount (registers));
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindDWARF,
+                                                dwarf_r0 + n,
+                                                offset };
                   
         for (int i = 0; i < 14; ++i)
         {
             if (BitIsSet (registers, i))
             {
                 // R[i] = MemA[address,4]; address = address + 4;
-                EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                        eRegisterKindDWARF,
-                                                        dwarf_r0 + n,
-                                                        offset };
-
+                context.arg2 = offset;
                 uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
                 if (!success)
                     return false;
@@ -1767,11 +1764,7 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
         //     LoadWritePC(MemA[address,4]);
         if (BitIsSet (registers, 15))
         {
-            EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                    eRegisterKindDWARF,
-                                                    dwarf_r0 + n,
-                                                    offset };
-                  
+            context.arg2 = offset;
             uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
@@ -1782,15 +1775,115 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
         // if wback && registers<n> == ’0’ then R[n] = R[n] - 4*BitCount(registers);
         if (wback && BitIsClear (registers, n))
         {
-            EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                    eRegisterKindDWARF,
-                                                    dwarf_r0 + n,
-                                                    offset };
-                  
+            context.arg2 = offset;      
             addr_t addr = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
             if (!success)
                 return false;
             addr = addr - (addr_byte_size * BitCount (registers));
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
+                return false;
+        }
+                  
+        // if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
+        if (wback && BitIsSet (registers, n))
+            return false;  // I'm not sure this is right; how do I set R[n] to bits(32) UNKNOWN.
+    }
+    return true;
+}
+
+bool
+EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations(); 
+        address = R[n] + 4;
+                  
+        for i = 0 to 14 
+            if registers<i> == ’1’ then
+                  R[i] = MemA[address,4]; address = address + 4; 
+        if registers<15> == ’1’ then
+            LoadWritePC(MemA[address,4]);
+                  
+        if wback && registers<n> == ’0’ then R[n] = R[n] + 4*BitCount(registers); 
+        if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN;
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed())
+    {
+        uint32_t n;
+        uint32_t registers = 0;
+        bool wback;
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        switch (encoding)
+        {
+            case eEncodingA1:
+                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                n = Bits32 (opcode, 19, 16);
+                registers = Bits32 (opcode, 15, 0);
+                wback = BitIsSet (opcode, 21);
+                  
+                // if n == 15 || BitCount(registers) < 1 then UNPREDICTABLE;
+                if ((n == 15) || (BitCount (registers) < 1))
+                    return false;
+                  
+                break;
+            default:
+                return false;
+        }
+        // address = R[n] + 4;
+                  
+        int32_t offset = 0;
+        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success) + addr_byte_size;
+                  
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindDWARF,
+                                                dwarf_r0 + n,
+                                                offset };
+
+        for (int i = 0; i < 14; ++i)
+        {
+            if (BitIsSet (registers, i))
+            {
+                // R[i] = MemA[address,4]; address = address + 4;
+                
+                context.arg2 = offset;
+                uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+                if (!success)
+                    return false;
+                  
+                if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + i, data))
+                    return false;
+                  
+                offset += addr_byte_size;
+            }
+        }
+                  
+        // if registers<15> == ’1’ then
+        //     LoadWritePC(MemA[address,4]);
+        if (BitIsSet (registers, 15))
+        {
+            context.arg2 = offset;
+            uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+            if (!success)
+                return false;
+            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+                return false;
+        }
+                  
+        // if wback && registers<n> == ’0’ then R[n] = R[n] + 4*BitCount(registers);
+        if (wback && BitIsClear (registers, n))
+        {
+            context.arg2 = offset;      
+            addr_t addr = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+            if (!success)
+                return false;
+            addr = addr + (addr_byte_size * BitCount (registers));
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
                 return false;
         }
@@ -1862,7 +1955,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // Load instructions
         //----------------------------------------------------------------------
         { 0x0fd00000, 0x08900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x09100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" }
+        { 0x0fd00000, 0x09100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x09900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMIB, "ldmib<c> <Rn<{!} <registers>" }
         
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
