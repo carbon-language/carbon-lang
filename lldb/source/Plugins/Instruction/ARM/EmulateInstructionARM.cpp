@@ -19,6 +19,11 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static inline uint32_t Align(uint32_t val, uint32_t alignment)
+{
+    return alignment * (val / alignment);
+}
+
 // A8.6.50
 // Valid return values are {1, 2, 3, 4}, with 0 signifying an error condition.
 static unsigned short CountITSize(unsigned ITMask) {
@@ -767,6 +772,23 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             return false;
         int32_t imm32; // PC-relative offset
         switch (encoding) {
+        case eEncodingT1:
+            {
+            lr = (pc + 4) | 1u; // return address
+            uint32_t S = Bits32(opcode, 26, 26);
+            uint32_t imm10 = Bits32(opcode, 25, 16);
+            uint32_t J1 = Bits32(opcode, 13, 13);
+            uint32_t J2 = Bits32(opcode, 11, 11);
+            uint32_t imm11 = Bits32(opcode, 10, 0);
+            uint32_t I1 = !(J1 ^ S);
+            uint32_t I2 = !(J2 ^ S);
+            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) + (imm11 << 1);
+            imm32 = llvm::SignExtend32<25>(imm25);
+            target = pc + 4 + imm32;
+            context.arg1 = 4 + imm32;  // signed offset
+            context.arg2 = eModeThumb; // target instruction set
+            break;
+            }
         case eEncodingT2:
             {
             lr = (pc + 4) | 1u; // return address
@@ -779,17 +801,17 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             uint32_t I2 = !(J2 ^ S);
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10H << 12) + (imm10L << 2);
             imm32 = llvm::SignExtend32<25>(imm25);
-            target = ((pc + 4) & 0xfffffffc) + imm32;
-            context.arg1 = 4 + imm32;  // signed offset
-            context.arg2 = eModeARM;   // target instruction set
+            target = Align(pc + 4, 4) + imm32;
+            context.arg1 = 4 + imm32; // signed offset
+            context.arg2 = eModeARM;  // target instruction set
             break;
             }
         case eEncodingA1:
             lr = pc + 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
-            target = pc + 8 + imm32;
-            context.arg1 = 8 + imm32;  // signed offset
-            context.arg2 = eModeARM; // target instruction set
+            target = Align(pc + 8, 4) + imm32;
+            context.arg1 = 8 + imm32; // signed offset
+            context.arg2 = eModeARM;  // target instruction set
             break;
         case eEncodingA2:
             lr = pc + 4; // return address
@@ -1542,8 +1564,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
 
         // push register(s)
         { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePush, "push <registers>" },
-        { 0xffff0000, 0xe92d0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePush, "push.w <registers>" },
-        { 0xffff0fff, 0xf84d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePush, "push.w <register>" },
+        { 0xffff0000, 0xe92d0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePush, "push.w <registers>" },
+        { 0xffff0fff, 0xf84d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePush, "push.w <register>" },
         // move from high register to low register
         { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovLowHigh, "mov r0-r7, r8-r15" },
 
@@ -1557,12 +1579,12 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // adjust the stack pointer
         { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPRm, "add sp, <Rm>"},
         { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSubSPImmdiate, "add sp, sp, #imm"},
-        { 0xfbef8f00, 0xf1ad0d00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "sub.w sp, sp, #<const>"},
-        { 0xfbff8f00, 0xf2ad0d00, ARMv6T2|ARMv7, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "subw sp, sp, #imm12"},
+        { 0xfbef8f00, 0xf1ad0d00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "sub.w sp, sp, #<const>"},
+        { 0xfbff8f00, 0xf2ad0d00, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "subw sp, sp, #imm12"},
 
         // vector push consecutive extension register(s)
-        { 0xffbf0f00, 0xed2d0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
-        { 0xffbf0f00, 0xed2d0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
+        { 0xffbf0f00, 0xed2d0b00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
+        { 0xffbf0f00, 0xed2d0a00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
         //----------------------------------------------------------------------
         // Epilogue instructions
@@ -1571,12 +1593,14 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
         { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         // J1 == J2 == 1
-        { 0xf800e801, 0xf000e800, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
+        { 0xf800f800, 0xf000f800, ARMV4T_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
+        // J1 == J2 == 1
+        { 0xf800e800, 0xf000e800, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
         { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
-        { 0xffff0000, 0xe8bd0000, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
-        { 0xffff0fff, 0xf85d0d04, ARMv6T2|ARMv7, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <register>" },
-        { 0xffbf0f00, 0xecbd0b00, ARMv6T2|ARMv7, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
-        { 0xffbf0f00, 0xecbd0a00, ARMv6T2|ARMv7, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
+        { 0xffff0000, 0xe8bd0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
+        { 0xffff0fff, 0xf85d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <register>" },
+        { 0xffbf0f00, 0xecbd0b00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
+        { 0xffbf0f00, 0xecbd0a00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
 
         //----------------------------------------------------------------------
         // Supervisor Call (previously Software Interrupt)
