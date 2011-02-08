@@ -145,6 +145,12 @@ public:
     uint32_t
     CurrentCond ();
 
+    bool
+    BranchWritePC(const Context &context, uint32_t addr);
+
+    bool
+    BXWritePC(Context &context, uint32_t addr);
+
 protected:
 
     // Typedef for the callback function used during the emulation.

@@ -779,24 +779,24 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             uint32_t I2 = !(J2 ^ S);
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10H << 12) + (imm10L << 2);
             imm32 = llvm::SignExtend32<25>(imm25);
-            target = (pc & 0xfffffffc) + 4 + imm32;
-            context.arg1 = eModeARM;   // target instruction set
-            context.arg2 = 4 + imm32;  // signed offset
+            target = ((pc + 4) & 0xfffffffc) + imm32;
+            context.arg1 = 4 + imm32;  // signed offset
+            context.arg2 = eModeARM;   // target instruction set
             break;
             }
         case eEncodingA2:
             lr = pc + 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2 | Bits32(opcode, 24, 24) << 1);
             target = pc + 8 + imm32;
-            context.arg1 = eModeThumb; // target instruction set
-            context.arg2 = 8 + imm32;  // signed offset
+            context.arg1 = 8 + imm32;  // signed offset
+            context.arg2 = eModeThumb; // target instruction set
             break;
         default:
             return false;
         }
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
             return false;
-        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
+        if (!BranchWritePC(context, target))
             return false;
     }
     return true;
@@ -858,19 +858,11 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
         default:
             return false;
         }
-        bool toThumb;
-        if (BitIsSet(target, 0))
-            toThumb = true;
-        else if (BitIsClear(target, 1))
-            toThumb = false;
-        else
-            return false; // address<1:0> == ‘10’ => UNPREDICTABLE
         context.arg0 = eRegisterKindDWARF;
         context.arg1 = dwarf_r0 + Rm;
-        context.arg2 = toThumb ? eModeThumb : eModeARM;
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
             return false;
-        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
+        if (!BXWritePC(context, target))
             return false;
     }
     return true;
@@ -1394,7 +1386,72 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
     if (!success)
         return false;
 
-    return false;
+    if (ConditionPassed())
+    {
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRelativeBranchImmediate, 0, 0, 0};
+        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        addr_t target; // target address
+        if (!success)
+            return false;
+        int32_t imm32; // PC-relative offset
+        switch (encoding) {
+        case eEncodingT1:
+            // The 'cond' field is handled in EmulateInstructionARM::CurrentCond().
+            imm32 = llvm::SignExtend32<9>(Bits32(opcode, 7, 0) << 1);
+            target = pc + 4 + imm32;
+            context.arg1 = 4 + imm32;  // signed offset
+            context.arg2 = eModeThumb; // target instruction set
+            break;
+        case eEncodingT2:
+            imm32 = llvm::SignExtend32<12>(Bits32(opcode, 10, 0));
+            target = pc + 4 + imm32;
+            context.arg1 = 4 + imm32;  // signed offset
+            context.arg2 = eModeThumb; // target instruction set
+            break;
+        case eEncodingT3:
+            // The 'cond' field is handled in EmulateInstructionARM::CurrentCond().
+            {
+            uint32_t S = Bits32(opcode, 26, 26);
+            uint32_t imm6 = Bits32(opcode, 21, 16);
+            uint32_t J1 = Bits32(opcode, 13, 13);
+            uint32_t J2 = Bits32(opcode, 11, 11);
+            uint32_t imm11 = Bits32(opcode, 10, 0);
+            uint32_t imm21 = (S << 20) | (J2 << 19) | (J1 << 18) | (imm6 << 12) + (imm11 << 1);
+            imm32 = llvm::SignExtend32<21>(imm21);
+            target = pc + 4 + imm32;
+            context.arg1 = eModeThumb; // target instruction set
+            context.arg2 = 4 + imm32;  // signed offset
+            break;
+            }
+        case eEncodingT4:
+            {
+            uint32_t S = Bits32(opcode, 26, 26);
+            uint32_t imm10 = Bits32(opcode, 25, 16);
+            uint32_t J1 = Bits32(opcode, 13, 13);
+            uint32_t J2 = Bits32(opcode, 11, 11);
+            uint32_t imm11 = Bits32(opcode, 10, 0);
+            uint32_t I1 = !(J1 ^ S);
+            uint32_t I2 = !(J2 ^ S);
+            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) + (imm11 << 1);
+            imm32 = llvm::SignExtend32<25>(imm25);
+            target = pc + 4 + imm32;
+            context.arg1 = eModeThumb; // target instruction set
+            context.arg2 = 4 + imm32;  // signed offset
+            break;
+            }
+        case eEncodingA1:
+            imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
+            target = pc + 8 + imm32;
+            context.arg1 = eModeARM; // target instruction set
+            context.arg2 = 8 + imm32;  // signed offset
+            break;
+        default:
+            return false;
+        }
+        if (!BranchWritePC(context, target))
+            return false;
+    }
+    return true;
 }
 
 EmulateInstructionARM::ARMOpcode*
@@ -1530,8 +1587,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // To resolve ambiguity, "b<c> #imm8" should come after "svc #imm8".
         { 0xfffff000, 0x0000d000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm8 (outside IT)"},
         { 0xffff8000, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b #imm11 (outside or last in IT)"},
-        { 0xf800d000, 0x00008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
-        { 0xf800d000, 0x00009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b.w #imm8 (outside or last in IT)"}
+        { 0xf800d000, 0xf0008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
+        { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b.w #imm8 (outside or last in IT)"}
 
     };
 
@@ -1628,40 +1685,6 @@ EmulateInstructionARM::ReadInstruction ()
     return success;
 }
 
-uint32_t
-EmulateInstructionARM::CurrentCond ()
-{
-    switch (m_inst_mode)
-    {
-    default:
-    case eModeInvalid:
-        break;
-
-    case eModeARM:
-        return UnsignedBits(m_inst.opcode.inst32, 31, 28);
-    
-    case eModeThumb:
-        // For T1 and T3 encodings of the Branch instruction, it returns the 4-bit
-        // 'cond' field of the encoding.
-        if (m_inst.opcode_type == eOpcode16 &&
-            Bits32(m_inst.opcode.inst16, 15, 12) == 0x0d &&
-            Bits32(m_inst.opcode.inst16, 11, 7) != 0x0f)
-        {
-            return Bits32(m_inst.opcode.inst16, 11, 7);
-        }
-        else if (m_inst.opcode_type == eOpcode32 &&
-                 Bits32(m_inst.opcode.inst32, 31, 27) == 0x1e &&
-                 Bits32(m_inst.opcode.inst32, 15, 14) == 0x02 &&
-                 Bits32(m_inst.opcode.inst32, 12, 12) == 0x00 &&
-                 Bits32(m_inst.opcode.inst32, 25, 22) <= 0x0d)
-        {
-            return Bits32(m_inst.opcode.inst32, 25, 22);
-        }
-        
-        return m_it_session.GetCond();
-    }
-    return UINT32_MAX;  // Return invalid value
-}
 bool
 EmulateInstructionARM::ConditionPassed ()
 {
@@ -1705,6 +1728,88 @@ EmulateInstructionARM::ConditionPassed ()
     return result;
 }
 
+uint32_t
+EmulateInstructionARM::CurrentCond ()
+{
+    switch (m_inst_mode)
+    {
+    default:
+    case eModeInvalid:
+        break;
+
+    case eModeARM:
+        return UnsignedBits(m_inst.opcode.inst32, 31, 28);
+    
+    case eModeThumb:
+        // For T1 and T3 encodings of the Branch instruction, it returns the 4-bit
+        // 'cond' field of the encoding.
+        if (m_inst.opcode_type == eOpcode16 &&
+            Bits32(m_inst.opcode.inst16, 15, 12) == 0x0d &&
+            Bits32(m_inst.opcode.inst16, 11, 7) != 0x0f)
+        {
+            return Bits32(m_inst.opcode.inst16, 11, 7);
+        }
+        else if (m_inst.opcode_type == eOpcode32 &&
+                 Bits32(m_inst.opcode.inst32, 31, 27) == 0x1e &&
+                 Bits32(m_inst.opcode.inst32, 15, 14) == 0x02 &&
+                 Bits32(m_inst.opcode.inst32, 12, 12) == 0x00 &&
+                 Bits32(m_inst.opcode.inst32, 25, 22) <= 0x0d)
+        {
+            return Bits32(m_inst.opcode.inst32, 25, 22);
+        }
+        
+        return m_it_session.GetCond();
+    }
+    return UINT32_MAX;  // Return invalid value
+}
+
+// API client must pass in a context whose arg2 field contains the target instruction set.
+bool
+EmulateInstructionARM::BranchWritePC (const Context &context, uint32_t addr)
+{
+    addr_t target;
+
+    // Chech the target instruction set.
+    switch (context.arg2)
+    {
+    default:
+        assert(0 && "BranchWritePC expects context.arg1 with either eModeARM or eModeThumb");
+        return false;
+    case eModeARM:
+        target = addr & 0xfffffffc;
+        break;
+    case eModeThumb:
+        target = addr & 0xfffffffe;
+        break;
+    }
+    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
+        return false;    
+    return false;
+}
+
+// As a side effect, BXWritePC sets context.arg2 to eModeARM or eModeThumb by inspecting addr.
+bool
+EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
+{
+    addr_t target;
+
+    if (BitIsSet(addr, 0))
+    {
+        target = addr & 0xfffffffe;
+        context.arg2 = eModeThumb;
+    }
+    else if (BitIsClear(addr, 1))
+    {
+        target = addr & 0xfffffffc;
+        context.arg2 = eModeARM;
+    }
+    else
+        return false; // address<1:0> == '10' => UNPREDICTABLE
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
+        return false;    
+    return false;
+}
 
 bool
 EmulateInstructionARM::EvaluateInstruction ()
