@@ -24,7 +24,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ValueHandle.h"
 #include "CodeGenModule.h"
-#include "CGBlocks.h"
 #include "CGBuilder.h"
 #include "CGCall.h"
 #include "CGValue.h"
@@ -71,6 +70,8 @@ namespace CodeGen {
   class CGRecordLayout;
   class CGBlockInfo;
   class CGCXXABI;
+  class BlockFlags;
+  class BlockFieldFlags;
 
 /// A branch fixup.  These are required when emitting a goto to a
 /// label which hasn't been emitted yet.  The goto is optimistically
@@ -502,7 +503,7 @@ public:
 
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
-class CodeGenFunction : public BlockFunction {
+class CodeGenFunction {
   CodeGenFunction(const CodeGenFunction&); // DO NOT IMPLEMENT
   void operator=(const CodeGenFunction&);  // DO NOT IMPLEMENT
 
@@ -584,8 +585,13 @@ public:
   const llvm::IntegerType *IntPtrTy, *Int32Ty, *Int64Ty;
   uint32_t LLVMPointerWidth;
 
+  const llvm::PointerType *Int8PtrTy;
+
   bool Exceptions;
   bool CatchUndefined;
+
+  const CodeGen::CGBlockInfo *BlockInfo;
+  llvm::Value *BlockPointer;
 
   /// \brief A mapping from NRVO variables to the flags used to indicate
   /// when the NRVO has been applied to this variable.
@@ -932,6 +938,8 @@ public:
   ASTContext &getContext() const;
   CGDebugInfo *getDebugInfo() { return DebugInfo; }
 
+  const LangOptions &getLangOptions() const { return CGM.getLangOptions(); }
+
   /// Returns a pointer to the function's exception object slot, which
   /// is assigned in every landing pad.
   llvm::Value *getExceptionSlot();
@@ -952,7 +960,7 @@ public:
     return getInvokeDestImpl();
   }
 
-  llvm::LLVMContext &getLLVMContext() { return VMContext; }
+  llvm::LLVMContext &getLLVMContext() { return CGM.getLLVMContext(); }
 
   //===--------------------------------------------------------------------===//
   //                                  Objective-C
@@ -984,13 +992,24 @@ public:
   llvm::Constant *BuildDescriptorBlockDecl(const BlockExpr *,
                                            const CGBlockInfo &Info,
                                            const llvm::StructType *,
-                                           llvm::Constant *BlockVarLayout,
-                                           std::vector<HelperInfo> *);
+                                           llvm::Constant *BlockVarLayout);
 
   llvm::Function *GenerateBlockFunction(GlobalDecl GD,
                                         const CGBlockInfo &Info,
                                         const Decl *OuterFuncDecl,
                                         const DeclMapTy &ldm);
+
+  llvm::Constant *GenerateCopyHelperFunction(const CGBlockInfo &blockInfo);
+  llvm::Constant *GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo);
+
+  llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *,
+                                                  BlockFieldFlags flags,
+                                                  const VarDecl *BD);
+  llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, 
+                                                     BlockFieldFlags flags, 
+                                                     const VarDecl *BD);
+
+  void BuildBlockRelease(llvm::Value *DeclPtr, BlockFieldFlags flags);
 
   llvm::Value *LoadBlockStruct() {
     assert(BlockPointer && "no block pointer set!");
@@ -1111,13 +1130,13 @@ public:
   static bool hasAggregateLLVMType(QualType T);
 
   /// createBasicBlock - Create an LLVM basic block.
-  llvm::BasicBlock *createBasicBlock(const char *Name="",
-                                     llvm::Function *Parent=0,
-                                     llvm::BasicBlock *InsertBefore=0) {
+  llvm::BasicBlock *createBasicBlock(llvm::StringRef name = "",
+                                     llvm::Function *parent = 0,
+                                     llvm::BasicBlock *before = 0) {
 #ifdef NDEBUG
-    return llvm::BasicBlock::Create(VMContext, "", Parent, InsertBefore);
+    return llvm::BasicBlock::Create(getLLVMContext(), "", parent, before);
 #else
-    return llvm::BasicBlock::Create(VMContext, Name, Parent, InsertBefore);
+    return llvm::BasicBlock::Create(getLLVMContext(), name, parent, before);
 #endif
   }
 
@@ -1204,6 +1223,9 @@ public:
   AggValueSlot CreateAggTemp(QualType T, const llvm::Twine &Name = "tmp") {
     return AggValueSlot::forAddr(CreateMemTemp(T, Name), false, false);
   }
+
+  /// Emit a cast to void* in the appropriate address space.
+  llvm::Value *EmitCastToVoidPtr(llvm::Value *value);
 
   /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
   /// expression and compare the result against zero, returning an Int1Ty value.
@@ -2020,76 +2042,6 @@ template <> struct DominatingValue<RValue> {
   static type restore(CodeGenFunction &CGF, saved_type value) {
     return value.restore(CGF);
   }
-};
-
-/// CGBlockInfo - Information to generate a block literal.
-class CGBlockInfo {
-public:
-  /// Name - The name of the block, kindof.
-  const char *Name;
-
-  /// The field index of 'this' within the block, if there is one.
-  unsigned CXXThisIndex;
-
-  class Capture {
-    uintptr_t Data;
-
-  public:
-    bool isIndex() const { return (Data & 1) != 0; }
-    bool isConstant() const { return !isIndex(); }
-    unsigned getIndex() const { assert(isIndex()); return Data >> 1; }
-    llvm::Value *getConstant() const {
-      assert(isConstant());
-      return reinterpret_cast<llvm::Value*>(Data);
-    }
-
-    static Capture makeIndex(unsigned index) {
-      Capture v;
-      v.Data = (index << 1) | 1;
-      return v;
-    }
-
-    static Capture makeConstant(llvm::Value *value) {
-      Capture v;
-      v.Data = reinterpret_cast<uintptr_t>(value);
-      return v;
-    }    
-  };
-
-  /// The mapping of allocated indexes within the block.
-  llvm::DenseMap<const VarDecl*, Capture> Captures;  
-
-  /// CanBeGlobal - True if the block can be global, i.e. it has
-  /// no non-constant captures.
-  bool CanBeGlobal : 1;
-
-  /// True if the block needs a custom copy or dispose function.
-  bool NeedsCopyDispose : 1;
-
-  /// HasCXXObject - True if the block's custom copy/dispose functions
-  /// need to be run even in GC mode.
-  bool HasCXXObject : 1;
-
-  /// HasWeakBlockVariable - True if block captures a weak __block variable.
-  bool HasWeakBlockVariable : 1;
-  
-  const llvm::StructType *StructureType;
-  const BlockExpr *Block;
-  CharUnits BlockSize;
-  CharUnits BlockAlign;
-  llvm::SmallVector<const Expr*, 8> BlockLayout;
-
-  const Capture &getCapture(const VarDecl *var) const {
-    llvm::DenseMap<const VarDecl*, Capture>::const_iterator
-      it = Captures.find(var);
-    assert(it != Captures.end() && "no entry for variable!");
-    return it->second;
-  }
-
-  const BlockDecl *getBlockDecl() const { return Block->getBlockDecl(); }
-  const BlockExpr *getBlockExpr() const { return Block; }
-
-  CGBlockInfo(const BlockExpr *blockExpr, const char *Name);
 };
 
 }  // end namespace CodeGen

@@ -2668,7 +2668,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   }
 
   if (!ResultType->isVoidType() && Slot.isNull())
-    CGM.getCXXABI().EmitReturnFromThunk(CGF, RV, ResultType);
+    CGM.getCXXABI().EmitReturnFromThunk(*this, RV, ResultType);
 
   FinishFunction();
 

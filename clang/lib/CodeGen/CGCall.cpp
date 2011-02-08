@@ -928,7 +928,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // The alignment we need to use is the max of the requested alignment for
       // the argument plus the alignment required by our access code below.
       unsigned AlignmentToUse =
-        CGF.CGM.getTargetData().getABITypeAlignment(ArgI.getCoerceToType());
+        CGM.getTargetData().getABITypeAlignment(ArgI.getCoerceToType());
       AlignmentToUse = std::max(AlignmentToUse,
                         (unsigned)getContext().getDeclAlign(Arg).getQuantity());
 

@@ -784,7 +784,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
       // Optimistically hope that any fixups will continue falling through.
       for (unsigned I = FixupDepth, E = EHStack.getNumBranchFixups();
            I < E; ++I) {
-        BranchFixup &Fixup = CGF.EHStack.getBranchFixup(I);
+        BranchFixup &Fixup = EHStack.getBranchFixup(I);
         if (!Fixup.Destination) continue;
         if (!Fixup.OptimisticBranchBlock) {
           new llvm::StoreInst(Builder.getInt32(Fixup.DestinationIndex),
@@ -846,7 +846,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
       if (NewNormalEntry != NormalEntry && NormalEntry == NormalExit)
         for (unsigned I = FixupDepth, E = EHStack.getNumBranchFixups();
                I < E; ++I)
-          CGF.EHStack.getBranchFixup(I).OptimisticBranchBlock = NewNormalEntry;
+          EHStack.getBranchFixup(I).OptimisticBranchBlock = NewNormalEntry;
     }
   }
 

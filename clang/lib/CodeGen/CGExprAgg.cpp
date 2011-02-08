@@ -901,12 +901,12 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
 
   const llvm::PointerType *DPT = cast<llvm::PointerType>(DestPtr->getType());
   const llvm::Type *DBP =
-    llvm::Type::getInt8PtrTy(VMContext, DPT->getAddressSpace());
+    llvm::Type::getInt8PtrTy(getLLVMContext(), DPT->getAddressSpace());
   DestPtr = Builder.CreateBitCast(DestPtr, DBP, "tmp");
 
   const llvm::PointerType *SPT = cast<llvm::PointerType>(SrcPtr->getType());
   const llvm::Type *SBP =
-    llvm::Type::getInt8PtrTy(VMContext, SPT->getAddressSpace());
+    llvm::Type::getInt8PtrTy(getLLVMContext(), SPT->getAddressSpace());
   SrcPtr = Builder.CreateBitCast(SrcPtr, SBP, "tmp");
 
   if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {

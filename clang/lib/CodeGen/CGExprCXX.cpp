@@ -279,7 +279,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
 
   // Ask the ABI to load the callee.  Note that This is modified.
   llvm::Value *Callee =
-    CGM.getCXXABI().EmitLoadOfMemberFunctionPointer(CGF, This, MemFnPtr, MPT);
+    CGM.getCXXABI().EmitLoadOfMemberFunctionPointer(*this, This, MemFnPtr, MPT);
   
   CallArgList Args;
 
@@ -692,11 +692,7 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
 
 static void EmitZeroMemSet(CodeGenFunction &CGF, QualType T,
                            llvm::Value *NewPtr, llvm::Value *Size) {
-  llvm::LLVMContext &VMContext = CGF.CGM.getLLVMContext();
-  const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
-  if (NewPtr->getType() != BP)
-    NewPtr = CGF.Builder.CreateBitCast(NewPtr, BP, "tmp");
-
+  CGF.EmitCastToVoidPtr(NewPtr);
   CharUnits Alignment = CGF.getContext().getTypeAlignInChars(T);
   CGF.Builder.CreateMemSet(NewPtr, CGF.Builder.getInt8(0), Size,
                            Alignment.getQuantity(), false);
@@ -1011,7 +1007,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
          CalculateCookiePadding(*this, E).isZero());
   if (AllocSize != AllocSizeWithoutCookie) {
     assert(E->isArray());
-    NewPtr = CGM.getCXXABI().InitializeArrayCookie(CGF, NewPtr, NumElements,
+    NewPtr = CGM.getCXXABI().InitializeArrayCookie(*this, NewPtr, NumElements,
                                                    E, AllocType);
   }
 
@@ -1345,7 +1341,7 @@ llvm::Value *CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
                              NonZeroBlock, ZeroBlock);
         EmitBlock(ZeroBlock);
         /// Call __cxa_bad_typeid
-        const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
+        const llvm::Type *ResultType = llvm::Type::getVoidTy(getLLVMContext());
         const llvm::FunctionType *FTy;
         FTy = llvm::FunctionType::get(ResultType, false);
         llvm::Value *F = CGM.CreateRuntimeFunction(FTy, "__cxa_bad_typeid");
@@ -1413,19 +1409,17 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
     V = GetVTablePtr(This, PtrDiffTy->getPointerTo());
     V = Builder.CreateConstInBoundsGEP1_64(V, -2ULL);
     V = Builder.CreateLoad(V, "offset to top");
-    This = Builder.CreateBitCast(This, llvm::Type::getInt8PtrTy(VMContext));
+    This = EmitCastToVoidPtr(This);
     V = Builder.CreateInBoundsGEP(This, V);
     V = Builder.CreateBitCast(V, LTy);
   } else {
     /// Call __dynamic_cast
-    const llvm::Type *ResultType = llvm::Type::getInt8PtrTy(VMContext);
+    const llvm::Type *ResultType = Int8PtrTy;
     const llvm::FunctionType *FTy;
     std::vector<const llvm::Type*> ArgTys;
-    const llvm::Type *PtrToInt8Ty
-      = llvm::Type::getInt8Ty(VMContext)->getPointerTo();
-    ArgTys.push_back(PtrToInt8Ty);
-    ArgTys.push_back(PtrToInt8Ty);
-    ArgTys.push_back(PtrToInt8Ty);
+    ArgTys.push_back(Int8PtrTy);
+    ArgTys.push_back(Int8PtrTy);
+    ArgTys.push_back(Int8PtrTy);
     ArgTys.push_back(PtrDiffTy);
     FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
 
@@ -1440,7 +1434,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
     llvm::Value *DestArg
       = CGM.GetAddrOfRTTIDescriptor(DestTy.getUnqualifiedType());
     
-    V = Builder.CreateBitCast(V, PtrToInt8Ty);
+    V = Builder.CreateBitCast(V, Int8PtrTy);
     V = Builder.CreateCall4(CGM.CreateRuntimeFunction(FTy, "__dynamic_cast"),
                             V, SrcArg, DestArg, hint);
     V = Builder.CreateBitCast(V, LTy);
@@ -1450,7 +1444,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
       Builder.CreateCondBr(Builder.CreateIsNotNull(V), ContBlock, BadCastBlock);
       EmitBlock(BadCastBlock);
       /// Invoke __cxa_bad_cast
-      ResultType = llvm::Type::getVoidTy(VMContext);
+      ResultType = llvm::Type::getVoidTy(getLLVMContext());
       const llvm::FunctionType *FBadTy;
       FBadTy = llvm::FunctionType::get(ResultType, false);
       llvm::Value *F = CGM.CreateRuntimeFunction(FBadTy, "__cxa_bad_cast");

@@ -228,7 +228,7 @@ static llvm::Constant *getPersonalityFn(CodeGenModule &CGM,
 static llvm::Constant *getOpaquePersonalityFn(CodeGenModule &CGM,
                                         const EHPersonality &Personality) {
   llvm::Constant *Fn = getPersonalityFn(CGM, Personality);
-  return llvm::ConstantExpr::getBitCast(Fn, CGM.PtrToInt8Ty);
+  return llvm::ConstantExpr::getBitCast(Fn, CGM.Int8PtrTy);
 }
 
 /// Check whether a personality function could reasonably be swapped
@@ -310,7 +310,7 @@ void CodeGenModule::SimplifyPersonality() {
 /// presence of a catch-all.
 static llvm::Constant *getCatchAllValue(CodeGenFunction &CGF) {
   // Possibly we should use @llvm.eh.catch.all.value here.
-  return llvm::ConstantPointerNull::get(CGF.CGM.PtrToInt8Ty);
+  return llvm::ConstantPointerNull::get(CGF.Int8PtrTy);
 }
 
 /// Returns the value to inject into a selector to indicate the
@@ -625,8 +625,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   // Save the current IR generation state.
   CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
 
-  const EHPersonality &Personality =
-    EHPersonality::get(CGF.CGM.getLangOptions());
+  const EHPersonality &Personality = EHPersonality::get(getLangOptions());
 
   // Create and configure the landing pad.
   llvm::BasicBlock *LP = createBasicBlock("lpad");
@@ -723,7 +722,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
 
   // If we have a catch-all, add null to the selector.
   if (CatchAll.isValid()) {
-    EHSelector.push_back(getCatchAllValue(CGF));
+    EHSelector.push_back(getCatchAllValue(*this));
 
   // If we have an EH filter, we need to add those handlers in the
   // right place in the selector, which is to say, at the end.
@@ -739,14 +738,14 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
     // Also check whether we need a cleanup.
     if (UseInvokeInlineHack || HasEHCleanup)
       EHSelector.push_back(UseInvokeInlineHack
-                           ? getCatchAllValue(CGF)
-                           : getCleanupValue(CGF));
+                           ? getCatchAllValue(*this)
+                           : getCleanupValue(*this));
 
   // Otherwise, signal that we at least have cleanups.
   } else if (UseInvokeInlineHack || HasEHCleanup) {
     EHSelector.push_back(UseInvokeInlineHack
-                         ? getCatchAllValue(CGF)
-                         : getCleanupValue(CGF));
+                         ? getCatchAllValue(*this)
+                         : getCleanupValue(*this));
   } else {
     assert(LastToEmitInLoop > 2);
     LastToEmitInLoop--;
@@ -788,7 +787,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
     // Check whether the exception matches.
     llvm::CallInst *Id
       = Builder.CreateCall(llvm_eh_typeid_for,
-                           Builder.CreateBitCast(Type, CGM.PtrToInt8Ty));
+                           Builder.CreateBitCast(Type, Int8PtrTy));
     Id->setDoesNotThrow();
     Builder.CreateCondBr(Builder.CreateICmpEQ(Selection, Id),
                          Match, Next);
@@ -1314,7 +1313,7 @@ CodeGenFunction::EnterFinallyBlock(const Stmt *Body,
   JumpDest RethrowDest = getJumpDestInCurrentScope(getUnreachableBlock());
 
   // Whether the finally block is being executed for EH purposes.
-  llvm::AllocaInst *ForEHVar = CreateTempAlloca(CGF.Builder.getInt1Ty(),
+  llvm::AllocaInst *ForEHVar = CreateTempAlloca(Builder.getInt1Ty(),
                                                 "finally.for-eh");
   InitTempAlloca(ForEHVar, llvm::ConstantInt::getFalse(getLLVMContext()));
 
@@ -1397,7 +1396,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
   llvm::CallInst *TerminateCall = Builder.CreateCall(getTerminateFn(*this));
   TerminateCall->setDoesNotReturn();
   TerminateCall->setDoesNotThrow();
-  CGF.Builder.CreateUnreachable();
+  Builder.CreateUnreachable();
 
   // Restore the saved insertion state.
   Builder.restoreIP(SavedIP);

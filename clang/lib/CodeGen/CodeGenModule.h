@@ -20,7 +20,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Mangle.h"
-#include "CGBlocks.h"
 #include "CGCall.h"
 #include "CGVTables.h"
 #include "CodeGenTypes.h"
@@ -75,6 +74,7 @@ namespace CodeGen {
   class CGCXXABI;
   class CGDebugInfo;
   class CGObjCRuntime;
+  class BlockFieldFlags;
   
   struct OrderGlobalInits {
     unsigned int priority;
@@ -97,7 +97,7 @@ namespace CodeGen {
   
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
-class CodeGenModule : public BlockModule {
+class CodeGenModule {
   CodeGenModule(const CodeGenModule&);  // DO NOT IMPLEMENT
   void operator=(const CodeGenModule&); // DO NOT IMPLEMENT
 
@@ -207,6 +207,16 @@ class CodeGenModule : public BlockModule {
   llvm::Constant *BlockObjectAssign;
   llvm::Constant *BlockObjectDispose;
 
+  const llvm::Type *BlockDescriptorType;
+  const llvm::Type *GenericBlockLiteralType;
+
+  struct {
+    int GlobalUniqueCount;
+  } Block;
+
+  llvm::DenseMap<uint64_t, llvm::Constant *> AssignCache;
+  llvm::DenseMap<uint64_t, llvm::Constant *> DestroyCache;
+
   /// @}
 public:
   CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
@@ -216,6 +226,8 @@ public:
 
   /// Release - Finalize LLVM code generation.
   void Release();
+
+  const llvm::PointerType *Int8PtrTy;
 
   /// getObjCRuntime() - Return a reference to the configured
   /// Objective-C runtime.
@@ -248,6 +260,7 @@ public:
   CodeGenVTables &getVTables() { return VTables; }
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
+  const TargetInfo &getTarget() const { return Context.Target; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
   const TargetCodeGenInfo &getTargetCodeGenInfo();
   bool isTargetDarwin() const;
@@ -336,6 +349,29 @@ public:
   GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
                                CastExpr::path_const_iterator PathBegin,
                                CastExpr::path_const_iterator PathEnd);
+
+  llvm::Constant *BuildbyrefCopyHelper(const llvm::Type *T,
+                                       BlockFieldFlags flags,
+                                       unsigned Align,
+                                       const VarDecl *variable);
+  llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type *T,
+                                          BlockFieldFlags flags,
+                                          unsigned Align,
+                                          const VarDecl *variable);
+
+  /// getGlobalUniqueCount - Fetches the global unique block count.
+  int getGlobalUniqueCount() { return ++Block.GlobalUniqueCount; }
+
+  /// getBlockDescriptorType - Fetches the type of a generic block
+  /// descriptor.
+  const llvm::Type *getBlockDescriptorType();
+
+  /// getGenericBlockLiteralType - The type of a generic block literal.
+  const llvm::Type *getGenericBlockLiteralType();
+
+  /// GetAddrOfGlobalBlock - Gets the address of a block which
+  /// requires no captures.
+  llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE, const char *);
   
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of

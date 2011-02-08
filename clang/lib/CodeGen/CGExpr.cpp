@@ -29,6 +29,18 @@ using namespace CodeGen;
 //                        Miscellaneous Helper Methods
 //===--------------------------------------------------------------------===//
 
+llvm::Value *CodeGenFunction::EmitCastToVoidPtr(llvm::Value *value) {
+  unsigned addressSpace =
+    cast<llvm::PointerType>(value->getType())->getAddressSpace();
+
+  const llvm::PointerType *destType = Int8PtrTy;
+  if (addressSpace)
+    destType = llvm::Type::getInt8PtrTy(getLLVMContext(), addressSpace);
+
+  if (value->getType() == destType) return value;
+  return Builder.CreateBitCast(value, destType);
+}
+
 /// CreateTempAlloca - This creates a alloca and inserts it into the entry
 /// block.
 llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
@@ -68,7 +80,7 @@ llvm::AllocaInst *CodeGenFunction::CreateMemTemp(QualType Ty,
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   if (const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>()) {
     llvm::Value *MemPtr = EmitScalarExpr(E);
-    return CGM.getCXXABI().EmitMemberPointerIsNotNull(CGF, MemPtr, MPT);
+    return CGM.getCXXABI().EmitMemberPointerIsNotNull(*this, MemPtr, MPT);
   }
 
   QualType BoolTy = getContext().BoolTy;
@@ -350,8 +362,8 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
     if (VD->hasGlobalStorage()) {
       llvm::Constant *DtorFn = 
         CGM.GetAddrOfCXXDestructor(ReferenceTemporaryDtor, Dtor_Complete);
-      CGF.EmitCXXGlobalDtorRegistration(DtorFn, 
-                                      cast<llvm::Constant>(ReferenceTemporary));
+      EmitCXXGlobalDtorRegistration(DtorFn, 
+                                    cast<llvm::Constant>(ReferenceTemporary));
       
       return RValue::get(Value);
     }
@@ -377,14 +389,14 @@ void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
   if (!CatchUndefined)
     return;
 
-  Address = Builder.CreateBitCast(Address, PtrToInt8Ty);
+  // This needs to be to the standard address space.
+  Address = Builder.CreateBitCast(Address, Int8PtrTy);
 
   const llvm::Type *IntPtrT = IntPtrTy;
   llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, &IntPtrT, 1);
-  const llvm::IntegerType *Int1Ty = llvm::Type::getInt1Ty(VMContext);
 
   // In time, people may want to control this and use a 1 here.
-  llvm::Value *Arg = llvm::ConstantInt::get(Int1Ty, 0);
+  llvm::Value *Arg = Builder.getFalse();
   llvm::Value *C = Builder.CreateCall2(F, Address, Arg);
   llvm::BasicBlock *Cont = createBasicBlock();
   llvm::BasicBlock *Check = createBasicBlock();
@@ -497,8 +509,8 @@ LValue CodeGenFunction::EmitCheckedLValue(const Expr *E) {
 ///
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
   llvm::DenseMap<const Expr *, LValue>::iterator I = 
-                                      CGF.ConditionalSaveLValueExprs.find(E);
-  if (I != CGF.ConditionalSaveLValueExprs.end())
+                                      ConditionalSaveLValueExprs.find(E);
+  if (I != ConditionalSaveLValueExprs.end())
     return I->second;
   
   switch (E->getStmtClass()) {
@@ -702,13 +714,13 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
 
     // Offset by the byte offset, if used.
     if (AI.FieldByteOffset) {
-      const llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(VMContext);
-      Ptr = Builder.CreateBitCast(Ptr, i8PTy);
+      Ptr = EmitCastToVoidPtr(Ptr);
       Ptr = Builder.CreateConstGEP1_32(Ptr, AI.FieldByteOffset,"bf.field.offs");
     }
 
     // Cast to the access type.
-    const llvm::Type *PTy = llvm::Type::getIntNPtrTy(VMContext, AI.AccessWidth,
+    const llvm::Type *PTy = llvm::Type::getIntNPtrTy(getLLVMContext(),
+                                                     AI.AccessWidth,
                                                     ExprType.getAddressSpace());
     Ptr = Builder.CreateBitCast(Ptr, PTy);
 
@@ -896,6 +908,8 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
 
     // Get the field pointer.
     llvm::Value *Ptr = Dst.getBitFieldBaseAddr();
+    unsigned addressSpace =
+      cast<llvm::PointerType>(Ptr->getType())->getAddressSpace();
 
     // Only offset by the field index if used, so that incoming values are not
     // required to be structures.
@@ -904,14 +918,15 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
 
     // Offset by the byte offset, if used.
     if (AI.FieldByteOffset) {
-      const llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(VMContext);
-      Ptr = Builder.CreateBitCast(Ptr, i8PTy);
+      Ptr = EmitCastToVoidPtr(Ptr);
       Ptr = Builder.CreateConstGEP1_32(Ptr, AI.FieldByteOffset,"bf.field.offs");
     }
 
     // Cast to the access type.
-    const llvm::Type *PTy = llvm::Type::getIntNPtrTy(VMContext, AI.AccessWidth,
-                                                     Ty.getAddressSpace());
+    const llvm::Type *AccessLTy =
+      llvm::Type::getIntNTy(getLLVMContext(), AI.AccessWidth);
+
+    const llvm::Type *PTy = AccessLTy->getPointerTo(addressSpace);
     Ptr = Builder.CreateBitCast(Ptr, PTy);
 
     // Extract the piece of the bit-field value to write in this access, limited
@@ -923,8 +938,6 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
                                                             AI.TargetBitWidth));
 
     // Extend or truncate to the access size.
-    const llvm::Type *AccessLTy =
-      llvm::Type::getIntNTy(VMContext, AI.AccessWidth);
     if (ResSizeInBits < AI.AccessWidth)
       Val = Builder.CreateZExt(Val, AccessLTy);
     else if (ResSizeInBits > AI.AccessWidth)
@@ -1141,7 +1154,7 @@ static LValue EmitFunctionDeclLValue(CodeGenFunction &CGF,
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const NamedDecl *ND = E->getDecl();
-  unsigned Alignment = CGF.getContext().getDeclAlign(ND).getQuantity();
+  unsigned Alignment = getContext().getDeclAlign(ND).getQuantity();
 
   if (ND->hasAttr<WeakRefAttr>()) {
     const ValueDecl *VD = cast<ValueDecl>(ND);
@@ -1191,7 +1204,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 
 LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
   unsigned Alignment =
-    CGF.getContext().getDeclAlign(E->getDecl()).getQuantity();
+    getContext().getDeclAlign(E->getDecl()).getQuantity();
   return MakeAddrLValue(GetAddrOfBlockDecl(E), E->getType(), Alignment);
 }
 
@@ -1368,7 +1381,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     // Emit the vector as an lvalue to get its address.
     LValue LHS = EmitLValue(E->getBase());
     assert(LHS.isSimple() && "Can only subscript lvalue vectors here!");
-    Idx = Builder.CreateIntCast(Idx, CGF.Int32Ty, IdxSigned, "vidx");
+    Idx = Builder.CreateIntCast(Idx, Int32Ty, IdxSigned, "vidx");
     return LValue::MakeVectorElt(LHS.getAddress(), Idx,
                                  E->getBase()->getType().getCVRQualifiers());
   }
@@ -1406,13 +1419,11 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 
     Idx = Builder.CreateMul(Idx, VLASize);
 
-    const llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(VMContext);
-
     // The base must be a pointer, which is not an aggregate.  Emit it.
     llvm::Value *Base = EmitScalarExpr(E->getBase());
-    
-    Address = Builder.CreateInBoundsGEP(Builder.CreateBitCast(Base, i8PTy),
-                                        Idx, "arrayidx");
+
+    Address = EmitCastToVoidPtr(Base);
+    Address = Builder.CreateInBoundsGEP(Address, Idx, "arrayidx");
     Address = Builder.CreateBitCast(Address, Base->getType());
   } else if (const ObjCObjectType *OIT = E->getType()->getAs<ObjCObjectType>()){
     // Indexing over an interface, as in "NSString *P; P[4];"
@@ -1422,12 +1433,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 
     Idx = Builder.CreateMul(Idx, InterfaceSize);
 
-    const llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(VMContext);
-    
     // The base must be a pointer, which is not an aggregate.  Emit it.
     llvm::Value *Base = EmitScalarExpr(E->getBase());
-    Address = Builder.CreateGEP(Builder.CreateBitCast(Base, i8PTy),
-                                Idx, "arrayidx");
+    Address = EmitCastToVoidPtr(Base);
+    Address = Builder.CreateGEP(Address, Idx, "arrayidx");
     Address = Builder.CreateBitCast(Address, Base->getType());
   } else if (const Expr *Array = isSimpleArrayDecayOperand(E->getBase())) {
     // If this is A[i] where A is an array, the frontend will have decayed the
@@ -1509,7 +1518,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   E->getEncodedElementAccess(Indices);
 
   if (Base.isSimple()) {
-    llvm::Constant *CV = GenerateConstantVector(VMContext, Indices);
+    llvm::Constant *CV = GenerateConstantVector(getLLVMContext(), Indices);
     return LValue::MakeExtVectorElt(Base.getAddress(), CV,
                                     Base.getVRQualifiers());
   }

@@ -1312,9 +1312,6 @@ llvm::Value *
 CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
                                            const CXXRecordDecl *ClassDecl,
                                            const CXXRecordDecl *BaseClassDecl) {
-  const llvm::Type *Int8PtrTy = 
-    llvm::Type::getInt8Ty(VMContext)->getPointerTo();
-
   llvm::Value *VTablePtr = GetVTablePtr(This, Int8PtrTy);
   int64_t VBaseOffsetOffset = 
     CGM.getVTables().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);

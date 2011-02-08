@@ -338,8 +338,8 @@ CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD,
     CGM.getVTables().getAddressPoint(BaseSubobject(RD, 0), RD);
   VTableIndex += AddressPoint;
   llvm::Value *VFuncPtr = 
-    CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
-  return CGF.Builder.CreateLoad(VFuncPtr);
+    Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
+  return Builder.CreateLoad(VFuncPtr);
 }
 
 /// BuildVirtualCall - This routine makes indirect vtable call for
@@ -373,8 +373,8 @@ CodeGenFunction::BuildAppleKextVirtualDestructorCall(
       CGM.getVTables().getAddressPoint(BaseSubobject(RD, 0), RD);
     VTableIndex += AddressPoint;
     llvm::Value *VFuncPtr =
-      CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
-    Callee = CGF.Builder.CreateLoad(VFuncPtr);
+      Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
+    Callee = Builder.CreateLoad(VFuncPtr);
   }
   return Callee;
 }

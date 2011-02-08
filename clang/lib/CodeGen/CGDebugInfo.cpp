@@ -14,6 +14,7 @@
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CGBlocks.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclObjC.h"

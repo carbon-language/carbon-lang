@@ -29,9 +29,9 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
-  : BlockFunction(cgm, *this, Builder), CGM(cgm),
-    Target(CGM.getContext().Target),
+  : CGM(cgm), Target(CGM.getContext().Target),
     Builder(cgm.getModule().getContext()),
+    BlockInfo(0), BlockPointer(0),
     NormalCleanupDest(0), EHCleanupDest(0), NextCleanupDestIndex(1),
     ExceptionSlot(0), DebugInfo(0), IndirectBranch(0),
     SwitchInsn(0), CaseRangeBlock(0),
@@ -46,6 +46,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   IntPtrTy = llvm::IntegerType::get(LLVMContext, LLVMPointerWidth);
   Int32Ty  = llvm::Type::getInt32Ty(LLVMContext);
   Int64Ty  = llvm::Type::getInt64Ty(LLVMContext);
+  Int8PtrTy = cgm.Int8PtrTy;
       
   Exceptions = getContext().getLangOptions().Exceptions;
   CatchUndefined = getContext().getLangOptions().CatchUndefined;
@@ -192,12 +193,11 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
   std::vector<const llvm::Type*> ProfileFuncArgs;
 
   // void __cyg_profile_func_{enter,exit} (void *this_fn, void *call_site);
-  PointerTy = llvm::Type::getInt8PtrTy(VMContext);
+  PointerTy = Int8PtrTy;
   ProfileFuncArgs.push_back(PointerTy);
   ProfileFuncArgs.push_back(PointerTy);
-  FunctionTy = llvm::FunctionType::get(
-    llvm::Type::getVoidTy(VMContext),
-    ProfileFuncArgs, false);
+  FunctionTy = llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
+                                       ProfileFuncArgs, false);
 
   llvm::Constant *F = CGM.CreateRuntimeFunction(FunctionTy, Fn);
   llvm::CallInst *CallSite = Builder.CreateCall(
@@ -671,8 +671,6 @@ llvm::BasicBlock *CodeGenFunction::GetIndirectGotoBlock() {
   
   CGBuilderTy TmpBuilder(createBasicBlock("indirectgoto"));
   
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-
   // Create the PHI node that indirect gotos will add entries to.
   llvm::Value *DestVal = TmpBuilder.CreatePHI(Int8PtrTy, "indirect.goto.dest");
   

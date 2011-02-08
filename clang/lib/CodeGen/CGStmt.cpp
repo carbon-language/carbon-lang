@@ -335,8 +335,7 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
 
   // Ensure that we have an i8* for our PHI node.
   llvm::Value *V = Builder.CreateBitCast(EmitScalarExpr(S.getTarget()),
-                                         llvm::Type::getInt8PtrTy(VMContext),
-                                          "addr");
+                                         Int8PtrTy, "addr");
   llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
   
 
@@ -657,11 +656,8 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     
     // If there is an NRVO flag for this variable, set it to 1 into indicate
     // that the cleanup code should not destroy the variable.
-    if (llvm::Value *NRVOFlag = NRVOFlags[S.getNRVOCandidate()]) {
-      const llvm::Type *BoolTy = llvm::Type::getInt1Ty(VMContext);
-      llvm::Value *One = llvm::ConstantInt::get(BoolTy, 1);
-      Builder.CreateStore(One, NRVOFlag);
-    }
+    if (llvm::Value *NRVOFlag = NRVOFlags[S.getNRVOCandidate()])
+      Builder.CreateStore(Builder.getTrue(), NRVOFlag);
   } else if (!ReturnValue) {
     // Make sure not to return anything, but evaluate the expression
     // for side effects.
@@ -749,7 +745,8 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   if (Range.ult(llvm::APInt(Range.getBitWidth(), 64))) {
     // Range is small enough to add multiple switch instruction cases.
     for (unsigned i = 0, e = Range.getZExtValue() + 1; i != e; ++i) {
-      SwitchInsn->addCase(llvm::ConstantInt::get(VMContext, LHS), CaseDest);
+      SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), LHS),
+                          CaseDest);
       LHS++;
     }
     return;
@@ -771,10 +768,10 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   // Emit range check.
   llvm::Value *Diff =
     Builder.CreateSub(SwitchInsn->getCondition(),
-                      llvm::ConstantInt::get(VMContext, LHS),  "tmp");
+                      llvm::ConstantInt::get(getLLVMContext(), LHS),  "tmp");
   llvm::Value *Cond =
-    Builder.CreateICmpULE(Diff,
-                          llvm::ConstantInt::get(VMContext, Range), "tmp");
+    Builder.CreateICmpULE(Diff, llvm::ConstantInt::get(getLLVMContext(), Range),
+                          "inbounds");
   Builder.CreateCondBr(Cond, CaseDest, FalseDest);
 
   // Restore the appropriate insertion point.
@@ -793,7 +790,8 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
-  SwitchInsn->addCase(llvm::ConstantInt::get(VMContext, CaseVal), CaseDest);
+  SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), CaseVal),
+                      CaseDest);
 
   // Recursively emitting the statement is acceptable, but is not wonderful for
   // code where we have many case statements nested together, i.e.:
@@ -811,7 +809,8 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   while (NextCase && NextCase->getRHS() == 0) {
     CurCase = NextCase;
     CaseVal = CurCase->getLHS()->EvaluateAsInt(getContext());
-    SwitchInsn->addCase(llvm::ConstantInt::get(VMContext, CaseVal), CaseDest);
+    SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), CaseVal),
+                        CaseDest);
 
     NextCase = dyn_cast<CaseStmt>(CurCase->getSubStmt());
   }
@@ -975,7 +974,7 @@ CodeGenFunction::EmitAsmInputLValue(const AsmStmt &S,
       const llvm::Type *Ty = ConvertType(InputType);
       uint64_t Size = CGM.getTargetData().getTypeSizeInBits(Ty);
       if (Size <= 64 && llvm::isPowerOf2_64(Size)) {
-        Ty = llvm::IntegerType::get(VMContext, Size);
+        Ty = llvm::IntegerType::get(getLLVMContext(), Size);
         Ty = llvm::PointerType::getUnqual(Ty);
 
         Arg = Builder.CreateLoad(Builder.CreateBitCast(InputValue.getAddress(),
@@ -1138,7 +1137,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       }
       if (const llvm::Type* AdjTy = 
             Target.adjustInlineAsmType(OutputConstraint, ResultRegTypes.back(),
-                                       VMContext))
+                                       getLLVMContext()))
         ResultRegTypes.back() = AdjTy;
     } else {
       ArgTypes.push_back(Dest.getAddress()->getType());
@@ -1210,7 +1209,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     }
     if (const llvm::Type* AdjTy = 
               Target.adjustInlineAsmType(InputConstraint, Arg->getType(),
-                                         VMContext))
+                                         getLLVMContext()))
       Arg = Builder.CreateBitCast(Arg, AdjTy);
 
     ArgTypes.push_back(Arg->getType());
@@ -1249,11 +1248,11 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
   const llvm::Type *ResultType;
   if (ResultRegTypes.empty())
-    ResultType = llvm::Type::getVoidTy(VMContext);
+    ResultType = llvm::Type::getVoidTy(getLLVMContext());
   else if (ResultRegTypes.size() == 1)
     ResultType = ResultRegTypes[0];
   else
-    ResultType = llvm::StructType::get(VMContext, ResultRegTypes);
+    ResultType = llvm::StructType::get(getLLVMContext(), ResultRegTypes);
 
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(ResultType, ArgTypes, false);
@@ -1293,13 +1292,13 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         Tmp = Builder.CreateFPTrunc(Tmp, TruncTy);
       else if (TruncTy->isPointerTy() && Tmp->getType()->isIntegerTy()) {
         uint64_t ResSize = CGM.getTargetData().getTypeSizeInBits(TruncTy);
-        Tmp = Builder.CreateTrunc(Tmp, llvm::IntegerType::get(VMContext,
-                                                            (unsigned)ResSize));
+        Tmp = Builder.CreateTrunc(Tmp,
+                   llvm::IntegerType::get(getLLVMContext(), (unsigned)ResSize));
         Tmp = Builder.CreateIntToPtr(Tmp, TruncTy);
       } else if (Tmp->getType()->isPointerTy() && TruncTy->isIntegerTy()) {
         uint64_t TmpSize =CGM.getTargetData().getTypeSizeInBits(Tmp->getType());
-        Tmp = Builder.CreatePtrToInt(Tmp, llvm::IntegerType::get(VMContext,
-                                                            (unsigned)TmpSize));
+        Tmp = Builder.CreatePtrToInt(Tmp,
+                   llvm::IntegerType::get(getLLVMContext(), (unsigned)TmpSize));
         Tmp = Builder.CreateTrunc(Tmp, TruncTy);
       } else if (TruncTy->isIntegerTy()) {
         Tmp = Builder.CreateTrunc(Tmp, TruncTy);

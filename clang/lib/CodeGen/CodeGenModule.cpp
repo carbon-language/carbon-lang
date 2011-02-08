@@ -58,8 +58,7 @@ static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
 CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
                              llvm::Module &M, const llvm::TargetData &TD,
                              Diagnostic &diags)
-  : BlockModule(C, M, TD, Types, *this), Context(C),
-    Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
+  : Context(C), Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
     TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
     ABI(createCXXABI(*this)), 
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI),
@@ -70,8 +69,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
     BlockObjectAssignDecl(0), BlockObjectDisposeDecl(0),
-    BlockObjectAssign(0), BlockObjectDispose(0){
-
+    BlockObjectAssign(0), BlockObjectDispose(0),
+    BlockDescriptorType(0), GenericBlockLiteralType(0) {
   if (!Features.ObjC1)
     Runtime = 0;
   else if (!Features.NeXTRuntime)
@@ -88,6 +87,9 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 
   // If debug info generation is enabled, create the CGDebugInfo object.
   DebugInfo = CodeGenOpts.DebugInfo ? new CGDebugInfo(*this) : 0;
+
+  Block.GlobalUniqueCount = 0;
+  Int8PtrTy = llvm::Type::getInt8PtrTy(M.getContext());
 }
 
 CodeGenModule::~CodeGenModule() {
@@ -2170,7 +2172,7 @@ llvm::Constant *CodeGenModule::getBlockObjectDispose() {
   const llvm::FunctionType *FTy;
   std::vector<const llvm::Type*> ArgTys;
   const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
-  ArgTys.push_back(PtrToInt8Ty);
+  ArgTys.push_back(Int8PtrTy);
   ArgTys.push_back(llvm::Type::getInt32Ty(VMContext));
   FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
   return BlockObjectDispose =
@@ -2192,8 +2194,8 @@ llvm::Constant *CodeGenModule::getBlockObjectAssign() {
   const llvm::FunctionType *FTy;
   std::vector<const llvm::Type*> ArgTys;
   const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
-  ArgTys.push_back(PtrToInt8Ty);
-  ArgTys.push_back(PtrToInt8Ty);
+  ArgTys.push_back(Int8PtrTy);
+  ArgTys.push_back(Int8PtrTy);
   ArgTys.push_back(llvm::Type::getInt32Ty(VMContext));
   FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
   return BlockObjectAssign =
@@ -2212,8 +2214,8 @@ llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
   }
 
   // Otherwise construct the variable by hand.
-  return NSConcreteGlobalBlock = CreateRuntimeVariable(
-    PtrToInt8Ty, "_NSConcreteGlobalBlock");
+  return NSConcreteGlobalBlock =
+    CreateRuntimeVariable(Int8PtrTy, "_NSConcreteGlobalBlock");
 }
 
 llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
@@ -2228,8 +2230,8 @@ llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
   }
 
   // Otherwise construct the variable by hand.
-  return NSConcreteStackBlock = CreateRuntimeVariable(
-    PtrToInt8Ty, "_NSConcreteStackBlock");
+  return NSConcreteStackBlock =
+    CreateRuntimeVariable(Int8PtrTy, "_NSConcreteStackBlock");
 }
 
 ///@}

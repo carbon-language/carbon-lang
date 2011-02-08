@@ -16,6 +16,7 @@
 #include "CGRecordLayout.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
+#include "CGBlocks.h"
 #include "CGCleanup.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
