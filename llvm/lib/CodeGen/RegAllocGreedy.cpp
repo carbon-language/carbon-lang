@@ -746,8 +746,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       continue;
     }
 
-    if (IP.second.getBoundaryIndex() < BI.LastUse &&
-        IP.second.getBoundaryIndex() <= BI.LastSplitPoint) {
+    if (IP.second.getBoundaryIndex() < BI.LastUse) {
       // There are interference-free uses at the end of the block.
       // Find the first use that can get the live-out register.
       SmallVectorImpl<SlotIndex>::const_iterator UI =
@@ -755,13 +754,16 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
                          IP.second.getBoundaryIndex());
       assert(UI != SA->UseSlots.end() && "Couldn't find last use");
       SlotIndex Use = *UI;
-      DEBUG(dbgs() << ", free use at " << Use << ".\n");
       assert(Use <= BI.LastUse && "Couldn't find last use");
-      SlotIndex SegStart = SE.enterIntvBefore(Use);
-      assert(SegStart >= IP.second && "Couldn't avoid interference");
-      assert(SegStart < BI.LastSplitPoint && "Impossible split point");
-      SE.useIntv(SegStart, Stop);
-      continue;
+      // Only attempt a split befroe the last split point.
+      if (Use.getBaseIndex() <= BI.LastSplitPoint) {
+        DEBUG(dbgs() << ", free use at " << Use << ".\n");
+        SlotIndex SegStart = SE.enterIntvBefore(Use);
+        assert(SegStart >= IP.second && "Couldn't avoid interference");
+        assert(SegStart < BI.LastSplitPoint && "Impossible split point");
+        SE.useIntv(SegStart, Stop);
+        continue;
+      }
     }
 
     // Interference is after the last use.
