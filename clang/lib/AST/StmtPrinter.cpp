@@ -65,6 +65,7 @@ namespace  {
     void PrintRawDeclStmt(DeclStmt *S);
     void PrintRawIfStmt(IfStmt *If);
     void PrintRawCXXCatchStmt(CXXCatchStmt *Catch);
+    void PrintCallArgs(CallExpr *E);
 
     void PrintExpr(Expr *E) {
       if (E)
@@ -725,9 +726,7 @@ void StmtPrinter::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
   OS << "]";
 }
 
-void StmtPrinter::VisitCallExpr(CallExpr *Call) {
-  PrintExpr(Call->getCallee());
-  OS << "(";
+void StmtPrinter::PrintCallArgs(CallExpr *Call) {
   for (unsigned i = 0, e = Call->getNumArgs(); i != e; ++i) {
     if (isa<CXXDefaultArgExpr>(Call->getArg(i))) {
       // Don't print any defaulted arguments
@@ -737,6 +736,12 @@ void StmtPrinter::VisitCallExpr(CallExpr *Call) {
     if (i) OS << ", ";
     PrintExpr(Call->getArg(i));
   }
+}
+
+void StmtPrinter::VisitCallExpr(CallExpr *Call) {
+  PrintExpr(Call->getCallee());
+  OS << "(";
+  PrintCallArgs(Call);
   OS << ")";
 }
 void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
