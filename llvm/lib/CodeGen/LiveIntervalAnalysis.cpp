@@ -742,6 +742,128 @@ LiveInterval* LiveIntervals::dupInterval(LiveInterval *li) {
   return NewLI;
 }
 
+/// shrinkToUses - After removing some uses of a register, shrink its live
+/// range to just the remaining uses. This method does not compute reaching
+/// defs for new uses, and it doesn't remove dead defs.
+void LiveIntervals::shrinkToUses(LiveInterval *li) {
+  DEBUG(dbgs() << "Shrink: " << *li << '\n');
+  assert(TargetRegisterInfo::isVirtualRegister(li->reg)
+         && "Can't only shrink physical registers");
+  // Find all the values used, including PHI kills.
+  SmallVector<std::pair<SlotIndex, VNInfo*>, 16> WorkList;
+
+  // Visit all instructions reading li->reg.
+  for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(li->reg);
+       MachineInstr *UseMI = I.skipInstruction();) {
+    if (UseMI->isDebugValue() || !UseMI->readsVirtualRegister(li->reg))
+      continue;
+    SlotIndex Idx = getInstructionIndex(UseMI).getUseIndex();
+    VNInfo *VNI = li->getVNInfoAt(Idx);
+    assert(VNI && "Live interval not live into reading instruction");
+    if (VNI->def == Idx) {
+      // Special case: An early-clobber tied operand reads and writes the
+      // register one slot early.
+      Idx = Idx.getPrevSlot();
+      VNI = li->getVNInfoAt(Idx);
+      assert(VNI && "Early-clobber tied value not available");
+    }
+    WorkList.push_back(std::make_pair(Idx, VNI));
+  }
+
+  // Create a new live interval with only minimal live segments per def.
+  LiveInterval NewLI(li->reg, 0);
+  for (LiveInterval::vni_iterator I = li->vni_begin(), E = li->vni_end();
+       I != E; ++I) {
+    VNInfo *VNI = *I;
+    if (VNI->isUnused())
+      continue;
+    NewLI.addRange(LiveRange(VNI->def, VNI->def.getNextSlot(), VNI));
+  }
+
+  // Extend intervals to reach all uses in WorkList.
+  while (!WorkList.empty()) {
+    SlotIndex Idx = WorkList.back().first;
+    VNInfo *VNI = WorkList.back().second;
+    WorkList.pop_back();
+
+    // Extend the live range for VNI to be live at Idx.
+    LiveInterval::iterator I = NewLI.find(Idx);
+
+    // Already got it?
+    if (I != NewLI.end() && I->start <= Idx) {
+      assert(I->valno == VNI && "Unexpected existing value number");
+      continue;
+    }
+
+    // Is there already a live range in the block containing Idx?
+    const MachineBasicBlock *MBB = getMBBFromIndex(Idx);
+    SlotIndex BlockStart = getMBBStartIdx(MBB);
+    DEBUG(dbgs() << "Shrink: Use val#" << VNI->id << " at " << Idx
+                 << " in BB#" << MBB->getNumber() << '@' << BlockStart);
+    if (I != NewLI.begin() && (--I)->end > BlockStart) {
+      assert(I->valno == VNI && "Wrong reaching def");
+      DEBUG(dbgs() << " extend [" << I->start << ';' << I->end << ")\n");
+      // Is this the first use of a PHIDef in its defining block?
+      if (VNI->isPHIDef() && I->end == VNI->def.getNextSlot()) {
+        // The PHI is live, make sure the predecessors are live-out.
+        for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
+             PE = MBB->pred_end(); PI != PE; ++PI) {
+          SlotIndex Stop = getMBBEndIdx(*PI).getPrevSlot();
+          VNInfo *PVNI = li->getVNInfoAt(Stop);
+          // A predecessor is not required to have a live-out value for a PHI.
+          if (PVNI) {
+            assert(PVNI->hasPHIKill() && "Missing hasPHIKill flag");
+            WorkList.push_back(std::make_pair(Stop, PVNI));
+          }
+        }
+      }
+
+      // Extend the live range in the block to include Idx.
+      NewLI.addRange(LiveRange(I->end, Idx.getNextSlot(), VNI));
+      continue;
+    }
+
+    // VNI is live-in to MBB.
+    DEBUG(dbgs() << " live-in at " << BlockStart << '\n');
+    NewLI.addRange(LiveRange(BlockStart, Idx.getNextSlot(), VNI));
+
+    // Make sure VNI is live-out from the predecessors.
+    for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+      SlotIndex Stop = getMBBEndIdx(*PI).getPrevSlot();
+      assert(li->getVNInfoAt(Stop) == VNI && "Wrong value out of predecessor");
+      WorkList.push_back(std::make_pair(Stop, VNI));
+    }
+  }
+
+  // Handle dead values.
+  for (LiveInterval::vni_iterator I = li->vni_begin(), E = li->vni_end();
+       I != E; ++I) {
+    VNInfo *VNI = *I;
+    if (VNI->isUnused())
+      continue;
+    LiveInterval::iterator LII = NewLI.FindLiveRangeContaining(VNI->def);
+    assert(LII != NewLI.end() && "Missing live range for PHI");
+    if (LII->end != VNI->def.getNextSlot())
+      continue;
+    if (!VNI->isPHIDef()) {
+      // This is a dead PHI. Remove it.
+      VNI->setIsUnused(true);
+      NewLI.removeRange(*LII);
+    } else {
+      // This is a dead def. Make sure the instruction knows.
+      MachineInstr *MI = getInstructionFromIndex(VNI->def);
+      assert(MI && "No instruction defining live value");
+      MI->addRegisterDead(li->reg, tri_);
+    }
+  }
+
+  // Move the trimmed ranges back.
+  li->ranges.swap(NewLI.ranges);
+  DEBUG(dbgs() << "Shrink: " << *li << '\n');
+}
+
+
 //===----------------------------------------------------------------------===//
 // Register allocator hooks.
 //

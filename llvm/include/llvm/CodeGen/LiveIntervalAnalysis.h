@@ -163,6 +163,12 @@ namespace llvm {
     LiveRange addLiveRangeToEndOfBlock(unsigned reg,
                                        MachineInstr* startInst);
 
+    /// shrinkToUses - After removing some uses of a register, shrink its live
+    /// range to just the remaining uses. This method does not compute reaching
+    /// defs for new uses, and it doesn't remove dead defs.
+    /// Dead PHIDef values are marked as unused.
+    void shrinkToUses(LiveInterval *li);
+
     // Interval removal
 
     void removeInterval(unsigned Reg) {
