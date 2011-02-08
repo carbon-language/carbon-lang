@@ -444,7 +444,6 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
   for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
     if (!query(VirtReg, *AI).checkInterference())
       continue;
-    DEBUG(PhysReg2LiveUnion[*AI].print(dbgs(), TRI));
     LiveIntervalUnion::SegmentIter IntI =
       PhysReg2LiveUnion[*AI].find(VirtReg.beginIndex());
     if (!IntI.valid())
