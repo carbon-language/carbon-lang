@@ -23,7 +23,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   ExprEngine.cpp
-  ExprEngineExperimentalChecks.cpp
+  ExperimentalChecks.cpp
   FixedAddressChecker.cpp
   FrontendActions.cpp
   IdempotentOperationChecker.cpp
