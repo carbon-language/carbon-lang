@@ -3370,17 +3370,9 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (!RT)
     return Owned(E);
 
-  // If this is the result of a call or an Objective-C message send expression,
-  // our source might actually be a reference, in which case we shouldn't bind.
-  if (CallExpr *CE = dyn_cast<CallExpr>(E)) {
-    if (CE->getCallReturnType()->isReferenceType())
-      return Owned(E);
-  } else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
-    if (const ObjCMethodDecl *MD = ME->getMethodDecl()) {
-      if (MD->getResultType()->isReferenceType())
-        return Owned(E);
-    }
-  }
+  // If the result is a glvalue, we shouldn't bind it.
+  if (E->Classify(Context).isGLValue())
+    return Owned(E);
 
   // That should be enough to guarantee that this type is complete.
   // If it has a trivial destructor, we can avoid the extra copy.
