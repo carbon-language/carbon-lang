@@ -157,7 +157,8 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
   // Finally we can rematerialize OrigMI before MI.
   SlotIndex DefIdx = edit_->rematerializeAt(*MI->getParent(), MI, NewLI.reg, RM,
                                             lis_, tii_, tri_);
-  DEBUG(dbgs() << "\tremat:  " << DefIdx << '\n');
+  DEBUG(dbgs() << "\tremat:  " << DefIdx << '\t'
+               << *lis_.getInstructionFromIndex(DefIdx));
 
   // Replace operands
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
@@ -269,6 +270,9 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
       continue;
     // FIXME: Teach targets to deal with subregs.
     if (MO.getSubReg())
+      return false;
+    // We cannot fold a load instruction into a def.
+    if (LoadMI && MO.isDef())
       return false;
     // Tied use operands should not be passed to foldMemoryOperand.
     if (!MI->isRegTiedToDefOperand(Idx))
