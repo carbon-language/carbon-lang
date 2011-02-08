@@ -259,38 +259,56 @@ Thread::ShouldStop (Event* event_ptr)
     if (current_plan->PlanExplainsStop())
     {
         bool over_ride_stop = current_plan->ShouldAutoContinue(event_ptr);
-        while (1)
+        
+        // We're starting from the base plan, so just let it decide;
+        if (PlanIsBasePlan(current_plan))
         {
-            should_stop = current_plan->ShouldStop(event_ptr);
-            if (current_plan->MischiefManaged())
+            should_stop = current_plan->ShouldStop (event_ptr);
+            if (log)
+                log->Printf("Base plan says should stop: %d.", current_plan->GetName(), should_stop);
+        }
+        else
+        {
+            // Otherwise, don't let the base plan override what the other plans say to do, since
+            // presumably if there were other plans they would know what to do...
+            while (1)
             {
-                if (should_stop)
-                    current_plan->WillStop();
-
-                // If a Master Plan wants to stop, and wants to stick on the stack, we let it.
-                // Otherwise, see if the plan's parent wants to stop.
-
-                if (should_stop && current_plan->IsMasterPlan() && !current_plan->OkayToDiscard())
-                {
-                    PopPlan();
+                if (PlanIsBasePlan(current_plan))
                     break;
+                    
+                should_stop = current_plan->ShouldStop(event_ptr);
+                if (log)
+                    log->Printf("Plan %s should stop: %d.", current_plan->GetName(), should_stop);
+                if (current_plan->MischiefManaged())
+                {
+                    if (should_stop)
+                        current_plan->WillStop();
+
+                    // If a Master Plan wants to stop, and wants to stick on the stack, we let it.
+                    // Otherwise, see if the plan's parent wants to stop.
+
+                    if (should_stop && current_plan->IsMasterPlan() && !current_plan->OkayToDiscard())
+                    {
+                        PopPlan();
+                        break;
+                    }
+                    else
+                    {
+
+                        PopPlan();
+
+                        current_plan = GetCurrentPlan();
+                        if (current_plan == NULL)
+                        {
+                            break;
+                        }
+                    }
+
                 }
                 else
                 {
-
-                    PopPlan();
-
-                    current_plan = GetCurrentPlan();
-                    if (current_plan == NULL)
-                    {
-                        break;
-                    }
+                    break;
                 }
-
-            }
-            else
-            {
-                break;
             }
         }
         if (over_ride_stop)
@@ -476,7 +494,6 @@ Thread::GetCompletedPlan ()
 bool
 Thread::IsThreadPlanDone (ThreadPlan *plan)
 {
-    ThreadPlanSP empty_plan_sp;
     if (!m_completed_plan_stack.empty())
     {
         for (int i = m_completed_plan_stack.size() - 1; i >= 0; i--)
@@ -491,7 +508,6 @@ Thread::IsThreadPlanDone (ThreadPlan *plan)
 bool
 Thread::WasThreadPlanDiscarded (ThreadPlan *plan)
 {
-    ThreadPlanSP empty_plan_sp;
     if (!m_discarded_plan_stack.empty())
     {
         for (int i = m_discarded_plan_stack.size() - 1; i >= 0; i--)

@@ -13,6 +13,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/State.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
@@ -88,6 +89,9 @@ ThreadGDBRemote::WillResume (StateType resume_state)
     Thread::WillResume(resume_state);
 
     int signo = GetResumeSignal();
+    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
+    if (log)
+        log->Printf ("Resuming thread: %4.4x with state: %s.", GetID(), StateAsCString(resume_state));
 
     switch (resume_state)
     {

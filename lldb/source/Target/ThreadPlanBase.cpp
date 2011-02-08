@@ -18,6 +18,7 @@
 #include "lldb/Breakpoint/BreakpointSite.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/Breakpoint.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -82,6 +83,8 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
     m_stop_vote = eVoteYes;
     m_run_vote = eVoteYes;
 
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+
     StopInfoSP stop_info_sp = GetPrivateStopReason();
     if (stop_info_sp)
     {
@@ -101,6 +104,8 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
                 // If we are going to stop for a breakpoint, then unship the other plans
                 // at this point.  Don't force the discard, however, so Master plans can stay
                 // in place if they want to.
+                if (log)
+                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4x (breakpoint hit.)", m_thread.GetID());
                 m_thread.DiscardThreadPlans(false);
                 return true;
             }
@@ -127,12 +132,16 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
         case eStopReasonException:
             // If we crashed, discard thread plans and stop.  Don't force the discard, however,
             // since on rerun the target may clean up this exception and continue normally from there.
+                if (log)
+                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4x (exception.)", m_thread.GetID());
             m_thread.DiscardThreadPlans(false);
             return true;
 
         case eStopReasonSignal:
             if (stop_info_sp->ShouldStop(event_ptr))
             {
+                if (log)
+                    log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4x (signal.)", m_thread.GetID());
                 m_thread.DiscardThreadPlans(false);
                 return true;
             }

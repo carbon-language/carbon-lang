@@ -553,6 +553,16 @@ public:
     ThreadPlan *
     GetCurrentPlan ();
 
+private:
+    bool
+    PlanIsBasePlan (ThreadPlan *plan_ptr)
+    {
+        if (m_plan_stack.size() == 0)
+            return false;
+        return m_plan_stack[0].get() == plan_ptr;
+    }
+public:
+
     //------------------------------------------------------------------
     /// Gets the inner-most plan that was popped off the plan stack in the
     /// most recent stop.  Useful for printing the stop reason accurately.

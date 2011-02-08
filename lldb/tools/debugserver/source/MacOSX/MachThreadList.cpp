@@ -252,13 +252,15 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
                     thread_sp.reset(new MachThread(process, tid));
 
                     // Add the new thread regardless of its is user ready state...
-                    if (new_threads)
-                        new_threads->push_back(thread_sp);
-
                     // Make sure the thread is ready to be displayed and shown to users
                     // before we add this thread to our list...
                     if (thread_sp->IsUserReady())
+                    {
+                        if (new_threads)
+                            new_threads->push_back(thread_sp);
+                    
                         currThreads.push_back(thread_sp);
+                    }
                 }
             }
 

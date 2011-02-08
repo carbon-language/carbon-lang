@@ -59,7 +59,8 @@ public:
         StopInfo (thread, break_id),
         m_description(),
         m_should_stop (false),
-        m_should_stop_is_valid (false)
+        m_should_stop_is_valid (false),
+        m_should_perform_action (true)
     {
     }
     
@@ -67,7 +68,8 @@ public:
         StopInfo (thread, break_id),
         m_description(),
         m_should_stop (should_stop),
-        m_should_stop_is_valid (true)
+        m_should_stop_is_valid (true),
+        m_should_perform_action (true)
     {
     }
 
@@ -115,6 +117,10 @@ public:
     virtual void
     PerformAction (Event *event_ptr)
     {
+        if (!m_should_perform_action)
+            return;
+        m_should_perform_action = false;
+        
         BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
         if (bp_site_sp)
         {
@@ -189,6 +195,8 @@ private:
     std::string m_description;
     bool m_should_stop;
     bool m_should_stop_is_valid;
+    bool m_should_perform_action; // Since we are trying to preserve the "state" of the system even if we run functions
+                                  // etc. behind the users backs, we need to make sure we only REALLY perform the action once.
 };
 
 
