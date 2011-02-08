@@ -675,6 +675,10 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
     return ObjCInstanceMessage;
 
   case LookupResult::Found: {
+    // If the identifier is a class or not, and there is a trailing dot,
+    // it's an instance message.
+    if (HasTrailingDot)
+      return ObjCInstanceMessage;
     // We found something. If it's a type, then we have a class
     // message. Otherwise, it's an instance message.
     NamedDecl *ND = Result.getFoundDecl();
