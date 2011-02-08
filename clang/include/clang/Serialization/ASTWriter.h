@@ -47,6 +47,7 @@ class MacroDefinition;
 class MemorizeStatCalls;
 class ASTReader;
 class PreprocessedEntity;
+class PreprocessingRecord;
 class Preprocessor;
 class Sema;
 class SourceManager;
@@ -311,6 +312,7 @@ private:
                                const Preprocessor &PP,
                                const char* isysroot);
   void WritePreprocessor(const Preprocessor &PP);
+  void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WritePragmaDiagnosticMappings(const Diagnostic &Diag);
   void WriteType(QualType T);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);

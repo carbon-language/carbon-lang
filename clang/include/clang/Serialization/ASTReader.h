@@ -280,9 +280,18 @@ private:
     /// \brief The offset of the start of the set of defined macros.
     uint64_t MacroStartOffset;
     
+    // === Detailed PreprocessingRecord ===
+    
+    /// \brief The cursor to the start of the (optional) detailed preprocessing 
+    /// record block.
+    llvm::BitstreamCursor PreprocessorDetailCursor;
+    
+    /// \brief The offset of the start of the preprocessor detail cursor.
+    uint64_t PreprocessorDetailStartOffset;
+    
     /// \brief The number of macro definitions in this file.
     unsigned LocalNumMacroDefinitions;
-
+    
     /// \brief Offsets of all of the macro definitions in the preprocessing
     /// record in the AST file.
     const uint32_t *MacroDefinitionOffsets;
@@ -1175,6 +1184,10 @@ public:
   /// \brief Reads the macro record located at the given offset.
   PreprocessedEntity *ReadMacroRecord(PerFileData &F, uint64_t Offset);
 
+  /// \brief Reads the preprocessed entity located at the current stream
+  /// position.
+  PreprocessedEntity *LoadPreprocessedEntity(PerFileData &F);
+      
   /// \brief Note that the identifier is a macro whose record will be loaded
   /// from the given AST file at the given (file-local) offset.
   void SetIdentifierIsMacro(IdentifierInfo *II, PerFileData &F,

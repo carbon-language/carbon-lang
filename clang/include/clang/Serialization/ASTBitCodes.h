@@ -148,7 +148,10 @@ namespace clang {
       DECLTYPES_BLOCK_ID,
 
       /// \brief The block containing DECL_UPDATES records.
-      DECL_UPDATES_BLOCK_ID
+      DECL_UPDATES_BLOCK_ID,
+      
+      /// \brief The block containing the detailed preprocessing record.
+      PREPROCESSOR_DETAIL_BLOCK_ID
     };
 
     /// \brief Record types that occur within the AST block itself.
@@ -383,20 +386,23 @@ namespace clang {
 
       /// \brief Describes one token.
       /// [PP_TOKEN, SLoc, Length, IdentInfoID, Kind, Flags]
-      PP_TOKEN = 3,
-
-      /// \brief Describes a macro instantiation within the preprocessing 
-      /// record.
-      PP_MACRO_INSTANTIATION = 4,
-      
-      /// \brief Describes a macro definition within the preprocessing record.
-      PP_MACRO_DEFINITION = 5,
-      
-      /// \brief Describes am inclusion directive within the preprocessing
-      /// record.
-      PP_INCLUSION_DIRECTIVE = 6
+      PP_TOKEN = 3
     };
 
+    /// \brief Record types used within a preprocessor detail block.
+    enum PreprocessorDetailRecordTypes {
+      /// \brief Describes a macro instantiation within the preprocessing 
+      /// record.
+      PPD_MACRO_INSTANTIATION = 0,
+      
+      /// \brief Describes a macro definition within the preprocessing record.
+      PPD_MACRO_DEFINITION = 1,
+      
+      /// \brief Describes an inclusion directive within the preprocessing
+      /// record.
+      PPD_INCLUSION_DIRECTIVE = 2
+    };
+    
     /// \defgroup ASTAST AST file AST constants
     ///
     /// The constants in this group describe various components of the

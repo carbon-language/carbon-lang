@@ -752,9 +752,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(PP_MACRO_OBJECT_LIKE);
   RECORD(PP_MACRO_FUNCTION_LIKE);
   RECORD(PP_TOKEN);
-  RECORD(PP_MACRO_INSTANTIATION);
-  RECORD(PP_MACRO_DEFINITION);
-  RECORD(PP_INCLUSION_DIRECTIVE);
   
   // Decls and Types block.
   BLOCK(DECLTYPES_BLOCK);
@@ -849,6 +846,11 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(DECL_CXX_BASE_SPECIFIERS);
   RECORD(DECL_INDIRECTFIELD);
   RECORD(DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK);
+  
+  BLOCK(PREPROCESSOR_DETAIL_BLOCK);
+  RECORD(PPD_MACRO_INSTANTIATION);
+  RECORD(PPD_MACRO_DEFINITION);
+  RECORD(PPD_INCLUSION_DIRECTIVE);
   
   // Statements and Exprs can occur in the Decls and Types block.
   AddStmtsExprs(Stream, Record);
@@ -1409,21 +1411,8 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   // Loop over all the macro definitions that are live at the end of the file,
   // emitting each to the PP section.
   PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
-  unsigned InclusionAbbrev = 0;
-  if (PPRec) {
-    using namespace llvm;
-    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(PP_INCLUSION_DIRECTIVE));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // index
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // start location
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // end location
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // filename length
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // in quotes
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // kind
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-    InclusionAbbrev = Stream.EmitAbbrev(Abbrev);
-  }
 
+  // FIXME: If we are chaining, don't visit all of the macros!
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
     // FIXME: This emits macros in hash table order, we should do it in a stable
@@ -1493,82 +1482,109 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     }
     ++NumMacros;
   }
+  Stream.ExitBlock();
+
+  if (PPRec)
+    WritePreprocessorDetail(*PPRec);
+}
+
+void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
+  if (PPRec.begin(Chain) == PPRec.end(Chain))
+    return;
+  
+  // Enter the preprocessor block.
+  Stream.EnterSubblock(PREPROCESSOR_DETAIL_BLOCK_ID, 3);
 
   // If the preprocessor has a preprocessing record, emit it.
   unsigned NumPreprocessingRecords = 0;
-  if (PPRec) {
-    unsigned IndexBase = Chain ? PPRec->getNumPreallocatedEntities() : 0;
-    for (PreprocessingRecord::iterator E = PPRec->begin(Chain),
-                                       EEnd = PPRec->end(Chain);
-         E != EEnd; ++E) {
-      Record.clear();
+  using namespace llvm;
+  
+  // Set up the abbreviation for 
+  unsigned InclusionAbbrev = 0;
+  {
+    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(PPD_INCLUSION_DIRECTIVE));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // index
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // start location
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // end location
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // filename length
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // in quotes
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // kind
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    InclusionAbbrev = Stream.EmitAbbrev(Abbrev);
+  }
+  
+  unsigned IndexBase = Chain ? PPRec.getNumPreallocatedEntities() : 0;
+  RecordData Record;
+  for (PreprocessingRecord::iterator E = PPRec.begin(Chain),
+                                  EEnd = PPRec.end(Chain);
+       E != EEnd; ++E) {
+    Record.clear();
 
-      if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
-        // Record this macro definition's location.
-        MacroID ID = getMacroDefinitionID(MD);
-        
-        // Don't write the macro definition if it is from another AST file.
-        if (ID < FirstMacroID)
-          continue;
-        
-        // Notify the serialization listener that we're serializing this entity.
-        if (SerializationListener)
-          SerializationListener->SerializedPreprocessedEntity(*E, 
-                                                      Stream.GetCurrentBitNo());
-
-        unsigned Position = ID - FirstMacroID;
-        if (Position != MacroDefinitionOffsets.size()) {
-          if (Position > MacroDefinitionOffsets.size())
-            MacroDefinitionOffsets.resize(Position + 1);
-          
-          MacroDefinitionOffsets[Position] = Stream.GetCurrentBitNo();
-        } else
-          MacroDefinitionOffsets.push_back(Stream.GetCurrentBitNo());
-        
-        Record.push_back(IndexBase + NumPreprocessingRecords++);
-        Record.push_back(ID);
-        AddSourceLocation(MD->getSourceRange().getBegin(), Record);
-        AddSourceLocation(MD->getSourceRange().getEnd(), Record);
-        AddIdentifierRef(MD->getName(), Record);
-        AddSourceLocation(MD->getLocation(), Record);
-        Stream.EmitRecord(PP_MACRO_DEFINITION, Record);
+    if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
+      // Record this macro definition's location.
+      MacroID ID = getMacroDefinitionID(MD);
+      
+      // Don't write the macro definition if it is from another AST file.
+      if (ID < FirstMacroID)
         continue;
-      }
-
+      
       // Notify the serialization listener that we're serializing this entity.
       if (SerializationListener)
         SerializationListener->SerializedPreprocessedEntity(*E, 
-                                                      Stream.GetCurrentBitNo());
+                                                    Stream.GetCurrentBitNo());
 
-      if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {          
-        Record.push_back(IndexBase + NumPreprocessingRecords++);
-        AddSourceLocation(MI->getSourceRange().getBegin(), Record);
-        AddSourceLocation(MI->getSourceRange().getEnd(), Record);
-        AddIdentifierRef(MI->getName(), Record);
-        Record.push_back(getMacroDefinitionID(MI->getDefinition()));
-        Stream.EmitRecord(PP_MACRO_INSTANTIATION, Record);
-        continue;
-      }
-
-      if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
-        Record.push_back(PP_INCLUSION_DIRECTIVE);
-        Record.push_back(IndexBase + NumPreprocessingRecords++);
-        AddSourceLocation(ID->getSourceRange().getBegin(), Record);
-        AddSourceLocation(ID->getSourceRange().getEnd(), Record);
-        Record.push_back(ID->getFileName().size());
-        Record.push_back(ID->wasInQuotes());
-        Record.push_back(static_cast<unsigned>(ID->getKind()));
-        llvm::SmallString<64> Buffer;
-        Buffer += ID->getFileName();
-        Buffer += ID->getFile()->getName();
-        Stream.EmitRecordWithBlob(InclusionAbbrev, Record, Buffer);
-        continue;
-      }
+      unsigned Position = ID - FirstMacroID;
+      if (Position != MacroDefinitionOffsets.size()) {
+        if (Position > MacroDefinitionOffsets.size())
+          MacroDefinitionOffsets.resize(Position + 1);
+        
+        MacroDefinitionOffsets[Position] = Stream.GetCurrentBitNo();
+      } else
+        MacroDefinitionOffsets.push_back(Stream.GetCurrentBitNo());
       
-      llvm_unreachable("Unhandled PreprocessedEntity in ASTWriter");
+      Record.push_back(IndexBase + NumPreprocessingRecords++);
+      Record.push_back(ID);
+      AddSourceLocation(MD->getSourceRange().getBegin(), Record);
+      AddSourceLocation(MD->getSourceRange().getEnd(), Record);
+      AddIdentifierRef(MD->getName(), Record);
+      AddSourceLocation(MD->getLocation(), Record);
+      Stream.EmitRecord(PPD_MACRO_DEFINITION, Record);
+      continue;
     }
-  }
 
+    // Notify the serialization listener that we're serializing this entity.
+    if (SerializationListener)
+      SerializationListener->SerializedPreprocessedEntity(*E, 
+                                                    Stream.GetCurrentBitNo());
+
+    if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {          
+      Record.push_back(IndexBase + NumPreprocessingRecords++);
+      AddSourceLocation(MI->getSourceRange().getBegin(), Record);
+      AddSourceLocation(MI->getSourceRange().getEnd(), Record);
+      AddIdentifierRef(MI->getName(), Record);
+      Record.push_back(getMacroDefinitionID(MI->getDefinition()));
+      Stream.EmitRecord(PPD_MACRO_INSTANTIATION, Record);
+      continue;
+    }
+
+    if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
+      Record.push_back(PPD_INCLUSION_DIRECTIVE);
+      Record.push_back(IndexBase + NumPreprocessingRecords++);
+      AddSourceLocation(ID->getSourceRange().getBegin(), Record);
+      AddSourceLocation(ID->getSourceRange().getEnd(), Record);
+      Record.push_back(ID->getFileName().size());
+      Record.push_back(ID->wasInQuotes());
+      Record.push_back(static_cast<unsigned>(ID->getKind()));
+      llvm::SmallString<64> Buffer;
+      Buffer += ID->getFileName();
+      Buffer += ID->getFile()->getName();
+      Stream.EmitRecordWithBlob(InclusionAbbrev, Record, Buffer);
+      continue;
+    }
+    
+    llvm_unreachable("Unhandled PreprocessedEntity in ASTWriter");
+  }
   Stream.ExitBlock();
 
   // Write the offsets table for the preprocessing record.
