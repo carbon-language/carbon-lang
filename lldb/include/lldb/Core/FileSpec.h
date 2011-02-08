@@ -521,7 +521,7 @@ public:
     static size_t
     Resolve (const char *src_path, char *dst_path, size_t dst_len);
 
-#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 
 
     //------------------------------------------------------------------

@@ -153,7 +153,7 @@ DiskFilesOrDirectories
     
     if (end_ptr == NULL)
     {
-#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 
         // There's no directory.  If the thing begins with a "~" then this is a bare
         // user name.
@@ -207,7 +207,7 @@ DiskFilesOrDirectories
             return matches.GetSize();
         }
         else
-#endif // LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+#endif //  #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 
         {
             // The containing part is the CWD, and the whole string is the remainder.
@@ -239,7 +239,7 @@ DiskFilesOrDirectories
     // Look for a user name in the containing part, and if it's there, resolve it and stick the
     // result back into the containing_part:
 
-#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
     if (*partial_name_copy == '~')
     {
         size_t resolved_username_len = FileSpec::ResolveUsername(containing_part, containing_part, sizeof (containing_part));
@@ -247,7 +247,7 @@ DiskFilesOrDirectories
         if (resolved_username_len == 0 || resolved_username_len >= sizeof (containing_part))
             return matches.GetSize();
     }
-#endif // #if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+#endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 
     // Okay, containing_part is now the directory we want to open and look for files:
 

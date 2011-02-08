@@ -98,10 +98,10 @@ StreamFile::Open (const char *path, const char *permissions)
 void
 StreamFile::SetLineBuffered ()
 {
-#if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
+#ifdef LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
     if (m_file != NULL)
         setlinebuf (m_file);
-#endif // #if LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
+#endif // #ifdef LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
 }
 
 void

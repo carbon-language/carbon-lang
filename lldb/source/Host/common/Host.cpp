@@ -14,6 +14,7 @@
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Host/Config.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Mutex.h"
 
@@ -21,12 +22,16 @@
 #include <errno.h>
 
 #if defined (__APPLE__)
+
 #include <dispatch/dispatch.h>
 #include <libproc.h>
 #include <mach-o/dyld.h>
 #include <sys/sysctl.h>
+
 #elif defined (__linux__)
+
 #include <sys/wait.h>
+
 #endif
 
 using namespace lldb;
@@ -643,21 +648,48 @@ Host::ResolveExecutableInBundle (FileSpec &file)
 }
 #endif
 
-void *
-Host::DynamicLibraryOpen (const FileSpec &file_spec, Error &error)
+// Opaque info that tracks a dynamic library that was loaded
+struct DynamicLibraryInfo
 {
-    void *dynamic_library_handle = NULL;
+    DynamicLibraryInfo (const FileSpec &fs, int o, void *h) :
+        file_spec (fs),
+        open_options (o),
+        handle (h)
+    {
+    }
+
+    const FileSpec file_spec;
+    uint32_t open_options;
+    void * handle;
+};
+
+void *
+Host::DynamicLibraryOpen (const FileSpec &file_spec, uint32_t options, Error &error)
+{
     char path[PATH_MAX];
     if (file_spec.GetPath(path, sizeof(path)))
     {
-#if defined (__linux__)
-        dynamic_library_handle = ::dlopen (path, RTLD_LAZY | RTLD_GLOBAL);
-#else
-        dynamic_library_handle = ::dlopen (path, RTLD_LAZY | RTLD_GLOBAL | RTLD_FIRST);
+        int mode = 0;
+        
+        if (options & eDynamicLibraryOpenOptionLazy)
+            mode |= RTLD_LAZY;
+    
+        if (options & eDynamicLibraryOpenOptionLocal)
+            mode |= RTLD_LOCAL;
+        else
+            mode |= RTLD_GLOBAL;
+
+#ifdef LLDB_CONFIG_DLOPEN_RTLD_FIRST_SUPPORTED
+        if (options & eDynamicLibraryOpenOptionLimitGetSymbol)
+            mode |= RTLD_FIRST;
 #endif
-        if (dynamic_library_handle)
+        
+        void * opaque = ::dlopen (path, mode);
+
+        if (opaque)
         {
             error.Clear();
+            return new DynamicLibraryInfo (file_spec, options, opaque);
         }
         else
         {
@@ -668,40 +700,73 @@ Host::DynamicLibraryOpen (const FileSpec &file_spec, Error &error)
     {
         error.SetErrorString("failed to extract path");
     }
-
-    return dynamic_library_handle;
+    return NULL;
 }
 
 Error
-Host::DynamicLibraryClose (void *dynamic_library_handle)
+Host::DynamicLibraryClose (void *opaque)
 {
     Error error;
-    if (dynamic_library_handle == NULL)
+    if (opaque == NULL)
     {
         error.SetErrorString ("invalid dynamic library handle");
     }
-    else if (::dlclose(dynamic_library_handle) != 0)
+    else
     {
-        error.SetErrorString(::dlerror());
+        DynamicLibraryInfo *dylib_info = (DynamicLibraryInfo *) opaque;
+        if (::dlclose (dylib_info->handle) != 0)
+        {
+            error.SetErrorString(::dlerror());
+        }
+        
+        dylib_info->open_options = 0;
+        dylib_info->handle = 0;
+        delete dylib_info;
     }
     return error;
 }
 
 void *
-Host::DynamicLibraryGetSymbol (void *dynamic_library_handle, const char *symbol_name, Error &error)
+Host::DynamicLibraryGetSymbol (void *opaque, const char *symbol_name, Error &error)
 {
-    if (dynamic_library_handle == NULL)
+    if (opaque == NULL)
     {
         error.SetErrorString ("invalid dynamic library handle");
-        return NULL;
     }
-    
-    void *symbol_addr = ::dlsym (dynamic_library_handle, symbol_name);
-    if (symbol_addr == NULL)
-        error.SetErrorString(::dlerror());
     else
-        error.Clear();
-    return symbol_addr;
+    {
+        DynamicLibraryInfo *dylib_info = (DynamicLibraryInfo *) opaque;
+
+        void *symbol_addr = ::dlsym (dylib_info->handle, symbol_name);
+        if (symbol_addr)
+        {
+#ifndef LLDB_CONFIG_DLOPEN_RTLD_FIRST_SUPPORTED
+            // This host doesn't support limiting searches to this shared library
+            // so we need to verify that the match came from this shared library
+            // if it was requested in the Host::DynamicLibraryOpen() function.
+            if (dylib_info->options & eDynamicLibraryOpenOptionLimitGetSymbol)
+            {
+                FileSpec match_dylib_spec (Host::GetModuleFileSpecForHostAddress (symbol_addr));
+                if (match_dylib_spec != dylib_info->file_spec)
+                {
+                    char dylib_path[PATH_MAX];
+                    if (dylib_info->file_spec.GetPath (dylib_path, sizeof(dylib_path)))
+                        error.SetErrorStringWithFormat ("symbol not found in \"%s\"", dylib_path);
+                    else
+                        error.SetErrorString ("symbol not found");
+                    return NULL;
+                }
+            }
+#endif
+            error.Clear();
+            return symbol_addr;
+        }
+        else
+        {
+            error.SetErrorString(::dlerror());
+        }
+    }
+    return NULL;
 }
 
 bool

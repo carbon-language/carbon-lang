@@ -95,7 +95,11 @@ LoadPluginCallback
         else
         {
             PluginInfo plugin_info = { NULL, NULL, NULL };
-            plugin_info.plugin_handle = Host::DynamicLibraryOpen (plugin_file_spec, error);
+            uint32_t flags = Host::eDynamicLibraryOpenOptionLazy |
+                             Host::eDynamicLibraryOpenOptionLocal |
+                             Host::eDynamicLibraryOpenOptionLimitGetSymbol;
+
+            plugin_info.plugin_handle = Host::DynamicLibraryOpen (plugin_file_spec, flags, error);
             if (plugin_info.plugin_handle)
             {
                 bool success = false;

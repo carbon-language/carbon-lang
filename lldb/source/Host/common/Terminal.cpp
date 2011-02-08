@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
 #include <termios.h>
 #endif
 
@@ -33,7 +33,7 @@ Terminal::SetEcho (bool enabled)
 {
     if (FileDescriptorIsValid())
     {
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (IsATerminal ())
         {
             struct termios fd_termios;
@@ -60,7 +60,7 @@ Terminal::SetEcho (bool enabled)
                 return ::tcsetattr (m_fd, TCSANOW, &fd_termios) == 0;
             }
         }
-#endif
+#endif // #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
     }
     return false;
 }
@@ -70,7 +70,7 @@ Terminal::SetCanonical (bool enabled)
 {
     if (FileDescriptorIsValid())
     {
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (IsATerminal ())
         {
             struct termios fd_termios;
@@ -97,7 +97,7 @@ Terminal::SetCanonical (bool enabled)
                 return ::tcsetattr (m_fd, TCSANOW, &fd_termios) == 0;
             }
         }
-#endif
+#endif // #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
     }
     return false;
 }
@@ -132,13 +132,13 @@ TerminalState::Save (int fd, bool save_process_group)
     if (m_tty.IsATerminal())
     {
         m_tflags = ::fcntl (fd, F_GETFL, 0);
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (m_termios_ap.get() == NULL)
             m_termios_ap.reset (new struct termios);
         int err = ::tcgetattr (fd, m_termios_ap.get());
         if (err != 0)
             m_termios_ap.reset();
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+#endif // #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (save_process_group)
             m_process_group = ::tcgetpgrp (0);
         else
@@ -168,10 +168,10 @@ TerminalState::Restore () const
         if (TFlagsIsValid())
             result = fcntl (fd, F_SETFL, m_tflags);
 
-#if LLDB_CONFIG_TERMIOS_SUPPORTED
+#ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (TTYStateIsValid())
             result = tcsetattr (fd, TCSANOW, m_termios_ap.get());
-#endif // #if LLDB_CONFIG_TERMIOS_SUPPORTED
+#endif // #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
 
         if (ProcessGroupIsValid())
         {
