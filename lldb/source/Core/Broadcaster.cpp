@@ -25,8 +25,8 @@ Broadcaster::Broadcaster (const char *name) :
     m_broadcaster_name (name),
     m_listeners (),
     m_listeners_mutex (Mutex::eMutexTypeRecursive),
-    m_hijacking_listener(NULL),
-    m_hijacking_mask(UINT32_MAX)
+    m_hijacking_listeners(),
+    m_hijacking_masks()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
@@ -153,7 +153,7 @@ Broadcaster::EventTypeHasListeners (uint32_t event_type)
 {
     Mutex::Locker locker (m_listeners_mutex);
     
-    if (m_hijacking_listener != NULL && event_type & m_hijacking_mask)
+    if (m_hijacking_listeners.size() > 0 && event_type & m_hijacking_masks.back())
         return true;
         
     if (m_listeners.empty())
@@ -224,19 +224,22 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
                      m_broadcaster_name.AsCString(""),
                      event_description.GetData(),
                      unique,
-                     m_hijacking_listener);
+                     m_hijacking_listeners.back());
     }
 
-    if (m_hijacking_listener != NULL && m_hijacking_mask & event_type)
+    if (m_hijacking_listeners.size() > 0 && m_hijacking_masks.back() & event_type)
     {
+        Listener *hijacking_listener = m_hijacking_listeners.back();
         // FIXME: REMOVE THIS EXTRA LOGGING
         LogSP log_process(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
         if (log_process)
-            log_process->Printf ("Hijacking event delivery for Broadcaster(\"%s\").", m_broadcaster_name.AsCString(""));
+            log_process->Printf ("Hijacking event delivery for Broadcaster(\"%s\") to Listener(\"%s\").", 
+                                 m_broadcaster_name.AsCString(""),
+                                 hijacking_listener->GetName());
             
-        if (unique && m_hijacking_listener->PeekAtNextEventForBroadcasterWithType (this, event_type))
+        if (unique && hijacking_listener->PeekAtNextEventForBroadcasterWithType (this, event_type))
             return;
-        m_hijacking_listener->AddEvent (event_sp);
+        hijacking_listener->AddEvent (event_sp);
     }
     else
     {
@@ -276,13 +279,9 @@ bool
 Broadcaster::HijackBroadcaster (Listener *listener, uint32_t event_mask)
 {
     Mutex::Locker event_types_locker(m_listeners_mutex);
-    assert (m_hijacking_listener == NULL);
     
-    if (m_hijacking_listener != NULL)
-        return false;
-    
-    m_hijacking_listener = listener;
-    m_hijacking_mask = event_mask;
+    m_hijacking_listeners.push_back(listener);
+    m_hijacking_masks.push_back(event_mask);
     return true;
 }
 
@@ -290,7 +289,7 @@ void
 Broadcaster::RestoreBroadcaster ()
 {
     Mutex::Locker event_types_locker(m_listeners_mutex);
-    m_hijacking_listener = NULL;
-    m_hijacking_mask = 0;
+    m_hijacking_listeners.pop_back();
+    m_hijacking_masks.pop_back();
 }
 
