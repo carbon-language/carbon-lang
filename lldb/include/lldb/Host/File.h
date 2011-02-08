@@ -53,9 +53,7 @@ public:
         ePermissionsWorldExecute    = (1u << 8)
     };
 
-    File() :
-        m_file_spec (),
-        m_file_desc (-1)
+    File() : m_file_desc (-1)
     {
     }
 
@@ -145,11 +143,8 @@ public:
     /// @return
     ///     A reference to the file specification object.
     //------------------------------------------------------------------
-    const FileSpec &
-    GetFileSpec () const
-    {
-        return m_file_spec;
-    }
+    Error
+    GetFileSpec (FileSpec &file_spec) const;
     
     Error
     Open (const char *path,
@@ -165,12 +160,23 @@ public:
     Error
     Write (const void *src, size_t &num_bytes);
 
+    Error
+    SeekFromStart (off_t& offset);
+    
+    Error
+    SeekFromCurrent (off_t& offset);
+    
+    Error
+    SeekFromEnd (off_t& offset);
+
+    Error
+    Sync ();
+
 protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    FileSpec m_file_spec;   ///< The file specific for the current file (if any)
-    int m_file_desc;    ///< The open file handle or NULL if the file isn't opened
+    int m_file_desc; ///< The open file handle or NULL if the file isn't opened
 };
 
 } // namespace lldb_private

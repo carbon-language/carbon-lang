@@ -18,7 +18,6 @@ using namespace lldb;
 using namespace lldb_private;
 
 File::File(const char *path, uint32_t options, uint32_t permissions) :
-    m_file_spec (path, false),
     m_file_desc (-1)
 {
     Open (path, options, permissions);
@@ -80,8 +79,6 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
     m_file_desc = ::open(path, oflag, mode);
     if (m_file_desc == -1)
         error.SetErrorToErrno();
-    else
-        m_file_spec.SetFile (path, false);
     
     return error;
 }
@@ -94,10 +91,101 @@ File::Close ()
     {
         if (::close (m_file_desc) != 0)
             error.SetErrorToErrno();
+        m_file_desc = -1;
     }
     return error;
 }
-    
+
+
+Error
+File::GetFileSpec (FileSpec &file_spec) const
+{
+    Error error;
+    if (IsValid ())
+    {
+        char path[PATH_MAX];
+        if (::fcntl(m_file_desc, F_GETPATH, path) == -1)
+            error.SetErrorToErrno();
+        else
+            file_spec.SetFile (path, false);
+    }
+    else 
+        error.SetErrorString("invalid file handle");
+
+    if (error.Fail())
+        file_spec.Clear();
+    return error;
+}
+
+Error
+File::SeekFromStart (off_t& offset)
+{
+    Error error;
+    if (IsValid ())
+    {
+        offset = ::lseek (m_file_desc, offset, SEEK_SET);
+
+        if (offset == -1)
+            error.SetErrorToErrno();
+    }
+    else 
+    {
+        error.SetErrorString("invalid file handle");
+    }
+    return error;
+}
+
+Error
+File::SeekFromCurrent (off_t& offset)
+{
+    Error error;
+    if (IsValid ())
+    {
+        offset = ::lseek (m_file_desc, offset, SEEK_CUR);
+        
+        if (offset == -1)
+            error.SetErrorToErrno();
+    }
+    else 
+    {
+        error.SetErrorString("invalid file handle");
+    }
+    return error;
+}
+
+Error
+File::SeekFromEnd (off_t& offset)
+{
+    Error error;
+    if (IsValid ())
+    {
+        offset = ::lseek (m_file_desc, offset, SEEK_CUR);
+        
+        if (offset == -1)
+            error.SetErrorToErrno();
+    }
+    else 
+    {
+        error.SetErrorString("invalid file handle");
+    }
+    return error;
+}
+
+Error
+File::Sync ()
+{
+    Error error;
+    if (IsValid ())
+    {
+        if (::fsync (m_file_desc) == -1)
+            error.SetErrorToErrno();
+    }
+    else 
+    {
+        error.SetErrorString("invalid file handle");
+    }
+    return error;
+}
 Error
 File::Read (void *buf, size_t &num_bytes)
 {
