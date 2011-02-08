@@ -377,6 +377,18 @@ public:
   /// Return the end of the live range.
   SlotIndex leaveIntvAtTop(MachineBasicBlock &MBB);
 
+  /// overlapIntv - Indicate that all instructions in range should use the open
+  /// interval, but also let the complement interval be live.
+  ///
+  /// This doubles the register pressure, but is sometimes required to deal with
+  /// register uses after the last valid split point.
+  ///
+  /// The Start index should be a return value from a leaveIntv* call, and End
+  /// should be in the same basic block. The parent interval must have the same
+  /// value across the range.
+  ///
+  void overlapIntv(SlotIndex Start, SlotIndex End);
+
   /// closeIntv - Indicate that we are done editing the currently open
   /// LiveInterval, and ranges can be trimmed.
   void closeIntv();

@@ -882,6 +882,22 @@ SlotIndex SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   return VNI->def;
 }
 
+void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
+  assert(OpenIdx && "openIntv not called before overlapIntv");
+  assert(Edit.getParent().getVNInfoAt(Start) ==
+         Edit.getParent().getVNInfoAt(End.getPrevSlot()) &&
+         "Parent changes value in extended range");
+  assert(Edit.get(0)->getVNInfoAt(Start) && "Start must come from leaveIntv*");
+  assert(LIS.getMBBFromIndex(Start) == LIS.getMBBFromIndex(End) &&
+         "Range cannot span basic blocks");
+
+  // Treat this as useIntv() for now. The complement interval will be extended
+  // as needed by mapValue().
+  DEBUG(dbgs() << "    overlapIntv [" << Start << ';' << End << "):");
+  RegAssign.insert(Start, End, OpenIdx);
+  DEBUG(dump());
+}
+
 /// closeIntv - Indicate that we are done editing the currently open
 /// LiveInterval, and ranges can be trimmed.
 void SplitEditor::closeIntv() {

@@ -746,6 +746,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       assert(Use <= BI.LastUse && "Couldn't find last use");
       SlotIndex SegStart = SE.enterIntvBefore(Use);
       assert(SegStart >= IP.second && "Couldn't avoid interference");
+      assert(SegStart < BI.LastSplitPoint && "Impossible split point");
       SE.useIntv(SegStart, Stop);
       continue;
     }
@@ -798,8 +799,30 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       if (!RegOut) {
         // Block is live-through, but exit bundle is on the stack.
         // Spill immediately after the last use.
-        DEBUG(dbgs() << ", uses, stack-out.\n");
-        SE.useIntv(Start, SE.leaveIntvAfter(BI.LastUse));
+        if (BI.LastUse < BI.LastSplitPoint) {
+          DEBUG(dbgs() << ", uses, stack-out.\n");
+          SE.useIntv(Start, SE.leaveIntvAfter(BI.LastUse));
+          continue;
+        }
+        // The last use is after the last split point, it is probably an
+        // indirect jump.
+        DEBUG(dbgs() << ", uses at " << BI.LastUse << " after split point "
+                     << BI.LastSplitPoint << ", stack-out.\n");
+        SlotIndex SegEnd;
+        if (BI.LastSplitPoint == Start)
+          SegEnd = SE.leaveIntvAtTop(*BI.MBB);
+        else {
+          MachineBasicBlock::iterator I =
+            LIS->getInstructionFromIndex(BI.LastSplitPoint);
+          do assert(I != BI.MBB->begin() && "Expected instruction");
+          while ((--I)->isDebugValue());
+          SegEnd = SE.leaveIntvAfter(LIS->getInstructionIndex(I));
+        }
+        SE.useIntv(Start, SegEnd);
+        // Run a double interval from the split to the last use.
+        // This makes it possible to spill the complement without affecting the
+        // indirect branch.
+        SE.overlapIntv(SegEnd, BI.LastUse);
         continue;
       }
       // Register is live-through.
