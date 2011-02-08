@@ -145,6 +145,41 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
 }
 
 size_t
+FileSpec::ResolvePartialUsername (const char *partial_name, StringList &matches)
+{
+#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+    size_t extant_entries = matches.GetSize();
+    
+    setpwent();
+    struct passwd *user_entry;
+    const char *name_start = partial_name + 1;
+    std::set<std::string> name_list;
+    
+    while ((user_entry = getpwent()) != NULL)
+    {
+        if (strstr(user_entry->pw_name, name_start) == user_entry->pw_name)
+        {
+            std::string tmp_buf("~");
+            tmp_buf.append(user_entry->pw_name);
+            tmp_buf.push_back('/');
+            name_list.insert(tmp_buf);                    
+        }
+    }
+    std::set<std::string>::iterator pos, end = name_list.end();
+    for (pos = name_list.begin(); pos != end; pos++)
+    {  
+        matches.AppendString((*pos).c_str());
+    }
+    return matches.GetSize() - extant_entries;
+#else
+    // Resolving home directories is not supported, just copy the path...
+    return 0;
+#endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER    
+}
+
+
+
+size_t
 FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
 {
     if (src_path == NULL || src_path[0] == '\0')

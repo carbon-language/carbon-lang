@@ -543,6 +543,9 @@ public:
     //------------------------------------------------------------------
     static size_t
     ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
+    
+    static size_t
+    ResolvePartialUsername (const char *partial_name, StringList &matches);
 
     enum EnumerateDirectoryResult
     {

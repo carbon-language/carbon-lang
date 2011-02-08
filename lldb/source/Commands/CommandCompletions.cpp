@@ -153,8 +153,6 @@ DiskFilesOrDirectories
     
     if (end_ptr == NULL)
     {
-#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
-
         // There's no directory.  If the thing begins with a "~" then this is a bare
         // user name.
         if (*partial_name_copy == '~')
@@ -169,46 +167,28 @@ DiskFilesOrDirectories
            // Not sure how this would happen, a username longer than PATH_MAX?  Still...
             if (resolved_username_len >= sizeof (resolved_username))
                 return matches.GetSize();
-            if (resolved_username_len == 0)
+            else if (resolved_username_len == 0)
             {
                 // The user name didn't resolve, let's look in the password database for matches.
                 // The user name database contains duplicates, and is not in alphabetical order, so
                 // we'll use a set to manage that for us.
-                
-                setpwent();
-                struct passwd *user_entry;
-                const char *name_start = partial_name_copy + 1;
-                std::set<std::string> name_list;
-                
-                while ((user_entry = getpwent()) != NULL)
-                {
-                    if (strstr(user_entry->pw_name, name_start) == user_entry->pw_name)
-                    {
-                        std::string tmp_buf("~");
-                        tmp_buf.append(user_entry->pw_name);
-                        tmp_buf.push_back('/');
-                        name_list.insert(tmp_buf);                    
-                        saw_directory = true;
-                    }
-                }
-                std::set<std::string>::iterator pos, end = name_list.end();
-                for (pos = name_list.begin(); pos != end; pos++)
-                {  
-                    matches.AppendString((*pos).c_str());
-                }
+                FileSpec::ResolvePartialUsername (partial_name_copy, matches);
+                if (matches.GetSize() > 0)
+                    saw_directory = true;
                 return matches.GetSize();
-            }    
-            //The thing exists, put a '/' on the end, and return it...
-            // FIXME: complete user names here:
-            partial_name_copy[partial_name_len] = '/';
-            partial_name_copy[partial_name_len+1] = '\0';
-            matches.AppendString(partial_name_copy);
-            saw_directory = true;
-            return matches.GetSize();
+            } 
+            else
+            {   
+                //The thing exists, put a '/' on the end, and return it...
+                // FIXME: complete user names here:
+                partial_name_copy[partial_name_len] = '/';
+                partial_name_copy[partial_name_len+1] = '\0';
+                matches.AppendString(partial_name_copy);
+                saw_directory = true;
+                return matches.GetSize();
+            }
         }
         else
-#endif //  #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
-
         {
             // The containing part is the CWD, and the whole string is the remainder.
             containing_part[0] = '.';
@@ -239,15 +219,15 @@ DiskFilesOrDirectories
     // Look for a user name in the containing part, and if it's there, resolve it and stick the
     // result back into the containing_part:
 
-#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
     if (*partial_name_copy == '~')
     {
-        size_t resolved_username_len = FileSpec::ResolveUsername(containing_part, containing_part, sizeof (containing_part));
+        size_t resolved_username_len = FileSpec::ResolveUsername(containing_part, 
+                                                                 containing_part, 
+                                                                 sizeof (containing_part));
         // User name doesn't exist, we're not getting any further...
         if (resolved_username_len == 0 || resolved_username_len >= sizeof (containing_part))
             return matches.GetSize();
     }
-#endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 
     // Okay, containing_part is now the directory we want to open and look for files:
 
