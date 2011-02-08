@@ -617,9 +617,10 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(RD);
 
 
+  CharUnits NonVirtualSize  = Layout.getNonVirtualSize();
+  CharUnits NonVirtualAlign = Layout.getNonVirtualAlign();
   uint64_t AlignedNonVirtualTypeSize =
-    llvm::RoundUpToAlignment(Layout.getNonVirtualSize().getQuantity() * 8,
-                             Layout.getNonVirtualAlign()) / 8;
+    NonVirtualSize.RoundUpToAlignment(NonVirtualAlign).getQuantity();
   
   
   // First check if we can use the same fields as for the complete class.
@@ -855,9 +856,13 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
          "Type size mismatch!");
 
   if (BaseTy) {
-    uint64_t AlignedNonVirtualTypeSizeInBits =
-      llvm::RoundUpToAlignment(Layout.getNonVirtualSize().getQuantity() * 8,
-                               Layout.getNonVirtualAlign());
+    CharUnits NonVirtualSize  = Layout.getNonVirtualSize();
+    CharUnits NonVirtualAlign = Layout.getNonVirtualAlign();
+    CharUnits AlignedNonVirtualTypeSize = 
+      NonVirtualSize.RoundUpToAlignment(NonVirtualAlign);
+
+    uint64_t AlignedNonVirtualTypeSizeInBits = 
+      AlignedNonVirtualTypeSize.getQuantity() * getContext().getCharWidth();
 
     assert(AlignedNonVirtualTypeSizeInBits == 
            getTargetData().getTypeAllocSizeInBits(BaseTy) &&

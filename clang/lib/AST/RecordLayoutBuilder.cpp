@@ -1096,7 +1096,8 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
     return CharUnits::Zero();
   }
 
-  unsigned UnpackedBaseAlign = Layout.getNonVirtualAlign();
+  unsigned UnpackedBaseAlign = 
+    Layout.getNonVirtualAlign().getQuantity() * Context.getCharWidth();
   unsigned BaseAlign = (Packed) ? 8 : UnpackedBaseAlign;
 
   // The maximum field alignment overrides base align.
@@ -1684,13 +1685,14 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
       IsPODForThePurposeOfLayout ? Builder->Size : Builder->DataSize;
     uint64_t NonVirtualSize =
       IsPODForThePurposeOfLayout ? DataSize : Builder->NonVirtualSize;
+    uint64_t NonVirtualAlign = Builder->NonVirtualAlignment;
 
     NewEntry =
       new (*this) ASTRecordLayout(*this, Builder->Size, Builder->Alignment,
                                   DataSize, Builder->FieldOffsets.data(),
                                   Builder->FieldOffsets.size(),
                                   toCharUnitsFromBits(NonVirtualSize),
-                                  Builder->NonVirtualAlignment,
+                                  toCharUnitsFromBits(NonVirtualAlign),
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
                                   Builder->PrimaryBase,
                                   Builder->PrimaryBaseIsVirtual,
@@ -1859,7 +1861,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
   OS << ", dsize=" << Layout.getDataSize() / 8;
   OS << ", align=" << Layout.getAlignment() / 8 << '\n';
   OS << "  nvsize=" << Layout.getNonVirtualSize().getQuantity();
-  OS << ", nvalign=" << Layout.getNonVirtualAlign() / 8 << '\n';
+  OS << ", nvalign=" << Layout.getNonVirtualAlign().getQuantity() << '\n';
   OS << '\n';
 }
 
