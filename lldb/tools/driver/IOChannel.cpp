@@ -412,19 +412,19 @@ IOChannel::Run ()
 bool
 IOChannel::Start ()
 {
-    if (m_read_thread != LLDB_INVALID_HOST_THREAD)
+    if (IS_VALID_LLDB_HOST_THREAD(m_read_thread))
         return true;
 
     m_read_thread = SBHostOS::ThreadCreate ("<lldb.driver.commandline_io>", IOChannel::IOReadThread, this,
                                             NULL);
 
-    return (m_read_thread != LLDB_INVALID_HOST_THREAD);
+    return (IS_VALID_LLDB_HOST_THREAD(m_read_thread));
 }
 
 bool
 IOChannel::Stop ()
 {
-    if (m_read_thread == LLDB_INVALID_HOST_THREAD)
+    if (!IS_VALID_LLDB_HOST_THREAD(m_read_thread))
         return true;
 
     BroadcastEventByType (eBroadcastBitThreadShouldExit);

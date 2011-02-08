@@ -614,7 +614,7 @@ ScriptInterpreterPython::InputReaderCallback
                 embedded_interpreter_thread = Host::ThreadCreate ("<lldb.script-interpreter.embedded-python-loop>",
                                                                   ScriptInterpreterPython::RunEmbeddedPythonInterpreter,
                                                                   script_interpreter, NULL);
-                if (embedded_interpreter_thread != LLDB_INVALID_HOST_THREAD)
+                if (IS_VALID_LLDB_HOST_THREAD(embedded_interpreter_thread))
                 {
                     if (log)
                         log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, succeeded in creating thread (thread = %d)", embedded_interpreter_thread);

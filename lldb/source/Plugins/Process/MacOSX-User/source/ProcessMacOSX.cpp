@@ -1167,7 +1167,7 @@ ProcessMacOSX::Clear()
         m_exception_messages.clear();
     }
 
-    if (m_monitor_thread != LLDB_INVALID_HOST_THREAD)
+    if (IS_VALID_LLDB_HOST_THREAD(m_monitor_thread))
     {
         Host::ThreadCancel (m_monitor_thread, NULL);
         thread_result_t thread_result;
@@ -1180,6 +1180,9 @@ ProcessMacOSX::Clear()
 bool
 ProcessMacOSX::StartSTDIOThread()
 {
+    if (IS_VALID_LLDB_HOST_THREAD(m_stdio_thread))
+        return true;
+
     // If we created and own the child STDIO file handles, then we track the
     // STDIO ourselves, else we let whomever owns these file handles track
     // the IO themselves.
@@ -1188,7 +1191,7 @@ ProcessMacOSX::StartSTDIOThread()
         ProcessMacOSXLog::LogIf (PD_LOG_PROCESS, "ProcessMacOSX::%s ( )", __FUNCTION__);
         // Create the thread that watches for the child STDIO
         m_stdio_thread = Host::ThreadCreate ("<lldb.process.process-macosx.stdio>", ProcessMacOSX::STDIOThread, this, NULL);
-        return m_stdio_thread != LLDB_INVALID_HOST_THREAD;
+        return IS_VALID_LLDB_HOST_THREAD(m_stdio_thread);
     }
     return false;
 }
@@ -1199,7 +1202,7 @@ ProcessMacOSX::StopSTDIOThread(bool close_child_fds)
 {
     ProcessMacOSXLog::LogIf (PD_LOG_PROCESS, "ProcessMacOSX::%s ( )", __FUNCTION__);
     // Stop the stdio thread
-    if (m_stdio_thread != LLDB_INVALID_HOST_THREAD)
+    if (IS_VALID_LLDB_HOST_THREAD(m_stdio_thread))
     {
         Host::ThreadCancel (m_stdio_thread, NULL);
         thread_result_t result = NULL;

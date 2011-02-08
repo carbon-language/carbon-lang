@@ -39,6 +39,7 @@
 //  #define LLDB_INVALID_PROCESS_ID ...
 //  #define LLDB_INVALID_THREAD_ID ...
 //  #define LLDB_INVALID_HOST_THREAD ...
+//  #define IS_VALID_LLDB_HOST_THREAD ...
 //----------------------------------------------------------------------
 
 // TODO: Add a bunch of ifdefs to determine the host system and what
@@ -72,7 +73,19 @@ namespace lldb {
 
 } // namespace lldb
 
+#if defined(__MINGW32__)
+
+const lldb::thread_t lldb_invalid_host_thread_const = { NULL, 0 } ;
+#define LLDB_INVALID_HOST_THREAD         (lldb_invalid_host_thread_const)
+#define IS_VALID_LLDB_HOST_THREAD(t)     (!(NULL == (t).p && 0 == (t).x))
+
+#else
+
 #define LLDB_INVALID_HOST_THREAD         ((lldb::thread_t)NULL)
+#define IS_VALID_LLDB_HOST_THREAD(t)     ((t) != LLDB_INVALID_HOST_THREAD)
+
+#endif
+
 #define LLDB_INVALID_HOST_TIME           { 0, 0 }
 
 //----------------------------------------------------------------------

@@ -74,7 +74,7 @@ Host::StartMonitoringChildProcess
                                info_ap.get(),
                                NULL);
                                
-        if (thread != LLDB_INVALID_HOST_THREAD)
+        if (IS_VALID_LLDB_HOST_THREAD(thread))
             info_ap.release();
     }
     return thread;

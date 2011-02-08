@@ -131,7 +131,7 @@ ProcessGDBRemote::~ProcessGDBRemote()
 {
     m_dynamic_loader_ap.reset();
 
-    if (m_debugserver_thread != LLDB_INVALID_HOST_THREAD)
+    if (IS_VALID_LLDB_HOST_THREAD(m_debugserver_thread))
     {
         Host::ThreadCancel (m_debugserver_thread, NULL);
         thread_result_t thread_result;
@@ -2174,7 +2174,7 @@ ProcessGDBRemote::StartAsyncThread ()
     // Create a thread that watches our internal state and controls which
     // events make it to clients (into the DCProcess event queue).
     m_async_thread = Host::ThreadCreate ("<lldb.process.gdb-remote.async>", ProcessGDBRemote::AsyncThread, this, NULL);
-    return m_async_thread != LLDB_INVALID_HOST_THREAD;
+    return IS_VALID_LLDB_HOST_THREAD(m_async_thread);
 }
 
 void
@@ -2188,7 +2188,7 @@ ProcessGDBRemote::StopAsyncThread ()
     m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncThreadShouldExit);
 
     // Stop the stdio thread
-    if (m_async_thread != LLDB_INVALID_HOST_THREAD)
+    if (IS_VALID_LLDB_HOST_THREAD(m_async_thread))
     {
         Host::ThreadJoin (m_async_thread, NULL, NULL);
     }

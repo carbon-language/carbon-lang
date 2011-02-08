@@ -2122,7 +2122,7 @@ Process::StartPrivateStateThread ()
     char thread_name[1024];
     snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%i)>", GetID());
     m_private_state_thread = Host::ThreadCreate (thread_name, Process::PrivateStateThread, this, NULL);
-    return m_private_state_thread != LLDB_INVALID_HOST_THREAD;
+    return IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
 }
 
 void
@@ -2159,7 +2159,7 @@ Process::ControlPrivateStateThread (uint32_t signal)
     // thread starts exiting since the private state thread will NULL this out
     // when it exits
     const lldb::thread_t private_state_thread = m_private_state_thread;
-    if (private_state_thread != LLDB_INVALID_HOST_THREAD)
+    if (IS_VALID_LLDB_HOST_THREAD(private_state_thread))
     {
         TimeValue timeout_time;
         bool timed_out;

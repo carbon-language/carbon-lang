@@ -228,7 +228,7 @@ Communication::Write (const void *src, size_t src_len, ConnectionStatus &status,
 bool
 Communication::StartReadThread (Error *error_ptr)
 {
-    if (m_read_thread != LLDB_INVALID_HOST_THREAD)
+    if (IS_VALID_LLDB_HOST_THREAD(m_read_thread))
         return true;
 
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
@@ -240,7 +240,7 @@ Communication::StartReadThread (Error *error_ptr)
 
     m_read_thread_enabled = true;
     m_read_thread = Host::ThreadCreate (thread_name, Communication::ReadThread, this, error_ptr);
-    if (m_read_thread == LLDB_INVALID_HOST_THREAD)
+    if (!IS_VALID_LLDB_HOST_THREAD(m_read_thread))
         m_read_thread_enabled = false;
     return m_read_thread_enabled;
 }
@@ -248,7 +248,7 @@ Communication::StartReadThread (Error *error_ptr)
 bool
 Communication::StopReadThread (Error *error_ptr)
 {
-    if (m_read_thread == LLDB_INVALID_HOST_THREAD)
+    if (!IS_VALID_LLDB_HOST_THREAD(m_read_thread))
         return true;
 
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
