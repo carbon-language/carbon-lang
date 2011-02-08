@@ -202,6 +202,8 @@ private:
   bool ParseDirectiveInclude(); // ".include"
 
   bool ParseDirectiveIf(SMLoc DirectiveLoc); // ".if"
+  // ".ifdef" or ".ifndef", depending on expect_defined
+  bool ParseDirectiveIfdef(SMLoc DirectiveLoc, bool expect_defined);
   bool ParseDirectiveElseIf(SMLoc DirectiveLoc); // ".elseif"
   bool ParseDirectiveElse(SMLoc DirectiveLoc); // ".else"
   bool ParseDirectiveEndIf(SMLoc DirectiveLoc); // .endif
@@ -222,7 +224,6 @@ class GenericAsmParser : public MCAsmParserExtension {
     getParser().AddDirectiveHandler(this, Directive,
                                     HandleDirective<GenericAsmParser, Handler>);
   }
-
 public:
   GenericAsmParser() {}
 
@@ -887,6 +888,10 @@ bool AsmParser::ParseStatement() {
   // example.
   if (IDVal == ".if")
     return ParseDirectiveIf(IDLoc);
+  if (IDVal == ".ifdef")
+    return ParseDirectiveIfdef(IDLoc, true);
+  if (IDVal == ".ifndef" || IDVal == ".ifnotdef")
+    return ParseDirectiveIfdef(IDLoc, false);
   if (IDVal == ".elseif")
     return ParseDirectiveElseIf(IDLoc);
   if (IDVal == ".else")
@@ -1927,6 +1932,31 @@ bool AsmParser::ParseDirectiveIf(SMLoc DirectiveLoc) {
     Lex();
 
     TheCondState.CondMet = ExprValue;
+    TheCondState.Ignore = !TheCondState.CondMet;
+  }
+
+  return false;
+}
+
+bool AsmParser::ParseDirectiveIfdef(SMLoc DirectiveLoc, bool expect_defined) {
+  StringRef Name;
+  TheCondStack.push_back(TheCondState);
+  TheCondState.TheCond = AsmCond::IfCond;
+
+  if (TheCondState.Ignore) {
+    EatToEndOfStatement();
+  } else {
+    if (ParseIdentifier(Name))
+      return TokError("expected identifier after '.ifdef'");
+
+    Lex();
+
+    MCSymbol *Sym = getContext().LookupSymbol(Name);
+
+    if (expect_defined)
+      TheCondState.CondMet = (Sym != NULL && !Sym->isUndefined());
+    else
+      TheCondState.CondMet = (Sym == NULL || Sym->isUndefined());
     TheCondState.Ignore = !TheCondState.CondMet;
   }
 
