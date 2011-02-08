@@ -31,7 +31,7 @@
 
 // FIXME: Restructure checker registration.
 #include "ExprEngineExperimentalChecks.h"
-#include "ExprEngineInternalChecks.h"
+#include "InternalChecks.h"
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"

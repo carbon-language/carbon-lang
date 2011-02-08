@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExprEngineInternalChecks.h"
+#include "InternalChecks.h"
 #include "clang/StaticAnalyzer/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/BugReporter/BugType.h"

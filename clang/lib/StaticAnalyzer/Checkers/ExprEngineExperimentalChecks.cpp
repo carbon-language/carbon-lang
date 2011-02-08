@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExprEngineInternalChecks.h"
+#include "InternalChecks.h"
 #include "ExprEngineExperimentalChecks.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
 

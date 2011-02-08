@@ -1,4 +1,4 @@
-//=-- ExprEngineInternalChecks.h- Builtin ExprEngine Checks -----*- C++ -*-=
+//=-- InternalChecks.h- Builtin ExprEngine Checks -------------------*- C++ -*-=
 //
 //                     The LLVM Compiler Infrastructure
 //

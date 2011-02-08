@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExprEngineInternalChecks.h"
+#include "InternalChecks.h"
 #include "clang/StaticAnalyzer/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/PathSensitive/CheckerVisitor.h"

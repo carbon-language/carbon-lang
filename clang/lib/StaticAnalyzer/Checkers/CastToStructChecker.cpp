@@ -15,7 +15,7 @@
 
 #include "clang/StaticAnalyzer/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/PathSensitive/CheckerVisitor.h"
-#include "ExprEngineInternalChecks.h"
+#include "InternalChecks.h"
 
 using namespace clang;
 using namespace ento;
