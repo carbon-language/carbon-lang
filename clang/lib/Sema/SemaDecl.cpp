@@ -60,7 +60,7 @@ Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(Decl *Ptr) {
 /// and then return NULL.
 ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                              Scope *S, CXXScopeSpec *SS,
-                             bool isClassName,
+                             bool isClassName, bool HasTrailingDot,
                              ParsedType ObjectTypePtr) {
   // Determine where we will perform name lookup.
   DeclContext *LookupCtx = 0;
@@ -193,13 +193,15 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
       T = getElaboratedType(ETK_None, *SS, T);
     
   } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
-    T = Context.getObjCInterfaceType(IDecl);
-  } else {
+    if (!HasTrailingDot)
+      T = Context.getObjCInterfaceType(IDecl);
+  }
+
+  if (T.isNull()) {
     // If it's not plausibly a type, suppress diagnostics.
     Result.suppressDiagnostics();
     return ParsedType();
   }
-
   return ParsedType::make(T);
 }
 

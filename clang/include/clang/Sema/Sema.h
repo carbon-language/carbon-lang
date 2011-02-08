@@ -694,6 +694,7 @@ public:
   ParsedType getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                          Scope *S, CXXScopeSpec *SS = 0,
                          bool isClassName = false,
+                         bool HasTrailingDot = false,
                          ParsedType ObjectType = ParsedType());
   TypeSpecifierType isTagName(IdentifierInfo &II, Scope *S);
   bool DiagnoseUnknownTypeName(const IdentifierInfo &II,

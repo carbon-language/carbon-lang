@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -verify %s 
 // rdar://8962253
 
 @interface Singleton {
