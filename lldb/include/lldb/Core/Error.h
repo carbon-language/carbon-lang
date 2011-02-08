@@ -205,7 +205,7 @@ public:
     ///     A mach error code.
     //------------------------------------------------------------------
     void
-    SetError (uint32_t err);
+    SetMachError (uint32_t err);
 
     //------------------------------------------------------------------
     /// Set accesssor with an error value and type.

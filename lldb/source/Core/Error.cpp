@@ -244,7 +244,7 @@ Error::LogIfError (Log *log, const char *format, ...)
 // "eErrorTypeMachKernel"
 //----------------------------------------------------------------------
 void
-Error::SetError (uint32_t err)
+Error::SetMachError (uint32_t err)
 {
     m_code = err;
     m_type = eErrorTypeMachKernel;
