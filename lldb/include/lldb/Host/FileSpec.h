@@ -20,7 +20,7 @@
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-/// @class FileSpec FileSpec.h "lldb/Core/FileSpec.h"
+/// @class FileSpec FileSpec.h "lldb/Host/FileSpec.h"
 /// @brief A file utility class.
 ///
 /// A file specification class that divides paths up into a directory

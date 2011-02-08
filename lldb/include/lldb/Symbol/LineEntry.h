@@ -12,7 +12,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/AddressRange.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 
 namespace lldb_private {
 

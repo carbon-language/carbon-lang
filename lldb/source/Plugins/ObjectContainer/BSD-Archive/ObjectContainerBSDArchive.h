@@ -14,7 +14,7 @@
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Host/TimeValue.h"
 

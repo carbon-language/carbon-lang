@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "lldb/Core/Error.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
 

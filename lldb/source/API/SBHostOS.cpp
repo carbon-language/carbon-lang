@@ -9,7 +9,7 @@
 
 #include "lldb/API/SBHostOS.h"
 #include "lldb/API/SBError.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Host/Host.h"
 

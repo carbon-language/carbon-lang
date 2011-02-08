@@ -12,7 +12,7 @@
 #if defined(__cplusplus)
 
 #include "lldb/lldb-private.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include <vector>
 
 namespace lldb_private {

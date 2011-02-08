@@ -15,7 +15,7 @@
 
 #include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 
 using namespace lldb_private;

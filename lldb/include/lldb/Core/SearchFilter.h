@@ -16,7 +16,7 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Core/Module.h"

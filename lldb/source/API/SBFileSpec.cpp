@@ -9,7 +9,7 @@
 
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBStream.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
 
 using namespace lldb;

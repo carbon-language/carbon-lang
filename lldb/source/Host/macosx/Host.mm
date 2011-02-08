@@ -21,7 +21,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"

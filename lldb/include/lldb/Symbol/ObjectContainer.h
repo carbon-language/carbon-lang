@@ -17,7 +17,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/DataExtractor.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Host/Endian.h"

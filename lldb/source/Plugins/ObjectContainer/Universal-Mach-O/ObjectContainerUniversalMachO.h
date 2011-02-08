@@ -11,7 +11,7 @@
 #define liblldb_ObjectContainerUniversalMachO_h_
 
 #include "lldb/Symbol/ObjectContainer.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 
 #include "llvm/Support/MachO.h"
 

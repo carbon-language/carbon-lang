@@ -27,7 +27,7 @@
 
 #include "lldb/Breakpoint/WatchpointLocation.h"
 #include "lldb/Core/ArchSpec.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"

@@ -24,7 +24,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Stream.h"

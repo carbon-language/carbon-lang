@@ -17,7 +17,7 @@
 
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Interpreter/Options.h"

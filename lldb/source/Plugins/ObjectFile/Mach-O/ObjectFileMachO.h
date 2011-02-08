@@ -12,7 +12,7 @@
 
 #include "llvm/Support/MachO.h"
 
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/ObjectFile.h"
 

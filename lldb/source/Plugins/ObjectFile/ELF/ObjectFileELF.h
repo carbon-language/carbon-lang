@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "lldb/lldb-private.h"
-#include "lldb/Core/FileSpec.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ObjectFile.h"
 
 #include "ELFHeader.h"
