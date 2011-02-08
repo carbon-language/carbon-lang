@@ -613,11 +613,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
 
           case ARM::LDRi12:
           case ARM::LDRcp:
-          case ARM::t2LDRi12:
-          case ARM::t2LDRHi12:
-          case ARM::t2LDRBi12:
-          case ARM::t2LDRSHi12:
-          case ARM::t2LDRSBi12:
+          case ARM::t2LDRpci:
             Bits = 12;  // +-offset_12
             NegOk = true;
             break;
@@ -1576,16 +1572,6 @@ bool ARMConstantIslands::OptimizeThumb2Instructions(MachineFunction &MF) {
         Scale = 4;
       }
       break;
-    case ARM::t2LDRi12:
-      // FIXME: Temporary workaround for a  bug introduced by r121082.
-      // We should use t2LDRpci for loads from constantpools.
-      if (isARMLowRegister(U.MI->getOperand(0).getReg()) &&
-          U.MI->getOperand(1).getReg() == ARM::PC) {
-        NewOpc = ARM::tLDRpci;
-        Bits = 8;
-        Scale = 4;
-      }
-      break;
     }
 
     if (!NewOpc)
@@ -1596,10 +1582,6 @@ bool ARMConstantIslands::OptimizeThumb2Instructions(MachineFunction &MF) {
     // FIXME: Check if offset is multiple of scale if scale is not 4.
     if (CPEIsInRange(U.MI, UserOffset, U.CPEMI, MaxOffs, false, true)) {
       U.MI->setDesc(TII->get(NewOpc));
-      if (NewOpc == ARM::tLDRpci)
-        // FIXME: Temporary workaround.
-        // PC is now an implicit operand.
-        U.MI->RemoveOperand(1);
       MachineBasicBlock *MBB = U.MI->getParent();
       BBSizes[MBB->getNumber()] -= 2;
       AdjustBBOffsetsAfter(MBB, -2);

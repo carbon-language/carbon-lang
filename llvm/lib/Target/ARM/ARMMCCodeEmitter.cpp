@@ -58,7 +58,7 @@ public:
                              SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getHiLo16ImmOpValue - Return the encoding for the hi / low 16-bit of
-  /// the specified operand. This is used for operands with :lower16: and 
+  /// the specified operand. This is used for operands with :lower16: and
   /// :upper16: prefixes.
   uint32_t getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups) const;
@@ -112,7 +112,7 @@ public:
                               SmallVectorImpl<MCFixup> &Fixups) const;
   uint32_t getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                               SmallVectorImpl<MCFixup> &Fixups) const;
-  
+
 
   /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
   /// operand.
@@ -536,12 +536,12 @@ getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
     Val &= ~0x400000;
   else
     Val |= 0x400000;
-    
+
   if (I ^ J2)
     Val &= ~0x200000;
   else
     Val |= 0x200000;
-  
+
   return Val;
 }
 
@@ -601,17 +601,13 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   bool isAdd = true;
   // If The first operand isn't a register, we have a label reference.
   const MCOperand &MO = MI.getOperand(OpIdx);
-  const MCOperand &MO2 = MI.getOperand(OpIdx+1);
-  if (!MO.isReg() || (MO.getReg() == ARM::PC && MO2.isExpr())) {
+  if (!MO.isReg()) {
     Reg = getARMRegisterNumbering(ARM::PC);   // Rn is PC.
     Imm12 = 0;
     isAdd = false ; // 'U' bit is set as part of the fixup.
 
-    const MCExpr *Expr = 0;
-    if (!MO.isReg())
-      Expr = MO.getExpr();
-    else
-      Expr = MO2.getExpr();
+    assert(MO.isExpr() && "Unexpected machine operand type!");
+    const MCExpr *Expr = MO.getExpr();
 
     MCFixupKind Kind;
     if (Subtarget->isThumb2())
@@ -699,7 +695,7 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
     switch (ARM16Expr->getKind()) {
     default: assert(0 && "Unsupported ARMFixup");
     case ARMMCExpr::VK_ARM_HI16:
-      if (!Subtarget->isTargetDarwin() && EvaluateAsPCRel(E)) 
+      if (!Subtarget->isTargetDarwin() && EvaluateAsPCRel(E))
         Kind = MCFixupKind(Subtarget->isThumb2()
                            ? ARM::fixup_t2_movt_hi16_pcrel
                            : ARM::fixup_arm_movt_hi16_pcrel);
@@ -709,7 +705,7 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
                            : ARM::fixup_arm_movt_hi16);
       break;
     case ARMMCExpr::VK_ARM_LO16:
-      if (!Subtarget->isTargetDarwin() && EvaluateAsPCRel(E)) 
+      if (!Subtarget->isTargetDarwin() && EvaluateAsPCRel(E))
         Kind = MCFixupKind(Subtarget->isThumb2()
                            ? ARM::fixup_t2_movw_lo16_pcrel
                            : ARM::fixup_arm_movw_lo16_pcrel);

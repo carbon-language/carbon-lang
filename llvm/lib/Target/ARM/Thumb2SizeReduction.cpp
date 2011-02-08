@@ -234,7 +234,7 @@ static bool VerifyLowRegs(MachineInstr *MI) {
   unsigned Opc = MI->getOpcode();
   bool isPCOk = (Opc == ARM::t2LDMIA_RET || Opc == ARM::t2LDMIA     ||
                  Opc == ARM::t2LDMDB     || Opc == ARM::t2LDMIA_UPD ||
-                 Opc == ARM::t2LDMDB_UPD || Opc == ARM::t2LDRi12);
+                 Opc == ARM::t2LDMDB_UPD);
   bool isLROk = (Opc == ARM::t2STMIA_UPD || Opc == ARM::t2STMDB_UPD);
   bool isSPOk = isPCOk || isLROk || (Opc == ARM::t2ADDrSPi);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -268,7 +268,6 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     return false;
 
   unsigned Scale = 1;
-  bool HasBaseReg = true;
   bool HasImmOffset = false;
   bool HasShift = false;
   bool HasOffReg = true;
@@ -289,50 +288,19 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     }
 
     Scale = 4;
-
-    if (MI->getOperand(2).isImm()) {
-      HasImmOffset = true;
-      HasOffReg = false;
-    } else {
-      // FIXME: Temporary workaround for a  bug introduced by r121082.
-      // We should use t2LDRpci for loads from constantpools.
-      // We don't want to narrow this to tLDRpci until constant island pass
-      // for fear of pessimizing code.
-      return false;
-    }
+    HasImmOffset = true;
+    HasOffReg = false;
     break;
   case ARM::t2LDRBi12:
   case ARM::t2STRBi12:
-    if (MI->getOperand(2).isImm()) {
-      HasImmOffset = true;
-      HasOffReg = false;
-    } else {
-      if (Entry.WideOpc == ARM::t2LDRBi12) {
-        Opc = ARM::tLDRpci;
-        OpNum = 2;
-      }
-
-      HasImmOffset = false;
-      HasBaseReg = false;
-      HasOffReg = false;
-    }
+    HasImmOffset = true;
+    HasOffReg = false;
     break;
   case ARM::t2LDRHi12:
   case ARM::t2STRHi12:
     Scale = 2;
-    if (MI->getOperand(2).isImm()) {
-      HasImmOffset = true;
-      HasOffReg = false;
-    } else {
-      if (Entry.WideOpc == ARM::t2LDRHi12) {
-        Opc = ARM::tLDRpci;
-        OpNum = 2;
-      }
-
-      HasImmOffset = false;
-      HasBaseReg = false;
-      HasOffReg = false;
-    }
+    HasImmOffset = true;
+    HasOffReg = false;
     break;
   case ARM::t2LDRs:
   case ARM::t2LDRBs:
@@ -426,9 +394,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, TII->get(Opc));
   if (!isLdStMul) {
     MIB.addOperand(MI->getOperand(0));
-
-    if (HasBaseReg)
-      MIB.addOperand(MI->getOperand(1));
+    MIB.addOperand(MI->getOperand(1));
 
     if (HasImmOffset)
       MIB.addImm(OffsetImm / Scale);
@@ -467,7 +433,7 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
   default: break;
-  case ARM::t2ADDSri: 
+  case ARM::t2ADDSri:
   case ARM::t2ADDSrr: {
     unsigned PredReg = 0;
     if (getInstrPredicate(MI, PredReg) == ARMCC::AL) {
