@@ -92,9 +92,9 @@ class TargetRegisterInfo;
   private:
     void PrescanInstruction(MachineInstr *MI);
     void ScanInstruction(MachineInstr *MI, unsigned Count);
-    bool isNewRegModifiedByRefs(RegRefIter RegRefBegin,
-                                RegRefIter RegRefEnd,
-                                unsigned NewReg);
+    bool isNewRegClobberedByRefs(RegRefIter RegRefBegin,
+                                 RegRefIter RegRefEnd,
+                                 unsigned NewReg);
     unsigned findSuitableFreeRegister(RegRefIter RegRefBegin,
                                       RegRefIter RegRefEnd,
                                       unsigned AntiDepReg,
