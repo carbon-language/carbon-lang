@@ -14,7 +14,7 @@
 #include "clang/StaticAnalyzer/BugReporter/BugReporter.h"
 
 // FIXME: Restructure checker registration.
-#include "Checkers/ExperimentalChecks.h"
+#include "ExperimentalChecks.h"
 
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"

@@ -5,6 +5,7 @@ set(LLVM_USED_LIBS clangBasic clangAST)
 add_clang_library(clangStaticAnalyzerCheckers
   AdjustedReturnValueChecker.cpp
   AnalysisConsumer.cpp
+  AnalyzerStatsChecker.cpp
   ArrayBoundChecker.cpp
   ArrayBoundCheckerV2.cpp
   AttrNonNullChecker.cpp
