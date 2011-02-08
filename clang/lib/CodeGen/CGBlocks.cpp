@@ -201,6 +201,42 @@ namespace {
   }
 }
 
+/// Determines if the given record type has a mutable field.
+static bool hasMutableField(const CXXRecordDecl *record) {
+  for (CXXRecordDecl::field_iterator
+         i = record->field_begin(), e = record->field_end(); i != e; ++i)
+    if ((*i)->isMutable())
+      return true;
+
+  for (CXXRecordDecl::base_class_const_iterator
+         i = record->bases_begin(), e = record->bases_end(); i != e; ++i) {
+    const RecordType *record = i->getType()->castAs<RecordType>();
+    if (hasMutableField(cast<CXXRecordDecl>(record->getDecl())))
+      return true;
+  }
+
+  return false;
+}
+
+/// Determines if the given type is safe for constant capture in C++.
+static bool isSafeForCXXConstantCapture(QualType type) {
+  const RecordType *recordType =
+    type->getBaseElementTypeUnsafe()->getAs<RecordType>();
+
+  // Only records can be unsafe.
+  if (!recordType) return true;
+
+  const CXXRecordDecl *record = cast<CXXRecordDecl>(recordType->getDecl());
+
+  // Maintain semantics for classes with non-trivial dtors or copy ctors.
+  if (!record->hasTrivialDestructor()) return false;
+  if (!record->hasTrivialCopyConstructor()) return false;
+
+  // Otherwise, we just have to make sure there aren't any mutable
+  // fields that might have changed since initialization.
+  return !hasMutableField(record);
+}
+
 /// It is illegal to modify a const object after initialization.
 /// Therefore, if a const object has a constant initializer, we don't
 /// actually need to keep storage for it in the block; we'll just
@@ -214,11 +250,12 @@ static llvm::Constant *tryCaptureAsConstant(CodeGenModule &CGM,
   // We can only do this if the variable is const.
   if (!type.isConstQualified()) return 0;
 
-  // Furthermore, in C++ we can't do this for classes.  TODO: we might
-  // actually be able to get away with it for classes with a trivial
-  // destructor and a trivial copy constructor and no mutable fields.
-  if (CGM.getLangOptions().CPlusPlus &&
-      type->getBaseElementTypeUnsafe()->isRecordType())
+  // Furthermore, in C++ we have to worry about mutable fields:
+  // C++ [dcl.type.cv]p4:
+  //   Except that any class member declared mutable can be
+  //   modified, any attempt to modify a const object during its
+  //   lifetime results in undefined behavior.
+  if (CGM.getLangOptions().CPlusPlus && !isSafeForCXXConstantCapture(type))
     return 0;
 
   // If the variable doesn't have any initializer (shouldn't this be
