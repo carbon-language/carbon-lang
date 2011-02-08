@@ -323,7 +323,7 @@ public:
     /// Get const accessor for any inlined function information.
     ///
     /// @return
-    ///     A cpmst pointer to any inlined function information, or NULL
+    ///     A comst pointer to any inlined function information, or NULL
     ///     if this is a regular block.
     //------------------------------------------------------------------
     const InlineFunctionInfo*

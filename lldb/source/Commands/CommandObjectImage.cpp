@@ -248,7 +248,10 @@ LookupAddressInModule
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset);
         strm.EOL();
         strm.Indent ("    Summary: ");
+        const uint32_t save_indent = strm.GetIndentLevel ();
+        strm.SetIndentLevel (save_indent + 11);
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
+        strm.SetIndentLevel (save_indent);
         strm.EOL();
         // Print out detailed address information when verbose is enabled
         if (verbose)

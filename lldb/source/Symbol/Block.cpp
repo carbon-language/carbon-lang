@@ -172,7 +172,7 @@ Block::DumpStopContext
             // First frame in a frame with inlined functions
             s->PutCString (" [inlined]");
         }
-        if (show_inline_blocks)
+        if (show_inline_blocks && child_inline_call_site)
             s->EOL();
         else
             s->PutChar(' ');

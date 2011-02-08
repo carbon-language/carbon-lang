@@ -133,29 +133,6 @@ SymbolContext::DumpStopContext
         if (function->GetMangled().GetName())
             function->GetMangled().GetName().Dump(s);
 
-        if (show_inlined_frames && block)
-        {
-            const InlineFunctionInfo *inline_info = block->GetInlinedFunctionInfo();
-            if (inline_info == NULL)
-            {
-                const Block *parent_inline_block = block->GetInlinedParent();
-                if (parent_inline_block)
-                    inline_info = parent_inline_block->GetInlinedFunctionInfo();
-            }
-
-            if (inline_info)
-            {
-                s->PutCString(" [inlined] ");
-                inline_info->GetName().Dump(s);
-                
-                if (line_entry.IsValid())
-                {
-                    s->PutCString(" at ");
-                    line_entry.DumpStopContext(s, show_fullpaths);
-                }
-                return;
-            }
-        }
         if (addr.IsValid())
         {
             const addr_t function_offset = addr.GetOffset() - function->GetAddressRange().GetBaseAddress().GetOffset();
