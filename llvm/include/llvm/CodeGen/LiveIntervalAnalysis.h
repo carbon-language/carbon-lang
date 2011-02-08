@@ -320,6 +320,10 @@ namespace llvm {
     MachineBasicBlock::iterator getLastSplitPoint(const LiveInterval &li,
                                                   MachineBasicBlock *mbb);
 
+    /// addKillFlags - Add kill flags to any instruction that kills a virtual
+    /// register.
+    void addKillFlags();
+
   private:
     /// computeIntervals - Compute live intervals.
     void computeIntervals();

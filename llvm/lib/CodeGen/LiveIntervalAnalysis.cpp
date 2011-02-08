@@ -890,6 +890,29 @@ LiveIntervals::getLastSplitPoint(const LiveInterval &li,
   return mbb->getFirstTerminator();
 }
 
+void LiveIntervals::addKillFlags() {
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    unsigned Reg = I->first;
+    if (TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+    if (mri_->reg_nodbg_empty(Reg))
+      continue;
+    LiveInterval *LI = I->second;
+
+    // Every instruction that kills Reg corresponds to a live range end point.
+    for (LiveInterval::iterator RI = LI->begin(), RE = LI->end(); RI != RE;
+         ++RI) {
+      // A LOAD index indicates an MBB edge.
+      if (RI->end.isLoad())
+        continue;
+      MachineInstr *MI = getInstructionFromIndex(RI->end);
+      if (!MI)
+        continue;
+      MI->addRegisterKilled(Reg, NULL);
+    }
+  }
+}
+
 /// getReMatImplicitUse - If the remat definition MI has one (for now, we only
 /// allow one) virtual register operand, then its uses are implicitly using
 /// the register. Returns the virtual register.

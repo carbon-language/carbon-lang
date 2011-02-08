@@ -1087,6 +1087,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
 
   allocatePhysRegs();
   addMBBLiveIns(MF);
+  LIS->addKillFlags();
 
   // Run rewriter
   {
