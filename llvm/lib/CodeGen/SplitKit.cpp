@@ -857,9 +857,10 @@ SlotIndex SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id << '\n');
 
-  MachineBasicBlock::iterator MII = LIS.getInstructionFromIndex(Idx);
-  VNInfo *VNI = defFromParent(0, ParentVNI, Idx,
-                              *MII->getParent(), llvm::next(MII));
+  MachineInstr *MI = LIS.getInstructionFromIndex(Idx);
+  assert(MI && "No instruction at index");
+  VNInfo *VNI = defFromParent(0, ParentVNI, Idx, *MI->getParent(),
+                              llvm::next(MachineBasicBlock::iterator(MI)));
   return VNI->def;
 }
 
