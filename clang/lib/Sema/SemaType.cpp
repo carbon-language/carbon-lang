@@ -486,27 +486,19 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
     return;
   }
 
-  // If there are any type objects, the type as written won't
-  // name a function, regardless of the decl spec type.  This
-  // is because a block signature declarator is always an
-  // abstract-declarator, and abstract-declarators can't just
-  // be parentheses chunks.  Therefore we need to build a function
-  // chunk unless there are no type objects and the decl spec
-  // type is a function.
+  // If there are any type objects, the type as written won't name a
+  // function, regardless of the decl spec type.  This is because a
+  // block signature declarator is always an abstract-declarator, and
+  // abstract-declarators can't just be parentheses chunks.  Therefore
+  // we need to build a function chunk unless there are no type
+  // objects and the decl spec type is a function.
   if (!declarator.getNumTypeObjects() && declSpecType->isFunctionType())
     return;
 
-#ifndef NDEBUG
-  if (declarator.getNumTypeObjects()) {
-    bool isOnlyParens = true;
-    for (unsigned i = 0, e = declarator.getNumTypeObjects(); i != e; ++i) {
-      if (declarator.getTypeObject(i).Kind != DeclaratorChunk::Paren) {
-        isOnlyParens = false;
-        break;
-      }
-    }
-  }
-#endif
+  // Note that there *are* cases with invalid declarators where
+  // declarators consist solely of parentheses.  In general, these
+  // occur only in failed efforts to make function declarators, so
+  // faking up the function chunk is still the right thing to do.
 
   // Otherwise, we need to fake up a function declarator.
   SourceLocation loc = declarator.getSourceRange().getBegin();

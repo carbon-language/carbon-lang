@@ -34,3 +34,9 @@ void f0() {
   ^(int, double d, char) {}(1, 1.34, 'a'); // expected-error {{parameter name omitted}} \
 				 	   // expected-error {{parameter name omitted}}
 }
+
+// rdar://problem/8962770
+void test4() {
+  int (^f)() = ^((x)) { }; // expected-error {{expected ')'}} expected-warning {{type specifier missing}} expected-note {{to match this}}
+}
+
