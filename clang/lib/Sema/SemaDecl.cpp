@@ -3121,10 +3121,9 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
         Diagnostic::Ignored)
     return;
 
-  // Don't diagnose declarations at file scope.  The scope might not
-  // have a DeclContext if (e.g.) we're parsing a function prototype.
-  DeclContext *NewDC = static_cast<DeclContext*>(S->getEntity());
-  if (NewDC && NewDC->isFileContext())
+  // Don't diagnose declarations at file scope.
+  DeclContext *NewDC = D->getDeclContext();
+  if (NewDC->isFileContext())
     return;
   
   // Only diagnose if we're shadowing an unambiguous field or variable.

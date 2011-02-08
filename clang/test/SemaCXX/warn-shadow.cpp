@@ -55,3 +55,18 @@ void Foo::Baz() {
   double Bar = 12; // Don't warn.
 }
 }
+
+// http://llvm.org/PR9160
+namespace PR9160 {
+struct V {
+  V(int);
+};
+struct S {
+  V v;
+  static void m() {
+    if (1) {
+      V v(0);
+    }
+  }
+};
+}
