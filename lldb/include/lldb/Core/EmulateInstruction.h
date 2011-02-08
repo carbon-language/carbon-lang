@@ -123,8 +123,8 @@ public:
 
         // Used when performing a PC-relative branch where the
         // arg0 = don't care
-        // arg1 = target instruction set or don't care
-        // arg2 = imm32 (signed offset)
+        // arg1 = imm32 (signed offset)
+        // arg2 = target instruction set or don't care
         eContextRelativeBranchImmediate,
 
         // Used when performing an absolute branch where the
