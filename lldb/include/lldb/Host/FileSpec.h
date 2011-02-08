@@ -15,7 +15,6 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/STLUtils.h"
 #include "lldb/Host/TimeValue.h"
-#include "lldb/Host/Config.h"
 
 namespace lldb_private {
 
@@ -521,9 +520,6 @@ public:
     static size_t
     Resolve (const char *src_path, char *dst_path, size_t dst_len);
 
-#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
-
-
     //------------------------------------------------------------------
     /// Resolves the user name at the beginning of \a src_path, and writes the output
     /// to \a dst_path.  Note, \a src_path can contain other path components after the
@@ -547,8 +543,6 @@ public:
     //------------------------------------------------------------------
     static size_t
     ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
-
-#endif
 
     enum EnumerateDirectoryResult
     {

@@ -98,6 +98,8 @@ StreamFile::Open (const char *path, const char *permissions)
 void
 StreamFile::SetLineBuffered ()
 {
+    // TODO: check if we can get rid of this LLDB_CONFIG if we do a:
+    // setvbuf(m_file, (char *)NULL, _IOLBF, 0);
 #ifdef LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED
     if (m_file != NULL)
         setlinebuf (m_file);

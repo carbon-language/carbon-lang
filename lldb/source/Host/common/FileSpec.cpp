@@ -63,6 +63,8 @@ GetCachedGlobTildeSlash()
     return g_tilde.c_str();
 }
 
+#endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+
 // Resolves the username part of a path of the form ~user/other/directories, and
 // writes the result into dst_path.
 // Returns 0 if there WAS a ~ in the path but the username couldn't be resolved.
@@ -71,11 +73,14 @@ GetCachedGlobTildeSlash()
 size_t
 FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
 {
+    if (src_path == NULL || src_path[0] == '\0')
+        return 0;
+
+#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+
     char user_home[PATH_MAX];
     const char *user_name;
     
-    if (src_path == NULL || src_path[0] == '\0')
-        return 0;
     
     // If there's no ~, then just copy src_path straight to dst_path (they may be the same string...)
     if (src_path[0] != '~')
@@ -133,8 +138,11 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
         return 0;
     else 
         return ::snprintf (dst_path, dst_len, "%s%s", home_dir, remainder);
+#else
+    // Resolving home directories is not supported, just copy the path...
+    return ::snprintf (dst_path, dst_len, "%s", src_path);
+#endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER    
 }
-#endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
 
 size_t
 FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
