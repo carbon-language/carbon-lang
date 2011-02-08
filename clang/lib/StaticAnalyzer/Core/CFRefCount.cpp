@@ -1385,24 +1385,6 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessage &msg,
   // FIXME: The receiver could be a reference to a class, meaning that
   //  we should use the class method.
   RetainSummary *Summ = getInstanceMethodSummary(msg, ID);
-
-  // Special-case: are we sending a mesage to "self"?
-  //  This is a hack.  When we have full-IP this should be removed.
-  if (isa<ObjCMethodDecl>(LC->getDecl()) && Receiver) {
-    if (const loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&receiverV)) {
-      // Get the region associated with 'self'.
-      if (const ImplicitParamDecl *SelfDecl = LC->getSelfDecl()) {
-        SVal SelfVal = state->getSVal(state->getRegion(SelfDecl, LC));
-        if (L->StripCasts() == SelfVal.getAsRegion()) {
-          // Update the summary to make the default argument effect
-          // 'StopTracking'.
-          Summ = copySummary(Summ);
-          Summ->setDefaultArgEffect(StopTracking);
-        }
-      }
-    }
-  }
-
   return Summ ? Summ : getDefaultSummary();
 }
 

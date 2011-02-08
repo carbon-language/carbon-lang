@@ -30,7 +30,9 @@ typedef signed char BOOL;
 }
 - (NSURL *)myMethod:(NSString *)inString;
 - (NSURL *)getMethod:(NSString*)inString;
-- (void)addObject:(id)X;
+- (NSURL *)getMethod2:(NSString*)inString;
+- (void)addObject:(id) __attribute__((ns_consumed)) X;
+- (void)addObject2:(id) X;
 @end
 
 @implementation MyClass
@@ -46,6 +48,13 @@ typedef signed char BOOL;
   NSURL *url = (NSURL *)CFURLCreateWithString(0, (CFStringRef)inString, 0);
   [self addObject:url];
   return url; // no-warning
+}
+
+- (NSURL *)getMethod2:(NSString *)inString
+{
+  NSURL *url = (NSURL *)CFURLCreateWithString(0, (CFStringRef)inString, 0); // expected-warning{{leak}}
+  [self addObject2:url];
+  return url;
 }
 
 void testNames(NamingTest* x) {
@@ -67,4 +76,10 @@ void testNames(NamingTest* x) {
   myObject = X;
 }
 
+- (void)addObject2:(id)X
+{
+  myObject = X;
+}
+
 @end
+
