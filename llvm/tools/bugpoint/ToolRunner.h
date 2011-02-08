@@ -66,7 +66,7 @@ public:
                      const std::string &OutputFile,
                      std::string *Error = 0,
                      const std::vector<std::string> &GCCArgs =
-                         std::vector<std::string>(), 
+                         std::vector<std::string>(),
                      unsigned Timeout = 0,
                      unsigned MemoryLimit = 0);
 
