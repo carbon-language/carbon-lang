@@ -281,8 +281,12 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
     DefaultHostTriple = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
     Dir = InstalledDir = A->getValue(*Args);
-  if (const Arg *A = Args->getLastArg(options::OPT_B))
-    PrefixDir = A->getValue(*Args);
+  for (arg_iterator it = Args->filtered_begin(options::OPT_B),
+         ie = Args->filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
+    A->claim();
+    PrefixDirs.push_back(A->getValue(*Args, 0));
+  }
 
   Host = GetHostInfo(DefaultHostTriple.c_str());
 
@@ -1237,8 +1241,9 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
   // attempting to use this prefix when lokup up program paths.
-  if (!PrefixDir.empty()) {
-    llvm::sys::Path P(PrefixDir);
+  for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
+       ie = PrefixDirs.end(); it != ie; ++it) {
+    llvm::sys::Path P(*it);
     P.appendComponent(Name);
     bool Exists;
     if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
@@ -1262,8 +1267,9 @@ std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
                                    bool WantFile) const {
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
   // attempting to use this prefix when lokup up program paths.
-  if (!PrefixDir.empty()) {
-    llvm::sys::Path P(PrefixDir);
+  for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
+       ie = PrefixDirs.end(); it != ie; ++it) {
+    llvm::sys::Path P(*it);
     P.appendComponent(Name);
     bool Exists;
     if (WantFile ? !llvm::sys::fs::exists(P.str(), Exists) && Exists

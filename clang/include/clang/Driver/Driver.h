@@ -74,7 +74,8 @@ public:
   /// functionality.
   /// FIXME: This type of customization should be removed in favor of the
   /// universal driver when it is ready.
-  std::string PrefixDir;
+  typedef llvm::SmallVector<std::string, 4> prefix_list;
+  prefix_list PrefixDirs;
 
   /// Default host triple.
   std::string DefaultHostTriple;
