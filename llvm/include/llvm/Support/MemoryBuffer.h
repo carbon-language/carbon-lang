@@ -69,8 +69,7 @@ public:
                             int64_t FileSize = -1);
 
   /// getOpenFile - Given an already-open file descriptor, read the file and
-  /// return a MemoryBuffer.  This takes ownership of the descriptor,
-  /// immediately closing it after reading the file.
+  /// return a MemoryBuffer.
   static error_code getOpenFile(int FD, const char *Filename,
                                 OwningPtr<MemoryBuffer> &result,
                                 int64_t FileSize = -1);

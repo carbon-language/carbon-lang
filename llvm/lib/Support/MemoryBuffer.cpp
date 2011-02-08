@@ -179,14 +179,6 @@ public:
     sys::Path::UnMapFilePages(getBufferStart(), getBufferSize());
   }
 };
-
-/// FileCloser - RAII object to make sure an FD gets closed properly.
-class FileCloser {
-  int FD;
-public:
-  explicit FileCloser(int FD) : FD(FD) {}
-  ~FileCloser() { ::close(FD); }
-};
 }
 
 error_code MemoryBuffer::getFile(StringRef Filename,
@@ -208,15 +200,14 @@ error_code MemoryBuffer::getFile(const char *Filename,
   if (FD == -1) {
     return error_code(errno, posix_category());
   }
-
-  return getOpenFile(FD, Filename, result, FileSize);
+  error_code ret = getOpenFile(FD, Filename, result, FileSize);
+  close(FD);
+  return ret;
 }
 
 error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                      OwningPtr<MemoryBuffer> &result,
                                      int64_t FileSize) {
-  FileCloser FC(FD); // Close FD on return.
-
   // If we don't know the file size, use fstat to find out.  fstat on an open
   // file descriptor is cheaper than stat on a random path.
   if (FileSize == -1) {

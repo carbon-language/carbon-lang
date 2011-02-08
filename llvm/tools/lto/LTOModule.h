@@ -51,6 +51,9 @@ struct LTOModule {
 
     static LTOModule*        makeLTOModule(const char* path,
                                           std::string& errMsg);
+    static LTOModule*        makeLTOModule(int fd, const char *path,
+                                           off_t size,
+                                           std::string& errMsg);
     static LTOModule*        makeLTOModule(const void* mem, size_t length,
                                            std::string& errMsg);
 

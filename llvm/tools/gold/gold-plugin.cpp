@@ -241,7 +241,8 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 /// with add_symbol if possible.
 static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                                         int *claimed) {
-  void *buf = NULL;
+  lto_module_t M;
+
   if (file->offset) {
     // Gold has found what might be IR part-way inside of a file, such as
     // an .a archive.
@@ -252,7 +253,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                  file->offset, sys::StrError(errno).c_str());
       return LDPS_ERR;
     }
-    buf = malloc(file->filesize);
+    void *buf = malloc(file->filesize);
     if (!buf) {
       (*message)(LDPL_ERROR,
                  "Failed to allocate buffer for archive member of size: %d\n",
@@ -272,16 +273,31 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
       free(buf);
       return LDPS_OK;
     }
-  } else if (!lto_module_is_object_file(file->name))
-    return LDPS_OK;
+    M = lto_module_create_from_memory(buf, file->filesize);
+    free(buf);
+  } else {
+    // FIXME: We should not need to pass -1 as the file size, but there
+    // is a bug in BFD that causes it to pass 0 to us. Remove this once
+    // that is fixed.
+    off_t size = file->filesize ? file->filesize : -1;
+
+    // FIXME: We should not need to reset the position in the file, but there
+    // is a bug in BFD. Remove this once that is fixed.
+    off_t old_pos = lseek(file->fd, 0, SEEK_CUR);
+
+    lseek(file->fd, 0, SEEK_SET);
+    M = lto_module_create_from_fd(file->fd, file->name, size);
+
+    lseek(file->fd, old_pos, SEEK_SET);
+    if (!M)
+      return LDPS_OK;
+  }
 
   *claimed = 1;
   Modules.resize(Modules.size() + 1);
   claimed_file &cf = Modules.back();
+  cf.M = M;
 
-  cf.M = buf ? lto_module_create_from_memory(buf, file->filesize) :
-               lto_module_create(file->name);
-  free(buf);
   if (!cf.M) {
     (*message)(LDPL_ERROR, "Failed to create LLVM module: %s",
                lto_get_error_message());

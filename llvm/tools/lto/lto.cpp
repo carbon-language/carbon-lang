@@ -91,6 +91,14 @@ lto_module_t lto_module_create(const char* path)
      return LTOModule::makeLTOModule(path, sLastErrorString);
 }
 
+//
+// loads an object file from disk
+// returns NULL on error (check lto_get_error_message() for details)
+//
+lto_module_t lto_module_create_from_fd(int fd, const char *path, off_t size)
+{
+     return LTOModule::makeLTOModule(fd, path, size, sLastErrorString);
+}
 
 //
 // loads an object file from memory 

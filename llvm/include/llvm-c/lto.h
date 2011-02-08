@@ -18,6 +18,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <unistd.h>
 
 #define LTO_API_VERSION 4
 
@@ -120,6 +121,13 @@ lto_module_create(const char* path);
  */
 extern lto_module_t
 lto_module_create_from_memory(const void* mem, size_t length);
+
+/**
+ * Loads an object file from disk. The seek point of fd is not preserved.
+ * Returns NULL on error (check lto_get_error_message() for details).
+ */
+extern lto_module_t
+lto_module_create_from_fd(int fd, const char *path, off_t size);
 
 
 /**

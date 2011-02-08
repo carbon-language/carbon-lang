@@ -87,6 +87,17 @@ LTOModule *LTOModule::makeLTOModule(const char *path,
   return makeLTOModule(buffer.get(), errMsg);
 }
 
+LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
+                                    off_t size,
+                                    std::string &errMsg) {
+  OwningPtr<MemoryBuffer> buffer;
+  if (error_code ec = MemoryBuffer::getOpenFile(fd, path, buffer, size)) {
+    errMsg = ec.message();
+    return NULL;
+  }
+  return makeLTOModule(buffer.get(), errMsg);
+}
+
 /// makeBuffer - Create a MemoryBuffer from a memory range.  MemoryBuffer
 /// requires the byte past end of the buffer to be a zero.  We might get lucky
 /// and already be that way, otherwise make a copy.  Also if next byte is on a
