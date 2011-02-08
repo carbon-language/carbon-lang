@@ -56,6 +56,10 @@ using namespace dwarf;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 
+static cl::opt<bool>
+Disable256Bit("disable-256bit", cl::Hidden,
+              cl::desc("Disable use of 256-bit vectors"));
+
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
@@ -65,10 +69,14 @@ static SDValue Insert128BitVector(SDValue Result,
                                   SDValue Idx,
                                   SelectionDAG &DAG,
                                   DebugLoc dl);
+
 static SDValue Extract128BitVector(SDValue Vec,
                                    SDValue Idx,
                                    SelectionDAG &DAG,
                                    DebugLoc dl);
+
+static SDValue ConcatVectors(SDValue Lower, SDValue Upper, SelectionDAG &DAG);
+
 
 /// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
 /// sets things up to match to an AVX VEXTRACTF128 instruction or a
@@ -149,6 +157,34 @@ static SDValue Insert128BitVector(SDValue Result,
   }
 
   return SDValue();
+}
+
+/// Given two vectors, concat them.
+static SDValue ConcatVectors(SDValue Lower, SDValue Upper, SelectionDAG &DAG) {
+  DebugLoc dl = Lower.getDebugLoc();
+
+  assert(Lower.getValueType() == Upper.getValueType() && "Mismatched vectors!");
+
+  EVT VT = EVT::getVectorVT(*DAG.getContext(),
+                            Lower.getValueType().getVectorElementType(),
+                            Lower.getValueType().getVectorNumElements() * 2);
+
+  // TODO: Generalize to arbitrary vector length (this assumes 256-bit vectors).
+  assert(VT.getSizeInBits() == 256 && "Unsupported vector concat!");
+
+  // Insert the upper subvector.
+  SDValue Vec = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Upper,
+                                   DAG.getConstant(
+                                     // This is half the length of the result
+                                     // vector.  Start inserting the upper 128
+                                     // bits here.
+                                     Lower.getValueType().getVectorNumElements(),
+                                     MVT::i32),
+                                   DAG, dl);
+
+  // Insert the lower subvector.
+  Vec = Insert128BitVector(Vec, Lower, DAG.getConstant(0, MVT::i32), DAG, dl);
+  return Vec;
 }
 
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
@@ -4281,6 +4317,34 @@ SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
 
+  EVT VT = Op.getValueType();
+  EVT ExtVT = VT.getVectorElementType();
+
+  unsigned NumElems = Op.getNumOperands();
+
+  // For AVX-length vectors, build the individual 128-bit pieces and
+  // use shuffles to put them in place.
+  if (VT.getSizeInBits() > 256 && 
+      Subtarget->hasAVX() && 
+      !Disable256Bit &&
+      !ISD::isBuildVectorAllZeros(Op.getNode())) {
+    SmallVector<SDValue, 8> V;
+    V.resize(NumElems);
+    for (unsigned i = 0; i < NumElems; ++i) {
+      V[i] = Op.getOperand(i);
+    }
+ 
+    EVT HVT = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems/2);
+
+    // Build the lower subvector.
+    SDValue Lower = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT, &V[0], NumElems/2);
+    // Build the upper subvector.
+    SDValue Upper = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT, &V[NumElems / 2],
+                                NumElems/2);
+
+    return ConcatVectors(Lower, Upper, DAG);
+  }
+
   // All zero's are handled with pxor in SSE2 and above, xorps in SSE1.
   // All one's are handled with pcmpeqd. In AVX, zero's are handled with
   // vpxor in 128-bit and xor{pd,ps} in 256-bit, but no 256 version of pcmpeqd
@@ -4299,11 +4363,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return getZeroVector(Op.getValueType(), Subtarget->hasSSE2(), DAG, dl);
   }
 
-  EVT VT = Op.getValueType();
-  EVT ExtVT = VT.getVectorElementType();
   unsigned EVTBits = ExtVT.getSizeInBits();
 
-  unsigned NumElems = Op.getNumOperands();
   unsigned NumZero  = 0;
   unsigned NumNonZero = 0;
   unsigned NonZeros = 0;
