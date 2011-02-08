@@ -1666,15 +1666,32 @@ public:
 /// a subclass for overloaded operator calls that use operator syntax, e.g.,
 /// "str1 + str2" to resolve to a function call.
 class CallExpr : public Expr {
-  enum { FN=0, ARGS_START=1 };
+  enum { FN=0, PREARGS_START=1 };
   Stmt **SubExprs;
   unsigned NumArgs;
   SourceLocation RParenLoc;
 
 protected:
-  // This version of the constructor is for derived classes.
-  CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args, unsigned numargs,
-           QualType t, ExprValueKind VK, SourceLocation rparenloc);
+  // These versions of the constructor are for derived classes.
+  CallExpr(ASTContext& C, StmtClass SC, Expr *fn, unsigned NumPreArgs,
+           Expr **args, unsigned numargs, QualType t, ExprValueKind VK,
+           SourceLocation rparenloc);
+  CallExpr(ASTContext &C, StmtClass SC, unsigned NumPreArgs, EmptyShell Empty);
+
+  Stmt *getPreArg(unsigned i) {
+    assert(i < getNumPreArgs() && "Prearg access out of range!");
+    return SubExprs[PREARGS_START+i];
+  }
+  const Stmt *getPreArg(unsigned i) const {
+    assert(i < getNumPreArgs() && "Prearg access out of range!");
+    return SubExprs[PREARGS_START+i];
+  }
+  void setPreArg(unsigned i, Stmt *PreArg) {
+    assert(i < getNumPreArgs() && "Prearg access out of range!");
+    SubExprs[PREARGS_START+i] = PreArg;
+  }
+
+  unsigned getNumPreArgs() const { return CallExprBits.NumPreArgs; }
 
 public:
   CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs, QualType t,
@@ -1703,22 +1720,24 @@ public:
   unsigned getNumArgs() const { return NumArgs; }
 
   /// \brief Retrieve the call arguments.
-  Expr **getArgs() { return reinterpret_cast<Expr **>(SubExprs + ARGS_START); }
+  Expr **getArgs() {
+    return reinterpret_cast<Expr **>(SubExprs+getNumPreArgs()+PREARGS_START);
+  }
   
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
     assert(Arg < NumArgs && "Arg access out of range!");
-    return cast<Expr>(SubExprs[Arg+ARGS_START]);
+    return cast<Expr>(SubExprs[Arg+getNumPreArgs()+PREARGS_START]);
   }
   const Expr *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
-    return cast<Expr>(SubExprs[Arg+ARGS_START]);
+    return cast<Expr>(SubExprs[Arg+getNumPreArgs()+PREARGS_START]);
   }
 
   /// setArg - Set the specified argument.
   void setArg(unsigned Arg, Expr *ArgExpr) {
     assert(Arg < NumArgs && "Arg access out of range!");
-    SubExprs[Arg+ARGS_START] = ArgExpr;
+    SubExprs[Arg+getNumPreArgs()+PREARGS_START] = ArgExpr;
   }
 
   /// setNumArgs - This changes the number of arguments present in this call.
@@ -1729,10 +1748,16 @@ public:
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
 
-  arg_iterator arg_begin() { return SubExprs+ARGS_START; }
-  arg_iterator arg_end() { return SubExprs+ARGS_START+getNumArgs(); }
-  const_arg_iterator arg_begin() const { return SubExprs+ARGS_START; }
-  const_arg_iterator arg_end() const { return SubExprs+ARGS_START+getNumArgs();}
+  arg_iterator arg_begin() { return SubExprs+PREARGS_START+getNumPreArgs(); }
+  arg_iterator arg_end() {
+    return SubExprs+PREARGS_START+getNumPreArgs()+getNumArgs();
+  }
+  const_arg_iterator arg_begin() const {
+    return SubExprs+PREARGS_START+getNumPreArgs();
+  }
+  const_arg_iterator arg_end() const {
+    return SubExprs+PREARGS_START+getNumPreArgs()+getNumArgs();
+  }
 
   /// getNumCommas - Return the number of commas that must have been present in
   /// this function call.

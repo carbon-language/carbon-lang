@@ -52,7 +52,7 @@ public:
   CXXOperatorCallExpr(ASTContext& C, OverloadedOperatorKind Op, Expr *fn,
                       Expr **args, unsigned numargs, QualType t,
                       ExprValueKind VK, SourceLocation operatorloc)
-    : CallExpr(C, CXXOperatorCallExprClass, fn, args, numargs, t, VK,
+    : CallExpr(C, CXXOperatorCallExprClass, fn, 0, args, numargs, t, VK,
                operatorloc),
       Operator(Op) {}
   explicit CXXOperatorCallExpr(ASTContext& C, EmptyShell Empty) :
@@ -91,7 +91,7 @@ class CXXMemberCallExpr : public CallExpr {
 public:
   CXXMemberCallExpr(ASTContext &C, Expr *fn, Expr **args, unsigned numargs,
                     QualType t, ExprValueKind VK, SourceLocation RP)
-    : CallExpr(C, CXXMemberCallExprClass, fn, args, numargs, t, VK, RP) {}
+    : CallExpr(C, CXXMemberCallExprClass, fn, 0, args, numargs, t, VK, RP) {}
 
   CXXMemberCallExpr(ASTContext &C, EmptyShell Empty)
     : CallExpr(C, CXXMemberCallExprClass, Empty) { }

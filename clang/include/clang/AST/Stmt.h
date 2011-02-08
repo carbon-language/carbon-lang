@@ -174,12 +174,20 @@ protected:
     unsigned BasePathSize : 32 - 6 - NumExprBits;
   };
 
+  class CallExprBitfields {
+    friend class CallExpr;
+    unsigned : NumExprBits;
+
+    unsigned NumPreArgs : 1;
+  };
+
   union {
     StmtBitfields StmtBits;
     CompoundStmtBitfields CompoundStmtBits;
     LabelStmtBitfields LabelStmtBits;
     ExprBitfields ExprBits;
     CastExprBitfields CastExprBits;
+    CallExprBitfields CallExprBits;
   };
 
   friend class ASTStmtReader;

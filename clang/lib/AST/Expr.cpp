@@ -647,8 +647,8 @@ OverloadedOperatorKind UnaryOperator::getOverloadedOperator(Opcode Opc) {
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
 
-CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
-                   unsigned numargs, QualType t, ExprValueKind VK,
+CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, unsigned NumPreArgs,
+                   Expr **args, unsigned numargs, QualType t, ExprValueKind VK,
                    SourceLocation rparenloc)
   : Expr(SC, t, VK, OK_Ordinary,
          fn->isTypeDependent(),
@@ -656,7 +656,7 @@ CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
          fn->containsUnexpandedParameterPack()),
     NumArgs(numargs) {
 
-  SubExprs = new (C) Stmt*[numargs+1];
+  SubExprs = new (C) Stmt*[numargs+PREARGS_START+NumPreArgs];
   SubExprs[FN] = fn;
   for (unsigned i = 0; i != numargs; ++i) {
     if (args[i]->isTypeDependent())
@@ -666,9 +666,10 @@ CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
     if (args[i]->containsUnexpandedParameterPack())
       ExprBits.ContainsUnexpandedParameterPack = true;
 
-    SubExprs[i+ARGS_START] = args[i];
+    SubExprs[i+PREARGS_START+NumPreArgs] = args[i];
   }
 
+  CallExprBits.NumPreArgs = NumPreArgs;
   RParenLoc = rparenloc;
 }
 
@@ -680,7 +681,7 @@ CallExpr::CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
          fn->containsUnexpandedParameterPack()),
     NumArgs(numargs) {
 
-  SubExprs = new (C) Stmt*[numargs+1];
+  SubExprs = new (C) Stmt*[numargs+PREARGS_START];
   SubExprs[FN] = fn;
   for (unsigned i = 0; i != numargs; ++i) {
     if (args[i]->isTypeDependent())
@@ -690,16 +691,26 @@ CallExpr::CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
     if (args[i]->containsUnexpandedParameterPack())
       ExprBits.ContainsUnexpandedParameterPack = true;
 
-    SubExprs[i+ARGS_START] = args[i];
+    SubExprs[i+PREARGS_START] = args[i];
   }
 
+  CallExprBits.NumPreArgs = 0;
   RParenLoc = rparenloc;
 }
 
 CallExpr::CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty)
   : Expr(SC, Empty), SubExprs(0), NumArgs(0) {
   // FIXME: Why do we allocate this?
-  SubExprs = new (C) Stmt*[1];
+  SubExprs = new (C) Stmt*[PREARGS_START];
+  CallExprBits.NumPreArgs = 0;
+}
+
+CallExpr::CallExpr(ASTContext &C, StmtClass SC, unsigned NumPreArgs,
+                   EmptyShell Empty)
+  : Expr(SC, Empty), SubExprs(0), NumArgs(0) {
+  // FIXME: Why do we allocate this?
+  SubExprs = new (C) Stmt*[PREARGS_START+NumPreArgs];
+  CallExprBits.NumPreArgs = NumPreArgs;
 }
 
 Decl *CallExpr::getCalleeDecl() {
@@ -738,12 +749,14 @@ void CallExpr::setNumArgs(ASTContext& C, unsigned NumArgs) {
   }
 
   // Otherwise, we are growing the # arguments.  New an bigger argument array.
-  Stmt **NewSubExprs = new (C) Stmt*[NumArgs+1];
+  unsigned NumPreArgs = getNumPreArgs();
+  Stmt **NewSubExprs = new (C) Stmt*[NumArgs+PREARGS_START+NumPreArgs];
   // Copy over args.
-  for (unsigned i = 0; i != getNumArgs()+ARGS_START; ++i)
+  for (unsigned i = 0; i != getNumArgs()+PREARGS_START+NumPreArgs; ++i)
     NewSubExprs[i] = SubExprs[i];
   // Null out new args.
-  for (unsigned i = getNumArgs()+ARGS_START; i != NumArgs+ARGS_START; ++i)
+  for (unsigned i = getNumArgs()+PREARGS_START+NumPreArgs;
+       i != NumArgs+PREARGS_START+NumPreArgs; ++i)
     NewSubExprs[i] = 0;
 
   if (SubExprs) C.Deallocate(SubExprs);
@@ -2823,7 +2836,7 @@ Stmt::child_iterator CallExpr::child_begin() {
   return &SubExprs[0];
 }
 Stmt::child_iterator CallExpr::child_end() {
-  return &SubExprs[0]+NumArgs+ARGS_START;
+  return &SubExprs[0]+NumArgs+getNumPreArgs()+PREARGS_START;
 }
 
 // MemberExpr
