@@ -250,6 +250,67 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const char *Argv0,
 }
 
 //===---------------------------------------------------------------------===//
+// Custom compiler command implementation of AbstractIntepreter interface
+//
+// Allows using a custom command for compiling the bitcode, thus allows, for
+// example, to compile a bitcode fragment without linking or executing, then
+// using a custom wrapper script to check for compiler errors.
+namespace {
+  class CustomCompiler : public AbstractInterpreter {
+    std::string CompilerCommand;
+    std::vector<std::string> CompilerArgs;
+  public:
+    CustomCompiler(
+      const std::string &CompilerCmd, std::vector<std::string> CompArgs) :
+      CompilerCommand(CompilerCmd), CompilerArgs(CompArgs) {}
+
+    virtual void compileProgram(const std::string &Bitcode,
+                                std::string *Error,
+                                unsigned Timeout = 0,
+                                unsigned MemoryLimit = 0);
+
+    virtual int ExecuteProgram(const std::string &Bitcode,
+                               const std::vector<std::string> &Args,
+                               const std::string &InputFile,
+                               const std::string &OutputFile,
+                               std::string *Error,
+                               const std::vector<std::string> &GCCArgs =
+                               std::vector<std::string>(),
+                               const std::vector<std::string> &SharedLibs =
+                               std::vector<std::string>(),
+                               unsigned Timeout = 0,
+                               unsigned MemoryLimit = 0) {
+      *Error = "Execution not supported with -compile-custom";
+      return -1;
+    }
+  };
+}
+
+void CustomCompiler::compileProgram(const std::string &Bitcode,
+                                    std::string *Error,
+                                    unsigned Timeout,
+                                    unsigned MemoryLimit) {
+
+  std::vector<const char*> ProgramArgs;
+  ProgramArgs.push_back(CompilerCommand.c_str());
+
+  for (std::size_t i = 0; i < CompilerArgs.size(); ++i)
+    ProgramArgs.push_back(CompilerArgs.at(i).c_str());
+  ProgramArgs.push_back(Bitcode.c_str());
+  ProgramArgs.push_back(0);
+
+  // Add optional parameters to the running program from Argv
+  for (unsigned i = 0, e = CompilerArgs.size(); i != e; ++i)
+    ProgramArgs.push_back(CompilerArgs[i].c_str());
+
+  if (RunProgramWithTimeout( sys::Path(CompilerCommand), &ProgramArgs[0],
+                             sys::Path(), sys::Path(), sys::Path(),
+                             Timeout, MemoryLimit, Error))
+    *Error = ProcessFailure(sys::Path(CompilerCommand), &ProgramArgs[0],
+                           Timeout, MemoryLimit);
+}
+
+//===---------------------------------------------------------------------===//
 // Custom execution command implementation of AbstractIntepreter interface
 //
 // Allows using a custom command for executing the bitcode, thus allows,
@@ -305,51 +366,74 @@ int CustomExecutor::ExecuteProgram(const std::string &Bitcode,
     sys::Path(OutputFile), Timeout, MemoryLimit, Error);
 }
 
-// Custom execution environment create method, takes the execution command
-// as arguments
-AbstractInterpreter *AbstractInterpreter::createCustom(
-                    std::string &Message,
-                    const std::string &ExecCommandLine) {
+// Tokenize the CommandLine to the command and the args to allow
+// defining a full command line as the command instead of just the
+// executed program. We cannot just pass the whole string after the command
+// as a single argument because then program sees only a single
+// command line argument (with spaces in it: "foo bar" instead
+// of "foo" and "bar").
+//
+// code borrowed from:
+// http://oopweb.com/CPP/Documents/CPPHOWTO/Volume/C++Programming-HOWTO-7.html
+static void lexCommand(std::string &Message, const std::string &CommandLine,
+                       std::string &CmdPath, std::vector<std::string> Args) {
 
   std::string Command = "";
-  std::vector<std::string> Args;
   std::string delimiters = " ";
 
-  // Tokenize the ExecCommandLine to the command and the args to allow
-  // defining a full command line as the command instead of just the
-  // executed program. We cannot just pass the whole string after the command
-  // as a single argument because then program sees only a single
-  // command line argument (with spaces in it: "foo bar" instead
-  // of "foo" and "bar").
-
-  // code borrowed from:
-  // http://oopweb.com/CPP/Documents/CPPHOWTO/Volume/C++Programming-HOWTO-7.html
-  std::string::size_type lastPos =
-    ExecCommandLine.find_first_not_of(delimiters, 0);
-  std::string::size_type pos =
-    ExecCommandLine.find_first_of(delimiters, lastPos);
+  std::string::size_type lastPos = CommandLine.find_first_not_of(delimiters, 0);
+  std::string::size_type pos = CommandLine.find_first_of(delimiters, lastPos);
 
   while (std::string::npos != pos || std::string::npos != lastPos) {
-    std::string token = ExecCommandLine.substr(lastPos, pos - lastPos);
+    std::string token = CommandLine.substr(lastPos, pos - lastPos);
     if (Command == "")
        Command = token;
     else
        Args.push_back(token);
     // Skip delimiters.  Note the "not_of"
-    lastPos = ExecCommandLine.find_first_not_of(delimiters, pos);
+    lastPos = CommandLine.find_first_not_of(delimiters, pos);
     // Find next "non-delimiter"
-    pos = ExecCommandLine.find_first_of(delimiters, lastPos);
+    pos = CommandLine.find_first_of(delimiters, lastPos);
   }
 
-  std::string CmdPath = sys::Program::FindProgramByName(Command).str();
+  CmdPath = sys::Program::FindProgramByName(Command).str();
   if (CmdPath.empty()) {
     Message =
       std::string("Cannot find '") + Command +
       "' in PATH!\n";
-    return 0;
+    return;
   }
 
   Message = "Found command in: " + CmdPath + "\n";
+}
+
+// Custom execution environment create method, takes the execution command
+// as arguments
+AbstractInterpreter *AbstractInterpreter::createCustomCompiler(
+                    std::string &Message,
+                    const std::string &CompileCommandLine) {
+
+  std::string CmdPath;
+  std::vector<std::string> Args;
+  lexCommand(Message, CompileCommandLine, CmdPath, Args);
+  if (CmdPath.empty())
+    return 0;
+
+  return new CustomCompiler(CmdPath, Args);
+}
+
+// Custom execution environment create method, takes the execution command
+// as arguments
+AbstractInterpreter *AbstractInterpreter::createCustomExecutor(
+                    std::string &Message,
+                    const std::string &ExecCommandLine) {
+
+
+  std::string CmdPath;
+  std::vector<std::string> Args;
+  lexCommand(Message, ExecCommandLine, CmdPath, Args);
+  if (CmdPath.empty())
+    return 0;
 
   return new CustomExecutor(CmdPath, Args);
 }

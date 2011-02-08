@@ -28,7 +28,8 @@ namespace {
   // for miscompilation.
   //
   enum OutputType {
-    AutoPick, RunLLI, RunJIT, RunLLC, RunLLCIA, RunCBE, CBE_bug, LLC_Safe,Custom
+    AutoPick, RunLLI, RunJIT, RunLLC, RunLLCIA, RunCBE, CBE_bug, LLC_Safe,
+    CompileCustom, Custom
   };
 
   cl::opt<double>
@@ -50,6 +51,9 @@ namespace {
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
                             clEnumValN(CBE_bug,"cbe-bug", "Find CBE bugs"),
                             clEnumValN(LLC_Safe, "llc-safe", "Use LLC for all"),
+                            clEnumValN(CompileCustom, "compile-custom",
+                            "Use -compile-command to define a command to "
+                            "compile the bitcode. Useful to avoid linking."),
                             clEnumValN(Custom, "run-custom",
                             "Use -exec-command to define a command to execute "
                             "the bitcode. Useful for cross-compilation."),
@@ -89,6 +93,11 @@ namespace {
   cl::list<std::string>
   AdditionalLinkerArgs("Xlinker",
       cl::desc("Additional arguments to pass to the linker"));
+
+  cl::opt<std::string>
+  CustomCompileCommand("compile-command", cl::init("llc"),
+      cl::desc("Command to compile the bitcode (use with -compile-custom) "
+               "(default: llc)"));
 
   cl::opt<std::string>
   CustomExecCommand("exec-command", cl::init("simulate"),
@@ -192,8 +201,13 @@ bool BugDriver::initializeExecutionEnvironment() {
                                                  GCCBinary, &ToolArgv,
                                                  &GCCToolArgv);
     break;
+  case CompileCustom:
+    Interpreter =
+      AbstractInterpreter::createCustomCompiler(Message, CustomCompileCommand);
+    break;
   case Custom:
-    Interpreter = AbstractInterpreter::createCustom(Message, CustomExecCommand);
+    Interpreter =
+      AbstractInterpreter::createCustomExecutor(Message, CustomExecCommand);
     break;
   default:
     Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
@@ -272,8 +286,8 @@ bool BugDriver::initializeExecutionEnvironment() {
                                                      &GCCToolArgv);
     break;
   case Custom:
-    SafeInterpreter = AbstractInterpreter::createCustom(Message,
-                                                        CustomExecCommand);
+    SafeInterpreter =
+      AbstractInterpreter::createCustomExecutor(Message, CustomExecCommand);
     break;
   default:
     Message = "Sorry, this back-end is not supported by bugpoint as the "

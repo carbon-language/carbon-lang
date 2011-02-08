@@ -103,8 +103,13 @@ public:
   static AbstractInterpreter* createJIT(const char *Argv0, std::string &Message,
                                         const std::vector<std::string> *Args=0);
 
-  static AbstractInterpreter* createCustom(std::string &Message,
-                                           const std::string &ExecCommandLine);
+  static AbstractInterpreter*
+  createCustomCompiler(std::string &Message,
+                       const std::string &CompileCommandLine);
+
+  static AbstractInterpreter*
+  createCustomExecutor(std::string &Message,
+                       const std::string &ExecCommandLine);
 
 
   virtual ~AbstractInterpreter() {}
