@@ -236,6 +236,10 @@ protected:
     bool
     EmulateB (ARMEncoding encoding);
     
+    // CBNZ, CBZ
+    bool
+    EmulateCB (ARMEncoding encoding);
+
     bool
     EmulateLDM (ARMEncoding encoding);
     

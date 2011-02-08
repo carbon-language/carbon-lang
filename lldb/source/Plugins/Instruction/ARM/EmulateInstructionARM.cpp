@@ -765,10 +765,10 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
     {
         EmulateInstruction::Context context = { EmulateInstruction::eContextRelativeBranchImmediate, 0, 0, 0};
         const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
-        addr_t lr; // next instruction address
-        addr_t target; // target address
         if (!success)
             return false;
+        addr_t lr; // next instruction address
+        addr_t target; // target address
         int32_t imm32; // PC-relative offset
         switch (encoding) {
         case eEncodingT1:
@@ -781,7 +781,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             uint32_t imm11 = Bits32(opcode, 10, 0);
             uint32_t I1 = !(J1 ^ S);
             uint32_t I2 = !(J2 ^ S);
-            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) + (imm11 << 1);
+            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<25>(imm25);
             target = pc + 4 + imm32;
             context.arg1 = 4 + imm32;  // signed offset
@@ -798,7 +798,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             uint32_t imm10L = Bits32(opcode, 10, 1);
             uint32_t I1 = !(J1 ^ S);
             uint32_t I2 = !(J2 ^ S);
-            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10H << 12) + (imm10L << 2);
+            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10H << 12) | (imm10L << 2);
             imm32 = llvm::SignExtend32<25>(imm25);
             target = Align(pc + 4, 4) + imm32;
             context.arg1 = 4 + imm32; // signed offset
@@ -1418,9 +1418,9 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
     {
         EmulateInstruction::Context context = { EmulateInstruction::eContextRelativeBranchImmediate, 0, 0, 0};
         const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
-        addr_t target; // target address
         if (!success)
             return false;
+        addr_t target; // target address
         int32_t imm32; // PC-relative offset
         switch (encoding) {
         case eEncodingT1:
@@ -1444,7 +1444,7 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
             uint32_t J1 = Bits32(opcode, 13, 13);
             uint32_t J2 = Bits32(opcode, 11, 11);
             uint32_t imm11 = Bits32(opcode, 10, 0);
-            uint32_t imm21 = (S << 20) | (J2 << 19) | (J1 << 18) | (imm6 << 12) + (imm11 << 1);
+            uint32_t imm21 = (S << 20) | (J2 << 19) | (J1 << 18) | (imm6 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<21>(imm21);
             target = pc + 4 + imm32;
             context.arg1 = eModeThumb; // target instruction set
@@ -1460,7 +1460,7 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
             uint32_t imm11 = Bits32(opcode, 10, 0);
             uint32_t I1 = !(J1 ^ S);
             uint32_t I2 = !(J2 ^ S);
-            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) + (imm11 << 1);
+            uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<25>(imm25);
             target = pc + 4 + imm32;
             context.arg1 = eModeThumb; // target instruction set
@@ -1479,6 +1479,55 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
         if (!BranchWritePC(context, target))
             return false;
     }
+    return true;
+}
+
+// Compare and Branch on Nonzero and Compare and Branch on Zero compare the value in a register with
+// zero and conditionally branch forward a constant value.  They do not affect the condition flags.
+// CBNZ, CBZ
+bool
+EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    EncodingSpecificOperations();
+    if nonzero ^ IsZero(R[n]) then
+        BranchWritePC(PC + imm32);
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    // Read the register value from the operand register Rn.
+    uint32_t reg_val = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Bits32(opcode, 2, 0), 0, &success);
+    if (!success)
+        return false;
+                  
+    EmulateInstruction::Context context = { EmulateInstruction::eContextRelativeBranchImmediate, 0, 0, 0};
+    const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+    if (!success)
+        return false;
+
+    addr_t target;  // target address
+    uint32_t imm32; // PC-relative offset to branch forward
+    bool nonzero;
+    switch (encoding) {
+    case eEncodingT1:
+        imm32 = Bits32(opcode, 9, 9) << 6 | Bits32(opcode, 7, 3) << 1;
+        nonzero = BitIsSet(opcode, 11);
+        target = pc + 4 + imm32;
+        context.arg1 = 4 + imm32;  // signed offset
+        context.arg2 = eModeThumb; // target instruction set
+        break;
+    default:
+        return false;
+    }
+    if (nonzero ^ (reg_val == 0))
+        if (!BranchWritePC(context, target))
+            return false;
+
     return true;
 }
 
@@ -1896,7 +1945,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffff8000, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b #imm11 (outside or last in IT)"},
         { 0xf800d000, 0xf0008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
         { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b.w #imm8 (outside or last in IT)"},
-
+        // compare and branch
+        { 0xfffff500, 0x0000b100, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCB, "cb{n}z <Rn>, <label>"},
 
         //----------------------------------------------------------------------
         // Load instructions
@@ -2098,8 +2148,9 @@ EmulateInstructionARM::BranchWritePC (const Context &context, uint32_t addr)
         break;
     }
     if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
-        return false;    
-    return false;
+        return false;
+
+    return true;
 }
 
 // As a side effect, BXWritePC sets context.arg2 to eModeARM or eModeThumb by inspecting addr.
@@ -2122,8 +2173,9 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
         return false; // address<1:0> == '10' => UNPREDICTABLE
 
     if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
-        return false;    
-    return false;
+        return false;
+
+    return true;
 }
 
 bool
