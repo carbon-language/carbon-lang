@@ -128,7 +128,6 @@ EmulateInstructionARM::Terminate ()
 {
 }
 
-
 // Push Multiple Registers stores multiple registers to the stack, storing to
 // consecutive memory locations ending just below the address in SP, and updates
 // SP to point to the start of the stored data.
@@ -1483,6 +1482,141 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
     return true;
 }
 
+// LDM loads multiple registers from consecutive memory locations, using an
+// address from a base register.  Optionally the addres just above the highest of those locations
+// can be written back to the base register.
+bool
+EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed()
+        EncodingSpecificOperations(); NullCheckIfThumbEE (n);
+        address = R[n];
+                  
+        for i = 0 to 14
+            if registers<i> == '1' then
+                R[i] = MemA[address, 4]; address = address + 4;
+        if registers<15> == '1' then
+            LoadWritePC (MemA[address, 4]);
+                  
+        if wback && registers<n> == '0' then R[n] = R[n] + 4 * BitCount (registers);
+        if wback && registers<n> == '1' then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
+
+#endif
+            
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+            
+    if (ConditionPassed())
+    {
+        uint32_t n;
+        uint32_t registers = 0;
+        bool wback;
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        switch (encoding)
+        {
+            case eEncodingT1:
+                n = Bits32 (opcode, 10, 8);
+                registers = Bits32 (opcode, 7, 0);
+                wback = BitIsClear (registers, n);
+                // if BitCount(registers) < 1 then UNPREDICTABLE;
+                if (BitCount(registers) < 1)
+                    return false;
+                break;
+            case eEncodingT2:
+                n = Bits32 (opcode, 19, 16);
+                registers = Bits32 (opcode, 15, 0);
+                wback = BitIsSet (opcode, 21);
+                if ((n == 15)
+                    || (BitCount (registers) < 2)
+                    || (BitIsSet (opcode, 14) && BitIsSet (opcode, 15)))
+                    return false;
+                if (BitIsSet (registers, 15)
+                    && m_it_session.InITBlock()
+                    && !m_it_session.LastInITBlock())
+                    return false;
+                if (wback
+                    && BitIsSet (registers, n))
+                    return false;
+                break;
+            case eEncodingA1:
+                n = Bits32 (opcode, 19, 16);
+                registers = Bits32 (opcode, 15, 0);
+                wback = BitIsSet (opcode, 21);
+                if ((n == 15)
+                    || (BitCount (registers) < 1))
+                    return false;
+                break;
+            default:
+                return false;
+        }
+        
+        int32_t offset = 0;
+        const addr_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+                  
+        for (int i = 0; i < 14; ++i)
+        {
+            if (BitIsSet (registers, i))
+            {
+                EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                        eRegisterKindDWARF,
+                                                        dwarf_r0 + n,
+                                                        offset };
+                  
+                if (wback && (n == 13)) // Pop Instruction
+                    context.type = EmulateInstruction::eContextPopRegisterOffStack;
+
+                // R[i] = MemA [address, 4]; address = address + 4;
+                uint32_t data = ReadMemoryUnsigned (context, base_address + offset, addr_byte_size, 0, &success);
+                if (!success)
+                    return false;
+                  
+                if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + i, data))
+                    return false;
+
+                offset += addr_byte_size;
+            }
+        }
+                
+        if (BitIsSet (registers, 15))
+        {
+            //LoadWritePC (MemA [address, 4]);
+            EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                    eRegisterKindDWARF,
+                                                    dwarf_r0 + n,
+                                                    offset };
+                                                    
+            uint32_t data = ReadMemoryUnsigned (context, base_address + offset, addr_byte_size, 0, &success);
+            if (!success)
+                return false;
+            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+                return false;
+        }
+                             
+        if (wback && BitIsClear (registers, n))
+        {
+            addr_t offset = addr_byte_size * BitCount (registers);
+            EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                    eRegisterKindDWARF,
+                                                    dwarf_r0 + n,
+                                                    offset };
+                
+            // R[n] = R[n] + 4 * BitCount (registers)
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, base_address + offset))
+                return false;
+        }
+        if (wback && BitIsSet (registers, n))
+            // R[n] bits(32) UNKNOWN;
+            return false; //I'm not convinced this is the right thing to do here...
+    }
+    return true;
+}
+                  
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -1537,8 +1671,13 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Branch instructions
         //----------------------------------------------------------------------
-        { 0x0f000000, 0x0a000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "b #imm24"}
+        { 0x0f000000, 0x0a000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "b #imm24"},
 
+        //----------------------------------------------------------------------
+        // Load instructions
+        //----------------------------------------------------------------------
+        { 0x0fd00000, 0x08900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" }
+        
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
                   
@@ -1619,8 +1758,15 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfffff000, 0x0000d000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm8 (outside IT)"},
         { 0xffff8000, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b #imm11 (outside or last in IT)"},
         { 0xf800d000, 0xf0008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
-        { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b.w #imm8 (outside or last in IT)"}
+        { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b.w #imm8 (outside or last in IT)"},
 
+
+        //----------------------------------------------------------------------
+        // Load instructions
+        //----------------------------------------------------------------------
+        { 0xfffff800, 0x0000c800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
+        { 0xffd02000, 0xe8900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c>.w <Rn>{!} <registers>" }
+        
     };
 
     const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);

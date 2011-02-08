@@ -235,6 +235,9 @@ protected:
 
     bool
     EmulateB (ARMEncoding encoding);
+    
+    bool
+    EmulateLDM (ARMEncoding encoding);
 
     uint32_t m_arm_isa;
     Mode m_inst_mode;
