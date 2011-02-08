@@ -1,4 +1,4 @@
-//=-- ExprEngineExperimentalChecks.h ------------------------------*- C++ -*-=
+//=-- ExperimentalChecks.h ----------------------------------------*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InternalChecks.h"
-#include "ExprEngineExperimentalChecks.h"
+#include "ExperimentalChecks.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
 
 using namespace clang;

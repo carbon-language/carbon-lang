@@ -42,7 +42,7 @@
 // - Finer grained false positive control (levels)
 // - Handling ~0 values
 
-#include "ExprEngineExperimentalChecks.h"
+#include "ExperimentalChecks.h"
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/StaticAnalyzer/BugReporter/BugReporter.h"

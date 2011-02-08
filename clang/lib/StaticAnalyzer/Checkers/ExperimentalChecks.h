@@ -1,4 +1,4 @@
-//=-- ExprEngineExperimentalChecks.h ------------------------------*- C++ -*-=
+//=-- ExperimentalChecks.h ----------------------------------------*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //

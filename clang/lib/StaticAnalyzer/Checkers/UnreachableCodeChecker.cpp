@@ -21,7 +21,7 @@
 #include "clang/StaticAnalyzer/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/PathSensitive/CheckerHelpers.h"
 #include "clang/StaticAnalyzer/BugReporter/BugReporter.h"
-#include "ExprEngineExperimentalChecks.h"
+#include "ExperimentalChecks.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 // The number of CFGBlock pointers we want to reserve memory for. This is used
