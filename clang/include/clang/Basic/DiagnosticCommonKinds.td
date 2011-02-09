@@ -44,6 +44,7 @@ def err_expected_colon_after_setter_name : Error<
 def ext_no_declarators : ExtWarn<"declaration does not declare anything">,
   InGroup<MissingDeclarations>;
 def err_param_redefinition : Error<"redefinition of parameter %0">;
+def warn_method_param_redefinition : Warning<"redefinition of method parameter %0">;
 def err_invalid_storage_class_in_func_decl : Error<
   "invalid storage class specifier in function declarator">;
 def err_expected_namespace_name : Error<"expected namespace name">;

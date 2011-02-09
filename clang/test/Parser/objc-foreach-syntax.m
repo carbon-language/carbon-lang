@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-
-
+struct __objcFastEnumerationState; 
 @implementation MyList // expected-warning {{cannot find interface declaration for 'MyList'}}
 - (unsigned int)countByEnumeratingWithState:  (struct __objcFastEnumerationState *)state objects:  (id *)items count:(unsigned int)stackcount
 {

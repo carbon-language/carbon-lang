@@ -1664,6 +1664,7 @@ bool containsInvalidMethodImplAttribute(const AttrVec &A) {
 }
 
 Decl *Sema::ActOnMethodDeclaration(
+    Scope *S,
     SourceLocation MethodLoc, SourceLocation EndLoc,
     tok::TokenKind MethodType, Decl *ClassDecl,
     ObjCDeclSpec &ReturnQT, ParsedType ReturnType,
@@ -1721,6 +1722,20 @@ Decl *Sema::ActOnMethodDeclaration(
       ArgType = adjustParameterType(ArgType);
     }
 
+    LookupResult R(*this, ArgInfo[i].Name, ArgInfo[i].NameLoc, 
+                   LookupOrdinaryName, ForRedeclaration);
+    LookupName(R, S);
+    if (R.isSingleResult()) {
+      NamedDecl *PrevDecl = R.getFoundDecl();
+      if (S->isDeclScope(PrevDecl)) {
+        // FIXME. This should be an error; but will break projects.
+        Diag(ArgInfo[i].NameLoc, diag::warn_method_param_redefinition) 
+          << ArgInfo[i].Name;
+        Diag(PrevDecl->getLocation(), 
+             diag::note_previous_declaration);
+      }
+    }
+
     ParmVarDecl* Param
       = ParmVarDecl::Create(Context, ObjCMethod, ArgInfo[i].NameLoc,
                             ArgInfo[i].Name, ArgType, DI,
@@ -1739,9 +1754,12 @@ Decl *Sema::ActOnMethodDeclaration(
     // Apply the attributes to the parameter.
     ProcessDeclAttributeList(TUScope, Param, ArgInfo[i].ArgAttrs);
 
+    S->AddDecl(Param);
+    IdResolver.AddDecl(Param);
+
     Params.push_back(Param);
   }
-
+  
   for (unsigned i = 0, e = CNumArgs; i != e; ++i) {
     ParmVarDecl *Param = cast<ParmVarDecl>(CParamInfo[i].Param);
     QualType ArgType = Param->getType();
@@ -1757,8 +1775,7 @@ Decl *Sema::ActOnMethodDeclaration(
       Param->setInvalidDecl();
     }
     Param->setDeclContext(ObjCMethod);
-    if (Param->getDeclName())
-      IdResolver.RemoveDecl(Param);
+    
     Params.push_back(Param);
   }
   

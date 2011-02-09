@@ -4251,6 +4251,7 @@ public:
   };
 
   Decl *ActOnMethodDeclaration(
+    Scope *S,
     SourceLocation BeginLoc, // location of the + or -.
     SourceLocation EndLoc,   // location of the ; or {.
     tok::TokenKind MethodType,

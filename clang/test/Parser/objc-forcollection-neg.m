@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
+struct __objcFastEnumerationState; 
 typedef struct objc_class *Class;
 typedef struct objc_object {
  Class isa;

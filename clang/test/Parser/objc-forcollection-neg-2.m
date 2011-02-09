@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 typedef struct objc_class *Class;
+struct __objcFastEnumerationState; 
 typedef struct objc_object {
  Class isa;
 } *id;
     
-            
 @protocol P @end
 
 @interface MyList

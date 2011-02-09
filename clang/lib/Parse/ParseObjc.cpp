@@ -868,7 +868,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     Decl *Result
-         = Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
+         = Actions.ActOnMethodDeclaration(getCurScope(), mLoc, Tok.getLocation(),
                                           mType, IDecl, DSRet, ReturnType, Sel,
                                           0, 
                                           CParamInfo.data(), CParamInfo.size(),
@@ -879,7 +879,9 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   llvm::SmallVector<Sema::ObjCArgInfo, 12> ArgInfos;
-
+  ParseScope PrototypeScope(this,
+                            Scope::FunctionPrototypeScope|Scope::DeclScope);
+  
   while (1) {
     Sema::ObjCArgInfo ArgInfo;
 
@@ -976,18 +978,25 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   // If attributes exist after the method, parse them.
   if (getLang().ObjC2)
     MaybeParseGNUAttributes(attrs);
-
-  if (KeyIdents.size() == 0)
+  
+  if (KeyIdents.size() == 0) {
+    // Leave prototype scope.
+    PrototypeScope.Exit();
     return 0;
+  }
+  
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
   Decl *Result
-       = Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
+       = Actions.ActOnMethodDeclaration(getCurScope(), mLoc, Tok.getLocation(),
                                         mType, IDecl, DSRet, ReturnType, Sel,
                                         &ArgInfos[0], 
                                         CParamInfo.data(), CParamInfo.size(),
                                         attrs.getList(),
                                         MethodImplKind, isVariadic);
+  // Leave prototype scope.
+  PrototypeScope.Exit();
+  
   PD.complete(Result);
   return Result;
 }
