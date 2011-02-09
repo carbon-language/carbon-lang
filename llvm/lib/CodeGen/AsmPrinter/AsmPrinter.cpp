@@ -1033,6 +1033,7 @@ void AsmPrinter::EmitJumpTableInfo() {
 void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                     const MachineBasicBlock *MBB,
                                     unsigned UID) const {
+  assert(MBB && MBB->getNumber() >= 0 && "Invalid basic block");
   const MCExpr *Value = 0;
   switch (MJTI->getEntryKind()) {
   case MachineJumpTableInfo::EK_Inline:
