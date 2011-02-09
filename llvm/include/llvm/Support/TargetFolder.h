@@ -82,17 +82,11 @@ public:
   Constant *CreateFMul(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFMul(LHS, RHS));
   }
-  Constant *CreateUDiv(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getUDiv(LHS, RHS));
+  Constant *CreateUDiv(Constant *LHS, Constant *RHS, bool isExact = false)const{
+    return Fold(ConstantExpr::getUDiv(LHS, RHS, isExact));
   }
-  Constant *CreateExactUDiv(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getExactUDiv(LHS, RHS));
-  }
-  Constant *CreateSDiv(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getSDiv(LHS, RHS));
-  }
-  Constant *CreateExactSDiv(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getExactSDiv(LHS, RHS));
+  Constant *CreateSDiv(Constant *LHS, Constant *RHS, bool isExact = false)const{
+    return Fold(ConstantExpr::getSDiv(LHS, RHS, isExact));
   }
   Constant *CreateFDiv(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFDiv(LHS, RHS));
@@ -109,11 +103,11 @@ public:
   Constant *CreateShl(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getShl(LHS, RHS));
   }
-  Constant *CreateLShr(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getLShr(LHS, RHS));
+  Constant *CreateLShr(Constant *LHS, Constant *RHS, bool isExact = false)const{
+    return Fold(ConstantExpr::getLShr(LHS, RHS, isExact));
   }
-  Constant *CreateAShr(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getAShr(LHS, RHS));
+  Constant *CreateAShr(Constant *LHS, Constant *RHS, bool isExact = false)const{
+    return Fold(ConstantExpr::getAShr(LHS, RHS, isExact));
   }
   Constant *CreateAnd(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getAnd(LHS, RHS));
