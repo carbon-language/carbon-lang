@@ -610,8 +610,15 @@ def LDC_lru6 : _FLRU6<
                  [(set GRRegs:$dst, immU16:$b)]>;
 }
 
+def SETC_ru6 : _FRU6<(outs), (ins GRRegs:$r, i32imm:$val),
+                  "setc res[$r], $val",
+                  [(int_xcore_setc GRRegs:$r, immU6:$val)]>;
+
+def SETC_lru6 : _FLRU6<(outs), (ins GRRegs:$r, i32imm:$val),
+                  "setc res[$r], $val",
+                  [(int_xcore_setc GRRegs:$r, immU16:$val)]>;
+
 // Operand register - U6
-// TODO setc
 let isBranch = 1, isTerminator = 1 in {
 defm BRFT: FRU6_LRU6_branch<"bt">;
 defm BRBT: FRU6_LRU6_branch<"bt">;
@@ -805,6 +812,10 @@ def BYTEREV_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
 def CLZ_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
                  "clz $dst, $src",
                  [(set GRRegs:$dst, (ctlz GRRegs:$src))]>;
+
+def SETC_l2r : _FRU6<(outs), (ins GRRegs:$r, GRRegs:$val),
+                  "setc res[$r], $val",
+                  [(int_xcore_setc GRRegs:$r, GRRegs:$val)]>;
 
 // One operand short
 // TODO edu, eeu, waitet, waitef, tstart, msync, mjoin, syncr, clrtp

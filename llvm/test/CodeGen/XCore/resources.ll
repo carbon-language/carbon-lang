@@ -95,3 +95,17 @@ define void @setd(i8 addrspace(1)* %r, i32 %value) {
 	call void @llvm.xcore.setd.p1i8(i8 addrspace(1)* %r, i32 %value)
 	ret void
 }
+
+define void @setc(i8 addrspace(1)* %r, i32 %value) {
+; CHECK: setc:
+; CHECK: setc res[r0], r1
+	call void @llvm.xcore.setc.p1i8(i8 addrspace(1)* %r, i32 %value)
+	ret void
+}
+
+define void @setci(i8 addrspace(1)* %r) {
+; CHECK: setci:
+; CHECK: setc res[r0], 2
+	call void @llvm.xcore.setc.p1i8(i8 addrspace(1)* %r, i32 2)
+	ret void
+}
