@@ -71,10 +71,11 @@ protected:
 protected:
   const void* getData1() const { return Data.first; }
   const void* getData2() const { return Data.second; }
-  const void *getTag() const { return Tag; }
 
 public:
   Kind getKind() const { return K; }
+
+  const void *getTag() const { return Tag; }
 
   const LocationContext *getLocationContext() const { return L; }
 
