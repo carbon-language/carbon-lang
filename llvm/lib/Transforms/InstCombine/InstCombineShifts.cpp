@@ -617,13 +617,16 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
 }
 
 Instruction *InstCombiner::visitShl(BinaryOperator &I) {
-  if (Value *V = SimplifyShlInst(I.getOperand(0), I.getOperand(1), TD))
+  if (Value *V = SimplifyShlInst(I.getOperand(0), I.getOperand(1),
+                                 I.hasNoSignedWrap(), I.hasNoUnsignedWrap(),
+                                 TD))
     return ReplaceInstUsesWith(I, V);
   return commonShiftTransforms(I);
 }
 
 Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
-  if (Value *V = SimplifyLShrInst(I.getOperand(0), I.getOperand(1), TD))
+  if (Value *V = SimplifyLShrInst(I.getOperand(0), I.getOperand(1),
+                                  I.isExact(), TD))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *R = commonShiftTransforms(I))
@@ -652,7 +655,8 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
-  if (Value *V = SimplifyAShrInst(I.getOperand(0), I.getOperand(1), TD))
+  if (Value *V = SimplifyAShrInst(I.getOperand(0), I.getOperand(1),
+                                  I.isExact(), TD))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *R = commonShiftTransforms(I))

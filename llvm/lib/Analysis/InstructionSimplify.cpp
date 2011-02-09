@@ -29,7 +29,7 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
-#define RecursionLimit 3
+enum { RecursionLimit = 3 };
 
 STATISTIC(NumExpand,  "Number of expansions");
 STATISTIC(NumFactor , "Number of factorizations");
@@ -946,8 +946,9 @@ static Value *SimplifyShift(unsigned Opcode, Value *Op0, Value *Op1,
 
 /// SimplifyShlInst - Given operands for an Shl, see if we can
 /// fold the result.  If not, this returns null.
-static Value *SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD,
-                              const DominatorTree *DT, unsigned MaxRecurse) {
+static Value *SimplifyShlInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
+                              const TargetData *TD, const DominatorTree *DT,
+                              unsigned MaxRecurse) {
   if (Value *V = SimplifyShift(Instruction::Shl, Op0, Op1, TD, DT, MaxRecurse))
     return V;
 
@@ -955,18 +956,24 @@ static Value *SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD,
   if (match(Op0, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
+  // (X >> A) << A -> X
+  Value *X;
+  if (match(Op0, m_Shr(m_Value(X), m_Specific(Op1))) &&
+      cast<PossiblyExactOperator>(Op0)->isExact())
+    return X;
   return 0;
 }
 
-Value *llvm::SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD,
-                             const DominatorTree *DT) {
-  return ::SimplifyShlInst(Op0, Op1, TD, DT, RecursionLimit);
+Value *llvm::SimplifyShlInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
+                             const TargetData *TD, const DominatorTree *DT) {
+  return ::SimplifyShlInst(Op0, Op1, isNSW, isNUW, TD, DT, RecursionLimit);
 }
 
 /// SimplifyLShrInst - Given operands for an LShr, see if we can
 /// fold the result.  If not, this returns null.
-static Value *SimplifyLShrInst(Value *Op0, Value *Op1, const TargetData *TD,
-                               const DominatorTree *DT, unsigned MaxRecurse) {
+static Value *SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
+                               const TargetData *TD, const DominatorTree *DT,
+                               unsigned MaxRecurse) {
   if (Value *V = SimplifyShift(Instruction::LShr, Op0, Op1, TD, DT, MaxRecurse))
     return V;
 
@@ -974,18 +981,25 @@ static Value *SimplifyLShrInst(Value *Op0, Value *Op1, const TargetData *TD,
   if (match(Op0, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
+  // (X << A) >> A -> X
+  Value *X;
+  if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1))) &&
+      cast<OverflowingBinaryOperator>(Op0)->hasNoUnsignedWrap())
+    return X;
+  
   return 0;
 }
 
-Value *llvm::SimplifyLShrInst(Value *Op0, Value *Op1, const TargetData *TD,
-                              const DominatorTree *DT) {
-  return ::SimplifyLShrInst(Op0, Op1, TD, DT, RecursionLimit);
+Value *llvm::SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
+                              const TargetData *TD, const DominatorTree *DT) {
+  return ::SimplifyLShrInst(Op0, Op1, isExact, TD, DT, RecursionLimit);
 }
 
 /// SimplifyAShrInst - Given operands for an AShr, see if we can
 /// fold the result.  If not, this returns null.
-static Value *SimplifyAShrInst(Value *Op0, Value *Op1, const TargetData *TD,
-                              const DominatorTree *DT, unsigned MaxRecurse) {
+static Value *SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
+                               const TargetData *TD, const DominatorTree *DT,
+                               unsigned MaxRecurse) {
   if (Value *V = SimplifyShift(Instruction::AShr, Op0, Op1, TD, DT, MaxRecurse))
     return V;
 
@@ -997,12 +1011,18 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, const TargetData *TD,
   if (match(Op0, m_Undef()))
     return Constant::getAllOnesValue(Op0->getType());
 
+  // (X << A) >> A -> X
+  Value *X;
+  if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1))) &&
+      cast<OverflowingBinaryOperator>(Op0)->hasNoSignedWrap())
+    return X;
+  
   return 0;
 }
 
-Value *llvm::SimplifyAShrInst(Value *Op0, Value *Op1, const TargetData *TD,
-                              const DominatorTree *DT) {
-  return ::SimplifyAShrInst(Op0, Op1, TD, DT, RecursionLimit);
+Value *llvm::SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
+                              const TargetData *TD, const DominatorTree *DT) {
+  return ::SimplifyAShrInst(Op0, Op1, isExact, TD, DT, RecursionLimit);
 }
 
 /// SimplifyAndInst - Given operands for an And, see if we can
@@ -1037,12 +1057,12 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Op0;
 
   // A & ~A  =  ~A & A  =  0
-  Value *A = 0, *B = 0;
-  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
-      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+  if (match(Op0, m_Not(m_Specific(Op1))) ||
+      match(Op1, m_Not(m_Specific(Op0))))
     return Constant::getNullValue(Op0->getType());
 
   // (A | ?) & A = A
+  Value *A = 0, *B = 0;
   if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
       (A == Op1 || B == Op1))
     return Op1;
@@ -1126,12 +1146,12 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Op1;
 
   // A | ~A  =  ~A | A  =  -1
-  Value *A = 0, *B = 0;
-  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
-      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+  if (match(Op0, m_Not(m_Specific(Op1))) ||
+      match(Op1, m_Not(m_Specific(Op0))))
     return Constant::getAllOnesValue(Op0->getType());
 
   // (A & ?) | A = A
+  Value *A = 0, *B = 0;
   if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
       (A == Op1 || B == Op1))
     return Op1;
@@ -1206,9 +1226,8 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Constant::getNullValue(Op0->getType());
 
   // A ^ ~A  =  ~A ^ A  =  -1
-  Value *A = 0;
-  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
-      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+  if (match(Op0, m_Not(m_Specific(Op1))) ||
+      match(Op1, m_Not(m_Specific(Op0))))
     return Constant::getAllOnesValue(Op0->getType());
 
   // Try some generic simplifications for associative operations.
@@ -1794,21 +1813,25 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
                             const TargetData *TD, const DominatorTree *DT,
                             unsigned MaxRecurse) {
   switch (Opcode) {
-  case Instruction::Add: return SimplifyAddInst(LHS, RHS, /* isNSW */ false,
-                                                /* isNUW */ false, TD, DT,
-                                                MaxRecurse);
-  case Instruction::Sub: return SimplifySubInst(LHS, RHS, /* isNSW */ false,
-                                                /* isNUW */ false, TD, DT,
-                                                MaxRecurse);
-  case Instruction::Mul: return SimplifyMulInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::Add:
+    return SimplifyAddInst(LHS, RHS, /* isNSW */ false, /* isNUW */ false,
+                           TD, DT, MaxRecurse);
+  case Instruction::Sub:
+    return SimplifySubInst(LHS, RHS, /* isNSW */ false, /* isNUW */ false,
+                           TD, DT, MaxRecurse);
+  case Instruction::Mul:  return SimplifyMulInst (LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::SDiv: return SimplifySDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::UDiv: return SimplifyUDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::FDiv: return SimplifyFDivInst(LHS, RHS, TD, DT, MaxRecurse);
-  case Instruction::Shl: return SimplifyShlInst(LHS, RHS, TD, DT, MaxRecurse);
-  case Instruction::LShr: return SimplifyLShrInst(LHS, RHS, TD, DT, MaxRecurse);
-  case Instruction::AShr: return SimplifyAShrInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::Shl:
+    return SimplifyShlInst(LHS, RHS, /*NSW*/false, /*NUW*/false,
+                           TD, DT, MaxRecurse);
+  case Instruction::LShr:
+    return SimplifyLShrInst(LHS, RHS, /*isexact*/ false, TD, DT, MaxRecurse);
+  case Instruction::AShr:
+    return SimplifyAShrInst(LHS, RHS, /*isexact*/false, TD, DT, MaxRecurse);
   case Instruction::And: return SimplifyAndInst(LHS, RHS, TD, DT, MaxRecurse);
-  case Instruction::Or:  return SimplifyOrInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::Or:  return SimplifyOrInst (LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::Xor: return SimplifyXorInst(LHS, RHS, TD, DT, MaxRecurse);
   default:
     if (Constant *CLHS = dyn_cast<Constant>(LHS))
@@ -1895,13 +1918,20 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     Result = SimplifyFDivInst(I->getOperand(0), I->getOperand(1), TD, DT);
     break;
   case Instruction::Shl:
-    Result = SimplifyShlInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    Result = SimplifyShlInst(I->getOperand(0), I->getOperand(1),
+                             cast<BinaryOperator>(I)->hasNoSignedWrap(),
+                             cast<BinaryOperator>(I)->hasNoUnsignedWrap(),
+                             TD, DT);
     break;
   case Instruction::LShr:
-    Result = SimplifyLShrInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    Result = SimplifyLShrInst(I->getOperand(0), I->getOperand(1),
+                              cast<BinaryOperator>(I)->isExact(),
+                              TD, DT);
     break;
   case Instruction::AShr:
-    Result = SimplifyAShrInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    Result = SimplifyAShrInst(I->getOperand(0), I->getOperand(1),
+                              cast<BinaryOperator>(I)->isExact(),
+                              TD, DT);
     break;
   case Instruction::And:
     Result = SimplifyAndInst(I->getOperand(0), I->getOperand(1), TD, DT);
