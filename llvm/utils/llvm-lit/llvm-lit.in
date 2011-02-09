@@ -16,6 +16,10 @@ builtin_parameters = {
     'llvm_site_config' : os.path.join(llvm_obj_root, 'test', 'lit.site.cfg')
     }
 
+clang_site_config = os.path.join(llvm_obj_root, 'tools', 'clang', 'test', 'lit.site.cfg')
+if os.path.exists(clang_site_config):
+    builtin_parameters['clang_site_config'] = clang_site_config
+
 if __name__=='__main__':
     import lit
     lit.main(builtin_parameters)
