@@ -655,7 +655,7 @@ ProcessGDBRemote::DidLaunchOrAttach ()
         ArchSpec target_arch (GetTarget().GetArchitecture());
         ArchSpec gdb_remote_arch (m_gdb_comm.GetHostArchitecture());
 
-        // If the remote host is ARM and we are on have apple as the vendor, then 
+        // If the remote host is ARM and we have apple as the vendor, then 
         // ARM executables and shared libraries can have mixed ARM architectures.
         // You can have an armv6 executable, and if the host is armv7, then the
         // system will load the best possible architecture for all shared libraries
