@@ -87,15 +87,19 @@ bool Stmt::CollectingStats(bool Enable) {
 namespace {
   struct good {};
   struct bad {};
-  static inline good is_good(good); // static inline to suppress unused warning
+
+  // These silly little functions have to be static inline to suppress
+  // unused warnings, and they have to be defined to suppress other
+  // warnings.
+  static inline good is_good(good) {}
 
   typedef Stmt::child_range children_t();
-  template <class T> good implements_children(children_t T::*);
-  static inline bad implements_children(children_t Stmt::*);
+  template <class T> good implements_children(children_t T::*) {}
+  static inline bad implements_children(children_t Stmt::*) {}
 
   typedef SourceRange getSourceRange_t() const;
-  template <class T> good implements_getSourceRange(getSourceRange_t T::*);
-  static inline bad implements_getSourceRange(getSourceRange_t Stmt::*);
+  template <class T> good implements_getSourceRange(getSourceRange_t T::*) {}
+  static inline bad implements_getSourceRange(getSourceRange_t Stmt::*) {}
 
 #define ASSERT_IMPLEMENTS_children(type) \
   (void) sizeof(is_good(implements_children(&type::children)))
