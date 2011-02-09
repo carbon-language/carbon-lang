@@ -648,46 +648,48 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 
         StreamString strm;
 
-        ArchSpec inferior_arch (m_gdb_comm.GetHostArchitecture());
-
+        ;
         // See if the GDB server supports the qHostInfo information
         const char *vendor = m_gdb_comm.GetVendorString().AsCString();
         const char *os_type = m_gdb_comm.GetOSString().AsCString();
-        const ArchSpec target_arch (GetTarget().GetArchitecture());
-        const ArchSpec arm_any("arm");
-        bool set_target_arch = true;
+        ArchSpec target_arch (GetTarget().GetArchitecture());
+        ArchSpec gdb_remote_arch (m_gdb_comm.GetHostArchitecture());
+
+        // If the remote host is ARM and we are on have apple as the vendor, then 
+        // ARM executables and shared libraries can have mixed ARM architectures.
+        // You can have an armv6 executable, and if the host is armv7, then the
+        // system will load the best possible architecture for all shared libraries
+        // it has, so we really need to take the remote host architecture as our
+        // defacto architecture in this case.
+
+        if (gdb_remote_arch == ArchSpec ("arm") && 
+            vendor != NULL && 
+            strcmp(vendor, "apple") == 0)
+        {
+            GetTarget().SetArchitecture (gdb_remote_arch);
+            target_arch = gdb_remote_arch;
+        }
+        
+        if (!target_arch.IsValid())
+            target_arch = gdb_remote_arch;
+
         if (target_arch.IsValid())
         {
-            if (inferior_arch == arm_any)
-            {
-                // For ARM we can't trust the arch of the process as it could
-                // have an armv6 object file, but be running on armv7 kernel.
-                // So we only set the ARM architecture if the target isn't set
-                // to ARM already...
-                if (target_arch == arm_any)
-                {
-                    inferior_arch = target_arch;
-                    set_target_arch = false;
-                }
-            }
+            if (vendor == NULL)
+                vendor = Host::GetVendorString().AsCString("apple");
+            
+            if (os_type == NULL)
+                os_type = Host::GetOSString().AsCString("darwin");
+
+            strm.Printf ("%s-%s-%s", target_arch.AsCString(), vendor, os_type);
+
+            std::transform (strm.GetString().begin(), 
+                            strm.GetString().end(), 
+                            strm.GetString().begin(), 
+                            ::tolower);
+
+            m_target_triple.SetCString(strm.GetString().c_str());
         }
-        if (set_target_arch)
-            GetTarget().SetArchitecture (inferior_arch);
-
-        if (vendor == NULL)
-            vendor = Host::GetVendorString().AsCString("apple");
-        
-        if (os_type == NULL)
-            os_type = Host::GetOSString().AsCString("darwin");
-
-        strm.Printf ("%s-%s-%s", inferior_arch.AsCString(), vendor, os_type);
-
-        std::transform (strm.GetString().begin(), 
-                        strm.GetString().end(), 
-                        strm.GetString().begin(), 
-                        ::tolower);
-
-        m_target_triple.SetCString(strm.GetString().c_str());
     }
 }
 
