@@ -1093,24 +1093,68 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       break;
     }
 
-    case tok::l_paren: {   // p-e: p-e '(' argument-expression-list[opt] ')'
+    case tok::l_paren:         // p-e: p-e '(' argument-expression-list[opt] ')'
+    case tok::lesslessless: {  // p-e: p-e '<<<' argument-expression-list '>>>'
+                               //   '(' argument-expression-list[opt] ')'
+      tok::TokenKind OpKind = Tok.getKind();
       InMessageExpressionRAIIObject InMessage(*this, false);
       
+      Expr *ExecConfig = 0;
+
+      if (OpKind == tok::lesslessless) {
+        ExprVector ExecConfigExprs(Actions);
+        CommaLocsTy ExecConfigCommaLocs;
+        SourceLocation LLLLoc, GGGLoc;
+
+        LLLLoc = ConsumeToken();
+
+        if (ParseExpressionList(ExecConfigExprs, ExecConfigCommaLocs)) {
+          LHS = ExprError();
+        }
+
+        if (LHS.isInvalid()) {
+          SkipUntil(tok::greatergreatergreater);
+        } else if (Tok.isNot(tok::greatergreatergreater)) {
+          MatchRHSPunctuation(tok::greatergreatergreater, LLLLoc);
+          LHS = ExprError();
+        } else {
+          GGGLoc = ConsumeToken();
+        }
+
+        if (!LHS.isInvalid()) {
+          if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen, ""))
+            LHS = ExprError();
+          else
+            Loc = PrevTokLocation;
+        }
+
+        if (!LHS.isInvalid()) {
+          ExprResult ECResult = Actions.ActOnCUDAExecConfigExpr(getCurScope(),
+                                     LLLLoc, move_arg(ExecConfigExprs), GGGLoc);
+          if (ECResult.isInvalid())
+            LHS = ExprError();
+          else
+            ExecConfig = ECResult.get();
+        }
+      } else {
+        Loc = ConsumeParen();
+      }
+
       ExprVector ArgExprs(Actions);
       CommaLocsTy CommaLocs;
-
-      Loc = ConsumeParen();
       
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteCall(getCurScope(), LHS.get(), 0, 0);
         ConsumeCodeCompletionToken();
       }
-      
-      if (Tok.isNot(tok::r_paren)) {
-        if (ParseExpressionList(ArgExprs, CommaLocs, &Sema::CodeCompleteCall,
-                                LHS.get())) {
-          SkipUntil(tok::r_paren);
-          LHS = ExprError();
+
+      if (OpKind == tok::l_paren || !LHS.isInvalid()) {
+        if (Tok.isNot(tok::r_paren)) {
+          if (ParseExpressionList(ArgExprs, CommaLocs, &Sema::CodeCompleteCall,
+                                  LHS.get())) {
+            SkipUntil(tok::r_paren);
+            LHS = ExprError();
+          }
         }
       }
 
@@ -1125,7 +1169,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
                 ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
         LHS = Actions.ActOnCallExpr(getCurScope(), LHS.take(), Loc,
-                                    move_arg(ArgExprs), Tok.getLocation());
+                                    move_arg(ArgExprs), Tok.getLocation(),
+                                    ExecConfig);
         ConsumeParen();
       }
 
