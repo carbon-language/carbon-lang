@@ -187,6 +187,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::CallExprClass:              
   case Stmt::CXXOperatorCallExprClass:
   case Stmt::CXXMemberCallExprClass:
+  case Stmt::CUDAKernelCallExprClass:
   case Stmt::CXXConstructExprClass:  
   case Stmt::CXXTemporaryObjectExprClass:
     // FIXME: CXXUnresolvedConstructExpr

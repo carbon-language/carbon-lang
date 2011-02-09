@@ -182,6 +182,9 @@ namespace clang {
     void VisitSubstNonTypeTemplateParmPackExpr(
                                            SubstNonTypeTemplateParmPackExpr *E);
     void VisitOpaqueValueExpr(OpaqueValueExpr *E);
+    
+    // CUDA Expressions
+    void VisitCUDAKernelCallExpr(CUDAKernelCallExpr *E);
   };
 }
 
@@ -1323,6 +1326,15 @@ void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   E->Loc = ReadSourceLocation(Record, Idx);
 }
 
+//===----------------------------------------------------------------------===//
+// CUDA Expressions and Statements
+//===----------------------------------------------------------------------===//
+
+void ASTStmtReader::VisitCUDAKernelCallExpr(CUDAKernelCallExpr *E) {
+  VisitCallExpr(E);
+  E->setConfig(cast<CallExpr>(Reader.ReadSubExpr()));
+}
+
 Stmt *ASTReader::ReadStmt(PerFileData &F) {
   switch (ReadingKind) {
   case Read_Decl:
@@ -1871,6 +1883,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
         
     case EXPR_OPAQUE_VALUE:
       S = new (Context) OpaqueValueExpr(Empty);
+      break;
+
+    case EXPR_CUDA_KERNEL_CALL:
+      S = new (Context) CUDAKernelCallExpr(*Context, Empty);
       break;
     }
     

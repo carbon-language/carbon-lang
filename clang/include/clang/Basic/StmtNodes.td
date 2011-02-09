@@ -125,6 +125,9 @@ def ObjCIvarRefExpr : DStmt<Expr>;
 def ObjCPropertyRefExpr : DStmt<Expr>;
 def ObjCIsaExpr : DStmt<Expr>;
 
+// CUDA Expressions.
+def CUDAKernelCallExpr : DStmt<CallExpr>;
+
 // Clang Extensions.
 def ShuffleVectorExpr : DStmt<Expr>;
 def BlockExpr : DStmt<Expr>;

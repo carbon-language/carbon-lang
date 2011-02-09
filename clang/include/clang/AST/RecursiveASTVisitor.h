@@ -1846,6 +1846,7 @@ DEF_TRAVERSE_STMT(UnresolvedMemberExpr, {
 
 DEF_TRAVERSE_STMT(CXXOperatorCallExpr, { })
 DEF_TRAVERSE_STMT(OpaqueValueExpr, { })
+DEF_TRAVERSE_STMT(CUDAKernelCallExpr, { })
 
 // These operators (all of them) do not need any action except
 // iterating over the children.

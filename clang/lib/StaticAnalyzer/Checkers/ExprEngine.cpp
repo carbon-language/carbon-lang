@@ -894,6 +894,7 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::PredefinedExprClass:
     case Stmt::ShuffleVectorExprClass:
     case Stmt::VAArgExprClass:
+    case Stmt::CUDAKernelCallExprClass:
         // Fall through.
 
     // Cases we intentionally don't evaluate, since they don't need

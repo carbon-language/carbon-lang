@@ -644,6 +644,10 @@ void StmtProfiler::VisitCXXMemberCallExpr(CXXMemberCallExpr *S) {
   VisitCallExpr(S);
 }
 
+void StmtProfiler::VisitCUDAKernelCallExpr(CUDAKernelCallExpr *S) {
+  VisitCallExpr(S);
+}
+
 void StmtProfiler::VisitCXXNamedCastExpr(CXXNamedCastExpr *S) {
   VisitExplicitCastExpr(S);
 }

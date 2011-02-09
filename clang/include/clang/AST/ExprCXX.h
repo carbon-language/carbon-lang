@@ -116,6 +116,35 @@ public:
   static bool classof(const CXXMemberCallExpr *) { return true; }
 };
 
+/// CUDAKernelCallExpr - Represents a call to a CUDA kernel function.
+class CUDAKernelCallExpr : public CallExpr {
+private:
+  enum { CONFIG, END_PREARG };
+
+public:
+  CUDAKernelCallExpr(ASTContext &C, Expr *fn, CallExpr *Config,
+                     Expr **args, unsigned numargs, QualType t,
+                     ExprValueKind VK, SourceLocation RP)
+    : CallExpr(C, CUDAKernelCallExprClass, fn, END_PREARG, args, numargs, t, VK,
+               RP) {
+    setConfig(Config);
+  }
+
+  CUDAKernelCallExpr(ASTContext &C, EmptyShell Empty)
+    : CallExpr(C, CUDAKernelCallExprClass, END_PREARG, Empty) { }
+
+  const CallExpr *getConfig() const {
+    return cast_or_null<CallExpr>(getPreArg(CONFIG));
+  }
+  CallExpr *getConfig() { return cast_or_null<CallExpr>(getPreArg(CONFIG)); }
+  void setConfig(CallExpr *E) { setPreArg(CONFIG, E); }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CUDAKernelCallExprClass;
+  }
+  static bool classof(const CUDAKernelCallExpr *) { return true; }
+};
+
 /// CXXNamedCastExpr - Abstract class common to all of the C++ "named"
 /// casts, @c static_cast, @c dynamic_cast, @c reinterpret_cast, or @c
 /// const_cast.

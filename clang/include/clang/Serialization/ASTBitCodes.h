@@ -949,7 +949,11 @@ namespace clang {
       
       EXPR_PACK_EXPANSION,        // PackExpansionExpr
       EXPR_SIZEOF_PACK,           // SizeOfPackExpr
-      EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK // SubstNonTypeTemplateParmPackExpr
+      EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK,// SubstNonTypeTemplateParmPackExpr
+
+      // CUDA
+
+      EXPR_CUDA_KERNEL_CALL       // CUDAKernelCallExpr
     };
 
     /// \brief The kinds of designators that can occur in a
