@@ -20,6 +20,15 @@ UsedOcamLibs := llvm llvm_analysis llvm_executionengine llvm_target \
 
 OCAMLCFLAGS += -pp camlp4of
 
+OcamlSources1 = \
+	$(PROJ_SRC_DIR)/ast.ml \
+	$(PROJ_SRC_DIR)/parser.ml \
+	$(PROJ_SRC_DIR)/codegen.ml \
+	$(PROJ_SRC_DIR)/lexer.ml \
+	$(PROJ_SRC_DIR)/token.ml \
+	$(PROJ_SRC_DIR)/toplevel.ml \
+	$(PROJ_SRC_DIR)/toy.ml
+
 ExcludeSources = $(PROJ_SRC_DIR)/myocamlbuild.ml
 
 include $(LEVEL)/bindings/ocaml/Makefile.ocaml

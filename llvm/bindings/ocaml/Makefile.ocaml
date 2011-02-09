@@ -73,8 +73,13 @@ Archive.EXE := $(strip $(OCAMLC) -cc $(CXX) $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG:%=%.
 endif
 
 # Source files
+ifndef OcamlSources1
 OcamlSources1 := $(sort $(wildcard $(PROJ_SRC_DIR)/*.ml))
+endif
+
+ifndef OcamlHeaders1
 OcamlHeaders1 := $(sort $(wildcard $(PROJ_SRC_DIR)/*.mli))
+endif
 
 OcamlSources2 := $(filter-out $(ExcludeSources),$(OcamlSources1))
 OcamlHeaders2 := $(filter-out $(ExcludeHeaders),$(OcamlHeaders1))
@@ -352,11 +357,11 @@ $(OutputEXE): $(ToolEXE) $(OcamlDir)/.dir
 ifndef OCAMLOPT
 $(ToolEXE): $(ObjectsCMO) $(OcamlDir)/.dir
 	$(Echo) "Archiving $(notdir $@) for $(BuildMode) build"
-	$(Verb) $(Archive.EXE) $@ $<
+	$(Verb) $(Archive.EXE) $@ $(ObjectsCMO)
 else
 $(ToolEXE): $(ObjectsCMX) $(OcamlDir)/.dir
 	$(Echo) "Archiving $(notdir $@) for $(BuildMode) build"
-	$(Verb) $(Archive.EXE) $@ $<
+	$(Verb) $(Archive.EXE) $@ $(ObjectsCMX)
 endif
 endif
 
