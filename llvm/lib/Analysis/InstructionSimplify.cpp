@@ -1814,22 +1814,22 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
                             unsigned MaxRecurse) {
   switch (Opcode) {
   case Instruction::Add:
-    return SimplifyAddInst(LHS, RHS, /* isNSW */ false, /* isNUW */ false,
+    return SimplifyAddInst(LHS, RHS, /*isNSW*/false, /*isNUW*/false,
                            TD, DT, MaxRecurse);
   case Instruction::Sub:
-    return SimplifySubInst(LHS, RHS, /* isNSW */ false, /* isNUW */ false,
+    return SimplifySubInst(LHS, RHS, /*isNSW*/false, /*isNUW*/false,
                            TD, DT, MaxRecurse);
   case Instruction::Mul:  return SimplifyMulInst (LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::SDiv: return SimplifySDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::UDiv: return SimplifyUDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::FDiv: return SimplifyFDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::Shl:
-    return SimplifyShlInst(LHS, RHS, /*NSW*/false, /*NUW*/false,
+    return SimplifyShlInst(LHS, RHS, /*isNSW*/false, /*isNUW*/false,
                            TD, DT, MaxRecurse);
   case Instruction::LShr:
-    return SimplifyLShrInst(LHS, RHS, /*isexact*/ false, TD, DT, MaxRecurse);
+    return SimplifyLShrInst(LHS, RHS, /*isExact*/false, TD, DT, MaxRecurse);
   case Instruction::AShr:
-    return SimplifyAShrInst(LHS, RHS, /*isexact*/false, TD, DT, MaxRecurse);
+    return SimplifyAShrInst(LHS, RHS, /*isExact*/false, TD, DT, MaxRecurse);
   case Instruction::And: return SimplifyAndInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::Or:  return SimplifyOrInst (LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::Xor: return SimplifyXorInst(LHS, RHS, TD, DT, MaxRecurse);
