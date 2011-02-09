@@ -143,7 +143,8 @@ int main(int argc, char **argv) {
                        /* TrimGraph */ false, /* InlineCall */ true, 
                        /* UseUnoptimizedCFG */ false,
                        /* addImplicitDtors */ true,
-                       /* addInitializers */ false);
+                       /* addInitializers */ false,
+                       /* reclaimeNodes */ true);
 
   TransferFuncs* TF = MakeCFRefCountTF(AMgr.getASTContext(), /*GC*/false,
                                          AMgr.getLangOptions());
