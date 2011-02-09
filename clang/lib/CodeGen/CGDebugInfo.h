@@ -178,7 +178,7 @@ public:
   /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
   /// variable declaration.
   void EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
-                                CGBuilderTy &Builder);
+                                CGBuilderTy &Builder, bool IndirectArg = false);
 
   /// EmitGlobalVariable - Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *Decl);
@@ -194,7 +194,7 @@ public:
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
-                   CGBuilderTy &Builder);
+                   CGBuilderTy &Builder, bool IndirectArgument = false);
 
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable
   /// declaration from an enclosing block.

@@ -898,7 +898,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           V = EmitScalarConversion(V, Ty, Arg->getType());
         }
       }
-      EmitParmDecl(*Arg, V);
+      EmitParmDecl(*Arg, V, true /*ABIArgInfo::Indirect*/);
       break;
     }
 

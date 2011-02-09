@@ -1735,7 +1735,8 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
 
 /// EmitDeclare - Emit local variable declaration debug info.
 void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
-                              llvm::Value *Storage, CGBuilderTy &Builder) {
+                              llvm::Value *Storage, CGBuilderTy &Builder,
+                              bool IndirectArgument) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
@@ -1750,6 +1751,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   // for this variable.
   if (!Ty)
     return;
+
+  // If an aggregate variable has non trivial destructor or non trivial copy
+  // constructor than it is pass indirectly. Let debug info know about this
+  // by using reference of the aggregate type as a argument type.
+  if (IndirectArgument && VD->getType()->isRecordType())
+    Ty = DBuilder.CreateReferenceType(Ty);
 
   // Get location information.
   unsigned Line = getLineNumber(VD->getLocation());
@@ -1911,8 +1918,10 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
 /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
 /// variable declaration.
 void CGDebugInfo::EmitDeclareOfArgVariable(const VarDecl *VD, llvm::Value *AI,
-                                           CGBuilderTy &Builder) {
-  EmitDeclare(VD, llvm::dwarf::DW_TAG_arg_variable, AI, Builder);
+                                           CGBuilderTy &Builder, 
+                                           bool IndirectArgument) {
+  EmitDeclare(VD, llvm::dwarf::DW_TAG_arg_variable, AI, Builder, 
+              IndirectArgument);
 }
 
 
