@@ -52,6 +52,7 @@ void SplitAnalysis::clear() {
   UsingInstrs.clear();
   UsingBlocks.clear();
   UsingLoops.clear();
+  LiveBlocks.clear();
   CurLI = 0;
 }
 
@@ -81,10 +82,95 @@ void SplitAnalysis::analyzeUses() {
       UsingLoops[Loop]++;
   }
   array_pod_sort(UseSlots.begin(), UseSlots.end());
+  calcLiveBlockInfo();
   DEBUG(dbgs() << "  counted "
                << UsingInstrs.size() << " instrs, "
                << UsingBlocks.size() << " blocks, "
                << UsingLoops.size()  << " loops.\n");
+}
+
+/// calcLiveBlockInfo - Fill the LiveBlocks array with information about blocks
+/// where CurLI is live.
+void SplitAnalysis::calcLiveBlockInfo() {
+  if (CurLI->empty())
+    return;
+
+  LiveInterval::const_iterator LVI = CurLI->begin();
+  LiveInterval::const_iterator LVE = CurLI->end();
+
+  SmallVectorImpl<SlotIndex>::const_iterator UseI, UseE;
+  UseI = UseSlots.begin();
+  UseE = UseSlots.end();
+
+  // Loop over basic blocks where CurLI is live.
+  MachineFunction::iterator MFI = LIS.getMBBFromIndex(LVI->start);
+  for (;;) {
+    BlockInfo BI;
+    BI.MBB = MFI;
+    SlotIndex Start, Stop;
+    tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
+
+    // The last split point is the latest possible insertion point that dominates
+    // all successor blocks. If interference reaches LastSplitPoint, it is not
+    // possible to insert a split or reload that makes CurLI live in the
+    // outgoing bundle.
+    MachineBasicBlock::iterator LSP = LIS.getLastSplitPoint(*CurLI, BI.MBB);
+    if (LSP == BI.MBB->end())
+      BI.LastSplitPoint = Stop;
+    else
+      BI.LastSplitPoint = LIS.getInstructionIndex(LSP);
+
+    // LVI is the first live segment overlapping MBB.
+    BI.LiveIn = LVI->start <= Start;
+    if (!BI.LiveIn)
+      BI.Def = LVI->start;
+
+    // Find the first and last uses in the block.
+    BI.Uses = hasUses(MFI);
+    if (BI.Uses && UseI != UseE) {
+      BI.FirstUse = *UseI;
+      assert(BI.FirstUse >= Start);
+      do ++UseI;
+      while (UseI != UseE && *UseI < Stop);
+      BI.LastUse = UseI[-1];
+      assert(BI.LastUse < Stop);
+    }
+
+    // Look for gaps in the live range.
+    bool hasGap = false;
+    BI.LiveOut = true;
+    while (LVI->end < Stop) {
+      SlotIndex LastStop = LVI->end;
+      if (++LVI == LVE || LVI->start >= Stop) {
+        BI.Kill = LastStop;
+        BI.LiveOut = false;
+        break;
+      }
+      if (LastStop < LVI->start) {
+        hasGap = true;
+        BI.Kill = LastStop;
+        BI.Def = LVI->start;
+      }
+    }
+
+    // Don't set LiveThrough when the block has a gap.
+    BI.LiveThrough = !hasGap && BI.LiveIn && BI.LiveOut;
+    LiveBlocks.push_back(BI);
+
+    // LVI is now at LVE or LVI->end >= Stop.
+    if (LVI == LVE)
+      break;
+
+    // Live segment ends exactly at Stop. Move to the next segment.
+    if (LVI->end == Stop && ++LVI == LVE)
+      break;
+
+    // Pick the next basic block.
+    if (LVI->start < Stop)
+      ++MFI;
+    else
+      MFI = LIS.getMBBFromIndex(LVI->start);
+  }
 }
 
 void SplitAnalysis::print(const BlockPtrSet &B, raw_ostream &OS) const {

@@ -870,7 +870,7 @@ void LiveIntervals::shrinkToUses(LiveInterval *li) {
 
 MachineBasicBlock::iterator
 LiveIntervals::getLastSplitPoint(const LiveInterval &li,
-                                 MachineBasicBlock *mbb) {
+                                 MachineBasicBlock *mbb) const {
   const MachineBasicBlock *lpad = mbb->getLandingPadSuccessor();
 
   // If li is not live into a landing pad, we can insert spill code before the

@@ -318,7 +318,7 @@ namespace llvm {
     /// spilling and splitting code. This is the first terminator, or the call
     /// instruction if li is live into a landing pad successor.
     MachineBasicBlock::iterator getLastSplitPoint(const LiveInterval &li,
-                                                  MachineBasicBlock *mbb);
+                                                  MachineBasicBlock *mbb) const;
 
     /// addKillFlags - Add kill flags to any instruction that kills a virtual
     /// register.

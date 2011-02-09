@@ -63,12 +63,47 @@ public:
   typedef DenseMap<const MachineLoop*, unsigned> LoopCountMap;
   LoopCountMap UsingLoops;
 
+  /// Additional information about basic blocks where the current variable is
+  /// live. Such a block will look like one of these templates:
+  ///
+  ///  1. |   o---x   | Internal to block. Variable is only live in this block.
+  ///  2. |---x       | Live-in, kill.
+  ///  3. |       o---| Def, live-out.
+  ///  4. |---x   o---| Live-in, kill, def, live-out.
+  ///  5. |---o---o---| Live-through with uses or defs.
+  ///  6. |-----------| Live-through without uses. Transparent.
+  ///
+  struct BlockInfo {
+    MachineBasicBlock *MBB;
+    SlotIndex FirstUse;   ///< First instr using current reg.
+    SlotIndex LastUse;    ///< Last instr using current reg.
+    SlotIndex Kill;       ///< Interval end point inside block.
+    SlotIndex Def;        ///< Interval start point inside block.
+    /// Last possible point for splitting live ranges.
+    SlotIndex LastSplitPoint;
+    bool Uses;            ///< Current reg has uses or defs in block.
+    bool LiveThrough;     ///< Live in whole block (Templ 5. or 6. above).
+    bool LiveIn;          ///< Current reg is live in.
+    bool LiveOut;         ///< Current reg is live out.
+
+    // Per-interference pattern scratch data.
+    bool OverlapEntry;    ///< Interference overlaps entering interval.
+    bool OverlapExit;     ///< Interference overlaps exiting interval.
+  };
+
+  /// Basic blocks where var is live. This array is parallel to
+  /// SpillConstraints.
+  SmallVector<BlockInfo, 8> LiveBlocks;
+
 private:
   // Current live interval.
   const LiveInterval *CurLI;
 
   // Sumarize statistics by counting instructions using CurLI.
   void analyzeUses();
+
+  /// calcLiveBlockInfo - Compute per-block information about CurLI.
+  void calcLiveBlockInfo();
 
   /// canAnalyzeBranch - Return true if MBB ends in a branch that can be
   /// analyzed.
