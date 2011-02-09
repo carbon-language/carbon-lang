@@ -521,29 +521,29 @@ public:
         return Insert(Folder.CreateFMul(LC, RC), Name);
     return Insert(BinaryOperator::CreateFMul(LHS, RHS), Name);
   }
-  Value *CreateUDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateUDiv(Value *LHS, Value *RHS, const Twine &Name = "",
+                    bool isExact = false) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Insert(Folder.CreateUDiv(LC, RC), Name);
-    return Insert(BinaryOperator::CreateUDiv(LHS, RHS), Name);
-  }
-  Value *CreateExactUDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Insert(Folder.CreateExactUDiv(LC, RC), Name);
+        return Insert(Folder.CreateUDiv(LC, RC, isExact), Name);
+    if (!isExact)
+      return Insert(BinaryOperator::CreateUDiv(LHS, RHS), Name);
     return Insert(BinaryOperator::CreateExactUDiv(LHS, RHS), Name);
   }
-  Value *CreateSDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateExactUDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
+    return CreateUDiv(LHS, RHS, Name, true);
+  }
+  Value *CreateSDiv(Value *LHS, Value *RHS, const Twine &Name = "",
+                    bool isExact = false) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Insert(Folder.CreateSDiv(LC, RC), Name);
-    return Insert(BinaryOperator::CreateSDiv(LHS, RHS), Name);
+        return Insert(Folder.CreateSDiv(LC, RC, isExact), Name);
+    if (!isExact)
+      return Insert(BinaryOperator::CreateSDiv(LHS, RHS), Name);
+    return Insert(BinaryOperator::CreateExactSDiv(LHS, RHS), Name);
   }
   Value *CreateExactSDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Insert(Folder.CreateExactSDiv(LC, RC), Name);
-    return Insert(BinaryOperator::CreateExactSDiv(LHS, RHS), Name);
+    return CreateSDiv(LHS, RHS, Name, true);
   }
   Value *CreateFDiv(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
@@ -577,54 +577,46 @@ public:
     return Insert(BinaryOperator::CreateShl(LHS, RHS), Name);
   }
   Value *CreateShl(Value *LHS, const APInt &RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateShl(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateShl(LHS, RHSC), Name);
+    return CreateShl(LHS, ConstantInt::get(LHS->getType(), RHS), Name);
   }
   Value *CreateShl(Value *LHS, uint64_t RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateShl(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateShl(LHS, RHSC), Name);
+    return CreateShl(LHS, ConstantInt::get(LHS->getType(), RHS), Name);
   }
 
-  Value *CreateLShr(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateLShr(Value *LHS, Value *RHS, const Twine &Name = "",
+                    bool isExact = false) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Insert(Folder.CreateLShr(LC, RC), Name);
-    return Insert(BinaryOperator::CreateLShr(LHS, RHS), Name);
+        return Insert(Folder.CreateLShr(LC, RC, isExact), Name);
+    if (!isExact)
+      return Insert(BinaryOperator::CreateLShr(LHS, RHS), Name);
+    return Insert(BinaryOperator::CreateExactLShr(LHS, RHS), Name);
   }
-  Value *CreateLShr(Value *LHS, const APInt &RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateLShr(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateLShr(LHS, RHSC), Name);
+  Value *CreateLShr(Value *LHS, const APInt &RHS, const Twine &Name = "",
+                    bool isExact = false) {
+    return CreateLShr(LHS, ConstantInt::get(LHS->getType(), RHS), Name,isExact);
   }
-  Value *CreateLShr(Value *LHS, uint64_t RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateLShr(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateLShr(LHS, RHSC), Name);
+  Value *CreateLShr(Value *LHS, uint64_t RHS, const Twine &Name = "",
+                    bool isExact = false) {
+    return CreateLShr(LHS, ConstantInt::get(LHS->getType(), RHS), Name,isExact);
   }
 
-  Value *CreateAShr(Value *LHS, Value *RHS, const Twine &Name = "") {
+  Value *CreateAShr(Value *LHS, Value *RHS, const Twine &Name = "",
+                    bool isExact = false) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Insert(Folder.CreateAShr(LC, RC), Name);
-    return Insert(BinaryOperator::CreateAShr(LHS, RHS), Name);
+        return Insert(Folder.CreateAShr(LC, RC, isExact), Name);
+    if (!isExact)
+      return Insert(BinaryOperator::CreateAShr(LHS, RHS), Name);
+    return Insert(BinaryOperator::CreateExactAShr(LHS, RHS), Name);
   }
-  Value *CreateAShr(Value *LHS, const APInt &RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateAShr(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateAShr(LHS, RHSC), Name);
+  Value *CreateAShr(Value *LHS, const APInt &RHS, const Twine &Name = "",
+                    bool isExact = false) {
+    return CreateAShr(LHS, ConstantInt::get(LHS->getType(), RHS), Name,isExact);
   }
-  Value *CreateAShr(Value *LHS, uint64_t RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateAShr(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateAShr(LHS, RHSC), Name);
+  Value *CreateAShr(Value *LHS, uint64_t RHS, const Twine &Name = "",
+                    bool isExact = false) {
+    return CreateAShr(LHS, ConstantInt::get(LHS->getType(), RHS), Name,isExact);
   }
 
   Value *CreateAnd(Value *LHS, Value *RHS, const Twine &Name = "") {
@@ -637,16 +629,10 @@ public:
     return Insert(BinaryOperator::CreateAnd(LHS, RHS), Name);
   }
   Value *CreateAnd(Value *LHS, const APInt &RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateAnd(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateAnd(LHS, RHSC), Name);
+    return CreateAnd(LHS, ConstantInt::get(LHS->getType(), RHS), Name);
   }
   Value *CreateAnd(Value *LHS, uint64_t RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateAnd(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateAnd(LHS, RHSC), Name);
+    return CreateAnd(LHS, ConstantInt::get(LHS->getType(), RHS), Name);
   }
 
   Value *CreateOr(Value *LHS, Value *RHS, const Twine &Name = "") {
@@ -659,16 +645,10 @@ public:
     return Insert(BinaryOperator::CreateOr(LHS, RHS), Name);
   }
   Value *CreateOr(Value *LHS, const APInt &RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateOr(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateOr(LHS, RHSC), Name);
+    return CreateOr(LHS, ConstantInt::get(LHS->getType(), RHS), Name);
   }
   Value *CreateOr(Value *LHS, uint64_t RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateOr(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateOr(LHS, RHSC), Name);
+    return CreateOr(LHS, ConstantInt::get(LHS->getType(), RHS), Name);
   }
 
   Value *CreateXor(Value *LHS, Value *RHS, const Twine &Name = "") {
@@ -678,16 +658,10 @@ public:
     return Insert(BinaryOperator::CreateXor(LHS, RHS), Name);
   }
   Value *CreateXor(Value *LHS, const APInt &RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateXor(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateXor(LHS, RHSC), Name);
+    return CreateXor(LHS, ConstantInt::get(LHS->getType(), RHS), Name);
   }
   Value *CreateXor(Value *LHS, uint64_t RHS, const Twine &Name = "") {
-    Constant *RHSC = ConstantInt::get(LHS->getType(), RHS);
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      return Insert(Folder.CreateXor(LC, RHSC), Name);
-    return Insert(BinaryOperator::CreateXor(LHS, RHSC), Name);
+    return CreateXor(LHS, ConstantInt::get(LHS->getType(), RHS), Name);
   }
 
   Value *CreateBinOp(Instruction::BinaryOps Opc,

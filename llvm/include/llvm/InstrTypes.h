@@ -194,174 +194,92 @@ public:
   }
 #include "llvm/Instruction.def"
 
-
-  /// CreateNSWAdd - Create an Add operator with the NSW flag set.
-  ///
-  static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
-                                      const Twine &Name = "") {
-    BinaryOperator *BO = CreateAdd(V1, V2, Name);
+  static BinaryOperator *CreateNSW(BinaryOps Opc, Value *V1, Value *V2,
+                                   const Twine &Name = "") {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name);
     BO->setHasNoSignedWrap(true);
     return BO;
   }
-  static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
-                                      const Twine &Name, BasicBlock *BB) {
-    BinaryOperator *BO = CreateAdd(V1, V2, Name, BB);
+  static BinaryOperator *CreateNSW(BinaryOps Opc, Value *V1, Value *V2,
+                                   const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name, BB);
     BO->setHasNoSignedWrap(true);
     return BO;
   }
-  static BinaryOperator *CreateNSWAdd(Value *V1, Value *V2,
-                                      const Twine &Name, Instruction *I) {
-    BinaryOperator *BO = CreateAdd(V1, V2, Name, I);
+  static BinaryOperator *CreateNSW(BinaryOps Opc, Value *V1, Value *V2,
+                                   const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name, I);
     BO->setHasNoSignedWrap(true);
     return BO;
   }
-
-  /// CreateNUWAdd - Create an Add operator with the NUW flag set.
-  ///
-  static BinaryOperator *CreateNUWAdd(Value *V1, Value *V2,
-                                      const Twine &Name = "") {
-    BinaryOperator *BO = CreateAdd(V1, V2, Name);
+  
+  static BinaryOperator *CreateNUW(BinaryOps Opc, Value *V1, Value *V2,
+                                   const Twine &Name = "") {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name);
     BO->setHasNoUnsignedWrap(true);
     return BO;
   }
-  static BinaryOperator *CreateNUWAdd(Value *V1, Value *V2,
-                                      const Twine &Name, BasicBlock *BB) {
-    BinaryOperator *BO = CreateAdd(V1, V2, Name, BB);
+  static BinaryOperator *CreateNUW(BinaryOps Opc, Value *V1, Value *V2,
+                                   const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name, BB);
     BO->setHasNoUnsignedWrap(true);
     return BO;
   }
-  static BinaryOperator *CreateNUWAdd(Value *V1, Value *V2,
-                                      const Twine &Name, Instruction *I) {
-    BinaryOperator *BO = CreateAdd(V1, V2, Name, I);
+  static BinaryOperator *CreateNUW(BinaryOps Opc, Value *V1, Value *V2,
+                                   const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name, I);
     BO->setHasNoUnsignedWrap(true);
     return BO;
   }
-
-  /// CreateNSWSub - Create an Sub operator with the NSW flag set.
-  ///
-  static BinaryOperator *CreateNSWSub(Value *V1, Value *V2,
-                                      const Twine &Name = "") {
-    BinaryOperator *BO = CreateSub(V1, V2, Name);
-    BO->setHasNoSignedWrap(true);
-    return BO;
-  }
-  static BinaryOperator *CreateNSWSub(Value *V1, Value *V2,
-                                      const Twine &Name, BasicBlock *BB) {
-    BinaryOperator *BO = CreateSub(V1, V2, Name, BB);
-    BO->setHasNoSignedWrap(true);
-    return BO;
-  }
-  static BinaryOperator *CreateNSWSub(Value *V1, Value *V2,
-                                      const Twine &Name, Instruction *I) {
-    BinaryOperator *BO = CreateSub(V1, V2, Name, I);
-    BO->setHasNoSignedWrap(true);
-    return BO;
-  }
-
-  /// CreateNUWSub - Create an Sub operator with the NUW flag set.
-  ///
-  static BinaryOperator *CreateNUWSub(Value *V1, Value *V2,
-                                      const Twine &Name = "") {
-    BinaryOperator *BO = CreateSub(V1, V2, Name);
-    BO->setHasNoUnsignedWrap(true);
-    return BO;
-  }
-  static BinaryOperator *CreateNUWSub(Value *V1, Value *V2,
-                                      const Twine &Name, BasicBlock *BB) {
-    BinaryOperator *BO = CreateSub(V1, V2, Name, BB);
-    BO->setHasNoUnsignedWrap(true);
-    return BO;
-  }
-  static BinaryOperator *CreateNUWSub(Value *V1, Value *V2,
-                                      const Twine &Name, Instruction *I) {
-    BinaryOperator *BO = CreateSub(V1, V2, Name, I);
-    BO->setHasNoUnsignedWrap(true);
-    return BO;
-  }
-
-  /// CreateNSWMul - Create a Mul operator with the NSW flag set.
-  ///
-  static BinaryOperator *CreateNSWMul(Value *V1, Value *V2,
-                                      const Twine &Name = "") {
-    BinaryOperator *BO = CreateMul(V1, V2, Name);
-    BO->setHasNoSignedWrap(true);
-    return BO;
-  }
-  static BinaryOperator *CreateNSWMul(Value *V1, Value *V2,
-                                      const Twine &Name, BasicBlock *BB) {
-    BinaryOperator *BO = CreateMul(V1, V2, Name, BB);
-    BO->setHasNoSignedWrap(true);
-    return BO;
-  }
-  static BinaryOperator *CreateNSWMul(Value *V1, Value *V2,
-                                      const Twine &Name, Instruction *I) {
-    BinaryOperator *BO = CreateMul(V1, V2, Name, I);
-    BO->setHasNoSignedWrap(true);
-    return BO;
-  }
-
-  /// CreateNUWMul - Create a Mul operator with the NUW flag set.
-  ///
-  static BinaryOperator *CreateNUWMul(Value *V1, Value *V2,
-                                      const Twine &Name = "") {
-    BinaryOperator *BO = CreateMul(V1, V2, Name);
-    BO->setHasNoUnsignedWrap(true);
-    return BO;
-  }
-  static BinaryOperator *CreateNUWMul(Value *V1, Value *V2,
-                                      const Twine &Name, BasicBlock *BB) {
-    BinaryOperator *BO = CreateMul(V1, V2, Name, BB);
-    BO->setHasNoUnsignedWrap(true);
-    return BO;
-  }
-  static BinaryOperator *CreateNUWMul(Value *V1, Value *V2,
-                                      const Twine &Name, Instruction *I) {
-    BinaryOperator *BO = CreateMul(V1, V2, Name, I);
-    BO->setHasNoUnsignedWrap(true);
-    return BO;
-  }
-
-  /// CreateExactUDiv - Create a UDiv operator with the exact flag set.
-  ///
-  static BinaryOperator *CreateExactUDiv(Value *V1, Value *V2,
-                                         const Twine &Name = "") {
-    BinaryOperator *BO = CreateUDiv(V1, V2, Name);
+  
+  static BinaryOperator *CreateExact(BinaryOps Opc, Value *V1, Value *V2,
+                                     const Twine &Name = "") {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name);
     BO->setIsExact(true);
     return BO;
   }
-  static BinaryOperator *CreateExactUDiv(Value *V1, Value *V2,
-                                         const Twine &Name, BasicBlock *BB) {
-    BinaryOperator *BO = CreateUDiv(V1, V2, Name, BB);
+  static BinaryOperator *CreateExact(BinaryOps Opc, Value *V1, Value *V2,
+                                     const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name, BB);
     BO->setIsExact(true);
     return BO;
   }
-  static BinaryOperator *CreateExactUDiv(Value *V1, Value *V2,
-                                         const Twine &Name, Instruction *I) {
-    BinaryOperator *BO = CreateUDiv(V1, V2, Name, I);
+  static BinaryOperator *CreateExact(BinaryOps Opc, Value *V1, Value *V2,
+                                     const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = Create(Opc, V1, V2, Name, I);
     BO->setIsExact(true);
     return BO;
   }
+  
+#define DEFINE_HELPERS(OPC, NUWNSWEXACT)                                     \
+  static BinaryOperator *Create ## NUWNSWEXACT ## OPC                        \
+           (Value *V1, Value *V2, const Twine &Name = "") {                  \
+    return Create ## NUWNSWEXACT(Instruction::OPC, V1, V2, Name);            \
+  }                                                                          \
+  static BinaryOperator *Create ## NUWNSWEXACT ## OPC                        \
+           (Value *V1, Value *V2, const Twine &Name, BasicBlock *BB) {       \
+    return Create ## NUWNSWEXACT(Instruction::OPC, V1, V2, Name, BB);        \
+  }                                                                          \
+  static BinaryOperator *Create ## NUWNSWEXACT ## OPC                        \
+           (Value *V1, Value *V2, const Twine &Name, Instruction *I) {       \
+    return Create ## NUWNSWEXACT(Instruction::OPC, V1, V2, Name, I);         \
+  }
+  
+  DEFINE_HELPERS(Add, NSW)  // CreateNSWAdd
+  DEFINE_HELPERS(Add, NUW)  // CreateNUWAdd
+  DEFINE_HELPERS(Sub, NSW)  // CreateNSWSub
+  DEFINE_HELPERS(Sub, NUW)  // CreateNUWSub
+  DEFINE_HELPERS(Mul, NSW)  // CreateNSWMul
+  DEFINE_HELPERS(Mul, NUW)  // CreateNUWMul
+  DEFINE_HELPERS(Shl, NSW)  // CreateNSWShl
+  DEFINE_HELPERS(Shl, NUW)  // CreateNUWShl
 
-  /// CreateExactSDiv - Create an SDiv operator with the exact flag set.
-  ///
-  static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
-                                         const Twine &Name = "") {
-    BinaryOperator *BO = CreateSDiv(V1, V2, Name);
-    BO->setIsExact(true);
-    return BO;
-  }
-  static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
-                                         const Twine &Name, BasicBlock *BB) {
-    BinaryOperator *BO = CreateSDiv(V1, V2, Name, BB);
-    BO->setIsExact(true);
-    return BO;
-  }
-  static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
-                                         const Twine &Name, Instruction *I) {
-    BinaryOperator *BO = CreateSDiv(V1, V2, Name, I);
-    BO->setIsExact(true);
-    return BO;
-  }
+  DEFINE_HELPERS(SDiv, Exact)  // CreateExactSDiv
+  DEFINE_HELPERS(UDiv, Exact)  // CreateExactUDiv
+  DEFINE_HELPERS(AShr, Exact)  // CreateExactAShr
+  DEFINE_HELPERS(LShr, Exact)  // CreateExactLShr
+
+#undef DEFINE_HELPERS
   
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:

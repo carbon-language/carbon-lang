@@ -41,18 +41,61 @@ bool match(Val *V, const Pattern &P) {
 }
 
 template<typename Class>
-struct leaf_ty {
+struct class_match {
   template<typename ITy>
   bool match(ITy *V) { return isa<Class>(V); }
 };
 
 /// m_Value() - Match an arbitrary value and ignore it.
-inline leaf_ty<Value> m_Value() { return leaf_ty<Value>(); }
+inline class_match<Value> m_Value() { return class_match<Value>(); }
 /// m_ConstantInt() - Match an arbitrary ConstantInt and ignore it.
-inline leaf_ty<ConstantInt> m_ConstantInt() { return leaf_ty<ConstantInt>(); }
+inline class_match<ConstantInt> m_ConstantInt() {
+  return class_match<ConstantInt>();
+}
+/// m_Undef() - Match an arbitrary undef constant.
+inline class_match<UndefValue> m_Undef() { return class_match<UndefValue>(); }
 
+inline class_match<Constant> m_Constant() { return class_match<Constant>(); }
+  
+struct match_zero {
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (const Constant *C = dyn_cast<Constant>(V))
+      return C->isNullValue();
+    return false;
+  }
+};
+  
+/// m_Zero() - Match an arbitrary zero/null constant.  This includes
+/// zero_initializer for vectors and ConstantPointerNull for pointers.
+inline match_zero m_Zero() { return match_zero(); }
+  
+  
+struct apint_match {
+  const APInt *&Res;
+  apint_match(const APInt *&R) : Res(R) {}
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      Res = &CI->getValue();
+      return true;
+    }
+    if (ConstantVector *CV = dyn_cast<ConstantVector>(V))
+      if (ConstantInt *CI = cast_or_null<ConstantInt>(CV->getSplatValue())) {
+        Res = &CI->getValue();
+        return true;
+      }
+    return false;
+  }
+};
+  
+/// m_APInt - Match a ConstantInt or splatted ConstantVector, binding the
+/// specified pointer to the contained APInt.
+inline apint_match m_APInt(const APInt *&Res) { return Res; }
+
+  
 template<int64_t Val>
-struct constantint_ty {
+struct constantint_match {
   template<typename ITy>
   bool match(ITy *V) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
@@ -68,79 +111,82 @@ struct constantint_ty {
   }
 };
 
-/// m_ConstantInt(int64_t) - Match a ConstantInt with a specific value
-/// and ignore it.
+/// m_ConstantInt<int64_t> - Match a ConstantInt with a specific value.
 template<int64_t Val>
-inline constantint_ty<Val> m_ConstantInt() {
-  return constantint_ty<Val>();
+inline constantint_match<Val> m_ConstantInt() {
+  return constantint_match<Val>();
 }
 
-struct undef_ty {
-  template<typename ITy>
-  bool match(ITy *V) {
-    return isa<UndefValue>(V);
-  }
-};
-
-/// m_Undef() - Match an arbitrary undef constant.
-inline undef_ty m_Undef() { return undef_ty(); }
-
-struct zero_ty {
-  template<typename ITy>
-  bool match(ITy *V) {
-    if (const Constant *C = dyn_cast<Constant>(V))
-      return C->isNullValue();
-    return false;
-  }
-};
-
-/// m_Zero() - Match an arbitrary zero/null constant.
-inline zero_ty m_Zero() { return zero_ty(); }
-
-struct one_ty {
+/// cst_pred_ty - This helper class is used to match scalar and vector constants
+/// that satisfy a specified predicate.
+template<typename Predicate>
+struct cst_pred_ty : public Predicate {
   template<typename ITy>
   bool match(ITy *V) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return CI->isOne();
+      return this->isValue(CI->getValue());
     if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
       if (ConstantInt *CI = cast_or_null<ConstantInt>(CV->getSplatValue()))
-        return CI->isOne();
+        return this->isValue(CI->getValue());
     return false;
   }
+};
+  
+/// api_pred_ty - This helper class is used to match scalar and vector constants
+/// that satisfy a specified predicate, and bind them to an APInt.
+template<typename Predicate>
+struct api_pred_ty : public Predicate {
+  const APInt *&Res;
+  api_pred_ty(const APInt *&R) : Res(R) {}
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
+      if (this->isValue(CI->getValue())) {
+        Res = &CI->getValue();
+        return true;
+      }
+    if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
+      if (ConstantInt *CI = cast_or_null<ConstantInt>(CV->getSplatValue()))
+        if (this->isValue(CI->getValue())) {
+          Res = &CI->getValue();
+          return true;
+        }
+    return false;
+  }
+};
+  
+  
+struct is_one {
+  bool isValue(const APInt &C) { return C == 1; }
 };
 
 /// m_One() - Match an integer 1 or a vector with all elements equal to 1.
-inline one_ty m_One() { return one_ty(); }
-  
-struct all_ones_ty {
-  template<typename ITy>
-  bool match(ITy *V) {
-    if (const ConstantInt *C = dyn_cast<ConstantInt>(V))
-      return C->isAllOnesValue();
-    if (const ConstantVector *C = dyn_cast<ConstantVector>(V))
-      return C->isAllOnesValue();
-    return false;
-  }
+inline cst_pred_ty<is_one> m_One() { return cst_pred_ty<is_one>(); }
+inline api_pred_ty<is_one> m_One(const APInt *&V) { return V; }
+    
+struct is_all_ones {
+  bool isValue(const APInt &C) { return C.isAllOnesValue(); }
 };
-
+  
 /// m_AllOnes() - Match an integer or vector with all bits set to true.
-inline all_ones_ty m_AllOnes() { return all_ones_ty(); }
+inline cst_pred_ty<is_all_ones> m_AllOnes() {return cst_pred_ty<is_all_ones>();}
+inline api_pred_ty<is_all_ones> m_AllOnes(const APInt *&V) { return V; }
 
-struct signbit_ty {
-  template<typename ITy>
-  bool match(ITy *V) {
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return CI->getValue().isSignBit();
-    if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
-      if (ConstantInt *CI = cast_or_null<ConstantInt>(CV->getSplatValue()))
-        return CI->getValue().isSignBit();
-    return false;
-  }
+struct is_sign_bit {
+  bool isValue(const APInt &C) { return C.isSignBit(); }
 };
 
 /// m_SignBit() - Match an integer or vector with only the sign bit(s) set.
-inline signbit_ty m_SignBit() { return signbit_ty(); }
+inline cst_pred_ty<is_sign_bit> m_SignBit() {return cst_pred_ty<is_sign_bit>();}
+inline api_pred_ty<is_sign_bit> m_SignBit(const APInt *&V) { return V; }
 
+struct is_power2 {
+  bool isValue(const APInt &C) { return C.isPowerOf2(); }
+};
+
+/// m_Power2() - Match an integer or vector power of 2.
+inline cst_pred_ty<is_power2> m_Power2() { return cst_pred_ty<is_power2>(); }
+inline api_pred_ty<is_power2> m_Power2(const APInt *&V) { return V; }
 
 template<typename Class>
 struct bind_ty {
@@ -163,6 +209,9 @@ inline bind_ty<Value> m_Value(Value *&V) { return V; }
 /// m_ConstantInt - Match a ConstantInt, capturing the value if we match.
 inline bind_ty<ConstantInt> m_ConstantInt(ConstantInt *&CI) { return CI; }
 
+/// m_Constant - Match a Constant, capturing the value if we match.
+inline bind_ty<Constant> m_Constant(Constant *&C) { return C; }
+
 /// specificval_ty - Match a specified Value*.
 struct specificval_ty {
   const Value *Val;
@@ -182,8 +231,7 @@ inline specificval_ty m_Specific(const Value *V) { return V; }
 // Matchers for specific binary operators.
 //
 
-template<typename LHS_t, typename RHS_t,
-         unsigned Opcode, typename ConcreteTy = BinaryOperator>
+template<typename LHS_t, typename RHS_t, unsigned Opcode>
 struct BinaryOp_match {
   LHS_t L;
   RHS_t R;
@@ -193,9 +241,8 @@ struct BinaryOp_match {
   template<typename OpTy>
   bool match(OpTy *V) {
     if (V->getValueID() == Value::InstructionVal + Opcode) {
-      ConcreteTy *I = cast<ConcreteTy>(V);
-      return I->getOpcode() == Opcode && L.match(I->getOperand(0)) &&
-             R.match(I->getOperand(1));
+      BinaryOperator *I = cast<BinaryOperator>(V);
+      return L.match(I->getOperand(0)) && R.match(I->getOperand(1));
     }
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       return CE->getOpcode() == Opcode && L.match(CE->getOperand(0)) &&
@@ -205,227 +252,156 @@ struct BinaryOp_match {
 };
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Add> m_Add(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::Add>
+m_Add(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Add>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::FAdd> m_FAdd(const LHS &L,
-                                                          const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::FAdd>
+m_FAdd(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::FAdd>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Sub> m_Sub(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::Sub>
+m_Sub(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Sub>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::FSub> m_FSub(const LHS &L,
-                                                          const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::FSub>
+m_FSub(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::FSub>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Mul> m_Mul(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::Mul>
+m_Mul(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Mul>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::FMul> m_FMul(const LHS &L,
-                                                          const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::FMul>
+m_FMul(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::FMul>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::UDiv> m_UDiv(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::UDiv>
+m_UDiv(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::UDiv>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::SDiv> m_SDiv(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::SDiv>
+m_SDiv(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::SDiv>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::FDiv> m_FDiv(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::FDiv>
+m_FDiv(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::FDiv>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::URem> m_URem(const LHS &L,
-                                                          const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::URem>
+m_URem(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::URem>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::SRem> m_SRem(const LHS &L,
-                                                          const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::SRem>
+m_SRem(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::SRem>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::FRem> m_FRem(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::FRem>
+m_FRem(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::FRem>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::And> m_And(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::And>
+m_And(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::And>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Or> m_Or(const LHS &L,
-                                                      const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::Or>
+m_Or(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Or>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Xor> m_Xor(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::Xor>
+m_Xor(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Xor>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Shl> m_Shl(const LHS &L,
-                                                        const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::Shl>
+m_Shl(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Shl>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::LShr> m_LShr(const LHS &L,
-                                                          const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::LShr>
+m_LShr(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::LShr>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::AShr> m_AShr(const LHS &L,
-                                                          const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::AShr>
+m_AShr(const LHS &L, const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::AShr>(L, R);
 }
 
 //===----------------------------------------------------------------------===//
-// Matchers for either AShr or LShr .. for convenience
+// Class that matches two different binary ops.
 //
-template<typename LHS_t, typename RHS_t, typename ConcreteTy = BinaryOperator>
-struct Shr_match {
+template<typename LHS_t, typename RHS_t, unsigned Opc1, unsigned Opc2>
+struct BinOp2_match {
   LHS_t L;
   RHS_t R;
 
-  Shr_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
+  BinOp2_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    if (V->getValueID() == Value::InstructionVal + Instruction::LShr ||
-        V->getValueID() == Value::InstructionVal + Instruction::AShr) {
-      ConcreteTy *I = cast<ConcreteTy>(V);
-      return (I->getOpcode() == Instruction::AShr ||
-              I->getOpcode() == Instruction::LShr) &&
-             L.match(I->getOperand(0)) &&
-             R.match(I->getOperand(1));
+    if (V->getValueID() == Value::InstructionVal + Opc1 ||
+        V->getValueID() == Value::InstructionVal + Opc2) {
+      BinaryOperator *I = cast<BinaryOperator>(V);
+      return L.match(I->getOperand(0)) && R.match(I->getOperand(1));
     }
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      return (CE->getOpcode() == Instruction::LShr ||
-              CE->getOpcode() == Instruction::AShr) &&
-             L.match(CE->getOperand(0)) &&
-             R.match(CE->getOperand(1));
+      return (CE->getOpcode() == Opc1 || CE->getOpcode() == Opc2) &&
+             L.match(CE->getOperand(0)) && R.match(CE->getOperand(1));
     return false;
   }
 };
 
+/// m_Shr - Matches LShr or AShr.
 template<typename LHS, typename RHS>
-inline Shr_match<LHS, RHS> m_Shr(const LHS &L, const RHS &R) {
-  return Shr_match<LHS, RHS>(L, R);
+inline BinOp2_match<LHS, RHS, Instruction::LShr, Instruction::AShr>
+m_Shr(const LHS &L, const RHS &R) {
+  return BinOp2_match<LHS, RHS, Instruction::LShr, Instruction::AShr>(L, R);
 }
 
-//===----------------------------------------------------------------------===//
-// Matchers for either SDiv or UDiv .. for convenience
-//
-template<typename LHS_t, typename RHS_t, typename ConcreteTy = BinaryOperator>
-struct Div_match {
-  LHS_t L;
-  RHS_t R;
-
-  Div_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
-
-  template<typename OpTy>
-  bool match(OpTy *V) {
-    if (V->getValueID() == Value::InstructionVal + Instruction::SDiv ||
-        V->getValueID() == Value::InstructionVal + Instruction::UDiv) {
-      ConcreteTy *I = cast<ConcreteTy>(V);
-      return (I->getOpcode() == Instruction::UDiv ||
-              I->getOpcode() == Instruction::SDiv) &&
-             L.match(I->getOperand(0)) &&
-             R.match(I->getOperand(1));
-    }
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      return (CE->getOpcode() == Instruction::SDiv ||
-              CE->getOpcode() == Instruction::UDiv) &&
-             L.match(CE->getOperand(0)) &&
-             R.match(CE->getOperand(1));
-    return false;
-  }
-};
-
+/// m_LogicalShift - Matches LShr or Shl.
 template<typename LHS, typename RHS>
-inline Div_match<LHS, RHS> m_Div(const LHS &L, const RHS &R) {
-  return Div_match<LHS, RHS>(L, R);
+inline BinOp2_match<LHS, RHS, Instruction::LShr, Instruction::Shl>
+m_LogicalShift(const LHS &L, const RHS &R) {
+  return BinOp2_match<LHS, RHS, Instruction::LShr, Instruction::Shl>(L, R);
 }
 
-//===----------------------------------------------------------------------===//
-// Matchers for binary classes
-//
-
-template<typename LHS_t, typename RHS_t, typename Class, typename OpcType>
-struct BinaryOpClass_match {
-  OpcType *Opcode;
-  LHS_t L;
-  RHS_t R;
-
-  BinaryOpClass_match(OpcType &Op, const LHS_t &LHS,
-                      const RHS_t &RHS)
-    : Opcode(&Op), L(LHS), R(RHS) {}
-  BinaryOpClass_match(const LHS_t &LHS, const RHS_t &RHS)
-    : Opcode(0), L(LHS), R(RHS) {}
-
-  template<typename OpTy>
-  bool match(OpTy *V) {
-    if (Class *I = dyn_cast<Class>(V))
-      if (L.match(I->getOperand(0)) &&
-          R.match(I->getOperand(1))) {
-        if (Opcode)
-          *Opcode = I->getOpcode();
-        return true;
-      }
-#if 0  // Doesn't handle constantexprs yet!
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      return CE->getOpcode() == Opcode && L.match(CE->getOperand(0)) &&
-             R.match(CE->getOperand(1));
-#endif
-    return false;
-  }
-};
-
+/// m_IDiv - Matches UDiv and SDiv.
 template<typename LHS, typename RHS>
-inline BinaryOpClass_match<LHS, RHS, BinaryOperator, Instruction::BinaryOps>
-m_Shift(Instruction::BinaryOps &Op, const LHS &L, const RHS &R) {
-  return BinaryOpClass_match<LHS, RHS,
-                             BinaryOperator, Instruction::BinaryOps>(Op, L, R);
-}
-
-template<typename LHS, typename RHS>
-inline BinaryOpClass_match<LHS, RHS, BinaryOperator, Instruction::BinaryOps>
-m_Shift(const LHS &L, const RHS &R) {
-  return BinaryOpClass_match<LHS, RHS,
-                             BinaryOperator, Instruction::BinaryOps>(L, R);
+inline BinOp2_match<LHS, RHS, Instruction::SDiv, Instruction::UDiv>
+m_IDiv(const LHS &L, const RHS &R) {
+  return BinOp2_match<LHS, RHS, Instruction::SDiv, Instruction::UDiv>(L, R);
 }
 
 //===----------------------------------------------------------------------===//
@@ -438,15 +414,13 @@ struct CmpClass_match {
   LHS_t L;
   RHS_t R;
 
-  CmpClass_match(PredicateTy &Pred, const LHS_t &LHS,
-                 const RHS_t &RHS)
+  CmpClass_match(PredicateTy &Pred, const LHS_t &LHS, const RHS_t &RHS)
     : Predicate(Pred), L(LHS), R(RHS) {}
 
   template<typename OpTy>
   bool match(OpTy *V) {
     if (Class *I = dyn_cast<Class>(V))
-      if (L.match(I->getOperand(0)) &&
-          R.match(I->getOperand(1))) {
+      if (L.match(I->getOperand(0)) && R.match(I->getOperand(1))) {
         Predicate = I->getPredicate();
         return true;
       }
@@ -501,11 +475,9 @@ m_Select(const Cond &C, const LHS &L, const RHS &R) {
 /// m_SelectCst - This matches a select of two constants, e.g.:
 ///    m_SelectCst<-1, 0>(m_Value(V))
 template<int64_t L, int64_t R, typename Cond>
-inline SelectClass_match<Cond, constantint_ty<L>, constantint_ty<R> >
+inline SelectClass_match<Cond, constantint_match<L>, constantint_match<R> >
 m_SelectCst(const Cond &C) {
-  return SelectClass_match<Cond, constantint_ty<L>,
-                           constantint_ty<R> >(C, m_ConstantInt<L>(),
-                                           m_ConstantInt<R>());
+  return m_Select(C, m_ConstantInt<L>(), m_ConstantInt<R>());
 }
 
 
@@ -589,12 +561,8 @@ private:
   bool matchIfNot(Value *LHS, Value *RHS) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
       return CI->isAllOnesValue() && L.match(LHS);
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(LHS))
-      return CI->isAllOnesValue() && L.match(RHS);
     if (ConstantVector *CV = dyn_cast<ConstantVector>(RHS))
       return CV->isAllOnesValue() && L.match(LHS);
-    if (ConstantVector *CV = dyn_cast<ConstantVector>(LHS))
-      return CV->isAllOnesValue() && L.match(RHS);
     return false;
   }
 };
@@ -621,11 +589,13 @@ struct neg_match {
   }
 private:
   bool matchIfNeg(Value *LHS, Value *RHS) {
-    return LHS == ConstantFP::getZeroValueForNegation(LHS->getType()) &&
-           L.match(RHS);
+    if (ConstantInt *C = dyn_cast<ConstantInt>(LHS))
+      return C->isZero() && L.match(RHS);
+    return false;
   }
 };
 
+/// m_Neg - Match an integer negate.
 template<typename LHS>
 inline neg_match<LHS> m_Neg(const LHS &L) { return L; }
 
@@ -644,23 +614,23 @@ struct fneg_match {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::FSub)
         return matchIfFNeg(CE->getOperand(0), CE->getOperand(1));
-    if (ConstantFP *CF = dyn_cast<ConstantFP>(V))
-      return L.match(ConstantExpr::getFNeg(CF));
     return false;
   }
 private:
   bool matchIfFNeg(Value *LHS, Value *RHS) {
-    return LHS == ConstantFP::getZeroValueForNegation(LHS->getType()) &&
-           L.match(RHS);
+    if (ConstantFP *C = dyn_cast<ConstantFP>(LHS))
+      return C->isNegativeZeroValue() && L.match(RHS);
+    return false;
   }
 };
 
+/// m_FNeg - Match a floating point negate.
 template<typename LHS>
 inline fneg_match<LHS> m_FNeg(const LHS &L) { return L; }
 
 
 //===----------------------------------------------------------------------===//
-// Matchers for control flow
+// Matchers for control flow.
 //
 
 template<typename Cond_t>
@@ -674,12 +644,10 @@ struct brc_match {
   template<typename OpTy>
   bool match(OpTy *V) {
     if (BranchInst *BI = dyn_cast<BranchInst>(V))
-      if (BI->isConditional()) {
-        if (Cond.match(BI->getCondition())) {
-          T = BI->getSuccessor(0);
-          F = BI->getSuccessor(1);
-          return true;
-        }
+      if (BI->isConditional() && Cond.match(BI->getCondition())) {
+        T = BI->getSuccessor(0);
+        F = BI->getSuccessor(1);
+        return true;
       }
     return false;
   }

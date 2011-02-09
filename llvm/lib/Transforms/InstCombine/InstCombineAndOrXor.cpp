@@ -1755,8 +1755,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   // (A >> B) | (C << D)  and  (A << B) | (B >> C)  -> bswap if possible.
   if (match(Op0, m_Or(m_Value(), m_Value())) ||
       match(Op1, m_Or(m_Value(), m_Value())) ||
-      (match(Op0, m_Shift(m_Value(), m_Value())) &&
-       match(Op1, m_Shift(m_Value(), m_Value())))) {
+      (match(Op0, m_LogicalShift(m_Value(), m_Value())) &&
+       match(Op1, m_LogicalShift(m_Value(), m_Value())))) {
     if (Instruction *BSwap = MatchBSwap(I))
       return BSwap;
   }
