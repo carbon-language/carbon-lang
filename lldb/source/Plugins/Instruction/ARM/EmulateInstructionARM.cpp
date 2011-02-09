@@ -1644,7 +1644,8 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
             uint32_t data = ReadMemoryUnsigned (context, base_address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
-            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+            // In ARMv5T and above, this is an interworking branch.
+            if (!LoadWritePC(context, data))
                 return false;
         }
                              
@@ -1770,7 +1771,8 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
             uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
-            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+            // In ARMv5T and above, this is an interworking branch.
+            if (!LoadWritePC(context, data))
                 return false;
         }
                   
@@ -1874,7 +1876,8 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
             uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
-            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+            // In ARMv5T and above, this is an interworking branch.
+            if (!LoadWritePC(context, data))
                 return false;
         }
                   
