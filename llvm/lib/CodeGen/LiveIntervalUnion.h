@@ -64,10 +64,12 @@ public:
 
 private:
   const unsigned RepReg;  // representative register number
+  unsigned Tag;           // unique tag for current contents.
   LiveSegments Segments;  // union of virtual reg segments
 
 public:
-  LiveIntervalUnion(unsigned r, Allocator &a) : RepReg(r), Segments(a) {}
+  LiveIntervalUnion(unsigned r, Allocator &a) : RepReg(r), Tag(0), Segments(a)
+    {}
 
   // Iterate over all segments in the union of live virtual registers ordered
   // by their starting position.
@@ -80,6 +82,12 @@ public:
   // Provide public access to the underlying map to allow overlap iteration.
   typedef LiveSegments Map;
   const Map &getMap() { return Segments; }
+
+  /// getTag - Return an opaque tag representing the current state of the union.
+  unsigned getTag() const { return Tag; }
+
+  /// changedSince - Return true if the union change since getTag returned tag.
+  bool changedSince(unsigned tag) const { return tag != Tag; }
 
   // Add a live virtual register to this union and merge its segments.
   void unify(LiveInterval &VirtReg);
@@ -155,6 +163,7 @@ public:
     bool CheckedFirstInterference;
     bool SeenAllInterferences;
     bool SeenUnspillableVReg;
+    unsigned Tag;
 
   public:
     Query(): LiveUnion(), VirtReg() {}
@@ -171,17 +180,19 @@ public:
       CheckedFirstInterference = false;
       SeenAllInterferences = false;
       SeenUnspillableVReg = false;
+      Tag = 0;
     }
 
     void init(LiveInterval *VReg, LiveIntervalUnion *LIU) {
       assert(VReg && LIU && "Invalid arguments");
-      if (VirtReg == VReg && LiveUnion == LIU) {
+      if (VirtReg == VReg && LiveUnion == LIU && !LIU->changedSince(Tag)) {
         // Retain cached results, e.g. firstInterference.
         return;
       }
       clear();
       LiveUnion = LIU;
       VirtReg = VReg;
+      Tag = LIU->getTag();
     }
 
     LiveInterval &virtReg() const {

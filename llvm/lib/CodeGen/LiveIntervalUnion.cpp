@@ -28,6 +28,7 @@ using namespace llvm;
 void LiveIntervalUnion::unify(LiveInterval &VirtReg) {
   if (VirtReg.empty())
     return;
+  ++Tag;
 
   // Insert each of the virtual register's live segments into the map.
   LiveInterval::iterator RegPos = VirtReg.begin();
@@ -46,6 +47,7 @@ void LiveIntervalUnion::unify(LiveInterval &VirtReg) {
 void LiveIntervalUnion::extract(LiveInterval &VirtReg) {
   if (VirtReg.empty())
     return;
+  ++Tag;
 
   // Remove each of the virtual register's live segments from the map.
   LiveInterval::iterator RegPos = VirtReg.begin();
