@@ -339,6 +339,12 @@
     on Visual C++ and Xcode,
     <tt>&quot;-sv&quot;</tt> on others.</dd>
 
+  <dt><b>LLVM_LIT_TOOLS_DIR</b>:STRING</dt>
+  <dd>The path to GnuWin32 tools for tests. Valid on Windows host.
+    Defaults to "", then Lit seeks tools according to %PATH%.
+    Lit can find tools(eg. grep, sort, &c) on LLVM_LIT_TOOLS_DIR at first,
+    without specifying GnuWin32 to %PATH%.</dd>
+
   <dt><b>LLVM_ENABLE_FFI</b>:BOOL</dt>
   <dd>Indicates whether LLVM Interpreter will be linked with Foreign
     Function Interface library. If the library or its headers are
@@ -364,7 +370,7 @@
   <p><tt>make check</tt></p>
 </div>
 
-<p>Testing is not supported on Visual Studio.</p>
+<p>On Visual Studio, you may run tests to build the project "check".</p>
 
 </div>
 

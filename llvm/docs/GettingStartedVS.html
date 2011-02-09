@@ -112,7 +112,8 @@
 
   <p>If you would like to run the LLVM tests you will need
   <a href="http://www.python.org/">Python</a>. Versions 2.4-2.7 are known to
-  work.</p>
+  work. You will need <a href="http://gnuwin32.sourceforge.net/">"GnuWin32"</a>
+  tools, too.</p>
 
   <p>Do not install the LLVM directory tree into a path containing spaces (e.g.
   C:\Documents and Settings\...) as the configure step will fail.</p>
@@ -191,6 +192,15 @@
     program will print the corresponding fibonacci value.</li>
   </ul></li>
 
+  <li>Test LLVM on Visual Studio:
+  <ul>
+    <li>If %PATH% does not contain GnuWin32, you may specify LLVM_LIT_TOOLS_DIR
+    on CMake for the path to GnuWin32.</li>
+    <li>You can run LLVM tests to build the project "check".</li>
+  </ul>
+  </li>
+
+  <!-- FIXME: Is it up-to-date? -->
   <li>Test LLVM:
   <ul>
     <li>The LLVM tests can be run by <tt>cd</tt>ing to the llvm source directory
