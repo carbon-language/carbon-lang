@@ -48,7 +48,7 @@ class TargetRegisterInfo;
     /// pointer.
     std::vector<const TargetRegisterClass*> Classes;
 
-    /// RegRegs - Map registers to all their references within a live range.
+    /// RegRefs - Map registers to all their references within a live range.
     std::multimap<unsigned, MachineOperand *> RegRefs;
     typedef std::multimap<unsigned, MachineOperand *>::const_iterator
       RegRefIter;
