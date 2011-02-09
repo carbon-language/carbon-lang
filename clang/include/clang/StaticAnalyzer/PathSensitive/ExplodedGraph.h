@@ -75,7 +75,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
     ExplodedNode *getNode() const {
       return reinterpret_cast<ExplodedNode*>(getPtr());
     }
-
+    
   public:
     NodeGroup() : P(0) {}
 
@@ -88,6 +88,8 @@ class ExplodedNode : public llvm::FoldingSetNode {
     bool empty() const { return (P & ~Mask) == 0; }
 
     void addNode(ExplodedNode* N, ExplodedGraph &G);
+
+    void replaceNode(ExplodedNode *node);
 
     void setFlag() {
       assert(P == 0);
@@ -208,6 +210,10 @@ public:
   };
 
   static void SetAuditor(Auditor* A);
+  
+private:
+  void replaceSuccessor(ExplodedNode *node) { Succs.replaceNode(node); }
+  void replacePredecessor(ExplodedNode *node) { Preds.replaceNode(node); }
 };
 
 // FIXME: Is this class necessary?
@@ -249,6 +255,15 @@ protected:
 
   /// NumNodes - The number of nodes in the graph.
   unsigned NumNodes;
+  
+  /// A list of recently allocated nodes that can potentially be recycled.
+  void *recentlyAllocatedNodes;
+  
+  /// A list of nodes that can be reused.
+  void *freeNodes;
+  
+  /// A flag that indicates whether nodes should be recycled.
+  bool reclaimNodes;
 
 public:
   /// getNode - Retrieve the node associated with a (Location,State) pair,
@@ -275,10 +290,10 @@ public:
     return V;
   }
 
-  ExplodedGraph() : NumNodes(0) {}
+  ExplodedGraph() : NumNodes(0), recentlyAllocatedNodes(0), freeNodes(0) {}
 
-  ~ExplodedGraph() {}
-
+  ~ExplodedGraph();
+  
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
 
@@ -332,6 +347,14 @@ public:
                               const ExplodedNode* const * NEnd,
                               InterExplodedGraphMap *M,
                     llvm::DenseMap<const void*, const void*> *InverseMap) const;
+
+  /// Enable tracking of recently allocated nodes for potential reclamation
+  /// when calling reclaimRecentlyAllocatedNodes().
+  void enableNodeReclamation() { reclaimNodes = true; }
+
+  /// Reclaim "uninteresting" nodes created since the last time this method
+  /// was called.
+  void reclaimRecentlyAllocatedNodes();
 };
 
 class ExplodedNodeSet {

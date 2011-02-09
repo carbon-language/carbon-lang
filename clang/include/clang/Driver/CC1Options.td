@@ -107,6 +107,8 @@ def analyzer_eagerly_assume : Flag<"-analyzer-eagerly-assume">,
   HelpText<"Eagerly assume the truth/falseness of some symbolic constraints">;
 def analyzer_no_purge_dead : Flag<"-analyzer-no-purge-dead">,
   HelpText<"Don't remove dead symbols, bindings, and constraints before processing a statement">;
+def analyzer_no_eagerly_trim_egraph : Flag<"-analyzer-no-eagerly-trim-egraph">,
+  HelpText<"Don't eagerly remove uninteresting ExplodedNodes from the ExplodedGraph">;
 def trim_egraph : Flag<"-trim-egraph">,
   HelpText<"Only show error-related paths in the analysis graph">;
 def analyzer_viz_egraph_graphviz : Flag<"-analyzer-viz-egraph-graphviz">,

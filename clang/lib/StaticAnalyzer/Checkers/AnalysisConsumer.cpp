@@ -194,7 +194,8 @@ public:
                                   Opts.PurgeDead, Opts.EagerlyAssume,
                                   Opts.TrimGraph, Opts.InlineCall,
                                   Opts.UnoptimizedCFG, Opts.CFGAddImplicitDtors,
-                                  Opts.CFGAddInitializers));
+                                  Opts.CFGAddInitializers,
+                                  Opts.EagerlyTrimEGraph));
   }
 
   virtual void HandleTranslationUnit(ASTContext &C);

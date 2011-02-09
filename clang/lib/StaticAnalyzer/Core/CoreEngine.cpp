@@ -783,7 +783,8 @@ void CallEnterNodeBuilder::generateNode(const GRState *state) {
                          OldMgr.shouldInlineCall(),
                      OldMgr.getAnalysisContextManager().getUseUnoptimizedCFG(),
                      OldMgr.getAnalysisContextManager().getAddImplicitDtors(),
-                     OldMgr.getAnalysisContextManager().getAddInitializers());
+                     OldMgr.getAnalysisContextManager().getAddInitializers(),
+                     OldMgr.shouldEagerlyTrimExplodedGraph());
     llvm::OwningPtr<TransferFuncs> TF(MakeCFRefCountTF(AMgr.getASTContext(),
                                                          /* GCEnabled */ false,
                                                         AMgr.getLangOptions()));

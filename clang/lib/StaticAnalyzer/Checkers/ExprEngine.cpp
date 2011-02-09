@@ -338,6 +338,11 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
   // FIXME: Eventually remove the TF object entirely.
   TF->RegisterChecks(*this);
   TF->RegisterPrinters(getStateManager().Printers);
+  
+  if (mgr.shouldEagerlyTrimExplodedGraph()) {
+    // Enable eager node reclaimation when constructing the ExplodedGraph.  
+    G.enableNodeReclamation();
+  }
 }
 
 ExprEngine::~ExprEngine() {
@@ -573,6 +578,8 @@ void ExprEngine::processCFGElement(const CFGElement E,
 }
 
 void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
+  // Reclaim any unnecessary nodes in the ExplodedGraph.
+  G.reclaimRecentlyAllocatedNodes();
   // Recycle any unused states in the GRStateManager.
   StateMgr.recycleUnusedStates();
   

@@ -80,6 +80,7 @@ public:
   unsigned UnoptimizedCFG : 1;
   unsigned CFGAddImplicitDtors : 1;
   unsigned CFGAddInitializers : 1;
+  unsigned EagerlyTrimEGraph : 1;
 
 public:
   AnalyzerOptions() {
@@ -103,6 +104,7 @@ public:
     UnoptimizedCFG = 0;
     CFGAddImplicitDtors = 0;
     CFGAddInitializers = 0;
+    EagerlyTrimEGraph = 0;
   }
 };
 

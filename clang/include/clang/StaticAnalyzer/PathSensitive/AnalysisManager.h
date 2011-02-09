@@ -69,6 +69,7 @@ class AnalysisManager : public BugReporterData {
   bool EagerlyAssume;
   bool TrimGraph;
   bool InlineCall;
+  bool EagerlyTrimEGraph;
 
 public:
   AnalysisManager(ASTContext &ctx, Diagnostic &diags, 
@@ -79,14 +80,16 @@ public:
                   unsigned maxnodes, unsigned maxvisit,
                   bool vizdot, bool vizubi, bool purge, bool eager, bool trim,
                   bool inlinecall, bool useUnoptimizedCFG,
-                  bool addImplicitDtors, bool addInitializers)
+                  bool addImplicitDtors, bool addInitializers,
+                  bool eagerlyTrimEGraph)
 
     : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
       Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),Idxer(idxer),
       AScope(ScopeDecl), MaxNodes(maxnodes), MaxVisit(maxvisit),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
-      EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall) {}
+      EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall),
+      EagerlyTrimEGraph(eagerlyTrimEGraph) {}
   
   ~AnalysisManager() { FlushDiagnostics(); }
   
@@ -145,6 +148,8 @@ public:
   bool shouldVisualize() const {
     return VisualizeEGDot || VisualizeEGUbi;
   }
+
+  bool shouldEagerlyTrimExplodedGraph() const { return EagerlyTrimEGraph; }
 
   bool shouldTrimGraph() const { return TrimGraph; }
 

@@ -78,6 +78,7 @@ private:
   void operator=(const GRState& R) const; // Do not implement.
 
   friend class GRStateManager;
+  friend class ExplodedGraph;
 
   llvm::PointerIntPair<GRStateManager *, 1, bool> stateMgr;
   Environment Env;           // Maps a Stmt to its current SVal.
