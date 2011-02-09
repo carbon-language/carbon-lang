@@ -89,8 +89,10 @@ struct EDDisassembler {
     bool operator<(const CPUKey &key) const {
       if(Arch > key.Arch)
         return false;
-      if(Syntax >= key.Syntax)
-        return false;
+      else if (Arch == key.Arch) {
+        if(Syntax > key.Syntax)
+          return false;
+      }
       return true;
     }
   };
