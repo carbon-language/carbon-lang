@@ -11,6 +11,7 @@
 #include "lldb/Host/File.h"
 
 #include <fcntl.h>
+#include <stdarg.h>
 
 #include "lldb/Core/Error.h"
 #include "lldb/Host/Config.h"
