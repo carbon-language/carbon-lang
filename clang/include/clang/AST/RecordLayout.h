@@ -33,7 +33,7 @@ namespace clang {
 /// ObjCInterfaceDecl. FIXME - Find appropriate name.
 /// These objects are managed by ASTContext.
 class ASTRecordLayout {
-  /// Size - Size of record in bits.
+  /// Size - Size of record in characters.
   CharUnits Size;
 
   /// DataSize - Size of record in bits without tail padding.
@@ -109,7 +109,7 @@ public:
   /// getAlignment - Get the record alignment in bits.
   unsigned getAlignment() const { return Alignment; }
 
-  /// getSize - Get the record size in bits.
+  /// getSize - Get the record size in characters.
   CharUnits getSize() const { return Size; }
 
   /// getFieldCount - Get the number of fields in the layout.
