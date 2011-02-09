@@ -366,7 +366,8 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
             data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
             if (!success)
                 return false;
-            if (!WriteRegisterUnsigned(context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+            // In ARMv5T and above, this is an interworking branch.
+            if (!LoadWritePC(context, data))
                 return false;
             addr += addr_byte_size;
         }
