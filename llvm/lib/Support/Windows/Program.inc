@@ -22,15 +22,6 @@
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
-#ifdef __MINGW32__
-// Ancient mingw32's w32api might not have this declaration.
-extern "C"
-BOOL WINAPI SetInformationJobObject(HANDLE hJob,
-                                    JOBOBJECTINFOCLASS JobObjectInfoClass,
-                                    LPVOID lpJobObjectInfo,
-                                    DWORD cbJobObjectInfoLength);
-#endif
-
 namespace {
   struct Win32ProcessInfo {
     HANDLE hProcess;
