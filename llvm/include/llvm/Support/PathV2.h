@@ -244,6 +244,15 @@ const StringRef filename(StringRef path);
 /// @result The stem of \a path.
 const StringRef stem(StringRef path);
 
+/// Convert path to a canonical form, resolving symbolic links and removing
+/// unnecessary path elements (e.g., "foo/../", "./"). 
+///
+/// @param path A path that is going to be canonicalized by resolving symlinks
+/// and removing unnecessary path elements (e.g., "./").
+///
+/// @param buffer The resulting canonical path.
+void canonical(const char *path, SmallVectorImpl<char> &result);
+  
 /// @brief Get extension.
 ///
 /// If filename contains a dot but not solely one or two dots, result is the
