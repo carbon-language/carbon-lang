@@ -2251,22 +2251,39 @@ bool
 EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
 {
     addr_t target;
+    // If the CPSR is changed due to switching between ARM and Thumb ISETSTATE,
+    // we want to record it and issue a WriteRegister callback so the clients
+    // can track the mode changes accordingly.
+    bool cpsr_changed = false;
 
     if (BitIsSet(addr, 0))
     {
-        SelectInstrSet(eModeThumb);
+        if (CurrentInstrSet() != eModeThumb)
+        {
+            SelectInstrSet(eModeThumb);
+            cpsr_changed = true;
+        }
         target = addr & 0xfffffffe;
         context.arg2 = eModeThumb;
     }
     else if (BitIsClear(addr, 1))
     {
-        SelectInstrSet(eModeARM);
+        if (CurrentInstrSet() != eModeARM)
+        {
+            SelectInstrSet(eModeARM);
+            cpsr_changed = true;
+        }
         target = addr & 0xfffffffc;
         context.arg2 = eModeARM;
     }
     else
         return false; // address<1:0> == '10' => UNPREDICTABLE
 
+    if (cpsr_changed)
+    {
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_inst_cpsr))
+            return false;
+    }
     if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
         return false;
 
