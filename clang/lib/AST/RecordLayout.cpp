@@ -27,7 +27,7 @@ void ASTRecordLayout::Destroy(ASTContext &Ctx) {
   Ctx.Deallocate(this);
 }
 
-ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, uint64_t size,
+ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, CharUnits size,
                                  unsigned alignment, unsigned datasize,
                                  const uint64_t *fieldoffsets,
                                  unsigned fieldcount)
@@ -41,7 +41,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, uint64_t size,
 
 // Constructor for C++ records.
 ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
-                                 uint64_t size, unsigned alignment,
+                                 CharUnits size, unsigned alignment,
                                  uint64_t datasize,
                                  const uint64_t *fieldoffsets,
                                  unsigned fieldcount,

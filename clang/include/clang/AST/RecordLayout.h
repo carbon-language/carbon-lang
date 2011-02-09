@@ -34,7 +34,7 @@ namespace clang {
 /// These objects are managed by ASTContext.
 class ASTRecordLayout {
   /// Size - Size of record in bits.
-  uint64_t Size;
+  CharUnits Size;
 
   /// DataSize - Size of record in bits without tail padding.
   uint64_t DataSize;
@@ -82,14 +82,14 @@ class ASTRecordLayout {
 
   friend class ASTContext;
 
-  ASTRecordLayout(const ASTContext &Ctx, uint64_t size, unsigned alignment,
+  ASTRecordLayout(const ASTContext &Ctx, CharUnits size, unsigned alignment,
                   unsigned datasize, const uint64_t *fieldoffsets,
                   unsigned fieldcount);
 
   // Constructor for C++ records.
   typedef CXXRecordLayoutInfo::BaseOffsetsMapTy BaseOffsetsMapTy;
   ASTRecordLayout(const ASTContext &Ctx,
-                  uint64_t size, unsigned alignment, uint64_t datasize,
+                  CharUnits size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   CharUnits nonvirtualsize, CharUnits nonvirtualalign,
                   CharUnits SizeOfLargestEmptySubobject,
@@ -110,7 +110,7 @@ public:
   unsigned getAlignment() const { return Alignment; }
 
   /// getSize - Get the record size in bits.
-  uint64_t getSize() const { return Size; }
+  CharUnits getSize() const { return Size; }
 
   /// getFieldCount - Get the number of fields in the layout.
   unsigned getFieldCount() const { return FieldCount; }

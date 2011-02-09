@@ -368,7 +368,7 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
     }
   }
 
-  uint64_t LayoutSizeInBytes = Layout.getSize() / 8;
+  uint64_t LayoutSizeInBytes = Layout.getSize().getQuantity();
 
   if (NextFieldOffsetInBytes > LayoutSizeInBytes) {
     // If the struct is bigger than the size of the record type,
@@ -394,9 +394,10 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
   }
 
   // Append tail padding if necessary.
-  AppendTailPadding(Layout.getSize());
+  AppendTailPadding(
+    Layout.getSize().getQuantity() * CGM.getContext().getCharWidth());
 
-  assert(Layout.getSize() / 8 == NextFieldOffsetInBytes &&
+  assert(Layout.getSize().getQuantity() == NextFieldOffsetInBytes &&
          "Tail padding mismatch!");
 
   return true;

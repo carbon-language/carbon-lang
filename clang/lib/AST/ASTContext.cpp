@@ -846,7 +846,7 @@ ASTContext::getTypeInfo(const Type *T) const {
   case Type::ObjCInterface: {
     const ObjCInterfaceType *ObjCI = cast<ObjCInterfaceType>(T);
     const ASTRecordLayout &Layout = getASTObjCInterfaceLayout(ObjCI->getDecl());
-    Width = Layout.getSize();
+    Width = Layout.getSize().getQuantity() * getCharWidth();
     Align = Layout.getAlignment();
     break;
   }
@@ -865,7 +865,7 @@ ASTContext::getTypeInfo(const Type *T) const {
 
     const RecordType *RT = cast<RecordType>(TT);
     const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl());
-    Width = Layout.getSize();
+    Width = Layout.getSize().getQuantity() * getCharWidth();
     Align = Layout.getAlignment();
     break;
   }

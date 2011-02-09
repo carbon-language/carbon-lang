@@ -300,7 +300,8 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
                                         uint64_t FieldSize) {
   const RecordDecl *RD = FD->getParent();
   const ASTRecordLayout &RL = Types.getContext().getASTRecordLayout(RD);
-  uint64_t ContainingTypeSizeInBits = RL.getSize();
+  uint64_t ContainingTypeSizeInBits = 
+    RL.getSize().getQuantity() * Types.getContext().getCharWidth();
   unsigned ContainingTypeAlign = RL.getAlignment();
 
   return MakeInfo(Types, FD, FieldOffset, FieldSize, ContainingTypeSizeInBits,
@@ -489,8 +490,8 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   }
 
   // Append tail padding.
-  if (Layout.getSize() / 8 > Size)
-    AppendPadding(Layout.getSize() / 8, Align);
+  if (Layout.getSize().getQuantity() > Size)
+    AppendPadding(Layout.getSize().getQuantity(), Align);
 }
 
 void CGRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *BaseDecl,
@@ -624,7 +625,7 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   
   
   // First check if we can use the same fields as for the complete class.
-  if (AlignedNonVirtualTypeSize == Layout.getSize() / 8) {
+  if (AlignedNonVirtualTypeSize == Layout.getSize().getQuantity()) {
     NonVirtualBaseTypeIsSameAsCompleteType = true;
     return true;
   }
@@ -686,7 +687,8 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   }
   
   // Append tail padding if necessary.
-  AppendTailPadding(Layout.getSize());
+  AppendTailPadding(
+    Layout.getSize().getQuantity() * Types.getContext().getCharWidth());
 
   return true;
 }
@@ -851,7 +853,8 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
   // Verify that the computed LLVM struct size matches the AST layout size.
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(D);
 
-  uint64_t TypeSizeInBits = Layout.getSize();
+  uint64_t TypeSizeInBits = 
+    Layout.getSize().getQuantity() * getContext().getCharWidth();
   assert(TypeSizeInBits == getTargetData().getTypeAllocSizeInBits(Ty) &&
          "Type size mismatch!");
 
