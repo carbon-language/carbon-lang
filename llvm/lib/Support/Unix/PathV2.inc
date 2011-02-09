@@ -522,13 +522,13 @@ void canonical(const char *path, SmallVectorImpl<char> &buffer) {
     buffer.resize(length);
     memcpy(buffer.data(), result, length);
     free(result);
-    return buffer.data();
+    return;
   }
 
   size_t length = strlen(path);
   buffer.resize(length);
   memcpy(buffer.data(), path, length);
-  return path;
+  return;
 }
 
 } // end namespace path
