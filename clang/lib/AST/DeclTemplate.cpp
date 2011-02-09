@@ -408,7 +408,7 @@ NonTypeTemplateParmDecl::NonTypeTemplateParmDecl(DeclContext *DC,
                                                  const QualType *ExpandedTypes,
                                                  unsigned NumExpandedTypes,
                                                 TypeSourceInfo **ExpandedTInfos)
-  : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, SC_None, SC_None),
+  : DeclaratorDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo),
     TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false),
     ParameterPack(true), ExpandedParameterPack(true),
     NumExpandedTypes(NumExpandedTypes)
@@ -445,6 +445,17 @@ NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
   return new (Mem) NonTypeTemplateParmDecl(DC, L, D, P, Id, T, TInfo, 
                                            ExpandedTypes, NumExpandedTypes, 
                                            ExpandedTInfos);
+}
+
+SourceLocation NonTypeTemplateParmDecl::getInnerLocStart() const {
+  SourceLocation Start = getTypeSpecStartLoc();
+  if (Start.isInvalid())
+    Start = getLocation();
+  return Start;
+}
+
+SourceRange NonTypeTemplateParmDecl::getSourceRange() const {
+  return SourceRange(getOuterLocStart(), getLocation());
 }
 
 SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {

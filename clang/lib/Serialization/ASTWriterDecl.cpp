@@ -1009,7 +1009,7 @@ void ASTDeclWriter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   if (D->isExpandedParameterPack())
     Record.push_back(D->getNumExpansionTypes());
   
-  VisitVarDecl(D);
+  VisitDeclaratorDecl(D);
   // TemplateParmPosition.
   Record.push_back(D->getDepth());
   Record.push_back(D->getPosition());

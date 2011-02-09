@@ -985,7 +985,7 @@ public:
 /// template<int Size> class array { };
 /// @endcode
 class NonTypeTemplateParmDecl
-  : public VarDecl, protected TemplateParmPosition {
+  : public DeclaratorDecl, protected TemplateParmPosition {
   /// \brief The default template argument, if any, and whether or not
   /// it was inherited.
   llvm::PointerIntPair<Expr*, 1, bool> DefaultArgumentAndInherited;
@@ -1007,7 +1007,7 @@ class NonTypeTemplateParmDecl
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
                           unsigned P, IdentifierInfo *Id, QualType T,
                           bool ParameterPack, TypeSourceInfo *TInfo)
-    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, SC_None, SC_None),
+    : DeclaratorDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo),
       TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false),
       ParameterPack(ParameterPack), ExpandedParameterPack(false),
       NumExpandedTypes(0)
@@ -1039,6 +1039,9 @@ public:
   using TemplateParmPosition::getPosition;
   using TemplateParmPosition::setPosition;
   using TemplateParmPosition::getIndex;
+
+  SourceLocation getInnerLocStart() const;
+  SourceRange getSourceRange() const;
 
   /// \brief Determine whether this template parameter has a default
   /// argument.

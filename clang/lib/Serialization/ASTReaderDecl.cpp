@@ -1168,7 +1168,7 @@ void ASTDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
 }
 
 void ASTDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
-  VisitVarDecl(D);
+  VisitDeclaratorDecl(D);
   // TemplateParmPosition.
   D->setDepth(Record[Idx++]);
   D->setPosition(Record[Idx++]);

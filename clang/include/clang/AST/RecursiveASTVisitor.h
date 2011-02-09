@@ -1538,7 +1538,7 @@ DEF_TRAVERSE_DECL(ImplicitParamDecl, {
 
 DEF_TRAVERSE_DECL(NonTypeTemplateParmDecl, {
     // A non-type template parameter, e.g. "S" in template<int S> class Foo ...
-    TRY_TO(TraverseVarHelper(D));
+    TRY_TO(TraverseDeclaratorHelper(D));
     TRY_TO(TraverseStmt(D->getDefaultArgument()));
   })
 
