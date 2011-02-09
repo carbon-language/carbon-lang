@@ -37,14 +37,21 @@ install_targets := install-html
 ifeq ($(ENABLE_DOXYGEN),1)
 install_targets += install-doxygen
 endif
+ifdef OCAMLDOC
 ifneq (,$(filter ocaml,$(BINDINGS_TO_BUILD)))
 install_targets += install-ocamldoc
 endif
+endif
 install-local:: $(install_targets)
+
+generated_targets := doxygen
+ifdef OCAMLDOC
+generated_targets += ocamldoc
+endif
 
 # Live documentation is generated for the web site using this target:
 # 'make generated BUILD_FOR_WEBSITE=1'
-generated:: doxygen ocamldoc
+generated:: $(generated_targets)
 
 install-html: $(PROJ_OBJ_DIR)/html.tar.gz
 	$(Echo) Installing HTML documentation
