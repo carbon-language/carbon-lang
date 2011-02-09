@@ -210,6 +210,9 @@ class ASTContext {
   /// \brief Type for the Block descriptor for Blocks CodeGen.
   mutable RecordDecl *BlockDescriptorExtendedType;
 
+  /// \brief Declaration for the CUDA cudaConfigureCall function.
+  FunctionDecl *cudaConfigureCallDecl;
+
   TypeSourceInfo NullTypeSourceInfo;
 
   /// \brief Keeps track of all declaration attributes.
@@ -539,6 +542,13 @@ public:
     if (BlockDescriptorExtendedType)
       return getTagDeclType(BlockDescriptorExtendedType);
     return QualType();
+  }
+
+  void setcudaConfigureCallDecl(FunctionDecl *FD) {
+    cudaConfigureCallDecl = FD;
+  }
+  FunctionDecl *getcudaConfigureCallDecl() {
+    return cudaConfigureCallDecl;
   }
 
   /// This gets the struct used to keep track of pointer to blocks, complete

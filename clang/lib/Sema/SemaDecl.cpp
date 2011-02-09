@@ -4110,6 +4110,19 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   MarkUnusedFileScopedDecl(NewFD);
+
+  if (getLangOptions().CUDA)
+    if (IdentifierInfo *II = NewFD->getIdentifier())
+      if (!NewFD->isInvalidDecl() &&
+          NewFD->getDeclContext()->getRedeclContext()->isTranslationUnit()) {
+        if (II->isStr("cudaConfigureCall")) {
+          if (!R->getAs<FunctionType>()->getResultType()->isScalarType())
+            Diag(NewFD->getLocation(), diag::err_config_scalar_return);
+
+          Context.setcudaConfigureCallDecl(NewFD);
+        }
+      }
+
   return NewFD;
 }
 

@@ -575,6 +575,12 @@ private:
   /// The AST context tracks a few important types, such as va_list, directly.
   llvm::SmallVector<uint64_t, 16> SpecialTypes;
 
+  /// \brief The IDs of CUDA-specific declarations ASTContext stores directly.
+  ///
+  /// The AST context tracks a few important decls, currently cudaConfigureCall,
+  /// directly.
+  llvm::SmallVector<uint64_t, 2> CUDASpecialDeclRefs;
+
   //@}
 
   /// \brief Diagnostic IDs and their mappings that the user changed.

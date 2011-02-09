@@ -347,7 +347,10 @@ namespace clang {
       CXX_BASE_SPECIFIER_OFFSETS = 37,
 
       /// \brief Record code for #pragma diagnostic mappings.
-      DIAG_PRAGMA_MAPPINGS = 38
+      DIAG_PRAGMA_MAPPINGS = 38,
+
+      /// \brief Record code for special CUDA declarations.
+      CUDA_SPECIAL_DECL_REFS = 39
     };
 
     /// \brief Record types used within a source manager block.

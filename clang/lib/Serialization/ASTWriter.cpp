@@ -2545,6 +2545,11 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(SemaRef.getStdBadAlloc(), SemaDeclRefs);
   }
 
+  RecordData CUDASpecialDeclRefs;
+  if (Context.getcudaConfigureCallDecl()) {
+    AddDeclRef(Context.getcudaConfigureCallDecl(), CUDASpecialDeclRefs);
+  }
+
   // Write the remaining AST contents.
   RecordData Record;
   Stream.EnterSubblock(AST_BLOCK_ID, 5);
@@ -2658,6 +2663,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing declaration references of Sema.
   if (!SemaDeclRefs.empty())
     Stream.EmitRecord(SEMA_DECL_REFS, SemaDeclRefs);
+
+  // Write the record containing CUDA-specific declaration references.
+  if (!CUDASpecialDeclRefs.empty())
+    Stream.EmitRecord(CUDA_SPECIAL_DECL_REFS, CUDASpecialDeclRefs);
 
   // Some simple statistics
   Record.clear();

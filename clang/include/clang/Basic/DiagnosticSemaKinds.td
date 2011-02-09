@@ -3049,6 +3049,8 @@ def err_deleted_function_use : Error<"attempt to use a deleted function">;
 
 def err_kern_type_not_void_return : Error<
   "kernel function type %0 must have void return type">;
+def err_config_scalar_return : Error<
+  "CUDA special function 'cudaConfigureCall' must have scalar return type">;
 
 
 def err_cannot_pass_objc_interface_to_vararg : Error<

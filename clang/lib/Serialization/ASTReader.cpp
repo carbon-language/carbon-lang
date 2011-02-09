@@ -2152,6 +2152,11 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         PragmaDiagMappings.insert(PragmaDiagMappings.end(),
                                 Record.begin(), Record.end());
       break;
+
+    case CUDA_SPECIAL_DECL_REFS:
+      // Later tables overwrite earlier ones.
+      CUDASpecialDeclRefs.swap(Record);
+      break;
     }
     First = false;
   }
@@ -2496,6 +2501,13 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
     Context->setInt128Installed();
 
   ReadPragmaDiagnosticMappings(Context->getDiagnostics());
+
+  // If there were any CUDA special declarations, deserialize them.
+  if (!CUDASpecialDeclRefs.empty()) {
+    assert(CUDASpecialDeclRefs.size() == 1 && "More decl refs than expected!");
+    Context->setcudaConfigureCallDecl(
+                           cast<FunctionDecl>(GetDecl(CUDASpecialDeclRefs[0])));
+  }
 }
 
 /// \brief Retrieve the name of the original source file name
