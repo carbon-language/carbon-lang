@@ -75,6 +75,18 @@ def which(command, paths = None):
 
     return None
 
+def checkToolsPath(dir, tools):
+    for tool in tools:
+        if not os.path.exists(os.path.join(dir, tool)):
+            return False;
+    return True;
+
+def whichTools(tools, paths):
+    for path in paths.split(os.pathsep):
+        if checkToolsPath(path, tools):
+            return path
+    return None
+
 def printHistogram(items, title = 'Items'):
     import itertools, math
 
