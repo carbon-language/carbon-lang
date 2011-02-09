@@ -1533,6 +1533,88 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
     return true;
 }
 
+// ADD <Rdn>, <Rm>
+// where <Rdn> the destination register is also the first operand register
+// and <Rm> is the second operand register.
+bool
+EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(R[n], shifted, '0');
+        if d == 15 then
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd, Rn, Rm;
+        //bool setflags = false;
+        switch (encoding)
+        {
+        case eEncodingT2:
+            // setflags = FALSE
+            Rd = Rn = Bits32(opcode, 7, 7) << 3 | Bits32(opcode, 2, 0);
+            Rm = Bits32(opcode, 6, 3);
+            if (Rn == 15 && Rm == 15)
+                return false;
+            break;
+        default:
+            return false;
+        }
+
+        int32_t result, val1, val2;
+        // Read the first operand.
+        if (Rn == 15)
+            val1 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        else
+            val1 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+        if (!success)
+            return false;
+
+        // Read the second operand.
+        if (Rm == 15)
+            val2 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        else
+            val2 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        if (!success)
+            return false;
+
+        result = val1 + val2;
+        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
+                                                result,
+                                                0,
+                                                0 };
+    
+        if (Rd == 15)
+        {
+            if (!ALUWritePC (context, result))
+                return false;
+        }
+        else
+        {
+            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, result))
+                return false;
+        }
+    }
+    return true;
+}
+
 // LDM loads multiple registers from consecutive memory locations, using an
 // address from a base register.  Optionally the addres just above the highest of those locations
 // can be written back to the base register.
@@ -2048,6 +2130,12 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfffff500, 0x0000b100, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCB, "cb{n}z <Rn>, <label>"},
 
         //----------------------------------------------------------------------
+        // Data-processing instructions
+        //----------------------------------------------------------------------
+        // Make sure "add sp, <Rm>" comes before this instruction, so there's no ambiguity decoding the two.
+        { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateAddRdnRm, "add <Rdn>, <Rm>"},
+
+        //----------------------------------------------------------------------
         // Load instructions
         //----------------------------------------------------------------------
         { 0xfffff800, 0x0000c800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
@@ -2299,6 +2387,16 @@ bool
 EmulateInstructionARM::LoadWritePC (Context &context, uint32_t addr)
 {
     if (ArchVersion() >= ARMv5T)
+        return BXWritePC(context, addr);
+    else
+        return BranchWritePC((const Context)context, addr);
+}
+
+// Dispatches to either BXWritePC or BranchWritePC based on architecture versions and current instruction set.
+bool
+EmulateInstructionARM::ALUWritePC (Context &context, uint32_t addr)
+{
+    if (ArchVersion() >= ARMv7 && CurrentInstrSet() == eModeARM)
         return BXWritePC(context, addr);
     else
         return BranchWritePC((const Context)context, addr);

@@ -157,6 +157,9 @@ public:
     bool
     LoadWritePC(Context &context, uint32_t addr);
 
+    bool
+    ALUWritePC(Context &context, uint32_t addr);
+
     Mode
     CurrentInstrSet();
 
@@ -251,6 +254,9 @@ protected:
     // CBNZ, CBZ
     bool
     EmulateCB (ARMEncoding encoding);
+
+    bool
+    EmulateAddRdnRm (ARMEncoding encoding);
 
     bool
     EmulateLDM (ARMEncoding encoding);
