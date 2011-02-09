@@ -111,6 +111,10 @@ public:
   /// The name of the relocation model to use.
   std::string RelocationModel;
 
+  /// The user specified number of registers to be used for integral arguments,
+  /// or 0 if unspecified.
+  unsigned NumRegisterParameters;
+
 public:
   CodeGenOptions() {
     AsmVerbose = 0;
@@ -134,6 +138,7 @@ public:
     NoInfsFPMath = 0;
     NoNaNsFPMath = 0;
     NoZeroInitializedInBSS = 0;
+    NumRegisterParameters = 0;
     ObjCDispatchMethod = Legacy;
     OmitLeafFramePointer = 0;
     OptimizationLevel = 0;

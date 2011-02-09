@@ -177,6 +177,8 @@ def momit_leaf_frame_pointer : Flag<"-momit-leaf-frame-pointer">,
   HelpText<"Omit frame pointer setup for leaf functions.">;
 def msoft_float : Flag<"-msoft-float">,
   HelpText<"Use software floating point">;
+def mregparm : Separate<"-mregparm">,
+  HelpText<"Limit the number of registers available for integer arguments">;
 def mrelax_all : Flag<"-mrelax-all">,
   HelpText<"Relax all machine instructions">;
 def mrelocation_model : Separate<"-mrelocation-model">,

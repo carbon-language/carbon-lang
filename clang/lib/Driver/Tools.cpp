@@ -1012,6 +1012,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // LLVM Code Generator Options.
 
+  if (Arg *A = Args.getLastArg(options::OPT_mregparm_EQ)) {
+    CmdArgs.push_back("-mregparm");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+
   // FIXME: Set --enable-unsafe-fp-math.
   if (Args.hasFlag(options::OPT_fno_omit_frame_pointer,
                    options::OPT_fomit_frame_pointer))
