@@ -64,8 +64,12 @@ bool SplitAnalysis::canAnalyzeBranch(const MachineBasicBlock *MBB) {
 /// analyzeUses - Count instructions, basic blocks, and loops using CurLI.
 void SplitAnalysis::analyzeUses() {
   const MachineRegisterInfo &MRI = MF.getRegInfo();
-  for (MachineRegisterInfo::reg_iterator I = MRI.reg_begin(CurLI->reg);
-       MachineInstr *MI = I.skipInstruction();) {
+  for (MachineRegisterInfo::reg_iterator I = MRI.reg_begin(CurLI->reg),
+       E = MRI.reg_end(); I != E; ++I) {
+    MachineOperand &MO = I.getOperand();
+    if (MO.isUse() && MO.isUndef())
+      continue;
+    MachineInstr *MI = MO.getParent();
     if (MI->isDebugValue() || !UsingInstrs.insert(MI))
       continue;
     UseSlots.push_back(LIS.getInstructionIndex(MI).getDefIndex());
@@ -918,6 +922,14 @@ void SplitEditor::rewriteAssigned() {
       MO.setReg(0);
       continue;
     }
+
+    // <undef> operands don't really read the register, so just assign them to
+    // the complement.
+    if (MO.isUse() && MO.isUndef()) {
+      MO.setReg(Edit.get(0)->reg);
+      continue;
+    }
+
     SlotIndex Idx = LIS.getInstructionIndex(MI);
     Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
 
