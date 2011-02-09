@@ -1954,7 +1954,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   }
   llvm::StringRef DeclName = D->getName();
   llvm::StringRef LinkageName;
-  if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext()))
+  if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext())
+      && !isa<ObjCMethodDecl>(D->getDeclContext()))
     LinkageName = Var->getName();
   if (LinkageName == DeclName)
     LinkageName = llvm::StringRef();
