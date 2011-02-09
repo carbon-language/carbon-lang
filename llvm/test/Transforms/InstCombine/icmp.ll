@@ -209,3 +209,12 @@ define i1 @test22(i8 %x, i8 %y) {
   %B = icmp ult i8 %A, 4
   ret i1 %B
 }
+
+; PR2740
+; CHECK: @test23
+; CHECK: icmp sgt i32 %x, 1328634634
+define i1 @test23(i32 %x) nounwind {
+	%i3 = sdiv i32 %x, -1328634635
+	%i4 = icmp eq i32 %i3, -1
+	ret i1 %i4
+}
