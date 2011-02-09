@@ -503,35 +503,5 @@ error_code get_magic(const Twine &path, uint32_t len,
 }
 
 } // end namespace fs
-
-namespace path {
-
-void canonical(const char *path, SmallVectorImpl<char> &buffer) {
-  buffer.resize(PATH_MAX);
-  char *result = realpath(path, buffer.data());
-  if (result) {
-    buffer.resize(strlen(result));
-    return;
-  }
-
-  // A common extension is to support memory allocation of the result when
-  // passing NULL as the second argument.
-  result = realpath(path, 0);
-  if (result) {
-    size_t length = strlen(result);
-    buffer.resize(length);
-    memcpy(buffer.data(), result, length);
-    free(result);
-    return;
-  }
-
-  size_t length = strlen(path);
-  buffer.resize(length);
-  memcpy(buffer.data(), path, length);
-  return;
-}
-
-} // end namespace path
-
 } // end namespace sys
 } // end namespace llvm
