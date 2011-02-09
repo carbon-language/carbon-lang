@@ -62,6 +62,10 @@
 /* Define to 1 if you have the <ctype.h> header file. */
 #cmakedefine HAVE_CTYPE_H ${HAVE_CTYPE_H}
 
+/* Define to 1 if you have the declaration of `strerror_s', and to 0 if you
+   don't. */
+#cmakedefine01 HAVE_DECL_STRERROR_S
+
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #cmakedefine HAVE_DIRENT_H ${HAVE_DIRENT_H}
@@ -367,9 +371,6 @@
 
 /* Define to 1 if you have the `strerror_r' function. */
 #cmakedefine HAVE_STRERROR_R ${HAVE_STRERROR_R}
-
-/* Define to 1 if you have the `strerror_s' function. */
-#cmakedefine HAVE_STRERROR_S ${HAVE_STRERROR_S}
 
 /* Define to 1 if you have the <strings.h> header file. */
 #cmakedefine HAVE_STRINGS_H ${HAVE_STRINGS_H}

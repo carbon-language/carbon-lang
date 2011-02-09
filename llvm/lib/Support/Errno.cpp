@@ -50,7 +50,7 @@ std::string StrError(int errnum) {
 # else
     strerror_r(errnum,buffer,MaxErrStrLen-1);
 # endif
-#elif defined(HAVE_STRERROR_S)  // Windows.
+#elif HAVE_DECL_STRERROR_S // "Windows Secure API"
     if (errnum)
       strerror_s(buffer, errnum);
 #elif defined(HAVE_STRERROR)

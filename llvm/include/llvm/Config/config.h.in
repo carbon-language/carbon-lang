@@ -78,6 +78,10 @@
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
 
+/* Define to 1 if you have the declaration of `strerror_s', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRERROR_S
+
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #undef HAVE_DIRENT_H
@@ -383,9 +387,6 @@
 
 /* Define to 1 if you have the `strerror_r' function. */
 #undef HAVE_STRERROR_R
-
-/* Define to 1 if you have the `strerror_s' function. */
-#undef HAVE_STRERROR_S
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
