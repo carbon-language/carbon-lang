@@ -90,6 +90,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   switch (E->getStmtClass()) {
     // First come the expressions that are always lvalues, unconditionally.
   case Stmt::NoStmtClass:
+#define ABSTRACT_STMT(Kind)
 #define STMT(Kind, Base) case Expr::Kind##Class:
 #define EXPR(Kind, Base)
 #include "clang/AST/StmtNodes.inc"

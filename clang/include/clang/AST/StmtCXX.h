@@ -37,7 +37,7 @@ public:
   CXXCatchStmt(EmptyShell Empty)
   : Stmt(CXXCatchStmtClass), ExceptionDecl(0), HandlerBlock(0) {}
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(CatchLoc, HandlerBlock->getLocEnd());
   }
 
@@ -51,8 +51,7 @@ public:
   }
   static bool classof(const CXXCatchStmt *) { return true; }
 
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&HandlerBlock, &HandlerBlock+1); }
 
   friend class ASTStmtReader;
 };
@@ -84,7 +83,7 @@ public:
   static CXXTryStmt *Create(ASTContext &C, EmptyShell Empty,
                             unsigned numHandlers);
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(getTryLoc(), getEndLoc());
   }
 
@@ -113,8 +112,9 @@ public:
   }
   static bool classof(const CXXTryStmt *) { return true; }
 
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(getStmts(), getStmts() + getNumHandlers() + 1);
+  }
 
   friend class ASTStmtReader;
 };

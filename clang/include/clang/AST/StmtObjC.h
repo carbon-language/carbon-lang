@@ -55,7 +55,7 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd());
   }
   static bool classof(const Stmt *T) {
@@ -64,8 +64,9 @@ public:
   static bool classof(const ObjCForCollectionStmt *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[END_EXPR]);
+  }
 };
 
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
@@ -102,7 +103,7 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtCatchLoc, Body->getLocEnd());
   }
 
@@ -113,8 +114,7 @@ public:
   }
   static bool classof(const ObjCAtCatchStmt *) { return true; }
 
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&Body, &Body + 1); }
 };
 
 /// ObjCAtFinallyStmt - This represent objective-c's @finally Statement
@@ -133,7 +133,7 @@ public:
   Stmt *getFinallyBody() { return AtFinallyStmt; }
   void setFinallyBody(Stmt *S) { AtFinallyStmt = S; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd());
   }
 
@@ -145,8 +145,9 @@ public:
   }
   static bool classof(const ObjCAtFinallyStmt *) { return true; }
 
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(&AtFinallyStmt, &AtFinallyStmt+1);
+  }
 };
 
 /// ObjCAtTryStmt - This represent objective-c's over-all
@@ -239,15 +240,17 @@ public:
     getStmts()[1 + NumCatchStmts] = S; 
   }
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtTryStmtClass;
   }
   static bool classof(const ObjCAtTryStmt *) { return true; }
 
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(getStmts(),
+                       getStmts() + 1 + NumCatchStmts + HasFinally);
+  }
 };
 
 /// ObjCAtSynchronizedStmt - This is for objective-c's @synchronized statement.
@@ -291,7 +294,7 @@ public:
   }
   void setSynchExpr(Stmt *S) { SubStmts[SYNC_EXPR] = S; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtSynchronizedLoc, getSynchBody()->getLocEnd());
   }
 
@@ -300,8 +303,9 @@ public:
   }
   static bool classof(const ObjCAtSynchronizedStmt *) { return true; }
 
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(&SubStmts[0], &SubStmts[0]+END_EXPR);
+  }
 };
 
 /// ObjCAtThrowStmt - This represents objective-c's @throw statement.
@@ -323,7 +327,7 @@ public:
   SourceLocation getThrowLoc() { return AtThrowLoc; }
   void setThrowLoc(SourceLocation Loc) { AtThrowLoc = Loc; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     if (Throw)
       return SourceRange(AtThrowLoc, Throw->getLocEnd());
     else
@@ -335,8 +339,7 @@ public:
   }
   static bool classof(const ObjCAtThrowStmt *) { return true; }
 
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&Throw, &Throw+1); }
 };
 
 }  // end namespace clang

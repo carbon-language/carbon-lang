@@ -71,7 +71,7 @@ public:
   /// bracket.
   SourceLocation getOperatorLoc() const { return getRParenLoc(); }
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXOperatorCallExprClass;
@@ -108,7 +108,7 @@ public:
   /// FIXME: Returns 0 for member pointer call exprs.
   CXXRecordDecl *getRecordDecl();
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXMemberCallExprClass;
@@ -151,7 +151,7 @@ public:
   /// \brief Retrieve the location of the closing parenthesis.
   SourceLocation getRParenLoc() const { return RParenLoc; }
   
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(Loc, RParenLoc);
   }
   static bool classof(const Stmt *T) {
@@ -306,7 +306,7 @@ public:
   bool getValue() const { return Value; }
   void setValue(bool V) { Value = V; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
@@ -317,8 +317,7 @@ public:
   static bool classof(const CXXBoolLiteralExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
 
 /// CXXNullPtrLiteralExpr - [C++0x 2.14.7] C++ Pointer Literal
@@ -333,7 +332,7 @@ public:
   explicit CXXNullPtrLiteralExpr(EmptyShell Empty)
     : Expr(CXXNullPtrLiteralExprClass, Empty) { }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
@@ -343,8 +342,7 @@ public:
   }
   static bool classof(const CXXNullPtrLiteralExpr *) { return true; }
 
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
 
 /// CXXTypeidExpr - A C++ @c typeid expression (C++ [expr.typeid]), which gets
@@ -411,7 +409,7 @@ public:
     Operand = E;
   }
   
-  virtual SourceRange getSourceRange() const { return Range; }
+  SourceRange getSourceRange() const { return Range; }
   void setSourceRange(SourceRange R) { Range = R; }
   
   static bool classof(const Stmt *T) {
@@ -420,8 +418,11 @@ public:
   static bool classof(const CXXTypeidExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    if (isTypeOperand()) return child_range();
+    Stmt **begin = reinterpret_cast<Stmt**>(&Operand);
+    return child_range(begin, begin + 1);
+  }
 };
 
 /// CXXUuidofExpr - A microsoft C++ @c __uuidof expression, which gets
@@ -481,7 +482,7 @@ public:
     Operand = E;
   }
 
-  virtual SourceRange getSourceRange() const { return Range; }
+  SourceRange getSourceRange() const { return Range; }
   void setSourceRange(SourceRange R) { Range = R; }
   
   static bool classof(const Stmt *T) {
@@ -490,8 +491,11 @@ public:
   static bool classof(const CXXUuidofExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    if (isTypeOperand()) return child_range();
+    Stmt **begin = reinterpret_cast<Stmt**>(&Operand);
+    return child_range(begin, begin + 1);
+  }
 };
 
 /// CXXThisExpr - Represents the "this" expression in C++, which is a
@@ -523,7 +527,7 @@ public:
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   bool isImplicit() const { return Implicit; }
   void setImplicit(bool I) { Implicit = I; }
@@ -534,8 +538,7 @@ public:
   static bool classof(const CXXThisExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
 
 ///  CXXThrowExpr - [C++ 15] C++ Throw Expression.  This handles
@@ -562,7 +565,7 @@ public:
   SourceLocation getThrowLoc() const { return ThrowLoc; }
   void setThrowLoc(SourceLocation L) { ThrowLoc = L; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     if (getSubExpr() == 0)
       return SourceRange(ThrowLoc, ThrowLoc);
     return SourceRange(ThrowLoc, getSubExpr()->getSourceRange().getEnd());
@@ -574,8 +577,9 @@ public:
   static bool classof(const CXXThrowExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(&Op, Op ? &Op+1 : &Op);
+  }
 };
 
 /// CXXDefaultArgExpr - C++ [dcl.fct.default]. This wraps up a
@@ -649,7 +653,7 @@ public:
   /// used.
   SourceLocation getUsedLocation() const { return Loc; }
   
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     // Default argument expressions have no representation in the
     // source, so they have an empty source range.
     return SourceRange();
@@ -661,8 +665,7 @@ public:
   static bool classof(const CXXDefaultArgExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
@@ -724,7 +727,7 @@ public:
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
   void setSubExpr(Expr *E) { SubExpr = E; }
 
-  virtual SourceRange getSourceRange() const { 
+  SourceRange getSourceRange() const { 
     return SubExpr->getSourceRange();
   }
 
@@ -735,8 +738,7 @@ public:
   static bool classof(const CXXBindTemporaryExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&SubExpr, &SubExpr + 1); }
 };
 
 /// CXXConstructExpr - Represents a call to a C++ constructor.
@@ -842,7 +844,7 @@ public:
     Args[Arg] = ArgExpr;
   }
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
   SourceRange getParenRange() const { return ParenRange; }
 
   static bool classof(const Stmt *T) {
@@ -852,8 +854,9 @@ public:
   static bool classof(const CXXConstructExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(&Args[0], &Args[0]+NumArgs);
+  }
 
   friend class ASTStmtReader;
 };
@@ -893,7 +896,7 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(TyBeginLoc, RParenLoc);
   }
   static bool classof(const Stmt *T) {
@@ -931,7 +934,7 @@ public:
 
   TypeSourceInfo *getTypeSourceInfo() const { return Type; }
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXTemporaryObjectExprClass;
@@ -970,7 +973,7 @@ public:
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXScalarValueInitExprClass;
@@ -978,8 +981,7 @@ public:
   static bool classof(const CXXScalarValueInitExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
 
 /// CXXNewExpr - A new expression for memory allocation and constructor calls,
@@ -1152,7 +1154,7 @@ public:
   SourceLocation getConstructorLParen() const { return ConstructorLParen; }
   SourceLocation getConstructorRParen() const { return ConstructorRParen; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(StartLoc, EndLoc);
   }
 
@@ -1162,8 +1164,11 @@ public:
   static bool classof(const CXXNewExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(&SubExprs[0],
+                       &SubExprs[0] + Array + getNumPlacementArgs()
+                         + getNumConstructorArgs());
+  }
 };
 
 /// CXXDeleteExpr - A delete expression for memory deallocation and destructor
@@ -1221,7 +1226,7 @@ public:
   /// return an invalid type.
   QualType getDestroyedType() const;
   
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(Loc, Argument->getLocEnd());
   }
 
@@ -1231,8 +1236,7 @@ public:
   static bool classof(const CXXDeleteExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&Argument, &Argument+1); }
 
   friend class ASTStmtReader;
 };
@@ -1424,7 +1428,7 @@ public:
     DestroyedType = PseudoDestructorTypeStorage(Info);
   }
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXPseudoDestructorExprClass;
@@ -1432,8 +1436,7 @@ public:
   static bool classof(const CXXPseudoDestructorExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&Base, &Base + 1); }
 };
 
 /// UnaryTypeTraitExpr - A GCC or MS unary type trait, as used in the
@@ -1469,7 +1472,7 @@ public:
     : Expr(UnaryTypeTraitExprClass, Empty), UTT(0), Value(false),
       QueriedType() { }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc, RParen);}
+  SourceRange getSourceRange() const { return SourceRange(Loc, RParen);}
 
   UnaryTypeTrait getTrait() const { return static_cast<UnaryTypeTrait>(UTT); }
 
@@ -1485,8 +1488,7 @@ public:
   static bool classof(const UnaryTypeTraitExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 
   friend class ASTStmtReader;
 };
@@ -1531,7 +1533,7 @@ public:
     : Expr(BinaryTypeTraitExprClass, Empty), BTT(0), Value(false),
       LhsType(), RhsType() { }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(Loc, RParen);
   }
 
@@ -1553,8 +1555,7 @@ public:
   static bool classof(const BinaryTypeTraitExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 
   friend class ASTStmtReader;
 };
@@ -1825,15 +1826,14 @@ public:
     return getExplicitTemplateArgs().NumTemplateArgs;
   }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     SourceRange Range(getNameInfo().getSourceRange());
     if (getQualifier()) Range.setBegin(getQualifierRange().getBegin());
     if (hasExplicitTemplateArgs()) Range.setEnd(getRAngleLoc());
     return Range;
   }
 
-  virtual StmtIterator child_begin();
-  virtual StmtIterator child_end();
+  child_range children() { return child_range(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnresolvedLookupExprClass;
@@ -1956,7 +1956,7 @@ public:
     return getExplicitTemplateArgs().NumTemplateArgs;
   }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     SourceRange Range(QualifierRange.getBegin(), getLocation());
     if (hasExplicitTemplateArgs())
       Range.setEnd(getRAngleLoc());
@@ -1968,8 +1968,7 @@ public:
   }
   static bool classof(const DependentScopeDeclRefExpr *) { return true; }
 
-  virtual StmtIterator child_begin();
-  virtual StmtIterator child_end();
+  child_range children() { return child_range(); }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
@@ -2017,7 +2016,7 @@ public:
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   void setSubExpr(Expr *E) { SubExpr = E; }
 
-  virtual SourceRange getSourceRange() const { 
+  SourceRange getSourceRange() const { 
     return SubExpr->getSourceRange();
   }
 
@@ -2028,8 +2027,7 @@ public:
   static bool classof(const ExprWithCleanups *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&SubExpr, &SubExpr + 1); }
 };
 
 /// \brief Describes an explicit type conversion that uses functional
@@ -2136,7 +2134,7 @@ public:
     *(arg_begin() + I) = E;
   }
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXUnresolvedConstructExprClass;
@@ -2144,8 +2142,10 @@ public:
   static bool classof(const CXXUnresolvedConstructExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    Stmt **begin = reinterpret_cast<Stmt**>(this+1);
+    return child_range(begin, begin + NumArgs);
+  }
 };
 
 /// \brief Represents a C++ member access expression where the actual
@@ -2361,7 +2361,7 @@ public:
     return getExplicitTemplateArgs().RAngleLoc;
   }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     SourceRange Range;
     if (!isImplicitAccess())
       Range.setBegin(Base->getSourceRange().getBegin());
@@ -2383,8 +2383,10 @@ public:
   static bool classof(const CXXDependentScopeMemberExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    if (isImplicitAccess()) return child_range();
+    return child_range(&Base, &Base + 1);
+  }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
@@ -2554,7 +2556,7 @@ public:
     return getExplicitTemplateArgs().RAngleLoc;
   }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     SourceRange Range = getMemberNameInfo().getSourceRange();
     if (!isImplicitAccess())
       Range.setBegin(Base->getSourceRange().getBegin());
@@ -2572,8 +2574,10 @@ public:
   static bool classof(const UnresolvedMemberExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    if (isImplicitAccess()) return child_range();
+    return child_range(&Base, &Base + 1);
+  }
 };
 
 /// \brief Represents a C++0x noexcept expression (C++ [expr.unary.noexcept]).
@@ -2603,7 +2607,7 @@ public:
 
   Expr *getOperand() const { return static_cast<Expr*>(Operand); }
 
-  virtual SourceRange getSourceRange() const { return Range; }
+  SourceRange getSourceRange() const { return Range; }
 
   bool getValue() const { return Value; }
 
@@ -2613,8 +2617,7 @@ public:
   static bool classof(const CXXNoexceptExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&Operand, &Operand + 1); }
 };
 
 /// \brief Represents a C++0x pack expansion that produces a sequence of 
@@ -2680,7 +2683,9 @@ public:
     return llvm::Optional<unsigned>();
   }
   
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const {
+    return SourceRange(Pattern->getLocStart(), EllipsisLoc);
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == PackExpansionExprClass;
@@ -2688,8 +2693,9 @@ public:
   static bool classof(const PackExpansionExpr *) { return true; }
   
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    return child_range(&Pattern, &Pattern + 1);
+  }
 };
   
 inline ExplicitTemplateArgumentList &OverloadExpr::getExplicitTemplateArgs() {
@@ -2778,7 +2784,9 @@ public:
     return Length;
   }
   
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const {
+    return SourceRange(OperatorLoc, RParenLoc);
+  }
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == SizeOfPackExprClass;
@@ -2786,8 +2794,7 @@ public:
   static bool classof(const SizeOfPackExpr *) { return true; }
   
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
 
 /// \brief Represents a reference to a non-type template parameter pack that
@@ -2838,7 +2845,7 @@ public:
   /// template arguments.
   TemplateArgument getArgumentPack() const;
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const { return NameLoc; }
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == SubstNonTypeTemplateParmPackExprClass;
@@ -2848,8 +2855,7 @@ public:
   }
   
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
   
 }  // end namespace clang

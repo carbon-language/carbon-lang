@@ -2280,6 +2280,7 @@ StmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
   // Transform individual statement nodes
 #define STMT(Node, Parent)                                              \
   case Stmt::Node##Class: return getDerived().Transform##Node(cast<Node>(S));
+#define ABSTRACT_STMT(Node)
 #define EXPR(Node, Parent)
 #include "clang/AST/StmtNodes.inc"
 
@@ -4827,13 +4828,6 @@ TreeTransform<Derived>::TransformDeclStmt(DeclStmt *S) {
 
   return getDerived().RebuildDeclStmt(Decls.data(), Decls.size(),
                                       S->getStartLoc(), S->getEndLoc());
-}
-
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformSwitchCase(SwitchCase *S) {
-  assert(false && "SwitchCase is abstract and cannot be transformed");
-  return SemaRef.Owned(S);
 }
 
 template<typename Derived>

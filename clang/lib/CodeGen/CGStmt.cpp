@@ -71,7 +71,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   switch (S->getStmtClass()) {
   case Stmt::NoStmtClass:
   case Stmt::CXXCatchStmtClass:
-  case Stmt::SwitchCaseClass:
     llvm_unreachable("invalid statement class to emit generically");
   case Stmt::NullStmtClass:
   case Stmt::CompoundStmtClass:

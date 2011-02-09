@@ -42,7 +42,7 @@ public:
   SourceLocation getAtLoc() const { return AtLoc; }
   void setAtLoc(SourceLocation L) { AtLoc = L; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtLoc, String->getLocEnd());
   }
 
@@ -52,8 +52,7 @@ public:
   static bool classof(const ObjCStringLiteral *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&String, &String+1); }
 };
 
 /// ObjCEncodeExpr, used for @encode in Objective-C.  @encode has the same type
@@ -86,7 +85,7 @@ public:
     EncodedType = EncType; 
   }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtLoc, RParenLoc);
   }
 
@@ -96,8 +95,7 @@ public:
   static bool classof(const ObjCEncodeExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
 
 /// ObjCSelectorExpr used for @selector in Objective-C.
@@ -121,7 +119,7 @@ public:
   void setAtLoc(SourceLocation L) { AtLoc = L; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtLoc, RParenLoc);
   }
 
@@ -134,8 +132,7 @@ public:
   static bool classof(const ObjCSelectorExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
 
 /// ObjCProtocolExpr used for protocol expression in Objective-C.  This is used
@@ -162,7 +159,7 @@ public:
   void setAtLoc(SourceLocation L) { AtLoc = L; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtLoc, RParenLoc);
   }
 
@@ -172,8 +169,7 @@ public:
   static bool classof(const ObjCProtocolExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(); }
 };
 
 /// ObjCIvarRefExpr - A reference to an ObjC instance variable.
@@ -212,7 +208,7 @@ public:
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return isFreeIvar() ? SourceRange(Loc)
     : SourceRange(getBase()->getLocStart(), Loc);
   }
@@ -223,8 +219,7 @@ public:
   static bool classof(const ObjCIvarRefExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&Base, &Base+1); }
 };
 
 /// ObjCPropertyRefExpr - A dot-syntax expression to access an ObjC
@@ -349,7 +344,7 @@ public:
   bool isSuperReceiver() const { return Receiver.is<const Type*>(); }
   bool isClassReceiver() const { return Receiver.is<ObjCInterfaceDecl*>(); }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange((isObjectReceiver() ? getBase()->getLocStart()
                                            : getReceiverLocation()), 
                        IdLoc);
@@ -361,8 +356,14 @@ public:
   static bool classof(const ObjCPropertyRefExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() {
+    if (Receiver.is<Stmt*>()) {
+      Stmt **begin = reinterpret_cast<Stmt**>(&Receiver); // hack!
+      return child_range(begin, begin+1);
+    }
+    return child_range();
+  }
+
 private:
   friend class ASTStmtReader;
   void setExplicitProperty(ObjCPropertyDecl *D) {
@@ -776,7 +777,7 @@ public:
     LBracLoc = R.getBegin();
     RBracLoc = R.getEnd();
   }
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(LBracLoc, RBracLoc);
   }
 
@@ -786,8 +787,7 @@ public:
   static bool classof(const ObjCMessageExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children();
 
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
@@ -839,11 +839,11 @@ public:
   SourceLocation getIsaMemberLoc() const { return IsaMemberLoc; }
   void setIsaMemberLoc(SourceLocation L) { IsaMemberLoc = L; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), IsaMemberLoc);
   }
 
-  virtual SourceLocation getExprLoc() const { return IsaMemberLoc; }
+  SourceLocation getExprLoc() const { return IsaMemberLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCIsaExprClass;
@@ -851,8 +851,7 @@ public:
   static bool classof(const ObjCIsaExpr *) { return true; }
 
   // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
+  child_range children() { return child_range(&Base, &Base+1); }
 };
 
 }  // end namespace clang

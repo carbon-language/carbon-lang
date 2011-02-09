@@ -29,65 +29,10 @@ QualType CXXTypeidExpr::getTypeOperand() const {
                                                         .getUnqualifiedType();
 }
 
-// CXXTypeidExpr - has child iterators if the operand is an expression
-Stmt::child_iterator CXXTypeidExpr::child_begin() {
-  return isTypeOperand() ? child_iterator() 
-                         : reinterpret_cast<Stmt **>(&Operand);
-}
-Stmt::child_iterator CXXTypeidExpr::child_end() {
-  return isTypeOperand() ? child_iterator() 
-                         : reinterpret_cast<Stmt **>(&Operand) + 1;
-}
-
 QualType CXXUuidofExpr::getTypeOperand() const {
   assert(isTypeOperand() && "Cannot call getTypeOperand for __uuidof(expr)");
   return Operand.get<TypeSourceInfo *>()->getType().getNonReferenceType()
                                                         .getUnqualifiedType();
-}
-
-// CXXUuidofExpr - has child iterators if the operand is an expression
-Stmt::child_iterator CXXUuidofExpr::child_begin() {
-  return isTypeOperand() ? child_iterator() 
-                         : reinterpret_cast<Stmt **>(&Operand);
-}
-Stmt::child_iterator CXXUuidofExpr::child_end() {
-  return isTypeOperand() ? child_iterator() 
-                         : reinterpret_cast<Stmt **>(&Operand) + 1;
-}
-
-// CXXBoolLiteralExpr
-Stmt::child_iterator CXXBoolLiteralExpr::child_begin() {
-  return child_iterator();
-}
-Stmt::child_iterator CXXBoolLiteralExpr::child_end() {
-  return child_iterator();
-}
-
-// CXXNullPtrLiteralExpr
-Stmt::child_iterator CXXNullPtrLiteralExpr::child_begin() {
-  return child_iterator();
-}
-Stmt::child_iterator CXXNullPtrLiteralExpr::child_end() {
-  return child_iterator();
-}
-
-// CXXThisExpr
-Stmt::child_iterator CXXThisExpr::child_begin() { return child_iterator(); }
-Stmt::child_iterator CXXThisExpr::child_end() { return child_iterator(); }
-
-// CXXThrowExpr
-Stmt::child_iterator CXXThrowExpr::child_begin() { return &Op; }
-Stmt::child_iterator CXXThrowExpr::child_end() {
-  // If Op is 0, we are processing throw; which has no children.
-  return Op ? &Op+1 : &Op;
-}
-
-// CXXDefaultArgExpr
-Stmt::child_iterator CXXDefaultArgExpr::child_begin() {
-  return child_iterator();
-}
-Stmt::child_iterator CXXDefaultArgExpr::child_end() {
-  return child_iterator();
 }
 
 // CXXScalarValueInitExpr
@@ -96,13 +41,6 @@ SourceRange CXXScalarValueInitExpr::getSourceRange() const {
   if (TypeInfo)
     Start = TypeInfo->getTypeLoc().getBeginLoc();
   return SourceRange(Start, RParenLoc);
-}
-
-Stmt::child_iterator CXXScalarValueInitExpr::child_begin() {
-  return child_iterator();
-}
-Stmt::child_iterator CXXScalarValueInitExpr::child_end() {
-  return child_iterator();
 }
 
 // CXXNewExpr
@@ -163,11 +101,6 @@ void CXXNewExpr::AllocateArgsArray(ASTContext &C, bool isArray,
 }
 
 
-Stmt::child_iterator CXXNewExpr::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator CXXNewExpr::child_end() {
-  return &SubExprs[0] + Array + getNumPlacementArgs() + getNumConstructorArgs();
-}
-
 // CXXDeleteExpr
 QualType CXXDeleteExpr::getDestroyedType() const {
   const Expr *Arg = getArgument();
@@ -187,15 +120,7 @@ QualType CXXDeleteExpr::getDestroyedType() const {
   return ArgType->getAs<PointerType>()->getPointeeType();
 }
 
-Stmt::child_iterator CXXDeleteExpr::child_begin() { return &Argument; }
-Stmt::child_iterator CXXDeleteExpr::child_end() { return &Argument+1; }
-
 // CXXPseudoDestructorExpr
-Stmt::child_iterator CXXPseudoDestructorExpr::child_begin() { return &Base; }
-Stmt::child_iterator CXXPseudoDestructorExpr::child_end() {
-  return &Base + 1;
-}
-
 PseudoDestructorTypeStorage::PseudoDestructorTypeStorage(TypeSourceInfo *Info)
  : Type(Info) 
 {
@@ -355,28 +280,6 @@ CXXRecordDecl *OverloadExpr::getNamingClass() const {
     return cast<UnresolvedMemberExpr>(this)->getNamingClass();
 }
 
-Stmt::child_iterator UnresolvedLookupExpr::child_begin() {
-  return child_iterator();
-}
-Stmt::child_iterator UnresolvedLookupExpr::child_end() {
-  return child_iterator();
-}
-// UnaryTypeTraitExpr
-Stmt::child_iterator UnaryTypeTraitExpr::child_begin() {
-  return child_iterator();
-}
-Stmt::child_iterator UnaryTypeTraitExpr::child_end() {
-  return child_iterator();
-}
-
-//BinaryTypeTraitExpr
-Stmt::child_iterator BinaryTypeTraitExpr::child_begin() {
-  return child_iterator();
-}
-Stmt::child_iterator BinaryTypeTraitExpr::child_end() {
-  return child_iterator();
-}
-
 // DependentScopeDeclRefExpr
 DependentScopeDeclRefExpr::DependentScopeDeclRefExpr(QualType T,
                             NestedNameSpecifier *Qualifier,
@@ -429,14 +332,6 @@ DependentScopeDeclRefExpr::CreateEmpty(ASTContext &C,
                                           DeclarationNameInfo(), 0);
   E->HasExplicitTemplateArgs = HasExplicitTemplateArgs;
   return E;
-}
-
-StmtIterator DependentScopeDeclRefExpr::child_begin() {
-  return child_iterator();
-}
-
-StmtIterator DependentScopeDeclRefExpr::child_end() {
-  return child_iterator();
 }
 
 SourceRange CXXConstructExpr::getSourceRange() const {
@@ -746,32 +641,6 @@ ExprWithCleanups *ExprWithCleanups::Create(ASTContext &C,
   return new (C) ExprWithCleanups(C, SubExpr, Temps, NumTemps);
 }
 
-// CXXBindTemporaryExpr
-Stmt::child_iterator CXXBindTemporaryExpr::child_begin() {
-  return &SubExpr;
-}
-
-Stmt::child_iterator CXXBindTemporaryExpr::child_end() {
-  return &SubExpr + 1;
-}
-
-// CXXConstructExpr
-Stmt::child_iterator CXXConstructExpr::child_begin() {
-  return &Args[0];
-}
-Stmt::child_iterator CXXConstructExpr::child_end() {
-  return &Args[0]+NumArgs;
-}
-
-// ExprWithCleanups
-Stmt::child_iterator ExprWithCleanups::child_begin() {
-  return &SubExpr;
-}
-
-Stmt::child_iterator ExprWithCleanups::child_end() {
-  return &SubExpr + 1;
-}
-
 CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
                                                  SourceLocation LParenLoc,
                                                  Expr **Args,
@@ -818,14 +687,6 @@ CXXUnresolvedConstructExpr::CreateEmpty(ASTContext &C, unsigned NumArgs) {
 
 SourceRange CXXUnresolvedConstructExpr::getSourceRange() const {
   return SourceRange(Type->getTypeLoc().getBeginLoc(), RParenLoc);
-}
-
-Stmt::child_iterator CXXUnresolvedConstructExpr::child_begin() {
-  return child_iterator(reinterpret_cast<Stmt **>(this + 1));
-}
-
-Stmt::child_iterator CXXUnresolvedConstructExpr::child_end() {
-  return child_iterator(reinterpret_cast<Stmt **>(this + 1) + NumArgs);
 }
 
 CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
@@ -927,16 +788,6 @@ CXXDependentScopeMemberExpr::CreateEmpty(ASTContext &C,
   return E;
 }
 
-Stmt::child_iterator CXXDependentScopeMemberExpr::child_begin() {
-  return child_iterator(&Base);
-}
-
-Stmt::child_iterator CXXDependentScopeMemberExpr::child_end() {
-  if (isImplicitAccess())
-    return child_iterator(&Base);
-  return child_iterator(&Base + 1);
-}
-
 UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, 
                                            bool HasUnresolvedUsing,
                                            Expr *Base, QualType BaseType,
@@ -1025,47 +876,6 @@ CXXRecordDecl *UnresolvedMemberExpr::getNamingClass() const {
   return Record;
 }
 
-Stmt::child_iterator UnresolvedMemberExpr::child_begin() {
-  return child_iterator(&Base);
-}
-
-Stmt::child_iterator UnresolvedMemberExpr::child_end() {
-  if (isImplicitAccess())
-    return child_iterator(&Base);
-  return child_iterator(&Base + 1);
-}
-
-Stmt::child_iterator CXXNoexceptExpr::child_begin() {
-  return child_iterator(&Operand);
-}
-Stmt::child_iterator CXXNoexceptExpr::child_end() {
-  return child_iterator(&Operand + 1);
-}
-
-SourceRange PackExpansionExpr::getSourceRange() const {
-  return SourceRange(Pattern->getLocStart(), EllipsisLoc);
-}
-
-Stmt::child_iterator PackExpansionExpr::child_begin() {
-  return child_iterator(&Pattern);
-}
-
-Stmt::child_iterator PackExpansionExpr::child_end() {
-  return child_iterator(&Pattern + 1);
-}
-
-SourceRange SizeOfPackExpr::getSourceRange() const {
-  return SourceRange(OperatorLoc, RParenLoc);
-}
-
-Stmt::child_iterator SizeOfPackExpr::child_begin() {
-  return child_iterator();
-}
-
-Stmt::child_iterator SizeOfPackExpr::child_end() {
-  return child_iterator();
-}
-
 SubstNonTypeTemplateParmPackExpr::
 SubstNonTypeTemplateParmPackExpr(QualType T, 
                                  NonTypeTemplateParmDecl *Param,
@@ -1078,18 +888,6 @@ SubstNonTypeTemplateParmPackExpr(QualType T,
 
 TemplateArgument SubstNonTypeTemplateParmPackExpr::getArgumentPack() const {
   return TemplateArgument(Arguments, NumArguments);
-}
-
-SourceRange SubstNonTypeTemplateParmPackExpr::getSourceRange() const {
-  return NameLoc;
-}
-
-Stmt::child_iterator SubstNonTypeTemplateParmPackExpr::child_begin() {
-  return child_iterator();
-}
-
-Stmt::child_iterator SubstNonTypeTemplateParmPackExpr::child_end() {
-  return child_iterator();
 }
 
 

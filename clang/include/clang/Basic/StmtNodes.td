@@ -23,7 +23,7 @@ def ContinueStmt : Stmt;
 def BreakStmt : Stmt;
 def ReturnStmt : Stmt;
 def DeclStmt  : Stmt;
-def SwitchCase : Stmt;
+def SwitchCase : Stmt<1>;
 def CaseStmt : DStmt<SwitchCase>;
 def DefaultStmt : DStmt<SwitchCase>;
 

@@ -1,4 +1,4 @@
-//===--- StmtIterator.h - Iterators for Statements ------------------------===//
+//===--- StmtIterator.h - Iterators for Statements --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -145,6 +145,15 @@ struct ConstStmtIterator : public StmtIteratorImpl<ConstStmtIterator,
   ConstStmtIterator(const StmtIterator& RHS) :
     StmtIteratorImpl<ConstStmtIterator,const Stmt*>(RHS) {}
 };
+
+typedef std::pair<StmtIterator,StmtIterator> StmtRange;
+typedef std::pair<ConstStmtIterator,ConstStmtIterator> ConstStmtRange;
+
+inline StmtIterator begin(StmtRange range) { return range.first; }
+inline StmtIterator end(StmtRange range) { return range.second; }
+
+inline ConstStmtIterator begin(ConstStmtRange range) { return range.first; }
+inline ConstStmtIterator end(ConstStmtRange range) { return range.second; }
 
 } // end namespace clang
 

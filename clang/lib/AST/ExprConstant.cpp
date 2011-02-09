@@ -2578,6 +2578,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   }
 
   switch (E->getStmtClass()) {
+#define ABSTRACT_STMT(Node)
 #define STMT(Node, Base) case Expr::Node##Class:
 #define EXPR(Node, Base)
 #include "clang/AST/StmtNodes.inc"

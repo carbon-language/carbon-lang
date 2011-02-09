@@ -84,6 +84,61 @@ bool Stmt::CollectingStats(bool Enable) {
   return StatSwitch;
 }
 
+namespace {
+  struct good {};
+  struct bad {};
+  static inline good is_good(good); // static inline to suppress unused warning
+
+  typedef Stmt::child_range children_t();
+  template <class T> good implements_children(children_t T::*);
+  static inline bad implements_children(children_t Stmt::*);
+
+  typedef SourceRange getSourceRange_t() const;
+  template <class T> good implements_getSourceRange(getSourceRange_t T::*);
+  static inline bad implements_getSourceRange(getSourceRange_t Stmt::*);
+
+#define ASSERT_IMPLEMENTS_children(type) \
+  (void) sizeof(is_good(implements_children(&type::children)))
+#define ASSERT_IMPLEMENTS_getSourceRange(type) \
+  (void) sizeof(is_good(implements_getSourceRange(&type::getSourceRange)))
+}
+
+/// Check whether the various Stmt classes implement their member
+/// functions.
+static inline void check_implementations() {
+#define ABSTRACT_STMT(type)
+#define STMT(type, base) \
+  ASSERT_IMPLEMENTS_children(type); \
+  ASSERT_IMPLEMENTS_getSourceRange(type);
+#include "clang/AST/StmtNodes.inc"
+}
+
+Stmt::child_range Stmt::children() {
+  switch (getStmtClass()) {
+  case Stmt::NoStmtClass: llvm_unreachable("statement without class");
+#define ABSTRACT_STMT(type)
+#define STMT(type, base) \
+  case Stmt::type##Class: \
+    return static_cast<type*>(this)->children();
+#include "clang/AST/StmtNodes.inc"
+  }
+  llvm_unreachable("unknown statement kind!");
+  return child_range();
+}
+
+SourceRange Stmt::getSourceRange() const {
+  switch (getStmtClass()) {
+  case Stmt::NoStmtClass: llvm_unreachable("statement without class");
+#define ABSTRACT_STMT(type)
+#define STMT(type, base) \
+  case Stmt::type##Class: \
+    return static_cast<const type*>(this)->getSourceRange();
+#include "clang/AST/StmtNodes.inc"
+  }
+  llvm_unreachable("unknown statement kind!");
+  return SourceRange();
+}
+
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
   if (this->Body)
     C.Deallocate(Body);
@@ -556,6 +611,11 @@ void SwitchStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
                                    V->getSourceRange().getEnd());
 }
 
+Stmt *SwitchCase::getSubStmt() {
+  if (isa<CaseStmt>(this)) return cast<CaseStmt>(this)->getSubStmt();
+  return cast<DefaultStmt>(this)->getSubStmt();
+}
+
 WhileStmt::WhileStmt(ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body, 
                      SourceLocation WL)
 : Stmt(WhileStmtClass)
@@ -585,89 +645,6 @@ void WhileStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
                                    V->getSourceRange().getEnd());
 }
 
-//===----------------------------------------------------------------------===//
-//  Child Iterators for iterating over subexpressions/substatements
-//===----------------------------------------------------------------------===//
-
-// DeclStmt
-Stmt::child_iterator DeclStmt::child_begin() {
-  return StmtIterator(DG.begin(), DG.end());
-}
-
-Stmt::child_iterator DeclStmt::child_end() {
-  return StmtIterator(DG.end(), DG.end());
-}
-
-// NullStmt
-Stmt::child_iterator NullStmt::child_begin() { return child_iterator(); }
-Stmt::child_iterator NullStmt::child_end() { return child_iterator(); }
-
-// CompoundStmt
-Stmt::child_iterator CompoundStmt::child_begin() { return &Body[0]; }
-Stmt::child_iterator CompoundStmt::child_end() {
-  return &Body[0]+CompoundStmtBits.NumStmts;
-}
-
-// CaseStmt
-Stmt::child_iterator CaseStmt::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator CaseStmt::child_end() { return &SubExprs[END_EXPR]; }
-
-// DefaultStmt
-Stmt::child_iterator DefaultStmt::child_begin() { return &SubStmt; }
-Stmt::child_iterator DefaultStmt::child_end() { return &SubStmt+1; }
-
-// LabelStmt
-Stmt::child_iterator LabelStmt::child_begin() { return &SubStmt; }
-Stmt::child_iterator LabelStmt::child_end() { return &SubStmt+1; }
-
-// IfStmt
-Stmt::child_iterator IfStmt::child_begin() {
-  return &SubExprs[0];
-}
-Stmt::child_iterator IfStmt::child_end() {
-  return &SubExprs[0]+END_EXPR;
-}
-
-// SwitchStmt
-Stmt::child_iterator SwitchStmt::child_begin() {
-  return &SubExprs[0];
-}
-Stmt::child_iterator SwitchStmt::child_end() {
-  return &SubExprs[0]+END_EXPR;
-}
-
-// WhileStmt
-Stmt::child_iterator WhileStmt::child_begin() {
-  return &SubExprs[0];
-}
-Stmt::child_iterator WhileStmt::child_end() {
-  return &SubExprs[0]+END_EXPR;
-}
-
-// DoStmt
-Stmt::child_iterator DoStmt::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator DoStmt::child_end() { return &SubExprs[0]+END_EXPR; }
-
-// ForStmt
-Stmt::child_iterator ForStmt::child_begin() {
-  return &SubExprs[0];
-}
-Stmt::child_iterator ForStmt::child_end() {
-  return &SubExprs[0]+END_EXPR;
-}
-
-// ObjCForCollectionStmt
-Stmt::child_iterator ObjCForCollectionStmt::child_begin() {
-  return &SubExprs[0];
-}
-Stmt::child_iterator ObjCForCollectionStmt::child_end() {
-  return &SubExprs[0]+END_EXPR;
-}
-
-// GotoStmt
-Stmt::child_iterator GotoStmt::child_begin() { return child_iterator(); }
-Stmt::child_iterator GotoStmt::child_end() { return child_iterator(); }
-
 // IndirectGotoStmt
 LabelStmt *IndirectGotoStmt::getConstantTarget() {
   if (AddrLabelExpr *E =
@@ -676,87 +653,10 @@ LabelStmt *IndirectGotoStmt::getConstantTarget() {
   return 0;
 }
 
-Stmt::child_iterator IndirectGotoStmt::child_begin() { return &Target; }
-Stmt::child_iterator IndirectGotoStmt::child_end() { return &Target+1; }
-
-// ContinueStmt
-Stmt::child_iterator ContinueStmt::child_begin() { return child_iterator(); }
-Stmt::child_iterator ContinueStmt::child_end() { return child_iterator(); }
-
-// BreakStmt
-Stmt::child_iterator BreakStmt::child_begin() { return child_iterator(); }
-Stmt::child_iterator BreakStmt::child_end() { return child_iterator(); }
-
 // ReturnStmt
 const Expr* ReturnStmt::getRetValue() const {
   return cast_or_null<Expr>(RetExpr);
 }
 Expr* ReturnStmt::getRetValue() {
   return cast_or_null<Expr>(RetExpr);
-}
-
-Stmt::child_iterator ReturnStmt::child_begin() {
-  return &RetExpr;
-}
-Stmt::child_iterator ReturnStmt::child_end() {
-  return RetExpr ? &RetExpr+1 : &RetExpr;
-}
-
-// AsmStmt
-Stmt::child_iterator AsmStmt::child_begin() {
-  return NumOutputs + NumInputs == 0 ? 0 : &Exprs[0];
-}
-Stmt::child_iterator AsmStmt::child_end() {
-  return NumOutputs + NumInputs == 0 ? 0 : &Exprs[0] + NumOutputs + NumInputs;
-}
-
-// ObjCAtCatchStmt
-Stmt::child_iterator ObjCAtCatchStmt::child_begin() { return &Body; }
-Stmt::child_iterator ObjCAtCatchStmt::child_end() { return &Body + 1; }
-
-// ObjCAtFinallyStmt
-Stmt::child_iterator ObjCAtFinallyStmt::child_begin() { return &AtFinallyStmt; }
-Stmt::child_iterator ObjCAtFinallyStmt::child_end() { return &AtFinallyStmt+1; }
-
-// ObjCAtTryStmt
-Stmt::child_iterator ObjCAtTryStmt::child_begin() { return getStmts(); }
-
-Stmt::child_iterator ObjCAtTryStmt::child_end() {
-  return getStmts() + 1 + NumCatchStmts + HasFinally;
-}
-
-// ObjCAtThrowStmt
-Stmt::child_iterator ObjCAtThrowStmt::child_begin() {
-  return &Throw;
-}
-
-Stmt::child_iterator ObjCAtThrowStmt::child_end() {
-  return &Throw+1;
-}
-
-// ObjCAtSynchronizedStmt
-Stmt::child_iterator ObjCAtSynchronizedStmt::child_begin() {
-  return &SubStmts[0];
-}
-
-Stmt::child_iterator ObjCAtSynchronizedStmt::child_end() {
-  return &SubStmts[0]+END_EXPR;
-}
-
-// CXXCatchStmt
-Stmt::child_iterator CXXCatchStmt::child_begin() {
-  return &HandlerBlock;
-}
-
-Stmt::child_iterator CXXCatchStmt::child_end() {
-  return &HandlerBlock + 1;
-}
-
-// CXXTryStmt
-Stmt::child_iterator CXXTryStmt::child_begin() {
-  return reinterpret_cast<Stmt **>(this + 1);
-}
-
-Stmt::child_iterator CXXTryStmt::child_end() {
-  return reinterpret_cast<Stmt **>(this + 1) + NumHandlers + 1;
 }

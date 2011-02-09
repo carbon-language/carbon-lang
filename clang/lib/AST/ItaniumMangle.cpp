@@ -1690,6 +1690,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   //                ::= L <mangled-name> E           # external name
   switch (E->getStmtClass()) {
   case Expr::NoStmtClass:
+#define ABSTRACT_STMT(Type)
 #define EXPR(Type, Base)
 #define STMT(Type, Base) \
   case Expr::Type##Class:
