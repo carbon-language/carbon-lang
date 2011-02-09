@@ -659,6 +659,11 @@ int main(int argc, char **argv) {
   }
   MemoryBuffer *F = File.take();
 
+  if (F->getBufferSize() == 0) {
+    errs() << "FileCheck error: '" << InputFilename << "' is empty.\n";
+    return 1;
+  }
+  
   // Remove duplicate spaces in the input file if requested.
   if (!NoCanonicalizeWhiteSpace)
     F = CanonicalizeInputFile(F);
