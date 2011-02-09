@@ -954,6 +954,25 @@ SlotIndex SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   return VNI->def;
 }
 
+SlotIndex SplitEditor::leaveIntvBefore(SlotIndex Idx) {
+  assert(OpenIdx && "openIntv not called before leaveIntvBefore");
+  DEBUG(dbgs() << "    leaveIntvBefore " << Idx);
+
+  // The interval must be live into the instruction at Idx.
+  Idx = Idx.getBoundaryIndex();
+  VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Idx);
+  if (!ParentVNI) {
+    DEBUG(dbgs() << ": not live\n");
+    return Idx.getNextSlot();
+  }
+  DEBUG(dbgs() << ": valno " << ParentVNI->id << '\n');
+
+  MachineInstr *MI = LIS.getInstructionFromIndex(Idx);
+  assert(MI && "No instruction at index");
+  VNInfo *VNI = defFromParent(0, ParentVNI, Idx, *MI->getParent(), MI);
+  return VNI->def;
+}
+
 SlotIndex SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   assert(OpenIdx && "openIntv not called before leaveIntvAtTop");
   SlotIndex Start = LIS.getMBBStartIdx(&MBB);
@@ -1211,28 +1230,20 @@ void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
 /// may be an advantage to split CurLI for the duration of the block.
 bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
   // If CurLI is local to one block, there is no point to splitting it.
-  if (UsingBlocks.size() <= 1)
+  if (LiveBlocks.size() <= 1)
     return false;
   // Add blocks with multiple uses.
-  for (BlockCountMap::iterator I = UsingBlocks.begin(), E = UsingBlocks.end();
-       I != E; ++I)
-    switch (I->second) {
-    case 0:
-    case 1:
+  for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
+    const BlockInfo &BI = LiveBlocks[i];
+    if (!BI.Uses)
       continue;
-    case 2: {
-      // When there are only two uses and CurLI is both live in and live out,
-      // we don't really win anything by isolating the block since we would be
-      // inserting two copies.
-      // The remaing register would still have two uses in the block. (Unless it
-      // separates into disconnected components).
-      if (LIS.isLiveInToMBB(*CurLI, I->first) &&
-          LIS.isLiveOutOfMBB(*CurLI, I->first))
-        continue;
-    } // Fall through.
-    default:
-      Blocks.insert(I->first);
-    }
+    unsigned Instrs = UsingBlocks.lookup(BI.MBB);
+    if (Instrs <= 1)
+      continue;
+    if (Instrs == 2 && BI.LiveIn && BI.LiveOut && !BI.LiveThrough)
+      continue;
+    Blocks.insert(BI.MBB);
+  }
   return !Blocks.empty();
 }
 
@@ -1240,34 +1251,22 @@ bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
 /// basic block in Blocks.
 void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
   DEBUG(dbgs() << "  splitSingleBlocks for " << Blocks.size() << " blocks.\n");
-  // Determine the first and last instruction using CurLI in each block.
-  typedef std::pair<SlotIndex,SlotIndex> IndexPair;
-  typedef DenseMap<const MachineBasicBlock*,IndexPair> IndexPairMap;
-  IndexPairMap MBBRange;
-  for (SplitAnalysis::InstrPtrSet::const_iterator I = sa_.UsingInstrs.begin(),
-       E = sa_.UsingInstrs.end(); I != E; ++I) {
-    const MachineBasicBlock *MBB = (*I)->getParent();
-    if (!Blocks.count(MBB))
-      continue;
-    SlotIndex Idx = LIS.getInstructionIndex(*I);
-    DEBUG(dbgs() << "  BB#" << MBB->getNumber() << '\t' << Idx << '\t' << **I);
-    IndexPair &IP = MBBRange[MBB];
-    if (!IP.first.isValid() || Idx < IP.first)
-      IP.first = Idx;
-    if (!IP.second.isValid() || Idx > IP.second)
-      IP.second = Idx;
-  }
 
-  // Create a new interval for each block.
-  for (SplitAnalysis::BlockPtrSet::const_iterator I = Blocks.begin(),
-       E = Blocks.end(); I != E; ++I) {
-    IndexPair &IP = MBBRange[*I];
-    DEBUG(dbgs() << "  splitting for BB#" << (*I)->getNumber() << ": ["
-                 << IP.first << ';' << IP.second << ")\n");
-    assert(IP.first.isValid() && IP.second.isValid());
+  for (unsigned i = 0, e = sa_.LiveBlocks.size(); i != e; ++i) {
+    const SplitAnalysis::BlockInfo &BI = sa_.LiveBlocks[i];
+    if (!BI.Uses || !Blocks.count(BI.MBB))
+      continue;
 
     openIntv();
-    useIntv(enterIntvBefore(IP.first), leaveIntvAfter(IP.second));
+    SlotIndex SegStart = enterIntvBefore(BI.FirstUse);
+    if (BI.LastUse < BI.LastSplitPoint) {
+      useIntv(SegStart, leaveIntvAfter(BI.LastUse));
+    } else {
+      // THe last use os after tha last valid split point.
+      SlotIndex SegStop = leaveIntvBefore(BI.LastSplitPoint);
+      useIntv(SegStart, SegStop);
+      overlapIntv(SegStop, BI.LastUse);
+    }
     closeIntv();
   }
   finish();

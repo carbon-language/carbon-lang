@@ -407,6 +407,10 @@ public:
   /// Return the end of the live range.
   SlotIndex leaveIntvAfter(SlotIndex Idx);
 
+  /// leaveIntvBefore - Leave the open interval before the instruction at Idx.
+  /// Return the end of the live range.
+  SlotIndex leaveIntvBefore(SlotIndex Idx);
+
   /// leaveIntvAtTop - Leave the interval at the top of MBB.
   /// Add liveness from the MBB top to the copy.
   /// Return the end of the live range.
