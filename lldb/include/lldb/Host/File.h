@@ -11,6 +11,8 @@
 #define liblldb_File_h_
 #if defined(__cplusplus)
 
+#include <stdio.h>
+
 #include "lldb/lldb-private.h"
 
 namespace lldb_private {

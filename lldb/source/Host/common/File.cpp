@@ -269,8 +269,24 @@ File::GetFileSpec (FileSpec &file_spec) const
     {
         error.SetErrorString("invalid file handle");
     }
+#elif defined(__linux__)
+    char proc[64];
+    char path[PATH_MAX];
+    if (::snprintf(proc, sizeof(proc), "/proc/self/fd/%d", GetDescriptor()) < 0)
+        error.SetErrorString ("Cannot resolve file descriptor\n");
+    else
+    {
+        ssize_t len;
+        if ((len = ::readlink(proc, path, sizeof(path) - 1)) == -1)
+            error.SetErrorToErrno();
+        else
+        {
+            path[len] = '\0';
+            file_spec.SetFile (path, false);
+        }
+    }
 #else
-    error.SetErrorString ("fcntl (fd, F_GETPATH, ...) is not supported on this platform");
+    error.SetErrorString ("File::GetFileSpec is not supported on this platform");
 #endif
 
     if (error.Fail())

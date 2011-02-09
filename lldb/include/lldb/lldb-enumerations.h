@@ -85,7 +85,7 @@ typedef enum ByteOrder
     eByteOrderInvalid   = 0,
     eByteOrderBig       = 1,
     eByteOrderPDP       = 2,
-    eByteOrderLittle    = 4,
+    eByteOrderLittle    = 4
 } ByteOrder;
 
 //----------------------------------------------------------------------
