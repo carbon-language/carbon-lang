@@ -2323,6 +2323,10 @@ LexNextToken:
         // If this is actually a '<<<<<<<' version control conflict marker,
         // recognize it as such and recover nicely.
         goto LexNextToken;
+      } else if (Features.CUDA && After == '<') {
+        Kind = tok::lesslessless;
+        CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                             SizeTmp2, Result);
       } else {
         CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
         Kind = tok::lessless;
@@ -2354,6 +2358,10 @@ LexNextToken:
       } else if (After == '>' && HandleEndOfConflictMarker(CurPtr-1)) {
         // If this is '>>>>>>>' and we're in a conflict marker, ignore it.
         goto LexNextToken;
+      } else if (Features.CUDA && After == '>') {
+        Kind = tok::greatergreatergreater;
+        CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                             SizeTmp2, Result);
       } else {
         CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
         Kind = tok::greatergreater;
