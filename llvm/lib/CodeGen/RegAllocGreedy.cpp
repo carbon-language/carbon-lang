@@ -714,19 +714,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         // indirect jump.
         DEBUG(dbgs() << ", uses at " << BI.LastUse << " after split point "
                      << BI.LastSplitPoint << ", stack-out.\n");
-        SlotIndex SegEnd;
-        // Find the last real instruction before the split point.
-        MachineBasicBlock::iterator SplitI =
-          LIS->getInstructionFromIndex(BI.LastSplitPoint);
-        MachineBasicBlock::iterator I = SplitI, B = BI.MBB->begin();
-        while (I != B && (--I)->isDebugValue())
-          ;
-        if (I == SplitI)
-          SegEnd = SE.leaveIntvAtTop(*BI.MBB);
-        else {
-          SegEnd = SE.leaveIntvAfter(LIS->getInstructionIndex(I));
-          SE.useIntv(Start, SegEnd);
-        }
+        SlotIndex SegEnd = SE.leaveIntvBefore(BI.LastSplitPoint);
+        SE.useIntv(Start, SegEnd);
         // Run a double interval from the split to the last use.
         // This makes it possible to spill the complement without affecting the
         // indirect branch.
