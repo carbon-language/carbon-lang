@@ -10,15 +10,17 @@
 #include "lldb/Core/ConnectionFileDescriptor.h"
 
 // C Includes
-#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef __APPLE__
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/un.h>
+#endif
+#include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -616,7 +618,13 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
 int
 ConnectionFileDescriptor::SetSocketOption(int fd, int level, int option_name, int option_value)
 {
-    return ::setsockopt(fd, level, option_name, &option_value, sizeof(option_value));
+#if defined(__MINGW32__) || defined(__MINGW64__)
+    const char* option_value_p = static_cast<const char*>(&option_value);
+#else // #if defined(__MINGW32__) || defined(__MINGW64__)
+    const void* option_value_p = &option_name;
+#endif // #if defined(__MINGW32__) || defined(__MINGW64__)
+
+	return ::setsockopt(fd, level, option_name, option_value_p, sizeof(option_value));
 }
 
 

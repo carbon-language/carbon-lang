@@ -13,7 +13,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#if defined(TIOCSCTTY)
 #include <sys/ioctl.h>
+#endif
 
 using namespace lldb_utility;
 
@@ -237,7 +239,7 @@ PseudoTerminal::Fork (char *error_str, size_t error_len)
                 // We are done with the master in the child process so lets close it
                 CloseMasterFileDescriptor ();
 
-#if defined (TIOCSCTTY)
+#if defined(TIOCSCTTY)
                 // Acquire the controlling terminal
                 if (::ioctl (m_slave_fd, TIOCSCTTY, (char *)0) < 0)
                 {

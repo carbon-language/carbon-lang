@@ -10,9 +10,10 @@
 #include "EmulateInstructionARM.h"
 #include "lldb/Core/ConstString.h"
 
-#include "ARMDefines.h"
-#include "ARMUtils.h"
-#include "ARM_DWARF_Registers.h"
+#include "Plugins/Process/Utility/ARMDefines.h"
+#include "Plugins/Process/Utility/ARMUtils.h"
+#include "Utility/ARM_DWARF_Registers.h"
+
 #include "llvm/Support/MathExtras.h" // for SignExtend32 template function
                                      // and CountTrailingZeros_32 function
 

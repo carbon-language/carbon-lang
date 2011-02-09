@@ -60,7 +60,7 @@ thread_func (void *arg)
     while (mask_access(eGet) & thread_mask)
     {
         // random micro second sleep from zero to 3 seconds
-        long usec = ::random() % 3000000;
+        int usec = ::rand() % 3000000;
         printf ("%s (thread = %u) doing a usleep (%li)...\n", __FUNCTION__, thread_index, usec);
         ::usleep (usec);
         printf ("%s (thread = %u) after usleep ...\n", __FUNCTION__, thread_index); // Set break point at this line.
