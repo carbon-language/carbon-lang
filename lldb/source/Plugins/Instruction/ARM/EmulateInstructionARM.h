@@ -139,6 +139,9 @@ public:
     virtual bool
     EvaluateInstruction ();
 
+    uint32_t
+    ArchVersion();
+
     bool
     ConditionPassed ();
 
@@ -150,6 +153,15 @@ public:
 
     bool
     BXWritePC(Context &context, uint32_t addr);
+
+    bool
+    LoadWritePC(Context &context, uint32_t addr);
+
+    Mode
+    CurrentInstrSet();
+
+    bool
+    SelectInstrSet(Mode arm_or_thumb);
 
 protected:
 

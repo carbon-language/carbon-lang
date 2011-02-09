@@ -2144,6 +2144,12 @@ EmulateInstructionARM::ReadInstruction ()
     return success;
 }
 
+uint32_t
+EmulateInstructionARM::ArchVersion ()
+{
+    return m_arm_isa;
+}
+
 bool
 EmulateInstructionARM::ConditionPassed ()
 {
@@ -2222,25 +2228,17 @@ EmulateInstructionARM::CurrentCond ()
     return UINT32_MAX;  // Return invalid value
 }
 
-// API client must pass in a context whose arg2 field contains the target instruction set.
 bool
 EmulateInstructionARM::BranchWritePC (const Context &context, uint32_t addr)
 {
     addr_t target;
 
-    // Chech the target instruction set.
-    switch (context.arg2)
-    {
-    default:
-        assert(0 && "BranchWritePC expects context.arg1 with either eModeARM or eModeThumb");
-        return false;
-    case eModeARM:
+    // Check the current instruction set.
+    if (CurrentInstrSet() == eModeARM)
         target = addr & 0xfffffffc;
-        break;
-    case eModeThumb:
+    else
         target = addr & 0xfffffffe;
-        break;
-    }
+
     if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
         return false;
 
@@ -2255,11 +2253,13 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
 
     if (BitIsSet(addr, 0))
     {
+        SelectInstrSet(eModeThumb);
         target = addr & 0xfffffffe;
         context.arg2 = eModeThumb;
     }
     else if (BitIsClear(addr, 1))
     {
+        SelectInstrSet(eModeARM);
         target = addr & 0xfffffffc;
         context.arg2 = eModeARM;
     }
@@ -2269,6 +2269,43 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
     if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
         return false;
 
+    return true;
+}
+
+// Dispatches to either BXWritePC or BranchWritePC based on architecture versions.
+bool
+EmulateInstructionARM::LoadWritePC (Context &context, uint32_t addr)
+{
+    if (ArchVersion() >= ARMv5T)
+        return BXWritePC(context, addr);
+    else
+        return BranchWritePC((const Context)context, addr);
+}
+
+EmulateInstructionARM::Mode
+EmulateInstructionARM::CurrentInstrSet ()
+{
+    return m_inst_mode;
+}
+
+// Set the 'T' bit of our CPSR.  The m_inst_mode gets updated when the next
+// ReadInstruction() is performed.
+bool
+EmulateInstructionARM::SelectInstrSet (Mode arm_or_thumb)
+{
+    switch (arm_or_thumb)
+    {
+    default:
+        return false;
+    eModeARM:
+        // Clear the T bit.
+        m_inst_cpsr &= ~MASK_CPSR_T;
+        break;
+    eModeThumb:
+        // Set the T bit.
+        m_inst_cpsr |= MASK_CPSR_T;
+        break;
+    }
     return true;
 }
 
