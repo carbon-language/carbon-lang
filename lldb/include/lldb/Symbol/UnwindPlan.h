@@ -205,15 +205,19 @@ public:
 public:
 
     UnwindPlan () : 
-        m_register_kind(-1), 
-        m_row_list(), 
-        m_plan_valid_address_range(), 
-        m_source_name()
-    { 
-        m_plan_valid_address_range.SetByteSize (0);
+        m_row_list (), 
+        m_plan_valid_address_range (), 
+        m_register_kind (UINT32_MAX), 
+        m_source_name ()
+    {
     }
 
-    void Dump (Stream& s, Thread* thread) const;
+    ~UnwindPlan ()
+	{
+	}
+
+    void 
+    Dump (Stream& s, Thread* thread) const;
 
     void 
     AppendRow (const Row& row);

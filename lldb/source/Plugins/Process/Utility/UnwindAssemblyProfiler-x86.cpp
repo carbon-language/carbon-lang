@@ -519,7 +519,6 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
 bool 
 AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
 {
-    UnwindPlan up;
     UnwindPlan::Row row;
     int non_prologue_insn_count = 0;
     m_cur_insn = m_func_bounds.GetBaseAddress ();
