@@ -9,6 +9,7 @@
 
 #include "lldb/API/SBStream.h"
 
+#include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
@@ -75,7 +76,13 @@ SBStream::RedirectToFile (const char *path, bool append)
         if (!m_is_file)
             local_data.swap(static_cast<StreamString *>(m_opaque_ap.get())->GetString());
     }
-    m_opaque_ap.reset (new StreamFile (path, append ? "a" : "w"));
+    StreamFile *stream_file = new StreamFile;
+    uint32_t open_options = File::eOpenOptionWrite | File::eOpenOptionCanCreate;
+    if (append)
+        open_options |= File::eOpenOptionAppend;
+    stream_file->GetFile().Open (path, open_options, File::ePermissionsDefault);
+
+    m_opaque_ap.reset (stream_file);
 
     if (m_opaque_ap.get())
     {

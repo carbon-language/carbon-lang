@@ -418,28 +418,25 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
     size_t bytes_len
 )
 {
-    FILE *out_fh = reader.GetDebugger().GetOutputFileHandle();
+    File &out_file = reader.GetDebugger().GetOutputFile();
 
     switch (notification)
     {
     case eInputReaderActivate:
-        if (out_fh)
-        {
-            ::fprintf (out_fh, "%s\n", g_reader_instructions);
-            if (reader.GetPrompt())
-                ::fprintf (out_fh, "%s", reader.GetPrompt());
-            ::fflush (out_fh);
-        }
+        out_file.Printf ("%s\n", g_reader_instructions);
+        if (reader.GetPrompt())
+            out_file.Printf ("%s", reader.GetPrompt());
+        out_file.Flush();
         break;
 
     case eInputReaderDeactivate:
         break;
 
     case eInputReaderReactivate:
-        if (out_fh && reader.GetPrompt())
+        if (reader.GetPrompt())
         {
-            ::fprintf (out_fh, "%s", reader.GetPrompt());
-            ::fflush (out_fh);
+            out_file.Printf ("%s", reader.GetPrompt());
+            out_file.Flush();
         }
         break;
 
@@ -454,10 +451,10 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
                     ((BreakpointOptions::CommandData *)bp_options_baton->m_data)->user_source.AppendString (bytes, bytes_len); 
             }
         }
-        if (out_fh && !reader.IsDone() && reader.GetPrompt())
+        if (!reader.IsDone() && reader.GetPrompt())
         {
-            ::fprintf (out_fh, "%s", reader.GetPrompt());
-            ::fflush (out_fh);
+            out_file.Printf ("%s", reader.GetPrompt());
+            out_file.Flush();
         }
         break;
         
@@ -475,8 +472,8 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
                     ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->script_source.Clear();
                 }
             }
-            ::fprintf (out_fh, "Warning: No command attached to breakpoint.\n");
-            ::fflush (out_fh);
+            out_file.Printf ("Warning: No command attached to breakpoint.\n");
+            out_file.Flush();
         }
         break;
         
@@ -774,8 +771,8 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
             Debugger &debugger = context->exe_ctx.target->GetDebugger();
             CommandInterpreter &interpreter = debugger.GetCommandInterpreter();
         
-            FILE *out_fh = debugger.GetOutputFileHandle();
-            FILE *err_fh = debugger.GetErrorFileHandle();
+            File &out_file = debugger.GetOutputFile();
+            File &err_file = debugger.GetErrorFile();
                 
             uint32_t i;
             for (i = 0; i < num_commands; ++i)
@@ -797,30 +794,24 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
                 {
                     if (i < num_commands - 1)
                     {
-                        if (out_fh)
-                            ::fprintf (out_fh, "Short-circuiting command execution because target state changed to %s."
-                                               " last command: \"%s\"\n", StateAsCString(internal_state),
-                                               commands.GetStringAtIndex(i));
+                        out_file.Printf ("Short-circuiting command execution because target state changed to %s."
+                                         " last command: \"%s\"\n", StateAsCString(internal_state),
+                                         commands.GetStringAtIndex(i));
                     }
                     break;
                 }
                 
-                if (out_fh)
-                    ::fprintf (out_fh, "%s", result.GetErrorStream().GetData());
-                if (err_fh)
-                    ::fprintf (err_fh, "%s", result.GetOutputStream().GetData());
+                out_file.Printf ("%s", result.GetErrorStream().GetData());
+                err_file.Printf ("%s", result.GetOutputStream().GetData());
                 result.Clear();
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
 
-            if (err_fh && !result.Succeeded() && i < num_commands)
-                ::fprintf (err_fh, "Attempt to execute '%s' failed.\n", commands.GetStringAtIndex(i));
+            if (!result.Succeeded() && i < num_commands)
+                err_file.Printf ("Attempt to execute '%s' failed.\n", commands.GetStringAtIndex(i));
 
-            if (out_fh)
-                ::fprintf (out_fh, "%s", result.GetErrorStream().GetData());
-
-            if (err_fh)
-                ::fprintf (err_fh, "%s", result.GetOutputStream().GetData());        
+            out_file.Printf ("%s", result.GetErrorStream().GetData());
+            err_file.Printf ("%s", result.GetOutputStream().GetData());        
         }
     }
     return ret_value;

@@ -193,7 +193,7 @@ FILE *
 SBDebugger::GetInputFileHandle ()
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetInputFileHandle();
+        return m_opaque_sp->GetInputFile().GetStream();
     return NULL;
 }
 
@@ -201,7 +201,7 @@ FILE *
 SBDebugger::GetOutputFileHandle ()
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetOutputFileHandle();
+        return m_opaque_sp->GetOutputFile().GetStream();
     return NULL;
 }
 
@@ -209,7 +209,7 @@ FILE *
 SBDebugger::GetErrorFileHandle ()
 {
     if (m_opaque_sp)
-        return m_opaque_sp->GetErrorFileHandle();
+        return m_opaque_sp->GetErrorFile().GetStream();
     return NULL;
 }
 

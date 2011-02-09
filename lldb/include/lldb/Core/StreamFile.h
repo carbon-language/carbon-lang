@@ -19,6 +19,7 @@
 // Project includes
 
 #include "lldb/Core/Stream.h"
+#include "lldb/Host/File.h"
 
 namespace lldb_private {
 
@@ -30,22 +31,28 @@ public:
     //------------------------------------------------------------------
     StreamFile ();
 
-    StreamFile (uint32_t flags, uint32_t addr_size, lldb::ByteOrder byte_order, FILE *f);
+    StreamFile (uint32_t flags, uint32_t addr_size, lldb::ByteOrder byte_order);
 
-    StreamFile (FILE *f, bool tranfer_ownership = false);
+    StreamFile (int fd, bool transfer_ownership);
 
-    StreamFile (uint32_t flags, uint32_t addr_size, lldb::ByteOrder byte_order, const char *path, const char *permissions = "w");
+    StreamFile (const char *path);
 
-    StreamFile (const char *path, const char *permissions = "w");
+    StreamFile (FILE *fh, bool transfer_ownership);
 
     virtual
     ~StreamFile();
 
-    void
-    Close ();
+    File &
+    GetFile ()
+    {
+        return m_file;
+    }
 
-    bool
-    Open (const char *path, const char *permissions = "w");
+    const File &
+    GetFile () const
+    {
+        return m_file;
+    }
 
     virtual void
     Flush ();
@@ -53,25 +60,11 @@ public:
     virtual int
     Write (const void *s, size_t length);
 
-    FILE *
-    GetFileHandle ();
-
-    void
-    SetFileHandle (FILE *file, bool close_file);
-
-    const char *
-    GetFilePathname ();
-
-    void
-    SetLineBuffered();
-
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from StreamFile can see and modify these
     //------------------------------------------------------------------
-    FILE* m_file;           ///< File handle to dump to.
-    bool m_close_file;
-    std::string m_path_name;
+    File m_file;
     
 private:
     DISALLOW_COPY_AND_ASSIGN (StreamFile);

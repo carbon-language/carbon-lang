@@ -302,9 +302,12 @@ InputReader::RefreshPrompt ()
 {
     if (!m_prompt.empty())
     {
-        FILE *out_fh = m_debugger.GetOutputFileHandle();
-        if (out_fh)
-            ::fprintf (out_fh, "%s", m_prompt.c_str());
+        File &out_file = m_debugger.GetOutputFile();
+        if (out_file.IsValid())
+        {
+            out_file.Printf ("%s", m_prompt.c_str());
+            out_file.Flush();
+        }
     }
 }
 

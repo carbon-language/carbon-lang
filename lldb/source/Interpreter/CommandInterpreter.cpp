@@ -1102,24 +1102,27 @@ CommandInterpreter::SetPrompt (const char *new_prompt)
 }
 
 size_t
-CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
-                                    InputReader &reader,
-                                    lldb::InputReaderAction action,
-                                    const char *bytes,
-                                    size_t bytes_len)
+CommandInterpreter::GetConfirmationInputReaderCallback 
+(
+    void *baton,
+    InputReader &reader,
+    lldb::InputReaderAction action,
+    const char *bytes,
+    size_t bytes_len
+)
 {
-    FILE *out_fh = reader.GetDebugger().GetOutputFileHandle();
+    File &out_file = reader.GetDebugger().GetOutputFile();
     bool *response_ptr = (bool *) baton;
     
     switch (action)
     {
     case eInputReaderActivate:
-        if (out_fh)
+        if (out_file.IsValid())
         {
             if (reader.GetPrompt())
             {
-                ::fprintf (out_fh, "%s", reader.GetPrompt());
-                ::fflush (out_fh);
+                out_file.Printf ("%s", reader.GetPrompt());
+                out_file.Flush ();
             }
         }
         break;
@@ -1128,10 +1131,10 @@ CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
         break;
 
     case eInputReaderReactivate:
-        if (out_fh && reader.GetPrompt())
+        if (out_file.IsValid() && reader.GetPrompt())
         {
-            ::fprintf (out_fh, "%s", reader.GetPrompt());
-            ::fflush (out_fh);
+            out_file.Printf ("%s", reader.GetPrompt());
+            out_file.Flush ();
         }
         break;
 
@@ -1152,11 +1155,10 @@ CommandInterpreter::GetConfirmationInputReaderCallback (void *baton,
         }
         else
         {
-            if (out_fh && !reader.IsDone() && reader.GetPrompt())
+            if (out_file.IsValid() && !reader.IsDone() && reader.GetPrompt())
             {
-                ::fprintf (out_fh, "Please answer \"y\" or \"n\"\n");
-                ::fprintf (out_fh, "%s", reader.GetPrompt());
-                ::fflush (out_fh);
+                out_file.Printf ("Please answer \"y\" or \"n\"\n%s", reader.GetPrompt());
+                out_file.Flush ();
             }
         }
         break;

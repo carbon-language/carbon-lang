@@ -347,7 +347,7 @@ public:
             if (m_options.m_append_to_outfile)
                 mode[0] = 'a';
                 
-            if (outfile_stream.Open (path, mode))
+            if (outfile_stream.GetFile ().Open (path, File::eOpenOptionWrite | File::eOpenOptionCanCreate).Success())
             {
                 if (m_options.m_output_as_binary)
                 {

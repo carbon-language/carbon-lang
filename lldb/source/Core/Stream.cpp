@@ -211,7 +211,6 @@ Stream::PrintfVarArg (const char *format, va_list args)
     size_t length = ::vsnprintf (str, sizeof(str), format, args);
     if (length < sizeof(str))
     {
-        va_end (args);
         // Include the NULL termination byte for binary output
         if (m_flags.Test(eBinary))
             length += 1;

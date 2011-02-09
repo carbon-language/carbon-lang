@@ -103,7 +103,7 @@ SBInstruction::Print (FILE *out)
 
     if (m_opaque_sp)
     {
-        StreamFile out_stream (out);
+        StreamFile out_stream (out, false);
         m_opaque_sp->Dump (&out_stream, true, NULL, 0, NULL, false);
     }
 }

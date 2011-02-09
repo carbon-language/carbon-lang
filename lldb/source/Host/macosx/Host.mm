@@ -255,7 +255,13 @@ LaunchInNewTerminalWithCommandFile
 
     ::strncat (temp_file_path, ".command", sizeof (temp_file_path));
 
-    StreamFile command_file (temp_file_path, "w");
+    StreamFile command_file;
+    command_file.GetFile().Open (temp_file_path, 
+                                 File::eOpenOptionWrite | File::eOpenOptionCanCreate,
+                                 File::ePermissionsDefault);
+    
+    if (!command_file.GetFile().IsValid())
+        return LLDB_INVALID_PROCESS_ID;
     
     FileSpec darwin_debug_file_spec;
     if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
@@ -291,7 +297,7 @@ LaunchInNewTerminalWithCommandFile
         }
     }
     command_file.PutCString("\necho Process exited with status $?\n");
-    command_file.Close();
+    command_file.GetFile().Close();
     if (::chmod (temp_file_path, S_IRWXU | S_IRWXG) != 0)
         return LLDB_INVALID_PROCESS_ID;
             

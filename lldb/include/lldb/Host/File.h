@@ -25,7 +25,9 @@ namespace lldb_private {
 class File
 {
 public:
-    
+    static int kInvalidDescriptor;
+    static FILE * kInvalidStream;
+
     enum OpenOptions
     {
         eOpenOptionRead                 = (1u << 0),    // Open file for reading
@@ -34,9 +36,8 @@ public:
         eOpenOptionNonBlocking          = (1u << 3),    // File reads
         eOpenOptionCanCreate            = (1u << 4),    // Create file if doesn't already exist
         eOpenOptionCanCreateNewOnly     = (1u << 5),    // Can create file only if it doesn't already exist
-        eOpenOptionTruncate             = (1u << 6),    // Truncate file when opening existing
-        eOpenOptionSharedLock           = (1u << 7),    // Open file and get shared lock
-        eOpenOptionExclusiveLock        = (1u << 8)     // Open file and get exclusive lock
+        eOpenOptionSharedLock           = (1u << 6),    // Open file and get shared lock
+        eOpenOptionExclusiveLock        = (1u << 7)     // Open file and get exclusive lock
     };
     
     enum Permissions
@@ -49,13 +50,50 @@ public:
         ePermissionsGroupExecute    = (1u << 5),
         ePermissionsWorldRead       = (1u << 6),
         ePermissionsWorldWrite      = (1u << 7),
-        ePermissionsWorldExecute    = (1u << 8)
+        ePermissionsWorldExecute    = (1u << 8),
+
+        ePermissionsUserRW      = (ePermissionsUserRead    | ePermissionsUserWrite    | 0                        ),
+        ePermissionsUserRX      = (ePermissionsUserRead    | 0                        | ePermissionsUserExecute  ),
+        ePermissionsUserRWX     = (ePermissionsUserRead    | ePermissionsUserWrite    | ePermissionsUserExecute  ),
+
+        ePermissionsGroupRW     = (ePermissionsGroupRead   | ePermissionsGroupWrite   | 0                        ),
+        ePermissionsGroupRX     = (ePermissionsGroupRead   | 0                        | ePermissionsGroupExecute ),
+        ePermissionsGroupRWX    = (ePermissionsGroupRead   | ePermissionsGroupWrite   | ePermissionsGroupExecute ),
+
+        ePermissionsWorldRW     = (ePermissionsWorldRead   | ePermissionsWorldWrite   | 0                        ),
+        ePermissionsWorldRX     = (ePermissionsWorldRead   | 0                        | ePermissionsWorldExecute ),
+        ePermissionsWorldRWX    = (ePermissionsWorldRead   | ePermissionsWorldWrite   | ePermissionsWorldExecute ),
+
+        ePermissionsEveryoneR   = (ePermissionsUserRead    | ePermissionsGroupRead    | ePermissionsWorldRead    ),
+        ePermissionsEveryoneW   = (ePermissionsUserWrite   | ePermissionsGroupWrite   | ePermissionsWorldWrite   ),
+        ePermissionsEveryoneX   = (ePermissionsUserExecute | ePermissionsGroupExecute | ePermissionsWorldExecute ),
+
+        ePermissionsEveryoneRW  = (ePermissionsEveryoneR   | ePermissionsEveryoneW    | 0                        ),
+        ePermissionsEveryoneRX  = (ePermissionsEveryoneR   | 0                        | ePermissionsEveryoneX    ),
+        ePermissionsEveryoneRWX = (ePermissionsEveryoneR   | ePermissionsEveryoneW    | ePermissionsEveryoneX    ),
+        ePermissionsDefault     = (ePermissionsUserRW      | ePermissionsGroupRead)
     };
 
-    File() : m_file_desc (-1)
+    File() : 
+        m_descriptor (kInvalidDescriptor),
+        m_stream (kInvalidStream),
+        m_options (0),
+        m_owned (false)
+    {
+    }
+    
+    File (FILE *fh, bool transfer_ownership) :
+        m_descriptor (kInvalidDescriptor),
+        m_stream (fh),
+        m_options (0),
+        m_owned (transfer_ownership)
     {
     }
 
+    File (const File &rhs);
+    
+    File &
+    operator= (const File &rhs);
     //------------------------------------------------------------------
     /// Constructor with path.
     ///
@@ -76,8 +114,16 @@ public:
     //------------------------------------------------------------------
     File (const char *path,
           uint32_t options,
-          uint32_t permissions);
+          uint32_t permissions = ePermissionsDefault);
 
+    
+    File (int fd, bool tranfer_ownership) : 
+        m_descriptor (fd),
+        m_stream (kInvalidStream),
+        m_options (0),
+        m_owned (tranfer_ownership)
+    {
+    }
     //------------------------------------------------------------------
     /// Destructor.
     ///
@@ -89,7 +135,7 @@ public:
     bool
     IsValid () const
     {
-        return m_file_desc >= 0;
+        return DescriptorIsValid() || StreamIsValid();
     }
 
     //------------------------------------------------------------------
@@ -111,7 +157,7 @@ public:
     operator
     bool () const
     {
-        return m_file_desc >= 0;
+        return DescriptorIsValid() || StreamIsValid();
     }
 
     //------------------------------------------------------------------
@@ -133,7 +179,7 @@ public:
     bool
     operator! () const
     {
-        return m_file_desc < 0;
+        return !DescriptorIsValid() && !StreamIsValid();
     }
 
     //------------------------------------------------------------------
@@ -163,11 +209,26 @@ public:
     Error
     Open (const char *path,
           uint32_t options,
-          uint32_t permissions);
+          uint32_t permissions = ePermissionsDefault);
 
     Error
     Close ();
     
+    Error
+    Duplicate (const File &rhs);
+
+    int
+    GetDescriptor() const;
+
+    void
+    SetDescriptor(int fd, bool transfer_ownership);
+
+    FILE *
+    GetStream ();
+
+    void
+    SetStream (FILE *fh, bool transfer_ownership);
+
     //------------------------------------------------------------------
     /// Read bytes from a file from the current file position.
     ///
@@ -328,6 +389,15 @@ public:
     Error
     Write (const void *src, size_t &num_bytes, off_t &offset);
 
+    //------------------------------------------------------------------
+    /// Flush the current stream
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
+    Error
+    Flush ();
     
     //------------------------------------------------------------------
     /// Sync to disk.
@@ -339,11 +409,46 @@ public:
     Error
     Sync ();
 
+    //------------------------------------------------------------------
+    /// Output printf formatted output to the stream.
+    ///
+    /// Print some formatted output to the stream.
+    ///
+    /// @param[in] format
+    ///     A printf style format string.
+    ///
+    /// @param[in] ...
+    ///     Variable arguments that are needed for the printf style
+    ///     format string \a format.
+    //------------------------------------------------------------------
+    int
+    Printf (const char *format, ...);
+    
+    int
+    PrintfVarArg(const char *format, va_list args);
+
 protected:
+    
+    
+    bool
+    DescriptorIsValid () const
+    {
+        return m_descriptor >= 0;
+    }
+
+    bool
+    StreamIsValid () const
+    {
+        return m_stream != kInvalidStream;
+    }
+    
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    int m_file_desc; ///< The open file handle or NULL if the file isn't opened
+    int m_descriptor;
+    FILE *m_stream;
+    uint32_t m_options;
+    bool m_owned;
 };
 
 } // namespace lldb_private
