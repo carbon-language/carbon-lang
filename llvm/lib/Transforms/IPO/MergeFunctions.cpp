@@ -96,6 +96,7 @@ class ComparableFunction {
 public:
   static const ComparableFunction EmptyKey;
   static const ComparableFunction TombstoneKey;
+  static TargetData * const LookupOnly;
 
   ComparableFunction(Function *Func, TargetData *TD)
     : Func(Func), Hash(profileFunction(Func)), TD(TD) {}
@@ -124,6 +125,7 @@ private:
 const ComparableFunction ComparableFunction::EmptyKey = ComparableFunction(0);
 const ComparableFunction ComparableFunction::TombstoneKey =
     ComparableFunction(1);
+TargetData * const ComparableFunction::LookupOnly = (TargetData*)(-1);
 
 }
 
@@ -658,6 +660,12 @@ bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
     return true;
   if (!LHS.getFunc() || !RHS.getFunc())
     return false;
+
+  // One of these is a special "underlying pointer comparison only" object.
+  if (LHS.getTD() == ComparableFunction::LookupOnly ||
+      RHS.getTD() == ComparableFunction::LookupOnly)
+    return false;
+
   assert(LHS.getTD() == RHS.getTD() &&
          "Comparing functions for different targets");
 
@@ -796,8 +804,10 @@ void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
 // that was already inserted.
 bool MergeFunctions::insert(ComparableFunction &NewF) {
   std::pair<FnSetType::iterator, bool> Result = FnSet.insert(NewF);
-  if (Result.second)
+  if (Result.second) {
+    DEBUG(dbgs() << "Inserting as unique: " << NewF.getFunc()->getName() << '\n');
     return false;
+  }
 
   const ComparableFunction &OldF = *Result.first;
 
@@ -817,8 +827,15 @@ bool MergeFunctions::insert(ComparableFunction &NewF) {
 // Remove a function from FnSet. If it was already in FnSet, add it to Deferred
 // so that we'll look at it in the next round.
 void MergeFunctions::remove(Function *F) {
-  ComparableFunction CF = ComparableFunction(F, TD);
+  // We need to make sure we remove F, not a function "equal" to F per the
+  // function equality comparator.
+  //
+  // The special "lookup only" ComparableFunction bypasses the expensive
+  // function comparison in favour of a pointer comparison on the underlying
+  // Function*'s.
+  ComparableFunction CF = ComparableFunction(F, ComparableFunction::LookupOnly);
   if (FnSet.erase(CF)) {
+    DEBUG(dbgs() << "Removed " << F->getName() << " from set and deferred it.\n");
     Deferred.push_back(F);
   }
 }
