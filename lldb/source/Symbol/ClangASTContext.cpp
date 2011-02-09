@@ -755,6 +755,11 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
                     if (QualTypeMatchesBitSize (bit_size, ast, ast->WCharTy))
                         return ast->WCharTy.getAsOpaquePtr();
                 }
+                else if (streq(type_name, "void"))
+                {
+                    if (QualTypeMatchesBitSize (bit_size, ast, ast->VoidTy))
+                        return ast->VoidTy.getAsOpaquePtr();
+                }
             }
             // We weren't able to match up a type name, just search by size
             if (QualTypeMatchesBitSize (bit_size, ast, ast->CharTy))
@@ -835,6 +840,8 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
         case DW_ATE_unsigned_char:
             if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedCharTy))
                 return ast->UnsignedCharTy.getAsOpaquePtr();
+            if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedShortTy))
+                return ast->UnsignedShortTy.getAsOpaquePtr();
             break;
 
         case DW_ATE_imaginary_float:

@@ -139,6 +139,7 @@ DWARFDebugInfoEntry::FastExtract
                 bool form_is_indirect = false;
                 do
                 {
+                    form_is_indirect = false;
                     register uint32_t form_size = 0;
                     switch (form)
                     {
@@ -279,96 +280,77 @@ DWARFDebugInfoEntry::Extract
                     }
                     else
                     {
-die_extract_indirect_form:
-                        register uint32_t form_size = 0;
-                        switch (form)
+                        bool form_is_indirect = false;
+                        do
                         {
-                        // Blocks if inlined data that have a length field and the data bytes
-                        // inlined in the .debug_info
-                        case DW_FORM_block      : form_size = debug_info_data.GetULEB128(&offset);  break;
-                        case DW_FORM_block1     : form_size = debug_info_data.GetU8(&offset);       break;
-                        case DW_FORM_block2     : form_size = debug_info_data.GetU16(&offset);      break;
-                        case DW_FORM_block4     : form_size = debug_info_data.GetU32(&offset);      break;
-
-                        // Inlined NULL terminated C-strings
-                        case DW_FORM_string     :
+                            form_is_indirect = false;
+                            register uint32_t form_size = 0;
+                            switch (form)
                             {
-//                                const char *s = 
-                                debug_info_data.GetCStr(&offset);
-//                                switch (attr)
-//                                {
-//                                case DW_AT_name: m_name = s; break;
-//                                case DW_AT_MIPS_linkage_name: m_linkage_name = s; break;
-//                                default: break;
-//                                }
-                            }
-                            break;
+                            // Blocks if inlined data that have a length field and the data bytes
+                            // inlined in the .debug_info
+                            case DW_FORM_block      : form_size = debug_info_data.GetULEB128(&offset);  break;
+                            case DW_FORM_block1     : form_size = debug_info_data.GetU8(&offset);       break;
+                            case DW_FORM_block2     : form_size = debug_info_data.GetU16(&offset);      break;
+                            case DW_FORM_block4     : form_size = debug_info_data.GetU32(&offset);      break;
 
-                        // Compile unit address sized values
-                        case DW_FORM_addr       :
-                        case DW_FORM_ref_addr   :
-                            form_size = cu_addr_size;
-                            break;
+                            // Inlined NULL terminated C-strings
+                            case DW_FORM_string     : debug_info_data.GetCStr(&offset);                 break;
 
-                        // 1 byte values
-                        case DW_FORM_data1      :
-                        case DW_FORM_flag       :
-                        case DW_FORM_ref1       :
-                            form_size = 1;
-                            break;
+                            // Compile unit address sized values
+                            case DW_FORM_addr       :
+                            case DW_FORM_ref_addr   :
+                                form_size = cu_addr_size;
+                                break;
 
-                        // 2 byte values
-                        case DW_FORM_data2      :
-                        case DW_FORM_ref2       :
-                            form_size = 2;
-                            break;
+                            // 1 byte values
+                            case DW_FORM_data1      :
+                            case DW_FORM_flag       :
+                            case DW_FORM_ref1       :
+                                form_size = 1;
+                                break;
 
-                        // 4 byte values
-                        case DW_FORM_strp       :
-//                            switch (attr)
-//                            {
-//                            case DW_AT_name:
-//                                m_name = debug_str_data.PeekCStr(debug_info_data.GetU32(&offset));
-//                                break;
-//                            case DW_AT_MIPS_linkage_name:
-//                                m_linkage_name = debug_str_data.PeekCStr(debug_info_data.GetU32(&offset));
-//                                break;
-//
-//                            default:
+                            // 2 byte values
+                            case DW_FORM_data2      :
+                            case DW_FORM_ref2       :
+                                form_size = 2;
+                                break;
+
+                            // 4 byte values
+                            case DW_FORM_strp       :
                                 form_size = 4;
-//                                break;
-//                            }
-                            break;
+                                break;
 
-                        case DW_FORM_data4      :
-                        case DW_FORM_ref4       :
-                            form_size = 4;
-                            break;
+                            case DW_FORM_data4      :
+                            case DW_FORM_ref4       :
+                                form_size = 4;
+                                break;
 
-                        // 8 byte values
-                        case DW_FORM_data8      :
-                        case DW_FORM_ref8       :
-                            form_size = 8;
-                            break;
+                            // 8 byte values
+                            case DW_FORM_data8      :
+                            case DW_FORM_ref8       :
+                                form_size = 8;
+                                break;
 
-                        // signed or unsigned LEB 128 values
-                    //  case DW_FORM_APPLE_db_str:
-                        case DW_FORM_sdata      :
-                        case DW_FORM_udata      :
-                        case DW_FORM_ref_udata  :
-                            debug_info_data.Skip_LEB128(&offset);
-                            break;
+                            // signed or unsigned LEB 128 values
+                            case DW_FORM_sdata      :
+                            case DW_FORM_udata      :
+                            case DW_FORM_ref_udata  :
+                                debug_info_data.Skip_LEB128(&offset);
+                                break;
 
-                        case DW_FORM_indirect   :
-                            form = debug_info_data.GetULEB128(&offset);
-                            goto die_extract_indirect_form;
+                            case DW_FORM_indirect   :
+                                form = debug_info_data.GetULEB128(&offset);
+                                form_is_indirect = true;
+                                break;
 
-                        default:
-                            *offset_ptr = offset;
-                            return false;
-                        }
+                            default:
+                                *offset_ptr = offset;
+                                return false;
+                            }
 
-                        offset += form_size;
+                            offset += form_size;
+                        } while (form_is_indirect);
                     }
                 }
                 *offset_ptr = offset;
