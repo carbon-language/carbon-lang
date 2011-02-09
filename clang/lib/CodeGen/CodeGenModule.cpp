@@ -857,10 +857,10 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
       if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
         if (FD->isImplicit() && !ForVTable) {
           assert(FD->isUsed() && "Sema didn't mark implicit function as used!");
-          DeferredDeclsToEmit.push_back(D);
+          DeferredDeclsToEmit.push_back(D.getWithDecl(FD));
           break;
         } else if (FD->isThisDeclarationADefinition()) {
-          DeferredDeclsToEmit.push_back(D);
+          DeferredDeclsToEmit.push_back(D.getWithDecl(FD));
           break;
         }
       }

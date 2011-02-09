@@ -81,6 +81,12 @@ public:
     GD.Value.setFromOpaqueValue(P);
     return GD;
   }
+  
+  GlobalDecl getWithDecl(const Decl *D) {
+    GlobalDecl Result(*this);
+    Result.Value.setPointer(D);
+    return Result;
+  }
 };
 
 } // end namespace CodeGen
