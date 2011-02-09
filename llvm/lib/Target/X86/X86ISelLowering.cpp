@@ -125,7 +125,9 @@ static SDValue Extract128BitVector(SDValue Vec,
 
 /// Generate a DAG to put 128-bits into a vector > 128 bits.  This
 /// sets things up to match to an AVX VINSERTF128 instruction or a
-/// simple superregister reference.
+/// simple superregister reference.  Idx is an index in the 128 bits
+/// we want.  It need not be aligned to a 128-bit bounday.  That makes
+/// lowering INSERT_VECTOR_ELT operations easier.
 static SDValue Insert128BitVector(SDValue Result,
                                   SDValue Vec,
                                   SDValue Idx,
@@ -6027,16 +6029,44 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   EVT EltVT = VT.getVectorElementType();
 
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue N0 = Op.getOperand(0);
+  SDValue N1 = Op.getOperand(1);
+  SDValue N2 = Op.getOperand(2);
+
+  // If this is a 256-bit vector result, first insert into a 128-bit
+  // vector and then insert into the 256-bit vector.
+  if (VT.getSizeInBits() > 128) {
+    if (!isa<ConstantSDNode>(N2))
+      return SDValue();
+
+    // Get the 128-bit vector.
+    unsigned NumElems = VT.getVectorNumElements();
+    unsigned IdxVal = cast<ConstantSDNode>(N2)->getZExtValue();
+    bool Upper = IdxVal >= NumElems / 2;
+
+    SDValue SubN0 = Extract128BitVector(N0, N2, DAG, dl);
+
+    // Insert into it.
+    SDValue ScaledN2 = N2;
+    if (Upper)
+      ScaledN2 = DAG.getNode(ISD::SUB, dl, N2.getValueType(), N2,
+                             DAG.getConstant(NumElems / 
+                                             (VT.getSizeInBits() / 128),
+                                             N2.getValueType()));
+    Op = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, SubN0.getValueType(), SubN0,
+                     N1, ScaledN2);
+
+    // Insert the 128-bit vector
+    // FIXME: Why UNDEF?
+    return Insert128BitVector(N0, Op, N2, DAG, dl);
+  }
+
   if (Subtarget->hasSSE41())
     return LowerINSERT_VECTOR_ELT_SSE4(Op, DAG);
 
   if (EltVT == MVT::i8)
     return SDValue();
-
-  DebugLoc dl = Op.getDebugLoc();
-  SDValue N0 = Op.getOperand(0);
-  SDValue N1 = Op.getOperand(1);
-  SDValue N2 = Op.getOperand(2);
 
   if (EltVT.getSizeInBits() == 16 && isa<ConstantSDNode>(N2)) {
     // Transform it so it match pinsrw which expects a 16-bit value in a GR32
