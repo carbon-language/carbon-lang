@@ -154,6 +154,10 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
   LiveInterval &NewLI = edit_->create(mri_, lis_, vrm_);
   NewLI.markNotSpillable();
 
+  // Rematting for a copy: Set allocation hint to be the destination register.
+  if (MI->isCopy())
+    mri_.setRegAllocationHint(NewLI.reg, 0, MI->getOperand(0).getReg());
+
   // Finally we can rematerialize OrigMI before MI.
   SlotIndex DefIdx = edit_->rematerializeAt(*MI->getParent(), MI, NewLI.reg, RM,
                                             lis_, tii_, tri_);
