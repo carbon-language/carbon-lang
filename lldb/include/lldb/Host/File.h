@@ -35,9 +35,7 @@ public:
         eOpenOptionAppend               = (1u << 2),    // Don't truncate file when opening, append to end of file
         eOpenOptionNonBlocking          = (1u << 3),    // File reads
         eOpenOptionCanCreate            = (1u << 4),    // Create file if doesn't already exist
-        eOpenOptionCanCreateNewOnly     = (1u << 5),    // Can create file only if it doesn't already exist
-        eOpenOptionSharedLock           = (1u << 6),    // Open file and get shared lock
-        eOpenOptionExclusiveLock        = (1u << 7)     // Open file and get exclusive lock
+        eOpenOptionCanCreateNewOnly     = (1u << 5)    // Can create file only if it doesn't already exist
     };
     
     enum Permissions

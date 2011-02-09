@@ -25,4 +25,6 @@
 
 //#define LLDB_CONFIG_DLOPEN_RTLD_FIRST_SUPPORTED 1
 
+//#define LLDB_CONFIG_FCNTL_GETPATH_SUPPORTED 1
+
 #endif // #ifndef liblldb_Platform_Config_h_

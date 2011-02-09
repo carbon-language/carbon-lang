@@ -13,6 +13,7 @@
 #include <fcntl.h>
 
 #include "lldb/Core/Error.h"
+#include "lldb/Host/Config.h"
 #include "lldb/Host/FileSpec.h"
 
 using namespace lldb;
@@ -202,13 +203,6 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
     if (options & eOpenOptionCanCreateNewOnly)
         oflag |= O_CREAT | O_EXCL;
     
-    
-    if (options & eOpenOptionSharedLock)
-        oflag |= O_SHLOCK;
-
-    if (options & eOpenOptionExclusiveLock)
-        oflag |= O_EXLOCK;
-
     mode_t mode = 0;
     if (permissions & ePermissionsUserRead)     mode |= S_IRUSR;
     if (permissions & ePermissionsUserWrite)    mode |= S_IWUSR;
@@ -262,6 +256,7 @@ Error
 File::GetFileSpec (FileSpec &file_spec) const
 {
     Error error;
+#ifdef LLDB_CONFIG_FCNTL_GETPATH_SUPPORTED
     if (IsValid ())
     {
         char path[PATH_MAX];
@@ -271,7 +266,12 @@ File::GetFileSpec (FileSpec &file_spec) const
             file_spec.SetFile (path, false);
     }
     else 
+    {
         error.SetErrorString("invalid file handle");
+    }
+#else
+    error.SetErrorString ("fcntl (fd, F_GETPATH, ...) is not supported on this platform");
+#endif
 
     if (error.Fail())
         file_spec.Clear();
