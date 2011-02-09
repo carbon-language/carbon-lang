@@ -56,8 +56,7 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
   void traverseChild() {
     while (VisitStack.back().second != GT::child_end(VisitStack.back().first)) {
       NodeType *BB = *VisitStack.back().second++;
-      if (!this->Visited.count(BB)) {  // If the block is not visited...
-        this->Visited.insert(BB);
+      if (this->Visited.insert(BB)) {  // If the block is not visited...
         VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
       }
     }
@@ -72,8 +71,7 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
 
   inline po_iterator(NodeType *BB, SetType &S) :
     po_iterator_storage<SetType, ExtStorage>(S) {
-    if(!S.count(BB)) {
-      this->Visited.insert(BB);
+    if (this->Visited.insert(BB)) {
       VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
       traverseChild();
     }
