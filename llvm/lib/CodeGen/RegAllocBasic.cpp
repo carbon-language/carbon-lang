@@ -238,6 +238,18 @@ seedLiveVirtRegs(std::priority_queue<std::pair<float, unsigned> > &VirtRegQ) {
   }
 }
 
+void RegAllocBase::assign(LiveInterval &VirtReg, unsigned PhysReg) {
+  assert(!VRM->hasPhys(VirtReg.reg) && "Duplicate VirtReg assignment");
+  VRM->assignVirt2Phys(VirtReg.reg, PhysReg);
+  PhysReg2LiveUnion[PhysReg].unify(VirtReg);
+}
+
+void RegAllocBase::unassign(LiveInterval &VirtReg, unsigned PhysReg) {
+  assert(VRM->getPhys(VirtReg.reg) == PhysReg && "Inconsistent unassign");
+  PhysReg2LiveUnion[PhysReg].extract(VirtReg);
+  VRM->clearVirt(VirtReg.reg);
+}
+
 // Top-level driver to manage the queue of unassigned VirtRegs and call the
 // selectOrSplit implementation.
 void RegAllocBase::allocatePhysRegs() {
@@ -264,9 +276,7 @@ void RegAllocBase::allocatePhysRegs() {
     if (AvailablePhysReg) {
       DEBUG(dbgs() << "allocating: " << TRI->getName(AvailablePhysReg)
                    << " for " << VirtReg << '\n');
-      assert(!VRM->hasPhys(VirtReg.reg) && "duplicate vreg in union");
-      VRM->assignVirt2Phys(VirtReg.reg, AvailablePhysReg);
-      PhysReg2LiveUnion[AvailablePhysReg].unify(VirtReg);
+      assign(VirtReg, AvailablePhysReg);
     }
     for (VirtRegVec::iterator I = SplitVRegs.begin(), E = SplitVRegs.end();
          I != E; ++I) {
@@ -308,10 +318,7 @@ void RegAllocBase::spillReg(LiveInterval& VirtReg, unsigned PhysReg,
 
     // Deallocate the interfering vreg by removing it from the union.
     // A LiveInterval instance may not be in a union during modification!
-    PhysReg2LiveUnion[PhysReg].extract(SpilledVReg);
-
-    // Clear the vreg assignment.
-    VRM->clearVirt(SpilledVReg.reg);
+    unassign(SpilledVReg, PhysReg);
 
     // Spill the extracted interval.
     spiller().spill(&SpilledVReg, SplitVRegs, PendingSpills);

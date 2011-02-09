@@ -133,7 +133,6 @@ private:
   bool checkUncachedInterference(LiveInterval&, unsigned);
   LiveInterval *getSingleInterference(LiveInterval&, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
-  bool reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg);
   float calcInterferenceWeight(LiveInterval&, unsigned);
   void calcLiveBlockInfo(LiveInterval&);
   float calcInterferenceInfo(LiveInterval&, unsigned);
@@ -141,7 +140,8 @@ private:
   void splitAroundRegion(LiveInterval&, unsigned, const BitVector&,
                          SmallVectorImpl<LiveInterval*>&);
 
-  unsigned tryReassign(LiveInterval&, AllocationOrder&);
+  unsigned tryReassignOrEvict(LiveInterval&, AllocationOrder&,
+                              SmallVectorImpl<LiveInterval*>&);
   unsigned tryRegionSplit(LiveInterval&, AllocationOrder&,
                           SmallVectorImpl<LiveInterval*>&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
@@ -286,41 +286,54 @@ bool RAGreedy::reassignVReg(LiveInterval &InterferingVReg,
     unsigned OldAssign = VRM->getPhys(InterferingVReg.reg);
     DEBUG(dbgs() << "reassigning: " << InterferingVReg << " from " <<
           TRI->getName(OldAssign) << " to " << TRI->getName(PhysReg) << '\n');
-    PhysReg2LiveUnion[OldAssign].extract(InterferingVReg);
-    VRM->clearVirt(InterferingVReg.reg);
-    VRM->assignVirt2Phys(InterferingVReg.reg, PhysReg);
-    PhysReg2LiveUnion[PhysReg].unify(InterferingVReg);
-
+    unassign(InterferingVReg, OldAssign);
+    assign(InterferingVReg, PhysReg);
     return true;
   }
   return false;
 }
 
-/// reassignInterferences - Reassign all interferences to different physical
-/// registers such that Virtreg can be assigned to PhysReg.
-/// Currently this only works with a single interference.
-/// @param  VirtReg Currently unassigned virtual register.
-/// @param  PhysReg Physical register to be cleared.
-/// @return True on success, false if nothing was changed.
-bool RAGreedy::reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg) {
-  LiveInterval *InterferingVReg = getSingleInterference(VirtReg, PhysReg);
-  if (!InterferingVReg)
-    return false;
-  if (TargetRegisterInfo::isPhysicalRegister(InterferingVReg->reg))
-    return false;
-  return reassignVReg(*InterferingVReg, PhysReg);
-}
-
-/// tryReassign - Try to reassign interferences to different physregs.
+/// tryReassignOrEvict - Try to reassign a single interferences to a different
+/// physreg, or evict a single interference with a lower spill weight.
 /// @param  VirtReg Currently unassigned virtual register.
 /// @param  Order   Physregs to try.
 /// @return         Physreg to assign VirtReg, or 0.
-unsigned RAGreedy::tryReassign(LiveInterval &VirtReg, AllocationOrder &Order) {
+unsigned RAGreedy::tryReassignOrEvict(LiveInterval &VirtReg,
+                                      AllocationOrder &Order,
+                                      SmallVectorImpl<LiveInterval*> &NewVRegs){
   NamedRegionTimer T("Reassign", TimerGroupName, TimePassesIsEnabled);
+
+  // Keep track of the lightest single interference seen so far.
+  float BestWeight = VirtReg.weight;
+  LiveInterval *BestVirt = 0;
+  unsigned BestPhys = 0;
+
   Order.rewind();
-  while (unsigned PhysReg = Order.next())
-    if (reassignInterferences(VirtReg, PhysReg))
+  while (unsigned PhysReg = Order.next()) {
+    LiveInterval *InterferingVReg = getSingleInterference(VirtReg, PhysReg);
+    if (!InterferingVReg)
+      continue;
+    if (TargetRegisterInfo::isPhysicalRegister(InterferingVReg->reg))
+      continue;
+    if (reassignVReg(*InterferingVReg, PhysReg))
       return PhysReg;
+
+    // Cannot reassign, is this an eviction candidate?
+    if (InterferingVReg->weight < BestWeight) {
+      BestVirt = InterferingVReg;
+      BestPhys = PhysReg;
+      BestWeight = InterferingVReg->weight;
+    }
+  }
+
+  // Nothing reassigned, can we evict a lighter single interference?
+  if (BestVirt) {
+    DEBUG(dbgs() << "evicting lighter " << *BestVirt << '\n');
+    unassign(*BestVirt, VRM->getPhys(BestVirt->reg));
+    NewVRegs.push_back(BestVirt);
+    return BestPhys;
+  }
+
   return 0;
 }
 
@@ -1029,8 +1042,7 @@ unsigned RAGreedy::trySpillInterferences(LiveInterval &VirtReg,
     Spills.append(Q.interferingVRegs().begin(), Q.interferingVRegs().end());
     for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
       LiveInterval *VReg = Q.interferingVRegs()[i];
-      PhysReg2LiveUnion[*AI].extract(*VReg);
-      VRM->clearVirt(VReg->reg);
+      unassign(*VReg, *AI);
     }
   }
 
@@ -1057,7 +1069,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   }
 
   // Try to reassign interferences.
-  if (unsigned PhysReg = tryReassign(VirtReg, Order))
+  if (unsigned PhysReg = tryReassignOrEvict(VirtReg, Order, NewVRegs))
     return PhysReg;
 
   assert(NewVRegs.empty() && "Cannot append to existing NewVRegs");

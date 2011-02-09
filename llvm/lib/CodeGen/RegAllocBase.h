@@ -139,6 +139,15 @@ protected:
   // exists, return the interfering register, which may be preg or an alias.
   unsigned checkPhysRegInterference(LiveInterval& VirtReg, unsigned PhysReg);
 
+  /// assign - Assign VirtReg to PhysReg.
+  /// This should not be called from selectOrSplit for the current register.
+  void assign(LiveInterval &VirtReg, unsigned PhysReg);
+
+  /// unassign - Undo a previous assignment of VirtReg to PhysReg.
+  /// This can be invoked from selectOrSplit, but be careful to guarantee that
+  /// allocation is making progress.
+  void unassign(LiveInterval &VirtReg, unsigned PhysReg);
+
   // Helper for spilling all live virtual registers currently unified under preg
   // that interfere with the most recently queried lvr.  Return true if spilling
   // was successful, and append any new spilled/split intervals to splitLVRs.
