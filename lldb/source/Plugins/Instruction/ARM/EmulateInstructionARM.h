@@ -270,6 +270,7 @@ protected:
     uint32_t m_arm_isa;
     Mode m_inst_mode;
     uint32_t m_inst_cpsr;
+    uint32_t m_new_inst_cpsr; // This can get updated by the opcode.
     ITSession m_it_session;
 };
 

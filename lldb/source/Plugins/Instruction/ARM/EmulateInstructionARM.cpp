@@ -2373,7 +2373,7 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
 
     if (cpsr_changed)
     {
-        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_inst_cpsr))
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
             return false;
     }
     if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, target))
@@ -2409,21 +2409,23 @@ EmulateInstructionARM::CurrentInstrSet ()
 }
 
 // Set the 'T' bit of our CPSR.  The m_inst_mode gets updated when the next
-// ReadInstruction() is performed.
+// ReadInstruction() is performed.  This function has a side effect of updating
+// the m_new_inst_cpsr member variable if necessary.
 bool
 EmulateInstructionARM::SelectInstrSet (Mode arm_or_thumb)
 {
+    m_new_inst_cpsr = m_inst_cpsr;
     switch (arm_or_thumb)
     {
     default:
         return false;
     eModeARM:
         // Clear the T bit.
-        m_inst_cpsr &= ~MASK_CPSR_T;
+        m_new_inst_cpsr &= ~MASK_CPSR_T;
         break;
     eModeThumb:
         // Set the T bit.
-        m_inst_cpsr |= MASK_CPSR_T;
+        m_new_inst_cpsr |= MASK_CPSR_T;
         break;
     }
     return true;
