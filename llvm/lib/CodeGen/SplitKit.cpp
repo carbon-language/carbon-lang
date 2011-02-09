@@ -20,7 +20,6 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -51,7 +50,6 @@ void SplitAnalysis::clear() {
   UseSlots.clear();
   UsingInstrs.clear();
   UsingBlocks.clear();
-  UsingLoops.clear();
   LiveBlocks.clear();
   CurLI = 0;
 }
@@ -75,18 +73,13 @@ void SplitAnalysis::analyzeUses() {
       continue;
     UseSlots.push_back(LIS.getInstructionIndex(MI).getDefIndex());
     MachineBasicBlock *MBB = MI->getParent();
-    if (UsingBlocks[MBB]++)
-      continue;
-    for (MachineLoop *Loop = Loops.getLoopFor(MBB); Loop;
-         Loop = Loop->getParentLoop())
-      UsingLoops[Loop]++;
+    UsingBlocks[MBB]++;
   }
   array_pod_sort(UseSlots.begin(), UseSlots.end());
   calcLiveBlockInfo();
   DEBUG(dbgs() << "  counted "
                << UsingInstrs.size() << " instrs, "
-               << UsingBlocks.size() << " blocks, "
-               << UsingLoops.size()  << " loops.\n");
+               << UsingBlocks.size() << " blocks.\n");
 }
 
 /// calcLiveBlockInfo - Fill the LiveBlocks array with information about blocks
@@ -182,269 +175,10 @@ void SplitAnalysis::print(const BlockPtrSet &B, raw_ostream &OS) const {
   }
 }
 
-// Get three sets of basic blocks surrounding a loop: Blocks inside the loop,
-// predecessor blocks, and exit blocks.
-void SplitAnalysis::getLoopBlocks(const MachineLoop *Loop, LoopBlocks &Blocks) {
-  Blocks.clear();
-
-  // Blocks in the loop.
-  Blocks.Loop.insert(Loop->block_begin(), Loop->block_end());
-
-  // Predecessor blocks.
-  const MachineBasicBlock *Header = Loop->getHeader();
-  for (MachineBasicBlock::const_pred_iterator I = Header->pred_begin(),
-       E = Header->pred_end(); I != E; ++I)
-    if (!Blocks.Loop.count(*I))
-      Blocks.Preds.insert(*I);
-
-  // Exit blocks.
-  for (MachineLoop::block_iterator I = Loop->block_begin(),
-       E = Loop->block_end(); I != E; ++I) {
-    const MachineBasicBlock *MBB = *I;
-    for (MachineBasicBlock::const_succ_iterator SI = MBB->succ_begin(),
-       SE = MBB->succ_end(); SI != SE; ++SI)
-      if (!Blocks.Loop.count(*SI))
-        Blocks.Exits.insert(*SI);
-  }
-}
-
-void SplitAnalysis::print(const LoopBlocks &B, raw_ostream &OS) const {
-  OS << "Loop:";
-  print(B.Loop, OS);
-  OS << ", preds:";
-  print(B.Preds, OS);
-  OS << ", exits:";
-  print(B.Exits, OS);
-}
-
-/// analyzeLoopPeripheralUse - Return an enum describing how CurLI is used in
-/// and around the Loop.
-SplitAnalysis::LoopPeripheralUse SplitAnalysis::
-analyzeLoopPeripheralUse(const SplitAnalysis::LoopBlocks &Blocks) {
-  LoopPeripheralUse use = ContainedInLoop;
-  for (BlockCountMap::iterator I = UsingBlocks.begin(), E = UsingBlocks.end();
-       I != E; ++I) {
-    const MachineBasicBlock *MBB = I->first;
-    // Is this a peripheral block?
-    if (use < MultiPeripheral &&
-        (Blocks.Preds.count(MBB) || Blocks.Exits.count(MBB))) {
-      if (I->second > 1) use = MultiPeripheral;
-      else               use = SinglePeripheral;
-      continue;
-    }
-    // Is it a loop block?
-    if (Blocks.Loop.count(MBB))
-      continue;
-    // It must be an unrelated block.
-    DEBUG(dbgs() << ", outside: BB#" << MBB->getNumber());
-    return OutsideLoop;
-  }
-  return use;
-}
-
-/// getCriticalExits - It may be necessary to partially break critical edges
-/// leaving the loop if an exit block has predecessors from outside the loop
-/// periphery.
-void SplitAnalysis::getCriticalExits(const SplitAnalysis::LoopBlocks &Blocks,
-                                     BlockPtrSet &CriticalExits) {
-  CriticalExits.clear();
-
-  // A critical exit block has CurLI live-in, and has a predecessor that is not
-  // in the loop nor a loop predecessor. For such an exit block, the edges
-  // carrying the new variable must be moved to a new pre-exit block.
-  for (BlockPtrSet::iterator I = Blocks.Exits.begin(), E = Blocks.Exits.end();
-       I != E; ++I) {
-    const MachineBasicBlock *Exit = *I;
-    // A single-predecessor exit block is definitely not a critical edge.
-    if (Exit->pred_size() == 1)
-      continue;
-    // This exit may not have CurLI live in at all. No need to split.
-    if (!LIS.isLiveInToMBB(*CurLI, Exit))
-      continue;
-    // Does this exit block have a predecessor that is not a loop block or loop
-    // predecessor?
-    for (MachineBasicBlock::const_pred_iterator PI = Exit->pred_begin(),
-         PE = Exit->pred_end(); PI != PE; ++PI) {
-      const MachineBasicBlock *Pred = *PI;
-      if (Blocks.Loop.count(Pred) || Blocks.Preds.count(Pred))
-        continue;
-      // This is a critical exit block, and we need to split the exit edge.
-      CriticalExits.insert(Exit);
-      break;
-    }
-  }
-}
-
-void SplitAnalysis::getCriticalPreds(const SplitAnalysis::LoopBlocks &Blocks,
-                                     BlockPtrSet &CriticalPreds) {
-  CriticalPreds.clear();
-
-  // A critical predecessor block has CurLI live-out, and has a successor that
-  // has CurLI live-in and is not in the loop nor a loop exit block. For such a
-  // predecessor block, we must carry the value in both the 'inside' and
-  // 'outside' registers.
-  for (BlockPtrSet::iterator I = Blocks.Preds.begin(), E = Blocks.Preds.end();
-       I != E; ++I) {
-    const MachineBasicBlock *Pred = *I;
-    // Definitely not a critical edge.
-    if (Pred->succ_size() == 1)
-      continue;
-    // This block may not have CurLI live out at all if there is a PHI.
-    if (!LIS.isLiveOutOfMBB(*CurLI, Pred))
-      continue;
-    // Does this block have a successor outside the loop?
-    for (MachineBasicBlock::const_pred_iterator SI = Pred->succ_begin(),
-         SE = Pred->succ_end(); SI != SE; ++SI) {
-      const MachineBasicBlock *Succ = *SI;
-      if (Blocks.Loop.count(Succ) || Blocks.Exits.count(Succ))
-        continue;
-      if (!LIS.isLiveInToMBB(*CurLI, Succ))
-        continue;
-      // This is a critical predecessor block.
-      CriticalPreds.insert(Pred);
-      break;
-    }
-  }
-}
-
-/// canSplitCriticalExits - Return true if it is possible to insert new exit
-/// blocks before the blocks in CriticalExits.
-bool
-SplitAnalysis::canSplitCriticalExits(const SplitAnalysis::LoopBlocks &Blocks,
-                                     BlockPtrSet &CriticalExits) {
-  // If we don't allow critical edge splitting, require no critical exits.
-  if (!AllowSplit)
-    return CriticalExits.empty();
-
-  for (BlockPtrSet::iterator I = CriticalExits.begin(), E = CriticalExits.end();
-       I != E; ++I) {
-    const MachineBasicBlock *Succ = *I;
-    // We want to insert a new pre-exit MBB before Succ, and change all the
-    // in-loop blocks to branch to the pre-exit instead of Succ.
-    // Check that all the in-loop predecessors can be changed.
-    for (MachineBasicBlock::const_pred_iterator PI = Succ->pred_begin(),
-         PE = Succ->pred_end(); PI != PE; ++PI) {
-      const MachineBasicBlock *Pred = *PI;
-      // The external predecessors won't be altered.
-      if (!Blocks.Loop.count(Pred) && !Blocks.Preds.count(Pred))
-        continue;
-      if (!canAnalyzeBranch(Pred))
-        return false;
-    }
-
-    // If Succ's layout predecessor falls through, that too must be analyzable.
-    // We need to insert the pre-exit block in the gap.
-    MachineFunction::const_iterator MFI = Succ;
-    if (MFI == MF.begin())
-      continue;
-    if (!canAnalyzeBranch(--MFI))
-      return false;
-  }
-  // No problems found.
-  return true;
-}
-
 void SplitAnalysis::analyze(const LiveInterval *li) {
   clear();
   CurLI = li;
   analyzeUses();
-}
-
-void SplitAnalysis::getSplitLoops(LoopPtrSet &Loops) {
-  assert(CurLI && "Call analyze() before getSplitLoops");
-  if (UsingLoops.empty())
-    return;
-
-  LoopBlocks Blocks;
-  BlockPtrSet CriticalExits;
-
-  // We split around loops where CurLI is used outside the periphery.
-  for (LoopCountMap::const_iterator I = UsingLoops.begin(),
-       E = UsingLoops.end(); I != E; ++I) {
-    const MachineLoop *Loop = I->first;
-    getLoopBlocks(Loop, Blocks);
-    DEBUG({ dbgs() << "  "; print(Blocks, dbgs()); });
-
-    switch(analyzeLoopPeripheralUse(Blocks)) {
-    case OutsideLoop:
-      break;
-    case MultiPeripheral:
-      // FIXME: We could split a live range with multiple uses in a peripheral
-      // block and still make progress. However, it is possible that splitting
-      // another live range will insert copies into a peripheral block, and
-      // there is a small chance we can enter an infinite loop, inserting copies
-      // forever.
-      // For safety, stick to splitting live ranges with uses outside the
-      // periphery.
-      DEBUG(dbgs() << ": multiple peripheral uses");
-      break;
-    case ContainedInLoop:
-      DEBUG(dbgs() << ": fully contained\n");
-      continue;
-    case SinglePeripheral:
-      DEBUG(dbgs() << ": single peripheral use\n");
-      continue;
-    }
-    // Will it be possible to split around this loop?
-    getCriticalExits(Blocks, CriticalExits);
-    DEBUG(dbgs() << ": " << CriticalExits.size() << " critical exits\n");
-    if (!canSplitCriticalExits(Blocks, CriticalExits))
-      continue;
-    // This is a possible split.
-    Loops.insert(Loop);
-  }
-
-  DEBUG(dbgs() << "  getSplitLoops found " << Loops.size()
-               << " candidate loops.\n");
-}
-
-const MachineLoop *SplitAnalysis::getBestSplitLoop() {
-  LoopPtrSet Loops;
-  getSplitLoops(Loops);
-  if (Loops.empty())
-    return 0;
-
-  // Pick the earliest loop.
-  // FIXME: Are there other heuristics to consider?
-  const MachineLoop *Best = 0;
-  SlotIndex BestIdx;
-  for (LoopPtrSet::const_iterator I = Loops.begin(), E = Loops.end(); I != E;
-       ++I) {
-    SlotIndex Idx = LIS.getMBBStartIdx((*I)->getHeader());
-    if (!Best || Idx < BestIdx)
-      Best = *I, BestIdx = Idx;
-  }
-  DEBUG(dbgs() << "  getBestSplitLoop found " << *Best);
-  return Best;
-}
-
-/// isBypassLoop - Return true if CurLI is live through Loop and has no uses
-/// inside the loop. Bypass loops are candidates for splitting because it can
-/// prevent interference inside the loop.
-bool SplitAnalysis::isBypassLoop(const MachineLoop *Loop) {
-  // If CurLI is live into the loop header and there are no uses in the loop, it
-  // must be live in the entire loop and live on at least one exiting edge.
-  return !UsingLoops.count(Loop) &&
-         LIS.isLiveInToMBB(*CurLI, Loop->getHeader());
-}
-
-/// getBypassLoops - Get all the maximal bypass loops. These are the bypass
-/// loops whose parent is not a bypass loop.
-void SplitAnalysis::getBypassLoops(LoopPtrSet &BypassLoops) {
-  SmallVector<MachineLoop*, 8> Todo(Loops.begin(), Loops.end());
-  while (!Todo.empty()) {
-    MachineLoop *Loop = Todo.pop_back_val();
-    if (!UsingLoops.count(Loop)) {
-      // This is either a bypass loop or completely irrelevant.
-      if (LIS.isLiveInToMBB(*CurLI, Loop->getHeader()))
-        BypassLoops.insert(Loop);
-      // Either way, skip the child loops.
-      continue;
-    }
-
-    // The child loops may be bypass loops.
-    Todo.append(Loop->begin(), Loop->end());
-  }
 }
 
 
@@ -1172,53 +906,6 @@ void SplitEditor::finish() {
     DEBUG(dbgs() << "  new interval " << MRI.getRegClass(li.reg)->getName()
                  << ":" << li << '\n');
   }
-}
-
-
-//===----------------------------------------------------------------------===//
-//                               Loop Splitting
-//===----------------------------------------------------------------------===//
-
-void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
-  SplitAnalysis::LoopBlocks Blocks;
-  sa_.getLoopBlocks(Loop, Blocks);
-
-  DEBUG({
-    dbgs() << "  splitAround"; sa_.print(Blocks, dbgs()); dbgs() << '\n';
-  });
-
-  // Break critical edges as needed.
-  SplitAnalysis::BlockPtrSet CriticalExits;
-  sa_.getCriticalExits(Blocks, CriticalExits);
-  assert(CriticalExits.empty() && "Cannot break critical exits yet");
-
-  // Create new live interval for the loop.
-  openIntv();
-
-  // Insert copies in the predecessors if live-in to the header.
-  if (LIS.isLiveInToMBB(Edit.getParent(), Loop->getHeader())) {
-    for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Preds.begin(),
-           E = Blocks.Preds.end(); I != E; ++I) {
-      MachineBasicBlock &MBB = const_cast<MachineBasicBlock&>(**I);
-      enterIntvAtEnd(MBB);
-    }
-  }
-
-  // Switch all loop blocks.
-  for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Loop.begin(),
-       E = Blocks.Loop.end(); I != E; ++I)
-     useIntv(**I);
-
-  // Insert back copies in the exit blocks.
-  for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Exits.begin(),
-       E = Blocks.Exits.end(); I != E; ++I) {
-    MachineBasicBlock &MBB = const_cast<MachineBasicBlock&>(**I);
-    leaveIntvAtTop(MBB);
-  }
-
-  // Done.
-  closeIntv();
-  finish();
 }
 
 

@@ -24,7 +24,6 @@ class LiveInterval;
 class LiveIntervals;
 class LiveRangeEdit;
 class MachineInstr;
-class MachineLoop;
 class MachineLoopInfo;
 class MachineRegisterInfo;
 class TargetInstrInfo;
@@ -58,10 +57,6 @@ public:
   // The number of instructions using CurLI in each basic block.
   typedef DenseMap<const MachineBasicBlock*, unsigned> BlockCountMap;
   BlockCountMap UsingBlocks;
-
-  // The number of basic block using CurLI in each loop.
-  typedef DenseMap<const MachineLoop*, unsigned> LoopCountMap;
-  LoopCountMap UsingLoops;
 
   /// Additional information about basic blocks where the current variable is
   /// live. Such a block will look like one of these templates:
@@ -127,74 +122,9 @@ public:
   }
 
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
-  typedef SmallPtrSet<const MachineLoop*, 16> LoopPtrSet;
 
   // Print a set of blocks with use counts.
   void print(const BlockPtrSet&, raw_ostream&) const;
-
-  // Sets of basic blocks surrounding a machine loop.
-  struct LoopBlocks {
-    BlockPtrSet Loop;  // Blocks in the loop.
-    BlockPtrSet Preds; // Loop predecessor blocks.
-    BlockPtrSet Exits; // Loop exit blocks.
-
-    void clear() {
-      Loop.clear();
-      Preds.clear();
-      Exits.clear();
-    }
-  };
-
-  // Print loop blocks with use counts.
-  void print(const LoopBlocks&, raw_ostream&) const;
-
-  // Calculate the block sets surrounding the loop.
-  void getLoopBlocks(const MachineLoop *Loop, LoopBlocks &Blocks);
-
-  /// LoopPeripheralUse - how is a variable used in and around a loop?
-  /// Peripheral blocks are the loop predecessors and exit blocks.
-  enum LoopPeripheralUse {
-    ContainedInLoop,  // All uses are inside the loop.
-    SinglePeripheral, // At most one instruction per peripheral block.
-    MultiPeripheral,  // Multiple instructions in some peripheral blocks.
-    OutsideLoop       // Uses outside loop periphery.
-  };
-
-  /// analyzeLoopPeripheralUse - Return an enum describing how CurLI is used in
-  /// and around the Loop.
-  LoopPeripheralUse analyzeLoopPeripheralUse(const LoopBlocks&);
-
-  /// getCriticalExits - It may be necessary to partially break critical edges
-  /// leaving the loop if an exit block has phi uses of CurLI. Collect the exit
-  /// blocks that need special treatment into CriticalExits.
-  void getCriticalExits(const LoopBlocks &Blocks, BlockPtrSet &CriticalExits);
-
-  /// canSplitCriticalExits - Return true if it is possible to insert new exit
-  /// blocks before the blocks in CriticalExits.
-  bool canSplitCriticalExits(const LoopBlocks &Blocks,
-                             BlockPtrSet &CriticalExits);
-
-  /// getCriticalPreds - Get the set of loop predecessors with critical edges to
-  /// blocks outside the loop that have CurLI live in. We don't have to break
-  /// these edges, but they do require special treatment.
-  void getCriticalPreds(const LoopBlocks &Blocks, BlockPtrSet &CriticalPreds);
-
-  /// getSplitLoops - Get the set of loops that have CurLI uses and would be
-  /// profitable to split.
-  void getSplitLoops(LoopPtrSet&);
-
-  /// getBestSplitLoop - Return the loop where CurLI may best be split to a
-  /// separate register, or NULL.
-  const MachineLoop *getBestSplitLoop();
-
-  /// isBypassLoop - Return true if CurLI is live through Loop and has no uses
-  /// inside the loop. Bypass loops are candidates for splitting because it can
-  /// prevent interference inside the loop.
-  bool isBypassLoop(const MachineLoop *Loop);
-
-  /// getBypassLoops - Get all the maximal bypass loops. These are the bypass
-  /// loops whose parent is not a bypass loop.
-  void getBypassLoops(LoopPtrSet&);
 
   /// getMultiUseBlocks - Add basic blocks to Blocks that may benefit from
   /// having CurLI split to a new live interval. Return true if Blocks can be
@@ -440,10 +370,6 @@ public:
   void dump() const;
 
   // ===--- High level methods ---===
-
-  /// splitAroundLoop - Split CurLI into a separate live interval inside
-  /// the loop.
-  void splitAroundLoop(const MachineLoop*);
 
   /// splitSingleBlocks - Split CurLI into a separate live interval inside each
   /// basic block in Blocks.
