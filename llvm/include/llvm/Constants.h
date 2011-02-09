@@ -691,8 +691,8 @@ public:
   static Constant *getFSub(Constant *C1, Constant *C2);
   static Constant *getMul(Constant *C1, Constant *C2);
   static Constant *getFMul(Constant *C1, Constant *C2);
-  static Constant *getUDiv(Constant *C1, Constant *C2);
-  static Constant *getSDiv(Constant *C1, Constant *C2);
+  static Constant *getUDiv(Constant *C1, Constant *C2, bool isExact = false);
+  static Constant *getSDiv(Constant *C1, Constant *C2, bool isExact = false);
   static Constant *getFDiv(Constant *C1, Constant *C2);
   static Constant *getURem(Constant *C1, Constant *C2);
   static Constant *getSRem(Constant *C1, Constant *C2);
@@ -701,8 +701,8 @@ public:
   static Constant *getOr(Constant *C1, Constant *C2);
   static Constant *getXor(Constant *C1, Constant *C2);
   static Constant *getShl(Constant *C1, Constant *C2);
-  static Constant *getLShr(Constant *C1, Constant *C2);
-  static Constant *getAShr(Constant *C1, Constant *C2);
+  static Constant *getLShr(Constant *C1, Constant *C2, bool isExact = false);
+  static Constant *getAShr(Constant *C1, Constant *C2, bool isExact = false);
   static Constant *getTrunc   (Constant *C, const Type *Ty);
   static Constant *getSExt    (Constant *C, const Type *Ty);
   static Constant *getZExt    (Constant *C, const Type *Ty);
@@ -726,10 +726,18 @@ public:
   static Constant *getNUWMul(Constant *C1, Constant *C2);
   static Constant *getNSWShl(Constant *C1, Constant *C2);
   static Constant *getNUWShl(Constant *C1, Constant *C2);
-  static Constant *getExactSDiv(Constant *C1, Constant *C2);
-  static Constant *getExactUDiv(Constant *C1, Constant *C2);
-  static Constant *getExactAShr(Constant *C1, Constant *C2);
-  static Constant *getExactLShr(Constant *C1, Constant *C2);
+  static Constant *getExactSDiv(Constant *C1, Constant *C2) {
+    return getSDiv(C1, C2, true);
+  }
+  static Constant *getExactUDiv(Constant *C1, Constant *C2) {
+    return getUDiv(C1, C2, true);
+  }
+  static Constant *getExactAShr(Constant *C1, Constant *C2) {
+    return getAShr(C1, C2, true);
+  }
+  static Constant *getExactLShr(Constant *C1, Constant *C2) {
+    return getLShr(C1, C2, true);
+  }
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

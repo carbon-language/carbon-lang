@@ -691,27 +691,6 @@ Constant *ConstantExpr::getNUWShl(Constant *C1, Constant *C2) {
                OverflowingBinaryOperator::NoUnsignedWrap);
 }
 
-Constant *ConstantExpr::getExactSDiv(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::SDiv, C1, C2,
-               PossiblyExactOperator::IsExact);
-}
-
-Constant *ConstantExpr::getExactUDiv(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::UDiv, C1, C2,
-               PossiblyExactOperator::IsExact);
-}
-
-Constant *ConstantExpr::getExactAShr(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::AShr, C1, C2,
-               PossiblyExactOperator::IsExact);
-}
-
-Constant *ConstantExpr::getExactLShr(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::LShr, C1, C2,
-               PossiblyExactOperator::IsExact);
-}
-
-
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
 // can't be inline because we don't want to #include Instruction.h into
 // Constant.h
@@ -1890,12 +1869,14 @@ Constant *ConstantExpr::getFMul(Constant *C1, Constant *C2) {
   return get(Instruction::FMul, C1, C2);
 }
 
-Constant *ConstantExpr::getUDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::UDiv, C1, C2);
+Constant *ConstantExpr::getUDiv(Constant *C1, Constant *C2, bool isExact) {
+  return get(Instruction::UDiv, C1, C2,
+             isExact ? PossiblyExactOperator::IsExact : 0);
 }
 
-Constant *ConstantExpr::getSDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::SDiv, C1, C2);
+Constant *ConstantExpr::getSDiv(Constant *C1, Constant *C2, bool isExact) {
+  return get(Instruction::SDiv, C1, C2,
+             isExact ? PossiblyExactOperator::IsExact : 0);
 }
 
 Constant *ConstantExpr::getFDiv(Constant *C1, Constant *C2) {
@@ -1930,12 +1911,14 @@ Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
   return get(Instruction::Shl, C1, C2);
 }
 
-Constant *ConstantExpr::getLShr(Constant *C1, Constant *C2) {
-  return get(Instruction::LShr, C1, C2);
+Constant *ConstantExpr::getLShr(Constant *C1, Constant *C2, bool isExact) {
+  return get(Instruction::LShr, C1, C2,
+             isExact ? PossiblyExactOperator::IsExact : 0);
 }
 
-Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2) {
-  return get(Instruction::AShr, C1, C2);
+Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2, bool isExact) {
+  return get(Instruction::AShr, C1, C2,
+             isExact ? PossiblyExactOperator::IsExact : 0);
 }
 
 // destroyConstant - Remove the constant from the constant table...
