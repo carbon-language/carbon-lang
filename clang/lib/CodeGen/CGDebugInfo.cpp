@@ -313,6 +313,12 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
                                      getOrCreateMainFile(),
                                      0, 0, 0, 0, Elements);
   }
+  case BuiltinType::ObjCSel: {
+    return  DBuilder.CreateStructType(TheCU, "objc_selector", 
+                                      getOrCreateMainFile(), 0, 0, 0,
+                                      llvm::DIDescriptor::FlagFwdDecl, 
+                                      llvm::DIArray());
+  }
   case BuiltinType::UChar:
   case BuiltinType::Char_U: Encoding = llvm::dwarf::DW_ATE_unsigned_char; break;
   case BuiltinType::Char_S:
