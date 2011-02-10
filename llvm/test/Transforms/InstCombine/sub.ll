@@ -40,7 +40,7 @@ define i32 @test5(i32 %A, i32 %B, i32 %C) {
 	%E = sub i32 %A, %D	
 	ret i32 %E
 ; CHECK: @test5
-; CHECK: %D = sub i32 %C, %B
+; CHECK: %D1 = sub i32 %C, %B
 ; CHECK: %E = add
 ; CHECK: ret i32 %E
 }
