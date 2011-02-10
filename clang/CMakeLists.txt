@@ -124,6 +124,9 @@ macro(add_clang_library name)
     string( REGEX MATCHALL "/[^/]+" split_path ${CMAKE_CURRENT_SOURCE_DIR})
     list( GET split_path -1 dir)
     file( GLOB_RECURSE headers
+      ../../../include/clang/StaticAnalyzer${dir}/*.h
+      ../../../include/clang/StaticAnalyzer${dir}/*.td
+      ../../../include/clang/StaticAnalyzer${dir}/*.def
       ../../include/clang${dir}/*.h
       ../../include/clang${dir}/*.td
       ../../include/clang${dir}/*.def)
