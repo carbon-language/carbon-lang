@@ -17,7 +17,8 @@ int main ()
 
   NSString *str = [NSString stringWithCString:"hello" encoding:NSASCIIStringEncoding];
 
-  NSLog(@"String \"%@\" has length %d", str, [str length]); // Breakpoint 1
+  NSLog(@"String \"%@\" has length %lu", str, [str length]); // Set breakpoint here.
 
   [pool drain];
+  return 0;
 }
