@@ -1,4 +1,4 @@
-; RUN: opt < %s -loopsimplify -licm -disable-output
+; RUN: opt < %s -loop-simplify -licm -disable-output
 
 ; This is PR306
 

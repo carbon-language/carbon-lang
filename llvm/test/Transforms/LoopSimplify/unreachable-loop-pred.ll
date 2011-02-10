@@ -1,4 +1,4 @@
-; RUN: opt -S -loopsimplify -disable-output -verify-loop-info -verify-dom-info < %s
+; RUN: opt -S -loop-simplify -disable-output -verify-loop-info -verify-dom-info < %s
 ; PR5235
 
 ; When loopsimplify inserts a preheader for this loop, it should add the new

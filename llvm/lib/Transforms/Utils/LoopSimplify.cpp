@@ -37,7 +37,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loopsimplify"
+#define DEBUG_TYPE "loop-simplify"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
@@ -108,11 +108,11 @@ namespace {
 }
 
 char LoopSimplify::ID = 0;
-INITIALIZE_PASS_BEGIN(LoopSimplify, "loopsimplify",
+INITIALIZE_PASS_BEGIN(LoopSimplify, "loop-simplify",
                 "Canonicalize natural loops", true, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_END(LoopSimplify, "loopsimplify",
+INITIALIZE_PASS_END(LoopSimplify, "loop-simplify",
                 "Canonicalize natural loops", true, false)
 
 // Publically exposed interface to pass...

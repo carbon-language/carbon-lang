@@ -1,4 +1,4 @@
-; RUN: opt < %s -loopsimplify
+; RUN: opt < %s -loop-simplify
 
 define void @foo(i1 %C) {
 	br i1 %C, label %T, label %F

@@ -1,4 +1,4 @@
-; RUN: opt < %s -loopsimplify -disable-output
+; RUN: opt < %s -loop-simplify -disable-output
 
 define void @test() {
 loopentry.0:
