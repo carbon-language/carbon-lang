@@ -1764,6 +1764,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   if (IndirectArgument && VD->getType()->isRecordType())
     Ty = DBuilder.CreateReferenceType(Ty);
 
+  // If Storage is an aggregate returned as 'sret' then let debugger know
+  // about this.
+  if (llvm::Argument *Arg = dyn_cast<llvm::Argument>(Storage))
+    if (Arg->hasStructRetAttr())
+      Ty = DBuilder.CreateReferenceType(Ty);
+      
   // Get location information.
   unsigned Line = getLineNumber(VD->getLocation());
   unsigned Column = getColumnNumber(VD->getLocation());
