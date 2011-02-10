@@ -80,7 +80,9 @@ static SDValue ConcatVectors(SDValue Lower, SDValue Upper, SelectionDAG &DAG);
 
 /// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
 /// sets things up to match to an AVX VEXTRACTF128 instruction or a
-/// simple subregister reference.
+/// simple subregister reference.  Idx is an index in the 128 bits we
+/// want.  It need not be aligned to a 128-bit bounday.  That makes
+/// lowering EXTRACT_VECTOR_ELT operations easier.
 static SDValue Extract128BitVector(SDValue Vec,
                                    SDValue Idx,
                                    SelectionDAG &DAG,
@@ -5916,6 +5918,38 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
                                            SelectionDAG &DAG) const {
   if (!isa<ConstantSDNode>(Op.getOperand(1)))
     return SDValue();
+
+  SDValue Vec = Op.getOperand(0);
+  EVT VecVT = Vec.getValueType();
+
+  // If this is a 256-bit vector result, first extract the 128-bit
+  // vector and then extract from the 128-bit vector.
+  if (VecVT.getSizeInBits() > 128) {
+    DebugLoc dl = Op.getNode()->getDebugLoc();
+    unsigned NumElems = VecVT.getVectorNumElements();
+    SDValue Idx = Op.getOperand(1);
+
+    if (!isa<ConstantSDNode>(Idx))
+      return SDValue();
+
+    unsigned ExtractNumElems = NumElems / (VecVT.getSizeInBits() / 128);
+    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+
+    // Get the 128-bit vector.
+    bool Upper = IdxVal >= ExtractNumElems;
+    Vec = Extract128BitVector(Vec, Idx, DAG, dl);
+
+    // Extract from it.
+    SDValue ScaledIdx = Idx;
+    if (Upper)
+      ScaledIdx = DAG.getNode(ISD::SUB, dl, Idx.getValueType(), Idx,
+                              DAG.getConstant(ExtractNumElems,
+                                              Idx.getValueType()));
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, Op.getValueType(), Vec,
+                       ScaledIdx);
+  }
+
+  assert(Vec.getValueSizeInBits() <= 128 && "Unexpected vector length");
 
   if (Subtarget->hasSSE41()) {
     SDValue Res = LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG);
