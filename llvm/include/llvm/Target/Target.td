@@ -1,10 +1,10 @@
 //===- Target.td - Target Independent TableGen interface ---*- tablegen -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the target-independent interfaces which should be
@@ -47,7 +47,7 @@ class Register<string n> {
   // modification of this register can potentially read or modify the aliased
   // registers.
   list<Register> Aliases = [];
-  
+
   // SubRegs - A list of registers that are parts of this register. Note these
   // are "immediate" sub-registers and the registers within the list do not
   // themselves overlap. e.g. For X86, EAX's SubRegs list contains only [AX],
@@ -84,7 +84,7 @@ class Register<string n> {
 // need to specify sub-registers.
 // List "subregs" specifies which registers are sub-registers to this one. This
 // is used to populate the SubRegs and AliasSet fields of TargetRegisterDesc.
-// This allows the code generator to be careful not to put two values with 
+// This allows the code generator to be careful not to put two values with
 // overlapping live ranges into registers which alias.
 class RegisterWithSubRegs<string n, list<Register> subregs> : Register<n> {
   let SubRegs = subregs;
@@ -101,7 +101,7 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
 
   // RegType - Specify the list ValueType of the registers in this register
   // class.  Note that all registers in a register class must have the same
-  // ValueTypes.  This is a list because some targets permit storing different 
+  // ValueTypes.  This is a list because some targets permit storing different
   // types in same register, for example vector values with 128-bit total size,
   // but different count/size of items, like SSE on x86.
   //
@@ -127,13 +127,13 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // allocation used by the register allocator.
   //
   list<Register> MemberList = regList;
-  
+
   // SubRegClasses - Specify the register class of subregisters as a list of
   // dags: (RegClass SubRegIndex, SubRegindex, ...)
   list<dag> SubRegClasses = [];
 
   // MethodProtos/MethodBodies - These members can be used to insert arbitrary
-  // code into a generated register class.   The normal usage of this is to 
+  // code into a generated register class.   The normal usage of this is to
   // overload virtual methods.
   code MethodProtos = [{}];
   code MethodBodies = [{}];
@@ -261,7 +261,7 @@ class Instruction {
 /// selector matching code. Currently each predicate is just a string.
 class Predicate<string cond> {
   string CondString = cond;
-  
+
   /// AssemblerMatcherPredicate - If this feature can be used by the assembler
   /// matcher, this is true.  Targets should set this by inheriting their
   /// feature from the AssemblerPredicate class in addition to Predicate.
@@ -352,7 +352,7 @@ class AsmOperandClass {
 def ImmAsmOperand : AsmOperandClass {
   let Name = "Imm";
 }
-   
+
 /// Operand Types - These provide the built-in operand types that may be used
 /// by a target.  Targets can optionally provide their own operand types as
 /// needed, though this should not be needed for RISC targets.
@@ -580,7 +580,7 @@ class AssemblerPredicate {
 class MnemonicAlias<string From, string To> {
   string FromMnemonic = From;
   string ToMnemonic = To;
-  
+
   // Predicates - Predicates that must be true for this remapping to happen.
   list<Predicate> Predicates = [];
 }
@@ -591,7 +591,7 @@ class MnemonicAlias<string From, string To> {
 class InstAlias<string Asm, dag Result> {
   string AsmString = Asm;      // The .s format to match the instruction with.
   dag ResultInst = Result;     // The MCInst to generate.
-  
+
   // Predicates - Predicates that must be true for this to match.
   list<Predicate> Predicates = [];
 }
@@ -616,15 +616,15 @@ class AsmWriter {
   // will specify which alternative to use.  For example "{x|y|z}" with Variant
   // == 1, will expand to "y".
   int Variant = 0;
-  
-  
+
+
   // FirstOperandColumn/OperandSpacing - If the assembler syntax uses a columnar
   // layout, the asmwriter can actually generate output in this columns (in
   // verbose-asm mode).  These two values indicate the width of the first column
   // (the "opcode" area) and the width to reserve for subsequent operands.  When
   // verbose asm mode is enabled, operands will be indented to respect this.
   int FirstOperandColumn = -1;
-  
+
   // OperandSpacing - Space between operand columns.
   int OperandSpacing = -1;
 
@@ -659,15 +659,15 @@ class SubtargetFeature<string n, string a,  string v, string d,
   // appropriate target chip.
   //
   string Name = n;
-  
+
   // Attribute - Attribute to be set by feature.
   //
   string Attribute = a;
-  
+
   // Value - Value the attribute to be set to by feature.
   //
   string Value = v;
-  
+
   // Desc - Feature description.  Used by command line (-mattr=) to display help
   // information.
   //
@@ -689,12 +689,12 @@ class Processor<string n, ProcessorItineraries pi, list<SubtargetFeature> f> {
   // appropriate target chip.
   //
   string Name = n;
-  
+
   // ProcItin - The scheduling information for the target processor.
   //
   ProcessorItineraries ProcItin = pi;
-  
-  // Features - list of 
+
+  // Features - list of
   list<SubtargetFeature> Features = f;
 }
 
