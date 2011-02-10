@@ -1621,37 +1621,35 @@ static void EmitMatchClassEnumeration(CodeGenTarget &Target,
   OS << "}\n\n";
 }
 
-/// EmitClassifyOperand - Emit the function to classify an operand.
-static void EmitClassifyOperand(AsmMatcherInfo &Info,
-                                raw_ostream &OS) {
-  OS << "static MatchClassKind ClassifyOperand(MCParsedAsmOperand *GOp) {\n"
-     << "  " << Info.Target.getName() << "Operand &Operand = *("
+/// EmitValidateOperandClass - Emit the function to validate an operand class.
+static void EmitValidateOperandClass(AsmMatcherInfo &Info,
+                                     raw_ostream &OS) {
+  OS << "static bool ValidateOperandClass(MCParsedAsmOperand *GOp, "
+     << "MatchClassKind Kind) {\n";
+  OS << "  " << Info.Target.getName() << "Operand &Operand = *("
      << Info.Target.getName() << "Operand*)GOp;\n";
 
-  // Classify tokens.
+  // Check for Token operands first.
   OS << "  if (Operand.isToken())\n";
-  OS << "    return MatchTokenString(Operand.getToken());\n\n";
+  OS << "    return MatchTokenString(Operand.getToken()) == Kind;\n\n";
 
-  // Classify registers.
-  //
-  // FIXME: Don't hardcode isReg, getReg.
+  // Check for register operands, including sub-classes.
   OS << "  if (Operand.isReg()) {\n";
+  OS << "    MatchClassKind OpKind;\n";
   OS << "    switch (Operand.getReg()) {\n";
-  OS << "    default: return InvalidMatchClass;\n";
+  OS << "    default: OpKind = InvalidMatchClass; break;\n";
   for (std::map<Record*, ClassInfo*>::iterator
          it = Info.RegisterClasses.begin(), ie = Info.RegisterClasses.end();
        it != ie; ++it)
     OS << "    case " << Info.Target.getName() << "::"
-       << it->first->getName() << ": return " << it->second->Name << ";\n";
+       << it->first->getName() << ": OpKind = " << it->second->Name
+       << "; break;\n";
   OS << "    }\n";
+  OS << "    return IsSubclass(OpKind, Kind);\n";
   OS << "  }\n\n";
 
-  // Classify user defined operands.  To do so, we need to perform a topological
-  // sort of the superclass relationship graph so that we always match the
-  // narrowest type first.
-
-  // Collect the incoming edge counts for each class.
-  std::map<ClassInfo*, unsigned> IncomingEdges;
+  // Check the user classes. We don't care what order since we're only
+  // actually matching against one of them.
   for (std::vector<ClassInfo*>::iterator it = Info.Classes.begin(),
          ie = Info.Classes.end(); it != ie; ++it) {
     ClassInfo &CI = **it;
@@ -1659,58 +1657,14 @@ static void EmitClassifyOperand(AsmMatcherInfo &Info,
     if (!CI.isUserClass())
       continue;
 
-    for (std::vector<ClassInfo*>::iterator SI = CI.SuperClasses.begin(),
-         SE = CI.SuperClasses.end(); SI != SE; ++SI)
-      ++IncomingEdges[*SI];
-  }
-
-  // Initialize a worklist of classes with no incoming edges.
-  std::vector<ClassInfo*> LeafClasses;
-  for (std::vector<ClassInfo*>::iterator it = Info.Classes.begin(),
-         ie = Info.Classes.end(); it != ie; ++it) {
-    if (!IncomingEdges[*it])
-      LeafClasses.push_back(*it);
-  }
-
-  // Iteratively pop the list, process that class, and update the incoming
-  // edge counts for its super classes.  When a superclass reaches zero
-  // incoming edges, push it onto the worklist for processing.
-  while (!LeafClasses.empty()) {
-    ClassInfo &CI = *LeafClasses.back();
-    LeafClasses.pop_back();
-
-    if (!CI.isUserClass())
-      continue;
-
-    OS << "  // '" << CI.ClassName << "' class";
-    if (!CI.SuperClasses.empty()) {
-      OS << ", subclass of ";
-      for (unsigned i = 0, e = CI.SuperClasses.size(); i != e; ++i) {
-        if (i) OS << ", ";
-        OS << "'" << CI.SuperClasses[i]->ClassName << "'";
-        assert(CI < *CI.SuperClasses[i] && "Invalid class relation!");
-
-        --IncomingEdges[CI.SuperClasses[i]];
-        if (!IncomingEdges[CI.SuperClasses[i]])
-          LeafClasses.push_back(CI.SuperClasses[i]);
-      }
-    }
-    OS << "\n";
-
-    OS << "  if (Operand." << CI.PredicateMethod << "()) {\n";
-
-    // Validate subclass relationships.
-    if (!CI.SuperClasses.empty()) {
-      for (unsigned i = 0, e = CI.SuperClasses.size(); i != e; ++i)
-        OS << "    assert(Operand." << CI.SuperClasses[i]->PredicateMethod
-           << "() && \"Invalid class relationship!\");\n";
-    }
-
-    OS << "    return " << CI.Name << ";\n";
+    OS << "  // '" << CI.ClassName << "' class\n";
+    OS << "  if (Kind == " << CI.Name
+       << " && Operand." << CI.PredicateMethod << "()) {\n";
+    OS << "    return true;\n";
     OS << "  }\n\n";
   }
 
-  OS << "  return InvalidMatchClass;\n";
+  OS << "  return false;\n";
   OS << "}\n\n";
 }
 
@@ -2215,11 +2169,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Emit the routine to match token strings to their match class.
   EmitMatchTokenString(Target, Info.Classes, OS);
 
-  // Emit the routine to classify an operand.
-  EmitClassifyOperand(Info, OS);
-
   // Emit the subclass predicate routine.
   EmitIsSubclass(Target, Info.Classes, OS);
+
+  // Emit the routine to validate an operand against a match class.
+  EmitValidateOperandClass(Info, OS);
 
   // Emit the available features compute function.
   EmitComputeAvailableFeatures(Info, OS);
@@ -2335,23 +2289,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    return Match_InvalidOperand;\n";
   OS << "  }\n\n";
 
-  OS << "  // Compute the class list for this operand vector.\n";
-  OS << "  MatchClassKind Classes[" << MaxNumOperands << "];\n";
-  OS << "  for (unsigned i = 1, e = Operands.size(); i != e; ++i) {\n";
-  OS << "    Classes[i-1] = ClassifyOperand(Operands[i]);\n\n";
-
-  OS << "    // Check for invalid operands before matching.\n";
-  OS << "    if (Classes[i-1] == InvalidMatchClass) {\n";
-  OS << "      ErrorInfo = i;\n";
-  OS << "      return Match_InvalidOperand;\n";
-  OS << "    }\n";
-  OS << "  }\n\n";
-
-  OS << "  // Mark unused classes.\n";
-  OS << "  for (unsigned i = Operands.size()-1, e = " << MaxNumOperands << "; "
-     << "i != e; ++i)\n";
-  OS << "    Classes[i] = InvalidMatchClass;\n\n";
-
   OS << "  // Some state to try to produce better error messages.\n";
   OS << "  bool HadMatchOtherThanFeatures = false;\n\n";
   OS << "  // Set ErrorInfo to the operand that mismatches if it is \n";
@@ -2378,7 +2315,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Emit check that the subclasses match.
   OS << "    bool OperandsValid = true;\n";
   OS << "    for (unsigned i = 0; i != " << MaxNumOperands << "; ++i) {\n";
-  OS << "      if (IsSubclass(Classes[i], it->Classes[i]))\n";
+  OS << "      if (i + 1 >= Operands.size()) {\n";
+  OS << "        OperandsValid = (it->Classes[i] == " <<"InvalidMatchClass);\n";
+  OS << "        break;";
+  OS << "      }\n";
+  OS << "      if (ValidateOperandClass(Operands[i+1], it->Classes[i]))\n";
   OS << "        continue;\n";
   OS << "      // If this operand is broken for all of the instances of this\n";
   OS << "      // mnemonic, keep track of it so we can report loc info.\n";
