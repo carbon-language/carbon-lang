@@ -709,7 +709,7 @@ template <class _T1, class _T2> struct _LIBCPP_VISIBLE is_convertible
 
 // is_base_of
 
-#ifdef __has_feature(is_base_of)
+#if __has_feature(is_base_of)
 
 template <class _Bp, class _Dp>
 struct _LIBCPP_VISIBLE is_base_of
