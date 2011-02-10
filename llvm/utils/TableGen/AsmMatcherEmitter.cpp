@@ -2345,7 +2345,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "                         it->Opcode, Operands))\n";
   OS << "      return Match_ConversionFail;\n";
   OS << "\n";
-  OS << "    return Match_Success;\n";
 
   // Call the post-processing function, if used.
   std::string InsnCleanupFn =
