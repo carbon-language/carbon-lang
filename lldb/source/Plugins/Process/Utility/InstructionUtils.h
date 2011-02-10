@@ -15,29 +15,29 @@
 namespace lldb_private {
 
 static inline uint32_t
-Bits32 (const uint32_t value, const uint32_t msbit, const uint32_t lsbit)
+Bits32 (const uint32_t bits, const uint32_t msbit, const uint32_t lsbit)
 {
     assert(msbit < 32 && lsbit <= msbit);
-    return (value >> lsbit) & ((1u << (msbit - lsbit + 1)) - 1);
+    return (bits >> lsbit) & ((1u << (msbit - lsbit + 1)) - 1);
 }
 
 static inline uint32_t
-Bit32 (const uint32_t value, const uint32_t bit)
+Bit32 (const uint32_t bits, const uint32_t bit)
 {
-    return Bits32(value, bit, bit);
+    return Bits32(bits, bit, bit);
 }
 
 static inline void
-SetBits32(uint32_t &bits, unsigned msbit, unsigned lsbit, unsigned val)
+SetBits32(uint32_t &bits, const uint32_t msbit, const uint32_t lsbit, const uint32_t val)
 {
     assert(msbit < 32 && lsbit < 32 && msbit >= lsbit);
-    uint32_t mask = ((1 << (msbit - lsbit + 1)) - 1);
+    uint32_t mask = ((1u << (msbit - lsbit + 1)) - 1);
     bits &= ~(mask << lsbit);
     bits |= (val & mask) << lsbit;
 }
 
 static inline void
-SetBit32(uint32_t &bits, unsigned bit, unsigned val)
+SetBit32(uint32_t &bits, const uint32_t bit, const uint32_t val)
 {
     SetBits32(bits, bit, bit, val);
 }
