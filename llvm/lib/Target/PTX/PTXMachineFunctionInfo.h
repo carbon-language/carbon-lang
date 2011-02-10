@@ -31,8 +31,8 @@ private:
 public:
   PTXMachineFunctionInfo(MachineFunction &MF)
     : is_kernel(false), reg_ret(PTX::NoRegister), _isDoneAddArg(false) {
-      reg_arg.reserve(32);
-      reg_local_var.reserve(64);
+      reg_arg.reserve(8);
+      reg_local_var.reserve(32);
     }
 
   void setKernel(bool _is_kernel=true) { is_kernel = _is_kernel; }

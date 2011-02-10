@@ -40,6 +40,8 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
 #include "PTXGenDAGISel.inc"
 
   private:
+    SDNode *SelectREAD_PARAM(SDNode *Node);
+
     bool isImm(const SDValue &operand);
     bool SelectImm(const SDValue &operand, SDValue &imm);
 }; // class PTXDAGToDAGISel
@@ -57,8 +59,21 @@ PTXDAGToDAGISel::PTXDAGToDAGISel(PTXTargetMachine &TM,
   : SelectionDAGISel(TM, OptLevel) {}
 
 SDNode *PTXDAGToDAGISel::Select(SDNode *Node) {
-  // SelectCode() is auto'gened
-  return SelectCode(Node);
+  if (Node->getOpcode() == PTXISD::READ_PARAM)
+    return SelectREAD_PARAM(Node);
+  else
+    return SelectCode(Node);
+}
+
+SDNode *PTXDAGToDAGISel::SelectREAD_PARAM(SDNode *Node) {
+  SDValue index = Node->getOperand(1);
+  DebugLoc dl = Node->getDebugLoc();
+
+  if (index.getOpcode() != ISD::TargetConstant)
+    llvm_unreachable("READ_PARAM: index is not ISD::TargetConstant");
+
+  return PTXInstrInfo::
+    GetPTXMachineNode(CurDAG, PTX::LDpi, dl, MVT::i32, index);
 }
 
 // Match memory operand of the form [reg+reg]

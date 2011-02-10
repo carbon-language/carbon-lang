@@ -67,7 +67,9 @@ bool PTXMFInfoExtract::runOnMachineFunction(MachineFunction &MF) {
 
   // FIXME: This is a slow linear scanning
   for (unsigned reg = PTX::NoRegister + 1; reg < PTX::NUM_TARGET_REGS; ++reg)
-    if (MRI.isPhysRegUsed(reg) && reg != retreg && !MFI->isArgReg(reg))
+    if (MRI.isPhysRegUsed(reg) &&
+        reg != retreg &&
+        (MFI->isKernel() || !MFI->isArgReg(reg)))
       MFI->addLocalVarReg(reg);
 
   // Notify MachineFunctionInfo that I've done adding local var reg

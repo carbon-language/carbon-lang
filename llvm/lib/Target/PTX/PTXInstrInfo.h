@@ -15,6 +15,8 @@
 #define PTX_INSTR_INFO_H
 
 #include "PTXRegisterInfo.h"
+#include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
@@ -45,6 +47,28 @@ class PTXInstrInfo : public TargetInstrInfoImpl {
     virtual bool isMoveInstr(const MachineInstr& MI,
                              unsigned &SrcReg, unsigned &DstReg,
                              unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
+
+    // static helper routines
+
+    static MachineSDNode *GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
+                                            DebugLoc dl, EVT VT,
+                                            SDValue Op1) {
+      SDValue pred_reg = DAG->getRegister(0, MVT::i1);
+      SDValue pred_imm = DAG->getTargetConstant(0, MVT::i32);
+      SDValue ops[] = { Op1, pred_reg, pred_imm };
+      return DAG->getMachineNode(Opcode, dl, VT, ops, array_lengthof(ops));
+    }
+
+    static MachineSDNode *GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
+                                            DebugLoc dl, EVT VT,
+                                            SDValue Op1,
+                                            SDValue Op2) {
+      SDValue pred_reg = DAG->getRegister(0, MVT::i1);
+      SDValue pred_imm = DAG->getTargetConstant(0, MVT::i32);
+      SDValue ops[] = { Op1, Op2, pred_reg, pred_imm };
+      return DAG->getMachineNode(Opcode, dl, VT, ops, array_lengthof(ops));
+    }
+
   }; // class PTXInstrInfo
 } // namespace llvm
 

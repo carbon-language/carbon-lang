@@ -38,12 +38,11 @@
 using namespace llvm;
 
 static cl::opt<std::string>
-OptPTXVersion("ptx-version", cl::desc("Set PTX version"),
-           cl::init("1.4"));
+OptPTXVersion("ptx-version", cl::desc("Set PTX version"), cl::init("1.4"));
 
 static cl::opt<std::string>
 OptPTXTarget("ptx-target", cl::desc("Set GPU target (comma-separated list)"),
-           cl::init("sm_10"));
+             cl::init("sm_10"));
 
 namespace {
 class PTXAsmPrinter : public AsmPrinter {
@@ -67,6 +66,8 @@ public:
   void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
                        const char *Modifier = 0);
+  void printParamOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
+                         const char *Modifier = 0);
 
   // autogen'd.
   void printInstruction(const MachineInstr *MI, raw_ostream &OS);
@@ -229,6 +230,11 @@ void PTXAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
 
   OS << "+";
   printOperand(MI, opNum+1, OS);
+}
+
+void PTXAsmPrinter::printParamOperand(const MachineInstr *MI, int opNum,
+                                      raw_ostream &OS, const char *Modifier) {
+  OS << PARAM_PREFIX << (int) MI->getOperand(opNum).getImm() + 1;
 }
 
 void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {

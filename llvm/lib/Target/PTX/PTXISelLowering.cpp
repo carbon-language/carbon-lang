@@ -47,9 +47,14 @@ SDValue PTXTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
 const char *PTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
-    default:           llvm_unreachable("Unknown opcode");
-    case PTXISD::EXIT: return "PTXISD::EXIT";
-    case PTXISD::RET:  return "PTXISD::RET";
+    default:
+      llvm_unreachable("Unknown opcode");
+    case PTXISD::READ_PARAM:
+      return "PTXISD::READ_PARAM";
+    case PTXISD::EXIT:
+      return "PTXISD::EXIT";
+    case PTXISD::RET:
+      return "PTXISD::RET";
   }
 }
 
@@ -86,42 +91,6 @@ struct argmap_entry {
 };
 } // end anonymous namespace
 
-static SDValue lower_kernel_argument(int i,
-                                     SDValue Chain,
-                                     DebugLoc dl,
-                                     MVT::SimpleValueType VT,
-                                     argmap_entry *entry,
-                                     SelectionDAG &DAG,
-                                     unsigned *argreg) {
-  // TODO
-  llvm_unreachable("Not implemented yet");
-}
-
-static SDValue lower_device_argument(int i,
-                                     SDValue Chain,
-                                     DebugLoc dl,
-                                     MVT::SimpleValueType VT,
-                                     argmap_entry *entry,
-                                     SelectionDAG &DAG,
-                                     unsigned *argreg) {
-  MachineRegisterInfo &RegInfo = DAG.getMachineFunction().getRegInfo();
-
-  unsigned preg = *++(entry->loc); // allocate start from register 1
-  unsigned vreg = RegInfo.createVirtualRegister(entry->RC);
-  RegInfo.addLiveIn(preg, vreg);
-
-  *argreg = preg;
-  return DAG.getCopyFromReg(Chain, dl, vreg, VT);
-}
-
-typedef SDValue (*lower_argument_func)(int i,
-                                       SDValue Chain,
-                                       DebugLoc dl,
-                                       MVT::SimpleValueType VT,
-                                       argmap_entry *entry,
-                                       SelectionDAG &DAG,
-                                       unsigned *argreg);
-
 SDValue PTXTargetLowering::
   LowerFormalArguments(SDValue Chain,
                        CallingConv::ID CallConv,
@@ -135,21 +104,21 @@ SDValue PTXTargetLowering::
   MachineFunction &MF = DAG.getMachineFunction();
   PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
 
-  lower_argument_func lower_argument;
-
   switch (CallConv) {
     default:
       llvm_unreachable("Unsupported calling convention");
       break;
     case CallingConv::PTX_Kernel:
-      MFI->setKernel();
-      lower_argument = lower_kernel_argument;
+      MFI->setKernel(true);
       break;
     case CallingConv::PTX_Device:
       MFI->setKernel(false);
-      lower_argument = lower_device_argument;
       break;
   }
+
+  // Make sure we don't add argument registers twice
+  if (MFI->isDoneAddArg())
+    llvm_unreachable("cannot add argument registers twice");
 
   // Reset argmap before allocation
   for (struct argmap_entry *i = argmap, *e = argmap + array_lengthof(argmap);
@@ -164,17 +133,27 @@ SDValue PTXTargetLowering::
     if (entry == argmap + array_lengthof(argmap))
       llvm_unreachable("Type of argument is not supported");
 
-    unsigned reg;
-    SDValue arg = lower_argument(i, Chain, dl, VT, entry, DAG, &reg);
-    InVals.push_back(arg);
+    if (MFI->isKernel() && entry->RC == PTX::PredsRegisterClass)
+      llvm_unreachable("cannot pass preds to kernel");
 
-    if (!MFI->isDoneAddArg())
-      MFI->addArgReg(reg);
+    MachineRegisterInfo &RegInfo = DAG.getMachineFunction().getRegInfo();
+
+    unsigned preg = *++(entry->loc); // allocate start from register 1
+    unsigned vreg = RegInfo.createVirtualRegister(entry->RC);
+    RegInfo.addLiveIn(preg, vreg);
+
+    MFI->addArgReg(preg);
+
+    SDValue inval;
+    if (MFI->isKernel())
+      inval = DAG.getNode(PTXISD::READ_PARAM, dl, VT, Chain,
+                          DAG.getTargetConstant(i, MVT::i32));
+    else
+      inval = DAG.getCopyFromReg(Chain, dl, vreg, VT);
+    InVals.push_back(inval);
   }
 
-  // Make sure we don't add argument registers twice
-  if (!MFI->isDoneAddArg())
-    MFI->doneAddArg();
+  MFI->doneAddArg();
 
   return Chain;
 }

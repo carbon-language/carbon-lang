@@ -120,6 +120,10 @@ def MEMii : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops i32imm, i32imm);
 }
+def MEMpi : Operand<i32> {
+  let PrintMethod = "printParamOperand";
+  let MIOperandInfo = (ops i32imm);
+}
 
 //===----------------------------------------------------------------------===//
 // PTX Specific Node Definitions
@@ -236,9 +240,13 @@ defm LDl : PTX_LD<"ld.local",  RRegs32, load_local>;
 defm LDp : PTX_LD<"ld.param",  RRegs32, load_parameter>;
 defm LDs : PTX_LD<"ld.shared", RRegs32, load_shared>;
 
+def LDpi : InstPTX<(outs RRegs32:$d), (ins MEMpi:$a),
+                   "ld.param.%type\t$d, [$a]", []>;
+
 defm STg : PTX_ST<"st.global", RRegs32, store_global>;
 defm STl : PTX_ST<"st.local",  RRegs32, store_local>;
-defm STp : PTX_ST<"st.param",  RRegs32, store_parameter>;
+// Store to parameter state space requires PTX 2.0 or higher?
+// defm STp : PTX_ST<"st.param",  RRegs32, store_parameter>;
 defm STs : PTX_ST<"st.shared", RRegs32, store_shared>;
 
 ///===- Control Flow Instructions -----------------------------------------===//
