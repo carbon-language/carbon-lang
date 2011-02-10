@@ -490,7 +490,8 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   }
 
   // Append tail padding.
-  if (Layout.getSize().getQuantity() > Size)
+  uint64_t RecordSizeInBits = Layout.getSize().getQuantity();
+  if (RecordSizeInBits > Size)
     AppendPadding(Layout.getSize().getQuantity(), Align);
 }
 
@@ -625,7 +626,8 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   
   
   // First check if we can use the same fields as for the complete class.
-  if (AlignedNonVirtualTypeSize == Layout.getSize().getQuantity()) {
+  uint64_t RecordSizeInBits = Layout.getSize().getQuantity();
+  if (AlignedNonVirtualTypeSize == RecordSizeInBits) {
     NonVirtualBaseTypeIsSameAsCompleteType = true;
     return true;
   }
