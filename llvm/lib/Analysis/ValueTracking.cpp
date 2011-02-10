@@ -590,6 +590,10 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
       }
     }
 
+    // Unreachable blocks may have zero-operand PHI nodes.
+    if (P->getNumIncomingValues() == 0)
+      return;
+
     // Otherwise take the unions of the known bit sets of the operands,
     // taking conservative care to avoid excessive recursion.
     if (Depth < MaxDepth - 1 && !KnownZero && !KnownOne) {
