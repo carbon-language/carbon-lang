@@ -1,7 +1,5 @@
 set(MODULE TRUE)
 
-set(LLVM_NO_RTTI 1)
-
 set( LLVM_USED_LIBS
   clangFrontendTool
   clangFrontend

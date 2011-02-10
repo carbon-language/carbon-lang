@@ -1,5 +1,3 @@
-set(LLVM_NO_RTTI 1)
-
 add_clang_library(clangBasic
   Builtins.cpp
   ConvertUTF.c
