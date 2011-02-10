@@ -15,7 +15,7 @@ for.cond:                                         ; preds = %for.cond, %codeRepl
   store i32 %storemerge, i32* @g_2, align 4
   %shl = shl i32 %storemerge, 30
   %conv2 = lshr i32 %shl, 24
-; CHECK:  %0 = shl i32 %storemerge, 6
+; CHECK:  %0 = shl nuw nsw i32 %storemerge, 6
 ; CHECK:  %conv2 = and i32 %0, 64
   %tobool = icmp eq i32 %conv2, 0
   br i1 %tobool, label %for.cond, label %codeRepl2

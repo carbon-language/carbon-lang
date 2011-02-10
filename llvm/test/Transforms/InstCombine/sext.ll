@@ -110,7 +110,7 @@ entry:
         ret i32 %b
 ; CHECK: @test10
 ; CHECK:  shl i32 %i, 30
-; CHECK-NEXT: ashr i32
+; CHECK-NEXT: ashr exact i32
 ; CHECK-NEXT: ret i32
 }
 

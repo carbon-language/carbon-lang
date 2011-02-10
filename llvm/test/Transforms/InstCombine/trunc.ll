@@ -24,7 +24,7 @@ define i64 @test2(i64 %a) {
   ret i64 %d
 ; CHECK: @test2
 ; CHECK: shl i64 %a, 36
-; CHECK: %d = ashr i64 {{.*}}, 36
+; CHECK: %d = ashr exact i64 {{.*}}, 36
 ; CHECK: ret i64 %d
 }
 define i64 @test3(i64 %a) {
@@ -92,7 +92,7 @@ define i64 @test8(i32 %A, i32 %B) {
 ; CHECK: @test8
 ; CHECK:   %tmp38 = zext i32 %A to i64
 ; CHECK:   %tmp32 = zext i32 %B to i64
-; CHECK:   %tmp33 = shl i64 %tmp32, 32
+; CHECK:   %tmp33 = shl nuw i64 %tmp32, 32
 ; CHECK:   %ins35 = or i64 %tmp33, %tmp38
 ; CHECK:   ret i64 %ins35
 }

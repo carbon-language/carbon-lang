@@ -28,3 +28,12 @@ define i1 @shl_icmp(i64 %X) nounwind {
   ret i1 %B
 }
 
+; CHECK: @shl1
+; CHECK: %B = shl nuw nsw i64 %A, 8
+; CHECK: ret i64 %B
+define i64 @shl1(i64 %X, i64* %P) nounwind {
+  %A = and i64 %X, 312
+  store i64 %A, i64* %P  ; multiple uses of A.
+  %B = shl i64 %A, 8
+  ret i64 %B
+}

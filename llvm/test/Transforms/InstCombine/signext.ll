@@ -9,7 +9,7 @@ define i32 @test1(i32 %x) {
         ret i32 %tmp.3
 ; CHECK: @test1
 ; CHECK: %sext = shl i32 %x, 16
-; CHECK: %tmp.3 = ashr i32 %sext, 16
+; CHECK: %tmp.3 = ashr exact i32 %sext, 16
 ; CHECK: ret i32 %tmp.3
 }
 
@@ -20,7 +20,7 @@ define i32 @test2(i32 %x) {
         ret i32 %tmp.3
 ; CHECK: @test2
 ; CHECK: %sext = shl i32 %x, 16
-; CHECK: %tmp.3 = ashr i32 %sext, 16
+; CHECK: %tmp.3 = ashr exact i32 %sext, 16
 ; CHECK: ret i32 %tmp.3
 }
 
@@ -51,7 +51,7 @@ define i32 @test5(i32 %x) {
         ret i32 %tmp.3
 ; CHECK: @test5
 ; CHECK: %sext = shl i32 %x, 24
-; CHECK: %tmp.3 = ashr i32 %sext, 24
+; CHECK: %tmp.3 = ashr exact i32 %sext, 24
 ; CHECK: ret i32 %tmp.3
 }
 
@@ -61,7 +61,7 @@ define i32 @test6(i32 %x) {
         ret i32 %tmp.4
 ; CHECK: @test6
 ; CHECK: %tmp.2 = shl i32 %x, 16
-; CHECK: %tmp.4 = ashr i32 %tmp.2, 16
+; CHECK: %tmp.4 = ashr exact i32 %tmp.2, 16
 ; CHECK: ret i32 %tmp.4
 }
 
@@ -82,6 +82,6 @@ entry:
   %sub = add i32 %xor, -67108864                  ; <i32> [#uses=1]
   ret i32 %sub
 ; CHECK: @test8
-; CHECK: %sub = ashr i32 %x, 5
-; CHECK: ret i32 %sub
+; CHECK: %shr = ashr i32 %x, 5
+; CHECK: ret i32 %shr
 }

@@ -451,7 +451,7 @@ entry:
   ret i64 %tmp46
   
 ; CHECK: @test37
-; CHECK:  %tmp23 = shl i128 %tmp22, 32
+; CHECK:  %tmp23 = shl nuw nsw i128 %tmp22, 32
 ; CHECK:  %ins = or i128 %tmp23, %A
 ; CHECK:  %tmp46 = trunc i128 %ins to i64
 }

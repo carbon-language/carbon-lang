@@ -452,7 +452,7 @@ define i64 @test48(i8 %A, i8 %a) {
 ; CHECK: @test48
 ; CHECK-NEXT: %b = zext i8 %a to i64
 ; CHECK-NEXT: %B = zext i8 %A to i64
-; CHECK-NEXT: %C = shl i64 %B, 8
+; CHECK-NEXT: %C = shl nuw nsw i64 %B, 8
 ; CHECK-NEXT: %D = or i64 %C, %b
 ; CHECK-NEXT: ret i64 %D
 }
@@ -464,7 +464,7 @@ define i64 @test49(i64 %A) {
  ret i64 %D
 ; CHECK: @test49
 ; CHECK-NEXT: %C = shl i64 %A, 32
-; CHECK-NEXT: ashr i64 %C, 32
+; CHECK-NEXT: ashr exact i64 %C, 32
 ; CHECK-NEXT: %D = or i64 {{.*}}, 1
 ; CHECK-NEXT: ret i64 %D
 }
@@ -478,8 +478,8 @@ define i64 @test50(i64 %A) {
 ; CHECK: @test50
 ; CHECK-NEXT: shl i64 %A, 30
 ; CHECK-NEXT: add i64 {{.*}}, -4294967296
-; CHECK-NEXT: %E = ashr i64 {{.*}}, 32
-; CHECK-NEXT: ret i64 %E
+; CHECK-NEXT: %sext = ashr i64 {{.*}}, 32
+; CHECK-NEXT: ret i64 %sext
 }
 
 define i64 @test51(i64 %A, i1 %cond) {

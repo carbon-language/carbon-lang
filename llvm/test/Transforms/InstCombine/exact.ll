@@ -7,6 +7,13 @@ define i32 @sdiv1(i32 %x) {
   ret i32 %y
 }
 
+; CHECK: @sdiv2
+; CHECK: ashr exact i32 %x, 3
+define i32 @sdiv2(i32 %x) {
+  %y = sdiv exact i32 %x, 8
+  ret i32 %y
+}
+
 ; CHECK: @sdiv3
 ; CHECK: %y = srem i32 %x, 3
 ; CHECK: %z = sub i32 %x, %y
@@ -50,6 +57,24 @@ define i32 @udiv1(i32 %x, i32 %w) {
   %y = udiv exact i32 %x, %w
   %z = mul i32 %y, %w
   ret i32 %z
+}
+
+; CHECK: @udiv2
+; CHECK: %z = lshr exact i32 %x, %w
+; CHECK: ret i32 %z
+define i32 @udiv2(i32 %x, i32 %w) {
+  %y = shl i32 1, %w
+  %z = udiv exact i32 %x, %y
+  ret i32 %z
+}
+
+; CHECK: @ashr1
+; CHECK: %B = ashr exact i64 %A, 2
+; CHECK: ret i64 %B
+define i64 @ashr1(i64 %X) nounwind {
+  %A = shl i64 %X, 8
+  %B = ashr i64 %A, 2   ; X/4
+  ret i64 %B
 }
 
 ; CHECK: @ashr_icmp
