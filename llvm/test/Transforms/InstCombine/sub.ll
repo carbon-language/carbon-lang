@@ -256,7 +256,7 @@ define i64 @test24b(i8* %P, i64 %A){
   %G = sub i64 %C, ptrtoint ([42 x i16]* @Arr to i64)
   ret i64 %G
 ; CHECK: @test24b
-; CHECK-NEXT: shl i64 %A, 1
+; CHECK-NEXT: shl nuw i64 %A, 1
 ; CHECK-NEXT: ret i64 
 }
 
@@ -267,7 +267,7 @@ define i64 @test25(i8* %P, i64 %A){
   %G = sub i64 %C, ptrtoint (i16* getelementptr ([42 x i16]* @Arr, i64 1, i64 0) to i64)
   ret i64 %G
 ; CHECK: @test25
-; CHECK-NEXT: shl i64 %A, 1
+; CHECK-NEXT: shl nuw i64 %A, 1
 ; CHECK-NEXT: add i64 {{.*}}, -84
 ; CHECK-NEXT: ret i64 
 }

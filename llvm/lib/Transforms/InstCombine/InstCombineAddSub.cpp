@@ -399,6 +399,10 @@ Value *InstCombiner::EmitGEPOffset(User *GEP) {
   const Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
   Value *Result = Constant::getNullValue(IntPtrTy);
 
+  // If the GEP is inbounds, we know that none of the addressing operations will
+  // overflow in an unsigned sense.
+  bool isInBounds = cast<GEPOperator>(GEP)->isInBounds();
+  
   // Build a mask for high order bits.
   unsigned IntPtrWidth = TD.getPointerSizeInBits();
   uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
@@ -414,31 +418,34 @@ Value *InstCombiner::EmitGEPOffset(User *GEP) {
       if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
         Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
         
-        Result = Builder->CreateAdd(Result,
-                                    ConstantInt::get(IntPtrTy, Size),
-                                    GEP->getName()+".offs");
+        if (Size)
+          Result = Builder->CreateAdd(Result, ConstantInt::get(IntPtrTy, Size),
+                                      GEP->getName()+".offs",
+                                      isInBounds /*NUW*/);
         continue;
       }
       
       Constant *Scale = ConstantInt::get(IntPtrTy, Size);
       Constant *OC =
               ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
-      Scale = ConstantExpr::getMul(OC, Scale);
+      Scale = ConstantExpr::getMul(OC, Scale, isInBounds/*NUW*/);
       // Emit an add instruction.
-      Result = Builder->CreateAdd(Result, Scale, GEP->getName()+".offs");
+      Result = Builder->CreateAdd(Result, Scale, GEP->getName()+".offs",
+                                  isInBounds /*NUW*/);
       continue;
     }
     // Convert to correct type.
     if (Op->getType() != IntPtrTy)
       Op = Builder->CreateIntCast(Op, IntPtrTy, true, Op->getName()+".c");
     if (Size != 1) {
-      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
       // We'll let instcombine(mul) convert this to a shl if possible.
-      Op = Builder->CreateMul(Op, Scale, GEP->getName()+".idx");
+      Op = Builder->CreateMul(Op, ConstantInt::get(IntPtrTy, Size),
+                              GEP->getName()+".idx", isInBounds /*NUW*/);
     }
 
     // Emit an add instruction.
-    Result = Builder->CreateAdd(Op, Result, GEP->getName()+".offs");
+    Result = Builder->CreateAdd(Op, Result, GEP->getName()+".offs",
+                                isInBounds /*NUW*/);
   }
   return Result;
 }

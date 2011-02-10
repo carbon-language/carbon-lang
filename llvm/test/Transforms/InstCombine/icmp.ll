@@ -1,5 +1,8 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
+target datalayout =
+"e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+
 define i32 @test1(i32 %X) {
 entry:
         icmp slt i32 %X, 0              ; <i1>:0 [#uses=1]
@@ -218,3 +221,16 @@ define i1 @test23(i32 %x) nounwind {
 	%i4 = icmp eq i32 %i3, -1
 	ret i1 %i4
 }
+
+@X = global [1000 x i32] zeroinitializer
+
+; PR8882
+; CHECK: @test24
+; CHECK:    %cmp = icmp eq i64 %i, 1000
+; CHECK:   ret i1 %cmp
+define i1 @test24(i64 %i) {
+  %p1 = getelementptr inbounds i32* getelementptr inbounds ([1000 x i32]* @X, i64 0, i64 0), i64 %i
+  %cmp = icmp eq i32* %p1, getelementptr inbounds ([1000 x i32]* @X, i64 1, i64 0)
+  ret i1 %cmp
+}
+
