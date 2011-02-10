@@ -478,13 +478,18 @@ IRForTarget::RewriteObjCConstString (llvm::Module &llvm_module,
         m_CFStringCreateWithBytes = ConstantExpr::getIntToPtr(CFSCWB_addr_int, CFSCWB_ptr_ty);
     }
     
-    ConstantArray *string_array = dyn_cast<ConstantArray>(cstr->getInitializer());
+    ConstantArray *string_array;
+    
+    if (cstr)
+        string_array = dyn_cast<ConstantArray>(cstr->getInitializer());
+    else
+        string_array = NULL;
                         
     SmallVector <Value*, 5> CFSCWB_arguments;
     
     Constant *alloc_arg         = Constant::getNullValue(i8_ptr_ty);
-    Constant *bytes_arg         = ConstantExpr::getBitCast(cstr, i8_ptr_ty);
-    Constant *numBytes_arg      = ConstantInt::get(intptr_ty, string_array->getType()->getNumElements(), false);
+    Constant *bytes_arg         = cstr ? ConstantExpr::getBitCast(cstr, i8_ptr_ty) : Constant::getNullValue(i8_ptr_ty);
+    Constant *numBytes_arg      = ConstantInt::get(intptr_ty, cstr ? string_array->getType()->getNumElements() - 1 : 0, false);
     Constant *encoding_arg      = ConstantInt::get(i32_ty, 0x0600, false); /* 0x0600 is kCFStringEncodingASCII */
     Constant *isExternal_arg    = ConstantInt::get(i8_ty, 0x0, false); /* 0x0 is false */
     
@@ -664,9 +669,8 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
                 
                 return false;
             }
-            
-            ConstantArray *cstr_array = dyn_cast<ConstantArray>(cstr_global->getInitializer());
-            
+                        
+            /*
             if (!cstr_array)
             {
                 if (log)
@@ -688,9 +692,20 @@ IRForTarget::RewriteObjCConstStrings(Module &llvm_module, Function &llvm_functio
                 
                 return false;
             }
+            */
+            
+            ConstantArray *cstr_array = dyn_cast<ConstantArray>(cstr_global->getInitializer());
             
             if (log)
-                log->Printf("Found NSString constant %s, which contains \"%s\"", vi->first(), cstr_array->getAsString().c_str());
+            {
+                if (cstr_array)
+                    log->Printf("Found NSString constant %s, which contains \"%s\"", vi->first(), cstr_array->getAsString().c_str());
+                else
+                    log->Printf("Found NSString constant %s, which contains \"\"", vi->first());
+            }
+            
+            if (!cstr_array)
+                cstr_global = NULL;
             
             if (!RewriteObjCConstString(llvm_module, nsstring_global, cstr_global, FirstEntryInstruction))
             {                
