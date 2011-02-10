@@ -2369,7 +2369,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
     // variable is within the block, create a normal DeclRefExpr.
 
     QualType type = VD->getType();
-    ExprValueKind valueKind;
+    ExprValueKind valueKind = 0;
 
     switch (D->getKind()) {
     // Ignore all the non-ValueDecl kinds.
