@@ -347,6 +347,23 @@ Debugger::GetTargetList ()
     return m_target_list;
 }
 
+InputReaderSP 
+Debugger::GetCurrentInputReader ()
+{
+    InputReaderSP reader_sp;
+    
+    if (!m_input_readers.empty())
+    {
+        // Clear any finished readers from the stack
+        while (CheckIfTopInputReaderIsDone()) ;
+        
+        if (!m_input_readers.empty())
+            reader_sp = m_input_readers.top();
+    }
+    
+    return reader_sp;
+}
+
 void
 Debugger::DispatchInputCallback (void *baton, const void *bytes, size_t bytes_len)
 {
@@ -371,14 +388,12 @@ Debugger::DispatchInputInterrupt ()
 {
     m_input_reader_data.clear();
     
-    if (!m_input_readers.empty())
+    InputReaderSP reader_sp (GetCurrentInputReader ());
+    if (reader_sp)
     {
-        while (CheckIfTopInputReaderIsDone ()) ;
+        reader_sp->Notify (eInputReaderInterrupt);
         
-        InputReaderSP reader_sp(m_input_readers.top());
-        if (reader_sp)
-            reader_sp->Notify (eInputReaderInterrupt);
-
+        // If notifying the reader of the interrupt finished the reader, we should pop it off the stack.
         while (CheckIfTopInputReaderIsDone ()) ;
     }
 }
@@ -388,14 +403,12 @@ Debugger::DispatchInputEndOfFile ()
 {
     m_input_reader_data.clear();
     
-    if (!m_input_readers.empty())
+    InputReaderSP reader_sp (GetCurrentInputReader ());
+    if (reader_sp)
     {
-        while (CheckIfTopInputReaderIsDone ()) ;
+        reader_sp->Notify (eInputReaderEndOfFile);
         
-        InputReaderSP reader_sp(m_input_readers.top());
-        if (reader_sp)
-            reader_sp->Notify (eInputReaderEndOfFile);
-
+        // If notifying the reader of the end-of-file finished the reader, we should pop it off the stack.
         while (CheckIfTopInputReaderIsDone ()) ;
     }
 }
@@ -405,11 +418,10 @@ Debugger::CleanUpInputReaders ()
 {
     m_input_reader_data.clear();
     
+    // The bottom input reader should be the main debugger input reader.  We do not want to close that one here.
     while (m_input_readers.size() > 1)
     {
-        while (CheckIfTopInputReaderIsDone ()) ;
-        
-        InputReaderSP reader_sp (m_input_readers.top());
+        InputReaderSP reader_sp (GetCurrentInputReader ());
         if (reader_sp)
         {
             reader_sp->Notify (eInputReaderEndOfFile);
@@ -429,12 +441,8 @@ Debugger::WriteToDefaultReader (const char *bytes, size_t bytes_len)
 
     while (!m_input_readers.empty() && !m_input_reader_data.empty())
     {
-        while (CheckIfTopInputReaderIsDone ())
-            /* Do nothing. */;
-        
         // Get the input reader from the top of the stack
-        InputReaderSP reader_sp(m_input_readers.top());
-        
+        InputReaderSP reader_sp (GetCurrentInputReader ());
         if (!reader_sp)
             break;
 
@@ -452,7 +460,7 @@ Debugger::WriteToDefaultReader (const char *bytes, size_t bytes_len)
         }
     }
     
-    // Flush out any input readers that are donesvn
+    // Flush out any input readers that are done.
     while (CheckIfTopInputReaderIsDone ())
         /* Do nothing. */;
 
@@ -463,13 +471,13 @@ Debugger::PushInputReader (const InputReaderSP& reader_sp)
 {
     if (!reader_sp)
         return;
-    if (!m_input_readers.empty())
-    {
-        // Deactivate the old top reader
-        InputReaderSP top_reader_sp (m_input_readers.top());
-        if (top_reader_sp)
-            top_reader_sp->Notify (eInputReaderDeactivate);
-    }
+ 
+    // Deactivate the old top reader
+    InputReaderSP top_reader_sp (GetCurrentInputReader ());
+    
+    if (top_reader_sp)
+        top_reader_sp->Notify (eInputReaderDeactivate);
+
     m_input_readers.push (reader_sp);
     reader_sp->Notify (eInputReaderActivate);
     ActivateInputReader (reader_sp);
@@ -484,6 +492,7 @@ Debugger::PopInputReader (const lldb::InputReaderSP& pop_reader_sp)
     // read on the stack referesh its prompt and if there is one...
     if (!m_input_readers.empty())
     {
+        // Cannot call GetCurrentInputReader here, as that would cause an infinite loop.
         InputReaderSP reader_sp(m_input_readers.top());
         
         if (!pop_reader_sp || pop_reader_sp.get() == reader_sp.get())
@@ -513,6 +522,7 @@ Debugger::CheckIfTopInputReaderIsDone ()
     bool result = false;
     if (!m_input_readers.empty())
     {
+        // Cannot call GetCurrentInputReader here, as that would cause an infinite loop.
         InputReaderSP reader_sp(m_input_readers.top());
         
         if (reader_sp && reader_sp->IsDone())

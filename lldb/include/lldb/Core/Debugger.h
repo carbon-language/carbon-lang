@@ -394,6 +394,9 @@ protected:
     static void
     DispatchInputCallback (void *baton, const void *bytes, size_t bytes_len);
 
+    lldb::InputReaderSP
+    GetCurrentInputReader ();
+    
     void
     ActivateInputReader (const lldb::InputReaderSP &reader_sp);
 
