@@ -214,6 +214,16 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
     const uint32_t event_type = event_sp->GetType();
 
     Mutex::Locker event_types_locker(m_listeners_mutex);
+    
+    Listener *hijacking_listener = NULL;
+    if (!m_hijacking_listeners.empty())
+    {
+        assert (!m_hijacking_masks.empty());
+        hijacking_listener = m_hijacking_listeners.back();
+        if ((event_type & m_hijacking_masks.back()) == 0)
+            hijacking_listener = NULL;
+    }
+
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EVENTS));
     if (log)
     {
@@ -224,12 +234,11 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
                      m_broadcaster_name.AsCString(""),
                      event_description.GetData(),
                      unique,
-                     m_hijacking_listeners.back());
+                     hijacking_listener);
     }
 
-    if (m_hijacking_listeners.size() > 0 && m_hijacking_masks.back() & event_type)
+    if (hijacking_listener)
     {
-        Listener *hijacking_listener = m_hijacking_listeners.back();
         // FIXME: REMOVE THIS EXTRA LOGGING
         LogSP log_process(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
         if (log_process)
