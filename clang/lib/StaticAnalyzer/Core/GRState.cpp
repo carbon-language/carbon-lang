@@ -293,6 +293,7 @@ void GRStateManager::recycleUnusedStates() {
       continue;
     StateSet.RemoveNode(state);
     freeStates.push_back(state);
+    state->~GRState();
   }
   recentlyAllocatedStates.clear();
 }
