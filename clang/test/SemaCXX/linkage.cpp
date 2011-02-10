@@ -53,5 +53,16 @@ namespace test2 {
   }
 }
 
+namespace test3 {
+  namespace { struct A {}; }
+
+  // CHECK: define internal void @_ZN5test34testENS_12_GLOBAL__N_11AE(
+  void test(A a) {}
+  void force() { test(A()); }
+
+  // CHECK: define void @test3(
+  extern "C" void test3(A a) {}
+}
+
 // CHECK: define linkonce_odr i8* @_ZN5test21A1BILj0EE3fooEv(
 // CHECK: define linkonce_odr i8* @_ZN5test11A3fooILj0EEEPvv(

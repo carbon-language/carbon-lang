@@ -5859,10 +5859,6 @@ GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) {
   GVALinkage External = GVA_StrongExternal;
 
   Linkage L = FD->getLinkage();
-  if (L == ExternalLinkage && getLangOptions().CPlusPlus &&
-      FD->getType()->getLinkage() == UniqueExternalLinkage)
-    L = UniqueExternalLinkage;
-  
   switch (L) {
   case NoLinkage:
   case InternalLinkage:

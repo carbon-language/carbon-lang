@@ -392,6 +392,14 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       }
     }
 
+    // In C++, then if the type of the function uses a type with
+    // unique-external linkage, it's not legally usable from outside
+    // this translation unit.  However, we should use the C linkage
+    // rules instead for extern "C" declarations.
+    if (Context.getLangOptions().CPlusPlus && !Function->isExternC() &&
+        Function->getType()->getLinkage() == UniqueExternalLinkage)
+      return LinkageInfo::uniqueExternal();
+
     if (FunctionTemplateSpecializationInfo *SpecInfo
                                = Function->getTemplateSpecializationInfo()) {
       LV.merge(getLVForDecl(SpecInfo->getTemplate(),
@@ -512,6 +520,11 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     return LinkageInfo::uniqueExternal();
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+    // If the type of the function uses a type with unique-external
+    // linkage, it's not legally usable from outside this translation unit.
+    if (MD->getType()->getLinkage() == UniqueExternalLinkage)
+      return LinkageInfo::uniqueExternal();
+
     TemplateSpecializationKind TSK = TSK_Undeclared;
 
     // If this is a method template specialization, use the linkage for

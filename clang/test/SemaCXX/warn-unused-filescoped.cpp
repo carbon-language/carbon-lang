@@ -66,7 +66,15 @@ namespace PR8841 {
   template <typename T> void template_test(X<T> x) {
     (void)(x == x);
   }
-  void test(X<int> x) {
+  void test() {
+    X<int> x;
     template_test(x);
   }
+}
+
+namespace test4 {
+  namespace { struct A {}; }
+
+  void test(A a); // expected-warning {{unused function}}
+  extern "C" void test4(A a);
 }
