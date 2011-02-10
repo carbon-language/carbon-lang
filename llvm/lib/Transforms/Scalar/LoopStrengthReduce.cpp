@@ -3824,6 +3824,9 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<DominatorTree>();
   AU.addRequired<ScalarEvolution>();
   AU.addPreserved<ScalarEvolution>();
+  // Requiring LoopSimplify a second time here prevents IVUsers from running
+  // twice, since LoopSimplify was invalidated by running ScalarEvolution.
+  AU.addRequiredID(LoopSimplifyID);
   AU.addRequired<IVUsers>();
   AU.addPreserved<IVUsers>();
 }
