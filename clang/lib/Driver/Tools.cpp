@@ -3233,11 +3233,12 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("--no-as-needed");
     }
 
-    if (Args.hasArg(options::OPT_pthread))
+    if (Args.hasArg(options::OPT_pthread)) {
       if (Args.hasArg(options::OPT_pg))
         CmdArgs.push_back("-lpthread_p");
       else
         CmdArgs.push_back("-lpthread");
+    }
 
     if (Args.hasArg(options::OPT_pg)) {
       if (Args.hasArg(options::OPT_shared))
