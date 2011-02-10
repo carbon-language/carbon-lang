@@ -9,9 +9,9 @@
 // This file reports various statistics about analyzer visitation.
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/PathSensitive/CheckerVisitor.h"
-#include "clang/StaticAnalyzer/PathSensitive/ExplodedGraph.h"
-#include "clang/StaticAnalyzer/BugReporter/BugReporter.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 
 // FIXME: Restructure checker registration.
 #include "ExperimentalChecks.h"

@@ -16,7 +16,7 @@
 #define LLVM_CLANG_GR_BUGREPORTER
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/ImmutableSet.h"

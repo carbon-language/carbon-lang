@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/CFG.h"
-#include "clang/StaticAnalyzer/PathSensitive/GRStateTrait.h"
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/PathSensitive/SubEngine.h"
-#include "clang/StaticAnalyzer/PathSensitive/TransferFuncs.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;

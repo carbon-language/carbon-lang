@@ -17,9 +17,9 @@
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/StaticAnalyzer/PathSensitive/SVals.h"
-#include "clang/StaticAnalyzer/PathSensitive/BasicValueFactory.h"
-#include "clang/StaticAnalyzer/PathSensitive/MemRegion.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/BasicValueFactory.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 
 namespace clang {
 

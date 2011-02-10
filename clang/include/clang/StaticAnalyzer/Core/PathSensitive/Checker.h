@@ -16,7 +16,7 @@
 #define LLVM_CLANG_GR_CHECKER
 
 #include "clang/Analysis/Support/SaveAndRestore.h"
-#include "clang/StaticAnalyzer/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 
 //===----------------------------------------------------------------------===//
 // Checker interface.

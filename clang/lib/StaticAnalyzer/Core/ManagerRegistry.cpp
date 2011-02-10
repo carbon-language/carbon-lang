@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/ManagerRegistry.h"
+#include "clang/StaticAnalyzer/Core/ManagerRegistry.h"
 
 using namespace clang;
 using namespace ento;

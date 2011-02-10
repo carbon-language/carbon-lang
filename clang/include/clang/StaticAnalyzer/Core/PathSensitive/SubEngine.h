@@ -14,7 +14,7 @@
 #define LLVM_CLANG_GR_SUBENGINE_H
 
 #include "clang/Analysis/ProgramPoint.h"
-#include "clang/StaticAnalyzer/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 
 namespace clang {
 

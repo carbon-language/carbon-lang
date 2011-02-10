@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_GR_SIMPLE_CONSTRAINT_MANAGER_H
 #define LLVM_CLANG_GR_SIMPLE_CONSTRAINT_MANAGER_H
 
-#include "clang/StaticAnalyzer/PathSensitive/ConstraintManager.h"
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ConstraintManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 
 namespace clang {
 

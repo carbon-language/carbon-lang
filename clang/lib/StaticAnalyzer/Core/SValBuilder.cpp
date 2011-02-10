@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/PathSensitive/MemRegion.h"
-#include "clang/StaticAnalyzer/PathSensitive/SVals.h"
-#include "clang/StaticAnalyzer/PathSensitive/SValBuilder.h"
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/PathSensitive/BasicValueFactory.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/BasicValueFactory.h"
 
 using namespace clang;
 using namespace ento;

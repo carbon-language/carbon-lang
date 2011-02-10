@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
-#include "clang/StaticAnalyzer/BugReporter/PathDiagnostic.h"
-#include "clang/StaticAnalyzer/BugReporter/BugReporter.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclObjC.h"

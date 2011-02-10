@@ -15,9 +15,9 @@
 #ifndef LLVM_CLANG_GR_TRANSFERFUNCS
 #define LLVM_CLANG_GR_TRANSFERFUNCS
 
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/PathSensitive/SVals.h"
-#include "clang/StaticAnalyzer/PathSensitive/ObjCMessage.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include <vector>
 
 namespace clang {

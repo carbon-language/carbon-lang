@@ -16,11 +16,11 @@
 // FIXME: Restructure checker registration.
 #include "InternalChecks.h"
 
-#include "clang/StaticAnalyzer/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/PathSensitive/AnalysisManager.h"
-#include "clang/StaticAnalyzer/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/PathSensitive/ExprEngineBuilders.h"
-#include "clang/StaticAnalyzer/PathSensitive/Checker.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngineBuilders.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Checker.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"

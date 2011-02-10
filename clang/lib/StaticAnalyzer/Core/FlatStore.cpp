@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableIntervalMap.h"
 #include "llvm/Support/ErrorHandling.h"
 

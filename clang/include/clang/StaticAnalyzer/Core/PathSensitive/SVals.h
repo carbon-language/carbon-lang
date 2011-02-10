@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_GR_RVALUE_H
 #define LLVM_CLANG_GR_RVALUE_H
 
-#include "clang/StaticAnalyzer/PathSensitive/SymbolManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/ImmutableList.h"
 

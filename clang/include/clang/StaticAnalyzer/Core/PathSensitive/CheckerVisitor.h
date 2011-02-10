@@ -13,7 +13,7 @@
 
 #ifndef LLVM_CLANG_GR_CHECKERVISITOR
 #define LLVM_CLANG_GR_CHECKERVISITOR
-#include "clang/StaticAnalyzer/PathSensitive/Checker.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Checker.h"
 
 namespace clang {
 
@@ -47,7 +47,7 @@ public:
 case Stmt::NAME ## Class:\
 static_cast<ImplClass*>(this)->PreVisit ## NAME(C,static_cast<const NAME*>(S));\
 break;
-#include "clang/StaticAnalyzer/PathSensitive/CheckerVisitor.def"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.def"
     }
   }
   
@@ -62,7 +62,7 @@ case Stmt::NAME ## Class:\
 static_cast<ImplClass*>(this)->\
 PostVisit ## NAME(C,static_cast<const NAME*>(S));\
 break;
-#include "clang/StaticAnalyzer/PathSensitive/CheckerVisitor.def"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.def"
     }
   }
 
@@ -93,7 +93,7 @@ void PreVisit ## NAME(CheckerContext &C, const NAME* S) {\
 void PostVisit ## NAME(CheckerContext &C, const NAME* S) {\
   static_cast<ImplClass*>(this)->PostVisit ## FALLBACK(C, S);\
 }
-#include "clang/StaticAnalyzer/PathSensitive/CheckerVisitor.def"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.def"
 };
 
 } // end GR namespace

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/AnalysisConsumer.h"
+#include "clang/StaticAnalyzer/Core/AnalysisConsumer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -21,13 +21,13 @@
 #include "clang/Analysis/Analyses/UninitializedValues.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
-#include "clang/StaticAnalyzer/ManagerRegistry.h"
-#include "clang/StaticAnalyzer/BugReporter/PathDiagnostic.h"
-#include "clang/StaticAnalyzer/PathSensitive/AnalysisManager.h"
-#include "clang/StaticAnalyzer/BugReporter/BugReporter.h"
-#include "clang/StaticAnalyzer/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/PathSensitive/TransferFuncs.h"
-#include "clang/StaticAnalyzer/PathDiagnosticClients.h"
+#include "clang/StaticAnalyzer/Core/ManagerRegistry.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
+#include "clang/StaticAnalyzer/Core/PathDiagnosticClients.h"
 
 // FIXME: Restructure checker registration.
 #include "ExperimentalChecks.h"

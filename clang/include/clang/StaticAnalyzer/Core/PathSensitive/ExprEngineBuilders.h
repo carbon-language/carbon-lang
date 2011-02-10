@@ -14,7 +14,7 @@
 
 #ifndef LLVM_CLANG_GR_EXPRENGINE_BUILDERS
 #define LLVM_CLANG_GR_EXPRENGINE_BUILDERS
-#include "clang/StaticAnalyzer/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 
 namespace clang {

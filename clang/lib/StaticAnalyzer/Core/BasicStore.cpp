@@ -15,7 +15,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/AnalysisContext.h"
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;

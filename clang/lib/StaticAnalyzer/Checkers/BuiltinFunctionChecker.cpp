@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InternalChecks.h"
-#include "clang/StaticAnalyzer/PathSensitive/Checker.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Checker.h"
 #include "clang/Basic/Builtins.h"
 
 using namespace clang;

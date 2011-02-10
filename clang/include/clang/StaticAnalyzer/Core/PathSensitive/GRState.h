@@ -14,10 +14,10 @@
 #ifndef LLVM_CLANG_GR_VALUESTATE_H
 #define LLVM_CLANG_GR_VALUESTATE_H
 
-#include "clang/StaticAnalyzer/PathSensitive/ConstraintManager.h"
-#include "clang/StaticAnalyzer/PathSensitive/Environment.h"
-#include "clang/StaticAnalyzer/PathSensitive/Store.h"
-#include "clang/StaticAnalyzer/PathSensitive/SValBuilder.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ConstraintManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Environment.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"

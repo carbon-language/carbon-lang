@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_GR_ENVIRONMENT_H
 #define LLVM_CLANG_GR_ENVIRONMENT_H
 
-#include "clang/StaticAnalyzer/PathSensitive/Store.h"
-#include "clang/StaticAnalyzer/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/ADT/ImmutableMap.h"
 
 namespace clang {

@@ -15,8 +15,8 @@
 #ifndef LLVM_CLANG_STATICANALYZER_PATHSENSITIVE_OBJCMESSAGE
 #define LLVM_CLANG_STATICANALYZER_PATHSENSITIVE_OBJCMESSAGE
 
-#include "clang/StaticAnalyzer/PathSensitive/SVals.h"
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 #include "clang/AST/ExprObjC.h"
 
 namespace clang {

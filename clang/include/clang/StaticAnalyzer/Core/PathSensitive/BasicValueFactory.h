@@ -16,7 +16,7 @@
 #ifndef LLVM_CLANG_GR_BASICVALUEFACTORY_H
 #define LLVM_CLANG_GR_BASICVALUEFACTORY_H
 
-#include "clang/StaticAnalyzer/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/APSInt.h"

@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_GR_WORKLIST
 #define LLVM_CLANG_GR_WORKLIST
 
-#include "clang/StaticAnalyzer/PathSensitive/BlockCounter.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h"
 #include <cstddef>
 
 namespace clang {

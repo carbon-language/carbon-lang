@@ -31,7 +31,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/Support/Casting.h"
 #include "clang/Analysis/Support/BumpVector.h"
-#include "clang/StaticAnalyzer/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 
 namespace clang {
 

@@ -16,8 +16,8 @@
 #define LLVM_CLANG_GR_ANALYSISMANAGER_H
 
 #include "clang/Analysis/AnalysisContext.h"
-#include "clang/StaticAnalyzer/BugReporter/BugReporter.h"
-#include "clang/StaticAnalyzer/BugReporter/PathDiagnostic.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 
 namespace clang {
 

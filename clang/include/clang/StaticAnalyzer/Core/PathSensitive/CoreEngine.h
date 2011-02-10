@@ -16,10 +16,10 @@
 #define LLVM_CLANG_GR_COREENGINE
 
 #include "clang/AST/Expr.h"
-#include "clang/StaticAnalyzer/PathSensitive/ExplodedGraph.h"
-#include "clang/StaticAnalyzer/PathSensitive/WorkList.h"
-#include "clang/StaticAnalyzer/PathSensitive/BlockCounter.h"
-#include "clang/StaticAnalyzer/PathSensitive/SubEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/WorkList.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h"
 #include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
