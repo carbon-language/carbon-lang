@@ -91,7 +91,7 @@ public:
   /// @{
 
   bool shouldMangleDeclName(const NamedDecl *D);
-  void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
+  void mangleName(const NamedDecl *D, llvm::raw_svector_ostream &);
   void mangleThunk(const CXXMethodDecl *MD,
                    const ThunkInfo &Thunk,
                    llvm::SmallVectorImpl<char> &);
@@ -110,9 +110,9 @@ public:
   void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);
   void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &);
   void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                     llvm::SmallVectorImpl<char> &);
+                     llvm::raw_svector_ostream &);
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                     llvm::SmallVectorImpl<char> &);
+                     llvm::raw_svector_ostream &);
 
   void mangleItaniumGuardVariable(const VarDecl *D,
                                   llvm::SmallVectorImpl<char> &);
@@ -136,7 +136,7 @@ public:
 /// CXXNameMangler - Manage the mangling of a single name.
 class CXXNameMangler {
   ItaniumMangleContext &Context;
-  llvm::raw_svector_ostream Out;
+  llvm::raw_svector_ostream &Out;
 
   const CXXMethodDecl *Structor;
   unsigned StructorType;
@@ -149,15 +149,15 @@ class CXXNameMangler {
   ASTContext &getASTContext() const { return Context.getASTContext(); }
 
 public:
-  CXXNameMangler(ItaniumMangleContext &C, llvm::SmallVectorImpl<char> &Res)
-    : Context(C), Out(Res), Structor(0), StructorType(0), SeqID(0) { }
-  CXXNameMangler(ItaniumMangleContext &C, llvm::SmallVectorImpl<char> &Res,
+  CXXNameMangler(ItaniumMangleContext &C, llvm::raw_svector_ostream &Out_)
+    : Context(C), Out(Out_), Structor(0), StructorType(0), SeqID(0) { }
+  CXXNameMangler(ItaniumMangleContext &C, llvm::raw_svector_ostream &Out_,
                  const CXXConstructorDecl *D, CXXCtorType Type)
-    : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type),
+    : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(Type),
     SeqID(0) { }
-  CXXNameMangler(ItaniumMangleContext &C, llvm::SmallVectorImpl<char> &Res,
+  CXXNameMangler(ItaniumMangleContext &C, llvm::raw_svector_ostream &Out_,
                  const CXXDestructorDecl *D, CXXDtorType Type)
-    : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type),
+    : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(Type),
     SeqID(0) { }
 
 #if MANGLE_CHECKER
@@ -909,7 +909,9 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
   if (const BlockDecl *Block = dyn_cast<BlockDecl>(DC)) {
     manglePrefix(DC->getParent(), NoFunction);    
     llvm::SmallString<64> Name;
-    Context.mangleBlock(Block, Name);
+    llvm::raw_svector_ostream NameStream(Name);
+    Context.mangleBlock(Block, NameStream);
+    NameStream.flush();
     Out << Name.size() << Name;
     return;
   }
@@ -2535,7 +2537,7 @@ void CXXNameMangler::addSubstitution(uintptr_t Ptr) {
 /// emit the identifier of the declaration (\c D->getIdentifier()) as its
 /// name.
 void ItaniumMangleContext::mangleName(const NamedDecl *D,
-                                      llvm::SmallVectorImpl<char> &Res) {
+                                      llvm::raw_svector_ostream &Out) {
   assert((isa<FunctionDecl>(D) || isa<VarDecl>(D)) &&
           "Invalid mangleName() call, argument is not a variable or function!");
   assert(!isa<CXXConstructorDecl>(D) && !isa<CXXDestructorDecl>(D) &&
@@ -2545,21 +2547,21 @@ void ItaniumMangleContext::mangleName(const NamedDecl *D,
                                  getASTContext().getSourceManager(),
                                  "Mangling declaration");
 
-  CXXNameMangler Mangler(*this, Res);
+  CXXNameMangler Mangler(*this, Out);
   return Mangler.mangle(D);
 }
 
 void ItaniumMangleContext::mangleCXXCtor(const CXXConstructorDecl *D,
                                          CXXCtorType Type,
-                                         llvm::SmallVectorImpl<char> &Res) {
-  CXXNameMangler Mangler(*this, Res, D, Type);
+                                         llvm::raw_svector_ostream &Out) {
+  CXXNameMangler Mangler(*this, Out, D, Type);
   Mangler.mangle(D);
 }
 
 void ItaniumMangleContext::mangleCXXDtor(const CXXDestructorDecl *D,
                                          CXXDtorType Type,
-                                         llvm::SmallVectorImpl<char> &Res) {
-  CXXNameMangler Mangler(*this, Res, D, Type);
+                                         llvm::raw_svector_ostream &Out) {
+  CXXNameMangler Mangler(*this, Out, D, Type);
   Mangler.mangle(D);
 }
 
@@ -2575,8 +2577,8 @@ void ItaniumMangleContext::mangleThunk(const CXXMethodDecl *MD,
   
   assert(!isa<CXXDestructorDecl>(MD) &&
          "Use mangleCXXDtor for destructor decls!");
-  
-  CXXNameMangler Mangler(*this, Res);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZT";
   if (!Thunk.Return.isEmpty())
     Mangler.getStream() << 'c';
@@ -2600,7 +2602,8 @@ ItaniumMangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD,
   //  <special-name> ::= T <call-offset> <base encoding>
   //                      # base is the nominal target function of thunk
   
-  CXXNameMangler Mangler(*this, Res, DD, Type);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out, DD, Type);
   Mangler.getStream() << "_ZT";
 
   // Mangle the 'this' pointer adjustment.
@@ -2616,7 +2619,8 @@ void ItaniumMangleContext::mangleItaniumGuardVariable(const VarDecl *D,
                                              llvm::SmallVectorImpl<char> &Res) {
   //  <special-name> ::= GV <object name>       # Guard variable for one-time
   //                                            # initialization
-  CXXNameMangler Mangler(*this, Res);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZGV";
   Mangler.mangleName(D);
 }
@@ -2625,7 +2629,8 @@ void ItaniumMangleContext::mangleReferenceTemporary(const VarDecl *D,
                                              llvm::SmallVectorImpl<char> &Res) {
   // We match the GCC mangling here.
   //  <special-name> ::= GR <object name>
-  CXXNameMangler Mangler(*this, Res);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZGR";
   Mangler.mangleName(D);
 }
@@ -2633,7 +2638,8 @@ void ItaniumMangleContext::mangleReferenceTemporary(const VarDecl *D,
 void ItaniumMangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
                                            llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TV <type>  # virtual table
-  CXXNameMangler Mangler(*this, Res);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZTV";
   Mangler.mangleNameOrStandardSubstitution(RD);
 }
@@ -2641,7 +2647,8 @@ void ItaniumMangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
 void ItaniumMangleContext::mangleCXXVTT(const CXXRecordDecl *RD,
                                         llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TT <type>  # VTT structure
-  CXXNameMangler Mangler(*this, Res);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZTT";
   Mangler.mangleNameOrStandardSubstitution(RD);
 }
@@ -2651,7 +2658,8 @@ void ItaniumMangleContext::mangleCXXCtorVTable(const CXXRecordDecl *RD,
                                                const CXXRecordDecl *Type,
                                              llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TC <type> <offset number> _ <base type>
-  CXXNameMangler Mangler(*this, Res);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZTC";
   Mangler.mangleNameOrStandardSubstitution(RD);
   Mangler.getStream() << Offset;
@@ -2663,7 +2671,8 @@ void ItaniumMangleContext::mangleCXXRTTI(QualType Ty,
                                          llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TI <type>  # typeinfo structure
   assert(!Ty.hasQualifiers() && "RTTI info cannot have top-level qualifiers");
-  CXXNameMangler Mangler(*this, Res);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZTI";
   Mangler.mangleType(Ty);
 }
@@ -2671,7 +2680,8 @@ void ItaniumMangleContext::mangleCXXRTTI(QualType Ty,
 void ItaniumMangleContext::mangleCXXRTTIName(QualType Ty,
                                              llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TS <type>  # typeinfo name (null terminated byte string)
-  CXXNameMangler Mangler(*this, Res);
+  llvm::raw_svector_ostream Out(Res);
+  CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZTS";
   Mangler.mangleType(Ty);
 }

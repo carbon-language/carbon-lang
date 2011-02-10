@@ -37,6 +37,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -263,16 +264,18 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   }
   
   llvm::SmallString<256> Buffer;
+  llvm::raw_svector_ostream Out(Buffer);
   if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
-    getCXXABI().getMangleContext().mangleCXXCtor(D, GD.getCtorType(), Buffer);
+    getCXXABI().getMangleContext().mangleCXXCtor(D, GD.getCtorType(), Out);
   else if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
-    getCXXABI().getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Buffer);
+    getCXXABI().getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Out);
   else if (const BlockDecl *BD = dyn_cast<BlockDecl>(ND))
-    getCXXABI().getMangleContext().mangleBlock(BD, Buffer);
+    getCXXABI().getMangleContext().mangleBlock(BD, Out);
   else
-    getCXXABI().getMangleContext().mangleName(ND, Buffer);
+    getCXXABI().getMangleContext().mangleName(ND, Out);
 
   // Allocate space for the mangled name.
+  Out.flush();
   size_t Length = Buffer.size();
   char *Name = MangledNamesAllocator.Allocate<char>(Length);
   std::copy(Buffer.begin(), Buffer.end(), Name);
@@ -286,14 +289,15 @@ void CodeGenModule::getBlockMangledName(GlobalDecl GD, MangleBuffer &Buffer,
                                         const BlockDecl *BD) {
   MangleContext &MangleCtx = getCXXABI().getMangleContext();
   const Decl *D = GD.getDecl();
+  llvm::raw_svector_ostream Out(Buffer.getBuffer());
   if (D == 0)
-    MangleCtx.mangleGlobalBlock(BD, Buffer.getBuffer());
+    MangleCtx.mangleGlobalBlock(BD, Out);
   else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
-    MangleCtx.mangleCtorBlock(CD, GD.getCtorType(), BD, Buffer.getBuffer());
+    MangleCtx.mangleCtorBlock(CD, GD.getCtorType(), BD, Out);
   else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
-    MangleCtx.mangleDtorBlock(DD, GD.getDtorType(), BD, Buffer.getBuffer());
+    MangleCtx.mangleDtorBlock(DD, GD.getDtorType(), BD, Out);
   else
-    MangleCtx.mangleBlock(cast<DeclContext>(D), BD, Buffer.getBuffer());
+    MangleCtx.mangleBlock(cast<DeclContext>(D), BD, Out);
 }
 
 llvm::GlobalValue *CodeGenModule::GetGlobalValue(llvm::StringRef Name) {
