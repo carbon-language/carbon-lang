@@ -39,3 +39,16 @@ struct S4 : public B4 {
   void foo(float);
   void foo();
 };
+
+namespace PR9182 {
+struct Base {
+  virtual void foo(int);
+};
+
+void Base::foo(int) { }
+
+struct Derived : public Base {
+  virtual void foo(int);   
+  void foo(int, int);   
+};
+}
