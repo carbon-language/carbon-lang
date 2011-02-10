@@ -25,6 +25,12 @@ static inline uint32_t Align(uint32_t val, uint32_t alignment)
     return alignment * (val / alignment);
 }
 
+//----------------------------------------------------------------------
+//
+// ITSession implementation
+//
+//----------------------------------------------------------------------
+
 // A8.6.50
 // Valid return values are {1, 2, 3, 4}, with 0 signifying an error condition.
 static unsigned short CountITSize(unsigned ITMask) {
@@ -118,6 +124,12 @@ uint32_t ITSession::GetCond()
 #define ARMV4T_ABOVE  (ARMv4T|ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
 #define ARMV5_ABOVE   (ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
 #define ARMV6T2_ABOVE (ARMv6T2|ARMv7|ARMv8)
+
+//----------------------------------------------------------------------
+//
+// EmulateInstructionARM implementation
+//
+//----------------------------------------------------------------------
 
 void
 EmulateInstructionARM::Initialize ()
