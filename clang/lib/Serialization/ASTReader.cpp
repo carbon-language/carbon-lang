@@ -40,12 +40,14 @@
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <iterator>
 #include <cstdio>
 #include <sys/stat.h>
+
 using namespace clang;
 using namespace clang::serialization;
 
@@ -1244,7 +1246,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
       return Failure;
     }
 
-    if (Record.size() < 10) {
+    if (Record.size() < 6) {
       Error("source location entry is incorrect");
       return Failure;
     }
@@ -1269,15 +1271,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     if (Record[3])
       const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(FID).getFile())
         .setHasLineDirectives();
-
-    // Reconstruct header-search information for this file.
-    HeaderFileInfo HFI;
-    HFI.isImport = Record[6];
-    HFI.DirInfo = Record[7];
-    HFI.NumIncludes = Record[8];
-    HFI.ControllingMacroID = Record[9];
-    if (Listener)
-      Listener->ReadHeaderFileInfo(HFI, File->getUID());
+    
     break;
   }
 
@@ -1571,6 +1565,99 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(PerFileData &F) {
   Error("invalid offset in preprocessor detail block");
   return 0;
 }
+
+namespace {
+  /// \brief Trait class used to search the on-disk hash table containing all of
+  /// the header search information.
+  ///
+  /// The on-disk hash table contains a mapping from each header path to 
+  /// information about that header (how many times it has been included, its
+  /// controlling macro, etc.). Note that we actually hash based on the 
+  /// filename, and support "deep" comparisons of file names based on current
+  /// inode numbers, so that the search can cope with non-normalized path names
+  /// and symlinks.
+  class HeaderFileInfoTrait {
+    const char *SearchPath;
+    struct stat SearchPathStatBuf;
+    llvm::Optional<int> SearchPathStatResult;
+    
+    int StatSimpleCache(const char *Path, struct stat *StatBuf) {
+      if (Path == SearchPath) {
+        if (!SearchPathStatResult)
+          SearchPathStatResult = stat(Path, &SearchPathStatBuf);
+        
+        *StatBuf = SearchPathStatBuf;
+        return *SearchPathStatResult;
+      }
+      
+      return stat(Path, StatBuf);
+    }
+    
+  public:
+    typedef const char *external_key_type;
+    typedef const char *internal_key_type;
+    
+    typedef HeaderFileInfo data_type;
+    
+    HeaderFileInfoTrait(const char *SearchPath = 0) : SearchPath(SearchPath) { }
+    
+    static unsigned ComputeHash(const char *path) {
+      return llvm::HashString(llvm::sys::path::filename(path));
+    }
+    
+    static internal_key_type GetInternalKey(const char *path) { return path; }
+    
+    bool EqualKey(internal_key_type a, internal_key_type b) {
+      if (strcmp(a, b) == 0)
+        return true;
+      
+      if (llvm::sys::path::filename(a) != llvm::sys::path::filename(b))
+        return false;
+      
+      // The file names match, but the path names don't. stat() the files to
+      // see if they are the same.      
+      struct stat StatBufA, StatBufB;
+      if (StatSimpleCache(a, &StatBufA) || StatSimpleCache(b, &StatBufB))
+        return false;
+      
+      return StatBufA.st_ino == StatBufB.st_ino;
+    }
+    
+    static std::pair<unsigned, unsigned>
+    ReadKeyDataLength(const unsigned char*& d) {
+      unsigned KeyLen = (unsigned) clang::io::ReadUnalignedLE16(d);
+      unsigned DataLen = (unsigned) *d++;
+      return std::make_pair(KeyLen + 1, DataLen);
+    }
+    
+    static internal_key_type ReadKey(const unsigned char *d, unsigned) {
+      return (const char *)d;
+    }
+    
+    static data_type ReadData(const internal_key_type, const unsigned char *d,
+                              unsigned DataLen) {
+      const unsigned char *End = d + DataLen;
+      using namespace clang::io;
+      HeaderFileInfo HFI;
+      unsigned Flags = *d++;
+      HFI.isImport = (Flags >> 3) & 0x01;
+      HFI.DirInfo = (Flags >> 1) & 0x03;
+      HFI.Resolved = Flags & 0x01;
+      HFI.NumIncludes = ReadUnalignedLE16(d);
+      HFI.ControllingMacroID = ReadUnalignedLE32(d);
+      assert(End == d && "Wrong data length in HeaderFileInfo deserialization");
+      (void)End;
+      
+      // This HeaderFileInfo was externally loaded.
+      HFI.External = true;
+      return HFI;
+    }
+  };
+}
+
+/// \brief The on-disk hash table used for the global method pool.
+typedef OnDiskChainedHashTable<HeaderFileInfoTrait>
+  HeaderFileInfoLookupTable;
 
 void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, PerFileData &F,
                                      uint64_t Offset) {
@@ -2152,10 +2239,23 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         PragmaDiagMappings.insert(PragmaDiagMappings.end(),
                                 Record.begin(), Record.end());
       break;
-
+        
     case CUDA_SPECIAL_DECL_REFS:
       // Later tables overwrite earlier ones.
       CUDASpecialDeclRefs.swap(Record);
+      break;
+
+    case HEADER_SEARCH_TABLE:
+      F.HeaderFileInfoTableData = BlobStart;
+      F.LocalNumHeaderFileInfos = Record[1];
+      if (Record[0]) {
+        F.HeaderFileInfoTable
+          = HeaderFileInfoLookupTable::Create(
+                   (const unsigned char *)F.HeaderFileInfoTableData + Record[0],
+                   (const unsigned char *)F.HeaderFileInfoTableData);
+        if (PP)
+          PP->getHeaderSearchInfo().SetExternalSource(this);
+      }
       break;
     }
     First = false;
@@ -2400,7 +2500,8 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   PP->getIdentifierTable().setExternalIdentifierLookup(this);
   PP->getHeaderSearchInfo().SetExternalLookup(this);
   PP->setExternalSource(this);
-
+  PP->getHeaderSearchInfo().SetExternalSource(this);
+  
   // If we have an update block for the TU waiting, we have to add it before
   // deserializing the decl.
   DeclContextOffsetsMap::iterator DCU = DeclContextOffsets.find(0);
@@ -2707,6 +2808,31 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(uint64_t Offset) {
   SavedStreamPosition SavedPosition(F->PreprocessorDetailCursor);  
   F->PreprocessorDetailCursor.JumpToBit(Offset);
   return LoadPreprocessedEntity(*F);
+}
+
+HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
+  HeaderFileInfoTrait Trait(FE->getName());
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    PerFileData &F = *Chain[I];
+    HeaderFileInfoLookupTable *Table
+      = static_cast<HeaderFileInfoLookupTable *>(F.HeaderFileInfoTable);
+    if (!Table)
+      continue;
+    
+    // Look in the on-disk hash table for an entry for this file name.
+    HeaderFileInfoLookupTable::iterator Pos = Table->find(FE->getName(), 
+                                                          &Trait);
+    if (Pos == Table->end())
+      continue;
+
+    HeaderFileInfo HFI = *Pos;
+    if (Listener)
+      Listener->ReadHeaderFileInfo(HFI, FE->getUID());
+
+    return HFI;
+  }
+  
+  return HeaderFileInfo();
 }
 
 void ASTReader::ReadPragmaDiagnosticMappings(Diagnostic &Diag) {
@@ -4765,7 +4891,10 @@ ASTReader::PerFileData::PerFileData(ASTFileType Ty)
   : Type(Ty), SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0), LocalSLocSize(0),
     LocalNumIdentifiers(0), IdentifierOffsets(0), IdentifierTableData(0),
     IdentifierLookupTable(0), LocalNumMacroDefinitions(0),
-    MacroDefinitionOffsets(0), LocalNumSelectors(0), SelectorOffsets(0),
+    MacroDefinitionOffsets(0), 
+    LocalNumHeaderFileInfos(0), HeaderFileInfoTableData(0),
+    HeaderFileInfoTable(0),
+    LocalNumSelectors(0), SelectorOffsets(0),
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
     LocalNumTypes(0), TypeOffsets(0), StatCache(0),
@@ -4774,6 +4903,7 @@ ASTReader::PerFileData::PerFileData(ASTFileType Ty)
 
 ASTReader::PerFileData::~PerFileData() {
   delete static_cast<ASTIdentifierLookupTable *>(IdentifierLookupTable);
+  delete static_cast<HeaderFileInfoLookupTable *>(HeaderFileInfoTable);
   delete static_cast<ASTSelectorLookupTable *>(SelectorLookupTable);
 }
 

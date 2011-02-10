@@ -42,6 +42,7 @@ class ASTSerializationListener;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXCtorInitializer;
+class HeaderSearch;
 class LabelStmt;
 class MacroDefinition;
 class MemorizeStatCalls;
@@ -312,6 +313,7 @@ private:
                                const Preprocessor &PP,
                                const char* isysroot);
   void WritePreprocessor(const Preprocessor &PP);
+  void WriteHeaderSearch(HeaderSearch &HS, const char* isysroot);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WritePragmaDiagnosticMappings(const Diagnostic &Diag);
   void WriteType(QualType T);

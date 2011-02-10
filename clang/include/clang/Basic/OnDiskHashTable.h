@@ -320,7 +320,7 @@ public:
         InfoPtr->ReadKey((const unsigned char* const) Items, L.first);
 
       // If the key doesn't match just skip reading the value.
-      if (!Info::EqualKey(X, iKey)) {
+      if (!InfoPtr->EqualKey(X, iKey)) {
         Items += item_len;
         continue;
       }

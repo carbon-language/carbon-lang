@@ -33,12 +33,15 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
   return ControllingMacro;
 }
 
+ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
+
 HeaderSearch::HeaderSearch(FileManager &FM)
     : FileMgr(FM), FrameworkMap(64) {
   SystemDirIdx = 0;
   NoCurDirSearch = false;
 
   ExternalLookup = 0;
+  ExternalSource = 0;
   NumIncluded = 0;
   NumMultiIncludeFileOptzn = 0;
   NumFrameworkLookups = NumSubFrameworkLookups = 0;
@@ -387,12 +390,19 @@ LookupSubframeworkHeader(llvm::StringRef Filename,
 HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   if (FE->getUID() >= FileInfo.size())
     FileInfo.resize(FE->getUID()+1);
-  return FileInfo[FE->getUID()];
+  
+  HeaderFileInfo &HFI = FileInfo[FE->getUID()];
+  if (ExternalSource && !HFI.Resolved) {
+    HFI = ExternalSource->GetHeaderFileInfo(FE);
+    HFI.Resolved = true;
+  }
+  return HFI;
 }
 
 void HeaderSearch::setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID) {
   if (UID >= FileInfo.size())
     FileInfo.resize(UID+1);
+  HFI.Resolved = true;
   FileInfo[UID] = HFI;
 }
 

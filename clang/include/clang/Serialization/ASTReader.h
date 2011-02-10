@@ -20,6 +20,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -165,10 +166,12 @@ private:
 class ASTReader
   : public ExternalPreprocessorSource,
     public ExternalPreprocessingRecordSource,
+    public ExternalHeaderFileInfoSource,
     public ExternalSemaSource,
     public IdentifierInfoLookup,
     public ExternalIdentifierLookup,
-    public ExternalSLocEntrySource {
+    public ExternalSLocEntrySource 
+{
 public:
   enum ASTReadResult { Success, Failure, IgnorePCH };
   /// \brief Types of AST files.
@@ -261,7 +264,7 @@ private:
     /// stored.
     const uint32_t *IdentifierOffsets;
 
-    /// \brief Actual data for the on-disk hash table.
+    /// \brief Actual data for the on-disk hash table of identifiers.
     ///
     /// This pointer points into a memory buffer, where the on-disk hash
     /// table for identifiers actually lives.
@@ -296,6 +299,22 @@ private:
     /// record in the AST file.
     const uint32_t *MacroDefinitionOffsets;
 
+    // === Header search information ===
+    
+    /// \brief The number of local HeaderFileInfo structures.
+    unsigned LocalNumHeaderFileInfos;
+    
+    /// \brief Actual data for the on-disk hash table of header file 
+    /// information.
+    ///
+    /// This pointer points into a memory buffer, where the on-disk hash
+    /// table for header file information actually lives.
+    const char *HeaderFileInfoTableData;
+
+    /// \brief The on-disk hash table that contains information about each of
+    /// the header files.
+    void *HeaderFileInfoTable;
+    
     // === Selectors ===
 
     /// \brief The number of selectors new to this file.
@@ -880,6 +899,9 @@ public:
 
   /// \brief Read the preprocessed entity at the given offset.
   virtual PreprocessedEntity *ReadPreprocessedEntity(uint64_t Offset);
+
+  /// \brief Read the header file information for the given file entry.
+  virtual HeaderFileInfo GetHeaderFileInfo(const FileEntry *FE);
 
   void ReadPragmaDiagnosticMappings(Diagnostic &Diag);
 

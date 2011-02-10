@@ -493,6 +493,25 @@ bool FileManager::getStatValue(const char *Path, struct stat &StatBuf,
                                   StatCache.get());
 }
 
+void FileManager::GetUniqueIDMapping(
+                   llvm::SmallVectorImpl<const FileEntry *> &UIDToFiles) const {
+  UIDToFiles.clear();
+  UIDToFiles.resize(NextFileUID);
+  
+  // Map file entries
+  for (llvm::StringMap<FileEntry*, llvm::BumpPtrAllocator>::const_iterator
+         FE = FileEntries.begin(), FEEnd = FileEntries.end();
+       FE != FEEnd; ++FE)
+    if (FE->getValue() && FE->getValue() != NON_EXISTENT_FILE)
+      UIDToFiles[FE->getValue()->getUID()] = FE->getValue();
+  
+  // Map virtual file entries
+  for (llvm::SmallVector<FileEntry*, 4>::const_iterator 
+         VFE = VirtualFileEntries.begin(), VFEEnd = VirtualFileEntries.end();
+       VFE != VFEEnd; ++VFE)
+    if (*VFE && *VFE != NON_EXISTENT_FILE)
+      UIDToFiles[(*VFE)->getUID()] = *VFE;
+}
 
 
 void FileManager::PrintStats() const {

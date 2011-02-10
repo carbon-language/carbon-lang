@@ -45,6 +45,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include <cstdio>
+#include <string.h>
 using namespace clang;
 using namespace clang::serialization;
 
@@ -739,7 +740,8 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(DECL_UPDATES);
   RECORD(CXX_BASE_SPECIFIER_OFFSETS);
   RECORD(DIAG_PRAGMA_MAPPINGS);
-         
+  RECORD(HEADER_SEARCH_TABLE);
+  
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
   RECORD(SM_SLOC_FILE_ENTRY);
@@ -1146,11 +1148,6 @@ static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &Stream) {
   // FileEntry fields.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 12)); // Size
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 32)); // Modification time
-  // HeaderFileInfo fields.
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // isImport
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // DirInfo
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // NumIncludes
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // ControllingMacro
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
   return Stream.EmitAbbrev(Abbrev);
 }
@@ -1191,6 +1188,135 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &Stream) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // End location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Token length
   return Stream.EmitAbbrev(Abbrev);
+}
+
+namespace {
+  // Trait used for the on-disk hash table of header search information.
+  class HeaderFileInfoTrait {
+    ASTWriter &Writer;
+    HeaderSearch &HS;
+    
+  public:
+    HeaderFileInfoTrait(ASTWriter &Writer, HeaderSearch &HS) 
+      : Writer(Writer), HS(HS) { }
+    
+    typedef const char *key_type;
+    typedef key_type key_type_ref;
+    
+    typedef HeaderFileInfo data_type;
+    typedef const data_type &data_type_ref;
+    
+    static unsigned ComputeHash(const char *path) {
+      // The hash is based only on the filename portion of the key, so that the
+      // reader can match based on filenames when symlinking or excess path
+      // elements ("foo/../", "../") change the form of the name. However,
+      // complete path is still the key.
+      return llvm::HashString(llvm::sys::path::filename(path));
+    }
+    
+    std::pair<unsigned,unsigned>
+    EmitKeyDataLength(llvm::raw_ostream& Out, const char *path,
+                      data_type_ref Data) {
+      unsigned StrLen = strlen(path);
+      clang::io::Emit16(Out, StrLen);
+      unsigned DataLen = 1 + 2 + 4;
+      clang::io::Emit8(Out, DataLen);
+      return std::make_pair(StrLen + 1, DataLen);
+    }
+    
+    void EmitKey(llvm::raw_ostream& Out, const char *path, unsigned KeyLen) {
+      Out.write(path, KeyLen);
+    }
+    
+    void EmitData(llvm::raw_ostream &Out, key_type_ref,
+                  data_type_ref Data, unsigned DataLen) {
+      using namespace clang::io;
+      uint64_t Start = Out.tell(); (void)Start;
+      
+      unsigned char Flags = (Data.isImport << 3)
+                          | (Data.DirInfo << 1)
+                          | Data.Resolved;
+      Emit8(Out, (uint8_t)Flags);
+      Emit16(Out, (uint16_t) Data.NumIncludes);
+      
+      if (!Data.ControllingMacro)
+        Emit32(Out, (uint32_t)Data.ControllingMacroID);
+      else
+        Emit32(Out, (uint32_t)Writer.getIdentifierRef(Data.ControllingMacro));
+      assert(Out.tell() - Start == DataLen && "Wrong data length");
+    }
+  };
+} // end anonymous namespace
+
+/// \brief Write the header search block for the list of files that 
+///
+/// \param HS The header search structure to save.
+///
+/// \param Chain Whether we're creating a chained AST file.
+void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, const char* isysroot) {
+  llvm::SmallVector<const FileEntry *, 16> FilesByUID;
+  HS.getFileMgr().GetUniqueIDMapping(FilesByUID);
+  
+  if (FilesByUID.size() > HS.header_file_size())
+    FilesByUID.resize(HS.header_file_size());
+  
+  HeaderFileInfoTrait GeneratorTrait(*this, HS);
+  OnDiskChainedHashTableGenerator<HeaderFileInfoTrait> Generator;  
+  llvm::SmallVector<const char *, 4> SavedStrings;
+  unsigned NumHeaderSearchEntries = 0;
+  for (unsigned UID = 0, LastUID = FilesByUID.size(); UID != LastUID; ++UID) {
+    const FileEntry *File = FilesByUID[UID];
+    if (!File)
+      continue;
+
+    const HeaderFileInfo &HFI = HS.header_file_begin()[UID];
+    if (HFI.External && Chain)
+      continue;
+
+    // Turn the file name into an absolute path, if it isn't already.
+    const char *Filename = File->getName();
+    Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
+      
+    // If we performed any translation on the file name at all, we need to
+    // save this string, since the generator will refer to it later.
+    if (Filename != File->getName()) {
+      Filename = strdup(Filename);
+      SavedStrings.push_back(Filename);
+    }
+    
+    Generator.insert(Filename, HFI, GeneratorTrait);
+    ++NumHeaderSearchEntries;
+  }
+  
+  // Create the on-disk hash table in a buffer.
+  llvm::SmallString<4096> TableData;
+  uint32_t BucketOffset;
+  {
+    llvm::raw_svector_ostream Out(TableData);
+    // Make sure that no bucket is at offset 0
+    clang::io::Emit32(Out, 0);
+    BucketOffset = Generator.Emit(Out, GeneratorTrait);
+  }
+
+  // Create a blob abbreviation
+  using namespace llvm;
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(HEADER_SEARCH_TABLE));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned TableAbbrev = Stream.EmitAbbrev(Abbrev);
+  
+  // Write the stat cache
+  RecordData Record;
+  Record.push_back(HEADER_SEARCH_TABLE);
+  Record.push_back(BucketOffset);
+  Record.push_back(NumHeaderSearchEntries);
+  Stream.EmitRecordWithBlob(TableAbbrev, Record, TableData.str());
+  
+  // Free all of the strings we had to duplicate.
+  for (unsigned I = 0, N = SavedStrings.size(); I != N; ++I)
+    free((void*)SavedStrings[I]);
 }
 
 /// \brief Writes the block containing the serialized form of the
@@ -1294,16 +1420,6 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         Record.push_back(Content->Entry->getSize());
         Record.push_back(Content->Entry->getModificationTime());
 
-        // Emit header-search information associated with this file.
-        HeaderFileInfo HFI;
-        HeaderSearch &HS = PP.getHeaderSearchInfo();
-        if (Content->Entry->getUID() < HS.header_file_size())
-          HFI = HS.header_file_begin()[Content->Entry->getUID()];
-        Record.push_back(HFI.isImport);
-        Record.push_back(HFI.DirInfo);
-        Record.push_back(HFI.NumIncludes);
-        AddIdentifierRef(HFI.ControllingMacro, Record);
-
         // Turn the file name into an absolute path, if it isn't already.
         const char *Filename = Content->Entry->getName();
         llvm::SmallString<128> FilePath(Filename);
@@ -1312,11 +1428,6 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
 
         Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
         Stream.EmitRecordWithBlob(SLocFileAbbrv, Record, Filename);
-
-        // FIXME: For now, preload all file source locations, so that
-        // we get the appropriate File entries in the reader. This is
-        // a temporary measure.
-        PreloadSLocs.push_back(BaseSLocID + SLocEntryOffsets.size());
       } else {
         // The source location entry is a buffer. The blob associated
         // with this entry contains the contents of the buffer.
@@ -2596,6 +2707,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.ExitBlock();
 
   WritePreprocessor(PP);
+  WriteHeaderSearch(PP.getHeaderSearchInfo(), isysroot);
   WriteSelectors(SemaRef);
   WriteReferencedSelectorsPool(SemaRef);
   WriteIdentifierTable(PP);

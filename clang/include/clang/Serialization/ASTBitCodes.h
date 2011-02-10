@@ -350,7 +350,10 @@ namespace clang {
       DIAG_PRAGMA_MAPPINGS = 38,
 
       /// \brief Record code for special CUDA declarations.
-      CUDA_SPECIAL_DECL_REFS = 39
+      CUDA_SPECIAL_DECL_REFS = 39,
+      
+      /// \brief Record code for header search information.
+      HEADER_SEARCH_TABLE = 40
     };
 
     /// \brief Record types used within a source manager block.
