@@ -1982,6 +1982,109 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
     return true;
 }
                   
+// Load Register (immediate) calculates an address from a base register value and
+// an immediate offset, loads a word from memory, and writes to a register.
+// LDR (immediate, Thumb)
+bool
+EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations(); NullCheckIfThumbEE(15);
+        offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+        address = if index then offset_addr else R[n];
+        data = MemU[address,4];
+        if wback then R[n] = offset_addr;
+        if t == 15 then
+            if address<1:0> == '00' then LoadWritePC(data); else UNPREDICTABLE;
+        elsif UnalignedSupport() || address<1:0> = '00' then
+            R[t] = data;
+        else R[t] = bits(32) UNKNOWN; // Can only apply before ARMv7
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rt; // the destination register
+        uint32_t Rn; // the base register
+        uint32_t imm32; // the immediate offset used to form the address
+        addr_t offset_addr; // the offset address
+        addr_t address; // the calculated address
+        uint32_t data; // the literal data value from memory load
+        bool add, index, wback;
+        switch (encoding) {
+        case eEncodingT1:
+            Rt = Bits32(opcode, 5, 3);
+            Rn = Bits32(opcode, 2, 0);
+            imm32 = Bits32(opcode, 10, 6) << 2; // imm32 = ZeroExtend(imm5:'00', 32);
+            // index = TRUE; add = TRUE; wback = FALSE
+            add = true;
+            index = true;
+            wback = false;
+            break;
+        default:
+            return false;
+        }
+        uint32_t base = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+        if (!success)
+            return false;
+        if (add)
+            offset_addr = base + imm32;
+        else
+            offset_addr = base - imm32;
+
+        address = (index ? offset_addr : base);
+
+        if (wback)
+        {
+            EmulateInstruction::Context ctx = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindDWARF,
+                                                dwarf_r0 + Rn,
+                                                (int32_t) (offset_addr - base)};
+            if (!WriteRegisterUnsigned (ctx, eRegisterKindDWARF, dwarf_r0 + Rn, offset_addr))
+                return false;
+        }
+
+        // Prepare to write to the Rt register.
+        EmulateInstruction::Context context = {EmulateInstruction::eContextImmediate,
+                                               0,
+                                               0,
+                                               0};
+
+        // Read memory from the address.
+        data = ReadMemoryUnsigned(context, address, 4, 0, &success);
+        if (!success)
+            return false;    
+        context.arg0 = data;
+
+        if (Rt == 15)
+        {
+            if (Bits32(address, 1, 0) == 0)
+            {
+                if (!LoadWritePC(context, data))
+                    return false;
+            }
+            else
+                return false;
+        }
+        else if (UnalignedSupport() || Bits32(address, 1, 0) == 0)
+        {
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rt, data))
+                return false;
+        }
+        else
+            return false;
+    }
+    return true;
+}
+
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -2140,7 +2243,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         { 0xfffff800, 0x0000c800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
         { 0xffd02000, 0xe8900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c>.w <Rn>{!} <registers>" },
-        { 0xffd00000, 0xe9100000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" }
+        { 0xffd00000, 0xe9100000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
+        { 0xfffff800, 0x00006800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#imm}]"}
         
     };
 
@@ -2429,6 +2533,15 @@ EmulateInstructionARM::SelectInstrSet (Mode arm_or_thumb)
         break;
     }
     return true;
+}
+
+// This function returns TRUE if the processor currently provides support for
+// unaligned memory accesses, or FALSE otherwise. This is always TRUE in ARMv7,
+// controllable by the SCTLR.U bit in ARMv6, and always FALSE before ARMv6.
+bool
+EmulateInstructionARM::UnalignedSupport()
+{
+    return (ArchVersion() >= ARMv7);
 }
 
 bool

@@ -166,6 +166,9 @@ public:
     bool
     SelectInstrSet(Mode arm_or_thumb);
 
+    bool
+    UnalignedSupport();
+
 protected:
 
     // Typedef for the callback function used during the emulation.
@@ -266,6 +269,9 @@ protected:
     
     bool
     EmulateLDMIB (ARMEncoding encoding);
+
+    bool
+    EmulateLDRRtRnImm (ARMEncoding encoding);
 
     uint32_t m_arm_isa;
     Mode m_inst_mode;
