@@ -664,32 +664,35 @@ public:
 
   /// getAlignOf constant expr - computes the alignment of a type in a target
   /// independent way (Note: the return type is an i64).
-  static Constant *getAlignOf(const Type* Ty);
+  static Constant *getAlignOf(const Type *Ty);
   
   /// getSizeOf constant expr - computes the (alloc) size of a type (in
   /// address-units, not bits) in a target independent way (Note: the return
   /// type is an i64).
   ///
-  static Constant *getSizeOf(const Type* Ty);
+  static Constant *getSizeOf(const Type *Ty);
 
   /// getOffsetOf constant expr - computes the offset of a struct field in a 
   /// target independent way (Note: the return type is an i64).
   ///
-  static Constant *getOffsetOf(const StructType* STy, unsigned FieldNo);
+  static Constant *getOffsetOf(const StructType *STy, unsigned FieldNo);
 
   /// getOffsetOf constant expr - This is a generalized form of getOffsetOf,
   /// which supports any aggregate type, and any Constant index.
   ///
-  static Constant *getOffsetOf(const Type* Ty, Constant *FieldNo);
+  static Constant *getOffsetOf(const Type *Ty, Constant *FieldNo);
   
-  static Constant *getNeg(Constant *C);
+  static Constant *getNeg(Constant *C, bool HasNUW = false, bool HasNSW =false);
   static Constant *getFNeg(Constant *C);
   static Constant *getNot(Constant *C);
-  static Constant *getAdd(Constant *C1, Constant *C2);
+  static Constant *getAdd(Constant *C1, Constant *C2,
+                          bool HasNUW = false, bool HasNSW = false);
   static Constant *getFAdd(Constant *C1, Constant *C2);
-  static Constant *getSub(Constant *C1, Constant *C2);
+  static Constant *getSub(Constant *C1, Constant *C2,
+                          bool HasNUW = false, bool HasNSW = false);
   static Constant *getFSub(Constant *C1, Constant *C2);
-  static Constant *getMul(Constant *C1, Constant *C2);
+  static Constant *getMul(Constant *C1, Constant *C2,
+                          bool HasNUW = false, bool HasNSW = false);
   static Constant *getFMul(Constant *C1, Constant *C2);
   static Constant *getUDiv(Constant *C1, Constant *C2, bool isExact = false);
   static Constant *getSDiv(Constant *C1, Constant *C2, bool isExact = false);
@@ -700,7 +703,8 @@ public:
   static Constant *getAnd(Constant *C1, Constant *C2);
   static Constant *getOr(Constant *C1, Constant *C2);
   static Constant *getXor(Constant *C1, Constant *C2);
-  static Constant *getShl(Constant *C1, Constant *C2);
+  static Constant *getShl(Constant *C1, Constant *C2,
+                          bool HasNUW = false, bool HasNSW = false);
   static Constant *getLShr(Constant *C1, Constant *C2, bool isExact = false);
   static Constant *getAShr(Constant *C1, Constant *C2, bool isExact = false);
   static Constant *getTrunc   (Constant *C, const Type *Ty);
@@ -716,16 +720,32 @@ public:
   static Constant *getIntToPtr(Constant *C, const Type *Ty);
   static Constant *getBitCast (Constant *C, const Type *Ty);
 
-  static Constant *getNSWNeg(Constant *C);
-  static Constant *getNUWNeg(Constant *C);
-  static Constant *getNSWAdd(Constant *C1, Constant *C2);
-  static Constant *getNUWAdd(Constant *C1, Constant *C2);
-  static Constant *getNSWSub(Constant *C1, Constant *C2);
-  static Constant *getNUWSub(Constant *C1, Constant *C2);
-  static Constant *getNSWMul(Constant *C1, Constant *C2);
-  static Constant *getNUWMul(Constant *C1, Constant *C2);
-  static Constant *getNSWShl(Constant *C1, Constant *C2);
-  static Constant *getNUWShl(Constant *C1, Constant *C2);
+  static Constant *getNSWNeg(Constant *C) { return getNeg(C, false, true); }
+  static Constant *getNUWNeg(Constant *C) { return getNeg(C, true, false); }
+  static Constant *getNSWAdd(Constant *C1, Constant *C2) {
+    return getAdd(C1, C2, false, true);
+  }
+  static Constant *getNUWAdd(Constant *C1, Constant *C2) {
+    return getAdd(C1, C2, true, false);
+  }
+  static Constant *getNSWSub(Constant *C1, Constant *C2) {
+    return getSub(C1, C2, false, true);
+  }
+  static Constant *getNUWSub(Constant *C1, Constant *C2) {
+    return getSub(C1, C2, true, false);
+  }
+  static Constant *getNSWMul(Constant *C1, Constant *C2) {
+    return getMul(C1, C2, false, true);
+  }
+  static Constant *getNUWMul(Constant *C1, Constant *C2) {
+    return getMul(C1, C2, true, false);
+  }
+  static Constant *getNSWShl(Constant *C1, Constant *C2) {
+    return getShl(C1, C2, false, true);
+  }
+  static Constant *getNUWShl(Constant *C1, Constant *C2) {
+    return getShl(C1, C2, true, false);
+  }
   static Constant *getExactSDiv(Constant *C1, Constant *C2) {
     return getSDiv(C1, C2, true);
   }

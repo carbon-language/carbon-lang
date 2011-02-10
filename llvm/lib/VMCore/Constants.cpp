@@ -639,58 +639,6 @@ Constant *ConstantVector::get(Constant *const* Vals, unsigned NumVals) {
   return get(std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
-Constant *ConstantExpr::getNSWNeg(Constant *C) {
-  assert(C->getType()->isIntOrIntVectorTy() &&
-         "Cannot NEG a nonintegral value!");
-  return getNSWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
-}
-
-Constant *ConstantExpr::getNUWNeg(Constant *C) {
-  assert(C->getType()->isIntOrIntVectorTy() &&
-         "Cannot NEG a nonintegral value!");
-  return getNUWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
-}
-
-Constant *ConstantExpr::getNSWAdd(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::Add, C1, C2,
-               OverflowingBinaryOperator::NoSignedWrap);
-}
-
-Constant *ConstantExpr::getNUWAdd(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::Add, C1, C2,
-               OverflowingBinaryOperator::NoUnsignedWrap);
-}
-
-Constant *ConstantExpr::getNSWSub(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::Sub, C1, C2,
-               OverflowingBinaryOperator::NoSignedWrap);
-}
-
-Constant *ConstantExpr::getNUWSub(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::Sub, C1, C2,
-               OverflowingBinaryOperator::NoUnsignedWrap);
-}
-
-Constant *ConstantExpr::getNSWMul(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::Mul, C1, C2,
-               OverflowingBinaryOperator::NoSignedWrap);
-}
-
-Constant *ConstantExpr::getNUWMul(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::Mul, C1, C2,
-               OverflowingBinaryOperator::NoUnsignedWrap);
-}
-
-Constant *ConstantExpr::getNSWShl(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::Shl, C1, C2,
-               OverflowingBinaryOperator::NoSignedWrap);
-}
-
-Constant *ConstantExpr::getNUWShl(Constant *C1, Constant *C2) {
-  return getTy(C1->getType(), Instruction::Shl, C1, C2,
-               OverflowingBinaryOperator::NoUnsignedWrap);
-}
-
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
 // can't be inline because we don't want to #include Instruction.h into
 // Constant.h
@@ -1823,20 +1771,17 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
   return getExtractValueTy(ReqTy, Agg, IdxList, NumIdx);
 }
 
-Constant *ConstantExpr::getNeg(Constant *C) {
+Constant *ConstantExpr::getNeg(Constant *C, bool HasNUW, bool HasNSW) {
   assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NEG a nonintegral value!");
-  return get(Instruction::Sub,
-             ConstantFP::getZeroValueForNegation(C->getType()),
-             C);
+  return getSub(ConstantFP::getZeroValueForNegation(C->getType()),
+                C, HasNUW, HasNSW);
 }
 
 Constant *ConstantExpr::getFNeg(Constant *C) {
   assert(C->getType()->isFPOrFPVectorTy() &&
          "Cannot FNEG a non-floating-point value!");
-  return get(Instruction::FSub,
-             ConstantFP::getZeroValueForNegation(C->getType()),
-             C);
+  return getFSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
 }
 
 Constant *ConstantExpr::getNot(Constant *C) {
@@ -1845,24 +1790,33 @@ Constant *ConstantExpr::getNot(Constant *C) {
   return get(Instruction::Xor, C, Constant::getAllOnesValue(C->getType()));
 }
 
-Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
-  return get(Instruction::Add, C1, C2);
+Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2,
+                               bool HasNUW, bool HasNSW) {
+  unsigned Flags = (HasNUW ? OverflowingBinaryOperator::NoUnsignedWrap : 0) |
+                   (HasNSW ? OverflowingBinaryOperator::NoSignedWrap   : 0);
+  return get(Instruction::Add, C1, C2, Flags);
 }
 
 Constant *ConstantExpr::getFAdd(Constant *C1, Constant *C2) {
   return get(Instruction::FAdd, C1, C2);
 }
 
-Constant *ConstantExpr::getSub(Constant *C1, Constant *C2) {
-  return get(Instruction::Sub, C1, C2);
+Constant *ConstantExpr::getSub(Constant *C1, Constant *C2,
+                               bool HasNUW, bool HasNSW) {
+  unsigned Flags = (HasNUW ? OverflowingBinaryOperator::NoUnsignedWrap : 0) |
+                   (HasNSW ? OverflowingBinaryOperator::NoSignedWrap   : 0);
+  return get(Instruction::Sub, C1, C2, Flags);
 }
 
 Constant *ConstantExpr::getFSub(Constant *C1, Constant *C2) {
   return get(Instruction::FSub, C1, C2);
 }
 
-Constant *ConstantExpr::getMul(Constant *C1, Constant *C2) {
-  return get(Instruction::Mul, C1, C2);
+Constant *ConstantExpr::getMul(Constant *C1, Constant *C2,
+                               bool HasNUW, bool HasNSW) {
+  unsigned Flags = (HasNUW ? OverflowingBinaryOperator::NoUnsignedWrap : 0) |
+                   (HasNSW ? OverflowingBinaryOperator::NoSignedWrap   : 0);
+  return get(Instruction::Mul, C1, C2, Flags);
 }
 
 Constant *ConstantExpr::getFMul(Constant *C1, Constant *C2) {
@@ -1907,8 +1861,11 @@ Constant *ConstantExpr::getXor(Constant *C1, Constant *C2) {
   return get(Instruction::Xor, C1, C2);
 }
 
-Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
-  return get(Instruction::Shl, C1, C2);
+Constant *ConstantExpr::getShl(Constant *C1, Constant *C2,
+                               bool HasNUW, bool HasNSW) {
+  unsigned Flags = (HasNUW ? OverflowingBinaryOperator::NoUnsignedWrap : 0) |
+                   (HasNSW ? OverflowingBinaryOperator::NoSignedWrap   : 0);
+  return get(Instruction::Shl, C1, C2, Flags);
 }
 
 Constant *ConstantExpr::getLShr(Constant *C1, Constant *C2, bool isExact) {

@@ -46,38 +46,23 @@ public:
   // Binary Operators
   //===--------------------------------------------------------------------===//
 
-  Constant *CreateAdd(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getAdd(LHS, RHS));
-  }
-  Constant *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getNSWAdd(LHS, RHS));
-  }
-  Constant *CreateNUWAdd(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getNUWAdd(LHS, RHS));
+  Constant *CreateAdd(Constant *LHS, Constant *RHS,
+                      bool HasNUW = false, bool HasNSW = false) const {
+    return Fold(ConstantExpr::getAdd(LHS, RHS, HasNUW, HasNSW));
   }
   Constant *CreateFAdd(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFAdd(LHS, RHS));
   }
-  Constant *CreateSub(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getSub(LHS, RHS));
-  }
-  Constant *CreateNSWSub(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getNSWSub(LHS, RHS));
-  }
-  Constant *CreateNUWSub(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getNUWSub(LHS, RHS));
+  Constant *CreateSub(Constant *LHS, Constant *RHS,
+                      bool HasNUW = false, bool HasNSW = false) const {
+    return Fold(ConstantExpr::getSub(LHS, RHS, HasNUW, HasNSW));
   }
   Constant *CreateFSub(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFSub(LHS, RHS));
   }
-  Constant *CreateMul(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getMul(LHS, RHS));
-  }
-  Constant *CreateNSWMul(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getNSWMul(LHS, RHS));
-  }
-  Constant *CreateNUWMul(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getNUWMul(LHS, RHS));
+  Constant *CreateMul(Constant *LHS, Constant *RHS,
+                      bool HasNUW = false, bool HasNSW = false) const {
+    return Fold(ConstantExpr::getMul(LHS, RHS, HasNUW, HasNSW));
   }
   Constant *CreateFMul(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFMul(LHS, RHS));
@@ -100,8 +85,9 @@ public:
   Constant *CreateFRem(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFRem(LHS, RHS));
   }
-  Constant *CreateShl(Constant *LHS, Constant *RHS) const {
-    return Fold(ConstantExpr::getShl(LHS, RHS));
+  Constant *CreateShl(Constant *LHS, Constant *RHS,
+                      bool HasNUW = false, bool HasNSW = false) const {
+    return Fold(ConstantExpr::getShl(LHS, RHS, HasNUW, HasNSW));
   }
   Constant *CreateLShr(Constant *LHS, Constant *RHS, bool isExact = false)const{
     return Fold(ConstantExpr::getLShr(LHS, RHS, isExact));
@@ -128,14 +114,9 @@ public:
   // Unary Operators
   //===--------------------------------------------------------------------===//
 
-  Constant *CreateNeg(Constant *C) const {
-    return Fold(ConstantExpr::getNeg(C));
-  }
-  Constant *CreateNSWNeg(Constant *C) const {
-    return Fold(ConstantExpr::getNSWNeg(C));
-  }
-  Constant *CreateNUWNeg(Constant *C) const {
-    return Fold(ConstantExpr::getNUWNeg(C));
+  Constant *CreateNeg(Constant *C,
+                      bool HasNUW = false, bool HasNSW = false) const {
+    return Fold(ConstantExpr::getNeg(C, HasNUW, HasNSW));
   }
   Constant *CreateFNeg(Constant *C) const {
     return Fold(ConstantExpr::getFNeg(C));
