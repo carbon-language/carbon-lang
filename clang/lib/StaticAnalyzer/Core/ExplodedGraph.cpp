@@ -123,6 +123,8 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
       freeNodes = new NodeList();
     getNodeList(freeNodes)->push_back(node);
     Nodes.RemoveNode(node);
+    --NumNodes;
+    node->~ExplodedNode();
   }
   
   nl.clear();

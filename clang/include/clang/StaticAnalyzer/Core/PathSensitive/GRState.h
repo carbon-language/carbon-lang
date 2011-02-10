@@ -79,11 +79,13 @@ private:
 
   friend class GRStateManager;
   friend class ExplodedGraph;
+  friend class ExplodedNode;
 
-  llvm::PointerIntPair<GRStateManager *, 1, bool> stateMgr;
+  GRStateManager *stateMgr;
   Environment Env;           // Maps a Stmt to its current SVal.
   Store St;                  // Maps a location to its current value.
   GenericDataMap   GDM;      // Custom data stored by a client of this class.
+  unsigned refCount;
 
   /// makeWithStore - Return a GRState with the same values as the current
   ///  state with the exception of using the specified Store.
@@ -94,33 +96,27 @@ public:
   /// This ctor is used when creating the first GRState object.
   GRState(GRStateManager *mgr, const Environment& env,
           Store st, GenericDataMap gdm)
-    : stateMgr(mgr, false),
+    : stateMgr(mgr),
       Env(env),
       St(st),
-      GDM(gdm) {}
+      GDM(gdm),
+      refCount(0) {}
 
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
   GRState(const GRState& RHS)
     : llvm::FoldingSetNode(),
-      stateMgr(RHS.stateMgr.getPointer(), false),
+      stateMgr(RHS.stateMgr),
       Env(RHS.Env),
       St(RHS.St),
-      GDM(RHS.GDM) {}
+      GDM(RHS.GDM),
+      refCount(0) {}
 
   /// Return the GRStateManager associated with this state.
-  GRStateManager &getStateManager() const {
-    return *stateMgr.getPointer();
-  }
+  GRStateManager &getStateManager() const { return *stateMgr; }
 
   /// Return true if this state is referenced by a persistent ExplodedNode.
-  bool referencedByExplodedNode() const {
-    return stateMgr.getInt();
-  }
-  
-  void setReferencedByExplodedNode() {
-    stateMgr.setInt(true);
-  }
+  bool referencedByExplodedNode() const { return refCount > 0; }
 
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
@@ -373,6 +369,16 @@ public:
   void printStdErr(CFG &C) const;
 
   void printDOT(llvm::raw_ostream& Out, CFG &C) const;
+
+private:
+  /// Increments the number of times this state is referenced by ExplodeNodes.
+  void incrementReferenceCount() { ++refCount; }
+
+  /// Decrement the number of times this state is referenced by ExplodeNodes.
+  void decrementReferenceCount() {
+    assert(refCount > 0);
+    --refCount;
+  }
 };
 
 class GRStateSet {

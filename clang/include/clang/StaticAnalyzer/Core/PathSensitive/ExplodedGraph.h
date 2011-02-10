@@ -118,7 +118,11 @@ public:
 
   explicit ExplodedNode(const ProgramPoint& loc, const GRState* state)
     : Location(loc), State(state) {
-    const_cast<GRState*>(State)->setReferencedByExplodedNode();
+    const_cast<GRState*>(State)->incrementReferenceCount();
+  }
+  
+  ~ExplodedNode() {
+    const_cast<GRState*>(State)->decrementReferenceCount();
   }
 
   /// getLocation - Returns the edge associated with the given node.
