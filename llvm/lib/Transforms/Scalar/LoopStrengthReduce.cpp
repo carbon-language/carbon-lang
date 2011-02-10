@@ -3815,15 +3815,15 @@ LoopStrengthReduce::LoopStrengthReduce(const TargetLowering *tli)
 void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   // We split critical edges, so we change the CFG.  However, we do update
   // many analyses if they are around.
+  AU.addPreservedID(LoopSimplifyID);
 
+  AU.addRequired<LoopInfo>();
+  AU.addPreserved<LoopInfo>();
+  AU.addRequiredID(LoopSimplifyID);
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
   AU.addRequired<ScalarEvolution>();
   AU.addPreserved<ScalarEvolution>();
-  AU.addRequired<LoopInfo>();
-  AU.addPreserved<LoopInfo>();
-  AU.addRequiredID(LoopSimplifyID);
-  AU.addPreservedID(LoopSimplifyID);
   AU.addRequired<IVUsers>();
   AU.addPreserved<IVUsers>();
 }
