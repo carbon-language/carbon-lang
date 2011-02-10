@@ -126,7 +126,8 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // Emit function epilog (to return).
   EmitReturnBlock();
 
-  EmitFunctionInstrumentation("__cyg_profile_func_exit");
+  if (ShouldInstrumentFunction())
+    EmitFunctionInstrumentation("__cyg_profile_func_exit");
 
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = getDebugInfo()) {
@@ -185,9 +186,6 @@ bool CodeGenFunction::ShouldInstrumentFunction() {
 /// instrumentation function with the current function and the call site, if
 /// function instrumentation is enabled.
 void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
-  if (!ShouldInstrumentFunction())
-    return;
-
   const llvm::PointerType *PointerTy;
   const llvm::FunctionType *FunctionTy;
   std::vector<const llvm::Type*> ProfileFuncArgs;
@@ -267,7 +265,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
     DI->EmitFunctionStart(GD, FnType, CurFn, Builder);
   }
 
-  EmitFunctionInstrumentation("__cyg_profile_func_enter");
+  if (ShouldInstrumentFunction())
+    EmitFunctionInstrumentation("__cyg_profile_func_enter");
 
   if (CGM.getCodeGenOpts().InstrumentForProfiling)
     EmitMCountInstrumentation();
