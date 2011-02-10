@@ -769,7 +769,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     // 'restrict' -> 'noalias' is done in EmitFunctionProlog when we
     // have the corresponding parameter variable.  It doesn't make
-    // sense to do it here because parameters are so fucked up.
+    // sense to do it here because parameters are so messed up.
     switch (AI.getKind()) {
     case ABIArgInfo::Extend:
       if (ParamType->isSignedIntegerType())
