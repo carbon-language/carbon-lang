@@ -1,11 +1,11 @@
 import os
-import platform
+import sys
 
 import Test
 import TestRunner
 import Util
 
-kIsWindows = platform.system() == 'Windows'
+kIsWindows = sys.platform in ['win32', 'cygwin']
 
 class GoogleTest(object):
     def __init__(self, test_sub_dir, test_suffix):
