@@ -21,8 +21,6 @@ endif()
 set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}"
     CACHE STRING "Default options for lit")
 
-set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
-
 if( LLVM_ENABLE_ASSERTIONS )
   # MSVC doesn't like _DEBUG on release builds. See PR 4379.
   if( NOT MSVC )
@@ -48,6 +46,9 @@ if(WIN32)
   else(CYGWIN)
     set(LLVM_ON_WIN32 1)
     set(LLVM_ON_UNIX 0)
+
+    # This is effective only on Win32 hosts to use gnuwin32 tools.
+    set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
   endif(CYGWIN)
   set(LTDL_SHLIB_EXT ".dll")
   set(EXEEXT ".exe")
