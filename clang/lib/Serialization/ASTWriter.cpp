@@ -1498,6 +1498,14 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
 // Preprocessor Serialization
 //===----------------------------------------------------------------------===//
 
+static int compareMacroDefinitions(const void *XPtr, const void *YPtr) {
+  const std::pair<const IdentifierInfo *, MacroInfo *> &X =
+    *(const std::pair<const IdentifierInfo *, MacroInfo *>*)XPtr;
+  const std::pair<const IdentifierInfo *, MacroInfo *> &Y =
+    *(const std::pair<const IdentifierInfo *, MacroInfo *>*)YPtr;
+  return X.first->getName().compare(Y.first->getName());
+}
+
 /// \brief Writes the block containing the serialized form of the
 /// preprocessor.
 ///
@@ -1524,12 +1532,24 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   // emitting each to the PP section.
   PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
 
-  // FIXME: If we are chaining, don't visit all of the macros!
+  // Construct the list of macro definitions that need to be serialized.
+  llvm::SmallVector<std::pair<const IdentifierInfo *, MacroInfo *>, 2> 
+    MacrosToEmit;
+  llvm::SmallPtrSet<const IdentifierInfo*, 4> MacroDefinitionsSeen;
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
-    // FIXME: This emits macros in hash table order, we should do it in a stable
-    // order so that output is reproducible.
-    MacroInfo *MI = I->second;
+    MacroDefinitionsSeen.insert(I->first);
+    MacrosToEmit.push_back(std::make_pair(I->first, I->second));
+  }
+  
+  // Sort the set of macro definitions that need to be serialized by the
+  // name of the macro, to provide a stable ordering.
+  llvm::array_pod_sort(MacrosToEmit.begin(), MacrosToEmit.end(), 
+                       &compareMacroDefinitions);
+  
+  for (unsigned I = 0, N = MacrosToEmit.size(); I != N; ++I) {
+    const IdentifierInfo *Name = MacrosToEmit[I].first;
+    MacroInfo *MI = MacrosToEmit[I].second;
 
     // Don't emit builtin macros like __LINE__ to the AST file unless they have
     // been redefined by the header (in which case they are not isBuiltinMacro).
@@ -1540,11 +1560,11 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
     // chained PCH, by storing the offset into the original PCH rather than
     // writing the macro definition a second time.
     if (MI->isBuiltinMacro() ||
-        (Chain && I->first->isFromAST() && MI->isFromAST()))
+        (Chain && Name->isFromAST() && MI->isFromAST()))
       continue;
 
-    AddIdentifierRef(I->first, Record);
-    MacroOffsets[I->first] = Stream.GetCurrentBitNo();
+    AddIdentifierRef(Name, Record);
+    MacroOffsets[Name] = Stream.GetCurrentBitNo();
     Record.push_back(MI->getDefinitionLoc().getRawEncoding());
     Record.push_back(MI->isUsed());
 
