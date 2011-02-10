@@ -22,7 +22,7 @@ Bits32 (const uint32_t value, const uint32_t msbit, const uint32_t lsbit)
 }
 
 static inline uint32_t
-Bits32 (const uint32_t value, const uint32_t bit)
+Bit32 (const uint32_t value, const uint32_t bit)
 {
     return Bits32(value, bit, bit);
 }
@@ -37,9 +37,9 @@ SetBits32(uint32_t &bits, unsigned msbit, unsigned lsbit, unsigned val)
 }
 
 static inline void
-SetBits32(uint32_t &bits, unsigned bit, unsigned val)
+SetBit32(uint32_t &bits, unsigned bit, unsigned val)
 {
-    SetBits32(bits, bit, val);
+    SetBits32(bits, bit, bit, val);
 }
 
 // Create a mask that starts at bit zero and includes "bit"

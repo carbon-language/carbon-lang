@@ -191,7 +191,7 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
         case eEncodingT1:
             registers = Bits32(opcode, 7, 0);
             // The M bit represents LR.
-            if (Bits32(opcode, 8))
+            if (Bit32(opcode, 8))
                 registers |= (1u << 14);
             // if BitCount(registers) < 1 then UNPREDICTABLE;
             if (BitCount(registers) < 1)
@@ -311,7 +311,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
         case eEncodingT1:
             registers = Bits32(opcode, 7, 0);
             // The P bit represents PC.
-            if (Bits32(opcode, 8))
+            if (Bit32(opcode, 8))
                 registers |= (1u << 15);
             // if BitCount(registers) < 1 then UNPREDICTABLE;
             if (BitCount(registers) < 1)
@@ -321,7 +321,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
             // Ignore bit 13.
             registers = Bits32(opcode, 15, 0) & ~0x2000;
             // if BitCount(registers) < 2 || (P == '1' && M == '1') then UNPREDICTABLE;
-            if (BitCount(registers) < 2 || (Bits32(opcode, 15) && Bits32(opcode, 14)))
+            if (BitCount(registers) < 2 || (Bit32(opcode, 15) && Bit32(opcode, 14)))
                 return false;
             break;
         case eEncodingT3:
@@ -338,7 +338,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
             // if BitCount(register_list) < 2 then SEE LDM / LDMIA / LDMFD;
 
             // if registers<13> == ‘1’ && ArchVersion() >= 7 then UNPREDICTABLE;
-            if (Bits32(opcode, 13) && ArchVersion() >= ARMv7)
+            if (Bit32(opcode, 13) && ArchVersion() >= ARMv7)
                 return false;
             break;
         case eEncodingA2:
@@ -555,7 +555,7 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
         switch (encoding) {
         case eEncodingT1:
             Rm = Bits32(opcode, 6, 3);
-            Rd = Bits32(opcode, 7) << 3 | Bits32(opcode, 2, 1);
+            Rd = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 1);
             setflags = false;
             break;
         case eEncodingT2:
@@ -588,8 +588,8 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
             if (setflags)
             {
                 m_new_inst_cpsr = m_inst_cpsr;
-                SetBits32(m_new_inst_cpsr, CPSR_N, Bits32(reg_value, CPSR_N));
-                SetBits32(m_new_inst_cpsr, CPSR_Z, reg_value == 0 ? 1 : 0);
+                SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(reg_value, CPSR_N));
+                SetBit32(m_new_inst_cpsr, CPSR_Z, reg_value == 0 ? 1 : 0);
                 if (m_new_inst_cpsr != m_inst_cpsr)
                 {
                     if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
@@ -822,10 +822,10 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
         case eEncodingT1:
             {
             lr = (pc + 4) | 1u; // return address
-            uint32_t S = Bits32(opcode, 26);
+            uint32_t S = Bit32(opcode, 26);
             uint32_t imm10 = Bits32(opcode, 25, 16);
-            uint32_t J1 = Bits32(opcode, 13);
-            uint32_t J2 = Bits32(opcode, 11);
+            uint32_t J1 = Bit32(opcode, 13);
+            uint32_t J2 = Bit32(opcode, 11);
             uint32_t imm11 = Bits32(opcode, 10, 0);
             uint32_t I1 = !(J1 ^ S);
             uint32_t I2 = !(J2 ^ S);
@@ -839,10 +839,10 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
         case eEncodingT2:
             {
             lr = (pc + 4) | 1u; // return address
-            uint32_t S = Bits32(opcode, 26);
+            uint32_t S = Bit32(opcode, 26);
             uint32_t imm10H = Bits32(opcode, 25, 16);
-            uint32_t J1 = Bits32(opcode, 13);
-            uint32_t J2 = Bits32(opcode, 11);
+            uint32_t J1 = Bit32(opcode, 13);
+            uint32_t J2 = Bit32(opcode, 11);
             uint32_t imm10L = Bits32(opcode, 10, 1);
             uint32_t I1 = !(J1 ^ S);
             uint32_t I2 = !(J2 ^ S);
@@ -1232,7 +1232,7 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
         case eEncodingT1:
         case eEncodingA1:
             single_regs = false;
-            d = Bits32(opcode, 22) << 4 | Bits32(opcode, 15, 12);
+            d = Bit32(opcode, 22) << 4 | Bits32(opcode, 15, 12);
             imm32 = Bits32(opcode, 7, 0) * addr_byte_size;
             // If UInt(imm8) is odd, see "FSTMX".
             regs = Bits32(opcode, 7, 0) / 2;
@@ -1243,7 +1243,7 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
         case eEncodingT2:
         case eEncodingA2:
             single_regs = true;
-            d = Bits32(opcode, 15, 12) << 1 | Bits32(opcode, 22);
+            d = Bits32(opcode, 15, 12) << 1 | Bit32(opcode, 22);
             imm32 = Bits32(opcode, 7, 0) * addr_byte_size;
             regs = Bits32(opcode, 7, 0);
             // if regs == 0 || regs > 16 || (d+regs) > 32 then UNPREDICTABLE;
@@ -1326,7 +1326,7 @@ EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
         case eEncodingT1:
         case eEncodingA1:
             single_regs = false;
-            d = Bits32(opcode, 22) << 4 | Bits32(opcode, 15, 12);
+            d = Bit32(opcode, 22) << 4 | Bits32(opcode, 15, 12);
             imm32 = Bits32(opcode, 7, 0) * addr_byte_size;
             // If UInt(imm8) is odd, see "FLDMX".
             regs = Bits32(opcode, 7, 0) / 2;
@@ -1337,7 +1337,7 @@ EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
         case eEncodingT2:
         case eEncodingA2:
             single_regs = true;
-            d = Bits32(opcode, 15, 12) << 1 | Bits32(opcode, 22);
+            d = Bits32(opcode, 15, 12) << 1 | Bit32(opcode, 22);
             imm32 = Bits32(opcode, 7, 0) * addr_byte_size;
             regs = Bits32(opcode, 7, 0);
             // if regs == 0 || regs > 16 || (d+regs) > 32 then UNPREDICTABLE;
@@ -1487,10 +1487,10 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
         case eEncodingT3:
             // The 'cond' field is handled in EmulateInstructionARM::CurrentCond().
             {
-            uint32_t S = Bits32(opcode, 26);
+            uint32_t S = Bit32(opcode, 26);
             uint32_t imm6 = Bits32(opcode, 21, 16);
-            uint32_t J1 = Bits32(opcode, 13);
-            uint32_t J2 = Bits32(opcode, 11);
+            uint32_t J1 = Bit32(opcode, 13);
+            uint32_t J2 = Bit32(opcode, 11);
             uint32_t imm11 = Bits32(opcode, 10, 0);
             uint32_t imm21 = (S << 20) | (J2 << 19) | (J1 << 18) | (imm6 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<21>(imm21);
@@ -1501,10 +1501,10 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
             }
         case eEncodingT4:
             {
-            uint32_t S = Bits32(opcode, 26);
+            uint32_t S = Bit32(opcode, 26);
             uint32_t imm10 = Bits32(opcode, 25, 16);
-            uint32_t J1 = Bits32(opcode, 13);
-            uint32_t J2 = Bits32(opcode, 11);
+            uint32_t J1 = Bit32(opcode, 13);
+            uint32_t J2 = Bit32(opcode, 11);
             uint32_t imm11 = Bits32(opcode, 10, 0);
             uint32_t I1 = !(J1 ^ S);
             uint32_t I2 = !(J2 ^ S);
@@ -1563,7 +1563,7 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
     bool nonzero;
     switch (encoding) {
     case eEncodingT1:
-        imm32 = Bits32(opcode, 9) << 6 | Bits32(opcode, 7, 3) << 1;
+        imm32 = Bit32(opcode, 9) << 6 | Bits32(opcode, 7, 3) << 1;
         nonzero = BitIsSet(opcode, 11);
         target = pc + 4 + imm32;
         context.arg1 = 4 + imm32;  // signed offset
@@ -1615,7 +1615,7 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
         {
         case eEncodingT2:
             // setflags = FALSE
-            Rd = Rn = Bits32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
+            Rd = Rn = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
             Rm = Bits32(opcode, 6, 3);
             if (Rn == 15 && Rm == 15)
                 return false;
