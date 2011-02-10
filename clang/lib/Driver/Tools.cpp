@@ -1313,6 +1313,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_flimit_debug_info);
+  Args.AddLastArg(CmdArgs, options::OPT_pg);
 
   // -flax-vector-conversions is default.
   if (!Args.hasFlag(options::OPT_flax_vector_conversions,
@@ -1743,13 +1744,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 
-  // Explicitly warn that these options are unsupported, even though
-  // we are allowing compilation to continue.
-  for (arg_iterator it = Args.filtered_begin(options::OPT_pg),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    (*it)->claim();
-    D.Diag(clang::diag::warn_drv_clang_unsupported) << (*it)->getAsString(Args);
-  }
+  if (Arg *A = Args.getLastArg(options::OPT_pg))
+    if (Args.hasArg(options::OPT_fomit_frame_pointer))
+      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << "-fomit-frame-pointer" << A->getAsString(Args);
 
   // Claim some arguments which clang supports automatically.
 

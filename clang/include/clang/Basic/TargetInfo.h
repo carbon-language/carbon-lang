@@ -76,6 +76,7 @@ protected:
   unsigned char LongLongWidth, LongLongAlign;
   const char *DescriptionString;
   const char *UserLabelPrefix;
+  const char *MCountName;
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
   unsigned char RegParmMax, SSERegParmMax;
   TargetCXXABI CXXABI;
@@ -241,6 +242,11 @@ public:
   /// others.
   const char *getUserLabelPrefix() const {
     return UserLabelPrefix;
+  }
+
+  /// MCountName - This returns name of the mcount instrumentation function.
+  const char *getMCountName() const {
+    return MCountName;
   }
 
   bool useBitFieldTypeAlignment() const {

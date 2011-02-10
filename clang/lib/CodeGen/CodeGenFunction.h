@@ -1087,6 +1087,9 @@ public:
   /// function instrumentation is enabled.
   void EmitFunctionInstrumentation(const char *Fn);
 
+  /// EmitMCountInstrumentation - Emit call to .mcount.
+  void EmitMCountInstrumentation();
+
   /// EmitFunctionProlog - Emit the target specific LLVM code to load the
   /// arguments for the given function. This is also responsible for naming the
   /// LLVM function arguments.

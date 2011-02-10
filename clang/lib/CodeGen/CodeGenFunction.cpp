@@ -210,6 +210,15 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
                       CallSite);
 }
 
+void CodeGenFunction::EmitMCountInstrumentation() {
+  llvm::FunctionType *FTy =
+    llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()), false);
+
+  llvm::Constant *MCountFn = CGM.CreateRuntimeFunction(FTy,
+                                                       Target.getMCountName());
+  Builder.CreateCall(MCountFn);
+}
+
 void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args,
@@ -259,6 +268,9 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   }
 
   EmitFunctionInstrumentation("__cyg_profile_func_enter");
+
+  if (CGM.getCodeGenOpts().InstrumentForProfiling)
+    EmitMCountInstrumentation();
 
   // FIXME: Leaked.
   // CC info is ignored, hopefully?

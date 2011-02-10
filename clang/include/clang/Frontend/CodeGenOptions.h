@@ -58,6 +58,7 @@ public:
                                   /// hidden visibility.
   unsigned InstrumentFunctions : 1; /// Set when -finstrument-functions is
                                     /// enabled.
+  unsigned InstrumentForProfiling : 1; /// Set when -pg is enabled
   unsigned LessPreciseFPMAD  : 1; /// Enable less precise MAD instructions to be
                                   /// generated.
   unsigned MergeAllConstants : 1; /// Merge identical constants.
@@ -131,6 +132,7 @@ public:
     HiddenWeakTemplateVTables = 0;
     HiddenWeakVTables = 0;
     InstrumentFunctions = 0;
+    InstrumentForProfiling = 0;
     LessPreciseFPMAD = 0;
     MergeAllConstants = 1;
     NoCommon = 0;
