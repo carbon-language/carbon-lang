@@ -504,6 +504,14 @@ EmulateInstructionARM::EmulateMovRdSP (ARMEncoding encoding)
 bool
 EmulateInstructionARM::EmulateMovLowHigh (ARMEncoding encoding)
 {
+    return EmulateMovRdRm (encoding);
+}
+
+// Move from register to register.
+// MOV (register)
+bool
+EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
+{
 #if 0
     // ARM pseudo code...
     if (ConditionPassed())
@@ -531,15 +539,22 @@ EmulateInstructionARM::EmulateMovLowHigh (ARMEncoding encoding)
     {
         uint32_t Rm; // the source register
         uint32_t Rd; // the destination register
+        bool setflags;
         switch (encoding) {
         case eEncodingT1:
             Rm = Bits32(opcode, 6, 3);
-            Rd = Bits32(opcode, 2, 1); // bits(7) == 0
+            Rd = Bits32(opcode, 7, 7) << 3 | Bits32(opcode, 2, 1);
+            setflags = false;
+            break;
+        case eEncodingT2:
+            Rm = Bits32(opcode, 5, 3);
+            Rd = Bits32(opcode, 2, 1);
+            setflags = true;
             break;
         default:
             return false;
         }
-        int32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
         if (!success)
             return false;
         
@@ -549,8 +564,27 @@ EmulateInstructionARM::EmulateMovLowHigh (ARMEncoding encoding)
                                                 dwarf_r0 + Rm,
                                                 0 };
     
-        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, reg_value))
-            return false;
+        if (Rd == 15)
+        {
+            if (!ALUWritePC (context, reg_value))
+                return false;
+        }
+        else
+        {
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, reg_value))
+                return false;
+            if (setflags)
+            {
+                m_new_inst_cpsr = m_inst_cpsr;
+                SetBits32(m_new_inst_cpsr, CPSR_N, Bits32(reg_value, CPSR_N));
+                SetBits32(m_new_inst_cpsr, CPSR_Z, reg_value == 0 ? 1 : 0);
+                if (m_new_inst_cpsr != m_inst_cpsr)
+                {
+                    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+                        return false;
+                }
+            }
+        }
     }
     return true;
 }
@@ -2238,6 +2272,10 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Make sure "add sp, <Rm>" comes before this instruction, so there's no ambiguity decoding the two.
         { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateAddRdnRm, "add <Rdn>, <Rm>"},
+        // move from high register to high register
+        { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "mov<c> <Rd>, <Rm>"},
+        // move from low register to low register
+        { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "movs <Rd>, <Rm>"},
 
         //----------------------------------------------------------------------
         // Load instructions

@@ -273,6 +273,10 @@ protected:
     bool
     EmulateLDRRtRnImm (ARMEncoding encoding);
 
+    // MOV (register)
+    bool
+    EmulateMovRdRm (ARMEncoding encoding);
+
     uint32_t m_arm_isa;
     Mode m_inst_mode;
     uint32_t m_inst_cpsr;
