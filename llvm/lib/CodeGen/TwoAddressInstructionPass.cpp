@@ -110,7 +110,7 @@ namespace {
     bool ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
                             MachineBasicBlock::iterator &nmi,
                             MachineFunction::iterator &mbbi,
-                            unsigned RegB, unsigned Dist);
+                            unsigned RegA, unsigned RegB, unsigned Dist);
 
     typedef std::pair<std::pair<unsigned, bool>, MachineInstr*> NewKill;
     bool canUpdateDeletedKills(SmallVector<unsigned, 4> &Kills,
@@ -550,7 +550,7 @@ TwoAddressInstructionPass::isProfitableToCommute(unsigned regB, unsigned regC,
   unsigned FromRegC = getMappedReg(regC, SrcRegMap);
   unsigned ToRegB = getMappedReg(regB, DstRegMap);
   unsigned ToRegC = getMappedReg(regC, DstRegMap);
-  if (!regsAreCompatible(FromRegB, ToRegB, TRI) &&
+  if ((FromRegB && ToRegB && !regsAreCompatible(FromRegB, ToRegB, TRI)) &&
       ((!FromRegC && !ToRegC) ||
        regsAreCompatible(FromRegB, ToRegC, TRI) ||
        regsAreCompatible(FromRegC, ToRegB, TRI)))
@@ -633,7 +633,8 @@ bool
 TwoAddressInstructionPass::ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
                                               MachineBasicBlock::iterator &nmi,
                                               MachineFunction::iterator &mbbi,
-                                              unsigned RegB, unsigned Dist) {
+                                              unsigned RegA, unsigned RegB,
+                                              unsigned Dist) {
   MachineInstr *NewMI = TII->convertToThreeAddress(mbbi, mi, LV);
   if (NewMI) {
     DEBUG(dbgs() << "2addr: CONVERTING 2-ADDR: " << *mi);
@@ -653,6 +654,10 @@ TwoAddressInstructionPass::ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
       mi = NewMI;
       nmi = llvm::next(mi);
     }
+
+    // Update source and destination register maps.
+    SrcRegMap.erase(RegA);
+    DstRegMap.erase(RegB);
     return true;
   }
 
@@ -887,7 +892,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
     // three-address instruction.  Check if it is profitable.
     if (!regBKilled || isProfitableToConv3Addr(regA)) {
       // Try to convert it.
-      if (ConvertInstTo3Addr(mi, nmi, mbbi, regB, Dist)) {
+      if (ConvertInstTo3Addr(mi, nmi, mbbi, regA, regB, Dist)) {
         ++NumConvertedTo3Addr;
         return true; // Done with this instruction.
       }
