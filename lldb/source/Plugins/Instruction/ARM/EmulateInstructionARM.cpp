@@ -625,7 +625,7 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
 // PC relative immediate load into register, possibly followed by ADD (SP plus register).
 // LDR (literal)
 bool
-EmulateInstructionARM::EmulateLDRRdPCRelative (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -663,24 +663,63 @@ EmulateInstructionARM::EmulateLDRRdPCRelative (ARMEncoding encoding)
                                                eRegisterKindGeneric,
                                                LLDB_REGNUM_GENERIC_PC,
                                                0};
-        uint32_t Rd; // the destination register
+        uint32_t Rt;    // the destination register
         uint32_t imm32; // immediate offset from the PC
-        addr_t addr;    // the PC relative address
+        bool add;       // +imm32 or -imm32?
+        addr_t base;    // the base address
+        addr_t address; // the PC relative address
         uint32_t data;  // the literal data value from the PC relative load
         switch (encoding) {
         case eEncodingT1:
-            Rd = Bits32(opcode, 10, 8);
+            Rt = Bits32(opcode, 10, 8);
             imm32 = Bits32(opcode, 7, 0) << 2; // imm32 = ZeroExtend(imm8:'00', 32);
-            addr = pc + 4 + imm32;
+            add = true;
+            base = Align(pc + 4, 4);
+            context.arg2 = 4 + imm32;
+            break;
+        case eEncodingT2:
+            Rt = Bits32(opcode, 15, 12);
+            imm32 = Bits32(opcode, 11, 0) << 2; // imm32 = ZeroExtend(imm12, 32);
+            add = BitIsSet(opcode, 23);
+            if (Rt == 15
+                && m_it_session.InITBlock()
+                && !m_it_session.LastInITBlock())
+                return false;
+            base = Align(pc + 4, 4);
             context.arg2 = 4 + imm32;
             break;
         default:
             return false;
         }
-        data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
+
+        if (add)
+            address = base + imm32;
+        else
+            address = base - imm32;
+        data = ReadMemoryUnsigned(context, address, 4, 0, &success);
         if (!success)
             return false;    
-        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, data))
+
+        if (Rt == 15)
+        {
+            if (Bits32(address, 1, 0) == 0)
+            {
+                // In ARMv5T and above, this is an interworking branch.
+                if (!LoadWritePC(context, data))
+                    return false;
+            }
+            else
+                return false;
+        }
+        else if (UnalignedSupport() || Bits32(address, 1, 0) == 0)
+        {
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rt, data))
+                return false;
+        }
+        else // We don't handle ARM for now.
+            return false;
+
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rt, data))
             return false;
     }
     return true;
@@ -2433,8 +2472,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // move from high register to low register (comes after "mov r7, sp" to resolve ambiguity)
         { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovLowHigh, "mov r0-r7, r8-r15" },
 
-        // PC relative load into register (see also EmulateAddSPRm)
-        { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRdPCRelative, "ldr <Rd>, [PC, #imm]"},
+        // PC-relative load into register (see also EmulateAddSPRm)
+        { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr <Rt>, [PC, #imm]"},
 
         // adjust the stack pointer
         { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPRm, "add sp, <Rm>"},
@@ -2501,7 +2540,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfffff800, 0x0000c800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
         { 0xffd02000, 0xe8900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c>.w <Rn>{!} <registers>" },
         { 0xffd00000, 0xe9100000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
-        { 0xfffff800, 0x00006800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#imm}]"}
+        { 0xfffff800, 0x00006800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#imm}]"},
+        // Thumb2 PC-relative load into register
+        { 0xff7f0000, 0xf85f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr<c>.w <Rt>, [PC, +/-#imm}]"}
         
     };
 

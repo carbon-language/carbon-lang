@@ -226,7 +226,7 @@ protected:
     EmulateMovLowHigh (ARMEncoding encoding);
 
     bool
-    EmulateLDRRdPCRelative (ARMEncoding encoding);
+    EmulateLDRRtPCRelative (ARMEncoding encoding);
 
     bool
     EmulateAddSPImmediate (ARMEncoding encoding);
