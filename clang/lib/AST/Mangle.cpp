@@ -39,7 +39,7 @@ namespace {
 static void mangleFunctionBlock(MangleContext &Context,
                                 llvm::StringRef Outer,
                                 const BlockDecl *BD,
-                                llvm::raw_svector_ostream &Out) {
+                                llvm::raw_ostream &Out) {
   Out << "__" << Outer << "_block_invoke_" << Context.getBlockId(BD, true);
 }
 
@@ -55,13 +55,13 @@ static void checkMangleDC(const DeclContext *DC, const BlockDecl *BD) {
 }
 
 void MangleContext::mangleGlobalBlock(const BlockDecl *BD,
-                                      llvm::raw_svector_ostream &Out) {
+                                      llvm::raw_ostream &Out) {
   Out << "__block_global_" << getBlockId(BD, false);
 }
 
 void MangleContext::mangleCtorBlock(const CXXConstructorDecl *CD,
                                     CXXCtorType CT, const BlockDecl *BD,
-                                    llvm::raw_svector_ostream &ResStream) {
+                                    llvm::raw_ostream &ResStream) {
   checkMangleDC(CD, BD);
   llvm::SmallString<64> Buffer;
   llvm::raw_svector_ostream Out(Buffer);
@@ -72,7 +72,7 @@ void MangleContext::mangleCtorBlock(const CXXConstructorDecl *CD,
 
 void MangleContext::mangleDtorBlock(const CXXDestructorDecl *DD,
                                     CXXDtorType DT, const BlockDecl *BD,
-                                    llvm::raw_svector_ostream &ResStream) {
+                                    llvm::raw_ostream &ResStream) {
   checkMangleDC(DD, BD);
   llvm::SmallString<64> Buffer;
   llvm::raw_svector_ostream Out(Buffer);
@@ -82,7 +82,7 @@ void MangleContext::mangleDtorBlock(const CXXDestructorDecl *DD,
 }
 
 void MangleContext::mangleBlock(const DeclContext *DC, const BlockDecl *BD,
-                                llvm::raw_svector_ostream &Out) {
+                                llvm::raw_ostream &Out) {
   assert(!isa<CXXConstructorDecl>(DC) && !isa<CXXDestructorDecl>(DC));
   checkMangleDC(DC, BD);
 
@@ -124,7 +124,7 @@ void MangleContext::mangleObjCMethodName(const ObjCMethodDecl *MD,
 }
 
 void MangleContext::mangleBlock(const BlockDecl *BD,
-                                llvm::raw_svector_ostream &Out) {
+                                llvm::raw_ostream &Out) {
   const DeclContext *DC = BD->getDeclContext();
   while (isa<BlockDecl>(DC) || isa<EnumDecl>(DC))
     DC = DC->getParent();

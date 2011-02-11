@@ -29,12 +29,12 @@ namespace {
 /// Microsoft Visual C++ ABI.
 class MicrosoftCXXNameMangler {
   MangleContext &Context;
-  llvm::raw_svector_ostream &Out;
+  llvm::raw_ostream &Out;
 
   ASTContext &getASTContext() const { return Context.getASTContext(); }
 
 public:
-  MicrosoftCXXNameMangler(MangleContext &C, llvm::raw_svector_ostream &Out_)
+  MicrosoftCXXNameMangler(MangleContext &C, llvm::raw_ostream &Out_)
   : Context(C), Out(Out_) { }
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "?");
@@ -80,7 +80,7 @@ public:
   MicrosoftMangleContext(ASTContext &Context,
                          Diagnostic &Diags) : MangleContext(Context, Diags) { }
   virtual bool shouldMangleDeclName(const NamedDecl *D);
-  virtual void mangleName(const NamedDecl *D, llvm::raw_svector_ostream &Out);
+  virtual void mangleName(const NamedDecl *D, llvm::raw_ostream &Out);
   virtual void mangleThunk(const CXXMethodDecl *MD,
                            const ThunkInfo &Thunk,
                            llvm::SmallVectorImpl<char> &);
@@ -97,9 +97,9 @@ public:
   virtual void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);
   virtual void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &);
   virtual void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                             llvm::raw_svector_ostream &);
+                             llvm::raw_ostream &);
   virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                             llvm::raw_svector_ostream &);
+                             llvm::raw_ostream &);
   virtual void mangleReferenceTemporary(const clang::VarDecl *,
                                         llvm::SmallVectorImpl<char> &);
 };
@@ -1122,7 +1122,7 @@ void MicrosoftCXXNameMangler::mangleType(const DecltypeType *T) {
 }
 
 void MicrosoftMangleContext::mangleName(const NamedDecl *D,
-                                        llvm::raw_svector_ostream &Out) {
+                                        llvm::raw_ostream &Out) {
   assert((isa<FunctionDecl>(D) || isa<VarDecl>(D)) &&
          "Invalid mangleName() call, argument is not a variable or function!");
   assert(!isa<CXXConstructorDecl>(D) && !isa<CXXDestructorDecl>(D) &&
@@ -1170,12 +1170,12 @@ void MicrosoftMangleContext::mangleCXXRTTIName(QualType T,
 }
 void MicrosoftMangleContext::mangleCXXCtor(const CXXConstructorDecl *D,
                                            CXXCtorType Type,
-                                           llvm::raw_svector_ostream &) {
+                                           llvm::raw_ostream &) {
   assert(false && "Can't yet mangle constructors!");
 }
 void MicrosoftMangleContext::mangleCXXDtor(const CXXDestructorDecl *D,
                                            CXXDtorType Type,
-                                           llvm::raw_svector_ostream &) {
+                                           llvm::raw_ostream &) {
   assert(false && "Can't yet mangle destructors!");
 }
 void MicrosoftMangleContext::mangleReferenceTemporary(const clang::VarDecl *,

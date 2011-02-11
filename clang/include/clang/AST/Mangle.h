@@ -95,7 +95,7 @@ public:
   /// @{
 
   virtual bool shouldMangleDeclName(const NamedDecl *D) = 0;
-  virtual void mangleName(const NamedDecl *D, llvm::raw_svector_ostream &)=0;
+  virtual void mangleName(const NamedDecl *D, llvm::raw_ostream &)=0;
   virtual void mangleThunk(const CXXMethodDecl *MD,
                           const ThunkInfo &Thunk,
                           llvm::SmallVectorImpl<char> &) = 0;
@@ -114,20 +114,20 @@ public:
   virtual void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                             llvm::raw_svector_ostream &) = 0;
+                             llvm::raw_ostream &) = 0;
   virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                             llvm::raw_svector_ostream &) = 0;
+                             llvm::raw_ostream &) = 0;
 
   void mangleGlobalBlock(const BlockDecl *BD,
-                         llvm::raw_svector_ostream &Out);
+                         llvm::raw_ostream &Out);
   void mangleCtorBlock(const CXXConstructorDecl *CD, CXXCtorType CT,
-                       const BlockDecl *BD, llvm::raw_svector_ostream &Out);
+                       const BlockDecl *BD, llvm::raw_ostream &Out);
   void mangleDtorBlock(const CXXDestructorDecl *CD, CXXDtorType DT,
-                       const BlockDecl *BD, llvm::raw_svector_ostream &Out);
+                       const BlockDecl *BD, llvm::raw_ostream &Out);
   void mangleBlock(const DeclContext *DC, const BlockDecl *BD,
-                   llvm::raw_svector_ostream &Out);
+                   llvm::raw_ostream &Out);
   // Do the right thing.
-  void mangleBlock(const BlockDecl *BD, llvm::raw_svector_ostream &Out);
+  void mangleBlock(const BlockDecl *BD, llvm::raw_ostream &Out);
 
   void mangleObjCMethodName(const ObjCMethodDecl *MD,
                             llvm::SmallVectorImpl<char> &);
