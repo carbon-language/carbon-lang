@@ -28,6 +28,9 @@ PROJ_resources_lib := $(PROJ_resources)/lib
 # Expect compiler-rt to be in llvm/projects/compiler-rt
 COMPILERRT_SRC_ROOT := $(LLVM_SRC_ROOT)/projects/compiler-rt
 
+# Additional flags to pass to Clang.
+CLANG_CCFLAGS := -no-integrated-as
+
 ifneq ($(CLANG_NO_RUNTIME),1)
 ifeq ($(shell test -d $(COMPILERRT_SRC_ROOT) && echo OK),OK)
 
@@ -40,6 +43,13 @@ RuntimeDirs :=
 ifeq ($(OS),Darwin)
 RuntimeDirs += darwin
 RuntimeLibrary.darwin.Configs = eprintf 10.4 armv6 cc_kext
+
+# On Darwin, fake Clang into using the iOS assembler (since compiler-rt wants to
+# build ARM bits).
+ifeq ($(OS),Darwin)
+CLANG_CCFLAGS += -ccc-install-dir \
+	/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/
+endif
 endif
 
 # Rule to build the compiler-rt libraries we need.
@@ -50,7 +60,7 @@ BuildRuntimeLibraries:
 	$(Verb) $(MAKE) -C $(COMPILERRT_SRC_ROOT) \
 	  ProjSrcRoot=$(COMPILERRT_SRC_ROOT) \
 	  ProjObjRoot=$(PROJ_OBJ_DIR) \
-	  CC="$(ToolDir)/clang -no-integrated-as" \
+	  CC="$(ToolDir)/clang $(CLANG_CCFLAGS)" \
 	  $(RuntimeDirs:%=clang_%)
 .PHONY: BuildRuntimeLibraries
 CleanRuntimeLibraries:
