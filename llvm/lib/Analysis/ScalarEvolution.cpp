@@ -2785,10 +2785,21 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                   HasNSW = true;
               } else if (const GEPOperator *GEP = 
                             dyn_cast<GEPOperator>(BEValueV)) {
-                // If the increment is a GEP, then we know it won't perform an
-                // unsigned overflow, because the address space cannot be
+                // If the increment is a GEP, then we know it won't perform a
+                // signed overflow, because the address space cannot be
                 // wrapped around.
-                HasNUW |= GEP->isInBounds();
+                //
+                // NOTE: This isn't strictly true, because you could have an
+                // object straddling the 2G address boundary in a 32-bit address
+                // space (for example).  We really want to model this as a "has
+                // no signed/unsigned wrap" where the base pointer is treated as
+                // unsigned and the increment is known to not have signed
+                // wrapping.
+                //
+                // This is a highly theoretical concern though, and this is good
+                // enough for all cases we know of at this point. :)
+                //                
+                HasNSW |= GEP->isInBounds();
               }
 
               const SCEV *StartVal = getSCEV(StartValueV);
