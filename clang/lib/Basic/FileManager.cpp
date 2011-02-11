@@ -64,8 +64,6 @@ FileEntry::~FileEntry() {
 
 #ifdef LLVM_ON_WIN32
 
-#define IS_DIR_SEPARATOR_CHAR(x) ((x) == '/' || (x) == '\\')
-
 namespace {
   static std::string GetFullPath(const char *relPath) {
     char *absPathStrPtr = _fullpath(NULL, relPath, 0);
@@ -121,8 +119,6 @@ public:
 //===----------------------------------------------------------------------===//
 
 #else
-
-#define IS_DIR_SEPARATOR_CHAR(x) ((x) == '/')
 
 class FileManager::UniqueDirContainer {
   /// UniqueDirs - Cache from ID's to existing directories/files.
@@ -222,44 +218,27 @@ void FileManager::removeStatCache(FileSystemStatCache *statCache) {
 /// Filename can point to either a real file or a virtual file.
 static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
                                                   llvm::StringRef Filename) {
-  // Figure out what directory it is in.   If the string contains a / in it,
-  // strip off everything after it.
-  // FIXME: this logic should be in sys::Path.
-  size_t SlashPos = Filename.size();
-  if (SlashPos == 0 || IS_DIR_SEPARATOR_CHAR(Filename[SlashPos-1]))
-    return NULL;  // If Filename is empty or a directory.
+  if (Filename.empty())
+    return NULL;
 
-  while (SlashPos != 0 && !IS_DIR_SEPARATOR_CHAR(Filename[SlashPos-1]))
-    --SlashPos;
+  if (llvm::sys::path::is_separator(Filename[Filename.size() - 1]))
+    return NULL;  // If Filename is a directory.
 
+  llvm::StringRef DirName = llvm::sys::path::parent_path(Filename);
   // Use the current directory if file has no path component.
-  if (SlashPos == 0)
-    return FileMgr.getDirectory(".");
+  if (DirName.empty())
+    DirName = ".";
 
-  // Ignore repeated //'s.
-  while (SlashPos != 0 && IS_DIR_SEPARATOR_CHAR(Filename[SlashPos-1]))
-    --SlashPos;
-
-  return FileMgr.getDirectory(Filename.substr(0, SlashPos));
+  return FileMgr.getDirectory(DirName);
 }
 
 /// Add all ancestors of the given path (pointing to either a file or
 /// a directory) as virtual directories.
 void FileManager::addAncestorsAsVirtualDirs(llvm::StringRef Path) {
-  size_t SlashPos = Path.size();
-
-  // Find the beginning of the last segment in Path.
-  while (SlashPos != 0 && !IS_DIR_SEPARATOR_CHAR(Path[SlashPos-1]))
-    --SlashPos;
-
-  // Ignore repeated //'s.
-  while (SlashPos != 0 && IS_DIR_SEPARATOR_CHAR(Path[SlashPos-1]))
-    --SlashPos;
-
-  if (SlashPos == 0)
+  llvm::StringRef DirName = llvm::sys::path::parent_path(Path);
+  if (DirName.empty())
     return;
 
-  llvm::StringRef DirName = Path.substr(0, SlashPos);
   llvm::StringMapEntry<DirectoryEntry *> &NamedDirEnt =
     SeenDirEntries.GetOrCreateValue(DirName);
 
@@ -286,7 +265,7 @@ void FileManager::addAncestorsAsVirtualDirs(llvm::StringRef Path) {
 ///
 const DirectoryEntry *FileManager::getDirectory(llvm::StringRef DirName) {
   // stat doesn't like trailing separators (at least on Windows).
-  if (DirName.size() > 1 && IS_DIR_SEPARATOR_CHAR(DirName.back()))
+  if (DirName.size() > 1 && llvm::sys::path::is_separator(DirName.back()))
     DirName = DirName.substr(0, DirName.size()-1);
 
   ++NumDirLookups;
