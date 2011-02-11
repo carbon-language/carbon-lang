@@ -114,6 +114,12 @@ public:
         // arg1 = register number for SP
         // arg2 = signed offset being applied to the SP value
         eContextAdjustStackPointer,
+        
+        // Add or subtract a value from a base address register (other than SP)
+        // arg0 = register kind for base register
+        // arg1 = register number of base register
+        // arg2 = signed offset being applied to base register
+        eContextAdjustBaseRegister,
 
         // Used in WriteRegister callbacks to indicate where the 
         // arg0 = source register kind
@@ -121,6 +127,12 @@ public:
         // arg2 = source signed offset
         eContextRegisterPlusOffset,
 
+        // Used in WriteMemory callback to indicate where the data came from
+        // arg0 = register kind
+        // arg1 = register number (register being stored)
+        // arg2 = address of store
+        eContextRegisterStore,
+        
         // Used when performing a PC-relative branch where the
         // arg0 = don't care
         // arg1 = imm32 (signed offset)
@@ -144,7 +156,13 @@ public:
         // arg0 = target register kind
         // arg1 = target register number
         // arg2 = don't care
-        eContextWriteRegisterRandomBits
+        eContextWriteRegisterRandomBits,
+        
+        // Used when random bits are written to memory
+        // arg0 = target memory address
+        // arg1 = don't care
+        // arg2 = don't care
+        eContextWriteMemoryRandomBits
     };
     
     struct Context

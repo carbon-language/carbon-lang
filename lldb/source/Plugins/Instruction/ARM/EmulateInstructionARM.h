@@ -170,6 +170,9 @@ public:
     WriteBits32Unknown (int n);
 
     bool
+    WriteBits32UnknownToMemory (lldb::addr_t address);
+    
+    bool
     UnalignedSupport();
 
     typedef struct
@@ -299,6 +302,9 @@ protected:
     bool
     EmulateLDRRtRnImm (ARMEncoding encoding);
 
+    bool
+    EmulateSTM (ARMEncoding encoding);
+    
     uint32_t m_arm_isa;
     Mode m_inst_mode;
     uint32_t m_inst_cpsr;
