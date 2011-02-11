@@ -1502,43 +1502,14 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
 template<typename IndexTy>
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
                                            IndexTy const *Idxs,
-                                           unsigned NumIdx) {
+                                           unsigned NumIdx, bool InBounds) {
   assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs,
                                            Idxs+NumIdx) ==
          cast<PointerType>(ReqTy)->getElementType() &&
          "GEP indices invalid!");
 
-  if (Constant *FC = ConstantFoldGetElementPtr(C, /*inBounds=*/false,
-                                               Idxs, NumIdx))
-    return FC;          // Fold a few common cases...
-
-  assert(C->getType()->isPointerTy() &&
-         "Non-pointer type for constant GetElementPtr expression");
-  // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec;
-  ArgVec.reserve(NumIdx+1);
-  ArgVec.push_back(C);
-  for (unsigned i = 0; i != NumIdx; ++i)
-    ArgVec.push_back(cast<Constant>(Idxs[i]));
-  const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec);
-
-  LLVMContextImpl *pImpl = ReqTy->getContext().pImpl;
-  return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
-}
-
-template<typename IndexTy>
-Constant *ConstantExpr::getInBoundsGetElementPtrTy(const Type *ReqTy,
-                                                   Constant *C,
-                                                   IndexTy const *Idxs,
-                                                   unsigned NumIdx) {
-  assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs,
-                                           Idxs+NumIdx) ==
-         cast<PointerType>(ReqTy)->getElementType() &&
-         "GEP indices invalid!");
-
-  if (Constant *FC = ConstantFoldGetElementPtr(C, /*inBounds=*/true,
-                                               Idxs, NumIdx))
-    return FC;          // Fold a few common cases...
+  if (Constant *FC = ConstantFoldGetElementPtr(C, InBounds, Idxs, NumIdx))
+    return FC;          // Fold a few common cases.
 
   assert(C->getType()->isPointerTy() &&
          "Non-pointer type for constant GetElementPtr expression");
@@ -1549,7 +1520,7 @@ Constant *ConstantExpr::getInBoundsGetElementPtrTy(const Type *ReqTy,
   for (unsigned i = 0; i != NumIdx; ++i)
     ArgVec.push_back(cast<Constant>(Idxs[i]));
   const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec, 0,
-                           GEPOperator::IsInBounds);
+                           InBounds ? GEPOperator::IsInBounds : 0);
 
   LLVMContextImpl *pImpl = ReqTy->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
@@ -1557,47 +1528,23 @@ Constant *ConstantExpr::getInBoundsGetElementPtrTy(const Type *ReqTy,
 
 template<typename IndexTy>
 Constant *ConstantExpr::getGetElementPtrImpl(Constant *C, IndexTy const *Idxs,
-                                             unsigned NumIdx) {
+                                             unsigned NumIdx, bool InBounds) {
   // Get the result type of the getelementptr!
   const Type *Ty = 
     GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx);
   assert(Ty && "GEP indices invalid!");
   unsigned As = cast<PointerType>(C->getType())->getAddressSpace();
-  return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx);
-}
-
-template<typename IndexTy>
-Constant *ConstantExpr::getInBoundsGetElementPtrImpl(Constant *C,
-                                                     IndexTy const *Idxs,
-                                                     unsigned NumIdx) {
-  // Get the result type of the getelementptr!
-  const Type *Ty = 
-    GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx);
-  assert(Ty && "GEP indices invalid!");
-  unsigned As = cast<PointerType>(C->getType())->getAddressSpace();
-  return getInBoundsGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx);
+  return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx,InBounds);
 }
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
-                                         unsigned NumIdx) {
-  return getGetElementPtrImpl(C, Idxs, NumIdx);
+                                         unsigned NumIdx, bool InBounds) {
+  return getGetElementPtrImpl(C, Idxs, NumIdx, InBounds);
 }
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Constant *const *Idxs,
-                                         unsigned NumIdx) {
-  return getGetElementPtrImpl(C, Idxs, NumIdx);
-}
-
-Constant *ConstantExpr::getInBoundsGetElementPtr(Constant *C,
-                                                 Value* const *Idxs,
-                                                 unsigned NumIdx) {
-  return getInBoundsGetElementPtrImpl(C, Idxs, NumIdx);
-}
-
-Constant *ConstantExpr::getInBoundsGetElementPtr(Constant *C,
-                                                 Constant *const *Idxs,
-                                                 unsigned NumIdx) {
-  return getInBoundsGetElementPtrImpl(C, Idxs, NumIdx);
+                                         unsigned NumIdx, bool InBounds) {
+  return getGetElementPtrImpl(C, Idxs, NumIdx, InBounds);
 }
 
 Constant *

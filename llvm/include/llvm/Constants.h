@@ -631,11 +631,8 @@ protected:
                                Constant *C1, Constant *C2, Constant *C3);
   template<typename IndexTy>
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
-                                      IndexTy const *Idxs, unsigned NumIdxs);
-  template<typename IndexTy>
-  static Constant *getInBoundsGetElementPtrTy(const Type *Ty, Constant *C,
-                                              IndexTy const *Idxs,
-                                              unsigned NumIdxs);
+                                      IndexTy const *Idxs, unsigned NumIdxs,
+                                      bool InBounds);
   static Constant *getExtractElementTy(const Type *Ty, Constant *Val,
                                        Constant *Idx);
   static Constant *getInsertElementTy(const Type *Ty, Constant *Val,
@@ -650,11 +647,7 @@ protected:
   template<typename IndexTy>
   static Constant *getGetElementPtrImpl(Constant *C,
                                         IndexTy const *IdxList,
-                                        unsigned NumIdx);
-  template<typename IndexTy>
-  static Constant *getInBoundsGetElementPtrImpl(Constant *C,
-                                                IndexTy const *IdxList,
-                                                unsigned NumIdx);
+                                        unsigned NumIdx, bool InBounds);
 
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
@@ -849,18 +842,24 @@ public:
   /// all elements must be Constant's.
   ///
   static Constant *getGetElementPtr(Constant *C,
-                                    Constant *const *IdxList, unsigned NumIdx);
+                                    Constant *const *IdxList, unsigned NumIdx,
+                                    bool InBounds = false);
   static Constant *getGetElementPtr(Constant *C,
-                                    Value* const *IdxList, unsigned NumIdx);
+                                    Value *const *IdxList, unsigned NumIdx,
+                                    bool InBounds = false);
 
   /// Create an "inbounds" getelementptr. See the documentation for the
   /// "inbounds" flag in LangRef.html for details.
   static Constant *getInBoundsGetElementPtr(Constant *C,
                                             Constant *const *IdxList,
-                                            unsigned NumIdx);
+                                            unsigned NumIdx) {
+    return getGetElementPtr(C, IdxList, NumIdx, true);
+  }
   static Constant *getInBoundsGetElementPtr(Constant *C,
                                             Value* const *IdxList,
-                                            unsigned NumIdx);
+                                            unsigned NumIdx) {
+    return getGetElementPtr(C, IdxList, NumIdx, true);
+  }
 
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
