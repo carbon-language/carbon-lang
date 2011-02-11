@@ -1368,7 +1368,8 @@ void ASTUnit::RealizePreprocessedEntitiesFromPreamble() {
 
   for (unsigned I = 0, N = PreprocessedEntitiesInPreamble.size(); I != N; ++I) {
     if (PreprocessedEntity *PE
-          = External->ReadPreprocessedEntity(PreprocessedEntitiesInPreamble[I]))
+          = External->ReadPreprocessedEntityAtOffset(
+                                            PreprocessedEntitiesInPreamble[I]))
       PreprocessedEntities.push_back(PE);
   }
   

@@ -250,7 +250,8 @@ namespace clang {
     virtual void ReadPreprocessedEntities() = 0;
     
     /// \brief Read the preprocessed entity at the given offset.
-    virtual PreprocessedEntity *ReadPreprocessedEntity(uint64_t Offset) = 0;
+    virtual PreprocessedEntity *
+    ReadPreprocessedEntityAtOffset(uint64_t Offset) = 0;
   };
   
   /// \brief A record of the steps taken while preprocessing a source file,
@@ -297,7 +298,7 @@ namespace clang {
     iterator end(bool OnlyLocalEntities = false);
     const_iterator begin(bool OnlyLocalEntities = false) const;
     const_iterator end(bool OnlyLocalEntities = false) const;
-    
+
     /// \brief Add a new preprocessed entity to this record.
     void addPreprocessedEntity(PreprocessedEntity *Entity);
     

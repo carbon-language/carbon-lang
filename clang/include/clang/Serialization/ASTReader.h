@@ -898,7 +898,7 @@ public:
   virtual void ReadPreprocessedEntities();
 
   /// \brief Read the preprocessed entity at the given offset.
-  virtual PreprocessedEntity *ReadPreprocessedEntity(uint64_t Offset);
+  virtual PreprocessedEntity *ReadPreprocessedEntityAtOffset(uint64_t Offset);
 
   /// \brief Read the header file information for the given file entry.
   virtual HeaderFileInfo GetHeaderFileInfo(const FileEntry *FE);

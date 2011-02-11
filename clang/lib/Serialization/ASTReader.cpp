@@ -2787,7 +2787,7 @@ void ASTReader::ReadPreprocessedEntities() {
   }
 }
 
-PreprocessedEntity *ASTReader::ReadPreprocessedEntity(uint64_t Offset) {
+PreprocessedEntity *ASTReader::ReadPreprocessedEntityAtOffset(uint64_t Offset) {
   PerFileData *F = 0;  
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     if (Offset < Chain[I]->SizeInBits) {
