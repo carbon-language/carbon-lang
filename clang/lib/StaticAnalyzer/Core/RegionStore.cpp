@@ -228,8 +228,6 @@ public:
   /// For DerivedToBase casts, create a CXXBaseObjectRegion and return it.
   virtual SVal evalDerivedToBase(SVal derived, QualType basePtrType);
 
-  SVal evalBinOp(BinaryOperator::Opcode Op,Loc L, NonLoc R, QualType resultTy);
-
   Store getInitialStore(const LocationContext *InitLoc) {
     return RBFactory.getEmptyMap().getRoot();
   }
@@ -238,7 +236,7 @@ public:
   // Binding values to regions.
   //===-------------------------------------------------------------------===//
 
-  Store InvalidateRegions(Store store,
+  Store invalidateRegions(Store store,
                           const MemRegion * const *Begin,
                           const MemRegion * const *End,
                           const Expr *E, unsigned Count,
@@ -570,21 +568,21 @@ void RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
 }
 
 namespace {
-class InvalidateRegionsWorker : public ClusterAnalysis<InvalidateRegionsWorker>
+class invalidateRegionsWorker : public ClusterAnalysis<invalidateRegionsWorker>
 {
   const Expr *Ex;
   unsigned Count;
   StoreManager::InvalidatedSymbols *IS;
   StoreManager::InvalidatedRegions *Regions;
 public:
-  InvalidateRegionsWorker(RegionStoreManager &rm,
+  invalidateRegionsWorker(RegionStoreManager &rm,
                           GRStateManager &stateMgr,
                           RegionBindings b,
                           const Expr *ex, unsigned count,
                           StoreManager::InvalidatedSymbols *is,
                           StoreManager::InvalidatedRegions *r,
                           bool includeGlobals)
-    : ClusterAnalysis<InvalidateRegionsWorker>(rm, stateMgr, b, includeGlobals),
+    : ClusterAnalysis<invalidateRegionsWorker>(rm, stateMgr, b, includeGlobals),
       Ex(ex), Count(count), IS(is), Regions(r) {}
 
   void VisitCluster(const MemRegion *baseR, BindingKey *I, BindingKey *E);
@@ -595,7 +593,7 @@ private:
 };
 }
 
-void InvalidateRegionsWorker::VisitBinding(SVal V) {
+void invalidateRegionsWorker::VisitBinding(SVal V) {
   // A symbol?  Mark it touched by the invalidation.
   if (IS)
     if (SymbolRef Sym = V.getAsSymbol())
@@ -623,7 +621,7 @@ void InvalidateRegionsWorker::VisitBinding(SVal V) {
   }
 }
 
-void InvalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
+void invalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
                                            BindingKey *I, BindingKey *E) {
   for ( ; I != E; ++I) {
     // Get the old binding.  Is it a region?  If so, add it to the worklist.
@@ -635,7 +633,7 @@ void InvalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
   }
 }
 
-void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
+void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   if (IS) {
     // Symbolic region?  Mark that symbol touched by the invalidation.
     if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR))
@@ -708,14 +706,14 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   B = RM.addBinding(B, baseR, BindingKey::Direct, V);
 }
 
-Store RegionStoreManager::InvalidateRegions(Store store,
+Store RegionStoreManager::invalidateRegions(Store store,
                                             const MemRegion * const *I,
                                             const MemRegion * const *E,
                                             const Expr *Ex, unsigned Count,
                                             InvalidatedSymbols *IS,
                                             bool invalidateGlobals,
                                             InvalidatedRegions *Regions) {
-  InvalidateRegionsWorker W(*this, StateMgr,
+  invalidateRegionsWorker W(*this, StateMgr,
                             RegionStoreManager::GetRegionBindings(store),
                             Ex, Count, IS, Regions, invalidateGlobals);
 

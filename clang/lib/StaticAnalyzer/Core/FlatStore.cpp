@@ -57,7 +57,7 @@ public:
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   
-  Store InvalidateRegions(Store store, const MemRegion * const *I,
+  Store invalidateRegions(Store store, const MemRegion * const *I,
                           const MemRegion * const *E, const Expr *Ex,
                           unsigned Count, InvalidatedSymbols *IS,
                           bool invalidateGlobals, InvalidatedRegions *Regions);
@@ -157,7 +157,7 @@ Store FlatStoreManager::BindDeclWithNoInit(Store store, const VarRegion *VR) {
   return store;
 }
 
-Store FlatStoreManager::InvalidateRegions(Store store,
+Store FlatStoreManager::invalidateRegions(Store store,
                                           const MemRegion * const *I,
                                           const MemRegion * const *E,
                                           const Expr *Ex, unsigned Count,

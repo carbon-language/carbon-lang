@@ -110,7 +110,7 @@ const GRState *GRState::bindDefault(SVal loc, SVal V) const {
            new_state;
 }
 
-const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
+const GRState *GRState::invalidateRegions(const MemRegion * const *Begin,
                                           const MemRegion * const *End,
                                           const Expr *E, unsigned Count,
                                           StoreManager::InvalidatedSymbols *IS,
@@ -121,7 +121,7 @@ const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
   if (Eng && Eng->wantsRegionChangeUpdate(this)) {
     StoreManager::InvalidatedRegions Regions;
 
-    Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,
+    Store new_store = Mgr.StoreMgr->invalidateRegions(St, Begin, End,
                                                       E, Count, IS,
                                                       invalidateGlobals,
                                                       &Regions);
@@ -132,7 +132,7 @@ const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
                                      &Regions.back()+1);
   }
 
-  Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,
+  Store new_store = Mgr.StoreMgr->invalidateRegions(St, Begin, End,
                                                     E, Count, IS,
                                                     invalidateGlobals,
                                                     NULL);
@@ -140,7 +140,7 @@ const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
 }
 
 const GRState *GRState::unbindLoc(Loc LV) const {
-  assert(!isa<loc::MemRegionVal>(LV) && "Use InvalidateRegion instead.");
+  assert(!isa<loc::MemRegionVal>(LV) && "Use invalidateRegion instead.");
 
   Store OldStore = getStore();
   Store NewStore = getStateManager().StoreMgr->Remove(OldStore, LV);

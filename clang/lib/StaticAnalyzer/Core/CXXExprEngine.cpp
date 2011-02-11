@@ -280,7 +280,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     const GRState *state = GetState(*I);
 
     if (ObjTy->isRecordType()) {
-      state = state->InvalidateRegion(EleReg, CNE, Count);
+      state = state->invalidateRegion(EleReg, CNE, Count);
     } else {
       if (CNE->hasInitializer()) {
         SVal V = state->getSVal(*CNE->constructor_arg_begin());

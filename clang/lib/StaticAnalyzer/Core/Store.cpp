@@ -51,7 +51,7 @@ const ElementRegion *StoreManager::GetElementZeroRegion(const MemRegion *R,
   return MRMgr.getElementRegion(T, idx, R, Ctx);
 }
 
-const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy) {
+const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy) {
 
   ASTContext& Ctx = StateMgr.getContext();
 

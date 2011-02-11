@@ -593,7 +593,7 @@ const GRState *CStringChecker::InvalidateBuffer(CheckerContext &C,
 
     // Invalidate this region.
     unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
-    return state->InvalidateRegion(R, E, Count, NULL);
+    return state->invalidateRegion(R, E, Count, NULL);
   }
 
   // If we have a non-region value by chance, just remove the binding.

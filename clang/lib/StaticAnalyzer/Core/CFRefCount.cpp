@@ -2601,7 +2601,7 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
 
   // NOTE: Even if RegionsToInvalidate is empty, we must still invalidate
   //  global variables.
-  state = state->InvalidateRegions(RegionsToInvalidate.data(),
+  state = state->invalidateRegions(RegionsToInvalidate.data(),
                                    RegionsToInvalidate.data() +
                                    RegionsToInvalidate.size(),
                                    Ex, Count, &IS,

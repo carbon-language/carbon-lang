@@ -224,7 +224,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     if (nonloc::LocAsInteger *LV = dyn_cast<nonloc::LocAsInteger>(&val)) {
       if (const MemRegion *R = LV->getLoc().getAsRegion()) {
         StoreManager &storeMgr = StateMgr.getStoreManager();
-        R = storeMgr.CastRegion(R, castTy);
+        R = storeMgr.castRegion(R, castTy);
         return R ? SVal(loc::MemRegionVal(R)) : UnknownVal();
       }
       return LV->getLoc();
@@ -299,7 +299,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     // Delegate to store manager to get the result of casting a region to a
     // different type.  If the MemRegion* returned is NULL, this expression
     // Evaluates to UnknownVal.
-    R = storeMgr.CastRegion(R, castTy);
+    R = storeMgr.castRegion(R, castTy);
     return R ? SVal(loc::MemRegionVal(R)) : UnknownVal();
   }
 

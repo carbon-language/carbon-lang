@@ -48,10 +48,10 @@ public:
 
   SVal Retrieve(Store store, Loc loc, QualType T = QualType());
 
-  Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E,
+  Store invalidateRegion(Store store, const MemRegion *R, const Expr *E,
                          unsigned Count, InvalidatedSymbols *IS);
 
-  Store InvalidateRegions(Store store, const MemRegion * const *Begin,
+  Store invalidateRegions(Store store, const MemRegion * const *Begin,
                           const MemRegion * const *End, const Expr *E,
                           unsigned Count, InvalidatedSymbols *IS,
                           bool invalidateGlobals, InvalidatedRegions *Regions);
@@ -144,7 +144,7 @@ SVal BasicStoreManager::LazyRetrieve(Store store, const TypedRegion *R) {
   // Globals and parameters start with symbolic values.
   // Local variables initially are undefined.
 
-  // Non-static globals may have had their values reset by InvalidateRegions.
+  // Non-static globals may have had their values reset by invalidateRegions.
   const MemSpaceRegion *MS = VR->getMemorySpace();
   if (isa<NonStaticGlobalSpaceRegion>(MS)) {
     BindingsTy B = GetBindings(store);
@@ -523,7 +523,7 @@ StoreManager::BindingsHandler::~BindingsHandler() {}
 //===----------------------------------------------------------------------===//
 
 
-Store BasicStoreManager::InvalidateRegions(Store store,
+Store BasicStoreManager::invalidateRegions(Store store,
                                            const MemRegion * const *I,
                                            const MemRegion * const *End,
                                            const Expr *E, unsigned Count,
@@ -535,7 +535,7 @@ Store BasicStoreManager::InvalidateRegions(Store store,
     for (BindingsTy::iterator I=B.begin(), End=B.end(); I != End; ++I) {
       const MemRegion *R = I.getKey();
       if (isa<NonStaticGlobalSpaceRegion>(R->getMemorySpace()))
-        store = InvalidateRegion(store, R, E, Count, IS);
+        store = invalidateRegion(store, R, E, Count, IS);
     }
   }
 
@@ -546,7 +546,7 @@ Store BasicStoreManager::InvalidateRegions(Store store,
       if (isa<NonStaticGlobalSpaceRegion>(R->getMemorySpace()))
         continue;
     }
-    store = InvalidateRegion(store, *I, E, Count, IS);
+    store = invalidateRegion(store, *I, E, Count, IS);
     if (Regions)
       Regions->push_back(R);
   }
@@ -570,7 +570,7 @@ Store BasicStoreManager::InvalidateRegions(Store store,
 }
 
 
-Store BasicStoreManager::InvalidateRegion(Store store,
+Store BasicStoreManager::invalidateRegion(Store store,
                                           const MemRegion *R,
                                           const Expr *E,
                                           unsigned Count,

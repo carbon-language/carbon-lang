@@ -148,10 +148,10 @@ public:
 
   const ElementRegion *GetElementZeroRegion(const MemRegion *R, QualType T);
 
-  /// CastRegion - Used by ExprEngine::VisitCast to handle casts from
+  /// castRegion - Used by ExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
-  const MemRegion *CastRegion(const MemRegion *region, QualType CastToTy);
+  const MemRegion *castRegion(const MemRegion *region, QualType CastToTy);
 
   virtual Store removeDeadBindings(Store store, const StackFrameContext *LCtx,
                                    SymbolReaper& SymReaper,
@@ -164,7 +164,7 @@ public:
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   typedef llvm::SmallVector<const MemRegion *, 8> InvalidatedRegions;
 
-  /// InvalidateRegions - Clears out the specified regions from the store,
+  /// invalidateRegions - Clears out the specified regions from the store,
   ///  marking their values as unknown. Depending on the store, this may also
   ///  invalidate additional regions that may have changed based on accessing
   ///  the given regions. Optionally, invalidates non-static globals as well.
@@ -183,7 +183,7 @@ public:
   ///   invalidated. This should include any regions explicitly invalidated
   ///   even if they do not currently have bindings. Pass \c NULL if this
   ///   information will not be used.
-  virtual Store InvalidateRegions(Store store,
+  virtual Store invalidateRegions(Store store,
                                   const MemRegion * const *Begin,
                                   const MemRegion * const *End,
                                   const Expr *E, unsigned Count,

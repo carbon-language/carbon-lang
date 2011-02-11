@@ -226,19 +226,19 @@ public:
 
   const GRState *unbindLoc(Loc LV) const;
 
-  /// InvalidateRegion - Returns the state with bindings for the given region
-  ///  cleared from the store. See InvalidateRegions.
-  const GRState *InvalidateRegion(const MemRegion *R,
+  /// invalidateRegion - Returns the state with bindings for the given region
+  ///  cleared from the store. See invalidateRegions.
+  const GRState *invalidateRegion(const MemRegion *R,
                                   const Expr *E, unsigned BlockCount,
                                   StoreManager::InvalidatedSymbols *IS = NULL)
                                   const {
-    return InvalidateRegions(&R, &R+1, E, BlockCount, IS, false);
+    return invalidateRegions(&R, &R+1, E, BlockCount, IS, false);
   }
 
-  /// InvalidateRegions - Returns the state with bindings for the given regions
+  /// invalidateRegions - Returns the state with bindings for the given regions
   ///  cleared from the store. The regions are provided as a continuous array
   ///  from Begin to End. Optionally invalidates global regions as well.
-  const GRState *InvalidateRegions(const MemRegion * const *Begin,
+  const GRState *invalidateRegions(const MemRegion * const *Begin,
                                    const MemRegion * const *End,
                                    const Expr *E, unsigned BlockCount,
                                    StoreManager::InvalidatedSymbols *IS,
