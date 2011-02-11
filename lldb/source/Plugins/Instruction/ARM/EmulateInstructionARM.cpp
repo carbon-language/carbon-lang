@@ -141,6 +141,26 @@ EmulateInstructionARM::Terminate ()
 {
 }
 
+// Write "bits (32) UNKNOWN" to register n.  Helper function for many ARM instructions.
+bool
+EmulateInstructionARM::WriteBits32Unknown (int n)
+{
+    EmulateInstruction::Context context = { EmulateInstruction::eContextWriteRegisterRandomBits, 
+                                            eRegisterKindDWARF, 
+                                            dwarf_r0 + n, 
+                                            0 };
+
+    uint32_t data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+                  
+    if (!success)
+        return false;
+   
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, data))
+        return false;
+    
+    return true;
+}
+
 // Push Multiple Registers stores multiple registers to the stack, storing to
 // consecutive memory locations ending just below the address in SP, and updates
 // SP to point to the start of the stored data.
@@ -1711,7 +1731,7 @@ EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
 }
 
 // LDM loads multiple registers from consecutive memory locations, using an
-// address from a base register.  Optionally the addres just above the highest of those locations
+// address from a base register.  Optionally the address just above the highest of those locations
 // can be written back to the base register.
 bool
 EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
@@ -1838,11 +1858,130 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
         }
         if (wback && BitIsSet (registers, n))
             // R[n] bits(32) UNKNOWN;
-            return false; //I'm not convinced this is the right thing to do here...
+            return WriteBits32Unknown (n);
     }
     return true;
 }
+                
+// LDMDA loads multiple registers from consecutive memory locations using an address from a base registers.
+// The consecutive memorty locations end at this address and the address just below the lowest of those locations
+// can optionally be written back tot he base registers.
+bool
+EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); 
+        address = R[n] - 4*BitCount(registers) + 4;
                   
+        for i = 0 to 14 
+            if registers<i> == ’1’ then
+                  R[i] = MemA[address,4]; address = address + 4; 
+                  
+        if registers<15> == ’1’ then
+            LoadWritePC(MemA[address,4]);
+                  
+        if wback && registers<n> == ’0’ then R[n] = R[n] - 4*BitCount(registers); 
+        if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN;
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed())
+    {
+        uint32_t n;
+        uint32_t registers = 0;
+        bool wback;
+        const uint32_t addr_byte_size = GetAddressByteSize();
+                  
+        // EncodingSpecificOperations(); 
+        switch (encoding)
+        {
+            case eEncodingA1:
+                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                n = Bits32 (opcode, 19, 16);
+                registers = Bits32 (opcode, 15, 0);
+                wback = BitIsSet (opcode, 21);
+                  
+                // if n == 15 || BitCount(registers) < 1 then UNPREDICTABLE;
+                if ((n == 15) || (BitCount (registers) < 1))
+                    return false;
+                  
+                break;
+
+            default:
+                return false;
+        }
+        // address = R[n] - 4*BitCount(registers) + 4;
+                  
+        int32_t offset = 0;
+        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+                  
+        if (!success)
+            return false;
+            
+        address = address - (addr_byte_size * BitCount (registers)) + addr_byte_size;
+                                                        
+        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
+                                                eRegisterKindDWARF,
+                                                dwarf_r0 + n,
+                                                offset };
+                  
+        // for i = 0 to 14 
+        for (int i = 0; i < 14; ++i)
+        {
+            // if registers<i> == ’1’ then
+            if (BitIsSet (registers, i))
+            {
+                  // R[i] = MemA[address,4]; address = address + 4; 
+                  context.arg2 = offset;
+                  uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+                  if (!success)
+                      return false;
+                  if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + i, data))
+                      return false;
+                  offset += addr_byte_size;
+            }
+        }
+                  
+        // if registers<15> == ’1’ then
+        //     LoadWritePC(MemA[address,4]);
+        if (BitIsSet (registers, 15))
+        {
+            context.arg2 = offset;
+            uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+            if (!success)
+                return false;
+            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, data))
+                return false;
+        }
+                  
+        // if wback && registers<n> == ’0’ then R[n] = R[n] - 4*BitCount(registers); 
+        if (wback && BitIsClear (registers, n))
+        {
+            context.arg2 = offset;      
+            addr_t addr = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+            if (!success)
+                return false;
+            addr = addr - (addr_byte_size * BitCount (registers));
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
+                return false;
+        }
+                  
+        // if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN;
+        if (wback && BitIsSet (registers, n))
+            return WriteBits32Unknown (n);
+    }
+    return true;
+}
+  
+// LDMDB loads multiple registers from consecutive memory locations using an address from a base register.  The 
+// consecutive memory lcoations end just below this address, and the address of the lowest of those locations can 
+// be optionally written back to the base register.
 bool
 EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
 {
@@ -1915,9 +2054,15 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
                 return false;
         }
                   
+        // address = R[n] - 4*BitCount(registers);
+                  
         int32_t offset = 0;
-        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success) 
-                                                                             - (addr_byte_size * BitCount (registers));
+        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+                  
+        if (!success)
+            return false;
+                  
+        address = address - (addr_byte_size * BitCount (registers));
         EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
                                                 eRegisterKindDWARF,
                                                 dwarf_r0 + n,
@@ -1967,11 +2112,14 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
                   
         // if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
         if (wback && BitIsSet (registers, n))
-            return false;  // I'm not sure this is right; how do I set R[n] to bits(32) UNKNOWN.
+            return WriteBits32Unknown (n);
     }
     return true;
 }
 
+// LDMIB loads multiple registers from consecutive memory locations using an address from a base register.  The 
+// consecutive memory locations start just above this address, and thea ddress of the last of those locations can 
+// optinoally be written back to the base register.
 bool
 EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
 {
@@ -2020,7 +2168,12 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
         // address = R[n] + 4;
                   
         int32_t offset = 0;
-        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success) + addr_byte_size;
+        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+                  
+        if (!success)
+            return false;
+                  
+        address = address + addr_byte_size;
                   
         EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
                                                 eRegisterKindDWARF,
@@ -2072,7 +2225,7 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
                   
         // if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
         if (wback && BitIsSet (registers, n))
-            return false;  // I'm not sure this is right; how do I set R[n] to bits(32) UNKNOWN.
+            return WriteBits32Unknown (n);
     }
     return true;
 }
@@ -2240,6 +2393,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // Load instructions
         //----------------------------------------------------------------------
         { 0x0fd00000, 0x08900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x08100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMDA, "ldmda<c> <Rn>{!} <registers>" },
         { 0x0fd00000, 0x09100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
         { 0x0fd00000, 0x09900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMIB, "ldmib<c> <Rn<{!} <registers>" }
         

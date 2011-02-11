@@ -138,7 +138,13 @@ public:
         // arg0 = current instruction set or don't care
         // arg1 = immediate data or don't care
         // arg2 = don't care
-        eContextSupervisorCall
+        eContextSupervisorCall,
+        
+        // Used when random bits are written into a register
+        // arg0 = target register kind
+        // arg1 = target register number
+        // arg2 = don't care
+        eContextWriteRegisterRandomBits
     };
     
     struct Context

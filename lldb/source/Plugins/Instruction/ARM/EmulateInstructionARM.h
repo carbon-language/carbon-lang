@@ -167,6 +167,9 @@ public:
     SelectInstrSet(Mode arm_or_thumb);
 
     bool
+    WriteBits32Unknown (int n);
+
+    bool
     UnalignedSupport();
 
     typedef struct
@@ -280,6 +283,9 @@ protected:
 
     bool
     EmulateLDM (ARMEncoding encoding);
+    
+    bool
+    EmulateLDMDA (ARMEncoding encoding);
     
     bool 
     EmulateLDMDB (ARMEncoding encoding);
