@@ -2833,12 +2833,46 @@ SDValue ARMTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
   EVT SrcVT = Tmp1.getValueType();
-  SDValue AbsVal = DAG.getNode(ISD::FABS, dl, VT, Tmp0);
-  SDValue ARMcc = DAG.getConstant(ARMCC::LT, MVT::i32);
-  SDValue FP0 = DAG.getConstantFP(0.0, SrcVT);
-  SDValue Cmp = getVFPCmp(Tmp1, FP0, DAG, dl);
+  bool F2IisFast = Subtarget->isCortexA9() ||
+    Tmp0.getOpcode() == ISD::BITCAST || Tmp0.getOpcode() == ARMISD::VMOVDRR;
+
+  // Bitcast operand 1 to i32.
+  if (SrcVT == MVT::f64)
+    Tmp1 = DAG.getNode(ARMISD::VMOVRRD, dl, DAG.getVTList(MVT::i32, MVT::i32),
+                       &Tmp1, 1).getValue(1);
+  Tmp1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Tmp1);
+
+  // If float to int conversion isn't going to be super expensive, then simply
+  // or in the signbit.
+  if (F2IisFast) {
+    SDValue Mask1 = DAG.getConstant(0x80000000, MVT::i32);
+    SDValue Mask2 = DAG.getConstant(0x7fffffff, MVT::i32);
+    Tmp1 = DAG.getNode(ISD::AND, dl, MVT::i32, Tmp1, Mask1);
+    if (VT == MVT::f32) {
+      Tmp0 = DAG.getNode(ISD::AND, dl, MVT::i32,
+                         DAG.getNode(ISD::BITCAST, dl, MVT::i32, Tmp0), Mask2);
+      return DAG.getNode(ISD::BITCAST, dl, MVT::f32,
+                         DAG.getNode(ISD::OR, dl, MVT::i32, Tmp0, Tmp1));
+    }
+
+    // f64: Or the high part with signbit and then combine two parts.
+    Tmp0 = DAG.getNode(ARMISD::VMOVRRD, dl, DAG.getVTList(MVT::i32, MVT::i32),
+                       &Tmp0, 1);
+    SDValue Lo = Tmp0.getValue(0);
+    SDValue Hi = DAG.getNode(ISD::AND, dl, MVT::i32, Tmp0.getValue(1), Mask2);
+    Hi = DAG.getNode(ISD::OR, dl, MVT::i32, Hi, Tmp1);
+    return DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, Lo, Hi);
+  }
+
+  // Remove the signbit of operand 0.
+  Tmp0 = DAG.getNode(ISD::FABS, dl, VT, Tmp0);
+
+  // If operand 1 signbit is one, then negate operand 0.
+  SDValue ARMcc;
+  SDValue Cmp = getARMCmp(Tmp1, DAG.getConstant(0, MVT::i32),
+                          ISD::SETLT, ARMcc, DAG, dl);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-  return DAG.getNode(ARMISD::CNEG, dl, VT, AbsVal, AbsVal, ARMcc, CCR, Cmp);
+  return DAG.getNode(ARMISD::CNEG, dl, VT, Tmp0, Tmp0, ARMcc, CCR, Cmp);
 }
 
 SDValue ARMTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const{
