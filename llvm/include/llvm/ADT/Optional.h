@@ -61,6 +61,60 @@ template <typename T>
 struct simplify_type<Optional<T> >
   : public simplify_type<const Optional<T> > {};
 
+/// \brief Poison comparison between two \c Optional objects. Clients needs to
+/// explicitly compare the underlying values and account for empty \c Optional
+/// objects.
+///
+/// This routine will never be defined. It returns \c void to help diagnose 
+/// errors at compile time.
+template<typename T, typename U>
+void operator==(const Optional<T> &X, const Optional<U> &Y);
+
+/// \brief Poison comparison between two \c Optional objects. Clients needs to
+/// explicitly compare the underlying values and account for empty \c Optional
+/// objects.
+///
+/// This routine will never be defined. It returns \c void to help diagnose 
+/// errors at compile time.
+template<typename T, typename U>
+void operator!=(const Optional<T> &X, const Optional<U> &Y);
+
+/// \brief Poison comparison between two \c Optional objects. Clients needs to
+/// explicitly compare the underlying values and account for empty \c Optional
+/// objects.
+///
+/// This routine will never be defined. It returns \c void to help diagnose 
+/// errors at compile time.
+template<typename T, typename U>
+void operator<(const Optional<T> &X, const Optional<U> &Y);
+
+/// \brief Poison comparison between two \c Optional objects. Clients needs to
+/// explicitly compare the underlying values and account for empty \c Optional
+/// objects.
+///
+/// This routine will never be defined. It returns \c void to help diagnose 
+/// errors at compile time.
+template<typename T, typename U>
+void operator<=(const Optional<T> &X, const Optional<U> &Y);
+
+/// \brief Poison comparison between two \c Optional objects. Clients needs to
+/// explicitly compare the underlying values and account for empty \c Optional
+/// objects.
+///
+/// This routine will never be defined. It returns \c void to help diagnose 
+/// errors at compile time.
+template<typename T, typename U>
+void operator>=(const Optional<T> &X, const Optional<U> &Y);
+
+/// \brief Poison comparison between two \c Optional objects. Clients needs to
+/// explicitly compare the underlying values and account for empty \c Optional
+/// objects.
+///
+/// This routine will never be defined. It returns \c void to help diagnose 
+/// errors at compile time.
+template<typename T, typename U>
+void operator>(const Optional<T> &X, const Optional<U> &Y);
+
 } // end llvm namespace
 
 #endif
