@@ -350,16 +350,19 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     MCContext Context(*_target->getMCAsmInfo(), NULL);
     Mangler mangler(Context, *_target->getTargetData());
     std::vector<const char*> mustPreserveList;
+    SmallString<64> Buffer;
     for (Module::iterator f = mergedModule->begin(),
          e = mergedModule->end(); f != e; ++f) {
+      mangler.getNameWithPrefix(Buffer, f, false);
       if (!f->isDeclaration() &&
-          _mustPreserveSymbols.count(mangler.getNameWithPrefix(f)))
+          _mustPreserveSymbols.count(Buffer))
         mustPreserveList.push_back(::strdup(f->getNameStr().c_str()));
     }
     for (Module::global_iterator v = mergedModule->global_begin(), 
          e = mergedModule->global_end(); v !=  e; ++v) {
+      mangler.getNameWithPrefix(Buffer, v, false);
       if (!v->isDeclaration() &&
-          _mustPreserveSymbols.count(mangler.getNameWithPrefix(v)))
+          _mustPreserveSymbols.count(Buffer))
         mustPreserveList.push_back(::strdup(v->getNameStr().c_str()));
     }
     passes.add(createInternalizePass(mustPreserveList));

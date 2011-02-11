@@ -224,16 +224,6 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   }
 }
 
-/// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
-/// and the specified global variable's name.  If the global variable doesn't
-/// have a name, this fills in a unique name for the global.
-std::string Mangler::getNameWithPrefix(const GlobalValue *GV,
-                                       bool isImplicitlyPrivate) {
-  SmallString<64> Buf;
-  getNameWithPrefix(Buf, GV, isImplicitlyPrivate);
-  return std::string(Buf.begin(), Buf.end());
-}
-
 /// getSymbol - Return the MCSymbol for the specified global value.  This
 /// symbol is the main label that is the address of the global.
 MCSymbol *Mangler::getSymbol(const GlobalValue *GV) {

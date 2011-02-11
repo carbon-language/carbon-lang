@@ -320,7 +320,9 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
     return;
 
   // string is owned by _defines
-  const char *symbolName = ::strdup(mangler.getNameWithPrefix(def).c_str());
+  SmallString<64> Buffer;
+  mangler.getNameWithPrefix(Buffer, def, false);
+  const char *symbolName = ::strdup(Buffer.c_str());
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
@@ -395,7 +397,8 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl,
   if (isa<GlobalAlias>(decl))
     return;
 
-  std::string name = mangler.getNameWithPrefix(decl);
+  SmallString<64> name;
+  mangler.getNameWithPrefix(name, decl, false);
 
   // we already have the symbol
   if (_undefines.find(name) != _undefines.end())
