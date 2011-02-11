@@ -2110,7 +2110,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Information for the class declaration.
   OS << "\n#ifdef GET_ASSEMBLER_HEADER\n";
   OS << "#undef GET_ASSEMBLER_HEADER\n";
-  OS << "  // This should be included into the middle of the declaration of \n";
+  OS << "  // This should be included into the middle of the declaration of\n";
   OS << "  // your subclasses implementation of TargetAsmParser.\n";
   OS << "  unsigned ComputeAvailableFeatures(const " <<
            Target.getName() << "Subtarget *Subtarget) const;\n";
@@ -2291,7 +2291,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "  // Some state to try to produce better error messages.\n";
   OS << "  bool HadMatchOtherThanFeatures = false;\n\n";
-  OS << "  // Set ErrorInfo to the operand that mismatches if it is \n";
+  OS << "  // Set ErrorInfo to the operand that mismatches if it is\n";
   OS << "  // wrong for all instances of the instruction.\n";
   OS << "  ErrorInfo = ~0U;\n";
 
