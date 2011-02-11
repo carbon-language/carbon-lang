@@ -94,8 +94,8 @@ const GRState *GRState::bindLoc(Loc LV, SVal V) const {
   const GRState *new_state = makeWithStore(new_store);
 
   const MemRegion *MR = LV.getAsRegion();
-  if (MR)
-    return Mgr.getOwningEngine().processRegionChange(new_state, MR);
+  if (MR && Mgr.getOwningEngine())
+    return Mgr.getOwningEngine()->processRegionChange(new_state, MR);
 
   return new_state;
 }
@@ -105,7 +105,9 @@ const GRState *GRState::bindDefault(SVal loc, SVal V) const {
   const MemRegion *R = cast<loc::MemRegionVal>(loc).getRegion();
   Store new_store = Mgr.StoreMgr->BindDefault(St, R, V);
   const GRState *new_state = makeWithStore(new_store);
-  return Mgr.getOwningEngine().processRegionChange(new_state, R);
+  return Mgr.getOwningEngine() ? 
+           Mgr.getOwningEngine()->processRegionChange(new_state, R) : 
+           new_state;
 }
 
 const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
@@ -114,9 +116,9 @@ const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
                                           StoreManager::InvalidatedSymbols *IS,
                                           bool invalidateGlobals) const {
   GRStateManager &Mgr = getStateManager();
-  SubEngine &Eng = Mgr.getOwningEngine();
-
-  if (Eng.wantsRegionChangeUpdate(this)) {
+  SubEngine* Eng = Mgr.getOwningEngine();
+ 
+  if (Eng && Eng->wantsRegionChangeUpdate(this)) {
     StoreManager::InvalidatedRegions Regions;
 
     Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,
@@ -125,9 +127,9 @@ const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
                                                       &Regions);
     const GRState *new_state = makeWithStore(new_store);
 
-    return Eng.processRegionChanges(new_state,
-                                    &Regions.front(),
-                                    &Regions.back()+1);
+    return Eng->processRegionChanges(new_state,
+                                     &Regions.front(),
+                                     &Regions.back()+1);
   }
 
   Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,

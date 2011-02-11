@@ -423,7 +423,7 @@ class GRStateManager {
   friend class ExprEngine; // FIXME: Remove.
 private:
   /// Eng - The SubEngine that owns this state manager.
-  SubEngine &Eng;
+  SubEngine *Eng; /* Can be null. */
 
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StoreMgr;
@@ -461,13 +461,26 @@ public:
                  ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc,
                  SubEngine &subeng)
-    : Eng(subeng),
+    : Eng(&subeng),
       EnvMgr(alloc),
       GDMFactory(alloc),
       svalBuilder(createSimpleSValBuilder(alloc, Ctx, *this)),
       Alloc(alloc) {
     StoreMgr.reset((*CreateStoreManager)(*this));
     ConstraintMgr.reset((*CreateConstraintManager)(*this, subeng));
+  }
+
+  GRStateManager(ASTContext& Ctx,
+                 StoreManagerCreator CreateStoreManager,
+                 ConstraintManager* ConstraintManagerPtr,
+                 llvm::BumpPtrAllocator& alloc)
+    : Eng(0),
+      EnvMgr(alloc),
+      GDMFactory(alloc),
+      svalBuilder(createSimpleSValBuilder(alloc, Ctx, *this)),
+      Alloc(alloc) {
+    StoreMgr.reset((*CreateStoreManager)(*this));
+    ConstraintMgr.reset(ConstraintManagerPtr);
   }
 
   ~GRStateManager();
@@ -506,7 +519,7 @@ public:
 
   StoreManager& getStoreManager() { return *StoreMgr; }
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
-  SubEngine& getOwningEngine() { return Eng; }
+  SubEngine* getOwningEngine() { return Eng; }
 
   const GRState* removeDeadBindings(const GRState* St,
                                     const StackFrameContext *LCtx,
