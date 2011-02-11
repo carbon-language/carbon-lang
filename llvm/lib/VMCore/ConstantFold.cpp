@@ -42,6 +42,10 @@ using namespace llvm;
 /// input vector constant are all simple integer or FP values.
 static Constant *BitCastConstantVector(ConstantVector *CV,
                                        const VectorType *DstTy) {
+
+  if (CV->isAllOnesValue()) return Constant::getAllOnesValue(DstTy);
+  if (CV->isNullValue()) return Constant::getNullValue(DstTy);
+
   // If this cast changes element count then we can't handle it here:
   // doing so requires endianness information.  This should be handled by
   // Analysis/ConstantFolding.cpp
@@ -688,6 +692,42 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
                                               Constant *V1, Constant *V2) {
   if (ConstantInt *CB = dyn_cast<ConstantInt>(Cond))
     return CB->getZExtValue() ? V1 : V2;
+
+  // Check for zero aggregate and ConstantVector of zeros
+  if (Cond->isNullValue()) return V2;
+
+  if (ConstantVector* CondV = dyn_cast<ConstantVector>(Cond)) {
+
+    if (CondV->isAllOnesValue()) return V1;
+
+    const VectorType *VTy = cast<VectorType>(V1->getType());
+    ConstantVector *CP1 = dyn_cast<ConstantVector>(V1);
+    ConstantVector *CP2 = dyn_cast<ConstantVector>(V2);
+
+    if ((CP1 || isa<ConstantAggregateZero>(V1)) &&
+        (CP2 || isa<ConstantAggregateZero>(V2))) {
+
+      // Find the element type of the returned vector
+      const Type *EltTy = VTy->getElementType();
+      unsigned NumElem = VTy->getNumElements();
+      std::vector<Constant*> Res(NumElem);
+
+      bool Valid = true;
+      for (unsigned i = 0; i < NumElem; ++i) {
+        ConstantInt* c = dyn_cast<ConstantInt>(CondV->getOperand(i));
+        if (!c) {
+          Valid = false;
+          break;
+        }
+        Constant *C1 = CP1 ? CP1->getOperand(i) : Constant::getNullValue(EltTy);
+        Constant *C2 = CP2 ? CP2->getOperand(i) : Constant::getNullValue(EltTy);
+        Res[i] = c->getZExtValue() ? C1 : C2;
+      }
+      // If we were able to build the vector, return it
+      if (Valid) return ConstantVector::get(Res);
+    }
+  }
+
 
   if (isa<UndefValue>(V1)) return V2;
   if (isa<UndefValue>(V2)) return V1;
