@@ -28,26 +28,80 @@ using namespace ento;
 
 namespace {
 
+// FIXME: Eventually migrate into its own file, and have it managed by
+// AnalysisManager.
+class ReachableCode {
+  const CFG &cfg;
+  llvm::BitVector reachable;
+public:
+  ReachableCode(const CFG &cfg)
+    : cfg(cfg), reachable(cfg.getNumBlockIDs(), false) {}
+  
+  void computeReachableBlocks();
+  
+  bool isReachable(const CFGBlock *block) const {
+    return reachable[block->getBlockID()];
+  }
+};
+}
+
+void ReachableCode::computeReachableBlocks() {
+  if (!cfg.getNumBlockIDs())
+    return;
+  
+  llvm::SmallVector<const CFGBlock*, 10> worklist;
+  worklist.push_back(&cfg.getEntry());
+  
+  while (!worklist.empty()) {
+    const CFGBlock *block = worklist.back();
+    worklist.pop_back();
+    llvm::BitVector::reference isReachable = reachable[block->getBlockID()];
+    if (isReachable)
+      continue;
+    isReachable = true;
+    for (CFGBlock::const_succ_iterator i = block->succ_begin(),
+                                       e = block->succ_end(); i != e; ++i)
+      if (const CFGBlock *succ = *i)
+        worklist.push_back(succ);
+  }
+}
+
+namespace {
 class DeadStoreObs : public LiveVariables::ObserverTy {
+  const CFG &cfg;
   ASTContext &Ctx;
   BugReporter& BR;
   ParentMap& Parents;
   llvm::SmallPtrSet<VarDecl*, 20> Escaped;
+  llvm::OwningPtr<ReachableCode> reachableCode;
+  const CFGBlock *currentBlock;
 
   enum DeadStoreKind { Standard, Enclosing, DeadIncrement, DeadInit };
 
 public:
-  DeadStoreObs(ASTContext &ctx, BugReporter& br, ParentMap& parents,
+  DeadStoreObs(const CFG &cfg, ASTContext &ctx,
+               BugReporter& br, ParentMap& parents,
                llvm::SmallPtrSet<VarDecl*, 20> &escaped)
-    : Ctx(ctx), BR(br), Parents(parents), Escaped(escaped) {}
+    : cfg(cfg), Ctx(ctx), BR(br), Parents(parents),
+      Escaped(escaped), currentBlock(0) {}
 
   virtual ~DeadStoreObs() {}
 
   void Report(VarDecl* V, DeadStoreKind dsk, SourceLocation L, SourceRange R) {
     if (Escaped.count(V))
       return;
+    
+    // Compute reachable blocks within the CFG for trivial cases
+    // where a bogus dead store can be reported because itself is unreachable.
+    if (!reachableCode.get()) {
+      reachableCode.reset(new ReachableCode(cfg));
+      reachableCode->computeReachableBlocks();
+    }
+    
+    if (!reachableCode->isReachable(currentBlock))
+      return;
 
-    std::string name = V->getNameAsString();
+    const std::string &name = V->getNameAsString();
 
     const char* BugType = 0;
     std::string msg;
@@ -127,10 +181,12 @@ public:
     return false;
   }
 
-  virtual void ObserveStmt(Stmt* S,
+  virtual void ObserveStmt(Stmt* S, const CFGBlock *block,
                            const LiveVariables::AnalysisDataTy& AD,
                            const LiveVariables::ValTy& Live) {
 
+    currentBlock = block;
+    
     // Skip statements in macros.
     if (S->getLocStart().isMacroID())
       return;
@@ -284,6 +340,6 @@ void ento::CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &pmap,
                             BugReporter& BR) {
   FindEscaped FS(&cfg);
   FS.getCFG().VisitBlockStmts(FS);
-  DeadStoreObs A(BR.getContext(), BR, pmap, FS.Escaped);
+  DeadStoreObs A(cfg, BR.getContext(), BR, pmap, FS.Escaped);
   L.runOnAllBlocks(cfg, &A);
 }

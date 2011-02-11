@@ -104,8 +104,9 @@ namespace {
 class TransferFuncs : public CFGRecStmtVisitor<TransferFuncs>{
   LiveVariables::AnalysisDataTy& AD;
   LiveVariables::ValTy LiveState;
+  const CFGBlock *currentBlock;
 public:
-  TransferFuncs(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}
+  TransferFuncs(LiveVariables::AnalysisDataTy& ad) : AD(ad), currentBlock(0) {}
 
   LiveVariables::ValTy& getVal() { return LiveState; }
   CFG& getCFG() { return AD.getCFG(); }
@@ -128,7 +129,10 @@ public:
   void SetTopValue(LiveVariables::ValTy& V) {
     V = AD.AlwaysLive;
   }
-
+  
+  void setCurrentBlock(const CFGBlock *block) {
+    currentBlock = block;
+  }
 };
 
 void TransferFuncs::Visit(Stmt *S) {
@@ -136,7 +140,7 @@ void TransferFuncs::Visit(Stmt *S) {
   if (S == getCurrentBlkStmt()) {
 
     if (AD.Observer)
-      AD.Observer->ObserveStmt(S,AD,LiveState);
+      AD.Observer->ObserveStmt(S, currentBlock, AD, LiveState);
 
     if (getCFG().isBlkExpr(S))
       LiveState(S, AD) = Dead;
@@ -146,7 +150,7 @@ void TransferFuncs::Visit(Stmt *S) {
   else if (!getCFG().isBlkExpr(S)) {
 
     if (AD.Observer)
-      AD.Observer->ObserveStmt(S,AD,LiveState);
+      AD.Observer->ObserveStmt(S, currentBlock, AD, LiveState);
 
     StmtVisitor<TransferFuncs,void>::Visit(S);
 

@@ -273,6 +273,8 @@ private:
   void ProcessBlock(const CFGBlock* B, bool recordStmtValues,
                     dataflow::forward_analysis_tag) {
 
+    TF.setCurrentBlock(B);
+    
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {
       CFGElement El = *I;
       if (CFGStmt S = El.getAs<CFGStmt>())
@@ -285,6 +287,8 @@ private:
   void ProcessBlock(const CFGBlock* B, bool recordStmtValues,
                     dataflow::backward_analysis_tag) {
 
+    TF.setCurrentBlock(B);
+    
     TF.VisitTerminator(const_cast<CFGBlock*>(B));
 
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {

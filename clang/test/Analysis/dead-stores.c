@@ -175,13 +175,35 @@ int f18() {
       x = 10;  // expected-warning{{Value stored to 'x' is never read}}
    while (1)
       x = 10;  // expected-warning{{Value stored to 'x' is never read}}
+   // unreachable.
    do
-      x = 10;   // expected-warning{{Value stored to 'x' is never read}}
+      x = 10;   // no-warning
    while (1);
-
-   // Don't warn for dead stores in nested expressions.  We have yet
-   // to see a real bug in this scenario.
    return (x = 10); // no-warning
+}
+
+int f18_a() {
+   int x = 0; // no-warning
+   return (x = 10); // no-warning
+}
+
+void f18_b() {
+   int x = 0; // no-warning
+   if (1)
+      x = 10;  // expected-warning{{Value stored to 'x' is never read}}
+}
+
+void f18_c() {
+  int x = 0;
+  while (1)
+     x = 10;  // expected-warning{{Value stored to 'x' is never read}}
+}
+
+void f18_d() {
+  int x = 0; // no-warning
+  do
+     x = 10;   // expected-warning{{Value stored to 'x' is never read}}
+  while (1);
 }
 
 // PR 3514: false positive `dead initialization` warning for init to global
@@ -490,5 +512,18 @@ void rdar8320674(s_rdar8320674 *z, unsigned y, s2_rdar8320674 *st, int m)
         ++z2;
         ++z;
     }while (--m);
+}
+
+// Avoid dead stores resulting from an assignment (and use) being unreachable.
+void rdar8405222_aux(int i);
+void rdar8405222() {
+  const int show = 0;
+  int i = 0;
+    
+  if (show)
+      i = 5; // no-warning
+
+  if (show)
+    rdar8405222_aux(i);
 }
 

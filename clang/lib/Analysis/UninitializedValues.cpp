@@ -79,6 +79,8 @@ public:
   bool BlockStmt_VisitExpr(Expr* E);
 
   void VisitTerminator(CFGBlock* B) { }
+    
+  void setCurrentBlock(const CFGBlock *block) {}
 };
 
 static const bool Initialized = false;

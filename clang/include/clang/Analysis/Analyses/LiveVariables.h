@@ -55,7 +55,8 @@ struct LiveVariables_ValueTypes {
 
     /// ObserveStmt - A callback invoked right before invoking the
     ///  liveness transfer function on the given statement.
-    virtual void ObserveStmt(Stmt* S, const AnalysisDataTy& AD,
+    virtual void ObserveStmt(Stmt* S, const CFGBlock *currentBlock,
+                             const AnalysisDataTy& AD,
                              const ValTy& V) {}
 
     virtual void ObserverKill(DeclRefExpr* DR) {}

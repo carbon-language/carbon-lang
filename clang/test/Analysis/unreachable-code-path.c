@@ -114,9 +114,9 @@ void test10() {
   goto b; // expected-warning {{never executed}}
   goto a; // expected-warning {{never executed}}
   b:
-  i = 1; // expected-warning {{Value stored to 'i' is never read}}
+  i = 1; // no-warning
   a:
-  i = 2; // expected-warning {{Value stored to 'i' is never read}}
+  i = 2;  // no-warning
   goto f;
   e:
   goto d;
