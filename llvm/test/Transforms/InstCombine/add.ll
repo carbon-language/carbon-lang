@@ -276,18 +276,26 @@ define i32 @test36(i32 %a) {
 	ret i32 %q
 }
 
-define i32 @test37(i32 %a, i32 %b) nounwind readnone {
-entry:
-  %add = add nsw i32 %a, %b
+define i1 @test37(i32 %a, i32 %b) nounwind readnone {
+  %add = add i32 %a, %b
   %cmp = icmp eq i32 %add, %a
-  %conv = zext i1 %cmp to i32
-  ret i32 %conv
+  ret i1 %cmp
 }
 
-define i32 @test38(i32 %a, i32 %b) nounwind readnone {
-entry:
-  %add = add nsw i32 %a, %b
+define i1 @test38(i32 %a, i32 %b) nounwind readnone {
+  %add = add i32 %a, %b
+  %cmp = icmp eq i32 %add, %b
+  ret i1 %cmp
+}
+
+define i1 @test39(i32 %a, i32 %b) nounwind readnone {
+  %add = add i32 %b, %a
   %cmp = icmp eq i32 %add, %a
-  %conv = zext i1 %cmp to i32
-  ret i32 %conv
+  ret i1 %cmp
+}
+
+define i1 @test40(i32 %a, i32 %b) nounwind readnone {
+  %add = add i32 %b, %a
+  %cmp = icmp eq i32 %add, %b
+  ret i1 %cmp
 }

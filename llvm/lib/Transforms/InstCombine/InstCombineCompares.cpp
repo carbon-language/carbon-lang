@@ -2351,12 +2351,14 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                           Constant::getNullValue(B->getType()));
 
     // (A+B) == A  ->  B == 0
-    if (match(Op0, m_Add(m_Specific(Op1), m_Value(B))))
+    if (match(Op0, m_Add(m_Specific(Op1), m_Value(B))) ||
+        match(Op0, m_Add(m_Value(B), m_Specific(Op1))))
       return new ICmpInst(I.getPredicate(), B,
                           Constant::getNullValue(B->getType()));
 
     // A == (A+B)  ->  B == 0
-    if (match(Op1, m_Add(m_Specific(Op0), m_Value(B))))
+    if (match(Op1, m_Add(m_Specific(Op0), m_Value(B))) ||
+        match(Op1, m_Add(m_Value(B), m_Specific(Op0))))
       return new ICmpInst(I.getPredicate(), B,
                           Constant::getNullValue(B->getType()));
 
