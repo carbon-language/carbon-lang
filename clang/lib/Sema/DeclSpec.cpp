@@ -226,7 +226,25 @@ const char *DeclSpec::getSpecifierName(TQ T) {
 
 bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
                                    const char *&PrevSpec,
-                                   unsigned &DiagID) {
+                                   unsigned &DiagID,
+                                   const LangOptions &Lang) {
+  // OpenCL prohibits extern, auto, register, and static
+  // It seems sensible to prohibit private_extern too
+  if (Lang.OpenCL) {
+    switch (S) {
+    case SCS_extern:
+    case SCS_private_extern:
+    case SCS_auto:
+    case SCS_register:
+    case SCS_static:
+      DiagID   = diag::err_not_opencl_storage_class_specifier;
+      PrevSpec = getSpecifierName(S);
+      return true;
+    default:
+      break;
+    }
+  }
+
   if (StorageClassSpec != SCS_unspecified) {
     // Changing storage class is allowed only if the previous one
     // was the 'extern' that is part of a linkage specification and

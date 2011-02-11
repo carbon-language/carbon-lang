@@ -443,5 +443,9 @@ def warn_pragma_unused_expected_var : Warning<
 def warn_pragma_unused_expected_punc : Warning<
   "expected ')' or ',' in '#pragma unused'">;
 
+// OpenCL Section 6.8.g
+def err_not_opencl_storage_class_specifier : Error<
+  "OpenCL does not support the '%0' storage class specifier">;
+
 } // end of Parse Issue category.
 } // end of Parser diagnostics

@@ -1922,7 +1922,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 
       // Recover by adding 'static'.
       DS.SetStorageClassSpec(DeclSpec::SCS_static, SourceLocation(),
-                             PrevSpec, DiagID);
+                             PrevSpec, DiagID, getLangOptions());
     }
     // C++ [class.union]p3:
     //   A storage class is not allowed in a declaration of an
@@ -1935,7 +1935,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 
       // Recover by removing the storage specifier.
       DS.SetStorageClassSpec(DeclSpec::SCS_unspecified, SourceLocation(),
-                             PrevSpec, DiagID);
+                             PrevSpec, DiagID, getLangOptions());
     }
 
     // C++ [class.union]p2:

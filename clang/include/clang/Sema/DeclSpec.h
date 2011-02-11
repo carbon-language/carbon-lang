@@ -403,7 +403,7 @@ public:
   /// TODO: use a more general approach that still allows these
   /// diagnostics to be ignored when desired.
   bool SetStorageClassSpec(SCS S, SourceLocation Loc, const char *&PrevSpec,
-                           unsigned &DiagID);
+                           unsigned &DiagID, const LangOptions &Lang);
   bool SetStorageClassSpecThread(SourceLocation Loc, const char *&PrevSpec,
                                  unsigned &DiagID);
   bool SetTypeSpecWidth(TSW W, SourceLocation Loc, const char *&PrevSpec,
