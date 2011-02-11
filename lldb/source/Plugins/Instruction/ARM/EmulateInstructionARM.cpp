@@ -2411,10 +2411,6 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // Epilogue instructions
         //----------------------------------------------------------------------
 
-        // To resolve ambiguity, "blx <label>" should come before "bl <label>".
-        { 0xfe000000, 0xfa000000, ARMV5_ABOVE,   eEncodingA2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
-        { 0x0f000000, 0x0b000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
-        { 0x0ffffff0, 0x012fff30, ARMV5_ABOVE,   eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
         { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePop, "pop <register>"},
         { 0x0fbf0f00, 0x0cbd0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
@@ -2429,6 +2425,10 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // Branch instructions
         //----------------------------------------------------------------------
         { 0x0f000000, 0x0a000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "b #imm24"},
+        // To resolve ambiguity, "blx <label>" should come before "bl <label>".
+        { 0xfe000000, 0xfa000000, ARMV5_ABOVE,   eEncodingA2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
+        { 0x0f000000, 0x0b000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
+        { 0x0ffffff0, 0x012fff30, ARMV5_ABOVE,   eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
 
         //----------------------------------------------------------------------
         // Load instructions
@@ -2491,11 +2491,6 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
-        { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
-        // J1 == J2 == 1
-        { 0xf800f800, 0xf000f800, ARMV4T_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
-        // J1 == J2 == 1
-        { 0xf800e800, 0xf000e800, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
         { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
         { 0xffff0000, 0xe8bd0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
         { 0xffff0fff, 0xf85d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <register>" },
@@ -2520,6 +2515,11 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffff8000, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b #imm11 (outside or last in IT)"},
         { 0xf800d000, 0xf0008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
         { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b.w #imm8 (outside or last in IT)"},
+        // J1 == J2 == 1
+        { 0xf800f800, 0xf000f800, ARMV4T_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
+        // J1 == J2 == 1
+        { 0xf800e800, 0xf000e800, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
+        { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         // compare and branch
         { 0xfffff500, 0x0000b100, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCB, "cb{n}z <Rn>, <label>"},
 
