@@ -616,11 +616,6 @@ protected:
       DataSize(0), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
       PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
-  // FIXME: Remove this.
-  uint64_t toOffset(CharUnits Offset) const {
-    return Offset.getQuantity() * Context.getCharWidth();
-  }
-  
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);
@@ -1091,14 +1086,13 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   // If we have an empty base class, try to place it at offset 0.
   if (Base->Class->isEmpty() &&
       EmptySubobjects->CanPlaceBaseAtOffset(Base, CharUnits::Zero())) {
-    Size = std::max(Size, 
-                    Layout.getSize().getQuantity() * Context.getCharWidth());
+    uint64_t RecordSizeInBits = Context.toBits(Layout.getSize());
+    Size = std::max(Size, RecordSizeInBits);
 
     return CharUnits::Zero();
   }
 
-  unsigned UnpackedBaseAlign = 
-    Layout.getNonVirtualAlign().getQuantity() * Context.getCharWidth();
+  unsigned UnpackedBaseAlign = Context.toBits(Layout.getNonVirtualAlign());
   unsigned BaseAlign = (Packed) ? 8 : UnpackedBaseAlign;
 
   // The maximum field alignment overrides base align.
@@ -1117,13 +1111,11 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
 
   if (!Base->Class->isEmpty()) {
     // Update the data size.
-    DataSize = Offset + 
-      (Layout.getNonVirtualSize().getQuantity() * Context.getCharWidth());
+    DataSize = Offset + Context.toBits(Layout.getNonVirtualSize());
 
     Size = std::max(Size, DataSize);
   } else
-    Size = std::max(Size, 
-            Offset + (Layout.getSize().getQuantity() * Context.getCharWidth()));
+    Size = std::max(Size, Offset + Context.toBits(Layout.getSize()));
 
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign, UnpackedBaseAlign);
@@ -1885,7 +1877,7 @@ void ASTContext::DumpRecordLayout(const RecordDecl *RD,
   RD->dump();
   OS << "\nLayout: ";
   OS << "<ASTRecordLayout\n";
-  OS << "  Size:" << Info.getSize().getQuantity() * getCharWidth() << "\n";
+  OS << "  Size:" << toBits(Info.getSize()) << "\n";
   OS << "  DataSize:" << Info.getDataSize() << "\n";
   OS << "  Alignment:" << Info.getAlignment() << "\n";
   OS << "  FieldOffsets: [";

@@ -1015,6 +1015,9 @@ public:
   /// toCharUnitsFromBits - Convert a size in bits to a size in characters.
   CharUnits toCharUnitsFromBits(int64_t BitSize) const;
 
+  /// toBits - Convert a size in characters to a size in bits.
+  int64_t toBits(CharUnits CharSize) const;
+
   /// getTypeSizeInChars - Return the size of the specified type, in characters.
   /// This method does not work on incomplete types.
   CharUnits getTypeSizeInChars(QualType T) const;

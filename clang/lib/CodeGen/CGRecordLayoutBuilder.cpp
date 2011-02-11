@@ -300,8 +300,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
                                         uint64_t FieldSize) {
   const RecordDecl *RD = FD->getParent();
   const ASTRecordLayout &RL = Types.getContext().getASTRecordLayout(RD);
-  uint64_t ContainingTypeSizeInBits = 
-    RL.getSize().getQuantity() * Types.getContext().getCharWidth();
+  uint64_t ContainingTypeSizeInBits = Types.getContext().toBits(RL.getSize());
   unsigned ContainingTypeAlign = RL.getAlignment();
 
   return MakeInfo(Types, FD, FieldOffset, FieldSize, ContainingTypeSizeInBits,
@@ -689,8 +688,7 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   }
   
   // Append tail padding if necessary.
-  AppendTailPadding(
-    Layout.getSize().getQuantity() * Types.getContext().getCharWidth());
+  AppendTailPadding(Types.getContext().toBits(Layout.getSize()));
 
   return true;
 }
@@ -855,8 +853,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
   // Verify that the computed LLVM struct size matches the AST layout size.
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(D);
 
-  uint64_t TypeSizeInBits = 
-    Layout.getSize().getQuantity() * getContext().getCharWidth();
+  uint64_t TypeSizeInBits = getContext().toBits(Layout.getSize());
   assert(TypeSizeInBits == getTargetData().getTypeAllocSizeInBits(Ty) &&
          "Type size mismatch!");
 
@@ -867,7 +864,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
       NonVirtualSize.RoundUpToAlignment(NonVirtualAlign);
 
     uint64_t AlignedNonVirtualTypeSizeInBits = 
-      AlignedNonVirtualTypeSize.getQuantity() * getContext().getCharWidth();
+      getContext().toBits(AlignedNonVirtualTypeSize);
 
     assert(AlignedNonVirtualTypeSizeInBits == 
            getTargetData().getTypeAllocSizeInBits(BaseTy) &&

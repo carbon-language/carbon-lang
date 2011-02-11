@@ -131,8 +131,7 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // a synthesized ivar can never be a bit-field, so this is safe.
   const ASTRecordLayout &RL =
     CGF.CGM.getContext().getASTObjCInterfaceLayout(OID);
-  uint64_t TypeSizeInBits = 
-    RL.getSize().getQuantity() * CGF.CGM.getContext().getCharWidth();
+  uint64_t TypeSizeInBits = CGF.CGM.getContext().toBits(RL.getSize());
   uint64_t FieldBitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar);
   uint64_t BitOffset = FieldBitOffset % 8;
   uint64_t ContainingTypeAlign = 8;

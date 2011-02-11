@@ -394,8 +394,7 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
   }
 
   // Append tail padding if necessary.
-  AppendTailPadding(
-    Layout.getSize().getQuantity() * CGM.getContext().getCharWidth());
+  AppendTailPadding(CGM.getContext().toBits(Layout.getSize()));
 
   assert(Layout.getSize().getQuantity() == NextFieldOffsetInBytes &&
          "Tail padding mismatch!");
