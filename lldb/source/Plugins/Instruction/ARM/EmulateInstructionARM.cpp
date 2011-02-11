@@ -2595,6 +2595,27 @@ EmulateInstructionARM::UnalignedSupport()
     return (ArchVersion() >= ARMv7);
 }
 
+// The main addition and subtraction instructions can produce status information
+// about both unsigned carry and signed overflow conditions.  This status
+// information can be used to synthesize multi-word additions and subtractions.
+EmulateInstructionARM::AddWithCarryResult
+EmulateInstructionARM::AddWithCarry (uint32_t x, uint32_t y, uint8_t carry_in)
+{
+    uint32_t result;
+    uint8_t carry_out;
+    uint8_t overflow;
+
+    uint64_t unsigned_sum = x + y + carry_in;
+    int64_t signed_sum = (int32_t)x + (int32_t)y + (int32_t)carry_in;
+    
+    result = UnsignedBits(unsigned_sum, 31, 0);
+    carry_out = (result == unsigned_sum ? 0 : 1);
+    overflow = ((int32_t)result == signed_sum ? 0 : 1);
+    
+    AddWithCarryResult res = { result, carry_out, overflow };
+    return res;
+}
+
 bool
 EmulateInstructionARM::EvaluateInstruction ()
 {

@@ -169,6 +169,16 @@ public:
     bool
     UnalignedSupport();
 
+    typedef struct
+    {
+        uint32_t result;
+        uint8_t carry_out;
+        uint8_t overflow;
+    } AddWithCarryResult;
+
+    AddWithCarryResult
+    AddWithCarry(uint32_t x, uint32_t y, uint8_t carry_in);
+
 protected:
 
     // Typedef for the callback function used during the emulation.
