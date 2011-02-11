@@ -2054,7 +2054,8 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
       Indices.push_back(Val);
     }
     Replacement = ConstantExpr::getGetElementPtr(Pointer,
-                                                 &Indices[0], Indices.size());
+                                                 &Indices[0], Indices.size(),
+                                         cast<GEPOperator>(this)->isInBounds());
   } else if (getOpcode() == Instruction::ExtractValue) {
     Constant *Agg = getOperand(0);
     if (Agg == From) Agg = To;
