@@ -36,8 +36,8 @@ class ASTRecordLayout {
   /// Size - Size of record in characters.
   CharUnits Size;
 
-  /// DataSize - Size of record in bits without tail padding.
-  uint64_t DataSize;
+  /// DataSize - Size of record in characters without tail padding.
+  CharUnits DataSize;
 
   /// FieldOffsets - Array of field offsets in bits.
   uint64_t *FieldOffsets;
@@ -83,13 +83,13 @@ class ASTRecordLayout {
   friend class ASTContext;
 
   ASTRecordLayout(const ASTContext &Ctx, CharUnits size, unsigned alignment,
-                  unsigned datasize, const uint64_t *fieldoffsets,
+                  CharUnits datasize, const uint64_t *fieldoffsets,
                   unsigned fieldcount);
 
   // Constructor for C++ records.
   typedef CXXRecordLayoutInfo::BaseOffsetsMapTy BaseOffsetsMapTy;
   ASTRecordLayout(const ASTContext &Ctx,
-                  CharUnits size, unsigned alignment, uint64_t datasize,
+                  CharUnits size, unsigned alignment, CharUnits datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   CharUnits nonvirtualsize, CharUnits nonvirtualalign,
                   CharUnits SizeOfLargestEmptySubobject,
@@ -123,8 +123,8 @@ public:
   }
 
   /// getDataSize() - Get the record data size, which is the record size
-  /// without tail padding, in bits.
-  uint64_t getDataSize() const {
+  /// without tail padding, in characters.
+  CharUnits getDataSize() const {
     return DataSize;
   }
 

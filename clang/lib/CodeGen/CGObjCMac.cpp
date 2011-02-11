@@ -4950,7 +4950,7 @@ void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
     CGM.getContext().getASTObjCImplementationLayout(OID);
 
   // InstanceSize is really instance end.
-  InstanceSize = llvm::RoundUpToAlignment(RL.getDataSize(), 8) / 8;
+  InstanceSize = RL.getDataSize().getQuantity();
 
   // If there are no fields, the start is the same as the end.
   if (!RL.getFieldCount())

@@ -1207,7 +1207,7 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
 
     // We start laying out ivars not at the end of the superclass
     // structure, but at the next byte following the last field.
-    Size = llvm::RoundUpToAlignment(SL.getDataSize(), 8);
+    Size = Context.toBits(SL.getDataSize());
     DataSize = Size;
   }
 
@@ -1684,7 +1684,8 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     CharUnits RecordSize = toCharUnitsFromBits(Builder->Size);
     NewEntry =
       new (*this) ASTRecordLayout(*this, RecordSize, Builder->Alignment,
-                                  DataSize, Builder->FieldOffsets.data(),
+                                  toCharUnitsFromBits(DataSize), 
+                                  Builder->FieldOffsets.data(),
                                   Builder->FieldOffsets.size(),
                                   toCharUnitsFromBits(NonVirtualSize),
                                   toCharUnitsFromBits(NonVirtualAlign),
@@ -1700,7 +1701,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
     NewEntry =
       new (*this) ASTRecordLayout(*this, RecordSize, Builder.Alignment,
-                                  Builder.Size,
+                                  toCharUnitsFromBits(Builder.Size),
                                   Builder.FieldOffsets.data(),
                                   Builder.FieldOffsets.size());
   }
@@ -1760,7 +1761,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
   const ASTRecordLayout *NewEntry =
     new (*this) ASTRecordLayout(*this, RecordSize, Builder.Alignment,
-                                Builder.DataSize,
+                                toCharUnitsFromBits(Builder.DataSize),
                                 Builder.FieldOffsets.data(),
                                 Builder.FieldOffsets.size());
 
@@ -1857,7 +1858,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
   }
 
   OS << "  sizeof=" << Layout.getSize().getQuantity();
-  OS << ", dsize=" << Layout.getDataSize() / 8;
+  OS << ", dsize=" << Layout.getDataSize().getQuantity();
   OS << ", align=" << Layout.getAlignment() / 8 << '\n';
   OS << "  nvsize=" << Layout.getNonVirtualSize().getQuantity();
   OS << ", nvalign=" << Layout.getNonVirtualAlign().getQuantity() << '\n';
@@ -1878,7 +1879,7 @@ void ASTContext::DumpRecordLayout(const RecordDecl *RD,
   OS << "\nLayout: ";
   OS << "<ASTRecordLayout\n";
   OS << "  Size:" << toBits(Info.getSize()) << "\n";
-  OS << "  DataSize:" << Info.getDataSize() << "\n";
+  OS << "  DataSize:" << toBits(Info.getDataSize()) << "\n";
   OS << "  Alignment:" << Info.getAlignment() << "\n";
   OS << "  FieldOffsets: [";
   for (unsigned i = 0, e = Info.getFieldCount(); i != e; ++i) {
