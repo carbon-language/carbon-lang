@@ -1,4 +1,4 @@
-\Low Level Virtual Machine (LLVM)
+Low Level Virtual Machine (LLVM)
 ================================
 
 This directory and its subdirectories contain source code for the Low Level
