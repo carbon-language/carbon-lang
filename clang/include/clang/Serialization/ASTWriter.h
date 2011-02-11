@@ -184,6 +184,9 @@ private:
   /// defined.
   llvm::DenseMap<const IdentifierInfo *, uint64_t> MacroOffsets;
 
+  /// \brief The set of identifiers that had macro definitions at some point.
+  std::vector<const IdentifierInfo *> DeserializedMacroNames;
+                    
   /// \brief The first ID number we can use for our own macro definitions.
   serialization::MacroID FirstMacroID;
   

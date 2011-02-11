@@ -1536,7 +1536,8 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   llvm::SmallVector<std::pair<const IdentifierInfo *, MacroInfo *>, 2> 
     MacrosToEmit;
   llvm::SmallPtrSet<const IdentifierInfo*, 4> MacroDefinitionsSeen;
-  for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
+  for (Preprocessor::macro_iterator I = PP.macro_begin(Chain == 0), 
+                                    E = PP.macro_end(Chain == 0);
        I != E; ++I) {
     MacroDefinitionsSeen.insert(I->first);
     MacrosToEmit.push_back(std::make_pair(I->first, I->second));
@@ -1547,10 +1548,21 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   llvm::array_pod_sort(MacrosToEmit.begin(), MacrosToEmit.end(), 
                        &compareMacroDefinitions);
   
+  // Resolve any identifiers that defined macros at the time they were
+  // deserialized, adding them to the list of macros to emit (if appropriate).
+  for (unsigned I = 0, N = DeserializedMacroNames.size(); I != N; ++I) {
+    IdentifierInfo *Name
+      = const_cast<IdentifierInfo *>(DeserializedMacroNames[I]);
+    if (Name->hasMacroDefinition() && MacroDefinitionsSeen.insert(Name))
+      MacrosToEmit.push_back(std::make_pair(Name, PP.getMacroInfo(Name)));
+  }
+  
   for (unsigned I = 0, N = MacrosToEmit.size(); I != N; ++I) {
     const IdentifierInfo *Name = MacrosToEmit[I].first;
     MacroInfo *MI = MacrosToEmit[I].second;
-
+    if (!MI)
+      continue;
+    
     // Don't emit builtin macros like __LINE__ to the AST file unless they have
     // been redefined by the header (in which case they are not isBuiltinMacro).
     // Also skip macros from a AST file if we're chaining.
@@ -1603,7 +1615,6 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
       // FIXME: When reading literal tokens, reconstruct the literal pointer if
       // it is needed.
       AddIdentifierRef(Tok.getIdentifierInfo(), Record);
-
       // FIXME: Should translate token kind to a stable encoding.
       Record.push_back(Tok.getKind());
       // FIXME: Should translate token flags to a stable encoding.
@@ -3681,6 +3692,8 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
   IdentifierIDs[II] = ID;
+  if (II->hasMacroDefinition())
+    DeserializedMacroNames.push_back(II);
 }
 
 void ASTWriter::TypeRead(TypeIdx Idx, QualType T) {
