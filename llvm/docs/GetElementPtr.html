@@ -598,13 +598,27 @@ idx3 = (char*) &amp;MyVar + 8
   <a name="overflow"><b>What happens if a GEP computation overflows?</b></a>
 </div>
 <div class="doc_text">
-   <p>If the GEP has the <tt>inbounds</tt> keyword, the result value is
-      undefined.</p>
+   <p>If the GEP lacks the <tt>inbounds</tt> keyword, the value is the result
+      from evaluating the implied two's complement integer computation. However,
+      since there's no guarantee of where an object will be allocated in the
+      address space, such values have limited meaning.</p>
 
-   <p>Otherwise, the result value is the result from evaluating the implied
-      two's complement integer computation. However, since there's no
-      guarantee of where an object will be allocated in the address space,
-      such values have limited meaning.</p>
+  <p>If the GEP has the <tt>inbounds</tt> keyword, the result value is
+     undefined (a "<a href="LangRef.html#trapvalues">trap value</a>") if the GEP
+     overflows (i.e. wraps around the end of the address space).</p>
+  
+  <p>As such, there are some ramifications of this for inbounds GEPs: scales
+     implied by array/vector/pointer indices are always known to be "nsw" since
+     they are signed values that are scaled by the element size.  These values
+     are also allowed to be negative (e.g. "gep i32 *%P, i32 -1") but the
+     pointer itself is logically treated as an unsigned value.  This means that
+     GEPs have an asymmetric relation between the pointer base (which is treated
+     as unsigned) and the offset applied to it (which is treated as signed). The
+     result of the additions within the offset calculation cannot have signed
+     overflow, but when applied to the base pointer, there can be signed
+     overflow.
+  </p>
+  
 
 </div>
 
