@@ -263,6 +263,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     switch(CodeID) {
     default:return 0;
     case bitc::METADATA_ATTACHMENT:  return "METADATA_ATTACHMENT";
+    case bitc::METADATA_ATTACHMENT2: return "METADATA_ATTACHMENT2";
     }
   case bitc::METADATA_BLOCK_ID:
     switch(CodeID) {
@@ -277,7 +278,6 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::METADATA_NODE2:       return "METADATA_NODE2";
     case bitc::METADATA_FN_NODE2:    return "METADATA_FN_NODE2";
     case bitc::METADATA_NAMED_NODE2: return "METADATA_NAMED_NODE2";
-    case bitc::METADATA_ATTACHMENT2: return "METADATA_ATTACHMENT2";
     }
   }
 }
