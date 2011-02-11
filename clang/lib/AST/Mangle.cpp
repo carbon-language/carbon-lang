@@ -87,30 +87,30 @@ void MangleContext::mangleBlock(const DeclContext *DC, const BlockDecl *BD,
   checkMangleDC(DC, BD);
 
   llvm::SmallString<64> Buffer;
+  llvm::raw_svector_ostream Stream(Buffer);
   if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(DC)) {
-    mangleObjCMethodName(Method, Buffer);
+    mangleObjCMethodName(Method, Stream);
   } else {
     const NamedDecl *ND = cast<NamedDecl>(DC);
     if (IdentifierInfo *II = ND->getIdentifier())
-      Buffer = II->getName();
+      Stream << II->getName();
     else {
       // FIXME: We were doing a mangleUnqualifiedName() before, but that's
       // a private member of a class that will soon itself be private to the
       // Itanium C++ ABI object. What should we do now? Right now, I'm just
       // calling the mangleName() method on the MangleContext; is there a
       // better way?
-      llvm::raw_svector_ostream Out(Buffer);
-      mangleName(ND, Out);
+      mangleName(ND, Stream);
     }
   }
-
+  Stream.flush();
   mangleFunctionBlock(*this, Buffer, BD, Out);
 }
 
 void MangleContext::mangleObjCMethodName(const ObjCMethodDecl *MD,
-                                         llvm::SmallVectorImpl<char> &Res) {
+                                         llvm::raw_ostream &Out) {
   llvm::SmallString<64> Name;
-  llvm::raw_svector_ostream OS(Name), Out(Res);
+  llvm::raw_svector_ostream OS(Name);
   
   const ObjCContainerDecl *CD =
   dyn_cast<ObjCContainerDecl>(MD->getDeclContext());

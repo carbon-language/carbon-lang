@@ -98,21 +98,21 @@ public:
   virtual void mangleName(const NamedDecl *D, llvm::raw_ostream &)=0;
   virtual void mangleThunk(const CXXMethodDecl *MD,
                           const ThunkInfo &Thunk,
-                          llvm::SmallVectorImpl<char> &) = 0;
+                          llvm::raw_ostream &) = 0;
   virtual void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                                   const ThisAdjustment &ThisAdjustment,
-                                  llvm::SmallVectorImpl<char> &) = 0;
+                                  llvm::raw_ostream &) = 0;
   virtual void mangleReferenceTemporary(const VarDecl *D,
-                                        llvm::SmallVectorImpl<char> &) = 0;
+                                        llvm::raw_ostream &) = 0;
   virtual void mangleCXXVTable(const CXXRecordDecl *RD,
-                               llvm::SmallVectorImpl<char> &) = 0;
+                               llvm::raw_ostream &) = 0;
   virtual void mangleCXXVTT(const CXXRecordDecl *RD,
-                            llvm::SmallVectorImpl<char> &) = 0;
+                            llvm::raw_ostream &) = 0;
   virtual void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
                                    const CXXRecordDecl *Type,
-                                   llvm::SmallVectorImpl<char> &) = 0;
-  virtual void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &) = 0;
-  virtual void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &) = 0;
+                                   llvm::raw_ostream &) = 0;
+  virtual void mangleCXXRTTI(QualType T, llvm::raw_ostream &) = 0;
+  virtual void mangleCXXRTTIName(QualType T, llvm::raw_ostream &) = 0;
   virtual void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
                              llvm::raw_ostream &) = 0;
   virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
@@ -130,11 +130,11 @@ public:
   void mangleBlock(const BlockDecl *BD, llvm::raw_ostream &Out);
 
   void mangleObjCMethodName(const ObjCMethodDecl *MD,
-                            llvm::SmallVectorImpl<char> &);
+                            llvm::raw_ostream &);
 
   // This is pretty lame.
   virtual void mangleItaniumGuardVariable(const VarDecl *D,
-                                          llvm::SmallVectorImpl<char> &) {
+                                          llvm::raw_ostream &) {
     assert(0 && "Target does not support mangling guard variables");
   }
   /// @}

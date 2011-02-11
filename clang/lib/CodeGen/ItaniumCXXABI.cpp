@@ -1072,7 +1072,9 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
 
   // Create the guard variable.
   llvm::SmallString<256> GuardVName;
-  getMangleContext().mangleItaniumGuardVariable(&D, GuardVName);
+  llvm::raw_svector_ostream Out(GuardVName);
+  getMangleContext().mangleItaniumGuardVariable(&D, Out);
+  Out.flush();
 
   // Just absorb linkage and visibility from the variable.
   llvm::GlobalVariable *GuardVariable =

@@ -393,7 +393,9 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
   assert(RD->getNumVBases() && "Only classes with virtual bases need a VTT");
 
   llvm::SmallString<256> OutName;
-  CGM.getCXXABI().getMangleContext().mangleCXXVTT(RD, OutName);
+  llvm::raw_svector_ostream Out(OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXVTT(RD, Out);
+  Out.flush();
   llvm::StringRef Name = OutName.str();
 
   VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/false);

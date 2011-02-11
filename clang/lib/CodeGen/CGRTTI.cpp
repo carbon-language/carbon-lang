@@ -116,7 +116,9 @@ llvm::GlobalVariable *
 RTTIBuilder::GetAddrOfTypeName(QualType Ty, 
                                llvm::GlobalVariable::LinkageTypes Linkage) {
   llvm::SmallString<256> OutName;
-  CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, OutName);
+  llvm::raw_svector_ostream Out(OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, Out);
+  Out.flush();
   llvm::StringRef Name = OutName.str();
 
   // We know that the mangled name of the type starts at index 4 of the
@@ -135,7 +137,9 @@ RTTIBuilder::GetAddrOfTypeName(QualType Ty,
 llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
   // Mangle the RTTI name.
   llvm::SmallString<256> OutName;
-  CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, OutName);
+  llvm::raw_svector_ostream Out(OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, Out);
+  Out.flush();
   llvm::StringRef Name = OutName.str();
 
   // Look for an existing global.
@@ -524,7 +528,9 @@ maybeUpdateRTTILinkage(CodeGenModule &CGM, llvm::GlobalVariable *GV,
 
   // Get the typename global.
   llvm::SmallString<256> OutName;
-  CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, OutName);
+  llvm::raw_svector_ostream Out(OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, Out);
+  Out.flush();
   llvm::StringRef Name = OutName.str();
 
   llvm::GlobalVariable *TypeNameGV = CGM.getModule().getNamedGlobal(Name);
@@ -542,7 +548,9 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   // Check if we've already emitted an RTTI descriptor for this type.
   llvm::SmallString<256> OutName;
-  CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, OutName);
+  llvm::raw_svector_ostream Out(OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, Out);
+  Out.flush();
   llvm::StringRef Name = OutName.str();
 
   llvm::GlobalVariable *OldGV = CGM.getModule().getNamedGlobal(Name);
