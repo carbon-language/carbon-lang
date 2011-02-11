@@ -1145,16 +1145,19 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
     if (MainSLoc.isFile()) {
       const ContentCache *MainContentCache
         = MainSLoc.getFile().getContentCache();
-      if (MainContentCache->Entry == SourceFile)
+      if (!MainContentCache) {
+        // Can't do anything
+      } else if (MainContentCache->Entry == SourceFile) {
         FirstFID = MainFileID;
-      else if (MainContentCache) {
+      } else {
         // Fall back: check whether we have the same base name and inode
         // as the main file.
         const FileEntry *MainFile = MainContentCache->Entry;
         SourceFileName = llvm::sys::path::filename(SourceFile->getName());
         if (*SourceFileName == llvm::sys::path::filename(MainFile->getName())) {
           SourceFileInode = getActualFileInode(SourceFile);
-          if (SourceFileInode == getActualFileInode(MainFile)) {
+          if (SourceFileInode && 
+              *SourceFileInode == getActualFileInode(MainFile)) {
             FirstFID = MainFileID;
             SourceFile = MainFile;
           }
@@ -1192,11 +1195,14 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
           = SLoc.getFile().getContentCache();
         const FileEntry *Entry =FileContentCache? FileContentCache->Entry : 0;
         if (Entry && 
-            *SourceFileName == llvm::sys::path::filename(Entry->getName()) &&
-            SourceFileInode == getActualFileInode(Entry)) {
-          FirstFID = FileID::get(I);
-          SourceFile = Entry;
-          break;
+            *SourceFileName == llvm::sys::path::filename(Entry->getName())) {
+          if (llvm::Optional<ino_t> EntryInode = getActualFileInode(Entry)) {
+            if (*SourceFileInode == *EntryInode) {
+              FirstFID = FileID::get(I);
+              SourceFile = Entry;
+              break;
+            }
+          }
         }
       }
     }      
