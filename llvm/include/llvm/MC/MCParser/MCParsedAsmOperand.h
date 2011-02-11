@@ -19,10 +19,10 @@ class raw_ostream;
 /// base class is used by target-independent clients and is the interface
 /// between parsing an asm instruction and recognizing it.
 class MCParsedAsmOperand {
-public:  
+public:
   MCParsedAsmOperand() {}
   virtual ~MCParsedAsmOperand() {}
-  
+
   /// getStartLoc - Get the location of the first token of this operand.
   virtual SMLoc getStartLoc() const = 0;
   /// getEndLoc - Get the location of the last token of this operand.
