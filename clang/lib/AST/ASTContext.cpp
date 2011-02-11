@@ -5076,9 +5076,14 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
 
   // Check return type
   QualType retType;
-  if (OfBlockPointer)
-    retType = mergeTypes(rbase->getResultType(), lbase->getResultType(), true,
-                         Unqualified);
+  if (OfBlockPointer) {
+    QualType RHS = rbase->getResultType();
+    QualType LHS = lbase->getResultType();
+    bool UnqualifiedResult = Unqualified;
+    if (!UnqualifiedResult)
+      UnqualifiedResult = (!RHS.hasQualifiers() && LHS.hasQualifiers());
+    retType = mergeTypes(RHS, LHS, true, UnqualifiedResult);
+  }
   else
     retType = mergeTypes(lbase->getResultType(), rbase->getResultType(), false,
                          Unqualified);

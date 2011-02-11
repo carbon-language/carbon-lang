@@ -110,7 +110,7 @@ void foo6() {
 
 void foo7()
 {
- const int (^BB) (void) = ^{ const int i = 1; return i; }; // expected-error{{incompatible block pointer types initializing 'const int (^)(void)' with an expression of type 'int (^)(void)'}}
+ const int (^BB) (void) = ^{ const int i = 1; return i; }; // OK - initializing 'const int (^)(void)' with an expression of type 'int (^)(void)'
 
  const int (^CC) (void)  = ^const int{ const int i = 1; return i; };
 
