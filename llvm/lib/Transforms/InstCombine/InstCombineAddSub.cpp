@@ -420,8 +420,7 @@ Value *InstCombiner::EmitGEPOffset(User *GEP) {
         
         if (Size)
           Result = Builder->CreateAdd(Result, ConstantInt::get(IntPtrTy, Size),
-                                      GEP->getName()+".offs",
-                                      isInBounds /*NUW*/);
+                                      GEP->getName()+".offs");
         continue;
       }
       
@@ -430,8 +429,7 @@ Value *InstCombiner::EmitGEPOffset(User *GEP) {
               ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
       Scale = ConstantExpr::getMul(OC, Scale, isInBounds/*NUW*/);
       // Emit an add instruction.
-      Result = Builder->CreateAdd(Result, Scale, GEP->getName()+".offs",
-                                  isInBounds /*NUW*/);
+      Result = Builder->CreateAdd(Result, Scale, GEP->getName()+".offs");
       continue;
     }
     // Convert to correct type.
@@ -444,8 +442,7 @@ Value *InstCombiner::EmitGEPOffset(User *GEP) {
     }
 
     // Emit an add instruction.
-    Result = Builder->CreateAdd(Op, Result, GEP->getName()+".offs",
-                                isInBounds /*NUW*/);
+    Result = Builder->CreateAdd(Op, Result, GEP->getName()+".offs");
   }
   return Result;
 }
