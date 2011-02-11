@@ -2233,7 +2233,7 @@ bool GenericAsmParser::ParseRegisterOrRegisterNumber(int64_t &Register,
     Register = getContext().getTargetAsmInfo().getDwarfRegNum(RegNo, true);
   } else
     return getParser().ParseAbsoluteExpression(Register);
-  
+
   return false;
 }
 

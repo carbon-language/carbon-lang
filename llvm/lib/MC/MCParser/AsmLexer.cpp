@@ -31,12 +31,12 @@ AsmLexer::~AsmLexer() {
 
 void AsmLexer::setBuffer(const MemoryBuffer *buf, const char *ptr) {
   CurBuf = buf;
-  
+
   if (ptr)
     CurPtr = ptr;
   else
     CurPtr = CurBuf->getBufferStart();
-  
+
   TokStart = 0;
 }
 
@@ -44,7 +44,7 @@ void AsmLexer::setBuffer(const MemoryBuffer *buf, const char *ptr) {
 /// location.  This is defined to always return AsmToken::Error.
 AsmToken AsmLexer::ReturnError(const char *Loc, const std::string &Msg) {
   SetError(SMLoc::getFromPointer(Loc), Msg);
-  
+
   return AsmToken(AsmToken::Error, StringRef(Loc, 0));
 }
 
@@ -58,9 +58,9 @@ int AsmLexer::getNextChar() {
     // a random nul in the file.  Disambiguate that here.
     if (CurPtr-1 != CurBuf->getBufferEnd())
       return 0;  // Just whitespace.
-    
+
     // Otherwise, return end of file.
-    --CurPtr;  // Another call to lex will return EOF again.  
+    --CurPtr;  // Another call to lex will return EOF again.
     return EOF;
   }
 }
@@ -106,11 +106,11 @@ AsmToken AsmLexer::LexIdentifier() {
 
   while (IsIdentifierChar(*CurPtr))
     ++CurPtr;
-  
+
   // Handle . as a special case.
   if (CurPtr == TokStart+1 && TokStart[0] == '.')
     return AsmToken(AsmToken::Dot, StringRef(TokStart, 1));
-  
+
   return AsmToken(AsmToken::Identifier, StringRef(TokStart, CurPtr - TokStart));
 }
 
@@ -133,7 +133,7 @@ AsmToken AsmLexer::LexSlash() {
     case '*':
       // End of the comment?
       if (CurPtr[0] != '/') break;
-      
+
       ++CurPtr;   // End the */.
       return LexToken();
     }
@@ -148,7 +148,7 @@ AsmToken AsmLexer::LexLineComment() {
   int CurChar = getNextChar();
   while (CurChar != '\n' && CurChar != '\n' && CurChar != EOF)
     CurChar = getNextChar();
-  
+
   if (CurChar == EOF)
     return AsmToken(AsmToken::Eof, StringRef(CurPtr, 0));
   return AsmToken(AsmToken::EndOfStatement, StringRef(CurPtr, 0));
@@ -191,14 +191,14 @@ AsmToken AsmLexer::LexDigit() {
         return ReturnError(TokStart, "invalid decimal number");
       Value = (long long)UValue;
     }
-    
+
     // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL
     // suffixes on integer literals.
     SkipIgnoredIntegerSuffix(CurPtr);
-    
+
     return AsmToken(AsmToken::Integer, Result, Value);
   }
-  
+
   if (*CurPtr == 'b') {
     ++CurPtr;
     // See if we actually have "0b" as part of something like "jmp 0b\n"
@@ -210,30 +210,30 @@ AsmToken AsmLexer::LexDigit() {
     const char *NumStart = CurPtr;
     while (CurPtr[0] == '0' || CurPtr[0] == '1')
       ++CurPtr;
-    
+
     // Requires at least one binary digit.
     if (CurPtr == NumStart)
       return ReturnError(TokStart, "Invalid binary number");
-    
+
     StringRef Result(TokStart, CurPtr - TokStart);
-    
+
     long long Value;
     if (Result.substr(2).getAsInteger(2, Value))
       return ReturnError(TokStart, "Invalid binary number");
-    
+
     // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL
     // suffixes on integer literals.
     SkipIgnoredIntegerSuffix(CurPtr);
-    
+
     return AsmToken(AsmToken::Integer, Result, Value);
   }
- 
+
   if (*CurPtr == 'x') {
     ++CurPtr;
     const char *NumStart = CurPtr;
     while (isxdigit(CurPtr[0]))
       ++CurPtr;
-    
+
     // Requires at least one hex digit.
     if (CurPtr == NumStart)
       return ReturnError(CurPtr-2, "Invalid hexadecimal number");
@@ -241,28 +241,28 @@ AsmToken AsmLexer::LexDigit() {
     unsigned long long Result;
     if (StringRef(TokStart, CurPtr - TokStart).getAsInteger(0, Result))
       return ReturnError(TokStart, "Invalid hexadecimal number");
-      
+
     // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL
     // suffixes on integer literals.
     SkipIgnoredIntegerSuffix(CurPtr);
-    
+
     return AsmToken(AsmToken::Integer, StringRef(TokStart, CurPtr - TokStart),
                     (int64_t)Result);
   }
-  
+
   // Must be an octal number, it starts with 0.
   while (*CurPtr >= '0' && *CurPtr <= '7')
     ++CurPtr;
-  
+
   StringRef Result(TokStart, CurPtr - TokStart);
   long long Value;
   if (Result.getAsInteger(8, Value))
     return ReturnError(TokStart, "Invalid octal number");
-  
+
   // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL
   // suffixes on integer literals.
   SkipIgnoredIntegerSuffix(CurPtr);
-  
+
   return AsmToken(AsmToken::Integer, Result, Value);
 }
 
@@ -298,7 +298,7 @@ AsmToken AsmLexer::LexSingleQuote() {
   } else
     Value = TokStart[1];
 
-  return AsmToken(AsmToken::Integer, Res, Value); 
+  return AsmToken(AsmToken::Integer, Res, Value);
 }
 
 
@@ -311,13 +311,13 @@ AsmToken AsmLexer::LexQuote() {
       // Allow \", etc.
       CurChar = getNextChar();
     }
-    
+
     if (CurChar == EOF)
       return ReturnError(TokStart, "unterminated string constant");
 
     CurChar = getNextChar();
   }
-  
+
   return AsmToken(AsmToken::String, StringRef(TokStart, CurPtr - TokStart));
 }
 
@@ -343,7 +343,7 @@ AsmToken AsmLexer::LexToken() {
   TokStart = CurPtr;
   // This always consumes at least one character.
   int CurChar = getNextChar();
-  
+
   if (isAtStartOfComment(CurChar))
     return LexLineComment();
 
@@ -352,7 +352,7 @@ AsmToken AsmLexer::LexToken() {
     // Handle identifier: [a-zA-Z_.][a-zA-Z0-9_$.@]*
     if (isalpha(CurChar) || CurChar == '_' || CurChar == '.')
       return LexIdentifier();
-    
+
     // Unknown character, emit an error.
     return ReturnError(TokStart, "invalid character in input");
   case EOF: return AsmToken(AsmToken::Eof, StringRef(TokStart, 0));
@@ -378,20 +378,20 @@ AsmToken AsmLexer::LexToken() {
   case ',': return AsmToken(AsmToken::Comma, StringRef(TokStart, 1));
   case '$': return AsmToken(AsmToken::Dollar, StringRef(TokStart, 1));
   case '@': return AsmToken(AsmToken::At, StringRef(TokStart, 1));
-  case '=': 
+  case '=':
     if (*CurPtr == '=')
       return ++CurPtr, AsmToken(AsmToken::EqualEqual, StringRef(TokStart, 2));
     return AsmToken(AsmToken::Equal, StringRef(TokStart, 1));
-  case '|': 
+  case '|':
     if (*CurPtr == '|')
       return ++CurPtr, AsmToken(AsmToken::PipePipe, StringRef(TokStart, 2));
     return AsmToken(AsmToken::Pipe, StringRef(TokStart, 1));
   case '^': return AsmToken(AsmToken::Caret, StringRef(TokStart, 1));
-  case '&': 
+  case '&':
     if (*CurPtr == '&')
       return ++CurPtr, AsmToken(AsmToken::AmpAmp, StringRef(TokStart, 2));
     return AsmToken(AsmToken::Amp, StringRef(TokStart, 1));
-  case '!': 
+  case '!':
     if (*CurPtr == '=')
       return ++CurPtr, AsmToken(AsmToken::ExclaimEqual, StringRef(TokStart, 2));
     return AsmToken(AsmToken::Exclaim, StringRef(TokStart, 1));
@@ -405,23 +405,23 @@ AsmToken AsmLexer::LexToken() {
     return LexDigit();
   case '<':
     switch (*CurPtr) {
-    case '<': return ++CurPtr, AsmToken(AsmToken::LessLess, 
+    case '<': return ++CurPtr, AsmToken(AsmToken::LessLess,
                                         StringRef(TokStart, 2));
-    case '=': return ++CurPtr, AsmToken(AsmToken::LessEqual, 
+    case '=': return ++CurPtr, AsmToken(AsmToken::LessEqual,
                                         StringRef(TokStart, 2));
-    case '>': return ++CurPtr, AsmToken(AsmToken::LessGreater, 
+    case '>': return ++CurPtr, AsmToken(AsmToken::LessGreater,
                                         StringRef(TokStart, 2));
     default: return AsmToken(AsmToken::Less, StringRef(TokStart, 1));
     }
   case '>':
     switch (*CurPtr) {
-    case '>': return ++CurPtr, AsmToken(AsmToken::GreaterGreater, 
+    case '>': return ++CurPtr, AsmToken(AsmToken::GreaterGreater,
                                         StringRef(TokStart, 2));
-    case '=': return ++CurPtr, AsmToken(AsmToken::GreaterEqual, 
+    case '=': return ++CurPtr, AsmToken(AsmToken::GreaterEqual,
                                         StringRef(TokStart, 2));
     default: return AsmToken(AsmToken::Greater, StringRef(TokStart, 1));
     }
-      
+
   // TODO: Quoted identifiers (objc methods etc)
   // local labels: [0-9][:]
   // Forward/backward labels: [0-9][fb]
