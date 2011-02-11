@@ -2475,10 +2475,6 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
 /// DeclContext in a dependent AST file. As such, they only exist for the TU
 /// (in C++) and for namespaces.
 void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
-  // Make the context build its lookup table, but don't make it load external
-  // decls.
-  DC->lookup(DeclarationName());
-
   StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(DC->getLookupPtr());
   if (!Map || Map->empty())
     return;
