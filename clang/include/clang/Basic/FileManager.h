@@ -35,7 +35,8 @@ namespace clang {
 class FileManager;
 class FileSystemStatCache;
   
-/// DirectoryEntry - Cached information about one directory on the disk.
+/// DirectoryEntry - Cached information about one directory (either on
+/// the disk or in the virtual file system).
 ///
 class DirectoryEntry {
   const char *Name;   // Name of the directory.
@@ -45,9 +46,9 @@ public:
   const char *getName() const { return Name; }
 };
 
-/// FileEntry - Cached information about one file on the disk.  If the 'FD'
-/// member is valid, then this FileEntry has an open file descriptor for the
-/// file.
+/// FileEntry - Cached information about one file (either on the disk
+/// or in the virtual file system).  If the 'FD' member is valid, then
+/// this FileEntry has an open file descriptor for the file.
 ///
 class FileEntry {
   const char *Name;           // Name of the file.
@@ -106,27 +107,35 @@ public:
 ///
 class FileManager {
   FileSystemOptions FileSystemOpts;
-  
+
   class UniqueDirContainer;
   class UniqueFileContainer;
 
-  /// UniqueDirs/UniqueFiles - Cache for existing directories/files.
+  /// UniqueRealDirs/UniqueRealFiles - Cache for existing real directories/files.
   ///
-  UniqueDirContainer &UniqueDirs;
-  UniqueFileContainer &UniqueFiles;
+  UniqueDirContainer &UniqueRealDirs;
+  UniqueFileContainer &UniqueRealFiles;
 
-  /// DirEntries/FileEntries - This is a cache of directory/file entries we have
-  /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
+  /// \brief The virtual directories that we have allocated.  For each
+  /// virtual file (e.g. foo/bar/baz.cpp), we add all of its parent
+  /// directories (foo/ and foo/bar/) here.
+  llvm::SmallVector<DirectoryEntry*, 4> VirtualDirectoryEntries;
+  /// \brief The virtual files that we have allocated.
+  llvm::SmallVector<FileEntry*, 4> VirtualFileEntries;
+
+  /// SeenDirEntries/SeenFileEntries - This is a cache that maps paths
+  /// to directory/file entries (either real or virtual) we have
+  /// looked up.  The actual Entries for real directories/files are
+  /// owned by UniqueRealDirs/UniqueRealFiles above, while the Entries
+  /// for virtual directories/files are owned by
+  /// VirtualDirectoryEntries/VirtualFileEntries above.
   ///
-  llvm::StringMap<DirectoryEntry*, llvm::BumpPtrAllocator> DirEntries;
-  llvm::StringMap<FileEntry*, llvm::BumpPtrAllocator> FileEntries;
+  llvm::StringMap<DirectoryEntry*, llvm::BumpPtrAllocator> SeenDirEntries;
+  llvm::StringMap<FileEntry*, llvm::BumpPtrAllocator> SeenFileEntries;
 
   /// NextFileUID - Each FileEntry we create is assigned a unique ID #.
   ///
   unsigned NextFileUID;
-
-  /// \brief The virtual files that we have allocated.
-  llvm::SmallVector<FileEntry*, 4> VirtualFileEntries;
 
   // Statistics.
   unsigned NumDirLookups, NumFileLookups;
@@ -137,12 +146,17 @@ class FileManager {
 
   bool getStatValue(const char *Path, struct stat &StatBuf,
                     int *FileDescriptor);
+
+  /// Add all ancestors of the given path (pointing to either a file
+  /// or a directory) as virtual directories.
+  void addAncestorsAsVirtualDirs(llvm::StringRef Path);
+
 public:
   FileManager(const FileSystemOptions &FileSystemOpts);
   ~FileManager();
 
   /// \brief Installs the provided FileSystemStatCache object within
-  /// the FileManager. 
+  /// the FileManager.
   ///
   /// Ownership of this object is transferred to the FileManager.
   ///
@@ -156,14 +170,14 @@ public:
 
   /// \brief Removes the specified FileSystemStatCache object from the manager.
   void removeStatCache(FileSystemStatCache *statCache);
-  
-  /// getDirectory - Lookup, cache, and verify the specified directory.  This
-  /// returns null if the directory doesn't exist.
-  ///
-  const DirectoryEntry *getDirectory(llvm::StringRef Filename);
 
-  /// getFile - Lookup, cache, and verify the specified file.  This returns null
-  /// if the file doesn't exist.
+  /// getDirectory - Lookup, cache, and verify the specified directory
+  /// (real or virtual).  This returns NULL if the directory doesn't exist.
+  ///
+  const DirectoryEntry *getDirectory(llvm::StringRef DirName);
+
+  /// getFile - Lookup, cache, and verify the specified file (real or
+  /// virtual).  This returns NULL if the file doesn't exist.
   ///
   const FileEntry *getFile(llvm::StringRef Filename);
 
@@ -185,7 +199,7 @@ public:
   /// working directory.
   static void FixupRelativePath(llvm::sys::Path &path,
                                 const FileSystemOptions &FSOpts);
-  
+
   
   /// \brief Produce an array mapping from the unique IDs assigned to each
   /// file to the corresponding FileEntry pointer.

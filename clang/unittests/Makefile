@@ -14,7 +14,7 @@ ifndef CLANG_LEVEL
 
 IS_UNITTEST_LEVEL := 1
 CLANG_LEVEL := ..
-PARALLEL_DIRS = Frontend
+PARALLEL_DIRS = FileManager Frontend
 
 endif  # CLANG_LEVEL
 
