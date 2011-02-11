@@ -150,6 +150,7 @@ EmulateInstructionARM::WriteBits32Unknown (int n)
                                             dwarf_r0 + n, 
                                             0 };
 
+    bool success;
     uint32_t data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
                   
     if (!success)
