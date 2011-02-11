@@ -20,16 +20,7 @@
 
 namespace {
   using llvm::StringRef;
-
-  bool is_separator(const char value) {
-    switch(value) {
-#ifdef LLVM_ON_WIN32
-    case '\\': // fall through
-#endif
-    case '/': return true;
-    default: return false;
-    }
-  }
+  using llvm::sys::path::is_separator;
 
 #ifdef LLVM_ON_WIN32
   const StringRef separators = "\\/";
@@ -154,7 +145,7 @@ namespace {
 
     return end_pos;
   }
-}
+} // end unnamed namespace
 
 namespace llvm {
 namespace sys  {
@@ -483,6 +474,16 @@ const StringRef extension(StringRef path) {
       return fname.substr(pos);
 }
 
+bool is_separator(char value) {
+  switch(value) {
+#ifdef LLVM_ON_WIN32
+    case '\\': // fall through
+#endif
+    case '/': return true;
+    default: return false;
+  }
+}
+
 bool has_root_name(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
@@ -737,7 +738,7 @@ error_code remove_all_r(StringRef path, file_type ft, uint32_t &count) {
 
   return success;
 }
-}
+} // end unnamed namespace
 
 error_code remove_all(const Twine &path, uint32_t &num_removed) {
   SmallString<128> path_storage;

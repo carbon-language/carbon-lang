@@ -29,6 +29,19 @@ using namespace llvm::sys;
 
 namespace {
 
+TEST(is_separator, Works) {
+  EXPECT_TRUE(path::is_separator('/'));
+  EXPECT_FALSE(path::is_separator('\0'));
+  EXPECT_FALSE(path::is_separator('-'));
+  EXPECT_FALSE(path::is_separator(' '));
+
+#ifdef LLVM_ON_WIN32
+  EXPECT_TRUE(path::is_separator('\\'));
+#else
+  EXPECT_FALSE(path::is_separator('\\'));
+#endif
+}
+
 TEST(Support, Path) {
   SmallVector<StringRef, 40> paths;
   paths.push_back("");

@@ -258,6 +258,12 @@ const StringRef stem(StringRef path);
 /// @result The extension of \a path.
 const StringRef extension(StringRef path);
 
+/// @brief Check whether the given char is a path separator on the host OS.
+///
+/// @param value a character
+/// @result true if \a value is a path separator character on the host OS
+bool is_separator(char value);
+
 /// @brief Has root name?
 ///
 /// root_name != ""
