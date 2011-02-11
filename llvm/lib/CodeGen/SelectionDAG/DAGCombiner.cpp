@@ -6872,6 +6872,9 @@ SDValue DAGCombiner::SimplifySelect(DebugLoc DL, SDValue N0,
 bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
                                     SDValue RHS) {
 
+  // Cannot simplify select with vector condition
+  if (TheSelect->getOperand(0).getValueType().isVector()) return false;
+
   // If this is a select from two identical things, try to pull the operation
   // through the select.
   if (LHS.getOpcode() != RHS.getOpcode() ||
