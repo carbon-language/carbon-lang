@@ -1533,7 +1533,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
 
   // fold (sub x, x) -> 0
   if (N0 == N1)
-    return DAG.getConstant(0, N->getValueType(0));
+    return DAG.getConstant(0, N->getValueType(0), LegalTypes);
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::SUB, VT, N0C, N1C);
