@@ -29,10 +29,10 @@ class MCAsmInfo;
 /// AsmLexer - Lexer class for assembly files.
 class AsmLexer : public MCAsmLexer {
   const MCAsmInfo &MAI;
-  
+
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
-  
+
   void operator=(const AsmLexer&); // DO NOT IMPLEMENT
   AsmLexer(const AsmLexer&);       // DO NOT IMPLEMENT
 
@@ -43,13 +43,13 @@ protected:
 public:
   AsmLexer(const MCAsmInfo &MAI);
   ~AsmLexer();
-  
+
   void setBuffer(const MemoryBuffer *buf, const char *ptr = NULL);
-  
+
   virtual StringRef LexUntilEndOfStatement();
 
   bool isAtStartOfComment(char Char);
-  
+
   const MCAsmInfo &getMAI() const { return MAI; }
 
 private:
@@ -64,7 +64,7 @@ private:
   AsmToken LexQuote();
   AsmToken LexFloatLiteral();
 };
-  
+
 } // end namespace llvm
 
 #endif
