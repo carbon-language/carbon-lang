@@ -480,12 +480,6 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       AddPath(
         "C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include",
         System, false, false, false);
-      // For some clang developers.
-      AddPath("G:/Program Files/Microsoft Visual Studio 9.0/VC/include",
-              System, false, false, false);
-      AddPath(
-        "G:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
-        System, false, false, false);
     }
     break;
   }
