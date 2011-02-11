@@ -271,6 +271,13 @@ protected:
     bool
     EmulateAddRdnRm (ARMEncoding encoding);
 
+    // MOV (register)
+    bool
+    EmulateMovRdRm (ARMEncoding encoding);
+
+    bool
+    EmulateCmpRnImm (ARMEncoding encoding);
+
     bool
     EmulateLDM (ARMEncoding encoding);
     
@@ -282,10 +289,6 @@ protected:
 
     bool
     EmulateLDRRtRnImm (ARMEncoding encoding);
-
-    // MOV (register)
-    bool
-    EmulateMovRdRm (ARMEncoding encoding);
 
     uint32_t m_arm_isa;
     Mode m_inst_mode;

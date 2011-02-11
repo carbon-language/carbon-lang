@@ -1661,6 +1661,55 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
     return true;
 }
 
+bool
+EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(R[n], NOT(imm32), '1');
+        APSR.N = result<31>;
+        APSR.Z = IsZeroBit(result);
+        APSR.C = carry;
+        APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rn; // the first operand
+    uint32_t imm32; // the immediate value to be compared with
+    switch (encoding) {
+    case eEncodingT1:
+        Rn = Bits32(opcode, 10, 8);
+        imm32 = Bits32(opcode, 7, 0);
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from the operand register Rn.
+    uint32_t reg_val = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+    if (!success)
+        return false;
+                  
+    EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
+    AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
+    m_new_inst_cpsr = m_inst_cpsr;
+    SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
+    SetBit32(m_new_inst_cpsr, CPSR_Z, res.result == 0 ? 1 : 0);
+    SetBit32(m_new_inst_cpsr, CPSR_C, res.carry_out);
+    SetBit32(m_new_inst_cpsr, CPSR_V, res.overflow);
+    if (m_new_inst_cpsr != m_inst_cpsr)
+    {
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+            return false;
+    }
+    return true;
+}
+
 // LDM loads multiple registers from consecutive memory locations, using an
 // address from a base register.  Optionally the addres just above the highest of those locations
 // can be written back to the base register.
@@ -2288,6 +2337,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "mov<c> <Rd>, <Rm>"},
         // move from low register to low register
         { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "movs <Rd>, <Rm>"},
+        // compare a register with immediate
+        { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCmpRnImm, "cmp<c> <Rn>, #imm8"},
 
         //----------------------------------------------------------------------
         // Load instructions
