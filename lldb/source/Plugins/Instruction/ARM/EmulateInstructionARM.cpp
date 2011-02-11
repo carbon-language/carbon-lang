@@ -1721,6 +1721,7 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
     return true;
 }
 
+// CMP (immediate)
 bool
 EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
 {
@@ -1757,6 +1758,70 @@ EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
                   
     EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
     AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
+    m_new_inst_cpsr = m_inst_cpsr;
+    SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
+    SetBit32(m_new_inst_cpsr, CPSR_Z, res.result == 0 ? 1 : 0);
+    SetBit32(m_new_inst_cpsr, CPSR_C, res.carry_out);
+    SetBit32(m_new_inst_cpsr, CPSR_V, res.overflow);
+    if (m_new_inst_cpsr != m_inst_cpsr)
+    {
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+            return false;
+    }
+    return true;
+}
+
+// CMP (register)
+bool
+EmulateInstructionARM::EmulateCmpRnRm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(R[n], NOT(shifted), '1');
+        APSR.N = result<31>;
+        APSR.Z = IsZeroBit(result);
+        APSR.C = carry;
+        APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rn; // the first operand
+    uint32_t Rm; // the second operand
+    switch (encoding) {
+    case eEncodingT1:
+        Rn = Bits32(opcode, 2, 0);
+        Rm = Bits32(opcode, 5, 3);
+        break;
+    case eEncodingT2:
+        Rn = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
+        Rm = Bits32(opcode, 6, 3);
+        if (Rn < 8 && Rm < 8)
+            return false;
+        if (Rn == 15 || Rm == 15)
+            return false;
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from register Rn.
+    uint32_t reg_val1 = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+    if (!success)
+        return false;
+    // Read the register value from register Rm.
+    // The register value is not being shifted since we don't handle ARM for now.
+    uint32_t reg_val2 = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+    if (!success)
+        return false;
+                  
+    EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
+    AddWithCarryResult res = AddWithCarry(reg_val1, reg_val2, 1);
     m_new_inst_cpsr = m_inst_cpsr;
     SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
     SetBit32(m_new_inst_cpsr, CPSR_Z, res.result == 0 ? 1 : 0);
@@ -2534,6 +2599,10 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "movs <Rd>, <Rm>"},
         // compare a register with immediate
         { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCmpRnImm, "cmp<c> <Rn>, #imm8"},
+        // compare Rn with Rm (Rn and Rm both from r0-r7)
+        { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCmpRnRm, "cmp<c> <Rn>, <Rm>"},
+        // compare Rn with Rm (Rn and Rm not both from r0-r7)
+        { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateCmpRnRm, "cmp<c> <Rn>, <Rm>"},
 
         //----------------------------------------------------------------------
         // Load instructions

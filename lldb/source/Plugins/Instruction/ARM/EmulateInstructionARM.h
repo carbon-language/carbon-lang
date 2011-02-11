@@ -282,6 +282,9 @@ protected:
     EmulateCmpRnImm (ARMEncoding encoding);
 
     bool
+    EmulateCmpRnRm (ARMEncoding encoding);
+
+    bool
     EmulateLDM (ARMEncoding encoding);
     
     bool
