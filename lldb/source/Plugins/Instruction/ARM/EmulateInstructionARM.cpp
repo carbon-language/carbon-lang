@@ -364,11 +364,16 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
             // if BitCount(registers) < 2 || (P == '1' && M == '1') then UNPREDICTABLE;
             if (BitCount(registers) < 2 || (Bit32(opcode, 15) && Bit32(opcode, 14)))
                 return false;
+            // if registers<15> == '1' && InITBlock() && !LastInITBlock() then UNPREDICTABLE;
+            if (BitIsSet(registers, 15) && InITBlock() && !LastInITBlock())
+                return false;
             break;
         case eEncodingT3:
             Rt = Bits32(opcode, 15, 12);
             // if t == 13 || (t == 15 && InITBlock() && !LastInITBlock()) then UNPREDICTABLE;
-            if (Rt == dwarf_sp)
+            if (Rt == 13)
+                return false;
+            if (Rt == 15 && InITBlock() && !LastInITBlock())
                 return false;
             registers = (1u << Rt);
             break;
@@ -379,7 +384,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
             // if BitCount(register_list) < 2 then SEE LDM / LDMIA / LDMFD;
 
             // if registers<13> == ‘1’ && ArchVersion() >= 7 then UNPREDICTABLE;
-            if (Bit32(opcode, 13) && ArchVersion() >= ARMv7)
+            if (BitIsSet(opcode, 13) && ArchVersion() >= ARMv7)
                 return false;
             break;
         case eEncodingA2:
@@ -701,9 +706,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             Rt = Bits32(opcode, 15, 12);
             imm32 = Bits32(opcode, 11, 0) << 2; // imm32 = ZeroExtend(imm12, 32);
             add = BitIsSet(opcode, 23);
-            if (Rt == 15
-                && m_it_session.InITBlock()
-                && !m_it_session.LastInITBlock())
+            if (Rt == 15 && InITBlock() && !LastInITBlock())
                 return false;
             base = Align(pc + 4, 4);
             context.arg2 = 4 + imm32;
@@ -914,7 +917,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             target = pc + 4 + imm32;
             context.arg1 = 4 + imm32;  // signed offset
             context.arg2 = eModeThumb; // target instruction set
-            if (m_it_session.InITBlock() && !m_it_session.LastInITBlock())
+            if (InITBlock() && !LastInITBlock())
                 return false;
             break;
             }
@@ -933,7 +936,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             target = Align(pc + 4, 4) + imm32;
             context.arg1 = 4 + imm32; // signed offset
             context.arg2 = eModeARM;  // target instruction set
-            if (m_it_session.InITBlock() && !m_it_session.LastInITBlock())
+            if (InITBlock() && !LastInITBlock())
                 return false;
             break;
             }
@@ -1004,7 +1007,7 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
             // if m == 15 then UNPREDICTABLE;
             if (Rm == 15)
                 return false;
-            if (m_it_session.InITBlock() && !m_it_session.LastInITBlock())
+            if (InITBlock() && !LastInITBlock())
                 return false;
             break;
         case eEncodingA1:
@@ -1056,7 +1059,7 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
         switch (encoding) {
         case eEncodingT1:
             Rm = Bits32(opcode, 6, 3);
-            if (m_it_session.InITBlock() && !m_it_session.LastInITBlock())
+            if (InITBlock() && !LastInITBlock())
                 return false;
             break;
         case eEncodingA1:
@@ -1959,9 +1962,7 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
                     || (BitCount (registers) < 2)
                     || (BitIsSet (opcode, 14) && BitIsSet (opcode, 15)))
                     return false;
-                if (BitIsSet (registers, 15)
-                    && m_it_session.InITBlock()
-                    && !m_it_session.LastInITBlock())
+                if (BitIsSet (registers, 15) && InITBlock() && !LastInITBlock())
                     return false;
                 if (wback
                     && BitIsSet (registers, n))
@@ -2208,9 +2209,7 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
                     return false;
 
                 // if registers<15> == ’1’ && InITBlock() && !LastInITBlock() then UNPREDICTABLE;
-                if (BitIsSet (registers, 15)
-                    && m_it_session.InITBlock()
-                    && !m_it_session.LastInITBlock())
+                if (BitIsSet (registers, 15) && InITBlock() && !LastInITBlock())
                     return false;
 
                 // if wback && registers<n> == ’1’ then UNPREDICTABLE;
@@ -3045,6 +3044,18 @@ EmulateInstructionARM::CurrentCond ()
         return m_it_session.GetCond();
     }
     return UINT32_MAX;  // Return invalid value
+}
+
+bool
+EmulateInstructionARM::InITBlock()
+{
+    return CurrentInstrSet() == eModeThumb && m_it_session.InITBlock();
+}
+
+bool
+EmulateInstructionARM::LastInITBlock()
+{
+    return CurrentInstrSet() == eModeThumb && m_it_session.LastInITBlock();
 }
 
 bool

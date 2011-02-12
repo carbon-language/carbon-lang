@@ -148,6 +148,12 @@ public:
     uint32_t
     CurrentCond ();
 
+    // InITBlock - Returns true if we're in Thumb mode and inside an IT Block.
+    bool InITBlock();
+
+    // LastInITBlock - Returns true if we're in Thumb mode and the last instruction inside an IT Block.
+    bool LastInITBlock();
+
     bool
     BranchWritePC(const Context &context, uint32_t addr);
 
