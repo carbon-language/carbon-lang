@@ -4815,6 +4815,13 @@ void ASTReader::FinishedDeserializing() {
       PendingIdentifierInfos.pop_front();
     }
 
+    // Ready to load previous declarations of Decls that were delayed.
+    while (!PendingPreviousDecls.empty()) {
+      loadAndAttachPreviousDecl(PendingPreviousDecls.front().first,
+                                PendingPreviousDecls.front().second);
+      PendingPreviousDecls.pop_front();
+    }
+
     // We are not in recursive loading, so it's safe to pass the "interesting"
     // decls to the consumer.
     if (Consumer)

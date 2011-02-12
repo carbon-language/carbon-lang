@@ -721,6 +721,13 @@ private:
   /// Objective-C protocols.
   std::deque<Decl *> InterestingDecls;
 
+  /// \brief We delay loading of the previous declaration chain to avoid
+  /// deeply nested calls when there are many redeclarations.
+  std::deque<std::pair<Decl *, serialization::DeclID> > PendingPreviousDecls;
+
+  /// \brief Ready to load the previous declaration of the given Decl.
+  void loadAndAttachPreviousDecl(Decl *D, serialization::DeclID ID);
+
   /// \brief When reading a Stmt tree, Stmt operands are placed in this stack.
   llvm::SmallVector<Stmt *, 16> StmtStack;
 

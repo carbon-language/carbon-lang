@@ -862,6 +862,9 @@ void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   // getCommonPtr() can be used while this is still initializing.
 
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+  if (D->getPreviousDeclaration())
+    Writer.AddDeclRef(D->getFirstDeclaration(), Record);
+
   if (D->getPreviousDeclaration() == 0) {
     // This TemplateDecl owns the CommonPtr; write it.
     assert(D->isCanonicalDecl());
@@ -1075,9 +1078,14 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
   if (D->RedeclLink.getNext() == D) {
     Record.push_back(NoRedeclaration);
   } else {
-    Record.push_back(D->RedeclLink.NextIsPrevious() ? PointsToPrevious
-                                                    : PointsToLatest);
-    Writer.AddDeclRef(D->RedeclLink.getPointer(), Record);
+    if (D->RedeclLink.NextIsPrevious()) {
+      Record.push_back(PointsToPrevious);
+      Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+      Writer.AddDeclRef(D->getFirstDeclaration(), Record);
+    } else {
+      Record.push_back(PointsToLatest);
+      Writer.AddDeclRef(D->RedeclLink.getPointer(), Record);
+    }
   }
 
   T *First = D->getFirstDeclaration();
