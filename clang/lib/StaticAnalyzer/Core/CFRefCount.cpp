@@ -2514,6 +2514,18 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
   //  done an invalidation pass.
   llvm::DenseSet<SymbolRef> WhitelistedSymbols;
 
+  // Invalidate all instance variables of the receiver of a message.
+  // FIXME: We should be able to do better with inter-procedural analysis.
+  if (Receiver) {
+    SVal V = Receiver.getSValAsScalarOrLoc(state);
+    if (SymbolRef Sym = V.getAsLocSymbol()) {
+      if (state->get<RefBindings>(Sym))
+        WhitelistedSymbols.insert(Sym);
+    }
+    if (const MemRegion *region = V.getAsRegion())
+      RegionsToInvalidate.push_back(region);
+  }
+  
   for (unsigned idx = 0, e = callOrMsg.getNumArgs(); idx != e; ++idx) {
     SVal V = callOrMsg.getArgSValAsScalarOrLoc(idx);
     SymbolRef Sym = V.getAsLocSymbol();
