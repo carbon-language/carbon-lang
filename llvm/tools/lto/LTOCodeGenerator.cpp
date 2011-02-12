@@ -367,6 +367,14 @@ void LTOCodeGenerator::applyScopeRestrictions() {
           _mustPreserveSymbols.count(Buffer))
         mustPreserveList.push_back(::strdup(v->getNameStr().c_str()));
     }
+    for (Module::alias_iterator a = mergedModule->alias_begin(),
+         e = mergedModule->alias_end(); a != e; ++a) {
+      Buffer.clear();
+      mangler.getNameWithPrefix(Buffer, a, false);
+      if (!a->isDeclaration() &&
+          _mustPreserveSymbols.count(Buffer))
+        mustPreserveList.push_back(::strdup(a->getNameStr().c_str()));
+    }
     passes.add(createInternalizePass(mustPreserveList));
   }
   
