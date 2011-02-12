@@ -647,6 +647,33 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
     return true;
 }
 
+// Bitwise NOT (immediate) writes the bitwise inverse of an immediate value to
+// the destination register.  It can optionally update the condition flags based
+// on the value.
+// MVN (immediate)
+bool
+EmulateInstructionARM::EmulateMvnRdImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        result = NOT(imm32);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+    }
+#endif
+    return false;
+}
+
 // PC relative immediate load into register, possibly followed by ADD (SP plus register).
 // LDR (literal)
 bool
@@ -2736,6 +2763,12 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0ffffff0, 0x012fff10, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
 
         //----------------------------------------------------------------------
+        // Data-processing instructions
+        //----------------------------------------------------------------------
+        // move bitwise not
+        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMvnRdImm, "mvn{s} <Rd>, #<const>"},
+
+        //----------------------------------------------------------------------
         // Load instructions
         //----------------------------------------------------------------------
         { 0x0fd00000, 0x08900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
@@ -2844,6 +2877,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "mov<c> <Rd>, <Rm>"},
         // move from low register to low register
         { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "movs <Rd>, <Rm>"},
+        // move bitwise not
+        { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateMvnRdImm, "mvn{s} <Rd>, #<const>"},
         // compare a register with immediate
         { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCmpRnImm, "cmp<c> <Rn>, #imm8"},
         // compare Rn with Rm (Rn and Rm both from r0-r7)

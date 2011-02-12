@@ -290,6 +290,10 @@ protected:
     bool
     EmulateMovRdRm (ARMEncoding encoding);
 
+    // MVN (immediate)
+    bool
+    EmulateMvnRdImm (ARMEncoding encoding);
+
     bool
     EmulateCmpRnImm (ARMEncoding encoding);
 
