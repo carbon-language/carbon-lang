@@ -914,6 +914,8 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             target = pc + 4 + imm32;
             context.arg1 = 4 + imm32;  // signed offset
             context.arg2 = eModeThumb; // target instruction set
+            if (m_it_session.InITBlock() && !m_it_session.LastInITBlock())
+                return false;
             break;
             }
         case eEncodingT2:
@@ -931,6 +933,8 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             target = Align(pc + 4, 4) + imm32;
             context.arg1 = 4 + imm32; // signed offset
             context.arg2 = eModeARM;  // target instruction set
+            if (m_it_session.InITBlock() && !m_it_session.LastInITBlock())
+                return false;
             break;
             }
         case eEncodingA1:
@@ -990,7 +994,6 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
         EmulateInstruction::Context context = { EmulateInstruction::eContextAbsoluteBranchRegister, 0, 0, 0};
         const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
         addr_t lr; // next instruction address
-        addr_t target; // target address
         if (!success)
             return false;
         uint32_t Rm; // the register with the target address
@@ -1001,7 +1004,8 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
             // if m == 15 then UNPREDICTABLE;
             if (Rm == 15)
                 return false;
-            target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+            if (m_it_session.InITBlock() && !m_it_session.LastInITBlock())
+                return false;
             break;
         case eEncodingA1:
             lr = pc + 4; // return address
@@ -1009,15 +1013,63 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
             // if m == 15 then UNPREDICTABLE;
             if (Rm == 15)
                 return false;
-            target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
             break;
         default:
             return false;
         }
+        addr_t target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        if (!success)
+            return false;
         context.arg0 = eRegisterKindDWARF;
         context.arg1 = dwarf_r0 + Rm;
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
             return false;
+        if (!BXWritePC(context, target))
+            return false;
+    }
+    return true;
+}
+
+// Branch and Exchange causes a branch to an address and instruction set specified by a register.
+// BX
+bool
+EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        BXWritePC(R[m]);
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        EmulateInstruction::Context context = { EmulateInstruction::eContextAbsoluteBranchRegister, 0, 0, 0};
+        uint32_t Rm; // the register with the target address
+        switch (encoding) {
+        case eEncodingT1:
+            Rm = Bits32(opcode, 6, 3);
+            if (m_it_session.InITBlock() && !m_it_session.LastInITBlock())
+                return false;
+            break;
+        case eEncodingA1:
+            Rm = Bits32(opcode, 3, 0);
+            break;
+        default:
+            return false;
+        }
+        addr_t target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        if (!success)
+            return false;
+        context.arg0 = eRegisterKindDWARF;
+        context.arg1 = dwarf_r0 + Rm;
         if (!BXWritePC(context, target))
             return false;
     }
@@ -2681,6 +2733,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0xfe000000, 0xfa000000, ARMV5_ABOVE,   eEncodingA2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
         { 0x0f000000, 0x0b000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
         { 0x0ffffff0, 0x012fff30, ARMV5_ABOVE,   eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
+        // for example, "bx lr"
+        { 0x0ffffff0, 0x012fff10, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
 
         //----------------------------------------------------------------------
         // Load instructions
@@ -2777,6 +2831,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // J1 == J2 == 1
         { 0xf800e800, 0xf000e800, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
         { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
+        // for example, "bx lr"
+        { 0xffffff87, 0x00004700, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
         // compare and branch
         { 0xfffff500, 0x0000b100, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCB, "cb{n}z <Rn>, <label>"},
 

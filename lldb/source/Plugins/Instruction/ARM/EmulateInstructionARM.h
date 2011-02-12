@@ -244,6 +244,9 @@ protected:
     EmulateBLXRm (ARMEncoding encoding);
 
     bool
+    EmulateBXRm (ARMEncoding encoding);
+
+    bool
     EmulateSubR7IPImmediate (ARMEncoding encoding);
 
     bool
