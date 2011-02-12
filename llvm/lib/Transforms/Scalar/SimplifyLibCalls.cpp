@@ -1092,8 +1092,13 @@ struct PrintFOpt : public LibCallOptimization {
       return CI->use_empty() ? (Value*)CI :
                                ConstantInt::get(CI->getType(), 0);
 
-    // printf("x") -> putchar('x'), even for '%'.  Return the result of putchar
-    // in case there is an error writing to stdout.
+    // Do not do any of the following transformations if the printf return value
+    // is used, in general the printf return value is not compatible with either
+    // putchar() or puts().
+    if (!CI->use_empty())
+      return 0;
+
+    // printf("x") -> putchar('x'), even for '%'.
     if (FormatStr.size() == 1) {
       Value *Res = EmitPutChar(B.getInt32(FormatStr[0]), B, TD);
       if (CI->use_empty()) return CI;
@@ -1126,8 +1131,7 @@ struct PrintFOpt : public LibCallOptimization {
 
     // printf("%s\n", str) --> puts(str)
     if (FormatStr == "%s\n" && CI->getNumArgOperands() > 1 &&
-        CI->getArgOperand(1)->getType()->isPointerTy() &&
-        CI->use_empty()) {
+        CI->getArgOperand(1)->getType()->isPointerTy()) {
       EmitPutS(CI->getArgOperand(1), B, TD);
       return CI;
     }
@@ -1344,7 +1348,7 @@ struct PutsOpt : public LibCallOptimization {
     if (!GetConstantStringInfo(CI->getArgOperand(0), Str))
       return 0;
 
-    if (Str.empty()) {
+    if (Str.empty() && CI->use_empty()) {
       // puts("") -> putchar('\n')
       Value *Res = EmitPutChar(B.getInt32('\n'), B, TD);
       if (CI->use_empty()) return CI;
