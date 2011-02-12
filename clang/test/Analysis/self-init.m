@@ -102,7 +102,7 @@ static id _commonInit(MyObj *self) {
 }
 
 -(id)init6 {
-  [NSBundle loadNibNamed:@"Window" owner:myivar]; // expected-warning {{Instance variable used}}
+  [NSBundle loadNibNamed:@"Window" owner:myivar]; // no-warning
   return [self initWithSomething:0];
 }
 
@@ -121,17 +121,17 @@ static id _commonInit(MyObj *self) {
 }
 
 -(id)init9 {
-	[self doSomething];
-    return self; // expected-warning {{Returning 'self'}}
+  [self doSomething];
+  return self; // no-warning
 }
 
 -(id)init10 {
-	myivar = 0; // expected-warning {{Instance variable used}}
-    return self;
+  myivar = 0; // no-warning
+  return self;
 }
 
 -(id)init11 {
-	return self; // expected-warning {{Returning 'self'}}
+  return self; // no-warning
 }
 
 -(id)init12 {

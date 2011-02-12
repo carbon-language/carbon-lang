@@ -109,6 +109,7 @@ public:
 } // end anonymous namespace
 
 typedef llvm::ImmutableMap<SymbolRef, unsigned> SelfFlag;
+namespace { struct CalledInit {}; }
 
 namespace clang {
 namespace ento {
@@ -118,6 +119,10 @@ namespace ento {
       static int index = 0;
       return &index;
     }
+  };
+  template <>
+  struct GRStateTrait<CalledInit> : public GRStatePartialTrait<bool> {
+    static void *GDMIndex() { static int index = 0; return &index; }
   };
 }
 }
@@ -133,8 +138,8 @@ static SelfFlagEnum getSelfFlags(SVal val, CheckerContext &C) {
   return getSelfFlags(val, C.getState());
 }
 
-static void addSelfFlag(SVal val, SelfFlagEnum flag, CheckerContext &C) {
-  const GRState *state = C.getState();
+static void addSelfFlag(const GRState *state, SVal val,
+                        SelfFlagEnum flag, CheckerContext &C) {
   // We tag the symbol that the SVal wraps.
   if (SymbolRef sym = val.getAsSymbol())
     C.addTransition(state->set<SelfFlag>(sym, getSelfFlags(val, C) | flag));
@@ -161,9 +166,13 @@ static void checkForInvalidSelf(const Expr *E, CheckerContext &C,
                                 const char *errorStr) {
   if (!E)
     return;
+  
+  if (!C.getState()->get<CalledInit>())
+    return;
+  
   if (!isInvalidSelf(E, C))
     return;
-
+  
   // Generate an error node.
   ExplodedNode *N = C.generateSink();
   if (!N)
@@ -188,8 +197,14 @@ void ObjCSelfInitChecker::postVisitObjCMessage(CheckerContext &C,
   if (isInitMessage(msg)) {
     // Tag the return value as the result of an initializer.
     const GRState *state = C.getState();
+    
+    // FIXME this really should be context sensitive, where we record
+    // the current stack frame (for IPA).  Also, we need to clean this
+    // value out when we return from this method.
+    state = state->set<CalledInit>(true);
+    
     SVal V = state->getSVal(msg.getOriginExpr());
-    addSelfFlag(V, SelfFlag_InitRes, C);
+    addSelfFlag(state, V, SelfFlag_InitRes, C);
     return;
   }
 
@@ -262,10 +277,10 @@ void ObjCSelfInitChecker::PostVisitGenericCall(CheckerContext &C,
          I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I) {
     SVal argV = state->getSVal(*I);
     if (isSelfVar(argV, C)) {
-      addSelfFlag(state->getSVal(cast<Loc>(argV)), preCallSelfFlags, C);
+      addSelfFlag(state, state->getSVal(cast<Loc>(argV)), preCallSelfFlags, C);
       return;
     } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
-      addSelfFlag(state->getSVal(CE), preCallSelfFlags, C);
+      addSelfFlag(state, state->getSVal(CE), preCallSelfFlags, C);
       return;
     }
   }
@@ -277,7 +292,7 @@ void ObjCSelfInitChecker::visitLocation(CheckerContext &C, const Stmt *S,
   // value is the object that 'self' points to.
   const GRState *state = C.getState();
   if (isSelfVar(location, C))
-    addSelfFlag(state->getSVal(cast<Loc>(location)), SelfFlag_Self, C);
+    addSelfFlag(state, state->getSVal(cast<Loc>(location)), SelfFlag_Self, C);
 }
 
 // FIXME: A callback should disable checkers at the start of functions.

@@ -145,6 +145,19 @@ namespace ento {
       delete (typename data_type::Factory*) Ctx;
     }
   };
+  
+  // Partial specialization for bool.
+  template <> struct GRStatePartialTrait<bool> {
+    typedef bool data_type;
+
+    static inline data_type MakeData(void* const* p) {
+      return (bool) (uintptr_t) p;
+    }
+    static inline void *MakeVoidPtr(data_type d) {
+      return (void*) (uintptr_t) d;
+    }
+  };
+  
 } // end GR namespace
 
 } // end clang namespace
