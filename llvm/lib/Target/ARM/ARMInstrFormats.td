@@ -152,7 +152,7 @@ def CCOutOperand : AsmOperandClass {
 def MemBarrierOptOperand : AsmOperandClass {
   let Name = "MemBarrierOpt";
   let SuperClasses = [];
-  let ParserMethod = "ParseMemBarrierOptOperand";
+  let ParserMethod = "tryParseMemBarrierOptOperand";
 }
 
 // ARM Predicate operand. Default to 14 = always (AL). Second part is CC

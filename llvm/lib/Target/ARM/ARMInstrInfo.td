@@ -591,13 +591,13 @@ def nohash_imm : Operand<i32> {
 def CoprocNumAsmOperand : AsmOperandClass {
   let Name = "CoprocNum";
   let SuperClasses = [];
-  let ParserMethod = "ParseCoprocNumOperand";
+  let ParserMethod = "tryParseCoprocNumOperand";
 }
 
 def CoprocRegAsmOperand : AsmOperandClass {
   let Name = "CoprocReg";
   let SuperClasses = [];
-  let ParserMethod = "ParseCoprocRegOperand";
+  let ParserMethod = "tryParseCoprocRegOperand";
 }
 
 def p_imm : Operand<i32> {

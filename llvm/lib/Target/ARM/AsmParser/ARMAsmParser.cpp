@@ -55,10 +55,7 @@ class ARMAsmParser : public TargetAsmParser {
   int TryParseRegister();
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
   bool TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool ParseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*>&);
-  bool ParseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*>&);
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool ParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &, StringRef Mnemonic);
   bool ParsePrefix(ARMMCExpr::VariantKind &RefKind);
@@ -94,6 +91,13 @@ class ARMAsmParser : public TargetAsmParser {
 #include "ARMGenAsmMatcher.inc"
 
   /// }
+
+  OperandMatchResultTy tryParseCoprocNumOperand(
+    SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy tryParseCoprocRegOperand(
+    SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy tryParseMemBarrierOptOperand(
+    SmallVectorImpl<MCParsedAsmOperand*> &);
 
 public:
   ARMAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
@@ -734,40 +738,40 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
   return -1;
 }
 
-/// ParseCoprocNumOperand - Try to parse an coprocessor number operand. The
+/// tryParseCoprocNumOperand - Try to parse an coprocessor number operand. The
 /// token must be an Identifier when called, and if it is a coprocessor
 /// number, the token is eaten and the operand is added to the operand list.
-bool ARMAsmParser::
-ParseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+tryParseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
 
   int Num = MatchCoprocessorOperandName(Tok.getString(), 'p');
   if (Num == -1)
-    return true;
+    return MatchOperand_NoMatch;
 
   Parser.Lex(); // Eat identifier token.
   Operands.push_back(ARMOperand::CreateCoprocNum(Num, S));
-  return false;
+  return MatchOperand_Success;
 }
 
-/// ParseCoprocRegOperand - Try to parse an coprocessor register operand. The
+/// tryParseCoprocRegOperand - Try to parse an coprocessor register operand. The
 /// token must be an Identifier when called, and if it is a coprocessor
 /// number, the token is eaten and the operand is added to the operand list.
-bool ARMAsmParser::
-ParseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+tryParseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
 
   int Reg = MatchCoprocessorOperandName(Tok.getString(), 'c');
   if (Reg == -1)
-    return true;
+    return MatchOperand_NoMatch;
 
   Parser.Lex(); // Eat identifier token.
   Operands.push_back(ARMOperand::CreateCoprocReg(Reg, S));
-  return false;
+  return MatchOperand_Success;
 }
 
 /// Parse a register list, return it if successful else return null.  The first
@@ -854,9 +858,9 @@ ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return false;
 }
 
-/// ParseMemBarrierOptOperand - Try to parse DSB/DMB data barrier options.
-bool ARMAsmParser::
-ParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+/// tryParseMemBarrierOptOperand - Try to parse DSB/DMB data barrier options.
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+tryParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
@@ -874,11 +878,11 @@ ParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     .Default(~0U);
 
   if (Opt == ~0U)
-    return true;
+    return MatchOperand_NoMatch;
 
   Parser.Lex(); // Eat identifier token.
   Operands.push_back(ARMOperand::CreateMemBarrierOpt((ARM_MB::MemBOpt)Opt, S));
-  return false;
+  return MatchOperand_Success;
 }
 
 /// Parse an ARM memory expression, return false if successful else return true
@@ -1105,9 +1109,14 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 
   // Check if the current operand has a custom associated parser, if so, try to
   // custom parse the operand, or fallback to the general approach.
-  MatchResultTy ResTy = MatchOperandParserImpl(Operands, Mnemonic);
-  if (ResTy == Match_Success)
+  OperandMatchResultTy ResTy = MatchOperandParserImpl(Operands, Mnemonic);
+  if (ResTy == MatchOperand_Success)
     return false;
+  // If there wasn't a custom match, try the generic matcher below. Otherwise,
+  // there was a match, but an error occurred, in which case, just return that
+  // the operand parsing failed.
+  if (ResTy == MatchOperand_ParseFail)
+    return true;
 
   switch (getLexer().getKind()) {
   default:

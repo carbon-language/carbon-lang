@@ -1974,7 +1974,8 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the operand class switch to call the correct custom parser for
   // the found operand class.
-  OS << "bool " << Target.getName() << ClassName << "::\n"
+  OS << Target.getName() << ClassName << "::OperandMatchResultTy "
+     << Target.getName() << ClassName << "::\n"
      << "TryCustomParseOperand(SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands,\n                      unsigned MCK) {\n\n"
      << "  switch(MCK) {\n";
@@ -1989,15 +1990,15 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   }
 
   OS << "  default:\n";
-  OS << "    return true;\n";
+  OS << "    return MatchOperand_NoMatch;\n";
   OS << "  }\n";
-  OS << "  return true;\n";
+  OS << "  return MatchOperand_NoMatch;\n";
   OS << "}\n\n";
 
   // Emit the static custom operand parser. This code is very similar with
   // the other matcher. Also use MatchResultTy here just in case we go for
   // a better error handling.
-  OS << Target.getName() << ClassName << "::MatchResultTy "
+  OS << Target.getName() << ClassName << "::OperandMatchResultTy "
      << Target.getName() << ClassName << "::\n"
      << "MatchOperandParserImpl(SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands,\n                       StringRef Mnemonic) {\n";
@@ -2009,9 +2010,6 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   OS << "  // Get the next operand index.\n";
   OS << "  unsigned NextOpNum = Operands.size()-1;\n";
 
-  OS << "  // Some state to try to produce better error messages.\n";
-  OS << "  bool HadMatchOtherThanFeatures = false;\n\n";
-
   // Emit code to search the table.
   OS << "  // Search the table.\n";
   OS << "  std::pair<const OperandMatchEntry*, const OperandMatchEntry*>";
@@ -2020,9 +2018,8 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
      << Info.OperandMatchInfo.size() << ", Mnemonic,\n"
      << "                     LessOpcodeOperand());\n\n";
 
-  OS << "  // Return a more specific error code if no mnemonics match.\n";
   OS << "  if (MnemonicRange.first == MnemonicRange.second)\n";
-  OS << "    return Match_MnemonicFail;\n\n";
+  OS << "    return MatchOperand_NoMatch;\n\n";
 
   OS << "  for (const OperandMatchEntry *it = MnemonicRange.first,\n"
      << "       *ie = MnemonicRange.second; it != ie; ++it) {\n";
@@ -2034,7 +2031,6 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   OS << "    // check if the available features match\n";
   OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
      << "!= it->RequiredFeatures) {\n";
-  OS << "      HadMatchOtherThanFeatures = true;\n";
   OS << "      continue;\n";
   OS << "    }\n\n";
 
@@ -2045,13 +2041,14 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit call to the custom parser method
   OS << "    // call custom parse method to handle the operand\n";
-  OS << "    if (!TryCustomParseOperand(Operands, it->Class))\n";
-  OS << "      return Match_Success;\n";
+  OS << "    OperandMatchResultTy Result = ";
+  OS << "TryCustomParseOperand(Operands, it->Class);\n";
+  OS << "    if (Result != MatchOperand_NoMatch)\n";
+  OS << "      return Result;\n";
   OS << "  }\n\n";
 
-  OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
-  OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
-  OS << "  return Match_InvalidOperand;\n";
+  OS << "  // Okay, we had no match.\n";
+  OS << "  return MatchOperand_NoMatch;\n";
   OS << "}\n\n";
 }
 
@@ -2131,11 +2128,16 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    MCInst &Inst, unsigned &ErrorInfo);\n";
 
   if (Info.OperandMatchInfo.size()) {
-    OS << "  MatchResultTy MatchOperandParserImpl(\n";
+    OS << "\n  enum OperandMatchResultTy {\n";
+    OS << "    MatchOperand_Success,    // operand matched successfully\n";
+    OS << "    MatchOperand_NoMatch,    // operand did not match\n";
+    OS << "    MatchOperand_ParseFail   // operand matched but had errors\n";
+    OS << "  };\n";
+    OS << "  OperandMatchResultTy MatchOperandParserImpl(\n";
     OS << "    SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
     OS << "    StringRef Mnemonic);\n";
 
-    OS << "  bool TryCustomParseOperand(\n";
+    OS << "  OperandMatchResultTy TryCustomParseOperand(\n";
     OS << "    SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
     OS << "    unsigned MCK);\n\n";
   }
