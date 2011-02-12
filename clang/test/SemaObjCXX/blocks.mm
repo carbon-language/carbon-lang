@@ -3,7 +3,7 @@
 
 void bar(id(^)(void));
 void foo(id <NSObject>(^objectCreationBlock)(void)) {
-    return bar(objectCreationBlock); // expected-warning{{incompatible pointer types passing 'id<NSObject> (^)()' to parameter of type 'id (^)()'}}
+    return bar(objectCreationBlock); // OK
 }
 
 void bar2(id(*)(void));
@@ -103,4 +103,18 @@ namespace N3 {
   void f() {
     X<N> xN = ^() { return X<N>(); }();
   }
+}
+
+// rdar://8979379
+
+@interface A
+@end
+
+@interface B : A
+@end
+
+void f(int (^bl)(A* a)); // expected-note {{candidate function not viable: no known conversion from 'int (^)(B *)' to 'int (^)(A *)' for 1st argument}}
+
+void g() {
+  f(^(B* b) { return 0; }); // expected-error {{no matching function for call to 'f'}}
 }

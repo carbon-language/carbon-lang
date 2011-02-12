@@ -2199,7 +2199,12 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       }
     }
     break;
-
+  
+  case ICK_Block_Pointer_Conversion: {
+      ImpCastExprToType(From, ToType.getUnqualifiedType(), CK_BitCast, VK_RValue);
+      break;
+    }
+      
   case ICK_Lvalue_To_Rvalue:
   case ICK_Array_To_Pointer:
   case ICK_Function_To_Pointer:

@@ -75,6 +75,7 @@ namespace clang {
     ICK_Vector_Conversion,     ///< Vector conversions
     ICK_Vector_Splat,          ///< A vector splat from an arithmetic type
     ICK_Complex_Real,          ///< Complex-real conversions (C99 6.3.1.7)
+    ICK_Block_Pointer_Conversion,    ///< Block Pointer conversions 
     ICK_Num_Conversion_Kinds   ///< The number of conversion kinds
   };
 
