@@ -14,6 +14,7 @@
 
 // C++ Includes
 #include <list>
+#include <vector>
 
 // Other libraries and framework includes
 #include "lldb/Core/ArchSpec.h"
@@ -343,7 +344,12 @@ protected:
     lldb::tid_t m_curr_tid;         // Current gdb remote protocol thread index for all other operations
     lldb::tid_t m_curr_tid_run;     // Current gdb remote protocol thread index for continue, step, etc
     uint32_t m_z0_supported:1;      // Set to non-zero if Z0 and z0 packets are supported
-    lldb_private::StreamString m_continue_packet;
+    typedef std::vector<lldb::tid_t> tid_collection;
+    typedef std::vector< std::pair<lldb::tid_t,int> > tid_sig_collection;
+    tid_collection m_continue_c_tids;                  // 'c' for continue
+    tid_sig_collection m_continue_C_tids; // 'C' for continue with signal
+    tid_collection m_continue_s_tids;                  // 's' for step
+    tid_sig_collection m_continue_S_tids; // 'S' for step with signal
     lldb::addr_t m_dispatch_queue_offsets_addr;
     uint32_t m_packet_timeout;
     size_t m_max_memory_size;       // The maximum number of bytes to read/write when reading and writing memory

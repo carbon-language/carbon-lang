@@ -114,7 +114,10 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_curr_tid (LLDB_INVALID_THREAD_ID),
     m_curr_tid_run (LLDB_INVALID_THREAD_ID),
     m_z0_supported (1),
-    m_continue_packet(),
+    m_continue_c_tids (),
+    m_continue_C_tids (),
+    m_continue_s_tids (),
+    m_continue_S_tids (),
     m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
     m_packet_timeout (1),
     m_max_memory_size (512),
@@ -599,7 +602,6 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
         return error;
     }
 
-    m_gdb_comm.SetAckMode (true);
     if (m_gdb_comm.StartReadThread(&error))
     {
         // Send an initial ack
@@ -611,19 +613,11 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
                                                                       m_debugserver_pid,
                                                                       false);
         
-        StringExtractorGDBRemote response;
-        if (m_gdb_comm.SendPacketAndWaitForResponse("QStartNoAckMode", response, 1, false))
-        {
-            if (response.IsOKPacket())
-                m_gdb_comm.SetAckMode (false);
-        }
-
-        if (m_gdb_comm.SendPacketAndWaitForResponse("QThreadSuffixSupported", response, 1, false))
-        {
-            if (response.IsOKPacket())
-                m_gdb_comm.SetThreadSuffixSupported (true);
-        }
-
+        m_gdb_comm.ResetDiscoverableSettings();
+        m_gdb_comm.GetSendAcks ();
+        m_gdb_comm.GetThreadSuffixSupported ();
+        m_gdb_comm.GetHostInfo ();
+        m_gdb_comm.GetVContSupported ('c');
     }
     return error;
 }
@@ -847,12 +841,10 @@ ProcessGDBRemote::DidAttach ()
 Error
 ProcessGDBRemote::WillResume ()
 {
-    m_continue_packet.Clear();
-    // Start the continue packet we will use to run the target. Each thread
-    // will append what it is supposed to be doing to this packet when the
-    // ThreadList::WillResume() is called. If a thread it supposed
-    // to stay stopped, then don't append anything to this string.
-    m_continue_packet.Printf("vCont");
+    m_continue_c_tids.clear();
+    m_continue_C_tids.clear();
+    m_continue_s_tids.clear();
+    m_continue_S_tids.clear();
     return Error();
 }
 
@@ -867,14 +859,210 @@ ProcessGDBRemote::DoResume ()
     Listener listener ("gdb-remote.resume-packet-sent");
     if (listener.StartListeningForEvents (&m_gdb_comm, GDBRemoteCommunication::eBroadcastBitRunPacketSent))
     {
-        EventSP event_sp;
-        TimeValue timeout;
-        timeout = TimeValue::Now();
-        timeout.OffsetWithSeconds (5);
-        m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (m_continue_packet.GetData(), m_continue_packet.GetSize()));
+        StreamString continue_packet;
+        bool continue_packet_error = false;
+        if (m_gdb_comm.HasAnyVContSupport ())
+        {
+            continue_packet.PutCString ("vCont");
+        
+            if (!m_continue_c_tids.empty())
+            {
+                if (m_gdb_comm.GetVContSupported ('c'))
+                {
+                    for (tid_collection::const_iterator t_pos = m_continue_c_tids.begin(), t_end = m_continue_c_tids.end(); t_pos != t_end; ++t_pos)
+                        continue_packet.Printf(";c:%4.4x", *t_pos);
+                }
+                else 
+                    continue_packet_error = true;
+            }
+            
+            if (!continue_packet_error && !m_continue_C_tids.empty())
+            {
+                if (m_gdb_comm.GetVContSupported ('C'))
+                {
+                    for (tid_sig_collection::const_iterator s_pos = m_continue_C_tids.begin(), s_end = m_continue_C_tids.end(); s_pos != s_end; ++s_pos)
+                        continue_packet.Printf(";C%2.2x:%4.4x", s_pos->second, s_pos->first);
+                }
+                else 
+                    continue_packet_error = true;
+            }
 
-        if (listener.WaitForEvent (&timeout, event_sp) == false)
-            error.SetErrorString("Resume timed out.");
+            if (!continue_packet_error && !m_continue_s_tids.empty())
+            {
+                if (m_gdb_comm.GetVContSupported ('s'))
+                {
+                    for (tid_collection::const_iterator t_pos = m_continue_s_tids.begin(), t_end = m_continue_s_tids.end(); t_pos != t_end; ++t_pos)
+                        continue_packet.Printf(";s:%4.4x", *t_pos);
+                }
+                else 
+                    continue_packet_error = true;
+            }
+            
+            if (!continue_packet_error && !m_continue_S_tids.empty())
+            {
+                if (m_gdb_comm.GetVContSupported ('S'))
+                {
+                    for (tid_sig_collection::const_iterator s_pos = m_continue_S_tids.begin(), s_end = m_continue_S_tids.end(); s_pos != s_end; ++s_pos)
+                        continue_packet.Printf(";S%2.2x:%4.4x", s_pos->second, s_pos->first);
+                }
+                else
+                    continue_packet_error = true;
+            }
+            
+            if (continue_packet_error)
+                continue_packet.GetString().clear();
+        }
+        else
+            continue_packet_error = true;
+        
+        if (continue_packet_error)
+        {
+            continue_packet_error = false;
+            // Either no vCont support, or we tried to use part of the vCont
+            // packet that wasn't supported by the remote GDB server.
+            // We need to try and make a simple packet that can do our continue
+            const size_t num_threads = GetThreadList().GetSize();
+            const size_t num_continue_c_tids = m_continue_c_tids.size();
+            const size_t num_continue_C_tids = m_continue_C_tids.size();
+            const size_t num_continue_s_tids = m_continue_s_tids.size();
+            const size_t num_continue_S_tids = m_continue_S_tids.size();
+            if (num_continue_c_tids > 0)
+            {
+                if (num_continue_c_tids == num_threads)
+                {
+                    // All threads are resuming...
+                    SetCurrentGDBRemoteThreadForRun (-1);
+                    continue_packet.PutChar ('c');                
+                }
+                else if (num_continue_c_tids == 1 &&
+                         num_continue_C_tids == 0 && 
+                         num_continue_s_tids == 0 && 
+                         num_continue_S_tids == 0 )
+                {
+                    // Only one thread is continuing
+                    SetCurrentGDBRemoteThreadForRun (m_continue_c_tids.front());
+                    continue_packet.PutChar ('c');                
+                }
+                else
+                {
+                    // We can't represent this continue packet....
+                    continue_packet_error = true;
+                }
+            }
+
+            if (!continue_packet_error && num_continue_C_tids > 0)
+            {
+                if (num_continue_C_tids == num_threads)
+                {
+                    const int continue_signo = m_continue_C_tids.front().second;
+                    if (num_continue_C_tids > 1)
+                    {
+                        for (size_t i=1; i<num_threads; ++i)
+                        {
+                            if (m_continue_C_tids[i].second != continue_signo)
+                                continue_packet_error = true;
+                        }
+                    }
+                    if (!continue_packet_error)
+                    {
+                        // Add threads continuing with the same signo...
+                        SetCurrentGDBRemoteThreadForRun (-1);
+                        continue_packet.Printf("C%2.2x", continue_signo);
+                    }
+                }
+                else if (num_continue_c_tids == 0 &&
+                         num_continue_C_tids == 1 && 
+                         num_continue_s_tids == 0 && 
+                         num_continue_S_tids == 0 )
+                {
+                    // Only one thread is continuing with signal
+                    SetCurrentGDBRemoteThreadForRun (m_continue_C_tids.front().first);
+                    continue_packet.Printf("C%2.2x", m_continue_C_tids.front().second);
+                }
+                else
+                {
+                    // We can't represent this continue packet....
+                    continue_packet_error = true;
+                }
+            }
+
+            if (!continue_packet_error && num_continue_s_tids > 0)
+            {
+                if (num_continue_s_tids == num_threads)
+                {
+                    // All threads are resuming...
+                    SetCurrentGDBRemoteThreadForRun (-1);
+                    continue_packet.PutChar ('s');                
+                }
+                else if (num_continue_c_tids == 0 &&
+                         num_continue_C_tids == 0 && 
+                         num_continue_s_tids == 1 && 
+                         num_continue_S_tids == 0 )
+                {
+                    // Only one thread is stepping
+                    SetCurrentGDBRemoteThreadForRun (m_continue_s_tids.front());
+                    continue_packet.PutChar ('s');                
+                }
+                else
+                {
+                    // We can't represent this continue packet....
+                    continue_packet_error = true;
+                }
+            }
+
+            if (!continue_packet_error && num_continue_S_tids > 0)
+            {
+                if (num_continue_S_tids == num_threads)
+                {
+                    const int step_signo = m_continue_S_tids.front().second;
+                    // Are all threads trying to step with the same signal?
+                    if (num_continue_S_tids > 1)
+                    {
+                        for (size_t i=1; i<num_threads; ++i)
+                        {
+                            if (m_continue_S_tids[i].second != step_signo)
+                                continue_packet_error = true;
+                        }
+                    }
+                    if (!continue_packet_error)
+                    {
+                        // Add threads stepping with the same signo...
+                        SetCurrentGDBRemoteThreadForRun (-1);
+                        continue_packet.Printf("S%2.2x", step_signo);
+                    }
+                }
+                else if (num_continue_c_tids == 0 &&
+                         num_continue_C_tids == 0 && 
+                         num_continue_s_tids == 0 && 
+                         num_continue_S_tids == 1 )
+                {
+                    // Only one thread is stepping with signal
+                    SetCurrentGDBRemoteThreadForRun (m_continue_S_tids.front().first);
+                    continue_packet.Printf("S%2.2x", m_continue_S_tids.front().second);
+                }
+                else
+                {
+                    // We can't represent this continue packet....
+                    continue_packet_error = true;
+                }
+            }
+        }
+
+        if (continue_packet_error)
+        {
+            error.SetErrorString ("can't make continue packet for this resume");
+        }
+        else
+        {
+            EventSP event_sp;
+            TimeValue timeout;
+            timeout = TimeValue::Now();
+            timeout.OffsetWithSeconds (5);
+            m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (continue_packet.GetData(), continue_packet.GetSize()));
+
+            if (listener.WaitForEvent (&timeout, event_sp) == false)
+                error.SetErrorString("Resume timed out.");
+        }
     }
 
     return error;
@@ -2118,7 +2306,11 @@ ProcessGDBRemote::SetCurrentGDBRemoteThread (int tid)
         return true;
 
     char packet[32];
-    const int packet_len = ::snprintf (packet, sizeof(packet), "Hg%x", tid);
+    int packet_len;
+    if (tid <= 0)
+        packet_len = ::snprintf (packet, sizeof(packet), "Hg%i", tid);
+    else
+        packet_len = ::snprintf (packet, sizeof(packet), "Hg%x", tid);
     assert (packet_len + 1 < sizeof(packet));
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, false))
@@ -2139,7 +2331,12 @@ ProcessGDBRemote::SetCurrentGDBRemoteThreadForRun (int tid)
         return true;
 
     char packet[32];
-    const int packet_len = ::snprintf (packet, sizeof(packet), "Hc%x", tid);
+    int packet_len;
+    if (tid <= 0)
+        packet_len = ::snprintf (packet, sizeof(packet), "Hc%i", tid);
+    else
+        packet_len = ::snprintf (packet, sizeof(packet), "Hc%x", tid);
+
     assert (packet_len + 1 < sizeof(packet));
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, false))

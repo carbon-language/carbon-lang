@@ -93,25 +93,25 @@ ThreadGDBRemote::WillResume (StateType resume_state)
     if (log)
         log->Printf ("Resuming thread: %4.4x with state: %s.", GetID(), StateAsCString(resume_state));
 
+    ProcessGDBRemote &process = GetGDBProcess();
     switch (resume_state)
     {
     case eStateSuspended:
     case eStateStopped:
-        // Don't append anything for threads that should stay stopped.
         break;
 
     case eStateRunning:
         if (m_process.GetUnixSignals().SignalIsValid (signo))
-            GetGDBProcess().m_continue_packet.Printf(";C%2.2x:%4.4x", signo, GetID());
+            process.m_continue_C_tids.push_back(std::make_pair(GetID(), signo));
         else
-            GetGDBProcess().m_continue_packet.Printf(";c:%4.4x", GetID());
+            process.m_continue_c_tids.push_back(GetID());
         break;
 
     case eStateStepping:
         if (m_process.GetUnixSignals().SignalIsValid (signo))
-            GetGDBProcess().m_continue_packet.Printf(";S%2.2x:%4.4x", signo, GetID());
+            process.m_continue_S_tids.push_back(std::make_pair(GetID(), signo));
         else
-            GetGDBProcess().m_continue_packet.Printf(";s:%4.4x", GetID());
+            process.m_continue_s_tids.push_back(GetID());
         break;
 
     default:

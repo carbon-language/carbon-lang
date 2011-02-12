@@ -93,6 +93,9 @@ DNBLogEnabled ()
 static inline void
 _DNBLogVAPrintf(uint32_t flags, const char *format, va_list args)
 {
+    static PThreadMutex g_LogThreadedMutex(PTHREAD_MUTEX_RECURSIVE);
+    PTHREAD_MUTEX_LOCKER(locker, g_LogThreadedMutex);
+
     if (g_log_callback)
       g_log_callback(g_log_baton, flags, format, args);
 }
@@ -140,12 +143,6 @@ _DNBLogDebugVerbose (const char *format, ...)
 }
 
 
-static pthread_mutex_t *
-GetLogThreadedMutex()
-{
-    static PThreadMutex g_LogThreadedMutex(PTHREAD_MUTEX_RECURSIVE);
-    return g_LogThreadedMutex.Mutex();
-}
 static uint32_t g_message_id = 0;
 
 //----------------------------------------------------------------------
@@ -157,7 +154,7 @@ _DNBLogThreaded (const char *format, ...)
 {
     if (DNBLogEnabled ())
     {
-        PTHREAD_MUTEX_LOCKER(locker, GetLogThreadedMutex());
+        //PTHREAD_MUTEX_LOCKER(locker, GetLogThreadedMutex());
 
         char *arg_msg = NULL;
         va_list args;
@@ -202,7 +199,7 @@ _DNBLogThreadedIf (uint32_t log_bit, const char *format, ...)
 {
     if (DNBLogEnabled () && (log_bit & g_log_bits) == log_bit)
     {
-        PTHREAD_MUTEX_LOCKER(locker, GetLogThreadedMutex());
+        //PTHREAD_MUTEX_LOCKER(locker, GetLogThreadedMutex());
 
         char *arg_msg = NULL;
         va_list args;
