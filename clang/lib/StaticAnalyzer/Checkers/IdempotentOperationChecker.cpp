@@ -357,8 +357,15 @@ void IdempotentOperationChecker::PostVisitBinaryOperator(
                                                       const BinaryOperator *B) {
   // Add the ExplodedNode we just visited
   BinaryOperatorData &Data = hash[B];
-  assert(isa<BinaryOperator>(cast<StmtPoint>(C.getPredecessor()
-                                             ->getLocation()).getStmt()));
+
+  const Stmt *predStmt 
+    = cast<StmtPoint>(C.getPredecessor()->getLocation()).getStmt();
+  
+  // Ignore implicit calls to setters.
+  if (isa<ObjCPropertyRefExpr>(predStmt))
+    return;
+  
+  assert(isa<BinaryOperator>(predStmt));
   Data.explodedNodes.Add(C.getPredecessor());
 }
 

@@ -4,10 +4,12 @@ typedef signed char BOOL;
 typedef unsigned long NSUInteger;
 typedef struct _NSZone NSZone;
 @protocol NSObject  - (BOOL)isEqual:(id)object;
-@end    @interface NSObject <NSObject> {
-}
 @end
 
+@interface NSObject {}
+  @property int locked;
+  @property(nonatomic, readonly) NSObject *media;
+@end
 
 // <rdar://problem/8725041> - Don't flag idempotent operation warnings when
 // a method may invalidate an instance variable.
@@ -31,4 +33,10 @@ typedef struct _NSZone NSZone;
   _attribute = ((void*)0);
 }
 @end
+
+// Test that the idempotent operations checker works in the prescence
+// of property expressions.
+void pr9116(NSObject *placeholder) {
+  int x = placeholder.media.locked = placeholder ? 1 : 0;
+}
 
