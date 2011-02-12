@@ -1,4 +1,5 @@
 ;RUN: llc -march=sparc < %s | FileCheck %s
+;RUN: llc -march=sparc -O0 < %s | FileCheck %s -check-prefix=UNOPT
 
 
 define i32 @test(i32 %a) nounwind {
@@ -75,3 +76,15 @@ bb1:                                              ; preds = %entry
 declare i32 @foo(...)
 
 declare i32 @bar(i32)
+
+
+define i32 @test_implicit_def() nounwind {
+entry:
+;UNOPT:       test_implicit_def
+;UNOPT:       call func
+;UNOPT-NEXT:  nop
+  %0 = tail call i32 @func(i32* undef) nounwind
+  ret i32 0
+}
+
+declare i32 @func(i32*)

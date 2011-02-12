@@ -182,6 +182,9 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
                             SmallSet<unsigned, 32> &RegUses)
 {
 
+  if (candidate->isImplicitDef() || candidate->isKill())
+    return true;
+
   if (candidate->getDesc().mayLoad()) {
     sawLoad = true;
     if (sawStore)
