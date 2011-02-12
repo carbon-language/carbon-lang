@@ -353,6 +353,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     SmallString<64> Buffer;
     for (Module::iterator f = mergedModule->begin(),
          e = mergedModule->end(); f != e; ++f) {
+      Buffer.clear();
       mangler.getNameWithPrefix(Buffer, f, false);
       if (!f->isDeclaration() &&
           _mustPreserveSymbols.count(Buffer))
@@ -360,6 +361,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     }
     for (Module::global_iterator v = mergedModule->global_begin(), 
          e = mergedModule->global_end(); v !=  e; ++v) {
+      Buffer.clear();
       mangler.getNameWithPrefix(Buffer, v, false);
       if (!v->isDeclaration() &&
           _mustPreserveSymbols.count(Buffer))
