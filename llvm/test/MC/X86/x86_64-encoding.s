@@ -140,3 +140,11 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0x48,0x8b,0x04,0xe1]
           movq  (%rcx,%riz,8), %rax
 
+// CHECK: fxsaveq (%rax)
+// CHECK: encoding: [0x48,0x0f,0xae,0x00]
+          fxsaveq (%rax)
+
+// CHECK: fxrstorq (%rax)
+// CHECK: encoding: [0x48,0x0f,0xae,0x08]
+          fxrstorq (%rax)
+

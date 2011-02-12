@@ -625,8 +625,12 @@ def FCOMPP : I<0xD9, RawFrm, (outs), (ins), "fcompp", []>, DE;
 
 def FXSAVE : I<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
                "fxsave\t$dst", []>, TB;
+def FXSAVE64 : I<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
+                 "fxsaveq\t$dst", []>, TB, REX_W, Requires<[In64BitMode]>;
 def FXRSTOR : I<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
                 "fxrstor\t$src", []>, TB;
+def FXRSTOR64 : I<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
+                  "fxrstorq\t$src", []>, TB, REX_W, Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
