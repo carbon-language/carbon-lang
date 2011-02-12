@@ -44,10 +44,11 @@ void f5() {
 
 }
 
+//
 int f6() {
   
   int x = 4;
-  ++x; // expected-warning{{never read}}
+  ++x; // no-warning
   return 1;
 }
 
@@ -231,7 +232,7 @@ void halt() __attribute__((noreturn));
 int f21() {
   int x = 4;
   
-  ++x; // expected-warning{{never read}}
+  x = x + 1; // expected-warning{{never read}}
   if (1) {
     halt();
     (void)x;
@@ -263,7 +264,7 @@ void f22() {
   int y19 = 4;
   int y20 = 4;
 
-  ++x; // expected-warning{{never read}}
+  x = x + 1; // expected-warning{{never read}}
   ++y1;
   ++y2;
   ++y3;

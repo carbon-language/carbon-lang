@@ -12,7 +12,7 @@ int j;
 void test1() {
   int x = 4;
 
-  ++x; // expected-warning{{never read}}
+  x = x + 1; // expected-warning{{never read}}
 
   switch (j) {
   case 1:
@@ -69,11 +69,11 @@ void test2_b() {
 //===----------------------------------------------------------------------===//
 
 void test3_a(int x) {
-  ++x; // expected-warning{{never read}}
+   x = x + 1; // expected-warning{{never read}}
 }
 
 void test3_b(int &x) {
-  ++x; // no-warninge
+  x = x + 1; // no-warninge
 }
 
 void test3_c(int x) {

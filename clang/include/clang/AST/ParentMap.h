@@ -31,6 +31,7 @@ public:
 
   Stmt *getParent(Stmt*) const;
   Stmt *getParentIgnoreParens(Stmt *) const;
+  Stmt *getParentIgnoreParenCasts(Stmt *) const;
 
   const Stmt *getParent(const Stmt* S) const {
     return getParent(const_cast<Stmt*>(S));
@@ -38,6 +39,10 @@ public:
 
   const Stmt *getParentIgnoreParens(const Stmt *S) const {
     return getParentIgnoreParens(const_cast<Stmt*>(S));
+  }
+
+  const Stmt *getParentIgnoreParenCasts(const Stmt *S) const {
+    return getParentIgnoreParenCasts(const_cast<Stmt*>(S));
   }
 
   bool hasParent(Stmt* S) const {

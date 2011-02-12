@@ -191,6 +191,8 @@ public:
     if (S->getLocStart().isMacroID())
       return;
 
+    // Only cover dead stores from regular assignments.  ++/-- dead stores
+    // have never flagged a real bug.
     if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
       if (!B->isAssignmentOp()) return; // Skip non-assignments.
 
@@ -221,14 +223,11 @@ public:
         }
     }
     else if (UnaryOperator* U = dyn_cast<UnaryOperator>(S)) {
-      if (!U->isIncrementOp())
+      if (!U->isIncrementOp() || U->isPrefix())
         return;
 
-      // Handle: ++x within a subexpression.  The solution is not warn
-      //  about preincrements to dead variables when the preincrement occurs
-      //  as a subexpression.  This can lead to false negatives, e.g. "(++x);"
-      //  A generalized dead code checker should find such issues.
-      if (U->isPrefix() && Parents.isConsumedExpr(U))
+      Stmt *parent = Parents.getParentIgnoreParenCasts(U);
+      if (!parent || !isa<ReturnStmt>(parent))
         return;
 
       Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
