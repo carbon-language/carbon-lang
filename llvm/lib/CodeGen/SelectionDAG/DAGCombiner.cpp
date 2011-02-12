@@ -6375,6 +6375,12 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
   if (InVal.getOpcode() == ISD::UNDEF)
     return InVec;
 
+  EVT VT = InVec.getValueType();
+
+  // If we can't generate a legal BUILD_VECTOR, exit 
+  if (LegalOperations && !TLI.isOperationLegal(ISD::BUILD_VECTOR, VT))
+    return SDValue();
+
   // If the invec is a BUILD_VECTOR and if EltNo is a constant, build a new
   // vector with the inserted element.
   if (InVec.getOpcode() == ISD::BUILD_VECTOR && isa<ConstantSDNode>(EltNo)) {
@@ -6384,13 +6390,12 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
     if (Elt < Ops.size())
       Ops[Elt] = InVal;
     return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
-                       InVec.getValueType(), &Ops[0], Ops.size());
+                       VT, &Ops[0], Ops.size());
   }
   // If the invec is an UNDEF and if EltNo is a constant, create a new
   // BUILD_VECTOR with undef elements and the inserted element.
-  if (!LegalOperations && InVec.getOpcode() == ISD::UNDEF &&
+  if (InVec.getOpcode() == ISD::UNDEF &&
       isa<ConstantSDNode>(EltNo)) {
-    EVT VT = InVec.getValueType();
     EVT EltVT = VT.getVectorElementType();
     unsigned NElts = VT.getVectorNumElements();
     SmallVector<SDValue, 8> Ops(NElts, DAG.getUNDEF(EltVT));
@@ -6399,7 +6404,7 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
     if (Elt < Ops.size())
       Ops[Elt] = InVal;
     return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
-                       InVec.getValueType(), &Ops[0], Ops.size());
+                       VT, &Ops[0], Ops.size());
   }
   return SDValue();
 }
