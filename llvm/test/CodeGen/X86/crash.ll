@@ -187,3 +187,15 @@ for.inc44:                                        ; preds = %for.body
   %add46 = add i32 %l_74.0, 1
   br label %for.body
 }
+
+; PR9028
+define void @f(i64 %A) nounwind {
+entry:
+  %0 = zext i64 %A to i160
+  %1 = shl i160 %0, 64
+  %2 = zext i160 %1 to i576
+  %3 = zext i96 undef to i576
+  %4 = or i576 %3, %2
+  store i576 %4, i576* undef, align 8
+  ret void
+}

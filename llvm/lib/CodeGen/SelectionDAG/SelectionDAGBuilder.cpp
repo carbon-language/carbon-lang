@@ -2426,11 +2426,11 @@ void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
   SDValue Op2 = getValue(I.getOperand(1));
   
   MVT ShiftTy = TLI.getShiftAmountTy();
-  unsigned ShiftSize = ShiftTy.getSizeInBits();
-  unsigned Op2Size = Op2.getValueType().getSizeInBits();
   
   // Coerce the shift amount to the right type if we can.
   if (!I.getType()->isVectorTy() && Op2.getValueType() != ShiftTy) {
+    unsigned ShiftSize = ShiftTy.getSizeInBits();
+    unsigned Op2Size = Op2.getValueType().getSizeInBits();
     DebugLoc DL = getCurDebugLoc();
     
     // If the operand is smaller than the shift count type, promote it.

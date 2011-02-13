@@ -1167,13 +1167,19 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
   unsigned NVTBits = NVT.getSizeInBits();
   EVT ShTy = N->getOperand(1).getValueType();
 
+  // If this is a large integer being legalized (e.g. an i512) then plop the
+  // shift amount down as a fixed i32.  The target shift amount may be something
+  // like i8, but this isn't enough to represent the shift amount.
+  if (NVTBits > 256)
+    ShTy = MVT::i32;
+  
   if (N->getOpcode() == ISD::SHL) {
     if (Amt > VTBits) {
       Lo = Hi = DAG.getConstant(0, NVT);
     } else if (Amt > NVTBits) {
       Lo = DAG.getConstant(0, NVT);
       Hi = DAG.getNode(ISD::SHL, dl,
-                       NVT, InL, DAG.getConstant(Amt-NVTBits,ShTy));
+                       NVT, InL, DAG.getConstant(Amt-NVTBits, ShTy));
     } else if (Amt == NVTBits) {
       Lo = DAG.getConstant(0, NVT);
       Hi = InL;
