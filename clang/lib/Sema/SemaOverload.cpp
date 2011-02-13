@@ -1808,66 +1808,65 @@ bool Sema::IsBlockPointerConversion(QualType FromType, QualType ToType,
   const FunctionProtoType *ToFunctionType
     = ToPointeeType->getAs<FunctionProtoType>();
   
-  if (FromFunctionType && ToFunctionType) {
-    if (Context.getCanonicalType(FromPointeeType)
-          == Context.getCanonicalType(ToPointeeType))
-      return true;
-    
-    // Perform the quick checks that will tell us whether these
-    // function types are obviously different.
-    if (FromFunctionType->getNumArgs() != ToFunctionType->getNumArgs() ||
-        FromFunctionType->isVariadic() != ToFunctionType->isVariadic() ||
-        FromFunctionType->getTypeQuals() != ToFunctionType->getTypeQuals())
-      return false;
-    
-    bool IncompatibleObjC = false;
-    if (Context.getCanonicalType(FromFunctionType->getResultType())
-          == Context.getCanonicalType(ToFunctionType->getResultType())) {
-      // Okay, the types match exactly. Nothing to do.
-    } else {
-      QualType RHS = FromFunctionType->getResultType();
-      QualType CanRHS = Context.getCanonicalType(RHS);
-      QualType LHS = ToFunctionType->getResultType();
-      QualType CanLHS = Context.getCanonicalType(LHS);
-      if (!CanRHS->isRecordType() &&
-          !CanRHS.hasQualifiers() && CanLHS.hasQualifiers())
-        CanLHS = CanLHS.getUnqualifiedType();
+  if (!FromFunctionType || !ToFunctionType)
+    return false;
 
-      if (Context.getCanonicalType(CanRHS)
-          == Context.getCanonicalType(CanLHS)) {
-        // OK exact match.
-      } else if (isObjCPointerConversion(CanRHS, CanLHS,
-                                  ConvertedType, IncompatibleObjC)) {
-      if (IncompatibleObjC)
-        return false;
-      // Okay, we have an Objective-C pointer conversion.
-      }
-      else
-        return false;
-    }
-    
-    // Check argument types.
-    for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumArgs();
-         ArgIdx != NumArgs; ++ArgIdx) {
-      IncompatibleObjC = false;
-      QualType FromArgType = FromFunctionType->getArgType(ArgIdx);
-      QualType ToArgType = ToFunctionType->getArgType(ArgIdx);
-      if (Context.getCanonicalType(FromArgType)
-            == Context.getCanonicalType(ToArgType)) {
-        // Okay, the types match exactly. Nothing to do.
-      } else if (isObjCPointerConversion(ToArgType, FromArgType,
-                                         ConvertedType, IncompatibleObjC)) {
-        if (IncompatibleObjC)
-          return false;
-        // Okay, we have an Objective-C pointer conversion.
-      } else
-        // Argument types are too different. Abort.
-        return false;
-    }
-    ConvertedType = ToType;
+  if (Context.hasSameType(FromPointeeType, ToPointeeType))
     return true;
-  }
-  return false;
+    
+  // Perform the quick checks that will tell us whether these
+  // function types are obviously different.
+  if (FromFunctionType->getNumArgs() != ToFunctionType->getNumArgs() ||
+      FromFunctionType->isVariadic() != ToFunctionType->isVariadic())
+    return false;
+    
+  FunctionType::ExtInfo FromEInfo = FromFunctionType->getExtInfo();
+  FunctionType::ExtInfo ToEInfo = ToFunctionType->getExtInfo();
+  if (FromEInfo != ToEInfo)
+    return false;
+
+  bool IncompatibleObjC = false;
+  if (Context.getCanonicalType(FromFunctionType->getResultType())
+        == Context.getCanonicalType(ToFunctionType->getResultType())) {
+    // Okay, the types match exactly. Nothing to do.
+  } else {
+    QualType RHS = FromFunctionType->getResultType();
+    QualType LHS = ToFunctionType->getResultType();
+    if ((!getLangOptions().CPlusPlus || !RHS->isRecordType()) &&
+        !RHS.hasQualifiers() && LHS.hasQualifiers())
+       LHS = LHS.getUnqualifiedType();
+
+     if (Context.hasSameType(RHS,LHS)) {
+       // OK exact match.
+     } else if (isObjCPointerConversion(RHS, LHS,
+                                        ConvertedType, IncompatibleObjC)) {
+     if (IncompatibleObjC)
+       return false;
+     // Okay, we have an Objective-C pointer conversion.
+     }
+     else
+       return false;
+   }
+    
+   // Check argument types.
+   for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumArgs();
+        ArgIdx != NumArgs; ++ArgIdx) {
+     IncompatibleObjC = false;
+     QualType FromArgType = FromFunctionType->getArgType(ArgIdx);
+     QualType ToArgType = ToFunctionType->getArgType(ArgIdx);
+     if (Context.hasSameType(FromArgType, ToArgType)) {
+       // Okay, the types match exactly. Nothing to do.
+     } else if (isObjCPointerConversion(ToArgType, FromArgType,
+                                        ConvertedType, IncompatibleObjC)) {
+       if (IncompatibleObjC)
+         return false;
+       // Okay, we have an Objective-C pointer conversion.
+     } else
+       // Argument types are too different. Abort.
+       return false;
+   }
+   ConvertedType = ToType;
+   return true;
 }
 
 /// FunctionArgTypesAreEqual - This routine checks two function proto types
