@@ -1157,7 +1157,7 @@ std::pair <SDValue, SDValue> DAGTypeLegalizer::ExpandAtomic(SDNode *Node) {
 /// and the shift amount is a constant 'Amt'.  Expand the operation.
 void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
                                              SDValue &Lo, SDValue &Hi) {
-  DebugLoc dl = N->getDebugLoc();
+  DebugLoc DL = N->getDebugLoc();
   // Expand the incoming operand to be shifted, so that we have its parts
   SDValue InL, InH;
   GetExpandedInteger(N->getOperand(0), InL, InH);
@@ -1167,18 +1167,12 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
   unsigned NVTBits = NVT.getSizeInBits();
   EVT ShTy = N->getOperand(1).getValueType();
 
-  // If this is a large integer being legalized (e.g. an i512) then plop the
-  // shift amount down as a fixed i32.  The target shift amount may be something
-  // like i8, but this isn't enough to represent the shift amount.
-  if (NVTBits > 256)
-    ShTy = MVT::i32;
-  
   if (N->getOpcode() == ISD::SHL) {
     if (Amt > VTBits) {
       Lo = Hi = DAG.getConstant(0, NVT);
     } else if (Amt > NVTBits) {
       Lo = DAG.getConstant(0, NVT);
-      Hi = DAG.getNode(ISD::SHL, dl,
+      Hi = DAG.getNode(ISD::SHL, DL,
                        NVT, InL, DAG.getConstant(Amt-NVTBits, ShTy));
     } else if (Amt == NVTBits) {
       Lo = DAG.getConstant(0, NVT);
@@ -1189,15 +1183,15 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
       // Emit this X << 1 as X+X.
       SDVTList VTList = DAG.getVTList(NVT, MVT::Glue);
       SDValue LoOps[2] = { InL, InL };
-      Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
+      Lo = DAG.getNode(ISD::ADDC, DL, VTList, LoOps, 2);
       SDValue HiOps[3] = { InH, InH, Lo.getValue(1) };
-      Hi = DAG.getNode(ISD::ADDE, dl, VTList, HiOps, 3);
+      Hi = DAG.getNode(ISD::ADDE, DL, VTList, HiOps, 3);
     } else {
-      Lo = DAG.getNode(ISD::SHL, dl, NVT, InL, DAG.getConstant(Amt, ShTy));
-      Hi = DAG.getNode(ISD::OR, dl, NVT,
-                       DAG.getNode(ISD::SHL, dl, NVT, InH,
+      Lo = DAG.getNode(ISD::SHL, DL, NVT, InL, DAG.getConstant(Amt, ShTy));
+      Hi = DAG.getNode(ISD::OR, DL, NVT,
+                       DAG.getNode(ISD::SHL, DL, NVT, InH,
                                    DAG.getConstant(Amt, ShTy)),
-                       DAG.getNode(ISD::SRL, dl, NVT, InL,
+                       DAG.getNode(ISD::SRL, DL, NVT, InL,
                                    DAG.getConstant(NVTBits-Amt, ShTy)));
     }
     return;
@@ -1208,43 +1202,43 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
       Lo = DAG.getConstant(0, NVT);
       Hi = DAG.getConstant(0, NVT);
     } else if (Amt > NVTBits) {
-      Lo = DAG.getNode(ISD::SRL, dl,
+      Lo = DAG.getNode(ISD::SRL, DL,
                        NVT, InH, DAG.getConstant(Amt-NVTBits,ShTy));
       Hi = DAG.getConstant(0, NVT);
     } else if (Amt == NVTBits) {
       Lo = InH;
       Hi = DAG.getConstant(0, NVT);
     } else {
-      Lo = DAG.getNode(ISD::OR, dl, NVT,
-                       DAG.getNode(ISD::SRL, dl, NVT, InL,
+      Lo = DAG.getNode(ISD::OR, DL, NVT,
+                       DAG.getNode(ISD::SRL, DL, NVT, InL,
                                    DAG.getConstant(Amt, ShTy)),
-                       DAG.getNode(ISD::SHL, dl, NVT, InH,
+                       DAG.getNode(ISD::SHL, DL, NVT, InH,
                                    DAG.getConstant(NVTBits-Amt, ShTy)));
-      Hi = DAG.getNode(ISD::SRL, dl, NVT, InH, DAG.getConstant(Amt, ShTy));
+      Hi = DAG.getNode(ISD::SRL, DL, NVT, InH, DAG.getConstant(Amt, ShTy));
     }
     return;
   }
 
   assert(N->getOpcode() == ISD::SRA && "Unknown shift!");
   if (Amt > VTBits) {
-    Hi = Lo = DAG.getNode(ISD::SRA, dl, NVT, InH,
+    Hi = Lo = DAG.getNode(ISD::SRA, DL, NVT, InH,
                           DAG.getConstant(NVTBits-1, ShTy));
   } else if (Amt > NVTBits) {
-    Lo = DAG.getNode(ISD::SRA, dl, NVT, InH,
+    Lo = DAG.getNode(ISD::SRA, DL, NVT, InH,
                      DAG.getConstant(Amt-NVTBits, ShTy));
-    Hi = DAG.getNode(ISD::SRA, dl, NVT, InH,
+    Hi = DAG.getNode(ISD::SRA, DL, NVT, InH,
                      DAG.getConstant(NVTBits-1, ShTy));
   } else if (Amt == NVTBits) {
     Lo = InH;
-    Hi = DAG.getNode(ISD::SRA, dl, NVT, InH,
+    Hi = DAG.getNode(ISD::SRA, DL, NVT, InH,
                      DAG.getConstant(NVTBits-1, ShTy));
   } else {
-    Lo = DAG.getNode(ISD::OR, dl, NVT,
-                     DAG.getNode(ISD::SRL, dl, NVT, InL,
+    Lo = DAG.getNode(ISD::OR, DL, NVT,
+                     DAG.getNode(ISD::SRL, DL, NVT, InL,
                                  DAG.getConstant(Amt, ShTy)),
-                     DAG.getNode(ISD::SHL, dl, NVT, InH,
+                     DAG.getNode(ISD::SHL, DL, NVT, InH,
                                  DAG.getConstant(NVTBits-Amt, ShTy)));
-    Hi = DAG.getNode(ISD::SRA, dl, NVT, InH, DAG.getConstant(Amt, ShTy));
+    Hi = DAG.getNode(ISD::SRA, DL, NVT, InH, DAG.getConstant(Amt, ShTy));
   }
 }
 

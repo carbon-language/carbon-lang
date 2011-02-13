@@ -2720,6 +2720,13 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
            "Shift operators return type must be the same as their first arg");
     assert(VT.isInteger() && N2.getValueType().isInteger() &&
            "Shifts only work on integers");
+    // Verify that the shift amount VT is bit enough to hold valid shift
+    // amounts.  This catches things like trying to shift an i1024 value by an
+    // i8, which is easy to fall into in generic code that uses
+    // TLI.getShiftAmount().
+    assert(N2.getValueType().getSizeInBits() >=
+                   Log2_32_Ceil(N1.getValueType().getSizeInBits()) && 
+           "Invalid use of small shift amount with oversized value!");
 
     // Always fold shifts of i1 values so the code generator doesn't need to
     // handle them.  Since we know the size of the shift has to be less than the

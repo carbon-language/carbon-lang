@@ -303,13 +303,21 @@ namespace ISD {
     // an unsigned/signed value of type i[2*N], then return the top part.
     MULHU, MULHS,
 
-    // Bitwise operators - logical and, logical or, logical xor, shift left,
-    // shift right algebraic (shift in sign bits), shift right logical (shift in
-    // zeroes), rotate left, rotate right, and byteswap.
-    AND, OR, XOR, SHL, SRA, SRL, ROTL, ROTR, BSWAP,
+    /// Bitwise operators - logical and, logical or, logical xor.
+    AND, OR, XOR,
+    
+    /// Shift and rotation operations.  After legalization, the type of the
+    /// shift amount is known to be TLI.getShiftAmountTy().  Before legalization
+    /// the shift amount can be any type, but care must be taken to ensure it is
+    /// large enough.  TLI.getShiftAmountTy() is i8 on some targets, but before
+    /// legalization, types like i1024 can occur and i8 doesn't have enough bits
+    /// to represent the shift amount.  By convention, DAGCombine and IRBuilder
+    /// forces these shift amounts to i32 for simplicity.
+    ///
+    SHL, SRA, SRL, ROTL, ROTR,
 
-    // Counting operators
-    CTTZ, CTLZ, CTPOP,
+    /// Byte Swap and Counting operators.
+    BSWAP, CTTZ, CTLZ, CTPOP,
 
     // Select(COND, TRUEVAL, FALSEVAL).  If the type of the boolean COND is not
     // i1 then the high bits must conform to getBooleanContents.

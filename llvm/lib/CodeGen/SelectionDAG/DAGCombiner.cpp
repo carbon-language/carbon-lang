@@ -4000,21 +4000,27 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       isa<ConstantSDNode>(N0.getOperand(1)) &&
       N0.getOperand(0).getOpcode() == ISD::ZERO_EXTEND &&
       N0.hasOneUse()) {
+    SDValue ShAmt = N0.getOperand(1);
+    unsigned ShAmtVal = cast<ConstantSDNode>(ShAmt)->getZExtValue();
     if (N0.getOpcode() == ISD::SHL) {
+      SDValue InnerZExt = N0.getOperand(0);
       // If the original shl may be shifting out bits, do not perform this
       // transformation.
-      unsigned ShAmt = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
-      unsigned KnownZeroBits = N0.getOperand(0).getValueType().getSizeInBits() -
-        N0.getOperand(0).getOperand(0).getValueType().getSizeInBits();
-      if (ShAmt > KnownZeroBits)
+      unsigned KnownZeroBits = InnerZExt.getValueType().getSizeInBits() -
+        InnerZExt.getOperand(0).getValueType().getSizeInBits();
+      if (ShAmtVal > KnownZeroBits)
         return SDValue();
     }
-    DebugLoc dl = N->getDebugLoc();
-    return DAG.getNode(N0.getOpcode(), dl, VT,
-                       DAG.getNode(ISD::ZERO_EXTEND, dl, VT, N0.getOperand(0)),
-                       DAG.getNode(ISD::ZERO_EXTEND, dl,
-                                   N0.getOperand(1).getValueType(),
-                                   N0.getOperand(1)));
+
+    DebugLoc DL = N->getDebugLoc();
+    
+    // Ensure that the shift amount is wide enough for the shifted value. 
+    if (VT.getSizeInBits() >= 256)
+      ShAmt = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, ShAmt);
+    
+    return DAG.getNode(N0.getOpcode(), DL, VT,
+                       DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N0.getOperand(0)),
+                       ShAmt);
   }
 
   return SDValue();

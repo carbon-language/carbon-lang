@@ -2434,7 +2434,6 @@ void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
     DebugLoc DL = getCurDebugLoc();
     
     // If the operand is smaller than the shift count type, promote it.
-    MVT PtrTy = TLI.getPointerTy();
     if (ShiftSize > Op2Size)
       Op2 = DAG.getNode(ISD::ZERO_EXTEND, DL, ShiftTy, Op2);
     
@@ -2445,9 +2444,9 @@ void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
     else if (ShiftSize >= Log2_32_Ceil(Op2.getValueType().getSizeInBits()))
       Op2 = DAG.getNode(ISD::TRUNCATE, DL, ShiftTy, Op2);
     // Otherwise we'll need to temporarily settle for some other convenient
-    // type.   Type legalization will make adjustments as needed.
+    // type.  Type legalization will make adjustments once the shiftee is split.
     else
-      Op2 = DAG.getZExtOrTrunc(Op2, DL, PtrTy);
+      Op2 = DAG.getZExtOrTrunc(Op2, DL, MVT::i32);
   }
 
   setValue(&I, DAG.getNode(Opcode, getCurDebugLoc(),
