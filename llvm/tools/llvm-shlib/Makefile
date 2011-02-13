@@ -73,6 +73,11 @@ ifeq ($(HOST_OS),Linux)
     LLVMLibsOptions += -Wl,--no-undefined
 endif
 
+ifeq ($(HOST_OS),SunOS)
+    # add -z allextract ahead of other libraries on Solaris
+    LLVMLibsOptions := -Wl,-z -Wl,allextract $(LLVMLibsOptions)
+endif
+
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
 
 SHLIB_STUBS := $(addprefix $(ObjDir)/, $(SHLIB_FRAG_NAMES))
