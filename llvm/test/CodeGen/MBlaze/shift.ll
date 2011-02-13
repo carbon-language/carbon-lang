@@ -13,7 +13,6 @@ define i8 @test_i8(i8 %a, i8 %b) {
     ; FUN:        andi
     ; FUN:        add
     ; FUN:        bnei
-    ; SHT-NOT:    andi
     ; SHT-NOT:    bnei
 
     ret i8 %tmp.1
@@ -50,7 +49,6 @@ define i16 @test_i16(i16 %a, i16 %b) {
     ; FUN:        andi
     ; FUN:        add
     ; FUN:        bnei
-    ; SHT-NOT:    andi
     ; SHT-NOT:    bnei
 
     ret i16 %tmp.1

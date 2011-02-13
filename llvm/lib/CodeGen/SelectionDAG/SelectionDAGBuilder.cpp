@@ -2424,31 +2424,30 @@ void SelectionDAGBuilder::visitBinary(const User &I, unsigned OpCode) {
 void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  if (!I.getType()->isVectorTy() &&
-      Op2.getValueType() != TLI.getShiftAmountTy()) {
+  
+  MVT ShiftTy = TLI.getShiftAmountTy();
+  unsigned ShiftSize = ShiftTy.getSizeInBits();
+  unsigned Op2Size = Op2.getValueType().getSizeInBits();
+  
+  // Coerce the shift amount to the right type if we can.
+  if (!I.getType()->isVectorTy() && Op2.getValueType() != ShiftTy) {
+    DebugLoc DL = getCurDebugLoc();
+    
     // If the operand is smaller than the shift count type, promote it.
-    EVT PTy = TLI.getPointerTy();
-    EVT STy = TLI.getShiftAmountTy();
-    if (STy.bitsGT(Op2.getValueType()))
-      Op2 = DAG.getNode(ISD::ANY_EXTEND, getCurDebugLoc(),
-                        TLI.getShiftAmountTy(), Op2);
+    MVT PtrTy = TLI.getPointerTy();
+    if (ShiftSize > Op2Size)
+      Op2 = DAG.getNode(ISD::ZERO_EXTEND, DL, ShiftTy, Op2);
+    
     // If the operand is larger than the shift count type but the shift
     // count type has enough bits to represent any shift value, truncate
     // it now. This is a common case and it exposes the truncate to
     // optimization early.
-    else if (STy.getSizeInBits() >=
-             Log2_32_Ceil(Op2.getValueType().getSizeInBits()))
-      Op2 = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
-                        TLI.getShiftAmountTy(), Op2);
-    // Otherwise we'll need to temporarily settle for some other
-    // convenient type; type legalization will make adjustments as
-    // needed.
-    else if (PTy.bitsLT(Op2.getValueType()))
-      Op2 = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
-                        TLI.getPointerTy(), Op2);
-    else if (PTy.bitsGT(Op2.getValueType()))
-      Op2 = DAG.getNode(ISD::ANY_EXTEND, getCurDebugLoc(),
-                        TLI.getPointerTy(), Op2);
+    else if (ShiftSize >= Log2_32_Ceil(Op2.getValueType().getSizeInBits()))
+      Op2 = DAG.getNode(ISD::TRUNCATE, DL, ShiftTy, Op2);
+    // Otherwise we'll need to temporarily settle for some other convenient
+    // type.   Type legalization will make adjustments as needed.
+    else
+      Op2 = DAG.getZExtOrTrunc(Op2, DL, PtrTy);
   }
 
   setValue(&I, DAG.getNode(Opcode, getCurDebugLoc(),

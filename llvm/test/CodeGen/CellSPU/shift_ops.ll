@@ -4,7 +4,7 @@
 ; RUN: grep {shl	}  %t1.s | count 9
 ; RUN: grep {shli	}  %t1.s | count 3
 ; RUN: grep {xshw	}  %t1.s | count 5
-; RUN: grep {and	}  %t1.s | count 5
+; RUN: grep {and	}  %t1.s | count 14
 ; RUN: grep {andi	}  %t1.s | count 2
 ; RUN: grep {rotmi	}  %t1.s | count 2
 ; RUN: grep {rotqmbyi	}  %t1.s | count 1
