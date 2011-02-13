@@ -1826,8 +1826,8 @@ bool Sema::IsBlockPointerConversion(QualType FromType, QualType ToType,
     return false;
 
   bool IncompatibleObjC = false;
-  if (Context.getCanonicalType(FromFunctionType->getResultType())
-        == Context.getCanonicalType(ToFunctionType->getResultType())) {
+  if (Context.hasSameType(FromFunctionType->getResultType(), 
+                          ToFunctionType->getResultType())) {
     // Okay, the types match exactly. Nothing to do.
   } else {
     QualType RHS = FromFunctionType->getResultType();
