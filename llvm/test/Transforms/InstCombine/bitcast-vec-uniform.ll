@@ -9,7 +9,7 @@ define <4 x i32> @a(<1 x i64> %y) {
 }
 
 ; CHECK: @b
-; CHECK: bitcast
+; CHECK-NOT: bitcast
 ; CHECK: ret
 
 define <4 x i32> @b(<1 x i64> %y) {
