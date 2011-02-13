@@ -431,6 +431,13 @@ public:
   /// @returns the low "numBits" bits of this APInt.
   APInt getLoBits(unsigned numBits) const;
 
+  /// getOneBitSet - Return an APInt with exactly one bit set in the result.
+  static APInt getOneBitSet(unsigned numBits, unsigned BitNo) {
+    APInt Res(numBits, 0);
+    Res.setBit(BitNo);
+    return Res;
+  }
+  
   /// Constructs an APInt value that has a contiguous range of bits set. The
   /// bits from loBit (inclusive) to hiBit (exclusive) will be set. All other
   /// bits will be zero. For example, with parameters(32, 0, 16) you would get
