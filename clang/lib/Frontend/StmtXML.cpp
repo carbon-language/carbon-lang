@@ -61,8 +61,7 @@ namespace  {
             Doc.PrintDecl(*DI);
           }
         } else {
-          for (Stmt::child_iterator i = S->child_begin(), e = S->child_end();
-               i != e; ++i)
+          for (Stmt::child_range i = S->children(); i; ++i)
             DumpSubTree(*i);
         }
         Doc.toParent();

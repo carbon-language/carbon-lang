@@ -59,9 +59,9 @@ namespace  {
           Visit(S);
 
           // Print out children.
-          Stmt::child_iterator CI = S->child_begin(), CE = S->child_end();
-          if (CI != CE) {
-            while (CI != CE) {
+          Stmt::child_range CI = S->children();
+          if (CI) {
+            while (CI) {
               OS << '\n';
               DumpSubTree(*CI++);
             }

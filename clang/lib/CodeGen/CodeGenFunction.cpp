@@ -396,8 +396,7 @@ bool CodeGenFunction::ContainsLabel(const Stmt *S, bool IgnoreCaseStmts) {
     IgnoreCaseStmts = true;
 
   // Scan subexpressions for verboten labels.
-  for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
-       I != E; ++I)
+  for (Stmt::const_child_range I = S->children(); I; ++I)
     if (ContainsLabel(*I, IgnoreCaseStmts))
       return true;
 

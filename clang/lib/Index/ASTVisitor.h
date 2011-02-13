@@ -108,8 +108,7 @@ public:
   }
 
   void VisitStmt(Stmt *Node) {
-    for (Stmt::child_iterator
-           I = Node->child_begin(), E = Node->child_end(); I != E; ++I)
+    for (Stmt::child_range I = Node->children(); I; ++I)
       if (*I)
         Visit(*I);
   }

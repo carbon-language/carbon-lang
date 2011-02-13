@@ -21,7 +21,7 @@ using namespace clang;
 typedef llvm::DenseMap<Stmt*, Stmt*> MapTy;
 
 static void BuildParentMap(MapTy& M, Stmt* S) {
-  for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
+  for (Stmt::child_range I = S->children(); I; ++I)
     if (*I) {
       M[*I] = S;
       BuildParentMap(M, *I);

@@ -221,8 +221,7 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     break;
   }
 
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end(); CI != E;
-       ++CI) {
+  for (Stmt::child_range CI = S->children(); CI; ++CI) {
     if (SkipFirstSubStmt) {
       SkipFirstSubStmt = false;
       continue;

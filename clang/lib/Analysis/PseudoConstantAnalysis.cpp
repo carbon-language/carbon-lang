@@ -233,8 +233,7 @@ void PseudoConstantAnalysis::RunAnalysis() {
     } // switch (head->getStmtClass())
 
     // Add all substatements to the worklist
-    for (Stmt::const_child_iterator I = Head->child_begin(),
-        E = Head->child_end(); I != E; ++I)
+    for (Stmt::const_child_range I = Head->children(); I; ++I)
       if (*I)
         WorkList.push_back(*I);
   } // while (!WorkList.empty())

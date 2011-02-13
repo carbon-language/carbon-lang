@@ -1491,8 +1491,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
 }
 
 Stmt *RewriteObjC::RewriteObjCNestedIvarRefExpr(Stmt *S, bool &replaced) {
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI) {
+  for (Stmt::child_range CI = S->children(); CI; ++CI) {
     if (*CI) {
       Stmt *newStmt = RewriteObjCNestedIvarRefExpr(*CI, replaced);
       if (newStmt)
@@ -1837,8 +1836,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
 void RewriteObjC::WarnAboutReturnGotoStmts(Stmt *S)
 {
   // Perform a bottom up traversal of all children.
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI)
+  for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI)
       WarnAboutReturnGotoStmts(*CI);
 
@@ -1852,8 +1850,7 @@ void RewriteObjC::WarnAboutReturnGotoStmts(Stmt *S)
 void RewriteObjC::HasReturnStmts(Stmt *S, bool &hasReturns) 
 {  
   // Perform a bottom up traversal of all children.
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-        CI != E; ++CI)
+  for (Stmt::child_range CI = S->children(); CI; ++CI)
    if (*CI)
      HasReturnStmts(*CI, hasReturns);
 
@@ -1864,8 +1861,7 @@ void RewriteObjC::HasReturnStmts(Stmt *S, bool &hasReturns)
 
 void RewriteObjC::RewriteTryReturnStmts(Stmt *S) {
  // Perform a bottom up traversal of all children.
- for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-      CI != E; ++CI)
+ for (Stmt::child_range CI = S->children(); CI; ++CI)
    if (*CI) {
      RewriteTryReturnStmts(*CI);
    }
@@ -1888,8 +1884,7 @@ void RewriteObjC::RewriteTryReturnStmts(Stmt *S) {
 
 void RewriteObjC::RewriteSyncReturnStmts(Stmt *S, std::string syncExitBuf) {
   // Perform a bottom up traversal of all children.
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI)
+  for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI) {
       RewriteSyncReturnStmts(*CI, syncExitBuf);
     }
@@ -4545,8 +4540,7 @@ void RewriteObjC::InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD) {
 }
 
 void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI)
+  for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI) {
       if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI))
         GetBlockDeclRefExprs(CBE->getBody());
@@ -4574,8 +4568,7 @@ void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
 void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S, 
                 llvm::SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs,
                 llvm::SmallPtrSet<const DeclContext *, 8> &InnerContexts) {
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI)
+  for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI) {
       if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI)) {
         InnerContexts.insert(cast<DeclContext>(CBE->getBlockDecl()));
@@ -5463,8 +5456,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
 // we get this right.
 void RewriteObjC::CollectPropertySetters(Stmt *S) {
   // Perform a bottom up traversal of all children.
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI)
+  for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI)
       CollectPropertySetters(*CI);
 
@@ -5488,8 +5480,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   SourceRange OrigStmtRange = S->getSourceRange();
 
   // Perform a bottom up rewrite of all children.
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI)
+  for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI) {
       Stmt *newStmt;
       Stmt *S = (*CI);

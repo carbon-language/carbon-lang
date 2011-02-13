@@ -230,7 +230,7 @@ bool TransferFuncs::VisitStmt(Stmt* S) {
   // We don't stop at the first subexpression that is Uninitialized because
   // evaluating some subexpressions may result in propogating "Uninitialized"
   // or "Initialized" to variables referenced in the other subexpressions.
-  for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
+  for (Stmt::child_range I = S->children(); I; ++I)
     if (*I && Visit(*I) == Uninitialized) x = Uninitialized;
 
   return x;

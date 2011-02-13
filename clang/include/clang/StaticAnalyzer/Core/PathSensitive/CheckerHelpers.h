@@ -28,8 +28,7 @@ template <class T> bool containsStmt(const Stmt *S) {
   if (isa<T>(S))
       return true;
 
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
+  for (Stmt::const_child_range I = S->children(); I; ++I)
     if (const Stmt *child = *I)
       if (containsStmt<T>(child))
         return true;

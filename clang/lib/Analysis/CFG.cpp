@@ -921,8 +921,7 @@ CFGBlock *CFGBuilder::VisitStmt(Stmt *S, AddStmtChoice asc) {
 /// VisitChildren - Visit the children of a Stmt.
 CFGBlock *CFGBuilder::VisitChildren(Stmt* Terminator) {
   CFGBlock *B = Block;
-  for (Stmt::child_iterator I = Terminator->child_begin(),
-         E = Terminator->child_end(); I != E; ++I) {
+  for (Stmt::child_range I = Terminator->children(); I; ++I) {
     if (*I) B = Visit(*I);
   }
   return B;
@@ -2503,8 +2502,7 @@ CFGBlock *CFGBuilder::VisitChildrenForTemporaryDtors(Stmt *E) {
   // them in helper vector.
   typedef llvm::SmallVector<Stmt *, 4> ChildrenVect;
   ChildrenVect ChildrenRev;
-  for (Stmt::child_iterator I = E->child_begin(), L = E->child_end();
-      I != L; ++I) {
+  for (Stmt::child_range I = E->children(); I; ++I) {
     if (*I) ChildrenRev.push_back(*I);
   }
 
@@ -2697,7 +2695,7 @@ static void FindSubExprAssignments(Stmt *S,
   if (!S)
     return;
 
-  for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I) {
+  for (Stmt::child_range I = S->children(); I; ++I) {
     Stmt *child = *I;
     if (!child)
       continue;
@@ -3020,7 +3018,7 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
       if (StmtExpr* SE = dyn_cast<StmtExpr>(S)) {
         CompoundStmt* Sub = SE->getSubStmt();
 
-        if (Sub->child_begin() != Sub->child_end()) {
+        if (Sub->children()) {
           OS << "({ ... ; ";
           Helper->handledStmt(*SE->getSubStmt()->body_rbegin(),OS);
           OS << " })\n";

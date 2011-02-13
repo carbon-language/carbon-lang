@@ -2954,8 +2954,7 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
 
   // Now just recurse over the expression's children.
   CC = E->getExprLoc();
-  for (Stmt::child_iterator I = E->child_begin(), IE = E->child_end();
-         I != IE; ++I)
+  for (Stmt::child_range I = E->children(); I; ++I)
     AnalyzeImplicitConversions(S, cast<Expr>(*I), CC);
 }
 

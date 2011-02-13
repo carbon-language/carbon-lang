@@ -1686,8 +1686,7 @@ void EnqueueVisitor::AddTypeLoc(TypeSourceInfo *TI) {
  }
 void EnqueueVisitor::EnqueueChildren(Stmt *S) {
   unsigned size = WL.size();
-  for (Stmt::child_iterator Child = S->child_begin(), ChildEnd = S->child_end();
-       Child != ChildEnd; ++Child) {
+  for (Stmt::child_range Child = S->children(); Child; ++Child) {
     AddStmt(*Child);
   }
   if (size == WL.size())

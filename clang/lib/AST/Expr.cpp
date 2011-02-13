@@ -1594,9 +1594,7 @@ static Expr::CanThrowResult MergeCanThrow(Expr::CanThrowResult CT1,
 static Expr::CanThrowResult CanSubExprsThrow(ASTContext &C, const Expr *CE) {
   Expr *E = const_cast<Expr*>(CE);
   Expr::CanThrowResult R = Expr::CT_Cannot;
-  Expr::child_iterator I, IE;
-  for (llvm::tie(I, IE) = E->children();
-       I != IE && R != Expr::CT_Can; ++I) {
+  for (Expr::child_range I = E->children(); I && R != Expr::CT_Can; ++I) {
     R = MergeCanThrow(R, cast<Expr>(*I)->CanThrow(C));
   }
   return R;
@@ -2593,7 +2591,7 @@ DesignatedInitExpr::DesignatedInitExpr(ASTContext &C, QualType Ty,
   this->Designators = new (C) Designator[NumDesignators];
 
   // Record the initializer itself.
-  child_iterator Child = child_begin();
+  child_range Child = children();
   *Child++ = Init;
 
   // Copy the designators and their subexpressions, computing

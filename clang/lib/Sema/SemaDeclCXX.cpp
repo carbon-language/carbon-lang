@@ -63,8 +63,7 @@ namespace {
   /// VisitExpr - Visit all of the children of this expression.
   bool CheckDefaultArgumentVisitor::VisitExpr(Expr *Node) {
     bool IsInvalid = false;
-    for (Stmt::child_iterator I = Node->child_begin(),
-         E = Node->child_end(); I != E; ++I)
+    for (Stmt::child_range I = Node->children(); I; ++I)
       IsInvalid |= Visit(*I);
     return IsInvalid;
   }
@@ -1365,8 +1364,7 @@ static bool InitExprContainsUninitializedFields(const Stmt *S,
     if (UOE->getOpcode() == UO_AddrOf)
       return false;
   }
-  for (Stmt::const_child_iterator it = S->child_begin(), e = S->child_end();
-       it != e; ++it) {
+  for (Stmt::const_child_range it = S->children(); it; ++it) {
     if (!*it) {
       // An expression such as 'member(arg ?: "")' may trigger this.
       continue;
@@ -7199,8 +7197,7 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
 }
 
 static void SearchForReturnInStmt(Sema &Self, Stmt *S) {
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end(); CI != E;
-       ++CI) {
+  for (Stmt::child_range CI = S->children(); CI; ++CI) {
     Stmt *SubStmt = *CI;
     if (!SubStmt)
       continue;
