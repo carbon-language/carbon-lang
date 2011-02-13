@@ -145,6 +145,8 @@ public:
                                               ConstantInt *RHS);
   Instruction *FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
                               ConstantInt *DivRHS);
+  Instruction *FoldICmpShrCst(ICmpInst &ICI, BinaryOperator *DivI,
+                              ConstantInt *DivRHS);
   Instruction *FoldICmpAddOpCst(ICmpInst &ICI, Value *X, ConstantInt *CI,
                                 ICmpInst::Predicate Pred, Value *TheAdd);
   Instruction *FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
