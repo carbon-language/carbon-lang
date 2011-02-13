@@ -43,7 +43,8 @@ using namespace llvm;
 static Constant *BitCastConstantVector(ConstantVector *CV,
                                        const VectorType *DstTy) {
 
-  if (CV->isAllOnesValue()) return Constant::getAllOnesValue(DstTy);
+  if (CV->isAllOnesValue() && DstTy->getElementType()->isIntegerTy())
+      return Constant::getAllOnesValue(DstTy);
   if (CV->isNullValue()) return Constant::getNullValue(DstTy);
 
   // If this cast changes element count then we can't handle it here:
