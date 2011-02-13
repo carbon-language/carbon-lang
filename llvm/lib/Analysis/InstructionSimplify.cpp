@@ -986,7 +986,7 @@ static Value *SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
   if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1))) &&
       cast<OverflowingBinaryOperator>(Op0)->hasNoUnsignedWrap())
     return X;
-  
+
   return 0;
 }
 
@@ -1016,7 +1016,7 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
   if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1))) &&
       cast<OverflowingBinaryOperator>(Op0)->hasNoSignedWrap())
     return X;
-  
+
   return 0;
 }
 
@@ -1585,6 +1585,53 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
           }
         }
       }
+    }
+  }
+
+  // Special logic for binary operators.
+  BinaryOperator *LBO = dyn_cast<BinaryOperator>(LHS);
+  BinaryOperator *RBO = dyn_cast<BinaryOperator>(RHS);
+  if (MaxRecurse && (LBO || RBO)) {
+
+    // Analyze the case when either LHS or RHS is an add instruction.
+    Value *A = 0, *B = 0, *C = 0, *D = 0;
+    // LHS = A + B (or A and B are null); RHS = C + D (or C and D are null).
+    bool NoLHSWrapProblem = false, NoRHSWrapProblem = false;
+    if (LBO && LBO->getOpcode() == Instruction::Add) {
+      A = LBO->getOperand(0); B = LBO->getOperand(1);
+      NoLHSWrapProblem = ICmpInst::isEquality(Pred) ||
+        (CmpInst::isUnsigned(Pred) && LBO->hasNoUnsignedWrap()) ||
+        (CmpInst::isSigned(Pred) && LBO->hasNoSignedWrap());
+    }
+    if (RBO && RBO->getOpcode() == Instruction::Add) {
+      C = RBO->getOperand(0); D = RBO->getOperand(1);
+      NoRHSWrapProblem = ICmpInst::isEquality(Pred) ||
+        (CmpInst::isUnsigned(Pred) && RBO->hasNoUnsignedWrap()) ||
+        (CmpInst::isSigned(Pred) && RBO->hasNoSignedWrap());
+    }
+
+    // icmp (X+Y), X -> icmp Y, 0 for equalities or if there is no overflow.
+    if ((A == RHS || B == RHS) && NoLHSWrapProblem)
+      if (Value *V = SimplifyICmpInst(Pred, A == RHS ? B : A,
+                                      Constant::getNullValue(RHS->getType()),
+                                      TD, DT, MaxRecurse-1))
+        return V;
+
+    // icmp X, (X+Y) -> icmp 0, Y for equalities or if there is no overflow.
+    if ((C == LHS || D == LHS) && NoRHSWrapProblem)
+      if (Value *V = SimplifyICmpInst(Pred,
+                                      Constant::getNullValue(LHS->getType()),
+                                      C == LHS ? D : C, TD, DT, MaxRecurse-1))
+        return V;
+
+    // icmp (X+Y), (X+Z) -> icmp Y,Z for equalities or if there is no overflow.
+    if (A && C && (A == C || A == D || B == C || B == D) &&
+        NoLHSWrapProblem && NoRHSWrapProblem) {
+      // Determine Y and Z in the form icmp (X+Y), (X+Z).
+      Value *Y = (A == C || A == D) ? B : A;
+      Value *Z = (C == A || C == B) ? D : C;
+      if (Value *V = SimplifyICmpInst(Pred, Y, Z, TD, DT, MaxRecurse-1))
+        return V;
     }
   }
 

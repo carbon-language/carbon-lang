@@ -91,6 +91,26 @@ define i1 @add3(i8 %x, i8 %y) {
 ; CHECK: ret i1 %c
 }
 
+define i1 @add4(i32 %x, i32 %y) {
+; CHECK: @add4
+  %z = add nsw i32 %y, 1
+  %s1 = add nsw i32 %x, %y
+  %s2 = add nsw i32 %x, %z
+  %c = icmp slt i32 %s1, %s2
+  ret i1 %c
+; CHECK: ret i1 true
+}
+
+define i1 @add5(i32 %x, i32 %y) {
+; CHECK: @add5
+  %z = add nuw i32 %y, 1
+  %s1 = add nuw i32 %x, %z
+  %s2 = add nuw i32 %x, %y
+  %c = icmp ugt i32 %s1, %s2
+  ret i1 %c
+; CHECK: ret i1 true
+}
+
 define i1 @addpowtwo(i32 %x, i32 %y) {
 ; CHECK: @addpowtwo
   %l = lshr i32 %x, 1
