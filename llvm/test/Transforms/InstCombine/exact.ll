@@ -77,6 +77,7 @@ define i64 @ashr1(i64 %X) nounwind {
   ret i64 %B
 }
 
+; PR9120
 ; CHECK: @ashr_icmp1
 ; CHECK: %B = icmp eq i64 %X, 0
 ; CHECK: ret i1 %B
