@@ -77,13 +77,22 @@ define i64 @ashr1(i64 %X) nounwind {
   ret i64 %B
 }
 
-; CHECK: @ashr_icmp
+; CHECK: @ashr_icmp1
 ; CHECK: %B = icmp eq i64 %X, 0
 ; CHECK: ret i1 %B
-define i1 @ashr_icmp(i64 %X) nounwind {
+define i1 @ashr_icmp1(i64 %X) nounwind {
   %A = ashr exact i64 %X, 2   ; X/4
   %B = icmp eq i64 %A, 0
   ret i1 %B
+}
+
+; CHECK: @ashr_icmp2
+; CHECK: %Z = icmp slt i64 %X, 16
+; CHECK: ret i1 %Z
+define i1 @ashr_icmp2(i64 %X) nounwind {
+ %Y = ashr exact i64 %X, 2  ; x / 4
+ %Z = icmp slt i64 %Y, 4    ; x < 16
+ ret i1 %Z
 }
 
 ; CHECK: @udiv_icmp1

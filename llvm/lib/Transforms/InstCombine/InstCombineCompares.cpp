@@ -794,9 +794,11 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
     return 0; // The ProdOV computation fails on divide by zero.
   if (DivIsSigned && DivRHS->isAllOnesValue())
     return 0; // The overflow computation also screws up here
-  if (DivRHS->isOne())
-    return 0; // Not worth bothering, and eliminates some funny cases
-              // with INT_MIN.
+  if (DivRHS->isOne()) {
+    // This eliminates some funny cases with INT_MIN.
+    ICI.setOperand(0, DivI->getOperand(0));   // X/1 == X.
+    return &ICI;
+  }
 
   // Compute Prod = CI * DivRHS. We are essentially solving an equation
   // of form X/C1=C2. We solve for X by multiplying C1 (DivRHS) and 
@@ -931,8 +933,6 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
 /// FoldICmpShrCst - Handle "icmp(([al]shr X, cst1), cst2)".
 Instruction *InstCombiner::FoldICmpShrCst(ICmpInst &ICI, BinaryOperator *Shr,
                                           ConstantInt *ShAmt) {
-  if (!ICI.isEquality()) return 0;
-
   const APInt &CmpRHSV = cast<ConstantInt>(ICI.getOperand(1))->getValue();
   
   // Check that the shift amount is in range.  If not, don't perform
@@ -940,8 +940,49 @@ Instruction *InstCombiner::FoldICmpShrCst(ICmpInst &ICI, BinaryOperator *Shr,
   // simplified.
   uint32_t TypeBits = CmpRHSV.getBitWidth();
   uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
-  if (ShAmtVal >= TypeBits)
+  if (ShAmtVal >= TypeBits || ShAmtVal == 0)
     return 0;
+  
+  if (!ICI.isEquality()) {
+    // If we have an unsigned comparison and an ashr, we can't simplify this.
+    // Similarly for signed comparisons with lshr.
+    if (ICI.isSigned() != (Shr->getOpcode() == Instruction::AShr))
+      return 0;
+    
+    // Otherwise, all lshr and all exact ashr's are equivalent to a udiv/sdiv by
+    // a power of 2.  Since we already have logic to simplify these, transform
+    // to div and then simplify the resultant comparison.
+    if (Shr->getOpcode() == Instruction::AShr &&
+        !Shr->isExact())
+      return 0;
+    
+    // Revisit the shift (to delete it).
+    Worklist.Add(Shr);
+    
+    Constant *DivCst =
+      ConstantInt::get(Shr->getType(), APInt::getOneBitSet(TypeBits, ShAmtVal));
+    
+    Value *Tmp =
+      Shr->getOpcode() == Instruction::AShr ?
+      Builder->CreateSDiv(Shr->getOperand(0), DivCst, "", Shr->isExact()) :
+      Builder->CreateUDiv(Shr->getOperand(0), DivCst, "", Shr->isExact());
+    
+    ICI.setOperand(0, Tmp);
+    
+    // If the builder folded the binop, just return it.
+    BinaryOperator *TheDiv = dyn_cast<BinaryOperator>(Tmp);
+    if (TheDiv == 0)
+      return &ICI;
+    
+    // Otherwise, fold this div/compare.
+    assert(TheDiv->getOpcode() == Instruction::SDiv ||
+           TheDiv->getOpcode() == Instruction::UDiv);
+    
+    Instruction *Res = FoldICmpDivCst(ICI, TheDiv, cast<ConstantInt>(DivCst));
+    assert(Res && "This div/cst should have folded!");
+    return Res;
+  }
+  
   
   // If we are comparing against bits always shifted out, the
   // comparison cannot succeed.
@@ -1266,8 +1307,9 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     if (LHSI->hasOneUse() &&
         isSignBitCheck(ICI.getPredicate(), RHS, TrueIfSigned)) {
       // (X << 31) <s 0  --> (X&1) != 0
-      Constant *Mask = ConstantInt::get(ICI.getContext(), APInt(TypeBits, 1) <<
-                                           (TypeBits-ShAmt->getZExtValue()-1));
+      Constant *Mask = ConstantInt::get(LHSI->getOperand(0)->getType(),
+                                        APInt::getOneBitSet(TypeBits, 
+                                            TypeBits-ShAmt->getZExtValue()-1));
       Value *And =
         Builder->CreateAnd(LHSI->getOperand(0), Mask, LHSI->getName()+".mask");
       return new ICmpInst(TrueIfSigned ? ICmpInst::ICMP_NE : ICmpInst::ICMP_EQ,
