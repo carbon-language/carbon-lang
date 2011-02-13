@@ -76,3 +76,31 @@ for.cond.for.end_crit_edge.i.i:                   ; preds = %for.body.i.i
 _ZSt4fillIPiiEvT_S1_RKT0_.exit:                   ; preds = %entry, %for.cond.for.end_crit_edge.i.i
   ret void
 }
+
+; Various checks for inbounds geps.
+define void @test3(i32* %begin, i32* %end) nounwind ssp {
+entry:
+  %cmp7.i.i = icmp eq i32* %begin, %end
+  br i1 %cmp7.i.i, label %_ZSt4fillIPiiEvT_S1_RKT0_.exit, label %for.body.i.i
+
+for.body.i.i:                                     ; preds = %entry, %for.body.i.i
+  %indvar.i.i = phi i64 [ %tmp, %for.body.i.i ], [ 0, %entry ]
+; CHECK: %indvar.i.i
+; CHECK: {0,+,1}<nuw><nsw><%for.body.i.i>
+  %tmp = add nsw i64 %indvar.i.i, 1
+; CHECK: %tmp = 
+; CHECK: {1,+,1}<nuw><nsw><%for.body.i.i>
+  %ptrincdec.i.i = getelementptr inbounds i32* %begin, i64 %tmp
+; CHECK: %ptrincdec.i.i =
+; CHECK: {(4 + %begin),+,4}<nsw><%for.body.i.i>
+  %__first.addr.08.i.i = getelementptr inbounds i32* %begin, i64 %indvar.i.i
+; CHECK: %__first.addr.08.i.i
+; CHECK: {%begin,+,4}<nsw><%for.body.i.i>
+  store i32 0, i32* %__first.addr.08.i.i, align 4
+  %cmp.i.i = icmp eq i32* %ptrincdec.i.i, %end
+  br i1 %cmp.i.i, label %_ZSt4fillIPiiEvT_S1_RKT0_.exit, label %for.body.i.i
+; CHECK: Loop %for.body.i.i: Unpredictable backedge-taken count. 
+; CHECK: Loop %for.body.i.i: Unpredictable max backedge-taken count.
+_ZSt4fillIPiiEvT_S1_RKT0_.exit:                   ; preds = %for.body.i.i, %entry
+  ret void
+}
