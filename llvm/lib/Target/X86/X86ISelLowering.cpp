@@ -4201,8 +4201,7 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
     if (FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(Ptr)) {
       FI = FINode->getIndex();
       Offset = 0;
-    } else if (Ptr.getOpcode() == ISD::ADD &&
-               isa<ConstantSDNode>(Ptr.getOperand(1)) &&
+    } else if (DAG.isBaseWithConstantOffset(Ptr) &&
                isa<FrameIndexSDNode>(Ptr.getOperand(0))) {
       FI = cast<FrameIndexSDNode>(Ptr.getOperand(0))->getIndex();
       Offset = Ptr.getConstantOperandVal(1);
