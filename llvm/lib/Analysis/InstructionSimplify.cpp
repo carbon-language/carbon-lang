@@ -1592,7 +1592,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   BinaryOperator *LBO = dyn_cast<BinaryOperator>(LHS);
   BinaryOperator *RBO = dyn_cast<BinaryOperator>(RHS);
   if (MaxRecurse && (LBO || RBO)) {
-
     // Analyze the case when either LHS or RHS is an add instruction.
     Value *A = 0, *B = 0, *C = 0, *D = 0;
     // LHS = A + B (or A and B are null); RHS = C + D (or C and D are null).
