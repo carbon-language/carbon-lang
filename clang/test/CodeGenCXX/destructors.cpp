@@ -306,6 +306,26 @@ namespace test6 {
   // CHECK:   invoke void @_ZN5test61BILj0EED2Ev
 }
 
+// PR 9197
+namespace test7 {
+  struct D { ~D(); };
+
+  struct A { ~A(); };
+  A::~A() { }
+
+  struct B : public A {
+    ~B();
+    D arr[1];
+  };
+
+  // Verify that this doesn't get emitted as an alias
+  // CHECK: define void @_ZN5test71BD2Ev(
+  // CHECK:   invoke void @_ZN5test71DD1Ev(
+  // CHECK:   call void @_ZN5test71AD2Ev(
+  B::~B() {}
+
+}
+
 // Checks from test3:
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr

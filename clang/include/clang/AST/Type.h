@@ -692,6 +692,19 @@ public:
     return getObjCGCAttr() == Qualifiers::Strong;
   }
 
+  enum DestructionKind {
+    DK_none,
+    DK_cxx_destructor
+  };
+
+  /// isDestructedType - nonzero if objects of this type require
+  /// non-trivial work to clean up after.  Non-zero because it's
+  /// conceivable that qualifiers (objc_gc(weak)?) could make
+  /// something require destruction.
+  DestructionKind isDestructedType() const {
+    return isDestructedTypeImpl(*this);
+  }
+
 private:
   // These methods are implemented in a separate translation unit;
   // "static"-ize them to avoid creating temporary QualTypes in the
@@ -701,6 +714,7 @@ private:
   static SplitQualType getSplitDesugaredType(QualType T);
   static SplitQualType getSplitUnqualifiedTypeImpl(QualType type);
   static QualType IgnoreParens(QualType T);
+  static DestructionKind isDestructedTypeImpl(QualType type);
 };
 
 } // end clang.

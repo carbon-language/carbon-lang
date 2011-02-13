@@ -1576,3 +1576,14 @@ bool Type::hasSizedVLAType() const {
 
   return false;
 }
+
+QualType::DestructionKind QualType::isDestructedTypeImpl(QualType type) {
+  /// Currently, the only destruction kind we recognize is C++ objects
+  /// with non-trivial destructors.
+  const CXXRecordDecl *record =
+    type->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
+  if (record && !record->hasTrivialDestructor())
+    return DK_cxx_destructor;
+
+  return DK_none;
+}
