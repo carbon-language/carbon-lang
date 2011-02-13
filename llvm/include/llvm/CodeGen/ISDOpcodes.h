@@ -311,8 +311,8 @@ namespace ISD {
     /// the shift amount can be any type, but care must be taken to ensure it is
     /// large enough.  TLI.getShiftAmountTy() is i8 on some targets, but before
     /// legalization, types like i1024 can occur and i8 doesn't have enough bits
-    /// to represent the shift amount.  By convention, DAGCombine and IRBuilder
-    /// forces these shift amounts to i32 for simplicity.
+    /// to represent the shift amount.  By convention, DAGCombine and
+    /// SelectionDAGBuilder forces these shift amounts to i32 for simplicity.
     ///
     SHL, SRA, SRL, ROTL, ROTR,
 
