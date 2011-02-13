@@ -1003,7 +1003,7 @@ Instruction *InstCombiner::FoldICmpShrCst(ICmpInst &ICI, BinaryOperator *Shr,
   // Otherwise, check to see if the bits shifted out are known to be zero.
   // If so, we can compare against the unshifted value:
   //  (X & 4) >> 1 == 2  --> (X & 4) == 4.
-  if (Shr->hasOneUse() && cast<BinaryOperator>(Shr)->isExact())
+  if (Shr->hasOneUse() && Shr->isExact())
     return new ICmpInst(ICI.getPredicate(), Shr->getOperand(0), ShiftedCmpRHS);
   
   if (Shr->hasOneUse()) {
