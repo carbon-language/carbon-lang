@@ -12,6 +12,7 @@ add_executable(tblgen
   ClangASTNodesEmitter.cpp
   ClangAttrEmitter.cpp
   ClangDiagnosticsEmitter.cpp
+  ClangSACheckersEmitter.cpp
   CodeEmitterGen.cpp
   CodeGenDAGPatterns.cpp
   CodeGenInstruction.cpp

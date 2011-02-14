@@ -21,6 +21,7 @@
 #include "ClangASTNodesEmitter.h"
 #include "ClangAttrEmitter.h"
 #include "ClangDiagnosticsEmitter.h"
+#include "ClangSACheckersEmitter.h"
 #include "CodeEmitterGen.h"
 #include "DAGISelEmitter.h"
 #include "DisassemblerEmitter.h"
@@ -66,6 +67,7 @@ enum ActionType {
   GenClangDiagGroups,
   GenClangDeclNodes,
   GenClangStmtNodes,
+  GenClangSACheckers,
   GenDAGISel,
   GenFastISel,
   GenOptParserDefs, GenOptParserImpl,
@@ -141,6 +143,8 @@ namespace {
                                "Generate Clang AST declaration nodes"),
                     clEnumValN(GenClangStmtNodes, "gen-clang-stmt-nodes",
                                "Generate Clang AST statement nodes"),
+                    clEnumValN(GenClangSACheckers, "gen-clang-sa-checkers",
+                               "Generate Clang Static Analyzer checkers"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
                                "Generate LLVMC configuration library"),
                     clEnumValN(GenEDInfo, "gen-enhanced-disassembly-info",
@@ -297,6 +301,9 @@ int main(int argc, char **argv) {
       break;
     case GenClangStmtNodes:
       ClangASTNodesEmitter(Records, "Stmt", "").run(Out.os());
+      break;
+    case GenClangSACheckers:
+      ClangSACheckersEmitter(Records).run(Out.os());
       break;
     case GenDisassembler:
       DisassemblerEmitter(Records).run(Out.os());
