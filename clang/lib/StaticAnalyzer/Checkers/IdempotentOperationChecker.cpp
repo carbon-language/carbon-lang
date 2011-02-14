@@ -54,6 +54,7 @@
 #include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <deque>
 
@@ -81,7 +82,7 @@ private:
   static bool isUnused(const Expr *E, AnalysisContext *AC);
   static bool isTruncationExtensionAssignment(const Expr *LHS,
                                               const Expr *RHS);
-  bool PathWasCompletelyAnalyzed(const CFG *C,
+  bool pathWasCompletelyAnalyzed(const CFG *cfg,
                                  const CFGBlock *CB,
                                  const CFGStmtMap *CBM,
                                  const CoreEngine &CE);
@@ -90,8 +91,9 @@ private:
   static bool isConstantOrPseudoConstant(const DeclRefExpr *DR,
                                          AnalysisContext *AC);
   static bool containsNonLocalVarDecl(const Stmt *S);
-  const ExplodedNodeSet getLastRelevantNodes(const CFGBlock *Begin,
-                                             const ExplodedNode *N);
+  void getLastRelevantNodes(const CFGBlock *Begin,
+                            const ExplodedNode *N,
+                            ExplodedNodeSet &result);
 
   // Hash table and related data structures
   struct BinaryOperatorData {
@@ -112,16 +114,19 @@ private:
   // from the destination node and cache the results to prevent work
   // duplication.
   class CFGReachabilityAnalysis {
-    typedef llvm::SmallSet<unsigned, 32> ReachableSet;
+    typedef llvm::BitVector ReachableSet;
     typedef llvm::DenseMap<unsigned, ReachableSet> ReachableMap;
     ReachableSet analyzed;
     ReachableMap reachable;
   public:
+    CFGReachabilityAnalysis(const CFG &cfg)
+      : analyzed(cfg.getNumBlockIDs(), false) {}
+    
     inline bool isReachable(const CFGBlock *Src, const CFGBlock *Dst);
   private:
     void MapReachability(const CFGBlock *Dst);
   };
-  CFGReachabilityAnalysis CRA;
+  llvm::OwningPtr<CFGReachabilityAnalysis> CRA;
 };
 }
 
@@ -394,7 +399,7 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
                                                 &AC->getParentMap());
 
       // If we can trace back
-      if (!PathWasCompletelyAnalyzed(AC->getCFG(),
+      if (!pathWasCompletelyAnalyzed(AC->getCFG(),
                                      CBM->getBlock(B), CBM,
                                      Eng.getCoreEngine()))
         continue;
@@ -556,11 +561,14 @@ bool IdempotentOperationChecker::isTruncationExtensionAssignment(
 
 // Returns false if a path to this block was not completely analyzed, or true
 // otherwise.
-bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
-                                                       const CFG *C,
-                                                       const CFGBlock *CB,
-                                                       const CFGStmtMap *CBM,
-                                                       const CoreEngine &CE) {
+bool
+IdempotentOperationChecker::pathWasCompletelyAnalyzed(const CFG *cfg,
+                                                      const CFGBlock *CB,
+                                                      const CFGStmtMap *CBM,
+                                                      const CoreEngine &CE) {
+  
+  CRA.reset(new CFGReachabilityAnalysis(*cfg));
+  
   // Test for reachability from any aborted blocks to this block
   typedef CoreEngine::BlocksAborted::const_iterator AbortedIterator;
   for (AbortedIterator I = CE.blocks_aborted_begin(),
@@ -570,7 +578,7 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
     // The destination block on the BlockEdge is the first block that was not
     // analyzed. If we can reach this block from the aborted block, then this
     // block was not completely analyzed.
-    if (CRA.isReachable(BE.getDst(), CB))
+    if (CRA->isReachable(BE.getDst(), CB))
       return false;
   }
   
@@ -605,14 +613,14 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
       return CRA.isReachable(B, TargetBlock);
     }
   };
-  VisitWL visitWL(CBM, CB, CRA);
+  VisitWL visitWL(CBM, CB, *CRA.get());
   // Were there any items in the worklist that could potentially reach
   // this block?
   if (CE.getWorkList()->visitItemsInWorkList(visitWL))
     return false;
 
   // Verify that this block is reachable from the entry block
-  if (!CRA.isReachable(&C->getEntry(), CB))
+  if (!CRA->isReachable(&cfg->getEntry(), CB))
     return false;
 
   // If we get to this point, there is no connection to the entry block or an
@@ -754,41 +762,42 @@ bool IdempotentOperationChecker::containsNonLocalVarDecl(const Stmt *S) {
 // subsequent execution could not affect the idempotent operation on this path.
 // This is useful for displaying paths after the point of the error, providing
 // an example of how this idempotent operation cannot change.
-const ExplodedNodeSet IdempotentOperationChecker::getLastRelevantNodes(
-    const CFGBlock *Begin, const ExplodedNode *N) {
-  std::deque<const ExplodedNode *> WorkList;
-  llvm::SmallPtrSet<const ExplodedNode *, 32> Visited;
-  ExplodedNodeSet Result;
+void IdempotentOperationChecker::getLastRelevantNodes(
+    const CFGBlock *Begin, const ExplodedNode *node,
+    ExplodedNodeSet &result) {
+  llvm::SmallVector<const ExplodedNode *, 11> worklist;
+  llvm::DenseMap<const ExplodedNode *, unsigned> visited;
 
-  WorkList.push_back(N);
+  worklist.push_back(node);
 
-  while (!WorkList.empty()) {
-    const ExplodedNode *Head = WorkList.front();
-    WorkList.pop_front();
-    Visited.insert(Head);
+  while (!worklist.empty()) {
+    node = worklist.back();
+    worklist.pop_back();
 
-    const ProgramPoint &PP = Head->getLocation();
+    // Was this node previously visited?
+    unsigned &visitFlag = visited[node];
+    if (visitFlag)
+      continue;
+    visitFlag = 1;    
+
+    const ProgramPoint &PP = node->getLocation();
     if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&PP)) {
       // Get the CFGBlock and test the reachability
       const CFGBlock *CB = BE->getBlock();
 
       // If we cannot reach the beginning CFGBlock from this block, then we are
       // finished
-      if (!CRA.isReachable(CB, Begin)) {
-        Result.Add(const_cast<ExplodedNode *>(Head));
+      if (!CRA->isReachable(CB, Begin)) {
+        result.Add(const_cast<ExplodedNode *>(node));
         continue;
       }
     }
 
     // Add unvisited children to the worklist
-    for (ExplodedNode::const_succ_iterator I = Head->succ_begin(),
-        E = Head->succ_end(); I != E; ++I)
-      if (!Visited.count(*I))
-        WorkList.push_back(*I);
+    for (ExplodedNode::const_succ_iterator i = node->succ_begin(),
+         e = node->succ_end(); i != e; ++i)
+      worklist.push_back(*i);
   }
-
-  // Return the ExplodedNodes that were found
-  return Result;
 }
 
 bool IdempotentOperationChecker::CFGReachabilityAnalysis::isReachable(
@@ -797,45 +806,51 @@ bool IdempotentOperationChecker::CFGReachabilityAnalysis::isReachable(
   const unsigned DstBlockID = Dst->getBlockID();
 
   // If we haven't analyzed the destination node, run the analysis now
-  if (!analyzed.count(DstBlockID)) {
+  if (!analyzed[DstBlockID]) {
     MapReachability(Dst);
-    analyzed.insert(DstBlockID);
+    analyzed[DstBlockID] = true;
   }
 
   // Return the cached result
-  return reachable[DstBlockID].count(Src->getBlockID());
+  return reachable[DstBlockID][Src->getBlockID()];
 }
 
 // Maps reachability to a common node by walking the predecessors of the
 // destination node.
 void IdempotentOperationChecker::CFGReachabilityAnalysis::MapReachability(
                                                           const CFGBlock *Dst) {
-  std::deque<const CFGBlock *> WorkList;
-  // Maintain a visited list to ensure we don't get stuck on cycles
-  llvm::SmallSet<unsigned, 32> Visited;
+
+  llvm::SmallVector<const CFGBlock *, 11> worklist;
+  llvm::BitVector visited(analyzed.size());
+  
   ReachableSet &DstReachability = reachable[Dst->getBlockID()];
+  DstReachability.resize(analyzed.size(), false);
 
   // Start searching from the destination node, since we commonly will perform
   // multiple queries relating to a destination node.
-  WorkList.push_back(Dst);
-
+  worklist.push_back(Dst);
   bool firstRun = true;
-  while (!WorkList.empty()) {
-    const CFGBlock *Head = WorkList.front();
-    WorkList.pop_front();
-    Visited.insert(Head->getBlockID());
 
+  while (!worklist.empty()) {    
+    const CFGBlock *block = worklist.back();
+    worklist.pop_back();
+    
+    if (visited[block->getBlockID()])
+      continue;
+    visited[block->getBlockID()] = true;
+    
     // Update reachability information for this node -> Dst
-    if (!firstRun)
+    if (!firstRun) {
       // Don't insert Dst -> Dst unless it was a predecessor of itself
-      DstReachability.insert(Head->getBlockID());
+      DstReachability[block->getBlockID()] = true;
+    }
     else
       firstRun = false;
 
-    // Add the predecessors to the worklist unless we have already visited them
-    for (CFGBlock::const_pred_iterator I = Head->pred_begin();
-        I != Head->pred_end(); ++I)
-      if (!Visited.count((*I)->getBlockID()))
-        WorkList.push_back(*I);
+    // Add the predecessors to the worklist.
+    for (CFGBlock::const_pred_iterator i = block->pred_begin(), 
+         e = block->pred_end(); i != e; ++i) {
+      worklist.push_back(*i);
+    }
   }
 }
