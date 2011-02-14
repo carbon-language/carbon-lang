@@ -62,7 +62,7 @@ static inline uint32_t ARMExpandImm(uint32_t val)
 // (imm32, carry_out) = ThumbExpandImm_C(imm12, carry_in)
 static inline uint32_t ThumbExpandImm_C(uint32_t val, uint32_t carry_in, uint32_t &carry_out)
 {
-    uint32_t imm32;
+    uint32_t imm32; // the expaned result
     const uint32_t i = bit(val, 26);
     const uint32_t imm3 = bits(val, 14, 12);
     const uint32_t abcdefgh = bits(val, 7, 0);
