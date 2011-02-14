@@ -981,12 +981,20 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
     return TC_Failed;
   }
 
-  if (!CStyle && Self.CheckBaseClassAccess(OpRange.getBegin(),
-                                           SrcType, DestType,
-                                           Paths.front(),
+  if (!CStyle) {
+    switch (Self.CheckBaseClassAccess(OpRange.getBegin(),
+                                      SrcType, DestType,
+                                      Paths.front(),
                                 diag::err_downcast_from_inaccessible_base)) {
-    msg = 0;
-    return TC_Failed;
+    case Sema::AR_accessible:
+    case Sema::AR_delayed:     // be optimistic
+    case Sema::AR_dependent:   // be optimistic
+      break;
+
+    case Sema::AR_inaccessible:
+      msg = 0;
+      return TC_Failed;
+    }
   }
 
   Self.BuildBasePathArray(Paths, BasePath);
@@ -1065,12 +1073,22 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
     return TC_Failed;
   }
 
-  if (!CStyle && Self.CheckBaseClassAccess(OpRange.getBegin(),
-                                           DestClass, SrcClass,
-                                           Paths.front(),
-                                     diag::err_upcast_to_inaccessible_base)) {
-    msg = 0;
-    return TC_Failed;
+  if (!CStyle) {
+    switch (Self.CheckBaseClassAccess(OpRange.getBegin(),
+                                      DestClass, SrcClass,
+                                      Paths.front(),
+                                      diag::err_upcast_to_inaccessible_base)) {
+    case Sema::AR_accessible:
+    case Sema::AR_delayed:
+    case Sema::AR_dependent:
+      // Optimistically assume that the delayed and dependent cases
+      // will work out.
+      break;
+
+    case Sema::AR_inaccessible:
+      msg = 0;
+      return TC_Failed;
+    }
   }
 
   if (WasOverloadedFunction) {

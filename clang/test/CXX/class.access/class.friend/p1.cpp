@@ -326,3 +326,18 @@ namespace test11 {
   void A::test2(B::private_type x) {} // expected-error {{'private_type' is a private member of 'test11::B'}}
   void A::test3(int x = B::private_type()) {} // expected-error {{'private_type' is a private member of 'test11::B'}}
 }
+
+
+// PR9221
+namespace test12 {
+  struct A {
+    void foo();
+  };
+  class B : private A {
+    friend void A::foo();
+    void *mem;
+  };
+  void A::foo() {
+    void *var = static_cast<B*>(this)->mem;
+  }
+}
