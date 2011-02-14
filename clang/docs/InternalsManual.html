@@ -151,15 +151,14 @@ diagnostic :).</p>
 pieces, this section describes them and talks about best practices when adding
 a new diagnostic.</p>
 
-<!-- ============================== -->
-<h4>The Diagnostic*Kinds.def files</h4>
-<!-- ============================== -->
+<!-- ============================= -->
+<h4>The Diagnostic*Kinds.td files</h4>
+<!-- ============================= -->
 
 <p>Diagnostics are created by adding an entry to one of the <tt>
-clang/Basic/Diagnostic*Kinds.def</tt> files, depending on what library will
-be using it.  This file encodes the unique ID of the 
-diagnostic (as an enum, the first argument), the severity of the diagnostic
-(second argument) and the English translation + format string.</p>
+clang/Basic/Diagnostic*Kinds.td</tt> files, depending on what library will
+be using it.  From this file, tblgen generates the unique ID of the diagnostic,
+the severity of the diagnostic and the English translation + format string.</p>
 
 <p>There is little sanity with the naming of the unique ID's right now.  Some
 start with err_, warn_, ext_ to encode the severity into the name.  Since the
@@ -243,7 +242,7 @@ are some simple format strings:</p>
 
 <ul>
 <li>Keep the string short.  It should ideally fit in the 80 column limit of the
-    <tt>DiagnosticKinds.def</tt> file.  This avoids the diagnostic wrapping when
+    <tt>DiagnosticKinds.td</tt> file.  This avoids the diagnostic wrapping when
     printed, and forces you to think about the important point you are conveying
     with the diagnostic.</li>
 <li>Take advantage of location information.  The user will be able to see the
@@ -258,7 +257,7 @@ are some simple format strings:</p>
 <p>Diagnostics should never take random English strings as arguments: you
 shouldn't use <tt>"you have a problem with %0"</tt> and pass in things like
 <tt>"your argument"</tt> or <tt>"your return value"</tt> as arguments. Doing
-this prevents <a href="translation">translating</a> the Clang diagnostics to
+this prevents <a href="#translation">translating</a> the Clang diagnostics to
 other languages (because they'll get random English words in their otherwise
 localized diagnostic).  The exceptions to this are C/C++ language keywords
 (e.g. auto, const, mutable, etc) and C/C++ operators (<tt>/=</tt>).  Note
@@ -373,10 +372,10 @@ of repetitive diagnostics and/or have an idea for a useful formatter, please
 bring it up on the cfe-dev mailing list.</p>
 
 <!-- ===================================================== -->
-<h4><a name="#producingdiag">Producing the Diagnostic</a></h4>
+<h4 id="producingdiag">Producing the Diagnostic</h4>
 <!-- ===================================================== -->
 
-<p>Now that you've created the diagnostic in the DiagnosticKinds.def file, you
+<p>Now that you've created the diagnostic in the DiagnosticKinds.td file, you
 need to write the code that detects the condition in question and emits the
 new diagnostic.  Various components of Clang (e.g. the preprocessor, Sema,
 etc) provide a helper function named "Diag".  It creates a diagnostic and
@@ -394,7 +393,7 @@ it.</p>
 
 <p>This shows that use of the Diag method: they take a location (a <a
 href="#SourceLocation">SourceLocation</a> object) and a diagnostic enum value
-(which matches the name from DiagnosticKinds.def).  If the diagnostic takes
+(which matches the name from DiagnosticKinds.td).  If the diagnostic takes
 arguments, they are specified with the &lt;&lt; operator: the first argument
 becomes %0, the second becomes %1, etc.  The diagnostic interface allows you to
 specify arguments of many different types, including <tt>int</tt> and
