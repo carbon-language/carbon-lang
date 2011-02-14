@@ -1,4 +1,4 @@
-##===- clang/lib/StaticAnalyzer/Makefile -------------------*- Makefile -*-===##
+##===- clang/lib/StaticAnalyzer/Frontend/Makefile ----------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,11 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-# This implements analyses built on top of source-level CFGs. 
+# Starting point into the static analyzer land for the driver.
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ../..
-PARALLEL_DIRS := Core Checkers Frontend
+CLANG_LEVEL := ../../..
+LIBRARYNAME := clangStaticAnalyzerFrontend
 
 include $(CLANG_LEVEL)/Makefile

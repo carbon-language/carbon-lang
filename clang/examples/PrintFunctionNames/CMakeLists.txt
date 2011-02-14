@@ -8,6 +8,7 @@ set( LLVM_USED_LIBS
   clangCodeGen
   clangParse
   clangSema
+  clangStaticAnalyzerFrontend
   clangStaticAnalyzerCheckers
   clangStaticAnalyzerCore
   clangAnalysis

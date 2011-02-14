@@ -30,8 +30,8 @@
 #include "clang/StaticAnalyzer/Core/PathDiagnosticClients.h"
 
 // FIXME: Restructure checker registration.
-#include "ExperimentalChecks.h"
-#include "InternalChecks.h"
+#include "../Checkers/ExperimentalChecks.h"
+#include "../Checkers/InternalChecks.h"
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"

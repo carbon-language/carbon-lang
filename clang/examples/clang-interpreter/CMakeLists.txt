@@ -4,6 +4,7 @@ set(LLVM_USED_LIBS
     clangDriver
     clangCodeGen
     clangSema
+    clangStaticAnalyzerFrontend
     clangStaticAnalyzerCheckers
     clangStaticAnalyzerCore
     clangIndex

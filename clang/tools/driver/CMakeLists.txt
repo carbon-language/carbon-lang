@@ -12,6 +12,7 @@ set( LLVM_USED_LIBS
   clangRewrite
   clangSema
   clangSerialization
+  clangStaticAnalyzerFrontend
   clangStaticAnalyzerCheckers
   clangStaticAnalyzerCore
   )
