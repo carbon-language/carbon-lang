@@ -165,12 +165,183 @@ public:
         eContextWriteMemoryRandomBits
     };
     
+    enum InfoType {
+        eInfoTypeRegisterPlusOffset,
+        eInfoTypeRegisterPlusIndirectOffset,
+        eInfoTypeRegisterToRegisterPlusOffset,
+        eInfoTypeOffset,
+        eInfoTypeRegister,
+        eInfoTypeImmediate,
+        eInfoTypeImmediateSigned,
+        eInfoTypeAddress,
+        eInfoTypeModeAndImmediate,
+        eInfoTypeModeAndImmediateSigned,
+        eInfoTypeModeAndRegister,
+        eInfoTypeNoArgs
+    } InfoType;
+    
+    struct Register
+    {
+        uint32_t kind;
+        uint32_t num;
+        
+
+        void
+        SetRegister (uint32_t reg_kind, uint32_t reg_num)
+        {
+            kind = reg_kind;
+            num = reg_num;
+        }
+    };
+    
     struct Context
     {
         ContextType type;
-        lldb::addr_t arg0;      // Register kind.
-        lldb::addr_t arg1;      // Register spec.
-        int64_t arg2;           // Possible negative value.
+        enum InfoType info_type;
+        union
+        {
+            struct RegisterPlusOffset 
+            {
+                Register reg;          // base register
+                int64_t signed_offset; // signed offset added to base register
+            } RegisterPlusOffset;
+            
+            struct RegisterPlusIndirectOffset 
+            {
+                Register base_reg;    // base register number
+                Register offset_reg;  // offset register kind
+            } RegisterPlusIndirectOffset;
+            
+            struct RegisterToRegisterPlusOffset 
+            {
+                Register data_reg;  // source/target register for data
+                Register base_reg;  // base register for address calculation
+                int64_t offset;     // offset for address calculation
+            } RegisterToRegisterPlusOffset;
+            
+            int64_t signed_offset; // signed offset by which to adjust self (for registers only)
+            
+            Register reg;          // plain register
+            
+            uint64_t immediate;    // immediate value
+            
+            int64_t signed_immediate; // signed immediate value
+            
+            lldb::addr_t address;        // direct address
+            
+            struct ModeAndImmediate 
+            {
+                uint32_t mode;        // eModeARM or eModeThumb
+                uint32_t data_value;  //immdiate data
+            } ModeAndImmediate;
+            
+            struct ModeAndImmediateSigned 
+            {
+                uint32_t mode;             // eModeARM or eModeThumb
+                int32_t signed_data_value; // signed immdiate data
+            } ModeAndImmediateSigned;
+            
+            struct ModeAndRegister 
+            {
+                uint32_t mode;  // eModeARM or eModeThumb
+                Register reg;   
+            } ModeAndRegister;
+                        
+        } info;
+        
+        void 
+        SetRegisterPlusOffset (Register base_reg,
+                               int64_t signed_offset)
+        {
+            info_type = eInfoTypeRegisterPlusOffset;
+            info.RegisterPlusOffset.reg = base_reg;
+            info.RegisterPlusOffset.signed_offset = signed_offset;
+        }
+
+        void
+        SetRegisterPlusIndirectOffset (Register base_reg,
+                                       Register offset_reg)
+        {
+            info_type = eInfoTypeRegisterPlusIndirectOffset;
+            info.RegisterPlusIndirectOffset.base_reg   = base_reg;
+            info.RegisterPlusIndirectOffset.offset_reg = offset_reg;
+        }
+        
+        void
+        SetRegisterToRegisterPlusOffset (Register data_reg,
+                                         Register base_reg,
+                                         int64_t offset)
+        {
+            info_type = eInfoTypeRegisterToRegisterPlusOffset;
+            info.RegisterToRegisterPlusOffset.data_reg = data_reg;
+            info.RegisterToRegisterPlusOffset.base_reg = base_reg;
+            info.RegisterToRegisterPlusOffset.offset   = offset;
+        }
+        
+        void
+        SetOffset (int64_t signed_offset)
+        {
+            info_type = eInfoTypeOffset;
+            info.signed_offset = signed_offset;
+        }
+        
+        void
+        SetRegister (Register reg)
+        {
+            info_type = eInfoTypeRegister;
+            info.reg = reg;
+        }
+        
+        void
+        SetImmediate (uint64_t immediate)
+        {
+            info_type = eInfoTypeImmediate;
+            info.immediate = immediate;
+        }
+        
+        void
+        SetImmediateSigned (int64_t signed_immediate)
+        {
+            info_type = eInfoTypeImmediateSigned;
+            info.signed_immediate = signed_immediate;
+        }
+        
+        void
+        SetAddress (lldb::addr_t address)
+        {
+            info_type = eInfoTypeAddress;
+            info.address = address;
+        }
+        void
+        SetModeAndImmediate (uint32_t mode, uint32_t data_value)
+        {
+            info_type = eInfoTypeModeAndImmediate;
+            info.ModeAndImmediate.mode = mode;
+            info.ModeAndImmediate.data_value = data_value;
+        }
+        
+        void
+        SetModeAndImmediateSigned (uint32_t mode, int32_t signed_data_value)
+        {
+            info_type = eInfoTypeModeAndImmediateSigned;
+            info.ModeAndImmediateSigned.mode = mode;
+            info.ModeAndImmediateSigned.signed_data_value = signed_data_value;
+        }
+        
+        void
+        SetModeAndRegister (uint32_t mode, Register reg)
+        {
+            info_type = eInfoTypeModeAndRegister;
+            info.ModeAndRegister.mode = mode;
+            info.ModeAndRegister.reg = reg;
+        }
+        
+        void
+        SetNoArgs ()
+        {
+            info_type = eInfoTypeNoArgs;
+        }
+        
     };
 
     union Opcode

@@ -158,13 +158,13 @@ public:
     BranchWritePC(const Context &context, uint32_t addr);
 
     bool
-    BXWritePC(Context &context, uint32_t addr);
+    BXWritePC(Context &context, uint32_t addr, Register &reg);
 
     bool
-    LoadWritePC(Context &context, uint32_t addr);
+    LoadWritePC(Context &context, uint32_t addr, Register &reg);
 
     bool
-    ALUWritePC(Context &context, uint32_t addr);
+    ALUWritePC(Context &context, uint32_t addr, Register &reg);
 
     Mode
     CurrentInstrSet();

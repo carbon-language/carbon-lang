@@ -147,10 +147,9 @@ EmulateInstructionARM::Terminate ()
 bool
 EmulateInstructionARM::WriteBits32UnknownToMemory (addr_t address)
 {
-    EmulateInstruction::Context context = { EmulateInstruction::eContextWriteMemoryRandomBits, 
-                                            address, 
-                                            0, 
-                                            0 };
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextWriteMemoryRandomBits;
+    context.SetNoArgs ();
 
     uint32_t random_data = rand ();
     const uint32_t addr_byte_size = GetAddressByteSize();
@@ -165,10 +164,9 @@ EmulateInstructionARM::WriteBits32UnknownToMemory (addr_t address)
 bool
 EmulateInstructionARM::WriteBits32Unknown (int n)
 {
-    EmulateInstruction::Context context = { EmulateInstruction::eContextWriteRegisterRandomBits, 
-                                            eRegisterKindDWARF, 
-                                            dwarf_r0 + n, 
-                                            0 };
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextWriteRegisterRandomBits;
+    context.SetNoArgs ();
 
     bool success;
     uint32_t data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
@@ -272,14 +270,17 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
         addr_t addr = sp - sp_offset;
         uint32_t i;
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextPushRegisterOnStack, eRegisterKindDWARF, 0, 0 };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextPushRegisterOnStack;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
         for (i=0; i<15; ++i)
         {
             if (BitIsSet (registers, i))
             {
-                context.arg1 = dwarf_r0 + i;    // arg1 in the context is the DWARF register number
-                context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
-                uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
+                dwarf_reg.num = dwarf_r0 + i;
+                context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
+                uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
                 if (!success)
                     return false;
                 if (!WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
@@ -290,8 +291,8 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
         
         if (BitIsSet (registers, 15))
         {
-            context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
-            context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
+            dwarf_reg.num = dwarf_pc;
+            context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
             const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
             if (!success)
                 return false;
@@ -300,9 +301,7 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
         }
         
         context.type = EmulateInstruction::eContextAdjustStackPointer;
-        context.arg0 = eRegisterKindGeneric;
-        context.arg1 = LLDB_REGNUM_GENERIC_SP;
-        context.arg2 = -sp_offset;
+        context.SetImmediateSigned (-sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
@@ -401,17 +400,20 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
         addr_t addr = sp;
         uint32_t i, data;
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextPopRegisterOffStack, eRegisterKindDWARF, 0, 0 };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextPopRegisterOffStack;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
         for (i=0; i<15; ++i)
         {
             if (BitIsSet (registers, i))
             {
-                context.arg1 = dwarf_r0 + i;    // arg1 in the context is the DWARF register number
-                context.arg2 = addr - sp;       // arg2 in the context is the stack pointer offset
+                dwarf_reg.num = dwarf_r0 + i;
+                context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
                 data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
                 if (!success)
                     return false;    
-                if (!WriteRegisterUnsigned(context, eRegisterKindDWARF, context.arg1, data))
+                if (!WriteRegisterUnsigned(context, eRegisterKindDWARF, dwarf_reg.num, data))
                     return false;
                 addr += addr_byte_size;
             }
@@ -419,21 +421,19 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
         
         if (BitIsSet (registers, 15))
         {
-            context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
-            context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
+            dwarf_reg.num = dwarf_pc;
+            context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
             data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data))
+            if (!LoadWritePC(context, data, dwarf_reg))
                 return false;
             addr += addr_byte_size;
         }
         
         context.type = EmulateInstruction::eContextAdjustStackPointer;
-        context.arg0 = eRegisterKindGeneric;
-        context.arg1 = LLDB_REGNUM_GENERIC_SP;
-        context.arg2 = sp_offset;
+        context.SetImmediateSigned (sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp + sp_offset))
             return false;
@@ -491,10 +491,11 @@ EmulateInstructionARM::EmulateAddRdSPImmediate (ARMEncoding encoding)
         addr_t sp_offset = imm32;
         addr_t addr = sp + sp_offset; // a pointer to the stack area
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindGeneric,
-                                                LLDB_REGNUM_GENERIC_SP,
-                                                sp_offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register sp_reg;
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+        context.SetRegisterPlusOffset (sp_reg, sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, addr))
             return false;
@@ -546,10 +547,12 @@ EmulateInstructionARM::EmulateMovRdSP (ARMEncoding encoding)
         default:
             return false;
         }
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindGeneric,
-                                                LLDB_REGNUM_GENERIC_SP,
-                                                0 };
+                  
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register sp_reg;
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+        context.SetRegisterPlusOffset (sp_reg, 0);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, sp))
             return false;
@@ -617,14 +620,15 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
             return false;
         
         // The context specifies that Rm is to be moved into Rd.
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindDWARF,
-                                                dwarf_r0 + Rm,
-                                                0 };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
+        context.SetRegisterPlusOffset (dwarf_reg, 0);
     
         if (Rd == 15)
         {
-            if (!ALUWritePC (context, reg_value))
+            if (!ALUWritePC (context, reg_value, dwarf_reg))
                 return false;
         }
         else
@@ -701,14 +705,16 @@ EmulateInstructionARM::EmulateMovRdImm (ARMEncoding encoding)
         uint32_t result = imm32;
 
         // The context specifies that an immediate is to be moved into Rd.
-        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
-                                                0,
-                                                0,
-                                                0 };
-    
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+                                       
+        Register dummy_reg;
+        dummy_reg.SetRegister (eRegisterKindDWARF, dwarf_r0);
+     
         if (Rd == 15)
         {
-            if (!ALUWritePC (context, result))
+            if (!ALUWritePC (context, result, dummy_reg))
                 return false;
         }
         else
@@ -787,14 +793,14 @@ EmulateInstructionARM::EmulateMvnRdImm (ARMEncoding encoding)
         uint32_t result = ~imm32;
         
         // The context specifies that an immediate is to be moved into Rd.
-        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
-                                                0,
-                                                0,
-                                                0 };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
     
         if (Rd == 15)
         {
-            if (!ALUWritePC (context, result))
+            Register dummy_reg;
+            if (!ALUWritePC (context, result, dummy_reg))
                 return false;
         }
         else
@@ -855,10 +861,12 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             return false;
 
         // PC relative immediate load context
-        EmulateInstruction::Context context = {EmulateInstruction::eContextRegisterPlusOffset,
-                                               eRegisterKindGeneric,
-                                               LLDB_REGNUM_GENERIC_PC,
-                                               0};
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register pc_reg;
+        pc_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+        context.SetRegisterPlusOffset (pc_reg, 0);                             
+                                               
         uint32_t Rt;    // the destination register
         uint32_t imm32; // immediate offset from the PC
         bool add;       // +imm32 or -imm32?
@@ -871,7 +879,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             imm32 = Bits32(opcode, 7, 0) << 2; // imm32 = ZeroExtend(imm8:'00', 32);
             add = true;
             base = Align(pc + 4, 4);
-            context.arg2 = 4 + imm32;
+            context.SetRegisterPlusOffset (pc_reg, 4 + imm32);
             break;
         case eEncodingT2:
             Rt = Bits32(opcode, 15, 12);
@@ -880,7 +888,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             if (Rt == 15 && InITBlock() && !LastInITBlock())
                 return false;
             base = Align(pc + 4, 4);
-            context.arg2 = 4 + imm32;
+            context.SetRegisterPlusOffset (pc_reg, 4 + imm32);
             break;
         default:
             return false;
@@ -899,7 +907,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             if (Bits32(address, 1, 0) == 0)
             {
                 // In ARMv5T and above, this is an interworking branch.
-                if (!LoadWritePC(context, data))
+                if (!LoadWritePC(context, data, pc_reg))
                     return false;
             }
             else
@@ -963,10 +971,9 @@ EmulateInstructionARM::EmulateAddSPImmediate (ARMEncoding encoding)
         addr_t sp_offset = imm32;
         addr_t addr = sp + sp_offset; // the adjusted stack pointer value
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextAdjustStackPointer,
-                                                eRegisterKindGeneric,
-                                                LLDB_REGNUM_GENERIC_SP,
-                                                sp_offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextAdjustStackPointer;
+        context.SetImmediateSigned (sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
             return false;
@@ -1022,10 +1029,9 @@ EmulateInstructionARM::EmulateAddSPRm (ARMEncoding encoding)
 
         addr_t addr = (int32_t)sp + reg_value; // the adjusted stack pointer value
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextAdjustStackPointer,
-                                                eRegisterKindGeneric,
-                                                LLDB_REGNUM_GENERIC_SP,
-                                                reg_value };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextAdjustStackPointer;
+        context.SetImmediateSigned (reg_value);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
             return false;
@@ -1065,7 +1071,8 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRelativeBranchImmediate, 0, 0, 0};
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRelativeBranchImmediate;
         const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
         if (!success)
             return false;
@@ -1086,8 +1093,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<25>(imm25);
             target = pc + 4 + imm32;
-            context.arg1 = 4 + imm32;  // signed offset
-            context.arg2 = eModeThumb; // target instruction set
+            context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             if (InITBlock() && !LastInITBlock())
                 return false;
             break;
@@ -1105,8 +1111,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10H << 12) | (imm10L << 2);
             imm32 = llvm::SignExtend32<25>(imm25);
             target = Align(pc + 4, 4) + imm32;
-            context.arg1 = 4 + imm32; // signed offset
-            context.arg2 = eModeARM;  // target instruction set
+            context.SetModeAndImmediateSigned (eModeARM, 4 + imm32);
             if (InITBlock() && !LastInITBlock())
                 return false;
             break;
@@ -1115,15 +1120,13 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             lr = pc + 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
             target = Align(pc + 8, 4) + imm32;
-            context.arg1 = 8 + imm32; // signed offset
-            context.arg2 = eModeARM;  // target instruction set
+            context.SetModeAndImmediateSigned (eModeARM, 8 + imm32);
             break;
         case eEncodingA2:
             lr = pc + 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2 | Bits32(opcode, 24, 24) << 1);
             target = pc + 8 + imm32;
-            context.arg1 = 8 + imm32;  // signed offset
-            context.arg2 = eModeThumb; // target instruction set
+            context.SetModeAndImmediateSigned (eModeThumb, 8 + imm32);
             break;
         default:
             return false;
@@ -1165,7 +1168,8 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        EmulateInstruction::Context context = { EmulateInstruction::eContextAbsoluteBranchRegister, 0, 0, 0};
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextAbsoluteBranchRegister;
         const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
         addr_t lr; // next instruction address
         if (!success)
@@ -1194,11 +1198,12 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
         addr_t target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
         if (!success)
             return false;
-        context.arg0 = eRegisterKindDWARF;
-        context.arg1 = dwarf_r0 + Rm;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
+        context.SetRegister (dwarf_reg);
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
             return false;
-        if (!BXWritePC(context, target))
+        if (!BXWritePC(context, target, dwarf_reg))
             return false;
     }
     return true;
@@ -1225,7 +1230,8 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        EmulateInstruction::Context context = { EmulateInstruction::eContextAbsoluteBranchRegister, 0, 0, 0};
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextAbsoluteBranchRegister;
         uint32_t Rm; // the register with the target address
         switch (encoding) {
         case eEncodingT1:
@@ -1242,9 +1248,10 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
         addr_t target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
         if (!success)
             return false;
-        context.arg0 = eRegisterKindDWARF;
-        context.arg1 = dwarf_r0 + Rm;
-        if (!BXWritePC(context, target))
+                  
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
+        if (!BXWritePC(context, target, dwarf_reg))
             return false;
     }
     return true;
@@ -1294,10 +1301,11 @@ EmulateInstructionARM::EmulateSubR7IPImmediate (ARMEncoding encoding)
         addr_t ip_offset = imm32;
         addr_t addr = ip - ip_offset; // the adjusted ip value
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindDWARF,
-                                                dwarf_r12,
-                                                -ip_offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r12);
+        context.SetRegisterPlusOffset (dwarf_reg, -ip_offset);                             
     
         if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r7, addr))
             return false;
@@ -1349,10 +1357,11 @@ EmulateInstructionARM::EmulateSubIPSPImmediate (ARMEncoding encoding)
         addr_t sp_offset = imm32;
         addr_t addr = sp - sp_offset; // the adjusted stack pointer value
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindGeneric,
-                                                LLDB_REGNUM_GENERIC_SP,
-                                                -sp_offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+        context.SetRegisterPlusOffset (dwarf_reg, -sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r12, addr))
             return false;
@@ -1411,10 +1420,9 @@ EmulateInstructionARM::EmulateSubSPImmdiate (ARMEncoding encoding)
         addr_t sp_offset = imm32;
         addr_t addr = sp - sp_offset; // the adjusted stack pointer value
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextAdjustStackPointer,
-                                                eRegisterKindGeneric,
-                                                LLDB_REGNUM_GENERIC_SP,
-                                                -sp_offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextAdjustStackPointer;
+        context.SetImmediateSigned (-sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
             return false;
@@ -1462,12 +1470,15 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
         addr_t sp_offset = imm12;
         addr_t addr = sp - sp_offset;
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextPushRegisterOnStack, eRegisterKindDWARF, 0, 0 };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextPushRegisterOnStack;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
         if (Rt != 15)
         {
-            context.arg1 = dwarf_r0 + Rt;    // arg1 in the context is the DWARF register number
-            context.arg2 = addr - sp;        // arg2 in the context is the stack pointer offset
-            uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
+            dwarf_reg.num = dwarf_r0 + Rt;
+            context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
+            uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
             if (!success)
                 return false;
             if (!WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
@@ -1475,8 +1486,8 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
         }
         else
         {
-            context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
-            context.arg2 = addr - sp;   // arg2 in the context is the stack pointer offset
+            dwarf_reg.num = dwarf_pc;
+            context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
             const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
             if (!success)
                 return false;
@@ -1485,9 +1496,7 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
         }
         
         context.type = EmulateInstruction::eContextAdjustStackPointer;
-        context.arg0 = eRegisterKindGeneric;
-        context.arg1 = LLDB_REGNUM_GENERIC_SP;
-        context.arg2 = -sp_offset;
+        context.SetImmediateSigned (-sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
@@ -1565,13 +1574,16 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
         addr_t addr = sp - sp_offset;
         uint32_t i;
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextPushRegisterOnStack, eRegisterKindDWARF, 0, 0 };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextPushRegisterOnStack;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
         for (i=d; i<regs; ++i)
         {
-            context.arg1 = start_reg + i;    // arg1 in the context is the DWARF register number
-            context.arg2 = addr - sp;        // arg2 in the context is the stack pointer offset
+            dwarf_reg.num = start_reg + i;
+            context.SetRegisterPlusOffset ( dwarf_reg, addr - sp);
             // uint64_t to accommodate 64-bit registers.
-            uint64_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, context.arg1, 0, &success);
+            uint64_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
             if (!success)
                 return false;
             if (!WriteMemoryUnsigned (context, addr, reg_value, reg_byte_size))
@@ -1580,9 +1592,7 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
         }
         
         context.type = EmulateInstruction::eContextAdjustStackPointer;
-        context.arg0 = eRegisterKindGeneric;
-        context.arg1 = LLDB_REGNUM_GENERIC_SP;
-        context.arg2 = -sp_offset;
+        context.SetImmediateSigned (-sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
             return false;
@@ -1660,23 +1670,24 @@ EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
         uint32_t i;
         uint64_t data; // uint64_t to accomodate 64-bit registers.
         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextPopRegisterOffStack, eRegisterKindDWARF, 0, 0 };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextPopRegisterOffStack;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
         for (i=d; i<regs; ++i)
         {
-            context.arg1 = start_reg + i;    // arg1 in the context is the DWARF register number
-            context.arg2 = addr - sp;        // arg2 in the context is the stack pointer offset
+            dwarf_reg.num = start_reg + i;
+            context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
             data = ReadMemoryUnsigned(context, addr, reg_byte_size, 0, &success);
             if (!success)
                 return false;    
-            if (!WriteRegisterUnsigned(context, eRegisterKindDWARF, context.arg1, data))
+            if (!WriteRegisterUnsigned(context, eRegisterKindDWARF, dwarf_reg.num, data))
                 return false;
             addr += reg_byte_size;
         }
         
         context.type = EmulateInstruction::eContextAdjustStackPointer;
-        context.arg0 = eRegisterKindGeneric;
-        context.arg1 = LLDB_REGNUM_GENERIC_SP;
-        context.arg2 = sp_offset;
+        context.SetImmediateSigned (sp_offset);
     
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp + sp_offset))
             return false;
@@ -1724,7 +1735,10 @@ EmulateInstructionARM::EmulateSVC (ARMEncoding encoding)
         default:
             return false;
         }
-        EmulateInstruction::Context context = { EmulateInstruction::eContextSupervisorCall, mode, imm32, 0};
+                  
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextSupervisorCall;
+        context.SetModeAndImmediate (mode, imm32);
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
             return false;
     }
@@ -1770,7 +1784,8 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRelativeBranchImmediate, 0, 0, 0};
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRelativeBranchImmediate;
         const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
         if (!success)
             return false;
@@ -1781,14 +1796,12 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
             // The 'cond' field is handled in EmulateInstructionARM::CurrentCond().
             imm32 = llvm::SignExtend32<9>(Bits32(opcode, 7, 0) << 1);
             target = pc + 4 + imm32;
-            context.arg1 = 4 + imm32;  // signed offset
-            context.arg2 = eModeThumb; // target instruction set
+            context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
         case eEncodingT2:
             imm32 = llvm::SignExtend32<12>(Bits32(opcode, 10, 0));
             target = pc + 4 + imm32;
-            context.arg1 = 4 + imm32;  // signed offset
-            context.arg2 = eModeThumb; // target instruction set
+            context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
         case eEncodingT3:
             // The 'cond' field is handled in EmulateInstructionARM::CurrentCond().
@@ -1801,8 +1814,7 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
             uint32_t imm21 = (S << 20) | (J2 << 19) | (J1 << 18) | (imm6 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<21>(imm21);
             target = pc + 4 + imm32;
-            context.arg1 = eModeThumb; // target instruction set
-            context.arg2 = 4 + imm32;  // signed offset
+            context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
             }
         case eEncodingT4:
@@ -1817,15 +1829,13 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<25>(imm25);
             target = pc + 4 + imm32;
-            context.arg1 = eModeThumb; // target instruction set
-            context.arg2 = 4 + imm32;  // signed offset
+            context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
             }
         case eEncodingA1:
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
             target = pc + 8 + imm32;
-            context.arg1 = eModeARM; // target instruction set
-            context.arg2 = 8 + imm32;  // signed offset
+            context.SetModeAndImmediateSigned (eModeARM, 8 + imm32);
             break;
         default:
             return false;
@@ -1859,7 +1869,8 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
     if (!success)
         return false;
                   
-    EmulateInstruction::Context context = { EmulateInstruction::eContextRelativeBranchImmediate, 0, 0, 0};
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextRelativeBranchImmediate;
     const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
     if (!success)
         return false;
@@ -1872,8 +1883,7 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
         imm32 = Bit32(opcode, 9) << 6 | Bits32(opcode, 7, 3) << 1;
         nonzero = BitIsSet(opcode, 11);
         target = pc + 4 + imm32;
-        context.arg1 = 4 + imm32;  // signed offset
-        context.arg2 = eModeThumb; // target instruction set
+        context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
         break;
     default:
         return false;
@@ -1948,14 +1958,16 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
             return false;
 
         result = val1 + val2;
-        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
-                                                0,
-                                                0,
-                                                0 };
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+        Register dummy_reg;
+        dummy_reg.SetRegister (eRegisterKindDWARF, dwarf_r0);
     
         if (Rd == 15)
         {
-            if (!ALUWritePC (context, result))
+            if (!ALUWritePC (context, result, dummy_reg))
                 return false;
         }
         else
@@ -2002,6 +2014,10 @@ EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
     if (!success)
         return false;
                   
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs ();
+                  
     AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
     m_new_inst_cpsr = m_inst_cpsr;
     SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
@@ -2010,7 +2026,9 @@ EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
     SetBit32(m_new_inst_cpsr, CPSR_V, res.overflow);
     if (m_new_inst_cpsr != m_inst_cpsr)
     {
-        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
             return false;
     }
@@ -2066,6 +2084,10 @@ EmulateInstructionARM::EmulateCmpRnRm (ARMEncoding encoding)
     if (!success)
         return false;
                   
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs();
+                  
     AddWithCarryResult res = AddWithCarry(reg_val1, reg_val2, 1);
     m_new_inst_cpsr = m_inst_cpsr;
     SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
@@ -2074,7 +2096,9 @@ EmulateInstructionARM::EmulateCmpRnRm (ARMEncoding encoding)
     SetBit32(m_new_inst_cpsr, CPSR_V, res.overflow);
     if (m_new_inst_cpsr != m_inst_cpsr)
     {
-        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
             return false;
     }
@@ -2156,17 +2180,18 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
         if (!success)
             return false;
 
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindDWARF,
-                                                dwarf_r0 + n,
-                                                offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        context.SetRegisterPlusOffset (dwarf_reg, offset);
                   
         for (int i = 0; i < 14; ++i)
         {
             if (BitIsSet (registers, i))
             {
                 context.type = EmulateInstruction::eContextRegisterPlusOffset;
-                context.arg2 = offset;
+                context.SetRegisterPlusOffset (dwarf_reg, offset);
                 if (wback && (n == 13)) // Pop Instruction
                     context.type = EmulateInstruction::eContextPopRegisterOffStack;
 
@@ -2186,12 +2211,12 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
         {
             //LoadWritePC (MemA [address, 4]);
             context.type = EmulateInstruction::eContextRegisterPlusOffset;
-            context.arg2 = offset;
+            context.SetRegisterPlusOffset (dwarf_reg, offset);
             uint32_t data = ReadMemoryUnsigned (context, base_address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data))
+            if (!LoadWritePC(context, data, dwarf_reg))
                 return false;
         }
                              
@@ -2200,7 +2225,7 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
             // R[n] = R[n] + 4 * BitCount (registers)
             int32_t offset = addr_byte_size * BitCount (registers);
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
-            context.arg2 = offset;
+            context.SetRegisterPlusOffset (dwarf_reg, offset);
                 
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, base_address + offset))
                 return false;
@@ -2275,10 +2300,11 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
             
         address = address - (addr_byte_size * BitCount (registers)) + addr_byte_size;
                                                         
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindDWARF,
-                                                dwarf_r0 + n,
-                                                offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        context.SetRegisterPlusOffset (dwarf_reg, offset);
                   
         // for i = 0 to 14 
         for (int i = 0; i < 14; ++i)
@@ -2287,7 +2313,7 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
             if (BitIsSet (registers, i))
             {
                   // R[i] = MemA[address,4]; address = address + 4; 
-                  context.arg2 = offset;
+                  context.SetRegisterPlusOffset (dwarf_reg, offset);
                   uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
                   if (!success)
                       return false;
@@ -2301,12 +2327,12 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
         //     LoadWritePC(MemA[address,4]);
         if (BitIsSet (registers, 15))
         {
-            context.arg2 = offset;
+            context.SetRegisterPlusOffset (dwarf_reg, offset);
             uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data))
+            if (!LoadWritePC(context, data, dwarf_reg))
                 return false;
         }
                   
@@ -2319,7 +2345,7 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
 
             offset = (addr_byte_size * BitCount (registers)) * -1;
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
-            context.arg2 = offset;      
+            context.SetImmediateSigned (offset);      
             addr = addr + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
                 return false;
@@ -2414,17 +2440,18 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
             return false;
                   
         address = address - (addr_byte_size * BitCount (registers));
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindDWARF,
-                                                dwarf_r0 + n,
-                                                offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        context.SetRegisterPlusOffset (dwarf_reg, offset);
                   
         for (int i = 0; i < 14; ++i)
         {
             if (BitIsSet (registers, i))
             {
                 // R[i] = MemA[address,4]; address = address + 4;
-                context.arg2 = offset;
+                context.SetRegisterPlusOffset (dwarf_reg, offset);
                 uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
                 if (!success)
                     return false;
@@ -2440,12 +2467,12 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
         //     LoadWritePC(MemA[address,4]);
         if (BitIsSet (registers, 15))
         {
-            context.arg2 = offset;
+            context.SetRegisterPlusOffset (dwarf_reg, offset);
             uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data))
+            if (!LoadWritePC(context, data, dwarf_reg))
                 return false;
         }
                   
@@ -2458,7 +2485,7 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
             
             offset = (addr_byte_size * BitCount (registers)) * -1;
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
-            context.arg2 = offset;
+            context.SetImmediateSigned (offset);
             addr = addr + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
                 return false;
@@ -2529,10 +2556,11 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
                   
         address = address + addr_byte_size;
                   
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindDWARF,
-                                                dwarf_r0 + n,
-                                                offset };
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        context.SetRegisterPlusOffset (dwarf_reg, offset);
 
         for (int i = 0; i < 14; ++i)
         {
@@ -2540,7 +2568,7 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
             {
                 // R[i] = MemA[address,4]; address = address + 4;
                 
-                context.arg2 = offset;
+                context.SetRegisterPlusOffset (dwarf_reg, offset);
                 uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
                 if (!success)
                     return false;
@@ -2556,12 +2584,12 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
         //     LoadWritePC(MemA[address,4]);
         if (BitIsSet (registers, 15))
         {
-            context.arg2 = offset;
+            context.SetRegisterPlusOffset (dwarf_reg, offset);
             uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data))
+            if (!LoadWritePC(context, data, dwarf_reg))
                 return false;
         }
                   
@@ -2574,7 +2602,7 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
 
             offset = addr_byte_size * BitCount (registers);
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
-            context.arg2 = offset;
+            context.SetImmediateSigned (offset);
             addr = addr + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
                 return false;
@@ -2649,19 +2677,22 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
 
         if (wback)
         {
-            EmulateInstruction::Context ctx = { EmulateInstruction::eContextRegisterPlusOffset,
-                                                eRegisterKindDWARF,
-                                                dwarf_r0 + Rn,
-                                                (int32_t) (offset_addr - base)};
+            EmulateInstruction::Context ctx;
+            ctx.type = EmulateInstruction::eContextRegisterPlusOffset;
+            Register dwarf_reg;
+            dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rn);
+            ctx.SetRegisterPlusOffset (dwarf_reg, (int32_t) (offset_addr - base));
+
             if (!WriteRegisterUnsigned (ctx, eRegisterKindDWARF, dwarf_r0 + Rn, offset_addr))
                 return false;
         }
 
         // Prepare to write to the Rt register.
-        EmulateInstruction::Context context = {EmulateInstruction::eContextImmediate,
-                                               0,
-                                               0,
-                                               0};
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+        Register dummy_reg;
+        dummy_reg.SetRegister (eRegisterKindDWARF, dwarf_r0);
 
         // Read memory from the address.
         data = ReadMemoryUnsigned(context, address, 4, 0, &success);
@@ -2672,7 +2703,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
         {
             if (Bits32(address, 1, 0) == 0)
             {
-                if (!LoadWritePC(context, data))
+                if (!LoadWritePC(context, data, dummy_reg))
                     return false;
             }
             else
@@ -2778,10 +2809,10 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
         if (!success)
             return false;
                   
-        EmulateInstruction::Context context = { EmulateInstruction::eContextRegisterStore,
-                                                eRegisterKindDWARF, 
-                                                dwarf_r0 + n,
-                                                offset }; 
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterStore;
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
                   
         // for i = 0 to 14
         for (int i = 0; i < 14; ++i)
@@ -2803,8 +2834,9 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
                       if (!success)
                           return false;
                   
-                      context.arg1 = dwarf_r0 + i;
-                      context.arg2 = address + offset;
+                      Register data_reg;
+                      data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
+                      context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
                       if (!WriteMemoryUnsigned (context, address + offset, data, addr_byte_size))
                           return false;
                   }
@@ -2821,9 +2853,10 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
             const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
             if (!success)
                 return false;
-                  
-            context.arg1 = dwarf_pc;    // arg1 in the context is the DWARF register number
-            context.arg2 = address + offset - sp;   // arg2 in the context is the stack pointer offset
+
+            Register pc_reg;
+            pc_reg.SetRegister (eRegisterKindDWARF, dwarf_pc);
+            context.SetRegisterPlusOffset (pc_reg, 8);
             const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
             if (!success)
                 return false;
@@ -2837,8 +2870,7 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
         {
             offset = addr_byte_size * BitCount (registers);
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
-            context.arg1 = dwarf_r0 + n;
-            context.arg2 = offset;
+            context.SetImmediateSigned (offset);
             addr_t data = address + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, data))
                 return false;
@@ -3107,7 +3139,10 @@ EmulateInstructionARM::ReadInstruction ()
         addr_t pc = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, LLDB_INVALID_ADDRESS, &success);
         if (success)
         {
-            Context read_inst_context = {eContextReadOpcode, 0, 0};
+            Context read_inst_context;
+            read_inst_context.type = eContextReadOpcode;
+            read_inst_context.SetNoArgs ();
+                  
             if (m_inst_cpsr & MASK_CPSR_T)
             {
                 m_inst_mode = eModeThumb;
@@ -3258,7 +3293,7 @@ EmulateInstructionARM::BranchWritePC (const Context &context, uint32_t addr)
 
 // As a side effect, BXWritePC sets context.arg2 to eModeARM or eModeThumb by inspecting addr.
 bool
-EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
+EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr, Register &reg)
 {
     addr_t target;
     // If the CPSR is changed due to switching between ARM and Thumb ISETSTATE,
@@ -3274,7 +3309,7 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
             cpsr_changed = true;
         }
         target = addr & 0xfffffffe;
-        context.arg2 = eModeThumb;
+        context.SetModeAndRegister (eModeThumb, reg);
     }
     else if (BitIsClear(addr, 1))
     {
@@ -3284,7 +3319,7 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
             cpsr_changed = true;
         }
         target = addr & 0xfffffffc;
-        context.arg2 = eModeARM;
+        context.SetModeAndRegister (eModeARM, reg);
     }
     else
         return false; // address<1:0> == '10' => UNPREDICTABLE
@@ -3302,20 +3337,20 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
 
 // Dispatches to either BXWritePC or BranchWritePC based on architecture versions.
 bool
-EmulateInstructionARM::LoadWritePC (Context &context, uint32_t addr)
+EmulateInstructionARM::LoadWritePC (Context &context, uint32_t addr, Register &reg)
 {
     if (ArchVersion() >= ARMv5T)
-        return BXWritePC(context, addr);
+        return BXWritePC(context, addr, reg);
     else
         return BranchWritePC((const Context)context, addr);
 }
 
 // Dispatches to either BXWritePC or BranchWritePC based on architecture versions and current instruction set.
 bool
-EmulateInstructionARM::ALUWritePC (Context &context, uint32_t addr)
+EmulateInstructionARM::ALUWritePC (Context &context, uint32_t addr, Register &reg)
 {
     if (ArchVersion() >= ARMv7 && CurrentInstrSet() == eModeARM)
-        return BXWritePC(context, addr);
+        return BXWritePC(context, addr, reg);
     else
         return BranchWritePC((const Context)context, addr);
 }
