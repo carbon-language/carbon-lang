@@ -350,6 +350,20 @@ void Sema::ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
   }
 }
 
+void Sema::ActOnPragmaFPContract(tok::OnOffSwitch OOS) {
+  switch (OOS) {
+  case tok::OOS_ON:
+    FPFeatures.fp_contract = 1;
+    break;
+  case tok::OOS_OFF:
+    FPFeatures.fp_contract = 0; 
+    break;
+  case tok::OOS_DEFAULT:
+    FPFeatures.fp_contract = getLangOptions().DefaultFPContract;
+    break;
+  }
+}
+
 void Sema::PushNamespaceVisibilityAttr(const VisibilityAttr *Attr) {
   // Visibility calculations will consider the namespace's visibility.
   // Here we just want to note that we're in a visibility context

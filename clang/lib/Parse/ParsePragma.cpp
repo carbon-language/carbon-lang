@@ -371,3 +371,14 @@ void PragmaWeakHandler::HandlePragma(Preprocessor &PP,
     Actions.ActOnPragmaWeakID(WeakName, WeakLoc, WeakNameLoc);
   }
 }
+
+void
+PragmaFPContractHandler::HandlePragma(Preprocessor &PP, 
+                                      PragmaIntroducerKind Introducer,
+                                      Token &Tok) {
+  tok::OnOffSwitch OOS;
+  if (PP.LexOnOffSwitch(OOS))
+    return;
+
+  Actions.ActOnPragmaFPContract(OOS);
+}

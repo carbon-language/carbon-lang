@@ -210,6 +210,8 @@ public:
   typedef TemplateParameterList TemplateParamsTy;
   typedef NestedNameSpecifier CXXScopeTy;
 
+  FPOptions FPFeatures;
+
   const LangOptions &LangOpts;
   Preprocessor &PP;
   ASTContext &Context;
@@ -544,6 +546,8 @@ public:
   void Initialize();
   
   const LangOptions &getLangOptions() const { return LangOpts; }
+  FPOptions     &getFPOptions() { return FPFeatures; }
+
   Diagnostic &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
   const TargetAttributesSema &getTargetAttributesSema() const;
@@ -4406,6 +4410,10 @@ public:
                             SourceLocation PragmaLoc,
                             SourceLocation WeakNameLoc,
                             SourceLocation AliasNameLoc);
+
+  /// ActOnPragmaFPContract - Called on well formed
+  /// #pragma STDC FP_CONTRACT
+  void ActOnPragmaFPContract(tok::OnOffSwitch OOS);
 
   /// AddAlignmentAttributesForRecord - Adds any needed alignment attributes to
   /// a the record decl, to handle '#pragma pack' and '#pragma options align'.

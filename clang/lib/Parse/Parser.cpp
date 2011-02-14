@@ -50,6 +50,9 @@ Parser::Parser(Preprocessor &pp, Sema &actions)
 
   WeakHandler.reset(new PragmaWeakHandler(actions));
   PP.AddPragmaHandler(WeakHandler.get());
+
+  FPContractHandler.reset(new PragmaFPContractHandler(actions, *this));
+  PP.AddPragmaHandler("STDC", FPContractHandler.get());
       
   PP.setCodeCompletionHandler(*this);
 }
@@ -360,6 +363,8 @@ Parser::~Parser() {
   UnusedHandler.reset();
   PP.RemovePragmaHandler(WeakHandler.get());
   WeakHandler.reset();
+  PP.RemovePragmaHandler("STDC", FPContractHandler.get());
+  FPContractHandler.reset();
   PP.clearCodeCompletionHandler();
 }
 

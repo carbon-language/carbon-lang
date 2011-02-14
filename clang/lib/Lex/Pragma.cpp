@@ -962,20 +962,6 @@ struct PragmaPopMacroHandler : public PragmaHandler {
 
 // Pragma STDC implementations.
 
-/// PragmaSTDC_FP_CONTRACTHandler - "#pragma STDC FP_CONTRACT ...".
-struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
-  PragmaSTDC_FP_CONTRACTHandler() : PragmaHandler("FP_CONTRACT") {}
-  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
-                            Token &Tok) {
-    // We just ignore the setting of FP_CONTRACT. Since we don't do contractions
-    // at all, our default is OFF and setting it to ON is an optimization hint
-    // we can safely ignore.  When we support -ffma or something, we would need
-    // to diagnose that we are ignoring FMA.
-    tok::OnOffSwitch OOS;
-    PP.LexOnOffSwitch(OOS);
-  }
-};
-
 /// PragmaSTDC_FENV_ACCESSHandler - "#pragma STDC FENV_ACCESS ...".
 struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
   PragmaSTDC_FENV_ACCESSHandler() : PragmaHandler("FENV_ACCESS") {}
@@ -1034,7 +1020,6 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler("clang", new PragmaDependencyHandler());
   AddPragmaHandler("clang", new PragmaDiagnosticHandler());
 
-  AddPragmaHandler("STDC", new PragmaSTDC_FP_CONTRACTHandler());
   AddPragmaHandler("STDC", new PragmaSTDC_FENV_ACCESSHandler());
   AddPragmaHandler("STDC", new PragmaSTDC_CX_LIMITED_RANGEHandler());
   AddPragmaHandler("STDC", new PragmaSTDC_UnknownHandler());

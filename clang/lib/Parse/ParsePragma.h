@@ -80,6 +80,17 @@ public:
                             Token &FirstToken);
 };
 
+class PragmaFPContractHandler : public PragmaHandler {
+  Sema &Actions;
+  Parser &parser;
+public:
+  PragmaFPContractHandler(Sema &S, Parser& p) : 
+    PragmaHandler("FP_CONTRACT"), Actions(S), parser(p) {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+  
+
 }  // end namespace clang
 
 #endif
