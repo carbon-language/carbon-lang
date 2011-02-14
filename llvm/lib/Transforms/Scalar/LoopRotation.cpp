@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "loop-rotate"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -231,7 +232,7 @@ bool LoopRotate::rotateLoop(Loop *L) {
     // memory (without proving that the loop doesn't write).
     if (L->hasLoopInvariantOperands(Inst) &&
         !Inst->mayReadFromMemory() && !Inst->mayWriteToMemory() &&
-        !isa<TerminatorInst>(Inst)) {
+        !isa<TerminatorInst>(Inst) && !isa<DbgInfoIntrinsic>(Inst)) {
       Inst->moveBefore(LoopEntryBranch);
       continue;
     }
