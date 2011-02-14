@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
 
 ; PR7158
-define arm_aapcs_vfpcc i32 @test_pr7158() nounwind {
+define i32 @test_pr7158() nounwind {
 bb.nph55.bb.nph55.split_crit_edge:
   br label %bb3
 
