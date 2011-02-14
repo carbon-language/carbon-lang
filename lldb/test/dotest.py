@@ -498,18 +498,30 @@ def setupSysPath():
     base = os.path.abspath(os.path.join(scriptPath, os.pardir))
     dbgPath = os.path.join(base, 'build', 'Debug', 'LLDB.framework',
                            'Resources', 'Python')
+    dbgPath2 = os.path.join(base, 'build', 'lldb', 'Build', 'Products', 
+                            'Debug', 'LLDB.framework', 'Resources', 'Python')
     relPath = os.path.join(base, 'build', 'Release', 'LLDB.framework',
                            'Resources', 'Python')
+    relPath2 = os.path.join(base, 'build', 'lldb', 'Build', 'Products', 
+                            'Release', 'LLDB.framework', 'Resources', 'Python')
     baiPath = os.path.join(base, 'build', 'BuildAndIntegration',
                            'LLDB.framework', 'Resources', 'Python')
+    baiPath2 = os.path.join(base, 'build', 'lldb', 'Build', 'Products', 
+                           'BuildAndIntegration', 'LLDB.framework', 'Resources', 'Python')
 
     lldbPath = None
     if os.path.isfile(os.path.join(dbgPath, 'lldb.py')):
         lldbPath = dbgPath
+    elif os.path.isfile(os.path.join(dbgPath2, 'lldb.py')):
+        lldbPath = dbgPath2
     elif os.path.isfile(os.path.join(relPath, 'lldb.py')):
         lldbPath = relPath
+    elif os.path.isfile(os.path.join(relPath2, 'lldb.py')):
+        lldbPath = relPath2
     elif os.path.isfile(os.path.join(baiPath, 'lldb.py')):
         lldbPath = baiPath
+    elif os.path.isfile(os.path.join(baiPath2, 'lldb.py')):
+        lldbPath = baiPath2
 
     if not lldbPath:
         print 'This script requires lldb.py to be in either ' + dbgPath + ',',
