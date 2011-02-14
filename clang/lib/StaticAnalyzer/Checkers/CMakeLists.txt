@@ -5,10 +5,6 @@ tablegen(Checkers.inc
 add_custom_target(ClangSACheckers
   DEPENDS Checkers.inc)
 
-# So 'Checkers.inc' can be included from the cmake build directory.
-# FIXME: Someone more familiar with cmake should enable this for all of LLVM.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I ${CMAKE_CURRENT_BINARY_DIR}")
-
 set(LLVM_USED_LIBS clangBasic clangAST)
 
 add_clang_library(clangStaticAnalyzerCheckers
