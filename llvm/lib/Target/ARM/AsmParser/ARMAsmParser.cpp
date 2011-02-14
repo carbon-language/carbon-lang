@@ -98,6 +98,8 @@ class ARMAsmParser : public TargetAsmParser {
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy tryParseMemBarrierOptOperand(
     SmallVectorImpl<MCParsedAsmOperand*> &);
+  OperandMatchResultTy tryParseProcIFlagsOperand(
+    SmallVectorImpl<MCParsedAsmOperand*> &);
 
 public:
   ARMAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
@@ -126,6 +128,7 @@ class ARMOperand : public MCParsedAsmOperand {
     Immediate,
     MemBarrierOpt,
     Memory,
+    ProcIFlags,
     Register,
     RegisterList,
     DPRRegisterList,
@@ -148,6 +151,10 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       unsigned Val;
     } Cop;
+
+    struct {
+      ARM_PROC::IFlags Val;
+    } IFlags;
 
     struct {
       const char *Data;
@@ -215,6 +222,8 @@ public:
     case Memory:
       Mem = o.Mem;
       break;
+    case ProcIFlags:
+      IFlags = o.IFlags;
     }
   }
 
@@ -257,6 +266,11 @@ public:
   ARM_MB::MemBOpt getMemBarrierOpt() const {
     assert(Kind == MemBarrierOpt && "Invalid access!");
     return MBOpt.Val;
+  }
+
+  ARM_PROC::IFlags getProcIFlags() const {
+    assert(Kind == ProcIFlags && "Invalid access!");
+    return IFlags.Val;
   }
 
   /// @name Memory Operand Accessors
@@ -333,6 +347,7 @@ public:
     uint64_t Value = CE->getValue();
     return ((Value & 0x3) == 0 && Value <= 124);
   }
+  bool isProcIFlags() const { return Kind == ProcIFlags; }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
@@ -431,6 +446,11 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
     assert(CE && "Non-constant mode offset operand!");
     Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+  }
+
+  void addProcIFlagsOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(unsigned(getProcIFlags())));
   }
 
   virtual void dump(raw_ostream &OS) const;
@@ -556,6 +576,14 @@ public:
     Op->EndLoc = S;
     return Op;
   }
+
+  static ARMOperand *CreateProcIFlags(ARM_PROC::IFlags IFlags, SMLoc S) {
+    ARMOperand *Op = new ARMOperand(ProcIFlags);
+    Op->IFlags.Val = IFlags;
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+    return Op;
+  }
 };
 
 } // end anonymous namespace.
@@ -604,6 +632,15 @@ void ARMOperand::dump(raw_ostream &OS) const {
       OS << " (writeback)";
     OS << ">";
     break;
+  case ProcIFlags: {
+    OS << "<ARM_PROC::";
+    unsigned IFlags = getProcIFlags();
+    for (int i=2; i >= 0; --i)
+      if (IFlags & (1 << i))
+        OS << ARM_PROC::IFlagsToString(1 << i);
+    OS << ">";
+    break;
+  }
   case Register:
     OS << "<register " << getReg() << ">";
     break;
@@ -882,6 +919,35 @@ tryParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   Parser.Lex(); // Eat identifier token.
   Operands.push_back(ARMOperand::CreateMemBarrierOpt((ARM_MB::MemBOpt)Opt, S));
+  return MatchOperand_Success;
+}
+
+/// ParseProcIFlagsOperand - Try to parse iflags from CPS instruction.
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+tryParseProcIFlagsOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+  const AsmToken &Tok = Parser.getTok();
+  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  StringRef IFlagsStr = Tok.getString();
+
+  unsigned IFlags = 0;
+  for (int i = 0, e = IFlagsStr.size(); i != e; ++i) {
+    unsigned Flag = StringSwitch<unsigned>(IFlagsStr.substr(i, 1))
+    .Case("a", ARM_PROC::A)
+    .Case("i", ARM_PROC::I)
+    .Case("f", ARM_PROC::F)
+    .Default(~0U);
+
+    // If some specific iflag is already set, it means that some letter is
+    // present more than once, this is not acceptable.
+    if (Flag == ~0U || (IFlags & Flag))
+      return MatchOperand_NoMatch;
+
+    IFlags |= Flag;
+  }
+
+  Parser.Lex(); // Eat identifier token.
+  Operands.push_back(ARMOperand::CreateProcIFlags((ARM_PROC::IFlags)IFlags, S));
   return MatchOperand_Success;
 }
 
@@ -1254,11 +1320,13 @@ ARMAsmParser::ApplyPrefixToExpr(const MCExpr *E,
 /// setting letters to form a canonical mnemonic and flags.
 //
 // FIXME: Would be nice to autogen this.
-static StringRef SplitMnemonicAndCC(StringRef Mnemonic,
-                                    unsigned &PredicationCode,
-                                    bool &CarrySetting) {
+static StringRef SplitMnemonic(StringRef Mnemonic,
+                               unsigned &PredicationCode,
+                               bool &CarrySetting,
+                               unsigned &ProcessorIMod) {
   PredicationCode = ARMCC::AL;
   CarrySetting = false;
+  ProcessorIMod = 0;
 
   // Ignore some mnemonics we know aren't predicated forms.
   //
@@ -1312,6 +1380,21 @@ static StringRef SplitMnemonicAndCC(StringRef Mnemonic,
     CarrySetting = true;
   }
 
+  // The "cps" instruction can have a interrupt mode operand which is glued into
+  // the mnemonic. Check if this is the case, split it and parse the imod op
+  if (Mnemonic.startswith("cps")) {
+    // Split out any imod code.
+    unsigned IMod =
+      StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2, 2))
+      .Case("ie", ARM_PROC::IE)
+      .Case("id", ARM_PROC::ID)
+      .Default(~0U);
+    if (IMod != ~0U) {
+      Mnemonic = Mnemonic.slice(0, Mnemonic.size()-2);
+      ProcessorIMod = IMod;
+    }
+  }
+
   return Mnemonic;
 }
 
@@ -1342,7 +1425,7 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "mcrr2" || Mnemonic == "cbz" || Mnemonic == "cdp2" ||
       Mnemonic == "trap" || Mnemonic == "mrc2" || Mnemonic == "mrrc2" ||
       Mnemonic == "dsb" || Mnemonic == "movs" || Mnemonic == "isb" ||
-      Mnemonic == "clrex") {
+      Mnemonic == "clrex" || Mnemonic.startswith("cps")) {
     CanAcceptPredicationCode = false;
   } else {
     CanAcceptPredicationCode = true;
@@ -1363,8 +1446,10 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   // Split out the predication code and carry setting flag from the mnemonic.
   unsigned PredicationCode;
+  unsigned ProcessorIMod;
   bool CarrySetting;
-  Head = SplitMnemonicAndCC(Head, PredicationCode, CarrySetting);
+  Head = SplitMnemonic(Head, PredicationCode, CarrySetting,
+                       ProcessorIMod);
 
   Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
 
@@ -1404,13 +1489,25 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     // FIXME: Issue a nice error.
   }
 
+  // Add the processor imod operand, if necessary.
+  if (ProcessorIMod) {
+    Operands.push_back(ARMOperand::CreateImm(
+          MCConstantExpr::Create(ProcessorIMod, getContext()),
+                                 NameLoc, NameLoc));
+  } else {
+    // This mnemonic can't ever accept a imod, but the user wrote
+    // one (or misspelled another mnemonic).
+
+    // FIXME: Issue a nice error.
+  }
+
   // Add the remaining tokens in the mnemonic.
   while (Next != StringRef::npos) {
     Start = Next;
     Next = Name.find('.', Start + 1);
-    Head = Name.slice(Start, Next);
+    StringRef ExtraToken = Name.slice(Start, Next);
 
-    Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
+    Operands.push_back(ARMOperand::CreateToken(ExtraToken, NameLoc));
   }
 
   // Read the remaining operands.

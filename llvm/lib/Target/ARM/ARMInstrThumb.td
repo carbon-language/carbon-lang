@@ -266,21 +266,17 @@ def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
 }
 
 // Change Processor State is a system instruction -- for disassembly only.
-// The singleton $opt operand contains the following information:
-// 
-//   opt{4-0} = mode ==> don't care
-//   opt{5} = changemode ==> 0 (false for 16-bit Thumb instr)
-//   opt{8-6} = AIF from Inst{2-0}
-//   opt{10-9} = 1:imod from Inst{4} with 0b10 as enable and 0b11 as disable
-//
-// The opt{4-0} and opt{5} sub-fields are to accommodate 32-bit Thumb and ARM
-// CPS which has more options.
-def tCPS : T1I<(outs), (ins cps_opt:$opt), NoItinerary, "cps$opt",
-              [/* For disassembly only; pattern left blank */]>,
+def tCPS : T1I<(outs), (ins imod_op:$imod, iflags_op:$iflags),
+                NoItinerary, "cps$imod $iflags",
+                [/* For disassembly only; pattern left blank */]>,
            T1Misc<0b0110011> {
   // A8.6.38 & B6.1.1
-  let Inst{3} = 0;
-  // FIXME: Finish encoding.
+  bit imod;
+  bits<3> iflags;
+
+  let Inst{4}   = imod;
+  let Inst{3}   = 0;
+  let Inst{2-0} = iflags;
 }
 
 // For both thumb1 and thumb2.

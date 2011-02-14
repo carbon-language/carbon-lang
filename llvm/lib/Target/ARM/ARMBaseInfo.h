@@ -97,6 +97,36 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
   }
 }
 
+namespace ARM_PROC {
+  enum IMod {
+    IE = 2,
+    ID = 3
+  };
+
+  enum IFlags {
+    F = 1,
+    I = 2,
+    A = 4
+  };
+
+  inline static const char *IFlagsToString(unsigned val) {
+    switch (val) {
+    default: llvm_unreachable("Unknown iflags operand");
+    case F: return "f";
+    case I: return "i";
+    case A: return "a";
+    }
+  }
+
+  inline static const char *IModToString(unsigned val) {
+    switch (val) {
+    default: llvm_unreachable("Unknown imod operand");
+    case IE: return "ie";
+    case ID: return "id";
+    }
+  }
+}
+
 namespace ARM_MB {
   // The Memory Barrier Option constants map directly to the 4-bit encoding of
   // the option field for memory barrier operations.

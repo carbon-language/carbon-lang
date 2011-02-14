@@ -65,3 +65,6 @@
 
 @ CHECK: wfi @ encoding: [0x30,0xbf]
         wfi
+
+@ CHECK: cpsie aif @ encoding: [0x67,0xb6]
+        cpsie aif

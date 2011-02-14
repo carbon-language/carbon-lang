@@ -2942,15 +2942,25 @@ static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
   }
 
-  // CPS has a singleton $opt operand that contains the following information:
-  // opt{4-0} = mode from Inst{4-0}
-  // opt{5} = changemode from Inst{17}
-  // opt{8-6} = AIF from Inst{8-6}
-  // opt{10-9} = imod from Inst{19-18} with 0b10 as enable and 0b11 as disable
-  if (Opcode == ARM::CPS) {
-    unsigned Option = slice(insn, 4, 0) | slice(insn, 17, 17) << 5 |
-      slice(insn, 8, 6) << 6 | slice(insn, 19, 18) << 9;
-    MI.addOperand(MCOperand::CreateImm(Option));
+  // FIXME: To enable correct asm parsing and disasm of CPS we need 3 different
+  // opcodes which match the same real instruction. This is needed since there's
+  // no current handling of optional arguments. Fix here when a better handling
+  // of optional arguments is implemented.
+  if (Opcode == ARM::CPS3p) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 19, 18))); // imod
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 8, 6)));   // iflags
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0)));   // mode
+    NumOpsAdded = 3;
+    return true;
+  }
+  if (Opcode == ARM::CPS2p) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 19, 18))); // imod
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 8, 6)));   // iflags
+    NumOpsAdded = 2;
+    return true;
+  }
+  if (Opcode == ARM::CPS1p) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0))); // mode
     NumOpsAdded = 1;
     return true;
   }

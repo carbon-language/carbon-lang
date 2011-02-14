@@ -155,6 +155,22 @@ def MemBarrierOptOperand : AsmOperandClass {
   let ParserMethod = "tryParseMemBarrierOptOperand";
 }
 
+def ProcIFlagsOperand : AsmOperandClass {
+  let Name = "ProcIFlags";
+  let SuperClasses = [];
+  let ParserMethod = "tryParseProcIFlagsOperand";
+}
+
+// ARM imod and iflag operands, used only by the CPS instruction.
+def imod_op : Operand<i32> {
+  let PrintMethod = "printCPSIMod";
+}
+
+def iflags_op : Operand<i32> {
+  let PrintMethod = "printCPSIFlag";
+  let ParserMatchClass = ProcIFlagsOperand;
+}
+
 // ARM Predicate operand. Default to 14 = always (AL). Second part is CC
 // register whose default is 0 (no register).
 def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),

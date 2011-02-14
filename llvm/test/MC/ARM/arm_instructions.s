@@ -237,3 +237,12 @@
 @ CHECK: dsb  oshst @ encoding: [0x42,0xf0,0x7f,0xf5]
         dsb  oshst
 
+@ CHECK: cpsie  aif @ encoding: [0xc0,0x01,0x08,0xf1]
+        cpsie  aif
+
+@ CHECK: cps  #15 @ encoding: [0x0f,0x00,0x02,0xf1]
+        cps  #15
+
+@ CHECK: cpsie  if, #10 @ encoding: [0xca,0x00,0x0a,0xf1]
+        cpsie  if, #10
+

@@ -1102,21 +1102,37 @@ def BKPT : AI<(outs), (ins i32imm:$val), MiscFrm, NoItinerary, "bkpt", "\t$val",
   let Inst{7-4} = 0b0111;
 }
 
-// Change Processor State is a system instruction -- for disassembly only.
-// The singleton $opt operand contains the following information:
-// opt{4-0} = mode from Inst{4-0}
-// opt{5} = changemode from Inst{17}
-// opt{8-6} = AIF from Inst{8-6}
-// opt{10-9} = imod from Inst{19-18} with 0b10 as enable and 0b11 as disable
-// FIXME: Integrated assembler will need these split out.
-def CPS : AXI<(outs), (ins cps_opt:$opt), MiscFrm, NoItinerary, "cps$opt",
-              [/* For disassembly only; pattern left blank */]>,
-          Requires<[IsARM]> {
+// Change Processor State is a system instruction -- for disassembly and
+// parsing only.
+// FIXME: Since the asm parser has currently no clean way to handle optional
+// operands, create 3 versions of the same instruction. Once there's a clean
+// framework to represent optional operands, change this behavior.
+class CPS<dag iops, string asm_ops>
+  : AXI<(outs), iops, MiscFrm, NoItinerary, !strconcat("cps", asm_ops),
+        [/* For disassembly only; pattern left blank */]>, Requires<[IsARM]> {
+  bits<2> imod;
+  bits<3> iflags;
+  bits<5> mode;
+  bit M;
+
   let Inst{31-28} = 0b1111;
   let Inst{27-20} = 0b00010000;
-  let Inst{16} = 0;
-  let Inst{5} = 0;
+  let Inst{19-18} = imod;
+  let Inst{17}    = M; // Enabled if mode is set;
+  let Inst{16}    = 0;
+  let Inst{8-6}   = iflags;
+  let Inst{5}     = 0;
+  let Inst{4-0}   = mode;
 }
+
+let M = 1 in
+  def CPS3p : CPS<(ins imod_op:$imod, iflags_op:$iflags, i32imm:$mode),
+                  "$imod\t$iflags, $mode">;
+let mode = 0, M = 0 in
+  def CPS2p : CPS<(ins imod_op:$imod, iflags_op:$iflags), "$imod\t$iflags">;
+
+let imod = 0, iflags = 0, M = 1 in
+  def CPS1p : CPS<(ins i32imm:$mode), "\t$mode">;
 
 // Preload signals the memory system of possible future data/instruction access.
 // These are for disassembly only.

@@ -3127,40 +3127,39 @@ def t2BXJ : T2I<(outs), (ins rGPR:$func), NoItinerary, "bxj", "\t$func",
   let Inst{19-16} = func;
 }
 
-// Change Processor State is a system instruction -- for disassembly only.
-// The singleton $opt operand contains the following information:
-// opt{4-0} = mode from Inst{4-0}
-// opt{5} = changemode from Inst{17}
-// opt{8-6} = AIF from Inst{8-6}
-// opt{10-9} = imod from Inst{19-18} with 0b10 as enable and 0b11 as disable
-def t2CPS : T2XI<(outs),(ins cps_opt:$opt), NoItinerary, "cps$opt",
-                 [/* For disassembly only; pattern left blank */]> {
+// Change Processor State is a system instruction -- for disassembly and
+// parsing only.
+// FIXME: Since the asm parser has currently no clean way to handle optional
+// operands, create 3 versions of the same instruction. Once there's a clean
+// framework to represent optional operands, change this behavior.
+class t2CPS<dag iops, string asm_op> : T2XI<(outs), iops, NoItinerary,
+            !strconcat("cps", asm_op),
+            [/* For disassembly only; pattern left blank */]> {
+  bits<2> imod;
+  bits<3> iflags;
+  bits<5> mode;
+  bit M;
+
   let Inst{31-27} = 0b11110;
-  let Inst{26} = 0;
+  let Inst{26}    = 0;
   let Inst{25-20} = 0b111010;
+  let Inst{19-16} = 0b1111;
   let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
-
-  bits<11> opt;
-
-  // mode number
-  let Inst{4-0} = opt{4-0};
-
-  // M flag
-  let Inst{8} = opt{5};
-
-  // F flag
-  let Inst{5} = opt{6};
-
-  // I flag
-  let Inst{6} = opt{7};
-
-  // A flag
-  let Inst{7} = opt{8};
-
-  // imod flag
-  let Inst{10-9} = opt{10-9};
+  let Inst{12}    = 0;
+  let Inst{10-9}  = imod;
+  let Inst{8}     = M;
+  let Inst{7-5}   = iflags;
+  let Inst{4-0}   = mode;
 }
+
+let M = 1 in
+  def t2CPS3p : t2CPS<(ins imod_op:$imod, iflags_op:$iflags, i32imm:$mode),
+                      "$imod.w\t$iflags, $mode">;
+let mode = 0, M = 0 in
+  def t2CPS2p : t2CPS<(ins imod_op:$imod, iflags_op:$iflags),
+                      "$imod.w\t$iflags">;
+let imod = 0, iflags = 0, M = 1 in
+  def t2CPS1p : t2CPS<(ins i32imm:$mode), "\t$mode">;
 
 // A6.3.4 Branches and miscellaneous control
 // Table A6-14 Change Processor State, and hint instructions

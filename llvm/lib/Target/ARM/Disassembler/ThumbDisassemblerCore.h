@@ -828,14 +828,13 @@ static bool DisassembleThumb1Misc(MCInst &MI, unsigned Opcode, uint32_t insn,
   }
 
   // CPS has a singleton $opt operand that contains the following information:
-  // opt{4-0} = don't care
-  // opt{5} = 0 (false)
-  // opt{8-6} = AIF from Inst{2-0}
-  // opt{10-9} = 1:imod from Inst{4} with 0b10 as enable and 0b11 as disable
+  // The first op would be 0b10 as enable and 0b11 as disable in regular ARM,
+  // but in Thumb it's is 0 as enable and 1 as disable. So map it to ARM's
+  // default one. The second get the AIF flags from Inst{2-0}.
   if (Opcode == ARM::tCPS) {
-    unsigned Option = slice(insn, 2, 0) << 6 | slice(insn, 4, 4) << 9 | 1 << 10;
-    MI.addOperand(MCOperand::CreateImm(Option));
-    NumOpsAdded = 1;
+    MI.addOperand(MCOperand::CreateImm(2 + slice(insn, 4, 4)));
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 2, 0)));
+    NumOpsAdded = 2;
     return true;
   }
 
@@ -1659,15 +1658,25 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
     break;
   }
 
-  // CPS has a singleton $opt operand that contains the following information:
-  // opt{4-0} = mode from Inst{4-0}
-  // opt{5} = changemode from Inst{8}
-  // opt{8-6} = AIF from Inst{7-5}
-  // opt{10-9} = imod from Inst{10-9} with 0b10 as enable and 0b11 as disable
-  if (Opcode == ARM::t2CPS) {
-    unsigned Option = slice(insn, 4, 0) | slice(insn, 8, 8) << 5 |
-      slice(insn, 7, 5) << 6 | slice(insn, 10, 9) << 9;
-    MI.addOperand(MCOperand::CreateImm(Option));
+  // FIXME: To enable correct asm parsing and disasm of CPS we need 3 different
+  // opcodes which match the same real instruction. This is needed since there's
+  // no current handling of optional arguments. Fix here when a better handling
+  // of optional arguments is implemented.
+  if (Opcode == ARM::t2CPS3p) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 10, 9))); // imod
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 7, 5)));  // iflags
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0)));  // mode
+    NumOpsAdded = 3;
+    return true;
+  }
+  if (Opcode == ARM::t2CPS2p) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 10, 9))); // imod
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 7, 5)));  // iflags
+    NumOpsAdded = 2;
+    return true;
+  }
+  if (Opcode == ARM::t2CPS1p) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0))); // mode
     NumOpsAdded = 1;
     return true;
   }

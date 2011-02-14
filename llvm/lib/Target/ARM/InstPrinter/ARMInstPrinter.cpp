@@ -379,27 +379,19 @@ void ARMInstPrinter::printSetendOperand(const MCInst *MI, unsigned OpNum,
     O << "le";
 }
 
-void ARMInstPrinter::printCPSOptionOperand(const MCInst *MI, unsigned OpNum,
-                                           raw_ostream &O) {
+void ARMInstPrinter::printCPSIMod(const MCInst *MI, unsigned OpNum,
+                                  raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
-  unsigned option = Op.getImm();
-  unsigned mode = option & 31;
-  bool changemode = option >> 5 & 1;
-  unsigned AIF = option >> 6 & 7;
-  unsigned imod = option >> 9 & 3;
-  if (imod == 2)
-    O << "ie";
-  else if (imod == 3)
-    O << "id";
-  O << '\t';
-  if (imod > 1) {
-    if (AIF & 4) O << 'a';
-    if (AIF & 2) O << 'i';
-    if (AIF & 1) O << 'f';
-    if (AIF > 0 && changemode) O << ", ";
-  }
-  if (changemode)
-    O << '#' << mode;
+  O << ARM_PROC::IModToString(Op.getImm());
+}
+
+void ARMInstPrinter::printCPSIFlag(const MCInst *MI, unsigned OpNum,
+                                   raw_ostream &O) {
+  const MCOperand &Op = MI->getOperand(OpNum);
+  unsigned IFlags = Op.getImm();
+  for (int i=2; i >= 0; --i)
+    if (IFlags & (1 << i))
+      O << ARM_PROC::IFlagsToString(1 << i);
 }
 
 void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
