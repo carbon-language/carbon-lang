@@ -1333,6 +1333,7 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
     Opts.AltiVec = 1;
     Opts.CXXOperatorNames = 1;
     Opts.LaxVectorConversions = 1;
+    Opts.DefaultFPContract = 1;
   }
 
   if (LangStd == LangStandard::lang_cuda)

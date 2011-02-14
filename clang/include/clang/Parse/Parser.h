@@ -123,6 +123,7 @@ class Parser : public CodeCompletionHandler {
   llvm::OwningPtr<PragmaHandler> UnusedHandler;
   llvm::OwningPtr<PragmaHandler> WeakHandler;
   llvm::OwningPtr<PragmaHandler> FPContractHandler;
+  llvm::OwningPtr<PragmaHandler> OpenCLExtensionHandler;
 
   /// Whether the '>' token acts as an operator or not. This will be
   /// true except when we are parsing an expression within a C++
@@ -1526,6 +1527,7 @@ private:
   void ParseMicrosoftDeclSpec(ParsedAttributes &attrs);
   void ParseMicrosoftTypeAttributes(ParsedAttributes &attrs);
   void ParseBorlandTypeAttributes(ParsedAttributes &attrs);
+  void ParseOpenCLAttributes(ParsedAttributes &attrs);
 
   void ParseTypeofSpecifier(DeclSpec &DS);
   void ParseDecltypeSpecifier(DeclSpec &DS);

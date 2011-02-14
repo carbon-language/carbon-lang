@@ -192,6 +192,8 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //   KEYCXX0X - This is a C++ keyword introduced to C++ in C++0x
 //   KEYGNU   - This is a keyword if GNU extensions are enabled
 //   KEYMS    - This is a keyword if Microsoft extensions are enabled
+//   KEYOPENCL  - This is a keyword in OpenCL
+//   KEYALTIVEC - This is a keyword in AltiVec
 //   KEYBORLAND - This is a keyword if Borland extensions are enabled
 //
 KEYWORD(auto                        , KEYALL)
@@ -342,6 +344,10 @@ KEYWORD(__stdcall                   , KEYALL)
 KEYWORD(__fastcall                  , KEYALL)
 KEYWORD(__thiscall                  , KEYALL)
 KEYWORD(__forceinline               , KEYALL)
+
+// OpenCL-specific keywords (see OpenCL 1.1 [6.1.9])
+KEYWORD(__kernel                    , KEYOPENCL)
+ALIAS("kernel", __kernel            , KEYOPENCL)
 
 // Borland Extensions.
 KEYWORD(__pascal                    , KEYALL)

@@ -301,6 +301,16 @@ void Parser::ParseBorlandTypeAttributes(ParsedAttributes &attrs) {
   }
 }
 
+void Parser::ParseOpenCLAttributes(ParsedAttributes &attrs) {
+  // Treat these like attributes
+  while (Tok.is(tok::kw___kernel)) {
+    SourceLocation AttrNameLoc = ConsumeToken();
+    attrs.add(AttrFactory.Create(PP.getIdentifierInfo("opencl_kernel_function"),
+                                 AttrNameLoc, 0, AttrNameLoc, 0,
+                                 SourceLocation(), 0, 0, false));
+  }
+}
+
 void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {
   Diag(attrs.Range.getBegin(), diag::err_attributes_not_allowed)
     << attrs.Range;
@@ -864,6 +874,7 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
 /// [C99]   'inline'
 /// [C++]   'virtual'
 /// [C++]   'explicit'
+/// [OpenCL] '__kernel'
 ///       'friend': [C++ dcl.friend]
 ///       'constexpr': [C++0x dcl.constexpr]
 
@@ -1199,6 +1210,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     // Borland single token adornments.
     case tok::kw___pascal:
       ParseBorlandTypeAttributes(DS.getAttributes());
+      continue;
+
+    // OpenCL single token adornments.
+    case tok::kw___kernel:
+      ParseOpenCLAttributes(DS.getAttributes());
       continue;
 
     // storage-class-specifier

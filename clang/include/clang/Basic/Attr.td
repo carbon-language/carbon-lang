@@ -202,6 +202,10 @@ def CUDAShared : InheritableAttr {
   let Spellings = ["shared"];
 }
 
+def OpenCLKernel : Attr {
+  let Spellings = ["opencl_kernel_function"];
+}
+
 def Deprecated : InheritableAttr {
   let Spellings = ["deprecated"];
   let Args = [StringArgument<"Message">];

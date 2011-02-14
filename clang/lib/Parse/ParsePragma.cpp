@@ -382,3 +382,53 @@ PragmaFPContractHandler::HandlePragma(Preprocessor &PP,
 
   Actions.ActOnPragmaFPContract(OOS);
 }
+
+void 
+PragmaOpenCLExtensionHandler::HandlePragma(Preprocessor &PP, 
+                                           PragmaIntroducerKind Introducer,
+                                           Token &Tok) {
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier) <<
+      "OPENCL";
+    return;
+  }
+  IdentifierInfo *ename = Tok.getIdentifierInfo();
+  SourceLocation NameLoc = Tok.getLocation();
+
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::colon)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_colon) << ename;
+    return;
+  }
+
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_enable_disable);
+    return;
+  }
+  IdentifierInfo *op = Tok.getIdentifierInfo();
+
+  unsigned state;
+  if (op->isStr("enable")) {
+    state = 1;
+  } else if (op->isStr("disable")) {
+    state = 0;
+  } else {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_enable_disable);
+    return;
+  }
+
+  OpenCLOptions &f = Actions.getOpenCLOptions();
+  if (ename->isStr("all")) {
+#define OPENCLEXT(nm)   f.nm = state;
+#include "clang/Basic/OpenCLExtensions.def"
+  }
+#define OPENCLEXT(nm) else if (ename->isStr(#nm)) { f.nm = state; }
+#include "clang/Basic/OpenCLExtensions.def"
+  else {
+    PP.Diag(NameLoc, diag::warn_pragma_unknown_extension) << ename;
+    return;
+  }
+}
+

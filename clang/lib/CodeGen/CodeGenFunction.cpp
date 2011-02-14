@@ -239,6 +239,19 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
         break;
       }
 
+  if (getContext().getLangOptions().OpenCL) {
+    // Add metadata for a kernel function.
+    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
+      if (FD->hasAttr<OpenCLKernelAttr>()) {
+        llvm::LLVMContext &Context = getLLVMContext();
+        llvm::NamedMDNode *OpenCLMetadata = 
+          CGM.getModule().getOrInsertNamedMetadata("opencl.kernels");
+          
+        llvm::Value *Op = Fn;
+        OpenCLMetadata->addOperand(llvm::MDNode::get(Context, &Op, 1));
+      }
+  }
+
   llvm::BasicBlock *EntryBB = createBasicBlock("entry", CurFn);
 
   // Create a marker to make it easy to insert allocas into the entryblock

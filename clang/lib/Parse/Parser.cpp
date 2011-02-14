@@ -53,6 +53,14 @@ Parser::Parser(Preprocessor &pp, Sema &actions)
 
   FPContractHandler.reset(new PragmaFPContractHandler(actions, *this));
   PP.AddPragmaHandler("STDC", FPContractHandler.get());
+
+  if (getLang().OpenCL) {
+    OpenCLExtensionHandler.reset(
+                  new PragmaOpenCLExtensionHandler(actions, *this));
+    PP.AddPragmaHandler("OPENCL", OpenCLExtensionHandler.get());
+
+    PP.AddPragmaHandler("OPENCL", FPContractHandler.get());
+  }
       
   PP.setCodeCompletionHandler(*this);
 }
@@ -363,6 +371,13 @@ Parser::~Parser() {
   UnusedHandler.reset();
   PP.RemovePragmaHandler(WeakHandler.get());
   WeakHandler.reset();
+
+  if (getLang().OpenCL) {
+    PP.RemovePragmaHandler("OPENCL", OpenCLExtensionHandler.get());
+    OpenCLExtensionHandler.reset();
+    PP.RemovePragmaHandler("OPENCL", FPContractHandler.get());
+  }
+
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());
   FPContractHandler.reset();
   PP.clearCodeCompletionHandler();

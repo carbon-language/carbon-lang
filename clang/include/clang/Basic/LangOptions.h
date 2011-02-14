@@ -249,6 +249,18 @@ public:
     fp_contract(LangOpts.DefaultFPContract) {}
 };
 
+/// OpenCL volatile options
+class OpenCLOptions {
+public:
+#define OPENCLEXT(nm)  unsigned nm : 1;
+#include "clang/Basic/OpenCLExtensions.def"
+
+  OpenCLOptions() {
+#define OPENCLEXT(nm)   nm = 0;
+#include "clang/Basic/OpenCLExtensions.def"
+  }
+};
+
 }  // end namespace clang
 
 #endif

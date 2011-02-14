@@ -2333,6 +2333,11 @@ static void HandleCallConvAttr(Decl *d, const AttributeList &attr, Sema &S) {
   }
 }
 
+static void HandleOpenCLKernelAttr(Decl *d, const AttributeList &Attr, Sema &S){
+  assert(Attr.isInvalid() == false);
+  d->addAttr(::new (S.Context) OpenCLKernelAttr(Attr.getLoc(), S.Context));
+}
+
 bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
   if (attr.isInvalid())
     return true;
@@ -2773,6 +2778,9 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_thiscall:
   case AttributeList::AT_pascal:
     HandleCallConvAttr(D, Attr, S);
+    break;
+  case AttributeList::AT_opencl_kernel_function:
+    HandleOpenCLKernelAttr(D, Attr, S);
     break;
   case AttributeList::AT_uuid:
     HandleUuidAttr(D, Attr, S);

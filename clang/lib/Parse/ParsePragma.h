@@ -80,6 +80,17 @@ public:
                             Token &FirstToken);
 };
 
+class PragmaOpenCLExtensionHandler : public PragmaHandler {
+  Sema &Actions;
+  Parser &parser;
+public:
+  PragmaOpenCLExtensionHandler(Sema &S, Parser& p) : 
+    PragmaHandler("EXTENSION"), Actions(S), parser(p) {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+  
+
 class PragmaFPContractHandler : public PragmaHandler {
   Sema &Actions;
   Parser &parser;

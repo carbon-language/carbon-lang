@@ -210,6 +210,7 @@ public:
   typedef TemplateParameterList TemplateParamsTy;
   typedef NestedNameSpecifier CXXScopeTy;
 
+  OpenCLOptions OpenCLFeatures;
   FPOptions FPFeatures;
 
   const LangOptions &LangOpts;
@@ -546,6 +547,7 @@ public:
   void Initialize();
   
   const LangOptions &getLangOptions() const { return LangOpts; }
+  OpenCLOptions &getOpenCLOptions() { return OpenCLFeatures; }
   FPOptions     &getFPOptions() { return FPFeatures; }
 
   Diagnostic &getDiagnostics() const { return Diags; }
@@ -4412,7 +4414,7 @@ public:
                             SourceLocation AliasNameLoc);
 
   /// ActOnPragmaFPContract - Called on well formed
-  /// #pragma STDC FP_CONTRACT
+  /// #pragma {STDC,OPENCL} FP_CONTRACT
   void ActOnPragmaFPContract(tok::OnOffSwitch OOS);
 
   /// AddAlignmentAttributesForRecord - Adds any needed alignment attributes to

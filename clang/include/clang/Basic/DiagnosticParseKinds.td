@@ -447,5 +447,13 @@ def warn_pragma_unused_expected_punc : Warning<
 def err_not_opencl_storage_class_specifier : Error<
   "OpenCL does not support the '%0' storage class specifier">;
 
+// OpenCL EXTENSION pragma (OpenCL 1.1 [9.1])
+def warn_pragma_expected_colon : Warning<
+  "missing ':' after %0 - ignoring">;
+def warn_pragma_expected_enable_disable : Warning<
+  "expected 'enable' or 'disable' - ignoring">;
+def warn_pragma_unknown_extension : Warning<
+  "unknown OpenCL extension %0 - ignoring">;
+
 } // end of Parse Issue category.
 } // end of Parser diagnostics

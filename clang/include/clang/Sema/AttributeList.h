@@ -134,6 +134,7 @@ public:
     AT_ns_consumed,             // Clang-specific.
     AT_ns_consumes_self,        // Clang-specific.
     AT_objc_gc,
+    AT_opencl_kernel_function,  // OpenCL-specific.
     AT_overloadable,       // Clang-specific.
     AT_ownership_holds,    // Clang-specific.
     AT_ownership_returns,  // Clang-specific.

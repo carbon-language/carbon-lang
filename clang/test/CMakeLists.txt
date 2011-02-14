@@ -4,6 +4,7 @@ set(CLANG_TEST_DIRECTORIES
   "CodeGen"
   "CodeGenCXX"
   "CodeGenObjC"
+  "CodeGenOpenCL"
   "Coverage"
   "CXX"
   "Driver"
