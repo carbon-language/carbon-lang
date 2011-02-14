@@ -698,6 +698,8 @@ EmulateInstructionARM::EmulateMovRdImm (ARMEncoding encoding)
             setflags = BitIsSet(opcode, 20);
             imm12 = Bit32(opcode, 26) << 11 | Bits32(opcode, 14, 12) << 8 | Bits32(opcode, 7, 0);
             imm32 = ThumbExpandImm_C(imm12, Bit32(m_inst_cpsr, CPSR_C), carry);
+            if (BadReg(Rd))
+                return false;
             break;
         default:
             return false;
