@@ -214,3 +214,11 @@ entry:
   store <4 x float> %2, <4 x float> * undef
   ret void
 }
+
+; PR9210
+define <4 x float> @f(<4 x double>) nounwind {
+entry:
+ %double2float.i = fptrunc <4 x double> %0 to <4 x float>
+ ret <4 x float> %double2float.i
+}
+
