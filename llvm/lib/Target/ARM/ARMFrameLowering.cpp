@@ -833,7 +833,6 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     unsigned Reg = CSRegs[i];
     bool Spilled = false;
     if (MF.getRegInfo().isPhysRegUsed(Reg)) {
-      AFI->setCSRegisterIsSpilled(Reg);
       Spilled = true;
       CanEliminateFrame = false;
     } else {
@@ -932,7 +931,6 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // Spill LR as well so we can fold BX_RET to the registers restore (LDM).
     if (!LRSpilled && CS1Spilled) {
       MF.getRegInfo().setPhysRegUsed(ARM::LR);
-      AFI->setCSRegisterIsSpilled(ARM::LR);
       NumGPRSpills++;
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
                                     UnspilledCS1GPRs.end(), (unsigned)ARM::LR));
@@ -957,7 +955,6 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
           if (!AFI->isThumb1OnlyFunction() ||
               isARMLowRegister(Reg) || Reg == ARM::LR) {
             MF.getRegInfo().setPhysRegUsed(Reg);
-            AFI->setCSRegisterIsSpilled(Reg);
             if (!RegInfo->isReservedReg(MF, Reg))
               ExtraCSSpill = true;
             break;
@@ -966,7 +963,6 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       } else if (!UnspilledCS2GPRs.empty() && !AFI->isThumb1OnlyFunction()) {
         unsigned Reg = UnspilledCS2GPRs.front();
         MF.getRegInfo().setPhysRegUsed(Reg);
-        AFI->setCSRegisterIsSpilled(Reg);
         if (!RegInfo->isReservedReg(MF, Reg))
           ExtraCSSpill = true;
       }
@@ -1006,7 +1002,6 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       if (Extras.size() && NumExtras == 0) {
         for (unsigned i = 0, e = Extras.size(); i != e; ++i) {
           MF.getRegInfo().setPhysRegUsed(Extras[i]);
-          AFI->setCSRegisterIsSpilled(Extras[i]);
         }
       } else if (!AFI->isThumb1OnlyFunction()) {
         // note: Thumb1 functions spill to R12, not the stack.  Reserve a slot
@@ -1021,7 +1016,6 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   if (ForceLRSpill) {
     MF.getRegInfo().setPhysRegUsed(ARM::LR);
-    AFI->setCSRegisterIsSpilled(ARM::LR);
     AFI->setLRIsSpilledForFarJump(true);
   }
 }
