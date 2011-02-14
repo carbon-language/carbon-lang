@@ -647,6 +647,91 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
     return true;
 }
 
+// Move (immediate) writes an immediate value to the destination register.  It
+// can optionally update the condition flags based on the value.
+// MOV (immediate)
+bool
+EmulateInstructionARM::EmulateMovRdImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        result = imm32;
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+    }
+#endif
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd; // the destination register
+        uint32_t imm12; // some intermediate result
+        uint32_t imm32; // the immediate value to be written to Rd
+        uint32_t carry; // the carry bit after ThumbExpandImm_C or ARMExpandImm_C.
+        bool setflags;
+        switch (encoding) {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 11, 8);
+            setflags = !InITBlock();
+            imm32 = Bits32(opcode, 7, 0); // imm32 = ZeroExtend(imm8, 32)
+            carry = Bit32(m_inst_cpsr, CPSR_C);
+            break;
+        case eEncodingT2:
+            Rd = Bits32(opcode, 15, 12);
+            setflags = BitIsSet(opcode, 20);
+            imm12 = Bit32(opcode, 26) << 11 | Bits32(opcode, 14, 12) << 8 | Bits32(opcode, 7, 0);
+            imm32 = ThumbExpandImm_C(imm12, Bit32(m_inst_cpsr, CPSR_C), carry);
+            break;
+        default:
+            return false;
+        }
+        uint32_t result = imm32;
+
+        // The context specifies that an immediate is to be moved into Rd.
+        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
+                                                0,
+                                                0,
+                                                0 };
+    
+        if (Rd == 15)
+        {
+            if (!ALUWritePC (context, result))
+                return false;
+        }
+        else
+        {
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
+                return false;
+            if (setflags)
+            {
+                m_new_inst_cpsr = m_inst_cpsr;
+                SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
+                SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
+                SetBit32(m_new_inst_cpsr, CPSR_C, carry);
+                if (m_new_inst_cpsr != m_inst_cpsr)
+                {
+                    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+                        return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 // Bitwise NOT (immediate) writes the bitwise inverse of an immediate value to
 // the destination register.  It can optionally update the condition flags based
 // on the value.
@@ -679,21 +764,21 @@ EmulateInstructionARM::EmulateMvnRdImm (ARMEncoding encoding)
     if (ConditionPassed())
     {
         uint32_t Rd; // the destination register
-        uint32_t imm12; // the first operand to ThumbExpandImm_C or ARMExpandImm_C.
-        uint32_t imm32; // the output after ThumbExpandImm_C or ARMExpandImm_C.
-        uint32_t carry; // the carry bit after ThumbExpandImm_C or ARMExpandImm_C.
+        uint32_t imm12; // the first operand to ThumbExpandImm_C or ARMExpandImm_C
+        uint32_t imm32; // the output after ThumbExpandImm_C or ARMExpandImm_C
+        uint32_t carry; // the carry bit after ThumbExpandImm_C or ARMExpandImm_C
         bool setflags;
         switch (encoding) {
         case eEncodingT1:
             Rd = Bits32(opcode, 11, 8);
-            imm12 = Bit32(opcode, 26) << 11 | Bits32(opcode, 14, 12) << 8 | Bits32(opcode, 7, 0);
             setflags = BitIsSet(opcode, 20);
+            imm12 = Bit32(opcode, 26) << 11 | Bits32(opcode, 14, 12) << 8 | Bits32(opcode, 7, 0);
             imm32 = ThumbExpandImm_C(imm12, Bit32(m_inst_cpsr, CPSR_C), carry);
             break;
         case eEncodingA1:
             Rd = Bits32(opcode, 15, 12);
-            imm12 = Bits32(opcode, 11, 0);
             setflags = BitIsSet(opcode, 20);
+            imm12 = Bits32(opcode, 11, 0);
             imm32 = ARMExpandImm_C(imm12, Bit32(m_inst_cpsr, CPSR_C), carry);
             break;
         default:
@@ -2935,6 +3020,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "mov<c> <Rd>, <Rm>"},
         // move from low register to low register
         { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "movs <Rd>, <Rm>"},
+        // move immediate
+        { 0xfffff800, 0x00002000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdImm, "movs|mov<c> <Rd>, #imm8"},
+        { 0xfbef8000, 0xf04f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMovRdImm, "mov{s}<c>.w <Rd>, #<const>"},
         // move bitwise not
         { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateMvnRdImm, "mvn{s} <Rd>, #<const>"},
         // compare a register with immediate
@@ -3297,6 +3385,10 @@ EmulateInstructionARM::EvaluateInstruction ()
     // Advance the ITSTATE bits to their values for the next instruction.
     if (m_inst_mode == eModeThumb && m_it_session.InITBlock())
         m_it_session.ITAdvance();
+
+    // If the flags have changed, flush it out.
+    if (m_new_inst_cpsr != m_inst_cpsr)
+        m_inst_cpsr = m_new_inst_cpsr;
 
     return false;
 }
