@@ -328,6 +328,18 @@ void ELFWriter::AddToSymbolList(ELFSym *GblSym) {
   }
 }
 
+/// HasCommonSymbols - True if this section holds common symbols, this is
+/// indicated on the ELF object file by a symbol with SHN_COMMON section
+/// header index.
+static bool HasCommonSymbols(const MCSectionELF &S) {
+  // FIXME: this is wrong, a common symbol can be in .data for example.
+  if (StringRef(S.getSectionName()).startswith(".gnu.linkonce."))
+    return true;
+
+  return false;
+}
+
+
 // EmitGlobal - Choose the right section for global and emit it
 void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
@@ -364,7 +376,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     unsigned Size = TD->getTypeAllocSize(GVar->getInitializer()->getType());
     GblSym->Size = Size;
 
-    if (S->HasCommonSymbols()) { // Symbol must go to a common section
+    if (HasCommonSymbols(*S)) { // Symbol must go to a common section
       GblSym->SectionIdx = ELF::SHN_COMMON;
 
       // A new linkonce section is created for each global in the

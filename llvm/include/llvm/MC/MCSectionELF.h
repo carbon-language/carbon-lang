@@ -55,11 +55,6 @@ public:
   /// should be printed before the section name
   bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
-  /// HasCommonSymbols - True if this section holds common symbols, this is
-  /// indicated on the ELF object file by a symbol with SHN_COMMON section
-  /// header index.
-  bool HasCommonSymbols() const;
-
   StringRef getSectionName() const { return SectionName; }
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
