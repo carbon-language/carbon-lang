@@ -331,25 +331,37 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     ImmDefRegs.clear();
     ImmDefMIs.clear();
 
+    MachineBasicBlock::iterator PMII = I->begin();
     for (MachineBasicBlock::iterator
            MII = I->begin(), MIE = I->end(); MII != MIE; ) {
-      MachineInstr *MI = &*MII++;
+      MachineInstr *MI = &*MII;
       LocalMIs.insert(MI);
 
       if (MI->isLabel() || MI->isPHI() || MI->isImplicitDef() ||
           MI->isKill() || MI->isInlineAsm() || MI->isDebugValue() ||
-          MI->hasUnmodeledSideEffects())
+          MI->hasUnmodeledSideEffects()) {
+        ++MII;
         continue;
+      }
 
       if (MI->getDesc().isCompare()) {
-        Changed |= OptimizeCmpInstr(MI, MBB);
-      } else if (isMoveImmediate(MI, ImmDefRegs, ImmDefMIs)) {
+        if (OptimizeCmpInstr(MI, MBB)) {
+          // MI is deleted.
+          Changed = true;
+          MII = llvm::next(PMII);
+          continue;
+        }
+      }
+
+      if (isMoveImmediate(MI, ImmDefRegs, ImmDefMIs)) {
         SeenMoveImm = true;
       } else {
         Changed |= OptimizeExtInstr(MI, MBB, LocalMIs);
         if (SeenMoveImm)
           Changed |= FoldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
       }
+      PMII = MII;
+      ++MII;
     }
   }
 
