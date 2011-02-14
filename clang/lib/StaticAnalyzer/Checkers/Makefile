@@ -14,4 +14,11 @@
 CLANG_LEVEL := ../../..
 LIBRARYNAME := clangStaticAnalyzerCheckers
 
+BUILT_SOURCES = Checkers.inc
+TABLEGEN_INC_FILES_COMMON = 1
+
 include $(CLANG_LEVEL)/Makefile
+
+$(ObjDir)/Checkers.inc.tmp : Checkers.td $(TBLGEN) $(ObjDir)/.dir
+	$(Echo) "Building Clang SA Checkers tables with tblgen"
+	$(Verb) $(TableGen) -gen-clang-sa-checkers -I $(PROJ_SRC_DIR)/$(CLANG_LEVEL)/include -o $(call SYSPATH, $@) $<

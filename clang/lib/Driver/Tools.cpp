@@ -925,9 +925,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
       // Checks to perform for Objective-C/Objective-C++.
       if (types::isObjC(InputType)) {
+        // Enable all checkers in 'cocoa' package.
+        CmdArgs.push_back("-analyzer-checker=cocoa");
+
         CmdArgs.push_back("-analyzer-check-objc-methodsigs");
         CmdArgs.push_back("-analyzer-check-objc-unused-ivars");
-        CmdArgs.push_back("-analyzer-check-objc-self-init");
         // Do not enable the missing -dealloc check.
         // '-analyzer-check-objc-missing-dealloc',
       }

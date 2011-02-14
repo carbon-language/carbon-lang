@@ -270,4 +270,7 @@ def warn_unknown_warning_option : Warning<
 def warn_unknown_warning_specifier : Warning<
     "unknown %0 warning specifier: '%1'">,
     InGroup<DiagGroup<"unknown-warning-option"> >;
+
+def warn_unkwown_analyzer_checker : Warning<
+    "no analyzer checkers are associated with '%0'">;
 }

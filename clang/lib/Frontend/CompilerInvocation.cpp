@@ -118,10 +118,17 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-analyzer-experimental-internal-checks");
   if (Opts.IdempotentOps)
     Res.push_back("-analyzer-check-idempotent-operations");
-  if (Opts.ObjCSelfInitCheck)
-    Res.push_back("-analyzer-check-objc-self-init");
   if (Opts.BufferOverflows)
     Res.push_back("-analyzer-check-buffer-overflows");
+
+  for (unsigned i = 0, e = Opts.CheckersControlList.size(); i != e; ++i) {
+    const std::pair<std::string, bool> &opt = Opts.CheckersControlList[i];
+    if (opt.second)
+      Res.push_back("-analyzer-disable-checker");
+    else
+      Res.push_back("-analyzer-checker");
+    Res.push_back(opt.first);
+  }
 }
 
 static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
@@ -885,8 +892,18 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.EagerlyTrimEGraph = !Args.hasArg(OPT_analyzer_no_eagerly_trim_egraph);
   Opts.InlineCall = Args.hasArg(OPT_analyzer_inline_call);
   Opts.IdempotentOps = Args.hasArg(OPT_analysis_WarnIdempotentOps);
-  Opts.ObjCSelfInitCheck = Args.hasArg(OPT_analysis_WarnObjCSelfInit);
   Opts.BufferOverflows = Args.hasArg(OPT_analysis_WarnBufferOverflows);
+
+  Opts.CheckersControlList.clear();
+  for (arg_iterator it = Args.filtered_begin(OPT_analyzer_checker,
+                                             OPT_analyzer_disable_checker),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
+    A->claim();
+    bool enable = (A->getOption().getID() == OPT_analyzer_checker);
+    Opts.CheckersControlList.push_back(std::make_pair(A->getValue(Args),
+                                                      enable));
+  }
 }
 
 static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,

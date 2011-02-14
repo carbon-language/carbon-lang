@@ -64,8 +64,6 @@ def analysis_WarnObjCUnusedIvars : Flag<"-analyzer-check-objc-unused-ivars">,
   HelpText<"Warn about private ivars that are never used">;
 def analysis_ObjCMemChecker : Flag<"-analyzer-check-objc-mem">,
   HelpText<"Run the [Core] Foundation reference count checker">;
-def analysis_WarnObjCSelfInit : Flag<"-analyzer-check-objc-self-init">,
-  HelpText<"Warn about missing initialization of 'self' in an initializer">;
 def analysis_WarnSizeofPointer : Flag<"-warn-sizeof-pointer">,
   HelpText<"Warn about unintended use of sizeof() on pointer expressions">;
 def analysis_WarnIdempotentOps : Flag<"-analyzer-check-idempotent-operations">,
@@ -121,6 +119,16 @@ def analyzer_max_nodes : Separate<"-analyzer-max-nodes">,
   HelpText<"The maximum number of nodes the analyzer can generate (150000 default, 0 = no limit)">;
 def analyzer_max_loop : Separate<"-analyzer-max-loop">,
   HelpText<"The maximum number of times the analyzer will go through a loop">;
+
+def analyzer_checker : Separate<"-analyzer-checker">,
+  HelpText<"Choose analyzer checkers to enable">;
+def analyzer_checker_EQ : Joined<"-analyzer-checker=">,
+  Alias<analyzer_checker>;
+
+def analyzer_disable_checker : Separate<"-analyzer-disable-checker">,
+  HelpText<"Choose analyzer checkers to disable">;
+def analyzer_disable_checker_EQ : Joined<"-analyzer-disable-checker=">,
+  Alias<analyzer_disable_checker>;
 
 //===----------------------------------------------------------------------===//
 // CodeGen Options

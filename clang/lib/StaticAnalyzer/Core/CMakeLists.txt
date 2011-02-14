@@ -13,6 +13,7 @@ add_clang_library(clangStaticAnalyzerCore
   CFRefCount.cpp
   Checker.cpp
   CheckerHelpers.cpp
+  CheckerManager.cpp
   Environment.cpp
   ExplodedGraph.cpp
   FlatStore.cpp

@@ -16,6 +16,7 @@
 // FIXME: Restructure checker registration.
 #include "InternalChecks.h"
 
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
@@ -332,6 +333,7 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
     BR(mgr, *this), TF(tf) {
+  mgr.getCheckerManager()->registerCheckersToEngine(*this);
   // Register internal checks.
   RegisterInternalChecks(*this);
 

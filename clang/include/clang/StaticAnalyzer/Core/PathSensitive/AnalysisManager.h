@@ -27,6 +27,7 @@ namespace idx {
 }
 
 namespace ento {
+  class CheckerManager;
 
 class AnalysisManager : public BugReporterData {
   AnalysisContextManager AnaCtxMgr;
@@ -41,6 +42,8 @@ class AnalysisManager : public BugReporterData {
   // Configurable components creators.
   StoreManagerCreator CreateStoreMgr;
   ConstraintManagerCreator CreateConstraintMgr;
+
+  CheckerManager *CheckerMgr;
 
   /// \brief Provide function definitions in other translation units. This is
   /// NULL if we don't have multiple translation units. AnalysisManager does
@@ -76,6 +79,7 @@ public:
                   const LangOptions &lang, PathDiagnosticClient *pd,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
+                  CheckerManager *checkerMgr,
                   idx::Indexer *idxer,
                   unsigned maxnodes, unsigned maxvisit,
                   bool vizdot, bool vizubi, bool purge, bool eager, bool trim,
@@ -85,7 +89,8 @@ public:
 
     : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
       Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
-      CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),Idxer(idxer),
+      CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
+      CheckerMgr(checkerMgr), Idxer(idxer),
       AScope(ScopeDecl), MaxNodes(maxnodes), MaxVisit(maxvisit),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
       EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall),
@@ -109,6 +114,8 @@ public:
   ConstraintManagerCreator getConstraintManagerCreator() {
     return CreateConstraintMgr;
   }
+
+  CheckerManager *getCheckerManager() const { return CheckerMgr; }
 
   idx::Indexer *getIndexer() const { return Idxer; }
 

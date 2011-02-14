@@ -773,6 +773,7 @@ void CallEnterNodeBuilder::generateNode(const GRState *state) {
                          OldMgr.getPathDiagnosticClient(),
                          OldMgr.getStoreManagerCreator(),
                          OldMgr.getConstraintManagerCreator(),
+                         OldMgr.getCheckerManager(),
                          OldMgr.getIndexer(),
                          OldMgr.getMaxNodes(), OldMgr.getMaxVisit(),
                          OldMgr.shouldVisualizeGraphviz(),

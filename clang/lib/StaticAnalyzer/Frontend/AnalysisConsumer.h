@@ -22,8 +22,10 @@ namespace clang {
 class AnalyzerOptions;
 class ASTConsumer;
 class Preprocessor;
+class Diagnostic;
 
 namespace ento {
+class CheckerManager;
 
 /// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
 /// analysis passes.  (The set of analyses run is controlled by command-line
@@ -31,6 +33,8 @@ namespace ento {
 ASTConsumer* CreateAnalysisConsumer(const Preprocessor &pp,
                                     const std::string &output,
                                     const AnalyzerOptions& Opts);
+
+CheckerManager *registerCheckers(const AnalyzerOptions &opts,Diagnostic &diags);
 
 } // end GR namespace
 
