@@ -21,7 +21,7 @@
 #pragma STDC CX_LIMITED_RANGE IN_BETWEEN   // expected-warning {{expected 'ON' or 'OFF' or 'DEFAULT' in pragma}}
 
 #pragma STDC CX_LIMITED_RANGE    // expected-warning {{expected 'ON' or 'OFF' or 'DEFAULT' in pragma}}
-#pragma STDC CX_LIMITED_RANGE ON FULL POWER  // expected-warning {{expected end of macro in STDC pragma}}
+#pragma STDC CX_LIMITED_RANGE ON FULL POWER  // expected-warning {{expected end of macro in pragma}}
 
 #pragma STDC SO_GREAT  // expected-warning {{unknown pragma in STDC namespace}}
 #pragma STDC   // expected-warning {{unknown pragma in STDC namespace}}

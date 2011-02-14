@@ -723,6 +723,33 @@ void Preprocessor::RemovePragmaHandler(llvm::StringRef Namespace,
     PragmaHandlers->RemovePragmaHandler(NS);
 }
 
+bool Preprocessor::LexOnOffSwitch(tok::OnOffSwitch &Result) {
+  Token Tok;
+  LexUnexpandedToken(Tok);
+
+  if (Tok.isNot(tok::identifier)) {
+    Diag(Tok, diag::ext_on_off_switch_syntax);
+    return true;
+  }
+  IdentifierInfo *II = Tok.getIdentifierInfo();
+  if (II->isStr("ON"))
+    Result = tok::OOS_ON;
+  else if (II->isStr("OFF"))
+    Result = tok::OOS_OFF;
+  else if (II->isStr("DEFAULT"))
+    Result = tok::OOS_DEFAULT;
+  else {
+    Diag(Tok, diag::ext_on_off_switch_syntax);
+    return true;
+  }
+
+  // Verify that this is followed by EOM.
+  LexUnexpandedToken(Tok);
+  if (Tok.isNot(tok::eom))
+    Diag(Tok, diag::ext_pragma_syntax_eom);
+  return false;
+}
+
 namespace {
 /// PragmaOnceHandler - "#pragma once" marks the file as atomically included.
 struct PragmaOnceHandler : public PragmaHandler {
@@ -935,38 +962,6 @@ struct PragmaPopMacroHandler : public PragmaHandler {
 
 // Pragma STDC implementations.
 
-enum STDCSetting {
-  STDC_ON, STDC_OFF, STDC_DEFAULT, STDC_INVALID
-};
-
-static STDCSetting LexOnOffSwitch(Preprocessor &PP) {
-  Token Tok;
-  PP.LexUnexpandedToken(Tok);
-
-  if (Tok.isNot(tok::identifier)) {
-    PP.Diag(Tok, diag::ext_stdc_pragma_syntax);
-    return STDC_INVALID;
-  }
-  IdentifierInfo *II = Tok.getIdentifierInfo();
-  STDCSetting Result;
-  if (II->isStr("ON"))
-    Result = STDC_ON;
-  else if (II->isStr("OFF"))
-    Result = STDC_OFF;
-  else if (II->isStr("DEFAULT"))
-    Result = STDC_DEFAULT;
-  else {
-    PP.Diag(Tok, diag::ext_stdc_pragma_syntax);
-    return STDC_INVALID;
-  }
-
-  // Verify that this is followed by EOM.
-  PP.LexUnexpandedToken(Tok);
-  if (Tok.isNot(tok::eom))
-    PP.Diag(Tok, diag::ext_stdc_pragma_syntax_eom);
-  return Result;
-}
-
 /// PragmaSTDC_FP_CONTRACTHandler - "#pragma STDC FP_CONTRACT ...".
 struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
   PragmaSTDC_FP_CONTRACTHandler() : PragmaHandler("FP_CONTRACT") {}
@@ -976,7 +971,8 @@ struct PragmaSTDC_FP_CONTRACTHandler : public PragmaHandler {
     // at all, our default is OFF and setting it to ON is an optimization hint
     // we can safely ignore.  When we support -ffma or something, we would need
     // to diagnose that we are ignoring FMA.
-    LexOnOffSwitch(PP);
+    tok::OnOffSwitch OOS;
+    PP.LexOnOffSwitch(OOS);
   }
 };
 
@@ -985,7 +981,10 @@ struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
   PragmaSTDC_FENV_ACCESSHandler() : PragmaHandler("FENV_ACCESS") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                             Token &Tok) {
-    if (LexOnOffSwitch(PP) == STDC_ON)
+    tok::OnOffSwitch OOS;
+    if (PP.LexOnOffSwitch(OOS))
+     return;
+    if (OOS == tok::OOS_ON)
       PP.Diag(Tok, diag::warn_stdc_fenv_access_not_supported);
   }
 };
@@ -996,7 +995,8 @@ struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
     : PragmaHandler("CX_LIMITED_RANGE") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                             Token &Tok) {
-    LexOnOffSwitch(PP);
+    tok::OnOffSwitch OOS;
+    PP.LexOnOffSwitch(OOS);
   }
 };
 

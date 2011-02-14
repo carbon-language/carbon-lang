@@ -43,6 +43,12 @@ enum ObjCKeywordKind {
   NUM_OBJC_KEYWORDS
 };
 
+/// OnOffSwitch - This defines the possible values of an on-off-switch
+/// (C99 6.10.6p2).
+enum OnOffSwitch {
+  OOS_ON, OOS_OFF, OOS_DEFAULT
+};
+
 /// \brief Determines the name of a token as used within the front end.
 ///
 /// The name of a token will be an internal name (such as "l_square")

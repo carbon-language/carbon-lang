@@ -843,6 +843,10 @@ public:
   bool ConcatenateIncludeName(llvm::SmallString<128> &FilenameBuffer,
                               SourceLocation &End);
 
+  /// LexOnOffSwitch - Lex an on-off-switch (C99 6.10.6p2) and verify that it is
+  /// followed by EOM.  Return true if the token is not a valid on-off-switch.
+  bool LexOnOffSwitch(tok::OnOffSwitch &OOS);
+
 private:
 
   void PushIncludeMacroStack() {
