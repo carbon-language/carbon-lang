@@ -1,7 +1,11 @@
-void always_warning() { int *p = 0; *p = 0xDEADBEEF; }
+// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations -analyzer-max-loop 3 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations -analyzer-max-loop 4 -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations %s -verify
 
-// FIXME: False positive due to loop unrolling.  This should be fixed.
+void always_warning() { int *p = 0; *p = 0xDEADBEEF; } // expected-warning{{Dereference of null pointer (loaded from variable 'p')}}
 
+// This test case previously caused a bogus idempotent operation warning
+// due to us not properly culling warnings due to incomplete analysis of loops.
 int pr8403()
 {
         int i;
@@ -14,16 +18,4 @@ int pr8403()
         }
         return 0;
 }
-
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations -analyzer-max-loop 3 %s 2>&1 | FileCheck --check-prefix=Loops3 %s
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations -analyzer-max-loop 4 %s 2>&1 | FileCheck --check-prefix=Loops4 %s
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations %s 2>&1 | FileCheck --check-prefix=LoopsDefault %s
-
-// CHECK-Loops3: :1:37: warning: Dereference of null pointer
-// CHECK-Loops3: :11:27: warning: The left operand to '+' is always 0
-// CHECK-Loops3: 2 warnings generated
-// CHECK-Loops4: :1:37: warning: Dereference of null pointer
-// CHECK-Loops4: 1 warning generated.
-// CHECK-LoopsDefault: :1:37: warning: Dereference of null pointer
-// CHECK-LoopsDefault: 1 warning generated.
 

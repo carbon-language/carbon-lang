@@ -578,7 +578,12 @@ IdempotentOperationChecker::pathWasCompletelyAnalyzed(const CFG *cfg,
     // The destination block on the BlockEdge is the first block that was not
     // analyzed. If we can reach this block from the aborted block, then this
     // block was not completely analyzed.
-    if (CRA->isReachable(BE.getDst(), CB))
+    //
+    // Also explicitly check if the current block is the destination block.
+    // While technically reachable, it means we aborted the analysis on
+    // a path that included that block.
+    const CFGBlock *destBlock = BE.getDst();
+    if (destBlock == CB || CRA->isReachable(destBlock, CB))
       return false;
   }
   
