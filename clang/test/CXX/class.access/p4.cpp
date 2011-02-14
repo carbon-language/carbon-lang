@@ -498,3 +498,13 @@ namespace rdar8876150 {
     return !b;
   }
 }
+
+namespace test23 {
+  template <typename T> class A {
+    A();
+    static A instance;
+  };
+
+  template <typename T> A<T> A<T>::instance;
+  template class A<int>;
+}
