@@ -91,9 +91,6 @@ private:
   static bool isConstantOrPseudoConstant(const DeclRefExpr *DR,
                                          AnalysisContext *AC);
   static bool containsNonLocalVarDecl(const Stmt *S);
-  void getLastRelevantNodes(const CFGBlock *Begin,
-                            const ExplodedNode *N,
-                            ExplodedNodeSet &result);
 
   // Hash table and related data structures
   struct BinaryOperatorData {
@@ -760,49 +757,6 @@ bool IdempotentOperationChecker::containsNonLocalVarDecl(const Stmt *S) {
         return true;
 
   return false;
-}
-
-// Returns the successor nodes of N whose CFGBlocks cannot reach N's CFGBlock.
-// This effectively gives us a set of points in the ExplodedGraph where
-// subsequent execution could not affect the idempotent operation on this path.
-// This is useful for displaying paths after the point of the error, providing
-// an example of how this idempotent operation cannot change.
-void IdempotentOperationChecker::getLastRelevantNodes(
-    const CFGBlock *Begin, const ExplodedNode *node,
-    ExplodedNodeSet &result) {
-  llvm::SmallVector<const ExplodedNode *, 11> worklist;
-  llvm::DenseMap<const ExplodedNode *, unsigned> visited;
-
-  worklist.push_back(node);
-
-  while (!worklist.empty()) {
-    node = worklist.back();
-    worklist.pop_back();
-
-    // Was this node previously visited?
-    unsigned &visitFlag = visited[node];
-    if (visitFlag)
-      continue;
-    visitFlag = 1;    
-
-    const ProgramPoint &PP = node->getLocation();
-    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&PP)) {
-      // Get the CFGBlock and test the reachability
-      const CFGBlock *CB = BE->getBlock();
-
-      // If we cannot reach the beginning CFGBlock from this block, then we are
-      // finished
-      if (!CRA->isReachable(CB, Begin)) {
-        result.Add(const_cast<ExplodedNode *>(node));
-        continue;
-      }
-    }
-
-    // Add unvisited children to the worklist
-    for (ExplodedNode::const_succ_iterator i = node->succ_begin(),
-         e = node->succ_end(); i != e; ++i)
-      worklist.push_back(*i);
-  }
 }
 
 bool IdempotentOperationChecker::CFGReachabilityAnalysis::isReachable(
