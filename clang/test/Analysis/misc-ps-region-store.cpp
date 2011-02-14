@@ -225,3 +225,18 @@ void Foo3<T>::Bar() {
   Baz();
   value_();
 }
+
+//===---------------------------------------------------------------------===//
+// Handle misc. C++ constructs.
+//===---------------------------------------------------------------------===//
+
+namespace fum {
+  int i = 3;
+};
+
+void test_namespace() {
+  // Previously triggered a crash.
+  using namespace fum;
+  int x = i;
+}
+
