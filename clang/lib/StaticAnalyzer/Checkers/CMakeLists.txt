@@ -23,7 +23,6 @@ add_clang_library(clangStaticAnalyzerCheckers
   ExprEngine.cpp
   ExperimentalChecks.cpp
   FixedAddressChecker.cpp
-  FrontendActions.cpp
   IdempotentOperationChecker.cpp
   LLVMConventionsChecker.cpp
   MacOSXAPIChecker.cpp

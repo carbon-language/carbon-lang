@@ -4,6 +4,7 @@ set(LLVM_USED_LIBS clangBasic clangLex clangAST clangFrontend clangRewrite)
 
 add_clang_library(clangStaticAnalyzerFrontend
   AnalysisConsumer.cpp
+  FrontendActions.cpp
   )
 
 add_dependencies(clangStaticAnalyzerCheckers clangStaticAnalyzerCore ClangAttrClasses ClangAttrList ClangDeclNodes
