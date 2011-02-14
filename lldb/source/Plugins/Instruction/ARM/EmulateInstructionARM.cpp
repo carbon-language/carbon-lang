@@ -671,7 +671,66 @@ EmulateInstructionARM::EmulateMvnRdImm (ARMEncoding encoding)
                 // APSR.V unchanged
     }
 #endif
-    return false;
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd; // the destination register
+        uint32_t imm12; // the first operand to ThumbExpandImm_C or ARMExpandImm_C.
+        uint32_t imm32; // the output after ThumbExpandImm_C or ARMExpandImm_C.
+        uint32_t carry; // the carry bit after ThumbExpandImm_C or ARMExpandImm_C.
+        bool setflags;
+        switch (encoding) {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 11, 8);
+            imm12 = Bit32(opcode, 26) << 11 | Bits32(opcode, 14, 12) << 8 | Bits32(opcode, 7, 0);
+            setflags = BitIsSet(opcode, 20);
+            imm32 = ThumbExpandImm_C(imm12, Bit32(m_inst_cpsr, CPSR_C), carry);
+            break;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            imm12 = Bits32(opcode, 11, 0);
+            setflags = BitIsSet(opcode, 20);
+            imm32 = ARMExpandImm_C(imm12, Bit32(m_inst_cpsr, CPSR_C), carry);
+            break;
+        default:
+            return false;
+        }
+        uint32_t result = ~imm32;
+        
+        // The context specifies that an immediate is to be moved into Rd.
+        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
+                                                0,
+                                                0,
+                                                0 };
+    
+        if (Rd == 15)
+        {
+            if (!ALUWritePC (context, result))
+                return false;
+        }
+        else
+        {
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
+                return false;
+            if (setflags)
+            {
+                m_new_inst_cpsr = m_inst_cpsr;
+                SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
+                SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
+                SetBit32(m_new_inst_cpsr, CPSR_C, carry);
+                if (m_new_inst_cpsr != m_inst_cpsr)
+                {
+                    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+                        return false;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 // PC relative immediate load into register, possibly followed by ADD (SP plus register).
@@ -1805,7 +1864,7 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
 
         result = val1 + val2;
         EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate,
-                                                result,
+                                                0,
                                                 0,
                                                 0 };
     
@@ -1816,7 +1875,7 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
         }
         else
         {
-            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, result))
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
                 return false;
         }
     }
@@ -1858,7 +1917,6 @@ EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
     if (!success)
         return false;
                   
-    EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
     AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
     m_new_inst_cpsr = m_inst_cpsr;
     SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
@@ -1867,6 +1925,7 @@ EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
     SetBit32(m_new_inst_cpsr, CPSR_V, res.overflow);
     if (m_new_inst_cpsr != m_inst_cpsr)
     {
+        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
             return false;
     }
@@ -1922,7 +1981,6 @@ EmulateInstructionARM::EmulateCmpRnRm (ARMEncoding encoding)
     if (!success)
         return false;
                   
-    EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
     AddWithCarryResult res = AddWithCarry(reg_val1, reg_val2, 1);
     m_new_inst_cpsr = m_inst_cpsr;
     SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
@@ -1931,6 +1989,7 @@ EmulateInstructionARM::EmulateCmpRnRm (ARMEncoding encoding)
     SetBit32(m_new_inst_cpsr, CPSR_V, res.overflow);
     if (m_new_inst_cpsr != m_inst_cpsr)
     {
+        EmulateInstruction::Context context = { EmulateInstruction::eContextImmediate, 0, 0, 0};
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
             return false;
     }
@@ -2523,7 +2582,6 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
         data = ReadMemoryUnsigned(context, address, 4, 0, &success);
         if (!success)
             return false;    
-        context.arg0 = data;
 
         if (Rt == 15)
         {
