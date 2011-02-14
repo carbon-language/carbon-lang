@@ -54,7 +54,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
   // vector so the code below can handle it uniformly.
   if (isa<ConstantFP>(C) || isa<ConstantInt>(C)) {
     Constant *Ops = C; // don't take the address of C!
-    return FoldBitCast(ConstantVector::get(Ops), DestTy, TD);
+    return FoldBitCast(ConstantVector::get(&Ops, 1), DestTy, TD);
   }
   
   // If this is a bitcast from constant vector -> vector, fold it.
@@ -167,7 +167,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
     }
   }
   
-  return ConstantVector::get(Result);
+  return ConstantVector::get(Result.data(), Result.size());
 }
 
 

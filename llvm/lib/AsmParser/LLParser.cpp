@@ -2079,7 +2079,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
                      "vector element #" + Twine(i) +
                     " is not of type '" + Elts[0]->getType()->getDescription());
 
-    ID.ConstantVal = ConstantVector::get(Elts);
+    ID.ConstantVal = ConstantVector::get(Elts.data(), Elts.size());
     ID.Kind = ValID::t_Constant;
     return false;
   }

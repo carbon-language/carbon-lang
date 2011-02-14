@@ -859,7 +859,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         for (unsigned i = 0; i != 8; ++i)
           Indices.push_back(ConstantInt::get(IntTy, shiftVal + i));
 
-        Value *SV = ConstantVector::get(Indices);
+        Value *SV = ConstantVector::get(Indices.begin(), Indices.size());
         Rep = Builder.CreateShuffleVector(Op2, Op1, SV, "palignr");
         Rep = Builder.CreateBitCast(Rep, F->getReturnType());
       }
@@ -915,7 +915,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         for (unsigned i = 0; i != 16; ++i)
           Indices.push_back(ConstantInt::get(IntTy, shiftVal + i));
 
-        Value *SV = ConstantVector::get(Indices);
+        Value *SV = ConstantVector::get(Indices.begin(), Indices.size());
         Rep = Builder.CreateShuffleVector(Op2, Op1, SV, "palignr");
         Rep = Builder.CreateBitCast(Rep, F->getReturnType());
       }

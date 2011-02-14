@@ -298,7 +298,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
         NewC = ConstantStruct::get(Context, &NewOps[0], NewOps.size(),
                                          UserCS->getType()->isPacked());
       } else if (isa<ConstantVector>(UserC)) {
-        NewC = ConstantVector::get(NewOps);
+        NewC = ConstantVector::get(&NewOps[0], NewOps.size());
       } else {
         assert(isa<ConstantExpr>(UserC) && "Must be a ConstantExpr.");
         NewC = cast<ConstantExpr>(UserC)->getWithOperands(&NewOps[0],

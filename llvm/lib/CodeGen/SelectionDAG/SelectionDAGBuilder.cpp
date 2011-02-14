@@ -2387,13 +2387,29 @@ void SelectionDAGBuilder::visitIndirectBr(const IndirectBrInst &I) {
 void SelectionDAGBuilder::visitFSub(const User &I) {
   // -0.0 - X --> fneg
   const Type *Ty = I.getType();
-  if (isa<Constant>(I.getOperand(0)) &&
-      I.getOperand(0) == ConstantFP::getZeroValueForNegation(Ty)) {
-    SDValue Op2 = getValue(I.getOperand(1));
-    setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
-                             Op2.getValueType(), Op2));
-    return;
+  if (Ty->isVectorTy()) {
+    if (ConstantVector *CV = dyn_cast<ConstantVector>(I.getOperand(0))) {
+      const VectorType *DestTy = cast<VectorType>(I.getType());
+      const Type *ElTy = DestTy->getElementType();
+      unsigned VL = DestTy->getNumElements();
+      std::vector<Constant*> NZ(VL, ConstantFP::getNegativeZero(ElTy));
+      Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
+      if (CV == CNZ) {
+        SDValue Op2 = getValue(I.getOperand(1));
+        setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
+                                 Op2.getValueType(), Op2));
+        return;
+      }
+    }
   }
+
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
+    if (CFP->isExactlyValue(ConstantFP::getNegativeZero(Ty)->getValueAPF())) {
+      SDValue Op2 = getValue(I.getOperand(1));
+      setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
+                               Op2.getValueType(), Op2));
+      return;
+    }
 
   visitBinary(I, ISD::FSUB);
 }
