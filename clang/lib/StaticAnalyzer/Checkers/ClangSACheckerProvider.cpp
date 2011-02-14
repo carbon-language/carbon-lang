@@ -121,8 +121,6 @@ static void collectCheckers(CheckerOptInfo &opt,
   collectCheckers(found, opt.isEnabled(), checkers, /*collectHidden=*/true);
 }
 
-#include "llvm/Support/raw_ostream.h"
-
 void ClangSACheckerProvider::registerCheckers(CheckerManager &checkerMgr,
                              CheckerOptInfo *checkOpts, unsigned numCheckOpts) {
   llvm::DenseSet<const StaticCheckerInfoRec *> enabledCheckers;
