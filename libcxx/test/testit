@@ -8,51 +8,14 @@
 # //
 # //===--------------------------------------------------------------------===//
 
-BACKUP="../"
-
-currentpath=`pwd`
-origpath=$currentpath
-currentdir=`basename $currentpath`
-while [ $currentdir != "test" ]; do
-	if [ $currentdir == "/" ]
-	then
-		echo "current directory must be in or under \"test\"."
-		exit 1
-	fi
-	cd ..
-	currentpath=`pwd`
-	currentdir=`basename $currentpath`
-	BACKUP="../"$BACKUP
-done
-cd $origpath
-
 if [ -z $CC ]
 then
-	CC=g++
-fi
-
-auto_header=0
-
-if [ -z $HEADER_INCLUDE ]
-then
-	HEADER_INCLUDE=$BACKUP"include"
-	let "auto_header+=1"
-fi
-
-auto_lib=0
-
-SOURCE_LIB=/usr/lib/libc++.dylib
-#SOURCE_LIB=/Users/hinnant/Development/libcpp/lib/libc++.a
-
-if [ -z $SOURCE_LIB ]
-then
-	SOURCE_LIB=$BACKUP"lib/libc++.dylib"
-	let "auto_lib+=1"
+	CC=clang++
 fi
 
 if [ -z "$OPTIONS" ]
 then
-	OPTIONS="-nostdinc++ -nodefaultlibs /usr/lib/libSystem.B.dylib -arch `arch`"
+	OPTIONS="-std=c++0x -stdlib=libc++"
 fi
 
 FAIL=0
@@ -68,7 +31,7 @@ function afunc
 	if (ls *.fail.cpp &> /dev/null)
 	then
 		for FILE in $(ls *.fail.cpp); do
-			if $CC $OPTIONS -I$HEADER_INCLUDE $SOURCE_LIB $FILE &> /dev/null
+			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE &> /dev/null
 			then
 				rm ./a.out
 				echo "$FILE should not compile"
@@ -82,7 +45,7 @@ function afunc
 	if (ls *.pass.cpp &> /dev/null)
 	then
 		for FILE in $(ls *.pass.cpp); do
-			if $CC $OPTIONS -I$HEADER_INCLUDE $SOURCE_LIB $FILE
+			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE
 			then
 				if ./a.out
 				then
@@ -127,27 +90,7 @@ function afunc
 		if [ -d "$FILE" ];
 		then
 			cd $FILE
-			if [ $auto_header -eq 1 ]
-			then
-				SAVE_HEADER_INCLUDE=$HEADER_INCLUDE
-				HEADER_INCLUDE="../"$HEADER_INCLUDE
-			fi
-			if [ $auto_lib -eq 1 ]
-			then
-				SAVE_SOURCE_LIB=$SOURCE_LIB
-				SOURCE_LIB="../"$SOURCE_LIB
-			fi
-
 			afunc
-
-			if [ $auto_header -eq 1 ]
-			then
-				HEADER_INCLUDE=${HEADER_INCLUDE:3}
-			fi
-			if [ $auto_lib -eq 1 ]
-			then
-				SOURCE_LIB=${SOURCE_LIB:3}
-			fi
 			cd ..
 		fi
 	done
@@ -158,7 +101,7 @@ afunc
 echo "****************************************************"
 echo "Results for `pwd`:"
 echo "using `$CC --version`"
-echo "with $OPTIONS -I$HEADER_INCLUDE $SOURCE_LIB"
+echo "with $OPTIONS $HEADER_INCLUDE $SOURCE_LIB"
 echo "----------------------------------------------------"
 echo "sections without tests   : $UNIMPLEMENTED"
 echo "sections with failures   : $IMPLEMENTED_FAIL"
