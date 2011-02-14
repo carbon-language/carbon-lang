@@ -61,6 +61,8 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << 'a';
   if (Flags & ELF::SHF_EXECINSTR)
     OS << 'x';
+  if (Flags & ELF::SHF_GROUP)
+    OS << 'G';
   if (Flags & ELF::SHF_WRITE)
     OS << 'w';
   if (Flags & ELF::SHF_MERGE)
@@ -104,6 +106,8 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << "," << EntrySize;
   }
 
+  if (Flags & ELF::SHF_GROUP)
+    OS << "," << Group->getName() << ",comdat";
   OS << '\n';
 }
 

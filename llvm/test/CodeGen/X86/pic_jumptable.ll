@@ -1,4 +1,4 @@
-; RUN: llc < %s -relocation-model=pic -mtriple=i386-linux-gnu -asm-verbose=false | not grep -F .text
+; RUN: llc < %s -relocation-model=pic -mtriple=i386-linux-gnu -asm-verbose=false | grep -F .text._Z3fooILi1EEvi,"axG",@progbits,_Z3fooILi1EEvi,comdat
 ; RUN: llc < %s -relocation-model=pic -mtriple=i686-apple-darwin -asm-verbose=false | FileCheck %s
 ; RUN: llc < %s                       -mtriple=x86_64-apple-darwin | not grep 'lJTI'
 ; rdar://6971437

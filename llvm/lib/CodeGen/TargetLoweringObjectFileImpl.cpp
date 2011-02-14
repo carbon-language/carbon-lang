@@ -266,22 +266,6 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                                     getELFSectionFlags(Kind), Kind);
 }
 
-static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
-  if (Kind.isText())                 return ".gnu.linkonce.t.";
-  if (Kind.isReadOnly())             return ".gnu.linkonce.r.";
-
-  if (Kind.isThreadData())           return ".gnu.linkonce.td.";
-  if (Kind.isThreadBSS())            return ".gnu.linkonce.tb.";
-
-  if (Kind.isDataNoRel())            return ".gnu.linkonce.d.";
-  if (Kind.isDataRelLocal())         return ".gnu.linkonce.d.rel.local.";
-  if (Kind.isDataRel())              return ".gnu.linkonce.d.rel.";
-  if (Kind.isReadOnlyWithRelLocal()) return ".gnu.linkonce.d.rel.ro.local.";
-
-  assert(Kind.isReadOnlyWithRel() && "Unknown section kind");
-  return ".gnu.linkonce.d.rel.ro.";
-}
-
 /// getSectionPrefixForGlobal - Return the section prefix name used by options
 /// FunctionsSections and DataSections.
 static const char *getSectionPrefixForGlobal(SectionKind Kind) {
@@ -317,19 +301,21 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if ((GV->isWeakForLinker() || EmitUniquedSection) &&
       !Kind.isCommon() && !Kind.isBSS()) {
     const char *Prefix;
-    if (GV->isWeakForLinker())
-      Prefix = getSectionPrefixForUniqueGlobal(Kind);
-    else {
-      assert(EmitUniquedSection);
-      Prefix = getSectionPrefixForGlobal(Kind);
-    }
+    Prefix = getSectionPrefixForGlobal(Kind);
 
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
     MCSymbol *Sym = Mang->getSymbol(GV);
     Name.append(Sym->getName().begin(), Sym->getName().end());
+    StringRef Group = "";
+    unsigned Flags = getELFSectionFlags(Kind);
+    if (GV->isWeakForLinker()) {
+      Group = Sym->getName();
+      Flags |= ELF::SHF_GROUP;
+    }
+
     return getContext().getELFSection(Name.str(),
                                       getELFSectionType(Name.str(), Kind),
-                                      getELFSectionFlags(Kind), Kind);
+                                      Flags, Kind, 0, Group);
   }
 
   if (Kind.isText()) return TextSection;

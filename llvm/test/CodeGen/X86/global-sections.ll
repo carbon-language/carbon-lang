@@ -66,7 +66,7 @@
 @"foo bar" = linkonce global i32 42
 
 ; LINUX: .type	foo_20_bar,@object
-; LINUX:.section	.gnu.linkonce.d.foo_20_bar,"aw",@progbits
+; LINUX: .section .data.foo_20_bar,"aGw",@progbits,foo_20_bar,comdat
 ; LINUX: .weak	foo_20_bar
 ; LINUX: foo_20_bar:
 
@@ -79,7 +79,7 @@
 @G6 = weak_odr unnamed_addr constant [1 x i8] c"\01"
 
 ; LINUX:   .type	G6,@object
-; LINUX:   .section	.gnu.linkonce.r.G6,"a",@progbits
+; LINUX:   .section	.rodata.G6,"aG",@progbits,G6,comdat
 ; LINUX:   .weak	G6
 ; LINUX: G6:
 ; LINUX:   .byte	1

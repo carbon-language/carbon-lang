@@ -339,6 +339,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     }
 
     int definition = attrs & LTO_SYMBOL_DEFINITION_MASK;
+    sym.comdat_key = NULL;
     switch (definition) {
       case LTO_SYMBOL_DEFINITION_REGULAR:
         sym.def = LDPK_DEF;
@@ -350,6 +351,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         sym.def = LDPK_COMMON;
         break;
       case LTO_SYMBOL_DEFINITION_WEAK:
+        sym.comdat_key = sym.name;
         sym.def = LDPK_WEAKDEF;
         break;
       case LTO_SYMBOL_DEFINITION_WEAKUNDEF:
@@ -360,9 +362,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         return LDPS_ERR;
     }
 
-    // LLVM never emits COMDAT.
     sym.size = 0;
-    sym.comdat_key = NULL;
 
     sym.resolution = LDPR_UNKNOWN;
   }
