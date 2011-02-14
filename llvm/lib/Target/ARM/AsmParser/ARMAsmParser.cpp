@@ -771,7 +771,6 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
     break;
   }
 
-  llvm_unreachable("Unhandled coprocessor operand string!");
   return -1;
 }
 
