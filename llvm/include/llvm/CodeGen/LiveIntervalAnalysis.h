@@ -75,14 +75,6 @@ namespace llvm {
     // Calculate the spill weight to assign to a single instruction.
     static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth);
 
-    // After summing the spill weights of all defs and uses, the final weight
-    // should be normalized, dividing the weight of the interval by its size.
-    // This encourages spilling of intervals that are large and have few uses,
-    // and discourages spilling of small intervals with many uses.
-    void normalizeSpillWeight(LiveInterval &li) {
-      li.weight /= getApproximateInstructionCount(li) + 25;
-    }
-
     typedef Reg2IntervalMap::iterator iterator;
     typedef Reg2IntervalMap::const_iterator const_iterator;
     const_iterator begin() const { return r2iMap_.begin(); }
@@ -460,9 +452,6 @@ namespace llvm {
         DenseMap<unsigned,std::vector<SRInfo> > &RestoreIdxes,
         DenseMap<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs);
-
-    // Normalize the spill weight of all the intervals in NewLIs.
-    void normalizeSpillWeights(std::vector<LiveInterval*> &NewLIs);
 
     static LiveInterval* createInterval(unsigned Reg);
 

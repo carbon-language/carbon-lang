@@ -20,6 +20,7 @@
 #include "VirtRegMap.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -1706,10 +1707,10 @@ LiveIntervals::getSpillWeight(bool isDef, bool isUse, unsigned loopDepth) {
   return (isDef + isUse) * lc;
 }
 
-void
-LiveIntervals::normalizeSpillWeights(std::vector<LiveInterval*> &NewLIs) {
+static void normalizeSpillWeights(std::vector<LiveInterval*> &NewLIs) {
   for (unsigned i = 0, e = NewLIs.size(); i != e; ++i)
-    normalizeSpillWeight(*NewLIs[i]);
+    NewLIs[i]->weight =
+      normalizeSpillWeight(NewLIs[i]->weight, NewLIs[i]->getSize());
 }
 
 std::vector<LiveInterval*> LiveIntervals::

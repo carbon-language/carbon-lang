@@ -20,6 +20,26 @@ namespace llvm {
   class LiveIntervals;
   class MachineLoopInfo;
 
+  /// normalizeSpillWeight - The spill weight of a live interval is computed as:
+  ///
+  ///   (sum(use freq) + sum(def freq)) / (K + size)
+  ///
+  /// @param UseDefFreq Expected number of executed use and def instructions
+  ///                   per function call. Derived from block frequencies.
+  /// @param Size       Size of live interval as returnexd by getSize()
+  ///
+  static inline float normalizeSpillWeight(float UseDefFreq, unsigned Size) {
+    // The magic constant 200 corresponds to approx. 25 instructions since
+    // SlotIndexes allocate 8 slots per instruction.
+    //
+    // The constant is added to avoid depending too much on accidental SlotIndex
+    // gaps for small intervals. The effect is that small intervals have a spill
+    // weight that is mostly proportional to the number of uses, while large
+    // intervals get a spill weight that is closer to a use density.
+    //
+    return UseDefFreq / (Size + 200);
+  }
+
   /// VirtRegAuxInfo - Calculate auxiliary information for a virtual
   /// register such as its spill weight and allocation hint.
   class VirtRegAuxInfo {

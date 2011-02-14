@@ -174,8 +174,7 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
       totalWeight *= 0.5F;
   }
 
-  li.weight = totalWeight;
-  lis_.normalizeSpillWeight(li);
+  li.weight = normalizeSpillWeight(totalWeight, li.getSize());
 }
 
 void VirtRegAuxInfo::CalculateRegClass(unsigned reg) {
