@@ -9,7 +9,7 @@
 
 #include "clang/StaticAnalyzer/Core/FrontendActions.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/StaticAnalyzer/Core/AnalysisConsumer.h"
+#include "AnalysisConsumer.h"
 using namespace clang;
 using namespace ento;
 
