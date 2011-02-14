@@ -582,10 +582,10 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     // Splat the element across to all elements
     llvm::SmallVector<llvm::Constant*, 16> Args;
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
-    for (unsigned i = 0; i != NumElements; ++i)
+    for (unsigned i = 0; i < NumElements; i++)
       Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, 0));
 
-    llvm::Constant *Mask = llvm::ConstantVector::get(Args);
+    llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
     return Yay;
   }
@@ -684,7 +684,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
         concat.push_back(llvm::ConstantInt::get(CGF.Int32Ty, 2*i+1));
       }
       
-      Value* CV = llvm::ConstantVector::get(concat);
+      Value* CV = llvm::ConstantVector::get(concat.begin(), concat.size());
       LHS = Builder.CreateShuffleVector(LHS, RHS, CV, "concat");
       LHSElts *= 2;
     } else {
@@ -710,7 +710,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
     for (unsigned i = 0, e = MTy->getNumElements(); i != e; ++i)
       MaskV.push_back(EltMask);
     
-    Value* MaskBits = llvm::ConstantVector::get(MaskV);
+    Value* MaskBits = llvm::ConstantVector::get(MaskV.begin(), MaskV.size());
     Mask = Builder.CreateAnd(Mask, MaskBits, "mask");
     
     // newv = undef
@@ -762,7 +762,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
     indices.push_back(C);
   }
 
-  Value *SV = llvm::ConstantVector::get(indices);
+  Value* SV = llvm::ConstantVector::get(indices.begin(), indices.size());
   return Builder.CreateShuffleVector(V1, V2, SV, "shuffle");
 }
 Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
@@ -882,7 +882,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
             VIsUndefShuffle = false;
           }
           if (!Args.empty()) {
-            llvm::Constant *Mask = llvm::ConstantVector::get(Args);
+            llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], ResElts);
             V = Builder.CreateShuffleVector(LHS, RHS, Mask);
             ++CurIdx;
             continue;
@@ -937,7 +937,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
         Args.push_back(llvm::ConstantInt::get(CGF.Int32Ty, j));
       for (unsigned j = InitElts; j != ResElts; ++j)
         Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
-      llvm::Constant *Mask = llvm::ConstantVector::get(Args);
+      llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], ResElts);
       Init = Builder.CreateShuffleVector(Init, llvm::UndefValue::get(VVT),
                                          Mask, "vext");
 
@@ -954,7 +954,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // merging subsequent shuffles into this one.
     if (CurIdx == 0)
       std::swap(V, Init);
-    llvm::Constant *Mask = llvm::ConstantVector::get(Args);
+    llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], ResElts);
     V = Builder.CreateShuffleVector(V, Init, Mask, "vecinit");
     VIsUndefShuffle = isa<llvm::UndefValue>(Init);
     CurIdx += InitElts;
@@ -1167,7 +1167,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     for (unsigned i = 0; i < NumElements; i++)
       Args.push_back(Zero);
 
-    llvm::Constant *Mask = llvm::ConstantVector::get(Args);
+    llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
     return Yay;
   }
