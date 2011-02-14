@@ -2850,10 +2850,6 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
         //     MemA[address,4] = PCStoreValue();
         if (BitIsSet (registers, 15))
         {
-            const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
-            if (!success)
-                return false;
-
             Register pc_reg;
             pc_reg.SetRegister (eRegisterKindDWARF, dwarf_pc);
             context.SetRegisterPlusOffset (pc_reg, 8);
