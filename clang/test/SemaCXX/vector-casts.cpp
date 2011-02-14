@@ -3,7 +3,7 @@ typedef int __v2si __attribute__((__vector_size__(8)));
 typedef short __v4hi __attribute__((__vector_size__(8)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
 
-struct S { };
+struct S { }; // expected-note 2 {{candidate constructor}}
 
 void f() {
   __v2si v2si;
@@ -23,9 +23,9 @@ void f() {
   (void)(__v2si)(ll);
 
   (void)reinterpret_cast<S>(v2si); // expected-error {{reinterpret_cast from '__v2si' to 'S' is not allowed}}
-  (void)(S)v2si; // expected-error {{C-style cast from '__v2si' to 'S' is not allowed}}
+  (void)(S)v2si; // expected-error {{no matching conversion for C-style cast from '__v2si' to 'S'}}
   (void)reinterpret_cast<__v2si>(s); // expected-error {{reinterpret_cast from 'S' to '__v2si' is not allowed}}
-  (void)(__v2si)s; // expected-error {{C-style cast from 'S' to '__v2si' is not allowed}}
+  (void)(__v2si)s; // expected-error {{cannot convert 'S' to '__v2si' without a conversion operator}}
   
   (void)reinterpret_cast<unsigned char>(v2si); // expected-error {{reinterpret_cast from vector '__v2si' to scalar 'unsigned char' of different size}}
   (void)(unsigned char)v2si; // expected-error {{C-style cast from vector '__v2si' to scalar 'unsigned char' of different size}}

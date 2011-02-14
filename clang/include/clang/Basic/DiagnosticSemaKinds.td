@@ -1414,6 +1414,17 @@ def note_ovl_builtin_unary_candidate : Note<
     "built-in candidate %0">;
 def err_ovl_no_viable_function_in_init : Error<
   "no matching constructor for initialization of %0">;
+def err_ovl_no_conversion_in_cast : Error<
+  "cannot convert %1 to %2 without a conversion operator">;
+def err_ovl_no_viable_conversion_in_cast : Error<
+  "no matching conversion for %select{|static_cast|reinterpret_cast|"
+  "dynamic_cast|C-style cast|functional-style cast}0 from %1 to %2">;
+def err_ovl_ambiguous_conversion_in_cast : Error<
+  "ambiguous conversion for %select{|static_cast|reinterpret_cast|"
+  "dynamic_cast|C-style cast|functional-style cast}0 from %1 to %2">;
+def err_ovl_deleted_conversion_in_cast : Error<
+  "%select{|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"
+  "functional-style cast}0 from %1 to %2 uses deleted function">;
 def err_ovl_ambiguous_init : Error<"call to constructor of %0 is ambiguous">;
 def err_ref_init_ambiguous : Error<
   "reference initialization of type %0 with initializer of type %1 is ambiguous">;

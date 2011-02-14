@@ -8,14 +8,14 @@ struct A {
   A(R);
 };
 
-struct B {
-  B(A);
+struct B { // expected-note 3 {{candidate constructor (the implicit copy constructor) not viable}}
+  B(A); // expected-note 3 {{candidate constructor not viable}}
 };
 
 int main () {
-  B(10);	// expected-error {{functional-style cast from 'int' to 'B' is not allowed}}
-  (B)10;	// expected-error {{C-style cast from 'int' to 'B' is not allowed}}
-  static_cast<B>(10);	// expected-error {{static_cast from 'int' to 'B' is not allowed}} \\
+  B(10);	// expected-error {{no matching conversion for functional-style cast from 'int' to 'B'}}
+  (B)10;	// expected-error {{no matching conversion for C-style cast from 'int' to 'B'}}
+  static_cast<B>(10);	// expected-error {{no matching conversion for static_cast from 'int' to 'B'}} \\
 			// expected-warning {{expression result unused}}
 }
 

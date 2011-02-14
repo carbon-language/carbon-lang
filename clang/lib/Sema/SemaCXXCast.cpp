@@ -214,6 +214,92 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
   return ExprError();
 }
 
+/// Try to diagnose a failed overloaded cast.  Returns true if
+/// diagnostics were emitted.
+static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
+                                      SourceRange range, Expr *src,
+                                      QualType destType) {
+  switch (CT) {
+  // These cast kinds don't consider user-defined conversions.
+  case CT_Const:
+  case CT_Reinterpret:
+  case CT_Dynamic:
+    return false;
+
+  // These do.
+  case CT_Static:
+  case CT_CStyle:
+  case CT_Functional:
+    break;
+  }
+
+  QualType srcType = src->getType();
+  if (!destType->isRecordType() && !srcType->isRecordType())
+    return false;
+
+  InitializedEntity entity = InitializedEntity::InitializeTemporary(destType);
+  InitializationKind initKind
+    = InitializationKind::CreateCast(/*type range?*/ range,
+                                     (CT == CT_CStyle || CT == CT_Functional));
+  InitializationSequence sequence(S, entity, initKind, &src, 1);
+
+  assert(sequence.getKind() == InitializationSequence::FailedSequence &&
+         "initialization succeeded on second try?");
+  switch (sequence.getFailureKind()) {
+  default: return false;
+
+  case InitializationSequence::FK_ConstructorOverloadFailed:
+  case InitializationSequence::FK_UserConversionOverloadFailed:
+    break;
+  }
+
+  OverloadCandidateSet &candidates = sequence.getFailedCandidateSet();
+
+  unsigned msg = 0;
+  OverloadCandidateDisplayKind howManyCandidates = OCD_AllCandidates;
+
+  switch (sequence.getFailedOverloadResult()) {
+  case OR_Success: llvm_unreachable("successful failed overload");
+    return false;
+  case OR_No_Viable_Function:
+    if (candidates.empty())
+      msg = diag::err_ovl_no_conversion_in_cast;
+    else
+      msg = diag::err_ovl_no_viable_conversion_in_cast;
+    howManyCandidates = OCD_AllCandidates;
+    break;
+
+  case OR_Ambiguous:
+    msg = diag::err_ovl_ambiguous_conversion_in_cast;
+    howManyCandidates = OCD_ViableCandidates;
+    break;
+
+  case OR_Deleted:
+    msg = diag::err_ovl_deleted_conversion_in_cast;
+    howManyCandidates = OCD_ViableCandidates;
+    break;
+  }
+
+  S.Diag(range.getBegin(), msg)
+    << CT << srcType << destType
+    << range << src->getSourceRange();
+
+  candidates.NoteCandidates(S, howManyCandidates, &src, 1);
+
+  return true;
+}
+
+/// Diagnose a failed cast.
+static void diagnoseBadCast(Sema &S, unsigned msg, CastType castType,
+                            SourceRange opRange, Expr *src, QualType destType) {
+  if (msg == diag::err_bad_cxx_cast_generic &&
+      tryDiagnoseOverloadedCast(S, castType, opRange, src, destType))
+    return;
+
+  S.Diag(opRange.getBegin(), msg) << castType
+    << src->getType() << destType << opRange << src->getSourceRange();
+}
+
 /// UnwrapDissimilarPointerTypes - Like Sema::UnwrapSimilarPointerTypes,
 /// this removes one level of indirection from both types, provided that they're
 /// the same kind of pointer (plain or to-member). Unlike the Sema function,
@@ -492,20 +578,17 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                          msg, Kind)
       != TC_Success && msg != 0)
   {
-    if (SrcExpr->getType() == Self.Context.OverloadTy)
-    {
+    if (SrcExpr->getType() == Self.Context.OverloadTy) {
       //FIXME: &f<int>; is overloaded and resolvable 
       Self.Diag(OpRange.getBegin(), diag::err_bad_reinterpret_cast_overload) 
         << OverloadExpr::find(SrcExpr).Expression->getName()
         << DestType << OpRange;
       NoteAllOverloadCandidates(SrcExpr, Self);
 
+    } else {
+      diagnoseBadCast(Self, msg, CT_Reinterpret, OpRange, SrcExpr, DestType);
     }
-    else
-      Self.Diag(OpRange.getBegin(), msg) << CT_Reinterpret
-      << SrcExpr->getType() << DestType << OpRange;
-  }
-    
+  }    
 }
 
 
@@ -533,16 +616,14 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, msg,
                     Kind, BasePath) != TC_Success && msg != 0)
   {
-    if (SrcExpr->getType() == Self.Context.OverloadTy)
-    {
+    if (SrcExpr->getType() == Self.Context.OverloadTy) {
       OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
       Self.Diag(OpRange.getBegin(), diag::err_bad_static_cast_overload)
         << oe->getName() << DestType << OpRange << oe->getQualifierRange();
       NoteAllOverloadCandidates(SrcExpr, Self);
+    } else {
+      diagnoseBadCast(Self, msg, CT_Static, OpRange, SrcExpr, DestType);
     }
-    else
-      Self.Diag(OpRange.getBegin(), msg) << CT_Static
-      << SrcExpr->getType() << DestType << OpRange;
   }
   else if (Kind == CK_BitCast)
     Self.CheckCastAlign(SrcExpr, DestType, OpRange);
@@ -1374,7 +1455,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
   // So we finish by allowing everything that remains - it's got to be two
   // object pointers.
   return TC_Success;
-}
+}                                     
 
 bool 
 Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
@@ -1445,9 +1526,10 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
                                 Found);
       assert(!Fn && "cast failed but able to resolve overload expression!!");
       (void)Fn;
+
     } else {
-      Diag(R.getBegin(), msg) << (FunctionalStyle ? CT_Functional : CT_CStyle)
-        << CastExpr->getType() << CastTy << R;
+      diagnoseBadCast(*this, msg, (FunctionalStyle ? CT_Functional : CT_CStyle),
+                      R, CastExpr, CastTy);
     }
   }
   else if (Kind == CK_BitCast)

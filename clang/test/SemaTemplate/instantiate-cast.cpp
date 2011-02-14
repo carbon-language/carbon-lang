@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-struct A { int x; }; 
+struct A { int x; }; // expected-note 2 {{candidate constructor}}
 
 class Base { 
 public:
@@ -23,7 +23,7 @@ struct Constructible {
 template<typename T, typename U>
 struct CStyleCast0 {
   void f(T t) {
-    (void)((U)t); // expected-error{{C-style cast from 'A' to 'int' is not allowed}}
+    (void)((U)t); // expected-error{{cannot convert 'A' to 'int' without a conversion operator}}
   }
 };
 
@@ -36,7 +36,7 @@ template struct CStyleCast0<A, int>; // expected-note{{instantiation}}
 template<typename T, typename U>
 struct StaticCast0 {
   void f(T t) {
-    (void)static_cast<U>(t); // expected-error{{static_cast from 'int' to 'A' is not allowed}}
+    (void)static_cast<U>(t); // expected-error{{no matching conversion for static_cast from 'int' to 'A'}}
   }
 };
 
@@ -89,7 +89,7 @@ template struct ConstCast0<int const *, float *>; // expected-note{{instantiatio
 template<typename T, typename U>
 struct FunctionalCast1 {
   void f(T t) {
-    (void)U(t); // expected-error{{functional-style cast from 'A' to 'int' is not allowed}}
+    (void)U(t); // expected-error{{cannot convert 'A' to 'int' without a conversion operator}}
   }
 };
 

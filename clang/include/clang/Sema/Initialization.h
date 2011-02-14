@@ -791,12 +791,18 @@ public:
     return FailedCandidateSet;
   }
 
+  /// brief Get the overloading result, for when the initialization
+  /// sequence failed due to a bad overload.
+  OverloadingResult getFailedOverloadResult() const {
+    return FailedOverloadResult;
+  }
+
   /// \brief Determine why initialization failed.
   FailureKind getFailureKind() const {
     assert(getKind() == FailedSequence && "Not an initialization failure!");
     return Failure;
   }
-  
+
   /// \brief Dump a representation of this initialization sequence to 
   /// the given stream, for debugging purposes.
   void dump(llvm::raw_ostream &OS) const;

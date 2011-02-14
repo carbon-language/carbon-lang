@@ -18,7 +18,7 @@ void test1(X x) {
 
   I<P> *ip = (I<P>*)cft;
 
-  (id)x; // expected-error {{C-style cast from 'X' to 'id' is not allowed}}
+  (id)x; // expected-error {{cannot convert 'X' to 'id' without a conversion operator}}
 
   id *pid = (id*)ccct;
 
