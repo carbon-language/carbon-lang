@@ -60,7 +60,7 @@ class scc_iterator
   // First element is basic block pointer, second is the 'next child' to visit
   std::vector<std::pair<NodeType *, ChildItTy> > VisitStack;
 
-  // MinVistNumStack - Stack holding the "min" values for each node in the DFS.
+  // MinVisitNumStack - Stack holding the "min" values for each node in the DFS.
   // This is used to track the minimum uplink values for all children of
   // the corresponding node on the VisitStack.
   std::vector<unsigned> MinVisitNumStack;
