@@ -1265,7 +1265,7 @@ basic_istream<_CharT, _Traits>::readsome(char_type* __s, streamsize __n)
             case 0:
                 break;
             default:
-                __c = min(__c, __n);
+                __c = _STD::min(__c, __n);
                 for (streamsize __k = 0; __k < __c; ++__k, ++__s, ++__i)
                     *__s = *__i;
             }

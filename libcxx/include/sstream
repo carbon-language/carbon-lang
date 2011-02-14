@@ -451,7 +451,7 @@ basic_stringbuf<_CharT, _Traits, _Allocator>::overflow(int_type __c)
             }
 #endif  // _LIBCPP_NO_EXCEPTIONS
         }
-        __hm_ = max(this->pptr() + 1, __hm_);
+        __hm_ = _STD::max(this->pptr() + 1, __hm_);
         if (__mode_ & ios_base::in)
         {
             char_type* __p = const_cast<char_type*>(__str_.data());

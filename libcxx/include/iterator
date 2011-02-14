@@ -488,7 +488,7 @@ next(_ForwardIter __x,
      typename iterator_traits<_ForwardIter>::difference_type __n = 1,
      typename enable_if<__is_forward_iterator<_ForwardIter>::value>::type* = 0)
 {
-    advance(__x, __n);
+    _STD::advance(__x, __n);
     return __x;
 }
 
@@ -499,7 +499,7 @@ prev(_BidiretionalIter __x,
      typename iterator_traits<_BidiretionalIter>::difference_type __n = 1,
      typename enable_if<__is_bidirectional_iterator<_BidiretionalIter>::value>::type* = 0)
 {
-    advance(__x, -__n);
+    _STD::advance(__x, -__n);
     return __x;
 }
 

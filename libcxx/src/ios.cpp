@@ -165,7 +165,7 @@ ios_base::iword(int index)
         size_t newcap;
         const size_t mx = std::numeric_limits<size_t>::max();
         if (req_size < mx/2)
-            newcap = max(2 * __iarray_cap_, req_size);
+            newcap = _STD::max(2 * __iarray_cap_, req_size);
         else
             newcap = mx;
         long* iarray = (long*)realloc(__iarray_, newcap * sizeof(long));
@@ -193,7 +193,7 @@ ios_base::pword(int index)
         size_t newcap;
         const size_t mx = std::numeric_limits<size_t>::max();
         if (req_size < mx/2)
-            newcap = max(2 * __parray_cap_, req_size);
+            newcap = _STD::max(2 * __parray_cap_, req_size);
         else
             newcap = mx;
         void** parray = (void**)realloc(__parray_, newcap * sizeof(void*));
@@ -223,7 +223,7 @@ ios_base::register_callback(event_callback fn, int index)
         size_t newcap;
         const size_t mx = std::numeric_limits<size_t>::max();
         if (req_size < mx/2)
-            newcap = max(2 * __event_cap_, req_size);
+            newcap = _STD::max(2 * __event_cap_, req_size);
         else
             newcap = mx;
         event_callback* fns = (event_callback*)realloc(__fn_, newcap * sizeof(event_callback));

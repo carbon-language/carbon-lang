@@ -714,8 +714,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename list<_Tp, _Alloc>::iterator
 list<_Tp, _Alloc>::__iterator(size_type __n)
 {
-    return __n <= base::__sz() / 2 ? next(begin(), __n)
-                                   : prev(end(), base::__sz() - __n);
+    return __n <= base::__sz() / 2 ? _STD::next(begin(), __n)
+                                   : _STD::prev(end(), base::__sz() - __n);
 }
 
 template <class _Tp, class _Alloc>
@@ -1321,7 +1321,7 @@ template <class _Tp, class _Alloc>
 void
 list<_Tp, _Alloc>::splice(const_iterator __p, list& __c, const_iterator __i)
 {
-    if (__p != __i && __p != next(__i))
+    if (__p != __i && __p != _STD::next(__i))
     {
         __node& __f = const_cast<__node&>(*__i.__ptr_);
         base::__unlink_nodes(__f, __f);
@@ -1359,7 +1359,7 @@ list<_Tp, _Alloc>::remove(const value_type& __x)
     {
         if (*__i == __x)
         {
-            iterator __j = next(__i);
+            iterator __j = _STD::next(__i);
             for (; __j != __e && *__j == __x; ++__j)
                 ;
             __i = erase(__i, __j);
@@ -1378,7 +1378,7 @@ list<_Tp, _Alloc>::remove_if(_Pred __pred)
     {
         if (__pred(*__i))
         {
-            iterator __j = next(__i);
+            iterator __j = _STD::next(__i);
             for (; __j != __e && __pred(*__j); ++__j)
                 ;
             __i = erase(__i, __j);
@@ -1403,7 +1403,7 @@ list<_Tp, _Alloc>::unique(_BinaryPred __binary_pred)
 {
     for (iterator __i = begin(), __e = end(); __i != __e;)
     {
-        iterator __j = next(__i);
+        iterator __j = _STD::next(__i);
         for (; __j != __e && __binary_pred(*__i, *__j); ++__j)
             ;
         if (++__i != __j)
@@ -1435,7 +1435,7 @@ list<_Tp, _Alloc>::merge(list& __c, _Comp __comp)
             if (__comp(*__f2, *__f1))
             {
                 size_type __ds = 1;
-                iterator __m2 = next(__f2);
+                iterator __m2 = _STD::next(__f2);
                 for (; __m2 != __e2 && __comp(*__m2, *__f1); ++__m2, ++__ds)
                     ;
                 base::__sz() += __ds;
@@ -1444,7 +1444,7 @@ list<_Tp, _Alloc>::merge(list& __c, _Comp __comp)
                 __node& __l = *__m2.__ptr_->__prev_;
                 __f2 = __m2;
                 base::__unlink_nodes(__f, __l);
-                __m2 = next(__f1);
+                __m2 = _STD::next(__f1);
                 __link_nodes(*__f1.__ptr_, __f, __l);
                 __f1 = __m2;
             }
@@ -1493,12 +1493,12 @@ list<_Tp, _Alloc>::__sort(iterator __f1, iterator __e2, size_type __n, _Comp& __
         return __f1;
     }
     size_type __n2 = __n / 2;
-    iterator __e1 = next(__f1, __n2);
+    iterator __e1 = _STD::next(__f1, __n2);
     iterator  __r = __f1 = __sort(__f1, __e1, __n2, __comp);
     iterator __f2 = __e1 = __sort(__e1, __e2, __n - __n2, __comp);
     if (__comp(*__f2, *__f1))
     {
-        iterator __m2 = next(__f2);
+        iterator __m2 = _STD::next(__f2);
         for (; __m2 != __e2 && __comp(*__m2, *__f1); ++__m2)
             ;
         __node& __f = *__f2.__ptr_;
@@ -1506,7 +1506,7 @@ list<_Tp, _Alloc>::__sort(iterator __f1, iterator __e2, size_type __n, _Comp& __
         __r = __f2;
         __e1 = __f2 = __m2;
         base::__unlink_nodes(__f, __l);
-        __m2 = next(__f1);
+        __m2 = _STD::next(__f1);
         __link_nodes(*__f1.__ptr_, __f, __l);
         __f1 = __m2;
     }
@@ -1516,7 +1516,7 @@ list<_Tp, _Alloc>::__sort(iterator __f1, iterator __e2, size_type __n, _Comp& __
     {
         if (__comp(*__f2, *__f1))
         {
-            iterator __m2 = next(__f2);
+            iterator __m2 = _STD::next(__f2);
             for (; __m2 != __e2 && __comp(*__m2, *__f1); ++__m2)
                 ;
             __node& __f = *__f2.__ptr_;
@@ -1525,7 +1525,7 @@ list<_Tp, _Alloc>::__sort(iterator __f1, iterator __e2, size_type __n, _Comp& __
                 __e1 = __m2;
             __f2 = __m2;
             base::__unlink_nodes(__f, __l);
-            __m2 = next(__f1);
+            __m2 = _STD::next(__f1);
             __link_nodes(*__f1.__ptr_, __f, __l);
             __f1 = __m2;
         }

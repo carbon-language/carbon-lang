@@ -1573,7 +1573,7 @@ typename enable_if
 >::type
 copy_n(_InputIterator __first, _Size __n, _OutputIterator __result)
 {
-    return copy(__first, __first + __n, __result);
+    return _STD::copy(__first, __first + __n, __result);
 }
 
 // move

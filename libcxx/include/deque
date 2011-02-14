@@ -603,7 +603,7 @@ copy_backward(_RAIter __f,
     typedef typename __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2>::pointer pointer;
     while (__f != __l)
     {
-        __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2> __rp = prev(__r);
+        __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2> __rp = _STD::prev(__r);
         pointer __rb = *__rp.__m_iter_;
         pointer __re = __rp.__ptr_ + 1;
         difference_type __bs = __re - __rb;
@@ -776,7 +776,7 @@ move_backward(_RAIter __f,
     typedef typename __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2>::pointer pointer;
     while (__f != __l)
     {
-        __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2> __rp = prev(__r);
+        __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2> __rp = _STD::prev(__r);
         pointer __rb = *__rp.__m_iter_;
         pointer __re = __rp.__ptr_ + 1;
         difference_type __bs = __re - __rb;
@@ -1780,7 +1780,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, const value_type& __v)
         {
             const_pointer __vt = pointer_traits<const_pointer>::pointer_to(__v);
             iterator __b = __base::begin();
-            iterator __bm1 = prev(__b);
+            iterator __bm1 = _STD::prev(__b);
             if (__vt == pointer_traits<const_pointer>::pointer_to(*__b))
                 __vt = pointer_traits<const_pointer>::pointer_to(*__bm1);
             __alloc_traits::construct(__a, _STD::addressof(*__bm1), _STD::move(*__b));
@@ -1806,7 +1806,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, const value_type& __v)
         {
             const_pointer __vt = pointer_traits<const_pointer>::pointer_to(__v);
             iterator __e = __base::end();
-            iterator __em1 = prev(__e);
+            iterator __em1 = _STD::prev(__e);
             if (__vt == pointer_traits<const_pointer>::pointer_to(*__em1))
                 __vt = pointer_traits<const_pointer>::pointer_to(*__e);
             __alloc_traits::construct(__a, _STD::addressof(*__e), _STD::move(*__em1));
@@ -1842,7 +1842,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, value_type&& __v)
         else
         {
             iterator __b = __base::begin();
-            iterator __bm1 = prev(__b);
+            iterator __bm1 = _STD::prev(__b);
             __alloc_traits::construct(__a, _STD::addressof(*__bm1), _STD::move(*__b));
             --__base::__start_;
             ++__base::size();
@@ -1865,7 +1865,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, value_type&& __v)
         else
         {
             iterator __e = __base::end();
-            iterator __em1 = prev(__e);
+            iterator __em1 = _STD::prev(__e);
             __alloc_traits::construct(__a, _STD::addressof(*__e), _STD::move(*__em1));
             ++__base::size();
             if (__de > 1)
@@ -1900,7 +1900,7 @@ deque<_Tp, _Allocator>::emplace(const_iterator __p, _Args&&... __args)
         else
         {
             iterator __b = __base::begin();
-            iterator __bm1 = prev(__b);
+            iterator __bm1 = _STD::prev(__b);
             __alloc_traits::construct(__a, _STD::addressof(*__bm1), _STD::move(*__b));
             --__base::__start_;
             ++__base::size();
@@ -1923,7 +1923,7 @@ deque<_Tp, _Allocator>::emplace(const_iterator __p, _Args&&... __args)
         else
         {
             iterator __e = __base::end();
-            iterator __em1 = prev(__e);
+            iterator __em1 = _STD::prev(__e);
             __alloc_traits::construct(__a, _STD::addressof(*__e), _STD::move(*__em1));
             ++__base::size();
             if (__de > 1)
@@ -2209,7 +2209,7 @@ deque<_Tp, _Allocator>::__add_front_capacity(size_type __n)
     size_type __nb = __recommend_blocks(__n + __base::__map_.empty());
     // Number of unused blocks at back:
     size_type __back_capacity = __back_spare() / __base::__block_size;
-    __back_capacity = min(__back_capacity, __nb);  // don't take more than you need
+    __back_capacity = _STD::min(__back_capacity, __nb);  // don't take more than you need
     __nb -= __back_capacity;  // number of blocks need to allocate
     // If __nb == 0, then we have sufficient capacity.
     if (__nb == 0)
@@ -2354,7 +2354,7 @@ deque<_Tp, _Allocator>::__add_back_capacity(size_type __n)
     size_type __nb = __recommend_blocks(__n + __base::__map_.empty());
     // Number of unused blocks at front:
     size_type __front_capacity = __front_spare() / __base::__block_size;
-    __front_capacity = min(__front_capacity, __nb);  // don't take more than you need
+    __front_capacity = _STD::min(__front_capacity, __nb);  // don't take more than you need
     __nb -= __front_capacity;  // number of blocks need to allocate
     // If __nb == 0, then we have sufficient capacity.
     if (__nb == 0)
@@ -2608,7 +2608,7 @@ deque<_Tp, _Allocator>::erase(const_iterator __f)
     allocator_type& __a = __base::__alloc();
     if (__pos < (__base::size() - 1) / 2)
     {   // erase from front
-        _STD::move_backward(__b, __p, next(__p));
+        _STD::move_backward(__b, __p, _STD::next(__p));
         __alloc_traits::destroy(__a, _STD::addressof(*__b));
         --__base::size();
         ++__base::__start_;

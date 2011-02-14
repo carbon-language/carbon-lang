@@ -871,7 +871,7 @@ typename enable_if
 forward_list<_Tp, _Alloc>::assign(_InputIterator __f, _InputIterator __l)
 {
     iterator __i = before_begin();
-    iterator __j = next(__i);
+    iterator __j = _STD::next(__i);
     iterator __e = end();
     for (; __j != __e && __f != __l; ++__i, ++__j, ++__f)
         *__j = *__f;
@@ -886,7 +886,7 @@ void
 forward_list<_Tp, _Alloc>::assign(size_type __n, const value_type& __v)
 {
     iterator __i = before_begin();
-    iterator __j = next(__i);
+    iterator __j = _STD::next(__i);
     iterator __e = end();
     for (; __j != __e && __n > 0; --__n, ++__i, ++__j)
         *__j = __v;
@@ -1235,7 +1235,7 @@ forward_list<_Tp, _Alloc>::splice_after(const_iterator __p,
                                         forward_list& __x,
                                         const_iterator __i)
 {
-    const_iterator __lm1 = next(__i);
+    const_iterator __lm1 = _STD::next(__i);
     if (__p != __i && __p != __lm1)
     {
         const_cast<__node_pointer>(__i.__ptr_)->__next_ =
@@ -1312,7 +1312,7 @@ forward_list<_Tp, _Alloc>::remove(const value_type& __v)
     {
         if (__i.__ptr_->__next_->__value_ == __v)
         {
-            iterator __j = next(__i, 2);
+            iterator __j = _STD::next(__i, 2);
             for (; __j != __e && *__j == __v; ++__j)
                 ;
             erase_after(__i, __j);
@@ -1335,7 +1335,7 @@ forward_list<_Tp, _Alloc>::remove_if(_Predicate __pred)
     {
         if (__pred(__i.__ptr_->__next_->__value_))
         {
-            iterator __j = next(__i, 2);
+            iterator __j = _STD::next(__i, 2);
             for (; __j != __e && __pred(*__j); ++__j)
                 ;
             erase_after(__i, __j);
@@ -1355,7 +1355,7 @@ forward_list<_Tp, _Alloc>::unique(_BinaryPredicate __binary_pred)
 {
     for (iterator __i = begin(), __e = end(); __i != __e;)
     {
-        iterator __j = next(__i);
+        iterator __j = _STD::next(__i);
         for (; __j != __e && __binary_pred(*__i, *__j); ++__j)
             ;
         if (__i.__ptr_->__next_ != __j.__ptr_)
@@ -1456,7 +1456,7 @@ forward_list<_Tp, _Alloc>::__sort(__node_pointer __f1, difference_type __sz,
     }
     difference_type __sz1 = __sz / 2;
     difference_type __sz2 = __sz - __sz1;
-    __node_pointer __t = next(iterator(__f1), __sz1 - 1).__ptr_;
+    __node_pointer __t = _STD::next(iterator(__f1), __sz1 - 1).__ptr_;
     __node_pointer __f2 = __t->__next_;
     __t->__next_ = nullptr;
     return __merge(__sort(__f1, __sz1, __comp),

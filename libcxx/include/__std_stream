@@ -97,7 +97,7 @@ typename __stdinbuf<_CharT>::int_type
 __stdinbuf<_CharT>::__getchar(bool __consume)
 {
     char __extbuf[__limit];
-    int __nread = max(1, __encoding_);
+    int __nread = _STD::max(1, __encoding_);
     for (int __i = 0; __i < __nread; ++__i)
     {
         char __c = getc(__file_);

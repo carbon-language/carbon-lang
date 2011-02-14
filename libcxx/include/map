@@ -1042,7 +1042,7 @@ map<_Key, _Tp, _Compare, _Allocator>::__find_equal_key(const_iterator __hint,
     else if (__tree_.value_comp().key_comp()(__hint->first, __k))  // check after
     {
         // *__hint < __k
-        const_iterator __next = next(__hint);
+        const_iterator __next = _STD::next(__hint);
         if (__next == end() || __tree_.value_comp().key_comp()(__k, __next->first))
         {
             // *__hint < __k < *next(__hint)

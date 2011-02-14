@@ -2228,7 +2228,7 @@ __bracket_expression<_CharT, _Traits>::__exec(__state& __s) const
         ++__consumed;
         if (__might_have_digraph_)
         {
-            const _CharT* __next = next(__s.__current_);
+            const _CharT* __next = _STD::next(__s.__current_);
             if (__next != __s.__last_)
             {
                 pair<_CharT, _CharT> __ch2(*__s.__current_, *__next);
@@ -2919,7 +2919,7 @@ basic_regex<_CharT, _Traits>::__parse_basic_reg_exp(_ForwardIterator __first,
             __first = __parse_RE_expression(__first, __last);
             if (__first != __last)
             {
-                _ForwardIterator __temp = next(__first);
+                _ForwardIterator __temp = _STD::next(__first);
                 if (__temp == __last && *__first == '$')
                 {
                     __push_r_anchor();
@@ -3148,7 +3148,7 @@ basic_regex<_CharT, _Traits>::__parse_Back_open_paren(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         if (__temp != __last)
         {
             if (*__first == '\\' && *__temp == '(')
@@ -3166,7 +3166,7 @@ basic_regex<_CharT, _Traits>::__parse_Back_close_paren(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         if (__temp != __last)
         {
             if (*__first == '\\' && *__temp == ')')
@@ -3184,7 +3184,7 @@ basic_regex<_CharT, _Traits>::__parse_Back_open_brace(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         if (__temp != __last)
         {
             if (*__first == '\\' && *__temp == '{')
@@ -3202,7 +3202,7 @@ basic_regex<_CharT, _Traits>::__parse_Back_close_brace(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         if (__temp != __last)
         {
             if (*__first == '\\' && *__temp == '}')
@@ -3220,7 +3220,7 @@ basic_regex<_CharT, _Traits>::__parse_BACKREF(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         if (__temp != __last)
         {
             if (*__first == '\\' && '1' <= *__temp && *__temp <= '9')
@@ -3241,7 +3241,7 @@ basic_regex<_CharT, _Traits>::__parse_ORD_CHAR(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         if (__temp == __last && *__first == '$')
             return __first;
         // Not called inside a bracket
@@ -3299,7 +3299,7 @@ basic_regex<_CharT, _Traits>::__parse_QUOTED_CHAR(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         if (__temp != __last)
         {
             if (*__first == '\\')
@@ -3330,7 +3330,7 @@ basic_regex<_CharT, _Traits>::__parse_QUOTED_CHAR_ERE(_ForwardIterator __first,
 {
     if (__first != __last)
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         if (__temp != __last)
         {
             if (*__first == '\\')
@@ -3640,7 +3640,7 @@ basic_regex<_CharT, _Traits>::__parse_expression_term(_ForwardIterator __first,
 {
     if (__first != __last && *__first != ']')
     {
-        _ForwardIterator __temp = next(__first);
+        _ForwardIterator __temp = _STD::next(__first);
         basic_string<_CharT> __start_range;
         if (__temp != __last && *__first == '[')
         {
@@ -3669,7 +3669,7 @@ basic_regex<_CharT, _Traits>::__parse_expression_term(_ForwardIterator __first,
         }
         if (__first != __last && *__first != ']')
         {
-            __temp = next(__first);
+            __temp = _STD::next(__first);
             if (__temp != __last && *__first == '-' && *__temp != ']')
             {
                 // parse a range
@@ -3891,7 +3891,7 @@ basic_regex<_CharT, _Traits>::__parse_equivalence_class(_ForwardIterator __first
 #endif  // _LIBCPP_NO_EXCEPTIONS
         }
     }
-    __first = next(__temp, 2);
+    __first = _STD::next(__temp, 2);
     return __first;
 }
 
@@ -3920,7 +3920,7 @@ basic_regex<_CharT, _Traits>::__parse_character_class(_ForwardIterator __first,
         throw regex_error(regex_constants::error_brack);
 #endif  // _LIBCPP_NO_EXCEPTIONS
     __ml->__add_class(__class_type);
-    __first = next(__temp, 2);
+    __first = _STD::next(__temp, 2);
     return __first;
 }
 
@@ -3953,7 +3953,7 @@ basic_regex<_CharT, _Traits>::__parse_collating_symbol(_ForwardIterator __first,
         throw regex_error(regex_constants::error_collate);
 #endif  // _LIBCPP_NO_EXCEPTIONS
     }
-    __first = next(__temp, 2);
+    __first = _STD::next(__temp, 2);
     return __first;
 }
 
@@ -5220,18 +5220,18 @@ public:
         __matches_.resize(__m.size());
         for (size_type __i = 0; __i < __matches_.size(); ++__i)
         {
-            __matches_[__i].first = next(__f, _STD::distance(__mf, __m[__i].first));
-            __matches_[__i].second = next(__f, _STD::distance(__mf, __m[__i].second));
+            __matches_[__i].first = _STD::next(__f, _STD::distance(__mf, __m[__i].first));
+            __matches_[__i].second = _STD::next(__f, _STD::distance(__mf, __m[__i].second));
             __matches_[__i].matched = __m[__i].matched;
         }
         __unmatched_.first   = __l;
         __unmatched_.second  = __l;
         __unmatched_.matched = false;
-        __prefix_.first = next(__f, _STD::distance(__mf, __m.prefix().first));
-        __prefix_.second = next(__f, _STD::distance(__mf, __m.prefix().second));
+        __prefix_.first = _STD::next(__f, _STD::distance(__mf, __m.prefix().first));
+        __prefix_.second = _STD::next(__f, _STD::distance(__mf, __m.prefix().second));
         __prefix_.matched = __m.prefix().matched;
-        __suffix_.first = next(__f, _STD::distance(__mf, __m.suffix().first));
-        __suffix_.second = next(__f, _STD::distance(__mf, __m.suffix().second));
+        __suffix_.first = _STD::next(__f, _STD::distance(__mf, __m.suffix().first));
+        __suffix_.second = _STD::next(__f, _STD::distance(__mf, __m.suffix().second));
         __suffix_.matched = __m.suffix().matched;
         if (!__no_update_pos)
             __position_start_ = __prefix_.first;

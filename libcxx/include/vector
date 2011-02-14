@@ -1101,7 +1101,7 @@ vector<_Tp, _Allocator>::assign(size_type __n, const_reference __u)
     if (__n <= capacity())
     {
         size_type __s = size();
-        _STD::fill_n(this->__begin_, min(__n, __s), __u);
+        _STD::fill_n(this->__begin_, _STD::min(__n, __s), __u);
         if (__n > __s)
             __construct_at_end(__n - __s, __u);
         else

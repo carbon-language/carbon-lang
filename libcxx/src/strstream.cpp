@@ -302,7 +302,7 @@ strstreambuf::seekoff(off_type __off, ios_base::seekdir __way, ios_base::openmod
         {
             char* newpos = eback() + newoff;
             if (pos_in)
-                setg(eback(), newpos, max(newpos, egptr()));
+                setg(eback(), newpos, _STD::max(newpos, egptr()));
             if (pos_out)
             {
                 // min(pbase, newpos), newpos, epptr()
@@ -332,7 +332,7 @@ strstreambuf::seekpos(pos_type __sp, ios_base::openmode __which)
             {
                 char* newpos = eback() + newoff;
                 if (pos_in)
-                    setg(eback(), newpos, max(newpos, egptr()));
+                    setg(eback(), newpos, _STD::max(newpos, egptr()));
                 if (pos_out)
                 {
                     // min(pbase, newpos), newpos, epptr()
