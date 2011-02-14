@@ -47,6 +47,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
@@ -186,6 +187,10 @@ namespace {
     LiveIntervals *LI;
   };
 } // namespace
+
+STATISTIC(NumPHIsLowered, "Number of PHIs lowered");
+STATISTIC(NumDestCopiesInserted, "Number of destination copies inserted");
+STATISTIC(NumSrcCopiesInserted, "Number of source copies inserted");
 
 char StrongPHIElimination::ID = 0;
 INITIALIZE_PASS_BEGIN(StrongPHIElimination, "strong-phi-node-elimination",
@@ -645,6 +650,7 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
 void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
                                               MachineBasicBlock *MBB) {
   assert(PHI->isPHI());
+  ++NumPHIsLowered;
   unsigned PHIColor = getPHIColor(PHI);
 
   for (unsigned i = 1; i < PHI->getNumOperands(); i += 2) {
@@ -694,6 +700,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
                                         TII->get(TargetOpcode::COPY),
                                         CopyReg).addReg(SrcReg, 0, SrcSubReg);
       LI->InsertMachineInstrInMaps(CopyInstr);
+      ++NumSrcCopiesInserted;
 
       // addLiveRangeToEndOfBlock() also adds the phikill flag to the VNInfo for
       // the newly added range.
@@ -763,6 +770,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
                                     DestReg).addReg(CopyReg);
   LI->InsertMachineInstrInMaps(CopyInstr);
   PHI->getOperand(0).setReg(CopyReg);
+  ++NumDestCopiesInserted;
 
   // Add the region from the beginning of MBB to the copy instruction to
   // CopyReg's live interval, and give the VNInfo the phidef flag.
