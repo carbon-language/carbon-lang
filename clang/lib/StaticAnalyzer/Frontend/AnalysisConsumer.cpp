@@ -21,7 +21,6 @@
 #include "clang/Analysis/Analyses/UninitializedValues.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
-#include "clang/StaticAnalyzer/Core/ManagerRegistry.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
@@ -119,29 +118,20 @@ public:
     }
 
     // Create the analyzer component creators.
-    if (ManagerRegistry::StoreMgrCreator != 0) {
-      CreateStoreMgr = ManagerRegistry::StoreMgrCreator;
-    }
-    else {
-      switch (Opts.AnalysisStoreOpt) {
-      default:
-        assert(0 && "Unknown store manager.");
+    switch (Opts.AnalysisStoreOpt) {
+    default:
+      assert(0 && "Unknown store manager.");
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATEFN)           \
-        case NAME##Model: CreateStoreMgr = CREATEFN; break;
+      case NAME##Model: CreateStoreMgr = CREATEFN; break;
 #include "clang/Frontend/Analyses.def"
-      }
     }
 
-    if (ManagerRegistry::ConstraintMgrCreator != 0)
-      CreateConstraintMgr = ManagerRegistry::ConstraintMgrCreator;
-    else {
-      switch (Opts.AnalysisConstraintsOpt) {
-      default:
-        assert(0 && "Unknown store manager.");
+    switch (Opts.AnalysisConstraintsOpt) {
+    default:
+      assert(0 && "Unknown store manager.");
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATEFN)     \
-        case NAME##Model: CreateConstraintMgr = CREATEFN; break;
+      case NAME##Model: CreateConstraintMgr = CREATEFN; break;
 #include "clang/Frontend/Analyses.def"
-      }
     }
   }
 

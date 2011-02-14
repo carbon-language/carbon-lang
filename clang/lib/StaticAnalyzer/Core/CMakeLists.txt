@@ -21,7 +21,6 @@ add_clang_library(clangStaticAnalyzerCore
   CoreEngine.cpp
   GRState.cpp
   HTMLDiagnostics.cpp
-  ManagerRegistry.cpp
   MemRegion.cpp
   ObjCMessage.cpp
   PathDiagnostic.cpp
