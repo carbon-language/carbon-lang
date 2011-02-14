@@ -2292,7 +2292,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
 /// ISD::ADD with a ConstantSDNode on the right-hand side, or if it is an
 /// ISD::OR with a ConstantSDNode that is guaranteed to have the same
 /// semantics as an ADD.  This handles the equivalence:
-///     X|Cst == X+Cst iff X&~Cst = 0.
+///     X|Cst == X+Cst iff X&Cst = 0.
 bool SelectionDAG::isBaseWithConstantOffset(SDValue Op) const {
   if ((Op.getOpcode() != ISD::ADD && Op.getOpcode() != ISD::OR) ||
       !isa<ConstantSDNode>(Op.getOperand(1)))

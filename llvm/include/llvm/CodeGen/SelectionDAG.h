@@ -974,7 +974,7 @@ public:
   /// ISD::ADD with a ConstantSDNode on the right-hand side, or if it is an
   /// ISD::OR with a ConstantSDNode that is guaranteed to have the same
   /// semantics as an ADD.  This handles the equivalence:
-  ///     X|Cst == X+Cst iff X&~Cst = 0.
+  ///     X|Cst == X+Cst iff X&Cst = 0.
   bool isBaseWithConstantOffset(SDValue Op) const;
   
   /// isKnownNeverNan - Test whether the given SDValue is known to never be NaN.
