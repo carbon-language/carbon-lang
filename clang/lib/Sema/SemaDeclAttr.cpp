@@ -2923,59 +2923,77 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
     ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
 }
 
-/// PushParsingDeclaration - Enter a new "scope" of deprecation
-/// warnings.
-///
-/// The state token we use is the start index of this scope
-/// on the warning stack.
-Sema::ParsingDeclStackState Sema::PushParsingDeclaration() {
-  ParsingDeclDepth++;
-  return (ParsingDeclStackState) DelayedDiagnostics.size();
+// This duplicates a vector push_back but hides the need to know the
+// size of the type.
+void Sema::DelayedDiagnostics::add(const DelayedDiagnostic &diag) {
+  assert(StackSize <= StackCapacity);
+
+  // Grow the stack if necessary.
+  if (StackSize == StackCapacity) {
+    unsigned newCapacity = 2 * StackCapacity + 2;
+    char *newBuffer = new char[newCapacity * sizeof(DelayedDiagnostic)];
+    const char *oldBuffer = (const char*) Stack;
+
+    if (StackCapacity)
+      memcpy(newBuffer, oldBuffer, StackCapacity * sizeof(DelayedDiagnostic));
+    
+    delete[] oldBuffer;
+    Stack = reinterpret_cast<sema::DelayedDiagnostic*>(newBuffer);
+    StackCapacity = newCapacity;
+  }
+
+  assert(StackSize < StackCapacity);
+  new (&Stack[StackSize++]) DelayedDiagnostic(diag);
 }
 
-void Sema::PopParsingDeclaration(ParsingDeclStackState S, Decl *D) {
-  assert(ParsingDeclDepth > 0 && "empty ParsingDeclaration stack");
-  ParsingDeclDepth--;
+void Sema::DelayedDiagnostics::popParsingDecl(Sema &S, ParsingDeclState state,
+                                              Decl *decl) {
+  DelayedDiagnostics &DD = S.DelayedDiagnostics;
 
-  if (DelayedDiagnostics.empty())
+  // Check the invariants.
+  assert(DD.StackSize >= state.SavedStackSize);
+  assert(state.SavedStackSize >= DD.ActiveStackBase);
+  assert(DD.ParsingDepth > 0);
+
+  // Drop the parsing depth.
+  DD.ParsingDepth--;
+
+  // If there are no active diagnostics, we're done.
+  if (DD.StackSize == DD.ActiveStackBase)
     return;
-
-  unsigned SavedIndex = (unsigned) S;
-  assert(SavedIndex <= DelayedDiagnostics.size() &&
-         "saved index is out of bounds");
-
-  unsigned E = DelayedDiagnostics.size();
 
   // We only want to actually emit delayed diagnostics when we
   // successfully parsed a decl.
-  if (D) {
-    // We really do want to start with 0 here.  We get one push for a
+  if (decl) {
+    // We emit all the active diagnostics, not just those starting
+    // from the saved state.  The idea is this:  we get one push for a
     // decl spec and another for each declarator;  in a decl group like:
     //   deprecated_typedef foo, *bar, baz();
     // only the declarator pops will be passed decls.  This is correct;
     // we really do need to consider delayed diagnostics from the decl spec
     // for each of the different declarations.
-    for (unsigned I = 0; I != E; ++I) {
-      if (DelayedDiagnostics[I].Triggered)
+    for (unsigned i = DD.ActiveStackBase, e = DD.StackSize; i != e; ++i) {
+      DelayedDiagnostic &diag = DD.Stack[i];
+      if (diag.Triggered)
         continue;
 
-      switch (DelayedDiagnostics[I].Kind) {
+      switch (diag.Kind) {
       case DelayedDiagnostic::Deprecation:
-        HandleDelayedDeprecationCheck(DelayedDiagnostics[I], D);
+        S.HandleDelayedDeprecationCheck(diag, decl);
         break;
 
       case DelayedDiagnostic::Access:
-        HandleDelayedAccessCheck(DelayedDiagnostics[I], D);
+        S.HandleDelayedAccessCheck(diag, decl);
         break;
       }
     }
   }
 
   // Destroy all the delayed diagnostics we're about to pop off.
-  for (unsigned I = SavedIndex; I != E; ++I)
-    DelayedDiagnostics[I].destroy();
+  for (unsigned i = state.SavedStackSize, e = DD.StackSize; i != e; ++i)
+    DD.Stack[i].destroy();
 
-  DelayedDiagnostics.set_size(SavedIndex);
+  DD.StackSize = state.SavedStackSize;
 }
 
 static bool isDeclDeprecated(Decl *D) {
@@ -3005,9 +3023,8 @@ void Sema::EmitDeprecationWarning(NamedDecl *D, llvm::StringRef Message,
                                   SourceLocation Loc,
                                   bool UnknownObjCClass) {
   // Delay if we're currently parsing a declaration.
-  if (ParsingDeclDepth) {
-    DelayedDiagnostics.push_back(DelayedDiagnostic::makeDeprecation(Loc, D, 
-                                                                    Message));
+  if (DelayedDiagnostics.shouldDelayDiagnostics()) {
+    DelayedDiagnostics.add(DelayedDiagnostic::makeDeprecation(Loc, D, Message));
     return;
   }
 

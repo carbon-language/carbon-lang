@@ -4556,13 +4556,12 @@ namespace {
   /// to implicitly define the body of a C++ member function;
   class ImplicitlyDefinedFunctionScope {
     Sema &S;
-    DeclContext *PreviousContext;
+    Sema::ContextRAII SavedContext;
     
   public:
     ImplicitlyDefinedFunctionScope(Sema &S, CXXMethodDecl *Method)
-      : S(S), PreviousContext(S.CurContext) 
+      : S(S), SavedContext(S, Method) 
     {
-      S.CurContext = Method;
       S.PushFunctionScope();
       S.PushExpressionEvaluationContext(Sema::PotentiallyEvaluated);
     }
@@ -4570,7 +4569,6 @@ namespace {
     ~ImplicitlyDefinedFunctionScope() {
       S.PopExpressionEvaluationContext();
       S.PopFunctionOrBlockScope();
-      S.CurContext = PreviousContext;
     }
   };
 }
@@ -7281,6 +7279,10 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
                     diag::err_covariant_return_ambiguous_derived_to_base_conv,
                     // FIXME: Should this point to the return type?
                     New->getLocation(), SourceRange(), New->getDeclName(), 0)) {
+      // FIXME: this note won't trigger for delayed access control
+      // diagnostics, and it's impossible to get an undelayed error
+      // here from access control during the original parse because
+      // the ParsingDeclSpec/ParsingDeclarator are still in scope.
       Diag(Old->getLocation(), diag::note_overridden_virtual_function);
       return true;
     }

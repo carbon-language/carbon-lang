@@ -1260,13 +1260,19 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
   if (S.SuppressAccessChecking)
     return Sema::AR_accessible;
 
-  // If we're currently parsing a top-level declaration, delay
-  // diagnostics.  This is the only case where parsing a declaration
-  // can actually change our effective context for the purposes of
-  // access control.
-  if (S.CurContext->isFileContext() && S.ParsingDeclDepth) {
-    S.DelayedDiagnostics.push_back(
-        DelayedDiagnostic::makeAccess(Loc, Entity));
+  // If we're currently parsing a declaration, we may need to delay
+  // access control checking, because our effective context might be
+  // different based on what the declaration comes out as.
+  //
+  // For example, we might be parsing a declaration with a scope
+  // specifier, like this:
+  //   A::private_type A::foo() { ... }
+  //
+  // Or we might be parsing something that will turn out to be a friend:
+  //   void foo(A::private_type);
+  //   void B::foo(A::private_type);
+  if (S.DelayedDiagnostics.shouldDelayDiagnostics()) {
+    S.DelayedDiagnostics.add(DelayedDiagnostic::makeAccess(Loc, Entity));
     return Sema::AR_delayed;
   }
 

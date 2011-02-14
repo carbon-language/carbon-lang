@@ -246,7 +246,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
     // Eat the semi colon after the declaration.
     ExpectAndConsume(tok::semi, diag::err_expected_semi_declaration);
-    DS.complete(ThisDecl);
+    DeclaratorInfo.complete(ThisDecl);
     return ThisDecl;
   }
 

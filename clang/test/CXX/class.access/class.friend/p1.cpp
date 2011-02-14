@@ -305,3 +305,24 @@ namespace test10 {
     NS::bar->foo(); // expected-error {{private member}}
   }
 }
+
+// PR8705
+namespace test11 {
+  class A {
+    void test0(int);
+    void test1(int);
+    void test2(int);
+    void test3(int);
+  };
+
+  class B {
+    typedef int private_type; // expected-note 2 {{implicitly declared private here}}
+    friend void A::test0(int);
+    friend void A::test1(int);
+  };
+
+  void A::test0(B::private_type x) {}
+  void A::test1(int x = B::private_type()) {}
+  void A::test2(B::private_type x) {} // expected-error {{'private_type' is a private member of 'test11::B'}}
+  void A::test3(int x = B::private_type()) {} // expected-error {{'private_type' is a private member of 'test11::B'}}
+}

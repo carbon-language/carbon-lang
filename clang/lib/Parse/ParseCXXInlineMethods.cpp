@@ -20,7 +20,7 @@ using namespace clang;
 /// ParseCXXInlineMethodDef - We parsed and verified that the specified
 /// Declarator is a well formed C++ inline method definition. Now lex its body
 /// and store its tokens for parsing after the C++ class is complete.
-Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
+Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
                                 const VirtSpecifiers& VS) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
@@ -50,6 +50,8 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
   }
 
   HandleMemberFunctionDefaultArgs(D, FnD);
+
+  D.complete(FnD);
 
   // Consume the tokens and store them for later parsing.
 

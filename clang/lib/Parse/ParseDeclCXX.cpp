@@ -2087,10 +2087,12 @@ TypeResult Parser::ParseTrailingReturnType() {
 /// \brief We have just started parsing the definition of a new class,
 /// so push that class onto our stack of classes that is currently
 /// being parsed.
-void Parser::PushParsingClass(Decl *ClassDecl, bool NonNestedClass) {
+Sema::ParsingClassState
+Parser::PushParsingClass(Decl *ClassDecl, bool NonNestedClass) {
   assert((NonNestedClass || !ClassStack.empty()) &&
          "Nested class without outer class");
   ClassStack.push(new ParsingClass(ClassDecl, NonNestedClass));
+  return Actions.PushParsingClass();
 }
 
 /// \brief Deallocate the given parsed class and all of its nested
@@ -2110,8 +2112,10 @@ void Parser::DeallocateParsedClasses(Parser::ParsingClass *Class) {
 ///
 /// \returns true if the class we've popped is a top-level class,
 /// false otherwise.
-void Parser::PopParsingClass() {
+void Parser::PopParsingClass(Sema::ParsingClassState state) {
   assert(!ClassStack.empty() && "Mismatched push/pop for class parsing");
+
+  Actions.PopParsingClass(state);
 
   ParsingClass *Victim = ClassStack.top();
   ClassStack.pop();

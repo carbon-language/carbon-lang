@@ -725,7 +725,7 @@ private:
   /// class or function definition.
   class ParsingDeclRAIIObject {
     Sema &Actions;
-    Sema::ParsingDeclStackState State;
+    Sema::ParsingDeclState State;
     bool Popped;
 
   public:
@@ -837,23 +837,24 @@ private:
   class ParsingClassDefinition {
     Parser &P;
     bool Popped;
+    Sema::ParsingClassState State;
 
   public:
     ParsingClassDefinition(Parser &P, Decl *TagOrTemplate, bool TopLevelClass)
-      : P(P), Popped(false) {
-      P.PushParsingClass(TagOrTemplate, TopLevelClass);
+      : P(P), Popped(false),
+        State(P.PushParsingClass(TagOrTemplate, TopLevelClass)) {
     }
 
     /// \brief Pop this class of the stack.
     void Pop() {
       assert(!Popped && "Nested class has already been popped");
       Popped = true;
-      P.PopParsingClass();
+      P.PopParsingClass(State);
     }
 
     ~ParsingClassDefinition() {
       if (!Popped)
-        P.PopParsingClass();
+        P.PopParsingClass(State);
     }
   };
 
@@ -907,11 +908,12 @@ private:
     SourceRange getSourceRange() const;
   };
 
-  void PushParsingClass(Decl *TagOrTemplate, bool TopLevelClass);
+  Sema::ParsingClassState
+  PushParsingClass(Decl *TagOrTemplate, bool TopLevelClass);
   void DeallocateParsedClasses(ParsingClass *Class);
-  void PopParsingClass();
+  void PopParsingClass(Sema::ParsingClassState);
 
-  Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
+  Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
                                 const VirtSpecifiers& VS);
   void ParseLexedMethodDeclarations(ParsingClass &Class);

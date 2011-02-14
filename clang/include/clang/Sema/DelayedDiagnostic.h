@@ -101,7 +101,7 @@ public:
 
 private:
   unsigned Access : 2;
-  bool IsMember;
+  unsigned IsMember : 1;
   NamedDecl *Target;
   CXXRecordDecl *NamingClass;
   QualType BaseObjectType;
