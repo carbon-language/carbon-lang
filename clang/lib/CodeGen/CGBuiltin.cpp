@@ -1061,7 +1061,7 @@ static const llvm::VectorType *GetNeonType(LLVMContext &C, unsigned type,
 Value *CodeGenFunction::EmitNeonSplat(Value *V, Constant *C) {
   unsigned nElts = cast<llvm::VectorType>(V->getType())->getNumElements();
   SmallVector<Constant*, 16> Indices(nElts, C);
-  Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+  Value* SV = llvm::ConstantVector::get(Indices);
   return Builder.CreateShuffleVector(V, V, SV, "lane");
 }
 
@@ -1087,7 +1087,7 @@ Value *CodeGenFunction::EmitNeonShiftVector(Value *V, const llvm::Type *Ty,
   const llvm::VectorType *VTy = cast<llvm::VectorType>(Ty);
   llvm::Constant *C = ConstantInt::get(VTy->getElementType(), neg ? -SV : SV);
   SmallVector<llvm::Constant*, 16> CV(VTy->getNumElements(), C);
-  return llvm::ConstantVector::get(CV.begin(), CV.size());
+  return llvm::ConstantVector::get(CV);
 }
 
 /// GetPointeeAlignment - Given an expression with a pointer type, find the
@@ -1261,15 +1261,14 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
   case ARM::BI__builtin_neon_vext_v:
   case ARM::BI__builtin_neon_vextq_v: {
-    ConstantInt *C = dyn_cast<ConstantInt>(Ops[2]);
-    int CV = C->getSExtValue();
+    int CV = cast<ConstantInt>(Ops[2])->getSExtValue();
     SmallVector<Constant*, 16> Indices;
     for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i)
       Indices.push_back(ConstantInt::get(Int32Ty, i+CV));
     
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
-    Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+    Value *SV = llvm::ConstantVector::get(Indices);
     return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vext");
   }
   case ARM::BI__builtin_neon_vget_lane_i8:
@@ -1756,7 +1755,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
         Indices.push_back(ConstantInt::get(Int32Ty, i+e+vi));
       }
       Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
-      SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+      SV = llvm::ConstantVector::get(Indices);
       SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vtrn");
       SV = Builder.CreateStore(SV, Addr);
     }
@@ -1775,7 +1774,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
         Indices.push_back(ConstantInt::get(Int32Ty, 2*i+vi));
 
       Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
-      SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+      SV = llvm::ConstantVector::get(Indices);
       SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vuzp");
       SV = Builder.CreateStore(SV, Addr);
     }
@@ -1795,7 +1794,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
         Indices.push_back(ConstantInt::get(Int32Ty, ((i + vi*e) >> 1)+e));
       }
       Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
-      SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+      SV = llvm::ConstantVector::get(Indices);
       SV = Builder.CreateShuffleVector(Ops[1], Ops[2], SV, "vzip");
       SV = Builder.CreateStore(SV, Addr);
     }
@@ -2032,7 +2031,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       for (unsigned i = 0; i != 8; ++i)
         Indices.push_back(llvm::ConstantInt::get(Int32Ty, shiftVal + i));
       
-      Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+      Value* SV = llvm::ConstantVector::get(Indices);
       return Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
     }
     
@@ -2063,7 +2062,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       for (unsigned i = 0; i != 16; ++i)
         Indices.push_back(llvm::ConstantInt::get(Int32Ty, shiftVal + i));
       
-      Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
+      Value* SV = llvm::ConstantVector::get(Indices);
       return Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
     }
     
