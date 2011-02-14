@@ -83,6 +83,7 @@ namespace {
 }
 
 STATISTIC(NumAtomic, "Number of atomic phis lowered");
+STATISTIC(NumCriticalEdgesSplit, "Number of critical edges split");
 STATISTIC(NumReused, "Number of reused lowered phis");
 
 char PHIElimination::ID = 0;
@@ -413,8 +414,12 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
           !LV.isLiveIn(Reg, MBB) && LV.isLiveOut(Reg, *PreMBB)) {
         if (!MLI ||
             !(MLI->getLoopFor(PreMBB) == MLI->getLoopFor(&MBB) &&
-              MLI->isLoopHeader(&MBB)))
-          Changed |= PreMBB->SplitCriticalEdge(&MBB, this) != 0;
+              MLI->isLoopHeader(&MBB))) {
+          if (PreMBB->SplitCriticalEdge(&MBB, this)) {
+            Changed = true;
+            ++NumCriticalEdgesSplit;
+          }
+        }
       }
     }
   }
