@@ -103,6 +103,7 @@ public:
     VisualizeEGUbi = 0;
     EnableExperimentalChecks = 0;
     EnableExperimentalInternalChecks = 0;
+    InlineCall = 0;
     UnoptimizedCFG = 0;
     CFGAddImplicitDtors = 0;
     CFGAddInitializers = 0;
