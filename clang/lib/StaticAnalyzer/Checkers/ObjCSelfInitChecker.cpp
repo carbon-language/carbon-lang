@@ -46,7 +46,7 @@
 // objects in the diagnostics.
 // http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjectiveC/Articles/ocAllocInit.html
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
@@ -46,7 +46,7 @@ public:
 };
 } //end anonymous namespace
 
-void ento::RegisterUnixAPIChecker(ExprEngine &Eng) {
+void ento::registerUnixAPIChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UnixAPIChecker());
 }
 

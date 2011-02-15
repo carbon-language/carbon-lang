@@ -15,7 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
@@ -45,9 +45,8 @@ public:
 };
 } //end anonymous namespace
 
-void ento::RegisterMacOSXAPIChecker(ExprEngine &Eng) {
-  if (Eng.getContext().Target.getTriple().getVendor() == llvm::Triple::Apple)
-    Eng.registerCheck(new MacOSXAPIChecker());
+void ento::registerMacOSXAPIChecker(ExprEngine &Eng) {
+  Eng.registerCheck(new MacOSXAPIChecker());
 }
 
 //===----------------------------------------------------------------------===//

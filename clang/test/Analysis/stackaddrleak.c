@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.StackAddrLeak -analyzer-store region -verify %s
 
 char const *p;
 

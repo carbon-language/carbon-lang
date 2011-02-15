@@ -921,6 +921,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       types::ID InputType = Inputs[0].getType();
 
       // Checks to perform for all language types.
+
+      CmdArgs.push_back("-analyzer-checker=core");
+      if (getToolChain().getTriple().getOS() != llvm::Triple::Win32)
+        CmdArgs.push_back("-analyzer-checker=unix");
+      if (getToolChain().getTriple().getVendor() == llvm::Triple::Apple)
+        CmdArgs.push_back("-analyzer-checker=macosx");
+
       CmdArgs.push_back("-analyzer-check-dead-stores");
 
       // Checks to perform for Objective-C/Objective-C++.

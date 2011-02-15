@@ -308,15 +308,11 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   RegisterUndefBranchChecker(Eng);
   RegisterUndefCapturedBlockVarChecker(Eng);
   RegisterUndefResultChecker(Eng);
-  RegisterStackAddrLeakChecker(Eng);
-  RegisterObjCAtSyncChecker(Eng);
 
   // This is not a checker yet.
   RegisterNoReturnFunctionChecker(Eng);
   RegisterBuiltinFunctionChecker(Eng);
   RegisterOSAtomicChecker(Eng);
-  RegisterUnixAPIChecker(Eng);
-  RegisterMacOSXAPIChecker(Eng);
 }
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
@@ -333,13 +329,14 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
     BR(mgr, *this), TF(tf) {
-  mgr.getCheckerManager()->registerCheckersToEngine(*this);
   // Register internal checks.
   RegisterInternalChecks(*this);
 
   // FIXME: Eventually remove the TF object entirely.
   TF->RegisterChecks(*this);
   TF->RegisterPrinters(getStateManager().Printers);
+
+  mgr.getCheckerManager()->registerCheckersToEngine(*this);
   
   if (mgr.shouldEagerlyTrimExplodedGraph()) {
     // Enable eager node reclaimation when constructing the ExplodedGraph.  

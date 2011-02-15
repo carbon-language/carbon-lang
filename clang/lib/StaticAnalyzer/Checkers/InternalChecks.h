@@ -34,24 +34,19 @@ void RegisterDereferenceChecker(ExprEngine &Eng);
 void RegisterDivZeroChecker(ExprEngine &Eng);
 void RegisterFixedAddressChecker(ExprEngine &Eng);
 void RegisterNoReturnFunctionChecker(ExprEngine &Eng);
-void RegisterObjCAtSyncChecker(ExprEngine &Eng);
 void RegisterPointerArithChecker(ExprEngine &Eng);
 void RegisterPointerSubChecker(ExprEngine &Eng);
 void RegisterReturnPointerRangeChecker(ExprEngine &Eng);
 void RegisterReturnUndefChecker(ExprEngine &Eng);
-void RegisterStackAddrLeakChecker(ExprEngine &Eng);
 void RegisterUndefBranchChecker(ExprEngine &Eng);
 void RegisterUndefCapturedBlockVarChecker(ExprEngine &Eng);
 void RegisterUndefResultChecker(ExprEngine &Eng);
 void RegisterUndefinedArraySubscriptChecker(ExprEngine &Eng);
 void RegisterUndefinedAssignmentChecker(ExprEngine &Eng);
 void RegisterVLASizeChecker(ExprEngine &Eng);
-void registerObjCSelfInitChecker(ExprEngine &Eng);
 
 // API checks.
-void RegisterMacOSXAPIChecker(ExprEngine &Eng);
 void RegisterOSAtomicChecker(ExprEngine &Eng);
-void RegisterUnixAPIChecker(ExprEngine &Eng);
 
 } // end GR namespace
 
