@@ -1077,10 +1077,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (Deleted) // FIXME: Source location is not very good.
     SetDeclDeleted(Member, D.getSourceRange().getBegin());
 
-  if (isInstField) {
+  if (isInstField)
     FieldCollector->Add(cast<FieldDecl>(Member));
-    return 0;
-  }
   return Member;
 }
 

@@ -139,3 +139,17 @@ namespace test5 {
     template <A::Enum en> class bar {}; // expected-error {{'Enum' is a private member of 'test5::A'}}
   };
 }
+
+namespace test6 {
+  class A {
+  public: class public_inner {};
+  protected: class protected_inner {};
+  private: class private_inner {}; // expected-note {{declared private here}}
+  };
+
+  class B : A {
+    public_inner a;
+    protected_inner b;
+    private_inner c; // expected-error {{ 'private_inner' is a private member of 'test6::A'}}
+  };
+}
