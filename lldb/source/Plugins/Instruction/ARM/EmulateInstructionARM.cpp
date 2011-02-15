@@ -3599,7 +3599,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateCmpRnRm, "cmp<c> <Rn>, <Rm>"},
         // asr (immediate)
         { 0xfffff800, 0x00001000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateASRImm, "asrs|asr<c> <Rd>, <Rm>, #imm"},
-        { 0x0fef0070, 0x01a00040, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c>.w <Rd>, <Rm>, #imm"},
+        { 0xffef8030, 0xea4f0020, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c>.w <Rd>, <Rm>, #imm"},
 
         //----------------------------------------------------------------------
         // Load instructions
