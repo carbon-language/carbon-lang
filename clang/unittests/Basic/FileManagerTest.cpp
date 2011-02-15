@@ -1,4 +1,4 @@
-//===- unittests/FileManager/FileMangerTest.cpp ------ FileManger tests ---===//
+//===- unittests/Basic/FileMangerTest.cpp ------------ FileManger tests ---===//
 //
 //                     The LLVM Compiler Infrastructure
 //

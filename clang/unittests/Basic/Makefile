@@ -1,4 +1,4 @@
-##===- unittests/FileManager/Makefile ----------------------*- Makefile -*-===##
+##===- unittests/Basic/Makefile ----------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL = ../..
-TESTNAME = FileManager
+TESTNAME = Basic
 LINK_COMPONENTS := core support mc
 USEDLIBS = clangBasic.a
 
