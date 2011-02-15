@@ -22,12 +22,7 @@ using namespace ento;
 void ento::RegisterExperimentalChecks(ExprEngine &Eng) {
   // These are checks that never belong as internal checks
   // within ExprEngine.
-  RegisterCStringChecker(Eng);
-  RegisterChrootChecker(Eng);
-  RegisterMallocChecker(Eng);
-  RegisterPthreadLockChecker(Eng);
-  RegisterStreamChecker(Eng);
-  RegisterUnreachableCodeChecker(Eng);
+  RegisterMallocChecker(Eng); // ArrayBoundChecker depends on this.
 }
 
 void ento::RegisterExperimentalInternalChecks(ExprEngine &Eng) {

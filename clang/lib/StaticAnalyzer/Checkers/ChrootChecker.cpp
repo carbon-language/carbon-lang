@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExperimentalChecks.h"
+#include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
@@ -59,7 +59,7 @@ private:
 
 } // end anonymous namespace
 
-void ento::RegisterChrootChecker(ExprEngine &Eng) {
+void ento::registerChrootChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ChrootChecker());
 }
 

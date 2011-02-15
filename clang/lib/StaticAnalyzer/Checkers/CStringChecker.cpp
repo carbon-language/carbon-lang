@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExperimentalChecks.h"
+#include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
@@ -109,7 +109,7 @@ namespace ento {
 }
 }
 
-void ento::RegisterCStringChecker(ExprEngine &Eng) {
+void ento::registerCStringChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CStringChecker());
 }
 

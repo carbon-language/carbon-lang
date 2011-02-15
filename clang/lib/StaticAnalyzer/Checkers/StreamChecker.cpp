@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExperimentalChecks.h"
+#include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
@@ -114,7 +114,7 @@ namespace ento {
 }
 }
 
-void ento::RegisterStreamChecker(ExprEngine &Eng) {
+void ento::registerStreamChecker(ExprEngine &Eng) {
   Eng.registerCheck(new StreamChecker());
 }
 

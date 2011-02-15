@@ -13,6 +13,7 @@
 // A similar flow-sensitive only check exists in Analysis/ReachableCode.cpp
 //===----------------------------------------------------------------------===//
 
+#include "ClangSACheckers.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
@@ -21,7 +22,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerHelpers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
-#include "ExperimentalChecks.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 // The number of CFGBlock pointers we want to reserve memory for. This is used
@@ -54,7 +54,7 @@ void *UnreachableCodeChecker::getTag() {
   return &x;
 }
 
-void ento::RegisterUnreachableCodeChecker(ExprEngine &Eng) {
+void ento::registerUnreachableCodeChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UnreachableCodeChecker());
 }
 

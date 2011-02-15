@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
-#include "ExperimentalChecks.h"
 #include "llvm/ADT/ImmutableSet.h"
 
 using namespace clang;
@@ -53,7 +53,7 @@ template <> struct GRStateTrait<LockSet> :
 } // end GR namespace
 } // end clang namespace
 
-void ento::RegisterPthreadLockChecker(ExprEngine &Eng) {
+void ento::registerPthreadLockChecker(ExprEngine &Eng) {
   Eng.registerCheck(new PthreadLockChecker());
 }
 
