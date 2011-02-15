@@ -24,9 +24,8 @@ class CheckerGroup<string name> {
 class InGroup<CheckerGroup G> { CheckerGroup Group = G; }
 
 // All checkers are an indirect subclass of this.
-class Checker<string className> {
-  string      ClassName = className;
-  string      CheckerName;
+class Checker<string name = ""> {
+  string      CheckerName = name;
   string      DescFile;
   string      HelpText;
   bit         Hidden = 0;
@@ -34,7 +33,6 @@ class Checker<string className> {
   CheckerGroup Group;
 }
 
-class Named<string name> { string CheckerName = name; }
 class DescFile<string filename> { string DescFile = filename; }
 class HelpText<string text> { string HelpText = text; }
 class Hidden { bit Hidden = 1; }

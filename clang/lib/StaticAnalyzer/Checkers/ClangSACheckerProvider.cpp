@@ -62,6 +62,7 @@ struct CheckNameOption {
   const char  *Name;
   const short *Members;
   const short *SubGroups;
+  bool Hidden;
 };
 
 } // end anonymous namespace.
@@ -88,6 +89,9 @@ static void collectCheckers(const CheckNameOption *checkName,
                             bool enable,
                          llvm::DenseSet<const StaticCheckerInfoRec *> &checkers,
                             bool collectHidden) {
+  if (checkName->Hidden && !collectHidden)
+    return;
+
   if (const short *member = checkName->Members) {
     if (enable) {
       if (collectHidden || !StaticCheckerInfo[*member].Hidden)
@@ -102,14 +106,14 @@ static void collectCheckers(const CheckNameOption *checkName,
   if (const short *subGroups = checkName->SubGroups) {
     for (; *subGroups != -1; ++subGroups)
       collectCheckers(&CheckNameTable[*subGroups], enable, checkers,
-                      /*don't enable hidden in subgroups*/ false);
+                      collectHidden && checkName->Hidden);
   }
 }
 
 static void collectCheckers(CheckerOptInfo &opt,
                        llvm::DenseSet<const StaticCheckerInfoRec *> &checkers) {
   const char *optName = opt.getName();
-  CheckNameOption key = { optName, 0, 0 };
+  CheckNameOption key = { optName, 0, 0, false };
   const CheckNameOption *found =
   std::lower_bound(CheckNameTable, CheckNameTable + CheckNameTableSize, key,
                    CheckNameOptionCompare);
