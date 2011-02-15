@@ -25,6 +25,7 @@
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -542,8 +543,8 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
         {
             address = m_value.ULongLong(LLDB_INVALID_ADDRESS);
             address_type = eAddressTypeLoad;
-            data.SetByteOrder(exe_ctx->process->GetByteOrder());
-            data.SetAddressByteSize(exe_ctx->process->GetAddressByteSize());
+            data.SetByteOrder(exe_ctx->process->GetTarget().GetArchitecture().GetByteOrder());
+            data.SetAddressByteSize(exe_ctx->process->GetTarget().GetArchitecture().GetAddressByteSize());
         }
         break;
 
@@ -570,8 +571,8 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
                             if (address != LLDB_INVALID_ADDRESS)
                             {
                                 address_type = eAddressTypeLoad;
-                                data.SetByteOrder(exe_ctx->process->GetByteOrder());
-                                data.SetAddressByteSize(exe_ctx->process->GetAddressByteSize());
+                                data.SetByteOrder(exe_ctx->target->GetArchitecture().GetByteOrder());
+                                data.SetAddressByteSize(exe_ctx->target->GetArchitecture().GetAddressByteSize());
                             }
                             else
                             {

@@ -13,6 +13,7 @@
 #if defined(__cplusplus)
 
 #include "lldb/lldb-private.h"
+#include "llvm/ADT/Triple.h"
 
 namespace lldb_private {
 
@@ -40,6 +41,9 @@ public:
         eCPU_ppc64,
         eCPU_sparc
     };
+    
+    static void
+    Initialize();
 
     //------------------------------------------------------------------
     /// Default constructor.
@@ -140,6 +144,11 @@ public:
     uint32_t
     GetAddressByteSize () const;
 
+    void
+    SetAddressByteSize (uint32_t byte_size)
+    {
+        m_addr_byte_size = byte_size;
+    }
 
     CPU
     GetGenericCPUType () const;
@@ -262,11 +271,42 @@ public:
     /// @param[in] subtype The new CPU subtype
     //------------------------------------------------------------------
     void
-    SetMachOArch (uint32_t cpu, uint32_t sub)
+    SetMachOArch (uint32_t cpu, uint32_t sub);
+
+    //------------------------------------------------------------------
+    /// Returns the byte order for the architecture specification.
+    ///
+    /// @return The endian enumeration for the current endianness of
+    ///     the architecture specification
+    //------------------------------------------------------------------
+    lldb::ByteOrder
+    GetByteOrder () const
     {
-        m_type = lldb::eArchTypeMachO;
-        m_cpu = cpu;
-        m_sub = sub;
+        return m_byte_order;
+    }
+
+    void
+    SetByteOrder (lldb::ByteOrder b)
+    {
+        m_byte_order = b;
+    }
+
+    llvm::Triple &
+    GetTriple ()
+    {
+        return m_triple;
+    }
+    
+    const llvm::Triple &
+    GetTriple () const
+    {
+        return m_triple;
+    }
+    
+    void
+    SetTriple (const llvm::Triple &triple)
+    {
+        m_triple = triple;
     }
 
     void
@@ -301,6 +341,17 @@ protected:
     //       m_type =>  eArchTypeMachO      eArchTypeELF
     uint32_t m_cpu; //  cpu type            ELF header e_machine
     uint32_t m_sub; //  cpu subtype         nothing
+    llvm::Triple m_triple;
+    lldb::ByteOrder m_byte_order;
+    uint32_t m_addr_byte_size;
+    
+private:
+    
+    void
+    MachOArchUpdated (size_t macho_idx = SIZE_T_MAX);
+    
+    void
+    ELFArchUpdated (size_t idx = SIZE_T_MAX);
 };
 
 

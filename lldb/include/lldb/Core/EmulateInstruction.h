@@ -81,7 +81,7 @@ class EmulateInstruction :
 public:
 
     static EmulateInstruction*
-    FindPlugin (const ConstString &triple, const char *plugin_name);
+    FindPlugin (const ArchSpec &arch, const char *plugin_name);
 
     enum ContextType
     {
@@ -403,7 +403,7 @@ public:
     }
     
     virtual bool
-    SetTargetTriple (const ConstString &triple) = 0;
+    SetTargetTriple (const ArchSpec &arch) = 0;
     
     virtual bool 
     ReadInstruction () = 0;

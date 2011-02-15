@@ -81,20 +81,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
         error_stream.PutCString ("error: invalid target\n");
         return false;
     }
-    
-    ConstString target_triple;
-    
-    target->GetTargetTriple (target_triple);
-    
-    if (!target_triple)
-        target_triple = Host::GetTargetTriple ();
-    
-    if (!target_triple)
-    {
-        error_stream.PutCString ("error: invalid target triple\n");
-        return false;
-    }
-    
+        
     //////////////////////////
     // Parse the expression
     //
@@ -105,7 +92,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
     
     m_expr_decl_map->WillParse(exe_ctx);
         
-    ClangExpressionParser parser(target_triple.GetCString(), exe_ctx.process, *this);
+    ClangExpressionParser parser(exe_ctx.GetBestExecutionContextScope(), *this);
     
     unsigned num_errors = parser.Parse (error_stream);
     

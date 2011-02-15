@@ -234,19 +234,6 @@ ClangUserExpression::Parse (Stream &error_stream,
         return false;
     }
     
-    ConstString target_triple;
-    
-    target->GetTargetTriple (target_triple);
-    
-    if (!target_triple)
-        target_triple = Host::GetTargetTriple ();
-    
-    if (!target_triple)
-    {
-        error_stream.PutCString ("error: invalid target triple\n");
-        return false;
-    }
-        
     //////////////////////////
     // Parse the expression
     //
@@ -257,7 +244,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     m_expr_decl_map->WillParse(exe_ctx);
     
-    ClangExpressionParser parser(target_triple.GetCString(), exe_ctx.process, *this);
+    ClangExpressionParser parser(exe_ctx.process, *this);
     
     unsigned num_errors = parser.Parse (error_stream);
     

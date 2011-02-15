@@ -11,6 +11,7 @@
 #define liblldb_ClangExpressionParser_h_
 
 #include "lldb/lldb-include.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Error.h"
 
@@ -40,19 +41,15 @@ public:
     ///
     /// Initializes class variabes.
     ///
-    /// @param[in] target_triple
-    ///     The LLVM-friendly target triple for use in initializing the
-    ///     compiler.
-    ///
-    /// @param[in process
-    ///     If non-NULL, the process to customize the expression for
-    ///     (e.g., by tuning Objective-C runtime support).  May be NULL.
+    /// @param[in] exe_scope,
+    ///     If non-NULL, an execution context scope that can help to 
+    ///     correctly create an expression with a valid process for 
+    ///     optional tuning Objective-C runtime support. Can be NULL.
     ///
     /// @param[in] expr
     ///     The expression to be parsed.
     //------------------------------------------------------------------
-    ClangExpressionParser (const char *target_triple,
-                           Process *process,
+    ClangExpressionParser (ExecutionContextScope *exe_scope,
                            ClangExpression &expr);
     
     //------------------------------------------------------------------
@@ -181,7 +178,6 @@ private:
     
     ClangExpression                            &m_expr;                 ///< The expression to be parsed
     
-    std::string                                 m_target_triple;        ///< The target triple used to initialize LLVM
     std::auto_ptr<clang::FileManager>           m_file_manager;         ///< The Clang file manager object used by the compiler
     std::auto_ptr<clang::CompilerInstance>      m_compiler;             ///< The Clang compiler used to parse expressions into IR
     std::auto_ptr<clang::Builtin::Context>      m_builtin_context;      ///< Context for Clang built-ins

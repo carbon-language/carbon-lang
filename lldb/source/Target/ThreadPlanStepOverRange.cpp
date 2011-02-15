@@ -19,6 +19,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanStepOut.h"
 #include "lldb/Target/ThreadPlanStepThrough.h"
@@ -69,7 +70,8 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     if (log)
     {
         StreamString s;
-        s.Address (m_thread.GetRegisterContext()->GetPC(), m_thread.GetProcess().GetAddressByteSize());
+        s.Address (m_thread.GetRegisterContext()->GetPC(), 
+                   m_thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
         log->Printf("ThreadPlanStepOverRange reached %s.", s.GetData());
     }
     

@@ -15,6 +15,8 @@
 
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/MachO.h"
+#include "lldb/Host/Endian.h"
+#include "lldb/Host/Host.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -28,6 +30,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 struct ArchDefinition
 {
+    ByteOrder byte_order;
+    uint32_t addr_byte_size;
     uint32_t cpu;
     uint32_t sub;
     const char *name;
@@ -52,54 +56,36 @@ static const char *g_arch_type_strings[] =
 //----------------------------------------------------------------------
 static ArchDefinition g_mach_arch_defs[] =
 {
-    { CPU_ANY,                          CPU_ANY , "all"         },
-    { llvm::MachO::CPUTypeARM,          CPU_ANY , "arm"         },
-    { llvm::MachO::CPUTypeARM,          0       , "arm"         },
-    { llvm::MachO::CPUTypeARM,          5       , "armv4"       },
-    { llvm::MachO::CPUTypeARM,          6       , "armv6"       },
-    { llvm::MachO::CPUTypeARM,          7       , "armv5"       },
-    { llvm::MachO::CPUTypeARM,          8       , "xscale"      },
-    { llvm::MachO::CPUTypeARM,          9       , "armv7"       },
-    { llvm::MachO::CPUTypePowerPC,      CPU_ANY , "ppc"         },
-    { llvm::MachO::CPUTypePowerPC,      0       , "ppc"         },
-    { llvm::MachO::CPUTypePowerPC,      1       , "ppc601"      },
-    { llvm::MachO::CPUTypePowerPC,      2       , "ppc602"      },
-    { llvm::MachO::CPUTypePowerPC,      3       , "ppc603"      },
-    { llvm::MachO::CPUTypePowerPC,      4       , "ppc603e"     },
-    { llvm::MachO::CPUTypePowerPC,      5       , "ppc603ev"    },
-    { llvm::MachO::CPUTypePowerPC,      6       , "ppc604"      },
-    { llvm::MachO::CPUTypePowerPC,      7       , "ppc604e"     },
-    { llvm::MachO::CPUTypePowerPC,      8       , "ppc620"      },
-    { llvm::MachO::CPUTypePowerPC,      9       , "ppc750"      },
-    { llvm::MachO::CPUTypePowerPC,      10      , "ppc7400"     },
-    { llvm::MachO::CPUTypePowerPC,      11      , "ppc7450"     },
-    { llvm::MachO::CPUTypePowerPC,      100     , "ppc970"      },
-    { llvm::MachO::CPUTypePowerPC64,    0       , "ppc64"       },
-    { llvm::MachO::CPUTypePowerPC64,    100     , "ppc970-64"   },
-    { llvm::MachO::CPUTypeI386,         3       , "i386"        },
-    { llvm::MachO::CPUTypeI386,         4       , "i486"        },
-    { llvm::MachO::CPUTypeI386,         0x84    , "i486sx"      },
-    { llvm::MachO::CPUTypeI386,         CPU_ANY , "i386"        },
-    { llvm::MachO::CPUTypeX86_64,       3       , "x86_64"      },
-    { llvm::MachO::CPUTypeX86_64,       CPU_ANY , "x86_64"      },
-
-    // TODO: when we get a platform that knows more about the host OS we should
-    // let it call some accessor funcitons to set the default system arch for
-    // the default, 32 and 64 bit cases instead of hard coding it in this
-    // table.
-
-#if defined (__i386__) || defined(__x86_64__)
-    { llvm::MachO::CPUTypeX86_64,      3    , LLDB_ARCH_DEFAULT         },
-    { llvm::MachO::CPUTypeI386,        3    , LLDB_ARCH_DEFAULT_32BIT   },
-    { llvm::MachO::CPUTypeX86_64,      3    , LLDB_ARCH_DEFAULT_64BIT   },
-#elif defined (__arm__)
-    { llvm::MachO::CPUTypeARM,         6    , LLDB_ARCH_DEFAULT         },
-    { llvm::MachO::CPUTypeARM,         6    , LLDB_ARCH_DEFAULT_32BIT   },
-#elif defined (__powerpc__) || defined (__ppc__) || defined (__ppc64__)
-    { llvm::MachO::CPUTypePowerPC,     10   , LLDB_ARCH_DEFAULT         },
-    { llvm::MachO::CPUTypePowerPC,     10   , LLDB_ARCH_DEFAULT_32BIT   },
-    { llvm::MachO::CPUTypePowerPC64,   100  , LLDB_ARCH_DEFAULT_64BIT   },
-#endif
+    { eByteOrderInvalid, 0, CPU_ANY,                          CPU_ANY , "all"         },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeARM,          CPU_ANY , "arm"         },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeARM,          0       , "arm"         },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeARM,          5       , "armv4"       },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeARM,          6       , "armv6"       },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeARM,          7       , "armv5"       },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeARM,          8       , "xscale"      },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeARM,          9       , "armv7"       },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      CPU_ANY , "ppc"         },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      0       , "ppc"         },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      1       , "ppc601"      },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      2       , "ppc602"      },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      3       , "ppc603"      },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      4       , "ppc603e"     },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      5       , "ppc603ev"    },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      6       , "ppc604"      },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      7       , "ppc604e"     },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      8       , "ppc620"      },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      9       , "ppc750"      },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      10      , "ppc7400"     },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      11      , "ppc7450"     },
+    { eByteOrderBig,     4, llvm::MachO::CPUTypePowerPC,      100     , "ppc970"      },
+    { eByteOrderBig,     8, llvm::MachO::CPUTypePowerPC64,    0       , "ppc64"       },
+    { eByteOrderBig,     8, llvm::MachO::CPUTypePowerPC64,    100     , "ppc970-64"   },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeI386,         3       , "i386"        },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeI386,         4       , "i486"        },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeI386,         0x84    , "i486sx"      },
+    { eByteOrderLittle,  4, llvm::MachO::CPUTypeI386,         CPU_ANY , "i386"        },
+    { eByteOrderLittle,  8, llvm::MachO::CPUTypeX86_64,       3       , "x86_64"      },
+    { eByteOrderLittle,  8, llvm::MachO::CPUTypeX86_64,       CPU_ANY , "x86_64"      },
 };
 
 //----------------------------------------------------------------------
@@ -118,33 +104,20 @@ const size_t k_num_mach_arch_defs = sizeof(g_mach_arch_defs)/sizeof(ArchDefiniti
 //----------------------------------------------------------------------
 static ArchDefinition g_elf_arch_defs[] =
 {
-    { llvm::ELF::EM_M32    , 0, "m32"      }, // AT&T WE 32100
-    { llvm::ELF::EM_SPARC  , 0, "sparc"    }, // AT&T WE 32100
-    { llvm::ELF::EM_386    , 0, "i386"     }, // Intel 80386
-    { llvm::ELF::EM_68K    , 0, "68k"      }, // Motorola 68000
-    { llvm::ELF::EM_88K    , 0, "88k"      }, // Motorola 88000
-    { llvm::ELF::EM_486    , 0, "i486"     }, // Intel 486 (deprecated)
-    { llvm::ELF::EM_860    , 0, "860"      }, // Intel 80860
-    { llvm::ELF::EM_MIPS   , 0, "rs3000"   }, // MIPS RS3000
-    { llvm::ELF::EM_PPC    , 0, "ppc"      }, // PowerPC
-    { 21                   , 0, "ppc64"    }, // PowerPC64
-    { llvm::ELF::EM_ARM    , 0, "arm"      }, // ARM
-    { llvm::ELF::EM_ALPHA  , 0, "alpha"    }, // DEC Alpha
-    { llvm::ELF::EM_SPARCV9, 0, "sparc9"   }, // SPARC V9
-    { llvm::ELF::EM_X86_64 , 0, "x86_64"   }, // AMD64
-
-#if defined (__i386__) || defined(__x86_64__)
-    { llvm::ELF::EM_X86_64 , 0, LLDB_ARCH_DEFAULT         },
-    { llvm::ELF::EM_386    , 0, LLDB_ARCH_DEFAULT_32BIT   },
-    { llvm::ELF::EM_X86_64 , 0, LLDB_ARCH_DEFAULT_64BIT   },
-#elif defined (__arm__)
-    { llvm::ELF::EM_ARM    , 0, LLDB_ARCH_DEFAULT         },
-    { llvm::ELF::EM_ARM    , 0, LLDB_ARCH_DEFAULT_32BIT   },
-#elif defined (__powerpc__) || defined (__ppc__) || defined (__ppc64__)
-    { llvm::ELF::EM_PPC    , 0, LLDB_ARCH_DEFAULT         },
-    { llvm::ELF::EM_PPC    , 0, LLDB_ARCH_DEFAULT_32BIT   },
-    { llvm::ELF::EM_PPC64  , 0, LLDB_ARCH_DEFAULT_64BIT   },
-#endif
+    { eByteOrderInvalid,    0, llvm::ELF::EM_M32    , 0, "m32"      }, // AT&T WE 32100
+    { eByteOrderBig,        4, llvm::ELF::EM_SPARC  , 0, "sparc"    }, // Sparc
+    { eByteOrderLittle,     4, llvm::ELF::EM_386    , 0, "i386"     }, // Intel 80386
+    { eByteOrderBig,        4, llvm::ELF::EM_68K    , 0, "68k"      }, // Motorola 68000
+    { eByteOrderBig,        4, llvm::ELF::EM_88K    , 0, "88k"      }, // Motorola 88000
+    { eByteOrderLittle,     4, llvm::ELF::EM_486    , 0, "i486"     }, // Intel 486 (deprecated)
+    { eByteOrderLittle,     4, llvm::ELF::EM_860    , 0, "860"      }, // Intel 80860
+    { eByteOrderBig,        4, llvm::ELF::EM_MIPS   , 0, "rs3000"   }, // MIPS RS3000
+    { eByteOrderBig,        4, llvm::ELF::EM_PPC    , 0, "ppc"      }, // PowerPC
+    { eByteOrderBig,        8, 21                   , 0, "ppc64"    }, // PowerPC64
+    { eByteOrderLittle,     4, llvm::ELF::EM_ARM    , 0, "arm"      }, // ARM
+    { eByteOrderLittle,     4, llvm::ELF::EM_ALPHA  , 0, "alpha"    }, // DEC Alpha
+    { eByteOrderLittle,     4, llvm::ELF::EM_SPARCV9, 0, "sparc9"   }, // SPARC V9
+    { eByteOrderLittle,     8, llvm::ELF::EM_X86_64 , 0, "x86_64"   }, // AMD64
 };
 
 //----------------------------------------------------------------------
@@ -158,7 +131,10 @@ const size_t k_num_elf_arch_defs = sizeof(g_elf_arch_defs)/sizeof(ArchDefinition
 ArchSpec::ArchSpec() :
     m_type (eArchTypeMachO),        // Use the most complete arch definition which will always be translatable to any other ArchitectureType values
     m_cpu (LLDB_INVALID_CPUTYPE),
-    m_sub (0)
+    m_sub (0),
+    m_triple (),
+    m_byte_order (lldb::endian::InlHostByteOrder()),
+    m_addr_byte_size (0)
 {
 }
 
@@ -169,31 +145,38 @@ ArchSpec::ArchSpec() :
 ArchSpec::ArchSpec (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t sub) :
     m_type (arch_type),
     m_cpu (cpu),
-    m_sub (sub)
+    m_sub (sub),
+    m_triple (),
+    m_byte_order (lldb::endian::InlHostByteOrder()),
+    m_addr_byte_size (0)
 {
+    if (m_type == eArchTypeMachO)
+        MachOArchUpdated ();
 }
 
 //----------------------------------------------------------------------
 // Constructor that initializes the object with supplied
 // architecture name. There are also predefined values in
 // Defines.h:
-//  liblldb_ARCH_DEFAULT
+//  LLDB_ARCH_DEFAULT
 //      The arch the current system defaults to when a program is
 //      launched without any extra attributes or settings.
 //
-//  liblldb_ARCH_DEFAULT_32BIT
+//  LLDB_ARCH_DEFAULT_32BIT
 //      The 32 bit arch the current system defaults to (if any)
 //
-//  liblldb_ARCH_DEFAULT_32BIT
+//  LLDB_ARCH_DEFAULT_32BIT
 //      The 64 bit arch the current system defaults to (if any)
 //----------------------------------------------------------------------
 ArchSpec::ArchSpec (const char *arch_name) :
     m_type (eArchTypeMachO),        // Use the most complete arch definition which will always be translatable to any other ArchitectureType values
     m_cpu (LLDB_INVALID_CPUTYPE),
-    m_sub (0)
+    m_sub (0),
+    m_triple (),
+    m_byte_order (lldb::endian::InlHostByteOrder()),
+    m_addr_byte_size (0)
 {
-    if (arch_name)
-        SetArch (arch_name);
+    SetArch (arch_name);
 }
 
 //----------------------------------------------------------------------
@@ -214,6 +197,9 @@ ArchSpec::operator= (const ArchSpec& rhs)
         m_type = rhs.m_type;
         m_cpu = rhs.m_cpu;
         m_sub = rhs.m_sub;
+        m_triple = rhs.m_triple;
+        m_byte_order = rhs.m_byte_order;
+        m_addr_byte_size = rhs.m_addr_byte_size;
     }
     return *this;
 }
@@ -294,6 +280,9 @@ ArchSpec::Clear()
     m_type = eArchTypeInvalid;
     m_cpu = LLDB_INVALID_CPUTYPE;
     m_sub = 0;
+    m_triple = llvm::Triple();
+    m_byte_order = lldb::endian::InlHostByteOrder();
+    m_addr_byte_size = 0;
 }
 
 
@@ -1605,6 +1594,9 @@ ArchSpec::IsValid() const
 uint32_t
 ArchSpec::GetAddressByteSize() const
 {
+    if (m_addr_byte_size > 0)
+        return m_addr_byte_size;
+
     switch (m_type)
     {
     case kNumArchTypes:
@@ -1639,7 +1631,6 @@ ArchSpec::GetAddressByteSize() const
         }
         break;
     }
-
     return 0;
 }
 
@@ -1667,6 +1658,105 @@ ArchSpec::SetArchFromTargetTriple (const char *target_triple)
     }
     return SetArch (target_triple);
 }
+void
+ArchSpec::SetMachOArch (uint32_t cpu, uint32_t sub)
+{
+    m_type = lldb::eArchTypeMachO;
+    m_cpu = cpu;
+    m_sub = sub;
+    MachOArchUpdated ();
+}
+
+void
+ArchSpec::MachOArchUpdated (size_t idx)
+{
+    // m_type, m_cpu, and m_sub have been updated, fixup everything else
+    if (idx >= k_num_mach_arch_defs)
+    {
+        for (size_t i=0; i<k_num_mach_arch_defs; i++)
+        {
+            if (m_cpu == g_mach_arch_defs[i].cpu)
+            {
+                if (m_sub == CPU_ANY || m_sub == LLDB_INVALID_CPUTYPE)
+                {
+                    if (m_sub == g_mach_arch_defs[i].sub)
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+                else if ((m_sub & 0x00ffffff) == g_mach_arch_defs[i].sub)
+                {
+                    idx = i;
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (idx < k_num_mach_arch_defs)
+    {
+        m_byte_order = g_mach_arch_defs[idx].byte_order;
+        m_addr_byte_size = g_mach_arch_defs[idx].addr_byte_size;
+        char triple_cstr[1024];
+        int triple_cstr_len = ::snprintf (triple_cstr, 
+                                          sizeof(triple_cstr),
+                                          "%s-apple-darwin", 
+                                          g_mach_arch_defs[idx].name);
+        std::string triple_sstr (llvm::Triple::normalize (llvm::StringRef (triple_cstr, triple_cstr_len)));
+        llvm::StringRef triple_sref (triple_sstr.c_str(), triple_sstr.size());
+        llvm::Triple triple (triple_sref);
+        m_triple = triple;
+    }
+    else
+    {
+        assert (!"Unknown mach-o architecture");
+        m_byte_order = lldb::endian::InlHostByteOrder();
+        // We weren't able to find our CPU type in out known list of mach architectures...
+        if (GetCPUType() & llvm::MachO::CPUArchABI64)
+            m_addr_byte_size = 8;
+        else
+            m_addr_byte_size = 4;
+        m_triple = llvm::Triple();
+    }
+}
+
+void
+ArchSpec::ELFArchUpdated (size_t idx)
+{
+    if (idx >= k_num_elf_arch_defs)
+    {
+        for (size_t i=0; i<k_num_elf_arch_defs; i++)
+        {
+            if (g_elf_arch_defs[i].cpu == m_cpu)
+            {
+                idx = i;
+                break;
+            }
+        }
+    }
+    if (idx < k_num_elf_arch_defs)
+    {
+        m_byte_order = g_elf_arch_defs[idx].byte_order;
+        m_addr_byte_size = g_elf_arch_defs[idx].addr_byte_size;
+        char triple_cstr[1024];
+        int triple_cstr_len = ::snprintf (triple_cstr, 
+                                          sizeof(triple_cstr),
+                                          "%s-unknown-unknown", 
+                                          g_elf_arch_defs[idx].name);
+        std::string triple_sstr (llvm::Triple::normalize (llvm::StringRef (triple_cstr, triple_cstr_len)));
+        llvm::StringRef triple_sref (triple_sstr.c_str(), triple_sstr.size());
+        llvm::Triple triple (triple_sref);
+        m_triple = triple;
+    }
+    else
+    {
+        assert (!"Unknown ELF architecture");
+        m_byte_order = lldb::endian::InlHostByteOrder();
+        m_addr_byte_size = sizeof(void *);
+        m_triple = llvm::Triple();
+    }
+}
 
 //----------------------------------------------------------------------
 // Change the CPU type and subtype given an architecture name.
@@ -1676,8 +1766,22 @@ ArchSpec::SetArch (const char *arch_name)
 {
     if (arch_name && arch_name[0] != '\0')
     {
-        size_t i;
+        // All system default architecture string values start with LLDB_ARCH_DEFAULT
+        if (::strncmp (arch_name, LLDB_ARCH_DEFAULT, strlen(LLDB_ARCH_DEFAULT)) == 0)
+        {
+            // Special case for the current host default architectures...
 
+            if (::strcmp (arch_name, LLDB_ARCH_DEFAULT_32BIT) == 0)
+                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+            else if (::strcmp (arch_name, LLDB_ARCH_DEFAULT_64BIT) == 0)
+                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture64);
+            else
+                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+
+            return IsValid();
+        }
+
+        size_t i;
         switch (m_type)
         {
         case eArchTypeInvalid:
@@ -1689,6 +1793,7 @@ ArchSpec::SetArch (const char *arch_name)
                     m_type = eArchTypeMachO;
                     m_cpu = g_mach_arch_defs[i].cpu;
                     m_sub = g_mach_arch_defs[i].sub;
+                    MachOArchUpdated (i);
                     return true;
                 }
             }
@@ -1701,6 +1806,7 @@ ArchSpec::SetArch (const char *arch_name)
                 {
                     m_cpu = g_elf_arch_defs[i].cpu;
                     m_sub = g_elf_arch_defs[i].sub;
+                    ELFArchUpdated (i);
                     return true;
                 }
             }
@@ -1731,6 +1837,7 @@ ArchSpec::SetArch (const char *arch_name)
         
         if (m_type != eArchTypeInvalid)
         {
+            m_type = eArchTypeMachO;
             char *end = NULL;
             m_cpu = ::strtoul (str, &end, 0);
             if (str != end)
@@ -1744,6 +1851,7 @@ ArchSpec::SetArch (const char *arch_name)
                         m_sub = strtoul(str, &end, 0);
                         if (*end == '\0')
                         {
+                            MachOArchUpdated ();
                             // We consumed the entire string and got a cpu type and subtype
                             return true;
                         }
@@ -1760,6 +1868,9 @@ ArchSpec::SetArch (const char *arch_name)
                     if (m_cpu == g_mach_arch_defs[i].cpu)
                     {
                         m_sub = g_mach_arch_defs[i].sub;
+                        m_byte_order = g_mach_arch_defs[i].byte_order;
+                        m_addr_byte_size = g_mach_arch_defs[i].addr_byte_size;
+                        MachOArchUpdated (i);
                         return true;
                     }
                 }
@@ -1767,8 +1878,8 @@ ArchSpec::SetArch (const char *arch_name)
                 // Default the cpu subtype to zero when we don't have a matching
                 // cpu type in our architecture defs structure (g_mach_arch_defs).
                 m_sub = 0;
+                MachOArchUpdated ();
                 return true;
-
             }
         }
     }
@@ -1781,17 +1892,17 @@ ArchSpec::GetDefaultEndian () const
 {
     switch (GetGenericCPUType ())
     {
-    case eCPU_ppc:
-    case eCPU_ppc64:
-        return eByteOrderBig;
-
-    case eCPU_arm:
-    case eCPU_i386:
-    case eCPU_x86_64:
-        return eByteOrderLittle;
-
-    default:
-        break;
+        case eCPU_ppc:
+        case eCPU_ppc64:
+            return eByteOrderBig;
+            
+        case eCPU_arm:
+        case eCPU_i386:
+        case eCPU_x86_64:
+            return eByteOrderLittle;
+            
+        default:
+            break;
     }
     return eByteOrderInvalid;
 }

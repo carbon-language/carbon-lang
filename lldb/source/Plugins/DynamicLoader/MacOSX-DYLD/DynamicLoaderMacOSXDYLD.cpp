@@ -424,7 +424,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
     m_dyld_all_image_infos.Clear();
     if (m_dyld_all_image_infos_addr != LLDB_INVALID_ADDRESS)
     {
-        ByteOrder byte_order = m_process->GetByteOrder();
+        ByteOrder byte_order = m_process->GetTarget().GetArchitecture().GetByteOrder();
         uint32_t addr_size = 4;
         if (m_dyld_all_image_infos_addr > UINT32_MAX)
             addr_size = 8;

@@ -1043,40 +1043,28 @@ ObjectFileELF::DumpDependentModules(lldb_private::Stream *s)
 }
 
 bool
-ObjectFileELF::GetTargetTriple(ConstString &target_triple)
+ObjectFileELF::GetArchitecture (ArchSpec &arch)
 {
-    static ConstString g_target_triple;
-
-    if (g_target_triple)
-    {
-        target_triple = g_target_triple;
-        return true;
-    }
-
-    std::string triple;
     switch (m_header.e_machine)
     {
     default:
         assert(false && "Unexpected machine type.");
         break;
-    case EM_SPARC:  triple.assign("sparc-"); break;
-    case EM_386:    triple.assign("i386-"); break;
-    case EM_68K:    triple.assign("68k-"); break;
-    case EM_88K:    triple.assign("88k-"); break;
-    case EM_860:    triple.assign("i860-"); break;
-    case EM_MIPS:   triple.assign("mips-"); break;
-    case EM_PPC:    triple.assign("powerpc-"); break;
-    case EM_PPC64:  triple.assign("powerpc64-"); break;
-    case EM_ARM:    triple.assign("arm-"); break;
-    case EM_X86_64: triple.assign("x86_64-"); break;
+    case EM_SPARC:  arch.GetTriple().setArchName("sparc"); break;
+    case EM_386:    arch.GetTriple().setArchName("i386"); break;
+    case EM_68K:    arch.GetTriple().setArchName("68k"); break;
+    case EM_88K:    arch.GetTriple().setArchName("88k"); break;
+    case EM_860:    arch.GetTriple().setArchName("i860"); break;
+    case EM_MIPS:   arch.GetTriple().setArchName("mips"); break;
+    case EM_PPC:    arch.GetTriple().setArchName("powerpc"); break;
+    case EM_PPC64:  arch.GetTriple().setArchName("powerpc64"); break;
+    case EM_ARM:    arch.GetTriple().setArchName("arm"); break;
+    case EM_X86_64: arch.GetTriple().setArchName("x86_64"); break;
     }
     // TODO: determine if there is a vendor in the ELF? Default to "linux" for now
-    triple += "linux-";
+    arch.GetTriple().setOSName ("linux");
     // TODO: determine if there is an OS in the ELF? Default to "gnu" for now
-    triple += "gnu";
-    g_target_triple.SetCString(triple.c_str());
-    target_triple = g_target_triple;
-
+    arch.GetTriple().setVendorName("gnu");
     return true;
 }
 

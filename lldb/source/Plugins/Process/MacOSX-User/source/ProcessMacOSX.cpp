@@ -443,39 +443,10 @@ ProcessMacOSX::DidLaunchOrAttach ()
         Module * exe_module = GetTarget().GetExecutableModule ().get();
         assert (exe_module);
 
-        m_arch_spec = exe_module->GetArchitecture();
-        assert (m_arch_spec.IsValid());
-
-        ObjectFile *exe_objfile = exe_module->GetObjectFile();
-        assert (exe_objfile);
-
-        m_byte_order = exe_objfile->GetByteOrder();
-        assert (m_byte_order != eByteOrderInvalid);
         // Install a signal handler so we can catch when our child process
         // dies and set the exit status correctly.
 
         m_monitor_thread = Host::StartMonitoringChildProcess (Process::SetProcessExitStatus, NULL, GetID(), false);
-
-        if (m_arch_spec == ArchSpec("arm"))
-        {
-            // On ARM we want the actual target triple of the OS to get the
-            // most capable ARM slice for the process. Since this plug-in is
-            // only used for doing native debugging this will work.
-            m_target_triple = Host::GetTargetTriple();
-        }
-        else
-        {
-            // We want the arch of the process, and the vendor and OS from the
-            // host OS.
-            StreamString triple;
-
-            triple.Printf("%s-%s-%s", 
-                          m_arch_spec.AsCString(), 
-                          Host::GetVendorString().AsCString("apple"), 
-                          Host::GetOSString().AsCString("darwin"));
-
-            m_target_triple.SetCString(triple.GetString().c_str());
-        }
     }
 }
 
@@ -881,12 +852,6 @@ ProcessMacOSX::DoDestroy ()
         Clear();
     }
     return error;
-}
-
-ByteOrder
-ProcessMacOSX::GetByteOrder () const
-{
-    return m_byte_order;
 }
 
 //------------------------------------------------------------------

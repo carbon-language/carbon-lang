@@ -222,38 +222,122 @@ Host::GetPageSize()
 }
 
 const ArchSpec &
-Host::GetArchitecture ()
+Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
 {
-    static ArchSpec g_host_arch;
-    if (!g_host_arch.IsValid())
-    {
+    static bool g_supports_32 = false;
+    static bool g_supports_64 = false;
+    static ArchSpec g_host_arch_32;
+    static ArchSpec g_host_arch_64;
+
 #if defined (__APPLE__)
+
+    // Apple is different in that it can support both 32 and 64 bit executables
+    // in the same operating system running concurrently. Here we detect the
+    // correct host architectures for both 32 and 64 bit including if 64 bit
+    // executables are supported on the system.
+
+    if (g_supports_32 == false && g_supports_64 == false)
+    {
+        // All apple systems support 32 bit execution.
+        g_supports_32 = true;
         uint32_t cputype, cpusubtype;
-        uint32_t is_64_bit_capable;
+        uint32_t is_64_bit_capable = false;
         size_t len = sizeof(cputype);
+        ArchSpec host_arch;
+        // These will tell us about the kernel architecture, which even on a 64
+        // bit machine can be 32 bit...
         if  (::sysctlbyname("hw.cputype", &cputype, &len, NULL, 0) == 0)
         {
-            len = sizeof(cpusubtype);
-            if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
-                g_host_arch.SetMachOArch (cputype, cpusubtype);
-            
+            len = sizeof (cpusubtype);
+            if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) != 0)
+                cpusubtype = CPU_TYPE_ANY;
+                
             len = sizeof (is_64_bit_capable);
             if  (::sysctlbyname("hw.cpu64bit_capable", &is_64_bit_capable, &len, NULL, 0) == 0)
             {
                 if (is_64_bit_capable)
+                    g_supports_64 = true;
+            }
+            
+            if (is_64_bit_capable)
+            {
+                if (cputype & CPU_ARCH_ABI64)
                 {
-                    if (cputype == CPU_TYPE_I386 && cpusubtype == CPU_SUBTYPE_486)
+                    // We have a 64 bit kernel on a 64 bit system
+                    g_host_arch_32.SetMachOArch (CPU_TYPE_I386, CPU_SUBTYPE_386);
+                    g_host_arch_64.SetMachOArch (cputype, cpusubtype);
+                }
+                else
+                {
+                    // We have a 32 bit kernel on a 64 bit system
+                    g_host_arch_32.SetMachOArch (cputype, cpusubtype);
+#if defined (__i386__) || defined (__x86_64__)
+                    if (cpusubtype == CPU_SUBTYPE_486)
                         cpusubtype = CPU_SUBTYPE_I386_ALL;
-
+#endif
                     cputype |= CPU_ARCH_ABI64;
+                    g_host_arch_64.SetMachOArch (cputype, cpusubtype);
                 }
             }
+            else
+            {
+                g_host_arch_32.SetMachOArch (cputype, cpusubtype);
+                g_host_arch_64.Clear();
+            }
         }
-#elif defined (__linux__)
-        g_host_arch.SetElfArch(7u, 144u);
+    }
+    
+#else // #if defined (__APPLE__)
+    
+    if (g_supports_32 == false && g_supports_64 == false)
+    {
+#if defined (__x86_64__)
+
+        g_host_arch_64.SetArch ("x86_64");
+        g_supports_32 = false;
+        g_supports_64 = true;
+
+#elif defined (__i386__)
+
+        g_host_arch.SetArch ("i386");
+        g_supports_32 = true;
+        g_supports_64 = false;
+
+#elif defined (__arm__)        
+
+        g_host_arch.SetArch ("arm");
+        g_supports_32 = true;
+        g_supports_64 = false;
+
+#elif defined (__ppc64__)
+
+        g_host_arch.SetArch ("ppc64");
+        g_supports_32 = false;
+        g_supports_64 = true;
+
+#elif defined (__powerpc__) || defined (__ppc__)
+        g_host_arch.SetArch ("ppc");
+        g_supports_32 = true;
+        g_supports_64 = false;
+
+#else
+
+#error undefined architecture, define your architecture here
+
 #endif
     }
-    return g_host_arch;
+    
+#endif // #else for #if defined (__APPLE__)
+    
+    if (arch_kind == eSystemDefaultArchitecture32)
+        return g_host_arch_32;
+    else if (arch_kind == eSystemDefaultArchitecture64)
+        return g_host_arch_64;
+
+    if (g_supports_64)
+        return g_host_arch_64;
+        
+    return g_host_arch_32;
 }
 
 const ConstString &

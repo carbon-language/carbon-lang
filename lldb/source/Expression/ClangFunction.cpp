@@ -17,6 +17,7 @@
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Module.h"
 
@@ -36,6 +37,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
@@ -48,13 +50,13 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 ClangFunction::ClangFunction 
 (
-    const char *target_triple, 
+    ExecutionContextScope *exe_scope,
     ClangASTContext *ast_context, 
     void *return_qualtype, 
     const Address& functionAddress, 
     const ValueList &arg_value_list
 ) :
-    m_target_triple (target_triple),
+    m_arch (),
     m_function_ptr (NULL),
     m_function_addr (functionAddress),
     m_function_return_qual_type(return_qualtype),
@@ -66,16 +68,22 @@ ClangFunction::ClangFunction
     m_compiled (false),
     m_JITted (false)
 {
+    if (exe_scope)
+    {
+        Target *target = exe_scope->CalculateTarget();
+        if (target)
+            m_arch = target->GetArchitecture();
+    }
 }
 
 ClangFunction::ClangFunction
 (
-    const char *target_triple, 
+    ExecutionContextScope *exe_scope,
     Function &function, 
     ClangASTContext *ast_context, 
     const ValueList &arg_value_list
 ) :
-    m_target_triple (target_triple),
+    m_arch (),
     m_function_ptr (&function),
     m_function_addr (),
     m_function_return_qual_type (),
@@ -87,6 +95,13 @@ ClangFunction::ClangFunction
     m_compiled (false),
     m_JITted (false)
 {
+    if (exe_scope)
+    {
+        Target *target = exe_scope->CalculateTarget();
+        if (target)
+            m_arch = target->GetArchitecture();
+    }
+
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
     m_function_return_qual_type = m_function_ptr->GetReturnType().GetClangType();
 }
@@ -212,7 +227,7 @@ ClangFunction::CompileFunction (Stream &errors)
         
     // Okay, now compile this expression
     
-    m_parser.reset(new ClangExpressionParser(m_target_triple.c_str(), NULL, *this));
+    m_parser.reset(new ClangExpressionParser(NULL, *this));
     
     num_errors = m_parser->Parse (errors);
     

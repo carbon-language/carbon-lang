@@ -47,7 +47,7 @@ public:
                     Value &value) const = 0;
     
     static ABI* 
-    FindPlugin (const ConstString &triple);
+    FindPlugin (const ArchSpec &arch);
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ABI can see and modify these

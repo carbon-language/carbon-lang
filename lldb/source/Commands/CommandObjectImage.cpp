@@ -342,7 +342,7 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
                     int addr_size = sizeof (addr_t);
                     Process *process = interpreter.GetDebugger().GetExecutionContext().process;
                     if (process)
-                        addr_size = process->GetAddressByteSize();
+                        addr_size = process->GetTarget().GetArchitecture().GetAddressByteSize();
                     if (vm_addr != LLDB_INVALID_ADDRESS)
                         strm.Address (vm_addr, addr_size);
                     else

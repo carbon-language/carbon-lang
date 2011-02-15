@@ -819,11 +819,11 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                 // Next make the runner function for our implementation utility function.
                 if (!m_impl_function.get())
                 {
-                     m_impl_function.reset(new ClangFunction(process->GetTargetTriple().GetCString(), 
-                                                             clang_ast_context, 
-                                                             clang_void_ptr_type, 
-                                                             impl_code_address, 
-                                                             dispatch_values));
+                     m_impl_function.reset(new ClangFunction (&thread,
+                                                              clang_ast_context, 
+                                                              clang_void_ptr_type, 
+                                                              impl_code_address, 
+                                                              dispatch_values));
                     
                     errors.Clear();        
                     unsigned num_errors = m_impl_function->CompileFunction(errors);

@@ -222,9 +222,6 @@ public:
     virtual lldb_private::Error
     DisableWatchpoint (lldb_private::WatchpointLocation *wp_loc);
 
-    virtual lldb::ByteOrder
-    GetByteOrder () const;
-
     virtual lldb_private::DynamicLoader *
     GetDynamicLoader ();
 

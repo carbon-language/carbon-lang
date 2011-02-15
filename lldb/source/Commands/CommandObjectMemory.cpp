@@ -260,7 +260,7 @@ public:
         if (item_byte_size == 0)
         {
             if (m_options.m_format == eFormatPointer)
-                item_byte_size = process->GetAddressByteSize();
+                item_byte_size = process->GetTarget().GetArchitecture().GetAddressByteSize();
             else
                 item_byte_size = 1;
         }
@@ -334,7 +334,9 @@ public:
             result.AppendWarningWithFormat("Not all bytes (%u/%u) were able to be read from 0x%llx.\n", bytes_read, total_byte_size, addr);
 
         result.SetStatus(eReturnStatusSuccessFinishResult);
-        DataExtractor data(data_sp, process->GetByteOrder(), process->GetAddressByteSize());
+        DataExtractor data (data_sp, 
+                            process->GetTarget().GetArchitecture().GetByteOrder(), 
+                            process->GetTarget().GetArchitecture().GetAddressByteSize());
 
         StreamFile outfile_stream;
         Stream *output_stream = NULL;
@@ -616,8 +618,8 @@ public:
         }
 
         StreamString buffer (Stream::eBinary,
-                             process->GetAddressByteSize(),
-                             process->GetByteOrder());
+                             process->GetTarget().GetArchitecture().GetAddressByteSize(),
+                             process->GetTarget().GetArchitecture().GetByteOrder());
 
         size_t item_byte_size = m_options.m_byte_size;
 

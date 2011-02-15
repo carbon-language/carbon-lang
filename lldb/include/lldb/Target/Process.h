@@ -417,6 +417,7 @@ public:
     void
     UpdateInstanceName ();
 
+    
     //------------------------------------------------------------------
     /// Construct with a shared pointer to a target, and the Process listener.
     //------------------------------------------------------------------
@@ -473,6 +474,12 @@ public:
                           lldb::pid_t pid,        // The process ID we want to monitor
                           int signo,              // Zero for no signal
                           int status);            // Exit value of process if signal is zero
+
+    lldb::ByteOrder
+    GetByteOrder () const;
+    
+    uint32_t
+    GetAddressByteSize () const;
 
     //------------------------------------------------------------------
     /// Check if a plug-in instance can debug the file in \a module.
@@ -649,15 +656,6 @@ public:
     virtual ArchSpec
     GetArchSpecForExistingProcess (const char *process_name);
 
-    uint32_t
-    GetAddressByteSize();
-
-    void
-    SetAddressByteSize (uint32_t addr_byte_size)
-    {
-        m_addr_byte_size = addr_byte_size;
-    }
-
     //------------------------------------------------------------------
     /// Get the image information address for the current process.
     ///
@@ -821,8 +819,10 @@ public:
     Signal (int signal);
 
     virtual UnixSignals &
-    GetUnixSignals ();
-
+    GetUnixSignals ()
+    {
+        return m_unix_signals;
+    }
 
     //==================================================================
     // Plug-in Process Control Overrides
@@ -1179,7 +1179,10 @@ public:
     ///     module.
     //------------------------------------------------------------------
     Target &
-    GetTarget ();
+    GetTarget ()
+    {
+        return m_target;
+    }
 
     //------------------------------------------------------------------
     /// Get the const target object pointer for this module.
@@ -1189,7 +1192,11 @@ public:
     ///     module.
     //------------------------------------------------------------------
     const Target &
-    GetTarget () const;
+    GetTarget () const
+    {
+        return m_target;
+    }
+
 
     //------------------------------------------------------------------
     /// Get accessor for the current process state.
@@ -1652,10 +1659,16 @@ public:
     UpdateThreadListIfNeeded () = 0;
 
     ThreadList &
-    GetThreadList ();
+    GetThreadList ()
+    {
+        return m_thread_list;
+    }
 
     const ThreadList &
-    GetThreadList () const;
+    GetThreadList () const
+    {
+        return m_thread_list;
+    }
 
     uint32_t
     GetNextThreadIndexID ();
@@ -1739,30 +1752,6 @@ protected:
     ShouldBroadcastEvent (Event *event_ptr);
 
 public:
-    //------------------------------------------------------------------
-    /// Gets the byte order for this process.
-    ///
-    /// @return
-    ///     A valid ByteOrder enumeration, or eByteOrderInvalid.
-    //------------------------------------------------------------------
-    lldb::ByteOrder
-    GetByteOrder () const
-    {
-        return m_byte_order;
-    }
-    
-    void
-    SetByteOrder (lldb::ByteOrder byte_order)
-    {
-        m_byte_order = byte_order;
-    }
-
-    const ConstString &
-    GetTargetTriple ()
-    {
-        return m_target_triple;
-    }
-
     const ABI *
     GetABI ();
 
@@ -1807,16 +1796,28 @@ public:
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
     virtual Target *
-    CalculateTarget ();
+    CalculateTarget ()
+    {
+        return &m_target;
+    }
 
     virtual Process *
-    CalculateProcess ();
+    CalculateProcess ()
+    {
+        return this;
+    }
 
     virtual Thread *
-    CalculateThread ();
+    CalculateThread ()
+    {
+        return NULL;
+    }
 
     virtual StackFrame *
-    CalculateStackFrame ();
+    CalculateStackFrame ()
+    {
+        return NULL;
+    }
 
     virtual void
     CalculateExecutionContext (ExecutionContext &exe_ctx);
@@ -1941,9 +1942,6 @@ protected:
                                                         ///< to insert in the target.
     std::auto_ptr<DynamicCheckerFunctions>  m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
-    ConstString                 m_target_triple;
-    lldb::ByteOrder             m_byte_order;           /// The byte order of the process. Should be set in DidLaunch/DidAttach.
-    uint32_t                    m_addr_byte_size;       /// The size in bytes of an address/pointer for the inferior process. Should be set in DidLaunch/DidAttach.
     lldb::ABISP                 m_abi_sp;
     lldb::InputReaderSP         m_process_input_reader;
     lldb_private::Communication m_stdio_communication;

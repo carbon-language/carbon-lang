@@ -17,7 +17,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 EmulateInstruction*
-EmulateInstruction::FindPlugin (const ConstString &triple, const char *plugin_name)
+EmulateInstruction::FindPlugin (const ArchSpec &arch, const char *plugin_name)
 {
     EmulateInstructionCreateInstance create_callback = NULL;
     if (plugin_name)
@@ -25,7 +25,7 @@ EmulateInstruction::FindPlugin (const ConstString &triple, const char *plugin_na
         create_callback  = PluginManager::GetEmulateInstructionCreateCallbackForPluginName (plugin_name);
         if (create_callback)
         {
-            std::auto_ptr<EmulateInstruction> instance_ap(create_callback(triple));
+            std::auto_ptr<EmulateInstruction> instance_ap(create_callback(arch));
             if (instance_ap.get())
                 return instance_ap.release();
         }
@@ -34,7 +34,7 @@ EmulateInstruction::FindPlugin (const ConstString &triple, const char *plugin_na
     {
         for (uint32_t idx = 0; (create_callback = PluginManager::GetEmulateInstructionCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            std::auto_ptr<EmulateInstruction> instance_ap(create_callback(triple));
+            std::auto_ptr<EmulateInstruction> instance_ap(create_callback(arch));
             if (instance_ap.get())
                 return instance_ap.release();
         }

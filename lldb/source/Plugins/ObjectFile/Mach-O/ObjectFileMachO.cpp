@@ -1436,15 +1436,11 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
 }
 
 bool
-ObjectFileMachO::GetTargetTriple (ConstString &target_triple)
+ObjectFileMachO::GetArchitecture (ArchSpec &arch)
 {
     lldb_private::Mutex::Locker locker(m_mutex);
-    std::string triple(GetModule()->GetArchitecture().AsCString());
-    triple += "-apple-darwin";
-    target_triple.SetCString(triple.c_str());
-    if (target_triple)
-        return true;
-    return false;
+    arch.SetMachOArch(m_header.cputype, m_header.cpusubtype);
+    return true;
 }
 
 

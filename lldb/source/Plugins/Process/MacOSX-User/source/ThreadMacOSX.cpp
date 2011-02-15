@@ -107,7 +107,9 @@ ThreadMacOSX::GetDispatchQueueName()
 
         uint8_t memory_buffer[8];
         addr_t dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
-        DataExtractor data(memory_buffer, sizeof(memory_buffer), m_process.GetByteOrder(), m_process.GetAddressByteSize());
+        DataExtractor data (memory_buffer, sizeof(memory_buffer), 
+                            m_process.GetTarget().GetArchitecture().GetByteOrder(), 
+                            m_process.GetTarget().GetArchitecture().GetAddressByteSize());
         static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
         const Symbol *dispatch_queue_offsets_symbol = NULL;
         ModuleSP module_sp(m_process.GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib", false)));
@@ -476,6 +478,8 @@ ThreadMacOSX::ThreadWillResume (StateType resume_state)
     case eStateRunning:
     case eStateStepping:
         Resume();
+        break;
+    default:
         break;
     }
     m_context->ThreadWillResume();

@@ -638,7 +638,7 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 
         BuildDynamicRegisterInfo (false);
 
-        m_byte_order = m_gdb_comm.GetByteOrder();
+        m_target.GetArchitecture().SetByteOrder (m_gdb_comm.GetByteOrder());
 
         StreamString strm;
 
@@ -656,33 +656,16 @@ ProcessGDBRemote::DidLaunchOrAttach ()
         // defacto architecture in this case.
 
         if (gdb_remote_arch == ArchSpec ("arm") && 
-            vendor != NULL && 
-            strcmp(vendor, "apple") == 0)
+            vendor && ::strcmp(vendor, "apple") == 0)
         {
             GetTarget().SetArchitecture (gdb_remote_arch);
             target_arch = gdb_remote_arch;
         }
         
-        if (!target_arch.IsValid())
-            target_arch = gdb_remote_arch;
-
-        if (target_arch.IsValid())
-        {
-            if (vendor == NULL)
-                vendor = Host::GetVendorString().AsCString("apple");
-            
-            if (os_type == NULL)
-                os_type = Host::GetOSString().AsCString("darwin");
-
-            strm.Printf ("%s-%s-%s", target_arch.AsCString(), vendor, os_type);
-
-            std::transform (strm.GetString().begin(), 
-                            strm.GetString().end(), 
-                            strm.GetString().begin(), 
-                            ::tolower);
-
-            m_target_triple.SetCString(strm.GetString().c_str());
-        }
+        if (vendor)
+            m_target.GetArchitecture().GetTriple().setVendorName(vendor);
+        if (os_type)
+            m_target.GetArchitecture().GetTriple().setOSName(os_type);
     }
 }
 
@@ -2557,7 +2540,10 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
         }
 
         uint8_t memory_buffer[8];
-        DataExtractor data(memory_buffer, sizeof(memory_buffer), GetByteOrder(), GetAddressByteSize());
+        DataExtractor data (memory_buffer, 
+                            sizeof(memory_buffer), 
+                            m_target.GetArchitecture().GetByteOrder(), 
+                            m_target.GetArchitecture().GetAddressByteSize());
 
         // Excerpt from src/queue_private.h
         struct dispatch_queue_offsets_s

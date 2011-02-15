@@ -910,7 +910,7 @@ StackFrame::Dump (Stream *strm, bool show_frame_index, bool show_fullpaths)
 
     if (show_frame_index)
         strm->Printf("frame #%u: ", m_frame_index);
-    strm->Printf("0x%0*llx ", m_thread.GetProcess().GetAddressByteSize() * 2, GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess().GetTarget()));
+    strm->Printf("0x%0*llx ", m_thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize() * 2, GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess().GetTarget()));
     GetSymbolContext(eSymbolContextEverything);
     const bool show_module = true;
     const bool show_inline = true;

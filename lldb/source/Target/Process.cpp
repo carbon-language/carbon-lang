@@ -229,9 +229,6 @@ Process::Process(Target &target, Listener &listener) :
     m_breakpoint_site_list (),
     m_dynamic_checkers_ap (),
     m_unix_signals (),
-    m_target_triple (),
-    m_byte_order (lldb::endian::InlHostByteOrder()),
-    m_addr_byte_size (0),
     m_abi_sp (),
     m_process_input_reader (),
     m_stdio_communication ("process.stdio"),
@@ -857,15 +854,8 @@ Process::GetDynamicLoader()
 const ABI *
 Process::GetABI()
 {
-    ConstString& triple = m_target_triple;
-
-    if (triple.IsEmpty())
-        return NULL;
-
     if (m_abi_sp.get() == NULL)
-    {
-        m_abi_sp.reset(ABI::FindPlugin(triple));
-    }
+        m_abi_sp.reset(ABI::FindPlugin(m_target.GetArchitecture()));
 
     return m_abi_sp.get();
 }
@@ -1317,7 +1307,10 @@ Process::ReadUnsignedInteger (lldb::addr_t vm_addr, size_t integer_byte_size, Er
     else
     {
         uint8_t tmp[sizeof(uint64_t)];
-        DataExtractor data (tmp, integer_byte_size, GetByteOrder(), GetAddressByteSize());
+        DataExtractor data (tmp, 
+                            integer_byte_size, 
+                            m_target.GetArchitecture().GetByteOrder(), 
+                            m_target.GetArchitecture().GetAddressByteSize());
         if (ReadMemory (vm_addr, tmp, integer_byte_size, error) == integer_byte_size)
         {
             uint32_t offset = 0;
@@ -1509,7 +1502,6 @@ Process::Launch
 )
 {
     Error error;
-    m_target_triple.Clear();
     m_abi_sp.reset();
     m_process_input_reader.reset();
 
@@ -1666,7 +1658,6 @@ Error
 Process::Attach (lldb::pid_t attach_pid)
 {
 
-    m_target_triple.Clear();
     m_abi_sp.reset();
     m_process_input_reader.reset();
 
@@ -1710,7 +1701,6 @@ Process::Attach (lldb::pid_t attach_pid)
 Error
 Process::Attach (const char *process_name, bool wait_for_launch)
 {
-    m_target_triple.Clear();
     m_abi_sp.reset();
     m_process_input_reader.reset();
     
@@ -1756,7 +1746,6 @@ Process::Attach (const char *process_name, bool wait_for_launch)
 Error
 Process::ConnectRemote (const char *remote_url)
 {
-    m_target_triple.Clear();
     m_abi_sp.reset();
     m_process_input_reader.reset();
     
@@ -1975,31 +1964,18 @@ Process::Signal (int signal)
     return error;
 }
 
-UnixSignals &
-Process::GetUnixSignals ()
+lldb::ByteOrder
+Process::GetByteOrder () const
 {
-    return m_unix_signals;
-}
-
-Target &
-Process::GetTarget ()
-{
-    return m_target;
-}
-
-const Target &
-Process::GetTarget () const
-{
-    return m_target;
+    return m_target.GetArchitecture().GetByteOrder();
 }
 
 uint32_t
-Process::GetAddressByteSize()
+Process::GetAddressByteSize () const
 {
-    if (m_addr_byte_size == 0)
-        return m_target.GetArchitecture().GetAddressByteSize();
-    return m_addr_byte_size;
+    return m_target.GetArchitecture().GetAddressByteSize();
 }
+
 
 bool
 Process::ShouldBroadcastEvent (Event *event_ptr)
@@ -2109,22 +2085,6 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
     if (log)
         log->Printf ("Process::ShouldBroadcastEvent (%p) => %s", event_ptr, StateAsCString(state), return_value ? "YES" : "NO");
     return return_value;
-}
-
-//------------------------------------------------------------------
-// Thread Queries
-//------------------------------------------------------------------
-
-ThreadList &
-Process::GetThreadList ()
-{
-    return m_thread_list;
-}
-
-const ThreadList &
-Process::GetThreadList () const
-{
-    return m_thread_list;
 }
 
 
@@ -2515,30 +2475,6 @@ Process::ProcessEventData::SetUpdateStateOnRemoval (Event *event_ptr)
         return true;
     }
     return false;
-}
-
-Target *
-Process::CalculateTarget ()
-{
-    return &m_target;
-}
-
-Process *
-Process::CalculateProcess ()
-{
-    return this;
-}
-
-Thread *
-Process::CalculateThread ()
-{
-    return NULL;
-}
-
-StackFrame *
-Process::CalculateStackFrame ()
-{
-    return NULL;
 }
 
 void

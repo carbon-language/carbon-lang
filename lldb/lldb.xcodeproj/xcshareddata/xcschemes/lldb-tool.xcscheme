@@ -31,6 +31,10 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "/Volumes/work/gclayton/Documents/src/attach/a.out"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-a i386 /Volumes/work/gclayton/Documents/src/lldb/test/macosx/universal/testit"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
@@ -89,6 +93,10 @@
             argument = "/Volumes/work/gclayton/Documents/src/attach/a.out"
             isEnabled = "YES">
          </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-a i386 /Volumes/work/gclayton/Documents/src/lldb/test/macosx/universal/testit"
+            isEnabled = "NO">
+         </CommandLineArgument>
       </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
@@ -144,6 +152,10 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "/Volumes/work/gclayton/Documents/src/attach/a.out"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-a i386 /Volumes/work/gclayton/Documents/src/lldb/test/macosx/universal/testit"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

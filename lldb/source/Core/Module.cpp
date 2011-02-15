@@ -102,11 +102,11 @@ Module::GetClangASTContext ()
     if (m_did_init_ast == false)
     {
         ObjectFile * objfile = GetObjectFile();
-        ConstString target_triple;
-        if (objfile && objfile->GetTargetTriple(target_triple))
+        ArchSpec object_arch;
+        if (objfile && objfile->GetArchitecture(object_arch))
         {
             m_did_init_ast = true;
-            m_ast.SetTargetTriple (target_triple.AsCString());
+            m_ast.SetArchitecture (object_arch);
         }
     }
     return m_ast;

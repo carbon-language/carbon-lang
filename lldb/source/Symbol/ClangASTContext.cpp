@@ -54,6 +54,7 @@
 #include <assert.h>
 #endif
 
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/Log.h"
@@ -393,6 +394,13 @@ ClangASTContext::SetTargetTriple (const char *target_triple)
 {
     Clear();
     m_target_triple.assign(target_triple);
+}
+
+void
+ClangASTContext::SetArchitecture (const ArchSpec &arch)
+{
+    Clear();
+    m_target_triple.assign(arch.GetTriple().str());
 }
 
 bool

@@ -42,11 +42,11 @@ GetByteOrderAndAddressSize (ExecutionContextScope *exe_scope, const Address &add
     if (exe_scope == NULL)
         return false;
 
-    Process *process = exe_scope->CalculateProcess();
-    if (process)
+    Target *target = exe_scope->CalculateTarget();
+    if (target)
     {
-        byte_order = process->GetByteOrder();
-        addr_size = process->GetAddressByteSize();
+        byte_order = target->GetArchitecture().GetByteOrder();
+        addr_size = target->GetArchitecture().GetAddressByteSize();
     }
 
     if (byte_order == eByteOrderInvalid || addr_size == 0)
@@ -54,7 +54,7 @@ GetByteOrderAndAddressSize (ExecutionContextScope *exe_scope, const Address &add
         Module *module = address.GetModule();
         if (module)
         {
-            byte_order = module->GetArchitecture().GetDefaultEndian();
+            byte_order = module->GetArchitecture().GetByteOrder();
             addr_size = module->GetArchitecture().GetAddressByteSize();
         }
     }
@@ -313,7 +313,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     if (addr_size == UINT32_MAX)
     {
         if (process)
-            addr_size = process->GetAddressByteSize ();
+            addr_size = target->GetArchitecture().GetAddressByteSize ();
         else
             addr_size = sizeof(addr_t);
     }
@@ -387,8 +387,8 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 
             uint32_t pointer_size = 4;
             Module *module = GetModule();
-            if (process)
-                pointer_size = process->GetAddressByteSize();
+            if (target)
+                pointer_size = target->GetArchitecture().GetAddressByteSize();
             else if (module)
                 pointer_size = module->GetArchitecture().GetAddressByteSize();
 

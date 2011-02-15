@@ -105,7 +105,7 @@ public:
     Dump(lldb_private::Stream *s);
 
     virtual bool
-    GetTargetTriple(lldb_private::ConstString &target_triple);
+    GetArchitecture (lldb_private::ArchSpec &arch);
 
     virtual bool
     GetUUID(lldb_private::UUID* uuid);

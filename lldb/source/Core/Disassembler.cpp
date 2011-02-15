@@ -436,16 +436,8 @@ Disassembler::ParseInstructions
             heap_buffer->SetByteSize (bytes_read);
 
         data.SetData(data_sp);
-        if (exe_ctx->process)
-        {
-            data.SetByteOrder(exe_ctx->process->GetByteOrder());
-            data.SetAddressByteSize(exe_ctx->process->GetAddressByteSize());
-        }
-        else
-        {
-            data.SetByteOrder(target->GetArchitecture().GetDefaultEndian());
-            data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
-        }
+        data.SetByteOrder(target->GetArchitecture().GetByteOrder());
+        data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
         return DecodeInstructions (range.GetBaseAddress(), data, 0, UINT32_MAX);
     }
 

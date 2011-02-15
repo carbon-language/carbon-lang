@@ -3270,7 +3270,10 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
     strm << "endian:pdp;";
 #endif
 
-    strm << "ptrsize:" << std::dec << sizeof(void *) << ';';
+    if (promoted_to_64)
+        strm << "ptrsize:8;";
+    else
+        strm << "ptrsize:" << std::dec << sizeof(void *) << ';';
     return SendPacket (strm.str());
 }
 

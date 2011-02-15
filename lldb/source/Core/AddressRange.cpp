@@ -143,8 +143,8 @@ AddressRange::Dump(Stream *s, Target *target, Address::DumpStyle style, Address:
 {
     addr_t vmaddr = LLDB_INVALID_ADDRESS;
     int addr_size = sizeof (addr_t);
-    if (target && target->GetProcessSP())
-        addr_size = target->GetProcessSP()->GetAddressByteSize ();
+    if (target)
+        addr_size = target->GetArchitecture().GetAddressByteSize ();
 
     bool show_module = false;
     switch (style)

@@ -365,10 +365,28 @@ public:
     ///     A list of Module objects in a module list.
     //------------------------------------------------------------------
     ModuleList&
-    GetImages ();
+    GetImages ()
+    {
+        return m_images;
+    }
 
-    ArchSpec
-    GetArchitecture () const;
+    const ModuleList&
+    GetImages () const
+    {
+        return m_images;
+    }
+
+    ArchSpec &
+    GetArchitecture ()
+    {
+        return m_arch_spec;
+    }
+    
+    const ArchSpec &
+    GetArchitecture () const
+    {
+        return m_arch_spec;
+    }
     
     //------------------------------------------------------------------
     /// Set the architecture for this target.
@@ -396,9 +414,6 @@ public:
     {
         return m_debugger;
     }
-
-    bool
-    GetTargetTriple (ConstString &target_triple);
 
     size_t
     ReadMemoryFromFileCache (const Address& addr, 
@@ -505,7 +520,6 @@ protected:
     // we can correctly tear down everything that we need to, so the only
     // class that knows about the process lifespan is this target class.
     lldb::ProcessSP m_process_sp;
-    ConstString     m_triple;       ///< The target triple ("x86_64-apple-darwin10")
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
     std::auto_ptr<ClangASTContext> m_scratch_ast_context_ap;

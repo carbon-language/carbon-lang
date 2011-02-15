@@ -371,7 +371,7 @@ SBProcess::GetAddressByteSize () const
 {
     uint32_t size = 0;
     if (m_opaque_sp)
-        size =  m_opaque_sp->GetAddressByteSize();
+        size =  m_opaque_sp->GetTarget().GetArchitecture().GetAddressByteSize();
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)

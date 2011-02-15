@@ -58,12 +58,11 @@ UnwindTable::Initialize ()
     }
     
     ArchSpec arch;
-    ConstString str;
-    m_object_file.GetTargetTriple (str);
-    arch.SetArchFromTargetTriple (str.GetCString());
-    m_assembly_profiler = UnwindAssemblyProfiler::FindPlugin (arch);
-
-    m_initialized = true;
+    if (m_object_file.GetArchitecture (arch))
+    {
+        m_assembly_profiler = UnwindAssemblyProfiler::FindPlugin (arch);
+        m_initialized = true;
+    }
 }
 
 UnwindTable::~UnwindTable ()

@@ -18,6 +18,7 @@
 // Project includes
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Address.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Expression/ClangExpression.h"
@@ -69,9 +70,9 @@ public:
 	//------------------------------------------------------------------
 	/// Constructor
     ///
-    /// @param[in] target_triple
-    ///     The LLVM-style target triple for the target in which the
-    ///     function is to be executed.
+    /// @param[in] exe_scope
+    ///     An execution context scope that gets us a target and/or 
+    ///     process (possibly neither.).
     ///
     /// @param[in] function_ptr
     ///     The default function to be called.  Can be overridden using
@@ -84,17 +85,17 @@ public:
     ///     The default values to use when calling this function.  Can
     ///     be overridden using WriteFunctionArguments().
 	//------------------------------------------------------------------  
-	ClangFunction(const char *target_triple, 
-                  Function &function_ptr, 
-                  ClangASTContext *ast_context, 
-                  const ValueList &arg_value_list);
+	ClangFunction (ExecutionContextScope *exe_scope,
+                   Function &function_ptr, 
+                   ClangASTContext *ast_context, 
+                   const ValueList &arg_value_list);
     
     //------------------------------------------------------------------
 	/// Constructor
     ///
-    /// @param[in] target_triple
-    ///     The LLVM-style target triple for the target in which the
-    ///     function is to be executed.
+    /// @param[in] exe_scope
+    ///     An execution context scope that gets us a target and/or 
+    ///     process (possibly neither.).
     ///
     /// @param[in] ast_context
     ///     The AST context to evaluate argument types in.
@@ -110,11 +111,11 @@ public:
     ///     The default values to use when calling this function.  Can
     ///     be overridden using WriteFunctionArguments().
 	//------------------------------------------------------------------
-	ClangFunction(const char *target_triple, 
-                  ClangASTContext *ast_context, 
-                  void *return_qualtype, 
-                  const Address& function_address, 
-                  const ValueList &arg_value_list);
+	ClangFunction (ExecutionContextScope *exe_scope,
+                   ClangASTContext *ast_context, 
+                   void *return_qualtype, 
+                   const Address& function_address, 
+                   const ValueList &arg_value_list);
     
     //------------------------------------------------------------------
 	/// Destructor
@@ -613,7 +614,7 @@ private:
     Address                         m_function_addr;                ///< If we don't have the FunctionSP, we at least need the address & return type.
     void                           *m_function_return_qual_type;    ///< The opaque clang qual type for the function return type.
     ClangASTContext                *m_clang_ast_context;            ///< This is the clang_ast_context that we're getting types from the and value, and the function return the function pointer is NULL.
-    std::string                     m_target_triple;                ///< The target triple to compile the wrapper function for.
+    ArchSpec                        m_arch;                         ///< The target triple to compile the wrapper function for.
 
     std::string                     m_wrapper_function_name;        ///< The name of the wrapper function.
     std::string                     m_wrapper_function_text;        ///< The contents of the wrapper function.

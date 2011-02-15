@@ -104,6 +104,9 @@ public:
     void
     SetTargetTriple (const char *target_triple);
 
+    void
+    SetArchitecture (const ArchSpec &arch);
+
     bool
     HasExternalSource ();
 

@@ -16,13 +16,13 @@
 
 namespace lldb_private
 {
-    typedef ABI* (*ABICreateInstance) (const ConstString &triple);
+    typedef ABI* (*ABICreateInstance) (const ArchSpec &arch);
     typedef Disassembler* (*DisassemblerCreateInstance) (const ArchSpec &arch);
     typedef DynamicLoader* (*DynamicLoaderCreateInstance) (Process* process);
     typedef ObjectContainer* (*ObjectContainerCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec *file, lldb::addr_t offset, lldb::addr_t length);
     typedef ObjectFile* (*ObjectFileCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec* file, lldb::addr_t offset, lldb::addr_t length);
     typedef LogChannel* (*LogChannelCreateInstance) ();
-    typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ConstString &triple);
+    typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch);
     typedef LanguageRuntime *(*LanguageRuntimeCreateInstance) (Process *process, lldb::LanguageType language);
     typedef Process* (*ProcessCreateInstance) (Target &target, Listener &listener);
     typedef SymbolFile* (*SymbolFileCreateInstance) (ObjectFile* obj_file);

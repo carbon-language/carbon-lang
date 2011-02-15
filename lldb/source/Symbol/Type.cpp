@@ -25,6 +25,7 @@
 
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -355,7 +356,8 @@ Type::DumpValueInMemory
     if (address != LLDB_INVALID_ADDRESS)
     {
         DataExtractor data;
-        data.SetByteOrder (exe_ctx->process->GetByteOrder());
+        if (exe_ctx->target)
+            data.SetByteOrder (exe_ctx->target->GetArchitecture().GetByteOrder());
         if (ReadFromMemory (exe_ctx, address, address_type, data))
         {
             DumpValue(exe_ctx, s, data, 0, show_types, show_summary, verbose);

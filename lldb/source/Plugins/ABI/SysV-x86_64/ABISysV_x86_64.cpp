@@ -42,15 +42,11 @@ ABISysV_x86_64::GetRedZoneSize () const
 // Static Functions
 //------------------------------------------------------------------
 lldb_private::ABI *
-ABISysV_x86_64::CreateInstance (const ConstString &triple)
+ABISysV_x86_64::CreateInstance (const ArchSpec &arch)
 {
-    llvm::StringRef tripleStr(triple.GetCString());
-    llvm::Triple llvmTriple(tripleStr);
-
-    if (llvmTriple.getArch() != llvm::Triple::x86_64)
-        return NULL;
-
-    return new ABISysV_x86_64;
+    if (arch.GetTriple().getArch() == llvm::Triple::x86_64)
+        return new ABISysV_x86_64;
+    return NULL;
 }
 
 bool
@@ -227,7 +223,9 @@ static bool ReadIntegerArgument(Scalar           &scalar,
         uint8_t arg_data[sizeof(arg_contents)];
         Error error;
         thread.GetProcess().ReadMemory(current_stack_argument, arg_data, sizeof(arg_contents), error);
-        DataExtractor arg_data_extractor(arg_data, sizeof(arg_contents), thread.GetProcess().GetByteOrder(), thread.GetProcess().GetAddressByteSize());
+        DataExtractor arg_data_extractor (arg_data, sizeof(arg_contents), 
+                                          thread.GetProcess().GetTarget().GetArchitecture().GetByteOrder(), 
+                                          thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
         uint32_t offset = 0;
         arg_contents = arg_data_extractor.GetMaxU64(&offset, bit_width / 8);
         if (!offset)

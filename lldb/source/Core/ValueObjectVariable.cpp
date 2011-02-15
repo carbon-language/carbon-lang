@@ -104,10 +104,10 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
     lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
     ExecutionContext exe_ctx (exe_scope);
     
-    if (exe_ctx.process)
+    if (exe_ctx.target)
     {
-        m_data.SetByteOrder(exe_ctx.process->GetByteOrder());
-        m_data.SetAddressByteSize(exe_ctx.process->GetAddressByteSize());
+        m_data.SetByteOrder(exe_ctx.target->GetArchitecture().GetByteOrder());
+        m_data.SetAddressByteSize(exe_ctx.target->GetArchitecture().GetAddressByteSize());
     }
 
     if (expr.IsLocationList())

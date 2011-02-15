@@ -328,6 +328,10 @@ public:
                         if (synchronous_execution)
                         {
                             state = process->WaitForProcessToStop (NULL);
+                            if (!StateIsStoppedState(state));
+                            {
+                                result.AppendErrorWithFormat ("Process isn't stopped: %s", StateAsCString(state));
+                            }                    
                             result.SetDidChangeProcessState (true);
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
@@ -336,8 +340,23 @@ public:
                             result.SetStatus (eReturnStatusSuccessContinuingNoResult);
                         }
                     }
+                    else
+                    {
+                        result.AppendErrorWithFormat ("Process resume at entry point failed: %s", error.AsCString());
+                        result.SetStatus (eReturnStatusFailed);
+                    }                    
                 }
+                else
+                {
+                    result.AppendErrorWithFormat ("Initial process state wasn't stopped: %s", StateAsCString(state));
+                    result.SetStatus (eReturnStatusFailed);
+                }                    
             }
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("Process launch failed: %s", error.AsCString());
+            result.SetStatus (eReturnStatusFailed);
         }
 
         return result.Succeeded();

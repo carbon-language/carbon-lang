@@ -1208,9 +1208,7 @@ Debugger::FormatPrompt
 
                                     if (vaddr != LLDB_INVALID_ADDRESS)
                                     {
-                                        int addr_width = 0;
-                                        if (exe_ctx && exe_ctx->process)
-                                            addr_width = exe_ctx->process->GetAddressByteSize() * 2;
+                                        int addr_width = target->GetArchitecture().GetAddressByteSize() * 2;
                                         if (addr_width == 0)
                                             addr_width = 16;
                                         s.Printf("0x%*.*llx", addr_width, addr_width, vaddr);

@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+#include "llvm/ADT/Triple.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/Log.h"

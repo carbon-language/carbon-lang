@@ -131,7 +131,7 @@ public:
     
     
     virtual bool
-    SetTargetTriple (const ConstString &triple);
+    SetArchitecture (const ArchSpec &arch);
 
     virtual bool 
     ReadInstruction ();

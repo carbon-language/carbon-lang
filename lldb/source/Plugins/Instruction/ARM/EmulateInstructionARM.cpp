@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #include "EmulateInstructionARM.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
 
 #include "Plugins/Process/Utility/ARMDefines.h"
@@ -3620,38 +3621,22 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
 }
 
 bool
-EmulateInstructionARM::SetTargetTriple (const ConstString &triple)
+EmulateInstructionARM::SetArchitecture (const ArchSpec &arch)
 {
     m_arm_isa = 0;
-    const char *triple_cstr = triple.GetCString();
-    if (triple_cstr)
+    const char *arch_cstr = arch.AsCString ();
+    if (arch_cstr)
     {
-        const char *dash = ::strchr (triple_cstr, '-');
-        if (dash)
-        {
-            std::string arch (triple_cstr, dash);
-            const char *arch_cstr = arch.c_str();
-            if (strcasecmp(arch_cstr, "armv4t") == 0)
-                m_arm_isa = ARMv4T;
-            else if (strcasecmp(arch_cstr, "armv4") == 0)
-                m_arm_isa = ARMv4;
-            else if (strcasecmp(arch_cstr, "armv5tej") == 0)
-                m_arm_isa = ARMv5TEJ;
-            else if (strcasecmp(arch_cstr, "armv5te") == 0)
-                m_arm_isa = ARMv5TE;
-            else if (strcasecmp(arch_cstr, "armv5t") == 0)
-                m_arm_isa = ARMv5T;
-            else if (strcasecmp(arch_cstr, "armv6k") == 0)
-                m_arm_isa = ARMv6K;
-            else if (strcasecmp(arch_cstr, "armv6") == 0)
-                m_arm_isa = ARMv6;
-            else if (strcasecmp(arch_cstr, "armv6t2") == 0)
-                m_arm_isa = ARMv6T2;
-            else if (strcasecmp(arch_cstr, "armv7") == 0)
-                m_arm_isa = ARMv7;
-            else if (strcasecmp(arch_cstr, "armv8") == 0)
-                m_arm_isa = ARMv8;
-        }
+        if      (0 == ::strcasecmp(arch_cstr, "armv4t"))    m_arm_isa = ARMv4T;
+        else if (0 == ::strcasecmp(arch_cstr, "armv4"))     m_arm_isa = ARMv4;
+        else if (0 == ::strcasecmp(arch_cstr, "armv5tej"))  m_arm_isa = ARMv5TEJ;
+        else if (0 == ::strcasecmp(arch_cstr, "armv5te"))   m_arm_isa = ARMv5TE;
+        else if (0 == ::strcasecmp(arch_cstr, "armv5t"))    m_arm_isa = ARMv5T;
+        else if (0 == ::strcasecmp(arch_cstr, "armv6k"))    m_arm_isa = ARMv6K;
+        else if (0 == ::strcasecmp(arch_cstr, "armv6"))     m_arm_isa = ARMv6;
+        else if (0 == ::strcasecmp(arch_cstr, "armv6t2"))   m_arm_isa = ARMv6T2;
+        else if (0 == ::strcasecmp(arch_cstr, "armv7"))     m_arm_isa = ARMv7;
+        else if (0 == ::strcasecmp(arch_cstr, "armv8"))     m_arm_isa = ARMv8;
     }
     return m_arm_isa != 0;
 }

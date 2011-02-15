@@ -41,15 +41,12 @@ ABIMacOSX_i386::GetRedZoneSize () const
 // Static Functions
 //------------------------------------------------------------------
 lldb_private::ABI *
-ABIMacOSX_i386::CreateInstance (const ConstString &triple)
+ABIMacOSX_i386::CreateInstance (const ArchSpec &arch)
 {
-    llvm::StringRef tripleStr(triple.GetCString());
-    llvm::Triple llvmTriple(tripleStr);
-    
-    if (llvmTriple.getArch() != llvm::Triple::x86)
-        return NULL;
-    
-    return new ABIMacOSX_i386;
+    if (arch.GetTriple().getArch() == llvm::Triple::x86)
+        return new ABIMacOSX_i386;
+
+    return NULL;
 }
 
 bool

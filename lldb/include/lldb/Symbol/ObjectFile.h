@@ -238,7 +238,7 @@ public:
     ///     false otherwise.
     //------------------------------------------------------------------
     virtual bool
-    GetTargetTriple(ConstString &target_triple) = 0;
+    GetArchitecture (ArchSpec &arch) = 0;
 
     //------------------------------------------------------------------
     /// Gets the section list for the currently selected architecture

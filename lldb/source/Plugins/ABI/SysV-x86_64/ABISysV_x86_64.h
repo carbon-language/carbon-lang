@@ -62,7 +62,7 @@ public:
     Terminate();
 
     static lldb_private::ABI *
-    CreateInstance (const ConstString &triple);
+    CreateInstance (const ArchSpec &arch);
 
     //------------------------------------------------------------------
     // PluginInterface protocol

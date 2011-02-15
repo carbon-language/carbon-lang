@@ -45,7 +45,6 @@ Target::Target(Debugger &debugger) :
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
     m_process_sp(),
-    m_triple(),
     m_search_filter_sp(),
     m_image_search_paths (ImageSearchPathsChanged, this),
     m_scratch_ast_context_ap (NULL),
@@ -447,28 +446,15 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
         }
         
         // Now see if we know the target triple, and if so, create our scratch AST context:
-        ConstString target_triple;
-        if (GetTargetTriple(target_triple))
+        if (m_arch_spec.IsValid())
         {
-            m_scratch_ast_context_ap.reset (new ClangASTContext(target_triple.GetCString()));
+            m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch_spec.GetTriple().str().c_str()));
         }
     }
 
     UpdateInstanceName();
 }
 
-
-ModuleList&
-Target::GetImages ()
-{
-    return m_images;
-}
-
-ArchSpec
-Target::GetArchitecture () const
-{
-    return m_arch_spec;
-}
 
 bool
 Target::SetArchitecture (const ArchSpec &arch_spec)
@@ -492,7 +478,6 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
         ModuleSP executable_sp = GetExecutableModule ();
         m_images.Clear();
         m_scratch_ast_context_ap.reset();
-        m_triple.Clear();
         // Need to do something about unsetting breakpoints.
         
         if (executable_sp)
@@ -522,31 +507,6 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
             return false;
         }
     }
-}
-
-bool
-Target::GetTargetTriple(ConstString &triple)
-{
-    triple.Clear();
-
-    if (m_triple)
-    {
-        triple = m_triple;
-    }
-    else
-    {
-        Module *exe_module = GetExecutableModule().get();
-        if (exe_module)
-        {
-            ObjectFile *objfile = exe_module->GetObjectFile();
-            if (objfile)
-            {
-                objfile->GetTargetTriple(m_triple);
-                triple = m_triple;
-            }
-        }
-    }
-    return !triple.IsEmpty();
 }
 
 void

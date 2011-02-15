@@ -104,7 +104,6 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
     arg_value_list.PushValue(value);
     
     // This is the return value:
-    const char *target_triple = exe_ctx.process->GetTargetTriple().GetCString();
     ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
     
     void *return_qualtype = ast_context->GetCStringType(true);
@@ -112,7 +111,12 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
     ret.SetContext(Value::eContextTypeClangType, return_qualtype);
     
     // Now we're ready to call the function:
-    ClangFunction func(target_triple, ast_context, return_qualtype, *function_address, arg_value_list);
+    ClangFunction func (exe_ctx.GetBestExecutionContextScope(),
+                        ast_context, 
+                        return_qualtype, 
+                        *function_address, 
+                        arg_value_list);
+
     StreamString error_stream;
     
     lldb::addr_t wrapper_struct_addr = LLDB_INVALID_ADDRESS;
