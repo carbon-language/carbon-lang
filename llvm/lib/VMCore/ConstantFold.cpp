@@ -150,7 +150,7 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
     // This allows for other simplifications (although some of them
     // can only be handled by Analysis/ConstantFolding.cpp).
     if (isa<ConstantInt>(V) || isa<ConstantFP>(V))
-      return ConstantExpr::getBitCast(ConstantVector::get(&V, 1), DestPTy);
+      return ConstantExpr::getBitCast(ConstantVector::get(V), DestPTy);
   }
 
   // Finally, implement bitcast folding now.   The code below doesn't handle
@@ -873,7 +873,7 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(Constant *V1,
     Result.push_back(InElt);
   }
 
-  return ConstantVector::get(&Result[0], Result.size());
+  return ConstantVector::get(Result);
 }
 
 Constant *llvm::ConstantFoldExtractValueInstruction(Constant *Agg,
@@ -1947,11 +1947,11 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     // If we can constant fold the comparison of each element, constant fold
     // the whole vector comparison.
     SmallVector<Constant*, 4> ResElts;
-    for (unsigned i = 0, e = C1Elts.size(); i != e; ++i) {
-      // Compare the elements, producing an i1 result or constant expr.
+    // Compare the elements, producing an i1 result or constant expr.
+    for (unsigned i = 0, e = C1Elts.size(); i != e; ++i)
       ResElts.push_back(ConstantExpr::getCompare(pred, C1Elts[i], C2Elts[i]));
-    }
-    return ConstantVector::get(&ResElts[0], ResElts.size());
+
+    return ConstantVector::get(ResElts);
   }
 
   if (C1->getType()->isFloatingPointTy()) {

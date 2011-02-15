@@ -94,7 +94,7 @@ Constant *Constant::getAllOnesValue(const Type *Ty) {
     return ConstantInt::get(Ty->getContext(),
                             APInt::getAllOnesValue(ITy->getBitWidth()));
   
-  std::vector<Constant*> Elts;
+  SmallVector<Constant*, 16> Elts;
   const VectorType *VTy = cast<VectorType>(Ty);
   Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));
   assert(Elts[0] && "Not a vector integer type!");
@@ -302,8 +302,8 @@ Constant *ConstantInt::get(const Type* Ty, uint64_t V, bool isSigned) {
 
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return ConstantVector::get(
-      std::vector<Constant *>(VTy->getNumElements(), C));
+    return ConstantVector::get(SmallVector<Constant*,
+                                           16>(VTy->getNumElements(), C));
 
   return C;
 }
@@ -329,7 +329,7 @@ Constant *ConstantInt::get(const Type* Ty, const APInt& V) {
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
     return ConstantVector::get(
-      std::vector<Constant *>(VTy->getNumElements(), C));
+      SmallVector<Constant *, 16>(VTy->getNumElements(), C));
 
   return C;
 }
@@ -372,7 +372,7 @@ Constant *ConstantFP::get(const Type* Ty, double V) {
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
     return ConstantVector::get(
-      std::vector<Constant *>(VTy->getNumElements(), C));
+      SmallVector<Constant *, 16>(VTy->getNumElements(), C));
 
   return C;
 }
@@ -387,7 +387,7 @@ Constant *ConstantFP::get(const Type* Ty, StringRef Str) {
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
     return ConstantVector::get(
-      std::vector<Constant *>(VTy->getNumElements(), C));
+      SmallVector<Constant *, 16>(VTy->getNumElements(), C));
 
   return C; 
 }
@@ -404,9 +404,9 @@ ConstantFP* ConstantFP::getNegativeZero(const Type* Ty) {
 Constant *ConstantFP::getZeroValueForNegation(const Type* Ty) {
   if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
     if (PTy->getElementType()->isFloatingPointTy()) {
-      std::vector<Constant*> zeros(PTy->getNumElements(),
+      SmallVector<Constant*, 16> zeros(PTy->getNumElements(),
                            getNegativeZero(PTy->getElementType()));
-      return ConstantVector::get(PTy, zeros);
+      return ConstantVector::get(zeros);
     }
 
   if (Ty->isFloatingPointTy()) 
@@ -601,13 +601,12 @@ ConstantVector::ConstantVector(const VectorType *T,
 }
 
 // ConstantVector accessors.
-Constant *ConstantVector::get(const VectorType* T,
-                              const std::vector<Constant*>& V) {
+Constant *ConstantVector::get(const VectorType *T,
+                              const std::vector<Constant*> &V) {
   assert(!V.empty() && "Vectors can't be empty");
-  LLVMContext &Context = T->getContext();
-  LLVMContextImpl *pImpl = Context.pImpl;
+  LLVMContextImpl *pImpl = T->getContext().pImpl;
 
-  // If this is an all-undef or alll-zero vector, return a
+  // If this is an all-undef or all-zero vector, return a
   // ConstantAggregateZero or UndefValue.
   Constant *C = V[0];
   bool isZero = C->isNullValue();
@@ -629,14 +628,10 @@ Constant *ConstantVector::get(const VectorType* T,
   return pImpl->VectorConstants.getOrCreate(T, V);
 }
 
-Constant *ConstantVector::get(const std::vector<Constant*>& V) {
-  assert(!V.empty() && "Cannot infer type if V is empty");
-  return get(VectorType::get(V.front()->getType(),V.size()), V);
-}
-
-Constant *ConstantVector::get(Constant *const* Vals, unsigned NumVals) {
+Constant *ConstantVector::get(ArrayRef<Constant*> V) {
   // FIXME: make this the primary ctor method.
-  return get(std::vector<Constant*>(Vals, Vals+NumVals));
+  assert(!V.empty() && "Vectors cannot be empty");
+  return get(VectorType::get(V.front()->getType(), V.size()), V.vec());
 }
 
 // Utility function for determining if a ConstantExpr is a CastOp or not. This

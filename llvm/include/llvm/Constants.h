@@ -25,7 +25,7 @@
 #include "llvm/OperandTraits.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
-#include <vector>
+#include "llvm/ADT/ArrayRef.h"
 
 namespace llvm {
 
@@ -39,8 +39,6 @@ template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
 template<class ConstantClass, class TypeClass>
 struct ConvertConstantType;
-template<typename T, unsigned N>
-class SmallVector;
 
 //===----------------------------------------------------------------------===//
 /// This is the shared class of boolean and integer constants. This class 
@@ -473,9 +471,9 @@ protected:
   ConstantVector(const VectorType *T, const std::vector<Constant*> &Val);
 public:
   // ConstantVector accessors
+  static Constant *get(ArrayRef<Constant*> V);
+  // FIXME: Eliminate this constructor form.
   static Constant *get(const VectorType *T, const std::vector<Constant*> &V);
-  static Constant *get(const std::vector<Constant*> &V);
-  static Constant *get(Constant *const *Vals, unsigned NumVals);
   
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

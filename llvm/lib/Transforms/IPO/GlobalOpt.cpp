@@ -2257,8 +2257,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
 
     if (Init->getType()->isArrayTy())
       return ConstantArray::get(cast<ArrayType>(InitTy), Elts);
-    else
-      return ConstantVector::get(&Elts[0], Elts.size());
+    return ConstantVector::get(Elts);
   }
 }
 
