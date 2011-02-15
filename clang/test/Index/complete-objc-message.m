@@ -171,6 +171,10 @@ void test_redundancy(C *c) {
 }
 @end
 
+void test_missing_open_more() {
+  A *a = A class_method3];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{TypedText withKeyword:}{Placeholder (int)}
@@ -294,3 +298,4 @@ void test_redundancy(C *c) {
 // RUN: c-index-test -code-completion-at=%s:141:23 %s | FileCheck -check-prefix=CHECK-CCD %s
 // RUN: c-index-test -code-completion-at=%s:141:30 %s | FileCheck -check-prefix=CHECK-CCE %s
 
+// RUN: c-index-test -code-completion-at=%s:175:12 %s | FileCheck -check-prefix=CHECK-CLASS-RESULT %s
