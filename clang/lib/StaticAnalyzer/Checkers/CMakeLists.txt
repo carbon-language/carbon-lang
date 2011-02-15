@@ -60,4 +60,4 @@ add_clang_library(clangStaticAnalyzerCheckers
   )
 
 add_dependencies(clangStaticAnalyzerCore ClangAttrClasses ClangAttrList ClangDeclNodes
-                 ClangStmtNodes)
+                 ClangStmtNodes ClangSACheckers)
