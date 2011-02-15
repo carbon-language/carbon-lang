@@ -90,7 +90,17 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   DebugInfo = CodeGenOpts.DebugInfo ? new CGDebugInfo(*this) : 0;
 
   Block.GlobalUniqueCount = 0;
-  Int8PtrTy = llvm::Type::getInt8PtrTy(M.getContext());
+
+  // Initialize the type cache.
+  llvm::LLVMContext &LLVMContext = M.getContext();
+  Int8Ty  = llvm::Type::getInt8Ty(LLVMContext);
+  Int32Ty  = llvm::Type::getInt32Ty(LLVMContext);
+  Int64Ty  = llvm::Type::getInt64Ty(LLVMContext);
+  PointerWidthInBits = C.Target.getPointerWidth(0);
+  IntTy = llvm::IntegerType::get(LLVMContext, C.Target.getIntWidth());
+  IntPtrTy = llvm::IntegerType::get(LLVMContext, PointerWidthInBits);
+  Int8PtrTy = Int8Ty->getPointerTo(0);
+  Int8PtrPtrTy = Int8PtrTy->getPointerTo(0);
 }
 
 CodeGenModule::~CodeGenModule() {

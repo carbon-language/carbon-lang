@@ -1387,9 +1387,8 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   }
 
   // Extend or truncate the index type to 32 or 64-bits.
-  if (!Idx->getType()->isIntegerTy(LLVMPointerWidth))
-    Idx = Builder.CreateIntCast(Idx, IntPtrTy,
-                                IdxSigned, "idxprom");
+  if (Idx->getType() != IntPtrTy)
+    Idx = Builder.CreateIntCast(Idx, IntPtrTy, IdxSigned, "idxprom");
   
   // FIXME: As llvm implements the object size checking, this can come out.
   if (CatchUndefined) {

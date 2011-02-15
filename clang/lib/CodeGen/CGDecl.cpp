@@ -933,7 +933,6 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
   assert((isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)) &&
          "Invalid argument to EmitParmDecl");
   QualType Ty = D.getType();
-  CanQualType CTy = getContext().getCanonicalType(Ty);
 
   llvm::Value *DeclPtr;
   // If this is an aggregate or variable sized value, reuse the input pointer.
@@ -945,8 +944,9 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     DeclPtr = CreateMemTemp(Ty, D.getName() + ".addr");
 
     // Store the initial value into the alloca.
-    unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
-    EmitStoreOfScalar(Arg, DeclPtr, CTy.isVolatileQualified(), Alignment, Ty);
+    EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified(),
+                      getContext().getDeclAlign(&D).getQuantity(), Ty,
+                      CGM.getTBAAInfo(Ty));
   }
   Arg->setName(D.getName());
 

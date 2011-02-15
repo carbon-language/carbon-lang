@@ -94,10 +94,39 @@ namespace CodeGen {
       return priority == RHS.priority && lex_order < RHS.lex_order;
     }
   };
+
+  struct CodeGenTypeCache {
+    /// i8, i32, and i64
+    const llvm::IntegerType *Int8Ty, *Int32Ty, *Int64Ty;
+
+    /// int
+    const llvm::IntegerType *IntTy;
+
+    /// intptr_t and size_t, which we assume are the same
+    union {
+      const llvm::IntegerType *IntPtrTy;
+      const llvm::IntegerType *SizeTy;
+    };
+
+    /// void* in address space 0
+    union {
+      const llvm::PointerType *VoidPtrTy;
+      const llvm::PointerType *Int8PtrTy;
+    };
+
+    /// void** in address space 0
+    union {
+      const llvm::PointerType *VoidPtrPtrTy;
+      const llvm::PointerType *Int8PtrPtrTy;
+    };
+
+    /// The width of an address-zero pointer.
+    unsigned char PointerWidthInBits;
+  };
   
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
-class CodeGenModule {
+class CodeGenModule : public CodeGenTypeCache {
   CodeGenModule(const CodeGenModule&);  // DO NOT IMPLEMENT
   void operator=(const CodeGenModule&); // DO NOT IMPLEMENT
 
@@ -226,8 +255,6 @@ public:
 
   /// Release - Finalize LLVM code generation.
   void Release();
-
-  const llvm::PointerType *Int8PtrTy;
 
   /// getObjCRuntime() - Return a reference to the configured
   /// Objective-C runtime.

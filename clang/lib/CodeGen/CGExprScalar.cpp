@@ -1250,104 +1250,123 @@ EmitAddConsiderOverflowBehavior(const UnaryOperator *E,
   return 0;
 }
 
-llvm::Value *ScalarExprEmitter::
-EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
-                        bool isInc, bool isPre) {
+llvm::Value *
+ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
+                                           bool isInc, bool isPre) {
   
-  QualType ValTy = E->getSubExpr()->getType();
-  llvm::Value *InVal = EmitLoadOfLValue(LV, ValTy);
-  
-  int AmountVal = isInc ? 1 : -1;
-  
-  if (ValTy->isPointerType() &&
-      ValTy->getAs<PointerType>()->isVariableArrayType()) {
-    // The amount of the addition/subtraction needs to account for the VLA size
-    CGF.ErrorUnsupported(E, "VLA pointer inc/dec");
-  }
-  
-  llvm::Value *NextVal;
-  if (const llvm::PointerType *PT =
-      dyn_cast<llvm::PointerType>(InVal->getType())) {
-    llvm::Constant *Inc = llvm::ConstantInt::get(CGF.Int32Ty, AmountVal);
-    if (!isa<llvm::FunctionType>(PT->getElementType())) {
-      QualType PTEE = ValTy->getPointeeType();
-      if (const ObjCObjectType *OIT = PTEE->getAs<ObjCObjectType>()) {
-        // Handle interface types, which are not represented with a concrete
-        // type.
-        CharUnits size = CGF.getContext().getTypeSizeInChars(OIT);
-        if (!isInc)
-          size = -size;
-        Inc = llvm::ConstantInt::get(Inc->getType(), size.getQuantity());
-        const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
-        InVal = Builder.CreateBitCast(InVal, i8Ty);
-        NextVal = Builder.CreateGEP(InVal, Inc, "add.ptr");
-        llvm::Value *lhs = LV.getAddress();
-        lhs = Builder.CreateBitCast(lhs, llvm::PointerType::getUnqual(i8Ty));
-        LV = CGF.MakeAddrLValue(lhs, ValTy);
-      } else
-        NextVal = Builder.CreateInBoundsGEP(InVal, Inc, "ptrincdec");
-    } else {
-      const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
-      NextVal = Builder.CreateBitCast(InVal, i8Ty, "tmp");
-      NextVal = Builder.CreateGEP(NextVal, Inc, "ptrincdec");
-      NextVal = Builder.CreateBitCast(NextVal, InVal->getType());
-    }
-  } else if (InVal->getType()->isIntegerTy(1) && isInc) {
-    // Bool++ is an interesting case, due to promotion rules, we get:
-    // Bool++ -> Bool = Bool+1 -> Bool = (int)Bool+1 ->
-    // Bool = ((int)Bool+1) != 0
-    // An interesting aspect of this is that increment is always true.
-    // Decrement does not have this property.
-    NextVal = llvm::ConstantInt::getTrue(VMContext);
-  } else if (ValTy->isVectorType()) {
-    if (ValTy->hasIntegerRepresentation()) {
-      NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
+  QualType type = E->getSubExpr()->getType();
+  llvm::Value *value = EmitLoadOfLValue(LV, type);
+  llvm::Value *input = value;
 
-      NextVal = ValTy->hasSignedIntegerRepresentation() ?
-                EmitAddConsiderOverflowBehavior(E, InVal, NextVal, isInc) :
-                Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+  int amount = (isInc ? 1 : -1);
+
+  // Special case of integer increment that we have to check first: bool++.
+  // Due to promotion rules, we get:
+  //   bool++ -> bool = bool + 1
+  //          -> bool = (int)bool + 1
+  //          -> bool = ((int)bool + 1 != 0)
+  // An interesting aspect of this is that increment is always true.
+  // Decrement does not have this property.
+  if (isInc && type->isBooleanType()) {
+    value = Builder.getTrue();
+
+  // Most common case by far: integer increment.
+  } else if (type->isIntegerType()) {
+
+    llvm::Value *amt = llvm::ConstantInt::get(value->getType(), amount);
+
+    if (type->isSignedIntegerType())
+      value = EmitAddConsiderOverflowBehavior(E, value, amt, isInc);
+
+    // Unsigned integer inc is always two's complement.
+    else
+      value = Builder.CreateAdd(value, amt, isInc ? "inc" : "dec");
+  
+  // Next most common: pointer increment.
+  } else if (const PointerType *ptr = type->getAs<PointerType>()) {
+    QualType type = ptr->getPointeeType();
+
+    // VLA types don't have constant size.
+    if (type->isVariableArrayType()) {
+      llvm::Value *vlaSize =
+        CGF.GetVLASize(CGF.getContext().getAsVariableArrayType(type));
+      value = CGF.EmitCastToVoidPtr(value);
+      if (!isInc) vlaSize = Builder.CreateNSWNeg(vlaSize, "vla.negsize");
+      value = Builder.CreateInBoundsGEP(value, vlaSize, "vla.inc");
+      value = Builder.CreateBitCast(value, input->getType());
+    
+    // Arithmetic on function pointers (!) is just +-1.
+    } else if (type->isFunctionType()) {
+      llvm::Value *amt = llvm::ConstantInt::get(CGF.Int32Ty, amount);
+
+      value = CGF.EmitCastToVoidPtr(value);
+      value = Builder.CreateInBoundsGEP(value, amt, "incdec.funcptr");
+      value = Builder.CreateBitCast(value, input->getType());
+
+    // For everything else, we can just do a simple increment.
     } else {
-      NextVal = Builder.CreateFAdd(
-                  InVal,
-                  llvm::ConstantFP::get(InVal->getType(), AmountVal),
+      llvm::Value *amt = llvm::ConstantInt::get(CGF.Int32Ty, amount);
+      value = Builder.CreateInBoundsGEP(value, amt, "incdec.ptr");
+    }
+
+  // Vector increment/decrement.
+  } else if (type->isVectorType()) {
+    if (type->hasIntegerRepresentation()) {
+      llvm::Value *amt = llvm::ConstantInt::get(value->getType(), amount);
+
+      if (type->hasSignedIntegerRepresentation())
+        value = EmitAddConsiderOverflowBehavior(E, value, amt, isInc);
+      else
+        value = Builder.CreateAdd(value, amt, isInc ? "inc" : "dec");
+    } else {
+      value = Builder.CreateFAdd(
+                  value,
+                  llvm::ConstantFP::get(value->getType(), amount),
                   isInc ? "inc" : "dec");
     }
-  } else if (isa<llvm::IntegerType>(InVal->getType())) {
-    NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
 
-    NextVal = ValTy->isSignedIntegerType() ?
-              EmitAddConsiderOverflowBehavior(E, InVal, NextVal, isInc) :
-              // Unsigned integer inc is always two's complement.
-              Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
-  } else {
+  // Floating point.
+  } else if (type->isRealFloatingType()) {
     // Add the inc/dec to the real part.
-    if (InVal->getType()->isFloatTy())
-      NextVal =
-      llvm::ConstantFP::get(VMContext,
-                            llvm::APFloat(static_cast<float>(AmountVal)));
-    else if (InVal->getType()->isDoubleTy())
-      NextVal =
-      llvm::ConstantFP::get(VMContext,
-                            llvm::APFloat(static_cast<double>(AmountVal)));
+    llvm::Value *amt;
+    if (value->getType()->isFloatTy())
+      amt = llvm::ConstantFP::get(VMContext,
+                                  llvm::APFloat(static_cast<float>(amount)));
+    else if (value->getType()->isDoubleTy())
+      amt = llvm::ConstantFP::get(VMContext,
+                                  llvm::APFloat(static_cast<double>(amount)));
     else {
-      llvm::APFloat F(static_cast<float>(AmountVal));
+      llvm::APFloat F(static_cast<float>(amount));
       bool ignored;
       F.convert(CGF.Target.getLongDoubleFormat(), llvm::APFloat::rmTowardZero,
                 &ignored);
-      NextVal = llvm::ConstantFP::get(VMContext, F);
+      amt = llvm::ConstantFP::get(VMContext, F);
     }
-    NextVal = Builder.CreateFAdd(InVal, NextVal, isInc ? "inc" : "dec");
+    value = Builder.CreateFAdd(value, amt, isInc ? "inc" : "dec");
+
+  // Objective-C pointer types.
+  } else {
+    const ObjCObjectPointerType *OPT = type->castAs<ObjCObjectPointerType>();
+    value = CGF.EmitCastToVoidPtr(value);
+
+    CharUnits size = CGF.getContext().getTypeSizeInChars(OPT->getObjectType());
+    if (!isInc) size = -size;
+    llvm::Value *sizeValue =
+      llvm::ConstantInt::get(CGF.SizeTy, size.getQuantity());
+
+    value = Builder.CreateInBoundsGEP(value, sizeValue, "incdec.objptr");
+    value = Builder.CreateBitCast(value, input->getType());
   }
   
   // Store the updated result through the lvalue.
   if (LV.isBitField())
-    CGF.EmitStoreThroughBitfieldLValue(RValue::get(NextVal), LV, ValTy, &NextVal);
+    CGF.EmitStoreThroughBitfieldLValue(RValue::get(value), LV, type, &value);
   else
-    CGF.EmitStoreThroughLValue(RValue::get(NextVal), LV, ValTy);
+    CGF.EmitStoreThroughLValue(RValue::get(value), LV, type);
   
   // If this is a postinc, return the value read from memory, otherwise use the
   // updated value.
-  return isPre ? NextVal : InVal;
+  return isPre ? value : input;
 }
 
 
@@ -1835,7 +1854,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   }
 
   unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-  if (Width < CGF.LLVMPointerWidth) {
+  if (Width < CGF.PointerWidthInBits) {
     // Zero or sign extend the pointer value based on whether the index is
     // signed or not.
     const llvm::Type *IdxType = CGF.IntPtrTy;
@@ -1908,7 +1927,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     // pointer - int
     Value *Idx = Ops.RHS;
     unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-    if (Width < CGF.LLVMPointerWidth) {
+    if (Width < CGF.PointerWidthInBits) {
       // Zero or sign extend the pointer value based on whether the index is
       // signed or not.
       const llvm::Type *IdxType = CGF.IntPtrTy;

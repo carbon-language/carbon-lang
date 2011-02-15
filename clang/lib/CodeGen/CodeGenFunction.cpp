@@ -29,8 +29,8 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
-  : CGM(cgm), Target(CGM.getContext().Target),
-    Builder(cgm.getModule().getContext()),
+  : CodeGenTypeCache(cgm), CGM(cgm),
+    Target(CGM.getContext().Target), Builder(cgm.getModule().getContext()),
     BlockInfo(0), BlockPointer(0),
     NormalCleanupDest(0), EHCleanupDest(0), NextCleanupDestIndex(1),
     ExceptionSlot(0), DebugInfo(0), IndirectBranch(0),
@@ -39,14 +39,6 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
     OutermostConditional(0), TerminateLandingPad(0), TerminateHandler(0),
     TrapBB(0) {
-      
-  // Get some frequently used types.
-  LLVMPointerWidth = Target.getPointerWidth(0);
-  llvm::LLVMContext &LLVMContext = CGM.getLLVMContext();
-  IntPtrTy = llvm::IntegerType::get(LLVMContext, LLVMPointerWidth);
-  Int32Ty  = llvm::Type::getInt32Ty(LLVMContext);
-  Int64Ty  = llvm::Type::getInt64Ty(LLVMContext);
-  Int8PtrTy = cgm.Int8PtrTy;
       
   Exceptions = getContext().getLangOptions().Exceptions;
   CatchUndefined = getContext().getLangOptions().CatchUndefined;
