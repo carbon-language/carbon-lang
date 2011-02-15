@@ -27,6 +27,7 @@ set(CLANG_TEST_DIRECTORIES
 
 set(LLVM_SOURCE_DIR "${LLVM_MAIN_SRC_DIR}")
 set(LLVM_BINARY_DIR "${LLVM_BINARY_DIR}")
+set(LLVM_BUILD_MODE "%(build_mode)s")
 set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_config)s")
 set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib/%(build_config)s")
 set(CLANG_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
@@ -66,6 +67,8 @@ if(PYTHONINTERP_FOUND)
   set(LIT_ARGS "${CLANG_TEST_EXTRA_ARGS} ${LLVM_LIT_ARGS}")
   separate_arguments(LIT_ARGS)
 
+  add_custom_target(clang-test.deps)
+
   foreach(testdir ${CLANG_TEST_DIRECTORIES})
     add_custom_target(clang-test-${testdir}
       COMMAND ${PYTHON_EXECUTABLE}
@@ -82,7 +85,9 @@ if(PYTHONINTERP_FOUND)
     COMMAND ${PYTHON_EXECUTABLE}
                 ${LIT}
                 --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+                --param clang_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
                 --param build_config=${CMAKE_CFG_INTDIR}
+                --param build_mode=${RUNTIME_BUILD_MODE}
                 ${LIT_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Running Clang regression tests")
@@ -97,8 +102,9 @@ if(PYTHONINTERP_FOUND)
                 DEPENDS clang c-index-test FileCheck not count
                 COMMENT "Running Clang regression tests")
 
-  add_custom_target(check-all
-    COMMAND ${PYTHON_EXECUTABLE}
+  if( NOT CLANG_BUILT_STANDALONE )
+     add_custom_target(check-all
+      COMMAND ${PYTHON_EXECUTABLE}
                 ${LIT}
                 --param build_config=${CMAKE_CFG_INTDIR}
                 --param build_mode=${RUNTIME_BUILD_MODE}
@@ -106,15 +112,14 @@ if(PYTHONINTERP_FOUND)
                 ${LLVM_BINARY_DIR}/test
                 ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Running Clang and LLVM regression tests")
-
-  add_custom_target(clang-test.deps)
+    add_dependencies(check-all check.deps clang-test.deps)
+    add_dependencies(clang-test.deps ClangUnitTests)
+ endif()
 
   add_dependencies(clang-test clang-test.deps)
   add_dependencies(clang-test.deps
                  clang clang-headers c-index-test
                  llvm-dis opt
                  FileCheck count not)
-
-  add_dependencies(check-all check.deps clang-test.deps)
 
 endif()

@@ -53,6 +53,8 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
 
   add_definitions( -D__STDC_LIMIT_MACROS )
   add_definitions( -D__STDC_CONSTANT_MACROS )
+
+  set( CLANG_BUILT_STANDALONE 1 )
 endif()
 
 set(CLANG_RESOURCE_DIR "" CACHE STRING
@@ -214,3 +216,8 @@ add_subdirectory(runtime)
 
 # TODO: docs.
 add_subdirectory(test)
+
+# FIXME: unittests require gtest.
+if( NOT CLANG_BUILT_STANDALONE )
+  add_subdirectory(unittests)
+endif()
