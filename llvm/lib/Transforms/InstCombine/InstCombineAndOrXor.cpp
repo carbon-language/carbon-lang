@@ -274,10 +274,11 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     ConstantInt *CI = ConstantInt::get(AndRHS->getContext(),
                                        AndRHS->getValue() & ShlMask);
 
-    if (CI->getValue() == ShlMask) { 
-    // Masking out bits that the shift already masks
+    if (CI->getValue() == ShlMask)
+      // Masking out bits that the shift already masks.
       return ReplaceInstUsesWith(TheAnd, Op);   // No need for the and.
-    } else if (CI != AndRHS) {                  // Reducing bits set in and.
+    
+    if (CI != AndRHS) {                  // Reducing bits set in and.
       TheAnd.setOperand(1, CI);
       return &TheAnd;
     }
@@ -294,10 +295,11 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     ConstantInt *CI = ConstantInt::get(Op->getContext(),
                                        AndRHS->getValue() & ShrMask);
 
-    if (CI->getValue() == ShrMask) {   
-    // Masking out bits that the shift already masks.
+    if (CI->getValue() == ShrMask)
+      // Masking out bits that the shift already masks.
       return ReplaceInstUsesWith(TheAnd, Op);
-    } else if (CI != AndRHS) {
+    
+    if (CI != AndRHS) {
       TheAnd.setOperand(1, CI);  // Reduce bits set in and cst.
       return &TheAnd;
     }
@@ -1065,7 +1067,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         }
         break;
       }
-
+          
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
         if (Instruction *Res = OptAndOp(Op0I, Op0CI, AndRHS, I))
           return Res;
