@@ -427,7 +427,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data, dwarf_reg))
+            if (!LoadWritePC(context, data))
                 return false;
             addr += addr_byte_size;
         }
@@ -628,7 +628,7 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
     
         if (Rd == 15)
         {
-            if (!ALUWritePC (context, reg_value, dwarf_reg))
+            if (!ALUWritePC (context, reg_value))
                 return false;
         }
         else
@@ -711,12 +711,9 @@ EmulateInstructionARM::EmulateMovRdImm (ARMEncoding encoding)
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
                                        
-        Register dummy_reg;
-        dummy_reg.SetRegister (eRegisterKindDWARF, dwarf_r0);
-     
         if (Rd == 15)
         {
-            if (!ALUWritePC (context, result, dummy_reg))
+            if (!ALUWritePC (context, result))
                 return false;
         }
         else
@@ -801,8 +798,7 @@ EmulateInstructionARM::EmulateMvnRdImm (ARMEncoding encoding)
     
         if (Rd == 15)
         {
-            Register dummy_reg;
-            if (!ALUWritePC (context, result, dummy_reg))
+            if (!ALUWritePC (context, result))
                 return false;
         }
         else
@@ -909,7 +905,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             if (Bits32(address, 1, 0) == 0)
             {
                 // In ARMv5T and above, this is an interworking branch.
-                if (!LoadWritePC(context, data, pc_reg))
+                if (!LoadWritePC(context, data))
                     return false;
             }
             else
@@ -1205,7 +1201,7 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
         context.SetRegister (dwarf_reg);
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, lr))
             return false;
-        if (!BXWritePC(context, target, dwarf_reg))
+        if (!BXWritePC(context, target))
             return false;
     }
     return true;
@@ -1253,7 +1249,8 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
                   
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
-        if (!BXWritePC(context, target, dwarf_reg))
+        context.SetRegister (dwarf_reg);
+        if (!BXWritePC(context, target))
             return false;
     }
     return true;
@@ -1964,12 +1961,10 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
-        Register dummy_reg;
-        dummy_reg.SetRegister (eRegisterKindDWARF, dwarf_r0);
     
         if (Rd == 15)
         {
-            if (!ALUWritePC (context, result, dummy_reg))
+            if (!ALUWritePC (context, result))
                 return false;
         }
         else
@@ -2180,13 +2175,10 @@ EmulateInstructionARM::EmulateASRImm (ARMEncoding encoding)
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
-
-        Register dummy_reg;
-        dummy_reg.SetRegister (eRegisterKindDWARF, dwarf_r0);
      
         if (Rd == 15)
         {
-            if (!ALUWritePC (context, result, dummy_reg))
+            if (!ALUWritePC (context, result))
                 return false;
         }
         else
@@ -2333,7 +2325,7 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data, dwarf_reg))
+            if (!LoadWritePC(context, data))
                 return false;
         }
                              
@@ -2449,7 +2441,7 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data, dwarf_reg))
+            if (!LoadWritePC(context, data))
                 return false;
         }
                   
@@ -2590,7 +2582,7 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data, dwarf_reg))
+            if (!LoadWritePC(context, data))
                 return false;
         }
                   
@@ -2707,7 +2699,7 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
-            if (!LoadWritePC(context, data, dwarf_reg))
+            if (!LoadWritePC(context, data))
                 return false;
         }
                   
@@ -2809,8 +2801,6 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
-        Register dummy_reg;
-        dummy_reg.SetRegister (eRegisterKindDWARF, dwarf_r0);
 
         // Read memory from the address.
         data = ReadMemoryUnsigned(context, address, 4, 0, &success);
@@ -2821,7 +2811,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
         {
             if (Bits32(address, 1, 0) == 0)
             {
-                if (!LoadWritePC(context, data, dummy_reg))
+                if (!LoadWritePC(context, data))
                     return false;
             }
             else
@@ -3831,7 +3821,7 @@ EmulateInstructionARM::BranchWritePC (const Context &context, uint32_t addr)
 
 // As a side effect, BXWritePC sets context.arg2 to eModeARM or eModeThumb by inspecting addr.
 bool
-EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr, Register &reg)
+EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr)
 {
     addr_t target;
     // If the CPSR is changed due to switching between ARM and Thumb ISETSTATE,
@@ -3847,7 +3837,7 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr, Register &reg
             cpsr_changed = true;
         }
         target = addr & 0xfffffffe;
-        context.SetModeAndRegister (eModeThumb, reg);
+        context.SetMode (eModeThumb);
     }
     else if (BitIsClear(addr, 1))
     {
@@ -3857,7 +3847,7 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr, Register &reg
             cpsr_changed = true;
         }
         target = addr & 0xfffffffc;
-        context.SetModeAndRegister (eModeARM, reg);
+        context.SetMode (eModeARM);
     }
     else
         return false; // address<1:0> == '10' => UNPREDICTABLE
@@ -3875,20 +3865,20 @@ EmulateInstructionARM::BXWritePC (Context &context, uint32_t addr, Register &reg
 
 // Dispatches to either BXWritePC or BranchWritePC based on architecture versions.
 bool
-EmulateInstructionARM::LoadWritePC (Context &context, uint32_t addr, Register &reg)
+EmulateInstructionARM::LoadWritePC (Context &context, uint32_t addr)
 {
     if (ArchVersion() >= ARMv5T)
-        return BXWritePC(context, addr, reg);
+        return BXWritePC(context, addr);
     else
         return BranchWritePC((const Context)context, addr);
 }
 
 // Dispatches to either BXWritePC or BranchWritePC based on architecture versions and current instruction set.
 bool
-EmulateInstructionARM::ALUWritePC (Context &context, uint32_t addr, Register &reg)
+EmulateInstructionARM::ALUWritePC (Context &context, uint32_t addr)
 {
     if (ArchVersion() >= ARMv7 && CurrentInstrSet() == eModeARM)
-        return BXWritePC(context, addr, reg);
+        return BXWritePC(context, addr);
     else
         return BranchWritePC((const Context)context, addr);
 }

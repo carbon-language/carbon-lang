@@ -176,7 +176,7 @@ public:
         eInfoTypeAddress,
         eInfoTypeModeAndImmediate,
         eInfoTypeModeAndImmediateSigned,
-        eInfoTypeModeAndRegister,
+        eInfoTypeMode,
         eInfoTypeNoArgs
     } InfoType;
     
@@ -232,7 +232,7 @@ public:
             struct ModeAndImmediate 
             {
                 uint32_t mode;        // eModeARM or eModeThumb
-                uint32_t data_value;  //immdiate data
+                uint32_t data_value;  // immdiate data
             } ModeAndImmediate;
             
             struct ModeAndImmediateSigned 
@@ -241,11 +241,7 @@ public:
                 int32_t signed_data_value; // signed immdiate data
             } ModeAndImmediateSigned;
             
-            struct ModeAndRegister 
-            {
-                uint32_t mode;  // eModeARM or eModeThumb
-                Register reg;   
-            } ModeAndRegister;
+            uint32_t mode;         // eModeARM or eModeThumb
                         
         } info;
         
@@ -329,11 +325,10 @@ public:
         }
         
         void
-        SetModeAndRegister (uint32_t mode, Register reg)
+        SetMode (uint32_t mode)
         {
-            info_type = eInfoTypeModeAndRegister;
-            info.ModeAndRegister.mode = mode;
-            info.ModeAndRegister.reg = reg;
+            info_type = eInfoTypeMode;
+            info.mode = mode;
         }
         
         void
