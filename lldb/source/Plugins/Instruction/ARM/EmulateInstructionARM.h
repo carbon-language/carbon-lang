@@ -304,6 +304,10 @@ protected:
     bool
     EmulateCmpRnRm (ARMEncoding encoding);
 
+    // A8.6.14 ASR (immediate)
+    bool
+    EmulateASRImm (ARMEncoding encoding);
+
     bool
     EmulateLDM (ARMEncoding encoding);
     

@@ -54,6 +54,12 @@ static inline uint32_t DecodeImmShift(const uint32_t type, const uint32_t imm5, 
     }
 }
 
+static inline uint32_t DecodeImmShift(const ARM_ShifterType shift_t, const uint32_t imm5)
+{
+    ARM_ShifterType dont_care;
+    return DecodeImmShift(shift_t, imm5, dont_care);
+}
+
 static inline ARM_ShifterType DecodeRegShift(const uint32_t type)
 {
     switch (type) {

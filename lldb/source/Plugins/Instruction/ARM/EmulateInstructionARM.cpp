@@ -2107,6 +2107,109 @@ EmulateInstructionARM::EmulateCmpRnRm (ARMEncoding encoding)
     return true;
 }
 
+// Arithmetic Shift Right (immediate) shifts a register value right by an immediate number of bits,
+// shifting in copies of its sign bit, and writes the result to the destination register.  It can
+// optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateASRImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry) = Shift_C(R[m], SRType_ASR, shift_n, APSR.C);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd;   // the destination register
+        uint32_t Rm;   // the first operand register
+        uint32_t imm5; // encoding for the shift amount
+        uint32_t carry; // the carry bit after the shift operation
+        bool setflags;
+        switch (encoding) {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 2, 0);
+            Rm = Bits32(opcode, 5, 3);
+            setflags = !InITBlock();
+            imm5 = Bits32(opcode, 10, 6);
+            break;
+        case eEncodingT2:
+            Rd = Bits32(opcode, 11, 8);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            imm5 = Bits32(opcode, 14, 12) << 2 | Bits32(opcode, 7, 6);
+            if (BadReg(Rd) || BadReg(Rm))
+                return false;
+            break;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            imm5 = Bits32(opcode, 11, 7);
+            break;
+        default:
+            return false;
+        }
+
+        // Get the first operand.
+        uint32_t value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        if (!success)
+            return false;
+
+        // Decode the shift amount.
+        uint32_t amt = DecodeImmShift(SRType_ASR, imm5);
+
+        uint32_t result = Shift_C(value, SRType_ASR, amt, Bit32(m_inst_cpsr, CPSR_C), carry);
+
+        // The context specifies that an immediate is to be moved into Rd.
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        Register dummy_reg;
+        dummy_reg.SetRegister (eRegisterKindDWARF, dwarf_r0);
+     
+        if (Rd == 15)
+        {
+            if (!ALUWritePC (context, result, dummy_reg))
+                return false;
+        }
+        else
+        {
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
+                return false;
+            if (setflags)
+            {
+                m_new_inst_cpsr = m_inst_cpsr;
+                SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
+                SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
+                SetBit32(m_new_inst_cpsr, CPSR_C, carry);
+                if (m_new_inst_cpsr != m_inst_cpsr)
+                {
+                    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+                        return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 // LDM loads multiple registers from consecutive memory locations, using an
 // address from a base register.  Optionally the address just above the highest of those locations
 // can be written back to the base register.
@@ -3367,6 +3470,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // move bitwise not
         { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMvnRdImm, "mvn{s} <Rd>, #<const>"},
+        // asr (immediate)
+        { 0x0fef0070, 0x01a00040, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c> <Rd>, <Rm>, #imm"},
 
         //----------------------------------------------------------------------
         // Load instructions
@@ -3492,6 +3597,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCmpRnRm, "cmp<c> <Rn>, <Rm>"},
         // compare Rn with Rm (Rn and Rm not both from r0-r7)
         { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateCmpRnRm, "cmp<c> <Rn>, <Rm>"},
+        // asr (immediate)
+        { 0xfffff800, 0x00001000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateASRImm, "asrs|asr<c> <Rd>, <Rm>, #imm"},
+        { 0x0fef0070, 0x01a00040, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c>.w <Rd>, <Rm>, #imm"},
 
         //----------------------------------------------------------------------
         // Load instructions
