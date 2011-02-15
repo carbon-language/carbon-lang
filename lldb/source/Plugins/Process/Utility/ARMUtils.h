@@ -78,14 +78,14 @@ static inline ARM_ShifterType DecodeRegShift(const uint32_t type)
 
 static inline uint32_t LSL_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
 {
-    assert(amount > 0 && amount < 32);
-    carry_out = Bit32(value, 32 - amount);
+    assert(amount > 0);
+    carry_out = amount <= 32 ? Bit32(value, 32 - amount) : 0;
     return value << amount;
 }
 
 static inline uint32_t LSL(const uint32_t value, const uint32_t amount)
 {
-    assert(amount >= 0 && amount < 32);
+    assert(amount >= 0);
     if (amount == 0)
         return value;
     uint32_t dont_care;
@@ -94,14 +94,14 @@ static inline uint32_t LSL(const uint32_t value, const uint32_t amount)
 
 static inline uint32_t LSR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
 {
-    assert(amount > 0 && amount <= 32);
-    carry_out = Bit32(value, amount - 1);
+    assert(amount > 0);
+    carry_out = amount <= 32 ? Bit32(value, amount - 1) : 0;
     return value >> amount;
 }
 
 static inline uint32_t LSR(const uint32_t value, const uint32_t amount)
 {
-    assert(amount >= 0 && amount <= 32);
+    assert(amount >= 0);
     if (amount == 0)
         return value;
     uint32_t dont_care;
@@ -111,14 +111,23 @@ static inline uint32_t LSR(const uint32_t value, const uint32_t amount)
 static inline uint32_t ASR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
 {
     assert(amount > 0 && amount <= 32);
-    carry_out = Bit32(value, amount - 1);
-    int64_t extended = llvm::SignExtend64<32>(value);
-    return UnsignedBits(extended, amount + 31, amount);
+    bool negative = BitIsSet(value, 31);
+    if (amount <= 32)
+    {
+        carry_out = Bit32(value, amount - 1);
+        int64_t extended = llvm::SignExtend64<32>(value);
+        return UnsignedBits(extended, amount + 31, amount);
+    }
+    else
+    {
+        carry_out = (negative ? 1 : 0);
+        return (negative ? 0xffffffff : 0);
+    }
 }
 
 static inline uint32_t ASR(const uint32_t value, const uint32_t amount)
 {
-    assert(amount >= 0 && amount <= 32);
+    assert(amount >= 0);
     if (amount == 0)
         return value;
     uint32_t dont_care;
@@ -127,15 +136,16 @@ static inline uint32_t ASR(const uint32_t value, const uint32_t amount)
 
 static inline uint32_t ROR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
 {
-    assert(amount > 0 && amount < 32);
-    uint32_t result = Rotr32(value, amount);
+    assert(amount > 0);
+    uint32_t amt = amount % 32;
+    uint32_t result = Rotr32(value, amt);
     carry_out = Bit32(value, 31);
     return result;
 }
 
 static inline uint32_t ROR(const uint32_t value, const uint32_t amount)
 {
-    assert(amount >= 0 && amount < 32);
+    assert(amount >= 0);
     if (amount == 0)
         return value;
     uint32_t dont_care;
