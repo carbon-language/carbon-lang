@@ -4984,7 +4984,8 @@ public:
   void CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS);
   void CodeCompleteObjCPropertyGetter(Scope *S, Decl *ClassDecl);
   void CodeCompleteObjCPropertySetter(Scope *S, Decl *ClassDecl);
-  void CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS);
+  void CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS, 
+                                   bool IsParameter);
   void CodeCompleteObjCMessageReceiver(Scope *S);
   void CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
                                     IdentifierInfo **SelIdents,

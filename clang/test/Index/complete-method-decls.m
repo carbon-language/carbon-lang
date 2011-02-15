@@ -1,6 +1,6 @@
 /* Note: the RUN lines are near the end of the file, since line/column
    matter for this test. */
-
+#define IBAction void
 @protocol P1
 - (id)abc;
 - (id)initWithInt:(int)x;
@@ -158,3 +158,8 @@
 // CHECK-CCH: NotImplemented:{TypedText unsigned} (50)
 // CHECK-CCH: NotImplemented:{TypedText void} (50)
 // CHECK-CCH: NotImplemented:{TypedText volatile} (50)
+
+// IBAction completion
+// RUN: c-index-test -code-completion-at=%s:5:4 %s | FileCheck -check-prefix=CHECK-IBACTION %s
+// CHECK-IBACTION: NotImplemented:{TypedText IBAction}{RightParen )}{Placeholder selector}{Colon :}{LeftParen (}{Text id}{RightParen )}{Text sender} (40)
+

@@ -4307,7 +4307,8 @@ void Sema::CodeCompleteObjCPropertySetter(Scope *S, Decl *ObjCImplDecl) {
                             Results.data(),Results.size());
 }
 
-void Sema::CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS) {
+void Sema::CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS,
+                                       bool IsParameter) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompletionContext::CCC_Type);
@@ -4333,6 +4334,26 @@ void Sema::CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS) {
      Results.AddResult("bycopy");
      Results.AddResult("byref");
      Results.AddResult("oneway");
+  }
+  
+  // If we're completing the return type of an Objective-C method and the 
+  // identifier IBAction refers to a macro, provide a completion item for
+  // an action, e.g.,
+  //   IBAction)<#selector#>:(id)sender
+  if (DS.getObjCDeclQualifier() == 0 && !IsParameter &&
+      Context.Idents.get("IBAction").hasMacroDefinition()) {
+    typedef CodeCompletionString::Chunk Chunk;
+    CodeCompletionBuilder Builder(Results.getAllocator(), CCP_CodePattern, 
+                                  CXAvailability_Available);
+    Builder.AddTypedTextChunk("IBAction");
+    Builder.AddChunk(Chunk(CodeCompletionString::CK_RightParen));
+    Builder.AddPlaceholderChunk("selector");
+    Builder.AddChunk(Chunk(CodeCompletionString::CK_Colon));
+    Builder.AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
+    Builder.AddTextChunk("id");
+    Builder.AddChunk(Chunk(CodeCompletionString::CK_RightParen));
+    Builder.AddTextChunk("sender");
+    Results.AddResult(CodeCompletionResult(Builder.TakeString()));
   }
   
   // Add various builtin type names and specifiers.

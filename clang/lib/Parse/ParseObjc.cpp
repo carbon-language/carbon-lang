@@ -723,7 +723,7 @@ bool Parser::isTokIdentifier_in() const {
 void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS, bool IsParameter) {
   while (1) {
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteObjCPassingType(getCurScope(), DS);
+      Actions.CodeCompleteObjCPassingType(getCurScope(), DS, IsParameter);
       ConsumeCodeCompletionToken();
     }
     
