@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -x cl -cl-single-precision-constant -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -cl-single-precision-constant -emit-llvm -o - | FileCheck %s
 
 float fn(float f) {
   // CHECK: fmul float
