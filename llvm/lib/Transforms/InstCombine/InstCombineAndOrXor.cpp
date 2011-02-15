@@ -1140,7 +1140,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         cast<BinaryOperator>(Op1)->swapOperands();
         std::swap(A, B);
       }
-      if (A == Op0)                                // A&(A^B) -> A & ~B
+      // Notice that the patten (A&(~B)) is actually (A&(-1^B)), so if
+      // A is originally -1 (or a vector of -1 and undefs), then we enter
+      // an endless loop. By checking that A is non-constant we ensure that
+      // we will never get to the loop.
+      if (A == Op0 && !isa<Constant>(A)) // A&(A^B) -> A & ~B
         return BinaryOperator::CreateAnd(A, Builder->CreateNot(B, "tmp"));
     }
 
