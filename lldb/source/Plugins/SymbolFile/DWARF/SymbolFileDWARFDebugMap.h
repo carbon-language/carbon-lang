@@ -15,6 +15,8 @@
 #include <bitset>
 #include "lldb/Symbol/SymbolFile.h"
 
+#include "UniqueDWARFASTType.h"
+
 class SymbolFileDWARF;
 class DWARFCompileUnit;
 class DWARFDebugInfoEntry;
@@ -211,6 +213,11 @@ protected:
                               const DWARFDebugInfoEntry *die, 
                               const lldb_private::ConstString &type_name);    
 
+    UniqueDWARFASTTypeMap &
+    GetUniqueDWARFASTTypeMap ()
+    {
+        return m_unique_ast_type_map;
+    }
     //------------------------------------------------------------------
     // Member Variables
     //------------------------------------------------------------------
@@ -218,6 +225,7 @@ protected:
     std::vector<CompileUnitInfo> m_compile_unit_infos;
     std::vector<uint32_t> m_func_indexes;   // Sorted by address
     std::vector<uint32_t> m_glob_indexes;
+    UniqueDWARFASTTypeMap m_unique_ast_type_map;
 };
 
 #endif // #ifndef liblldb_SymbolFileDWARFDebugMap_h_

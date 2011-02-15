@@ -321,6 +321,9 @@ protected:
     clang::NamespaceDecl *
     ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die);
     
+    UniqueDWARFASTTypeMap &
+    GetUniqueDWARFASTTypeMap ();
+
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;
     lldb_private::Flags             m_flags;

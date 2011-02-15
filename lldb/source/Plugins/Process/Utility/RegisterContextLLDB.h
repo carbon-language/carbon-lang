@@ -20,8 +20,10 @@
 class RegisterContextLLDB : public lldb_private::RegisterContext
 {
 public:
+    typedef lldb::SharedPtr<RegisterContextLLDB>::Type SharedPtr;
+
     RegisterContextLLDB (lldb_private::Thread &thread,
-                         const lldb::RegisterContextSP& next_frame,
+                         const SharedPtr& next_frame,
                          lldb_private::SymbolContext& sym_ctx,
                          uint32_t frame_number);
 
@@ -147,22 +149,23 @@ private:
     bool
     ReadGPRValue (int register_kind, uint32_t regnum, lldb::addr_t &value);
 
-    lldb_private::UnwindPlan *
+    lldb::UnwindPlanSP
     GetFastUnwindPlanForFrame ();
 
-    lldb_private::UnwindPlan *
+    lldb::UnwindPlanSP
     GetFullUnwindPlanForFrame ();
 
     lldb_private::Thread& m_thread;
-    lldb::RegisterContextSP m_next_frame;
+    
+    SharedPtr m_next_frame;
 
     ///
     // The following tell us how to retrieve the CALLER's register values (ie the "previous" frame, aka the frame above)
     // i.e. where THIS frame saved them
     ///
 
-    lldb_private::UnwindPlan *m_fast_unwind_plan;  // may be NULL
-    lldb_private::UnwindPlan *m_full_unwind_plan;
+    lldb::UnwindPlanSP m_fast_unwind_plan_sp;  // may be NULL
+    lldb::UnwindPlanSP m_full_unwind_plan_sp;
     bool m_all_registers_available;               // Can we retrieve all regs or just nonvolatile regs?
     int m_frame_type;                             // enum FrameType
 

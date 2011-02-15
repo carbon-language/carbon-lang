@@ -228,7 +228,7 @@ public:
 protected:
     friend class ThreadGDBRemote;
 
-    void
+    bool
     PrivateSetRegisterValue (uint32_t reg, StringExtractor &response);
     
     void

@@ -23,10 +23,10 @@ public:
     virtual
     ~ArchDefaultUnwindPlan();
 
-    virtual lldb_private::UnwindPlan*
+    virtual lldb::UnwindPlanSP
     GetArchDefaultUnwindPlan (Thread& thread, Address current_pc) = 0;
 
-    static ArchDefaultUnwindPlan*
+    static lldb::ArchDefaultUnwindPlanSP
     FindPlugin (const ArchSpec &arch);
 
 protected:

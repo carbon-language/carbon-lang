@@ -26,7 +26,7 @@
 #include "Plugins/Process/Utility/UnwindLLDB.h"
 #include "Utility/StringExtractorGDBRemote.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #include "UnwindMacOSXFrameBackchain.h"
 #endif
 
@@ -98,6 +98,7 @@ ThreadGDBRemote::WillResume (StateType resume_state)
     {
     case eStateSuspended:
     case eStateStopped:
+        // Don't append anything for threads that should stay stopped.
         break;
 
     case eStateRunning:
@@ -145,7 +146,7 @@ ThreadGDBRemote::GetUnwinder ()
         {
             m_unwinder_ap.reset (new UnwindLLDB (*this));
         }
-#ifdef __APPLE__
+#if defined(__APPLE__)
         else
         {
             m_unwinder_ap.reset (new UnwindMacOSXFrameBackchain (*this));
@@ -207,12 +208,12 @@ ThreadGDBRemote::CreateRegisterContextForFrame (StackFrame *frame)
     return reg_ctx_sp;
 }
 
-void
+bool
 ThreadGDBRemote::PrivateSetRegisterValue (uint32_t reg, StringExtractor &response)
 {
     GDBRemoteRegisterContext *gdb_reg_ctx = static_cast<GDBRemoteRegisterContext *>(GetRegisterContext ().get());
     assert (gdb_reg_ctx);
-    gdb_reg_ctx->PrivateSetRegisterValue (reg, response);
+    return gdb_reg_ctx->PrivateSetRegisterValue (reg, response);
 }
 
 bool

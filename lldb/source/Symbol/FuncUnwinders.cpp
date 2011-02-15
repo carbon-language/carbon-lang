@@ -34,10 +34,10 @@ FuncUnwinders::FuncUnwinders
     m_assembly_profiler(assembly_profiler), 
     m_range(range), 
     m_mutex (Mutex::eMutexTypeNormal),
-    m_unwind_at_call_site_ap (), 
-    m_unwind_at_non_call_site_ap (), 
-    m_unwind_fast_ap (), 
-    m_unwind_arch_default (NULL), 
+    m_unwind_plan_call_site_sp (), 
+    m_unwind_plan_non_call_site_sp (), 
+    m_unwind_plan_fast_sp (), 
+    m_unwind_plan_arch_default_sp (), 
     m_tried_unwind_at_call_site (false),
     m_tried_unwind_at_non_call_site (false),
     m_tried_unwind_fast (false),
@@ -50,15 +50,15 @@ FuncUnwinders::~FuncUnwinders ()
 { 
 }
 
-UnwindPlan*
+UnwindPlanSP
 FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
 {
     // Lock the mutex to ensure we can always give out the most appropriate
     // information. We want to make sure if someone requests a call site unwind
     // plan, that they get one and don't run into a race condition where one
     // thread has started to create the unwind plan and has put it into 
-    // m_unwind_at_call_site_ap, and have another thread enter this function
-    // and return the partially filled in m_unwind_at_call_site_ap pointer.
+    // m_unwind_plan_call_site_sp, and have another thread enter this function
+    // and return the partially filled in m_unwind_plan_call_site_sp pointer.
     // We also want to make sure that we lock out other unwind plans from
     // being accessed until this one is done creating itself in case someone
     // had some code like:
@@ -66,7 +66,7 @@ FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_at_call_site == false && m_unwind_at_call_site_ap.get() == NULL)
+    if (m_tried_unwind_at_call_site == false && m_unwind_plan_call_site_sp.get() == NULL)
     {
         m_tried_unwind_at_call_site = true;
         // We have cases (e.g. with _sigtramp on Mac OS X) where the hand-written eh_frame unwind info for a
@@ -84,16 +84,16 @@ FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
             DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
             if (eh_frame)
             {
-                m_unwind_at_call_site_ap.reset (new UnwindPlan);
-                if (!eh_frame->GetUnwindPlan (current_pc, *m_unwind_at_call_site_ap))
-                    m_unwind_at_call_site_ap.reset();
+                m_unwind_plan_call_site_sp.reset (new UnwindPlan);
+                if (!eh_frame->GetUnwindPlan (current_pc, *m_unwind_plan_call_site_sp))
+                    m_unwind_plan_call_site_sp.reset();
             }
         }
     }
-    return m_unwind_at_call_site_ap.get();
+    return m_unwind_plan_call_site_sp;
 }
 
-UnwindPlan*
+UnwindPlanSP
 FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
 {
     // Lock the mutex to ensure we can always give out the most appropriate
@@ -109,17 +109,17 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_at_non_call_site == false && m_unwind_at_non_call_site_ap.get() == NULL)
+    if (m_tried_unwind_at_non_call_site == false && m_unwind_plan_non_call_site_sp.get() == NULL)
     {
         m_tried_unwind_at_non_call_site = true;
-        m_unwind_at_non_call_site_ap.reset (new UnwindPlan);
-        if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_at_non_call_site_ap))
-            m_unwind_at_non_call_site_ap.reset();
+        m_unwind_plan_non_call_site_sp.reset (new UnwindPlan);
+        if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
+            m_unwind_plan_non_call_site_sp.reset();
     }
-    return m_unwind_at_non_call_site_ap.get();
+    return m_unwind_plan_non_call_site_sp;
 }
 
-UnwindPlan*
+UnwindPlanSP
 FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
 {
     // Lock the mutex to ensure we can always give out the most appropriate
@@ -135,17 +135,17 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_fast == false && m_unwind_fast_ap.get() == NULL)
+    if (m_tried_unwind_fast == false && m_unwind_plan_fast_sp.get() == NULL)
     {
         m_tried_unwind_fast = true;
-        m_unwind_fast_ap.reset (new UnwindPlan);
-        if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_unwind_fast_ap))
-            m_unwind_fast_ap.reset();
+        m_unwind_plan_fast_sp.reset (new UnwindPlan);
+        if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_unwind_plan_fast_sp))
+            m_unwind_plan_fast_sp.reset();
     }
-    return m_unwind_fast_ap.get();
+    return m_unwind_plan_fast_sp;
 }
 
-UnwindPlan*
+UnwindPlanSP
 FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
 {
     // Lock the mutex to ensure we can always give out the most appropriate
@@ -161,21 +161,20 @@ FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_arch_default == false && m_unwind_arch_default == NULL)
+    if (m_tried_unwind_arch_default == false && m_unwind_plan_arch_default_sp.get() == NULL)
     {
         m_tried_unwind_arch_default = true;
         Address current_pc;
         Target *target = thread.CalculateTarget();
         if (target)
         {
-            ArchSpec arch = target->GetArchitecture ();
-            ArchDefaultUnwindPlan *arch_default = ArchDefaultUnwindPlan::FindPlugin (arch);
-            if (arch_default)
-                m_unwind_arch_default = arch_default->GetArchDefaultUnwindPlan (thread, current_pc);
+            ArchDefaultUnwindPlanSP arch_default_sp (ArchDefaultUnwindPlan::FindPlugin (target->GetArchitecture ()));
+            if (arch_default_sp)
+                m_unwind_plan_arch_default_sp = arch_default_sp->GetArchDefaultUnwindPlan (thread, current_pc);
         }
     }
 
-    return m_unwind_arch_default;
+    return m_unwind_plan_arch_default_sp;
 }
 
 Address&

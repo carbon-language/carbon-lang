@@ -17,13 +17,13 @@
 
 namespace lldb_private {
     
-class ArchDefaultUnwindPlan_x86 : public lldb_private::ArchDefaultUnwindPlan
+class ArchDefaultUnwindPlan_x86_64 : public lldb_private::ArchDefaultUnwindPlan
 {
 public:
 
-    ~ArchDefaultUnwindPlan_x86 () { }
+    ~ArchDefaultUnwindPlan_x86_64 () { }
 
-    virtual lldb_private::UnwindPlan*
+    virtual lldb::UnwindPlanSP
     GetArchDefaultUnwindPlan (Thread& thread, Address current_pc);
 
     static lldb_private::ArchDefaultUnwindPlan *
@@ -63,11 +63,60 @@ public:
     EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
 
 private:
-    ArchDefaultUnwindPlan_x86(int cpu);        // Call CreateInstance instead.
+    ArchDefaultUnwindPlan_x86_64();        // Call CreateInstance instead.
 
-    int m_cpu;
-    lldb_private::UnwindPlan m_32bit_default;
-    lldb_private::UnwindPlan m_64bit_default;
+    lldb::UnwindPlanSP m_unwind_plan_sp;
+};
+
+class ArchDefaultUnwindPlan_i386 : public lldb_private::ArchDefaultUnwindPlan
+{
+public:
+
+    ~ArchDefaultUnwindPlan_i386 () { }
+
+    virtual lldb::UnwindPlanSP
+    GetArchDefaultUnwindPlan (Thread& thread, Address current_pc);
+
+    static lldb_private::ArchDefaultUnwindPlan *
+    CreateInstance (const lldb_private::ArchSpec &arch);
+
+    //------------------------------------------------------------------
+    // PluginInterface protocol
+    //------------------------------------------------------------------
+    static void
+    Initialize();
+
+    static void
+    Terminate();
+
+    static const char *
+    GetPluginNameStatic();
+
+    static const char *
+    GetPluginDescriptionStatic();
+
+    virtual const char *
+    GetPluginName();
+    
+    virtual const char *
+    GetShortPluginName();
+    
+    virtual uint32_t
+    GetPluginVersion();
+    
+    virtual void
+    GetPluginCommandHelp (const char *command, lldb_private::Stream *strm);
+    
+    virtual lldb_private::Error
+    ExecutePluginCommand (lldb_private::Args &command, lldb_private::Stream *strm);
+    
+    virtual lldb_private::Log *
+    EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
+
+private:
+    ArchDefaultUnwindPlan_i386();        // Call CreateInstance instead.
+
+    lldb::UnwindPlanSP m_unwind_plan_sp;
 };
 
 

@@ -43,16 +43,16 @@ public:
     // On architectures where the pc points to the next instruction that will execute, this
     // offset value will have already been decremented by 1 to stay within the bounds of the 
     // correct function body.
-    UnwindPlan*
+    lldb::UnwindPlanSP
     GetUnwindPlanAtCallSite (int current_offset);
 
-    UnwindPlan*
+    lldb::UnwindPlanSP
     GetUnwindPlanAtNonCallSite (lldb_private::Thread& thread);
 
-    UnwindPlan*
+    lldb::UnwindPlanSP
     GetUnwindPlanFastUnwind (lldb_private::Thread& Thread);
 
-    UnwindPlan*
+    lldb::UnwindPlanSP
     GetUnwindPlanArchitectureDefault (lldb_private::Thread& thread);
 
     Address&
@@ -74,10 +74,10 @@ private:
     AddressRange m_range;
 
     Mutex m_mutex;
-    std::auto_ptr<UnwindPlan> m_unwind_at_call_site_ap;
-    std::auto_ptr<UnwindPlan> m_unwind_at_non_call_site_ap;
-    std::auto_ptr<UnwindPlan> m_unwind_fast_ap;
-    UnwindPlan *m_unwind_arch_default;
+    lldb::UnwindPlanSP m_unwind_plan_call_site_sp;
+    lldb::UnwindPlanSP m_unwind_plan_non_call_site_sp;
+    lldb::UnwindPlanSP m_unwind_plan_fast_sp;
+    lldb::UnwindPlanSP m_unwind_plan_arch_default_sp;
 
     bool m_tried_unwind_at_call_site:1,
          m_tried_unwind_at_non_call_site:1,

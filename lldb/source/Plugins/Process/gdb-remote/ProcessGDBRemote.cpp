@@ -642,7 +642,6 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 
         StreamString strm;
 
-        ;
         // See if the GDB server supports the qHostInfo information
         const char *vendor = m_gdb_comm.GetVendorString().AsCString();
         const char *os_type = m_gdb_comm.GetOSString().AsCString();
@@ -1176,6 +1175,18 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
     case 'T':
     case 'S':
         {
+            if (GetStopID() == 0)
+            {
+                // Our first stop, make sure we have a process ID, and also make
+                // sure we know about our registers
+                if (GetID() == LLDB_INVALID_PROCESS_ID)
+                {
+                    lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID (1);
+                    if (pid != LLDB_INVALID_PROCESS_ID)
+                        SetID (pid);
+                }
+                BuildDynamicRegisterInfo (true);
+            }
             // Stop with signal and thread info
             const uint8_t signo = stop_packet.GetHexU8();
             std::string name;
@@ -1209,7 +1220,14 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     // thread in big endian hex
                     tid = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    Mutex::Locker locker (m_thread_list.GetMutex ());
                     thread_sp = m_thread_list.FindThreadByID(tid, false);
+                    if (!thread_sp)
+                    {
+                        // Create the thread if we need to
+                        thread_sp.reset (new ThreadGDBRemote (*this, tid));
+                        m_thread_list.AddThread(thread_sp);
+                    }
                 }
                 else if (name.compare("hexname") == 0)
                 {
@@ -1242,7 +1260,15 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                             StringExtractor reg_value_extractor;
                             // Swap "value" over into "reg_value_extractor"
                             reg_value_extractor.GetStringRef().swap(value);
-                            static_cast<ThreadGDBRemote *> (thread_sp.get())->PrivateSetRegisterValue (reg, reg_value_extractor);
+                            if (!static_cast<ThreadGDBRemote *> (thread_sp.get())->PrivateSetRegisterValue (reg, reg_value_extractor))
+                            {
+                                Host::SetCrashDescriptionWithFormat("Setting thread register '%s' (decoded to %u (0x%x)) with value '%s' for stop packet: '%s'", 
+                                                                    name.c_str(), 
+                                                                    reg, 
+                                                                    reg, 
+                                                                    reg_value_extractor.GetStringRef().c_str(), 
+                                                                    stop_packet.GetStringRef().c_str());
+                            }
                         }
                     }
                 }

@@ -76,7 +76,8 @@ lldb_private::Initialize ()
         SymbolFileDWARF::Initialize();
         SymbolFileSymtab::Initialize();
         UnwindAssemblyProfiler_x86::Initialize();
-        ArchDefaultUnwindPlan_x86::Initialize();
+        ArchDefaultUnwindPlan_x86_64::Initialize();
+        ArchDefaultUnwindPlan_i386::Initialize();
         ArchVolatileRegs_x86::Initialize();
         ScriptInterpreter::Initialize ();
 
@@ -123,7 +124,8 @@ lldb_private::Terminate ()
     SymbolFileDWARF::Terminate();
     SymbolFileSymtab::Terminate();
     UnwindAssemblyProfiler_x86::Terminate();
-    ArchDefaultUnwindPlan_x86::Terminate();
+    ArchDefaultUnwindPlan_i386::Terminate();
+    ArchDefaultUnwindPlan_x86_64::Terminate();
     ArchVolatileRegs_x86::Terminate();
     ScriptInterpreter::Terminate ();
 

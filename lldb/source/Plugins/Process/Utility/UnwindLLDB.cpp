@@ -15,9 +15,11 @@
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Utility/ArchDefaultUnwindPlan.h"
-#include "UnwindLLDB.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Core/Log.h"
+
+#include "UnwindLLDB.h"
+#include "RegisterContextLLDB.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -65,8 +67,10 @@ UnwindLLDB::AddFirstFrame ()
 {
     // First, set up the 0th (initial) frame
     CursorSP first_cursor_sp(new Cursor ());
-    RegisterContextSP no_frame; 
-    std::auto_ptr<RegisterContextLLDB> first_register_ctx_ap (new RegisterContextLLDB(m_thread, no_frame, first_cursor_sp->sctx, 0));
+    std::auto_ptr<RegisterContextLLDB> first_register_ctx_ap (new RegisterContextLLDB (m_thread, 
+                                                                                       RegisterContextLLDB::SharedPtr(), 
+                                                                                       first_cursor_sp->sctx, 
+                                                                                       0));
     if (first_register_ctx_ap.get() == NULL)
         return false;
     
@@ -150,8 +154,8 @@ UnwindLLDB::AddOneMoreFrame ()
             return false;
         }
     }
-    RegisterContextSP register_ctx_sp(register_ctx_ap.release());
-    cursor_sp->reg_ctx = register_ctx_sp;
+    RegisterContextLLDB::SharedPtr reg_ctx_sp(register_ctx_ap.release());
+    cursor_sp->reg_ctx = reg_ctx_sp;
     m_frames.push_back (cursor_sp);
     return true;
 }

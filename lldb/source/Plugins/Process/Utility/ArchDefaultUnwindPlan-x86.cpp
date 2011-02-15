@@ -8,67 +8,29 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArchDefaultUnwindPlan-x86.h"
-#include "llvm/Support/MachO.h"
-#include "lldb/lldb-private.h"
-#include "lldb/Utility/ArchDefaultUnwindPlan.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginManager.h"
-#include "lldb/lldb-enumerations.h"
+#include "lldb/Utility/ArchDefaultUnwindPlan.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-lldb_private::UnwindPlan*
-ArchDefaultUnwindPlan_x86::GetArchDefaultUnwindPlan (Thread& thread, Address current_pc)
+lldb_private::ArchDefaultUnwindPlan *
+ArchDefaultUnwindPlan_x86_64::CreateInstance (const lldb_private::ArchSpec &arch)
 {
-    if (m_cpu == llvm::MachO::CPUTypeX86_64)
-    {
-        return &m_64bit_default;
-    }
-    if (m_cpu == llvm::MachO::CPUTypeI386)
-    {
-        return &m_32bit_default;
-    }
+    if (arch.GetGenericCPUType () == ArchSpec::eCPU_x86_64)
+        return new ArchDefaultUnwindPlan_x86_64 ();
     return NULL;
 }
 
-lldb_private::ArchDefaultUnwindPlan *
-ArchDefaultUnwindPlan_x86::CreateInstance (const lldb_private::ArchSpec &arch)
-{
-   uint32_t cpu = arch.GetCPUType ();
-   if (cpu != llvm::MachO::CPUTypeX86_64 && cpu != llvm::MachO::CPUTypeI386)
-       return NULL;
-
-   return new ArchDefaultUnwindPlan_x86 (cpu);
-}
-
-ArchDefaultUnwindPlan_x86::ArchDefaultUnwindPlan_x86(int cpu) :
+ArchDefaultUnwindPlan_x86_64::ArchDefaultUnwindPlan_x86_64() :
                 lldb_private::ArchDefaultUnwindPlan(), 
-                m_cpu(cpu), 
-                m_32bit_default(), 
-                m_64bit_default() 
+                m_unwind_plan_sp (new UnwindPlan)
 { 
     UnwindPlan::Row row;
     UnwindPlan::Row::RegisterLocation regloc;
 
-    m_32bit_default.SetRegisterKind (eRegisterKindGeneric);
-    row.SetCFARegister (LLDB_REGNUM_GENERIC_FP);
-    row.SetCFAOffset (2 * 4);
-    row.SetOffset (0);
-
-    regloc.SetAtCFAPlusOffset (2 * -4);
-    row.SetRegisterInfo (LLDB_REGNUM_GENERIC_FP, regloc);
-    regloc.SetAtCFAPlusOffset (1 * -4);
-    row.SetRegisterInfo (LLDB_REGNUM_GENERIC_PC, regloc);
-    regloc.SetIsCFAPlusOffset (0);
-    row.SetRegisterInfo (LLDB_REGNUM_GENERIC_SP, regloc);
-
-    m_32bit_default.AppendRow (row);
-    m_32bit_default.SetSourceName ("architectural default");
-
-    row.Clear();
-
-    m_64bit_default.SetRegisterKind (eRegisterKindGeneric);
+    m_unwind_plan_sp->SetRegisterKind (eRegisterKindGeneric);
     row.SetCFARegister (LLDB_REGNUM_GENERIC_FP);
     row.SetCFAOffset (2 * 8);
     row.SetOffset (0);
@@ -80,43 +42,40 @@ ArchDefaultUnwindPlan_x86::ArchDefaultUnwindPlan_x86(int cpu) :
     regloc.SetIsCFAPlusOffset (0);
     row.SetRegisterInfo (LLDB_REGNUM_GENERIC_SP, regloc);
 
-    m_64bit_default.AppendRow (row);
-    m_64bit_default.SetSourceName ("architectural default");
+    m_unwind_plan_sp->AppendRow (row);
+    m_unwind_plan_sp->SetSourceName ("x86_64 architectural default");
 }
-
-
-
 
 //------------------------------------------------------------------
 // PluginInterface protocol in UnwindAssemblyParser_x86
 //------------------------------------------------------------------
 
 const char *
-ArchDefaultUnwindPlan_x86::GetPluginName()
+ArchDefaultUnwindPlan_x86_64::GetPluginName()
 {
-    return "ArchDefaultUnwindPlan_x86";
+    return "ArchDefaultUnwindPlan_x86_64";
 }
 
 const char *
-ArchDefaultUnwindPlan_x86::GetShortPluginName()
+ArchDefaultUnwindPlan_x86_64::GetShortPluginName()
 {
-    return "archdefaultunwindplan.x86";
+    return "lldb.arch-default-unwind-plan.x86-64";
 }
 
 
 uint32_t
-ArchDefaultUnwindPlan_x86::GetPluginVersion()
+ArchDefaultUnwindPlan_x86_64::GetPluginVersion()
 {
     return 1;
 }
 
 void
-ArchDefaultUnwindPlan_x86::GetPluginCommandHelp (const char *command, Stream *strm)
+ArchDefaultUnwindPlan_x86_64::GetPluginCommandHelp (const char *command, Stream *strm)
 {
 }
 
 Error
-ArchDefaultUnwindPlan_x86::ExecutePluginCommand (Args &command, Stream *strm)
+ArchDefaultUnwindPlan_x86_64::ExecutePluginCommand (Args &command, Stream *strm)
 {
     Error error;
     error.SetErrorString("No plug-in command are currently supported.");
@@ -124,13 +83,13 @@ ArchDefaultUnwindPlan_x86::ExecutePluginCommand (Args &command, Stream *strm)
 }
 
 Log *
-ArchDefaultUnwindPlan_x86::EnablePluginLogging (Stream *strm, Args &command)
+ArchDefaultUnwindPlan_x86_64::EnablePluginLogging (Stream *strm, Args &command)
 {
     return NULL;
 }
 
 void
-ArchDefaultUnwindPlan_x86::Initialize()
+ArchDefaultUnwindPlan_x86_64::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
@@ -138,20 +97,135 @@ ArchDefaultUnwindPlan_x86::Initialize()
 }
 
 void
-ArchDefaultUnwindPlan_x86::Terminate()
+ArchDefaultUnwindPlan_x86_64::Terminate()
 {
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
 
 const char *
-ArchDefaultUnwindPlan_x86::GetPluginNameStatic()
+ArchDefaultUnwindPlan_x86_64::GetPluginNameStatic()
 {
-    return "ArchDefaultUnwindPlan_x86";
+    return "ArchDefaultUnwindPlan_x86_64";
 }
 
 const char *
-ArchDefaultUnwindPlan_x86::GetPluginDescriptionStatic()
+ArchDefaultUnwindPlan_x86_64::GetPluginDescriptionStatic()
 {
-    return "i386 and x86_64 architecture default unwind plan assembly plugin.";
+    return "x86_64 architecture default unwind plan assembly plugin.";
 }
+
+UnwindPlanSP
+ArchDefaultUnwindPlan_x86_64::GetArchDefaultUnwindPlan (Thread& thread, Address current_pc)
+{
+    return m_unwind_plan_sp;
+}
+
+
+
+lldb_private::ArchDefaultUnwindPlan *
+ArchDefaultUnwindPlan_i386::CreateInstance (const lldb_private::ArchSpec &arch)
+{
+    if (arch.GetGenericCPUType () == ArchSpec::eCPU_i386)
+        return new ArchDefaultUnwindPlan_i386 ();
+    return NULL;
+}
+
+ArchDefaultUnwindPlan_i386::ArchDefaultUnwindPlan_i386() :
+                lldb_private::ArchDefaultUnwindPlan(), 
+                m_unwind_plan_sp (new UnwindPlan)
+{ 
+    UnwindPlan::Row row;
+    UnwindPlan::Row::RegisterLocation regloc;
+
+    m_unwind_plan_sp->SetRegisterKind (eRegisterKindGeneric);
+    row.SetCFARegister (LLDB_REGNUM_GENERIC_FP);
+    row.SetCFAOffset (2 * 4);
+    row.SetOffset (0);
+
+    regloc.SetAtCFAPlusOffset (2 * -4);
+    row.SetRegisterInfo (LLDB_REGNUM_GENERIC_FP, regloc);
+    regloc.SetAtCFAPlusOffset (1 * -4);
+    row.SetRegisterInfo (LLDB_REGNUM_GENERIC_PC, regloc);
+    regloc.SetIsCFAPlusOffset (0);
+    row.SetRegisterInfo (LLDB_REGNUM_GENERIC_SP, regloc);
+
+    m_unwind_plan_sp->AppendRow (row);
+    m_unwind_plan_sp->SetSourceName ("i386 architectural default");
+}
+
+//------------------------------------------------------------------
+// PluginInterface protocol in UnwindAssemblyParser_x86
+//------------------------------------------------------------------
+
+const char *
+ArchDefaultUnwindPlan_i386::GetPluginName()
+{
+    return "ArchDefaultUnwindPlan_i386";
+}
+
+const char *
+ArchDefaultUnwindPlan_i386::GetShortPluginName()
+{
+    return "archdefaultunwindplan.x86";
+}
+
+
+uint32_t
+ArchDefaultUnwindPlan_i386::GetPluginVersion()
+{
+    return 1;
+}
+
+void
+ArchDefaultUnwindPlan_i386::GetPluginCommandHelp (const char *command, Stream *strm)
+{
+}
+
+Error
+ArchDefaultUnwindPlan_i386::ExecutePluginCommand (Args &command, Stream *strm)
+{
+    Error error;
+    error.SetErrorString("No plug-in command are currently supported.");
+    return error;
+}
+
+Log *
+ArchDefaultUnwindPlan_i386::EnablePluginLogging (Stream *strm, Args &command)
+{
+    return NULL;
+}
+
+void
+ArchDefaultUnwindPlan_i386::Initialize()
+{
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   GetPluginDescriptionStatic(),
+                                   CreateInstance);
+}
+
+void
+ArchDefaultUnwindPlan_i386::Terminate()
+{
+    PluginManager::UnregisterPlugin (CreateInstance);
+}
+
+
+const char *
+ArchDefaultUnwindPlan_i386::GetPluginNameStatic()
+{
+    return "ArchDefaultUnwindPlan_i386";
+}
+
+const char *
+ArchDefaultUnwindPlan_i386::GetPluginDescriptionStatic()
+{
+    return "i386 architecture default unwind plan assembly plugin.";
+}
+
+UnwindPlanSP
+ArchDefaultUnwindPlan_i386::GetArchDefaultUnwindPlan (Thread& thread, Address current_pc)
+{
+    return m_unwind_plan_sp;
+}
+

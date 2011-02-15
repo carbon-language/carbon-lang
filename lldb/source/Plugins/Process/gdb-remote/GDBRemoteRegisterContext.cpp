@@ -178,11 +178,12 @@ GDBRemoteRegisterContext::ReadRegisterValue (uint32_t reg, Scalar &value)
     return false;
 }
 
-void
+bool
 GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor &response)
 {
     const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
-    assert (reg_info);
+    if (reg_info == NULL)
+        return false;
 
     // Invalidate if needed
     InvalidateIfNeeded(false);
@@ -200,6 +201,7 @@ GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor
         // leave it as it was.
         m_reg_valid[reg] = false;
     }
+    return success;
 }
 
 

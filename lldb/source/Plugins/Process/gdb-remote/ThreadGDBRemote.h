@@ -105,7 +105,7 @@ protected:
     virtual bool
     RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
 
-    void
+    bool
     PrivateSetRegisterValue (uint32_t reg, 
                              StringExtractor &response);
                              

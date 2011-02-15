@@ -21,6 +21,7 @@ namespace lldb {
 
     typedef SharedPtr<lldb_private::ABI>::Type ABISP;
     typedef SharedPtr<lldb_private::AddressResolver>::Type AddressResolverSP;
+    typedef SharedPtr<lldb_private::ArchDefaultUnwindPlan>::Type ArchDefaultUnwindPlanSP;
     typedef SharedPtr<lldb_private::Baton>::Type BatonSP;
     typedef SharedPtr<lldb_private::Block>::Type BlockSP;
     typedef SharedPtr<lldb_private::Breakpoint>::Type BreakpointSP;
@@ -66,6 +67,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::Type>::Type TypeSP;
     typedef SharedPtr<lldb_private::FuncUnwinders>::Type FuncUnwindersSP;
     typedef SharedPtr<lldb_private::UserSettingsController>::Type UserSettingsControllerSP;
+    typedef SharedPtr<lldb_private::UnwindPlan>::Type UnwindPlanSP;
     typedef SharedPtr<lldb_private::ValueObject>::Type ValueObjectSP;
     typedef SharedPtr<lldb_private::Variable>::Type VariableSP;
     typedef SharedPtr<lldb_private::VariableList>::Type VariableListSP;
