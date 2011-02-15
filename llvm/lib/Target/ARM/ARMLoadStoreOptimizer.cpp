@@ -379,22 +379,14 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
   // First calculate which of the registers should be killed by the merged
   // instruction.
   const unsigned insertPos = memOps[insertAfter].Position;
-
-  SmallSet<unsigned, 4> UnavailRegs;
   SmallSet<unsigned, 4> KilledRegs;
   DenseMap<unsigned, unsigned> Killer;
-  for (unsigned i = 0; i < memOpsBegin; ++i) {
-    if (memOps[i].Position < insertPos && memOps[i].isKill) {
-      unsigned Reg = memOps[i].Reg;
-      if (memOps[i].Merged)
-        UnavailRegs.insert(Reg);
-      else {
-        KilledRegs.insert(Reg);
-        Killer[Reg] = i;
-      }
+  for (unsigned i = 0, e = memOps.size(); i != e; ++i) {
+    if (i == memOpsBegin) {
+      i = memOpsEnd;
+      if (i == e)
+        break;
     }
-  }
-  for (unsigned i = memOpsEnd, e = memOps.size(); i != e; ++i) {
     if (memOps[i].Position < insertPos && memOps[i].isKill) {
       unsigned Reg = memOps[i].Reg;
       KilledRegs.insert(Reg);
@@ -405,12 +397,7 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
   SmallVector<std::pair<unsigned, bool>, 8> Regs;
   for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
     unsigned Reg = memOps[i].Reg;
-    if (UnavailRegs.count(Reg))
-      // Register is killed before and it's not easy / possible to update the
-      // kill marker on already merged instructions. Abort.
-      return;
-
-    // If we are inserting the merged operation after an unmerged operation that
+    // If we are inserting the merged operation after an operation that
     // uses the same register, make sure to transfer any kill flag.
     bool isKill = memOps[i].isKill || KilledRegs.count(Reg);
     Regs.push_back(std::make_pair(Reg, isKill));
@@ -426,17 +413,24 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
   // Merge succeeded, update records.
   Merges.push_back(prior(Loc));
   for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
-    // Remove kill flags from any unmerged memops that come before insertPos.
+    // Remove kill flags from any memops that come before insertPos.
     if (Regs[i-memOpsBegin].second) {
       unsigned Reg = Regs[i-memOpsBegin].first;
       if (KilledRegs.count(Reg)) {
         unsigned j = Killer[Reg];
-        memOps[j].MBBI->getOperand(0).setIsKill(false);
+        int Idx = memOps[j].MBBI->findRegisterUseOperandIdx(Reg, true);
+        assert(Idx >= 0 && "Cannot find killing operand");
+        memOps[j].MBBI->getOperand(Idx).setIsKill(false);
         memOps[j].isKill = false;
       }
+      memOps[i].isKill = true;
     }
     MBB.erase(memOps[i].MBBI);
+    // Update this memop to refer to the merged instruction.
+    // We may need to move kill flags again.
     memOps[i].Merged = true;
+    memOps[i].MBBI = Merges.back();
+    memOps[i].Position = insertPos;
   }
 }
 
