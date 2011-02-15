@@ -17,8 +17,8 @@ namespace llvm {
   class APInt;
   
   /// ArrayRef - Represent a constant reference to an array (0 or more elements
-  /// consequtively in memory), i.e. a start pointer and a length.  It allows
-  /// various APIs to take consequtive elements easily and conveniently.
+  /// consecutively in memory), i.e. a start pointer and a length.  It allows
+  /// various APIs to take consecutive elements easily and conveniently.
   ///
   /// This class does not own the underlying data, it is expected to be used in
   /// situations where the data resides in some other buffer, whose lifetime
@@ -53,7 +53,7 @@ namespace llvm {
       : Data(&OneElt), Length(1) {}
     
     /// Construct an ArrayRef from a pointer and length.
-    /*implicit*/ ArrayRef(T *data, size_t length)
+    /*implicit*/ ArrayRef(const T *data, size_t length)
       : Data(data), Length(length) {}
     
     /// Construct an ArrayRef from a SmallVector.
@@ -85,7 +85,7 @@ namespace llvm {
       return Data[0];
     }
     
-    /// back - Get the last character in the string.
+    /// back - Get the last element.
     const T &back() const {
       assert(!empty());
       return Data[Length-1];
@@ -95,7 +95,7 @@ namespace llvm {
     /// @name Operator Overloads
     /// @{
     
-    char operator[](size_t Index) const {
+    const T &operator[](size_t Index) const {
       assert(Index < Length && "Invalid index!");
       return Data[Index];
     }
