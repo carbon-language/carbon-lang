@@ -173,6 +173,7 @@ private:
   bool ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc);
   bool ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res, SMLoc &EndLoc);
   bool ParseParenExpr(const MCExpr *&Res, SMLoc &EndLoc);
+  bool ParseBracketExpr(const MCExpr *&Res, SMLoc &EndLoc);
 
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \arg Res to the identifier contents.
@@ -492,6 +493,20 @@ bool AsmParser::ParseParenExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   return false;
 }
 
+/// ParseBracketExpr - Parse a bracket expression and return it.
+/// NOTE: This assumes the leading '[' has already been consumed.
+///
+/// bracketexpr ::= expr]
+///
+bool AsmParser::ParseBracketExpr(const MCExpr *&Res, SMLoc &EndLoc) {
+  if (ParseExpression(Res)) return true;
+  if (Lexer.isNot(AsmToken::RBrac))
+    return TokError("expected ']' in brackets expression");
+  EndLoc = Lexer.getLoc();
+  Lex();
+  return false;
+}
+
 /// ParsePrimaryExpr - Parse a primary expression and return it.
 ///  primaryexpr ::= (parenexpr
 ///  primaryexpr ::= symbol
@@ -587,6 +602,9 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   case AsmToken::LParen:
     Lex(); // Eat the '('.
     return ParseParenExpr(Res, EndLoc);
+  case AsmToken::LBrac:
+    Lex(); // Eat the '['.
+    return ParseBracketExpr(Res, EndLoc);
   case AsmToken::Minus:
     Lex(); // Eat the operator.
     if (ParsePrimaryExpr(Res, EndLoc))
