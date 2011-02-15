@@ -88,16 +88,6 @@
             ReferencedContainer = "container:lldb.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <CommandLineArguments>
-         <CommandLineArgument
-            argument = "/Volumes/work/gclayton/Documents/src/attach/a.out"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "-a i386 /Volumes/work/gclayton/Documents/src/lldb/test/macosx/universal/testit"
-            isEnabled = "NO">
-         </CommandLineArgument>
-      </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "LLDB_LAUNCH_FLAG_DISABLE_ASLR"
@@ -122,12 +112,12 @@
          <EnvironmentVariable
             key = "LLDB_DEBUGSERVER_LOG_FILE"
             value = "/tmp/debugserver.txt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "LLDB_DEBUGSERVER_LOG_FLAGS"
             value = "0x802e0e"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </EnvironmentVariable>
       </EnvironmentVariables>
       <AdditionalOptions>
