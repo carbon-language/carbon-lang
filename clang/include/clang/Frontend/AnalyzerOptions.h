@@ -70,7 +70,6 @@ public:
   unsigned AnalyzerStats : 1;
   unsigned EagerlyAssume : 1;
   unsigned IdempotentOps : 1;
-  unsigned ObjCSelfInitCheck : 1;
   unsigned BufferOverflows : 1;
   unsigned PurgeDead : 1;
   unsigned TrimGraph : 1;
@@ -95,7 +94,6 @@ public:
     AnalyzerStats = 0;
     EagerlyAssume = 0;
     IdempotentOps = 0;
-    ObjCSelfInitCheck = 0;
     BufferOverflows = 0;    
     PurgeDead = 1;
     TrimGraph = 0;
