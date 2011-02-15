@@ -11,10 +11,180 @@
 #define lldb_ARMUtils_h_
 
 #include "InstructionUtils.h"
+#include "llvm/Support/MathExtras.h" // for SignExtend64 template function
 
 // Common utilities for the ARM/Thumb Instruction Set Architecture.
 
 namespace lldb_private {
+
+typedef enum
+{
+    SRType_LSL,
+    SRType_LSR,
+    SRType_ASR,
+    SRType_ROR,
+    SRType_RRX
+} ARM_ShifterType;
+
+static inline uint32_t DecodeImmShift(const uint32_t type, const uint32_t imm5, ARM_ShifterType &shift_t)
+{
+    switch (type) {
+    default:
+        assert(0 && "Invalid shift type");
+    case 0:
+        shift_t = SRType_LSL;
+        return imm5;
+    case 1:
+        shift_t = SRType_LSR;
+        return (imm5 == 0 ? 32 : imm5);
+    case 2:
+        shift_t = SRType_ASR;
+        return (imm5 == 0 ? 32 : imm5);
+    case 3:
+        if (imm5 == 0)
+        {
+            shift_t = SRType_RRX;
+            return 1;
+        }
+        else
+        {
+            shift_t = SRType_ROR;
+            return imm5;
+        }
+    }
+}
+
+static inline ARM_ShifterType DecodeRegShift(const uint32_t type)
+{
+    switch (type) {
+    default:
+        assert(0 && "Invalid shift type");
+    case 0:
+        return SRType_LSL;
+    case 1:
+        return SRType_LSR;
+    case 2:
+        return SRType_ASR;
+    case 3:
+        return SRType_ROR;
+    }
+}
+
+static inline uint32_t LSL_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
+{
+    assert(amount > 0 && amount < 32);
+    carry_out = Bit32(value, 32 - amount);
+    return value << amount;
+}
+
+static inline uint32_t LSL(const uint32_t value, const uint32_t amount)
+{
+    assert(amount >= 0 && amount < 32);
+    if (amount == 0)
+        return value;
+    uint32_t dont_care;
+    return LSL_C(value, amount, dont_care);
+}
+
+static inline uint32_t LSR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
+{
+    assert(amount > 0 && amount <= 32);
+    carry_out = Bit32(value, amount - 1);
+    return value >> amount;
+}
+
+static inline uint32_t LSR(const uint32_t value, const uint32_t amount)
+{
+    assert(amount >= 0 && amount <= 32);
+    if (amount == 0)
+        return value;
+    uint32_t dont_care;
+    return LSR_C(value, amount, dont_care);
+}
+
+static inline uint32_t ASR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
+{
+    assert(amount > 0 && amount <= 32);
+    carry_out = Bit32(value, amount - 1);
+    int64_t extended = llvm::SignExtend64<32>(value);
+    return UnsignedBits(extended, amount + 31, amount);
+}
+
+static inline uint32_t ASR(const uint32_t value, const uint32_t amount)
+{
+    assert(amount >= 0 && amount <= 32);
+    if (amount == 0)
+        return value;
+    uint32_t dont_care;
+    return ASR_C(value, amount, dont_care);
+}
+
+static inline uint32_t ROR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
+{
+    assert(amount > 0 && amount < 32);
+    uint32_t result = Rotr32(value, amount);
+    carry_out = Bit32(value, 31);
+    return result;
+}
+
+static inline uint32_t ROR(const uint32_t value, const uint32_t amount)
+{
+    assert(amount >= 0 && amount < 32);
+    if (amount == 0)
+        return value;
+    uint32_t dont_care;
+    return ROR_C(value, amount, dont_care);
+}
+
+static inline uint32_t RRX_C(const uint32_t value, const uint32_t carry_in, uint32_t &carry_out)
+{
+    carry_out = Bit32(value, 0);
+    return Bit32(carry_in, 0) << 31 | Bits32(value, 31, 1);
+}
+
+static inline uint32_t RRX(const uint32_t value, const uint32_t carry_in)
+{
+    uint32_t dont_care;
+    return RRX_C(value, carry_in, dont_care);
+}
+
+static inline uint32_t Shift_C(const uint32_t value, ARM_ShifterType type, const uint32_t amount,
+                               const uint32_t carry_in, uint32_t &carry_out)
+{
+    assert(type != SRType_RRX || amount == 1);
+    if (amount == 0)
+    {
+        carry_out = carry_in;
+        return value;
+    }
+    uint32_t result;
+    switch (type) {
+    case SRType_LSL:
+        result = LSL_C(value, amount, carry_out);
+        break;
+    case SRType_LSR:
+        result = LSR_C(value, amount, carry_out);
+        break;
+    case SRType_ASR:
+        result = ASR_C(value, amount, carry_out);
+        break;
+    case SRType_ROR:
+        result = ROR_C(value, amount, carry_out);
+        break;
+    case SRType_RRX:
+        result = RRX_C(value, amount, carry_out);
+        break;
+    }
+    return result;
+}
+
+static inline uint32_t Shift(const uint32_t value, ARM_ShifterType type, const uint32_t amount,
+                             const uint32_t carry_in)
+{
+    // Don't care about carry out in this case.
+    uint32_t dont_care;
+    return Shift_C(value, type, amount, carry_in, dont_care);
+}
 
 static inline uint32_t bits(const uint32_t val, const uint32_t msbit, const uint32_t lsbit)
 {
