@@ -142,6 +142,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_BENIGN(CatchUndefined);
   PARSE_LANGOPT_IMPORTANT(ElideConstructors, diag::warn_pch_elide_constructors);
   PARSE_LANGOPT_BENIGN(SpellChecking);
+  PARSE_LANGOPT_BENIGN(DefaultFPContract);
 #undef PARSE_LANGOPT_IMPORTANT
 #undef PARSE_LANGOPT_BENIGN
 
@@ -2304,6 +2305,16 @@ ASTReader::ReadASTBlock(PerFileData &F) {
           PP->getHeaderSearchInfo().SetExternalSource(this);
       }
       break;
+
+    case FP_PRAGMA_OPTIONS:
+      // Later tables overwrite earlier ones.
+      FPPragmaOptions.swap(Record);
+      break;
+
+    case OPENCL_EXTENSIONS:
+      // Later tables overwrite earlier ones.
+      OpenCLExtensions.swap(Record);
+      break;
     }
     First = false;
   }
@@ -2818,6 +2829,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(OpenCL);
     PARSE_LANGOPT(CUDA);
     PARSE_LANGOPT(CatchUndefined);
+    PARSE_LANGOPT(DefaultFPContract);
     // FIXME: Missing ElideConstructors?!
   #undef PARSE_LANGOPT
 
@@ -4105,6 +4117,19 @@ void ASTReader::InitializeSema(Sema &S) {
       SemaObj->VTableUses.push_back(std::make_pair(Class, Loc));
       SemaObj->VTablesUsed[Class] = DefinitionRequired;
     }
+  }
+
+  if (!FPPragmaOptions.empty()) {
+    assert(FPPragmaOptions.size() == 1 && "Wrong number of FP_PRAGMA_OPTIONS");
+    SemaObj->FPFeatures.fp_contract = FPPragmaOptions[0];
+  }
+
+  if (!OpenCLExtensions.empty()) {
+    unsigned I = 0;
+#define OPENCLEXT(nm)  SemaObj->OpenCLFeatures.nm = OpenCLExtensions[I++];
+#include "clang/Basic/OpenCLExtensions.def"
+
+    assert(OpenCLExtensions.size() == I && "Wrong number of OPENCL_EXTENSIONS");
   }
 }
 

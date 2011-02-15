@@ -42,10 +42,12 @@ class ASTSerializationListener;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXCtorInitializer;
+class FPOptions;
 class HeaderSearch;
 class LabelStmt;
 class MacroDefinition;
 class MemorizeStatCalls;
+class OpenCLOptions;
 class ASTReader;
 class PreprocessedEntity;
 class PreprocessingRecord;
@@ -331,6 +333,8 @@ private:
   void WriteDeclUpdatesBlocks();
   void WriteDeclReplacementsBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
+  void WriteFPPragmaOptions(const FPOptions &Opts);
+  void WriteOpenCLExtensions(Sema &SemaRef);
 
   unsigned ParmVarDeclAbbrev;
   unsigned DeclContextLexicalAbbrev;

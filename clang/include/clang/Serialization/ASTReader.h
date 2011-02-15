@@ -600,6 +600,12 @@ private:
   /// directly.
   llvm::SmallVector<uint64_t, 2> CUDASpecialDeclRefs;
 
+  /// \brief The floating point pragma option settings.
+  llvm::SmallVector<uint64_t, 1> FPPragmaOptions;
+
+  /// \brief The OpenCL extension settings.
+  llvm::SmallVector<uint64_t, 1> OpenCLExtensions;
+
   //@}
 
   /// \brief Diagnostic IDs and their mappings that the user changed.

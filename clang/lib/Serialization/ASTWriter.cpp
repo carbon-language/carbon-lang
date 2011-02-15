@@ -740,7 +740,10 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(DECL_UPDATES);
   RECORD(CXX_BASE_SPECIFIER_OFFSETS);
   RECORD(DIAG_PRAGMA_MAPPINGS);
+  RECORD(CUDA_SPECIAL_DECL_REFS);
   RECORD(HEADER_SEARCH_TABLE);
+  RECORD(FP_PRAGMA_OPTIONS);
+  RECORD(OPENCL_EXTENSIONS);
   
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
@@ -1056,6 +1059,7 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.OpenCL);
   Record.push_back(LangOpts.CUDA);
   Record.push_back(LangOpts.CatchUndefined);
+  Record.push_back(LangOpts.DefaultFPContract);
   Record.push_back(LangOpts.ElideConstructors);
   Record.push_back(LangOpts.SpellChecking);
   Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
@@ -2528,6 +2532,25 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
   Stream.EmitRecordWithBlob(UpdateVisibleAbbrev, Record, LookupTable.str());
 }
 
+/// \brief Write an FP_PRAGMA_OPTIONS block for the given FPOptions.
+void ASTWriter::WriteFPPragmaOptions(const FPOptions &Opts) {
+  RecordData Record;
+  Record.push_back(Opts.fp_contract);
+  Stream.EmitRecord(FP_PRAGMA_OPTIONS, Record);
+}
+
+/// \brief Write an OPENCL_EXTENSIONS block for the given OpenCLOptions.
+void ASTWriter::WriteOpenCLExtensions(Sema &SemaRef) {
+  if (!SemaRef.Context.getLangOptions().OpenCL)
+    return;
+
+  const OpenCLOptions &Opts = SemaRef.getOpenCLOptions();
+  RecordData Record;
+#define OPENCLEXT(nm)  Record.push_back(Opts.nm);
+#include "clang/Basic/OpenCLExtensions.def"
+  Stream.EmitRecord(OPENCL_EXTENSIONS, Record);
+}
+
 //===----------------------------------------------------------------------===//
 // General Serialization Routines
 //===----------------------------------------------------------------------===//
@@ -2758,6 +2781,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteSelectors(SemaRef);
   WriteReferencedSelectorsPool(SemaRef);
   WriteIdentifierTable(PP);
+  WriteFPPragmaOptions(SemaRef.getFPOptions());
+  WriteOpenCLExtensions(SemaRef);
 
   WriteTypeDeclOffsets();
   WritePragmaDiagnosticMappings(Context.getDiagnostics());
@@ -2997,6 +3022,9 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteSelectors(SemaRef);
   WriteReferencedSelectorsPool(SemaRef);
   WriteIdentifierTable(PP);
+  WriteFPPragmaOptions(SemaRef.getFPOptions());
+  WriteOpenCLExtensions(SemaRef);
+
   WriteTypeDeclOffsets();
   // FIXME: For chained PCH only write the new mappings (we currently
   // write all of them again).

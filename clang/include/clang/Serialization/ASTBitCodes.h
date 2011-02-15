@@ -356,7 +356,13 @@ namespace clang {
       HEADER_SEARCH_TABLE = 40,
 
       /// \brief The directory that the PCH was originally created in.
-      ORIGINAL_PCH_DIR = 41
+      ORIGINAL_PCH_DIR = 41,
+
+      /// \brief Record code for floating point #pragma options.
+      FP_PRAGMA_OPTIONS = 42,
+
+      /// \brief Record code for enabled OpenCL extensions.
+      OPENCL_EXTENSIONS = 43
     };
 
     /// \brief Record types used within a source manager block.
