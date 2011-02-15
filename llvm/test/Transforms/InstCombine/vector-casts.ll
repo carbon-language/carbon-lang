@@ -121,3 +121,31 @@ define <2 x double> @fc(<2 x double> %t) {
   %b = sitofp <2 x i64> %a to <2 x double>
   ret <2 x double> %b
 }
+
+; PR9228
+; This was a crasher, so no CHECK statements.
+define <4 x float> @f(i32 %a) nounwind alwaysinline {
+; CHECK: @f
+entry:
+  %dim = insertelement <4 x i32> undef, i32 %a, i32 0
+  %dim30 = insertelement <4 x i32> %dim, i32 %a, i32 1
+  %dim31 = insertelement <4 x i32> %dim30, i32 %a, i32 2
+  %dim32 = insertelement <4 x i32> %dim31, i32 %a, i32 3
+
+  %offset_ptr = getelementptr <4 x float>* null, i32 1
+  %offset_int = ptrtoint <4 x float>* %offset_ptr to i64
+  %sizeof32 = trunc i64 %offset_int to i32
+
+  %smearinsert33 = insertelement <4 x i32> undef, i32 %sizeof32, i32 0
+  %smearinsert34 = insertelement <4 x i32> %smearinsert33, i32 %sizeof32, i32 1
+  %smearinsert35 = insertelement <4 x i32> %smearinsert34, i32 %sizeof32, i32 2
+  %smearinsert36 = insertelement <4 x i32> %smearinsert35, i32 %sizeof32, i32 3
+
+  %delta_scale = mul <4 x i32> %dim32, %smearinsert36
+  %offset_delta = add <4 x i32> zeroinitializer, %delta_scale
+
+  %offset_varying_delta = add <4 x i32> %offset_delta, undef
+
+  ret <4 x float> undef
+}
+

@@ -81,7 +81,8 @@ struct apint_match {
       return true;
     }
     if (ConstantVector *CV = dyn_cast<ConstantVector>(V))
-      if (ConstantInt *CI = cast_or_null<ConstantInt>(CV->getSplatValue())) {
+      if (ConstantInt *CI =
+          dyn_cast_or_null<ConstantInt>(CV->getSplatValue())) {
         Res = &CI->getValue();
         return true;
       }
@@ -126,7 +127,7 @@ struct cst_pred_ty : public Predicate {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
       return this->isValue(CI->getValue());
     if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
-      if (ConstantInt *CI = cast_or_null<ConstantInt>(CV->getSplatValue()))
+      if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CV->getSplatValue()))
         return this->isValue(CI->getValue());
     return false;
   }
@@ -146,7 +147,7 @@ struct api_pred_ty : public Predicate {
         return true;
       }
     if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
-      if (ConstantInt *CI = cast_or_null<ConstantInt>(CV->getSplatValue()))
+      if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CV->getSplatValue()))
         if (this->isValue(CI->getValue())) {
           Res = &CI->getValue();
           return true;
