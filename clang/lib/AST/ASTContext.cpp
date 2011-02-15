@@ -632,7 +632,7 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
       const ASTRecordLayout &layout = getASTRecordLayout(field->getParent());
 
       // Start with the record's overall alignment.
-      unsigned fieldAlign = layout.getAlignment();
+      unsigned fieldAlign = toBits(layout.getAlignment());
 
       // Use the GCD of that and the offset within the record.
       uint64_t offset = layout.getFieldOffset(field->getFieldIndex());
@@ -848,7 +848,7 @@ ASTContext::getTypeInfo(const Type *T) const {
     const ObjCInterfaceType *ObjCI = cast<ObjCInterfaceType>(T);
     const ASTRecordLayout &Layout = getASTObjCInterfaceLayout(ObjCI->getDecl());
     Width = toBits(Layout.getSize());
-    Align = Layout.getAlignment();
+    Align = toBits(Layout.getAlignment());
     break;
   }
   case Type::Record:
@@ -867,7 +867,7 @@ ASTContext::getTypeInfo(const Type *T) const {
     const RecordType *RT = cast<RecordType>(TT);
     const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl());
     Width = toBits(Layout.getSize());
-    Align = Layout.getAlignment();
+    Align = toBits(Layout.getAlignment());
     break;
   }
 

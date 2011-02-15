@@ -28,7 +28,7 @@ void ASTRecordLayout::Destroy(ASTContext &Ctx) {
 }
 
 ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, CharUnits size,
-                                 unsigned alignment, CharUnits datasize,
+                                 CharUnits alignment, CharUnits datasize,
                                  const uint64_t *fieldoffsets,
                                  unsigned fieldcount)
   : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
@@ -41,7 +41,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx, CharUnits size,
 
 // Constructor for C++ records.
 ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
-                                 CharUnits size, unsigned alignment,
+                                 CharUnits size, CharUnits alignment,
                                  CharUnits datasize,
                                  const uint64_t *fieldoffsets,
                                  unsigned fieldcount,

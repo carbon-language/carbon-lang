@@ -177,7 +177,8 @@ public:
 }
 
 void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
-  Alignment = Types.getContext().getASTRecordLayout(D).getAlignment() / 8;
+  Alignment = 
+    Types.getContext().getASTRecordLayout(D).getAlignment().getQuantity();
   Packed = D->hasAttr<PackedAttr>();
 
   if (D->isUnion()) {
@@ -301,7 +302,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
   const RecordDecl *RD = FD->getParent();
   const ASTRecordLayout &RL = Types.getContext().getASTRecordLayout(RD);
   uint64_t ContainingTypeSizeInBits = Types.getContext().toBits(RL.getSize());
-  unsigned ContainingTypeAlign = RL.getAlignment();
+  unsigned ContainingTypeAlign = Types.getContext().toBits(RL.getAlignment());
 
   return MakeInfo(Types, FD, FieldOffset, FieldSize, ContainingTypeSizeInBits,
                   ContainingTypeAlign);
@@ -476,7 +477,7 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   if (Ty) {
     AppendField(0, Ty);
 
-    if (getTypeAlignment(Ty) > Layout.getAlignment() / 8) {
+    if (getTypeAlignment(Ty) > Layout.getAlignment().getQuantity()) {
       // We need a packed struct.
       Packed = true;
       Align = 1;

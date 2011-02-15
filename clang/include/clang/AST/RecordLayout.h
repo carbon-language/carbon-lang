@@ -42,8 +42,8 @@ class ASTRecordLayout {
   /// FieldOffsets - Array of field offsets in bits.
   uint64_t *FieldOffsets;
 
-  // Alignment - Alignment of record in bits.
-  unsigned Alignment;
+  // Alignment - Alignment of record in characters.
+  CharUnits Alignment;
 
   // FieldCount - Number of fields.
   unsigned FieldCount;
@@ -82,14 +82,14 @@ class ASTRecordLayout {
 
   friend class ASTContext;
 
-  ASTRecordLayout(const ASTContext &Ctx, CharUnits size, unsigned alignment,
+  ASTRecordLayout(const ASTContext &Ctx, CharUnits size, CharUnits alignment,
                   CharUnits datasize, const uint64_t *fieldoffsets,
                   unsigned fieldcount);
 
   // Constructor for C++ records.
   typedef CXXRecordLayoutInfo::BaseOffsetsMapTy BaseOffsetsMapTy;
   ASTRecordLayout(const ASTContext &Ctx,
-                  CharUnits size, unsigned alignment, CharUnits datasize,
+                  CharUnits size, CharUnits alignment, CharUnits datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   CharUnits nonvirtualsize, CharUnits nonvirtualalign,
                   CharUnits SizeOfLargestEmptySubobject,
@@ -106,8 +106,8 @@ class ASTRecordLayout {
   void operator=(const ASTRecordLayout&); // DO NOT IMPLEMENT
 public:
 
-  /// getAlignment - Get the record alignment in bits.
-  unsigned getAlignment() const { return Alignment; }
+  /// getAlignment - Get the record alignment in characters.
+  CharUnits getAlignment() const { return Alignment; }
 
   /// getSize - Get the record size in characters.
   CharUnits getSize() const { return Size; }
