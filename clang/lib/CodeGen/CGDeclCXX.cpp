@@ -159,11 +159,12 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            Name, &CGM.getModule());
-
-  // Set the section if needed.
-  if (const char *Section = 
-        CGM.getContext().Target.getStaticInitSectionSpecifier())
-    Fn->setSection(Section);
+  if (!CGM.getContext().getLangOptions().AppleKext) {
+    // Set the section if needed.
+    if (const char *Section = 
+          CGM.getContext().Target.getStaticInitSectionSpecifier())
+      Fn->setSection(Section);
+  }
 
   if (!CGM.getLangOptions().Exceptions)
     Fn->setDoesNotThrow();
