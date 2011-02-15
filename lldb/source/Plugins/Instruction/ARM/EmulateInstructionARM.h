@@ -308,6 +308,10 @@ protected:
     bool
     EmulateASRImm (ARMEncoding encoding);
 
+    // A8.6.15 ASR (register)
+    bool
+    EmulateASRReg (ARMEncoding encoding);
+
     bool
     EmulateLDM (ARMEncoding encoding);
     
