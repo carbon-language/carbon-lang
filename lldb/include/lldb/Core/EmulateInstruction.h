@@ -133,6 +133,8 @@ public:
         // arg2 = address of store
         eContextRegisterStore,
         
+        eContextRegisterLoad,
+        
         // Used when performing a PC-relative branch where the
         // arg0 = don't care
         // arg1 = imm32 (signed offset)
