@@ -71,6 +71,18 @@ namespace {
     /// (because these can be defined in declspecs).
     virtual void HandleTagDeclDefinition(TagDecl *D) {
       Builder->UpdateCompletedType(D);
+      
+      // In C++, we may have member functions that need to be emitted at this 
+      // point.
+      if (Ctx->getLangOptions().CPlusPlus && !D->isDependentContext()) {
+        for (DeclContext::decl_iterator M = D->decls_begin(), 
+                                     MEnd = D->decls_end();
+             M != MEnd; ++M)
+          if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*M))
+            if (Method->isThisDeclarationADefinition() &&
+                Method->hasAttr<UsedAttr>())
+              Builder->EmitTopLevelDecl(Method);
+      }
     }
 
     virtual void HandleTranslationUnit(ASTContext &Ctx) {
