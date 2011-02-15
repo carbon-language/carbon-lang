@@ -621,6 +621,11 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     // Debian based distros.
     // Note: these distros symlink /usr/include/c++/X.Y.Z -> X.Y
     //===------------------------------------------------------------------===//
+    // Ubuntu 10.10 LTS "Lucid Lynx" -- gcc-4.4.5
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
+                                "i686-linux-gnu", "", "64", triple);
+    // The rest of 10.10 is the same as previous versions.
+
     // Ubuntu 10.04 LTS "Lucid Lynx" -- gcc-4.4.3
     // Ubuntu 9.10 "Karmic Koala"    -- gcc-4.4.1
     // Debian 6.0 "squeeze"          -- gcc-4.4.2
