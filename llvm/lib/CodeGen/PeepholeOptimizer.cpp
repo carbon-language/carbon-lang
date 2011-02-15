@@ -331,7 +331,8 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     ImmDefRegs.clear();
     ImmDefMIs.clear();
 
-    MachineBasicBlock::iterator PMII = I->begin();
+    bool First = true;
+    MachineBasicBlock::iterator PMII;
     for (MachineBasicBlock::iterator
            MII = I->begin(), MIE = I->end(); MII != MIE; ) {
       MachineInstr *MI = &*MII;
@@ -348,7 +349,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
         if (OptimizeCmpInstr(MI, MBB)) {
           // MI is deleted.
           Changed = true;
-          MII = llvm::next(PMII);
+          MII = First ? I->begin() : llvm::next(PMII);
           continue;
         }
       }
@@ -360,6 +361,8 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
         if (SeenMoveImm)
           Changed |= FoldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
       }
+
+      First = false;
       PMII = MII;
       ++MII;
     }
