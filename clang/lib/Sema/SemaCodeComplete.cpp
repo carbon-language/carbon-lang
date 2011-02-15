@@ -1894,7 +1894,8 @@ static std::string FormatFunctionParameter(ASTContext &Context,
   
   // The argument for a block pointer parameter is a block literal with
   // the appropriate type.
-  FunctionProtoTypeLoc *Block = 0;
+  FunctionTypeLoc *Block = 0;
+  FunctionProtoTypeLoc *BlockProto = 0;
   TypeLoc TL;
   if (TypeSourceInfo *TSInfo = Param->getTypeSourceInfo()) {
     TL = TSInfo->getTypeLoc().getUnqualifiedLoc();
@@ -1919,7 +1920,8 @@ static std::string FormatFunctionParameter(ASTContext &Context,
       if (BlockPointerTypeLoc *BlockPtr
           = dyn_cast<BlockPointerTypeLoc>(&TL)) {
         TL = BlockPtr->getPointeeLoc().IgnoreParens();
-        Block = dyn_cast<FunctionProtoTypeLoc>(&TL);
+        Block = dyn_cast<FunctionTypeLoc>(&TL);
+        BlockProto = dyn_cast<FunctionProtoTypeLoc>(&TL);
       }
       break;
     }
@@ -1950,8 +1952,8 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     ResultType.getAsStringInternal(Result, Context.PrintingPolicy);
   
   Result = '^' + Result;
-  if (Block->getNumArgs() == 0) {
-    if (Block->getTypePtr()->isVariadic())
+  if (!BlockProto || Block->getNumArgs() == 0) {
+    if (BlockProto && BlockProto->getTypePtr()->isVariadic())
       Result += "(...)";
     else
       Result += "(void)";
@@ -1962,7 +1964,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
         Result += ", ";
       Result += FormatFunctionParameter(Context, Block->getArg(I));
       
-      if (I == N - 1 && Block->getTypePtr()->isVariadic())
+      if (I == N - 1 && BlockProto->getTypePtr()->isVariadic())
         Result += ", ...";
     }
     Result += ")";
