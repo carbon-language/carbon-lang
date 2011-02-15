@@ -391,6 +391,12 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
   }
 }
 
+void append(SmallVectorImpl<char> &path,
+            const_iterator begin, const_iterator end) {
+  for (; begin != end; ++begin)
+    path::append(path, *begin);
+}
+
 const StringRef parent_path(StringRef path) {
   size_t end_pos = parent_path_end(path);
   if (end_pos == StringRef::npos)
