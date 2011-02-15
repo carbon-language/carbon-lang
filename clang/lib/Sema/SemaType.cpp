@@ -671,6 +671,11 @@ static QualType ConvertDeclSpecToType(Sema &S, TypeProcessingState &state) {
       Result = Context.LongDoubleTy;
     else
       Result = Context.DoubleTy;
+
+    if (S.getLangOptions().OpenCL && !S.getOpenCLOptions().cl_khr_fp64) {
+      S.Diag(DS.getTypeSpecTypeLoc(), diag::err_double_requires_fp64);
+      declarator.setInvalidType(true);
+    }
     break;
   case DeclSpec::TST_bool: Result = Context.BoolTy; break; // _Bool or bool
   case DeclSpec::TST_decimal32:    // _Decimal32

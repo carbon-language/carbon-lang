@@ -23,6 +23,7 @@ set(CLANG_TEST_DIRECTORIES
   "SemaCXX"
   "SemaObjC"
   "SemaObjCXX"
+  "SemaOpenCL"
   "SemaTemplate")
 
 set(LLVM_SOURCE_DIR "${LLVM_MAIN_SRC_DIR}")

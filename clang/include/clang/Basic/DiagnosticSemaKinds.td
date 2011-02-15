@@ -3635,6 +3635,8 @@ def ext_c99_array_usage : Extension<
   "use of C99-specific array features, accepted as an extension">;
 def err_c99_array_usage_cxx : Error<
   "C99-specific array features are not permitted in C++">;
+def err_double_requires_fp64 : Error<
+  "use of type 'double' requires cl_khr_fp64 extension to be enabled">;
   
 def note_getter_unavailable : Note<
   "or because setter is declared here, but no getter method %0 is found">;
