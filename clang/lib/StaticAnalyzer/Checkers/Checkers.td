@@ -83,6 +83,26 @@ def IdempotentOperationChecker : Checker<"IdempotentOps">,
   HelpText<"Warn about idempotent operations">,
   DescFile<"IdempotentOperationChecker.cpp">;
 
+def CastToStructChecker : Checker<"CastToStruct">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check for cast from non-struct pointer to struct pointer">,
+  DescFile<"CastToStructChecker.cpp">;
+
+def FixedAddressChecker : Checker<"FixedAddr">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check for assignment of a fixed address to a pointer">,
+  DescFile<"FixedAddressChecker.cpp">;
+
+def PointerArithChecker : Checker<"PointerArithm">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check for pointer arithmetic on locations other than array elements">,
+  DescFile<"PointerArithChecker">;
+
+def PointerSubChecker : Checker<"PointerSub">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check for pointer subtractions on two pointers pointing to different memory chunks">,
+  DescFile<"PointerSubChecker">;
+
 def ChrootChecker : Checker<"Chroot">,
   InPackage<UnixExperimental>,
   HelpText<"Check improper use of chroot">,

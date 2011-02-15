@@ -13,9 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
-#include "InternalChecks.h"
 
 using namespace clang;
 using namespace ento;
@@ -74,6 +74,6 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
   }
 }
 
-void ento::RegisterCastToStructChecker(ExprEngine &Eng) {
+void ento::registerCastToStructChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CastToStructChecker());
 }

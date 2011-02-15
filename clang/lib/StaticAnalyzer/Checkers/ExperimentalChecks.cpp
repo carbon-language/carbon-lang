@@ -34,8 +34,4 @@ void ento::RegisterExperimentalInternalChecks(ExprEngine &Eng) {
   
   RegisterArrayBoundChecker(Eng);
   RegisterCastSizeChecker(Eng);
-  RegisterCastToStructChecker(Eng);
-  RegisterFixedAddressChecker(Eng);
-  RegisterPointerArithChecker(Eng);
-  RegisterPointerSubChecker(Eng);
 }

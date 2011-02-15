@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
@@ -74,6 +74,6 @@ void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
   }
 }
 
-void ento::RegisterPointerSubChecker(ExprEngine &Eng) {
+void ento::registerPointerSubChecker(ExprEngine &Eng) {
   Eng.registerCheck(new PointerSubChecker());
 }
