@@ -44,12 +44,12 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ; check that variable bar:b value range is appropriately trucated in debug info. Here Ltmp5 is end of
 ; location range.
 
-;CHECK:Ltmp7
+;CHECK:Ltmp6
 ;CHECK-NEXT: DEBUG_VALUE: bar:b <- undef
 
 ;CHECK:Ldebug_loc0:
 ;CHECK-NEXT:	.quad	Ltmp
-;CHECK-NEXT:	.quad	Ltmp7
+;CHECK-NEXT:	.quad	Ltmp6
 ;CHECK-NEXT:	.short	1
 ;CHECK-NEXT:	.byte	85
 ;CHECK-NEXT:	.quad	0

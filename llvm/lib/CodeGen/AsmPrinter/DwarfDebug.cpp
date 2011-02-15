@@ -2708,6 +2708,10 @@ bool DwarfDebug::extractScopeInformation() {
         continue;
       }
 
+      // Ignore DBG_VALUE. It does not contribute any instruction in output.
+      if (MInsn->isDebugValue())
+        continue;
+
       if (RangeBeginMI) {
         // If we have alread seen a beginning of a instruction range and
         // current instruction scope does not match scope of first instruction
