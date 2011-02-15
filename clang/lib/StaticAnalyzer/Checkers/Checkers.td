@@ -78,6 +78,11 @@ def UnreachableCodeChecker : Checker<"UnreachableCode">,
   HelpText<"Check unreachable code">,
   DescFile<"UnreachableCodeChecker.cpp">;
 
+def IdempotentOperationChecker : Checker<"IdempotentOps">,
+  InPackage<CoreExperimental>,
+  HelpText<"Warn about idempotent operations">,
+  DescFile<"IdempotentOperationChecker.cpp">;
+
 def ChrootChecker : Checker<"Chroot">,
   InPackage<UnixExperimental>,
   HelpText<"Check improper use of chroot">,

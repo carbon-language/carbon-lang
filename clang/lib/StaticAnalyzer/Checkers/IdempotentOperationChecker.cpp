@@ -42,7 +42,7 @@
 // - Finer grained false positive control (levels)
 // - Handling ~0 values
 
-#include "ExperimentalChecks.h"
+#include "ClangSACheckers.h"
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
@@ -132,7 +132,7 @@ void *IdempotentOperationChecker::getTag() {
   return &x;
 }
 
-void ento::RegisterIdempotentOperationChecker(ExprEngine &Eng) {
+void ento::registerIdempotentOperationChecker(ExprEngine &Eng) {
   Eng.registerCheck(new IdempotentOperationChecker());
 }
 

@@ -952,7 +952,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-analyzer-check-objc-mem");
 
         CmdArgs.push_back("-analyzer-eagerly-assume");
-        CmdArgs.push_back("-analyzer-check-idempotent-operations");
       }
     }
 

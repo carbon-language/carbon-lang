@@ -69,7 +69,6 @@ public:
   unsigned AnalyzeNestedBlocks : 1;
   unsigned AnalyzerStats : 1;
   unsigned EagerlyAssume : 1;
-  unsigned IdempotentOps : 1;
   unsigned BufferOverflows : 1;
   unsigned PurgeDead : 1;
   unsigned TrimGraph : 1;
@@ -93,7 +92,6 @@ public:
     AnalyzeNestedBlocks = 0;
     AnalyzerStats = 0;
     EagerlyAssume = 0;
-    IdempotentOps = 0;
     BufferOverflows = 0;    
     PurgeDead = 1;
     TrimGraph = 0;

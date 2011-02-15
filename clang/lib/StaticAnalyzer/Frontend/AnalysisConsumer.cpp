@@ -354,12 +354,6 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);
 
-  // Enable idempotent operation checking if it was explicitly turned on, or if
-  // we are running experimental checks (i.e. everything)
-  if (C.Opts.IdempotentOps || C.Opts.EnableExperimentalChecks
-      || C.Opts.EnableExperimentalInternalChecks)
-    RegisterIdempotentOperationChecker(Eng);
-  
   if (C.Opts.BufferOverflows)
     RegisterArrayBoundCheckerV2(Eng);
 
