@@ -1588,6 +1588,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         DEBUG(errs() << "IC: Old = " << *I << '\n'
                      << "    New = " << *Result << '\n');
 
+        Result->setDebugLoc(I->getDebugLoc());
         // Everything uses the new instruction now.
         I->replaceAllUsesWith(Result);
 
