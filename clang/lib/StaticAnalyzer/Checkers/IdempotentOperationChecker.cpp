@@ -563,8 +563,9 @@ IdempotentOperationChecker::pathWasCompletelyAnalyzed(const CFG *cfg,
                                                       const CFGBlock *CB,
                                                       const CFGStmtMap *CBM,
                                                       const CoreEngine &CE) {
-  
-  CRA.reset(new CFGReachabilityAnalysis(*cfg));
+
+  if (!CRA.get())
+    CRA.reset(new CFGReachabilityAnalysis(*cfg));
   
   // Test for reachability from any aborted blocks to this block
   typedef CoreEngine::BlocksAborted::const_iterator AbortedIterator;
