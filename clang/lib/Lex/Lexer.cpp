@@ -1162,7 +1162,7 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
       if (C == 0 && PP && PP->isCodeCompletionFile(FileLoc))
         PP->CodeCompleteNaturalLanguage();
       else if (!isLexingRawMode() && !Features.AsmPreprocessor)
-        Diag(BufferPtr, diag::err_unterminated_string);
+        Diag(BufferPtr, diag::warn_unterminated_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
     }
@@ -1241,7 +1241,7 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
       if (C == 0 && PP && PP->isCodeCompletionFile(FileLoc))
         PP->CodeCompleteNaturalLanguage();
       else if (!isLexingRawMode() && !Features.AsmPreprocessor)
-        Diag(BufferPtr, diag::err_unterminated_char);
+        Diag(BufferPtr, diag::warn_unterminated_char);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
     } else if (C == 0) {
