@@ -90,7 +90,7 @@ private:
 ///
 class LocalScope {
 public:
-  typedef llvm::SmallVector<VarDecl*, 4> AutomaticVarsTy;
+  typedef BumpVector<VarDecl*> AutomaticVarsTy;
 
   /// const_iterator - Iterates local scope backwards and jumps to previous
   /// scope on reaching the beginning of currently iterated scope.
@@ -160,6 +160,8 @@ public:
   friend class const_iterator;
 
 private:
+  BumpVectorContext ctx;
+  
   /// Automatic variables in order of declaration.
   AutomaticVarsTy Vars;
   /// Iterator to variable in previous scope that was declared just before
@@ -168,15 +170,14 @@ private:
 
 public:
   /// Constructs empty scope linked to previous scope in specified place.
-  LocalScope(const_iterator P)
-      : Vars()
-      , Prev(P) {}
+  LocalScope(BumpVectorContext &ctx, const_iterator P)
+      : ctx(ctx), Vars(ctx, 4), Prev(P) {}
 
   /// Begin of scope in direction of CFG building (backwards).
   const_iterator begin() const { return const_iterator(*this, Vars.size()); }
 
   void addVar(VarDecl* VD) {
-    Vars.push_back(VD);
+    Vars.push_back(VD, ctx);
   }
 };
 
@@ -630,8 +631,10 @@ void CFGBuilder::addImplicitDtorsForDestructor(const CXXDestructorDecl *DD) {
 /// way return valid LocalScope object.
 LocalScope* CFGBuilder::createOrReuseLocalScope(LocalScope* Scope) {
   if (!Scope) {
-    Scope = cfg->getAllocator().Allocate<LocalScope>();
-    new (Scope) LocalScope(ScopePos);
+    llvm::BumpPtrAllocator &alloc = cfg->getAllocator();
+    Scope = alloc.Allocate<LocalScope>();
+    BumpVectorContext ctx(alloc);
+    new (Scope) LocalScope(ctx, ScopePos);
   }
   return Scope;
 }
