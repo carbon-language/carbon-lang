@@ -23,6 +23,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/ABI.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -328,7 +329,17 @@ void CXXNameMangler::mangle(const NamedDecl *D, llvm::StringRef Prefix) {
   // over all other naming in the .o file.
   if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
     // If we have an asm name, then we use it as the mangling.
-    Out << '\01';  // LLVM IR Marker for __asm("foo")
+
+    // Adding the prefix can cause problems when one file has a "foo" and
+    // another has a "\01foo". That is known to happen on ELF with the
+    // tricks normally used for producing aliases (PR9177). Fortunately the
+    // llvm mangler on ELF is a nop, so we can just avoid adding the \01
+    // marker.
+    llvm::StringRef UserLabelPrefix =
+      getASTContext().Target.getUserLabelPrefix();
+    if (!UserLabelPrefix.empty())
+      Out << '\01';  // LLVM IR Marker for __asm("foo")
+
     Out << ALA->getLabel();
     return;
   }

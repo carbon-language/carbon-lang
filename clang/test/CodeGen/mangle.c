@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple i386-pc-linux-gnu -emit-llvm -o - %s | FileCheck %s
 
-// CHECK: @"\01foo"
+// CHECK: @foo
 
 // Make sure we mangle overloadable, even in C system headers.
 # 1 "somesystemheader.h" 1 3 4
@@ -9,7 +9,7 @@ void __attribute__((__overloadable__)) f0(int a) {}
 // CHECK: @_Z2f0l
 void __attribute__((__overloadable__)) f0(long b) {}
 
-// CHECK: @"\01bar"
+// CHECK: @bar
 
 // These should get merged.
 void foo() __asm__("bar");
@@ -55,7 +55,7 @@ float foo8 __asm__("foo7") = 42;
 int func(void);
 extern int func (void) __asm__ ("FUNC");
 
-// CHECK: @"\01FUNC"
+// CHECK: @FUNC
 int func(void) {
   return 42;
 }
