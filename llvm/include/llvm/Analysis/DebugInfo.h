@@ -868,10 +868,6 @@ namespace llvm {
     Constant *GetTagConstant(unsigned TAG);
   };
 
-  bool getLocationInfo(const Value *V, std::string &DisplayName,
-                       std::string &Type, unsigned &LineNo, std::string &File,
-                       std::string &Dir);
-
   /// getDISubprogram - Find subprogram that is enclosing this scope.
   DISubprogram getDISubprogram(const MDNode *Scope);
 
