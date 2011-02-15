@@ -3549,9 +3549,5 @@ EmulateInstructionARM::EvaluateInstruction ()
     if (m_inst_mode == eModeThumb && m_it_session.InITBlock())
         m_it_session.ITAdvance();
 
-    // If the flags have changed, flush it out.
-    if (m_new_inst_cpsr != m_inst_cpsr)
-        m_inst_cpsr = m_new_inst_cpsr;
-
     return false;
 }
