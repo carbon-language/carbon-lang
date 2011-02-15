@@ -1286,16 +1286,20 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
   return Sema::AR_accessible;
 }
 
-void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx) {
-  // Pretend we did this from the context of the newly-parsed
-  // declaration. If that declaration itself forms a declaration context,
-  // include it in the effective context so that parameters and return types of
-  // befriended functions have that function's access priveledges.
-  DeclContext *DC = Ctx->getDeclContext();
-  if (isa<FunctionDecl>(Ctx))
-    DC = cast<DeclContext>(Ctx);
-  else if (FunctionTemplateDecl *FnTpl = dyn_cast<FunctionTemplateDecl>(Ctx))
-    DC = cast<DeclContext>(FnTpl->getTemplatedDecl());
+void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *decl) {
+  // Access control for names used in the declarations of functions
+  // and function templates should normally be evaluated in the context
+  // of the declaration, just in case it's a friend of something.
+  // However, this does not apply to local extern declarations.
+
+  DeclContext *DC = decl->getDeclContext();
+  if (FunctionDecl *fn = dyn_cast<FunctionDecl>(decl)) {
+    if (!DC->isFunctionOrMethod()) DC = fn;
+  } else if (FunctionTemplateDecl *fnt = dyn_cast<FunctionTemplateDecl>(decl)) {
+    // Never a local declaration.
+    DC = fnt->getTemplatedDecl();
+  }
+
   EffectiveContext EC(DC);
 
   AccessTarget Target(DD.getAccessData());

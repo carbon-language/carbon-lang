@@ -153,3 +153,18 @@ namespace test6 {
     private_inner c; // expected-error {{ 'private_inner' is a private member of 'test6::A'}}
   };
 }
+
+// PR9229
+namespace test7 {
+  void foo(int arg[1]);
+  class A {
+    void check();
+  };
+  class B {
+    friend class A;
+    A ins;
+  };
+  void A::check() {
+    void foo(int arg[__builtin_offsetof(B, ins)]);
+  }
+}
