@@ -24,6 +24,23 @@
 
 using namespace clang;
 
+static void DiagnoseObjCImplementedDeprecations(Sema &S,
+                                                NamedDecl *ND,
+                                                SourceLocation ImplLoc,
+                                                int select) {
+  
+  unsigned DIAG = diag::warn_depercated_def;
+  if (S.Diags.getDiagnosticLevel(DIAG, ImplLoc)== Diagnostic::Ignored)
+    return;
+  if (ND && ND->getAttr<DeprecatedAttr>()) {
+    S.Diag(ImplLoc, DIAG) << select;
+    if (select == 0)
+      S.Diag(ND->getLocation(), diag::note_method_declared_at);
+    else
+      S.Diag(ND->getLocation(), diag::note_previous_decl) << "class";
+  }
+}
+
 /// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
@@ -66,19 +83,12 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
   }
   // Warn on implementating deprecated methods under 
   // -Wdeprecated-implementations flag.
-  // FIXME. Refactor using common routine.
-  unsigned DIAG = diag::warn_depercated_def;
-  if (Diags.getDiagnosticLevel(DIAG, MDecl->getLocation())
-      != Diagnostic::Ignored)
-    if (ObjCInterfaceDecl *IC = MDecl->getClassInterface()) {
-      if (ObjCMethodDecl *IMD = 
+  if (ObjCInterfaceDecl *IC = MDecl->getClassInterface())
+    if (ObjCMethodDecl *IMD = 
           IC->lookupMethod(MDecl->getSelector(), MDecl->isInstanceMethod()))
-        if (NamedDecl *ND = dyn_cast<NamedDecl>(IMD))
-          if (ND->getAttr<DeprecatedAttr>()) {
-            Diag(MDecl->getLocation(), DIAG) << 0;
-            Diag(IMD->getLocation(), diag::note_method_declared_at);
-          }
-    }
+      DiagnoseObjCImplementedDeprecations(*this, 
+                                          dyn_cast<NamedDecl>(IMD), 
+                                          MDecl->getLocation(), 0);
 }
 
 Decl *Sema::
@@ -556,16 +566,9 @@ Decl *Sema::ActOnStartCategoryImplementation(
       CatIDecl->setImplementation(CDecl);
       // Warn on implementating category of deprecated class under 
       // -Wdeprecated-implementations flag.
-      // FIXME. Refactor using common routine.
-      unsigned DIAG = diag::warn_depercated_def;
-      if (Diags.getDiagnosticLevel(DIAG, CDecl->getLocation())
-          != Diagnostic::Ignored)
-        if (NamedDecl *ND = dyn_cast<NamedDecl>(IDecl))
-          if (ND->getAttr<DeprecatedAttr>()) {
-            Diag(CDecl->getLocation(), DIAG) << 2;
-            Diag(IDecl->getLocation(), diag::note_previous_decl) << "class";
-          }
-
+      DiagnoseObjCImplementedDeprecations(*this, 
+                                          dyn_cast<NamedDecl>(IDecl), 
+                                          CDecl->getLocation(), 2);
     }
   }
 
@@ -677,15 +680,9 @@ Decl *Sema::ActOnStartClassImplementation(
     PushOnScopeChains(IMPDecl, TUScope);
     // Warn on implementating deprecated class under 
     // -Wdeprecated-implementations flag.
-    // FIXME. Refactor using common routine.
-    unsigned DIAG = diag::warn_depercated_def;
-    if (Diags.getDiagnosticLevel(DIAG, IMPDecl->getLocation())
-          != Diagnostic::Ignored)
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(IDecl))
-        if (ND->getAttr<DeprecatedAttr>()) {
-          Diag(IMPDecl->getLocation(), DIAG) << 1;
-          Diag(IDecl->getLocation(), diag::note_previous_decl) << "class";
-       }
+    DiagnoseObjCImplementedDeprecations(*this, 
+                                        dyn_cast<NamedDecl>(IDecl), 
+                                        IMPDecl->getLocation(), 1);
   }
   return IMPDecl;
 }
