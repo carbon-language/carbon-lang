@@ -792,9 +792,8 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
     Mask.push_back(llvm::ConstantInt::get(Int32Ty, InIdx));
   }
 
-  llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
-  Vec = Builder.CreateShuffleVector(Vec,
-                                    llvm::UndefValue::get(Vec->getType()),
+  llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
+  Vec = Builder.CreateShuffleVector(Vec, llvm::UndefValue::get(Vec->getType()),
                                     MaskV, "tmp");
   return RValue::get(Vec);
 }
@@ -997,7 +996,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
         Mask[InIdx] = llvm::ConstantInt::get(Int32Ty, i);
       }
 
-      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+      llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
       Vec = Builder.CreateShuffleVector(SrcVal,
                                         llvm::UndefValue::get(Vec->getType()),
                                         MaskV, "tmp");
@@ -1012,8 +1011,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
         ExtMask.push_back(llvm::ConstantInt::get(Int32Ty, i));
       for (; i != NumDstElts; ++i)
         ExtMask.push_back(llvm::UndefValue::get(Int32Ty));
-      llvm::Value *ExtMaskV = llvm::ConstantVector::get(&ExtMask[0],
-                                                        ExtMask.size());
+      llvm::Value *ExtMaskV = llvm::ConstantVector::get(ExtMask);
       llvm::Value *ExtSrcVal =
         Builder.CreateShuffleVector(SrcVal,
                                     llvm::UndefValue::get(SrcVal->getType()),
@@ -1028,7 +1026,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
         unsigned Idx = getAccessedFieldNo(i, Elts);
         Mask[Idx] = llvm::ConstantInt::get(Int32Ty, i+NumDstElts);
       }
-      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+      llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
       Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV, "tmp");
     } else {
       // We should never shorten the vector
@@ -1482,7 +1480,7 @@ llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
     CElts.push_back(llvm::ConstantInt::get(Int32Ty, Elts[i]));
 
-  return llvm::ConstantVector::get(&CElts[0], CElts.size());
+  return llvm::ConstantVector::get(CElts);
 }
 
 LValue CodeGenFunction::
@@ -1535,7 +1533,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     else
       CElts.push_back(cast<llvm::Constant>(BaseElts->getOperand(Indices[i])));
   }
-  llvm::Constant *CV = llvm::ConstantVector::get(&CElts[0], CElts.size());
+  llvm::Constant *CV = llvm::ConstantVector::get(CElts);
   return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV,
                                   Base.getVRQualifiers());
 }
