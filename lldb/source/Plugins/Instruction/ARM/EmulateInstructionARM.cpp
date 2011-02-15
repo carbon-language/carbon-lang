@@ -2735,9 +2735,9 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
     return true;
 }
 
-// STM stores multiple registers to consecutive memory locations using an address from a base register.  The 
-// consecutive memory locations start at this address, and teh address just above the last of those locations can 
-// optionally be written back to the base register.
+// STM (Store Multiple Increment After) stores multiple registers to consecutive memory locations using an address 
+// from a base register.  The consecutive memory locations start at this address, and teh address just above the last
+// of those locations can optionally be written back to the base register.
 bool
 EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
 {
@@ -2892,9 +2892,9 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
     return true;
 }
 
-// STMDA stores multiple registers to consecutive memory locations using an address from a base register.  The 
-// consecutive memory locations end at this address, and the address just below the lowest of those locations can 
-// optionally be written back to the base register.
+// STMDA (Store Multiple Decrement After) stores multiple registers to consecutive memory locations using an address
+// from a base register.  The consecutive memory locations end at this address, and the address just below the lowest
+// of those locations can optionally be written back to the base register.
 bool
 EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
 {
@@ -3009,7 +3009,7 @@ EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
         // if wback then R[n] = R[n] - 4*BitCount(registers);
         if (wback)
         {
-            offset = addr_byte_size * BitCount (registers);
+            offset = (addr_byte_size * BitCount (registers)) * -1;
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
             context.SetImmediateSigned (offset);
             addr_t data = address + offset;
@@ -3020,9 +3020,9 @@ EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
     return true;
 }
                   
-// STMDB stores multiple registers to consecutive memory locations using an address from a base register.  The 
-// consecutive memory locations end just below this address, and the address of the first of those locations can 
-// optionally be written back to the base register.
+// STMDB (Store Multiple Decrement Before) stores multiple registers to consecutive memory locations using an address
+// from a base register.  The consecutive memory locations end just below this address, and the address of the first of
+// those locations can optionally be written back to the base register.
 bool
 EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
 {
@@ -3163,6 +3163,135 @@ EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
         // if wback then R[n] = R[n] - 4*BitCount(registers);
         if (wback)
         {
+            offset = (addr_byte_size * BitCount (registers)) * -1;
+            context.type = EmulateInstruction::eContextAdjustBaseRegister;
+            context.SetImmediateSigned (offset);
+            addr_t data = address + offset;
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, data))
+                return false;
+        }
+    }
+    return true;
+}
+                  
+// STMIB (Store Multiple Increment Before) stores multiple registers to consecutive memory locations using an address
+// from a base register.  The consecutive memory locations start just above this address, and the address of the last
+// of those locations can optionally be written back to the base register.
+bool
+EmulateInstructionARM::EmulateSTMIB (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); 
+        address = R[n] + 4;
+                  
+        for i = 0 to 14 
+            if registers<i> == ’1’ then
+                if i == n && wback && i != LowestSetBit(registers) then
+                    MemA[address,4] = bits(32) UNKNOWN;
+                else 
+                    MemA[address,4] = R[i];
+                address = address + 4;
+                  
+        if registers<15> == ’1’ then 
+            MemA[address,4] = PCStoreValue();
+                  
+        if wback then R[n] = R[n] + 4*BitCount(registers);
+#endif   
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed())
+    {
+        uint32_t n;
+        uint32_t registers = 0;
+        bool wback;
+        const uint32_t addr_byte_size = GetAddressByteSize();
+                  
+        // EncodingSpecificOperations(); 
+        switch (encoding)
+        {
+            case eEncodingA1:
+                // n = UInt(Rn); registers = register_list; wback = (W == ’1’); 
+                n = Bits32 (opcode, 19, 16);
+                registers = Bits32 (opcode, 15, 0);
+                wback = BitIsSet (opcode, 21);
+                  
+                // if n == 15 || BitCount(registers) < 1 then UNPREDICTABLE;
+                if ((n == 15) && (BitCount (registers) < 1))
+                    return false;
+                break;
+            default:
+                return false;
+        }
+        // address = R[n] + 4;
+                  
+        int32_t offset = 0;
+        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+                  
+        address = address + addr_byte_size;
+                  
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterStore;
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+                
+        uint32_t lowest_set_bit = 14;
+        // for i = 0 to 14
+        for (int i = 0; i < 14; ++i)
+        {
+            // if registers<i> == ’1’ then
+            if (BitIsSet (registers, i))
+            {
+                if (i < lowest_set_bit)
+                    lowest_set_bit = i;
+                // if i == n && wback && i != LowestSetBit(registers) then
+                if ((i == n) && wback && (i != lowest_set_bit))
+                    // MemA[address,4] = bits(32) UNKNOWN;
+                    WriteBits32UnknownToMemory (address + offset);
+                // else
+                else
+                {
+                    // MemA[address,4] = R[i];
+                    uint32_t data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + i, 0, &success);
+                    if (!success)
+                        return false;
+                  
+                    Register data_reg;
+                    data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
+                    if (!WriteMemoryUnsigned (context, address + offset, data, addr_byte_size))
+                        return false;
+                }
+                  
+                // address = address + 4;
+                offset += addr_byte_size;
+            }
+        }
+                  
+        // if registers<15> == ’1’ then 
+            // MemA[address,4] = PCStoreValue();
+        if (BitIsSet (registers, 15))
+        {
+            Register pc_reg;
+            pc_reg.SetRegister (eRegisterKindDWARF, dwarf_pc);
+            context.SetRegisterPlusOffset (pc_reg, 8);
+            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            if (!success)
+            return false;
+                  
+            if (!WriteMemoryUnsigned (context, address + offset, pc + 8, addr_byte_size))
+                return false;
+        }
+                  
+        // if wback then R[n] = R[n] + 4*BitCount(registers);
+        if (wback)
+        {
             offset = addr_byte_size * BitCount (registers);
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
             context.SetImmediateSigned (offset);
@@ -3173,6 +3302,7 @@ EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
     }
     return true;
 }
+                  
                   
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
@@ -3251,7 +3381,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         { 0x0fd00000, 0x08800000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTM, "stm<c> <Rn>{!} <registers>" },
         { 0x0fd00000, 0x08000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDA, "stmda<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x09000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" }
+        { 0x0fd00000, 0x09000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x09800000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMIB, "stmib<c> <Rn>{!} <registers>" }
                   
         
     };
