@@ -73,10 +73,10 @@ namespace llvm {
     iterator begin() const { return Data; }
     iterator end() const { return Data + Length; }
     
-    /// empty - Check if the string is empty.
+    /// empty - Check if the array is empty.
     bool empty() const { return Length == 0; }
     
-    /// size - Get the string size.
+    /// size - Get the array size.
     size_t size() const { return Length; }
     
     /// front - Get the first element.
