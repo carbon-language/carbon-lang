@@ -39,6 +39,8 @@ def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings">;
 def Deprecated : DiagGroup<"deprecated", [ DeprecatedDeclarations] >,
                  DiagCategory<"Deprecations">;
 
+def DeprecatedImplementations :DiagGroup<"deprecated-implementations">;
+
 def : DiagGroup<"disabled-optimization">;
 def : DiagGroup<"discard-qual">;
 def : DiagGroup<"div-by-zero">;

@@ -64,6 +64,21 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
     if ((*PI)->getIdentifier())
       PushOnScopeChains(*PI, FnBodyScope);
   }
+  // Warn on implementating deprecated methods under 
+  // -Wdeprecated-implementations flag.
+  // FIXME. Refactor using common routine.
+  unsigned DIAG = diag::warn_depercated_def;
+  if (Diags.getDiagnosticLevel(DIAG, MDecl->getLocation())
+      != Diagnostic::Ignored)
+    if (ObjCInterfaceDecl *IC = MDecl->getClassInterface()) {
+      if (ObjCMethodDecl *IMD = 
+          IC->lookupMethod(MDecl->getSelector(), MDecl->isInstanceMethod()))
+        if (NamedDecl *ND = dyn_cast<NamedDecl>(IMD))
+          if (ND->getAttr<DeprecatedAttr>()) {
+            Diag(MDecl->getLocation(), DIAG) << 0;
+            Diag(IMD->getLocation(), diag::note_method_declared_at);
+          }
+    }
 }
 
 Decl *Sema::
@@ -537,8 +552,21 @@ Decl *Sema::ActOnStartCategoryImplementation(
         << CatName;
       Diag(CatIDecl->getImplementation()->getLocation(),
            diag::note_previous_definition);
-    } else
+    } else {
       CatIDecl->setImplementation(CDecl);
+      // Warn on implementating category of deprecated class under 
+      // -Wdeprecated-implementations flag.
+      // FIXME. Refactor using common routine.
+      unsigned DIAG = diag::warn_depercated_def;
+      if (Diags.getDiagnosticLevel(DIAG, CDecl->getLocation())
+          != Diagnostic::Ignored)
+        if (NamedDecl *ND = dyn_cast<NamedDecl>(IDecl))
+          if (ND->getAttr<DeprecatedAttr>()) {
+            Diag(CDecl->getLocation(), DIAG) << 2;
+            Diag(IDecl->getLocation(), diag::note_previous_decl) << "class";
+          }
+
+    }
   }
 
   CheckObjCDeclScope(CDecl);
@@ -647,6 +675,17 @@ Decl *Sema::ActOnStartClassImplementation(
   } else { // add it to the list.
     IDecl->setImplementation(IMPDecl);
     PushOnScopeChains(IMPDecl, TUScope);
+    // Warn on implementating deprecated class under 
+    // -Wdeprecated-implementations flag.
+    // FIXME. Refactor using common routine.
+    unsigned DIAG = diag::warn_depercated_def;
+    if (Diags.getDiagnosticLevel(DIAG, IMPDecl->getLocation())
+          != Diagnostic::Ignored)
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(IDecl))
+        if (ND->getAttr<DeprecatedAttr>()) {
+          Diag(IMPDecl->getLocation(), DIAG) << 1;
+          Diag(IDecl->getLocation(), diag::note_previous_decl) << "class";
+       }
   }
   return IMPDecl;
 }
