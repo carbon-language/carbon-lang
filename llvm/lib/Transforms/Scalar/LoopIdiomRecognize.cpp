@@ -273,7 +273,7 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
     return false;
   
   // If the stored value is a byte-wise value (like i32 -1), then it may be
-  // turned into a memset of i8 -1, assuming that all the consequtive bytes
+  // turned into a memset of i8 -1, assuming that all the consecutive bytes
   // are stored.  A store of i32 0x01020304 can never be turned into a memset.
   if (Value *SplatValue = isBytewiseValue(StoredVal))
     if (processLoopStoreOfSplatValue(StorePtr, StoreSize, SI->getAlignment(),

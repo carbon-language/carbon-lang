@@ -133,7 +133,7 @@ both 32-bit and 64-bit code generation.
 =head2 The "CHECK-NEXT:" directive
 
 Sometimes you want to match lines and would like to verify that matches
-happen on exactly consequtive lines with no other lines in between them.  In
+happen on exactly consecutive lines with no other lines in between them.  In
 this case, you can use CHECK: and CHECK-NEXT: directives to specify this.  If
 you specified a custom check prefix, just use "<PREFIX>-NEXT:".  For
 example, something like this works as you'd expect:

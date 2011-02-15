@@ -165,7 +165,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   if (LI.isVolatile()) return 0;
   
   // Do really simple store-to-load forwarding and load CSE, to catch cases
-  // where there are several consequtive memory accesses to the same location,
+  // where there are several consecutive memory accesses to the same location,
   // separated by a few arithmetic operations.
   BasicBlock::iterator BBI = &LI;
   if (Value *AvailableVal = FindAvailableLoadedValue(Op, LI.getParent(), BBI,6))

@@ -57,7 +57,7 @@ protected:
   /// it, so that the end iterator actually points to valid memory.
   unsigned CurArraySize;
 
-  // If small, this is # elts allocated consequtively
+  // If small, this is # elts allocated consecutively
   unsigned NumElements;
   unsigned NumTombstones;
 

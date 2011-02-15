@@ -699,7 +699,7 @@ static bool CompareMBBNumbers(const MachineBasicBlock *LHS,
 /// machine function, it upsets all of the block numbers.  Renumber the blocks
 /// and update the arrays that parallel this numbering.
 void ARMConstantIslands::UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB) {
-  // Renumber the MBB's to keep them consequtive.
+  // Renumber the MBB's to keep them consecutive.
   NewBB->getParent()->RenumberBlocks(NewBB);
 
   // Insert a size into BBSizes to align it properly with the (newly

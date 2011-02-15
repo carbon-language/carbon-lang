@@ -352,7 +352,7 @@ INITIALIZE_PASS_END(MemCpyOpt, "memcpyopt", "MemCpy Optimization",
 
 /// tryMergingIntoMemset - When scanning forward over instructions, we look for
 /// some other patterns to fold away.  In particular, this looks for stores to
-/// neighboring locations of memory.  If it sees enough consequtive ones, it
+/// neighboring locations of memory.  If it sees enough consecutive ones, it
 /// attempts to merge them together into a memcpy/memset.
 Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst, 
                                              Value *StartPtr, Value *ByteVal) {
