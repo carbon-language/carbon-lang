@@ -613,6 +613,13 @@ private:
   /// AST file.
   std::string ActualOriginalFileName;
 
+  /// \brief The directory that the PCH was originally created in. Used to
+  /// allow resolving headers even after headers+PCH was moved to a new path.
+  std::string OriginalDir;
+
+  /// \brief The directory that the PCH we are reading is stored in.
+  std::string CurrentDir;
+
   /// \brief Whether this precompiled header is a relocatable PCH file.
   bool RelocatablePCH;
 

@@ -899,7 +899,8 @@ adjustFilenameForRelocatablePCH(const char *Filename, const char *isysroot) {
 }
 
 /// \brief Write the AST metadata (e.g., i686-apple-darwin9).
-void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
+void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot,
+                              const std::string &OutputFile) {
   using namespace llvm;
 
   // Metadata
@@ -945,6 +946,23 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
     RecordData Record;
     Record.push_back(ORIGINAL_FILE_NAME);
     Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
+  }
+
+  // Original PCH directory
+  if (!OutputFile.empty() && OutputFile != "-") {
+    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(ORIGINAL_PCH_DIR));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
+    unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
+
+    llvm::SmallString<128> OutputPath(OutputFile);
+
+    llvm::sys::fs::make_absolute(OutputPath);
+    StringRef origDir = llvm::sys::path::parent_path(OutputPath);
+
+    RecordData Record;
+    Record.push_back(ORIGINAL_PCH_DIR);
+    Stream.EmitRecordWithBlob(AbbrevCode, Record, origDir);
   }
 
   // Repository branch/version information.
@@ -2568,6 +2586,7 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
 }
 
 void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+                         const std::string &OutputFile,
                          const char *isysroot) {
   // Emit the file header.
   Stream.Emit((unsigned)'C', 8);
@@ -2580,11 +2599,12 @@ void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (Chain)
     WriteASTChain(SemaRef, StatCalls, isysroot);
   else
-    WriteASTCore(SemaRef, StatCalls, isysroot);
+    WriteASTCore(SemaRef, StatCalls, isysroot, OutputFile);
 }
 
 void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                             const char *isysroot) {
+                             const char *isysroot,
+                             const std::string &OutputFile) {
   using namespace llvm;
 
   ASTContext &Context = SemaRef.Context;
@@ -2692,7 +2712,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the remaining AST contents.
   RecordData Record;
   Stream.EnterSubblock(AST_BLOCK_ID, 5);
-  WriteMetadata(Context, isysroot);
+  WriteMetadata(Context, isysroot, OutputFile);
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls);
@@ -2827,7 +2847,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   RecordData Record;
   Stream.EnterSubblock(AST_BLOCK_ID, 5);
-  WriteMetadata(Context, isysroot);
+  WriteMetadata(Context, isysroot, "");
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls);
   // FIXME: Source manager block should only write new stuff, which could be

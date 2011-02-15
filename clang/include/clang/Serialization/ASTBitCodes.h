@@ -353,7 +353,10 @@ namespace clang {
       CUDA_SPECIAL_DECL_REFS = 39,
       
       /// \brief Record code for header search information.
-      HEADER_SEARCH_TABLE = 40
+      HEADER_SEARCH_TABLE = 40,
+
+      /// \brief The directory that the PCH was originally created in.
+      ORIGINAL_PCH_DIR = 41
     };
 
     /// \brief Record types used within a source manager block.

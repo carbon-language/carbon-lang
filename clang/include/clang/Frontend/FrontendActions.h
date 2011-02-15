@@ -89,6 +89,7 @@ public:
   static bool ComputeASTConsumerArguments(CompilerInstance &CI,
                                           llvm::StringRef InFile,
                                           std::string &Sysroot,
+                                          std::string &OutputFile,
                                           llvm::raw_ostream *&OS,
                                           bool &Chaining);
 };

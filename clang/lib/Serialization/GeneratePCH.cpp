@@ -27,10 +27,11 @@
 using namespace clang;
 
 PCHGenerator::PCHGenerator(const Preprocessor &PP,
+                           const std::string &OutputFile,
                            bool Chaining,
                            const char *isysroot,
                            llvm::raw_ostream *OS)
-  : PP(PP), isysroot(isysroot), Out(OS), SemaPtr(0),
+  : PP(PP), OutputFile(OutputFile), isysroot(isysroot), Out(OS), SemaPtr(0),
     StatCalls(0), Stream(Buffer), Writer(Stream), Chaining(Chaining) {
   // Install a stat() listener to keep track of all of the stat()
   // calls.
@@ -50,7 +51,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   
   // Emit the PCH file
   assert(SemaPtr && "No Sema?");
-  Writer.WriteAST(*SemaPtr, StatCalls, isysroot);
+  Writer.WriteAST(*SemaPtr, StatCalls, OutputFile, isysroot);
 
   // Write the generated bitstream to "Out".
   Out->write((char *)&Buffer.front(), Buffer.size());

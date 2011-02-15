@@ -1181,6 +1181,39 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
   }
 }
 
+/// \brief If a header file is not found at the path that we expect it to be
+/// and the PCH file was moved from its original location, try to resolve the
+/// file by assuming that header+PCH were moved together and the header is in
+/// the same place relative to the PCH.
+static std::string
+resolveFileRelativeToOriginalDir(const std::string &Filename,
+                                 const std::string &OriginalDir,
+                                 const std::string &CurrDir) {
+  assert(OriginalDir != CurrDir &&
+         "No point trying to resolve the file if the PCH dir didn't change");
+  using namespace llvm::sys;
+  llvm::SmallString<128> filePath(Filename);
+  fs::make_absolute(filePath);
+  assert(path::is_absolute(OriginalDir));
+  llvm::SmallString<128> currPCHPath(CurrDir);
+
+  path::const_iterator fileDirI = path::begin(path::parent_path(filePath)),
+                       fileDirE = path::end(path::parent_path(filePath));
+  path::const_iterator origDirI = path::begin(OriginalDir),
+                       origDirE = path::end(OriginalDir);
+  // Skip the common path components from filePath and OriginalDir.
+  while (fileDirI != fileDirE && origDirI != origDirE &&
+         *fileDirI == *origDirI) {
+    ++fileDirI;
+    ++origDirI;
+  }
+  for (; origDirI != origDirE; ++origDirI)
+    path::append(currPCHPath, "..");
+  path::append(currPCHPath, fileDirI, fileDirE);
+  path::append(currPCHPath, path::filename(Filename));
+  return currPCHPath.str();
+}
+
 /// \brief Get a cursor that's correctly positioned for reading the source
 /// location entry with the given ID.
 ASTReader::PerFileData *ASTReader::SLocCursorForID(unsigned ID) {
@@ -1235,6 +1268,14 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     std::string Filename(BlobStart, BlobStart + BlobLen);
     MaybeAddSystemRootToFilename(Filename);
     const FileEntry *File = FileMgr.getFile(Filename);
+    if (File == 0 && !OriginalDir.empty() && !CurrentDir.empty() &&
+        OriginalDir != CurrentDir) {
+      std::string resolved = resolveFileRelativeToOriginalDir(Filename,
+                                                              OriginalDir,
+                                                              CurrentDir);
+      if (!resolved.empty())
+        File = FileMgr.getFile(resolved);
+    }
     if (File == 0)
       File = FileMgr.getVirtualFile(Filename, (off_t)Record[4],
                                     (time_t)Record[5]);
@@ -2179,6 +2220,12 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       MaybeAddSystemRootToFilename(OriginalFileName);
       break;
 
+    case ORIGINAL_PCH_DIR:
+      // The primary AST will be the last to get here, so it will be the one
+      // that's used.
+      OriginalDir.assign(BlobStart, BlobLen);
+      break;
+
     case VERSION_CONTROL_BRANCH_REVISION: {
       const std::string &CurBranch = getClangFullRepositoryVersion();
       llvm::StringRef ASTBranch(BlobStart, BlobLen);
@@ -2392,6 +2439,11 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
 
   // Set the AST file name.
   F.FileName = FileName;
+
+  if (FileName != "-") {
+    CurrentDir = llvm::sys::path::parent_path(FileName);
+    if (CurrentDir.empty()) CurrentDir = ".";
+  }
 
   // Open the AST file.
   //

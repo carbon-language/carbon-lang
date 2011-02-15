@@ -309,7 +309,8 @@ private:
   void WriteSubStmt(Stmt *S);
 
   void WriteBlockInfoBlock();
-  void WriteMetadata(ASTContext &Context, const char *isysroot);
+  void WriteMetadata(ASTContext &Context, const char *isysroot,
+                     const std::string &OutputFile);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteStatCache(MemorizeStatCalls &StatCalls);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
@@ -339,7 +340,7 @@ private:
   void WriteDecl(ASTContext &Context, Decl *D);
 
   void WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                    const char* isysroot);
+                    const char* isysroot, const std::string &OutputFile);
   void WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                      const char* isysroot);
   
@@ -368,6 +369,7 @@ public:
   /// \param PPRec Record of the preprocessing actions that occurred while
   /// preprocessing this file, e.g., macro instantiations
   void WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+                const std::string &OutputFile,
                 const char* isysroot);
 
   /// \brief Emit a source location.
@@ -575,6 +577,7 @@ public:
 /// precompiled header from the parsed source code.
 class PCHGenerator : public SemaConsumer {
   const Preprocessor &PP;
+  std::string OutputFile;
   const char *isysroot;
   llvm::raw_ostream *Out;
   Sema *SemaPtr;
@@ -589,7 +592,7 @@ protected:
   const ASTWriter &getWriter() const { return Writer; }
 
 public:
-  PCHGenerator(const Preprocessor &PP, bool Chaining,
+  PCHGenerator(const Preprocessor &PP, const std::string &OutputFile, bool Chaining,
                const char *isysroot, llvm::raw_ostream *Out);
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
