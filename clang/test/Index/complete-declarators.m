@@ -19,6 +19,8 @@
   for(q in param1) {
     int y;
   }
+
+  static P *p = 0;
 }
 @end
 
@@ -43,3 +45,28 @@
 // CHECK-CC4-NOT: VarDecl:{ResultType int}{TypedText q2}
 // CHECK-CC4: NotImplemented:{ResultType A *}{TypedText self} (34)
 // CHECK-CC4: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
+// RUN: c-index-test -code-completion-at=%s:23:10 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// CHECK-CC5: NotImplemented:{TypedText _Bool} (50)
+// CHECK-CC5: NotImplemented:{TypedText _Complex} (50)
+// CHECK-CC5: NotImplemented:{TypedText _Imaginary} (50)
+// CHECK-CC5: ObjCInterfaceDecl:{TypedText A} (50)
+// CHECK-CC5: NotImplemented:{TypedText char} (50)
+// CHECK-CC5: TypedefDecl:{TypedText Class} (50)
+// CHECK-CC5: NotImplemented:{TypedText const} (50)
+// CHECK-CC5: NotImplemented:{TypedText double} (50)
+// CHECK-CC5: NotImplemented:{TypedText enum} (50)
+// CHECK-CC5: NotImplemented:{TypedText float} (50)
+// CHECK-CC5: TypedefDecl:{TypedText id} (50)
+// CHECK-CC5: NotImplemented:{TypedText int} (50)
+// CHECK-CC5: NotImplemented:{TypedText long} (50)
+// CHECK-CC5: NotImplemented:{TypedText restrict} (50)
+// CHECK-CC5: TypedefDecl:{TypedText SEL} (50)
+// CHECK-CC5: NotImplemented:{TypedText short} (50)
+// CHECK-CC5: NotImplemented:{TypedText signed} (50)
+// CHECK-CC5: NotImplemented:{TypedText struct} (50)
+// CHECK-CC5: NotImplemented:{TypedText typeof}{HorizontalSpace  }{Placeholder expression} (40)
+// CHECK-CC5: NotImplemented:{TypedText typeof}{LeftParen (}{Placeholder type}{RightParen )} (40)
+// CHECK-CC5: NotImplemented:{TypedText union} (50)
+// CHECK-CC5: NotImplemented:{TypedText unsigned} (50)
+// CHECK-CC5: NotImplemented:{TypedText void} (50)
+// CHECK-CC5: NotImplemented:{TypedText volatile} (50)

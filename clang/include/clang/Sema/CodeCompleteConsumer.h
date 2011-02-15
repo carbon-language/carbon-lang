@@ -146,7 +146,7 @@ class Sema;
 class CodeCompletionContext {
 public:
   enum Kind {
-    /// \brief An unspecified code-completion context, where the 
+    /// \brief An unspecified code-completion context.
     CCC_Other,
     /// \brief Code completion occurred within a "top-level" completion context,
     /// e.g., at namespace or global scope.

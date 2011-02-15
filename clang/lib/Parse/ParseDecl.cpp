@@ -920,7 +920,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         return;
       } 
       
-      if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
+      if (getCurScope()->getFnParent() || getCurScope()->getBlockParent())
+        CCC = Sema::PCC_LocalDeclarationSpecifiers;
+      else if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
         CCC = DSContext == DSC_class? Sema::PCC_MemberTemplate 
                                     : Sema::PCC_Template;
       else if (DSContext == DSC_class)

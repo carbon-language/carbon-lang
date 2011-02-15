@@ -4938,7 +4938,10 @@ public:
     PCC_Type,
     /// \brief Code completion occurs in a parenthesized expression, which
     /// might also be a type cast.
-    PCC_ParenthesizedExpression
+    PCC_ParenthesizedExpression,
+    /// \brief Code completion occurs within a sequence of declaration 
+    /// specifiers within a function, method, or block.
+    PCC_LocalDeclarationSpecifiers
   };
 
   void CodeCompleteOrdinaryName(Scope *S,

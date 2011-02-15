@@ -1286,6 +1286,7 @@ static void AddFunctionSpecifiers(Sema::ParserCompletionContext CCC,
   case Sema::PCC_RecoveryInFunction:
   case Sema::PCC_Type:
   case Sema::PCC_ParenthesizedExpression:
+  case Sema::PCC_LocalDeclarationSpecifiers:
     break;
   }
 }
@@ -1325,6 +1326,7 @@ static bool WantTypesInContext(Sema::ParserCompletionContext CCC,
   case Sema::PCC_RecoveryInFunction:
   case Sema::PCC_Type:
   case Sema::PCC_ParenthesizedExpression:
+  case Sema::PCC_LocalDeclarationSpecifiers:
     return true;
     
   case Sema::PCC_Expression:
@@ -1768,6 +1770,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
   }
       
   case Sema::PCC_Type:
+  case Sema::PCC_LocalDeclarationSpecifiers:
     break;
   }
 
@@ -2719,6 +2722,9 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
 
   case Sema::PCC_ParenthesizedExpression:
     return CodeCompletionContext::CCC_ParenthesizedExpression;
+      
+  case Sema::PCC_LocalDeclarationSpecifiers:
+    return CodeCompletionContext::CCC_Type;
   }
   
   return CodeCompletionContext::CCC_Other;
@@ -2818,6 +2824,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   case PCC_Template:
   case PCC_MemberTemplate:
   case PCC_Type:
+  case PCC_LocalDeclarationSpecifiers:
     Results.setFilter(&ResultBuilder::IsOrdinaryNonValueName);
     break;
 
@@ -2873,6 +2880,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   case PCC_ForInit:
   case PCC_Condition:
   case PCC_Type:
+  case PCC_LocalDeclarationSpecifiers:
     break;
   }
   
