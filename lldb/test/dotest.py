@@ -496,18 +496,19 @@ def setupSysPath():
         return
         
     base = os.path.abspath(os.path.join(scriptPath, os.pardir))
-    dbgPath = os.path.join(base, 'build', 'Debug', 'LLDB.framework',
-                           'Resources', 'Python')
-    dbgPath2 = os.path.join(base, 'build', 'lldb', 'Build', 'Products', 
-                            'Debug', 'LLDB.framework', 'Resources', 'Python')
-    relPath = os.path.join(base, 'build', 'Release', 'LLDB.framework',
-                           'Resources', 'Python')
-    relPath2 = os.path.join(base, 'build', 'lldb', 'Build', 'Products', 
-                            'Release', 'LLDB.framework', 'Resources', 'Python')
-    baiPath = os.path.join(base, 'build', 'BuildAndIntegration',
-                           'LLDB.framework', 'Resources', 'Python')
-    baiPath2 = os.path.join(base, 'build', 'lldb', 'Build', 'Products', 
-                           'BuildAndIntegration', 'LLDB.framework', 'Resources', 'Python')
+
+    xcode3_build_dir = ['build']
+    xcode4_build_dir = ['build', 'lldb', 'Build', 'Products']
+    dbg = ['Debug']
+    rel = ['Release']
+    bai = ['BuildAndIntegration']
+    python_resource_dir = ['LLDB.framework', 'Resources', 'Python']
+    dbgPath  = os.path.join(base, *(xcode3_build_dir + dbg + python_resource_dir))
+    dbgPath2 = os.path.join(base, *(xcode4_build_dir + dbg + python_resource_dir))
+    relPath  = os.path.join(base, *(xcode3_build_dir + rel + python_resource_dir))
+    relPath2 = os.path.join(base, *(xcode4_build_dir + rel + python_resource_dir))
+    baiPath  = os.path.join(base, *(xcode3_build_dir + bai + python_resource_dir))
+    baiPath2 = os.path.join(base, *(xcode4_build_dir + bai + python_resource_dir))
 
     lldbPath = None
     if os.path.isfile(os.path.join(dbgPath, 'lldb.py')):
