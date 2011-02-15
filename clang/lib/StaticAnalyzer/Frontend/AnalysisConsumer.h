@@ -34,8 +34,6 @@ ASTConsumer* CreateAnalysisConsumer(const Preprocessor &pp,
                                     const std::string &output,
                                     const AnalyzerOptions& Opts);
 
-CheckerManager *registerCheckers(const AnalyzerOptions &opts,Diagnostic &diags);
-
 } // end GR namespace
 
 } // end clang namespace

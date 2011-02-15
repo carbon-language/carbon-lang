@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AnalysisConsumer.h"
+#include "clang/StaticAnalyzer/Frontend/CheckerRegistration.h"
 #include "../Checkers/ClangSACheckerProvider.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/CheckerProvider.h"
