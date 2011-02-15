@@ -1592,6 +1592,23 @@ static Value *findDbgGlobalDeclare(GlobalVariable *V) {
   return 0;
 }
 
+/// Find the debug info descriptor corresponding to this function.
+static Value *findDbgSubprogramDeclare(Function *V) {
+  const Module *M = V->getParent();
+  NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.sp");
+  if (!NMD)
+    return 0;
+
+  for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+    DIDescriptor DIG(cast<MDNode>(NMD->getOperand(i)));
+    if (!DIG.isSubprogram())
+      continue;
+    if (DISubprogram(DIG).getFunction() == V)
+      return DIG;
+  }
+  return 0;
+}
+
 /// Finds the llvm.dbg.declare intrinsic corresponding to this value if any.
 /// It looks through pointer casts too.
 static const DbgDeclareInst *findDbgDeclare(const Value *V) {
@@ -1626,6 +1643,17 @@ bool llvm::getLocationInfo(const Value *V, std::string &DisplayName,
     Value *DIGV = findDbgGlobalDeclare(GV);
     if (!DIGV) return false;
     DIGlobalVariable Var(cast<MDNode>(DIGV));
+
+    StringRef D = Var.getDisplayName();
+    if (!D.empty())
+      DisplayName = D;
+    LineNo = Var.getLineNumber();
+    Unit = Var.getCompileUnit();
+    TypeD = Var.getType();
+  } else if (Function *F = dyn_cast<Function>(const_cast<Value*>(V))){
+    Value *DIF = findDbgSubprogramDeclare(F);
+    if (!DIF) return false;
+    DISubprogram Var(cast<MDNode>(DIF));
 
     StringRef D = Var.getDisplayName();
     if (!D.empty())

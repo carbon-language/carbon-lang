@@ -66,8 +66,12 @@ void PrintDbgInfo::printVariableDeclaration(const Value *V) {
 
   Out << "; ";
   WriteAsOperand(Out, V, false, 0);
-  Out << " is variable " << DisplayName
-      << " of type " << Type << " declared at ";
+  if (isa<Function>(V)) 
+    Out << " is function " << DisplayName
+        << " of type " << Type << " declared at ";
+  else
+    Out << " is variable " << DisplayName
+        << " of type " << Type << " declared at ";
 
   if (PrintDirectory)
     Out << Directory << "/";
