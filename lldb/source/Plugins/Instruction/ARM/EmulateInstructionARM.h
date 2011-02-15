@@ -322,6 +322,9 @@ protected:
     bool
     EmulateSTM (ARMEncoding encoding);
     
+    bool
+    EmulateSTMDA (ARMEncoding encoding);
+    
     uint32_t m_arm_isa;
     Mode m_inst_mode;
     uint32_t m_inst_cpsr;
