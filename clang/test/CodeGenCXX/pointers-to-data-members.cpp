@@ -1,37 +1,41 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin10 | FileCheck %s
-// RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin10 -O3 | FileCheck --check-prefix=CHECK-O3 %s
+// RUN: %clang_cc1 %s -emit-llvm -o %t.ll -triple=x86_64-apple-darwin10
+// RUN: FileCheck %s < %t.ll
+// RUN: FileCheck -check-prefix=CHECK-GLOBAL %s < %t.ll
+// RUN: %clang_cc1 %s -emit-llvm -o %t-opt.ll -triple=x86_64-apple-darwin10 -O3
+// RUN: FileCheck --check-prefix=CHECK-O3 %s < %t-opt.ll
+
 struct A { int a; int b; };
 struct B { int b; };
 struct C : B, A { };
 
 // Zero init.
 namespace ZeroInit {
-  // CHECK: @_ZN8ZeroInit1aE = global i64 -1
+  // CHECK-GLOBAL: @_ZN8ZeroInit1aE = global i64 -1
   int A::* a;
   
-  // CHECK: @_ZN8ZeroInit2aaE = global [2 x i64] [i64 -1, i64 -1]
+  // CHECK-GLOBAL: @_ZN8ZeroInit2aaE = global [2 x i64] [i64 -1, i64 -1]
   int A::* aa[2];
   
-  // CHECK: @_ZN8ZeroInit3aaaE = global [2 x [2 x i64]] {{\[}}[2 x i64] [i64 -1, i64 -1], [2 x i64] [i64 -1, i64 -1]]
+  // CHECK-GLOBAL: @_ZN8ZeroInit3aaaE = global [2 x [2 x i64]] {{\[}}[2 x i64] [i64 -1, i64 -1], [2 x i64] [i64 -1, i64 -1]]
   int A::* aaa[2][2];
   
-  // CHECK: @_ZN8ZeroInit1bE = global i64 -1,
+  // CHECK-GLOBAL: @_ZN8ZeroInit1bE = global i64 -1,
   int A::* b = 0;
 
-  // CHECK: @_ZN8ZeroInit2saE = internal global %struct.anon { i64 -1 }
+  // CHECK-GLOBAL: @_ZN8ZeroInit2saE = internal global %struct.anon { i64 -1 }
   struct {
     int A::*a;
   } sa;
   void test_sa() { (void) sa; } // force emission
   
-  // CHECK: @_ZN8ZeroInit3ssaE = internal
-  // CHECK: [2 x i64] [i64 -1, i64 -1]
+  // CHECK-GLOBAL: @_ZN8ZeroInit3ssaE = internal
+  // CHECK-GLOBAL: [2 x i64] [i64 -1, i64 -1]
   struct {
     int A::*aa[2];
   } ssa[2];
   void test_ssa() { (void) ssa; }
   
-  // CHECK: @_ZN8ZeroInit2ssE = internal global %1 { %struct.anon { i64 -1 } }
+  // CHECK-GLOBAL: @_ZN8ZeroInit2ssE = internal global %1 { %struct.anon { i64 -1 } }
   struct {
     struct {
       int A::*pa;
@@ -51,13 +55,13 @@ namespace ZeroInit {
   };
 
   struct C : A, B { int j; };
-  // CHECK: @_ZN8ZeroInit1cE = global %"struct.ZeroInit::C" { [16 x i8] c"\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00", [176 x i8] c"\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF", i32 0, [4 x i8] zeroinitializer }
+  // CHECK-GLOBAL: @_ZN8ZeroInit1cE = global {{%.*}} { [16 x i8] c"\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00", [176 x i8] c"\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF", i32 0, [4 x i8] zeroinitializer }
   C c;
 }
 
 // PR5674
 namespace PR5674 {
-  // CHECK: @_ZN6PR56742pbE = global i64 4
+  // CHECK-GLOBAL: @_ZN6PR56742pbE = global i64 4
   int A::*pb = &A::b;
 }
 
@@ -168,15 +172,15 @@ struct A {
   int A::*i;
 };
 
-// FIXME: A::i should be initialized to -1 here.
+// CHECK-GLOBAL: @_ZN12VirtualBases1bE = global {{%.*}} { i32 (...)** null, [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF" }
 struct B : virtual A { };
 B b;
 
-// FIXME: A::i should be initialized to -1 here.
+// CHECK-GLOBAL: @_ZN12VirtualBases1cE = global {{%.*}} { i32 (...)** null, i64 -1, [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF" }
 struct C : virtual A { int A::*i; };
 C c;
 
-// FIXME: C::A::i should be initialized to -1 here.
+  // CHECK-GLOBAL: @_ZN12VirtualBases1dE = global {{%.*}} { [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF", i64 -1, [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF" }
 struct D : C { int A::*i; };
 D d;
 
@@ -217,3 +221,12 @@ void f(S* p, double S::*pm) {
 
 }
 
+namespace test4 {
+  struct A             { int A_i; };
+  struct B : virtual A { int A::*B_p; };
+  struct C : virtual B { int    *C_p; };
+  struct D :         C { int    *D_p; };
+
+  // CHECK-GLOBAL: @_ZN5test41dE = global {{%.*}} { [16 x i8] zeroinitializer, i32* null, [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF", [4 x i8] zeroinitializer }
+  D d;
+}

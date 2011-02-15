@@ -33,9 +33,10 @@ namespace {
 class CGRecordLayoutBuilder {
 public:
   /// FieldTypes - Holds the LLVM types that the struct is created from.
+  /// 
   std::vector<const llvm::Type *> FieldTypes;
 
-  /// NonVirtualBaseFieldTypes - Holds the LLVM types for the non-virtual part
+  /// BaseSubobjectType - Holds the LLVM type for the non-virtual part
   /// of the struct. For example, consider:
   ///
   /// struct A { int i; };
@@ -47,22 +48,19 @@ public:
   ///
   /// And the LLVM type of the non-virtual base struct will be
   /// %struct.C.base = type { i32 (...)**, %struct.A, i32 }
-  std::vector<const llvm::Type *> NonVirtualBaseFieldTypes;
+  ///
+  /// This only gets initialized if the base subobject type is
+  /// different from the complete-object type.
+  const llvm::StructType *BaseSubobjectType;
 
-  /// NonVirtualBaseTypeIsSameAsCompleteType - Whether the non-virtual part of
-  /// the struct is equivalent to the complete struct.
-  bool NonVirtualBaseTypeIsSameAsCompleteType;
-  
-  /// LLVMFieldInfo - Holds a field and its corresponding LLVM field number.
-  typedef std::pair<const FieldDecl *, unsigned> LLVMFieldInfo;
-  llvm::SmallVector<LLVMFieldInfo, 16> LLVMFields;
+  /// FieldInfo - Holds a field and its corresponding LLVM field number.
+  llvm::DenseMap<const FieldDecl *, unsigned> Fields;
 
-  /// LLVMBitFieldInfo - Holds location and size information about a bit field.
-  typedef std::pair<const FieldDecl *, CGBitFieldInfo> LLVMBitFieldInfo;
-  llvm::SmallVector<LLVMBitFieldInfo, 16> LLVMBitFields;
+  /// BitFieldInfo - Holds location and size information about a bit field.
+  llvm::DenseMap<const FieldDecl *, CGBitFieldInfo> BitFields;
 
-  typedef std::pair<const CXXRecordDecl *, unsigned> LLVMBaseInfo;
-  llvm::SmallVector<LLVMBaseInfo, 16> LLVMNonVirtualBases;
+  llvm::DenseMap<const CXXRecordDecl *, unsigned> NonVirtualBases;
+  llvm::DenseMap<const CXXRecordDecl *, unsigned> VirtualBases;
 
   /// IndirectPrimaryBases - Virtual base classes, direct or indirect, that are
   /// primary base classes for some other direct or indirect base class.
@@ -75,6 +73,7 @@ public:
   /// IsZeroInitializable - Whether this struct can be C++
   /// zero-initialized with an LLVM zeroinitializer.
   bool IsZeroInitializable;
+  bool IsZeroInitializableAsBase;
 
   /// Packed - Whether the resulting LLVM struct will be packed or not.
   bool Packed;
@@ -148,6 +147,7 @@ private:
   
   /// AppendBytes - Append a given number of bytes to the record.
   void AppendBytes(uint64_t NumBytes);
+  void AppendBytes(CharUnits numBytes) { AppendBytes(numBytes.getQuantity()); }
 
   /// AppendTailPadding - Append enough tail padding so that the type will have
   /// the passed size.
@@ -162,13 +162,13 @@ private:
   /// CheckZeroInitializable - Check if the given type contains a pointer
   /// to data member.
   void CheckZeroInitializable(QualType T);
-  void CheckZeroInitializable(const CXXRecordDecl *RD);
 
 public:
   CGRecordLayoutBuilder(CodeGenTypes &Types)
-    : NonVirtualBaseTypeIsSameAsCompleteType(false), IsZeroInitializable(true),
-    Packed(false), Types(Types), Alignment(0), BitsAvailableInLastField(0),
-    NextFieldOffsetInBytes(0) { }
+    : BaseSubobjectType(0),
+      IsZeroInitializable(true), IsZeroInitializableAsBase(true),
+      Packed(false), Types(Types), Alignment(0),
+      BitsAvailableInLastField(0), NextFieldOffsetInBytes(0) { }
 
   /// Layout - Will layout a RecordDecl.
   void Layout(const RecordDecl *D);
@@ -193,9 +193,10 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
   Packed = true;
   NextFieldOffsetInBytes = 0;
   FieldTypes.clear();
-  LLVMFields.clear();
-  LLVMBitFields.clear();
-  LLVMNonVirtualBases.clear();
+  Fields.clear();
+  BitFields.clear();
+  NonVirtualBases.clear();
+  VirtualBases.clear();
 
   LayoutFields(D);
 }
@@ -339,9 +340,8 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   }
 
   // Add the bit field info.
-  LLVMBitFields.push_back(
-    LLVMBitFieldInfo(D, CGBitFieldInfo::MakeInfo(Types, D, FieldOffset,
-                                                 FieldSize)));
+  BitFields.insert(std::make_pair(D,
+                   CGBitFieldInfo::MakeInfo(Types, D, FieldOffset, FieldSize)));
 
   AppendBytes(NumBytesToAppend);
 
@@ -401,7 +401,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   AppendPadding(FieldOffsetInBytes, TypeAlignment);
 
   // Now append the field.
-  LLVMFields.push_back(LLVMFieldInfo(D, FieldTypes.size()));
+  Fields[D] = FieldTypes.size();
   AppendField(FieldOffsetInBytes, Ty);
 
   return true;
@@ -426,14 +426,13 @@ CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
       FieldTy = llvm::ArrayType::get(FieldTy, NumBytesToAppend);
 
     // Add the bit field info.
-    LLVMBitFields.push_back(
-      LLVMBitFieldInfo(Field, CGBitFieldInfo::MakeInfo(Types, Field,
-                                                       0, FieldSize)));
+    BitFields.insert(std::make_pair(Field,
+                         CGBitFieldInfo::MakeInfo(Types, Field, 0, FieldSize)));
     return FieldTy;
   }
 
   // This is a regular union field.
-  LLVMFields.push_back(LLVMFieldInfo(Field, 0));
+  Fields[Field] = 0;
   return Types.ConvertTypeForMemRecursive(Field->getType());
 }
 
@@ -495,41 +494,51 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     AppendPadding(RecordSize, Align);
 }
 
-void CGRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *BaseDecl,
-                                       uint64_t BaseOffset) {
-  CheckZeroInitializable(BaseDecl);
+void CGRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *base,
+                                       uint64_t baseOffsetInBits) {
+  uint64_t baseOffsetInBytes = baseOffsetInBits / 8;
+  AppendPadding(baseOffsetInBytes, 1);
 
-  const ASTRecordLayout &Layout = 
-    Types.getContext().getASTRecordLayout(BaseDecl);
-  
-  CharUnits NonVirtualSize = Layout.getNonVirtualSize();
-  
-  AppendPadding(BaseOffset / 8, 1);
-  
-  // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
-  AppendBytes(NonVirtualSize.getQuantity());
+  const ASTRecordLayout &baseASTLayout
+    = Types.getContext().getASTRecordLayout(base);
+
+  // FIXME: use a better type than [sizeof(base) x i8].
+  // We could use the base layout's subobject type as the actualy
+  // subobject type in the layout if its size is the nvsize of the
+  // base, or if we'd need padding out to the enclosing object anyhow.
+  AppendBytes(baseASTLayout.getNonVirtualSize());
+}
+
+void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *base,
+                                                 uint64_t baseOffsetInBits) {
+  // Ignore empty bases.
+  if (base->isEmpty()) return;
+
+  const CGRecordLayout &baseLayout = Types.getCGRecordLayout(base);
+  if (IsZeroInitializableAsBase) {
+    assert(IsZeroInitializable &&
+           "class zero-initializable as base but not as complete object");
+
+    IsZeroInitializable = IsZeroInitializableAsBase =
+      baseLayout.isZeroInitializableAsBase();
+  }
+
+  LayoutBase(base, baseOffsetInBits);
+  NonVirtualBases[base] = (FieldTypes.size() - 1);
 }
 
 void
-CGRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *BaseDecl,
-                                         uint64_t BaseOffset) {
+CGRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *base,
+                                         uint64_t baseOffsetInBits) {
   // Ignore empty bases.
-  if (BaseDecl->isEmpty())
-    return;
+  if (base->isEmpty()) return;
 
-  CheckZeroInitializable(BaseDecl);
+  const CGRecordLayout &baseLayout = Types.getCGRecordLayout(base);
+  if (IsZeroInitializable)
+    IsZeroInitializable = baseLayout.isZeroInitializableAsBase();
 
-  const ASTRecordLayout &Layout = 
-    Types.getContext().getASTRecordLayout(BaseDecl);
-
-  CharUnits NonVirtualSize = Layout.getNonVirtualSize();
-
-  AppendPadding(BaseOffset / 8, 1);
-  
-  // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
-  AppendBytes(NonVirtualSize.getQuantity());
-
-  // FIXME: Add the vbase field info.
+  LayoutBase(base, baseOffsetInBits);
+  VirtualBases[base] = (FieldTypes.size() - 1);
 }
 
 /// LayoutVirtualBases - layout the non-virtual bases of a record decl.
@@ -559,18 +568,6 @@ CGRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
     
     LayoutVirtualBases(BaseDecl, Layout);
   }
-}
-
-void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
-                                                 uint64_t BaseOffset) {
-  // Ignore empty bases.
-  if (BaseDecl->isEmpty())
-    return;
-
-  LayoutBase(BaseDecl, BaseOffset);
-
-  // Append the base field.
-  LLVMNonVirtualBases.push_back(LLVMBaseInfo(BaseDecl, FieldTypes.size() - 1));
 }
 
 void
@@ -618,37 +615,40 @@ bool
 CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(RD);
 
-
   CharUnits NonVirtualSize  = Layout.getNonVirtualSize();
   CharUnits NonVirtualAlign = Layout.getNonVirtualAlign();
   uint64_t AlignedNonVirtualTypeSize =
     NonVirtualSize.RoundUpToAlignment(NonVirtualAlign).getQuantity();
   
-  
   // First check if we can use the same fields as for the complete class.
   uint64_t RecordSize = Layout.getSize().getQuantity();
-  if (AlignedNonVirtualTypeSize == RecordSize) {
-    NonVirtualBaseTypeIsSameAsCompleteType = true;
+  if (AlignedNonVirtualTypeSize == RecordSize)
     return true;
-  }
 
   // Check if we need padding.
   uint64_t AlignedNextFieldOffset =
     llvm::RoundUpToAlignment(NextFieldOffsetInBytes, 
                              getAlignmentAsLLVMStruct());
 
-  if (AlignedNextFieldOffset > AlignedNonVirtualTypeSize)
+  if (AlignedNextFieldOffset > AlignedNonVirtualTypeSize) {
+    assert(!Packed && "cannot layout even as packed struct");
     return false; // Needs packing.
-
-  NonVirtualBaseFieldTypes = FieldTypes;
-
-  if (AlignedNonVirtualTypeSize == AlignedNextFieldOffset) {
-    // We don't need any padding.
-    return true;
   }
 
-  uint64_t NumBytes = AlignedNonVirtualTypeSize - AlignedNextFieldOffset;
-  NonVirtualBaseFieldTypes.push_back(getByteArrayType(NumBytes));
+  bool needsPadding = (AlignedNonVirtualTypeSize != AlignedNextFieldOffset);
+  if (needsPadding) {
+    uint64_t NumBytes = AlignedNonVirtualTypeSize - AlignedNextFieldOffset;
+    FieldTypes.push_back(getByteArrayType(NumBytes));
+  }
+
+  BaseSubobjectType = llvm::StructType::get(Types.getLLVMContext(),
+                                            FieldTypes, Packed);
+
+  if (needsPadding) {
+    // Pull the padding back off.
+    FieldTypes.pop_back();
+  }
+
   return true;
 }
 
@@ -777,34 +777,27 @@ unsigned CGRecordLayoutBuilder::getAlignmentAsLLVMStruct() const {
   return MaxAlignment;
 }
 
+/// Merge in whether a field of the given type is zero-initializable.
 void CGRecordLayoutBuilder::CheckZeroInitializable(QualType T) {
   // This record already contains a member pointer.
-  if (!IsZeroInitializable)
+  if (!IsZeroInitializableAsBase)
     return;
 
   // Can only have member pointers if we're compiling C++.
   if (!Types.getContext().getLangOptions().CPlusPlus)
     return;
 
-  T = Types.getContext().getBaseElementType(T);
+  const Type *elementType = T->getBaseElementTypeUnsafe();
 
-  if (const MemberPointerType *MPT = T->getAs<MemberPointerType>()) {
+  if (const MemberPointerType *MPT = elementType->getAs<MemberPointerType>()) {
     if (!Types.getCXXABI().isZeroInitializable(MPT))
-      IsZeroInitializable = false;
-  } else if (const RecordType *RT = T->getAs<RecordType>()) {
+      IsZeroInitializable = IsZeroInitializableAsBase = false;
+  } else if (const RecordType *RT = elementType->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    CheckZeroInitializable(RD);
+    const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
+    if (!Layout.isZeroInitializable())
+      IsZeroInitializable = IsZeroInitializableAsBase = false;
   }
-}
-
-void CGRecordLayoutBuilder::CheckZeroInitializable(const CXXRecordDecl *RD) {
-  // This record already contains a member pointer.
-  if (!IsZeroInitializable)
-    return;
-
-  const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
-  if (!Layout.isZeroInitializable())
-    IsZeroInitializable = false;
 }
 
 CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
@@ -816,30 +809,25 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
                                                      Builder.FieldTypes,
                                                      Builder.Packed);
 
+  // If we're in C++, compute the base subobject type.
   const llvm::StructType *BaseTy = 0;
   if (isa<CXXRecordDecl>(D)) {
-    if (Builder.NonVirtualBaseTypeIsSameAsCompleteType)
-      BaseTy = Ty;
-    else if (!Builder.NonVirtualBaseFieldTypes.empty())
-      BaseTy = llvm::StructType::get(getLLVMContext(), 
-                                     Builder.NonVirtualBaseFieldTypes, 
-                                     Builder.Packed);
+    BaseTy = Builder.BaseSubobjectType;
+    if (!BaseTy) BaseTy = Ty;
   }
 
   CGRecordLayout *RL =
-    new CGRecordLayout(Ty, BaseTy, Builder.IsZeroInitializable);
+    new CGRecordLayout(Ty, BaseTy, Builder.IsZeroInitializable,
+                       Builder.IsZeroInitializableAsBase);
 
-  // Add all the non-virtual base field numbers.
-  RL->NonVirtualBaseFields.insert(Builder.LLVMNonVirtualBases.begin(),
-                                  Builder.LLVMNonVirtualBases.end());
+  RL->NonVirtualBases.swap(Builder.NonVirtualBases);
+  RL->CompleteObjectVirtualBases.swap(Builder.VirtualBases);
 
   // Add all the field numbers.
-  RL->FieldInfo.insert(Builder.LLVMFields.begin(),
-                       Builder.LLVMFields.end());
+  RL->FieldInfo.swap(Builder.Fields);
 
   // Add bitfield info.
-  RL->BitFields.insert(Builder.LLVMBitFields.begin(),
-                       Builder.LLVMBitFields.end());
+  RL->BitFields.swap(Builder.BitFields);
 
   // Dump the layout, if requested.
   if (getContext().getLangOptions().DumpRecordLayouts) {
@@ -913,9 +901,9 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 
 void CGRecordLayout::print(llvm::raw_ostream &OS) const {
   OS << "<CGRecordLayout\n";
-  OS << "  LLVMType:" << *LLVMType << "\n";
-  if (NonVirtualBaseLLVMType)
-    OS << "  NonVirtualBaseLLVMType:" << *NonVirtualBaseLLVMType << "\n"; 
+  OS << "  LLVMType:" << *CompleteObjectType << "\n";
+  if (BaseSubobjectType)
+    OS << "  NonVirtualBaseLLVMType:" << *BaseSubobjectType << "\n"; 
   OS << "  IsZeroInitializable:" << IsZeroInitializable << "\n";
   OS << "  BitFields:[\n";
 
