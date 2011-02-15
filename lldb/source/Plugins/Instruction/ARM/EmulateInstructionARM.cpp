@@ -2144,27 +2144,39 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
         switch (encoding)
         {
             case eEncodingT1:
+                // n = UInt(Rn); registers = ’00000000’:register_list; wback = (registers<n> == ’0’);
                 n = Bits32 (opcode, 10, 8);
                 registers = Bits32 (opcode, 7, 0);
+                registers = registers & 0x00ff;  // Make sure the top 8 bits are zeros.
                 wback = BitIsClear (registers, n);
                 // if BitCount(registers) < 1 then UNPREDICTABLE;
                 if (BitCount(registers) < 1)
                     return false;
                 break;
             case eEncodingT2:
+                // if W == ’1’ && Rn == ’1101’ then SEE POP; 
+                // n = UInt(Rn); registers = P:M:’0’:register_list; wback = (W == ’1’); 
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
+                registers = registers & 0xdfff; // Make sure bit 13 is zero.
                 wback = BitIsSet (opcode, 21);
+                  
+                // if n == 15 || BitCount(registers) < 2 || (P == ’1’ && M == ’1’) then UNPREDICTABLE; 
                 if ((n == 15)
                     || (BitCount (registers) < 2)
                     || (BitIsSet (opcode, 14) && BitIsSet (opcode, 15)))
                     return false;
+                  
+                // if registers<15> == ’1’ && InITBlock() && !LastInITBlock() then UNPREDICTABLE; 
                 if (BitIsSet (registers, 15) && InITBlock() && !LastInITBlock())
                     return false;
+
+                // if wback && registers<n> == ’1’ then UNPREDICTABLE;
                 if (wback
                     && BitIsSet (registers, n))
                     return false;
                 break;
+                  
             case eEncodingA1:
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
@@ -2399,6 +2411,7 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
                 // n = UInt(Rn); registers = P:M:’0’:register_list; wback = (W == ’1’);
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
+                registers = registers & 0xdfff;  // Make sure bit 13 is a zero.
                 wback = BitIsSet (opcode, 21);
 
                 // if n == 15 || BitCount(registers) < 2 || (P == ’1’ && M == ’1’) then UNPREDICTABLE;
@@ -2765,6 +2778,7 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
                 // n = UInt(Rn); registers = ’00000000’:register_list; wback = TRUE;
                 n = Bits32 (opcode, 10, 8);
                 registers = Bits32 (opcode, 7, 0);
+                registers = registers & 0x00ff;  // Make sure the top 8 bits are zeros.
                 wback = true;
                   
                 // if BitCount(registers) < 1 then UNPREDICTABLE;
@@ -2777,6 +2791,7 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
                 // n = UInt(Rn); registers = ’0’:M:’0’:register_list; wback = (W == ’1’);
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
+                registers = registers & 0x5fff; // Make sure bits 15 & 13 are zeros.
                 wback = BitIsSet (opcode, 21);
                   
                 // if n == 15 || BitCount(registers) < 2 then UNPREDICTABLE;
@@ -3005,6 +3020,160 @@ EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
     return true;
 }
                   
+// STMDB stores multiple registers to consecutive memory locations using an address from a base register.  The 
+// consecutive memory locations end just below this address, and the address of the first of those locations can 
+// optionally be written back to the base register.
+bool
+EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        address = R[n] - 4*BitCount(registers);
+                  
+        for i = 0 to 14 
+            if registers<i> == ’1’ then
+                if i == n && wback && i != LowestSetBit(registers) then 
+                    MemA[address,4] = bits(32) UNKNOWN; // Only possible for encoding A1
+                else 
+                    MemA[address,4] = R[i];
+                address = address + 4;
+                  
+        if registers<15> == ’1’ then // Only possible for encoding A1 
+            MemA[address,4] = PCStoreValue();
+                  
+        if wback then R[n] = R[n] - 4*BitCount(registers);
+#endif
+
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed ())
+    {
+        uint32_t n;
+        uint32_t registers = 0;
+        bool wback;
+        const uint32_t addr_byte_size = GetAddressByteSize();
+                  
+        // EncodingSpecificOperations(); NullCheckIfThumbEE(n);
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // if W == ’1’ && Rn == ’1101’ then SEE PUSH;
+                if ((BitIsSet (opcode, 21)) && (Bits32 (opcode, 19, 16) == 13))
+                { 
+                    // See PUSH 
+                }
+                // n = UInt(Rn); registers = ’0’:M:’0’:register_list; wback = (W == ’1’); 
+                n = Bits32 (opcode, 19, 16);
+                registers = Bits32 (opcode, 15, 0);
+                registers = registers & 0x5fff;  // Make sure bits 15 & 13 are zeros.
+                wback = BitIsSet (opcode, 21);
+                // if n == 15 || BitCount(registers) < 2 then UNPREDICTABLE;
+                if ((n == 15) || BitCount (registers) < 2)
+                    return false;
+                // if wback && registers<n> == ’1’ then UNPREDICTABLE;
+                if (wback && BitIsSet (registers, n))
+                    return false;
+                break;
+                  
+            case eEncodingA1:
+                // if W == ’1’ && Rn == ’1101’ && BitCount(register_list) >= 2 then SEE PUSH; 
+                if (BitIsSet (opcode, 21) && (Bits32 (opcode, 19, 16) == 13) && BitCount (Bits32 (opcode, 15, 0)) >= 2)
+                {
+                    // See Push
+                }
+                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                n = Bits32 (opcode, 19, 16);
+                registers = Bits32 (opcode, 15, 0);
+                wback = BitIsSet (opcode, 21);
+                // if n == 15 || BitCount(registers) < 1 then UNPREDICTABLE;
+                if ((n == 15) || BitCount (registers) < 1)
+                    return false;
+                break;
+                  
+            default:
+                return false;
+        }
+                  
+        // address = R[n] - 4*BitCount(registers);
+                  
+        int32_t offset = 0;
+        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+        return false;
+                  
+        address = address - (addr_byte_size * BitCount (registers));
+                  
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRegisterStore;
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+                  
+        // for i = 0 to 14
+        for (int i = 0; i < 14; ++i)
+        {
+            uint32_t lowest_set_bit = 14;
+            // if registers<i> == ’1’ then
+            if (BitIsSet (registers, i))
+            {
+                if (i < lowest_set_bit)
+                    lowest_set_bit = i;
+                // if i == n && wback && i != LowestSetBit(registers) then 
+                if ((i == n) && wback && (i != lowest_set_bit))
+                    // MemA[address,4] = bits(32) UNKNOWN; // Only possible for encoding A1
+                    WriteBits32UnknownToMemory (address + offset);
+                else
+                {
+                    // MemA[address,4] = R[i];
+                    uint32_t data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + i, 0, &success);
+                    if (!success)
+                        return false;
+                  
+                    Register data_reg;
+                    data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
+                    if (!WriteMemoryUnsigned (context, address + offset, data, addr_byte_size))
+                        return false;
+                }
+                  
+                // address = address + 4;
+                offset += addr_byte_size;
+            }
+        }
+                  
+        // if registers<15> == ’1’ then // Only possible for encoding A1 
+        //     MemA[address,4] = PCStoreValue();
+        if (BitIsSet (registers, 15))
+        {
+            Register pc_reg;
+            pc_reg.SetRegister (eRegisterKindDWARF, dwarf_pc);
+            context.SetRegisterPlusOffset (pc_reg, 8);
+            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            if (!success)
+                return false;
+                  
+            if (!WriteMemoryUnsigned (context, address + offset, pc + 8, addr_byte_size))
+                return false;
+        }
+                  
+        // if wback then R[n] = R[n] - 4*BitCount(registers);
+        if (wback)
+        {
+            offset = addr_byte_size * BitCount (registers);
+            context.type = EmulateInstruction::eContextAdjustBaseRegister;
+            context.SetImmediateSigned (offset);
+            addr_t data = address + offset;
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, data))
+                return false;
+        }
+    }
+    return true;
+}
+                  
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -3081,7 +3250,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // Store instructions
         //----------------------------------------------------------------------
         { 0x0fd00000, 0x08800000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTM, "stm<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x08000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDA, "stmda<c> <Rn>{!} <registers>" }
+        { 0x0fd00000, 0x08000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDA, "stmda<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x09000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" }
                   
         
     };
@@ -3206,7 +3376,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // Store instructions
         //----------------------------------------------------------------------
         { 0xfffff800, 0x0000c000, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTM, "stm<c> <Rn>{!} <registers>" },
-        { 0xffd00000, 0xe8800000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTM, "stm<c>.w <Rn>{!} <registers>" }
+        { 0xffd00000, 0xe8800000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTM, "stm<c>.w <Rn>{!} <registers>" },
+        { 0xffd00000, 0xe9000000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" }
         
     };
 
