@@ -180,7 +180,7 @@ static inline uint32_t Shift_C(const uint32_t value, ARM_ShifterType type, const
         result = ROR_C(value, amount, carry_out);
         break;
     case SRType_RRX:
-        result = RRX_C(value, amount, carry_out);
+        result = RRX_C(value, carry_in, carry_out);
         break;
     }
     return result;

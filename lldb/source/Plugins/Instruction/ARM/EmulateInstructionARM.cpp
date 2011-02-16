@@ -2250,6 +2250,82 @@ EmulateInstructionARM::EmulateLSRReg (ARMEncoding encoding)
     return EmulateShiftReg(encoding, SRType_LSR);
 }
 
+// Rotate Right (immediate) provides the value of the contents of a register rotated by a constant value.
+// The bits that are rotated off the right end are inserted into the vacated bit positions on the left.
+// It can optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateRORImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry) = Shift_C(R[m], SRType_ROR, shift_n, APSR.C);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+#endif
+
+    return EmulateShiftImm(encoding, SRType_ROR);
+}
+
+// Rotate Right (register) provides the value of the contents of a register rotated by a variable number of bits.
+// The bits that are rotated off the right end are inserted into the vacated bit positions on the left.
+// The variable number of bits is read from the bottom byte of a register. It can optionally update the condition
+// flags based on the result.
+bool
+EmulateInstructionARM::EmulateRORReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shift_n = UInt(R[m]<7:0>);
+        (result, carry) = Shift_C(R[m], SRType_ROR, shift_n, APSR.C);
+        R[d] = result;
+        if setflags then
+            APSR.N = result<31>;
+            APSR.Z = IsZeroBit(result);
+            APSR.C = carry;
+            // APSR.V unchanged
+#endif
+
+    return EmulateShiftReg(encoding, SRType_ROR);
+}
+
+// Rotate Right with Extend provides the value of the contents of a register shifted right by one place,
+// with the carry flag shifted into bit [31].
+//
+// RRX can optionally update the condition flags based on the result.
+// In that case, bit [0] is shifted into the carry flag.
+bool
+EmulateInstructionARM::EmulateRRX (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry) = Shift_C(R[m], SRType_RRX, 1, APSR.C);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+#endif
+
+    return EmulateShiftImm(encoding, SRType_RRX);
+}
+
 bool
 EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType shift_type)
 {
@@ -2267,14 +2343,30 @@ EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType sh
         uint32_t imm5;  // encoding for the shift amount
         uint32_t carry; // the carry bit after the shift operation
         bool setflags;
+
+        // Special case handling!
+        // A8.6.139 ROR (immediate) -- Encoding T1
+        if (shift_type == SRType_ROR && encoding == eEncodingT1)
+        {
+            // Morph the T1 encoding from the ARM Architecture Manual into T2 encoding to
+            // have the same decoding of bit fields as the other Thumb2 shift operations.
+            encoding = eEncodingT2;
+        }
+
         switch (encoding) {
         case eEncodingT1:
+            // Due to the above special case handling!
+            assert(shift_type != SRType_ROR);
+
             Rd = Bits32(opcode, 2, 0);
             Rm = Bits32(opcode, 5, 3);
             setflags = !InITBlock();
             imm5 = Bits32(opcode, 10, 6);
             break;
         case eEncodingT2:
+            // A8.6.141 RRX
+            assert(shift_type != SRType_RRX);
+
             Rd = Bits32(opcode, 11, 8);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
@@ -2292,13 +2384,17 @@ EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType sh
             return false;
         }
 
+        // A8.6.139 ROR (immediate)
+        if (shift_type == SRType_ROR && imm5 == 0)
+            shift_type = SRType_RRX;
+
         // Get the first operand.
         uint32_t value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
         if (!success)
             return false;
 
-        // Decode the shift amount.
-        uint32_t amt = DecodeImmShift(shift_type, imm5);
+        // Decode the shift amount if not RRX.
+        uint32_t amt = (shift_type == SRType_RRX ? 1 : DecodeImmShift(shift_type, imm5));
 
         uint32_t result = Shift_C(value, shift_type, amt, Bit32(m_inst_cpsr, CPSR_C), carry);
 
@@ -4177,6 +4273,12 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fef0070, 0x01a00020, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSRImm, "lsr{s}<c> <Rd>, <Rm>, #imm"},
         // lsr (register)
         { 0x0fef00f0, 0x01a00050, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSRReg, "lsr{s}<c> <Rd>, <Rn>, <Rm>"},
+        // rrx is a special case encoding of ror (immediate)
+        { 0x0fef0ff0, 0x01a00060, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRRX, "rrx{s}<c> <Rd>, <Rm>"},
+        // ror (immediate)
+        { 0x0fef0070, 0x01a00060, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRORImm, "ror{s}<c> <Rd>, <Rm>, #imm"},
+        // ror (register)
+        { 0x0fef00f0, 0x01a00070, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c> <Rd>, <Rn>, <Rm>"},
 
         //----------------------------------------------------------------------
         // Load instructions
@@ -4319,8 +4421,15 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfffff800, 0x00000800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSRImm, "lsrs|lsr<c> <Rd>, <Rm>, #imm"},
         { 0xffef8030, 0xea4f0010, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSRImm, "lsr{s}<c>.w <Rd>, <Rm>, #imm"},
         // lsr (register)
-        { 0xffffffc0, 0x000040c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSRReg, "lsrs|asr<c> <Rdn>, <Rm>"},
+        { 0xffffffc0, 0x000040c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSRReg, "lsrs|lsr<c> <Rdn>, <Rm>"},
         { 0xffe0f0f0, 0xfa20f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSRReg, "lsr{s}<c>.w <Rd>, <Rn>, <Rm>"},
+        // rrx is a special case encoding of ror (immediate)
+        { 0xffeff0f0, 0xea4f0030, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateRRX, "rrx{s}<c>.w <Rd>, <Rm>"},
+        // ror (immediate)
+        { 0xffef8030, 0xea4f0030, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateRORImm, "ror{s}<c>.w <Rd>, <Rm>, #imm"},
+        // ror (register)
+        { 0xffffffc0, 0x000041c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateRORReg, "rors|ror<c> <Rdn>, <Rm>"},
+        { 0xffe0f0f0, 0xfa60f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c>.w <Rd>, <Rn>, <Rm>"},
 
         //----------------------------------------------------------------------
         // Load instructions

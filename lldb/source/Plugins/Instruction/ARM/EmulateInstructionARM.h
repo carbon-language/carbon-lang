@@ -352,11 +352,23 @@ protected:
     bool
     EmulateLSRReg (ARMEncoding encoding);
 
-    // Helper method for ASR, LSL, and LSR (immediate)
+    // A8.6.139 ROR (immediate)
+    bool
+    EmulateRORImm (ARMEncoding encoding);
+
+    // A8.6.140 ROR (register)
+    bool
+    EmulateRORReg (ARMEncoding encoding);
+
+    // A8.6.141 RRX
+    bool
+    EmulateRRX (ARMEncoding encoding);
+
+    // Helper method for ASR, LSL, LSR, ROR (immediate), and RRX
     bool
     EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType shift_type);
 
-    // Helper method for ASR, LSL, and LSR (register)
+    // Helper method for ASR, LSL, LSR, and ROR (register)
     bool
     EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType shift_type);
 
