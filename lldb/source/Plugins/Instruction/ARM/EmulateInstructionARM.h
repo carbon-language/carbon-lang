@@ -295,7 +295,7 @@ protected:
     bool
     EmulateIT (ARMEncoding encoding);
 
-    // A8.6.16
+    // A8.6.16 B
     bool
     EmulateB (ARMEncoding encoding);
     
