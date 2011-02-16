@@ -1156,10 +1156,14 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
         SourceFileName = llvm::sys::path::filename(SourceFile->getName());
         if (*SourceFileName == llvm::sys::path::filename(MainFile->getName())) {
           SourceFileInode = getActualFileInode(SourceFile);
-          if (SourceFileInode && 
-              *SourceFileInode == getActualFileInode(MainFile)) {
-            FirstFID = MainFileID;
-            SourceFile = MainFile;
+          if (SourceFileInode) {
+            if (llvm::Optional<ino_t> MainFileInode 
+                                               = getActualFileInode(MainFile)) {
+              if (*SourceFileInode == *MainFileInode) {
+                FirstFID = MainFileID;
+                SourceFile = MainFile;
+              }
+            }
           }
         }
       }
