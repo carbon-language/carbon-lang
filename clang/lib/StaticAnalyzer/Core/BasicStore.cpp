@@ -252,7 +252,7 @@ Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
     // a pointer.  We may wish to flag a type error here if the types
     // are incompatible.  This may also cause lots of breakage
     // elsewhere. Food for thought.
-    if (TyR->isBoundable() && Loc::IsLocType(TyR->getValueType()))
+    if (TyR->isBoundable() && Loc::isLocType(TyR->getValueType()))
       V = X->getLoc();
   }
 
@@ -464,7 +464,7 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
       //     unsigned) zero;
       if (!InitVal) {
         QualType T = VD->getType();
-        if (Loc::IsLocType(T))
+        if (Loc::isLocType(T))
           store = Bind(store, loc::MemRegionVal(VR),
                        loc::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType() && T->isScalarType())

@@ -165,7 +165,7 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
 
   if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
     QualType T = TR->getValueType();
-    if (Loc::IsLocType(T) || T->isIntegerType())
+    if (Loc::isLocType(T) || T->isIntegerType())
       return getSVal(R);
   }
 

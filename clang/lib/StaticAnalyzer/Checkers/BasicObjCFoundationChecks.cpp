@@ -291,7 +291,7 @@ void CFNumberCreateChecker::PreVisitCallExpr(CheckerContext &C,
   if (!LV)
     return;
 
-  const TypedRegion* R = dyn_cast<TypedRegion>(LV->StripCasts());
+  const TypedRegion* R = dyn_cast<TypedRegion>(LV->stripCasts());
   if (!R)
     return;
 

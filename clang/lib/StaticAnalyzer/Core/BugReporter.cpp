@@ -446,7 +446,7 @@ public:
     // Create the diagnostic.
     FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
 
-    if (Loc::IsLocType(VD->getType())) {
+    if (Loc::isLocType(VD->getType())) {
       std::string msg = "'" + std::string(VD->getNameAsString()) +
       "' now aliases '" + MostRecent->getNameAsString() + "'";
 

@@ -99,7 +99,7 @@ const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, unsigned BitWidth,
 const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, QualType T) {
 
   unsigned bits = Ctx.getTypeSize(T);
-  llvm::APSInt V(bits, T->isUnsignedIntegerType() || Loc::IsLocType(T));
+  llvm::APSInt V(bits, T->isUnsignedIntegerType() || Loc::isLocType(T));
   V = X;
   return getValue(V);
 }
@@ -286,5 +286,3 @@ BasicValueFactory::getPersistentSValPair(const SVal& V1, const SVal& V2) {
 const SVal* BasicValueFactory::getPersistentSVal(SVal X) {
   return &getPersistentSValWithData(X, 0).first;
 }
-
-

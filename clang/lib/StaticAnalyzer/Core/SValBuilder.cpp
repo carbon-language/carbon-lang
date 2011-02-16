@@ -26,7 +26,7 @@ using namespace ento;
 //===----------------------------------------------------------------------===//
 
 DefinedOrUnknownSVal SValBuilder::makeZeroVal(QualType T) {
-  if (Loc::IsLocType(T))
+  if (Loc::isLocType(T))
     return makeNull();
 
   if (T->isIntegerType())
@@ -43,14 +43,14 @@ NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
   // The Environment ensures we always get a persistent APSInt in
   // BasicValueFactory, so we don't need to get the APSInt from
   // BasicValueFactory again.
-  assert(!Loc::IsLocType(T));
+  assert(!Loc::isLocType(T));
   return nonloc::SymExprVal(SymMgr.getSymIntExpr(lhs, op, v, T));
 }
 
 NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                                 const SymExpr *rhs, QualType T) {
   assert(SymMgr.getType(lhs) == SymMgr.getType(rhs));
-  assert(!Loc::IsLocType(T));
+  assert(!Loc::isLocType(T));
   return nonloc::SymExprVal(SymMgr.getSymSymExpr(lhs, op, rhs, T));
 }
 
@@ -78,7 +78,7 @@ SValBuilder::getRegionValueSymbolVal(const TypedRegion* R) {
 
   SymbolRef sym = SymMgr.getRegionValueSymbol(R);
 
-  if (Loc::IsLocType(T))
+  if (Loc::isLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   return nonloc::SymbolVal(sym);
@@ -94,7 +94,7 @@ DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *SymbolTag,
 
   SymbolRef sym = SymMgr.getConjuredSymbol(E, Count, SymbolTag);
 
-  if (Loc::IsLocType(T))
+  if (Loc::isLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   return nonloc::SymbolVal(sym);
@@ -110,7 +110,7 @@ DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *SymbolTag,
 
   SymbolRef sym = SymMgr.getConjuredSymbol(E, T, Count, SymbolTag);
 
-  if (Loc::IsLocType(T))
+  if (Loc::isLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   return nonloc::SymbolVal(sym);
@@ -124,7 +124,7 @@ DefinedSVal SValBuilder::getMetadataSymbolVal(const void *SymbolTag,
 
   SymbolRef sym = SymMgr.getMetadataSymbol(MR, E, T, Count, SymbolTag);
 
-  if (Loc::IsLocType(T))
+  if (Loc::isLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   return nonloc::SymbolVal(sym);
@@ -140,7 +140,7 @@ SValBuilder::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
 
   SymbolRef sym = SymMgr.getDerivedSymbol(parentSymbol, R);
 
-  if (Loc::IsLocType(T))
+  if (Loc::isLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   return nonloc::SymbolVal(sym);
@@ -216,11 +216,11 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     return evalCastNL(cast<NonLoc>(val), castTy);
 
   // Check for casts from pointers to integers.
-  if (castTy->isIntegerType() && Loc::IsLocType(originalTy))
+  if (castTy->isIntegerType() && Loc::isLocType(originalTy))
     return evalCastL(cast<Loc>(val), castTy);
 
   // Check for casts from integers to pointers.
-  if (Loc::IsLocType(castTy) && originalTy->isIntegerType()) {
+  if (Loc::isLocType(castTy) && originalTy->isIntegerType()) {
     if (nonloc::LocAsInteger *LV = dyn_cast<nonloc::LocAsInteger>(&val)) {
       if (const MemRegion *R = LV->getLoc().getAsRegion()) {
         StoreManager &storeMgr = StateMgr.getStoreManager();
@@ -234,7 +234,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
 
   // Just pass through function and block pointers.
   if (originalTy->isBlockPointerType() || originalTy->isFunctionPointerType()) {
-    assert(Loc::IsLocType(castTy));
+    assert(Loc::isLocType(castTy));
     return val;
   }
 
@@ -264,7 +264,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     // FIXME: We should handle the case where we strip off view layers to get
     //  to a desugared type.
 
-    if (!Loc::IsLocType(castTy)) {
+    if (!Loc::isLocType(castTy)) {
       // FIXME: There can be gross cases where one casts the result of a function
       // (that returns a pointer) to some other value that happens to fit
       // within that pointer value.  We currently have no good way to
@@ -291,7 +291,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     //    return bar(x)+1; // no-warning
     //  }
 
-    assert(Loc::IsLocType(originalTy) || originalTy->isFunctionType() ||
+    assert(Loc::isLocType(originalTy) || originalTy->isFunctionType() ||
            originalTy->isBlockPointerType());
 
     StoreManager &storeMgr = StateMgr.getStoreManager();

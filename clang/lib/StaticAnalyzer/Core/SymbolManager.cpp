@@ -235,7 +235,7 @@ SymbolManager::~SymbolManager() {}
 bool SymbolManager::canSymbolicate(QualType T) {
   T = T.getCanonicalType();
 
-  if (Loc::IsLocType(T))
+  if (Loc::isLocType(T))
     return true;
 
   if (T->isIntegerType())

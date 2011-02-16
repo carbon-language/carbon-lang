@@ -93,7 +93,7 @@ SVal CallOrObjCMessage::getArgSValAsScalarOrLoc(unsigned i) const {
   assert(i < getNumArgs());
   if (CallE) return State->getSValAsScalarOrLoc(CallE->getArg(i));
   QualType argT = Msg.getArgType(i);
-  if (Loc::IsLocType(argT) || argT->isIntegerType())
+  if (Loc::isLocType(argT) || argT->isIntegerType())
     return Msg.getArgSVal(i, State);
   return UnknownVal();
 }

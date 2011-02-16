@@ -59,7 +59,7 @@ SValBuilder *ento::createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,
 
 SVal SimpleSValBuilder::evalCastNL(NonLoc val, QualType castTy) {
 
-  bool isLocType = Loc::IsLocType(castTy);
+  bool isLocType = Loc::isLocType(castTy);
 
   if (nonloc::LocAsInteger *LI = dyn_cast<nonloc::LocAsInteger>(&val)) {
     if (isLocType)
@@ -97,7 +97,7 @@ SVal SimpleSValBuilder::evalCastNL(NonLoc val, QualType castTy) {
     return UnknownVal();
 
   llvm::APSInt i = cast<nonloc::ConcreteInt>(val).getValue();
-  i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::IsLocType(castTy));
+  i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::isLocType(castTy));
   i = i.extOrTrunc(Context.getTypeSize(castTy));
 
   if (isLocType)
@@ -114,7 +114,7 @@ SVal SimpleSValBuilder::evalCastL(Loc val, QualType castTy) {
   //   can be introduced by the frontend for corner cases, e.g
   //   casting from va_list* to __builtin_va_list&.
   //
-  if (Loc::IsLocType(castTy) || castTy->isReferenceType())
+  if (Loc::isLocType(castTy) || castTy->isReferenceType())
     return val;
 
   // FIXME: Handle transparent unions where a value can be "transparently"
@@ -129,7 +129,7 @@ SVal SimpleSValBuilder::evalCastL(Loc val, QualType castTy) {
       return makeLocAsInteger(val, BitWidth);
 
     llvm::APSInt i = cast<loc::ConcreteInt>(val).getValue();
-    i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::IsLocType(castTy));
+    i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::isLocType(castTy));
     i = i.extOrTrunc(BitWidth);
     return makeIntVal(i);
   }

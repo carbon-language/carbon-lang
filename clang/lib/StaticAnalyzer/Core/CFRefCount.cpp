@@ -2679,7 +2679,7 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
       // that are returned by value.
 
       QualType T = callOrMsg.getResultType(Eng.getContext());
-      if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
+      if (Loc::isLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
         SValBuilder &svalBuilder = Eng.getSValBuilder();
         SVal X = svalBuilder.getConjuredSymbolVal(NULL, Ex, T, Count);

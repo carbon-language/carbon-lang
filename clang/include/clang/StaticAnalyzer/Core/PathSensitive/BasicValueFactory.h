@@ -104,9 +104,9 @@ public:
   }
   
   const llvm::APSInt &Convert(QualType T, const llvm::APSInt &From) {
-    assert(T->isIntegerType() || Loc::IsLocType(T));
+    assert(T->isIntegerType() || Loc::isLocType(T));
     unsigned bitwidth = Ctx.getTypeSize(T);
-    bool isUnsigned = T->isUnsignedIntegerType() || Loc::IsLocType(T);
+    bool isUnsigned = T->isUnsignedIntegerType() || Loc::isLocType(T);
     
     if (isUnsigned == From.isUnsigned() && bitwidth == From.getBitWidth())
       return From;
@@ -128,14 +128,14 @@ public:
   }
 
   inline const llvm::APSInt& getMaxValue(QualType T) {
-    assert(T->isIntegerType() || Loc::IsLocType(T));
-    bool isUnsigned = T->isUnsignedIntegerType() || Loc::IsLocType(T);
+    assert(T->isIntegerType() || Loc::isLocType(T));
+    bool isUnsigned = T->isUnsignedIntegerType() || Loc::isLocType(T);
     return getValue(llvm::APSInt::getMaxValue(Ctx.getTypeSize(T), isUnsigned));
   }
 
   inline const llvm::APSInt& getMinValue(QualType T) {
-    assert(T->isIntegerType() || Loc::IsLocType(T));
-    bool isUnsigned = T->isUnsignedIntegerType() || Loc::IsLocType(T);
+    assert(T->isIntegerType() || Loc::isLocType(T));
+    bool isUnsigned = T->isUnsignedIntegerType() || Loc::isLocType(T);
     return getValue(llvm::APSInt::getMinValue(Ctx.getTypeSize(T), isUnsigned));
   }
 

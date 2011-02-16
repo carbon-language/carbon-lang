@@ -261,9 +261,9 @@ const GRState *SimpleConstraintManager::assumeSymRel(const GRState *state,
   ASTContext &Ctx = StateMgr.getContext();
 
   QualType T = Sym->getType(Ctx);
-  assert(T->isIntegerType() || Loc::IsLocType(T));
+  assert(T->isIntegerType() || Loc::isLocType(T));
   unsigned bitwidth = Ctx.getTypeSize(T);
-  bool isSymUnsigned = T->isUnsignedIntegerType() || Loc::IsLocType(T);
+  bool isSymUnsigned = T->isUnsignedIntegerType() || Loc::isLocType(T);
 
   // Convert the adjustment.
   Adjustment.setIsUnsigned(isSymUnsigned);

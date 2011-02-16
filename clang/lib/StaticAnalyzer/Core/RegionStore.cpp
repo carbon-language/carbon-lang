@@ -1333,7 +1333,7 @@ Store RegionStoreManager::setImplicitDefaultValue(Store store,
   RegionBindings B = GetRegionBindings(store);
   SVal V;
 
-  if (Loc::IsLocType(T))
+  if (Loc::isLocType(T))
     V = svalBuilder.makeNull();
   else if (T->isIntegerType())
     V = svalBuilder.makeZeroVal(T);

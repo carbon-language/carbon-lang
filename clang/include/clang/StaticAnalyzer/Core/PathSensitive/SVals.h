@@ -63,7 +63,6 @@ protected:
   ///  The higher bits are an unsigned "kind" value.
   unsigned Kind;
 
-protected:
   explicit SVal(const void* d, bool isLoc, unsigned ValKind)
   : Data(d), Kind((isLoc ? LocKind : NonLocKind) | (ValKind << BaseBits)) {}
 
@@ -81,6 +80,8 @@ public:
   inline BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
   inline unsigned getSubKind() const { return (Kind & ~BaseMask) >> BaseBits; }
 
+  // This method is required for using SVal in a FoldingSetNode.  It
+  // extracts a unique signature for this SVal object.
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) getRawKind());
     ID.AddPointer(Data);
@@ -262,7 +263,7 @@ public:
     return V->getBaseKind() == LocKind;
   }
 
-  static inline bool IsLocType(QualType T) {
+  static inline bool isLocType(QualType T) {
     return T->isAnyPointerType() || T->isBlockPointerType() || 
            T->isReferenceType();
   }
@@ -456,7 +457,7 @@ public:
     return static_cast<const MemRegion*>(Data);
   }
 
-  const MemRegion* StripCasts() const;
+  const MemRegion* stripCasts() const;
 
   template <typename REGION>
   const REGION* getRegionAs() const {

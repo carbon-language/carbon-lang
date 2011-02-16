@@ -2280,7 +2280,7 @@ void ExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
         //  container.  We will do this with dispatch logic to the store.
         //  For now, just 'conjure' up a symbolic value.
         QualType T = R->getValueType();
-        assert(Loc::IsLocType(T));
+        assert(Loc::isLocType(T));
         unsigned Count = Builder->getCurrentBlockCount();
         SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
         SVal V = svalBuilder.makeLoc(Sym);
@@ -2798,7 +2798,7 @@ void ExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
     return;
   }
 
-  if (Loc::IsLocType(T) || T->isIntegerType()) {
+  if (Loc::isLocType(T) || T->isIntegerType()) {
     assert (E->getNumInits() == 1);
     ExplodedNodeSet Tmp;
     const Expr* Init = E->getInit(0);
@@ -3103,7 +3103,7 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         // If the value is a location, ++/-- should always preserve
         // non-nullness.  Check if the original value was non-null, and if so
         // propagate that constraint.
-        if (Loc::IsLocType(U->getType())) {
+        if (Loc::isLocType(U->getType())) {
           DefinedOrUnknownSVal Constraint =
             svalBuilder.evalEQ(state, V2,svalBuilder.makeZeroVal(U->getType()));
 
