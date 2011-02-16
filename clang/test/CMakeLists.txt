@@ -114,13 +114,17 @@ if(PYTHONINTERP_FOUND)
                 ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Running Clang and LLVM regression tests")
     add_dependencies(check-all check.deps clang-test.deps)
-    add_dependencies(clang-test.deps ClangUnitTests)
+    add_dependencies(clang-test.deps
+                     ClangUnitTests
+                     llvm-dis opt
+                     FileCheck count not
+                     )
+
  endif()
 
   add_dependencies(clang-test clang-test.deps)
   add_dependencies(clang-test.deps
                  clang clang-headers c-index-test
-                 llvm-dis opt
-                 FileCheck count not)
+                 )
 
 endif()
