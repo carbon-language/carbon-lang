@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -verify %s
 
 int foo() {
-  int x[2]; // expected-note 4 {{Array 'x' declared here}}
-  int y[2]; // expected-note 2 {{Array 'y' declared here}}
+  int x[2]; // expected-note 4 {{array 'x' declared here}}
+  int y[2]; // expected-note 2 {{array 'y' declared here}}
   int *p = &y[2]; // no-warning
   (void) sizeof(x[2]); // no-warning
   y[2] = 2; // expected-warning{{array index of '2' indexes past the end of an array (that contains 2 elements)}}
