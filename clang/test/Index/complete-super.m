@@ -26,6 +26,19 @@ typedef int Bool;
 }
 @end
 
+@interface A (Cat)
+- (void)multiply:(int)x by:(int)y;
+@end
+
+@interface C : A
+@end
+
+@implementation C
+- (void)multiply:(int)a by:(int)b {
+  [super multiply:a by:b];
+}
+@end
+
 // Check "super" completion as a message receiver.
 // RUN: c-index-test -code-completion-at=%s:20:4 %s | FileCheck -check-prefix=CHECK-ADD-RECEIVER %s
 // CHECK-ADD-RECEIVER: ObjCInstanceMethodDecl:{ResultType void}{TypedText super}{HorizontalSpace  }{Text add:}{Placeholder a}{HorizontalSpace  }{Text to:}{Placeholder b} (20)
@@ -59,3 +72,10 @@ typedef int Bool;
 // RUN: c-index-test -code-completion-at=%s:25:10 %s | FileCheck -check-prefix=CHECK-SELECTOR-SELECTOR %s
 // RUN: c-index-test -code-completion-at=%s:25:28 %s | FileCheck -check-prefix=CHECK-SELECTOR-FIRST %s
 // RUN: c-index-test -code-completion-at=%s:25:37 %s | FileCheck -check-prefix=CHECK-SELECTOR-SECOND %s
+
+// Check "super" completion for a method declared in a category.
+// RUN: c-index-test -code-completion-at=%s:38:10 %s | FileCheck -check-prefix=CHECK-IN-CATEGORY %s
+// CHECK-IN-CATEGORY: ObjCInstanceMethodDecl:{ResultType void}{TypedText add:}{Placeholder (int)}{HorizontalSpace  }{TypedText to:}{Placeholder (int)} (35)
+// CHECK-IN-CATEGORY: ObjCInstanceMethodDecl:{ResultType void}{TypedText last} (35)
+// CHECK-IN-CATEGORY: ObjCInstanceMethodDecl:{ResultType void}{TypedText multiply:}{Placeholder a}{HorizontalSpace  }{Text by:}{Placeholder b} (20)
+

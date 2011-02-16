@@ -4478,9 +4478,20 @@ static ObjCMethodDecl *AddSuperSendCompletion(Sema &S, bool NeedSuperKeyword,
   
   // Try to find a superclass method with the same selector.
   ObjCMethodDecl *SuperMethod = 0;
-  while ((Class = Class->getSuperClass()) && !SuperMethod)
+  while ((Class = Class->getSuperClass()) && !SuperMethod) {
+    // Check in the class
     SuperMethod = Class->getMethod(CurMethod->getSelector(), 
                                    CurMethod->isInstanceMethod());
+
+    // Check in categories or class extensions.
+    if (!SuperMethod) {
+      for (ObjCCategoryDecl *Category = Class->getCategoryList(); Category;
+           Category = Category->getNextClassCategory())
+        if ((SuperMethod = Category->getMethod(CurMethod->getSelector(), 
+                                               CurMethod->isInstanceMethod())))
+          break;
+    }
+  }
 
   if (!SuperMethod)
     return 0;
