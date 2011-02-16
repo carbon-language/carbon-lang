@@ -1783,13 +1783,12 @@ entry:
 }
 
 Generated code:
-       addq    %rcx, %rdx
-       movl    $0, %eax
-       adcq    $0, %rax
-       addq    %r8, %rax
-       movq    %rax, (%rdi)
-       movq    %rdx, (%rsi)
-       ret
+        addq	%rcx, %rdx
+        sbbq	%rax, %rax
+        subq	%rax, %r8
+        movq	%r8, (%rdi)
+        movq	%rdx, (%rsi)
+        ret
 
 Expected code:
        addq    %rcx, %rdx
@@ -1797,12 +1796,6 @@ Expected code:
        movq    %r8, (%rdi)
        movq    %rdx, (%rsi)
        ret
-
-The generated SelectionDAG has an ADD of an ADDE, where both operands of the
-ADDE are zero. Replacing one of the operands of the ADDE with the other operand
-of the ADD, and replacing the ADD with the ADDE, should give the desired result.
-
-(That said, we are doing a lot better than gcc on this testcase. :) )
 
 //===---------------------------------------------------------------------===//
 
