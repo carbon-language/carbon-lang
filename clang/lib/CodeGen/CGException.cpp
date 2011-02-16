@@ -1026,19 +1026,17 @@ static void InitCatchParam(CodeGenFunction &CGF,
     return;
   }
 
-  // FIXME: this *really* needs to be done via a proper, Sema-emitted
-  // initializer expression.
-
-  CXXRecordDecl *RD = CatchType.getTypePtr()->getAsCXXRecordDecl();
-  assert(RD && "aggregate catch type was not a record!");
+  assert(isa<RecordType>(CatchType) && "unexpected catch type!");
 
   const llvm::Type *PtrTy = LLVMCatchTy->getPointerTo(0); // addrspace 0 ok
 
+  // Check for a copy expression.  If we don't have a copy expression,
+  // that means a trivial copy is okay.
   const Expr *copyExpr = CatchParam.getInit();
   if (!copyExpr) {
-    llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn, true);
-    llvm::Value *Cast = CGF.Builder.CreateBitCast(AdjustedExn, PtrTy);
-    CGF.EmitAggregateCopy(ParamAddr, Cast, CatchType);
+    llvm::Value *rawAdjustedExn = CallBeginCatch(CGF, Exn, true);
+    llvm::Value *adjustedExn = CGF.Builder.CreateBitCast(rawAdjustedExn, PtrTy);
+    CGF.EmitAggregateCopy(ParamAddr, adjustedExn, CatchType);
     return;
   }
 
