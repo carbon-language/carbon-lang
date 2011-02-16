@@ -45,8 +45,8 @@ def charize_microsoft_ext : Extension<"@# is a microsoft extension">;
 
 def ext_token_used : Extension<"extension used">;
 
-def warn_unterminated_string : Warning<"missing terminating '\"' character">;
-def warn_unterminated_char : Warning<"missing terminating ' character">;
+def warn_unterminated_string : ExtWarn<"missing terminating '\"' character">;
+def warn_unterminated_char : ExtWarn<"missing terminating ' character">;
 def err_empty_character : Error<"empty character constant">;
 def err_unterminated_block_comment : Error<"unterminated /* comment">;
 def err_invalid_character_to_charify : Error<
