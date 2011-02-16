@@ -63,9 +63,19 @@ DynamicLoaderMacOSXDYLD::GetImageInfo (const FileSpec &file_spec, const lldb_pri
 // allows the lldb to instantiate an instance of this class.
 //----------------------------------------------------------------------
 DynamicLoader *
-DynamicLoaderMacOSXDYLD::CreateInstance (Process* process)
+DynamicLoaderMacOSXDYLD::CreateInstance (Process* process, bool force)
 {
-    return new DynamicLoaderMacOSXDYLD (process);
+    bool create = force;
+    if (!create)
+    {
+        const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
+        if (triple_ref.getOS() == llvm::Triple::Darwin && triple_ref.getVendor() == llvm::Triple::Apple)
+            create = true;
+    }
+    
+    if (create)
+        return new DynamicLoaderMacOSXDYLD (process);
+    return NULL;
 }
 
 //----------------------------------------------------------------------

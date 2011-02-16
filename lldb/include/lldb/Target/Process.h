@@ -1232,6 +1232,12 @@ protected:
     lldb::StateType
     GetPrivateState ();
 
+    //------------------------------------------------------------------
+    // Called internally
+    //------------------------------------------------------------------
+    void
+    CompleteAttach ();
+    
 public:
     //------------------------------------------------------------------
     /// Get the exit status for a process.
@@ -1755,9 +1761,12 @@ public:
     const ABI *
     GetABI ();
 
-    virtual DynamicLoader *
-    GetDynamicLoader ();
-    
+    DynamicLoader *
+    GetDynamicLoader ()
+    {
+        return m_dyld_ap.get();
+    }
+
     virtual LanguageRuntime *
     GetLanguageRuntime (lldb::LanguageType language);
 
@@ -1940,6 +1949,7 @@ protected:
     Listener                    &m_listener;
     BreakpointSiteList          m_breakpoint_site_list; ///< This is the list of breakpoint locations we intend
                                                         ///< to insert in the target.
+    std::auto_ptr<DynamicLoader> m_dyld_ap;
     std::auto_ptr<DynamicCheckerFunctions>  m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;

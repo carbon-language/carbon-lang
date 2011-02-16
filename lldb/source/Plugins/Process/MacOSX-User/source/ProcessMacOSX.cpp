@@ -234,8 +234,7 @@ ProcessMacOSX::ProcessMacOSX(Target& target, Listener &listener) :
     m_stdout_data (),
     m_exception_messages (),
     m_exception_messages_mutex (Mutex::eMutexTypeRecursive),
-    m_arch_spec (),
-    m_dynamic_loader_ap ()
+    m_arch_spec ()
 {
 }
 
@@ -414,14 +413,7 @@ ProcessMacOSX::DoAttachToProcessWithID (lldb::pid_t attach_pid)
 Error
 ProcessMacOSX::WillLaunchOrAttach ()
 {
-    Error error;
-    // TODO: this is hardcoded for macosx right now. We need this to be more dynamic
-    m_dynamic_loader_ap.reset(DynamicLoader::FindPlugin(this, "dynamic-loader.macosx-dyld"));
-
-    if (m_dynamic_loader_ap.get() == NULL)
-        error.SetErrorString("unable to find the dynamic loader named 'dynamic-loader.macosx-dyld'");
-    
-    return error;
+    return Error();
 }
 
 
@@ -434,11 +426,7 @@ ProcessMacOSX::WillLaunch (Module* module)
 void
 ProcessMacOSX::DidLaunchOrAttach ()
 {
-    if (GetID() == LLDB_INVALID_PROCESS_ID)
-    {
-        m_dynamic_loader_ap.reset();
-    }
-    else
+    if (GetID() != LLDB_INVALID_PROCESS_ID)
     {
         Module * exe_module = GetTarget().GetExecutableModule ().get();
         assert (exe_module);
@@ -455,16 +443,12 @@ ProcessMacOSX::DidLaunch ()
 {
     ProcessMacOSXLog::LogIf (PD_LOG_PROCESS, "ProcessMacOSX::DidLaunch()");
     DidLaunchOrAttach ();
-    if (m_dynamic_loader_ap.get())
-        m_dynamic_loader_ap->DidLaunch();
 }
 
 void
 ProcessMacOSX::DidAttach ()
 {
     DidLaunchOrAttach ();
-    if (m_dynamic_loader_ap.get())
-        m_dynamic_loader_ap->DidAttach();
 }
 
 Error
@@ -868,12 +852,6 @@ lldb::addr_t
 ProcessMacOSX::GetImageInfoAddress()
 {
     return Task().GetDYLDAllImageInfosAddress();
-}
-
-DynamicLoader *
-ProcessMacOSX::GetDynamicLoader()
-{
-    return m_dynamic_loader_ap.get();
 }
 
 //------------------------------------------------------------------

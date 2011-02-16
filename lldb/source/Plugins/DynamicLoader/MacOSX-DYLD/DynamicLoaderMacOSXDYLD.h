@@ -44,7 +44,7 @@ public:
     GetPluginDescriptionStatic();
 
     static lldb_private::DynamicLoader *
-    CreateInstance (lldb_private::Process *process);
+    CreateInstance (lldb_private::Process *process, bool force);
 
     DynamicLoaderMacOSXDYLD (lldb_private::Process *process);
 

@@ -101,7 +101,6 @@ ProcessGDBRemote::CanDebug(Target &target)
 //----------------------------------------------------------------------
 ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     Process (target, listener),
-    m_dynamic_loader_ap (),
     m_flags (0),
     m_stdio_mutex (Mutex::eMutexTypeRecursive),
     m_gdb_comm(),
@@ -132,8 +131,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
 //----------------------------------------------------------------------
 ProcessGDBRemote::~ProcessGDBRemote()
 {
-    m_dynamic_loader_ap.reset();
-
     if (IS_VALID_LLDB_HOST_THREAD(m_debugserver_thread))
     {
         Host::ThreadCancel (m_debugserver_thread, NULL);
@@ -410,13 +407,7 @@ Error
 ProcessGDBRemote::WillLaunchOrAttach ()
 {
     Error error;
-    // TODO: this is hardcoded for macosx right now. We need this to be more dynamic
-    m_dynamic_loader_ap.reset(DynamicLoader::FindPlugin(this, "dynamic-loader.macosx-dyld"));
-
-    if (m_dynamic_loader_ap.get() == NULL)
-        error.SetErrorString("unable to find the dynamic loader named 'dynamic-loader.macosx-dyld'");
     m_stdio_communication.Clear ();
-    
     return error;
 }
 
@@ -628,11 +619,7 @@ ProcessGDBRemote::DidLaunchOrAttach ()
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessGDBRemote::DidLaunch()");
-    if (GetID() == LLDB_INVALID_PROCESS_ID)
-    {
-        m_dynamic_loader_ap.reset();
-    }
-    else
+    if (GetID() != LLDB_INVALID_PROCESS_ID)
     {
         m_dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
 
@@ -673,8 +660,6 @@ void
 ProcessGDBRemote::DidLaunch ()
 {
     DidLaunchOrAttach ();
-    if (m_dynamic_loader_ap.get())
-        m_dynamic_loader_ap->DidLaunch();
 }
 
 Error
@@ -816,8 +801,6 @@ void
 ProcessGDBRemote::DidAttach ()
 {
     DidLaunchOrAttach ();
-    if (m_dynamic_loader_ap.get())
-        m_dynamic_loader_ap->DidAttach();
 }
 
 Error
@@ -1538,12 +1521,6 @@ ProcessGDBRemote::GetImageInfoAddress()
         }
     }
     return LLDB_INVALID_ADDRESS;
-}
-
-DynamicLoader *
-ProcessGDBRemote::GetDynamicLoader()
-{
-    return m_dynamic_loader_ap.get();
 }
 
 //------------------------------------------------------------------

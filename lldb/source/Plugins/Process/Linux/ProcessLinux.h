@@ -138,9 +138,6 @@ public:
     virtual lldb::addr_t
     GetImageInfoAddress();
 
-    virtual lldb_private::DynamicLoader *
-    GetDynamicLoader();
-
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -185,9 +182,6 @@ private:
     /// Message queue notifying this instance of inferior process state changes.
     lldb_private::Mutex m_message_mutex;
     std::queue<ProcessMessage> m_message_queue;
-
-    /// Dynamic loader plugin associated with this process.
-    std::auto_ptr<lldb_private::DynamicLoader> m_dyld_ap;
 
     /// Updates the loaded sections provided by the executable.
     ///

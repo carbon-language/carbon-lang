@@ -222,9 +222,6 @@ public:
     virtual lldb_private::Error
     DisableWatchpoint (lldb_private::WatchpointLocation *wp_loc);
 
-    virtual lldb_private::DynamicLoader *
-    GetDynamicLoader ();
-
     static void
     AddArchCreateCallback(const lldb_private::ArchSpec& arch_spec,
                           ProcessMacOSX::CreateArchCalback callback);
@@ -244,7 +241,6 @@ protected:
     MachException::Message::collection m_exception_messages;       // A collection of exception messages caught when listening to the exception port
     lldb_private::Mutex m_exception_messages_mutex; // Multithreaded protection for m_exception_messages
     lldb_private::ArchSpec m_arch_spec;
-    std::auto_ptr<lldb_private::DynamicLoader> m_dynamic_loader_ap;
 
     //----------------------------------------------------------------------
     // Child process control

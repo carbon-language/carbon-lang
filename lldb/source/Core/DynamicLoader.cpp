@@ -23,7 +23,7 @@ DynamicLoader::FindPlugin (Process *process, const char *plugin_name)
         create_callback  = PluginManager::GetDynamicLoaderCreateCallbackForPluginName (plugin_name);
         if (create_callback)
         {
-            std::auto_ptr<DynamicLoader> instance_ap(create_callback(process));
+            std::auto_ptr<DynamicLoader> instance_ap(create_callback(process, true));
             if (instance_ap.get())
                 return instance_ap.release();
         }
@@ -32,7 +32,7 @@ DynamicLoader::FindPlugin (Process *process, const char *plugin_name)
     {
         for (uint32_t idx = 0; (create_callback = PluginManager::GetDynamicLoaderCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            std::auto_ptr<DynamicLoader> instance_ap(create_callback(process));
+            std::auto_ptr<DynamicLoader> instance_ap(create_callback(process, false));
             if (instance_ap.get())
                 return instance_ap.release();
         }

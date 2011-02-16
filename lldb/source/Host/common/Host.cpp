@@ -261,20 +261,20 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
             
             if (is_64_bit_capable)
             {
+#if defined (__i386__) || defined (__x86_64__)
+                if (cpusubtype == CPU_SUBTYPE_486)
+                    cpusubtype = CPU_SUBTYPE_I386_ALL;
+#endif
                 if (cputype & CPU_ARCH_ABI64)
                 {
                     // We have a 64 bit kernel on a 64 bit system
-                    g_host_arch_32.SetMachOArch (CPU_TYPE_I386, CPU_SUBTYPE_386);
+                    g_host_arch_32.SetMachOArch (~(CPU_ARCH_MASK) & cputype, cpusubtype);
                     g_host_arch_64.SetMachOArch (cputype, cpusubtype);
                 }
                 else
                 {
                     // We have a 32 bit kernel on a 64 bit system
                     g_host_arch_32.SetMachOArch (cputype, cpusubtype);
-#if defined (__i386__) || defined (__x86_64__)
-                    if (cpusubtype == CPU_SUBTYPE_486)
-                        cpusubtype = CPU_SUBTYPE_I386_ALL;
-#endif
                     cputype |= CPU_ARCH_ABI64;
                     g_host_arch_64.SetMachOArch (cputype, cpusubtype);
                 }

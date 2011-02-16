@@ -3258,7 +3258,11 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
     char ostype[64];
     len = sizeof(ostype);
     if (::sysctlbyname("kern.ostype", &ostype, &len, NULL, 0) == 0)
+    {
+        len = strlen(ostype);
+        std::transform (ostype, ostype + len, ostype, tolower);
         strm << "ostype:" << std::dec << ostype << ';';
+    }
 
     strm << "vendor:apple;";
 

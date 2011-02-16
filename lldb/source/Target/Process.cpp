@@ -845,12 +845,6 @@ Process::UnloadImage (uint32_t image_token)
     return error;
 }
 
-DynamicLoader *
-Process::GetDynamicLoader()
-{
-    return NULL;
-}
-
 const ABI *
 Process::GetABI()
 {
@@ -1503,6 +1497,7 @@ Process::Launch
 {
     Error error;
     m_abi_sp.reset();
+    m_dyld_ap.reset();
     m_process_input_reader.reset();
 
     Module *exe_module = m_target.GetExecutableModule().get();
@@ -1569,7 +1564,12 @@ Process::Launch
 
                     if (state == eStateStopped || state == eStateCrashed)
                     {
+
                         DidLaunch ();
+
+                        m_dyld_ap.reset (DynamicLoader::FindPlugin(this, false));
+                        if (m_dyld_ap.get())
+                            m_dyld_ap->DidLaunch();
 
                         // This delays passing the stopped event to listeners till DidLaunch gets
                         // a chance to complete...
@@ -1609,25 +1609,7 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
             // lldb_private::Process subclasses must set the process must set
             // the new process ID.
             assert (m_process->GetID() != LLDB_INVALID_PROCESS_ID);
-            m_process->DidAttach ();
-            // Figure out which one is the executable, and set that in our target:
-            ModuleList &modules = m_process->GetTarget().GetImages();
-            
-            size_t num_modules = modules.GetSize();
-            for (int i = 0; i < num_modules; i++)
-            {
-                ModuleSP module_sp = modules.GetModuleAtIndex(i);
-                if (module_sp->IsExecutable())
-                {
-                    ModuleSP exec_module = m_process->GetTarget().GetExecutableModule();
-                    if (!exec_module || exec_module != module_sp)
-                    {
-                        
-                        m_process->GetTarget().SetExecutableModule (module_sp, false);
-                    }
-                    break;
-                }
-            }
+            m_process->CompleteAttach ();
             return eEventActionSuccess;
         }
             
@@ -1670,6 +1652,8 @@ Process::Attach (lldb::pid_t attach_pid)
         // Set the architecture on the target.
         GetTarget().SetArchitecture(attach_spec);
     }
+
+    m_dyld_ap.reset();
 
     Error error (WillAttachToProcessWithID(attach_pid));
     if (error.Success())
@@ -1716,6 +1700,8 @@ Process::Attach (const char *process_name, bool wait_for_launch)
             GetTarget().SetArchitecture(attach_spec);
         }
     }
+
+    m_dyld_ap.reset();
     
     Error error (WillAttachToProcessWithName(process_name, wait_for_launch));
     if (error.Success())
@@ -1741,6 +1727,36 @@ Process::Attach (const char *process_name, bool wait_for_launch)
         }
     }
     return error;
+}
+
+void
+Process::CompleteAttach ()
+{
+    // Let the process subclass figure out at much as it can about the process
+    // before we go looking for a dynamic loader plug-in.
+    DidAttach();
+
+    // We have complete the attach, now it is time to find the dynamic loader
+    // plug-in
+    m_dyld_ap.reset (DynamicLoader::FindPlugin(this, false));
+    if (m_dyld_ap.get())
+        m_dyld_ap->DidAttach();
+
+    // Figure out which one is the executable, and set that in our target:
+    ModuleList &modules = m_target.GetImages();
+    
+    size_t num_modules = modules.GetSize();
+    for (int i = 0; i < num_modules; i++)
+    {
+        ModuleSP module_sp (modules.GetModuleAtIndex(i));
+        if (module_sp->IsExecutable())
+        {
+            ModuleSP target_exe_module_sp (m_target.GetExecutableModule());
+            if (target_exe_module_sp != module_sp)
+                m_target.SetExecutableModule (module_sp, false);
+            break;
+        }
+    }
 }
 
 Error

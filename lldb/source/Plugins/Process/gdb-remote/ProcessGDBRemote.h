@@ -219,9 +219,6 @@ public:
     virtual lldb_private::Error
     DisableWatchpoint (lldb_private::WatchpointLocation *wp_loc);
 
-    virtual lldb_private::DynamicLoader *
-    GetDynamicLoader ();
-    
     virtual bool
     StartNoticingNewThreads();    
 
@@ -328,8 +325,6 @@ protected:
         eBroadcastBitAsyncThreadShouldExit          = (1 << 1)
     };
 
-
-    std::auto_ptr<lldb_private::DynamicLoader> m_dynamic_loader_ap;
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
     lldb_private::Mutex m_stdio_mutex;      // Multithreaded protection for stdio
     GDBRemoteCommunication m_gdb_comm;

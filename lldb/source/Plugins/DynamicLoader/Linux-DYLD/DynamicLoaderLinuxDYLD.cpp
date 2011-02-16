@@ -73,9 +73,19 @@ DynamicLoaderLinuxDYLD::GetPluginVersion()
 }
 
 DynamicLoader *
-DynamicLoaderLinuxDYLD::CreateInstance(Process *process)
+DynamicLoaderLinuxDYLD::CreateInstance(Process *process, bool force)
 {
-    return new DynamicLoaderLinuxDYLD(process);
+    bool create = force;
+    if (!create)
+    {
+        const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
+        if (triple_ref.getOS() == llvm::Triple::Linux)
+            create = true;
+    }
+    
+    if (create)
+        return new DynamicLoaderLinuxDYLD (process);
+    return NULL;
 }
 
 DynamicLoaderLinuxDYLD::DynamicLoaderLinuxDYLD(Process *process)
