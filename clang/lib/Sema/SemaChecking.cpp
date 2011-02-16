@@ -3080,3 +3080,33 @@ void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
     << TRange << Op->getSourceRange();
 }
 
+void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *ae) {
+  const DeclRefExpr *dr =
+    dyn_cast<DeclRefExpr>(ae->getBase()->IgnoreParenImpCasts());
+  if (!dr)
+    return;
+  const VarDecl *vd = cast<VarDecl>(dr->getDecl());
+  const ConstantArrayType *cat = Context.getAsConstantArrayType(vd->getType());
+  if (!cat)
+    return;
+  const Expr *idx = ae->getIdx();
+  if (idx->isValueDependent())
+    return;
+  llvm::APSInt result;
+  if (!idx->isIntegerConstantExpr(result, Context))
+    return;
+  unsigned kind = 2;
+  if (result.slt(0))
+    kind = /* precedes */ 0;
+  else {
+    const llvm::APInt &size = cat->getSize();
+    if (size.getBitWidth() > result.getBitWidth())
+      result = result.sext(size.getBitWidth());
+    if (result.sge(size))
+      kind = /* excedes */ 1;
+  }
+  if (kind < 2)
+    Diag(ae->getBase()->getLocEnd(), diag::warn_array_index_out_of_bounds)
+      << kind << idx->getSourceRange();
+}
+

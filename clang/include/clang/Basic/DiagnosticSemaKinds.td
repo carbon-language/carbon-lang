@@ -3379,6 +3379,10 @@ def warn_not_compound_assign : Warning<
 def warn_explicit_conversion_functions : Warning<
   "explicit conversion functions are a C++0x extension">, InGroup<CXX0x>;
 
+def warn_array_index_out_of_bounds : Warning<
+  "array index %select{precedes first|excedes last}0 array element">,
+  InGroup<DiagGroup<"array-bounds">>;
+
 def warn_printf_write_back : Warning<
   "use of '%%n' in format string discouraged (potentially insecure)">,
   InGroup<FormatSecurity>;
