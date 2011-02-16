@@ -1969,7 +1969,7 @@ def warn_deprecated_message : Warning<"%0 is deprecated: %1">,
 def warn_deprecated_fwdclass_message : Warning<
     "%0 maybe deprecated because receiver type is unknown">,
     InGroup<DeprecatedDeclarations>;
-def warn_depercated_def : Warning<
+def warn_deprecated_def : Warning<
     "Implementing deprecated %select{method|class|category}0">,
     InGroup<DeprecatedImplementations>, DefaultIgnore;
 def err_unavailable : Error<"%0 is unavailable">;

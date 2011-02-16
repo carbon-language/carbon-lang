@@ -29,7 +29,7 @@ static void DiagnoseObjCImplementedDeprecations(Sema &S,
                                                 SourceLocation ImplLoc,
                                                 int select) {
   
-  unsigned DIAG = diag::warn_depercated_def;
+  unsigned DIAG = diag::warn_deprecated_def;
   if (S.Diags.getDiagnosticLevel(DIAG, ImplLoc)== Diagnostic::Ignored)
     return;
   if (ND && ND->getAttr<DeprecatedAttr>()) {
