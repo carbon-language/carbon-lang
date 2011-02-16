@@ -551,7 +551,7 @@ protected:
   uint64_t Size;
 
   /// Alignment - The current alignment of the record layout.
-  unsigned Alignment;
+  CharUnits Alignment;
 
   /// \brief The alignment if attribute packed is not used.
   unsigned UnpackedAlignment;
@@ -610,12 +610,12 @@ protected:
 
   RecordLayoutBuilder(const ASTContext &Context, EmptySubobjectMap
                       *EmptySubobjects)
-    : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), Alignment(8),
-      UnpackedAlignment(Alignment), Packed(false), IsUnion(false),
-      IsMac68kAlign(false), UnfilledBitsInLastByte(0), MaxFieldAlignment(0),
-      DataSize(0), NonVirtualSize(CharUnits::Zero()), 
-      NonVirtualAlignment(CharUnits::One()), PrimaryBase(0), 
-      PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
+    : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
+      Alignment(CharUnits::One()), UnpackedAlignment(Context.toBits(Alignment)),
+      Packed(false), IsUnion(false), IsMac68kAlign(false), 
+      UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), 
+      NonVirtualSize(CharUnits::Zero()), NonVirtualAlignment(CharUnits::One()),
+      PrimaryBase(0), PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
@@ -1137,7 +1137,7 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
   if (D->hasAttr<AlignMac68kAttr>()) {
     IsMac68kAlign = true;
     MaxFieldAlignment = 2 * 8;
-    Alignment = 2 * 8;
+    Alignment = CharUnits::fromQuantity(2);
   } else {
     if (const MaxFieldAlignmentAttr *MFAA = D->getAttr<MaxFieldAlignmentAttr>())
       MaxFieldAlignment = MFAA->getAlignment();
@@ -1165,7 +1165,7 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
   LayoutFields(RD);
 
   NonVirtualSize = Context.toCharUnitsFromBits(Size);
-  NonVirtualAlignment = Context.toCharUnitsFromBits(Alignment);
+  NonVirtualAlignment = Alignment;
 
   // Lay out the virtual bases and add the primary virtual base offsets.
   LayoutVirtualBases(RD, RD);
@@ -1480,7 +1480,7 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
   // record itself.
   uint64_t UnpaddedSize = Size - UnfilledBitsInLastByte;
   uint64_t UnpackedSize = llvm::RoundUpToAlignment(Size, UnpackedAlignment);
-  Size = llvm::RoundUpToAlignment(Size, Alignment);
+  Size = llvm::RoundUpToAlignment(Size, Context.toBits(Alignment));
 
   unsigned CharBitNum = Context.Target.getCharWidth();
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
@@ -1512,9 +1512,10 @@ void RecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment,
   if (IsMac68kAlign)
     return;
 
-  if (NewAlignment > Alignment) {
+  CharUnits NewAlignmentInChars = Context.toCharUnitsFromBits(NewAlignment);
+  if (NewAlignmentInChars > Alignment) {
     assert(llvm::isPowerOf2_32(NewAlignment && "Alignment not a power of 2"));
-    Alignment = NewAlignment;
+    Alignment = NewAlignmentInChars;
   }
 
   if (UnpackedNewAlignment > UnpackedAlignment) {
@@ -1685,7 +1686,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     CharUnits RecordSize = toCharUnitsFromBits(Builder->Size);
     NewEntry =
       new (*this) ASTRecordLayout(*this, RecordSize, 
-                                  toCharUnitsFromBits(Builder->Alignment),
+                                  Builder->Alignment,
                                   toCharUnitsFromBits(DataSize), 
                                   Builder->FieldOffsets.data(),
                                   Builder->FieldOffsets.size(),
@@ -1703,7 +1704,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
     NewEntry =
       new (*this) ASTRecordLayout(*this, RecordSize, 
-                                  toCharUnitsFromBits(Builder.Alignment),
+                                  Builder.Alignment,
                                   toCharUnitsFromBits(Builder.Size),
                                   Builder.FieldOffsets.data(),
                                   Builder.FieldOffsets.size());
@@ -1764,7 +1765,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
   const ASTRecordLayout *NewEntry =
     new (*this) ASTRecordLayout(*this, RecordSize, 
-                                toCharUnitsFromBits(Builder.Alignment),
+                                Builder.Alignment,
                                 toCharUnitsFromBits(Builder.DataSize),
                                 Builder.FieldOffsets.data(),
                                 Builder.FieldOffsets.size());
