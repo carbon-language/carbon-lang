@@ -1,6 +1,6 @@
 /* Note: the RUN lines are near the end of the file, since line/column
  matter for this test. */
-
+@class MyClass;
 @interface I1 
 {
   id StoredProp3;
@@ -53,4 +53,7 @@ id test(I3 *i3) {
 // CHECK-CC5-NEXT: ObjCPropertyDecl:{ResultType float}{TypedText Prop2} (35)
 // CHECK-CC5-NEXT: ObjCPropertyDecl:{ResultType id}{TypedText Prop3} (35)
 // CHECK-CC5-NEXT: ObjCPropertyDecl:{ResultType id}{TypedText Prop4} (35)
+
+// RUN: c-index-test -code-completion-at=%s:9:11 %s | FileCheck -check-prefix=CHECK-CC6 %s
+// CHECK-CC6: ObjCInterfaceDecl:{TypedText MyClass} (50)
 

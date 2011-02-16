@@ -2484,7 +2484,17 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
             Visited.add(*P);
           }
         }
+      } else if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(*D)) {
+        for (ObjCClassDecl::iterator I = Class->begin(), IEnd = Class->end();
+             I != IEnd; ++I) {
+          ObjCInterfaceDecl *IFace = I->getInterface();
+          if (Result.isAcceptableDecl(IFace)) {
+            Consumer.FoundDecl(IFace, Visited.checkHidden(IFace), InBaseClass);
+            Visited.add(IFace);
+          }
+        }
       }
+      
       // Visit transparent contexts and inline namespaces inside this context.
       if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
         if (InnerCtx->isTransparentContext() || InnerCtx->isInlineNamespace())
