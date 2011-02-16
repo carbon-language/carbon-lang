@@ -4029,8 +4029,16 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMvnRdImm, "mvn{s} <Rd>, #<const>"},
         // asr (immediate)
         { 0x0fef0070, 0x01a00040, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c> <Rd>, <Rm>, #imm"},
-        // asr (immediate)
+        // asr (register)
         { 0x0fef00f0, 0x01a00050, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRReg, "asr{s}<c> <Rd>, <Rn>, <Rm>"},
+        // lsl (immediate)
+        { 0x0fef0070, 0x01a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSLImm, "lsl{s}<c> <Rd>, <Rm>, #imm"},
+        // lsl (register)
+        { 0x0fef00f0, 0x01a00010, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSLReg, "lsl{s}<c> <Rd>, <Rn>, <Rm>"},
+        // lsr (immediate)
+        { 0x0fef0070, 0x01a00020, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSRImm, "lsr{s}<c> <Rd>, <Rm>, #imm"},
+        // lsr (register)
+        { 0x0fef00f0, 0x01a00050, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSRReg, "lsr{s}<c> <Rd>, <Rn>, <Rm>"},
 
         //----------------------------------------------------------------------
         // Load instructions
@@ -4163,6 +4171,18 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // asr (register)
         { 0xffffffc0, 0x00004100, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateASRReg, "asrs|asr<c> <Rdn>, <Rm>"},
         { 0xffe0f0f0, 0xfa40f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateASRReg, "asr{s}<c>.w <Rd>, <Rn>, <Rm>"},
+        // lsl (immediate)
+        { 0xfffff800, 0x00000000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSLImm, "lsls|lsl<c> <Rd>, <Rm>, #imm"},
+        { 0xffef8030, 0xea4f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSLImm, "lsl{s}<c>.w <Rd>, <Rm>, #imm"},
+        // lsl (register)
+        { 0xffffffc0, 0x00004080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSLReg, "lsls|lsl<c> <Rdn>, <Rm>"},
+        { 0xffe0f0f0, 0xfa00f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSLReg, "lsl{s}<c>.w <Rd>, <Rn>, <Rm>"},
+        // lsr (immediate)
+        { 0xfffff800, 0x00000800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSRImm, "lsrs|lsr<c> <Rd>, <Rm>, #imm"},
+        { 0xffef8030, 0xea4f0010, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSRImm, "lsr{s}<c>.w <Rd>, <Rm>, #imm"},
+        // lsr (register)
+        { 0xffffffc0, 0x000040c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSRReg, "lsrs|asr<c> <Rdn>, <Rm>"},
+        { 0xffe0f0f0, 0xfa20f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSRReg, "lsr{s}<c>.w <Rd>, <Rn>, <Rm>"},
 
         //----------------------------------------------------------------------
         // Load instructions
