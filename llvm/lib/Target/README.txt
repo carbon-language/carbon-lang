@@ -2218,3 +2218,32 @@ llc time when it gets inlined, because we can use smaller transfers.  This also
 avoids partial register stalls in some important cases.
 
 //===---------------------------------------------------------------------===//
+
+Some missed instcombine xforms (from GCC PR14753):
+
+void bar (void);
+
+void mask_gt (unsigned int a) {
+/* This is equivalent to a > 15.  */
+if ((a & ~7) > 8)
+bar();
+}
+
+void neg_eq_cst(unsigned int a) {
+if (-a == 123)
+bar();
+}
+
+void minus_cst(unsigned int a) {
+if (20 - a == 5)
+bar();
+}
+
+void rotate_cst (unsigned a) {
+a = (a << 10) | (a >> 22);
+if (a == 123)
+bar ();
+}
+
+//===---------------------------------------------------------------------===//
+
