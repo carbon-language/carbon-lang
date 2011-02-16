@@ -1518,6 +1518,22 @@ SDValue DAGCombiner::visitADDE(SDNode *N) {
   return SDValue();
 }
 
+// Since it may not be valid to emit a fold to zero for vector initializers
+// check if we can before folding.
+static SDValue tryFoldToZero(DebugLoc DL, const TargetLowering &TLI, EVT VT,
+                             SelectionDAG &DAG, bool LegalOperations) {                            
+  if (!VT.isVector()) {
+    return DAG.getConstant(0, VT);
+  } else if (!LegalOperations || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)) {
+    // Produce a vector of zeros.
+    SDValue El = DAG.getConstant(0, VT.getVectorElementType());
+    std::vector<SDValue> Ops(VT.getVectorNumElements(), El);
+    return DAG.getNode(ISD::BUILD_VECTOR, DL, VT,
+      &Ops[0], Ops.size());
+  }
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitSUB(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -1533,17 +1549,8 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
 
   // fold (sub x, x) -> 0
   // FIXME: Refactor this and xor and other similar operations together.
-  if (N0 == N1) {
-    if (!VT.isVector()) {
-      return DAG.getConstant(0, VT);
-    } else if (!LegalOperations || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)){
-      // Produce a vector of zeros.
-      SDValue El = DAG.getConstant(0, VT.getVectorElementType());
-      std::vector<SDValue> Ops(VT.getVectorNumElements(), El);
-      return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
-                         &Ops[0], Ops.size());
-    }
-  }
+  if (N0 == N1)
+    return tryFoldToZero(N->getDebugLoc(), TLI, VT, DAG, LegalOperations);
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::SUB, VT, N0C, N1C);
@@ -2843,17 +2850,8 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
                                          N01C->getAPIntValue(), VT));
   }
   // fold (xor x, x) -> 0
-  if (N0 == N1) {
-    if (!VT.isVector()) {
-      return DAG.getConstant(0, VT);
-    } else if (!LegalOperations || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)){
-      // Produce a vector of zeros.
-      SDValue El = DAG.getConstant(0, VT.getVectorElementType());
-      std::vector<SDValue> Ops(VT.getVectorNumElements(), El);
-      return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
-                         &Ops[0], Ops.size());
-    }
-  }
+  if (N0 == N1)
+    return tryFoldToZero(N->getDebugLoc(), TLI, VT, DAG, LegalOperations);
 
   // Simplify: xor (op x...), (op y...)  -> (op (xor x, y))
   if (N0.getOpcode() == N1.getOpcode()) {
