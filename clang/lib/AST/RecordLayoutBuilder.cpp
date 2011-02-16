@@ -578,7 +578,7 @@ protected:
   uint64_t DataSize;
 
   uint64_t NonVirtualSize;
-  unsigned NonVirtualAlignment;
+  CharUnits NonVirtualAlignment;
 
   /// PrimaryBase - the primary base class (if one exists) of the class
   /// we're laying out.
@@ -613,8 +613,8 @@ protected:
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), Alignment(8),
       UnpackedAlignment(Alignment), Packed(false), IsUnion(false),
       IsMac68kAlign(false), UnfilledBitsInLastByte(0), MaxFieldAlignment(0),
-      DataSize(0), NonVirtualSize(0), NonVirtualAlignment(8), PrimaryBase(0),
-      PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
+      DataSize(0), NonVirtualSize(0), NonVirtualAlignment(CharUnits::One()), 
+      PrimaryBase(0), PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
@@ -1164,7 +1164,7 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
   LayoutFields(RD);
 
   NonVirtualSize = Size;
-  NonVirtualAlignment = Alignment;
+  NonVirtualAlignment = Context.toCharUnitsFromBits(Alignment);
 
   // Lay out the virtual bases and add the primary virtual base offsets.
   LayoutVirtualBases(RD, RD);
@@ -1679,7 +1679,6 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
       IsPODForThePurposeOfLayout ? Builder->Size : Builder->DataSize;
     uint64_t NonVirtualSize =
       IsPODForThePurposeOfLayout ? DataSize : Builder->NonVirtualSize;
-    uint64_t NonVirtualAlign = Builder->NonVirtualAlignment;
 
     CharUnits RecordSize = toCharUnitsFromBits(Builder->Size);
     NewEntry =
@@ -1689,7 +1688,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
                                   Builder->FieldOffsets.data(),
                                   Builder->FieldOffsets.size(),
                                   toCharUnitsFromBits(NonVirtualSize),
-                                  toCharUnitsFromBits(NonVirtualAlign),
+                                  Builder->NonVirtualAlignment,
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
                                   Builder->PrimaryBase,
                                   Builder->PrimaryBaseIsVirtual,
