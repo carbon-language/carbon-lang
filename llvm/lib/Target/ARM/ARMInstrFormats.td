@@ -1200,7 +1200,7 @@ class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 1;          // Double precision
 
-  // 64-bit loads & stores operate on both NEON and VFP pipelines.
+  // Loads & stores operate on both NEON and VFP pipelines.
   let D = VFPNeonDomain;
 }
 
@@ -1225,6 +1225,9 @@ class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{21-20} = opcod2;
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 0;          // Single precision
+
+  // Loads & stores operate on both NEON and VFP pipelines.
+  let D = VFPNeonDomain;
 }
 
 // VFP Load / store multiple pseudo instructions.
@@ -1257,9 +1260,6 @@ class AXDI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
   let Inst{27-25} = 0b110;
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 1;          // Double precision
-
-  // 64-bit loads & stores operate on both NEON and VFP pipelines.
-  let D = VFPNeonDomain;
 }
 
 class AXSI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
