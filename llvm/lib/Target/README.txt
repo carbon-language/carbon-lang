@@ -733,18 +733,6 @@ codegen badness or something else (haven't investigated).
 
 //===---------------------------------------------------------------------===//
 
-We miss some instcombines for stuff like this:
-void bar (void);
-void foo (unsigned int a) {
-  /* This one is equivalent to a >= (3 << 2).  */
-  if ((a >> 2) >= 3)
-    bar ();
-}
-
-A few other related ones are in GCC PR14753.
-
-//===---------------------------------------------------------------------===//
-
 Divisibility by constant can be simplified (according to GCC PR12849) from
 being a mulhi to being a mul lo (cheaper).  Testcase:
 
