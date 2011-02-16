@@ -40,7 +40,7 @@ case $TRIPLE in
 		LDSHARED_FLAGS="-o libc++.1.dylib \
 			-dynamiclib -nodefaultlibs -current_version 1 \
 			-compatibility_version 1 \
-			-install_name /usr/lib/libc++.dylib \
+			-install_name /usr/lib/libc++.1.dylib \
 			-Wl,-reexport_library,/usr/lib/libc++abi.dylib \
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
 			/usr/lib/libSystem.B.dylib"
@@ -49,7 +49,7 @@ case $TRIPLE in
 		LDSHARED_FLAGS="-o libc++.1.dylib \
 			-dynamiclib -nodefaultlibs  \
 			-current_version ${RC_ProjectSourceVersion} -compatibility_version 1 \
-			-install_name /usr/lib/libc++.dylib \
+			-install_name /usr/lib/libc++.1.dylib \
 			${SDKROOT}/usr/lib/libc++abi.dylib \
 			-lSystem  \
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
