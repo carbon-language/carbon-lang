@@ -1532,8 +1532,18 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
   }
 
   // fold (sub x, x) -> 0
-  if (N0 == N1)
-    return DAG.getConstant(0, N->getValueType(0), LegalTypes);
+  // FIXME: Refactor this and xor and other similar operations together.
+  if (N0 == N1) {
+    if (!VT.isVector()) {
+      return DAG.getConstant(0, VT);
+    } else if (!LegalOperations || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)){
+      // Produce a vector of zeros.
+      SDValue El = DAG.getConstant(0, VT.getVectorElementType());
+      std::vector<SDValue> Ops(VT.getVectorNumElements(), El);
+      return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
+                         &Ops[0], Ops.size());
+    }
+  }
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::SUB, VT, N0C, N1C);
