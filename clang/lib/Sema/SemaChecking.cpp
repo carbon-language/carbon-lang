@@ -3085,7 +3085,9 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *ae) {
     dyn_cast<DeclRefExpr>(ae->getBase()->IgnoreParenImpCasts());
   if (!dr)
     return;
-  const VarDecl *vd = cast<VarDecl>(dr->getDecl());
+  const VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl());
+  if (!vd)
+    return;
   const ConstantArrayType *cat = Context.getAsConstantArrayType(vd->getType());
   if (!cat)
     return;

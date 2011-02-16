@@ -14,3 +14,8 @@ int foo() {
          x[sizeof(x[2])]; // expected-warning{{array index of '4' indexes past the end of an array (that contains 2 elements)}}
 }
 
+// This code example tests that -Warray-bounds works with arrays that
+// are template parameters.
+template <char *sz> class Qux {
+  bool test() { return sz[0] == 'a'; }
+};
