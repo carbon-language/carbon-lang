@@ -14,6 +14,7 @@
 #ifndef LLVM_MC_MCSTREAMER_H
 #define LLVM_MC_MCSTREAMER_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCDwarf.h"
@@ -56,16 +57,16 @@ namespace llvm {
     MCDwarfFrameInfo *getCurrentFrameInfo();
     void EnsureValidFrame();
 
+    /// CurSectionStack - This is stack of CurSection values saved by
+    /// PushSection.
+    SmallVector<const MCSection *, 4> CurSectionStack;
+
+    /// PrevSectionStack - This is stack of PrevSection values saved by
+    /// PushSection.
+    SmallVector<const MCSection *, 4> PrevSectionStack;
+
   protected:
     MCStreamer(MCContext &Ctx);
-
-    /// CurSection - This is the current section code is being emitted to, it is
-    /// kept up to date by SwitchSection.
-    const MCSection *CurSection;
-
-    /// PrevSection - This is the previous section code is being emitted to, it
-    /// is kept up to date by SwitchSection.
-    const MCSection *PrevSection;
 
   public:
     virtual ~MCStreamer();
@@ -115,17 +116,63 @@ namespace llvm {
 
     /// getCurrentSection - Return the current section that the streamer is
     /// emitting code to.
-    const MCSection *getCurrentSection() const { return CurSection; }
+    const MCSection *getCurrentSection() const {
+      if (!CurSectionStack.empty())
+        return CurSectionStack.back();
+      return NULL;
+    }
 
     /// getPreviousSection - Return the previous section that the streamer is
     /// emitting code to.
-    const MCSection *getPreviousSection() const { return PrevSection; }
+    const MCSection *getPreviousSection() const {
+      if (!PrevSectionStack.empty())
+        return PrevSectionStack.back();
+      return NULL;
+    }
+
+    /// ChangeSection - Update streamer for a new active section.
+    ///
+    /// This is called by PopSection and SwitchSection, if the current
+    /// section changes.
+    virtual void ChangeSection(const MCSection *) = 0;
+
+    /// pushSection - Save the current and previous section on the
+    /// section stack.
+    void PushSection() {
+      PrevSectionStack.push_back(getPreviousSection());
+      CurSectionStack.push_back(getCurrentSection());
+    }
+
+    /// popSection - Restore the current and previous section from
+    /// the section stack.  Calls ChangeSection as needed.
+    ///
+    /// Returns false if the stack was empty.
+    bool PopSection() {
+      if (PrevSectionStack.size() <= 1)
+        return false;
+      assert(CurSectionStack.size() > 1);
+      PrevSectionStack.pop_back();
+      const MCSection *oldSection = CurSectionStack.pop_back_val();
+      const MCSection *curSection = CurSectionStack.back();
+
+      if (oldSection != curSection)
+        ChangeSection(curSection);
+      return true;
+    }
 
     /// SwitchSection - Set the current section where code is being emitted to
     /// @p Section.  This is required to update CurSection.
     ///
     /// This corresponds to assembler directives like .section, .text, etc.
-    virtual void SwitchSection(const MCSection *Section) = 0;
+    void SwitchSection(const MCSection *Section) {
+      assert(Section && "Cannot switch to a null section!");
+      const MCSection *curSection = CurSectionStack.back();
+      PrevSectionStack.back() = curSection;
+      if (Section != curSection) {
+        CurSectionStack.back() = Section;
+        ChangeSection(Section);
+      }
+    }
 
     /// InitSections - Create the default sections and set the initial one.
     virtual void InitSections() = 0;

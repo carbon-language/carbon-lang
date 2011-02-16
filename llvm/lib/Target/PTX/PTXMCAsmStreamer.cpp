@@ -100,8 +100,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void SwitchSection(const MCSection *Section);
-
+  virtual void ChangeSection(const MCSection *Section);
   virtual void InitSections() {}
 
   virtual void EmitLabel(MCSymbol *Symbol);
@@ -227,22 +226,18 @@ static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
 }
 
-void PTXMCAsmStreamer::SwitchSection(const MCSection *Section) {
+void PTXMCAsmStreamer::ChangeSection(const MCSection *Section) {
   assert(Section && "Cannot switch to a null section!");
-  if (Section != CurSection) {
-    PrevSection = CurSection;
-    CurSection = Section;
-  }
 }
 
 void PTXMCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(CurSection && "Cannot emit before setting section!");
+  assert(getCurrentSection() && "Cannot emit before setting section!");
 
   OS << *Symbol << MAI.getLabelSuffix();
   EmitEOL();
-  Symbol->setSection(*CurSection);
+  Symbol->setSection(*getCurrentSection());
 }
 
 void PTXMCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {}
@@ -332,7 +327,7 @@ static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
 }
 
 void PTXMCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
-  assert(CurSection && "Cannot emit contents before setting section!");
+  assert(getCurrentSection() && "Cannot emit contents before setting section!");
   if (Data.empty()) return;
 
   if (Data.size() == 1) {
@@ -358,7 +353,7 @@ void PTXMCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
 
 void PTXMCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
                                      bool isPCRel, unsigned AddrSpace) {
-  assert(CurSection && "Cannot emit contents before setting section!");
+  assert(getCurrentSection() && "Cannot emit contents before setting section!");
   assert(!isPCRel && "Cannot emit pc relative relocations!");
   const char *Directive = 0;
   switch (Size) {
@@ -502,7 +497,7 @@ bool PTXMCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo,
 void PTXMCAsmStreamer::AddEncodingComment(const MCInst &Inst) {}
 
 void PTXMCAsmStreamer::EmitInstruction(const MCInst &Inst) {
-  assert(CurSection && "Cannot emit contents before setting section!");
+  assert(getCurrentSection() && "Cannot emit contents before setting section!");
 
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter)

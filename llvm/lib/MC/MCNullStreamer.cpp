@@ -28,15 +28,13 @@ namespace {
     virtual void InitSections() {
     }
 
-    virtual void SwitchSection(const MCSection *Section) {
-      PrevSection = CurSection;
-      CurSection = Section;
+    virtual void ChangeSection(const MCSection *Section) {
     }
 
     virtual void EmitLabel(MCSymbol *Symbol) {
       assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-      assert(CurSection && "Cannot emit before setting section!");
-      Symbol->setSection(*CurSection);
+      assert(getCurrentSection() && "Cannot emit before setting section!");
+      Symbol->setSection(*getCurrentSection());
     }
 
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}

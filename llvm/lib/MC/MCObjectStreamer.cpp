@@ -101,9 +101,9 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 
 void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(CurSection && "Cannot emit before setting section!");
+  assert(getCurrentSection() && "Cannot emit before setting section!");
 
-  Symbol->setSection(*CurSection);
+  Symbol->setSection(*getCurrentSection());
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
 
@@ -142,14 +142,9 @@ void MCObjectStreamer::EmitWeakReference(MCSymbol *Alias,
   report_fatal_error("This file format doesn't support weak aliases.");
 }
 
-void MCObjectStreamer::SwitchSection(const MCSection *Section) {
+void MCObjectStreamer::ChangeSection(const MCSection *Section) {
   assert(Section && "Cannot switch to a null section!");
 
-  // If already in this section, then this is a noop.
-  if (Section == CurSection) return;
-
-  PrevSection = CurSection;
-  CurSection = Section;
   CurSectionData = &getAssembler().getOrCreateSectionData(*Section);
 }
 

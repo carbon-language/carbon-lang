@@ -48,10 +48,9 @@ public:
     return Child->AddBlankLine();
   }
 
-  virtual void SwitchSection(const MCSection *Section) {
-    CurSection = Section;
-    LogCall("SwitchSection");
-    return Child->SwitchSection(Section);
+  virtual void ChangeSection(const MCSection *Section) {
+    LogCall("ChangeSection");
+    return Child->ChangeSection(Section);
   }
 
   virtual void InitSections() {

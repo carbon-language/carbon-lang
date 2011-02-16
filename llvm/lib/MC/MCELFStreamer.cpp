@@ -80,12 +80,12 @@ public:
   /// @{
 
   virtual void InitSections();
+  virtual void ChangeSection(const MCSection *Section);
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
-  virtual void SwitchSection(const MCSection *Section);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
     assert(0 && "ELF doesn't support this directive");
@@ -222,11 +222,11 @@ void MCELFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   Symbol->setVariableValue(AddValueSymbols(Value));
 }
 
-void MCELFStreamer::SwitchSection(const MCSection *Section) {
+void MCELFStreamer::ChangeSection(const MCSection *Section) {
   const MCSymbol *Grp = static_cast<const MCSectionELF *>(Section)->getGroup();
   if (Grp)
     getAssembler().getOrCreateSymbolData(*Grp);
-  this->MCObjectStreamer::SwitchSection(Section);
+  this->MCObjectStreamer::ChangeSection(Section);
 }
 
 void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
@@ -411,7 +411,7 @@ void MCELFStreamer::EmitCodeAlignment(unsigned ByteAlignment,
 // entry in the module's symbol table (the first being the null symbol).
 void MCELFStreamer::EmitFileDirective(StringRef Filename) {
   MCSymbol *Symbol = getAssembler().getContext().GetOrCreateSymbol(Filename);
-  Symbol->setSection(*CurSection);
+  Symbol->setSection(*getCurrentSection());
   Symbol->setAbsolute();
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);

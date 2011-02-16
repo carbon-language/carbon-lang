@@ -107,7 +107,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void SwitchSection(const MCSection *Section);
+  virtual void ChangeSection(const MCSection *Section);
 
   virtual void InitSections() {
     // FIXME, this is MachO specific, but the testsuite
@@ -254,23 +254,19 @@ static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
 }
 
-void MCAsmStreamer::SwitchSection(const MCSection *Section) {
+void MCAsmStreamer::ChangeSection(const MCSection *Section) {
   assert(Section && "Cannot switch to a null section!");
-  if (Section != CurSection) {
-    PrevSection = CurSection;
-    CurSection = Section;
-    Section->PrintSwitchToSection(MAI, OS);
-  }
+  Section->PrintSwitchToSection(MAI, OS);
 }
 
 void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(CurSection && "Cannot emit before setting section!");
+  assert(getCurrentSection() && "Cannot emit before setting section!");
 
   OS << *Symbol << MAI.getLabelSuffix();
   EmitEOL();
-  Symbol->setSection(*CurSection);
+  Symbol->setSection(*getCurrentSection());
 }
 
 void MCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
@@ -486,7 +482,7 @@ static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
 
 
 void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
-  assert(CurSection && "Cannot emit contents before setting section!");
+  assert(getCurrentSection() && "Cannot emit contents before setting section!");
   if (Data.empty()) return;
 
   if (Data.size() == 1) {
@@ -517,7 +513,7 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
 
 void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
                                   bool isPCRel, unsigned AddrSpace) {
-  assert(CurSection && "Cannot emit contents before setting section!");
+  assert(getCurrentSection() && "Cannot emit contents before setting section!");
   assert(!isPCRel && "Cannot emit pc relative relocations!");
   const char *Directive = 0;
   switch (Size) {
@@ -864,7 +860,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
-  assert(CurSection && "Cannot emit contents before setting section!");
+  assert(getCurrentSection() && "Cannot emit contents before setting section!");
 
   if (!UseLoc)
     MCLineEntry::Make(this, getCurrentSection());

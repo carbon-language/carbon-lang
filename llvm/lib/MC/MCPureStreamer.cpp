@@ -113,9 +113,9 @@ void MCPureStreamer::InitSections() {
 void MCPureStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(CurSection && "Cannot emit before setting section!");
+  assert(getCurrentSection() && "Cannot emit before setting section!");
 
-  Symbol->setSection(*CurSection);
+  Symbol->setSection(*getCurrentSection());
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
 

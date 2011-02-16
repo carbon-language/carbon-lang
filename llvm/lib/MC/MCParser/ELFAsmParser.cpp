@@ -49,6 +49,8 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveDataRelRoLocal>(".data.rel.ro.local");
     AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveEhFrame>(".eh_frame");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSection>(".section");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectivePushSection>(".pushsection");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectivePopSection>(".popsection");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectivePrevious>(".previous");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveType>(".type");
@@ -115,6 +117,8 @@ public:
                               ELF::SHF_WRITE,
                               SectionKind::getDataRel());
   }
+  bool ParseDirectivePushSection(StringRef, SMLoc);
+  bool ParseDirectivePopSection(StringRef, SMLoc);
   bool ParseDirectiveSection(StringRef, SMLoc);
   bool ParseDirectiveSize(StringRef, SMLoc);
   bool ParseDirectivePrevious(StringRef, SMLoc);
@@ -253,6 +257,23 @@ static int parseSectionFlags(StringRef flagsStr) {
   return flags;
 }
 
+bool ELFAsmParser::ParseDirectivePushSection(StringRef s, SMLoc loc) {
+  getStreamer().PushSection();
+
+  if (ParseDirectiveSection(s, loc)) {
+    getStreamer().PopSection();
+    return true;
+  }
+
+  return false;
+}
+
+bool ELFAsmParser::ParseDirectivePopSection(StringRef, SMLoc) {
+  if (!getStreamer().PopSection())
+    return TokError(".popsection without corresponding .pushsection");
+  return false;
+}
+
 // FIXME: This is a work in progress.
 bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   StringRef SectionName;
@@ -364,8 +385,9 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
 
 bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
   const MCSection *PreviousSection = getStreamer().getPreviousSection();
-  if (PreviousSection != NULL)
-    getStreamer().SwitchSection(PreviousSection);
+  if (PreviousSection == NULL)
+      return TokError(".previous without corresponding .section");
+  getStreamer().SwitchSection(PreviousSection);
 
   return false;
 }
@@ -427,7 +449,6 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
 
   Lex();
 
-  const MCSection *OldSection = getStreamer().getCurrentSection();
   const MCSection *Comment =
     getContext().getELFSection(".comment", ELF::SHT_PROGBITS,
                                ELF::SHF_MERGE |
@@ -437,13 +458,14 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
 
   static bool First = true;
 
+  getStreamer().PushSection();
   getStreamer().SwitchSection(Comment);
   if (First)
     getStreamer().EmitIntValue(0, 1);
   First = false;
   getStreamer().EmitBytes(Data, 0);
   getStreamer().EmitIntValue(0, 1);
-  getStreamer().SwitchSection(OldSection);
+  getStreamer().PopSection();
   return false;
 }
 
