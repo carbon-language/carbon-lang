@@ -279,6 +279,11 @@ Process::Finalize()
 {
     // Do any cleanup needed prior to being destructed... Subclasses
     // that override this method should call this superclass method as well.
+    
+    // We need to destroy the loader before the derived Process class gets destroyed
+    // since it is very likely that undoing the loader will require access to the real process.
+    if (m_dyld_ap.get() != NULL)
+        m_dyld_ap.reset();
 }
 
 void

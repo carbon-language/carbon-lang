@@ -98,8 +98,8 @@ Target::DeleteCurrentProcess ()
         m_section_load_list.Clear();
         if (m_process_sp->IsAlive())
             m_process_sp->Destroy();
-        else
-            m_process_sp->Finalize();
+        
+        m_process_sp->Finalize();
 
         // Do any cleanup of the target we need to do between process instances.
         // NB It is better to do this before destroying the process in case the
