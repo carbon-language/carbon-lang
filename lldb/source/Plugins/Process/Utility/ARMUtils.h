@@ -10,21 +10,13 @@
 #ifndef lldb_ARMUtils_h_
 #define lldb_ARMUtils_h_
 
+#include "ARMDefines.h"
 #include "InstructionUtils.h"
 #include "llvm/Support/MathExtras.h" // for SignExtend64 template function
 
 // Common utilities for the ARM/Thumb Instruction Set Architecture.
 
 namespace lldb_private {
-
-typedef enum
-{
-    SRType_LSL,
-    SRType_LSR,
-    SRType_ASR,
-    SRType_ROR,
-    SRType_RRX
-} ARM_ShifterType;
 
 static inline uint32_t DecodeImmShift(const uint32_t type, const uint32_t imm5, ARM_ShifterType &shift_t)
 {

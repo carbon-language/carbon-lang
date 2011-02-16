@@ -10,11 +10,19 @@
 #ifndef lldb_ARMDefines_h_
 #define lldb_ARMDefines_h_
 
-#include "InstructionUtils.h"
-
 // Common defintions for the ARM/Thumb Instruction Set Architecture.
 
 namespace lldb_private {
+
+// ARM shifter types
+typedef enum
+{
+    SRType_LSL,
+    SRType_LSR,
+    SRType_ASR,
+    SRType_ROR,
+    SRType_RRX
+} ARM_ShifterType;
 
 // ARM conditions          // Meaning (integer)         Meaning (floating-point)      Condition flags
 #define COND_EQ     0x0    // Equal                     Equal                         Z == 1

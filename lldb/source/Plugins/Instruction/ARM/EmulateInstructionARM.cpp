@@ -2125,6 +2125,136 @@ EmulateInstructionARM::EmulateASRImm (ARMEncoding encoding)
                 // APSR.V unchanged
 #endif
 
+    return EmulateShiftImm(encoding, SRType_ASR);
+}
+
+// Arithmetic Shift Right (register) shifts a register value right by a variable number of bits,
+// shifting in copies of its sign bit, and writes the result to the destination register.
+// The variable number of bits is read from the bottom byte of a register. It can optionally update
+// the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateASRReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shift_n = UInt(R[m]<7:0>);
+        (result, carry) = Shift_C(R[m], SRType_ASR, shift_n, APSR.C);
+        R[d] = result;
+        if setflags then
+            APSR.N = result<31>;
+            APSR.Z = IsZeroBit(result);
+            APSR.C = carry;
+            // APSR.V unchanged
+#endif
+
+    return EmulateShiftReg(encoding, SRType_ASR);
+}
+
+// Logical Shift Left (immediate) shifts a register value left by an immediate number of bits,
+// shifting in zeros, and writes the result to the destination register.  It can optionally
+// update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateLSLImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry) = Shift_C(R[m], SRType_LSL, shift_n, APSR.C);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+#endif
+
+    return EmulateShiftImm(encoding, SRType_LSL);
+}
+
+// Logical Shift Left (register) shifts a register value left by a variable number of bits,
+// shifting in zeros, and writes the result to the destination register.  The variable number
+// of bits is read from the bottom byte of a register. It can optionally update the condition
+// flags based on the result.
+bool
+EmulateInstructionARM::EmulateLSLReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shift_n = UInt(R[m]<7:0>);
+        (result, carry) = Shift_C(R[m], SRType_LSL, shift_n, APSR.C);
+        R[d] = result;
+        if setflags then
+            APSR.N = result<31>;
+            APSR.Z = IsZeroBit(result);
+            APSR.C = carry;
+            // APSR.V unchanged
+#endif
+
+    return EmulateShiftReg(encoding, SRType_LSL);
+}
+
+// Logical Shift Right (immediate) shifts a register value right by an immediate number of bits,
+// shifting in zeros, and writes the result to the destination register.  It can optionally
+// update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateLSRImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry) = Shift_C(R[m], SRType_LSR, shift_n, APSR.C);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+#endif
+
+    return EmulateShiftImm(encoding, SRType_LSR);
+}
+
+// Logical Shift Right (register) shifts a register value right by a variable number of bits,
+// shifting in zeros, and writes the result to the destination register.  The variable number
+// of bits is read from the bottom byte of a register. It can optionally update the condition
+// flags based on the result.
+bool
+EmulateInstructionARM::EmulateLSRReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shift_n = UInt(R[m]<7:0>);
+        (result, carry) = Shift_C(R[m], SRType_LSR, shift_n, APSR.C);
+        R[d] = result;
+        if setflags then
+            APSR.N = result<31>;
+            APSR.Z = IsZeroBit(result);
+            APSR.C = carry;
+            // APSR.V unchanged
+#endif
+
+    return EmulateShiftReg(encoding, SRType_LSR);
+}
+
+bool
+EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType shift_type)
+{
+    assert(shift_type == SRType_ASR || shift_type == SRType_LSL || shift_type == SRType_LSR);
+
     bool success = false;
     const uint32_t opcode = OpcodeAsUnsigned (&success);
     if (!success)
@@ -2168,9 +2298,9 @@ EmulateInstructionARM::EmulateASRImm (ARMEncoding encoding)
             return false;
 
         // Decode the shift amount.
-        uint32_t amt = DecodeImmShift(SRType_ASR, imm5);
+        uint32_t amt = DecodeImmShift(shift_type, imm5);
 
-        uint32_t result = Shift_C(value, SRType_ASR, amt, Bit32(m_inst_cpsr, CPSR_C), carry);
+        uint32_t result = Shift_C(value, shift_type, amt, Bit32(m_inst_cpsr, CPSR_C), carry);
 
         // The context specifies that an immediate is to be moved into Rd.
         EmulateInstruction::Context context;
@@ -2203,26 +2333,10 @@ EmulateInstructionARM::EmulateASRImm (ARMEncoding encoding)
     return true;
 }
 
-// Arithmetic Shift Right (register) shifts a register value right by a variable number of bits,
-// shifting in copies of its sign bit, and writes the result to the destination register.
-// The variable number of bits is read from the bottom byte of a register. It can optionally update
-// the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateASRReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType shift_type)
 {
-#if 0
-    // ARM pseudo code...
-    if ConditionPassed() then
-        EncodingSpecificOperations();
-        shift_n = UInt(R[m]<7:0>);
-        (result, carry) = Shift_C(R[m], SRType_ASR, shift_n, APSR.C);
-        R[d] = result;
-        if setflags then
-            APSR.N = result<31>;
-            APSR.Z = IsZeroBit(result);
-            APSR.C = carry;
-            // APSR.V unchanged
-#endif
+    assert(shift_type == SRType_ASR || shift_type == SRType_LSL || shift_type == SRType_LSR);
 
     bool success = false;
     const uint32_t opcode = OpcodeAsUnsigned (&success);
@@ -2275,7 +2389,7 @@ EmulateInstructionARM::EmulateASRReg (ARMEncoding encoding)
         // Get the shift amount.
         uint32_t amt = Bits32(val, 7, 0);
 
-        uint32_t result = Shift_C(value, SRType_ASR, amt, Bit32(m_inst_cpsr, CPSR_C), carry);
+        uint32_t result = Shift_C(value, shift_type, amt, Bit32(m_inst_cpsr, CPSR_C), carry);
 
         // The context specifies that an immediate is to be moved into Rd.
         EmulateInstruction::Context context;

@@ -12,6 +12,7 @@
 
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Error.h"
+#include "Plugins/Process/Utility/ARMDefines.h"
 
 namespace lldb_private {
 
@@ -334,6 +335,30 @@ protected:
     // A8.6.15 ASR (register)
     bool
     EmulateASRReg (ARMEncoding encoding);
+
+    // A8.6.88 LSL (immediate)
+    bool
+    EmulateLSLImm (ARMEncoding encoding);
+
+    // A8.6.89 LSL (register)
+    bool
+    EmulateLSLReg (ARMEncoding encoding);
+
+    // A8.6.90 LSR (immediate)
+    bool
+    EmulateLSRImm (ARMEncoding encoding);
+
+    // A8.6.91 LSR (register)
+    bool
+    EmulateLSRReg (ARMEncoding encoding);
+
+    // Helper method for ASR, LSL, and LSR
+    bool
+    EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType shift_type);
+
+    // Helper method for ASR, LSL, and LSR
+    bool
+    EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType shift_type);
 
     // A8.6.53 LDM/LDMIA/LDMFD
     bool
