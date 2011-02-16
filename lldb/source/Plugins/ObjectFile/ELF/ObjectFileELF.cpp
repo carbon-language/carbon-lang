@@ -1065,6 +1065,8 @@ ObjectFileELF::GetArchitecture (ArchSpec &arch)
     arch.GetTriple().setOSName ("linux");
     // TODO: determine if there is an OS in the ELF? Default to "gnu" for now
     arch.GetTriple().setVendorName("gnu");
+
+    arch.SetElfArch(m_header.e_machine, m_header.e_flags);
     return true;
 }
 
