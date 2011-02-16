@@ -72,6 +72,7 @@ namespace options {
   static bool generate_api_file = false;
   static generate_bc generate_bc_file = BC_NO;
   static std::string bc_path;
+  static std::string obj_path;
   static std::string as_path;
   static std::vector<std::string> as_args;
   static std::vector<std::string> pass_through;
@@ -112,6 +113,8 @@ namespace options {
       pass_through.push_back(item.str());
     } else if (opt.startswith("mtriple=")) {
       triple = opt.substr(strlen("mtriple="));
+    } else if (opt.startswith("obj-path=")) {
+      obj_path = opt.substr(strlen("obj-path="));
     } else if (opt == "emit-llvm") {
       generate_bc_file = BC_ONLY;
     } else if (opt == "also-emit-llvm") {
@@ -471,23 +474,29 @@ static ld_plugin_status all_symbols_read_hook(void) {
 
   std::string ErrMsg;
 
-  sys::Path uniqueObjPath("/tmp/llvmgold.o");
-  if (uniqueObjPath.createTemporaryFileOnDisk(true, &ErrMsg)) {
-    (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());
-    return LDPS_ERR;
+  const char *objPath;
+  if (!options::obj_path.empty()) {
+    objPath = options::obj_path.c_str();
+  } else {
+    sys::Path uniqueObjPath("/tmp/llvmgold.o");
+    if (uniqueObjPath.createTemporaryFileOnDisk(true, &ErrMsg)) {
+      (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());
+      return LDPS_ERR;
+    }
+    objPath = uniqueObjPath.c_str();
   }
-  tool_output_file objFile(uniqueObjPath.c_str(), ErrMsg,
-                           raw_fd_ostream::F_Binary);
-  if (!ErrMsg.empty()) {
-    (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());
-    return LDPS_ERR;
-  }
+  tool_output_file objFile(objPath, ErrMsg,
+                             raw_fd_ostream::F_Binary);
+    if (!ErrMsg.empty()) {
+      (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());
+      return LDPS_ERR;
+    }
 
   objFile.os().write(buffer, bufsize);
   objFile.os().close();
   if (objFile.os().has_error()) {
     (*message)(LDPL_ERROR, "Error writing output file '%s'",
-               uniqueObjPath.c_str());
+               objPath);
     objFile.os().clear_error();
     return LDPS_ERR;
   }
@@ -495,9 +504,9 @@ static ld_plugin_status all_symbols_read_hook(void) {
 
   lto_codegen_dispose(cg);
 
-  if ((*add_input_file)(uniqueObjPath.c_str()) != LDPS_OK) {
+  if ((*add_input_file)(objPath) != LDPS_OK) {
     (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
-    (*message)(LDPL_ERROR, "File left behind in: %s", uniqueObjPath.c_str());
+    (*message)(LDPL_ERROR, "File left behind in: %s", objPath);
     return LDPS_ERR;
   }
 
@@ -525,7 +534,8 @@ static ld_plugin_status all_symbols_read_hook(void) {
     }
   }
 
-  Cleanup.push_back(uniqueObjPath);
+  if (options::obj_path.empty())
+    Cleanup.push_back(sys::Path(objPath));
 
   return LDPS_OK;
 }
