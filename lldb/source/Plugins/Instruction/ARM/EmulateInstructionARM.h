@@ -335,35 +335,48 @@ protected:
     bool
     EmulateASRReg (ARMEncoding encoding);
 
+    // A8.6.53 LDM/LDMIA/LDMFD
     bool
     EmulateLDM (ARMEncoding encoding);
     
+    // A8.6.54 LDMDA/LDMFA
     bool
     EmulateLDMDA (ARMEncoding encoding);
     
+    // A8.6.55 LDMDB/LDMEA
     bool 
     EmulateLDMDB (ARMEncoding encoding);
     
+    // A8.6.56 LDMIB/LDMED
     bool
     EmulateLDMIB (ARMEncoding encoding);
 
     bool
     EmulateLDRRtRnImm (ARMEncoding encoding);
 
+    // A8.6.188 STM/STMIA/STMEA
     bool
     EmulateSTM (ARMEncoding encoding);
     
+    // A8.6.189 STMDA/STMED
     bool
     EmulateSTMDA (ARMEncoding encoding);
     
+    // A8.6.190 STMDB/STMFD
     bool
     EmulateSTMDB (ARMEncoding encoding);
     
+    // A8.6.191 STMIB/STMFA
     bool
     EmulateSTMIB (ARMEncoding encoding);
     
+    // A8.6.192 STR (immediate, Thumb)
     bool
     EmulateSTRThumb(ARMEncoding encoding);
+    
+    // A8.6.194 STR (register)
+    bool
+    EmulateSTRRegister (ARMEncoding encoding);
     
     uint32_t m_arm_isa;
     Mode m_inst_mode;
