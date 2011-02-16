@@ -648,7 +648,8 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
             // to this variable. Set it to zero to indicate that NRVO was not 
             // applied.
             llvm::Value *Zero = Builder.getFalse();
-            NRVOFlag = CreateTempAlloca(Zero->getType(), "nrvo");            
+            NRVOFlag = CreateTempAlloca(Zero->getType(), "nrvo");
+            EnsureInsertPoint();
             Builder.CreateStore(Zero, NRVOFlag);
             
             // Record the NRVO flag for this variable.
