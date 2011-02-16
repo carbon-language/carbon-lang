@@ -542,7 +542,7 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
                              false, false, 0);
   SDValue Tmp = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
                               DAG.getConstant(8, MVT::i64));
-  SDValue Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, dl, Base.getValue(1),
+  SDValue Offset = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Base.getValue(1),
                                   Tmp, MachinePointerInfo(),
                                   MVT::i32, false, false, 0);
   DataPtr = DAG.getNode(ISD::ADD, dl, MVT::i64, Base, Offset);
@@ -709,7 +709,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op,
 
     SDValue Result;
     if (Op.getValueType() == MVT::i32)
-      Result = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, dl, Chain, DataPtr,
+      Result = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Chain, DataPtr,
                               MachinePointerInfo(), MVT::i32, false, false, 0);
     else
       Result = DAG.getLoad(Op.getValueType(), dl, Chain, DataPtr,
@@ -732,7 +732,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op,
                                   false, false, 0);
     SDValue NP = DAG.getNode(ISD::ADD, dl, MVT::i64, SrcP,
                                DAG.getConstant(8, MVT::i64));
-    Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, dl, Result,
+    Val = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Result,
                          NP, MachinePointerInfo(), MVT::i32, false, false, 0);
     SDValue NPD = DAG.getNode(ISD::ADD, dl, MVT::i64, DestP,
                                 DAG.getConstant(8, MVT::i64));

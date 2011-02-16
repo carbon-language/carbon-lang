@@ -3462,7 +3462,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       // FIXME does the case above also need this?
       EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
       assert(NVT.bitsGE(VT));
-      Value = DAG.getExtLoad(ISD::EXTLOAD, NVT, dl, Chain,
+      Value = DAG.getExtLoad(ISD::EXTLOAD, dl, NVT, Chain,
                              getMemBasePlusOffset(Src, SrcOff, DAG),
                              SrcPtrInfo.getWithOffset(SrcOff), VT, isVol, false,
                              MinAlign(SrcAlign, SrcOff));
@@ -4113,7 +4113,7 @@ SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
                  PtrInfo, VT, isVolatile, isNonTemporal, Alignment, TBAAInfo);
 }
 
-SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
+SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
                                  SDValue Chain, SDValue Ptr,
                                  MachinePointerInfo PtrInfo, EVT MemVT,
                                  bool isVolatile, bool isNonTemporal,

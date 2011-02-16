@@ -506,7 +506,7 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
                                           N->getOperand(0),
                                           MemTmp, MachinePointerInfo(), MemVT,
                                           false, false, 0);
-    SDValue Result = CurDAG->getExtLoad(ISD::EXTLOAD, DstVT, dl, Store, MemTmp,
+    SDValue Result = CurDAG->getExtLoad(ISD::EXTLOAD, dl, DstVT, Store, MemTmp,
                                         MachinePointerInfo(),
                                         MemVT, false, false, 0);
 

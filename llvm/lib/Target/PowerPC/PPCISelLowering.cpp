@@ -3050,7 +3050,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
         // Everything else is passed left-justified.
         EVT VT = (Size==1) ? MVT::i8 : MVT::i16;
         if (GPR_idx != NumGPRs) {
-          SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, PtrVT, dl, Chain, Arg,
+          SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, dl, PtrVT, Chain, Arg,
                                         MachinePointerInfo(), VT,
                                         false, false, 0);
           MemOpChains.push_back(Load.getValue(1));

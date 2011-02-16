@@ -634,7 +634,7 @@ public:
                   MachinePointerInfo PtrInfo, bool isVolatile,
                   bool isNonTemporal, unsigned Alignment,
                   const MDNode *TBAAInfo = 0);
-  SDValue getExtLoad(ISD::LoadExtType ExtType, EVT VT, DebugLoc dl,
+  SDValue getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
                      SDValue Chain, SDValue Ptr, MachinePointerInfo PtrInfo,
                      EVT MemVT, bool isVolatile,
                      bool isNonTemporal, unsigned Alignment,

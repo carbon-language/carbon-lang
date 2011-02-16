@@ -1103,7 +1103,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
 
   // Load back the required element.
   StackPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
-  return DAG.getExtLoad(ISD::EXTLOAD, N->getValueType(0), dl, Store, StackPtr,
+  return DAG.getExtLoad(ISD::EXTLOAD, dl, N->getValueType(0), Store, StackPtr,
                         MachinePointerInfo(), EltVT, false, false, 0);
 }
 
@@ -2387,7 +2387,7 @@ DAGTypeLegalizer::GenWidenVectorExtLoads(SmallVector<SDValue, 16>& LdChain,
   unsigned WidenNumElts = WidenVT.getVectorNumElements();
   SmallVector<SDValue, 16> Ops(WidenNumElts);
   unsigned Increment = LdEltVT.getSizeInBits() / 8;
-  Ops[0] = DAG.getExtLoad(ExtType, EltVT, dl, Chain, BasePtr,
+  Ops[0] = DAG.getExtLoad(ExtType, dl, EltVT, Chain, BasePtr,
                           LD->getPointerInfo(),
                           LdEltVT, isVolatile, isNonTemporal, Align);
   LdChain.push_back(Ops[0].getValue(1));
@@ -2395,7 +2395,7 @@ DAGTypeLegalizer::GenWidenVectorExtLoads(SmallVector<SDValue, 16>& LdChain,
   for (i=1; i < NumElts; ++i, Offset += Increment) {
     SDValue NewBasePtr = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(),
                                      BasePtr, DAG.getIntPtrConstant(Offset));
-    Ops[i] = DAG.getExtLoad(ExtType, EltVT, dl, Chain, NewBasePtr,
+    Ops[i] = DAG.getExtLoad(ExtType, dl, EltVT, Chain, NewBasePtr,
                             LD->getPointerInfo().getWithOffset(Offset), LdEltVT,
                             isVolatile, isNonTemporal, Align);
     LdChain.push_back(Ops[i].getValue(1));
