@@ -1633,7 +1633,7 @@ SpillRegToStackSlot(MachineBasicBlock::iterator &MII,
 /// effect and all of its defs are dead.
 static bool isSafeToDelete(MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
-  if (TID.mayLoad() || TID.mayStore() || TID.isCall() || TID.isTerminator() ||
+  if (TID.mayLoad() || TID.mayStore() || TID.isTerminator() ||
       TID.isCall() || TID.isBarrier() || TID.isReturn() ||
       MI.isLabel() || MI.isDebugValue() ||
       MI.hasUnmodeledSideEffects())
