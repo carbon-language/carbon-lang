@@ -376,6 +376,7 @@ protected:
     bool
     EmulateLDMIB (ARMEncoding encoding);
 
+    // A8.6.57 LDR (immediate, Thumb) -- Encoding T1
     bool
     EmulateLDRRtRnImm (ARMEncoding encoding);
 
