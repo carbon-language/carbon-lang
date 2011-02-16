@@ -957,8 +957,8 @@ ClangASTContext::AreTypesSame(ASTContext *ast,
              clang_type_t type1,
              clang_type_t type2)
 {
-    return ast->hasSameType(QualType::getFromOpaquePtr(type1),
-                                    QualType::getFromOpaquePtr(type2));
+    return ast->hasSameType (QualType::getFromOpaquePtr(type1),
+                             QualType::getFromOpaquePtr(type2));
 }
 
 #pragma mark CVR modifiers

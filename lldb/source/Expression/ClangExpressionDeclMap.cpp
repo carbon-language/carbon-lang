@@ -1503,7 +1503,7 @@ ClangExpressionDeclMap::FindVariableInScope
     {
         if (type->GetASTContext() == var_sp->GetType()->GetClangAST())
         {
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var_sp->GetType()->GetClangType()))
+            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var_sp->GetType()->GetClangFullType()))
                 return NULL;
         }
         else
@@ -1642,7 +1642,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
                 log->PutCString (strm.GetData());
             }
 
-            TypeFromUser this_user_type(this_type->GetClangType(),
+            TypeFromUser this_user_type(this_type->GetClangFullType(),
                                         this_type->GetClangAST());
             
             m_struct_vars->m_object_pointer_type = this_user_type;
@@ -1689,7 +1689,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             if (!self_type)
                 return;
         
-            TypeFromUser self_user_type(self_type->GetClangType(),
+            TypeFromUser self_user_type(self_type->GetClangFullType(),
                                         self_type->GetClangAST());
             
             m_struct_vars->m_object_pointer_type = self_user_type;
@@ -1747,7 +1747,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             log->PutCString (strm.GetData());
         }
 
-        TypeFromUser user_type (type_sp->GetClangType(),
+        TypeFromUser user_type (type_sp->GetClangFullType(),
                                 type_sp->GetClangAST());
             
         AddOneType(context, user_type, false);
@@ -1775,7 +1775,7 @@ ClangExpressionDeclMap::GetVariableValue
         return NULL;
     }
     
-    void *var_opaque_type = var_type->GetClangType();
+    clang_type_t var_opaque_type = var_type->GetClangFullType();
     
     if (!var_opaque_type)
     {
@@ -2031,7 +2031,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
             return;
         }
         
-        fun_opaque_type = fun_type->GetClangType();
+        fun_opaque_type = fun_type->GetClangFullType();
         
         if (!fun_opaque_type)
         {

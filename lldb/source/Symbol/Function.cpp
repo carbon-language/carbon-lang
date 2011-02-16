@@ -399,39 +399,20 @@ Function::GetType() const
     return m_type;
 }
 
-Type
-Function::GetReturnType ()
+clang_type_t
+Function::GetReturnClangType ()
 {
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangType()));
-    assert (clang_type->isFunctionType());
+    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangFullType()));
     const clang::FunctionType *function_type = dyn_cast<clang::FunctionType> (clang_type);
-    clang::QualType fun_return_qualtype = function_type->getResultType();
-
-    const ConstString fun_return_name(ClangASTType::GetClangTypeName(fun_return_qualtype.getAsOpaquePtr()));
-
-    SymbolContext sc;
-    CalculateSymbolContext (&sc);
-    // Null out everything below the CompUnit 'cause we don't actually know these.
-
-    size_t bit_size = ClangASTType::GetClangTypeBitWidth (GetType()->GetClangASTContext().getASTContext(), 
-                                                          fun_return_qualtype.getAsOpaquePtr());
-    Type return_type (0, 
-                      GetType()->GetSymbolFile(), 
-                      fun_return_name, 
-                      bit_size, 
-                      sc.comp_unit, 
-                      0, 
-                      Type::eEncodingIsSyntheticUID, 
-                      Declaration(), 
-                      fun_return_qualtype.getAsOpaquePtr(), 
-                      Type::eResolveStateFull);
-    return return_type;
+    if (function_type)
+        return function_type->getResultType().getAsOpaquePtr();
+    return NULL;
 }
 
 int
 Function::GetArgumentCount ()
 {
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangType()));
+    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangFullType()));
     assert (clang_type->isFunctionType());
     if (!clang_type->isFunctionProtoType())
         return -1;
@@ -443,67 +424,33 @@ Function::GetArgumentCount ()
     return 0;
 }
 
-const Type
+clang_type_t
 Function::GetArgumentTypeAtIndex (size_t idx)
 {
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangType()));
-   assert (clang_type->isFunctionType());
-   if (!clang_type->isFunctionProtoType())
-        return Type();
-
+    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangFullType()));
     const clang::FunctionProtoType *function_proto_type = dyn_cast<clang::FunctionProtoType>(clang_type);
-    if (function_proto_type != NULL)
+    if (function_proto_type)
     {
         unsigned num_args = function_proto_type->getNumArgs();
         if (idx >= num_args)
-            return Type();
-        clang::QualType arg_qualtype = (function_proto_type->arg_type_begin())[idx];
-
-        const ConstString arg_return_name(ClangASTType::GetClangTypeName(arg_qualtype.getAsOpaquePtr()));
-        SymbolContext sc;
-        CalculateSymbolContext (&sc);
-        // Null out everything below the CompUnit 'cause we don't actually know these.
-
-        size_t bit_size = ClangASTType::GetClangTypeBitWidth ((GetType()->GetClangASTContext().getASTContext()), arg_qualtype.getAsOpaquePtr());
-        Type arg_type (0, 
-                       GetType()->GetSymbolFile(), 
-                       arg_return_name, 
-                       bit_size, 
-                       sc.comp_unit, 
-                       0, 
-                       Type::eEncodingIsSyntheticUID, 
-                       Declaration(), 
-                       arg_qualtype.getAsOpaquePtr(), 
-                       Type::eResolveStateFull);
-        return arg_type;
+            return NULL;
+        
+        return (function_proto_type->arg_type_begin())[idx].getAsOpaquePtr();
     }
-
-    return Type();
-}
-
-const char *
-Function::GetArgumentNameAtIndex (size_t idx)
-{
-   const clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetClangType())->getTypePtr();
-   assert (clang_type->isFunctionType());
-   if (!clang_type->isFunctionProtoType())
-       return NULL;
     return NULL;
 }
 
 bool
 Function::IsVariadic ()
 {
-   const clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetClangType())->getTypePtr();
+   const clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetClangFullType())->getTypePtr();
    assert (clang_type->isFunctionType());
    if (!clang_type->isFunctionProtoType())
         return false;
 
     const clang::FunctionProtoType *function_proto_type = dyn_cast<clang::FunctionProtoType>(clang_type);
-    if (function_proto_type != NULL)
-    {
+    if (function_proto_type)
         return function_proto_type->isVariadic();
-    }
 
     return false;
 }

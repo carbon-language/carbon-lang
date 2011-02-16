@@ -670,7 +670,7 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
         {
             Type *class_type = ResolveType (dwarf_cu, parent_die);
             if (class_type)
-                class_type->GetClangType();
+                class_type->GetClangFullType();
         }
         break;
 
@@ -1312,17 +1312,18 @@ SymbolFileDWARF::ParseChildMembers
                     Type *base_class_type = ResolveTypeUID(encoding_uid);
                     assert(base_class_type);
                     
+                    clang_type_t base_class_clang_type = base_class_type->GetClangFullType();
+                    assert (base_class_clang_type);
                     if (class_language == eLanguageTypeObjC)
                     {
-                        GetClangASTContext().SetObjCSuperClass(class_clang_type, base_class_type->GetClangType());
+                        GetClangASTContext().SetObjCSuperClass(class_clang_type, base_class_clang_type);
                     }
                     else
                     {
-                        base_classes.push_back (GetClangASTContext().CreateBaseClassSpecifier (base_class_type->GetClangType(), 
+                        base_classes.push_back (GetClangASTContext().CreateBaseClassSpecifier (base_class_clang_type, 
                                                                                                accessibility, 
                                                                                                is_virtual, 
                                                                                                is_base_of_class));
-                        assert(base_classes.back());
                     }
                 }
             }
@@ -3723,7 +3724,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 element_orders.push_back (1);
                             if (byte_stride == 0 && bit_stride == 0)
                                 byte_stride = element_type->GetByteSize();
-                            clang_type_t array_element_type = element_type->GetClangType();
+                            clang_type_t array_element_type = element_type->GetClangFullType();
                             uint64_t array_element_bit_stride = byte_stride * 8 + bit_stride;
                             uint64_t num_elements = 0;
                             std::vector<uint64_t>::const_reverse_iterator pos;

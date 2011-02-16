@@ -103,7 +103,7 @@ ClangFunction::ClangFunction
     }
 
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
-    m_function_return_qual_type = m_function_ptr->GetReturnType().GetClangType();
+    m_function_return_qual_type = m_function_ptr->GetReturnClangType();
 }
 
 //----------------------------------------------------------------------
@@ -163,12 +163,12 @@ ClangFunction::CompileFunction (Stream &errors)
     std::string args_list_buffer;  // This one stores the argument list called from the structure.
     for (size_t i = 0; i < num_args; i++)
     {
-        const char *type_string;
-        std::string type_stdstr;
+        std::string type_name;
 
         if (trust_function)
         {
-            type_string = m_function_ptr->GetArgumentTypeAtIndex(i).GetName().AsCString();
+            lldb::clang_type_t arg_clang_type = m_function_ptr->GetArgumentTypeAtIndex(i);
+            type_name = ClangASTContext::GetTypeName(arg_clang_type);
         }
         else
         {
@@ -176,8 +176,7 @@ ClangFunction::CompileFunction (Stream &errors)
             void *clang_qual_type = arg_value->GetClangType ();
             if (clang_qual_type != NULL)
             {
-                type_stdstr = ClangASTContext::GetTypeName(clang_qual_type);
-                type_string = type_stdstr.c_str();
+                type_name = ClangASTContext::GetTypeName(clang_qual_type);
             }
             else
             {   
@@ -186,13 +185,13 @@ ClangFunction::CompileFunction (Stream &errors)
             }
         }
 
-        m_wrapper_function_text.append (type_string);
+        m_wrapper_function_text.append (type_name);
         if (i < num_args - 1)
             m_wrapper_function_text.append (", ");
 
         char arg_buf[32];
         args_buffer.append ("    ");
-        args_buffer.append (type_string);
+        args_buffer.append (type_name);
         snprintf(arg_buf, 31, "arg_%zd", i);
         args_buffer.push_back (' ');
         args_buffer.append (arg_buf);

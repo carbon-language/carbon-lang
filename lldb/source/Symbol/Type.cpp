@@ -578,7 +578,7 @@ Type::GetEncodingMask ()
 }
 
 clang_type_t 
-Type::GetClangType ()
+Type::GetClangFullType ()
 {
     ResolveClangType(eResolveStateFull);
     return m_clang_type;

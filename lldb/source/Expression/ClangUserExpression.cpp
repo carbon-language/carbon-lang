@@ -84,13 +84,12 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
         
         lldb::clang_type_t pointer_target_type;
         
-        if (ClangASTContext::IsPointerType(this_type->GetClangType(),
+        if (ClangASTContext::IsPointerType(this_type->GetClangForwardType(),
                                            &pointer_target_type))
         {
             TypeFromUser target_ast_type(pointer_target_type, this_type->GetClangAST());
             
-            if (target_ast_type.IsDefined() &&
-                ClangASTContext::IsCXXClassType(target_ast_type.GetOpaqueQualType()))
+            if (ClangASTContext::IsCXXClassType(target_ast_type.GetOpaqueQualType()))
             {
                 m_cplusplus = true;
             

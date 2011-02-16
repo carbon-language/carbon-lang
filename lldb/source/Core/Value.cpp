@@ -409,7 +409,7 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
     return byte_size;
 }
 
-void *
+clang_type_t
 Value::GetClangType ()
 {
     if (m_context_type == eContextTypeValue)
@@ -429,12 +429,12 @@ Value::GetClangType ()
 
     case eContextTypeLLDBType:
         if (GetType())
-            return GetType()->GetClangType();
+            return GetType()->GetClangForwardType();
         break;
 
     case eContextTypeVariable:
         if (GetVariable())
-            return GetVariable()->GetType()->GetClangType();
+            return GetVariable()->GetType()->GetClangForwardType();
         break;
     }
 

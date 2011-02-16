@@ -185,7 +185,7 @@ public:
     // Get the clang type, and resolve definitions for any 
     // class/struct/union/enum types completely.
     lldb::clang_type_t 
-    GetClangType ();
+    GetClangFullType ();
 
     // Get the clang type, and resolve definitions enough so that the type could
     // have layout performed. This allows ptrs and refs to class/struct/union/enum 

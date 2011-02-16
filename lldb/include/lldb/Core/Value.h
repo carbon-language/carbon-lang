@@ -74,7 +74,7 @@ public:
     Value *
     GetProxyTarget();
 
-    void *
+    lldb::clang_type_t
     GetClangType();
 
     ValueType
