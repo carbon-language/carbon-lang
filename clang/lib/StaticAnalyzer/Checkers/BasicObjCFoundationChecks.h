@@ -27,7 +27,6 @@ class BugReporter;
 class ExprEngine;
 
 void RegisterNSErrorChecks(BugReporter& BR, ExprEngine &Eng, const Decl &D);
-void RegisterNSAutoreleasePoolChecks(ExprEngine &Eng);
 
 } // end GR namespace
 

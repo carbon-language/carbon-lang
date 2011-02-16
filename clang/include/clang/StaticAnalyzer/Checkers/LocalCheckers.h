@@ -50,7 +50,6 @@ void CheckObjCInstMethSignature(const ObjCImplementationDecl *ID,
 
 void CheckObjCUnusedIvar(const ObjCImplementationDecl *D, BugReporter& BR);
 
-void RegisterAppleChecks(ExprEngine& Eng, const Decl &D);
 void RegisterExperimentalChecks(ExprEngine &Eng);
 void RegisterExperimentalInternalChecks(ExprEngine &Eng);
 

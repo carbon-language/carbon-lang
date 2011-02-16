@@ -34,6 +34,7 @@
 #include "../Checkers/ClangSACheckers.h"
 #include "../Checkers/ExperimentalChecks.h"
 #include "../Checkers/InternalChecks.h"
+#include "../Checkers/BasicObjCFoundationChecks.h"
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -349,7 +350,7 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   if (C.Opts.EnableExperimentalInternalChecks)
     RegisterExperimentalInternalChecks(Eng);
 
-  RegisterAppleChecks(Eng, *D);
+  RegisterNSErrorChecks(Eng.getBugReporter(), Eng, *D);
 
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);

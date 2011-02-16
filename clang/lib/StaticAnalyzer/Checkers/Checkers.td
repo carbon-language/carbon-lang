@@ -45,6 +45,18 @@ def ObjCAtSyncChecker : Checker<"AtSync">,
   HelpText<"Check for null pointers used as mutexes for @synchronized">,
   DescFile<"ObjCAtSyncChecker.cpp">;
 
+def NilArgChecker : Checker<"NilArg">,
+  HelpText<"Check for prohibited nil arguments to ObjC method calls">,
+  DescFile<"BasicObjCFoundationChecks.cpp">;
+
+def ClassReleaseChecker : Checker<"ClassRelease">,
+  HelpText<"Check for sending 'retain', 'release', or 'autorelease' directly to a Class">,
+  DescFile<"BasicObjCFoundationChecks.cpp">;
+
+def NSAutoreleasePoolChecker : Checker<"NSAutoreleasePool">,
+  HelpText<"Warn for subpar uses of NSAutoreleasePool">,
+  DescFile<"NSAutoreleasePoolChecker.cpp">;
+
 }
 
 def StackAddrLeakChecker : Checker<"StackAddrLeak">,
@@ -61,6 +73,16 @@ def MacOSXAPIChecker : Checker<"API">,
   InPackage<MacOSX>,
   HelpText<"Check calls to various MacOSXAPIChecker">,
   DescFile<"MacOSXAPIChecker.cpp">;
+
+def CFNumberCreateChecker : Checker<"CFNumber">,
+  InPackage<MacOSX>,
+  HelpText<"Check for CFNumberCreate">,
+  DescFile<"BasicObjCFoundationChecks.cpp">;
+
+def CFRetainReleaseChecker : Checker<"CFRetainRelease">,
+  InPackage<MacOSX>,
+  HelpText<"Check for null arguments to CFRetain/CFRelease">,
+  DescFile<"BasicObjCFoundationChecks.cpp">;
 
 //===----------------------------------------------------------------------===//
 // Hidden experimental checkers.

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=basic -verify -fobjc-gc-only -fblocks %s
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -fobjc-gc-only -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=cocoa.NSAutoreleasePool -analyzer-check-objc-mem -analyzer-store=basic -verify -fobjc-gc-only -fblocks %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=cocoa.NSAutoreleasePool -analyzer-check-objc-mem -analyzer-store=region -fobjc-gc-only -fblocks -verify %s
 
 //===----------------------------------------------------------------------===//
 // Header stuff.

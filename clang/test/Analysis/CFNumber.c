@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=macosx.CFNumber -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=macosx.CFNumber -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=macosx.CFNumber -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=macosx.CFNumber -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
 
 typedef signed long CFIndex;
 typedef const struct __CFAllocator * CFAllocatorRef;

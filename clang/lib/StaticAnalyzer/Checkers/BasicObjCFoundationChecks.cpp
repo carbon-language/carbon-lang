@@ -15,6 +15,7 @@
 
 #include "BasicObjCFoundationChecks.h"
 
+#include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
@@ -485,12 +486,19 @@ void ClassReleaseChecker::preVisitObjCMessage(CheckerContext &C,
 //===----------------------------------------------------------------------===//
 // Check registration.
 //===----------------------------------------------------------------------===//
-  
-void ento::RegisterAppleChecks(ExprEngine& Eng, const Decl &D) {
+
+void ento::registerNilArgChecker(ExprEngine& Eng) {
   Eng.registerCheck(new NilArgChecker());
+}
+
+void ento::registerCFNumberCreateChecker(ExprEngine& Eng) {
   Eng.registerCheck(new CFNumberCreateChecker());
-  RegisterNSErrorChecks(Eng.getBugReporter(), Eng, D);
-  RegisterNSAutoreleasePoolChecks(Eng);
+}
+
+void ento::registerCFRetainReleaseChecker(ExprEngine& Eng) {
   Eng.registerCheck(new CFRetainReleaseChecker());
+}
+
+void ento::registerClassReleaseChecker(ExprEngine& Eng) {
   Eng.registerCheck(new ClassReleaseChecker());
 }
