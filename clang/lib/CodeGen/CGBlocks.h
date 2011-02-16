@@ -173,9 +173,6 @@ public:
   /// need to be run even in GC mode.
   bool HasCXXObject : 1;
 
-  /// HasWeakBlockVariable - True if block captures a weak __block variable.
-  bool HasWeakBlockVariable : 1;
-  
   const llvm::StructType *StructureType;
   const BlockExpr *Block;
   CharUnits BlockSize;

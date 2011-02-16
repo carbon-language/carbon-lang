@@ -27,8 +27,7 @@ using namespace CodeGen;
 
 CGBlockInfo::CGBlockInfo(const BlockExpr *blockExpr, const char *N)
   : Name(N), CXXThisIndex(0), CanBeGlobal(false), NeedsCopyDispose(false),
-    HasCXXObject(false), HasWeakBlockVariable(false),
-    StructureType(0), Block(blockExpr) {
+    HasCXXObject(false), StructureType(0), Block(blockExpr) {
     
   // Skip asm prefix, if any.
   if (Name && Name[0] == '\01')
@@ -355,10 +354,6 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
       // We have to copy/dispose of the __block reference.
       info.NeedsCopyDispose = true;
 
-      // Also note that it's weak for GC purposes.
-      if (variable->getType().isObjCGCWeak())
-        info.HasWeakBlockVariable = true;
-
       // Just use void* instead of a pointer to the byref type.
       QualType byRefPtrTy = C.VoidPtrTy;
 
@@ -650,22 +645,6 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
     Builder.CreateBitCast(blockAddr,
                           ConvertType(blockInfo.getBlockExpr()->getType()));
 
-  // We must call objc_read_weak on the block literal itself if it closes
-  // on any __weak __block variables.  For some reason.
-  if (blockInfo.HasWeakBlockVariable) {
-    const llvm::Type *OrigTy = result->getType();
-
-    // Must cast argument to id*
-    const llvm::Type *ObjectPtrTy = 
-      ConvertType(CGM.getContext().getObjCIdType());
-    const llvm::Type *PtrObjectPtrTy = 
-      llvm::PointerType::getUnqual(ObjectPtrTy);
-    result = Builder.CreateBitCast(result, PtrObjectPtrTy);
-    result = CGM.getObjCRuntime().EmitObjCWeakRead(*this, result);
-
-    // Cast back to the original type.
-    result = Builder.CreateBitCast(result, OrigTy);
-  }
   return result;
 }
 
