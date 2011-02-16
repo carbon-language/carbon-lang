@@ -1,4 +1,8 @@
-function(add_clang_unittest test_dirname)
+function(add_clang_unittest test_dirname link_components used_libs)
+  separate_arguments(link_components)
+  set(LLVM_LINK_COMPONENTS ${link_components})
+  separate_arguments(used_libs)
+  set(LLVM_USED_LIBS ${used_libs})
   string(REGEX MATCH "([^/]+)$" test_name ${test_dirname})
   if (CMAKE_BUILD_TYPE)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
@@ -32,16 +36,8 @@ if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   add_definitions("-Wno-variadic-macros")
 endif()
 
-set(LLVM_LINK_COMPONENTS
-  Core
-  )
-
-set(LLVM_USED_LIBS
-  gtest
-  gtest_main
-  clangFrontend
-  )
-
 add_clang_unittest(Frontend
+  "Core"
+  "gtest gtest_main clangFrontend"
   Frontend/FrontendActionTest.cpp
  )
