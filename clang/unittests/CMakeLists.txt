@@ -36,6 +36,12 @@ if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   add_definitions("-Wno-variadic-macros")
 endif()
 
+add_clang_unittest(Basic
+  "Core"
+  "gtest gtest_main clangBasic"
+  Basic/FileManagerTest.cpp
+ )
+
 add_clang_unittest(Frontend
   "Core"
   "gtest gtest_main clangFrontend"
