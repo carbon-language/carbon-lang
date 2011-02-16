@@ -3963,6 +3963,144 @@ EmulateInstructionARM::EmulateSTRRegister (ARMEncoding encoding)
     }
     return true;
 }
+               
+bool
+EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
+        address = if index then offset_addr else R[n]; 
+        MemU[address,1] = R[t]<7:0>; 
+        if wback then R[n] = offset_addr;
+#endif
+
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed ())
+    {
+        uint32_t t;
+        uint32_t n;
+        uint32_t imm32;
+        bool index;
+        bool add;
+        bool wback;
+        // EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm5, 32);
+                t = Bits32 (opcode, 2, 0);
+                n = Bits32 (opcode, 5, 3);
+                imm32 = Bits32 (opcode, 10, 6);
+                  
+                // index = TRUE; add = TRUE; wback = FALSE;
+                index = true;
+                add = true;
+                wback = false;
+                break;
+                  
+            case eEncodingT2:
+                // if Rn == ’1111’ then UNDEFINED; 
+                if (Bits32 (opcode, 19, 16) == 15)
+                    return false;
+                  
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 11, 0);
+                  
+                // index = TRUE; add = TRUE; wback = FALSE;
+                index = true;
+                add = true;
+                wback = false;
+                  
+                // if BadReg(t) then UNPREDICTABLE;
+                if (BadReg (t))
+                    return false;
+                break;
+                  
+            case eEncodingT3:
+                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE STRBT; 
+                // if Rn == ’1111’ || (P == ’0’ && W == ’0’) then UNDEFINED; 
+                if (Bits32 (opcode, 19, 16) == 15)
+                    return false;
+                  
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm8, 32);
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 7, 0);
+                  
+                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’);
+                index = BitIsSet (opcode, 10);
+                add = BitIsSet (opcode, 9);
+                wback = BitIsSet (opcode, 8);
+                  
+                // if BadReg(t) || (wback && n == t) then UNPREDICTABLE
+                if ((BadReg (t)) || (wback && (n == t)))
+                    return false;
+                break;
+                  
+            default:
+                return false;
+        }
+                  
+        addr_t offset_addr;
+        addr_t address;
+        addr_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+                  
+        // offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
+        if (add)
+            offset_addr = base_address + imm32;
+        else
+            offset_addr = base_address - imm32;
+                  
+        // address = if index then offset_addr else R[n];
+        if (index)
+            address = offset_addr;
+        else
+            address = base_address;
+                  
+        // MemU[address,1] = R[t]<7:0>;   NOTE:  "MemU' means UNALIGNED memory access
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+                  
+        Register data_reg;
+        data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + t);
+                  
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterStore;
+        context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - base_address);
+                  
+        uint32_t data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + t, 0, &success);
+        if (!success)
+            return false;
+                  
+        data = Bits32 (data, 7, 0);
+
+        if (!WriteMemoryUnsigned (context, address, data, 1))
+            return false;
+                  
+        // if wback then R[n] = offset_addr;
+        if (wback)
+        {
+            context.type = eContextRegisterLoad;
+            context.SetAddress (offset_addr);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, offset_addr))
+                return false;
+        }
+            
+    }
+
+    return true;
+}
                   
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
@@ -4205,7 +4343,10 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfff00000, 0xf8c00000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSTRThumb, "str<c>.w <Rt [<Rn>,#<imm12>]" },
         { 0xfff00800, 0xf8400800, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateSTRThumb, "str<c> <Rt> [<Rn>,#+/-<imm8>]" },
         { 0xfffffe00, 0x00005000, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTRRegister, "str<c> <Rt> {<Rn> <Rm>]" },
-        { 0xfff00fc0, 0xf8400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c>.w <Rt> [<Rn> <Rm> {lsl #imm2>}]" }
+        { 0xfff00fc0, 0xf8400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c>.w <Rt> [<Rn> <Rm> {lsl #imm2>}]" },
+        { 0xfffff800, 0x00007000, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt> [<Rn> #<imm5>]" },
+        { 0xfff00000, 0xf8800000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c>.w <Rt> [<Rn> #<imm12>]" },
+        { 0xfff00800, 0xf8000800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt> [<Rn>, #+/-<imm8>]{!}" }
     };
 
     const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);

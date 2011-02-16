@@ -404,6 +404,11 @@ protected:
     bool
     EmulateSTRRegister (ARMEncoding encoding);
     
+    // A8.6.195 STRB (immediate, Thumb)
+    bool
+    EmulateSTRBThumb (ARMEncoding encoding);
+    
+    
     uint32_t m_arm_isa;
     Mode m_inst_mode;
     uint32_t m_inst_cpsr;
