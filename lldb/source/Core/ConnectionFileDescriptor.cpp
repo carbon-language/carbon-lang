@@ -12,14 +12,12 @@
 // C Includes
 #include <errno.h>
 #include <fcntl.h>
-#ifdef __APPLE__
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#endif
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
