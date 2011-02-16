@@ -19,3 +19,12 @@ dispatch_item_t LEGACY_dispatch_call(dispatch_queue_t dq,
     }
     );
 }
+
+// radar://9008853
+typedef struct P {
+  int x;
+} PS;
+# 1 ""
+void foo() {
+  PS p2;
+}

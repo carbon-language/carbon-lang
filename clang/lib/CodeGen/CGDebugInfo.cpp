@@ -161,7 +161,7 @@ llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc);
 
-  if (PLoc.isInvalid())
+  if (PLoc.isInvalid() || llvm::StringRef(PLoc.getFilename()).empty())
     // If the location is not valid then use main input file.
     return DBuilder.CreateFile(TheCU.getFilename(), TheCU.getDirectory());
 
