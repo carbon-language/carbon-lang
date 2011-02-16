@@ -229,8 +229,10 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
     } else if (!Target.getSymA()) {
       IsResolved = false;
     } else {
-      const MCSymbol &SA = Target.getSymA()->getSymbol();
-      if (SA.AliasedSymbol().isUndefined()) {
+      const MCSymbolRefExpr *A = Target.getSymA();
+      const MCSymbol &SA = A->getSymbol();
+      if (A->getKind() != MCSymbolRefExpr::VK_None ||
+          SA.AliasedSymbol().isUndefined()) {
         IsResolved = false;
       } else {
         const MCSymbolData &DataA = getSymbolData(SA);

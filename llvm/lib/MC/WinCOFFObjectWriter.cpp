@@ -179,13 +179,6 @@ public:
                         MCValue Target,
                         uint64_t &FixedValue);
 
-  virtual bool
-  IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                         const MCSymbolData &DataA,
-                                         const MCFragment &FB,
-                                         bool InSet,
-                                         bool IsPCRel) const;
-
   void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 };
 }
@@ -717,19 +710,6 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   }
 
   coff_section->Relocations.push_back(Reloc);
-}
-
-bool
-WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
-                                                      const MCAssembler &Asm,
-                                                      const MCSymbolData &DataA,
-                                                      const MCFragment &FB,
-                                                      bool InSet,
-                                                      bool IsPCRel) const {
-  const MCSection &SecA = DataA.getSymbol().AliasedSymbol().getSection();
-  const MCSection &SecB = FB.getParent()->getSection();
-  // On COFF A - B is absolute if A and B are in the same section.
-  return &SecA == &SecB;
 }
 
 void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,

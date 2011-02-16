@@ -359,13 +359,6 @@ namespace {
                                           MCDataFragment *F,
                                           const MCSectionData *SD);
 
-    virtual bool
-    IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                           const MCSymbolData &DataA,
-                                           const MCFragment &FB,
-                                           bool InSet,
-                                           bool IsPCRel) const;
-
     virtual void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
     virtual void WriteSection(MCAssembler &Asm,
                       const SectionIndexMapTy &SectionIndexMap,
@@ -1179,24 +1172,6 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
     F->getContents() += Name;
     F->getContents() += '\x00';
   }
-}
-
-bool
-ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                                      const MCSymbolData &DataA,
-                                                      const MCFragment &FB,
-                                                      bool InSet,
-                                                      bool IsPCRel) const {
-  // FIXME: This is in here just to match gnu as output. If the two ends
-  // are in the same section, there is nothing that the linker can do to
-  // break it.
-  if (DataA.isExternal())
-    return false;
-
-  const MCSection &SecA = DataA.getSymbol().AliasedSymbol().getSection();
-  const MCSection &SecB = FB.getParent()->getSection();
-  // On ELF A - B is absolute if A and B are in the same section.
-  return &SecA == &SecB;
 }
 
 void ELFObjectWriter::CreateIndexedSections(MCAssembler &Asm,

@@ -66,3 +66,15 @@ MCObjectWriter::IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
                                                 InSet,
                                                 false);
 }
+
+bool
+MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+                                                      const MCSymbolData &DataA,
+                                                      const MCFragment &FB,
+                                                      bool InSet,
+                                                      bool IsPCRel) const {
+  const MCSection &SecA = DataA.getSymbol().AliasedSymbol().getSection();
+  const MCSection &SecB = FB.getParent()->getSection();
+  // On ELF and COFF  A - B is absolute if A and B are in the same section.
+  return &SecA == &SecB;
+}

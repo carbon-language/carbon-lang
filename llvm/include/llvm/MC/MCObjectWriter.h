@@ -96,7 +96,7 @@ public:
                                          const MCSymbolData &DataA,
                                          const MCFragment &FB,
                                          bool InSet,
-                                         bool IsPCRel) const = 0;
+                                         bool IsPCRel) const;
 
 
   /// Write the object file.
