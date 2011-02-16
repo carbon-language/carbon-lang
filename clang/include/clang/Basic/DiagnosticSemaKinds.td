@@ -3379,9 +3379,14 @@ def warn_not_compound_assign : Warning<
 def warn_explicit_conversion_functions : Warning<
   "explicit conversion functions are a C++0x extension">, InGroup<CXX0x>;
 
-def warn_array_index_out_of_bounds : Warning<
-  "array index %select{precedes first|excedes last}0 array element">,
+def warn_array_index_precedes_bounds : Warning<
+  "array index of '%0' indexes before the beginning of the array">,
   InGroup<DiagGroup<"array-bounds">>;
+def warn_array_index_exceeds_bounds : Warning<
+  "array index of '%0' indexes past the end of an array (that contains %1 elements)">,
+  InGroup<DiagGroup<"array-bounds">>;
+def note_array_index_out_of_bounds : Note<
+  "Array %0 declared here">;
 
 def warn_printf_write_back : Warning<
   "use of '%%n' in format string discouraged (potentially insecure)">,

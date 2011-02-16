@@ -3095,18 +3095,24 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *ae) {
   llvm::APSInt result;
   if (!idx->isIntegerConstantExpr(result, Context))
     return;
-  unsigned kind = 2;
-  if (result.slt(0))
-    kind = /* precedes */ 0;
+
+  if (result.slt(0)) {
+    Diag(ae->getBase()->getLocStart(), diag::warn_array_index_precedes_bounds)
+      << result.toString(10, true) << idx->getSourceRange();
+  }
   else {
     const llvm::APInt &size = cat->getSize();
     if (size.getBitWidth() > result.getBitWidth())
       result = result.sext(size.getBitWidth());
-    if (result.sge(size))
-      kind = /* excedes */ 1;
+    if (result.sge(size)) {
+      Diag(ae->getBase()->getLocStart(), diag::warn_array_index_exceeds_bounds)
+        << result.toString(10, true) << size.toString(10, true)
+        << idx->getSourceRange();
+    }
+    else
+      return;
   }
-  if (kind < 2)
-    Diag(ae->getBase()->getLocEnd(), diag::warn_array_index_out_of_bounds)
-      << kind << idx->getSourceRange();
+  Diag(vd->getLocStart(), diag::note_array_index_out_of_bounds)
+    << vd->getDeclName();
 }
 
