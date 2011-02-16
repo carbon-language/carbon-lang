@@ -1034,7 +1034,8 @@ static void InitCatchParam(CodeGenFunction &CGF,
 
   const llvm::Type *PtrTy = LLVMCatchTy->getPointerTo(0); // addrspace 0 ok
 
-  if (RD->hasTrivialCopyConstructor()) {
+  const Expr *copyExpr = CatchParam.getInit();
+  if (!copyExpr) {
     llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn, true);
     llvm::Value *Cast = CGF.Builder.CreateBitCast(AdjustedExn, PtrTy);
     CGF.EmitAggregateCopy(ParamAddr, Cast, CatchType);
@@ -1043,29 +1044,29 @@ static void InitCatchParam(CodeGenFunction &CGF,
 
   // We have to call __cxa_get_exception_ptr to get the adjusted
   // pointer before copying.
-  llvm::CallInst *AdjustedExn =
+  llvm::CallInst *rawAdjustedExn =
     CGF.Builder.CreateCall(getGetExceptionPtrFn(CGF), Exn);
-  AdjustedExn->setDoesNotThrow();
-  llvm::Value *Cast = CGF.Builder.CreateBitCast(AdjustedExn, PtrTy);
+  rawAdjustedExn->setDoesNotThrow();
 
-  CXXConstructorDecl *CD = RD->getCopyConstructor(CGF.getContext(), 0);
-  assert(CD && "record has no copy constructor!");
-  llvm::Value *CopyCtor = CGF.CGM.GetAddrOfCXXConstructor(CD, Ctor_Complete);
+  // Cast that to the appropriate type.
+  llvm::Value *adjustedExn = CGF.Builder.CreateBitCast(rawAdjustedExn, PtrTy);
 
-  CallArgList CallArgs;
-  CallArgs.push_back(std::make_pair(RValue::get(ParamAddr),
-                                    CD->getThisType(CGF.getContext())));
-  CallArgs.push_back(std::make_pair(RValue::get(Cast),
-                                    CD->getParamDecl(0)->getType()));
-
-  const FunctionProtoType *FPT
-    = CD->getType()->getAs<FunctionProtoType>();
+  // The copy expression is defined in terms of an OpaqueValueExpr.
+  // Find it and map it to the adjusted expression.
+  CodeGenFunction::OpaqueValueMapping
+    opaque(CGF, OpaqueValueExpr::findInCopyConstruct(copyExpr), adjustedExn);
 
   // Call the copy ctor in a terminate scope.
   CGF.EHStack.pushTerminate();
-  CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(CallArgs, FPT),
-               CopyCtor, ReturnValueSlot(), CallArgs, CD);
+
+  // Perform the copy construction.
+  CGF.EmitAggExpr(copyExpr, AggValueSlot::forAddr(ParamAddr, false, false));
+
+  // Leave the terminate scope.
   CGF.EHStack.popTerminate();
+
+  // Undo the opaque value mapping.
+  opaque.pop();
 
   // Finally we can call __cxa_begin_catch.
   CallBeginCatch(CGF, Exn, true);
@@ -1073,8 +1074,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
 
 /// Begins a catch statement by initializing the catch variable and
 /// calling __cxa_begin_catch.
-static void BeginCatch(CodeGenFunction &CGF,
-                       const CXXCatchStmt *S) {
+static void BeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *S) {
   // We have to be very careful with the ordering of cleanups here:
   //   C++ [except.throw]p4:
   //     The destruction [of the exception temporary] occurs

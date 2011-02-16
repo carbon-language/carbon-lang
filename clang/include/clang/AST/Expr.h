@@ -3636,6 +3636,11 @@ public:
       Loc(Loc) {
   }
 
+  /// Given an expression which invokes a copy constructor --- i.e.  a
+  /// CXXConstructExpr, possibly wrapped in an ExprWithCleanups ---
+  /// find the OpaqueValueExpr that's the source of the construction.
+  static const OpaqueValueExpr *findInCopyConstruct(const Expr *expr);
+
   explicit OpaqueValueExpr(EmptyShell Empty)
     : Expr(OpaqueValueExprClass, Empty) { }
 

@@ -2751,6 +2751,15 @@ ParenListExpr::ParenListExpr(ASTContext& C, SourceLocation lparenloc,
   }
 }
 
+const OpaqueValueExpr *OpaqueValueExpr::findInCopyConstruct(const Expr *e) {
+  if (const ExprWithCleanups *ewc = dyn_cast<ExprWithCleanups>(e))
+    e = ewc->getSubExpr();
+  e = cast<CXXConstructExpr>(e)->getArg(0);
+  while (const ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(e))
+    e = ice->getSubExpr();
+  return cast<OpaqueValueExpr>(e);
+}
+
 //===----------------------------------------------------------------------===//
 //  ExprIterator.
 //===----------------------------------------------------------------------===//

@@ -129,6 +129,8 @@ public:
   void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   void VisitCXXTypeidExpr(CXXTypeidExpr *E) { EmitAggLoadOfLValue(E); }
 
+  void VisitOpaqueValueExpr(OpaqueValueExpr *E);
+
   void VisitVAArgExpr(VAArgExpr *E);
 
   void EmitInitializationToLValue(Expr *E, LValue Address, QualType T);
@@ -241,6 +243,10 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
+
+void AggExprEmitter::VisitOpaqueValueExpr(OpaqueValueExpr *e) {
+  EmitFinalDestCopy(e, CGF.EmitOpaqueValueLValue(e));
+}
 
 void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   if (Dest.isIgnored() && E->getCastKind() != CK_Dynamic) {

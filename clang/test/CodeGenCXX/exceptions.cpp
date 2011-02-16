@@ -259,3 +259,37 @@ namespace test4 {
     return new(foo(),bar()) A(5);
   }
 }
+
+// PR7908
+namespace test5 {
+  struct T { T(); ~T(); };
+
+  struct A {
+    A(const A &x, const T &t = T());
+    ~A();
+  };
+
+  void foo();
+
+  // CHECK:    define void @_ZN5test54testEv()
+  // CHECK:      [[EXNSLOT:%.*]] = alloca i8*
+  // CHECK-NEXT: [[A:%.*]] = alloca [[A_T:%.*]], align 1
+  // CHECK-NEXT: [[T:%.*]] = alloca [[T_T:%.*]], align 1
+  // CHECK-NEXT: alloca i32
+  // CHECK-NEXT: invoke void @_ZN5test53fooEv()
+  // CHECK:      [[EXN:%.*]] = load i8** [[EXNSLOT]]
+  // CHECK-NEXT: [[ADJ:%.*]] = call i8* @__cxa_get_exception_ptr(i8* [[EXN]])
+  // CHECK-NEXT: [[SRC:%.*]] = bitcast i8* [[ADJ]] to [[A_T]]*
+  // CHECK-NEXT: invoke void @_ZN5test51TC1Ev([[T_T]]* [[T]])
+  // CHECK:      invoke void @_ZN5test51AC1ERKS0_RKNS_1TE([[A_T]]* [[A]], [[A_T]]* [[SRC]], [[T_T]]* [[T]])
+  // CHECK:      invoke void @_ZN5test51TD1Ev([[T_T]]* [[T]])
+  // CHECK:      call i8* @__cxa_begin_catch(i8* [[EXN]]) nounwind
+  // CHECK-NEXT: invoke void @_ZN5test51AD1Ev([[A_T]]* [[A]])
+  // CHECK:      call void @__cxa_end_catch()
+  void test() {
+    try {
+      foo();
+    } catch (A a) {
+    }
+  }
+}

@@ -838,6 +838,31 @@ public:
       CGF.EnsureInsertPoint();
     }
   };
+
+  /// An RAII object to set (and then clear) a mapping for an OpaqueValueExpr.
+  class OpaqueValueMapping {
+    CodeGenFunction &CGF;
+    const OpaqueValueExpr *OpaqueValue;
+
+  public:
+    OpaqueValueMapping(CodeGenFunction &CGF,
+                       const OpaqueValueExpr *opaqueValue,
+                       llvm::Value *value)
+      : CGF(CGF), OpaqueValue(opaqueValue) {
+      assert(opaqueValue && "no opaque value expression!");
+      CGF.OpaqueValues.insert(std::make_pair(opaqueValue, value));
+    }
+
+    void pop() {
+      assert(OpaqueValue && "mapping already popped!");
+      CGF.OpaqueValues.erase(OpaqueValue);
+      OpaqueValue = 0;
+    }
+
+    ~OpaqueValueMapping() {
+      if (OpaqueValue) CGF.OpaqueValues.erase(OpaqueValue);
+    }
+  };
   
   /// getByrefValueFieldNumber - Given a declaration, returns the LLVM field
   /// number that holds the value.
@@ -882,6 +907,10 @@ private:
   /// CaseRangeBlock - This block holds if condition check for last case
   /// statement range in current switch instruction.
   llvm::BasicBlock *CaseRangeBlock;
+
+  /// OpaqueValues - Keeps track of the current set of opaque value
+  /// expressions.
+  llvm::DenseMap<const OpaqueValueExpr *, llvm::Value*> OpaqueValues;
 
   // VLASizeMap - This keeps track of the associated size for each VLA type.
   // We track this by the size expression rather than the type itself because
@@ -1278,6 +1307,16 @@ public:
     return Res;
   }
 
+  /// getOpaqueValueMapping - Given an opaque value expression (which
+  /// must be mapped), return its mapping.  Whether this is an address
+  /// or a value depends on the expression's type and value kind.
+  llvm::Value *getOpaqueValueMapping(const OpaqueValueExpr *e) {
+    llvm::DenseMap<const OpaqueValueExpr*,llvm::Value*>::iterator
+      it = OpaqueValues.find(e);
+    assert(it != OpaqueValues.end() && "no mapping for opaque value!");
+    return it->second;
+  }
+
   /// getAccessedFieldNo - Given an encoded value and a result number, return
   /// the input field number being accessed.
   static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
@@ -1609,6 +1648,7 @@ public:
   LValue EmitConditionalOperatorLValue(const ConditionalOperator *E);
   LValue EmitCastLValue(const CastExpr *E);
   LValue EmitNullInitializationLValue(const CXXScalarValueInitExpr *E);
+  LValue EmitOpaqueValueLValue(const OpaqueValueExpr *e);
 
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);

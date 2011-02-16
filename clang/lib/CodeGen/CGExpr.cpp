@@ -583,6 +583,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitConditionalOperatorLValue(cast<ConditionalOperator>(E));
   case Expr::ChooseExprClass:
     return EmitLValue(cast<ChooseExpr>(E)->getChosenSubExpr(getContext()));
+  case Expr::OpaqueValueExprClass:
+    return EmitOpaqueValueLValue(cast<OpaqueValueExpr>(E));
   case Expr::ImplicitCastExprClass:
   case Expr::CStyleCastExprClass:
   case Expr::CXXFunctionalCastExprClass:
@@ -1886,6 +1888,12 @@ LValue CodeGenFunction::EmitNullInitializationLValue(
   LValue LV = MakeAddrLValue(CreateMemTemp(Ty), Ty);
   EmitNullInitialization(LV.getAddress(), Ty);
   return LV;
+}
+
+LValue CodeGenFunction::EmitOpaqueValueLValue(const OpaqueValueExpr *e) {
+  assert(e->isGLValue() || e->getType()->isRecordType());
+  llvm::Value *value = getOpaqueValueMapping(e);
+  return MakeAddrLValue(value, e->getType());
 }
 
 //===--------------------------------------------------------------------===//

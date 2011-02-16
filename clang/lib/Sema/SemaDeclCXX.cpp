@@ -6593,7 +6593,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
   ExDecl->setExceptionVariable(true);
   
   if (!Invalid) {
-    if (const RecordType *RecordTy = ExDeclType->getAs<RecordType>()) {
+    if (const RecordType *recordType = ExDeclType->getAs<RecordType>()) {
       // C++ [except.handle]p16:
       //   The object declared in an exception-declaration or, if the 
       //   exception-declaration does not specify a name, a temporary (12.2) is 
@@ -6603,18 +6603,32 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
       //
       // We just pretend to initialize the object with itself, then make sure 
       // it can be destroyed later.
-      InitializedEntity Entity = InitializedEntity::InitializeVariable(ExDecl);
-      Expr *ExDeclRef = DeclRefExpr::Create(Context, 0, SourceRange(), ExDecl, 
-                                            Loc, ExDeclType, VK_LValue, 0);
-      InitializationKind Kind = InitializationKind::CreateCopy(Loc, 
-                                                               SourceLocation());
-      InitializationSequence InitSeq(*this, Entity, Kind, &ExDeclRef, 1);
-      ExprResult Result = InitSeq.Perform(*this, Entity, Kind, 
-                                         MultiExprArg(*this, &ExDeclRef, 1));
-      if (Result.isInvalid())
+      QualType initType = ExDeclType;
+
+      InitializedEntity entity =
+        InitializedEntity::InitializeVariable(ExDecl);
+      InitializationKind initKind =
+        InitializationKind::CreateCopy(Loc, SourceLocation());
+
+      Expr *opaqueValue =
+        new (Context) OpaqueValueExpr(Loc, initType, VK_LValue, OK_Ordinary);
+      InitializationSequence sequence(*this, entity, initKind, &opaqueValue, 1);
+      ExprResult result = sequence.Perform(*this, entity, initKind,
+                                           MultiExprArg(&opaqueValue, 1));
+      if (result.isInvalid())
         Invalid = true;
-      else 
-        FinalizeVarWithDestructor(ExDecl, RecordTy);
+      else {
+        // If the constructor used was non-trivial, set this as the
+        // "initializer".
+        CXXConstructExpr *construct = cast<CXXConstructExpr>(result.take());
+        if (!construct->getConstructor()->isTrivial()) {
+          Expr *init = MaybeCreateExprWithCleanups(construct);
+          ExDecl->setInit(init);
+        }
+        
+        // And make sure it's destructable.
+        FinalizeVarWithDestructor(ExDecl, recordType);
+      }
     }
   }
   

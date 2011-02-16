@@ -129,6 +129,14 @@ public:
   }
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitMemberExpr(const Expr *E) { return EmitLoadOfLValue(E); }
+  ComplexPairTy VisitOpaqueValueExpr(OpaqueValueExpr *E) {
+    if (E->isGLValue()) return EmitLoadOfLValue(E);
+
+    // Otherwise, the mapping is... what, exactly?  Probably a
+    // first-class aggregate, but it's really just not worthwhile.
+    CGF.ErrorUnsupported(E, "complex opaque r-value");
+    return ComplexPairTy();
+  }
 
   // FIXME: CompoundLiteralExpr
 

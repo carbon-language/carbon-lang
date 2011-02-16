@@ -199,6 +199,13 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), 
                                   E->getPackLength());
   }
+
+  Value *VisitOpaqueValueExpr(OpaqueValueExpr *E) {
+    if (E->isGLValue()) return EmitLoadOfLValue(E);
+
+    // Otherwise, assume the mapping is the scalar directly.
+    return CGF.getOpaqueValueMapping(E);
+  }
     
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {
