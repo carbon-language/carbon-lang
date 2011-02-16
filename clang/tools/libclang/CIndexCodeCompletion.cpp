@@ -229,6 +229,10 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   /// the code-completion results.
   llvm::SmallVector<const llvm::MemoryBuffer *, 1> TemporaryBuffers;
   
+  /// \brief Allocator used to store globally cached code-completion results.
+  llvm::IntrusiveRefCntPtr<clang::GlobalCodeCompletionAllocator> 
+    CachedCompletionAllocator;
+  
   /// \brief Allocator used to store code completion results.
   clang::CodeCompletionAllocator CodeCompletionAllocator;
 };
@@ -379,7 +383,7 @@ void clang_codeCompleteAt_Impl(void *UserData) {
   AllocatedCXCodeCompleteResults *Results = new AllocatedCXCodeCompleteResults;
   Results->Results = 0;
   Results->NumResults = 0;
-
+  
   // Create a code-completion consumer to capture the results.
   CaptureCompletionResults Capture(*Results);
 
@@ -392,6 +396,12 @@ void clang_codeCompleteAt_Impl(void *UserData) {
                     *Results->Diag, Results->LangOpts, Results->SourceMgr,
                     Results->FileMgr, Results->Diagnostics,
                     Results->TemporaryBuffers);
+  
+  // Keep a reference to the allocator used for cached global completions, so
+  // that we can be sure that the memory used by our code completion strings
+  // doesn't get freed due to subsequent reparses (while the code completion
+  // results are still active).
+  Results->CachedCompletionAllocator = AST->getCachedCompletionAllocator();
 
   
 

@@ -224,7 +224,8 @@ void ASTUnit::CacheCodeCompletionResults() {
   // Gather the set of global code completions.
   typedef CodeCompletionResult Result;
   llvm::SmallVector<Result, 8> Results;
-  TheSema->GatherGlobalCodeCompletions(CachedCompletionAllocator, Results);
+  CachedCompletionAllocator = new GlobalCodeCompletionAllocator;
+  TheSema->GatherGlobalCodeCompletions(*CachedCompletionAllocator, Results);
   
   // Translate global code completions into cached completions.
   llvm::DenseMap<CanQualType, unsigned> CompletionTypes;
@@ -235,7 +236,7 @@ void ASTUnit::CacheCodeCompletionResults() {
       bool IsNestedNameSpecifier = false;
       CachedCodeCompletionResult CachedResult;
       CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema,
-                                                     CachedCompletionAllocator);
+                                                    *CachedCompletionAllocator);
       CachedResult.ShowInContexts = getDeclShowContexts(Results[I].Declaration,
                                                         Ctx->getLangOptions(),
                                                         IsNestedNameSpecifier);
@@ -299,7 +300,7 @@ void ASTUnit::CacheCodeCompletionResults() {
           Results[I].StartsNestedNameSpecifier = true;
           CachedResult.Completion 
             = Results[I].CreateCodeCompletionString(*TheSema,
-                                                    CachedCompletionAllocator);
+                                                    *CachedCompletionAllocator);
           CachedResult.ShowInContexts = RemainingContexts;
           CachedResult.Priority = CCP_NestedNameSpecifier;
           CachedResult.TypeClass = STC_Void;
@@ -320,7 +321,7 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedCodeCompletionResult CachedResult;
       CachedResult.Completion 
         = Results[I].CreateCodeCompletionString(*TheSema,
-                                                CachedCompletionAllocator);
+                                                *CachedCompletionAllocator);
       CachedResult.ShowInContexts
         = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
         | (1 << (CodeCompletionContext::CCC_ObjCInterface - 1))
@@ -353,7 +354,7 @@ void ASTUnit::CacheCodeCompletionResults() {
 void ASTUnit::ClearCachedCompletionResults() {
   CachedCompletionResults.clear();
   CachedCompletionTypes.clear();
-  CachedCompletionAllocator.Reset();
+  CachedCompletionAllocator = 0;
 }
 
 namespace {

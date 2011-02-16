@@ -54,6 +54,14 @@ class TargetInfo;
 
 using namespace idx;
   
+/// \brief Allocator for a cached set of global code completions.
+class GlobalCodeCompletionAllocator 
+  : public CodeCompletionAllocator,
+    public llvm::RefCountedBase<GlobalCodeCompletionAllocator> 
+{
+
+};
+  
 /// \brief Utility class for loading a ASTContext from an AST file.
 ///
 class ASTUnit {
@@ -287,9 +295,16 @@ public:
     return CachedCompletionTypes; 
   }
   
+  /// \brief Retrieve the allocator used to cache global code completions.
+  llvm::IntrusiveRefCntPtr<GlobalCodeCompletionAllocator> 
+  getCachedCompletionAllocator() {
+    return CachedCompletionAllocator;
+  }
+  
 private:
   /// \brief Allocator used to store cached code completions.
-  CodeCompletionAllocator CachedCompletionAllocator;
+  llvm::IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
+    CachedCompletionAllocator;
 
   /// \brief The set of cached code-completion results.
   std::vector<CachedCodeCompletionResult> CachedCompletionResults;
