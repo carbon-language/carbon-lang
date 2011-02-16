@@ -183,6 +183,18 @@ public:
     Second->FileSkipped(ParentFile, FilenameTok, FileType);
   }
 
+  virtual void InclusionDirective(SourceLocation HashLoc,
+                                  const Token &IncludeTok,
+                                  llvm::StringRef FileName,
+                                  bool IsAngled,
+                                  const FileEntry *File,
+                                  SourceLocation EndLoc) {
+    First->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File, 
+                              EndLoc);
+    Second->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File, 
+                               EndLoc);
+  }
+
   virtual void EndOfMainFile() {
     First->EndOfMainFile();
     Second->EndOfMainFile();
