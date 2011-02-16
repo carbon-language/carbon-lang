@@ -1435,8 +1435,7 @@ public:
                          llvm::GlobalValue::LinkageTypes Linkage);
 
   /// EmitParmDecl - Emit a ParmVarDecl or an ImplicitParamDecl.
-  void EmitParmDecl(const VarDecl &D, llvm::Value *Arg, 
-                    bool IndirectArgument = false);
+  void EmitParmDecl(const VarDecl &D, llvm::Value *Arg);
 
   //===--------------------------------------------------------------------===//
   //                             Statement Emission

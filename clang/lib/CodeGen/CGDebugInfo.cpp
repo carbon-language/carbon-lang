@@ -1741,8 +1741,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
 
 /// EmitDeclare - Emit local variable declaration debug info.
 void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
-                              llvm::Value *Storage, CGBuilderTy &Builder,
-                              bool IndirectArgument) {
+                              llvm::Value *Storage, CGBuilderTy &Builder) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
@@ -1758,17 +1757,19 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   if (!Ty)
     return;
 
-  // If an aggregate variable has non trivial destructor or non trivial copy
-  // constructor than it is pass indirectly. Let debug info know about this
-  // by using reference of the aggregate type as a argument type.
-  if (IndirectArgument && VD->getType()->isClassType())
-    Ty = DBuilder.CreateReferenceType(Ty);
-
-  // If Storage is an aggregate returned as 'sret' then let debugger know
-  // about this.
-  if (llvm::Argument *Arg = dyn_cast<llvm::Argument>(Storage))
+  if (llvm::Argument *Arg = dyn_cast<llvm::Argument>(Storage)) {
+    // If Storage is an aggregate returned as 'sret' then let debugger know
+    // about this.
     if (Arg->hasStructRetAttr())
       Ty = DBuilder.CreateReferenceType(Ty);
+    else if (CXXRecordDecl *Record = VD->getType()->getAsCXXRecordDecl()) {
+      // If an aggregate variable has non trivial destructor or non trivial copy
+      // constructor than it is pass indirectly. Let debug info know about this
+      // by using reference of the aggregate type as a argument type.
+      if (!Record->hasTrivialCopyConstructor() || !Record->hasTrivialDestructor())
+        Ty = DBuilder.CreateReferenceType(Ty);
+    }
+  }
       
   // Get location information.
   unsigned Line = getLineNumber(VD->getLocation());
@@ -1930,10 +1931,8 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
 /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
 /// variable declaration.
 void CGDebugInfo::EmitDeclareOfArgVariable(const VarDecl *VD, llvm::Value *AI,
-                                           CGBuilderTy &Builder, 
-                                           bool IndirectArgument) {
-  EmitDeclare(VD, llvm::dwarf::DW_TAG_arg_variable, AI, Builder, 
-              IndirectArgument);
+                                           CGBuilderTy &Builder) {
+  EmitDeclare(VD, llvm::dwarf::DW_TAG_arg_variable, AI, Builder);
 }
 
 
