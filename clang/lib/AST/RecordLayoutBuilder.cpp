@@ -577,7 +577,7 @@ protected:
   /// DataSize - The data size of the record being laid out.
   uint64_t DataSize;
 
-  uint64_t NonVirtualSize;
+  CharUnits NonVirtualSize;
   CharUnits NonVirtualAlignment;
 
   /// PrimaryBase - the primary base class (if one exists) of the class
@@ -613,8 +613,9 @@ protected:
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), Alignment(8),
       UnpackedAlignment(Alignment), Packed(false), IsUnion(false),
       IsMac68kAlign(false), UnfilledBitsInLastByte(0), MaxFieldAlignment(0),
-      DataSize(0), NonVirtualSize(0), NonVirtualAlignment(CharUnits::One()), 
-      PrimaryBase(0), PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
+      DataSize(0), NonVirtualSize(CharUnits::Zero()), 
+      NonVirtualAlignment(CharUnits::One()), PrimaryBase(0), 
+      PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
@@ -1163,7 +1164,7 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
 
   LayoutFields(RD);
 
-  NonVirtualSize = Size;
+  NonVirtualSize = Context.toCharUnitsFromBits(Size);
   NonVirtualAlignment = Context.toCharUnitsFromBits(Alignment);
 
   // Lay out the virtual bases and add the primary virtual base offsets.
@@ -1677,8 +1678,9 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     // FIXME: This should be done in FinalizeLayout.
     uint64_t DataSize =
       IsPODForThePurposeOfLayout ? Builder->Size : Builder->DataSize;
-    uint64_t NonVirtualSize =
-      IsPODForThePurposeOfLayout ? DataSize : Builder->NonVirtualSize;
+    CharUnits NonVirtualSize =
+      IsPODForThePurposeOfLayout ? 
+        toCharUnitsFromBits(DataSize) : Builder->NonVirtualSize;
 
     CharUnits RecordSize = toCharUnitsFromBits(Builder->Size);
     NewEntry =
@@ -1687,7 +1689,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
                                   toCharUnitsFromBits(DataSize), 
                                   Builder->FieldOffsets.data(),
                                   Builder->FieldOffsets.size(),
-                                  toCharUnitsFromBits(NonVirtualSize),
+                                  NonVirtualSize,
                                   Builder->NonVirtualAlignment,
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
                                   Builder->PrimaryBase,
