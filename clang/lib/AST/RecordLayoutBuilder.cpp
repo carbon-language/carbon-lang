@@ -554,7 +554,7 @@ protected:
   CharUnits Alignment;
 
   /// \brief The alignment if attribute packed is not used.
-  unsigned UnpackedAlignment;
+  CharUnits UnpackedAlignment;
 
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
 
@@ -611,7 +611,7 @@ protected:
   RecordLayoutBuilder(const ASTContext &Context, EmptySubobjectMap
                       *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
-      Alignment(CharUnits::One()), UnpackedAlignment(Context.toBits(Alignment)),
+      Alignment(CharUnits::One()), UnpackedAlignment(Alignment),
       Packed(false), IsUnion(false), IsMac68kAlign(false), 
       UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), 
       NonVirtualSize(CharUnits::Zero()), NonVirtualAlignment(CharUnits::One()),
@@ -1479,7 +1479,8 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
   // Finally, round the size of the record up to the alignment of the
   // record itself.
   uint64_t UnpaddedSize = Size - UnfilledBitsInLastByte;
-  uint64_t UnpackedSize = llvm::RoundUpToAlignment(Size, UnpackedAlignment);
+  uint64_t UnpackedSize = 
+    llvm::RoundUpToAlignment(Size, Context.toBits(UnpackedAlignment));
   Size = llvm::RoundUpToAlignment(Size, Context.toBits(Alignment));
 
   unsigned CharBitNum = Context.Target.getCharWidth();
@@ -1500,7 +1501,7 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
 
     // Warn if we packed it unnecessarily. If the alignment is 1 byte don't
     // bother since there won't be alignment issues.
-    if (Packed && UnpackedAlignment > CharBitNum && Size == UnpackedSize)
+    if (Packed && UnpackedAlignment > CharUnits::One() && Size == UnpackedSize)
       Diag(D->getLocation(), diag::warn_unnecessary_packed)
           << Context.getTypeDeclType(RD);
   }
@@ -1518,10 +1519,12 @@ void RecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment,
     Alignment = NewAlignmentInChars;
   }
 
-  if (UnpackedNewAlignment > UnpackedAlignment) {
+  CharUnits UnpackedNewAlignmentInChars = 
+    Context.toCharUnitsFromBits(UnpackedNewAlignment);
+  if (UnpackedNewAlignmentInChars > UnpackedAlignment) {
     assert(llvm::isPowerOf2_32(UnpackedNewAlignment &&
            "Alignment not a power of 2"));
-    UnpackedAlignment = UnpackedNewAlignment;
+    UnpackedAlignment = UnpackedNewAlignmentInChars;
   }
 }
 
