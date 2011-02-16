@@ -37,7 +37,7 @@ public:
     GetPluginDescriptionStatic();
 
     static lldb_private::DynamicLoader *
-    CreateInstance(lldb_private::Process *process);
+    CreateInstance(lldb_private::Process *process, bool force);
 
     DynamicLoaderLinuxDYLD(lldb_private::Process *process);
 
