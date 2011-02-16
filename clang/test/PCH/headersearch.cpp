@@ -1,5 +1,6 @@
 // Test reading of PCH with changed location of original input files,
 // i.e. invoking header search.
+// XFAIL: win32
 
 // Generate the original files:
 // RUN: mkdir -p %t_orig/sub %t_orig/sub2
