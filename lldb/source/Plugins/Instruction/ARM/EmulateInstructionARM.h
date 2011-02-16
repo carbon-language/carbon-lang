@@ -219,88 +219,111 @@ protected:
     static ARMOpcode*
     GetThumbOpcodeForInstruction (const uint32_t opcode);
 
+    // A8.6.123 PUSH
     bool
     EmulatePush (ARMEncoding encoding);
     
-    bool 
+    // A8.6.122 POP
+    bool
     EmulatePop (ARMEncoding encoding);
     
+    // A8.6.8 ADD (SP plus immediate)
     bool
     EmulateAddRdSPImmediate (ARMEncoding encoding);
 
+    // A8.6.97 MOV (register) -- Rd == r7|ip and Rm == sp
     bool
     EmulateMovRdSP (ARMEncoding encoding);
 
+    // A8.6.97 MOV (register) -- move from r8-r15 to r0-r7
     bool
     EmulateMovLowHigh (ARMEncoding encoding);
 
+    // A8.6.59 LDR (literal)
     bool
     EmulateLDRRtPCRelative (ARMEncoding encoding);
 
+    // A8.6.8 ADD (SP plus immediate)
     bool
     EmulateAddSPImmediate (ARMEncoding encoding);
 
+    // A8.6.9 ADD (SP plus register)
     bool
     EmulateAddSPRm (ARMEncoding encoding);
 
+    // A8.6.23 BL, BLX (immediate)
     bool
     EmulateBLXImmediate (ARMEncoding encoding);
 
+    // A8.6.24 BLX (register)
     bool
     EmulateBLXRm (ARMEncoding encoding);
 
+    // A8.6.25 BX
     bool
     EmulateBXRm (ARMEncoding encoding);
 
+    // A8.6.212 SUB (immediate, ARM) -- Rd == r7 and Rm == ip
     bool
     EmulateSubR7IPImmediate (ARMEncoding encoding);
 
+    // A8.6.215 SUB (SP minus immediate) -- Rd == ip
     bool
     EmulateSubIPSPImmediate (ARMEncoding encoding);
 
+    // A8.6.215 SUB (SP minus immediate)
     bool
     EmulateSubSPImmdiate (ARMEncoding encoding);
 
+    // A8.6.194 STR (immediate, ARM) -- Rn == sp
     bool
     EmulateSTRRtSP (ARMEncoding encoding);
 
+    // A8.6.355 VPUSH
     bool
     EmulateVPUSH (ARMEncoding encoding);
 
+    // A8.6.354 VPOP
     bool
     EmulateVPOP (ARMEncoding encoding);
 
+    // A8.6.218 SVC (previously SWI)
     bool
     EmulateSVC (ARMEncoding encoding);
 
+    // A8.6.50 IT
     bool
     EmulateIT (ARMEncoding encoding);
 
+    // A8.6.16
     bool
     EmulateB (ARMEncoding encoding);
     
-    // CBNZ, CBZ
+    // A8.6.27 CBNZ, CBZ
     bool
     EmulateCB (ARMEncoding encoding);
 
+    // A8.6.6 ADD (register) -- Encoding T2
     bool
     EmulateAddRdnRm (ARMEncoding encoding);
 
-    // MOV (register)
+    // A8.6.97 MOV (register)
     bool
     EmulateMovRdRm (ARMEncoding encoding);
 
-    // MOV (immediate)
+    // A8.6.96 MOV (immediate)
     bool
     EmulateMovRdImm (ARMEncoding encoding);
 
-    // MVN (immediate)
+    // A8.6.106 MVN (immediate)
     bool
     EmulateMvnRdImm (ARMEncoding encoding);
 
+    // A8.6.35 CMP (immediate)
     bool
     EmulateCmpRnImm (ARMEncoding encoding);
 
+    // A8.6.36 CMP (register)
     bool
     EmulateCmpRnRm (ARMEncoding encoding);
 
