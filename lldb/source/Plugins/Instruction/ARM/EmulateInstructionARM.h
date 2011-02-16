@@ -352,11 +352,11 @@ protected:
     bool
     EmulateLSRReg (ARMEncoding encoding);
 
-    // Helper method for ASR, LSL, and LSR
+    // Helper method for ASR, LSL, and LSR (immediate)
     bool
     EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType shift_type);
 
-    // Helper method for ASR, LSL, and LSR
+    // Helper method for ASR, LSL, and LSR (register)
     bool
     EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType shift_type);
 
