@@ -102,6 +102,12 @@ public:
     EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
 
 protected:
+    bool
+    IsValid() const
+    {
+        return m_disassembler != NULL;
+    }
+
     EDDisassemblerRef m_disassembler;
 };
 

@@ -342,39 +342,33 @@ DisassemblerLLVM::InstructionLLVM::Extract(const DataExtractor &data, uint32_t d
         return 0;
 }
 
-static inline const char *
-TripleForArchSpec (const ArchSpec &arch, char *triple, size_t triple_len)
-{
-    const char *arch_name = arch.AsCString();
-
-    if (arch_name)
-    {
-        snprintf(triple, triple_len, "%s-unknown-unknown", arch_name);
-        return triple;
-    }
-    return NULL;
-}
-
 static inline EDAssemblySyntax_t
 SyntaxForArchSpec (const ArchSpec &arch)
 {
-    const char *arch_name = arch.AsCString();
-
-    if (arch_name != NULL
-        && (   (0 == ::strncasecmp (arch_name, "i386", 4))
-            || (0 == ::strncasecmp (arch_name, "x86_64", 6))))
+    switch (arch.GetGenericCPUType())
+    {
+    case ArchSpec::eCPU_i386:
+    case ArchSpec::eCPU_x86_64:
         return kEDAssemblySyntaxX86ATT;
-    
+
+    case ArchSpec::eCPU_arm:
+    case ArchSpec::eCPU_ppc:
+    case ArchSpec::eCPU_ppc64:
+    case ArchSpec::eCPU_sparc:
+    default:
+        break;
+    }
     return (EDAssemblySyntax_t)0;   // default
 }
 
 Disassembler *
 DisassemblerLLVM::CreateInstance(const ArchSpec &arch)
 {
-    char triple[256];
+    std::auto_ptr<DisassemblerLLVM> disasm_ap (new DisassemblerLLVM(arch));
+ 
+    if (disasm_ap->IsValid())
+        return disasm_ap.release();
 
-    if (TripleForArchSpec (arch, triple, sizeof(triple)))
-        return new DisassemblerLLVM(arch);
     return NULL;
 }
 
@@ -382,11 +376,11 @@ DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
     Disassembler (arch),
     m_disassembler (NULL)
 {
-    char triple[256];
-    if (TripleForArchSpec (arch, triple, sizeof(triple)))
+    const std::string &arch_triple = arch.GetTriple().str();
+    if (!arch_triple.empty())
     {
-        int err = EDGetDisassembler(&m_disassembler, triple, SyntaxForArchSpec (arch));
-        assert (err == 0);
+        if (EDGetDisassembler(&m_disassembler, arch_triple.c_str(), SyntaxForArchSpec (arch)))
+            m_disassembler = NULL;
     }
 }
 

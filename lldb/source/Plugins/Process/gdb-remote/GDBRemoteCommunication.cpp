@@ -172,6 +172,8 @@ GDBRemoteCommunication::GetVContSupported (char flavor)
     if (m_supports_vCont_c == eLazyBoolCalculate)
     {
         StringExtractorGDBRemote response;
+        m_supports_vCont_any = eLazyBoolNo;
+        m_supports_vCont_all = eLazyBoolNo;
         m_supports_vCont_c = eLazyBoolNo;
         m_supports_vCont_C = eLazyBoolNo;
         m_supports_vCont_s = eLazyBoolNo;
