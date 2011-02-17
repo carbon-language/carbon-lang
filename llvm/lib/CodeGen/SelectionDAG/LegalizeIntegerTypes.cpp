@@ -548,16 +548,15 @@ SDValue DAGTypeLegalizer::PromoteIntRes_UADDSUBO(SDNode *N, unsigned ResNo) {
   return Res;
 }
 
-
 SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
   // Promote the overflow bit trivially.
   if (ResNo == 1)
     return PromoteIntRes_Overflow(N);
-  
+
   SDValue LHS = N->getOperand(0), RHS = N->getOperand(1);
   DebugLoc DL = N->getDebugLoc();
-  unsigned SmallSize = LHS.getValueType().getSizeInBits();
-  
+  EVT SmallVT = LHS.getValueType();
+
   // To determine if the result overflowed in a larger type, we extend the input
   // to the larger type, do the multiply, then check the high bits of the result
   // to see if the overflow happened.
@@ -568,33 +567,28 @@ SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
     LHS = ZExtPromotedInteger(LHS);
     RHS = ZExtPromotedInteger(RHS);
   }
-  
   SDValue Mul = DAG.getNode(ISD::MUL, DL, LHS.getValueType(), LHS, RHS);
-  
-  
-  // For an unsigned overflow, we check to see if the high part is != 0;
+
+  // Overflow occurred iff the high part of the result does not zero/sign-extend
+  // the low part.
   SDValue Overflow;
   if (N->getOpcode() == ISD::UMULO) {
+    // Unsigned overflow occurred iff the high part is non-zero.
     SDValue Hi = DAG.getNode(ISD::SRL, DL, Mul.getValueType(), Mul,
-                             DAG.getIntPtrConstant(SmallSize));
-    // Overflowed if and only if this is not equal to Res.
+                             DAG.getIntPtrConstant(SmallVT.getSizeInBits()));
     Overflow = DAG.getSetCC(DL, N->getValueType(1), Hi,
                             DAG.getConstant(0, Hi.getValueType()), ISD::SETNE);
   } else {
-    // Signed multiply overflowed if the high part is not 0 and not -1.
-    SDValue Hi = DAG.getNode(ISD::SRA, DL, Mul.getValueType(), Mul,
-                             DAG.getIntPtrConstant(SmallSize));
-    Hi = DAG.getNode(ISD::ADD, DL, Hi.getValueType(), Hi,
-                     DAG.getConstant(1, Hi.getValueType()));
-    Overflow = DAG.getSetCC(DL, N->getValueType(1), Hi,
-                            DAG.getConstant(1, Hi.getValueType()), ISD::SETUGT);
+    // Signed overflow occurred iff the high part does not sign extend the low.
+    SDValue SExt = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, Mul.getValueType(),
+                               Mul, DAG.getValueType(SmallVT));
+    Overflow = DAG.getSetCC(DL, N->getValueType(1), SExt, Mul, ISD::SETNE);
   }
 
   // Use the calculated overflow everywhere.
   ReplaceValueWith(SDValue(N, 1), Overflow);
   return Mul;
 }
-
 
 SDValue DAGTypeLegalizer::PromoteIntRes_UDIV(SDNode *N) {
   // Zero extend the input.
