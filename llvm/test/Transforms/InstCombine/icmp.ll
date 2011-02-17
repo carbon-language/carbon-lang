@@ -234,3 +234,22 @@ define i1 @test24(i64 %i) {
   ret i1 %cmp
 }
 
+; CHECK: @test25
+; CHECK: %c = icmp sgt i32 %x, %y
+; CHECK: ret i1 %c
+define i1 @test25(i32 %x, i32 %y, i32 %z) {
+  %lhs = add nsw i32 %x, %z
+  %rhs = add nsw i32 %y, %z
+  %c = icmp sgt i32 %lhs, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test26
+; CHECK: %c = icmp sgt i32 %x, %y
+; CHECK: ret i1 %c
+define i1 @test26(i32 %x, i32 %y, i32 %z) {
+  %lhs = sub nsw i32 %x, %z
+  %rhs = sub nsw i32 %y, %z
+  %c = icmp sgt i32 %lhs, %rhs
+  ret i1 %c
+}
