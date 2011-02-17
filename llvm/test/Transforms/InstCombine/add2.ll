@@ -33,3 +33,11 @@ define i32 @test3(i32 %A) {
 ; CHECK-NEXT: ret i32
 }
 
+define i32 @test4(i32 %A) {
+  %B = add nuw i32 %A, %A
+  ret i32 %B
+; CHECK: @test4
+; CHECK-NEXT: %B = shl nuw i32 %A, 1
+; CHECK-NEXT: ret i32 %B
+}
+
