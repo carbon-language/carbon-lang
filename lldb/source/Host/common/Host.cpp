@@ -294,37 +294,31 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
 #if defined (__x86_64__)
 
         g_host_arch_64.SetArch ("x86_64");
-        g_supports_32 = false;
-        g_supports_64 = true;
 
 #elif defined (__i386__)
 
-        g_host_arch.SetArch ("i386");
-        g_supports_32 = true;
-        g_supports_64 = false;
+        g_host_arch_32.SetArch ("i386");
 
 #elif defined (__arm__)        
 
-        g_host_arch.SetArch ("arm");
-        g_supports_32 = true;
-        g_supports_64 = false;
+        g_host_arch_32.SetArch ("arm");
 
 #elif defined (__ppc64__)
 
-        g_host_arch.SetArch ("ppc64");
-        g_supports_32 = false;
-        g_supports_64 = true;
+        g_host_arch_64.SetArch ("ppc64");
 
 #elif defined (__powerpc__) || defined (__ppc__)
-        g_host_arch.SetArch ("ppc");
-        g_supports_32 = true;
-        g_supports_64 = false;
+
+        g_host_arch_32.SetArch ("ppc");
 
 #else
 
 #error undefined architecture, define your architecture here
 
 #endif
+
+        g_supports_32 = g_host_arch_32.IsValid();
+        g_supports_64 = g_host_arch_64.IsValid();
     }
     
 #endif // #else for #if defined (__APPLE__)
