@@ -53,7 +53,6 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case FixIt:                  return new FixItAction();
   case GeneratePCH:            return new GeneratePCHAction();
   case GeneratePTH:            return new GeneratePTHAction();
-  case InheritanceView:        return new InheritanceViewAction();
   case InitOnly:               return new InitOnlyAction();
   case ParseSyntaxOnly:        return new SyntaxOnlyAction();
 

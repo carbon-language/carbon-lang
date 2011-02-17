@@ -119,11 +119,6 @@ bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
   return false;
 }
 
-ASTConsumer *InheritanceViewAction::CreateASTConsumer(CompilerInstance &CI,
-                                                      llvm::StringRef InFile) {
-  return CreateInheritanceViewer(CI.getFrontendOpts().ViewClassInheritance);
-}
-
 ASTConsumer *SyntaxOnlyAction::CreateASTConsumer(CompilerInstance &CI,
                                                  llvm::StringRef InFile) {
   return new ASTConsumer();

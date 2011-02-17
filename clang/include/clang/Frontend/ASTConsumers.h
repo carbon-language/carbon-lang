@@ -61,10 +61,6 @@ ASTConsumer *CreateASTViewer();
 // to stderr; this is intended for debugging.
 ASTConsumer *CreateDeclContextPrinter();
 
-// Inheritance viewer: for C++ code, creates a graph of the inheritance
-// tree for the given class and displays it with "dotty".
-ASTConsumer *CreateInheritanceViewer(const std::string& clsname);
-
 } // end clang namespace
 
 #endif

@@ -94,12 +94,6 @@ public:
                                           bool &Chaining);
 };
 
-class InheritanceViewAction : public ASTFrontendAction {
-protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         llvm::StringRef InFile);
-};
-
 class SyntaxOnlyAction : public ASTFrontendAction {
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,

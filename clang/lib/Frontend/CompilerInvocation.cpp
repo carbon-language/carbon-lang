@@ -335,7 +335,6 @@ static const char *getInputKindName(InputKind Kind) {
 static const char *getActionName(frontend::ActionKind Kind) {
   switch (Kind) {
   case frontend::PluginAction:
-  case frontend::InheritanceView:
     llvm_unreachable("Invalid kind!");
 
   case frontend::ASTDump:                return "-ast-dump";
@@ -425,18 +424,13 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-o");
     Res.push_back(Opts.OutputFile);
   }
-  if (!Opts.ViewClassInheritance.empty()) {
-    Res.push_back("-cxx-inheritance-view");
-    Res.push_back(Opts.ViewClassInheritance);
-  }
   if (!Opts.CodeCompletionAt.FileName.empty()) {
     Res.push_back("-code-completion-at");
     Res.push_back(Opts.CodeCompletionAt.FileName + ":" +
                   llvm::utostr(Opts.CodeCompletionAt.Line) + ":" +
                   llvm::utostr(Opts.CodeCompletionAt.Column));
   }
-  if (Opts.ProgramAction != frontend::InheritanceView &&
-      Opts.ProgramAction != frontend::PluginAction)
+  if (Opts.ProgramAction != frontend::PluginAction)
     Res.push_back(getActionName(Opts.ProgramAction));
   if (!Opts.ActionName.empty()) {
     Res.push_back("-plugin");
@@ -1170,7 +1164,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.ShowStats = Args.hasArg(OPT_print_stats);
   Opts.ShowTimers = Args.hasArg(OPT_ftime_report);
   Opts.ShowVersion = Args.hasArg(OPT_version);
-  Opts.ViewClassInheritance = Args.getLastArgValue(OPT_cxx_inheritance_view);
   Opts.ASTMergeFiles = Args.getAllArgValues(OPT_ast_merge);
   Opts.LLVMArgs = Args.getAllArgValues(OPT_mllvm);
   Opts.FixWhatYouCan = Args.hasArg(OPT_fix_what_you_can);

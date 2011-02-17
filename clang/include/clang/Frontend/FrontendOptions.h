@@ -39,7 +39,6 @@ namespace frontend {
     FixIt,                  ///< Parse and apply any fixits to the source.
     GeneratePCH,            ///< Generate pre-compiled header.
     GeneratePTH,            ///< Generate pre-tokenized header.
-    InheritanceView,        ///< View C++ inheritance for a specified class.
     InitOnly,               ///< Only execute frontend initialization.
     ParseSyntaxOnly,        ///< Parse and perform semantic analysis.
     PluginAction,           ///< Run a plugin action, \see ActionName.
@@ -84,9 +83,6 @@ public:
 
   /// The output file, if any.
   std::string OutputFile;
-
-  /// If given, the name for a C++ class to view the inheritance of.
-  std::string ViewClassInheritance;
 
   /// If given, the new suffix for fix-it rewritten files.
   std::string FixItSuffix;

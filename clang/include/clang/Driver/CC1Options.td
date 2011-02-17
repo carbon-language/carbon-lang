@@ -302,9 +302,6 @@ def help : Flag<"-help">,
   HelpText<"Print this help text">;
 def _help : Flag<"--help">, Alias<help>;
 def x : Separate<"-x">, HelpText<"Input language type">;
-def cxx_inheritance_view : Separate<"-cxx-inheritance-view">,
-  MetaVarName<"<class name>">,
-  HelpText<"View C++ inheritance for a specified class">;
 def o : Separate<"-o">, MetaVarName<"<path>">, HelpText<"Specify output file">;
 def load : Separate<"-load">, MetaVarName<"<dsopath>">,
   HelpText<"Load the named plugin (dynamic shared object)">;
