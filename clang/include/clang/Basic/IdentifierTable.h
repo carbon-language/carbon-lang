@@ -54,7 +54,7 @@ class IdentifierInfo {
   // Objective-C keyword ('protocol' in '@protocol') or builtin (__builtin_inf).
   // First NUM_OBJC_KEYWORDS values are for Objective-C, the remaining values
   // are for builtins.
-  unsigned ObjCOrBuiltinID    :10;
+  unsigned ObjCOrBuiltinID    :11;
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
@@ -64,7 +64,7 @@ class IdentifierInfo {
                                    // file and wasn't modified since.
   bool RevertedTokenID        : 1; // True if RevertTokenIDToIdentifier was
                                    // called.
-  // 7 bits left in 32-bit word.
+  // 6 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
 
