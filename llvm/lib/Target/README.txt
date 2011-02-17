@@ -873,6 +873,12 @@ rshift_gt (unsigned int a)
  if ((a >> 2) > 5)
    bar ();
 }
+
+void neg_eq_cst(unsigned int a) {
+if (-a == 123)
+bar();
+}
+
 All should simplify to a single comparison.  All of these are
 currently not optimized with "clang -emit-llvm-bc | opt
 -std-compile-opts".
@@ -2219,31 +2225,52 @@ avoids partial register stalls in some important cases.
 
 //===---------------------------------------------------------------------===//
 
-Some missed instcombine xforms (from GCC PR14753):
+We should fold compares like this:
 
-void bar (void);
+ %1266 = add nsw i32 %.84.i.i.i, 1
+ %560 = add nsw i32 %556, 1
+ %1267 = icmp slt i32 %1266, %560
 
-void mask_gt (unsigned int a) {
-/* This is equivalent to a > 15.  */
-if ((a & ~7) > 8)
-bar();
-}
-
-void neg_eq_cst(unsigned int a) {
-if (-a == 123)
-bar();
-}
-
-void minus_cst(unsigned int a) {
-if (20 - a == 5)
-bar();
-}
-
-void rotate_cst (unsigned a) {
-a = (a << 10) | (a >> 22);
-if (a == 123)
-bar ();
-}
+to a single 'icmp slt' when the add's have a single use, since they are NSW.
 
 //===---------------------------------------------------------------------===//
+
+We don't fold (icmp (add) (add)) unless the two adds only have a single use.
+There are a lot of cases that we're refusing to fold in (e.g.) 256.bzip2, for
+example:
+
+ %indvar.next90 = add i64 %indvar89, 1     ;; Has 2 uses
+ %tmp96 = add i64 %tmp95, 1                ;; Has 1 use
+ %exitcond97 = icmp eq i64 %indvar.next90, %tmp96
+
+We don't fold this because we don't want to introduce an overlapped live range
+of the ivar.  However if we can make this more aggressive without causing
+performance issues in two ways:
+
+1. If *either* the LHS or RHS has a single use, we can definitely do the
+   transformation.  In the overlapping liverange case we're trading one register
+   use for one fewer operation, which is a reasonable trade.  Before doing this
+   we should verify that the llc output actually shrinks for some benchmarks.
+2. If both ops have multiple uses, we can still fold it if the operations are
+   both sinkable to *after* the icmp (e.g. in a subsequent block) which doesn't
+   increase register pressure.
+
+There are a ton of icmp's we aren't simplifying because of the reg pressure
+concern.  Care is warranted here though because many of these are induction
+variables and other cases that matter a lot to performance, like the above.
+Here's a blob of code that you can drop into the bottom of visitICmp to see some
+missed cases:
+
+  { Value *A, *B, *C, *D;
+    if (match(Op0, m_Add(m_Value(A), m_Value(B))) && 
+        match(Op1, m_Add(m_Value(C), m_Value(D))) &&
+        (A == C || A == D || B == C || B == D)) {
+      errs() << "OP0 = " << *Op0 << "  U=" << Op0->getNumUses() << "\n";
+      errs() << "OP1 = " << *Op1 << "  U=" << Op1->getNumUses() << "\n";
+      errs() << "CMP = " << I << "\n\n";
+    }
+  }
+
+//===---------------------------------------------------------------------===//
+
 
