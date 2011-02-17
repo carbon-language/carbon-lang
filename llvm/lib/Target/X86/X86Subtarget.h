@@ -103,7 +103,7 @@ protected:
   /// Max. memset / memcpy size that is turned into rep/movs, rep/stos ops.
   ///
   unsigned MaxInlineSizeThreshold;
-  
+
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
@@ -166,23 +166,23 @@ public:
   bool hasVectorUAMem() const { return HasVectorUAMem; }
 
   bool isTargetDarwin() const { return TargetTriple.getOS() == Triple::Darwin; }
-  
+
   // ELF is a reasonably sane default and the only other X86 targets we
   // support are Darwin and Windows. Just use "not those".
-  bool isTargetELF() const { 
+  bool isTargetELF() const {
     return !isTargetDarwin() && !isTargetWindows() && !isTargetCygMing();
   }
   bool isTargetLinux() const { return TargetTriple.getOS() == Triple::Linux; }
 
   bool isTargetWindows() const { return TargetTriple.getOS() == Triple::Win32; }
-  bool isTargetMingw() const { 
+  bool isTargetMingw() const {
     return TargetTriple.getOS() == Triple::MinGW32 ||
            TargetTriple.getOS() == Triple::MinGW64; }
   bool isTargetCygwin() const { return TargetTriple.getOS() == Triple::Cygwin; }
   bool isTargetCygMing() const {
     return isTargetMingw() || isTargetCygwin();
   }
-  
+
   /// isTargetCOFF - Return true if this is any COFF/Windows target variant.
   bool isTargetCOFF() const {
     return isTargetMingw() || isTargetCygwin() || isTargetWindows();

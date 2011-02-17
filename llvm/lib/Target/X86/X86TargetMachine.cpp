@@ -65,7 +65,7 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   }
 }
 
-extern "C" void LLVMInitializeX86Target() { 
+extern "C" void LLVMInitializeX86Target() {
   // Register the target.
   RegisterTargetMachine<X86_32TargetMachine> X(TheX86_32Target);
   RegisterTargetMachine<X86_64TargetMachine> Y(TheX86_64Target);
@@ -122,7 +122,7 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, const std::string &TT,
 
 /// X86TargetMachine ctor - Create an X86 target.
 ///
-X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT, 
+X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS, is64Bit),
@@ -234,12 +234,12 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       JITCodeEmitter &JCE) {
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
-  if (DefRelocModel == Reloc::Default && 
+  if (DefRelocModel == Reloc::Default &&
       (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit())) {
     setRelocationModel(Reloc::Static);
     Subtarget.setPICStyle(PICStyles::None);
   }
-  
+
 
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
 
