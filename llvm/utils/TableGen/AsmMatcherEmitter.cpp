@@ -1881,6 +1881,8 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
         AliasWithNoPredicate = i;
         continue;
       }
+      if (R->getValueAsString("ToMnemonic") == I->first)
+        throw TGError(R->getLoc(), "MnemonicAlias to the same string");
 
       if (!MatchCode.empty())
         MatchCode += "else ";
