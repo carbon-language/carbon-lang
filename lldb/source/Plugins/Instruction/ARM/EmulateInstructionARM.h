@@ -192,6 +192,9 @@ public:
     AddWithCarryResult
     AddWithCarry(uint32_t x, uint32_t y, uint8_t carry_in);
 
+    // See A8.6.96 MOV (immediate) Operation.
+    // Default arguments are specified for carry and overflow parameters, which means
+    // not to update the respective flags if setflags is true.
     bool
     WriteCoreRegisterWithFlags (Context &context,
                                 const uint32_t result,
