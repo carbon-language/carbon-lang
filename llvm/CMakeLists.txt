@@ -266,6 +266,9 @@ foreach(t ${LLVM_TARGETS_TO_BUILD})
     set(LLVM_ENUM_DISASSEMBLERS
       "${LLVM_ENUM_DISASSEMBLERS}LLVM_DISASSEMBLER(${t})\n")
   endif()
+  if( EXISTS ${td}/Utils/CMakeLists.txt )
+    add_subdirectory(${td}/Utils)
+  endif()
   set(CURRENT_LLVM_TARGET)
 endforeach(t)
 
