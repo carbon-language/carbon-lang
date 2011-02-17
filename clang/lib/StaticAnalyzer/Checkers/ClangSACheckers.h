@@ -23,7 +23,7 @@ class ExprEngine;
 #define GET_CHECKERS
 #define CHECKER(FULLNAME,CLASS,CXXFILE,HELPTEXT,HIDDEN)    \
   void register##CLASS(ExprEngine &Eng);
-#include "../Checkers/Checkers.inc"
+#include "Checkers.inc"
 #undef CHECKER
 #undef GET_CHECKERS
 

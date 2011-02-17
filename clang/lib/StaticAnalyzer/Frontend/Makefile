@@ -14,4 +14,6 @@
 CLANG_LEVEL := ../../..
 LIBRARYNAME := clangStaticAnalyzerFrontend
 
+CPP.Flags += -I${PROJ_OBJ_DIR}/../Checkers
+
 include $(CLANG_LEVEL)/Makefile
