@@ -2166,17 +2166,6 @@ bool Sema::Subst(const TemplateArgumentLoc *Args, unsigned NumArgs,
   return Instantiator.TransformTemplateArguments(Args, NumArgs, Result);
 }
 
-Decl *LocalInstantiationScope::getInstantiationOf(const Decl *D) {
-  llvm::PointerUnion<Decl *, DeclArgumentPack *> *Found= findInstantiationOf(D);
-  assert(Found);
-  
-  if (Found->is<Decl *>())
-    return Found->get<Decl *>();
-  
-  return (*Found->get<DeclArgumentPack *>())[
-                                        SemaRef.ArgumentPackSubstitutionIndex];
-}
-
 llvm::PointerUnion<Decl *, LocalInstantiationScope::DeclArgumentPack *> *
 LocalInstantiationScope::findInstantiationOf(const Decl *D) {
   for (LocalInstantiationScope *Current = this; Current; 

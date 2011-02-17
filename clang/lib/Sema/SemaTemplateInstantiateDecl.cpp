@@ -2860,7 +2860,16 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
       (ParentDC->isFunctionOrMethod() && ParentDC->isDependentContext())) {
     // D is a local of some kind. Look into the map of local
     // declarations to their instantiations.
-    return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
+    typedef LocalInstantiationScope::DeclArgumentPack DeclArgumentPack;
+    llvm::PointerUnion<Decl *, DeclArgumentPack *> *Found
+      = CurrentInstantiationScope->findInstantiationOf(D);
+    assert(Found);
+    
+    if (Decl *FD = Found->dyn_cast<Decl *>())
+      return cast<NamedDecl>(FD);
+    
+    unsigned PackIdx = ArgumentPackSubstitutionIndex;
+    return cast<NamedDecl>((*Found->get<DeclArgumentPack *>())[PackIdx]);
   }
 
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {

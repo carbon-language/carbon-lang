@@ -253,6 +253,8 @@ namespace clang {
     ~LocalInstantiationScope() {
       Exit();
     }
+    
+    const Sema &getSema() const { return SemaRef; }
 
     /// \brief Exit this local instantiation scope early.
     void Exit() {
@@ -265,8 +267,6 @@ namespace clang {
       SemaRef.CurrentInstantiationScope = Outer;
       Exited = true;
     }
-
-    Decl *getInstantiationOf(const Decl *D);
 
     /// \brief Find the instantiation of the declaration D within the current
     /// instantiation scope.
