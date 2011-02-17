@@ -84,6 +84,7 @@ namespace clang {
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *TU);
     void VisitNamedDecl(NamedDecl *ND);
+    void VisitLabelDecl(LabelDecl *LD);
     void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
@@ -721,6 +722,12 @@ void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   D->setLanguage((LinkageSpecDecl::LanguageIDs)Record[Idx++]);
   D->setHasBraces(Record[Idx++]);
 }
+
+void ASTDeclReader::VisitLabelDecl(LabelDecl *D) {
+  VisitNamedDecl(D);
+  if (Record[Idx++]) D->setHasUnusedAttribute();
+}
+
 
 void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitNamedDecl(D);
@@ -1417,6 +1424,9 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     D = LinkageSpecDecl::Create(*Context, 0, SourceLocation(),
                                 (LinkageSpecDecl::LanguageIDs)0,
                                 false);
+    break;
+  case DECL_LABEL:
+    D = LabelDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case DECL_NAMESPACE:
     D = NamespaceDecl::Create(*Context, 0, SourceLocation(), 0);

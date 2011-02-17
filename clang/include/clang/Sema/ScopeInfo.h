@@ -23,7 +23,7 @@ namespace clang {
 
 class BlockDecl;
 class IdentifierInfo;
-class LabelStmt;
+class LabelDecl;
 class ReturnStmt;
 class Scope;
 class SwitchStmt;
@@ -52,10 +52,10 @@ public:
   /// \brief Used to determine if errors occurred in this function or block.
   DiagnosticErrorTrap ErrorTrap;
 
-  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
-  /// it (which acts like the label decl in some ways).  Forward referenced
-  /// labels have a LabelStmt created for them with a null location & SubStmt.
-  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
+  /// LabelMap - This is a mapping from label identifiers to the LabelDecl for
+  /// it.  Forward referenced labels have a LabelDecl created for them with a
+  /// null statement.
+  llvm::DenseMap<IdentifierInfo*, LabelDecl*> LabelMap;
 
   /// SwitchStack - This is the current set of active switch statements in the
   /// block.
@@ -92,6 +92,11 @@ public:
 
   virtual ~FunctionScopeInfo();
 
+  /// checkLabelUse - This checks to see if any labels are used without being
+  /// defined, emiting errors and returning true if any are found.  This also
+  /// warns about unused labels.
+  bool checkLabelUse(Stmt *Body, Sema &S);
+  
   /// \brief Clear out the information in this function scope, making it
   /// suitable for reuse.
   void Clear();

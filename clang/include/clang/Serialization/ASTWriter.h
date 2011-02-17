@@ -44,7 +44,6 @@ class CXXBaseSpecifier;
 class CXXCtorInitializer;
 class FPOptions;
 class HeaderSearch;
-class LabelStmt;
 class MacroDefinition;
 class MemorizeStatCalls;
 class OpenCLOptions;
@@ -260,9 +259,6 @@ private:
 
   /// \brief Mapping from SwitchCase statements to IDs.
   std::map<SwitchCase *, unsigned> SwitchCaseIDs;
-
-  /// \brief Mapping from LabelStmt statements to IDs.
-  std::map<LabelStmt *, unsigned> LabelIDs;
 
   /// \brief The number of statements written to the AST file.
   unsigned NumStatements;
@@ -552,10 +548,6 @@ public:
   unsigned getSwitchCaseID(SwitchCase *S);
 
   void ClearSwitchCaseIDs();
-
-  /// \brief Retrieve the ID for the given label statement, which may
-  /// or may not have been emitted yet.
-  unsigned GetLabelID(LabelStmt *S);
 
   unsigned getParmVarDeclAbbrev() const { return ParmVarDeclAbbrev; }
 

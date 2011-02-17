@@ -324,7 +324,7 @@ public:
 
   bool hasAttrs() const { return HasAttrs; }
   void setAttrs(const AttrVec& Attrs);
-  AttrVec& getAttrs() {
+  AttrVec &getAttrs() {
     return const_cast<AttrVec&>(const_cast<const Decl*>(this)->getAttrs());
   }
   const AttrVec &getAttrs() const;

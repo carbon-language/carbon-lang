@@ -331,11 +331,11 @@ public:
     iterator& operator++() { ++I; return *this; }
     bool operator!=(const iterator& X) const { return I != X.I; }
 
-    const LabelStmt* getLabel() const {
-      return llvm::cast<LabelStmt>((*I)->getLabel());
+    const LabelDecl *getLabel() const {
+      return llvm::cast<LabelStmt>((*I)->getLabel())->getDecl();
     }
 
-    const CFGBlock*  getBlock() const {
+    const CFGBlock *getBlock() const {
       return *I;
     }
   };

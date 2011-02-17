@@ -2182,6 +2182,12 @@ TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
   return new (C) TranslationUnitDecl(C);
 }
 
+LabelDecl *LabelDecl::Create(ASTContext &C, DeclContext *DC,
+                             SourceLocation L, IdentifierInfo *II) {
+  return new (C) LabelDecl(DC, L, II, 0);
+}
+
+
 NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id) {
   return new (C) NamespaceDecl(DC, L, Id);

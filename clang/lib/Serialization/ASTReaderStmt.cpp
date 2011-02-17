@@ -245,12 +245,11 @@ void ASTStmtReader::VisitDefaultStmt(DefaultStmt *S) {
 
 void ASTStmtReader::VisitLabelStmt(LabelStmt *S) {
   VisitStmt(S);
-  S->setID(Reader.GetIdentifierInfo(Record, Idx));
+  LabelDecl *LD = cast<LabelDecl>(Reader.GetDecl(Record[Idx++]));
+  LD->setStmt(S);
+  S->setDecl(LD);
   S->setSubStmt(Reader.ReadSubStmt());
   S->setIdentLoc(ReadSourceLocation(Record, Idx));
-  S->setUsed(Record[Idx++]);
-  S->setUnusedAttribute(Record[Idx++]);
-  Reader.RecordLabelStmt(S, Record[Idx++]);
 }
 
 void ASTStmtReader::VisitIfStmt(IfStmt *S) {
@@ -319,7 +318,7 @@ void ASTStmtReader::VisitForStmt(ForStmt *S) {
 
 void ASTStmtReader::VisitGotoStmt(GotoStmt *S) {
   VisitStmt(S);
-  Reader.SetLabelOf(S, Record[Idx++]);
+  S->setLabel(cast<LabelDecl>(Reader.GetDecl(Record[Idx++])));
   S->setGotoLoc(ReadSourceLocation(Record, Idx));
   S->setLabelLoc(ReadSourceLocation(Record, Idx));
 }
@@ -759,7 +758,7 @@ void ASTStmtReader::VisitAddrLabelExpr(AddrLabelExpr *E) {
   VisitExpr(E);
   E->setAmpAmpLoc(ReadSourceLocation(Record, Idx));
   E->setLabelLoc(ReadSourceLocation(Record, Idx));
-  Reader.SetLabelOf(E, Record[Idx++]);
+  E->setLabel(cast<LabelDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void ASTStmtReader::VisitStmtExpr(StmtExpr *E) {

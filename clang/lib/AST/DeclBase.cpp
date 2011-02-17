@@ -269,7 +269,8 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCMethod:
     case ObjCProperty:
       return IDNS_Ordinary;
-
+    case Label:
+      return IDNS_Label;
     case IndirectField:
       return IDNS_Ordinary | IDNS_Member;
 

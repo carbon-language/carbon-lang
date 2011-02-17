@@ -45,6 +45,7 @@ namespace clang {
   class CXXDestructorDecl;
   class CXXTryStmt;
   class Decl;
+  class LabelDecl;
   class EnumConstantDecl;
   class FunctionDecl;
   class FunctionProtoType;
@@ -768,7 +769,7 @@ public:
   /// The given basic block lies in the current EH scope, but may be a
   /// target of a potentially scope-crossing jump; get a stable handle
   /// to which we can perform this jump later.
-  JumpDest getJumpDestInCurrentScope(const char *Name = 0) {
+  JumpDest getJumpDestInCurrentScope(llvm::StringRef Name = llvm::StringRef()) {
     return getJumpDestInCurrentScope(createBasicBlock(Name));
   }
 
@@ -887,7 +888,7 @@ private:
   DeclMapTy LocalDeclMap;
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
-  llvm::DenseMap<const LabelStmt*, JumpDest> LabelMap;
+  llvm::DenseMap<const LabelDecl*, JumpDest> LabelMap;
 
   // BreakContinueStack - This keeps track of where break and continue
   // statements should jump to.
@@ -1168,7 +1169,7 @@ public:
 
   /// getBasicBlockForLabel - Return the LLVM basicblock that the specified
   /// label maps to.
-  JumpDest getJumpDestForLabel(const LabelStmt *S);
+  JumpDest getJumpDestForLabel(const LabelDecl *S);
 
   /// SimplifyForwardingBlocks - If the given basic block is only a branch to
   /// another basic block, simplify it. This assumes that no other code could
@@ -1321,7 +1322,7 @@ public:
   /// the input field number being accessed.
   static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
 
-  llvm::BlockAddress *GetAddrOfLabel(const LabelStmt *L);
+  llvm::BlockAddress *GetAddrOfLabel(const LabelDecl *L);
   llvm::BasicBlock *GetIndirectGotoBlock();
 
   /// EmitNullInitialization - Generate code to set a value of the given type to
@@ -1504,7 +1505,7 @@ public:
 
   /// EmitLabel - Emit the block for the given label. It is legal to call this
   /// function even if there is no current insertion point.
-  void EmitLabel(const LabelStmt &S); // helper for EmitLabelStmt.
+  void EmitLabel(const LabelDecl *D); // helper for EmitLabelStmt.
 
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);

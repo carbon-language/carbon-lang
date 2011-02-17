@@ -1095,7 +1095,7 @@ def err_regparm_mismatch : Error<"function declared with with regparm(%0) "
   "attribute was previously declared "
   "%plural{0:without the regparm|:with the regparm(%1)}1 attribute">;
 def warn_label_attribute_not_unused : Warning<
-  "The only valid attribute for labels is 'unused'">;
+  "the only valid attribute for labels is 'unused'">;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
@@ -2157,9 +2157,9 @@ def warn_missing_braces : Warning<
   "suggest braces around initialization of subobject">,
   InGroup<DiagGroup<"missing-braces">>, DefaultIgnore;
 
-def err_redefinition_of_label : Error<"redefinition of label '%0'">;
-def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
-def warn_unused_label : Warning<"unused label '%0'">,
+def err_redefinition_of_label : Error<"redefinition of label %0">;
+def err_undeclared_label_use : Error<"use of undeclared label %0">;
+def warn_unused_label : Warning<"unused label %0">,
   InGroup<UnusedLabel>, DefaultIgnore;
 
 def err_goto_into_protected_scope : Error<"goto into protected scope">;

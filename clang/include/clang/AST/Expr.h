@@ -2641,9 +2641,9 @@ public:
 /// AddrLabelExpr - The GNU address of label extension, representing &&label.
 class AddrLabelExpr : public Expr {
   SourceLocation AmpAmpLoc, LabelLoc;
-  LabelStmt *Label;
+  LabelDecl *Label;
 public:
-  AddrLabelExpr(SourceLocation AALoc, SourceLocation LLoc, LabelStmt *L,
+  AddrLabelExpr(SourceLocation AALoc, SourceLocation LLoc, LabelDecl *L,
                 QualType t)
     : Expr(AddrLabelExprClass, t, VK_RValue, OK_Ordinary, false, false, false),
       AmpAmpLoc(AALoc), LabelLoc(LLoc), Label(L) {}
@@ -2661,8 +2661,8 @@ public:
     return SourceRange(AmpAmpLoc, LabelLoc);
   }
 
-  LabelStmt *getLabel() const { return Label; }
-  void setLabel(LabelStmt *S) { Label = S; }
+  LabelDecl *getLabel() const { return Label; }
+  void setLabel(LabelDecl *L) { Label = L; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == AddrLabelExprClass;

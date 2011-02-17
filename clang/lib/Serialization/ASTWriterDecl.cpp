@@ -47,6 +47,7 @@ namespace clang {
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *D);
     void VisitNamedDecl(NamedDecl *D);
+    void VisitLabelDecl(LabelDecl *LD);
     void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
@@ -650,6 +651,13 @@ void ASTDeclWriter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   Record.push_back(D->hasBraces());
   Code = serialization::DECL_LINKAGE_SPEC;
 }
+
+void ASTDeclWriter::VisitLabelDecl(LabelDecl *D) {
+  VisitNamedDecl(D);
+  Record.push_back(D->hasUnusedAttribute());
+  Code = serialization::DECL_LABEL;
+}
+
 
 void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitNamedDecl(D);

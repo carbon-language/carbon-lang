@@ -36,6 +36,7 @@ class FunctionTemplateSpecializationInfo;
 class DependentFunctionTemplateSpecializationInfo;
 class TypeLoc;
 class UnresolvedSetImpl;
+class LabelStmt;
 
 /// \brief A container of type source information.
 ///
@@ -294,6 +295,36 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
+/// LabelDecl - Represents the declaration of a label.  Labels also have a
+/// corresponding LabelStmt, which indicates the position that the label was
+/// defined at.  For normal labels, the location of the decl is the same as the
+/// location of the statement.  For GNU local labels (__label__), the decl
+/// location is where the __label__ is.
+class LabelDecl : public NamedDecl {
+  /// HasUnusedAttr - True if the label has __attribute__((unused)) on it.
+  /// FIXME: Just use attributes!
+  unsigned HasUnusedAttr : 1;
+
+  LabelStmt *TheStmt;
+  LabelDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *II, LabelStmt *S)
+    : NamedDecl(Label, DC, L, II), TheStmt(S) {}
+  
+public:
+  static LabelDecl *Create(ASTContext &C, DeclContext *DC,
+                           SourceLocation L, IdentifierInfo *II);
+
+  LabelStmt *getStmt() const { return TheStmt; }
+  void setStmt(LabelStmt *T) { TheStmt = T; }
+  
+  bool hasUnusedAttribute() const { return HasUnusedAttr; }
+  void setHasUnusedAttribute() { HasUnusedAttr = true; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classof(const LabelDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Label; }
+};
+  
 /// NamespaceDecl - Represent a C++ namespace.
 class NamespaceDecl : public NamedDecl, public DeclContext {
   bool IsInline : 1;

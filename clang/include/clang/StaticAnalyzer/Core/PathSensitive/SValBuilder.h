@@ -238,7 +238,7 @@ public:
     return loc::MemRegionVal(R);
   }
 
-  Loc makeLoc(const AddrLabelExpr* E) {
+  Loc makeLoc(const AddrLabelExpr *E) {
     return loc::GotoLabel(E->getLabel());
   }
 

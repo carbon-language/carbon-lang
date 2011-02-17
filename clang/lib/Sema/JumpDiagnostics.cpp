@@ -62,7 +62,7 @@ class JumpScopeChecker {
   llvm::SmallVector<Stmt*, 16> Jumps;
 
   llvm::SmallVector<IndirectGotoStmt*, 4> IndirectJumps;
-  llvm::SmallVector<LabelStmt*, 4> IndirectJumpTargets;
+  llvm::SmallVector<LabelDecl*, 4> IndirectJumpTargets;
 public:
   JumpScopeChecker(Stmt *Body, Sema &S);
 private:
@@ -71,7 +71,7 @@ private:
   void VerifyJumps();
   void VerifyIndirectJumps();
   void DiagnoseIndirectJump(IndirectGotoStmt *IG, unsigned IGScope,
-                            LabelStmt *Target, unsigned TargetScope);
+                            LabelDecl *Target, unsigned TargetScope);
   void CheckJump(Stmt *From, Stmt *To,
                  SourceLocation DiagLoc, unsigned JumpDiag);
 
@@ -235,12 +235,12 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     // order to avoid blowing out the stack.
     while (true) {
       Stmt *Next;
-      if (isa<CaseStmt>(SubStmt))
-        Next = cast<CaseStmt>(SubStmt)->getSubStmt();
-      else if (isa<DefaultStmt>(SubStmt))
-        Next = cast<DefaultStmt>(SubStmt)->getSubStmt();
-      else if (isa<LabelStmt>(SubStmt))
-        Next = cast<LabelStmt>(SubStmt)->getSubStmt();
+      if (CaseStmt *CS = dyn_cast<CaseStmt>(SubStmt))
+        Next = CS->getSubStmt();
+      else if (DefaultStmt *DS = dyn_cast<DefaultStmt>(SubStmt))
+        Next = DS->getSubStmt();
+      else if (LabelStmt *LS = dyn_cast<LabelStmt>(SubStmt))
+        Next = LS->getSubStmt();
       else
         break;
 
@@ -346,15 +346,15 @@ void JumpScopeChecker::VerifyJumps() {
 
     // With a goto,
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
-      CheckJump(GS, GS->getLabel(), GS->getGotoLoc(),
+      CheckJump(GS, GS->getLabel()->getStmt(), GS->getGotoLoc(),
                 diag::err_goto_into_protected_scope);
       continue;
     }
 
     // We only get indirect gotos here when they have a constant target.
     if (IndirectGotoStmt *IGS = dyn_cast<IndirectGotoStmt>(Jump)) {
-      LabelStmt *Target = IGS->getConstantTarget();
-      CheckJump(IGS, Target, IGS->getGotoLoc(),
+      LabelDecl *Target = IGS->getConstantTarget();
+      CheckJump(IGS, Target->getStmt(), IGS->getGotoLoc(),
                 diag::err_goto_into_protected_scope);
       continue;
     }
@@ -424,15 +424,15 @@ void JumpScopeChecker::VerifyIndirectJumps() {
   // Collect a single representative of every scope containing a
   // label whose address was taken somewhere in the function.
   // For most code bases, there will be only one such scope.
-  llvm::DenseMap<unsigned, LabelStmt*> TargetScopes;
-  for (llvm::SmallVectorImpl<LabelStmt*>::iterator
+  llvm::DenseMap<unsigned, LabelDecl*> TargetScopes;
+  for (llvm::SmallVectorImpl<LabelDecl*>::iterator
          I = IndirectJumpTargets.begin(), E = IndirectJumpTargets.end();
        I != E; ++I) {
-    LabelStmt *TheLabel = *I;
-    assert(LabelAndGotoScopes.count(TheLabel) &&
+    LabelDecl *TheLabel = *I;
+    assert(LabelAndGotoScopes.count(TheLabel->getStmt()) &&
            "Referenced label didn't get added to scopes?");
-    unsigned LabelScope = LabelAndGotoScopes[TheLabel];
-    LabelStmt *&Target = TargetScopes[LabelScope];
+    unsigned LabelScope = LabelAndGotoScopes[TheLabel->getStmt()];
+    LabelDecl *&Target = TargetScopes[LabelScope];
     if (!Target) Target = TheLabel;
   }
 
@@ -445,10 +445,10 @@ void JumpScopeChecker::VerifyIndirectJumps() {
   // entered, then verify that every jump scope can be trivially
   // exitted to reach a scope in S.
   llvm::BitVector Reachable(Scopes.size(), false);
-  for (llvm::DenseMap<unsigned,LabelStmt*>::iterator
+  for (llvm::DenseMap<unsigned,LabelDecl*>::iterator
          TI = TargetScopes.begin(), TE = TargetScopes.end(); TI != TE; ++TI) {
     unsigned TargetScope = TI->first;
-    LabelStmt *TargetLabel = TI->second;
+    LabelDecl *TargetLabel = TI->second;
 
     Reachable.reset();
 
@@ -511,12 +511,12 @@ void JumpScopeChecker::VerifyIndirectJumps() {
 /// Diagnose an indirect jump which is known to cross scopes.
 void JumpScopeChecker::DiagnoseIndirectJump(IndirectGotoStmt *Jump,
                                             unsigned JumpScope,
-                                            LabelStmt *Target,
+                                            LabelDecl *Target,
                                             unsigned TargetScope) {
   assert(JumpScope != TargetScope);
 
   S.Diag(Jump->getGotoLoc(), diag::err_indirect_goto_in_protected_scope);
-  S.Diag(Target->getIdentLoc(), diag::note_indirect_goto_target);
+  S.Diag(Target->getStmt()->getIdentLoc(), diag::note_indirect_goto_target);
 
   unsigned Common = GetDeepestCommonScope(JumpScope, TargetScope);
 

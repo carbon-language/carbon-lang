@@ -4,8 +4,8 @@ void f() {
   a:
   goto a;
   b: // expected-warning{{unused}}
-  c: __attribute__((unused));
-  d: __attribute__((noreturn)); // expected-warning {{The only valid attribute for labels is 'unused'}}
+  c: __attribute__((unused));    // expected-warning {{unused label 'c'}}
+  d: __attribute__((noreturn)); // expected-warning {{the only valid attribute for labels is 'unused'}}
   goto d;
   return;
 }

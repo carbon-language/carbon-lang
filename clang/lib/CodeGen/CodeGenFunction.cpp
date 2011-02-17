@@ -668,7 +668,7 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
   Builder.CreateMemSet(DestPtr, Builder.getInt8(0), SizeVal, Align, false);
 }
 
-llvm::BlockAddress *CodeGenFunction::GetAddrOfLabel(const LabelStmt *L) {
+llvm::BlockAddress *CodeGenFunction::GetAddrOfLabel(const LabelDecl *L) {
   // Make sure that there is a block for the indirect goto.
   if (IndirectBranch == 0)
     GetIndirectGotoBlock();

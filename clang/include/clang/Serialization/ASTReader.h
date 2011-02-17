@@ -56,7 +56,6 @@ class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXCtorInitializer;
 class GotoStmt;
-class LabelStmt;
 class MacroDefinition;
 class NamedDecl;
 class Preprocessor;
@@ -645,22 +644,6 @@ private:
   /// Statements usually don't have IDs, but switch cases need them, so that the
   /// switch statement can refer to them.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
-
-  /// \brief Mapping from label statement IDs in the chain to label statements.
-  ///
-  /// Statements usually don't have IDs, but labeled statements need them, so
-  /// that goto statements and address-of-label expressions can refer to them.
-  std::map<unsigned, LabelStmt *> LabelStmts;
-
-  /// \brief Mapping from label IDs to the set of "goto" statements
-  /// that point to that label before the label itself has been
-  /// de-serialized.
-  std::multimap<unsigned, GotoStmt *> UnresolvedGotoStmts;
-
-  /// \brief Mapping from label IDs to the set of address label
-  /// expressions that point to that label before the label itself has
-  /// been de-serialized.
-  std::multimap<unsigned, AddrLabelExpr *> UnresolvedAddrLabelExprs;
 
   /// \brief The number of stat() calls that hit/missed the stat
   /// cache.
@@ -1278,29 +1261,7 @@ public:
   /// \brief Retrieve the switch-case statement with the given ID.
   SwitchCase *getSwitchCaseWithID(unsigned ID);
 
-  /// \brief Record that the given label statement has been
-  /// deserialized and has the given ID.
-  void RecordLabelStmt(LabelStmt *S, unsigned ID);
-
   void ClearSwitchCaseIDs();
-
-  /// \brief Set the label of the given statement to the label
-  /// identified by ID.
-  ///
-  /// Depending on the order in which the label and other statements
-  /// referencing that label occur, this operation may complete
-  /// immediately (updating the statement) or it may queue the
-  /// statement to be back-patched later.
-  void SetLabelOf(GotoStmt *S, unsigned ID);
-
-  /// \brief Set the label of the given expression to the label
-  /// identified by ID.
-  ///
-  /// Depending on the order in which the label and other statements
-  /// referencing that label occur, this operation may complete
-  /// immediately (updating the statement) or it may queue the
-  /// statement to be back-patched later.
-  void SetLabelOf(AddrLabelExpr *S, unsigned ID);
 };
 
 /// \brief Helper class that saves the current stream position and

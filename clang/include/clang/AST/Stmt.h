@@ -130,14 +130,6 @@ protected:
     unsigned NumStmts : 32 - NumStmtBits;
   };
 
-  class LabelStmtBitfields {
-    friend class LabelStmt;
-    unsigned : NumStmtBits;
-
-    unsigned Used : 1;
-    unsigned HasUnusedAttr : 1;
-  };
-
   class ExprBitfields {
     friend class Expr;
     friend class DeclRefExpr; // computeDependence
@@ -187,7 +179,6 @@ protected:
 
     StmtBitfields StmtBits;
     CompoundStmtBitfields CompoundStmtBits;
-    LabelStmtBitfields LabelStmtBits;
     ExprBitfields ExprBits;
     CastExprBitfields CastExprBits;
     CallExprBitfields CallExprBits;
@@ -633,39 +624,30 @@ public:
   child_range children() { return child_range(&SubStmt, &SubStmt+1); }
 };
 
+  
+/// LabelStmt - Represents a label, which has a substatement.  For example:
+///    foo: return;
+///
 class LabelStmt : public Stmt {
-  IdentifierInfo *Label;
+  LabelDecl *TheDecl;
   Stmt *SubStmt;
   SourceLocation IdentLoc;
 public:
-  LabelStmt(SourceLocation IL, IdentifierInfo *label, Stmt *substmt,
-            bool hasUnusedAttr = false)
-    : Stmt(LabelStmtClass), Label(label), SubStmt(substmt), IdentLoc(IL) {
-    LabelStmtBits.Used = false;
-    LabelStmtBits.HasUnusedAttr = hasUnusedAttr;
+  LabelStmt(SourceLocation IL, LabelDecl *D, Stmt *substmt)
+    : Stmt(LabelStmtClass), TheDecl(D), SubStmt(substmt), IdentLoc(IL) {
   }
 
   // \brief Build an empty label statement.
   explicit LabelStmt(EmptyShell Empty) : Stmt(LabelStmtClass, Empty) { }
 
   SourceLocation getIdentLoc() const { return IdentLoc; }
-  IdentifierInfo *getID() const { return Label; }
-  void setID(IdentifierInfo *II) { Label = II; }
+  LabelDecl *getDecl() const { return TheDecl; }
+  void setDecl(LabelDecl *D) { TheDecl = D; }
   const char *getName() const;
   Stmt *getSubStmt() { return SubStmt; }
   const Stmt *getSubStmt() const { return SubStmt; }
   void setIdentLoc(SourceLocation L) { IdentLoc = L; }
   void setSubStmt(Stmt *SS) { SubStmt = SS; }
-
-  /// \brief Whether this label was used.
-  bool isUsed(bool CheckUnusedAttr = true) const {
-    return LabelStmtBits.Used ||
-           (CheckUnusedAttr && LabelStmtBits.HasUnusedAttr);
-  }
-  void setUsed(bool U = true) { LabelStmtBits.Used = U; }
-
-  bool HasUnusedAttribute() const { return LabelStmtBits.HasUnusedAttr; }
-  void setUnusedAttribute(bool U) { LabelStmtBits.HasUnusedAttr = U; }
 
   SourceRange getSourceRange() const {
     return SourceRange(IdentLoc, SubStmt->getLocEnd());
@@ -995,18 +977,18 @@ public:
 /// GotoStmt - This represents a direct goto.
 ///
 class GotoStmt : public Stmt {
-  LabelStmt *Label;
+  LabelDecl *Label;
   SourceLocation GotoLoc;
   SourceLocation LabelLoc;
 public:
-  GotoStmt(LabelStmt *label, SourceLocation GL, SourceLocation LL)
+  GotoStmt(LabelDecl *label, SourceLocation GL, SourceLocation LL)
     : Stmt(GotoStmtClass), Label(label), GotoLoc(GL), LabelLoc(LL) {}
 
   /// \brief Build an empty goto statement.
   explicit GotoStmt(EmptyShell Empty) : Stmt(GotoStmtClass, Empty) { }
 
-  LabelStmt *getLabel() const { return Label; }
-  void setLabel(LabelStmt *S) { Label = S; }
+  LabelDecl *getLabel() const { return Label; }
+  void setLabel(LabelDecl *D) { Label = D; }
 
   SourceLocation getGotoLoc() const { return GotoLoc; }
   void setGotoLoc(SourceLocation L) { GotoLoc = L; }
@@ -1052,8 +1034,8 @@ public:
 
   /// getConstantTarget - Returns the fixed target of this indirect
   /// goto, if one exists.
-  LabelStmt *getConstantTarget();
-  const LabelStmt *getConstantTarget() const {
+  LabelDecl *getConstantTarget();
+  const LabelDecl *getConstantTarget() const {
     return const_cast<IndirectGotoStmt*>(this)->getConstantTarget();
   }
 

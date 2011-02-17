@@ -217,12 +217,9 @@ void ASTStmtWriter::VisitDefaultStmt(DefaultStmt *S) {
 
 void ASTStmtWriter::VisitLabelStmt(LabelStmt *S) {
   VisitStmt(S);
-  Writer.AddIdentifierRef(S->getID(), Record);
+  Writer.AddDeclRef(S->getDecl(), Record);
   Writer.AddStmt(S->getSubStmt());
   Writer.AddSourceLocation(S->getIdentLoc(), Record);
-  Record.push_back(S->isUsed());
-  Record.push_back(S->HasUnusedAttribute());
-  Record.push_back(Writer.GetLabelID(S));
   Code = serialization::STMT_LABEL;
 }
 
@@ -284,7 +281,7 @@ void ASTStmtWriter::VisitForStmt(ForStmt *S) {
 
 void ASTStmtWriter::VisitGotoStmt(GotoStmt *S) {
   VisitStmt(S);
-  Record.push_back(Writer.GetLabelID(S->getLabel()));
+  Writer.AddDeclRef(S->getLabel(), Record);
   Writer.AddSourceLocation(S->getGotoLoc(), Record);
   Writer.AddSourceLocation(S->getLabelLoc(), Record);
   Code = serialization::STMT_GOTO;
@@ -722,7 +719,7 @@ void ASTStmtWriter::VisitAddrLabelExpr(AddrLabelExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getAmpAmpLoc(), Record);
   Writer.AddSourceLocation(E->getLabelLoc(), Record);
-  Record.push_back(Writer.GetLabelID(E->getLabel()));
+  Writer.AddDeclRef(E->getLabel(), Record);
   Code = serialization::EXPR_ADDR_LABEL;
 }
 
@@ -1357,18 +1354,6 @@ unsigned ASTWriter::getSwitchCaseID(SwitchCase *S) {
 
 void ASTWriter::ClearSwitchCaseIDs() {
   SwitchCaseIDs.clear();
-}
-
-/// \brief Retrieve the ID for the given label statement, which may
-/// or may not have been emitted yet.
-unsigned ASTWriter::GetLabelID(LabelStmt *S) {
-  std::map<LabelStmt *, unsigned>::iterator Pos = LabelIDs.find(S);
-  if (Pos != LabelIDs.end())
-    return Pos->second;
-
-  unsigned NextID = LabelIDs.size();
-  LabelIDs[S] = NextID;
-  return NextID;
 }
 
 /// \brief Write the given substatement or subexpression to the

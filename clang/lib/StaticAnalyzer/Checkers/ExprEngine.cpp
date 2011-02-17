@@ -1344,7 +1344,7 @@ void ExprEngine::processBranch(const Stmt* Condition, const Stmt* Term,
 
 /// processIndirectGoto - Called by CoreEngine.  Used to generate successor
 ///  nodes by processing the 'effects' of a computed goto jump.
-void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder& builder) {
+void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder &builder) {
 
   const GRState *state = builder.getState();
   SVal V = state->getSVal(builder.getTarget());
@@ -1359,16 +1359,16 @@ void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder& builder) {
   typedef IndirectGotoNodeBuilder::iterator iterator;
 
   if (isa<loc::GotoLabel>(V)) {
-    const LabelStmt* L = cast<loc::GotoLabel>(V).getLabel();
+    const LabelDecl *L = cast<loc::GotoLabel>(V).getLabel();
 
-    for (iterator I=builder.begin(), E=builder.end(); I != E; ++I) {
+    for (iterator I = builder.begin(), E = builder.end(); I != E; ++I) {
       if (I.getLabel() == L) {
         builder.generateNode(I, state);
         return;
       }
     }
 
-    assert (false && "No block with label.");
+    assert(false && "No block with label.");
     return;
   }
 

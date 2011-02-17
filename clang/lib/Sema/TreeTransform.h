@@ -975,10 +975,9 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildLabelStmt(SourceLocation IdentLoc,
-                                    IdentifierInfo *Id,
-                                    SourceLocation ColonLoc,
-                                    Stmt *SubStmt, bool HasUnusedAttr) {
+  StmtResult RebuildLabelStmt(SourceLocation IdentLoc, IdentifierInfo *Id,
+                              SourceLocation ColonLoc, Stmt *SubStmt,
+                              bool HasUnusedAttr) {
     return SemaRef.ActOnLabelStmt(IdentLoc, Id, ColonLoc, SubStmt,
                                   HasUnusedAttr);
   }
@@ -1028,10 +1027,8 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildDoStmt(SourceLocation DoLoc, Stmt *Body,
-                                 SourceLocation WhileLoc,
-                                 SourceLocation LParenLoc,
-                                 Expr *Cond,
-                                 SourceLocation RParenLoc) {
+                           SourceLocation WhileLoc, SourceLocation LParenLoc,
+                           Expr *Cond, SourceLocation RParenLoc) {
     return getSema().ActOnDoStmt(DoLoc, Body, WhileLoc, LParenLoc,
                                  Cond, RParenLoc);
   }
@@ -1040,24 +1037,21 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildForStmt(SourceLocation ForLoc,
-                                  SourceLocation LParenLoc,
-                                  Stmt *Init, Sema::FullExprArg Cond, 
-                                  VarDecl *CondVar, Sema::FullExprArg Inc,
-                                  SourceLocation RParenLoc, Stmt *Body) {
+  StmtResult RebuildForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
+                            Stmt *Init, Sema::FullExprArg Cond, 
+                            VarDecl *CondVar, Sema::FullExprArg Inc,
+                            SourceLocation RParenLoc, Stmt *Body) {
     return getSema().ActOnForStmt(ForLoc, LParenLoc, Init, Cond, 
-                                  CondVar,
-                                  Inc, RParenLoc, Body);
+                                  CondVar, Inc, RParenLoc, Body);
   }
 
   /// \brief Build a new goto statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildGotoStmt(SourceLocation GotoLoc,
-                                   SourceLocation LabelLoc,
-                                   LabelStmt *Label) {
-    return getSema().ActOnGotoStmt(GotoLoc, LabelLoc, Label->getID());
+  StmtResult RebuildGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
+                             LabelDecl *Label) {
+    return getSema().ActOnGotoStmt(GotoLoc, LabelLoc, Label->getIdentifier());
   }
 
   /// \brief Build a new indirect goto statement.
@@ -1065,8 +1059,8 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildIndirectGotoStmt(SourceLocation GotoLoc,
-                                           SourceLocation StarLoc,
-                                           Expr *Target) {
+                                     SourceLocation StarLoc,
+                                     Expr *Target) {
     return getSema().ActOnIndirectGotoStmt(GotoLoc, StarLoc, Target);
   }
 
@@ -1074,9 +1068,7 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildReturnStmt(SourceLocation ReturnLoc,
-                                     Expr *Result) {
-
+  StmtResult RebuildReturnStmt(SourceLocation ReturnLoc, Expr *Result) {
     return getSema().ActOnReturnStmt(ReturnLoc, Result);
   }
 
@@ -1550,9 +1542,8 @@ public:
   /// rather than attempting to map the label statement itself.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildAddrLabelExpr(SourceLocation AmpAmpLoc,
-                                        SourceLocation LabelLoc,
-                                        LabelStmt *Label) {
-    return getSema().ActOnAddrLabel(AmpAmpLoc, LabelLoc, Label->getID());
+                                  SourceLocation LabelLoc, LabelDecl *Label) {
+    return getSema().ActOnAddrLabel(AmpAmpLoc, LabelLoc,Label->getIdentifier());
   }
 
   /// \brief Build a new GNU statement expression.
@@ -4522,8 +4513,10 @@ TreeTransform<Derived>::TransformLabelStmt(LabelStmt *S) {
 
   // FIXME: Pass the real colon location in.
   SourceLocation ColonLoc = SemaRef.PP.getLocForEndOfToken(S->getIdentLoc());
-  return getDerived().RebuildLabelStmt(S->getIdentLoc(), S->getID(), ColonLoc,
-                                       SubStmt.get(), S->HasUnusedAttribute());
+  return getDerived().RebuildLabelStmt(S->getIdentLoc(),
+                                       S->getDecl()->getIdentifier(), ColonLoc,
+                                       SubStmt.get(),
+                                       S->getDecl()->hasUnusedAttribute());
 }
 
 template<typename Derived>

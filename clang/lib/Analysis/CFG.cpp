@@ -242,7 +242,7 @@ class CFGBuilder {
   LocalScope::const_iterator ScopePos;
 
   // LabelMap records the mapping from Label expressions to their jump targets.
-  typedef llvm::DenseMap<LabelStmt*, JumpTarget> LabelMapTy;
+  typedef llvm::DenseMap<LabelDecl*, JumpTarget> LabelMapTy;
   LabelMapTy LabelMap;
 
   // A list of blocks that end with a "goto" that must be backpatched to their
@@ -251,7 +251,7 @@ class CFGBuilder {
   BackpatchBlocksTy BackpatchBlocks;
 
   // A list of labels whose address has been taken (for indirect gotos).
-  typedef llvm::SmallPtrSet<LabelStmt*,5> LabelSetTy;
+  typedef llvm::SmallPtrSet<LabelDecl*, 5> LabelSetTy;
   LabelSetTy AddressTakenLabels;
 
   bool badCFG;
@@ -648,13 +648,13 @@ void CFGBuilder::addLocalScopeForStmt(Stmt* S) {
   LocalScope *Scope = 0;
 
   // For compound statement we will be creating explicit scope.
-  if (CompoundStmt* CS = dyn_cast<CompoundStmt>(S)) {
+  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(S)) {
     for (CompoundStmt::body_iterator BI = CS->body_begin(), BE = CS->body_end()
         ; BI != BE; ++BI) {
-      Stmt* SI = *BI;
-      if (LabelStmt* LS = dyn_cast<LabelStmt>(SI))
+      Stmt *SI = *BI;
+      if (LabelStmt *LS = dyn_cast<LabelStmt>(SI))
         SI = LS->getSubStmt();
-      if (DeclStmt* DS = dyn_cast<DeclStmt>(SI))
+      if (DeclStmt *DS = dyn_cast<DeclStmt>(SI))
         Scope = addLocalScopeForDeclStmt(DS, Scope);
     }
     return;
@@ -662,9 +662,9 @@ void CFGBuilder::addLocalScopeForStmt(Stmt* S) {
 
   // For any other statement scope will be implicit and as such will be
   // interesting only for DeclStmt.
-  if (LabelStmt* LS = dyn_cast<LabelStmt>(S))
+  if (LabelStmt *LS = dyn_cast<LabelStmt>(S))
     S = LS->getSubStmt();
-  if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
+  if (DeclStmt *DS = dyn_cast<DeclStmt>(S))
     addLocalScopeForDeclStmt(DS);
 }
 
@@ -1454,16 +1454,17 @@ CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
   return VisitStmt(R, AddStmtChoice::AlwaysAdd);
 }
 
-CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
+CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt *L) {
   // Get the block of the labeled statement.  Add it to our map.
   addStmt(L->getSubStmt());
-  CFGBlock* LabelBlock = Block;
+  CFGBlock *LabelBlock = Block;
 
   if (!LabelBlock)              // This can happen when the body is empty, i.e.
     LabelBlock = createBlock(); // scopes that only contains NullStmts.
 
-  assert(LabelMap.find(L) == LabelMap.end() && "label already in map");
-  LabelMap[ L ] = JumpTarget(LabelBlock, ScopePos);
+  assert(LabelMap.find(L->getDecl()) == LabelMap.end() &&
+         "label already in map");
+  LabelMap[L->getDecl()] = JumpTarget(LabelBlock, ScopePos);
 
   // Labels partition blocks, so this is the end of the basic block we were
   // processing (L is the block's label).  Because this is label (and we have

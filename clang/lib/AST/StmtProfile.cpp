@@ -101,7 +101,7 @@ void StmtProfiler::VisitDefaultStmt(DefaultStmt *S) {
 
 void StmtProfiler::VisitLabelStmt(LabelStmt *S) {
   VisitStmt(S);
-  VisitName(S->getID());
+  VisitDecl(S->getDecl());
 }
 
 void StmtProfiler::VisitIfStmt(IfStmt *S) {
@@ -129,7 +129,7 @@ void StmtProfiler::VisitForStmt(ForStmt *S) {
 
 void StmtProfiler::VisitGotoStmt(GotoStmt *S) {
   VisitStmt(S);
-  VisitName(S->getLabel()->getID());
+  VisitDecl(S->getLabel());
 }
 
 void StmtProfiler::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
@@ -351,7 +351,7 @@ void StmtProfiler::VisitConditionalOperator(ConditionalOperator *S) {
 
 void StmtProfiler::VisitAddrLabelExpr(AddrLabelExpr *S) {
   VisitExpr(S);
-  VisitName(S->getLabel()->getID());
+  VisitDecl(S->getLabel());
 }
 
 void StmtProfiler::VisitStmtExpr(StmtExpr *S) {

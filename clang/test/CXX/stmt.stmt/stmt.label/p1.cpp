@@ -9,7 +9,7 @@ label1: // expected-note{{previous definition is here}}
   x = 1;
   goto label2; // expected-error{{use of undeclared label 'label2'}}
 
-label1: // expected-error{{redefinition of label ''label1''}}
+label1: // expected-error{{redefinition of label 'label1'}}
   x = 2;
 }
 

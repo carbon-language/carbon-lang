@@ -208,7 +208,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     // emitting them before we evaluate the subexpr.
     const Stmt *LastStmt = S.body_back();
     while (const LabelStmt *LS = dyn_cast<LabelStmt>(LastStmt)) {
-      EmitLabel(*LS);
+      EmitLabel(LS->getDecl());
       LastStmt = LS->getSubStmt();
     }
 
@@ -276,24 +276,24 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
 }
 
 CodeGenFunction::JumpDest
-CodeGenFunction::getJumpDestForLabel(const LabelStmt *S) {
-  JumpDest &Dest = LabelMap[S];
+CodeGenFunction::getJumpDestForLabel(const LabelDecl *D) {
+  JumpDest &Dest = LabelMap[D];
   if (Dest.isValid()) return Dest;
 
   // Create, but don't insert, the new block.
-  Dest = JumpDest(createBasicBlock(S->getName()),
+  Dest = JumpDest(createBasicBlock(D->getName()),
                   EHScopeStack::stable_iterator::invalid(),
                   NextCleanupDestIndex++);
   return Dest;
 }
 
-void CodeGenFunction::EmitLabel(const LabelStmt &S) {
-  JumpDest &Dest = LabelMap[&S];
+void CodeGenFunction::EmitLabel(const LabelDecl *D) {
+  JumpDest &Dest = LabelMap[D];
 
   // If we didn't need a forward reference to this label, just go
   // ahead and create a destination at the current scope.
   if (!Dest.isValid()) {
-    Dest = getJumpDestInCurrentScope(S.getName());
+    Dest = getJumpDestInCurrentScope(D->getName());
 
   // Otherwise, we need to give this label a target depth and remove
   // it from the branch-fixups list.
@@ -311,7 +311,7 @@ void CodeGenFunction::EmitLabel(const LabelStmt &S) {
 
 
 void CodeGenFunction::EmitLabelStmt(const LabelStmt &S) {
-  EmitLabel(S);
+  EmitLabel(S.getDecl());
   EmitStmt(S.getSubStmt());
 }
 
@@ -327,7 +327,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
 
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
-  if (const LabelStmt *Target = S.getConstantTarget()) {
+  if (const LabelDecl *Target = S.getConstantTarget()) {
     EmitBranchThroughCleanup(getJumpDestForLabel(Target));
     return;
   }

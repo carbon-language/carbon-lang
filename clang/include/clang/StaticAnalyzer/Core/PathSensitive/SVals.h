@@ -432,15 +432,14 @@ enum Kind { GotoLabelKind, MemRegionKind, ConcreteIntKind, ObjCPropRefKind };
 
 class GotoLabel : public Loc {
 public:
-  explicit GotoLabel(LabelStmt* Label) : Loc(GotoLabelKind, Label) {}
+  explicit GotoLabel(LabelDecl *Label) : Loc(GotoLabelKind, Label) {}
 
-  const LabelStmt* getLabel() const {
-    return static_cast<const LabelStmt*>(Data);
+  const LabelDecl *getLabel() const {
+    return static_cast<const LabelDecl*>(Data);
   }
 
   static inline bool classof(const SVal* V) {
-    return V->getBaseKind() == LocKind &&
-           V->getSubKind() == GotoLabelKind;
+    return V->getBaseKind() == LocKind && V->getSubKind() == GotoLabelKind;
   }
 
   static inline bool classof(const Loc* V) {

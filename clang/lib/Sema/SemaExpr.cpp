@@ -8321,20 +8321,19 @@ ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
 }
 
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
-ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc,
-                                            SourceLocation LabLoc,
-                                            IdentifierInfo *LabelII) {
+ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
+                                IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
-  LabelStmt *&LabelDecl = getCurFunction()->LabelMap[LabelII];
+  LabelDecl *&TheDecl = getCurFunction()->LabelMap[LabelII];
 
   // If we haven't seen this label yet, create a forward reference. It
   // will be validated and/or cleaned up in ActOnFinishFunctionBody.
-  if (LabelDecl == 0)
-    LabelDecl = new (Context) LabelStmt(LabLoc, LabelII, 0);
+  if (TheDecl == 0)
+    TheDecl = LabelDecl::Create(Context, CurContext, LabLoc, LabelII);
 
-  LabelDecl->setUsed();
+  TheDecl->setUsed();
   // Create the AST node.  The address of a label always has type 'void*'.
-  return Owned(new (Context) AddrLabelExpr(OpLoc, LabLoc, LabelDecl,
+  return Owned(new (Context) AddrLabelExpr(OpLoc, LabLoc, TheDecl,
                                        Context.getPointerType(Context.VoidTy)));
 }
 
@@ -8833,25 +8832,8 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
   BSI->TheDecl->setBody(cast<CompoundStmt>(Body));
 
-  bool Good = true;
   // Check goto/label use.
-  for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
-         I = BSI->LabelMap.begin(), E = BSI->LabelMap.end(); I != E; ++I) {
-    LabelStmt *L = I->second;
-
-    // Verify that we have no forward references left.  If so, there was a goto
-    // or address of a label taken, but no definition of it.
-    if (L->getSubStmt() != 0) {
-      if (!L->isUsed())
-        Diag(L->getIdentLoc(), diag::warn_unused_label) << L->getName();
-      continue;
-    }
-
-    // Emit error.
-    Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
-    Good = false;
-  }
-  if (!Good) {
+  if (BSI->checkLabelUse(0, *this)) {
     PopFunctionOrBlockScope();
     return ExprError();
   }

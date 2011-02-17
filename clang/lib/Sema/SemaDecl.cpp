@@ -5477,46 +5477,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
 
   // Check goto/label use.
   FunctionScopeInfo *CurFn = getCurFunction();
-  for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
-         I = CurFn->LabelMap.begin(), E = CurFn->LabelMap.end(); I != E; ++I) {
-    LabelStmt *L = I->second;
-
-    // Verify that we have no forward references left.  If so, there was a goto
-    // or address of a label taken, but no definition of it.  Label fwd
-    // definitions are indicated with a null substmt.
-    if (L->getSubStmt() != 0) {
-      if (!L->isUsed())
-        Diag(L->getIdentLoc(), diag::warn_unused_label) << L->getName();
-      continue;
-    }
-
-    // Emit error.
-    Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
-
-    // At this point, we have gotos that use the bogus label.  Stitch it into
-    // the function body so that they aren't leaked and that the AST is well
-    // formed.
-    if (Body == 0) {
-      // The whole function wasn't parsed correctly.
-      continue;
-    }
-
-    // Otherwise, the body is valid: we want to stitch the label decl into the
-    // function somewhere so that it is properly owned and so that the goto
-    // has a valid target.  Do this by creating a new compound stmt with the
-    // label in it.
-
-    // Give the label a sub-statement.
-    L->setSubStmt(new (Context) NullStmt(L->getIdentLoc()));
-
-    CompoundStmt *Compound = isa<CXXTryStmt>(Body) ?
-                               cast<CXXTryStmt>(Body)->getTryBlock() :
-                               cast<CompoundStmt>(Body);
-    llvm::SmallVector<Stmt*, 64> Elements(Compound->body_begin(),
-                                          Compound->body_end());
-    Elements.push_back(L);
-    Compound->setStmts(Context, Elements.data(), Elements.size());
-  }
+  CurFn->checkLabelUse(Body, *this);
 
   if (Body) {
     // C++ constructors that have function-try-blocks can't have return

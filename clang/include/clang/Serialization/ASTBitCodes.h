@@ -697,7 +697,9 @@ namespace clang {
       /// IDs. This data is used when performing qualified name lookup
       /// into a DeclContext via DeclContext::lookup.
       DECL_CONTEXT_VISIBLE,
-      /// \brief A NamespaceDecl rcord.
+      /// \brief A LabelDecl record.
+      DECL_LABEL,
+      /// \brief A NamespaceDecl record.
       DECL_NAMESPACE,
       /// \brief A NamespaceAliasDecl record.
       DECL_NAMESPACE_ALIAS,

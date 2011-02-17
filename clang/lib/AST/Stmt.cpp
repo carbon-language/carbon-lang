@@ -161,7 +161,7 @@ void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
 }
 
 const char *LabelStmt::getName() const {
-  return getID()->getNameStart();
+  return getDecl()->getIdentifier()->getNameStart();
 }
 
 // This is defined here to avoid polluting Stmt.h with importing Expr.h
@@ -658,7 +658,7 @@ void WhileStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
 }
 
 // IndirectGotoStmt
-LabelStmt *IndirectGotoStmt::getConstantTarget() {
+LabelDecl *IndirectGotoStmt::getConstantTarget() {
   if (AddrLabelExpr *E =
         dyn_cast<AddrLabelExpr>(getTarget()->IgnoreParenImpCasts()))
     return E->getLabel();

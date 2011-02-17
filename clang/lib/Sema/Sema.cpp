@@ -31,6 +31,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/StmtCXX.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
@@ -49,6 +50,53 @@ void FunctionScopeInfo::Clear() {
   Returns.clear();
   ErrorTrap.reset();
 }
+
+bool FunctionScopeInfo::checkLabelUse(Stmt *Body, Sema &S) {
+  bool AnyErrors = false;
+  for (llvm::DenseMap<IdentifierInfo*, LabelDecl*>::iterator
+       I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
+    LabelDecl *L = I->second;
+    
+    // Verify that we have no forward references left.  If so, there was a goto
+    // or address of a label taken, but no definition of it.  Label fwd
+    // definitions are indicated with a null substmt.
+    if (L->getStmt() != 0) {
+      if (!L->isUsed())
+        S.Diag(L->getLocation(), diag::warn_unused_label) << L->getDeclName();
+      continue;
+    }
+    
+    AnyErrors = true;
+    
+    // Emit error.
+    S.Diag(L->getLocation(), diag::err_undeclared_label_use) << L->getDeclName();
+    
+    // At this point, we have gotos that use the bogus label.  Stitch it into
+    // the function body so that the AST is well formed.
+    if (Body == 0) {
+      // The whole function wasn't parsed correctly.
+      continue;
+    }
+    
+    // Otherwise, the body is valid: we want to stitch the label decl into the
+    // function somewhere so that it is properly owned and so that the goto
+    // has a valid target.  Do this by creating LabelStmt and adding it to the
+    // end of the outer CompoundStmt.
+    LabelStmt *LS = new (S.Context) LabelStmt(L->getLocation(), L, 
+                                    new (S.Context) NullStmt(L->getLocation()));
+    
+    CompoundStmt *Compound = isa<CXXTryStmt>(Body) ?
+    cast<CXXTryStmt>(Body)->getTryBlock() :
+    cast<CompoundStmt>(Body);
+    llvm::SmallVector<Stmt*, 64> Elements(Compound->body_begin(),
+                                          Compound->body_end());
+    Elements.push_back(LS);
+    Compound->setStmts(S.Context, Elements.data(), Elements.size());
+  }
+  return AnyErrors;
+}
+
+
 
 BlockScopeInfo::~BlockScopeInfo() { }
 

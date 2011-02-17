@@ -15,6 +15,7 @@ def Named : Decl<1>;
   def Namespace : DDecl<Named>, DeclContext;
   def UsingDirective : DDecl<Named>;
   def NamespaceAlias : DDecl<Named>;
+  def Label : DDecl<Named>;
   def Type : DDecl<Named, 1>;
     def Typedef : DDecl<Type>;
     def UnresolvedUsingTypename : DDecl<Type>;

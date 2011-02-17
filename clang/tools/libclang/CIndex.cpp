@@ -1529,14 +1529,14 @@ public:
 
 class LabelRefVisit : public VisitorJob {
 public:
-  LabelRefVisit(LabelStmt *LS, SourceLocation labelLoc, CXCursor parent)
-    : VisitorJob(parent, VisitorJob::LabelRefVisitKind, LS,
+  LabelRefVisit(LabelDecl *LD, SourceLocation labelLoc, CXCursor parent)
+    : VisitorJob(parent, VisitorJob::LabelRefVisitKind, LD,
                  labelLoc.getPtrEncoding()) {}
   
   static bool classof(const VisitorJob *VJ) {
     return VJ->getKind() == VisitorJob::LabelRefVisitKind;
   }
-  LabelStmt *get() const { return static_cast<LabelStmt*>(data[0]); }
+  LabelDecl *get() const { return static_cast<LabelDecl*>(data[0]); }
   SourceLocation getLoc() const { 
     return SourceLocation::getFromPtrEncoding(data[1]); }
 };
@@ -1985,8 +1985,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         continue;
       }
       case VisitorJob::LabelRefVisitKind: {
-        LabelStmt *LS = cast<LabelRefVisit>(&LI)->get();
-        if (Visit(MakeCursorLabelRef(LS,
+        LabelDecl *LS = cast<LabelRefVisit>(&LI)->get();
+        if (Visit(MakeCursorLabelRef(LS->getStmt(),
                                      cast<LabelRefVisit>(&LI)->getLoc(),
                                      TU)))
           return true;
@@ -2851,7 +2851,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
       LabelStmt *Label = getCursorLabelRef(C).first;
       assert(Label && "Missing label");
       
-      return createCXString(Label->getID()->getName());
+      return createCXString(Label->getName());
     }
 
     case CXCursor_OverloadedDeclRef: {
@@ -2885,7 +2885,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
   if (clang_isStatement(C.kind)) {
     Stmt *S = getCursorStmt(C);
     if (LabelStmt *Label = dyn_cast_or_null<LabelStmt>(S))
-      return createCXString(Label->getID()->getName());
+      return createCXString(Label->getName());
 
     return createCXString("");
   }
@@ -3569,7 +3569,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   if (clang_isStatement(C.kind)) {
     Stmt *S = getCursorStmt(C);
     if (GotoStmt *Goto = dyn_cast_or_null<GotoStmt>(S))
-      return MakeCXCursor(Goto->getLabel(), getCursorDecl(C), tu);
+      return MakeCXCursor(Goto->getLabel()->getStmt(), getCursorDecl(C), tu);
 
     return clang_getNullCursor();
   }
@@ -3676,6 +3676,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::FileScopeAsm:
   case Decl::StaticAssert:
   case Decl::Block:
+  case Decl::Label:  // FIXME: Is this right??
     return C;
 
   // Declaration kinds that don't make any sense here, but are
