@@ -288,9 +288,6 @@ void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
 // Decl Implementation
 //===----------------------------------------------------------------------===//
 
-// Out-of-line virtual method providing a home for Decl.
-Decl::~Decl() { }
-
 bool Decl::isOutOfLine() const {
   if (const VarDecl *VD = dyn_cast<VarDecl>(this))
     return VD->isOutOfLine();

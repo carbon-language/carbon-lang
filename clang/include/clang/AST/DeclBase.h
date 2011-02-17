@@ -270,8 +270,6 @@ protected:
     if (Decl::CollectingStats()) add(DK);
   }
 
-  virtual ~Decl();
-  
 public:
 
   /// \brief Source range that this declaration covers.
