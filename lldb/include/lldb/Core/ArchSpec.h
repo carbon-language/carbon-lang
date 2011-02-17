@@ -12,8 +12,6 @@
 
 #if defined(__cplusplus)
 
-#include <stdint.h>
-
 #include "lldb/lldb-private.h"
 #include "llvm/ADT/Triple.h"
 
@@ -350,10 +348,10 @@ protected:
 private:
     
     void
-    MachOArchUpdated (size_t macho_idx = SIZE_MAX);
+    MachOArchUpdated (size_t macho_idx = ~(size_t)0);
     
     void
-    ELFArchUpdated (size_t idx = SIZE_MAX);
+    ELFArchUpdated (size_t idx = ~(size_t)0);
 };
 
 
