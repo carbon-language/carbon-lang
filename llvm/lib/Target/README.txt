@@ -2225,16 +2225,6 @@ avoids partial register stalls in some important cases.
 
 //===---------------------------------------------------------------------===//
 
-We should fold compares like this:
-
- %1266 = add nsw i32 %.84.i.i.i, 1
- %560 = add nsw i32 %556, 1
- %1267 = icmp slt i32 %1266, %560
-
-to a single 'icmp slt' when the add's have a single use, since they are NSW.
-
-//===---------------------------------------------------------------------===//
-
 We don't fold (icmp (add) (add)) unless the two adds only have a single use.
 There are a lot of cases that we're refusing to fold in (e.g.) 256.bzip2, for
 example:
