@@ -172,6 +172,15 @@ void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
 // Out-of-line virtual method providing a home for Decl.
 Decl::~Decl() { }
 
+bool Decl::isOutOfLine() const {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(this))
+    return VD->isOutOfLine();
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
+    return FD->isOutOfLine();
+  
+  return getLexicalDeclContext() != getDeclContext();
+}
+
 void Decl::setDeclContext(DeclContext *DC) {
   if (isOutOfSemaDC())
     delete getMultipleDC();

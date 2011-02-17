@@ -1159,7 +1159,7 @@ const Expr *VarDecl::getAnyInitializer(const VarDecl *&D) const {
 }
 
 bool VarDecl::isOutOfLine() const {
-  if (Decl::isOutOfLine())
+  if (getLexicalDeclContext() != getDeclContext())
     return true;
 
   if (!isStaticDataMember())
@@ -1883,7 +1883,7 @@ SourceLocation FunctionDecl::getPointOfInstantiation() const {
 }
 
 bool FunctionDecl::isOutOfLine() const {
-  if (Decl::isOutOfLine())
+  if (getLexicalDeclContext() != getDeclContext())
     return true;
   
   // If this function was instantiated from a member function of a 

@@ -459,9 +459,10 @@ public:
     return const_cast<Decl*>(this)->getLexicalDeclContext();
   }
 
-  virtual bool isOutOfLine() const {
-    return getLexicalDeclContext() != getDeclContext();
-  }
+  /// \brief Determine whether this declaration was written out-of-line, which
+  /// typically indicates that it was written with a qualified name in a scope
+  /// outside of its semantic scope.
+  bool isOutOfLine() const;
 
   /// setDeclContext - Set both the semantic and lexical DeclContext
   /// to DC.
