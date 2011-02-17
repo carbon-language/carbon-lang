@@ -890,43 +890,6 @@ def : Pat<(X86call (i32 texternalsym:$dst)),
 def : Pat<(X86call (i32 imm:$dst)),
           (CALLpcrel32 imm:$dst)>, Requires<[CallImmAddr]>;
 
-// X86 specific add which produces a flag.
-def : Pat<(addc GR32:$src1, GR32:$src2),
-          (ADD32rr GR32:$src1, GR32:$src2)>;
-def : Pat<(addc GR32:$src1, (load addr:$src2)),
-          (ADD32rm GR32:$src1, addr:$src2)>;
-def : Pat<(addc GR32:$src1, imm:$src2),
-          (ADD32ri GR32:$src1, imm:$src2)>;
-def : Pat<(addc GR32:$src1, i32immSExt8:$src2),
-          (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
-
-def : Pat<(addc GR64:$src1, GR64:$src2),
-          (ADD64rr GR64:$src1, GR64:$src2)>;
-def : Pat<(addc GR64:$src1, (load addr:$src2)),
-          (ADD64rm GR64:$src1, addr:$src2)>;
-def : Pat<(addc GR64:$src1, i64immSExt8:$src2),
-          (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
-def : Pat<(addc GR64:$src1, i64immSExt32:$src2),
-          (ADD64ri32 GR64:$src1, imm:$src2)>;
-
-def : Pat<(subc GR32:$src1, GR32:$src2),
-          (SUB32rr GR32:$src1, GR32:$src2)>;
-def : Pat<(subc GR32:$src1, (load addr:$src2)),
-          (SUB32rm GR32:$src1, addr:$src2)>;
-def : Pat<(subc GR32:$src1, imm:$src2),
-          (SUB32ri GR32:$src1, imm:$src2)>;
-def : Pat<(subc GR32:$src1, i32immSExt8:$src2),
-          (SUB32ri8 GR32:$src1, i32immSExt8:$src2)>;
-
-def : Pat<(subc GR64:$src1, GR64:$src2),
-          (SUB64rr GR64:$src1, GR64:$src2)>;
-def : Pat<(subc GR64:$src1, (load addr:$src2)),
-          (SUB64rm GR64:$src1, addr:$src2)>;
-def : Pat<(subc GR64:$src1, i64immSExt8:$src2),
-          (SUB64ri8 GR64:$src1, i64immSExt8:$src2)>;
-def : Pat<(subc GR64:$src1, imm:$src2),
-          (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
-
 // Comparisons.
 
 // TEST R,R is smaller than CMP R,0
