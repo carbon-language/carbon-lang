@@ -622,7 +622,7 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
         dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
         context.SetRegisterPlusOffset (dwarf_reg, 0);
 
-        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags))
+        if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags))
             return false;
     }
     return true;
@@ -688,7 +688,7 @@ EmulateInstructionARM::EmulateMovRdImm (ARMEncoding encoding)
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
 
-        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags, carry))
+        if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags, carry))
             return false;
     }
     return true;
@@ -753,7 +753,7 @@ EmulateInstructionARM::EmulateMvnRdImm (ARMEncoding encoding)
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
 
-        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags, carry))
+        if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags, carry))
             return false;
     }
     return true;
@@ -2006,7 +2006,7 @@ EmulateInstructionARM::EmulateAddReg (ARMEncoding encoding)
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
 
-        if (!WriteCoreRegisterWithFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+        if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
             return false;
     }
     return true;
@@ -2047,24 +2047,14 @@ EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
     if (!success)
         return false;
                   
+    AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
+
     EmulateInstruction::Context context;
     context.type = EmulateInstruction::eContextImmediate;
     context.SetNoArgs ();
-                  
-    AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
-    m_new_inst_cpsr = m_inst_cpsr;
-    SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
-    SetBit32(m_new_inst_cpsr, CPSR_Z, res.result == 0 ? 1 : 0);
-    SetBit32(m_new_inst_cpsr, CPSR_C, res.carry_out);
-    SetBit32(m_new_inst_cpsr, CPSR_V, res.overflow);
-    if (m_new_inst_cpsr != m_inst_cpsr)
-    {
-        EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextImmediate;
-        context.SetNoArgs ();
-        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
-            return false;
-    }
+    if (!WriteFlags(context, res.result, res.carry_out, res.overflow))
+        return false;
+
     return true;
 }
 
@@ -2117,24 +2107,14 @@ EmulateInstructionARM::EmulateCmpRnRm (ARMEncoding encoding)
     if (!success)
         return false;
                   
+    AddWithCarryResult res = AddWithCarry(reg_val1, ~reg_val2, 1);
+
     EmulateInstruction::Context context;
     context.type = EmulateInstruction::eContextImmediate;
     context.SetNoArgs();
-                  
-    AddWithCarryResult res = AddWithCarry(reg_val1, reg_val2, 1);
-    m_new_inst_cpsr = m_inst_cpsr;
-    SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(res.result, CPSR_N));
-    SetBit32(m_new_inst_cpsr, CPSR_Z, res.result == 0 ? 1 : 0);
-    SetBit32(m_new_inst_cpsr, CPSR_C, res.carry_out);
-    SetBit32(m_new_inst_cpsr, CPSR_V, res.overflow);
-    if (m_new_inst_cpsr != m_inst_cpsr)
-    {
-        EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextImmediate;
-        context.SetNoArgs ();
-        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
-            return false;
-    }
+    if (!WriteFlags(context, res.result, res.carry_out, res.overflow))
+        return false;
+
     return true;
 }
 
@@ -2438,7 +2418,7 @@ EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType sh
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
      
-        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags, carry))
+        if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags, carry))
             return false;
     }
     return true;
@@ -2507,7 +2487,7 @@ EmulateInstructionARM::EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType sh
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
      
-        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags, carry))
+        if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags, carry))
             return false;
     }
     return true;
@@ -4802,12 +4782,12 @@ EmulateInstructionARM::AddWithCarry (uint32_t x, uint32_t y, uint8_t carry_in)
 // In the above case, the API client does not pass in the overflow arg, which
 // defaults to ~0u.
 bool
-EmulateInstructionARM::WriteCoreRegisterWithFlags (Context &context,
-                                                   const uint32_t result,
-                                                   const uint32_t Rd,
-                                                   bool setflags,
-                                                   const uint32_t carry,
-                                                   const uint32_t overflow)
+EmulateInstructionARM::WriteCoreRegOptionalFlags (Context &context,
+                                                  const uint32_t result,
+                                                  const uint32_t Rd,
+                                                  bool setflags,
+                                                  const uint32_t carry,
+                                                  const uint32_t overflow)
 {
     if (Rd == 15)
     {
@@ -4819,20 +4799,38 @@ EmulateInstructionARM::WriteCoreRegisterWithFlags (Context &context,
         if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
             return false;
         if (setflags)
-        {
-            m_new_inst_cpsr = m_inst_cpsr;
-            SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
-            SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
-            if (carry != ~0u)
-                SetBit32(m_new_inst_cpsr, CPSR_C, carry);
-            if (overflow != ~0u)
-                SetBit32(m_new_inst_cpsr, CPSR_V, overflow);
-            if (m_new_inst_cpsr != m_inst_cpsr)
-            {
-                if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
-                    return false;
-            }
-        }
+            return WriteFlags (context, result, carry, overflow);
+    }
+    return true;
+}
+
+// This helper method tries to encapsulate the following pseudocode from the
+// ARM Architecture Reference Manual:
+//
+// APSR.N = result<31>;
+// APSR.Z = IsZeroBit(result);
+// APSR.C = carry;
+// APSR.V = overflow
+//
+// Default arguments can be specified for carry and overflow parameters, which means
+// not to update the respective flags.
+bool
+EmulateInstructionARM::WriteFlags (Context &context,
+                                   const uint32_t result,
+                                   const uint32_t carry,
+                                   const uint32_t overflow)
+{
+    m_new_inst_cpsr = m_inst_cpsr;
+    SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
+    SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
+    if (carry != ~0u)
+        SetBit32(m_new_inst_cpsr, CPSR_C, carry);
+    if (overflow != ~0u)
+        SetBit32(m_new_inst_cpsr, CPSR_V, overflow);
+    if (m_new_inst_cpsr != m_inst_cpsr)
+    {
+        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+            return false;
     }
     return true;
 }

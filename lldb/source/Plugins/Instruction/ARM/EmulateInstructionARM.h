@@ -194,14 +194,23 @@ public:
 
     // See A8.6.96 MOV (immediate) Operation.
     // Default arguments are specified for carry and overflow parameters, which means
-    // not to update the respective flags if setflags is true.
+    // not to update the respective flags even if setflags is true.
     bool
-    WriteCoreRegisterWithFlags (Context &context,
-                                const uint32_t result,
-                                const uint32_t Rd,
-                                bool setflags,
-                                const uint32_t carry = ~0u,
-                                const uint32_t overflow = ~0u);
+    WriteCoreRegOptionalFlags (Context &context,
+                               const uint32_t result,
+                               const uint32_t Rd,
+                               bool setflags,
+                               const uint32_t carry = ~0u,
+                               const uint32_t overflow = ~0u);
+
+    // See A8.6.35 CMP (immediate) Operation.
+    // Default arguments are specified for carry and overflow parameters, which means
+    // not to update the respective flags.
+    bool
+    WriteFlags (Context &context,
+                const uint32_t result,
+                const uint32_t carry = ~0u,
+                const uint32_t overflow = ~0u);
 
     inline uint64_t
     MemARead (EmulateInstruction::Context &context, 
