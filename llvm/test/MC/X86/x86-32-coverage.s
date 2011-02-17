@@ -267,6 +267,9 @@
 // CHECK: 	leave
         	leave
 
+// CHECK: 	leave
+        	leavel
+
 // CHECK: 	seto	%bl
         	seto	%bl
 
@@ -3329,6 +3332,10 @@
 // CHECK: leave
 // CHECK:  encoding: [0xc9]
         	leave
+
+// CHECK: leave
+// CHECK:  encoding: [0xc9]
+        	leavel
 
 // CHECK: seto	%bl
 // CHECK:  encoding: [0x0f,0x90,0xc3]

@@ -148,3 +148,10 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: encoding: [0x48,0x0f,0xae,0x08]
           fxrstorq (%rax)
 
+// CHECK: leave
+// CHECK:  encoding: [0xc9]
+        	leave
+
+// CHECK: leave
+// CHECK:  encoding: [0xc9]
+        	leaveq
