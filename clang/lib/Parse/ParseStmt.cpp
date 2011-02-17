@@ -1039,7 +1039,6 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
       Collection = ParseExpression();
     } else {
       Diag(Tok, diag::err_expected_semi_for);
-      SkipUntil(tok::semi);
     }
   } else {
     Value = ParseExpression();
@@ -1065,8 +1064,14 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
       }
       Collection = ParseExpression();
     } else {
-      if (!Value.isInvalid()) Diag(Tok, diag::err_expected_semi_for);
-      SkipUntil(tok::semi);
+      if (!Value.isInvalid()) {
+        Diag(Tok, diag::err_expected_semi_for);
+      } else {
+        // Skip until semicolon or rparen, don't consume it.
+        SkipUntil(tok::r_paren, true, true);
+        if (Tok.is(tok::semi))
+          ConsumeToken();
+      }
     }
   }
   if (!ForEach) {
@@ -1074,6 +1079,8 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     // Parse the second part of the for specifier.
     if (Tok.is(tok::semi)) {  // for (...;;
       // no second part.
+    } else if (Tok.is(tok::r_paren)) {
+      // missing both semicolons.
     } else {
       ExprResult Second;
       if (getLang().CPlusPlus)
@@ -1088,12 +1095,16 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
       SecondPart = Actions.MakeFullExpr(Second.get());
     }
 
+    if (Tok.isNot(tok::semi)) {
+      if (!SecondPartIsInvalid || SecondVar)
+        Diag(Tok, diag::err_expected_semi_for);
+      else
+        // Skip until semicolon or rparen, don't consume it.
+        SkipUntil(tok::r_paren, true, true);
+    }
+
     if (Tok.is(tok::semi)) {
       ConsumeToken();
-    } else {
-      if (!SecondPartIsInvalid || SecondVar) 
-        Diag(Tok, diag::err_expected_semi_for);
-      SkipUntil(tok::semi);
     }
 
     // Parse the third part of the for specifier.
