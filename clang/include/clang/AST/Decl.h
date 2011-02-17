@@ -1332,7 +1332,7 @@ public:
   /// containing the body (if there is one).
   bool hasBody(const FunctionDecl *&Definition) const;
 
-  virtual bool hasBody() const {
+  bool hasBody() const {
     const FunctionDecl* Definition;
     return hasBody(Definition);
   }
@@ -1346,7 +1346,7 @@ public:
   /// unnecessary AST de-serialization of the body.
   Stmt *getBody(const FunctionDecl *&Definition) const;
 
-  virtual Stmt *getBody() const {
+  Stmt *getBody() const {
     const FunctionDecl* Definition;
     return getBody(Definition);
   }

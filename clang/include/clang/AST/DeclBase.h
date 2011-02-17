@@ -545,11 +545,11 @@ public:
   /// getBody - If this Decl represents a declaration for a body of code,
   ///  such as a function or method definition, this method returns the
   ///  top-level Stmt* of that body.  Otherwise this method returns null.
-  virtual Stmt* getBody() const { return 0; }
+  Stmt* getBody() const;
 
   /// \brief Returns true if this Decl represents a declaration for a body of
   /// code, such as a function or method definition.
-  virtual bool hasBody() const { return getBody() != 0; }
+  bool hasBody() const;
 
   /// getBodyRBrace - Gets the right brace of the body, if a body exists.
   /// This works whether the body is a CompoundStmt or a CXXTryStmt.

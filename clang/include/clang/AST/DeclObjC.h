@@ -300,7 +300,7 @@ public:
     return ImplementationControl(DeclImplementation);
   }
 
-  virtual Stmt *getBody() const {
+  Stmt *getBody() const {
     return (Stmt*) Body;
   }
   CompoundStmt *getCompoundBody() { return (CompoundStmt*)Body; }
