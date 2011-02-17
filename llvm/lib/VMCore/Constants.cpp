@@ -93,7 +93,13 @@ Constant *Constant::getAllOnesValue(const Type *Ty) {
   if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty))
     return ConstantInt::get(Ty->getContext(),
                             APInt::getAllOnesValue(ITy->getBitWidth()));
-  
+
+  if (Ty->isFloatingPointTy()) {
+    APFloat FL = APFloat::getAllOnesValue(Ty->getPrimitiveSizeInBits(),
+                                          !Ty->isPPC_FP128Ty());
+    return ConstantFP::get(Ty->getContext(), FL);
+  }
+
   SmallVector<Constant*, 16> Elts;
   const VectorType *VTy = cast<VectorType>(Ty);
   Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));

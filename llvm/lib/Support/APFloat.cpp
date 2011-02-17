@@ -3197,6 +3197,12 @@ APFloat::initFromAPInt(const APInt& api, bool isIEEE)
     llvm_unreachable(0);
 }
 
+APFloat
+APFloat::getAllOnesValue(unsigned BitWidth, bool isIEEE)
+{
+  return APFloat(APInt::getAllOnesValue(BitWidth), isIEEE);
+}
+
 APFloat APFloat::getLargest(const fltSemantics &Sem, bool Negative) {
   APFloat Val(Sem, fcNormal, Negative);
 
