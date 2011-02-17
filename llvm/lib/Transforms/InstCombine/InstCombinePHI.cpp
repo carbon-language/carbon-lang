@@ -209,7 +209,7 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   GetElementPtrInst *NewGEP = 
     GetElementPtrInst::Create(Base, FixedOperands.begin()+1,
                               FixedOperands.end());
-  if (AllInBounds) NewGEP->setIsInbounds();
+  if (AllInBounds) NewGEP->setIsInBounds();
   return NewGEP;
 }
 
