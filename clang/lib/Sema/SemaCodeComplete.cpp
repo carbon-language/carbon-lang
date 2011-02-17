@@ -5521,8 +5521,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
        (ReturnType.isNull() && 
         (Property->getType()->isIntegerType() || 
          Property->getType()->isBooleanType())))) {
-    llvm::Twine SelectorName = llvm::Twine("is") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName = (llvm::Twine("is") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getNullarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5540,8 +5540,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   // Add the normal mutator.
   if (IsInstanceMethod && ReturnTypeMatchesVoid && 
       !Property->getSetterMethodDecl()) {
-    llvm::Twine SelectorName = llvm::Twine("set") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName = (llvm::Twine("set") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5591,8 +5591,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   // Add -(NSUInteger)countOf<key>
   if (IsInstanceMethod &&  
       (ReturnType.isNull() || ReturnType->isIntegerType())) {
-    llvm::Twine SelectorName = llvm::Twine("countOf") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName = (llvm::Twine("countOf") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getNullarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5613,9 +5613,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   // Add -(id)objectInKeyAtIndex:(NSUInteger)index
   if (IsInstanceMethod &&
       (ReturnType.isNull() || ReturnType->isObjCObjectPointerType())) {
-    llvm::Twine SelectorName
-      = llvm::Twine("objectIn") + UpperKey + "AtIndex";
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName
+      = (llvm::Twine("objectIn") + UpperKey + "AtIndex").str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5640,9 +5640,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
         ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl() &&
         ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl()
                                                 ->getName() == "NSArray"))) {
-    llvm::Twine SelectorName
-      = llvm::Twine(Property->getName()) + "AtIndexes";
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName
+      = (llvm::Twine(Property->getName()) + "AtIndexes").str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5662,9 +5662,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // Add -(void)getKey:(type **)buffer range:(NSRange)inRange
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName = llvm::Twine("get") + UpperKey;
+    std::string SelectorName = (llvm::Twine("get") + UpperKey).str();
     IdentifierInfo *SelectorIds[2] = {
-      &Context.Idents.get(SelectorName.str()),
+      &Context.Idents.get(SelectorName),
       &Context.Idents.get("range")
     };
     
@@ -5696,10 +5696,10 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // - (void)insertObject:(type *)object inKeyAtIndex:(NSUInteger)index
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName = llvm::Twine("in") + UpperKey + "AtIndex";
+    std::string SelectorName = (llvm::Twine("in") + UpperKey + "AtIndex").str();
     IdentifierInfo *SelectorIds[2] = {
       &Context.Idents.get("insertObject"),
-      &Context.Idents.get(SelectorName.str())
+      &Context.Idents.get(SelectorName)
     };
     
     if (!KnownMethods.count(Selectors.getSelector(2, SelectorIds))) {
@@ -5728,9 +5728,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // - (void)insertKey:(NSArray *)array atIndexes:(NSIndexSet *)indexes
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName = llvm::Twine("insert") + UpperKey;
+    std::string SelectorName = (llvm::Twine("insert") + UpperKey).str();
     IdentifierInfo *SelectorIds[2] = {
-      &Context.Idents.get(SelectorName.str()),
+      &Context.Idents.get(SelectorName),
       &Context.Idents.get("atIndexes")
     };
     
@@ -5759,9 +5759,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // -(void)removeObjectFromKeyAtIndex:(NSUInteger)index
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName
-      = llvm::Twine("removeObjectFrom") + UpperKey + "AtIndex";
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());        
+    std::string SelectorName
+      = (llvm::Twine("removeObjectFrom") + UpperKey + "AtIndex").str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);        
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5781,9 +5781,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // -(void)removeKeyAtIndexes:(NSIndexSet *)indexes
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName
-      = llvm::Twine("remove") + UpperKey + "AtIndexes";
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());        
+    std::string SelectorName
+      = (llvm::Twine("remove") + UpperKey + "AtIndexes").str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);        
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5803,10 +5803,10 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // - (void)replaceObjectInKeyAtIndex:(NSUInteger)index withObject:(id)object
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName
-      = llvm::Twine("replaceObjectIn") + UpperKey + "AtIndex";
+    std::string SelectorName
+      = (llvm::Twine("replaceObjectIn") + UpperKey + "AtIndex").str();
     IdentifierInfo *SelectorIds[2] = {
-      &Context.Idents.get(SelectorName.str()),
+      &Context.Idents.get(SelectorName),
       &Context.Idents.get("withObject")
     };
     
@@ -5835,11 +5835,12 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // - (void)replaceKeyAtIndexes:(NSIndexSet *)indexes withKey:(NSArray *)array
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName1 = llvm::Twine("replace") + UpperKey + "AtIndexes";
-    llvm::Twine SelectorName2 = llvm::Twine("with") + UpperKey;
+    std::string SelectorName1 
+      = (llvm::Twine("replace") + UpperKey + "AtIndexes").str();
+    std::string SelectorName2 = (llvm::Twine("with") + UpperKey).str();
     IdentifierInfo *SelectorIds[2] = {
-      &Context.Idents.get(SelectorName1.str()),
-      &Context.Idents.get(SelectorName2.str())
+      &Context.Idents.get(SelectorName1),
+      &Context.Idents.get(SelectorName2)
     };
     
     if (!KnownMethods.count(Selectors.getSelector(2, SelectorIds))) {
@@ -5873,8 +5874,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
         ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl() &&
         ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl()
           ->getName() == "NSEnumerator"))) {
-    llvm::Twine SelectorName = llvm::Twine("enumeratorOf") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName = (llvm::Twine("enumeratorOf") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getNullarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5891,8 +5892,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   // - (type *)memberOfKey:(type *)object
   if (IsInstanceMethod && 
       (ReturnType.isNull() || ReturnType->isObjCObjectPointerType())) {
-    llvm::Twine SelectorName = llvm::Twine("memberOf") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName = (llvm::Twine("memberOf") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5920,9 +5921,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   // Mutable unordered accessors
   // - (void)addKeyObject:(type *)object
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName
-      = llvm::Twine("add") + UpperKey + llvm::Twine("Object");
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName
+      = (llvm::Twine("add") + UpperKey + llvm::Twine("Object")).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5943,8 +5944,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
 
   // - (void)addKey:(NSSet *)objects
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName = llvm::Twine("add") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName = (llvm::Twine("add") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5964,9 +5965,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // - (void)removeKeyObject:(type *)object
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName
-    = llvm::Twine("remove") + UpperKey + llvm::Twine("Object");
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName
+      = (llvm::Twine("remove") + UpperKey + llvm::Twine("Object")).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -5987,8 +5988,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   
   // - (void)removeKey:(NSSet *)objects
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName = llvm::Twine("remove") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName = (llvm::Twine("remove") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -6008,8 +6009,8 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
 
   // - (void)intersectKey:(NSSet *)objects
   if (IsInstanceMethod && ReturnTypeMatchesVoid) {
-    llvm::Twine SelectorName = llvm::Twine("intersect") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName = (llvm::Twine("intersect") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
@@ -6035,9 +6036,9 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
         ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl() &&
         ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl()
                                                     ->getName() == "NSSet"))) {
-    llvm::Twine SelectorName 
-      = llvm::Twine("keyPathsForValuesAffecting") + UpperKey;
-    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    std::string SelectorName 
+      = (llvm::Twine("keyPathsForValuesAffecting") + UpperKey).str();
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName);
     if (!KnownMethods.count(Selectors.getNullarySelector(SelectorId))) {
       if (ReturnType.isNull()) {
         Builder.AddChunk(CodeCompletionString::CK_LeftParen);
