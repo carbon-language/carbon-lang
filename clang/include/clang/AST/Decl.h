@@ -435,7 +435,7 @@ public:
     return getOriginalNamespace(); 
   }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(getLocation(), RBracLoc);
   }
 
@@ -691,7 +691,7 @@ public:
                          StorageClass SCAsWritten);
 
   virtual SourceLocation getInnerLocStart() const;
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
 
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
   StorageClass getStorageClassAsWritten() const {
@@ -1349,7 +1349,7 @@ public:
                                     const PrintingPolicy &Policy,
                                     bool Qualified) const;
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(getOuterLocStart(), EndRangeLoc);
   }
   void setLocEnd(SourceLocation E) {
@@ -2071,7 +2071,7 @@ public:
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
   SourceLocation getOuterLocStart() const;
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
 
   TagDecl* getCanonicalDecl();
   const TagDecl* getCanonicalDecl() const {
@@ -2646,7 +2646,7 @@ public:
                    const Capture *end,
                    bool capturesCXXThis);
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

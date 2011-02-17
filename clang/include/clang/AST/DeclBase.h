@@ -275,9 +275,7 @@ protected:
 public:
 
   /// \brief Source range that this declaration covers.
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(getLocation(), getLocation());
-  }
+  SourceRange getSourceRange() const;
   SourceLocation getLocStart() const { return getSourceRange().getBegin(); }
   SourceLocation getLocEnd() const { return getSourceRange().getEnd(); }
 

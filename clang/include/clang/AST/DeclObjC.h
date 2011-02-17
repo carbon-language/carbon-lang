@@ -217,7 +217,7 @@ public:
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
   void setEndLoc(SourceLocation Loc) { EndLoc = Loc; }
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(getLocation(), EndLoc);
   }
 
@@ -393,7 +393,7 @@ public:
     AtEnd = atEnd;
   }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(getLocation(), getAtEndRange().getEnd());
   }
 
@@ -883,7 +883,7 @@ public:
                                const SourceLocation *Locs = 0,
                                unsigned nElts = 0);
   
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
 
   typedef const ObjCClassRef* iterator;
   iterator begin() const { return ForwardDecls; }
@@ -1064,7 +1064,7 @@ public:
   SourceLocation getCategoryNameLoc() const { return CategoryNameLoc; }
   void setCategoryNameLoc(SourceLocation Loc) { CategoryNameLoc = Loc; }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtLoc, getAtEndRange().getEnd());
   }
 
@@ -1475,7 +1475,7 @@ public:
     return PropertyIvarDecl;
   }
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(AtLoc, getLocation());
   }
 
@@ -1541,7 +1541,7 @@ public:
                                       ObjCIvarDecl *ivarDecl,
                                       SourceLocation ivarLoc);
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const;
   
   SourceLocation getLocStart() const { return AtLoc; }
   void setAtLoc(SourceLocation Loc) { AtLoc = Loc; }

@@ -42,6 +42,30 @@ using namespace clang;
 
 static bool StatSwitch = false;
 
+namespace {
+  template<typename Class>
+  inline SourceRange getSourceRangeImpl(const Decl *D, 
+                                        SourceRange (Class::*)() const) {
+    return static_cast<const Class *>(D)->getSourceRange();
+  }
+
+  inline SourceRange getSourceRangeImpl(const Decl *D, 
+                                        SourceRange (Decl::*)() const) {
+    return D->getLocation();
+  }
+}
+
+SourceRange Decl::getSourceRange() const {
+  switch (getKind()) {
+#define ABSTRACT_DECL(Type)
+#define DECL(Type, Base) \
+  case Type: return getSourceRangeImpl(this, &Type##Decl::getSourceRange);
+#include "clang/AST/DeclNodes.inc"
+  }
+  
+  return getLocation();
+}
+
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: assert(0 && "Declaration not in DeclNodes.inc!");
@@ -163,8 +187,8 @@ Decl *Decl::getCanonicalDecl() {
       return getSpecificCanonicalDecl(this, &Type##Decl::getCanonicalDecl);
 #include "clang/AST/DeclNodes.inc"
   }
-  return this;
   
+  return this;  
 }
 
 //===----------------------------------------------------------------------===//

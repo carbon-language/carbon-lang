@@ -1922,7 +1922,7 @@ public:
                                     SourceLocation IdentLoc,
                                     NamedDecl *Namespace);
 
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(NamespaceLoc, IdentLoc);
   }
   
