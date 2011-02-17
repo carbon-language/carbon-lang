@@ -192,6 +192,14 @@ public:
     AddWithCarryResult
     AddWithCarry(uint32_t x, uint32_t y, uint8_t carry_in);
 
+    bool
+    WriteCoreRegisterWithFlags (Context &context,
+                                const uint32_t result,
+                                const uint32_t Rd,
+                                bool setflags,
+                                const uint32_t carry = ~0u,
+                                const uint32_t overflow = ~0u);
+
 protected:
 
     // Typedef for the callback function used during the emulation.
@@ -371,6 +379,14 @@ protected:
     // Helper method for ASR, LSL, LSR, and ROR (register)
     bool
     EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType shift_type);
+
+    // A8.6.113 ORR (immediate)
+    bool
+    EmulateORRImm (ARMEncoding encoding);
+
+    // A8.6.114 ORR (register)
+    bool
+    EmulateORRReg (ARMEncoding encoding);
 
     // A8.6.53 LDM/LDMIA/LDMFD
     bool

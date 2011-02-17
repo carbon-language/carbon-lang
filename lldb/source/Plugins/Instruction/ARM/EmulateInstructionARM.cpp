@@ -616,7 +616,7 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
         default:
             return false;
         }
-        uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        uint32_t result = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
         if (!success)
             return false;
         
@@ -626,28 +626,9 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
         context.SetRegisterPlusOffset (dwarf_reg, 0);
-    
-        if (Rd == 15)
-        {
-            if (!ALUWritePC (context, reg_value))
-                return false;
-        }
-        else
-        {
-            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, reg_value))
-                return false;
-            if (setflags)
-            {
-                m_new_inst_cpsr = m_inst_cpsr;
-                SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(reg_value, CPSR_N));
-                SetBit32(m_new_inst_cpsr, CPSR_Z, reg_value == 0 ? 1 : 0);
-                if (m_new_inst_cpsr != m_inst_cpsr)
-                {
-                    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
-                        return false;
-                }
-            }
-        }
+
+        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags))
+            return false;
     }
     return true;
 }
@@ -711,29 +692,9 @@ EmulateInstructionARM::EmulateMovRdImm (ARMEncoding encoding)
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
-                                       
-        if (Rd == 15)
-        {
-            if (!ALUWritePC (context, result))
-                return false;
-        }
-        else
-        {
-            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
-                return false;
-            if (setflags)
-            {
-                m_new_inst_cpsr = m_inst_cpsr;
-                SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
-                SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
-                SetBit32(m_new_inst_cpsr, CPSR_C, carry);
-                if (m_new_inst_cpsr != m_inst_cpsr)
-                {
-                    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
-                        return false;
-                }
-            }
-        }
+
+        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags, carry))
+            return false;
     }
     return true;
 }
@@ -796,29 +757,9 @@ EmulateInstructionARM::EmulateMvnRdImm (ARMEncoding encoding)
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
-    
-        if (Rd == 15)
-        {
-            if (!ALUWritePC (context, result))
-                return false;
-        }
-        else
-        {
-            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
-                return false;
-            if (setflags)
-            {
-                m_new_inst_cpsr = m_inst_cpsr;
-                SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
-                SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
-                SetBit32(m_new_inst_cpsr, CPSR_C, carry);
-                if (m_new_inst_cpsr != m_inst_cpsr)
-                {
-                    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
-                        return false;
-                }
-            }
-        }
+
+        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags, carry))
+            return false;
     }
     return true;
 }
@@ -1926,13 +1867,13 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
     if (ConditionPassed())
     {
         uint32_t Rd, Rn, Rm;
-        //bool setflags = false;
+        bool setflags;
         switch (encoding)
         {
         case eEncodingT2:
-            // setflags = FALSE
             Rd = Rn = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
             Rm = Bits32(opcode, 6, 3);
+            setflags = false;
             if (Rn == 15 && Rm == 15)
                 return false;
             break;
@@ -1957,22 +1898,16 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
         if (!success)
             return false;
 
+        // TODO: Handle the case where Rm needs to be shifted properly.
+        AddWithCarryResult res = AddWithCarry(val1, val2, 0);
         result = val1 + val2;
 
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
-    
-        if (Rd == 15)
-        {
-            if (!ALUWritePC (context, result))
-                return false;
-        }
-        else
-        {
-            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
-                return false;
-        }
+
+        if (!WriteCoreRegisterWithFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+            return false;
     }
     return true;
 }
@@ -2403,28 +2338,8 @@ EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType sh
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
      
-        if (Rd == 15)
-        {
-            if (!ALUWritePC (context, result))
-                return false;
-        }
-        else
-        {
-            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
-                return false;
-            if (setflags)
-            {
-                m_new_inst_cpsr = m_inst_cpsr;
-                SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
-                SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
-                SetBit32(m_new_inst_cpsr, CPSR_C, carry);
-                if (m_new_inst_cpsr != m_inst_cpsr)
-                {
-                    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
-                        return false;
-                }
-            }
-        }
+        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags, carry))
+            return false;
     }
     return true;
 }
@@ -2492,20 +2407,8 @@ EmulateInstructionARM::EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType sh
         context.type = EmulateInstruction::eContextImmediate;
         context.SetNoArgs ();
      
-        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
+        if (!WriteCoreRegisterWithFlags(context, result, Rd, setflags, carry))
             return false;
-        if (setflags)
-        {
-            m_new_inst_cpsr = m_inst_cpsr;
-            SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
-            SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
-            SetBit32(m_new_inst_cpsr, CPSR_C, carry);
-            if (m_new_inst_cpsr != m_inst_cpsr)
-            {
-                if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
-                    return false;
-            }
-        }
     }
     return true;
 }
@@ -4772,6 +4675,60 @@ EmulateInstructionARM::AddWithCarry (uint32_t x, uint32_t y, uint8_t carry_in)
     
     AddWithCarryResult res = { result, carry_out, overflow };
     return res;
+}
+
+// Write the result to the ARM core register Rd, and optionally update the
+// condition flags based on the result.
+//
+// This helper method tries to encapsulate the following pseudocode from the
+// ARM Architecture Reference Manual:
+//
+// if d == 15 then         // Can only occur for encoding A1
+//     ALUWritePC(result); // setflags is always FALSE here
+// else
+//     R[d] = result;
+//     if setflags then
+//         APSR.N = result<31>;
+//         APSR.Z = IsZeroBit(result);
+//         APSR.C = carry;
+//         // APSR.V unchanged
+//
+// In the above case, the API client does not pass in the overflow arg, which
+// defaults to ~0u.
+bool
+EmulateInstructionARM::WriteCoreRegisterWithFlags (Context &context,
+                                                   const uint32_t result,
+                                                   const uint32_t Rd,
+                                                   bool setflags,
+                                                   const uint32_t carry,
+                                                   const uint32_t overflow)
+{
+    if (Rd == 15)
+    {
+        if (!ALUWritePC (context, result))
+            return false;
+    }
+    else
+    {
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
+            return false;
+        if (setflags)
+        {
+            m_new_inst_cpsr = m_inst_cpsr;
+            SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
+            SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
+            if (carry != ~0u)
+                SetBit32(m_new_inst_cpsr, CPSR_C, carry);
+            if (overflow != ~0u)
+                SetBit32(m_new_inst_cpsr, CPSR_V, overflow);
+            if (m_new_inst_cpsr != m_inst_cpsr)
+            {
+                if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+                    return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool
