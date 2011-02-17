@@ -1318,10 +1318,6 @@ public:
   static ClassTemplateSpecializationDecl *
   Create(ASTContext &Context, EmptyShell Empty);
 
-  virtual void getNameForDiagnostic(std::string &S,
-                                    const PrintingPolicy &Policy,
-                                    bool Qualified) const;
-
   ClassTemplateSpecializationDecl *getMostRecentDeclaration() {
     CXXRecordDecl *Recent
         = cast<CXXRecordDecl>(CXXRecordDecl::getMostRecentDeclaration());

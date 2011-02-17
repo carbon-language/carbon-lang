@@ -158,14 +158,9 @@ public:
   /// specializations are printed with their template arguments.
   ///
   /// TODO: use an API that doesn't require so many temporary strings
-  virtual void getNameForDiagnostic(std::string &S,
-                                    const PrintingPolicy &Policy,
-                                    bool Qualified) const {
-    if (Qualified)
-      S += getQualifiedNameAsString(Policy);
-    else
-      S += getNameAsString();
-  }
+  void getNameForDiagnostic(std::string &S,
+                            const PrintingPolicy &Policy,
+                            bool Qualified) const;
 
   /// declarationReplaces - Determine whether this declaration, if
   /// known to be well-formed within its context, will replace the
@@ -1348,10 +1343,6 @@ public:
   DeclarationNameInfo getNameInfo() const {
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
-
-  virtual void getNameForDiagnostic(std::string &S,
-                                    const PrintingPolicy &Policy,
-                                    bool Qualified) const;
 
   SourceRange getSourceRange() const {
     return SourceRange(getOuterLocStart(), EndRangeLoc);

@@ -551,19 +551,6 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context, EmptyShell Empty) {
     new (Context)ClassTemplateSpecializationDecl(ClassTemplateSpecialization);
 }
 
-void
-ClassTemplateSpecializationDecl::getNameForDiagnostic(std::string &S,
-                                                  const PrintingPolicy &Policy,
-                                                      bool Qualified) const {
-  NamedDecl::getNameForDiagnostic(S, Policy, Qualified);
-
-  const TemplateArgumentList &TemplateArgs = getTemplateArgs();
-  S += TemplateSpecializationType::PrintTemplateArgumentList(
-                                                          TemplateArgs.data(),
-                                                          TemplateArgs.size(),
-                                                             Policy);
-}
-
 ClassTemplateDecl *
 ClassTemplateSpecializationDecl::getSpecializedTemplate() const {
   if (SpecializedPartialSpecialization *PartialSpec

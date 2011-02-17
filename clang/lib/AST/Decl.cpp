@@ -601,6 +601,30 @@ static void clearLinkageForClass(const CXXRecordDecl *record) {
   }
 }
 
+void NamedDecl::getNameForDiagnostic(std::string &S,
+                                     const PrintingPolicy &Policy,
+                                     bool Qualified) const {
+  if (Qualified)
+    S += getQualifiedNameAsString(Policy);
+  else
+    S += getNameAsString();
+
+  const TemplateArgumentList *TemplateArgs = 0;
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
+    TemplateArgs = FD->getTemplateSpecializationArgs();
+  else if (const ClassTemplateSpecializationDecl *Spec
+                              = dyn_cast<ClassTemplateSpecializationDecl>(this))
+    TemplateArgs = &Spec->getTemplateArgs();
+  
+  
+   if (TemplateArgs)
+     S += TemplateSpecializationType::PrintTemplateArgumentList(
+                                                          TemplateArgs->data(),
+                                                          TemplateArgs->size(),
+                                                          Policy);
+}
+
 void NamedDecl::ClearLinkageCache() {
   // Note that we can't skip clearing the linkage of children just
   // because the parent doesn't have cached linkage:  we don't cache
@@ -1282,19 +1306,6 @@ bool ParmVarDecl::isParameterPack() const {
 //===----------------------------------------------------------------------===//
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
-
-void FunctionDecl::getNameForDiagnostic(std::string &S,
-                                        const PrintingPolicy &Policy,
-                                        bool Qualified) const {
-  NamedDecl::getNameForDiagnostic(S, Policy, Qualified);
-  const TemplateArgumentList *TemplateArgs = getTemplateSpecializationArgs();
-  if (TemplateArgs)
-    S += TemplateSpecializationType::PrintTemplateArgumentList(
-                                                         TemplateArgs->data(),
-                                                         TemplateArgs->size(),
-                                                               Policy);
-    
-}
 
 bool FunctionDecl::isVariadic() const {
   if (const FunctionProtoType *FT = getType()->getAs<FunctionProtoType>())
