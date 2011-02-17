@@ -1801,6 +1801,8 @@ bool Parser::ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
     if (Tok.is(tok::code_completion)) {
       if (Completer)
         (Actions.*Completer)(getCurScope(), Data, Exprs.data(), Exprs.size());
+      else
+        Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
       ConsumeCodeCompletionToken();
     }
     
