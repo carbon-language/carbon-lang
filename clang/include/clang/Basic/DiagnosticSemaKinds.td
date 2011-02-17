@@ -1068,7 +1068,8 @@ def warn_attribute_wrong_decl_type : Warning<
   "variables and functions|functions and methods|parameters|"
   "parameters and methods|functions, methods and blocks|"
   "classes and virtual methods|functions, methods, and parameters|"
-  "classes|virtual methods|class members|variables|methods}1">;
+  "classes|virtual methods|class members|variables|methods|"
+  "variables, functions and labels}1">;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"
@@ -1094,8 +1095,6 @@ def err_cconv_varargs : Error<
 def err_regparm_mismatch : Error<"function declared with with regparm(%0) "
   "attribute was previously declared "
   "%plural{0:without the regparm|:with the regparm(%1)}1 attribute">;
-def warn_label_attribute_not_unused : Warning<
-  "the only valid attribute for labels is 'unused'">;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,

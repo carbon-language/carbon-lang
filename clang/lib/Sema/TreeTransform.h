@@ -1,15 +1,16 @@
-//===------- TreeTransform.h - Semantic Tree Transformation -----*- C++ -*-===/
+//===------- TreeTransform.h - Semantic Tree Transformation -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-//===----------------------------------------------------------------------===/
+//===----------------------------------------------------------------------===//
 //
 //  This file implements a semantic tree transformation that takes a given
 //  AST and rebuilds it, possibly transforming some nodes in the process.
 //
-//===----------------------------------------------------------------------===/
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_CLANG_SEMA_TREETRANSFORM_H
 #define LLVM_CLANG_SEMA_TREETRANSFORM_H
 
@@ -975,11 +976,9 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildLabelStmt(SourceLocation IdentLoc, IdentifierInfo *Id,
-                              SourceLocation ColonLoc, Stmt *SubStmt,
-                              bool HasUnusedAttr) {
-    return SemaRef.ActOnLabelStmt(IdentLoc, Id, ColonLoc, SubStmt,
-                                  HasUnusedAttr);
+  StmtResult RebuildLabelStmt(SourceLocation IdentLoc, LabelDecl *L,
+                              SourceLocation ColonLoc, Stmt *SubStmt) {
+    return SemaRef.ActOnLabelStmt(IdentLoc, L, ColonLoc, SubStmt);
   }
 
   /// \brief Build a new "if" statement.
@@ -987,8 +986,8 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildIfStmt(SourceLocation IfLoc, Sema::FullExprArg Cond,
-                                 VarDecl *CondVar, Stmt *Then, 
-                                 SourceLocation ElseLoc, Stmt *Else) {
+                           VarDecl *CondVar, Stmt *Then, 
+                           SourceLocation ElseLoc, Stmt *Else) {
     return getSema().ActOnIfStmt(IfLoc, Cond, CondVar, Then, ElseLoc, Else);
   }
 
@@ -997,7 +996,7 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildSwitchStmtStart(SourceLocation SwitchLoc,
-                                          Expr *Cond, VarDecl *CondVar) {
+                                    Expr *Cond, VarDecl *CondVar) {
     return getSema().ActOnStartOfSwitchStmt(SwitchLoc, Cond, 
                                             CondVar);
   }
@@ -1007,7 +1006,7 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildSwitchStmtBody(SourceLocation SwitchLoc,
-                                         Stmt *Switch, Stmt *Body) {
+                                   Stmt *Switch, Stmt *Body) {
     return getSema().ActOnFinishSwitchStmt(SwitchLoc, Switch, Body);
   }
 
@@ -1015,10 +1014,8 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildWhileStmt(SourceLocation WhileLoc,
-                                    Sema::FullExprArg Cond,
-                                    VarDecl *CondVar,
-                                    Stmt *Body) {
+  StmtResult RebuildWhileStmt(SourceLocation WhileLoc, Sema::FullExprArg Cond,
+                              VarDecl *CondVar, Stmt *Body) {
     return getSema().ActOnWhileStmt(WhileLoc, Cond, CondVar, Body);
   }
 
@@ -1051,7 +1048,7 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
                              LabelDecl *Label) {
-    return getSema().ActOnGotoStmt(GotoLoc, LabelLoc, Label->getIdentifier());
+    return getSema().ActOnGotoStmt(GotoLoc, LabelLoc, Label);
   }
 
   /// \brief Build a new indirect goto statement.
@@ -1543,7 +1540,7 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildAddrLabelExpr(SourceLocation AmpAmpLoc,
                                   SourceLocation LabelLoc, LabelDecl *Label) {
-    return getSema().ActOnAddrLabel(AmpAmpLoc, LabelLoc,Label->getIdentifier());
+    return getSema().ActOnAddrLabel(AmpAmpLoc, LabelLoc, Label);
   }
 
   /// \brief Build a new GNU statement expression.
@@ -4511,12 +4508,16 @@ TreeTransform<Derived>::TransformLabelStmt(LabelStmt *S) {
   if (SubStmt.isInvalid())
     return StmtError();
 
+  Decl *LD = getDerived().TransformDecl(S->getDecl()->getLocation(),
+                                        S->getDecl());
+  if (!LD)
+    return StmtError();
+  
+  
   // FIXME: Pass the real colon location in.
-  SourceLocation ColonLoc = SemaRef.PP.getLocForEndOfToken(S->getIdentLoc());
   return getDerived().RebuildLabelStmt(S->getIdentLoc(),
-                                       S->getDecl()->getIdentifier(), ColonLoc,
-                                       SubStmt.get(),
-                                       S->getDecl()->hasUnusedAttribute());
+                                       cast<LabelDecl>(LD), SourceLocation(),
+                                       SubStmt.get());
 }
 
 template<typename Derived>
@@ -4755,9 +4756,14 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
 template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformGotoStmt(GotoStmt *S) {
+  Decl *LD = getDerived().TransformDecl(S->getLabel()->getLocation(),
+                                        S->getLabel());
+  if (!LD)
+    return StmtError();
+  
   // Goto statements must always be rebuilt, to resolve the label.
   return getDerived().RebuildGotoStmt(S->getGotoLoc(), S->getLabelLoc(),
-                                      S->getLabel());
+                                      cast<LabelDecl>(LD));
 }
 
 template<typename Derived>
@@ -5798,8 +5804,13 @@ TreeTransform<Derived>::TransformParenListExpr(ParenListExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformAddrLabelExpr(AddrLabelExpr *E) {
+  Decl *LD = getDerived().TransformDecl(E->getLabel()->getLocation(),
+                                        E->getLabel());
+  if (!LD)
+    return ExprError();
+  
   return getDerived().RebuildAddrLabelExpr(E->getAmpAmpLoc(), E->getLabelLoc(),
-                                           E->getLabel());
+                                           cast<LabelDecl>(LD));
 }
 
 template<typename Derived>

@@ -51,6 +51,7 @@ namespace {
     void VisitFunctionDecl(FunctionDecl *D);
     void VisitFieldDecl(FieldDecl *D);
     void VisitVarDecl(VarDecl *D);
+    void VisitLabelDecl(LabelDecl *D);
     void VisitParmVarDecl(ParmVarDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
     void VisitNamespaceDecl(NamespaceDecl *D);
@@ -536,6 +537,11 @@ void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
     D->getBitWidth()->printPretty(Out, Context, 0, Policy, Indentation);
   }
 }
+
+void DeclPrinter::VisitLabelDecl(LabelDecl *D) {
+  Out << D->getNameAsString() << ":";
+}
+
 
 void DeclPrinter::VisitVarDecl(VarDecl *D) {
   if (!Policy.SuppressSpecifiers && D->getStorageClass() != SC_None)

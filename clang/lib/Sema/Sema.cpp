@@ -61,8 +61,7 @@ bool FunctionScopeInfo::checkLabelUse(Stmt *Body, Sema &S) {
     // or address of a label taken, but no definition of it.  Label fwd
     // definitions are indicated with a null substmt.
     if (L->getStmt() != 0) {
-      if (!L->isUsed())
-        S.Diag(L->getLocation(), diag::warn_unused_label) << L->getDeclName();
+      S.DiagnoseUnusedDecl(L);
       continue;
     }
     

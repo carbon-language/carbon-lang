@@ -332,6 +332,7 @@ namespace clang {
     // declarations with automatically-generated ones from
     // clang/AST/DeclNodes.inc.
     Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
+    Decl *VisitLabelDecl(LabelDecl *D);
     Decl *VisitNamespaceDecl(NamespaceDecl *D);
     Decl *VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);

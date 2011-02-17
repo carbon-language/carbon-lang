@@ -1717,10 +1717,10 @@ public:
                                       Stmt *SubStmt, Scope *CurScope);
   StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                             SourceLocation ColonLoc, Stmt *SubStmt,
-                            const AttributeList *Attr);
-  StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                            SourceLocation ColonLoc, Stmt *SubStmt,
-                            bool HasUnusedAttr);
+                            AttributeList *Attr);
+  StmtResult ActOnLabelStmt(SourceLocation IdentLoc, LabelDecl *TheDecl,
+                            SourceLocation ColonLoc, Stmt *SubStmt);
+    
   StmtResult ActOnIfStmt(SourceLocation IfLoc,
                          FullExprArg CondVal, Decl *CondVar,
                          Stmt *ThenVal,
@@ -1753,6 +1753,9 @@ public:
   StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                            SourceLocation LabelLoc,
                            IdentifierInfo *LabelII);
+  StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
+                           SourceLocation LabelLoc,
+                           LabelDecl *TheDecl);
   StmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
                                    SourceLocation StarLoc,
                                    Expr *DestExp);
@@ -2078,7 +2081,10 @@ public:
   ExprResult ActOnAddrLabel(SourceLocation OpLoc,
                             SourceLocation LabLoc,
                             IdentifierInfo *LabelII);
-
+  ExprResult ActOnAddrLabel(SourceLocation OpLoc,
+                            SourceLocation LabLoc,
+                            LabelDecl *LD);
+  
   ExprResult ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
                            SourceLocation RPLoc); // "({..})"
 

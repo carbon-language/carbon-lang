@@ -725,7 +725,6 @@ void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
 
 void ASTDeclReader::VisitLabelDecl(LabelDecl *D) {
   VisitNamedDecl(D);
-  if (Record[Idx++]) D->setHasUnusedAttribute();
 }
 
 

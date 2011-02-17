@@ -296,10 +296,6 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 /// location of the statement.  For GNU local labels (__label__), the decl
 /// location is where the __label__ is.
 class LabelDecl : public NamedDecl {
-  /// HasUnusedAttr - True if the label has __attribute__((unused)) on it.
-  /// FIXME: Just use attributes!
-  unsigned HasUnusedAttr : 1;
-
   LabelStmt *TheStmt;
   LabelDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *II, LabelStmt *S)
     : NamedDecl(Label, DC, L, II), TheStmt(S) {}
@@ -310,9 +306,6 @@ public:
 
   LabelStmt *getStmt() const { return TheStmt; }
   void setStmt(LabelStmt *T) { TheStmt = T; }
-  
-  bool hasUnusedAttribute() const { return HasUnusedAttr; }
-  void setHasUnusedAttribute() { HasUnusedAttr = true; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

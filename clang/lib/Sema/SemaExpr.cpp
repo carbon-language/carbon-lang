@@ -8362,7 +8362,11 @@ ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
   // will be validated and/or cleaned up in ActOnFinishFunctionBody.
   if (TheDecl == 0)
     TheDecl = LabelDecl::Create(Context, CurContext, LabLoc, LabelII);
+  return ActOnAddrLabel(OpLoc, LabLoc, TheDecl);
+}
 
+ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
+                                LabelDecl *TheDecl) {
   TheDecl->setUsed();
   // Create the AST node.  The address of a label always has type 'void*'.
   return Owned(new (Context) AddrLabelExpr(OpLoc, LabLoc, TheDecl,
