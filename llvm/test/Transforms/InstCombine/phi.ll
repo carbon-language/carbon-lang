@@ -125,7 +125,7 @@ Exit:           ; preds = %Loop
 
 define i32* @test8({ i32, i32 } *%A, i1 %b) {
 BB0:
-        %X = getelementptr { i32, i32 } *%A, i32 0, i32 1
+        %X = getelementptr inbounds { i32, i32 } *%A, i32 0, i32 1
         br i1 %b, label %BB1, label %BB2
 
 BB1:
@@ -139,7 +139,7 @@ BB2:
 ; CHECK: @test8
 ; CHECK-NOT: phi
 ; CHECK: BB2:
-; CHECK-NEXT: %B = getelementptr 
+; CHECK-NEXT: %B = getelementptr %0 
 ; CHECK-NEXT: ret i32* %B
 }
 
@@ -525,3 +525,4 @@ Exit:           ; preds = %Loop
 ; CHECK: Exit:
 ; CHECK-NEXT: ret i32 %B
 }
+

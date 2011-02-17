@@ -118,6 +118,8 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   // especially bad when the PHIs are in the header of a loop.
   bool NeededPhi = false;
   
+  bool AllInBounds = true;
+  
   // Scan to see if all operands are the same opcode, and all have one use.
   for (unsigned i = 1; i != PN.getNumIncomingValues(); ++i) {
     GetElementPtrInst *GEP= dyn_cast<GetElementPtrInst>(PN.getIncomingValue(i));
@@ -125,6 +127,8 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
       GEP->getNumOperands() != FirstInst->getNumOperands())
       return 0;
 
+    AllInBounds &= GEP->isInBounds();
+    
     // Keep track of whether or not all GEPs are of alloca pointers.
     if (AllBasePointersAreAllocas &&
         (!isa<AllocaInst>(GEP->getOperand(0)) ||
@@ -202,11 +206,11 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   }
   
   Value *Base = FixedOperands[0];
-  return cast<GEPOperator>(FirstInst)->isInBounds() ?
-    GetElementPtrInst::CreateInBounds(Base, FixedOperands.begin()+1,
-                                      FixedOperands.end()) :
+  GetElementPtrInst *NewGEP = 
     GetElementPtrInst::Create(Base, FixedOperands.begin()+1,
                               FixedOperands.end());
+  if (AllInBounds) NewGEP->setIsInbounds();
+  return NewGEP;
 }
 
 
