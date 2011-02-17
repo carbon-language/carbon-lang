@@ -3095,17 +3095,12 @@ void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
 }
 
 void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
-  const DeclRefExpr *DRE =
-    dyn_cast<DeclRefExpr>(E->getBase()->IgnoreParenImpCasts());
-  if (!DRE)
-    return;
-  const VarDecl *Variable = dyn_cast<VarDecl>(DRE->getDecl());
-  if (!Variable)
-    return;
+  const Expr *BaseExpr = E->getBase()->IgnoreParenImpCasts();
   const ConstantArrayType *ArrayTy =
-    Context.getAsConstantArrayType(Variable->getType());
+    Context.getAsConstantArrayType(BaseExpr->getType());
   if (!ArrayTy)
     return;
+
   const Expr *IndexExpr = E->getIdx();
   if (IndexExpr->isValueDependent())
     return;
@@ -3115,6 +3110,8 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
 
   if (!index.isNegative()) {
     const llvm::APInt &size = ArrayTy->getSize();
+    if (!size.isStrictlyPositive())
+      return;
     if (size.getBitWidth() > index.getBitWidth())
       index = index.sext(size.getBitWidth());
     if (index.slt(size))
@@ -3127,7 +3124,14 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
     Diag(E->getBase()->getLocStart(), diag::warn_array_index_precedes_bounds)
       << index.toString(10, true) << IndexExpr->getSourceRange();
   }
-  Diag(Variable->getLocStart(), diag::note_array_index_out_of_bounds)
-    << Variable->getDeclName();
+
+  const NamedDecl *ND = NULL;
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(BaseExpr))
+    ND = dyn_cast<NamedDecl>(DRE->getDecl());
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr))
+    ND = dyn_cast<NamedDecl>(ME->getMemberDecl());
+  if (ND)
+    Diag(ND->getLocStart(), diag::note_array_index_out_of_bounds)
+      << ND->getDeclName();
 }
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-experimental-checks -analyzer-check-objc-mem -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -Wno-array-bounds -analyze -analyzer-experimental-internal-checks -analyzer-experimental-checks -analyzer-check-objc-mem -analyzer-store=region -verify %s
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
