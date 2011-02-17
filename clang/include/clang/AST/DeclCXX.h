@@ -447,6 +447,9 @@ class CXXRecordDecl : public RecordDecl {
   void markedVirtualFunctionPure();
   friend void FunctionDecl::setPure(bool);
   
+  void completeDefinitionImpl(CXXFinalOverriderMap *FinalOverriders);
+  friend class RecordDecl;
+  
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id,
@@ -993,9 +996,6 @@ public:
     if (DeclAccess == AS_private) return AS_none;
     return (PathAccess > DeclAccess ? PathAccess : DeclAccess);
   }
-
-  /// \brief Indicates that the definition of this class is now complete.
-  virtual void completeDefinition();
 
   /// \brief Indicates that the definition of this class is now complete, 
   /// and provides a final overrider map to help determine

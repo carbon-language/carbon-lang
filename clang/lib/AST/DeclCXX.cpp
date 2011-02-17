@@ -819,13 +819,8 @@ CXXDestructorDecl *CXXRecordDecl::getDestructor() const {
   return Dtor;
 }
 
-void CXXRecordDecl::completeDefinition() {
-  completeDefinition(0);
-}
-
-void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
-  RecordDecl::completeDefinition();
-  
+void 
+CXXRecordDecl::completeDefinitionImpl(CXXFinalOverriderMap *FinalOverriders) {
   // If the class may be abstract (but hasn't been marked as such), check for
   // any pure final overriders.
   if (mayBeAbstract()) {
@@ -863,6 +858,12 @@ void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
                              E = data().Conversions.end(); 
        I != E; ++I)
     data().Conversions.setAccess(I, (*I)->getAccess());
+}
+
+void 
+CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
+  TagDecl::completeDefinition();
+  completeDefinitionImpl(FinalOverriders);
 }
 
 bool CXXRecordDecl::mayBeAbstract() const {

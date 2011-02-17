@@ -2485,9 +2485,8 @@ public:
     return field_begin() == field_end();
   }
 
-  /// completeDefinition - Notes that the definition of this type is
-  /// now complete.
-  virtual void completeDefinition();
+  /// \brief Indicates that the definition of this class is now complete.
+  void completeDefinition();
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const RecordDecl *D) { return true; }

@@ -2128,13 +2128,6 @@ RecordDecl::field_iterator RecordDecl::field_begin() const {
   return field_iterator(decl_iterator(FirstDecl));
 }
 
-/// completeDefinition - Notes that the definition of this type is now
-/// complete.
-void RecordDecl::completeDefinition() {
-  assert(!isDefinition() && "Cannot redefine record!");
-  TagDecl::completeDefinition();
-}
-
 void RecordDecl::LoadFieldsFromExternalStorage() const {
   ExternalASTSource *Source = getASTContext().getExternalSource();
   assert(hasExternalLexicalStorage() && Source && "No external storage?");
@@ -2158,6 +2151,13 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
     return;
 
   llvm::tie(FirstDecl, LastDecl) = BuildDeclChain(Decls);
+}
+
+void RecordDecl::completeDefinition() {
+  assert(!isDefinition() && "Cannot redefine record!");
+  TagDecl::completeDefinition();
+  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(this))
+    CXXRecord->completeDefinitionImpl(0);
 }
 
 //===----------------------------------------------------------------------===//
