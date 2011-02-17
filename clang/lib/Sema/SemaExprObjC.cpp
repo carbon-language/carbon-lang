@@ -520,6 +520,22 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     return HandleExprPropertyRefExpr(OPT, BaseExpr, TypoResult, MemberLoc,
                                      SuperLoc, SuperType, Super);
   }
+  ObjCInterfaceDecl *ClassDeclared;
+  if (ObjCIvarDecl *Ivar = 
+      IFace->lookupInstanceVariable(Member, ClassDeclared)) {
+    QualType T = Ivar->getType();
+    if (const ObjCObjectPointerType * OBJPT = 
+        T->getAsObjCInterfacePointerType()) {
+      const ObjCInterfaceType *IFaceT = OBJPT->getInterfaceType();
+      if (ObjCInterfaceDecl *IFace = IFaceT->getDecl())
+        if (IFace->isForwardDecl()) {
+          Diag(MemberLoc, diag::err_property_not_as_forward_class)
+          << MemberName << QualType(OPT, 0);
+          Diag(IFace->getLocation(), diag::note_forward_class);
+          return ExprError();
+        }
+    }
+  }
   
   Diag(MemberLoc, diag::err_property_not_found)
     << MemberName << QualType(OPT, 0);

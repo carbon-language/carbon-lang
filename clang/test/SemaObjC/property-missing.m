@@ -20,3 +20,15 @@ void f3(id o)
   o.foo; // expected-error{{property 'foo' not found on object of type 'id'}}
 }
 
+// rdar://8851803
+@class SomeOtherClass; // expected-note {{forward class is declared here}}
+
+@interface MyClass {
+    SomeOtherClass *someOtherObject;
+}
+@end
+
+void foo(MyClass *myObject) {
+	myObject.someOtherObject.someProperty = 0; // expected-error {{property 'someOtherObject' names an object of forward class type in class object 'MyClass *'}}
+}
+

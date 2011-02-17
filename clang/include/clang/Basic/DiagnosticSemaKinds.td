@@ -2567,6 +2567,8 @@ def err_getter_not_found : Error<
   "expected getter method not found on object of type %0">;
 def err_property_not_found_forward_class : Error<
   "property %0 cannot be found in forward class object %1">;
+def err_property_not_as_forward_class : Error<
+  "property %0 names an object of forward class type in class object %1">;
 def note_forward_class : Note<
   "forward class is declared here">;
 def err_duplicate_property : Error<
