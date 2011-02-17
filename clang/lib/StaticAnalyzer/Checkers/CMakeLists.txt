@@ -26,6 +26,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   ChrootChecker.cpp
   ClangSACheckerProvider.cpp
   DeadStoresChecker.cpp
+  DebugCheckers.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   ExprEngine.cpp
