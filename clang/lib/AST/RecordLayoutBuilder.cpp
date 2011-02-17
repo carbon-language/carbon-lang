@@ -572,7 +572,7 @@ protected:
 
   /// MaxFieldAlignment - The maximum allowed field alignment. This is set by
   /// #pragma pack.
-  unsigned MaxFieldAlignment;
+  CharUnits MaxFieldAlignment;
 
   /// DataSize - The data size of the record being laid out.
   uint64_t DataSize;
@@ -613,9 +613,10 @@ protected:
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
       Alignment(CharUnits::One()), UnpackedAlignment(Alignment),
       Packed(false), IsUnion(false), IsMac68kAlign(false), 
-      UnfilledBitsInLastByte(0), MaxFieldAlignment(0), DataSize(0), 
-      NonVirtualSize(CharUnits::Zero()), NonVirtualAlignment(CharUnits::One()),
-      PrimaryBase(0), PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
+      UnfilledBitsInLastByte(0), MaxFieldAlignment(CharUnits::Zero()), 
+      DataSize(0), NonVirtualSize(CharUnits::Zero()), 
+      NonVirtualAlignment(CharUnits::One()), PrimaryBase(0), 
+      PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
@@ -802,9 +803,10 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   unsigned BaseAlign = (Packed) ? 8 : UnpackedBaseAlign;
 
   // The maximum field alignment overrides base align.
-  if (MaxFieldAlignment) {
-    BaseAlign = std::min(BaseAlign, MaxFieldAlignment);
-    UnpackedBaseAlign = std::min(UnpackedBaseAlign, MaxFieldAlignment);
+  if (!MaxFieldAlignment.isZero()) {
+    unsigned MaxFieldAlignmentInBits = Context.toBits(MaxFieldAlignment);
+    BaseAlign = std::min(BaseAlign, MaxFieldAlignmentInBits);
+    UnpackedBaseAlign = std::min(UnpackedBaseAlign, MaxFieldAlignmentInBits);
   }
 
   // Update the alignment.
@@ -1097,9 +1099,10 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   unsigned BaseAlign = (Packed) ? 8 : UnpackedBaseAlign;
 
   // The maximum field alignment overrides base align.
-  if (MaxFieldAlignment) {
-    BaseAlign = std::min(BaseAlign, MaxFieldAlignment);
-    UnpackedBaseAlign = std::min(UnpackedBaseAlign, MaxFieldAlignment);
+  if (!MaxFieldAlignment.isZero()) {
+    unsigned MaxFieldAlignmentInBits = Context.toBits(MaxFieldAlignment);
+    BaseAlign = std::min(BaseAlign, MaxFieldAlignmentInBits);
+    UnpackedBaseAlign = std::min(UnpackedBaseAlign, MaxFieldAlignmentInBits);
   }
 
   // Round up the current record size to the base's alignment boundary.
@@ -1136,11 +1139,11 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
   // to bit-fields, but gcc appears not to follow that.
   if (D->hasAttr<AlignMac68kAttr>()) {
     IsMac68kAlign = true;
-    MaxFieldAlignment = 2 * 8;
+    MaxFieldAlignment = CharUnits::fromQuantity(2);
     Alignment = CharUnits::fromQuantity(2);
   } else {
     if (const MaxFieldAlignmentAttr *MFAA = D->getAttr<MaxFieldAlignmentAttr>())
-      MaxFieldAlignment = MFAA->getAlignment();
+      MaxFieldAlignment = Context.toCharUnitsFromBits(MFAA->getAlignment());
 
     if (unsigned MaxAlign = D->getMaxAlignment())
       UpdateAlignment(MaxAlign);
@@ -1324,9 +1327,10 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   UnpackedFieldAlign = std::max(UnpackedFieldAlign, D->getMaxAlignment());
 
   // The maximum field alignment overrides the aligned attribute.
-  if (MaxFieldAlignment) {
-    FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
-    UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignment);
+  if (!MaxFieldAlignment.isZero()) {
+    unsigned MaxFieldAlignmentInBits = Context.toBits(MaxFieldAlignment);
+    FieldAlign = std::min(FieldAlign, MaxFieldAlignmentInBits);
+    UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignmentInBits);
   }
 
   // Check if we need to add padding to give the field the correct alignment.
@@ -1425,9 +1429,10 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   UnpackedFieldAlign = std::max(UnpackedFieldAlign, D->getMaxAlignment());
 
   // The maximum field alignment overrides the aligned attribute.
-  if (MaxFieldAlignment) {
-    FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
-    UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignment);
+  if (!MaxFieldAlignment.isZero()) {
+    unsigned MaxFieldAlignmentInBits = Context.toBits(MaxFieldAlignment);
+    FieldAlign = std::min(FieldAlign, MaxFieldAlignmentInBits);
+    UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignmentInBits);
   }
 
   // Round up the current record size to the field's alignment boundary.
