@@ -17,6 +17,7 @@
 
 #include "ClangSACheckers.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
@@ -45,8 +46,12 @@ public:
 };
 } //end anonymous namespace
 
-void ento::registerMacOSXAPIChecker(ExprEngine &Eng) {
+static void RegisterMacOSXAPIChecker(ExprEngine &Eng) {
   Eng.registerCheck(new MacOSXAPIChecker());
+}
+
+void ento::registerMacOSXAPIChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterMacOSXAPIChecker);
 }
 
 //===----------------------------------------------------------------------===//

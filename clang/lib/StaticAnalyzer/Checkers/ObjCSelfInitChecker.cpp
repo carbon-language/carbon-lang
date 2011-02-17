@@ -47,6 +47,7 @@
 // http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjectiveC/Articles/ocAllocInit.html
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -92,9 +93,13 @@ public:
 };
 } // end anonymous namespace
 
-void ento::registerObjCSelfInitChecker(ExprEngine &Eng) {
+static void RegisterObjCSelfInitChecker(ExprEngine &Eng) {
   if (Eng.getContext().getLangOptions().ObjC1)
     Eng.registerCheck(new ObjCSelfInitChecker());
+}
+
+void ento::registerObjCSelfInitChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterObjCSelfInitChecker);
 }
 
 namespace {

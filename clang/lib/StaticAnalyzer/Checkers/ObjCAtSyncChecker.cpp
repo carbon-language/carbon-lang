@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Checkers/DereferenceChecker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
@@ -33,10 +34,14 @@ public:
 };
 } // end anonymous namespace
 
-void ento::registerObjCAtSyncChecker(ExprEngine &Eng) {
+static void RegisterObjCAtSyncChecker(ExprEngine &Eng) {
   // @synchronized is an Objective-C 2 feature.
   if (Eng.getContext().getLangOptions().ObjC2)
     Eng.registerCheck(new ObjCAtSyncChecker());
+}
+
+void ento::registerObjCAtSyncChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterObjCAtSyncChecker);
 }
 
 void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,

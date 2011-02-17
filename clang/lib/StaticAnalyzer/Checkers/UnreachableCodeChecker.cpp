@@ -17,6 +17,7 @@
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
@@ -54,8 +55,12 @@ void *UnreachableCodeChecker::getTag() {
   return &x;
 }
 
-void ento::registerUnreachableCodeChecker(ExprEngine &Eng) {
+static void RegisterUnreachableCodeChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UnreachableCodeChecker());
+}
+
+void ento::registerUnreachableCodeChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterUnreachableCodeChecker);
 }
 
 void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,

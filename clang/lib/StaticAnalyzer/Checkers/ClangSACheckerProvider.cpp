@@ -40,7 +40,7 @@ namespace {
 
 struct StaticCheckerInfoRec {
   const char *FullName;
-  CheckerManager::RegisterFunc RegFunc;
+  void (*RegFunc)(CheckerManager &mgr);
   bool Hidden;
 };
 
@@ -132,6 +132,6 @@ void ClangSACheckerProvider::registerCheckers(CheckerManager &checkerMgr,
     collectCheckers(checkOpts[i], enabledCheckers);
   for (llvm::DenseSet<const StaticCheckerInfoRec *>::iterator
          I = enabledCheckers.begin(), E = enabledCheckers.end(); I != E; ++I) {
-    checkerMgr.addCheckerRegisterFunction((*I)->RegFunc);
+    (*I)->RegFunc(checkerMgr);
   }
 }

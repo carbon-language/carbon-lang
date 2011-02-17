@@ -16,6 +16,7 @@
 #include "BasicObjCFoundationChecks.h"
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
@@ -487,18 +488,34 @@ void ClassReleaseChecker::preVisitObjCMessage(CheckerContext &C,
 // Check registration.
 //===----------------------------------------------------------------------===//
 
-void ento::registerNilArgChecker(ExprEngine& Eng) {
+static void RegisterNilArgChecker(ExprEngine& Eng) {
   Eng.registerCheck(new NilArgChecker());
 }
 
-void ento::registerCFNumberCreateChecker(ExprEngine& Eng) {
+void ento::registerNilArgChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterNilArgChecker);
+}
+
+static void RegisterCFNumberCreateChecker(ExprEngine& Eng) {
   Eng.registerCheck(new CFNumberCreateChecker());
 }
 
-void ento::registerCFRetainReleaseChecker(ExprEngine& Eng) {
+void ento::registerCFNumberCreateChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterCFNumberCreateChecker);
+}
+
+static void RegisterCFRetainReleaseChecker(ExprEngine& Eng) {
   Eng.registerCheck(new CFRetainReleaseChecker());
 }
 
-void ento::registerClassReleaseChecker(ExprEngine& Eng) {
+void ento::registerCFRetainReleaseChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterCFRetainReleaseChecker);
+}
+
+static void RegisterClassReleaseChecker(ExprEngine& Eng) {
   Eng.registerCheck(new ClassReleaseChecker());
+}
+
+void ento::registerClassReleaseChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterClassReleaseChecker);
 }

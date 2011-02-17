@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
@@ -67,6 +68,10 @@ void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
   }
 }
 
-void ento::registerPointerArithChecker(ExprEngine &Eng) {
+static void RegisterPointerArithChecker(ExprEngine &Eng) {
   Eng.registerCheck(new PointerArithChecker());
+}
+
+void ento::registerPointerArithChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterPointerArithChecker);
 }

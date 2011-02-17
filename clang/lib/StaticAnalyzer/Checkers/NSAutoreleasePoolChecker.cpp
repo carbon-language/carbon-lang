@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
@@ -45,12 +46,16 @@ public:
 } // end anonymous namespace
 
 
-void ento::registerNSAutoreleasePoolChecker(ExprEngine &Eng) {
+static void RegisterNSAutoreleasePoolChecker(ExprEngine &Eng) {
   ASTContext &Ctx = Eng.getContext();
   if (Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {    
     Eng.registerCheck(new NSAutoreleasePoolChecker(GetNullarySelector("release",
                                                                       Ctx)));
   }
+}
+
+void ento::registerNSAutoreleasePoolChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterNSAutoreleasePoolChecker);
 }
 
 void

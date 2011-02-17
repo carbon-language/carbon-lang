@@ -45,6 +45,7 @@
 #include "ClangSACheckers.h"
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerHelpers.h"
@@ -132,8 +133,12 @@ void *IdempotentOperationChecker::getTag() {
   return &x;
 }
 
-void ento::registerIdempotentOperationChecker(ExprEngine &Eng) {
+static void RegisterIdempotentOperationChecker(ExprEngine &Eng) {
   Eng.registerCheck(new IdempotentOperationChecker());
+}
+
+void ento::registerIdempotentOperationChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterIdempotentOperationChecker);
 }
 
 void IdempotentOperationChecker::PreVisitBinaryOperator(

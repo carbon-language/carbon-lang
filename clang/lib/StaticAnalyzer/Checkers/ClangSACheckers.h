@@ -18,11 +18,11 @@
 namespace clang {
 
 namespace ento {
-class ExprEngine;
+class CheckerManager;
 
 #define GET_CHECKERS
 #define CHECKER(FULLNAME,CLASS,CXXFILE,HELPTEXT,HIDDEN)    \
-  void register##CLASS(ExprEngine &Eng);
+  void register##CLASS(CheckerManager &mgr);
 #include "Checkers.inc"
 #undef CHECKER
 #undef GET_CHECKERS

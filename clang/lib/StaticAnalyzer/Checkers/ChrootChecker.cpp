@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
@@ -59,8 +60,12 @@ private:
 
 } // end anonymous namespace
 
-void ento::registerChrootChecker(ExprEngine &Eng) {
+static void RegisterChrootChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ChrootChecker());
+}
+
+void ento::registerChrootChecker(CheckerManager &mgr) {
+  mgr.addCheckerRegisterFunction(RegisterChrootChecker);
 }
 
 bool ChrootChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {

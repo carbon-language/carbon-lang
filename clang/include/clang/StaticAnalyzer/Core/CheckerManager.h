@@ -23,16 +23,16 @@ namespace ento {
 
 class CheckerManager {
 public:
-  typedef void (*RegisterFunc)(ExprEngine &Eng);
+  typedef void (*RegisterToEngFunc)(ExprEngine &Eng);
 
-  void addCheckerRegisterFunction(RegisterFunc fn) {
+  void addCheckerRegisterFunction(RegisterToEngFunc fn) {
     Funcs.push_back(fn);
   }
   
   void registerCheckersToEngine(ExprEngine &eng);
 
 private:
-  llvm::SmallVector<RegisterFunc, 8> Funcs;
+  llvm::SmallVector<RegisterToEngFunc, 8> Funcs;
 };
 
 } // end ento namespace
