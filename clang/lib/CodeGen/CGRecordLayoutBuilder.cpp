@@ -225,6 +225,12 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     FieldSize = TypeSizeInBits;
   }
 
+  // in big-endian machines the first fields are in higher bit positions,
+  // so revert the offset. The byte offsets are reversed(back) later.
+  if (Types.getTargetData().isBigEndian()) {
+    FieldOffset = ((ContainingTypeSizeInBits)-FieldOffset-FieldSize);
+  }
+
   // Compute the access components. The policy we use is to start by attempting
   // to access using the width of the bit-field type itself and to always access
   // at aligned indices of that type. If such an access would fail because it
@@ -232,7 +238,6 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
   // power of two and retry. The current algorithm assumes pow2 sized types,
   // although this is easy to fix.
   //
-  // FIXME: This algorithm is wrong on big-endian systems, I think.
   assert(llvm::isPowerOf2_32(TypeSizeInBits) && "Unexpected type size!");
   CGBitFieldInfo::AccessInfo Components[3];
   unsigned NumComponents = 0;
@@ -280,7 +285,15 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     // FIXME: We still follow the old access pattern of only using the field
     // byte offset. We should switch this once we fix the struct layout to be
     // pretty.
-    AI.FieldByteOffset = AccessStart / 8;
+
+    // on big-endian machines we reverted the bit offset because first fields are
+    // in higher bits. But this also reverts the bytes, so fix this here by reverting
+    // the byte offset on big-endian machines.
+    if (Types.getTargetData().isBigEndian()) {
+      AI.FieldByteOffset = (ContainingTypeSizeInBits - AccessStart - AccessWidth )/8;
+    } else {
+      AI.FieldByteOffset = AccessStart / 8;
+    }
     AI.FieldBitStart = AccessBitsInFieldStart - AccessStart;
     AI.AccessWidth = AccessWidth;
     AI.AccessAlignment = llvm::MinAlign(ContainingTypeAlign, AccessStart) / 8;

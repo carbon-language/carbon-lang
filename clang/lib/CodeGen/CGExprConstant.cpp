@@ -231,7 +231,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
 
     if (CGM.getTargetData().isBigEndian()) {
       // We want the high bits.
-      Tmp = FieldValue.lshr(Tmp.getBitWidth() - 8).trunc(8);
+      Tmp = FieldValue.lshr(FieldValue.getBitWidth() - 8).trunc(8);
     } else {
       // We want the low bits.
       Tmp = FieldValue.trunc(8);
