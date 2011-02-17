@@ -169,11 +169,11 @@ bool Decl::isDefinedOutsideFunctionOrMethod() const {
 
 namespace {
   template<typename Class, typename Result>
-  inline Result *getSpecificCanonicalDecl(Decl *D, Result *(Class::*Get)()) {
-    return (llvm::cast<Class>(D)->*Get)();
+  inline Result *getCanonicalDeclImpl(Decl *D, Result *(Class::*)()) {
+    return static_cast<Class *>(D)->getCanonicalDecl();
   }
   
-  inline Decl *getSpecificCanonicalDecl(Decl *D, Decl *(Decl::*)()) {
+  inline Decl *getCanonicalDeclImpl(Decl *D, Decl *(Decl::*)()) {
     // No specific implementation.
     return D;
   }
@@ -184,7 +184,7 @@ Decl *Decl::getCanonicalDecl() {
 #define ABSTRACT_DECL(Type)
 #define DECL(Type, Base) \
     case Type:           \
-      return getSpecificCanonicalDecl(this, &Type##Decl::getCanonicalDecl);
+      return getCanonicalDeclImpl(this, &Type##Decl::getCanonicalDecl);
 #include "clang/AST/DeclNodes.inc"
   }
   
