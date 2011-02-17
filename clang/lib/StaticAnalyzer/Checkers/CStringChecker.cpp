@@ -496,7 +496,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, const GRState *&state,
         llvm::SmallString<120> buf;
         llvm::raw_svector_ostream os(buf);
         os << "Argument to byte string function is the address of the label '"
-           << Label->getLabel()->getID()->getName()
+           << Label->getLabel()->getName()
            << "', which is not a null-terminated string";
 
         // Generate a report for this bug.

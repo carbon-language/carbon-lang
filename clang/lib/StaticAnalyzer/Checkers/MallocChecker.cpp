@@ -380,9 +380,7 @@ bool MallocChecker::SummarizeValue(llvm::raw_ostream& os, SVal V) {
   else if (loc::ConcreteInt *ConstAddr = dyn_cast<loc::ConcreteInt>(&V))
     os << "a constant address (" << ConstAddr->getValue() << ")";
   else if (loc::GotoLabel *Label = dyn_cast<loc::GotoLabel>(&V))
-    os << "the address of the label '"
-       << Label->getLabel()->getID()->getName()
-       << "'";
+    os << "the address of the label '" << Label->getLabel()->getName() << "'";
   else
     return false;
   
