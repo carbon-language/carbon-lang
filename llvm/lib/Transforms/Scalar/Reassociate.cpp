@@ -348,9 +348,10 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
       I->setOperand(0, Ops[i].Op);
       I->setOperand(1, Ops[i+1].Op);
 
-      // Conservatively clear all the optional flags, which may not hold
-      // after the reassociation.
-      I->clearSubclassOptionalData();
+      // Clear all the optional flags, which may not hold after the
+      // reassociation if the expression involved more than just this operation.
+      if (Ops.size() != 2)
+        I->clearSubclassOptionalData();
 
       DEBUG(dbgs() << "TO: " << *I << '\n');
       MadeChange = true;

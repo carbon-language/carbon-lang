@@ -20,3 +20,10 @@ define i64 @test1(i64 %a, i64 %b, i64 %c) {
   %z = add nsw i64 %y, %a
   ret i64 %z
 }
+
+; PR9215
+; CHECK: %s = add nsw i32 %y, %x
+define i32 @test2(i32 %x, i32 %y) {
+  %s = add nsw i32 %x, %y
+  ret i32 %s
+}
