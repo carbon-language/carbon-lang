@@ -592,13 +592,6 @@ public:
   /// when the NRVO has been applied to this variable.
   llvm::DenseMap<const VarDecl *, llvm::Value *> NRVOFlags;
 
-  /// \brief A mapping from 'Save' expression in a conditional expression
-  /// to the IR for this expression. Used to implement IR gen. for Gnu
-  /// extension's missing LHS expression in a conditional operator expression.
-  llvm::DenseMap<const Expr *, llvm::Value *> ConditionalSaveExprs;
-  llvm::DenseMap<const Expr *, ComplexPairTy> ConditionalSaveComplexExprs;
-  llvm::DenseMap<const Expr *, LValue> ConditionalSaveLValueExprs;
-
   EHScopeStack EHStack;
 
   /// i32s containing the indexes of the cleanup destinations.

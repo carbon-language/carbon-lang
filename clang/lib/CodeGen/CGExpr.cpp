@@ -510,11 +510,6 @@ LValue CodeGenFunction::EmitCheckedLValue(const Expr *E) {
 /// length type, this is not possible.
 ///
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
-  llvm::DenseMap<const Expr *, LValue>::iterator I = 
-                                      ConditionalSaveLValueExprs.find(E);
-  if (I != ConditionalSaveLValueExprs.end())
-    return I->second;
-  
   switch (E->getStmtClass()) {
   default: return EmitUnsupportedLValue(E, "l-value expression");
 

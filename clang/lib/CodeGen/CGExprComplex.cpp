@@ -98,12 +98,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   ComplexPairTy Visit(Expr *E) {
-    llvm::DenseMap<const Expr *, ComplexPairTy>::iterator I = 
-      CGF.ConditionalSaveComplexExprs.find(E);
-    if (I != CGF.ConditionalSaveComplexExprs.end())
-      return I->second;
-      
-      return StmtVisitor<ComplexExprEmitter, ComplexPairTy>::Visit(E);
+    return StmtVisitor<ComplexExprEmitter, ComplexPairTy>::Visit(E);
   }
     
   ComplexPairTy VisitStmt(Stmt *S) {

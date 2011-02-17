@@ -150,11 +150,6 @@ public:
   //===--------------------------------------------------------------------===//
 
   Value *Visit(Expr *E) {
-    llvm::DenseMap<const Expr *, llvm::Value *>::iterator I = 
-      CGF.ConditionalSaveExprs.find(E);
-    if (I != CGF.ConditionalSaveExprs.end())
-      return I->second;
-      
     return StmtVisitor<ScalarExprEmitter, Value*>::Visit(E);
   }
     
