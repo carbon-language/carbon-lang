@@ -203,6 +203,75 @@ public:
                                 const uint32_t carry = ~0u,
                                 const uint32_t overflow = ~0u);
 
+    inline uint64_t
+    MemARead (EmulateInstruction::Context &context, 
+              lldb::addr_t address, 
+              uint32_t size, 
+              uint64_t fail_value, 
+              bool *success_ptr)
+    {
+        // This is a stub function corresponding to "MemA[]" in the ARM manual pseudocode, for 
+        // aligned reads from memory.  Since we are not trying to write a full hardware simulator, and since
+        // we are running in User mode (rather than Kernel mode) and therefore won't have access to many of the
+        // system registers we would need in order to fully implement this function, we will just call
+        // ReadMemoryUnsigned from here.  In the future, if we decide we do need to do more faithful emulation of
+        // the hardware, we can update this function appropriately.
+        
+        return ReadMemoryUnsigned (context, address, size, fail_value, success_ptr);
+    }
+    
+    inline bool
+    MemAWrite (EmulateInstruction::Context &context,
+               lldb::addr_t address,
+               uint64_t data_val,
+               uint32_t size)
+    
+    {
+        // This is a stub function corresponding to "MemA[]" in the ARM manual pseudocode, for 
+        // aligned writes to memory.  Since we are not trying to write a full hardware simulator, and since
+        // we are running in User mode (rather than Kernel mode) and therefore won't have access to many of the
+        // system registers we would need in order to fully implement this function, we will just call
+        // WriteMemoryUnsigned from here.  In the future, if we decide we do need to do more faithful emulation of
+        // the hardware, we can update this function appropriately.
+        
+        return WriteMemoryUnsigned (context, address, data_val, size);
+    }
+    
+    
+    inline uint64_t
+    MemURead (EmulateInstruction::Context &context,
+              lldb::addr_t address,
+              uint32_t size,
+              uint64_t fail_value,
+              bool *success_ptr)
+    {
+        // This is a stub function corresponding to "MemU[]" in the ARM manual pseudocode, for 
+        // unaligned reads from memory.  Since we are not trying to write a full hardware simulator, and since
+        // we are running in User mode (rather than Kernel mode) and therefore won't have access to many of the
+        // system registers we would need in order to fully implement this function, we will just call
+        // ReadMemoryUnsigned from here.  In the future, if we decide we do need to do more faithful emulation of
+        // the hardware, we can update this function appropriately.
+        
+        return ReadMemoryUnsigned (context, address, size, fail_value, success_ptr);
+    }
+    
+    inline bool
+    MemUWrite (EmulateInstruction::Context &context, 
+               lldb::addr_t address,
+               uint64_t data_val,
+               uint32_t size)
+    
+    {
+        // This is a stub function corresponding to "MemU[]" in the ARM manual pseudocode, for 
+        // unaligned writes to memory.  Since we are not trying to write a full hardware simulator, and since
+        // we are running in User mode (rather than Kernel mode) and therefore won't have access to many of the
+        // system registers we would need in order to fully implement this function, we will just call
+        // WriteMemoryUnsigned from here.  In the future, if we decide we do need to do more faithful emulation of
+        // the hardware, we can update this function appropriately.
+        
+        return WriteMemoryUnsigned (context, address, data_val, size);
+    }
+
 protected:
 
     // Typedef for the callback function used during the emulation.

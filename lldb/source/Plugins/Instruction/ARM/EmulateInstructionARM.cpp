@@ -150,7 +150,7 @@ EmulateInstructionARM::WriteBits32UnknownToMemory (addr_t address)
     uint32_t random_data = rand ();
     const uint32_t addr_byte_size = GetAddressByteSize();
     
-    if (!WriteMemoryUnsigned (context, address, random_data, addr_byte_size))
+    if (!MemAWrite (context, address, random_data, addr_byte_size))
         return false;
     
     return true;
@@ -279,7 +279,7 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
                 uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
                 if (!success)
                     return false;
-                if (!WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
+                if (!MemAWrite (context, addr, reg_value, addr_byte_size))
                     return false;
                 addr += addr_byte_size;
             }
@@ -292,7 +292,7 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
             const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
             if (!success)
                 return false;
-            if (!WriteMemoryUnsigned (context, addr, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, addr, pc + 8, addr_byte_size))
                 return false;
         }
         
@@ -406,7 +406,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
             {
                 dwarf_reg.num = dwarf_r0 + i;
                 context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
-                data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
+                data = MemARead(context, addr, 4, 0, &success);
                 if (!success)
                     return false;    
                 if (!WriteRegisterUnsigned(context, eRegisterKindDWARF, dwarf_reg.num, data))
@@ -419,7 +419,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
         {
             dwarf_reg.num = dwarf_pc;
             context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
-            data = ReadMemoryUnsigned(context, addr, 4, 0, &success);
+            data = MemARead(context, addr, 4, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
@@ -833,7 +833,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             address = base + imm32;
         else
             address = base - imm32;
-        data = ReadMemoryUnsigned(context, address, 4, 0, &success);
+        data = MemURead(context, address, 4, 0, &success);
         if (!success)
             return false;    
 
@@ -1417,7 +1417,7 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
             uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
             if (!success)
                 return false;
-            if (!WriteMemoryUnsigned (context, addr, reg_value, addr_byte_size))
+            if (!MemUWrite (context, addr, reg_value, addr_byte_size))
                 return false;
         }
         else
@@ -1427,7 +1427,7 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
             const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
             if (!success)
                 return false;
-            if (!WriteMemoryUnsigned (context, addr, pc + 8, addr_byte_size))
+            if (!MemUWrite (context, addr, pc + 8, addr_byte_size))
                 return false;
         }
         
@@ -1522,7 +1522,7 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
             uint64_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
             if (!success)
                 return false;
-            if (!WriteMemoryUnsigned (context, addr, reg_value, reg_byte_size))
+            if (!MemAWrite (context, addr, reg_value, reg_byte_size))
                 return false;
             addr += reg_byte_size;
         }
@@ -1614,7 +1614,7 @@ EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
         {
             dwarf_reg.num = start_reg + i;
             context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
-            data = ReadMemoryUnsigned(context, addr, reg_byte_size, 0, &success);
+            data = MemARead(context, addr, reg_byte_size, 0, &success);
             if (!success)
                 return false;    
             if (!WriteRegisterUnsigned(context, eRegisterKindDWARF, dwarf_reg.num, data))
@@ -2511,7 +2511,7 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
                     context.type = EmulateInstruction::eContextPopRegisterOffStack;
 
                 // R[i] = MemA [address, 4]; address = address + 4;
-                uint32_t data = ReadMemoryUnsigned (context, base_address + offset, addr_byte_size, 0, &success);
+                uint32_t data = MemARead (context, base_address + offset, addr_byte_size, 0, &success);
                 if (!success)
                     return false;
                   
@@ -2527,7 +2527,7 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
             //LoadWritePC (MemA [address, 4]);
             context.type = EmulateInstruction::eContextRegisterPlusOffset;
             context.SetRegisterPlusOffset (dwarf_reg, offset);
-            uint32_t data = ReadMemoryUnsigned (context, base_address + offset, addr_byte_size, 0, &success);
+            uint32_t data = MemARead (context, base_address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
@@ -2629,7 +2629,7 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
             {
                   // R[i] = MemA[address,4]; address = address + 4; 
                   context.SetRegisterPlusOffset (dwarf_reg, offset);
-                  uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+                  uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
                   if (!success)
                       return false;
                   if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + i, data))
@@ -2643,7 +2643,7 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
         if (BitIsSet (registers, 15))
         {
             context.SetRegisterPlusOffset (dwarf_reg, offset);
-            uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+            uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
@@ -2768,7 +2768,7 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
             {
                 // R[i] = MemA[address,4]; address = address + 4;
                 context.SetRegisterPlusOffset (dwarf_reg, offset);
-                uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+                uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
                 if (!success)
                     return false;
                   
@@ -2784,7 +2784,7 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
         if (BitIsSet (registers, 15))
         {
             context.SetRegisterPlusOffset (dwarf_reg, offset);
-            uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+            uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
@@ -2885,7 +2885,7 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
                 // R[i] = MemA[address,4]; address = address + 4;
                 
                 context.SetRegisterPlusOffset (dwarf_reg, offset);
-                uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+                uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
                 if (!success)
                     return false;
                   
@@ -2901,7 +2901,7 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
         if (BitIsSet (registers, 15))
         {
             context.SetRegisterPlusOffset (dwarf_reg, offset);
-            uint32_t data = ReadMemoryUnsigned (context, address + offset, addr_byte_size, 0, &success);
+            uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
             if (!success)
                 return false;
             // In ARMv5T and above, this is an interworking branch.
@@ -3009,7 +3009,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
         context.SetNoArgs ();
 
         // Read memory from the address.
-        data = ReadMemoryUnsigned(context, address, 4, 0, &success);
+        data = MemURead(context, address, 4, 0, &success);
         if (!success)
             return false;    
 
@@ -3153,7 +3153,7 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
                       Register data_reg;
                       data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
                       context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
-                      if (!WriteMemoryUnsigned (context, address + offset, data, addr_byte_size))
+                      if (!MemAWrite (context, address + offset, data, addr_byte_size))
                           return false;
                   }
                   
@@ -3173,7 +3173,7 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
             if (!success)
                 return false;
                   
-            if (!WriteMemoryUnsigned (context, address + offset, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, address + offset, pc + 8, addr_byte_size))
                 return false;
         }
                   
@@ -3281,7 +3281,7 @@ EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
                     Register data_reg;
                     data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
                     context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
-                    if (!WriteMemoryUnsigned (context, address + offset, data, addr_byte_size))
+                    if (!MemAWrite (context, address + offset, data, addr_byte_size))
                         return false;
                 }
                   
@@ -3301,7 +3301,7 @@ EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
             if (!success)
                 return false;
                   
-            if (!WriteMemoryUnsigned (context, address + offset, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, address + offset, pc + 8, addr_byte_size))
                 return false;
         }
                   
@@ -3435,7 +3435,7 @@ EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
                     Register data_reg;
                     data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
                     context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
-                    if (!WriteMemoryUnsigned (context, address + offset, data, addr_byte_size))
+                    if (!MemAWrite (context, address + offset, data, addr_byte_size))
                         return false;
                 }
                   
@@ -3455,7 +3455,7 @@ EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
             if (!success)
                 return false;
                   
-            if (!WriteMemoryUnsigned (context, address + offset, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, address + offset, pc + 8, addr_byte_size))
                 return false;
         }
                   
@@ -3564,7 +3564,7 @@ EmulateInstructionARM::EmulateSTMIB (ARMEncoding encoding)
                     Register data_reg;
                     data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
                     context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
-                    if (!WriteMemoryUnsigned (context, address + offset, data, addr_byte_size))
+                    if (!MemAWrite (context, address + offset, data, addr_byte_size))
                         return false;
                 }
                   
@@ -3584,7 +3584,7 @@ EmulateInstructionARM::EmulateSTMIB (ARMEncoding encoding)
             if (!success)
             return false;
                   
-            if (!WriteMemoryUnsigned (context, address + offset, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, address + offset, pc + 8, addr_byte_size))
                 return false;
         }
                   
@@ -3744,7 +3744,7 @@ EmulateInstructionARM::EmulateSTRThumb (ARMEncoding encoding)
             data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + t);
             int32_t offset = address - base_address;
             context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
-            if (!WriteMemoryUnsigned (context, address, data, addr_byte_size))
+            if (!MemUWrite (context, address, data, addr_byte_size))
                 return false;
         }
         else
@@ -3937,7 +3937,7 @@ EmulateInstructionARM::EmulateSTRRegister (ARMEncoding encoding)
             data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + t);
             
             context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - base_address);
-            if (!WriteMemoryUnsigned (context, address, data, addr_byte_size))
+            if (!MemUWrite (context, address, data, addr_byte_size))
                 return false;
             
         }
@@ -4062,7 +4062,7 @@ EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
         else
             address = base_address;
                   
-        // MemU[address,1] = R[t]<7:0>;   NOTE:  "MemU' means UNALIGNED memory access
+        // MemU[address,1] = R[t]<7:0>
         Register base_reg;
         base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
                   
@@ -4079,7 +4079,7 @@ EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
                   
         data = Bits32 (data, 7, 0);
 
-        if (!WriteMemoryUnsigned (context, address, data, 1))
+        if (!MemUWrite (context, address, data, 1))
             return false;
                   
         // if wback then R[n] = offset_addr;
@@ -4404,7 +4404,7 @@ EmulateInstructionARM::ReadInstruction ()
             if (m_inst_cpsr & MASK_CPSR_T)
             {
                 m_inst_mode = eModeThumb;
-                uint32_t thumb_opcode = ReadMemoryUnsigned(read_inst_context, pc, 2, 0, &success);
+                uint32_t thumb_opcode = MemARead(read_inst_context, pc, 2, 0, &success);
                 
                 if (success)
                 {
@@ -4416,7 +4416,7 @@ EmulateInstructionARM::ReadInstruction ()
                     else
                     {
                         m_inst.opcode_type = eOpcode32;
-                        m_inst.opcode.inst32 = (thumb_opcode << 16) | ReadMemoryUnsigned(read_inst_context, pc + 2, 2, 0, &success);
+                        m_inst.opcode.inst32 = (thumb_opcode << 16) | MemARead(read_inst_context, pc + 2, 2, 0, &success);
                     }
                 }
             }
@@ -4424,7 +4424,7 @@ EmulateInstructionARM::ReadInstruction ()
             {
                 m_inst_mode = eModeARM;
                 m_inst.opcode_type = eOpcode32;
-                m_inst.opcode.inst32 = ReadMemoryUnsigned(read_inst_context, pc, 4, 0, &success);
+                m_inst.opcode.inst32 = MemARead(read_inst_context, pc, 4, 0, &success);
             }
         }
     }
