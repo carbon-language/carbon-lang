@@ -393,9 +393,9 @@ void PHIElimination::analyzePHINodes(const MachineFunction& MF) {
 }
 
 bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
-                                         MachineBasicBlock &MBB,
-                                         LiveVariables &LV,
-                                         MachineLoopInfo *MLI) {
+                                   MachineBasicBlock &MBB,
+                                   LiveVariables &LV,
+                                   MachineLoopInfo *MLI) {
   if (MBB.empty() || !MBB.front().isPHI() || MBB.isLandingPad())
     return false;   // Quick exit for basic blocks without PHIs.
 
