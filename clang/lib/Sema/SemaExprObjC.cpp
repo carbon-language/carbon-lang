@@ -530,7 +530,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
       if (ObjCInterfaceDecl *IFace = IFaceT->getDecl())
         if (IFace->isForwardDecl()) {
           Diag(MemberLoc, diag::err_property_not_as_forward_class)
-          << MemberName << QualType(OPT, 0);
+          << MemberName << IFace;
           Diag(IFace->getLocation(), diag::note_forward_class);
           return ExprError();
         }

@@ -29,6 +29,6 @@ void f3(id o)
 @end
 
 void foo(MyClass *myObject) {
-	myObject.someOtherObject.someProperty = 0; // expected-error {{property 'someOtherObject' names an object of forward class type in class object 'MyClass *'}}
+	myObject.someOtherObject.someProperty = 0; // expected-error {{property 'someOtherObject' refers to an incomplete Objective-C class 'SomeOtherClass' (with no @interface available)}}
 }
 
