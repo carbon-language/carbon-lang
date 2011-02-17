@@ -22,6 +22,7 @@
 #include "SplitKit.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
 #include "llvm/PassAnalysisSupport.h"
@@ -44,6 +45,11 @@
 #include "llvm/Support/Timer.h"
 
 using namespace llvm;
+
+STATISTIC(NumGlobalSplits, "Number of split global live ranges");
+STATISTIC(NumLocalSplits,  "Number of split local live ranges");
+STATISTIC(NumReassigned,   "Number of interferences reassigned");
+STATISTIC(NumEvicted,      "Number of interferences evicted");
 
 static RegisterRegAlloc greedyRegAlloc("greedy", "greedy register allocator",
                                        createGreedyRegisterAllocator);
@@ -265,6 +271,7 @@ bool RAGreedy::reassignVReg(LiveInterval &InterferingVReg,
           TRI->getName(OldAssign) << " to " << TRI->getName(PhysReg) << '\n');
     unassign(InterferingVReg, OldAssign);
     assign(InterferingVReg, PhysReg);
+    ++NumReassigned;
     return true;
   }
   return false;
@@ -307,6 +314,7 @@ unsigned RAGreedy::tryReassignOrEvict(LiveInterval &VirtReg,
   if (BestVirt) {
     DEBUG(dbgs() << "evicting lighter " << *BestVirt << '\n');
     unassign(*BestVirt, VRM->getPhys(BestVirt->reg));
+    ++NumEvicted;
     NewVRegs.push_back(BestVirt);
     return BestPhys;
   }
@@ -782,6 +790,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   // per-block segments? The current approach allows the stack region to
   // separate into connected components. Some components may be allocatable.
   SE.finish();
+  ++NumGlobalSplits;
 
   if (VerifyEnabled) {
     MF->verify(this, "After splitting live range around region");
@@ -1094,6 +1103,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SE.useIntv(SegStart, SegStop);
   SE.closeIntv();
   SE.finish();
+  ++NumLocalSplits;
 
   return 0;
 }

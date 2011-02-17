@@ -20,6 +20,7 @@
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
 #include "llvm/PassAnalysisSupport.h"
@@ -47,6 +48,10 @@
 #include <cstdlib>
 
 using namespace llvm;
+
+STATISTIC(NumAssigned     , "Number of registers assigned");
+STATISTIC(NumUnassigned   , "Number of registers unassigned");
+STATISTIC(NumNewQueued    , "Number of new live ranges queued");
 
 static RegisterRegAlloc basicRegAlloc("basic", "basic register allocator",
                                       createBasicRegisterAllocator);
@@ -242,12 +247,14 @@ void RegAllocBase::assign(LiveInterval &VirtReg, unsigned PhysReg) {
   assert(!VRM->hasPhys(VirtReg.reg) && "Duplicate VirtReg assignment");
   VRM->assignVirt2Phys(VirtReg.reg, PhysReg);
   PhysReg2LiveUnion[PhysReg].unify(VirtReg);
+  ++NumAssigned;
 }
 
 void RegAllocBase::unassign(LiveInterval &VirtReg, unsigned PhysReg) {
   assert(VRM->getPhys(VirtReg.reg) == PhysReg && "Inconsistent unassign");
   PhysReg2LiveUnion[PhysReg].extract(VirtReg);
   VRM->clearVirt(VirtReg.reg);
+  ++NumUnassigned;
 }
 
 // Top-level driver to manage the queue of unassigned VirtRegs and call the
@@ -287,6 +294,7 @@ void RegAllocBase::allocatePhysRegs() {
              "expect split value in virtual register");
       VirtRegQ.push(std::make_pair(getPriority(SplitVirtReg),
                                    SplitVirtReg->reg));
+      ++NumNewQueued;
     }
   }
 }
