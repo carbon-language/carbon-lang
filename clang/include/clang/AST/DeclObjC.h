@@ -450,8 +450,11 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// Protocols reference in both the @interface and class extensions.
   ObjCList<ObjCProtocolDecl> AllReferencedProtocols;
 
-  /// List of categories defined for this class.
-  /// FIXME: Why is this a linked list??
+  /// \brief List of categories and class extensions defined for this class.
+  ///
+  /// Categories are stored as a linked list in the AST, since the categories
+  /// and class extensions come long after the initial interface declaration,
+  /// and we avoid dynamically-resized arrays in the AST whereever possible.
   ObjCCategoryDecl *CategoryList;
   
   /// IvarList - List of all ivars defined by this class; including class
