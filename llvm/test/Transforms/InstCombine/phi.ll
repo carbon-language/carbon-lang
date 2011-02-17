@@ -526,3 +526,21 @@ Exit:           ; preds = %Loop
 ; CHECK-NEXT: ret i32 %B
 }
 
+define i32 @test24(i32 %A, i1 %cond) {
+BB0:
+        %X = add nuw nsw i32 %A, 1
+        br i1 %cond, label %BB1, label %BB2
+
+BB1:
+        %Y = add nuw i32 %A, 1
+        br label %BB2
+
+BB2:
+        %C = phi i32 [ %X, %BB0 ], [ %Y, %BB1 ]
+        ret i32 %C
+; CHECK: @test24
+; CHECK-NOT: phi
+; CHECK: BB2:
+; CHECK-NEXT: %C = add nuw i32 %A, 1
+; CHECK-NEXT: ret i32 %C
+}
