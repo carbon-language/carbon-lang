@@ -2168,8 +2168,7 @@ bool Sema::Subst(const TemplateArgumentLoc *Args, unsigned NumArgs,
 
 Decl *LocalInstantiationScope::getInstantiationOf(const Decl *D) {
   llvm::PointerUnion<Decl *, DeclArgumentPack *> *Found= findInstantiationOf(D);
-  if (!Found)
-    return 0;
+  assert(Found);
   
   if (Found->is<Decl *>())
     return Found->get<Decl *>();
@@ -2202,8 +2201,7 @@ LocalInstantiationScope::findInstantiationOf(const Decl *D) {
       break;
   }
   
-  assert(D->isInvalidDecl() && 
-         "declaration was not instantiated in this scope!");
+  assert(0 && "declaration was not instantiated in this scope!");
   return 0;
 }
 

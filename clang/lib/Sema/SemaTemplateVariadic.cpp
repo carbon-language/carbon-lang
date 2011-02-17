@@ -503,8 +503,7 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
       llvm::PointerUnion<Decl *, DeclArgumentPack *> *Instantiation
         = CurrentInstantiationScope->findInstantiationOf(
                                         Unexpanded[I].first.get<NamedDecl *>());
-      if (Instantiation &&
-          Instantiation->is<DeclArgumentPack *>()) {
+      if (Instantiation->is<DeclArgumentPack *>()) {
         // We could expand this function parameter pack.
         NewPackSize = Instantiation->get<DeclArgumentPack *>()->size();
       } else {
@@ -594,7 +593,7 @@ unsigned Sema::getNumArgumentsInExpansion(QualType T,
         llvm::PointerUnion<Decl *, DeclArgumentPack *> *Instantiation
           = CurrentInstantiationScope->findInstantiationOf(
                                         Unexpanded[I].first.get<NamedDecl *>());
-        if (Instantiation && Instantiation->is<DeclArgumentPack *>())
+        if (Instantiation->is<DeclArgumentPack *>())
           return Instantiation->get<DeclArgumentPack *>()->size();
         
         continue;
