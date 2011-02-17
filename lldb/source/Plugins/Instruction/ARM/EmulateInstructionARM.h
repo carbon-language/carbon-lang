@@ -521,7 +521,210 @@ protected:
     bool
     EmulateSTRBThumb (ARMEncoding encoding);
     
+    // A8.6.1 ADC (immediate)
+    bool
+    EmulateADCImmediate (ARMEncoding encoding);
     
+    // A8.6.2 ADC (Register)
+    bool
+    EmulateADCRegister (ARMEncoding encoding);
+    
+    // A8.6.4 ADD (immediate,Thumb)
+    bool
+    EmulateADDImmediateThumb (ARMEncoding encoding);
+    
+    // A8.6.10 ADR
+    bool
+    EmulateADR (ARMEncoding encoding);
+    
+    // A8.6.11 AND (immediate)
+    bool
+    EmulateANDImmediate (ARMEncoding encoding);
+    
+    // A8.6.12 AND (register)
+    bool
+    EmulateANDRegister (ARMEncoding encoding);
+    
+    // A8.6.19 BIC (immediate) - Encoding A1
+    bool
+    EmulateBICImmediate (ARMEncoding encoding);
+    
+    // A8.6.20 BIC (register) - Encoding T1, A1
+    bool
+    EmulateBICRegister (ARMEncoding encoding);
+    
+    // A8.6.26 BXJ
+    bool
+    EmulateBXJ (ARMEncoding encoding);
+    
+    // A8.6.32 CMN (immediate) - Encoding A1
+    bool
+    EmulateCMNImmediate (ARMEncoding encoding);
+    
+    // A8.6.33 CMN (register) - Encoding T1, A1
+    bool
+    EmulateCMNRegister (ARMEncoding encoding);
+    
+    // A8.6.44 EOR (immediate)
+    bool
+    EmulateEORImmediate (ARMEncoding encoding);
+    
+    // A8.6.45 EOR (register)
+    bool
+    EmulateEORRegister (ARMEncoding encoding);
+    
+    // A8.6.58 LDR (immediate, ARM) - Encoding A1
+    bool
+    EmulateLDRImmediateARM (ARMEncoding encoding);
+    
+    // A8.6.60 LDR (register) - Encoding T1, T2, A1
+    bool
+    EmulateLDRRegister (ARMEncoding encoding);
+    
+    // A8.6.61 LDRB (immediate, Thumb) - Encoding T1, T2
+    bool
+    EmulateLDRBImmediate (ARMEncoding encoding);
+    
+    // A8.6.63 LDRB (literal) - Encoding T1
+    bool
+    EmulateLDRBLiteral (ARMEncoding encoding);
+    
+    // A8.6.64 LDRB (register) - Encoding T1
+    bool
+    EmulateLDRBRegoster (ARMEncoding encoding);
+    
+    // A8.6.73 LDRH (immediate, Thumb) - Encoding T1, T2
+    bool
+    EmulateLDRHImmediateThumb (ARMEncoding encoding);
+    
+    // A8.6.75 LDRH (literal) - Encoding T1
+    bool
+    EmulateLDRHLiteral (ARMEncoding encoding);
+    
+    // A8.6.76 LDRH (register) - Encoding T1, T2
+    bool
+    EmulateLDRHRegister (ARMEncoding encoding);
+    
+    // A8.6.78 LDRSB (immediate) - Encoding T1
+    bool
+    EmulateLDRSBImmediate (ARMEncoding encoding);
+    
+    // A8.6.79 LDRSB (literal) - Encoding T1
+    bool
+    EmulateLDRSBLiteral (ARMEncoding encoding);
+    
+    // A8.6.80 LDRSB (register) - Encoding T1, T2
+    bool
+    EmulateLDRSBRegister (ARMEncoding encoding);
+    
+    // A8.6.82 LDRSH (immediate) - Encoding T1
+    bool
+    EmulateLDRSHImmediate (ARMEncoding encoding);
+    
+    // A8.6.83 LDRSH (literal) - Encoding T1
+    bool
+    EmulateLDRSHLiteral (ARMEncoding encoding);
+    
+    // A8.6.84 LDRSH (register) - Encoding T1, T2
+    bool
+    EmulateLDRSHRegister (ARMEncoding encoding);
+    
+    // A8.6.105 MUL
+    bool
+    EmulateMUL (ARMEncoding encoding);
+    
+    // A8.6.107 MVN (register) - Encoding T1, A1
+    bool
+    EmulateMVNRegister (ARMEncoding encoding);
+    
+    // A8.6.117 PLD (immediate, literal) - Encoding T1, T2, T3, A1
+    bool
+    EmulatePLDImmediate (ARMEncoding encoding);
+    
+    // A8.6.119 PLI (immediate,literal) - Encoding T3, A1
+    bool
+    EmulatePLIImmediate (ARMEncoding encoding);
+    
+    // A8.6.120 PLI (register) - Encoding T1, A1
+    bool
+    EmulatePLIRegister (ARMEncoding encoding);
+    
+    // A8.6.141 RSB (immediate) - Encoding T1, A1
+    bool
+    EmulateRSBImmediate (ARMEncoding encoding);
+    
+    // A8.6.142 RSB (register) - Encoding A1
+    bool
+    EmulateRSBRegister (ARMEncoding encoding);
+    
+    // A8.6.144 RSC (immediate) - Encoding A1
+    bool
+    EmulateRSCImmediate (ARMEncoding encoding);
+    
+    // A8.6.145 RSC (register) - Encoding A1
+    bool
+    EmulateRSCRegister (ARMEncoding encoding);
+    
+    // A8.6.150 SBC (immediate) - Encoding A1
+    bool
+    EmulateSBCImmediate (ARMEncoding encoding);
+    
+    // A8.6.151 SBC (register) - Encoding T1, A1
+    bool
+    EmulateSBCRegister (ARMEncoding encoding);
+    
+    // A8.6.210 SUB (immediate, Thumb)    - Encoding T1, T2
+    bool
+    EmulateSUBImmediateThumb (ARMEncoding encoding);
+    
+    // A8.6.211 SUB (immediate, ARM)      - Encoding A1
+    bool
+    EmulateSUBImmediateARM (ARMEncoding encoding);
+    
+    // A8.6.214 SUB (SP minus immediate)  - Encoding T1, A1
+    bool
+    EmulateSUBSpImmediate (ARMEncoding encoding);
+    
+    // A8.6.222 SXTB  - Encoding T1
+    bool
+    EmulateSXTB (ARMEncoding encoding);
+    
+    // A8.6.224 SXTH  - EncodingT1
+    bool
+    EmulateSXTH (ARMEncoding encoding);
+    
+    // A8.6.225 TBB, TBH        - Encoding T1
+    bool
+    EmulateTBB (ARMEncoding encoding);
+    
+    // A8.6.226 TEQ (immediate) - Encoding A1
+    bool
+    EmulateTEQImmediate (ARMEncoding encoding);
+    
+    // A8.6.227 TEQ (register)  - Encoding A1
+    bool
+    EmulateTEQRegister (ARMEncoding encoding);
+    
+    // A8.6.229 TST (immediate) - Encoding A1
+    bool
+    EmulateTSTImmediate (ARMEncoding encoding);
+    
+    // A8.6.230 TST (register)  - Encoding T1, A1
+    bool
+    EmulateTSTRegister (ARMEncoding encoding);
+    
+    // A8.6.262 UXTB  - Encoding T1
+    bool
+    EmulateUXTB (ARMEncoding encoding);
+    
+    // A8.6.264 UXTH  - Encoding T1
+    bool
+    EmulateUXTH (ARMEncoding encoding);
+    
+    // B6.1.8  RFE
+    bool
+    EmulateRFE (ARMEncoding encoding);
+     
     uint32_t m_arm_isa;
     Mode m_inst_mode;
     uint32_t m_inst_cpsr;
