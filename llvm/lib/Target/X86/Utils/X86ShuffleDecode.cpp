@@ -12,21 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86_SHUFFLE_DECODE_H
-#define X86_SHUFFLE_DECODE_H
-
-#include "llvm/ADT/SmallVector.h"
-using namespace llvm;
+#include "X86ShuffleDecode.h"
 
 //===----------------------------------------------------------------------===//
 //  Vector Mask Decoding
 //===----------------------------------------------------------------------===//
 
-enum {
-  SM_SentinelZero = ~0U
-};
+namespace llvm {
 
-static inline
 void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<unsigned> &ShuffleMask) {
   // Defaults the copying the dest value.
   ShuffleMask.push_back(0);
@@ -51,8 +44,8 @@ void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<unsigned> &ShuffleMask) {
 }
 
 // <3,1> or <6,7,2,3>
-static void DecodeMOVHLPSMask(unsigned NElts,
-                              SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeMOVHLPSMask(unsigned NElts,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
   for (unsigned i = NElts/2; i != NElts; ++i)
     ShuffleMask.push_back(NElts+i);
 
@@ -61,8 +54,8 @@ static void DecodeMOVHLPSMask(unsigned NElts,
 }
 
 // <0,2> or <0,1,4,5>
-static void DecodeMOVLHPSMask(unsigned NElts,
-                              SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeMOVLHPSMask(unsigned NElts,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
   for (unsigned i = 0; i != NElts/2; ++i)
     ShuffleMask.push_back(i);
 
@@ -70,16 +63,16 @@ static void DecodeMOVLHPSMask(unsigned NElts,
     ShuffleMask.push_back(NElts+i);
 }
 
-static void DecodePSHUFMask(unsigned NElts, unsigned Imm,
-                            SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodePSHUFMask(unsigned NElts, unsigned Imm,
+                     SmallVectorImpl<unsigned> &ShuffleMask) {
   for (unsigned i = 0; i != NElts; ++i) {
     ShuffleMask.push_back(Imm % NElts);
     Imm /= NElts;
   }
 }
 
-static void DecodePSHUFHWMask(unsigned Imm,
-                              SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodePSHUFHWMask(unsigned Imm,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
   ShuffleMask.push_back(0);
   ShuffleMask.push_back(1);
   ShuffleMask.push_back(2);
@@ -90,8 +83,8 @@ static void DecodePSHUFHWMask(unsigned Imm,
   }
 }
 
-static void DecodePSHUFLWMask(unsigned Imm,
-                              SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodePSHUFLWMask(unsigned Imm,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
   for (unsigned i = 0; i != 4; ++i) {
     ShuffleMask.push_back((Imm & 3));
     Imm >>= 2;
@@ -102,24 +95,24 @@ static void DecodePSHUFLWMask(unsigned Imm,
   ShuffleMask.push_back(7);
 }
 
-static void DecodePUNPCKLMask(unsigned NElts,
-                              SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodePUNPCKLMask(unsigned NElts,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
   for (unsigned i = 0; i != NElts/2; ++i) {
     ShuffleMask.push_back(i);
     ShuffleMask.push_back(i+NElts);
   }
 }
 
-static void DecodePUNPCKHMask(unsigned NElts,
-                              SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodePUNPCKHMask(unsigned NElts,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
   for (unsigned i = 0; i != NElts/2; ++i) {
     ShuffleMask.push_back(i+NElts/2);
     ShuffleMask.push_back(i+NElts+NElts/2);
   }
 }
 
-static void DecodeSHUFPSMask(unsigned NElts, unsigned Imm,
-                             SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeSHUFPSMask(unsigned NElts, unsigned Imm,
+                      SmallVectorImpl<unsigned> &ShuffleMask) {
   // Part that reads from dest.
   for (unsigned i = 0; i != NElts/2; ++i) {
     ShuffleMask.push_back(Imm % NElts);
@@ -132,8 +125,8 @@ static void DecodeSHUFPSMask(unsigned NElts, unsigned Imm,
   }
 }
 
-static void DecodeUNPCKHPMask(unsigned NElts,
-                              SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeUNPCKHPMask(unsigned NElts,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
   for (unsigned i = 0; i != NElts/2; ++i) {
     ShuffleMask.push_back(i+NElts/2);        // Reads from dest
     ShuffleMask.push_back(i+NElts+NElts/2);  // Reads from src
@@ -144,12 +137,12 @@ static void DecodeUNPCKHPMask(unsigned NElts,
 /// DecodeUNPCKLPMask - This decodes the shuffle masks for unpcklps/unpcklpd
 /// etc.  NElts indicates the number of elements in the vector allowing it to
 /// handle different datatypes and vector widths.
-static void DecodeUNPCKLPMask(unsigned NElts,
-                              SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeUNPCKLPMask(unsigned NElts,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
   for (unsigned i = 0; i != NElts/2; ++i) {
     ShuffleMask.push_back(i);        // Reads from dest
     ShuffleMask.push_back(i+NElts);  // Reads from src
   }
 }
 
-#endif
+} // llvm namespace

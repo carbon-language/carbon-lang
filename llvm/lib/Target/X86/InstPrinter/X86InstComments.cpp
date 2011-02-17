@@ -16,7 +16,7 @@
 #include "X86GenInstrNames.inc"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/raw_ostream.h"
-#include "../X86ShuffleDecode.h"
+#include "../Utils/X86ShuffleDecode.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
