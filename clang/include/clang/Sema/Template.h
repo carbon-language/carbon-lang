@@ -278,19 +278,6 @@ namespace clang {
     /// returns NULL.
     llvm::PointerUnion<Decl *, DeclArgumentPack *> *
     findInstantiationOf(const Decl *D);
-                              
-    VarDecl *getInstantiationOf(const VarDecl *Var) {
-      return cast<VarDecl>(getInstantiationOf(cast<Decl>(Var)));
-    }
-
-    ParmVarDecl *getInstantiationOf(const ParmVarDecl *Var) {
-      return cast<ParmVarDecl>(getInstantiationOf(cast<Decl>(Var)));
-    }
-
-    NonTypeTemplateParmDecl *getInstantiationOf(
-                                          const NonTypeTemplateParmDecl *Var) {
-      return cast<NonTypeTemplateParmDecl>(getInstantiationOf(cast<Decl>(Var)));
-    }
 
     void InstantiatedLocal(const Decl *D, Decl *Inst);
     void InstantiatedLocalPackArg(const Decl *D, Decl *Inst);
