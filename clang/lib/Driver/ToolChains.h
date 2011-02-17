@@ -185,8 +185,7 @@ public:
   }
   
   virtual bool IsObjCDefaultSynthPropertiesDefault() const {
-    // Always allow default synthesized properties on Darwin.
-    return true;
+    return false;
   }
 
   virtual bool IsObjCNonFragileABIDefault() const {
