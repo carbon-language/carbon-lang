@@ -116,6 +116,9 @@ public:
   /// new interval.
   void clear();
 
+  /// getParent - Return the last analyzed interval.
+  const LiveInterval &getParent() const { return *CurLI; }
+
   /// hasUses - Return true if MBB has any uses of CurLI.
   bool hasUses(const MachineBasicBlock *MBB) const {
     return UsingBlocks.lookup(MBB);

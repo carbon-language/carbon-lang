@@ -72,6 +72,10 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
   /// All basic blocks where the current register is live.
   SmallVector<SpillPlacement::BlockConstraint, 8> SpillConstraints;
 
+  /// For every instruction in SA->UseSlots, store the previous non-copy
+  /// instruction.
+  SmallVector<SlotIndex, 8> PrevSlot;
+
 public:
   RAGreedy();
 
@@ -106,11 +110,17 @@ private:
   float calcGlobalSplitCost(const BitVector&);
   void splitAroundRegion(LiveInterval&, unsigned, const BitVector&,
                          SmallVectorImpl<LiveInterval*>&);
+  void calcGapWeights(unsigned, SmallVectorImpl<float>&);
+  SlotIndex getPrevMappedIndex(const MachineInstr*);
+  void calcPrevSlots();
+  unsigned nextSplitPoint(unsigned);
 
   unsigned tryReassignOrEvict(LiveInterval&, AllocationOrder&,
                               SmallVectorImpl<LiveInterval*>&);
   unsigned tryRegionSplit(LiveInterval&, AllocationOrder&,
                           SmallVectorImpl<LiveInterval*>&);
+  unsigned tryLocalSplit(LiveInterval&, AllocationOrder&,
+    SmallVectorImpl<LiveInterval*>&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
                     SmallVectorImpl<LiveInterval*>&);
   unsigned trySpillInterferences(LiveInterval&, AllocationOrder&,
@@ -824,6 +834,271 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
 
 //===----------------------------------------------------------------------===//
+//                             Local Splitting
+//===----------------------------------------------------------------------===//
+
+
+/// calcGapWeights - Compute the maximum spill weight that needs to be evicted
+/// in order to use PhysReg between two entries in SA->UseSlots.
+///
+/// GapWeight[i] represents the gap between UseSlots[i] and UseSlots[i+1].
+///
+void RAGreedy::calcGapWeights(unsigned PhysReg,
+                              SmallVectorImpl<float> &GapWeight) {
+  assert(SA->LiveBlocks.size() == 1 && "Not a local interval");
+  const SplitAnalysis::BlockInfo &BI = SA->LiveBlocks.front();
+  const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
+  const unsigned NumGaps = Uses.size()-1;
+
+  // Start and end points for the interference check.
+  SlotIndex StartIdx = BI.LiveIn ? BI.FirstUse.getBaseIndex() : BI.FirstUse;
+  SlotIndex StopIdx = BI.LiveOut ? BI.LastUse.getBoundaryIndex() : BI.LastUse;
+
+  GapWeight.assign(NumGaps, 0.0f);
+
+  // Add interference from each overlapping register.
+  for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
+    if (!query(const_cast<LiveInterval&>(SA->getParent()), *AI)
+           .checkInterference())
+      continue;
+
+    // We know that VirtReg is a continuous interval from FirstUse to LastUse,
+    // so we don't need InterferenceQuery.
+    //
+    // Interference that overlaps an instruction is counted in both gaps
+    // surrounding the instruction. The exception is interference before
+    // StartIdx and after StopIdx.
+    //
+    LiveIntervalUnion::SegmentIter IntI = PhysReg2LiveUnion[*AI].find(StartIdx);
+    for (unsigned Gap = 0; IntI.valid() && IntI.start() < StopIdx; ++IntI) {
+      // Skip the gaps before IntI.
+      while (Uses[Gap+1].getBoundaryIndex() < IntI.start())
+        if (++Gap == NumGaps)
+          break;
+      if (Gap == NumGaps)
+        break;
+
+      // Update the gaps covered by IntI.
+      const float weight = IntI.value()->weight;
+      for (; Gap != NumGaps; ++Gap) {
+        GapWeight[Gap] = std::max(GapWeight[Gap], weight);
+        if (Uses[Gap+1].getBaseIndex() >= IntI.stop())
+          break;
+      }
+      if (Gap == NumGaps)
+        break;
+    }
+  }
+}
+
+/// getPrevMappedIndex - Return the slot index of the last non-copy instruction
+/// before MI that has a slot index. If MI is the first mapped instruction in
+/// its block, return the block start index instead.
+///
+SlotIndex RAGreedy::getPrevMappedIndex(const MachineInstr *MI) {
+  assert(MI && "Missing MachineInstr");
+  const MachineBasicBlock *MBB = MI->getParent();
+  MachineBasicBlock::const_iterator B = MBB->begin(), I = MI;
+  while (I != B)
+    if (!(--I)->isDebugValue() && !I->isCopy())
+      return Indexes->getInstructionIndex(I);
+  return Indexes->getMBBStartIdx(MBB);
+}
+
+/// calcPrevSlots - Fill in the PrevSlot array with the index of the previous
+/// real non-copy instruction for each instruction in SA->UseSlots.
+///
+void RAGreedy::calcPrevSlots() {
+  const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
+  PrevSlot.clear();
+  PrevSlot.reserve(Uses.size());
+  for (unsigned i = 0, e = Uses.size(); i != e; ++i) {
+    const MachineInstr *MI = Indexes->getInstructionFromIndex(Uses[i]);
+    PrevSlot.push_back(getPrevMappedIndex(MI).getDefIndex());
+  }
+}
+
+/// nextSplitPoint - Find the next index into SA->UseSlots > i such that it may
+/// be beneficial to split before UseSlots[i].
+///
+/// 0 is always a valid split point
+unsigned RAGreedy::nextSplitPoint(unsigned i) {
+  const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
+  const unsigned Size = Uses.size();
+  assert(i != Size && "No split points after the end");
+  // Allow split before i when Uses[i] is not adjacent to the previous use.
+  while (++i != Size && PrevSlot[i].getBaseIndex() <= Uses[i-1].getBaseIndex())
+    ;
+  return i;
+}
+
+/// tryLocalSplit - Try to split VirtReg into smaller intervals inside its only
+/// basic block.
+///
+unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
+                                 SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  assert(SA->LiveBlocks.size() == 1 && "Not a local interval");
+  const SplitAnalysis::BlockInfo &BI = SA->LiveBlocks.front();
+
+  // Note that it is possible to have an interval that is live-in or live-out
+  // while only covering a single block - A phi-def can use undef values from
+  // predecessors, and the block could be a single-block loop.
+  // We don't bother doing anything clever about such a case, we simply assume
+  // that the interval is continuous from FirstUse to LastUse. We should make
+  // sure that we don't do anything illegal to such an interval, though.
+
+  const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
+  if (Uses.size() <= 2)
+    return 0;
+  const unsigned NumGaps = Uses.size()-1;
+
+  DEBUG({
+    dbgs() << "tryLocalSplit: ";
+    for (unsigned i = 0, e = Uses.size(); i != e; ++i)
+      dbgs() << ' ' << SA->UseSlots[i];
+    dbgs() << '\n';
+  });
+
+  // For every use, find the previous mapped non-copy instruction.
+  // We use this to detect valid split points, and to estimate new interval
+  // sizes.
+  calcPrevSlots();
+
+  unsigned BestBefore = NumGaps;
+  unsigned BestAfter = 0;
+  float BestDiff = 0;
+
+  const float blockFreq = SpillPlacer->getBlockFrequency(BI.MBB);
+  SmallVector<float, 8> GapWeight;
+
+  Order.rewind();
+  while (unsigned PhysReg = Order.next()) {
+    // Keep track of the largest spill weight that would need to be evicted in
+    // order to make use of PhysReg between UseSlots[i] and UseSlots[i+1].
+    calcGapWeights(PhysReg, GapWeight);
+
+    // Try to find the best sequence of gaps to close.
+    // The new spill weight must be larger than any gap interference.
+
+    // We will split before Uses[SplitBefore] and after Uses[SplitAfter].
+    unsigned SplitBefore = 0, SplitAfter = nextSplitPoint(1) - 1;
+
+    // MaxGap should always be max(GapWeight[SplitBefore..SplitAfter-1]).
+    // It is the spill weight that needs to be evicted.
+    float MaxGap = GapWeight[0];
+    for (unsigned i = 1; i != SplitAfter; ++i)
+      MaxGap = std::max(MaxGap, GapWeight[i]);
+
+    for (;;) {
+      // Live before/after split?
+      const bool LiveBefore = SplitBefore != 0 || BI.LiveIn;
+      const bool LiveAfter = SplitAfter != NumGaps || BI.LiveOut;
+
+      DEBUG(dbgs() << PrintReg(PhysReg, TRI) << ' '
+                   << Uses[SplitBefore] << '-' << Uses[SplitAfter]
+                   << " i=" << MaxGap);
+
+      // Stop before the interval gets so big we wouldn't be making progress.
+      if (!LiveBefore && !LiveAfter) {
+        DEBUG(dbgs() << " all\n");
+        break;
+      }
+      // Should the interval be extended or shrunk?
+      bool Shrink = true;
+      if (MaxGap < HUGE_VALF) {
+        // Estimate the new spill weight.
+        //
+        // Each instruction reads and writes the register, except the first
+        // instr doesn't read when !FirstLive, and the last instr doesn't write
+        // when !LastLive.
+        //
+        // We will be inserting copies before and after, so the total number of
+        // reads and writes is 2 * EstUses.
+        //
+        const unsigned EstUses = 2*(SplitAfter - SplitBefore) +
+                                 2*(LiveBefore + LiveAfter);
+
+        // Try to guess the size of the new interval. This should be trivial,
+        // but the slot index of an inserted copy can be a lot smaller than the
+        // instruction it is inserted before if there are many dead indexes
+        // between them.
+        //
+        // We measure the distance from the instruction before SplitBefore to
+        // get a conservative estimate.
+        //
+        // The final distance can still be different if inserting copies
+        // triggers a slot index renumbering.
+        //
+        const float EstWeight = normalizeSpillWeight(blockFreq * EstUses,
+                              PrevSlot[SplitBefore].distance(Uses[SplitAfter]));
+        // Would this split be possible to allocate?
+        // Never allocate all gaps, we wouldn't be making progress.
+        float Diff = EstWeight - MaxGap;
+        DEBUG(dbgs() << " w=" << EstWeight << " d=" << Diff);
+        if (Diff > 0) {
+          Shrink = false;
+          if (Diff > BestDiff) {
+            DEBUG(dbgs() << " (best)");
+            BestDiff = Diff;
+            BestBefore = SplitBefore;
+            BestAfter = SplitAfter;
+          }
+        }
+      }
+
+      // Try to shrink.
+      if (Shrink) {
+        SplitBefore = nextSplitPoint(SplitBefore);
+        if (SplitBefore < SplitAfter) {
+          DEBUG(dbgs() << " shrink\n");
+          // Recompute the max when necessary.
+          if (GapWeight[SplitBefore - 1] >= MaxGap) {
+            MaxGap = GapWeight[SplitBefore];
+            for (unsigned i = SplitBefore + 1; i != SplitAfter; ++i)
+              MaxGap = std::max(MaxGap, GapWeight[i]);
+          }
+          continue;
+        }
+        MaxGap = 0;
+      }
+
+      // Try to extend the interval.
+      if (SplitAfter >= NumGaps) {
+        DEBUG(dbgs() << " end\n");
+        break;
+      }
+
+      DEBUG(dbgs() << " extend\n");
+      for (unsigned e = nextSplitPoint(SplitAfter + 1) - 1;
+           SplitAfter != e; ++SplitAfter)
+        MaxGap = std::max(MaxGap, GapWeight[SplitAfter]);
+          continue;
+    }
+  }
+
+  // Didn't find any candidates?
+  if (BestBefore == NumGaps)
+    return 0;
+
+  DEBUG(dbgs() << "Best local split range: " << Uses[BestBefore]
+               << '-' << Uses[BestAfter] << ", " << BestDiff
+               << ", " << (BestAfter - BestBefore + 1) << " instrs\n");
+
+  SmallVector<LiveInterval*, 4> SpillRegs;
+  LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
+  SplitEditor SE(*SA, *LIS, *VRM, *DomTree, LREdit);
+
+  SE.openIntv();
+  SlotIndex SegStart = SE.enterIntvBefore(Uses[BestBefore]);
+  SlotIndex SegStop  = SE.leaveIntvAfter(Uses[BestAfter]);
+  SE.useIntv(SegStart, SegStop);
+  SE.closeIntv();
+  SE.finish();
+
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
 //                          Live Range Splitting
 //===----------------------------------------------------------------------===//
 
@@ -835,9 +1110,9 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   NamedRegionTimer T("Splitter", TimerGroupName, TimePassesIsEnabled);
   SA->analyze(&VirtReg);
 
-  // Don't attempt splitting on local intervals for now. TBD.
+  // Local intervals are handled separately.
   if (LIS->intervalIsInOneMBB(VirtReg))
-    return 0;
+    return tryLocalSplit(VirtReg, Order, NewVRegs);
 
   // First try to split around a region spanning multiple blocks.
   unsigned PhysReg = tryRegionSplit(VirtReg, Order, NewVRegs);
