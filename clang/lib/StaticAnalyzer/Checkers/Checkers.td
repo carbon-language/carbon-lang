@@ -24,6 +24,8 @@ def CoreExperimental : Package<"experimental">,
 def UnixExperimental : Package<"experimental">,
   InPackage<Unix>, Hidden;
 
+def LLVM : Package<"llvm">;
+
 //===----------------------------------------------------------------------===//
 // Groups.
 //===----------------------------------------------------------------------===//
@@ -83,6 +85,11 @@ def CFRetainReleaseChecker : Checker<"CFRetainRelease">,
   InPackage<MacOSX>,
   HelpText<"Check for null arguments to CFRetain/CFRelease">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
+
+def LLVMConventionsChecker : Checker<"Conventions">,
+  InPackage<LLVM>,
+  HelpText<"Check code for LLVM codebase conventions">,
+  DescFile<"LLVMConventionsChecker.cpp">;
 
 //===----------------------------------------------------------------------===//
 // Hidden experimental checkers.

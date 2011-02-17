@@ -82,7 +82,6 @@ private:
   Actions ObjCMethodActions;
   Actions ObjCImplementationActions;
   Actions CXXMethodActions;
-  TUActions TranslationUnitActions; // Remove this.
 
 public:
   ASTContext* Ctx;
@@ -170,10 +169,6 @@ public:
     CXXMethodActions.push_back(action);
   }
 
-  void addTranslationUnitAction(TUAction action) {
-    TranslationUnitActions.push_back(action);
-  }
-
   void addObjCImplementationAction(CodeAction action) {
     ObjCImplementationActions.push_back(action);
   }
@@ -207,10 +202,12 @@ public:
 //===----------------------------------------------------------------------===//
 
 void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
+  BugReporter BR(*Mgr);
   for (DeclContext::decl_iterator I = dc->decls_begin(), E = dc->decls_end();
        I != E; ++I) {
     Decl *D = *I;
-    
+    checkerMgr->runCheckersOnASTDecl(D, *Mgr, BR);
+
     switch (D->getKind()) {
       case Decl::Namespace: {
         HandleDeclContext(C, cast<NamespaceDecl>(D));
@@ -259,13 +256,10 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
 }
 
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
+  BugReporter BR(*Mgr);
   TranslationUnitDecl *TU = C.getTranslationUnitDecl();
+  checkerMgr->runCheckersOnASTDecl(TU, *Mgr, BR);
   HandleDeclContext(C, TU);
-
-  for (TUActions::iterator I = TranslationUnitActions.begin(),
-                           E = TranslationUnitActions.end(); I != E; ++I) {
-    (*I)(*this, *Mgr, *TU);
-  }
 
   // Explicitly destroy the PathDiagnosticClient.  This will flush its output.
   // FIXME: This should be replaced with something that doesn't rely on
@@ -307,6 +301,12 @@ void AnalysisConsumer::HandleCode(Decl *D, Actions& actions) {
 
   if (D->hasBody() && Opts.AnalyzeNestedBlocks)
     FindBlocks(cast<DeclContext>(D), WL);
+
+  BugReporter BR(*Mgr);
+  for (llvm::SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
+       WI != WE; ++WI)
+    if ((*WI)->hasBody())
+      checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
 
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
     for (llvm::SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
@@ -438,13 +438,6 @@ static void ActionSecuritySyntacticChecks(AnalysisConsumer &C,
                                           AnalysisManager &mgr, Decl *D) {
   BugReporter BR(mgr);
   CheckSecuritySyntaxOnly(D, BR);
-}
-
-static void ActionLLVMConventionChecker(AnalysisConsumer &C,
-                                        AnalysisManager &mgr,
-                                        TranslationUnitDecl &TU) {
-  BugReporter BR(mgr);
-  CheckLLVMConventions(TU, BR);
 }
 
 static void ActionWarnObjCDealloc(AnalysisConsumer &C, AnalysisManager& mgr,

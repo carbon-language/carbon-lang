@@ -53,7 +53,6 @@ void CheckObjCUnusedIvar(const ObjCImplementationDecl *D, BugReporter& BR);
 void RegisterExperimentalChecks(ExprEngine &Eng);
 void RegisterExperimentalInternalChecks(ExprEngine &Eng);
 
-void CheckLLVMConventions(TranslationUnitDecl &TU, BugReporter &BR);
 void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
 void CheckSizeofPointer(const Decl *D, BugReporter &BR);
 

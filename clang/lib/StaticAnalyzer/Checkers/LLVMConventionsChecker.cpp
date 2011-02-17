@@ -12,10 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/DeclTemplate.h"
-#include "clang/AST/StmtVisitor.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
+#include "clang/AST/DeclTemplate.h"
+#include "clang/AST/StmtVisitor.h"
 #include <string>
 #include "llvm/ADT/StringRef.h"
 
@@ -210,10 +212,10 @@ static bool IsPartOfAST(const CXXRecordDecl *R) {
 namespace {
 class ASTFieldVisitor {
   llvm::SmallVector<FieldDecl*, 10> FieldChain;
-  CXXRecordDecl *Root;
+  const CXXRecordDecl *Root;
   BugReporter &BR;
 public:
-  ASTFieldVisitor(CXXRecordDecl *root, BugReporter &br)
+  ASTFieldVisitor(const CXXRecordDecl *root, BugReporter &br)
     : Root(root), BR(br) {}
 
   void Visit(FieldDecl *D);
@@ -221,7 +223,7 @@ public:
 };
 } // end anonymous namespace
 
-static void CheckASTMemory(CXXRecordDecl *R, BugReporter &BR) {
+static void CheckASTMemory(const CXXRecordDecl *R, BugReporter &BR) {
   if (!IsPartOfAST(R))
     return;
 
@@ -283,29 +285,27 @@ void ASTFieldVisitor::ReportError(QualType T) {
 }
 
 //===----------------------------------------------------------------------===//
-// Entry point for all checks.
+// LLVMConventionsChecker
 //===----------------------------------------------------------------------===//
 
-static void ScanCodeDecls(DeclContext *DC, BugReporter &BR) {
-  for (DeclContext::decl_iterator I=DC->decls_begin(), E=DC->decls_end();
-       I!=E ; ++I) {
-
-    Decl *D = *I;
-
-    if (D->hasBody())
-      CheckStringRefAssignedTemporary(D, BR);
-
-    if (CXXRecordDecl *R = dyn_cast<CXXRecordDecl>(D))
-      if (R->isDefinition())
-        CheckASTMemory(R, BR);
-
-    if (DeclContext *DC_child = dyn_cast<DeclContext>(D))
-      ScanCodeDecls(DC_child, BR);
+namespace {
+class LLVMConventionsChecker : public CheckerV2<
+                                                check::ASTDecl<CXXRecordDecl>,
+                                                check::ASTCodeBody > {
+public:
+  void checkASTDecl(const CXXRecordDecl *R, AnalysisManager& mgr,
+                    BugReporter &BR) const {
+    if (R->isDefinition())
+      CheckASTMemory(R, BR);
   }
+
+  void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
+                        BugReporter &BR) const {
+    CheckStringRefAssignedTemporary(D, BR);
+  }
+};
 }
 
-void ento::CheckLLVMConventions(TranslationUnitDecl &TU,
-                                 BugReporter &BR) {
-  ScanCodeDecls(&TU, BR);
+void ento::registerLLVMConventionsChecker(CheckerManager &mgr) {
+  mgr.registerChecker<LLVMConventionsChecker>();
 }
-
