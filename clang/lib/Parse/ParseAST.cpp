@@ -25,26 +25,6 @@
 
 using namespace clang;
 
-static void DumpRecordLayouts(ASTContext &C) {
-  for (ASTContext::type_iterator I = C.types_begin(), E = C.types_end();
-       I != E; ++I) {
-    const RecordType *RT = dyn_cast<RecordType>(*I);
-    if (!RT)
-      continue;
-
-    const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
-    if (!RD || RD->isImplicit() || RD->isDependentType() ||
-        RD->isInvalidDecl() || !RD->getDefinition())
-      continue;
-
-    // FIXME: Do we really need to hard code this?
-    if (RD->getQualifiedNameAsString() == "__va_list_tag")
-      continue;
-
-    C.DumpRecordLayout(RD, llvm::errs());
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // Public interface to the file
 //===----------------------------------------------------------------------===//
@@ -96,10 +76,6 @@ void clang::ParseAST(Sema &S, bool PrintStats) {
        I = S.WeakTopLevelDecls().begin(),
        E = S.WeakTopLevelDecls().end(); I != E; ++I)
     Consumer->HandleTopLevelDecl(DeclGroupRef(*I));
-  
-  // Dump record layouts, if requested.
-  if (S.getLangOptions().DumpRecordLayouts)
-    DumpRecordLayouts(S.getASTContext());
   
   Consumer->HandleTranslationUnit(S.getASTContext());
   
