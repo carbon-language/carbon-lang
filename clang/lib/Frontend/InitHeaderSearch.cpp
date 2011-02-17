@@ -566,6 +566,14 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "3.4.4");
     break;
   case llvm::Triple::MinGW32:
+    // mingw-w64-20110207
+    AddPath("c:/MinGW/include/c++/4.5.3", System, true, false, false);
+    AddPath("c:/MinGW/include/c++/4.5.3/x86_64-w64-mingw32", System, true, false, false);
+    AddPath("c:/MinGW/include/c++/4.5.3/backward", System, true, false, false);
+    // mingw-w64-20101129
+    AddPath("c:/MinGW/include/c++/4.5.2", System, true, false, false);
+    AddPath("c:/MinGW/include/c++/4.5.2/x86_64-w64-mingw32", System, true, false, false);
+    AddPath("c:/MinGW/include/c++/4.5.2/backward", System, true, false, false);
     // Try gcc 4.5.0
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
     // Try gcc 4.4.0
