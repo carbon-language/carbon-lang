@@ -2514,6 +2514,9 @@ def warn_lunsigned_always_true_comparison : Warning<
 def warn_runsigned_always_true_comparison : Warning<
   "comparison of %0 unsigned%select{| enum}2 expression is always %1">,
   InGroup<TautologicalCompare>;
+def warn_comparison_of_mixed_enum_types : Warning<
+  "comparison of two values with different enumeration types (%0 and %1)">,
+  InGroup<DiagGroup<"enum-compare">>;
 
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a nonstatic member function">;

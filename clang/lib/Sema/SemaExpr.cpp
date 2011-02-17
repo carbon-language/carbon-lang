@@ -6637,6 +6637,24 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   QualType lType = lex->getType();
   QualType rType = rex->getType();
 
+  Expr *LHSStripped = lex->IgnoreParenImpCasts();
+  Expr *RHSStripped = rex->IgnoreParenImpCasts();
+  QualType LHSStrippedType = LHSStripped->getType();
+  QualType RHSStrippedType = RHSStripped->getType();
+
+  // Two different enums will raise a warning when compared.
+  if (const EnumType *LHSEnumType = LHSStrippedType->getAs<EnumType>()) {
+    if (const EnumType *RHSEnumType = RHSStrippedType->getAs<EnumType>()) {
+      if (LHSEnumType->getDecl()->getIdentifier() &&
+          RHSEnumType->getDecl()->getIdentifier() &&
+          !Context.hasSameUnqualifiedType(LHSStrippedType, RHSStrippedType)) {
+        Diag(Loc, diag::warn_comparison_of_mixed_enum_types)
+          << LHSStrippedType << RHSStrippedType
+          << lex->getSourceRange() << rex->getSourceRange();
+      }
+    }
+  }
+
   if (!lType->hasFloatingRepresentation() &&
       !(lType->isBlockPointerType() && isRelational) &&
       !lex->getLocStart().isMacroID() &&
@@ -6651,8 +6669,6 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     // obvious cases in the definition of the template anyways. The idea is to
     // warn when the typed comparison operator will always evaluate to the same
     // result.
-    Expr *LHSStripped = lex->IgnoreParenImpCasts();
-    Expr *RHSStripped = rex->IgnoreParenImpCasts();
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped)) {
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
         if (DRL->getDecl() == DRR->getDecl() &&
