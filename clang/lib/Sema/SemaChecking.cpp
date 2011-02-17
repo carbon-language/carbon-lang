@@ -3094,41 +3094,40 @@ void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
     << TRange << Op->getSourceRange();
 }
 
-void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *ae) {
-  const DeclRefExpr *dr =
-    dyn_cast<DeclRefExpr>(ae->getBase()->IgnoreParenImpCasts());
-  if (!dr)
+void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
+  const DeclRefExpr *DRE =
+    dyn_cast<DeclRefExpr>(E->getBase()->IgnoreParenImpCasts());
+  if (!DRE)
     return;
-  const VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl());
-  if (!vd)
+  const VarDecl *Variable = dyn_cast<VarDecl>(DRE->getDecl());
+  if (!Variable)
     return;
-  const ConstantArrayType *cat = Context.getAsConstantArrayType(vd->getType());
-  if (!cat)
+  const ConstantArrayType *ArrayTy =
+    Context.getAsConstantArrayType(Variable->getType());
+  if (!ArrayTy)
     return;
-  const Expr *idx = ae->getIdx();
-  if (idx->isValueDependent())
+  const Expr *IndexExpr = E->getIdx();
+  if (IndexExpr->isValueDependent())
     return;
-  llvm::APSInt result;
-  if (!idx->isIntegerConstantExpr(result, Context))
+  llvm::APSInt index;
+  if (!IndexExpr->isIntegerConstantExpr(index, Context))
     return;
 
-  if (result.slt(0)) {
-    Diag(ae->getBase()->getLocStart(), diag::warn_array_index_precedes_bounds)
-      << result.toString(10, true) << idx->getSourceRange();
-  }
-  else {
-    const llvm::APInt &size = cat->getSize();
-    if (size.getBitWidth() > result.getBitWidth())
-      result = result.sext(size.getBitWidth());
-    if (result.sge(size)) {
-      Diag(ae->getBase()->getLocStart(), diag::warn_array_index_exceeds_bounds)
-        << result.toString(10, true) << size.toString(10, true)
-        << idx->getSourceRange();
-    }
-    else
+  if (!index.isNegative()) {
+    const llvm::APInt &size = ArrayTy->getSize();
+    if (size.getBitWidth() > index.getBitWidth())
+      index = index.sext(size.getBitWidth());
+    if (index.slt(size))
       return;
+
+    Diag(E->getBase()->getLocStart(), diag::warn_array_index_exceeds_bounds)
+      << index.toString(10, true) << size.toString(10, true)
+      << IndexExpr->getSourceRange();
+  } else {
+    Diag(E->getBase()->getLocStart(), diag::warn_array_index_precedes_bounds)
+      << index.toString(10, true) << IndexExpr->getSourceRange();
   }
-  Diag(vd->getLocStart(), diag::note_array_index_out_of_bounds)
-    << vd->getDeclName();
+  Diag(Variable->getLocStart(), diag::note_array_index_out_of_bounds)
+    << Variable->getDeclName();
 }
 
