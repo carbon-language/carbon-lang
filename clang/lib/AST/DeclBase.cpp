@@ -191,6 +191,78 @@ Decl *Decl::getCanonicalDecl() {
   return this;  
 }
 
+Decl *Decl::getNextRedeclaration() {
+  switch (getKind()) {
+  case Var: 
+    return static_cast<VarDecl *>(this)->getNextRedeclaration();
+      
+  case Function:
+  case CXXMethod:
+  case CXXConstructor:
+  case CXXDestructor:
+  case CXXConversion:
+    return static_cast<FunctionDecl *>(this)->getNextRedeclaration();
+     
+  case Typedef:
+    return static_cast<TypedefDecl *>(this)->getNextRedeclaration();
+      
+  case Enum:
+  case Record:
+  case CXXRecord:
+  case ClassTemplateSpecialization:
+  case ClassTemplatePartialSpecialization:
+    return static_cast<TagDecl *>(this)->getNextRedeclaration();
+
+  case ObjCMethod:
+    return static_cast<ObjCMethodDecl *>(this)->getNextRedeclaration();
+      
+  case FunctionTemplate:
+  case ClassTemplate:
+    return static_cast<RedeclarableTemplateDecl *>(this)
+                                                      ->getNextRedeclaration();
+      
+  case Namespace:
+  case UsingDirective:
+  case NamespaceAlias:
+  case Label:
+  case UnresolvedUsingTypename:
+  case TemplateTypeParm:
+  case EnumConstant:
+  case UnresolvedUsingValue:
+  case IndirectField:
+  case Field:
+  case ObjCIvar:
+  case ObjCAtDefsField:
+  case ImplicitParam:
+  case ParmVar:
+  case NonTypeTemplateParm:
+  case TemplateTemplateParm:
+  case Using:
+  case UsingShadow:
+  case ObjCCategory:
+  case ObjCProtocol:
+  case ObjCInterface:
+  case ObjCCategoryImpl:
+  case ObjCImplementation:
+  case ObjCProperty:
+  case ObjCCompatibleAlias:
+  case LinkageSpec:
+  case ObjCPropertyImpl:
+  case ObjCForwardProtocol:
+  case ObjCClass:
+  case FileScopeAsm:
+  case AccessSpec:
+  case Friend:
+  case FriendTemplate:
+  case StaticAssert:
+  case Block:
+  case TranslationUnit:
+    return this;
+  }
+  
+  return this;  
+}
+
 //===----------------------------------------------------------------------===//
 // PrettyStackTraceDecl Implementation
 //===----------------------------------------------------------------------===//

@@ -182,8 +182,9 @@ private:
   /// \brief A definition will return its interface declaration.
   /// An interface declaration will return its definition.
   /// Otherwise it will return itself.
-  virtual ObjCMethodDecl *getNextRedeclaration();
-
+  ObjCMethodDecl *getNextRedeclaration();
+  friend class Decl;
+  
 public:
   static ObjCMethodDecl *Create(ASTContext &C,
                                 SourceLocation beginLoc,

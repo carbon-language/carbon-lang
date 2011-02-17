@@ -271,7 +271,7 @@ protected:
   }
 
   virtual ~Decl();
-
+  
 public:
 
   /// \brief Source range that this declaration covers.
@@ -488,7 +488,7 @@ protected:
   ///
   /// Decl subclasses that can be redeclared should override this method so that
   /// Decl::redecl_iterator can iterate over them.
-  virtual Decl *getNextRedeclaration() { return this; }
+  Decl *getNextRedeclaration();
 
 public:
   /// \brief Iterates through all the redeclarations of the same decl.

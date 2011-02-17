@@ -674,8 +674,9 @@ protected:
   }
 
   typedef Redeclarable<VarDecl> redeclarable_base;
-  virtual VarDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
-
+  VarDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  friend class Decl;
+  
 public:
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
@@ -1310,9 +1311,12 @@ protected:
       DNLoc(NameInfo.getInfo()) {}
 
   typedef Redeclarable<FunctionDecl> redeclarable_base;
-  virtual FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
+  friend class Decl;
+                       
 public:
+                       
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
     return redeclarable_base::redecls_begin();
@@ -1921,8 +1925,10 @@ class TypedefDecl : public TypeDecl, public Redeclarable<TypedefDecl> {
 
 protected:
   typedef Redeclarable<TypedefDecl> redeclarable_base;
-  virtual TypedefDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  TypedefDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
+  friend class Decl;
+  
 public:
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
@@ -2042,12 +2048,14 @@ protected:
   }
 
   typedef Redeclarable<TagDecl> redeclarable_base;
-  virtual TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
   /// @brief Completes the definition of this tag declaration.
   ///
   /// This is a helper function for derived classes.
   void completeDefinition();    
+  
+  friend class Decl;
     
 public:
   typedef redeclarable_base::redecl_iterator redecl_iterator;
