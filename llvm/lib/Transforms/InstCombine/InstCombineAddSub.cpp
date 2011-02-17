@@ -147,7 +147,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     return BinaryOperator::CreateXor(LHS, RHS);
 
   // X + X --> X << 1
-  if (LHS == RHS && I.getType()->isIntegerTy()) {
+  if (LHS == RHS) {
     BinaryOperator *New =
       BinaryOperator::CreateShl(LHS, ConstantInt::get(I.getType(), 1));
     New->setHasNoSignedWrap(I.hasNoSignedWrap());
