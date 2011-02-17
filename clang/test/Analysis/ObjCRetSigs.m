@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-methodsigs -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-checker=cocoa.MethodSigs -verify %s
 
 int printf(const char *, ...);
 

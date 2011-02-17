@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-missing-dealloc %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-checker=cocoa.experimental.Dealloc %s -verify
 
 // Tests for the checker which checks missing/extra ivar 'release' calls 
 // in dealloc.

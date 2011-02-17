@@ -318,14 +318,6 @@ void AnalysisConsumer::HandleCode(Decl *D, Actions& actions) {
 // Analyses
 //===----------------------------------------------------------------------===//
 
-static void ActionWarnDeadStores(AnalysisConsumer &C, AnalysisManager& mgr,
-                                 Decl *D) {
-  if (LiveVariables *L = mgr.getLiveVariables(D)) {
-    BugReporter BR(mgr);
-    CheckDeadStores(*mgr.getCFG(D), *L, mgr.getParentMap(D), BR);
-  }
-}
-
 static void ActionWarnUninitVals(AnalysisConsumer &C, AnalysisManager& mgr,
                                  Decl *D) {
   if (CFG* c = mgr.getCFG(D)) {
@@ -432,38 +424,6 @@ static void ActionCFGView(AnalysisConsumer &C, AnalysisManager& mgr, Decl *D) {
   if (CFG *cfg = mgr.getCFG(D)) {
     cfg->viewCFG(mgr.getLangOptions());
   }
-}
-
-static void ActionSecuritySyntacticChecks(AnalysisConsumer &C,
-                                          AnalysisManager &mgr, Decl *D) {
-  BugReporter BR(mgr);
-  CheckSecuritySyntaxOnly(D, BR);
-}
-
-static void ActionWarnObjCDealloc(AnalysisConsumer &C, AnalysisManager& mgr,
-                                  Decl *D) {
-  if (mgr.getLangOptions().getGCMode() == LangOptions::GCOnly)
-    return;
-  BugReporter BR(mgr);
-  CheckObjCDealloc(cast<ObjCImplementationDecl>(D), mgr.getLangOptions(), BR);
-}
-
-static void ActionWarnObjCUnusedIvars(AnalysisConsumer &C, AnalysisManager& mgr,
-                                      Decl *D) {
-  BugReporter BR(mgr);
-  CheckObjCUnusedIvar(cast<ObjCImplementationDecl>(D), BR);
-}
-
-static void ActionWarnObjCMethSigs(AnalysisConsumer &C, AnalysisManager& mgr,
-                                   Decl *D) {
-  BugReporter BR(mgr);
-  CheckObjCInstMethSignature(cast<ObjCImplementationDecl>(D), BR);
-}
-
-static void ActionWarnSizeofPointer(AnalysisConsumer &C, AnalysisManager &mgr,
-                                    Decl *D) {
-  BugReporter BR(mgr);
-  CheckSizeofPointer(D, BR);
 }
 
 //===----------------------------------------------------------------------===//

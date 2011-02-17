@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -fblocks -analyze -analyzer-check-objc-unused-ivars %s -verify
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -fblocks -analyze -analyzer-checker=cocoa.UnusedIvars %s -verify
 
 //===--- BEGIN: Delta-debugging reduced headers. --------------------------===//
 

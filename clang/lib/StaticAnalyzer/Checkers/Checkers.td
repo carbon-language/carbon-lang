@@ -21,6 +21,9 @@ def MacOSX : Package<"macosx">;
 def CoreExperimental : Package<"experimental">,
   InPackage<Core>, Hidden;
 
+def CocoaExperimental : Package<"experimental">,
+  InPackage<Cocoa>, Hidden;
+
 def UnixExperimental : Package<"experimental">,
   InPackage<Unix>, Hidden;
 
@@ -59,12 +62,25 @@ def NSAutoreleasePoolChecker : Checker<"NSAutoreleasePool">,
   HelpText<"Warn for subpar uses of NSAutoreleasePool">,
   DescFile<"NSAutoreleasePoolChecker.cpp">;
 
+def ObjCMethSigsChecker : Checker<"MethodSigs">,
+  HelpText<"Warn about Objective-C method signatures with type incompatibilities">,
+  DescFile<"CheckObjCInstMethSignature.cpp">;
+
+def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
+  HelpText<"Warn about private ivars that are never used">,
+  DescFile<"ObjCUnusedIVarsChecker.cpp">;
+
 }
 
 def StackAddrLeakChecker : Checker<"StackAddrLeak">,
   InPackage<Core>,
   HelpText<"Check that addresses to stack memory are not leaked outside the function">,
   DescFile<"StackAddrLeakChecker.cpp">;
+
+def DeadStoresChecker : Checker<"DeadStores">,
+  InPackage<Core>,
+  HelpText<"Check for stores to dead variables">,
+  DescFile<"DeadStoresChecker.cpp">;
 
 def UnixAPIChecker : Checker<"API">,
   InPackage<Unix>,
@@ -131,6 +147,21 @@ def PointerSubChecker : Checker<"PointerSub">,
   InPackage<CoreExperimental>,
   HelpText<"Check for pointer subtractions on two pointers pointing to different memory chunks">,
   DescFile<"PointerSubChecker">;
+
+def SizeofPointerChecker : Checker<"SizeofPtr">,
+  InPackage<CoreExperimental>,
+  HelpText<"Warn about unintended use of sizeof() on pointer expressions">,
+  DescFile<"CheckSizeofPointer.cpp">;
+
+def SecuritySyntaxChecker : Checker<"SecuritySyntactic">,
+  InPackage<CoreExperimental>,
+  HelpText<"Perform quick security checks that require no data flow">,
+  DescFile<"CheckSecuritySyntaxOnly.cpp">;
+
+def ObjCDeallocChecker : Checker<"Dealloc">,
+  InPackage<CocoaExperimental>,
+  HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">,
+  DescFile<"CheckObjCDealloc.cpp">;
 
 def ChrootChecker : Checker<"Chroot">,
   InPackage<UnixExperimental>,

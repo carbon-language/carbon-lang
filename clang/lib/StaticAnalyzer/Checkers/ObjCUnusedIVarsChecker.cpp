@@ -13,7 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/ExprObjC.h"
@@ -98,7 +99,7 @@ static void Scan(IvarUsageMap &M, const DeclContext *C, const FileID FID,
     }
 }
 
-void ento::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
+static void checkObjCUnusedIvar(const ObjCImplementationDecl *D,
                                 BugReporter &BR) {
 
   const ObjCInterfaceDecl* ID = D->getClassInterface();
@@ -161,4 +162,23 @@ void ento::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
       BR.EmitBasicReport("Unused instance variable", "Optimization",
                          os.str(), I->first->getLocation());
     }
+}
+
+//===----------------------------------------------------------------------===//
+// ObjCUnusedIvarsChecker
+//===----------------------------------------------------------------------===//
+
+namespace {
+class ObjCUnusedIvarsChecker : public CheckerV2<
+                                      check::ASTDecl<ObjCImplementationDecl> > {
+public:
+  void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager& mgr,
+                    BugReporter &BR) const {
+    checkObjCUnusedIvar(D, BR);
+  }
+};
+}
+
+void ento::registerObjCUnusedIvarsChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ObjCUnusedIvarsChecker>();
 }

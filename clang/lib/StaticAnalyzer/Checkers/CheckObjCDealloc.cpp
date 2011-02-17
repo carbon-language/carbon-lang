@@ -13,7 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/ExprObjC.h"
@@ -94,8 +96,8 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
   return false;
 }
 
-void ento::CheckObjCDealloc(const ObjCImplementationDecl* D,
-                          const LangOptions& LOpts, BugReporter& BR) {
+static void checkObjCDealloc(const ObjCImplementationDecl* D,
+                             const LangOptions& LOpts, BugReporter& BR) {
 
   assert (LOpts.getGCMode() != LangOptions::GCOnly);
 
@@ -260,3 +262,23 @@ void ento::CheckObjCDealloc(const ObjCImplementationDecl* D,
   }
 }
 
+//===----------------------------------------------------------------------===//
+// ObjCDeallocChecker
+//===----------------------------------------------------------------------===//
+
+namespace {
+class ObjCDeallocChecker : public CheckerV2<
+                                      check::ASTDecl<ObjCImplementationDecl> > {
+public:
+  void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager& mgr,
+                    BugReporter &BR) const {
+    if (mgr.getLangOptions().getGCMode() == LangOptions::GCOnly)
+      return;
+    checkObjCDealloc(cast<ObjCImplementationDecl>(D), mgr.getLangOptions(), BR);
+  }
+};
+}
+
+void ento::registerObjCDeallocChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ObjCDeallocChecker>();
+}

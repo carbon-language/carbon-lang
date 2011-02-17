@@ -12,9 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
 
 using namespace clang;
 using namespace ento;
@@ -66,7 +67,21 @@ void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   }
 }
 
-void ento::CheckSizeofPointer(const Decl *D, BugReporter &BR) {
-  WalkAST walker(BR);
-  walker.Visit(D->getBody());
+//===----------------------------------------------------------------------===//
+// SizeofPointerChecker
+//===----------------------------------------------------------------------===//
+
+namespace {
+class SizeofPointerChecker : public CheckerV2<check::ASTCodeBody> {
+public:
+  void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
+                        BugReporter &BR) const {
+    WalkAST walker(BR);
+    walker.Visit(D->getBody());
+  }
+};
+}
+
+void ento::registerSizeofPointerChecker(CheckerManager &mgr) {
+  mgr.registerChecker<SizeofPointerChecker>();
 }

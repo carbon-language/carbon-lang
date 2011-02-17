@@ -11,9 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/TargetInfo.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
-#include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -497,10 +498,20 @@ void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
 }
 
 //===----------------------------------------------------------------------===//
-// Entry point for check.
+// SecuritySyntaxChecker
 //===----------------------------------------------------------------------===//
 
-void ento::CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR) {
-  WalkAST walker(BR);
-  walker.Visit(D->getBody());
+namespace {
+class SecuritySyntaxChecker : public CheckerV2<check::ASTCodeBody> {
+public:
+  void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
+                        BugReporter &BR) const {
+    WalkAST walker(BR);
+    walker.Visit(D->getBody());
+  }
+};
+}
+
+void ento::registerSecuritySyntaxChecker(CheckerManager &mgr) {
+  mgr.registerChecker<SecuritySyntaxChecker>();
 }

@@ -36,25 +36,11 @@ class BugType;
 class BugReporter;
 class ExprEngine;
 
-void CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &map, 
-                     BugReporter& BR);
-
 TransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                   const LangOptions& lopts);
 
-void CheckObjCDealloc(const ObjCImplementationDecl* D, const LangOptions& L,
-                      BugReporter& BR);
-
-void CheckObjCInstMethSignature(const ObjCImplementationDecl *ID,
-                                BugReporter& BR);
-
-void CheckObjCUnusedIvar(const ObjCImplementationDecl *D, BugReporter& BR);
-
 void RegisterExperimentalChecks(ExprEngine &Eng);
 void RegisterExperimentalInternalChecks(ExprEngine &Eng);
-
-void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
-void CheckSizeofPointer(const Decl *D, BugReporter &BR);
 
 void RegisterCallInliner(ExprEngine &Eng);
 

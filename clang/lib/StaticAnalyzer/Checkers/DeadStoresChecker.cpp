@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
@@ -335,10 +337,27 @@ public:
 } // end anonymous namespace
 
 
-void ento::CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &pmap, 
-                            BugReporter& BR) {
-  FindEscaped FS(&cfg);
-  FS.getCFG().VisitBlockStmts(FS);
-  DeadStoreObs A(cfg, BR.getContext(), BR, pmap, FS.Escaped);
-  L.runOnAllBlocks(cfg, &A);
+//===----------------------------------------------------------------------===//
+// DeadStoresChecker
+//===----------------------------------------------------------------------===//
+
+namespace {
+class DeadStoresChecker : public CheckerV2<check::ASTCodeBody> {
+public:
+  void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
+                        BugReporter &BR) const {
+    if (LiveVariables *L = mgr.getLiveVariables(D)) {
+      CFG &cfg = *mgr.getCFG(D);
+      ParentMap &pmap = mgr.getParentMap(D);
+      FindEscaped FS(&cfg);
+      FS.getCFG().VisitBlockStmts(FS);
+      DeadStoreObs A(cfg, BR.getContext(), BR, pmap, FS.Escaped);
+      L->runOnAllBlocks(cfg, &A);
+    }
+  }
+};
+}
+
+void ento::registerDeadStoresChecker(CheckerManager &mgr) {
+  mgr.registerChecker<DeadStoresChecker>();
 }

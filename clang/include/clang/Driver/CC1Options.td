@@ -48,22 +48,10 @@ def analysis_CFGAddInitializers : Flag<"-cfg-add-initializers">,
   HelpText<"Add C++ initializers to CFGs for all analyses">;
 def analysis_DisplayLiveVariables : Flag<"-dump-live-variables">,
   HelpText<"Print results of live variable analysis">;
-def analysis_SecuritySyntacticChecks : Flag<"-analyzer-check-security-syntactic">,
-  HelpText<"Perform quick security checks that require no data flow">;
-def analysis_WarnDeadStores : Flag<"-analyzer-check-dead-stores">,
-  HelpText<"Warn about stores to dead variables">;
 def analysis_WarnUninitVals : Flag<"-warn-uninit-values">,
   HelpText<"Warn about uses of uninitialized variables">;
-def analysis_WarnObjCMethSigs : Flag<"-analyzer-check-objc-methodsigs">,
-  HelpText<"Warn about Objective-C method signatures with type incompatibilities">;
-def analysis_WarnObjCDealloc : Flag<"-analyzer-check-objc-missing-dealloc">,
-  HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">;
-def analysis_WarnObjCUnusedIvars : Flag<"-analyzer-check-objc-unused-ivars">,
-  HelpText<"Warn about private ivars that are never used">;
 def analysis_ObjCMemChecker : Flag<"-analyzer-check-objc-mem">,
   HelpText<"Run the [Core] Foundation reference count checker">;
-def analysis_WarnSizeofPointer : Flag<"-warn-sizeof-pointer">,
-  HelpText<"Warn about unintended use of sizeof() on pointer expressions">;
 def analysis_AnalyzerStats : Flag<"-analyzer-stats">,
   HelpText<"Emit warnings with analyzer statistics">;
 def analysis_WarnBufferOverflows : Flag<"-analyzer-check-buffer-overflows">,
