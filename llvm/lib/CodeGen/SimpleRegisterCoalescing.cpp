@@ -1425,9 +1425,9 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
                                                std::vector<CopyRec> &TryAgain) {
   DEBUG(dbgs() << MBB->getName() << ":\n");
 
-  std::vector<CopyRec> VirtCopies;
-  std::vector<CopyRec> PhysCopies;
-  std::vector<CopyRec> ImpDefCopies;
+  SmallVector<CopyRec, 8> VirtCopies;
+  SmallVector<CopyRec, 8> PhysCopies;
+  SmallVector<CopyRec, 8> ImpDefCopies;
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E;) {
     MachineInstr *Inst = MII++;
