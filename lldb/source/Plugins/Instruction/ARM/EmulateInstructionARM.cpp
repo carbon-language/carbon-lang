@@ -1831,6 +1831,87 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
     return true;
 }
 
+// Table Branch Byte causes a PC-relative forward branch using a table of single byte offsets.
+// A base register provides a pointer to the table, and a second register supplies an index into the table.
+// The branch length is twice the value of the byte returned from the table.
+//
+// Table Branch Halfword causes a PC-relative forward branch using a table of single halfword offsets.
+// A base register provides a pointer to the table, and a second register supplies an index into the table.
+// The branch length is twice the value of the halfword returned from the table.
+// TBB, TBH
+bool
+EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    EncodingSpecificOperations(); NullCheckIfThumbEE(n);
+    if is_tbh then
+        halfwords = UInt(MemU[R[n]+LSL(R[m],1), 2]);
+    else
+        halfwords = UInt(MemU[R[n]+R[m], 1]);
+    BranchWritePC(PC + 2*halfwords);
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rn;     // the base register which contains the address of the table of branch lengths
+    uint32_t Rm;     // the index register which contains an integer pointing to a byte/halfword in the table
+    bool is_tbh;     // true if table branch halfword
+    switch (encoding) {
+    case eEncodingT1:
+        Rn = Bits32(opcode, 19, 16);
+        Rm = Bits32(opcode, 3, 0);
+        is_tbh = BitIsSet(opcode, 4);
+        if (Rn == 13 || BadReg(Rm))
+            return false;
+        if (InITBlock() && !LastInITBlock())
+            return false;
+        break;
+    default:
+        return false;
+    }
+
+    // Read the address of the table from the operand register Rn.
+    // The PC can be used, in which case the table immediately follows this instruction.
+    uint32_t base =
+        Rn == 15 ? (ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success) + 4)
+                 : ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+    if (!success)
+        return false;
+
+    // the table index
+    uint32_t index = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+    if (!success)
+        return false;
+
+    // the offsetted table address
+    addr_t addr = base + (is_tbh ? index*2 : index);
+
+    // PC-relative offset to branch forward
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextTableBranchReadMemory;
+    uint32_t offset = MemURead(context, addr, is_tbh ? 2 : 1, 0, &success);
+    if (!success)
+        return false;
+
+    const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+    if (!success)
+        return false;
+
+    // target address
+    addr_t target = pc + 4 + offset;
+    context.type = EmulateInstruction::eContextRelativeBranchImmediate;
+    context.SetModeAndImmediateSigned (eModeThumb, 4 + offset);
+
+    if (!BranchWritePC(context, target))
+        return false;
+
+    return true;
+}
+
 // ADD <Rdn>, <Rm>
 // where <Rdn> the destination register is also the first operand register
 // and <Rm> is the second operand register.
@@ -4282,6 +4363,10 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff87, 0x00004700, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
         // compare and branch
         { 0xfffff500, 0x0000b100, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCB, "cb{n}z <Rn>, <label>"},
+        // table branch byte
+        { 0xfff0fff0, 0xe8d0f000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTB, "tbb<c> <Rn>, <Rm>"},
+        // table branch halfword
+        { 0xfff0fff0, 0xe8d0f010, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTB, "tbh<c> <Rn>, <Rm>, lsl #1"},
 
         //----------------------------------------------------------------------
         // Data-processing instructions

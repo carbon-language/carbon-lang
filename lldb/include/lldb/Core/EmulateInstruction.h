@@ -153,6 +153,10 @@ public:
         // arg1 = immediate data or don't care
         // arg2 = don't care
         eContextSupervisorCall,
+
+        // Used when performing a MemU operation to read the PC-relative offset
+        // from an address.
+        eContextTableBranchReadMemory,
         
         // Used when random bits are written into a register
         // arg0 = target register kind

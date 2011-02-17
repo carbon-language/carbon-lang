@@ -384,6 +384,10 @@ protected:
     bool
     EmulateCB (ARMEncoding encoding);
 
+    // A8.6.226 TBB, TBH
+    bool
+    EmulateTB (ARMEncoding encoding);
+
     // A8.6.6 ADD (register) -- Encoding T2
     bool
     EmulateAddRdnRm (ARMEncoding encoding);
