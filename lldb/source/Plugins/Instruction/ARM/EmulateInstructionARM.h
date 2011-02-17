@@ -693,23 +693,19 @@ protected:
     bool
     EmulateSXTH (ARMEncoding encoding);
     
-    // A8.6.225 TBB, TBH        - Encoding T1
-    bool
-    EmulateTBB (ARMEncoding encoding);
-    
-    // A8.6.226 TEQ (immediate) - Encoding A1
+    // A8.6.227 TEQ (immediate) - Encoding A1
     bool
     EmulateTEQImmediate (ARMEncoding encoding);
     
-    // A8.6.227 TEQ (register)  - Encoding A1
+    // A8.6.228 TEQ (register)  - Encoding A1
     bool
     EmulateTEQRegister (ARMEncoding encoding);
     
-    // A8.6.229 TST (immediate) - Encoding A1
+    // A8.6.230 TST (immediate) - Encoding A1
     bool
     EmulateTSTImmediate (ARMEncoding encoding);
     
-    // A8.6.230 TST (register)  - Encoding T1, A1
+    // A8.6.231 TST (register)  - Encoding T1, A1
     bool
     EmulateTSTRegister (ARMEncoding encoding);
     
