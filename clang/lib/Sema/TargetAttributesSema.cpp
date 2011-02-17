@@ -275,4 +275,3 @@ const TargetAttributesSema &Sema::getTargetAttributesSema() const {
     return *(TheTargetAttributesSema = new X86AttributesSema);
   }
 }
-

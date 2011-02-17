@@ -1058,7 +1058,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // work around a linker bug;  see <rdar://problem/7651567>.
   if (getToolChain().getTriple().getOS() != llvm::Triple::Darwin)
     CmdArgs.push_back("-mconstructor-aliases");
-    
+
   if (Args.hasArg(options::OPT_mms_bitfields)) {
     CmdArgs.push_back("-mms-bitfields");
   }
@@ -1549,7 +1549,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           CmdArgs.push_back("-fobjc-dispatch-method=non-legacy");
       }
     }
-    
+
     // -fobjc-default-synthesize-properties=0 is default.
     if (Args.hasFlag(options::OPT_fobjc_default_synthesize_properties,
                      options::OPT_fno_objc_default_synthesize_properties,
@@ -1587,7 +1587,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_mno_pascal_strings,
                    false))
     CmdArgs.push_back("-fpascal-strings");
-  
+
   if (Args.hasArg(options::OPT_mkernel) ||
       Args.hasArg(options::OPT_fapple_kext)) {
     if (!Args.hasArg(options::OPT_fcommon))

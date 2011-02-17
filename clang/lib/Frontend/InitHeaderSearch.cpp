@@ -347,7 +347,7 @@ static bool getVisualStudioDir(std::string &path) {
   bool hasVCExpressDir = getSystemRegistryString(
     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VCExpress\\$VERSION",
     "InstallDir", vsExpressIDEInstallDir, sizeof(vsExpressIDEInstallDir) - 1);
-    // If we have both vc80 and vc90, pick version we were compiled with. 
+    // If we have both vc80 and vc90, pick version we were compiled with.
   if (hasVCDir && vsIDEInstallDir[0]) {
     char *p = (char*)strstr(vsIDEInstallDir, "\\Common7\\IDE");
     if (p)
@@ -369,7 +369,7 @@ static bool getVisualStudioDir(std::string &path) {
     const char* vs80comntools = getenv("VS80COMNTOOLS");
     const char* vscomntools = NULL;
 
-    // Try to find the version that we were compiled with 
+    // Try to find the version that we were compiled with
     if(false) {}
     #if (_MSC_VER >= 1600)  // VC100
     else if(vs100comntools) {
@@ -412,7 +412,7 @@ static bool getWindowsSDKDir(std::string &path) {
   bool hasSDKDir = getSystemRegistryString(
    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\$VERSION",
     "InstallationFolder", windowsSDKInstallDir, sizeof(windowsSDKInstallDir) - 1);
-    // If we have both vc80 and vc90, pick version we were compiled with. 
+    // If we have both vc80 and vc90, pick version we were compiled with.
   if (hasSDKDir && windowsSDKInstallDir[0]) {
     path = windowsSDKInstallDir;
     return(true);
@@ -450,7 +450,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     CIncludeDirs.split(dirs, ":");
     for (llvm::SmallVectorImpl<llvm::StringRef>::iterator i = dirs.begin();
          i != dirs.end();
-         ++i) 
+         ++i)
       AddPath(*i, System, false, false, false);
     return;
   }
@@ -490,7 +490,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     AddPath("/boot/develop/headers/os/arch", System, true, false, false);
     AddPath("/boot/develop/headers/os/device", System, true, false, false);
     AddPath("/boot/develop/headers/os/drivers", System, true, false, false);
-    AddPath("/boot/develop/headers/os/game", System, true, false, false); 
+    AddPath("/boot/develop/headers/os/game", System, true, false, false);
     AddPath("/boot/develop/headers/os/interface", System, true, false, false);
     AddPath("/boot/develop/headers/os/kernel", System, true, false, false);
     AddPath("/boot/develop/headers/os/locale", System, true, false, false);
@@ -503,13 +503,13 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     AddPath("/boot/develop/headers/os/support", System, true, false, false);
     AddPath("/boot/develop/headers/os/translation",
       System, true, false, false);
-    AddPath("/boot/develop/headers/os/add-ons/graphics", 
+    AddPath("/boot/develop/headers/os/add-ons/graphics",
       System, true, false, false);
-    AddPath("/boot/develop/headers/os/add-ons/input_server", 
+    AddPath("/boot/develop/headers/os/add-ons/input_server",
       System, true, false, false);
-    AddPath("/boot/develop/headers/os/add-ons/screen_saver", 
+    AddPath("/boot/develop/headers/os/add-ons/screen_saver",
       System, true, false, false);
-    AddPath("/boot/develop/headers/os/add-ons/tracker", 
+    AddPath("/boot/develop/headers/os/add-ons/tracker",
       System, true, false, false);
     AddPath("/boot/develop/headers/os/be_apps/Deskbar",
       System, true, false, false);
@@ -518,7 +518,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     AddPath("/boot/develop/headers/os/be_apps/Tracker",
       System, true, false, false);
     AddPath("/boot/develop/headers/cpp", System, true, false, false);
-    AddPath("/boot/develop/headers/cpp/i586-pc-haiku", 
+    AddPath("/boot/develop/headers/cpp/i586-pc-haiku",
       System, true, false, false);
     AddPath("/boot/develop/headers/3rdparty", System, true, false, false);
     AddPath("/boot/develop/headers/bsd", System, true, false, false);
@@ -575,8 +575,8 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw64", "4.3.0");
     // Fall through.
   case llvm::Triple::MinGW32:
-   // Try gcc 4.5.0
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0"); 
+    // Try gcc 4.5.0
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
     // Try gcc 4.4.0
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
     // Try gcc 4.3.0
@@ -586,13 +586,13 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     switch (triple.getArch()) {
     default: break;
 
-    case llvm::Triple::ppc: 
+    case llvm::Triple::ppc:
     case llvm::Triple::ppc64:
       AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
-                                  "powerpc-apple-darwin10", "", "ppc64", 
+                                  "powerpc-apple-darwin10", "", "ppc64",
                                   triple);
       AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0",
-                                  "powerpc-apple-darwin10", "", "ppc64", 
+                                  "powerpc-apple-darwin10", "", "ppc64",
                                   triple);
       break;
 

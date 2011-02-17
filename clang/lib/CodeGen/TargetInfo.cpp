@@ -2650,7 +2650,7 @@ void MBlazeTargetCodeGenInfo::SetTargetAttributes(const Decl *D,
                                                   const {
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   if (!FD) return;
-  
+
   llvm::CallingConv::ID CC = llvm::CallingConv::C;
   if (FD->hasAttr<MBlazeInterruptHandlerAttr>())
     CC = llvm::CallingConv::MBLAZE_INTR;
