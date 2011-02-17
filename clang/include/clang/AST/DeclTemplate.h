@@ -1041,7 +1041,6 @@ public:
   using TemplateParmPosition::setPosition;
   using TemplateParmPosition::getIndex;
 
-  SourceLocation getInnerLocStart() const;
   SourceRange getSourceRange() const;
 
   /// \brief Determine whether this template parameter has a default
@@ -1467,8 +1466,6 @@ public:
   SourceLocation getTemplateKeywordLoc() const {
     return ExplicitInfo ? ExplicitInfo->TemplateKeywordLoc : SourceLocation();
   }
-
-  SourceLocation getInnerLocStart() const { return getTemplateKeywordLoc(); }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     Profile(ID, TemplateArgs->data(), TemplateArgs->size(), getASTContext());

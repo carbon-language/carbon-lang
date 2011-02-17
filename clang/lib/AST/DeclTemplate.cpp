@@ -455,13 +455,6 @@ NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
                                            ExpandedTInfos);
 }
 
-SourceLocation NonTypeTemplateParmDecl::getInnerLocStart() const {
-  SourceLocation Start = getTypeSpecStartLoc();
-  if (Start.isInvalid())
-    Start = getLocation();
-  return Start;
-}
-
 SourceRange NonTypeTemplateParmDecl::getSourceRange() const {
   return SourceRange(getOuterLocStart(), getLocation());
 }

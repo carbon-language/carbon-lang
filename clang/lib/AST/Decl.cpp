@@ -969,6 +969,20 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
   }
 }
 
+SourceLocation DeclaratorDecl::getInnerLocStart() const {
+  if (const VarDecl *Var = dyn_cast<VarDecl>(this)) {
+    SourceLocation Start = Var->getTypeSpecStartLoc();
+    if (Start.isValid())
+      return Start;    
+  } else if (const NonTypeTemplateParmDecl *NTTP 
+                                    = dyn_cast<NonTypeTemplateParmDecl>(this)) {
+    SourceLocation Start = NTTP->getTypeSpecStartLoc();
+    if (Start.isValid())
+      return Start;        
+  }
+  return getLocation();
+}
+
 SourceLocation DeclaratorDecl::getOuterLocStart() const {
   return getTemplateOrInnerLocStart(this);
 }
@@ -1027,13 +1041,6 @@ void VarDecl::setStorageClass(StorageClass SC) {
     ClearLinkageCache();
   
   SClass = SC;
-}
-
-SourceLocation VarDecl::getInnerLocStart() const {
-  SourceLocation Start = getTypeSpecStartLoc();
-  if (Start.isInvalid())
-    Start = getLocation();
-  return Start;
 }
 
 SourceRange VarDecl::getSourceRange() const {
@@ -1958,6 +1965,17 @@ unsigned FieldDecl::getFieldIndex() const {
 //===----------------------------------------------------------------------===//
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
+
+SourceLocation TagDecl::getInnerLocStart() const {
+  if (const ClassTemplateSpecializationDecl *Spec 
+                         = dyn_cast<ClassTemplateSpecializationDecl>(this)) {
+    SourceLocation Start = Spec->getTemplateKeywordLoc();
+    if (Start.isValid())
+      return Start;    
+  } 
+  
+  return getTagKeywordLoc();
+}
 
 SourceLocation TagDecl::getOuterLocStart() const {
   return getTemplateOrInnerLocStart(this);

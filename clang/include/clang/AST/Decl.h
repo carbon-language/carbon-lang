@@ -538,7 +538,7 @@ public:
 
   /// getInnerLocStart - Return SourceLocation representing start of source
   /// range ignoring outer template declarations.
-  virtual SourceLocation getInnerLocStart() const { return getLocation(); }
+  SourceLocation getInnerLocStart() const;
 
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
@@ -686,7 +686,6 @@ public:
                          QualType T, TypeSourceInfo *TInfo, StorageClass S,
                          StorageClass SCAsWritten);
 
-  virtual SourceLocation getInnerLocStart() const;
   SourceRange getSourceRange() const;
 
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
@@ -2065,7 +2064,7 @@ public:
 
   /// getInnerLocStart - Return SourceLocation representing start of source
   /// range ignoring outer template declarations.
-  virtual SourceLocation getInnerLocStart() const { return TagKeywordLoc; }
+    SourceLocation getInnerLocStart() const;
 
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
