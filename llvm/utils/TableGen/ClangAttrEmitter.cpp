@@ -45,6 +45,7 @@ std::string ReadPCHRecord(StringRef type) {
     .EndsWith("Decl *", "cast_or_null<" + std::string(type, 0, type.size()-1) +
               ">(GetDecl(Record[Idx++]))")
     .Case("QualType", "GetType(Record[Idx++])")
+    .Case("Expr *", "ReadSubExpr()")
     .Default("Record[Idx++]");
 }
 
@@ -54,6 +55,7 @@ std::string WritePCHRecord(StringRef type, StringRef name) {
     .EndsWith("Decl *", "AddDeclRef(" + std::string(name) +
                         ", Record);\n")
     .Case("QualType", "AddTypeRef(" + std::string(name) + ", Record);\n")
+    .Case("Expr *", "AddStmt(" + std::string(name) + ");\n")
     .Default("Record.push_back(" + std::string(name) + ");\n");
 }
 
