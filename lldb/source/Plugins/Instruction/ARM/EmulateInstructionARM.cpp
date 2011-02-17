@@ -1893,7 +1893,7 @@ EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
     // PC-relative offset to branch forward
     EmulateInstruction::Context context;
     context.type = EmulateInstruction::eContextTableBranchReadMemory;
-    uint32_t offset = MemURead(context, addr, is_tbh ? 2 : 1, 0, &success);
+    uint32_t offset = MemURead(context, addr, is_tbh ? 2 : 1, 0, &success) * 2;
     if (!success)
         return false;
 
