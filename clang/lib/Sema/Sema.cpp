@@ -53,6 +53,8 @@ void FunctionScopeInfo::Clear() {
 
 bool FunctionScopeInfo::checkLabelUse(Stmt *Body, Sema &S) {
   bool AnyErrors = false;
+  // FIXME: The iteration order of this (and thus, the order of errors and
+  // warnings produced) is nondeterminstic.
   for (llvm::DenseMap<IdentifierInfo*, LabelDecl*>::iterator
        I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
     LabelDecl *L = I->second;
