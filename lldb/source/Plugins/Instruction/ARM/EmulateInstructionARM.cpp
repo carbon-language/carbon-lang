@@ -23,11 +23,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static inline uint32_t Align(uint32_t val, uint32_t alignment)
-{
-    return alignment * (val / alignment);
-}
-
 //----------------------------------------------------------------------
 //
 // ITSession implementation

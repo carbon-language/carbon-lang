@@ -18,6 +18,11 @@
 
 namespace lldb_private {
 
+static inline uint32_t Align(uint32_t val, uint32_t alignment)
+{
+    return alignment * (val / alignment);
+}
+
 static inline uint32_t DecodeImmShift(const uint32_t type, const uint32_t imm5, ARM_ShifterType &shift_t)
 {
     switch (type) {
