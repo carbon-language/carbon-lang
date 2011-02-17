@@ -19,6 +19,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang-c/Index.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstring>
@@ -225,6 +226,14 @@ const char *CodeCompletionAllocator::CopyString(llvm::StringRef String) {
   std::copy(String.begin(), String.end(), Mem);
   Mem[String.size()] = 0;
   return Mem;
+}
+
+const char *CodeCompletionAllocator::CopyString(llvm::Twine String) {
+  // FIXME: It would be more efficient to teach Twine to tell us its size and
+  // then add a routine there to fill in an allocated char* with the contents
+  // of the string.
+  llvm::SmallString<128> Data;
+  return CopyString(String.toStringRef(Data));
 }
 
 CodeCompletionString *CodeCompletionBuilder::TakeString() {

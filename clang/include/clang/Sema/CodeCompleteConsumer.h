@@ -23,6 +23,7 @@
 
 namespace llvm {
   class raw_ostream;
+  class Twine;
 }
 
 namespace clang {
@@ -80,7 +81,11 @@ enum {
   
   /// \brief Adjustment to the "bool" type in Objective-C, where the typedef
   /// "BOOL" is preferred.
-  CCD_bool_in_ObjC = 1
+  CCD_bool_in_ObjC = 1,
+  
+  /// \brief Adjustment for KVC code pattern priorities when it doesn't look
+  /// like the
+  CCD_ProbablyNotObjCCollection = 15
 };
 
 /// \brief Priority value factors by which we will divide or multiply the
@@ -426,6 +431,19 @@ class CodeCompletionAllocator : public llvm::BumpPtrAllocator {
 public:
   /// \brief Copy the given string into this allocator.
   const char *CopyString(llvm::StringRef String);
+
+  /// \brief Copy the given string into this allocator.
+  const char *CopyString(llvm::Twine String);
+  
+  // \brief Copy the given string into this allocator.
+  const char *CopyString(const char *String) {
+    return CopyString(llvm::StringRef(String));
+  }
+  
+  /// \brief Copy the given string into this allocator.
+  const char *CopyString(const std::string &String) {
+    return CopyString(llvm::StringRef(String));
+  }
 };
   
 /// \brief A builder class used to construct new code-completion strings.
@@ -451,7 +469,7 @@ public:
     : Allocator(Allocator), Priority(Priority), Availability(Availability) { }
 
   /// \brief Retrieve the allocator into which the code completion
-  /// strings will be 
+  /// strings should be allocated.
   CodeCompletionAllocator &getAllocator() const { return Allocator; }
   
   /// \brief Take the resulting completion string. 
@@ -460,42 +478,36 @@ public:
   CodeCompletionString *TakeString();
   
   /// \brief Add a new typed-text chunk.
-  /// The text string will be copied.
   void AddTypedTextChunk(const char *Text) { 
     Chunks.push_back(Chunk(CodeCompletionString::CK_TypedText, Text));
   }
   
   /// \brief Add a new text chunk.
-  /// The text string will be copied.
   void AddTextChunk(const char *Text) { 
     Chunks.push_back(Chunk::CreateText(Text)); 
   }
-  
+
   /// \brief Add a new optional chunk.
   void AddOptionalChunk(CodeCompletionString *Optional) {
     Chunks.push_back(Chunk::CreateOptional(Optional));
   }
   
   /// \brief Add a new placeholder chunk.
-  /// The placeholder text will be copied.
   void AddPlaceholderChunk(const char *Placeholder) {
     Chunks.push_back(Chunk::CreatePlaceholder(Placeholder));
   }
   
   /// \brief Add a new informative chunk.
-  /// The text will be copied.
   void AddInformativeChunk(const char *Text) {
     Chunks.push_back(Chunk::CreateInformative(Text));
   }
   
   /// \brief Add a new result-type chunk.
-  /// The text will be copied.
   void AddResultTypeChunk(const char *ResultType) {
     Chunks.push_back(Chunk::CreateResultType(ResultType));
   }
   
   /// \brief Add a new current-parameter chunk.
-  /// The text will be copied.
   void AddCurrentParameterChunk(const char *CurrentParameter) {
     Chunks.push_back(Chunk::CreateCurrentParameter(CurrentParameter));
   }

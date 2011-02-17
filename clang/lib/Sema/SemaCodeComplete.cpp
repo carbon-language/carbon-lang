@@ -5427,6 +5427,631 @@ static void FindImplementableMethods(ASTContext &Context,
   }
 }
 
+/// \brief Add the parenthesized return or parameter type chunk to a code 
+/// completion string.
+static void AddObjCPassingTypeChunk(QualType Type,
+                                    ASTContext &Context,
+                                    CodeCompletionBuilder &Builder) {
+  Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+  Builder.AddTextChunk(GetCompletionTypeString(Type, Context, 
+                                               Builder.getAllocator()));
+  Builder.AddChunk(CodeCompletionString::CK_RightParen);
+}
+
+/// \brief Determine whether the given class is or inherits from a class by
+/// the given name.
+static bool InheritsFromClassNamed(ObjCInterfaceDecl *Class, 
+                                   llvm::StringRef Name) {
+  if (!Class)
+    return false;
+  
+  if (Class->getIdentifier() && Class->getIdentifier()->getName() == Name)
+    return true;
+  
+  return InheritsFromClassNamed(Class->getSuperClass(), Name);
+}
+                  
+/// \brief Add code completions for Objective-C Key-Value Coding (KVC) and
+/// Key-Value Observing (KVO).
+static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
+                                       bool IsInstanceMethod,
+                                       QualType ReturnType,
+                                       ASTContext &Context,
+                                       const KnownMethodsMap &KnownMethods,
+                                       ResultBuilder &Results) {
+  IdentifierInfo *PropName = Property->getIdentifier();
+  if (!PropName || PropName->getLength() == 0)
+    return;
+  
+  
+  // Builder that will create each code completion.
+  typedef CodeCompletionResult Result;
+  CodeCompletionAllocator &Allocator = Results.getAllocator();
+  CodeCompletionBuilder Builder(Allocator);
+  
+  // The selector table.
+  SelectorTable &Selectors = Context.Selectors;
+  
+  // The property name, copied into the code completion allocation region
+  // on demand.
+  struct KeyHolder {
+    CodeCompletionAllocator &Allocator;
+    llvm::StringRef Key;
+    const char *CopiedKey;
+    
+    KeyHolder(CodeCompletionAllocator &Allocator, llvm::StringRef Key)
+    : Allocator(Allocator), Key(Key), CopiedKey(0) { }
+    
+    operator const char *() {
+      if (CopiedKey)
+        return CopiedKey;
+      
+      return CopiedKey = Allocator.CopyString(Key);
+    }
+  } Key(Allocator, PropName->getName());
+  
+  // The uppercased name of the property name.
+  std::string UpperKey = PropName->getName();
+  if (!UpperKey.empty())
+    UpperKey[0] = toupper(UpperKey[0]);      
+  
+  bool ReturnTypeMatchesProperty = ReturnType.isNull() ||
+    Context.hasSameUnqualifiedType(ReturnType.getNonReferenceType(), 
+                                   Property->getType());
+  bool ReturnTypeMatchesVoid 
+    = ReturnType.isNull() || ReturnType->isVoidType();
+  
+  // Add the normal accessor -(type)key.
+  if (IsInstanceMethod &&
+      !KnownMethods.count(Selectors.getNullarySelector(PropName)) &&
+      ReturnTypeMatchesProperty && !Property->getGetterMethodDecl()) {
+    if (ReturnType.isNull())
+      AddObjCPassingTypeChunk(Property->getType(), Context, Builder);
+    
+    Builder.AddTypedTextChunk(Key);
+    Results.AddResult(Result(Builder.TakeString(), CCP_CodePattern, 
+                             CXCursor_ObjCInstanceMethodDecl));
+  }
+  
+  // If we have an integral or boolean property (or the user has provided
+  // an integral or boolean return type), add the accessor -(type)isKey.
+  if (IsInstanceMethod &&
+      ((!ReturnType.isNull() && 
+        (ReturnType->isIntegerType() || ReturnType->isBooleanType())) ||
+       (ReturnType.isNull() && 
+        (Property->getType()->isIntegerType() || 
+         Property->getType()->isBooleanType())))) {
+    llvm::Twine SelectorName = llvm::Twine("is") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getNullarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("BOOL");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(
+                                Allocator.CopyString(SelectorId->getName()));
+      Results.AddResult(Result(Builder.TakeString(), CCP_CodePattern, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // Add the normal mutator.
+  if (IsInstanceMethod && ReturnTypeMatchesVoid && 
+      !Property->getSetterMethodDecl()) {
+    llvm::Twine SelectorName = llvm::Twine("set") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(
+                                Allocator.CopyString(SelectorId->getName()));
+      Builder.AddTypedTextChunk(":");
+      AddObjCPassingTypeChunk(Property->getType(), Context, Builder);
+      Builder.AddTextChunk(Key);
+      Results.AddResult(Result(Builder.TakeString(), CCP_CodePattern, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // Indexed and unordered accessors
+  unsigned IndexedGetterPriority = CCP_CodePattern;
+  unsigned IndexedSetterPriority = CCP_CodePattern;
+  unsigned UnorderedGetterPriority = CCP_CodePattern;
+  unsigned UnorderedSetterPriority = CCP_CodePattern;
+  if (const ObjCObjectPointerType *ObjCPointer 
+                    = Property->getType()->getAs<ObjCObjectPointerType>()) {
+    if (ObjCInterfaceDecl *IFace = ObjCPointer->getInterfaceDecl()) {
+      // If this interface type is not provably derived from a known
+      // collection, penalize the corresponding completions.
+      if (!InheritsFromClassNamed(IFace, "NSMutableArray")) {
+        IndexedSetterPriority += CCD_ProbablyNotObjCCollection;            
+        if (!InheritsFromClassNamed(IFace, "NSArray"))
+          IndexedGetterPriority += CCD_ProbablyNotObjCCollection;
+      }
+
+      if (!InheritsFromClassNamed(IFace, "NSMutableSet")) {
+        UnorderedSetterPriority += CCD_ProbablyNotObjCCollection;            
+        if (!InheritsFromClassNamed(IFace, "NSSet"))
+          UnorderedGetterPriority += CCD_ProbablyNotObjCCollection;
+      }
+    }
+  } else {
+    IndexedGetterPriority += CCD_ProbablyNotObjCCollection;
+    IndexedSetterPriority += CCD_ProbablyNotObjCCollection;
+    UnorderedGetterPriority += CCD_ProbablyNotObjCCollection;
+    UnorderedSetterPriority += CCD_ProbablyNotObjCCollection;
+  }
+  
+  // Add -(NSUInteger)countOf<key>
+  if (IsInstanceMethod &&  
+      (ReturnType.isNull() || ReturnType->isIntegerType())) {
+    llvm::Twine SelectorName = llvm::Twine("countOf") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getNullarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("NSUInteger");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(
+                                Allocator.CopyString(SelectorId->getName()));
+      Results.AddResult(Result(Builder.TakeString(), 
+                               std::min(IndexedGetterPriority, 
+                                        UnorderedGetterPriority),
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // Indexed getters
+  // Add -(id)objectInKeyAtIndex:(NSUInteger)index
+  if (IsInstanceMethod &&
+      (ReturnType.isNull() || ReturnType->isObjCObjectPointerType())) {
+    llvm::Twine SelectorName
+      = llvm::Twine("objectIn") + UpperKey + "AtIndex";
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("id");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSUInteger");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("index");
+      Results.AddResult(Result(Builder.TakeString(), IndexedGetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // Add -(NSArray *)keyAtIndexes:(NSIndexSet *)indexes
+  if (IsInstanceMethod &&
+      (ReturnType.isNull() || 
+       (ReturnType->isObjCObjectPointerType() &&
+        ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl() &&
+        ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl()
+                                                ->getName() == "NSArray"))) {
+    llvm::Twine SelectorName
+      = llvm::Twine(Property->getName()) + "AtIndexes";
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("NSArray *");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+       
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSIndexSet *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("indexes");
+      Results.AddResult(Result(Builder.TakeString(), IndexedGetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // Add -(void)getKey:(type **)buffer range:(NSRange)inRange
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName = llvm::Twine("get") + UpperKey;
+    IdentifierInfo *SelectorIds[2] = {
+      &Context.Idents.get(SelectorName.str()),
+      &Context.Idents.get("range")
+    };
+    
+    if (!KnownMethods.count(Selectors.getSelector(2, SelectorIds))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("object-type");
+      Builder.AddTextChunk(" **");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("buffer");
+      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Builder.AddTypedTextChunk("range:");
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSRange");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("inRange");
+      Results.AddResult(Result(Builder.TakeString(), IndexedGetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // Mutable indexed accessors
+  
+  // - (void)insertObject:(type *)object inKeyAtIndex:(NSUInteger)index
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName = llvm::Twine("in") + UpperKey + "AtIndex";
+    IdentifierInfo *SelectorIds[2] = {
+      &Context.Idents.get("insertObject"),
+      &Context.Idents.get(SelectorName.str())
+    };
+    
+    if (!KnownMethods.count(Selectors.getSelector(2, SelectorIds))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk("insertObject:");
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("object-type");
+      Builder.AddTextChunk(" *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("object");
+      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("NSUInteger");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("index");
+      Results.AddResult(Result(Builder.TakeString(), IndexedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // - (void)insertKey:(NSArray *)array atIndexes:(NSIndexSet *)indexes
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName = llvm::Twine("insert") + UpperKey;
+    IdentifierInfo *SelectorIds[2] = {
+      &Context.Idents.get(SelectorName.str()),
+      &Context.Idents.get("atIndexes")
+    };
+    
+    if (!KnownMethods.count(Selectors.getSelector(2, SelectorIds))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSArray *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("array");
+      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Builder.AddTypedTextChunk("atIndexes:");
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("NSIndexSet *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("indexes");
+      Results.AddResult(Result(Builder.TakeString(), IndexedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // -(void)removeObjectFromKeyAtIndex:(NSUInteger)index
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName
+      = llvm::Twine("removeObjectFrom") + UpperKey + "AtIndex";
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());        
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSUInteger");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("index");
+      Results.AddResult(Result(Builder.TakeString(), IndexedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // -(void)removeKeyAtIndexes:(NSIndexSet *)indexes
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName
+      = llvm::Twine("remove") + UpperKey + "AtIndexes";
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());        
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSIndexSet *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("indexes");
+      Results.AddResult(Result(Builder.TakeString(), IndexedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // - (void)replaceObjectInKeyAtIndex:(NSUInteger)index withObject:(id)object
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName
+      = llvm::Twine("replaceObjectIn") + UpperKey + "AtIndex";
+    IdentifierInfo *SelectorIds[2] = {
+      &Context.Idents.get(SelectorName.str()),
+      &Context.Idents.get("withObject")
+    };
+    
+    if (!KnownMethods.count(Selectors.getSelector(2, SelectorIds))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("NSUInteger");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("index");
+      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Builder.AddTypedTextChunk("withObject:");
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("id");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("object");
+      Results.AddResult(Result(Builder.TakeString(), IndexedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // - (void)replaceKeyAtIndexes:(NSIndexSet *)indexes withKey:(NSArray *)array
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName1 = llvm::Twine("replace") + UpperKey + "AtIndexes";
+    llvm::Twine SelectorName2 = llvm::Twine("with") + UpperKey;
+    IdentifierInfo *SelectorIds[2] = {
+      &Context.Idents.get(SelectorName1.str()),
+      &Context.Idents.get(SelectorName2.str())
+    };
+    
+    if (!KnownMethods.count(Selectors.getSelector(2, SelectorIds))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName1 + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("NSIndexSet *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("indexes");
+      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName2 + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSArray *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("array");
+      Results.AddResult(Result(Builder.TakeString(), IndexedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }  
+  
+  // Unordered getters
+  // - (NSEnumerator *)enumeratorOfKey
+  if (IsInstanceMethod && 
+      (ReturnType.isNull() || 
+       (ReturnType->isObjCObjectPointerType() &&
+        ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl() &&
+        ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl()
+          ->getName() == "NSEnumerator"))) {
+    llvm::Twine SelectorName = llvm::Twine("enumeratorOf") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getNullarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("NSEnumerator *");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+       
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName));
+      Results.AddResult(Result(Builder.TakeString(), UnorderedGetterPriority, 
+                              CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+
+  // - (type *)memberOfKey:(type *)object
+  if (IsInstanceMethod && 
+      (ReturnType.isNull() || ReturnType->isObjCObjectPointerType())) {
+    llvm::Twine SelectorName = llvm::Twine("memberOf") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddPlaceholderChunk("object-type");
+        Builder.AddTextChunk(" *");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      if (ReturnType.isNull()) {
+        Builder.AddPlaceholderChunk("object-type");
+        Builder.AddTextChunk(" *");
+      } else {
+        Builder.AddTextChunk(GetCompletionTypeString(ReturnType, Context, 
+                                                     Builder.getAllocator()));
+      }
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("object");
+      Results.AddResult(Result(Builder.TakeString(), UnorderedGetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+  
+  // Mutable unordered accessors
+  // - (void)addKeyObject:(type *)object
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName
+      = llvm::Twine("add") + UpperKey + llvm::Twine("Object");
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("object-type");
+      Builder.AddTextChunk(" *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("object");
+      Results.AddResult(Result(Builder.TakeString(), UnorderedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }  
+
+  // - (void)addKey:(NSSet *)objects
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName = llvm::Twine("add") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSSet *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("objects");
+      Results.AddResult(Result(Builder.TakeString(), UnorderedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }  
+  
+  // - (void)removeKeyObject:(type *)object
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName
+    = llvm::Twine("remove") + UpperKey + llvm::Twine("Object");
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("object-type");
+      Builder.AddTextChunk(" *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("object");
+      Results.AddResult(Result(Builder.TakeString(), UnorderedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }  
+  
+  // - (void)removeKey:(NSSet *)objects
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName = llvm::Twine("remove") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSSet *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("objects");
+      Results.AddResult(Result(Builder.TakeString(), UnorderedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }    
+
+  // - (void)intersectKey:(NSSet *)objects
+  if (IsInstanceMethod && ReturnTypeMatchesVoid) {
+    llvm::Twine SelectorName = llvm::Twine("intersect") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getUnarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("void");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+      
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName + ":"));
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddTextChunk("NSSet *");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddTextChunk("objects");
+      Results.AddResult(Result(Builder.TakeString(), UnorderedSetterPriority, 
+                               CXCursor_ObjCInstanceMethodDecl));
+    }
+  }  
+  
+  // Key-Value Observing
+  // + (NSSet *)keyPathsForValuesAffectingKey
+  if (!IsInstanceMethod && 
+      (ReturnType.isNull() || 
+       (ReturnType->isObjCObjectPointerType() &&
+        ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl() &&
+        ReturnType->getAs<ObjCObjectPointerType>()->getInterfaceDecl()
+                                                    ->getName() == "NSSet"))) {
+    llvm::Twine SelectorName 
+      = llvm::Twine("keyPathsForValuesAffecting") + UpperKey;
+    IdentifierInfo *SelectorId = &Context.Idents.get(SelectorName.str());
+    if (!KnownMethods.count(Selectors.getNullarySelector(SelectorId))) {
+      if (ReturnType.isNull()) {
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddTextChunk("NSSet *");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      }
+       
+      Builder.AddTypedTextChunk(Allocator.CopyString(SelectorName));
+      Results.AddResult(Result(Builder.TakeString(), CCP_CodePattern, 
+                              CXCursor_ObjCInstanceMethodDecl));
+    }
+  }
+}
+
 void Sema::CodeCompleteObjCMethodDecl(Scope *S, 
                                       bool IsInstanceMethod,
                                       ParsedType ReturnTy,
@@ -5482,13 +6107,8 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
     
     // If the result type was not already provided, add it to the
     // pattern as (type).
-    if (ReturnType.isNull()) {
-      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
-      Builder.AddTextChunk(GetCompletionTypeString(Method->getResultType(),
-                                                   Context, 
-                                                   Builder.getAllocator()));
-      Builder.AddChunk(CodeCompletionString::CK_RightParen);
-    }
+    if (ReturnType.isNull())
+      AddObjCPassingTypeChunk(Method->getResultType(), Context, Builder);
 
     Selector Sel = Method->getSelector();
 
@@ -5514,11 +6134,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
         break;
 
       // Add the parameter type.
-      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
-      Builder.AddTextChunk(GetCompletionTypeString((*P)->getOriginalType(), 
-                                                   Context,
-                                                   Builder.getAllocator()));
-      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      AddObjCPassingTypeChunk((*P)->getOriginalType(), Context, Builder);
       
       if (IdentifierInfo *Id = (*P)->getIdentifier())
         Builder.AddTextChunk(Builder.getAllocator().CopyString( Id->getName())); 
@@ -5558,6 +6174,33 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
                                : CXCursor_ObjCClassMethodDecl));
   }
 
+  // Add Key-Value-Coding and Key-Value-Observing accessor methods for all of 
+  // the properties in this class and its categories.
+  if (Context.getLangOptions().ObjC2) {
+    llvm::SmallVector<ObjCContainerDecl *, 4> Containers;
+    Containers.push_back(SearchDecl);
+    
+    ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(SearchDecl);
+    if (!IFace)
+      if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(SearchDecl))
+        IFace = Category->getClassInterface();
+    
+    if (IFace) {
+      for (ObjCCategoryDecl *Category = IFace->getCategoryList(); Category;
+           Category = Category->getNextClassCategory())
+        Containers.push_back(Category);
+    }
+    
+    for (unsigned I = 0, N = Containers.size(); I != N; ++I) {
+      for (ObjCContainerDecl::prop_iterator P = Containers[I]->prop_begin(),
+                                         PEnd = Containers[I]->prop_end(); 
+           P != PEnd; ++P) {
+        AddObjCKeyValueCompletions(*P, IsInstanceMethod, ReturnType, Context, 
+                                   KnownMethods, Results);
+      }
+    }
+  }
+  
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, 
