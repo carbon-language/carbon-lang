@@ -5508,12 +5508,14 @@ void SelectionDAG::TransferDbgValues(SDValue From, SDValue To) {
   SDNode *FromNode = From.getNode();
   SDNode *ToNode = To.getNode();
   SmallVector<SDDbgValue*,2> &DVs = GetDbgValues(FromNode);
-  DbgInfo->removeSDDbgValues(FromNode);
   for (SmallVector<SDDbgValue *, 2>::iterator I = DVs.begin(), E = DVs.end();
        I != E; ++I) {
-    if ((*I)->getKind() == SDDbgValue::SDNODE) {
-      AddDbgValue(*I, ToNode, false);
-      (*I)->setSDNode(ToNode, To.getResNo());
+    SDDbgValue *Dbg = *I;
+    if (Dbg->getKind() == SDDbgValue::SDNODE) {
+      SDDbgValue *Clone = getDbgValue(Dbg->getMDPtr(), ToNode, To.getResNo(),
+                                      Dbg->getOffset(), Dbg->getDebugLoc(),
+                                      Dbg->getOrder());
+      AddDbgValue(Clone, ToNode, false);
     }
   }
 }

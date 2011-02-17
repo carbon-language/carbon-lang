@@ -100,10 +100,6 @@ public:
     return DbgValMap[Node];
   }
 
-  void removeSDDbgValues(const SDNode *Node) {
-    DbgValMap.erase(Node);
-  }
-
   typedef SmallVector<SDDbgValue*,32>::iterator DbgIterator;
   DbgIterator DbgBegin() { return DbgValues.begin(); }
   DbgIterator DbgEnd()   { return DbgValues.end(); }
