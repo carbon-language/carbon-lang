@@ -143,6 +143,29 @@ bool Decl::isDefinedOutsideFunctionOrMethod() const {
   return true;
 }
 
+namespace {
+  template<typename Class, typename Result>
+  inline Result *getSpecificCanonicalDecl(Decl *D, Result *(Class::*Get)()) {
+    return (llvm::cast<Class>(D)->*Get)();
+  }
+  
+  inline Decl *getSpecificCanonicalDecl(Decl *D, Decl *(Decl::*)()) {
+    // No specific implementation.
+    return D;
+  }
+}
+
+Decl *Decl::getCanonicalDecl() {
+  switch (getKind()) {
+#define ABSTRACT_DECL(Type)
+#define DECL(Type, Base) \
+    case Type:           \
+      return getSpecificCanonicalDecl(this, &Type##Decl::getCanonicalDecl);
+#include "clang/AST/DeclNodes.inc"
+  }
+  return this;
+  
+}
 
 //===----------------------------------------------------------------------===//
 // PrettyStackTraceDecl Implementation

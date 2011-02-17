@@ -198,7 +198,7 @@ public:
                                 ImplementationControl impControl = None,
                                 unsigned numSelectorArgs = 0);
 
-  virtual ObjCMethodDecl *getCanonicalDecl();
+  ObjCMethodDecl *getCanonicalDecl();
   const ObjCMethodDecl *getCanonicalDecl() const {
     return const_cast<ObjCMethodDecl*>(this)->getCanonicalDecl();
   }

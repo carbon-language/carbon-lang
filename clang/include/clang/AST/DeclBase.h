@@ -477,7 +477,7 @@ public:
   bool isDefinedOutsideFunctionOrMethod() const;
 
   /// \brief Retrieves the "canonical" declaration of the given declaration.
-  virtual Decl *getCanonicalDecl() { return this; }
+  Decl *getCanonicalDecl();
   const Decl *getCanonicalDecl() const {
     return const_cast<Decl*>(this)->getCanonicalDecl();
   }

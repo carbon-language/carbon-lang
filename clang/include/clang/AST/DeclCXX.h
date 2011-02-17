@@ -472,10 +472,10 @@ public:
   typedef std::reverse_iterator<base_class_const_iterator>
     reverse_base_class_const_iterator;
 
-  virtual CXXRecordDecl *getCanonicalDecl() {
+  CXXRecordDecl *getCanonicalDecl() {
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
-  virtual const CXXRecordDecl *getCanonicalDecl() const {
+  const CXXRecordDecl *getCanonicalDecl() const {
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
   

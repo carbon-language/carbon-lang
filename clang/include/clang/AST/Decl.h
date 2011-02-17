@@ -430,7 +430,7 @@ public:
     getOriginalNamespace()->OrigOrAnonNamespace.setPointer(D);
   }
 
-  virtual NamespaceDecl *getCanonicalDecl() { return getOriginalNamespace(); }
+  NamespaceDecl *getCanonicalDecl() { return getOriginalNamespace(); }
   const NamespaceDecl *getCanonicalDecl() const { 
     return getOriginalNamespace(); 
   }
@@ -779,7 +779,7 @@ public:
     return getKind() != Decl::ParmVar && getDeclContext()->isRecord();
   }
 
-  virtual VarDecl *getCanonicalDecl();
+  VarDecl *getCanonicalDecl();
   const VarDecl *getCanonicalDecl() const {
     return const_cast<VarDecl*>(this)->getCanonicalDecl();
   }
@@ -1467,8 +1467,8 @@ public:
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
-  virtual const FunctionDecl *getCanonicalDecl() const;
-  virtual FunctionDecl *getCanonicalDecl();
+  const FunctionDecl *getCanonicalDecl() const;
+  FunctionDecl *getCanonicalDecl();
 
   unsigned getBuiltinID() const;
 
@@ -2073,7 +2073,7 @@ public:
   SourceLocation getOuterLocStart() const;
   virtual SourceRange getSourceRange() const;
 
-  virtual TagDecl* getCanonicalDecl();
+  TagDecl* getCanonicalDecl();
   const TagDecl* getCanonicalDecl() const {
     return const_cast<TagDecl*>(this)->getCanonicalDecl();
   }
