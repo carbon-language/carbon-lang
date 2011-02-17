@@ -423,5 +423,5 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
       }
     }
   }
-  return true;
+  return Changed;
 }
