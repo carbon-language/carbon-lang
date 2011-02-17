@@ -15,15 +15,6 @@
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)
 #endif
 
-ANALYSIS(CFGDump, "cfg-dump", 
-         "Display Control-Flow Graphs", Code)
-
-ANALYSIS(CFGView, "cfg-view", 
-         "View Control-Flow Graphs using GraphViz", Code)
-
-ANALYSIS(DisplayLiveVariables, "dump-live-variables",
-         "Print results of live variable analysis", Code)
-
 ANALYSIS(WarnUninitVals, "warn-uninit-values",
          "Warn about uses of uninitialized variables", Code)
  

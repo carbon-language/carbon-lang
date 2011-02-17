@@ -407,25 +407,6 @@ static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,
  }
 }
 
-static void ActionDisplayLiveVariables(AnalysisConsumer &C,
-                                       AnalysisManager& mgr, Decl *D) {
-  if (LiveVariables* L = mgr.getLiveVariables(D)) {
-    L->dumpBlockLiveness(mgr.getSourceManager());
-  }
-}
-
-static void ActionCFGDump(AnalysisConsumer &C, AnalysisManager& mgr, Decl *D) {
-  if (CFG *cfg = mgr.getCFG(D)) {
-    cfg->dump(mgr.getLangOptions());
-  }
-}
-
-static void ActionCFGView(AnalysisConsumer &C, AnalysisManager& mgr, Decl *D) {
-  if (CFG *cfg = mgr.getCFG(D)) {
-    cfg->viewCFG(mgr.getLangOptions());
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//

@@ -28,6 +28,7 @@ def UnixExperimental : Package<"experimental">,
   InPackage<Unix>, Hidden;
 
 def LLVM : Package<"llvm">;
+def Debug : Package<"debug">;
 
 //===----------------------------------------------------------------------===//
 // Groups.
@@ -106,6 +107,21 @@ def LLVMConventionsChecker : Checker<"Conventions">,
   InPackage<LLVM>,
   HelpText<"Check code for LLVM codebase conventions">,
   DescFile<"LLVMConventionsChecker.cpp">;
+
+def LiveVariablesDumper : Checker<"DumpLiveVars">,
+  InPackage<Debug>,
+  HelpText<"Print results of live variable analysis">,
+  DescFile<"DebugCheckers.cpp">;
+
+def CFGViewer : Checker<"ViewCFG">,
+  InPackage<Debug>,
+  HelpText<"View Control-Flow Graphs using GraphViz">,
+  DescFile<"DebugCheckers.cpp">;
+
+def CFGDumper : Checker<"DumpCFG">,
+  InPackage<Debug>,
+  HelpText<"Display Control-Flow Graphs">,
+  DescFile<"DebugCheckers.cpp">;
 
 //===----------------------------------------------------------------------===//
 // Hidden experimental checkers.

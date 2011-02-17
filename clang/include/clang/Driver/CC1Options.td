@@ -36,18 +36,12 @@ def triple_EQ : Joined<"-triple=">, Alias<triple>;
 // Analyzer Options
 //===----------------------------------------------------------------------===//
 
-def analysis_CFGDump : Flag<"-cfg-dump">,
-  HelpText<"Display Control-Flow Graphs">;
-def analysis_CFGView : Flag<"-cfg-view">,
-  HelpText<"View Control-Flow Graphs using GraphViz">;
 def analysis_UnoptimizedCFG : Flag<"-unoptimized-cfg">,
   HelpText<"Generate unoptimized CFGs for all analyses">;
 def analysis_CFGAddImplicitDtors : Flag<"-cfg-add-implicit-dtors">,
   HelpText<"Add C++ implicit destructors to CFGs for all analyses">;
 def analysis_CFGAddInitializers : Flag<"-cfg-add-initializers">,
   HelpText<"Add C++ initializers to CFGs for all analyses">;
-def analysis_DisplayLiveVariables : Flag<"-dump-live-variables">,
-  HelpText<"Print results of live variable analysis">;
 def analysis_WarnUninitVals : Flag<"-warn-uninit-values">,
   HelpText<"Warn about uses of uninitialized variables">;
 def analysis_ObjCMemChecker : Flag<"-analyzer-check-objc-mem">,
