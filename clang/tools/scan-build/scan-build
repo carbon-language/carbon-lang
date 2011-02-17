@@ -99,32 +99,6 @@ else {
 }
 my $ClangCXX = $Clang . "++";
 
-my %AvailableAnalyses;
-
-# Query clang for analysis options.
-open(PIPE, "-|", $Clang, "-cc1", "-help") or
-  DieDiag("Cannot execute '$Clang'\n");
-
-while(<PIPE>) {
-  if (/(-analyzer-check-[^\s]+)/) {
-    $AvailableAnalyses{$1} = 1;
-    next;
-  }  
-}
-close (PIPE);
-
-my %AnalysesDefaultEnabled = (
-  '-analyzer-check-dead-stores' => 1,
-  '-analyzer-check-objc-mem' => 1,
-  '-analyzer-check-objc-methodsigs' => 1,
-  '-analyzer-check-objc-self-init' => 1,
-  # Do not enable the missing -dealloc check by default.
-  #  '-analyzer-check-objc-missing-dealloc' => 1,
-  '-analyzer-check-objc-unused-ivars' => 1,
-  '-analyzer-check-security-syntactic' => 1,
-  '-analyzer-check-idempotent-operations' => 1
-);
-
 ##----------------------------------------------------------------------------##
 # GetHTMLRunDir - Construct an HTML directory name for the current sub-run.
 ##----------------------------------------------------------------------------##
@@ -969,8 +943,6 @@ OPTIONS:
 
  -analyze-headers - Also analyze functions in #included files.
  
- --experimental-checks - Enable experimental checks that are currently in heavy testing
-
  -o             - Target directory for HTML report files.  Subdirectories
                   will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
@@ -1031,22 +1003,10 @@ ADVANCED OPTIONS:
  -maxloop N - specifiy the number of times a block can be visited before giving
               up. Default is 3. Increase for more comprehensive coverage at a
               cost of speed.
-
-AVAILABLE ANALYSES (multiple analyses may be specified):
-
 ENDTEXT
 
-  foreach my $Analysis (sort keys %AvailableAnalyses) {
-    if (defined $AnalysesDefaultEnabled{$Analysis}) {
-      print " (+)";
-    }
-    else {
-      print "    ";
-    }
-    
-    print " $Analysis\n";
-  }
-  
+# FIXME: Print out available analyesis.
+
 print <<ENDTEXT
 
  NOTE: "(+)" indicates that an analysis is enabled by default unless one
@@ -1131,12 +1091,6 @@ while (@ARGV) {
     next;
   }
   
-  if (defined $AvailableAnalyses{$arg}) {
-    shift @ARGV;
-    push @AnalysesToRun, $arg;
-    next;
-  }
-  
   if ($arg eq "-o") {
     shift @ARGV;
         
@@ -1172,13 +1126,7 @@ while (@ARGV) {
     $IgnoreErrors = 1;
     next;
   }
-  
-  if ($arg eq "--experimental-checks") {
-    shift @ARGV;
-    $ENV{"CCC_EXPERIMENTAL_CHECKS"} = 1;
-    next;
-  }
-  
+
   if ($arg =~ /^--use-cc(=(.+))?$/) {
     shift @ARGV;
     my $cc;
@@ -1322,12 +1270,6 @@ if ($Verbose >= 2) {
 
 if ($Verbose >= 3) {
   $ENV{'CCC_ANALYZER_LOG'} = 1;
-}
-
-if (scalar(@AnalysesToRun) == 0) {
-  foreach my $key (keys %AnalysesDefaultEnabled) {
-    push @AnalysesToRun,$key;
-  }
 }
 
 if ($AnalyzeHeaders) {
