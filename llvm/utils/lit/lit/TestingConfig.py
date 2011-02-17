@@ -17,6 +17,7 @@ class TestingConfig:
                 'PATHEXT' : os.environ.get('PATHEXT',''),
                 'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
                 'LLVM_DISABLE_CRT_DEBUG' : '1',
+                'PRINTF_EXPONENT_DIGITS' : '2',
                 }
 
             config = TestingConfig(parent,
