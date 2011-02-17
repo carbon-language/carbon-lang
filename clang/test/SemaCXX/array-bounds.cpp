@@ -74,3 +74,14 @@ template <int I> void f() {
 void test_templates() {
   f<5>(); // expected-note {{in instantiation}}
 }
+
+#define SIZE 10
+#define ARR_IN_MACRO(flag, arr, idx) flag ? arr[idx] : 1
+
+int test_no_warn_macro_unreachable() {
+  int arr[SIZE]; // expected-note 2 {{array 'arr' declared here}}
+  // FIXME: We don't want to warn for the first case.
+  return ARR_IN_MACRO(0, arr, SIZE) + // expected-warning{{array index of '10' indexes past the end of an array (that contains 10 elements)}}
+         ARR_IN_MACRO(1, arr, SIZE); // expected-warning{{array index of '10' indexes past the end of an array (that contains 10 elements)}}
+}
+
