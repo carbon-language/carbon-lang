@@ -64,7 +64,7 @@ public:
   /// \brief The list of return statements that occur within the function or
   /// block, if there is any chance of applying the named return value
   /// optimization.
-  llvm::SmallVector<ReturnStmt *, 4> Returns;
+  llvm::SmallVector<ReturnStmt*, 4> Returns;
 
   void setHasBranchIntoScope() {
     HasBranchIntoScope = true;

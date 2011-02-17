@@ -8800,7 +8800,7 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
 /// ActOnBlockStmtExpr - This is called when the body of a block statement
 /// literal was successfully completed.  ^(int x){...}
 ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
-                                                Stmt *Body, Scope *CurScope) {
+                                    Stmt *Body, Scope *CurScope) {
   // If blocks are disabled, emit an error.
   if (!LangOpts.Blocks)
     Diag(CaretLoc, diag::err_blocks_disable);
@@ -8866,13 +8866,10 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   if (getCurFunction()->NeedsScopeChecking() && !hasAnyErrorsInThisFunction())
     DiagnoseInvalidJumps(cast<CompoundStmt>(Body));
 
-  BSI->TheDecl->setBody(cast<CompoundStmt>(Body));
-
   // Check goto/label use.
-  if (BSI->checkLabelUse(0, *this)) {
-    PopFunctionOrBlockScope();
-    return ExprError();
-  }
+  BSI->checkLabelUse(Body, *this);
+  
+  BSI->TheDecl->setBody(cast<CompoundStmt>(Body));
 
   BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
 
