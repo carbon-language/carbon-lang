@@ -23,8 +23,8 @@ void test_f0() {
   X<Y&> xy2 = f0(lvalue<Y>());
 }
 
-template<typename T> X<T> f1(const T&&); // expected-note{{candidate function [with T = int] not viable: no known conversion from 'int' to 'int const &&' for 1st argument}} \
-// expected-note{{candidate function [with T = Y] not viable: no known conversion from 'Y' to 'Y const &&' for 1st argument}}
+template<typename T> X<T> f1(const T&&); // expected-note{{candidate function [with T = int] not viable: no known conversion from 'int' to 'const int &&' for 1st argument}} \
+// expected-note{{candidate function [with T = Y] not viable: no known conversion from 'Y' to 'const Y &&' for 1st argument}}
 
 void test_f1() {
   X<int> xi0 = f1(prvalue<int>());
@@ -37,7 +37,7 @@ void test_f1() {
 
 namespace std_example {
   template <class T> int f(T&&); 
-  template <class T> int g(const T&&); // expected-note{{candidate function [with T = int] not viable: no known conversion from 'int' to 'int const &&' for 1st argument}}
+  template <class T> int g(const T&&); // expected-note{{candidate function [with T = int] not viable: no known conversion from 'int' to 'const int &&' for 1st argument}}
 
   int i;
   int n1 = f(i);

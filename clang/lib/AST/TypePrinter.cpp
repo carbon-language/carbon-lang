@@ -77,11 +77,61 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
   // the type is complex.  For example if the type is "int*", we *must* print
   // "int * const", printing "const int *" is different.  Only do this when the
   // type expands to a simple string.
-  bool CanPrefixQualifiers =
-    isa<BuiltinType>(T) || isa<TypedefType>(T) || isa<TagType>(T) || 
-    isa<ComplexType>(T) || isa<TemplateSpecializationType>(T) ||
-    isa<ObjCObjectType>(T) || isa<ObjCInterfaceType>(T) ||
-    T->isObjCIdType() || T->isObjCQualifiedIdType();
+  bool CanPrefixQualifiers = false;
+  
+  Type::TypeClass TC = T->getTypeClass();
+  if (const SubstTemplateTypeParmType *Subst
+                                      = dyn_cast<SubstTemplateTypeParmType>(T))
+    TC = Subst->getReplacementType()->getTypeClass();
+  
+  switch (TC) {
+    case Type::Builtin:
+    case Type::Complex:
+    case Type::UnresolvedUsing:
+    case Type::Typedef:
+    case Type::TypeOfExpr:
+    case Type::TypeOf:
+    case Type::Decltype:
+    case Type::Record:
+    case Type::Enum:
+    case Type::Elaborated:
+    case Type::TemplateTypeParm:
+    case Type::SubstTemplateTypeParmPack:
+    case Type::TemplateSpecialization:
+    case Type::InjectedClassName:
+    case Type::DependentName:
+    case Type::DependentTemplateSpecialization:
+    case Type::ObjCObject:
+    case Type::ObjCInterface:
+      CanPrefixQualifiers = true;
+      break;
+      
+    case Type::ObjCObjectPointer:
+      CanPrefixQualifiers = T->isObjCIdType() || T->isObjCClassType() ||
+        T->isObjCQualifiedIdType() || T->isObjCQualifiedClassType();
+      break;
+      
+    case Type::Pointer:
+    case Type::BlockPointer:
+    case Type::LValueReference:
+    case Type::RValueReference:
+    case Type::MemberPointer:
+    case Type::ConstantArray:
+    case Type::IncompleteArray:
+    case Type::VariableArray:
+    case Type::DependentSizedArray:
+    case Type::DependentSizedExtVector:
+    case Type::Vector:
+    case Type::ExtVector:
+    case Type::FunctionProto:
+    case Type::FunctionNoProto:
+    case Type::Paren:
+    case Type::Attributed:
+    case Type::PackExpansion:
+    case Type::SubstTemplateTypeParm:
+      CanPrefixQualifiers = false;
+      break;
+  }
   
   if (!CanPrefixQualifiers && !Quals.empty()) {
     std::string qualsBuffer;

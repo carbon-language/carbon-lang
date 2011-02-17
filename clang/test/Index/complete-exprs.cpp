@@ -35,7 +35,7 @@ void g() {
 // CHECK-CC1: CXXConstructor:{TypedText string}{LeftParen (}{Placeholder const char *}{RightParen )} (50)
 // CHECK-CC1: CXXConstructor:{TypedText string}{LeftParen (}{Placeholder const char *}{Comma , }{Placeholder int n}{RightParen )} (50)
 // CHECK-CC1: ClassTemplate:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >} (50)
-// CHECK-CC1: CXXConstructor:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder T const &}{Comma , }{Placeholder unsigned int n}{RightParen )} (50)
+// CHECK-CC1: CXXConstructor:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder const T &}{Comma , }{Placeholder unsigned int n}{RightParen )} (50)
 // CHECK-CC1: FunctionTemplate:{ResultType void}{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder InputIterator first}{Comma , }{Placeholder InputIterator last}{RightParen )} (50)
 
 // RUN: c-index-test -code-completion-at=%s:19:1 %s | FileCheck -check-prefix=CHECK-CC2 %s
@@ -49,5 +49,5 @@ void g() {
 // CHECK-CC3: FunctionDecl:{ResultType int}{TypedText foo}{LeftParen (}{RightParen )} (50)
 // CHECK-CC3: FunctionDecl:{ResultType void}{TypedText g}{LeftParen (}{RightParen )} (50)
 // CHECK-CC3: ClassTemplate:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >} (50)
-// CHECK-CC3: CXXConstructor:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder T const &}{Comma , }{Placeholder unsigned int n}{RightParen )} (50)
+// CHECK-CC3: CXXConstructor:{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder const T &}{Comma , }{Placeholder unsigned int n}{RightParen )} (50)
 // CHECK-CC3: FunctionTemplate:{ResultType void}{TypedText vector}{LeftAngle <}{Placeholder typename T}{RightAngle >}{LeftParen (}{Placeholder InputIterator first}{Comma , }{Placeholder InputIterator last}{RightParen )} (50)

@@ -63,7 +63,7 @@ struct X0 {
   
   template<typename T> operator const T*() const {
     T x = T();
-    return x; // expected-error{{cannot initialize return object of type 'char const *' with an lvalue of type 'char'}}
+    return x; // expected-error{{cannot initialize return object of type 'const char *' with an lvalue of type 'char'}}
   }
 };
 
