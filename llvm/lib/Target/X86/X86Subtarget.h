@@ -175,9 +175,7 @@ public:
   bool isTargetLinux() const { return TargetTriple.getOS() == Triple::Linux; }
 
   bool isTargetWindows() const { return TargetTriple.getOS() == Triple::Win32; }
-  bool isTargetMingw() const {
-    return TargetTriple.getOS() == Triple::MinGW32 ||
-           TargetTriple.getOS() == Triple::MinGW64; }
+  bool isTargetMingw() const { return TargetTriple.getOS() == Triple::MinGW32; }
   bool isTargetCygwin() const { return TargetTriple.getOS() == Triple::Cygwin; }
   bool isTargetCygMing() const {
     return isTargetMingw() || isTargetCygwin();

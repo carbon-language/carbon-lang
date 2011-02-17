@@ -84,8 +84,7 @@ public:
     FreeBSD,
     Linux,
     Lv2,        // PS3
-    MinGW32,
-    MinGW64,
+    MinGW32,    // i*86-pc-mingw32, *-w64-mingw32
     NetBSD,
     OpenBSD,
     Psp,

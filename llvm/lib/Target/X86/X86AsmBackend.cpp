@@ -428,7 +428,7 @@ TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
   switch (Triple(TT).getOS()) {
   case Triple::Darwin:
     return new DarwinX86_64AsmBackend(T);
-  case Triple::MinGW64:
+  case Triple::MinGW32:
   case Triple::Cygwin:
   case Triple::Win32:
     if (Triple(TT).getEnvironment() == Triple::MachO)

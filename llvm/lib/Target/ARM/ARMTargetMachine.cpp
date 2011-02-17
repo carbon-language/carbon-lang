@@ -45,7 +45,6 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   case Triple::Darwin:
     return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
   case Triple::MinGW32:
-  case Triple::MinGW64:
   case Triple::Cygwin:
   case Triple::Win32:
     llvm_unreachable("ARM does not support Windows COFF format");

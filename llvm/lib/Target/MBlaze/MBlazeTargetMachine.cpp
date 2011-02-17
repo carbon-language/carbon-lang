@@ -41,7 +41,6 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
     llvm_unreachable("MBlaze does not support Darwin MACH-O format");
     return NULL;
   case Triple::MinGW32:
-  case Triple::MinGW64:
   case Triple::Cygwin:
   case Triple::Win32:
     llvm_unreachable("MBlaze does not support Windows COFF format");

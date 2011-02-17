@@ -101,7 +101,6 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case Linux: return "linux";
   case Lv2: return "lv2";
   case MinGW32: return "mingw32";
-  case MinGW64: return "mingw64";
   case NetBSD: return "netbsd";
   case OpenBSD: return "openbsd";
   case Psp: return "psp";
@@ -318,8 +317,6 @@ Triple::OSType Triple::ParseOS(StringRef OSName) {
     return Lv2;
   else if (OSName.startswith("mingw32"))
     return MinGW32;
-  else if (OSName.startswith("mingw64"))
-    return MinGW64;
   else if (OSName.startswith("netbsd"))
     return NetBSD;
   else if (OSName.startswith("openbsd"))

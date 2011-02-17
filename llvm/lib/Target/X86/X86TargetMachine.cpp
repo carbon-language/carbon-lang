@@ -30,7 +30,6 @@ static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   case Triple::Darwin:
     return new X86MCAsmInfoDarwin(TheTriple);
   case Triple::MinGW32:
-  case Triple::MinGW64:
   case Triple::Cygwin:
   case Triple::Win32:
     if (TheTriple.getEnvironment() == Triple::MachO)
@@ -53,7 +52,6 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   case Triple::Darwin:
     return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
   case Triple::MinGW32:
-  case Triple::MinGW64:
   case Triple::Cygwin:
   case Triple::Win32:
     if (TheTriple.getEnvironment() == Triple::MachO)

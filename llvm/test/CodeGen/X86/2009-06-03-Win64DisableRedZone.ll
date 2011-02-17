@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-pc-mingw64 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-mingw32 < %s | FileCheck %s
 ; CHECK-NOT: -{{[1-9][0-9]*}}(%rsp)
 
 define x86_fp80 @a(i64 %x) nounwind readnone {
