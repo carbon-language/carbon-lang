@@ -13,7 +13,6 @@
 
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -22,7 +21,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/raw_ostream.h"
-#include <string>
 
 using namespace clang;
 
@@ -117,6 +115,16 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
     Files.push_back(Filename);
 }
 
+/// PrintFilename - GCC escapes spaces, but apparently not ' or " or other
+/// scary characters.
+static void PrintFilename(llvm::raw_ostream &OS, llvm::StringRef Filename) {
+  for (unsigned i = 0, e = Filename.size(); i != e; ++i) {
+    if (Filename[i] == ' ')
+      OS << '\\';
+    OS << Filename[i];
+  }
+}
+
 void DependencyFileCallback::OutputDependencyFile() {
   // Write out the dependency targets, trying to avoid overly long
   // lines when possible. We try our best to emit exactly the same
@@ -130,14 +138,15 @@ void DependencyFileCallback::OutputDependencyFile() {
     unsigned N = I->length();
     if (Columns == 0) {
       Columns += N;
-      *OS << *I;
     } else if (Columns + N + 2 > MaxColumns) {
       Columns = N + 2;
-      *OS << " \\\n  " << *I;
+      *OS << " \\\n  ";
     } else {
       Columns += N + 1;
-      *OS << ' ' << *I;
+      *OS << ' ';
     }
+    // Targets already quoted as needed.
+    *OS << *I;
   }
 
   *OS << ':';
@@ -155,7 +164,8 @@ void DependencyFileCallback::OutputDependencyFile() {
       *OS << " \\\n ";
       Columns = 2;
     }
-    *OS << ' ' << *I;
+    *OS << ' ';
+    PrintFilename(*OS, *I);
     Columns += N + 1;
   }
   *OS << '\n';
@@ -166,7 +176,8 @@ void DependencyFileCallback::OutputDependencyFile() {
     for (std::vector<std::string>::iterator I = Files.begin() + 1,
            E = Files.end(); I != E; ++I) {
       *OS << '\n';
-      *OS << *I << ":\n";
+      PrintFilename(*OS, *I);
+      *OS << ":\n";
     }
   }
 }
