@@ -1448,8 +1448,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (KernelOrKext ||
     !Args.hasFlag(options::OPT_fuse_cxa_atexit, options::OPT_fno_use_cxa_atexit,
                   getToolChain().getTriple().getOS() != llvm::Triple::Cygwin &&
-                  getToolChain().getTriple().getOS() != llvm::Triple::MinGW32 &&
-                  getToolChain().getTriple().getOS() != llvm::Triple::MinGW64))
+                  getToolChain().getTriple().getOS() != llvm::Triple::MinGW32))
     CmdArgs.push_back("-fno-use-cxa-atexit");
 
   // -fms-extensions=0 is default.

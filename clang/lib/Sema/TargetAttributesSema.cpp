@@ -238,8 +238,7 @@ namespace {
                               const AttributeList &Attr, Sema &S) const {
       const llvm::Triple &Triple(S.Context.Target.getTriple());
       if (Triple.getOS() == llvm::Triple::Win32 ||
-          Triple.getOS() == llvm::Triple::MinGW32 ||
-          Triple.getOS() == llvm::Triple::MinGW64) {
+          Triple.getOS() == llvm::Triple::MinGW32) {
         switch (Attr.getKind()) {
         case AttributeList::AT_dllimport: HandleDLLImportAttr(D, Attr, S);
                                           return true;

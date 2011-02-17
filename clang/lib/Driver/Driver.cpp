@@ -1349,7 +1349,6 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
   case llvm::Triple::Win32:
     return createWindowsHostInfo(*this, Triple);
   case llvm::Triple::MinGW32:
-  case llvm::Triple::MinGW64:
     return createMinGWHostInfo(*this, Triple);
   default:
     return createUnknownHostInfo(*this, Triple);
