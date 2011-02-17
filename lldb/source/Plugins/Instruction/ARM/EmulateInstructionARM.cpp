@@ -1912,11 +1912,10 @@ EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
     return true;
 }
 
-// ADD <Rdn>, <Rm>
-// where <Rdn> the destination register is also the first operand register
-// and <Rm> is the second operand register.
+// This instruction adds a register value and an optionally-shifted register value, and writes the result
+// to the destination register. It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateAddReg (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1943,14 +1942,27 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
     if (ConditionPassed())
     {
         uint32_t Rd, Rn, Rm;
+        ARM_ShifterType shift_t;
+        uint32_t shift_n; // the shift applied to the value read from Rm
         bool setflags;
         switch (encoding)
         {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 2, 0);
+            Rn = Bits32(opcode, 5, 3);
+            Rm = Bits32(opcode, 8, 6);
+            setflags = !InITBlock();
+            shift_t = SRType_LSL;
+            shift_n = 0;
         case eEncodingT2:
             Rd = Rn = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
             Rm = Bits32(opcode, 6, 3);
             setflags = false;
+            shift_t = SRType_LSL;
+            shift_n = 0;
             if (Rn == 15 && Rm == 15)
+                return false;
+            if (Rd == 15 && InITBlock() && !LastInITBlock())
                 return false;
             break;
         default:
@@ -1960,7 +1972,13 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
         int32_t result, val1, val2;
         // Read the first operand.
         if (Rn == 15)
+        {
             val1 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            if (encoding == eEncodingT1 || encoding == eEncodingT2)
+                val1 += 4;
+            else
+                val1 += 8;
+        }
         else
             val1 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
         if (!success)
@@ -1968,13 +1986,19 @@ EmulateInstructionARM::EmulateAddRdnRm (ARMEncoding encoding)
 
         // Read the second operand.
         if (Rm == 15)
+        {
             val2 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            if (encoding == eEncodingT1 || encoding == eEncodingT2)
+                val1 += 4;
+            else
+                val1 += 8;
+        }
         else
             val2 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
         if (!success)
             return false;
 
-        // TODO: Handle the case where Rm needs to be shifted properly.
+        val2 = Shift(val2, shift_t, shift_n, Bit32(m_inst_cpsr, CPSR_C));
         AddWithCarryResult res = AddWithCarry(val1, val2, 0);
         result = val1 + val2;
 
@@ -4371,8 +4395,10 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Data-processing instructions
         //----------------------------------------------------------------------
+        { 0xfffffe00, 0x00001800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateAddReg, "adds|add<c> <Rd>, <Rn>, <Rm>"},
         // Make sure "add sp, <Rm>" comes before this instruction, so there's no ambiguity decoding the two.
-        { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateAddRdnRm, "add <Rdn>, <Rm>"},
+        // Can update PC!
+        { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddReg, "add<c> <Rdn>, <Rm>"},
         // move from high register to high register
         { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "mov<c> <Rd>, <Rm>"},
         // move from low register to low register

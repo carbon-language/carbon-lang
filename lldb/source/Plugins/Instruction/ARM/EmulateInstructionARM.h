@@ -388,9 +388,9 @@ protected:
     bool
     EmulateTB (ARMEncoding encoding);
 
-    // A8.6.6 ADD (register) -- Encoding T2
+    // A8.6.6 ADD (register)
     bool
-    EmulateAddRdnRm (ARMEncoding encoding);
+    EmulateAddReg (ARMEncoding encoding);
 
     // A8.6.97 MOV (register)
     bool
