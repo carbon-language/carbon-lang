@@ -116,6 +116,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::BinaryOperatorClass:        
   case Stmt::CompoundAssignOperatorClass:
   case Stmt::ConditionalOperatorClass:   
+  case Stmt::BinaryConditionalOperatorClass:
   case Stmt::ImplicitCastExprClass:
   case Stmt::CStyleCastExprClass:
   case Stmt::CompoundLiteralExprClass:   

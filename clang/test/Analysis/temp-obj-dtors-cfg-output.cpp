@@ -381,93 +381,119 @@ TestCtorInits::TestCtorInits()
 // CHECK: [ B0 (EXIT) ]
 // CHECK:    Predecessors (1): B1
 // CHECK:    Successors (0):
-// CHECK: [ B6 (ENTRY) ]
+// CHECK: [ B8 (ENTRY) ]
 // CHECK:    Predecessors (0):
-// CHECK:    Successors (1): B5
+// CHECK:    Successors (1): B7
 // CHECK: [ B1 ]
 // CHECK:      1: ~A() (Temporary object destructor)
 // CHECK:      2: int b;
-// CHECK:      3: [B3.2].~A() (Implicit destructor)
-// CHECK:    Predecessors (2): B3 B2
+// CHECK:      3: [B4.2].~A() (Implicit destructor)
+// CHECK:    Predecessors (2): B2 B3
 // CHECK:    Successors (1): B0
 // CHECK: [ B2 ]
 // CHECK:      1: ~A() (Temporary object destructor)
-// CHECK:      2: ~A() (Temporary object destructor)
-// CHECK:    Predecessors (1): B3
+// CHECK:    Predecessors (1): B4
 // CHECK:    Successors (1): B1
 // CHECK: [ B3 ]
-// CHECK:      1: [B5.2] ?: [B4.2]
-// CHECK:      2: A a = A().operator _Bool() ?: A();
-// CHECK:      T: [B5.2] ? ... : ...
-// CHECK:    Predecessors (2): B5 B4
-// CHECK:    Successors (2): B1 B2
+// CHECK:      1: ~A() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
+// CHECK:    Predecessors (1): B4
+// CHECK:    Successors (1): B1
 // CHECK: [ B4 ]
-// CHECK:      1: A()
-// CHECK:      2: [B4.1] (BindTemporary)
-// CHECK:    Predecessors (1): B5
-// CHECK:    Successors (1): B3
+// CHECK:      1: [B7.2] ?: [B6.2]
+// CHECK:      2: A a = A() ?: A();
+// CHECK:      T: [B7.3] ? ... : ...
+// CHECK:    Predecessors (2): B5 B6
+// CHECK:    Successors (2): B2 B3
 // CHECK: [ B5 ]
+// CHECK:      1:
+// CHECK:      2: [B5.1] (BindTemporary)
+// CHECK:    Predecessors (1): B7
+// CHECK:    Successors (1): B4
+// CHECK: [ B6 ]
 // CHECK:      1: A()
-// CHECK:      2: [B5.1].operator _Bool()
-// CHECK:      T: [B5.2] ? ... : ...
-// CHECK:    Predecessors (1): B6
-// CHECK:    Successors (2): B3 B4
+// CHECK:      2: [B6.1] (BindTemporary)
+// CHECK:    Predecessors (1): B7
+// CHECK:    Successors (1): B4
+// CHECK: [ B7 ]
+// CHECK:      1: A()
+// CHECK:      2: [B7.1] (BindTemporary)
+// CHECK:      3: .operator _Bool()
+// CHECK:      T: [B7.3] ? ... : ...
+// CHECK:    Predecessors (1): B8
+// CHECK:    Successors (2): B5 B6
 // CHECK: [ B0 (EXIT) ]
 // CHECK:    Predecessors (1): B1
 // CHECK:    Successors (0):
-// CHECK: [ B10 (ENTRY) ]
+// CHECK: [ B13 (ENTRY) ]
 // CHECK:    Predecessors (0):
-// CHECK:    Successors (1): B9
+// CHECK:    Successors (1): B12
 // CHECK: [ B1 ]
 // CHECK:      1: ~A() (Temporary object destructor)
 // CHECK:      2: int b;
-// CHECK:      3: [B7.2].~A() (Implicit destructor)
-// CHECK:    Predecessors (2): B3 B2
+// CHECK:      3: [B9.2].~A() (Implicit destructor)
+// CHECK:    Predecessors (2): B2 B3
 // CHECK:    Successors (1): B0
 // CHECK: [ B2 ]
 // CHECK:      1: ~A() (Temporary object destructor)
-// CHECK:      2: ~A() (Temporary object destructor)
-// CHECK:    Predecessors (1): B3
+// CHECK:    Predecessors (1): B4
 // CHECK:    Successors (1): B1
 // CHECK: [ B3 ]
-// CHECK:      1: [B5.3] ?: [B4.2]
-// CHECK:      2: foo([B3.1])
-// CHECK:      T: [B5.3] ? ... : ...
-// CHECK:    Predecessors (2): B5 B4
-// CHECK:    Successors (2): B1 B2
+// CHECK:      1: ~A() (Temporary object destructor)
+// CHECK:      2: ~A() (Temporary object destructor)
+// CHECK:    Predecessors (1): B4
+// CHECK:    Successors (1): B1
 // CHECK: [ B4 ]
-// CHECK:      1: A()
-// CHECK:      2: [B4.1] (BindTemporary)
-// CHECK:    Predecessors (1): B5
-// CHECK:    Successors (1): B3
+// CHECK:      1: [B7.3] ?: [B6.2]
+// CHECK:      2: foo([B4.1])
+// CHECK:      T: [B7.4] ? ... : ...
+// CHECK:    Predecessors (2): B5 B6
+// CHECK:    Successors (2): B2 B3
 // CHECK: [ B5 ]
+// CHECK:      1:
+// CHECK:      2: [B5.1] (BindTemporary)
+// CHECK:    Predecessors (1): B7
+// CHECK:    Successors (1): B4
+// CHECK: [ B6 ]
+// CHECK:      1: A()
+// CHECK:      2: [B6.1] (BindTemporary)
+// CHECK:    Predecessors (1): B7
+// CHECK:    Successors (1): B4
+// CHECK: [ B7 ]
 // CHECK:      1: ~A() (Temporary object destructor)
 // CHECK:      2: A()
-// CHECK:      3: [B5.2].operator _Bool()
-// CHECK:      T: [B5.3] ? ... : ...
-// CHECK:    Predecessors (2): B7 B6
-// CHECK:    Successors (2): B3 B4
-// CHECK: [ B6 ]
-// CHECK:      1: ~A() (Temporary object destructor)
-// CHECK:    Predecessors (1): B7
-// CHECK:    Successors (1): B5
-// CHECK: [ B7 ]
-// CHECK:      1: [B9.2] ?: [B8.2]
-// CHECK:      2: const A &a = A().operator _Bool() ?: A();
-// CHECK:      T: [B9.2] ? ... : ...
+// CHECK:      3: [B7.2] (BindTemporary)
+// CHECK:      4: .operator _Bool()
+// CHECK:      T: [B7.4] ? ... : ...
 // CHECK:    Predecessors (2): B9 B8
 // CHECK:    Successors (2): B5 B6
 // CHECK: [ B8 ]
-// CHECK:      1: A()
-// CHECK:      2: [B8.1] (BindTemporary)
+// CHECK:      1: ~A() (Temporary object destructor)
 // CHECK:    Predecessors (1): B9
 // CHECK:    Successors (1): B7
 // CHECK: [ B9 ]
-// CHECK:      1: A()
-// CHECK:      2: [B9.1].operator _Bool()
-// CHECK:      T: [B9.2] ? ... : ...
-// CHECK:    Predecessors (1): B10
+// CHECK:      1: [B12.2] ?: [B11.2]
+// CHECK:      2: const A &a = A() ?: A();
+// CHECK:      T: [B12.3] ? ... : ...
+// CHECK:    Predecessors (2): B10 B11
 // CHECK:    Successors (2): B7 B8
+// CHECK: [ B10 ]
+// CHECK:      1:
+// CHECK:      2: [B10.1] (BindTemporary)
+// CHECK:    Predecessors (1): B12
+// CHECK:    Successors (1): B9
+// CHECK: [ B11 ]
+// CHECK:      1: A()
+// CHECK:      2: [B11.1] (BindTemporary)
+// CHECK:    Predecessors (1): B12
+// CHECK:    Successors (1): B9
+// CHECK: [ B12 ]
+// CHECK:      1: A()
+// CHECK:      2: [B12.1] (BindTemporary)
+// CHECK:      3: .operator _Bool()
+// CHECK:      T: [B12.3] ? ... : ...
+// CHECK:    Predecessors (1): B13
+// CHECK:    Successors (2): B10 B11
 // CHECK: [ B0 (EXIT) ]
 // CHECK:    Predecessors (1): B1
 // CHECK:    Successors (0):

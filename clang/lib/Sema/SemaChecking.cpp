@@ -885,11 +885,12 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
     return false;
 
   switch (E->getStmtClass()) {
+  case Stmt::BinaryConditionalOperatorClass:
   case Stmt::ConditionalOperatorClass: {
-    const ConditionalOperator *C = cast<ConditionalOperator>(E);
+    const AbstractConditionalOperator *C = cast<AbstractConditionalOperator>(E);
     return SemaCheckStringLiteral(C->getTrueExpr(), TheCall, HasVAListArg,
                                   format_idx, firstDataArg, isPrintf)
-        && SemaCheckStringLiteral(C->getRHS(), TheCall, HasVAListArg,
+        && SemaCheckStringLiteral(C->getFalseExpr(), TheCall, HasVAListArg,
                                   format_idx, firstDataArg, isPrintf);
   }
 
@@ -909,6 +910,13 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
     E = cast<ParenExpr>(E)->getSubExpr();
     goto tryAgain;
   }
+
+  case Stmt::OpaqueValueExprClass:
+    if (const Expr *src = cast<OpaqueValueExpr>(E)->getSourceExpr()) {
+      E = src;
+      goto tryAgain;
+    }
+    return false;
 
   case Stmt::DeclRefExprClass: {
     const DeclRefExpr *DR = cast<DeclRefExpr>(E);

@@ -859,7 +859,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::LabelStmtClass:
     case Stmt::NoStmtClass:
     case Stmt::NullStmtClass:
-    case Stmt::OpaqueValueExprClass:
       llvm_unreachable("Stmt should not be in analyzer evaluation loop");
       break;
 
@@ -894,6 +893,7 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::ShuffleVectorExprClass:
     case Stmt::VAArgExprClass:
     case Stmt::CUDAKernelCallExprClass:
+    case Stmt::OpaqueValueExprClass:
         // Fall through.
 
     // Cases we intentionally don't evaluate, since they don't need
@@ -1003,9 +1003,11 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       VisitCompoundLiteralExpr(cast<CompoundLiteralExpr>(S), Pred, Dst);
       break;
 
+    case Stmt::BinaryConditionalOperatorClass:
     case Stmt::ConditionalOperatorClass: { // '?' operator
-      const ConditionalOperator* C = cast<ConditionalOperator>(S);
-      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
+      const AbstractConditionalOperator *C
+        = cast<AbstractConditionalOperator>(S);
+      VisitGuardedExpr(C, C->getTrueExpr(), C->getFalseExpr(), Pred, Dst);
       break;
     }
 
@@ -1206,9 +1208,10 @@ const GRState* ExprEngine::MarkBranch(const GRState* state,
       return state->BindExpr(B, UndefinedVal(Ex));
     }
 
+    case Stmt::BinaryConditionalOperatorClass:
     case Stmt::ConditionalOperatorClass: { // ?:
-
-      const ConditionalOperator* C = cast<ConditionalOperator>(Terminator);
+      const AbstractConditionalOperator* C
+        = cast<AbstractConditionalOperator>(Terminator);
 
       // For ?, if branchTaken == true then the value is either the LHS or
       // the condition itself. (GNU extension).
@@ -1216,9 +1219,9 @@ const GRState* ExprEngine::MarkBranch(const GRState* state,
       const Expr* Ex;
 
       if (branchTaken)
-        Ex = C->getLHS() ? C->getLHS() : C->getCond();
+        Ex = C->getTrueExpr();
       else
-        Ex = C->getRHS();
+        Ex = C->getFalseExpr();
 
       return state->BindExpr(C, UndefinedVal(Ex));
     }

@@ -1852,6 +1852,7 @@ DEF_TRAVERSE_STMT(CUDAKernelCallExpr, { })
 
 // These operators (all of them) do not need any action except
 // iterating over the children.
+DEF_TRAVERSE_STMT(BinaryConditionalOperator, { })
 DEF_TRAVERSE_STMT(ConditionalOperator, { })
 DEF_TRAVERSE_STMT(UnaryOperator, { })
 DEF_TRAVERSE_STMT(BinaryOperator, { })

@@ -1753,6 +1753,18 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     break;
   }
 
+  // Even gcc-4.5 doesn't mangle this.
+  case Expr::BinaryConditionalOperatorClass: {
+    Diagnostic &Diags = Context.getDiags();
+    unsigned DiagID =
+      Diags.getCustomDiagID(Diagnostic::Error,
+                "?: operator with omitted middle operand cannot be mangled");
+    Diags.Report(E->getExprLoc(), DiagID)
+      << E->getStmtClassName() << E->getSourceRange();
+    break;
+  }
+
+  // These are used for internal purposes and cannot be meaningfully mangled.
   case Expr::OpaqueValueExprClass:
     llvm_unreachable("cannot mangle opaque value; mangling wrong thing?");
 

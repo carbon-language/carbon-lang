@@ -76,6 +76,7 @@ namespace clang {
     void VisitBinaryOperator(BinaryOperator *E);
     void VisitCompoundAssignOperator(CompoundAssignOperator *E);
     void VisitConditionalOperator(ConditionalOperator *E);
+    void VisitBinaryConditionalOperator(BinaryConditionalOperator *E);
     void VisitImplicitCastExpr(ImplicitCastExpr *E);
     void VisitExplicitCastExpr(ExplicitCastExpr *E);
     void VisitCStyleCastExpr(CStyleCastExpr *E);
@@ -611,10 +612,22 @@ void ASTStmtWriter::VisitConditionalOperator(ConditionalOperator *E) {
   Writer.AddStmt(E->getCond());
   Writer.AddStmt(E->getLHS());
   Writer.AddStmt(E->getRHS());
-  Writer.AddStmt(E->getSAVE());
   Writer.AddSourceLocation(E->getQuestionLoc(), Record);
   Writer.AddSourceLocation(E->getColonLoc(), Record);
   Code = serialization::EXPR_CONDITIONAL_OPERATOR;
+}
+
+void
+ASTStmtWriter::VisitBinaryConditionalOperator(BinaryConditionalOperator *E) {
+  VisitExpr(E);
+  Writer.AddStmt(E->getOpaqueValue());
+  Writer.AddStmt(E->getCommon());
+  Writer.AddStmt(E->getCond());
+  Writer.AddStmt(E->getTrueExpr());
+  Writer.AddStmt(E->getFalseExpr());
+  Writer.AddSourceLocation(E->getQuestionLoc(), Record);
+  Writer.AddSourceLocation(E->getColonLoc(), Record);
+  Code = serialization::EXPR_BINARY_CONDITIONAL_OPERATOR;
 }
 
 void ASTStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
@@ -1320,6 +1333,7 @@ void ASTStmtWriter::VisitSubstNonTypeTemplateParmPackExpr(
 
 void ASTStmtWriter::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
+  Record.push_back(Writer.getOpaqueValueID(E));
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = serialization::EXPR_OPAQUE_VALUE;
 }
@@ -1354,6 +1368,12 @@ unsigned ASTWriter::getSwitchCaseID(SwitchCase *S) {
 
 void ASTWriter::ClearSwitchCaseIDs() {
   SwitchCaseIDs.clear();
+}
+
+unsigned ASTWriter::getOpaqueValueID(OpaqueValueExpr *e) {
+  unsigned &entry = OpaqueValues[e];
+  if (!entry) entry = OpaqueValues.size();
+  return entry;
 }
 
 /// \brief Write the given substatement or subexpression to the

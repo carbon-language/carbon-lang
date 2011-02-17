@@ -346,8 +346,10 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode* Pred) {
         HandleBranch(cast<BinaryOperator>(Term)->getLHS(), Term, B, Pred);
         return;
 
+      case Stmt::BinaryConditionalOperatorClass:
       case Stmt::ConditionalOperatorClass:
-        HandleBranch(cast<ConditionalOperator>(Term)->getCond(), Term, B, Pred);
+        HandleBranch(cast<AbstractConditionalOperator>(Term)->getCond(),
+                     Term, B, Pred);
         return;
 
         // FIXME: Use constant-folding in CFG construction to simplify this

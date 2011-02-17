@@ -130,12 +130,9 @@ public:
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitMemberExpr(const Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitOpaqueValueExpr(OpaqueValueExpr *E) {
-    if (E->isGLValue()) return EmitLoadOfLValue(E);
-
-    // Otherwise, the mapping is... what, exactly?  Probably a
-    // first-class aggregate, but it's really just not worthwhile.
-    CGF.ErrorUnsupported(E, "complex opaque r-value");
-    return ComplexPairTy();
+    if (E->isGLValue())
+      return EmitLoadOfLValue(CGF.getOpaqueLValueMapping(E));
+    return CGF.getOpaqueRValueMapping(E).getComplexVal();
   }
 
   // FIXME: CompoundLiteralExpr
@@ -260,7 +257,8 @@ public:
   ComplexPairTy VisitBinComma      (const BinaryOperator *E);
 
 
-  ComplexPairTy VisitConditionalOperator(const ConditionalOperator *CO);
+  ComplexPairTy
+  VisitAbstractConditionalOperator(const AbstractConditionalOperator *CO);
   ComplexPairTy VisitChooseExpr(ChooseExpr *CE);
 
   ComplexPairTy VisitInitListExpr(InitListExpr *E);
@@ -647,25 +645,18 @@ ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::
-VisitConditionalOperator(const ConditionalOperator *E) {
+VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
 
-  CodeGenFunction::ConditionalEvaluation eval(CGF);
+  // Bind the common expression if necessary.
+  CodeGenFunction::OpaqueValueMapping binding(CGF, E);
 
-  if (E->getLHS())
-    CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
-  else {
-    Expr *save = E->getSAVE();
-    assert(save && "VisitConditionalOperator - save is null");
-    // Intentionally not doing direct assignment to ConditionalSaveExprs[save] !!
-    ComplexPairTy SaveVal = Visit(save);
-    CGF.ConditionalSaveComplexExprs[save] = SaveVal;
-    CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
-  }
+  CodeGenFunction::ConditionalEvaluation eval(CGF);
+  CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
 
   eval.begin(CGF);
   CGF.EmitBlock(LHSBlock);
@@ -676,7 +667,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
 
   eval.begin(CGF);
   CGF.EmitBlock(RHSBlock);
-  ComplexPairTy RHS = Visit(E->getRHS());
+  ComplexPairTy RHS = Visit(E->getFalseExpr());
   RHSBlock = Builder.GetInsertBlock();
   CGF.EmitBlock(ContBlock);
   eval.end(CGF);

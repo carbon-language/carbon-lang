@@ -2003,6 +2003,10 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
   if (isa<MemberExpr>(E))
     return false;
 
+  // - opaque values (all)
+  if (isa<OpaqueValueExpr>(E))
+    return false;
+
   return true;
 }
 

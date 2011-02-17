@@ -4762,10 +4762,10 @@ public:
   void ConvertPropertyForLValue(Expr *&LHS, Expr *&RHS, QualType& LHSTy);
                                    
   QualType CheckConditionalOperands( // C99 6.5.15
-    Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save,
+    Expr *&cond, Expr *&lhs, Expr *&rhs,
     ExprValueKind &VK, ExprObjectKind &OK, SourceLocation questionLoc);
   QualType CXXCheckConditionalOperands( // C++ 5.16
-    Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save,
+    Expr *&cond, Expr *&lhs, Expr *&rhs,
     ExprValueKind &VK, ExprObjectKind &OK, SourceLocation questionLoc);
   QualType FindCompositePointerType(SourceLocation Loc, Expr *&E1, Expr *&E2,
                                     bool *NonStandardCompositeType = 0);

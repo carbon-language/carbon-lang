@@ -349,6 +349,10 @@ void StmtProfiler::VisitConditionalOperator(ConditionalOperator *S) {
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitBinaryConditionalOperator(BinaryConditionalOperator *S){
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitAddrLabelExpr(AddrLabelExpr *S) {
   VisitExpr(S);
   VisitDecl(S->getLabel());

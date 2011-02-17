@@ -290,7 +290,8 @@ private:
   CFGBlock *VisitCaseStmt(CaseStmt *C);
   CFGBlock *VisitChooseExpr(ChooseExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCompoundStmt(CompoundStmt *C);
-  CFGBlock *VisitConditionalOperator(ConditionalOperator *C, AddStmtChoice asc);
+  CFGBlock *VisitConditionalOperator(AbstractConditionalOperator *C,
+                                     AddStmtChoice asc);
   CFGBlock *VisitContinueStmt(ContinueStmt *C);
   CFGBlock *VisitDeclStmt(DeclStmt *DS);
   CFGBlock *VisitDeclSubExpr(DeclStmt* DS);
@@ -326,8 +327,9 @@ private:
   CFGBlock *VisitBinaryOperatorForTemporaryDtors(BinaryOperator *E);
   CFGBlock *VisitCXXBindTemporaryExprForTemporaryDtors(CXXBindTemporaryExpr *E,
       bool BindToTemporary);
-  CFGBlock *VisitConditionalOperatorForTemporaryDtors(ConditionalOperator *E,
-      bool BindToTemporary);
+  CFGBlock *
+  VisitConditionalOperatorForTemporaryDtors(AbstractConditionalOperator *E,
+                                            bool BindToTemporary);
 
   // NYS == Not Yet Supported
   CFGBlock* NYS() {
@@ -785,6 +787,9 @@ tryAgain:
     case Stmt::AddrLabelExprClass:
       return VisitAddrLabelExpr(cast<AddrLabelExpr>(S), asc);
 
+    case Stmt::BinaryConditionalOperatorClass:
+      return VisitConditionalOperator(cast<BinaryConditionalOperator>(S), asc);
+
     case Stmt::BinaryOperatorClass:
       return VisitBinaryOperator(cast<BinaryOperator>(S), asc);
 
@@ -1174,8 +1179,11 @@ CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
   return LastBlock;
 }
 
-CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
+CFGBlock *CFGBuilder::VisitConditionalOperator(AbstractConditionalOperator *C,
                                                AddStmtChoice asc) {
+  const BinaryConditionalOperator *BCO = dyn_cast<BinaryConditionalOperator>(C);
+  const OpaqueValueExpr *opaqueValue = (BCO ? BCO->getOpaqueValue() : NULL);
+
   // Create the confluence block that will "merge" the results of the ternary
   // expression.
   CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
@@ -1191,9 +1199,10 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
   //  e.g: x ?: y is shorthand for: x ? x : y;
   Succ = ConfluenceBlock;
   Block = NULL;
-  CFGBlock* LHSBlock = NULL;
-  if (C->getLHS()) {
-    LHSBlock = Visit(C->getLHS(), alwaysAdd);
+  CFGBlock* LHSBlock = 0;
+  const Expr *trueExpr = C->getTrueExpr();
+  if (trueExpr != opaqueValue) {
+    LHSBlock = Visit(C->getTrueExpr(), alwaysAdd);
     if (badCFG)
       return 0;
     Block = NULL;
@@ -1201,7 +1210,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
 
   // Create the block for the RHS expression.
   Succ = ConfluenceBlock;
-  CFGBlock* RHSBlock = Visit(C->getRHS(), alwaysAdd);
+  CFGBlock* RHSBlock = Visit(C->getFalseExpr(), alwaysAdd);
   if (badCFG)
     return 0;
 
@@ -1210,33 +1219,15 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C,
 
   // See if this is a known constant.
   const TryResult& KnownVal = tryEvaluateBool(C->getCond());
-  if (LHSBlock) {
+  if (LHSBlock)
     addSuccessor(Block, KnownVal.isFalse() ? NULL : LHSBlock);
-  } else {
-    if (KnownVal.isFalse()) {
-      // If we know the condition is false, add NULL as the successor for
-      // the block containing the condition.  In this case, the confluence
-      // block will have just one predecessor.
-      addSuccessor(Block, 0);
-      assert(ConfluenceBlock->pred_size() == 1);
-    } else {
-      // If we have no LHS expression, add the ConfluenceBlock as a direct
-      // successor for the block containing the condition.  Moreover, we need to
-      // reverse the order of the predecessors in the ConfluenceBlock because
-      // the RHSBlock will have been added to the succcessors already, and we
-      // want the first predecessor to the the block containing the expression
-      // for the case when the ternary expression evaluates to true.
-      addSuccessor(Block, ConfluenceBlock);
-      // Note that there can possibly only be one predecessor if one of the
-      // subexpressions resulted in calling a noreturn function.
-      std::reverse(ConfluenceBlock->pred_begin(),
-                   ConfluenceBlock->pred_end());
-    }
-  }
-
   addSuccessor(Block, KnownVal.isTrue() ? NULL : RHSBlock);
   Block->setTerminator(C);
-  return addStmt(C->getCond());
+  CFGBlock *result;
+  Expr *condExpr = C->getCond();
+  if (condExpr != opaqueValue) result = addStmt(condExpr);
+  if (BCO) result = addStmt(BCO->getCommon());
+  return result;
 }
 
 CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {
@@ -2485,9 +2476,10 @@ tryAgain:
       return VisitCXXBindTemporaryExprForTemporaryDtors(
           cast<CXXBindTemporaryExpr>(E), BindToTemporary);
 
+    case Stmt::BinaryConditionalOperatorClass:
     case Stmt::ConditionalOperatorClass:
       return VisitConditionalOperatorForTemporaryDtors(
-          cast<ConditionalOperator>(E), BindToTemporary);
+          cast<AbstractConditionalOperator>(E), BindToTemporary);
 
     case Stmt::ImplicitCastExprClass:
       // For implicit cast we want BindToTemporary to be passed further.
@@ -2602,7 +2594,7 @@ CFGBlock *CFGBuilder::VisitCXXBindTemporaryExprForTemporaryDtors(
 }
 
 CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
-    ConditionalOperator *E, bool BindToTemporary) {
+    AbstractConditionalOperator *E, bool BindToTemporary) {
   // First add destructors for condition expression.  Even if this will
   // unnecessarily create a block, this block will be used at least by the full
   // expression.
@@ -2610,21 +2602,26 @@ CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
   CFGBlock *ConfluenceBlock = VisitForTemporaryDtors(E->getCond());
   if (badCFG)
     return NULL;
-
-  // Try to add block with destructors for LHS expression.
-  CFGBlock *LHSBlock = NULL;
-  if (E->getLHS()) {
-    Succ = ConfluenceBlock;
-    Block = NULL;
-    LHSBlock = VisitForTemporaryDtors(E->getLHS(), BindToTemporary);
+  if (BinaryConditionalOperator *BCO
+        = dyn_cast<BinaryConditionalOperator>(E)) {
+    ConfluenceBlock = VisitForTemporaryDtors(BCO->getCommon());
     if (badCFG)
       return NULL;
   }
 
+  // Try to add block with destructors for LHS expression.
+  CFGBlock *LHSBlock = NULL;
+  Succ = ConfluenceBlock;
+  Block = NULL;
+  LHSBlock = VisitForTemporaryDtors(E->getTrueExpr(), BindToTemporary);
+  if (badCFG)
+    return NULL;
+
   // Try to add block with destructors for RHS expression;
   Succ = ConfluenceBlock;
   Block = NULL;
-  CFGBlock *RHSBlock = VisitForTemporaryDtors(E->getRHS(), BindToTemporary);
+  CFGBlock *RHSBlock = VisitForTemporaryDtors(E->getFalseExpr(),
+                                              BindToTemporary);
   if (badCFG)
     return NULL;
 
@@ -2969,7 +2966,7 @@ public:
     OS << "try ...";
   }
 
-  void VisitConditionalOperator(ConditionalOperator* C) {
+  void VisitAbstractConditionalOperator(AbstractConditionalOperator* C) {
     C->getCond()->printPretty(OS, Helper, Policy);
     OS << " ? ... : ...";
   }
@@ -3307,6 +3304,10 @@ Stmt* CFGBlock::getTerminatorCondition() {
       E = cast<SwitchStmt>(Terminator)->getCond();
       break;
 
+    case Stmt::BinaryConditionalOperatorClass:
+      E = cast<BinaryConditionalOperator>(Terminator)->getCond();
+      break;
+
     case Stmt::ConditionalOperatorClass:
       E = cast<ConditionalOperator>(Terminator)->getCond();
       break;
@@ -3338,6 +3339,7 @@ bool CFGBlock::hasBinaryBranchTerminator() const {
     case Stmt::DoStmtClass:
     case Stmt::IfStmtClass:
     case Stmt::ChooseExprClass:
+    case Stmt::BinaryConditionalOperatorClass:
     case Stmt::ConditionalOperatorClass:
     case Stmt::BinaryOperatorClass:
       return true;

@@ -2927,8 +2927,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E, QualType T) {
 /// See C++ [expr.cond]. Note that LHS is never null, even for the GNU x ?: y
 /// extension. In this case, LHS == Cond. (But they're not aliases.)
 QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
-                                           Expr *&SAVE, ExprValueKind &VK,
-                                           ExprObjectKind &OK,
+                                           ExprValueKind &VK, ExprObjectKind &OK,
                                            SourceLocation QuestionLoc) {
   // FIXME: Handle C99's complex types, vector types, block pointers and Obj-C++
   // interface pointers.
@@ -2936,12 +2935,6 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // C++0x 5.16p1
   //   The first expression is contextually converted to bool.
   if (!Cond->isTypeDependent()) {
-    if (SAVE && Cond->getType()->isArrayType()) {
-      QualType CondTy = Cond->getType();
-      CondTy = Context.getArrayDecayedType(CondTy);
-      ImpCastExprToType(Cond, CondTy, CK_ArrayToPointerDecay);
-      SAVE = LHS = Cond;
-    }
     if (CheckCXXBooleanCondition(Cond))
       return QualType();
   }
@@ -3037,12 +3030,10 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // l-values.
   bool Same = Context.hasSameType(LTy, RTy);
   if (Same &&
-      LHS->getValueKind() != VK_RValue &&
+      LHS->isGLValue() &&
       LHS->getValueKind() == RHS->getValueKind() &&
-      (LHS->getObjectKind() == OK_Ordinary ||
-       LHS->getObjectKind() == OK_BitField) &&
-      (RHS->getObjectKind() == OK_Ordinary ||
-       RHS->getObjectKind() == OK_BitField)) {
+      LHS->isOrdinaryOrBitFieldObject() &&
+      RHS->isOrdinaryOrBitFieldObject()) {
     VK = LHS->getValueKind();
     if (LHS->getObjectKind() == OK_BitField ||
         RHS->getObjectKind() == OK_BitField)

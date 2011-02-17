@@ -72,7 +72,7 @@ public:
   bool VisitStmt(Stmt* S);
   bool VisitCallExpr(CallExpr* C);
   bool VisitDeclStmt(DeclStmt* D);
-  bool VisitConditionalOperator(ConditionalOperator* C);
+  bool VisitAbstractConditionalOperator(AbstractConditionalOperator* C);
   bool BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
 
   bool Visit(Stmt *S);
@@ -213,13 +213,14 @@ TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
 }
 
 
-bool TransferFuncs::VisitConditionalOperator(ConditionalOperator* C) {
+bool TransferFuncs::
+VisitAbstractConditionalOperator(AbstractConditionalOperator* C) {
   Visit(C->getCond());
 
-  bool rhsResult = Visit(C->getRHS());
+  bool rhsResult = Visit(C->getFalseExpr());
   // Handle the GNU extension for missing LHS.
-  if (Expr *lhs = C->getLHS())
-    return Visit(lhs) & rhsResult; // Yes: we want &, not &&.
+  if (isa<ConditionalOperator>(C))
+    return Visit(C->getTrueExpr()) & rhsResult; // Yes: we want &, not &&.
   else
     return rhsResult;
 }

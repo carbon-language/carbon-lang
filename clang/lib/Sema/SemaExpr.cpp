@@ -5232,8 +5232,7 @@ ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
 /// In that case, lhs = cond.
 /// C99 6.5.15
 QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
-                                        Expr *&SAVE, ExprValueKind &VK,
-                                        ExprObjectKind &OK,
+                                        ExprValueKind &VK, ExprObjectKind &OK,
                                         SourceLocation QuestionLoc) {
   // If both LHS and RHS are overloaded functions, try to resolve them.
   if (Context.hasSameType(LHS->getType(), RHS->getType()) && 
@@ -5252,18 +5251,13 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 
   // C++ is sufficiently different to merit its own checker.
   if (getLangOptions().CPlusPlus)
-    return CXXCheckConditionalOperands(Cond, LHS, RHS, SAVE,
-                                       VK, OK, QuestionLoc);
+    return CXXCheckConditionalOperands(Cond, LHS, RHS, VK, OK, QuestionLoc);
 
   VK = VK_RValue;
   OK = OK_Ordinary;
 
   UsualUnaryConversions(Cond);
-  if (SAVE) {
-    SAVE = LHS = Cond;
-  }
-  else
-    UsualUnaryConversions(LHS);
+  UsualUnaryConversions(LHS);
   UsualUnaryConversions(RHS);
   QualType CondTy = Cond->getType();
   QualType LHSTy = LHS->getType();
@@ -5610,28 +5604,50 @@ QualType Sema::FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
 /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
 /// in the case of a the GNU conditional expr extension.
 ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
-                                                  SourceLocation ColonLoc,
-                                                  Expr *CondExpr, Expr *LHSExpr,
-                                                  Expr *RHSExpr) {
+                                    SourceLocation ColonLoc,
+                                    Expr *CondExpr, Expr *LHSExpr,
+                                    Expr *RHSExpr) {
   // If this is the gnu "x ?: y" extension, analyze the types as though the LHS
   // was the condition.
-  bool isLHSNull = LHSExpr == 0;
-  Expr *SAVEExpr = 0;
-  if (isLHSNull) {
-    LHSExpr = SAVEExpr = CondExpr;
+  OpaqueValueExpr *opaqueValue = 0;
+  Expr *commonExpr = 0;
+  if (LHSExpr == 0) {
+    commonExpr = CondExpr;
+
+    // We usually want to apply unary conversions *before* saving, except
+    // in the special case of a C++ l-value conditional.
+    if (!(getLangOptions().CPlusPlus
+          && !commonExpr->isTypeDependent()
+          && commonExpr->getValueKind() == RHSExpr->getValueKind()
+          && commonExpr->isGLValue()
+          && commonExpr->isOrdinaryOrBitFieldObject()
+          && RHSExpr->isOrdinaryOrBitFieldObject()
+          && Context.hasSameType(commonExpr->getType(), RHSExpr->getType()))) {
+      UsualUnaryConversions(commonExpr);
+    }
+
+    opaqueValue = new (Context) OpaqueValueExpr(commonExpr->getExprLoc(),
+                                                commonExpr->getType(),
+                                                commonExpr->getValueKind(),
+                                                commonExpr->getObjectKind());
+    LHSExpr = CondExpr = opaqueValue;
   }
 
   ExprValueKind VK = VK_RValue;
   ExprObjectKind OK = OK_Ordinary;
   QualType result = CheckConditionalOperands(CondExpr, LHSExpr, RHSExpr, 
-                                             SAVEExpr, VK, OK, QuestionLoc);
+                                             VK, OK, QuestionLoc);
   if (result.isNull())
     return ExprError();
 
-  return Owned(new (Context) ConditionalOperator(CondExpr, QuestionLoc,
-                                                 LHSExpr, ColonLoc, 
-                                                 RHSExpr, SAVEExpr,
-                                                 result, VK, OK));
+  if (!commonExpr)
+    return Owned(new (Context) ConditionalOperator(CondExpr, QuestionLoc,
+                                                   LHSExpr, ColonLoc, 
+                                                   RHSExpr, result, VK, OK));
+
+  return Owned(new (Context)
+    BinaryConditionalOperator(commonExpr, opaqueValue, CondExpr, LHSExpr,
+                              RHSExpr, QuestionLoc, ColonLoc, result, VK, OK));
 }
 
 // checkPointerTypesForAssignment - This is a very tricky routine (despite

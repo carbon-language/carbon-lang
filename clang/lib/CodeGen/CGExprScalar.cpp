@@ -201,10 +201,11 @@ public:
   }
 
   Value *VisitOpaqueValueExpr(OpaqueValueExpr *E) {
-    if (E->isGLValue()) return EmitLoadOfLValue(E);
+    if (E->isGLValue())
+      return EmitLoadOfLValue(CGF.getOpaqueLValueMapping(E), E->getType());
 
     // Otherwise, assume the mapping is the scalar directly.
-    return CGF.getOpaqueValueMapping(E);
+    return CGF.getOpaqueRValueMapping(E).getScalarVal();
   }
     
   // l-values.
@@ -496,7 +497,7 @@ public:
 
   // Other Operators.
   Value *VisitBlockExpr(const BlockExpr *BE);
-  Value *VisitConditionalOperator(const ConditionalOperator *CO);
+  Value *VisitAbstractConditionalOperator(const AbstractConditionalOperator *);
   Value *VisitChooseExpr(ChooseExpr *CE);
   Value *VisitVAArgExpr(VAArgExpr *VE);
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
@@ -2401,32 +2402,38 @@ static bool isCheapEnoughToEvaluateUnconditionally(const Expr *E,
 
 
 Value *ScalarExprEmitter::
-VisitConditionalOperator(const ConditionalOperator *E) {
+VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   TestAndClearIgnoreResultAssign();
+
+  // Bind the common expression if necessary.
+  CodeGenFunction::OpaqueValueMapping binding(CGF, E);
+
+  Expr *condExpr = E->getCond();
+  Expr *lhsExpr = E->getTrueExpr();
+  Expr *rhsExpr = E->getFalseExpr();
+
   // If the condition constant folds and can be elided, try to avoid emitting
   // the condition and the dead arm.
-  if (int Cond = CGF.ConstantFoldsToSimpleInteger(E->getCond())){
-    Expr *Live = E->getLHS(), *Dead = E->getRHS();
-    if (Cond == -1)
-      std::swap(Live, Dead);
+  if (int Cond = CGF.ConstantFoldsToSimpleInteger(condExpr)){
+    Expr *live = lhsExpr, *dead = rhsExpr;
+    if (Cond == -1) std::swap(live, dead);
 
     // If the dead side doesn't have labels we need, and if the Live side isn't
     // the gnu missing ?: extension (which we could handle, but don't bother
     // to), just emit the Live part.
-    if ((!Dead || !CGF.ContainsLabel(Dead)) &&  // No labels in dead part
-        Live)                                   // Live part isn't missing.
-      return Visit(Live);
+    if (!CGF.ContainsLabel(dead))
+      return Visit(live);
   }
 
   // OpenCL: If the condition is a vector, we can treat this condition like
   // the select function.
   if (CGF.getContext().getLangOptions().OpenCL 
-      && E->getCond()->getType()->isVectorType()) {
-    llvm::Value *CondV = CGF.EmitScalarExpr(E->getCond());
-    llvm::Value *LHS = Visit(E->getLHS());
-    llvm::Value *RHS = Visit(E->getRHS());
+      && condExpr->getType()->isVectorType()) {
+    llvm::Value *CondV = CGF.EmitScalarExpr(condExpr);
+    llvm::Value *LHS = Visit(lhsExpr);
+    llvm::Value *RHS = Visit(rhsExpr);
     
-    const llvm::Type *condType = ConvertType(E->getCond()->getType());
+    const llvm::Type *condType = ConvertType(condExpr->getType());
     const llvm::VectorType *vecTy = cast<llvm::VectorType>(condType);
     
     unsigned numElem = vecTy->getNumElements();      
@@ -2467,12 +2474,11 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   // If this is a really simple expression (like x ? 4 : 5), emit this as a
   // select instead of as control flow.  We can only do this if it is cheap and
   // safe to evaluate the LHS and RHS unconditionally.
-  if (E->getLHS() && isCheapEnoughToEvaluateUnconditionally(E->getLHS(),
-                                                            CGF) &&
-      isCheapEnoughToEvaluateUnconditionally(E->getRHS(), CGF)) {
-    llvm::Value *CondV = CGF.EvaluateExprAsBool(E->getCond());
-    llvm::Value *LHS = Visit(E->getLHS());
-    llvm::Value *RHS = Visit(E->getRHS());
+  if (isCheapEnoughToEvaluateUnconditionally(lhsExpr, CGF) &&
+      isCheapEnoughToEvaluateUnconditionally(rhsExpr, CGF)) {
+    llvm::Value *CondV = CGF.EvaluateExprAsBool(condExpr);
+    llvm::Value *LHS = Visit(lhsExpr);
+    llvm::Value *RHS = Visit(rhsExpr);
     return Builder.CreateSelect(CondV, LHS, RHS, "cond");
   }
 
@@ -2481,40 +2487,11 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
 
   CodeGenFunction::ConditionalEvaluation eval(CGF);
-  
-  // If we don't have the GNU missing condition extension, emit a branch on bool
-  // the normal way.
-  if (E->getLHS()) {
-    // Otherwise, just use EmitBranchOnBoolExpr to get small and simple code for
-    // the branch on bool.
-    CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
-  } else {
-    // Otherwise, for the ?: extension, evaluate the conditional and then
-    // convert it to bool the hard way.  We do this explicitly because we need
-    // the unconverted value for the missing middle value of the ?:.
-    Expr *save = E->getSAVE();
-    assert(save && "VisitConditionalOperator - save is null");
-    // Intentianlly not doing direct assignment to ConditionalSaveExprs[save] !!
-    Value *SaveVal = CGF.EmitScalarExpr(save);
-    CGF.ConditionalSaveExprs[save] = SaveVal;
-    Value *CondVal = Visit(E->getCond());
-    // In some cases, EmitScalarConversion will delete the "CondVal" expression
-    // if there are no extra uses (an optimization).  Inhibit this by making an
-    // extra dead use, because we're going to add a use of CondVal later.  We
-    // don't use the builder for this, because we don't want it to get optimized
-    // away.  This leaves dead code, but the ?: extension isn't common.
-    new llvm::BitCastInst(CondVal, CondVal->getType(), "dummy?:holder",
-                          Builder.GetInsertBlock());
-
-    Value *CondBoolVal =
-      CGF.EmitScalarConversion(CondVal, E->getCond()->getType(),
-                               CGF.getContext().BoolTy);
-    Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
-  }
+  CGF.EmitBranchOnBoolExpr(condExpr, LHSBlock, RHSBlock);
 
   CGF.EmitBlock(LHSBlock);
   eval.begin(CGF);
-  Value *LHS = Visit(E->getTrueExpr());
+  Value *LHS = Visit(lhsExpr);
   eval.end(CGF);
 
   LHSBlock = Builder.GetInsertBlock();
@@ -2522,7 +2499,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
 
   CGF.EmitBlock(RHSBlock);
   eval.begin(CGF);
-  Value *RHS = Visit(E->getRHS());
+  Value *RHS = Visit(rhsExpr);
   eval.end(CGF);
 
   RHSBlock = Builder.GetInsertBlock();

@@ -792,21 +792,20 @@ void StmtPrinter::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
 }
 void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
   PrintExpr(Node->getCond());
-
-  if (Node->getLHS()) {
-    OS << " ? ";
-    PrintExpr(Node->getLHS());
-    OS << " : ";
-  }
-  else { // Handle GCC extension where LHS can be NULL.
-    OS << " ?: ";
-  }
-
+  OS << " ? ";
+  PrintExpr(Node->getLHS());
+  OS << " : ";
   PrintExpr(Node->getRHS());
 }
 
 // GNU extensions.
 
+void
+StmtPrinter::VisitBinaryConditionalOperator(BinaryConditionalOperator *Node) {
+  PrintExpr(Node->getCommon());
+  OS << " ?: ";
+  PrintExpr(Node->getFalseExpr());
+}
 void StmtPrinter::VisitAddrLabelExpr(AddrLabelExpr *Node) {
   OS << "&&" << Node->getLabel()->getName();
 }

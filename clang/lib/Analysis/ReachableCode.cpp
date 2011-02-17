@@ -78,8 +78,10 @@ static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
       R2 = CAO->getRHS()->getSourceRange();
       return CAO->getOperatorLoc();
     }
+    case Expr::BinaryConditionalOperatorClass:
     case Expr::ConditionalOperatorClass: {
-      const ConditionalOperator *CO = cast<ConditionalOperator>(S);
+      const AbstractConditionalOperator *CO =
+        cast<AbstractConditionalOperator>(S);
       return CO->getQuestionLoc();
     }
     case Expr::MemberExprClass: {

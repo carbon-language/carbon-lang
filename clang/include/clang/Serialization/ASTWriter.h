@@ -46,6 +46,7 @@ class FPOptions;
 class HeaderSearch;
 class MacroDefinition;
 class MemorizeStatCalls;
+class OpaqueValueExpr;
 class OpenCLOptions;
 class ASTReader;
 class PreprocessedEntity;
@@ -259,6 +260,9 @@ private:
 
   /// \brief Mapping from SwitchCase statements to IDs.
   std::map<SwitchCase *, unsigned> SwitchCaseIDs;
+
+  /// \brief Mapping from OpaqueValueExpr expressions to IDs.
+  llvm::DenseMap<OpaqueValueExpr *, unsigned> OpaqueValues;
 
   /// \brief The number of statements written to the AST file.
   unsigned NumStatements;
@@ -548,6 +552,9 @@ public:
   unsigned getSwitchCaseID(SwitchCase *S);
 
   void ClearSwitchCaseIDs();
+
+  /// \brief Retrieve the ID for the given opaque value expression.
+  unsigned getOpaqueValueID(OpaqueValueExpr *e);
 
   unsigned getParmVarDeclAbbrev() const { return ParmVarDeclAbbrev; }
 

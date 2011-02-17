@@ -1415,10 +1415,10 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildConditionalOperator(Expr *Cond,
-                                              SourceLocation QuestionLoc,
-                                              Expr *LHS,
-                                              SourceLocation ColonLoc,
-                                              Expr *RHS) {
+                                        SourceLocation QuestionLoc,
+                                        Expr *LHS,
+                                        SourceLocation ColonLoc,
+                                        Expr *RHS) {
     return getSema().ActOnConditionalOp(QuestionLoc, ColonLoc, Cond,
                                         LHS, RHS);
   }
@@ -5520,6 +5520,32 @@ ExprResult
 TreeTransform<Derived>::TransformCompoundAssignOperator(
                                                       CompoundAssignOperator *E) {
   return getDerived().TransformBinaryOperator(E);
+}
+
+template<typename Derived>
+ExprResult TreeTransform<Derived>::
+TransformBinaryConditionalOperator(BinaryConditionalOperator *e) {
+  // Just rebuild the common and RHS expressions and see whether we
+  // get any changes.
+
+  ExprResult commonExpr = getDerived().TransformExpr(e->getCommon());
+  if (commonExpr.isInvalid())
+    return ExprError();
+
+  ExprResult rhs = getDerived().TransformExpr(e->getFalseExpr());
+  if (rhs.isInvalid())
+    return ExprError();
+
+  if (!getDerived().AlwaysRebuild() &&
+      commonExpr.get() == e->getCommon() &&
+      rhs.get() == e->getFalseExpr())
+    return SemaRef.Owned(e);
+
+  return getDerived().RebuildConditionalOperator(commonExpr.take(),
+                                                 e->getQuestionLoc(),
+                                                 0,
+                                                 e->getColonLoc(),
+                                                 rhs.get());
 }
 
 template<typename Derived>

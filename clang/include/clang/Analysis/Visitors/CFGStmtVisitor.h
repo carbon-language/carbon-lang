@@ -80,6 +80,7 @@ public:
 
       DISPATCH_CASE(StmtExpr)
       DISPATCH_CASE(ConditionalOperator)
+      DISPATCH_CASE(BinaryConditionalOperator)
       DISPATCH_CASE(ObjCForCollectionStmt)
 
       case Stmt::BinaryOperatorClass: {
@@ -102,6 +103,7 @@ public:
 
   DEFAULT_BLOCKSTMT_VISIT(StmtExpr)
   DEFAULT_BLOCKSTMT_VISIT(ConditionalOperator)
+  DEFAULT_BLOCKSTMT_VISIT(BinaryConditionalOperator)
 
   RetTy BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);

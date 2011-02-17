@@ -1052,7 +1052,8 @@ static void InitCatchParam(CodeGenFunction &CGF,
   // The copy expression is defined in terms of an OpaqueValueExpr.
   // Find it and map it to the adjusted expression.
   CodeGenFunction::OpaqueValueMapping
-    opaque(CGF, OpaqueValueExpr::findInCopyConstruct(copyExpr), adjustedExn);
+    opaque(CGF, OpaqueValueExpr::findInCopyConstruct(copyExpr),
+           CGF.MakeAddrLValue(adjustedExn, CatchParam.getType()));
 
   // Call the copy ctor in a terminate scope.
   CGF.EHStack.pushTerminate();

@@ -58,6 +58,7 @@ class CXXCtorInitializer;
 class GotoStmt;
 class MacroDefinition;
 class NamedDecl;
+class OpaqueValueExpr;
 class Preprocessor;
 class Sema;
 class SwitchCase;
@@ -644,6 +645,9 @@ private:
   /// Statements usually don't have IDs, but switch cases need them, so that the
   /// switch statement can refer to them.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
+
+  /// \brief Mapping from opaque value IDs to OpaqueValueExprs.
+  std::map<unsigned, OpaqueValueExpr*> OpaqueValueExprs;
 
   /// \brief The number of stat() calls that hit/missed the stat
   /// cache.

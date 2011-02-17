@@ -93,6 +93,7 @@ static const Stmt* GetNextStmt(const ExplodedNode* N) {
       // not actual statement points.
       switch (S->getStmtClass()) {
         case Stmt::ChooseExprClass:
+        case Stmt::BinaryConditionalOperatorClass: continue;
         case Stmt::ConditionalOperatorClass: continue;
         case Stmt::BinaryOperatorClass: {
           BinaryOperatorKind Op = cast<BinaryOperator>(S)->getOpcode();
@@ -279,10 +280,11 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
           return PathDiagnosticLocation(Parent, SMgr);
         else
           return PathDiagnosticLocation(S, SMgr);
+      case Stmt::BinaryConditionalOperatorClass:
       case Stmt::ConditionalOperatorClass:
         // For '?', if we are referring to condition, just have the edge point
         // to the entire '?' expression.
-        if (cast<ConditionalOperator>(Parent)->getCond() == S)
+        if (cast<AbstractConditionalOperator>(Parent)->getCond() == S)
           return PathDiagnosticLocation(Parent, SMgr);
         else
           return PathDiagnosticLocation(S, SMgr);
@@ -635,6 +637,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
         }
 
           // Determine control-flow for ternary '?'.
+        case Stmt::BinaryConditionalOperatorClass:
         case Stmt::ConditionalOperatorClass: {
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
@@ -810,7 +813,7 @@ static bool IsControlFlowExpr(const Stmt *S) {
 
   E = E->IgnoreParenCasts();
 
-  if (isa<ConditionalOperator>(E))
+  if (isa<AbstractConditionalOperator>(E))
     return true;
 
   if (const BinaryOperator *B = dyn_cast<BinaryOperator>(E))
@@ -859,8 +862,9 @@ class EdgeBuilder {
             S = cast<ParenExpr>(S)->IgnoreParens();
             firstCharOnly = true;
             continue;
+          case Stmt::BinaryConditionalOperatorClass:
           case Stmt::ConditionalOperatorClass:
-            S = cast<ConditionalOperator>(S)->getCond();
+            S = cast<AbstractConditionalOperator>(S)->getCond();
             firstCharOnly = true;
             continue;
           case Stmt::ChooseExprClass:

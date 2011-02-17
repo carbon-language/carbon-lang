@@ -711,7 +711,8 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
     return CanVary(cast<const ChooseExpr>(Ex)->getChosenSubExpr(
         AC->getASTContext()), AC);
   case Stmt::ConditionalOperatorClass:
-    return CanVary(cast<const ConditionalOperator>(Ex)->getCond(), AC);
+  case Stmt::BinaryConditionalOperatorClass:
+    return CanVary(cast<AbstractConditionalOperator>(Ex)->getCond(), AC);
   }
 }
 

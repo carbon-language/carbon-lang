@@ -48,6 +48,14 @@ struct EvalInfo {
   /// EvalResult - Contains information about the evaluation.
   Expr::EvalResult &EvalResult;
 
+  llvm::DenseMap<const OpaqueValueExpr*, APValue> OpaqueValues;
+  const APValue *getOpaqueValue(const OpaqueValueExpr *e) {
+    llvm::DenseMap<const OpaqueValueExpr*, APValue>::iterator
+      i = OpaqueValues.find(e);
+    if (i == OpaqueValues.end()) return 0;
+    return &i->second;
+  }
+
   EvalInfo(const ASTContext &ctx, Expr::EvalResult& evalresult)
     : Ctx(ctx), EvalResult(evalresult) {}
 };
@@ -73,11 +81,23 @@ namespace {
     APSInt &getComplexIntReal() { return IntReal; }
     APSInt &getComplexIntImag() { return IntImag; }
 
-    void moveInto(APValue &v) {
+    void moveInto(APValue &v) const {
       if (isComplexFloat())
         v = APValue(FloatReal, FloatImag);
       else
         v = APValue(IntReal, IntImag);
+    }
+    void setFrom(const APValue &v) {
+      assert(v.isComplexFloat() || v.isComplexInt());
+      if (v.isComplexFloat()) {
+        makeComplexFloat();
+        FloatReal = v.getComplexFloatReal();
+        FloatImag = v.getComplexFloatImag();
+      } else {
+        makeComplexInt();
+        IntReal = v.getComplexIntReal();
+        IntImag = v.getComplexIntImag();
+      }
     }
   };
 
@@ -88,12 +108,18 @@ namespace {
     Expr *getLValueBase() { return Base; }
     CharUnits getLValueOffset() { return Offset; }
 
-    void moveInto(APValue &v) {
+    void moveInto(APValue &v) const {
       v = APValue(Base, Offset);
+    }
+    void setFrom(const APValue &v) {
+      assert(v.isLValue());
+      Base = v.getLValueBase();
+      Offset = v.getLValueOffset();
     }
   };
 }
 
+static bool Evaluate(EvalInfo &info, const Expr *E);
 static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
@@ -295,6 +321,30 @@ public:
   bool VisitSizeOfPackExpr(SizeOfPackExpr *) { return false; }
 };
 
+class OpaqueValueEvaluation {
+  EvalInfo &info;
+  OpaqueValueExpr *opaqueValue;
+
+public:
+  OpaqueValueEvaluation(EvalInfo &info, OpaqueValueExpr *opaqueValue,
+                        Expr *value)
+    : info(info), opaqueValue(opaqueValue) {
+
+    // If evaluation fails, fail immediately.
+    if (!Evaluate(info, value)) {
+      this->opaqueValue = 0;
+      return;
+    }
+    info.OpaqueValues[opaqueValue] = info.EvalResult.Val;
+  }
+
+  bool hasError() const { return opaqueValue == 0; }
+
+  ~OpaqueValueEvaluation() {
+    if (opaqueValue) info.OpaqueValues.erase(opaqueValue);
+  }
+};
+  
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -468,11 +518,14 @@ public:
   }
   bool VisitImplicitValueInitExpr(ImplicitValueInitExpr *E)
       { return Success((Expr*)0); }
+  bool VisitBinaryConditionalOperator(BinaryConditionalOperator *E);
   bool VisitConditionalOperator(ConditionalOperator *E);
   bool VisitChooseExpr(ChooseExpr *E)
       { return Visit(E->getChosenSubExpr(Info.Ctx)); }
   bool VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E)
       { return Success((Expr*)0); }
+
+  bool VisitOpaqueValueExpr(OpaqueValueExpr *E);
   // FIXME: Missing: @protocol, @selector
 };
 } // end anonymous namespace
@@ -614,6 +667,26 @@ bool PointerExprEvaluator::VisitCallExpr(CallExpr *E) {
         Builtin::BI__builtin___NSStringMakeConstantString)
     return Success(E);
   return false;
+}
+
+bool PointerExprEvaluator::VisitOpaqueValueExpr(OpaqueValueExpr *e) {
+  const APValue *value = Info.getOpaqueValue(e);
+  if (!value)
+    return (e->getSourceExpr() ? Visit(e->getSourceExpr()) : false);
+  Result.setFrom(*value);
+  return true;
+}
+
+bool PointerExprEvaluator::
+VisitBinaryConditionalOperator(BinaryConditionalOperator *e) {
+  OpaqueValueEvaluation opaque(Info, e->getOpaqueValue(), e->getCommon());
+  if (opaque.hasError()) return false;
+
+  bool cond;
+  if (!HandleConversionToBool(e->getCond(), cond, Info))
+    return false;
+
+  return Visit(cond ? e->getTrueExpr() : e->getFalseExpr());
 }
 
 bool PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
@@ -912,6 +985,15 @@ public:
     return Success(E->getValue(), E);
   }
 
+  bool VisitOpaqueValueExpr(OpaqueValueExpr *e) {
+    const APValue *value = Info.getOpaqueValue(e);
+    if (!value) {
+      if (e->getSourceExpr()) return Visit(e->getSourceExpr());
+      return Error(e->getExprLoc(), diag::note_invalid_subexpr_in_ice, e);
+    }
+    return Success(value->getInt(), e);
+  }
+
   bool CheckReferencedDecl(const Expr *E, const Decl *D);
   bool VisitDeclRefExpr(const DeclRefExpr *E) {
     return CheckReferencedDecl(E, E->getDecl());
@@ -930,6 +1012,7 @@ public:
   bool VisitOffsetOfExpr(const OffsetOfExpr *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
   bool VisitConditionalOperator(const ConditionalOperator *E);
+  bool VisitBinaryConditionalOperator(const BinaryConditionalOperator *E);
 
   bool VisitCastExpr(CastExpr* E);
   bool VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
@@ -1463,6 +1546,18 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   }
 }
 
+bool IntExprEvaluator::
+VisitBinaryConditionalOperator(const BinaryConditionalOperator *e) {
+  OpaqueValueEvaluation opaque(Info, e->getOpaqueValue(), e->getCommon());
+  if (opaque.hasError()) return false;
+
+  bool cond;
+  if (!HandleConversionToBool(e->getCond(), cond, Info))
+    return false;
+
+  return Visit(cond ? e->getTrueExpr() : e->getFalseExpr());
+}
+
 bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
   bool Cond;
   if (!HandleConversionToBool(E->getCond(), Cond, Info))
@@ -1784,6 +1879,7 @@ public:
   bool VisitCastExpr(CastExpr *E);
   bool VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   bool VisitConditionalOperator(ConditionalOperator *E);
+  bool VisitBinaryConditionalOperator(BinaryConditionalOperator *E);
 
   bool VisitChooseExpr(const ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
@@ -1793,6 +1889,14 @@ public:
   bool VisitUnaryImag(const UnaryOperator *E);
 
   bool VisitDeclRefExpr(const DeclRefExpr *E);
+
+  bool VisitOpaqueValueExpr(const OpaqueValueExpr *e) {
+    const APValue *value = Info.getOpaqueValue(e);
+    if (!value)
+      return (e->getSourceExpr() ? Visit(e->getSourceExpr()) : false);
+    Result = value->getFloat();
+    return true;
+  }
 
   // FIXME: Missing: array subscript of vector, member of vector,
   //                 ImplicitValueInitExpr
@@ -2047,6 +2151,18 @@ bool FloatExprEvaluator::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) 
   return true;
 }
 
+bool FloatExprEvaluator::
+VisitBinaryConditionalOperator(BinaryConditionalOperator *e) {
+  OpaqueValueEvaluation opaque(Info, e->getOpaqueValue(), e->getCommon());
+  if (opaque.hasError()) return false;
+
+  bool cond;
+  if (!HandleConversionToBool(e->getCond(), cond, Info))
+    return false;
+
+  return Visit(cond ? e->getTrueExpr() : e->getFalseExpr());
+}
+
 bool FloatExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
   bool Cond;
   if (!HandleConversionToBool(E->getCond(), Cond, Info))
@@ -2086,10 +2202,18 @@ public:
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
   bool VisitConditionalOperator(const ConditionalOperator *E);
+  bool VisitBinaryConditionalOperator(const BinaryConditionalOperator *E);
   bool VisitChooseExpr(const ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
   bool VisitUnaryExtension(const UnaryOperator *E)
     { return Visit(E->getSubExpr()); }
+  bool VisitOpaqueValueExpr(const OpaqueValueExpr *e) {
+    const APValue *value = Info.getOpaqueValue(e);
+    if (!value)
+      return (e->getSourceExpr() ? Visit(e->getSourceExpr()) : false);
+    Result.setFrom(*value);
+    return true;
+  }
   // FIXME Missing: ImplicitValueInitExpr
 };
 } // end anonymous namespace
@@ -2410,6 +2534,18 @@ bool ComplexExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   }
 }
 
+bool ComplexExprEvaluator::
+VisitBinaryConditionalOperator(const BinaryConditionalOperator *e) {
+  OpaqueValueEvaluation opaque(Info, e->getOpaqueValue(), e->getCommon());
+  if (opaque.hasError()) return false;
+
+  bool cond;
+  if (!HandleConversionToBool(e->getCond(), cond, Info))
+    return false;
+
+  return Visit(cond ? e->getTrueExpr() : e->getFalseExpr());
+}
+
 bool ComplexExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
   bool Cond;
   if (!HandleConversionToBool(E->getCond(), Cond, Info))
@@ -2422,20 +2558,15 @@ bool ComplexExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E
 // Top level Expr::Evaluate method.
 //===----------------------------------------------------------------------===//
 
-/// Evaluate - Return true if this is a constant which we can fold using
-/// any crazy technique (that has nothing to do with language standards) that
-/// we want to.  If this function returns true, it returns the folded constant
-/// in Result.
-bool Expr::Evaluate(EvalResult &Result, const ASTContext &Ctx) const {
-  const Expr *E = this;
-  EvalInfo Info(Ctx, Result);
+static bool Evaluate(EvalInfo &Info, const Expr *E) {
   if (E->getType()->isVectorType()) {
     if (!EvaluateVector(E, Info.EvalResult.Val, Info))
       return false;
   } else if (E->getType()->isIntegerType()) {
     if (!IntExprEvaluator(Info, Info.EvalResult.Val).Visit(const_cast<Expr*>(E)))
       return false;
-    if (Result.Val.isLValue() && !IsGlobalLValue(Result.Val.getLValueBase()))
+    if (Info.EvalResult.Val.isLValue() &&
+        !IsGlobalLValue(Info.EvalResult.Val.getLValueBase()))
       return false;
   } else if (E->getType()->hasPointerRepresentation()) {
     LValue LV;
@@ -2459,6 +2590,15 @@ bool Expr::Evaluate(EvalResult &Result, const ASTContext &Ctx) const {
     return false;
 
   return true;
+}
+
+/// Evaluate - Return true if this is a constant which we can fold using
+/// any crazy technique (that has nothing to do with language standards) that
+/// we want to.  If this function returns true, it returns the folded constant
+/// in Result.
+bool Expr::Evaluate(EvalResult &Result, const ASTContext &Ctx) const {
+  EvalInfo Info(Ctx, Result);
+  return ::Evaluate(Info, this);
 }
 
 bool Expr::EvaluateAsBooleanCondition(bool &Result,
@@ -2844,6 +2984,17 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     if (isa<FloatingLiteral>(SubExpr->IgnoreParens()))
       return NoDiag();
     return ICEDiag(2, E->getLocStart());
+  }
+  case Expr::BinaryConditionalOperatorClass: {
+    const BinaryConditionalOperator *Exp = cast<BinaryConditionalOperator>(E);
+    ICEDiag CommonResult = CheckICE(Exp->getCommon(), Ctx);
+    if (CommonResult.Val == 2) return CommonResult;
+    ICEDiag FalseResult = CheckICE(Exp->getFalseExpr(), Ctx);
+    if (FalseResult.Val == 2) return FalseResult;
+    if (CommonResult.Val == 1) return CommonResult;
+    if (FalseResult.Val == 1 &&
+        Exp->getCommon()->EvaluateAsInt(Ctx) == 0) return NoDiag();
+    return FalseResult;
   }
   case Expr::ConditionalOperatorClass: {
     const ConditionalOperator *Exp = cast<ConditionalOperator>(E);

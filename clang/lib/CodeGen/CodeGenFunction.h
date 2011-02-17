@@ -840,28 +840,105 @@ public:
     }
   };
 
+  /// An object which temporarily prevents a value from being
+  /// destroyed by aggressive peephole optimizations that assume that
+  /// all uses of a value have been realized in the IR.
+  class PeepholeProtection {
+    llvm::Instruction *Inst;
+    friend class CodeGenFunction;
+
+  public:
+    PeepholeProtection() : Inst(0) {}
+  };  
+
   /// An RAII object to set (and then clear) a mapping for an OpaqueValueExpr.
   class OpaqueValueMapping {
     CodeGenFunction &CGF;
     const OpaqueValueExpr *OpaqueValue;
+    bool BoundLValue;
+    CodeGenFunction::PeepholeProtection Protection;
 
   public:
+    static bool shouldBindAsLValue(const Expr *expr) {
+      return expr->isGLValue() || expr->getType()->isRecordType();
+    }
+
+    /// Build the opaque value mapping for the given conditional
+    /// operator if it's the GNU ?: extension.  This is a common
+    /// enough pattern that the convenience operator is really
+    /// helpful.
+    ///
+    OpaqueValueMapping(CodeGenFunction &CGF,
+                       const AbstractConditionalOperator *op) : CGF(CGF) {
+      if (isa<ConditionalOperator>(op)) {
+        OpaqueValue = 0;
+        BoundLValue = false;
+        return;
+      }
+
+      const BinaryConditionalOperator *e = cast<BinaryConditionalOperator>(op);
+      init(e->getOpaqueValue(), e->getCommon());
+    }
+
     OpaqueValueMapping(CodeGenFunction &CGF,
                        const OpaqueValueExpr *opaqueValue,
-                       llvm::Value *value)
-      : CGF(CGF), OpaqueValue(opaqueValue) {
+                       LValue lvalue)
+      : CGF(CGF), OpaqueValue(opaqueValue), BoundLValue(true) {
       assert(opaqueValue && "no opaque value expression!");
-      CGF.OpaqueValues.insert(std::make_pair(opaqueValue, value));
+      assert(shouldBindAsLValue(opaqueValue));
+      initLValue(lvalue);
+    }
+
+    OpaqueValueMapping(CodeGenFunction &CGF,
+                       const OpaqueValueExpr *opaqueValue,
+                       RValue rvalue)
+      : CGF(CGF), OpaqueValue(opaqueValue), BoundLValue(false) {
+      assert(opaqueValue && "no opaque value expression!");
+      assert(!shouldBindAsLValue(opaqueValue));
+      initRValue(rvalue);
     }
 
     void pop() {
       assert(OpaqueValue && "mapping already popped!");
-      CGF.OpaqueValues.erase(OpaqueValue);
+      popImpl();
       OpaqueValue = 0;
     }
 
     ~OpaqueValueMapping() {
-      if (OpaqueValue) CGF.OpaqueValues.erase(OpaqueValue);
+      if (OpaqueValue) popImpl();
+    }
+
+  private:
+    void popImpl() {
+      if (BoundLValue)
+        CGF.OpaqueLValues.erase(OpaqueValue);
+      else {
+        CGF.OpaqueRValues.erase(OpaqueValue);
+        CGF.unprotectFromPeepholes(Protection);
+      }
+    }
+
+    void init(const OpaqueValueExpr *ov, const Expr *e) {
+      OpaqueValue = ov;
+      BoundLValue = shouldBindAsLValue(ov);
+      assert(BoundLValue == shouldBindAsLValue(e)
+             && "inconsistent expression value kinds!");
+      if (BoundLValue)
+        initLValue(CGF.EmitLValue(e));
+      else
+        initRValue(CGF.EmitAnyExpr(e));
+    }
+
+    void initLValue(const LValue &lv) {
+      CGF.OpaqueLValues.insert(std::make_pair(OpaqueValue, lv));
+    }
+
+    void initRValue(const RValue &rv) {
+      // Work around an extremely aggressive peephole optimization in
+      // EmitScalarConversion which assumes that all other uses of a
+      // value are extant.
+      Protection = CGF.protectFromPeepholes(rv);
+      CGF.OpaqueRValues.insert(std::make_pair(OpaqueValue, rv));
     }
   };
   
@@ -909,9 +986,10 @@ private:
   /// statement range in current switch instruction.
   llvm::BasicBlock *CaseRangeBlock;
 
-  /// OpaqueValues - Keeps track of the current set of opaque value
+  /// OpaqueLValues - Keeps track of the current set of opaque value
   /// expressions.
-  llvm::DenseMap<const OpaqueValueExpr *, llvm::Value*> OpaqueValues;
+  llvm::DenseMap<const OpaqueValueExpr *, LValue> OpaqueLValues;
+  llvm::DenseMap<const OpaqueValueExpr *, RValue> OpaqueRValues;
 
   // VLASizeMap - This keeps track of the associated size for each VLA type.
   // We track this by the size expression rather than the type itself because
@@ -1308,13 +1386,25 @@ public:
     return Res;
   }
 
-  /// getOpaqueValueMapping - Given an opaque value expression (which
-  /// must be mapped), return its mapping.  Whether this is an address
-  /// or a value depends on the expression's type and value kind.
-  llvm::Value *getOpaqueValueMapping(const OpaqueValueExpr *e) {
-    llvm::DenseMap<const OpaqueValueExpr*,llvm::Value*>::iterator
-      it = OpaqueValues.find(e);
-    assert(it != OpaqueValues.end() && "no mapping for opaque value!");
+  /// getOpaqueLValueMapping - Given an opaque value expression (which
+  /// must be mapped to an l-value), return its mapping.
+  const LValue &getOpaqueLValueMapping(const OpaqueValueExpr *e) {
+    assert(OpaqueValueMapping::shouldBindAsLValue(e));
+
+    llvm::DenseMap<const OpaqueValueExpr*,LValue>::iterator
+      it = OpaqueLValues.find(e);
+    assert(it != OpaqueLValues.end() && "no mapping for opaque value!");
+    return it->second;
+  }
+
+  /// getOpaqueRValueMapping - Given an opaque value expression (which
+  /// must be mapped to an r-value), return its mapping.
+  const RValue &getOpaqueRValueMapping(const OpaqueValueExpr *e) {
+    assert(!OpaqueValueMapping::shouldBindAsLValue(e));
+
+    llvm::DenseMap<const OpaqueValueExpr*,RValue>::iterator
+      it = OpaqueRValues.find(e);
+    assert(it != OpaqueRValues.end() && "no mapping for opaque value!");
     return it->second;
   }
 
@@ -1476,6 +1566,18 @@ public:
 
   /// EmitParmDecl - Emit a ParmVarDecl or an ImplicitParamDecl.
   void EmitParmDecl(const VarDecl &D, llvm::Value *Arg);
+
+  /// protectFromPeepholes - Protect a value that we're intending to
+  /// store to the side, but which will probably be used later, from
+  /// aggressive peepholing optimizations that might delete it.
+  ///
+  /// Pass the result to unprotectFromPeepholes to declare that
+  /// protection is no longer required.
+  ///
+  /// There's no particular reason why this shouldn't apply to
+  /// l-values, it's just that no existing peepholes work on pointers.
+  PeepholeProtection protectFromPeepholes(RValue rvalue);
+  void unprotectFromPeepholes(PeepholeProtection protection);
 
   //===--------------------------------------------------------------------===//
   //                             Statement Emission
@@ -1646,7 +1748,7 @@ public:
   LValue EmitMemberExpr(const MemberExpr *E);
   LValue EmitObjCIsaExpr(const ObjCIsaExpr *E);
   LValue EmitCompoundLiteralLValue(const CompoundLiteralExpr *E);
-  LValue EmitConditionalOperatorLValue(const ConditionalOperator *E);
+  LValue EmitConditionalOperatorLValue(const AbstractConditionalOperator *E);
   LValue EmitCastLValue(const CastExpr *E);
   LValue EmitNullInitializationLValue(const CXXScalarValueInitExpr *E);
   LValue EmitOpaqueValueLValue(const OpaqueValueExpr *e);
@@ -1687,6 +1789,7 @@ public:
   LValue EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E);
   LValue EmitObjCSelectorLValue(const ObjCSelectorExpr *E);
   void   EmitDeclRefExprDbgValue(const DeclRefExpr *E, llvm::Constant *Init);
+
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//

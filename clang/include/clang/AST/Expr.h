@@ -43,6 +43,7 @@ namespace clang {
   class ObjCPropertyRefExpr;
   class TemplateArgumentLoc;
   class TemplateArgumentListInfo;
+  class OpaqueValueExpr;
 
 /// \brief A simple array of base specifiers.
 typedef llvm::SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
@@ -319,6 +320,11 @@ public:
     return static_cast<ExprObjectKind>(ExprBits.ObjectKind);
   }
 
+  bool isOrdinaryOrBitFieldObject() const {
+    ExprObjectKind OK = getObjectKind();
+    return (OK == OK_Ordinary || OK == OK_BitField);
+  }
+
   /// setValueKind - Set the value kind produced by this expression.
   void setValueKind(ExprValueKind Cat) { ExprBits.ValueKind = Cat; }
 
@@ -537,6 +543,63 @@ public:
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
+
+/// OpaqueValueExpr - An expression referring to an opaque object of a
+/// fixed type and value class.  These don't correspond to concrete
+/// syntax; instead they're used to express operations (usually copy
+/// operations) on values whose source is generally obvious from
+/// context.
+class OpaqueValueExpr : public Expr {
+  friend class ASTStmtReader;
+  Expr *SourceExpr;
+  SourceLocation Loc;
+  
+public:
+  OpaqueValueExpr(SourceLocation Loc, QualType T, ExprValueKind VK, 
+                  ExprObjectKind OK = OK_Ordinary)
+    : Expr(OpaqueValueExprClass, T, VK, OK,
+           T->isDependentType(), T->isDependentType(), false), 
+      SourceExpr(0), Loc(Loc) {
+  }
+
+  /// Given an expression which invokes a copy constructor --- i.e.  a
+  /// CXXConstructExpr, possibly wrapped in an ExprWithCleanups ---
+  /// find the OpaqueValueExpr that's the source of the construction.
+  static const OpaqueValueExpr *findInCopyConstruct(const Expr *expr);
+
+  explicit OpaqueValueExpr(EmptyShell Empty)
+    : Expr(OpaqueValueExprClass, Empty) { }
+
+  /// \brief Retrieve the location of this expression.
+  SourceLocation getLocation() const { return Loc; }
+  
+  SourceRange getSourceRange() const {
+    if (SourceExpr) return SourceExpr->getSourceRange();
+    return Loc;
+  }
+  SourceLocation getExprLoc() const {
+    if (SourceExpr) return SourceExpr->getExprLoc();
+    return Loc;
+  }
+
+  child_range children() { return child_range(); }
+
+  /// The source expression of an opaque value expression is the
+  /// expression which originally generated the value.  This is
+  /// provided as a convenience for analyses that don't wish to
+  /// precisely model the execution behavior of the program.
+  ///
+  /// The source expression is typically set when building the
+  /// expression which binds the opaque value expression in the first
+  /// place.
+  Expr *getSourceExpr() const { return SourceExpr; }
+  void setSourceExpr(Expr *e) { SourceExpr = e; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OpaqueValueExprClass;
+  }
+  static bool classof(const OpaqueValueExpr *) { return true; }
+};
 
 /// \brief Represents the qualifier that may precede a C++ name, e.g., the
 /// "std::" in "std::sort".
@@ -2552,77 +2615,95 @@ public:
   }
 };
 
-/// ConditionalOperator - The ?: operator.  Note that LHS may be null when the
-/// GNU "missing LHS" extension is in use.
-///
-class ConditionalOperator : public Expr {
+/// AbstractConditionalOperator - An abstract base class for
+/// ConditionalOperator and BinaryConditionalOperator.
+class AbstractConditionalOperator : public Expr {
+  SourceLocation QuestionLoc, ColonLoc;
+  friend class ASTStmtReader;
+
+protected:
+  AbstractConditionalOperator(StmtClass SC, QualType T,
+                              ExprValueKind VK, ExprObjectKind OK,
+                              bool TD, bool VD,
+                              bool ContainsUnexpandedParameterPack,
+                              SourceLocation qloc,
+                              SourceLocation cloc)
+    : Expr(SC, T, VK, OK, TD, VD, ContainsUnexpandedParameterPack),
+      QuestionLoc(qloc), ColonLoc(cloc) {}
+
+  AbstractConditionalOperator(StmtClass SC, EmptyShell Empty)
+    : Expr(SC, Empty) { }
+
+public:
+  // getCond - Return the expression representing the condition for
+  //   the ?: operator.
+  Expr *getCond() const;
+
+  // getTrueExpr - Return the subexpression representing the value of
+  //   the expression if the condition evaluates to true.
+  Expr *getTrueExpr() const;
+
+  // getFalseExpr - Return the subexpression representing the value of
+  //   the expression if the condition evaluates to false.  This is
+  //   the same as getRHS.
+  Expr *getFalseExpr() const;
+
+  SourceLocation getQuestionLoc() const { return QuestionLoc; }
+  SourceLocation getColonLoc() const { return ColonLoc; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ConditionalOperatorClass ||
+           T->getStmtClass() == BinaryConditionalOperatorClass;
+  }
+  static bool classof(const AbstractConditionalOperator *) { return true; }
+};
+
+/// ConditionalOperator - The ?: ternary operator.  The GNU "missing
+/// middle" extension is a BinaryConditionalOperator.
+class ConditionalOperator : public AbstractConditionalOperator {
   enum { COND, LHS, RHS, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
-  Stmt* Save;
-  SourceLocation QuestionLoc, ColonLoc;
+
+  friend class ASTStmtReader;
 public:
   ConditionalOperator(Expr *cond, SourceLocation QLoc, Expr *lhs,
-                      SourceLocation CLoc, Expr *rhs, Expr *save,
+                      SourceLocation CLoc, Expr *rhs,
                       QualType t, ExprValueKind VK, ExprObjectKind OK)
-    : Expr(ConditionalOperatorClass, t, VK, OK,
+    : AbstractConditionalOperator(ConditionalOperatorClass, t, VK, OK,
            // FIXME: the type of the conditional operator doesn't
            // depend on the type of the conditional, but the standard
            // seems to imply that it could. File a bug!
-           ((lhs && lhs->isTypeDependent()) || (rhs && rhs->isTypeDependent())),
-           (cond->isValueDependent() ||
-            (lhs && lhs->isValueDependent()) ||
-            (rhs && rhs->isValueDependent())),
+           (lhs->isTypeDependent() || rhs->isTypeDependent()),
+           (cond->isValueDependent() || lhs->isValueDependent() ||
+            rhs->isValueDependent()),
            (cond->containsUnexpandedParameterPack() ||
-            (lhs && lhs->containsUnexpandedParameterPack()) ||
-            (rhs && rhs->containsUnexpandedParameterPack()))),
-      QuestionLoc(QLoc),
-      ColonLoc(CLoc) {
+            lhs->containsUnexpandedParameterPack() ||
+            rhs->containsUnexpandedParameterPack()),
+                                  QLoc, CLoc) {
     SubExprs[COND] = cond;
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
-    Save = save;
   }
 
   /// \brief Build an empty conditional operator.
   explicit ConditionalOperator(EmptyShell Empty)
-    : Expr(ConditionalOperatorClass, Empty) { }
+    : AbstractConditionalOperator(ConditionalOperatorClass, Empty) { }
 
   // getCond - Return the expression representing the condition for
-  //  the ?: operator.
+  //   the ?: operator.
   Expr *getCond() const { return cast<Expr>(SubExprs[COND]); }
-  void setCond(Expr *E) { SubExprs[COND] = E; }
 
-  // getTrueExpr - Return the subexpression representing the value of the ?:
-  //  expression if the condition evaluates to true.  
-  Expr *getTrueExpr() const {
-    return cast<Expr>(SubExprs[LHS]);
-  }
+  // getTrueExpr - Return the subexpression representing the value of
+  //   the expression if the condition evaluates to true.
+  Expr *getTrueExpr() const { return cast<Expr>(SubExprs[LHS]); }
 
-  // getFalseExpr - Return the subexpression representing the value of the ?:
-  // expression if the condition evaluates to false. This is the same as getRHS.
+  // getFalseExpr - Return the subexpression representing the value of
+  //   the expression if the condition evaluates to false.  This is
+  //   the same as getRHS.
   Expr *getFalseExpr() const { return cast<Expr>(SubExprs[RHS]); }
   
-  // getSaveExpr - In most cases this value will be null. Except a GCC extension 
-  // allows the left subexpression to be omitted, and instead of that condition 
-  // be returned. e.g: x ?: y is shorthand for x ? x : y, except that the 
-  // expression "x" is only evaluated once. Under this senario, this function
-  // returns the original, non-converted condition expression for the ?:operator
-  Expr *getSaveExpr() const { return Save? cast<Expr>(Save) : (Expr*)0; }
-
-  Expr *getLHS() const { return Save ? 0 : cast<Expr>(SubExprs[LHS]); }
-  void setLHS(Expr *E) { SubExprs[LHS] = E; }
-
+  Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
   Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
-  void setRHS(Expr *E) { SubExprs[RHS] = E; }
-
-  Expr *getSAVE() const { return Save? cast<Expr>(Save) : (Expr*)0; }
-  void setSAVE(Expr *E) { Save = E; }
-  
-  SourceLocation getQuestionLoc() const { return QuestionLoc; }
-  void setQuestionLoc(SourceLocation L) { QuestionLoc = L; }
-
-  SourceLocation getColonLoc() const { return ColonLoc; }
-  void setColonLoc(SourceLocation L) { ColonLoc = L; }
 
   SourceRange getSourceRange() const {
     return SourceRange(getCond()->getLocStart(), getRHS()->getLocEnd());
@@ -2637,6 +2718,105 @@ public:
     return child_range(&SubExprs[0], &SubExprs[0]+END_EXPR);
   }
 };
+
+/// BinaryConditionalOperator - The GNU extension to the conditional
+/// operator which allows the middle operand to be omitted.
+///
+/// This is a different expression kind on the assumption that almost
+/// every client ends up needing to know that these are different.
+class BinaryConditionalOperator : public AbstractConditionalOperator {
+  enum { COMMON, COND, LHS, RHS, NUM_SUBEXPRS };
+
+  /// - the common condition/left-hand-side expression, which will be
+  ///   evaluated as the opaque value
+  /// - the condition, expressed in terms of the opaque value
+  /// - the left-hand-side, expressed in terms of the opaque value
+  /// - the right-hand-side
+  Stmt *SubExprs[NUM_SUBEXPRS];
+  OpaqueValueExpr *OpaqueValue;
+
+  friend class ASTStmtReader;
+public:
+  BinaryConditionalOperator(Expr *common, OpaqueValueExpr *opaqueValue,
+                            Expr *cond, Expr *lhs, Expr *rhs,
+                            SourceLocation qloc, SourceLocation cloc,
+                            QualType t, ExprValueKind VK, ExprObjectKind OK)
+    : AbstractConditionalOperator(BinaryConditionalOperatorClass, t, VK, OK,
+           (common->isTypeDependent() || rhs->isTypeDependent()),
+           (common->isValueDependent() || rhs->isValueDependent()),
+           (common->containsUnexpandedParameterPack() ||
+            rhs->containsUnexpandedParameterPack()),
+                                  qloc, cloc),
+      OpaqueValue(opaqueValue) {
+    SubExprs[COMMON] = common;
+    SubExprs[COND] = cond;
+    SubExprs[LHS] = lhs;
+    SubExprs[RHS] = rhs;
+
+    OpaqueValue->setSourceExpr(common);
+  }
+
+  /// \brief Build an empty conditional operator.
+  explicit BinaryConditionalOperator(EmptyShell Empty)
+    : AbstractConditionalOperator(BinaryConditionalOperatorClass, Empty) { }
+
+  /// \brief getCommon - Return the common expression, written to the
+  ///   left of the condition.  The opaque value will be bound to the
+  ///   result of this expression.
+  Expr *getCommon() const { return cast<Expr>(SubExprs[COMMON]); }
+
+  /// \brief getOpaqueValue - Return the opaque value placeholder.
+  OpaqueValueExpr *getOpaqueValue() const { return OpaqueValue; }
+
+  /// \brief getCond - Return the condition expression; this is defined
+  ///   in terms of the opaque value.
+  Expr *getCond() const { return cast<Expr>(SubExprs[COND]); }
+
+  /// \brief getTrueExpr - Return the subexpression which will be
+  ///   evaluated if the condition evaluates to true;  this is defined
+  ///   in terms of the opaque value.
+  Expr *getTrueExpr() const {
+    return cast<Expr>(SubExprs[LHS]);
+  }
+
+  /// \brief getFalseExpr - Return the subexpression which will be
+  ///   evaluated if the condnition evaluates to false; this is
+  ///   defined in terms of the opaque value.
+  Expr *getFalseExpr() const {
+    return cast<Expr>(SubExprs[RHS]);
+  }
+  
+  SourceRange getSourceRange() const {
+    return SourceRange(getCommon()->getLocStart(), getFalseExpr()->getLocEnd());
+  }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == BinaryConditionalOperatorClass;
+  }
+  static bool classof(const BinaryConditionalOperator *) { return true; }
+
+  // Iterators
+  child_range children() {
+    return child_range(SubExprs, SubExprs + NUM_SUBEXPRS);
+  }
+};
+
+inline Expr *AbstractConditionalOperator::getCond() const {
+  if (const ConditionalOperator *co = dyn_cast<ConditionalOperator>(this))
+    return co->getCond();
+  return cast<BinaryConditionalOperator>(this)->getCond();
+}
+
+inline Expr *AbstractConditionalOperator::getTrueExpr() const {
+  if (const ConditionalOperator *co = dyn_cast<ConditionalOperator>(this))
+    return co->getTrueExpr();
+  return cast<BinaryConditionalOperator>(this)->getTrueExpr();
+}
+
+inline Expr *AbstractConditionalOperator::getFalseExpr() const {
+  if (const ConditionalOperator *co = dyn_cast<ConditionalOperator>(this))
+    return co->getFalseExpr();
+  return cast<BinaryConditionalOperator>(this)->getFalseExpr();
+}
 
 /// AddrLabelExpr - The GNU address of label extension, representing &&label.
 class AddrLabelExpr : public Expr {
@@ -3617,43 +3797,6 @@ public:
 
   // Iterators
   child_range children() { return child_range(); }
-};
-
-/// OpaqueValueExpr - An expression referring to an opaque object of a
-/// fixed type and value class.  These don't correspond to concrete
-/// syntax; instead they're used to express operations (usually copy
-/// operations) on values whose source is generally obvious from
-/// context.
-class OpaqueValueExpr : public Expr {
-  friend class ASTStmtReader;
-  SourceLocation Loc;
-  
-public:
-  OpaqueValueExpr(SourceLocation Loc, QualType T, ExprValueKind VK, 
-                  ExprObjectKind OK = OK_Ordinary)
-    : Expr(OpaqueValueExprClass, T, VK, OK,
-           T->isDependentType(), T->isDependentType(), false), 
-      Loc(Loc) {
-  }
-
-  /// Given an expression which invokes a copy constructor --- i.e.  a
-  /// CXXConstructExpr, possibly wrapped in an ExprWithCleanups ---
-  /// find the OpaqueValueExpr that's the source of the construction.
-  static const OpaqueValueExpr *findInCopyConstruct(const Expr *expr);
-
-  explicit OpaqueValueExpr(EmptyShell Empty)
-    : Expr(OpaqueValueExprClass, Empty) { }
-
-  /// \brief Retrieve the location of this expression.
-  SourceLocation getLocation() const { return Loc; }
-  
-  SourceRange getSourceRange() const { return Loc; }
-  child_range children() { return child_range(); }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == OpaqueValueExprClass;
-  }
-  static bool classof(const OpaqueValueExpr *) { return true; }
 };
 
 }  // end namespace clang

@@ -4,10 +4,9 @@
 
 extern "C" int printf(...);
 
-int main(int argc, char **argv) {
-// CHECK: phi i8* [ inttoptr (i64 3735928559 to i8*),
+void test0() {
+// CHECK: call i32 (...)* @printf({{.*}}, i8* inttoptr (i64 3735928559 to i8*))
     printf("%p\n", (void *)0xdeadbeef ? : (void *)0xaaaaaa);
-    return 0;
 }
 
 // rdar://8446940
