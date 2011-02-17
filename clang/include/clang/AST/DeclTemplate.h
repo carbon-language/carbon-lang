@@ -561,7 +561,7 @@ protected:
   /// for the common pointer.
   CommonBase *getCommonPtr();
 
-  virtual CommonBase *newCommon(ASTContext &C) = 0;
+  CommonBase *newCommon(ASTContext &C);
 
   // Construct a template decl with name, parameters, and templated element.
   RedeclarableTemplateDecl(Kind DK, DeclContext *DC, SourceLocation L,
@@ -773,7 +773,8 @@ protected:
   }
 
   friend class FunctionDecl;
-
+  friend class RedeclarableTemplateDecl;
+                               
   /// \brief Retrieve the set of function template specializations of this
   /// function template.
   llvm::FoldingSet<FunctionTemplateSpecializationInfo> &getSpecializations() {
@@ -1730,6 +1731,8 @@ protected:
   Common *getCommonPtr() {
     return static_cast<Common *>(RedeclarableTemplateDecl::getCommonPtr());
   }
+
+  friend class RedeclarableTemplateDecl;
 
 public:
   /// Get the underlying class declarations of the template.

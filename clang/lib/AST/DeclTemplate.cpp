@@ -112,6 +112,14 @@ RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() {
 }
 
 
+RedeclarableTemplateDecl::CommonBase *
+RedeclarableTemplateDecl::newCommon(ASTContext &C) {
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(this))
+    return FunTmpl->newCommon(C);
+  
+  return cast<ClassTemplateDecl>(this)->newCommon(C);
+}
+
 RedeclarableTemplateDecl *RedeclarableTemplateDecl::getCanonicalDeclImpl() {
   RedeclarableTemplateDecl *Tmpl = this;
   while (Tmpl->getPreviousDeclaration())
