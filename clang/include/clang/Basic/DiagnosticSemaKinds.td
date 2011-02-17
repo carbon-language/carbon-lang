@@ -2364,6 +2364,11 @@ def err_typecheck_member_reference_type : Error<
 def err_typecheck_member_reference_unknown : Error<
   "cannot refer to member %0 in %1 with '%select{.|->}2'">;
 def err_member_reference_needs_call : Error<
+  "base of member reference is an overloaded function; perhaps you meant "
+  "to call %select{it|the 0-argument overload}0?">;
+def note_member_ref_possible_intended_overload : Note<
+  "possibly valid overload here">;
+def err_member_reference_needs_call_zero_arg : Error<
   "base of member reference has function type %0; perhaps you meant to call "
   "this function with '()'?">;
 def warn_subscript_is_char : Warning<"array subscript is of type 'char'">,

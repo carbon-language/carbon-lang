@@ -115,3 +115,18 @@ namespace rdar8231724 {
     y->N::X1<int>; // expected-error{{'rdar8231724::N::X1' is not a member of class 'rdar8231724::Y'}}
   }
 }
+
+namespace PR9025 {
+  struct S { int x; };
+  S fun();
+  int fun(int i);
+  int g() {
+    return fun.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call the 0-argument overload?}}
+  }
+
+  S fun2(); // expected-note{{possibly valid overload here}}
+  S fun2(int i); // expected-note{{possibly valid overload here}}
+  int g2() {
+    return fun2.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it?}}
+  }
+}
