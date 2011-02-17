@@ -2799,9 +2799,15 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     }
 
     // If the target is integral, always warn.
-    if ((TargetBT && TargetBT->isInteger()))
-      // TODO: don't warn for integer values?
-      DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_float_integer);
+    if ((TargetBT && TargetBT->isInteger())) {
+      Expr *InnerE = E->IgnoreParenImpCasts();
+      if (FloatingLiteral *LiteralExpr = dyn_cast<FloatingLiteral>(InnerE)) {
+        DiagnoseImpCast(S, LiteralExpr, T, CC,
+                        diag::warn_impcast_literal_float_to_integer);
+      } else {
+        DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_float_integer);
+      }
+    }
 
     return;
   }

@@ -1127,6 +1127,10 @@ def warn_impcast_integer_precision_constant : Warning<
 def warn_impcast_bitfield_precision_constant : Warning<
   "implicit truncation from %2 to bitfield changes value from %0 to %1">,
   InGroup<DiagGroup<"constant-conversion">>;
+def warn_impcast_literal_float_to_integer : Warning<
+  "implicit conversion turns literal floating-point number into integer: "
+  "%0 to %1">,
+  InGroup<DiagGroup<"literal-conversion">>, DefaultIgnore;
 
 def warn_cast_align : Warning<
   "cast from %0 to %1 increases required alignment from %2 to %3">,

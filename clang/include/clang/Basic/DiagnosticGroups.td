@@ -181,10 +181,12 @@ def Parentheses : DiagGroup<"parentheses",
 // legacy reasons:
 //   - some people want just 64-to-32 warnings
 //   - conversion warnings with constant sources are on by default
+//   - conversion warnings for literals are on by default
 //   - bool-to-pointer conversion warnings are on by default
 def Conversion : DiagGroup<"conversion",
                            [DiagGroup<"shorten-64-to-32">,
                             DiagGroup<"constant-conversion">,
+                            DiagGroup<"literal-conversion">,
                             BoolConversions]>,
                  DiagCategory<"Value Conversion Issue">;
 

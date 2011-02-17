@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wconversion -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wconversion -Wliteral-conversion -fsyntax-only -verify %s
 
 // C DR #316, PR 3626.
 void f0(a, b, c, d) int a,b,c,d; {}
@@ -36,6 +36,6 @@ void proto(x)
 }
 
 void use_proto() {
-  proto(42.0); // expected-warning{{implicit conversion turns floating-point number into integer: 'double' to 'int'}}
-  (&proto)(42.0); // expected-warning{{implicit conversion turns floating-point number into integer: 'double' to 'int'}}
+  proto(42.0); // expected-warning{{implicit conversion turns literal floating-point number into integer}}
+  (&proto)(42.0); // expected-warning{{implicit conversion turns literal floating-point number into integer}}
 }
