@@ -240,8 +240,8 @@ public:
 /// The right-hand list is appended to the left-hand list, if any
 /// A pointer to the joined list is returned.
 /// Note: the lists are not left unmodified.
-inline AttributeList* addAttributeLists (AttributeList *Left,
-                                         AttributeList *Right) {
+inline AttributeList *addAttributeLists(AttributeList *Left,
+                                        AttributeList *Right) {
   if (!Left)
     return Right;
 
