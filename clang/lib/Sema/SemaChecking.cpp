@@ -3109,11 +3109,14 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
     return;
 
   if (!index.isNegative()) {
-    const llvm::APInt &size = ArrayTy->getSize();
+    llvm::APInt size = ArrayTy->getSize();
     if (!size.isStrictlyPositive())
       return;
     if (size.getBitWidth() > index.getBitWidth())
       index = index.sext(size.getBitWidth());
+    else if (size.getBitWidth() < index.getBitWidth())
+      size = size.sext(index.getBitWidth());
+
     if (index.slt(size))
       return;
 

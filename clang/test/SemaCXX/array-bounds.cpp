@@ -85,3 +85,9 @@ int test_no_warn_macro_unreachable() {
          ARR_IN_MACRO(1, arr, SIZE); // expected-warning{{array index of '10' indexes past the end of an array (that contains 10 elements)}}
 }
 
+// This exhibited an assertion failure for a 32-bit build of Clang.
+int test_pr9240() {
+  short array[100]; // expected-note {{array 'array' declared here}}
+  return array[(unsigned long long) 100]; // expected-warning {{array index of '100' indexes past the end of an array (that contains 100 elements)}}
+}
+
