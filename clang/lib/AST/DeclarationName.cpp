@@ -94,10 +94,8 @@ int DeclarationName::compare(DeclarationName LHS, DeclarationName RHS) {
     Selector RHSSelector = RHS.getObjCSelector();
     unsigned LN = LHSSelector.getNumArgs(), RN = RHSSelector.getNumArgs();
     for (unsigned I = 0, N = std::min(LN, RN); I != N; ++I) {
-      IdentifierInfo *LHSId = LHSSelector.getIdentifierInfoForSlot(I);
-      IdentifierInfo *RHSId = RHSSelector.getIdentifierInfoForSlot(I);
-        
-      switch (LHSId->getName().compare(RHSId->getName())) {
+      switch (LHSSelector.getNameForSlot(I).compare(
+                                               RHSSelector.getNameForSlot(I))) {
       case -1: return true;
       case 1: return false;
       default: break;

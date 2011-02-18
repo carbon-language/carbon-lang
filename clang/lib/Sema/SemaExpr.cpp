@@ -9487,13 +9487,11 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
       Selector Sel = ME->getSelector();
 
       // self = [<foo> init...]
-      if (isSelfExpr(Op->getLHS())
-          && Sel.getIdentifierInfoForSlot(0)->getName().startswith("init"))
+      if (isSelfExpr(Op->getLHS()) && Sel.getNameForSlot(0).startswith("init"))
         diagnostic = diag::warn_condition_is_idiomatic_assignment;
 
       // <foo> = [<bar> nextObject]
-      else if (Sel.isUnarySelector() &&
-               Sel.getIdentifierInfoForSlot(0)->getName() == "nextObject")
+      else if (Sel.isUnarySelector() && Sel.getNameForSlot(0) == "nextObject")
         diagnostic = diag::warn_condition_is_idiomatic_assignment;
     }
 

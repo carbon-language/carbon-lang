@@ -2391,11 +2391,11 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
     Selector Sel = Method->getSelector();
     if (Sel.isUnarySelector()) {
       Result.AddTypedTextChunk(Result.getAllocator().CopyString(
-                                  Sel.getIdentifierInfoForSlot(0)->getName()));
+                                  Sel.getNameForSlot(0)));
       return Result.TakeString();
     }
 
-    std::string SelName = Sel.getIdentifierInfoForSlot(0)->getName().str();
+    std::string SelName = Sel.getNameForSlot(0).str();
     SelName += ':';
     if (StartParameter == 0)
       Result.AddTypedTextChunk(Result.getAllocator().CopyString(SelName));
@@ -4531,10 +4531,10 @@ static ObjCMethodDecl *AddSuperSendCompletion(Sema &S, bool NeedSuperKeyword,
   if (Sel.isUnarySelector()) {
     if (NeedSuperKeyword)
       Builder.AddTextChunk(Builder.getAllocator().CopyString(
-                                  Sel.getIdentifierInfoForSlot(0)->getName()));
+                                  Sel.getNameForSlot(0)));
     else
       Builder.AddTypedTextChunk(Builder.getAllocator().CopyString(
-                                   Sel.getIdentifierInfoForSlot(0)->getName()));
+                                   Sel.getNameForSlot(0)));
   } else {
     ObjCMethodDecl::param_iterator CurP = CurMethod->param_begin();
     for (unsigned I = 0, N = Sel.getNumArgs(); I != N; ++I, ++CurP) {
@@ -4544,17 +4544,17 @@ static ObjCMethodDecl *AddSuperSendCompletion(Sema &S, bool NeedSuperKeyword,
       if (I < NumSelIdents)
         Builder.AddInformativeChunk(
                    Builder.getAllocator().CopyString(
-                      Sel.getIdentifierInfoForSlot(I)->getName().str() + ":"));
+                                                 Sel.getNameForSlot(I) + ":"));
       else if (NeedSuperKeyword || I > NumSelIdents) {
         Builder.AddTextChunk(
                  Builder.getAllocator().CopyString(
-                      Sel.getIdentifierInfoForSlot(I)->getName().str() + ":"));
+                                                  Sel.getNameForSlot(I) + ":"));
         Builder.AddPlaceholderChunk(Builder.getAllocator().CopyString(
                                          (*CurP)->getIdentifier()->getName()));
       } else {
         Builder.AddTypedTextChunk(
                   Builder.getAllocator().CopyString(
-                      Sel.getIdentifierInfoForSlot(I)->getName().str() + ":"));
+                                                  Sel.getNameForSlot(I) + ":"));
         Builder.AddPlaceholderChunk(Builder.getAllocator().CopyString(
                                          (*CurP)->getIdentifier()->getName())); 
       }
@@ -5002,7 +5002,7 @@ void Sema::CodeCompleteObjCSelector(Scope *S, IdentifierInfo **SelIdents,
     CodeCompletionBuilder Builder(Results.getAllocator());
     if (Sel.isUnarySelector()) {
       Builder.AddTypedTextChunk(Builder.getAllocator().CopyString(
-                                   Sel.getIdentifierInfoForSlot(0)->getName()));
+                                                       Sel.getNameForSlot(0)));
       Results.AddResult(Builder.TakeString());
       continue;
     }
@@ -5017,7 +5017,7 @@ void Sema::CodeCompleteObjCSelector(Scope *S, IdentifierInfo **SelIdents,
         }
       }
       
-      Accumulator += Sel.getIdentifierInfoForSlot(I)->getName().str();
+      Accumulator += Sel.getNameForSlot(I).str();
       Accumulator += ':';
     }
     Builder.AddTypedTextChunk(Builder.getAllocator().CopyString( Accumulator));
@@ -6115,7 +6115,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
 
     // Add the first part of the selector to the pattern.
     Builder.AddTypedTextChunk(Builder.getAllocator().CopyString(
-                                   Sel.getIdentifierInfoForSlot(0)->getName()));
+                                                       Sel.getNameForSlot(0)));
 
     // Add parameters to the pattern.
     unsigned I = 0;
@@ -6128,9 +6128,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       else if (I < Sel.getNumArgs()) {
         Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
         Builder.AddTypedTextChunk(
-                          Builder.getAllocator().CopyString(
-                                   (Sel.getIdentifierInfoForSlot(I)->getName()
-                                    + ":").str()));
+                Builder.getAllocator().CopyString(Sel.getNameForSlot(I) + ":"));
       } else
         break;
 

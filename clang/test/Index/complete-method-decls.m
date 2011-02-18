@@ -60,6 +60,14 @@
 - (oneway void)method:(in id x);
 @end
 
+@interface Gaps
+- (void)method:(int)x :(int)y;
+@end
+
+@implementation Gaps
+- (void)method:(int)x :(int)y;
+@end
+
 // RUN: c-index-test -code-completion-at=%s:17:3 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText abc}
 // CHECK-CC1: ObjCInstanceMethodDecl:{LeftParen (}{Text int}{RightParen )}{TypedText getInt}
@@ -163,3 +171,6 @@
 // RUN: c-index-test -code-completion-at=%s:5:4 %s | FileCheck -check-prefix=CHECK-IBACTION %s
 // CHECK-IBACTION: NotImplemented:{TypedText IBAction}{RightParen )}{Placeholder selector}{Colon :}{LeftParen (}{Text id}{RightParen )}{Text sender} (40)
 
+// <rdar://problem/8939352>
+// RUN: c-index-test -code-completion-at=%s:68:9 %s | FileCheck -check-prefix=CHECK-8939352 %s
+// CHECK-8939352: ObjCInstanceMethodDecl:{TypedText method}{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text x}{HorizontalSpace  }{TypedText :}{LeftParen (}{Text int}{RightParen )}{Text y} (40)

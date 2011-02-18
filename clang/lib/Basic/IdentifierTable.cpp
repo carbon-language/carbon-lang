@@ -326,6 +326,11 @@ IdentifierInfo *Selector::getIdentifierInfoForSlot(unsigned argIndex) const {
   return SI->getIdentifierInfoForSlot(argIndex);
 }
 
+llvm::StringRef Selector::getNameForSlot(unsigned int argIndex) const {
+  IdentifierInfo *II = getIdentifierInfoForSlot(argIndex);
+  return II? II->getName() : llvm::StringRef();
+}
+
 std::string MultiKeywordSelector::getName() const {
   llvm::SmallString<256> Str;
   llvm::raw_svector_ostream OS(Str);

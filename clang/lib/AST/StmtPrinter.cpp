@@ -1311,7 +1311,7 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   OS << ' ';
   Selector selector = Mess->getSelector();
   if (selector.isUnarySelector()) {
-    OS << selector.getIdentifierInfoForSlot(0)->getName();
+    OS << selector.getNameForSlot(0);
   } else {
     for (unsigned i = 0, e = Mess->getNumArgs(); i != e; ++i) {
       if (i < selector.getNumArgs()) {
