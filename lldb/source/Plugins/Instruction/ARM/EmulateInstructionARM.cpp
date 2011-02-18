@@ -5144,6 +5144,164 @@ EmulateInstructionARM::EmulateLDRBLiteral (ARMEncoding encoding)
     }
     return true;
 }
+  
+// LDRB (register) calculates an address from a base register value and an offset rigister value, loads a byte from
+// memory, zero-extends it to form a 32-bit word, and writes it to a register.  The offset register value can 
+// optionally be shifted.
+bool
+EmulateInstructionARM::EmulateLDRBRegister (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        offset = Shift(R[m], shift_t, shift_n, APSR.C); 
+        offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
+        address = if index then offset_addr else R[n]; 
+        R[t] = ZeroExtend(MemU[address,1],32); 
+        if wback then R[n] = offset_addr;
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                
+    if (ConditionPassed ())
+    {
+        uint32_t t;
+        uint32_t n;
+        uint32_t m;
+        bool index;
+        bool add;
+        bool wback;
+        ARM_ShifterType shift_t;
+        uint32_t shift_n;
+
+        // EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
+                t = Bits32 (opcode, 2, 0);
+                n = Bits32 (opcode, 5, 3);
+                m = Bits32 (opcode, 8, 6);
+                  
+                // index = TRUE; add = TRUE; wback = FALSE; 
+                index = true;
+                add = true;
+                wback = false;
+                  
+                // (shift_t, shift_n) = (SRType_LSL, 0);
+                shift_t = SRType_LSL;
+                shift_n = 0;
+                break;
+                  
+            case eEncodingT2:
+                // if Rt == ’1111’ then SEE PLD; 
+                // if Rn == ’1111’ then SEE LDRB (literal); 
+                // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                  
+                // index = TRUE; add = TRUE; wback = FALSE; 
+                index = true;
+                add = true;
+                wback = false;
+                  
+                // (shift_t, shift_n) = (SRType_LSL, UInt(imm2)); 
+                shift_t = SRType_LSL;
+                shift_n = Bits32 (opcode, 5, 4);
+                  
+                // if t == 13 || BadReg(m) then UNPREDICTABLE;
+                if ((t == 13) || BadReg (m))
+                    return false;
+                break;
+                  
+            case eEncodingA1:
+            {
+                // if P == ’0’ && W == ’1’ then SEE LDRBT; 
+                // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                  
+                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                index = BitIsSet (opcode, 24);
+                add = BitIsSet (opcode, 23);
+                wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
+                  
+                // (shift_t, shift_n) = DecodeImmShift(type, imm5); 
+                uint32_t type = Bits32 (opcode, 6, 5);
+                uint32_t imm5 = Bits32 (opcode, 11, 7);
+                shift_n = DecodeImmShift (type, imm5, shift_t);
+                  
+                // if t == 15 || m == 15 then UNPREDICTABLE; 
+                if ((t == 15) || (m == 15))
+                    return false;
+                  
+                // if wback && (n == 15 || n == t) then UNPREDICTABLE;
+                if (wback && ((n == 15) || (n == t)))
+                    return false;
+            }
+                break;
+                  
+            default:
+                return false;
+        }
+        
+        addr_t offset_addr;
+        addr_t address;
+        
+        // offset = Shift(R[m], shift_t, shift_n, APSR.C); 
+        uint32_t Rm = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + m, 0, &success);
+        if (!success)
+            return false;
+                  
+        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C);
+                  
+        // offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
+        uint32_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+                  
+        if (add)
+            offset_addr = Rn + offset;
+        else
+            offset_addr = Rn - offset;
+                  
+        // address = if index then offset_addr else R[n]; 
+        if (index)
+            address = offset_addr;
+        else
+            address = Rn;
+                  
+        // R[t] = ZeroExtend(MemU[address,1],32); 
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterLoad;
+        context.SetRegisterPlusOffset (base_reg, address - Rn);
+                  
+        uint64_t data = MemURead (context, address, 1, 0, &success);
+        if (!success)
+            return false;
+                  
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, data))
+            return false;
+                  
+        // if wback then R[n] = offset_addr;
+        if (wback)
+        {
+            context.type = eContextAdjustBaseRegister;
+            context.SetAddress (offset_addr);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, offset_addr))
+                return false;
+        }
+    }
+    return true;
+}
                   
 // Bitwise OR (immediate) performs a bitwise (inclusive) OR of a register value and an immediate value, and
 // writes the result to the destination register.  It can optionally update the condition flags based
@@ -5420,7 +5578,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fd00000, 0x09900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMIB, "ldmib<c> <Rn<{!} <registers>" },
         { 0x0e500000, 0x04100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRImmediateARM, "ldr<c> <Rt> [<Rn> {#+/-<imm12>}]" },
         { 0x0e500010, 0x06100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c> <Rt> [<Rn> +/-<Rm> {<shift>}] {!}" },
-        { 0x0e5f0000, 0x045f0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>, [...]"}, 
+        { 0x0e5f0000, 0x045f0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>, [...]"},
+        { 0xfe500010, 0x06500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>, [<Rn>,+/-<Rm>{, <shift>}]{!}" }, 
                   
         //----------------------------------------------------------------------
         // Store instructions
@@ -5604,6 +5763,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfff00000, 0xf8900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c>.w <Rt>,[<Rn>{,#<imm12>}]" },
         { 0xfff00800, 0xf8100800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[>Rn>, #+/-<imm8>]{!}" },
         { 0xff7f0000, 0xf81f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>,[...]" },
+        { 0xfffffe00, 0x00005c00, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>,[<Rn>,<Rm>]" },
+        {  0xfff00fc0, 0xf8100000, ARMV6T2_ABOVE, eEncodingT2, eSize32,&EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c>.w <Rt>,[<Rn>,<Rm>{,LSL #imm2>}]" },
                   
         //----------------------------------------------------------------------
         // Store instructions

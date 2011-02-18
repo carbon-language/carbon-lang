@@ -587,7 +587,7 @@ protected:
     
     // A8.6.64 LDRB (register) - Encoding T1
     bool
-    EmulateLDRBRegoster (ARMEncoding encoding);
+    EmulateLDRBRegister (ARMEncoding encoding);
     
     // A8.6.73 LDRH (immediate, Thumb) - Encoding T1, T2
     bool
