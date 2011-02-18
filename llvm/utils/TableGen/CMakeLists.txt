@@ -25,6 +25,7 @@ add_executable(tblgen
   DisassemblerEmitter.cpp
   EDEmitter.cpp
   FastISelEmitter.cpp
+  FixedLenDecoderEmitter.cpp
   InstrEnumEmitter.cpp
   InstrInfoEmitter.cpp
   IntrinsicEmitter.cpp
