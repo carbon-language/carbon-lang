@@ -17,6 +17,12 @@ namespace llvm {
 
   namespace LibFunc {
     enum Func {
+      /// void *memset(void *b, int c, size_t len);
+      memset,
+      
+      // void *memcpy(void *s1, const void *s2, size_t n);
+      memcpy,
+      
       /// void memset_pattern16(void *b, const void *pattern16, size_t len);
       memset_pattern16,
       
