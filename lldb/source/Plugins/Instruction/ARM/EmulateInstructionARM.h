@@ -469,14 +469,6 @@ protected:
     bool
     EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType shift_type);
 
-    // A8.6.113 ORR (immediate)
-    bool
-    EmulateORRImm (ARMEncoding encoding);
-
-    // A8.6.114 ORR (register)
-    bool
-    EmulateORRReg (ARMEncoding encoding);
-
     // A8.6.53 LDM/LDMIA/LDMFD
     bool
     EmulateLDM (ARMEncoding encoding);
@@ -637,6 +629,14 @@ protected:
     bool
     EmulateMVNRegister (ARMEncoding encoding);
     
+    // A8.6.113 ORR (immediate)
+    bool
+    EmulateORRImm (ARMEncoding encoding);
+
+    // A8.6.114 ORR (register)
+    bool
+    EmulateORRReg (ARMEncoding encoding);
+
     // A8.6.117 PLD (immediate, literal) - Encoding T1, T2, T3, A1
     bool
     EmulatePLDImmediate (ARMEncoding encoding);
