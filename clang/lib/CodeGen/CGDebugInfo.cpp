@@ -1785,13 +1785,13 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       CharUnits offset = CharUnits::fromQuantity(32);
       llvm::SmallVector<llvm::Value *, 9> addr;
       const llvm::Type *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
-      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
+      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
       // offset of __forwarding field
       offset = 
         CharUnits::fromQuantity(CGM.getContext().Target.getPointerWidth(0)/8);
       addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
-      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
-      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
+      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
+      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
       // offset of x field
       offset = CharUnits::fromQuantity(XOffset/8);
       addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
@@ -1886,17 +1886,17 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
 
   llvm::SmallVector<llvm::Value *, 9> addr;
   const llvm::Type *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
-  addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
-  addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
+  addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
+  addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
   addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
   if (isByRef) {
-    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
-    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
     // offset of __forwarding field
     offset = CharUnits::fromQuantity(target.getPointerSize()/8);
     addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
-    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
-    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
     // offset of x field
     offset = CharUnits::fromQuantity(XOffset/8);
     addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
