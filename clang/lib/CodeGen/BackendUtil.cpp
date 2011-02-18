@@ -111,7 +111,11 @@ void EmitAssemblyHelper::CreatePasses() {
   
   FunctionPassManager *FPM = getPerFunctionPasses();
   
-  FPM->add(new TargetLibraryInfo(Triple(TheModule->getTargetTriple())));
+  TargetLibraryInfo *TLI =
+    new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
+  if (!CodeGenOpts.SimplifyLibCalls)
+    TLI->disableAllFunctions();
+  FPM->add(TLI);
 
   // In -O0 if checking is disabled, we don't even have per-function passes.
   if (CodeGenOpts.VerifyModule)
@@ -143,7 +147,10 @@ void EmitAssemblyHelper::CreatePasses() {
 
   PassManager *MPM = getPerModulePasses();
   
-  MPM->add(new TargetLibraryInfo(Triple(TheModule->getTargetTriple())));
+  TLI = new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
+  if (!CodeGenOpts.SimplifyLibCalls)
+    TLI->disableAllFunctions();
+  MPM->add(TLI);
 
   // For now we always create per module passes.
   llvm::createStandardModulePasses(MPM, OptLevel,
