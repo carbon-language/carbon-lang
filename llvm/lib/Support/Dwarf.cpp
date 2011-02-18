@@ -78,6 +78,10 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_shared_type:               return "DW_TAG_shared_type";
   case DW_TAG_lo_user:                   return "DW_TAG_lo_user";
   case DW_TAG_hi_user:                   return "DW_TAG_hi_user";
+  case DW_TAG_auto_variable:             return "DW_TAG_auto_variable";
+  case DW_TAG_arg_variable:              return "DW_TAG_arg_variable";
+  case DW_TAG_return_variable:           return "DW_TAG_return_variable";
+  case DW_TAG_vector_type:               return "DW_TAG_vector_type";
   }
   return 0;
 }
