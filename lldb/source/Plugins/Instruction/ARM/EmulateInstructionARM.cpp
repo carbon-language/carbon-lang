@@ -4258,7 +4258,7 @@ EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
 }
                   
 // LDR (immediate, ARM) calculates an address from a base register value and an immediate offset, loads a word 
-// from memory, and writes it to a register.  It an use offset, post-indexed, or pre-indexed addressing.
+// from memory, and writes it to a register.  It can use offset, post-indexed, or pre-indexed addressing.
 bool
 EmulateInstructionARM::EmulateLDRImmediateARM (ARMEncoding encoding)
 {
