@@ -26,16 +26,12 @@ void test1() {
   // CHECK:      invoke void @{{.*}}test1_help
   test1_help(^{ n = 20; });
 
-  // CHECK:      [[FORWARDING:%.*]] = getelementptr inbounds [[N_T]]* [[N]], i32 0, i32 1
-  // CHECK-NEXT: [[T0:%.*]] = load [[N_T]]** [[FORWARDING]]
-  // CHECK-NEXT: [[T1:%.*]] = bitcast [[N_T]]* [[T0]] to i8*
+  // CHECK:      [[T1:%.*]] = bitcast [[N_T]]* [[N]] to i8*
   // CHECK-NEXT: call void @_Block_object_dispose(i8* [[T1]], i32 8)
   // CHECK-NEXT: ret void
 
   // CHECK:      call i8* @llvm.eh.exception()
-  // CHECK:      [[FORWARDING:%.*]] = getelementptr inbounds [[N_T]]* [[N]], i32 0, i32 1
-  // CHECK-NEXT: [[T0:%.*]] = load [[N_T]]** [[FORWARDING]]
-  // CHECK-NEXT: [[T1:%.*]] = bitcast [[N_T]]* [[T0]] to i8*
+  // CHECK:      [[T1:%.*]] = bitcast [[N_T]]* [[N]] to i8*
   // CHECK-NEXT: call void @_Block_object_dispose(i8* [[T1]], i32 8)
   // CHECK:      call void @_Unwind_Resume_or_Rethrow(
 }

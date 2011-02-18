@@ -504,9 +504,7 @@ namespace {
     CallBlockRelease(llvm::Value *Addr) : Addr(Addr) {}
 
     void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      llvm::Value *V = CGF.Builder.CreateStructGEP(Addr, 1, "forwarding");
-      V = CGF.Builder.CreateLoad(V);
-      CGF.BuildBlockRelease(V, BLOCK_FIELD_IS_BYREF);
+      CGF.BuildBlockRelease(Addr, BLOCK_FIELD_IS_BYREF);
     }
   };
 }
@@ -743,10 +741,6 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
 
   if (isByRef) {
     EnsureInsertPoint();
-    llvm::Value *isa_field = Builder.CreateStructGEP(DeclPtr, 0);
-    llvm::Value *forwarding_field = Builder.CreateStructGEP(DeclPtr, 1);
-    llvm::Value *flags_field = Builder.CreateStructGEP(DeclPtr, 2);
-    llvm::Value *size_field = Builder.CreateStructGEP(DeclPtr, 3);
     llvm::Value *V;
 
     BlockFieldFlags fieldFlags;
@@ -776,16 +770,23 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
     if (fieldFlags & BLOCK_FIELD_IS_WEAK)
       isa = 1;
     V = Builder.CreateIntToPtr(Builder.getInt32(isa), Int8PtrTy, "isa");
-    Builder.CreateStore(V, isa_field);
+    Builder.CreateStore(V, Builder.CreateStructGEP(DeclPtr, 0, "byref.isa"));
 
-    Builder.CreateStore(DeclPtr, forwarding_field);
+    Builder.CreateStore(DeclPtr, Builder.CreateStructGEP(DeclPtr, 1,
+                                                         "byref.forwarding"));
 
-    Builder.CreateStore(Builder.getInt32(fieldFlags.getBitMask()), flags_field);
+    // Blocks ABI:
+    //   c) the flags field is set to either 0 if no helper functions are
+    //      needed or BLOCK_HAS_COPY_DISPOSE if they are,
+    BlockFlags flags;
+    if (fieldNeedsCopyDispose) flags |= BLOCK_HAS_COPY_DISPOSE;
+    Builder.CreateStore(llvm::ConstantInt::get(IntTy, flags.getBitMask()),
+                        Builder.CreateStructGEP(DeclPtr, 2, "byref.flags"));
 
     const llvm::Type *V1;
     V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
-    V = Builder.getInt32(CGM.GetTargetTypeStoreSize(V1).getQuantity());
-    Builder.CreateStore(V, size_field);
+    V = llvm::ConstantInt::get(IntTy, CGM.GetTargetTypeStoreSize(V1).getQuantity());
+    Builder.CreateStore(V, Builder.CreateStructGEP(DeclPtr, 3, "byref.size"));
 
     if (fieldNeedsCopyDispose) {
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
