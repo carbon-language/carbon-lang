@@ -12,3 +12,10 @@ void f() {
   // Verify that null is evaluated as 0.
   int b[__null ? -1 : 1];
 }
+
+struct A {};
+
+void g() {
+  (void)(0 ? __null : A()); // expected-error {{non-pointer operand type 'A' incompatible with NULL}}
+  (void)(0 ? A(): __null); // expected-error {{non-pointer operand type 'A' incompatible with NULL}}
+}

@@ -2132,11 +2132,14 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
   return isEvaluatable(Ctx);
 }
 
-/// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
-/// integer constant expression with the value zero, or if this is one that is
-/// cast to void*.
-bool Expr::isNullPointerConstant(ASTContext &Ctx,
-                                 NullPointerConstantValueDependence NPC) const {
+/// isNullPointerConstant - C99 6.3.2.3p3 - Return whether this is a null 
+/// pointer constant or not, as well as the specific kind of constant detected.
+/// Null pointer constants can be integer constant expressions with the
+/// value zero, casts of zero to void*, nullptr (C++0X), or __null
+/// (a GNU extension).
+Expr::NullPointerConstantKind
+Expr::isNullPointerConstant(ASTContext &Ctx,
+                            NullPointerConstantValueDependence NPC) const {
   if (isValueDependent()) {
     switch (NPC) {
     case NPC_NeverValueDependent:
@@ -2144,10 +2147,13 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
       // If the unthinkable happens, fall through to the safest alternative.
         
     case NPC_ValueDependentIsNull:
-      return isTypeDependent() || getType()->isIntegralType(Ctx);
+      if (isTypeDependent() || getType()->isIntegralType(Ctx))
+        return NPCK_ZeroInteger;
+      else
+        return NPCK_NotNull;
         
     case NPC_ValueDependentIsNotNull:
-      return false;
+      return NPCK_NotNull;
     }
   }
 
@@ -2176,12 +2182,12 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
     return DefaultArg->getExpr()->isNullPointerConstant(Ctx, NPC);
   } else if (isa<GNUNullExpr>(this)) {
     // The GNU __null extension is always a null pointer constant.
-    return true;
+    return NPCK_GNUNull;
   }
 
   // C++0x nullptr_t is always a null pointer constant.
   if (getType()->isNullPtrType())
-    return true;
+    return NPCK_CXX0X_nullptr;
 
   if (const RecordType *UT = getType()->getAsUnionType())
     if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>())
@@ -2193,12 +2199,14 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
   // This expression must be an integer type.
   if (!getType()->isIntegerType() || 
       (Ctx.getLangOptions().CPlusPlus && getType()->isEnumeralType()))
-    return false;
+    return NPCK_NotNull;
 
   // If we have an integer constant expression, we need to *evaluate* it and
   // test for the value 0.
   llvm::APSInt Result;
-  return isIntegerConstantExpr(Result, Ctx) && Result == 0;
+  bool IsNull = isIntegerConstantExpr(Result, Ctx) && Result == 0;
+
+  return (IsNull ? NPCK_ZeroInteger : NPCK_NotNull);
 }
 
 /// \brief If this expression is an l-value for an Objective C

@@ -2874,13 +2874,14 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
 /// value operand is a class type, overload resolution is used to find a
 /// conversion to a common type.
 static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
-                                    SourceLocation Loc) {
+                                    SourceLocation QuestionLoc) {
   Expr *Args[2] = { LHS, RHS };
-  OverloadCandidateSet CandidateSet(Loc);
-  Self.AddBuiltinOperatorCandidates(OO_Conditional, Loc, Args, 2, CandidateSet);
+  OverloadCandidateSet CandidateSet(QuestionLoc);
+  Self.AddBuiltinOperatorCandidates(OO_Conditional, QuestionLoc, Args, 2,
+                                    CandidateSet);
 
   OverloadCandidateSet::iterator Best;
-  switch (CandidateSet.BestViableFunction(Self, Loc, Best)) {
+  switch (CandidateSet.BestViableFunction(Self, QuestionLoc, Best)) {
     case OR_Success:
       // We found a match. Perform the conversions on the arguments and move on.
       if (Self.PerformImplicitConversion(LHS, Best->BuiltinTypes.ParamTypes[0],
@@ -2891,13 +2892,20 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
       return false;
 
     case OR_No_Viable_Function:
-      Self.Diag(Loc, diag::err_typecheck_cond_incompatible_operands)
+
+      // Emit a better diagnostic if one of the expressions is a null pointer
+      // constant and the other is a pointer type. In this case, the user most
+      // likely forgot to take the address of the other expression.
+      if (Self.DiagnoseConditionalForNull(LHS, RHS, QuestionLoc))
+        return true;
+
+      Self.Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
         << LHS->getType() << RHS->getType()
         << LHS->getSourceRange() << RHS->getSourceRange();
       return true;
 
     case OR_Ambiguous:
-      Self.Diag(Loc, diag::err_conditional_ambiguous_ovl)
+      Self.Diag(QuestionLoc, diag::err_conditional_ambiguous_ovl)
         << LHS->getType() << RHS->getType()
         << LHS->getSourceRange() << RHS->getSourceRange();
       // FIXME: Print the possible common types by printing the return types of

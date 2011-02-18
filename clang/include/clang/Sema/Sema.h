@@ -4774,6 +4774,9 @@ public:
   QualType FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
                                         SourceLocation questionLoc);
 
+  bool DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
+                                  SourceLocation QuestionLoc);
+
   /// type checking for vector binary operators.
   QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   QualType CheckVectorCompareOperands(Expr *&lex, Expr *&rx,

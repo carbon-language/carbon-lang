@@ -437,6 +437,22 @@ public:
   /// EvaluateAsLValue - Evaluate an expression to see if it's a lvalue.
   bool EvaluateAsAnyLValue(EvalResult &Result, const ASTContext &Ctx) const;
 
+  /// \brief Enumeration used to describe the kind of Null pointer constant
+  /// returned from \c isNullPointerConstant().
+  enum NullPointerConstantKind {
+    /// \brief Expression is not a Null pointer constant.
+    NPCK_NotNull = 0,
+
+    /// \brief Expression is a Null pointer constant built from a zero integer.
+    NPCK_ZeroInteger,
+
+    /// \brief Expression is a C++0X nullptr.
+    NPCK_CXX0X_nullptr,
+
+    /// \brief Expression is a GNU-style __null constant.
+    NPCK_GNUNull
+  };
+
   /// \brief Enumeration used to describe how \c isNullPointerConstant()
   /// should cope with value-dependent expressions.
   enum NullPointerConstantValueDependence {
@@ -452,11 +468,12 @@ public:
     NPC_ValueDependentIsNotNull
   };
   
-  /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
-  /// integer constant expression with the value zero, or if this is one that is
-  /// cast to void*.
-  bool isNullPointerConstant(ASTContext &Ctx,
-                             NullPointerConstantValueDependence NPC) const;
+  /// isNullPointerConstant - C99 6.3.2.3p3 - Test if this reduces down to
+  /// a Null pointer constant. The return value can further distinguish the
+  /// kind of NULL pointer constant that was detected.
+  NullPointerConstantKind isNullPointerConstant(
+      ASTContext &Ctx,
+      NullPointerConstantValueDependence NPC) const;
 
   /// isOBJCGCCandidate - Return true if this expression may be used in a read/
   /// write barrier.

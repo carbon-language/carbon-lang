@@ -75,3 +75,16 @@ int f2(int x) {
   // We can suppress this because the immediate context wants an int.
   return (x != 0) ? 0U : x;
 }
+
+#define NULL (void*)0
+
+void PR9236() {
+  struct A {int i;} A1;
+  (void)(1 ? A1 : NULL); // expected-error{{non-pointer operand type 'struct A' incompatible with NULL}}
+  (void)(1 ? NULL : A1); // expected-error{{non-pointer operand type 'struct A' incompatible with NULL}}
+  (void)(1 ? 0 : A1); // expected-error{{incompatible operand types}}
+  (void)(1 ? (void*)0 : A1); // expected-error{{incompatible operand types}}
+  (void)(1 ? A1: (void*)0); // expected-error{{incompatible operand types}}
+  (void)(1 ? A1 : (NULL)); // expected-error{{non-pointer operand type 'struct A' incompatible with NULL}}
+}
+

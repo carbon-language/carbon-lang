@@ -5229,6 +5229,46 @@ ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
   return Owned(expr);
 }
 
+/// \brief Emit a specialized diagnostic when one expression is a null pointer
+/// constant and the other is not a pointer.
+bool Sema::DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
+                                      SourceLocation QuestionLoc) {
+  Expr *NullExpr = LHS;
+  Expr *NonPointerExpr = RHS;
+  Expr::NullPointerConstantKind NullKind =
+      NullExpr->isNullPointerConstant(Context,
+                                      Expr::NPC_ValueDependentIsNotNull);
+
+  if (NullKind == Expr::NPCK_NotNull) {
+    NullExpr = RHS;
+    NonPointerExpr = LHS;
+    NullKind =
+        NullExpr->isNullPointerConstant(Context,
+                                        Expr::NPC_ValueDependentIsNotNull);
+  }
+
+  if (NullKind == Expr::NPCK_NotNull)
+    return false;
+
+  if (NullKind == Expr::NPCK_ZeroInteger) {
+    // In this case, check to make sure that we got here from a "NULL"
+    // string in the source code.
+    NullExpr = NullExpr->IgnoreParenImpCasts();
+    SourceManager& SM = Context.getSourceManager();
+    SourceLocation Loc = SM.getInstantiationLoc(NullExpr->getExprLoc());
+    unsigned Len =
+        Lexer::MeasureTokenLength(Loc, SM, Context.getLangOptions());
+    if (Len != 4 || memcmp(SM.getCharacterData(Loc), "NULL", 4))
+      return false;
+  }
+
+  int DiagType = (NullKind == Expr::NPCK_CXX0X_nullptr);
+  Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands_null)
+      << NonPointerExpr->getType() << DiagType
+      << NonPointerExpr->getSourceRange();
+  return true;
+}
+
 /// Note that lhs is not null here, even if this is the gnu "x ?: y" extension.
 /// In that case, lhs = cond.
 /// C99 6.5.15
@@ -5470,6 +5510,12 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     ImpCastExprToType(RHS, LHSTy, CK_IntegralToPointer);
     return LHSTy;
   }
+
+  // Emit a better diagnostic if one of the expressions is a null pointer
+  // constant and the other is not a pointer type. In this case, the user most
+  // likely forgot to take the address of the other expression.
+  if (DiagnoseConditionalForNull(LHS, RHS, QuestionLoc))
+    return QualType();
 
   // Otherwise, the operands are not compatible.
   Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
