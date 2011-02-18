@@ -96,7 +96,7 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
 }
 
 /// Unroll the given loop by Count. The loop must be in LCSSA form. Returns true
-/// if unrolling was succesful, or false if the loop was unmodified. Unrolling
+/// if unrolling was successful, or false if the loop was unmodified. Unrolling
 /// can only fail when the loop's latch block is not terminated by a conditional
 /// branch instruction. However, if the trip count (and multiple) are not known,
 /// loop unrolling will mostly produce more code that is no faster.
@@ -105,7 +105,8 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
 ///
 /// If a LoopPassManager is passed in, and the loop is fully removed, it will be
 /// removed from the LoopPassManager as well. LPM can also be NULL.
-bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM) {
+bool llvm::UnrollLoop(Loop *L, unsigned Count,
+                      LoopInfo *LI, LPPassManager *LPM) {
   BasicBlock *Preheader = L->getLoopPreheader();
   if (!Preheader) {
     DEBUG(dbgs() << "  Can't unroll; loop preheader-insertion failed.\n");
@@ -125,6 +126,13 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
     // The loop-rotate pass can be helpful to avoid this in many cases.
     DEBUG(dbgs() <<
              "  Can't unroll; loop not terminated by a conditional branch.\n");
+    return false;
+  }
+  
+  if (Header->hasAddressTaken()) {
+    // The loop-rotate pass can be helpful to avoid this in many cases.
+    DEBUG(dbgs() <<
+          "  Won't unroll loop: address of header block is taken.\n");
     return false;
   }
 
