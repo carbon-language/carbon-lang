@@ -220,6 +220,7 @@ void initializeStrongPHIEliminationPass(PassRegistry&);
 void initializeTailCallElimPass(PassRegistry&);
 void initializeTailDupPass(PassRegistry&);
 void initializeTargetDataPass(PassRegistry&);
+void initializeTargetLibraryInfoPass(PassRegistry&);
 void initializeTwoAddressInstructionPassPass(PassRegistry&);
 void initializeTypeBasedAliasAnalysisPass(PassRegistry&);
 void initializeUnifyFunctionExitNodesPass(PassRegistry&);

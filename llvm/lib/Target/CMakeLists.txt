@@ -9,6 +9,7 @@ add_llvm_library(LLVMTarget
   TargetFrameLowering.cpp
   TargetInstrInfo.cpp
   TargetIntrinsicInfo.cpp
+  TargetLibraryInfo.cpp
   TargetLoweringObjectFile.cpp
   TargetMachine.cpp
   TargetRegisterInfo.cpp
