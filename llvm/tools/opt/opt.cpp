@@ -427,7 +427,7 @@ void AddStandardCompilePasses(PassManagerBase &PM) {
                              /*OptimizeSize=*/ false,
                              /*UnitAtATime=*/ true,
                              /*UnrollLoops=*/ true,
-                             /*SimplifyLibCalls=*/ true,
+                             !DisableSimplifyLibCalls,
                              /*HaveExceptions=*/ true,
                              InliningPass);
 }
