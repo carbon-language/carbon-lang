@@ -39,6 +39,7 @@ public:
 
   void VisitCastExpr(CastExpr *E);
   void VisitCXXConstructExpr(CXXConstructExpr *E);
+  void VisitCXXMemberCallExpr(CXXMemberCallExpr *E);
 };
 }
 
@@ -48,6 +49,7 @@ void AggExprVisitor::VisitCastExpr(CastExpr *E) {
     assert(0 && "Unhandled cast kind");
   case CK_NoOp:
   case CK_ConstructorConversion:
+  case CK_UserDefinedConversion:
     Visit(E->getSubExpr());
     break;
   }
@@ -55,6 +57,10 @@ void AggExprVisitor::VisitCastExpr(CastExpr *E) {
 
 void AggExprVisitor::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Eng.VisitCXXConstructExpr(E, Dest, Pred, DstSet);
+}
+
+void AggExprVisitor::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
+  Eng.VisitCXXMemberCallExpr(E, Pred, DstSet);
 }
 
 void ExprEngine::VisitAggExpr(const Expr *E, const MemRegion *Dest, 
