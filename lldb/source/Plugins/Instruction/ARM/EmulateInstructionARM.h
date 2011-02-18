@@ -397,6 +397,10 @@ protected:
     bool
     EmulateTB (ARMEncoding encoding);
 
+    // A8.6.5 ADD (immediate, ARM)
+    bool
+    EmulateADDImmARM (ARMEncoding encoding);
+    
     // A8.6.6 ADD (register)
     bool
     EmulateADDReg (ARMEncoding encoding);
@@ -529,21 +533,17 @@ protected:
     bool
     EmulateADCRegister (ARMEncoding encoding);
     
-    // A8.6.4 ADD (immediate,Thumb)
-    bool
-    EmulateADDImmediateThumb (ARMEncoding encoding);
-    
     // A8.6.10 ADR
     bool
     EmulateADR (ARMEncoding encoding);
     
     // A8.6.11 AND (immediate)
     bool
-    EmulateANDImmediate (ARMEncoding encoding);
+    EmulateANDImm (ARMEncoding encoding);
     
     // A8.6.12 AND (register)
     bool
-    EmulateANDRegister (ARMEncoding encoding);
+    EmulateANDReg (ARMEncoding encoding);
     
     // A8.6.19 BIC (immediate) - Encoding A1
     bool
@@ -571,7 +571,7 @@ protected:
     
     // A8.6.45 EOR (register)
     bool
-    EmulateEORRegister (ARMEncoding encoding);
+    EmulateEORegister (ARMEncoding encoding);
     
     // A8.6.58 LDR (immediate, ARM) - Encoding A1
     bool
