@@ -4287,7 +4287,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                                 N.getResNo(), Offset, dl, SDNodeOrder);
           DAG.AddDbgValue(SDV, N.getNode(), false);
         }
-      } else if (!V->use_empty() ) {
+      } else if (isa<PHINode>(V) && !V->use_empty() ) {
         // Do not call getValue(V) yet, as we don't want to generate code.
         // Remember it for later.
         DanglingDebugInfo DDI(&DI, dl, SDNodeOrder);
