@@ -245,6 +245,7 @@ class Instruction {
   string DisableEncoding = "";
 
   string PostEncoderMethod = "";
+  string DecoderMethod = "";
 
   /// Target-specific flags. This becomes the TSFlags field in TargetInstrDesc.
   bits<64> TSFlags = 0;
@@ -360,6 +361,7 @@ class Operand<ValueType ty> {
   ValueType Type = ty;
   string PrintMethod = "printOperand";
   string EncoderMethod = "";
+  string DecoderMethod = "";
   string AsmOperandLowerMethod = ?;
   dag MIOperandInfo = (ops);
 

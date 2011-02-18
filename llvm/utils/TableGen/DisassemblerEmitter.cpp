@@ -13,6 +13,7 @@
 #include "X86DisassemblerTables.h"
 #include "X86RecognizableInstr.h"
 #include "ARMDecoderEmitter.h"
+#include "FixedLenDecoderEmitter.h"
 
 using namespace llvm;
 using namespace llvm::X86Disassembler;
@@ -127,11 +128,11 @@ void DisassemblerEmitter::run(raw_ostream &OS) {
   }
 
   // Fixed-instruction-length targets use a common disassembler.
+  // ARM use its own implementation for now.
   if (Target.getName() == "ARM") {
     ARMDecoderEmitter(Records).run(OS);
     return;
   }  
 
-  throw TGError(Target.getTargetRecord()->getLoc(),
-                "Unable to generate disassembler for this target");
+  FixedLenDecoderEmitter(Records).run(OS);
 }
