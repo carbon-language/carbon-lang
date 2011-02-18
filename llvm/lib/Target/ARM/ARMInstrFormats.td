@@ -161,6 +161,12 @@ def ProcIFlagsOperand : AsmOperandClass {
   let ParserMethod = "tryParseProcIFlagsOperand";
 }
 
+def MSRMaskOperand : AsmOperandClass {
+  let Name = "MSRMask";
+  let SuperClasses = [];
+  let ParserMethod = "tryParseMSRMaskOperand";
+}
+
 // ARM imod and iflag operands, used only by the CPS instruction.
 def imod_op : Operand<i32> {
   let PrintMethod = "printCPSIMod";
@@ -205,6 +211,7 @@ def cps_opt : Operand<i32> {
 
 def msr_mask : Operand<i32> {
   let PrintMethod = "printMSRMaskOperand";
+  let ParserMatchClass = MSRMaskOperand;
 }
 
 // A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.

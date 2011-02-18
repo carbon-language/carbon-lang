@@ -3330,24 +3330,23 @@ def t2MRSsys : T2MRS<0b111100111111, 0b10, 0,
                    (outs rGPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr",
                    [/* For disassembly only; pattern left blank */]>;
 
-class T2MSR<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
-            dag oops, dag iops, InstrItinClass itin,
-          string opc, string asm, list<dag> pattern>
-  : T2SpecialReg<op31_20, op15_14, op12, oops, iops, itin, opc, asm, pattern> {
+// Move from ARM core register to Special Register
+//
+// No need to have both system and application versions, the encodings are the
+// same and the assembly parser has no way to distinguish between them. The mask
+// operand contains the special register (R Bit) in bit 4 and bits 3-0 contains
+// the mask with the fields to be accessed in the special register.
+def t2MSR : T2SpecialReg<0b111100111000 /* op31-20 */, 0b10 /* op15-14 */,
+                         0 /* op12 */, (outs), (ins msr_mask:$mask, rGPR:$Rn),
+                         NoItinerary, "msr", "\t$mask, $Rn",
+                         [/* For disassembly only; pattern left blank */]> {
+  bits<5> mask;
   bits<4> Rn;
-  bits<4> mask;
   let Inst{19-16} = Rn;
-  let Inst{11-8} = mask;
+  let Inst{20}    = mask{4}; // R Bit
+  let Inst{13}    = 0b0;
+  let Inst{11-8}  = mask{3-0};
 }
-
-def t2MSR : T2MSR<0b111100111000, 0b10, 0,
-                (outs), (ins rGPR:$Rn, msr_mask:$mask), NoItinerary, "msr",
-                "\tcpsr$mask, $Rn",
-                [/* For disassembly only; pattern left blank */]>;
-def t2MSRsys : T2MSR<0b111100111001, 0b10, 0,
-                   (outs), (ins rGPR:$Rn, msr_mask:$mask), NoItinerary, "msr",
-                   "\tspsr$mask, $Rn",
-                   [/* For disassembly only; pattern left blank */]>;
 
 //===----------------------------------------------------------------------===//
 // Move between coprocessor and ARM core register -- for disassembly only

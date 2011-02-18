@@ -397,7 +397,14 @@ void ARMInstPrinter::printCPSIFlag(const MCInst *MI, unsigned OpNum,
 void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
                                          raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
-  unsigned Mask = Op.getImm();
+  unsigned SpecRegRBit = Op.getImm() >> 4;
+  unsigned Mask = Op.getImm() & 0xf;
+
+  if (SpecRegRBit)
+    O << "spsr";
+  else
+    O << "cpsr";
+
   if (Mask) {
     O << '_';
     if (Mask & 8) O << 'f';

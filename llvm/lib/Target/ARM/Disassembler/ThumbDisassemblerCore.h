@@ -1702,11 +1702,13 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
     NumOpsAdded = 1;
     return true;
   }
-  // MSR and MSRsys take one GPR reg Rn, followed by the mask.
-  if (Opcode == ARM::t2MSR || Opcode == ARM::t2MSRsys || Opcode == ARM::t2BXJ) {
+  // MSR take a mask, followed by one GPR reg Rn. The mask contains the R Bit in
+  // bit 4, and the special register fields in bits 3-0.
+  if (Opcode == ARM::t2MSR) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 20, 20) << 4 /* R Bit */ |
+                                       slice(insn, 11, 8) /* Special Reg */));
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRn(insn))));
-    MI.addOperand(MCOperand::CreateImm(slice(insn, 11, 8)));
     NumOpsAdded = 2;
     return true;
   }

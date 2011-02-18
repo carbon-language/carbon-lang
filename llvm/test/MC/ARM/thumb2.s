@@ -259,3 +259,28 @@
 @ CHECK: cpsie.w  if, #10 @ encoding: [0xaf,0xf3,0x6a,0x85]
   cpsie.w  if, #10
 
+@ CHECK: msr  cpsr_fc, r0 @ encoding: [0x80,0xf3,0x00,0x89]
+  msr  apsr, r0
+@ CHECK: msr  cpsr_s, r0 @ encoding: [0x80,0xf3,0x00,0x84]
+  msr  apsr_g, r0
+@ CHECK: msr  cpsr_f, r0 @ encoding: [0x80,0xf3,0x00,0x88]
+  msr  apsr_nzcvq, r0
+@ CHECK: msr  cpsr_fs, r0 @ encoding: [0x80,0xf3,0x00,0x8c]
+  msr  apsr_nzcvqg, r0
+@ CHECK: msr  cpsr_fc, r0 @ encoding: [0x80,0xf3,0x00,0x89]
+  msr  cpsr_fc, r0
+@ CHECK: msr  cpsr_c, r0 @ encoding: [0x80,0xf3,0x00,0x81]
+  msr  cpsr_c, r0
+@ CHECK: msr  cpsr_x, r0 @ encoding: [0x80,0xf3,0x00,0x82]
+  msr  cpsr_x, r0
+@ CHECK: msr  cpsr_fc, r0 @ encoding: [0x80,0xf3,0x00,0x89]
+  msr  cpsr_fc, r0
+@ CHECK: msr  cpsr_fsx, r0 @ encoding: [0x80,0xf3,0x00,0x8e]
+  msr  cpsr_fsx, r0
+@ CHECK: msr  spsr_fc, r0 @ encoding: [0x90,0xf3,0x00,0x89]
+  msr  spsr_fc, r0
+@ CHECK: msr  spsr_fsxc, r0 @ encoding: [0x90,0xf3,0x00,0x8f]
+  msr  spsr_fsxc, r0
+@ CHECK: msr  cpsr_fsxc, r0 @ encoding: [0x80,0xf3,0x00,0x8f]
+  msr  cpsr_fsxc, r0
+

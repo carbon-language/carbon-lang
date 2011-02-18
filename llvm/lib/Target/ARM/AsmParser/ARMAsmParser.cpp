@@ -100,6 +100,8 @@ class ARMAsmParser : public TargetAsmParser {
     SmallVectorImpl<MCParsedAsmOperand*> &);
   OperandMatchResultTy tryParseProcIFlagsOperand(
     SmallVectorImpl<MCParsedAsmOperand*> &);
+  OperandMatchResultTy tryParseMSRMaskOperand(
+    SmallVectorImpl<MCParsedAsmOperand*> &);
 
 public:
   ARMAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
@@ -128,6 +130,7 @@ class ARMOperand : public MCParsedAsmOperand {
     Immediate,
     MemBarrierOpt,
     Memory,
+    MSRMask,
     ProcIFlags,
     Register,
     RegisterList,
@@ -155,6 +158,10 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       ARM_PROC::IFlags Val;
     } IFlags;
+
+    struct {
+      unsigned Val;
+    } MMask;
 
     struct {
       const char *Data;
@@ -222,6 +229,9 @@ public:
     case Memory:
       Mem = o.Mem;
       break;
+    case MSRMask:
+      MMask = o.MMask;
+      break;
     case ProcIFlags:
       IFlags = o.IFlags;
     }
@@ -271,6 +281,11 @@ public:
   ARM_PROC::IFlags getProcIFlags() const {
     assert(Kind == ProcIFlags && "Invalid access!");
     return IFlags.Val;
+  }
+
+  unsigned getMSRMask() const {
+    assert(Kind == MSRMask && "Invalid access!");
+    return MMask.Val;
   }
 
   /// @name Memory Operand Accessors
@@ -347,6 +362,7 @@ public:
     uint64_t Value = CE->getValue();
     return ((Value & 0x3) == 0 && Value <= 124);
   }
+  bool isMSRMask() const { return Kind == MSRMask; }
   bool isProcIFlags() const { return Kind == ProcIFlags; }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
@@ -446,6 +462,11 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
     assert(CE && "Non-constant mode offset operand!");
     Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+  }
+
+  void addMSRMaskOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(unsigned(getMSRMask())));
   }
 
   void addProcIFlagsOperands(MCInst &Inst, unsigned N) const {
@@ -584,6 +605,14 @@ public:
     Op->EndLoc = S;
     return Op;
   }
+
+  static ARMOperand *CreateMSRMask(unsigned MMask, SMLoc S) {
+    ARMOperand *Op = new ARMOperand(MSRMask);
+    Op->MMask.Val = MMask;
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+    return Op;
+  }
 };
 
 } // end anonymous namespace.
@@ -601,6 +630,9 @@ void ARMOperand::dump(raw_ostream &OS) const {
     break;
   case CoprocReg:
     OS << "<coprocessor register: " << getCoproc() << ">";
+    break;
+  case MSRMask:
+    OS << "<mask: " << getMSRMask() << ">";
     break;
   case Immediate:
     getImm()->print(OS);
@@ -947,6 +979,69 @@ tryParseProcIFlagsOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   Parser.Lex(); // Eat identifier token.
   Operands.push_back(ARMOperand::CreateProcIFlags((ARM_PROC::IFlags)IFlags, S));
+  return MatchOperand_Success;
+}
+
+/// tryParseMSRMaskOperand - Try to parse mask flags from MSR instruction.
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+tryParseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+  const AsmToken &Tok = Parser.getTok();
+  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  StringRef Mask = Tok.getString();
+
+  // Split spec_reg from flag, example: CPSR_sxf => "CPSR" and "sxf"
+  size_t Start = 0, Next = Mask.find('_');
+  StringRef Flags = "";
+  StringRef SpecReg = Mask.slice(Start, Next);
+  if (Next != StringRef::npos)
+    Flags = Mask.slice(Next+1, Mask.size());
+
+  // FlagsVal contains the complete mask:
+  // 3-0: Mask
+  // 4: Special Reg (cpsr, apsr => 0; spsr => 1)
+  unsigned FlagsVal = 0;
+
+  if (SpecReg == "apsr") {
+    FlagsVal = StringSwitch<unsigned>(Flags)
+    .Case("nzcvq",  0x8) // same as CPSR_c
+    .Case("g",      0x4) // same as CPSR_s
+    .Case("nzcvqg", 0xc) // same as CPSR_fs
+    .Default(~0U);
+
+    if (FlagsVal == ~0U)
+      if (!Flags.empty())
+        return MatchOperand_NoMatch;
+      else
+        FlagsVal = 0; // No flag
+  } else if (SpecReg == "cpsr" || SpecReg == "spsr") {
+    for (int i = 0, e = Flags.size(); i != e; ++i) {
+      unsigned Flag = StringSwitch<unsigned>(Flags.substr(i, 1))
+      .Case("c", 1)
+      .Case("x", 2)
+      .Case("s", 4)
+      .Case("f", 8)
+      .Default(~0U);
+
+      // If some specific flag is already set, it means that some letter is
+      // present more than once, this is not acceptable.
+      if (FlagsVal == ~0U || (FlagsVal & Flag))
+        return MatchOperand_NoMatch;
+      FlagsVal |= Flag;
+    }
+  } else // No match for special register.
+    return MatchOperand_NoMatch;
+
+  // Special register without flags are equivalent to "fc" flags.
+  if (!FlagsVal)
+    FlagsVal = 0x9;
+
+  // Bit 4: Special Reg (cpsr, apsr => 0; spsr => 1)
+  if (SpecReg == "spsr")
+    FlagsVal |= 16;
+
+  Parser.Lex(); // Eat identifier token.
+  Operands.push_back(ARMOperand::CreateMSRMask(FlagsVal, S));
   return MatchOperand_Success;
 }
 

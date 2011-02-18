@@ -720,25 +720,29 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     NumOpsAdded = 1;
     return true;
   }
-  // MSR and MSRsys take one GPR reg Rm, followed by the mask.
-  if (Opcode == ARM::MSR || Opcode == ARM::MSRsys) {
-    assert(NumOps >= 1 && OpInfo[0].RegClass == ARM::GPRRegClassID &&
+  // MSR take a mask, followed by one GPR reg Rm. The mask contains the R Bit in
+  // bit 4, and the special register fields in bits 3-0.
+  if (Opcode == ARM::MSR) {
+    assert(NumOps >= 1 && OpInfo[1].RegClass == ARM::GPRRegClassID &&
            "Reg operand expected");
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 22, 22) << 4 /* R Bit */ |
+                                       slice(insn, 19, 16) /* Special Reg */ ));
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
-    MI.addOperand(MCOperand::CreateImm(slice(insn, 19, 16)));
     NumOpsAdded = 2;
     return true;
   }
-  // MSRi and MSRsysi take one so_imm operand, followed by the mask.
-  if (Opcode == ARM::MSRi || Opcode == ARM::MSRsysi) {
+  // MSRi take a mask, followed by one so_imm operand. The mask contains the
+  // R Bit in bit 4, and the special register fields in bits 3-0.
+  if (Opcode == ARM::MSRi) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 22, 22) << 4 /* R Bit */ |
+                                       slice(insn, 19, 16) /* Special Reg */ ));
     // SOImm is 4-bit rotate amount in bits 11-8 with 8-bit imm in bits 7-0.
     // A5.2.4 Rotate amount is twice the numeric value of Inst{11-8}.
     // See also ARMAddressingModes.h: getSOImmValImm() and getSOImmValRot().
     unsigned Rot = (insn >> ARMII::SoRotImmShift) & 0xF;
     unsigned Imm = insn & 0xFF;
     MI.addOperand(MCOperand::CreateImm(ARM_AM::rotr32(Imm, 2*Rot)));
-    MI.addOperand(MCOperand::CreateImm(slice(insn, 19, 16)));
     NumOpsAdded = 2;
     return true;
   }

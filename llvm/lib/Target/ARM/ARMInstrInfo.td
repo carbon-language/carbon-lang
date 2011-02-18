@@ -3856,6 +3856,7 @@ def MRRC2 : MovRRCopro2<"mrrc2", 1 /* from coprocessor to ARM core register */>;
 // Move between special register and ARM core register -- for disassembly only
 //
 
+// Move to ARM core register from Special Register
 def MRS : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, cpsr",
               [/* For disassembly only; pattern left blank */]> {
   bits<4> Rd;
@@ -3872,30 +3873,37 @@ def MRSsys : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,"mrs","\t$Rd, spsr",
   let Inst{7-4} = 0b0000;
 }
 
-def MSR : ABI<0b0001, (outs), (ins GPR:$src, msr_mask:$mask), NoItinerary,
-              "msr", "\tcpsr$mask, $src",
+// Move from ARM core register to Special Register
+//
+// No need to have both system and application versions, the encodings are the
+// same and the assembly parser has no way to distinguish between them. The mask
+// operand contains the special register (R Bit) in bit 4 and bits 3-0 contains
+// the mask with the fields to be accessed in the special register.
+def MSR : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
+              "msr", "\t$mask, $Rn",
               [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0010;
-  let Inst{7-4} = 0b0000;
+  bits<5> mask;
+  bits<4> Rn;
+
+  let Inst{23} = 0;
+  let Inst{22} = mask{4}; // R bit
+  let Inst{21-20} = 0b10;
+  let Inst{19-16} = mask{3-0};
+  let Inst{15-12} = 0b1111;
+  let Inst{11-4} = 0b00000000;
+  let Inst{3-0} = Rn;
 }
 
-def MSRi : ABI<0b0011, (outs), (ins so_imm:$a, msr_mask:$mask), NoItinerary,
-              "msr", "\tcpsr$mask, $a",
-              [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0010;
-  let Inst{7-4} = 0b0000;
-}
+def MSRi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
+               "msr", "\t$mask, $a",
+               [/* For disassembly only; pattern left blank */]> {
+  bits<5> mask;
+  bits<12> a;
 
-def MSRsys : ABI<0b0001, (outs), (ins GPR:$src, msr_mask:$mask), NoItinerary,
-              "msr", "\tspsr$mask, $src",
-              [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0110;
-  let Inst{7-4} = 0b0000;
-}
-
-def MSRsysi : ABI<0b0011, (outs), (ins so_imm:$a, msr_mask:$mask), NoItinerary,
-              "msr", "\tspsr$mask, $a",
-              [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0110;
-  let Inst{7-4} = 0b0000;
+  let Inst{23} = 0;
+  let Inst{22} = mask{4}; // R bit
+  let Inst{21-20} = 0b10;
+  let Inst{19-16} = mask{3-0};
+  let Inst{15-12} = 0b1111;
+  let Inst{11-0} = a;
 }
