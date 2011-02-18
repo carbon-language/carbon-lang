@@ -94,3 +94,6 @@ add_llvm_library(LLVMCodeGen
   VirtRegMap.cpp
   VirtRegRewriter.cpp
   )
+
+add_subdirectory(SelectionDAG)
+add_subdirectory(AsmPrinter)

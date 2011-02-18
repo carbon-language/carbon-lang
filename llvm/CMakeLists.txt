@@ -195,10 +195,8 @@ if( MINGW )
   llvm_replace_compiler_option(CMAKE_CXX_FLAGS_RELEASE "-O3" "-O2")
 endif()
 
+# Put this before tblgen. Else we have a circular dependence.
 add_subdirectory(lib/Support)
-
-# Everything else depends on Support:
-set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${LLVM_LIBS} )
 
 set(LLVM_TABLEGEN "tblgen" CACHE
   STRING "Native TableGen executable. Saves building one when cross-compiling.")
@@ -214,89 +212,13 @@ endif( CMAKE_CROSSCOMPILING )
 
 add_subdirectory(include/llvm)
 
-add_subdirectory(lib/VMCore)
-add_subdirectory(lib/CodeGen)
-add_subdirectory(lib/CodeGen/SelectionDAG)
-add_subdirectory(lib/CodeGen/AsmPrinter)
-add_subdirectory(lib/Bitcode/Reader)
-add_subdirectory(lib/Bitcode/Writer)
-add_subdirectory(lib/Transforms/Utils)
-add_subdirectory(lib/Transforms/Instrumentation)
-add_subdirectory(lib/Transforms/InstCombine)
-add_subdirectory(lib/Transforms/Scalar)
-add_subdirectory(lib/Transforms/IPO)
-add_subdirectory(lib/Transforms/Hello)
-add_subdirectory(lib/Linker)
-add_subdirectory(lib/Analysis)
-add_subdirectory(lib/Analysis/IPA)
-add_subdirectory(lib/MC)
-add_subdirectory(lib/MC/MCParser)
-add_subdirectory(lib/MC/MCDisassembler)
-add_subdirectory(lib/Object)
+add_subdirectory(lib)
 
 add_subdirectory(utils/FileCheck)
 add_subdirectory(utils/FileUpdate)
 add_subdirectory(utils/count)
 add_subdirectory(utils/not)
 add_subdirectory(utils/llvm-lit)
-
-set(LLVM_ENUM_ASM_PRINTERS "")
-set(LLVM_ENUM_ASM_PARSERS "")
-set(LLVM_ENUM_DISASSEMBLERS "")
-foreach(t ${LLVM_TARGETS_TO_BUILD})
-  message(STATUS "Targeting ${t}")
-  add_subdirectory(lib/Target/${t})
-  add_subdirectory(lib/Target/${t}/TargetInfo)
-  set( td ${LLVM_MAIN_SRC_DIR}/lib/Target/${t} )
-  file(GLOB asmp_file "${td}/*AsmPrinter.cpp")
-  if( asmp_file )
-    set(LLVM_ENUM_ASM_PRINTERS
-      "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
-  endif()
-  if( EXISTS ${td}/InstPrinter/CMakeLists.txt )
-    add_subdirectory(lib/Target/${t}/InstPrinter)
-  endif()
-  if( EXISTS ${td}/AsmParser/CMakeLists.txt )
-    add_subdirectory(lib/Target/${t}/AsmParser)
-    set(LLVM_ENUM_ASM_PARSERS
-      "${LLVM_ENUM_ASM_PARSERS}LLVM_ASM_PARSER(${t})\n")
-  endif()
-  if( EXISTS ${td}/Disassembler/CMakeLists.txt )
-    add_subdirectory(lib/Target/${t}/Disassembler)
-    set(LLVM_ENUM_DISASSEMBLERS
-      "${LLVM_ENUM_DISASSEMBLERS}LLVM_DISASSEMBLER(${t})\n")
-  endif()
-  if( EXISTS ${td}/Utils/CMakeLists.txt )
-    add_subdirectory(${td}/Utils)
-  endif()
-  set(CURRENT_LLVM_TARGET)
-endforeach(t)
-
-# Produce llvm/Config/AsmPrinters.def
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmPrinters.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmPrinters.def
-  )
-
-# Produce llvm/Config/AsmParsers.def
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmParsers.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmParsers.def
-  )
-
-# Produce llvm/Config/Disassemblers.def
-configure_file(
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Disassemblers.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/Disassemblers.def
-  )
-
-add_subdirectory(lib/ExecutionEngine)
-add_subdirectory(lib/ExecutionEngine/Interpreter)
-add_subdirectory(lib/ExecutionEngine/JIT)
-add_subdirectory(lib/ExecutionEngine/MCJIT)
-add_subdirectory(lib/Target)
-add_subdirectory(lib/AsmParser)
-add_subdirectory(lib/Archive)
 
 add_subdirectory(projects)
 

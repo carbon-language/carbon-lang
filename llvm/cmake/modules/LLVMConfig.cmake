@@ -59,6 +59,7 @@ endfunction(llvm_map_components_to_libraries)
 
 function(explicit_map_components_to_libraries out_libs)
   set( link_components ${ARGN} )
+  get_property(llvm_libs GLOBAL PROPERTY LLVM_LIBS)
   string(TOUPPER "${llvm_libs}" capitalized_libs)
   # Translate symbolic component names to real libraries:
   foreach(c ${link_components})

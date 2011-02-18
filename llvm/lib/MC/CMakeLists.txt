@@ -34,3 +34,6 @@ add_llvm_library(LLVMMC
   WinCOFFObjectWriter.cpp
   TargetAsmBackend.cpp
   )
+
+add_subdirectory(MCParser)
+add_subdirectory(MCDisassembler)

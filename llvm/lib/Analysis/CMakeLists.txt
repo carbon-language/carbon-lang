@@ -56,3 +56,5 @@ add_llvm_library(LLVMAnalysis
   TypeBasedAliasAnalysis.cpp
   ValueTracking.cpp
   )
+
+add_subdirectory(IPA)
