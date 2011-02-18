@@ -78,6 +78,7 @@ MutexImpl::MutexImpl( bool recursive)
 #if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__)
     // Make it a process local mutex
     errorcode = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
+    assert(errorcode == 0);
 #endif
 
     // Initialize the mutex
