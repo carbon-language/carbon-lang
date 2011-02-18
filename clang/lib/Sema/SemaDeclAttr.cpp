@@ -1603,7 +1603,8 @@ static FormatAttrKind getFormatAttrKind(llvm::StringRef Format) {
   if (Format == "scanf" || Format == "printf" || Format == "printf0" ||
       Format == "strfmon" || Format == "cmn_err" || Format == "strftime" ||
       Format == "NSString" || Format == "CFString" || Format == "vcmn_err" ||
-      Format == "zcmn_err")
+      Format == "zcmn_err" ||
+      Format == "kprintf")  // OpenBSD.
     return SupportedFormat;
 
   if (Format == "gcc_diag" || Format == "gcc_cdiag" ||
