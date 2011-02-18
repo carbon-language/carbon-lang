@@ -215,7 +215,9 @@ add_subdirectory(tools)
 add_subdirectory(runtime)
 
 # TODO: docs.
+if( LLVM_INCLUDE_TESTS )
 add_subdirectory(test)
+endif()
 
 # FIXME: unittests require gtest.
 if( NOT CLANG_BUILT_STANDALONE )
