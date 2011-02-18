@@ -1014,9 +1014,6 @@ public:
   }
   virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const;
-  virtual const llvm::Type* adjustInlineAsmType(std::string& Constraint,
-                                     const llvm::Type* Ty,
-                                     llvm::LLVMContext& Context) const;
   virtual std::string convertConstraint(const char Constraint) const;
   virtual const char *getClobbers() const {
     return "~{dirflag},~{fpsr},~{flags}";
@@ -1339,15 +1336,6 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
     return true;
   }
   return false;
-}
-
-const llvm::Type*
-X86TargetInfo::adjustInlineAsmType(std::string& Constraint,
-                                   const llvm::Type* Ty,
-                                   llvm::LLVMContext &Context) const {
-  if (Constraint=="y" && Ty->isVectorTy())
-    return llvm::Type::getX86_MMXTy(Context);
-  return Ty;
 }
 
 
