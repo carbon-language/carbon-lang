@@ -53,7 +53,7 @@ public:
     /// ClassScope - The scope of a struct/union/class definition.
     ClassScope = 0x20,
 
-    /// BlockScope - This is a scope that corresponds to a block object.
+    /// BlockScope - This is a scope that corresponds to a block/closure object.
     /// Blocks serve as top-level scopes for some objects like labels, they
     /// also prevent things like break and continue.  BlockScopes always have
     /// the FnScope, BreakScope, ContinueScope, and DeclScope flags set as well.
@@ -146,8 +146,7 @@ public:
   unsigned getFlags() const { return Flags; }
   void setFlags(unsigned F) { Flags = F; }
 
-  /// isBlockScope - Return true if this scope does not correspond to a
-  /// closure.
+  /// isBlockScope - Return true if this scope correspond to a closure.
   bool isBlockScope() const { return Flags & BlockScope; }
 
   /// getParent - Return the scope that this is nested in.

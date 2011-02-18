@@ -1344,6 +1344,8 @@ public:
     /// Tag name lookup, which finds the names of enums, classes,
     /// structs, and unions.
     LookupTagName,
+    /// Label name lookup.
+    LookupLabel,
     /// Member name lookup, which finds the names of
     /// class/struct/union members.
     LookupMemberName,
@@ -1412,6 +1414,8 @@ public:
                                     QualType T1, QualType T2,
                                     UnresolvedSetImpl &Functions);
 
+  LabelDecl *LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc);
+  
   DeclContextLookupResult LookupConstructors(CXXRecordDecl *Class);
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
@@ -1715,9 +1719,6 @@ public:
   StmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                       SourceLocation ColonLoc,
                                       Stmt *SubStmt, Scope *CurScope);
-  StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                            SourceLocation ColonLoc, Stmt *SubStmt,
-                            AttributeList *Attr);
   StmtResult ActOnLabelStmt(SourceLocation IdentLoc, LabelDecl *TheDecl,
                             SourceLocation ColonLoc, Stmt *SubStmt);
     
@@ -1750,9 +1751,6 @@ public:
                                         Stmt *First, Expr *Second,
                                         SourceLocation RParenLoc, Stmt *Body);
 
-  StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
-                           SourceLocation LabelLoc,
-                           IdentifierInfo *LabelII);
   StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                            SourceLocation LabelLoc,
                            LabelDecl *TheDecl);
@@ -2078,11 +2076,7 @@ public:
                                 Expr *Cond, Expr *LHS, Expr *RHS);
 
   /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
-  ExprResult ActOnAddrLabel(SourceLocation OpLoc,
-                            SourceLocation LabLoc,
-                            IdentifierInfo *LabelII);
-  ExprResult ActOnAddrLabel(SourceLocation OpLoc,
-                            SourceLocation LabLoc,
+  ExprResult ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
                             LabelDecl *LD);
   
   ExprResult ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,

@@ -52,11 +52,6 @@ public:
   /// \brief Used to determine if errors occurred in this function or block.
   DiagnosticErrorTrap ErrorTrap;
 
-  /// LabelMap - This is a mapping from label identifiers to the LabelDecl for
-  /// it.  Forward referenced labels have a LabelDecl created for them with a
-  /// null statement.
-  llvm::DenseMap<IdentifierInfo*, LabelDecl*> LabelMap;
-
   /// SwitchStack - This is the current set of active switch statements in the
   /// block.
   llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
@@ -92,11 +87,6 @@ public:
 
   virtual ~FunctionScopeInfo();
 
-  /// checkLabelUse - This checks to see if any labels are used without being
-  /// defined, emiting errors and returning true if any are found.  This also
-  /// warns about unused labels.
-  bool checkLabelUse(Stmt *Body, Sema &S);
-  
   /// \brief Clear out the information in this function scope, making it
   /// suitable for reuse.
   void Clear();

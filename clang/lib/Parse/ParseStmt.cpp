@@ -236,10 +236,14 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributes &attrs) {
   // Broken substmt shouldn't prevent the label from being added to the AST.
   if (SubStmt.isInvalid())
     SubStmt = Actions.ActOnNullStmt(ColonLoc);
-
-  return Actions.ActOnLabelStmt(IdentTok.getLocation(),
-                                IdentTok.getIdentifierInfo(),
-                                ColonLoc, SubStmt.get(), attrs.getList());
+  
+  LabelDecl *LD = Actions.LookupOrCreateLabel(IdentTok.getIdentifierInfo(),
+                                              IdentTok.getLocation());
+  if (AttributeList *Attrs = attrs.getList())
+    Actions.ProcessDeclAttributeList(Actions.CurScope, LD, Attrs);
+  
+  return Actions.ActOnLabelStmt(IdentTok.getLocation(), LD, ColonLoc,
+                                SubStmt.get());
 }
 
 /// ParseCaseStatement
@@ -1168,8 +1172,9 @@ StmtResult Parser::ParseGotoStatement(ParsedAttributes &attrs) {
 
   StmtResult Res;
   if (Tok.is(tok::identifier)) {
-    Res = Actions.ActOnGotoStmt(GotoLoc, Tok.getLocation(),
-                                Tok.getIdentifierInfo());
+    LabelDecl *LD = Actions.LookupOrCreateLabel(Tok.getIdentifierInfo(),
+                                                Tok.getLocation());
+    Res = Actions.ActOnGotoStmt(GotoLoc, Tok.getLocation(), LD);
     ConsumeToken();
   } else if (Tok.is(tok::star)) {
     // GNU indirect goto extension.

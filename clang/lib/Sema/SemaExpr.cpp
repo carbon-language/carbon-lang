@@ -1566,8 +1566,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       Name.getCXXNameType()->isDependentType()) {
     DependentID = true;
   } else if (SS.isSet()) {
-    DeclContext *DC = computeDeclContext(SS, false);
-    if (DC) {
+    if (DeclContext *DC = computeDeclContext(SS, false)) {
       if (RequireCompleteDeclContext(SS, DC))
         return ExprError();
     } else {
@@ -1575,10 +1574,10 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
     }
   }
 
-  if (DependentID) {
+  if (DependentID)
     return ActOnDependentIdExpression(SS, NameInfo, isAddressOfOperand,
                                       TemplateArgs);
-  }
+
   bool IvarLookupFollowUp = false;
   // Perform the required lookup.
   LookupResult R(*this, NameInfo, LookupOrdinaryName);
@@ -1613,9 +1612,10 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       if (E.isInvalid())
         return ExprError();
 
-      Expr *Ex = E.takeAs<Expr>();
-      if (Ex) return Owned(Ex);
-      // Synthesize ivars lazily
+      if (Expr *Ex = E.takeAs<Expr>())
+        return Owned(Ex);
+      
+      // Synthesize ivars lazily.
       if (getLangOptions().ObjCDefaultSynthProperties &&
           getLangOptions().ObjCNonFragileABI2) {
         if (SynthesizeProvisionalIvar(*this, R, II, NameLoc)) {
@@ -8354,18 +8354,6 @@ ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
 
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
 ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
-                                IdentifierInfo *LabelII) {
-  // Look up the record for this label identifier.
-  LabelDecl *&TheDecl = getCurFunction()->LabelMap[LabelII];
-
-  // If we haven't seen this label yet, create a forward reference. It
-  // will be validated and/or cleaned up in ActOnFinishFunctionBody.
-  if (TheDecl == 0)
-    TheDecl = LabelDecl::Create(Context, CurContext, LabLoc, LabelII);
-  return ActOnAddrLabel(OpLoc, LabLoc, TheDecl);
-}
-
-ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
                                 LabelDecl *TheDecl) {
   TheDecl->setUsed();
   // Create the AST node.  The address of a label always has type 'void*'.
@@ -8866,9 +8854,6 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   if (getCurFunction()->NeedsScopeChecking() && !hasAnyErrorsInThisFunction())
     DiagnoseInvalidJumps(cast<CompoundStmt>(Body));
 
-  // Check goto/label use.
-  BSI->checkLabelUse(Body, *this);
-  
   BSI->TheDecl->setBody(cast<CompoundStmt>(Body));
 
   BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);

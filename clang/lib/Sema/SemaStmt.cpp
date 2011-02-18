@@ -48,9 +48,8 @@ StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc, bool LeadingEmptyMacro) {
   return Owned(new (Context) NullStmt(SemiLoc, LeadingEmptyMacro));
 }
 
-StmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
-                                           SourceLocation StartLoc,
-                                           SourceLocation EndLoc) {
+StmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg, SourceLocation StartLoc,
+                               SourceLocation EndLoc) {
   DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
 
   // If we have an invalid decl, just return an error.
@@ -229,25 +228,6 @@ Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
   DefaultStmt *DS = new (Context) DefaultStmt(DefaultLoc, ColonLoc, SubStmt);
   getCurFunction()->SwitchStack.back()->addSwitchCase(DS);
   return Owned(DS);
-}
-
-StmtResult
-Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                     SourceLocation ColonLoc, Stmt *SubStmt,
-                     AttributeList *Attr) {
-  // Look up the record for this label identifier.
-  LabelDecl *&TheDecl = getCurFunction()->LabelMap[II];
-
-  // If not forward referenced or defined already, create the backing decl.
-  if (TheDecl == 0)
-    TheDecl = LabelDecl::Create(Context, CurContext, IdentLoc, II);
-
-  assert(TheDecl->getIdentifier() == II && "Label mismatch!");
-
-  if (Attr)
-    ProcessDeclAttributeList(CurScope, TheDecl, Attr);
-  
-  return ActOnLabelStmt(IdentLoc, TheDecl, ColonLoc, SubStmt);
 }
 
 StmtResult
@@ -1021,19 +1001,6 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
   }
   return Owned(new (Context) ObjCForCollectionStmt(First, Second, Body,
                                                    ForLoc, RParenLoc));
-}
-
-StmtResult
-Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
-                    IdentifierInfo *LabelII) {
-  // Look up the record for this label identifier.
-  LabelDecl *&TheDecl = getCurFunction()->LabelMap[LabelII];
-
-  // If we haven't seen this label yet, create a forward reference.
-  if (TheDecl == 0)
-    TheDecl = LabelDecl::Create(Context, CurContext, LabelLoc, LabelII);
-
-  return ActOnGotoStmt(GotoLoc, LabelLoc, TheDecl);
 }
 
 StmtResult Sema::ActOnGotoStmt(SourceLocation GotoLoc,

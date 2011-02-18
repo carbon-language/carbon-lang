@@ -210,7 +210,8 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
     IDNS = Decl::IDNS_Ordinary;
     if (CPlusPlus) {
       IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member | Decl::IDNS_Namespace;
-      if (Redeclaration) IDNS |= Decl::IDNS_TagFriend | Decl::IDNS_OrdinaryFriend;
+      if (Redeclaration)
+        IDNS |= Decl::IDNS_TagFriend | Decl::IDNS_OrdinaryFriend;
     }
     break;
 
@@ -236,7 +237,10 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
       IDNS = Decl::IDNS_Tag;
     }
     break;
-
+  case Sema::LookupLabel:
+    IDNS = Decl::IDNS_Label;
+    break;
+      
   case Sema::LookupMemberName:
     IDNS = Decl::IDNS_Member;
     if (CPlusPlus)
@@ -270,8 +274,7 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
 }
 
 void LookupResult::configure() {
-  IDNS = getIDNS(LookupKind,
-                 SemaRef.getLangOptions().CPlusPlus,
+  IDNS = getIDNS(LookupKind, SemaRef.getLangOptions().CPlusPlus,
                  isForRedeclaration());
 
   // If we're looking for one of the allocation or deallocation
@@ -1059,7 +1062,6 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
   if (!getLangOptions().CPlusPlus) {
     // Unqualified name lookup in C/Objective-C is purely lexical, so
     // search in the declarations attached to the name.
-
     if (NameKind == Sema::LookupRedeclarationWithLinkage) {
       // Find the nearest non-transparent declaration scope.
       while (!(S->getFlags() & Scope::DeclScope) ||
@@ -1392,6 +1394,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
     case LookupOperatorName:
     case LookupNamespaceName:
     case LookupObjCProtocolName:
+    case LookupLabel:
       // These lookups will never find a member in a C++ class (or base class).
       return false;
 
@@ -2757,9 +2760,27 @@ void Sema::LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
                        /*InBaseClass=*/false, Consumer, Visited);
 }
 
-//----------------------------------------------------------------------------
+LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc) {
+  // Do a lookup to see if we have a label with this name already.
+  NamedDecl *Res = LookupSingleName(CurScope, II, Loc, LookupLabel,
+                                    NotForRedeclaration);
+  // If we found a label, check to see if it is in the same context as us.  When
+  // in a Block, we don't want to reuse a label in an enclosing function.
+  if (Res && Res->getDeclContext() != CurContext)
+    Res = 0;
+  
+  if (Res == 0) {
+    // If not forward referenced or defined already, create the backing decl.
+    Res = LabelDecl::Create(Context, CurContext, Loc, II);
+    PushOnScopeChains(Res, CurScope->getFnParent(), true);
+  }
+  
+  return cast<LabelDecl>(Res);
+}
+
+//===----------------------------------------------------------------------===//
 // Typo correction
-//----------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 
 namespace {
 class TypoCorrectionConsumer : public VisibleDeclConsumer {

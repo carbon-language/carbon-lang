@@ -1710,7 +1710,6 @@ Decl *Sema::ActOnMethodDeclaration(
   // Make sure we can establish a context for the method.
   if (!ClassDecl) {
     Diag(MethodLoc, diag::error_missing_method_context);
-    getCurFunction()->LabelMap.clear();
     return 0;
   }
   QualType resultDeclType;
