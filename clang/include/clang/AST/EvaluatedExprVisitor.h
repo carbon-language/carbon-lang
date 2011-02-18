@@ -72,7 +72,8 @@ public:
   /// expression, assuming they are all potentially evaluated.
   void VisitStmt(Stmt *S) {
     for (Stmt::child_range C = S->children(); C; ++C)
-      this->Visit(*C);
+      if (*C)
+        this->Visit(*C);
   }
 };
 
