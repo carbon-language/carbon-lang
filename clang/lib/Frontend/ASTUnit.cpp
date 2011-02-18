@@ -333,8 +333,8 @@ void ASTUnit::CacheCodeCompletionResults() {
         | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
         | (1 << (CodeCompletionContext::CCC_MacroNameUse - 1))
         | (1 << (CodeCompletionContext::CCC_PreprocessorExpression - 1))
-        | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1));
-
+        | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
+        | (1 << (CodeCompletionContext::CCC_OtherWithMacros - 1));
       
       CachedResult.Priority = Results[I].Priority;
       CachedResult.Kind = Results[I].CursorKind;
@@ -1790,6 +1790,7 @@ static void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_SelectorName:
   case CodeCompletionContext::CCC_TypeQualifiers:
   case CodeCompletionContext::CCC_Other:
+  case CodeCompletionContext::CCC_OtherWithMacros:
     // We're looking for nothing, or we're looking for names that cannot
     // be hidden.
     return;

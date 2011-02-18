@@ -3331,15 +3331,16 @@ void Sema::CodeCompleteCase(Scope *S) {
     if (EnumeratorsSeen.count(*E))
       continue;
     
-    Results.AddResult(CodeCompletionResult(*E, Qualifier),
-                      CurContext, 0, false);
+    CodeCompletionResult R(*E, Qualifier);
+    R.Priority = CCP_EnumInCase;
+    Results.AddResult(R, CurContext, 0, false);
   }
   Results.ExitScope();
 
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Expression,
+                            CodeCompletionContext::CCC_OtherWithMacros,
                             Results.data(),Results.size());
 }
 

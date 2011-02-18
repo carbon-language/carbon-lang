@@ -36,6 +36,9 @@ enum {
   /// \brief Priority for the next initialization in a constructor initializer
   /// list.
   CCP_NextInitializer = 7,
+  /// \brief Priority for an enumeration constant inside a switch whose 
+  /// condition is of the enumeration type.
+  CCP_EnumInCase = 7,
   /// \brief Priority for a send-to-super completion.
   CCP_SuperCompletion = 20,
   /// \brief Priority for a declaration that is in the local scope.
@@ -153,6 +156,9 @@ public:
   enum Kind {
     /// \brief An unspecified code-completion context.
     CCC_Other,
+    /// \brief An unspecified code-completion context where we should also add
+    /// macro completions.
+    CCC_OtherWithMacros,
     /// \brief Code completion occurred within a "top-level" completion context,
     /// e.g., at namespace or global scope.
     CCC_TopLevel,

@@ -63,6 +63,7 @@ bool CodeCompletionContext::wantConstructorResults() const {
   case CCC_SelectorName:
   case CCC_TypeQualifiers:
   case CCC_Other:
+  case CCC_OtherWithMacros:
     return false;
   }
   
