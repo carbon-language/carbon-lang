@@ -164,7 +164,7 @@ public:
   }
 
   inline const llvm::APSInt& getTruthValue(bool b) {
-    return getTruthValue(b, Ctx.IntTy);
+    return getTruthValue(b, Ctx.getLogicalOperationType());
   }
 
   const CompoundValData *getCompoundValData(QualType T,
