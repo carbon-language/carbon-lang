@@ -1959,18 +1959,8 @@ EmulateInstructionARM::EmulateADDImmARM (ARMEncoding encoding)
             return false;
         }
 
-        int32_t val1;
         // Read the first operand.
-        if (Rn == 15)
-        {
-            val1 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
-            if (encoding == eEncodingT1 || encoding == eEncodingT2)
-                val1 += 4;
-            else
-                val1 += 8;
-        }
-        else
-            val1 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+        uint32_t val1 = ReadCoreReg(Rn, &success);
         if (!success)
             return false;
 
@@ -2050,32 +2040,13 @@ EmulateInstructionARM::EmulateADDReg (ARMEncoding encoding)
             return false;
         }
 
-        int32_t val1, val2;
         // Read the first operand.
-        if (Rn == 15)
-        {
-            val1 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
-            if (encoding == eEncodingT1 || encoding == eEncodingT2)
-                val1 += 4;
-            else
-                val1 += 8;
-        }
-        else
-            val1 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+        uint32_t val1 = ReadCoreReg(Rn, &success);
         if (!success)
             return false;
 
         // Read the second operand.
-        if (Rm == 15)
-        {
-            val2 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
-            if (encoding == eEncodingT1 || encoding == eEncodingT2)
-                val1 += 4;
-            else
-                val1 += 8;
-        }
-        else
-            val2 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        uint32_t val2 = ReadCoreReg(Rm, &success);
         if (!success)
             return false;
 
@@ -4261,6 +4232,166 @@ EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
     return true;
 }
                   
+// Add with Carry (immediate) adds an immediate value and the carry flag value to a register value,
+// and writes the result to the destination register.  It can optionally update the condition flags
+// based on the result.
+bool
+EmulateInstructionARM::EmulateADCImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(R[n], imm32, APSR.C);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd, Rn;
+        uint32_t imm32; // the immediate value to be added to the value obtained from Rn
+        bool setflags;
+        switch (encoding)
+        {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 11, 8);
+            Rn = Bits32(opcode, 19, 16);
+            setflags = BitIsSet(opcode, 20);
+            imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
+            if (BadReg(Rd) || BadReg(Rn))
+                return false;
+            break;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            Rn = Bits32(opcode, 19, 16);
+            setflags = BitIsSet(opcode, 20);
+            imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+            // TODO: Emulate SUBS PC, LR and related instructions.
+            if (Rd == 15 && setflags)
+                return false;
+            break;
+        default:
+            return false;
+        }
+
+        // Read the first operand.
+        int32_t val1 = ReadCoreReg(Rn, &success);
+        if (!success)
+            return false;
+
+        AddWithCarryResult res = AddWithCarry(val1, imm32, APSR_C);
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+            return false;
+    }
+    return true;
+}
+
+// Add with Carry (register) adds a register value, the carry flag value, and an optionally-shifted
+// register value, and writes the result to the destination register.  It can optionally update the
+// condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateADCReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(R[n], shifted, APSR.C);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd, Rn, Rm;
+        ARM_ShifterType shift_t;
+        uint32_t shift_n; // the shift applied to the value read from Rm
+        bool setflags;
+        switch (encoding)
+        {
+        case eEncodingT1:
+            Rd = Rn = Bits32(opcode, 2, 0);
+            Rm = Bits32(opcode, 5, 3);
+            setflags = !InITBlock();
+            shift_t = SRType_LSL;
+            shift_n = 0;
+        case eEncodingT2:
+            Rd = Bits32(opcode, 11, 8);
+            Rn = Bits32(opcode, 19, 16);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+            if (BadReg(Rd) || BadReg(Rn) || BadReg(Rm))
+                return false;
+            break;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            Rn = Bits32(opcode, 19, 16);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            // TODO: Emulate SUBS PC, LR and related instructions.
+            if (Rd == 15 && setflags)
+                return false;
+            break;
+        default:
+            return false;
+        }
+
+        // Read the first operand.
+        int32_t val1 = ReadCoreReg(Rn, &success);
+        if (!success)
+            return false;
+
+        // Read the second operand.
+        int32_t val2 = ReadCoreReg(Rm, &success);
+        if (!success)
+            return false;
+
+        uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+        AddWithCarryResult res = AddWithCarry(val1, shifted, APSR_C);
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+            return false;
+    }
+    return true;
+}
+
 // This instruction performs a bitwise AND of a register value and an immediate value, and writes the result
 // to the destination register.  It can optionally update the condition flags based on the result.
 bool
@@ -4319,18 +4450,8 @@ EmulateInstructionARM::EmulateANDImm (ARMEncoding encoding)
             return false;
         }
 
-        int32_t val1;
         // Read the first operand.
-        if (Rn == 15)
-        {
-            val1 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
-            if (encoding == eEncodingT1)
-                val1 += 4;
-            else
-                val1 += 8;
-        }
-        else
-            val1 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+        uint32_t val1 = ReadCoreReg(Rn, &success);
         if (!success)
             return false;
 
@@ -4394,7 +4515,7 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12) << 2 | Bits32(opcode, 7, 6), shift_t);
+            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
             // TODO: Emulate TST (register)
             if (Rd == 15 && setflags)
                 return false;
@@ -4415,32 +4536,13 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
             return false;
         }
 
-        int32_t val1, val2;
         // Read the first operand.
-        if (Rn == 15)
-        {
-            val1 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
-            if (encoding == eEncodingT1 || encoding == eEncodingT2)
-                val1 += 4;
-            else
-                val1 += 8;
-        }
-        else
-            val1 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+        uint32_t val1 = ReadCoreReg(Rn, &success);
         if (!success)
             return false;
 
         // Read the second operand.
-        if (Rm == 15)
-        {
-            val2 = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
-            if (encoding == eEncodingT1 || encoding == eEncodingT2)
-                val1 += 4;
-            else
-                val1 += 8;
-        }
-        else
-            val2 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        uint32_t val2 = ReadCoreReg(Rm, &success);
         if (!success)
             return false;
 
@@ -5008,16 +5110,20 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Data-processing instructions
         //----------------------------------------------------------------------
+        // adc (immediate)
+        { 0x0fe00000, 0x02a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADCImm, "adc{s}<c> <Rd>, <Rn>, #const"},
+        // adc (register)
+        { 0x0fe00010, 0x00a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADCReg, "adc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // add (immediate)
-        { 0x0fe00000, 0x02800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDImmARM, "add{s} <Rd>, <Rn>, #const"},
+        { 0x0fe00000, 0x02800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDImmARM, "add{s}<c> <Rd>, <Rn>, #const"},
         // add (register)
-        { 0x0fe00010, 0x00800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDReg, "add{s} <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDReg, "add{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // and (immediate)
-        { 0x0fe00000, 0x02000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s} <Rd>, <Rn>, #const"},
+        { 0x0fe00000, 0x02000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #const"},
         // and (register)
-        { 0x0fe00010, 0x00000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s} <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // move bitwise not
-        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNRdImm, "mvn{s} <Rd>, #<const>"},
+        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNRdImm, "mvn{s}<c> <Rd>, #<const>"},
         // asr (immediate)
         { 0x0fef0070, 0x01a00040, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c> <Rd>, <Rm>, #imm"},
         // asr (register)
@@ -5151,12 +5257,17 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Data-processing instructions
         //----------------------------------------------------------------------
+        // adc (immediate)
+        { 0xfbe08000, 0xf1400000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateADCImm, "adc{s}<c> <Rd>, <Rn>, #<const>"},
+        // adc (register)
+        { 0xffffffc0, 0x00004140, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADCReg, "adcs|adc<c> <Rdn>, <Rm>"},
+        { 0xffe08000, 0xeb400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateADCReg, "adc{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // add (register)
         { 0xfffffe00, 0x00001800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDReg, "adds|add<c> <Rd>, <Rn>, <Rm>"},
         // Make sure "add sp, <Rm>" comes before this instruction, so there's no ambiguity decoding the two.
-        // Can update PC!
         { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDReg, "add<c> <Rdn>, <Rm>"},
         // and (immediate)
-        { 0xfbe08000, 0xf0000000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s} <Rd>, <Rn>, #<const>"},
+        { 0xfbe08000, 0xf0000000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #<const>"},
         // and (register)
         { 0xffffffc0, 0x00004000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateANDReg, "ands|and<c> <Rdn>, <Rm>"},
         { 0xffe08000, 0xea000000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
@@ -5547,6 +5658,24 @@ EmulateInstructionARM::AddWithCarry (uint32_t x, uint32_t y, uint8_t carry_in)
     
     AddWithCarryResult res = { result, carry_out, overflow };
     return res;
+}
+
+uint32_t
+EmulateInstructionARM::ReadCoreReg(uint32_t regnum, bool *success)
+{
+    uint32_t val;
+    if (regnum == 15)
+    {
+        val = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, success);
+        if (CurrentInstrSet() == eModeThumb)
+            val += 4;
+        else
+            val += 8;
+    }
+    else
+        val = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + regnum, 0, success);
+
+    return val;
 }
 
 // Write the result to the ARM core register Rd, and optionally update the

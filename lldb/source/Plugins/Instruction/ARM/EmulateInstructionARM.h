@@ -192,6 +192,10 @@ public:
     AddWithCarryResult
     AddWithCarry(uint32_t x, uint32_t y, uint8_t carry_in);
 
+    // Helper method to read the content of an ARM core register.
+    uint32_t
+    ReadCoreReg (uint32_t regnum, bool *success);
+
     // See A8.6.96 MOV (immediate) Operation.
     // Default arguments are specified for carry and overflow parameters, which means
     // not to update the respective flags even if setflags is true.
@@ -519,11 +523,11 @@ protected:
     
     // A8.6.1 ADC (immediate)
     bool
-    EmulateADCImmediate (ARMEncoding encoding);
+    EmulateADCImm (ARMEncoding encoding);
     
     // A8.6.2 ADC (Register)
     bool
-    EmulateADCRegister (ARMEncoding encoding);
+    EmulateADCReg (ARMEncoding encoding);
     
     // A8.6.10 ADR
     bool
