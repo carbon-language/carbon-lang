@@ -67,7 +67,7 @@ namespace llvm {
                                                 bool OptimizeSize,
                                                 bool UnitAtATime,
                                                 bool UnrollLoops,
-                                                bool OptimizeBuiltins,
+                                                bool SimplifyLibCalls,
                                                 bool HaveExceptions,
                                                 Pass *InliningPass) {
     createStandardAliasAnalysisPasses(PM);
@@ -89,7 +89,7 @@ namespace llvm {
     
     // Start of CallGraph SCC passes.
     if (UnitAtATime && HaveExceptions)
-      PM->add(createPruneEHPass());           // Remove dead EH info
+      PM->add(createPruneEHPass());             // Remove dead EH info
     if (InliningPass)
       PM->add(InliningPass);
     if (UnitAtATime)
@@ -101,7 +101,7 @@ namespace llvm {
     // Break up aggregate allocas, using SSAUpdater.
     PM->add(createScalarReplAggregatesPass(-1, false));
     PM->add(createEarlyCSEPass());              // Catch trivial redundancies
-    if (OptimizeBuiltins)
+    if (SimplifyLibCalls)
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createJumpThreadingPass());         // Thread jumps.
     PM->add(createCorrelatedValuePropagationPass()); // Propagate conditionals
@@ -116,8 +116,7 @@ namespace llvm {
     PM->add(createLoopUnswitchPass(OptimizeSize || OptimizationLevel < 3));
     PM->add(createInstructionCombiningPass());  
     PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
-    if (OptimizeBuiltins)
-      PM->add(createLoopIdiomPass());           // Recognize idioms like memset.
+    PM->add(createLoopIdiomPass());             // Recognize idioms like memset.
     PM->add(createLoopDeletionPass());          // Delete dead loops
     if (UnrollLoops)
       PM->add(createLoopUnrollPass());          // Unroll small loops
