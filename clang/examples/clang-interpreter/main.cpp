@@ -17,7 +17,6 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Config/config.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -130,7 +129,6 @@ int main(int argc, const char **argv, char * const *envp) {
 
   // Create a compiler instance to handle the actual work.
   CompilerInstance Clang;
-  Clang.setLLVMContext(new llvm::LLVMContext);
   Clang.setInvocation(CI.take());
 
   // Create the compilers actual diagnostics engine.

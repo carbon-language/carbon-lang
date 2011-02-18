@@ -224,9 +224,15 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
 
 //
 
-CodeGenAction::CodeGenAction(unsigned _Act) : Act(_Act) {}
+CodeGenAction::CodeGenAction(unsigned _Act, LLVMContext *_VMContext)
+  : Act(_Act), VMContext(_VMContext ? _VMContext : new LLVMContext),
+    OwnsVMContext(!_VMContext) {}
 
-CodeGenAction::~CodeGenAction() {}
+CodeGenAction::~CodeGenAction() {
+  TheModule.reset();
+  if (OwnsVMContext)
+    delete VMContext;
+}
 
 bool CodeGenAction::hasIRSupport() const { return true; }
 
@@ -241,6 +247,11 @@ void CodeGenAction::EndSourceFileAction() {
 
 llvm::Module *CodeGenAction::takeModule() {
   return TheModule.take();
+}
+
+llvm::LLVMContext *CodeGenAction::takeLLVMContext() {
+  OwnsVMContext = false;
+  return VMContext;
 }
 
 static raw_ostream *GetOutputStream(CompilerInstance &CI,
@@ -275,7 +286,7 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
       new BackendConsumer(BA, CI.getDiagnostics(),
                           CI.getCodeGenOpts(), CI.getTargetOpts(),
                           CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
-                          CI.getLLVMContext());
+                          *VMContext);
   return BEConsumer;
 }
 
@@ -301,7 +312,7 @@ void CodeGenAction::ExecuteAction() {
                                            getCurrentFile().c_str());
 
     llvm::SMDiagnostic Err;
-    TheModule.reset(ParseIR(MainFileCopy, Err, CI.getLLVMContext()));
+    TheModule.reset(ParseIR(MainFileCopy, Err, *VMContext));
     if (!TheModule) {
       // Translate from the diagnostic info to the SourceManager location.
       SourceLocation Loc = SM.getLocation(
@@ -332,15 +343,20 @@ void CodeGenAction::ExecuteAction() {
 
 //
 
-EmitAssemblyAction::EmitAssemblyAction()
-  : CodeGenAction(Backend_EmitAssembly) {}
+EmitAssemblyAction::EmitAssemblyAction(llvm::LLVMContext *_VMContext)
+  : CodeGenAction(Backend_EmitAssembly, _VMContext) {}
 
-EmitBCAction::EmitBCAction() : CodeGenAction(Backend_EmitBC) {}
+EmitBCAction::EmitBCAction(llvm::LLVMContext *_VMContext)
+  : CodeGenAction(Backend_EmitBC, _VMContext) {}
 
-EmitLLVMAction::EmitLLVMAction() : CodeGenAction(Backend_EmitLL) {}
+EmitLLVMAction::EmitLLVMAction(llvm::LLVMContext *_VMContext)
+  : CodeGenAction(Backend_EmitLL, _VMContext) {}
 
-EmitLLVMOnlyAction::EmitLLVMOnlyAction() : CodeGenAction(Backend_EmitNothing) {}
+EmitLLVMOnlyAction::EmitLLVMOnlyAction(llvm::LLVMContext *_VMContext)
+  : CodeGenAction(Backend_EmitNothing, _VMContext) {}
 
-EmitCodeGenOnlyAction::EmitCodeGenOnlyAction() : CodeGenAction(Backend_EmitMCNull) {}
+EmitCodeGenOnlyAction::EmitCodeGenOnlyAction(llvm::LLVMContext *_VMContext)
+  : CodeGenAction(Backend_EmitMCNull, _VMContext) {}
 
-EmitObjAction::EmitObjAction() : CodeGenAction(Backend_EmitObj) {}
+EmitObjAction::EmitObjAction(llvm::LLVMContext *_VMContext)
+  : CodeGenAction(Backend_EmitObj, _VMContext) {}
