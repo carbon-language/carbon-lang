@@ -3,8 +3,12 @@
 void xx();
 
 int a() { 
-  A:if (1) xx();
-  return ^{A:return 1;}();
+  A:
+  
+  if (1) xx();
+  return ^{
+         A: return 1;
+       }();
 }
 int b() { 
   A: return ^{int a; A:return 1;}();
@@ -15,5 +19,9 @@ int d() {
 }
 
 int c() { 
-  goto A; return ^{ A:return 1;}(); // expected-error {{use of undeclared label 'A'}}
+  goto A;     // expected-error {{use of undeclared label 'A'}}
+  return ^{
+       A:
+        return 1;
+     }();
 }
