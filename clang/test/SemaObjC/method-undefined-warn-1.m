@@ -40,3 +40,17 @@
 - (void) cls_meth1 : (int) arg2{}
 @end
 
+
+// rdar://8850818
+@interface Root @end
+
+@interface Foo : Root @end
+
+@implementation Foo
+
+- (void)someFunction { return; }
+
++ (void)anotherFunction {
+    [self someFunction]; // expected-warning {{method '+someFunction' not found (return type defaults to 'id')}}
+}
+@end
