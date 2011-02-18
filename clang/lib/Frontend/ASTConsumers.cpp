@@ -359,8 +359,13 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       Out << "<IndirectField> " << IFD << '\n';
       break;
     }
+    case Decl::Label: {
+      LabelDecl *LD = cast<LabelDecl>(*I);
+      Out << "<Label> " << LD << '\n';
+      break;
+    }
     case Decl::Field: {
-      FieldDecl* FD = cast<FieldDecl>(*I);
+      FieldDecl *FD = cast<FieldDecl>(*I);
       Out << "<field> " << FD << '\n';
       break;
     }
