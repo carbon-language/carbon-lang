@@ -30,7 +30,6 @@
 // the loop.  This would handle things like:
 //   void foo(_Complex float *P)
 //     for (i) { __real__(*P) = 0;  __imag__(*P) = 0; }
-// this is also "Example 2" from http://blog.regehr.org/archives/320
 //
 // This could recognize common matrix multiplies and dot product idioms and
 // replace them with calls to BLAS (if linked in??).
@@ -46,6 +45,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
@@ -62,6 +62,7 @@ namespace {
     const TargetData *TD;
     DominatorTree *DT;
     ScalarEvolution *SE;
+    TargetLibraryInfo *TLI;
   public:
     static char ID;
     explicit LoopIdiomRecognize() : LoopPass(ID) {
@@ -101,6 +102,7 @@ namespace {
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<DominatorTree>();
       AU.addRequired<DominatorTree>();
+      AU.addRequired<TargetLibraryInfo>();
     }
   };
 }
@@ -113,6 +115,7 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
                     false, false)
@@ -175,6 +178,7 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   DT = &getAnalysis<DominatorTree>();
   LoopInfo &LI = getAnalysis<LoopInfo>();
+  TLI = &getAnalysis<TargetLibraryInfo>();
   
   SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getUniqueExitBlocks(ExitBlocks);
@@ -302,6 +306,10 @@ processLoopMemSet(MemSetInst *MSI, const SCEV *BECount) {
   // We can only handle non-volatile memsets with a constant size.
   if (MSI->isVolatile() || !isa<ConstantInt>(MSI->getLength())) return false;
 
+  // If we're not allowed to hack on memset, we fail.
+  if (!TLI->has(LibFunc::memset))
+    return false;
+  
   Value *Pointer = MSI->getDest();
   
   // See if the pointer expression is an AddRec like {base,+,1} on the current
@@ -371,6 +379,11 @@ processLoopStoreOfSplatValue(Value *DestPtr, unsigned StoreSize,
                              unsigned StoreAlignment, Value *SplatValue, 
                              Instruction *TheStore,
                              const SCEVAddRecExpr *Ev, const SCEV *BECount) {
+  // If we're not allowed to form memset, we fail.
+  if (!TLI->has(LibFunc::memset))
+    return false;
+
+  
   // Verify that the stored value is loop invariant.  If not, we can't promote
   // the memset.
   if (!CurLoop->isLoopInvariant(SplatValue))
@@ -435,6 +448,10 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
                            const SCEVAddRecExpr *StoreEv,
                            const SCEVAddRecExpr *LoadEv,
                            const SCEV *BECount) {
+  // If we're not allowed to form memcpy, we fail.
+  if (!TLI->has(LibFunc::memcpy))
+    return false;
+  
   LoadInst *LI = cast<LoadInst>(SI->getValueOperand());
   
   // Okay, we have a strided store "p[i]" of a loaded value.  We can turn
