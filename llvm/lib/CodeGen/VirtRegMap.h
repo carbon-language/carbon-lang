@@ -35,6 +35,7 @@ namespace llvm {
   class TargetInstrInfo;
   class TargetRegisterInfo;
   class raw_ostream;
+  class SlotIndexes;
 
   class VirtRegMap : public MachineFunctionPass {
   public:
@@ -492,6 +493,13 @@ namespace llvm {
       }
       return 0;
     }
+
+    /// rewrite - Rewrite all instructions in MF to use only physical registers
+    /// by mapping all virtual register operands to their assigned physical
+    /// registers.
+    ///
+    /// @param Indexes Optionally remove deleted instructions from indexes.
+    void rewrite(SlotIndexes *Indexes);
 
     void print(raw_ostream &OS, const Module* M = 0) const;
     void dump() const;

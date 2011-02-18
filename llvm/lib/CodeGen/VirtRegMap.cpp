@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -252,6 +253,76 @@ bool VirtRegMap::FindUnusedRegisters(LiveIntervals* LIs) {
   }
 
   return AnyUnused;
+}
+
+void VirtRegMap::rewrite(SlotIndexes *Indexes) {
+  DEBUG(dbgs() << "********** REWRITE VIRTUAL REGISTERS **********\n"
+               << "********** Function: "
+               << MF->getFunction()->getName() << '\n');
+
+  SmallVector<unsigned, 8> SuperKills;
+
+  for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
+       MBBI != MBBE; ++MBBI) {
+    DEBUG(MBBI->print(dbgs(), Indexes));
+    for (MachineBasicBlock::iterator MII = MBBI->begin(), MIE = MBBI->end();
+         MII != MIE;) {
+      MachineInstr *MI = MII;
+      ++MII;
+
+      for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
+           MOE = MI->operands_end(); MOI != MOE; ++MOI) {
+        MachineOperand &MO = *MOI;
+        if (!MO.isReg() || !TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+          continue;
+        unsigned VirtReg = MO.getReg();
+        unsigned PhysReg = getPhys(VirtReg);
+        assert(PhysReg != NO_PHYS_REG && "Instruction uses unmapped VirtReg");
+
+        // Preserve semantics of sub-register operands.
+        if (MO.getSubReg()) {
+          // A virtual register kill refers to the whole register, so we may
+          // have to add <imp-use,kill> operands for the super-register.
+          if (MO.isUse() && MO.isKill() && !MO.isUndef())
+            SuperKills.push_back(PhysReg);
+
+          // We don't have to deal with sub-register defs because
+          // LiveIntervalAnalysis already added the necessary <imp-def>
+          // operands.
+
+          // PhysReg operands cannot have subregister indexes.
+          PhysReg = TRI->getSubReg(PhysReg, MO.getSubReg());
+          assert(PhysReg && "Invalid SubReg for physical register");
+          MO.setSubReg(0);
+        }
+        // Rewrite. Note we could have used MachineOperand::substPhysReg(), but
+        // we need the inlining here.
+        MO.setReg(PhysReg);
+      }
+
+      // Add any missing super-register kills after rewriting the whole
+      // instruction.
+      while (!SuperKills.empty())
+        MI->addRegisterKilled(SuperKills.pop_back_val(), TRI, true);
+
+      DEBUG(dbgs() << "> " << *MI);
+
+      // Finally, remove any identity copies.
+      if (MI->isIdentityCopy()) {
+        DEBUG(dbgs() << "Deleting identity copy.\n");
+        RemoveMachineInstrFromMaps(MI);
+        if (Indexes)
+          Indexes->removeMachineInstrFromMaps(MI);
+        // It's safe to erase MI because MII has already been incremented.
+        MI->eraseFromParent();
+      }
+    }
+  }
+
+  // Tell MRI about physical registers in use.
+  for (unsigned Reg = 1, RegE = TRI->getNumRegs(); Reg != RegE; ++Reg)
+    if (!MRI->reg_nodbg_empty(Reg))
+      MRI->setPhysRegUsed(Reg);
 }
 
 void VirtRegMap::print(raw_ostream &OS, const Module* M) const {

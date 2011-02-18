@@ -21,7 +21,6 @@
 #include "SpillPlacement.h"
 #include "SplitKit.h"
 #include "VirtRegMap.h"
-#include "VirtRegRewriter.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
@@ -1273,8 +1272,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   // Run rewriter
   {
     NamedRegionTimer T("Rewriter", TimerGroupName, TimePassesIsEnabled);
-    std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
-    rewriter->runOnMachineFunction(*MF, *VRM, LIS);
+    VRM->rewrite(Indexes);
   }
 
   // The pass output is in VirtRegMap. Release all the transient data.

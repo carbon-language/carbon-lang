@@ -18,7 +18,6 @@
 #include "RenderMachineFunction.h"
 #include "Spiller.h"
 #include "VirtRegMap.h"
-#include "VirtRegRewriter.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -510,8 +509,7 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
 #endif // !NDEBUG
 
   // Run rewriter
-  std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
-  rewriter->runOnMachineFunction(*MF, *VRM, LIS);
+  VRM->rewrite(LIS->getSlotIndexes());
 
   // The pass output is in VirtRegMap. Release all the transient data.
   releaseMemory();
