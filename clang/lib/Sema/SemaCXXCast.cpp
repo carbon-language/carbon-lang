@@ -688,18 +688,23 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   QualType SrcType = Self.Context.getCanonicalType(SrcExpr->getType());
 
   // C++0x 5.2.9p9: A value of a scoped enumeration type can be explicitly
-  // converted to an integral type.
-  if (Self.getLangOptions().CPlusPlus0x && SrcType->isEnumeralType()) {
-    assert(SrcType->getAs<EnumType>()->getDecl()->isScoped());
-    if (DestType->isBooleanType()) {
-      Kind = CK_IntegralToBoolean;
-      return TC_Success;
-    } else if (DestType->isIntegralType(Self.Context)) {
-      Kind = CK_IntegralCast;
-      return TC_Success;
+  // converted to an integral type. [...] A value of a scoped enumeration type
+  // can also be explicitly converted to a floating-point type [...].
+  if (const EnumType *Enum = SrcType->getAs<EnumType>()) {
+    if (Enum->getDecl()->isScoped()) {
+      if (DestType->isBooleanType()) {
+        Kind = CK_IntegralToBoolean;
+        return TC_Success;
+      } else if (DestType->isIntegralType(Self.Context)) {
+        Kind = CK_IntegralCast;
+        return TC_Success;
+      } else if (DestType->isRealFloatingType()) {
+        Kind = CK_IntegralToFloating;
+        return TC_Success;
+      }
     }
   }
-
+  
   // Reverse integral promotion/conversion. All such conversions are themselves
   // again integral promotions or conversions and are thus already handled by
   // p2 (TryDirectInitialization above).
