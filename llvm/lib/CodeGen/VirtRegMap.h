@@ -214,7 +214,7 @@ namespace llvm {
     }
 
     /// @brief returns the live interval virtReg is split from.
-    unsigned getPreSplitReg(unsigned virtReg) {
+    unsigned getPreSplitReg(unsigned virtReg) const {
       return Virt2SplitMap[virtReg];
     }
 

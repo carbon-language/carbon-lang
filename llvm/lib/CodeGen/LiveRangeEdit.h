@@ -73,6 +73,10 @@ public:
   LiveInterval &getParent() const { return parent_; }
   unsigned getReg() const { return parent_.reg; }
 
+  /// getOriginal - Return the original virtual register that parent descends
+  /// from through splitting. The original was not created by splitting.
+  unsigned getOriginal(const VirtRegMap&) const;
+
   /// Iterator for accessing the new registers added by this edit.
   typedef SmallVectorImpl<LiveInterval*>::const_iterator iterator;
   iterator begin() const { return newRegs_.begin()+firstNew_; }
