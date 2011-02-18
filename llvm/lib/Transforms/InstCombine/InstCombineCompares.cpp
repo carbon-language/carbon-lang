@@ -2267,7 +2267,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(Pred, Constant::getNullValue(Op0->getType()),
                           C == Op0 ? D : C);
 
-    // icmp (X+Y), (X+Z) -> icmp Y,Z for equalities or if there is no overflow.
+    // icmp (X+Y), (X+Z) -> icmp Y, Z for equalities or if there is no overflow.
     if (A && C && (A == C || A == D || B == C || B == D) &&
         NoOp0WrapProblem && NoOp1WrapProblem &&
         // Try not to increase register pressure.
@@ -2286,11 +2286,25 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (BO1 && BO1->getOpcode() == Instruction::Sub)
       C = BO1->getOperand(0), D = BO1->getOperand(1);
 
-    // icmp (Y-X), (Z-X) -> icmp Y,Z for equalities or if there is no overflow.
+    // icmp (X-Y), X -> icmp 0, Y for equalities or if there is no overflow.
+    if (A == Op1 && NoOp0WrapProblem)
+      return new ICmpInst(Pred, Constant::getNullValue(Op1->getType()), B);
+
+    // icmp X, (X-Y) -> icmp Y, 0 for equalities or if there is no overflow.
+    if (C == Op0 && NoOp1WrapProblem)
+      return new ICmpInst(Pred, D, Constant::getNullValue(Op0->getType()));
+
+    // icmp (Y-X), (Z-X) -> icmp Y, Z for equalities or if there is no overflow.
     if (B && D && B == D && NoOp0WrapProblem && NoOp1WrapProblem &&
         // Try not to increase register pressure.
         BO0->hasOneUse() && BO1->hasOneUse())
       return new ICmpInst(Pred, A, C);
+
+    // icmp (X-Y), (X-Z) -> icmp Z, Y for equalities or if there is no overflow.
+    if (A && C && A == C && NoOp0WrapProblem && NoOp1WrapProblem &&
+        // Try not to increase register pressure.
+        BO0->hasOneUse() && BO1->hasOneUse())
+      return new ICmpInst(Pred, D, B);
 
     if (BO0 && BO1 && BO0->getOpcode() == BO1->getOpcode() &&
         BO0->hasOneUse() && BO1->hasOneUse() &&
@@ -2375,12 +2389,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   
   if (I.isEquality()) {
     Value *A, *B, *C, *D;
-    
-    // -x == -y --> x == y
-    if (match(Op0, m_Neg(m_Value(A))) &&
-        match(Op1, m_Neg(m_Value(B))))
-      return new ICmpInst(I.getPredicate(), A, B);
-    
+
     if (match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
       if (A == Op1 || B == Op1) {    // (A^B) == A  ->  B == 0
         Value *OtherVal = A == Op1 ? B : A;
@@ -2414,16 +2423,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(I.getPredicate(), OtherVal,
                           Constant::getNullValue(A->getType()));
     }
-
-    // (A-B) == A  ->  B == 0
-    if (match(Op0, m_Sub(m_Specific(Op1), m_Value(B))))
-      return new ICmpInst(I.getPredicate(), B, 
-                          Constant::getNullValue(B->getType()));
-
-    // A == (A-B)  ->  B == 0
-    if (match(Op1, m_Sub(m_Specific(Op0), m_Value(B))))
-      return new ICmpInst(I.getPredicate(), B,
-                          Constant::getNullValue(B->getType()));
 
     // (X&Z) == (Y&Z) -> (X^Y) & Z == 0
     if (Op0->hasOneUse() && Op1->hasOneUse() &&

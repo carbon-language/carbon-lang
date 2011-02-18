@@ -235,6 +235,7 @@ define i1 @test24(i64 %i) {
 }
 
 ; CHECK: @test25
+; X + Z > Y + Z -> X > Y if there is no overflow.
 ; CHECK: %c = icmp sgt i32 %x, %y
 ; CHECK: ret i1 %c
 define i1 @test25(i32 %x, i32 %y, i32 %z) {
@@ -245,11 +246,134 @@ define i1 @test25(i32 %x, i32 %y, i32 %z) {
 }
 
 ; CHECK: @test26
-; CHECK: %c = icmp sgt i32 %x, %y
+; X + Z > Y + Z -> X > Y if there is no overflow.
+; CHECK: %c = icmp ugt i32 %x, %y
 ; CHECK: ret i1 %c
 define i1 @test26(i32 %x, i32 %y, i32 %z) {
+  %lhs = add nuw i32 %x, %z
+  %rhs = add nuw i32 %y, %z
+  %c = icmp ugt i32 %lhs, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test27
+; X - Z > Y - Z -> X > Y if there is no overflow.
+; CHECK: %c = icmp sgt i32 %x, %y
+; CHECK: ret i1 %c
+define i1 @test27(i32 %x, i32 %y, i32 %z) {
   %lhs = sub nsw i32 %x, %z
   %rhs = sub nsw i32 %y, %z
   %c = icmp sgt i32 %lhs, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test28
+; X - Z > Y - Z -> X > Y if there is no overflow.
+; CHECK: %c = icmp ugt i32 %x, %y
+; CHECK: ret i1 %c
+define i1 @test28(i32 %x, i32 %y, i32 %z) {
+  %lhs = sub nuw i32 %x, %z
+  %rhs = sub nuw i32 %y, %z
+  %c = icmp ugt i32 %lhs, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test29
+; X + Y > X -> Y > 0 if there is no overflow.
+; CHECK: %c = icmp sgt i32 %y, 0
+; CHECK: ret i1 %c
+define i1 @test29(i32 %x, i32 %y) {
+  %lhs = add nsw i32 %x, %y
+  %c = icmp sgt i32 %lhs, %x
+  ret i1 %c
+}
+
+; CHECK: @test30
+; X + Y > X -> Y > 0 if there is no overflow.
+; CHECK: %c = icmp ne i32 %y, 0
+; CHECK: ret i1 %c
+define i1 @test30(i32 %x, i32 %y) {
+  %lhs = add nuw i32 %x, %y
+  %c = icmp ugt i32 %lhs, %x
+  ret i1 %c
+}
+
+; CHECK: @test31
+; X > X + Y -> 0 > Y if there is no overflow.
+; CHECK: %c = icmp slt i32 %y, 0
+; CHECK: ret i1 %c
+define i1 @test31(i32 %x, i32 %y) {
+  %rhs = add nsw i32 %x, %y
+  %c = icmp sgt i32 %x, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test32
+; X > X + Y -> 0 > Y if there is no overflow.
+; CHECK: ret i1 false
+define i1 @test32(i32 %x, i32 %y) {
+  %rhs = add nuw i32 %x, %y
+  %c = icmp ugt i32 %x, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test33
+; X - Y > X -> 0 > Y if there is no overflow.
+; CHECK: %c = icmp slt i32 %y, 0
+; CHECK: ret i1 %c
+define i1 @test33(i32 %x, i32 %y) {
+  %lhs = sub nsw i32 %x, %y
+  %c = icmp sgt i32 %lhs, %x
+  ret i1 %c
+}
+
+; CHECK: @test34
+; X - Y > X -> 0 > Y if there is no overflow.
+; CHECK: ret i1 false
+define i1 @test34(i32 %x, i32 %y) {
+  %lhs = sub nuw i32 %x, %y
+  %c = icmp ugt i32 %lhs, %x
+  ret i1 %c
+}
+
+; CHECK: @test35
+; X > X - Y -> Y > 0 if there is no overflow.
+; CHECK: %c = icmp sgt i32 %y, 0
+; CHECK: ret i1 %c
+define i1 @test35(i32 %x, i32 %y) {
+  %rhs = sub nsw i32 %x, %y
+  %c = icmp sgt i32 %x, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test36
+; X > X - Y -> Y > 0 if there is no overflow.
+; CHECK: %c = icmp ne i32 %y, 0
+; CHECK: ret i1 %c
+define i1 @test36(i32 %x, i32 %y) {
+  %rhs = sub nuw i32 %x, %y
+  %c = icmp ugt i32 %x, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test37
+; X - Y > X - Z -> Z > Y if there is no overflow.
+; CHECK: %c = icmp sgt i32 %z, %y
+; CHECK: ret i1 %c
+define i1 @test37(i32 %x, i32 %y, i32 %z) {
+  %lhs = sub nsw i32 %x, %y
+  %rhs = sub nsw i32 %x, %z
+  %c = icmp sgt i32 %lhs, %rhs
+  ret i1 %c
+}
+
+; CHECK: @test38
+; X - Y > X - Z -> Z > Y if there is no overflow.
+; CHECK: %c = icmp ugt i32 %z, %y
+; CHECK: ret i1 %c
+define i1 @test38(i32 %x, i32 %y, i32 %z) {
+  %lhs = sub nuw i32 %x, %y
+  %rhs = sub nuw i32 %x, %z
+  %c = icmp ugt i32 %lhs, %rhs
   ret i1 %c
 }

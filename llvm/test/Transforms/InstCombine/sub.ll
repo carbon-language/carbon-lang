@@ -209,7 +209,7 @@ define i1 @test22(i32 %a, i32 %b) zeroext nounwind  {
 	%tmp5 = icmp eq i32 %tmp2, %tmp4	
 	ret i1 %tmp5
 ; CHECK: @test22
-; CHECK: %tmp5 = icmp eq i32 %a, %b
+; CHECK: %tmp5 = icmp eq i32 %b, %a
 ; CHECK: ret i1 %tmp5
 }
 
