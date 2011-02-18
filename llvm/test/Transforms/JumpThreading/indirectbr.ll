@@ -44,7 +44,9 @@ indirectgoto:                                     ; preds = %if.else, %entry
 ; Check constant folding of indirectbr
 
 ; CHECK: void @test2
-; CHECK-NEXT: :
+; CHECK: entry:
+; CHECK-NEXT: br label %L1
+; CHECK: L1:
 ; CHECK-NEXT: call void @bar
 ; CHECK-NEXT: ret void
 define void @test2() nounwind {
@@ -59,3 +61,34 @@ L2:                                               ; preds = %indirectgoto
   call void @baz()
   ret void
 }
+
+
+; PR4151
+; Don't merge address-taken blocks.
+@.str = private unnamed_addr constant [4 x i8] c"%p\0A\00"
+
+; CHECK: @test3
+; CHECK: __here:
+; CHECK: blockaddress(@test3, %__here)
+; CHECK: __here1:
+; CHECK: blockaddress(@test3, %__here1)
+; CHECK: __here3:
+; CHECK: blockaddress(@test3, %__here3)
+define void @test3() nounwind ssp noredzone {
+entry:
+  br label %__here
+
+__here:                                           ; preds = %entry
+  %call = call i32 (...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i64 ptrtoint (i8* blockaddress(@test3, %__here) to i64)) nounwind noredzone
+  br label %__here1
+
+__here1:                                          ; preds = %__here
+  %call2 = call i32 (...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i64 ptrtoint (i8* blockaddress(@test3, %__here1) to i64)) nounwind noredzone
+  br label %__here3
+
+__here3:                                          ; preds = %__here1
+  %call4 = call i32 (...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i64 ptrtoint (i8* blockaddress(@test3, %__here3) to i64)) nounwind noredzone
+  ret void
+}
+
+declare i32 @printf(...) noredzone

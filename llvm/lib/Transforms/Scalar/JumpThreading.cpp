@@ -606,6 +606,16 @@ static unsigned GetBestDestForJumpOnUndef(BasicBlock *BB) {
   return MinSucc;
 }
 
+static bool hasAddressTakenAndUsed(BasicBlock *BB) {
+  if (!BB->hasAddressTaken()) return false;
+  
+  // If the block has its address taken, it may be a tree of dead constants
+  // hanging off of it.  These shouldn't keep the block alive.
+  BlockAddress *BA = BlockAddress::get(BB);
+  BA->removeDeadConstantUsers();
+  return !BA->use_empty();
+}
+
 /// ProcessBlock - If there are any predecessors whose control can be threaded
 /// through to a successor, transform them now.
 bool JumpThreading::ProcessBlock(BasicBlock *BB) {
@@ -621,7 +631,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // predecessors of our predecessor block.
   if (BasicBlock *SinglePred = BB->getSinglePredecessor()) {
     if (SinglePred->getTerminator()->getNumSuccessors() == 1 &&
-        SinglePred != BB) {
+        SinglePred != BB && !hasAddressTakenAndUsed(BB)) {
       // If SinglePred was a loop header, BB becomes one.
       if (LoopHeaders.erase(SinglePred))
         LoopHeaders.insert(BB);
