@@ -335,11 +335,11 @@ protected:
 
     // A8.6.8 ADD (SP plus immediate)
     bool
-    EmulateAddSPImmediate (ARMEncoding encoding);
+    EmulateADDSPImm (ARMEncoding encoding);
 
     // A8.6.9 ADD (SP plus register)
     bool
-    EmulateAddSPRm (ARMEncoding encoding);
+    EmulateADDSPRm (ARMEncoding encoding);
 
     // A8.6.23 BL, BLX (immediate)
     bool
@@ -355,15 +355,15 @@ protected:
 
     // A8.6.212 SUB (immediate, ARM) -- Rd == r7 and Rm == ip
     bool
-    EmulateSubR7IPImmediate (ARMEncoding encoding);
+    EmulateSUBR7IPImm (ARMEncoding encoding);
 
     // A8.6.215 SUB (SP minus immediate) -- Rd == ip
     bool
-    EmulateSubIPSPImmediate (ARMEncoding encoding);
+    EmulateSUBIPSPImm (ARMEncoding encoding);
 
     // A8.6.215 SUB (SP minus immediate)
     bool
-    EmulateSubSPImmdiate (ARMEncoding encoding);
+    EmulateSUBSPImm (ARMEncoding encoding);
 
     // A8.6.194 STR (immediate, ARM) -- Rn == sp
     bool

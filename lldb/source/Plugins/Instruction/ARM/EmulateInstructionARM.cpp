@@ -865,7 +865,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
 // An add operation to adjust the SP.
 // ADD (SP plus immediate)
 bool
-EmulateInstructionARM::EmulateAddSPImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDSPImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -919,7 +919,7 @@ EmulateInstructionARM::EmulateAddSPImmediate (ARMEncoding encoding)
 // An add operation to adjust the SP.
 // ADD (SP plus register)
 bool
-EmulateInstructionARM::EmulateAddSPRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDSPRm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1196,7 +1196,7 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
 // Set r7 to point to some ip offset.
 // SUB (immediate)
 bool
-EmulateInstructionARM::EmulateSubR7IPImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSUBR7IPImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1252,7 +1252,7 @@ EmulateInstructionARM::EmulateSubR7IPImmediate (ARMEncoding encoding)
 // Set ip to point to some stack offset.
 // SUB (SP minus immediate)
 bool
-EmulateInstructionARM::EmulateSubIPSPImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSUBIPSPImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1307,7 +1307,7 @@ EmulateInstructionARM::EmulateSubIPSPImmediate (ARMEncoding encoding)
 
 // A sub operation to adjust the SP -- allocate space for local storage.
 bool
-EmulateInstructionARM::EmulateSubSPImmdiate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -4197,14 +4197,14 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 
         // set r7 to point to a stack offset
         { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDRdSPImm, "add r7, sp, #<const>" },
-        { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSubR7IPImmediate, "sub r7, ip, #<const>"},
+        { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBR7IPImm, "sub r7, ip, #<const>"},
         // copy the stack pointer to ip
         { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMOVRdSP, "mov ip, sp" },
         { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDRdSPImm, "add ip, sp, #<const>" },
-        { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSubIPSPImmediate, "sub ip, sp, #<const>"},
+        { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBIPSPImm, "sub ip, sp, #<const>"},
 
         // adjust the stack pointer
-        { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "sub sp, sp, #<const>"},
+        { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub sp, sp, #<const>"},
 
         // push one register
         // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
@@ -4316,14 +4316,14 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // move from high register to low register (comes after "mov r7, sp" to resolve ambiguity)
         { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVLowHigh, "mov r0-r7, r8-r15" },
 
-        // PC-relative load into register (see also EmulateAddSPRm)
+        // PC-relative load into register (see also EmulateADDSPRm)
         { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr <Rt>, [PC, #imm]"},
 
         // adjust the stack pointer
-        { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPRm, "add sp, <Rm>"},
-        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSubSPImmdiate, "add sp, sp, #imm"},
-        { 0xfbef8f00, 0xf1ad0d00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "sub.w sp, sp, #<const>"},
-        { 0xfbff8f00, 0xf2ad0d00, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSubSPImmdiate, "subw sp, sp, #imm12"},
+        { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDSPRm, "add sp, <Rm>"},
+        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBSPImm, "add sp, sp, #imm"},
+        { 0xfbef8f00, 0xf1ad0d00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub.w sp, sp, #<const>"},
+        { 0xfbff8f00, 0xf2ad0d00, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw sp, sp, #imm12"},
 
         // vector push consecutive extension register(s)
         { 0xffbf0f00, 0xed2d0b00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
@@ -4333,7 +4333,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // Epilogue instructions
         //----------------------------------------------------------------------
 
-        { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
+        { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDSPImm, "add sp, #imm"},
         { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePOP, "pop <registers>"},
         { 0xffff0000, 0xe8bd0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <registers>" },
         { 0xffff0fff, 0xf85d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <register>" },
