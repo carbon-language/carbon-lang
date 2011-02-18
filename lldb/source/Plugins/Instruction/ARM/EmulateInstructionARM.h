@@ -311,23 +311,23 @@ protected:
 
     // A8.6.123 PUSH
     bool
-    EmulatePush (ARMEncoding encoding);
+    EmulatePUSH (ARMEncoding encoding);
     
     // A8.6.122 POP
     bool
-    EmulatePop (ARMEncoding encoding);
+    EmulatePOP (ARMEncoding encoding);
     
     // A8.6.8 ADD (SP plus immediate)
     bool
-    EmulateAddRdSPImmediate (ARMEncoding encoding);
+    EmulateADDRdSPImm (ARMEncoding encoding);
 
     // A8.6.97 MOV (register) -- Rd == r7|ip and Rm == sp
     bool
-    EmulateMovRdSP (ARMEncoding encoding);
+    EmulateMOVRdSP (ARMEncoding encoding);
 
     // A8.6.97 MOV (register) -- move from r8-r15 to r0-r7
     bool
-    EmulateMovLowHigh (ARMEncoding encoding);
+    EmulateMOVLowHigh (ARMEncoding encoding);
 
     // A8.6.59 LDR (literal)
     bool
@@ -399,27 +399,27 @@ protected:
 
     // A8.6.6 ADD (register)
     bool
-    EmulateAddReg (ARMEncoding encoding);
+    EmulateADDReg (ARMEncoding encoding);
 
     // A8.6.97 MOV (register)
     bool
-    EmulateMovRdRm (ARMEncoding encoding);
+    EmulateMOVRdRm (ARMEncoding encoding);
 
     // A8.6.96 MOV (immediate)
     bool
-    EmulateMovRdImm (ARMEncoding encoding);
+    EmulateMOVRdImm (ARMEncoding encoding);
 
     // A8.6.106 MVN (immediate)
     bool
-    EmulateMvnRdImm (ARMEncoding encoding);
+    EmulateMVNRdImm (ARMEncoding encoding);
 
     // A8.6.35 CMP (immediate)
     bool
-    EmulateCmpRnImm (ARMEncoding encoding);
+    EmulateCMPRnImm (ARMEncoding encoding);
 
     // A8.6.36 CMP (register)
     bool
-    EmulateCmpRnRm (ARMEncoding encoding);
+    EmulateCMPRnRm (ARMEncoding encoding);
 
     // A8.6.14 ASR (immediate)
     bool

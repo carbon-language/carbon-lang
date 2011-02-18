@@ -180,7 +180,7 @@ EmulateInstructionARM::WriteBits32Unknown (int n)
 // consecutive memory locations ending just below the address in SP, and updates
 // SP to point to the start of the stored data.
 bool 
-EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
+EmulateInstructionARM::EmulatePUSH (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -309,7 +309,7 @@ EmulateInstructionARM::EmulatePush (ARMEncoding encoding)
 // consecutive memory locations staring at the address in SP, and updates
 // SP to point just above the loaded data.
 bool 
-EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
+EmulateInstructionARM::EmulatePOP (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -440,7 +440,7 @@ EmulateInstructionARM::EmulatePop (ARMEncoding encoding)
 // Set r7 or ip to point to saved value residing within the stack.
 // ADD (SP plus immediate)
 bool
-EmulateInstructionARM::EmulateAddRdSPImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDRdSPImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -502,7 +502,7 @@ EmulateInstructionARM::EmulateAddRdSPImmediate (ARMEncoding encoding)
 // Set r7 or ip to the current stack pointer.
 // MOV (register)
 bool
-EmulateInstructionARM::EmulateMovRdSP (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMOVRdSP (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -559,15 +559,15 @@ EmulateInstructionARM::EmulateMovRdSP (ARMEncoding encoding)
 // Move from high register (r8-r15) to low register (r0-r7).
 // MOV (register)
 bool
-EmulateInstructionARM::EmulateMovLowHigh (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMOVLowHigh (ARMEncoding encoding)
 {
-    return EmulateMovRdRm (encoding);
+    return EmulateMOVRdRm (encoding);
 }
 
 // Move from register to register.
 // MOV (register)
 bool
-EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMOVRdRm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -632,7 +632,7 @@ EmulateInstructionARM::EmulateMovRdRm (ARMEncoding encoding)
 // can optionally update the condition flags based on the value.
 // MOV (immediate)
 bool
-EmulateInstructionARM::EmulateMovRdImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMOVRdImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -699,7 +699,7 @@ EmulateInstructionARM::EmulateMovRdImm (ARMEncoding encoding)
 // on the value.
 // MVN (immediate)
 bool
-EmulateInstructionARM::EmulateMvnRdImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMVNRdImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1915,7 +1915,7 @@ EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
 // This instruction adds a register value and an optionally-shifted register value, and writes the result
 // to the destination register. It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateAddReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDReg (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2014,7 +2014,7 @@ EmulateInstructionARM::EmulateAddReg (ARMEncoding encoding)
 
 // CMP (immediate)
 bool
-EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCMPRnImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2060,7 +2060,7 @@ EmulateInstructionARM::EmulateCmpRnImm (ARMEncoding encoding)
 
 // CMP (register)
 bool
-EmulateInstructionARM::EmulateCmpRnRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCMPRnRm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -4192,15 +4192,15 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         // push register(s)
-        { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePush, "push <registers>" },
-        { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePush, "push <register>" },
+        { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePUSH, "push <registers>" },
+        { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePUSH, "push <register>" },
 
         // set r7 to point to a stack offset
-        { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateAddRdSPImmediate, "add r7, sp, #<const>" },
+        { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDRdSPImm, "add r7, sp, #<const>" },
         { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSubR7IPImmediate, "sub r7, ip, #<const>"},
         // copy the stack pointer to ip
-        { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMovRdSP, "mov ip, sp" },
-        { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateAddRdSPImmediate, "add ip, sp, #<const>" },
+        { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMOVRdSP, "mov ip, sp" },
+        { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDRdSPImm, "add ip, sp, #<const>" },
         { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSubIPSPImmediate, "sub ip, sp, #<const>"},
 
         // adjust the stack pointer
@@ -4218,8 +4218,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // Epilogue instructions
         //----------------------------------------------------------------------
 
-        { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
-        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePop, "pop <register>"},
+        { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePOP, "pop <registers>"},
+        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePOP, "pop <register>"},
         { 0x0fbf0f00, 0x0cbd0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
         { 0x0fbf0f00, 0x0cbd0a00, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
 
@@ -4243,7 +4243,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // Data-processing instructions
         //----------------------------------------------------------------------
         // move bitwise not
-        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMvnRdImm, "mvn{s} <Rd>, #<const>"},
+        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNRdImm, "mvn{s} <Rd>, #<const>"},
         // asr (immediate)
         { 0x0fef0070, 0x01a00040, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c> <Rd>, <Rm>, #imm"},
         // asr (register)
@@ -4305,16 +4305,16 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         // push register(s)
-        { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePush, "push <registers>" },
-        { 0xffff0000, 0xe92d0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePush, "push.w <registers>" },
-        { 0xffff0fff, 0xf84d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePush, "push.w <register>" },
+        { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePUSH, "push <registers>" },
+        { 0xffff0000, 0xe92d0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePUSH, "push.w <registers>" },
+        { 0xffff0fff, 0xf84d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePUSH, "push.w <register>" },
 
         // set r7 to point to a stack offset
-        { 0xffffff00, 0x0000af00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateAddRdSPImmediate, "add r7, sp, #imm" },
+        { 0xffffff00, 0x0000af00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDRdSPImm, "add r7, sp, #imm" },
         // copy the stack pointer to r7
-        { 0xffffffff, 0x0000466f, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdSP, "mov r7, sp" },
+        { 0xffffffff, 0x0000466f, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdSP, "mov r7, sp" },
         // move from high register to low register (comes after "mov r7, sp" to resolve ambiguity)
-        { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovLowHigh, "mov r0-r7, r8-r15" },
+        { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVLowHigh, "mov r0-r7, r8-r15" },
 
         // PC-relative load into register (see also EmulateAddSPRm)
         { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr <Rt>, [PC, #imm]"},
@@ -4334,9 +4334,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddSPImmediate, "add sp, #imm"},
-        { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePop, "pop <registers>"},
-        { 0xffff0000, 0xe8bd0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <registers>" },
-        { 0xffff0fff, 0xf85d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePop, "pop.w <register>" },
+        { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePOP, "pop <registers>"},
+        { 0xffff0000, 0xe8bd0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <registers>" },
+        { 0xffff0fff, 0xf85d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <register>" },
         { 0xffbf0f00, 0xecbd0b00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
         { 0xffbf0f00, 0xecbd0a00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
 
@@ -4375,25 +4375,25 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Data-processing instructions
         //----------------------------------------------------------------------
-        { 0xfffffe00, 0x00001800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateAddReg, "adds|add<c> <Rd>, <Rn>, <Rm>"},
+        { 0xfffffe00, 0x00001800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDReg, "adds|add<c> <Rd>, <Rn>, <Rm>"},
         // Make sure "add sp, <Rm>" comes before this instruction, so there's no ambiguity decoding the two.
         // Can update PC!
-        { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateAddReg, "add<c> <Rdn>, <Rm>"},
+        { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDReg, "add<c> <Rdn>, <Rm>"},
         // move from high register to high register
-        { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "mov<c> <Rd>, <Rm>"},
+        { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdRm, "mov<c> <Rd>, <Rm>"},
         // move from low register to low register
-        { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateMovRdRm, "movs <Rd>, <Rm>"},
+        { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateMOVRdRm, "movs <Rd>, <Rm>"},
         // move immediate
-        { 0xfffff800, 0x00002000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMovRdImm, "movs|mov<c> <Rd>, #imm8"},
-        { 0xfbef8000, 0xf04f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMovRdImm, "mov{s}<c>.w <Rd>, #<const>"},
+        { 0xfffff800, 0x00002000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdImm, "movs|mov<c> <Rd>, #imm8"},
+        { 0xfbef8000, 0xf04f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "mov{s}<c>.w <Rd>, #<const>"},
         // move bitwise not
-        { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateMvnRdImm, "mvn{s} <Rd>, #<const>"},
+        { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateMVNRdImm, "mvn{s} <Rd>, #<const>"},
         // compare a register with immediate
-        { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCmpRnImm, "cmp<c> <Rn>, #imm8"},
+        { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPRnImm, "cmp<c> <Rn>, #imm8"},
         // compare Rn with Rm (Rn and Rm both from r0-r7)
-        { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCmpRnRm, "cmp<c> <Rn>, <Rm>"},
+        { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPRnRm, "cmp<c> <Rn>, <Rm>"},
         // compare Rn with Rm (Rn and Rm not both from r0-r7)
-        { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateCmpRnRm, "cmp<c> <Rn>, <Rm>"},
+        { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateCMPRnRm, "cmp<c> <Rn>, <Rm>"},
         // asr (immediate)
         { 0xfffff800, 0x00001000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateASRImm, "asrs|asr<c> <Rd>, <Rm>, #imm"},
         { 0xffef8030, 0xea4f0020, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c>.w <Rd>, <Rm>, #imm"},
