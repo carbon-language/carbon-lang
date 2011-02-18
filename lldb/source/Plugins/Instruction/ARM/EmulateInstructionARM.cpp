@@ -4181,6 +4181,146 @@ EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
     return true;
 }
                   
+// LDR (immediate, ARM) calculates an address from a base register value and an immediate offset, loads a word 
+// from memory, and writes it to a register.  It an use offset, post-indexed, or pre-indexed addressing.
+bool
+EmulateInstructionARM::EmulateLDRImmediateARM (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); 
+        offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
+        address = if index then offset_addr else R[n]; 
+        data = MemU[address,4]; 
+        if wback then R[n] = offset_addr; 
+        if t == 15 then
+            if address<1:0> == ’00’ then LoadWritePC(data); else UNPREDICTABLE; 
+        elsif UnalignedSupport() || address<1:0> = ’00’ then
+            R[t] = data; 
+        else // Can only apply before ARMv7
+            R[t] = ROR(data, 8*UInt(address<1:0>));
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                
+    if (ConditionPassed ())
+    {
+        const uint32_t addr_byte_size = GetAddressByteSize();
+                  
+        uint32_t t;
+        uint32_t n;
+        uint32_t imm32;
+        bool index;
+        bool add;
+        bool wback;
+                  
+        switch (encoding)
+        {
+            case eEncodingA1:
+                // if Rn == ’1111’ then SEE LDR (literal);
+                // if P == ’0’ && W == ’1’ then SEE LDRT; 
+                // if Rn == ’1101’ && P == ’0’ && U == ’1’ && W == ’0’ && imm12 == ’000000000100’ then SEE POP; 
+                // t == UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 11, 0);
+                  
+                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’);
+                  index = BitIsSet (opcode, 24);
+                  add = BitIsSet (opcode, 23);
+                  wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
+                  
+                // if wback && n == t then UNPREDICTABLE;
+                if (wback && (n == t))
+                    return false;
+                  
+                break;
+                  
+            default:
+                return false;
+        }
+               
+        addr_t address;
+        addr_t offset_addr;
+        addr_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+                  
+        // offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
+        if (add)
+                  offset_addr = base_address + imm32;
+        else
+            offset_addr = base_address - imm32;
+                  
+        // address = if index then offset_addr else R[n]; 
+        if (index)
+            address = offset_addr;
+        else
+            address = base_address;
+                  
+        // data = MemU[address,4]; 
+                  
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+                 
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterLoad;
+        context.SetRegisterPlusOffset (base_reg, address - base_address);
+                  
+        uint64_t data = MemURead (context, address, addr_byte_size, 0, &success);
+        if (!success)
+            return false;
+                  
+        // if wback then R[n] = offset_addr; 
+        if (wback)
+        {
+            context.type = eContextAdjustBaseRegister;
+            context.SetAddress (offset_addr);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, offset_addr))
+                return false;
+        }
+                  
+        // if t == 15 then
+        if (t == 15)
+        {
+            // if address<1:0> == ’00’ then LoadWritePC(data); else UNPREDICTABLE; 
+            if (BitIsClear (address, 1) && BitIsClear (address, 0))
+            {
+                // LoadWritePC (data);
+                context.type = eContextRegisterLoad;
+                context.SetRegisterPlusOffset (base_reg, address - base_address);
+                LoadWritePC (context, data);
+            }
+            else
+                  return false;
+        }
+        // elsif UnalignedSupport() || address<1:0> = ’00’ then
+        else if (UnalignedSupport() || (BitIsClear (address, 1) && BitIsClear (address, 0)))
+        {
+            // R[t] = data; 
+            context.type = eContextRegisterLoad;
+            context.SetRegisterPlusOffset (base_reg, address - base_address);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, data))
+                return false;
+        }
+        // else // Can only apply before ARMv7
+        else
+        {
+            // R[t] = ROR(data, 8*UInt(address<1:0>));
+            data = ROR (data, Bits32 (address, 1, 0));
+            context.type = eContextRegisterLoad;
+            context.SetImmediate (data);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, data))
+                return false;
+        }
+
+    }
+    return true;
+}
+                  
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -4270,6 +4410,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fd00000, 0x08100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMDA, "ldmda<c> <Rn>{!} <registers>" },
         { 0x0fd00000, 0x09100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
         { 0x0fd00000, 0x09900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMIB, "ldmib<c> <Rn<{!} <registers>" },
+        { 0x0e500000, 0x04100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRImmediateARM, "ldr<c> <Rt> [<Rn> {#+/-<imm12>}]" },
                   
         //----------------------------------------------------------------------
         // Store instructions
