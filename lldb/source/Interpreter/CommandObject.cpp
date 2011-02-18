@@ -616,7 +616,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeEndAddress, "end-address", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeExpression, "expr", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeExprFormat, "expression-format", CommandCompletions::eNoCompletion, NULL, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]" },
-    { eArgTypeFilename, "filename", CommandCompletions::eNoCompletion, NULL, "The name of a file (can include path)." },
+    { eArgTypeFilename, "filename", CommandCompletions::eDiskFileCompletion, NULL, "The name of a file (can include path)." },
     { eArgTypeFormat, "format", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeFrameIndex, "frame-index", CommandCompletions::eNoCompletion, NULL, "Index into a thread's list of frames." },
     { eArgTypeFullName, "fullname", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },

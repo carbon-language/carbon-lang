@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/StringList.h"
+#include "lldb/Host/FileSpec.h"
 
 #include <string>
 
@@ -70,6 +71,12 @@ StringList::AppendList (StringList strings)
 
     for (uint32_t i = 0; i < len; ++i)
         m_strings.push_back (strings.GetStringAtIndex(i));
+}
+
+bool
+StringList::ReadFileLines (FileSpec &input_file)
+{
+    return input_file.ReadFileLines (m_strings);
 }
 
 uint32_t

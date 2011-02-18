@@ -22,14 +22,87 @@
 using namespace lldb;
 using namespace lldb_private;
 
-const char *k_space_characters = "\t\n\v\f\r ";
-
 //-------------------------------------------------------------------------
 // CommandObjectCommandsSource
 //-------------------------------------------------------------------------
 
 class CommandObjectCommandsSource : public CommandObject
 {
+private:
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (){}
+
+        virtual
+        ~CommandOptions (){}
+
+        virtual Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            bool success;
+            
+            switch (short_option)
+            {
+                case 'e':
+                    m_stop_on_error = Args::StringToBoolean(option_arg, true, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid value for stop-on-error: %s.\n", option_arg);
+                    break;
+                case 'c':
+                    m_stop_on_continue = Args::StringToBoolean(option_arg, true, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid value for stop-on-continue: %s.\n", option_arg);
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+
+        void
+        ResetOptionValues ()
+        {
+            Options::ResetOptionValues();
+
+            m_stop_on_error = true;
+            m_stop_on_continue = true;
+        }
+
+        const lldb::OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static lldb::OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        bool m_stop_on_error;
+        bool m_stop_on_continue;
+    };
+    
+    // Options table: Required for subclasses of Options.
+
+    static lldb::OptionDefinition g_option_table[];
+
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
 public:
     CommandObjectCommandsSource(CommandInterpreter &interpreter) :
         CommandObject (interpreter,
@@ -66,68 +139,21 @@ public:
         if (argc == 1)
         {
             const char *filename = args.GetArgumentAtIndex(0);
-            bool success = true;
 
             result.AppendMessageWithFormat ("Executing commands in '%s'.\n", filename);
 
             FileSpec cmd_file (filename, true);
-            if (cmd_file.Exists())
-            {
-                STLStringArray commands;
-                success = cmd_file.ReadFileLines (commands);
+            ExecutionContext *exe_ctx = NULL;  // Just use the default context.
+            bool echo_commands    = true;
+            bool print_results    = true;
 
-                STLStringArray::iterator pos = commands.begin();
-
-                // Trim out any empty lines or lines that start with the comment
-                // char '#'
-                while (pos != commands.end())
-                {
-                    size_t non_space = pos->find_first_not_of (k_space_characters);
-                    // Check for empty line or comment line (lines whose first
-                    // non-space character is a '#')
-                    if (non_space == std::string::npos || (*pos)[non_space] == '#')
-                        pos = commands.erase(pos);
-                    else
-                        ++pos;
-                }
-
-                if (commands.size() > 0)
-                {
-                    const size_t num_commands = commands.size();
-                    size_t i;
-                    for (i = 0; i<num_commands; ++i)
-                    {
-                        result.GetOutputStream().Printf ("%s %s\n", 
-                                                         m_interpreter.GetPrompt(), 
-                                                         commands[i].c_str());
-                        if (!m_interpreter.HandleCommand(commands[i].c_str(), false, result))
-                            break;
-                    }
-
-                    if (i < num_commands)
-                    {
-                        result.AppendErrorWithFormat("Aborting source of '%s' after command '%s' failed.\n", 
-                                                     filename, commands[i].c_str());
-                        result.SetStatus (eReturnStatusSuccessFinishResult);
-                    }
-                    else
-                    {
-                        success = true;
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-            }
-            else
-            {
-                result.AppendErrorWithFormat ("File '%s' does not exist.\n", filename);
-                result.SetStatus (eReturnStatusFailed);
-                success = false;
-            }
-
-            if (success)
-            {
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-            }
+            m_interpreter.HandleCommandsFromFile (cmd_file, 
+                                                  exe_ctx, 
+                                                  m_options.m_stop_on_continue, 
+                                                  m_options.m_stop_on_error, 
+                                                  echo_commands, 
+                                                  print_results, 
+                                                  result);
         }
         else
         {
@@ -137,6 +163,14 @@ public:
         return result.Succeeded();
 
     }
+};
+
+lldb::OptionDefinition
+CommandObjectCommandsSource::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_ALL, false, "stop-on-error", 'e', required_argument, NULL, 0, eArgTypeBoolean,    "If true, stop executing commands on error."},
+{ LLDB_OPT_SET_ALL, false, "stop-on-continue", 'c', required_argument, NULL, 0, eArgTypeBoolean, "If true, stop executing commands on continue."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 #pragma mark CommandObjectCommandsAlias

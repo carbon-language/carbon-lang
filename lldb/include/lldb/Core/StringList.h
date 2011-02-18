@@ -12,6 +12,7 @@
 
 
 #include "lldb/Core/STLUtils.h"
+#include "lldb/lldb-forward.h"
 
 namespace lldb_private {
 
@@ -24,7 +25,7 @@ public:
     StringList (const char *str);
 
     StringList (const char **strv, int strc);
-
+    
     virtual
     ~StringList ();
 
@@ -40,6 +41,9 @@ public:
     void
     AppendList (StringList strings);
 
+    bool
+    ReadFileLines (FileSpec &input_file);
+    
     uint32_t
     GetSize ();
 

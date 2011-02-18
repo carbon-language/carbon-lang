@@ -211,7 +211,8 @@ public:
     {
         CommandData () :
             user_source(),
-            script_source()
+            script_source(),
+            stop_on_error(true)
         {
         }
 
@@ -221,6 +222,7 @@ public:
         
         StringList user_source;
         StringList script_source;
+        bool stop_on_error;
     };
 
     class CommandBaton : public Baton

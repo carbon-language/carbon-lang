@@ -122,6 +122,7 @@ public:
         // Instance variables to hold the values for one_liner options.
         bool m_use_one_liner;
         std::string m_one_liner;
+        bool m_stop_on_error;
     };
 
 private:

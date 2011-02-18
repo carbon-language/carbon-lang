@@ -95,7 +95,68 @@ public:
     HandleCommand (const char *command_line, 
                    bool add_to_history, 
                    CommandReturnObject &result, 
-                   ExecutionContext *override_context = NULL);
+                   ExecutionContext *override_context = NULL,
+                   bool repeat_on_empty_command = true);
+    
+    //------------------------------------------------------------------
+    /// Execute a list of commands in sequence.
+    ///
+    /// @param[in] commands
+    ///    The list of commands to execute.
+    /// @param[in/out] context 
+    ///    The execution context in which to run the commands.  Can be NULL in which case the default
+    ///    context will be used.
+    /// @param[in] stop_on_continue 
+    ///    If \b true execution will end on the first command that causes the process in the
+    ///    execution context to continue.  If \false, we won't check the execution status.
+    /// @param[in] stop_on_error 
+    ///    If \b true execution will end on the first command that causes an error.
+    /// @param[in] echo_commands
+    ///    If \b true echo the command before executing it.  If \false, execute silently.
+    /// @param[in] print_results
+    ///    If \b true print the results of the command after executing it.  If \false, execute silently.
+    /// @param[out] result 
+    ///    This is marked as succeeding with no output if all commands execute safely,
+    ///    and failed with some explanation if we aborted executing the commands at some point.
+    //------------------------------------------------------------------
+    void
+    HandleCommands (StringList &commands, 
+                    ExecutionContext *context, 
+                    bool stop_on_continue, 
+                    bool stop_on_error, 
+                    bool echo_commands,
+                    bool print_results, 
+                    CommandReturnObject &result);
+
+    //------------------------------------------------------------------
+    /// Execute a list of commands from a file.
+    ///
+    /// @param[in] file
+    ///    The file from which to read in commands.
+    /// @param[in/out] context 
+    ///    The execution context in which to run the commands.  Can be NULL in which case the default
+    ///    context will be used.
+    /// @param[in] stop_on_continue 
+    ///    If \b true execution will end on the first command that causes the process in the
+    ///    execution context to continue.  If \false, we won't check the execution status.
+    /// @param[in] stop_on_error 
+    ///    If \b true execution will end on the first command that causes an error.
+    /// @param[in] echo_commands
+    ///    If \b true echo the command before executing it.  If \false, execute silently.
+    /// @param[in] print_results
+    ///    If \b true print the results of the command after executing it.  If \false, execute silently.
+    /// @param[out] result 
+    ///    This is marked as succeeding with no output if all commands execute safely,
+    ///    and failed with some explanation if we aborted executing the commands at some point.
+    //------------------------------------------------------------------
+    void
+    HandleCommandsFromFile (FileSpec &file, 
+                    ExecutionContext *context, 
+                    bool stop_on_continue, 
+                    bool stop_on_error, 
+                    bool echo_commands,
+                    bool print_results, 
+                    CommandReturnObject &result);
 
     CommandObject *
     GetCommandObjectForCommand (std::string &command_line);
@@ -263,6 +324,7 @@ private:
     std::vector<std::string> m_command_history;
     std::string m_repeat_command;  // Stores the command that will be executed for an empty command string.
     std::auto_ptr<ScriptInterpreter> m_script_interpreter_ap;
+    char m_comment_char;
 };
 
 

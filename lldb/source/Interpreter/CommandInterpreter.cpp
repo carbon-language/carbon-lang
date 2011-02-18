@@ -67,7 +67,8 @@ CommandInterpreter::CommandInterpreter
     m_debugger (debugger),
     m_synchronous_execution (synchronous_execution),
     m_skip_lldbinit_files (false),
-    m_script_interpreter_ap ()
+    m_script_interpreter_ap (),
+    m_comment_char ('#')
 {
     const char *dbg_name = debugger.GetInstanceName().AsCString();
     std::string lang_name = ScriptInterpreter::LanguageToString (script_language);
@@ -700,8 +701,11 @@ bool
 CommandInterpreter::HandleCommand (const char *command_line, 
                                    bool add_to_history,
                                    CommandReturnObject &result,
-                                   ExecutionContext *override_context)
+                                   ExecutionContext *override_context,
+                                   bool repeat_on_empty_command)
+
 {
+
     bool done = false;
     CommandObject *cmd_obj = NULL;
     std::string next_word;
@@ -722,26 +726,56 @@ CommandInterpreter::HandleCommand (const char *command_line,
     
     m_debugger.UpdateExecutionContext (override_context);
 
-    if (command_line == NULL || command_line[0] == '\0')
+    bool empty_command = false;
+    bool comment_command = false;
+    if (command_string.empty())
+        empty_command = true;
+    else
     {
-        if (m_command_history.empty())
+        const char *k_space_characters = "\t\n\v\f\r ";
+
+        size_t non_space = command_string.find_first_not_of (k_space_characters);
+        // Check for empty line or comment line (lines whose first
+        // non-space character is the comment character for this interpreter)
+        if (non_space == std::string::npos)
+            empty_command = true;
+        else if (command_string[non_space] == m_comment_char)
+             comment_command = true;
+    }
+    
+    if (empty_command)
+    {
+        if (repeat_on_empty_command)
         {
-            result.AppendError ("empty command");
-            result.SetStatus(eReturnStatusFailed);
-            return false;
+            if (m_command_history.empty())
+            {
+                result.AppendError ("empty command");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+            else
+            {
+                command_line = m_repeat_command.c_str();
+                command_string = command_line;
+                if (m_repeat_command.empty())
+                {
+                    result.AppendErrorWithFormat("No auto repeat.\n");
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+            add_to_history = false;
         }
         else
         {
-            command_line = m_repeat_command.c_str();
-            command_string = command_line;
-            if (m_repeat_command.empty())
-            {
-                result.AppendErrorWithFormat("No auto repeat.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
+            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            return true;
         }
-        add_to_history = false;
+    }
+    else if (comment_command)
+    {
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        return true;
     }
 
     // Phase 1.
@@ -1458,16 +1492,150 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
 
     if (init_file.Exists())
     {
-        char path[PATH_MAX];
-        init_file.GetPath(path, sizeof(path));
-        StreamString source_command;
-        source_command.Printf ("command source '%s'", path);
-        HandleCommand (source_command.GetData(), false, result);
+        ExecutionContext *exe_ctx = NULL;  // We don't have any context yet.
+        bool stop_on_continue = true;
+        bool stop_on_error    = false;
+        bool echo_commands    = false;
+        bool print_results    = false;
+        
+        HandleCommandsFromFile (init_file, exe_ctx, stop_on_continue, stop_on_error, echo_commands, print_results, result);
     }
     else
     {
         // nothing to be done if the file doesn't exist
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
+    }
+}
+
+void
+CommandInterpreter::HandleCommands (StringList &commands, 
+                                    ExecutionContext *override_context, 
+                                    bool stop_on_continue,
+                                    bool stop_on_error,
+                                    bool echo_commands,
+                                    bool print_results,
+                                    CommandReturnObject &result)
+{
+    size_t num_lines = commands.GetSize();
+    CommandReturnObject tmp_result;
+    
+    // If we are going to continue past a "continue" then we need to run the commands synchronously.
+    // Make sure you reset this value anywhere you return from the function.
+    
+    bool old_async_execution = m_debugger.GetAsyncExecution();
+    
+    // If we've been given an execution context, set it at the start, but don't keep resetting it or we will
+    // cause series of commands that change the context, then do an operation that relies on that context to fail.
+    
+    if (override_context != NULL)
+            m_debugger.UpdateExecutionContext (override_context);
+            
+    if (!stop_on_continue)
+    {
+        m_debugger.SetAsyncExecution (false);
+    }
+
+    for (int idx = 0; idx < num_lines; idx++)
+    {
+        const char *cmd = commands.GetStringAtIndex(idx);
+        if (cmd[0] == '\0')
+            continue;
+            
+        tmp_result.Clear();
+        if (echo_commands)
+        {
+            result.AppendMessageWithFormat ("%s %s\n", 
+                                             GetPrompt(), 
+                                             cmd);
+        }
+
+        bool success = HandleCommand(cmd, false, tmp_result, NULL);
+        
+        if (print_results)
+        {
+            if (tmp_result.Succeeded())
+              result.AppendMessageWithFormat("%s", tmp_result.GetOutputStream().GetData());
+        }
+                
+        if (!success || !tmp_result.Succeeded())
+        {
+            if (stop_on_error)
+            {
+                result.AppendErrorWithFormat("Aborting reading of commands after command #%d: '%s' failed.\n", 
+                                         idx, cmd);
+                result.SetStatus (eReturnStatusFailed);
+                m_debugger.SetAsyncExecution (old_async_execution);
+                return;
+            }
+            else if (print_results)
+            {
+                result.AppendMessageWithFormat ("Command #%d '%s' failed with error: %s.\n", 
+                                                idx + 1, 
+                                                cmd, 
+                                                tmp_result.GetErrorStream().GetData());
+            }
+        }
+        
+        // N.B. Can't depend on DidChangeProcessState, because the state coming into the command execution
+        // could be running (for instance in Breakpoint Commands.
+        // So we check the return value to see if it is has running in it.
+        if ((tmp_result.GetStatus() == eReturnStatusSuccessContinuingNoResult)
+                || (tmp_result.GetStatus() == eReturnStatusSuccessContinuingResult))
+        {
+            if (stop_on_continue)
+            {
+                // If we caused the target to proceed, and we're going to stop in that case, set the
+                // status in our real result before returning.  This is an error if the continue was not the
+                // last command in the set of commands to be run.
+                if (idx != num_lines - 1)
+                    result.AppendErrorWithFormat("Aborting reading of commands after command #%d: '%s' continued the target.\n", 
+                                                 idx + 1, cmd);
+                else
+                    result.AppendMessageWithFormat ("Command #%d '%s' continued the target.\n", idx + 1, cmd);
+                    
+                result.SetStatus(tmp_result.GetStatus());
+                m_debugger.SetAsyncExecution (old_async_execution);
+
+                return;
+            }
+        }
+        
+    }
+    
+    result.SetStatus (eReturnStatusSuccessFinishResult);
+    m_debugger.SetAsyncExecution (old_async_execution);
+
+    return;
+}
+
+void
+CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file, 
+                                            ExecutionContext *context, 
+                                            bool stop_on_continue,
+                                            bool stop_on_error,
+                                            bool echo_command,
+                                            bool print_result,
+                                            CommandReturnObject &result)
+{
+    if (cmd_file.Exists())
+    {
+        bool success;
+        StringList commands;
+        success = commands.ReadFileLines(cmd_file);
+        if (!success)
+        {
+            result.AppendErrorWithFormat ("Error reading commands from file: %s.\n", cmd_file.GetFilename().AsCString());
+            result.SetStatus (eReturnStatusFailed);
+            return;
+        }
+        HandleCommands (commands, context, stop_on_continue, stop_on_error, echo_command, print_result, result);
+    }
+    else
+    {
+        result.AppendErrorWithFormat ("Error reading commands from file %s - file not found.\n", 
+                                      cmd_file.GetFilename().AsCString());
+        result.SetStatus (eReturnStatusFailed);
+        return;
     }
 }
 

@@ -784,7 +784,7 @@ protected:
     CommandOptions m_options;
 };
 
-lldb::OptionEnumValueElement
+static lldb::OptionEnumValueElement
 g_sort_option_enumeration[4] =
 {
     { eSortOrderNone,       "none",     "No sorting, use the original symbol table order."},
