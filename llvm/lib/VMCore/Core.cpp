@@ -128,6 +128,10 @@ LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name) {
   return wrap(unwrap(M)->getTypeByName(Name));
 }
 
+const char *LLVMGetTypeName(LLVMModuleRef M, LLVMTypeRef Ty) {
+  return unwrap(M)->getTypeName(unwrap(Ty)).c_str();
+}
+
 void LLVMDumpModule(LLVMModuleRef M) {
   unwrap(M)->dump();
 }
