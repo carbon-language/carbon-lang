@@ -3707,8 +3707,15 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
     BT = T;
 
   Expr *E = IntegerLiteral::Create(Context, *Arg.getAsIntegral(), BT, Loc);
-  ImpCastExprToType(E, T, CK_IntegralCast);
-
+  if (T->isEnumeralType()) {
+    // FIXME: This is a hack. We need a better way to handle substituted
+    // non-type template parameters.
+    E = CStyleCastExpr::Create(Context, T, VK_RValue, CK_IntegralCast,
+                                      E, 0, 
+                                      Context.getTrivialTypeSourceInfo(T, Loc),
+                                      Loc, Loc);
+  }
+  
   return Owned(E);
 }
 
