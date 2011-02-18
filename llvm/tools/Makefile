@@ -12,6 +12,10 @@ LEVEL := ..
 # Build clang if present.
 OPTIONAL_PARALLEL_DIRS := clang
 
+# Build LLDB if present. Note LLDB must be built last as it depends on the
+# wider LLVM infrastructure (including Clang). 
+OPTIONAL_DIRS := lldb
+
 # NOTE: The tools are organized into five groups of four consisting of one
 # large and three small executables. This is done to minimize memory load
 # in parallel builds.  Please retain this ordering.
@@ -26,7 +30,8 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
 # Let users override the set of tools to build from the command line.
 ifdef ONLY_TOOLS
   OPTIONAL_PARALLEL_DIRS :=
-  PARALLEL_DIRS := $(ONLY_TOOLS)
+  OPTIONAL_DIRS := $(findstring lldb,$(ONLY_TOOLS))
+  PARALLEL_DIRS := $(filter-out lldb,$(ONLY_TOOLS))
 endif
 
 include $(LEVEL)/Makefile.config
