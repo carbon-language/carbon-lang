@@ -56,6 +56,7 @@ namespace llvm {
     public:
     explicit DIBuilder(Module &M);
     const MDNode *getCU() { return TheCU; }
+    enum ComplexAddrKind { OpPlus=1, OpDeref };
 
     /// CreateCompileUnit - A CompileUnit provides an anchor for all debugging
     /// information generated during this instance of compilation.
