@@ -2047,15 +2047,7 @@ static void WriteMDNodeComment(const MDNode *Node,
     return;
   
   Out.PadToColumn(50);
-  if (Tag == dwarf::DW_TAG_auto_variable)
-    Out << "; [ DW_TAG_auto_variable ]";
-  else if (Tag == dwarf::DW_TAG_arg_variable)
-    Out << "; [ DW_TAG_arg_variable ]";
-  else if (Tag == dwarf::DW_TAG_return_variable)
-    Out << "; [ DW_TAG_return_variable ]";
-  else if (Tag == dwarf::DW_TAG_vector_type)
-    Out << "; [ DW_TAG_vector_type ]";
-  else if (Tag == dwarf::DW_TAG_user_base)
+  if (Tag == dwarf::DW_TAG_user_base)
     Out << "; [ DW_TAG_user_base ]";
   else if (Tag.isIntN(32)) {
     if (const char *TagName = dwarf::TagString(Tag.getZExtValue()))
