@@ -26,13 +26,29 @@
 #include "llvm/Transforms/IPO.h"
 
 namespace llvm {
+
+  static inline void createStandardAliasAnalysisPasses(PassManagerBase *PM) {
+    // Add TypeBasedAliasAnalysis before BasicAliasAnalysis so that
+    // BasicAliasAnalysis wins if they disagree. This is intended to help
+    // support "obvious" type-punning idioms.
+    PM->add(createTypeBasedAliasAnalysisPass());
+    PM->add(createBasicAliasAnalysisPass());
+  }
+
   /// createStandardFunctionPasses - Add the standard list of function passes to
   /// the provided pass manager.
   ///
   /// \arg OptimizationLevel - The optimization level, corresponding to -O0,
   /// -O1, etc.
   static inline void createStandardFunctionPasses(PassManagerBase *PM,
-                                                  unsigned OptimizationLevel);
+                                                  unsigned OptimizationLevel) {
+    if (OptimizationLevel > 0) {
+      createStandardAliasAnalysisPasses(PM);
+      PM->add(createCFGSimplificationPass());
+      PM->add(createScalarReplAggregatesPass());
+      PM->add(createEarlyCSEPass());
+    }
+  }
 
   /// createStandardModulePasses - Add the standard list of module passes to the
   /// provided pass manager.
@@ -46,48 +62,6 @@ namespace llvm {
   /// \arg HaveExceptions - Whether the module may have code using exceptions.
   /// \arg InliningPass - The inlining pass to use, if any, or null. This will
   /// always be added, even at -O0.a
-  static inline void createStandardModulePasses(PassManagerBase *PM,
-                                                unsigned OptimizationLevel,
-                                                bool OptimizeSize,
-                                                bool UnitAtATime,
-                                                bool UnrollLoops,
-                                                bool SimplifyLibCalls,
-                                                bool HaveExceptions,
-                                                Pass *InliningPass);
-
-  /// createStandardLTOPasses - Add the standard list of module passes suitable
-  /// for link time optimization.
-  ///
-  /// Internalize - Run the internalize pass.
-  /// RunInliner - Use a function inlining pass.
-  /// VerifyEach - Run the verifier after each pass.
-  static inline void createStandardLTOPasses(PassManagerBase *PM,
-                                             bool Internalize,
-                                             bool RunInliner,
-                                             bool VerifyEach);
-
-  // Implementations
-
-  static inline void createStandardAliasAnalysisPasses(PassManagerBase *PM) {
-    // Add TypeBasedAliasAnalysis before BasicAliasAnalysis so that
-    // BasicAliasAnalysis wins if they disagree. This is intended to help
-    // support "obvious" type-punning idioms.
-    PM->add(createTypeBasedAliasAnalysisPass());
-    PM->add(createBasicAliasAnalysisPass());
-  }
-
-  static inline void createStandardFunctionPasses(PassManagerBase *PM,
-                                                  unsigned OptimizationLevel) {
-    if (OptimizationLevel > 0) {
-      createStandardAliasAnalysisPasses(PM);
-      PM->add(createCFGSimplificationPass());
-      PM->add(createScalarReplAggregatesPass());
-      PM->add(createEarlyCSEPass());
-    }
-  }
-
-  /// createStandardModulePasses - Add the standard module passes.  This is
-  /// expected to be run after the standard function passes.
   static inline void createStandardModulePasses(PassManagerBase *PM,
                                                 unsigned OptimizationLevel,
                                                 bool OptimizeSize,
@@ -183,6 +157,12 @@ namespace llvm {
       PM->add(createVerifierPass());
   }
 
+  /// createStandardLTOPasses - Add the standard list of module passes suitable
+  /// for link time optimization.
+  ///
+  /// Internalize - Run the internalize pass.
+  /// RunInliner - Use a function inlining pass.
+  /// VerifyEach - Run the verifier after each pass.
   static inline void createStandardLTOPasses(PassManagerBase *PM,
                                              bool Internalize,
                                              bool RunInliner,
