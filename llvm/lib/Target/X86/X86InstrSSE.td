@@ -3673,6 +3673,14 @@ let Uses = [ECX, EAX] in
 def MWAITrr   : I<0x01, MRM_C9, (outs), (ins), "mwait", []>, TB,
                 Requires<[HasSSE3]>;
 
+def : InstAlias<"mwait %eax, %ecx", (MWAITrr)>, Requires<[In32BitMode]>;
+def : InstAlias<"mwait %rax, %rcx", (MWAITrr)>, Requires<[In64BitMode]>;
+
+def : InstAlias<"monitor %eax, %ecx, %edx", (MONITORrrr)>,
+      Requires<[In32BitMode]>;
+def : InstAlias<"monitor %rax, %rcx, %rdx", (MONITORrrr)>,
+      Requires<[In64BitMode]>;
+
 //===---------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===---------------------------------------------------------------------===//

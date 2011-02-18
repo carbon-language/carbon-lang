@@ -2,6 +2,18 @@
 // RUN: FileCheck < %t %s
 // RUN: FileCheck --check-prefix=CHECK-STDERR < %t.err %s
 
+	monitor
+// CHECK: monitor
+// CHECK: encoding: [0x0f,0x01,0xc8]
+	monitor %rax, %rcx, %rdx
+// CHECK: monitor
+// CHECK: encoding: [0x0f,0x01,0xc8]
+	mwait
+// CHECK: mwait
+// CHECK: encoding: [0x0f,0x01,0xc9]
+	mwait %rax, %rcx
+// CHECK: mwait
+// CHECK: encoding: [0x0f,0x01,0xc9]
 
 // Suffix inference:
 

@@ -15,7 +15,13 @@
 	monitor
 // CHECK: monitor
 // CHECK: encoding: [0x0f,0x01,0xc8]
+	monitor %eax, %ecx, %edx
+// CHECK: monitor
+// CHECK: encoding: [0x0f,0x01,0xc8]
 	mwait
+// CHECK: mwait
+// CHECK: encoding: [0x0f,0x01,0xc9]
+	mwait %eax, %ecx
 // CHECK: mwait
 // CHECK: encoding: [0x0f,0x01,0xc9]
 
