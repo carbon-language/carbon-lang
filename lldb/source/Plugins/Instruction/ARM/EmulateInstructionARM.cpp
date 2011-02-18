@@ -27,6 +27,8 @@ using namespace lldb_private;
 #define APSR_C Bit32(m_inst_cpsr, CPSR_C)
 #define APSR_V Bit32(m_inst_cpsr, CPSR_V)
 
+#define AlignPC(pc_val) (pc_val & 0xFFFFFFFC)
+
 //----------------------------------------------------------------------
 //
 // ITSession implementation
@@ -5048,6 +5050,88 @@ EmulateInstructionARM::EmulateLDRBImmediate (ARMEncoding encoding)
     }
     return true;
 }
+                
+// LDRB (literal) calculates an address from the PC value and an immediate offset, loads a byte from memory, 
+// zero-extends it to form a 32-bit word and writes it to a register.
+bool
+EmulateInstructionARM::EmulateLDRBLiteral (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); NullCheckIfThumbEE(15); 
+        base = Align(PC,4); 
+        address = if add then (base + imm32) else (base - imm32); 
+        R[t] = ZeroExtend(MemU[address,1], 32);
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed ())
+    {
+        uint32_t t;
+        uint32_t imm32;
+        bool add;
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // if Rt == ’1111’ then SEE PLD; 
+                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == ’1’); 
+                t = Bits32 (opcode, 15, 12);
+                imm32 = Bits32 (opcode, 11, 0);
+                add = BitIsSet (opcode, 23);
+                  
+                // if t == 13 then UNPREDICTABLE;
+                if (t == 13)
+                    return false;
+                  
+                break;
+                  
+            case eEncodingA1:
+                // t == UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == ’1’); 
+                t = Bits32 (opcode, 15, 12);
+                imm32 = Bits32 (opcode, 11, 0);
+                add = BitIsSet (opcode, 23);
+                  
+                // if t == 15 then UNPREDICTABLE;
+                if (t == 15)
+                    return false;
+                break;
+                  
+            default:
+                return false;
+        }
+                  
+        // base = Align(PC,4); 
+        uint32_t pc_val = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        if (!success)
+            return false;
+                  
+        uint32_t base = AlignPC (pc_val);
+                  
+        addr_t address;
+        // address = if add then (base + imm32) else (base - imm32); 
+        if (add)
+            address = base + imm32;
+        else
+            address = base - imm32;
+                  
+        // R[t] = ZeroExtend(MemU[address,1], 32);
+        EmulateInstruction::Context context;
+        context.type = eContextRelativeBranchImmediate;
+        context.SetImmediate (address - base);
+                  
+        uint64_t data = MemURead (context, address, 1, 0, &success);
+        if (!success)
+            return false;
+                  
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, data))
+            return false;
+    }
+    return true;
+}
                   
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
@@ -5152,6 +5236,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fd00000, 0x09900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMIB, "ldmib<c> <Rn<{!} <registers>" },
         { 0x0e500000, 0x04100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRImmediateARM, "ldr<c> <Rt> [<Rn> {#+/-<imm12>}]" },
         { 0x0e500010, 0x06100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c> <Rt> [<Rn> +/-<Rm> {<shift>}] {!}" },
+        { 0x0e5f0000, 0x045f0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>, [...]"}, 
                   
         //----------------------------------------------------------------------
         // Store instructions
@@ -5326,6 +5411,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfffff800, 0x00007800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[<Rn>{,#<imm5>}]" },
         { 0xfff00000, 0xf8900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c>.w <Rt>,[<Rn>{,#<imm12>}]" },
         { 0xfff00800, 0xf8100800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[>Rn>, #+/-<imm8>]{!}" },
+        { 0xff7f0000, 0xf81f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>,[...]" },
                   
         //----------------------------------------------------------------------
         // Store instructions
