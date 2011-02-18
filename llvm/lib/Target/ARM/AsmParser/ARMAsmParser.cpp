@@ -97,11 +97,11 @@ class ARMAsmParser : public TargetAsmParser {
   OperandMatchResultTy tryParseCoprocRegOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy tryParseMemBarrierOptOperand(
-    SmallVectorImpl<MCParsedAsmOperand*> &);
+    SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy tryParseProcIFlagsOperand(
-    SmallVectorImpl<MCParsedAsmOperand*> &);
+    SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy tryParseMSRMaskOperand(
-    SmallVectorImpl<MCParsedAsmOperand*> &);
+    SmallVectorImpl<MCParsedAsmOperand*>&);
 
 public:
   ARMAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
@@ -953,7 +953,7 @@ tryParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
-/// ParseProcIFlagsOperand - Try to parse iflags from CPS instruction.
+/// tryParseProcIFlagsOperand - Try to parse iflags from CPS instruction.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 tryParseProcIFlagsOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
