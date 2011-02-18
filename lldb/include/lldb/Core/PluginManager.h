@@ -185,6 +185,12 @@ public:
 
     static ProcessCreateInstance
     GetProcessCreateCallbackForPluginName (const char *name);
+    
+    static const char *
+    GetProcessPluginNameAtIndex (uint32_t idx);
+
+    static const char *
+    GetProcessPluginDescriptionAtIndex (uint32_t idx);
 
     //------------------------------------------------------------------
     // SymbolFile

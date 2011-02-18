@@ -101,6 +101,10 @@ lldb_private::Initialize ()
 #endif
         // Scan for any system or user LLDB plug-ins
         PluginManager::Initialize();
+
+        // The process needs to know about installed plug-ins
+        Process::DidInitialize ();
+
     }
 }
 

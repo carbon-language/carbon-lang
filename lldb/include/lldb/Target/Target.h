@@ -15,7 +15,7 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-private.h"
+#include "lldb/lldb-include.h"
 #include "lldb/Breakpoint/BreakpointList.h"
 #include "lldb/Breakpoint/BreakpointLocationCollection.h"
 #include "lldb/Core/Broadcaster.h"
@@ -32,6 +32,9 @@
 
 namespace lldb_private {
 
+//----------------------------------------------------------------------
+// TargetInstanceSettings
+//----------------------------------------------------------------------
 class TargetInstanceSettings : public InstanceSettings
 {
 public:
@@ -62,6 +65,43 @@ public:
                               StringList &value,
                               Error *err);
 
+    lldb::ExecutionLevel
+    GetExecutionLevel () const
+    {
+        return m_execution_level;
+    }
+    
+    void
+    SetExecutionLevel (lldb::ExecutionLevel execution_level)
+    {
+        m_execution_level = execution_level;
+    }
+    
+    lldb::ExecutionMode
+    GetExecutionMode () const
+    {
+        return m_execution_mode;
+    }
+    
+    void
+    SetExecutionMode (lldb::ExecutionMode execution_mode)
+    {
+        m_execution_mode = execution_mode;
+    }
+    
+    lldb::ExecutionOSType
+    GetExecutionOSType () const
+    {
+        return m_execution_os_type;
+    }
+    
+    void
+    SetExecutionOSType (lldb::ExecutionOSType execution_os_type)
+    {
+        m_execution_os_type = execution_os_type;
+    }
+    
+
 protected:
 
     void
@@ -73,8 +113,15 @@ protected:
     
     std::string m_expr_prefix_path;
     std::string m_expr_prefix_contents;
+    lldb::ExecutionLevel m_execution_level;
+    lldb::ExecutionMode m_execution_mode;
+    lldb::ExecutionOSType m_execution_os_type;
+
 };
 
+//----------------------------------------------------------------------
+// Target
+//----------------------------------------------------------------------
 class Target :
     public Broadcaster,
     public ExecutionContextScope,
@@ -83,46 +130,16 @@ class Target :
 public:
     friend class TargetList;
 
-    class SettingsController : public UserSettingsController
+    //------------------------------------------------------------------
+    /// Broadcaster event bits definitions.
+    //------------------------------------------------------------------
+    enum
     {
-    public:
-        SettingsController ();
-
-        virtual
-        ~SettingsController ();
-
-        bool
-        SetGlobalVariable (const ConstString &var_name,
-                           const char *index_value,
-                           const char *value,
-                           const SettingEntry &entry,
-                           const lldb::VarSetOperationType op,
-                           Error&err);
-
-        bool
-        GetGlobalVariable (const ConstString &var_name,
-                           StringList &value,
-                           Error &err);
-
-        static SettingEntry global_settings_table[];
-        static SettingEntry instance_settings_table[];
-
-    protected:
-
-        lldb::InstanceSettingsSP
-        CreateInstanceSettings (const char *instance_name);
-
-        static const ConstString &
-        DefArchVarName ();
-
-    private:
-
-        // Class-wide settings.
-        ArchSpec m_default_architecture;
-
-        DISALLOW_COPY_AND_ASSIGN (SettingsController);
+        eBroadcastBitBreakpointChanged  = (1 << 0),
+        eBroadcastBitModulesLoaded      = (1 << 1),
+        eBroadcastBitModulesUnloaded    = (1 << 2)
     };
-
+    
     static void
     Initialize ();
 
@@ -140,16 +157,6 @@ public:
 
     void
     UpdateInstanceName ();
-
-    //------------------------------------------------------------------
-    /// Broadcaster event bits definitions.
-    //------------------------------------------------------------------
-    enum
-    {
-        eBroadcastBitBreakpointChanged  = (1 << 0),
-        eBroadcastBitModulesLoaded      = (1 << 1),
-        eBroadcastBitModulesUnloaded    = (1 << 2)
-    };
 
     lldb::ModuleSP
     GetSharedModule (const FileSpec& file_spec,
@@ -205,7 +212,6 @@ public:
 
     lldb::TargetSP
     GetSP();
-
 
     //------------------------------------------------------------------
     // This part handles the breakpoints.
@@ -501,6 +507,46 @@ public:
     }
 
 
+    //------------------------------------------------------------------
+    // Target::SettingsController
+    //------------------------------------------------------------------
+    class SettingsController : public UserSettingsController
+    {
+    public:
+        SettingsController ();
+        
+        virtual
+        ~SettingsController ();
+        
+        bool
+        SetGlobalVariable (const ConstString &var_name,
+                           const char *index_value,
+                           const char *value,
+                           const SettingEntry &entry,
+                           const lldb::VarSetOperationType op,
+                           Error&err);
+        
+        bool
+        GetGlobalVariable (const ConstString &var_name,
+                           StringList &value,
+                           Error &err);
+        
+        static SettingEntry global_settings_table[];
+        static SettingEntry instance_settings_table[];
+        
+    protected:
+        
+        lldb::InstanceSettingsSP
+        CreateInstanceSettings (const char *instance_name);
+        
+    private:
+        
+        // Class-wide settings.
+        ArchSpec m_default_architecture;
+        
+        DISALLOW_COPY_AND_ASSIGN (SettingsController);
+    };
+    
 
 protected:
     friend class lldb::SBTarget;

@@ -17,10 +17,56 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 
+using namespace lldb;
 using namespace lldb_private;
 
+static void
+DumpSettingEntry (CommandInterpreter &interpreter, 
+                  StreamString &result_stream,
+                  const uint32_t max_len, 
+                  const SettingEntry &entry)
+{
+    StreamString description;
+
+    if (entry.description)
+        description.Printf ("%s", entry.description);
+    
+    if (entry.default_value && entry.default_value[0])
+        description.Printf (" (default: %s)", entry.default_value);
+    
+    interpreter.OutputFormattedHelpText (result_stream, 
+                                         entry.var_name, 
+                                         "--", 
+                                         description.GetData(), 
+                                         max_len);
+    
+    if (entry.enum_values && entry.enum_values[0].string_value)
+    {
+        interpreter.OutputFormattedHelpText (result_stream, 
+                                             "", 
+                                             "  ", 
+                                             "Enumeration values:", 
+                                             max_len);
+        for (uint32_t enum_idx=0; entry.enum_values[enum_idx].string_value != NULL; ++enum_idx)
+        {
+            description.Clear();
+            if (entry.enum_values[enum_idx].usage)
+                description.Printf ("%s = %s", 
+                                    entry.enum_values[enum_idx].string_value,
+                                    entry.enum_values[enum_idx].usage);
+            else
+                description.Printf ("%s", entry.enum_values[enum_idx].string_value);
+            interpreter.OutputFormattedHelpText (result_stream, 
+                                                 "", 
+                                                 "  ", 
+                                                 description.GetData(), 
+                                                 max_len);
+        }
+    }
+}
+
 UserSettingsController::UserSettingsController (const char *level_name, 
-                                                const lldb::UserSettingsControllerSP &parent) :
+                                                const UserSettingsControllerSP &parent) :
     m_default_settings (),
     m_settings (),
     m_children (),
@@ -46,7 +92,7 @@ UserSettingsController::SetGlobalVariable
     const char *index_value,
     const char *value,
     const SettingEntry &entry,
-    const lldb::VarSetOperationType op,
+    const VarSetOperationType op,
     Error &err
 )
 {
@@ -66,11 +112,11 @@ UserSettingsController::GetGlobalVariable
 }
 
 bool
-UserSettingsController::InitializeSettingsController (lldb::UserSettingsControllerSP &controller_sp,
+UserSettingsController::InitializeSettingsController (UserSettingsControllerSP &controller_sp,
                                                       SettingEntry *global_settings,
                                                       SettingEntry *instance_settings)
 {
-    const lldb::UserSettingsControllerSP &parent = controller_sp->GetParent ();
+    const UserSettingsControllerSP &parent = controller_sp->GetParent ();
     if (parent)
         parent->RegisterChild (controller_sp);
 
@@ -84,9 +130,9 @@ UserSettingsController::InitializeSettingsController (lldb::UserSettingsControll
 }
 
 void
-UserSettingsController::FinalizeSettingsController (lldb::UserSettingsControllerSP &controller_sp)
+UserSettingsController::FinalizeSettingsController (UserSettingsControllerSP &controller_sp)
 {
-    const lldb::UserSettingsControllerSP &parent = controller_sp->GetParent ();
+    const UserSettingsControllerSP &parent = controller_sp->GetParent ();
     if (parent)
         parent->RemoveChild (controller_sp);
 }
@@ -100,7 +146,7 @@ UserSettingsController::InitializeGlobalVariables ()
     num_entries = m_settings.global_settings.size();
     for (int i = 0; i < num_entries; ++i)
     {
-        SettingEntry &entry = m_settings.global_settings[i];
+        const SettingEntry &entry = m_settings.global_settings[i];
         if (entry.default_value != NULL)
         {
             StreamString full_name;
@@ -108,30 +154,19 @@ UserSettingsController::InitializeGlobalVariables ()
                 full_name.Printf ("%s.%s", prefix, entry.var_name);
             else
                 full_name.Printf ("%s", entry.var_name);
-            SetVariable (full_name.GetData(), entry.default_value, lldb::eVarSetOperationAssign, false, "");
-        }
-        else if ((entry.var_type == lldb::eSetVarTypeEnum)
-                 && (entry.enum_values != NULL))
-        {
-            StreamString full_name;
-            if (prefix[0] != '\0')
-                full_name.Printf ("%s.%s", prefix, entry.var_name);
-            else
-                full_name.Printf ("%s", entry.var_name);
-            SetVariable (full_name.GetData(), entry.enum_values[0].string_value, lldb::eVarSetOperationAssign,
-                         false, "");
+            SetVariable (full_name.GetData(), entry.default_value, eVarSetOperationAssign, false, "");
         }
     }
 }
 
-const lldb::UserSettingsControllerSP &
+const UserSettingsControllerSP &
 UserSettingsController::GetParent ()
 {
     return m_settings.parent;
 }
 
 void
-UserSettingsController::RegisterChild (const lldb::UserSettingsControllerSP &child)
+UserSettingsController::RegisterChild (const UserSettingsControllerSP &child)
 {
     Mutex::Locker locker (m_children_mutex);
 
@@ -161,13 +196,13 @@ UserSettingsController::GetNumChildren ()
     return m_children.size();
 }
 
-const lldb::UserSettingsControllerSP
+const UserSettingsControllerSP
 UserSettingsController::GetChildAtIndex (size_t index)
 {
     if (index < m_children.size())
         return m_children[index];
 
-    lldb::UserSettingsControllerSP dummy_value;
+    UserSettingsControllerSP dummy_value;
 
     return dummy_value;
 }
@@ -178,7 +213,7 @@ UserSettingsController::GetGlobalEntry (const ConstString &var_name)
 
     for (int i = 0; i < m_settings.global_settings.size(); ++i)
     {
-        SettingEntry &entry = m_settings.global_settings[i];
+        const SettingEntry &entry = m_settings.global_settings[i];
         ConstString entry_name (entry.var_name);
         if (entry_name == var_name)
             return &entry;
@@ -205,7 +240,7 @@ UserSettingsController::GetInstanceEntry (const ConstString &const_var_name)
 void
 UserSettingsController::BuildParentPrefix (std::string &parent_prefix)
 {
-    lldb::UserSettingsControllerSP parent = GetParent();
+    UserSettingsControllerSP parent = GetParent();
     if (parent.get() != NULL)
     {
         parent->BuildParentPrefix (parent_prefix);
@@ -216,14 +251,14 @@ UserSettingsController::BuildParentPrefix (std::string &parent_prefix)
 }
 
 void
-UserSettingsController::RemoveChild (const lldb::UserSettingsControllerSP &child)
+UserSettingsController::RemoveChild (const UserSettingsControllerSP &child)
 {
     Mutex::Locker locker (m_children_mutex);
-    std::vector<lldb::UserSettingsControllerSP>::iterator pos, end = m_children.end();
+    std::vector<UserSettingsControllerSP>::iterator pos, end = m_children.end();
 
    for (pos = m_children.begin(); pos != end; ++pos)
    {
-      lldb::UserSettingsControllerSP entry = *pos;
+      UserSettingsControllerSP entry = *pos;
       if (entry == child)
       {
           m_children.erase (pos);
@@ -235,7 +270,7 @@ UserSettingsController::RemoveChild (const lldb::UserSettingsControllerSP &child
 Error
 UserSettingsController::SetVariable (const char *full_dot_name, 
                                      const char *value, 
-                                     const lldb::VarSetOperationType op,
+                                     const VarSetOperationType op,
                                      const bool override,
                                      const char *debugger_instance_name,
                                      const char *index_value)
@@ -285,9 +320,9 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                     return err;
 
                 if ((value == NULL || value[0] == '\0')
-                    && (op == lldb::eVarSetOperationAssign))
+                    && (op == eVarSetOperationAssign))
                 {
-                    if (entry->var_type != lldb::eSetVarTypeEnum)
+                    if (entry->var_type != eSetVarTypeEnum)
                         value = entry->default_value;
                     else
                         value = entry->enum_values[0].string_value;
@@ -313,9 +348,9 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                         return err;
 
                     if ((value == NULL || value[0] == '\0')
-                        && (op == lldb::eVarSetOperationAssign))
+                        && (op == eVarSetOperationAssign))
                     {
-                        if (entry->var_type != lldb::eSetVarTypeEnum)
+                        if (entry->var_type != eSetVarTypeEnum)
                             value = entry->default_value;
                         else
                             value = entry->enum_values[0].string_value;
@@ -348,11 +383,11 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                         OverrideAllInstances (const_var_name, value, op, index_value, err);
 
                         // Update all pending records as well.
-//                        std::map<std::string, lldb::InstanceSettingsSP>::iterator pos, end = m_pending_settings.end();
+//                        std::map<std::string, InstanceSettingsSP>::iterator pos, end = m_pending_settings.end();
 //                        for (pos = m_pending_settings.begin(); pos != end; end++)
 //                        {
 //                            const ConstString instance_name (pos->first.c_str());
-//                            lldb::InstanceSettingsSP setting_sp = pos->second;
+//                            InstanceSettingsSP setting_sp = pos->second;
 //                            setting_sp->UpdateInstanceSettingsVariable (const_var_name, index_value, value, 
 //                                                                        instance_name, *entry, op, err, true);
 //                        }
@@ -399,9 +434,9 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                     return err;
 
                 if ((value == NULL || value[0] == '\0')
-                    && (op == lldb::eVarSetOperationAssign))
+                    && (op == eVarSetOperationAssign))
                 {
-                    if (entry->var_type != lldb::eSetVarTypeEnum)
+                    if (entry->var_type != eSetVarTypeEnum)
                         value = entry->default_value;
                     else
                         value = entry->enum_values[0].string_value;
@@ -421,7 +456,7 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                 else
                 {
                     // Instance does not currently exist; make or update a pending setting for it.
-                    lldb::InstanceSettingsSP current_settings_sp = PendingSettingsForInstance (instance_name);
+                    InstanceSettingsSP current_settings_sp = PendingSettingsForInstance (instance_name);
 
                     // Now we have a settings record, update it appropriately.
 
@@ -438,12 +473,12 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                         OverrideAllInstances (const_var_name, value, op, index_value, err);
                         
                         // Update all pending records as well.
-                        std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
-                        std::map<std::string, lldb::InstanceSettingsSP>::iterator end = m_pending_settings.end();
+                        std::map<std::string, InstanceSettingsSP>::iterator pos;
+                        std::map<std::string, InstanceSettingsSP>::iterator end = m_pending_settings.end();
                         for (pos = m_pending_settings.begin(); pos != end; end++)
                         {
                             const ConstString tmp_inst_name (pos->first.c_str());
-                            lldb::InstanceSettingsSP setting_sp = pos->second;
+                            InstanceSettingsSP setting_sp = pos->second;
                             setting_sp->UpdateInstanceSettingsVariable (const_var_name, index_value, value, 
                                                                         tmp_inst_name, *entry, op, err, true);
                         }
@@ -453,7 +488,7 @@ UserSettingsController::SetVariable (const char *full_dot_name,
             else
             {
                 // A child setting.
-                lldb::UserSettingsControllerSP child;
+                UserSettingsControllerSP child;
                 ConstString child_prefix (names.GetArgumentAtIndex (0));
                 int num_children = GetNumChildren();
                 bool found = false;
@@ -497,7 +532,7 @@ StringList
 UserSettingsController::GetVariable 
 (
     const char *full_dot_name, 
-    lldb::SettableVariableType &var_type, 
+    SettableVariableType &var_type, 
     const char *debugger_instance_name,
     Error &err
 )
@@ -528,7 +563,7 @@ UserSettingsController::GetVariable
     // Should we pass this off to a child?  If there is more than one name piece left, and the next name piece
     // matches a child prefix, then yes.
 
-    lldb::UserSettingsControllerSP child;
+    UserSettingsControllerSP child;
     if (names.GetArgumentCount() > 1)
     {
         ConstString child_prefix (names.GetArgumentAtIndex (0));
@@ -570,12 +605,12 @@ UserSettingsController::GetVariable
                     // Look for instance name setting in pending settings.
 
                     std::string inst_name_str = instance_name.AsCString();
-                    std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
+                    std::map<std::string, InstanceSettingsSP>::iterator pos;
 
                     pos = m_pending_settings.find (inst_name_str);
                     if (pos != m_pending_settings.end())
                     {
-                        lldb::InstanceSettingsSP settings_sp = pos->second;
+                        InstanceSettingsSP settings_sp = pos->second;
                         settings_sp->GetInstanceSettingsValue (*instance_entry, const_var_name,  value, &err);
                     }
                     else 
@@ -655,16 +690,16 @@ UserSettingsController::RemovePendingSettings (const ConstString &instance_name)
         tmp_name.Printf ("%s", instance_name.AsCString());
 
     std::string instance_name_str (tmp_name.GetData());
-    std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
+    std::map<std::string, InstanceSettingsSP>::iterator pos;
     Mutex::Locker locker (m_pending_settings_mutex);
 
     m_pending_settings.erase (instance_name_str);
 }
 
-const lldb::InstanceSettingsSP &
+const InstanceSettingsSP &
 UserSettingsController::FindPendingSettings (const ConstString &instance_name)
 {
-    std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
+    std::map<std::string, InstanceSettingsSP>::iterator pos;
     StreamString tmp_name;
 
     // Add surrounding brackets to instance name if not already present.
@@ -698,16 +733,16 @@ UserSettingsController::CreateDefaultInstanceSettings ()
         ConstString var_name (entry.var_name);
         const char *value = entry.default_value;
 
-        if (entry.var_type == lldb::eSetVarTypeEnum)
+        if (entry.var_type == eSetVarTypeEnum)
             value = entry.enum_values[0].string_value;
   
         m_default_settings->UpdateInstanceSettingsVariable (var_name, NULL, value, default_name, entry, 
-                                                            lldb::eVarSetOperationAssign, err, true);
+                                                            eVarSetOperationAssign, err, true);
     } 
 }
 
 void
-UserSettingsController::CopyDefaultSettings (const lldb::InstanceSettingsSP &actual_settings,
+UserSettingsController::CopyDefaultSettings (const InstanceSettingsSP &actual_settings,
                                              const ConstString &instance_name,
                                              bool pending)
 {
@@ -733,27 +768,27 @@ UserSettingsController::CopyDefaultSettings (const lldb::InstanceSettingsSP &act
         }
 
         actual_settings->UpdateInstanceSettingsVariable (var_name, NULL, value_str.c_str(), instance_name, entry, 
-                                                         lldb::eVarSetOperationAssign, err, pending);
+                                                         eVarSetOperationAssign, err, pending);
 
     }
 }
 
-lldb::InstanceSettingsSP
+InstanceSettingsSP
 UserSettingsController::PendingSettingsForInstance (const ConstString &instance_name)
 {
     std::string name_str (instance_name.AsCString());
-    std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
+    std::map<std::string, InstanceSettingsSP>::iterator pos;
     Mutex::Locker locker (m_pending_settings_mutex);
 
     pos = m_pending_settings.find (name_str);
     if (pos != m_pending_settings.end())
     {
-        lldb::InstanceSettingsSP settings_sp = pos->second;
+        InstanceSettingsSP settings_sp = pos->second;
         return settings_sp;
     }
     else
     {
-        lldb::InstanceSettingsSP new_settings_sp = CreateInstanceSettings (instance_name.AsCString());
+        InstanceSettingsSP new_settings_sp = CreateInstanceSettings (instance_name.AsCString());
         CopyDefaultSettings (new_settings_sp, instance_name, true);
         m_pending_settings[name_str] = new_settings_sp;
         return new_settings_sp;
@@ -761,7 +796,7 @@ UserSettingsController::PendingSettingsForInstance (const ConstString &instance_
     
     // Should never reach this line.
 
-    lldb::InstanceSettingsSP dummy;
+    InstanceSettingsSP dummy;
 
     return dummy;
 }
@@ -789,9 +824,9 @@ UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
         {
             for (int j = 0; j < tmp_value.GetSize(); ++j)
             {
-                if (entry.var_type == lldb::eSetVarTypeArray)
+                if (entry.var_type == eSetVarTypeArray)
                     value_string.Printf ("\n  [%d]: '%s'", j, tmp_value.GetStringAtIndex (j));
-                else if (entry.var_type == lldb::eSetVarTypeDictionary)
+                else if (entry.var_type == eSetVarTypeDictionary)
                     value_string.Printf ("\n  '%s'", tmp_value.GetStringAtIndex (j));
             }
             multi_value = true;
@@ -812,7 +847,7 @@ UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
 void
 UserSettingsController::GetAllPendingSettingValues (StreamString &result_stream)
 {
-    std::map<std::string, lldb::InstanceSettingsSP>::iterator pos;
+    std::map<std::string, InstanceSettingsSP>::iterator pos;
 
     std::string parent_prefix;
     BuildParentPrefix (parent_prefix);
@@ -821,7 +856,7 @@ UserSettingsController::GetAllPendingSettingValues (StreamString &result_stream)
     for (pos = m_pending_settings.begin(); pos != m_pending_settings.end(); ++pos)
     {
         std::string tmp_name = pos->first;
-        lldb::InstanceSettingsSP settings_sp = pos->second;
+        InstanceSettingsSP settings_sp = pos->second;
 
         const ConstString instance_name (tmp_name.c_str());
 
@@ -929,7 +964,7 @@ UserSettingsController::GetAllInstanceVariableValues (CommandInterpreter &interp
 void
 UserSettingsController::OverrideAllInstances (const ConstString &var_name,
                                               const char *value,
-                                              lldb::VarSetOperationType op,
+                                              VarSetOperationType op,
                                               const char *index_value,
                                               Error &err)
 {
@@ -1018,23 +1053,23 @@ FindMaxNameLength (std::vector<SettingEntry> table)
 }
 
 const char *
-UserSettingsController::GetTypeString (lldb::SettableVariableType var_type)
+UserSettingsController::GetTypeString (SettableVariableType var_type)
 {
     switch (var_type)
     {
-        case lldb::eSetVarTypeInt:
+        case eSetVarTypeInt:
             return "int";
-        case lldb::eSetVarTypeBoolean:
+        case eSetVarTypeBoolean:
             return "boolean";
-        case lldb::eSetVarTypeString:
+        case eSetVarTypeString:
             return "string";
-        case lldb::eSetVarTypeArray:
+        case eSetVarTypeArray:
             return "array";
-        case lldb::eSetVarTypeDictionary:
+        case eSetVarTypeDictionary:
             return "dictionary";
-        case lldb::eSetVarTypeEnum:
+        case eSetVarTypeEnum:
             return "enum";
-        case lldb::eSetVarTypeNone:
+        case eSetVarTypeNone:
             return "no type";
     }
 
@@ -1042,7 +1077,7 @@ UserSettingsController::GetTypeString (lldb::SettableVariableType var_type)
 }
 
 void
-UserSettingsController::PrintEnumValues (const lldb::OptionEnumValueElement *enum_values, Stream &str)
+UserSettingsController::PrintEnumValues (const OptionEnumValueElement *enum_values, Stream &str)
 {
     int i = 0;
     while (enum_values[i].string_value != NULL)
@@ -1055,7 +1090,7 @@ UserSettingsController::PrintEnumValues (const lldb::OptionEnumValueElement *enu
 
 void
 UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpreter,
-                                                     lldb::UserSettingsControllerSP root, 
+                                                     UserSettingsControllerSP root, 
                                                      std::string &current_prefix, 
                                                      StreamString &result_stream,
                                                      Error &err)
@@ -1063,10 +1098,8 @@ UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpr
     // Write out current prefix line.
     StreamString prefix_line;
     StreamString description;
-    uint32_t max_len;
+    uint32_t max_len = FindMaxNameLength (root->m_settings.global_settings);
     int num_entries = root->m_settings.global_settings.size();
-
-    max_len = FindMaxNameLength (root->m_settings.global_settings);
 
     if (! current_prefix.empty())
         result_stream.Printf ("\n'%s' variables:\n\n", current_prefix.c_str());
@@ -1078,24 +1111,7 @@ UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpr
         // Write out all "global" variables.
         for (int i = 0; i < num_entries; ++i)
         {
-            SettingEntry entry = root->m_settings.global_settings[i];
-            description.Clear();
-            if (entry.var_type == lldb::eSetVarTypeEnum)
-            {
-                StreamString enum_values_str;
-                UserSettingsController::PrintEnumValues (entry.enum_values, enum_values_str);
-                description.Printf ("[static, enum] %s.  Valid values: {%s}  (default: '%s')", entry.description, 
-                                    enum_values_str.GetData(), entry.enum_values[0].string_value);
-            }
-            else if (entry.default_value != NULL)
-                description.Printf ("[static, %s] %s (default: '%s')", GetTypeString (entry.var_type), 
-                                    entry.description, entry.default_value);
-
-            else
-                description.Printf ("[static, %s] %s (default: '')", GetTypeString (entry.var_type), 
-                                    entry.description);
-            interpreter.OutputFormattedHelpText (result_stream, entry.var_name, "--", description.GetData(), 
-                                                 max_len);
+            DumpSettingEntry (interpreter, result_stream, max_len, root->m_settings.global_settings[i]);
         }
     }
 
@@ -1107,32 +1123,15 @@ UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpr
         // Write out all instance variables.
         for (int i = 0; i < num_entries; ++i)
         {
-            SettingEntry entry = root->m_settings.instance_settings[i];
-            description.Clear();
-            if (entry.var_type == lldb::eSetVarTypeEnum)
-            {
-                StreamString enum_values_str;
-                UserSettingsController::PrintEnumValues (entry.enum_values, enum_values_str);
-                description.Printf ("[instance, enum] %s.  Valid values: {%s} (default: '%s')", entry.description,
-                                    enum_values_str.GetData(), entry.enum_values[0].string_value);
-            }
-            else if (entry.default_value != NULL)
-                description.Printf ("[instance, %s] %s (default: '%s')", GetTypeString (entry.var_type), 
-                                    entry.description, entry.default_value);
-            else
-                description.Printf ("[instance, %s] %s (default: '')", GetTypeString (entry.var_type), 
-                                    entry.description);
-            interpreter.OutputFormattedHelpText (result_stream, entry.var_name, "--", description.GetData(), 
-                                                 max_len);
+            DumpSettingEntry (interpreter, result_stream, max_len, root->m_settings.instance_settings[i]);
         }
-
     }
     
     // Now, recurse across all children.
     int num_children = root->GetNumChildren();
     for (int i = 0; i < num_children; ++i)
     {
-        lldb::UserSettingsControllerSP child = root->GetChildAtIndex (i);
+        UserSettingsControllerSP child = root->GetChildAtIndex (i);
         
         if (child)
         {
@@ -1143,7 +1142,10 @@ UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpr
             else
                 new_prefix.Printf ("%s", child_prefix.AsCString());
             std::string new_prefix_str = new_prefix.GetData();
-            UserSettingsController::FindAllSettingsDescriptions (interpreter, child, new_prefix_str, result_stream, 
+            UserSettingsController::FindAllSettingsDescriptions (interpreter, 
+                                                                 child, 
+                                                                 new_prefix_str, 
+                                                                 result_stream, 
                                                                  err);
         }
     }
@@ -1151,7 +1153,7 @@ UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpr
 
 void
 UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interpreter,
-                                                  lldb::UserSettingsControllerSP root,
+                                                  UserSettingsControllerSP root,
                                                   std::string &current_prefix,
                                                   const char *search_name,
                                                   StreamString &result_stream,
@@ -1198,23 +1200,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
             // Write out all "global" variables.
             for (int i = 0; i < num_entries; ++i)
             {
-                SettingEntry entry = root->m_settings.global_settings[i];
-                description.Clear();
-                if (entry.var_type == lldb::eSetVarTypeEnum)
-                {
-                    StreamString enum_values_str;
-                    UserSettingsController::PrintEnumValues (entry.enum_values, enum_values_str);
-                    description.Printf ("[static, enum] %s.  Valid values: {%s}  (default: '%s')", entry.description, 
-                                        enum_values_str.GetData(), entry.enum_values[0].string_value);
-                }
-                else if (entry.default_value != NULL)
-                    description.Printf ("[static, %s] %s (default: '%s')", GetTypeString (entry.var_type), 
-                                        entry.description, entry.default_value);
-                else
-                    description.Printf ("[static, %s] %s (default: '')", GetTypeString (entry.var_type), 
-                                        entry.description);
-                interpreter.OutputFormattedHelpText (result_stream, entry.var_name, "--", description.GetData(), 
-                                                     max_len);
+                DumpSettingEntry (interpreter, result_stream, max_len, root->m_settings.global_settings[i]);
             }
         }
         
@@ -1226,23 +1212,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
             // Write out all instance variables.
             for (int i = 0; i < num_entries; ++i)
             {
-                SettingEntry entry = root->m_settings.instance_settings[i];
-                description.Clear();
-                if (entry.var_type == lldb::eSetVarTypeEnum)
-                {
-                    StreamString enum_values_str;
-                    UserSettingsController::PrintEnumValues (entry.enum_values, enum_values_str);
-                    description.Printf ("[instance, enum] %s.  Valid values: {%s} (default: '%s')", entry.description,
-                                        enum_values_str.GetData(), entry.enum_values[0].string_value);
-                }
-                else if (entry.default_value != NULL)
-                    description.Printf ("[instance, %s] %s (default: '%s')", GetTypeString (entry.var_type), 
-                                        entry.description, entry.default_value);
-                else
-                    description.Printf ("[instance, %s] %s (default: '')", GetTypeString (entry.var_type), 
-                                        entry.description);
-                interpreter.OutputFormattedHelpText (result_stream, entry.var_name, "--", description.GetData(), 
-                                                     max_len);
+                DumpSettingEntry (interpreter, result_stream, max_len, root->m_settings.instance_settings[i]);
             }
         }
     }
@@ -1261,28 +1231,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
         // Check to see if it is a global or instance variable name.
         if (setting_entry != NULL)
         {
-            StreamString description;
-            if (setting_entry->var_type == lldb::eSetVarTypeEnum)
-            {
-                StreamString enum_values_str;
-                UserSettingsController::PrintEnumValues (setting_entry->enum_values, enum_values_str);
-                description.Printf ("[%s, enum] %s.  Valid values: {%s}  (default: '%s')", 
-                                    (is_global ? "static" : "instance"), 
-                                    setting_entry->description, 
-                                    enum_values_str.GetData(), setting_entry->enum_values[0].string_value);
-            }
-            else if (setting_entry->default_value != NULL)
-                description.Printf ("[%s, %s] %s (default: '%s')", 
-                                    (is_global ? "static" : "instance"), 
-                                    GetTypeString (setting_entry->var_type), 
-                                    setting_entry->description, setting_entry->default_value);
-            else
-                description.Printf ("[%s, %s] %s (default: '')", 
-                                    (is_global ? "static" : "instance"), 
-                                    GetTypeString (setting_entry->var_type), 
-                                    setting_entry->description);
-            interpreter.OutputFormattedHelpText (result_stream, setting_entry->var_name, "--", description.GetData(), 
-                                                 var_name.GetLength());
+            DumpSettingEntry (interpreter, result_stream, var_name.GetLength(), *setting_entry);
         }
         else
         {
@@ -1291,15 +1240,19 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
             bool found = false;
             for (int i = 0; i < num_children && !found; ++i)
             {
-                lldb::UserSettingsControllerSP child = root->GetChildAtIndex (i);
+                UserSettingsControllerSP child = root->GetChildAtIndex (i);
                 if (child)
                 {
                     ConstString child_prefix = child->GetLevelName();
                     if (child_prefix == var_name)
                     {
                         found = true;
-                        UserSettingsController::FindSettingsDescriptions (interpreter, child, current_prefix,
-                                                                          var_name.AsCString(), result_stream, err);
+                        UserSettingsController::FindSettingsDescriptions (interpreter, 
+                                                                          child, 
+                                                                          current_prefix,
+                                                                          var_name.AsCString(), 
+                                                                          result_stream, 
+                                                                          err);
                     }
                 }
             }
@@ -1329,7 +1282,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
         bool found = false;
         for (int i = 0; i < num_children && !found; ++i)
         {
-            lldb::UserSettingsControllerSP child = root->GetChildAtIndex (i);
+            UserSettingsControllerSP child = root->GetChildAtIndex (i);
             if (child)
             {
                 ConstString child_prefix = child->GetLevelName();
@@ -1354,7 +1307,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
 
 void
 UserSettingsController::SearchAllSettingsDescriptions (CommandInterpreter &interpreter,
-                                                       lldb::UserSettingsControllerSP root,
+                                                       UserSettingsControllerSP root,
                                                        std::string &current_prefix,
                                                        const char *search_word,
                                                        StreamString &result_stream)
@@ -1368,7 +1321,7 @@ UserSettingsController::SearchAllSettingsDescriptions (CommandInterpreter &inter
     {
         for (int i = 0; i < num_entries; ++i)
         {
-            SettingEntry &entry = root->m_settings.global_settings[i];
+            const SettingEntry &entry = root->m_settings.global_settings[i];
             if (strcasestr (entry.description, search_word) != NULL)
             {
                 StreamString var_name;
@@ -1404,7 +1357,7 @@ UserSettingsController::SearchAllSettingsDescriptions (CommandInterpreter &inter
     int num_children = root->GetNumChildren ();
     for (int i = 0; i < num_children; ++i)
     {
-        lldb::UserSettingsControllerSP child = root->GetChildAtIndex (i);
+        UserSettingsControllerSP child = root->GetChildAtIndex (i);
         
         if (child)
         {
@@ -1423,20 +1376,20 @@ UserSettingsController::SearchAllSettingsDescriptions (CommandInterpreter &inter
 
 void
 UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
-                                              lldb::UserSettingsControllerSP root,
+                                              UserSettingsControllerSP root,
                                               std::string &current_prefix,
                                               StreamString &result_stream,
                                               Error &err)
 {
     StreamString description;
     int num_entries = root->m_settings.global_settings.size();
-    lldb::SettableVariableType var_type;
+    SettableVariableType var_type;
 
 
     for (int i = 0; i < num_entries; ++i)
     {
         StreamString full_var_name;
-        SettingEntry entry = root->m_settings.global_settings[i];
+        const SettingEntry &entry = root->m_settings.global_settings[i];
         if (! current_prefix.empty())
             full_var_name.Printf ("%s.%s", current_prefix.c_str(), entry.var_name);
         else
@@ -1451,9 +1404,9 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
         {
             description.Printf ("%s (%s):\n", full_var_name.GetData(), GetTypeString (entry.var_type));
             for (int j = 0; j < value.GetSize(); ++j)
-                if (entry.var_type == lldb::eSetVarTypeArray)
+                if (entry.var_type == eSetVarTypeArray)
                     description.Printf ("  [%d]: '%s'\n", j, value.GetStringAtIndex (j));
-                else if (entry.var_type == lldb::eSetVarTypeDictionary)
+                else if (entry.var_type == eSetVarTypeDictionary)
                     description.Printf ("  '%s'\n", value.GetStringAtIndex (j));
         }
 
@@ -1470,7 +1423,7 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
     int num_children = root->GetNumChildren();
     for (int i = 0; i < num_children; ++i)
     {
-        lldb::UserSettingsControllerSP child = root->GetChildAtIndex (i);
+        UserSettingsControllerSP child = root->GetChildAtIndex (i);
         
         if (child)
         {
@@ -1525,7 +1478,7 @@ UserSettingsController::IsLiveInstance (const std::string &instance_name)
 }
 
 int
-UserSettingsController::CompleteSettingsValue (lldb::UserSettingsControllerSP root_settings,
+UserSettingsController::CompleteSettingsValue (UserSettingsControllerSP root_settings,
                                                const char *full_dot_name,
                                                const char *partial_value,
                                                bool &word_complete,
@@ -1605,9 +1558,9 @@ UserSettingsController::CompleteSettingsValue (lldb::UserSettingsControllerSP ro
     if (entry == NULL)
         return 0;
 
-    if (entry->var_type == lldb::eSetVarTypeBoolean)
+    if (entry->var_type == eSetVarTypeBoolean)
         return UserSettingsController::BooleanMatches (partial_value, word_complete, matches);
-    else if (entry->var_type == lldb::eSetVarTypeEnum)
+    else if (entry->var_type == eSetVarTypeEnum)
         return UserSettingsController::EnumMatches (partial_value, entry->enum_values, word_complete, matches);
     else
         return 0;
@@ -1647,7 +1600,7 @@ UserSettingsController::BooleanMatches (const char *partial_value,
 
 int
 UserSettingsController::EnumMatches (const char *partial_value,
-                                     lldb::OptionEnumValueElement *enum_values,
+                                     OptionEnumValueElement *enum_values,
                                      bool &word_complete,
                                      StringList &matches)
 {
@@ -1676,7 +1629,7 @@ UserSettingsController::EnumMatches (const char *partial_value,
 }
 
 int
-UserSettingsController::CompleteSettingsNames (lldb::UserSettingsControllerSP root_settings,
+UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_settings,
                                                Args &partial_setting_name_pieces,
                                                bool &word_complete,
                                                StringList &matches)
@@ -1835,7 +1788,7 @@ UserSettingsController::GlobalVariableMatches (const char *partial_name,
 
     for (size_t i = 0; i < m_settings.global_settings.size(); ++i)
     {
-        SettingEntry &entry = m_settings.global_settings[i];
+        const SettingEntry &entry = m_settings.global_settings[i];
         std::string var_name (entry.var_name);
         if ((partial_len == 0)
             || ((partial_len <= var_name.length())
@@ -1964,16 +1917,16 @@ UserSettingsController::ChildMatches (const char *partial_name,
 }
 
 void
-UserSettingsController::VerifyOperationForType (lldb::SettableVariableType var_type, 
-                                                lldb::VarSetOperationType op, 
+UserSettingsController::VerifyOperationForType (SettableVariableType var_type, 
+                                                VarSetOperationType op, 
                                                 const ConstString &var_name,
                                                 Error &err)
 {
-    if (op == lldb::eVarSetOperationAssign)
+    if (op == eVarSetOperationAssign)
         return;
 
 
-    if (op == lldb::eVarSetOperationInvalid)
+    if (op == eVarSetOperationInvalid)
     {
         err.SetErrorString ("Invalid 'settings ' subcommand operation.\n");  
         return;
@@ -1981,23 +1934,23 @@ UserSettingsController::VerifyOperationForType (lldb::SettableVariableType var_t
 
     switch (op)
     {
-        case lldb::eVarSetOperationInsertBefore:
-        case lldb::eVarSetOperationInsertAfter:
-            if (var_type != lldb::eSetVarTypeArray)
+        case eVarSetOperationInsertBefore:
+        case eVarSetOperationInsertAfter:
+            if (var_type != eSetVarTypeArray)
                 err.SetErrorString ("Invalid operation:  This operation can only be performed on array variables.\n");
             break;
-        case lldb::eVarSetOperationReplace:
-        case lldb::eVarSetOperationRemove:
-            if ((var_type != lldb::eSetVarTypeArray)
-                && (var_type != lldb::eSetVarTypeDictionary))
+        case eVarSetOperationReplace:
+        case eVarSetOperationRemove:
+            if ((var_type != eSetVarTypeArray)
+                && (var_type != eSetVarTypeDictionary))
                 err.SetErrorString ("Invalid operation:  This operation can only be performed on array or dictionary"
                                     " variables.\n");
             break;
-        case lldb::eVarSetOperationAppend:
-        case lldb::eVarSetOperationClear:
-            if ((var_type != lldb::eSetVarTypeArray)
-                && (var_type != lldb::eSetVarTypeDictionary)
-                && (var_type != lldb::eSetVarTypeString))
+        case eVarSetOperationAppend:
+        case eVarSetOperationClear:
+            if ((var_type != eSetVarTypeArray)
+                && (var_type != eSetVarTypeDictionary)
+                && (var_type != eSetVarTypeString))
                 err.SetErrorString ("Invalid operation:  This operation can only be performed on array, dictionary "
                                     "or string variables.\n");
             break;
@@ -2009,36 +1962,36 @@ UserSettingsController::VerifyOperationForType (lldb::SettableVariableType var_t
 }
 
 void
-UserSettingsController::UpdateStringVariable (lldb::VarSetOperationType op, 
+UserSettingsController::UpdateStringVariable (VarSetOperationType op, 
                                               std::string &string_var, 
                                               const char *new_value,
                                               Error &err)
 {
-    if (op == lldb::eVarSetOperationAssign)
+    if (op == eVarSetOperationAssign)
     {
         if (new_value && new_value[0])
             string_var.assign (new_value);
         else
             string_var.clear();
     }
-    else if (op == lldb::eVarSetOperationAppend)
+    else if (op == eVarSetOperationAppend)
     {
         if (new_value && new_value[0])
             string_var.append (new_value);
     }
-    else if (op == lldb::eVarSetOperationClear)
+    else if (op == eVarSetOperationClear)
         string_var.clear();
     else
         err.SetErrorString ("Unrecognized operation. Cannot update value.\n");
 }
 
 void
-UserSettingsController::UpdateBooleanVariable (lldb::VarSetOperationType op,
+UserSettingsController::UpdateBooleanVariable (VarSetOperationType op,
                                                bool &bool_var,
                                                const char *new_value,
                                                Error &err)
 {
-    if (op != lldb::eVarSetOperationAssign)
+    if (op != eVarSetOperationAssign)
         err.SetErrorString ("Invalid operation for Boolean variable.  Cannot update value.\n");
 
     if (new_value && new_value[0])
@@ -2063,7 +2016,7 @@ UserSettingsController::UpdateBooleanVariable (lldb::VarSetOperationType op,
 }
 
 void
-UserSettingsController::UpdateStringArrayVariable (lldb::VarSetOperationType op, 
+UserSettingsController::UpdateStringArrayVariable (VarSetOperationType op, 
                                                    const char *index_value,
                                                    Args &array_var,
                                                    const char *new_value,
@@ -2096,41 +2049,41 @@ UserSettingsController::UpdateStringArrayVariable (lldb::VarSetOperationType op,
 
     switch (op) 
     {
-        case lldb::eVarSetOperationAssign:
+        case eVarSetOperationAssign:
             array_var.SetCommandString (new_value);
             break;
-        case lldb::eVarSetOperationReplace:
+        case eVarSetOperationReplace:
         {
             if (valid_index)
                 array_var.ReplaceArgumentAtIndex (index, new_value);
             break;
         }
-        case lldb::eVarSetOperationInsertBefore:
-        case lldb::eVarSetOperationInsertAfter:
+        case eVarSetOperationInsertBefore:
+        case eVarSetOperationInsertAfter:
         {
             if (valid_index)
             {
                 Args new_array (new_value);
-                if (op == lldb::eVarSetOperationInsertAfter)
+                if (op == eVarSetOperationInsertAfter)
                     ++index;
                 for (int i = 0; i < new_array.GetArgumentCount(); ++i)
                     array_var.InsertArgumentAtIndex (index, new_array.GetArgumentAtIndex (i));
             }
             break;
         }
-        case lldb::eVarSetOperationRemove:
+        case eVarSetOperationRemove:
         {
             if (valid_index)
                 array_var.DeleteArgumentAtIndex (index);
             break;
         }
-        case lldb::eVarSetOperationAppend:
+        case eVarSetOperationAppend:
         {
             Args new_array (new_value);
             array_var.AppendArguments (new_array);
             break;
         }
-        case lldb::eVarSetOperationClear:
+        case eVarSetOperationClear:
             array_var.Clear();
             break;
         default:
@@ -2140,7 +2093,7 @@ UserSettingsController::UpdateStringArrayVariable (lldb::VarSetOperationType op,
 }
 
 void
-UserSettingsController::UpdateDictionaryVariable (lldb::VarSetOperationType op,
+UserSettingsController::UpdateDictionaryVariable (VarSetOperationType op,
                                                   const char *index_value,
                                                   std::map<std::string, std::string> &dictionary,
                                                   const char *new_value,
@@ -2148,7 +2101,7 @@ UserSettingsController::UpdateDictionaryVariable (lldb::VarSetOperationType op,
 {
     switch (op)
     {
-        case lldb::eVarSetOperationReplace:
+        case eVarSetOperationReplace:
             if (index_value != NULL)
             {
                 std::string key (index_value);
@@ -2163,7 +2116,7 @@ UserSettingsController::UpdateDictionaryVariable (lldb::VarSetOperationType op,
             else
                 err.SetErrorString ("'settings replace' requires a key for dictionary variables. No key supplied.\n");
             break;
-        case lldb::eVarSetOperationRemove:
+        case eVarSetOperationRemove:
             if (index_value != NULL)
             {
                 std::string key (index_value);
@@ -2172,14 +2125,14 @@ UserSettingsController::UpdateDictionaryVariable (lldb::VarSetOperationType op,
             else
                 err.SetErrorString ("'settings remove' requires a key for dictionary variables. No key supplied.\n");
             break;
-        case lldb::eVarSetOperationClear:
+        case eVarSetOperationClear:
             dictionary.clear ();
             break;
-        case lldb::eVarSetOperationAppend:
-        case lldb::eVarSetOperationAssign:
+        case eVarSetOperationAppend:
+        case eVarSetOperationAssign:
             {
                 // Clear the dictionary if it's an assign with new_value as NULL.
-                if (new_value == NULL && op == lldb::eVarSetOperationAssign)
+                if (new_value == NULL && op == eVarSetOperationAssign)
                 {
                     dictionary.clear ();
                     break;
@@ -2215,8 +2168,8 @@ UserSettingsController::UpdateDictionaryVariable (lldb::VarSetOperationType op,
                 }
             }  
             break;
-        case lldb::eVarSetOperationInsertBefore:
-        case lldb::eVarSetOperationInsertAfter:
+        case eVarSetOperationInsertBefore:
+        case eVarSetOperationInsertAfter:
             err.SetErrorString ("Specified operation cannot be performed on dictionary variables.\n");
             break;
         default:
@@ -2226,7 +2179,7 @@ UserSettingsController::UpdateDictionaryVariable (lldb::VarSetOperationType op,
 }
 
 const char *
-UserSettingsController::EnumToString (const lldb::OptionEnumValueElement *enum_values,
+UserSettingsController::EnumToString (const OptionEnumValueElement *enum_values,
                                       int value)
 {
     int i = 0;
@@ -2237,12 +2190,12 @@ UserSettingsController::EnumToString (const lldb::OptionEnumValueElement *enum_v
         ++i;
     }
 
-    return "Invalid enumeration value";
+    return "";
 }
 
 
 void
-UserSettingsController::UpdateEnumVariable (lldb::OptionEnumValueElement *enum_values,
+UserSettingsController::UpdateEnumVariable (OptionEnumValueElement *enum_values,
                                             int *enum_var,
                                             const char *new_value,
                                             Error &err)
@@ -2297,11 +2250,11 @@ UserSettingsController::RenameInstanceSettings (const char *old_name, const char
         live_settings->ChangeInstanceName (stripped_new_name);
 
         // Now see if there are any pending settings for the new name; if so, copy them into live_settings.
-        std::map<std::string,  lldb::InstanceSettingsSP>::iterator pending_pos;
+        std::map<std::string,  InstanceSettingsSP>::iterator pending_pos;
         pending_pos = m_pending_settings.find (new_name_key);
         if (pending_pos != m_pending_settings.end())
         {
-            lldb::InstanceSettingsSP pending_settings_sp = pending_pos->second;
+            InstanceSettingsSP pending_settings_sp = pending_pos->second;
             live_settings->CopyInstanceSettings (pending_settings_sp, false);
         }
 

@@ -1687,12 +1687,17 @@ CommandInterpreter::OutputFormattedHelpText (Stream &strm,
     int indent_size = max_word_len + strlen (separator) + 2;
 
     strm.IndentMore (indent_size);
-
-    int len = indent_size + strlen (help_text) + 1;
-    char *text  = (char *) malloc (len);
-    sprintf (text, "%-*s %s %s",  max_word_len, word_text, separator, help_text);
+    
+    StreamString text_strm;
+    text_strm.Printf ("%-*s %s %s",  max_word_len, word_text, separator, help_text);
+    
+    size_t len = text_strm.GetSize();
+    const char *text = text_strm.GetData();
     if (text[len - 1] == '\n')
-        text[--len] = '\0';
+    {
+        text_strm.EOL();
+        len = text_strm.GetSize();
+    }
 
     if (len  < max_columns)
     {
@@ -1750,7 +1755,6 @@ CommandInterpreter::OutputFormattedHelpText (Stream &strm,
     }
     strm.EOL();
     strm.IndentLess(indent_size);
-    free (text);
 }
 
 void

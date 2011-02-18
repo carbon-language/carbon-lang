@@ -394,8 +394,6 @@ public:
         lldb::InstanceSettingsSP
         CreateInstanceSettings (const char *instance_name);
 
-        static lldb::OptionEnumValueElement g_plugins[];
-
     private:
 
         // Class-wide settings.
@@ -407,6 +405,9 @@ public:
 
     static void
     Initialize ();
+
+    static void
+    DidInitialize ();
 
     static void
     Terminate ();

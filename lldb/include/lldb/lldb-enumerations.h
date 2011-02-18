@@ -618,6 +618,60 @@ typedef enum LazyBool {
     eLazyBoolYes        = 1
 } LazyBool;
 
+//------------------------------------------------------------------
+/// Execution Level
+//------------------------------------------------------------------
+typedef enum ExecutionLevel
+{
+    eExecutionLevelAuto,    // Automatically detect how to run an executable
+    eExecutionLevelKernel,  // Execute a program as a kernel executable
+    eExecutionLevelUser     // Execute a program as a user space executable
+} ExecutionLevel;
+
+
+//------------------------------------------------------------------
+/// Execution mode
+//------------------------------------------------------------------
+typedef enum ExecutionMode
+{        
+    // Automatically detect the execution mode
+    eExecutionModeAuto,
+
+    // Execute with no shared libraries, everything is where the executable 
+    // files say they are (file addresses == load addresses)
+    eExecutionModeStatic,   
+
+    // Execute with shared libraries using a dynamic loader plug-in to
+    // detect when shared libraries are loaded/unloaded.
+    eExecutionModeDynamic
+
+} ExecutionMode;
+
+//------------------------------------------------------------------
+/// Execution OS
+//------------------------------------------------------------------
+typedef enum ExecutionOSType
+{
+    // Automatically detect the execution operating system
+    eExecutionOSTypeAuto,   
+
+    // There is no operating system (no processes or threads).
+    eExecutionOSTypeNone,   
+
+    // There is an OS, but when we execution stops, the entire OS is halted 
+    // (common when debugging in eExecutionLevelKernel modes). Processes and 
+    // threads can be queried, selected and switched between using memory 
+    // reads/writes using a ProcessHelper plug-in (which has yet to be 
+    // designed).
+    eExecutionOSTypeHalted, 
+
+    // There is live OS with debug services that we can talk to for process, 
+    // thread, and other OS queries.
+    eExecutionOSTypeLive 
+
+} ExecutionOSType;
+
+
 } // namespace lldb
 
 

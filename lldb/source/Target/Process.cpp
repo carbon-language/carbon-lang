@@ -2644,15 +2644,49 @@ Process::PopProcessInputReader ()
         m_target.GetDebugger().PopInputReader (m_process_input_reader);
 }
 
-
+// The process needs to know about installed plug-ins
 void
-Process::Initialize ()
+Process::DidInitialize ()
 {
+    static std::vector<lldb::OptionEnumValueElement> g_plugins;
+    
+    int i=0; 
+    const char *name;
+    OptionEnumValueElement option_enum;
+    while ((name = PluginManager::GetProcessPluginNameAtIndex (i)) != NULL)
+    {
+        if (name)
+        {
+            option_enum.value = i;
+            option_enum.string_value = name;
+            option_enum.usage = PluginManager::GetProcessPluginDescriptionAtIndex (i);
+            g_plugins.push_back (option_enum);
+        }
+        ++i;
+    }
+    option_enum.value = 0;
+    option_enum.string_value = NULL;
+    option_enum.usage = NULL;
+    g_plugins.push_back (option_enum);
+    
+    for (i=0; (name = SettingsController::instance_settings_table[i].var_name); ++i)
+    {
+        if (::strcmp (name, "plugin") == 0)
+        {
+            SettingsController::instance_settings_table[i].enum_values = &g_plugins[0];
+            break;
+        }
+    }
     UserSettingsControllerSP &usc = GetSettingsController();
     usc.reset (new SettingsController);
     UserSettingsController::InitializeSettingsController (usc,
                                                           SettingsController::global_settings_table,
                                                           SettingsController::instance_settings_table);
+}
+
+void
+Process::Initialize ()
+{
 }
 
 void
@@ -3550,14 +3584,6 @@ Process::SettingsController::global_settings_table[] =
 };
 
 
-lldb::OptionEnumValueElement
-Process::SettingsController::g_plugins[] =
-{
-    { eMacosx, "process.macosx", "Use the native MacOSX debugger plugin" },
-    { eRemoteDebugger, "process.gdb-remote" , "Use the GDB Remote protocol based debugger plugin" },
-    { 0, NULL, NULL }
-};
-
 SettingEntry
 Process::SettingsController::instance_settings_table[] =
 {
@@ -3568,7 +3594,7 @@ Process::SettingsController::instance_settings_table[] =
     { "input-path",     eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for reading its input." },
     { "output-path",    eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
     { "error-path",     eSetVarTypeString,      NULL,           NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
-    { "plugin",         eSetVarTypeEnum,        NULL,           g_plugins,  false,  false,  "The plugin to be used to run the process." }, 
+    { "plugin",         eSetVarTypeEnum,        NULL,           NULL,       false,  false,  "The plugin to be used to run the process." }, 
     { "disable-aslr",   eSetVarTypeBoolean,     "true",         NULL,       false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
     { "disable-stdio",  eSetVarTypeBoolean,     "false",        NULL,       false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
     {  NULL,            eSetVarTypeNone,        NULL,           NULL,       false,  false,  NULL }

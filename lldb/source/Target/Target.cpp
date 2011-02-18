@@ -998,13 +998,50 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
     return new_settings_sp;
 }
 
-const ConstString &
-Target::SettingsController::DefArchVarName ()
-{
-    static ConstString def_arch_var_name ("default-arch");
 
-    return def_arch_var_name;
+#define TSC_DEFAULT_ARCH    "default-arch"
+#define TSC_EXPR_PREFIX     "expr-prefix"
+#define TSC_EXEC_LEVEL      "execution-level"
+#define TSC_EXEC_MODE       "execution-mode"
+#define TSC_EXEC_OS_TYPE    "execution-os-type"
+
+
+static const ConstString &
+GetSettingNameForDefaultArch ()
+{
+    static ConstString g_const_string (TSC_DEFAULT_ARCH);
+
+    return g_const_string;
 }
+
+static const ConstString &
+GetSettingNameForExpressionPrefix ()
+{
+    static ConstString g_const_string (TSC_EXPR_PREFIX);
+    return g_const_string;
+}
+
+static const ConstString &
+GetSettingNameForExecutionLevel ()
+{
+    static ConstString g_const_string (TSC_EXEC_LEVEL);
+    return g_const_string;
+}
+
+static const ConstString &
+GetSettingNameForExecutionMode ()
+{
+    static ConstString g_const_string (TSC_EXEC_MODE);
+    return g_const_string;
+}
+
+static const ConstString &
+GetSettingNameForExecutionOSType ()
+{
+    static ConstString g_const_string (TSC_EXEC_OS_TYPE);
+    return g_const_string;
+}
+
 
 bool
 Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
@@ -1014,7 +1051,7 @@ Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
                                                const lldb::VarSetOperationType op,
                                                Error&err)
 {
-    if (var_name == DefArchVarName())
+    if (var_name == GetSettingNameForDefaultArch())
     {
         ArchSpec tmp_spec (value);
         if (tmp_spec.IsValid())
@@ -1031,7 +1068,7 @@ Target::SettingsController::GetGlobalVariable (const ConstString &var_name,
                                                StringList &value,
                                                Error &err)
 {
-    if (var_name == DefArchVarName())
+    if (var_name == GetSettingNameForDefaultArch())
     {
         // If the arch is invalid (the default), don't show a string for it
         if (m_default_architecture.IsValid())
@@ -1054,7 +1091,12 @@ TargetInstanceSettings::TargetInstanceSettings
     bool live_instance, 
     const char *name
 ) :
-    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance)
+    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
+    m_expr_prefix_path (),
+    m_expr_prefix_contents (),
+    m_execution_level (eExecutionLevelAuto),
+    m_execution_mode (eExecutionModeAuto),
+    m_execution_os_type (eExecutionOSTypeAuto)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -1100,8 +1142,6 @@ TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
     return *this;
 }
 
-#define EXPR_PREFIX_STRING  "expr-prefix"
-
 void
 TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_name,
                                                         const char *index_value,
@@ -1112,9 +1152,9 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
                                                         Error &err,
                                                         bool pending)
 {
-    static ConstString expr_prefix_str (EXPR_PREFIX_STRING);
-    
-    if (var_name == expr_prefix_str)
+    int new_enum = -1;
+
+    if (var_name == GetSettingNameForExpressionPrefix ())
     {
         switch (op)
         {
@@ -1156,19 +1196,39 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
             return;
         }
     }
+    else if (var_name == GetSettingNameForExecutionLevel ())
+    {
+        UserSettingsController::UpdateEnumVariable (entry.enum_values, &new_enum, value, err);
+        if (err.Success())
+            m_execution_level = (ExecutionLevel)new_enum;
+    }
+    else if (var_name == GetSettingNameForExecutionMode ())
+    {
+        UserSettingsController::UpdateEnumVariable (entry.enum_values, &new_enum, value, err);
+        if (err.Success())
+            m_execution_mode = (ExecutionMode)new_enum;
+    }
+    else if (var_name == GetSettingNameForExecutionOSType ())
+    {
+        UserSettingsController::UpdateEnumVariable (entry.enum_values, &new_enum, value, err);
+        if (err.Success())
+            m_execution_os_type = (ExecutionOSType)new_enum;
+    }
 }
 
 void
-TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
-                                              bool pending)
+TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings, bool pending)
 {
     TargetInstanceSettings *new_settings_ptr = static_cast <TargetInstanceSettings *> (new_settings.get());
     
     if (!new_settings_ptr)
         return;
     
-    m_expr_prefix_path = new_settings_ptr->m_expr_prefix_path;
-    m_expr_prefix_contents = new_settings_ptr->m_expr_prefix_contents;
+    m_expr_prefix_path      = new_settings_ptr->m_expr_prefix_path;
+    m_expr_prefix_contents  = new_settings_ptr->m_expr_prefix_contents;
+    m_execution_level       = new_settings_ptr->m_execution_level;
+    m_execution_mode        = new_settings_ptr->m_execution_mode;
+    m_execution_os_type     = new_settings_ptr->m_execution_os_type;
 }
 
 bool
@@ -1177,11 +1237,21 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                   StringList &value,
                                                   Error *err)
 {
-    static ConstString expr_prefix_str (EXPR_PREFIX_STRING);
-    
-    if (var_name == expr_prefix_str)
+    if (var_name == GetSettingNameForExpressionPrefix ())
     {
         value.AppendString (m_expr_prefix_path.c_str(), m_expr_prefix_path.size());
+    }
+    else if (var_name == GetSettingNameForExecutionLevel ())
+    {
+        value.AppendString (UserSettingsController::EnumToString (entry.enum_values, m_execution_level));
+    }
+    else if (var_name == GetSettingNameForExecutionMode ())
+    {
+        value.AppendString (UserSettingsController::EnumToString (entry.enum_values, m_execution_mode));
+    }
+    else if (var_name == GetSettingNameForExecutionOSType ())
+    {
+        value.AppendString (UserSettingsController::EnumToString (entry.enum_values, m_execution_os_type));
     }
     else 
     {
@@ -1213,15 +1283,51 @@ TargetInstanceSettings::CreateInstanceName ()
 SettingEntry
 Target::SettingsController::global_settings_table[] =
 {
-  //{ "var-name",       var-type,           "default",  enum-table, init'd, hidden, "help-text"},
-    { "default-arch",   eSetVarTypeString,  NULL,       NULL,       false,  false,  "Default architecture to choose, when there's a choice." },
-    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+    // var-name           var-type           default      enum  init'd hidden help-text
+    // =================  ================== ===========  ====  ====== ====== =========================================================================
+    { TSC_DEFAULT_ARCH  , eSetVarTypeString , NULL      , NULL, false, false, "Default architecture to choose, when there's a choice." },
+    { NULL              , eSetVarTypeNone   , NULL      , NULL, false, false, NULL }
+};
+
+static lldb::OptionEnumValueElement
+g_execution_level_enums[] =
+{
+    { eExecutionLevelAuto   , "auto"    , "Automatically detect the execution level (user/kernel)." },
+    { eExecutionLevelKernel , "kernel"  , "Treat executables as kernel executables." },
+    { eExecutionLevelUser   , "user"    , "Treat executables as user space executables." },
+    { 0                             , NULL      , NULL }
+};
+
+static lldb::OptionEnumValueElement
+g_execution_mode_enums[] =
+{
+    { eExecutionModeAuto    , "auto"    , "Automatically detect the execution mode (static/dynamic)." },
+    { eExecutionModeStatic  , "static"  , "All executables are static and addresses at the virtual addresses in the object files." },
+    { eExecutionModeDynamic , "dynamic" , "Executables and shared libraries are dynamically loaded.." },
+    { 0                             , NULL      , NULL }
+};
+
+static lldb::OptionEnumValueElement
+g_execution_os_enums[] =
+{
+    { eExecutionOSTypeAuto  , "auto"    , "Automatically detect the execution OS (none/halted/live)." },
+    { eExecutionOSTypeNone  , "none"    , "There is no operating system available (no processes or threads)." },
+    { eExecutionOSTypeHalted, "halted"  , "There is an operating system, but it is halted when the debugger is halted. "
+                                                  "Processes and threads must be discovered by accessing symbols and reading "
+                                                  "memory." },
+    { eExecutionOSTypeLive  , "live"    , "There is a live operating system with debug services that can be used to "
+                                                  "get processes, threads and theirs states." },
+    { 0, NULL, NULL }
 };
 
 SettingEntry
 Target::SettingsController::instance_settings_table[] =
 {
-  //{ "var-name",           var-type,           "default",  enum-table, init'd, hidden, "help-text"},
-    { EXPR_PREFIX_STRING,   eSetVarTypeString,  NULL,       NULL,       false,  false,  "Path to a file containing expressions to be prepended to all expressions." },
-    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+    // var-name           var-type           default      enum-table                  init'd hidden help-text
+    // =================  ================== ===========  =========================   ====== ====== =========================================================================
+    { TSC_EXPR_PREFIX   , eSetVarTypeString , NULL      , NULL                      , false, false, "Path to a file containing expressions to be prepended to all expressions." },
+    { TSC_EXEC_LEVEL    , eSetVarTypeEnum   , "auto"    , g_execution_level_enums   , false, false, "Sets the execution level for a target." },
+    { TSC_EXEC_MODE     , eSetVarTypeEnum   , "auto"    , g_execution_mode_enums    , false, false, "Sets the execution mode for a target." },
+    { TSC_EXEC_OS_TYPE  , eSetVarTypeEnum   , "auto"    , g_execution_os_enums      , false, false, "Sets the execution OS for a target." },
+    {  NULL             , eSetVarTypeNone   , NULL      , NULL                      , false, false, NULL }
 };

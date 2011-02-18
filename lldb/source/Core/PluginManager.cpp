@@ -1278,6 +1278,24 @@ PluginManager::RegisterPlugin
     return false;
 }
 
+const char *
+PluginManager::GetProcessPluginNameAtIndex (uint32_t idx)
+{
+    ProcessInstance instance;
+    if (AccessProcessInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.name.c_str();
+    return NULL;
+}
+
+const char *
+PluginManager::GetProcessPluginDescriptionAtIndex (uint32_t idx)
+{
+    ProcessInstance instance;
+    if (AccessProcessInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.description.c_str();
+    return NULL;
+}
+
 bool
 PluginManager::UnregisterPlugin (ProcessCreateInstance create_callback)
 {
