@@ -24,7 +24,9 @@
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Debug.h"
@@ -525,11 +527,15 @@ int main(int argc, char **argv) {
       NoOutput = true;
 
   // Create a PassManager to hold and optimize the collection of passes we are
-  // about to build...
+  // about to build.
   //
   PassManager Passes;
 
-  // Add an appropriate TargetData instance for this module...
+  // Add an appropriate TargetLibraryInfo pass for the module's triple.
+  if (!M->getTargetTriple().empty())
+    Passes.add(new TargetLibraryInfo(Triple(M->getTargetTriple())));
+  
+  // Add an appropriate TargetData instance for this module.
   TargetData *TD = 0;
   const std::string &ModuleDataLayout = M.get()->getDataLayout();
   if (!ModuleDataLayout.empty())
