@@ -2535,7 +2535,7 @@ void Sema::DiagnoseAbstractType(const CXXRecordDecl *RD) {
 
       Diag(SO->second.front().Method->getLocation(), 
            diag::note_pure_virtual_function) 
-        << SO->second.front().Method->getDeclName();
+        << SO->second.front().Method->getDeclName() << RD->getDeclName();
     }
   }
 

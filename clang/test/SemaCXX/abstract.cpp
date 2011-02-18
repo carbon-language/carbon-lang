@@ -9,7 +9,7 @@
 #endif
 
 class C {
-  virtual void f() = 0; // expected-note {{pure virtual function 'f'}}
+  virtual void f() = 0; // expected-note {{unimplemented pure virtual method 'f'}}
 };
 
 static_assert(__is_abstract(C), "C has a pure virtual function");
@@ -25,7 +25,7 @@ class E : D {
 
 static_assert(!__is_abstract(E), "E inherits from an abstract class but implements f");
 
-C *d = new C; // expected-error {{allocation of an object of abstract type 'C'}}
+C *d = new C; // expected-error {{allocating an object of type 'C', which is an abstract class}}
 
 C c; // expected-error {{variable type 'C' is an abstract class}}
 void t1(C c); // expected-error {{parameter type 'C' is an abstract class}}
@@ -38,8 +38,8 @@ struct S {
 void t3(const C&);
 
 void f() {
-  C(); // expected-error {{allocation of an object of abstract type 'C'}}
-  t3(C()); // expected-error {{allocation of an object of abstract type 'C'}}
+  C(); // expected-error {{allocating an object of type 'C', which is an abstract class}}
+  t3(C()); // expected-error {{allocating an object of type 'C', which is an abstract class}}
 }
 
 C e1[2]; // expected-error {{array of abstract class type 'C'}}
@@ -64,7 +64,7 @@ class F {
     void u(F c); // expected-error {{parameter type 'F' is an abstract class}}
   };
     
-  virtual void f() = 0; // expected-note {{pure virtual function 'f'}}
+  virtual void f() = 0; // expected-note {{unimplemented pure virtual method 'f'}}
 };
 
 // Diagnosing in these cases is prohibitively expensive.  We still
@@ -193,14 +193,14 @@ namespace test1 {
 // rdar://problem/8302168
 namespace test2 {
   struct X1 {
-    virtual void xfunc(void) = 0;  // expected-note {{pure virtual function}}
+    virtual void xfunc(void) = 0;  // expected-note {{unimplemented pure virtual method}}
     void g(X1 parm7);        // expected-error {{parameter type 'test2::X1' is an abstract class}}
     void g(X1 parm8[2]);     // expected-error {{array of abstract class type 'test2::X1'}}
   };
 
   template <int N>
   struct X2 {
-    virtual void xfunc(void) = 0;  // expected-note {{pure virtual function}}
+    virtual void xfunc(void) = 0;  // expected-note {{unimplemented pure virtual method}}
     void g(X2 parm10);        // expected-error {{parameter type 'X2<N>' is an abstract class}}
     void g(X2 parm11[2]);     // expected-error {{array of abstract class type 'X2<N>'}}
   };
@@ -219,11 +219,11 @@ namespace test3 {
 
   struct C {
     static C x; // expected-error {{abstract class}}
-    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    virtual void abstract() = 0; // expected-note {{unimplemented pure virtual method}}
   };
 
   struct D {
-    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    virtual void abstract() = 0; // expected-note {{unimplemented pure virtual method}}
     static D x; // expected-error {{abstract class}}
   };
 }
@@ -231,21 +231,21 @@ namespace test3 {
 namespace test4 {
   template <class T> struct A {
     A x; // expected-error {{abstract class}}
-    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    virtual void abstract() = 0; // expected-note {{unimplemented pure virtual method}}
   };
 
   template <class T> struct B {
-    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    virtual void abstract() = 0; // expected-note {{unimplemented pure virtual method}}
     B x; // expected-error {{abstract class}}
   };
 
   template <class T> struct C {
     static C x; // expected-error {{abstract class}}
-    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    virtual void abstract() = 0; // expected-note {{unimplemented pure virtual method}}
   };
 
   template <class T> struct D {
-    virtual void abstract() = 0; // expected-note {{pure virtual function}}
+    virtual void abstract() = 0; // expected-note {{unimplemented pure virtual method}}
     static D x; // expected-error {{abstract class}}
   };
 }

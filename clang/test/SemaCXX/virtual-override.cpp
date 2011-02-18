@@ -167,7 +167,7 @@ void test2() {
 };
 
 struct Foo3 {
-  virtual void f(int) = 0; // expected-note{{pure virtual function}}
+  virtual void f(int) = 0; // expected-note{{unimplemented pure virtual method}}
 };
 
 template<typename T>

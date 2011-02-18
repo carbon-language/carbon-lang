@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 struct A {
-  virtual void f() = 0; // expected-note{{pure virtual function}}
+  virtual void f() = 0; // expected-note{{unimplemented pure virtual method}}
 };
 
 struct B : A {
@@ -9,15 +9,15 @@ struct B : A {
 };
 
 struct C : B {
-  virtual void f() = 0; // expected-note 2{{pure virtual function}}
+  virtual void f() = 0; // expected-note 2{{unimplemented pure virtual method}}
 };
 
 struct D : C {
 };
 
 void test() {
-  (void)new A; // expected-error{{object of abstract type}}
+  (void)new A; // expected-error{{abstract class}}
   (void)new B;
-  (void)new C; // expected-error{{object of abstract type}}
-  (void)new D; // expected-error{{object of abstract type}}
+  (void)new C; // expected-error{{abstract class}}
+  (void)new D; // expected-error{{abstract class}}
 }

@@ -24,7 +24,7 @@ namespace PR6631 {
 // subobject but not pure in another subobject.
 namespace PartlyPure {
   struct A { 
-    virtual void f() = 0; // expected-note{{pure virtual function}}
+    virtual void f() = 0; // expected-note{{unimplemented pure virtual method}}
   };
 
   struct B : A {
@@ -36,7 +36,7 @@ namespace PartlyPure {
   struct D : B, C { };
 
   void f() {
-    (void) new D; // expected-error{{abstract type}}
+    (void) new D; // expected-error{{abstract class}}
   }
 }
 

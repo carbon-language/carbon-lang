@@ -2,7 +2,7 @@
 
 struct A; // expected-note 4 {{forward declaration of 'A'}}
 
-struct Abstract { virtual void f() = 0; }; // expected-note {{pure virtual function 'f'}}
+struct Abstract { virtual void f() = 0; }; // expected-note {{unimplemented pure virtual method 'f'}}
 
 void trys() {
   try {
@@ -105,7 +105,7 @@ public:
   void bar () {
     throw *this; // expected-error{{cannot throw an object of abstract type 'foo'}}
   }
-  virtual void test () = 0; // expected-note{{pure virtual function 'test'}}
+  virtual void test () = 0; // expected-note{{unimplemented pure virtual method 'test'}}
 };
 
 namespace PR6831 {

@@ -500,7 +500,7 @@ def err_partial_specialization_friend : Error<
 def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field}0 type %1 is an abstract class">;
 def err_allocation_of_abstract_type : Error<
-  "allocation of an object of abstract type %0">;
+  "allocating an object of abstract class type %0">;
 def err_throw_abstract_type : Error<
   "cannot throw an object of abstract type %0">;
 def err_array_of_abstract_type : Error<"array of abstract class type %0">;
@@ -517,7 +517,7 @@ def err_type_defined_in_param_type : Error<
   "%0 can not be defined in a parameter type">;
 
 def note_pure_virtual_function : Note<
-  "pure virtual function %0">;
+  "unimplemented pure virtual method %0 in %1">;
 
 def err_deleted_non_function : Error<
   "only functions can have deleted definitions">;
