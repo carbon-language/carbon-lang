@@ -40,7 +40,7 @@ public:
   template <typename CHECKER>
   void registerChecker() {
     CHECKER *checker = new CHECKER();
-    Checkers.push_back(std::make_pair(checker, destruct<CHECKER>));
+    Checkers.push_back(std::pair<CheckerRef, Dtor>(checker, destruct<CHECKER>));
     CHECKER::_register(checker, *this);
   }
 
