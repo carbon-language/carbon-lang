@@ -262,6 +262,59 @@ void Constant::getVectorElements(SmallVectorImpl<Constant*> &Elts) const {
 }
 
 
+/// removeDeadUsersOfConstant - If the specified constantexpr is dead, remove
+/// it.  This involves recursively eliminating any dead users of the
+/// constantexpr.
+static bool removeDeadUsersOfConstant(const Constant *C) {
+  if (isa<GlobalValue>(C)) return false; // Cannot remove this
+  
+  while (!C->use_empty()) {
+    const Constant *User = dyn_cast<Constant>(C->use_back());
+    if (!User) return false; // Non-constant usage;
+    if (!removeDeadUsersOfConstant(User))
+      return false; // Constant wasn't dead
+  }
+  
+  const_cast<Constant*>(C)->destroyConstant();
+  return true;
+}
+
+
+/// removeDeadConstantUsers - If there are any dead constant users dangling
+/// off of this constant, remove them.  This method is useful for clients
+/// that want to check to see if a global is unused, but don't want to deal
+/// with potentially dead constants hanging off of the globals.
+void Constant::removeDeadConstantUsers() const {
+  Value::const_use_iterator I = use_begin(), E = use_end();
+  Value::const_use_iterator LastNonDeadUser = E;
+  while (I != E) {
+    const Constant *User = dyn_cast<Constant>(*I);
+    if (User == 0) {
+      LastNonDeadUser = I;
+      ++I;
+      continue;
+    }
+    
+    if (!removeDeadUsersOfConstant(User)) {
+      // If the constant wasn't dead, remember that this was the last live use
+      // and move on to the next constant.
+      LastNonDeadUser = I;
+      ++I;
+      continue;
+    }
+    
+    // If the constant was dead, then the iterator is invalidated.
+    if (LastNonDeadUser == E) {
+      I = use_begin();
+      if (I == E) break;
+    } else {
+      I = LastNonDeadUser;
+      ++I;
+    }
+  }
+}
+
+
 
 //===----------------------------------------------------------------------===//
 //                                ConstantInt
