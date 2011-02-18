@@ -282,6 +282,8 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     UD->getTargetNestedNameDecl()->print(OS,
         PrintingPolicy(UD->getASTContext().getLangOptions()));
     OS << ";\"";
+  } else if (LabelDecl *LD = dyn_cast<LabelDecl>(D)) {
+    OS << "label " << LD->getNameAsString();
   } else {
     assert(0 && "Unexpected decl");
   }

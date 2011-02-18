@@ -476,12 +476,41 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
 
-  // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
-  // only allowed at the start of a compound stmt regardless of the language.
-
   StmtVector Stmts(Actions);
-  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
 
+  // "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
+  // only allowed at the start of a compound stmt regardless of the language.
+  while (Tok.is(tok::kw___label__)) {
+    SourceLocation LabelLoc = ConsumeToken();
+    Diag(LabelLoc, diag::ext_gnu_local_label);
+    
+    llvm::SmallVector<Decl *, 8> DeclsInGroup;
+    while (1) {
+      if (Tok.isNot(tok::identifier)) {
+        Diag(Tok, diag::err_expected_ident);
+        break;
+      }
+      
+      IdentifierInfo *II = Tok.getIdentifierInfo();
+      SourceLocation IdLoc = ConsumeToken();
+      DeclsInGroup.push_back(Actions.LookupOrCreateLabel(II, IdLoc, true));
+      
+      if (!Tok.is(tok::comma))
+        break;
+      ConsumeToken();
+    }
+    
+    DeclSpec DS;
+    DeclGroupPtrTy Res = Actions.FinalizeDeclaratorGroup(getCurScope(), DS,
+                                      DeclsInGroup.data(), DeclsInGroup.size());
+    StmtResult R = Actions.ActOnDeclStmt(Res, LabelLoc, Tok.getLocation());
+    
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_declaration);
+    if (R.isUsable())
+      Stmts.push_back(R.release());
+  }
+  
+  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     if (Tok.is(tok::annot_pragma_unused)) {
       HandlePragmaUnused();
       continue;

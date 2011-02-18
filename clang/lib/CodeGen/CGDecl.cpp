@@ -70,7 +70,6 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Friend:
   case Decl::FriendTemplate:
   case Decl::Block:
-  case Decl::Label:
     assert(0 && "Declaration not should not be in declstmts!");
   case Decl::Function:  // void X();
   case Decl::Record:    // struct/union/class X;
@@ -82,6 +81,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::UsingDirective: // using namespace X; [C++]
   case Decl::NamespaceAlias:
   case Decl::StaticAssert: // static_assert(X, ""); [C++0x]
+  case Decl::Label:        // __label__ x;
     // None of these decls require codegen support.
     return;
 

@@ -62,6 +62,8 @@ def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNU>;
 def ext_gnu_address_of_label : Extension<
   "use of GNU address-of-label extension">, InGroup<GNU>;
+def ext_gnu_local_label : Extension<
+  "use of GNU locally declared label extension">, InGroup<GNU>;
 def ext_gnu_statement_expr : Extension<
   "use of GNU statement expression extension">, InGroup<GNU>;
 def ext_gnu_conditional_expr : Extension<

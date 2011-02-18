@@ -2760,10 +2760,18 @@ void Sema::LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
                        /*InBaseClass=*/false, Consumer, Visited);
 }
 
-LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc) {
+/// LookupOrCreateLabel - Do a name lookup of a label with the specified name.
+/// If isLocalLabel is true, then this is a definition of an __label__ label
+/// name, otherwise it is a normal label definition or use.
+LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc,
+                                     bool isLocalLabel) {
   // Do a lookup to see if we have a label with this name already.
-  NamedDecl *Res = LookupSingleName(CurScope, II, Loc, LookupLabel,
-                                    NotForRedeclaration);
+  NamedDecl *Res = 0;
+  
+  // Local label definitions always shadow existing labels.
+  if (!isLocalLabel)
+    Res = LookupSingleName(CurScope, II, Loc, LookupLabel, NotForRedeclaration);
+  
   // If we found a label, check to see if it is in the same context as us.  When
   // in a Block, we don't want to reuse a label in an enclosing function.
   if (Res && Res->getDeclContext() != CurContext)
@@ -2772,7 +2780,8 @@ LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc) {
   if (Res == 0) {
     // If not forward referenced or defined already, create the backing decl.
     Res = LabelDecl::Create(Context, CurContext, Loc, II);
-    PushOnScopeChains(Res, CurScope->getFnParent(), true);
+    PushOnScopeChains(Res, isLocalLabel ? CurScope : CurScope->getFnParent(),
+                      true);
   }
   
   return cast<LabelDecl>(Res);
