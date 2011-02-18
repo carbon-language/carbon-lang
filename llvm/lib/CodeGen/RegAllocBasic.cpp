@@ -244,6 +244,8 @@ seedLiveVirtRegs(std::priority_queue<std::pair<float, unsigned> > &VirtRegQ) {
 }
 
 void RegAllocBase::assign(LiveInterval &VirtReg, unsigned PhysReg) {
+  DEBUG(dbgs() << "assigning " << PrintReg(VirtReg.reg, TRI)
+               << " to " << PrintReg(PhysReg, TRI) << '\n');
   assert(!VRM->hasPhys(VirtReg.reg) && "Duplicate VirtReg assignment");
   VRM->assignVirt2Phys(VirtReg.reg, PhysReg);
   PhysReg2LiveUnion[PhysReg].unify(VirtReg);
@@ -251,6 +253,8 @@ void RegAllocBase::assign(LiveInterval &VirtReg, unsigned PhysReg) {
 }
 
 void RegAllocBase::unassign(LiveInterval &VirtReg, unsigned PhysReg) {
+  DEBUG(dbgs() << "unassigning " << PrintReg(VirtReg.reg, TRI)
+               << " from " << PrintReg(PhysReg, TRI) << '\n');
   assert(VRM->getPhys(VirtReg.reg) == PhysReg && "Inconsistent unassign");
   PhysReg2LiveUnion[PhysReg].extract(VirtReg);
   VRM->clearVirt(VirtReg.reg);
@@ -280,11 +284,9 @@ void RegAllocBase::allocatePhysRegs() {
     VirtRegVec SplitVRegs;
     unsigned AvailablePhysReg = selectOrSplit(VirtReg, SplitVRegs);
 
-    if (AvailablePhysReg) {
-      DEBUG(dbgs() << "allocating: " << TRI->getName(AvailablePhysReg)
-                   << " for " << VirtReg << '\n');
+    if (AvailablePhysReg)
       assign(VirtReg, AvailablePhysReg);
-    }
+
     for (VirtRegVec::iterator I = SplitVRegs.begin(), E = SplitVRegs.end();
          I != E; ++I) {
       LiveInterval* SplitVirtReg = *I;

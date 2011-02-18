@@ -204,19 +204,15 @@ void SpillPlacement::activate(unsigned n) {
 /// Set a bit in NodeMask for each active node.
 void SpillPlacement::
 prepareNodes(const SmallVectorImpl<BlockConstraint> &LiveBlocks) {
-  DEBUG(dbgs() << "Building Hopfield network from " << LiveBlocks.size()
-               << " constraint blocks:\n");
   for (SmallVectorImpl<BlockConstraint>::const_iterator I = LiveBlocks.begin(),
        E = LiveBlocks.end(); I != E; ++I) {
     MachineBasicBlock *MBB = MF->getBlockNumbered(I->Number);
     float Freq = getBlockFrequency(MBB);
-    DEBUG(dbgs() << "  BB#" << I->Number << format(", Freq = %.1f", Freq));
 
     // Is this a transparent block? Link ingoing and outgoing bundles.
     if (I->Entry == DontCare && I->Exit == DontCare) {
       unsigned ib = bundles->getBundle(I->Number, 0);
       unsigned ob = bundles->getBundle(I->Number, 1);
-      DEBUG(dbgs() << ", transparent EB#" << ib << " -> EB#" << ob << '\n');
 
       // Ignore self-loops.
       if (ib == ob)
@@ -241,7 +237,6 @@ prepareNodes(const SmallVectorImpl<BlockConstraint> &LiveBlocks) {
       unsigned ib = bundles->getBundle(I->Number, 0);
       activate(ib);
       nodes[ib].addBias(Freq * Bias[I->Entry], 1);
-      DEBUG(dbgs() << format(", entry EB#%u %+.1f", ib, Freq * Bias[I->Entry]));
     }
 
     // Live-out from block?
@@ -249,10 +244,7 @@ prepareNodes(const SmallVectorImpl<BlockConstraint> &LiveBlocks) {
       unsigned ob = bundles->getBundle(I->Number, 1);
       activate(ob);
       nodes[ob].addBias(Freq * Bias[I->Exit], 0);
-      DEBUG(dbgs() << format(", exit EB#%u %+.1f", ob, Freq * Bias[I->Exit]));
     }
-
-    DEBUG(dbgs() << '\n');
   }
 }
 
@@ -260,7 +252,6 @@ prepareNodes(const SmallVectorImpl<BlockConstraint> &LiveBlocks) {
 /// maximum number of iterations is reached.
 /// @param Linked - Numbers of linked nodes that need updating.
 void SpillPlacement::iterate(const SmallVectorImpl<unsigned> &Linked) {
-  DEBUG(dbgs() << "Iterating over " << Linked.size() << " linked nodes:\n");
   if (Linked.empty())
     return;
 
@@ -278,8 +269,6 @@ void SpillPlacement::iterate(const SmallVectorImpl<unsigned> &Linked) {
       unsigned n = *I;
       bool C = nodes[n].update(nodes);
       Changed |= C;
-      DEBUG(dbgs() << " \\EB#" << n << format(" = %+2.0f", nodes[n].Value)
-                   << (C ? " *\n" : "\n"));
     }
     if (!Changed)
       return;
@@ -291,8 +280,6 @@ void SpillPlacement::iterate(const SmallVectorImpl<unsigned> &Linked) {
       unsigned n = *I;
       bool C = nodes[n].update(nodes);
       Changed |= C;
-      DEBUG(dbgs() << " /EB#" << n << format(" = %+2.0f", nodes[n].Value)
-                   << (C ? " *\n" : "\n"));
     }
     if (!Changed)
       return;
@@ -312,7 +299,6 @@ SpillPlacement::placeSpills(const SmallVectorImpl<BlockConstraint> &LiveBlocks,
 
   // Update all active nodes, and find the ones that are actually linked to
   // something so their value may change when iterating.
-  DEBUG(dbgs() << "Network has " << RegBundles.count() << " active nodes:\n");
   SmallVector<unsigned, 8> Linked;
   for (int n = RegBundles.find_first(); n>=0; n = RegBundles.find_next(n)) {
     nodes[n].update(nodes);
@@ -320,17 +306,6 @@ SpillPlacement::placeSpills(const SmallVectorImpl<BlockConstraint> &LiveBlocks,
     // change its value ever again, so exclude it from iterations.
     if (!nodes[n].Links.empty() && !nodes[n].mustSpill())
       Linked.push_back(n);
-
-    DEBUG({
-      dbgs() << "  EB#" << n << format(" = %+2.0f", nodes[n].Value)
-             << format(", Bias %+.2f", nodes[n].Bias)
-             << format(", Freq %.1f/%.1f", nodes[n].Frequency[0],
-                                           nodes[n].Frequency[1]);
-      for (unsigned i = 0, e = nodes[n].Links.size(); i != e; ++i)
-        dbgs() << format(", %.2f -> EB#%u", nodes[n].Links[i].first,
-                                            nodes[n].Links[i].second);
-      dbgs() << '\n';
-    });
   }
 
   // Iterate the network to convergence.
