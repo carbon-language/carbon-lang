@@ -66,3 +66,24 @@ namespace PR7402 {
 
   X x(42.0);
 }
+
+namespace PR9188 {
+  struct X0 {
+    union {
+      int member;
+    };
+  };
+
+  static union {
+    int global;
+  };
+
+  struct X1 : X0 {
+    template<typename T>
+    int f() {
+      return this->X0::member + PR9188::global;
+    }
+  };
+
+  template int X1::f<int>();
+}

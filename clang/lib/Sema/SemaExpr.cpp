@@ -1004,6 +1004,7 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
 
   // Case 1:  the base of the indirect field is not a field.
   VarDecl *baseVariable = indirectField->getVarDecl();
+  CXXScopeSpec EmptySS;
   if (baseVariable) {
     assert(baseVariable->getType()->isRecordType());
 
@@ -1017,7 +1018,7 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
     DeclarationNameInfo baseNameInfo(DeclarationName(), loc);
 
     ExprResult result =
-      BuildDeclarationNameExpr(SS, baseNameInfo, baseVariable);
+      BuildDeclarationNameExpr(EmptySS, baseNameInfo, baseVariable);
     if (result.isInvalid()) return ExprError();
 
     baseObjectExpr = result.take();    
@@ -1078,7 +1079,7 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
     DeclarationNameInfo memberNameInfo(field->getDeclName(), loc);
 
     result = BuildFieldReferenceExpr(*this, result, baseObjectIsPointer,
-                                     SS, field, foundDecl,
+                                     EmptySS, field, foundDecl,
                                      memberNameInfo).take();
     baseObjectIsPointer = false;
 
@@ -1088,16 +1089,16 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
   // In all cases, we should now skip the first declaration in the chain.
   ++FI;
 
-  for (; FI != FEnd; FI++) {
-    FieldDecl *field = cast<FieldDecl>(*FI);
+  while (FI != FEnd) {
+    FieldDecl *field = cast<FieldDecl>(*FI++);
 
     // FIXME: these are somewhat meaningless
     DeclarationNameInfo memberNameInfo(field->getDeclName(), loc);
     DeclAccessPair foundDecl = DeclAccessPair::make(field, field->getAccess());
-    CXXScopeSpec memberSS;
 
     result = BuildFieldReferenceExpr(*this, result, /*isarrow*/ false,
-                                     memberSS, field, foundDecl, memberNameInfo)
+                                     (FI == FEnd? SS : EmptySS), field, 
+                                     foundDecl, memberNameInfo)
       .take();
   }
 
