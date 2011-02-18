@@ -260,7 +260,8 @@ Path::GetCurrentDirectory() {
   return Path(pathname);
 }
 
-#if defined(__FreeBSD__) || defined (__NetBSD__) || defined(__minix)
+#if defined(__FreeBSD__) || defined (__NetBSD__) || \
+    defined(__OpenBSD__) || defined(__minix)
 static int
 test_dir(char buf[PATH_MAX], char ret[PATH_MAX],
     const char *dir, const char *bin)
@@ -328,7 +329,8 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
     if (realpath(exe_path, link_path))
       return Path(link_path);
   }
-#elif defined(__FreeBSD__) || defined (__NetBSD__) || defined(__minix)
+#elif defined(__FreeBSD__) || defined (__NetBSD__) || \
+      defined(__OpenBSD__) || defined(__minix)
   char exe_path[PATH_MAX];
 
   if (getprogpath(exe_path, argv0) != NULL)
