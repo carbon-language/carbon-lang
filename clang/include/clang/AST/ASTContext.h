@@ -844,6 +844,11 @@ public:
     return QualType();
   }
 
+  /// \brief The result type of logical operations, '<', '>', '!=', etc.
+  QualType getLogicalOperationType() const {
+    return getLangOptions().CPlusPlus ? BoolTy : IntTy;
+  }
+
   /// getObjCEncodingForType - Emit the ObjC type encoding for the
   /// given type into \arg S. If \arg NameFields is specified then
   /// record field names are also encoded.

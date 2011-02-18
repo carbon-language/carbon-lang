@@ -6772,7 +6772,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   rType = rex->getType();
 
   // The result of comparisons is 'bool' in C++, 'int' in C.
-  QualType ResultTy = getLangOptions().CPlusPlus ? Context.BoolTy:Context.IntTy;
+  QualType ResultTy = Context.getLogicalOperationType();
 
   if (isRelational) {
     if (lType->isRealType() && rType->isRealType())
@@ -7051,7 +7051,7 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
   // If AltiVec, the comparison results in a numeric type, i.e.
   // bool for C++, int for C
   if (getLangOptions().AltiVec)
-    return (getLangOptions().CPlusPlus ? Context.BoolTy : Context.IntTy);
+    return Context.getLogicalOperationType();
 
   QualType lType = lex->getType();
   QualType rType = rex->getType();
@@ -8303,7 +8303,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     
     // LNot always has type int. C99 6.5.3.3p5.
     // In C++, it's bool. C++ 5.3.1p8
-    resultType = getLangOptions().CPlusPlus ? Context.BoolTy : Context.IntTy;
+    resultType = Context.getLogicalOperationType();
     break;
   case UO_Real:
   case UO_Imag:
