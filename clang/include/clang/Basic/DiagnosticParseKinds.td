@@ -148,6 +148,8 @@ def err_expected_semi_for : Error<"expected ';' in 'for' statement specifier">;
 def err_expected_colon_after : Error<"expected ':' after %0">;
 def err_label_end_of_compound_statement : Error<
   "label at end of compound statement: expected statement">;
+def err_address_of_label_outside_fn : Error<
+  "use of address-of-label extension outside of a function body">;
 def err_expected_string_literal : Error<"expected string literal">;
 def err_expected_asm_operand : Error<
   "expected string literal or '[' for asm operand">, CatInlineAsm;

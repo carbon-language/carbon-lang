@@ -794,6 +794,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     if (Tok.isNot(tok::identifier))
       return ExprError(Diag(Tok, diag::err_expected_ident));
 
+    if (getCurScope()->getFnParent() == 0)
+      return ExprError(Diag(Tok, diag::err_address_of_label_outside_fn));
+    
     Diag(AmpAmpLoc, diag::ext_gnu_address_of_label);
     LabelDecl *LD = Actions.LookupOrCreateLabel(Tok.getIdentifierInfo(),
                                                 Tok.getLocation());
