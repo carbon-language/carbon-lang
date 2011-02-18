@@ -55,6 +55,10 @@ public:
   void setAvailable(LibFunc::Func F) {
     AvailableArray[F/8] |= 1 << (F&7);
   }
+  
+  /// disableAllFunctions - This disables all builtins, which is used for
+  /// options like -fno-builtin.
+  void disableAllFunctions();
 };
 
 } // end namespace llvm

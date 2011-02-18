@@ -532,8 +532,12 @@ int main(int argc, char **argv) {
   PassManager Passes;
 
   // Add an appropriate TargetLibraryInfo pass for the module's triple.
-  if (!M->getTargetTriple().empty())
-    Passes.add(new TargetLibraryInfo(Triple(M->getTargetTriple())));
+  TargetLibraryInfo *TLI = new TargetLibraryInfo(Triple(M->getTargetTriple()));
+  
+  // The -disable-simplify-libcalls flag actually disables all builtin optzns.
+  if (DisableSimplifyLibCalls)
+    TLI->disableAllFunctions();
+  Passes.add(TLI);
   
   // Add an appropriate TargetData instance for this module.
   TargetData *TD = 0;
