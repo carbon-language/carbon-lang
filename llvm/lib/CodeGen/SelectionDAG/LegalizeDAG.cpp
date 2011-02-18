@@ -87,6 +87,9 @@ class SelectionDAGLegalize {
     // If someone requests legalization of the new node, return itself.
     if (From != To)
       LegalizedNodes.insert(std::make_pair(To, To));
+    
+    // Transfer SDDbgValues.
+    DAG.TransferDbgValues(From, To);
   }
 
 public:
