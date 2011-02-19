@@ -1036,6 +1036,21 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
       // We were able to resolve the address of the overloaded function,
       // so we can convert to the type of that function.
       FromType = Fn->getType();
+
+      // we can sometimes resolve &foo<int> regardless of ToType, so check
+      // if the type matches (identity) or we are converting to bool
+      if (!S.Context.hasSameUnqualifiedType(
+                      S.ExtractUnqualifiedFunctionType(ToType), FromType)) {
+        QualType resultTy;
+        // if the function type matches except for [[noreturn]], it's ok
+        if (!IsNoReturnConversion(S.Context, FromType, 
+              S.ExtractUnqualifiedFunctionType(ToType), resultTy))
+          // otherwise, only a boolean conversion is standard   
+          if (!ToType->isBooleanType()) 
+            return false; 
+
+      }
+        
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
         if (!Method->isStatic()) {
           const Type *ClassType
@@ -6349,6 +6364,27 @@ void Sema::NoteOverloadCandidate(FunctionDecl *Fn) {
   MaybeEmitInheritedConstructorNote(*this, Fn);
 }
 
+//Notes the location of all overload candidates designated through 
+// OverloadedExpr
+void Sema::NoteAllOverloadCandidates(Expr* OverloadedExpr) {
+  assert(OverloadedExpr->getType() == Context.OverloadTy);
+
+  OverloadExpr::FindResult Ovl = OverloadExpr::find(OverloadedExpr);
+  OverloadExpr *OvlExpr = Ovl.Expression;
+
+  for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
+                            IEnd = OvlExpr->decls_end(); 
+       I != IEnd; ++I) {
+    if (FunctionTemplateDecl *FunTmpl = 
+                dyn_cast<FunctionTemplateDecl>((*I)->getUnderlyingDecl()) ) {
+      NoteOverloadCandidate(FunTmpl->getTemplatedDecl());   
+    } else if (FunctionDecl *Fun 
+                      = dyn_cast<FunctionDecl>((*I)->getUnderlyingDecl()) ) {
+      NoteOverloadCandidate(Fun);
+    }
+  }
+}
+
 /// Diagnoses an ambiguous conversion.  The partial diagnostic is the
 /// "lead" diagnostic; it will be given two arguments, the source and
 /// target types of the conversion.
@@ -7049,186 +7085,207 @@ static bool CheckUnresolvedAccess(Sema &S, OverloadExpr *E, DeclAccessPair D) {
   return S.CheckUnresolvedMemberAccess(cast<UnresolvedMemberExpr>(E), D);
 }
 
-/// ResolveAddressOfOverloadedFunction - Try to resolve the address of
-/// an overloaded function (C++ [over.over]), where @p From is an
-/// expression with overloaded function type and @p ToType is the type
-/// we're trying to resolve to. For example:
-///
-/// @code
-/// int f(double);
-/// int f(int);
-///
-/// int (*pfd)(double) = f; // selects f(double)
-/// @endcode
-///
-/// This routine returns the resulting FunctionDecl if it could be
-/// resolved, and NULL otherwise. When @p Complain is true, this
-/// routine will emit diagnostics if there is an error.
-FunctionDecl *
-Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
-                                         bool Complain,
-                                         DeclAccessPair &FoundResult) {
-  QualType FunctionType = ToType;
-  bool IsMember = false;
-  if (const PointerType *ToTypePtr = ToType->getAs<PointerType>())
-    FunctionType = ToTypePtr->getPointeeType();
-  else if (const ReferenceType *ToTypeRef = ToType->getAs<ReferenceType>())
-    FunctionType = ToTypeRef->getPointeeType();
+
+
+
+// [PossiblyAFunctionType]  -->   [Return]
+// NonFunctionType --> NonFunctionType
+// R (A) --> R(A)
+// R (*)(A) --> R (A)
+// R (&)(A) --> R (A)
+// R (S::*)(A) --> R (A)
+QualType Sema::ExtractUnqualifiedFunctionType(QualType PossiblyAFunctionType) {
+  QualType Ret = PossiblyAFunctionType;
+  if (const PointerType *ToTypePtr = 
+    PossiblyAFunctionType->getAs<PointerType>())
+    Ret = ToTypePtr->getPointeeType();
+  else if (const ReferenceType *ToTypeRef = 
+    PossiblyAFunctionType->getAs<ReferenceType>())
+    Ret = ToTypeRef->getPointeeType();
   else if (const MemberPointerType *MemTypePtr =
-                    ToType->getAs<MemberPointerType>()) {
-    FunctionType = MemTypePtr->getPointeeType();
-    IsMember = true;
-  }
+    PossiblyAFunctionType->getAs<MemberPointerType>()) 
+    Ret = MemTypePtr->getPointeeType();   
+  Ret = 
+    Context.getCanonicalType(Ret).getUnqualifiedType();
+  return Ret;
+}
 
-  // C++ [over.over]p1:
-  //   [...] [Note: any redundant set of parentheses surrounding the
-  //   overloaded function name is ignored (5.1). ]
-  // C++ [over.over]p1:
-  //   [...] The overloaded function name can be preceded by the &
-  //   operator.
-  // However, remember whether the expression has member-pointer form:
-  // C++ [expr.unary.op]p4:
-  //     A pointer to member is only formed when an explicit & is used
-  //     and its operand is a qualified-id not enclosed in
-  //     parentheses.
-  OverloadExpr::FindResult Ovl = OverloadExpr::find(From);
-  OverloadExpr *OvlExpr = Ovl.Expression;
+// A helper class to help with address of function resolution
+// - allows us to avoid passing around all those ugly parameters
+class AddressOfFunctionResolver 
+{
+  Sema& S;
+  Expr* SourceExpr;
+  const QualType& TargetType; 
+  QualType TargetFunctionType; // Extracted function type from target type 
+   
+  bool Complain;
+  //DeclAccessPair& ResultFunctionAccessPair;
+  ASTContext& Context;
 
-  // We expect a pointer or reference to function, or a function pointer.
-  FunctionType = Context.getCanonicalType(FunctionType).getUnqualifiedType();
-  if (!FunctionType->isFunctionType()) {
-    if (Complain)
-      Diag(From->getLocStart(), diag::err_addr_ovl_not_func_ptrref)
-        << OvlExpr->getName() << ToType;
+  bool TargetTypeIsNonStaticMemberFunction;
+  bool FoundNonTemplateFunction;
 
-    return 0;
-  }
-
-  // If the overload expression doesn't have the form of a pointer to
-  // member, don't try to convert it to a pointer-to-member type.
-  if (IsMember && !Ovl.HasFormOfMemberPointer) {
-    if (!Complain) return 0;
-
-    // TODO: Should we condition this on whether any functions might
-    // have matched, or is it more appropriate to do that in callers?
-    // TODO: a fixit wouldn't hurt.
-    Diag(OvlExpr->getNameLoc(), diag::err_addr_ovl_no_qualifier)
-      << ToType << OvlExpr->getSourceRange();
-    return 0;
-  }
-
-  TemplateArgumentListInfo ETABuffer, *ExplicitTemplateArgs = 0;
-  if (OvlExpr->hasExplicitTemplateArgs()) {
-    OvlExpr->getExplicitTemplateArgs().copyInto(ETABuffer);
-    ExplicitTemplateArgs = &ETABuffer;
-  }
-
-  assert(From->getType() == Context.OverloadTy);
-
-  // Look through all of the overloaded functions, searching for one
-  // whose type matches exactly.
+  OverloadExpr::FindResult OvlExprInfo; 
+  OverloadExpr *OvlExpr;
+  TemplateArgumentListInfo OvlExplicitTemplateArgs;
   llvm::SmallVector<std::pair<DeclAccessPair, FunctionDecl*>, 4> Matches;
-  llvm::SmallVector<FunctionDecl *, 4> NonMatches;
 
-  bool FoundNonTemplateFunction = false;
-  for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
-         E = OvlExpr->decls_end(); I != E; ++I) {
-    // Look through any using declarations to find the underlying function.
-    NamedDecl *Fn = (*I)->getUnderlyingDecl();
-
-    // C++ [over.over]p3:
-    //   Non-member functions and static member functions match
-    //   targets of type "pointer-to-function" or "reference-to-function."
-    //   Nonstatic member functions match targets of
-    //   type "pointer-to-member-function."
-    // Note that according to DR 247, the containing class does not matter.
-
-    if (FunctionTemplateDecl *FunctionTemplate
-          = dyn_cast<FunctionTemplateDecl>(Fn)) {
-      if (CXXMethodDecl *Method
-            = dyn_cast<CXXMethodDecl>(FunctionTemplate->getTemplatedDecl())) {
-        // Skip non-static function templates when converting to pointer, and
-        // static when converting to member pointer.
-        if (Method->isStatic() == IsMember)
-          continue;
-      } else if (IsMember)
-        continue;
-
-      // C++ [over.over]p2:
-      //   If the name is a function template, template argument deduction is
-      //   done (14.8.2.2), and if the argument deduction succeeds, the
-      //   resulting template argument list is used to generate a single
-      //   function template specialization, which is added to the set of
-      //   overloaded functions considered.
-      FunctionDecl *Specialization = 0;
-      TemplateDeductionInfo Info(Context, OvlExpr->getNameLoc());
-      if (TemplateDeductionResult Result
-            = DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,
-                                      FunctionType, Specialization, Info)) {
-        // FIXME: make a note of the failed deduction for diagnostics.
-        (void)Result;
-      } else {
-        // Template argument deduction ensures that we have an exact match.
-        // This function template specicalization works.
-        Specialization = cast<FunctionDecl>(Specialization->getCanonicalDecl());
-        assert(FunctionType
-                 == Context.getCanonicalType(Specialization->getType()));
-        Matches.push_back(std::make_pair(I.getPair(), Specialization));
+public:
+  AddressOfFunctionResolver(Sema &S, Expr* SourceExpr, 
+                            const QualType& TargetType, bool Complain)
+    : S(S), SourceExpr(SourceExpr), TargetType(TargetType), 
+      Complain(Complain), Context(S.getASTContext()), 
+      TargetTypeIsNonStaticMemberFunction(
+                                    !!TargetType->getAs<MemberPointerType>()),
+      FoundNonTemplateFunction(false),
+      OvlExprInfo(OverloadExpr::find(SourceExpr)),
+      OvlExpr(OvlExprInfo.Expression)
+  {
+    ExtractUnqualifiedFunctionTypeFromTargetType();
+    
+    if (!TargetFunctionType->isFunctionType()) {        
+      if (OvlExpr->hasExplicitTemplateArgs()) {
+        DeclAccessPair dap;
+        if( FunctionDecl* Fn = S.ResolveSingleFunctionTemplateSpecialization(
+                                            OvlExpr, false, &dap) ) {
+          Matches.push_back(std::make_pair(dap,Fn));
+        }
       }
-
-      continue;
+      return;
     }
+    
+    if (OvlExpr->hasExplicitTemplateArgs())
+      OvlExpr->getExplicitTemplateArgs().copyInto(OvlExplicitTemplateArgs);
 
+    if (FindAllFunctionsThatMatchTargetTypeExactly()) {
+      // C++ [over.over]p4:
+      //   If more than one function is selected, [...]
+      if (Matches.size() > 1) {
+        if (FoundNonTemplateFunction)
+          EliminateAllTemplateMatches();
+        else
+          EliminateAllExceptMostSpecializedTemplate();
+      }
+    }
+  }
+  
+private:
+  bool isTargetTypeAFunction() const {
+    return TargetFunctionType->isFunctionType();
+  }
+
+  // [ToType]     [Return]
+
+  // R (*)(A) --> R (A), IsNonStaticMemberFunction = false
+  // R (&)(A) --> R (A), IsNonStaticMemberFunction = false
+  // R (S::*)(A) --> R (A), IsNonStaticMemberFunction = true
+  void inline ExtractUnqualifiedFunctionTypeFromTargetType() {
+    TargetFunctionType = S.ExtractUnqualifiedFunctionType(TargetType);
+  }
+
+  // return true if any matching specializations were found
+  bool AddMatchingTemplateFunction(FunctionTemplateDecl* FunctionTemplate, 
+                                   const DeclAccessPair& CurAccessFunPair) {
+    if (CXXMethodDecl *Method
+              = dyn_cast<CXXMethodDecl>(FunctionTemplate->getTemplatedDecl())) {
+      // Skip non-static function templates when converting to pointer, and
+      // static when converting to member pointer.
+      if (Method->isStatic() == TargetTypeIsNonStaticMemberFunction)
+        return false;
+    } 
+    else if (TargetTypeIsNonStaticMemberFunction)
+      return false;
+
+    // C++ [over.over]p2:
+    //   If the name is a function template, template argument deduction is
+    //   done (14.8.2.2), and if the argument deduction succeeds, the
+    //   resulting template argument list is used to generate a single
+    //   function template specialization, which is added to the set of
+    //   overloaded functions considered.
+    FunctionDecl *Specialization = 0;
+    TemplateDeductionInfo Info(Context, OvlExpr->getNameLoc());
+    if (Sema::TemplateDeductionResult Result
+          = S.DeduceTemplateArguments(FunctionTemplate, 
+                                      &OvlExplicitTemplateArgs,
+                                      TargetFunctionType, Specialization, 
+                                      Info)) {
+      // FIXME: make a note of the failed deduction for diagnostics.
+      (void)Result;
+      return false;
+    } 
+    
+    // Template argument deduction ensures that we have an exact match.
+    // This function template specicalization works.
+    Specialization = cast<FunctionDecl>(Specialization->getCanonicalDecl());
+    assert(TargetFunctionType
+                      == Context.getCanonicalType(Specialization->getType()));
+    Matches.push_back(std::make_pair(CurAccessFunPair, Specialization));
+    return true;
+  }
+  
+  bool AddMatchingNonTemplateFunction(NamedDecl* Fn, 
+                                      const DeclAccessPair& CurAccessFunPair) {
     if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
       // Skip non-static functions when converting to pointer, and static
       // when converting to member pointer.
-      if (Method->isStatic() == IsMember)
-        continue;
-
-      // If we have explicit template arguments, skip non-templates.
-      if (OvlExpr->hasExplicitTemplateArgs())
-        continue;
-    } else if (IsMember)
-      continue;
+      if (Method->isStatic() == TargetTypeIsNonStaticMemberFunction)
+        return false;
+    } 
+    else if (TargetTypeIsNonStaticMemberFunction)
+      return false;
 
     if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(Fn)) {
       QualType ResultTy;
-      if (Context.hasSameUnqualifiedType(FunctionType, FunDecl->getType()) ||
-          IsNoReturnConversion(Context, FunDecl->getType(), FunctionType,
+      if (Context.hasSameUnqualifiedType(TargetFunctionType, 
+                                         FunDecl->getType()) ||
+          IsNoReturnConversion(Context, FunDecl->getType(), TargetFunctionType, 
                                ResultTy)) {
-        Matches.push_back(std::make_pair(I.getPair(),
-                           cast<FunctionDecl>(FunDecl->getCanonicalDecl())));
+        Matches.push_back(std::make_pair(CurAccessFunPair,
+          cast<FunctionDecl>(FunDecl->getCanonicalDecl())));
         FoundNonTemplateFunction = true;
+        return true;
       }
     }
+    
+    return false;
+  }
+  
+  bool FindAllFunctionsThatMatchTargetTypeExactly() {
+    bool Ret = false;
+    
+    // If the overload expression doesn't have the form of a pointer to
+    // member, don't try to convert it to a pointer-to-member type.
+    if (IsInvalidFormOfPointerToMemberFunction())
+      return false;
+
+    for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
+                               E = OvlExpr->decls_end(); 
+         I != E; ++I) {
+      // Look through any using declarations to find the underlying function.
+      NamedDecl *Fn = (*I)->getUnderlyingDecl();
+
+      // C++ [over.over]p3:
+      //   Non-member functions and static member functions match
+      //   targets of type "pointer-to-function" or "reference-to-function."
+      //   Nonstatic member functions match targets of
+      //   type "pointer-to-member-function."
+      // Note that according to DR 247, the containing class does not matter.
+      if (FunctionTemplateDecl *FunctionTemplate
+                                        = dyn_cast<FunctionTemplateDecl>(Fn)) {
+        if (AddMatchingTemplateFunction(FunctionTemplate, I.getPair()))
+          Ret = true;
+      }
+      // If we have explicit template arguments supplied, skip non-templates.
+      else if (!OvlExpr->hasExplicitTemplateArgs() &&
+               AddMatchingNonTemplateFunction(Fn, I.getPair()))
+        Ret = true;
+    }
+    assert(Ret || Matches.empty());
+    return Ret;
   }
 
-  // If there were 0 or 1 matches, we're done.
-  if (Matches.empty()) {
-    if (Complain) {
-      Diag(From->getLocStart(), diag::err_addr_ovl_no_viable)
-        << OvlExpr->getName() << FunctionType;
-      for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
-                                 E = OvlExpr->decls_end();
-           I != E; ++I)
-        if (FunctionDecl *F = dyn_cast<FunctionDecl>((*I)->getUnderlyingDecl()))
-          NoteOverloadCandidate(F);
-    }
-
-    return 0;
-  } else if (Matches.size() == 1) {
-    FunctionDecl *Result = Matches[0].second;
-    FoundResult = Matches[0].first;
-    MarkDeclarationReferenced(From->getLocStart(), Result);
-    if (Complain) {
-      CheckAddressOfMemberAccess(OvlExpr, Matches[0].first);
-    }
-    return Result;
-  }
-
-  // C++ [over.over]p4:
-  //   If more than one function is selected, [...]
-  if (!FoundNonTemplateFunction) {
+  void EliminateAllExceptMostSpecializedTemplate() {
     //   [...] and any given function template specialization F1 is
     //   eliminated if the set contains a second function template
     //   specialization whose function template is more specialized
@@ -7245,54 +7302,127 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       MatchesCopy.addDecl(Matches[I].second, Matches[I].first.getAccess());
 
     UnresolvedSetIterator Result =
-        getMostSpecialized(MatchesCopy.begin(), MatchesCopy.end(),
-                           TPOC_Other, 0, From->getLocStart(),
-                           PDiag(),
-                           PDiag(diag::err_addr_ovl_ambiguous)
-                               << Matches[0].second->getDeclName(),
-                           PDiag(diag::note_ovl_candidate)
-                               << (unsigned) oc_function_template);
-    if (Result == MatchesCopy.end())
-      return 0;
+      S.getMostSpecialized(MatchesCopy.begin(), MatchesCopy.end(),
+                           TPOC_Other, 0, SourceExpr->getLocStart(),
+                           S.PDiag(),
+                           S.PDiag(diag::err_addr_ovl_ambiguous)
+                             << Matches[0].second->getDeclName(),
+                           S.PDiag(diag::note_ovl_candidate)
+                             << (unsigned) oc_function_template,
+                           Complain);
 
-    MarkDeclarationReferenced(From->getLocStart(), *Result);
-    FoundResult = Matches[Result - MatchesCopy.begin()].first;
-    if (Complain)
-      CheckUnresolvedAccess(*this, OvlExpr, FoundResult);
-    return cast<FunctionDecl>(*Result);
-  }
-
-  //   [...] any function template specializations in the set are
-  //   eliminated if the set also contains a non-template function, [...]
-  for (unsigned I = 0, N = Matches.size(); I != N; ) {
-    if (Matches[I].second->getPrimaryTemplate() == 0)
-      ++I;
-    else {
-      Matches[I] = Matches[--N];
-      Matches.set_size(N);
+    if (Result != MatchesCopy.end()) {
+      // Make it the first and only element
+      Matches[0].first = Matches[Result - MatchesCopy.begin()].first;
+      Matches[0].second = cast<FunctionDecl>(*Result);
+      Matches.resize(1);
     }
   }
 
-  // [...] After such eliminations, if any, there shall remain exactly one
-  // selected function.
-  if (Matches.size() == 1) {
-    MarkDeclarationReferenced(From->getLocStart(), Matches[0].second);
-    FoundResult = Matches[0].first;
+  void EliminateAllTemplateMatches() {
+    //   [...] any function template specializations in the set are
+    //   eliminated if the set also contains a non-template function, [...]
+    for (unsigned I = 0, N = Matches.size(); I != N; ) {
+      if (Matches[I].second->getPrimaryTemplate() == 0)
+        ++I;
+      else {
+        Matches[I] = Matches[--N];
+        Matches.set_size(N);
+      }
+    }
+  }
+
+public:
+  void ComplainNoMatchesFound() const {
+    assert(Matches.empty());
+    S.Diag(OvlExpr->getLocStart(), diag::err_addr_ovl_no_viable)
+        << OvlExpr->getName() << TargetFunctionType
+        << OvlExpr->getSourceRange();
+    S.NoteAllOverloadCandidates(OvlExpr);
+  } 
+  
+  bool IsInvalidFormOfPointerToMemberFunction() const {
+    return TargetTypeIsNonStaticMemberFunction &&
+      !OvlExprInfo.HasFormOfMemberPointer;
+  }
+  
+  void ComplainIsInvalidFormOfPointerToMemberFunction() const {
+      // TODO: Should we condition this on whether any functions might
+      // have matched, or is it more appropriate to do that in callers?
+      // TODO: a fixit wouldn't hurt.
+      S.Diag(OvlExpr->getNameLoc(), diag::err_addr_ovl_no_qualifier)
+        << TargetType << OvlExpr->getSourceRange();
+  }
+  
+  void ComplainOfInvalidConversion() const {
+    S.Diag(OvlExpr->getLocStart(), diag::err_addr_ovl_not_func_ptrref)
+      << OvlExpr->getName() << TargetType;
+  }
+
+  void ComplainMultipleMatchesFound() const {
+    assert(Matches.size() > 1);
+    S.Diag(OvlExpr->getLocStart(), diag::err_addr_ovl_ambiguous)
+      << OvlExpr->getName()
+      << OvlExpr->getSourceRange();
+    S.NoteAllOverloadCandidates(OvlExpr);
+  }
+  
+  int getNumMatches() const { return Matches.size(); }
+  
+  FunctionDecl* getMatchingFunctionDecl() const {
+    if (Matches.size() != 1) return 0;
+    return Matches[0].second;
+  }
+  
+  const DeclAccessPair* getMatchingFunctionAccessPair() const {
+    if (Matches.size() != 1) return 0;
+    return &Matches[0].first;
+  }
+};
+  
+/// ResolveAddressOfOverloadedFunction - Try to resolve the address of
+/// an overloaded function (C++ [over.over]), where @p From is an
+/// expression with overloaded function type and @p ToType is the type
+/// we're trying to resolve to. For example:
+///
+/// @code
+/// int f(double);
+/// int f(int);
+///
+/// int (*pfd)(double) = f; // selects f(double)
+/// @endcode
+///
+/// This routine returns the resulting FunctionDecl if it could be
+/// resolved, and NULL otherwise. When @p Complain is true, this
+/// routine will emit diagnostics if there is an error.
+FunctionDecl *
+Sema::ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr, QualType TargetType,
+                                    bool Complain,
+                                    DeclAccessPair &FoundResult) {
+
+  assert(AddressOfExpr->getType() == Context.OverloadTy);
+  
+  AddressOfFunctionResolver Resolver(*this, AddressOfExpr, TargetType, Complain);
+  int NumMatches = Resolver.getNumMatches();
+  FunctionDecl* Fn = 0;
+  if ( NumMatches == 0 && Complain) {
+    if (Resolver.IsInvalidFormOfPointerToMemberFunction())
+      Resolver.ComplainIsInvalidFormOfPointerToMemberFunction();
+    else
+      Resolver.ComplainNoMatchesFound();
+  }
+  else if (NumMatches > 1 && Complain)
+    Resolver.ComplainMultipleMatchesFound();
+  else if (NumMatches == 1) {
+    Fn = Resolver.getMatchingFunctionDecl();
+    assert(Fn);
+    FoundResult = *Resolver.getMatchingFunctionAccessPair();
+    MarkDeclarationReferenced(AddressOfExpr->getLocStart(), Fn);
     if (Complain)
-      CheckUnresolvedAccess(*this, OvlExpr, Matches[0].first);
-    return cast<FunctionDecl>(Matches[0].second);
+      CheckAddressOfMemberAccess(AddressOfExpr, FoundResult);
   }
-
-  // FIXME: We should probably return the same thing that BestViableFunction
-  // returns (even if we issue the diagnostics here).
-  if (Complain) {
-    Diag(From->getLocStart(), diag::err_addr_ovl_ambiguous)
-      << Matches[0].second->getDeclName();
-    for (unsigned I = 0, E = Matches.size(); I != E; ++I)
-      NoteOverloadCandidate(Matches[I].second);
-  }
-
-  return 0;
+  
+  return Fn;
 }
 
 /// \brief Given an expression that refers to an overloaded function, try to
@@ -7302,14 +7432,15 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 /// template, where that template-id refers to a single template whose template
 /// arguments are either provided by the template-id or have defaults,
 /// as described in C++0x [temp.arg.explicit]p3.
-FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
+FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From, 
+                                                                bool Complain,
+                                                  DeclAccessPair* FoundResult) {
   // C++ [over.over]p1:
   //   [...] [Note: any redundant set of parentheses surrounding the
   //   overloaded function name is ignored (5.1). ]
   // C++ [over.over]p1:
   //   [...] The overloaded function name can be preceded by the &
   //   operator.
-
   if (From->getType() != Context.OverloadTy)
     return 0;
 
@@ -7353,10 +7484,20 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
     }
 
     // Multiple matches; we can't resolve to a single declaration.
-    if (Matched)
+    if (Matched) {
+      if (FoundResult) 
+          *FoundResult = DeclAccessPair();
+      
+      if (Complain) {
+        Diag(From->getLocStart(), diag::err_addr_ovl_ambiguous)
+          << OvlExpr->getName();
+        NoteAllOverloadCandidates(OvlExpr);
+      }
       return 0;
-
-    Matched = Specialization;
+    }   
+    
+    if ((Matched = Specialization) && FoundResult) 
+      *FoundResult = I.getPair();    
   }
 
   return Matched;

@@ -3190,7 +3190,10 @@ InitializationSequence::InitializationSequence(Sema &S,
                               /*InOverloadResolution*/ false,
                               /*CStyle=*/Kind.isCStyleOrFunctionalCast()))
   {
-    if (Initializer->getType() == Context.OverloadTy)
+    DeclAccessPair dap;
+    if (Initializer->getType() == Context.OverloadTy && 
+          !S.ResolveAddressOfOverloadedFunction(Initializer
+                      , DestType, false, dap))
       SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
     else
       SetFailed(InitializationSequence::FK_ConversionFailed);
@@ -4161,15 +4164,16 @@ bool InitializationSequence::Diagnose(Sema &S,
       << Args[0]->getSourceRange();
     break;
 
-  case FK_ConversionFailed:
+  case FK_ConversionFailed: {
+    QualType FromType = Args[0]->getType();
     S.Diag(Kind.getLocation(), diag::err_init_conversion_failed)
       << (int)Entity.getKind()
       << DestType
       << Args[0]->isLValue()
-      << Args[0]->getType()
+      << FromType
       << Args[0]->getSourceRange();
     break;
-
+  }
   case FK_TooManyInitsForScalar: {
     SourceRange R;
 

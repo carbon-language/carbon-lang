@@ -1824,6 +1824,11 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
   // template arguments that we have against the template name, if the template
   // name refers to a single template. That's not a terribly common case,
   // though.
+  // foo<int> could identify a single function unambiguously
+  // This approach does NOT work, since f<int>(1);
+  // gets resolved prior to resorting to overload resolution
+  // i.e., template<class T> void f(double);
+  //       vs template<class T, class U> void f(U);
 
   // These should be filtered out by our callers.
   assert(!R.empty() && "empty lookup results when building templateid");

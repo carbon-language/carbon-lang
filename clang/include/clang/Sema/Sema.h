@@ -1247,12 +1247,28 @@ public:
                                             OverloadCandidateSet& CandidateSet,
                                             bool PartialOverloading = false);
 
+  // Emit as a 'note' the specific overload candidate
   void NoteOverloadCandidate(FunctionDecl *Fn);
+   
+  // Emit as a series of 'note's all template and non-templates
+  // identified by the expression Expr
+  void NoteAllOverloadCandidates(Expr* E);
+  
+  // [PossiblyAFunctionType]  -->   [Return]
+  // NonFunctionType --> NonFunctionType
+  // R (A) --> R(A)
+  // R (*)(A) --> R (A)
+  // R (&)(A) --> R (A)
+  // R (S::*)(A) --> R (A)
+  QualType ExtractUnqualifiedFunctionType(QualType PossiblyAFunctionType);
 
-  FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
+  FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr, QualType TargetType,
                                                    bool Complain,
                                                    DeclAccessPair &Found);
-  FunctionDecl *ResolveSingleFunctionTemplateSpecialization(Expr *From);
+
+  FunctionDecl *ResolveSingleFunctionTemplateSpecialization(Expr *From,
+                                                   bool Complain = false,
+                                                   DeclAccessPair* Found = 0);
 
   Expr *FixOverloadedFunctionReference(Expr *E,
                                        DeclAccessPair FoundDecl,
@@ -3702,7 +3718,8 @@ public:
                                            SourceLocation Loc,
                                            const PartialDiagnostic &NoneDiag,
                                            const PartialDiagnostic &AmbigDiag,
-                                        const PartialDiagnostic &CandidateDiag);
+                                        const PartialDiagnostic &CandidateDiag,
+                                        bool Complain = true);
 
   ClassTemplatePartialSpecializationDecl *
   getMoreSpecializedPartialSpecialization(

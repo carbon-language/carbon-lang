@@ -22,7 +22,6 @@
 using namespace clang;
 
 
-static void NoteAllOverloadCandidates(Expr* const Expr, Sema& sema);
 
 enum TryCastResult {
   TC_NotApplicable, ///< The cast method is not applicable.
@@ -122,11 +121,23 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
                                    CXXCastPath &BasePath);
 static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                   bool CStyle, unsigned &msg);
-static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
+static TryCastResult TryReinterpretCast(Sema &Self, Expr *&SrcExpr,
                                         QualType DestType, bool CStyle,
                                         const SourceRange &OpRange,
                                         unsigned &msg,
                                         CastKind &Kind);
+
+
+static ExprResult 
+ResolveAndFixSingleFunctionTemplateSpecialization(
+                    Sema &Self, Expr *SrcExpr, 
+                    bool DoFunctionPointerConverion = false, 
+                    bool Complain = false, 
+                    const SourceRange& OpRangeForComplaining = SourceRange(), 
+                    QualType DestTypeForComplaining = QualType(), 
+                    unsigned DiagIDForComplaining = 0);
+
+
 
 /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
 ExprResult
@@ -583,7 +594,7 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
       Self.Diag(OpRange.getBegin(), diag::err_bad_reinterpret_cast_overload) 
         << OverloadExpr::find(SrcExpr).Expression->getName()
         << DestType << OpRange;
-      NoteAllOverloadCandidates(SrcExpr, Self);
+      Self.NoteAllOverloadCandidates(SrcExpr);
 
     } else {
       diagnoseBadCast(Self, msg, CT_Reinterpret, OpRange, SrcExpr, DestType);
@@ -604,7 +615,20 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
   if (DestType->isVoidType()) {
     Self.IgnoredValueConversions(SrcExpr);
-    Kind = CK_ToVoid;
+    if (SrcExpr->getType() == Self.Context.OverloadTy) {
+      ExprResult SingleFunctionExpression = 
+         ResolveAndFixSingleFunctionTemplateSpecialization(Self, SrcExpr, 
+                false, // Decay Function to ptr 
+                true, // Complain
+                OpRange, DestType, diag::err_bad_static_cast_overload);
+        if (SingleFunctionExpression.isUsable())
+        {
+          SrcExpr = SingleFunctionExpression.release();
+          Kind = CK_ToVoid;
+        }
+    }
+    else
+      Kind = CK_ToVoid;
     return;
   }
 
@@ -614,13 +638,12 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
   if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, msg,
-                    Kind, BasePath) != TC_Success && msg != 0)
-  {
+                    Kind, BasePath) != TC_Success && msg != 0) {
     if (SrcExpr->getType() == Self.Context.OverloadTy) {
       OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
       Self.Diag(OpRange.getBegin(), diag::err_bad_static_cast_overload)
         << oe->getName() << DestType << OpRange << oe->getQualifierRange();
-      NoteAllOverloadCandidates(SrcExpr, Self);
+      Self.NoteAllOverloadCandidates(SrcExpr);
     } else {
       diagnoseBadCast(Self, msg, CT_Static, OpRange, SrcExpr, DestType);
     }
@@ -1236,32 +1259,44 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   return TC_Success;
 }
 
-
-static void NoteAllOverloadCandidates(Expr* const Expr, Sema& sema)
-{
-  
-  assert(Expr->getType() == sema.Context.OverloadTy);
-
-  OverloadExpr::FindResult Ovl = OverloadExpr::find(Expr);
-  OverloadExpr *const OvlExpr = Ovl.Expression;
-
-  for (UnresolvedSetIterator it = OvlExpr->decls_begin(),
-    end = OvlExpr->decls_end(); it != end; ++it) {
-    if ( FunctionTemplateDecl *ftd = 
-              dyn_cast<FunctionTemplateDecl>((*it)->getUnderlyingDecl()) )
-    {
-	    sema.NoteOverloadCandidate(ftd->getTemplatedDecl());   
-    }
-    else if ( FunctionDecl *f = 
-                dyn_cast<FunctionDecl>((*it)->getUnderlyingDecl()) )
-    {
-      sema.NoteOverloadCandidate(f);
-    }
+// A helper function to resolve and fix an overloaded expression that
+// can be resolved because it identifies a single function
+// template specialization
+// Last three arguments should only be supplied if Complain = true
+static ExprResult ResolveAndFixSingleFunctionTemplateSpecialization(
+                    Sema &Self, Expr *SrcExpr, 
+                    bool DoFunctionPointerConverion, 
+                    bool Complain, 
+                    const SourceRange& OpRangeForComplaining, 
+                    QualType DestTypeForComplaining, 
+                    unsigned DiagIDForComplaining) {
+  assert(SrcExpr->getType() == Self.Context.OverloadTy);
+  DeclAccessPair Found;
+  bool ret = false;
+  Expr* SingleFunctionExpression = 0;
+  if (FunctionDecl* Fn = Self.ResolveSingleFunctionTemplateSpecialization(
+                                    SrcExpr, false, // false -> Complain 
+                                    &Found)) {
+    if (!Self.DiagnoseUseOfDecl(Fn, SrcExpr->getSourceRange().getBegin())) {
+      // mark the expression as resolved to Fn
+      SingleFunctionExpression = Self.FixOverloadedFunctionReference(SrcExpr, 
+                                                                    Found, Fn);
+      
+      if (DoFunctionPointerConverion)
+        Self.DefaultFunctionArrayLvalueConversion(SingleFunctionExpression);
+    }      
   }
+  if (!SingleFunctionExpression && Complain) {
+    OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
+    Self.Diag(OpRangeForComplaining.getBegin(), DiagIDForComplaining)
+      << oe->getName() << DestTypeForComplaining << OpRangeForComplaining 
+              << oe->getQualifierRange();
+    Self.NoteAllOverloadCandidates(SrcExpr);
+  }
+  return SingleFunctionExpression;
 }
 
-
-static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
+static TryCastResult TryReinterpretCast(Sema &Self, Expr *&SrcExpr,
                                         QualType DestType, bool CStyle,
                                         const SourceRange &OpRange,
                                         unsigned &msg,
@@ -1272,9 +1307,20 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
   QualType SrcType = SrcExpr->getType();
 
   // Is the source an overloaded name? (i.e. &foo)
-  // If so, reinterpret_cast can not help us here (13.4, p1, bullet 5)
-  if (SrcType == Self.Context.OverloadTy)
-    return TC_NotApplicable;
+  // If so, reinterpret_cast can not help us here (13.4, p1, bullet 5) ...
+  if (SrcType == Self.Context.OverloadTy) {
+    // ... unless foo<int> resolves to an lvalue unambiguously
+    ExprResult SingleFunctionExpr = 
+        ResolveAndFixSingleFunctionTemplateSpecialization(Self, SrcExpr, 
+          Expr::getValueKindForType(DestType) == VK_RValue // Convert Fun to Ptr 
+        );
+    if (SingleFunctionExpr.isUsable()) {
+      SrcExpr = SingleFunctionExpr.release();
+      SrcType = SrcExpr->getType();
+    }      
+    else  
+      return TC_NotApplicable;
+  }
 
   if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {
     bool LValue = DestTypeTmp->isLValueReferenceType();
@@ -1495,8 +1541,24 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
   if (CastTy->isVoidType()) {
     IgnoredValueConversions(CastExpr);    
-    Kind = CK_ToVoid;
-    return false;
+    bool ret = false; // false is 'able to convert'
+    if (CastExpr->getType() == Context.OverloadTy) {
+      ExprResult SingleFunctionExpr = 
+        ResolveAndFixSingleFunctionTemplateSpecialization(*this, 
+              CastExpr, 
+              /* Decay Function to ptr */ false, 
+              /* Complain */ true, 
+              R, CastTy, diag::err_bad_cstyle_cast_overload);
+      if (SingleFunctionExpr.isUsable()) {
+        CastExpr = SingleFunctionExpr.release();
+        Kind = CK_ToVoid;
+      }
+      else
+        ret = true;  
+    }
+    else
+      Kind = CK_ToVoid;
+    return ret;
   }
 
   // Make sure we determine the value kind before we bail out for
@@ -1547,7 +1609,9 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
                                 CastTy,
                                 /* Complain */ true,
                                 Found);
-      assert(!Fn && "cast failed but able to resolve overload expression!!");
+      
+      assert(!Fn 
+                && "cast failed but able to resolve overload expression!!");
       (void)Fn;
 
     } else {

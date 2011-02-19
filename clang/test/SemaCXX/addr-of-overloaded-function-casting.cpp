@@ -4,8 +4,8 @@ void g();
 void f(); // expected-note 9{{candidate function}}
 void f(int); // expected-note 9{{candidate function}}
 
-template<class T> void t(T); // expected-note 3{{candidate function}}
-template<class T> void t(T*); // expected-note 3{{candidate function}}
+template<class T> void t(T); // expected-note 6{{candidate function}}
+template<class T> void t(T*); // expected-note 6{{candidate function}}
 
 template<class T> void u(T);
 

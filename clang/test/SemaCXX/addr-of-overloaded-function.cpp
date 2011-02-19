@@ -57,11 +57,11 @@ struct B
 
 struct C {
   C &getC() {
-    return makeAC; // expected-error{{address of overloaded function 'makeAC' cannot be converted to type 'C'}}
+    return makeAC; // expected-error{{address of overloaded function 'makeAC'}}
   }
 
-  C &makeAC();
-  const C &makeAC() const;
+  C &makeAC();  //expected-note{{candidate function}}
+  const C &makeAC() const; //expected-note{{candidate function}}
 
   static void f(); // expected-note{{candidate function}}
   static void f(int); // expected-note{{candidate function}}

@@ -3322,9 +3322,11 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
                          SourceLocation Loc,
                          const PartialDiagnostic &NoneDiag,
                          const PartialDiagnostic &AmbigDiag,
-                         const PartialDiagnostic &CandidateDiag) {
+                         const PartialDiagnostic &CandidateDiag,
+                         bool Complain) {
   if (SpecBegin == SpecEnd) {
-    Diag(Loc, NoneDiag);
+    if (Complain)
+      Diag(Loc, NoneDiag);
     return SpecEnd;
   }
 
@@ -3370,13 +3372,15 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
   }
 
   // Diagnose the ambiguity.
-  Diag(Loc, AmbigDiag);
+  if (Complain)
+    Diag(Loc, AmbigDiag);
 
+  if (Complain)
   // FIXME: Can we order the candidates in some sane way?
-  for (UnresolvedSetIterator I = SpecBegin; I != SpecEnd; ++I)
-    Diag((*I)->getLocation(), CandidateDiag)
-      << getTemplateArgumentBindingsText(
-        cast<FunctionDecl>(*I)->getPrimaryTemplate()->getTemplateParameters(),
+    for (UnresolvedSetIterator I = SpecBegin; I != SpecEnd; ++I)
+      Diag((*I)->getLocation(), CandidateDiag)
+        << getTemplateArgumentBindingsText(
+          cast<FunctionDecl>(*I)->getPrimaryTemplate()->getTemplateParameters(),
                     *cast<FunctionDecl>(*I)->getTemplateSpecializationArgs());
 
   return SpecEnd;

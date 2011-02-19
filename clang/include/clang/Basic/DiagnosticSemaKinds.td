@@ -2686,6 +2686,10 @@ def err_bad_reinterpret_cast_overload : Error<
 def err_bad_static_cast_overload : Error<
   "address of overloaded function %0 cannot be static_cast to type %1">;
 
+def err_bad_cstyle_cast_overload : Error<
+  "address of overloaded function %0 cannot be cast to type %1">;
+
+
 def err_bad_cxx_cast_generic : Error<
   "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"
   "functional-style cast}0 from %1 to %2 is not allowed">;
