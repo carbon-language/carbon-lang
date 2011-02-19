@@ -1,8 +1,20 @@
-function(add_clang_unittest test_dirname link_components used_libs)
-  separate_arguments(link_components)
-  set(LLVM_LINK_COMPONENTS ${link_components})
-  separate_arguments(used_libs)
-  set(LLVM_USED_LIBS ${used_libs})
+include(LLVMParseArguments)
+
+# add_clang_unittest(test_dirname file1.cpp file2.cpp ...
+#                    [USED_LIBS lib1 lib2]
+#                    [LINK_COMPONENTS component1 component2])
+#
+# Will compile the list of files together and link against the clang
+# libraries in the USED_LIBS list and the llvm-config components in
+# the LINK_COMPONENTS list.  Produces a binary named
+# 'basename(test_dirname)Tests'.
+function(add_clang_unittest)
+  PARSE_ARGUMENTS(CLANG_UNITTEST "USED_LIBS;LINK_COMPONENTS" "" ${ARGN})
+  set(LLVM_LINK_COMPONENTS ${CLANG_UNITTEST_LINK_COMPONENTS})
+  set(LLVM_USED_LIBS ${CLANG_UNITTEST_USED_LIBS})
+  list(GET CLANG_UNITTEST_DEFAULT_ARGS 0 test_dirname)
+  list(REMOVE_AT CLANG_UNITTEST_DEFAULT_ARGS 0)
+
   string(REGEX MATCH "([^/]+)$" test_name ${test_dirname})
   if (CMAKE_BUILD_TYPE)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
@@ -14,7 +26,7 @@ function(add_clang_unittest test_dirname link_components used_libs)
   if( NOT LLVM_BUILD_TESTS )
     set(EXCLUDE_FROM_ALL ON)
   endif()
-  add_clang_executable(${test_name}Tests ${ARGN})
+  add_clang_executable(${test_name}Tests ${CLANG_UNITTEST_DEFAULT_ARGS})
   add_dependencies(ClangUnitTests ${test_name}Tests)
 endfunction()
 
@@ -37,13 +49,11 @@ if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 endif()
 
 add_clang_unittest(Basic
-  ""
-  "gtest gtest_main clangBasic"
   Basic/FileManagerTest.cpp
+  USED_LIBS gtest gtest_main clangBasic
  )
 
 add_clang_unittest(Frontend
-  ""
-  "gtest gtest_main clangFrontend"
   Frontend/FrontendActionTest.cpp
+  USED_LIBS gtest gtest_main clangFrontend
  )
