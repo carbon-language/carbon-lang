@@ -78,7 +78,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
 
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
-  QualType PointeeTy = CastToTy->getAs<PointerType>()->getPointeeType();
+  QualType PointeeTy = CastToTy->getPointeeType();
   QualType CanonPointeeTy = Ctx.getCanonicalType(PointeeTy);
 
   // Handle casts to void*.  We just pass the region through.

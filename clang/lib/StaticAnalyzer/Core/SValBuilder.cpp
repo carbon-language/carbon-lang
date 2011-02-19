@@ -292,7 +292,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     //  }
 
     assert(Loc::isLocType(originalTy) || originalTy->isFunctionType() ||
-           originalTy->isBlockPointerType());
+           originalTy->isBlockPointerType() || castTy->isReferenceType());
 
     StoreManager &storeMgr = StateMgr.getStoreManager();
 

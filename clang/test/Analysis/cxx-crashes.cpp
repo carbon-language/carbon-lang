@@ -14,6 +14,10 @@ bool f3() {
   return !false;
 }
 
+void *f4(int* w) {
+  return reinterpret_cast<void*&>(w);
+}
+
 namespace {
 
 struct A { };
@@ -24,6 +28,18 @@ struct B {
 A f(char *dst) {
   B b;
   return b;
+}
+
+}
+
+namespace {
+
+struct S {
+    void *p;
+};
+
+void *f(S* w) {
+    return &reinterpret_cast<void*&>(*w);
 }
 
 }
