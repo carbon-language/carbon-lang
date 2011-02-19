@@ -110,6 +110,8 @@ uint32_t ITSession::GetCond()
 // ARM constants used during decoding
 #define REG_RD          0
 #define LDM_REGLIST     1
+#define SP_REG          13
+#define LR_REG          14
 #define PC_REG          15
 #define PC_REGLIST_BIT  0x8000
 
@@ -223,7 +225,7 @@ EmulateInstructionARM::EmulatePUSH (ARMEncoding encoding)
     if (ConditionPassed())
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t registers = 0;
@@ -282,7 +284,7 @@ EmulateInstructionARM::EmulatePUSH (ARMEncoding encoding)
             {
                 dwarf_reg.num = dwarf_r0 + i;
                 context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
-                uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
+                uint32_t reg_value = ReadCoreReg(i, &success);
                 if (!success)
                     return false;
                 if (!MemAWrite (context, addr, reg_value, addr_byte_size))
@@ -295,10 +297,10 @@ EmulateInstructionARM::EmulatePUSH (ARMEncoding encoding)
         {
             dwarf_reg.num = dwarf_pc;
             context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
-            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            const uint32_t pc = ReadCoreReg(PC_REG, &success);
             if (!success)
                 return false;
-            if (!MemAWrite (context, addr, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, addr, pc, addr_byte_size))
                 return false;
         }
         
@@ -344,7 +346,7 @@ EmulateInstructionARM::EmulatePOP (ARMEncoding encoding)
     if (ConditionPassed())
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t registers = 0;
@@ -473,7 +475,7 @@ EmulateInstructionARM::EmulateADDRdSPImm (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t Rd; // the destination register
@@ -535,7 +537,7 @@ EmulateInstructionARM::EmulateMOVRdSP (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t Rd; // the destination register
@@ -809,7 +811,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        const uint32_t pc = ReadCoreReg(PC_REG, &success);
         if (!success)
             return false;
 
@@ -831,8 +833,6 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             Rt = Bits32(opcode, 10, 8);
             imm32 = Bits32(opcode, 7, 0) << 2; // imm32 = ZeroExtend(imm8:'00', 32);
             add = true;
-            base = Align(pc + 4, 4);
-            context.SetRegisterPlusOffset (pc_reg, 4 + imm32);
             break;
         case eEncodingT2:
             Rt = Bits32(opcode, 15, 12);
@@ -840,17 +840,18 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
             add = BitIsSet(opcode, 23);
             if (Rt == 15 && InITBlock() && !LastInITBlock())
                 return false;
-            base = Align(pc + 4, 4);
-            context.SetRegisterPlusOffset (pc_reg, 4 + imm32);
             break;
         default:
             return false;
         }
 
+        base = Align(pc, 4);
         if (add)
             address = base + imm32;
         else
             address = base - imm32;
+
+        context.SetRegisterPlusOffset(pc_reg, address - base);
         data = MemURead(context, address, 4, 0, &success);
         if (!success)
             return false;    
@@ -910,7 +911,7 @@ EmulateInstructionARM::EmulateADDSPImm (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t imm32; // the immediate operand
@@ -965,7 +966,7 @@ EmulateInstructionARM::EmulateADDSPRm (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t Rm; // the second operand
@@ -976,7 +977,7 @@ EmulateInstructionARM::EmulateADDSPRm (ARMEncoding encoding)
         default:
             return false;
         }
-        int32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        int32_t reg_value = ReadCoreReg(Rm, &success);
         if (!success)
             return false;
 
@@ -1026,7 +1027,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
     {
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRelativeBranchImmediate;
-        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        const uint32_t pc = ReadCoreReg(PC_REG, &success);
         if (!success)
             return false;
         addr_t lr; // next instruction address
@@ -1035,7 +1036,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
         switch (encoding) {
         case eEncodingT1:
             {
-            lr = (pc + 4) | 1u; // return address
+            lr = pc | 1u; // return address
             uint32_t S = Bit32(opcode, 26);
             uint32_t imm10 = Bits32(opcode, 25, 16);
             uint32_t J1 = Bit32(opcode, 13);
@@ -1045,7 +1046,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             uint32_t I2 = !(J2 ^ S);
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<25>(imm25);
-            target = pc + 4 + imm32;
+            target = pc + imm32;
             context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             if (InITBlock() && !LastInITBlock())
                 return false;
@@ -1053,7 +1054,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             }
         case eEncodingT2:
             {
-            lr = (pc + 4) | 1u; // return address
+            lr = pc | 1u; // return address
             uint32_t S = Bit32(opcode, 26);
             uint32_t imm10H = Bits32(opcode, 25, 16);
             uint32_t J1 = Bit32(opcode, 13);
@@ -1063,7 +1064,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             uint32_t I2 = !(J2 ^ S);
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10H << 12) | (imm10L << 2);
             imm32 = llvm::SignExtend32<25>(imm25);
-            target = Align(pc + 4, 4) + imm32;
+            target = Align(pc, 4) + imm32;
             context.SetModeAndImmediateSigned (eModeARM, 4 + imm32);
             if (InITBlock() && !LastInITBlock())
                 return false;
@@ -1072,13 +1073,13 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
         case eEncodingA1:
             lr = pc + 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
-            target = Align(pc + 8, 4) + imm32;
+            target = Align(pc, 4) + imm32;
             context.SetModeAndImmediateSigned (eModeARM, 8 + imm32);
             break;
         case eEncodingA2:
             lr = pc + 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2 | Bits32(opcode, 24, 24) << 1);
-            target = pc + 8 + imm32;
+            target = pc + imm32;
             context.SetModeAndImmediateSigned (eModeThumb, 8 + imm32);
             break;
         default:
@@ -1123,14 +1124,14 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
     {
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextAbsoluteBranchRegister;
-        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        const uint32_t pc = ReadCoreReg(PC_REG, &success);
         addr_t lr; // next instruction address
         if (!success)
             return false;
         uint32_t Rm; // the register with the target address
         switch (encoding) {
         case eEncodingT1:
-            lr = (pc + 2) | 1u; // return address
+            lr = (pc - 2) | 1u; // return address
             Rm = Bits32(opcode, 6, 3);
             // if m == 15 then UNPREDICTABLE;
             if (Rm == 15)
@@ -1139,7 +1140,7 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
                 return false;
             break;
         case eEncodingA1:
-            lr = pc + 4; // return address
+            lr = pc - 4; // return address
             Rm = Bits32(opcode, 3, 0);
             // if m == 15 then UNPREDICTABLE;
             if (Rm == 15)
@@ -1148,7 +1149,7 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
         default:
             return false;
         }
-        addr_t target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        addr_t target = ReadCoreReg (Rm, &success);
         if (!success)
             return false;
         Register dwarf_reg;
@@ -1198,7 +1199,7 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
         default:
             return false;
         }
-        addr_t target = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        addr_t target = ReadCoreReg (Rm, &success);
         if (!success)
             return false;
                   
@@ -1241,7 +1242,7 @@ EmulateInstructionARM::EmulateSUBR7IPImm (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const addr_t ip = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r12, 0, &success);
+        const addr_t ip = ReadCoreReg (12, &success);
         if (!success)
             return false;
         uint32_t imm32;
@@ -1297,7 +1298,7 @@ EmulateInstructionARM::EmulateSUBIPSPImm (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t imm32;
@@ -1352,7 +1353,7 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t imm32;
@@ -1408,7 +1409,7 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
     if (ConditionPassed())
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         uint32_t Rt; // the source register
@@ -1432,7 +1433,7 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
         {
             dwarf_reg.num = dwarf_r0 + Rt;
             context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
-            uint32_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
+            uint32_t reg_value = ReadCoreReg(Rt, &success);
             if (!success)
                 return false;
             if (!MemUWrite (context, addr, reg_value, addr_byte_size))
@@ -1442,7 +1443,7 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
         {
             dwarf_reg.num = dwarf_pc;
             context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
-            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            const uint32_t pc = ReadCoreReg(PC_REG, &success);
             if (!success)
                 return false;
             if (!MemUWrite (context, addr, pc + 8, addr_byte_size))
@@ -1490,7 +1491,7 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
     if (ConditionPassed())
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         bool single_regs;
@@ -1585,7 +1586,7 @@ EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
     if (ConditionPassed())
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
-        const addr_t sp = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, 0, &success);
+        const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
         bool single_regs;
@@ -1669,7 +1670,7 @@ EmulateInstructionARM::EmulateSVC (ARMEncoding encoding)
 
     if (ConditionPassed())
     {
-        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        const uint32_t pc = ReadCoreReg(PC_REG, &success);
         addr_t lr; // next instruction address
         if (!success)
             return false;
@@ -1740,7 +1741,7 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
     {
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRelativeBranchImmediate;
-        const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        const uint32_t pc = ReadCoreReg(PC_REG, &success);
         if (!success)
             return false;
         addr_t target; // target address
@@ -1749,12 +1750,12 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
         case eEncodingT1:
             // The 'cond' field is handled in EmulateInstructionARM::CurrentCond().
             imm32 = llvm::SignExtend32<9>(Bits32(opcode, 7, 0) << 1);
-            target = pc + 4 + imm32;
+            target = pc + imm32;
             context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
         case eEncodingT2:
             imm32 = llvm::SignExtend32<12>(Bits32(opcode, 10, 0));
-            target = pc + 4 + imm32;
+            target = pc + imm32;
             context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
         case eEncodingT3:
@@ -1767,7 +1768,7 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
             uint32_t imm11 = Bits32(opcode, 10, 0);
             uint32_t imm21 = (S << 20) | (J2 << 19) | (J1 << 18) | (imm6 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<21>(imm21);
-            target = pc + 4 + imm32;
+            target = pc + imm32;
             context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
             }
@@ -1782,13 +1783,13 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
             uint32_t I2 = !(J2 ^ S);
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<25>(imm25);
-            target = pc + 4 + imm32;
+            target = pc + imm32;
             context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
             }
         case eEncodingA1:
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
-            target = pc + 8 + imm32;
+            target = pc + imm32;
             context.SetModeAndImmediateSigned (eModeARM, 8 + imm32);
             break;
         default:
@@ -1819,13 +1820,13 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
         return false;
 
     // Read the register value from the operand register Rn.
-    uint32_t reg_val = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Bits32(opcode, 2, 0), 0, &success);
+    uint32_t reg_val = ReadCoreReg(Bits32(opcode, 2, 0), &success);
     if (!success)
         return false;
                   
     EmulateInstruction::Context context;
     context.type = EmulateInstruction::eContextRelativeBranchImmediate;
-    const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+    const uint32_t pc = ReadCoreReg(PC_REG, &success);
     if (!success)
         return false;
 
@@ -1836,7 +1837,7 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
     case eEncodingT1:
         imm32 = Bit32(opcode, 9) << 6 | Bits32(opcode, 7, 3) << 1;
         nonzero = BitIsSet(opcode, 11);
-        target = pc + 4 + imm32;
+        target = pc + imm32;
         context.SetModeAndImmediateSigned (eModeThumb, 4 + imm32);
         break;
     default:
@@ -1894,14 +1895,12 @@ EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
 
     // Read the address of the table from the operand register Rn.
     // The PC can be used, in which case the table immediately follows this instruction.
-    uint32_t base =
-        Rn == 15 ? (ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success) + 4)
-                 : ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+    uint32_t base = ReadCoreReg(Rm, &success);
     if (!success)
         return false;
 
     // the table index
-    uint32_t index = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+    uint32_t index = ReadCoreReg(Rm, &success);
     if (!success)
         return false;
 
@@ -1915,12 +1914,12 @@ EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
     if (!success)
         return false;
 
-    const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+    const uint32_t pc = ReadCoreReg(PC_REG, &success);
     if (!success)
         return false;
 
     // target address
-    addr_t target = pc + 4 + offset;
+    addr_t target = pc + offset;
     context.type = EmulateInstruction::eContextRelativeBranchImmediate;
     context.SetModeAndImmediateSigned (eModeThumb, 4 + offset);
 
@@ -2108,7 +2107,7 @@ EmulateInstructionARM::EmulateCMPRnImm (ARMEncoding encoding)
         return false;
     }
     // Read the register value from the operand register Rn.
-    uint32_t reg_val = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+    uint32_t reg_val = ReadCoreReg(Rn, &success);
     if (!success)
         return false;
                   
@@ -2163,12 +2162,12 @@ EmulateInstructionARM::EmulateCMPRnRm (ARMEncoding encoding)
         return false;
     }
     // Read the register value from register Rn.
-    uint32_t reg_val1 = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+    uint32_t reg_val1 = ReadCoreReg(Rn, &success);
     if (!success)
         return false;
     // Read the register value from register Rm.
     // The register value is not being shifted since we don't handle ARM for now.
-    uint32_t reg_val2 = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+    uint32_t reg_val2 = ReadCoreReg(Rm, &success);
     if (!success)
         return false;
                   
@@ -2469,7 +2468,7 @@ EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType sh
             shift_type = SRType_RRX;
 
         // Get the first operand.
-        uint32_t value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        uint32_t value = ReadCoreReg (Rm, &success);
         if (!success)
             return false;
 
@@ -2534,11 +2533,11 @@ EmulateInstructionARM::EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType sh
         }
 
         // Get the first operand.
-        uint32_t value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+        uint32_t value = ReadCoreReg (Rn, &success);
         if (!success)
             return false;
         // Get the Rm register content.
-        uint32_t val = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + Rm, 0, &success);
+        uint32_t val = ReadCoreReg (Rm, &success);
         if (!success)
             return false;
 
@@ -6100,19 +6099,52 @@ EmulateInstructionARM::AddWithCarry (uint32_t x, uint32_t y, uint8_t carry_in)
 }
 
 uint32_t
-EmulateInstructionARM::ReadCoreReg(uint32_t regnum, bool *success)
+EmulateInstructionARM::ReadCoreReg(uint32_t num, bool *success)
 {
-    uint32_t val;
-    if (regnum == 15)
+    uint32_t reg_kind, reg_num;
+    switch (num)
     {
-        val = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, success);
-        if (CurrentInstrSet() == eModeThumb)
-            val += 4;
+    case SP_REG:
+        reg_kind = eRegisterKindGeneric;
+        reg_num  = LLDB_REGNUM_GENERIC_SP;
+        break;
+    case LR_REG:
+        reg_kind = eRegisterKindGeneric;
+        reg_num  = LLDB_REGNUM_GENERIC_RA;
+        break;
+    case PC_REG:
+        reg_kind = eRegisterKindGeneric;
+        reg_num  = LLDB_REGNUM_GENERIC_PC;
+        break;
+    default:
+        if (0 <= num && num < SP_REG)
+        {
+            reg_kind = eRegisterKindDWARF;
+            reg_num  = dwarf_r0 + num;
+        }
         else
-            val += 8;
+        {
+            assert(0 && "Invalid register number");
+            *success = false;
+            return ~0u;
+        }
+        break;
     }
-    else
-        val = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + regnum, 0, success);
+
+    // Read our register.
+    uint32_t val = ReadRegisterUnsigned (reg_kind, reg_num, 0, success);
+
+    // When executing an ARM instruction , PC reads as the address of the current
+    // instruction plus 8.
+    // When executing a Thumb instruction , PC reads as the address of the current
+    // instruction plus 4.
+    if (num == 15)
+    {
+        if (CurrentInstrSet() == eModeARM)
+            val += 8;
+        else
+            val += 4;
+    }
 
     return val;
 }
