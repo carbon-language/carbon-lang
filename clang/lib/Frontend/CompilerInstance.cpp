@@ -27,7 +27,6 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -45,10 +44,6 @@ CompilerInstance::CompilerInstance()
 }
 
 CompilerInstance::~CompilerInstance() {
-}
-
-void CompilerInstance::setLLVMContext(llvm::LLVMContext *Value) {
-  LLVMContext.reset(Value);
 }
 
 void CompilerInstance::setInvocation(CompilerInvocation *Value) {

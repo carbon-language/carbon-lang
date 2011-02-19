@@ -19,7 +19,6 @@
 #include <string>
 
 namespace llvm {
-class LLVMContext;
 class raw_ostream;
 class raw_fd_ostream;
 class Timer;
@@ -59,9 +58,6 @@ class TargetInfo;
 /// come in two forms; a short form that reuses the CompilerInstance objects,
 /// and a long form that takes explicit instances of any required objects.
 class CompilerInstance {
-  /// The LLVM context used for this instance.
-  llvm::OwningPtr<llvm::LLVMContext> LLVMContext;
-
   /// The options used in this compiler instance.
   llvm::OwningPtr<CompilerInvocation> Invocation;
 
@@ -153,23 +149,6 @@ public:
   // FIXME: Eliminate the llvm_shutdown requirement, that should either be part
   // of the context or else not CompilerInstance specific.
   bool ExecuteAction(FrontendAction &Act);
-
-  /// }
-  /// @name LLVM Context
-  /// {
-
-  bool hasLLVMContext() const { return LLVMContext != 0; }
-
-  llvm::LLVMContext &getLLVMContext() const {
-    assert(LLVMContext && "Compiler instance has no LLVM context!");
-    return *LLVMContext;
-  }
-
-  llvm::LLVMContext *takeLLVMContext() { return LLVMContext.take(); }
-
-  /// setLLVMContext - Replace the current LLVM context and take ownership of
-  /// \arg Value.
-  void setLLVMContext(llvm::LLVMContext *Value);
 
   /// }
   /// @name Compiler Invocation and Options

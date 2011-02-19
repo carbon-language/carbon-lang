@@ -14,7 +14,6 @@
 #include "clang/Frontend/FrontendAction.h"
 
 #include "llvm/ADT/Triple.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 #include "gtest/gtest.h"
@@ -61,7 +60,6 @@ TEST(ASTFrontendAction, Sanity) {
   invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
   invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
   CompilerInstance compiler;
-  compiler.setLLVMContext(new LLVMContext);
   compiler.setInvocation(invocation);
   compiler.createDiagnostics(0, NULL);
 

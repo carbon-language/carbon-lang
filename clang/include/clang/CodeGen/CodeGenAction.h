@@ -14,6 +14,7 @@
 #include "llvm/ADT/OwningPtr.h"
 
 namespace llvm {
+  class LLVMContext;
   class Module;
 }
 
@@ -24,9 +25,14 @@ class CodeGenAction : public ASTFrontendAction {
 private:
   unsigned Act;
   llvm::OwningPtr<llvm::Module> TheModule;
+  llvm::LLVMContext *VMContext;
+  bool OwnsVMContext;
 
 protected:
-  CodeGenAction(unsigned _Act);
+  /// Create a new code generation action.  If the optional \arg _VMContext
+  /// parameter is supplied, the action uses it without taking ownership,
+  /// otherwise it creates a fresh LLVM context and takes ownership.
+  CodeGenAction(unsigned _Act, llvm::LLVMContext *_VMContext = 0);
 
   virtual bool hasIRSupport() const;
 
@@ -44,37 +50,40 @@ public:
   /// been run. The result may be null on failure.
   llvm::Module *takeModule();
 
+  /// Take the LLVM context used by this action.
+  llvm::LLVMContext *takeLLVMContext();
+
   BackendConsumer *BEConsumer;
 };
 
 class EmitAssemblyAction : public CodeGenAction {
 public:
-  EmitAssemblyAction();
+  EmitAssemblyAction(llvm::LLVMContext *_VMContext = 0);
 };
 
 class EmitBCAction : public CodeGenAction {
 public:
-  EmitBCAction();
+  EmitBCAction(llvm::LLVMContext *_VMContext = 0);
 };
 
 class EmitLLVMAction : public CodeGenAction {
 public:
-  EmitLLVMAction();
+  EmitLLVMAction(llvm::LLVMContext *_VMContext = 0);
 };
 
 class EmitLLVMOnlyAction : public CodeGenAction {
 public:
-  EmitLLVMOnlyAction();
+  EmitLLVMOnlyAction(llvm::LLVMContext *_VMContext = 0);
 };
 
 class EmitCodeGenOnlyAction : public CodeGenAction {
 public:
-  EmitCodeGenOnlyAction();
+  EmitCodeGenOnlyAction(llvm::LLVMContext *_VMContext = 0);
 };
 
 class EmitObjAction : public CodeGenAction {
 public:
-  EmitObjAction();
+  EmitObjAction(llvm::LLVMContext *_VMContext = 0);
 };
 
 }

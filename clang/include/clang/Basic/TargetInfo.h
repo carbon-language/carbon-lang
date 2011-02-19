@@ -26,8 +26,6 @@
 namespace llvm {
 struct fltSemantics;
 class StringRef;
-class LLVMContext;
-class Type;
 }
 
 namespace clang {
@@ -531,12 +529,6 @@ public:
   /// initialization functions.
   virtual const char *getStaticInitSectionSpecifier() const {
     return 0;
-  }
-
-  virtual const llvm::Type* adjustInlineAsmType(std::string& Constraint, 
-                                     const llvm::Type* Ty,
-                                     llvm::LLVMContext& Context) const {
-    return Ty;
   }
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {

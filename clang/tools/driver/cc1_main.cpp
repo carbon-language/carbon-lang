@@ -24,7 +24,6 @@
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/FrontendTool/Utils.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -117,8 +116,6 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
              const char *Argv0, void *MainAddr) {
   llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-
-  Clang->setLLVMContext(new llvm::LLVMContext());
 
   // Run clang -cc1 test.
   if (ArgBegin != ArgEnd && llvm::StringRef(ArgBegin[0]) == "-cc1test") {

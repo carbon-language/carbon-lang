@@ -1,9 +1,8 @@
 set(LLVM_USED_LIBS libclang)
 
 set( LLVM_LINK_COMPONENTS
-  bitreader
+  support
   mc
-  core
   )
 
 add_clang_executable(c-index-test

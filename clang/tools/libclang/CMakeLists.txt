@@ -11,9 +11,8 @@ set(LLVM_USED_LIBS
   clangBasic)
 
 set( LLVM_LINK_COMPONENTS
-  bitreader
+  support
   mc
-  core
   )
 
 add_clang_library(libclang
