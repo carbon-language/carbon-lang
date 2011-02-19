@@ -1223,10 +1223,18 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(AbstractConditionalOperator *C,
     addSuccessor(Block, KnownVal.isFalse() ? NULL : LHSBlock);
   addSuccessor(Block, KnownVal.isTrue() ? NULL : RHSBlock);
   Block->setTerminator(C);
-  CFGBlock *result;
   Expr *condExpr = C->getCond();
+
+  CFGBlock *result = 0;
+
+  // Run the condition expression if it's not trivially expressed in
+  // terms of the opaque value (or if there is no opaque value).
   if (condExpr != opaqueValue) result = addStmt(condExpr);
-  if (BCO) result = addStmt(BCO->getCommon());
+
+  // Before that, run the common subexpression if there was one.
+  // At least one of this or the above will be run.
+  if (opaqueValue) result = addStmt(BCO->getCommon());
+
   return result;
 }
 
