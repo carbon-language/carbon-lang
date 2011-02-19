@@ -218,6 +218,15 @@ namespace llvm {
       return Virt2SplitMap[virtReg];
     }
 
+    /// getOriginal - Return the original virtual register that VirtReg descends
+    /// from through splitting.
+    /// A register that was not created by splitting is its own original.
+    /// This operation is idempotent.
+    unsigned getOriginal(unsigned VirtReg) const {
+      unsigned Orig = getPreSplitReg(VirtReg);
+      return Orig ? Orig : VirtReg;
+    }
+
     /// @brief returns true if the specified virtual register is not
     /// mapped to a stack slot or rematerialized.
     bool isAssignedReg(unsigned virtReg) const {

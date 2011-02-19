@@ -19,18 +19,13 @@
 
 using namespace llvm;
 
-unsigned LiveRangeEdit::getOriginal(const VirtRegMap &vrm) const {
-  unsigned Orig = vrm.getPreSplitReg(getReg());
-  return Orig ? Orig : getReg();
-}
-
 LiveInterval &LiveRangeEdit::create(MachineRegisterInfo &mri,
                                     LiveIntervals &lis,
                                     VirtRegMap &vrm) {
   const TargetRegisterClass *RC = mri.getRegClass(getReg());
   unsigned VReg = mri.createVirtualRegister(RC);
   vrm.grow();
-  vrm.setIsSplitFromReg(VReg, getOriginal(vrm));
+  vrm.setIsSplitFromReg(VReg, vrm.getOriginal(getReg()));
   LiveInterval &li = lis.getOrCreateInterval(VReg);
   newRegs_.push_back(&li);
   return li;
