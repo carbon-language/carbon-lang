@@ -1009,11 +1009,12 @@ tryParseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     .Case("nzcvqg", 0xc) // same as CPSR_fs
     .Default(~0U);
 
-    if (FlagsVal == ~0U)
+    if (FlagsVal == ~0U) {
       if (!Flags.empty())
         return MatchOperand_NoMatch;
       else
         FlagsVal = 0; // No flag
+    }
   } else if (SpecReg == "cpsr" || SpecReg == "spsr") {
     for (int i = 0, e = Flags.size(); i != e; ++i) {
       unsigned Flag = StringSwitch<unsigned>(Flags.substr(i, 1))
