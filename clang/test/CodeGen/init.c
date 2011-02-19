@@ -100,3 +100,18 @@ int test10(int X) {
   // CHECK-NOT: store i32 0
   // CHECK: call void @bar
 }
+
+
+// PR9257
+struct test11S {
+  int A[10];
+};
+void test11(struct test11S *P) {
+  *P = (struct test11S) { .A = { [0 ... 3] = 4 } };
+  // CHECK: @test11
+  // CHECK: store i32 4
+  // CHECK: store i32 4
+  // CHECK: store i32 4
+  // CHECK: store i32 4
+  // CHECK: ret void
+}

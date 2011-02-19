@@ -1593,14 +1593,19 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
   } else {
     assert(D->isArrayRangeDesignator() && "Need array-range designator");
 
-
     DesignatedStartIndex =
       DIE->getArrayRangeStart(*D)->EvaluateAsInt(SemaRef.Context);
     DesignatedEndIndex =
       DIE->getArrayRangeEnd(*D)->EvaluateAsInt(SemaRef.Context);
     IndexExpr = DIE->getArrayRangeEnd(*D);
 
-    if (DesignatedStartIndex.getZExtValue() !=DesignatedEndIndex.getZExtValue())
+    // Codegen can't handle evaluating array range designators that have side
+    // effects, because we replicate the AST value for each initialized element.
+    // As such, set the sawArrayRangeDesignator() bit if we initialize multiple
+    // elements with something that has a side effect, so codegen can emit an
+    // "error unsupported" error instead of miscompiling the app.
+    if (DesignatedStartIndex.getZExtValue()!=DesignatedEndIndex.getZExtValue()&&
+        DIE->getInit()->HasSideEffects(SemaRef.Context))
       FullyStructuredList->sawArrayRangeDesignator();
   }
 
