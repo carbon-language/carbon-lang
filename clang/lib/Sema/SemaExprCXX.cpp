@@ -477,7 +477,7 @@ Sema::ActOnCXXNullPtrLiteral(SourceLocation Loc) {
 ExprResult
 Sema::ActOnCXXThrow(SourceLocation OpLoc, Expr *Ex) {
   if (!getLangOptions().Exceptions)
-    return Diag(OpLoc, diag::err_exceptions_disabled) << "throw";
+    Diag(OpLoc, diag::err_exceptions_disabled) << "throw";
 
   if (Ex && !Ex->isTypeDependent() && CheckCXXThrowOperand(OpLoc, Ex))
     return ExprError();
