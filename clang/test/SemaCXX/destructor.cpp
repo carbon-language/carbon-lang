@@ -172,3 +172,8 @@ template<class T> class TS2 { // expected-warning {{'nonvirtualdtor::TS2<int>' h
 
 TS2<int> foo; // expected-note {{instantiation}}
 }
+
+namespace PR9238 {
+  class B { public: ~B(); };
+  class C : virtual B { public: ~C() { } };
+}
