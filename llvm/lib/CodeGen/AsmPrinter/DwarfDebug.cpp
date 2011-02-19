@@ -1800,6 +1800,16 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
     return NULL;
 
+  SmallVector <DIE *, 8> Children;
+  // Collect lexical scope childrens first.
+  const SmallVector<DbgVariable *, 8> &Variables = Scope->getDbgVariables();
+  for (unsigned i = 0, N = Variables.size(); i < N; ++i)
+    if (DIE *Variable = constructVariableDIE(Variables[i], Scope))
+      Children.push_back(Variable);
+  const SmallVector<DbgScope *, 4> &Scopes = Scope->getScopes();
+  for (unsigned j = 0, M = Scopes.size(); j < M; ++j)
+    if (DIE *Nested = constructScopeDIE(Scopes[j]))
+      Children.push_back(Nested);
   DIScope DS(Scope->getScopeNode());
   DIE *ScopeDIE = NULL;
   if (Scope->getInlinedAt())
@@ -1815,26 +1825,19 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
     else
       ScopeDIE = updateSubprogramScopeDIE(DS);
   }
-  else
+  else {
+    // There is no need to emit empty lexical block DIE.
+    if (Children.empty())
+      return NULL;
     ScopeDIE = constructLexicalScopeDIE(Scope);
+  }
+  
   if (!ScopeDIE) return NULL;
 
-  // Add variables to scope.
-  const SmallVector<DbgVariable *, 8> &Variables = Scope->getDbgVariables();
-  for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-    DIE *VariableDIE = constructVariableDIE(Variables[i], Scope);
-    if (VariableDIE)
-      ScopeDIE->addChild(VariableDIE);
-  }
-
-  // Add nested scopes.
-  const SmallVector<DbgScope *, 4> &Scopes = Scope->getScopes();
-  for (unsigned j = 0, M = Scopes.size(); j < M; ++j) {
-    // Define the Scope debug information entry.
-    DIE *NestedDIE = constructScopeDIE(Scopes[j]);
-    if (NestedDIE)
-      ScopeDIE->addChild(NestedDIE);
-  }
+  // Add children
+  for (SmallVector<DIE *, 8>::iterator I = Children.begin(),
+         E = Children.end(); I != E; ++I)
+    ScopeDIE->addChild(*I);
 
   if (DS.isSubprogram())
     addPubTypes(DISubprogram(DS));
