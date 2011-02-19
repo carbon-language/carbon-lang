@@ -80,7 +80,8 @@ namespace {
              M != MEnd; ++M)
           if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*M))
             if (Method->isThisDeclarationADefinition() &&
-                Method->hasAttr<UsedAttr>())
+                (Method->hasAttr<UsedAttr>() || 
+                 Method->hasAttr<ConstructorAttr>()))
               Builder->EmitTopLevelDecl(Method);
       }
     }
