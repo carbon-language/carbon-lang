@@ -134,9 +134,21 @@ public:
     return Root && RHS.Root ? Root->isNotEqual(*RHS.Root) : Root != RHS.Root;
   }
 
-  TreeTy* getRoot() const {
+  TreeTy *getRoot() const {
     if (Root) { Root->retain(); }
     return Root;
+  }
+
+  TreeTy *getRootWithoutRetain() const {
+    return Root;
+  }
+  
+  void manualRetain() {
+    if (Root) Root->retain();
+  }
+  
+  void manualRelease() {
+    if (Root) Root->release();
   }
 
   bool isEmpty() const { return !Root; }
