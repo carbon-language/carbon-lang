@@ -18,12 +18,45 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/Type.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <algorithm>
+#include <cctype>
+#include <iomanip>
+#include <sstream>
 
 using namespace clang;
+
+/// \brief Print a template integral argument value.
+///
+/// \param TemplArg the TemplateArgument instance to print.
+///
+/// \param Out the raw_ostream instance to use for printing.
+static void printIntegral(const TemplateArgument &TemplArg,
+                          llvm::raw_ostream &Out) {
+  const ::clang::Type *T = TemplArg.getIntegralType().getTypePtr();
+  const llvm::APSInt *Val = TemplArg.getAsIntegral();
+
+  if (T->isBooleanType()) {
+    Out << (Val->getBoolValue() ? "true" : "false");
+  } else if (T->isCharType()) {
+    char Ch = Val->getSExtValue();
+    if (std::isprint(Ch)) {
+      Out << "'";
+      if (Ch == '\'' || Ch == '\\')
+        Out << '\\';
+      Out << Ch << "'";
+    } else {
+      std::ostringstream Str;
+      Str << std::setw(2) << std::setfill('0') << std::hex << (int)Ch;
+      Out << "'\\x" << Str.str() << "'";
+    }
+  } else {
+    Out << Val->toString(10);
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // TemplateArgument Implementation
@@ -283,7 +316,7 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
     break;
       
   case Integral: {
-    Out << getAsIntegral()->toString(10);
+    printIntegral(*this, Out);
     break;
   }
     

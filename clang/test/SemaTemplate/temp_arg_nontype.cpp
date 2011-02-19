@@ -170,7 +170,7 @@ namespace pr6249 {
 
 namespace PR6723 {
   template<unsigned char C> void f(int (&a)[C]); // expected-note {{candidate template ignored}} \
-  // expected-note{{candidate function [with C = 0] not viable: no known conversion from 'int [512]' to 'int (&)[0]' for 1st argument}}
+  // expected-note{{candidate function [with C = '\x00'] not viable: no known conversion from 'int [512]' to 'int (&)[0]' for 1st argument}}
   void g() {
     int arr512[512];
     f(arr512); // expected-error{{no matching function for call}}
@@ -248,4 +248,18 @@ namespace test8 {
 namespace PR8372 {
   template <int I> void foo() { } // expected-note{{template parameter is declared here}}
   void bar() { foo <0x80000000> (); } // expected-warning{{non-type template argument value '2147483648' truncated to '-2147483648' for template parameter of type 'int'}}
+}
+
+namespace PR9227 {
+  template <bool B> struct enable_if_bool { };
+  template <> struct enable_if_bool<true> { typedef int type; };
+  void test_bool() { enable_if_bool<false>::type i; } // expected-error{{enable_if_bool<false>}}
+
+  template <char C> struct enable_if_char { };
+  template <> struct enable_if_char<'a'> { typedef int type; };
+  void test_char_0() { enable_if_char<0>::type i; } // expected-error{{enable_if_char<'\x00'>}}
+  void test_char_b() { enable_if_char<'b'>::type i; } // expected-error{{enable_if_char<'b'>}}
+  void test_char_possibly_negative() { enable_if_char<'\x02'>::type i; } // expected-error{{enable_if_char<'\x02'>}}
+  void test_char_single_quote() { enable_if_char<'\''>::type i; } // expected-error{{enable_if_char<'\''>}}
+  void test_char_backslash() { enable_if_char<'\\'>::type i; } // expected-error{{enable_if_char<'\\'>}}
 }
