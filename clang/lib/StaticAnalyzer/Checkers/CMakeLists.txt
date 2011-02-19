@@ -60,5 +60,11 @@ add_clang_library(clangStaticAnalyzerCheckers
   VLASizeChecker.cpp
   )
 
-add_dependencies(clangStaticAnalyzerCore ClangAttrClasses ClangAttrList ClangDeclNodes
-                 ClangStmtNodes ClangSACheckers)
+add_dependencies(clangStaticAnalyzerCheckers
+  clangStaticAnalyzerCore
+  ClangAttrClasses
+  ClangAttrList
+  ClangDeclNodes
+  ClangStmtNodes
+  ClangSACheckers
+  )
