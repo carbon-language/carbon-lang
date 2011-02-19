@@ -3141,6 +3141,10 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (!Composite.isNull())
     return Composite;
 
+  // Check if we are using a null with a non-pointer type.
+  if (DiagnoseConditionalForNull(LHS, RHS, QuestionLoc))
+    return QualType();
+
   Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
     << LHS->getType() << RHS->getType()
     << LHS->getSourceRange() << RHS->getSourceRange();

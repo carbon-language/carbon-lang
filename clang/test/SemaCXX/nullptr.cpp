@@ -44,7 +44,7 @@ nullptr_t f(nullptr_t null)
   (void)(1 > nullptr); // expected-error {{invalid operands to binary expression}}
   (void)(1 != nullptr); // expected-error {{invalid operands to binary expression}}
   (void)(1 + nullptr); // expected-error {{invalid operands to binary expression}}
-  (void)(0 ? nullptr : 0); // expected-error {{incompatible operand types}}
+  (void)(0 ? nullptr : 0); // expected-error {{non-pointer operand type 'int' incompatible with nullptr}}
   (void)(0 ? nullptr : (void*)0);
   (void)(0 ? nullptr : A()); // expected-error {{non-pointer operand type 'A' incompatible with nullptr}}
   (void)(0 ? A() : nullptr); // expected-error {{non-pointer operand type 'A' incompatible with nullptr}}
