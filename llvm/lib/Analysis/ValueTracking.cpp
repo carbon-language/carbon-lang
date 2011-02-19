@@ -1163,6 +1163,11 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 Value *llvm::isBytewiseValue(Value *V) {
   // All byte-wide stores are splatable, even of arbitrary variables.
   if (V->getType()->isIntegerTy(8)) return V;
+
+  // Handle 'null' ConstantArrayZero etc.
+  if (Constant *C = dyn_cast<Constant>(V))
+    if (C->isNullValue())
+      return Constant::getNullValue(Type::getInt8Ty(V->getContext()));
   
   // Constant float and double values can be handled as integer values if the
   // corresponding integer value is "byteable".  An important case is 0.0. 

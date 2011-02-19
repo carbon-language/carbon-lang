@@ -299,4 +299,26 @@ for.end:                                          ; preds = %for.body
 ; CHECK: ret void
 }
 
+; Store of null should turn into memset of zero.
+define void @test12(i32** nocapture %P) nounwind ssp {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.body ]
+  %arrayidx = getelementptr i32** %P, i64 %indvar
+  store i32* null, i32** %arrayidx, align 4
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, 10000
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+; CHECK: @test12
+; CHECK-NEXT: entry:
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* %P1, i8 0, i64 80000, i32 4, i1 false)
+; CHECK-NOT: store
+; CHECK: ret void
+}
 
