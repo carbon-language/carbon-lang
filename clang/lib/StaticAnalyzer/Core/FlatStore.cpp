@@ -31,13 +31,13 @@ public:
       BVFactory(mgr.getAllocator()) {}
 
   SVal Retrieve(Store store, Loc L, QualType T);
-  Store Bind(Store store, Loc L, SVal val);
-  Store Remove(Store St, Loc L);
-  Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* cl,
+  StoreRef Bind(Store store, Loc L, SVal val);
+  StoreRef Remove(Store St, Loc L);
+  StoreRef BindCompoundLiteral(Store store, const CompoundLiteralExpr* cl,
                             const LocationContext *LC, SVal v);
 
-  Store getInitialStore(const LocationContext *InitLoc) {
-    return RBFactory.getEmptyMap().getRoot();
+  StoreRef getInitialStore(const LocationContext *InitLoc) {
+    return StoreRef(RBFactory.getEmptyMap().getRoot(), *this);
   }
 
   SubRegionMap *getSubRegionMap(Store store) {
@@ -45,22 +45,23 @@ public:
   }
 
   SVal ArrayToPointer(Loc Array);
-  Store removeDeadBindings(Store store, const StackFrameContext *LCtx,
-                           SymbolReaper& SymReaper,
-                         llvm::SmallVectorImpl<const MemRegion*>& RegionRoots){
-    return store;
+  StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
+                              SymbolReaper& SymReaper,
+                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots){
+    return StoreRef(store, *this);
   }
 
-  Store BindDecl(Store store, const VarRegion *VR, SVal initVal);
+  StoreRef BindDecl(Store store, const VarRegion *VR, SVal initVal);
 
-  Store BindDeclWithNoInit(Store store, const VarRegion *VR);
+  StoreRef BindDeclWithNoInit(Store store, const VarRegion *VR);
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   
-  Store invalidateRegions(Store store, const MemRegion * const *I,
-                          const MemRegion * const *E, const Expr *Ex,
-                          unsigned Count, InvalidatedSymbols *IS,
-                          bool invalidateGlobals, InvalidatedRegions *Regions);
+  StoreRef invalidateRegions(Store store, const MemRegion * const *I,
+                             const MemRegion * const *E, const Expr *Ex,
+                             unsigned Count, InvalidatedSymbols *IS,
+                             bool invalidateGlobals,
+                             InvalidatedRegions *Regions);
 
   void print(Store store, llvm::raw_ostream& Out, const char* nl, 
              const char *sep);
@@ -115,7 +116,7 @@ SVal FlatStoreManager::RetrieveRegionWithNoBinding(const MemRegion *R,
     return svalBuilder.getRegionValueSymbolVal(cast<TypedRegion>(R));
 }
 
-Store FlatStoreManager::Bind(Store store, Loc L, SVal val) {
+StoreRef FlatStoreManager::Bind(Store store, Loc L, SVal val) {
   const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
   RegionBindings B = getRegionBindings(store);
   const BindingVal *V = B.lookup(R);
@@ -127,45 +128,45 @@ Store FlatStoreManager::Bind(Store store, Loc L, SVal val) {
   RegionInterval RI = RegionToInterval(R);
   // FIXME: FlatStore should handle regions with unknown intervals.
   if (!RI.R)
-    return B.getRoot();
+    return StoreRef(B.getRoot(), *this);
   BV = BVFactory.add(BV, RI.I, val);
   B = RBFactory.add(B, RI.R, BV);
-  return B.getRoot();
+  return StoreRef(B.getRoot(), *this);
 }
 
-Store FlatStoreManager::Remove(Store store, Loc L) {
-  return store;
+StoreRef FlatStoreManager::Remove(Store store, Loc L) {
+  return StoreRef(store, *this);
 }
 
-Store FlatStoreManager::BindCompoundLiteral(Store store,
+StoreRef FlatStoreManager::BindCompoundLiteral(Store store,
                                             const CompoundLiteralExpr* cl,
                                             const LocationContext *LC,
                                             SVal v) {
-  return store;
+  return StoreRef(store, *this);
 }
 
 SVal FlatStoreManager::ArrayToPointer(Loc Array) {
   return Array;
 }
 
-Store FlatStoreManager::BindDecl(Store store, const VarRegion *VR, 
-                                 SVal initVal) {
+StoreRef FlatStoreManager::BindDecl(Store store, const VarRegion *VR, 
+                                    SVal initVal) {
   return Bind(store, svalBuilder.makeLoc(VR), initVal);
 }
 
-Store FlatStoreManager::BindDeclWithNoInit(Store store, const VarRegion *VR) {
-  return store;
+StoreRef FlatStoreManager::BindDeclWithNoInit(Store store, const VarRegion *VR){
+  return StoreRef(store, *this);
 }
 
-Store FlatStoreManager::invalidateRegions(Store store,
-                                          const MemRegion * const *I,
-                                          const MemRegion * const *E,
-                                          const Expr *Ex, unsigned Count,
-                                          InvalidatedSymbols *IS,
-                                          bool invalidateGlobals,
-                                          InvalidatedRegions *Regions) {
+StoreRef FlatStoreManager::invalidateRegions(Store store,
+                                             const MemRegion * const *I,
+                                             const MemRegion * const *E,
+                                             const Expr *Ex, unsigned Count,
+                                             InvalidatedSymbols *IS,
+                                             bool invalidateGlobals,
+                                             InvalidatedRegions *Regions) {
   assert(false && "Not implemented");
-  return store;
+  return StoreRef(store, *this);
 }
 
 void FlatStoreManager::print(Store store, llvm::raw_ostream& Out, 

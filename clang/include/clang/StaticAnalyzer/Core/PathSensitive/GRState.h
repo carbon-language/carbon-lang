@@ -83,19 +83,19 @@ private:
 
   GRStateManager *stateMgr;
   Environment Env;           // Maps a Stmt to its current SVal.
-  Store St;                  // Maps a location to its current value.
+  StoreRef St;               // Maps a location to its current value.
   GenericDataMap   GDM;      // Custom data stored by a client of this class.
   unsigned refCount;
 
   /// makeWithStore - Return a GRState with the same values as the current
   ///  state with the exception of using the specified Store.
-  const GRState *makeWithStore(Store store) const;
+  const GRState *makeWithStore(const StoreRef &store) const;
 
 public:
 
   /// This ctor is used when creating the first GRState object.
   GRState(GRStateManager *mgr, const Environment& env,
-          Store st, GenericDataMap gdm)
+          StoreRef st, GenericDataMap gdm)
     : stateMgr(mgr),
       Env(env),
       St(st),
@@ -122,12 +122,14 @@ public:
   ///  The environment is the mapping from expressions to values.
   const Environment& getEnvironment() const { return Env; }
 
+
   /// getStore - Return the store associated with this state.  The store
   ///  is a mapping from locations to values.
-  Store getStore() const { return St; }
-
+  Store getStore() const { return St.getStore(); }
+#if 0
   void setStore(Store s) { St = s; }
-
+#endif
+  
   /// getGDM - Return the generic data map associated with this state.
   GenericDataMap getGDM() const { return GDM; }
 
@@ -138,7 +140,7 @@ public:
   ///  have the same Environment, Store, and GenericDataMap.
   static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {
     V->Env.Profile(ID);
-    ID.AddPointer(V->St);
+    ID.AddPointer(V->St.getStore());
     V->GDM.Profile(ID);
   }
 
@@ -713,11 +715,11 @@ inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
 }
 
 inline SVal GRState::getRawSVal(Loc LV, QualType T) const {
-  return getStateManager().StoreMgr->Retrieve(St, LV, T);
+  return getStateManager().StoreMgr->Retrieve(getStore(), LV, T);
 }
 
 inline SVal GRState::getSVal(const MemRegion* R) const {
-  return getStateManager().StoreMgr->Retrieve(St, loc::MemRegionVal(R));
+  return getStateManager().StoreMgr->Retrieve(getStore(), loc::MemRegionVal(R));
 }
 
 inline BasicValueFactory &GRState::getBasicVals() const {

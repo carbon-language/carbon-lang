@@ -53,7 +53,7 @@ GRStateManager::removeDeadBindings(const GRState* state,
                                            state, RegionRoots);
 
   // Clean up the store.
-  NewState.St = StoreMgr->removeDeadBindings(NewState.St, LCtx, 
+  NewState.St = StoreMgr->removeDeadBindings(NewState.getStore(), LCtx, 
                                              SymReaper, RegionRoots);
   state = getPersistentState(NewState);
   return ConstraintMgr->removeDeadBindings(state, SymReaper);
@@ -73,38 +73,39 @@ const GRState *GRStateManager::MarshalState(const GRState *state,
 const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                             const LocationContext *LC,
                                             SVal V) const {
-  Store new_store = 
-    getStateManager().StoreMgr->BindCompoundLiteral(St, CL, LC, V);
-  return makeWithStore(new_store);
+  const StoreRef &newStore = 
+    getStateManager().StoreMgr->BindCompoundLiteral(getStore(), CL, LC, V);
+  return makeWithStore(newStore);
 }
 
 const GRState *GRState::bindDecl(const VarRegion* VR, SVal IVal) const {
-  Store new_store = getStateManager().StoreMgr->BindDecl(St, VR, IVal);
-  return makeWithStore(new_store);
+  const StoreRef &newStore =
+    getStateManager().StoreMgr->BindDecl(getStore(), VR, IVal);
+  return makeWithStore(newStore);
 }
 
 const GRState *GRState::bindDeclWithNoInit(const VarRegion* VR) const {
-  Store new_store = getStateManager().StoreMgr->BindDeclWithNoInit(St, VR);
-  return makeWithStore(new_store);
+  const StoreRef &newStore =
+    getStateManager().StoreMgr->BindDeclWithNoInit(getStore(), VR);
+  return makeWithStore(newStore);
 }
 
 const GRState *GRState::bindLoc(Loc LV, SVal V) const {
   GRStateManager &Mgr = getStateManager();
-  Store new_store = Mgr.StoreMgr->Bind(St, LV, V);
-  const GRState *new_state = makeWithStore(new_store);
-
+  const GRState *newState = makeWithStore(Mgr.StoreMgr->Bind(getStore(), 
+                                                             LV, V));
   const MemRegion *MR = LV.getAsRegion();
   if (MR && Mgr.getOwningEngine())
-    return Mgr.getOwningEngine()->processRegionChange(new_state, MR);
+    return Mgr.getOwningEngine()->processRegionChange(newState, MR);
 
-  return new_state;
+  return newState;
 }
 
 const GRState *GRState::bindDefault(SVal loc, SVal V) const {
   GRStateManager &Mgr = getStateManager();
   const MemRegion *R = cast<loc::MemRegionVal>(loc).getRegion();
-  Store new_store = Mgr.StoreMgr->BindDefault(St, R, V);
-  const GRState *new_state = makeWithStore(new_store);
+  const StoreRef &newStore = Mgr.StoreMgr->BindDefault(getStore(), R, V);
+  const GRState *new_state = makeWithStore(newStore);
   return Mgr.getOwningEngine() ? 
            Mgr.getOwningEngine()->processRegionChange(new_state, R) : 
            new_state;
@@ -120,39 +121,36 @@ const GRState *GRState::invalidateRegions(const MemRegion * const *Begin,
  
   if (Eng && Eng->wantsRegionChangeUpdate(this)) {
     StoreManager::InvalidatedRegions Regions;
-
-    Store new_store = Mgr.StoreMgr->invalidateRegions(St, Begin, End,
-                                                      E, Count, IS,
-                                                      invalidateGlobals,
-                                                      &Regions);
-    const GRState *new_state = makeWithStore(new_store);
-
-    return Eng->processRegionChanges(new_state,
+    const StoreRef &newStore
+      = Mgr.StoreMgr->invalidateRegions(getStore(), Begin, End, E, Count, IS,
+                                        invalidateGlobals, &Regions);
+    const GRState *newState = makeWithStore(newStore);
+    return Eng->processRegionChanges(newState,
                                      &Regions.front(),
                                      &Regions.back()+1);
   }
 
-  Store new_store = Mgr.StoreMgr->invalidateRegions(St, Begin, End,
-                                                    E, Count, IS,
-                                                    invalidateGlobals,
-                                                    NULL);
-  return makeWithStore(new_store);
+  const StoreRef &newStore =
+    Mgr.StoreMgr->invalidateRegions(getStore(), Begin, End, E, Count, IS,
+                                    invalidateGlobals, NULL);
+  return makeWithStore(newStore);
 }
 
 const GRState *GRState::unbindLoc(Loc LV) const {
   assert(!isa<loc::MemRegionVal>(LV) && "Use invalidateRegion instead.");
 
   Store OldStore = getStore();
-  Store NewStore = getStateManager().StoreMgr->Remove(OldStore, LV);
+  const StoreRef &newStore = getStateManager().StoreMgr->Remove(OldStore, LV);
 
-  if (NewStore == OldStore)
+  if (newStore.getStore() == OldStore)
     return this;
 
-  return makeWithStore(NewStore);
+  return makeWithStore(newStore);
 }
 
 const GRState *GRState::enterStackFrame(const StackFrameContext *frame) const {
-  Store new_store = getStateManager().StoreMgr->enterStackFrame(this, frame);
+  const StoreRef &new_store =
+    getStateManager().StoreMgr->enterStackFrame(this, frame);
   return makeWithStore(new_store);
 }
 
@@ -323,7 +321,7 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
   return newState;
 }
 
-const GRState* GRState::makeWithStore(Store store) const {
+const GRState* GRState::makeWithStore(const StoreRef &store) const {
   GRState NewSt = *this;
   NewSt.St = store;
   return getStateManager().getPersistentState(NewSt);

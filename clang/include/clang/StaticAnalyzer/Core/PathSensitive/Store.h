@@ -37,7 +37,27 @@ typedef const void* Store;
 class GRState;
 class GRStateManager;
 class SubRegionMap;
+class StoreManager;
+  
+class StoreRef {
+  Store store;
+  StoreManager &mgr;
+public:
+  StoreRef(Store, StoreManager &);
+  StoreRef(const StoreRef &);
+  StoreRef &operator=(StoreRef const &);
+  
+  bool operator==(const StoreRef &x) const {
+    assert(&mgr == &x.mgr);
+    return x.store == store;
+  }
+  bool operator!=(const StoreRef &x) const { return !operator==(x); }
 
+  ~StoreRef();
+  
+  Store getStore() const { return store; }
+};
+  
 class StoreManager {
 protected:
   SValBuilder &svalBuilder;
@@ -68,25 +88,22 @@ public:
   /// \return A pointer to a GRState object that contains the same bindings as
   ///   \c state with the addition of having the value specified by \c val bound
   ///   to the location given for \c loc.
-  virtual Store Bind(Store store, Loc loc, SVal val) = 0;
+  virtual StoreRef Bind(Store store, Loc loc, SVal val) = 0;
 
-  virtual Store BindDefault(Store store, const MemRegion *R, SVal V) {
-    return store;
-  }
-
-  virtual Store Remove(Store St, Loc L) = 0;
+  virtual StoreRef BindDefault(Store store, const MemRegion *R, SVal V);
+  virtual StoreRef Remove(Store St, Loc L) = 0;
 
   /// BindCompoundLiteral - Return the store that has the bindings currently
   ///  in 'store' plus the bindings for the CompoundLiteral.  'R' is the region
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
-  virtual Store BindCompoundLiteral(Store store,
-                                    const CompoundLiteralExpr* cl,
-                                    const LocationContext *LC, SVal v) = 0;
+  virtual StoreRef BindCompoundLiteral(Store store,
+                                       const CompoundLiteralExpr* cl,
+                                       const LocationContext *LC, SVal v) = 0;
 
   /// getInitialStore - Returns the initial "empty" store representing the
   ///  value bindings upon entry to an analyzed function.
-  virtual Store getInitialStore(const LocationContext *InitLoc) = 0;
+  virtual StoreRef getInitialStore(const LocationContext *InitLoc) = 0;
 
   /// getRegionManager - Returns the internal RegionManager object that is
   ///  used to query and manipulate MemRegion objects.
@@ -153,13 +170,22 @@ public:
   ///  casted and 'CastToTy' the result type of the cast.
   const MemRegion *castRegion(const MemRegion *region, QualType CastToTy);
 
-  virtual Store removeDeadBindings(Store store, const StackFrameContext *LCtx,
-                                   SymbolReaper& SymReaper,
+  virtual StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
+                                      SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
-  virtual Store BindDecl(Store store, const VarRegion *VR, SVal initVal) = 0;
+  virtual StoreRef BindDecl(Store store, const VarRegion *VR, SVal initVal) = 0;
 
-  virtual Store BindDeclWithNoInit(Store store, const VarRegion *VR) = 0;
+  virtual StoreRef BindDeclWithNoInit(Store store, const VarRegion *VR) = 0;
+  
+  /// If the StoreManager supports it, increment the reference count of
+  /// the specified Store object.
+  virtual void incrementReferenceCount(Store store) {}
+
+  /// If the StoreManager supports it, decrement the reference count of
+  /// the specified Store object.  If the reference count hits 0, the memory
+  /// associated with the object is recycled.
+  virtual void decrementReferenceCount(Store store) {}
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   typedef llvm::SmallVector<const MemRegion *, 8> InvalidatedRegions;
@@ -183,18 +209,18 @@ public:
   ///   invalidated. This should include any regions explicitly invalidated
   ///   even if they do not currently have bindings. Pass \c NULL if this
   ///   information will not be used.
-  virtual Store invalidateRegions(Store store,
-                                  const MemRegion * const *Begin,
-                                  const MemRegion * const *End,
-                                  const Expr *E, unsigned Count,
-                                  InvalidatedSymbols *IS,
-                                  bool invalidateGlobals,
-                                  InvalidatedRegions *Regions) = 0;
+  virtual StoreRef invalidateRegions(Store store,
+                                     const MemRegion * const *Begin,
+                                     const MemRegion * const *End,
+                                     const Expr *E, unsigned Count,
+                                     InvalidatedSymbols *IS,
+                                     bool invalidateGlobals,
+                                     InvalidatedRegions *Regions) = 0;
 
   /// enterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.
-  virtual Store enterStackFrame(const GRState *state,
-                                const StackFrameContext *frame);
+  virtual StoreRef enterStackFrame(const GRState *state,
+                                   const StackFrameContext *frame);
 
   virtual void print(Store store, llvm::raw_ostream& Out,
                      const char* nl, const char *sep) = 0;
@@ -222,6 +248,35 @@ protected:
 private:
   SVal getLValueFieldOrIvar(const Decl* decl, SVal base);
 };
+
+
+inline StoreRef::StoreRef(Store store, StoreManager & smgr)
+  : store(store), mgr(smgr) {
+  if (store)
+    mgr.incrementReferenceCount(store);
+}
+
+inline StoreRef::StoreRef(const StoreRef &sr) 
+  : store(sr.store), mgr(sr.mgr)
+{ 
+  if (store)
+    mgr.incrementReferenceCount(store);
+}
+  
+inline StoreRef::~StoreRef() {
+  if (store)
+    mgr.decrementReferenceCount(store);
+}
+  
+inline StoreRef &StoreRef::operator=(StoreRef const &newStore) {
+  assert(&newStore.mgr == &mgr);
+  if (store != newStore.store) {
+    mgr.incrementReferenceCount(newStore.store);
+    mgr.decrementReferenceCount(store);
+    store = newStore.getStore();
+  }
+  return *this;
+}
 
 // FIXME: Do we still need this?
 /// SubRegionMap - An abstract interface that represents a queryable map

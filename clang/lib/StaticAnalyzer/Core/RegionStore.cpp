@@ -215,7 +215,7 @@ public:
   /// setImplicitDefaultValue - Set the default binding for the provided
   ///  MemRegion to the value implicitly defined for compound literals when
   ///  the value is not specified.
-  Store setImplicitDefaultValue(Store store, const MemRegion *R, QualType T);
+  StoreRef setImplicitDefaultValue(Store store, const MemRegion *R, QualType T);
 
   /// ArrayToPointer - Emulates the "decay" of an array to a pointer
   ///  type.  'Array' represents the lvalue of the array being decayed
@@ -228,21 +228,21 @@ public:
   /// For DerivedToBase casts, create a CXXBaseObjectRegion and return it.
   virtual SVal evalDerivedToBase(SVal derived, QualType basePtrType);
 
-  Store getInitialStore(const LocationContext *InitLoc) {
-    return RBFactory.getEmptyMap().getRoot();
+  StoreRef getInitialStore(const LocationContext *InitLoc) {
+    return StoreRef(RBFactory.getEmptyMap().getRootWithoutRetain(), *this);
   }
 
   //===-------------------------------------------------------------------===//
   // Binding values to regions.
   //===-------------------------------------------------------------------===//
 
-  Store invalidateRegions(Store store,
-                          const MemRegion * const *Begin,
-                          const MemRegion * const *End,
-                          const Expr *E, unsigned Count,
-                          InvalidatedSymbols *IS,
-                          bool invalidateGlobals,
-                          InvalidatedRegions *Regions);
+  StoreRef invalidateRegions(Store store,
+                             const MemRegion * const *Begin,
+                             const MemRegion * const *End,
+                             const Expr *E, unsigned Count,
+                             InvalidatedSymbols *IS,
+                             bool invalidateGlobals,
+                             InvalidatedRegions *Regions);
 
 public:   // Made public for helper classes.
 
@@ -268,35 +268,45 @@ public:   // Made public for helper classes.
 
 public: // Part of public interface to class.
 
-  Store Bind(Store store, Loc LV, SVal V);
+  StoreRef Bind(Store store, Loc LV, SVal V);
 
   // BindDefault is only used to initialize a region with a default value.
-  Store BindDefault(Store store, const MemRegion *R, SVal V) {
+  StoreRef BindDefault(Store store, const MemRegion *R, SVal V) {
     RegionBindings B = GetRegionBindings(store);
     assert(!lookup(B, R, BindingKey::Default));
     assert(!lookup(B, R, BindingKey::Direct));
-    return addBinding(B, R, BindingKey::Default, V).getRoot();
+    return StoreRef(addBinding(B, R, BindingKey::Default, V).getRootWithoutRetain(), *this);
   }
 
-  Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
-                            const LocationContext *LC, SVal V);
+  StoreRef BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
+                               const LocationContext *LC, SVal V);
 
-  Store BindDecl(Store store, const VarRegion *VR, SVal InitVal);
+  StoreRef BindDecl(Store store, const VarRegion *VR, SVal InitVal);
 
-  Store BindDeclWithNoInit(Store store, const VarRegion *) {
-    return store;
+  StoreRef BindDeclWithNoInit(Store store, const VarRegion *) {
+    return StoreRef(store, *this);
   }
 
   /// BindStruct - Bind a compound value to a structure.
-  Store BindStruct(Store store, const TypedRegion* R, SVal V);
+  StoreRef BindStruct(Store store, const TypedRegion* R, SVal V);
 
-  Store BindArray(Store store, const TypedRegion* R, SVal V);
+  StoreRef BindArray(Store store, const TypedRegion* R, SVal V);
 
   /// KillStruct - Set the entire struct to unknown.
-  Store KillStruct(Store store, const TypedRegion* R, SVal DefaultVal);
+  StoreRef KillStruct(Store store, const TypedRegion* R, SVal DefaultVal);
 
-  Store Remove(Store store, Loc LV);
+  StoreRef Remove(Store store, Loc LV);
 
+  void incrementReferenceCount(Store store) {
+    GetRegionBindings(store).manualRetain();    
+  }
+  
+  /// If the StoreManager supports it, decrement the reference count of
+  /// the specified Store object.  If the reference count hits 0, the memory
+  /// associated with the object is recycled.
+  void decrementReferenceCount(Store store) {
+    GetRegionBindings(store).manualRelease();
+  }
 
   //===------------------------------------------------------------------===//
   // Loading values from regions.
@@ -347,8 +357,8 @@ public: // Part of public interface to class.
   std::pair<Store, const MemRegion*>
   GetLazyBinding(RegionBindings B, const MemRegion *R);
 
-  Store CopyLazyBindings(nonloc::LazyCompoundVal V, Store store,
-                         const TypedRegion *R);
+  StoreRef CopyLazyBindings(nonloc::LazyCompoundVal V, Store store,
+                            const TypedRegion *R);
 
   //===------------------------------------------------------------------===//
   // State pruning.
@@ -356,11 +366,11 @@ public: // Part of public interface to class.
 
   /// removeDeadBindings - Scans the RegionStore of 'state' for dead values.
   ///  It returns a new Store with these values removed.
-  Store removeDeadBindings(Store store, const StackFrameContext *LCtx,
+  StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                            SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
-  Store enterStackFrame(const GRState *state, const StackFrameContext *frame);
+  StoreRef enterStackFrame(const GRState *state, const StackFrameContext *frame);
 
   //===------------------------------------------------------------------===//
   // Region "extents".
@@ -706,13 +716,13 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   B = RM.addBinding(B, baseR, BindingKey::Direct, V);
 }
 
-Store RegionStoreManager::invalidateRegions(Store store,
-                                            const MemRegion * const *I,
-                                            const MemRegion * const *E,
-                                            const Expr *Ex, unsigned Count,
-                                            InvalidatedSymbols *IS,
-                                            bool invalidateGlobals,
-                                            InvalidatedRegions *Regions) {
+StoreRef RegionStoreManager::invalidateRegions(Store store,
+                                               const MemRegion * const *I,
+                                               const MemRegion * const *E,
+                                               const Expr *Ex, unsigned Count,
+                                               InvalidatedSymbols *IS,
+                                               bool invalidateGlobals,
+                                               InvalidatedRegions *Regions) {
   invalidateRegionsWorker W(*this, StateMgr,
                             RegionStoreManager::GetRegionBindings(store),
                             Ex, Count, IS, Regions, invalidateGlobals);
@@ -745,7 +755,7 @@ Store RegionStoreManager::invalidateRegions(Store store,
       Regions->push_back(GS);
   }
 
-  return B.getRoot();
+  return StoreRef(B.getRootWithoutRetain(), *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1252,17 +1262,19 @@ SVal RegionStoreManager::RetrieveArray(Store store, const TypedRegion * R) {
 // Binding values to regions.
 //===----------------------------------------------------------------------===//
 
-Store RegionStoreManager::Remove(Store store, Loc L) {
+StoreRef RegionStoreManager::Remove(Store store, Loc L) {
   if (isa<loc::MemRegionVal>(L))
     if (const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion())
-      return removeBinding(GetRegionBindings(store), R).getRoot();
+      return StoreRef(removeBinding(GetRegionBindings(store),
+                                    R).getRootWithoutRetain(),
+                      *this);
 
-  return store;
+  return StoreRef(store, *this);
 }
 
-Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
+StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   if (isa<loc::ConcreteInt>(L))
-    return store;
+    return StoreRef(store, *this);
 
   // If we get here, the location should be a region.
   const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
@@ -1301,11 +1313,12 @@ Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
 
   // Perform the binding.
   RegionBindings B = GetRegionBindings(store);
-  return addBinding(B, R, BindingKey::Direct, V).getRoot();
+  return StoreRef(addBinding(B, R, BindingKey::Direct,
+                             V).getRootWithoutRetain(), *this);
 }
 
-Store RegionStoreManager::BindDecl(Store store, const VarRegion *VR,
-                                   SVal InitVal) {
+StoreRef RegionStoreManager::BindDecl(Store store, const VarRegion *VR,
+                                      SVal InitVal) {
 
   QualType T = VR->getDecl()->getType();
 
@@ -1318,18 +1331,17 @@ Store RegionStoreManager::BindDecl(Store store, const VarRegion *VR,
 }
 
 // FIXME: this method should be merged into Bind().
-Store RegionStoreManager::BindCompoundLiteral(Store store,
-                                              const CompoundLiteralExpr *CL,
-                                              const LocationContext *LC,
-                                              SVal V) {
+StoreRef RegionStoreManager::BindCompoundLiteral(Store store,
+                                                 const CompoundLiteralExpr *CL,
+                                                 const LocationContext *LC,
+                                                 SVal V) {
   return Bind(store, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC)),
               V);
 }
 
-
-Store RegionStoreManager::setImplicitDefaultValue(Store store,
-                                                  const MemRegion *R,
-                                                  QualType T) {
+StoreRef RegionStoreManager::setImplicitDefaultValue(Store store,
+                                                     const MemRegion *R,
+                                                     QualType T) {
   RegionBindings B = GetRegionBindings(store);
   SVal V;
 
@@ -1343,14 +1355,15 @@ Store RegionStoreManager::setImplicitDefaultValue(Store store,
     V = svalBuilder.makeZeroVal(Ctx.IntTy);
   }
   else {
-    return store;
+    return StoreRef(store, *this);
   }
 
-  return addBinding(B, R, BindingKey::Default, V).getRoot();
+  return StoreRef(addBinding(B, R, BindingKey::Default,
+                             V).getRootWithoutRetain(), *this);
 }
 
-Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
-                                    SVal Init) {
+StoreRef RegionStoreManager::BindArray(Store store, const TypedRegion* R,
+                                       SVal Init) {
 
   const ArrayType *AT =cast<ArrayType>(Ctx.getCanonicalType(R->getValueType()));
   QualType ElementTy = AT->getElementType();
@@ -1382,6 +1395,7 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
   uint64_t i = 0;
 
+  StoreRef newStore(store, *this);
   for (; Size.hasValue() ? i < Size.getValue() : true ; ++i, ++VI) {
     // The init list might be shorter than the array length.
     if (VI == VE)
@@ -1391,26 +1405,26 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
     const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, Ctx);
 
     if (ElementTy->isStructureOrClassType())
-      store = BindStruct(store, ER, *VI);
+      newStore = BindStruct(newStore.getStore(), ER, *VI);
     else if (ElementTy->isArrayType())
-      store = BindArray(store, ER, *VI);
+      newStore = BindArray(newStore.getStore(), ER, *VI);
     else
-      store = Bind(store, svalBuilder.makeLoc(ER), *VI);
+      newStore = Bind(newStore.getStore(), svalBuilder.makeLoc(ER), *VI);
   }
 
   // If the init list is shorter than the array length, set the
   // array default value.
   if (Size.hasValue() && i < Size.getValue())
-    store = setImplicitDefaultValue(store, R, ElementTy);
+    newStore = setImplicitDefaultValue(newStore.getStore(), R, ElementTy);
 
-  return store;
+  return newStore;
 }
 
-Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
-                                     SVal V) {
+StoreRef RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
+                                        SVal V) {
 
   if (!Features.supportsFields())
-    return store;
+    return StoreRef(store, *this);
 
   QualType T = R->getValueType();
   assert(T->isStructureOrClassType());
@@ -1419,7 +1433,7 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
   RecordDecl* RD = RT->getDecl();
 
   if (!RD->isDefinition())
-    return store;
+    return StoreRef(store, *this);
 
   // Handle lazy compound values.
   if (const nonloc::LazyCompoundVal *LCV=dyn_cast<nonloc::LazyCompoundVal>(&V))
@@ -1437,7 +1451,8 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
 
   RecordDecl::field_iterator FI, FE;
-
+  StoreRef newStore(store, *this);
+  
   for (FI = RD->field_begin(), FE = RD->field_end(); FI != FE; ++FI, ++VI) {
 
     if (VI == VE)
@@ -1447,24 +1462,24 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
     const FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
 
     if (FTy->isArrayType())
-      store = BindArray(store, FR, *VI);
+      newStore = BindArray(newStore.getStore(), FR, *VI);
     else if (FTy->isStructureOrClassType())
-      store = BindStruct(store, FR, *VI);
+      newStore = BindStruct(newStore.getStore(), FR, *VI);
     else
-      store = Bind(store, svalBuilder.makeLoc(FR), *VI);
+      newStore = Bind(newStore.getStore(), svalBuilder.makeLoc(FR), *VI);
   }
 
   // There may be fewer values in the initialize list than the fields of struct.
   if (FI != FE) {
-    RegionBindings B = GetRegionBindings(store);
+    RegionBindings B = GetRegionBindings(newStore.getStore());
     B = addBinding(B, R, BindingKey::Default, svalBuilder.makeIntVal(0, false));
-    store = B.getRoot();
+    newStore = StoreRef(B.getRootWithoutRetain(), *this);
   }
 
-  return store;
+  return newStore;
 }
 
-Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R,
+StoreRef RegionStoreManager::KillStruct(Store store, const TypedRegion* R,
                                      SVal DefaultVal) {
   BindingKey key = BindingKey::Make(R, BindingKey::Default);
   
@@ -1494,13 +1509,14 @@ Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R,
 
   // Set the default value of the struct region to "unknown".
   if (!key.isValid())
-    return B.getRoot();
+    return StoreRef(B.getRootWithoutRetain(), *this);
   
-  return addBinding(B, key, DefaultVal).getRoot();
+  return StoreRef(addBinding(B, key, DefaultVal).getRootWithoutRetain(), *this);
 }
 
-Store RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
-                                           Store store, const TypedRegion *R) {
+StoreRef RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
+                                              Store store,
+                                              const TypedRegion *R) {
 
   // Nuke the old bindings stemming from R.
   RegionBindings B = GetRegionBindings(store);
@@ -1513,7 +1529,8 @@ Store RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 
   // Now copy the bindings.  This amounts to just binding 'V' to 'R'.  This
   // results in a zero-copy algorithm.
-  return addBinding(B, R, BindingKey::Direct, V).getRoot();
+  return StoreRef(addBinding(B, R, BindingKey::Direct,
+                             V).getRootWithoutRetain(), *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1704,9 +1721,9 @@ bool removeDeadBindingsWorker::UpdatePostponed() {
   return changed;
 }
 
-Store RegionStoreManager::removeDeadBindings(Store store,
-                                             const StackFrameContext *LCtx,
-                                             SymbolReaper& SymReaper,
+StoreRef RegionStoreManager::removeDeadBindings(Store store,
+                                                const StackFrameContext *LCtx,
+                                                SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
   RegionBindings B = GetRegionBindings(store);
@@ -1743,16 +1760,16 @@ Store RegionStoreManager::removeDeadBindings(Store store,
       SymReaper.maybeDead(*SI);
   }
 
-  return B.getRoot();
+  return StoreRef(B.getRootWithoutRetain(), *this);
 }
 
 
-Store RegionStoreManager::enterStackFrame(const GRState *state,
-                                          const StackFrameContext *frame) {
+StoreRef RegionStoreManager::enterStackFrame(const GRState *state,
+                                             const StackFrameContext *frame) {
   FunctionDecl const *FD = cast<FunctionDecl>(frame->getDecl());
   FunctionDecl::param_const_iterator PI = FD->param_begin(), 
                                      PE = FD->param_end();
-  Store store = state->getStore();
+  StoreRef store = StoreRef(state->getStore(), *this);
 
   if (CallExpr const *CE = dyn_cast<CallExpr>(frame->getCallSite())) {
     CallExpr::const_arg_iterator AI = CE->arg_begin(), AE = CE->arg_end();
@@ -1762,7 +1779,7 @@ Store RegionStoreManager::enterStackFrame(const GRState *state,
     // the function declaration.
     for (; AI != AE && PI != PE; ++AI, ++PI) {
       SVal ArgVal = state->getSVal(*AI);
-      store = Bind(store,
+      store = Bind(store.getStore(),
                    svalBuilder.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
     }
   } else if (const CXXConstructExpr *CE =
@@ -1773,7 +1790,7 @@ Store RegionStoreManager::enterStackFrame(const GRState *state,
     // Copy the arg expression value to the arg variables.
     for (; AI != AE; ++AI, ++PI) {
       SVal ArgVal = state->getSVal(*AI);
-      store = Bind(store,
+      store = Bind(store.getStore(),
                    svalBuilder.makeLoc(MRMgr.getVarRegion(*PI,frame)), ArgVal);
     }
   } else

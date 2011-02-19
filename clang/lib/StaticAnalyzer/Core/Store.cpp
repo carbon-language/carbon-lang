@@ -22,9 +22,9 @@ StoreManager::StoreManager(GRStateManager &stateMgr)
   : svalBuilder(stateMgr.getSValBuilder()), StateMgr(stateMgr),
     MRMgr(svalBuilder.getRegionManager()), Ctx(stateMgr.getContext()) {}
 
-Store StoreManager::enterStackFrame(const GRState *state,
-                                    const StackFrameContext *frame) {
-  return state->getStore();
+StoreRef StoreManager::enterStackFrame(const GRState *state,
+                                       const StackFrameContext *frame) {
+  return StoreRef(state->getStore(), *this);
 }
 
 const MemRegion *StoreManager::MakeElementRegion(const MemRegion *Base,
@@ -42,6 +42,10 @@ static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
   }
 
   return true;
+}
+
+StoreRef StoreManager::BindDefault(Store store, const MemRegion *R, SVal V) {
+  return StoreRef(store, *this);
 }
 
 const ElementRegion *StoreManager::GetElementZeroRegion(const MemRegion *R, 
