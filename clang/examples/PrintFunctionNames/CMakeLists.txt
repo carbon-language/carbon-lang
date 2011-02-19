@@ -1,11 +1,34 @@
 set(MODULE TRUE)
 
 set( LLVM_USED_LIBS
+  clangFrontendTool
   clangFrontend
+  clangDriver
+  clangSerialization
+  clangCodeGen
+  clangParse
+  clangSema
+  clangStaticAnalyzerFrontend
+  clangStaticAnalyzerCheckers
+  clangStaticAnalyzerCore
+  clangAnalysis
+  clangIndex
+  clangRewrite
   clangAST
+  clangLex
+  clangBasic
   )
 
-set( LLVM_LINK_COMPONENTS support mc)
+# Why do we have to link to all this just to print out function names?
+set( LLVM_LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
+  asmparser
+  bitreader
+  bitwriter
+  codegen
+  ipo
+  selectiondag
+  )
 
 add_clang_library(PrintFunctionNames PrintFunctionNames.cpp)
 

@@ -18,6 +18,8 @@
 
 namespace llvm {
   class raw_ostream;
+  class Module;
+  class LLVMContext;
   namespace sys { class Path; }
 }
 namespace clang {

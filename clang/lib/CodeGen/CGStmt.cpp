@@ -14,7 +14,6 @@
 #include "CGDebugInfo.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
-#include "TargetInfo.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/TargetInfo.h"
@@ -1136,8 +1135,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         }
       }
       if (const llvm::Type* AdjTy = 
-            getTargetHooks().adjustInlineAsmType(*this, OutputConstraint,
-                                                 ResultRegTypes.back()))
+            Target.adjustInlineAsmType(OutputConstraint, ResultRegTypes.back(),
+                                       getLLVMContext()))
         ResultRegTypes.back() = AdjTy;
     } else {
       ArgTypes.push_back(Dest.getAddress()->getType());
@@ -1208,8 +1207,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       }
     }
     if (const llvm::Type* AdjTy = 
-              getTargetHooks().adjustInlineAsmType(*this, InputConstraint,
-                                                   Arg->getType()))
+              Target.adjustInlineAsmType(InputConstraint, Arg->getType(),
+                                         getLLVMContext()))
       Arg = Builder.CreateBitCast(Arg, AdjTy);
 
     ArgTypes.push_back(Arg->getType());

@@ -355,14 +355,6 @@ bool UseX86_MMXType(const llvm::Type *IRType) {
     IRType->getScalarSizeInBits() != 64;
 }
 
-static const llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                                llvm::StringRef Constraint,
-                                                const llvm::Type* Ty) {
-  if (Constraint=="y" && UseX86_MMXType(Ty))
-    return llvm::Type::getX86_MMXTy(CGF.getLLVMContext());
-  return Ty;
-}
-
 //===----------------------------------------------------------------------===//
 // X86-32 ABI Implementation
 //===----------------------------------------------------------------------===//
@@ -423,13 +415,6 @@ public:
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const;
-
-  const llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                        llvm::StringRef Constraint,
-                                        const llvm::Type* Ty) const {
-    return X86AdjustInlineAsmType(CGF, Constraint, Ty);
-  }
-
 };
 
 }
@@ -910,13 +895,6 @@ public:
 
     return false;
   }
-
-  const llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                        llvm::StringRef Constraint,
-                                        const llvm::Type* Ty) const {
-    return X86AdjustInlineAsmType(CGF, Constraint, Ty);
-  }
-
 };
 
 class WinX86_64TargetCodeGenInfo : public TargetCodeGenInfo {

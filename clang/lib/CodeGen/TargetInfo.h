@@ -15,11 +15,8 @@
 #ifndef CLANG_CODEGEN_TARGETINFO_H
 #define CLANG_CODEGEN_TARGETINFO_H
 
-#include "llvm/ADT/StringRef.h"
-
 namespace llvm {
   class GlobalValue;
-  class Type;
   class Value;
 }
 
@@ -104,12 +101,6 @@ namespace clang {
     virtual llvm::Value *encodeReturnAddress(CodeGen::CodeGenFunction &CGF,
                                              llvm::Value *Address) const {
       return Address;
-    }
-
-    virtual const llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                                  llvm::StringRef Constraint, 
-                                                  const llvm::Type* Ty) const {
-      return Ty;
     }
   };
 }

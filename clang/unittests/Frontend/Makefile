@@ -9,7 +9,7 @@
 
 CLANG_LEVEL = ../..
 TESTNAME = Frontend
-LINK_COMPONENTS := support mc
+LINK_COMPONENTS := core support mc
 USEDLIBS = clangFrontendTool.a clangFrontend.a clangDriver.a \
            clangSerialization.a clangCodeGen.a clangParse.a clangSema.a \
            clangStaticAnalyzerCheckers.a clangStaticAnalyzerCore.a \
