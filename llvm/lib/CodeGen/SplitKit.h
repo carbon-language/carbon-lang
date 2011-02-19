@@ -43,6 +43,7 @@ typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 class SplitAnalysis {
 public:
   const MachineFunction &MF;
+  const VirtRegMap &VRM;
   const LiveIntervals &LIS;
   const MachineLoopInfo &Loops;
   const TargetInstrInfo &TII;
@@ -105,7 +106,7 @@ private:
   bool canAnalyzeBranch(const MachineBasicBlock *MBB);
 
 public:
-  SplitAnalysis(const MachineFunction &mf, const LiveIntervals &lis,
+  SplitAnalysis(const VirtRegMap &vrm, const LiveIntervals &lis,
                 const MachineLoopInfo &mli);
 
   /// analyze - set CurLI to the specified interval, and analyze how it may be

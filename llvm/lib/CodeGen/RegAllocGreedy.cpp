@@ -1266,7 +1266,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   Bundles = &getAnalysis<EdgeBundles>();
   SpillPlacer = &getAnalysis<SpillPlacement>();
 
-  SA.reset(new SplitAnalysis(*MF, *LIS, *Loops));
+  SA.reset(new SplitAnalysis(*VRM, *LIS, *Loops));
 
   allocatePhysRegs();
   addMBBLiveIns(MF);
