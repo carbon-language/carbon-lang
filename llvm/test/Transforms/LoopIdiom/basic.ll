@@ -277,7 +277,7 @@ for.end13:                                        ; preds = %for.inc10
 ; On darwin10 (which is the triple in this .ll file) this loop can be turned
 ; into a memset_pattern call.
 ; rdar://9009151
-define void @test11(i32* nocapture %P) nounwind ssp {
+define void @test11_pattern(i32* nocapture %P) nounwind ssp {
 entry:
   br label %for.body
 
@@ -291,7 +291,7 @@ for.body:                                         ; preds = %entry, %for.body
 
 for.end:                                          ; preds = %for.body
   ret void
-; CHECK: @test11
+; CHECK: @test11_pattern
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: memset_pattern
@@ -322,3 +322,28 @@ for.end:                                          ; preds = %for.body
 ; CHECK: ret void
 }
 
+@G = global i32 5
+
+; This store-of-address loop can be turned into a memset_pattern call.
+; rdar://9009151
+define void @test13_pattern(i32** nocapture %P) nounwind ssp {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.body ]
+  %arrayidx = getelementptr i32** %P, i64 %indvar
+  store i32* @G, i32** %arrayidx, align 4
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, 10000
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+; CHECK: @test13_pattern
+; CHECK-NEXT: entry:
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: memset_pattern
+; CHECK-NOT: store
+; CHECK: ret void
+}

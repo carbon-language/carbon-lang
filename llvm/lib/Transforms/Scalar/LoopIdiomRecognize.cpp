@@ -388,43 +388,24 @@ static Constant *getMemSetPatternValue(Value *V, const TargetData &TD) {
   if (Size == 0 || (Size & 7) || (Size & (Size-1)))
     return 0;
   
-  // Convert the constant to an integer type of the appropriate size so we can
-  // start hacking on it.
-  if (isa<PointerType>(V->getType()))
-    C = ConstantExpr::getPtrToInt(C, IntegerType::get(C->getContext(), Size));
-  else if (isa<VectorType>(V->getType()) || V->getType()->isFloatingPointTy())
-    C = ConstantExpr::getBitCast(C, IntegerType::get(C->getContext(), Size));
-  else if (!isa<IntegerType>(V->getType()))
-    return 0;  // Unhandled type.
+  // Don't care enough about darwin/ppc to implement this.
+  if (TD.isBigEndian())
+    return 0;
 
   // Convert to size in bytes.
   Size /= 8;
-  
-  // If we couldn't fold this to an integer, we fail.  We don't bother to handle
-  // relocatable expressions like the address of a global yet.
-  // FIXME!
-  ConstantInt *CI = dyn_cast<ConstantInt>(C);
-  if (CI == 0) return 0;
 
-  APInt CVal = CI->getValue();
-  
   // TODO: If CI is larger than 16-bytes, we can try slicing it in half to see
-  // if the top and bottom are the same.
+  // if the top and bottom are the same (e.g. for vectors and large integers).
   if (Size > 16) return 0;
+  
+  // If the constant is exactly 16 bytes, just use it.
+  if (Size == 16) return C;
 
-  // If this is a big endian target (PPC) then we need to bswap.
-  if (TD.isBigEndian())
-    CVal = CVal.byteSwap();
-  
-  // Determine what each byte of the pattern value should be.
-  char Value[16];
-  for (unsigned i = 0; i != 16; ++i) {
-    // Get the byte value we're indexing into.
-    unsigned CByte = i % Size;
-    Value[i] = (unsigned char)(CVal.getZExtValue() >> CByte);
-  }
-  
-  return ConstantArray::get(V->getContext(), StringRef(Value, 16), false);
+  // Otherwise, we'll use an array of the constants.
+  unsigned ArraySize = 16/Size;
+  ArrayType *AT = ArrayType::get(V->getType(), ArraySize);
+  return ConstantArray::get(AT, std::vector<Constant*>(ArraySize, C));
 }
 
 
@@ -518,8 +499,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
                                             PatternValue, ".memset_pattern");
     GV->setUnnamedAddr(true); // Ok to merge these.
     GV->setAlignment(16);
-    Value *PatternPtr = Builder.CreateConstInBoundsGEP2_32(GV, 0, 0, "pattern");
-    
+    Value *PatternPtr = ConstantExpr::getBitCast(GV, Builder.getInt8PtrTy());
     NewCall = Builder.CreateCall3(MSP, BasePtr, PatternPtr, NumBytes);
   }
   
