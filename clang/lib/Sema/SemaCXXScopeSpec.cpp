@@ -24,14 +24,26 @@
 using namespace clang;
 
 /// \brief Find the current instantiation that associated with the given type.
-static CXXRecordDecl *getCurrentInstantiationOf(QualType T) {
+static CXXRecordDecl *getCurrentInstantiationOf(QualType T, 
+                                                DeclContext *CurContext) {
   if (T.isNull())
     return 0;
 
   const Type *Ty = T->getCanonicalTypeInternal().getTypePtr();
-  if (isa<RecordType>(Ty))
-    return cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
-  else if (isa<InjectedClassNameType>(Ty))
+  if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
+    CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordTy->getDecl());
+    if (!T->isDependentType())
+      return Record;
+
+    // This may be a member of a class template or class template partial
+    // specialization. If it's part of the current semantic context, then it's
+    // an injected-class-name;
+    for (; !CurContext->isFileContext(); CurContext = CurContext->getParent())
+      if (CurContext->Equals(Record))
+        return Record;
+    
+    return 0;
+  } else if (isa<InjectedClassNameType>(Ty))
     return cast<InjectedClassNameType>(Ty)->getDecl();
   else
     return 0;
@@ -45,10 +57,11 @@ static CXXRecordDecl *getCurrentInstantiationOf(QualType T) {
 /// or NULL if the declaration context cannot be computed (e.g., because it is
 /// dependent and not the current instantiation).
 DeclContext *Sema::computeDeclContext(QualType T) {
-  if (const TagType *Tag = T->getAs<TagType>())
-    return Tag->getDecl();
+  if (!T->isDependentType())
+    if (const TagType *Tag = T->getAs<TagType>())
+      return Tag->getDecl();
 
-  return ::getCurrentInstantiationOf(T);
+  return ::getCurrentInstantiationOf(T, CurContext);
 }
 
 /// \brief Compute the DeclContext that is associated with the given
@@ -174,7 +187,7 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
     return 0;
 
   QualType T = QualType(NNS->getAsType(), 0);
-  return ::getCurrentInstantiationOf(T);
+  return ::getCurrentInstantiationOf(T, CurContext);
 }
 
 /// \brief Require that the context specified by SS be complete.

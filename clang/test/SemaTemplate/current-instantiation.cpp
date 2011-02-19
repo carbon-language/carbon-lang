@@ -199,3 +199,19 @@ namespace Expressions {
   typename Enable_If<Is_Same<U, Class<T> >::value, void>::type
   Class<T>::foo() {}
 }
+
+namespace PR9255 {
+  template<typename T>
+  class X0  {
+  public:
+    class Inner1;
+
+    class Inner2  {
+    public:
+      void f()
+      {
+        Inner1::f.g();
+      }
+    };
+  };
+}
