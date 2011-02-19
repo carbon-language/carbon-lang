@@ -103,9 +103,11 @@ public:
   }
 
   bool isAnnotation() const {
-    return is(tok::annot_typename) ||
-           is(tok::annot_cxxscope) ||
-           is(tok::annot_template_id);
+#define ANNOTATION(NAME) \
+    if (is(tok::annot_##NAME)) \
+      return true;
+#include "clang/Basic/TokenKinds.def"
+    return false;
   }
 
   /// getLocation - Return a source location identifier for the specified
