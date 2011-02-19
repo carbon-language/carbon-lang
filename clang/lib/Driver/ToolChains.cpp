@@ -699,6 +699,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       if (getArchName() != A->getValue(Args, 0))
         continue;
 
+      Arg *OriginalArg = A;
       unsigned Index = Args.getBaseArgs().MakeIndex(A->getValue(Args, 1));
       unsigned Prev = Index;
       Arg *XarchArg = Opts.ParseOneArg(Args, Index);
@@ -722,6 +723,20 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       A = XarchArg;
 
       DAL->AddSynthesizedArg(A);
+
+      // Linker input arguments require custom handling. The problem is that we
+      // have already constructed the phase actions, so we can not treat them as
+      // "input arguments".
+      if (A->getOption().isLinkerInput()) {
+        // Convert the argument into individual Zlinker_input_args.
+        for (unsigned i = 0, e = A->getNumValues(); i != e; ++i) {
+          DAL->AddSeparateArg(OriginalArg,
+                              Opts.getOption(options::OPT_Zlinker_input),
+                              A->getValue(Args, i));
+          
+        }
+        continue;
+      }
     }
 
     // Sob. These is strictly gcc compatible for the time being. Apple

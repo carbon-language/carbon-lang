@@ -778,7 +778,12 @@ def _write_user_dependencies : Flag<"--write-user-dependencies">, Alias<MMD>;
 def _ : Joined<"--">, Flags<[Unsupported]>;
 
 // Special internal option to handle -Xlinker --no-demangle.
-def Z_Xlinker__no_demangle : Flag<"-Z-Xlinker-no-demangle">, Flags<[Unsupported, NoArgumentUnused]>;
+def Z_Xlinker__no_demangle : Flag<"-Z-Xlinker-no-demangle">,
+    Flags<[Unsupported, NoArgumentUnused]>;
+
+// Special internal option to allow forwarding arbitrary arguments to linker.
+def Zlinker_input : Separate<"-Zlinker-input">,
+    Flags<[Unsupported, NoArgumentUnused]>;
 
 // Reserved library options.
 def Z_reserved_lib_stdcxx : Flag<"-Z-reserved-lib-stdc++">,

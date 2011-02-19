@@ -91,6 +91,10 @@ static void AddLinkerInputs(const ToolChain &TC,
                             ArgStringList &CmdArgs) {
   const Driver &D = TC.getDriver();
 
+  // Add extra linker input arguments which are not treated as inputs
+  // (constructed via -Xarch_).
+  Args.AddAllArgValues(CmdArgs, options::OPT_Zlinker_input);
+
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
