@@ -26,10 +26,10 @@ T f(T x) {
 // This one entered into an infinite loop.
 template <unsigned long N>
 void rdar8520617() {
-  if (N > 1) { } // expected-warning {{comparison of 0 > unsigned expression is always false}}
+  if (N > 1) { }
 }
 
 int f2() {
-  rdar8520617<0>(); // expected-note {{in instantiation}}
+  rdar8520617<0>();
 }
 

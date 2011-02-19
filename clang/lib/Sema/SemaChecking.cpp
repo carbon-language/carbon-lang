@@ -2581,7 +2581,11 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
   // We don't do anything special if this isn't an unsigned integral
   // comparison:  we're only interested in integral comparisons, and
   // signed comparisons only happen in cases we don't care to warn about.
-  if (!T->hasUnsignedIntegerRepresentation())
+  //
+  // We also don't care about value-dependent expressions or expressions
+  // whose result is a constant.
+  if (!T->hasUnsignedIntegerRepresentation()
+      || E->isValueDependent() || E->isIntegerConstantExpr(S.Context))
     return AnalyzeImpConvsInComparison(S, E);
 
   Expr *lex = E->getLHS()->IgnoreParenImpCasts();

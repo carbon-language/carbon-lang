@@ -206,3 +206,9 @@ void test2(int i, void *vp) {
   if (vp < 0) { }
   if (test1 < e) { } // expected-error{{comparison between pointer and integer}}
 }
+
+// PR7536
+static const unsigned int kMax = 0;
+int pr7536() {
+  return (kMax > 0);
+}
