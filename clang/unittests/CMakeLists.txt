@@ -37,13 +37,13 @@ if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 endif()
 
 add_clang_unittest(Basic
-  "support mc"
+  ""
   "gtest gtest_main clangBasic"
   Basic/FileManagerTest.cpp
  )
 
 add_clang_unittest(Frontend
-  "support mc"
+  ""
   "gtest gtest_main clangFrontend"
   Frontend/FrontendActionTest.cpp
  )
