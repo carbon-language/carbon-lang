@@ -5509,7 +5509,7 @@ static inline unsigned getUNPCKLOpcode(EVT VT) {
   case MVT::v16i8: return X86ISD::PUNPCKLBW;
   case MVT::v8i16: return X86ISD::PUNPCKLWD;
   default:
-    llvm_unreachable("Unknow type for unpckl");
+    llvm_unreachable("Unknown type for unpckl");
   }
   return 0;
 }
@@ -5523,7 +5523,7 @@ static inline unsigned getUNPCKHOpcode(EVT VT) {
   case MVT::v16i8: return X86ISD::PUNPCKHBW;
   case MVT::v8i16: return X86ISD::PUNPCKHWD;
   default:
-    llvm_unreachable("Unknow type for unpckh");
+    llvm_unreachable("Unknown type for unpckh");
   }
   return 0;
 }
