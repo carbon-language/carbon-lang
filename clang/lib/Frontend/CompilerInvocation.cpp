@@ -590,6 +590,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fexceptions");
   if (Opts.SjLjExceptions)
     Res.push_back("-fsjlj-exceptions");
+  if (!Opts.ObjCExceptions)
+    Res.push_back("-fno-objc-exceptions");
   if (!Opts.RTTI)
     Res.push_back("-fno-rtti");
   if (Opts.MSBitfields)
@@ -634,8 +636,6 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fdump-vtable-layouts");
   if (Opts.NoBitFieldTypeAlign)
     Res.push_back("-fno-bitfield-type-alignment");
-  if (Opts.SjLjExceptions)
-    Res.push_back("-fsjlj-exceptions");
   if (Opts.PICLevel) {
     Res.push_back("-pic-level");
     Res.push_back(llvm::utostr(Opts.PICLevel));
@@ -1457,6 +1457,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_fno_threadsafe_statics))
     Opts.ThreadsafeStatics = 0;
   Opts.Exceptions = Args.hasArg(OPT_fexceptions);
+  Opts.ObjCExceptions = !Args.hasArg(OPT_fno_objc_exceptions);
   Opts.RTTI = !Args.hasArg(OPT_fno_rtti);
   Opts.Blocks = Args.hasArg(OPT_fblocks);
   Opts.CharIsSigned = !Args.hasArg(OPT_fno_signed_char);
@@ -1486,6 +1487,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
   Opts.PICLevel = Args.getLastArgIntValue(OPT_pic_level, 0, Diags);
   Opts.SjLjExceptions = Args.hasArg(OPT_fsjlj_exceptions);
+  Opts.ObjCExceptions = !Args.hasArg(OPT_fno_objc_exceptions);
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.DumpRecordLayouts = Args.hasArg(OPT_fdump_record_layouts);
   Opts.DumpVTableLayouts = Args.hasArg(OPT_fdump_vtable_layouts);

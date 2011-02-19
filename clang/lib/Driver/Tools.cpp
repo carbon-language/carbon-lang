@@ -1545,6 +1545,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                      getToolChain().IsObjCDefaultSynthPropertiesDefault())) {
       CmdArgs.push_back("-fobjc-default-synthesize-properties");
     }
+
+    // -fobjc-exceptions is default.
+    if (!Args.hasFlag(options::OPT_fobjc_exceptions, 
+                      options::OPT_fno_objc_exceptions))
+      CmdArgs.push_back("-fno-objc-exceptions");
   }
 
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,

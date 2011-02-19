@@ -2829,6 +2829,8 @@ def warn_exception_caught_by_earlier_handler : Warning<
 def note_previous_exception_handler : Note<"for type %0">;
 def err_exceptions_disabled : Error<
   "cannot use '%0' with exceptions disabled">;
+def err_objc_exceptions_disabled : Error<
+  "cannot use '%0' with Objective-C exceptions disabled">;
 def warn_non_virtual_dtor : Warning<
   "%0 has virtual functions but non-virtual destructor">,
   InGroup<NonVirtualDtor>, DefaultIgnore;

@@ -54,6 +54,7 @@ public:
   unsigned AltiVec           : 1;  // Support AltiVec-style vector initializers.
   unsigned Exceptions        : 1;  // Support exception handling.
   unsigned SjLjExceptions    : 1;  // Use setjmp-longjump exception handling.
+  unsigned ObjCExceptions    : 1;  // Support Objective-C exceptions.
   unsigned RTTI              : 1;  // Support RTTI information.
 
   unsigned MSBitfields       : 1; // MS-compatible structure layout
@@ -165,6 +166,7 @@ public:
     C99 = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
     Exceptions = SjLjExceptions = Freestanding = NoBuiltin = 0;
+    ObjCExceptions = 1;
     MSBitfields = 0;
     NeXTRuntime = 1;
     RTTI = 1;

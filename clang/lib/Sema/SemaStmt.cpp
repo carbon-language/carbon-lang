@@ -1631,6 +1631,9 @@ Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, Stmt *Body) {
 StmtResult
 Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
                          MultiStmtArg CatchStmts, Stmt *Finally) {
+  if (!getLangOptions().ObjCExceptions)
+    Diag(AtLoc, diag::err_objc_exceptions_disabled) << "@try";
+
   getCurFunction()->setHasBranchProtectedScope();
   unsigned NumCatchStmts = CatchStmts.size();
   return Owned(ObjCAtTryStmt::Create(Context, AtLoc, Try,
@@ -1661,6 +1664,9 @@ StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,
 StmtResult
 Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw,
                            Scope *CurScope) {
+  if (!getLangOptions().ObjCExceptions)
+    Diag(AtLoc, diag::err_objc_exceptions_disabled) << "@throw";
+
   if (!Throw) {
     // @throw without an expression designates a rethrow (which much occur
     // in the context of an @catch clause).

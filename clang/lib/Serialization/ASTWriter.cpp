@@ -1016,6 +1016,7 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.AltiVec);
   Record.push_back(LangOpts.Exceptions);  // Support exception handling.
   Record.push_back(LangOpts.SjLjExceptions);
+  Record.push_back(LangOpts.ObjCExceptions);
 
   Record.push_back(LangOpts.MSBitfields); // MS-compatible structure layout
   Record.push_back(LangOpts.NeXTRuntime); // Use NeXT runtime.
