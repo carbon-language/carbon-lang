@@ -56,6 +56,7 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
           return svalBuilder.makeIntVal(cast<IntegerLiteral>(E));
       }
       case Stmt::ImplicitCastExprClass:
+      case Stmt::CXXFunctionalCastExprClass:
       case Stmt::CStyleCastExprClass: {
         // We blast through no-op casts to get the descendant
         // subexpression that has a value.
@@ -75,9 +76,6 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
       case Stmt::CXXBindTemporaryExprClass:
         E = cast<CXXBindTemporaryExpr>(E)->getSubExpr();
         continue;
-      case Stmt::CXXFunctionalCastExprClass:
-        E = cast<CXXFunctionalCastExpr>(E)->getSubExpr();
-        continue;        
       // Handle all other Stmt* using a lookup.
       default:
         break;

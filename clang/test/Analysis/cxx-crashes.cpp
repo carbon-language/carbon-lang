@@ -6,6 +6,10 @@ int f1(char *dst) {
   return !(q >= p);
 }
 
+long f2(char *c) {
+  return long(c) & 1;
+}
+
 namespace {
 
 struct A { };
