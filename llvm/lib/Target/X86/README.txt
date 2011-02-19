@@ -710,23 +710,17 @@ This:
         { return !full_add(a, b).second; }
 
 Should compile to:
+	addl	%esi, %edi
+	setae	%al
+	movzbl	%al, %eax
+	ret
 
-
-        _Z11no_overflowjj:
-                addl    %edi, %esi
-                setae   %al
-                ret
-
-FIXME: That code looks wrong; bool return is normally defined as zext.
-
-on x86-64, not:
-
-__Z11no_overflowjj:
-        addl    %edi, %esi
-        cmpl    %edi, %esi
-        setae   %al
-        movzbl  %al, %eax
-        ret
+on x86-64, instead of the rather stupid-looking:
+	addl	%esi, %edi
+	setb	%al
+	xorb	$1, %al
+	movzbl	%al, %eax
+	ret
 
 
 //===---------------------------------------------------------------------===//
@@ -994,10 +988,10 @@ _foo:
 
 instead of:
 _foo:
-        movl    $255, %eax
-        orl     4(%esp), %eax
-        andl    $65535, %eax
-        ret
+	movl	$65280, %eax
+	andl	4(%esp), %eax
+	orl	$255, %eax
+	ret
 
 //===---------------------------------------------------------------------===//
 
