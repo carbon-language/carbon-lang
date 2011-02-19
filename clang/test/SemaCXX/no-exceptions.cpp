@@ -19,3 +19,17 @@ namespace test0 {
     (void) new Foo();
   }
 }
+
+namespace test1 {
+void f() {
+  throw; // expected-error {{cannot use 'throw' with exceptions disabled}}
+}
+
+void g() {
+  try { // expected-error {{cannot use 'try' with exceptions disabled}}
+    f();
+  } catch (...) {
+  }
+}
+
+}

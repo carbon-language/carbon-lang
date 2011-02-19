@@ -1741,6 +1741,9 @@ public:
 StmtResult
 Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
                        MultiStmtArg RawHandlers) {
+  if (!getLangOptions().Exceptions)
+    return Diag(TryLoc, diag::err_exceptions_disabled) << "try";
+
   unsigned NumHandlers = RawHandlers.size();
   assert(NumHandlers > 0 &&
          "The parser shouldn't call this if there are no handlers.");
