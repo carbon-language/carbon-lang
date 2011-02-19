@@ -260,7 +260,7 @@ public:
 /// - Rewrite instructions with finish().
 ///
 class SplitEditor {
-  SplitAnalysis &sa_;
+  SplitAnalysis &SA;
   LiveIntervals &LIS;
   VirtRegMap &VRM;
   MachineRegisterInfo &MRI;
@@ -315,7 +315,7 @@ public:
               MachineDominatorTree&, LiveRangeEdit&);
 
   /// getAnalysis - Get the corresponding analysis.
-  SplitAnalysis &getAnalysis() { return sa_; }
+  SplitAnalysis &getAnalysis() { return SA; }
 
   /// Create a new virtual register and live interval.
   void openIntv();
