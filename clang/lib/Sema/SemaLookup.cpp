@@ -2294,7 +2294,7 @@ public:
     void Destroy();
 
     // Iteration.
-    typedef NamedDecl **iterator;
+    typedef NamedDecl * const *iterator;
     iterator begin();
     iterator end();
   };
@@ -2389,8 +2389,8 @@ VisibleDeclsRecord::ShadowMapEntry::begin() {
   if (DeclOrVector.isNull())
     return 0;
 
-  if (DeclOrVector.dyn_cast<NamedDecl *>())
-    return &reinterpret_cast<NamedDecl*&>(DeclOrVector);
+  if (DeclOrVector.is<NamedDecl *>())
+    return DeclOrVector.getAddrOf<NamedDecl *>();
 
   return DeclOrVector.get<DeclVector *>()->begin();
 }
