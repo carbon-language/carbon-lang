@@ -601,30 +601,6 @@ static void clearLinkageForClass(const CXXRecordDecl *record) {
   }
 }
 
-void NamedDecl::getNameForDiagnostic(std::string &S,
-                                     const PrintingPolicy &Policy,
-                                     bool Qualified) const {
-  if (Qualified)
-    S += getQualifiedNameAsString(Policy);
-  else
-    S += getNameAsString();
-
-  const TemplateArgumentList *TemplateArgs = 0;
-
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
-    TemplateArgs = FD->getTemplateSpecializationArgs();
-  else if (const ClassTemplateSpecializationDecl *Spec
-                              = dyn_cast<ClassTemplateSpecializationDecl>(this))
-    TemplateArgs = &Spec->getTemplateArgs();
-  
-  
-   if (TemplateArgs)
-     S += TemplateSpecializationType::PrintTemplateArgumentList(
-                                                          TemplateArgs->data(),
-                                                          TemplateArgs->size(),
-                                                          Policy);
-}
-
 void NamedDecl::ClearLinkageCache() {
   // Note that we can't skip clearing the linkage of children just
   // because the parent doesn't have cached linkage:  we don't cache
@@ -981,20 +957,6 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
   }
 }
 
-SourceLocation DeclaratorDecl::getInnerLocStart() const {
-  if (const VarDecl *Var = dyn_cast<VarDecl>(this)) {
-    SourceLocation Start = Var->getTypeSpecStartLoc();
-    if (Start.isValid())
-      return Start;    
-  } else if (const NonTypeTemplateParmDecl *NTTP 
-                                    = dyn_cast<NonTypeTemplateParmDecl>(this)) {
-    SourceLocation Start = NTTP->getTypeSpecStartLoc();
-    if (Start.isValid())
-      return Start;        
-  }
-  return getLocation();
-}
-
 SourceLocation DeclaratorDecl::getOuterLocStart() const {
   return getTemplateOrInnerLocStart(this);
 }
@@ -1053,6 +1015,13 @@ void VarDecl::setStorageClass(StorageClass SC) {
     ClearLinkageCache();
   
   SClass = SC;
+}
+
+SourceLocation VarDecl::getInnerLocStart() const {
+  SourceLocation Start = getTypeSpecStartLoc();
+  if (Start.isInvalid())
+    Start = getLocation();
+  return Start;
 }
 
 SourceRange VarDecl::getSourceRange() const {
@@ -1202,7 +1171,7 @@ const Expr *VarDecl::getAnyInitializer(const VarDecl *&D) const {
 }
 
 bool VarDecl::isOutOfLine() const {
-  if (getLexicalDeclContext() != getDeclContext())
+  if (Decl::isOutOfLine())
     return true;
 
   if (!isStaticDataMember())
@@ -1325,6 +1294,19 @@ bool ParmVarDecl::isParameterPack() const {
 //===----------------------------------------------------------------------===//
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
+
+void FunctionDecl::getNameForDiagnostic(std::string &S,
+                                        const PrintingPolicy &Policy,
+                                        bool Qualified) const {
+  NamedDecl::getNameForDiagnostic(S, Policy, Qualified);
+  const TemplateArgumentList *TemplateArgs = getTemplateSpecializationArgs();
+  if (TemplateArgs)
+    S += TemplateSpecializationType::PrintTemplateArgumentList(
+                                                         TemplateArgs->data(),
+                                                         TemplateArgs->size(),
+                                                               Policy);
+    
+}
 
 bool FunctionDecl::isVariadic() const {
   if (const FunctionProtoType *FT = getType()->getAs<FunctionProtoType>())
@@ -1913,7 +1895,7 @@ SourceLocation FunctionDecl::getPointOfInstantiation() const {
 }
 
 bool FunctionDecl::isOutOfLine() const {
-  if (getLexicalDeclContext() != getDeclContext())
+  if (Decl::isOutOfLine())
     return true;
   
   // If this function was instantiated from a member function of a 
@@ -1977,17 +1959,6 @@ unsigned FieldDecl::getFieldIndex() const {
 //===----------------------------------------------------------------------===//
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
-
-SourceLocation TagDecl::getInnerLocStart() const {
-  if (const ClassTemplateSpecializationDecl *Spec 
-                         = dyn_cast<ClassTemplateSpecializationDecl>(this)) {
-    SourceLocation Start = Spec->getTemplateKeywordLoc();
-    if (Start.isValid())
-      return Start;    
-  } 
-  
-  return getTagKeywordLoc();
-}
 
 SourceLocation TagDecl::getOuterLocStart() const {
   return getTemplateOrInnerLocStart(this);
@@ -2140,6 +2111,13 @@ RecordDecl::field_iterator RecordDecl::field_begin() const {
   return field_iterator(decl_iterator(FirstDecl));
 }
 
+/// completeDefinition - Notes that the definition of this type is now
+/// complete.
+void RecordDecl::completeDefinition() {
+  assert(!isDefinition() && "Cannot redefine record!");
+  TagDecl::completeDefinition();
+}
+
 void RecordDecl::LoadFieldsFromExternalStorage() const {
   ExternalASTSource *Source = getASTContext().getExternalSource();
   assert(hasExternalLexicalStorage() && Source && "No external storage?");
@@ -2163,13 +2141,6 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
     return;
 
   llvm::tie(FirstDecl, LastDecl) = BuildDeclChain(Decls);
-}
-
-void RecordDecl::completeDefinition() {
-  assert(!isDefinition() && "Cannot redefine record!");
-  TagDecl::completeDefinition();
-  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(this))
-    CXXRecord->completeDefinitionImpl(0);
 }
 
 //===----------------------------------------------------------------------===//

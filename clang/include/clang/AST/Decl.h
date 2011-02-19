@@ -158,9 +158,14 @@ public:
   /// specializations are printed with their template arguments.
   ///
   /// TODO: use an API that doesn't require so many temporary strings
-  void getNameForDiagnostic(std::string &S,
-                            const PrintingPolicy &Policy,
-                            bool Qualified) const;
+  virtual void getNameForDiagnostic(std::string &S,
+                                    const PrintingPolicy &Policy,
+                                    bool Qualified) const {
+    if (Qualified)
+      S += getQualifiedNameAsString(Policy);
+    else
+      S += getNameAsString();
+  }
 
   /// declarationReplaces - Determine whether this declaration, if
   /// known to be well-formed within its context, will replace the
@@ -418,12 +423,12 @@ public:
     getOriginalNamespace()->OrigOrAnonNamespace.setPointer(D);
   }
 
-  NamespaceDecl *getCanonicalDecl() { return getOriginalNamespace(); }
+  virtual NamespaceDecl *getCanonicalDecl() { return getOriginalNamespace(); }
   const NamespaceDecl *getCanonicalDecl() const { 
     return getOriginalNamespace(); 
   }
 
-  SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const {
     return SourceRange(getLocation(), RBracLoc);
   }
 
@@ -531,7 +536,7 @@ public:
 
   /// getInnerLocStart - Return SourceLocation representing start of source
   /// range ignoring outer template declarations.
-  SourceLocation getInnerLocStart() const;
+  virtual SourceLocation getInnerLocStart() const { return getLocation(); }
 
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
@@ -662,9 +667,8 @@ protected:
   }
 
   typedef Redeclarable<VarDecl> redeclarable_base;
-  VarDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
-  friend class Decl;
-  
+  virtual VarDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+
 public:
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
@@ -679,7 +683,8 @@ public:
                          QualType T, TypeSourceInfo *TInfo, StorageClass S,
                          StorageClass SCAsWritten);
 
-  SourceRange getSourceRange() const;
+  virtual SourceLocation getInnerLocStart() const;
+  virtual SourceRange getSourceRange() const;
 
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
   StorageClass getStorageClassAsWritten() const {
@@ -767,7 +772,7 @@ public:
     return getKind() != Decl::ParmVar && getDeclContext()->isRecord();
   }
 
-  VarDecl *getCanonicalDecl();
+  virtual VarDecl *getCanonicalDecl();
   const VarDecl *getCanonicalDecl() const {
     return const_cast<VarDecl*>(this)->getCanonicalDecl();
   }
@@ -806,7 +811,7 @@ public:
 
   /// \brief Determine whether this is or was instantiated from an out-of-line 
   /// definition of a static data member.
-  bool isOutOfLine() const;
+  virtual bool isOutOfLine() const;
 
   /// \brief If this is a static data member, find its out-of-line definition.
   VarDecl *getOutOfLineDefinition();
@@ -1298,12 +1303,9 @@ protected:
       DNLoc(NameInfo.getInfo()) {}
 
   typedef Redeclarable<FunctionDecl> redeclarable_base;
-  FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  virtual FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
-  friend class Decl;
-                       
 public:
-                       
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
     return redeclarable_base::redecls_begin();
@@ -1336,7 +1338,11 @@ public:
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
 
-  SourceRange getSourceRange() const {
+  virtual void getNameForDiagnostic(std::string &S,
+                                    const PrintingPolicy &Policy,
+                                    bool Qualified) const;
+
+  virtual SourceRange getSourceRange() const {
     return SourceRange(getOuterLocStart(), EndRangeLoc);
   }
   void setLocEnd(SourceLocation E) {
@@ -1350,7 +1356,7 @@ public:
   /// containing the body (if there is one).
   bool hasBody(const FunctionDecl *&Definition) const;
 
-  bool hasBody() const {
+  virtual bool hasBody() const {
     const FunctionDecl* Definition;
     return hasBody(Definition);
   }
@@ -1364,7 +1370,7 @@ public:
   /// unnecessary AST de-serialization of the body.
   Stmt *getBody(const FunctionDecl *&Definition) const;
 
-  Stmt *getBody() const {
+  virtual Stmt *getBody() const {
     const FunctionDecl* Definition;
     return getBody(Definition);
   }
@@ -1454,8 +1460,8 @@ public:
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
-  const FunctionDecl *getCanonicalDecl() const;
-  FunctionDecl *getCanonicalDecl();
+  virtual const FunctionDecl *getCanonicalDecl() const;
+  virtual FunctionDecl *getCanonicalDecl();
 
   unsigned getBuiltinID() const;
 
@@ -1708,7 +1714,7 @@ public:
                        
   /// \brief Determine whether this is or was instantiated from an out-of-line 
   /// definition of a member function.
-  bool isOutOfLine() const;
+  virtual bool isOutOfLine() const;
                        
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -1908,10 +1914,8 @@ class TypedefDecl : public TypeDecl, public Redeclarable<TypedefDecl> {
 
 protected:
   typedef Redeclarable<TypedefDecl> redeclarable_base;
-  TypedefDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  virtual TypedefDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
-  friend class Decl;
-  
 public:
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
@@ -2031,14 +2035,12 @@ protected:
   }
 
   typedef Redeclarable<TagDecl> redeclarable_base;
-  TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  virtual TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
   /// @brief Completes the definition of this tag declaration.
   ///
   /// This is a helper function for derived classes.
   void completeDefinition();    
-  
-  friend class Decl;
     
 public:
   typedef redeclarable_base::redecl_iterator redecl_iterator;
@@ -2057,14 +2059,14 @@ public:
 
   /// getInnerLocStart - Return SourceLocation representing start of source
   /// range ignoring outer template declarations.
-    SourceLocation getInnerLocStart() const;
+  virtual SourceLocation getInnerLocStart() const { return TagKeywordLoc; }
 
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
   SourceLocation getOuterLocStart() const;
-  SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const;
 
-  TagDecl* getCanonicalDecl();
+  virtual TagDecl* getCanonicalDecl();
   const TagDecl* getCanonicalDecl() const {
     return const_cast<TagDecl*>(this)->getCanonicalDecl();
   }
@@ -2478,8 +2480,9 @@ public:
     return field_begin() == field_end();
   }
 
-  /// \brief Indicates that the definition of this class is now complete.
-  void completeDefinition();
+  /// completeDefinition - Notes that the definition of this type is
+  /// now complete.
+  virtual void completeDefinition();
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const RecordDecl *D) { return true; }
@@ -2636,7 +2639,7 @@ public:
                    const Capture *end,
                    bool capturesCXXThis);
 
-  SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const;
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

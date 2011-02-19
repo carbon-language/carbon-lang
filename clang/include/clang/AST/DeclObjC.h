@@ -182,9 +182,8 @@ private:
   /// \brief A definition will return its interface declaration.
   /// An interface declaration will return its definition.
   /// Otherwise it will return itself.
-  ObjCMethodDecl *getNextRedeclaration();
-  friend class Decl;
-  
+  virtual ObjCMethodDecl *getNextRedeclaration();
+
 public:
   static ObjCMethodDecl *Create(ASTContext &C,
                                 SourceLocation beginLoc,
@@ -199,7 +198,7 @@ public:
                                 ImplementationControl impControl = None,
                                 unsigned numSelectorArgs = 0);
 
-  ObjCMethodDecl *getCanonicalDecl();
+  virtual ObjCMethodDecl *getCanonicalDecl();
   const ObjCMethodDecl *getCanonicalDecl() const {
     return const_cast<ObjCMethodDecl*>(this)->getCanonicalDecl();
   }
@@ -218,7 +217,7 @@ public:
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
   void setEndLoc(SourceLocation Loc) { EndLoc = Loc; }
-  SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const {
     return SourceRange(getLocation(), EndLoc);
   }
 
@@ -301,7 +300,7 @@ public:
     return ImplementationControl(DeclImplementation);
   }
 
-  Stmt *getBody() const {
+  virtual Stmt *getBody() const {
     return (Stmt*) Body;
   }
   CompoundStmt *getCompoundBody() { return (CompoundStmt*)Body; }
@@ -394,7 +393,7 @@ public:
     AtEnd = atEnd;
   }
 
-  SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const {
     return SourceRange(getLocation(), getAtEndRange().getEnd());
   }
 
@@ -887,7 +886,7 @@ public:
                                const SourceLocation *Locs = 0,
                                unsigned nElts = 0);
   
-  SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const;
 
   typedef const ObjCClassRef* iterator;
   iterator begin() const { return ForwardDecls; }
@@ -1068,7 +1067,7 @@ public:
   SourceLocation getCategoryNameLoc() const { return CategoryNameLoc; }
   void setCategoryNameLoc(SourceLocation Loc) { CategoryNameLoc = Loc; }
 
-  SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const {
     return SourceRange(AtLoc, getAtEndRange().getEnd());
   }
 
@@ -1479,7 +1478,7 @@ public:
     return PropertyIvarDecl;
   }
 
-  SourceRange getSourceRange() const {
+  virtual SourceRange getSourceRange() const {
     return SourceRange(AtLoc, getLocation());
   }
 
@@ -1545,7 +1544,7 @@ public:
                                       ObjCIvarDecl *ivarDecl,
                                       SourceLocation ivarLoc);
 
-  SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const;
   
   SourceLocation getLocStart() const { return AtLoc; }
   void setAtLoc(SourceLocation Loc) { AtLoc = Loc; }

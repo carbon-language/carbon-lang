@@ -270,10 +270,14 @@ protected:
     if (Decl::CollectingStats()) add(DK);
   }
 
+  virtual ~Decl();
+
 public:
 
   /// \brief Source range that this declaration covers.
-  SourceRange getSourceRange() const;
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getLocation(), getLocation());
+  }
   SourceLocation getLocStart() const { return getSourceRange().getBegin(); }
   SourceLocation getLocEnd() const { return getSourceRange().getEnd(); }
 
@@ -455,10 +459,9 @@ public:
     return const_cast<Decl*>(this)->getLexicalDeclContext();
   }
 
-  /// \brief Determine whether this declaration was written out-of-line, which
-  /// typically indicates that it was written with a qualified name in a scope
-  /// outside of its semantic scope.
-  bool isOutOfLine() const;
+  virtual bool isOutOfLine() const {
+    return getLexicalDeclContext() != getDeclContext();
+  }
 
   /// setDeclContext - Set both the semantic and lexical DeclContext
   /// to DC.
@@ -473,7 +476,7 @@ public:
   bool isDefinedOutsideFunctionOrMethod() const;
 
   /// \brief Retrieves the "canonical" declaration of the given declaration.
-  Decl *getCanonicalDecl();
+  virtual Decl *getCanonicalDecl() { return this; }
   const Decl *getCanonicalDecl() const {
     return const_cast<Decl*>(this)->getCanonicalDecl();
   }
@@ -486,7 +489,7 @@ protected:
   ///
   /// Decl subclasses that can be redeclared should override this method so that
   /// Decl::redecl_iterator can iterate over them.
-  Decl *getNextRedeclaration();
+  virtual Decl *getNextRedeclaration() { return this; }
 
 public:
   /// \brief Iterates through all the redeclarations of the same decl.
@@ -541,11 +544,11 @@ public:
   /// getBody - If this Decl represents a declaration for a body of code,
   ///  such as a function or method definition, this method returns the
   ///  top-level Stmt* of that body.  Otherwise this method returns null.
-  Stmt* getBody() const;
+  virtual Stmt* getBody() const { return 0; }
 
   /// \brief Returns true if this Decl represents a declaration for a body of
   /// code, such as a function or method definition.
-  bool hasBody() const;
+  virtual bool hasBody() const { return getBody() != 0; }
 
   /// getBodyRBrace - Gets the right brace of the body, if a body exists.
   /// This works whether the body is a CompoundStmt or a CXXTryStmt.
