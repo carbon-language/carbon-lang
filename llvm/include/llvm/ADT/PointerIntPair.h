@@ -91,6 +91,13 @@ public:
     Value |= IntVal << IntShift;  // Set new integer.
   }
 
+  PointerTy const *getAddrOfPointer() const {
+    assert(Value == reinterpret_cast<intptr_t>(getPointer()) &&
+           "Can only return the address if IntBits is cleared and "
+           "PtrTraits doesn't change the pointer");
+    return reinterpret_cast<PointerTy const *>(&Value);
+  }
+
   void *getOpaqueValue() const { return reinterpret_cast<void*>(Value); }
   void setFromOpaqueValue(void *Val) { Value = reinterpret_cast<intptr_t>(Val);}
 
