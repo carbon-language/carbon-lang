@@ -882,7 +882,13 @@ ASTContext::getTypeInfo(const Type *T) const {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
     std::pair<uint64_t, unsigned> Info
       = getTypeInfo(Typedef->getUnderlyingType().getTypePtr());
-    Align = std::max(Typedef->getMaxAlignment(), Info.second);
+    // If the typedef has an aligned attribute on it, it overrides any computed
+    // alignment we have.  This violates the GCC documentation (which says that
+    // attribute(aligned) can only round up) but matches its implementation.
+    if (unsigned AttrAlign = Typedef->getMaxAlignment())
+      Align = AttrAlign;
+    else
+      Align = Info.second;
     Width = Info.first;
     break;
   }
