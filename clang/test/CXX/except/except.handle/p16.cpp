@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fexceptions -fsyntax-only -verify %s
 
 // The object declared in an exception-declaration or, if the
 // exception-declaration does not specify a name, a temporary (12.2)

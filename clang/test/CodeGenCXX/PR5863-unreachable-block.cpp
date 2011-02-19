@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only %s
+// RUN: %clang_cc1 -fexceptions -emit-llvm-only %s
 
 // PR5863
 class E { };

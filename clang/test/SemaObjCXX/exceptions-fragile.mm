@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fexceptions -fsyntax-only -verify %s 
 
 @interface NSException @end
 void opaque();

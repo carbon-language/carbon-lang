@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x -fms-extensions %s
+// RUN: %clang_cc1 -fexceptions -fsyntax-only -verify -std=c++0x -fms-extensions %s
 
 #define P(e) static_assert(noexcept(e), "expected nothrow")
 #define N(e) static_assert(!noexcept(e), "expected throw")

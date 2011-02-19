@@ -1,11 +1,11 @@
 // Test this without pch.
-// RUN: %clang_cc1 -include %S/cxx-templates.h -verify %s -ast-dump -o -
-// RUN: %clang_cc1 -include %S/cxx-templates.h %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -fexceptions -include %S/cxx-templates.h -verify %s -ast-dump -o -
+// RUN: %clang_cc1 -fexceptions -include %S/cxx-templates.h %s -emit-llvm -o - | FileCheck %s
 
 // Test with pch.
-// RUN: %clang_cc1 -x c++-header -emit-pch -o %t %S/cxx-templates.h
-// RUN: %clang_cc1 -include-pch %t -verify %s -ast-dump  -o -
-// RUN: %clang_cc1 -include-pch %t %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -fexceptions -x c++-header -emit-pch -o %t %S/cxx-templates.h
+// RUN: %clang_cc1 -fexceptions -include-pch %t -verify %s -ast-dump  -o -
+// RUN: %clang_cc1 -fexceptions -include-pch %t %s -emit-llvm -o - | FileCheck %s
 
 // CHECK: define weak_odr void @_ZN2S4IiE1mEv
 // CHECK: define linkonce_odr void @_ZN2S3IiE1mEv

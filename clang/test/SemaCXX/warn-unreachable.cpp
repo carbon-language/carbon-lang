@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks -Wunreachable-code -Wno-unused-value
+// RUN: %clang_cc1 %s -fexceptions -fsyntax-only -verify -fblocks -Wunreachable-code -Wno-unused-value
 
 int &halt() __attribute__((noreturn));
 int &live();

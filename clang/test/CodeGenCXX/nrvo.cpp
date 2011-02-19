@@ -132,6 +132,7 @@ X test4(bool B) {
   exit(1);
 }
 
+#ifdef __EXCEPTIONS
 // CHECK-EH: define void @_Z5test5
 void may_throw();
 X test5() {
@@ -144,3 +145,4 @@ X test5() {
     return x;
   }
 }
+#endif
