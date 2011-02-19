@@ -4377,14 +4377,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
   const FunctionType* FT = T->getAs<FunctionType>();
 
   if (!Context.hasSameUnqualifiedType(FT->getResultType(), Context.IntTy)) {
-    TypeSourceInfo *TSI = FD->getTypeSourceInfo();
-    TypeLoc TL = TSI->getTypeLoc().IgnoreParens();
-    const SemaDiagnosticBuilder& D = Diag(FD->getTypeSpecStartLoc(),
-                                          diag::err_main_returns_nonint);
-    if (FunctionTypeLoc* PTL = dyn_cast<FunctionTypeLoc>(&TL)) {
-      D << FixItHint::CreateReplacement(PTL->getResultLoc().getSourceRange(),
-                                        "int");
-    }
+    Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint);
     FD->setInvalidDecl(true);
   }
 
