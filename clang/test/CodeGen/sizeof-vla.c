@@ -2,7 +2,7 @@
 
 // PR3442
 
-static void *g(unsigned long len);
+void *g(unsigned long len);
 
 void
 f(int n)

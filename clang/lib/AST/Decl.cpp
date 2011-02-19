@@ -637,14 +637,26 @@ void NamedDecl::ClearLinkageCache() {
   if (const CXXRecordDecl *record = dyn_cast<CXXRecordDecl>(this))
     clearLinkageForClass(record);
 
-  if (const ClassTemplateDecl *temp = dyn_cast<ClassTemplateDecl>(this)) {
+  if (ClassTemplateDecl *temp =
+        dyn_cast<ClassTemplateDecl>(const_cast<NamedDecl*>(this))) {
     // Clear linkage for the template pattern.
     CXXRecordDecl *record = temp->getTemplatedDecl();
     record->HasCachedLinkage = 0;
     clearLinkageForClass(record);
 
-    // ...do we need to clear linkage for specializations, too?
+    // We need to clear linkage for specializations, too.
+    for (ClassTemplateDecl::spec_iterator
+           i = temp->spec_begin(), e = temp->spec_end(); i != e; ++i)
+      i->ClearLinkageCache();
   }
+
+  // Clear cached linkage for function template decls, too.
+  if (FunctionTemplateDecl *temp =
+        dyn_cast<FunctionTemplateDecl>(const_cast<NamedDecl*>(this)))
+    for (FunctionTemplateDecl::spec_iterator
+           i = temp->spec_begin(), e = temp->spec_end(); i != e; ++i)
+      i->ClearLinkageCache();
+    
 }
 
 Linkage NamedDecl::getLinkage() const {

@@ -5,7 +5,7 @@ class Twine {
   Twine(const char *Str) { }
 };
 
-static void error(const Twine &Message);
+static void error(const Twine &Message) {}
 
 template<typename>
 struct opt_storage {

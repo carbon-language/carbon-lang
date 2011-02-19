@@ -11,8 +11,7 @@ typedef struct {
 typedef void (*FType)(int, int)      __attribute ((regparm (3), stdcall));
 FType bar;
 
-static void FASTCALL
-reduced(char b, double c, foo* d, double e, int f);
+extern void FASTCALL reduced(char b, double c, foo* d, double e, int f);
 
 // PR7025
 void FASTCALL f1(int i, int j, int k);

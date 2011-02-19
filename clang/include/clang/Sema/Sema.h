@@ -600,6 +600,10 @@ public:
   // argument locations.
   llvm::DenseMap<ParmVarDecl *,SourceLocation> UnparsedDefaultArgLocs;
 
+  /// UndefinedInternals - all the used, undefined objects with
+  /// internal linkage in this translation unit.
+  llvm::DenseMap<NamedDecl*, SourceLocation> UndefinedInternals;
+
   typedef std::pair<ObjCMethodList, ObjCMethodList> GlobalMethods;
   typedef llvm::DenseMap<Selector, GlobalMethods> GlobalMethodPool;
 

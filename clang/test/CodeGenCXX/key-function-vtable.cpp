@@ -30,6 +30,7 @@ void testf::a() {}
 namespace {
   struct testg { virtual void a(); };
 }
+void testg::a() {}
 testg *testgvar = new testg;
 
 struct X0 { virtual ~X0(); };

@@ -18,7 +18,7 @@ namespace {
 
 struct A { };
 struct B {
-  operator A();
+  operator A() { return A(); }
 };
 
 A f(char *dst) {

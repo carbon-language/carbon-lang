@@ -38,7 +38,7 @@ void *sel_registerName(const char *);
 
 @implementation Bar
 
-static int func(int i);
+static int func(int i) { return 0; }
 
 - (void)baz {
     Foo *obj1, *obj2;

@@ -983,7 +983,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
     // Set linkage and visibility in case we never see a definition.
     NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
     if (LV.linkage() != ExternalLinkage) {
-      GV->setLinkage(llvm::GlobalValue::InternalLinkage);
+      // Don't set internal linkage on declarations.
     } else {
       if (D->hasAttr<DLLImportAttr>())
         GV->setLinkage(llvm::GlobalValue::DLLImportLinkage);

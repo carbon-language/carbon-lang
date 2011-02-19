@@ -9284,6 +9284,9 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       MarkVTableUsed(Loc, MethodDecl->getParent());
   }
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+    // Recursive functions should be marked when used from another function.
+    if (CurContext == Function) return;
+
     // Implicit instantiation of function templates and member functions of
     // class templates.
     if (Function->isImplicitlyInstantiable()) {
@@ -9312,19 +9315,23 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
         else
           PendingInstantiations.push_back(std::make_pair(Function, Loc));
       }
-    } else // Walk redefinitions, as some of them may be instantiable.
+    } else {
+      // Walk redefinitions, as some of them may be instantiable.
       for (FunctionDecl::redecl_iterator i(Function->redecls_begin()),
            e(Function->redecls_end()); i != e; ++i) {
         if (!i->isUsed(false) && i->isImplicitlyInstantiable())
           MarkDeclarationReferenced(Loc, *i);
       }
+    }
 
-    // FIXME: keep track of references to static functions
+    // Keep track of used but undefined functions.
+    if (!Function->isPure() && !Function->hasBody() &&
+        Function->getLinkage() != ExternalLinkage) {
+      SourceLocation &old = UndefinedInternals[Function->getCanonicalDecl()];
+      if (old.isInvalid()) old = Loc;
+    }
 
-    // Recursive functions should be marked when used from another function.
-    if (CurContext != Function)
-      Function->setUsed(true);
-
+    Function->setUsed(true);
     return;
   }
 
@@ -9341,7 +9348,12 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       }
     }
 
-    // FIXME: keep track of references to static data?
+    // Keep track of used but undefined variables.
+    if (Var->hasDefinition() == VarDecl::DeclarationOnly
+        && Var->getLinkage() != ExternalLinkage) {
+      SourceLocation &old = UndefinedInternals[Var->getCanonicalDecl()];
+      if (old.isInvalid()) old = Loc;
+    }
 
     D->setUsed(true);
     return;

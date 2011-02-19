@@ -14,7 +14,7 @@ typedef unsigned char Boolean;
 typedef const struct __CFDictionary * CFDictionaryRef;
 
 extern Boolean CFDictionaryGetValueIfPresent(CFDictionaryRef theDict, const void *key, const void **value);
-static void shazam(NSUInteger i, unsigned char **out);
+void shazam(NSUInteger i, unsigned char **out);
 
 void rdar_6440393_1(NSDictionary *dict) {
   NSInteger x = 0;

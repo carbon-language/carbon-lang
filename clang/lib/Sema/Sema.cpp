@@ -271,6 +271,65 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
   return false;
 }
 
+namespace {
+  struct UndefinedInternal {
+    NamedDecl *decl;
+    FullSourceLoc useLoc;
+
+    UndefinedInternal(NamedDecl *decl, FullSourceLoc useLoc)
+      : decl(decl), useLoc(useLoc) {}
+  };
+
+  bool operator<(const UndefinedInternal &l, const UndefinedInternal &r) {
+    return l.useLoc.isBeforeInTranslationUnitThan(r.useLoc);
+  }
+}
+
+/// checkUndefinedInternals - Check for undefined objects with internal linkage.
+static void checkUndefinedInternals(Sema &S) {
+  if (S.UndefinedInternals.empty()) return;
+
+  // Collect all the still-undefined entities with internal linkage.
+  llvm::SmallVector<UndefinedInternal, 16> undefined;
+  for (llvm::DenseMap<NamedDecl*,SourceLocation>::iterator
+         i = S.UndefinedInternals.begin(), e = S.UndefinedInternals.end();
+       i != e; ++i) {
+    NamedDecl *decl = i->first;
+
+    // Ignore attributes that have become invalid.
+    if (decl->isInvalidDecl()) continue;
+
+    // __attribute__((weakref)) is basically a definition.
+    if (decl->hasAttr<WeakRefAttr>()) continue;
+
+    if (FunctionDecl *fn = dyn_cast<FunctionDecl>(decl)) {
+      if (fn->isPure() || fn->hasBody())
+        continue;
+    } else {
+      if (cast<VarDecl>(decl)->hasDefinition() != VarDecl::DeclarationOnly)
+        continue;
+    }
+
+    // We build a FullSourceLoc so that we can sort with array_pod_sort.
+    FullSourceLoc loc(i->second, S.Context.getSourceManager());
+    undefined.push_back(UndefinedInternal(decl, loc));
+  }
+
+  if (undefined.empty()) return;
+
+  // Sort (in order of use site) so that we're not (as) dependent on
+  // the iteration order through an llvm::DenseMap.
+  llvm::array_pod_sort(undefined.begin(), undefined.end());
+
+  for (llvm::SmallVectorImpl<UndefinedInternal>::iterator
+         i = undefined.begin(), e = undefined.end(); i != e; ++i) {
+    NamedDecl *decl = i->decl;
+    S.Diag(decl->getLocation(), diag::warn_undefined_internal)
+      << isa<VarDecl>(decl) << decl;
+    S.Diag(i->useLoc, diag::note_used_here);
+  }
+}
+
 /// ActOnEndOfTranslationUnit - This is called at the very end of the
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
@@ -403,6 +462,8 @@ void Sema::ActOnEndOfTranslationUnit() {
               << DiagD->getDeclName();
       }
     }
+
+    checkUndefinedInternals(*this);
   }
 
   TUScope = 0;

@@ -88,31 +88,29 @@ void C::f() { }
 }
 
 // Check that the thunk gets internal linkage.
-namespace {
+namespace Test4B {
+  struct A {
+    virtual void f();
+  };
 
-struct A {
-  virtual void f();
-};
+  struct B {
+    virtual void f();
+  };
 
-struct B {
-  virtual void f();
-};
+  namespace {
+    struct C : A, B {
+      virtual void c();
+      virtual void f();
+    };
+  }
+  void C::c() {}
+  void C::f() {}
 
-struct C : A, B {
-  virtual void c();
-
-  virtual void f();
-};
-
-void C::f() { }
-
-}
-
-// Force C::f to be used.
-void f() { 
-  C c; 
-  
-  c.f();
+  // Force C::f to be used.
+  void f() { 
+    C c; 
+    c.f();
+  }
 }
 
 namespace Test5 {
@@ -283,4 +281,4 @@ namespace Test11 {
 
 // This is from Test5:
 // CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
-// CHECK: define internal void @_ZThn8_N12_GLOBAL__N_11C1fEv(
+// CHECK: define internal void @_ZThn8_N6Test4B12_GLOBAL__N_11C1fEv(
