@@ -172,9 +172,8 @@ public:
                                         I->getType()->isUnsignedIntegerType()));
   }
 
-  nonloc::ConcreteInt makeIntVal(const CXXBoolLiteralExpr *E) {
-    return E->getValue() ? nonloc::ConcreteInt(BasicVals.getValue(1, 1, true))
-                         : nonloc::ConcreteInt(BasicVals.getValue(0, 1, true));
+  nonloc::ConcreteInt makeBoolVal(const CXXBoolLiteralExpr *E) {
+    return makeTruthVal(E->getValue());
   }
 
   nonloc::ConcreteInt makeIntVal(const llvm::APSInt& V) {
@@ -218,11 +217,11 @@ public:
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const SymExpr *rhs, QualType T);
 
-  NonLoc makeTruthVal(bool b, QualType T) {
+  nonloc::ConcreteInt makeTruthVal(bool b, QualType T) {
     return nonloc::ConcreteInt(BasicVals.getTruthValue(b, T));
   }
 
-  NonLoc makeTruthVal(bool b) {
+  nonloc::ConcreteInt makeTruthVal(bool b) {
     return nonloc::ConcreteInt(BasicVals.getTruthValue(b));
   }
 

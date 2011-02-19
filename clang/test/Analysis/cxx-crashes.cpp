@@ -10,6 +10,10 @@ long f2(char *c) {
   return long(c) & 1;
 }
 
+bool f3() {
+  return !false;
+}
+
 namespace {
 
 struct A { };

@@ -45,7 +45,7 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
         if (X) 
           return *X;
         else 
-          return svalBuilder.makeIntVal(cast<CXXBoolLiteralExpr>(E));
+          return svalBuilder.makeBoolVal(cast<CXXBoolLiteralExpr>(E));
       }
       case Stmt::IntegerLiteralClass: {
         // In C++, this expression may have been bound to a temporary object.
