@@ -274,7 +274,8 @@ def llvm_as : Tool<
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
  (command "llvm-as"),
- (actions (case (switch_on "emit-llvm"), (stop_compilation)))
+ (actions (case (and (switch_on "emit-llvm"), (not (switch_on "opt"))),
+                (stop_compilation)))
 ]>;
 
 def llvm_gcc_assembler : Tool<
@@ -424,7 +425,8 @@ def CompilationGraph : CompilationGraph<[
     (edge "llvm_as", "llc"),
 
     (optional_edge "root", "llvm_as",
-                   (case (switch_on "emit-llvm"), (inc_weight))),
+                   (case (or (switch_on "emit-llvm"),
+                             (switch_on "opt")), (inc_weight))),
     (optional_edge "llvm_gcc_c", "opt",
                    (case (switch_on "opt"), (inc_weight))),
     (optional_edge "llvm_gcc_cpp", "opt",
