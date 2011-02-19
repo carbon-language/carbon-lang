@@ -83,7 +83,7 @@ private:
 
   GRStateManager *stateMgr;
   Environment Env;           // Maps a Stmt to its current SVal.
-  StoreRef St;               // Maps a location to its current value.
+  Store store;               // Maps a location to its current value.
   GenericDataMap   GDM;      // Custom data stored by a client of this class.
   unsigned refCount;
 
@@ -91,26 +91,19 @@ private:
   ///  state with the exception of using the specified Store.
   const GRState *makeWithStore(const StoreRef &store) const;
 
+  void setStore(const StoreRef &storeRef);
+
 public:
 
   /// This ctor is used when creating the first GRState object.
   GRState(GRStateManager *mgr, const Environment& env,
-          StoreRef st, GenericDataMap gdm)
-    : stateMgr(mgr),
-      Env(env),
-      St(st),
-      GDM(gdm),
-      refCount(0) {}
-
+          StoreRef st, GenericDataMap gdm);
+    
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
-  GRState(const GRState& RHS)
-    : llvm::FoldingSetNode(),
-      stateMgr(RHS.stateMgr),
-      Env(RHS.Env),
-      St(RHS.St),
-      GDM(RHS.GDM),
-      refCount(0) {}
+  GRState(const GRState& RHS);
+  
+  ~GRState();
 
   /// Return the GRStateManager associated with this state.
   GRStateManager &getStateManager() const { return *stateMgr; }
@@ -122,13 +115,10 @@ public:
   ///  The environment is the mapping from expressions to values.
   const Environment& getEnvironment() const { return Env; }
 
-
-  /// getStore - Return the store associated with this state.  The store
+  /// Return the store associated with this state.  The store
   ///  is a mapping from locations to values.
-  Store getStore() const { return St.getStore(); }
-#if 0
-  void setStore(Store s) { St = s; }
-#endif
+  Store getStore() const { return store; }
+
   
   /// getGDM - Return the generic data map associated with this state.
   GenericDataMap getGDM() const { return GDM; }
@@ -140,7 +130,7 @@ public:
   ///  have the same Environment, Store, and GenericDataMap.
   static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {
     V->Env.Profile(ID);
-    ID.AddPointer(V->St.getStore());
+    ID.AddPointer(V->store);
     V->GDM.Profile(ID);
   }
 

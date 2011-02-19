@@ -105,7 +105,7 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
     // Conditions 5, 6, and 7.
     const GRState *state = node->getState();
     const GRState *pred_state = pred->getState();    
-    if (state->St != pred_state->St || state->GDM != pred_state->GDM ||
+    if (state->store != pred_state->store || state->GDM != pred_state->GDM ||
         progPoint.getLocationContext() != pred->getLocationContext())
       continue;
 

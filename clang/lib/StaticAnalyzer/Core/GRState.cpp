@@ -25,6 +25,31 @@ using namespace ento;
 // FIXME: Move this elsewhere.
 ConstraintManager::~ConstraintManager() {}
 
+GRState::GRState(GRStateManager *mgr, const Environment& env,
+                 StoreRef st, GenericDataMap gdm)
+  : stateMgr(mgr),
+    Env(env),
+    store(st.getStore()),
+    GDM(gdm),
+    refCount(0) {
+  stateMgr->getStoreManager().incrementReferenceCount(store);
+}
+
+GRState::GRState(const GRState& RHS)
+    : llvm::FoldingSetNode(),
+      stateMgr(RHS.stateMgr),
+      Env(RHS.Env),
+      store(RHS.store),
+      GDM(RHS.GDM),
+      refCount(0) {
+  stateMgr->getStoreManager().incrementReferenceCount(store);
+}
+
+GRState::~GRState() {
+  if (store)
+    stateMgr->getStoreManager().decrementReferenceCount(store);
+}
+
 GRStateManager::~GRStateManager() {
   for (std::vector<GRState::Printer*>::iterator I=Printers.begin(),
         E=Printers.end(); I!=E; ++I)
@@ -53,8 +78,8 @@ GRStateManager::removeDeadBindings(const GRState* state,
                                            state, RegionRoots);
 
   // Clean up the store.
-  NewState.St = StoreMgr->removeDeadBindings(NewState.getStore(), LCtx, 
-                                             SymReaper, RegionRoots);
+  NewState.setStore(StoreMgr->removeDeadBindings(NewState.getStore(), LCtx,
+                                                 SymReaper, RegionRoots));
   state = getPersistentState(NewState);
   return ConstraintMgr->removeDeadBindings(state, SymReaper);
 }
@@ -323,8 +348,17 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
 
 const GRState* GRState::makeWithStore(const StoreRef &store) const {
   GRState NewSt = *this;
-  NewSt.St = store;
+  NewSt.setStore(store);
   return getStateManager().getPersistentState(NewSt);
+}
+
+void GRState::setStore(const StoreRef &newStore) {
+  Store newStoreStore = newStore.getStore();
+  if (newStoreStore)
+    stateMgr->getStoreManager().incrementReferenceCount(newStoreStore);
+  if (store)
+    stateMgr->getStoreManager().decrementReferenceCount(store);
+  store = newStoreStore;
 }
 
 //===----------------------------------------------------------------------===//
