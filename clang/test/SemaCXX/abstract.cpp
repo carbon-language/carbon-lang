@@ -25,7 +25,7 @@ class E : D {
 
 static_assert(!__is_abstract(E), "E inherits from an abstract class but implements f");
 
-C *d = new C; // expected-error {{allocating an object of type 'C', which is an abstract class}}
+C *d = new C; // expected-error {{allocating an object of abstract class type 'C'}}
 
 C c; // expected-error {{variable type 'C' is an abstract class}}
 void t1(C c); // expected-error {{parameter type 'C' is an abstract class}}
@@ -38,8 +38,8 @@ struct S {
 void t3(const C&);
 
 void f() {
-  C(); // expected-error {{allocating an object of type 'C', which is an abstract class}}
-  t3(C()); // expected-error {{allocating an object of type 'C', which is an abstract class}}
+  C(); // expected-error {{allocating an object of abstract class type 'C'}}
+  t3(C()); // expected-error {{allocating an object of abstract class type 'C'}}
 }
 
 C e1[2]; // expected-error {{array of abstract class type 'C'}}
