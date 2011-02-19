@@ -233,6 +233,15 @@ public:
     //------------------------------------------------------------------
     lldb::TypeSP
     FindTypeByName (const ConstString &name) const;
+    
+//    static SymbolContext
+//    CreateSymbolContextFromDescription (lldb::TargetSP &target,
+//                                        const char *module,
+//                                        const char *comp_unit,
+//                                        const char *function,
+//                                        const char *block_spec
+//                                        const char *line_number,
+//                                        const char *symbol);
 
     //------------------------------------------------------------------
     // Member variables

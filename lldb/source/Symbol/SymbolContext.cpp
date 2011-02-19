@@ -433,6 +433,26 @@ SymbolContext::FindTypeByName (const ConstString &name) const
     return return_value;
 }
 
+//SymbolContext
+//SymbolContext::CreateSymbolContextFromDescription (lldb::TargetSP &target_sp,
+//                                    const char *module,
+//                                    const char *comp_unit,
+//                                    const char *function,
+//                                    const char *block_spec
+//                                    const char *line_number,
+//                                    const char *symbol)
+//{
+//    SymbolContext sc;
+//    sc.target = target_sp;
+//    
+//    if (module != NULL && module[0] != '0')
+//    {
+//    
+//    }
+//    
+//    return sc;
+//}
+
 //----------------------------------------------------------------------
 //
 //  SymbolContextList

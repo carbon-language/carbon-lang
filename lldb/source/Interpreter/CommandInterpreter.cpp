@@ -1518,6 +1518,8 @@ CommandInterpreter::HandleCommands (StringList &commands,
 {
     size_t num_lines = commands.GetSize();
     CommandReturnObject tmp_result;
+    tmp_result.SetImmediateOutputStream (result.GetImmediateOutputStream ());
+    tmp_result.SetImmediateErrorStream (result.GetImmediateErrorStream ());
     
     // If we are going to continue past a "continue" then we need to run the commands synchronously.
     // Make sure you reset this value anywhere you return from the function.
@@ -1554,7 +1556,7 @@ CommandInterpreter::HandleCommands (StringList &commands,
         if (print_results)
         {
             if (tmp_result.Succeeded())
-              result.AppendMessageWithFormat("%s", tmp_result.GetOutputStream().GetData());
+              result.AppendMessageWithFormat("%s", tmp_result.GetOutputData());
         }
                 
         if (!success || !tmp_result.Succeeded())
@@ -1572,7 +1574,7 @@ CommandInterpreter::HandleCommands (StringList &commands,
                 result.AppendMessageWithFormat ("Command #%d '%s' failed with error: %s.\n", 
                                                 idx + 1, 
                                                 cmd, 
-                                                tmp_result.GetErrorStream().GetData());
+                                                tmp_result.GetErrorData());
             }
         }
         

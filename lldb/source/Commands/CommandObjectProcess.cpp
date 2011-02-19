@@ -1483,7 +1483,7 @@ public:
         CommandReturnObject &result
     )
     {
-        StreamString &output_stream = result.GetOutputStream();
+        Stream &output_stream = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.process)

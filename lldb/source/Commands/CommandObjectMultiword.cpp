@@ -187,7 +187,7 @@ CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result)
     // First time through here, generate the help text for the object and
     // push it to the return result object as well
 
-    StreamString &output_stream = result.GetOutputStream();
+    Stream &output_stream = result.GetOutputStream();
     output_stream.PutCString ("The following subcommands are supported:\n\n");
 
     CommandMap::iterator pos;

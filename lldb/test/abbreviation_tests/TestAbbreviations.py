@@ -84,7 +84,7 @@ class AbbreviationsTestCase(TestBase):
         self.expect("br s -f main.cpp -l 32",
                     startstr = "Breakpoint created: 3: file ='main.cpp', line = 32, locations = 1")
 
-        self.runCmd("br co a -p 1 -o 'print frame'")
+        self.runCmd("br co a -s python 1 -o 'print frame'")
         self.expect("br co l 1",
                     substrs = [ "Breakpoint 1:",
                                 "Breakpoint commands:",

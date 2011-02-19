@@ -69,7 +69,13 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
-
+    
+    void
+    SetImmediateOutputFile (FILE *fh);
+    
+    void
+    SetImmediateErrorFile (FILE *fh);
+    
 protected:
     friend class SBCommandInterpreter;
     friend class SBOptions;

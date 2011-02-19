@@ -34,7 +34,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 static void
-AddBreakpointDescription (StreamString *s, Breakpoint *bp, lldb::DescriptionLevel level)
+AddBreakpointDescription (Stream *s, Breakpoint *bp, lldb::DescriptionLevel level)
 {
     s->IndentMore();
     bp->GetDescription (s, level, true);
@@ -370,8 +370,8 @@ CommandObjectBreakpointSet::Execute
                                                        m_options.m_check_inlines).get();
                         if (bp)
                         {
-                            StreamString &output_stream = result.GetOutputStream();
-                            output_stream.Printf ("Breakpoint created: ");
+                            Stream &output_stream = result.GetOutputStream();
+                            result.AppendMessage ("Breakpoint created: ");
                             bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
                             output_stream.EOL();
                             if (bp->GetNumLocations() == 0)
@@ -417,7 +417,7 @@ CommandObjectBreakpointSet::Execute
                                                        Breakpoint::Exact).get();
                         if (bp)
                         {
-                            StreamString &output_stream = result.GetOutputStream();
+                            Stream &output_stream = result.GetOutputStream();
                             output_stream.Printf ("Breakpoint created: ");
                             bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
                             output_stream.EOL();
@@ -450,7 +450,7 @@ CommandObjectBreakpointSet::Execute
                         bp = target->CreateBreakpoint (&module_spec, regexp).get();
                         if (bp)
                         {
-                            StreamString &output_stream = result.GetOutputStream();
+                            Stream &output_stream = result.GetOutputStream();
                             output_stream.Printf ("Breakpoint created: ");
                             bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
                             output_stream.EOL();
@@ -497,7 +497,7 @@ CommandObjectBreakpointSet::Execute
     
     if (bp && !use_module)
     {
-        StreamString &output_stream = result.GetOutputStream();
+        Stream &output_stream = result.GetOutputStream();
         output_stream.Printf ("Breakpoint created: ");
         bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
         output_stream.EOL();
@@ -775,7 +775,7 @@ CommandObjectBreakpointList::Execute
         return true;
     }
 
-    StreamString &output_stream = result.GetOutputStream();
+    Stream &output_stream = result.GetOutputStream();
 
     if (args.GetArgumentCount() == 0)
     {
@@ -1212,7 +1212,7 @@ CommandObjectBreakpointClear::Execute
 
     if (num_cleared > 0)
     {
-        StreamString &output_stream = result.GetOutputStream();
+        Stream &output_stream = result.GetOutputStream();
         output_stream.Printf ("%d breakpoints cleared:\n", num_cleared);
         output_stream << ss.GetData();
         output_stream.EOL();

@@ -65,7 +65,7 @@ public:
         CommandReturnObject &result
     )
     {
-        StreamString &output_stream = result.GetOutputStream();
+        Stream &output_stream = result.GetOutputStream();
         DataExtractor reg_data;
         ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         RegisterContext *reg_context = exe_ctx.GetRegisterContext ();

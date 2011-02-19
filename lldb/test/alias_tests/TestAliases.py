@@ -72,8 +72,8 @@ class AliasTestCase(TestBase):
                                  "2: name = 'sum', locations = 1",
                                  "3: file ='main.cpp', line = 32, locations = 1" ])
 
-        self.runCmd ("bpa -p 1 -o 'print frame; print bp_loc'")
-        self.runCmd ("bpa -c 2 -o 'frame variable b'")
+        self.runCmd ("bpa -s python 1 -o 'print frame; print bp_loc'")
+        self.runCmd ("bpa -s command 2 -o 'frame variable b'")
         self.expect ("bpi -f",
                      substrs = [ "Current breakpoints:",
                                  "1: name = 'foo', locations = 1",

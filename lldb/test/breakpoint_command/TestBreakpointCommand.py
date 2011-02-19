@@ -51,8 +51,8 @@ class BreakpointCommandTestCase(TestBase):
                         self.line)
 
         # Now add callbacks for the breakpoints just created.
-        self.runCmd("breakpoint command add -c -o 'frame variable -t -s' 1")
-        self.runCmd("breakpoint command add -p -o 'here = open(\"output.txt\", \"w\"); print >> here, \"lldb\"; here.close()' 2")
+        self.runCmd("breakpoint command add -s command -o 'frame variable -t -s' 1")
+        self.runCmd("breakpoint command add -s python -o 'here = open(\"output.txt\", \"w\"); print >> here, \"lldb\"; here.close()' 2")
 
         # Check that the breakpoint commands are correctly set.
 
@@ -145,7 +145,7 @@ class BreakpointCommandTestCase(TestBase):
                         self.line)
 
         # Now add callbacks for the breakpoints just created.
-        self.runCmd("breakpoint command add -p -o 'here = open(\"output-2.txt\", \"w\"); print >> here, frame; print >> here, bp_loc; here.close()' 1")
+        self.runCmd("breakpoint command add -s python -o 'here = open(\"output-2.txt\", \"w\"); print >> here, frame; print >> here, bp_loc; here.close()' 1")
 
         # Remove 'output-2.txt' if it already exists.
 

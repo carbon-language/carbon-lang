@@ -22,7 +22,7 @@ using namespace lldb_private;
 
 static void
 DumpSettingEntry (CommandInterpreter &interpreter, 
-                  StreamString &result_stream,
+                  Stream &result_stream,
                   const uint32_t max_len, 
                   const SettingEntry &entry)
 {
@@ -802,7 +802,7 @@ UserSettingsController::PendingSettingsForInstance (const ConstString &instance_
 }
 
 void
-UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
+UserSettingsController::GetAllDefaultSettingValues (Stream &result_stream)
 {
     std::string parent_prefix;
     BuildParentPrefix (parent_prefix);
@@ -845,7 +845,7 @@ UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
 }
 
 void
-UserSettingsController::GetAllPendingSettingValues (StreamString &result_stream)
+UserSettingsController::GetAllPendingSettingValues (Stream &result_stream)
 {
     std::map<std::string, InstanceSettingsSP>::iterator pos;
 
@@ -913,7 +913,7 @@ UserSettingsController::FindSettingsForInstance (const ConstString &instance_nam
 
 void
 UserSettingsController::GetAllInstanceVariableValues (CommandInterpreter &interpreter,
-                                                      StreamString &result_stream)
+                                                      Stream &result_stream)
 {
     std::map<std::string, InstanceSettings *>::iterator pos;
     std::string parent_prefix;
@@ -1092,7 +1092,7 @@ void
 UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpreter,
                                                      UserSettingsControllerSP root, 
                                                      std::string &current_prefix, 
-                                                     StreamString &result_stream,
+                                                     Stream &result_stream,
                                                      Error &err)
 {
     // Write out current prefix line.
@@ -1156,7 +1156,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
                                                   UserSettingsControllerSP root,
                                                   std::string &current_prefix,
                                                   const char *search_name,
-                                                  StreamString &result_stream,
+                                                  Stream &result_stream,
                                                   Error &err)
 {
     Args names = UserSettingsController::BreakNameIntoPieces (search_name);
@@ -1310,7 +1310,7 @@ UserSettingsController::SearchAllSettingsDescriptions (CommandInterpreter &inter
                                                        UserSettingsControllerSP root,
                                                        std::string &current_prefix,
                                                        const char *search_word,
-                                                       StreamString &result_stream)
+                                                       Stream &result_stream)
 {
     if ((search_word == NULL) || (strlen (search_word) == 0))
         return;
@@ -1378,7 +1378,7 @@ void
 UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
                                               UserSettingsControllerSP root,
                                               std::string &current_prefix,
-                                              StreamString &result_stream,
+                                              Stream &result_stream,
                                               Error &err)
 {
     StreamString description;

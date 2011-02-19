@@ -131,7 +131,7 @@ lldb_private::DisplayThreadsInfo
         if (num_thread_infos_dumped < num_threads)
             result.GetOutputStream().Printf("%u of %u threads stopped with reasons:\n", num_thread_infos_dumped, num_threads);
 
-        result.GetOutputStream().GetString().append(strm.GetString());
+        result.AppendMessage (strm.GetString().c_str());
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
     return num_thread_infos_dumped;
@@ -1379,7 +1379,7 @@ public:
         CommandReturnObject &result
     )
     {
-        StreamString &strm = result.GetOutputStream();
+        Stream &strm = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
         if (exe_ctx.process)

@@ -30,6 +30,7 @@
 #include "lldb/API/SBHostOS.h"
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBProcess.h"
@@ -894,11 +895,12 @@ Driver::HandleIOEvent (const SBEvent &event)
         if (command_string == NULL)
             command_string = "";
         SBCommandReturnObject result;
-        if (m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, true) != lldb::eReturnStatusQuit)
-        {
-            m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize());
-            m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize());
-        }
+        result.SetImmediateOutputFile (m_debugger.GetOutputFileHandle());
+        result.SetImmediateErrorFile (m_debugger.GetErrorFileHandle());
+        
+        // We've set the result to dump immediately.
+        m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, true);
+
         // We are done getting and running our command, we can now clear the
         // m_waiting_for_command so we can get another one.
         m_waiting_for_command = false;

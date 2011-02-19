@@ -40,8 +40,7 @@ CommandObjectVersion::Execute
     CommandReturnObject &result
 )
 {
-    StreamString &output_stream = result.GetOutputStream();
-    output_stream.Printf ("%s\n", lldb_private::GetVersion());
+    result.AppendMessageWithFormat ("%s\n", lldb_private::GetVersion());
     result.SetStatus (eReturnStatusSuccessFinishResult);
     return true;
 }

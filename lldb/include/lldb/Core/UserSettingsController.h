@@ -137,7 +137,7 @@ public:
     FindAllSettingsDescriptions (CommandInterpreter &interpreter,
                                  lldb::UserSettingsControllerSP root, 
                                  std::string &current_prefix, 
-                                 StreamString &result_stream,
+                                 Stream &result_stream,
                                  Error &err);
 
     static void
@@ -145,7 +145,7 @@ public:
                               lldb::UserSettingsControllerSP root, 
                               std::string &current_prefix, 
                               const char *search_name,
-                              StreamString &result_stream,
+                              Stream &result_stream,
                               Error &err);
     
     static void
@@ -153,13 +153,13 @@ public:
                                    lldb::UserSettingsControllerSP root,
                                    std::string &current_prefix,
                                    const char *search_word,
-                                   StreamString &result_stream);
+                                   Stream &result_stream);
 
     static void
     GetAllVariableValues (CommandInterpreter &interpreter,
                           lldb::UserSettingsControllerSP root,
                           std::string &current_prefix,
-                          StreamString &result_stream,
+                          Stream &result_stream,
                           Error &err);
 
     static int
@@ -289,14 +289,14 @@ protected:
     FindSettingsForInstance (const ConstString &instance_name);
 
     void
-    GetAllPendingSettingValues (StreamString &result_stream);
+    GetAllPendingSettingValues (Stream &result_stream);
 
     void
-    GetAllDefaultSettingValues (StreamString &result_stream);
+    GetAllDefaultSettingValues (Stream &result_stream);
 
     void
     GetAllInstanceVariableValues (CommandInterpreter &interpreter, 
-                                  StreamString &result_stream);
+                                  Stream &result_stream);
 
     void
     OverrideAllInstances (const ConstString &var_name, 

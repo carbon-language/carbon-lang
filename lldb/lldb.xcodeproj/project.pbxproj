@@ -347,6 +347,7 @@
 		4C61978D12823D4300FAFFCC /* AppleObjCRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C61978912823D4300FAFFCC /* AppleObjCRuntime.h */; };
 		4C61978E12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C61978A12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp */; };
 		4C61978F12823D4300FAFFCC /* AppleObjCRuntimeV1.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C61978B12823D4300FAFFCC /* AppleObjCRuntimeV1.h */; };
+		4C626534130F1B0A00C889F6 /* StreamTee.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C626533130F1B0A00C889F6 /* StreamTee.h */; };
 		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		4C7CF7E41295E10E00B4FBB5 /* ThreadPlanCallUserExpression.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C7CF7E31295E10E00B4FBB5 /* ThreadPlanCallUserExpression.h */; };
 		4C7CF7E61295E12B00B4FBB5 /* ThreadPlanCallUserExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C7CF7E51295E12B00B4FBB5 /* ThreadPlanCallUserExpression.cpp */; };
@@ -1001,6 +1002,7 @@
 		4C61978912823D4300FAFFCC /* AppleObjCRuntime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleObjCRuntime.h; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntime.h; sourceTree = "<group>"; };
 		4C61978A12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppleObjCRuntimeV1.cpp; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.cpp; sourceTree = "<group>"; };
 		4C61978B12823D4300FAFFCC /* AppleObjCRuntimeV1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppleObjCRuntimeV1.h; path = LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h; sourceTree = "<group>"; };
+		4C626533130F1B0A00C889F6 /* StreamTee.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamTee.h; path = include/lldb/Core/StreamTee.h; sourceTree = "<group>"; };
 		4C74CB6212288704006A8171 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		4C7CF7E31295E10E00B4FBB5 /* ThreadPlanCallUserExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanCallUserExpression.h; path = include/lldb/Target/ThreadPlanCallUserExpression.h; sourceTree = "<group>"; };
 		4C7CF7E51295E12B00B4FBB5 /* ThreadPlanCallUserExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallUserExpression.cpp; path = source/Target/ThreadPlanCallUserExpression.cpp; sourceTree = "<group>"; };
@@ -1741,6 +1743,7 @@
 				26BC7E9210F1B85900F91463 /* StreamFile.cpp */,
 				26BC7D7B10F1B77400F91463 /* StreamString.h */,
 				26BC7E9310F1B85900F91463 /* StreamString.cpp */,
+				4C626533130F1B0A00C889F6 /* StreamTee.h */,
 				9A35765E116E76A700E8ED2F /* StringList.h */,
 				9A35765F116E76B900E8ED2F /* StringList.cpp */,
 				26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */,
@@ -2356,6 +2359,7 @@
 				268DA872130095D000C9483A /* Terminal.h in Headers */,
 				26FA4316130103F400E71120 /* FileSpec.h in Headers */,
 				260C6EA113011578005E16B0 /* File.h in Headers */,
+				4C626534130F1B0A00C889F6 /* StreamTee.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

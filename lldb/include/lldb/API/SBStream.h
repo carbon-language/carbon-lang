@@ -21,7 +21,7 @@ class SBStream
 public:
 
     SBStream ();
-
+    
     ~SBStream ();
 
     bool
@@ -74,6 +74,7 @@ protected:
     friend class SBTarget;
     friend class SBThread;
     friend class SBValue;
+    friend class SBCommandReturnObject;
 
 #ifndef SWIG
 

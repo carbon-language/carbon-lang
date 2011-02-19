@@ -790,15 +790,19 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
     
     BreakpointOptions::CommandData *data = (BreakpointOptions::CommandData *) baton;
     StringList &commands = data->user_source;
-
+    
     if (commands.GetSize() > 0)
     {
-        CommandReturnObject result;
         if (context->exe_ctx.target)
         {
-        
+            CommandReturnObject result;
             Debugger &debugger = context->exe_ctx.target->GetDebugger();
-            
+            // Rig up the results secondary output stream to the debugger's, so the output will come out synchronously
+            // if the debugger is set up that way.
+                
+            result.SetImmediateOutputFile (debugger.GetOutputFile().GetStream());
+            result.SetImmediateErrorFile (debugger.GetErrorFile().GetStream());
+
             bool stop_on_continue = true;
             bool echo_commands    = false;
             bool print_results    = true;
@@ -810,14 +814,6 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
                                                              echo_commands, 
                                                              print_results, 
                                                              result);
-            // Now dump the commands to the debugger's output:
-            if (!result.Succeeded())
-            {
-                debugger.GetErrorFile().Printf ("%s", result.GetErrorStream().GetData());
-            }
-            
-            debugger.GetOutputFile().Printf ("%s", result.GetOutputStream().GetData());
-
         }
     }
     return ret_value;
