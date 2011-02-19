@@ -11,19 +11,19 @@
 {
    ADDRESS_IN_RANGE/Invalid read of size 4
    Memcheck:Addr4
-   obj:/usr/bin/python2.5
+   obj:/usr/bin/python*
 }
 
 {
    ADDRESS_IN_RANGE/Invalid read of size 4
    Memcheck:Value8
-   obj:/usr/bin/python2.5
+   obj:/usr/bin/python*
 }
 
 {
    ADDRESS_IN_RANGE/Conditional jump or move depends on uninitialised value
    Memcheck:Cond
-   obj:/usr/bin/python2.5
+   obj:/usr/bin/python*
 }
 
 {
@@ -42,5 +42,5 @@
    We don't care if python leaks
    Memcheck:Leak
    fun:malloc
-   obj:/usr/bin/python2.5
+   obj:/usr/bin/python*
 }
