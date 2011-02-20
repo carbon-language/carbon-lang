@@ -1,17 +1,11 @@
-set(LLVM_TARGET_DEFINITIONS Options.td)
-tablegen(Options.inc
-         -gen-opt-parser-defs)
-add_custom_target(ClangDriverOptions
-  DEPENDS Options.inc)
+clang_tablegen(Options.inc -gen-opt-parser-defs
+  SOURCE Options.td
+  TARGET ClangDriverOptions)
 
-set(LLVM_TARGET_DEFINITIONS CC1Options.td)
-tablegen(CC1Options.inc
-         -gen-opt-parser-defs)
-add_custom_target(ClangCC1Options
-  DEPENDS CC1Options.inc)
+clang_tablegen(CC1Options.inc -gen-opt-parser-defs
+  SOURCE CC1Options.td
+  TARGET ClangCC1Options)
 
-set(LLVM_TARGET_DEFINITIONS CC1AsOptions.td)
-tablegen(CC1AsOptions.inc
-         -gen-opt-parser-defs)
-add_custom_target(ClangCC1AsOptions
-  DEPENDS CC1AsOptions.inc)
+clang_tablegen(CC1AsOptions.inc -gen-opt-parser-defs
+  SOURCE CC1AsOptions.td
+  TARGET ClangCC1AsOptions)

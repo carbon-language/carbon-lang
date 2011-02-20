@@ -1,9 +1,7 @@
-set(LLVM_TARGET_DEFINITIONS Checkers.td)
-tablegen(Checkers.inc
-         -gen-clang-sa-checkers
-         -I ${CMAKE_CURRENT_SOURCE_DIR}/../../../include)
-add_custom_target(ClangSACheckers
-  DEPENDS Checkers.inc)
+clang_tablegen(Checkers.inc -gen-clang-sa-checkers
+  -I ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
+  SOURCE Checkers.td
+  TARGET ClangSACheckers)
 
 set(LLVM_USED_LIBS clangBasic clangAST)
 

@@ -121,6 +121,36 @@ configure_file(
   ${CLANG_SOURCE_DIR}/include/clang/Config/config.h.cmake
   ${CLANG_BINARY_DIR}/include/clang/Config/config.h)
 
+include(LLVMParseArguments)
+
+function(clang_tablegen)
+  # Syntax:
+  # clang_tablegen output-file [tablegen-arg ...] SOURCE source-file
+  # [[TARGET cmake-target-name] [DEPENDS extra-dependency ...]]
+  #
+  # Generates a custom command for invoking tblgen as
+  #
+  # tblgen source-file -o=output-file tablegen-arg ...
+  #
+  # and, if cmake-target-name is provided, creates a custom target for
+  # executing the custom command depending on output-file. It is
+  # possible to list more files to depend after DEPENDS.
+
+  parse_arguments( CTG "SOURCE;TARGET;DEPENDS" "" ${ARGN} )
+
+  if( NOT CTG_SOURCE )
+    message(FATAL_ERROR "SOURCE source-file required by clang_tablegen")
+  endif()
+
+  set( LLVM_TARGET_DEFINITIONS ${CTG_SOURCE} )
+  tablegen( ${CTG_DEFAULT_ARGS} )
+
+  list( GET CTG_DEFAULT_ARGS 0 output_file )
+  if( CTG_TARGET )
+    add_custom_target( ${CTG_TARGET} DEPENDS ${output_file} ${CTG_DEPENDS} )
+  endif()
+endfunction(clang_tablegen)
+
 macro(add_clang_library name)
   llvm_process_sources(srcs ${ARGN})
   if(MSVC_IDE OR XCODE)

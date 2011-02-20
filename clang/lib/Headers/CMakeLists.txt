@@ -28,8 +28,8 @@ if(MSVC_IDE OR XCODE)
 endif()
 
 # Generate arm_neon.h
-set(LLVM_TARGET_DEFINITIONS ${CLANG_SOURCE_DIR}/include/clang/Basic/arm_neon.td)
-tablegen(arm_neon.h.inc -gen-arm-neon)
+clang_tablegen(arm_neon.h.inc -gen-arm-neon
+  SOURCE ${CLANG_SOURCE_DIR}/include/clang/Basic/arm_neon.td)
 
 set(out_files)
 foreach( f ${files} )
