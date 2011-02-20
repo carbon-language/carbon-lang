@@ -242,7 +242,23 @@ void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
 
 void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
                                         unsigned char Value) {
-  new MCOrgFragment(*Offset, Value, getCurrentSectionData());
+  int64_t Res;
+  if (Offset->EvaluateAsAbsolute(Res, getAssembler())) {
+    new MCOrgFragment(*Offset, Value, getCurrentSectionData());
+    return;
+  }
+
+  MCSymbol *CurrentPos = getContext().CreateTempSymbol();
+  EmitLabel(CurrentPos);
+  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+  const MCExpr *Ref =
+    MCSymbolRefExpr::Create(CurrentPos, Variant, getContext());
+  const MCExpr *Delta =
+    MCBinaryExpr::Create(MCBinaryExpr::Sub, Offset, Ref, getContext());
+
+  if (!Delta->EvaluateAsAbsolute(Res, getAssembler()))
+    report_fatal_error("expected assembly-time absolute expression");
+  EmitFill(Res, Value, 0);
 }
 
 void MCObjectStreamer::Finish() {
