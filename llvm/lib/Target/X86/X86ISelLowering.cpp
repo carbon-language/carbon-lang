@@ -5472,6 +5472,10 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   if (MayFoldVectorLoad(V1) && MayFoldIntoStore(Op))
     CanFoldLoad = true;
 
+  // Both of them can't be memory operations though.
+  if (MayFoldVectorLoad(V1) && MayFoldVectorLoad(V2))
+    CanFoldLoad = false;
+  
   if (CanFoldLoad) {
     if (HasSSE2 && NumElems == 2)
       return getTargetShuffleNode(X86ISD::MOVLPD, dl, VT, V1, V2, DAG);
