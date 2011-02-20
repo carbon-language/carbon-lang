@@ -33,6 +33,12 @@ public:
 
     ~SBCommandInterpreter ();
 
+    static const char * 
+    GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type);
+    
+    static const char *
+    GetArgumentDescriptionAsCString (const lldb::CommandArgumentType arg_type);
+    
     bool
     IsValid() const;
 

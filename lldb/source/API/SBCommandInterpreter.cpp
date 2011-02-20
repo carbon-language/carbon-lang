@@ -292,3 +292,17 @@ SBCommandInterpreter::GetBroadcaster ()
     return broadcaster;
 }
 
+const char * 
+SBCommandInterpreter::GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type)
+{
+    return CommandObject::GetArgumentTypeAsCString (arg_type);
+}
+
+const char * 
+SBCommandInterpreter::GetArgumentDescriptionAsCString (const lldb::CommandArgumentType arg_type)
+{
+    return CommandObject::GetArgumentDescriptionAsCString (arg_type);
+}
+
+
+

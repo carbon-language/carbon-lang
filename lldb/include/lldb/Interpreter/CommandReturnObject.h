@@ -34,17 +34,18 @@ public:
     const char *
     GetOutputData ()
     {
-        if (m_output_stream_string_sp)
-            return static_cast<StreamString *>(m_output_stream_string_sp.get())->GetData();
-        else
-            return "";
+        lldb::StreamSP stream_sp (m_out_stream.GetStreamAtIndex (eStreamStringIndex));
+        if (stream_sp)
+            return static_cast<StreamString *>(stream_sp.get())->GetData();
+        return "";
     }
 
     const char *
     GetErrorData ()
     {
-        if (m_error_stream_string_sp)
-            return static_cast<StreamString *>(m_error_stream_string_sp.get())->GetData();
+        lldb::StreamSP stream_sp (m_err_stream.GetStreamAtIndex (eStreamStringIndex));
+        if (stream_sp)
+            return static_cast<StreamString *>(stream_sp.get())->GetData();
         else
             return "";
     }
@@ -52,63 +53,66 @@ public:
     Stream &
     GetOutputStream ()
     {
-        if (!m_output_stream_string_sp)
+        // Make sure we at least have our normal string stream output stream
+        lldb::StreamSP stream_sp (m_out_stream.GetStreamAtIndex (eStreamStringIndex));
+        if (!stream_sp)
         {
-            StreamString *new_stream = new StreamString();
-            m_output_stream_string_sp.reset (new_stream);
-            m_output_stream.SetStream1 (m_output_stream_string_sp);
+            stream_sp.reset (new StreamString());
+            m_out_stream.SetStreamAtIndex (eStreamStringIndex, stream_sp);
         }   
-        return m_output_stream;
+        return m_out_stream;
     }
 
     Stream &
     GetErrorStream ()
     {
-        if (!m_error_stream_string_sp)
+        // Make sure we at least have our normal string stream output stream
+        lldb::StreamSP stream_sp (m_err_stream.GetStreamAtIndex (eStreamStringIndex));
+        if (!stream_sp)
         {
-            StreamString *new_stream = new StreamString();
-            m_error_stream_string_sp.reset (new_stream);
-            m_error_stream.SetStream1 (m_error_stream_string_sp);
+            stream_sp.reset (new StreamString());
+            m_err_stream.SetStreamAtIndex (eStreamStringIndex, stream_sp);
         }   
-        return m_error_stream;
+        return m_err_stream;
     }
 
     void
-    SetImmediateOutputFile (FILE *fh)
+    SetImmediateOutputFile (FILE *fh, bool transfer_fh_ownership = false)
     {
-        lldb::StreamSP new_stream_sp (new StreamFile (fh, false));
-        m_output_stream.SetStream2 (new_stream_sp);
+        lldb::StreamSP stream_sp (new StreamFile (fh, transfer_fh_ownership));
+        m_out_stream.SetStreamAtIndex (eImmediateStreamIndex, stream_sp);
     }
     
     void
-    SetImmediateErrorFile (FILE *fh)
+    SetImmediateErrorFile (FILE *fh, bool transfer_fh_ownership = false)
     {
-        lldb::StreamSP new_stream_sp (new StreamFile (fh, false));
-        SetImmediateOutputStream (new_stream_sp);
+        lldb::StreamSP stream_sp (new StreamFile (fh, transfer_fh_ownership));
+        m_out_stream.SetStreamAtIndex (eImmediateStreamIndex, stream_sp);
     }
     
     void
-    SetImmediateOutputStream (lldb::StreamSP &new_stream_sp)
+    SetImmediateOutputStream (const lldb::StreamSP &stream_sp)
     {
-        m_output_stream.SetStream2 (new_stream_sp);
+        m_out_stream.SetStreamAtIndex (eImmediateStreamIndex, stream_sp);
     }
     
     void
-    SetImmediateErrorStream (lldb::StreamSP &new_stream_sp)
+    SetImmediateErrorStream (const lldb::StreamSP &stream_sp)
     {
-        m_error_stream.SetStream2 (new_stream_sp);
+        // Ensure we always have our normal output stream
+        m_err_stream.SetStreamAtIndex (eImmediateStreamIndex, stream_sp);
     }
     
-    lldb::StreamSP &
+    lldb::StreamSP
     GetImmediateOutputStream ()
     {
-        return m_output_stream.GetStream2 ();
+        return m_out_stream.GetStreamAtIndex (eImmediateStreamIndex);
     }
     
-    lldb::StreamSP &
+    lldb::StreamSP
     GetImmediateErrorStream ()
     {
-        return m_error_stream.GetStream2 ();
+        return m_err_stream.GetStreamAtIndex (eImmediateStreamIndex);
     }
     
     void
@@ -155,10 +159,14 @@ public:
     void SetDidChangeProcessState (bool b);
 
 private:
-    lldb::StreamSP m_output_stream_string_sp;
-    lldb::StreamSP m_error_stream_string_sp;
-    StreamTee    m_output_stream;
-    StreamTee    m_error_stream;
+    enum 
+    {
+        eStreamStringIndex = 0,
+        eImmediateStreamIndex = 1
+    };
+    
+    StreamTee    m_out_stream;
+    StreamTee    m_err_stream;
     
     lldb::ReturnStatus m_status;
     bool m_did_change_process_state;

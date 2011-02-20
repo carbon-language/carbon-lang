@@ -181,35 +181,6 @@ OutputFormattedUsageText (FILE *out, int indent, const char *text, int output_ma
     }
 }
 
-void 
-GetArgumentName (const CommandArgumentType arg_type, std::string &arg_name)
-{
-    //Fudge this function here, since we can't call the "real" version in lldb_private::CommandObject...
-
-    switch (arg_type)
-    {
-        // Make cases for all the arg_types used in Driver.cpp
-
-        case eArgTypeNone:
-            arg_name = "";
-            break;
-
-        case eArgTypeArchitecture:
-            arg_name = "architecture";
-            break;
-    
-        case eArgTypeScriptLang:
-            arg_name = "script-language";
-            break;
-
-        case eArgTypeFilename:
-            arg_name = "filename";
-            break;
-    }
-    return;
-}
-
-
 void
 ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData data)
 {
@@ -265,23 +236,22 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
             if (option_table[i].usage_mask & opt_set_mask)
             {
                 CommandArgumentType arg_type = option_table[i].argument_type;
-                std::string arg_name;
-                GetArgumentName (arg_type, arg_name);
+                const char *arg_name = SBCommandInterpreter::GetArgumentTypeAsCString (arg_type);
                 if (option_table[i].required)
                 {
                     if (option_table[i].option_has_arg == required_argument)
-                        fprintf (out, " -%c <%s>", option_table[i].short_option, arg_name.c_str());
+                        fprintf (out, " -%c <%s>", option_table[i].short_option, arg_name);
                     else if (option_table[i].option_has_arg == optional_argument)
-                        fprintf (out, " -%c [<%s>]", option_table[i].short_option, arg_name.c_str());
+                        fprintf (out, " -%c [<%s>]", option_table[i].short_option, arg_name);
                     else
                         fprintf (out, " -%c", option_table[i].short_option);
                 }
                 else
                 {
                     if (option_table[i].option_has_arg == required_argument)
-                        fprintf (out, " [-%c <%s>]", option_table[i].short_option, arg_name.c_str());
+                        fprintf (out, " [-%c <%s>]", option_table[i].short_option, arg_name);
                     else if (option_table[i].option_has_arg == optional_argument)
-                        fprintf (out, " [-%c [<%s>]]", option_table[i].short_option, arg_name.c_str());
+                        fprintf (out, " [-%c [<%s>]]", option_table[i].short_option, arg_name);
                     else
                         fprintf (out, " [-%c]", option_table[i].short_option);
                 }
@@ -311,17 +281,16 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
         if (pos == options_seen.end())
         {
             CommandArgumentType arg_type = option_table[i].argument_type;
-            std::string arg_name;
-            GetArgumentName (arg_type, arg_name);
+            const char *arg_name = SBCommandInterpreter::GetArgumentTypeAsCString (arg_type);
 
             options_seen.insert (option_table[i].short_option);
             fprintf (out, "%*s-%c ", indent_level, "", option_table[i].short_option);
             if (arg_type != eArgTypeNone)
-                fprintf (out, "<%s>", arg_name.c_str());
+                fprintf (out, "<%s>", arg_name);
             fprintf (out, "\n");
             fprintf (out, "%*s--%s ", indent_level, "", option_table[i].long_option);
             if (arg_type != eArgTypeNone)
-                fprintf (out, "<%s>", arg_name.c_str());
+                fprintf (out, "<%s>", arg_name);
             fprintf (out, "\n");
             indent_level += 5;
             OutputFormattedUsageText (out, indent_level, option_table[i].usage_text, screen_width);

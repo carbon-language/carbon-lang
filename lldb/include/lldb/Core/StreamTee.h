@@ -11,6 +11,7 @@
 #define liblldb_StreamTee_h_
 
 #include "lldb/Core/Stream.h"
+#include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
 
@@ -18,20 +19,42 @@ class StreamTee : public Stream
 {
 public:
     StreamTee () :
-        Stream()
+        Stream (),
+        m_streams_mutex (Mutex::eMutexTypeRecursive),
+        m_streams ()
     {
     }
 
-    StreamTee (lldb::StreamSP &stream_1_sp, lldb::StreamSP &stream_2_sp):
-        m_stream_1_sp (stream_1_sp),
-        m_stream_2_sp (stream_2_sp)
+    StreamTee (lldb::StreamSP &stream_sp):
+        Stream (),
+        m_streams_mutex (Mutex::eMutexTypeRecursive),
+        m_streams ()
     {
+        // No need to lock mutex during construction
+        if (stream_sp)
+            m_streams.push_back (stream_sp);
     }
+    
 
-    StreamTee (lldb::StreamSP &stream_1_sp):
-        m_stream_1_sp (stream_1_sp),
-        m_stream_2_sp ()
+    StreamTee (lldb::StreamSP &stream_sp, lldb::StreamSP &stream_2_sp) :
+        Stream (),
+        m_streams_mutex (Mutex::eMutexTypeRecursive),
+        m_streams ()
     {
+        // No need to lock mutex during construction
+        if (stream_sp)
+            m_streams.push_back (stream_sp);
+        if (stream_2_sp)
+            m_streams.push_back (stream_2_sp);
+    }
+    
+    StreamTee (const StreamTee &rhs) :
+        Stream (rhs),
+        m_streams_mutex (Mutex::eMutexTypeRecursive),
+        m_streams() // Don't copy until we lock down "rhs"
+    {
+        Mutex::Locker locker (rhs.m_streams_mutex);
+        m_streams = rhs.m_streams;
     }
 
     virtual
@@ -39,58 +62,109 @@ public:
     {
     }
 
+    StreamTee &
+    operator = (const StreamTee &rhs)
+    {
+        if (this != &rhs) {
+            Stream::operator=(rhs);
+            Mutex::Locker lhs_locker (m_streams_mutex);
+            Mutex::Locker rhs_locker (rhs.m_streams_mutex);
+            m_streams = rhs.m_streams;            
+        }
+        return *this;
+    }
+
     virtual void
     Flush ()
     {
-        if (m_stream_1_sp)
-            m_stream_1_sp->Flush ();
-            
-        if (m_stream_2_sp)
-            m_stream_2_sp->Flush ();
+        Mutex::Locker locker (m_streams_mutex);
+        collection::iterator pos, end;
+        for (pos = m_streams.begin(), end = m_streams.end(); pos != end; ++pos)
+        {
+            // Allow for our collection to contain NULL streams. This allows
+            // the StreamTee to be used with hard coded indexes for clients
+            // that might want N total streams with only a few that are set
+            // to valid values.
+            Stream *strm = pos->get();
+            if (strm)
+                strm->Flush ();
+        }
     }
 
     virtual int
     Write (const void *s, size_t length)
     {
-        int ret_1;
-        int ret_2;
-        if (m_stream_1_sp)
-            ret_1 = m_stream_1_sp->Write (s, length);
-            
-        if (m_stream_2_sp)
-            ret_2 = m_stream_2_sp->Write (s, length);
-        
-        return ret_1 < ret_2 ? ret_1 : ret_2;
+        Mutex::Locker locker (m_streams_mutex);
+        if (m_streams.empty())
+            return 0;
+    
+        int min_bytes_written = INT_MAX;
+        collection::iterator pos, end;
+        for (pos = m_streams.begin(), end = m_streams.end(); pos != end; ++pos)
+        {
+            // Allow for our collection to contain NULL streams. This allows
+            // the StreamTee to be used with hard coded indexes for clients
+            // that might want N total streams with only a few that are set
+            // to valid values.
+            Stream *strm = pos->get();
+            if (strm)
+            {
+                int bytes_written = strm->Write (s, length);
+                if (min_bytes_written > bytes_written)
+                    min_bytes_written = bytes_written;
+            }
+        }
+        return min_bytes_written;
+    }
+
+    size_t
+    AppendStream (const lldb::StreamSP &stream_sp)
+    {
+        size_t new_idx = m_streams.size();
+        Mutex::Locker locker (m_streams_mutex);
+        m_streams.push_back (stream_sp);
+        return new_idx;
+    }
+
+    size_t
+    GetNumStreams () const
+    {
+        size_t result = 0;
+        {
+            Mutex::Locker locker (m_streams_mutex);
+            result = m_streams.size();
+        }
+        return result;
+    }
+
+    lldb::StreamSP
+    GetStreamAtIndex (uint32_t idx)
+    {
+        lldb::StreamSP stream_sp;
+        Mutex::Locker locker (m_streams_mutex);
+        if (idx < m_streams.size())
+            stream_sp = m_streams[idx];
+        return stream_sp;
     }
 
     void
-    SetStream1 (lldb::StreamSP &stream_1_sp)
+    SetStreamAtIndex (uint32_t idx, const lldb::StreamSP& stream_sp)
     {
-        m_stream_1_sp = stream_1_sp;
+        Mutex::Locker locker (m_streams_mutex);
+        // Resize our stream vector as necessary to fit as many streams
+        // as needed. This also allows this class to be used with hard
+        // coded indexes that can be used contain many streams, not all
+        // of which are valid.
+        if (idx >= m_streams.size())
+            m_streams.resize(idx + 1);
+        m_streams[idx] = stream_sp;
     }
     
-    void
-    SetStream2 (lldb::StreamSP &stream_2_sp)
-    {
-        m_stream_2_sp = stream_2_sp;
-    }
-    
-    lldb::StreamSP &
-    GetStream1 ()
-    {
-        return m_stream_1_sp;
-    }
-    
-    lldb::StreamSP &
-    GetStream2 ()
-    {
-        return m_stream_2_sp;
-    }
-    
+
 protected:
-    lldb::StreamSP m_stream_1_sp;
-    lldb::StreamSP m_stream_2_sp;
-
+    typedef std::vector<lldb::StreamSP> collection;
+    mutable Mutex m_streams_mutex;
+    collection m_streams;
 };
 
 } // namespace lldb_private

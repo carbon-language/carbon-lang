@@ -59,6 +59,13 @@ public:
     virtual
     ~CommandObject ();
 
+    
+    static const char * 
+    GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type);
+    
+    static const char * 
+    GetArgumentDescriptionAsCString (const lldb::CommandArgumentType arg_type);
+
     CommandInterpreter &
     GetCommandInterpreter ()
     {

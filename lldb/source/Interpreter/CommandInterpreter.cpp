@@ -92,27 +92,27 @@ CommandInterpreter::Initialize ()
     LoadCommandDictionary ();
 
     // Set up some initial aliases.
-    result.Clear(); HandleCommand ("command alias q        quit", false, result);
-    result.Clear(); HandleCommand ("command alias run      process launch --", false, result);
-    result.Clear(); HandleCommand ("command alias r        process launch --", false, result);
-    result.Clear(); HandleCommand ("command alias c        process continue", false, result);
-    result.Clear(); HandleCommand ("command alias continue process continue", false, result);
-    result.Clear(); HandleCommand ("command alias expr     expression", false, result);
-    result.Clear(); HandleCommand ("command alias exit     quit", false, result);
-    result.Clear(); HandleCommand ("command alias b        regexp-break", false, result);
-    result.Clear(); HandleCommand ("command alias bt       thread backtrace", false, result);
-    result.Clear(); HandleCommand ("command alias si       thread step-inst", false, result);
-    result.Clear(); HandleCommand ("command alias step     thread step-in", false, result);
-    result.Clear(); HandleCommand ("command alias s        thread step-in", false, result);
-    result.Clear(); HandleCommand ("command alias next     thread step-over", false, result);
-    result.Clear(); HandleCommand ("command alias n        thread step-over", false, result);
-    result.Clear(); HandleCommand ("command alias finish   thread step-out", false, result);
-    result.Clear(); HandleCommand ("command alias x        memory read", false, result);
-    result.Clear(); HandleCommand ("command alias l        source list", false, result);
-    result.Clear(); HandleCommand ("command alias list     source list", false, result);
-    result.Clear(); HandleCommand ("command alias p        frame variable", false, result);
-    result.Clear(); HandleCommand ("command alias print    frame variable", false, result);
-    result.Clear(); HandleCommand ("command alias po       expression -o --", false, result);
+    HandleCommand ("command alias q        quit", false, result);
+    HandleCommand ("command alias run      process launch --", false, result);
+    HandleCommand ("command alias r        process launch --", false, result);
+    HandleCommand ("command alias c        process continue", false, result);
+    HandleCommand ("command alias continue process continue", false, result);
+    HandleCommand ("command alias expr     expression", false, result);
+    HandleCommand ("command alias exit     quit", false, result);
+    HandleCommand ("command alias b        regexp-break", false, result);
+    HandleCommand ("command alias bt       thread backtrace", false, result);
+    HandleCommand ("command alias si       thread step-inst", false, result);
+    HandleCommand ("command alias step     thread step-in", false, result);
+    HandleCommand ("command alias s        thread step-in", false, result);
+    HandleCommand ("command alias next     thread step-over", false, result);
+    HandleCommand ("command alias n        thread step-over", false, result);
+    HandleCommand ("command alias finish   thread step-out", false, result);
+    HandleCommand ("command alias x        memory read", false, result);
+    HandleCommand ("command alias l        source list", false, result);
+    HandleCommand ("command alias list     source list", false, result);
+    HandleCommand ("command alias p        frame variable", false, result);
+    HandleCommand ("command alias print    frame variable", false, result);
+    HandleCommand ("command alias po       expression -o --", false, result);
 }
 
 const char *
@@ -1517,9 +1517,6 @@ CommandInterpreter::HandleCommands (StringList &commands,
                                     CommandReturnObject &result)
 {
     size_t num_lines = commands.GetSize();
-    CommandReturnObject tmp_result;
-    tmp_result.SetImmediateOutputStream (result.GetImmediateOutputStream ());
-    tmp_result.SetImmediateErrorStream (result.GetImmediateErrorStream ());
     
     // If we are going to continue past a "continue" then we need to run the commands synchronously.
     // Make sure you reset this value anywhere you return from the function.
@@ -1543,7 +1540,6 @@ CommandInterpreter::HandleCommands (StringList &commands,
         if (cmd[0] == '\0')
             continue;
             
-        tmp_result.Clear();
         if (echo_commands)
         {
             result.AppendMessageWithFormat ("%s %s\n", 
@@ -1551,6 +1547,9 @@ CommandInterpreter::HandleCommands (StringList &commands,
                                              cmd);
         }
 
+        CommandReturnObject tmp_result;
+        tmp_result.SetImmediateOutputStream (result.GetImmediateOutputStream ());
+        tmp_result.SetImmediateErrorStream (result.GetImmediateErrorStream ());
         bool success = HandleCommand(cmd, false, tmp_result, NULL);
         
         if (print_results)

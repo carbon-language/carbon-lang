@@ -19,10 +19,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 CommandReturnObject::CommandReturnObject () :
-    m_error_stream_string_sp (),
-    m_output_stream_string_sp (),
-    m_output_stream (),
-    m_error_stream (),
+    m_out_stream (),
+    m_err_stream (),
     m_status (eReturnStatusStarted),
     m_did_change_process_state (false)
 {
@@ -145,11 +143,15 @@ CommandReturnObject::HasResult ()
 void
 CommandReturnObject::Clear()
 {
-    if (m_output_stream_string_sp)
-        static_cast<StreamString *>(m_output_stream_string_sp.get())->Clear();
-    if (m_error_stream_string_sp)
-        static_cast<StreamString *>(m_error_stream_string_sp.get())->Clear();
+    lldb::StreamSP stream_sp;
+    stream_sp = m_out_stream.GetStreamAtIndex (eStreamStringIndex);
+    if (stream_sp)
+        static_cast<StreamString *>(stream_sp.get())->Clear();
+    stream_sp = m_err_stream.GetStreamAtIndex (eStreamStringIndex);
+    if (stream_sp)
+        static_cast<StreamString *>(stream_sp.get())->Clear();
     m_status = eReturnStatusStarted;
+    m_did_change_process_state = false;
 }
 
 bool
