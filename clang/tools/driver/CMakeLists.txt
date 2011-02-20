@@ -46,6 +46,7 @@ add_custom_target(clang++ ALL
     "${LLVM_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/clang${CMAKE_EXECUTABLE_SUFFIX}"
     "${clang_pp}"
   DEPENDS clang)
+set_target_properties(clang++ PROPERTIES FOLDER "Clang executables")
 set_property(DIRECTORY APPEND
   PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${clang_pp})
 

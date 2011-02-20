@@ -28,9 +28,11 @@ function(add_clang_unittest)
   endif()
   add_clang_executable(${test_name}Tests ${CLANG_UNITTEST_DEFAULT_ARGS})
   add_dependencies(ClangUnitTests ${test_name}Tests)
+  set_target_properties(${test_name}Tests PROPERTIES FOLDER "Clang tests")
 endfunction()
 
 add_custom_target(ClangUnitTests)
+set_target_properties(ClangUnitTests PROPERTIES FOLDER "Clang tests")
 
 include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
 add_definitions(-DGTEST_HAS_RTTI=0)

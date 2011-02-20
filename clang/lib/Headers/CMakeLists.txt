@@ -67,6 +67,7 @@ if (other_output_dir)
 endif ()
 
 add_custom_target(clang-headers ALL DEPENDS ${out_files})
+set_target_properties(clang-headers PROPERTIES FOLDER "Misc")
 
 install(FILES ${files} ${output_dir}/arm_neon.h
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ

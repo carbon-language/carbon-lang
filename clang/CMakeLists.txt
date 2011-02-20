@@ -148,6 +148,7 @@ function(clang_tablegen)
   list( GET CTG_DEFAULT_ARGS 0 output_file )
   if( CTG_TARGET )
     add_custom_target( ${CTG_TARGET} DEPENDS ${output_file} ${CTG_DEPENDS} )
+    set_target_properties( ${CTG_TARGET} PROPERTIES FOLDER "Clang tablegenning")
   endif()
 endfunction(clang_tablegen)
 
@@ -205,10 +206,12 @@ macro(add_clang_library name)
   install(TARGETS ${name}
     LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
     ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+  set_target_properties(${name} PROPERTIES FOLDER "Clang libraries")
 endmacro(add_clang_library)
 
 macro(add_clang_executable name)
   add_llvm_executable( ${name} ${ARGN} )
+  set_target_properties(${name} PROPERTIES FOLDER "Clang executables")
 endmacro(add_clang_executable)
 
 include_directories(
