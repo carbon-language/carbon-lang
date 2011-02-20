@@ -1042,8 +1042,8 @@ public:
   CharUnits getTypeAlignInChars(QualType T) const;
   CharUnits getTypeAlignInChars(const Type *T) const;
 
-  std::pair<CharUnits, CharUnits> getTypeInfoInChars(const Type *T);
-  std::pair<CharUnits, CharUnits> getTypeInfoInChars(QualType T);
+  std::pair<CharUnits, CharUnits> getTypeInfoInChars(const Type *T) const;
+  std::pair<CharUnits, CharUnits> getTypeInfoInChars(QualType T) const;
 
   /// getPreferredTypeAlign - Return the "preferred" alignment of the specified
   /// type for the current target in bits.  This can be different than the ABI

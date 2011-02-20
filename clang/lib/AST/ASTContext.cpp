@@ -652,14 +652,14 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
 }
 
 std::pair<CharUnits, CharUnits>
-ASTContext::getTypeInfoInChars(const Type *T) {
+ASTContext::getTypeInfoInChars(const Type *T) const {
   std::pair<uint64_t, unsigned> Info = getTypeInfo(T);
   return std::make_pair(toCharUnitsFromBits(Info.first),
                         toCharUnitsFromBits(Info.second));
 }
 
 std::pair<CharUnits, CharUnits>
-ASTContext::getTypeInfoInChars(QualType T) {
+ASTContext::getTypeInfoInChars(QualType T) const {
   return getTypeInfoInChars(T.getTypePtr());
 }
 
