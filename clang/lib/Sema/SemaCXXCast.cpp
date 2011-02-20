@@ -1272,7 +1272,6 @@ static ExprResult ResolveAndFixSingleFunctionTemplateSpecialization(
                     unsigned DiagIDForComplaining) {
   assert(SrcExpr->getType() == Self.Context.OverloadTy);
   DeclAccessPair Found;
-  bool ret = false;
   Expr* SingleFunctionExpression = 0;
   if (FunctionDecl* Fn = Self.ResolveSingleFunctionTemplateSpecialization(
                                     SrcExpr, false, // false -> Complain 
