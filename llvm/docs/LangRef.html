@@ -4614,10 +4614,11 @@ entry:
 
 
 <h5>Arguments:</h5>
-<p>The '<tt>zext</tt>' instruction takes a value to cast, which must be of
-   <a href="#t_integer">integer</a> type, and a type to cast it to, which must
-   also be of <a href="#t_integer">integer</a> type. The bit size of the
-   <tt>value</tt> must be smaller than the bit size of the destination type,
+<p>The '<tt>zext</tt>' instruction takes a value to cast, and a type to cast it to.
+   Both types must be of <a href="#t_integer">integer</a> types, or vectors
+   of the same number of integers.
+   The bit size of the <tt>value</tt> must be smaller than
+   the bit size of the destination type,
    <tt>ty2</tt>.</p>
 
 <h5>Semantics:</h5>
@@ -4630,6 +4631,7 @@ entry:
 <pre>
   %X = zext i32 257 to i64              <i>; yields i64:257</i>
   %Y = zext i1 true to i32              <i>; yields i32:1</i>
+  %Z = zext &lt;2 x i16&gt; &lt;i16 8, i16 7&gt; to &lt;2 x i32&gt; <i>; yields &lt;i32 8, i32 7&gt;</i>
 </pre>
 
 </div>

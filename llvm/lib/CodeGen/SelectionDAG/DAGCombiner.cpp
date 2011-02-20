@@ -3887,7 +3887,9 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   }
 
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
-  if (ISD::isNON_EXTLoad(N0.getNode()) &&
+  // None of the supported targets knows how to perform load and vector_zext
+  // in one instruction.  We only perform this transformation on scalar zext.
+  if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::ZEXTLOAD, N0.getValueType()))) {
     bool DoXform = true;
