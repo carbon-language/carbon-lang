@@ -432,6 +432,61 @@ CXXRecordDecl *Type::getAsCXXRecordDecl() const {
   return 0;
 }
 
+namespace {
+  class GetContainedAutoVisitor :
+    public TypeVisitor<GetContainedAutoVisitor, AutoType*> {
+  public:
+    using TypeVisitor<GetContainedAutoVisitor, AutoType*>::Visit;
+    AutoType *Visit(QualType T) {
+      if (T.isNull())
+        return 0;
+      return Visit(T.getTypePtr());
+    }
+
+    // The 'auto' type itself.
+    AutoType *VisitAutoType(const AutoType *AT) {
+      return const_cast<AutoType*>(AT);
+    }
+
+    // Only these types can contain the desired 'auto' type.
+    AutoType *VisitPointerType(const PointerType *T) {
+      return Visit(T->getPointeeType());
+    }
+    AutoType *VisitBlockPointerType(const BlockPointerType *T) {
+      return Visit(T->getPointeeType());
+    }
+    AutoType *VisitReferenceType(const ReferenceType *T) {
+      return Visit(T->getPointeeTypeAsWritten());
+    }
+    AutoType *VisitMemberPointerType(const MemberPointerType *T) {
+      return Visit(T->getPointeeType());
+    }
+    AutoType *VisitArrayType(const ArrayType *T) {
+      return Visit(T->getElementType());
+    }
+    AutoType *VisitDependentSizedExtVectorType(
+      const DependentSizedExtVectorType *T) {
+      return Visit(T->getElementType());
+    }
+    AutoType *VisitVectorType(const VectorType *T) {
+      return Visit(T->getElementType());
+    }
+    AutoType *VisitFunctionType(const FunctionType *T) {
+      return Visit(T->getResultType());
+    }
+    AutoType *VisitParenType(const ParenType *T) {
+      return Visit(T->getInnerType());
+    }
+    AutoType *VisitAttributedType(const AttributedType *T) {
+      return Visit(T->getModifiedType());
+    }
+  };
+}
+
+AutoType *Type::getContainedAutoType() const {
+  return GetContainedAutoVisitor().Visit(this);
+}
+
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
@@ -1066,7 +1121,6 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case NullPtr:           return "nullptr_t";
   case Overload:          return "<overloaded function type>";
   case Dependent:         return "<dependent type>";
-  case UndeducedAuto:     return "auto";
   case ObjCId:            return "id";
   case ObjCClass:         return "Class";
   case ObjCSel:           return "SEL";

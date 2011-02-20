@@ -715,6 +715,10 @@ DEF_TRAVERSE_TYPE(DecltypeType, {
     TRY_TO(TraverseStmt(T->getUnderlyingExpr()));
   })
 
+DEF_TRAVERSE_TYPE(AutoType, {
+    TRY_TO(TraverseType(T->getDeducedType()));
+  })
+
 DEF_TRAVERSE_TYPE(RecordType, { })
 DEF_TRAVERSE_TYPE(EnumType, { })
 DEF_TRAVERSE_TYPE(TemplateTypeParmType, { })
@@ -921,6 +925,10 @@ DEF_TRAVERSE_TYPELOC(TypeOfType, {
 // FIXME: location of underlying expr
 DEF_TRAVERSE_TYPELOC(DecltypeType, {
     TRY_TO(TraverseStmt(TL.getTypePtr()->getUnderlyingExpr()));
+  })
+
+DEF_TRAVERSE_TYPELOC(AutoType, {
+    TRY_TO(TraverseType(TL.getTypePtr()->getDeducedType()));
   })
 
 DEF_TRAVERSE_TYPELOC(RecordType, { })

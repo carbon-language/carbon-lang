@@ -1312,9 +1312,6 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   case BuiltinType::Dependent:
     break;
 
-  case BuiltinType::UndeducedAuto: // FIXME: Deserves a cursor?
-    break;
-
   case BuiltinType::ObjCId:
     VisitType = Context.getObjCIdType();
     break;

@@ -380,10 +380,6 @@ void ASTContext::InitBuiltinTypes() {
   // Placeholder type for functions.
   InitBuiltinType(OverloadTy,          BuiltinType::Overload);
 
-  // Placeholder type for C++0x auto declarations whose real type has
-  // not yet been deduced.
-  InitBuiltinType(UndeducedAutoTy,     BuiltinType::UndeducedAuto);
-
   // C99 6.2.5p11.
   FloatComplexTy      = getComplexType(FloatTy);
   DoubleComplexTy     = getComplexType(DoubleTy);
@@ -874,6 +870,12 @@ ASTContext::getTypeInfo(const Type *T) const {
   case Type::SubstTemplateTypeParm:
     return getTypeInfo(cast<SubstTemplateTypeParmType>(T)->
                        getReplacementType().getTypePtr());
+
+  case Type::Auto: {
+    const AutoType *A = cast<AutoType>(T);
+    assert(A->isDeduced() && "Cannot request the size of a dependent type");
+    return getTypeInfo(cast<AutoType>(T)->getDeducedType().getTypePtr());
+  }
 
   case Type::Paren:
     return getTypeInfo(cast<ParenType>(T)->getInnerType().getTypePtr());
@@ -1532,6 +1534,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
   case Type::DependentTemplateSpecialization:
   case Type::TemplateTypeParm:
   case Type::SubstTemplateTypeParmPack:
+  case Type::Auto:
   case Type::PackExpansion:
     llvm_unreachable("type should never be variably-modified");
 
@@ -2678,6 +2681,14 @@ QualType ASTContext::getDecltypeType(Expr *e) const {
   }
   Types.push_back(dt);
   return QualType(dt, 0);
+}
+
+/// getAutoType - Unlike many "get<Type>" functions, we don't unique
+/// AutoType AST's.
+QualType ASTContext::getAutoType(QualType DeducedType) const {
+  AutoType *at = new (*this, TypeAlignment) AutoType(DeducedType);
+  Types.push_back(at);
+  return QualType(at, 0);
 }
 
 /// getTagDeclType - Return the unique reference to the type for the

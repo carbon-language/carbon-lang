@@ -54,9 +54,6 @@ serialization::TypeIdxFromBuiltin(const BuiltinType *BT) {
   case BuiltinType::ObjCId:     ID = PREDEF_TYPE_OBJC_ID;       break;
   case BuiltinType::ObjCClass:  ID = PREDEF_TYPE_OBJC_CLASS;    break;
   case BuiltinType::ObjCSel:    ID = PREDEF_TYPE_OBJC_SEL;      break;
-  case BuiltinType::UndeducedAuto:
-    assert(0 && "Should not see undeduced auto here");
-    break;
   }
 
   return TypeIdx(ID);

@@ -730,7 +730,8 @@ public:
   QualType BuildParenType(QualType T);
 
   TypeSourceInfo *GetTypeForDeclarator(Declarator &D, Scope *S,
-                                       TagDecl **OwnedDecl = 0);
+                                       TagDecl **OwnedDecl = 0,
+                                       bool AllowAutoInTypeName = false);
   TypeSourceInfo *GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
                                                TypeSourceInfo *ReturnTypeInfo);
   /// \brief Package the given type and TSI into a ParsedType.
@@ -850,9 +851,9 @@ public:
   bool SetParamDefaultArgument(ParmVarDecl *Param, Expr *DefaultArg,
                                SourceLocation EqualLoc);
 
-  void AddInitializerToDecl(Decl *dcl, Expr *init);
-  void AddInitializerToDecl(Decl *dcl, Expr *init, bool DirectInit);
-  void ActOnUninitializedDecl(Decl *dcl, bool TypeContainsUndeducedAuto);
+  void AddInitializerToDecl(Decl *dcl, Expr *init, bool DirectInit,
+                            bool TypeMayContainAuto);
+  void ActOnUninitializedDecl(Decl *dcl, bool TypeMayContainAuto);
   void ActOnInitializerError(Decl *Dcl);
   void SetDeclDeleted(Decl *dcl, SourceLocation DelLoc);
   DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
@@ -1058,6 +1059,7 @@ public:
   void MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
+  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old);
   void MergeVarDecl(VarDecl *New, LookupResult &OldDecls);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
 
@@ -2237,7 +2239,8 @@ public:
   void AddCXXDirectInitializerToDecl(Decl *Dcl,
                                      SourceLocation LParenLoc,
                                      MultiExprArg Exprs,
-                                     SourceLocation RParenLoc);
+                                     SourceLocation RParenLoc,
+                                     bool TypeMayContainAuto);
 
   /// InitializeVarWithConstructor - Creates an CXXConstructExpr
   /// and sets it as the initializer for the the passed in VarDecl.
@@ -2458,7 +2461,8 @@ public:
                          Expr *ArraySize,
                          SourceLocation ConstructorLParen,
                          MultiExprArg ConstructorArgs,
-                         SourceLocation ConstructorRParen);
+                         SourceLocation ConstructorRParen,
+                         bool TypeMayContainAuto = true);
 
   bool CheckAllocatedType(QualType AllocType, SourceLocation Loc,
                           SourceRange R);
@@ -3705,6 +3709,8 @@ public:
                           const TemplateArgumentListInfo *ExplicitTemplateArgs,
                           FunctionDecl *&Specialization,
                           sema::TemplateDeductionInfo &Info);
+
+  bool DeduceAutoType(QualType AutoType, Expr *Initializer, QualType &Result);
 
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,

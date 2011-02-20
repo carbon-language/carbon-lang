@@ -791,7 +791,7 @@ static QualType ConvertDeclSpecToType(Sema &S, TypeProcessingState &state) {
   }
   case DeclSpec::TST_auto: {
     // TypeQuals handled by caller.
-    Result = Context.UndeducedAutoTy;
+    Result = Context.getAutoType(QualType());
     break;
   }
 
@@ -1091,9 +1091,9 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     return QualType();
   }
 
-  if (Context.getCanonicalType(T) == Context.UndeducedAutoTy) {
-    Diag(Loc,  diag::err_illegal_decl_array_of_auto)
-      << getPrintableNameForEntity(Entity);
+  if (T->getContainedAutoType()) {
+    Diag(Loc, diag::err_illegal_decl_array_of_auto)
+      << getPrintableNameForEntity(Entity) << T;
     return QualType();
   }
 
@@ -1405,7 +1405,8 @@ QualType Sema::GetTypeFromParser(ParsedType Ty, TypeSourceInfo **TInfo) {
 /// The result of this call will never be null, but the associated
 /// type may be a null type if there's an unrecoverable error.
 TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
-                                           TagDecl **OwnedDecl) {
+                                           TagDecl **OwnedDecl,
+                                           bool AutoAllowedInTypeName) {
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
   QualType T;
@@ -1449,33 +1450,8 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   if (D.getAttributes())
     distributeTypeAttrsFromDeclarator(state, T);
 
-  // Check for auto functions and trailing return type and adjust the
-  // return type accordingly.
-  if (getLangOptions().CPlusPlus0x && D.isFunctionDeclarator()) {
-    const DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
-    if (T == Context.UndeducedAutoTy) {
-      if (FTI.TrailingReturnType) {
-          T = GetTypeFromParser(ParsedType::getFromOpaquePtr(FTI.TrailingReturnType),
-                                &ReturnTypeInfo);
-      }
-      else {
-          Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
-               diag::err_auto_missing_trailing_return);
-          T = Context.IntTy;
-          D.setInvalidType(true);
-      }
-    }
-    else if (FTI.TrailingReturnType) {
-      Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
-           diag::err_trailing_return_without_auto);
-      D.setInvalidType(true);
-    }
-  }
-
-  if (T.isNull())
-    return Context.getNullTypeSourceInfo();
-
-  if (T == Context.UndeducedAutoTy) {
+  if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
+      !D.isFunctionDeclarator()) {
     int Error = -1;
 
     switch (D.getContext()) {
@@ -1500,14 +1476,19 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       Error = 5; // Template parameter
       break;
     case Declarator::BlockLiteralContext:
-      Error = 6;  // Block literal
+      Error = 6; // Block literal
+      break;
+    case Declarator::TemplateTypeArgContext:
+      Error = 7; // Template type argument
+      break;
+    case Declarator::TypeNameContext:
+      if (!AutoAllowedInTypeName)
+        Error = 8; // Generic
       break;
     case Declarator::FileContext:
     case Declarator::BlockContext:
     case Declarator::ForContext:
     case Declarator::ConditionContext:
-    case Declarator::TypeNameContext:
-    case Declarator::TemplateTypeArgContext:
       break;
     }
 
@@ -1518,6 +1499,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       D.setInvalidType(true);
     }
   }
+
+  if (T.isNull())
+    return Context.getNullTypeSourceInfo();
 
   // The name we're declaring, if any.
   DeclarationName Name;
@@ -1629,6 +1613,32 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         Diag(DeclType.Loc, diagID) << T->isFunctionType() << T;
         T = Context.IntTy;
         D.setInvalidType(true);
+      }
+
+      // Check for auto functions and trailing return type and adjust the
+      // return type accordingly.
+      if (!D.isInvalidType()) {
+        // trailing-return-type is only required if we're declaring a function,
+        // and not, for instance, a pointer to a function.
+        if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
+            !FTI.TrailingReturnType && chunkIndex == 0) {
+          Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
+               diag::err_auto_missing_trailing_return);
+          T = Context.IntTy;
+          D.setInvalidType(true);
+        } else if (FTI.TrailingReturnType) {
+          if (T.hasQualifiers() || !isa<AutoType>(T)) {
+            // T must be exactly 'auto' at this point. See CWG issue 681.
+            Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
+                 diag::err_trailing_return_without_auto)
+              << T << D.getDeclSpec().getSourceRange();
+            D.setInvalidType(true);
+          }
+
+          T = GetTypeFromParser(
+            ParsedType::getFromOpaquePtr(FTI.TrailingReturnType),
+            &ReturnTypeInfo);
+        }
       }
 
       // cv-qualifiers on return types are pointless except when the type is a

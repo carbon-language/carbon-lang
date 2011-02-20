@@ -1465,6 +1465,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::TypeOfExpr:
   case Type::TypeOf:
   case Type::Decltype:
+  case Type::Auto:
     llvm_unreachable("type should have been unwrapped!");
     return llvm::DIType();      
   }

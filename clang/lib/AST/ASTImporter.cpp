@@ -64,6 +64,7 @@ namespace {
     // FIXME: DependentTypeOfExprType
     QualType VisitTypeOfType(const TypeOfType *T);
     QualType VisitDecltypeType(const DecltypeType *T);
+    QualType VisitAutoType(const AutoType *T);
     // FIXME: DependentDecltypeType
     QualType VisitRecordType(const RecordType *T);
     QualType VisitEnumType(const EnumType *T);
@@ -601,6 +602,13 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     if (!IsStructurallyEquivalent(Context,
                                   cast<DecltypeType>(T1)->getUnderlyingExpr(),
                                   cast<DecltypeType>(T2)->getUnderlyingExpr()))
+      return false;
+    break;
+
+  case Type::Auto:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<AutoType>(T1)->getDeducedType(),
+                                  cast<AutoType>(T2)->getDeducedType()))
       return false;
     break;
 
@@ -1347,9 +1355,6 @@ QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
     
   case BuiltinType::Overload: return Importer.getToContext().OverloadTy;
   case BuiltinType::Dependent: return Importer.getToContext().DependentTy;
-  case BuiltinType::UndeducedAuto: 
-    // FIXME: Make sure that the "to" context supports C++0x!
-    return Importer.getToContext().UndeducedAutoTy;
 
   case BuiltinType::ObjCId:
     // FIXME: Make sure that the "to" context supports Objective-C!
@@ -1550,11 +1555,25 @@ QualType ASTNodeImporter::VisitTypeOfType(const TypeOfType *T) {
 }
 
 QualType ASTNodeImporter::VisitDecltypeType(const DecltypeType *T) {
+  // FIXME: Make sure that the "to" context supports C++0x!
   Expr *ToExpr = Importer.Import(T->getUnderlyingExpr());
   if (!ToExpr)
     return QualType();
   
   return Importer.getToContext().getDecltypeType(ToExpr);
+}
+
+QualType ASTNodeImporter::VisitAutoType(const AutoType *T) {
+  // FIXME: Make sure that the "to" context supports C++0x!
+  QualType FromDeduced = T->getDeducedType();
+  QualType ToDeduced;
+  if (!FromDeduced.isNull()) {
+    ToDeduced = Importer.Import(FromDeduced);
+    if (ToDeduced.isNull())
+      return QualType();
+  }
+  
+  return Importer.getToContext().getAutoType(ToDeduced);
 }
 
 QualType ASTNodeImporter::VisitRecordType(const RecordType *T) {

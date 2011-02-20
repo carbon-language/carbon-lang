@@ -75,6 +75,15 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
     }
   }
 
+  // See if this is an auto-typed variable whose initializer we are parsing.
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (VD->isParsingAutoInit()) {
+      Diag(Loc, diag::err_auto_variable_cannot_appear_in_own_initializer)
+        << D->getDeclName();
+      return true;
+    }
+  }
+
   // See if the decl is deprecated.
   if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>())
     EmitDeprecationWarning(D, DA->getMessage(), Loc, UnknownObjCClass);
@@ -964,13 +973,6 @@ ExprResult
 Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
                        const DeclarationNameInfo &NameInfo,
                        const CXXScopeSpec *SS) {
-  if (Ty == Context.UndeducedAutoTy) {
-    Diag(NameInfo.getLoc(),
-         diag::err_auto_variable_cannot_appear_in_own_initializer)
-      << D->getDeclName();
-    return ExprError();
-  }
-
   MarkDeclarationReferenced(NameInfo.getLoc(), D);
 
   Expr *E = DeclRefExpr::Create(Context,
@@ -9650,26 +9652,18 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E, SourceLocation Loc) {
   if (!BT || !BT->isPlaceholderType()) return Owned(E);
 
   // If this is overload, check for a single overload.
-  if (BT->getKind() == BuiltinType::Overload) {
-    if (FunctionDecl *Specialization
-          = ResolveSingleFunctionTemplateSpecialization(E)) {
-      // The access doesn't really matter in this case.
-      DeclAccessPair Found = DeclAccessPair::make(Specialization,
-                                                  Specialization->getAccess());
-      E = FixOverloadedFunctionReference(E, Found, Specialization);
-      if (!E) return ExprError();
-      return Owned(E);
-    }
+  assert(BT->getKind() == BuiltinType::Overload);
 
-    Diag(Loc, diag::err_ovl_unresolvable) << E->getSourceRange();
-    return ExprError();
+  if (FunctionDecl *Specialization
+        = ResolveSingleFunctionTemplateSpecialization(E)) {
+    // The access doesn't really matter in this case.
+    DeclAccessPair Found = DeclAccessPair::make(Specialization,
+                                                Specialization->getAccess());
+    E = FixOverloadedFunctionReference(E, Found, Specialization);
+    if (!E) return ExprError();
+    return Owned(E);
   }
 
-  // Otherwise it's a use of undeduced auto.
-  assert(BT->getKind() == BuiltinType::UndeducedAuto);
-
-  DeclRefExpr *DRE = cast<DeclRefExpr>(E->IgnoreParens());
-  Diag(Loc, diag::err_auto_variable_cannot_appear_in_own_initializer)
-    << DRE->getDecl() << E->getSourceRange();
+  Diag(Loc, diag::err_ovl_unresolvable) << E->getSourceRange();
   return ExprError();
 }

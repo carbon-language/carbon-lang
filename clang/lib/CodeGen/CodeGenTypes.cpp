@@ -253,7 +253,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     case BuiltinType::Overload:
     case BuiltinType::Dependent:
-    case BuiltinType::UndeducedAuto:
       assert(0 && "Unexpected builtin type!");
       break;
     }

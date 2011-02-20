@@ -720,9 +720,6 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
     assert(false &&
            "Overloaded and dependent types shouldn't get to name mangling");
     break;
-  case BuiltinType::UndeducedAuto:
-    assert(0 && "Should not see undeduced auto here");
-    break;
   case BuiltinType::ObjCId: Out << "PAUobjc_object@@"; break;
   case BuiltinType::ObjCClass: Out << "PAUobjc_class@@"; break;
   case BuiltinType::ObjCSel: Out << "PAUobjc_selector@@"; break;
@@ -1117,6 +1114,10 @@ void MicrosoftCXXNameMangler::mangleType(const TypeOfExprType *T) {
 
 void MicrosoftCXXNameMangler::mangleType(const DecltypeType *T) {
   assert(false && "Don't know how to mangle DecltypeTypes yet!");
+}
+
+void MicrosoftCXXNameMangler::mangleType(const AutoType *T) {
+  assert(false && "Don't know how to mangle AutoTypes yet!");
 }
 
 void MicrosoftMangleContext::mangleName(const NamedDecl *D,

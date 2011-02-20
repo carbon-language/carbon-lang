@@ -1073,7 +1073,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   assert((Name || isInstField) && "No identifier for non-field ?");
 
   if (Init)
-    AddInitializerToDecl(Member, Init, false);
+    AddInitializerToDecl(Member, Init, false,
+                         DS.getTypeSpecType() == DeclSpec::TST_auto);
   if (Deleted) // FIXME: Source location is not very good.
     SetDeclDeleted(Member, D.getSourceRange().getBegin());
 
@@ -5953,7 +5954,8 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
 void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
                                          SourceLocation LParenLoc,
                                          MultiExprArg Exprs,
-                                         SourceLocation RParenLoc) {
+                                         SourceLocation RParenLoc,
+                                         bool TypeMayContainAuto) {
   assert(Exprs.size() != 0 && Exprs.get() && "missing expressions");
 
   // If there is no declaration, there was an error parsing it.  Just ignore
@@ -5966,6 +5968,37 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
     RealDecl->setInvalidDecl();
     return;
+  }
+
+  // C++0x [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
+  if (TypeMayContainAuto && VDecl->getType()->getContainedAutoType()) {
+    VDecl->setParsingAutoInit(false);
+
+    // FIXME: n3225 doesn't actually seem to indicate this is ill-formed
+    if (Exprs.size() > 1) {
+      Diag(Exprs.get()[1]->getSourceRange().getBegin(),
+           diag::err_auto_var_init_multiple_expressions)
+        << VDecl->getDeclName() << VDecl->getType()
+        << VDecl->getSourceRange();
+      RealDecl->setInvalidDecl();
+      return;
+    }
+
+    Expr *Init = Exprs.get()[0];
+    QualType DeducedType;
+    if (!DeduceAutoType(VDecl->getType(), Init, DeducedType)) {
+      Diag(VDecl->getLocation(), diag::err_auto_var_deduction_failure)
+        << VDecl->getDeclName() << VDecl->getType() << Init->getType()
+        << Init->getSourceRange();
+      RealDecl->setInvalidDecl();
+      return;
+    }
+    VDecl->setType(DeducedType);
+
+    // If this is a redeclaration, check that the type we just deduced matches
+    // the previously declared type.
+    if (VarDecl *Old = VDecl->getPreviousDeclaration())
+      MergeVarDeclTypes(VDecl, Old);
   }
 
   // We will represent direct-initialization similarly to copy-initialization:

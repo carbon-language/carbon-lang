@@ -19,7 +19,7 @@ auto f() -> int
 
 auto g(); // expected-error{{return without trailing return type}}
 
-int h() -> int; // expected-error{{trailing return type without 'auto'}}
+int h() -> int; // expected-error{{trailing return type must specify return type 'auto', not 'int'}}
 
 int x;
 

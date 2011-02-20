@@ -586,7 +586,6 @@ SimplifiedTypeClass clang::getSimplifiedTypeClass(CanQualType T) {
         
       case BuiltinType::Overload:
       case BuiltinType::Dependent:
-      case BuiltinType::UndeducedAuto:
         return STC_Other;
         
       case BuiltinType::ObjCId:

@@ -1328,6 +1328,11 @@ public:
   /// because the type is a RecordType or because it is the injected-class-name 
   /// type of a class template or class template partial specialization.
   CXXRecordDecl *getAsCXXRecordDecl() const;
+
+  /// \brief Get the AutoType whose type will be deduced for a variable with
+  /// an initializer of this type. This looks through declarators like pointer
+  /// types, but not through decltype or typedefs.
+  AutoType *getContainedAutoType() const;
   
   /// Member-template getAs<specific type>'.  Look through sugar for
   /// an instance of <specific type>.   This scheme will eventually
@@ -1478,9 +1483,6 @@ public:
 
     Overload,  // This represents the type of an overloaded function declaration.
 
-    UndeducedAuto, // In C++0x, this represents the type of an auto variable
-                   // that has not been deduced yet.
-
     /// The primitive Objective C 'id' type.  The type pointed to by the
     /// user-visible 'id' type.  Only ever shows up in an AST as the base
     /// type of an ObjCObjectType.
@@ -1528,8 +1530,7 @@ public:
   /// i.e. a type which cannot appear in arbitrary positions in a
   /// fully-formed expression.
   bool isPlaceholderType() const {
-    return getKind() == Overload ||
-           getKind() == UndeducedAuto;
+    return getKind() == Overload;
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
@@ -3012,6 +3013,48 @@ public:
     return T->getTypeClass() == SubstTemplateTypeParmPack;
   }
   static bool classof(const SubstTemplateTypeParmPackType *T) { return true; }
+};
+
+/// \brief Represents a C++0x auto type.
+///
+/// These types are usually a placeholder for a deduced type. However, within
+/// templates and before the initializer is attached, there is no deduced type
+/// and an auto type is type-dependent and canonical.
+class AutoType : public Type, public llvm::FoldingSetNode {
+  AutoType(QualType DeducedType)
+    : Type(Auto, DeducedType.isNull() ? QualType(this, 0) : DeducedType,
+           /*Dependent=*/DeducedType.isNull(),
+           /*VariablyModified=*/false, /*ContainsParameterPack=*/false) {
+    assert((DeducedType.isNull() || !DeducedType->isDependentType()) &&
+           "deduced a dependent type for auto");
+  }
+
+  friend class ASTContext;  // ASTContext creates these
+
+public:
+  bool isSugared() const { return isDeduced(); }
+  QualType desugar() const { return getCanonicalTypeInternal(); }
+
+  QualType getDeducedType() const {
+    return isDeduced() ? getCanonicalTypeInternal() : QualType();
+  }
+  bool isDeduced() const {
+    return !isDependentType();
+  }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getDeducedType());
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      QualType Deduced) {
+    ID.AddPointer(Deduced.getAsOpaquePtr());
+  }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == Auto;
+  }
+  static bool classof(const AutoType *T) { return true; }
 };
 
 /// \brief Represents the type of a template specialization as written

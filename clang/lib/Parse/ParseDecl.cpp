@@ -392,7 +392,7 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(StmtVector &Stmts,
   ParsingDeclSpec DS(*this);
   DS.takeAttributesFrom(attrs);
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS_none,
-                            getDeclSpecContextFromDeclaratorContext(Context));
+                             getDeclSpecContextFromDeclaratorContext(Context));
   StmtResult R = Actions.ActOnVlaStmt(DS);
   if (R.isUsable())
     Stmts.push_back(R.release());
@@ -587,6 +587,9 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
     }
   }
 
+  bool TypeContainsAuto =
+    D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
+
   // Parse declarator '=' initializer.
   if (isTokenEqualOrMistypedEqualEqual(
                                diag::err_invalid_equalequal_after_declarator)) {
@@ -622,7 +625,8 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
         SkipUntil(tok::comma, true, true);
         Actions.ActOnInitializerError(ThisDecl);
       } else
-        Actions.AddInitializerToDecl(ThisDecl, Init.take());
+        Actions.AddInitializerToDecl(ThisDecl, Init.take(),
+                                     /*DirectInit=*/false, TypeContainsAuto);
     }
   } else if (Tok.is(tok::l_paren)) {
     // Parse C++ direct initializer: '(' expression-list ')'
@@ -656,12 +660,11 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
 
       Actions.AddCXXDirectInitializerToDecl(ThisDecl, LParenLoc,
                                             move_arg(Exprs),
-                                            RParenLoc);
+                                            RParenLoc,
+                                            TypeContainsAuto);
     }
   } else {
-    bool TypeContainsUndeducedAuto =
-      D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
-    Actions.ActOnUninitializedDecl(ThisDecl, TypeContainsUndeducedAuto);
+    Actions.ActOnUninitializedDecl(ThisDecl, TypeContainsAuto);
   }
 
   return ThisDecl;

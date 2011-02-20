@@ -759,11 +759,16 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   Declarator &D, SourceLocation ConstructorLParen,
                   MultiExprArg ConstructorArgs,
                   SourceLocation ConstructorRParen) {
+  bool TypeContainsAuto = D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
+
   Expr *ArraySize = 0;
   // If the specified type is an array, unwrap it and save the expression.
   if (D.getNumTypeObjects() > 0 &&
       D.getTypeObject(0).Kind == DeclaratorChunk::Array) {
     DeclaratorChunk &Chunk = D.getTypeObject(0);
+    if (TypeContainsAuto)
+      return ExprError(Diag(Chunk.Loc, diag::err_new_array_of_auto)
+        << D.getSourceRange());
     if (Chunk.Arr.hasStatic)
       return ExprError(Diag(Chunk.Loc, diag::err_static_illegal_in_new)
         << D.getSourceRange());
@@ -793,13 +798,11 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     }
   }
 
-  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, /*Scope=*/0);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, /*Scope=*/0, /*OwnedDecl=*/0,
+                                               /*AllowAuto=*/true);
   QualType AllocType = TInfo->getType();
   if (D.isInvalidType())
     return ExprError();
-
-  if (!TInfo)
-    TInfo = Context.getTrivialTypeSourceInfo(AllocType);
 
   return BuildCXXNew(StartLoc, UseGlobal,
                      PlacementLParen,
@@ -811,7 +814,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                      ArraySize,
                      ConstructorLParen,
                      move(ConstructorArgs),
-                     ConstructorRParen);
+                     ConstructorRParen,
+                     TypeContainsAuto);
 }
 
 ExprResult
@@ -825,9 +829,33 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   Expr *ArraySize,
                   SourceLocation ConstructorLParen,
                   MultiExprArg ConstructorArgs,
-                  SourceLocation ConstructorRParen) {
+                  SourceLocation ConstructorRParen,
+                  bool TypeMayContainAuto) {
   SourceRange TypeRange = AllocTypeInfo->getTypeLoc().getSourceRange();
 
+  // C++0x [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
+  if (TypeMayContainAuto && AllocType->getContainedAutoType()) {
+    if (ConstructorArgs.size() == 0)
+      return ExprError(Diag(StartLoc, diag::err_auto_new_requires_ctor_arg)
+                       << AllocType << TypeRange);
+    if (ConstructorArgs.size() != 1) {
+      Expr *FirstBad = ConstructorArgs.get()[1];
+      return ExprError(Diag(FirstBad->getSourceRange().getBegin(),
+                            diag::err_auto_new_ctor_multiple_expressions)
+                       << AllocType << TypeRange);
+    }
+    QualType DeducedType;
+    if (!DeduceAutoType(AllocType, ConstructorArgs.get()[0], DeducedType))
+      return ExprError(Diag(StartLoc, diag::err_auto_new_deduction_failure)
+                       << AllocType
+                       << ConstructorArgs.get()[0]->getType()
+                       << TypeRange
+                       << ConstructorArgs.get()[0]->getSourceRange());
+
+    AllocType = DeducedType;
+    AllocTypeInfo = Context.getTrivialTypeSourceInfo(AllocType, StartLoc);
+  }
+  
   // Per C++0x [expr.new]p5, the type being constructed may be a
   // typedef of an array type.
   if (!ArraySize) {

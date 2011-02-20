@@ -324,19 +324,21 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     ASTOwningVector<Expr*> InitArgs(SemaRef);
     if (!InstantiateInitializer(SemaRef, D->getInit(), TemplateArgs, LParenLoc,
                                 InitArgs, RParenLoc)) {
+      bool TypeMayContainAuto = true;
       // Attach the initializer to the declaration, if we have one.
       if (InitArgs.size() == 0)
-        SemaRef.ActOnUninitializedDecl(Var, false);    
+        SemaRef.ActOnUninitializedDecl(Var, TypeMayContainAuto);
       else if (D->hasCXXDirectInitializer()) {
         // Add the direct initializer to the declaration.
         SemaRef.AddCXXDirectInitializerToDecl(Var,
                                               LParenLoc,
                                               move_arg(InitArgs),
-                                              RParenLoc);
+                                              RParenLoc,
+                                              TypeMayContainAuto);
       } else {
         assert(InitArgs.size() == 1);
         Expr *Init = InitArgs.take()[0];
-        SemaRef.AddInitializerToDecl(Var, Init, false);
+        SemaRef.AddInitializerToDecl(Var, Init, false, TypeMayContainAuto);
       }
     } else {
       // FIXME: Not too happy about invalidating the declaration

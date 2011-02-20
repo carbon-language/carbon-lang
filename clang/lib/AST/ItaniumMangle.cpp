@@ -1313,9 +1313,6 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
     assert(false &&
            "Overloaded and dependent types shouldn't get to name mangling");
     break;
-  case BuiltinType::UndeducedAuto:
-    assert(0 && "Should not see undeduced auto here");
-    break;
   case BuiltinType::ObjCId: Out << "11objc_object"; break;
   case BuiltinType::ObjCClass: Out << "10objc_class"; break;
   case BuiltinType::ObjCSel: Out << "13objc_selector"; break;
@@ -1646,6 +1643,12 @@ void CXXNameMangler::mangleType(const DecltypeType *T) {
     Out << "DT";
   mangleExpression(E);
   Out << 'E';
+}
+
+void CXXNameMangler::mangleType(const AutoType *T) {
+  QualType D = T->getDeducedType();
+  assert(!D.isNull() && "can't mangle undeduced auto type");
+  mangleType(D);
 }
 
 void CXXNameMangler::mangleIntegerLiteral(QualType T,

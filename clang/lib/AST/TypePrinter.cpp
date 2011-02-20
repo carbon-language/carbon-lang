@@ -80,6 +80,8 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
   bool CanPrefixQualifiers = false;
   
   Type::TypeClass TC = T->getTypeClass();
+  if (const AutoType *AT = dyn_cast<AutoType>(T))
+    TC = AT->desugar()->getTypeClass();
   if (const SubstTemplateTypeParmType *Subst
                                       = dyn_cast<SubstTemplateTypeParmType>(T))
     TC = Subst->getReplacementType()->getTypeClass();
@@ -129,6 +131,7 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
     case Type::Attributed:
     case Type::PackExpansion:
     case Type::SubstTemplateTypeParm:
+    case Type::Auto:
       CanPrefixQualifiers = false;
       break;
   }
@@ -491,6 +494,17 @@ void TypePrinter::printDecltype(const DecltypeType *T, std::string &S) {
   llvm::raw_string_ostream s(Str);
   T->getUnderlyingExpr()->printPretty(s, 0, Policy);
   S = "decltype(" + s.str() + ")" + S;
+}
+
+void TypePrinter::printAuto(const AutoType *T, std::string &S) { 
+  // If the type has been deduced, do not print 'auto'.
+  if (T->isDeduced()) {
+    print(T->getDeducedType(), S);
+  } else {
+    if (!S.empty())    // Prefix the basic type, e.g. 'auto X'.
+      S = ' ' + S;
+    S = "auto" + S;
+  }
 }
 
 /// Appends the given scope to the end of a string.

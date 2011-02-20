@@ -827,7 +827,8 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
     ConsumeToken();
     ExprResult AssignExpr(ParseAssignmentExpression());
     if (!AssignExpr.isInvalid()) 
-      Actions.AddInitializerToDecl(DeclOut, AssignExpr.take());
+      Actions.AddInitializerToDecl(DeclOut, AssignExpr.take(), false,
+                                   DS.getTypeSpecType() == DeclSpec::TST_auto);
   } else {
     // FIXME: C++0x allows a braced-init-list
     Diag(Tok, diag::err_expected_equal_after_declarator);

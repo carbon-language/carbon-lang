@@ -571,7 +571,6 @@ void USRGenerator::VisitType(QualType T) {
           c = 'n'; break;
         case BuiltinType::Overload:
         case BuiltinType::Dependent:
-        case BuiltinType::UndeducedAuto:
           IgnoreResults = true;
           return;
         case BuiltinType::ObjCId:

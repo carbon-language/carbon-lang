@@ -28,18 +28,26 @@ static QualType Desugar(ASTContext &Context, QualType QT, bool &ShouldAKA) {
     const Type *Ty = QC.strip(QT);
 
     // Don't aka just because we saw an elaborated type...
-    if (isa<ElaboratedType>(Ty)) {
-      QT = cast<ElaboratedType>(Ty)->desugar();
+    if (const ElaboratedType *ET = dyn_cast<ElaboratedType>(Ty)) {
+      QT = ET->desugar();
       continue;
     }
     // ... or a paren type ...
-    if (isa<ParenType>(Ty)) {
-      QT = cast<ParenType>(Ty)->desugar();
+    if (const ParenType *PT = dyn_cast<ParenType>(Ty)) {
+      QT = PT->desugar();
       continue;
     }
-    // ...or a substituted template type parameter.
-    if (isa<SubstTemplateTypeParmType>(Ty)) {
-      QT = cast<SubstTemplateTypeParmType>(Ty)->desugar();
+    // ...or a substituted template type parameter ...
+    if (const SubstTemplateTypeParmType *ST =
+          dyn_cast<SubstTemplateTypeParmType>(Ty)) {
+      QT = ST->desugar();
+      continue;
+    }
+    // ... or an auto type.
+    if (const AutoType *AT = dyn_cast<AutoType>(Ty)) {
+      if (!AT->isSugared())
+        break;
+      QT = AT->desugar();
       continue;
     }
 

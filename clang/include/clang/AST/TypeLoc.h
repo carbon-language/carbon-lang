@@ -1381,6 +1381,11 @@ class DecltypeTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                          DecltypeType> {
 };
 
+class AutoTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                        AutoTypeLoc,
+                                                        AutoType> {
+};
+
 struct ElaboratedLocInfo {
   SourceLocation KeywordLoc;
   SourceRange QualifierRange;
