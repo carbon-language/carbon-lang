@@ -42,6 +42,11 @@ TEST(Local, RecursivelyDeleteDeadPHINodes) {
   EXPECT_EQ(&bb0->front(), br0);
   EXPECT_EQ(&bb1->front(), br1);
 
+  builder.SetInsertPoint(bb0);
+  phi = builder.CreatePHI(Type::getInt32Ty(C));
+
+  EXPECT_TRUE(RecursivelyDeleteDeadPHINode(phi));
+
   bb0->dropAllReferences();
   bb1->dropAllReferences();
   delete bb0;

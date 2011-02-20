@@ -283,6 +283,11 @@ static bool areAllUsesEqual(Instruction *I) {
 /// delete it.  If that makes any of its operands trivially dead, delete them
 /// too, recursively.  Return true if the PHI node is actually deleted.
 bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
+  if (PN->use_empty()) {
+    PN->eraseFromParent();
+    return true;
+  }
+
   // We can remove a PHI if it is on a cycle in the def-use graph
   // where each node in the cycle has degree one, i.e. only one use,
   // and is an instruction with no side effects.
@@ -292,16 +297,16 @@ bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
   bool Changed = false;
   SmallPtrSet<PHINode *, 4> PHIs;
   PHIs.insert(PN);
-  for (Instruction *J = cast<Instruction>(*PN->use_begin());
-       areAllUsesEqual(J) && !J->mayHaveSideEffects();
-       J = cast<Instruction>(*J->use_begin()))
+  for (Instruction *I = cast<Instruction>(*PN->use_begin());
+       areAllUsesEqual(I) && !I->mayHaveSideEffects();
+       I = cast<Instruction>(*I->use_begin()))
     // If we find a PHI more than once, we're on a cycle that
     // won't prove fruitful.
-    if (PHINode *JP = dyn_cast<PHINode>(J))
-      if (!PHIs.insert(JP)) {
+    if (PHINode *IP = dyn_cast<PHINode>(I))
+      if (!PHIs.insert(IP)) {
         // Break the cycle and delete the PHI and its operands.
-        JP->replaceAllUsesWith(UndefValue::get(JP->getType()));
-        (void)RecursivelyDeleteTriviallyDeadInstructions(JP);
+        IP->replaceAllUsesWith(UndefValue::get(IP->getType()));
+        (void)RecursivelyDeleteTriviallyDeadInstructions(IP);
         Changed = true;
         break;
       }
