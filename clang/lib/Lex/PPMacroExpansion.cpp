@@ -553,7 +553,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("ownership_takes", true)
            // C++0x features
            .Case("cxx_attributes", LangOpts.CPlusPlus0x)
-         //.Case("cxx_auto_type", false)
+           .Case("cxx_auto_type", LangOpts.CPlusPlus0x)
            .Case("cxx_decltype", LangOpts.CPlusPlus0x)
            .Case("cxx_default_function_template_args", LangOpts.CPlusPlus0x)
            .Case("cxx_deleted_functions", LangOpts.CPlusPlus0x)

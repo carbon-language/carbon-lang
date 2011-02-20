@@ -37,8 +37,7 @@ int has_auto_type();
 int no_auto_type();
 #endif
 
-// FIXME: We don't implement "auto" well enough to turn on this feature test
-// CHECK-0X: no_auto_type
+// CHECK-0X: has_auto_type
 // CHECK-NO-0X: no_auto_type
 
 
