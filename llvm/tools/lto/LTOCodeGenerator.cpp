@@ -357,7 +357,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
       mangler.getNameWithPrefix(Buffer, f, false);
       if (!f->isDeclaration() &&
           _mustPreserveSymbols.count(Buffer))
-        mustPreserveList.push_back(::strdup(f->getNameStr().c_str()));
+        mustPreserveList.push_back(f->getName().data());
     }
     for (Module::global_iterator v = mergedModule->global_begin(), 
          e = mergedModule->global_end(); v !=  e; ++v) {
@@ -365,7 +365,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
       mangler.getNameWithPrefix(Buffer, v, false);
       if (!v->isDeclaration() &&
           _mustPreserveSymbols.count(Buffer))
-        mustPreserveList.push_back(::strdup(v->getNameStr().c_str()));
+        mustPreserveList.push_back(v->getName().data());
     }
     for (Module::alias_iterator a = mergedModule->alias_begin(),
          e = mergedModule->alias_end(); a != e; ++a) {
@@ -373,7 +373,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
       mangler.getNameWithPrefix(Buffer, a, false);
       if (!a->isDeclaration() &&
           _mustPreserveSymbols.count(Buffer))
-        mustPreserveList.push_back(::strdup(a->getNameStr().c_str()));
+        mustPreserveList.push_back(a->getName().data());
     }
     passes.add(createInternalizePass(mustPreserveList));
   }
@@ -441,6 +441,7 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
         codeGenPasses->run(*it);
 
     codeGenPasses->doFinalization();
+    delete codeGenPasses;
 
     return false; // success
 }

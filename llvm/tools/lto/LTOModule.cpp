@@ -195,26 +195,28 @@ void LTOModule::addObjCClass(GlobalVariable *clgv) {
     std::string superclassName;
     if (objcClassNameFromExpression(c->getOperand(1), superclassName)) {
       NameAndAttributes info;
-      if (_undefines.find(superclassName.c_str()) == _undefines.end()) {
-        const char *symbolName = ::strdup(superclassName.c_str());
+      StringMap<NameAndAttributes>::value_type &entry =
+        _undefines.GetOrCreateValue(superclassName.c_str());
+      if (!entry.getValue().name) {
+        const char *symbolName = entry.getKey().data();
         info.name = symbolName;
         info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
-        // string is owned by _undefines
-        _undefines[info.name] = info;
+        entry.setValue(info);
       }
     }
     // third slot in __OBJC,__class is pointer to class name
     std::string className;
     if (objcClassNameFromExpression(c->getOperand(2), className)) {
-      const char *symbolName = ::strdup(className.c_str());
+      StringSet::value_type &entry =
+        _defines.GetOrCreateValue(className.c_str());
+      entry.setValue(1);
       NameAndAttributes info;
-      info.name = symbolName;
+      info.name = entry.getKey().data();
       info.attributes = (lto_symbol_attributes)
         (LTO_SYMBOL_PERMISSIONS_DATA |
          LTO_SYMBOL_DEFINITION_REGULAR |
          LTO_SYMBOL_SCOPE_DEFAULT);
       _symbols.push_back(info);
-      _defines[info.name] = 1;
     }
   }
 }
@@ -227,13 +229,17 @@ void LTOModule::addObjCCategory(GlobalVariable *clgv) {
     std::string targetclassName;
     if (objcClassNameFromExpression(c->getOperand(1), targetclassName)) {
       NameAndAttributes info;
-      if (_undefines.find(targetclassName.c_str()) == _undefines.end()) {
-        const char *symbolName = ::strdup(targetclassName.c_str());
-        info.name = symbolName;
-        info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
-        // string is owned by _undefines
-        _undefines[info.name] = info;
-      }
+
+      StringMap<NameAndAttributes>::value_type &entry =
+        _undefines.GetOrCreateValue(targetclassName.c_str());
+
+      if (entry.getValue().name)
+        return;
+
+      const char *symbolName = entry.getKey().data();
+      info.name = symbolName;
+      info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+      entry.setValue(info);
     }
   }
 }
@@ -244,13 +250,16 @@ void LTOModule::addObjCClassRef(GlobalVariable *clgv) {
   std::string targetclassName;
   if (objcClassNameFromExpression(clgv->getInitializer(), targetclassName)) {
     NameAndAttributes info;
-    if (_undefines.find(targetclassName.c_str()) == _undefines.end()) {
-      const char *symbolName = ::strdup(targetclassName.c_str());
-      info.name = symbolName;
-      info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
-      // string is owned by _undefines
-      _undefines[info.name] = info;
-    }
+
+    StringMap<NameAndAttributes>::value_type &entry =
+      _undefines.GetOrCreateValue(targetclassName.c_str());
+    if (entry.getValue().name)
+      return;
+
+    const char *symbolName = entry.getKey().data();
+    info.name = symbolName;
+    info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
+    entry.setValue(info);
   }
 }
 
@@ -322,7 +331,6 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
   // string is owned by _defines
   SmallString<64> Buffer;
   mangler.getNameWithPrefix(Buffer, def, false);
-  const char *symbolName = ::strdup(Buffer.c_str());
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
@@ -365,26 +373,31 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
 
   // add to table of symbols
   NameAndAttributes info;
-  info.name = symbolName;
+  StringSet::value_type &entry = _defines.GetOrCreateValue(Buffer.c_str());
+  entry.setValue(1);
+
+  StringRef Name = entry.getKey();
+  info.name = Name.data();
+  assert(info.name[Name.size()] == '\0');
   info.attributes = (lto_symbol_attributes)attr;
   _symbols.push_back(info);
-  _defines[info.name] = 1;
 }
 
 void LTOModule::addAsmGlobalSymbol(const char *name) {
+  StringSet::value_type &entry = _defines.GetOrCreateValue(name);
+
   // only add new define if not already defined
-  if (_defines.count(name))
+  if (entry.getValue())
     return;
 
-  // string is owned by _defines
-  const char *symbolName = ::strdup(name);
+  entry.setValue(1);
+  const char *symbolName = entry.getKey().data();
   uint32_t attr = LTO_SYMBOL_DEFINITION_REGULAR;
   attr |= LTO_SYMBOL_SCOPE_DEFAULT;
   NameAndAttributes info;
   info.name = symbolName;
   info.attributes = (lto_symbol_attributes)attr;
   _symbols.push_back(info);
-  _defines[info.name] = 1;
 }
 
 void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl,
@@ -400,18 +413,22 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl,
   SmallString<64> name;
   mangler.getNameWithPrefix(name, decl, false);
 
+  StringMap<NameAndAttributes>::value_type &entry =
+    _undefines.GetOrCreateValue(name.c_str());
+
   // we already have the symbol
-  if (_undefines.find(name) != _undefines.end())
+  if (entry.getValue().name)
     return;
 
   NameAndAttributes info;
-  // string is owned by _undefines
-  info.name = ::strdup(name.c_str());
+
+  info.name = entry.getKey().data();
   if (decl->hasExternalWeakLinkage())
     info.attributes = LTO_SYMBOL_DEFINITION_WEAKUNDEF;
   else
     info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
-  _undefines[name] = info;
+
+  entry.setValue(info);
 }
 
 
