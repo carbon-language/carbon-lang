@@ -1089,7 +1089,7 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
   bool AddEHEdge = false;
 
   // Languages without exceptions are assumed to not throw.
-  if (Context->getLangOptions().Exceptions) {
+  if (Context->getLangOptions().areExceptionsEnabled()) {
     if (BuildOpts.AddEHEdges)
       AddEHEdge = true;
   }

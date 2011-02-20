@@ -39,8 +39,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
     OutermostConditional(0), TerminateLandingPad(0), TerminateHandler(0),
     TrapBB(0) {
-      
-  Exceptions = getContext().getLangOptions().Exceptions;
+
   CatchUndefined = getContext().getLangOptions().CatchUndefined;
   CGM.getCXXABI().getMangleContext().startNewFunction();
 }

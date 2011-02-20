@@ -406,7 +406,8 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
 
   CGF.EmitAggExpr(BaseInit->getInit(), AggSlot);
   
-  if (CGF.Exceptions && !BaseClassDecl->hasTrivialDestructor())
+  if (CGF.CGM.getLangOptions().areExceptionsEnabled() && 
+      !BaseClassDecl->hasTrivialDestructor())
     CGF.EHStack.pushCleanup<CallBaseDtor>(EHCleanup, BaseClassDecl,
                                           isBaseVirtual);
 }
@@ -604,7 +605,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     
     EmitAggMemberInitializer(CGF, LHS, ArrayIndexVar, MemberInit, FieldType, 0);
     
-    if (!CGF.Exceptions)
+    if (!CGF.CGM.getLangOptions().areExceptionsEnabled())
       return;
 
     // FIXME: If we have an array of classes w/ non-trivial destructors, 

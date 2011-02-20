@@ -439,7 +439,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 }
 
 void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
-  if (!Exceptions)
+  if (!CGM.getLangOptions().areExceptionsEnabled())
     return;
   
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
@@ -467,7 +467,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
 }
 
 void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
-  if (!Exceptions)
+  if (!CGM.getLangOptions().areExceptionsEnabled())
     return;
   
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
@@ -541,7 +541,7 @@ llvm::BasicBlock *CodeGenFunction::getInvokeDestImpl() {
   assert(EHStack.requiresLandingPad());
   assert(!EHStack.empty());
 
-  if (!Exceptions)
+  if (!CGM.getLangOptions().areExceptionsEnabled())
     return 0;
 
   // Check the innermost scope for a cached landing pad.  If this is

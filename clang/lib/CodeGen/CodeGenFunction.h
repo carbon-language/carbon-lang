@@ -582,7 +582,6 @@ public:
   /// we prefer to insert allocas.
   llvm::AssertingVH<llvm::Instruction> AllocaInsertPt;
 
-  bool Exceptions;
   bool CatchUndefined;
 
   const CodeGen::CGBlockInfo *BlockInfo;
