@@ -1897,6 +1897,47 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         return BinaryOperator::CreateNot(And);
       }
 
+  // Canonicalize xor to the RHS.
+  if (match(Op0, m_Xor(m_Value(), m_Value())))
+    std::swap(Op0, Op1);
+
+  // A | ( A ^ B) -> A |  B
+  // A | (~A ^ B) -> A | ~B
+  if (match(Op1, m_Xor(m_Value(A), m_Value(B)))) {
+    if (Op0 == A || Op0 == B)
+      return BinaryOperator::CreateOr(A, B);
+
+    if (Op1->hasOneUse() && match(A, m_Not(m_Specific(Op0)))) {
+      Value *Not = Builder->CreateNot(B, B->getName()+".not");
+      return BinaryOperator::CreateOr(Not, Op0);
+    }
+    if (Op1->hasOneUse() && match(B, m_Not(m_Specific(Op0)))) {
+      Value *Not = Builder->CreateNot(A, A->getName()+".not");
+      return BinaryOperator::CreateOr(Not, Op0);
+    }
+  }
+
+  // A | ~(A | B) -> A | ~B
+  // A | ~(A ^ B) -> A | ~B
+  // A | ~(A & B) -> -1
+  if (match(Op1, m_Not(m_Value(A))))
+    if (BinaryOperator *B = dyn_cast<BinaryOperator>(A))
+      if (Op0 == B->getOperand(0) || Op0 == B->getOperand(1))
+        switch (B->getOpcode()) {
+        default: break;
+        case Instruction::Or:
+        case Instruction::Xor:
+          if (Op1->hasOneUse()) {
+            Value *NotOp = Op0 == B->getOperand(0) ? B->getOperand(1) :
+                                                     B->getOperand(0);
+            Value *Not = Builder->CreateNot(NotOp, NotOp->getName()+".not");
+            return BinaryOperator::CreateOr(Not, Op0);
+          }
+          break;
+        case Instruction::And:
+          return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
+        }
+
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
     if (ICmpInst *LHS = dyn_cast<ICmpInst>(I.getOperand(0)))
       if (Value *Res = FoldOrOfICmps(LHS, RHS))
