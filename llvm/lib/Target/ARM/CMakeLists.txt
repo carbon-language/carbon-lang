@@ -62,3 +62,8 @@ set_property(
   PROPERTY COMPILE_FLAGS "/Od"
   )
 endif()
+
+add_subdirectory(TargetInfo)
+add_subdirectory(AsmParser)
+add_subdirectory(Disassembler)
+add_subdirectory(InstPrinter)

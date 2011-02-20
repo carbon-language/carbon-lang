@@ -32,3 +32,6 @@ add_llvm_target(PowerPCCodeGen
   PPCTargetMachine.cpp
   PPCSelectionDAGInfo.cpp
   )
+
+add_subdirectory(InstPrinter)
+add_subdirectory(TargetInfo)

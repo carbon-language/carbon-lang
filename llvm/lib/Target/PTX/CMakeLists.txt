@@ -22,3 +22,5 @@ add_llvm_target(PTXCodeGen
   PTXSubtarget.cpp
   PTXTargetMachine.cpp
   )
+
+add_subdirectory(TargetInfo)

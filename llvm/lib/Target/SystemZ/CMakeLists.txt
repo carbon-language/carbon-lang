@@ -22,3 +22,5 @@ add_llvm_target(SystemZCodeGen
   SystemZTargetMachine.cpp
   SystemZSelectionDAGInfo.cpp
   )
+
+add_subdirectory(TargetInfo)

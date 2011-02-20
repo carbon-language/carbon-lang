@@ -33,3 +33,8 @@ add_llvm_target(MBlazeCodeGen
   MBlazeELFWriterInfo.cpp
   MBlazeMCCodeEmitter.cpp
   )
+
+add_subdirectory(AsmParser)
+add_subdirectory(Disassembler)
+add_subdirectory(InstPrinter)
+add_subdirectory(TargetInfo)

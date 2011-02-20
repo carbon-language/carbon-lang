@@ -24,3 +24,5 @@ add_llvm_target(AlphaCodeGen
   AlphaTargetMachine.cpp
   AlphaSelectionDAGInfo.cpp
   )
+
+add_subdirectory(TargetInfo)

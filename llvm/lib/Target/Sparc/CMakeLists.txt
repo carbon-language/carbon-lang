@@ -24,3 +24,5 @@ add_llvm_target(SparcCodeGen
   SparcTargetMachine.cpp
   SparcSelectionDAGInfo.cpp
   )
+
+add_subdirectory(TargetInfo)

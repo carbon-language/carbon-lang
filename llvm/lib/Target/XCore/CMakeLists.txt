@@ -23,3 +23,5 @@ add_llvm_target(XCoreCodeGen
   XCoreTargetObjectFile.cpp
   XCoreSelectionDAGInfo.cpp
   )
+
+add_subdirectory(TargetInfo)
