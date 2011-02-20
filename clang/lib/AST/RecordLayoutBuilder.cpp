@@ -1383,24 +1383,28 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   UnfilledBitsInLastByte = 0;
 
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
-  uint64_t FieldOffset = IsUnion ? 0 : DataSize;
-  uint64_t FieldSize;
-  unsigned FieldAlign;
+  CharUnits FieldOffset = 
+    IsUnion ? CharUnits::Zero() : Context.toCharUnitsFromBits(DataSize);
+  CharUnits FieldSize;
+  CharUnits FieldAlign;
 
   if (D->getType()->isIncompleteArrayType()) {
     // This is a flexible array member; we can't directly
     // query getTypeInfo about these, so we figure it out here.
     // Flexible array members don't have any size, but they
     // have to be aligned appropriately for their element type.
-    FieldSize = 0;
+    FieldSize = CharUnits::Zero();
     const ArrayType* ATy = Context.getAsArrayType(D->getType());
-    FieldAlign = Context.getTypeAlign(ATy->getElementType());
+    FieldAlign = Context.getTypeAlignInChars(ATy->getElementType());
   } else if (const ReferenceType *RT = D->getType()->getAs<ReferenceType>()) {
     unsigned AS = RT->getPointeeType().getAddressSpace();
-    FieldSize = Context.Target.getPointerWidth(AS);
-    FieldAlign = Context.Target.getPointerAlign(AS);
+    FieldSize = 
+      Context.toCharUnitsFromBits(Context.Target.getPointerWidth(AS));
+    FieldAlign = 
+      Context.toCharUnitsFromBits(Context.Target.getPointerAlign(AS));
   } else {
-    std::pair<uint64_t, unsigned> FieldInfo = Context.getTypeInfo(D->getType());
+    std::pair<CharUnits, CharUnits> FieldInfo = 
+      Context.getTypeInfoInChars(D->getType());
     FieldSize = FieldInfo.first;
     FieldAlign = FieldInfo.second;
 
@@ -1412,7 +1416,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       // alignment if necessary.
       QualType T = Context.getBaseElementType(D->getType());
       if (const BuiltinType *BTy = T->getAs<BuiltinType>()) {
-        uint64_t TypeSize = Context.getTypeSize(BTy);
+        CharUnits TypeSize = Context.getTypeSizeInChars(BTy);
         if (TypeSize > FieldAlign)
           FieldAlign = TypeSize;
       }
@@ -1421,53 +1425,54 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 
   // The align if the field is not packed. This is to check if the attribute
   // was unnecessary (-Wpacked).
-  unsigned UnpackedFieldAlign = FieldAlign;
-  uint64_t UnpackedFieldOffset = FieldOffset;
+  CharUnits UnpackedFieldAlign = FieldAlign;
+  CharUnits UnpackedFieldOffset = FieldOffset;
 
   if (FieldPacked)
-    FieldAlign = 8;
-  FieldAlign = std::max(FieldAlign, D->getMaxAlignment());
-  UnpackedFieldAlign = std::max(UnpackedFieldAlign, D->getMaxAlignment());
+    FieldAlign = CharUnits::One();
+  CharUnits MaxAlignmentInChars = 
+    Context.toCharUnitsFromBits(D->getMaxAlignment());
+  FieldAlign = std::max(FieldAlign, MaxAlignmentInChars);
+  UnpackedFieldAlign = std::max(UnpackedFieldAlign, MaxAlignmentInChars);
 
   // The maximum field alignment overrides the aligned attribute.
   if (!MaxFieldAlignment.isZero()) {
-    unsigned MaxFieldAlignmentInBits = Context.toBits(MaxFieldAlignment);
-    FieldAlign = std::min(FieldAlign, MaxFieldAlignmentInBits);
-    UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignmentInBits);
+    FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
+    UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignment);
   }
 
   // Round up the current record size to the field's alignment boundary.
-  FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
-  UnpackedFieldOffset = llvm::RoundUpToAlignment(UnpackedFieldOffset,
-                                                 UnpackedFieldAlign);
+  FieldOffset = FieldOffset.RoundUpToAlignment(FieldAlign);
+  UnpackedFieldOffset = 
+    UnpackedFieldOffset.RoundUpToAlignment(UnpackedFieldAlign);
 
   if (!IsUnion && EmptySubobjects) {
     // Check if we can place the field at this offset.
-    while (!EmptySubobjects->CanPlaceFieldAtOffset(D, 
-                                    Context.toCharUnitsFromBits(FieldOffset))) {
+    while (!EmptySubobjects->CanPlaceFieldAtOffset(D, FieldOffset)) {
       // We couldn't place the field at the offset. Try again at a new offset.
       FieldOffset += FieldAlign;
     }
   }
 
   // Place this field at the current location.
-  FieldOffsets.push_back(FieldOffset);
+  FieldOffsets.push_back(Context.toBits(FieldOffset));
 
-  CheckFieldPadding(FieldOffset, UnpaddedFieldOffset, UnpackedFieldOffset,
-                    UnpackedFieldAlign, FieldPacked, D);
+  CheckFieldPadding(Context.toBits(FieldOffset), UnpaddedFieldOffset, 
+                    Context.toBits(UnpackedFieldOffset),
+                    Context.toBits(UnpackedFieldAlign), FieldPacked, D);
 
   // Reserve space for this field.
+  uint64_t FieldSizeInBits = Context.toBits(FieldSize);
   if (IsUnion)
-    Size = std::max(Size, FieldSize);
+    Size = std::max(Size, FieldSizeInBits);
   else
-    Size = FieldOffset + FieldSize;
+    Size = Context.toBits(FieldOffset) + FieldSizeInBits;
 
   // Update the data size.
   DataSize = Size;
 
   // Remember max struct/class alignment.
-  UpdateAlignment(Context.toCharUnitsFromBits(FieldAlign), 
-                  Context.toCharUnitsFromBits(UnpackedFieldAlign));
+  UpdateAlignment(FieldAlign, UnpackedFieldAlign);
 }
 
 void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
