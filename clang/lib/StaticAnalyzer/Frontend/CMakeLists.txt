@@ -16,5 +16,5 @@ add_dependencies(clangStaticAnalyzerFrontend
   ClangAttrClasses
   ClangAttrList
   ClangDeclNodes
-  ClangStmtNode
+  ClangStmtNodes
   )
