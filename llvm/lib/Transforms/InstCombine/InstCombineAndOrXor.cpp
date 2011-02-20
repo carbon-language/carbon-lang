@@ -1919,24 +1919,16 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // A | ~(A | B) -> A | ~B
   // A | ~(A ^ B) -> A | ~B
-  // A | ~(A & B) -> -1
   if (match(Op1, m_Not(m_Value(A))))
     if (BinaryOperator *B = dyn_cast<BinaryOperator>(A))
-      if (Op0 == B->getOperand(0) || Op0 == B->getOperand(1))
-        switch (B->getOpcode()) {
-        default: break;
-        case Instruction::Or:
-        case Instruction::Xor:
-          if (Op1->hasOneUse()) {
-            Value *NotOp = Op0 == B->getOperand(0) ? B->getOperand(1) :
-                                                     B->getOperand(0);
-            Value *Not = Builder->CreateNot(NotOp, NotOp->getName()+".not");
-            return BinaryOperator::CreateOr(Not, Op0);
-          }
-          break;
-        case Instruction::And:
-          return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
-        }
+      if ((Op0 == B->getOperand(0) || Op0 == B->getOperand(1)) &&
+          Op1->hasOneUse() && (B->getOpcode() == Instruction::Or ||
+                               B->getOpcode() == Instruction::Xor)) {
+        Value *NotOp = Op0 == B->getOperand(0) ? B->getOperand(1) :
+                                                 B->getOperand(0);
+        Value *Not = Builder->CreateNot(NotOp, NotOp->getName()+".not");
+        return BinaryOperator::CreateOr(Not, Op0);
+      }
 
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
     if (ICmpInst *LHS = dyn_cast<ICmpInst>(I.getOperand(0)))

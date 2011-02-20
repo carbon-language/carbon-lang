@@ -1161,6 +1161,16 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
       (A == Op0 || B == Op0))
     return Op0;
 
+  // ~(A & ?) | A = -1
+  if (match(Op0, m_Not(m_And(m_Value(A), m_Value(B)))) &&
+      (A == Op1 || B == Op1))
+    return Constant::getAllOnesValue(Op1->getType());
+
+  // A | ~(A & ?) = -1
+  if (match(Op1, m_Not(m_And(m_Value(A), m_Value(B)))) &&
+      (A == Op0 || B == Op0))
+    return Constant::getAllOnesValue(Op0->getType());
+
   // Try some generic simplifications for associative operations.
   if (Value *V = SimplifyAssociativeBinOp(Instruction::Or, Op0, Op1, TD, DT,
                                           MaxRecurse))
