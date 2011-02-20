@@ -11,4 +11,4 @@
 // RUN:   -arch i386 -Xarch_i386 -Wl,-some-linker-arg -filelist X 2> %t
 // RUN: FileCheck --check-prefix=CHECK-LINK < %t %s
 //
-// CHECK-LINK: ld"{{.*}} "-some-linker-arg"
+// CHECK-LINK: ld{{.*}} "-arch" "i386"{{.*}} "-some-linker-arg"
