@@ -7078,16 +7078,6 @@ void OverloadCandidateSet::NoteCandidates(Sema &S,
     S.Diag(OpLoc, diag::note_ovl_too_many_candidates) << int(E - I);
 }
 
-static bool CheckUnresolvedAccess(Sema &S, OverloadExpr *E, DeclAccessPair D) {
-  if (isa<UnresolvedLookupExpr>(E))
-    return S.CheckUnresolvedLookupAccess(cast<UnresolvedLookupExpr>(E), D);
-
-  return S.CheckUnresolvedMemberAccess(cast<UnresolvedMemberExpr>(E), D);
-}
-
-
-
-
 // [PossiblyAFunctionType]  -->   [Return]
 // NonFunctionType --> NonFunctionType
 // R (A) --> R(A)
