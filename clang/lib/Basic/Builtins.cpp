@@ -121,4 +121,3 @@ Builtin::Context::isScanfLike(unsigned ID, unsigned &FormatIdx,
   return true;
 }
 
-
