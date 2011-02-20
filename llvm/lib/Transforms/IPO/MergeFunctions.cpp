@@ -156,7 +156,7 @@ class FunctionComparator {
 public:
   FunctionComparator(const TargetData *TD, const Function *F1,
                      const Function *F2)
-    : F1(F1), F2(F2), TD(TD), IDMap1Count(0), IDMap2Count(0) {}
+    : F1(F1), F2(F2), TD(TD) {}
 
   /// Test whether the two functions have equivalent behaviour.
   bool compare();
@@ -191,9 +191,8 @@ private:
 
   const TargetData *TD;
 
-  typedef DenseMap<const Value *, unsigned long> IDMap;
-  IDMap Map1, Map2;
-  unsigned long IDMap1Count, IDMap2Count;
+  DenseMap<const Value *, const Value *> id_map;
+  DenseSet<const Value *> seen_values;
 };
 
 }
@@ -397,15 +396,18 @@ bool FunctionComparator::enumerate(const Value *V1, const Value *V2) {
   if (isa<InlineAsm>(V1) || isa<InlineAsm>(V2))
     return V1 == V2;
 
-  unsigned long &ID1 = Map1[V1];
-  if (!ID1)
-    ID1 = ++IDMap1Count;
+  // Check that V1 maps to V2. If we find a value that V1 maps to then we simply
+  // check whether it's equal to V2. When there is no mapping then we need to
+  // ensure that V2 isn't already equivalent to something else. For this
+  // purpose, we track the V2 values in a set.
 
-  unsigned long &ID2 = Map2[V2];
-  if (!ID2)
-    ID2 = ++IDMap2Count;
-
-  return ID1 == ID2;
+  const Value *&map_elem = id_map[V1];
+  if (map_elem)
+    return map_elem == V2;
+  if (!seen_values.insert(V2).second)
+    return false;
+  map_elem = V2;
+  return true;
 }
 
 // Test whether two basic blocks have equivalent behaviour.
