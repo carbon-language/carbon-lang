@@ -1,4 +1,4 @@
-add_executable(not
+add_llvm_utility(not
   not.cpp
   )
 

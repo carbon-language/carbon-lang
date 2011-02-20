@@ -4,6 +4,7 @@ tablegen(Intrinsics.gen -gen-intrinsic)
 
 add_custom_target(intrinsics_gen ALL
   DEPENDS ${llvm_builded_incs_dir}/Intrinsics.gen)
+set_target_properties(intrinsics_gen PROPERTIES FOLDER "Tablegenning")
 
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} intrinsics_gen PARENT_SCOPE)
 
@@ -16,4 +17,5 @@ if( MSVC_IDE OR XCODE )
     # We need at least one source file:
     ${LLVM_MAIN_SRC_DIR}/lib/Transforms/Hello/Hello.cpp
     ${headers})
+  set_target_properties(llvm_headers_do_not_build PROPERTIES FOLDER "Misc")
 endif()

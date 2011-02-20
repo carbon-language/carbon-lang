@@ -12,9 +12,11 @@ function(add_llvm_unittest test_dirname)
   endif()
   add_llvm_executable(${test_name}Tests ${ARGN})
   add_dependencies(UnitTests ${test_name}Tests)
+  set_target_properties(${test_name}Tests PROPERTIES FOLDER "Tests")
 endfunction()
 
 add_custom_target(UnitTests)
+set_target_properties(UnitTests PROPERTIES FOLDER "Tests")
 
 include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
 add_definitions(-DGTEST_HAS_RTTI=0)

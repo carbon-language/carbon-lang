@@ -82,6 +82,7 @@ if(PYTHONINTERP_FOUND)
                 ${LIT_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Running LLVM regression tests")
+  set_target_properties(check PROPERTIES FOLDER "Tests")
 
   add_custom_target(check.deps)
   add_dependencies(check check.deps)
@@ -91,5 +92,6 @@ if(PYTHONINTERP_FOUND)
                 llc lli llvm-ar llvm-as llvm-dis llvm-extract
                 llvm-ld llvm-link llvm-mc llvm-nm macho-dump opt
                 FileCheck count not)
+  set_target_properties(check.deps PROPERTIES FOLDER "Tests")
 
 endif()

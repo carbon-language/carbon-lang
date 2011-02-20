@@ -12,6 +12,8 @@ set(CMAKE_MODULE_PATH
 
 set(PACKAGE_VERSION "2.9")
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 include(VersionFromVCS)
 
 option(LLVM_APPEND_VC_REV

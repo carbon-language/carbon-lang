@@ -1,4 +1,4 @@
-add_executable(KillTheDoctor
+add_llvm_utility(KillTheDoctor
   KillTheDoctor.cpp
   )
 

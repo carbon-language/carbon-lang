@@ -3,7 +3,7 @@ set(LLVM_REQUIRES_RTTI 1)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR})
 
-add_executable(tblgen
+add_llvm_utility(tblgen
   ARMDecoderEmitter.cpp
   AsmMatcherEmitter.cpp
   AsmWriterEmitter.cpp

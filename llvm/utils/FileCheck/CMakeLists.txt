@@ -1,4 +1,4 @@
-add_executable(FileCheck
+add_llvm_utility(FileCheck
   FileCheck.cpp
   )
 
