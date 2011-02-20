@@ -840,7 +840,9 @@ $(RecursiveTargets)::
 else
 $(RecursiveTargets)::
 	$(Verb) for dir in $(OPTIONAL_DIRS); do \
-	  ($(MAKE) -C$$dir $@ ) || exit 1; \
+	  if [ -d $(PROJ_SRC_DIR)/$$dir ]; then\
+	    ($(MAKE) -C$$dir $@ ) || exit 1; \
+	  fi \
 	done
 endif
 endif
