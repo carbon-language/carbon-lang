@@ -64,7 +64,7 @@ namespace {
   std::string output_name = "";
   std::list<claimed_file> Modules;
   std::vector<sys::Path> Cleanup;
-  lto_code_gen_t code_gen;
+  lto_code_gen_t code_gen = NULL;
 }
 
 namespace options {
@@ -196,6 +196,8 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 
         if ((*callback)(all_symbols_read_hook) != LDPS_OK)
           return LDPS_ERR;
+
+        code_gen = lto_codegen_create();
       } break;
       case LDPT_REGISTER_CLEANUP_HOOK: {
         ld_plugin_register_cleanup callback;
@@ -235,8 +237,6 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
     (*message)(LDPL_ERROR, "add_symbols not passed to LLVMgold.");
     return LDPS_ERR;
   }
-
-  code_gen = lto_codegen_create();
 
   return LDPS_OK;
 }
@@ -322,6 +322,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     cf.syms.push_back(ld_plugin_symbol());
     ld_plugin_symbol &sym = cf.syms.back();
     sym.name = const_cast<char *>(lto_module_get_symbol_name(M, i));
+    sym.name = strdup(sym.name);
     sym.version = NULL;
 
     int scope = attrs & LTO_SYMBOL_SCOPE_MASK;
@@ -379,7 +380,11 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     }
   }
 
-  lto_codegen_add_module(code_gen, M);
+  if (code_gen)
+    lto_codegen_add_module(code_gen, M);
+
+  lto_module_dispose(M);
+
   return LDPS_OK;
 }
 
@@ -389,6 +394,8 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
 /// codegen.
 static ld_plugin_status all_symbols_read_hook(void) {
   std::ofstream api_file;
+  assert(code_gen);
+
   if (options::generate_api_file) {
     api_file.open("apifile.txt", std::ofstream::out | std::ofstream::trunc);
     if (!api_file.is_open()) {
@@ -469,10 +476,10 @@ static ld_plugin_status all_symbols_read_hook(void) {
   std::string ErrMsg;
 
   const char *objPath;
+  sys::Path uniqueObjPath("/tmp/llvmgold.o");
   if (!options::obj_path.empty()) {
     objPath = options::obj_path.c_str();
   } else {
-    sys::Path uniqueObjPath("/tmp/llvmgold.o");
     if (uniqueObjPath.createTemporaryFileOnDisk(true, &ErrMsg)) {
       (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());
       return LDPS_ERR;
@@ -497,6 +504,13 @@ static ld_plugin_status all_symbols_read_hook(void) {
   objFile.keep();
 
   lto_codegen_dispose(code_gen);
+  for (std::list<claimed_file>::iterator I = Modules.begin(),
+         E = Modules.end(); I != E; ++I) {
+    for (unsigned i = 0; i != I->syms.size(); ++i) {
+      ld_plugin_symbol &sym = I->syms[i];
+      free(sym.name);
+    }
+  }
 
   if ((*add_input_file)(objPath) != LDPS_OK) {
     (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
