@@ -1233,3 +1233,16 @@ void pr8648() {
   // crash with assignment
   y = ({ (union pr8648_union) { .pr8648_union_field = 0LL }; }).pr8648_union_field;
 }
+
+// PR 9269 - don't assert when building the following CFG.  The for statement
+// contains a condition with multiple basic blocks, and the value of the
+// statement expression is then indexed as part of a bigger condition expression.
+// This example exposed a bug in child traversal in the CFGBuilder.
+void pr9269() {
+  struct s { char *bar[10]; } baz[2] = { 0 };
+  unsigned i = 0;
+  for (i = 0;
+  (* ({ while(0); ({ &baz[0]; }); })).bar[0] != 0;
+       ++i) {}
+}
+

@@ -928,11 +928,13 @@ CFGBlock *CFGBuilder::VisitStmt(Stmt *S, AddStmtChoice asc) {
 
 /// VisitChildren - Visit the children of a Stmt.
 CFGBlock *CFGBuilder::VisitChildren(Stmt* Terminator) {
-  CFGBlock *B = Block;
-  for (Stmt::child_range I = Terminator->children(); I; ++I) {
-    if (*I) B = Visit(*I);
-  }
-  return B;
+  CFGBlock *lastBlock = Block;  
+  for (Stmt::child_range I = Terminator->children(); I; ++I)
+    if (Stmt *child = *I)
+      if (CFGBlock *b = Visit(child))
+        lastBlock = b;
+
+  return lastBlock;
 }
 
 CFGBlock *CFGBuilder::VisitAddrLabelExpr(AddrLabelExpr *A,
@@ -1819,6 +1821,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     if (badCFG)
       return 0;
     LoopSuccessor = Block;
+    Block = 0;
   } else
     LoopSuccessor = Succ;
 
