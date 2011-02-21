@@ -31,10 +31,8 @@ using namespace clang;
 // Sema Initialization Checking
 //===----------------------------------------------------------------------===//
 
-static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
-  const ArrayType *AT = Context.getAsArrayType(DeclType);
-  if (!AT) return 0;
-
+static Expr *IsStringInit(Expr *Init, const ArrayType *AT,
+                          ASTContext &Context) {
   if (!isa<ConstantArrayType>(AT) && !isa<IncompleteArrayType>(AT))
     return 0;
 
@@ -64,6 +62,13 @@ static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
     return Init;
 
   return 0;
+}
+
+static Expr *IsStringInit(Expr *init, QualType declType, ASTContext &Context) {
+  const ArrayType *arrayType = Context.getAsArrayType(declType);
+  if (!arrayType) return 0;
+
+  return IsStringInit(init, arrayType, Context);
 }
 
 static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
@@ -936,9 +941,11 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
                                      unsigned &Index,
                                      InitListExpr *StructuredList,
                                      unsigned &StructuredIndex) {
+  const ArrayType *arrayType = SemaRef.Context.getAsArrayType(DeclType);
+
   // Check for the special-case of initializing an array with a string.
   if (Index < IList->getNumInits()) {
-    if (Expr *Str = IsStringInit(IList->getInit(Index), DeclType,
+    if (Expr *Str = IsStringInit(IList->getInit(Index), arrayType,
                                  SemaRef.Context)) {
       CheckStringInit(Str, DeclType, SemaRef);
       // We place the string literal directly into the resulting
@@ -952,8 +959,7 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
       return;
     }
   }
-  if (const VariableArrayType *VAT =
-        SemaRef.Context.getAsVariableArrayType(DeclType)) {
+  if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(arrayType)) {
     // Check for VLAs; in standard C it would be possible to check this
     // earlier, but I don't know where clang accepts VLAs (gcc accepts
     // them in all sorts of strange places).
@@ -970,16 +976,14 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
   llvm::APSInt maxElements(elementIndex.getBitWidth(),
                            elementIndex.isUnsigned());
   bool maxElementsKnown = false;
-  if (const ConstantArrayType *CAT =
-        SemaRef.Context.getAsConstantArrayType(DeclType)) {
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(arrayType)) {
     maxElements = CAT->getSize();
     elementIndex = elementIndex.extOrTrunc(maxElements.getBitWidth());
     elementIndex.setIsUnsigned(maxElements.isUnsigned());
     maxElementsKnown = true;
   }
 
-  QualType elementType = SemaRef.Context.getAsArrayType(DeclType)
-                             ->getElementType();
+  QualType elementType = arrayType->getElementType();
   while (Index < IList->getNumInits()) {
     Expr *Init = IList->getInit(Index);
     if (DesignatedInitExpr *DIE = dyn_cast<DesignatedInitExpr>(Init)) {
@@ -3109,14 +3113,6 @@ InitializationSequence::InitializationSequence(Sema &S,
     return;
   }
 
-  //     - If the destination type is an array of characters, an array of
-  //       char16_t, an array of char32_t, or an array of wchar_t, and the
-  //       initializer is a string literal, see 8.5.2.
-  if (Initializer && IsStringInit(Initializer, DestType, Context)) {
-    TryStringLiteralInitialization(S, Entity, Kind, Initializer, *this);
-    return;
-  }
-
   //     - If the initializer is (), the object is value-initialized.
   if (Kind.getKind() == InitializationKind::IK_Value ||
       (Kind.getKind() == InitializationKind::IK_Direct && NumArgs == 0)) {
@@ -3130,10 +3126,18 @@ InitializationSequence::InitializationSequence(Sema &S,
     return;
   }
 
+  //     - If the destination type is an array of characters, an array of
+  //       char16_t, an array of char32_t, or an array of wchar_t, and the
+  //       initializer is a string literal, see 8.5.2.
   //     - Otherwise, if the destination type is an array, the program is
   //       ill-formed.
-  if (const ArrayType *AT = Context.getAsArrayType(DestType)) {
-    if (AT->getElementType()->isAnyCharacterType())
+  if (const ArrayType *arrayType = Context.getAsArrayType(DestType)) {
+    if (Initializer && IsStringInit(Initializer, arrayType, Context)) {
+      TryStringLiteralInitialization(S, Entity, Kind, Initializer, *this);
+      return;
+    }
+
+    if (arrayType->getElementType()->isAnyCharacterType())
       SetFailed(FK_ArrayNeedsInitListOrStringLiteral);
     else
       SetFailed(FK_ArrayNeedsInitList);
