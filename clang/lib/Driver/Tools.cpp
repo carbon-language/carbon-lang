@@ -3085,7 +3085,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-lgcc");
 
     if (Args.hasArg(options::OPT_pthread))
-      CmdArgs.push_back("-pthread");
+      CmdArgs.push_back("-lpthread");
     if (!Args.hasArg(options::OPT_shared))
       CmdArgs.push_back("-lc");
     CmdArgs.push_back("-lgcc");
