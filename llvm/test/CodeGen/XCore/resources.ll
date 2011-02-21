@@ -11,6 +11,11 @@ declare void @llvm.xcore.outct.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.chkct.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.setd.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.setc.p1i8(i8 addrspace(1)* %r, i32 %value)
+declare i32 @llvm.xcore.inshr.p1i8(i8 addrspace(1)* %r, i32 %value)
+declare i32 @llvm.xcore.outshr.p1i8(i8 addrspace(1)* %r, i32 %value)
+declare void @llvm.xcore.setpt.p1i8(i8 addrspace(1)* %r, i32 %value)
+declare i32 @llvm.xcore.getts.p1i8(i8 addrspace(1)* %r)
+declare void @llvm.xcore.syncr.p1i8(i8 addrspace(1)* %r)
 
 define i8 addrspace(1)* @getr() {
 ; CHECK: getr:
@@ -107,5 +112,40 @@ define void @setci(i8 addrspace(1)* %r) {
 ; CHECK: setci:
 ; CHECK: setc res[r0], 2
 	call void @llvm.xcore.setc.p1i8(i8 addrspace(1)* %r, i32 2)
+	ret void
+}
+
+define i32 @inshr(i32 %value, i8 addrspace(1)* %r) {
+; CHECK: inshr:
+; CHECK: inshr r0, res[r1]
+	%result = call i32 @llvm.xcore.inshr.p1i8(i8 addrspace(1)* %r, i32 %value)
+	ret i32 %result
+}
+
+define i32 @outshr(i32 %value, i8 addrspace(1)* %r) {
+; CHECK: outshr:
+; CHECK: outshr res[r1], r0
+	%result = call i32 @llvm.xcore.outshr.p1i8(i8 addrspace(1)* %r, i32 %value)
+	ret i32 %result
+}
+
+define void @setpt(i8 addrspace(1)* %r, i32 %value) {
+; CHECK: setpt:
+; CHECK: setpt res[r0], r1
+	call void @llvm.xcore.setpt.p1i8(i8 addrspace(1)* %r, i32 %value)
+	ret void
+}
+
+define i32 @getts(i8 addrspace(1)* %r) {
+; CHECK: getts:
+; CHECK: getts r0, res[r0]
+	%result = call i32 @llvm.xcore.getts.p1i8(i8 addrspace(1)* %r)
+	ret i32 %result
+}
+
+define void @syncr(i8 addrspace(1)* %r) {
+; CHECK: syncr:
+; CHECK: syncr res[r0]
+	call void @llvm.xcore.syncr.p1i8(i8 addrspace(1)* %r)
 	ret void
 }
