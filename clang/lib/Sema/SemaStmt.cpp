@@ -92,6 +92,8 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   unsigned DiagID = diag::warn_unused_expr;
   if (const ExprWithCleanups *Temps = dyn_cast<ExprWithCleanups>(E))
     E = Temps->getSubExpr();
+  if (const CXXBindTemporaryExpr *TempExpr = dyn_cast<CXXBindTemporaryExpr>(E))
+    E = TempExpr->getSubExpr();
 
   E = E->IgnoreParenImpCasts();
   if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
