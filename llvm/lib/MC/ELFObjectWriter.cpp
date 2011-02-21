@@ -1732,6 +1732,10 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         assert(Modifier == MCSymbolRefExpr::VK_None);
         Type = ELF::R_X86_64_PC16;
         break;
+      case FK_PCRel_1:
+        assert(Modifier == MCSymbolRefExpr::VK_None);
+        Type = ELF::R_X86_64_PC8;
+        break;
       }
     } else {
       switch ((unsigned)Fixup.getKind()) {
