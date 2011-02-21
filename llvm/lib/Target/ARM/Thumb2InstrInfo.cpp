@@ -95,6 +95,9 @@ Thumb2InstrInfo::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
 bool
 Thumb2InstrInfo::isLegalToSplitMBBAt(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MBBI) const {
+  while (MBBI->isDebugValue())
+    ++MBBI;
+
   unsigned PredReg = 0;
   return llvm::getITInstrPredicate(MBBI, PredReg) == ARMCC::AL;
 }
