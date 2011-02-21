@@ -1597,7 +1597,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
       }
 
       // Transform the arguments stored in physical registers into virtual ones.
-      unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC, dl);
+      unsigned Reg = MF.addLiveIn(VA.getLocReg(), RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, ValVT);
 
       InVals.push_back(ArgValue);
@@ -1689,7 +1689,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
       // Get an existing live-in vreg, or add a new one.
       unsigned VReg = MF.getRegInfo().getLiveInVirtReg(GPArgRegs[GPRIndex]);
       if (!VReg)
-        VReg = MF.addLiveIn(GPArgRegs[GPRIndex], &PPC::GPRCRegClass, dl);
+        VReg = MF.addLiveIn(GPArgRegs[GPRIndex], &PPC::GPRCRegClass);
 
       SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
       SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
@@ -1708,7 +1708,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
       // Get an existing live-in vreg, or add a new one.
       unsigned VReg = MF.getRegInfo().getLiveInVirtReg(FPArgRegs[FPRIndex]);
       if (!VReg)
-        VReg = MF.addLiveIn(FPArgRegs[FPRIndex], &PPC::F8RCRegClass, dl);
+        VReg = MF.addLiveIn(FPArgRegs[FPRIndex], &PPC::F8RCRegClass);
 
       SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::f64);
       SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
@@ -1872,7 +1872,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       InVals.push_back(FIN);
       if (ObjSize==1 || ObjSize==2) {
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass, dl);
+          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
           SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
                                             MachinePointerInfo(),
@@ -1891,7 +1891,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
         // to memory.  ArgVal will be address of the beginning of
         // the object.
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass, dl);
+          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
           SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
@@ -1914,7 +1914,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
     case MVT::i32:
       if (!isPPC64) {
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass, dl);
+          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
           ++GPR_idx;
         } else {
@@ -1928,7 +1928,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       // FALLTHROUGH
     case MVT::i64:  // PPC64
       if (GPR_idx != Num_GPR_Regs) {
-        unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass, dl);
+        unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
 
         if (ObjectVT == MVT::i32) {
@@ -1966,9 +1966,9 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
         unsigned VReg;
 
         if (ObjectVT == MVT::f32)
-          VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F4RCRegClass, dl);
+          VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F4RCRegClass);
         else
-          VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F8RCRegClass, dl);
+          VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F8RCRegClass);
 
         ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, ObjectVT);
         ++FPR_idx;
@@ -1986,7 +1986,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       // Note that vector arguments in registers don't reserve stack space,
       // except in varargs functions.
       if (VR_idx != Num_VR_Regs) {
-        unsigned VReg = MF.addLiveIn(VR[VR_idx], &PPC::VRRCRegClass, dl);
+        unsigned VReg = MF.addLiveIn(VR[VR_idx], &PPC::VRRCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, ObjectVT);
         if (isVarArg) {
           while ((ArgOffset % 16) != 0) {
@@ -2064,9 +2064,9 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       unsigned VReg;
 
       if (isPPC64)
-        VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass, dl);
+        VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
       else
-        VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass, dl);
+        VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
 
       SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
       SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,

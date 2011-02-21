@@ -17,8 +17,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/DebugLoc.h"
 #include <vector>
 
 namespace llvm {
@@ -66,10 +64,7 @@ class MachineRegisterInfo {
   /// stored in the second element.
   std::vector<std::pair<unsigned, unsigned> > LiveIns;
   std::vector<unsigned> LiveOuts;
-
-  /// LiveInLocs - Keep track of location livein registers.
-  DenseMap<unsigned, DebugLoc> LiveInLocs;
-
+  
   MachineRegisterInfo(const MachineRegisterInfo&); // DO NOT IMPLEMENT
   void operator=(const MachineRegisterInfo&);      // DO NOT IMPLEMENT
 public:
@@ -276,12 +271,7 @@ public:
     LiveIns.push_back(std::make_pair(Reg, vreg));
   }
   void addLiveOut(unsigned Reg) { LiveOuts.push_back(Reg); }
-
-  /// addLiveInLoc - Keep track of location info for live in reg.
-  void addLiveInLoc(unsigned VReg, DebugLoc DL) {
-    LiveInLocs[VReg] = DL;
-  }
-
+  
   // Iteration support for live in/out sets.  These sets are kept in sorted
   // order by their register number.
   typedef std::vector<std::pair<unsigned,unsigned> >::const_iterator

@@ -907,7 +907,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
 
       // Transform the arguments stored on
       // physical registers into virtual ones
-      unsigned Reg = MF.addLiveIn(ArgRegEnd, RC, dl);
+      unsigned Reg = MF.addLiveIn(ArgRegEnd, RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, RegVT);
 
       // If this is an 8 or 16-bit value, it has been passed promoted
@@ -973,7 +973,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
 
     for (; Start <= End; ++Start, ++StackLoc) {
       unsigned Reg = MBlazeRegisterInfo::getRegisterFromNumbering(Start);
-      unsigned LiveReg = MF.addLiveIn(Reg, RC, dl);
+      unsigned LiveReg = MF.addLiveIn(Reg, RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, LiveReg, MVT::i32);
 
       int FI = MFI->CreateFixedObject(4, 0, true);

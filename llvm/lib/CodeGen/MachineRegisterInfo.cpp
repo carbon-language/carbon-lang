@@ -210,15 +210,8 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
         LiveIns.erase(LiveIns.begin() + i);
         --i; --e;
       } else {
-        DebugLoc DL;
-        // If there is a location for this live in then use it.
-        DenseMap<unsigned, DebugLoc>::iterator DLI = 
-          LiveInLocs.find(LiveIns[i].second);
-        if (DLI != LiveInLocs.end())
-          DL = DLI->second;
-
         // Emit a copy.
-        BuildMI(*EntryMBB, EntryMBB->begin(), DL,
+        BuildMI(*EntryMBB, EntryMBB->begin(), DebugLoc(),
                 TII.get(TargetOpcode::COPY), LiveIns[i].second)
           .addReg(LiveIns[i].first);
 

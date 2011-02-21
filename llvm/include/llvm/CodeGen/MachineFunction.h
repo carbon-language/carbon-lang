@@ -281,7 +281,7 @@ public:
 
   /// addLiveIn - Add the specified physical register as a live-in value and
   /// create a corresponding virtual register for it.
-  unsigned addLiveIn(unsigned PReg, const TargetRegisterClass *RC, DebugLoc DL);
+  unsigned addLiveIn(unsigned PReg, const TargetRegisterClass *RC);
 
   //===--------------------------------------------------------------------===//
   // BasicBlock accessor functions.

@@ -396,8 +396,7 @@ void MachineFunction::viewCFGOnly() const
 /// addLiveIn - Add the specified physical register as a live-in value and
 /// create a corresponding virtual register for it.
 unsigned MachineFunction::addLiveIn(unsigned PReg,
-                                    const TargetRegisterClass *RC,
-                                    DebugLoc DL) {
+                                    const TargetRegisterClass *RC) {
   MachineRegisterInfo &MRI = getRegInfo();
   unsigned VReg = MRI.getLiveInVirtReg(PReg);
   if (VReg) {
@@ -406,7 +405,6 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
   }
   VReg = MRI.createVirtualRegister(RC);
   MRI.addLiveIn(PReg, VReg);
-  MRI.addLiveInLoc(VReg, DL);
   return VReg;
 }
 

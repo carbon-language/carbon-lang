@@ -851,17 +851,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       PrepareEHLandingPad();
 
     // Lower any arguments needed in this block if this is the entry block.
-    if (LLVMBB == &Fn.getEntryBlock()) {
-      for (BasicBlock::const_iterator DBI = LLVMBB->begin(), DBE = LLVMBB->end();
-           DBI != DBE; ++DBI) {
-        if (const DbgInfoIntrinsic *DI = dyn_cast<DbgInfoIntrinsic>(DBI)) {
-          const DebugLoc DL = DI->getDebugLoc();
-          SDB->setCurDebugLoc(DL);
-          break;
-        }
-      }
+    if (LLVMBB == &Fn.getEntryBlock())
       LowerArguments(LLVMBB);
-    }
 
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     if (FastIS) {

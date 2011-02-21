@@ -1219,7 +1219,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       FuncInfo->setVarArgsFrameIndex(
         MFI->CreateFixedObject(StackSlotSize, ArgOffset, true));
       SDValue FIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
-      unsigned VReg = MF.addLiveIn(ArgRegs[ArgRegIdx], &SPU::R32CRegClass, dl);
+      unsigned VReg = MF.addLiveIn(ArgRegs[ArgRegIdx], &SPU::R32CRegClass);
       SDValue ArgVal = DAG.getRegister(VReg, MVT::v16i8);
       SDValue Store = DAG.getStore(Chain, dl, ArgVal, FIN, MachinePointerInfo(),
                                    false, false, 0);
