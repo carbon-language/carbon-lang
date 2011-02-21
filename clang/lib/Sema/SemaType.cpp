@@ -1483,7 +1483,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       break;
     case Declarator::TypeNameContext:
       if (!AutoAllowedInTypeName)
-        Error = 8; // Generic
+        Error = 9; // Generic
       break;
     case Declarator::FileContext:
     case Declarator::BlockContext:
@@ -1491,6 +1491,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::ConditionContext:
       break;
     }
+
+    if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
+      Error = 8;
 
     if (Error != -1) {
       Diag(D.getDeclSpec().getTypeSpecTypeLoc(), diag::err_auto_not_allowed)

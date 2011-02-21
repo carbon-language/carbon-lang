@@ -898,7 +898,8 @@ def err_new_array_of_auto : Error<
 def err_auto_not_allowed : Error<
   "'auto' not allowed %select{in function prototype|in struct member"
   "|in union member|in class member|in exception declaration"
-  "|in template parameter|in block literal|in template argument|here}0">;
+  "|in template parameter|in block literal|in template argument"
+  "|in typedef|here}0">;
 def err_auto_var_requires_init : Error<
   "declaration of variable %0 with type %1 requires an initializer">;
 def err_auto_new_requires_ctor_arg : Error<

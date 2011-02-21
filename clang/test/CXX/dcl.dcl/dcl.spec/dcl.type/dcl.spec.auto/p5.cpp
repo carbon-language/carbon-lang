@@ -14,6 +14,9 @@ struct S {
   operator auto(); // expected-error{{'auto' not allowed here}}
 };
 
+typedef auto *AutoPtr; // expected-error{{'auto' not allowed in typedef}}
+typedef auto Fun(int a) -> decltype(a + a);
+
 void g(auto a) { // expected-error{{'auto' not allowed in function prototype}}
   try { }
   catch (auto &a) { } // expected-error{{'auto' not allowed in exception declaration}}
