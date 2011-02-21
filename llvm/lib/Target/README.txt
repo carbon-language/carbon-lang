@@ -254,6 +254,20 @@ unsigned long reverse(unsigned v) {
 
 //===---------------------------------------------------------------------===//
 
+[LOOP DELETION]
+
+We don't delete this output free loop, because trip count analysis doesn't
+realize that it is finite (if it were infinite, it would be undefined).  Not
+having this blocks Loop Idiom from matching strlen and friends.  
+
+void foo(char *C) {
+  int x = 0;
+  while (*C)
+    ++x,++C;
+}
+
+//===---------------------------------------------------------------------===//
+
 [LOOP RECOGNITION]
 
 These idioms should be recognized as popcount (see PR1488):
