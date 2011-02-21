@@ -4,7 +4,7 @@ set(LLVM_PACKAGE_VERSION @PACKAGE_VERSION@)
 
 set(LLVM_COMMON_DEPENDS @LLVM_COMMON_DEPENDS@)
 
-set(llvm_libs @llvm_libs@)
+set_property( GLOBAL PROPERTY LLVM_LIBS "@llvm_libs@")
 
 set(llvm_lib_targets @llvm_lib_targets@)
 
