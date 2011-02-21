@@ -707,11 +707,11 @@ protected:
     
     // A8.6.230 TST (immediate) - Encoding A1
     bool
-    EmulateTSTImmediate (ARMEncoding encoding);
+    EmulateTSTImm (ARMEncoding encoding);
     
     // A8.6.231 TST (register)  - Encoding T1, A1
     bool
-    EmulateTSTRegister (ARMEncoding encoding);
+    EmulateTSTReg (ARMEncoding encoding);
     
     // A8.6.262 UXTB  - Encoding T1
     bool

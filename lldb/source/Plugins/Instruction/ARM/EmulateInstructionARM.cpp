@@ -4444,9 +4444,9 @@ EmulateInstructionARM::EmulateANDImm (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             setflags = BitIsSet(opcode, 20);
             imm32 = ThumbExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
-            // TODO: Emulate TST (immediate)
+            // if Rd == '1111' && S == '1' then SEE TST (immediate);
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateTSTImm(eEncodingT1);
             if (Rd == 13 || (Rd == 15 && !setflags) || BadReg(Rn))
                 return false;
             break;
@@ -4529,9 +4529,9 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
             shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
-            // TODO: Emulate TST (register)
+            // if Rd == '1111' && S == '1' then SEE TST (register);
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateTSTReg(eEncodingT2);
             if (Rd == 13 || (Rd == 15 && !setflags) || BadReg(Rn) || BadReg(Rm))
                 return false;
             break;
@@ -5470,6 +5470,139 @@ EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
     return true;
 }
 
+// Test (immediate) performs a bitwise AND operation on a register value and an immediate value.
+// It updates the condition flags based on the result, and discards the result.
+bool
+EmulateInstructionARM::EmulateTSTImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        result = R[n] AND imm32;
+        APSR.N = result<31>;
+        APSR.Z = IsZeroBit(result);
+        APSR.C = carry;
+        // APSR.V unchanged
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rn;
+        uint32_t imm32; // the immediate value to be ANDed to the value obtained from Rn
+        uint32_t carry; // the carry bit after ARM/Thumb Expand operation
+        switch (encoding)
+        {
+        case eEncodingT1:
+            Rn = Bits32(opcode, 19, 16);
+            imm32 = ThumbExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
+            if (BadReg(Rn))
+                return false;
+            break;
+        case eEncodingA1:
+            Rn = Bits32(opcode, 19, 16);
+            imm32 = ARMExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
+            break;
+        default:
+            return false;
+        }
+
+        // Read the first operand.
+        uint32_t val1 = ReadCoreReg(Rn, &success);
+        if (!success)
+            return false;
+
+        uint32_t result = val1 & imm32;
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        if (!WriteFlags(context, result, carry))
+            return false;
+    }
+    return true;
+}
+
+// Test (register) performs a bitwise AND operation on a register value and an optionally-shifted register value.
+// It updates the condition flags based on the result, and discards the result.
+bool
+EmulateInstructionARM::EmulateTSTReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (shifted, carry) = Shift_C(R[m], shift_t, shift_n, APSR.C);
+        result = R[n] AND shifted;
+        APSR.N = result<31>;
+        APSR.Z = IsZeroBit(result);
+        APSR.C = carry;
+        // APSR.V unchanged
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rn, Rm;
+        ARM_ShifterType shift_t;
+        uint32_t shift_n; // the shift applied to the value read from Rm
+        uint32_t carry;
+        switch (encoding)
+        {
+        case eEncodingT1:
+            Rn = Bits32(opcode, 2, 0);
+            Rm = Bits32(opcode, 5, 3);
+            shift_t = SRType_LSL;
+            shift_n = 0;
+        case eEncodingT2:
+            Rn = Bits32(opcode, 19, 16);
+            Rm = Bits32(opcode, 3, 0);
+            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+            if (BadReg(Rn) || BadReg(Rm))
+                return false;
+            break;
+        case eEncodingA1:
+            Rn = Bits32(opcode, 19, 16);
+            Rm = Bits32(opcode, 3, 0);
+            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            break;
+        default:
+            return false;
+        }
+
+        // Read the first operand.
+        uint32_t val1 = ReadCoreReg(Rn, &success);
+        if (!success)
+            return false;
+
+        // Read the second operand.
+        uint32_t val2 = ReadCoreReg(Rm, &success);
+        if (!success)
+            return false;
+
+        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry);
+        uint32_t result = val1 & shifted;
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        if (!WriteFlags(context, result, carry))
+            return false;
+    }
+    return true;
+}
+
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -5547,6 +5680,12 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x03800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateORRImm, "orr{s}<c> <Rd>, <Rn>, #const"},
         // orr (register)
         { 0x0fe00010, 0x01800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateORRReg, "orr{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // tst (immediate)
+        { 0x0ff0f000, 0x03100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTSTImm, "tst<c> <Rn>, #const"},
+        // tst (register)
+        { 0x0ff0f010, 0x01100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rn>, <Rm> {,<shift>}"},
+
+
         // move bitwise not
         { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNRdImm, "mvn{s}<c> <Rd>, #<const>"},
         // asr (immediate)
@@ -5703,6 +5842,12 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // orr (register)
         { 0xffffffc0, 0x00004300, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateORRReg, "orrs|orr<c> <Rdn>, <Rm>"},
         { 0xffe08000, 0xea400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateORRReg, "orr{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // tst (immediate)
+        { 0xfbf08f00, 0xf0100f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTSTImm, "tsts}<c> <Rn>, #<const>"},
+        // tst (register)
+        { 0xffffffc0, 0x00004200, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rdn>, <Rm>"},
+        { 0xfff08f00, 0xea100f00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c>.w <Rn>, <Rm> {,<shift>}"},
+
 
         // move from high register to high register
         { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdRm, "mov<c> <Rd>, <Rm>"},
