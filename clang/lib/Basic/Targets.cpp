@@ -152,6 +152,7 @@ public:
   DarwinTargetInfo(const std::string& triple) :
     OSTargetInfo<Target>(triple) {
       this->TLSSupported = llvm::Triple(triple).getDarwinMajorNumber() > 10;
+      this->MCountName = "\01mcount";
     }
 
   virtual std::string isValidSectionSpecifier(llvm::StringRef SR) const {
