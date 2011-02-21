@@ -836,6 +836,8 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
   
   // FIXME: Build a reference to this declaration? Convert it to bool?
   // (This is currently handled by Sema).
+
+  Actions.FinalizeDeclaration(DeclOut);
   
   return false;
 }

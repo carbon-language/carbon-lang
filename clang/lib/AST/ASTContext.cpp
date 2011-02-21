@@ -2683,12 +2683,22 @@ QualType ASTContext::getDecltypeType(Expr *e) const {
   return QualType(dt, 0);
 }
 
-/// getAutoType - Unlike many "get<Type>" functions, we don't unique
-/// AutoType AST's.
+/// getAutoType - We only unique auto types after they've been deduced.
 QualType ASTContext::getAutoType(QualType DeducedType) const {
-  AutoType *at = new (*this, TypeAlignment) AutoType(DeducedType);
-  Types.push_back(at);
-  return QualType(at, 0);
+  void *InsertPos = 0;
+  if (!DeducedType.isNull()) {
+    // Look in the folding set for an existing type.
+    llvm::FoldingSetNodeID ID;
+    AutoType::Profile(ID, DeducedType);
+    if (AutoType *AT = AutoTypes.FindNodeOrInsertPos(ID, InsertPos))
+      return QualType(AT, 0);
+  }
+
+  AutoType *AT = new (*this, TypeAlignment) AutoType(DeducedType);
+  Types.push_back(AT);
+  if (InsertPos)
+    AutoTypes.InsertNode(AT, InsertPos);
+  return QualType(AT, 0);
 }
 
 /// getTagDeclType - Return the unique reference to the type for the

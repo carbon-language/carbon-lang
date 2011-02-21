@@ -652,10 +652,6 @@ private:
   /// slot of its function, enabling the named return value optimization (NRVO).
   bool NRVOVariable : 1;
 
-  /// \brief Whether this variable has a deduced C++0x auto type for which we're
-  /// currently parsing the initializer.
-  bool ParsingAutoInit : 1;
-  
   friend class StmtIteratorBase;
   friend class ASTDeclReader;
   
@@ -665,7 +661,7 @@ protected:
           StorageClass SCAsWritten)
     : DeclaratorDecl(DK, DC, L, Id, T, TInfo), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
-      ExceptionVar(false), NRVOVariable(false), ParsingAutoInit(false) {
+      ExceptionVar(false), NRVOVariable(false) {
     SClass = SC;
     SClassAsWritten = SCAsWritten;
   }
@@ -888,18 +884,6 @@ public:
   }
 
   void setInit(Expr *I);
-
-  /// \brief Check whether we are in the process of parsing an initializer
-  /// needed to deduce the type of this variable.
-  bool isParsingAutoInit() const {
-    return ParsingAutoInit;
-  }
-
-  /// \brief Note whether we are currently parsing an initializer needed to
-  /// deduce the type of this variable.
-  void setParsingAutoInit(bool P) {
-    ParsingAutoInit = P;
-  }
 
   EvaluatedStmt *EnsureEvaluatedStmt() const {
     EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>();

@@ -667,6 +667,8 @@ Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
     Actions.ActOnUninitializedDecl(ThisDecl, TypeContainsAuto);
   }
 
+  Actions.FinalizeDeclaration(ThisDecl);
+
   return ThisDecl;
 }
 

@@ -3004,12 +3004,12 @@ Sema::DeduceAutoType(QualType Type, Expr *Init, QualType &Result) {
   LocalInstantiationScope InstScope(*this);
 
   // Build template<class TemplParam> void Func(FuncParam);
-  NamedDecl *TemplParam
-    = TemplateTypeParmDecl::Create(Context, 0, Loc, 0, 0, 0, false, false);
-  TemplateParameterList *TemplateParams
-    = TemplateParameterList::Create(Context, Loc, Loc, &TemplParam, 1, Loc);
-
   QualType TemplArg = Context.getTemplateTypeParmType(0, 0, false);
+  TemplateTypeParmDecl TemplParam(0, Loc, 0, false, TemplArg, false);
+  NamedDecl *TemplParamPtr = &TemplParam;
+  FixedSizeTemplateParameterList<1> TemplateParams(Loc, Loc, &TemplParamPtr,
+                                                   Loc);
+
   QualType FuncParam =
     SubstituteAutoTransform(*this, TemplArg).TransformType(Type);
 
@@ -3018,13 +3018,13 @@ Sema::DeduceAutoType(QualType Type, Expr *Init, QualType &Result) {
   Deduced.resize(1);
   QualType InitType = Init->getType();
   unsigned TDF = 0;
-  if (AdjustFunctionParmAndArgTypesForDeduction(*this, TemplateParams,
+  if (AdjustFunctionParmAndArgTypesForDeduction(*this, &TemplateParams,
                                                 FuncParam, InitType, Init,
                                                 TDF))
     return false;
 
   TemplateDeductionInfo Info(Context, Loc);
-  if (::DeduceTemplateArguments(*this, TemplateParams,
+  if (::DeduceTemplateArguments(*this, &TemplateParams,
                                 FuncParam, InitType, Info, Deduced,
                                 TDF))
     return false;

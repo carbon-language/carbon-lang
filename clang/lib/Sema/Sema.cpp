@@ -466,6 +466,12 @@ void Sema::ActOnEndOfTranslationUnit() {
     checkUndefinedInternals(*this);
   }
 
+  // Check we've noticed that we're no longer parsing the initializer for every
+  // variable. If we miss cases, then at best we have a performance issue and
+  // at worst a rejects-valid bug.
+  assert(ParsingInitForAutoVars.empty() &&
+         "Didn't unmark var as having its initializer parsed");
+
   TUScope = 0;
 }
 

@@ -76,12 +76,10 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
   }
 
   // See if this is an auto-typed variable whose initializer we are parsing.
-  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    if (VD->isParsingAutoInit()) {
-      Diag(Loc, diag::err_auto_variable_cannot_appear_in_own_initializer)
-        << D->getDeclName();
-      return true;
-    }
+  if (ParsingInitForAutoVars.count(D)) {
+    Diag(Loc, diag::err_auto_variable_cannot_appear_in_own_initializer)
+      << D->getDeclName();
+    return true;
   }
 
   // See if the decl is deprecated.

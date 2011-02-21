@@ -3026,11 +3026,11 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(),
                             II, R, TInfo, SC, SCAsWritten);
 
-    // If this decl has an auto type in need of deduction, mark the VarDecl so
-    // we can diagnose uses of it in its own initializer.
-    if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto) {
-      NewVD->setParsingAutoInit(R->getContainedAutoType());
-    }
+    // If this decl has an auto type in need of deduction, make a note of the
+    // Decl so we can diagnose uses of it in its own initializer.
+    if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
+        R->getContainedAutoType())
+      ParsingInitForAutoVars.insert(NewVD);
 
     if (D.isInvalidType() || Invalid)
       NewVD->setInvalidDecl();
@@ -4534,8 +4534,6 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
 
   // C++0x [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
   if (TypeMayContainAuto && VDecl->getType()->getContainedAutoType()) {
-    VDecl->setParsingAutoInit(false);
-
     QualType DeducedType;
     if (!DeduceAutoType(VDecl->getType(), Init, DeducedType)) {
       Diag(VDecl->getLocation(), diag::err_auto_var_deduction_failure)
@@ -4800,9 +4798,8 @@ void Sema::ActOnInitializerError(Decl *D) {
   if (!VD) return;
 
   // Auto types are meaningless if we can't make sense of the initializer.
-  if (VD->isParsingAutoInit()) {
-    VD->setParsingAutoInit(false);
-    VD->setInvalidDecl();
+  if (ParsingInitForAutoVars.count(D)) {
+    D->setInvalidDecl();
     return;
   }
 
@@ -4840,8 +4837,6 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
 
     // C++0x [dcl.spec.auto]p3
     if (TypeMayContainAuto && Type->getContainedAutoType()) {
-      Var->setParsingAutoInit(false);
-
       Diag(Var->getLocation(), diag::err_auto_var_requires_init)
         << Var->getDeclName() << Type;
       Var->setInvalidDecl();
@@ -5042,6 +5037,14 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   // Require the destructor.
   if (const RecordType *recordType = baseType->getAs<RecordType>())
     FinalizeVarWithDestructor(var, recordType);
+}
+
+/// FinalizeDeclaration - called by ParseDeclarationAfterDeclarator to perform
+/// any semantic actions necessary after any initializer has been attached.
+void
+Sema::FinalizeDeclaration(Decl *ThisDecl) {
+  // Note that we are no longer parsing the initializer for this declaration.
+  ParsingInitForAutoVars.erase(ThisDecl);
 }
 
 Sema::DeclGroupPtrTy

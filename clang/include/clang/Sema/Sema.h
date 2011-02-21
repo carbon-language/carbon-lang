@@ -267,6 +267,10 @@ public:
   /// same list more than once.
   llvm::OwningPtr<RecordDeclSetTy> PureVirtualClassDiagSet;
 
+  /// ParsingInitForAutoVars - a set of declarations with auto types for which
+  /// we are currently parsing the initializer.
+  llvm::SmallPtrSet<const Decl*, 4> ParsingInitForAutoVars;
+
   /// \brief A mapping from external names to the most recent
   /// locally-scoped external declaration with that name.
   ///
@@ -856,6 +860,7 @@ public:
   void ActOnUninitializedDecl(Decl *dcl, bool TypeMayContainAuto);
   void ActOnInitializerError(Decl *Dcl);
   void SetDeclDeleted(Decl *dcl, SourceLocation DelLoc);
+  void FinalizeDeclaration(Decl *D);
   DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
                                          Decl **Group,
                                          unsigned NumDecls);

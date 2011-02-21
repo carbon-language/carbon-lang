@@ -48,6 +48,7 @@ class TemplateParameterList {
   /// parameter list.
   unsigned NumParams;
 
+protected:
   TemplateParameterList(SourceLocation TemplateLoc, SourceLocation LAngleLoc,
                         NamedDecl **Params, unsigned NumParams,
                         SourceLocation RAngleLoc);
@@ -104,6 +105,19 @@ public:
 
   SourceRange getSourceRange() const {
     return SourceRange(TemplateLoc, RAngleLoc);
+  }
+};
+
+/// FixedSizeTemplateParameterList - Stores a list of template parameters for a
+/// TemplateDecl and its derived classes. Suitable for creating on the stack.
+template<size_t N>
+class FixedSizeTemplateParameterList : public TemplateParameterList {
+  NamedDecl *Params[N];
+
+public:
+  FixedSizeTemplateParameterList(SourceLocation TemplateLoc, SourceLocation LAngleLoc,
+                                 NamedDecl **Params, SourceLocation RAngleLoc) :
+    TemplateParameterList(TemplateLoc, LAngleLoc, Params, N, RAngleLoc) {
   }
 };
 
@@ -913,6 +927,9 @@ class TemplateTypeParmDecl : public TypeDecl {
       InheritedDefault(false), ParameterPack(ParameterPack), DefaultArgument() {
     TypeForDecl = Type.getTypePtrOrNull();
   }
+
+  /// Sema creates these on the stack during auto type deduction.
+  friend class Sema;
 
 public:
   static TemplateTypeParmDecl *Create(const ASTContext &C, DeclContext *DC,

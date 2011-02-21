@@ -1078,6 +1078,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (Deleted) // FIXME: Source location is not very good.
     SetDeclDeleted(Member, D.getSourceRange().getBegin());
 
+  FinalizeDeclaration(Member);
+
   if (isInstField)
     FieldCollector->Add(cast<FieldDecl>(Member));
   return Member;
@@ -5972,8 +5974,6 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
 
   // C++0x [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
   if (TypeMayContainAuto && VDecl->getType()->getContainedAutoType()) {
-    VDecl->setParsingAutoInit(false);
-
     // FIXME: n3225 doesn't actually seem to indicate this is ill-formed
     if (Exprs.size() > 1) {
       Diag(Exprs.get()[1]->getSourceRange().getBegin(),
