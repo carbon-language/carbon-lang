@@ -1878,38 +1878,3 @@ _add32carry:
 	ret
 
 //===---------------------------------------------------------------------===//
-
-This:
-char t(char c) {
-  return c/3;
-}
-
-Compiles to: $clang t.c -S -o - -O3 -mkernel -fomit-frame-pointer
-
-_t:                                     ## @t
-	movslq	%edi, %rax
-	imulq	$1431655766, %rax, %rax ## imm = 0x55555556
-	movq	%rax, %rcx
-	shrq	$63, %rcx
-	shrq	$32, %rax
-	addl	%ecx, %eax
-	movsbl	%al, %eax
-	ret
-
-GCC gets:
-
-_t:
-	movl	$86, %eax
-	imulb	%dil
-	shrw	$8, %ax
-	sarb	$7, %dil
-	subb	%dil, %al
-	movsbl	%al,%eax
-	ret
-
-which is nicer.  This also happens for int, not just char.
-
-//===---------------------------------------------------------------------===//
-
-
-
