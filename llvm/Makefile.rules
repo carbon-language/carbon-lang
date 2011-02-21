@@ -973,7 +973,9 @@ $(NativeExportsFile): $(EXPORTED_SYMBOL_FILE) $(ObjDir)/.dir
 	$(Verb) echo "{" > $@
 	$(Verb) grep -q "\<" $< && echo "  global:" >> $@ || :
 	$(Verb) sed -e 's/$$/;/' -e 's/^/    /' < $< >> $@
+ifneq ($(HOST_OS),OpenBSD)
 	$(Verb) echo "  local: *;" >> $@
+endif
 	$(Verb) echo "};" >> $@
 clean-local::
 	-$(Verb) $(RM) -f $(NativeExportsFile)
