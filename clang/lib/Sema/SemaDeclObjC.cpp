@@ -856,9 +856,21 @@ static SourceRange getTypeRange(TypeSourceInfo *TSI) {
 
 static void CheckMethodOverrideReturn(Sema &S,
                                       ObjCMethodDecl *MethodImpl,
-                                      ObjCMethodDecl *MethodIface) {
+                                      ObjCMethodDecl *MethodDecl,
+                                      bool IsProtocolMethodDecl) {
+  if (IsProtocolMethodDecl &&
+      (MethodDecl->getObjCDeclQualifier() !=
+       MethodImpl->getObjCDeclQualifier())) {
+    S.Diag(MethodImpl->getLocation(), 
+           diag::warn_conflicting_ret_type_modifiers)
+        << MethodImpl->getDeclName()
+        << getTypeRange(MethodImpl->getResultTypeSourceInfo());
+    S.Diag(MethodDecl->getLocation(), diag::note_previous_declaration)
+        << getTypeRange(MethodDecl->getResultTypeSourceInfo());
+  }
+  
   if (S.Context.hasSameUnqualifiedType(MethodImpl->getResultType(),
-                                       MethodIface->getResultType()))
+                                       MethodDecl->getResultType()))
     return;
 
   unsigned DiagID = diag::warn_conflicting_ret_types;
@@ -868,7 +880,7 @@ static void CheckMethodOverrideReturn(Sema &S,
   if (const ObjCObjectPointerType *ImplPtrTy =
         MethodImpl->getResultType()->getAs<ObjCObjectPointerType>()) {
     if (const ObjCObjectPointerType *IfacePtrTy =
-          MethodIface->getResultType()->getAs<ObjCObjectPointerType>()) {
+          MethodDecl->getResultType()->getAs<ObjCObjectPointerType>()) {
       // Allow non-matching return types as long as they don't violate
       // the principle of substitutability.  Specifically, we permit
       // return types that are subclasses of the declared return type,
@@ -882,20 +894,33 @@ static void CheckMethodOverrideReturn(Sema &S,
 
   S.Diag(MethodImpl->getLocation(), DiagID)
     << MethodImpl->getDeclName()
-    << MethodIface->getResultType()
+    << MethodDecl->getResultType()
     << MethodImpl->getResultType()
     << getTypeRange(MethodImpl->getResultTypeSourceInfo());
-  S.Diag(MethodIface->getLocation(), diag::note_previous_definition)
-    << getTypeRange(MethodIface->getResultTypeSourceInfo());
+  S.Diag(MethodDecl->getLocation(), diag::note_previous_definition)
+    << getTypeRange(MethodDecl->getResultTypeSourceInfo());
 }
 
 static void CheckMethodOverrideParam(Sema &S,
                                      ObjCMethodDecl *MethodImpl,
-                                     ObjCMethodDecl *MethodIface,
+                                     ObjCMethodDecl *MethodDecl,
                                      ParmVarDecl *ImplVar,
-                                     ParmVarDecl *IfaceVar) {
+                                     ParmVarDecl *IfaceVar,
+                                     bool IsProtocolMethodDecl) {
+  if (IsProtocolMethodDecl &&
+      (ImplVar->getObjCDeclQualifier() !=
+       IfaceVar->getObjCDeclQualifier())) {
+    S.Diag(ImplVar->getLocation(), 
+           diag::warn_conflicting_param_modifiers)
+        << getTypeRange(ImplVar->getTypeSourceInfo())
+        << MethodImpl->getDeclName();
+    S.Diag(IfaceVar->getLocation(), diag::note_previous_declaration)
+        << getTypeRange(IfaceVar->getTypeSourceInfo());   
+  }
+      
   QualType ImplTy = ImplVar->getType();
   QualType IfaceTy = IfaceVar->getType();
+  
   if (S.Context.hasSameUnqualifiedType(ImplTy, IfaceTy))
     return;
 
@@ -927,17 +952,20 @@ static void CheckMethodOverrideParam(Sema &S,
                                      
 
 void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
-                                       ObjCMethodDecl *IntfMethodDecl) {
-  CheckMethodOverrideReturn(*this, ImpMethodDecl, IntfMethodDecl);
+                                       ObjCMethodDecl *MethodDecl,
+                                       bool IsProtocolMethodDecl) {
+  CheckMethodOverrideReturn(*this, ImpMethodDecl, MethodDecl, 
+                            IsProtocolMethodDecl);
 
   for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
-       IF = IntfMethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
+       IF = MethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
        IM != EM; ++IM, ++IF)
-    CheckMethodOverrideParam(*this, ImpMethodDecl, IntfMethodDecl, *IM, *IF);
+    CheckMethodOverrideParam(*this, ImpMethodDecl, MethodDecl, *IM, *IF,
+                             IsProtocolMethodDecl);
 
-  if (ImpMethodDecl->isVariadic() != IntfMethodDecl->isVariadic()) {
+  if (ImpMethodDecl->isVariadic() != MethodDecl->isVariadic()) {
     Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_variadic);
-    Diag(IntfMethodDecl->getLocation(), diag::note_previous_declaration);
+    Diag(MethodDecl->getLocation(), diag::note_previous_declaration);
   }
 }
 
@@ -1061,13 +1089,14 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
     } else {
       ObjCMethodDecl *ImpMethodDecl =
       IMPDecl->getInstanceMethod((*I)->getSelector());
-      ObjCMethodDecl *IntfMethodDecl =
+      ObjCMethodDecl *MethodDecl =
       CDecl->getInstanceMethod((*I)->getSelector());
-      assert(IntfMethodDecl &&
-             "IntfMethodDecl is null in ImplMethodsVsClassMethods");
+      assert(MethodDecl &&
+             "MethodDecl is null in ImplMethodsVsClassMethods");
       // ImpMethodDecl may be null as in a @dynamic property.
       if (ImpMethodDecl)
-        WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+        WarnConflictingTypedMethods(ImpMethodDecl, MethodDecl,
+                                    isa<ObjCProtocolDecl>(CDecl));
     }
   }
 
@@ -1085,9 +1114,10 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
     } else {
       ObjCMethodDecl *ImpMethodDecl =
         IMPDecl->getClassMethod((*I)->getSelector());
-      ObjCMethodDecl *IntfMethodDecl =
+      ObjCMethodDecl *MethodDecl =
         CDecl->getClassMethod((*I)->getSelector());
-      WarnConflictingTypedMethods(ImpMethodDecl, IntfMethodDecl);
+      WarnConflictingTypedMethods(ImpMethodDecl, MethodDecl, 
+                                  isa<ObjCProtocolDecl>(CDecl));
     }
   }
   

@@ -1523,7 +1523,8 @@ public:
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl, unsigned DiagID);
   void WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethod,
-                                   ObjCMethodDecl *IntfMethod);
+                                   ObjCMethodDecl *MethodDecl,
+                                   bool IsProtocolMethodDecl);
 
   bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl,
                           ObjCInterfaceDecl *IDecl);
