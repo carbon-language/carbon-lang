@@ -9336,9 +9336,12 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       }
     }
 
-    // Keep track of used but undefined variables.
+    // Keep track of used but undefined variables.  We make a hole in
+    // the warning for static const data members with in-line
+    // initializers.
     if (Var->hasDefinition() == VarDecl::DeclarationOnly
-        && Var->getLinkage() != ExternalLinkage) {
+        && Var->getLinkage() != ExternalLinkage
+        && !(Var->isStaticDataMember() && Var->hasInit())) {
       SourceLocation &old = UndefinedInternals[Var->getCanonicalDecl()];
       if (old.isInvalid()) old = Loc;
     }

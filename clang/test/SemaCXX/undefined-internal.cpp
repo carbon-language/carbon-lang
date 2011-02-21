@@ -84,3 +84,24 @@ namespace test5 {
     B<A>::foo(); // expected-note {{used here}}
   }
 }
+
+namespace test6 {
+  template <class T> struct A {
+    static const int zero = 0;
+    static const int one = 1;
+    static const int two = 2;
+
+    int value;
+
+    A() : value(zero) {
+      value = one;
+    }
+  };
+
+  namespace { struct Internal; }
+
+  void test() {
+    A<Internal> a;
+    a.value = A<Internal>::two;
+  }
+}
