@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 | FileCheck %s
+// RUN: %clang_cc1 -std=c++0x -emit-llvm %s -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 
 template < bool condition, typename T = void >
 struct enable_if { typedef T type; };
@@ -24,6 +24,10 @@ namespace Casts {
   void static_(typename enable_if< O <= static_cast<unsigned>(4) >::type* = 0) {
   }
 
+  template< typename T >
+  void auto_(decltype(new auto(T()))) {
+  }
+
   // FIXME: Test const_cast, reinterpret_cast, dynamic_cast, which are
   // a bit harder to use in template arguments.
   template <unsigned N> struct T {};
@@ -41,4 +45,7 @@ namespace Casts {
 
   // CHECK: define weak_odr void @_ZN5Casts1fILi6EEENS_1TIXT_EEEv
   template T<6> f<6>();
+
+  // CHECK: define weak_odr void @_ZN5Casts5auto_IiEEvDTnw_DapicvT__EEE(
+  template void auto_<int>(int*);
 }
