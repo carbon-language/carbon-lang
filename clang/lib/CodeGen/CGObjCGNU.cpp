@@ -949,7 +949,12 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   Elements.push_back(MakeConstantString(Name, ".class_name"));
   Elements.push_back(Zero);
   Elements.push_back(llvm::ConstantInt::get(LongTy, info));
-  Elements.push_back(InstanceSize);
+  if (isMeta) {
+    llvm::TargetData td(&TheModule);
+    Elements.push_back(llvm::ConstantInt::get(LongTy,
+                     td.getTypeSizeInBits(ClassTy)/8));
+  } else
+    Elements.push_back(InstanceSize);
   Elements.push_back(IVars);
   Elements.push_back(Methods);
   Elements.push_back(NULLPtr);
