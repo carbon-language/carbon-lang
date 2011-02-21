@@ -262,12 +262,13 @@ bool llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
 
 /// areAllUsesEqual - Check whether the uses of a value are all the same.
 /// This is similar to Instruction::hasOneUse() except this will also return
-/// true when there are multiple uses that all refer to the same value.
+/// true when there are no uses or multiple uses that all refer to the same
+/// value.
 static bool areAllUsesEqual(Instruction *I) {
   Value::use_iterator UI = I->use_begin();
   Value::use_iterator UE = I->use_end();
   if (UI == UE)
-    return false;
+    return true;
 
   User *TheUse = *UI;
   for (++UI; UI != UE; ++UI) {
@@ -283,34 +284,21 @@ static bool areAllUsesEqual(Instruction *I) {
 /// delete it.  If that makes any of its operands trivially dead, delete them
 /// too, recursively.  Return true if the PHI node is actually deleted.
 bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
-  if (PN->use_empty()) {
-    PN->eraseFromParent();
-    return true;
-  }
+  SmallPtrSet<Instruction*, 4> Visited;
+  for (Instruction *I = PN; areAllUsesEqual(I) && !I->mayHaveSideEffects();
+       I = cast<Instruction>(*I->use_begin())) {
+    if (I->use_empty())
+      return RecursivelyDeleteTriviallyDeadInstructions(I);
 
-  // We can remove a PHI if it is on a cycle in the def-use graph
-  // where each node in the cycle has degree one, i.e. only one use,
-  // and is an instruction with no side effects.
-  if (!areAllUsesEqual(PN))
-    return false;
-
-  bool Changed = false;
-  SmallPtrSet<PHINode *, 4> PHIs;
-  PHIs.insert(PN);
-  for (Instruction *I = cast<Instruction>(*PN->use_begin());
-       areAllUsesEqual(I) && !I->mayHaveSideEffects();
-       I = cast<Instruction>(*I->use_begin()))
-    // If we find a PHI more than once, we're on a cycle that
+    // If we find an instruction more than once, we're on a cycle that
     // won't prove fruitful.
-    if (PHINode *IP = dyn_cast<PHINode>(I))
-      if (!PHIs.insert(IP)) {
-        // Break the cycle and delete the PHI and its operands.
-        IP->replaceAllUsesWith(UndefValue::get(IP->getType()));
-        (void)RecursivelyDeleteTriviallyDeadInstructions(IP);
-        Changed = true;
-        break;
-      }
-  return Changed;
+    if (!Visited.insert(I)) {
+      // Break the cycle and delete the instruction and its operands.
+      I->replaceAllUsesWith(UndefValue::get(I->getType()));
+      return RecursivelyDeleteTriviallyDeadInstructions(I);
+    }
+  }
+  return false;
 }
 
 /// SimplifyInstructionsInBlock - Scan the specified basic block and try to
