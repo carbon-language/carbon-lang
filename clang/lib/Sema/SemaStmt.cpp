@@ -25,6 +25,7 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
@@ -1394,19 +1395,29 @@ static bool CheckAsmLValue(const Expr *E, Sema &S) {
   return true;
 }
 
+/// isOperandMentioned - Return true if the specified operand # is mentioned
+/// anywhere in the decomposed asm string.
+static bool isOperandMentioned(unsigned OpNo, 
+                         llvm::ArrayRef<AsmStmt::AsmStringPiece> AsmStrPieces) {
+  for (unsigned p = 0, e = AsmStrPieces.size(); p != e; ++p) {
+    const AsmStmt::AsmStringPiece &Piece = AsmStrPieces[p];
+    if (!Piece.isOperand()) continue;
+    
+    // If this is a reference to the input and if the input was the smaller
+    // one, then we have to reject this asm.
+    if (Piece.getOperandNo() == OpNo)
+      return true;
+  }
+ 
+  return false;
+}
 
-StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
-                                          bool IsSimple,
-                                          bool IsVolatile,
-                                          unsigned NumOutputs,
-                                          unsigned NumInputs,
-                                          IdentifierInfo **Names,
-                                          MultiExprArg constraints,
-                                          MultiExprArg exprs,
-                                          Expr *asmString,
-                                          MultiExprArg clobbers,
-                                          SourceLocation RParenLoc,
-                                          bool MSAsm) {
+StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
+                              bool IsVolatile, unsigned NumOutputs,
+                              unsigned NumInputs, IdentifierInfo **Names,
+                              MultiExprArg constraints, MultiExprArg exprs,
+                              Expr *asmString, MultiExprArg clobbers,
+                              SourceLocation RParenLoc, bool MSAsm) {
   unsigned NumClobbers = clobbers.size();
   StringLiteral **Constraints =
     reinterpret_cast<StringLiteral**>(constraints.get());
@@ -1571,30 +1582,28 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       continue;
 
     // If the smaller input/output operand is not mentioned in the asm string,
-    // then we can promote it and the asm string won't notice.  Check this
-    // case now.
+    // then we can promote it to a larger input and the asm string won't notice.
+    // Check this case now.
+    bool InputMentioned = isOperandMentioned(i+NumOutputs, Pieces);
+    bool OutputMentioned = isOperandMentioned(TiedTo, Pieces);
+    
     bool SmallerValueMentioned = false;
-    for (unsigned p = 0, e = Pieces.size(); p != e; ++p) {
-      AsmStmt::AsmStringPiece &Piece = Pieces[p];
-      if (!Piece.isOperand()) continue;
+    
+    // If this is a reference to the input and if the input was the smaller
+    // one, then we have to reject this asm.
+    if (InputMentioned) {
+      // This is a use in the asm string of the smaller operand.  Since we
+      // codegen this by promoting to a wider value, the asm will get printed
+      // "wrong".
+      if (InSize < OutSize)
+        SmallerValueMentioned = true;
+    }
 
-      // If this is a reference to the input and if the input was the smaller
-      // one, then we have to reject this asm.
-      if (Piece.getOperandNo() == i+NumOutputs) {
-        if (InSize < OutSize) {
-          SmallerValueMentioned = true;
-          break;
-        }
-      }
-
-      // If this is a reference to the output and if it was the smaller one,
-      // then we have to reject this asm.
-      if (Piece.getOperandNo() == TiedTo) {
-        if (InSize > OutSize) {
-          SmallerValueMentioned = true;
-          break;
-        }
-      }
+    if (OutputMentioned) {
+      // If this is a reference to the output, and if the output is the larger
+      // value, then it's ok because we'll promote the input to the larger type.
+      if (OutSize < InSize)
+        SmallerValueMentioned = true;
     }
 
     // If the smaller value wasn't mentioned in the asm string, and if the
