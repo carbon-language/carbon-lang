@@ -40,7 +40,7 @@ entry:
 	%div = sdiv i16 %x, 33		; <i32> [#uses=1]
 	ret i16 %div
 ; CHECK: test4:
-; CHECK: imull	$-1985, %ecx, %ecx 
+; CHECK: imull	$1986, %eax, %eax 
 }
 
 define i32 @test5(i32 %A) nounwind {

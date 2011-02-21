@@ -1888,12 +1888,10 @@ Compiles to: $clang t.c -S -o - -O3 -mkernel -fomit-frame-pointer
 
 _t:                                     ## @t
 	movslq	%edi, %rax
-	imulq	$-1431655765, %rax, %rcx ## imm = 0xFFFFFFFFAAAAAAAB
-	shrq	$32, %rcx
-	addl	%ecx, %eax
-	movl	%eax, %ecx
-	shrl	$31, %ecx
-	shrl	%eax
+	imulq	$1431655766, %rax, %rax ## imm = 0x55555556
+	movq	%rax, %rcx
+	shrq	$63, %rcx
+	shrq	$32, %rax
 	addl	%ecx, %eax
 	movsbl	%al, %eax
 	ret

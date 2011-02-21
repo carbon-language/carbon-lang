@@ -1505,7 +1505,7 @@ APInt::ms APInt::magic() const {
       r2 = r2 - ad;
     }
     delta = ad - r2;
-  } while (q1.ule(delta) || (q1 == delta && r1 == 0));
+  } while (q1.ult(delta) || (q1 == delta && r1 == 0));
 
   mag.m = q2 + 1;
   if (d.isNegative()) mag.m = -mag.m;   // resulting magic number
