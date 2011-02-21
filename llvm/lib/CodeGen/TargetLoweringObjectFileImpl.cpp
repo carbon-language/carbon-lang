@@ -441,11 +441,15 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
 
   Triple T(((LLVMTargetMachine&)TM).getTargetTriple());
   if (T.getOS() == Triple::Darwin) {
-    unsigned MajNum = T.getDarwinMajorNumber();
-    if (MajNum == 7 || MajNum == 8) // 10.3 Panther, 10.4 Tiger
+    switch (T.getDarwinMajorNumber()) {
+    case 7:  // 10.3 Panther.
+    case 8:  // 10.4 Tiger.
       CommDirectiveSupportsAlignment = false;
-    if (MajNum > 9)                 // 10.6 SnowLeopard
-      IsFunctionEHSymbolGlobal = false;
+      break;
+    case 9:   // 10.5 Leopard.
+    case 10:  // 10.6 SnowLeopard.
+      break;
+    }
   }
 
   TargetLoweringObjectFile::Initialize(Ctx, TM);
