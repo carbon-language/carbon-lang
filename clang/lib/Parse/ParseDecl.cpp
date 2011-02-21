@@ -1244,7 +1244,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                          DiagID, getLang());
       break;
     case tok::kw_auto:
-      if (getLang().CPlusPlus0x)
+      if (getLang().CPlusPlus0x || getLang().ObjC1)
         isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec,
                                        DiagID);
       else
