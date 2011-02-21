@@ -501,10 +501,11 @@ static bool ProfitableToMerge(MachineBasicBlock *MBB1,
                               MachineBasicBlock *SuccBB,
                               MachineBasicBlock *PredBB) {
   CommonTailLen = ComputeCommonTailLength(MBB1, MBB2, I1, I2);
-  MachineFunction *MF = MBB1->getParent();
-
   if (CommonTailLen == 0)
     return false;
+  DEBUG(dbgs() << "Common tail length of BB#" << MBB1->getNumber()
+               << " and BB#" << MBB2->getNumber() << " is " << CommonTailLen
+               << '\n');
 
   // It's almost always profitable to merge any number of non-terminator
   // instructions with the block that falls through into the common successor.
@@ -541,6 +542,7 @@ static bool ProfitableToMerge(MachineBasicBlock *MBB1,
   // we don't have to split a block.  At worst we will be introducing 1 new
   // branch instruction, which is likely to be smaller than the 2
   // instructions that would be deleted in the merge.
+  MachineFunction *MF = MBB1->getParent();
   if (EffectiveTailLen >= 2 &&
       MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize) &&
       (I1 == MBB1->begin() || I2 == MBB2->begin()))
