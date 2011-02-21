@@ -101,6 +101,8 @@ namespace llvm {
 
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
+
+    unsigned getSRetArgSize(SelectionDAG &DAG, SDValue Callee) const;
   };
 } // end namespace llvm
 

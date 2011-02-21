@@ -124,7 +124,8 @@ def call          : SDNode<"SPISD::CALL", SDT_SPCall,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                             SDNPVariadic]>;
 
-def retflag       : SDNode<"SPISD::RET_FLAG", SDTNone,
+def SDT_SPRet     : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def retflag       : SDNode<"SPISD::RET_FLAG", SDT_SPRet,
                            [SDNPHasChain, SDNPOptInGlue]>;
 
 def flushw        : SDNode<"SPISD::FLUSHW", SDTNone,
@@ -132,7 +133,7 @@ def flushw        : SDNode<"SPISD::FLUSHW", SDTNone,
 
 def getPCX        : Operand<i32> {
   let PrintMethod = "printGetPCX";
-}  
+}
 
 //===----------------------------------------------------------------------===//
 // SPARC Flag Conditions
@@ -232,6 +233,9 @@ let hasSideEffects = 1, mayStore = 1 in {
                    [(flushw)]>;
 }
 
+def UNIMP : F2_1<0b000, (outs), (ins i32imm:$val),
+                "unimp $val", []>;
+
 // FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the 
 // fpmover pass.
 let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
@@ -292,11 +296,13 @@ let usesCustomInserter = 1, Uses = [FCC] in {
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
 let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
-  let rd = O7.Num, rs1 = G0.Num, simm13 = 8 in
-    def RETL: F3_2<2, 0b111000, (outs), (ins), "retl", [(retflag)]>;
+  let rd = O7.Num, rs1 = G0.Num in
+    def RETL: F3_2<2, 0b111000, (outs), (ins i32imm:$val),
+                   "jmp %o7+$val", [(retflag simm13:$val)]>;
 
-  let rd = I7.Num, rs1 = G0.Num, simm13 = 8 in
-    def RET: F3_2<2, 0b111000, (outs), (ins), "ret", []>;
+  let rd = I7.Num, rs1 = G0.Num in
+    def RET: F3_2<2, 0b111000, (outs), (ins i32imm:$val),
+                  "jmp %i7+$val", []>;
 }
 
 // Section B.1 - Load Integer Instructions, p. 90

@@ -79,6 +79,7 @@ namespace {
     MachineBasicBlock::iterator
     findDelayInstr(MachineBasicBlock &MBB, MachineBasicBlock::iterator slot);
 
+    bool needsUnimp(MachineBasicBlock::iterator I, unsigned &StructSize);
 
   };
   char Filler::ID = 0;
@@ -90,6 +91,7 @@ namespace {
 FunctionPass *llvm::createSparcDelaySlotFillerPass(TargetMachine &tm) {
   return new Filler(tm);
 }
+
 
 /// runOnMachineBasicBlock - Fill in delay slots for the given basic block.
 /// We assume there is only one delay slot per delayed instruction.
@@ -112,6 +114,13 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
         BuildMI(MBB, ++J, I->getDebugLoc(), TII->get(SP::NOP));
       else
         MBB.splice(++J, &MBB, D);
+      unsigned structSize = 0;
+      if (needsUnimp(I, structSize)) {
+        MachineBasicBlock::iterator J = I;
+        ++J; //skip the delay filler.
+        BuildMI(MBB, ++J, I->getDebugLoc(),
+                TII->get(SP::UNIMP)).addImm(structSize);
+      }
     }
   return Changed;
 }
@@ -287,6 +296,28 @@ bool Filler::isDelayFiller(MachineBasicBlock &MBB,
 {
   if (candidate == MBB.begin())
     return false;
+  if (candidate->getOpcode() == SP::UNIMP)
+    return true;
   const TargetInstrDesc &prevdesc = (--candidate)->getDesc();
   return prevdesc.hasDelaySlot();
+}
+
+bool Filler::needsUnimp(MachineBasicBlock::iterator I, unsigned &StructSize)
+{
+  if (!I->getDesc().isCall())
+    return false;
+
+  unsigned structSizeOpNum = 0;
+  switch (I->getOpcode()) {
+  default: llvm_unreachable("Unknown call opcode.");
+  case SP::CALL: structSizeOpNum = 1; break;
+  case SP::JMPLrr:
+  case SP::JMPLri: structSizeOpNum = 2; break;
+  }
+
+  const MachineOperand &MO = I->getOperand(structSizeOpNum);
+  if (!MO.isImm())
+    return false;
+  StructSize = MO.getImm();
+  return true;
 }

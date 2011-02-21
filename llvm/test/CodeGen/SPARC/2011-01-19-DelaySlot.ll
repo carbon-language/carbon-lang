@@ -7,7 +7,7 @@ entry:
 ; CHECK: test
 ; CHECK: call bar
 ; CHECK-NOT: nop
-; CHECK: ret
+; CHECK: jmp
 ; CHECK-NEXT: restore
   %0 = tail call i32 @bar(i32 %a) nounwind
   ret i32 %0
@@ -18,7 +18,7 @@ entry:
 ; CHECK:      test_jmpl
 ; CHECK:      call
 ; CHECK-NOT:  nop
-; CHECK:      ret
+; CHECK:      jmp
 ; CHECK-NEXT: restore
   %0 = tail call i32 %f(i32 %a, i32 %b) nounwind
   ret i32 %0
@@ -47,7 +47,7 @@ bb:                                               ; preds = %entry, %bb
 
 bb5:                                              ; preds = %bb, %entry
   %a_addr.1.lcssa = phi i32 [ %a, %entry ], [ %a_addr.0, %bb ]
-;CHECK:      ret
+;CHECK:      jmp
 ;CHECK-NEXT: restore
   ret i32 %a_addr.1.lcssa
 }

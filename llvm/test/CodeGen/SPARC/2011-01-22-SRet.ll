@@ -7,7 +7,7 @@ entry:
 ;CHECK: make_foo
 ;CHECK: ld [%fp+64], {{.+}}
 ;CHECK: or {{.+}}, {{.+}}, %i0
-;CHECK: ret
+;CHECK: jmp %i7+12
   %0 = getelementptr inbounds %struct.foo_t* %agg.result, i32 0, i32 0
   store i32 %a, i32* %0, align 4
   %1 = getelementptr inbounds %struct.foo_t* %agg.result, i32 0, i32 1
@@ -22,6 +22,7 @@ entry:
 ;CHECK: test
 ;CHECK: st {{.+}}, [%sp+64]
 ;CHECK: make_foo
+;CHECK: unimp 12
   %f = alloca %struct.foo_t, align 8
   call void @make_foo(%struct.foo_t* noalias sret %f, i32 10, i32 20, i32 30) nounwind
   %0 = getelementptr inbounds %struct.foo_t* %f, i32 0, i32 0
