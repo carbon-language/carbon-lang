@@ -60,3 +60,83 @@ int main() {
   return  global-2;
 }
 }
+
+namespace test3 {
+  struct A {
+    A();
+    A(const A&);
+    ~A();
+  };
+
+  struct B {
+    B();
+    B(const B&);
+    ~B();
+    operator bool();
+    operator A();
+  };
+
+  B test0(B &x) {
+    // CHECK:    define void @_ZN5test35test0ERNS_1BE(
+    // CHECK:      [[X:%.*]] = alloca [[B:%.*]]*,
+    // CHECK-NEXT: store [[B]]* {{%.*}}, [[B]]** [[X]]
+    // CHECK-NEXT: [[T0:%.*]] = load [[B]]** [[X]]
+    // CHECK-NEXT: [[BOOL:%.*]] = call zeroext i1 @_ZN5test31BcvbEv([[B]]* [[T0]])
+    // CHECK-NEXT: br i1 [[BOOL]]
+    // CHECK:      call void @_ZN5test31BC1ERKS0_([[B]]* [[RESULT:%.*]], [[B]]* [[T0]])
+    // CHECK-NEXT: br label
+    // CHECK:      call void @_ZN5test31BC1Ev([[B]]* [[RESULT]])
+    // CHECK-NEXT: br label
+    // CHECK:      ret void
+    return x ?: B();
+  }
+
+  B test1() {
+    // CHECK:    define void @_ZN5test35test1Ev(
+    // CHECK:      [[TEMP:%.*]] = alloca [[B]],
+    // CHECK-NEXT: call  void @_ZN5test312test1_helperEv([[B]]* sret [[TEMP]])
+    // CHECK-NEXT: [[BOOL:%.*]] = call zeroext i1 @_ZN5test31BcvbEv([[B]]* [[TEMP]])
+    // CHECK-NEXT: br i1 [[BOOL]]
+    // CHECK:      call void @_ZN5test31BC1ERKS0_([[B]]* [[RESULT:%.*]], [[B]]* [[TEMP]])
+    // CHECK-NEXT: br label
+    // CHECK:      call void @_ZN5test31BC1Ev([[B]]* [[RESULT]])
+    // CHECK-NEXT: br label
+    // CHECK:      call void @_ZN5test31BD1Ev([[B]]* [[TEMP]])
+    // CHECK-NEXT: ret void
+    extern B test1_helper();
+    return test1_helper() ?: B();
+  }
+
+
+  A test2(B &x) {
+    // CHECK:    define void @_ZN5test35test2ERNS_1BE(
+    // CHECK:      [[X:%.*]] = alloca [[B]]*,
+    // CHECK-NEXT: store [[B]]* {{%.*}}, [[B]]** [[X]]
+    // CHECK-NEXT: [[T0:%.*]] = load [[B]]** [[X]]
+    // CHECK-NEXT: [[BOOL:%.*]] = call zeroext i1 @_ZN5test31BcvbEv([[B]]* [[T0]])
+    // CHECK-NEXT: br i1 [[BOOL]]
+    // CHECK:      call void @_ZN5test31BcvNS_1AEEv([[A:%.*]]* sret [[RESULT:%.*]], [[B]]* [[T0]])
+    // CHECK-NEXT: br label
+    // CHECK:      call void @_ZN5test31AC1Ev([[A]]* [[RESULT]])
+    // CHECK-NEXT: br label
+    // CHECK:      ret void
+    return x ?: A();
+  }
+
+  A test3() {
+    // CHECK:    define void @_ZN5test35test3Ev(
+    // CHECK:      [[TEMP:%.*]] = alloca [[B]],
+    // CHECK-NEXT: call  void @_ZN5test312test3_helperEv([[B]]* sret [[TEMP]])
+    // CHECK-NEXT: [[BOOL:%.*]] = call zeroext i1 @_ZN5test31BcvbEv([[B]]* [[TEMP]])
+    // CHECK-NEXT: br i1 [[BOOL]]
+    // CHECK:      call void @_ZN5test31BcvNS_1AEEv([[A]]* sret [[RESULT:%.*]], [[B]]* [[TEMP]])
+    // CHECK-NEXT: br label
+    // CHECK:      call void @_ZN5test31AC1Ev([[A]]* [[RESULT]])
+    // CHECK-NEXT: br label
+    // CHECK:      call void @_ZN5test31BD1Ev([[B]]* [[TEMP]])
+    // CHECK-NEXT: ret void
+    extern B test3_helper();
+    return test3_helper() ?: A();
+  }
+
+}

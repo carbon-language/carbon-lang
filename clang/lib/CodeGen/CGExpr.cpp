@@ -260,6 +260,10 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
         }
       }
 
+      if (const OpaqueValueExpr *opaque = dyn_cast<OpaqueValueExpr>(E))
+        if (opaque->getType()->isRecordType())
+          return CGF.EmitOpaqueValueLValue(opaque).getAddress();
+
       // Nothing changed.
       break;
     }
