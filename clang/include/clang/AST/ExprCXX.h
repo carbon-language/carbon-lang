@@ -108,8 +108,6 @@ public:
   /// FIXME: Returns 0 for member pointer call exprs.
   CXXRecordDecl *getRecordDecl();
 
-  SourceRange getSourceRange() const;
-  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXMemberCallExprClass;
   }

@@ -335,6 +335,9 @@ DependentScopeDeclRefExpr::CreateEmpty(ASTContext &C,
 }
 
 SourceRange CXXConstructExpr::getSourceRange() const {
+  if (isa<CXXTemporaryObjectExpr>(this))
+    return cast<CXXTemporaryObjectExpr>(this)->getSourceRange();
+
   if (ParenRange.isValid())
     return SourceRange(Loc, ParenRange.getEnd());
 
@@ -395,13 +398,6 @@ CXXRecordDecl *CXXMemberCallExpr::getRecordDecl() {
     return ThisArg->getType()->getPointeeType()->getAsCXXRecordDecl();
 
   return ThisArg->getType()->getAsCXXRecordDecl();
-}
-
-SourceRange CXXMemberCallExpr::getSourceRange() const {
-  SourceLocation LocStart = getCallee()->getLocStart();
-  if (LocStart.isInvalid() && getNumArgs() > 0)
-    LocStart = getArg(0)->getLocStart();
-  return SourceRange(LocStart, getRParenLoc());
 }
 
 

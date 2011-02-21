@@ -1843,9 +1843,7 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  SourceRange getSourceRange() const {
-    return SourceRange(getCallee()->getLocStart(), RParenLoc);
-  }
+  SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstCallExprConstant &&
