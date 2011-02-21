@@ -108,9 +108,11 @@ void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
   if (SectionTypeDescriptors[SectionType].AssemblerName) {
     OS << ',';
     OS << SectionTypeDescriptors[SectionType].AssemblerName;
-  } else
+  } else {
     // If we have no name for the attribute, stop here.
+    OS << '\n';
     return;
+  }
 
   // If we don't have any attributes, we're done.
   unsigned SectionAttrs = TAA & MCSectionMachO::SECTION_ATTRIBUTES;
