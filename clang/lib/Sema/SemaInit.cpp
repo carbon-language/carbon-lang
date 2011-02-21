@@ -71,13 +71,13 @@ static Expr *IsStringInit(Expr *init, QualType declType, ASTContext &Context) {
   return IsStringInit(init, arrayType, Context);
 }
 
-static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
+static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
+                            Sema &S) {
   // Get the length of the string as parsed.
   uint64_t StrLength =
     cast<ConstantArrayType>(Str->getType())->getSize().getZExtValue();
 
 
-  const ArrayType *AT = S.Context.getAsArrayType(DeclT);
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
     // C99 6.7.8p14. We have an array of character type with unknown size
     // being initialized to a string literal.
@@ -656,82 +656,93 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
                           newStructuredList, newStructuredIndex);
     ++StructuredIndex;
     ++Index;
-  } else if (Expr *Str = IsStringInit(expr, ElemType, SemaRef.Context)) {
-    CheckStringInit(Str, ElemType, SemaRef);
-    UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
-    ++Index;
+    return;
   } else if (ElemType->isScalarType()) {
-    CheckScalarType(Entity, IList, ElemType, Index,
-                    StructuredList, StructuredIndex);
+    return CheckScalarType(Entity, IList, ElemType, Index,
+                           StructuredList, StructuredIndex);
   } else if (ElemType->isReferenceType()) {
-    CheckReferenceType(Entity, IList, ElemType, Index,
-                       StructuredList, StructuredIndex);
-  } else {
-    if (SemaRef.getLangOptions().CPlusPlus) {
-      // C++ [dcl.init.aggr]p12:
-      //   All implicit type conversions (clause 4) are considered when
-      //   initializing the aggregate member with an ini- tializer from
-      //   an initializer-list. If the initializer can initialize a
-      //   member, the member is initialized. [...]
+    return CheckReferenceType(Entity, IList, ElemType, Index,
+                              StructuredList, StructuredIndex);
+  }
 
-      // FIXME: Better EqualLoc?
-      InitializationKind Kind =
-        InitializationKind::CreateCopy(expr->getLocStart(), SourceLocation());
-      InitializationSequence Seq(SemaRef, Entity, Kind, &expr, 1);
+  if (const ArrayType *arrayType = SemaRef.Context.getAsArrayType(ElemType)) {
+    // arrayType can be incomplete if we're initializing a flexible
+    // array member.  There's nothing we can do with the completed
+    // type here, though.
 
-      if (Seq) {
-        ExprResult Result =
-          Seq.Perform(SemaRef, Entity, Kind, MultiExprArg(&expr, 1));
-        if (Result.isInvalid())
-          hadError = true;
-
-        UpdateStructuredListElement(StructuredList, StructuredIndex,
-                                    Result.takeAs<Expr>());
-        ++Index;
-        return;
-      }
-
-      // Fall through for subaggregate initialization
-    } else {
-      // C99 6.7.8p13:
-      //
-      //   The initializer for a structure or union object that has
-      //   automatic storage duration shall be either an initializer
-      //   list as described below, or a single expression that has
-      //   compatible structure or union type. In the latter case, the
-      //   initial value of the object, including unnamed members, is
-      //   that of the expression.
-      if ((ElemType->isRecordType() || ElemType->isVectorType()) &&
-          SemaRef.CheckSingleAssignmentConstraints(ElemType, expr)
-              == Sema::Compatible) {
-        SemaRef.DefaultFunctionArrayLvalueConversion(expr);
-        UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
-        ++Index;
-        return;
-      }
-
-      // Fall through for subaggregate initialization
-    }
-
-    // C++ [dcl.init.aggr]p12:
-    //
-    //   [...] Otherwise, if the member is itself a non-empty
-    //   subaggregate, brace elision is assumed and the initializer is
-    //   considered for the initialization of the first member of
-    //   the subaggregate.
-    if (ElemType->isAggregateType() || ElemType->isVectorType()) {
-      CheckImplicitInitList(Entity, IList, ElemType, Index, StructuredList,
-                            StructuredIndex);
-      ++StructuredIndex;
-    } else {
-      // We cannot initialize this element, so let
-      // PerformCopyInitialization produce the appropriate diagnostic.
-      SemaRef.PerformCopyInitialization(Entity, SourceLocation(),
-                                        SemaRef.Owned(expr));
-      hadError = true;
+    if (Expr *Str = IsStringInit(expr, arrayType, SemaRef.Context)) {
+      CheckStringInit(Str, ElemType, arrayType, SemaRef);
+      UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
       ++Index;
-      ++StructuredIndex;
+      return;
     }
+
+    // Fall through for subaggregate initialization.
+
+  } else if (SemaRef.getLangOptions().CPlusPlus) {
+    // C++ [dcl.init.aggr]p12:
+    //   All implicit type conversions (clause 4) are considered when
+    //   initializing the aggregate member with an ini- tializer from
+    //   an initializer-list. If the initializer can initialize a
+    //   member, the member is initialized. [...]
+
+    // FIXME: Better EqualLoc?
+    InitializationKind Kind =
+      InitializationKind::CreateCopy(expr->getLocStart(), SourceLocation());
+    InitializationSequence Seq(SemaRef, Entity, Kind, &expr, 1);
+
+    if (Seq) {
+      ExprResult Result =
+        Seq.Perform(SemaRef, Entity, Kind, MultiExprArg(&expr, 1));
+      if (Result.isInvalid())
+        hadError = true;
+
+      UpdateStructuredListElement(StructuredList, StructuredIndex,
+                                  Result.takeAs<Expr>());
+      ++Index;
+      return;
+    }
+
+    // Fall through for subaggregate initialization
+  } else {
+    // C99 6.7.8p13:
+    //
+    //   The initializer for a structure or union object that has
+    //   automatic storage duration shall be either an initializer
+    //   list as described below, or a single expression that has
+    //   compatible structure or union type. In the latter case, the
+    //   initial value of the object, including unnamed members, is
+    //   that of the expression.
+    if ((ElemType->isRecordType() || ElemType->isVectorType()) &&
+        SemaRef.CheckSingleAssignmentConstraints(ElemType, expr)
+          == Sema::Compatible) {
+      SemaRef.DefaultFunctionArrayLvalueConversion(expr);
+      UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
+      ++Index;
+      return;
+    }
+
+    // Fall through for subaggregate initialization
+  }
+
+  // C++ [dcl.init.aggr]p12:
+  //
+  //   [...] Otherwise, if the member is itself a non-empty
+  //   subaggregate, brace elision is assumed and the initializer is
+  //   considered for the initialization of the first member of
+  //   the subaggregate.
+  if (ElemType->isAggregateType() || ElemType->isVectorType()) {
+    CheckImplicitInitList(Entity, IList, ElemType, Index, StructuredList,
+                          StructuredIndex);
+    ++StructuredIndex;
+  } else {
+    // We cannot initialize this element, so let
+    // PerformCopyInitialization produce the appropriate diagnostic.
+    SemaRef.PerformCopyInitialization(Entity, SourceLocation(),
+                                      SemaRef.Owned(expr));
+    hadError = true;
+    ++Index;
+    ++StructuredIndex;
   }
 }
 
@@ -947,7 +958,7 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
   if (Index < IList->getNumInits()) {
     if (Expr *Str = IsStringInit(IList->getInit(Index), arrayType,
                                  SemaRef.Context)) {
-      CheckStringInit(Str, DeclType, SemaRef);
+      CheckStringInit(Str, DeclType, arrayType, SemaRef);
       // We place the string literal directly into the resulting
       // initializer list. This is the only place where the structure
       // of the structured initializer list doesn't match exactly,
@@ -4033,7 +4044,8 @@ InitializationSequence::Perform(Sema &S,
 
     case SK_StringInit: {
       QualType Ty = Step->Type;
-      CheckStringInit(CurInitExpr, ResultType ? *ResultType : Ty, S);
+      CheckStringInit(CurInitExpr, ResultType ? *ResultType : Ty,
+                      S.Context.getAsArrayType(Ty), S);
       break;
     }
 
