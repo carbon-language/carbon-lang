@@ -60,7 +60,7 @@ bool RecursivelyDeleteTriviallyDeadInstructions(Value *V);
 /// dead PHI node, due to being a def-use chain of single-use nodes that
 /// either forms a cycle or is terminated by a trivially dead instruction,
 /// delete it.  If that makes any of its operands trivially dead, delete them
-/// too, recursively.  Return true if the PHI node is actually deleted.
+/// too, recursively.  Return true if a change was made.
 bool RecursivelyDeleteDeadPHINode(PHINode *PN);
 
   

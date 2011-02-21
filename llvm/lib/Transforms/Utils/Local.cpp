@@ -282,7 +282,7 @@ static bool areAllUsesEqual(Instruction *I) {
 /// dead PHI node, due to being a def-use chain of single-use nodes that
 /// either forms a cycle or is terminated by a trivially dead instruction,
 /// delete it.  If that makes any of its operands trivially dead, delete them
-/// too, recursively.  Return true if the PHI node is actually deleted.
+/// too, recursively.  Return true if a change was made.
 bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
   SmallPtrSet<Instruction*, 4> Visited;
   for (Instruction *I = PN; areAllUsesEqual(I) && !I->mayHaveSideEffects();
@@ -295,7 +295,8 @@ bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
     if (!Visited.insert(I)) {
       // Break the cycle and delete the instruction and its operands.
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
-      return RecursivelyDeleteTriviallyDeadInstructions(I);
+      (void)RecursivelyDeleteTriviallyDeadInstructions(I);
+      return true;
     }
   }
   return false;
