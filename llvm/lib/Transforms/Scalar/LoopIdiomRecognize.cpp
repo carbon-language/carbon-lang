@@ -281,7 +281,7 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
     // TODO: Could also handle negative stride here someday, that will require
     // the validity check in mayLoopAccessLocation to be updated though.
     // Enable this to print exact negative strides.
-    if (0 && StoreSize == -Stride->getValue()->getValue()) {
+    if (0 && Stride && StoreSize == -Stride->getValue()->getValue()) {
       dbgs() << "NEGATIVE STRIDE: " << *SI << "\n";
       dbgs() << "BB: " << *SI->getParent();
     }
