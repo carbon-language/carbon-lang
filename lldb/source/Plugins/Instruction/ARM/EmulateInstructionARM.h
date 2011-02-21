@@ -563,11 +563,11 @@ protected:
     
     // A8.6.44 EOR (immediate)
     bool
-    EmulateEORImmediate (ARMEncoding encoding);
+    EmulateEORImm (ARMEncoding encoding);
     
     // A8.6.45 EOR (register)
     bool
-    EmulateEORegister (ARMEncoding encoding);
+    EmulateEORReg (ARMEncoding encoding);
     
     // A8.6.58 LDR (immediate, ARM) - Encoding A1
     bool
@@ -699,11 +699,11 @@ protected:
     
     // A8.6.227 TEQ (immediate) - Encoding A1
     bool
-    EmulateTEQImmediate (ARMEncoding encoding);
+    EmulateTEQImm (ARMEncoding encoding);
     
     // A8.6.228 TEQ (register)  - Encoding A1
     bool
-    EmulateTEQRegister (ARMEncoding encoding);
+    EmulateTEQReg (ARMEncoding encoding);
     
     // A8.6.230 TST (immediate) - Encoding A1
     bool
