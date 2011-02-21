@@ -168,16 +168,16 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
     switch (insn.displacementSize) {
     default:
       break;
-    case 8:
+    case 1:
       type = TYPE_MOFFS8;
       break;
-    case 16:
+    case 2:
       type = TYPE_MOFFS16;
       break;
-    case 32:
+    case 4:
       type = TYPE_MOFFS32;
       break;
-    case 64:
+    case 8:
       type = TYPE_MOFFS64;
       break;
     }

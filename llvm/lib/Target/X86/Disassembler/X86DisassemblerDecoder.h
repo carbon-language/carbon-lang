@@ -399,7 +399,7 @@ struct InternalInstruction {
   /* The segment override type */
   SegmentOverride segmentOverride;
   
-  /* Sizes of various critical pieces of data */
+  /* Sizes of various critical pieces of data, in bytes */
   uint8_t registerSize;
   uint8_t addressSize;
   uint8_t displacementSize;
