@@ -1587,8 +1587,8 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
         }
       }
 
-      // If this is a reference to the input and if the input was the smaller
-      // one, then we have to reject this asm.
+      // If this is a reference to the output and if it was the smaller one,
+      // then we have to reject this asm.
       if (Piece.getOperandNo() == TiedTo) {
         if (InSize > OutSize) {
           SmallerValueMentioned = true;
