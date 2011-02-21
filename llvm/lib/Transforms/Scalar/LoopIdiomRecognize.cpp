@@ -31,6 +31,11 @@
 //   void foo(_Complex float *P)
 //     for (i) { __real__(*P) = 0;  __imag__(*P) = 0; }
 //
+// We should enhance this to handle negative strides through memory.
+// Alternatively (and perhaps better) we could rely on an earlier pass to force
+// forward iteration through memory, which is generally better for cache
+// behavior.  Negative strides *do* happen for memset/memcpy loops.
+//
 // This could recognize common matrix multiplies and dot product idioms and
 // replace them with calls to BLAS (if linked in??).
 //
@@ -272,10 +277,17 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   unsigned StoreSize = (unsigned)SizeInBits >> 3; 
   const SCEVConstant *Stride = dyn_cast<SCEVConstant>(StoreEv->getOperand(1));
   
-  // TODO: Could also handle negative stride here someday, that will require the
-  // validity check in mayLoopAccessLocation to be updated though.
-  if (Stride == 0 || StoreSize != Stride->getValue()->getValue())
+  if (Stride == 0 || StoreSize != Stride->getValue()->getValue()) {
+    // TODO: Could also handle negative stride here someday, that will require
+    // the validity check in mayLoopAccessLocation to be updated though.
+    // Enable this to print exact negative strides.
+    if (0 && StoreSize == -Stride->getValue()->getValue()) {
+      dbgs() << "NEGATIVE STRIDE: " << *SI << "\n";
+      dbgs() << "BB: " << *SI->getParent();
+    }
+    
     return false;
+  }
 
   // See if we can optimize just this store in isolation.
   if (processLoopStridedStore(StorePtr, StoreSize, SI->getAlignment(),
