@@ -2950,10 +2950,7 @@ def note_equality_comparison_silence : Note<
 def warn_synthesized_ivar_access : Warning<
   "direct access of synthesized ivar by using property access %0">,
   InGroup<NonfragileAbi2>, DefaultIgnore;
-def warn_ivar_variable_conflict : Warning<
-  "when default property synthesis is on, "
-  "%0 lookup will access property ivar instead of global variable">, 
-  InGroup<NonfragileAbi2>;
+
 def note_global_declared_at : Note<"global variable declared here">;
 
 // assignment related diagnostics (also for argument passing, returning, etc).

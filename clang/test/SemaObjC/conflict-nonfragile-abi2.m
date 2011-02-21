@@ -1,10 +1,10 @@
 // RUN: %clang_cc1 -fobjc-nonfragile-abi -verify -fsyntax-only %s
 // rdar://8225011
 
-int glob; // expected-note {{global variable declared here}}
+int glob;
 
 @interface I
-@property int glob; // expected-note {{property declared here}}
+@property int glob;
 @property int p;
 @property int le;
 @property int l;
@@ -12,8 +12,10 @@ int glob; // expected-note {{global variable declared here}}
 @property int r;
 @end
 
+// rdar://9027673
+// Warning on future name lookup rule is removed.
 @implementation I
-- (int) Meth { return glob; } // expected-warning {{when default property synthesis is on, 'glob' lookup will access}}
+- (int) Meth { return glob; } // no warning
 @synthesize glob;
 // rdar://8248681
 - (int) Meth1: (int) p {

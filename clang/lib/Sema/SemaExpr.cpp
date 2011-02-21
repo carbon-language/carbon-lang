@@ -1675,20 +1675,6 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
   // This is guaranteed from this point on.
   assert(!R.empty() || ADL);
 
-  if (VarDecl *Var = R.getAsSingle<VarDecl>()) {
-    if (getLangOptions().ObjCNonFragileABI && IvarLookupFollowUp &&
-        !(getLangOptions().ObjCDefaultSynthProperties && 
-          getLangOptions().ObjCNonFragileABI2) &&
-        Var->isFileVarDecl()) {
-      ObjCPropertyDecl *Property = canSynthesizeProvisionalIvar(II);
-      if (Property) {
-        Diag(NameLoc, diag::warn_ivar_variable_conflict) << Var->getDeclName();
-        Diag(Property->getLocation(), diag::note_property_declare);
-        Diag(Var->getLocation(), diag::note_global_declared_at);
-      }
-    }
-  }
-
   // Check whether this might be a C++ implicit instance member access.
   // C++ [class.mfct.non-static]p3:
   //   When an id-expression that is not part of a class member access
