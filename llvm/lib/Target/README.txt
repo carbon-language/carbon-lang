@@ -287,6 +287,16 @@ unsigned int popcount(unsigned int input) {
   return count;
 }
 
+This should be recognized as CLZ:  rdar://8459039
+
+unsigned clz_a(unsigned a) {
+  int i;
+  for (i=0;i<32;i++)
+    if (a & (1<<(31-i)))
+      return i;
+  return 32;
+}
+
 This sort of thing should be added to the loop idiom pass.
 
 //===---------------------------------------------------------------------===//
