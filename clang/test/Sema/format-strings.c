@@ -340,3 +340,13 @@ void posix_extensions() {
   printf("%'f\n", (float) 1.0); // no-warning
   printf("%'p\n", (void*) 0); // expected-warning{{results in undefined behavior with 'p' conversion specifier}}
 }
+
+// PR8486
+//
+// Test what happens when -Wformat is on, but -Wformat-security is off.
+#pragma GCC diagnostic warning "-Wformat"
+#pragma GCC diagnostic ignored "-Wformat-security"
+
+void pr8486() {
+  printf("%s", 1); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
+}

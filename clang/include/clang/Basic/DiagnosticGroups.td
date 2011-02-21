@@ -198,9 +198,11 @@ def Unused : DiagGroup<"unused",
                         DiagCategory<"Unused Entity Issue">;
 
 // Format settings.
-def Format : DiagGroup<"format", [FormatExtraArgs, FormatZeroLength, NonNull]>,
+def FormatSecurity : DiagGroup<"format-security">;
+def Format : DiagGroup<"format",
+                       [FormatExtraArgs, FormatZeroLength, NonNull,
+                        FormatSecurity]>,
              DiagCategory<"Format String Issue">;
-def FormatSecurity : DiagGroup<"format-security", [Format]>;
 def FormatNonLiteral : DiagGroup<"format-nonliteral", [FormatSecurity]>;
 def FormatY2K : DiagGroup<"format-y2k", [Format]>;
 def Format2 : DiagGroup<"format=2",
