@@ -166,6 +166,7 @@ public:
   bool hasVectorUAMem() const { return HasVectorUAMem; }
 
   bool isTargetDarwin() const { return TargetTriple.getOS() == Triple::Darwin; }
+  bool isTargetSolaris() const { return TargetTriple.getOS() == Triple::Solaris; }
 
   // ELF is a reasonably sane default and the only other X86 targets we
   // support are Darwin and Windows. Just use "not those".
