@@ -630,7 +630,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const {
   // Parse the section specifier and create it if valid.
   StringRef Segment, Section;
-  unsigned TAA, StubSize;
+  unsigned TAA = (unsigned)MCSectionMachO::SECTION_ATTRIBUTES, StubSize = 0;
   std::string ErrorCode =
     MCSectionMachO::ParseSectionSpecifier(GV->getSection(), Segment, Section,
                                           TAA, StubSize);
@@ -643,9 +643,18 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
     return DataSection;
   }
 
+  bool TAAWasSet = (TAA != MCSectionMachO::SECTION_ATTRIBUTES);
+  if (!TAAWasSet)
+    TAA = 0;      // Sensible default if this is a new section.
+    
   // Get the section.
   const MCSectionMachO *S =
     getContext().getMachOSection(Segment, Section, TAA, StubSize, Kind);
+
+  // If TAA wasn't set by ParseSectionSpecifier() above,
+  // use the value returned by getMachOSection() as a default.
+  if (!TAAWasSet)
+    TAA = S->getTypeAndAttributes();
 
   // Okay, now that we got the section, verify that the TAA & StubSize agree.
   // If the user declared multiple globals with different section flags, we need

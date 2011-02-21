@@ -101,16 +101,16 @@ void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
     return;
   }
 
-  OS << ',';
-
   unsigned SectionType = TAA & MCSectionMachO::SECTION_TYPE;
   assert(SectionType <= MCSectionMachO::LAST_KNOWN_SECTION_TYPE &&
          "Invalid SectionType specified!");
 
-  if (SectionTypeDescriptors[SectionType].AssemblerName)
+  if (SectionTypeDescriptors[SectionType].AssemblerName) {
+    OS << ',';
     OS << SectionTypeDescriptors[SectionType].AssemblerName;
-  else
-    OS << "<<" << SectionTypeDescriptors[SectionType].EnumName << ">>";
+  } else
+    // If we have no name for the attribute, stop here.
+    return;
 
   // If we don't have any attributes, we're done.
   unsigned SectionAttrs = TAA & MCSectionMachO::SECTION_ATTRIBUTES;
@@ -125,7 +125,9 @@ void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
 
   // Check each attribute to see if we have it.
   char Separator = ',';
-  for (unsigned i = 0; SectionAttrDescriptors[i].AttrFlag; ++i) {
+  for (unsigned i = 0;
+       SectionAttrs != 0 && SectionAttrDescriptors[i].AttrFlag;
+       ++i) {
     // Check to see if we have this attribute.
     if ((SectionAttrDescriptors[i].AttrFlag & SectionAttrs) == 0)
       continue;
@@ -207,7 +209,6 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
            "between 1 and 16 characters";
 
   // If there is no comma after the section, we're done.
-  TAA = 0;
   StubSize = 0;
   if (Comma.second.empty())
     return "";
