@@ -1328,7 +1328,8 @@ public:
   }
 
   Expr *getInputExpr(unsigned i);
-
+  void setInputExpr(unsigned i, Expr *E);
+  
   const Expr *getInputExpr(unsigned i) const {
     return const_cast<AsmStmt*>(this)->getInputExpr(i);
   }

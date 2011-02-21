@@ -1542,8 +1542,9 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (!Info.hasTiedOperand()) continue;
 
     unsigned TiedTo = Info.getTiedOperand();
+    unsigned InputOpNo = i+NumOutputs;
     Expr *OutputExpr = Exprs[TiedTo];
-    Expr *InputExpr = Exprs[i+NumOutputs];
+    Expr *InputExpr = Exprs[InputOpNo];
     QualType InTy = InputExpr->getType();
     QualType OutTy = OutputExpr->getType();
     if (Context.hasSameType(InTy, OutTy))
@@ -1588,7 +1589,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     
     // If this is a reference to the input and if the input was the smaller
     // one, then we have to reject this asm.
-    if (isOperandMentioned(i+NumOutputs, Pieces)) {
+    if (isOperandMentioned(InputOpNo, Pieces)) {
       // This is a use in the asm string of the smaller operand.  Since we
       // codegen this by promoting to a wider value, the asm will get printed
       // "wrong".
@@ -1606,6 +1607,19 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (!SmallerValueMentioned && InputDomain != AD_Other &&
         OutputConstraintInfos[TiedTo].allowsRegister())
       continue;
+    
+    // Either both of the operands were mentioned or the smaller one was
+    // mentioned.  One more special case that we'll allow: if the tied input is
+    // integer, unmentioned, and is a constant, then we'll allow truncating it
+    // down to the size of the destination.
+    if (InputDomain == AD_Int && OutputDomain == AD_Int &&
+        !isOperandMentioned(InputOpNo, Pieces) &&
+        InputExpr->isEvaluatable(Context)) {
+      ImpCastExprToType(InputExpr, OutTy, CK_IntegralCast);
+      Exprs[InputOpNo] = InputExpr;
+      NS->setInputExpr(i, InputExpr);
+      continue;
+    }
     
     Diag(InputExpr->getLocStart(),
          diag::err_asm_tying_incompatible_types)

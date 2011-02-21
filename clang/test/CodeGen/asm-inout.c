@@ -29,3 +29,12 @@ asm(
 		: "edi"
 		);
 }
+
+// PR8959 - This should implicitly truncate the immediate to a byte.
+int test4(volatile int *addr) {
+  unsigned char oldval;
+  __asm__ ("frob %0" : "=r"(oldval) : "0"(0xff));
+  return (int)oldval;
+// CHECK: call i8 asm "frob $0", "=r,0{{.*}}"(i8 -1)
+}
+
