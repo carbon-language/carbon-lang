@@ -426,8 +426,13 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
         if (!IntI.valid())
           break;
         // Not live in, but before the first use.
-        if (IntI.start() < BI.FirstUse)
+        if (IntI.start() < BI.FirstUse) {
           BC.Entry = SpillPlacement::PrefSpill;
+          // If the block contains a kill from an earlier split, never split
+          // again in the same block.
+          if (!BI.LiveThrough && !SA->isOriginalEndpoint(BI.Kill))
+            BC.Entry = SpillPlacement::MustSpill;
+        }
       }
 
       // Does interference overlap the uses in the entry segment
@@ -458,8 +463,12 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
           IntI.advanceTo(BI.LastUse);
           if (!IntI.valid())
             break;
-          if (IntI.start() < Stop)
+          if (IntI.start() < Stop) {
             BC.Exit = SpillPlacement::PrefSpill;
+            // Avoid splitting twice in the same block.
+            if (!BI.LiveThrough && !SA->isOriginalEndpoint(BI.Def))
+              BC.Exit = SpillPlacement::MustSpill;
+          }
         }
       }
     }

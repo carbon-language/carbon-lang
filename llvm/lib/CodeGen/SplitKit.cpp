@@ -167,6 +167,20 @@ void SplitAnalysis::calcLiveBlockInfo() {
   }
 }
 
+bool SplitAnalysis::isOriginalEndpoint(SlotIndex Idx) const {
+  unsigned OrigReg = VRM.getOriginal(CurLI->reg);
+  const LiveInterval &Orig = LIS.getInterval(OrigReg);
+  assert(!Orig.empty() && "Splitting empty interval?");
+  LiveInterval::const_iterator I = Orig.find(Idx);
+
+  // Range containing Idx should begin at Idx.
+  if (I != Orig.end() && I->start <= Idx)
+    return I->start == Idx;
+
+  // Range does not contain Idx, previous must end at Idx.
+  return I != Orig.begin() && (--I)->end == Idx;
+}
+
 void SplitAnalysis::print(const BlockPtrSet &B, raw_ostream &OS) const {
   for (BlockPtrSet::const_iterator I = B.begin(), E = B.end(); I != E; ++I) {
     unsigned count = UsingBlocks.lookup(*I);

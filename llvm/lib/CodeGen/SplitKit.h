@@ -125,6 +125,13 @@ public:
     return UsingBlocks.lookup(MBB);
   }
 
+  /// isOriginalEndpoint - Return true if the original live range was killed or
+  /// (re-)defined at Idx. Idx should be the 'def' slot for a normal kill/def,
+  /// and 'use' for an early-clobber def.
+  /// This can be used to recognize code inserted by earlier live range
+  /// splitting.
+  bool isOriginalEndpoint(SlotIndex Idx) const;
+
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
 
   // Print a set of blocks with use counts.
