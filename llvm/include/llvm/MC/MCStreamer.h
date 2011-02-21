@@ -57,13 +57,10 @@ namespace llvm {
     MCDwarfFrameInfo *getCurrentFrameInfo();
     void EnsureValidFrame();
 
-    /// CurSectionStack - This is stack of CurSection values saved by
-    /// PushSection.
-    SmallVector<const MCSection *, 4> CurSectionStack;
-
-    /// PrevSectionStack - This is stack of PrevSection values saved by
-    /// PushSection.
-    SmallVector<const MCSection *, 4> PrevSectionStack;
+    /// SectionStack - This is stack of current and previous section
+    /// values saved by PushSection.
+    SmallVector<std::pair<const MCSection *,
+                const MCSection *>, 4> SectionStack;
 
   protected:
     MCStreamer(MCContext &Ctx);
@@ -117,16 +114,16 @@ namespace llvm {
     /// getCurrentSection - Return the current section that the streamer is
     /// emitting code to.
     const MCSection *getCurrentSection() const {
-      if (!CurSectionStack.empty())
-        return CurSectionStack.back();
+      if (!SectionStack.empty())
+        return SectionStack.back().first;
       return NULL;
     }
 
     /// getPreviousSection - Return the previous section that the streamer is
     /// emitting code to.
     const MCSection *getPreviousSection() const {
-      if (!PrevSectionStack.empty())
-        return PrevSectionStack.back();
+      if (!SectionStack.empty())
+        return SectionStack.back().second;
       return NULL;
     }
 
@@ -139,8 +136,8 @@ namespace llvm {
     /// pushSection - Save the current and previous section on the
     /// section stack.
     void PushSection() {
-      PrevSectionStack.push_back(getPreviousSection());
-      CurSectionStack.push_back(getCurrentSection());
+      SectionStack.push_back(std::make_pair(getCurrentSection(),
+                                            getPreviousSection()));
     }
 
     /// popSection - Restore the current and previous section from
@@ -148,12 +145,10 @@ namespace llvm {
     ///
     /// Returns false if the stack was empty.
     bool PopSection() {
-      if (PrevSectionStack.size() <= 1)
+      if (SectionStack.size() <= 1)
         return false;
-      assert(CurSectionStack.size() > 1);
-      PrevSectionStack.pop_back();
-      const MCSection *oldSection = CurSectionStack.pop_back_val();
-      const MCSection *curSection = CurSectionStack.back();
+      const MCSection *oldSection = SectionStack.pop_back_val().first;
+      const MCSection *curSection = SectionStack.back().first;
 
       if (oldSection != curSection)
         ChangeSection(curSection);
@@ -166,10 +161,10 @@ namespace llvm {
     /// This corresponds to assembler directives like .section, .text, etc.
     void SwitchSection(const MCSection *Section) {
       assert(Section && "Cannot switch to a null section!");
-      const MCSection *curSection = CurSectionStack.back();
-      PrevSectionStack.back() = curSection;
+      const MCSection *curSection = SectionStack.back().first;
+      SectionStack.back().second = curSection;
       if (Section != curSection) {
-        CurSectionStack.back() = Section;
+        SectionStack.back().first = Section;
         ChangeSection(Section);
       }
     }

@@ -20,8 +20,8 @@
 using namespace llvm;
 
 MCStreamer::MCStreamer(MCContext &Ctx) : Context(Ctx) {
-  PrevSectionStack.push_back(NULL);
-  CurSectionStack.push_back(NULL);
+  const MCSection *section = NULL;
+  SectionStack.push_back(std::make_pair(section, section));
 }
 
 MCStreamer::~MCStreamer() {
