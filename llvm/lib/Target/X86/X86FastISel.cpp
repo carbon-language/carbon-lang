@@ -597,9 +597,13 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
         (AM.Base.Reg != 0 || AM.IndexReg != 0))
       return false;
 
-    // Can't handle TLS or DLLImport.
+    // Can't handle DLLImport.
+    if (GV->hasDLLImportLinkage())
+      return false;
+
+    // Can't handle TLS.
     if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
-      if (GVar->isThreadLocal() || GVar->hasDLLImportLinkage())
+      if (GVar->isThreadLocal())
         return false;
 
     // Okay, we've committed to selecting this global. Set up the basic address.
