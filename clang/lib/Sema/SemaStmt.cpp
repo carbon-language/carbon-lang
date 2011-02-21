@@ -1582,28 +1582,22 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       continue;
 
     // If the smaller input/output operand is not mentioned in the asm string,
-    // then we can promote it to a larger input and the asm string won't notice.
-    // Check this case now.
-    bool InputMentioned = isOperandMentioned(i+NumOutputs, Pieces);
-    bool OutputMentioned = isOperandMentioned(TiedTo, Pieces);
-    
+    // then we can promote the smaller one to a larger input and the asm string
+    // won't notice.
     bool SmallerValueMentioned = false;
     
     // If this is a reference to the input and if the input was the smaller
     // one, then we have to reject this asm.
-    if (InputMentioned) {
+    if (isOperandMentioned(i+NumOutputs, Pieces)) {
       // This is a use in the asm string of the smaller operand.  Since we
       // codegen this by promoting to a wider value, the asm will get printed
       // "wrong".
-      if (InSize < OutSize)
-        SmallerValueMentioned = true;
+      SmallerValueMentioned |= InSize < OutSize;
     }
-
-    if (OutputMentioned) {
+    if (isOperandMentioned(TiedTo, Pieces)) {
       // If this is a reference to the output, and if the output is the larger
       // value, then it's ok because we'll promote the input to the larger type.
-      if (OutSize < InSize)
-        SmallerValueMentioned = true;
+      SmallerValueMentioned |= OutSize < InSize;
     }
 
     // If the smaller value wasn't mentioned in the asm string, and if the
@@ -1612,7 +1606,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (!SmallerValueMentioned && InputDomain != AD_Other &&
         OutputConstraintInfos[TiedTo].allowsRegister())
       continue;
-
+    
     Diag(InputExpr->getLocStart(),
          diag::err_asm_tying_incompatible_types)
       << InTy << OutTy << OutputExpr->getSourceRange()
