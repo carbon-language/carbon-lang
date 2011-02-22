@@ -775,6 +775,19 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       delete &Op;
     }
   }
+  // Same hack for "in[bwl]? (%dx), %al" -> "inb %dx, %al".
+  if ((Name == "inb" || Name == "inw" || Name == "inl" || Name == "in") &&
+      Operands.size() == 3) {
+    X86Operand &Op = *(X86Operand*)Operands.begin()[1];
+    if (Op.isMem() && Op.Mem.SegReg == 0 &&
+        isa<MCConstantExpr>(Op.Mem.Disp) &&
+        cast<MCConstantExpr>(Op.Mem.Disp)->getValue() == 0 &&
+        Op.Mem.BaseReg == MatchRegisterName("dx") && Op.Mem.IndexReg == 0) {
+      SMLoc Loc = Op.getEndLoc();
+      Operands.begin()[1] = X86Operand::CreateReg(Op.Mem.BaseReg, Loc, Loc);
+      delete &Op;
+    }
+  }
   
   // FIXME: Hack to handle recognize s{hr,ar,hl} $1, <op>.  Canonicalize to
   // "shift <op>".
