@@ -417,10 +417,6 @@ protected:
     bool
     EmulateMOVRdImm (ARMEncoding encoding);
 
-    // A8.6.106 MVN (immediate)
-    bool
-    EmulateMVNRdImm (ARMEncoding encoding);
-
     // A8.6.35 CMP (immediate)
     bool
     EmulateCMPRnImm (ARMEncoding encoding);
@@ -629,9 +625,13 @@ protected:
     bool
     EmulateMUL (ARMEncoding encoding);
     
-    // A8.6.107 MVN (register) - Encoding T1, A1
+    // A8.6.106 MVN (immediate)
     bool
-    EmulateMVNRegister (ARMEncoding encoding);
+    EmulateMVNImm (ARMEncoding encoding);
+    
+    // A8.6.107 MVN (register)
+    bool
+    EmulateMVNReg (ARMEncoding encoding);
     
     // A8.6.113 ORR (immediate)
     bool

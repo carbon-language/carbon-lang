@@ -714,12 +714,10 @@ EmulateInstructionARM::EmulateMOVRdImm (ARMEncoding encoding)
     return true;
 }
 
-// Bitwise NOT (immediate) writes the bitwise inverse of an immediate value to
-// the destination register.  It can optionally update the condition flags based
-// on the value.
-// MVN (immediate)
+// Bitwise NOT (immediate) writes the bitwise inverse of an immediate value to the destination register.
+// It can optionally update the condition flags based on the value.
 bool
-EmulateInstructionARM::EmulateMVNRdImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMVNImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -746,7 +744,6 @@ EmulateInstructionARM::EmulateMVNRdImm (ARMEncoding encoding)
     if (ConditionPassed())
     {
         uint32_t Rd; // the destination register
-        uint32_t imm12; // the first operand to ThumbExpandImm_C or ARMExpandImm_C
         uint32_t imm32; // the output after ThumbExpandImm_C or ARMExpandImm_C
         uint32_t carry; // the carry bit after ThumbExpandImm_C or ARMExpandImm_C
         bool setflags;
@@ -754,19 +751,103 @@ EmulateInstructionARM::EmulateMVNRdImm (ARMEncoding encoding)
         case eEncodingT1:
             Rd = Bits32(opcode, 11, 8);
             setflags = BitIsSet(opcode, 20);
-            imm12 = Bit32(opcode, 26) << 11 | Bits32(opcode, 14, 12) << 8 | Bits32(opcode, 7, 0);
-            imm32 = ThumbExpandImm_C(imm12, APSR_C, carry);
+            imm32 = ThumbExpandImm_C(opcode, APSR_C, carry);
             break;
         case eEncodingA1:
             Rd = Bits32(opcode, 15, 12);
             setflags = BitIsSet(opcode, 20);
-            imm12 = Bits32(opcode, 11, 0);
-            imm32 = ARMExpandImm_C(imm12, APSR_C, carry);
+            imm32 = ARMExpandImm_C(opcode, APSR_C, carry);
+            // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+            // TODO: Emulate SUBS PC, LR and related instructions.
+            if (Rd == 15 && setflags)
+                return false;
             break;
         default:
             return false;
         }
         uint32_t result = ~imm32;
+        
+        // The context specifies that an immediate is to be moved into Rd.
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags, carry))
+            return false;
+    }
+    return true;
+}
+
+// Bitwise NOT (register) writes the bitwise inverse of a register value to the destination register.
+// It can optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateMVNReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        (shifted, carry) = Shift_C(R[m], shift_t, shift_n, APSR.C);
+        result = NOT(shifted);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rm; // the source register
+        uint32_t Rd; // the destination register
+        ARM_ShifterType shift_t;
+        uint32_t shift_n; // the shift applied to the value read from Rm
+        bool setflags;
+        uint32_t carry; // the carry bit after the shift operation
+        switch (encoding) {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 2, 0);
+            Rm = Bits32(opcode, 5, 3);
+            setflags = !InITBlock();
+            shift_t = SRType_LSL;
+            shift_n = 0;
+            if (InITBlock())
+                return false;
+            break;
+        case eEncodingT2:
+            Rd = Bits32(opcode, 11, 8);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+            // if (BadReg(d) || BadReg(m)) then UNPREDICTABLE;
+            if ((BadReg(Rd) || BadReg(Rm)))
+                return false;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            break;
+        default:
+            return false;
+        }
+        uint32_t value = ReadCoreReg(Rm, &success);
+        if (!success)
+            return false;
+
+        uint32_t shifted = Shift_C(value, shift_t, shift_n, APSR_C, carry);
+        uint32_t result = ~shifted;
         
         // The context specifies that an immediate is to be moved into Rd.
         EmulateInstruction::Context context;
@@ -5993,8 +6074,10 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0ff0f010, 0x01100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rn>, <Rm> {,<shift>}"},
 
 
-        // move bitwise not
-        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNRdImm, "mvn{s}<c> <Rd>, #<const>"},
+        // mvn (immediate)
+        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s}<c> <Rd>, #<const>"},
+        // mvn (register)
+        { 0x0fef0010, 0x01e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c> <Rd>, <Rm> {,<shift>}"},
         // asr (immediate)
         { 0x0fef0070, 0x01a00040, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c> <Rd>, <Rm>, #imm"},
         // asr (register)
@@ -6174,8 +6257,11 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // move immediate
         { 0xfffff800, 0x00002000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdImm, "movs|mov<c> <Rd>, #imm8"},
         { 0xfbef8000, 0xf04f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "mov{s}<c>.w <Rd>, #<const>"},
-        // move bitwise not
-        { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateMVNRdImm, "mvn{s} <Rd>, #<const>"},
+        // mvn (immediate)
+        { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s} <Rd>, #<const>"},
+        // mvn (register)
+        { 0xffffffc0, 0x000043c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMVNReg, "mvns|mvn<c> <Rd>, <Rm>"},
+        { 0xffef8000, 0xea6f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c>.w <Rd>, <Rm> {,<shift>}"},
         // compare a register with immediate
         { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPRnImm, "cmp<c> <Rn>, #imm8"},
         // compare Rn with Rm (Rn and Rm both from r0-r7)
