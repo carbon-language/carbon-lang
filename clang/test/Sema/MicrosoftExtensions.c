@@ -76,6 +76,6 @@ struct X0 {
   enum E1 : seventeen;
 };
 
-enum : long {  // expected-warning{{enumeration types with a fixed underlying type are a Microsoft extension}}
+enum : long long {  // expected-warning{{enumeration types with a fixed underlying type are a Microsoft extension}}
   SomeValue = 0x100000000
 };
