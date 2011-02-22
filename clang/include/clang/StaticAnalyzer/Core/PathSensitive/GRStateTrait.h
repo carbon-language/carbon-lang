@@ -151,7 +151,21 @@ namespace ento {
     typedef bool data_type;
 
     static inline data_type MakeData(void* const* p) {
-      return (bool) (uintptr_t) p;
+      return p ? (data_type) (uintptr_t) *p
+               : data_type();
+    }
+    static inline void *MakeVoidPtr(data_type d) {
+      return (void*) (uintptr_t) d;
+    }
+  };
+  
+  // Partial specialization for unsigned.
+  template <> struct GRStatePartialTrait<unsigned> {
+    typedef unsigned data_type;
+
+    static inline data_type MakeData(void* const* p) {
+      return p ? (data_type) (uintptr_t) *p
+               : data_type();
     }
     static inline void *MakeVoidPtr(data_type d) {
       return (void*) (uintptr_t) d;
