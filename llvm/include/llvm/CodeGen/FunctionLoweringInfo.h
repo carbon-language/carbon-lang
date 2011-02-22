@@ -101,29 +101,13 @@ public:
 #endif
 
   struct LiveOutInfo {
-    unsigned NumSignBits : 31;
-    bool IsValid : 1;
+    unsigned NumSignBits;
     APInt KnownOne, KnownZero;
-    LiveOutInfo() : NumSignBits(0), IsValid(false), KnownOne(1, 0),
-                    KnownZero(1, 0) {}
+    LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
   };
   
   /// LiveOutRegInfo - Information about live out vregs.
   IndexedMap<LiveOutInfo, VirtReg2IndexFunctor> LiveOutRegInfo;
-
-  /// VisitedBBs - Basic blocks that have been visited by reverse postorder.
-  DenseSet<const BasicBlock*> VisitedBBs;
-
-  /// AllPredsVisited - Tracks whether all predecessors of the current basic
-  /// block have already been visited.
-  bool AllPredsVisited;
-
-  /// PHIDestRegs - Virtual registers that are the destinations of PHIs.
-  DenseSet<unsigned> PHIDestRegs;
-
-  /// PHISrcToDestMap - Maps the virtual register defining a PHI's source to the
-  /// virtual register defining its destination.
-  DenseMap<unsigned, unsigned> PHISrcToDestMap;
 
   /// PHINodesToUpdate - A list of phi instructions whose operand list will
   /// be updated after processing the current basic block.

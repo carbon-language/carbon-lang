@@ -127,13 +127,10 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
       // Mark values used outside their block as exported, by allocating
       // a virtual register for them.
-      if (!EnableFastISel && isa<PHINode>(I)) {
-        PHIDestRegs.insert(InitializeRegForValue(I));
-      } else if (isUsedOutsideOfDefiningBlock(I)) {
+      if (isUsedOutsideOfDefiningBlock(I))
         if (!isa<AllocaInst>(I) ||
             !StaticAllocaMap.count(cast<AllocaInst>(I)))
           InitializeRegForValue(I);
-      }
 
       // Collect llvm.dbg.declare information. This is done now instead of
       // during the initial isel pass through the IR so that it is done
@@ -222,9 +219,6 @@ void FunctionLoweringInfo::clear() {
   CatchInfoFound.clear();
 #endif
   LiveOutRegInfo.clear();
-  VisitedBBs.clear();
-  PHIDestRegs.clear();
-  PHISrcToDestMap.clear();
   ArgDbgValues.clear();
   ByValArgFrameIndexMap.clear();
   RegFixups.clear();
