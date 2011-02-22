@@ -874,7 +874,7 @@ ASTContext::getTypeInfo(const Type *T) const {
   case Type::Auto: {
     const AutoType *A = cast<AutoType>(T);
     assert(A->isDeduced() && "Cannot request the size of a dependent type");
-    return getTypeInfo(cast<AutoType>(T)->getDeducedType().getTypePtr());
+    return getTypeInfo(A->getDeducedType().getTypePtr());
   }
 
   case Type::Paren:
