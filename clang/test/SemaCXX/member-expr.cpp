@@ -28,7 +28,7 @@ struct B {
  A *f0();
 };
 int f0(B *b) {
-  return b->f0->f0; // expected-error{{perhaps you meant to call this function}}
+  return b->f0->f0; // expected-error{{perhaps you meant to call it with no arguments}}
 }
 
 int i;
@@ -121,12 +121,18 @@ namespace PR9025 {
   S fun();
   int fun(int i);
   int g() {
-    return fun.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call the 0-argument overload?}}
+    return fun.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it with no arguments?}}
   }
 
   S fun2(); // expected-note{{possibly valid overload here}}
   S fun2(int i); // expected-note{{possibly valid overload here}}
   int g2() {
     return fun2.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it?}}
+  }
+
+  S fun3(int i=0);
+  int fun3(int i, int j);
+  int g3() {
+    return fun3.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it with no arguments?}}
   }
 }

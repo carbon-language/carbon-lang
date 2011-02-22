@@ -8,5 +8,5 @@ struct A { B* b() { return new B; } };
 
 void g() {
   A a;
-  MACRO(a.b->f());  // expected-error{{base of member reference has function type}}
+  MACRO(a.b->f());  // expected-error{{base of member reference is a function}}
 }

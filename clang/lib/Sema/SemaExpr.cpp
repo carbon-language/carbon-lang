@@ -3980,129 +3980,128 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   // Failure cases.
  fail:
 
-  // There's a possible road to recovery for function types.
-  const FunctionType *Fun = 0;
-  SourceLocation ParenInsertionLoc =
-      PP.getLocForEndOfToken(BaseExpr->getLocEnd());
-
+  // Recover from dot accesses to pointers, e.g.:
+  //   type *foo;
+  //   foo.bar
+  // This is actually well-formed in two cases:
+  //   - 'type' is an Objective C type
+  //   - 'bar' is a pseudo-destructor name which happens to refer to
+  //     the appropriate pointer type
   if (const PointerType *Ptr = BaseType->getAs<PointerType>()) {
-    if ((Fun = Ptr->getPointeeType()->getAs<FunctionType>())) {
-      // fall out, handled below.
-
-    // Recover from dot accesses to pointers, e.g.:
-    //   type *foo;
-    //   foo.bar
-    // This is actually well-formed in two cases:
-    //   - 'type' is an Objective C type
-    //   - 'bar' is a pseudo-destructor name which happens to refer to
-    //     the appropriate pointer type
-    } else if (!IsArrow && Ptr->getPointeeType()->isRecordType() &&
-               MemberName.getNameKind() != DeclarationName::CXXDestructorName) {
+    if (!IsArrow && Ptr->getPointeeType()->isRecordType() &&
+        MemberName.getNameKind() != DeclarationName::CXXDestructorName) {
       Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
-        << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
-        << FixItHint::CreateReplacement(OpLoc, "->");
+          << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
+          << FixItHint::CreateReplacement(OpLoc, "->");
 
       // Recurse as an -> access.
       IsArrow = true;
       return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
                               ObjCImpDecl, HasTemplateArgs);
     }
-  } else {
-    Fun = BaseType->getAs<FunctionType>();
   }
 
-  // If the user is trying to apply -> or . to a function pointer
-  // type, it's probably because they forgot parentheses to call that
-  // function. Suggest the addition of those parentheses, build the
-  // call, and continue on.
-  if (Fun || BaseType == Context.OverloadTy) {
-    bool TryCall;
-    if (BaseType == Context.OverloadTy) {
-      // Plunder the overload set for something that would make the member
-      // expression valid.
-      const OverloadExpr *Overloads = cast<OverloadExpr>(BaseExpr);
-      UnresolvedSet<4> CandidateOverloads;
-      bool HasZeroArgCandidateOverload = false;
-      for (OverloadExpr::decls_iterator it = Overloads->decls_begin(),
-           DeclsEnd = Overloads->decls_end(); it != DeclsEnd; ++it) {
-        const FunctionDecl *OverloadDecl = cast<FunctionDecl>(*it);
-        QualType ResultTy = OverloadDecl->getResultType();
-        if ((!IsArrow && ResultTy->isRecordType()) ||
-            (IsArrow && ResultTy->isPointerType() &&
-             ResultTy->getPointeeType()->isRecordType())) {
-          CandidateOverloads.addDecl(*it);
-          if (OverloadDecl->getNumParams() == 0) {
-            HasZeroArgCandidateOverload = true;
-          }
-        }
-      }
-      if (HasZeroArgCandidateOverload && CandidateOverloads.size() == 1) {
-        // We have one reasonable overload, and there's only one way to call it,
-        // so emit a fixit and try to recover
-        Diag(ParenInsertionLoc, diag::err_member_reference_needs_call)
-            << 1
-            << BaseExpr->getSourceRange()
-            << FixItHint::CreateInsertion(ParenInsertionLoc, "()");
-        TryCall = true;
-      } else {
-        Diag(BaseExpr->getExprLoc(), diag::err_member_reference_needs_call)
-            << 0
-            << BaseExpr->getSourceRange();
-        int CandidateOverloadCount = CandidateOverloads.size();
-        int I;
-        for (I = 0; I < CandidateOverloadCount; ++I) {
-          // FIXME: Magic number for max shown overloads stolen from
-          // OverloadCandidateSet::NoteCandidates.
-          if (I >= 4 && Diags.getShowOverloads() == Diagnostic::Ovl_Best) {
-            break;
-          }
-          Diag(CandidateOverloads[I].getDecl()->getSourceRange().getBegin(),
-               diag::note_member_ref_possible_intended_overload);
-        }
-        if (I != CandidateOverloadCount) {
-          Diag(BaseExpr->getExprLoc(), diag::note_ovl_too_many_candidates)
-              << int(CandidateOverloadCount - I);
-        }
-        return ExprError();
-      }
-    } else {
-      if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Fun)) {
-        TryCall = (FPT->getNumArgs() == 0);
-      } else {
-        TryCall = true;
-      }
+  // If the user is trying to apply -> or . to a function name, it's probably
+  // because they forgot parentheses to call that function.
+  bool TryCall = false;
+  bool Overloaded = false;
+  UnresolvedSet<8> AllOverloads;
+  if (const OverloadExpr *Overloads = dyn_cast<OverloadExpr>(BaseExpr)) {
+    AllOverloads.append(Overloads->decls_begin(), Overloads->decls_end());
+    TryCall = true;
+    Overloaded = true;
+  } else if (DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(BaseExpr)) {
+    if (FunctionDecl* Fun = dyn_cast<FunctionDecl>(DeclRef->getDecl())) {
+      AllOverloads.addDecl(Fun);
+      TryCall = true;
+    }
+  }
 
-      if (TryCall) {
-        QualType ResultTy = Fun->getResultType();
-        TryCall = (!IsArrow && ResultTy->isRecordType()) ||
-                  (IsArrow && ResultTy->isPointerType() &&
-                   ResultTy->getAs<PointerType>()->getPointeeType()->isRecordType());
+  if (TryCall) {
+    // Plunder the overload set for something that would make the member
+    // expression valid.
+    UnresolvedSet<4> ViableOverloads;
+    bool HasViableZeroArgOverload = false;
+    for (OverloadExpr::decls_iterator it = AllOverloads.begin(),
+         DeclsEnd = AllOverloads.end(); it != DeclsEnd; ++it) {
+      const FunctionDecl *OverloadDecl = cast<FunctionDecl>(*it);
+      QualType ResultTy = OverloadDecl->getResultType();
+      if ((!IsArrow && ResultTy->isRecordType()) ||
+          (IsArrow && ResultTy->isPointerType() &&
+           ResultTy->getPointeeType()->isRecordType())) {
+        ViableOverloads.addDecl(*it);
+        if (OverloadDecl->getMinRequiredArguments() == 0) {
+          HasViableZeroArgOverload = true;
+        }
       }
     }
 
+    if (!HasViableZeroArgOverload || ViableOverloads.size() != 1) {
+      Diag(BaseExpr->getExprLoc(), diag::err_member_reference_needs_call)
+          << 1 << 0
+          << BaseExpr->getSourceRange();
+      int ViableOverloadCount = ViableOverloads.size();
+      int I;
+      for (I = 0; I < ViableOverloadCount; ++I) {
+        // FIXME: Magic number for max shown overloads stolen from
+        // OverloadCandidateSet::NoteCandidates.
+        if (I >= 4 && Diags.getShowOverloads() == Diagnostic::Ovl_Best) {
+          break;
+        }
+        Diag(ViableOverloads[I].getDecl()->getSourceRange().getBegin(),
+             diag::note_member_ref_possible_intended_overload);
+      }
+      if (I != ViableOverloadCount) {
+        Diag(BaseExpr->getExprLoc(), diag::note_ovl_too_many_candidates)
+            << int(ViableOverloadCount - I);
+      }
+      return ExprError();
+    }
+  } else {
+    // We don't have an expression that's convenient to get a Decl from, but we
+    // can at least check if the type is "function of 0 arguments which returns
+    // an acceptable type".
+    const FunctionType *Fun = NULL;
+    if (const PointerType *Ptr = BaseType->getAs<PointerType>()) {
+      if ((Fun = Ptr->getPointeeType()->getAs<FunctionType>())) {
+        TryCall = true;
+      }
+    } else if ((Fun = BaseType->getAs<FunctionType>())) {
+      TryCall = true;
+    }
 
     if (TryCall) {
-      if (Fun) {
-        Diag(BaseExpr->getExprLoc(),
-             diag::err_member_reference_needs_call_zero_arg)
-          << QualType(Fun, 0)
-          << FixItHint::CreateInsertion(ParenInsertionLoc, "()");
+      if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Fun)) {
+        if (FPT->getNumArgs() == 0) {
+          QualType ResultTy = Fun->getResultType();
+          TryCall = (!IsArrow && ResultTy->isRecordType()) ||
+              (IsArrow && ResultTy->isPointerType() &&
+               ResultTy->getPointeeType()->isRecordType());
+        }
       }
-
-      ExprResult NewBase
-        = ActOnCallExpr(0, BaseExpr, ParenInsertionLoc,
-                        MultiExprArg(*this, 0, 0), ParenInsertionLoc);
-      if (NewBase.isInvalid())
-        return ExprError();
-      BaseExpr = NewBase.takeAs<Expr>();
-
-
-      DefaultFunctionArrayConversion(BaseExpr);
-      BaseType = BaseExpr->getType();
-
-      return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
-                              ObjCImpDecl, HasTemplateArgs);
     }
+  }
+
+  if (TryCall) {
+    // At this point, we know BaseExpr looks like it's potentially callable with
+    // 0 arguments, and that it returns something of a reasonable type, so we
+    // can emit a fixit and carry on pretending that BaseExpr was actually a
+    // CallExpr.
+    SourceLocation ParenInsertionLoc =
+        PP.getLocForEndOfToken(BaseExpr->getLocEnd());
+    Diag(BaseExpr->getExprLoc(), diag::err_member_reference_needs_call)
+        << int(Overloaded) << 1
+        << BaseExpr->getSourceRange()
+        << FixItHint::CreateInsertion(ParenInsertionLoc, "()");
+    ExprResult NewBase = ActOnCallExpr(0, BaseExpr, ParenInsertionLoc,
+                                       MultiExprArg(*this, 0, 0),
+                                       ParenInsertionLoc);
+    if (NewBase.isInvalid())
+      return ExprError();
+    BaseExpr = NewBase.takeAs<Expr>();
+    DefaultFunctionArrayConversion(BaseExpr);
+    return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                            ObjCImpDecl, HasTemplateArgs);
   }
 
   Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)
