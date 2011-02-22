@@ -318,8 +318,10 @@ class Builder(threading.Thread):
         if not os.path.exists(execdir):
             os.makedirs(execdir)
 
+        execenv = os.environ.copy()
+
         for key, value in env.items():
-            os.environ[key] = value
+            execenv[key] = value
  
         self.logger.debug("[" + prefix + "] " + "env " + str(env) + " "
                           + " ".join(command));
@@ -327,6 +329,7 @@ class Builder(threading.Thread):
         try:
             proc = subprocess.Popen(command,
                                     cwd=execdir,
+                                    env=execenv,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.STDOUT)
 
@@ -338,9 +341,6 @@ class Builder(threading.Thread):
 
         except:
             traceback.print_exc()
-
-        for key, value in env.items():
-            os.environ.pop(key)
 
     # Get a list of C++ include directories to pass to clang.
     def get_includes(self):
