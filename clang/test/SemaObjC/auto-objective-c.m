@@ -7,6 +7,9 @@
 - (id) Meth;
 @end
 
+// Objective-C does not support trailing return types, so check we don't get
+// the C++ diagnostic suggesting we forgot one.
+auto noTrailingReturnType(); // expected-error {{'auto' not allowed in function return type}}
 
 typedef int (^P) (int x);
 

@@ -1451,8 +1451,11 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     distributeTypeAttrsFromDeclarator(state, T);
 
   // C++0x [dcl.spec.auto]p5: reject 'auto' if it is not in an allowed context.
+  // In C++0x, a function declarator using 'auto' must have a trailing return
+  // type (this is checked later) and we can skip this. In other languages
+  // using auto, we need to check regardless.
   if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
-      !D.isFunctionDeclarator()) {
+      (!getLangOptions().CPlusPlus0x || !D.isFunctionDeclarator())) {
     int Error = -1;
 
     switch (D.getContext()) {
@@ -1484,7 +1487,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       break;
     case Declarator::TypeNameContext:
       if (!AutoAllowedInTypeName)
-        Error = 9; // Generic
+        Error = 10; // Generic
       break;
     case Declarator::FileContext:
     case Declarator::BlockContext:
@@ -1496,11 +1499,15 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
       Error = 8;
 
+    // In Objective-C it is an error to use 'auto' on a function declarator.
+    if (D.isFunctionDeclarator())
+      Error = 9;
+
     // C++0x [dcl.spec.auto]p2: 'auto' is always fine if the declarator
     // contains a trailing return type. That is only legal at the outermost
     // level. Check all declarator chunks (outermost first) anyway, to give
     // better diagnostics.
-    if (Error != -1) {
+    if (getLangOptions().CPlusPlus0x && Error != -1) {
       for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
         unsigned chunkIndex = e - i - 1;
         state.setCurrentChunkIndex(chunkIndex);
