@@ -1246,9 +1246,18 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                          DiagID, getLang());
       break;
     case tok::kw_auto:
-      if (getLang().CPlusPlus0x || getLang().ObjC1)
-        isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec,
-                                       DiagID);
+      if (getLang().CPlusPlus0x || getLang().ObjC2) {
+        if (isKnownToBeTypeSpecifier(GetLookAheadToken(1))) {
+          isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, Loc, PrevSpec,
+                                           DiagID, getLang());
+          if (!isInvalid)
+            Diag(Tok, diag::auto_storage_class)
+              << FixItHint::CreateRemoval(DS.getStorageClassSpecLoc());
+        }
+        else
+          isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec,
+                                         DiagID);
+      }
       else
         isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, Loc, PrevSpec,
                                            DiagID, getLang());
@@ -1461,6 +1470,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       else
         Diag(Tok, DiagID) << PrevSpec;
     }
+
     DS.SetRangeEnd(Tok.getLocation());
     ConsumeToken();
   }

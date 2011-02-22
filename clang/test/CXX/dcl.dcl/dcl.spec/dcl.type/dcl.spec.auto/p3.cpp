@@ -39,7 +39,7 @@ void p3example() {
   auto x = 5;
   const auto *v = &x, u = 6;
   static auto y = 0.0;
-  auto int r; // expected-error{{cannot combine with previous}} expected-error{{requires an initializer}}
+  auto int r; // expected-warning {{'auto' storage class specifier is redundant and will be removed in future releases}}
 
   same<decltype(x), int> xHasTypeInt;
   same<decltype(v), const int*> vHasTypeConstIntPtr;

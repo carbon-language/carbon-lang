@@ -25,3 +25,9 @@ typedef int (^P) (int x);
   return my_block;
 }
 @end
+
+
+// rdar://9036633
+int main() {
+  auto int auto_i = 7; // expected-warning {{'auto' storage class specifier is redundant and will be removed in future releases}}
+}

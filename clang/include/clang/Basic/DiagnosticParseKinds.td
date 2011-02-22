@@ -28,6 +28,10 @@ def ext_extra_struct_semi : Extension<
 def ext_extra_ivar_semi : Extension<
   "extra ';' inside instance variable list">;
 
+def auto_storage_class : ExtWarn<
+  "'auto' storage class specifier is redundant and will be "
+  "removed in future releases">;
+
 def ext_duplicate_declspec : Extension<"duplicate '%0' declaration specifier">;
 def ext_plain_complex : ExtWarn<
   "plain '_Complex' requires a type specifier; assuming '_Complex double'">;
