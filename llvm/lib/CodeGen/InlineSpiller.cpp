@@ -102,8 +102,7 @@ Spiller *createInlineSpiller(MachineFunctionPass &pass,
 }
 }
 
-/// reMaterializeFor - Attempt to rematerialize edit_->getReg() before MI instead of
-/// reloading it.
+/// reMaterializeFor - Attempt to rematerialize before MI instead of reloading.
 bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
   SlotIndex UseIdx = lis_.getInstructionIndex(MI).getUseIndex();
   VNInfo *OrigVNI = edit_->getParent().getVNInfoAt(UseIdx);
