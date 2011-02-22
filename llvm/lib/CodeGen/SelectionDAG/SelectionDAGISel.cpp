@@ -49,6 +49,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
@@ -832,8 +833,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     FastIS = TLI.createFastISel(*FuncInfo);
 
   // Iterate over all basic blocks in the function.
-  for (Function::const_iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
-    const BasicBlock *LLVMBB = &*I;
+  ReversePostOrderTraversal<const Function*> RPOT(&Fn);
+  for (ReversePostOrderTraversal<const Function*>::rpo_iterator
+       I = RPOT.begin(), E = RPOT.end(); I != E; ++I) {
+    const BasicBlock *LLVMBB = *I;
 #ifndef NDEBUG
     CheckLineNumbers(LLVMBB);
 #endif
