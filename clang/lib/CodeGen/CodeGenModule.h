@@ -389,8 +389,8 @@ public:
                                           unsigned Align,
                                           const VarDecl *variable);
 
-  /// getGlobalUniqueCount - Fetches the global unique block count.
-  int getGlobalUniqueCount() { return ++Block.GlobalUniqueCount; }
+  /// getUniqueBlockCount - Fetches the global unique block count.
+  int getUniqueBlockCount() { return ++Block.GlobalUniqueCount; }
 
   /// getBlockDescriptorType - Fetches the type of a generic block
   /// descriptor.

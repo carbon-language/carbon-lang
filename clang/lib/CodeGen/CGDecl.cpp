@@ -1004,6 +1004,24 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   // FIXME: Why isn't ImplicitParamDecl a ParmVarDecl?
   assert((isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)) &&
          "Invalid argument to EmitParmDecl");
+
+  Arg->setName(D.getName());
+
+  // Use better IR generation for certain implicit parameters.
+  if (isa<ImplicitParamDecl>(D)) {
+    // The only implicit argument a block has is its literal.
+    if (BlockInfo) {
+      LocalDeclMap[&D] = Arg;
+
+      if (CGDebugInfo *DI = getDebugInfo()) {
+        DI->setLocation(D.getLocation());
+        DI->EmitDeclareOfBlockLiteralArgVariable(*BlockInfo, Arg, Builder);
+      }
+
+      return;
+    }
+  }
+
   QualType Ty = D.getType();
 
   llvm::Value *DeclPtr;
@@ -1020,7 +1038,6 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
                       getContext().getDeclAlign(&D).getQuantity(), Ty,
                       CGM.getTBAAInfo(Ty));
   }
-  Arg->setName(D.getName());
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");

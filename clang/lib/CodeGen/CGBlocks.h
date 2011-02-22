@@ -177,7 +177,6 @@ public:
   const BlockExpr *Block;
   CharUnits BlockSize;
   CharUnits BlockAlign;
-  llvm::SmallVector<const Expr*, 8> BlockLayout;
 
   const Capture &getCapture(const VarDecl *var) const {
     llvm::DenseMap<const VarDecl*, Capture>::const_iterator

@@ -123,7 +123,10 @@ class CGDebugInfo {
                        llvm::SmallVectorImpl<llvm::Value *> &EltTys,
                        llvm::DIType RecordTy);
 
-
+  llvm::DIType createFieldType(llvm::StringRef name, QualType type,
+                               Expr *bitWidth, SourceLocation loc,
+                               AccessSpecifier AS, uint64_t offsetInBits,
+                               llvm::DIFile tunit);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
                            llvm::SmallVectorImpl<llvm::Value *> &E);
 
@@ -179,6 +182,13 @@ public:
   /// variable declaration.
   void EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
                                 CGBuilderTy &Builder);
+
+  /// EmitDeclareOfBlockLiteralArgVariable - Emit call to
+  /// llvm.dbg.declare for the block-literal argument to a block
+  /// invocation function.
+  void EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
+                                            llvm::Value *addr,
+                                            CGBuilderTy &Builder);
 
   /// EmitGlobalVariable - Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *Decl);

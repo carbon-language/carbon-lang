@@ -895,12 +895,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   QualType selfTy = getContext().VoidPtrTy;
   IdentifierInfo *II = &CGM.getContext().Idents.get(".block_descriptor");
 
-  // FIXME: this leaks, and we only need it very temporarily.
-  ImplicitParamDecl *selfDecl =
-    ImplicitParamDecl::Create(getContext(),
-                              const_cast<BlockDecl*>(blockDecl),
-                              SourceLocation(), II, selfTy);
-  args.push_back(std::make_pair(selfDecl, selfTy));
+  ImplicitParamDecl selfDecl(const_cast<BlockDecl*>(blockDecl),
+                             SourceLocation(), II, selfTy);
+  args.push_back(std::make_pair(&selfDecl, selfTy));
 
   // Now add the rest of the parameters.
   for (BlockDecl::param_const_iterator i = blockDecl->param_begin(),
@@ -928,12 +925,11 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
                 blockInfo.getBlockExpr()->getBody()->getLocEnd());
   CurFuncDecl = outerFnDecl; // StartFunction sets this to blockDecl
 
-  // Okay.  Undo some of what StartFunction did.  We really don't need
-  // an alloca for the block address;  in theory we could remove it,
-  // but that might do unpleasant things to debug info.
-  llvm::AllocaInst *blockAddrAlloca
-    = cast<llvm::AllocaInst>(LocalDeclMap[selfDecl]);
-  llvm::Value *blockAddr = Builder.CreateLoad(blockAddrAlloca);
+  // Okay.  Undo some of what StartFunction did.
+  
+  // Pull the 'self' reference out of the local decl map.
+  llvm::Value *blockAddr = LocalDeclMap[&selfDecl];
+  LocalDeclMap.erase(&selfDecl);
   BlockPointer = Builder.CreateBitCast(blockAddr,
                                        blockInfo.StructureType->getPointerTo(),
                                        "block");
@@ -1010,7 +1006,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
         continue;
       }
 
-      DI->EmitDeclareOfBlockDeclRefVariable(variable, blockAddrAlloca,
+      DI->EmitDeclareOfBlockDeclRefVariable(variable, BlockPointer,
                                             Builder, blockInfo);
     }
   }
