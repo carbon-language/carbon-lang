@@ -43,6 +43,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
 
+#include <queue>
+
 using namespace llvm;
 
 STATISTIC(NumGlobalSplits, "Number of split global live ranges");
@@ -71,6 +73,7 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
   // state
   std::auto_ptr<Spiller> SpillerInstance;
   std::auto_ptr<SplitAnalysis> SA;
+  std::priority_queue<std::pair<unsigned, unsigned> > Queue;
 
   // splitting state.
 
@@ -91,13 +94,10 @@ public:
 
   /// RAGreedy analysis usage.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-
   virtual void releaseMemory();
-
   virtual Spiller &spiller() { return *SpillerInstance; }
-
-  virtual float getPriority(LiveInterval *LI);
-
+  virtual void enqueue(LiveInterval *LI);
+  virtual LiveInterval *dequeue();
   virtual unsigned selectOrSplit(LiveInterval&,
                                  SmallVectorImpl<LiveInterval*>&);
 
@@ -186,22 +186,29 @@ void RAGreedy::releaseMemory() {
   RegAllocBase::releaseMemory();
 }
 
-float RAGreedy::getPriority(LiveInterval *LI) {
-  float Priority = LI->weight;
+void RAGreedy::enqueue(LiveInterval *LI) {
+  // Prioritize live ranges by size, assigning larger ranges first.
+  // The queue holds (size, reg) pairs.
+  unsigned Size = LI->getSize();
+  unsigned Reg = LI->reg;
+  assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
+         "Can only enqueue virtual registers");
 
-  // Prioritize hinted registers so they are allocated first.
-  std::pair<unsigned, unsigned> Hint;
-  if (Hint.first || Hint.second) {
-    // The hint can be target specific, a virtual register, or a physreg.
-    Priority *= 2;
+  // Boost ranges that have a physical register hint.
+  unsigned Hint = VRM->getRegAllocPref(Reg);
+  if (TargetRegisterInfo::isPhysicalRegister(Hint))
+    Size |= (1u << 30);
 
-    // Prefer physreg hints above anything else.
-    if (Hint.first == 0 && TargetRegisterInfo::isPhysicalRegister(Hint.second))
-      Priority *= 2;
-  }
-  return Priority;
+  Queue.push(std::make_pair(Size, Reg));
 }
 
+LiveInterval *RAGreedy::dequeue() {
+  if (Queue.empty())
+    return 0;
+  LiveInterval *LI = &LIS->getInterval(Queue.top().second);
+  Queue.pop();
+  return LI;
+}
 
 //===----------------------------------------------------------------------===//
 //                         Register Reassignment

@@ -39,7 +39,6 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "LiveIntervalUnion.h"
-#include <queue>
 
 namespace llvm {
 
@@ -58,8 +57,8 @@ class LiveVirtRegQueue;
 /// be extended to add interesting heuristics.
 ///
 /// Register allocators must override the selectOrSplit() method to implement
-/// live range splitting. They may also override getPriority() which otherwise
-/// defaults to the spill weight computed by CalculateSpillWeights.
+/// live range splitting. They must also override enqueue/dequeue to provide an
+/// assignment order.
 class RegAllocBase {
   LiveIntervalUnion::Allocator UnionAllocator;
 protected:
@@ -120,9 +119,11 @@ protected:
   // Get a temporary reference to a Spiller instance.
   virtual Spiller &spiller() = 0;
 
-  // getPriority - Calculate the allocation priority for VirtReg.
-  // Virtual registers with higher priorities are allocated first.
-  virtual float getPriority(LiveInterval *LI) = 0;
+  /// enqueue - Add VirtReg to the priority queue of unassigned registers.
+  virtual void enqueue(LiveInterval *LI) = 0;
+
+  /// dequeue - Return the next unassigned register, or NULL.
+  virtual LiveInterval *dequeue() = 0;
 
   // A RegAlloc pass should override this to provide the allocation heuristics.
   // Each call must guarantee forward progess by returning an available PhysReg
@@ -170,7 +171,7 @@ public:
   static bool VerifyEnabled;
 
 private:
-  void seedLiveVirtRegs(std::priority_queue<std::pair<float, unsigned> >&);
+  void seedLiveRegs();
 
   void spillReg(LiveInterval &VirtReg, unsigned PhysReg,
                 SmallVectorImpl<LiveInterval*> &SplitVRegs);
