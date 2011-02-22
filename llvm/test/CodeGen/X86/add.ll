@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86 | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -march=x86-64 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s -check-prefix=X64
 
 ; The immediate can be encoded in a smaller way if the
 ; instruction is a sub instead of an add.
@@ -43,7 +44,7 @@ overflow:
 ; X32-NEXT: jo
 
 ; X64:        test4:
-; X64:          addl	%esi, %edi
+; X64:          addl	%e[[A1:si|dx]], %e[[A0:di|cx]]
 ; X64-NEXT:	jo
 }
 
@@ -66,7 +67,7 @@ carry:
 ; X32-NEXT: jb
 
 ; X64:        test5:
-; X64:          addl	%esi, %edi
+; X64:          addl	%e[[A1]], %e[[A0]]
 ; X64-NEXT:	jb
 }
 
@@ -87,8 +88,8 @@ define i64 @test6(i64 %A, i32 %B) nounwind {
 ; X32-NEXT: ret
         
 ; X64: test6:
-; X64:	shlq	$32, %rsi
-; X64:	leaq	(%rsi,%rdi), %rax
+; X64:	shlq	$32, %r[[A1]]
+; X64:	leaq	(%r[[A1]],%r[[A0]]), %rax
 ; X64:	ret
 }
 
@@ -98,7 +99,7 @@ define {i32, i1} @test7(i32 %v1, i32 %v2) nounwind {
 }
 
 ; X64: test7:
-; X64: addl %esi, %eax
+; X64: addl %e[[A1]], %eax
 ; X64-NEXT: setb %dl
 ; X64-NEXT: ret
 
