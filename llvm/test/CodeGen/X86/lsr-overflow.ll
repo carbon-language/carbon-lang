@@ -1,10 +1,11 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
 
 ; The comparison uses the pre-inc value, which could lead LSR to
 ; try to compute -INT64_MIN.
 
 ; CHECK: movabsq $-9223372036854775808, %rax
-; CHECK: cmpq  %rax, %rbx
+; CHECK: cmpq  %rax,
 ; CHECK: sete  %al
 
 declare i64 @bar()
