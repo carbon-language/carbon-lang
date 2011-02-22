@@ -946,3 +946,11 @@ movdqu	%xmm0, %xmm1 // CHECK: movdqu	%xmm0, %xmm1 # encoding: [0xf3,0x0f,0x6f,0x
 // PR8935
 xgetbv // CHECK: xgetbv # encoding: [0x0f,0x01,0xd0]
 xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
+
+// CHECK: loope 0
+// CHECK: encoding: [0xe1,A]
+	loopz 0
+
+// CHECK: loopne 0
+// CHECK: encoding: [0xe0,A]
+	loopnz 0

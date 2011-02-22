@@ -1296,6 +1296,9 @@ def : MnemonicAlias<"lret", "lretl">;
 def : MnemonicAlias<"leavel", "leave">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"leaveq", "leave">, Requires<[In64BitMode]>;
 
+def : MnemonicAlias<"loopz", "loope">;
+def : MnemonicAlias<"loopnz", "loopne">;
+
 def : MnemonicAlias<"pop", "popl">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"pop", "popq">, Requires<[In64BitMode]>;
 def : MnemonicAlias<"popf", "popfl">, Requires<[In32BitMode]>;
