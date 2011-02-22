@@ -1,9 +1,10 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
 ; RUN: llc -O0 < %s -march=x86 -mcpu=core2 | FileCheck %s --check-prefix=CHECK_O0
 
 define <4 x i32> @t00(<4 x i32>* %a0) nounwind ssp {
 entry:
-; CHECK: movaps  (%rdi), %xmm0
+; CHECK: movaps  ({{%rdi|%rcx}}), %xmm0
 ; CHECK-NEXT: movaps  %xmm0, %xmm1
 ; CHECK-NEXT: movlps  (%rax), %xmm1
 ; CHECK-NEXT: shufps  $36, %xmm1, %xmm0
