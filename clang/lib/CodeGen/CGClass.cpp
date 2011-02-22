@@ -17,6 +17,7 @@
 #include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/Frontend/CodeGenOptions.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -1140,6 +1141,16 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
+
+  CGDebugInfo *DI = getDebugInfo();
+  if (DI && CGM.getCodeGenOpts().LimitDebugInfo) {
+    // If debug info for this class has been emitted then this is the right time
+    // to do so.
+    const CXXRecordDecl *Parent = D->getParent();
+    DI->getOrCreateRecordType(CGM.getContext().getTypeDeclType(Parent),
+                              Parent->getLocation());
+  }
+
   if (D->isTrivial()) {
     if (ArgBeg == ArgEnd) {
       // Trivial default constructor, no codegen required.
