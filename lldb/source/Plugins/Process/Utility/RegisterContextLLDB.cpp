@@ -113,8 +113,18 @@ RegisterContextLLDB::InitializeZerothFrame()
     if (addr_range.GetBaseAddress().IsValid())
     {
         m_start_pc = addr_range.GetBaseAddress();
-        assert (frame_sp->GetFrameCodeAddress().GetSection() == m_start_pc.GetSection());
-        m_current_offset = frame_sp->GetFrameCodeAddress().GetOffset() - m_start_pc.GetOffset();
+        if (frame_sp->GetFrameCodeAddress().GetSection() == m_start_pc.GetSection())
+        {
+            m_current_offset = frame_sp->GetFrameCodeAddress().GetOffset() - m_start_pc.GetOffset();
+        }
+        else if (frame_sp->GetFrameCodeAddress().GetModule() == m_start_pc.GetModule())
+        {
+            // This means that whatever symbol we kicked up isn't really correct
+            // as no should cross section boundaries... We really should NULL out
+            // the function/symbol in this case unless there is a bad assumption
+            // here due to inlined functions?
+            m_current_offset = frame_sp->GetFrameCodeAddress().GetFileAddress() - m_start_pc.GetFileAddress();
+        }
         m_current_offset_backed_up_one = m_current_offset;
     }
     else
