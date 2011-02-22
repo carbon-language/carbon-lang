@@ -1975,7 +1975,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     }
   }
 
-  bool AllowFixedUnderlyingType = getLang().CPlusPlus0x;
+  bool AllowFixedUnderlyingType = getLang().CPlusPlus0x || getLang().Microsoft;
   bool IsScopedEnum = false;
   bool IsScopedUsingClassTag = false;
 
@@ -2047,7 +2047,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
         // Consume the ':'.
         ConsumeToken();
       
-        if (isCXXDeclarationSpecifier() != TPResult::True()) {
+        if ((getLang().CPlusPlus && 
+             isCXXDeclarationSpecifier() != TPResult::True()) ||
+            (!getLang().CPlusPlus && !isDeclarationSpecifier(true))) {
           // We'll parse this as a bitfield later.
           PossibleBitfield = true;
           TPA.Revert();
@@ -2064,6 +2066,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     if (!PossibleBitfield) {
       SourceRange Range;
       BaseType = ParseTypeName(&Range);
+      
+      if (!getLang().CPlusPlus0x)
+        Diag(StartLoc, diag::ext_ms_enum_fixed_underlying_type)
+          << Range;
     }
   }
 

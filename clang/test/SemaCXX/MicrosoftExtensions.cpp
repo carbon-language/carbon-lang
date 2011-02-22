@@ -109,3 +109,16 @@ int main()
   f(0xffffffffffffffffLL);
   f(0xffffffffffffffffi64);
 }
+
+// Enumeration types with a fixed underlying type.
+const int seventeen = 17;
+typedef int Int;
+
+struct X0 {
+  enum E1 : Int { SomeOtherValue } field; // expected-warning{{enumeration types with a fixed underlying type are a Microsoft extension}}
+  enum E1 : seventeen;
+};
+
+enum : long {  // expected-warning{{enumeration types with a fixed underlying type are a Microsoft extension}}
+  SomeValue = 0x100000000
+};
