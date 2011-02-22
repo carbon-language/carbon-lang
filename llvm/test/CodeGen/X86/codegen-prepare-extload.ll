@@ -1,10 +1,11 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win64 | FileCheck %s
 ; rdar://7304838
 
 ; CodeGenPrepare should move the zext into the block with the load
 ; so that SelectionDAG can select it with the load.
 
-; CHECK: movzbl (%rdi), %eax
+; CHECK: movzbl ({{%rdi|%rcx}}), %eax
 
 define void @foo(i8* %p, i32* %q) {
 entry:
