@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86 -mattr=sse41 | FileCheck %s --check-prefix=X32
-; RUN: llc < %s -march=x86-64 -mattr=sse41 | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=sse41 | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=sse41 | FileCheck %s --check-prefix=X64
 
 define i32 @test1() nounwind readonly {
 entry:
@@ -30,7 +31,7 @@ entry:
 ; X32: calll	*%gs:(%eax)
 
 ; X64: test2:
-; X64: callq	*%gs:(%rdi)
+; X64: callq	*%gs:([[A0:%rdi|%rcx]])
 
 
 
@@ -50,7 +51,7 @@ entry:
 ; X32: 	ret
 
 ; X64: pmovsxwd_1:
-; X64:	pmovsxwd	%gs:(%rdi), %xmm0
+; X64:	pmovsxwd	%gs:([[A0]]), %xmm0
 ; X64:	ret
 }
 
