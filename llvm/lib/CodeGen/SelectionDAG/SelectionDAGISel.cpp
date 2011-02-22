@@ -471,6 +471,13 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     if (!TargetRegisterInfo::isVirtualRegister(DestReg))
       continue;
 
+    bool IsPHI = false;
+    DenseMap<unsigned, unsigned>::const_iterator It = FuncInfo->PHISrcToDestMap.find(DestReg);
+    if (It != FuncInfo->PHISrcToDestMap.end()) {
+      IsPHI = true;
+      DestReg = It->second;
+    }
+
     // Ignore non-scalar or non-integer values.
     SDValue Src = N->getOperand(2);
     EVT SrcVT = Src.getValueType();
@@ -482,14 +489,27 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     CurDAG->ComputeMaskedBits(Src, Mask, KnownZero, KnownOne);
 
     // Only install this information if it tells us something.
-    if (NumSignBits != 1 || KnownZero != 0 || KnownOne != 0) {
-      FuncInfo->LiveOutRegInfo.grow(DestReg);
+    if (!IsPHI && NumSignBits == 1 && KnownZero == 0 && KnownOne == 0)
+      continue;
+
+    FuncInfo->LiveOutRegInfo.grow(DestReg);
+    FunctionLoweringInfo::LiveOutInfo &LOI = FuncInfo->LiveOutRegInfo[DestReg];
+
+    // If this is a PHI and there is existing information, merge it with the
+    // information from this block.
+    if (IsPHI && LOI.IsValid) {
       FunctionLoweringInfo::LiveOutInfo &LOI =
         FuncInfo->LiveOutRegInfo[DestReg];
-      LOI.NumSignBits = NumSignBits;
-      LOI.KnownOne = KnownOne;
-      LOI.KnownZero = KnownZero;
+      LOI.NumSignBits = std::min(LOI.NumSignBits, NumSignBits);
+      LOI.KnownOne &= KnownOne;
+      LOI.KnownZero &= KnownZero;
+      continue;
     }
+
+    LOI.NumSignBits = NumSignBits;
+    LOI.KnownOne = KnownOne;
+    LOI.KnownZero = KnownZero;
+    LOI.IsValid = true;
   } while (!Worklist.empty());
 }
 
@@ -840,6 +860,21 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 #ifndef NDEBUG
     CheckLineNumbers(LLVMBB);
 #endif
+
+    if (EnableFastISel) {
+      FuncInfo->AllPredsVisited = false;
+    } else {
+      FuncInfo->AllPredsVisited = true;
+      for (const_pred_iterator PI = pred_begin(LLVMBB), PE = pred_end(LLVMBB);
+           PI != PE; ++PI) {
+        if (!FuncInfo->VisitedBBs.count(*PI)) {
+          FuncInfo->AllPredsVisited = false;
+          break;
+        }
+      }
+      FuncInfo->VisitedBBs.insert(LLVMBB);
+    }
+
     FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
     FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();
 

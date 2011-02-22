@@ -644,7 +644,10 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
           !RegisterVT.isInteger() || RegisterVT.isVector() ||
           !FuncInfo.LiveOutRegInfo.inBounds(Regs[Part+i]))
         continue;
-      
+
+      if (FuncInfo.PHIDestRegs.count(Regs[Part+i]) && !FuncInfo.AllPredsVisited)
+        continue;
+
       const FunctionLoweringInfo::LiveOutInfo &LOI =
         FuncInfo.LiveOutRegInfo[Regs[Part+i]];
 
@@ -6465,6 +6468,9 @@ SelectionDAGBuilder::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
           CopyValueToVirtualRegister(PHIOp, Reg);
         }
       }
+
+      if (!EnableFastISel)
+        FuncInfo.PHISrcToDestMap[Reg] = FuncInfo.ValueMap[PN];
 
       // Remember that this register needs to added to the machine PHI node as
       // the input for this MBB.
