@@ -2211,8 +2211,10 @@ NamespaceDecl *NamespaceDecl::getNextNamespace() {
 }
 
 ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
-    SourceLocation L, IdentifierInfo *Id, QualType T) {
-  return new (C) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);
+                                             SourceLocation loc,
+                                             IdentifierInfo *name,
+                                             QualType type) {
+  return new (C) ImplicitParamDecl(DC, loc, name, type);
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,

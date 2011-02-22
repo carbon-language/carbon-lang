@@ -1034,16 +1034,18 @@ public:
 };
 
 class ImplicitParamDecl : public VarDecl {
-protected:
-  ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
-                    IdentifierInfo *Id, QualType Tw)
-    : VarDecl(DK, DC, L, Id, Tw, /*TInfo=*/0, SC_None, SC_None) {
-    setImplicit();
-  }
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
                                    QualType T);
+
+  ImplicitParamDecl(DeclContext *DC, SourceLocation loc,
+                    IdentifierInfo *name, QualType type)
+    : VarDecl(ImplicitParam, DC, loc, name, type,
+              /*tinfo*/ 0, SC_None, SC_None) {
+    setImplicit();
+  }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const ImplicitParamDecl *D) { return true; }
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
