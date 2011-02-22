@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=x86-64 -o - | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
 
 ; Reuse the flags value from the add instructions instead of emitting separate
 ; testl instructions.
@@ -6,9 +7,9 @@
 ; Use the flags on the add.
 
 ; CHECK: test1:
-;      CHECK: addl    (%rdi), %esi
-; CHECK-NEXT: movl    %edx, %eax
-; CHECK-NEXT: cmovnsl %ecx, %eax
+;      CHECK: addl    (%r[[A0:di|cx]]), {{%esi|%edx}}
+; CHECK-NEXT: movl    {{%edx|%r8d}}, %eax
+; CHECK-NEXT: cmovnsl {{%ecx|%r9d}}, %eax
 ; CHECK-NEXT: ret
 
 define i32 @test1(i32* %x, i32 %y, i32 %a, i32 %b) nounwind {
@@ -25,7 +26,7 @@ declare void @foo(i32)
 ; other use. A simple test is better.
 
 ; CHECK: test2:
-; CHECK: testb   $16, %dil
+; CHECK: testb   $16, {{%dil|%cl}}
 
 define void @test2(i32 %x) nounwind {
   %y = and i32 %x, 16
@@ -41,7 +42,7 @@ false:
 ; Do use the flags result of the and here, since the and has another use.
 
 ; CHECK: test3:
-;      CHECK: andl    $16, %edi
+;      CHECK: andl    $16, %e[[A0]]
 ; CHECK-NEXT: jne
 
 define void @test3(i32 %x) nounwind {
