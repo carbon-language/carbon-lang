@@ -2182,8 +2182,10 @@ EmulateInstructionARM::EmulateCMNImm (ARMEncoding encoding)
     uint32_t imm32; // the immediate value to be compared with
     switch (encoding) {
     case eEncodingT1:
-        Rn = Bits32(opcode, 10, 8);
-        imm32 = Bits32(opcode, 7, 0);
+        Rn = Bits32(opcode, 19, 16);
+        imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
+        if (Rn == 15)
+            return false;
     case eEncodingA1:
         Rn = Bits32(opcode, 19, 16);
         imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
@@ -2196,7 +2198,7 @@ EmulateInstructionARM::EmulateCMNImm (ARMEncoding encoding)
     if (!success)
         return false;
                   
-    AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
+    AddWithCarryResult res = AddWithCarry(reg_val, imm32, 0);
 
     EmulateInstruction::Context context;
     context.type = EmulateInstruction::eContextImmediate;
@@ -2241,13 +2243,11 @@ EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
         shift_n = 0;
         break;
     case eEncodingT2:
-        Rn = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
-        Rm = Bits32(opcode, 6, 3);
-        shift_t = SRType_LSL;
-        shift_n = 0;
-        if (Rn < 8 && Rm < 8)
-            return false;
-        if (Rn == 15 || Rm == 15)
+        Rn = Bits32(opcode, 19, 16);
+        Rm = Bits32(opcode, 3, 0);
+        shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+        // if n == 15 || BadReg(m) then UNPREDICTABLE;
+        if (Rn == 15 || BadReg(Rm))
             return false;
         break;
     case eEncodingA1:
@@ -2268,7 +2268,7 @@ EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
         return false;
                   
     uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
-    AddWithCarryResult res = AddWithCarry(val1, ~shifted, 1);
+    AddWithCarryResult res = AddWithCarry(val1, shifted, 0);
 
     EmulateInstruction::Context context;
     context.type = EmulateInstruction::eContextImmediate;
@@ -2306,6 +2306,11 @@ EmulateInstructionARM::EmulateCMPImm (ARMEncoding encoding)
     case eEncodingT1:
         Rn = Bits32(opcode, 10, 8);
         imm32 = Bits32(opcode, 7, 0);
+    case eEncodingT2:
+        Rn = Bits32(opcode, 19, 16);
+        imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
+        if (Rn == 15)
+            return false;
     case eEncodingA1:
         Rn = Bits32(opcode, 19, 16);
         imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
@@ -6412,9 +6417,10 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfbf08f00, 0xf1100f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
         // cmn (register)
         { 0xffffffc0, 0x000042c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm>"},
-        { 0xfff08f00, 0xeb100f00, ARMvAll,       eEncodingT2, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
+        { 0xfff08f00, 0xeb100f00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
         // cmp (immediate)
         { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPImm, "cmp<c> <Rn>, #imm8"},
+        { 0xfbf08f00, 0xf1b00f00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateCMPImm, "cmp<c>.w <Rn>, #<const>"},
         // cmp (register) (Rn and Rm both from r0-r7)
         { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
         // cmp (register) (Rn and Rm not both from r0-r7)
