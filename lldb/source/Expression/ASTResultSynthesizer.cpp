@@ -238,6 +238,10 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
             last_stmt_ptr--;
             last_stmt = *last_stmt_ptr;
         }
+        else
+        {
+            return false;
+        }
     }
     
     Expr *last_expr = dyn_cast<Expr>(last_stmt);
