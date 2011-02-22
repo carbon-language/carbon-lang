@@ -42,7 +42,9 @@ namespace {
 ///  a HeaderSearch object. InitHeaderSearch stores several search path lists
 ///  internally, which can be sent to a HeaderSearch object in one swoop.
 class InitHeaderSearch {
-  std::vector<DirectoryLookup> IncludeGroup[4];
+  std::vector<std::pair<IncludeDirGroup, DirectoryLookup> > IncludePath;
+  typedef std::vector<std::pair<IncludeDirGroup,
+                      DirectoryLookup> >::const_iterator path_iterator;
   HeaderSearch& Headers;
   bool Verbose;
   std::string IncludeSysroot;
@@ -94,7 +96,7 @@ public:
 
   /// Realize - Merges all search path lists into one list and send it to
   /// HeaderSearch.
-  void Realize();
+  void Realize(const LangOptions &Lang);
 };
 
 }
@@ -131,8 +133,8 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
 
   // If the directory exists, add it.
   if (const DirectoryEntry *DE = FM.getDirectory(MappedPathStr)) {
-    IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
-                                                  isFramework));
+    IncludePath.push_back(std::make_pair(Group, DirectoryLookup(DE, Type,
+                          isUserSupplied, isFramework)));
     return;
   }
 
@@ -142,7 +144,8 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
     if (const FileEntry *FE = FM.getFile(MappedPathStr)) {
       if (const HeaderMap *HM = Headers.CreateHeaderMap(FE)) {
         // It is a headermap, add it to the search path.
-        IncludeGroup[Group].push_back(DirectoryLookup(HM, Type,isUserSupplied));
+        IncludePath.push_back(std::make_pair(Group, DirectoryLookup(HM, Type,
+                              isUserSupplied)));
         return;
       }
     }
@@ -179,29 +182,29 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
                                                    llvm::StringRef Dir64,
                                                    const llvm::Triple &triple) {
   // Add the base dir
-  AddPath(Base, System, true, false, false);
+  AddPath(Base, CXXSystem, true, false, false);
 
   // Add the multilib dirs
   llvm::Triple::ArchType arch = triple.getArch();
   bool is64bit = arch == llvm::Triple::ppc64 || arch == llvm::Triple::x86_64;
   if (is64bit)
-    AddPath(Base + "/" + ArchDir + "/" + Dir64, System, true, false, false);
+    AddPath(Base + "/" + ArchDir + "/" + Dir64, CXXSystem, true, false, false);
   else
-    AddPath(Base + "/" + ArchDir + "/" + Dir32, System, true, false, false);
+    AddPath(Base + "/" + ArchDir + "/" + Dir32, CXXSystem, true, false, false);
 
   // Add the backward dir
-  AddPath(Base + "/backward", System, true, false, false);
+  AddPath(Base + "/backward", CXXSystem, true, false, false);
 }
 
 void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
                                                      llvm::StringRef Arch,
                                                      llvm::StringRef Version) {
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++",
-          System, true, false, false);
+          CXXSystem, true, false, false);
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/" + Arch,
-          System, true, false, false);
+          CXXSystem, true, false, false);
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/backward",
-          System, true, false, false);
+          CXXSystem, true, false, false);
 }
 
   // FIXME: This probably should goto to some platform utils place.
@@ -567,13 +570,17 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     break;
   case llvm::Triple::MinGW32:
     // mingw-w64-20110207
-    AddPath("c:/MinGW/include/c++/4.5.3", System, true, false, false);
-    AddPath("c:/MinGW/include/c++/4.5.3/x86_64-w64-mingw32", System, true, false, false);
-    AddPath("c:/MinGW/include/c++/4.5.3/backward", System, true, false, false);
+    AddPath("c:/MinGW/include/c++/4.5.3", CXXSystem, true, false, false);
+    AddPath("c:/MinGW/include/c++/4.5.3/x86_64-w64-mingw32", CXXSystem, true,
+            false, false);
+    AddPath("c:/MinGW/include/c++/4.5.3/backward", CXXSystem, true, false,
+            false);
     // mingw-w64-20101129
-    AddPath("c:/MinGW/include/c++/4.5.2", System, true, false, false);
-    AddPath("c:/MinGW/include/c++/4.5.2/x86_64-w64-mingw32", System, true, false, false);
-    AddPath("c:/MinGW/include/c++/4.5.2/backward", System, true, false, false);
+    AddPath("c:/MinGW/include/c++/4.5.2", CXXSystem, true, false, false);
+    AddPath("c:/MinGW/include/c++/4.5.2/x86_64-w64-mingw32", CXXSystem, true,
+            false, false);
+    AddPath("c:/MinGW/include/c++/4.5.2/backward", CXXSystem, true, false,
+            false);
     // Try gcc 4.5.0
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
     // Try gcc 4.4.0
@@ -613,7 +620,7 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     }
     break;
   case llvm::Triple::DragonFly:
-    AddPath("/usr/include/c++/4.1", System, true, false, false);
+    AddPath("/usr/include/c++/4.1", CXXSystem, true, false, false);
     break;
   case llvm::Triple::Linux:
     //===------------------------------------------------------------------===//
@@ -812,7 +819,7 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
   if (Lang.CPlusPlus && HSOpts.UseStandardCXXIncludes) {
     if (!HSOpts.CXXSystemIncludes.empty()) {
       for (unsigned i = 0, e = HSOpts.CXXSystemIncludes.size(); i != e; ++i)
-        AddPath(HSOpts.CXXSystemIncludes[i], System, true, false, false);
+        AddPath(HSOpts.CXXSystemIncludes[i], CXXSystem, true, false, false);
     } else
       AddDefaultCPlusPlusIncludePaths(triple);
   }
@@ -829,11 +836,11 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
 /// RemoveDuplicates - If there are duplicate directory entries in the specified
 /// search list, remove the later (dead) ones.
 static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
-                             bool Verbose) {
+                             unsigned First, bool Verbose) {
   llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenDirs;
   llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenFrameworkDirs;
   llvm::SmallPtrSet<const HeaderMap *, 8> SeenHeaderMaps;
-  for (unsigned i = 0; i != SearchList.size(); ++i) {
+  for (unsigned i = First; i != SearchList.size(); ++i) {
     unsigned DirToRemove = i;
 
     const DirectoryLookup &CurEntry = SearchList[i];
@@ -908,32 +915,49 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
 }
 
 
-void InitHeaderSearch::Realize() {
+void InitHeaderSearch::Realize(const LangOptions &Lang) {
   // Concatenate ANGLE+SYSTEM+AFTER chains together into SearchList.
   std::vector<DirectoryLookup> SearchList;
-  SearchList = IncludeGroup[Angled];
-  SearchList.insert(SearchList.end(), IncludeGroup[System].begin(),
-                    IncludeGroup[System].end());
-  SearchList.insert(SearchList.end(), IncludeGroup[After].begin(),
-                    IncludeGroup[After].end());
-  RemoveDuplicates(SearchList, Verbose);
-  RemoveDuplicates(IncludeGroup[Quoted], Verbose);
+  SearchList.reserve(IncludePath.size());
 
-  // Prepend QUOTED list on the search list.
-  SearchList.insert(SearchList.begin(), IncludeGroup[Quoted].begin(),
-                    IncludeGroup[Quoted].end());
+  /* Quoted arguments go first. */
+  for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
+       it != ie; ++it) {
+    if (it->first == Quoted)
+      SearchList.push_back(it->second);
+  }
+  /* Deduplicate and remember index */
+  RemoveDuplicates(SearchList, 0, Verbose);
+  unsigned quoted = SearchList.size();
 
+  for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
+       it != ie; ++it) {
+    if (it->first == Angled)
+      SearchList.push_back(it->second);
+  }
+
+  for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
+       it != ie; ++it) {
+    if (it->first == System || (Lang.CPlusPlus && it->first == CXXSystem))
+      SearchList.push_back(it->second);
+  }
+
+  for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
+       it != ie; ++it) {
+    if (it->first == After)
+      SearchList.push_back(it->second);
+  }
+
+  RemoveDuplicates(SearchList, quoted, Verbose);
 
   bool DontSearchCurDir = false;  // TODO: set to true if -I- is set?
-  Headers.SetSearchPaths(SearchList, IncludeGroup[Quoted].size(),
-                         DontSearchCurDir);
+  Headers.SetSearchPaths(SearchList, quoted, DontSearchCurDir);
 
   // If verbose, print the list of directories that will be searched.
   if (Verbose) {
     llvm::errs() << "#include \"...\" search starts here:\n";
-    unsigned QuotedIdx = IncludeGroup[Quoted].size();
     for (unsigned i = 0, e = SearchList.size(); i != e; ++i) {
-      if (i == QuotedIdx)
+      if (i == quoted)
         llvm::errs() << "#include <...> search starts here:\n";
       const char *Name = SearchList[i].getName();
       const char *Suffix;
@@ -978,5 +1002,5 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   if (HSOpts.UseStandardIncludes)
     Init.AddDefaultSystemIncludePaths(Lang, Triple, HSOpts);
 
-  Init.Realize();
+  Init.Realize(Lang);
 }

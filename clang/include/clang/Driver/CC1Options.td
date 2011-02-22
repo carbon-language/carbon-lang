@@ -536,6 +536,8 @@ def idirafter : JoinedOrSeparate<"-idirafter">, MetaVarName<"<directory>">,
   HelpText<"Add directory to AFTER include search path">;
 def iquote : JoinedOrSeparate<"-iquote">, MetaVarName<"<directory>">,
   HelpText<"Add directory to QUOTE include search path">;
+def cxx_isystem : JoinedOrSeparate<"-cxx-isystem">, MetaVarName<"<directory>">,
+  HelpText<"Add directory to the C++ SYSTEM include search path">;
 def isystem : JoinedOrSeparate<"-isystem">, MetaVarName<"<directory>">,
   HelpText<"Add directory to SYSTEM include search path">;
 def iwithsysroot : JoinedOrSeparate<"-iwithsysroot">,MetaVarName<"<directory>">,
@@ -550,8 +552,6 @@ def iwithprefixbefore : JoinedOrSeparate<"-iwithprefixbefore">,
   HelpText<"Set directory to include search path with prefix">;
 def isysroot : JoinedOrSeparate<"-isysroot">, MetaVarName<"<dir>">,
   HelpText<"Set the system root directory (usually /)">;
-def cxx_system_include : Separate<"-cxx-system-include">,
-  HelpText<"Add a system #include directory for the C++ standard library">;
 def v : Flag<"-v">, HelpText<"Enable verbose output">;
 
 //===----------------------------------------------------------------------===//

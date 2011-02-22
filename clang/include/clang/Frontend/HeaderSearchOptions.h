@@ -22,6 +22,7 @@ namespace frontend {
     Quoted = 0,     ///< `#include ""` paths. Thing `gcc -iquote`.
     Angled,         ///< Paths for both `#include ""` and `#include <>`. (`-I`)
     System,         ///< Like Angled, but marks system directories.
+    CXXSystem,      ///< Like System, but only used for C++.
     After           ///< Like System, but searched after the system directories.
   };
 }

@@ -208,6 +208,7 @@ def compatibility__version : JoinedOrSeparate<"-compatibility_version">;
 def coverage : Flag<"-coverage">;
 def cpp_precomp : Flag<"-cpp-precomp">;
 def current__version : JoinedOrSeparate<"-current_version">;
+def cxx_isystem : JoinedOrSeparate<"-cxx-isystem">, Group<clang_i_Group>;
 def c : Flag<"-c">, Flags<[DriverOption]>,
   HelpText<"Only run preprocess, compile, and assemble steps">;
 def dA : Flag<"-dA">, Group<d_Group>;
