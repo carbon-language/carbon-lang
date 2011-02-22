@@ -478,7 +478,8 @@ static void ResurrectConfirmedKill(unsigned Reg, const TargetRegisterInfo* TRI,
   if (!RegKills[KReg])
     return;
 
-  assert(KillOps[KReg] == KillOp && "invalid superreg kill flags");
+  assert(KillOps[KReg]->getParent() == KillOp->getParent() &&
+         "invalid superreg kill flags");
   KillOps[KReg] = NULL;
   RegKills.reset(KReg);
 
@@ -487,7 +488,8 @@ static void ResurrectConfirmedKill(unsigned Reg, const TargetRegisterInfo* TRI,
   for (const unsigned *SR = TRI->getSubRegisters(KReg); *SR; ++SR) {
     DEBUG(dbgs() << "  Resurrect subreg " << TRI->getName(*SR) << "\n");
 
-    assert(KillOps[*SR] == KillOp && "invalid subreg kill flags");
+    assert(KillOps[*SR]->getParent() == KillOp->getParent() &&
+           "invalid subreg kill flags");
     KillOps[*SR] = NULL;
     RegKills.reset(*SR);
   }
