@@ -9,9 +9,16 @@ else()
   set(CLANGXX_LINK_OR_COPY copy)
 endif()
 
+# CMAKE_EXECUTABLE_SUFFIX is undefined on cmake scripts. See PR9286.
+if( WIN32 )
+  set(EXECUTABLE_SUFFIX ".exe")
+else()
+  set(EXECUTABLE_SUFFIX "")
+endif()
+
 set(bindir "${CLANGXX_DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/")
-set(clang "clang${CMAKE_EXECUTABLE_SUFFIX}")
-set(clangxx "clang++${CMAKE_EXECUTABLE_SUFFIX}")
+set(clang "clang${EXECUTABLE_SUFFIX}")
+set(clangxx "clang++${EXECUTABLE_SUFFIX}")
 
 message("Creating clang++ executable based on ${clang}")
 
