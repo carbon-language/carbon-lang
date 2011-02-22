@@ -1086,14 +1086,14 @@ static void BeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *S) {
   //   3.  Enter __cxa_end_catch cleanup
   //   4.  Enter dtor cleanup
   //
-  // We do this by initializing the exception variable with a
-  // "special initializer", InitCatchParam.  Delegation sequence:
+  // We do this by using a slightly abnormal initialization process.
+  // Delegation sequence:
   //   - ExitCXXTryStmt opens a RunCleanupsScope
-  //     - EmitLocalBlockVarDecl creates the variable and debug info
+  //     - EmitAutoVarAlloca creates the variable and debug info
   //       - InitCatchParam initializes the variable from the exception
-  //         - CallBeginCatch calls __cxa_begin_catch
-  //         - CallBeginCatch enters the __cxa_end_catch cleanup
-  //     - EmitLocalBlockVarDecl enters the variable destructor cleanup
+  //       - CallBeginCatch calls __cxa_begin_catch
+  //       - CallBeginCatch enters the __cxa_end_catch cleanup
+  //     - EmitAutoVarCleanups enters the variable destructor cleanup
   //   - EmitCXXTryStmt emits the code for the catch body
   //   - EmitCXXTryStmt close the RunCleanupsScope
 
@@ -1105,7 +1105,9 @@ static void BeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *S) {
   }
 
   // Emit the local.
-  CGF.EmitAutoVarDecl(*CatchParam, &InitCatchParam);
+  CodeGenFunction::AutoVarEmission var = CGF.EmitAutoVarAlloca(*CatchParam);
+  InitCatchParam(CGF, *CatchParam, var.getObjectAddress(CGF));
+  CGF.EmitAutoVarCleanups(var);
 }
 
 namespace {

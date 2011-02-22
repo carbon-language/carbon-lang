@@ -72,8 +72,8 @@ void test2(Test2 *x) {
   // CHECK-NEXT: store i8* bitcast (void (i8*)* @__Block_byref_object_dispose_{{.*}} to i8*), i8** [[T5]]
 
   // Actually capture the value.
-  // CHECK-NEXT: [[CAPTURE:%.*]] = load [[TEST2]]** [[X]]
   // CHECK-NEXT: [[T6:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 6
+  // CHECK-NEXT: [[CAPTURE:%.*]] = load [[TEST2]]** [[X]]
   // CHECK-NEXT: store [[TEST2]]* [[CAPTURE]], [[TEST2]]** [[T6]]
 
   // Then we initialize the block, blah blah blah.

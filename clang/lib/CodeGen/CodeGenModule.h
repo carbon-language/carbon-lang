@@ -120,8 +120,11 @@ namespace CodeGen {
       const llvm::PointerType *Int8PtrPtrTy;
     };
 
-    /// The width of an address-zero pointer.
+    /// The width of a pointer into the generic address space.
     unsigned char PointerWidthInBits;
+
+    /// The alignment of a pointer into the generic address space.
+    unsigned char PointerAlignInBytes;
   };
   
 /// CodeGenModule - This class organizes the cross-function state that is used

@@ -1555,7 +1555,50 @@ public:
   /// EmitAutoVarDecl - Emit an auto variable declaration.
   ///
   /// This function can be called with a null (unreachable) insert point.
-  void EmitAutoVarDecl(const VarDecl &D, SpecialInitFn *SpecialInit = 0);
+  void EmitAutoVarDecl(const VarDecl &D);
+
+  class AutoVarEmission {
+    friend class CodeGenFunction;
+
+    const VarDecl &Variable;
+
+    /// The alignment of the variable.
+    CharUnits Alignment;
+
+    /// The address of the alloca.  Null if the variable was emitted
+    /// as a global constant.
+    llvm::Value *Address;
+
+    llvm::Value *NRVOFlag;
+
+    /// True if the variable is a __block variable.
+    bool IsByRef;
+
+    /// True if the variable is of aggregate type and has a constant
+    /// initializer.
+    bool IsConstantAggregate;
+
+    AutoVarEmission(const VarDecl &variable)
+      : Variable(variable), Address(0), NRVOFlag(0),
+        IsByRef(false), IsConstantAggregate(false) {}
+
+    bool wasEmittedAsGlobal() const { return Address == 0; }
+
+  public:
+    /// Returns the address of the object within this declaration.
+    /// Note that this does not chase the forwarding pointer for
+    /// __block decls.
+    llvm::Value *getObjectAddress(CodeGenFunction &CGF) const {
+      if (!IsByRef) return Address;
+
+      return CGF.Builder.CreateStructGEP(Address,
+                                         CGF.getByRefValueLLVMField(&Variable),
+                                         Variable.getNameAsString());
+    }
+  };
+  AutoVarEmission EmitAutoVarAlloca(const VarDecl &var);
+  void EmitAutoVarInit(const AutoVarEmission &emission);
+  void EmitAutoVarCleanups(const AutoVarEmission &emission);  
 
   void EmitStaticVarDecl(const VarDecl &D,
                          llvm::GlobalValue::LinkageTypes Linkage);

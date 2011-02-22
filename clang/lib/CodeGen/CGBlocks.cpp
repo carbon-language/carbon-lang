@@ -1376,10 +1376,9 @@ llvm::Constant *CodeGenModule::BuildbyrefCopyHelper(const llvm::Type *T,
                                                     BlockFieldFlags flags,
                                                     unsigned align,
                                                     const VarDecl *var) {
-  // All alignments below that of pointer alignment collapse down to just
-  // pointer alignment, as we always have at least that much alignment to begin
-  // with.
-  align /= unsigned(getTarget().getPointerAlign(0) / 8);
+  // All alignments below pointer alignment are bumped up, as we
+  // always have at least that much alignment to begin with.
+  if (align < PointerAlignInBytes) align = PointerAlignInBytes;
   
   // As an optimization, we only generate a single function of each kind we
   // might need.  We need a different one for each alignment and for each
@@ -1396,10 +1395,9 @@ llvm::Constant *CodeGenModule::BuildbyrefDestroyHelper(const llvm::Type *T,
                                                        BlockFieldFlags flags,
                                                        unsigned align,
                                                        const VarDecl *var) {
-  // All alignments below that of pointer alignment collpase down to just
-  // pointer alignment, as we always have at least that much alignment to begin
-  // with.
-  align /= unsigned(getTarget().getPointerAlign(0) / 8);
+  // All alignments below pointer alignment are bumped up, as we
+  // always have at least that much alignment to begin with.
+  if (align < PointerAlignInBytes) align = PointerAlignInBytes;
   
   // As an optimization, we only generate a single function of each kind we
   // might need.  We need a different one for each alignment and for each
