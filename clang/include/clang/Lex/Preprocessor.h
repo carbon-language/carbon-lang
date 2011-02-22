@@ -942,9 +942,6 @@ private:
   /// is not enclosed within a string literal.
   void HandleMicrosoft__pragma(Token &Tok);
 
-  void Handle_Pragma(unsigned Introducer, const std::string &StrVal, 
-                     SourceLocation PragmaLoc, SourceLocation RParenLoc);
-
   /// EnterSourceFileWithLexer - Add a lexer to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.
   void EnterSourceFileWithLexer(Lexer *TheLexer, const DirectoryLookup *Dir);

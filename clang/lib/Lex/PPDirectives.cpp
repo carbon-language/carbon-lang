@@ -86,6 +86,7 @@ void Preprocessor::DiscardUntilEndOfDirective() {
   Token Tmp;
   do {
     LexUnexpandedToken(Tmp);
+    assert(Tmp.isNot(tok::eof) && "EOF seen while discarding directive tokens");
   } while (Tmp.isNot(tok::eom));
 }
 

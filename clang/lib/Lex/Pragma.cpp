@@ -175,7 +175,22 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
     }
   }
   
-  Handle_Pragma(PIK__Pragma, StrVal, PragmaLoc, RParenLoc);
+  // Plop the string (including the newline and trailing null) into a buffer
+  // where we can lex it.
+  Token TmpTok;
+  TmpTok.startToken();
+  CreateString(&StrVal[0], StrVal.size(), TmpTok);
+  SourceLocation TokLoc = TmpTok.getLocation();
+
+  // Make and enter a lexer object so that we lex and expand the tokens just
+  // like any others.
+  Lexer *TL = Lexer::Create_PragmaLexer(TokLoc, PragmaLoc, RParenLoc,
+                                        StrVal.size(), *this);
+
+  EnterSourceFileWithLexer(TL, 0);
+
+  // With everything set up, lex this as a #pragma directive.
+  HandlePragmaDirective(PIK__Pragma);
 
   // Finally, return whatever came after the pragma directive.
   return Lex(Tok);
@@ -194,16 +209,16 @@ void Preprocessor::HandleMicrosoft__pragma(Token &Tok) {
     return;
   }
 
-  // Get the tokens enclosed within the __pragma().
+  // Get the tokens enclosed within the __pragma(), as well as the final ')'.
   llvm::SmallVector<Token, 32> PragmaToks;
   int NumParens = 0;
   Lex(Tok);
   while (Tok.isNot(tok::eof)) {
+    PragmaToks.push_back(Tok);
     if (Tok.is(tok::l_paren))
       NumParens++;
     else if (Tok.is(tok::r_paren) && NumParens-- == 0)
       break;
-    PragmaToks.push_back(Tok);
     Lex(Tok);
   }
 
@@ -212,45 +227,23 @@ void Preprocessor::HandleMicrosoft__pragma(Token &Tok) {
     return;
   }
 
-  // Build the pragma string.
-  std::string StrVal = " ";
-  for (llvm::SmallVector<Token, 32>::iterator I =
-       PragmaToks.begin(), E = PragmaToks.end(); I != E; ++I) {
-    StrVal += getSpelling(*I);
-  }
-  
-  SourceLocation RParenLoc = Tok.getLocation();
+  PragmaToks.front().setFlag(Token::LeadingSpace);
 
-  Handle_Pragma(PIK___pragma, StrVal, PragmaLoc, RParenLoc);
+  // Replace the ')' with an EOM to mark the end of the pragma.
+  PragmaToks.back().setKind(tok::eom);
+
+  Token *TokArray = new Token[PragmaToks.size()];
+  std::copy(PragmaToks.begin(), PragmaToks.end(), TokArray);
+
+  // Push the tokens onto the stack.
+  EnterTokenStream(TokArray, PragmaToks.size(), true, true);
+
+  // With everything set up, lex this as a #pragma directive.
+  HandlePragmaDirective(PIK___pragma);
 
   // Finally, return whatever came after the pragma directive.
   return Lex(Tok);
 }
-
-void Preprocessor::Handle_Pragma(unsigned Introducer,
-                                 const std::string &StrVal,
-                                 SourceLocation PragmaLoc,
-                                 SourceLocation RParenLoc) {
-
-  // Plop the string (including the newline and trailing null) into a buffer
-  // where we can lex it.
-  Token TmpTok;
-  TmpTok.startToken();
-  CreateString(&StrVal[0], StrVal.size(), TmpTok);
-  SourceLocation TokLoc = TmpTok.getLocation();
-
-  // Make and enter a lexer object so that we lex and expand the tokens just
-  // like any others.
-  Lexer *TL = Lexer::Create_PragmaLexer(TokLoc, PragmaLoc, RParenLoc,
-                                        StrVal.size(), *this);
-
-  EnterSourceFileWithLexer(TL, 0);
-
-  // With everything set up, lex this as a #pragma directive.
-  HandlePragmaDirective(Introducer);
-}
-
-
 
 /// HandlePragmaOnce - Handle #pragma once.  OnceTok is the 'once'.
 ///
