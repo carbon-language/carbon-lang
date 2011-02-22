@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=core2
-
+; PR8311
+; XFAIL: mingw,win32
 
 define <8 x i32> @a(<8 x i16> %a) nounwind {
   %c = sext <8 x i16> %a to <8 x i32>
