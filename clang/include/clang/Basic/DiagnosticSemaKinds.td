@@ -918,6 +918,8 @@ def err_auto_missing_trailing_return : Error<
   "'auto' return without trailing return type">;
 def err_trailing_return_without_auto : Error<
   "function with trailing return type must specify return type 'auto', not %0">;
+def err_trailing_return_in_parens : Error<
+  "trailing return type may not be nested within parentheses">;
 def err_auto_var_deduction_failure : Error<
   "variable %0 with type %1 has incompatible initializer of type %2">;
 def err_auto_new_deduction_failure : Error<

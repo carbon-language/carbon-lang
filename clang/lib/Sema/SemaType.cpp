@@ -1450,6 +1450,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   if (D.getAttributes())
     distributeTypeAttrsFromDeclarator(state, T);
 
+  // C++0x [dcl.spec.auto]p5: reject 'auto' if it is not in an allowed context.
   if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
       !D.isFunctionDeclarator()) {
     int Error = -1;
@@ -1495,6 +1496,25 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
       Error = 8;
 
+    // C++0x [dcl.spec.auto]p2: 'auto' is always fine if the declarator
+    // contains a trailing return type. That is only legal at the outermost
+    // level. Check all declarator chunks (outermost first) anyway, to give
+    // better diagnostics.
+    if (Error != -1) {
+      for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
+        unsigned chunkIndex = e - i - 1;
+        state.setCurrentChunkIndex(chunkIndex);
+        DeclaratorChunk &DeclType = D.getTypeObject(chunkIndex);
+        if (DeclType.Kind == DeclaratorChunk::Function) {
+          const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
+          if (FTI.TrailingReturnType) {
+            Error = -1;
+            break;
+          }
+        }
+      }
+    }
+
     if (Error != -1) {
       Diag(D.getDeclSpec().getTypeSpecTypeLoc(), diag::err_auto_not_allowed)
         << Error;
@@ -1502,7 +1522,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       D.setInvalidType(true);
     }
   }
-
+  
   if (T.isNull())
     return Context.getNullTypeSourceInfo();
 
@@ -1603,6 +1623,37 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       // of the type, otherwise the argument list is ().
       const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
 
+      // Check for auto functions and trailing return type and adjust the
+      // return type accordingly.
+      if (!D.isInvalidType()) {
+        // trailing-return-type is only required if we're declaring a function,
+        // and not, for instance, a pointer to a function.
+        if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
+            !FTI.TrailingReturnType && chunkIndex == 0) {
+          Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
+               diag::err_auto_missing_trailing_return);
+          T = Context.IntTy;
+          D.setInvalidType(true);
+        } else if (FTI.TrailingReturnType) {
+          // T must be exactly 'auto' at this point. See CWG issue 681.
+          if (isa<ParenType>(T)) {
+            Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
+                 diag::err_trailing_return_in_parens)
+              << T << D.getDeclSpec().getSourceRange();
+            D.setInvalidType(true);
+          } else if (T.hasQualifiers() || !isa<AutoType>(T)) {
+            Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
+                 diag::err_trailing_return_without_auto)
+              << T << D.getDeclSpec().getSourceRange();
+            D.setInvalidType(true);
+          }
+
+          T = GetTypeFromParser(
+            ParsedType::getFromOpaquePtr(FTI.TrailingReturnType),
+            &ReturnTypeInfo);
+        }
+      }
+
       // C99 6.7.5.3p1: The return type may not be a function or array type.
       // For conversion functions, we'll diagnose this particular error later.
       if ((T->isArrayType() || T->isFunctionType()) &&
@@ -1616,32 +1667,6 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         Diag(DeclType.Loc, diagID) << T->isFunctionType() << T;
         T = Context.IntTy;
         D.setInvalidType(true);
-      }
-
-      // Check for auto functions and trailing return type and adjust the
-      // return type accordingly.
-      if (!D.isInvalidType()) {
-        // trailing-return-type is only required if we're declaring a function,
-        // and not, for instance, a pointer to a function.
-        if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
-            !FTI.TrailingReturnType && chunkIndex == 0) {
-          Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
-               diag::err_auto_missing_trailing_return);
-          T = Context.IntTy;
-          D.setInvalidType(true);
-        } else if (FTI.TrailingReturnType) {
-          if (T.hasQualifiers() || !isa<AutoType>(T)) {
-            // T must be exactly 'auto' at this point. See CWG issue 681.
-            Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
-                 diag::err_trailing_return_without_auto)
-              << T << D.getDeclSpec().getSourceRange();
-            D.setInvalidType(true);
-          }
-
-          T = GetTypeFromParser(
-            ParsedType::getFromOpaquePtr(FTI.TrailingReturnType),
-            &ReturnTypeInfo);
-        }
       }
 
       // cv-qualifiers on return types are pointless except when the type is a
@@ -2050,7 +2075,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       break;
     }
   }
-  
+
   if (T.isNull())
     return Context.getNullTypeSourceInfo();
   else if (D.isInvalidType())
