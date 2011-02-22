@@ -51,6 +51,20 @@ static inline uint32_t DecodeImmShift(const uint32_t type, const uint32_t imm5, 
     }
 }
 
+// A8.6.35 CMP (register) -- Encoding T3
+// Convenience function.
+static inline uint32_t DecodeImmShiftThumb(const uint32_t opcode, ARM_ShifterType &shift_t)
+{
+    return DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+}
+
+// A8.6.35 CMP (register) -- Encoding A1
+// Convenience function.
+static inline uint32_t DecodeImmShiftARM(const uint32_t opcode, ARM_ShifterType &shift_t)
+{
+    return DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+}
+
 static inline uint32_t DecodeImmShift(const ARM_ShifterType shift_t, const uint32_t imm5)
 {
     ARM_ShifterType dont_care;
@@ -216,11 +230,11 @@ static uint32_t ror(uint32_t val, uint32_t N, uint32_t shift)
 }
 
 // (imm32, carry_out) = ARMExpandImm_C(imm12, carry_in)
-static inline uint32_t ARMExpandImm_C(uint32_t val, uint32_t carry_in, uint32_t &carry_out)
+static inline uint32_t ARMExpandImm_C(uint32_t opcode, uint32_t carry_in, uint32_t &carry_out)
 {
-    uint32_t imm32;                      // the expanded result
-    uint32_t imm = bits(val, 7, 0);      // immediate value
-    uint32_t amt = 2 * bits(val, 11, 8); // rotate amount
+    uint32_t imm32;                         // the expanded result
+    uint32_t imm = bits(opcode, 7, 0);      // immediate value
+    uint32_t amt = 2 * bits(opcode, 11, 8); // rotate amount
     if (amt == 0)
     {
         imm32 = imm;
@@ -234,21 +248,21 @@ static inline uint32_t ARMExpandImm_C(uint32_t val, uint32_t carry_in, uint32_t 
     return imm32;
 }
 
-static inline uint32_t ARMExpandImm(uint32_t val)
+static inline uint32_t ARMExpandImm(uint32_t opcode)
 {
     // 'carry_in' argument to following function call does not affect the imm32 result.
     uint32_t carry_in = 0;
     uint32_t carry_out;
-    return ARMExpandImm_C(val, carry_in, carry_out);
+    return ARMExpandImm_C(opcode, carry_in, carry_out);
 }
 
 // (imm32, carry_out) = ThumbExpandImm_C(imm12, carry_in)
-static inline uint32_t ThumbExpandImm_C(uint32_t val, uint32_t carry_in, uint32_t &carry_out)
+static inline uint32_t ThumbExpandImm_C(uint32_t opcode, uint32_t carry_in, uint32_t &carry_out)
 {
     uint32_t imm32; // the expaned result
-    const uint32_t i = bit(val, 26);
-    const uint32_t imm3 = bits(val, 14, 12);
-    const uint32_t abcdefgh = bits(val, 7, 0);
+    const uint32_t i = bit(opcode, 26);
+    const uint32_t imm3 = bits(opcode, 14, 12);
+    const uint32_t abcdefgh = bits(opcode, 7, 0);
     const uint32_t imm12 = i << 11 | imm3 << 8 | abcdefgh;
 
     if (bits(imm12, 11, 10) == 0)
@@ -281,28 +295,28 @@ static inline uint32_t ThumbExpandImm_C(uint32_t val, uint32_t carry_in, uint32_
     return imm32;
 }
 
-static inline uint32_t ThumbExpandImm(uint32_t val)
+static inline uint32_t ThumbExpandImm(uint32_t opcode)
 {
     // 'carry_in' argument to following function call does not affect the imm32 result.
     uint32_t carry_in = 0;
     uint32_t carry_out;
-    return ThumbExpandImm_C(val, carry_in, carry_out);
+    return ThumbExpandImm_C(opcode, carry_in, carry_out);
 }
 
 // imm32 = ZeroExtend(i:imm3:imm8, 32)
-static inline uint32_t ThumbImm12(uint32_t val)
+static inline uint32_t ThumbImm12(uint32_t opcode)
 {
-  const uint32_t i = bit(val, 26);
-  const uint32_t imm3 = bits(val, 14, 12);
-  const uint32_t imm8 = bits(val, 7, 0);
+  const uint32_t i = bit(opcode, 26);
+  const uint32_t imm3 = bits(opcode, 14, 12);
+  const uint32_t imm8 = bits(opcode, 7, 0);
   const uint32_t imm12 = i << 11 | imm3 << 8 | imm8;
   return imm12;
 }
 
 // imm32 = ZeroExtend(imm7:'00', 32)
-static inline uint32_t ThumbImmScaled(uint32_t val)
+static inline uint32_t ThumbImmScaled(uint32_t opcode)
 {
-  const uint32_t imm7 = bits(val, 6, 0);
+  const uint32_t imm7 = bits(opcode, 6, 0);
   return imm7 * 4;
 }
 

@@ -829,7 +829,7 @@ EmulateInstructionARM::EmulateMVNReg (ARMEncoding encoding)
             Rd = Bits32(opcode, 11, 8);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+            shift_n = DecodeImmShiftThumb(opcode, shift_t);
             // if (BadReg(d) || BadReg(m)) then UNPREDICTABLE;
             if ((BadReg(Rd) || BadReg(Rm)))
                 return false;
@@ -837,7 +837,7 @@ EmulateInstructionARM::EmulateMVNReg (ARMEncoding encoding)
             Rd = Bits32(opcode, 15, 12);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
             break;
         default:
             return false;
@@ -2128,7 +2128,7 @@ EmulateInstructionARM::EmulateADDReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
             break;
         default:
             return false;
@@ -2245,7 +2245,7 @@ EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
     case eEncodingT2:
         Rn = Bits32(opcode, 19, 16);
         Rm = Bits32(opcode, 3, 0);
-        shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+        shift_n = DecodeImmShiftThumb(opcode, shift_t);
         // if n == 15 || BadReg(m) then UNPREDICTABLE;
         if (Rn == 15 || BadReg(Rm))
             return false;
@@ -2253,7 +2253,7 @@ EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
     case eEncodingA1:
         Rn = Bits32(opcode, 19, 16);
         Rm = Bits32(opcode, 3, 0);
-        shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+        shift_n = DecodeImmShiftARM(opcode, shift_t);
     default:
         return false;
     }
@@ -2380,7 +2380,7 @@ EmulateInstructionARM::EmulateCMPReg (ARMEncoding encoding)
     case eEncodingA1:
         Rn = Bits32(opcode, 19, 16);
         Rm = Bits32(opcode, 3, 0);
-        shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+        shift_n = DecodeImmShiftARM(opcode, shift_t);
     default:
         return false;
     }
@@ -4588,7 +4588,7 @@ EmulateInstructionARM::EmulateADCReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+            shift_n = DecodeImmShiftThumb(opcode, shift_t);
             if (BadReg(Rd) || BadReg(Rn) || BadReg(Rm))
                 return false;
             break;
@@ -4597,7 +4597,7 @@ EmulateInstructionARM::EmulateADCReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
             // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
                 return false;
@@ -4752,7 +4752,7 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+            shift_n = DecodeImmShiftThumb(opcode, shift_t);
             // if Rd == '1111' && S == '1' then SEE TST (register);
             if (Rd == 15 && setflags)
                 return EmulateTSTReg(eEncodingT2);
@@ -4764,7 +4764,7 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
             // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
                 return false;
@@ -5651,8 +5651,8 @@ EmulateInstructionARM::EmulateEORReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
-            // if Rd == ‘1111’ && S == ‘1’ then SEE TEQ (register);
+            shift_n = DecodeImmShiftThumb(opcode, shift_t);
+            // if Rd == '1111' && S == '1' then SEE TEQ (register);
             if (Rd == 15 && setflags)
                 return EmulateTEQReg(eEncodingT1);
             if (Rd == 13 || (Rd == 15 && !setflags) || BadReg(Rn) || BadReg(Rm))
@@ -5663,7 +5663,7 @@ EmulateInstructionARM::EmulateEORReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
             // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
             // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
@@ -5820,8 +5820,8 @@ EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
-            // if Rn == ‘1111’ then SEE MOV (register);
+            shift_n = DecodeImmShiftThumb(opcode, shift_t);
+            // if Rn == '1111' then SEE MOV (register);
             if (Rn == 15)
                 return EmulateMOVRdRm(eEncodingT3);
             if (BadReg(Rd) || Rn == 13 || BadReg(Rm))
@@ -5832,7 +5832,7 @@ EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
-            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
             // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
                 return false;
@@ -5957,14 +5957,14 @@ EmulateInstructionARM::EmulateTEQReg (ARMEncoding encoding)
         case eEncodingT1:
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
-            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+            shift_n = DecodeImmShiftThumb(opcode, shift_t);
             if (BadReg(Rn) || BadReg(Rm))
                 return false;
             break;
         case eEncodingA1:
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
-            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
             break;
         default:
             return false;
@@ -6090,14 +6090,14 @@ EmulateInstructionARM::EmulateTSTReg (ARMEncoding encoding)
         case eEncodingT2:
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
-            shift_n = DecodeImmShift(Bits32(opcode, 5, 4), Bits32(opcode, 14, 12)<<2 | Bits32(opcode, 7, 6), shift_t);
+            shift_n = DecodeImmShiftThumb(opcode, shift_t);
             if (BadReg(Rn) || BadReg(Rm))
                 return false;
             break;
         case eEncodingA1:
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
-            shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
             break;
         default:
             return false;
