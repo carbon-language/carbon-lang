@@ -1,7 +1,6 @@
 set(llvm_cmake_builddir "${LLVM_BINARY_DIR}/share/llvm/cmake")
 
 get_property(llvm_libs GLOBAL PROPERTY LLVM_LIBS)
-get_property(llvm_lib_targets GLOBAL PROPERTY LLVM_LIB_TARGETS)
 
 configure_file(
   LLVM.cmake

@@ -6,8 +6,6 @@ set(LLVM_COMMON_DEPENDS @LLVM_COMMON_DEPENDS@)
 
 set_property( GLOBAL PROPERTY LLVM_LIBS "@llvm_libs@")
 
-set(llvm_lib_targets @llvm_lib_targets@)
-
 set(LLVM_ALL_TARGETS @LLVM_ALL_TARGETS@)
 
 set(LLVM_TARGETS_TO_BUILD @LLVM_TARGETS_TO_BUILD@)

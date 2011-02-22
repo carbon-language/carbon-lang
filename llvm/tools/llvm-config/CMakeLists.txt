@@ -124,8 +124,7 @@ add_custom_command(OUTPUT ${LLVM_CONFIG}
 add_custom_target(llvm-config.target ALL
   DEPENDS ${LLVM_CONFIG})
 
-get_property(llvm_lib_targets GLOBAL PROPERTY LLVM_LIB_TARGETS)
-add_dependencies(llvm-config.target ${llvm_lib_targets})
+add_dependencies( llvm-config.target ${llvm_libs} )
 
 # Make sure that llvm-config builds before the llvm tools, so we have
 # LibDeps.txt and can use it for updating the hard-coded library
