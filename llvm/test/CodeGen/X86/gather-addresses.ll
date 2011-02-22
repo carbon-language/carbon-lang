@@ -1,20 +1,21 @@
-; RUN: llc -march=x86-64 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-win32 < %s | FileCheck %s
 ; rdar://7398554
 
 ; When doing vector gather-scatter index calculation with 32-bit indices,
 ; bounce the vector off of cache rather than shuffling each individual
 ; element out of the index vector.
 
-; CHECK: andps    (%rdx), %xmm0
-; CHECK: movaps   %xmm0, -24(%rsp)
-; CHECK: movslq   -24(%rsp), %rax
-; CHECK: movsd    (%rdi,%rax,8), %xmm0
-; CHECK: movslq   -20(%rsp), %rax
-; CHECK: movhpd   (%rdi,%rax,8), %xmm0
-; CHECK: movslq   -16(%rsp), %rax
-; CHECK: movsd    (%rdi,%rax,8), %xmm1
-; CHECK: movslq   -12(%rsp), %rax
-; CHECK: movhpd   (%rdi,%rax,8), %xmm1
+; CHECK: andps    ([[H:%rdx|%r8]]), %xmm0
+; CHECK: movaps   %xmm0, {{(-24)?}}(%rsp)
+; CHECK: movslq   {{(-24)?}}(%rsp), %rax
+; CHECK: movsd    ([[P:%rdi|%rcx]],%rax,8), %xmm0
+; CHECK: movslq   {{-20|4}}(%rsp), %rax
+; CHECK: movhpd   ([[P]],%rax,8), %xmm0
+; CHECK: movslq   {{-16|8}}(%rsp), %rax
+; CHECK: movsd    ([[P]],%rax,8), %xmm1
+; CHECK: movslq   {{-12|12}}(%rsp), %rax
+; CHECK: movhpd   ([[P]],%rax,8), %xmm1
 
 define <4 x double> @foo(double* %p, <4 x i32>* %i, <4 x i32>* %h) nounwind {
   %a = load <4 x i32>* %i
