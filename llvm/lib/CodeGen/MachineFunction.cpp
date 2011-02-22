@@ -644,6 +644,10 @@ MachineConstantPool::~MachineConstantPool() {
   for (unsigned i = 0, e = Constants.size(); i != e; ++i)
     if (Constants[i].isMachineConstantPoolEntry())
       delete Constants[i].Val.MachineCPVal;
+  for (DenseSet<MachineConstantPoolValue*>::iterator I =
+       MachineCPVsSharingEntries.begin(), E = MachineCPVsSharingEntries.end();
+       I != E; ++I)
+    delete *I;
 }
 
 /// CanShareConstantPoolEntry - Test whether the given two constants
@@ -721,8 +725,10 @@ unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
   //
   // FIXME, this could be made much more efficient for large constant pools.
   int Idx = V->getExistingMachineCPValue(this, Alignment);
-  if (Idx != -1)
+  if (Idx != -1) {
+    MachineCPVsSharingEntries.insert(V);
     return (unsigned)Idx;
+  }
 
   Constants.push_back(MachineConstantPoolEntry(V, Alignment));
   return Constants.size()-1;

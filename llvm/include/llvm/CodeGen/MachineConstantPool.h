@@ -16,6 +16,7 @@
 #ifndef LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
+#include "llvm/ADT/DenseSet.h"
 #include <cassert>
 #include <climits>
 #include <vector>
@@ -130,6 +131,8 @@ class MachineConstantPool {
   const TargetData *TD;   ///< The machine's TargetData.
   unsigned PoolAlignment; ///< The alignment for the pool.
   std::vector<MachineConstantPoolEntry> Constants; ///< The pool of constants.
+  /// MachineConstantPoolValues that use an existing MachineConstantPoolEntry.
+  DenseSet<MachineConstantPoolValue*> MachineCPVsSharingEntries;
 public:
   /// @brief The only constructor.
   explicit MachineConstantPool(const TargetData *td)
