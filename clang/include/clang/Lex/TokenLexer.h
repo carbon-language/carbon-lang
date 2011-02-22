@@ -121,6 +121,10 @@ public:
   /// Lex - Lex and return a token from this macro stream.
   void Lex(Token &Tok);
 
+  /// isParsingPreprocessorDirective - Return true if we are in the middle of a
+  /// preprocessor directive.
+  bool isParsingPreprocessorDirective() const;
+
 private:
   void destroy();
 

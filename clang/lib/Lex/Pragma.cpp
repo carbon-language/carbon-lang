@@ -110,7 +110,8 @@ void Preprocessor::HandlePragmaDirective(unsigned Introducer) {
   PragmaHandlers->HandlePragma(*this, PragmaIntroducerKind(Introducer), Tok);
 
   // If the pragma handler didn't read the rest of the line, consume it now.
-  if (CurPPLexer && CurPPLexer->ParsingPreprocessorDirective)
+  if ((CurTokenLexer && CurTokenLexer->isParsingPreprocessorDirective()) 
+   || (CurPPLexer && CurPPLexer->ParsingPreprocessorDirective))
     DiscardUntilEndOfDirective();
 }
 

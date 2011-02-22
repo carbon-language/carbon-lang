@@ -543,6 +543,11 @@ unsigned TokenLexer::isNextTokenLParen() const {
   return Tokens[CurToken].is(tok::l_paren);
 }
 
+/// isParsingPreprocessorDirective - Return true if we are in the middle of a
+/// preprocessor directive.
+bool TokenLexer::isParsingPreprocessorDirective() const {
+  return Tokens[NumTokens-1].is(tok::eom) && !isAtEnd();
+}
 
 /// HandleMicrosoftCommentPaste - In microsoft compatibility mode, /##/ pastes
 /// together to form a comment that comments out everything in the current

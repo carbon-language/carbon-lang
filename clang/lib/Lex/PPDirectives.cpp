@@ -167,10 +167,12 @@ void Preprocessor::CheckEndOfDirective(const char *DirType, bool EnableMacros) {
 
   if (Tmp.isNot(tok::eom)) {
     // Add a fixit in GNU/C99/C++ mode.  Don't offer a fixit for strict-C89,
-    // because it is more trouble than it is worth to insert /**/ and check that
-    // there is no /**/ in the range also.
+    // or if this is a macro-style preprocessing directive, because it is more
+    // trouble than it is worth to insert /**/ and check that there is no /**/
+    // in the range also.
     FixItHint Hint;
-    if (Features.GNUMode || Features.C99 || Features.CPlusPlus)
+    if ((Features.GNUMode || Features.C99 || Features.CPlusPlus) &&
+        !CurTokenLexer)
       Hint = FixItHint::CreateInsertion(Tmp.getLocation(),"//");
     Diag(Tmp, diag::ext_pp_extra_tokens_at_eol) << DirType << Hint;
     DiscardUntilEndOfDirective();
