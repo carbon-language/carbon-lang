@@ -1,4 +1,5 @@
-; RUN: llc %s -o - -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
 
 ; This tests codegen time inlining/optimization of memcmp
 ; rdar://6480398
@@ -20,8 +21,8 @@ bb:                                               ; preds = %entry
 return:                                           ; preds = %entry
   ret void
 ; CHECK: memcmp2:
-; CHECK: movw    (%rdi), %ax
-; CHECK: cmpw    (%rsi), %ax
+; CHECK: movw    ([[A0:%rdi|%rcx]]), %ax
+; CHECK: cmpw    ([[A1:%rsi|%rdx]]), %ax
 }
 
 define void @memcmp2a(i8* %X, i32* nocapture %P) nounwind {
@@ -37,7 +38,7 @@ bb:                                               ; preds = %entry
 return:                                           ; preds = %entry
   ret void
 ; CHECK: memcmp2a:
-; CHECK: cmpw    $28527, (%rdi)
+; CHECK: cmpw    $28527, ([[A0]])
 }
 
 
@@ -54,8 +55,8 @@ bb:                                               ; preds = %entry
 return:                                           ; preds = %entry
   ret void
 ; CHECK: memcmp4:
-; CHECK: movl    (%rdi), %eax
-; CHECK: cmpl    (%rsi), %eax
+; CHECK: movl    ([[A0]]), %eax
+; CHECK: cmpl    ([[A1]]), %eax
 }
 
 define void @memcmp4a(i8* %X, i32* nocapture %P) nounwind {
@@ -71,7 +72,7 @@ bb:                                               ; preds = %entry
 return:                                           ; preds = %entry
   ret void
 ; CHECK: memcmp4a:
-; CHECK: cmpl $1869573999, (%rdi)
+; CHECK: cmpl $1869573999, ([[A0]])
 }
 
 define void @memcmp8(i8* %X, i8* %Y, i32* nocapture %P) nounwind {
@@ -87,8 +88,8 @@ bb:                                               ; preds = %entry
 return:                                           ; preds = %entry
   ret void
 ; CHECK: memcmp8:
-; CHECK: movq    (%rdi), %rax
-; CHECK: cmpq    (%rsi), %rax
+; CHECK: movq    ([[A0]]), %rax
+; CHECK: cmpq    ([[A1]]), %rax
 }
 
 define void @memcmp8a(i8* %X, i32* nocapture %P) nounwind {
@@ -105,6 +106,6 @@ return:                                           ; preds = %entry
   ret void
 ; CHECK: memcmp8a:
 ; CHECK: movabsq $8029759185026510694, %rax
-; CHECK: cmpq	%rax, (%rdi)
+; CHECK: cmpq	%rax, ([[A0]])
 }
 
