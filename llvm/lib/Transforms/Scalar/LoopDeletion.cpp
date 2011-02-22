@@ -78,7 +78,6 @@ bool LoopDeletion::IsLoopDead(Loop* L,
                               SmallVector<BasicBlock*, 4>& exitingBlocks,
                               SmallVector<BasicBlock*, 4>& exitBlocks,
                               bool &Changed, BasicBlock *Preheader) {
-  BasicBlock* exitingBlock = exitingBlocks[0];
   BasicBlock* exitBlock = exitBlocks[0];
   
   // Make sure that all PHI entries coming from the loop are loop invariant.
@@ -88,11 +87,21 @@ bool LoopDeletion::IsLoopDead(Loop* L,
   // of the loop.
   BasicBlock::iterator BI = exitBlock->begin();
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
-    Value* incoming = P->getIncomingValueForBlock(exitingBlock);
+    Value* incoming = P->getIncomingValueForBlock(exitingBlocks[0]);
+
+    // Make sure all exiting blocks produce the same incoming value for the exit
+    // block.  If there are different incoming values for different exiting
+    // blocks, then it is impossible to statically determine which value should
+    // be used.
+    for (unsigned i = 1; i < exitingBlocks.size(); ++i) {
+      if (incoming != P->getIncomingValueForBlock(exitingBlocks[i]))
+        return false;
+    }
+      
     if (Instruction* I = dyn_cast<Instruction>(incoming))
       if (!L->makeLoopInvariant(I, Changed, Preheader->getTerminator()))
         return false;
-      
+
     ++BI;
   }
   
@@ -147,10 +156,6 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   if (exitBlocks.size() != 1)
     return false;
   
-  // Loops with multiple exits are too complicated to handle correctly.
-  if (exitingBlocks.size() != 1)
-    return false;
-  
   // Finally, we have to check that the loop really is dead.
   bool Changed = false;
   if (!IsLoopDead(L, exitingBlocks, exitBlocks, Changed, preheader))
@@ -166,7 +171,6 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // Now that we know the removal is safe, remove the loop by changing the
   // branch from the preheader to go to the single exit block.  
   BasicBlock* exitBlock = exitBlocks[0];
-  BasicBlock* exitingBlock = exitingBlocks[0];
   
   // Because we're deleting a large chunk of code at once, the sequence in which
   // we remove things is very important to avoid invalidation issues.  Don't
@@ -183,9 +187,12 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
 
   // Rewrite phis in the exit block to get their inputs from
   // the preheader instead of the exiting block.
+  BasicBlock* exitingBlock = exitingBlocks[0];
   BasicBlock::iterator BI = exitBlock->begin();
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
     P->replaceUsesOfWith(exitingBlock, preheader);
+    for (unsigned i = 1; i < exitingBlocks.size(); ++i)
+      P->removeIncomingValue(exitingBlocks[i]);
     ++BI;
   }
   
