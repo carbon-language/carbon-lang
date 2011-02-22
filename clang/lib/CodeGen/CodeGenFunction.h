@@ -1560,7 +1560,7 @@ public:
   class AutoVarEmission {
     friend class CodeGenFunction;
 
-    const VarDecl &Variable;
+    const VarDecl *Variable;
 
     /// The alignment of the variable.
     CharUnits Alignment;
@@ -1578,13 +1578,18 @@ public:
     /// initializer.
     bool IsConstantAggregate;
 
+    struct Invalid {};
+    AutoVarEmission(Invalid) : Variable(0) {}
+
     AutoVarEmission(const VarDecl &variable)
-      : Variable(variable), Address(0), NRVOFlag(0),
+      : Variable(&variable), Address(0), NRVOFlag(0),
         IsByRef(false), IsConstantAggregate(false) {}
 
     bool wasEmittedAsGlobal() const { return Address == 0; }
 
   public:
+    static AutoVarEmission invalid() { return AutoVarEmission(Invalid()); }
+
     /// Returns the address of the object within this declaration.
     /// Note that this does not chase the forwarding pointer for
     /// __block decls.
@@ -1592,8 +1597,8 @@ public:
       if (!IsByRef) return Address;
 
       return CGF.Builder.CreateStructGEP(Address,
-                                         CGF.getByRefValueLLVMField(&Variable),
-                                         Variable.getNameAsString());
+                                         CGF.getByRefValueLLVMField(Variable),
+                                         Variable->getNameAsString());
     }
   };
   AutoVarEmission EmitAutoVarAlloca(const VarDecl &var);

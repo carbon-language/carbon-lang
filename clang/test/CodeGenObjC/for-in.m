@@ -42,3 +42,9 @@ void t1() {
       break;
   }
 }
+
+// rdar://problem/9027663
+void t2(NSArray *array) {
+  for (NSArray *array in array) { // expected-warning {{collection expression type 'NSArray *' may not respond}}
+  }
+}

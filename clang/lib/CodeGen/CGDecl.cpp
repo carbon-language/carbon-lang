@@ -782,10 +782,12 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
 }
 
 void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
+  assert(emission.Variable && "emission was not valid!");
+
   // If this was emitted as a global constant, we're done.
   if (emission.wasEmittedAsGlobal()) return;
 
-  const VarDecl &D = emission.Variable;
+  const VarDecl &D = *emission.Variable;
   QualType type = D.getType();
 
   // If this local has an initializer, emit it now.
@@ -940,10 +942,12 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
 }
 
 void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
+  assert(emission.Variable && "emission was not valid!");
+
   // If this was emitted as a global constant, we're done.
   if (emission.wasEmittedAsGlobal()) return;
 
-  const VarDecl &D = emission.Variable;
+  const VarDecl &D = *emission.Variable;
 
   // Handle C++ destruction of variables.
   if (getLangOptions().CPlusPlus) {

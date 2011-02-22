@@ -663,6 +663,11 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     return;
   }
 
+  // The local variable comes into scope immediately.
+  AutoVarEmission variable = AutoVarEmission::invalid();
+  if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement()))
+    variable = EmitAutoVarAlloca(*cast<VarDecl>(SD->getSingleDecl()));
+
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getSourceRange().getBegin());
@@ -799,22 +804,23 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   // Initialize the element variable.
   RunCleanupsScope elementVariableScope(*this);
-  bool elementIsDecl;
+  bool elementIsVariable;
   LValue elementLValue;
   QualType elementType;
   if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
-    EmitStmt(SD);
-    const VarDecl* D = cast<VarDecl>(SD->getSingleDecl());
+    // Initialize the variable, in case it's a __block variable or something.
+    EmitAutoVarInit(variable);
 
+    const VarDecl* D = cast<VarDecl>(SD->getSingleDecl());
     DeclRefExpr tempDRE(const_cast<VarDecl*>(D), D->getType(),
                         VK_LValue, SourceLocation());
     elementLValue = EmitLValue(&tempDRE);
     elementType = D->getType();
-    elementIsDecl = true;
+    elementIsVariable = true;
   } else {
     elementLValue = LValue(); // suppress warning
     elementType = cast<Expr>(S.getElement())->getType();
-    elementIsDecl = false;
+    elementIsVariable = false;
   }
   const llvm::Type *convertedElementType = ConvertType(elementType);
 
@@ -837,10 +843,15 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   // Make sure we have an l-value.  Yes, this gets evaluated every
   // time through the loop.
-  if (!elementIsDecl)
+  if (!elementIsVariable)
     elementLValue = EmitLValue(cast<Expr>(S.getElement()));
 
   EmitStoreThroughLValue(RValue::get(CurrentItem), elementLValue, elementType);
+
+  // If we do have an element variable, this assignment is the end of
+  // its initialization.
+  if (elementIsVariable)
+    EmitAutoVarCleanups(variable);
 
   // Perform the loop body, setting up break and continue labels.
   BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody));
@@ -891,7 +902,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // No more elements.
   EmitBlock(EmptyBB);
 
-  if (!elementIsDecl) {
+  if (!elementIsVariable) {
     // If the element was not a declaration, set it to be null.
 
     llvm::Value *null = llvm::Constant::getNullValue(convertedElementType);
