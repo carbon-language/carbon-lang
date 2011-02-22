@@ -328,7 +328,10 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
     
     uint64_t evaluatedResult;
     void *Arg[] = { disassembler, &Out };
-    evaluatedResult = operand->evaluate(evaluatedResult, verboseEvaluator, Arg);
+    if (operand->evaluate(evaluatedResult, verboseEvaluator, Arg)) {
+      errs() << "error: Couldn't evaluate an operand\n";
+      return -1;
+    }
     Out << "=" << evaluatedResult << " ";
   }
   
