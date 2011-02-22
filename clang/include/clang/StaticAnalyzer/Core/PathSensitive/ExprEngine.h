@@ -137,6 +137,10 @@ public:
 
   virtual AnalysisManager &getAnalysisManager() { return AMgr; }
 
+  CheckerManager &getCheckerManager() const {
+    return *AMgr.getCheckerManager();
+  }
+
   SValBuilder &getSValBuilder() { return svalBuilder; }
 
   TransferFuncs& getTF() { return *TF; }

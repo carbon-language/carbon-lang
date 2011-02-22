@@ -92,12 +92,13 @@ void ExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
   }
   
   if (CO->empty()) {
-    // If there are no checkers, return early without doing any
-    // more work.
-    Dst.insert(Src);
+    // If there are no checkers, just delegate to the checker manager.
+    getCheckerManager().runCheckersForStmt(Kind == PreVisitStmtCallback,
+                                           Dst, Src, S, *this);
     return;
   }
 
+  ExplodedNodeSet CheckersV1Dst;
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
   unsigned checkersEvaluated = 0;
@@ -108,7 +109,7 @@ void ExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
       break;
     ExplodedNodeSet *CurrSet = 0;
     if (I+1 == E)
-      CurrSet = &Dst;
+      CurrSet = &CheckersV1Dst;
     else {
       CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
       CurrSet->clear();
@@ -144,6 +145,9 @@ void ExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
 
   // Don't autotransition.  The CheckerContext objects should do this
   // automatically.
+
+  getCheckerManager().runCheckersForStmt(Kind == PreVisitStmtCallback,
+                                         Dst, CheckersV1Dst, S, *this);
 }
 
 void ExprEngine::CheckerVisitObjCMessage(const ObjCMessage &msg,
@@ -152,10 +156,12 @@ void ExprEngine::CheckerVisitObjCMessage(const ObjCMessage &msg,
                                          bool isPrevisit) {
 
   if (Checkers.empty()) {
-    Dst.insert(Src);
+    getCheckerManager().runCheckersForObjCMessage(isPrevisit, Dst, Src, msg,
+                                                  *this);
     return;
   }
 
+  ExplodedNodeSet CheckersV1Dst;
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
 
@@ -163,7 +169,7 @@ void ExprEngine::CheckerVisitObjCMessage(const ObjCMessage &msg,
   {
     ExplodedNodeSet *CurrSet = 0;
     if (I+1 == E)
-      CurrSet = &Dst;
+      CurrSet = &CheckersV1Dst;
     else {
       CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
       CurrSet->clear();
@@ -181,8 +187,8 @@ void ExprEngine::CheckerVisitObjCMessage(const ObjCMessage &msg,
     PrevSet = CurrSet;
   }
 
-  // Don't autotransition.  The CheckerContext objects should do this
-  // automatically.
+  getCheckerManager().runCheckersForObjCMessage(isPrevisit, Dst, CheckersV1Dst,
+                                                msg, *this);
 }
 
 void ExprEngine::CheckerEvalNilReceiver(const ObjCMessage &msg,
@@ -1923,20 +1929,28 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
                                 const GRState* state, SVal location,
                                 const void *tag, bool isLoad) {
   // Early checks for performance reason.
-  if (location.isUnknown() || Checkers.empty()) {
+  if (location.isUnknown()) {
     Dst.Add(Pred);
     return;
   }
 
-  ExplodedNodeSet Src, Tmp;
+  ExplodedNodeSet Src;
   Src.Add(Pred);
+  if (Checkers.empty()) {
+    getCheckerManager().runCheckersForLocation(Dst, Src, location, isLoad, S,
+                                               state, *this);
+    return;
+  }
+
+  ExplodedNodeSet CheckersV1Dst;
+  ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
 
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
   {
     ExplodedNodeSet *CurrSet = 0;
     if (I+1 == E)
-      CurrSet = &Dst;
+      CurrSet = &CheckersV1Dst;
     else {
       CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
       CurrSet->clear();
@@ -1957,6 +1971,9 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
     // Update which NodeSet is the current one.
     PrevSet = CurrSet;
   }
+
+  getCheckerManager().runCheckersForLocation(Dst, CheckersV1Dst, location,
+                                             isLoad, S, state, *this);
 }
 
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, 

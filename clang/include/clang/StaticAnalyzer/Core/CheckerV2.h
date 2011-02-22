@@ -41,7 +41,9 @@ class ASTDecl {
 public:
   template <typename CHECKER>
   static void _register(CHECKER *checker, CheckerManager &mgr) {
-    mgr._registerForDecl(checker, _checkDecl<CHECKER>, _handlesDecl);
+    mgr._registerForDecl(CheckerManager::CheckDeclFunc(checker,
+                                                       _checkDecl<CHECKER>),
+                         _handlesDecl);
   }
 };
 
@@ -55,7 +57,91 @@ class ASTCodeBody {
 public:
   template <typename CHECKER>
   static void _register(CHECKER *checker, CheckerManager &mgr) {
-    mgr._registerForBody(checker, _checkBody<CHECKER>);
+    mgr._registerForBody(CheckerManager::CheckDeclFunc(checker,
+                                                       _checkBody<CHECKER>));
+  }
+};
+
+template <typename STMT>
+class PreStmt {
+  template <typename CHECKER>
+  static void _checkStmt(void *checker, const Stmt *S, CheckerContext &C) {
+    ((const CHECKER *)checker)->checkPreStmt(llvm::cast<STMT>(S), C);
+  }
+
+  static bool _handlesStmt(const Stmt *S) {
+    return llvm::isa<STMT>(S);
+  }
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForPreStmt(CheckerManager::CheckStmtFunc(checker,
+                                                          _checkStmt<CHECKER>),
+                            _handlesStmt);
+  }
+};
+
+template <typename STMT>
+class PostStmt {
+  template <typename CHECKER>
+  static void _checkStmt(void *checker, const Stmt *S, CheckerContext &C) {
+    ((const CHECKER *)checker)->checkPostStmt(llvm::cast<STMT>(S), C);
+  }
+
+  static bool _handlesStmt(const Stmt *S) {
+    return llvm::isa<STMT>(S);
+  }
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForPostStmt(CheckerManager::CheckStmtFunc(checker,
+                                                           _checkStmt<CHECKER>),
+                             _handlesStmt);
+  }
+};
+
+class PreObjCMessage {
+  template <typename CHECKER>
+  static void _checkObjCMessage(void *checker, const ObjCMessage &msg,
+                                CheckerContext &C) {
+    ((const CHECKER *)checker)->checkPreObjCMessage(msg, C);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForPreObjCMessage(
+     CheckerManager::CheckObjCMessageFunc(checker, _checkObjCMessage<CHECKER>));
+  }
+};
+
+class PostObjCMessage {
+  template <typename CHECKER>
+  static void _checkObjCMessage(void *checker, const ObjCMessage &msg,
+                                CheckerContext &C) {
+    ((const CHECKER *)checker)->checkPostObjCMessage(msg, C);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForPostObjCMessage(
+     CheckerManager::CheckObjCMessageFunc(checker, _checkObjCMessage<CHECKER>));
+  }
+};
+
+class Location {
+  template <typename CHECKER>
+  static void _checkLocation(void *checker, const SVal &location, bool isLoad,
+                             CheckerContext &C) {
+    ((const CHECKER *)checker)->checkLocation(location, isLoad, C);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForLocation(
+           CheckerManager::CheckLocationFunc(checker, _checkLocation<CHECKER>));
   }
 };
 

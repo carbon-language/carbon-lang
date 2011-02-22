@@ -47,8 +47,9 @@
 // http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjectiveC/Articles/ocAllocInit.html
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/Analysis/DomainSpecific/CocoaConventions.h"
@@ -63,44 +64,22 @@ static bool isInitMessage(const ObjCMessage &msg);
 static bool isSelfVar(SVal location, CheckerContext &C);
 
 namespace {
-enum SelfFlagEnum {
-  /// \brief No flag set.
-  SelfFlag_None = 0x0,
-  /// \brief Value came from 'self'.
-  SelfFlag_Self    = 0x1,
-  /// \brief Value came from the result of an initializer (e.g. [super init]).
-  SelfFlag_InitRes = 0x2
-};
-}
-
-namespace {
-class ObjCSelfInitChecker : public CheckerVisitor<ObjCSelfInitChecker> {
-  /// \brief A call receiving a reference to 'self' invalidates the object that
-  /// 'self' contains. This field keeps the "self flags" assigned to the 'self'
-  /// object before the call and assign them to the new object that 'self'
-  /// points to after the call.
-  SelfFlagEnum preCallSelfFlags;
-
+class ObjCSelfInitChecker : public CheckerV2<
+                                             check::PostObjCMessage,
+                                             check::PostStmt<ObjCIvarRefExpr>,
+                                             check::PreStmt<ReturnStmt>,
+                                             check::PreStmt<CallExpr>,
+                                             check::PostStmt<CallExpr>,
+                                             check::Location > {
 public:
-  static void *getTag() { static int tag = 0; return &tag; }
-  void postVisitObjCMessage(CheckerContext &C, ObjCMessage msg);
-  void PostVisitObjCIvarRefExpr(CheckerContext &C, const ObjCIvarRefExpr *E);
-  void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
-  void PreVisitGenericCall(CheckerContext &C, const CallExpr *CE);
-  void PostVisitGenericCall(CheckerContext &C, const CallExpr *CE);
-  virtual void visitLocation(CheckerContext &C, const Stmt *S, SVal location,
-                             bool isLoad);
+  void checkPostObjCMessage(ObjCMessage msg, CheckerContext &C) const;
+  void checkPostStmt(const ObjCIvarRefExpr *E, CheckerContext &C) const;
+  void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
+  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
+  void checkLocation(SVal location, bool isLoad, CheckerContext &C) const;
 };
 } // end anonymous namespace
-
-static void RegisterObjCSelfInitChecker(ExprEngine &Eng) {
-  if (Eng.getContext().getLangOptions().ObjC1)
-    Eng.registerCheck(new ObjCSelfInitChecker());
-}
-
-void ento::registerObjCSelfInitChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterObjCSelfInitChecker);
-}
 
 namespace {
 
@@ -113,20 +92,38 @@ public:
 
 } // end anonymous namespace
 
+namespace {
+enum SelfFlagEnum {
+  /// \brief No flag set.
+  SelfFlag_None = 0x0,
+  /// \brief Value came from 'self'.
+  SelfFlag_Self    = 0x1,
+  /// \brief Value came from the result of an initializer (e.g. [super init]).
+  SelfFlag_InitRes = 0x2
+};
+}
+
 typedef llvm::ImmutableMap<SymbolRef, unsigned> SelfFlag;
 namespace { struct CalledInit {}; }
+namespace { struct PreCallSelfFlags {}; }
 
 namespace clang {
 namespace ento {
   template<>
   struct GRStateTrait<SelfFlag> : public GRStatePartialTrait<SelfFlag> {
-    static void* GDMIndex() {
-      static int index = 0;
-      return &index;
-    }
+    static void* GDMIndex() { static int index = 0; return &index; }
   };
   template <>
   struct GRStateTrait<CalledInit> : public GRStatePartialTrait<bool> {
+    static void *GDMIndex() { static int index = 0; return &index; }
+  };
+
+  /// \brief A call receiving a reference to 'self' invalidates the object that
+  /// 'self' contains. This keeps the "self flags" assigned to the 'self'
+  /// object before the call so we can assign them to the new object that 'self'
+  /// points to after the call.
+  template <>
+  struct GRStateTrait<PreCallSelfFlags> : public GRStatePartialTrait<unsigned> {
     static void *GDMIndex() { static int index = 0; return &index; }
   };
 }
@@ -188,8 +185,8 @@ static void checkForInvalidSelf(const Expr *E, CheckerContext &C,
   C.EmitReport(report);
 }
 
-void ObjCSelfInitChecker::postVisitObjCMessage(CheckerContext &C,
-                                               ObjCMessage msg) {
+void ObjCSelfInitChecker::checkPostObjCMessage(ObjCMessage msg,
+                                               CheckerContext &C) const {
   // When encountering a message that does initialization (init rule),
   // tag the return value so that we know later on that if self has this value
   // then it is properly initialized.
@@ -219,8 +216,8 @@ void ObjCSelfInitChecker::postVisitObjCMessage(CheckerContext &C,
   // fails.
 }
 
-void ObjCSelfInitChecker::PostVisitObjCIvarRefExpr(CheckerContext &C,
-                                                   const ObjCIvarRefExpr *E) {
+void ObjCSelfInitChecker::checkPostStmt(const ObjCIvarRefExpr *E,
+                                        CheckerContext &C) const {
   // FIXME: A callback should disable checkers at the start of functions.
   if (!shouldRunOnFunctionOrMethod(dyn_cast<NamedDecl>(
                                      C.getCurrentAnalysisContext()->getDecl())))
@@ -231,8 +228,8 @@ void ObjCSelfInitChecker::PostVisitObjCIvarRefExpr(CheckerContext &C,
                                                  "'[(super or self) init...]'");
 }
 
-void ObjCSelfInitChecker::PreVisitReturnStmt(CheckerContext &C,
-                                             const ReturnStmt *S) {
+void ObjCSelfInitChecker::checkPreStmt(const ReturnStmt *S,
+                                       CheckerContext &C) const {
   // FIXME: A callback should disable checkers at the start of functions.
   if (!shouldRunOnFunctionOrMethod(dyn_cast<NamedDecl>(
                                      C.getCurrentAnalysisContext()->getDecl())))
@@ -259,40 +256,46 @@ void ObjCSelfInitChecker::PreVisitReturnStmt(CheckerContext &C,
 // Until we can use inter-procedural analysis, in such a call, transfer the
 // SelfFlags to the result of the call.
 
-void ObjCSelfInitChecker::PreVisitGenericCall(CheckerContext &C,
-                                              const CallExpr *CE) {
+void ObjCSelfInitChecker::checkPreStmt(const CallExpr *CE,
+                                       CheckerContext &C) const {
   const GRState *state = C.getState();
   for (CallExpr::const_arg_iterator
          I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I) {
     SVal argV = state->getSVal(*I);
     if (isSelfVar(argV, C)) {
-      preCallSelfFlags = getSelfFlags(state->getSVal(cast<Loc>(argV)), C);
+      unsigned selfFlags = getSelfFlags(state->getSVal(cast<Loc>(argV)), C);
+      C.addTransition(state->set<PreCallSelfFlags>(selfFlags));
       return;
     } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
-      preCallSelfFlags = getSelfFlags(argV, C);
+      unsigned selfFlags = getSelfFlags(argV, C);
+      C.addTransition(state->set<PreCallSelfFlags>(selfFlags));
       return;
     }
   }
 }
 
-void ObjCSelfInitChecker::PostVisitGenericCall(CheckerContext &C,
-                                               const CallExpr *CE) {
+void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
+                                        CheckerContext &C) const {
   const GRState *state = C.getState();
   for (CallExpr::const_arg_iterator
          I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I) {
     SVal argV = state->getSVal(*I);
     if (isSelfVar(argV, C)) {
-      addSelfFlag(state, state->getSVal(cast<Loc>(argV)), preCallSelfFlags, C);
+      SelfFlagEnum prevFlags = (SelfFlagEnum)state->get<PreCallSelfFlags>();
+      state = state->remove<PreCallSelfFlags>();
+      addSelfFlag(state, state->getSVal(cast<Loc>(argV)), prevFlags, C);
       return;
     } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
-      addSelfFlag(state, state->getSVal(CE), preCallSelfFlags, C);
+      SelfFlagEnum prevFlags = (SelfFlagEnum)state->get<PreCallSelfFlags>();
+      state = state->remove<PreCallSelfFlags>();
+      addSelfFlag(state, state->getSVal(CE), prevFlags, C);
       return;
     }
   }
 }
 
-void ObjCSelfInitChecker::visitLocation(CheckerContext &C, const Stmt *S,
-                                        SVal location, bool isLoad) {
+void ObjCSelfInitChecker::checkLocation(SVal location, bool isLoad,
+                                        CheckerContext &C) const {
   // Tag the result of a load from 'self' so that we can easily know that the
   // value is the object that 'self' points to.
   const GRState *state = C.getState();
@@ -353,4 +356,12 @@ static bool isInitializationMethod(const ObjCMethodDecl *MD) {
 
 static bool isInitMessage(const ObjCMessage &msg) {
   return cocoa::deriveNamingConvention(msg.getSelector()) == cocoa::InitRule;
+}
+
+//===----------------------------------------------------------------------===//
+// Registration.
+//===----------------------------------------------------------------------===//
+
+void ento::registerObjCSelfInitChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ObjCSelfInitChecker>();
 }
