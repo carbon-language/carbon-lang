@@ -979,6 +979,14 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     EmitByte(0xF9, CurByte, OS);
     break;
+  case X86II::MRM_D0:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xD0, CurByte, OS);
+    break;
+  case X86II::MRM_D1:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xD1, CurByte, OS);
+    break;
   }
 
   // If there is a remaining operand, it must be a trailing immediate.  Emit it

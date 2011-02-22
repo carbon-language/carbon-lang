@@ -942,3 +942,7 @@ movq 18446744073709551615,%rbx   // CHECK: movq	-1, %rbx
 
 // PR8946
 movdqu	%xmm0, %xmm1 // CHECK: movdqu	%xmm0, %xmm1 # encoding: [0xf3,0x0f,0x6f,0xc8]
+
+// PR8935
+xgetbv // CHECK: xgetbv # encoding: [0x0f,0x01,0xd0]
+xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]

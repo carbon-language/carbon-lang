@@ -388,3 +388,8 @@ def CPUID : I<0xA2, RawFrm, (outs), (ins), "cpuid", []>, TB;
 def INVD : I<0x08, RawFrm, (outs), (ins), "invd", []>, TB;
 def WBINVD : I<0x09, RawFrm, (outs), (ins), "wbinvd", []>, TB;
 
+let Defs = [RDX, RAX], Uses = [RCX] in
+  def XGETBV : I<0x01, MRM_D0, (outs), (ins), "xgetbv", []>, TB;
+
+let Uses = [RDX, RAX, RCX] in
+  def XSETBV : I<0x01, MRM_D1, (outs), (ins), "xsetbv", []>, TB;

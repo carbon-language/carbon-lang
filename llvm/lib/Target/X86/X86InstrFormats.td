@@ -41,6 +41,8 @@ def MRM_F8 : Format<41>;
 def MRM_F9 : Format<42>;
 def RawFrmImm8 : Format<43>;
 def RawFrmImm16 : Format<44>;
+def MRM_D0 : Format<45>;
+def MRM_D1 : Format<46>;
 
 // ImmType - This specifies the immediate type used by an instruction. This is
 // part of the ad-hoc solution used to emit machine instruction encodings by our

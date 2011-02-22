@@ -311,6 +311,8 @@ namespace X86II {
     MRM_F0 = 40,
     MRM_F8 = 41,
     MRM_F9 = 42,
+    MRM_D0 = 45,
+    MRM_D1 = 46,
 
     /// RawFrmImm8 - This is used for the ENTER instruction, which has two
     /// immediates, the first of which is a 16-bit immediate (specified by
@@ -577,6 +579,8 @@ namespace X86II {
     case X86II::MRM_F0:
     case X86II::MRM_F8:
     case X86II::MRM_F9:
+    case X86II::MRM_D0:
+    case X86II::MRM_D1:
       return -1;
     }
   }
