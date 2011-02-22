@@ -1,13 +1,14 @@
-; RUN: llc -O0 -march=x86-64 -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-linux -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-win32 -asm-verbose=false < %s | FileCheck %s
 ; rdar://8337108
 
 ; Fast-isel shouldn't try to look through the compare because it's in a
 ; different basic block, so its operands aren't necessarily exported
 ; for cross-block usage.
 
-; CHECK: movb    %al, 7(%rsp)
+; CHECK: movb    %al, [[OFS:[0-9]*]](%rsp)
 ; CHECK: callq   {{_?}}bar
-; CHECK: movb    7(%rsp), %al
+; CHECK: movb    [[OFS]](%rsp), %al
 
 declare void @bar()
 
