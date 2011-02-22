@@ -1,11 +1,12 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
 
 define i32 @test1(i32 %x) nounwind {
         %tmp1 = shl i32 %x, 3
         %tmp2 = add i32 %tmp1, 7
         ret i32 %tmp2
 ; CHECK: test1:
-; CHECK:    leal 7(,%rdi,8), %eax
+; CHECK:    leal 7(,[[A0:%rdi|%rcx]],8), %eax
 }
 
 
@@ -27,8 +28,8 @@ bb.nph:
 bb2:
 	ret i32 %x_offs
 ; CHECK: test2:
-; CHECK:	leal	-5(%rdi), %eax
+; CHECK:	leal	-5([[A0]]), %eax
 ; CHECK:	andl	$-4, %eax
 ; CHECK:	negl	%eax
-; CHECK:	leal	-4(%rdi,%rax), %eax
+; CHECK:	leal	-4([[A0]],%rax), %eax
 }
