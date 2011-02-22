@@ -6409,7 +6409,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffffc0, 0x000043c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMVNReg, "mvns|mvn<c> <Rd>, <Rm>"},
         { 0xffef8000, 0xea6f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c>.w <Rd>, <Rm> {,<shift>}"},
         // cmn (immediate)
-        { 0xfbf08f00, 0xf1100f00, ARMvAll,       eEncodingT1, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
+        { 0xfbf08f00, 0xf1100f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
         // cmn (register)
         { 0xffffffc0, 0x000042c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm>"},
         { 0xfff08f00, 0xeb100f00, ARMvAll,       eEncodingT2, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
