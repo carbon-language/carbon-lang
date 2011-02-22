@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=x86-64 -O0 | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-linux -O0 | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-win32 -O0 | FileCheck %s --check-prefix=X64
 ; RUN: llc < %s -march=x86 -O0 | FileCheck %s --check-prefix=X32
 
 ; GEP indices are interpreted as signed integers, so they
@@ -13,8 +14,8 @@ define i32 @test1(i32 %t3, i32* %t1) nounwind {
 ; X32:  	ret
 
 ; X64: test1:
-; X64:  	movslq	%edi, %rax
-; X64:  	movl	(%rsi,%rax,4), %eax
+; X64:  	movslq	%e[[A0:di|cx]], %rax
+; X64:  	movl	(%r[[A1:si|dx]],%rax,4), %eax
 ; X64:  	ret
 
 }
@@ -27,7 +28,7 @@ define i32 @test2(i64 %t3, i32* %t1) nounwind {
 ; X32:  	ret
 
 ; X64: test2:
-; X64:  	movl	(%rsi,%rdi,4), %eax
+; X64:  	movl	(%r[[A1]],%r[[A0]],4), %eax
 ; X64:  	ret
 }
 
@@ -47,7 +48,7 @@ entry:
 ; X32:  	ret
 
 ; X64: test3:
-; X64:  	movb	-2(%rdi), %al
+; X64:  	movb	-2(%r[[A0]]), %al
 ; X64:  	ret
 
 }
@@ -80,9 +81,9 @@ define i64 @test5(i8* %A, i32 %I, i64 %B) nounwind {
   %v11 = add i64 %B, %v10
   ret i64 %v11
 ; X64: test5:
-; X64: movslq	%esi, %rax
-; X64-NEXT: movq	(%rdi,%rax), %rax
-; X64-NEXT: addq	%rdx, %rax
+; X64: movslq	%e[[A1]], %rax
+; X64-NEXT: movq	(%r[[A0]],%rax), %rax
+; X64-NEXT: addq	%{{rdx|r8}}, %rax
 ; X64-NEXT: ret
 }
 
