@@ -172,6 +172,7 @@ class ARMFastISel : public FastISel {
     unsigned ARMMaterializeGV(const GlobalValue *GV, EVT VT);
     unsigned ARMMoveToFPReg(EVT VT, unsigned SrcReg);
     unsigned ARMMoveToIntReg(EVT VT, unsigned SrcReg);
+    unsigned ARMSelectCallOp(const GlobalValue *GV);
 
     // Call handling routines.
   private:
@@ -1633,6 +1634,25 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
   return true;
 }
 
+unsigned ARMFastISel::ARMSelectCallOp(const GlobalValue *GV) {
+
+  // Depend our opcode for thumb on whether or not we're targeting an
+  // externally callable function. For libcalls we'll just pass a NULL GV
+  // in here.
+  bool isExternal = false;
+  if (!GV || GV->hasExternalLinkage()) isExternal = true;
+  
+  // Darwin needs the r9 versions of the opcodes.
+  bool isDarwin = Subtarget->isTargetDarwin();
+  if (isThumb && isExternal) {
+    return isDarwin ? ARM::tBLXi_r9 : ARM::tBLXi;
+  } else if (isThumb) {
+    return isDarwin ? ARM::tBLr9 : ARM::tBL;
+  } else  {
+    return isDarwin ? ARM::BLr9 : ARM::BL;
+  }
+}
+
 // A quick function that will emit a call for a named libcall in F with the
 // vector of passed arguments for the Instruction in I. We can assume that we
 // can emit a call for any libcall we can produce. This is an abridged version
@@ -1694,20 +1714,17 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // Issue the call, BLXr9 for darwin, BLX otherwise. This uses V5 ops.
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
-  unsigned CallOpc;
-  if(isThumb) {
-    CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLXi_r9 : ARM::tBLXi;
+  unsigned CallOpc = ARMSelectCallOp(NULL);
+  if(isThumb)
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(CallOpc)))
                          .addExternalSymbol(TLI.getLibcallName(Call));
-  } else {
-    CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
+  else
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(CallOpc))
           .addExternalSymbol(TLI.getLibcallName(Call)));
-  }
 
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
@@ -1813,21 +1830,18 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   // Issue the call, BLXr9 for darwin, BLX otherwise. This uses V5 ops.
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
-  unsigned CallOpc;
+  unsigned CallOpc = ARMSelectCallOp(GV);
   // Explicitly adding the predicate here.
-  if(isThumb) {
-    CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLXi_r9 : ARM::tBLXi;
+  if(isThumb)
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(CallOpc)))
           .addGlobalAddress(GV, 0, 0);
-  } else {
-    CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
+  else
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(CallOpc))
           .addGlobalAddress(GV, 0, 0));
-  }
   
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
