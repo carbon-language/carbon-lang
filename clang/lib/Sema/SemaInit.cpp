@@ -2074,6 +2074,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_CAssignment:
   case SK_StringInit:
   case SK_ObjCObjectConversion:
+  case SK_ArrayInit:
     break;
 
   case SK_ConversionSequence:
@@ -2105,6 +2106,8 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_InitListBadDestinationType:
   case FK_DefaultInitOfConst:
   case FK_Incomplete:
+  case FK_ArrayTypeMismatch:
+  case FK_NonConstantArrayInit:
     return false;
 
   case FK_ReferenceInitOverloadFailed:
@@ -2243,6 +2246,13 @@ void InitializationSequence::AddStringInitStep(QualType T) {
 void InitializationSequence::AddObjCObjectConversionStep(QualType T) {
   Step S;
   S.Kind = SK_ObjCObjectConversion;
+  S.Type = T;
+  Steps.push_back(S);
+}
+
+void InitializationSequence::AddArrayInitStep(QualType T) {
+  Step S;
+  S.Kind = SK_ArrayInit;
   S.Type = T;
   Steps.push_back(S);
 }
@@ -3069,6 +3079,25 @@ static void TryUserDefinedConversion(Sema &S,
   }
 }
 
+/// \brief Determine whether we have compatible array types for the
+/// purposes of GNU by-copy array initialization.
+static bool hasCompatibleArrayTypes(ASTContext &Context,
+                                    const ArrayType *Dest, 
+                                    const ArrayType *Source) {
+  // If the source and destination array types are equivalent, we're
+  // done.
+  if (Context.hasSameType(QualType(Dest, 0), QualType(Source, 0)))
+    return true;
+
+  // Make sure that the element types are the same.
+  if (!Context.hasSameType(Dest->getElementType(), Source->getElementType()))
+    return false;
+
+  // The only mismatch we allow is when the destination is an
+  // incomplete array type and the source is a constant array type.
+  return Source->isConstantArrayType() && Dest->isIncompleteArrayType();
+}
+
 InitializationSequence::InitializationSequence(Sema &S,
                                                const InitializedEntity &Entity,
                                                const InitializationKind &Kind,
@@ -3142,13 +3171,29 @@ InitializationSequence::InitializationSequence(Sema &S,
   //       initializer is a string literal, see 8.5.2.
   //     - Otherwise, if the destination type is an array, the program is
   //       ill-formed.
-  if (const ArrayType *arrayType = Context.getAsArrayType(DestType)) {
-    if (Initializer && IsStringInit(Initializer, arrayType, Context)) {
+  if (const ArrayType *DestAT = Context.getAsArrayType(DestType)) {
+    if (Initializer && IsStringInit(Initializer, DestAT, Context)) {
       TryStringLiteralInitialization(S, Entity, Kind, Initializer, *this);
       return;
     }
 
-    if (arrayType->getElementType()->isAnyCharacterType())
+    // Note: as an GNU C extension, we allow initialization of an
+    // array from a compound literal that creates an array of the same
+    // type, so long as the initializer has no side effects.
+    if (!S.getLangOptions().CPlusPlus && Initializer &&
+        isa<CompoundLiteralExpr>(Initializer->IgnoreParens()) &&
+        Initializer->getType()->isArrayType()) {
+      const ArrayType *SourceAT
+        = Context.getAsArrayType(Initializer->getType());
+      if (!hasCompatibleArrayTypes(S.Context, DestAT, SourceAT))
+        SetFailed(FK_ArrayTypeMismatch);
+      else if (Initializer->HasSideEffects(S.Context))
+        SetFailed(FK_NonConstantArrayInit);
+      else {
+        setSequenceKind(ArrayInit);
+        AddArrayInitStep(DestType);
+      }
+    } else if (DestAT->getElementType()->isAnyCharacterType())
       SetFailed(FK_ArrayNeedsInitListOrStringLiteral);
     else
       SetFailed(FK_ArrayNeedsInitList);
@@ -3631,7 +3676,8 @@ InitializationSequence::Perform(Sema &S,
   case SK_ListInitialization:
   case SK_CAssignment:
   case SK_StringInit:
-  case SK_ObjCObjectConversion: {
+  case SK_ObjCObjectConversion:
+  case SK_ArrayInit: {
     assert(Args.size() == 1);
     Expr *CurInitExpr = Args.get()[0];
     if (!CurInitExpr) return ExprError();
@@ -4056,6 +4102,30 @@ InitializationSequence::Perform(Sema &S,
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);
       break;
+
+    case SK_ArrayInit:
+      // Okay: we checked everything before creating this step. Note that
+      // this is a GNU extension.
+      S.Diag(Kind.getLocation(), diag::ext_array_init_copy)
+        << Step->Type << CurInitExpr->getType()
+        << CurInitExpr->getSourceRange();
+
+      // If the destination type is an incomplete array type, update the
+      // type accordingly.
+      if (ResultType) {
+        if (const IncompleteArrayType *IncompleteDest
+                           = S.Context.getAsIncompleteArrayType(Step->Type)) {
+          if (const ConstantArrayType *ConstantSource
+                 = S.Context.getAsConstantArrayType(CurInitExpr->getType())) {
+            *ResultType = S.Context.getConstantArrayType(
+                                             IncompleteDest->getElementType(),
+                                             ConstantSource->getSize(),
+                                             ArrayType::Normal, 0);
+          }
+        }
+      }
+
+      break;
     }
   }
 
@@ -4095,6 +4165,17 @@ bool InitializationSequence::Diagnose(Sema &S,
   case FK_ArrayNeedsInitListOrStringLiteral:
     S.Diag(Kind.getLocation(), diag::err_array_init_not_init_list)
       << (Failure == FK_ArrayNeedsInitListOrStringLiteral);
+    break;
+
+  case FK_ArrayTypeMismatch:
+  case FK_NonConstantArrayInit:
+    S.Diag(Kind.getLocation(), 
+           (Failure == FK_ArrayTypeMismatch
+              ? diag::err_array_init_different_type
+              : diag::err_array_init_non_constant_array))
+      << DestType.getNonReferenceType()
+      << Args[0]->getType()
+      << Args[0]->getSourceRange();
     break;
 
   case FK_AddressOfOverloadFailed: {
@@ -4354,6 +4435,14 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
       OS << "array requires initializer list or string literal";
       break;
 
+    case FK_ArrayTypeMismatch:
+      OS << "array type mismatch";
+      break;
+
+    case FK_NonConstantArrayInit:
+      OS << "non-constant array initializer";
+      break;
+
     case FK_AddressOfOverloadFailed:
       OS << "address of overloaded function failed";
       break;
@@ -4457,6 +4546,10 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
   case StringInit:
     OS << "String initialization: ";
     break;
+
+  case ArrayInit:
+    OS << "Array initialization: ";
+    break;
   }
 
   for (step_iterator S = step_begin(), SEnd = step_end(); S != SEnd; ++S) {
@@ -4535,6 +4628,10 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
 
     case SK_ObjCObjectConversion:
       OS << "Objective-C object conversion";
+      break;
+
+    case SK_ArrayInit:
+      OS << "array initialization";
       break;
     }
   }

@@ -264,3 +264,17 @@ void test_matrix() {
 }
 
 char badchararray[1] = { badchararray[0], "asdf" }; // expected-warning {{excess elements in array initializer}} expected-error {{initializer element is not a compile-time constant}}
+
+// Test the GNU extension for initializing an array from an array
+// compound literal. PR9261.
+typedef int int5[5];
+int a1[5] = (int[]){1, 2, 3, 4, 5}; // expected-warning{{initialization of an array of type 'int [5]' from a compound literal of type 'int [5]' is a GNU extension}}
+int a2[5] = (int[5]){1, 2, 3, 4, 5}; // expected-warning{{initialization of an array of type 'int [5]' from a compound literal of type 'int [5]' is a GNU extension}}
+int a3[] = ((int[]){1, 2, 3, 4, 5}); // expected-warning{{initialization of an array of type 'int []' from a compound literal of type 'int [5]' is a GNU extension}}
+int a4[] = (int[5]){1, 2, 3, 4, 5}; // expected-warning{{initialization of an array of type 'int []' from a compound literal of type 'int [5]' is a GNU extension}}
+int a5[] = (int5){1, 2, 3, 4, 5}; // expected-warning{{initialization of an array of type 'int []' from a compound literal of type 'int5' (aka 'int [5]') is a GNU extension}}
+
+int a6[5] = (int[]){1, 2, 3}; // expected-error{{cannot initialize array of type 'int [5]' with array of type 'int [3]'}}
+
+int nonconst_value();
+int a7[5] = (int[5]){ 1, 2, 3, 4, nonconst_value() }; // expected-error{{initializer element is not a compile-time constant}}
