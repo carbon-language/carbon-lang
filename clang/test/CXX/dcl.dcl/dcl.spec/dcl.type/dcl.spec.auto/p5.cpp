@@ -14,6 +14,7 @@ struct S {
   operator auto(); // expected-error{{'auto' not allowed here}}
 };
 
+// PR 9278: auto is not allowed in typedefs, except with a trailing return type.
 typedef auto *AutoPtr; // expected-error{{'auto' not allowed in typedef}}
 typedef auto Fun(int a) -> decltype(a + a);
 
