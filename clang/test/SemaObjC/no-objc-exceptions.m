@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fno-objc-exceptions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 void f() {
   @throw @"Hello"; // expected-error {{cannot use '@throw' with Objective-C exceptions disabled}}

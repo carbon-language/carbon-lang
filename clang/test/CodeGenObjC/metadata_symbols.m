@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -fexceptions -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -fexceptions -fobjc-exceptions -o %t %s
 // RUN: FileCheck -check-prefix=CHECK-X86_64 < %t %s
 // RUN: grep '@"OBJC_EHTYPE_$_EH3"' %t | count 3
 
@@ -12,7 +12,7 @@
 // CHECK-X86_64: define internal void @"\01-[A im0]"
 // CHECK-X86_64: define internal void @"\01-[A(Cat) im1]"
 
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fvisibility hidden -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fobjc-exceptions -fvisibility hidden -emit-llvm -o %t %s
 // RUN: FileCheck -check-prefix=CHECK-X86_64-HIDDEN < %t %s
 
 // CHECK-X86_64-HIDDEN: @"OBJC_CLASS_$_A" = hidden global {{.*}}, section "__DATA, __objc_data", align 8
@@ -23,7 +23,7 @@
 // CHECK-X86_64-HIDDEN: define internal void @"\01-[A im0]"
 // CHECK-X86_64-HIDDEN: define internal void @"\01-[A(Cat) im1]"
 
-// RUN: %clang_cc1 -triple armv6-apple-darwin10 -target-abi apcs-gnu -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple armv6-apple-darwin10 -target-abi apcs-gnu -fobjc-nonfragile-abi -fobjc-exceptions -emit-llvm -o %t %s
 // RUN: FileCheck -check-prefix=CHECK-ARMV6 < %t %s
 
 // CHECK-ARMV6: @"OBJC_CLASS_$_A" = global {{.*}}, section "__DATA, __objc_data", align 4

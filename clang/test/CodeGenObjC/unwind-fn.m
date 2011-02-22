@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -emit-llvm -fexceptions -o - %s | FileCheck --check-prefix=DEFAULT_EH %s
-// RUN: %clang_cc1 -fsjlj-exceptions -fobjc-nonfragile-abi -fexceptions -emit-llvm -o - %s | FileCheck --check-prefix=SJLJ_EH %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -emit-llvm -fexceptions -fobjc-exceptions -o - %s | FileCheck --check-prefix=DEFAULT_EH %s
+// RUN: %clang_cc1 -fsjlj-exceptions -fobjc-nonfragile-abi -fexceptions -fobjc-exceptions -emit-llvm -o - %s | FileCheck --check-prefix=SJLJ_EH %s
 
 // DEFAULT_EH: declare void @_Unwind_Resume_or_Rethrow(i8*)
 // SJLJ_EH: declare void @_Unwind_SjLj_Resume_or_Rethrow(i8*)

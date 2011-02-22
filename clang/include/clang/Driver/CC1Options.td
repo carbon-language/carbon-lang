@@ -420,7 +420,7 @@ def fexceptions : Flag<"-fexceptions">,
   HelpText<"Enable support for exception handling">;
 def fsjlj_exceptions : Flag<"-fsjlj-exceptions">,
   HelpText<"Use SjLj style exceptions">;
-def fno_objc_exceptions : Flag<"-fno-objc-exceptions">,
+def fobjc_exceptions : Flag<"-fobjc-exceptions">,
   HelpText<"Disable Objective-C exceptions">;
 def ffreestanding : Flag<"-ffreestanding">,
   HelpText<"Assert that the compilation takes place in a freestanding environment">;

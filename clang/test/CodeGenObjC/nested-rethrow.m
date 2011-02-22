@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -fobjc-exceptions %s -o - | FileCheck %s
 
 
 extern int printf(const char*, ...);

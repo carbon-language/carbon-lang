@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc -o - %s
+// RUN: %clang_cc1 -rewrite-objc -fobjc-exceptions -o - %s
 // rdar://7522880
 
 @interface NSException

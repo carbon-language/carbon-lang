@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc -verify %s -o -
+// RUN: %clang_cc1 -rewrite-objc -fobjc-exceptions -verify %s -o -
 
 int main() {
   @try {
