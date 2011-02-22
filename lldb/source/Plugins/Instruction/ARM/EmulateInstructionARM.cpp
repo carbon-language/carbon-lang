@@ -2157,9 +2157,132 @@ EmulateInstructionARM::EmulateADDReg (ARMEncoding encoding)
     return true;
 }
 
-// CMP (immediate)
+// Compare Negative (immediate) adds a register value and an immediate value.
+// It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateCMPRnImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCMNImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(R[n], imm32, '0');
+        APSR.N = result<31>;
+        APSR.Z = IsZeroBit(result);
+        APSR.C = carry;
+        APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rn; // the first operand
+    uint32_t imm32; // the immediate value to be compared with
+    switch (encoding) {
+    case eEncodingT1:
+        Rn = Bits32(opcode, 10, 8);
+        imm32 = Bits32(opcode, 7, 0);
+    case eEncodingA1:
+        Rn = Bits32(opcode, 19, 16);
+        imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from the operand register Rn.
+    uint32_t reg_val = ReadCoreReg(Rn, &success);
+    if (!success)
+        return false;
+                  
+    AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs ();
+    if (!WriteFlags(context, res.result, res.carry_out, res.overflow))
+        return false;
+
+    return true;
+}
+
+// Compare Negative (register) adds a register value and an optionally-shifted register value.
+// It updates the condition flags based on the result, and discards the result.
+bool
+EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(R[n], shifted, '0');
+        APSR.N = result<31>;
+        APSR.Z = IsZeroBit(result);
+        APSR.C = carry;
+        APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rn; // the first operand
+    uint32_t Rm; // the second operand
+    ARM_ShifterType shift_t;
+    uint32_t shift_n; // the shift applied to the value read from Rm
+    switch (encoding) {
+    case eEncodingT1:
+        Rn = Bits32(opcode, 2, 0);
+        Rm = Bits32(opcode, 5, 3);
+        shift_t = SRType_LSL;
+        shift_n = 0;
+        break;
+    case eEncodingT2:
+        Rn = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
+        Rm = Bits32(opcode, 6, 3);
+        shift_t = SRType_LSL;
+        shift_n = 0;
+        if (Rn < 8 && Rm < 8)
+            return false;
+        if (Rn == 15 || Rm == 15)
+            return false;
+        break;
+    case eEncodingA1:
+        Rn = Bits32(opcode, 19, 16);
+        Rm = Bits32(opcode, 3, 0);
+        shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
+    default:
+        return false;
+    }
+    // Read the register value from register Rn.
+    uint32_t val1 = ReadCoreReg(Rn, &success);
+    if (!success)
+        return false;
+
+    // Read the register value from register Rm.
+    uint32_t val2 = ReadCoreReg(Rm, &success);
+    if (!success)
+        return false;
+                  
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    AddWithCarryResult res = AddWithCarry(val1, ~shifted, 1);
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs();
+    if (!WriteFlags(context, res.result, res.carry_out, res.overflow))
+        return false;
+
+    return true;
+}
+
+// Compare (immediate) subtracts an immediate value from a register value.
+// It updates the condition flags based on the result, and discards the result.
+bool
+EmulateInstructionARM::EmulateCMPImm (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2183,6 +2306,9 @@ EmulateInstructionARM::EmulateCMPRnImm (ARMEncoding encoding)
     case eEncodingT1:
         Rn = Bits32(opcode, 10, 8);
         imm32 = Bits32(opcode, 7, 0);
+    case eEncodingA1:
+        Rn = Bits32(opcode, 19, 16);
+        imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
         break;
     default:
         return false;
@@ -2203,9 +2329,10 @@ EmulateInstructionARM::EmulateCMPRnImm (ARMEncoding encoding)
     return true;
 }
 
-// CMP (register)
+// Compare (register) subtracts an optionally-shifted register value from a register value.
+// It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateCMPRnRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCMPReg (ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2226,33 +2353,44 @@ EmulateInstructionARM::EmulateCMPRnRm (ARMEncoding encoding)
 
     uint32_t Rn; // the first operand
     uint32_t Rm; // the second operand
+    ARM_ShifterType shift_t;
+    uint32_t shift_n; // the shift applied to the value read from Rm
     switch (encoding) {
     case eEncodingT1:
         Rn = Bits32(opcode, 2, 0);
         Rm = Bits32(opcode, 5, 3);
+        shift_t = SRType_LSL;
+        shift_n = 0;
         break;
     case eEncodingT2:
         Rn = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
         Rm = Bits32(opcode, 6, 3);
+        shift_t = SRType_LSL;
+        shift_n = 0;
         if (Rn < 8 && Rm < 8)
             return false;
         if (Rn == 15 || Rm == 15)
             return false;
         break;
+    case eEncodingA1:
+        Rn = Bits32(opcode, 19, 16);
+        Rm = Bits32(opcode, 3, 0);
+        shift_n = DecodeImmShift(Bits32(opcode, 6, 5), Bits32(opcode, 11, 7), shift_t);
     default:
         return false;
     }
     // Read the register value from register Rn.
-    uint32_t reg_val1 = ReadCoreReg(Rn, &success);
+    uint32_t val1 = ReadCoreReg(Rn, &success);
     if (!success)
         return false;
+
     // Read the register value from register Rm.
-    // The register value is not being shifted since we don't handle ARM for now.
-    uint32_t reg_val2 = ReadCoreReg(Rm, &success);
+    uint32_t val2 = ReadCoreReg(Rm, &success);
     if (!success)
         return false;
                   
-    AddWithCarryResult res = AddWithCarry(reg_val1, ~reg_val2, 1);
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    AddWithCarryResult res = AddWithCarry(val1, ~shifted, 1);
 
     EmulateInstruction::Context context;
     context.type = EmulateInstruction::eContextImmediate;
@@ -6078,6 +6216,10 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s}<c> <Rd>, #<const>"},
         // mvn (register)
         { 0x0fef0010, 0x01e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c> <Rd>, <Rm> {,<shift>}"},
+        // cmp (immediate)
+        { 0x0ff0f000, 0x03500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMPImm, "cmp<c> <Rn>, #<const>"},
+        // cmp (register)
+        { 0x0ff0f010, 0x01500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm> {,<shift>}"},
         // asr (immediate)
         { 0x0fef0070, 0x01a00040, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c> <Rd>, <Rm>, #imm"},
         // asr (register)
@@ -6262,12 +6404,17 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // mvn (register)
         { 0xffffffc0, 0x000043c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMVNReg, "mvns|mvn<c> <Rd>, <Rm>"},
         { 0xffef8000, 0xea6f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c>.w <Rd>, <Rm> {,<shift>}"},
-        // compare a register with immediate
-        { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPRnImm, "cmp<c> <Rn>, #imm8"},
-        // compare Rn with Rm (Rn and Rm both from r0-r7)
-        { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPRnRm, "cmp<c> <Rn>, <Rm>"},
-        // compare Rn with Rm (Rn and Rm not both from r0-r7)
-        { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateCMPRnRm, "cmp<c> <Rn>, <Rm>"},
+        // cmn (immediate)
+        { 0xfbf08f00, 0xf1100f00, ARMvAll,       eEncodingT1, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
+        // cmn (register)
+        { 0xffffffc0, 0x000042c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm>"},
+        { 0xfff08f00, 0xeb100f00, ARMvAll,       eEncodingT2, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
+        // cmp (immediate)
+        { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPImm, "cmp<c> <Rn>, #imm8"},
+        // cmp (register) (Rn and Rm both from r0-r7)
+        { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
+        // cmp (register) (Rn and Rm not both from r0-r7)
+        { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
         // asr (immediate)
         { 0xfffff800, 0x00001000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateASRImm, "asrs|asr<c> <Rd>, <Rm>, #imm"},
         { 0xffef8030, 0xea4f0020, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c>.w <Rd>, <Rm>, #imm"},

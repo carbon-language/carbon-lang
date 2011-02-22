@@ -419,11 +419,11 @@ protected:
 
     // A8.6.35 CMP (immediate)
     bool
-    EmulateCMPRnImm (ARMEncoding encoding);
+    EmulateCMPImm (ARMEncoding encoding);
 
     // A8.6.36 CMP (register)
     bool
-    EmulateCMPRnRm (ARMEncoding encoding);
+    EmulateCMPReg (ARMEncoding encoding);
 
     // A8.6.14 ASR (immediate)
     bool
@@ -549,13 +549,13 @@ protected:
     bool
     EmulateBXJ (ARMEncoding encoding);
     
-    // A8.6.32 CMN (immediate) - Encoding A1
+    // A8.6.32 CMN (immediate)
     bool
-    EmulateCMNImmediate (ARMEncoding encoding);
+    EmulateCMNImm (ARMEncoding encoding);
     
-    // A8.6.33 CMN (register) - Encoding T1, A1
+    // A8.6.33 CMN (register)
     bool
-    EmulateCMNRegister (ARMEncoding encoding);
+    EmulateCMNReg (ARMEncoding encoding);
     
     // A8.6.44 EOR (immediate)
     bool
