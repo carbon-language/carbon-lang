@@ -1975,6 +1975,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     }
   }
 
+  bool AllowFixedUnderlyingType = getLang().CPlusPlus0x;
   bool IsScopedEnum = false;
   bool IsScopedUsingClassTag = false;
 
@@ -1986,7 +1987,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   }
 
   // Must have either 'enum name' or 'enum {...}'.
-  if (Tok.isNot(tok::identifier) && Tok.isNot(tok::l_brace)) {
+  if (Tok.isNot(tok::identifier) && Tok.isNot(tok::l_brace) &&
+      (AllowFixedUnderlyingType && Tok.isNot(tok::colon))) {
     Diag(Tok, diag::err_expected_ident_lbrace);
 
     // Skip the rest of this declarator, up until the comma or semicolon.
@@ -2013,7 +2015,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   TypeResult BaseType;
 
   // Parse the fixed underlying type.
-  if (getLang().CPlusPlus0x && Tok.is(tok::colon)) {
+  if (AllowFixedUnderlyingType && Tok.is(tok::colon)) {
     bool PossibleBitfield = false;
     if (getCurScope()->getFlags() & Scope::ClassScope) {
       // If we're in class scope, this can either be an enum declaration with
@@ -2092,6 +2094,14 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     return;      
   }
   
+  if (!Name && TUK != Sema::TUK_Definition) {
+    Diag(Tok, diag::err_enumerator_unnamed_no_def);
+    
+    // Skip the rest of this declarator, up until the comma or semicolon.
+    SkipUntil(tok::comma, true);
+    return;
+  }
+      
   bool Owned = false;
   bool IsDependent = false;
   SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;

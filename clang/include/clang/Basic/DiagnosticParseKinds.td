@@ -57,6 +57,8 @@ def ext_enumerator_list_comma : Extension<
   "feature">;
 def err_enumerator_list_missing_comma : Error<
   "missing ',' between enumerators">;
+def err_enumerator_unnamed_no_def : Error<
+  "unnamed enumeration must be a definition">;
 
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNU>;
