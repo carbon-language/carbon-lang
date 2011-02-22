@@ -171,7 +171,9 @@ ARMSubtarget::GVIsIndirectSymbol(const GlobalValue *GV,
 
   // Materializable GVs (in JIT lazy compilation mode) do not require an extra
   // load from stub.
-  bool isDecl = GV->isDeclaration() && !GV->isMaterializable();
+  bool isDecl = GV->hasAvailableExternallyLinkage();
+  if (GV->isDeclaration() && !GV->isMaterializable())
+    isDecl = true;
 
   if (!isTargetDarwin()) {
     // Extra load is needed for all externally visible.
