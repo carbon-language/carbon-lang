@@ -655,11 +655,11 @@ protected:
     
     // A8.6.141 RSB (immediate) - Encoding T1, A1
     bool
-    EmulateRSBImmediate (ARMEncoding encoding);
+    EmulateRSBImm (ARMEncoding encoding);
     
     // A8.6.142 RSB (register) - Encoding A1
     bool
-    EmulateRSBRegister (ARMEncoding encoding);
+    EmulateRSBReg (ARMEncoding encoding);
     
     // A8.6.144 RSC (immediate) - Encoding A1
     bool

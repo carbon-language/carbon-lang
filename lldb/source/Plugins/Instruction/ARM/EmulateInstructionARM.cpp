@@ -630,6 +630,7 @@ EmulateInstructionARM::EmulateMOVRdRm (ARMEncoding encoding)
             // if !setflags && (d == 15 || m == 15 || (d == 13 && m == 13)) then UNPREDICTABLE;
             if (!setflags && (Rd == 15 || Rm == 15 || (Rd == 13 && Rm == 13)))
                 return false;
+            break;
         default:
             return false;
         }
@@ -831,8 +832,9 @@ EmulateInstructionARM::EmulateMVNReg (ARMEncoding encoding)
             setflags = BitIsSet(opcode, 20);
             shift_n = DecodeImmShiftThumb(opcode, shift_t);
             // if (BadReg(d) || BadReg(m)) then UNPREDICTABLE;
-            if ((BadReg(Rd) || BadReg(Rm)))
+            if (BadReg(Rd) || BadReg(Rm))
                 return false;
+            break;
         case eEncodingA1:
             Rd = Bits32(opcode, 15, 12);
             Rm = Bits32(opcode, 3, 0);
@@ -1441,6 +1443,7 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
         switch (encoding) {
         case eEncodingT1:
             imm32 = ThumbImmScaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
+            break;
         case eEncodingT2:
             imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
             break;
@@ -2112,6 +2115,7 @@ EmulateInstructionARM::EmulateADDReg (ARMEncoding encoding)
             setflags = !InITBlock();
             shift_t = SRType_LSL;
             shift_n = 0;
+            break;
         case eEncodingT2:
             Rd = Rn = Bit32(opcode, 7) << 3 | Bits32(opcode, 2, 0);
             Rm = Bits32(opcode, 6, 3);
@@ -2186,6 +2190,7 @@ EmulateInstructionARM::EmulateCMNImm (ARMEncoding encoding)
         imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
         if (Rn == 15)
             return false;
+        break;
     case eEncodingA1:
         Rn = Bits32(opcode, 19, 16);
         imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
@@ -2254,6 +2259,7 @@ EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
         Rn = Bits32(opcode, 19, 16);
         Rm = Bits32(opcode, 3, 0);
         shift_n = DecodeImmShiftARM(opcode, shift_t);
+        break;
     default:
         return false;
     }
@@ -2306,11 +2312,13 @@ EmulateInstructionARM::EmulateCMPImm (ARMEncoding encoding)
     case eEncodingT1:
         Rn = Bits32(opcode, 10, 8);
         imm32 = Bits32(opcode, 7, 0);
+        break;
     case eEncodingT2:
         Rn = Bits32(opcode, 19, 16);
         imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
         if (Rn == 15)
             return false;
+        break;
     case eEncodingA1:
         Rn = Bits32(opcode, 19, 16);
         imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
@@ -2381,6 +2389,7 @@ EmulateInstructionARM::EmulateCMPReg (ARMEncoding encoding)
         Rn = Bits32(opcode, 19, 16);
         Rm = Bits32(opcode, 3, 0);
         shift_n = DecodeImmShiftARM(opcode, shift_t);
+        break;
     default:
         return false;
     }
@@ -4583,6 +4592,7 @@ EmulateInstructionARM::EmulateADCReg (ARMEncoding encoding)
             setflags = !InITBlock();
             shift_t = SRType_LSL;
             shift_n = 0;
+            break;
         case eEncodingT2:
             Rd = Bits32(opcode, 11, 8);
             Rn = Bits32(opcode, 19, 16);
@@ -4747,6 +4757,7 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
             setflags = !InITBlock();
             shift_t = SRType_LSL;
             shift_n = 0;
+            break;
         case eEncodingT2:
             Rd = Bits32(opcode, 11, 8);
             Rn = Bits32(opcode, 19, 16);
@@ -5646,6 +5657,7 @@ EmulateInstructionARM::EmulateEORReg (ARMEncoding encoding)
             setflags = !InITBlock();
             shift_t = SRType_LSL;
             shift_n = 0;
+            break;
         case eEncodingT2:
             Rd = Bits32(opcode, 11, 8);
             Rn = Bits32(opcode, 19, 16);
@@ -5815,6 +5827,7 @@ EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
             setflags = !InITBlock();
             shift_t = SRType_LSL;
             shift_n = 0;
+            break;
         case eEncodingT2:
             Rd = Bits32(opcode, 11, 8);
             Rn = Bits32(opcode, 19, 16);
@@ -5861,6 +5874,161 @@ EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
         if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags, carry))
             return false;
     }
+    return true;
+}
+
+// Reverse Subtract (immediate) subtracts a register value from an immediate value, and writes the result to
+// the destination register. It can optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateRSBImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(NOT(R[n]), imm32, '1');
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rd; // the destination register
+    uint32_t Rn; // the first operand
+    bool setflags;
+    uint32_t imm32; // the immediate value to be added to the value obtained from Rn
+    switch (encoding) {
+    case eEncodingT1:
+        Rd = Bits32(opcode, 2, 0);
+        Rn = Bits32(opcode, 5, 3);
+        setflags = !InITBlock();
+        imm32 = 0;
+        break;
+    case eEncodingT2:
+        Rd = Bits32(opcode, 11, 8);
+        Rn = Bits32(opcode, 19, 16);
+        setflags = BitIsSet(opcode, 20);
+        imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
+        if (BadReg(Rd) || BadReg(Rn))
+            return false;
+        break;
+    case eEncodingA1:
+        Rd = Bits32(opcode, 15, 12);
+        Rn = Bits32(opcode, 19, 16);
+        setflags = BitIsSet(opcode, 20);
+        imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+        // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+        // TODO: Emulate SUBS PC, LR and related instructions.
+        if (Rd == 15 && setflags)
+            return false;
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from the operand register Rn.
+    uint32_t reg_val = ReadCoreReg(Rn, &success);
+    if (!success)
+        return false;
+                  
+    AddWithCarryResult res = AddWithCarry(~reg_val, imm32, 1);
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs ();
+
+    if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+        return false;
+
+    return true;
+}
+
+// Reverse Subtract (register) subtracts a register value from an optionally-shifted register value, and writes the
+// result to the destination register. It can optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateRSBReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(NOT(R[n]), shifted, '1');
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rd; // the destination register
+    uint32_t Rn; // the first operand
+    uint32_t Rm; // the second operand
+    bool setflags;
+    ARM_ShifterType shift_t;
+    uint32_t shift_n; // the shift applied to the value read from Rm
+    switch (encoding) {
+    case eEncodingT1:
+        Rd = Bits32(opcode, 11, 8);
+        Rn = Bits32(opcode, 19, 16);
+        Rm = Bits32(opcode, 3, 0);
+        setflags = BitIsSet(opcode, 20);
+        shift_n = DecodeImmShiftThumb(opcode, shift_t);
+        // if (BadReg(d) || BadReg(m)) then UNPREDICTABLE;
+        if (BadReg(Rd) || BadReg(Rn) || BadReg(Rm))
+            return false;
+        break;
+    case eEncodingA1:
+        Rd = Bits32(opcode, 15, 12);
+        Rn = Bits32(opcode, 19, 16);
+        Rm = Bits32(opcode, 3, 0);
+        setflags = BitIsSet(opcode, 20);
+        shift_n = DecodeImmShiftARM(opcode, shift_t);
+        // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+        // TODO: Emulate SUBS PC, LR and related instructions.
+        if (Rd == 15 && setflags)
+            return false;
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from register Rn.
+    uint32_t val1 = ReadCoreReg(Rn, &success);
+    if (!success)
+        return false;
+
+    // Read the register value from register Rm.
+    uint32_t val2 = ReadCoreReg(Rm, &success);
+    if (!success)
+        return false;
+                  
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    AddWithCarryResult res = AddWithCarry(~val1, shifted, 1);
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs();
+    if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+        return false;
+
     return true;
 }
 
@@ -6087,6 +6255,7 @@ EmulateInstructionARM::EmulateTSTReg (ARMEncoding encoding)
             Rm = Bits32(opcode, 5, 3);
             shift_t = SRType_LSL;
             shift_n = 0;
+            break;
         case eEncodingT2:
             Rn = Bits32(opcode, 19, 16);
             Rm = Bits32(opcode, 3, 0);
@@ -6207,6 +6376,10 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x03800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateORRImm, "orr{s}<c> <Rd>, <Rn>, #const"},
         // orr (register)
         { 0x0fe00010, 0x01800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateORRReg, "orr{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // rsb (immediate)
+        { 0x0fe00000, 0x02600000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSBImm, "rsb{s}<c> <Rd>, <Rn>, #<const>"},
+        // rsb (register)
+        { 0x0fe00010, 0x00600000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSBReg, "rsb{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // teq (immediate)
         { 0x0ff0f000, 0x03300000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #const"},
         // teq (register)
@@ -6388,6 +6561,11 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // orr (register)
         { 0xffffffc0, 0x00004300, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateORRReg, "orrs|orr<c> <Rdn>, <Rm>"},
         { 0xffe08000, 0xea400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateORRReg, "orr{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // rsb (immediate)
+        { 0xffffffc0, 0x00004240, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateRSBImm, "rsbs|rsb<c> <Rd>, <Rn>, #0"},
+        { 0xfbe08000, 0xf1c00000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateRSBImm, "rsb{s}<c>.w <Rd>, <Rn>, #<const>"},
+        // rsb (register)
+        { 0xffe08000, 0xea400000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateRSBReg, "rsb{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // teq (immediate)
         { 0xfbf08f00, 0xf0900f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #<const>"},
         // teq (register)
