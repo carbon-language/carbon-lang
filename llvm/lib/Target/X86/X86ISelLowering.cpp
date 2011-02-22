@@ -2693,6 +2693,10 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
+  case X86ISD::VUNPCKLPS:
+  case X86ISD::VUNPCKLPD:
+  case X86ISD::VUNPCKLPSY:
+  case X86ISD::VUNPCKLPDY:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
@@ -2760,6 +2764,10 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
+  case X86ISD::VUNPCKLPS:
+  case X86ISD::VUNPCKLPD:
+  case X86ISD::VUNPCKLPSY:
+  case X86ISD::VUNPCKLPDY:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLDQ:
@@ -9327,6 +9335,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MOVSS:              return "X86ISD::MOVSS";
   case X86ISD::UNPCKLPS:           return "X86ISD::UNPCKLPS";
   case X86ISD::UNPCKLPD:           return "X86ISD::UNPCKLPD";
+  case X86ISD::VUNPCKLPS:          return "X86ISD::VUNPCKLPS";
+  case X86ISD::VUNPCKLPD:          return "X86ISD::VUNPCKLPD";
+  case X86ISD::VUNPCKLPSY:         return "X86ISD::VUNPCKLPSY";
+  case X86ISD::VUNPCKLPDY:         return "X86ISD::VUNPCKLPDY";
   case X86ISD::UNPCKHPS:           return "X86ISD::UNPCKHPS";
   case X86ISD::UNPCKHPD:           return "X86ISD::UNPCKHPD";
   case X86ISD::PUNPCKLBW:          return "X86ISD::PUNPCKLBW";
@@ -11984,6 +11996,10 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
+  case X86ISD::VUNPCKLPS:
+  case X86ISD::VUNPCKLPD:
+  case X86ISD::VUNPCKLPSY:
+  case X86ISD::VUNPCKLPDY:
   case X86ISD::MOVHLPS:
   case X86ISD::MOVLHPS:
   case X86ISD::PSHUFD:
