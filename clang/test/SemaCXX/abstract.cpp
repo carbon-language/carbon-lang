@@ -249,3 +249,13 @@ namespace test4 {
     static D x; // expected-error {{abstract class}}
   };
 }
+
+// PR9247: Crash on invalid in clang::Sema::ActOnFinishCXXMemberSpecification
+namespace pr9247 {
+  struct A {
+    virtual void g(const A& input) = 0;
+    struct B {
+      C* f(int foo);
+    };
+  };
+}

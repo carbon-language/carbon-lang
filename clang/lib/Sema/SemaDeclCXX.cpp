@@ -2588,6 +2588,9 @@ struct CheckAbstractUsage {
   void Check(FunctionProtoTypeLoc TL, Sema::AbstractDiagSelID Sel) {
     Visit(TL.getResultLoc(), Sema::AbstractReturnType);
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
+      if (!TL.getArg(I))
+        continue;
+      
       TypeSourceInfo *TSI = TL.getArg(I)->getTypeSourceInfo();
       if (TSI) Visit(TSI->getTypeLoc(), Sema::AbstractParamType);
     }
