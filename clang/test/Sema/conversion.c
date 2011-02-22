@@ -310,3 +310,24 @@ void test_8232669(void) {
 #define USER_SETBIT(set,bit) do { int i = bit; set[i/(8*sizeof(set[0]))] |= (1 << (i%(8*sizeof(set)))); } while(0)
   USER_SETBIT(bitset, 0); // expected-warning 2 {{implicit conversion changes signedness}}
 }
+
+// <rdar://problem/8559831>
+enum E8559831a { E8559831a_val };
+enum E8559831b { E8559831b_val };
+typedef enum { E8559831c_val } E8559831c;
+enum { E8559831d_val } value_d;
+
+void test_8559831_a(enum E8559831a value);
+void test_8559831(enum E8559831b value_a, E8559831c value_c) {
+  test_8559831_a(value_a); // expected-warning{{implicit conversion from enumeration type 'enum E8559831b' to different enumeration type 'enum E8559831a'}}
+  enum E8559831a a1 = value_a; // expected-warning{{implicit conversion from enumeration type 'enum E8559831b' to different enumeration type 'enum E8559831a'}}
+  a1 = value_a; // expected-warning{{implicit conversion from enumeration type 'enum E8559831b' to different enumeration type 'enum E8559831a'}}
+
+  test_8559831_a(value_c); // expected-warning{{implicit conversion from enumeration type 'E8559831c' to different enumeration type 'enum E8559831a'}}
+  enum E8559831a a2 = value_c; // expected-warning{{implicit conversion from enumeration type 'E8559831c' to different enumeration type 'enum E8559831a'}}
+  a2 = value_c; // expected-warning{{implicit conversion from enumeration type 'E8559831c' to different enumeration type 'enum E8559831a'}}
+  
+   test_8559831_a(value_d);
+   enum E8559831a a3 = value_d;
+   a3 = value_d;
+}

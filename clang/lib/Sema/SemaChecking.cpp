@@ -2861,6 +2861,17 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     return DiagnoseImpCast(S, E, T, CC, DiagID);
   }
 
+  // Diagnose conversions between different enumeration types.
+  if (const EnumType *SourceEnum = Source->getAs<EnumType>())
+    if (const EnumType *TargetEnum = Target->getAs<EnumType>())
+      if ((SourceEnum->getDecl()->getIdentifier() || 
+           SourceEnum->getDecl()->getTypedefForAnonDecl()) &&
+          (TargetEnum->getDecl()->getIdentifier() ||
+           TargetEnum->getDecl()->getTypedefForAnonDecl()) &&
+          SourceEnum != TargetEnum)
+        return DiagnoseImpCast(S, E, T, CC, 
+                               diag::warn_impcast_different_enum_types);
+  
   return;
 }
 
