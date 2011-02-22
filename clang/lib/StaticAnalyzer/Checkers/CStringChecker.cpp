@@ -54,6 +54,9 @@ public:
   void evalMemcmp(CheckerContext &C, const CallExpr *CE);
 
   void evalstrLength(CheckerContext &C, const CallExpr *CE);
+  void evalstrnLength(CheckerContext &C, const CallExpr *CE);
+  void evalstrLengthCommon(CheckerContext &C, const CallExpr *CE, 
+                           bool IsStrnlen = false);
 
   void evalStrcpy(CheckerContext &C, const CallExpr *CE);
   void evalStpcpy(CheckerContext &C, const CallExpr *CE);
@@ -776,6 +779,16 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) {
 
 void CStringChecker::evalstrLength(CheckerContext &C, const CallExpr *CE) {
   // size_t strlen(const char *s);
+  evalstrLengthCommon(C, CE, /* IsStrnlen = */ false);
+}
+
+void CStringChecker::evalstrnLength(CheckerContext &C, const CallExpr *CE) {
+  // size_t strnlen(const char *s, size_t maxlen);
+  evalstrLengthCommon(C, CE, /* IsStrnlen = */ true);
+}
+
+void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
+                                         bool IsStrnlen) {
   const GRState *state = C.getState();
   const Expr *Arg = CE->getArg(0);
   SVal ArgVal = state->getSVal(Arg);
@@ -790,6 +803,32 @@ void CStringChecker::evalstrLength(CheckerContext &C, const CallExpr *CE) {
     // transition to.
     if (strLength.isUndef())
       return;
+
+    // If the check is for strnlen() then bind the return value to no more than
+    // the maxlen value.
+    if (IsStrnlen) {
+      const Expr *maxlenExpr = CE->getArg(1);
+      SVal maxlenVal = state->getSVal(maxlenExpr);
+    
+      NonLoc *strLengthNL = dyn_cast<NonLoc>(&strLength);
+      NonLoc *maxlenValNL = dyn_cast<NonLoc>(&maxlenVal);
+
+      QualType cmpTy = C.getSValBuilder().getContext().IntTy;
+      const GRState *stateTrue, *stateFalse;
+    
+      // Check if the strLength is greater than or equal to the maxlen
+      llvm::tie(stateTrue, stateFalse) =
+        state->assume(cast<DefinedOrUnknownSVal>
+                      (C.getSValBuilder().evalBinOpNN(state, BO_GE, 
+                                                      *strLengthNL, *maxlenValNL,
+                                                      cmpTy)));
+
+      // If the strLength is greater than or equal to the maxlen, set strLength
+      // to maxlen
+      if (stateTrue && !stateFalse) {
+        strLength = maxlenVal;
+      }
+    }
 
     // If getCStringLength couldn't figure out the length, conjure a return
     // value, so it can be used in constraints, at least.
@@ -914,6 +953,7 @@ bool CStringChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
     .Cases("strcpy", "__strcpy_chk", &CStringChecker::evalStrcpy)
     .Cases("stpcpy", "__stpcpy_chk", &CStringChecker::evalStpcpy)
     .Case("strlen", &CStringChecker::evalstrLength)
+    .Case("strnlen", &CStringChecker::evalstrnLength)
     .Case("bcopy", &CStringChecker::evalBcopy)
     .Default(NULL);
 

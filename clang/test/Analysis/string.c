@@ -140,6 +140,138 @@ void strlen_liveness(const char *x) {
 }
 
 //===----------------------------------------------------------------------===
+// strnlen()
+//===----------------------------------------------------------------------===
+
+#define strnlen BUILTIN(strnlen)
+size_t strnlen(const char *s, size_t maxlen);
+
+void strnlen_constant0() {
+  if (strnlen("123", 10) != 3)
+    (void)*(char*)0; // no-warning
+}
+
+void strnlen_constant1() {
+  const char *a = "123";
+  if (strnlen(a, 10) != 3)
+    (void)*(char*)0; // no-warning
+}
+
+void strnlen_constant2(char x) {
+  char a[] = "123";
+  if (strnlen(a, 10) != 3)
+    (void)*(char*)0; // no-warning
+  a[0] = x;
+  if (strnlen(a, 10) != 3)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void strnlen_constant4() {
+  if (strnlen("123456", 3) != 3)
+    (void)*(char*)0; // no-warning
+}
+
+void strnlen_constant5() {
+  const char *a = "123456";
+  if (strnlen(a, 3) != 3)
+    (void)*(char*)0; // no-warning
+}
+
+void strnlen_constant6(char x) {
+  char a[] = "123456";
+  if (strnlen(a, 3) != 3)
+    (void)*(char*)0; // no-warning
+  a[0] = x;
+  if (strnlen(a, 3) != 3)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+size_t strnlen_null() {
+  return strnlen(0, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+size_t strnlen_fn() {
+  return strnlen((char*)&strlen_fn, 3); // expected-warning{{Argument to byte string function is the address of the function 'strlen_fn', which is not a null-terminated string}}
+}
+
+size_t strnlen_nonloc() {
+label:
+  return strnlen((char*)&&label, 3); // expected-warning{{Argument to byte string function is the address of the label 'label', which is not a null-terminated string}}
+}
+
+void strnlen_subregion() {
+  struct two_stringsn { char a[2], b[2] };
+  extern void use_two_stringsn(struct two_stringsn *);
+
+  struct two_stringsn z;
+  use_two_stringsn(&z);
+
+  size_t a = strnlen(z.a, 10);
+  z.b[0] = 5;
+  size_t b = strnlen(z.a, 10);
+  if (a == 0 && b != 0)
+    (void)*(char*)0; // expected-warning{{never executed}}
+
+  use_two_stringsn(&z);
+
+  size_t c = strnlen(z.a, 10);
+  if (a == 0 && c != 0)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+extern void use_stringn(char *);
+void strnlen_argument(char *x) {
+  size_t a = strnlen(x, 10);
+  size_t b = strnlen(x, 10);
+  if (a == 0 && b != 0)
+    (void)*(char*)0; // expected-warning{{never executed}}
+
+  use_stringn(x);
+
+  size_t c = strnlen(x, 10);
+  if (a == 0 && c != 0)
+    (void)*(char*)0; // expected-warning{{null}}  
+}
+
+extern char global_strn[];
+void strnlen_global() {
+  size_t a = strnlen(global_strn, 10);
+  size_t b = strnlen(global_strn, 10);
+  if (a == 0 && b != 0)
+    (void)*(char*)0; // expected-warning{{never executed}}
+
+  // Call a function with unknown effects, which should invalidate globals.
+  use_stringn(0);
+
+  size_t c = strnlen(global_str, 10);
+  if (a == 0 && c != 0)
+    (void)*(char*)0; // expected-warning{{null}}  
+}
+
+void strnlen_indirect(char *x) {
+  size_t a = strnlen(x, 10);
+  char *p = x;
+  char **p2 = &p;
+  size_t b = strnlen(x, 10);
+  if (a == 0 && b != 0)
+    (void)*(char*)0; // expected-warning{{never executed}}
+
+  extern void use_stringn_ptr(char*const*);
+  use_stringn_ptr(p2);
+
+  size_t c = strnlen(x, 10);
+  if (a == 0 && c != 0)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void strnlen_liveness(const char *x) {
+  if (strnlen(x, 10) < 5)
+    return;
+  if (strnlen(x, 10) < 5)
+    (void)*(char*)0; // no-warning
+}
+
+//===----------------------------------------------------------------------===
 // strcpy()
 //===----------------------------------------------------------------------===
 
