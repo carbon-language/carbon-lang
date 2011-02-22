@@ -6216,6 +6216,10 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s}<c> <Rd>, #<const>"},
         // mvn (register)
         { 0x0fef0010, 0x01e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c> <Rd>, <Rm> {,<shift>}"},
+        // cmn (immediate)
+        { 0x0ff0f000, 0x03700000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
+        // cmn (register)
+        { 0x0ff0f010, 0x01700000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
         // cmp (immediate)
         { 0x0ff0f000, 0x03500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMPImm, "cmp<c> <Rn>, #<const>"},
         // cmp (register)
