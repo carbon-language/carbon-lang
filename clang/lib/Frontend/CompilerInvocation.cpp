@@ -473,11 +473,6 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     Res.push_back(Opts.Sysroot);
   }
 
-  for (unsigned i = 0, e = Opts.CXXSystemIncludes.size(); i != e; ++i) {
-    Res.push_back("-cxx-system-include");
-    Res.push_back(Opts.CXXSystemIncludes[i]);
-  }
-
   /// User specified include entries.
   for (unsigned i = 0, e = Opts.UserEntries.size(); i != e; ++i) {
     const HeaderSearchOptions::Entry &E = Opts.UserEntries[i];

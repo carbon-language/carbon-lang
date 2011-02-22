@@ -198,7 +198,8 @@ void ToolChain::AddClangCXXStdlibIncludeArgs(const ArgList &Args,
 
   switch (Type) {
   case ToolChain::CST_Libcxx:
-    CmdArgs.push_back("-cxx-system-include");
+    CmdArgs.push_back("-nostdinc++");
+    CmdArgs.push_back("-cxx-isystem");
     CmdArgs.push_back("/usr/include/c++/v1");
     break;
 

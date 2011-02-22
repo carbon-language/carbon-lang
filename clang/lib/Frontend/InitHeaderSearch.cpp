@@ -816,13 +816,8 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                                     const llvm::Triple &triple,
                                             const HeaderSearchOptions &HSOpts) {
-  if (Lang.CPlusPlus && HSOpts.UseStandardCXXIncludes) {
-    if (!HSOpts.CXXSystemIncludes.empty()) {
-      for (unsigned i = 0, e = HSOpts.CXXSystemIncludes.size(); i != e; ++i)
-        AddPath(HSOpts.CXXSystemIncludes[i], CXXSystem, true, false, false);
-    } else
-      AddDefaultCPlusPlusIncludePaths(triple);
-  }
+  if (Lang.CPlusPlus && HSOpts.UseStandardCXXIncludes)
+    AddDefaultCPlusPlusIncludePaths(triple);
 
   AddDefaultCIncludePaths(triple, HSOpts);
 
