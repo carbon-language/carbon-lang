@@ -30,9 +30,10 @@ class ELFAsmParser : public MCAsmParserExtension {
 
   bool ParseSectionSwitch(StringRef Section, unsigned Type,
                           unsigned Flags, SectionKind Kind);
+  bool SeenIdent;
 
 public:
-  ELFAsmParser() {}
+  ELFAsmParser() : SeenIdent(false) {}
 
   virtual void Initialize(MCAsmParser &Parser) {
     // Call the base implementation.
@@ -456,13 +457,12 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
                                SectionKind::getReadOnly(),
                                1, "");
 
-  static bool First = true;
-
   getStreamer().PushSection();
   getStreamer().SwitchSection(Comment);
-  if (First)
+  if (!SeenIdent) {
     getStreamer().EmitIntValue(0, 1);
-  First = false;
+    SeenIdent = true;
+  }
   getStreamer().EmitBytes(Data, 0);
   getStreamer().EmitIntValue(0, 1);
   getStreamer().PopSection();
