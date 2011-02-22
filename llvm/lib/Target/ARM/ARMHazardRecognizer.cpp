@@ -21,17 +21,14 @@ static bool hasRAWHazard(MachineInstr *DefMI, MachineInstr *MI,
   // FIXME: Detect integer instructions properly.
   const TargetInstrDesc &TID = MI->getDesc();
   unsigned Domain = TID.TSFlags & ARMII::DomainMask;
-  if (Domain == ARMII::DomainVFP) {
-    unsigned Opcode = MI->getOpcode();
-    if (Opcode == ARM::VSTRS || Opcode == ARM::VSTRD ||
-        Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
-      return false;
-  } else if (Domain == ARMII::DomainNEON) {
-    if (MI->getDesc().mayStore() || MI->getDesc().mayLoad())
-      return false;
-  } else
+  if (TID.mayStore())
     return false;
-  return MI->readsRegister(DefMI->getOperand(0).getReg(), &TRI);
+  unsigned Opcode = TID.getOpcode();
+  if (Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
+    return false;
+  if ((Domain & ARMII::DomainVFP) || (Domain & ARMII::DomainNEON))
+    return MI->readsRegister(DefMI->getOperand(0).getReg(), &TRI);
+  return false;
 }
 
 ScheduleHazardRecognizer::HazardType

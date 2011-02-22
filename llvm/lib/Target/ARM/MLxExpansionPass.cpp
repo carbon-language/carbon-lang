@@ -132,22 +132,16 @@ unsigned MLxExpansion::getDefReg(MachineInstr *MI) const {
 }
 
 bool MLxExpansion::hasRAWHazard(unsigned Reg, MachineInstr *MI) const {
-  const TargetInstrDesc &TID = MI->getDesc();
   // FIXME: Detect integer instructions properly.
+  const TargetInstrDesc &TID = MI->getDesc();
   unsigned Domain = TID.TSFlags & ARMII::DomainMask;
-  if (Domain == ARMII::DomainVFP) {
-    unsigned Opcode = TID.getOpcode();
-    if (Opcode == ARM::VSTRS || Opcode == ARM::VSTRD ||
-        Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
-      return false;
-  } else if (Domain == ARMII::DomainNEON) {
-    if (TID.mayStore() || TID.mayLoad())
-      return false;
-  } else {
+  if (TID.mayStore())
     return false;
-  }
-
-  return MI->readsRegister(Reg, TRI);
+  unsigned Opcode = TID.getOpcode();
+  if (Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
+    return false;
+  if ((Domain & ARMII::DomainVFP) || (Domain & ARMII::DomainNEON))
+    return MI->readsRegister(Reg, TRI);
   return false;
 }
 

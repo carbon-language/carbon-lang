@@ -197,9 +197,9 @@ def VADDS  : ASbIn<0b11100, 0b11, 0, 0,
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    IIC_fpALU32, "vadd", ".f32\t$Sd, $Sn, $Sm",
                    [(set SPR:$Sd, (fadd SPR:$Sn, SPR:$Sm))]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VSUBD  : ADbI<0b11100, 0b11, 1, 0,
@@ -211,9 +211,9 @@ def VSUBS  : ASbIn<0b11100, 0b11, 1, 0,
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    IIC_fpALU32, "vsub", ".f32\t$Sd, $Sn, $Sm",
                    [(set SPR:$Sd, (fsub SPR:$Sn, SPR:$Sm))]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VDIVD  : ADbI<0b11101, 0b00, 0, 0,
@@ -235,9 +235,9 @@ def VMULS  : ASbIn<0b11100, 0b10, 0, 0,
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    IIC_fpMUL32, "vmul", ".f32\t$Sd, $Sn, $Sm",
                    [(set SPR:$Sd, (fmul SPR:$Sn, SPR:$Sm))]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VNMULD : ADbI<0b11100, 0b10, 1, 0,
@@ -249,9 +249,9 @@ def VNMULS : ASbI<0b11100, 0b10, 1, 0,
                   (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                   IIC_fpMUL32, "vnmul", ".f32\t$Sd, $Sn, $Sm",
                   [(set SPR:$Sd, (fneg (fmul SPR:$Sn, SPR:$Sm)))]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 // Match reassociated forms only if not sign dependent rounding.
@@ -271,9 +271,9 @@ def VCMPES : ASuI<0b11101, 0b11, 0b0100, 0b11, 0,
                   (outs), (ins SPR:$Sd, SPR:$Sm),
                   IIC_fpCMP32, "vcmpe", ".f32\t$Sd, $Sm",
                   [(arm_cmpfp SPR:$Sd, SPR:$Sm)]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 // FIXME: Verify encoding after integrated assembler is working.
@@ -286,9 +286,9 @@ def VCMPS  : ASuI<0b11101, 0b11, 0b0100, 0b01, 0,
                   (outs), (ins SPR:$Sd, SPR:$Sm),
                   IIC_fpCMP32, "vcmp", ".f32\t$Sd, $Sm",
                   [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 } // Defs = [FPSCR]
 
@@ -305,9 +305,9 @@ def VABSS  : ASuIn<0b11101, 0b11, 0b0000, 0b11, 0,
                    (outs SPR:$Sd), (ins SPR:$Sm),
                    IIC_fpUNA32, "vabs", ".f32\t$Sd, $Sm",
                    [(set SPR:$Sd, (fabs SPR:$Sm))]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 let Defs = [FPSCR] in {
@@ -326,9 +326,9 @@ def VCMPEZS : ASuI<0b11101, 0b11, 0b0101, 0b11, 0,
   let Inst{3-0} = 0b0000;
   let Inst{5}   = 0;
 
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 // FIXME: Verify encoding after integrated assembler is working.
@@ -347,9 +347,9 @@ def VCMPZS  : ASuI<0b11101, 0b11, 0b0101, 0b01, 0,
   let Inst{3-0} = 0b0000;
   let Inst{5}   = 0;
 
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 } // Defs = [FPSCR]
 
@@ -423,9 +423,9 @@ def VNEGS  : ASuIn<0b11101, 0b11, 0b0001, 0b01, 0,
                    (outs SPR:$Sd), (ins SPR:$Sm),
                    IIC_fpUNA32, "vneg", ".f32\t$Sd, $Sm",
                    [(set SPR:$Sd, (fneg SPR:$Sm))]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VSQRTD : ADuI<0b11101, 0b11, 0b0001, 0b11, 0,
@@ -598,9 +598,9 @@ def VSITOS : AVConv1InSs_Encode<0b11101, 0b11, 0b1000, 0b1010,
                                 [(set SPR:$Sd, (arm_sitof SPR:$Sm))]> {
   let Inst{7} = 1; // s32
 
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VUITOD : AVConv1IDs_Encode<0b11101, 0b11, 0b1000, 0b1011,
@@ -616,9 +616,9 @@ def VUITOS : AVConv1InSs_Encode<0b11101, 0b11, 0b1000, 0b1010,
                                 [(set SPR:$Sd, (arm_uitof SPR:$Sm))]> {
   let Inst{7} = 0; // u32
 
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 // FP -> Int:
@@ -671,9 +671,9 @@ def VTOSIZS : AVConv1InsS_Encode<0b11101, 0b11, 0b1101, 0b1010,
                                  [(set SPR:$Sd, (arm_ftosi SPR:$Sm))]> {
   let Inst{7} = 1; // Z bit
 
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VTOUIZD : AVConv1IsD_Encode<0b11101, 0b11, 0b1100, 0b1011,
@@ -689,9 +689,9 @@ def VTOUIZS : AVConv1InsS_Encode<0b11101, 0b11, 0b1100, 0b1010,
                                  [(set SPR:$Sd, (arm_ftoui SPR:$Sm))]> {
   let Inst{7} = 1; // Z bit
 
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 // And the Z bit '0' variants, i.e. use the rounding mode specified by FPSCR.
@@ -743,36 +743,36 @@ def VTOSHS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 0,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTSI, "vcvt", ".s16.f32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VTOUHS : AVConv1XI<0b11101, 0b11, 0b1111, 0b1010, 0,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTSI, "vcvt", ".u16.f32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VTOSLS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 1,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTSI, "vcvt", ".s32.f32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VTOULS : AVConv1XI<0b11101, 0b11, 0b1111, 0b1010, 1,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTSI, "vcvt", ".u32.f32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VTOSHD : AVConv1XI<0b11101, 0b11, 0b1110, 0b1011, 0,
@@ -801,36 +801,36 @@ def VSHTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 0,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.s16\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VUHTOS : AVConv1XI<0b11101, 0b11, 0b1011, 0b1010, 0,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.u16\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VSLTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 1,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.s32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VULTOS : AVConv1XI<0b11101, 0b11, 0b1011, 0b1010, 1,
                        (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.u32\t$dst, $a, $fbits",
                  [/* For disassembly only; pattern left blank */]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def VSHTOD : AVConv1XI<0b11101, 0b11, 0b1010, 0b1011, 0,
@@ -874,9 +874,9 @@ def VMLAS : ASbIn<0b11100, 0b00, 0, 0,
                                            SPR:$Sdin))]>,
               RegConstraint<"$Sdin = $Sd">,
               Requires<[HasVFP2,DontUseNEONForFP,UseFPVMLx]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def : Pat<(fadd_mlx DPR:$dstin, (fmul_su DPR:$a, (f64 DPR:$b))),
@@ -901,9 +901,9 @@ def VMLSS : ASbIn<0b11100, 0b00, 1, 0,
                                            SPR:$Sdin))]>,
               RegConstraint<"$Sdin = $Sd">,
               Requires<[HasVFP2,DontUseNEONForFP,UseFPVMLx]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def : Pat<(fsub_mlx DPR:$dstin, (fmul_su DPR:$a, (f64 DPR:$b))),
@@ -928,9 +928,9 @@ def VNMLAS : ASbI<0b11100, 0b01, 1, 0,
                                            SPR:$Sdin))]>,
                 RegConstraint<"$Sdin = $Sd">,
                 Requires<[HasVFP2,DontUseNEONForFP,UseFPVMLx]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def : Pat<(fsub_mlx (fneg (fmul_su DPR:$a, (f64 DPR:$b))), DPR:$dstin),
@@ -954,9 +954,9 @@ def VNMLSS : ASbI<0b11100, 0b01, 0, 0,
              [(set SPR:$Sd, (fsub_mlx (fmul_su SPR:$Sn, SPR:$Sm), SPR:$Sdin))]>,
                          RegConstraint<"$Sdin = $Sd">,
                   Requires<[HasVFP2,DontUseNEONForFP,UseFPVMLx]> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 
 def : Pat<(fsub_mlx (fmul_su DPR:$a, (f64 DPR:$b)), DPR:$dstin),
@@ -995,9 +995,9 @@ def VNEGScc  : ASuI<0b11101, 0b11, 0b0001, 0b01, 0,
                     IIC_fpUNA32, "vneg", ".f32\t$Sd, $Sm",
                     [/*(set SPR:$Sd, (ARMcneg SPR:$Sn, SPR:$Sm, imm:$cc))*/]>,
                  RegConstraint<"$Sn = $Sd"> {
-  // Some single precision VFP instructions may be executed on both NEON and VFP
-  // pipelines.
-  let D = VFPNeonDomain;
+  // Some single precision VFP instructions may be executed on both NEON and
+  // VFP pipelines on A8.
+  let D = VFPNeonA8Domain;
 }
 } // neverHasSideEffects
 

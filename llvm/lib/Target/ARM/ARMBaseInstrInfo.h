@@ -155,10 +155,11 @@ namespace ARMII {
     //===------------------------------------------------------------------===//
     // Code domain.
     DomainShift   = 18,
-    DomainMask    = 3 << DomainShift,
+    DomainMask    = 7 << DomainShift,
     DomainGeneral = 0 << DomainShift,
     DomainVFP     = 1 << DomainShift,
     DomainNEON    = 2 << DomainShift,
+    DomainNEONA8  = 4 << DomainShift,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating

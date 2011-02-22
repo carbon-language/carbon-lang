@@ -127,13 +127,14 @@ def IndexModePost : IndexMode<2>;
 def IndexModeUpd  : IndexMode<3>;
 
 // Instruction execution domain.
-class Domain<bits<2> val> {
-  bits<2> Value = val;
+class Domain<bits<3> val> {
+  bits<3> Value = val;
 }
 def GenericDomain : Domain<0>;
 def VFPDomain     : Domain<1>; // Instructions in VFP domain only
 def NeonDomain    : Domain<2>; // Instructions in Neon domain only
 def VFPNeonDomain : Domain<3>; // Instructions in both VFP & Neon domains
+def VFPNeonA8Domain : Domain<7>; // Instructions in VFP & Neon under A8
 
 //===----------------------------------------------------------------------===//
 // ARM special operands.
@@ -249,7 +250,7 @@ class InstTemplate<AddrMode am, SizeFlagVal sz, IndexMode im,
   let TSFlags{15-10} = Form;
   let TSFlags{16}    = isUnaryDataProc;
   let TSFlags{17}    = canXformTo16Bit;
-  let TSFlags{19-18} = D.Value;
+  let TSFlags{20-18} = D.Value;
 
   let Constraints = cstr;
   let Itinerary = itin;
