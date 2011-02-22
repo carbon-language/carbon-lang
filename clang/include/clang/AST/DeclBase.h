@@ -299,6 +299,13 @@ public:
     return const_cast<Decl*>(this)->getDeclContext();
   }
 
+  /// Finds the innermost non-closure context of this declaration.
+  /// That is, walk out the DeclContext chain, skipping any blocks.
+  DeclContext *getNonClosureContext();
+  const DeclContext *getNonClosureContext() const {
+    return const_cast<Decl*>(this)->getNonClosureContext();
+  }
+
   TranslationUnitDecl *getTranslationUnitDecl();
   const TranslationUnitDecl *getTranslationUnitDecl() const {
     return const_cast<Decl*>(this)->getTranslationUnitDecl();
@@ -785,6 +792,10 @@ public:
   
   ASTContext &getParentASTContext() const {
     return cast<Decl>(this)->getASTContext();
+  }
+
+  bool isClosure() const {
+    return DeclKind == Decl::Block;
   }
 
   bool isFunctionOrMethod() const {

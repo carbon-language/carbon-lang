@@ -465,6 +465,22 @@ void Decl::CheckAccessDeclContext() const {
 #endif
 }
 
+DeclContext *Decl::getNonClosureContext() {
+  DeclContext *DC = getDeclContext();
+
+  // This is basically "while (DC->isClosure()) DC = DC->getParent();"
+  // except that it's significantly more efficient to cast to a known
+  // decl type and call getDeclContext() than to call getParent().
+  do {
+    if (isa<BlockDecl>(DC)) {
+      DC = cast<BlockDecl>(DC)->getDeclContext();
+      continue;
+    }
+  } while (false);
+
+  assert(!DC->isClosure());
+  return DC;
+}
 
 //===----------------------------------------------------------------------===//
 // DeclContext Implementation
