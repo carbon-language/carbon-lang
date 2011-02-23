@@ -65,6 +65,7 @@ MCAsmInfo::MCAsmInfo() {
   WeakDefDirective = 0;
   LinkOnceDirective = 0;
   HiddenVisibilityAttr = MCSA_Hidden;
+  HiddenDeclarationVisibilityAttr = MCSA_Hidden;
   ProtectedVisibilityAttr = MCSA_Protected;
   HasLEB128 = false;
   SupportsDebugInformation = false;

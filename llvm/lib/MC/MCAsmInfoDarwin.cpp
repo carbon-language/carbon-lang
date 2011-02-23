@@ -45,6 +45,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   HasAggressiveSymbolFolding = false;
 
   HiddenVisibilityAttr = MCSA_PrivateExtern;
+  HiddenDeclarationVisibilityAttr = MCSA_Invalid;
   // Doesn't support protected visibility.
   ProtectedVisibilityAttr = MCSA_Global;
   

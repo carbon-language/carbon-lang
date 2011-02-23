@@ -246,6 +246,11 @@ namespace llvm {
     /// declare a symbol as having hidden visibility.
     MCSymbolAttr HiddenVisibilityAttr;       // Defaults to MCSA_Hidden.
 
+    /// HiddenDeclarationVisibilityAttr - This attribute, if not MCSA_Invalid,
+    /// is used to declare an undefined symbol as having hidden visibility.
+    MCSymbolAttr HiddenDeclarationVisibilityAttr;   // Defaults to MCSA_Hidden.
+
+
     /// ProtectedVisibilityAttr - This attribute, if not MCSA_Invalid, is used
     /// to declare a symbol as having protected visibility.
     MCSymbolAttr ProtectedVisibilityAttr;    // Defaults to MCSA_Protected
@@ -425,6 +430,9 @@ namespace llvm {
     const char *getLinkOnceDirective() const { return LinkOnceDirective; }
 
     MCSymbolAttr getHiddenVisibilityAttr() const { return HiddenVisibilityAttr;}
+    MCSymbolAttr getHiddenDeclarationVisibilityAttr() const {
+      return HiddenDeclarationVisibilityAttr;
+    }
     MCSymbolAttr getProtectedVisibilityAttr() const {
       return ProtectedVisibilityAttr;
     }

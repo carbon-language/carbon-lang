@@ -764,7 +764,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       continue;
 
     MCSymbol *Name = Mang->getSymbol(&F);
-    EmitVisibility(Name, V);
+    EmitVisibility(Name, V, false);
   }
 
   // Finalize debug and EH information.
@@ -1820,13 +1820,17 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   }
 }
 
-void AsmPrinter::EmitVisibility(MCSymbol *Sym, unsigned Visibility) const {
+void AsmPrinter::EmitVisibility(MCSymbol *Sym, unsigned Visibility,
+                                bool IsDefinition) const {
   MCSymbolAttr Attr = MCSA_Invalid;
   
   switch (Visibility) {
   default: break;
   case GlobalValue::HiddenVisibility:
-    Attr = MAI->getHiddenVisibilityAttr();
+    if (IsDefinition)
+      Attr = MAI->getHiddenVisibilityAttr();
+    else
+      Attr = MAI->getHiddenDeclarationVisibilityAttr();
     break;
   case GlobalValue::ProtectedVisibility:
     Attr = MAI->getProtectedVisibilityAttr();
