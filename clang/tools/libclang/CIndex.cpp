@@ -1983,10 +1983,12 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
       }
       case VisitorJob::LabelRefVisitKind: {
         LabelDecl *LS = cast<LabelRefVisit>(&LI)->get();
-        if (Visit(MakeCursorLabelRef(LS->getStmt(),
-                                     cast<LabelRefVisit>(&LI)->getLoc(),
-                                     TU)))
-          return true;
+        if (LabelStmt *stmt = LS->getStmt()) {
+          if (Visit(MakeCursorLabelRef(stmt, cast<LabelRefVisit>(&LI)->getLoc(),
+                                       TU))) {
+            return true;
+          }
+        }
         continue;
       }
       case VisitorJob::NestedNameSpecifierVisitKind: {
