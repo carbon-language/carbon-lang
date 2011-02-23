@@ -314,10 +314,17 @@ static inline uint32_t ThumbImm12(uint32_t opcode)
 }
 
 // imm32 = ZeroExtend(imm7:'00', 32)
-static inline uint32_t ThumbImmScaled(uint32_t opcode)
+static inline uint32_t ThumbImm7Scaled(uint32_t opcode)
 {
   const uint32_t imm7 = bits(opcode, 6, 0);
   return imm7 * 4;
+}
+
+// imm32 = ZeroExtend(imm8:'00', 32)
+static inline uint32_t ThumbImm8Scaled(uint32_t opcode)
+{
+  const uint32_t imm8 = bits(opcode, 7, 0);
+  return imm8 * 4;
 }
 
 // This function performs the check for the register numbers 13 and 15 that are

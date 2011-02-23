@@ -1000,7 +1000,7 @@ EmulateInstructionARM::EmulateADDSPImm (ARMEncoding encoding)
         uint32_t imm32; // the immediate operand
         switch (encoding) {
         case eEncodingT2:
-            imm32 = ThumbImmScaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
+            imm32 = ThumbImm7Scaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
             break;
         default:
             return false;
@@ -1450,7 +1450,7 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
         case eEncodingT1:
             Rd = 13;
             setflags = false;
-            imm32 = ThumbImmScaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
+            imm32 = ThumbImm7Scaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
             break;
         case eEncodingT2:
             Rd = Bits32(opcode, 11, 8);
@@ -4664,6 +4664,73 @@ EmulateInstructionARM::EmulateADCReg (ARMEncoding encoding)
     return true;
 }
 
+// This instruction adds an immediate value to the PC value to form a PC-relative address,
+// and writes the result to the destination register.
+bool
+EmulateInstructionARM::EmulateADR (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        result = if add then (Align(PC,4) + imm32) else (Align(PC,4) - imm32);
+        if d == 15 then         // Can only occur for ARM encodings
+            ALUWritePC(result);
+        else
+            R[d] = result;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd;
+        uint32_t imm32; // the immediate value to be added/subtracted to/from the PC
+        bool add;
+        switch (encoding)
+        {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 10, 8);
+            imm32 = ThumbImm8Scaled(opcode); // imm32 = ZeroExtend(imm8:'00', 32)
+            break;
+        case eEncodingT2:
+        case eEncodingT3:
+            Rd = Bits32(opcode, 11, 8);
+            imm32 = ThumbImm12(opcode); // imm32 = ZeroExtend(i:imm3:imm8, 32)
+            add = (Bits32(opcode, 24, 21) == 0); // 0b0000 => ADD; 0b0101 => SUB
+            if (BadReg(Rd))
+                return false;
+            break;
+        case eEncodingA1:
+        case eEncodingA2:
+            Rd = Bits32(opcode, 15, 12);
+            imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+            add = (Bits32(opcode, 24, 21) == 0x4); // 0b0100 => ADD; 0b0010 => SUB
+            break;
+        default:
+            return false;
+        }
+
+        // Read the PC value.
+        uint32_t pc = ReadCoreReg(PC_REG, &success);
+        if (!success)
+            return false;
+
+        uint32_t result = (add ? Align(pc, 4) + imm32 : Align(pc, 4) - imm32);
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        if (!WriteCoreReg(context, result, Rd))
+            return false;
+    }
+    return true;
+}
+
 // This instruction performs a bitwise AND of a register value and an immediate value, and writes the result
 // to the destination register.  It can optionally update the condition flags based on the result.
 bool
@@ -6679,6 +6746,9 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x02800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDImmARM, "add{s}<c> <Rd>, <Rn>, #const"},
         // add (register)
         { 0x0fe00010, 0x00800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDReg, "add{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // adr
+        { 0x0fff0000, 0x028f0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
+        { 0x0fff0000, 0x024f0000, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulateADR, "sub<c> <Rd>, PC, #<const>"},
         // and (immediate)
         { 0x0fe00000, 0x02000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #const"},
         // and (register)
@@ -6871,6 +6941,10 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfffffe00, 0x00001800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDReg, "adds|add<c> <Rd>, <Rn>, <Rm>"},
         // Make sure "add sp, <Rm>" comes before this instruction, so there's no ambiguity decoding the two.
         { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDReg, "add<c> <Rdn>, <Rm>"},
+        // adr
+        { 0xfffff800, 0x0000a000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
+        { 0xfbff8000, 0xf2af0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateADR, "sub<c> <Rd>, PC, #<const>"},
+        { 0xfbff8000, 0xf20f0000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
         // and (immediate)
         { 0xfbe08000, 0xf0000000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #<const>"},
         // and (register)
@@ -7397,7 +7471,22 @@ EmulateInstructionARM::WriteCoreRegOptionalFlags (Context &context,
     }
     else
     {
-        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rd, result))
+        uint32_t reg_kind, reg_num;
+        switch (Rd)
+        {
+        case SP_REG:
+            reg_kind = eRegisterKindGeneric;
+            reg_num  = LLDB_REGNUM_GENERIC_SP;
+            break;
+        case LR_REG:
+            reg_kind = eRegisterKindGeneric;
+            reg_num  = LLDB_REGNUM_GENERIC_RA;
+            break;
+        default:
+            reg_kind = eRegisterKindDWARF;
+            reg_num  = dwarf_r0 + Rd;
+        }
+        if (!WriteRegisterUnsigned (context, reg_kind, reg_num, result))
             return false;
         if (setflags)
             return WriteFlags (context, result, carry, overflow);

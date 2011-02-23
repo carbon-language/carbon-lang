@@ -207,6 +207,15 @@ public:
                                const uint32_t carry = ~0u,
                                const uint32_t overflow = ~0u);
 
+    bool
+    WriteCoreReg (Context &context,
+                  const uint32_t result,
+                  const uint32_t Rd)
+    {
+        // Don't set the flags.
+        return WriteCoreRegOptionalFlags(context, result, Rd, false);
+    }
+
     // See A8.6.35 CMP (immediate) Operation.
     // Default arguments are specified for carry and overflow parameters, which means
     // not to update the respective flags.
@@ -679,11 +688,11 @@ protected:
     
     // A8.6.211 SUB (immediate, Thumb)    - Encoding T1, T2
     bool
-    EmulateSUBImmediateThumb (ARMEncoding encoding);
+    EmulateSUBImmThumb (ARMEncoding encoding);
     
     // A8.6.212 SUB (immediate, ARM)      - Encoding A1
     bool
-    EmulateSUBImmediateARM (ARMEncoding encoding);
+    EmulateSUBImmARM (ARMEncoding encoding);
     
     // A8.6.222 SXTB  - Encoding T1
     bool
