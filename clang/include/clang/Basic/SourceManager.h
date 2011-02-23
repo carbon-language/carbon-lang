@@ -684,10 +684,10 @@ public:
   /// before calling this method.
   unsigned getColumnNumber(FileID FID, unsigned FilePos, 
                            bool *Invalid = 0) const;
-  unsigned getSpellingColumnNumber(SourceLocation Loc,
-                                   bool *Invalid = 0) const;
+  unsigned getSpellingColumnNumber(SourceLocation Loc, bool *Invalid = 0) const;
   unsigned getInstantiationColumnNumber(SourceLocation Loc,
                                         bool *Invalid = 0) const;
+  unsigned getPresumedColumnNumber(SourceLocation Loc, bool *Invalid = 0) const;
 
 
   /// getLineNumber - Given a SourceLocation, return the spelling line number
@@ -695,10 +695,10 @@ public:
   /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
   unsigned getLineNumber(FileID FID, unsigned FilePos, bool *Invalid = 0) const;
-
+  unsigned getSpellingLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
   unsigned getInstantiationLineNumber(SourceLocation Loc, 
                                       bool *Invalid = 0) const;
-  unsigned getSpellingLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
+  unsigned getPresumedLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
 
   /// Return the filename or buffer identifier of the buffer the location is in.
   /// Note that this name does not respect #line directives.  Use getPresumedLoc

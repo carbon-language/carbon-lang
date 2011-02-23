@@ -823,6 +823,12 @@ unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc,
   return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
 
+unsigned SourceManager::getPresumedColumnNumber(SourceLocation Loc,
+                                                bool *Invalid) const {
+  if (isInvalid(Loc, Invalid)) return 0;
+  return getPresumedLoc(Loc).getColumn();
+}
+
 static LLVM_ATTRIBUTE_NOINLINE void
 ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI,
                    llvm::BumpPtrAllocator &Alloc,
@@ -985,17 +991,22 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos,
   return LineNo;
 }
 
+unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc, 
+                                              bool *Invalid) const {
+  if (isInvalid(Loc, Invalid)) return 0;
+  std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
+  return getLineNumber(LocInfo.first, LocInfo.second);
+}
 unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc, 
                                                    bool *Invalid) const {
   if (isInvalid(Loc, Invalid)) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
 }
-unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc, 
+unsigned SourceManager::getPresumedLineNumber(SourceLocation Loc,
                                               bool *Invalid) const {
   if (isInvalid(Loc, Invalid)) return 0;
-  std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
-  return getLineNumber(LocInfo.first, LocInfo.second);
+  return getPresumedLoc(Loc).getLine();
 }
 
 /// getFileCharacteristic - return the file characteristic of the specified
