@@ -156,7 +156,10 @@ void CheckerManager::runCheckersForObjCMessage(bool isPreVisit,
                                                ExplodedNodeSet &Src,
                                                const ObjCMessage &msg,
                                                ExprEngine &Eng) {
-  CheckObjCMessageContext C(isPreVisit, PostObjCMessageCheckers, msg, Eng);
+  CheckObjCMessageContext C(isPreVisit,
+                            isPreVisit ? PreObjCMessageCheckers
+                                       : PostObjCMessageCheckers,
+                            msg, Eng);
   runPathSensitiveCheckers(C, Dst, Src);
 }
 
