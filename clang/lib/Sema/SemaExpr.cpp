@@ -387,13 +387,13 @@ bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT,
     return false;
   
   if (Expr->getType()->isObjCObjectType() &&
-      DiagRuntimeBehavior(Expr->getLocStart(), Expr,
+      DiagRuntimeBehavior(Expr->getLocStart(), 0,
         PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
           << Expr->getType() << CT))
     return true;
 
   if (!Expr->getType()->isPODType() &&
-      DiagRuntimeBehavior(Expr->getLocStart(), Expr,
+      DiagRuntimeBehavior(Expr->getLocStart(), 0,
                           PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg)
                             << Expr->getType() << CT))
     return true;
@@ -6721,7 +6721,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
         if (DRL->getDecl() == DRR->getDecl() &&
             !IsWithinTemplateSpecialization(DRL->getDecl())) {
-          DiagRuntimeBehavior(Loc, lex, PDiag(diag::warn_comparison_always)
+          DiagRuntimeBehavior(Loc, 0, PDiag(diag::warn_comparison_always)
                               << 0 // self-
                               << (Opc == BO_EQ
                                   || Opc == BO_LE
@@ -6743,7 +6743,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
               always_evals_to = 2; // e.g. array1 <= array2
               break;
             }
-            DiagRuntimeBehavior(Loc, lex, PDiag(diag::warn_comparison_always)
+            DiagRuntimeBehavior(Loc, 0, PDiag(diag::warn_comparison_always)
                                 << 1 // array
                                 << always_evals_to);
         }
@@ -6784,7 +6784,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       default: assert(false && "Invalid comparison operator");
       }
 
-      DiagRuntimeBehavior(Loc, literalString,
+      DiagRuntimeBehavior(Loc, 0,
         PDiag(diag::warn_stringcompare)
           << isa<ObjCEncodeExpr>(literalStringStripped)
           << literalString->getSourceRange());
@@ -7094,7 +7094,7 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
         if (DRL->getDecl() == DRR->getDecl())
-          DiagRuntimeBehavior(Loc, rex,
+          DiagRuntimeBehavior(Loc, 0,
                               PDiag(diag::warn_comparison_always)
                                 << 0 // self-
                                 << 2 // "a constant"
@@ -7355,9 +7355,11 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
         UO->getSubExpr()->IgnoreParenCasts()->
           isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull) &&
         !UO->getType().isVolatileQualified()) {
-    Diag(UO->getOperatorLoc(), diag::warn_indirection_through_null)
-        << UO->getSubExpr()->getSourceRange();
-    Diag(UO->getOperatorLoc(), diag::note_indirection_through_null);
+    DiagRuntimeBehavior(UO->getOperatorLoc(), UO,
+                        PDiag(diag::warn_indirection_through_null)
+                          << UO->getSubExpr()->getSourceRange());
+    DiagRuntimeBehavior(UO->getOperatorLoc(), UO,
+                        PDiag(diag::note_indirection_through_null));
   }
   
   // Check for trivial buffer overflows.
@@ -9475,7 +9477,13 @@ bool Sema::DiagRuntimeBehavior(SourceLocation Loc, const Stmt *stmt,
 
   case PotentiallyEvaluated:
   case PotentiallyEvaluatedIfUsed:
-    Diag(Loc, PD);
+    if (stmt && getCurFunctionOrMethodDecl()) {
+      FunctionScopes.back()->PossiblyUnreachableDiags.
+        push_back(sema::PossiblyUnreachableDiag(PD, Loc, stmt));
+    }
+    else
+      Diag(Loc, PD);
+      
     return true;
 
   case PotentiallyPotentiallyEvaluated:

@@ -15,6 +15,7 @@
 
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/DeclObjC.h"
@@ -26,6 +27,8 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Analyses/ReachableCode.h"
+#include "clang/Analysis/Analyses/CFGReachabilityAnalysis.h"
+#include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Analyses/UninitializedValuesV2.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/Casting.h"
@@ -478,6 +481,16 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s) : S(s) {
         Diagnostic::Ignored);
 }
 
+static void flushDiagnostics(Sema &S, sema::FunctionScopeInfo *fscope) {
+  for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
+       i = fscope->PossiblyUnreachableDiags.begin(),
+       e = fscope->PossiblyUnreachableDiags.end();
+       i != e; ++i) {
+    const sema::PossiblyUnreachableDiag &D = *i;
+    S.Diag(D.Loc, D.PD);
+  }
+}
+
 void clang::sema::
 AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
                                      sema::FunctionScopeInfo *fscope,
@@ -491,9 +504,6 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   //     time.
   Diagnostic &Diags = S.getDiagnostics();
 
-  if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred())
-    return;
-
   // Do not do any analysis for declarations in system headers if we are
   // going to just ignore them.
   if (Diags.getSuppressSystemWarnings() &&
@@ -504,6 +514,12 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   if (cast<DeclContext>(D)->isDependentContext())
     return;
 
+  if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred()) {
+    // Flush out any possibly unreachable diagnostics.
+    flushDiagnostics(S, fscope);
+    return;
+  }
+  
   const Stmt *Body = D->getBody();
   assert(Body);
 
@@ -512,6 +528,34 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   AnalysisContext AC(D, 0, /*useUnoptimizedCFG=*/false, /*addehedges=*/false,
                      /*addImplicitDtors=*/true, /*addInitializers=*/true);
 
+  // Emit delayed diagnostics.
+  if (!fscope->PossiblyUnreachableDiags.empty()) {
+    bool analyzed = false;
+    if (CFGReachabilityAnalysis *cra = AC.getCFGReachablityAnalysis())
+      if (CFGStmtMap *csm = AC.getCFGStmtMap()) {
+        analyzed = true;
+        for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
+             i = fscope->PossiblyUnreachableDiags.begin(),
+             e = fscope->PossiblyUnreachableDiags.end();
+             i != e; ++i) {
+          const sema::PossiblyUnreachableDiag &D = *i;
+          if (const CFGBlock *blk = csm->getBlock(D.stmt)) {
+            // Can this block be reached from the entrance?
+            if (cra->isReachable(&AC.getCFG()->getEntry(), blk))
+              S.Diag(D.Loc, D.PD);
+          }
+          else {
+            // Emit the warning anyway if we cannot map to a basic block.
+            S.Diag(D.Loc, D.PD);
+          }
+        }
+      }
+
+    if (!analyzed)
+      flushDiagnostics(S, fscope);
+  }
+  
+  
   // Warning: check missing 'return'
   if (P.enableCheckFallThrough) {
     const CheckFallThroughDiagnostics &CD =

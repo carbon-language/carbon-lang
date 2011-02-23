@@ -60,7 +60,9 @@ int comma3[(1,2)]; // expected-warning {{size of static array must be an integer
 // Pointer + __builtin_constant_p
 char pbcp[__builtin_constant_p(4) ? (intptr_t)&expr : 0]; // expected-error {{variable length array declaration not allowed at file scope}}
 
-int illegaldiv1[1 || 1/0];  // expected-warning {{division by zero is undefined}}
+int illegaldiv1a[1 || 1/0];  // expected-warning {{division by zero is undefined}}
+int illegaldiv1b[1 && 1/0];  // expected-warning {{division by zero is undefined}} expected-error{{variable length array declaration not allowed at file scope}}
+
 int illegaldiv2[1/0]; // expected-error {{variable length array declaration not allowed at file scope}} \
                       // expected-warning {{division by zero is undefined}}
 int illegaldiv3[INT_MIN / -1]; // expected-error {{variable length array declaration not allowed at file scope}}

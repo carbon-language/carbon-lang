@@ -15,6 +15,7 @@
 #define LLVM_CLANG_SEMA_SCOPE_INFO_H
 
 #include "clang/AST/Type.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SetVector.h"
@@ -30,6 +31,17 @@ class SwitchStmt;
 
 namespace sema {
 
+class PossiblyUnreachableDiag {
+public:
+  PartialDiagnostic PD;
+  SourceLocation Loc;
+  const Stmt *stmt;
+  
+  PossiblyUnreachableDiag(const PartialDiagnostic &PD, SourceLocation Loc,
+                          const Stmt *stmt)
+    : PD(PD), Loc(Loc), stmt(stmt) {}
+};
+    
 /// \brief Retains information about a function, method, or block that is
 /// currently being parsed.
 class FunctionScopeInfo {
@@ -60,6 +72,11 @@ public:
   /// block, if there is any chance of applying the named return value
   /// optimization.
   llvm::SmallVector<ReturnStmt*, 4> Returns;
+  
+  /// \brief A list of PartialDiagnostics created but delayed within the
+  /// current function scope.  These diagnostics are vetted for reachability
+  /// prior to being emitted.
+  llvm::SmallVector<PossiblyUnreachableDiag, 4> PossiblyUnreachableDiags;
 
   void setHasBranchIntoScope() {
     HasBranchIntoScope = true;

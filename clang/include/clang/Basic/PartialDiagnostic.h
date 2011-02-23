@@ -75,7 +75,7 @@ public:
   /// \brief An allocator for Storage objects, which uses a small cache to 
   /// objects, used to reduce malloc()/free() traffic for partial diagnostics.
   class StorageAllocator {
-    static const unsigned NumCached = 4;
+    static const unsigned NumCached = 16;
     Storage Cached[NumCached];
     Storage *FreeList[NumCached];
     unsigned NumFreeListEntries;
