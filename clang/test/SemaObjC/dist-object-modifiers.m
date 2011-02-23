@@ -14,7 +14,7 @@
 
 @implementation I
 - (id)serverPID { return 0; } // expected-warning {{conflicting distributed object modifiers on return type in implementation of 'serverPID'}}
-- (void)doStuff:(id)clientId { } // expected-warning {{conflicting distributed object modifiers on patameter type in implementation of 'doStuff:'}}
+- (void)doStuff:(id)clientId { } // expected-warning {{conflicting distributed object modifiers on parameter type in implementation of 'doStuff:'}}
 - (bycopy id)Ok { return 0; }
 + (id) stillMore : (id)Arg  : (bycopy id)Arg1 { return Arg; } // expected-warning {{conflicting distributed object modifiers on return type in implementation of 'stillMore::'}} \
                                                               // expected-warning 2{{conflicting distributed object modifiers on patameter type in implementation of 'stillMore::'}}
