@@ -21,6 +21,7 @@
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
+#include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -85,6 +86,19 @@ CFG *AnalysisContext::getUnoptimizedCFG() {
   }
   return completeCFG;
 }
+
+CFGStmtMap *AnalysisContext::getCFGStmtMap() {
+  if (cfgStmtMap)
+    return cfgStmtMap;
+  
+  if (CFG *c = getCFG()) {
+    cfgStmtMap = CFGStmtMap::Build(c, &getParentMap());
+    return cfgStmtMap;
+  }
+    
+  return 0;
+}
+  
 
 void AnalysisContext::dumpCFG() {
     getCFG()->dump(getASTContext().getLangOptions());
@@ -346,6 +360,7 @@ AnalysisContext::getReferencedBlockVars(const BlockDecl *BD) {
 AnalysisContext::~AnalysisContext() {
   delete cfg;
   delete completeCFG;
+  delete cfgStmtMap;
   delete liveness;
   delete relaxedLiveness;
   delete PM;

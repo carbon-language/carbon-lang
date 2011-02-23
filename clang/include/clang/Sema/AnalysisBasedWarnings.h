@@ -25,6 +25,9 @@ class FunctionDecl;
 class ObjCMethodDecl;
 class QualType;
 class Sema;
+namespace sema {
+  class FunctionScopeInfo;
+}
 
 namespace sema {
 
@@ -51,7 +54,8 @@ private:
 public:
   AnalysisBasedWarnings(Sema &s);
 
-  void IssueWarnings(Policy P, const Decl *D, const BlockExpr *blkExpr);
+  void IssueWarnings(Policy P, FunctionScopeInfo *fscope,
+                     const Decl *D, const BlockExpr *blkExpr);
 
   Policy getDefaultPolicy() { return DefaultPolicy; }
 };

@@ -480,6 +480,7 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s) : S(s) {
 
 void clang::sema::
 AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
+                                     sema::FunctionScopeInfo *fscope,
                                      const Decl *D, const BlockExpr *blkExpr) {
 
   // We avoid doing analysis-based warnings when there are errors for

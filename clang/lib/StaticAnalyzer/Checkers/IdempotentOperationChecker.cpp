@@ -397,16 +397,13 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
     // If the analyzer did not finish, check to see if we can still emit this
     // warning
     if (Eng.hasWorkRemaining()) {
-      const CFGStmtMap *CBM = CFGStmtMap::Build(AC->getCFG(),
-                                                &AC->getParentMap());
+      const CFGStmtMap *CBM = AC->getCFGStmtMap();
 
       // If we can trace back
       if (!pathWasCompletelyAnalyzed(AC->getCFG(),
                                      CBM->getBlock(B), CBM,
                                      Eng.getCoreEngine()))
         continue;
-
-      delete CBM;
     }
 
     // Select the error message and SourceRanges to report.

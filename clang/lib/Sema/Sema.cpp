@@ -638,7 +638,7 @@ void Sema::PopFunctionOrBlockScope(const AnalysisBasedWarnings::Policy *WP,
   
   // Issue any analysis-based warnings.
   if (WP && D)
-    AnalysisWarnings.IssueWarnings(*WP, D, blkExpr);
+    AnalysisWarnings.IssueWarnings(*WP, Scope, D, blkExpr);
 
   if (FunctionScopes.back() != Scope)
     delete Scope;
