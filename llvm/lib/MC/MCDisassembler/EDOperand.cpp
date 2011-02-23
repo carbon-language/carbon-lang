@@ -152,9 +152,22 @@ int EDOperand::evaluate(uint64_t &result,
       uint64_t scaleAmount = Inst.Inst->getOperand(MCOpIndex+1).getImm();
       unsigned indexReg = Inst.Inst->getOperand(MCOpIndex+2).getReg();
       int64_t displacement = Inst.Inst->getOperand(MCOpIndex+3).getImm();
-      //unsigned segmentReg = Inst.Inst->getOperand(MCOpIndex+4).getReg();
-      
+    
       uint64_t addr = 0;
+        
+      unsigned segmentReg = Inst.Inst->getOperand(MCOpIndex+4).getReg();
+        
+      if (segmentReg != 0 && Disassembler.Key.Arch == Triple::x86_64) {
+        unsigned fsID = Disassembler.registerIDWithName("FS");
+        unsigned gsID = Disassembler.registerIDWithName("GS");
+        
+        if (segmentReg == fsID ||
+            segmentReg == gsID) {
+          uint64_t segmentBase;
+          if (!callback(&segmentBase, segmentReg, arg))
+            addr += segmentBase;        
+        }
+      }
         
       if (baseReg) {
         uint64_t baseVal;
@@ -175,7 +188,7 @@ int EDOperand::evaluate(uint64_t &result,
       result = addr;
       return 0;
     }
-    }
+    } // switch (operandType)
     break;
   case Triple::arm:
   case Triple::thumb:
@@ -203,6 +216,7 @@ int EDOperand::evaluate(uint64_t &result,
       return 0;
     }
     }
+    break;
   }
   
   return -1;
