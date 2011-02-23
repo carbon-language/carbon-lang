@@ -2838,8 +2838,51 @@ SDValue ARMTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
   EVT SrcVT = Tmp1.getValueType();
-  bool F2IisFast = Subtarget->isCortexA9() ||
-    Tmp0.getOpcode() == ISD::BITCAST || Tmp0.getOpcode() == ARMISD::VMOVDRR;
+  bool InGPR = Tmp0.getOpcode() == ISD::BITCAST ||
+    Tmp0.getOpcode() == ARMISD::VMOVDRR;
+  bool UseNEON = !InGPR && Subtarget->hasNEON();
+
+  if (UseNEON) {
+    // Use VBSL to copy the sign bit.
+    unsigned EncodedVal = ARM_AM::createNEONModImm(0x6, 0x80);
+    SDValue Mask = DAG.getNode(ARMISD::VMOVIMM, dl, MVT::v2i32,
+                               DAG.getTargetConstant(EncodedVal, MVT::i32));
+    EVT OpVT = (VT == MVT::f32) ? MVT::v2i32 : MVT::v1i64;
+    if (VT == MVT::f64)
+      Mask = DAG.getNode(ARMISD::VSHL, dl, OpVT,
+                         DAG.getNode(ISD::BITCAST, dl, OpVT, Mask),
+                         DAG.getConstant(32, MVT::i32));
+    else /*if (VT == MVT::f32)*/
+      Tmp0 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2f32, Tmp0);
+    if (SrcVT == MVT::f32) {
+      Tmp1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2f32, Tmp1);
+      if (VT == MVT::f64)
+        Tmp1 = DAG.getNode(ARMISD::VSHL, dl, OpVT,
+                           DAG.getNode(ISD::BITCAST, dl, OpVT, Tmp1),
+                           DAG.getConstant(32, MVT::i32));
+    }
+    Tmp0 = DAG.getNode(ISD::BITCAST, dl, OpVT, Tmp0);
+    Tmp1 = DAG.getNode(ISD::BITCAST, dl, OpVT, Tmp1);
+
+    SDValue AllOnes = DAG.getTargetConstant(ARM_AM::createNEONModImm(0xe, 0xff),
+                                            MVT::i32);
+    AllOnes = DAG.getNode(ARMISD::VMOVIMM, dl, MVT::v8i8, AllOnes);
+    SDValue MaskNot = DAG.getNode(ISD::XOR, dl, OpVT, Mask,
+                                  DAG.getNode(ISD::BITCAST, dl, OpVT, AllOnes));
+                                              
+    SDValue Res = DAG.getNode(ISD::OR, dl, OpVT,
+                              DAG.getNode(ISD::AND, dl, OpVT, Tmp1, Mask),
+                              DAG.getNode(ISD::AND, dl, OpVT, Tmp0, MaskNot));
+    if (SrcVT == MVT::f32) {
+      Res = DAG.getNode(ISD::BITCAST, dl, MVT::v2f32, Res);
+      Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f32, Res,
+                        DAG.getConstant(0, MVT::i32));
+    } else {
+      Res = DAG.getNode(ISD::BITCAST, dl, MVT::f64, Res);
+    }
+
+    return Res;
+  }
 
   // Bitcast operand 1 to i32.
   if (SrcVT == MVT::f64)
@@ -2847,37 +2890,24 @@ SDValue ARMTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
                        &Tmp1, 1).getValue(1);
   Tmp1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Tmp1);
 
-  // If float to int conversion isn't going to be super expensive, then simply
-  // or in the signbit.
-  if (F2IisFast) {
-    SDValue Mask1 = DAG.getConstant(0x80000000, MVT::i32);
-    SDValue Mask2 = DAG.getConstant(0x7fffffff, MVT::i32);
-    Tmp1 = DAG.getNode(ISD::AND, dl, MVT::i32, Tmp1, Mask1);
-    if (VT == MVT::f32) {
-      Tmp0 = DAG.getNode(ISD::AND, dl, MVT::i32,
-                         DAG.getNode(ISD::BITCAST, dl, MVT::i32, Tmp0), Mask2);
-      return DAG.getNode(ISD::BITCAST, dl, MVT::f32,
-                         DAG.getNode(ISD::OR, dl, MVT::i32, Tmp0, Tmp1));
-    }
-
-    // f64: Or the high part with signbit and then combine two parts.
-    Tmp0 = DAG.getNode(ARMISD::VMOVRRD, dl, DAG.getVTList(MVT::i32, MVT::i32),
-                       &Tmp0, 1);
-    SDValue Lo = Tmp0.getValue(0);
-    SDValue Hi = DAG.getNode(ISD::AND, dl, MVT::i32, Tmp0.getValue(1), Mask2);
-    Hi = DAG.getNode(ISD::OR, dl, MVT::i32, Hi, Tmp1);
-    return DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, Lo, Hi);
+  // Or in the signbit with integer operations.
+  SDValue Mask1 = DAG.getConstant(0x80000000, MVT::i32);
+  SDValue Mask2 = DAG.getConstant(0x7fffffff, MVT::i32);
+  Tmp1 = DAG.getNode(ISD::AND, dl, MVT::i32, Tmp1, Mask1);
+  if (VT == MVT::f32) {
+    Tmp0 = DAG.getNode(ISD::AND, dl, MVT::i32,
+                       DAG.getNode(ISD::BITCAST, dl, MVT::i32, Tmp0), Mask2);
+    return DAG.getNode(ISD::BITCAST, dl, MVT::f32,
+                       DAG.getNode(ISD::OR, dl, MVT::i32, Tmp0, Tmp1));
   }
 
-  // Remove the signbit of operand 0.
-  Tmp0 = DAG.getNode(ISD::FABS, dl, VT, Tmp0);
-
-  // If operand 1 signbit is one, then negate operand 0.
-  SDValue ARMcc;
-  SDValue Cmp = getARMCmp(Tmp1, DAG.getConstant(0, MVT::i32),
-                          ISD::SETLT, ARMcc, DAG, dl);
-  SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-  return DAG.getNode(ARMISD::CNEG, dl, VT, Tmp0, Tmp0, ARMcc, CCR, Cmp);
+  // f64: Or the high part with signbit and then combine two parts.
+  Tmp0 = DAG.getNode(ARMISD::VMOVRRD, dl, DAG.getVTList(MVT::i32, MVT::i32),
+                     &Tmp0, 1);
+  SDValue Lo = Tmp0.getValue(0);
+  SDValue Hi = DAG.getNode(ISD::AND, dl, MVT::i32, Tmp0.getValue(1), Mask2);
+  Hi = DAG.getNode(ISD::OR, dl, MVT::i32, Hi, Tmp1);
+  return DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, Lo, Hi);
 }
 
 SDValue ARMTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const{
