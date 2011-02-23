@@ -29,8 +29,6 @@ class BugType {
 private:
   const std::string Name;
   const std::string Category;
-  llvm::FoldingSet<BugReportEquivClass> EQClasses;
-  friend class BugReporter;
   bool SuppressonSink;
 public:
   BugType(llvm::StringRef name, llvm::StringRef cat)
@@ -48,14 +46,6 @@ public:
   void setSuppressOnSink(bool x) { SuppressonSink = x; }
 
   virtual void FlushReports(BugReporter& BR);
-
-  typedef llvm::FoldingSet<BugReportEquivClass>::iterator iterator;
-  iterator begin() { return EQClasses.begin(); }
-  iterator end() { return EQClasses.end(); }
-
-  typedef llvm::FoldingSet<BugReportEquivClass>::const_iterator const_iterator;
-  const_iterator begin() const { return EQClasses.begin(); }
-  const_iterator end() const { return EQClasses.end(); }
 };
 
 class BuiltinBug : public BugType {

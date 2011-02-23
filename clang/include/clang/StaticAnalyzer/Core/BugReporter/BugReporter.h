@@ -72,6 +72,7 @@ protected:
   friend class BugReportEquivClass;
 
   virtual void Profile(llvm::FoldingSetNodeID& hash) const {
+    hash.AddPointer(&BT);
     hash.AddInteger(getLocation().getRawEncoding());
     hash.AddString(Description);
   }
@@ -277,6 +278,8 @@ private:
 
   void FlushReport(BugReportEquivClass& EQ);
 
+  llvm::FoldingSet<BugReportEquivClass> EQClasses;
+
 protected:
   BugReporter(BugReporterData& d, Kind k) : BugTypes(F.getEmptySet()), kind(k),
                                             D(d) {}
@@ -301,6 +304,10 @@ public:
   typedef BugTypesTy::iterator iterator;
   iterator begin() { return BugTypes.begin(); }
   iterator end() { return BugTypes.end(); }
+
+  typedef llvm::FoldingSet<BugReportEquivClass>::iterator EQClasses_iterator;
+  EQClasses_iterator EQClasses_begin() { return EQClasses.begin(); }
+  EQClasses_iterator EQClasses_end() { return EQClasses.end(); }
 
   ASTContext& getContext() { return D.getASTContext(); }
 
@@ -344,6 +351,13 @@ public:
   }
 
   static bool classof(const BugReporter* R) { return true; }
+
+private:
+  llvm::StringMap<BugType *> StrBugTypes;
+
+  /// \brief Returns a BugType that is associated with the given name and
+  /// category.
+  BugType *getBugTypeForName(llvm::StringRef name, llvm::StringRef category);
 };
 
 // FIXME: Get rid of GRBugReporter.  It's the wrong abstraction.

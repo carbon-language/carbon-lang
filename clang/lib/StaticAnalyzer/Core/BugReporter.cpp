@@ -1202,16 +1202,8 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 //===----------------------------------------------------------------------===//
 // Methods for BugType and subclasses.
 //===----------------------------------------------------------------------===//
-BugType::~BugType() {
-  // Free up the equivalence class objects.  Observe that we get a pointer to
-  // the object first before incrementing the iterator, as destroying the
-  // node before doing so means we will read from freed memory.
-  for (iterator I = begin(), E = end(); I !=E; ) {
-    BugReportEquivClass *EQ = &*I;
-    ++I;
-    delete EQ;
-  }
-}
+BugType::~BugType() { }
+
 void BugType::FlushReports(BugReporter &BR) {}
 
 //===----------------------------------------------------------------------===//
@@ -1315,27 +1307,29 @@ void BugReporter::FlushReports() {
     return;
 
   // First flush the warnings for each BugType.  This may end up creating new
-  // warnings and new BugTypes.  Because ImmutableSet is a functional data
-  // structure, we do not need to worry about the iterators being invalidated.
+  // warnings and new BugTypes.
+  // FIXME: Only NSErrorChecker needs BugType's FlushReports.
+  // Turn NSErrorChecker into a proper checker and remove this.
+  llvm::SmallVector<const BugType*, 16> bugTypes;
   for (BugTypesTy::iterator I=BugTypes.begin(), E=BugTypes.end(); I!=E; ++I)
+    bugTypes.push_back(*I);
+  for (llvm::SmallVector<const BugType*, 16>::iterator
+         I = bugTypes.begin(), E = bugTypes.end(); I != E; ++I)
     const_cast<BugType*>(*I)->FlushReports(*this);
 
-  // Iterate through BugTypes a second time.  BugTypes may have been updated
-  // with new BugType objects and new warnings.
-  for (BugTypesTy::iterator I=BugTypes.begin(), E=BugTypes.end(); I!=E; ++I) {
-    BugType *BT = const_cast<BugType*>(*I);
-
-    typedef llvm::FoldingSet<BugReportEquivClass> SetTy;
-    SetTy& EQClasses = BT->EQClasses;
-
-    for (SetTy::iterator EI=EQClasses.begin(), EE=EQClasses.end(); EI!=EE;++EI){
-      BugReportEquivClass& EQ = *EI;
-      FlushReport(EQ);
-    }
-
-    // Delete the BugType object.
-    delete BT;
+  typedef llvm::FoldingSet<BugReportEquivClass> SetTy;
+  for (SetTy::iterator EI=EQClasses.begin(), EE=EQClasses.end(); EI!=EE;++EI){
+    BugReportEquivClass& EQ = *EI;
+    FlushReport(EQ);
   }
+
+  // BugReporter owns and deletes only BugTypes created implicitly through
+  // EmitBasicReport.
+  // FIXME: There are leaks from checkers that assume that the BugTypes they
+  // create will be destroyed by the BugReporter.
+  for (llvm::StringMap<BugType*>::iterator
+         I = StrBugTypes.begin(), E = StrBugTypes.end(); I != E; ++I)
+    delete I->second;
 
   // Remove all references to the BugType objects.
   BugTypes = F.getEmptySet();
@@ -1632,11 +1626,11 @@ void BugReporter::EmitReport(BugReport* R) {
   BugType& BT = R->getBugType();
   Register(&BT);
   void *InsertPos;
-  BugReportEquivClass* EQ = BT.EQClasses.FindNodeOrInsertPos(ID, InsertPos);
+  BugReportEquivClass* EQ = EQClasses.FindNodeOrInsertPos(ID, InsertPos);
 
   if (!EQ) {
     EQ = new BugReportEquivClass(R);
-    BT.EQClasses.InsertNode(EQ, InsertPos);
+    EQClasses.InsertNode(EQ, InsertPos);
   }
   else
     EQ->AddReport(R);
@@ -1887,10 +1881,24 @@ void BugReporter::EmitBasicReport(llvm::StringRef name,
                                   llvm::StringRef str, SourceLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
 
-  // 'BT' will be owned by BugReporter as soon as we call 'EmitReport'.
-  BugType *BT = new BugType(name, category);
+  // 'BT' is owned by BugReporter.
+  BugType *BT = getBugTypeForName(name, category);
   FullSourceLoc L = getContext().getFullLoc(Loc);
   RangedBugReport *R = new DiagBugReport(*BT, str, L);
   for ( ; NumRanges > 0 ; --NumRanges, ++RBeg) R->addRange(*RBeg);
   EmitReport(R);
+}
+
+BugType *BugReporter::getBugTypeForName(llvm::StringRef name,
+                                        llvm::StringRef category) {
+  llvm::SmallString<136> fullDesc;
+  llvm::raw_svector_ostream(fullDesc) << name << ":" << category;
+  llvm::StringMapEntry<BugType *> &
+      entry = StrBugTypes.GetOrCreateValue(fullDesc);
+  BugType *BT = entry.getValue();
+  if (!BT) {
+    BT = new BugType(name, category);
+    entry.setValue(BT);
+  }
+  return BT;
 }
