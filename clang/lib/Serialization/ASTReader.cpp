@@ -244,14 +244,15 @@ FindMacro(const PCHPredefinesBlocks &Buffers, llvm::StringRef MacroDef) {
 
 bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
                                         llvm::StringRef OriginalFileName,
-                                        std::string &SuggestedPredefines) {
+                                        std::string &SuggestedPredefines,
+                                        FileManager &FileMgr) {
   // We are in the context of an implicit include, so the predefines buffer will
   // have a #include entry for the PCH file itself (as normalized by the
   // preprocessor initialization). Find it and skip over it in the checking
   // below.
   llvm::SmallString<256> PCHInclude;
   PCHInclude += "#include \"";
-  PCHInclude += NormalizeDashIncludePath(OriginalFileName);
+  PCHInclude += NormalizeDashIncludePath(OriginalFileName, FileMgr);
   PCHInclude += "\"\n";
   std::pair<llvm::StringRef,llvm::StringRef> Split =
     llvm::StringRef(PP.getPredefines()).split(PCHInclude.str());
@@ -961,7 +962,8 @@ bool ASTReader::CheckPredefinesBuffers() {
   if (Listener)
     return Listener->ReadPredefinesBuffer(PCHPredefinesBuffers,
                                           ActualOriginalFileName,
-                                          SuggestedPredefines);
+                                          SuggestedPredefines,
+                                          FileMgr);
   return false;
 }
 
@@ -4934,4 +4936,3 @@ ASTReader::PerFileData::~PerFileData() {
   delete static_cast<HeaderFileInfoLookupTable *>(HeaderFileInfoTable);
   delete static_cast<ASTSelectorLookupTable *>(SelectorLookupTable);
 }
-

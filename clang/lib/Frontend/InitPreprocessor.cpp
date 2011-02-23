@@ -48,12 +48,13 @@ static void DefineBuiltinMacro(MacroBuilder &Builder, llvm::StringRef Macro,
   }
 }
 
-std::string clang::NormalizeDashIncludePath(llvm::StringRef File) {
+std::string clang::NormalizeDashIncludePath(llvm::StringRef File,
+                                            FileManager &FileMgr) {
   // Implicit include paths should be resolved relative to the current
   // working directory first, and then use the regular header search
   // mechanism. The proper way to handle this is to have the
   // predefines buffer located at the current working directory, but
-  // it has not file entry. For now, workaround this by using an
+  // it has no file entry. For now, workaround this by using an
   // absolute path if we find the file here, and otherwise letting
   // header search handle it.
   llvm::SmallString<128> Path(File);
@@ -61,21 +62,25 @@ std::string clang::NormalizeDashIncludePath(llvm::StringRef File) {
   bool exists;
   if (llvm::sys::fs::exists(Path.str(), exists) || !exists)
     Path = File;
+  else if (exists)
+    FileMgr.getFile(File);
 
   return Lexer::Stringify(Path.str());
 }
 
 /// AddImplicitInclude - Add an implicit #include of the specified file to the
 /// predefines buffer.
-static void AddImplicitInclude(MacroBuilder &Builder, llvm::StringRef File) {
+static void AddImplicitInclude(MacroBuilder &Builder, llvm::StringRef File,
+                               FileManager &FileMgr) {
   Builder.append("#include \"" +
-                 llvm::Twine(NormalizeDashIncludePath(File)) + "\"");
+                 llvm::Twine(NormalizeDashIncludePath(File, FileMgr)) + "\"");
 }
 
 static void AddImplicitIncludeMacros(MacroBuilder &Builder,
-                                     llvm::StringRef File) {
+                                     llvm::StringRef File,
+                                     FileManager &FileMgr) {
   Builder.append("#__include_macros \"" +
-                 llvm::Twine(NormalizeDashIncludePath(File)) + "\"");
+                 llvm::Twine(NormalizeDashIncludePath(File, FileMgr)) + "\"");
   // Marker token to stop the __include_macros fetch loop.
   Builder.append("##"); // ##?
 }
@@ -94,7 +99,7 @@ static void AddImplicitIncludePTH(MacroBuilder &Builder, Preprocessor &PP,
     return;
   }
 
-  AddImplicitInclude(Builder, OriginalFile);
+  AddImplicitInclude(Builder, OriginalFile, PP.getFileManager());
 }
 
 /// PickFP - This is used to pick a value based on the FP semantics of the
@@ -590,7 +595,8 @@ void clang::InitializePreprocessor(Preprocessor &PP,
   // If -imacros are specified, include them now.  These are processed before
   // any -include directives.
   for (unsigned i = 0, e = InitOpts.MacroIncludes.size(); i != e; ++i)
-    AddImplicitIncludeMacros(Builder, InitOpts.MacroIncludes[i]);
+    AddImplicitIncludeMacros(Builder, InitOpts.MacroIncludes[i],
+                             PP.getFileManager());
 
   // Process -include directives.
   for (unsigned i = 0, e = InitOpts.Includes.size(); i != e; ++i) {
@@ -598,7 +604,7 @@ void clang::InitializePreprocessor(Preprocessor &PP,
     if (Path == InitOpts.ImplicitPTHInclude)
       AddImplicitIncludePTH(Builder, PP, Path);
     else
-      AddImplicitInclude(Builder, Path);
+      AddImplicitInclude(Builder, Path, PP.getFileManager());
   }
 
   // Exit the command line and go back to <built-in> (2 is LC_LEAVE).

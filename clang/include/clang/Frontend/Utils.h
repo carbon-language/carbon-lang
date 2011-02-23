@@ -28,6 +28,7 @@ class Decl;
 class DependencyOutputOptions;
 class Diagnostic;
 class DiagnosticOptions;
+class FileManager;
 class HeaderSearch;
 class HeaderSearchOptions;
 class IdentifierTable;
@@ -42,7 +43,8 @@ class FrontendOptions;
 
 /// Normalize \arg File for use in a user defined #include directive (in the
 /// predefines buffer).
-std::string NormalizeDashIncludePath(llvm::StringRef File);
+std::string NormalizeDashIncludePath(llvm::StringRef File,
+                                     FileManager &FileMgr);
 
 /// Apply the header search options to get given HeaderSearch object.
 void ApplyHeaderSearchOptions(HeaderSearch &HS,
