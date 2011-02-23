@@ -1443,6 +1443,7 @@ void ExprEngine::processEndOfFunction(EndOfFunctionNodeBuilder& builder) {
     EndOfFunctionNodeBuilder B = builder.withCheckerTag(tag);
     checker->evalEndPath(B, tag, *this);
   }
+  getCheckerManager().runCheckersForEndPath(builder, *this);
 }
 
 /// ProcessSwitch - Called by CoreEngine.  Used to generate successor

@@ -160,6 +160,21 @@ public:
   }
 };
 
+class EndPath {
+  template <typename CHECKER>
+  static void _checkEndPath(void *checker, EndOfFunctionNodeBuilder &B,
+                            ExprEngine &Eng) {
+    ((const CHECKER *)checker)->checkEndPath(B, Eng);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForEndPath(
+     CheckerManager::CheckEndPathFunc(checker, _checkEndPath<CHECKER>));
+  }
+};
+
 } // end check namespace
 
 namespace eval {

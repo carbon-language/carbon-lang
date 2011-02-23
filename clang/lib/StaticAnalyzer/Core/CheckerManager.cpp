@@ -217,6 +217,16 @@ void CheckerManager::runCheckersForEndAnalysis(ExplodedGraph &G,
     EndAnalysisCheckers[i](G, BR, Eng);
 }
 
+/// \brief Run checkers for end of path.
+void CheckerManager::runCheckersForEndPath(EndOfFunctionNodeBuilder &B,
+                                           ExprEngine &Eng) {
+  for (unsigned i = 0, e = EndPathCheckers.size(); i != e; ++i) {
+    CheckEndPathFunc fn = EndPathCheckers[i];
+    EndOfFunctionNodeBuilder specialB = B.withCheckerTag(fn.Checker);
+    fn(specialB, Eng);
+  }
+}
+
 /// \brief Run checkers for evaluating a call.
 /// Only one checker will evaluate the call.
 void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
@@ -308,6 +318,10 @@ void CheckerManager::_registerForLocation(CheckLocationFunc checkfn) {
 
 void CheckerManager::_registerForEndAnalysis(CheckEndAnalysisFunc checkfn) {
   EndAnalysisCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForEndPath(CheckEndPathFunc checkfn) {
+  EndPathCheckers.push_back(checkfn);
 }
 
 void CheckerManager::_registerForEvalCall(EvalCallFunc checkfn) {

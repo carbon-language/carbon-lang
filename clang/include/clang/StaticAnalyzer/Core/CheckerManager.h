@@ -36,6 +36,7 @@ namespace ento {
   class ExplodedNodeSet;
   class ExplodedGraph;
   class GRState;
+  class EndOfFunctionNodeBuilder;
 
 class GraphExpander {
 public:
@@ -186,6 +187,9 @@ public:
   void runCheckersForEndAnalysis(ExplodedGraph &G, BugReporter &BR,
                                  ExprEngine &Eng);
 
+  /// \brief Run checkers for end of path.
+  void runCheckersForEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng);
+
   /// \brief Run checkers for evaluating a call.
   void runCheckersForEvalCall(ExplodedNodeSet &Dst,
                               const ExplodedNodeSet &Src,
@@ -221,6 +225,7 @@ public:
       CheckLocationFunc;
   typedef CheckerFn<ExplodedGraph &, BugReporter &, ExprEngine &>
       CheckEndAnalysisFunc;
+  typedef CheckerFn<EndOfFunctionNodeBuilder &, ExprEngine &> CheckEndPathFunc;
 
   typedef bool (*HandlesStmtFunc)(const Stmt *D);
   void _registerForPreStmt(CheckStmtFunc checkfn,
@@ -234,6 +239,8 @@ public:
   void _registerForLocation(CheckLocationFunc checkfn);
 
   void _registerForEndAnalysis(CheckEndAnalysisFunc checkfn);
+
+  void _registerForEndPath(CheckEndPathFunc checkfn);
 
   class EvalCallFunc {
     typedef bool (*Func)(void *, const CallExpr *, CheckerContext &);
@@ -315,6 +322,8 @@ private:
   std::vector<CheckLocationFunc> LocationCheckers;
 
   std::vector<CheckEndAnalysisFunc> EndAnalysisCheckers;
+
+  std::vector<CheckEndPathFunc> EndPathCheckers;
 
   std::vector<EvalCallFunc> EvalCallCheckers;
 };
