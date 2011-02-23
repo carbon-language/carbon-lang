@@ -134,7 +134,7 @@ def GenericDomain : Domain<0>;
 def VFPDomain     : Domain<1>; // Instructions in VFP domain only
 def NeonDomain    : Domain<2>; // Instructions in Neon domain only
 def VFPNeonDomain : Domain<3>; // Instructions in both VFP & Neon domains
-def VFPNeonA8Domain : Domain<7>; // Instructions in VFP & Neon under A8
+def VFPNeonA8Domain : Domain<5>; // Instructions in VFP & Neon under A8
 
 //===----------------------------------------------------------------------===//
 // ARM special operands.

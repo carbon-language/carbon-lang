@@ -45,13 +45,8 @@ namespace {
 }
 
 static bool inNEONDomain(unsigned Domain, bool isA8) {
-  if (Domain & ARMII::DomainNEON) {
-    // Some instructions only go down NEON pipeline when executed on CortexA8.
-    if (Domain & ARMII::DomainNEONA8)
-      return isA8;
-    return true;
-  }
-  return false;
+  return (Domain & ARMII::DomainNEON) ||
+    (isA8 && (Domain & ARMII::DomainNEONA8));
 }
 
 bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
