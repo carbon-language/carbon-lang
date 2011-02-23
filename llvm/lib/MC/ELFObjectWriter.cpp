@@ -833,7 +833,11 @@ static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
     return true;
 
   const MCSymbol &A = Symbol.AliasedSymbol();
-  if (!A.isVariable() && A.isUndefined() && !Data.isCommon())
+  if (Symbol.isVariable() && !A.isVariable() && A.isUndefined())
+    return false;
+
+  bool IsGlobal = GetBinding(Data) == ELF::STB_GLOBAL;
+  if (!Symbol.isVariable() && Symbol.isUndefined() && !IsGlobal)
     return false;
 
   if (!Asm.isSymbolLinkerVisible(Symbol) && !Symbol.isUndefined())
