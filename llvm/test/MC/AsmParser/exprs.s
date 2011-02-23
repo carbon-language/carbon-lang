@@ -35,8 +35,6 @@ k:
         check_expr 1 << 1, 2
         check_expr 2 >> 1, 1
         check_expr (~0 >> 1), -1
-        check_expr [~0 >> 1], -1
-        check_expr 4 * [4 + (3 + [2 * 2] + 1)], 48
         check_expr 3 - 2, 1
         check_expr 1 ^ 3, 2
         check_expr 1 && 2, 1
