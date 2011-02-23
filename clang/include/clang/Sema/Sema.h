@@ -1892,6 +1892,14 @@ public:
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
+  
+  /// \brief Conditionally issue a diagnostic based on the current
+  /// evaluation context.
+  ///
+  /// \param stmt - If stmt is non-null, delay reporting the diagnostic until
+  ///  the function body is parsed, and then do a basic reachability analysis to
+  ///  determine if the statement is reachable.  If it is unreachable, the
+  ///  diagnostic will not be emitted.
   bool DiagRuntimeBehavior(SourceLocation Loc, const Stmt *stmt,
                            const PartialDiagnostic &PD);
 
