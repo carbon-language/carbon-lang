@@ -24,8 +24,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 // Convenient macro definitions.
-#define APSR_C Bit32(m_inst_cpsr, CPSR_C)
-#define APSR_V Bit32(m_inst_cpsr, CPSR_V)
+#define APSR_C Bit32(m_inst_cpsr, CPSR_C_POS)
+#define APSR_V Bit32(m_inst_cpsr, CPSR_V_POS)
 
 #define AlignPC(pc_val) (pc_val & 0xFFFFFFFC)
 
@@ -7226,12 +7226,12 @@ EmulateInstructionARM::WriteFlags (Context &context,
                                    const uint32_t overflow)
 {
     m_new_inst_cpsr = m_inst_cpsr;
-    SetBit32(m_new_inst_cpsr, CPSR_N, Bit32(result, CPSR_N));
-    SetBit32(m_new_inst_cpsr, CPSR_Z, result == 0 ? 1 : 0);
+    SetBit32(m_new_inst_cpsr, CPSR_N_POS, Bit32(result, CPSR_N_POS));
+    SetBit32(m_new_inst_cpsr, CPSR_Z_POS, result == 0 ? 1 : 0);
     if (carry != ~0u)
-        SetBit32(m_new_inst_cpsr, CPSR_C, carry);
+        SetBit32(m_new_inst_cpsr, CPSR_C_POS, carry);
     if (overflow != ~0u)
-        SetBit32(m_new_inst_cpsr, CPSR_V, overflow);
+        SetBit32(m_new_inst_cpsr, CPSR_V_POS, overflow);
     if (m_new_inst_cpsr != m_inst_cpsr)
     {
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))

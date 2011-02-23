@@ -67,32 +67,32 @@ static inline const char *ARMCondCodeToString(uint32_t CC)
 }
 
 // Bit positions for CPSR
-#define CPSR_T  5
-#define CPSR_F  6
-#define CPSR_I  7
-#define CPSR_A  8
-#define CPSR_E  9
-#define CPSR_J 24
-#define CPSR_Q 27
-#define CPSR_V 28
-#define CPSR_C 29
-#define CPSR_Z 30
-#define CPSR_N 31
+#define CPSR_T_POS  5
+#define CPSR_F_POS  6
+#define CPSR_I_POS  7
+#define CPSR_A_POS  8
+#define CPSR_E_POS  9
+#define CPSR_J_POS 24
+#define CPSR_Q_POS 27
+#define CPSR_V_POS 28
+#define CPSR_C_POS 29
+#define CPSR_Z_POS 30
+#define CPSR_N_POS 31
 
 // Masks for CPSR
 #define MASK_CPSR_MODE_MASK     (0x0000001fu)
-#define MASK_CPSR_T         (1u << CPSR_T)
-#define MASK_CPSR_F         (1u << CPSR_F)
-#define MASK_CPSR_I         (1u << CPSR_I)
-#define MASK_CPSR_A         (1u << CPSR_A)
-#define MASK_CPSR_E         (1u << CPSR_E)
+#define MASK_CPSR_T         (1u << CPSR_T_POS)
+#define MASK_CPSR_F         (1u << CPSR_F_POS)
+#define MASK_CPSR_I         (1u << CPSR_I_POS)
+#define MASK_CPSR_A         (1u << CPSR_A_POS)
+#define MASK_CPSR_E         (1u << CPSR_E_POS)
 #define MASK_CPSR_GE_MASK   (0x000f0000u)
-#define MASK_CPSR_J         (1u << CPSR_J)
-#define MASK_CPSR_Q         (1u << CPSR_Q)
-#define MASK_CPSR_V         (1u << CPSR_V)
-#define MASK_CPSR_C         (1u << CPSR_C)
-#define MASK_CPSR_Z         (1u << CPSR_Z)
-#define MASK_CPSR_N         (1u << CPSR_N)
+#define MASK_CPSR_J         (1u << CPSR_J_POS)
+#define MASK_CPSR_Q         (1u << CPSR_Q_POS)
+#define MASK_CPSR_V         (1u << CPSR_V_POS)
+#define MASK_CPSR_C         (1u << CPSR_C_POS)
+#define MASK_CPSR_Z         (1u << CPSR_Z_POS)
+#define MASK_CPSR_N         (1u << CPSR_N_POS)
 
 }   // namespace lldb_private
 
