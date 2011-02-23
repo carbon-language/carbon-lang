@@ -8,6 +8,8 @@
 // RUN: grep 'dependency-gen.c' %t.d
 
 // PR8974
+// XFAIL: win32
+// RUN: rm -rf %t.dir
 // RUN: mkdir %t.dir
 // RUN: echo > %t.dir/x.h
 // RUN: %clang -include %t.dir/x.h -MD -MF %t.d -S -x c -o %t.o %s
