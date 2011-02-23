@@ -115,3 +115,8 @@ void test_pr9284() {
     pr9284b<false>(); // expected-note{{in instantiation of function template specialization 'pr9284b<false>' requested here}}
 }
 
+int test_pr9296() {
+    int array[2];
+    return array[true]; // no-warning
+}
+

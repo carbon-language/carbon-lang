@@ -3123,7 +3123,7 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
   if (!IndexExpr->isIntegerConstantExpr(index, Context))
     return;
 
-  if (!index.isNegative()) {
+  if (index.isUnsigned() || !index.isNegative()) {
     llvm::APInt size = ArrayTy->getSize();
     if (!size.isStrictlyPositive())
       return;
