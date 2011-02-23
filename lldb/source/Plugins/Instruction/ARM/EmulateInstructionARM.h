@@ -686,11 +686,11 @@ protected:
     bool
     EmulateSBCReg (ARMEncoding encoding);
     
-    // A8.6.211 SUB (immediate, Thumb)    - Encoding T1, T2
+    // A8.6.211 SUB (immediate, Thumb)
     bool
     EmulateSUBImmThumb (ARMEncoding encoding);
     
-    // A8.6.212 SUB (immediate, ARM)      - Encoding A1
+    // A8.6.212 SUB (immediate, ARM)
     bool
     EmulateSUBImmARM (ARMEncoding encoding);
     

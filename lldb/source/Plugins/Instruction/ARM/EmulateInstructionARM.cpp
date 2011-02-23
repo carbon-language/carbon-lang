@@ -1420,7 +1420,7 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
     {
         EncodingSpecificOperations();
         (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), ‘1’);
-        if d == 15 then // Can only occur for ARM encoding
+        if d == 15 then        // Can only occur for ARM encoding
            ALUWritePC(result); // setflags is always FALSE here
         else
             R[d] = result;
@@ -1465,11 +1465,17 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
             Rd = Bits32(opcode, 11, 8);
             setflags = false;
             imm32 = ThumbImm12(opcode); // imm32 = ZeroExtend(i:imm3:imm8, 32)
+            if (Rd == 15)
+                return false;
             break;
         case eEncodingA1:
             Rd = Bits32(opcode, 15, 12);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+            // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+            // TODO: Emulate SUBS PC, LR and related instructions.
+            if (Rd == 15 && setflags)
+                return false;
             break;
         default:
             return false;
@@ -6267,7 +6273,7 @@ EmulateInstructionARM::EmulateSBCImm (ARMEncoding encoding)
     // ARM pseudo code...
     if ConditionPassed() then
         EncodingSpecificOperations();
-    (result, carry, overflow) = AddWithCarry(R[n], NOT(imm32), APSR.C);
+        (result, carry, overflow) = AddWithCarry(R[n], NOT(imm32), APSR.C);
         if d == 15 then         // Can only occur for ARM encoding
             ALUWritePC(result); // setflags is always FALSE here
         else
@@ -6408,6 +6414,170 @@ EmulateInstructionARM::EmulateSBCReg (ARMEncoding encoding)
     EmulateInstruction::Context context;
     context.type = EmulateInstruction::eContextImmediate;
     context.SetNoArgs();
+    if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+        return false;
+
+    return true;
+}
+
+// This instruction subtracts an immediate value from a register value, and writes the result
+// to the destination register.  It can optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateSUBImmThumb (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(R[n], NOT(imm32), '1');
+        R[d] = result;
+        if setflags then
+            APSR.N = result<31>;
+            APSR.Z = IsZeroBit(result);
+            APSR.C = carry;
+            APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rd; // the destination register
+    uint32_t Rn; // the first operand
+    bool setflags;
+    uint32_t imm32; // the immediate value to be subtracted from the value obtained from Rn
+    switch (encoding) {
+    case eEncodingT1:
+        Rd = Bits32(opcode, 2, 0);
+        Rn = Bits32(opcode, 5, 3);
+        setflags = !InITBlock();
+        imm32 = Bits32(opcode, 8, 6); // imm32 = ZeroExtend(imm3, 32)
+        break;
+    case eEncodingT2:
+        Rd = Rn = Bits32(opcode, 10, 8);
+        setflags = !InITBlock();
+        imm32 = Bits32(opcode, 7, 0); // imm32 = ZeroExtend(imm8, 32)
+        break;
+    case eEncodingT3:
+        Rd = Bits32(opcode, 11, 8);
+        Rn = Bits32(opcode, 19, 16);
+        setflags = BitIsSet(opcode, 20);
+        imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
+
+        // if Rd == '1111' && S == '1' then SEE CMP (immediate);
+        if (Rd == 15 && setflags)
+            return EmulateCMPImm(eEncodingT2);
+
+        // if Rn == ‘1101’ then SEE SUB (SP minus immediate);
+        if (Rn == 13)
+            return EmulateSUBSPImm(eEncodingT2);
+
+        // if d == 13 || (d == 15 && S == '0') || n == 15 then UNPREDICTABLE;
+        if (Rd == 13 || (Rd == 15 && !setflags) || Rn == 15)
+            return false;
+        break;
+    case eEncodingT4:
+        Rd = Bits32(opcode, 11, 8);
+        Rn = Bits32(opcode, 19, 16);
+        setflags = BitIsSet(opcode, 20);
+        imm32 = ThumbImm12(opcode); // imm32 = ZeroExtend(i:imm3:imm8, 32)
+
+        // if Rn == '1111' then SEE ADR;
+        if (Rn == 15)
+            return EmulateADR(eEncodingT2);
+
+        // if Rn == '1101' then SEE SUB (SP minus immediate);
+        if (Rn == 13)
+            return EmulateSUBSPImm(eEncodingT3);
+
+        if (BadReg(Rd))
+            return false;
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from the operand register Rn.
+    uint32_t reg_val = ReadCoreReg(Rn, &success);
+    if (!success)
+        return false;
+                  
+    AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs ();
+
+    if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+        return false;
+
+    return true;
+}
+
+// This instruction subtracts an immediate value from a register value, and writes the result
+// to the destination register.  It can optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateSUBImmARM (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(R[n], NOT(imm32), '1');
+        if d == 15 then
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rd; // the destination register
+    uint32_t Rn; // the first operand
+    bool setflags;
+    uint32_t imm32; // the immediate value to be subtracted from the value obtained from Rn
+    switch (encoding) {
+    case eEncodingA1:
+        Rd = Bits32(opcode, 15, 12);
+        Rn = Bits32(opcode, 19, 16);
+        setflags = BitIsSet(opcode, 20);
+        imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+
+        // if Rn == ‘1111’ && S == ‘0’ then SEE ADR;
+        if (Rn == 15 && !setflags)
+            return EmulateADR(eEncodingA2);
+
+        // if Rn == ‘1101’ then SEE SUB (SP minus immediate);
+        if (Rn == 13)
+            return EmulateSUBSPImm(eEncodingA1);
+
+        // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+        // TODO: Emulate SUBS PC, LR and related instructions.
+        if (Rd == 15 && setflags)
+            return false;
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from the operand register Rn.
+    uint32_t reg_val = ReadCoreReg(Rn, &success);
+    if (!success)
+        return false;
+                  
+    AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs ();
+
     if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
         return false;
 
@@ -6773,6 +6943,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x02c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSBCImm, "sbc{s}<c> <Rd>, <Rn>, #<const>"},
         // sbc (register)
         { 0x0fe00010, 0x00c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // sub (immediate, ARM)
+        { 0x0fe00000, 0x02400000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBImmARM, "sub{s}<c> <Rd>, <Rn>, #<const>"},
         // sub (sp minus immediate)
         { 0x0fef0000, 0x024d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}<c> <Rd>, sp, #<const>"},
         // teq (immediate)
@@ -6970,6 +7142,11 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // sbc (register)
         { 0xffffffc0, 0x00004180, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSBCReg, "sbcs|sbc<c> <Rdn>, <Rm>"},
         { 0xffe08000, 0xeb600000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // sub (immediate, Thumb)
+        { 0xfffffe00, 0x00001e00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBImmThumb, "subs|sub<c> <Rd>, <Rn> #imm3"},
+        { 0xfffff800, 0x00003800, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateSUBImmThumb, "subs|sub<c> <Rdn>, #imm8"},
+        { 0xfbe08000, 0xf1a00000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBImmThumb, "sub{s}<c>.w <Rd>, <Rn>, #<const>"},
+        { 0xfbf08000, 0xf2a00000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateSUBImmThumb, "subw<c> <Rd>, <Rn>, #imm12"},
         // sub (sp minus immediate)
         { 0xfbef8000, 0xf1ad0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}.w <Rd>, sp, #<const>"},
         { 0xfbff8000, 0xf2ad0000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw<c> <Rd>, sp, #imm12"},
