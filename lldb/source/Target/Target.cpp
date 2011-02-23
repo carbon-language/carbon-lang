@@ -801,28 +801,20 @@ Target::GetSettingsController ()
 ArchSpec
 Target::GetDefaultArchitecture ()
 {
-    lldb::UserSettingsControllerSP &settings_controller = GetSettingsController();
-    lldb::SettableVariableType var_type;
-    Error err;
-    StringList result = settings_controller->GetVariable ("target.default-arch", var_type, "[]", err);
-
-    const char *default_name = "";
-    if (result.GetSize() == 1 && err.Success())
-        default_name = result.GetStringAtIndex (0);
-
-    ArchSpec default_arch (default_name);
-    return default_arch;
+    lldb::UserSettingsControllerSP settings_controller_sp (GetSettingsController());
+    
+    if (settings_controller_sp)
+        return static_cast<Target::SettingsController *>(settings_controller_sp.get())->GetArchitecture ();
+    return ArchSpec();
 }
 
 void
-Target::SetDefaultArchitecture (ArchSpec new_arch)
+Target::SetDefaultArchitecture (const ArchSpec& arch)
 {
-    if (new_arch.IsValid())
-        GetSettingsController ()->SetVariable ("target.default-arch", 
-                                               new_arch.AsCString(),
-                                               lldb::eVarSetOperationAssign, 
-                                               false, 
-                                               "[]");
+    lldb::UserSettingsControllerSP settings_controller_sp (GetSettingsController());
+
+    if (settings_controller_sp)
+        static_cast<Target::SettingsController *>(settings_controller_sp.get())->GetArchitecture () = arch;
 }
 
 Target *
@@ -854,7 +846,7 @@ Target::UpdateInstanceName ()
     {
         sstr.Printf ("%s_%s", 
                      module_sp->GetFileSpec().GetFilename().AsCString(), 
-                     module_sp->GetArchitecture().AsCString());
+                     module_sp->GetArchitecture().GetArchitectureName());
         GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
                                                          sstr.GetData());
     }
@@ -1053,11 +1045,9 @@ Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
 {
     if (var_name == GetSettingNameForDefaultArch())
     {
-        ArchSpec tmp_spec (value);
-        if (tmp_spec.IsValid())
-            m_default_architecture = tmp_spec;
-        else
-          err.SetErrorStringWithFormat ("'%s' is not a valid architecture.", value);
+        m_default_architecture.SetTriple (value);
+        if (!m_default_architecture.IsValid())
+            err.SetErrorStringWithFormat ("'%s' is not a valid architecture or triple.", value);
     }
     return true;
 }
@@ -1072,7 +1062,7 @@ Target::SettingsController::GetGlobalVariable (const ConstString &var_name,
     {
         // If the arch is invalid (the default), don't show a string for it
         if (m_default_architecture.IsValid())
-            value.AppendString (m_default_architecture.AsCString());
+            value.AppendString (m_default_architecture.GetArchitectureName());
         return true;
     }
     else

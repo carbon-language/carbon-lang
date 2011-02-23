@@ -1001,7 +1001,7 @@ GDBRemoteCommunication::GetHostInfo ()
             }
             
             if (cpu != LLDB_INVALID_CPUTYPE)
-                m_arch.SetMachOArch (cpu, sub);
+                m_arch.SetArchitecture (lldb::eArchTypeMachO, cpu, sub);
         }
     }
     return m_supports_qHostInfo == eLazyBoolYes;

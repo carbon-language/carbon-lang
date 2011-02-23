@@ -42,9 +42,9 @@ DumpModuleArchitecture (Stream &strm, Module *module, uint32_t width)
     if (module)
     {
         if (width)
-            strm.Printf("%-*s", width, module->GetArchitecture().AsCString());
+            strm.Printf("%-*s", width, module->GetArchitecture().GetArchitectureName());
         else
-            strm.PutCString(module->GetArchitecture().AsCString());
+            strm.PutCString(module->GetArchitecture().GetArchitectureName());
     }
 }
 
@@ -183,7 +183,7 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
             {
                 strm.PutCString ("Sections for '");
                 strm << module->GetFileSpec();
-                strm.Printf ("' (%s):\n", module->GetArchitecture().AsCString());
+                strm.Printf ("' (%s):\n", module->GetArchitecture().GetArchitectureName());
                 strm.IndentMore();
                 section_list->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target, true, UINT32_MAX);
                 strm.IndentLess();

@@ -11,6 +11,7 @@
 #define liblldb_ArchVolatileRegs_x86_h_
 
 #include "lldb/lldb-private.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Utility/ArchVolatileRegs.h"
 #include <set>
 
@@ -62,11 +63,11 @@ public:
     EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
 
 private:
-    ArchVolatileRegs_x86(int cpu);        // Call CreateInstance instead.
+    ArchVolatileRegs_x86(llvm::Triple::ArchType cpu);        // Call CreateInstance instead.
 
     void initialize_regset(lldb_private::Thread& thread);
 
-    int m_cpu;
+    llvm::Triple::ArchType m_cpu;
     std::set<int> m_non_volatile_regs;
 };
 

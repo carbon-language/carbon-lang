@@ -328,8 +328,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         // We didn't get anything. See if we are debugging ARM and fill with
         // a hard coded register set until we can get an updated debugserver
         // down on the devices.
-        ArchSpec arm_arch ("arm");
-        if (GetTarget().GetArchitecture() == arm_arch)
+        if (GetTarget().GetArchitecture().GetMachine() == llvm::Triple::arm)
             m_register_info.HardcodeARMRegisters();
     }
     m_register_info.Finalize ();
@@ -553,7 +552,9 @@ ProcessGDBRemote::DoLaunch
     {
         // Set our user ID to an invalid process ID.
         SetID(LLDB_INVALID_PROCESS_ID);
-        error.SetErrorStringWithFormat("Failed to get object file from '%s' for arch %s.\n", module->GetFileSpec().GetFilename().AsCString(), module->GetArchitecture().AsCString());
+        error.SetErrorStringWithFormat("Failed to get object file from '%s' for arch %s.\n", 
+                                       module->GetFileSpec().GetFilename().AsCString(), 
+                                       module->GetArchitecture().GetArchitectureName());
     }
     return error;
 
@@ -642,8 +643,8 @@ ProcessGDBRemote::DidLaunchOrAttach ()
         // it has, so we really need to take the remote host architecture as our
         // defacto architecture in this case.
 
-        if (gdb_remote_arch == ArchSpec ("arm") && 
-            vendor && ::strcmp(vendor, "apple") == 0)
+        if (gdb_remote_arch.GetMachine() == llvm::Triple::arm &&
+            gdb_remote_arch.GetTriple().getVendor() == llvm::Triple::Apple)
         {
             GetTarget().SetArchitecture (gdb_remote_arch);
             target_arch = gdb_remote_arch;
@@ -1044,16 +1045,16 @@ ProcessGDBRemote::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
     static const uint8_t g_ppc_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
     static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
 
-    ArchSpec::CPU arch_cpu = GetTarget().GetArchitecture().GetGenericCPUType();
-    switch (arch_cpu)
+    const llvm::Triple::ArchType machine = GetTarget().GetArchitecture().GetMachine();
+    switch (machine)
     {
-    case ArchSpec::eCPU_i386:
-    case ArchSpec::eCPU_x86_64:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
         trap_opcode = g_i386_breakpoint_opcode;
         trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
         break;
     
-    case ArchSpec::eCPU_arm:
+    case llvm::Triple::arm:
         // TODO: fill this in for ARM. We need to dig up the symbol for
         // the address in the breakpoint locaiton and figure out if it is
         // an ARM or Thumb breakpoint.
@@ -1061,8 +1062,8 @@ ProcessGDBRemote::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
         trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
         break;
     
-    case ArchSpec::eCPU_ppc:
-    case ArchSpec::eCPU_ppc64:
+    case llvm::Triple::ppc:
+    case llvm::Triple::ppc64:
         trap_opcode = g_ppc_breakpoint_opcode;
         trap_opcode_size = sizeof(g_ppc_breakpoint_opcode);
         break;
@@ -1955,31 +1956,33 @@ ProcessGDBRemote::StartDebugserverProcess
 
             Error local_err;    // Errors that don't affect the spawning.
             if (log)
-                log->Printf ("%s ( path='%s', argv=%p, envp=%p, arch=%s )", __FUNCTION__, debugserver_path, inferior_argv, inferior_envp, inferior_arch.AsCString());
+                log->Printf ("%s ( path='%s', argv=%p, envp=%p, arch=%s )", 
+                             __FUNCTION__, 
+                             debugserver_path, 
+                             inferior_argv, 
+                             inferior_envp, 
+                             inferior_arch.GetArchitectureName());
             error.SetError( ::posix_spawnattr_init (&attr), eErrorTypePOSIX);
             if (error.Fail() || log)
                 error.PutToLog(log.get(), "::posix_spawnattr_init ( &attr )");
             if (error.Fail())
-                return error;;
+                return error;
 
 #if !defined (__arm__)
 
             // We don't need to do this for ARM, and we really shouldn't now 
             // that we have multiple CPU subtypes and no posix_spawnattr call 
             // that allows us to set which CPU subtype to launch...
-            if (inferior_arch.GetType() == eArchTypeMachO)
+            cpu_type_t cpu = inferior_arch.GetMachOCPUType();
+            if (cpu != 0 && cpu != UINT32_MAX && cpu != LLDB_INVALID_CPUTYPE)
             {
-                cpu_type_t cpu = inferior_arch.GetCPUType();
-                if (cpu != 0 && cpu != UINT32_MAX && cpu != LLDB_INVALID_CPUTYPE)
-                {
-                    size_t ocount = 0;
-                    error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
-                    if (error.Fail() || log)
-                        error.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
-
-                    if (error.Fail() != 0 || ocount != 1)
-                        return error;
-                }
+                size_t ocount = 0;
+                error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
+                if (error.Fail() || log)
+                    error.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
+                
+                if (error.Fail() != 0 || ocount != 1)
+                    return error;
             }
 
 #endif

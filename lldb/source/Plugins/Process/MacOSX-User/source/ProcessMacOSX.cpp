@@ -337,7 +337,9 @@ ProcessMacOSX::DoLaunch
         // Set our user ID to an invalid process ID.
         SetID (LLDB_INVALID_PROCESS_ID);
         error.SetErrorToGenericError ();
-        error.SetErrorStringWithFormat("Failed to get object file from '%s' for arch %s.\n", module->GetFileSpec().GetFilename().AsCString(), module->GetArchitecture().AsCString());
+        error.SetErrorStringWithFormat("Failed to get object file from '%s' for arch %s.\n", 
+                                       module->GetFileSpec().GetFilename().AsCString(), 
+                                       module->GetArchitecture().GetArchitectureName());
     }
 
     // Return the process ID we have
@@ -498,16 +500,16 @@ ProcessMacOSX::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
     static const uint8_t g_ppc_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
     static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
 
-    ArchSpec::CPU arch_cpu = m_arch_spec.GetGenericCPUType();
-    switch (arch_cpu)
+    llvm::Triple::ArchType machine = m_arch_spec.GetMachine();
+    switch (machine)
     {
-    case ArchSpec::eCPU_i386:
-    case ArchSpec::eCPU_x86_64:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
         trap_opcode = g_i386_breakpoint_opcode;
         trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
         break;
     
-    case ArchSpec::eCPU_arm:
+    case llvm::Triple::arm:
         // TODO: fill this in for ARM. We need to dig up the symbol for
         // the address in the breakpoint locaiton and figure out if it is
         // an ARM or Thumb breakpoint.
@@ -515,8 +517,8 @@ ProcessMacOSX::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
         trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
         break;
     
-    case ArchSpec::eCPU_ppc:
-    case ArchSpec::eCPU_ppc64:
+    case llvm::Triple::ppc:
+    case llvm::Triple::ppc64:
         trap_opcode = g_ppc_breakpoint_opcode;
         trap_opcode_size = sizeof(g_ppc_breakpoint_opcode);
         break;
@@ -1672,19 +1674,16 @@ ProcessMacOSX::PosixSpawnChildForPTraceDebugging
     // We don't need to do this for ARM, and we really shouldn't now that we
     // have multiple CPU subtypes and no posix_spawnattr call that allows us
     // to set which CPU subtype to launch...
-    if (arch_spec.GetType() == eArchTypeMachO)
+    cpu_type_t cpu = arch_spec.GetMachOCPUType();
+    if (cpu != 0 && cpu != UINT32_MAX && cpu != LLDB_INVALID_CPUTYPE)
     {
-        cpu_type_t cpu = arch_spec.GetCPUType();
-        if (cpu != 0 && cpu != UINT32_MAX && cpu != LLDB_INVALID_CPUTYPE)
-        {
-            size_t ocount = 0;
-            err.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
-            if (err.Fail() || log)
-                err.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
+        size_t ocount = 0;
+        err.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
+        if (err.Fail() || log)
+            err.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
 
-            if (err.Fail() != 0 || ocount != 1)
-                return LLDB_INVALID_PROCESS_ID;
-        }
+        if (err.Fail() != 0 || ocount != 1)
+            return LLDB_INVALID_PROCESS_ID;
     }
 
 #endif

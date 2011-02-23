@@ -310,7 +310,7 @@ public:
                      
         if (error.Success())
         {
-            const char *archname = exe_module->GetArchitecture().AsCString();
+            const char *archname = exe_module->GetArchitecture().GetArchitectureName();
 
             result.AppendMessageWithFormat ("Process %i launched: '%s' (%s)\n", process->GetID(), filename, archname);
             result.SetDidChangeProcessState (true);
@@ -328,7 +328,7 @@ public:
                         if (synchronous_execution)
                         {
                             state = process->WaitForProcessToStop (NULL);
-                            if (!StateIsStoppedState(state));
+                            if (!StateIsStoppedState(state))
                             {
                                 result.AppendErrorWithFormat ("Process isn't stopped: %s", StateAsCString(state));
                             }                    
@@ -777,12 +777,12 @@ public:
             
             if (!old_arch_spec.IsValid())
             {
-                result.AppendMessageWithFormat ("Architecture set to: %s.\n", target->GetArchitecture().AsCString());
+                result.AppendMessageWithFormat ("Architecture set to: %s.\n", target->GetArchitecture().GetArchitectureName());
             }
             else if (old_arch_spec != target->GetArchitecture())
             {
                 result.AppendWarningWithFormat("Architecture changed from %s to %s.\n", 
-                                                old_arch_spec.AsCString(), target->GetArchitecture().AsCString());
+                                                old_arch_spec.GetArchitectureName(), target->GetArchitecture().GetArchitectureName());
             }
         }
         return result.Succeeded();

@@ -168,7 +168,7 @@ ObjectContainerUniversalMachO::Dump (Stream *s) const
     {
         s->Indent();
         GetArchitectureAtIndex(i, arch);
-        s->Printf("arch[%u] = %s\n", arch.AsCString());
+        s->Printf("arch[%u] = %s\n", arch.GetArchitectureName());
     }
     for (i=0; i<num_objects; i++)
     {
@@ -190,7 +190,7 @@ ObjectContainerUniversalMachO::GetArchitectureAtIndex (uint32_t idx, ArchSpec& a
 {
     if (idx < m_header.nfat_arch)
     {
-        arch.SetMachOArch (m_fat_archs[idx].cputype, m_fat_archs[idx].cpusubtype);
+        arch.SetArchitecture (lldb::eArchTypeMachO, m_fat_archs[idx].cputype, m_fat_archs[idx].cpusubtype);
         return true;
     }
     return false;
@@ -207,7 +207,7 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
     {
         arch = Target::GetDefaultArchitecture ();
         if (!arch.IsValid())
-            arch = LLDB_ARCH_DEFAULT;
+            arch.SetTriple (LLDB_ARCH_DEFAULT);
     }
     else
         arch = m_module->GetArchitecture();

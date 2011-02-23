@@ -30,7 +30,7 @@ StopInfoMachException::GetDescription ()
 {
     if (m_description.empty() && m_value != 0)
     {
-        ArchSpec::CPU cpu = m_thread.GetProcess().GetTarget().GetArchitecture().GetGenericCPUType();
+        const llvm::Triple::ArchType cpu = m_thread.GetProcess().GetTarget().GetArchitecture().GetMachine();
 
         const char *exc_desc = NULL;
         const char *code_label = "code";
@@ -44,7 +44,7 @@ StopInfoMachException::GetDescription ()
             subcode_label = "address";
             switch (cpu)
             {                        
-            case ArchSpec::eCPU_arm:
+            case llvm::Triple::arm:
                 switch (m_exc_code)
                 {
                 case 0x101: code_desc = "EXC_ARM_DA_ALIGN"; break;
@@ -52,8 +52,8 @@ StopInfoMachException::GetDescription ()
                 }
                 break;
 
-            case ArchSpec::eCPU_ppc:
-            case ArchSpec::eCPU_ppc64:
+            case llvm::Triple::ppc:
+            case llvm::Triple::ppc64:
                 switch (m_exc_code)
                 {
                 case 0x101: code_desc = "EXC_PPC_VM_PROT_READ"; break;
@@ -71,14 +71,14 @@ StopInfoMachException::GetDescription ()
             exc_desc = "EXC_BAD_INSTRUCTION";
             switch (cpu)
             {
-            case ArchSpec::eCPU_i386:
-            case ArchSpec::eCPU_x86_64:
+            case llvm::Triple::x86:
+            case llvm::Triple::x86_64:
                 if (m_exc_code == 1)
                     code_desc = "EXC_I386_INVOP";
                 break;
 
-            case ArchSpec::eCPU_ppc:
-            case ArchSpec::eCPU_ppc64:
+            case llvm::Triple::ppc:
+            case llvm::Triple::ppc64:
                 switch (m_exc_code)
                 {
                 case 1: code_desc = "EXC_PPC_INVALID_SYSCALL"; break; 
@@ -90,7 +90,7 @@ StopInfoMachException::GetDescription ()
                 }
                 break;
 
-            case ArchSpec::eCPU_arm:
+            case llvm::Triple::arm:
                 if (m_exc_code == 1)
                     code_desc = "EXC_ARM_UNDEFINED";
                 break;
@@ -104,8 +104,8 @@ StopInfoMachException::GetDescription ()
             exc_desc = "EXC_ARITHMETIC";
             switch (cpu)
             {
-            case ArchSpec::eCPU_i386:
-            case ArchSpec::eCPU_x86_64:
+            case llvm::Triple::x86:
+            case llvm::Triple::x86_64:
                 switch (m_exc_code)
                 {
                 case 1: code_desc = "EXC_I386_DIV"; break;
@@ -119,8 +119,8 @@ StopInfoMachException::GetDescription ()
                 }
                 break;
 
-            case ArchSpec::eCPU_ppc:
-            case ArchSpec::eCPU_ppc64:
+            case llvm::Triple::ppc:
+            case llvm::Triple::ppc64:
                 switch (m_exc_code)
                 {
                 case 1: code_desc = "EXC_PPC_OVERFLOW"; break;
@@ -157,8 +157,8 @@ StopInfoMachException::GetDescription ()
                 exc_desc = "EXC_BREAKPOINT";
                 switch (cpu)
                 {
-                case ArchSpec::eCPU_i386:
-                case ArchSpec::eCPU_x86_64:
+                case llvm::Triple::x86:
+                case llvm::Triple::x86_64:
                     switch (m_exc_code)
                     {
                     case 1: subcode_desc = "EXC_I386_SGL"; break;
@@ -166,15 +166,15 @@ StopInfoMachException::GetDescription ()
                     }
                     break;
 
-                case ArchSpec::eCPU_ppc:
-                case ArchSpec::eCPU_ppc64:
+                case llvm::Triple::ppc:
+                case llvm::Triple::ppc64:
                     switch (m_exc_code)
                     {
                     case 1: subcode_desc = "EXC_PPC_BREAKPOINT"; break;
                     }
                     break;
                 
-                case ArchSpec::eCPU_arm:
+                case llvm::Triple::arm:
                     switch (m_exc_code)
                     {
                     case 1: subcode_desc = "EXC_ARM_BREAKPOINT"; break;
@@ -248,7 +248,7 @@ StopInfoMachException::CreateStopReasonWithMachException
 {
     if (exc_type != 0)
     {
-        ArchSpec::CPU cpu = thread.GetProcess().GetTarget().GetArchitecture().GetGenericCPUType();
+        const llvm::Triple::ArchType cpu = thread.GetProcess().GetTarget().GetArchitecture().GetMachine();
 
         switch (exc_type)
         {
@@ -258,8 +258,8 @@ StopInfoMachException::CreateStopReasonWithMachException
         case 2: // EXC_BAD_INSTRUCTION
             switch (cpu)
             {
-            case ArchSpec::eCPU_ppc:
-            case ArchSpec::eCPU_ppc64:
+            case llvm::Triple::ppc:
+            case llvm::Triple::ppc64:
                 switch (exc_code)
                 {
                 case 1: // EXC_PPC_INVALID_SYSCALL
@@ -293,8 +293,8 @@ StopInfoMachException::CreateStopReasonWithMachException
                 bool is_software_breakpoint = false;
                 switch (cpu)
                 {
-                case ArchSpec::eCPU_i386:
-                case ArchSpec::eCPU_x86_64:
+                case llvm::Triple::x86:
+                case llvm::Triple::x86_64:
                     if (exc_code == 1) // EXC_I386_SGL
                     {
                         return StopInfo::CreateStopReasonToTrace(thread);
@@ -305,12 +305,12 @@ StopInfoMachException::CreateStopReasonWithMachException
                     }
                     break;
 
-                case ArchSpec::eCPU_ppc:
-                case ArchSpec::eCPU_ppc64:
+                case llvm::Triple::ppc:
+                case llvm::Triple::ppc64:
                     is_software_breakpoint = exc_code == 1; // EXC_PPC_BREAKPOINT
                     break;
                 
-                case ArchSpec::eCPU_arm:
+                case llvm::Triple::arm:
                     is_software_breakpoint = exc_code == 1; // EXC_ARM_BREAKPOINT
                     break;
 

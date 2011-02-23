@@ -279,7 +279,7 @@ LaunchInNewTerminalWithCommandFile
     
     if (arch_spec && arch_spec->IsValid())
     {
-        command_file.Printf("--arch=%s ", arch_spec->AsCString());
+        command_file.Printf("--arch=%s ", arch_spec->GetArchitectureName());
     }
 
     if (disable_aslr)
@@ -441,12 +441,12 @@ LaunchInNewTerminalWithAppleScript
     darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
 
     if (arch_spec)
-        command.Printf("arch -arch %s ", arch_spec->AsCString());
+        command.Printf("arch -arch %s ", arch_spec->GetArchitectureName());
 
     command.Printf("'%s' --unix-socket=%s", launcher_path, unix_socket_name.c_str());
 
     if (arch_spec && arch_spec->IsValid())
-        command.Printf(" --arch=%s", arch_spec->AsCString());
+        command.Printf(" --arch=%s", arch_spec->GetArchitectureName());
 
     if (working_dir)
         command.Printf(" --working-dir '%s'", working_dir);

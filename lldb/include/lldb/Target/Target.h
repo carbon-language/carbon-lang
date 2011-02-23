@@ -153,7 +153,7 @@ public:
     GetDefaultArchitecture ();
 
     static void
-    SetDefaultArchitecture (ArchSpec new_arch);
+    SetDefaultArchitecture (const ArchSpec &arch);
 
     void
     UpdateInstanceName ();
@@ -534,6 +534,11 @@ public:
         static SettingEntry global_settings_table[];
         static SettingEntry instance_settings_table[];
         
+        ArchSpec &
+        GetArchitecture ()
+        {
+            return m_default_architecture;
+        }
     protected:
         
         lldb::InstanceSettingsSP

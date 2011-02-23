@@ -142,7 +142,8 @@ ThreadGDBRemote::GetUnwinder ()
     if (m_unwinder_ap.get() == NULL)
     {
         const ArchSpec target_arch (GetProcess().GetTarget().GetArchitecture ());
-        if (target_arch == ArchSpec("x86_64") ||  target_arch == ArchSpec("i386"))
+        const llvm::Triple::ArchType machine = target_arch.GetMachine();
+        if (machine == llvm::Triple::x86_64 || machine == llvm::Triple::x86)
         {
             m_unwinder_ap.reset (new UnwindLLDB (*this));
         }

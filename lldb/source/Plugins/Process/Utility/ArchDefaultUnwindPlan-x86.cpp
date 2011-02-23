@@ -18,7 +18,7 @@ using namespace lldb_private;
 lldb_private::ArchDefaultUnwindPlan *
 ArchDefaultUnwindPlan_x86_64::CreateInstance (const lldb_private::ArchSpec &arch)
 {
-    if (arch.GetGenericCPUType () == ArchSpec::eCPU_x86_64)
+    if (arch.GetMachine () == llvm::Triple::x86_64)
         return new ArchDefaultUnwindPlan_x86_64 ();
     return NULL;
 }
@@ -126,7 +126,7 @@ ArchDefaultUnwindPlan_x86_64::GetArchDefaultUnwindPlan (Thread& thread, Address 
 lldb_private::ArchDefaultUnwindPlan *
 ArchDefaultUnwindPlan_i386::CreateInstance (const lldb_private::ArchSpec &arch)
 {
-    if (arch.GetGenericCPUType () == ArchSpec::eCPU_i386)
+    if (arch.GetMachine () == llvm::Triple::x86)
         return new ArchDefaultUnwindPlan_i386 ();
     return NULL;
 }

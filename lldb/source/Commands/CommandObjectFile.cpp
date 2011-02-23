@@ -145,7 +145,7 @@ CommandObjectFile::Execute
         if (target_sp)
         {
             debugger.GetTargetList().SetSelectedTarget(target_sp.get());
-            result.AppendMessageWithFormat ("Current executable set to '%s' (%s).\n", file_path, target_sp->GetArchitecture().AsCString());
+            result.AppendMessageWithFormat ("Current executable set to '%s' (%s).\n", file_path, target_sp->GetArchitecture().GetArchitectureName());
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else

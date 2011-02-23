@@ -360,7 +360,7 @@ ObjectContainerBSDArchive::Dump (Stream *s) const
     {
         s->Indent();
         GetArchitectureAtIndex(i, arch);
-        s->Printf("arch[%u] = %s\n", arch.AsCString());
+        s->Printf("arch[%u] = %s\n", arch.GetArchitectureName());
     }
     for (i=0; i<num_objects; i++)
     {

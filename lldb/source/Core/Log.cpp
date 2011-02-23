@@ -87,13 +87,10 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
     {
         static uint32_t g_sequence_id = 0;
         StreamString header;
-        static Mutex g_LogThreadedMutex(Mutex::eMutexTypeRecursive);
-
-        Mutex::Locker locker;
-
-        // Lock the threaded logging mutex if we are doing thread safe logging
-        if (m_options.Test (LLDB_LOG_OPTION_THREADSAFE))
-            locker.Reset(g_LogThreadedMutex.GetMutex());
+		// Enabling the thread safe logging actually deadlocks right now.
+		// Need to fix this at some point.
+//        static Mutex g_LogThreadedMutex(Mutex::eMutexTypeRecursive);
+//        Mutex::Locker locker (g_LogThreadedMutex);
 
         // Add a sequence ID if requested
         if (m_options.Test (LLDB_LOG_OPTION_PREPEND_SEQUENCE))

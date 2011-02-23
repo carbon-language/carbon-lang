@@ -268,20 +268,20 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
                 if (cputype & CPU_ARCH_ABI64)
                 {
                     // We have a 64 bit kernel on a 64 bit system
-                    g_host_arch_32.SetMachOArch (~(CPU_ARCH_MASK) & cputype, cpusubtype);
-                    g_host_arch_64.SetMachOArch (cputype, cpusubtype);
+                    g_host_arch_32.SetArchitecture (lldb::eArchTypeMachO, ~(CPU_ARCH_MASK) & cputype, cpusubtype);
+                    g_host_arch_64.SetArchitecture (lldb::eArchTypeMachO, cputype, cpusubtype);
                 }
                 else
                 {
                     // We have a 32 bit kernel on a 64 bit system
-                    g_host_arch_32.SetMachOArch (cputype, cpusubtype);
+                    g_host_arch_32.SetArchitecture (lldb::eArchTypeMachO, cputype, cpusubtype);
                     cputype |= CPU_ARCH_ABI64;
-                    g_host_arch_64.SetMachOArch (cputype, cpusubtype);
+                    g_host_arch_64.SetArchitecture (lldb::eArchTypeMachO, cputype, cpusubtype);
                 }
             }
             else
             {
-                g_host_arch_32.SetMachOArch (cputype, cpusubtype);
+                g_host_arch_32.SetArchitecture (lldb::eArchTypeMachO, cputype, cpusubtype);
                 g_host_arch_64.Clear();
             }
         }
@@ -293,23 +293,23 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
     {
 #if defined (__x86_64__)
 
-        g_host_arch_64.SetArch ("x86_64");
+        g_host_arch_64.SetTriple ("x86_64");
 
 #elif defined (__i386__)
 
-        g_host_arch_32.SetArch ("i386");
+        g_host_arch_32.SetTriple ("i386");
 
 #elif defined (__arm__)        
 
-        g_host_arch_32.SetArch ("arm");
+        g_host_arch_32.SetTriple ("arm");
 
 #elif defined (__ppc64__)
 
-        g_host_arch_64.SetArch ("ppc64");
+        g_host_arch_64.SetTriple ("ppc64");
 
 #elif defined (__powerpc__) || defined (__ppc__)
 
-        g_host_arch_32.SetArch ("ppc");
+        g_host_arch_32.SetTriple ("ppc");
 
 #else
 
@@ -377,7 +377,7 @@ Host::GetTargetTriple()
     {
         StreamString triple;
         triple.Printf("%s-%s-%s", 
-                      GetArchitecture().AsCString(),
+                      GetArchitecture().GetArchitectureName(),
                       GetVendorString().AsCString(),
                       GetOSString().AsCString());
 
@@ -1093,9 +1093,9 @@ Host::GetArchSpecForExistingProcess (lldb::pid_t pid)
     if (error == 0)
         return return_spec;
     if (bsd_info.pbi_flags & PROC_FLAG_LP64)
-        return_spec.SetArch(LLDB_ARCH_DEFAULT_64BIT);
+        return_spec.SetTriple (LLDB_ARCH_DEFAULT_64BIT);
     else 
-        return_spec.SetArch(LLDB_ARCH_DEFAULT_32BIT);
+        return_spec.SetTriple (LLDB_ARCH_DEFAULT_32BIT);
 #endif
         
     return return_spec;

@@ -345,16 +345,12 @@ DisassemblerLLVM::InstructionLLVM::Extract(const DataExtractor &data, uint32_t d
 static inline EDAssemblySyntax_t
 SyntaxForArchSpec (const ArchSpec &arch)
 {
-    switch (arch.GetGenericCPUType())
+    switch (arch.GetMachine ())
     {
-    case ArchSpec::eCPU_i386:
-    case ArchSpec::eCPU_x86_64:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
         return kEDAssemblySyntaxX86ATT;
 
-    case ArchSpec::eCPU_arm:
-    case ArchSpec::eCPU_ppc:
-    case ArchSpec::eCPU_ppc64:
-    case ArchSpec::eCPU_sparc:
     default:
         break;
     }

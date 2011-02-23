@@ -185,7 +185,7 @@ CommandObjectDisassemble::Execute
 
     if (disassembler == NULL)
     {
-        result.AppendErrorWithFormat ("Unable to find Disassembler plug-in for %s architecture.\n", arch.AsCString());
+        result.AppendErrorWithFormat ("Unable to find Disassembler plug-in for %s architecture.\n", arch.GetArchitectureName());
         result.SetStatus (eReturnStatusFailed);
         return false;
     }

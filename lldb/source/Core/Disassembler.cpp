@@ -38,7 +38,7 @@ Disassembler::FindPlugin (const ArchSpec &arch)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "Disassembler::FindPlugin (arch = %s)",
-                        arch.AsCString());
+                        arch.GetArchitectureName());
 
     std::auto_ptr<Disassembler> disassembler_ap;
     DisassemblerCreateInstance create_callback;

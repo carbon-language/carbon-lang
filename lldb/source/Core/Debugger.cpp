@@ -877,7 +877,7 @@ Debugger::FormatPrompt
                                         ArchSpec arch (target->GetArchitecture ());
                                         if (arch.IsValid())
                                         {
-                                            s.PutCString (arch.AsCString());
+                                            s.PutCString (arch.GetArchitectureName());
                                             var_success = true;
                                         }
                                     }

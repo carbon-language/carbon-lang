@@ -404,7 +404,7 @@ ModuleList::LogUUIDAndPaths (LogSP &log_sp, const char *prefix_cstr)
                             prefix_cstr ? prefix_cstr : "",
                             (uint32_t)std::distance (begin, pos),
                             uuid_cstr,
-                            module->GetArchitecture().AsCString(),
+                            module->GetArchitecture().GetArchitectureName(),
                             module_file_spec.GetDirectory().GetCString(),
                             module_file_spec.GetFilename().GetCString());
         }
@@ -521,7 +521,7 @@ ModuleList::GetModuleSP (const Module *module_ptr)
             const FileSpec &module_file_spec = module_ptr->GetFileSpec();
             fprintf (stderr, "warning: module not in shared module list: %s (%s) \"%s/%s\"\n", 
                      uuid_cstr,
-                     module_ptr->GetArchitecture().AsCString(),
+                     module_ptr->GetArchitecture().GetArchitectureName(),
                      module_file_spec.GetDirectory().GetCString(),
                      module_file_spec.GetFilename().GetCString());
         }
@@ -650,9 +650,9 @@ ModuleList::GetSharedModule
                 if (arch.IsValid())
                 {
                     if (uuid_cstr[0])
-                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture and UUID %s.\n", path, arch.AsCString(), uuid_cstr[0]);
+                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture and UUID %s.\n", path, arch.GetArchitectureName(), uuid_cstr[0]);
                     else
-                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture.\n", path, arch.AsCString());
+                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture.\n", path, arch.GetArchitectureName());
                 }
             }
             else
@@ -707,7 +707,7 @@ ModuleList::GetSharedModule
                 if (file_spec)
                 {
                     if (arch.IsValid())
-                        error.SetErrorStringWithFormat("Unable to open %s architecture in '%s'.\n", arch.AsCString(), path);
+                        error.SetErrorStringWithFormat("Unable to open %s architecture in '%s'.\n", arch.GetArchitectureName(), path);
                     else
                         error.SetErrorStringWithFormat("Unable to open '%s'.\n", path);
                 }
@@ -721,7 +721,7 @@ ModuleList::GetSharedModule
                     if (uuid_cstr[0])
                         error.SetErrorStringWithFormat("Cannot locate a module for UUID '%s'.\n", uuid_cstr[0]);
                     else
-                        error.SetErrorStringWithFormat("Cannot locate a module.\n", path, arch.AsCString());
+                        error.SetErrorStringWithFormat("Cannot locate a module.\n", path, arch.GetArchitectureName());
                 }
             }
         }

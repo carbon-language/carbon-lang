@@ -13,37 +13,86 @@
 #if defined(__cplusplus)
 
 #include "lldb/lldb-private.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 
 namespace lldb_private {
+
+struct CoreDefinition;    
 
 //----------------------------------------------------------------------
 /// @class ArchSpec ArchSpec.h "lldb/Core/ArchSpec.h"
 /// @brief An architecture specification class.
 ///
-/// A class designed to be created from a cpu type and subtype, or a
-/// string representation.  Keeping all of the conversions of strings
-/// to architecture enumeration values confined to this class allows
-/// new architecture support to be added easily.
+/// A class designed to be created from a cpu type and subtype, a
+/// string representation, or an llvm::Triple.  Keeping all of the
+/// conversions of strings to architecture enumeration values confined
+/// to this class allows new architecture support to be added easily.
 //----------------------------------------------------------------------
 class ArchSpec
 {
 public:
-    // Generic CPU types that each m_type needs to know how to convert 
-    // their m_cpu and m_sub to.
-    enum CPU
+    enum Core
     {
-        eCPU_Unknown,
-        eCPU_arm,
-        eCPU_i386,
-        eCPU_x86_64,
-        eCPU_ppc,
-        eCPU_ppc64,
-        eCPU_sparc
+        eCore_alpha_generic,
+
+        eCore_arm_generic,
+        eCore_arm_armv4,
+        eCore_arm_armv4t,
+        eCore_arm_armv5,
+        eCore_arm_armv5t,
+        eCore_arm_armv6,
+        eCore_arm_armv7,
+        eCore_arm_xscale,        
+        
+        eCore_ppc_generic,
+        eCore_ppc_ppc601,
+        eCore_ppc_ppc602,
+        eCore_ppc_ppc603,
+        eCore_ppc_ppc603e,
+        eCore_ppc_ppc603ev,
+        eCore_ppc_ppc604,
+        eCore_ppc_ppc604e,
+        eCore_ppc_ppc620,
+        eCore_ppc_ppc750,
+        eCore_ppc_ppc7400,
+        eCore_ppc_ppc7450,
+        eCore_ppc_ppc970,
+        
+        eCore_ppc64_generic,
+        eCore_ppc64_ppc970_64,
+        
+        eCore_sparc_generic,
+        
+        eCore_sparc9_generic,
+        
+        eCore_x86_32_i386,
+        eCore_x86_32_i486,
+        eCore_x86_32_i486sx,
+        
+        eCore_x86_64_x86_64,
+        kNumCores,
+
+        kCore_invalid,
+        // The following constants are used for wildcard matching only
+        kCore_any,           
+
+        kCore_arm_any,
+        kCore_arm_first     = eCore_arm_generic,
+        kCore_arm_last      = eCore_arm_xscale,
+
+        kCore_ppc_any,
+        kCore_ppc_first     = eCore_ppc_generic,
+        kCore_ppc_last      = eCore_ppc_ppc970,
+
+        kCore_ppc64_any,
+        kCore_ppc64_first   = eCore_ppc64_generic,
+        kCore_ppc64_last    = eCore_ppc64_ppc970_64,
+
+        kCore_x86_32_any,
+        kCore_x86_32_first  = eCore_x86_32_i386,
+        kCore_x86_32_last   = eCore_x86_32_i486sx
     };
-    
-    static void
-    Initialize();
 
     //------------------------------------------------------------------
     /// Default constructor.
@@ -54,30 +103,22 @@ public:
     ArchSpec ();
 
     //------------------------------------------------------------------
-    /// Constructor with cpu type and subtype.
+    /// Constructor over triple.
     ///
-    /// Constructor that initializes the object with supplied cpu and
-    /// subtypes.
+    /// Constructs an ArchSpec with properties consistent with the given
+    /// Triple.
     //------------------------------------------------------------------
-    ArchSpec (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t sub);
-
+    ArchSpec (const llvm::Triple &triple);
+    ArchSpec (const char *triple_cstr);
     //------------------------------------------------------------------
-    /// Construct with architecture name.
+    /// Constructor over architecture name.
     ///
-    /// Constructor that initializes the object with supplied
-    /// architecture name. There are also predefined values in
-    /// Defines.h:
-    /// @li \c LLDB_ARCH_DEFAULT
-    ///     The arch the current system defaults to when a program is
-    ///     launched without any extra attributes or settings.
-    ///
-    /// @li \c LLDB_ARCH_DEFAULT_32BIT
-    ///     The 32 bit arch the current system defaults to (if any)
-    ///
-    /// @li \c LLDB_ARCH_DEFAULT_32BIT
-    ///     The 64 bit arch the current system defaults to (if any)
+    /// Constructs an ArchSpec with properties consistent with the given
+    /// object type and architecture name.
     //------------------------------------------------------------------
-    ArchSpec (const char *arch_name);
+    ArchSpec (lldb::ArchitectureType arch_type,
+              uint32_t cpu_type,
+              uint32_t cpu_subtype);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -92,40 +133,19 @@ public:
     ///
     /// @param[in] rhs another ArchSpec object to copy.
     ///
-    /// @return a const reference to this object
+    /// @return A const reference to this object.
     //------------------------------------------------------------------
     const ArchSpec&
     operator= (const ArchSpec& rhs);
 
     //------------------------------------------------------------------
-    /// Get a string representation of the contained architecture.
+    /// Returns a static string representing the current architecture.
     ///
-    /// Gets a C string representation of the current architecture.
-    /// If the returned string is a valid architecture name, the string
-    /// came from a constant string values that do not need to be freed.
-    /// If the returned string uses the "N.M" format, the string comes
-    /// from a static buffer that should be copied.
-    ///
-    /// @return a NULL terminated C string that does not need to be
-    ///         freed.
+    /// @return A static string correcponding to the current
+    ///         architecture.
     //------------------------------------------------------------------
     const char *
-    AsCString () const;
-
-    //------------------------------------------------------------------
-    /// Returns a string representation of the supplied architecture.
-    ///
-    /// Class function to get a C string representation given a CPU type
-    /// and subtype.
-    ///
-    /// @param[in] cpu The cpu type of the architecture.
-    /// @param[in] subtype The cpu subtype of the architecture.
-    ///
-    /// @return a NULL terminated C string that does not need to be
-    ///         freed.
-    //------------------------------------------------------------------
-    static const char *
-    AsCString (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t subtype);
+    GetArchitectureName () const;
 
     //------------------------------------------------------------------
     /// Clears the object state.
@@ -144,107 +164,33 @@ public:
     uint32_t
     GetAddressByteSize () const;
 
-    void
-    SetAddressByteSize (uint32_t byte_size)
-    {
-        m_addr_byte_size = byte_size;
-    }
-
-    CPU
-    GetGenericCPUType () const;
-
     //------------------------------------------------------------------
-    /// CPU subtype get accessor.
+    /// Returns a machine family for the current architecture.
     ///
-    /// @return The current value of the CPU subtype.
+    /// @return An LLVM arch type.
     //------------------------------------------------------------------
-    uint32_t
-    GetCPUSubtype () const;
+    llvm::Triple::ArchType
+    GetMachine () const;
 
     //------------------------------------------------------------------
-    /// CPU type get accessor.
+    /// Tests if this ArchSpec is valid.
     ///
-    /// @return The current value of the CPU type.
-    //------------------------------------------------------------------
-    uint32_t
-    GetCPUType () const;
-
-    //------------------------------------------------------------------
-    /// Feature flags get accessor.
-    ///
-    /// @return The current value of the CPU feature flags.
-    //------------------------------------------------------------------
-    uint32_t
-    GetFeatureFlags () const;
-
-    //------------------------------------------------------------------
-    /// Get register names of the current architecture.
-    ///
-    /// Get register names of the current architecture given
-    /// a register number, and a flavor for that register number.
-    /// There are many different register numbering schemes used
-    /// on a host:
-    /// @li \c eRegisterKindGCC - gcc compiler register numbering
-    /// @li \c eRegisterKindDWARF - DWARF register numbering
-    ///
-    /// @param[in] reg_num The register number to decode.
-    /// @param[in] flavor The flavor of the \a reg_num.
-    ///
-    /// @return the name of the register as a NULL terminated C string,
-    ///         or /c NULL if the \a reg_num is invalid for \a flavor.
-    ///         String values that are returned do not need to be freed.
-    //------------------------------------------------------------------
-    const char *
-    GetRegisterName (uint32_t reg_num, uint32_t flavor) const;
-
-    //------------------------------------------------------------------
-    /// Get register names for a specified architecture.
-    ///
-    /// Get register names of the specified architecture given
-    /// a register number, and a flavor for that register number.
-    /// There are many different register numbering schemes used
-    /// on a host:
-    ///
-    /// @li compiler register numbers (@see eRegisterKindGCC)
-    /// @li DWARF register numbers (@see eRegisterKindDWARF)
-    ///
-    /// @param[in] cpu The cpu type of the architecture specific
-    ///            register
-    /// @param[in] subtype The cpu subtype of the architecture specific
-    ///            register
-    /// @param[in] reg_num The register number to decode.
-    /// @param[in] flavor The flavor of the \a reg_num.
-    ///
-    /// @return the name of the register as a NULL terminated C string,
-    ///         or /c NULL if the \a reg_num is invalid for \a flavor.
-    ///         String values that are returned do not need to be freed.
-    //------------------------------------------------------------------
-    static const char *
-    GetRegisterName (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t subtype, uint32_t reg_num, uint32_t flavor);
-
-    //------------------------------------------------------------------
-    /// Test if the contained architecture is valid.
-    ///
-    /// @return true if the current architecture is valid, false
+    /// @return True if the current architecture is valid, false
     ///         otherwise.
     //------------------------------------------------------------------
     bool
-    IsValid () const;
+    IsValid () const
+    {
+        return m_core >= eCore_alpha_generic && m_core < kNumCores;
+    }
+
 
     //------------------------------------------------------------------
-    /// Get the memory cost of this object.
+    /// Sets this ArchSpec according to the given architecture name.
     ///
-    /// @return
-    ///     The number of bytes that this object occupies in memory.
-    //------------------------------------------------------------------
-    size_t
-    MemorySize() const;
-
-    //------------------------------------------------------------------
-    /// Change the CPU type and subtype given an architecture name.
+    /// The architecture name can be one of the generic system default
+    /// values:
     ///
-    /// The architecture name supplied can also by one of the generic
-    /// system default values:
     /// @li \c LLDB_ARCH_DEFAULT - The arch the current system defaults
     ///        to when a program is launched without any extra
     ///        attributes or settings.
@@ -253,25 +199,43 @@ public:
     /// @li \c LLDB_ARCH_DEFAULT_64BIT - The default host architecture
     ///        for 64 bit (if any).
     ///
+    /// Alternatively, if the object type of this ArchSpec has been
+    /// configured,  a concrete architecture can be specified to set
+    /// the CPU type ("x86_64" for example).
+    ///
+    /// Finally, an encoded object and archetecture format is accepted.
+    /// The format contains an object type (like "macho" or "elf"),
+    /// followed by a platform dependent encoding of CPU type and
+    /// subtype.  For example:
+    ///
+    ///     "macho"        : Specifies an object type of MachO.
+    ///     "macho-16-6"   : MachO specific encoding for ARMv6.
+    ///     "elf-43        : ELF specific encoding for Sparc V9.
+    ///
     /// @param[in] arch_name The name of an architecture.
     ///
-    /// @return true if \a arch_name was successfully transformed into
-    ///         a valid cpu type and subtype.
+    /// @return True if @p arch_name was successfully translated, false
+    ///         otherwise.
     //------------------------------------------------------------------
-    bool
-    SetArch (const char *arch_name);
-
-    bool
-    SetArchFromTargetTriple (const char *arch_name);
+//    bool
+//    SetArchitecture (const llvm::StringRef& arch_name);
+//
+//    bool
+//    SetArchitecture (const char *arch_name);
+    
     //------------------------------------------------------------------
-    /// Change the CPU type and subtype given new values of the cpu
-    /// type and subtype.
+    /// Change the architecture object type and CPU type.
     ///
-    /// @param[in] cpu The new CPU type
-    /// @param[in] subtype The new CPU subtype
+    /// @param[in] arch_type The object type of this ArchSpec.
+    ///
+    /// @param[in] cpu The required CPU type.
+    ///
+    /// @return True if the object and CPU type were sucessfully set.
     //------------------------------------------------------------------
-    void
-    SetMachOArch (uint32_t cpu, uint32_t sub);
+    bool
+    SetArchitecture (lldb::ArchitectureType arch_type, 
+                     uint32_t cpu,
+                     uint32_t sub);
 
     //------------------------------------------------------------------
     /// Returns the byte order for the architecture specification.
@@ -280,78 +244,88 @@ public:
     ///     the architecture specification
     //------------------------------------------------------------------
     lldb::ByteOrder
-    GetByteOrder () const
-    {
-        return m_byte_order;
-    }
+    GetByteOrder () const;
 
+    //------------------------------------------------------------------
+    /// Sets this ArchSpec's byte order.
+    ///
+    /// In the common case there is no need to call this method as the
+    /// byte order can almost always be determined by the architecture.
+    /// However, many CPU's are bi-endian (ARM, Alpha, PowerPC, etc)
+    /// and the default/assumed byte order may be incorrect.
+    //------------------------------------------------------------------
     void
-    SetByteOrder (lldb::ByteOrder b)
+    SetByteOrder (lldb::ByteOrder byteorder);
+
+    Core
+    GetCore () const
     {
-        m_byte_order = b;
+        return m_core;
     }
 
+    uint32_t
+    GetMachOCPUType () const;
+
+    uint32_t
+    GetMachOCPUSubType () const;
+
+    //------------------------------------------------------------------
+    /// Architecture tripple accessor.
+    ///
+    /// @return A triple describing this ArchSpec.
+    //------------------------------------------------------------------
     llvm::Triple &
     GetTriple ()
     {
         return m_triple;
     }
-    
+
+    //------------------------------------------------------------------
+    /// Architecture tripple accessor.
+    ///
+    /// @return A triple describing this ArchSpec.
+    //------------------------------------------------------------------
     const llvm::Triple &
     GetTriple () const
     {
         return m_triple;
     }
+
+    //------------------------------------------------------------------
+    /// Architecture tripple setter.
+    ///
+    /// Configures this ArchSpec according to the given triple.  At a
+    /// minimum, the given triple must describe a valid operating
+    /// system.  If archetecture or environment components are present
+    /// they too will be used to further resolve the CPU type and
+    /// subtype, endian characteristics, etc.
+    ///
+    /// @return A triple describing this ArchSpec.
+    //------------------------------------------------------------------
+    bool
+    SetTriple (const llvm::Triple &triple);
+
+    bool
+    SetTriple (const char *triple_cstr);
     
-    void
-    SetTriple (const llvm::Triple &triple)
-    {
-        m_triple = triple;
-    }
-
-    void
-    SetElfArch (uint32_t cpu, uint32_t sub)
-    {
-        m_type = lldb::eArchTypeELF;
-        m_cpu = cpu;
-        m_sub = sub;
-    }
-
     //------------------------------------------------------------------
     /// Returns the default endianness of the architecture.
     ///
     /// @return The endian enumeration for the default endianness of
-    ///     the architecture.
+    ///         the architecture.
     //------------------------------------------------------------------
     lldb::ByteOrder
     GetDefaultEndian () const;
 
-
-    lldb::ArchitectureType
-    GetType() const
-    {
-        return m_type;
-    }
-
 protected:
-    //------------------------------------------------------------------
-    // Member variables
-    //------------------------------------------------------------------
-    lldb::ArchitectureType m_type;
-    //       m_type =>  eArchTypeMachO      eArchTypeELF
-    uint32_t m_cpu; //  cpu type            ELF header e_machine
-    uint32_t m_sub; //  cpu subtype         nothing
     llvm::Triple m_triple;
+    Core m_core;
     lldb::ByteOrder m_byte_order;
-    uint32_t m_addr_byte_size;
-    
-private:
-    
+
+    // Called when m_def or m_entry are changed.  Fills in all remaining
+    // members with default values.
     void
-    MachOArchUpdated (size_t macho_idx = ~(size_t)0);
-    
-    void
-    ELFArchUpdated (size_t idx = ~(size_t)0);
+    CoreUpdated (bool update_triple);
 };
 
 

@@ -6814,7 +6814,7 @@ bool
 EmulateInstructionARM::SetArchitecture (const ArchSpec &arch)
 {
     m_arm_isa = 0;
-    const char *arch_cstr = arch.AsCString ();
+    const char *arch_cstr = arch.GetArchitectureName ();
     if (arch_cstr)
     {
         if      (0 == ::strcasecmp(arch_cstr, "armv4t"))    m_arm_isa = ARMv4T;

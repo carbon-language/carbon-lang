@@ -714,7 +714,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     if (disassembler == NULL)
     {
         ret.SetErrorToGenericError();
-        ret.SetErrorStringWithFormat("Unable to find disassembler plug-in for %s architecture.", arch.AsCString());
+        ret.SetErrorStringWithFormat("Unable to find disassembler plug-in for %s architecture.", arch.GetArchitectureName());
         return ret;
     }
     

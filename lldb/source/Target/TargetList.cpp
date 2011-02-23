@@ -58,7 +58,7 @@ TargetList::CreateTarget
                         "TargetList::CreateTarget (file = '%s/%s', arch = '%s', uuid = %p)",
                         file.GetDirectory().AsCString(),
                         file.GetFilename().AsCString(),
-                        arch.AsCString(),
+                        arch.GetArchitectureName(),
                         uuid_ptr);
     Error error;
     
@@ -96,7 +96,7 @@ TargetList::CreateTarget
                                                    file.GetDirectory().AsCString(),
                                                    file.GetDirectory() ? "/" : "",
                                                    file.GetFilename().AsCString(),
-                                                   arch.AsCString());
+                                                   arch.GetArchitectureName());
                 }
                 else
                 {

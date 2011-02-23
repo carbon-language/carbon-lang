@@ -42,7 +42,11 @@ MachThreadContext_i386::Create (const ArchSpec &arch_spec, ThreadMacOSX &thread)
 void
 MachThreadContext_i386::Initialize()
 {
-    ArchSpec arch_spec("i386");
+    llvm::Triple triple;
+    triple.setArch (llvm::Triple::x86);
+    triple.setVendor (llvm::Triple::Apple);
+    triple.setOS (llvm::Triple::Darwin);
+    ArchSpec arch_spec (triple);
     ProcessMacOSX::AddArchCreateCallback(arch_spec, MachThreadContext_i386::Create);
 }
 

@@ -433,7 +433,7 @@ Symbols::LocateExecutableObjectFile (const FileSpec *exec_fspec, const ArchSpec*
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "LocateExecutableObjectFile (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
-                        arch ? arch->AsCString() : "<NULL>",
+                        arch ? arch->GetArchitectureName() : "<NULL>",
                         uuid);
 
     FileSpec objfile_fspec;
@@ -450,7 +450,7 @@ Symbols::LocateExecutableSymbolFile (const FileSpec *exec_fspec, const ArchSpec*
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "LocateExecutableSymbolFile (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
-                        arch ? arch->AsCString() : "<NULL>",
+                        arch ? arch->GetArchitectureName() : "<NULL>",
                         uuid);
 
     FileSpec symbol_fspec;

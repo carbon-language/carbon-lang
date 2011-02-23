@@ -42,7 +42,7 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
     if (log)
         log->Printf ("%p Module::Module((%s) '%s/%s%s%s%s')",
                      this,
-                     m_arch.AsCString(),
+                     m_arch.GetArchitectureName(),
                      m_file.GetDirectory().AsCString(""),
                      m_file.GetFilename().AsCString(""),
                      m_object_name.IsEmpty() ? "" : "(",
@@ -56,7 +56,7 @@ Module::~Module()
     if (log)
         log->Printf ("%p Module::~Module((%s) '%s/%s%s%s%s')",
                      this,
-                     m_arch.AsCString(),
+                     m_arch.GetArchitectureName(),
                      m_file.GetDirectory().AsCString(""),
                      m_file.GetFilename().AsCString(""),
                      m_object_name.IsEmpty() ? "" : "(",
@@ -474,7 +474,7 @@ Module::GetDescription (Stream *s)
     Mutex::Locker locker (m_mutex);
 
     if (m_arch.IsValid())
-        s->Printf("(%s) ", m_arch.AsCString());
+        s->Printf("(%s) ", m_arch.GetArchitectureName());
 
     char path[PATH_MAX];
     if (m_file.GetPath(path, sizeof(path)))
@@ -648,17 +648,11 @@ Module::IsExecutable ()
 bool 
 Module::SetArchitecture (const ArchSpec &new_arch)
 {
-    if (m_arch == new_arch)
-        return true;
-    else if (!m_arch.IsValid())
+    if (!m_arch.IsValid())
     {
         m_arch = new_arch;
         return true;
-    }
-    else
-    {
-        return false;
-    }
-
+    }    
+    return m_arch == new_arch;
 }
 

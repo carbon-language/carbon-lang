@@ -1351,7 +1351,7 @@ ObjectFileMachO::Dump (Stream *s)
 
     ArchSpec header_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
 
-    *s << ", file = '" << m_file << "', arch = " << header_arch.AsCString() << "\n";
+    *s << ", file = '" << m_file << "', arch = " << header_arch.GetArchitectureName() << "\n";
 
     if (m_sections_ap.get())
         m_sections_ap->Dump(s, NULL, true, UINT32_MAX);
@@ -1439,7 +1439,7 @@ bool
 ObjectFileMachO::GetArchitecture (ArchSpec &arch)
 {
     lldb_private::Mutex::Locker locker(m_mutex);
-    arch.SetMachOArch(m_header.cputype, m_header.cpusubtype);
+    arch.SetArchitecture (lldb::eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
     return true;
 }
 

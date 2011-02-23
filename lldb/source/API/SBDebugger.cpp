@@ -341,7 +341,7 @@ SBDebugger::GetDefaultArchitecture (char *arch_name, size_t arch_name_len)
 
         if (default_arch.IsValid())
         {
-            ::snprintf (arch_name, arch_name_len, "%s", default_arch.AsCString());
+            ::snprintf (arch_name, arch_name_len, "%s", default_arch.GetArchitectureName());
             return true;
         }
     }
@@ -423,7 +423,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
     {
         ArchSpec arch;
         FileSpec file_spec (filename, true);
-        arch.SetArchFromTargetTriple(target_triple);
+        arch.SetTriple (target_triple);
         TargetSP target_sp;
         Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file_spec, arch, NULL, true, target_sp));
         target.reset (target_sp);
@@ -440,7 +440,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
 }
 
 SBTarget
-SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archname)
+SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *arch_cstr)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
@@ -448,31 +448,28 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
     if (m_opaque_sp)
     {
         FileSpec file (filename, true);
-        ArchSpec arch = lldb_private::Target::GetDefaultArchitecture ();
+        ArchSpec arch;
         TargetSP target_sp;
         Error error;
 
-        if (archname != NULL)
-        {
-            ArchSpec arch2 (archname);
-            error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch2, NULL, true, target_sp);
-        }
+        if (arch_cstr)
+            arch.SetTriple (arch_cstr);
         else
+            arch = lldb_private::Target::GetDefaultArchitecture ();
+
+        if (!arch.IsValid())
+            arch.SetTriple (LLDB_ARCH_DEFAULT);
+
+        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
+
+        if (error.Fail())
         {
-            if (!arch.IsValid())
-                arch = LLDB_ARCH_DEFAULT;
+            if (strcmp (LLDB_ARCH_DEFAULT, LLDB_ARCH_DEFAULT_32BIT) == 0)
+                arch.SetTriple (LLDB_ARCH_DEFAULT_64BIT);
+            else
+                arch.SetTriple (LLDB_ARCH_DEFAULT_32BIT);
 
             error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
-
-            if (error.Fail())
-            {
-                if (arch == LLDB_ARCH_DEFAULT_32BIT)
-                    arch = LLDB_ARCH_DEFAULT_64BIT;
-                else
-                    arch = LLDB_ARCH_DEFAULT_32BIT;
-
-                error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
-            }
         }
 
         if (error.Success())
@@ -485,7 +482,7 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *archn
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndArch (filename=\"%s\", arch=%s) => SBTarget(%p)", 
-                     m_opaque_sp.get(), filename, archname, target.get());
+                     m_opaque_sp.get(), filename, arch_cstr, target.get());
     }
 
     return target;
@@ -503,16 +500,16 @@ SBDebugger::CreateTarget (const char *filename)
         Error error;
 
         if (!arch.IsValid())
-            arch = LLDB_ARCH_DEFAULT;
+            arch.SetTriple (LLDB_ARCH_DEFAULT);
 
         error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
 
         if (error.Fail())
         {
-            if (arch == LLDB_ARCH_DEFAULT_32BIT)
-                arch = LLDB_ARCH_DEFAULT_64BIT;
+            if (strcmp (LLDB_ARCH_DEFAULT, LLDB_ARCH_DEFAULT_32BIT) == 0)
+                arch.SetTriple (LLDB_ARCH_DEFAULT_64BIT);
             else
-                arch = LLDB_ARCH_DEFAULT_32BIT;
+                arch.SetTriple (LLDB_ARCH_DEFAULT_32BIT);
 
             error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
         }
@@ -563,9 +560,7 @@ SBDebugger::FindTargetWithFileAndArch (const char *filename, const char *arch_na
     if (m_opaque_sp && filename && filename[0])
     {
         // No need to lock, the target list is thread safe
-        ArchSpec arch;
-        if (arch_name)
-            arch.SetArch(arch_name);
+        ArchSpec arch (arch_name);
         TargetSP target_sp (m_opaque_sp->GetTargetList().FindTargetWithExecutableAndArchitecture (FileSpec(filename, false), arch_name ? &arch : NULL));
         sb_target.reset(target_sp);
     }

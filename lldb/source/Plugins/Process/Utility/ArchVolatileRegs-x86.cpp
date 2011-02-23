@@ -34,22 +34,20 @@ ArchVolatileRegs_x86::RegisterIsVolatile (Thread& thread, uint32_t regnum)
 lldb_private::ArchVolatileRegs *
 ArchVolatileRegs_x86::CreateInstance (const lldb_private::ArchSpec &arch)
 {
-   uint32_t cpu = arch.GetCPUType ();
-   if (cpu != llvm::MachO::CPUTypeX86_64 && cpu != llvm::MachO::CPUTypeI386)
-       return NULL;
-
-   return new ArchVolatileRegs_x86 (cpu);
+    llvm::Triple::ArchType cpu = arch.GetMachine ();
+    if (cpu == llvm::Triple::x86 || cpu == llvm::Triple::x86_64)
+        return new ArchVolatileRegs_x86 (cpu);
+    return NULL;
 }
 
-ArchVolatileRegs_x86::ArchVolatileRegs_x86(int cpu) :
-                lldb_private::ArchVolatileRegs(), 
-                m_cpu(cpu), 
-                m_non_volatile_regs()
+ArchVolatileRegs_x86::ArchVolatileRegs_x86(llvm::Triple::ArchType cpu) :
+    lldb_private::ArchVolatileRegs(), 
+    m_cpu(cpu), 
+    m_non_volatile_regs()
 {
 }
 
 void
-
 ArchVolatileRegs_x86::initialize_regset(Thread& thread)
 {
     if (m_non_volatile_regs.size() > 0)
@@ -78,13 +76,14 @@ ArchVolatileRegs_x86::initialize_regset(Thread& thread)
     
     const char **names;
     int namecount;
-    if (m_cpu == llvm::MachO::CPUTypeX86_64)
+    if (m_cpu == llvm::Triple::x86_64)
     {
         names = x86_64_regnames;
         namecount = sizeof (x86_64_regnames) / sizeof (char *);
     }
     else
     {
+        assert (m_cpu == llvm::Triple::x86);
         names = i386_regnames;
         namecount = sizeof (i386_regnames) / sizeof (char *);
     }

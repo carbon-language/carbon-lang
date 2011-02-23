@@ -11,6 +11,8 @@
 
 #include <sys/cdefs.h>
 
+#include "llvm/ADT/Triple.h"
+
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
 
@@ -41,7 +43,11 @@ MachThreadContext_x86_64::Create(const ArchSpec &arch_spec, ThreadMacOSX &thread
 void
 MachThreadContext_x86_64::Initialize()
 {
-    ArchSpec arch_spec("x86_64");
+    llvm::Triple triple;
+    triple.setArch (llvm::Triple::x86_64);
+    triple.setVendor (llvm::Triple::Apple);
+    triple.setOS (llvm::Triple::Darwin);
+    ArchSpec arch_spec (triple);
     ProcessMacOSX::AddArchCreateCallback(arch_spec, MachThreadContext_x86_64::Create);
 }
 

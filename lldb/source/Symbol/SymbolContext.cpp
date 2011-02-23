@@ -182,7 +182,7 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *t
         module_sp->GetFileSpec().Dump(s);
         *s << '"';
         if (module_sp->GetArchitecture().IsValid())
-            s->Printf (", arch = \"%s\"", module_sp->GetArchitecture().AsCString());
+            s->Printf (", arch = \"%s\"", module_sp->GetArchitecture().GetArchitectureName());
         s->EOL();
     }
 

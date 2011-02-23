@@ -19,6 +19,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Host/Host.h"
 
 #define CASE_AND_STREAM(s, def, width)                  \
     case def: s->Printf("%-*s", width, #def); break;
@@ -1045,28 +1046,9 @@ ObjectFileELF::DumpDependentModules(lldb_private::Stream *s)
 bool
 ObjectFileELF::GetArchitecture (ArchSpec &arch)
 {
-    switch (m_header.e_machine)
-    {
-    default:
-        assert(false && "Unexpected machine type.");
-        break;
-    case EM_SPARC:  arch.GetTriple().setArchName("sparc"); break;
-    case EM_386:    arch.GetTriple().setArchName("i386"); break;
-    case EM_68K:    arch.GetTriple().setArchName("68k"); break;
-    case EM_88K:    arch.GetTriple().setArchName("88k"); break;
-    case EM_860:    arch.GetTriple().setArchName("i860"); break;
-    case EM_MIPS:   arch.GetTriple().setArchName("mips"); break;
-    case EM_PPC:    arch.GetTriple().setArchName("powerpc"); break;
-    case EM_PPC64:  arch.GetTriple().setArchName("powerpc64"); break;
-    case EM_ARM:    arch.GetTriple().setArchName("arm"); break;
-    case EM_X86_64: arch.GetTriple().setArchName("x86_64"); break;
-    }
-    // TODO: determine if there is a vendor in the ELF? Default to "linux" for now
-    arch.GetTriple().setOSName ("linux");
-    // TODO: determine if there is an OS in the ELF? Default to "gnu" for now
-    arch.GetTriple().setVendorName("gnu");
-
-    arch.SetElfArch(m_header.e_machine, m_header.e_flags);
+    arch.SetArchitecture (lldb::eArchTypeELF, m_header.e_machine, m_header.e_flags);
+    arch.GetTriple().setOSName (Host::GetOSString().GetCString());
+    arch.GetTriple().setVendorName(Host::GetVendorString().GetCString());
     return true;
 }
 
