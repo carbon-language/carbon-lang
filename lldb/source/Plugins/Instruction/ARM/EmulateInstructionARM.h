@@ -669,13 +669,13 @@ protected:
     bool
     EmulateRSCReg (ARMEncoding encoding);
     
-    // A8.6.150 SBC (immediate) - Encoding A1
+    // A8.6.150 SBC (immediate)
     bool
-    EmulateSBCImmediate (ARMEncoding encoding);
+    EmulateSBCImm (ARMEncoding encoding);
     
-    // A8.6.151 SBC (register) - Encoding T1, A1
+    // A8.6.151 SBC (register)
     bool
-    EmulateSBCRegister (ARMEncoding encoding);
+    EmulateSBCReg (ARMEncoding encoding);
     
     // A8.6.210 SUB (immediate, Thumb)    - Encoding T1, T2
     bool
