@@ -13,8 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "llvm/ADT/ImmutableSet.h"
@@ -24,21 +25,15 @@ using namespace ento;
 
 namespace {
 class PthreadLockChecker
-  : public CheckerVisitor<PthreadLockChecker> {
-  BugType *BT;
+  : public CheckerV2< check::PostStmt<CallExpr> > {
 public:
-  PthreadLockChecker() : BT(0) {}
-  static void *getTag() {
-    static int x = 0;
-    return &x;
-  }
-  void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
     
   void AcquireLock(CheckerContext &C, const CallExpr *CE,
-                   SVal lock, bool isTryLock);
+                   SVal lock, bool isTryLock) const;
     
   void ReleaseLock(CheckerContext &C, const CallExpr *CE,
-                    SVal lock);
+                    SVal lock) const;
 
 };
 } // end anonymous namespace
@@ -49,22 +44,14 @@ namespace clang {
 namespace ento {
 template <> struct GRStateTrait<LockSet> :
   public GRStatePartialTrait<llvm::ImmutableSet<const MemRegion*> > {
-    static void* GDMIndex() { return PthreadLockChecker::getTag(); }
+    static void* GDMIndex() { static int x = 0; return &x; }
 };
 } // end GR namespace
 } // end clang namespace
 
-static void RegisterPthreadLockChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new PthreadLockChecker());
-}
 
-void ento::registerPthreadLockChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterPthreadLockChecker);
-}
-
-
-void PthreadLockChecker::PostVisitCallExpr(CheckerContext &C,
-                                           const CallExpr *CE) {
+void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
+                                       CheckerContext &C) const {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   const FunctionTextRegion *R =
@@ -96,7 +83,7 @@ void PthreadLockChecker::PostVisitCallExpr(CheckerContext &C,
 }
 
 void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
-                                     SVal lock, bool isTryLock) {
+                                     SVal lock, bool isTryLock) const {
   
   const MemRegion *lockR = lock.getAsRegion();
   if (!lockR)
@@ -132,7 +119,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
 }
 
 void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
-                                     SVal lock) {
+                                     SVal lock) const {
 
   const MemRegion *lockR = lock.getAsRegion();
   if (!lockR)
@@ -149,4 +136,8 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
     return;
   
   C.addTransition(C.generateNode(CE, unlockState));  
+}
+
+void ento::registerPthreadLockChecker(CheckerManager &mgr) {
+  mgr.registerChecker<PthreadLockChecker>();
 }

@@ -13,31 +13,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 class PointerArithChecker 
-  : public CheckerVisitor<PointerArithChecker> {
-  BuiltinBug *BT;
+  : public CheckerV2< check::PreStmt<BinaryOperator> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
+
 public:
-  PointerArithChecker() : BT(0) {}
-  static void *getTag();
-  void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
+  void checkPreStmt(const BinaryOperator *B, CheckerContext &C) const;
 };
 }
 
-void *PointerArithChecker::getTag() {
-  static int x;
-  return &x;
-}
-
-void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
-                                                 const BinaryOperator *B) {
+void PointerArithChecker::checkPreStmt(const BinaryOperator *B,
+                                       CheckerContext &C) const {
   if (B->getOpcode() != BO_Sub && B->getOpcode() != BO_Add)
     return;
 
@@ -57,10 +52,10 @@ void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
 
     if (ExplodedNode *N = C.generateNode()) {
       if (!BT)
-        BT = new BuiltinBug("Dangerous pointer arithmetic",
+        BT.reset(new BuiltinBug("Dangerous pointer arithmetic",
                             "Pointer arithmetic done on non-array variables "
                             "means reliance on memory layout, which is "
-                            "dangerous.");
+                            "dangerous."));
       RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(), N);
       R->addRange(B->getSourceRange());
       C.EmitReport(R);
@@ -68,10 +63,6 @@ void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
   }
 }
 
-static void RegisterPointerArithChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new PointerArithChecker());
-}
-
 void ento::registerPointerArithChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterPointerArithChecker);
+  mgr.registerChecker<PointerArithChecker>();
 }

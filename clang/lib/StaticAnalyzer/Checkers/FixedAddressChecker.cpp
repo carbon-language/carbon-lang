@@ -14,31 +14,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 class FixedAddressChecker 
-  : public CheckerVisitor<FixedAddressChecker> {
-  BuiltinBug *BT;
+  : public CheckerV2< check::PreStmt<BinaryOperator> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
+
 public:
-  FixedAddressChecker() : BT(0) {}
-  static void *getTag();
-  void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
+  void checkPreStmt(const BinaryOperator *B, CheckerContext &C) const;
 };
 }
 
-void *FixedAddressChecker::getTag() {
-  static int x;
-  return &x;
-}
-
-void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
-                                                 const BinaryOperator *B) {
+void FixedAddressChecker::checkPreStmt(const BinaryOperator *B,
+                                       CheckerContext &C) const {
   // Using a fixed address is not portable because that address will probably
   // not be valid in all environments or platforms.
 
@@ -58,20 +53,16 @@ void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
 
   if (ExplodedNode *N = C.generateNode()) {
     if (!BT)
-      BT = new BuiltinBug("Use fixed address", 
+      BT.reset(new BuiltinBug("Use fixed address", 
                           "Using a fixed address is not portable because that "
                           "address will probably not be valid in all "
-                          "environments or platforms.");
+                          "environments or platforms."));
     RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(), N);
     R->addRange(B->getRHS()->getSourceRange());
     C.EmitReport(R);
   }
 }
 
-static void RegisterFixedAddressChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new FixedAddressChecker());
-}
-
 void ento::registerFixedAddressChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterFixedAddressChecker);
+  mgr.registerChecker<FixedAddressChecker>();
 }

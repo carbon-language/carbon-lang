@@ -16,11 +16,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/Basic/TargetInfo.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/raw_ostream.h"
@@ -29,30 +30,25 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class MacOSXAPIChecker : public CheckerVisitor<MacOSXAPIChecker> {
+class MacOSXAPIChecker : public CheckerV2< check::PreStmt<CallExpr> > {
   enum SubChecks {
     DispatchOnce = 0,
     DispatchOnceF,
     NumChecks
   };
 
-  BugType *BTypes[NumChecks];
+  mutable BugType *BTypes[NumChecks];
 
 public:
   MacOSXAPIChecker() { memset(BTypes, 0, sizeof(*BTypes) * NumChecks); }
-  static void *getTag() { static unsigned tag = 0; return &tag; }
+  ~MacOSXAPIChecker() {
+    for (unsigned i=0; i != NumChecks; ++i)
+      delete BTypes[i];
+  }
 
-  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 };
 } //end anonymous namespace
-
-static void RegisterMacOSXAPIChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new MacOSXAPIChecker());
-}
-
-void ento::registerMacOSXAPIChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterMacOSXAPIChecker);
-}
 
 //===----------------------------------------------------------------------===//
 // dispatch_once and dispatch_once_f
@@ -121,7 +117,8 @@ namespace {
   };
 } // end anonymous namespace
 
-void MacOSXAPIChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
+void MacOSXAPIChecker::checkPreStmt(const CallExpr *CE,
+                                    CheckerContext &C) const {
   // FIXME: Mostly copy and paste from UnixAPIChecker.  Should refactor.
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
@@ -143,4 +140,12 @@ void MacOSXAPIChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
       .Default(SubCheck());
 
   SC.run(C, CE, FI);
+}
+
+//===----------------------------------------------------------------------===//
+// Registration.
+//===----------------------------------------------------------------------===//
+
+void ento::registerMacOSXAPIChecker(CheckerManager &mgr) {
+  mgr.registerChecker<MacOSXAPIChecker>();
 }

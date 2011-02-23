@@ -14,31 +14,25 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
-class CastToStructChecker 
-  : public CheckerVisitor<CastToStructChecker> {
-  BuiltinBug *BT;
+class CastToStructChecker : public CheckerV2< check::PreStmt<CastExpr> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
+
 public:
-  CastToStructChecker() : BT(0) {}
-  static void *getTag();
-  void PreVisitCastExpr(CheckerContext &C, const CastExpr *B);
+  void checkPreStmt(const CastExpr *CE, CheckerContext &C) const;
 };
 }
 
-void *CastToStructChecker::getTag() {
-  static int x;
-  return &x;
-}
-
-void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
-                                           const CastExpr *CE) {
+void CastToStructChecker::checkPreStmt(const CastExpr *CE,
+                                       CheckerContext &C) const {
   const Expr *E = CE->getSubExpr();
   ASTContext &Ctx = C.getASTContext();
   QualType OrigTy = Ctx.getCanonicalType(E->getType());
@@ -64,10 +58,10 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
   if (!OrigPointeeTy->isRecordType()) {
     if (ExplodedNode *N = C.generateNode()) {
       if (!BT)
-        BT = new BuiltinBug("Cast from non-struct type to struct type",
+        BT.reset(new BuiltinBug("Cast from non-struct type to struct type",
                             "Casting a non-structure type to a structure type "
                             "and accessing a field can lead to memory access "
-                            "errors or data corruption.");
+                            "errors or data corruption."));
       RangedBugReport *R = new RangedBugReport(*BT,BT->getDescription(), N);
       R->addRange(CE->getSourceRange());
       C.EmitReport(R);
@@ -75,10 +69,6 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
   }
 }
 
-static void RegisterCastToStructChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new CastToStructChecker());
-}
-
 void ento::registerCastToStructChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterCastToStructChecker);
+  mgr.registerChecker<CastToStructChecker>();
 }

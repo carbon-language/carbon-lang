@@ -14,31 +14,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 class PointerSubChecker 
-  : public CheckerVisitor<PointerSubChecker> {
-  BuiltinBug *BT;
+  : public CheckerV2< check::PreStmt<BinaryOperator> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
+
 public:
-  PointerSubChecker() : BT(0) {}
-  static void *getTag();
-  void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
+  void checkPreStmt(const BinaryOperator *B, CheckerContext &C) const;
 };
 }
 
-void *PointerSubChecker::getTag() {
-  static int x;
-  return &x;
-}
-
-void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
-                                               const BinaryOperator *B) {
+void PointerSubChecker::checkPreStmt(const BinaryOperator *B,
+                                     CheckerContext &C) const {
   // When doing pointer subtraction, if the two pointers do not point to the
   // same memory chunk, emit a warning.
   if (B->getOpcode() != BO_Sub)
@@ -66,19 +61,15 @@ void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
 
   if (ExplodedNode *N = C.generateNode()) {
     if (!BT)
-      BT = new BuiltinBug("Pointer subtraction", 
+      BT.reset(new BuiltinBug("Pointer subtraction", 
                           "Subtraction of two pointers that do not point to "
-                          "the same memory chunk may cause incorrect result.");
+                          "the same memory chunk may cause incorrect result."));
     RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(), N);
     R->addRange(B->getSourceRange());
     C.EmitReport(R);
   }
 }
 
-static void RegisterPointerSubChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new PointerSubChecker());
-}
-
 void ento::registerPointerSubChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterPointerSubChecker);
+  mgr.registerChecker<PointerSubChecker>();
 }

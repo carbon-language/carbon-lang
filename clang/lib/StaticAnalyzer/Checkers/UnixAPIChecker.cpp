@@ -13,10 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/Basic/TargetInfo.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <fcntl.h>
@@ -26,7 +27,7 @@ using namespace ento;
 using llvm::Optional;
 
 namespace {
-class UnixAPIChecker : public CheckerVisitor<UnixAPIChecker> {
+class UnixAPIChecker : public CheckerV2< check::PreStmt<CallExpr> > {
   enum SubChecks {
     OpenFn = 0,
     PthreadOnceFn = 1,
@@ -34,26 +35,21 @@ class UnixAPIChecker : public CheckerVisitor<UnixAPIChecker> {
     NumChecks
   };
 
-  BugType *BTypes[NumChecks];
+  mutable BugType *BTypes[NumChecks];
 
 public:
-  Optional<uint64_t> Val_O_CREAT;
+  mutable Optional<uint64_t> Val_O_CREAT;
 
 public:
   UnixAPIChecker() { memset(BTypes, 0, sizeof(*BTypes) * NumChecks); }
-  static void *getTag() { static unsigned tag = 0; return &tag; }
+  ~UnixAPIChecker() {
+    for (unsigned i=0; i != NumChecks; ++i)
+      delete BTypes[i];
+  }
 
-  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 };
 } //end anonymous namespace
-
-static void RegisterUnixAPIChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new UnixAPIChecker());
-}
-
-void ento::registerUnixAPIChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterUnixAPIChecker);
-}
 
 //===----------------------------------------------------------------------===//
 // Utility functions.
@@ -69,7 +65,7 @@ static inline void LazyInitialize(BugType *&BT, const char *name) {
 // "open" (man 2 open)
 //===----------------------------------------------------------------------===//
 
-static void CheckOpen(CheckerContext &C, UnixAPIChecker &UC,
+static void CheckOpen(CheckerContext &C, const UnixAPIChecker &UC,
                       const CallExpr *CE, BugType *&BT) {
   // The definition of O_CREAT is platform specific.  We need a better way
   // of querying this information from the checking environment.
@@ -141,7 +137,7 @@ static void CheckOpen(CheckerContext &C, UnixAPIChecker &UC,
 // pthread_once
 //===----------------------------------------------------------------------===//
 
-static void CheckPthreadOnce(CheckerContext &C, UnixAPIChecker &,
+static void CheckPthreadOnce(CheckerContext &C, const UnixAPIChecker &,
                              const CallExpr *CE, BugType *&BT) {
 
   // This is similar to 'CheckDispatchOnce' in the MacOSXAPIChecker.
@@ -186,7 +182,7 @@ static void CheckPthreadOnce(CheckerContext &C, UnixAPIChecker &,
 
 // FIXME: Eventually this should be rolled into the MallocChecker, but this
 // check is more basic and is valuable for widespread use.
-static void CheckMallocZero(CheckerContext &C, UnixAPIChecker &UC,
+static void CheckMallocZero(CheckerContext &C, const UnixAPIChecker &UC,
                             const CallExpr *CE, BugType *&BT) {
 
   // Sanity check that malloc takes one argument.
@@ -234,16 +230,16 @@ static void CheckMallocZero(CheckerContext &C, UnixAPIChecker &UC,
 // Central dispatch function.
 //===----------------------------------------------------------------------===//
 
-typedef void (*SubChecker)(CheckerContext &C, UnixAPIChecker &UC,
+typedef void (*SubChecker)(CheckerContext &C, const UnixAPIChecker &UC,
                            const CallExpr *CE, BugType *&BT);
 namespace {
   class SubCheck {
     SubChecker SC;
-    UnixAPIChecker *UC;
+    const UnixAPIChecker *UC;
     BugType **BT;
   public:
-    SubCheck(SubChecker sc, UnixAPIChecker *uc, BugType *& bt) : SC(sc), UC(uc),
-      BT(&bt) {}
+    SubCheck(SubChecker sc, const UnixAPIChecker *uc, BugType *& bt)
+      : SC(sc), UC(uc), BT(&bt) {}
     SubCheck() : SC(NULL), UC(NULL), BT(NULL) {}
 
     void run(CheckerContext &C, const CallExpr *CE) const {
@@ -253,7 +249,7 @@ namespace {
   };
 } // end anonymous namespace
 
-void UnixAPIChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
+void UnixAPIChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
   // Get the callee.  All the functions we care about are C functions
   // with simple identifiers.
   const GRState *state = C.getState();
@@ -279,4 +275,12 @@ void UnixAPIChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
       .Default(SubCheck());
 
   SC.run(C, CE);
+}
+
+//===----------------------------------------------------------------------===//
+// Registration.
+//===----------------------------------------------------------------------===//
+
+void ento::registerUnixAPIChecker(CheckerManager &mgr) {
+  mgr.registerChecker<UnixAPIChecker>();
 }
