@@ -240,8 +240,7 @@ LiveInterval *RAGreedy::getSingleInterference(LiveInterval &VirtReg,
     if (Q.checkInterference()) {
       if (Interference)
         return 0;
-      Q.collectInterferingVRegs(1);
-      if (!Q.seenAllInterferences())
+      if (Q.collectInterferingVRegs(2) > 1)
         return 0;
       Interference = Q.interferingVRegs().front();
     }
