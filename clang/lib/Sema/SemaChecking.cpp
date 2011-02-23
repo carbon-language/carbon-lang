@@ -3135,12 +3135,12 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
     if (index.slt(size))
       return;
 
-    DiagRuntimeBehavior(E->getBase()->getLocStart(),
+    DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
                         PDiag(diag::warn_array_index_exceeds_bounds)
                         << index.toString(10, true) << size.toString(10, true)
                         << IndexExpr->getSourceRange());
   } else {
-    DiagRuntimeBehavior(E->getBase()->getLocStart(),
+    DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
                         PDiag(diag::warn_array_index_precedes_bounds)
                           << index.toString(10, true)
                           << IndexExpr->getSourceRange());
@@ -3152,7 +3152,7 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr))
     ND = dyn_cast<NamedDecl>(ME->getMemberDecl());
   if (ND)
-    DiagRuntimeBehavior(ND->getLocStart(),
+    DiagRuntimeBehavior(ND->getLocStart(), BaseExpr,
                         PDiag(diag::note_array_index_out_of_bounds)
                           << ND->getDeclName());
 }

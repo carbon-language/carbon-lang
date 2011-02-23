@@ -1891,7 +1891,8 @@ public:
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
-  bool DiagRuntimeBehavior(SourceLocation Loc, const PartialDiagnostic &PD);
+  bool DiagRuntimeBehavior(SourceLocation Loc, const Stmt *stmt,
+                           const PartialDiagnostic &PD);
 
   // Primary Expressions.
   SourceRange getExprRange(Expr *E) const;

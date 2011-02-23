@@ -387,13 +387,13 @@ bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT,
     return false;
   
   if (Expr->getType()->isObjCObjectType() &&
-      DiagRuntimeBehavior(Expr->getLocStart(),
+      DiagRuntimeBehavior(Expr->getLocStart(), Expr,
         PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
           << Expr->getType() << CT))
     return true;
 
   if (!Expr->getType()->isPODType() &&
-      DiagRuntimeBehavior(Expr->getLocStart(),
+      DiagRuntimeBehavior(Expr->getLocStart(), Expr,
                           PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg)
                             << Expr->getType() << CT))
     return true;
@@ -6355,8 +6355,8 @@ QualType Sema::CheckMultiplyDivideOperands(
   // Check for division by zero.
   if (isDiv &&
       rex->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
-    DiagRuntimeBehavior(Loc, PDiag(diag::warn_division_by_zero)
-                                     << rex->getSourceRange());
+    DiagRuntimeBehavior(Loc, rex, PDiag(diag::warn_division_by_zero)
+                                      << rex->getSourceRange());
 
   return compType;
 }
@@ -6377,8 +6377,8 @@ QualType Sema::CheckRemainderOperands(
 
   // Check for remainder by zero.
   if (rex->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
-    DiagRuntimeBehavior(Loc, PDiag(diag::warn_remainder_by_zero)
-                                 << rex->getSourceRange());
+    DiagRuntimeBehavior(Loc, rex, PDiag(diag::warn_remainder_by_zero)
+                                  << rex->getSourceRange());
 
   return compType;
 }
@@ -6721,7 +6721,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
         if (DRL->getDecl() == DRR->getDecl() &&
             !IsWithinTemplateSpecialization(DRL->getDecl())) {
-          DiagRuntimeBehavior(Loc, PDiag(diag::warn_comparison_always)
+          DiagRuntimeBehavior(Loc, lex, PDiag(diag::warn_comparison_always)
                               << 0 // self-
                               << (Opc == BO_EQ
                                   || Opc == BO_LE
@@ -6743,7 +6743,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
               always_evals_to = 2; // e.g. array1 <= array2
               break;
             }
-            DiagRuntimeBehavior(Loc, PDiag(diag::warn_comparison_always)
+            DiagRuntimeBehavior(Loc, lex, PDiag(diag::warn_comparison_always)
                                 << 1 // array
                                 << always_evals_to);
         }
@@ -6784,7 +6784,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       default: assert(false && "Invalid comparison operator");
       }
 
-      DiagRuntimeBehavior(Loc,
+      DiagRuntimeBehavior(Loc, literalString,
         PDiag(diag::warn_stringcompare)
           << isa<ObjCEncodeExpr>(literalStringStripped)
           << literalString->getSourceRange());
@@ -7094,7 +7094,7 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
         if (DRL->getDecl() == DRR->getDecl())
-          DiagRuntimeBehavior(Loc,
+          DiagRuntimeBehavior(Loc, rex,
                               PDiag(diag::warn_comparison_always)
                                 << 0 // self-
                                 << 2 // "a constant"
@@ -8546,7 +8546,7 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
     //   (clause 9).
     if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
       if (!CRD->isPOD() && !DidWarnAboutNonPOD &&
-          DiagRuntimeBehavior(BuiltinLoc,
+          DiagRuntimeBehavior(BuiltinLoc, 0,
                               PDiag(diag::warn_offsetof_non_pod_type)
                               << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
                               << CurrentType))
@@ -9470,7 +9470,7 @@ void Sema::MarkDeclarationsReferencedInExpr(Expr *E) {
 /// behavior of a program, such as passing a non-POD value through an ellipsis.
 /// Failure to do so will likely result in spurious diagnostics or failures
 /// during overload resolution or within sizeof/alignof/typeof/typeid.
-bool Sema::DiagRuntimeBehavior(SourceLocation Loc,
+bool Sema::DiagRuntimeBehavior(SourceLocation Loc, const Stmt *stmt,
                                const PartialDiagnostic &PD) {
   switch (ExprEvalContexts.back().Context ) {
   case Unevaluated:
