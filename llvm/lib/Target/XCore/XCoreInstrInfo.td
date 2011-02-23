@@ -841,7 +841,7 @@ def SETTW_l2r : _FL2R<(outs), (ins GRRegs:$r, GRRegs:$val),
 
 // One operand short
 // TODO edu, eeu, waitet, waitef, tstart, msync, mjoin, clrtp
-// setdp, setcp, setv, setev, kcall
+// setdp, setcp, setev, kcall
 // dgetreg
 let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
 def BAU_1r : _F1R<(outs), (ins GRRegs:$addr),
@@ -888,6 +888,11 @@ def SYNCR_1r : _F1R<(outs), (ins GRRegs:$r),
 def FREER_1r : _F1R<(outs), (ins GRRegs:$r),
                "freer res[$r]",
                [(int_xcore_freer GRRegs:$r)]>;
+
+let Uses=[R11] in
+def SETV_1r : _F1R<(outs), (ins GRRegs:$r),
+               "setv res[$r], r11",
+               [(int_xcore_setv GRRegs:$r, R11)]>;
 
 // Zero operand short
 // TODO waiteu, clre, ssync, freet, ldspc, stspc, ldssr, stssr, ldsed, stsed,
