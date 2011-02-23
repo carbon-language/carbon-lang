@@ -64,7 +64,7 @@ void CheckerManager::runCheckersOnASTBody(const Decl *D, AnalysisManager& mgr,
 template <typename CHECK_CTX>
 static void expandGraphWithCheckers(CHECK_CTX checkCtx,
                                     ExplodedNodeSet &Dst,
-                                    ExplodedNodeSet &Src) {
+                                    const ExplodedNodeSet &Src) {
 
   typename CHECK_CTX::CheckersTy::const_iterator
       I = checkCtx.checkers_begin(), E = checkCtx.checkers_end();
@@ -73,15 +73,15 @@ static void expandGraphWithCheckers(CHECK_CTX checkCtx,
     return;
   }
 
-  ExplodedNodeSet Tmp;
-  ExplodedNodeSet *PrevSet = &Src;
+  ExplodedNodeSet Tmp1, Tmp2;
+  const ExplodedNodeSet *PrevSet = &Src;
 
   for (; I != E; ++I) {
     ExplodedNodeSet *CurrSet = 0;
     if (I+1 == E)
       CurrSet = &Dst;
     else {
-      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
+      CurrSet = (PrevSet == &Tmp1) ? &Tmp2 : &Tmp1;
       CurrSet->clear();
     }
 
@@ -123,7 +123,7 @@ namespace {
 /// \brief Run checkers for visiting Stmts.
 void CheckerManager::runCheckersForStmt(bool isPreVisit,
                                         ExplodedNodeSet &Dst,
-                                        ExplodedNodeSet &Src,
+                                        const ExplodedNodeSet &Src,
                                         const Stmt *S,
                                         ExprEngine &Eng) {
   CheckStmtContext C(isPreVisit, *getCachedStmtCheckersFor(S, isPreVisit),
@@ -160,7 +160,7 @@ namespace {
 /// \brief Run checkers for visiting obj-c messages.
 void CheckerManager::runCheckersForObjCMessage(bool isPreVisit,
                                                ExplodedNodeSet &Dst,
-                                               ExplodedNodeSet &Src,
+                                               const ExplodedNodeSet &Src,
                                                const ObjCMessage &msg,
                                                ExprEngine &Eng) {
   CheckObjCMessageContext C(isPreVisit,
@@ -201,7 +201,7 @@ namespace {
 
 /// \brief Run checkers for load/store of a location.
 void CheckerManager::runCheckersForLocation(ExplodedNodeSet &Dst,
-                                            ExplodedNodeSet &Src,
+                                            const ExplodedNodeSet &Src,
                                             SVal location, bool isLoad,
                                             const Stmt *S,
                                             const GRState *state,

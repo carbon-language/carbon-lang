@@ -133,7 +133,7 @@ public:
 
   /// \brief Run checkers for pre-visiting Stmts.
   void runCheckersForPreStmt(ExplodedNodeSet &Dst,
-                             ExplodedNodeSet &Src,
+                             const ExplodedNodeSet &Src,
                              const Stmt *S,
                              ExprEngine &Eng) {
     runCheckersForStmt(/*isPreVisit=*/true, Dst, Src, S, Eng);
@@ -141,7 +141,7 @@ public:
 
   /// \brief Run checkers for post-visiting Stmts.
   void runCheckersForPostStmt(ExplodedNodeSet &Dst,
-                              ExplodedNodeSet &Src,
+                              const ExplodedNodeSet &Src,
                               const Stmt *S,
                               ExprEngine &Eng) {
     runCheckersForStmt(/*isPreVisit=*/false, Dst, Src, S, Eng);
@@ -149,12 +149,12 @@ public:
 
   /// \brief Run checkers for visiting Stmts.
   void runCheckersForStmt(bool isPreVisit,
-                          ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
+                          ExplodedNodeSet &Dst, const ExplodedNodeSet &Src,
                           const Stmt *S, ExprEngine &Eng);
 
   /// \brief Run checkers for pre-visiting obj-c messages.
   void runCheckersForPreObjCMessage(ExplodedNodeSet &Dst,
-                                    ExplodedNodeSet &Src,
+                                    const ExplodedNodeSet &Src,
                                     const ObjCMessage &msg,
                                     ExprEngine &Eng) {
     runCheckersForObjCMessage(/*isPreVisit=*/true, Dst, Src, msg, Eng);
@@ -162,7 +162,7 @@ public:
 
   /// \brief Run checkers for post-visiting obj-c messages.
   void runCheckersForPostObjCMessage(ExplodedNodeSet &Dst,
-                                     ExplodedNodeSet &Src,
+                                     const ExplodedNodeSet &Src,
                                      const ObjCMessage &msg,
                                      ExprEngine &Eng) {
     runCheckersForObjCMessage(/*isPreVisit=*/false, Dst, Src, msg, Eng);
@@ -170,12 +170,13 @@ public:
 
   /// \brief Run checkers for visiting obj-c messages.
   void runCheckersForObjCMessage(bool isPreVisit,
-                                 ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
+                                 ExplodedNodeSet &Dst,
+                                 const ExplodedNodeSet &Src,
                                  const ObjCMessage &msg, ExprEngine &Eng);
 
   /// \brief Run checkers for load/store of a location.
   void runCheckersForLocation(ExplodedNodeSet &Dst,
-                              ExplodedNodeSet &Src,
+                              const ExplodedNodeSet &Src,
                               SVal location, bool isLoad,
                               const Stmt *S,
                               const GRState *state,
