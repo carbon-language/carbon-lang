@@ -177,11 +177,14 @@ def warn_pch_elide_constructors : Error<
 def warn_pch_exceptions : Error<
     "exceptions were %select{disabled|enabled}0 in PCH file but "
     "are currently %select{disabled|enabled}1">;
-def warn_pch_sjlj_exceptions : Error<
-    "sjlj-exceptions were %select{disabled|enabled}0 in PCH file but "
-    "are currently %select{disabled|enabled}1">;
 def warn_pch_objc_exceptions : Error<
     "Objective-C exceptions were %select{disabled|enabled}0 in PCH file but "
+    "are currently %select{disabled|enabled}1">;
+def warn_pch_cxx_exceptions : Error<
+    "C++ exceptions were %select{disabled|enabled}0 in PCH file but "
+    "are currently %select{disabled|enabled}1">;
+def warn_pch_sjlj_exceptions : Error<
+    "sjlj-exceptions were %select{disabled|enabled}0 in PCH file but "
     "are currently %select{disabled|enabled}1">;
 def warn_pch_objc_runtime : Error<
     "PCH file was compiled with the %select{NeXT|GNU}0 runtime but the "
