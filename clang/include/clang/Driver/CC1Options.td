@@ -418,10 +418,12 @@ def fblocks : Flag<"-fblocks">,
 def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;
 def fexceptions : Flag<"-fexceptions">,
   HelpText<"Enable support for exception handling">;
+def fobjc_exceptions : Flag<"-fobjc-exceptions">,
+  HelpText<"Enable Objective-C exceptions">;
+def fcxx_exceptions : Flag<"-fcxx-exceptions">,
+  HelpText<"Enable C++ exceptions">;
 def fsjlj_exceptions : Flag<"-fsjlj-exceptions">,
   HelpText<"Use SjLj style exceptions">;
-def fobjc_exceptions : Flag<"-fobjc-exceptions">,
-  HelpText<"Disable Objective-C exceptions">;
 def ffreestanding : Flag<"-ffreestanding">,
   HelpText<"Assert that the compilation takes place in a freestanding environment">;
 def fgnu_runtime : Flag<"-fgnu-runtime">,
