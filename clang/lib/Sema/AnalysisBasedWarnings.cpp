@@ -289,7 +289,7 @@ struct CheckFallThroughDiagnostics {
 /// of a noreturn function.  We assume that functions and blocks not marked
 /// noreturn will return.
 static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
-                                    QualType BlockTy,
+                                    const BlockExpr *blkExpr,
                                     const CheckFallThroughDiagnostics& CD,
                                     AnalysisContext &AC) {
 
@@ -306,6 +306,7 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
     HasNoReturn = MD->hasAttr<NoReturnAttr>();
   }
   else if (isa<BlockDecl>(D)) {
+    QualType BlockTy = blkExpr->getType();
     if (const FunctionType *FT =
           BlockTy->getPointeeType()->getAs<FunctionType>()) {
       if (FT->getResultType()->isVoidType())
@@ -479,9 +480,7 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s) : S(s) {
 
 void clang::sema::
 AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
-                                     const Decl *D, QualType BlockTy) {
-
-  assert(BlockTy.isNull() || isa<BlockDecl>(D));
+                                     const Decl *D, const BlockExpr *blkExpr) {
 
   // We avoid doing analysis-based warnings when there are errors for
   // two reasons:
@@ -517,7 +516,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     const CheckFallThroughDiagnostics &CD =
       (isa<BlockDecl>(D) ? CheckFallThroughDiagnostics::MakeForBlock()
                          : CheckFallThroughDiagnostics::MakeForFunction(D));
-    CheckFallThroughForBody(S, D, Body, BlockTy, CD, AC);
+    CheckFallThroughForBody(S, D, Body, blkExpr, CD, AC);
   }
 
   // Warning: check for unreachable code
@@ -549,22 +548,4 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
                                         reporter);
     }
   }
-}
-
-void clang::sema::
-AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
-                                     const BlockExpr *E) {
-  return IssueWarnings(P, E->getBlockDecl(), E->getType());
-}
-
-void clang::sema::
-AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
-                                     const ObjCMethodDecl *D) {
-  return IssueWarnings(P, D, QualType());
-}
-
-void clang::sema::
-AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
-                                     const FunctionDecl *D) {
-  return IssueWarnings(P, D, QualType());
 }

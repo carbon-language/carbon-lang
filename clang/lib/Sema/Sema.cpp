@@ -631,9 +631,15 @@ void Sema::PushBlockScope(Scope *BlockScope, BlockDecl *Block) {
                                               BlockScope, Block));
 }
 
-void Sema::PopFunctionOrBlockScope() {
-  FunctionScopeInfo *Scope = FunctionScopes.pop_back_val();
+void Sema::PopFunctionOrBlockScope(const AnalysisBasedWarnings::Policy *WP,
+                                   const Decl *D, const BlockExpr *blkExpr) {
+  FunctionScopeInfo *Scope = FunctionScopes.pop_back_val();  
   assert(!FunctionScopes.empty() && "mismatched push/pop!");
+  
+  // Issue any analysis-based warnings.
+  if (WP && D)
+    AnalysisWarnings.IssueWarnings(*WP, D, blkExpr);
+
   if (FunctionScopes.back() != Scope)
     delete Scope;
 }

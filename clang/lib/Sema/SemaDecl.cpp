@@ -5552,6 +5552,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     FD = dyn_cast_or_null<FunctionDecl>(dcl);
 
   sema::AnalysisBasedWarnings::Policy WP = AnalysisWarnings.getDefaultPolicy();
+  sema::AnalysisBasedWarnings::Policy *ActivePolicy = 0;
 
   if (FD) {
     FD->setBody(Body);
@@ -5620,13 +5621,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     else if (!isa<FunctionTemplateDecl>(dcl)) {
       // Since the body is valid, issue any analysis-based warnings that are
       // enabled.
-      QualType ResultType;
-      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(dcl)) {
-        AnalysisWarnings.IssueWarnings(WP, FD);
-      } else {
-        ObjCMethodDecl *MD = cast<ObjCMethodDecl>(dcl);
-        AnalysisWarnings.IssueWarnings(WP, MD);
-      }
+      ActivePolicy = &WP;
     }
 
     assert(ExprTemporaries.empty() && "Leftover temporaries in function");
@@ -5635,7 +5630,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
   if (!IsInstantiation)
     PopDeclContext();
 
-  PopFunctionOrBlockScope();
+  PopFunctionOrBlockScope(ActivePolicy, dcl);
   
   // If any errors have occurred, clear out any temporaries that may have
   // been leftover. This ensures that these temporaries won't be picked up for

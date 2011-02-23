@@ -8890,12 +8890,8 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
   BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
 
-  // Issue any analysis-based warnings.
-  const sema::AnalysisBasedWarnings::Policy &WP =
-    AnalysisWarnings.getDefaultPolicy();
-  AnalysisWarnings.IssueWarnings(WP, Result);
-
-  PopFunctionOrBlockScope();
+  const AnalysisBasedWarnings::Policy &WP = AnalysisWarnings.getDefaultPolicy();
+  PopFunctionOrBlockScope(&WP, Result->getBlockDecl(), Result);
   return Owned(Result);
 }
 

@@ -688,7 +688,8 @@ public:
 
   void PushFunctionScope();
   void PushBlockScope(Scope *BlockScope, BlockDecl *Block);
-  void PopFunctionOrBlockScope();
+  void PopFunctionOrBlockScope(const sema::AnalysisBasedWarnings::Policy *WP =0,
+                               const Decl *D = 0, const BlockExpr *blkExpr = 0);
 
   sema::FunctionScopeInfo *getCurFunction() const {
     return FunctionScopes.back();
