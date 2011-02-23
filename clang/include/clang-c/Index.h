@@ -35,7 +35,7 @@ extern "C" {
   #define CINDEX_LINKAGE
 #endif
 
-/** \defgroup CINDEX C Interface to Clang
+/** \defgroup CINDEX libclang: C Interface to Clang
  *
  * The C Interface to Clang provides a relatively small API that exposes
  * facilities for parsing source code into an abstract syntax tree (AST),
