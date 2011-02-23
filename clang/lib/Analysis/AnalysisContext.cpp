@@ -19,6 +19,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
+#include "clang/Analysis/Analyses/CFGReachabilityAnalysis.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CFGStmtMap.h"
@@ -98,7 +99,18 @@ CFGStmtMap *AnalysisContext::getCFGStmtMap() {
     
   return 0;
 }
+
+CFGReachabilityAnalysis *AnalysisContext::getCFGReachablityAnalysis() {
+  if (CFA)
+    return CFA;
   
+  if (CFG *c = getCFG()) {
+    CFA = new CFGReachabilityAnalysis(*c);
+    return CFA;
+  }
+  
+  return 0;
+}
 
 void AnalysisContext::dumpCFG() {
     getCFG()->dump(getASTContext().getLangOptions());
@@ -365,6 +377,7 @@ AnalysisContext::~AnalysisContext() {
   delete relaxedLiveness;
   delete PM;
   delete PCA;
+  delete CFA;
   delete ReferencedBlockVars;
 }
 

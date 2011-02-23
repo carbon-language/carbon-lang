@@ -3,6 +3,7 @@ set(LLVM_USED_LIBS clangBasic clangAST clangIndex)
 add_clang_library(clangAnalysis
   AnalysisContext.cpp
   CFG.cpp
+  CFGReachabilityAnalysis.cpp
   CFGStmtMap.cpp
   CocoaConventions.cpp
   FormatString.cpp

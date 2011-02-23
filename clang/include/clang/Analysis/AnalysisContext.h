@@ -29,6 +29,7 @@ class Decl;
 class Stmt;
 class CFG;
 class CFGBlock;
+class CFGReachabilityAnalysis;
 class CFGStmtMap;
 class LiveVariables;
 class ParentMap;
@@ -55,6 +56,7 @@ class AnalysisContext {
   LiveVariables *relaxedLiveness;
   ParentMap *PM;
   PseudoConstantAnalysis *PCA;
+  CFGReachabilityAnalysis *CFA;
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
   llvm::BumpPtrAllocator A;
   bool UseUnoptimizedCFG;  
@@ -69,7 +71,7 @@ public:
                   bool addInitializers = false)
     : D(d), TU(tu), cfg(0), completeCFG(0), cfgStmtMap(0),
       builtCFG(false), builtCompleteCFG(false),
-      liveness(0), relaxedLiveness(0), PM(0), PCA(0),
+      liveness(0), relaxedLiveness(0), PM(0), PCA(0), CFA(0),
       ReferencedBlockVars(0), UseUnoptimizedCFG(useUnoptimizedCFG),
       AddEHEdges(addehedges), AddImplicitDtors(addImplicitDtors),
       AddInitializers(addInitializers) {}
@@ -96,6 +98,8 @@ public:
   
   CFGStmtMap *getCFGStmtMap();
 
+  CFGReachabilityAnalysis *getCFGReachablityAnalysis();
+  
   /// Return a version of the CFG without any edges pruned.
   CFG *getUnoptimizedCFG();
 
