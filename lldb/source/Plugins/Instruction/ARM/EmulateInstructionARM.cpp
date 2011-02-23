@@ -1407,7 +1407,10 @@ EmulateInstructionARM::EmulateSUBIPSPImm (ARMEncoding encoding)
     return true;
 }
 
-// A sub operation to adjust the SP -- allocate space for local storage.
+// This instruction subtracts an immediate value from the SP value, and writes
+// the result to the destination register.
+//
+// If Rd == 13 => A sub operation to adjust the SP -- allocate space for local storage.
 bool
 EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
 {
@@ -1439,31 +1442,53 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
         const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
+
+        uint32_t Rd;
+        bool setflags;
         uint32_t imm32;
         switch (encoding) {
         case eEncodingT1:
+            Rd = 13;
+            setflags = false;
             imm32 = ThumbImmScaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
             break;
         case eEncodingT2:
+            Rd = Bits32(opcode, 11, 8);
+            setflags = BitIsSet(opcode, 20);
             imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
+            if (Rd == 15 && setflags)
+                return EmulateCMPImm(eEncodingT2);
+            if (Rd == 15 && !setflags)
+                return false;
             break;
         case eEncodingT3:
+            Rd = Bits32(opcode, 11, 8);
+            setflags = false;
             imm32 = ThumbImm12(opcode); // imm32 = ZeroExtend(i:imm3:imm8, 32)
             break;
         case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
             break;
         default:
             return false;
         }
-        addr_t sp_offset = imm32;
-        addr_t addr = sp - sp_offset; // the adjusted stack pointer value
-        
+        AddWithCarryResult res = AddWithCarry(sp, ~imm32, 1);
+
         EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextAdjustStackPointer;
-        context.SetImmediateSigned (-sp_offset);
-    
-        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
+        if (Rd == 13)
+        {
+            context.type = EmulateInstruction::eContextAdjustStackPointer;
+            context.SetImmediateSigned (-imm32); // the stack pointer offset
+        }
+        else
+        {
+            context.type = EmulateInstruction::eContextImmediate;
+            context.SetNoArgs ();
+        }
+
+        if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
             return false;
     }
     return true;
@@ -6678,6 +6703,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x02c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSBCImm, "sbc{s}<c> <Rd>, <Rn>, #<const>"},
         // sbc (register)
         { 0x0fe00010, 0x00c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // sub (sp minus immediate)
+        { 0x0fef0000, 0x024d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}<c> <Rd>, sp, #<const>"},
         // teq (immediate)
         { 0x0ff0f000, 0x03300000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #const"},
         // teq (register)
@@ -6781,7 +6808,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
 
         // adjust the stack pointer
         { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDSPRm, "add sp, <Rm>"},
-        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBSPImm, "add sp, sp, #imm"},
+        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBSPImm, "sub sp, sp, #imm"},
         { 0xfbef8f00, 0xf1ad0d00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub.w sp, sp, #<const>"},
         { 0xfbff8f00, 0xf2ad0d00, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw sp, sp, #imm12"},
 
@@ -6869,6 +6896,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // sbc (register)
         { 0xffffffc0, 0x00004180, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSBCReg, "sbcs|sbc<c> <Rdn>, <Rm>"},
         { 0xffe08000, 0xeb600000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // sub (sp minus immediate)
+        { 0xfbef8000, 0xf1ad0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}.w <Rd>, sp, #<const>"},
+        { 0xfbff8000, 0xf2ad0000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw<c> <Rd>, sp, #imm12"},
         // teq (immediate)
         { 0xfbf08f00, 0xf0900f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #<const>"},
         // teq (register)

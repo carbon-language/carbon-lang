@@ -677,17 +677,13 @@ protected:
     bool
     EmulateSBCReg (ARMEncoding encoding);
     
-    // A8.6.210 SUB (immediate, Thumb)    - Encoding T1, T2
+    // A8.6.211 SUB (immediate, Thumb)    - Encoding T1, T2
     bool
     EmulateSUBImmediateThumb (ARMEncoding encoding);
     
-    // A8.6.211 SUB (immediate, ARM)      - Encoding A1
+    // A8.6.212 SUB (immediate, ARM)      - Encoding A1
     bool
     EmulateSUBImmediateARM (ARMEncoding encoding);
-    
-    // A8.6.214 SUB (SP minus immediate)  - Encoding T1, A1
-    bool
-    EmulateSUBSpImmediate (ARMEncoding encoding);
     
     // A8.6.222 SXTB  - Encoding T1
     bool
