@@ -1,6 +1,8 @@
-// RUN: %clang -Wall -ffreestanding -fsyntax-only -Xclang -verify %s
+// RUN: %clang -Wall -Wshift-sign-overflow -ffreestanding -fsyntax-only -Xclang -verify %s
 
 #include <limits.h>
+
+#define WORD_BIT (sizeof(int) * CHAR_BIT)
 
 enum {
   X = 1 << 0,
@@ -32,6 +34,22 @@ void test() {
   c <<= CHAR_BIT+1; // expected-warning {{shift count >= width of type}}
   c >>= CHAR_BIT+1; // expected-warning {{shift count >= width of type}}
   (void)((long)c << CHAR_BIT);
+
+  int i;
+  i = 1 << (WORD_BIT - 2);
+  i = 2 << (WORD_BIT - 1); // expected-warning {{the promoted type of the shift expression is 'int'}}
+  i = 1 << (WORD_BIT - 1); // expected-warning {{overrides the sign bit of the promoted type of the shift expression ('int')}}
+  i = -1 << (WORD_BIT - 1);
+  i = 0 << (WORD_BIT - 1);
+  i = (char)1 << (WORD_BIT - 2);
+
+  unsigned u;
+  u = 1U << (WORD_BIT - 1);
+  u = 5U << (WORD_BIT - 1);
+
+  long long int lli;
+  lli = INT_MIN << 2; // expected-warning {{the promoted type of the shift expression is 'int'}}
+  lli = 1LL << (sizeof(long long) * CHAR_BIT - 2);
 }
 
 #define a 0

@@ -6626,9 +6626,61 @@ static bool isScopedEnumerationType(QualType T) {
   return false;
 }
 
+static void DiagnoseBadShiftValues(Sema& S, Expr *&lex, Expr *&rex,
+                                   SourceLocation Loc, unsigned Opc,
+                                   QualType LHSTy) {
+  llvm::APSInt Right;
+  // Check right/shifter operand
+  if (rex->isValueDependent() || !rex->isIntegerConstantExpr(Right, S.Context))
+    return;
+
+  if (Right.isNegative()) {
+    S.Diag(Loc, diag::warn_shift_negative) << rex->getSourceRange();
+    return;
+  }
+  llvm::APInt LeftBits(Right.getBitWidth(),
+                       S.Context.getTypeSize(lex->getType()));
+  if (Right.uge(LeftBits)) {
+    S.Diag(Loc, diag::warn_shift_gt_typewidth) << rex->getSourceRange();
+    return;
+  }
+  if (Opc != BO_Shl)
+    return;
+
+  // When left shifting an ICE which is signed, we can check for overflow which
+  // according to C++ has undefined behavior ([expr.shift] 5.8/2). Unsigned
+  // integers have defined behavior modulo one more than the maximum value
+  // representable in the result type, so never warn for those.
+  llvm::APSInt Left;
+  if (!lex->isIntegerConstantExpr(Left, S.Context) ||
+      LHSTy->hasUnsignedIntegerRepresentation())
+    return;
+  llvm::APInt ResultBits =
+      static_cast<llvm::APInt&>(Right) + Left.getMinSignedBits();
+  if (LeftBits.uge(ResultBits))
+    return;
+  llvm::APSInt Result = Left.extend(ResultBits.getLimitedValue());
+  Result = Result.shl(Right);
+
+  // If we are only missing a sign bit, this is less likely to result in actual
+  // bugs -- if the result is cast back to an unsigned type, it will have the
+  // expected value. Thus we place this behind a different warning that can be
+  // turned off separately if needed.
+  if (LeftBits == ResultBits - 1) {
+    S.Diag(Loc, diag::warn_shift_result_overrides_sign_bit)
+        << Result.toString(10) << LHSTy
+        << lex->getSourceRange() << rex->getSourceRange();
+    return;
+  }
+
+  S.Diag(Loc, diag::warn_shift_result_gt_typewidth)
+    << Result.toString(10) << Result.getMinSignedBits() << LHSTy
+    << Left.getBitWidth() << lex->getSourceRange() << rex->getSourceRange();
+}
+
 // C99 6.5.7
 QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
-                                  bool isCompAssign) {
+                                  unsigned Opc, bool isCompAssign) {
   // C99 6.5.7p2: Each of the operands shall have integer type.
   if (!lex->getType()->hasIntegerRepresentation() || 
       !rex->getType()->hasIntegerRepresentation())
@@ -6659,19 +6711,7 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   UsualUnaryConversions(rex);
 
   // Sanity-check shift operands
-  llvm::APSInt Right;
-  // Check right/shifter operand
-  if (!rex->isValueDependent() &&
-      rex->isIntegerConstantExpr(Right, Context)) {
-    if (Right.isNegative())
-      Diag(Loc, diag::warn_shift_negative) << rex->getSourceRange();
-    else {
-      llvm::APInt LeftBits(Right.getBitWidth(),
-                          Context.getTypeSize(lex->getType()));
-      if (Right.uge(LeftBits))
-        Diag(Loc, diag::warn_shift_gt_typewidth) << rex->getSourceRange();
-    }
-  }
+  DiagnoseBadShiftValues(*this, lex, rex, Loc, Opc, LHSTy);
 
   // "The type of the result is that of the promoted left operand."
   return LHSTy;
@@ -7958,7 +7998,7 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   case BO_Shl:
   case BO_Shr:
-    ResultTy = CheckShiftOperands(lhs, rhs, OpLoc);
+    ResultTy = CheckShiftOperands(lhs, rhs, OpLoc, Opc);
     break;
   case BO_LE:
   case BO_LT:
@@ -8005,7 +8045,7 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   case BO_ShlAssign:
   case BO_ShrAssign:
-    CompResultTy = CheckShiftOperands(lhs, rhs, OpLoc, true);
+    CompResultTy = CheckShiftOperands(lhs, rhs, OpLoc, Opc, true);
     CompLHSTy = CompResultTy;
     if (!CompResultTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);

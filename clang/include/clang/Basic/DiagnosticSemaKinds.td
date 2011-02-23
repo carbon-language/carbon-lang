@@ -2340,6 +2340,14 @@ def warn_division_by_zero : Warning<"division by zero is undefined">;
 def warn_remainder_by_zero : Warning<"remainder by zero is undefined">;
 def warn_shift_negative : Warning<"shift count is negative">;
 def warn_shift_gt_typewidth : Warning<"shift count >= width of type">;
+def warn_shift_result_gt_typewidth : Warning<
+  "shift result (%0) requires %1 bits to represent, but the promoted type of "
+  "the shift expression is %2 with only %3 bits">,
+   InGroup<DiagGroup<"shift-overflow">>;
+def warn_shift_result_overrides_sign_bit : Warning<
+  "shift result (%0) overrides the sign bit of the promoted type of the shift "
+  "expression (%1) and becomes negative">,
+  InGroup<DiagGroup<"shift-sign-overflow">>, DefaultIgnore;
 
 def warn_precedence_bitwise_rel : Warning<
   "%0 has lower precedence than %1; %1 will be evaluated first">,

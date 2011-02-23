@@ -4790,7 +4790,8 @@ public:
   QualType CheckSubtractionOperands( // C99 6.5.6
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, QualType* CompLHSTy = 0);
   QualType CheckShiftOperands( // C99 6.5.7
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc,
+    bool isCompAssign = false);
   QualType CheckCompareOperands( // C99 6.5.8/9
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc,
                                 bool isRelational);
