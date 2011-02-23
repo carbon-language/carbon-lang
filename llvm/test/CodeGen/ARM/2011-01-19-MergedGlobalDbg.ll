@@ -17,13 +17,12 @@ target triple = "thumbv7-apple-darwin10"
 ; DW_OP_constu
 ; offset
 
-;CHECK:        .byte   7                       @ Abbrev [7] 0x1a5:0x13 DW_TAG_variable
-;CHECK-NEXT:        .ascii   "x2"                   @ DW_AT_name
+;CHECK:        .ascii   "x2"                   @ DW_AT_name
 ;CHECK-NEXT:        .byte   0
-;CHECK-NEXT:        .long   93                      @ DW_AT_type
-;CHECK-NEXT:        .byte   1                       @ DW_AT_decl_file
-;CHECK-NEXT:        .byte   6                       @ DW_AT_decl_line
-;CHECK-NEXT:        .byte   8                       @ DW_AT_location
+;CHECK-NEXT:        @ DW_AT_type
+;CHECK-NEXT:        @ DW_AT_decl_file
+;CHECK-NEXT:        @ DW_AT_decl_line
+;CHECK-NEXT:        @ DW_AT_location
 ;CHECK-NEXT:        .byte   3
 ;CHECK-NEXT:        .long   __MergedGlobals
 ;CHECK-NEXT:        .byte   16

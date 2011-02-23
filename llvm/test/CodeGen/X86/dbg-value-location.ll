@@ -5,10 +5,10 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 ;CHECK:        .ascii   "var"                  ## DW_AT_name
 ;CHECK-NEXT:        .byte   0
-;CHECK-NEXT:        .byte   2                       ## DW_AT_decl_file
-;CHECK-NEXT:        .short  19509                   ## DW_AT_decl_line
-;CHECK-NEXT:        .long   68                      ## DW_AT_type
-;CHECK-NEXT:        .byte   1                       ## DW_AT_location
+;CHECK-NEXT:        ## DW_AT_decl_file
+;CHECK-NEXT:        ## DW_AT_decl_line
+;CHECK-NEXT:        ## DW_AT_type
+;CHECK-NEXT:        ## DW_AT_location
 
 @dfm = external global i32, align 4
 
