@@ -238,11 +238,25 @@ bool ExprEngine::CheckerEvalCall(const CallExpr *CE,
       DstTmp.clear();
   }
 
-  if (evaluated)
+  if (evaluated) {
     Dst.insert(DstTmp);
-  else
-    Dst.insert(Pred);
+    return evaluated;
+  }
 
+  class DefaultEval : public GraphExpander {
+    bool &Evaluated;
+  public:
+    DefaultEval(bool &evaluated) : Evaluated(evaluated) { }
+    virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) {
+      Evaluated = false;
+      Dst.insert(Pred);
+    }
+  };
+
+  evaluated = true;
+  DefaultEval defaultEval(evaluated);
+  getCheckerManager().runCheckersForEvalCall(Dst, Pred, CE, *this,
+                                             &defaultEval);
   return evaluated;
 }
 

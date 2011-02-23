@@ -162,6 +162,24 @@ public:
 
 } // end check namespace
 
+namespace eval {
+
+class Call {
+  template <typename CHECKER>
+  static bool _evalCall(void *checker, const CallExpr *CE, CheckerContext &C) {
+    return ((const CHECKER *)checker)->evalCall(CE, C);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForEvalCall(
+                     CheckerManager::EvalCallFunc(checker, _evalCall<CHECKER>));
+  }
+};
+
+} // end eval namespace
+
 template <typename CHECK1, typename CHECK2=check::_VoidCheck,
           typename CHECK3=check::_VoidCheck, typename CHECK4=check::_VoidCheck,
           typename CHECK5=check::_VoidCheck, typename CHECK6=check::_VoidCheck,

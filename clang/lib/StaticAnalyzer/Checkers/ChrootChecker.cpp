@@ -12,9 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
@@ -37,38 +38,30 @@ bool isRootChanged(intptr_t k) { return k == ROOT_CHANGED; }
 //         ROOT_CHANGED<--chdir(..)--      JAIL_ENTERED<--chdir(..)--
 //                                  |                               |
 //                      bug<--foo()--          JAIL_ENTERED<--foo()--
-class ChrootChecker : public CheckerVisitor<ChrootChecker> {
-  IdentifierInfo *II_chroot, *II_chdir;
+class ChrootChecker : public CheckerV2<eval::Call, check::PreStmt<CallExpr> > {
+  mutable IdentifierInfo *II_chroot, *II_chdir;
   // This bug refers to possibly break out of a chroot() jail.
-  BuiltinBug *BT_BreakJail;
+  mutable llvm::OwningPtr<BuiltinBug> BT_BreakJail;
 
 public:
-  ChrootChecker() : II_chroot(0), II_chdir(0), BT_BreakJail(0) {}
+  ChrootChecker() : II_chroot(0), II_chdir(0) {}
   
   static void *getTag() {
     static int x;
     return &x;
   }
   
-  virtual bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
-  virtual void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+  bool evalCall(const CallExpr *CE, CheckerContext &C) const;
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 
 private:
-  void Chroot(CheckerContext &C, const CallExpr *CE);
-  void Chdir(CheckerContext &C, const CallExpr *CE);
+  void Chroot(CheckerContext &C, const CallExpr *CE) const;
+  void Chdir(CheckerContext &C, const CallExpr *CE) const;
 };
 
 } // end anonymous namespace
 
-static void RegisterChrootChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new ChrootChecker());
-}
-
-void ento::registerChrootChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterChrootChecker);
-}
-
-bool ChrootChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
+bool ChrootChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
@@ -94,7 +87,7 @@ bool ChrootChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
   return false;
 }
 
-void ChrootChecker::Chroot(CheckerContext &C, const CallExpr *CE) {
+void ChrootChecker::Chroot(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   GRStateManager &Mgr = state->getStateManager();
   
@@ -104,7 +97,7 @@ void ChrootChecker::Chroot(CheckerContext &C, const CallExpr *CE) {
   C.addTransition(state);
 }
 
-void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) {
+void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   GRStateManager &Mgr = state->getStateManager();
 
@@ -131,7 +124,7 @@ void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) {
 }
 
 // Check the jail state before any function call except chroot and chdir().
-void ChrootChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
+void ChrootChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
@@ -155,13 +148,17 @@ void ChrootChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
     if (isRootChanged((intptr_t) *k))
       if (ExplodedNode *N = C.generateNode()) {
         if (!BT_BreakJail)
-          BT_BreakJail = new BuiltinBug("Break out of jail",
+          BT_BreakJail.reset(new BuiltinBug("Break out of jail",
                                         "No call of chdir(\"/\") immediately "
-                                        "after chroot");
+                                        "after chroot"));
         BugReport *R = new BugReport(*BT_BreakJail, 
                                      BT_BreakJail->getDescription(), N);
         C.EmitReport(R);
       }
   
   return;
+}
+
+void ento::registerChrootChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ChrootChecker>();
 }

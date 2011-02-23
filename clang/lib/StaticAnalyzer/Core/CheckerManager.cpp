@@ -66,7 +66,9 @@ static void runPathSensitiveCheckers(CHECK_CTX checkCtx,
                                      ExplodedNodeSet &Dst,
                                      ExplodedNodeSet &Src) {
 
-  if (checkCtx.Checkers.empty()) {
+  typename CHECK_CTX::CheckersTy::const_iterator
+      I = checkCtx.checkers_begin(), E = checkCtx.checkers_end();
+  if (I == E) {
     Dst.insert(Src);
     return;
   }
@@ -74,8 +76,7 @@ static void runPathSensitiveCheckers(CHECK_CTX checkCtx,
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
 
-  for (typename CHECK_CTX::CheckersTy::const_iterator
-         I= checkCtx.Checkers.begin(), E= checkCtx.Checkers.end(); I!=E; ++I) {
+  for (; I != E; ++I) {
     ExplodedNodeSet *CurrSet = 0;
     if (I+1 == E)
       CurrSet = &Dst;
@@ -100,6 +101,9 @@ namespace {
     const CheckersTy &Checkers;
     const Stmt *S;
     ExprEngine &Eng;
+
+    CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
+    CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
 
     CheckStmtContext(bool isPreVisit, const CheckersTy &checkers,
                      const Stmt *s, ExprEngine &eng)
@@ -134,6 +138,9 @@ namespace {
     const CheckersTy &Checkers;
     const ObjCMessage &Msg;
     ExprEngine &Eng;
+
+    CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
+    CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
 
     CheckObjCMessageContext(bool isPreVisit, const CheckersTy &checkers,
                             const ObjCMessage &msg, ExprEngine &eng)
@@ -173,6 +180,9 @@ namespace {
     const GRState *State;
     ExprEngine &Eng;
 
+    CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
+    CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
+
     CheckLocationContext(const CheckersTy &checkers,
                          SVal loc, bool isLoad, const Stmt *s,
                          const GRState *state, ExprEngine &eng)
@@ -205,6 +215,50 @@ void CheckerManager::runCheckersForEndAnalysis(ExplodedGraph &G,
                                                ExprEngine &Eng) {
   for (unsigned i = 0, e = EndAnalysisCheckers.size(); i != e; ++i)
     EndAnalysisCheckers[i](G, BR, Eng);
+}
+
+/// \brief Run checkers for evaluating a call.
+/// Only one checker will evaluate the call.
+void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
+                                            const ExplodedNodeSet &Src,
+                                            const CallExpr *CE,
+                                            ExprEngine &Eng,
+                                            GraphExpander *defaultEval) {
+  if (EvalCallCheckers.empty() && defaultEval == 0) {
+    Dst.insert(Src);
+    return;
+  }
+
+  for (ExplodedNodeSet::iterator
+         NI = Src.begin(), NE = Src.end(); NI != NE; ++NI) {
+
+    ExplodedNode *Pred = *NI;
+    bool anyEvaluated = false;
+    for (std::vector<EvalCallFunc>::iterator
+           EI = EvalCallCheckers.begin(), EE = EvalCallCheckers.end();
+         EI != EE; ++EI) {
+      ExplodedNodeSet checkDst;
+      CheckerContext C(checkDst, Eng.getBuilder(), Eng, Pred, EI->Checker,
+                       ProgramPoint::PostStmtKind, 0, CE);
+      bool evaluated = (*EI)(CE, C);
+      assert(!(evaluated && anyEvaluated)
+             && "There are more than one checkers evaluating the call");
+      if (evaluated) {
+        anyEvaluated = true;
+        Dst.insert(checkDst);
+#ifdef NDEBUG
+        break; // on release don't check that no other checker also evals.
+#endif
+      }
+    }
+    
+    if (!anyEvaluated) {
+      if (defaultEval)
+        defaultEval->expandGraph(Dst, Pred);
+      else
+        Dst.insert(Pred);
+    }
+  }
 }
 
 void CheckerManager::registerCheckersToEngine(ExprEngine &eng) {
@@ -256,6 +310,10 @@ void CheckerManager::_registerForEndAnalysis(CheckEndAnalysisFunc checkfn) {
   EndAnalysisCheckers.push_back(checkfn);
 }
 
+void CheckerManager::_registerForEvalCall(EvalCallFunc checkfn) {
+  EvalCallCheckers.push_back(checkfn);
+}
+
 //===----------------------------------------------------------------------===//
 // Implementation details.
 //===----------------------------------------------------------------------===//
@@ -290,3 +348,6 @@ CheckerManager::~CheckerManager() {
 
 // Anchor for the vtable.
 CheckerProvider::~CheckerProvider() { }
+
+// Anchor for the vtable.
+GraphExpander::~GraphExpander() { }

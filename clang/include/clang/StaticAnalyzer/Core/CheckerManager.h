@@ -23,6 +23,7 @@
 namespace clang {
   class Decl;
   class Stmt;
+  class CallExpr;
 
 namespace ento {
   class ExprEngine;
@@ -31,9 +32,16 @@ namespace ento {
   class CheckerContext;
   class ObjCMessage;
   class SVal;
+  class ExplodedNode;
   class ExplodedNodeSet;
   class ExplodedGraph;
   class GRState;
+
+class GraphExpander {
+public:
+  virtual ~GraphExpander();
+  virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) = 0;
+};
 
 struct VoidCheckerFnParm {};
 template <typename P1=VoidCheckerFnParm, typename P2=VoidCheckerFnParm,
@@ -177,6 +185,12 @@ public:
   void runCheckersForEndAnalysis(ExplodedGraph &G, BugReporter &BR,
                                  ExprEngine &Eng);
 
+  /// \brief Run checkers for evaluating a call.
+  void runCheckersForEvalCall(ExplodedNodeSet &Dst,
+                              const ExplodedNodeSet &Src,
+                              const CallExpr *CE, ExprEngine &Eng,
+                              GraphExpander *defaultEval = 0);
+
   // FIXME: Temporary until checker running is moved completely into
   // CheckerManager.
   void registerCheckersToEngine(ExprEngine &eng);
@@ -219,6 +233,19 @@ public:
   void _registerForLocation(CheckLocationFunc checkfn);
 
   void _registerForEndAnalysis(CheckEndAnalysisFunc checkfn);
+
+  class EvalCallFunc {
+    typedef bool (*Func)(void *, const CallExpr *, CheckerContext &);
+    Func Fn;
+  public:
+    void *Checker;
+    EvalCallFunc(void *checker, Func fn) : Fn(fn), Checker(checker) { }
+    bool operator()(const CallExpr *CE, CheckerContext &C) {
+      return Fn(Checker, CE, C);
+    } 
+  };
+
+  void _registerForEvalCall(EvalCallFunc checkfn);
 
 //===----------------------------------------------------------------------===//
 // Implementation details.
@@ -287,6 +314,8 @@ private:
   std::vector<CheckLocationFunc> LocationCheckers;
 
   std::vector<CheckEndAnalysisFunc> EndAnalysisCheckers;
+
+  std::vector<EvalCallFunc> EvalCallCheckers;
 };
 
 } // end ento namespace
