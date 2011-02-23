@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_SA_CORE_CHECKERMANAGER_H
 #define LLVM_CLANG_SA_CORE_CHECKERMANAGER_H
 
+#include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -77,8 +78,13 @@ public:
 };
 
 class CheckerManager {
+  const LangOptions LangOpts;
+
 public:
+  CheckerManager(const LangOptions &langOpts) : LangOpts(langOpts) { }
   ~CheckerManager();
+
+  const LangOptions &getLangOptions() const { return LangOpts; }
 
   typedef void *CheckerRef;
   typedef CheckerFn<> CheckerDtor;

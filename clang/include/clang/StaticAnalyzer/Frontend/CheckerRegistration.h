@@ -12,12 +12,15 @@
 
 namespace clang {
   class AnalyzerOptions;
+  class LangOptions;
   class Diagnostic;
 
 namespace ento {
   class CheckerManager;
 
-CheckerManager *registerCheckers(const AnalyzerOptions &opts,Diagnostic &diags);
+CheckerManager *registerCheckers(const AnalyzerOptions &opts,
+                                 const LangOptions &langOpts,
+                                 Diagnostic &diags);
 
 } // end ento namespace
 

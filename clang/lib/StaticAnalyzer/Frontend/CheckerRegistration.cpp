@@ -25,8 +25,9 @@ using namespace clang;
 using namespace ento;
 
 CheckerManager *ento::registerCheckers(const AnalyzerOptions &opts,
+                                       const LangOptions &langOpts,
                                        Diagnostic &diags) {
-  llvm::OwningPtr<CheckerManager> checkerMgr(new CheckerManager());
+  llvm::OwningPtr<CheckerManager> checkerMgr(new CheckerManager(langOpts));
 
   llvm::SmallVector<CheckerOptInfo, 8> checkerOpts;
   for (unsigned i = 0, e = opts.CheckersControlList.size(); i != e; ++i) {

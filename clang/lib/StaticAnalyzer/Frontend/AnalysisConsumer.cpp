@@ -175,7 +175,8 @@ public:
 
   virtual void Initialize(ASTContext &Context) {
     Ctx = &Context;
-    checkerMgr.reset(registerCheckers(Opts, PP.getDiagnostics()));
+    checkerMgr.reset(registerCheckers(Opts, PP.getLangOptions(),
+                                      PP.getDiagnostics()));
     Mgr.reset(new AnalysisManager(*Ctx, PP.getDiagnostics(),
                                   PP.getLangOptions(), PD,
                                   CreateStoreMgr, CreateConstraintMgr,

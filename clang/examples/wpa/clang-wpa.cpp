@@ -155,7 +155,8 @@ int main(int argc, char **argv) {
     Opts.CheckersControlList.push_back(std::make_pair("cocoa", true));
 
   llvm::OwningPtr<ento::CheckerManager> checkerMgr;
-  checkerMgr.reset(ento::registerCheckers(Opts, PP.getDiagnostics()));
+  checkerMgr.reset(ento::registerCheckers(Opts, PP.getLangOptions(),
+                                          PP.getDiagnostics()));
 
   using namespace clang::ento;
   AnalysisManager AMgr(TU->getASTContext(), PP.getDiagnostics(),
