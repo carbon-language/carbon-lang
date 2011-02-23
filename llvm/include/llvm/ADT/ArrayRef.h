@@ -64,7 +64,10 @@ namespace llvm {
     /*implicit*/ ArrayRef(const std::vector<T> &Vec)
       : Data(Vec.empty() ? (T*)0 : &Vec[0]), Length(Vec.size()) {}
     
-    // TODO: C arrays.
+    /// Construct an ArrayRef from a C array.
+    template <size_t N>
+    /*implicit*/ ArrayRef(const T (&Arr)[N])
+      : Data(Arr), Length(N) {}
     
     /// @}
     /// @name Simple Operations
