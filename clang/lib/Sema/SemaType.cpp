@@ -1395,6 +1395,56 @@ QualType Sema::GetTypeFromParser(ParsedType Ty, TypeSourceInfo **TInfo) {
   return QT;
 }
 
+static void DiagnoseIgnoredQualifiers(unsigned Quals,
+                                      SourceLocation ConstQualLoc,
+                                      SourceLocation VolatileQualLoc,
+                                      SourceLocation RestrictQualLoc,
+                                      Sema& S) {
+  std::string QualStr;
+  unsigned NumQuals = 0;
+  SourceLocation Loc;
+
+  FixItHint ConstFixIt;
+  FixItHint VolatileFixIt;
+  FixItHint RestrictFixIt;
+
+  // FIXME: The locations here are set kind of arbitrarily. It'd be nicer to
+  // find a range and grow it to encompass all the qualifiers, regardless of
+  // the order in which they textually appear.
+  if (Quals & Qualifiers::Const) {
+    ConstFixIt = FixItHint::CreateRemoval(ConstQualLoc);
+    Loc = ConstQualLoc;
+    ++NumQuals;
+    QualStr = "const";
+  }
+  if (Quals & Qualifiers::Volatile) {
+    VolatileFixIt = FixItHint::CreateRemoval(VolatileQualLoc);
+    if (NumQuals == 0) {
+      Loc = VolatileQualLoc;
+      QualStr = "volatile";
+    } else {
+      QualStr += " volatile";
+    }
+    ++NumQuals;
+  }
+  if (Quals & Qualifiers::Restrict) {
+    RestrictFixIt = FixItHint::CreateRemoval(RestrictQualLoc);
+    if (NumQuals == 0) {
+      Loc = RestrictQualLoc;
+      QualStr = "restrict";
+    } else {
+      QualStr += " restrict";
+    }
+    ++NumQuals;
+  }
+
+  assert(NumQuals > 0 && "No known qualifiers?");
+
+  S.Diag(Loc, diag::warn_qual_return_type)
+    << QualStr << NumQuals
+    << ConstFixIt << VolatileFixIt << RestrictFixIt;
+}
+
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances.
 ///
@@ -1678,46 +1728,31 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
       // cv-qualifiers on return types are pointless except when the type is a
       // class type in C++.
-      if (T.getCVRQualifiers() && D.getDeclSpec().getTypeQualifiers() &&
+      if (T->isPointerType() && T.getCVRQualifiers() &&
+          (!getLangOptions().CPlusPlus || !T->isDependentType())) {
+        assert(chunkIndex + 1 < e && "No DeclaratorChunk for the return type?");
+        DeclaratorChunk ReturnTypeChunk = D.getTypeObject(chunkIndex + 1);
+        assert(ReturnTypeChunk.Kind == DeclaratorChunk::Pointer);
+
+        DeclaratorChunk::PointerTypeInfo &PTI = ReturnTypeChunk.Ptr;
+
+        DiagnoseIgnoredQualifiers(PTI.TypeQuals,
+            SourceLocation::getFromRawEncoding(PTI.ConstQualLoc),
+            SourceLocation::getFromRawEncoding(PTI.VolatileQualLoc),
+            SourceLocation::getFromRawEncoding(PTI.RestrictQualLoc),
+            *this);
+
+      } else if (T.getCVRQualifiers() && D.getDeclSpec().getTypeQualifiers() &&
           (!getLangOptions().CPlusPlus ||
            (!T->isDependentType() && !T->isRecordType()))) {
-        unsigned Quals = D.getDeclSpec().getTypeQualifiers();
-        std::string QualStr;
-        unsigned NumQuals = 0;
-        SourceLocation Loc;
-        if (Quals & Qualifiers::Const) {
-          Loc = D.getDeclSpec().getConstSpecLoc();
-          ++NumQuals;
-          QualStr = "const";
-        }
-        if (Quals & Qualifiers::Volatile) {
-          if (NumQuals == 0) {
-            Loc = D.getDeclSpec().getVolatileSpecLoc();
-            QualStr = "volatile";
-          } else
-            QualStr += " volatile";
-          ++NumQuals;
-        }
-        if (Quals & Qualifiers::Restrict) {
-          if (NumQuals == 0) {
-            Loc = D.getDeclSpec().getRestrictSpecLoc();
-            QualStr = "restrict";
-          } else
-            QualStr += " restrict";
-          ++NumQuals;
-        }
-        assert(NumQuals > 0 && "No known qualifiers?");
-            
-        SemaDiagnosticBuilder DB = Diag(Loc, diag::warn_qual_return_type);
-        DB << QualStr << NumQuals;
-        if (Quals & Qualifiers::Const)
-          DB << FixItHint::CreateRemoval(D.getDeclSpec().getConstSpecLoc());
-        if (Quals & Qualifiers::Volatile)
-          DB << FixItHint::CreateRemoval(D.getDeclSpec().getVolatileSpecLoc());
-        if (Quals & Qualifiers::Restrict)
-          DB << FixItHint::CreateRemoval(D.getDeclSpec().getRestrictSpecLoc());
+
+        DiagnoseIgnoredQualifiers(D.getDeclSpec().getTypeQualifiers(),
+                                  D.getDeclSpec().getConstSpecLoc(),
+                                  D.getDeclSpec().getVolatileSpecLoc(),
+                                  D.getDeclSpec().getRestrictSpecLoc(),
+                                  *this);
       }
-      
+
       if (getLangOptions().CPlusPlus && D.getDeclSpec().isTypeSpecOwned()) {
         // C++ [dcl.fct]p6:
         //   Types shall not be defined in return or parameter types.

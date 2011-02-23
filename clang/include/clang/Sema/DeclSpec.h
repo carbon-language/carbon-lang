@@ -825,6 +825,16 @@ struct DeclaratorChunk {
   struct PointerTypeInfo : TypeInfoCommon {
     /// The type qualifiers: const/volatile/restrict.
     unsigned TypeQuals : 3;
+
+    /// The location of the const-qualifier, if any.
+    unsigned ConstQualLoc;
+
+    /// The location of the volatile-qualifier, if any.
+    unsigned VolatileQualLoc;
+
+    /// The location of the restrict-qualifier, if any.
+    unsigned RestrictQualLoc;
+
     void destroy() {
     }
   };
@@ -1055,12 +1065,18 @@ struct DeclaratorChunk {
   /// getPointer - Return a DeclaratorChunk for a pointer.
   ///
   static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc,
+                                    SourceLocation ConstQualLoc,
+                                    SourceLocation VolatileQualLoc,
+                                    SourceLocation RestrictQualLoc,
                                     const ParsedAttributes &attrs) {
     DeclaratorChunk I;
-    I.Kind          = Pointer;
-    I.Loc           = Loc;
-    I.Ptr.TypeQuals = TypeQuals;
-    I.Ptr.AttrList  = attrs.getList();
+    I.Kind                = Pointer;
+    I.Loc                 = Loc;
+    I.Ptr.TypeQuals       = TypeQuals;
+    I.Ptr.ConstQualLoc    = ConstQualLoc.getRawEncoding();
+    I.Ptr.VolatileQualLoc = VolatileQualLoc.getRawEncoding();
+    I.Ptr.RestrictQualLoc = RestrictQualLoc.getRawEncoding();
+    I.Ptr.AttrList        = attrs.getList();
     return I;
   }
 

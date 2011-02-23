@@ -242,6 +242,7 @@ static inline int si_forward() {} // expected-warning{{control reaches end of no
 // Test warnings on ignored qualifiers on return types.
 const int ignored_c_quals(); // expected-warning{{'const' type qualifier on return type has no effect}}
 const volatile int ignored_cv_quals(); // expected-warning{{'const volatile' type qualifiers on return type have no effect}}
+char* const volatile restrict ignored_cvr_quals(); // expected-warning{{'const volatile restrict' type qualifiers on return type have no effect}}
 
 // Test that for switch(enum) that if the switch statement covers all the cases
 // that we don't consider that for -Wreturn-type.
@@ -254,4 +255,3 @@ int test_enum_cases(enum Cases C) {
   case C3: return 4;
   }
 } // no-warning
-
