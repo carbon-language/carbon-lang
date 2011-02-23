@@ -3121,6 +3121,8 @@ def err_kern_type_not_void_return : Error<
   "kernel function type %0 must have void return type">;
 def err_config_scalar_return : Error<
   "CUDA special function 'cudaConfigureCall' must have scalar return type">;
+def err_kern_call_not_global_function : Error<
+  "kernel call to non-global function %0">;
 
 
 def err_cannot_pass_objc_interface_to_vararg : Error<

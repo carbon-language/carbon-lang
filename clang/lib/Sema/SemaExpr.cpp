@@ -4625,6 +4625,20 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
     return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
       << Fn->getType() << Fn->getSourceRange());
 
+  if (getLangOptions().CUDA) {
+    if (Config) {
+      // CUDA: Kernel calls must be to global functions
+      if (FDecl && !FDecl->hasAttr<CUDAGlobalAttr>())
+        return ExprError(Diag(LParenLoc,diag::err_kern_call_not_global_function)
+            << FDecl->getName() << Fn->getSourceRange());
+
+      // CUDA: Kernel function must have 'void' return type
+      if (!FuncT->getResultType()->isVoidType())
+        return ExprError(Diag(LParenLoc, diag::err_kern_type_not_void_return)
+            << Fn->getType() << Fn->getSourceRange());
+    }
+  }
+
   // Check for a valid return type
   if (CheckCallReturnType(FuncT->getResultType(),
                           Fn->getSourceRange().getBegin(), TheCall,
