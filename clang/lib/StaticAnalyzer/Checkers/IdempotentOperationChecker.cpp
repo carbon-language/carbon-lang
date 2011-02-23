@@ -46,11 +46,12 @@
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/Analysis/Analyses/CFGReachabilityAnalysis.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerHelpers.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/AST/Stmt.h"
@@ -65,28 +66,29 @@ using namespace ento;
 
 namespace {
 class IdempotentOperationChecker
-  : public CheckerVisitor<IdempotentOperationChecker> {
+  : public CheckerV2<check::PreStmt<BinaryOperator>,
+                     check::PostStmt<BinaryOperator>,
+                     check::EndAnalysis> {
 public:
-  static void *getTag();
-  void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
-  void PostVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
-  void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B, ExprEngine &Eng);
+  void checkPreStmt(const BinaryOperator *B, CheckerContext &C) const;
+  void checkPostStmt(const BinaryOperator *B, CheckerContext &C) const;
+  void checkEndAnalysis(ExplodedGraph &G, BugReporter &B,ExprEngine &Eng) const;
 
 private:
   // Our assumption about a particular operation.
   enum Assumption { Possible = 0, Impossible, Equal, LHSis1, RHSis1, LHSis0,
       RHSis0 };
 
-  void UpdateAssumption(Assumption &A, const Assumption &New);
+  static void UpdateAssumption(Assumption &A, const Assumption &New);
 
   // False positive reduction methods
   static bool isSelfAssign(const Expr *LHS, const Expr *RHS);
   static bool isUnused(const Expr *E, AnalysisContext *AC);
   static bool isTruncationExtensionAssignment(const Expr *LHS,
                                               const Expr *RHS);
-  bool pathWasCompletelyAnalyzed(AnalysisContext *AC,
-                                 const CFGBlock *CB,
-                                 const CoreEngine &CE);
+  static bool pathWasCompletelyAnalyzed(AnalysisContext *AC,
+                                        const CFGBlock *CB,
+                                        const CoreEngine &CE);
   static bool CanVary(const Expr *Ex,
                       AnalysisContext *AC);
   static bool isConstantOrPseudoConstant(const DeclRefExpr *DR,
@@ -104,26 +106,12 @@ private:
   };
   typedef llvm::DenseMap<const BinaryOperator *, BinaryOperatorData>
       AssumptionMap;
-  AssumptionMap hash;
+  mutable AssumptionMap hash;
 };
 }
 
-void *IdempotentOperationChecker::getTag() {
-  static int x = 0;
-  return &x;
-}
-
-static void RegisterIdempotentOperationChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new IdempotentOperationChecker());
-}
-
-void ento::registerIdempotentOperationChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterIdempotentOperationChecker);
-}
-
-void IdempotentOperationChecker::PreVisitBinaryOperator(
-                                                      CheckerContext &C,
-                                                      const BinaryOperator *B) {
+void IdempotentOperationChecker::checkPreStmt(const BinaryOperator *B,
+                                              CheckerContext &C) const {
   // Find or create an entry in the hash for this BinaryOperator instance.
   // If we haven't done a lookup before, it will get default initialized to
   // 'Possible'. At this stage we do not store the ExplodedNode, as it has not
@@ -339,9 +327,8 @@ void IdempotentOperationChecker::PreVisitBinaryOperator(
 // At the post visit stage, the predecessor ExplodedNode will be the
 // BinaryOperator that was just created. We use this hook to collect the
 // ExplodedNode.
-void IdempotentOperationChecker::PostVisitBinaryOperator(
-                                                      CheckerContext &C,
-                                                      const BinaryOperator *B) {
+void IdempotentOperationChecker::checkPostStmt(const BinaryOperator *B,
+                                               CheckerContext &C) const {
   // Add the ExplodedNode we just visited
   BinaryOperatorData &Data = hash[B];
 
@@ -356,9 +343,9 @@ void IdempotentOperationChecker::PostVisitBinaryOperator(
   Data.explodedNodes.Add(C.getPredecessor());
 }
 
-void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
+void IdempotentOperationChecker::checkEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
-                                                  ExprEngine &Eng) {
+                                                  ExprEngine &Eng) const {
   BugType *BT = new BugType("Idempotent operation", "Dead code");
   // Iterate over the hash to see if we have any paths with definite
   // idempotent operations.
@@ -439,6 +426,8 @@ void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
       BR.EmitReport(report);
     }
   }
+
+  hash.clear();
 }
 
 // Updates the current assumption given the new assumption
@@ -740,5 +729,6 @@ bool IdempotentOperationChecker::containsNonLocalVarDecl(const Stmt *S) {
 }
 
 
-
-
+void ento::registerIdempotentOperationChecker(CheckerManager &mgr) {
+  mgr.registerChecker<IdempotentOperationChecker>();
+}
