@@ -17,6 +17,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/AST/CharUnits.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Format.h"
@@ -413,9 +414,16 @@ private:
 
     Expr::EvalResult Result;
     if (!S->isTypeDependent() && !S->isValueDependent() &&
-        S->Evaluate(Result, *Context) && Result.Val.isInt())
-      return Result.Val.getInt().getBoolValue();
-
+        S->Evaluate(Result, *Context)) {      
+      if (Result.Val.isInt())
+        return Result.Val.getInt().getBoolValue();
+      if (Result.Val.isLValue()) {
+        Expr *e = Result.Val.getLValueBase();
+        const CharUnits &c = Result.Val.getLValueOffset();        
+        if (!e && c.isZero())
+          return false;        
+      }
+    }
     return TryResult();
   }
 };

@@ -18,6 +18,14 @@ int test_pr8876() {
   return 0;
 }
 
+// PR 8183 - Handle null pointer constants on the left-side of the '&&', and reason about
+// this when determining the reachability of the null pointer dereference on the right side.
+void pr8183(unsigned long long test)
+{
+  (void)((((void*)0)) && (*((unsigned long long*)(((void*)0))) = ((unsigned long long)((test)) % (unsigned long long)((1000000000)))));  // no-warning
+  (*((unsigned long long*)(((void*)0))) = ((unsigned long long)((test)) % (unsigned long long)((1000000000)))); // expected-warning {{indirection of non-volatile null pointer will be deleted, not trap}} expected-note {{consider using __builtin_trap() or qualifying pointer with 'volatile'}}
+}
+
 // PR1966
 _Complex double test1() {
   return __extension__ 1.0if;
