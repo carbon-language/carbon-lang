@@ -16,6 +16,7 @@
 #include "BasicObjCFoundationChecks.h"
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
@@ -69,22 +70,23 @@ static inline bool isNil(SVal X) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class NilArgChecker : public CheckerVisitor<NilArgChecker> {
-    APIMisuse *BT;
-    void WarnNilArg(CheckerContext &C, const ObjCMessage &msg, unsigned Arg);
+  class NilArgChecker : public CheckerV2<check::PreObjCMessage> {
+    mutable llvm::OwningPtr<APIMisuse> BT;
+
+    void WarnNilArg(CheckerContext &C,
+                    const ObjCMessage &msg, unsigned Arg) const;
+
   public:
-    NilArgChecker() : BT(0) {}
-    static void *getTag() { static int x = 0; return &x; }
-    void preVisitObjCMessage(CheckerContext &C, ObjCMessage msg);
+    void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
   };
 }
 
 void NilArgChecker::WarnNilArg(CheckerContext &C,
                                const ObjCMessage &msg,
-                               unsigned int Arg)
+                               unsigned int Arg) const
 {
   if (!BT)
-    BT = new APIMisuse("nil argument");
+    BT.reset(new APIMisuse("nil argument"));
   
   if (ExplodedNode *N = C.generateSink()) {
     llvm::SmallString<128> sbuf;
@@ -98,9 +100,8 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
   }
 }
 
-void NilArgChecker::preVisitObjCMessage(CheckerContext &C,
-                                        ObjCMessage msg)
-{
+void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
+                                        CheckerContext &C) const {
   const ObjCInterfaceType *ReceiverType = GetReceiverType(msg);
   if (!ReceiverType)
     return;
@@ -140,14 +141,14 @@ void NilArgChecker::preVisitObjCMessage(CheckerContext &C,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class CFNumberCreateChecker : public CheckerVisitor<CFNumberCreateChecker> {
-  APIMisuse* BT;
-  IdentifierInfo* II;
+class CFNumberCreateChecker : public CheckerV2< check::PreStmt<CallExpr> > {
+  mutable llvm::OwningPtr<APIMisuse> BT;
+  mutable IdentifierInfo* II;
 public:
-  CFNumberCreateChecker() : BT(0), II(0) {}
-  ~CFNumberCreateChecker() {}
-  static void *getTag() { static int x = 0; return &x; }
-  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+  CFNumberCreateChecker() : II(0) {}
+
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
+
 private:
   void EmitError(const TypedRegion* R, const Expr* Ex,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);
@@ -247,9 +248,8 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 }
 #endif
 
-void CFNumberCreateChecker::PreVisitCallExpr(CheckerContext &C,
-                                             const CallExpr *CE)
-{
+void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
+                                         CheckerContext &C) const {
   const Expr* Callee = CE->getCallee();
   const GRState *state = C.getState();
   SVal CallV = state->getSVal(Callee);
@@ -335,7 +335,7 @@ void CFNumberCreateChecker::PreVisitCallExpr(CheckerContext &C,
       << " bits of the input integer will be lost.";
 
     if (!BT)
-      BT = new APIMisuse("Bad use of CFNumberCreate");
+      BT.reset(new APIMisuse("Bad use of CFNumberCreate"));
     
     RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
     report->addRange(CE->getArg(2)->getSourceRange());
@@ -348,19 +348,18 @@ void CFNumberCreateChecker::PreVisitCallExpr(CheckerContext &C,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class CFRetainReleaseChecker : public CheckerVisitor<CFRetainReleaseChecker> {
-  APIMisuse *BT;
-  IdentifierInfo *Retain, *Release;
+class CFRetainReleaseChecker : public CheckerV2< check::PreStmt<CallExpr> > {
+  mutable llvm::OwningPtr<APIMisuse> BT;
+  mutable IdentifierInfo *Retain, *Release;
 public:
-  CFRetainReleaseChecker(): BT(0), Retain(0), Release(0) {}
-  static void *getTag() { static int x = 0; return &x; }
-  void PreVisitCallExpr(CheckerContext& C, const CallExpr* CE);
+  CFRetainReleaseChecker(): Retain(0), Release(0) {}
+  void checkPreStmt(const CallExpr* CE, CheckerContext& C) const;
 };
 } // end anonymous namespace
 
 
-void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
-                                              const CallExpr* CE) {
+void CFRetainReleaseChecker::checkPreStmt(const CallExpr* CE,
+                                          CheckerContext& C) const {
   // If the CallExpr doesn't have exactly 1 argument just give up checking.
   if (CE->getNumArgs() != 1)
     return;
@@ -377,7 +376,7 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
     ASTContext &Ctx = C.getASTContext();
     Retain = &Ctx.Idents.get("CFRetain");
     Release = &Ctx.Idents.get("CFRelease");
-    BT = new APIMisuse("null passed to CFRetain/CFRelease");
+    BT.reset(new APIMisuse("null passed to CFRetain/CFRelease"));
   }
 
   // Check if we called CFRetain/CFRelease.
@@ -431,28 +430,24 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class ClassReleaseChecker : public CheckerVisitor<ClassReleaseChecker> {
-  Selector releaseS;
-  Selector retainS;
-  Selector autoreleaseS;
-  Selector drainS;
-  BugType *BT;
-public:
-  ClassReleaseChecker()
-    : BT(0) {}
+class ClassReleaseChecker : public CheckerV2<check::PreObjCMessage> {
+  mutable Selector releaseS;
+  mutable Selector retainS;
+  mutable Selector autoreleaseS;
+  mutable Selector drainS;
+  mutable llvm::OwningPtr<BugType> BT;
 
-  static void *getTag() { static int x = 0; return &x; }
-      
-  void preVisitObjCMessage(CheckerContext &C, ObjCMessage msg);
+public:
+  void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
 };
 }
 
-void ClassReleaseChecker::preVisitObjCMessage(CheckerContext &C,
-                                              ObjCMessage msg) {
+void ClassReleaseChecker::checkPreObjCMessage(ObjCMessage msg,
+                                              CheckerContext &C) const {
   
   if (!BT) {
-    BT = new APIMisuse("message incorrectly sent to class instead of class "
-                       "instance");
+    BT.reset(new APIMisuse("message incorrectly sent to class instead of class "
+                           "instance"));
   
     ASTContext &Ctx = C.getASTContext();
     releaseS = GetNullarySelector("release", Ctx);
@@ -488,34 +483,18 @@ void ClassReleaseChecker::preVisitObjCMessage(CheckerContext &C,
 // Check registration.
 //===----------------------------------------------------------------------===//
 
-static void RegisterNilArgChecker(ExprEngine& Eng) {
-  Eng.registerCheck(new NilArgChecker());
-}
-
 void ento::registerNilArgChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterNilArgChecker);
-}
-
-static void RegisterCFNumberCreateChecker(ExprEngine& Eng) {
-  Eng.registerCheck(new CFNumberCreateChecker());
+  mgr.registerChecker<NilArgChecker>();
 }
 
 void ento::registerCFNumberCreateChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterCFNumberCreateChecker);
-}
-
-static void RegisterCFRetainReleaseChecker(ExprEngine& Eng) {
-  Eng.registerCheck(new CFRetainReleaseChecker());
+  mgr.registerChecker<CFNumberCreateChecker>();
 }
 
 void ento::registerCFRetainReleaseChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterCFRetainReleaseChecker);
-}
-
-static void RegisterClassReleaseChecker(ExprEngine& Eng) {
-  Eng.registerCheck(new ClassReleaseChecker());
+  mgr.registerChecker<CFRetainReleaseChecker>();
 }
 
 void ento::registerClassReleaseChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterClassReleaseChecker);
+  mgr.registerChecker<ClassReleaseChecker>();
 }
