@@ -16,10 +16,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Decl.h"
 
@@ -28,39 +29,18 @@ using namespace ento;
 
 namespace {
 class NSAutoreleasePoolChecker
-  : public CheckerVisitor<NSAutoreleasePoolChecker> {
+  : public CheckerV2<check::PreObjCMessage> {
       
-  Selector releaseS;
+  mutable Selector releaseS;
 
 public:
-    NSAutoreleasePoolChecker(Selector release_s) : releaseS(release_s) {}
-    
-  static void *getTag() {
-    static int x = 0;
-    return &x;
-  }
-
-  void preVisitObjCMessage(CheckerContext &C, ObjCMessage msg);    
+  void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;    
 };
 
 } // end anonymous namespace
 
-
-static void RegisterNSAutoreleasePoolChecker(ExprEngine &Eng) {
-  ASTContext &Ctx = Eng.getContext();
-  if (Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {    
-    Eng.registerCheck(new NSAutoreleasePoolChecker(GetNullarySelector("release",
-                                                                      Ctx)));
-  }
-}
-
-void ento::registerNSAutoreleasePoolChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterNSAutoreleasePoolChecker);
-}
-
-void
-NSAutoreleasePoolChecker::preVisitObjCMessage(CheckerContext &C,
-                                              ObjCMessage msg) {
+void NSAutoreleasePoolChecker::checkPreObjCMessage(ObjCMessage msg,
+                                                   CheckerContext &C) const {
   
   const Expr *receiver = msg.getInstanceReceiver();
   if (!receiver)
@@ -78,7 +58,9 @@ NSAutoreleasePoolChecker::preVisitObjCMessage(CheckerContext &C,
     return;  
   if (!OD->getIdentifier()->getName().equals("NSAutoreleasePool"))
     return;
-  
+
+  if (releaseS.isNull())
+    releaseS = GetNullarySelector("release", C.getASTContext());
   // Sending 'release' message?
   if (msg.getSelector() != releaseS)
     return;
@@ -89,4 +71,9 @@ NSAutoreleasePoolChecker::preVisitObjCMessage(CheckerContext &C,
     "API Upgrade (Apple)",
     "Use -drain instead of -release when using NSAutoreleasePool "
     "and garbage collection", R.getBegin(), &R, 1);
+}
+
+void ento::registerNSAutoreleasePoolChecker(CheckerManager &mgr) {
+  if (mgr.getLangOptions().getGCMode() != LangOptions::NonGC)
+    mgr.registerChecker<NSAutoreleasePoolChecker>();
 }

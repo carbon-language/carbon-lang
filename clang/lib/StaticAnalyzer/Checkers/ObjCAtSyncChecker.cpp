@@ -13,39 +13,29 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Checkers/DereferenceChecker.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
-class ObjCAtSyncChecker : public CheckerVisitor<ObjCAtSyncChecker> {
-  BuiltinBug *BT_null;
-  BuiltinBug *BT_undef;
+class ObjCAtSyncChecker
+    : public CheckerV2< check::PreStmt<ObjCAtSynchronizedStmt> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT_null;
+  mutable llvm::OwningPtr<BuiltinBug> BT_undef;
+
 public:
-  ObjCAtSyncChecker() : BT_null(0), BT_undef(0) {}
-  static void *getTag() { static int tag = 0; return &tag; }
-  void PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
-                                      const ObjCAtSynchronizedStmt *S);
+  void checkPreStmt(const ObjCAtSynchronizedStmt *S, CheckerContext &C) const;
 };
 } // end anonymous namespace
 
-static void RegisterObjCAtSyncChecker(ExprEngine &Eng) {
-  // @synchronized is an Objective-C 2 feature.
-  if (Eng.getContext().getLangOptions().ObjC2)
-    Eng.registerCheck(new ObjCAtSyncChecker());
-}
-
-void ento::registerObjCAtSyncChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterObjCAtSyncChecker);
-}
-
-void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
-                                         const ObjCAtSynchronizedStmt *S) {
+void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
+                                     CheckerContext &C) const {
 
   const Expr *Ex = S->getSynchExpr();
   const GRState *state = C.getState();
@@ -55,8 +45,8 @@ void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
   if (isa<UndefinedVal>(V)) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_undef)
-        BT_undef = new BuiltinBug("Uninitialized value used as mutex "
-                                  "for @synchronized");
+        BT_undef.reset(new BuiltinBug("Uninitialized value used as mutex "
+                                  "for @synchronized"));
       EnhancedBugReport *report =
         new EnhancedBugReport(*BT_undef, BT_undef->getDescription(), N);
       report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, Ex);
@@ -78,8 +68,8 @@ void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
       // a null mutex just means no synchronization occurs.
       if (ExplodedNode *N = C.generateNode(nullState)) {
         if (!BT_null)
-          BT_null = new BuiltinBug("Nil value used as mutex for @synchronized() "
-                                   "(no synchronization will occur)");
+          BT_null.reset(new BuiltinBug("Nil value used as mutex for @synchronized() "
+                                   "(no synchronization will occur)"));
         EnhancedBugReport *report =
           new EnhancedBugReport(*BT_null, BT_null->getDescription(), N);
         report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
@@ -98,3 +88,7 @@ void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
     C.addTransition(notNullState);
 }
 
+void ento::registerObjCAtSyncChecker(CheckerManager &mgr) {
+  if (mgr.getLangOptions().ObjC2)
+    mgr.registerChecker<ObjCAtSyncChecker>();
+}
