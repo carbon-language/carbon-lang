@@ -235,107 +235,111 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
     return -1;
   }
   
-  EDInst *inst =
-    disassembler->createInst(byteArrayReader, 0, &ByteArray);
-                             
-  if (inst == 0) {
-    errs() << "error: Didn't get an instruction\n";
-    return -1;
-  }
+  while (ByteArray.size()) {
+    EDInst *inst =
+      disassembler->createInst(byteArrayReader, 0, &ByteArray);
   
-  unsigned numTokens = inst->numTokens();
-  if ((int)numTokens < 0) {
-    errs() << "error: couldn't count the instruction's tokens\n";
-    return -1;
-  }
-  
-  for (unsigned tokenIndex = 0; tokenIndex != numTokens; ++tokenIndex) {
-    EDToken *token;
-    
-    if (inst->getToken(token, tokenIndex)) {
-      errs() << "error: Couldn't get token\n";
+    ByteArray.erase (ByteArray.begin(), ByteArray.begin() + inst->byteSize());
+                               
+    if (inst == 0) {
+      errs() << "error: Didn't get an instruction\n";
       return -1;
     }
     
-    const char *buf;
-    if (token->getString(buf)) {
-      errs() << "error: Couldn't get string for token\n";
+    unsigned numTokens = inst->numTokens();
+    if ((int)numTokens < 0) {
+      errs() << "error: couldn't count the instruction's tokens\n";
       return -1;
     }
     
-    Out << '[';
-    int operandIndex = token->operandID();
-    
-    if (operandIndex >= 0)
-      Out << operandIndex << "-";
-    
-    switch (token->type()) {
-    default: Out << "?"; break;
-    case EDToken::kTokenWhitespace: Out << "w"; break;
-    case EDToken::kTokenPunctuation: Out << "p"; break;
-    case EDToken::kTokenOpcode: Out << "o"; break;
-    case EDToken::kTokenLiteral: Out << "l"; break;
-    case EDToken::kTokenRegister: Out << "r"; break;
-    }
-    
-    Out << ":" << buf;
-  
-    if (token->type() == EDToken::kTokenLiteral) {
-      Out << "=";
-      if (token->literalSign())
-        Out << "-";
-      uint64_t absoluteValue;
-      if (token->literalAbsoluteValue(absoluteValue)) {
-        errs() << "error: Couldn't get the value of a literal token\n";
+    for (unsigned tokenIndex = 0; tokenIndex != numTokens; ++tokenIndex) {
+      EDToken *token;
+      
+      if (inst->getToken(token, tokenIndex)) {
+        errs() << "error: Couldn't get token\n";
         return -1;
       }
-      Out << absoluteValue;
-    } else if (token->type() == EDToken::kTokenRegister) {
-      Out << "=";
-      unsigned regID;
-      if (token->registerID(regID)) {
-        errs() << "error: Couldn't get the ID of a register token\n";
+      
+      const char *buf;
+      if (token->getString(buf)) {
+        errs() << "error: Couldn't get string for token\n";
         return -1;
       }
-      Out << "r" << regID;
+      
+      Out << '[';
+      int operandIndex = token->operandID();
+      
+      if (operandIndex >= 0)
+        Out << operandIndex << "-";
+      
+      switch (token->type()) {
+      default: Out << "?"; break;
+      case EDToken::kTokenWhitespace: Out << "w"; break;
+      case EDToken::kTokenPunctuation: Out << "p"; break;
+      case EDToken::kTokenOpcode: Out << "o"; break;
+      case EDToken::kTokenLiteral: Out << "l"; break;
+      case EDToken::kTokenRegister: Out << "r"; break;
+      }
+      
+      Out << ":" << buf;
+    
+      if (token->type() == EDToken::kTokenLiteral) {
+        Out << "=";
+        if (token->literalSign())
+          Out << "-";
+        uint64_t absoluteValue;
+        if (token->literalAbsoluteValue(absoluteValue)) {
+          errs() << "error: Couldn't get the value of a literal token\n";
+          return -1;
+        }
+        Out << absoluteValue;
+      } else if (token->type() == EDToken::kTokenRegister) {
+        Out << "=";
+        unsigned regID;
+        if (token->registerID(regID)) {
+          errs() << "error: Couldn't get the ID of a register token\n";
+          return -1;
+        }
+        Out << "r" << regID;
+      }
+      
+      Out << "]";
     }
     
-    Out << "]";
-  }
-  
-  Out << " ";
+    Out << " ";
+      
+    if (inst->isBranch())
+      Out << "<br> ";
+    if (inst->isMove())
+      Out << "<mov> ";
     
-  if (inst->isBranch())
-    Out << "<br> ";
-  if (inst->isMove())
-    Out << "<mov> ";
-  
-  unsigned numOperands = inst->numOperands();
-  
-  if ((int)numOperands < 0) {
-    errs() << "error: Couldn't count operands\n";
-    return -1;
-  }
-  
-  for (unsigned operandIndex = 0; operandIndex != numOperands; ++operandIndex) {
-    Out << operandIndex << ":";
+    unsigned numOperands = inst->numOperands();
     
-    EDOperand *operand;
-    if (inst->getOperand(operand, operandIndex)) {
-      errs() << "error: couldn't get operand\n";
+    if ((int)numOperands < 0) {
+      errs() << "error: Couldn't count operands\n";
       return -1;
     }
     
-    uint64_t evaluatedResult;
-    void *Arg[] = { disassembler, &Out };
-    if (operand->evaluate(evaluatedResult, verboseEvaluator, Arg)) {
-      errs() << "error: Couldn't evaluate an operand\n";
-      return -1;
+    for (unsigned operandIndex = 0; operandIndex != numOperands; ++operandIndex) {
+      Out << operandIndex << ":";
+      
+      EDOperand *operand;
+      if (inst->getOperand(operand, operandIndex)) {
+        errs() << "error: couldn't get operand\n";
+        return -1;
+      }
+      
+      uint64_t evaluatedResult;
+      void *Arg[] = { disassembler, &Out };
+      if (operand->evaluate(evaluatedResult, verboseEvaluator, Arg)) {
+        errs() << "error: Couldn't evaluate an operand\n";
+        return -1;
+      }
+      Out << "=" << evaluatedResult << " ";
     }
-    Out << "=" << evaluatedResult << " ";
+    
+    Out << '\n';
   }
-  
-  Out << '\n';
   
   return 0;
 }
