@@ -1894,7 +1894,7 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   addString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
             DIUnit.getProducer());
-  addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data1,
+  addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
           DIUnit.getLanguage());
   addString(Die, dwarf::DW_AT_name, dwarf::DW_FORM_string, FN);
   // Use DW_AT_entry_pc instead of DW_AT_low_pc/DW_AT_high_pc pair. This
