@@ -200,6 +200,13 @@ void CheckerManager::runCheckersForLocation(ExplodedNodeSet &Dst,
   runPathSensitiveCheckers(C, Dst, Src);
 }
 
+void CheckerManager::runCheckersForEndAnalysis(ExplodedGraph &G,
+                                               BugReporter &BR,
+                                               ExprEngine &Eng) {
+  for (unsigned i = 0, e = EndAnalysisCheckers.size(); i != e; ++i)
+    EndAnalysisCheckers[i](G, BR, Eng);
+}
+
 void CheckerManager::registerCheckersToEngine(ExprEngine &eng) {
   for (unsigned i = 0, e = Funcs.size(); i != e; ++i)
     Funcs[i](eng);
@@ -243,6 +250,10 @@ void CheckerManager::_registerForPostObjCMessage(CheckObjCMessageFunc checkfn) {
 
 void CheckerManager::_registerForLocation(CheckLocationFunc checkfn) {
   LocationCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForEndAnalysis(CheckEndAnalysisFunc checkfn) {
+  EndAnalysisCheckers.push_back(checkfn);
 }
 
 //===----------------------------------------------------------------------===//

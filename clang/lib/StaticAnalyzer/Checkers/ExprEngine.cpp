@@ -562,6 +562,7 @@ void ExprEngine::processEndWorklist(bool hasWorkRemaining) {
        I != E; ++I) {
     I->second->VisitEndAnalysis(G, BR, *this);
   }
+  getCheckerManager().runCheckersForEndAnalysis(G, BR, *this);
 }
 
 void ExprEngine::processCFGElement(const CFGElement E, 

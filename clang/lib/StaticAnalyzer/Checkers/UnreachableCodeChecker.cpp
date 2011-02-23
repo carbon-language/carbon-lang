@@ -14,15 +14,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/AST/ParentMap.h"
-#include "clang/Basic/Builtins.h"
-#include "clang/Basic/SourceManager.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerHelpers.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
+#include "clang/AST/ParentMap.h"
+#include "clang/Basic/Builtins.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 // The number of CFGBlock pointers we want to reserve memory for. This is used
@@ -33,40 +34,27 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class UnreachableCodeChecker : public Checker {
+class UnreachableCodeChecker : public CheckerV2<check::EndAnalysis> {
 public:
-  static void *getTag();
-  void VisitEndAnalysis(ExplodedGraph &G,
-                        BugReporter &B,
-                        ExprEngine &Eng);
+  void checkEndAnalysis(ExplodedGraph &G, BugReporter &B,
+                        ExprEngine &Eng) const;
 private:
+  typedef llvm::SmallSet<unsigned, DEFAULT_CFGBLOCKS> CFGBlocksSet;
+
   static inline const Stmt *getUnreachableStmt(const CFGBlock *CB);
-  void FindUnreachableEntryPoints(const CFGBlock *CB);
+  static void FindUnreachableEntryPoints(const CFGBlock *CB,
+                                         CFGBlocksSet &reachable,
+                                         CFGBlocksSet &visited);
   static bool isInvalidPath(const CFGBlock *CB, const ParentMap &PM);
   static inline bool isEmptyCFGBlock(const CFGBlock *CB);
-
-  llvm::SmallSet<unsigned, DEFAULT_CFGBLOCKS> reachable;
-  llvm::SmallSet<unsigned, DEFAULT_CFGBLOCKS> visited;
 };
 }
 
-void *UnreachableCodeChecker::getTag() {
-  static int x = 0;
-  return &x;
-}
-
-static void RegisterUnreachableCodeChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new UnreachableCodeChecker());
-}
-
-void ento::registerUnreachableCodeChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterUnreachableCodeChecker);
-}
-
-void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
+void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
                                               BugReporter &B,
-                                              ExprEngine &Eng) {
-  // Bail out if we didn't cover all paths
+                                              ExprEngine &Eng) const {
+  CFGBlocksSet reachable, visited;
+
   if (Eng.hasWorkRemaining())
     return;
 
@@ -109,7 +97,7 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
 
     // Find the entry points for this block
     if (!visited.count(CB->getBlockID()))
-      FindUnreachableEntryPoints(CB);
+      FindUnreachableEntryPoints(CB, reachable, visited);
 
     // This block may have been pruned; check if we still want to report it
     if (reachable.count(CB->getBlockID()))
@@ -155,7 +143,9 @@ void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
 }
 
 // Recursively finds the entry point(s) for this dead CFGBlock.
-void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB) {
+void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB,
+                                                        CFGBlocksSet &reachable,
+                                                        CFGBlocksSet &visited) {
   visited.insert(CB->getBlockID());
 
   for (CFGBlock::const_pred_iterator I = CB->pred_begin(), E = CB->pred_end();
@@ -166,7 +156,7 @@ void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB) {
       reachable.insert(CB->getBlockID());
       if (!visited.count((*I)->getBlockID()))
         // If we haven't previously visited the unreachable predecessor, recurse
-        FindUnreachableEntryPoints(*I);
+        FindUnreachableEntryPoints(*I, reachable, visited);
     }
   }
 }
@@ -225,4 +215,8 @@ bool UnreachableCodeChecker::isEmptyCFGBlock(const CFGBlock *CB) {
   return CB->getLabel() == 0       // No labels
       && CB->size() == 0           // No statements
       && CB->getTerminator() == 0; // No terminator
+}
+
+void ento::registerUnreachableCodeChecker(CheckerManager &mgr) {
+  mgr.registerChecker<UnreachableCodeChecker>();
 }

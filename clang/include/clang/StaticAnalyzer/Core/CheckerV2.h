@@ -145,6 +145,21 @@ public:
   }
 };
 
+class EndAnalysis {
+  template <typename CHECKER>
+  static void _checkEndAnalysis(void *checker, ExplodedGraph &G,
+                                BugReporter &BR, ExprEngine &Eng) {
+    ((const CHECKER *)checker)->checkEndAnalysis(G, BR, Eng);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForEndAnalysis(
+     CheckerManager::CheckEndAnalysisFunc(checker, _checkEndAnalysis<CHECKER>));
+  }
+};
+
 } // end check namespace
 
 template <typename CHECK1, typename CHECK2=check::_VoidCheck,

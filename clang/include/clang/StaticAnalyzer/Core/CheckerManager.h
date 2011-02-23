@@ -32,6 +32,7 @@ namespace ento {
   class ObjCMessage;
   class SVal;
   class ExplodedNodeSet;
+  class ExplodedGraph;
   class GRState;
 
 struct VoidCheckerFnParm {};
@@ -172,6 +173,10 @@ public:
                               const GRState *state,
                               ExprEngine &Eng);
 
+  /// \brief Run checkers for end of analysis.
+  void runCheckersForEndAnalysis(ExplodedGraph &G, BugReporter &BR,
+                                 ExprEngine &Eng);
+
   // FIXME: Temporary until checker running is moved completely into
   // CheckerManager.
   void registerCheckersToEngine(ExprEngine &eng);
@@ -199,6 +204,8 @@ public:
   typedef CheckerFn<const ObjCMessage &, CheckerContext &> CheckObjCMessageFunc;
   typedef CheckerFn<const SVal &/*location*/, bool/*isLoad*/, CheckerContext &>
       CheckLocationFunc;
+  typedef CheckerFn<ExplodedGraph &, BugReporter &, ExprEngine &>
+      CheckEndAnalysisFunc;
 
   typedef bool (*HandlesStmtFunc)(const Stmt *D);
   void _registerForPreStmt(CheckStmtFunc checkfn,
@@ -210,6 +217,8 @@ public:
   void _registerForPostObjCMessage(CheckObjCMessageFunc checkfn);
 
   void _registerForLocation(CheckLocationFunc checkfn);
+
+  void _registerForEndAnalysis(CheckEndAnalysisFunc checkfn);
 
 //===----------------------------------------------------------------------===//
 // Implementation details.
@@ -276,6 +285,8 @@ private:
   std::vector<CheckObjCMessageFunc> PostObjCMessageCheckers;
 
   std::vector<CheckLocationFunc> LocationCheckers;
+
+  std::vector<CheckEndAnalysisFunc> EndAnalysisCheckers;
 };
 
 } // end ento namespace
