@@ -831,7 +831,7 @@ def CLZ_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
                  "clz $dst, $src",
                  [(set GRRegs:$dst, (ctlz GRRegs:$src))]>;
 
-def SETC_l2r : _FRU6<(outs), (ins GRRegs:$r, GRRegs:$val),
+def SETC_l2r : _FL2R<(outs), (ins GRRegs:$r, GRRegs:$val),
                   "setc res[$r], $val",
                   [(int_xcore_setc GRRegs:$r, GRRegs:$val)]>;
 
