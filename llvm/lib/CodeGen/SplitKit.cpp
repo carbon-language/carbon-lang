@@ -961,10 +961,10 @@ void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
 
     openIntv();
     SlotIndex SegStart = enterIntvBefore(BI.FirstUse);
-    if (BI.LastUse < BI.LastSplitPoint) {
+    if (!BI.LiveOut || BI.LastUse < BI.LastSplitPoint) {
       useIntv(SegStart, leaveIntvAfter(BI.LastUse));
     } else {
-      // THe last use os after tha last valid split point.
+      // The last use is after the last valid split point.
       SlotIndex SegStop = leaveIntvBefore(BI.LastSplitPoint);
       useIntv(SegStart, SegStop);
       overlapIntv(SegStop, BI.LastUse);
