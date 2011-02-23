@@ -32,3 +32,28 @@ bool h(T t) {
 }
 
 bool b = h('x'); // expected-note {{here}}
+
+// PR 9276 - Make sure we check auto types deduce the same
+// in the case of a dependent initializer
+namespace PR9276 {
+  template<typename T>
+  void f() {
+    auto i = T(), j = 0; // expected-error {{deduced as 'long' in declaration of 'i' and deduced as 'int' in declaration of 'j'}}
+  }
+
+  void g() {
+    f<long>(); // expected-note {{here}}
+    f<int>();
+  }
+}
+
+namespace NoRepeatedDiagnostic {
+  template<typename T>
+  void f() {
+    auto a = 0, b = 0.0, c = T(); // expected-error {{deduced as 'int' in declaration of 'a' and deduced as 'double' in declaration of 'b'}}
+  }
+  // We've already diagnosed an issue. No extra diagnostics is needed for these.
+  template void f<int>();
+  template void f<double>();
+  template void f<char>();
+}

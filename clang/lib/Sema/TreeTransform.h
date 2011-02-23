@@ -1083,11 +1083,8 @@ public:
   StmtResult RebuildDeclStmt(Decl **Decls, unsigned NumDecls,
                                    SourceLocation StartLoc,
                                    SourceLocation EndLoc) {
-    return getSema().Owned(
-             new (getSema().Context) DeclStmt(
-                                        DeclGroupRef::Create(getSema().Context,
-                                                             Decls, NumDecls),
-                                              StartLoc, EndLoc));
+    Sema::DeclGroupPtrTy DG = getSema().BuildDeclaratorGroup(Decls, NumDecls);
+    return getSema().ActOnDeclStmt(DG, StartLoc, EndLoc);
   }
 
   /// \brief Build a new inline asm statement.

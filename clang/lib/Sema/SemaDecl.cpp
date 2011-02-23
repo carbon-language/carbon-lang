@@ -5055,6 +5055,19 @@ Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
   if (DS.isTypeSpecOwned())
     Decls.push_back(DS.getRepAsDecl());
 
+  for (unsigned i = 0; i != NumDecls; ++i)
+    if (Decl *D = Group[i])
+      Decls.push_back(D);
+
+  return BuildDeclaratorGroup(Decls.data(), Decls.size(), 
+                              DS.getTypeSpecType() == DeclSpec::TST_auto);
+}
+
+/// BuildDeclaratorGroup - convert a list of declarations into a declaration
+/// group, performing any necessary semantic checking.
+Sema::DeclGroupPtrTy
+Sema::BuildDeclaratorGroup(Decl **Group, unsigned NumDecls,
+                           bool TypeMayContainAuto) {
   // C++0x [dcl.spec.auto]p7:
   //   If the type deduced for the template parameter U is not the same in each
   //   deduction, the program is ill-formed.
@@ -5062,14 +5075,16 @@ Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
   // between the deduced type U and the deduced type which 'auto' stands for.
   //   auto a = 0, b = { 1, 2, 3 };
   // is legal because the deduced type U is 'int' in both cases.
-  bool TypeContainsAuto = DS.getTypeSpecType() == DeclSpec::TST_auto;
-  if (TypeContainsAuto && NumDecls > 1) {
+  if (TypeMayContainAuto && NumDecls > 1) {
     QualType Deduced;
     CanQualType DeducedCanon;
     VarDecl *DeducedDecl = 0;
     for (unsigned i = 0; i != NumDecls; ++i) {
       if (VarDecl *D = dyn_cast<VarDecl>(Group[i])) {
         AutoType *AT = D->getType()->getContainedAutoType();
+        // Don't reissue diagnostics when instantiating a template.
+        if (AT && D->isInvalidDecl())
+          break;
         if (AT && AT->isDeduced()) {
           QualType U = AT->getDeducedType();
           CanQualType UCanon = Context.getCanonicalType(U);
@@ -5078,11 +5093,13 @@ Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
             DeducedCanon = UCanon;
             DeducedDecl = D;
           } else if (DeducedCanon != UCanon) {
-            Diag(DS.getTypeSpecTypeLoc(), diag::err_auto_different_deductions)
+            Diag(D->getTypeSourceInfo()->getTypeLoc().getBeginLoc(),
+                 diag::err_auto_different_deductions)
               << Deduced << DeducedDecl->getDeclName()
               << U << D->getDeclName()
               << DeducedDecl->getInit()->getSourceRange()
               << D->getInit()->getSourceRange();
+            D->setInvalidDecl();
             break;
           }
         }
@@ -5090,12 +5107,7 @@ Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
     }
   }
 
-  for (unsigned i = 0; i != NumDecls; ++i)
-    if (Decl *D = Group[i])
-      Decls.push_back(D);
-
-  return DeclGroupPtrTy::make(DeclGroupRef::Create(Context,
-                                                   Decls.data(), Decls.size()));
+  return DeclGroupPtrTy::make(DeclGroupRef::Create(Context, Group, NumDecls));
 }
 
 

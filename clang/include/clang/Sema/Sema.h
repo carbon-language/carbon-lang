@@ -864,6 +864,8 @@ public:
   DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
                                          Decl **Group,
                                          unsigned NumDecls);
+  DeclGroupPtrTy BuildDeclaratorGroup(Decl **Group, unsigned NumDecls,
+                                      bool TypeMayContainAuto = true);
   void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
                                        SourceLocation LocAfterDecls);
   Decl *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
