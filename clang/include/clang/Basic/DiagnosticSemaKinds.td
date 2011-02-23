@@ -361,7 +361,7 @@ def warn_non_covariant_ret_types : Warning<
 def warn_conflicting_param_types : Warning<
   "conflicting parameter types in implementation of %0: %1 vs %2">;
 def warn_conflicting_param_modifiers : Warning<
-  "conflicting distributed object modifiers on patameter type "
+  "conflicting distributed object modifiers on parameter type "
   "in implementation of %0">;
 def warn_non_contravariant_param_types : Warning<
   "conflicting parameter types in implementation of %0: %1 vs %2">,
