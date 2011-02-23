@@ -718,13 +718,14 @@ EndOfFunctionNodeBuilder::~EndOfFunctionNodeBuilder() {
 }
 
 ExplodedNode*
-EndOfFunctionNodeBuilder::generateNode(const GRState* State, const void *tag,
-                                   ExplodedNode* P) {
+EndOfFunctionNodeBuilder::generateNode(const GRState* State,
+                                       ExplodedNode* P, const void *tag) {
   hasGeneratedNode = true;
   bool IsNew;
 
   ExplodedNode* Node = Eng.G->getNode(BlockEntrance(&B,
-                               Pred->getLocationContext(), tag), State, &IsNew);
+                               Pred->getLocationContext(), tag ? tag : Tag),
+                               State, &IsNew);
 
   Node->addPredecessor(P ? P : Pred, *Eng.G);
 

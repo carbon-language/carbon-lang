@@ -447,15 +447,21 @@ class EndOfFunctionNodeBuilder {
   CoreEngine &Eng;
   const CFGBlock& B;
   ExplodedNode* Pred;
+  void *Tag;
 
 public:
   bool hasGeneratedNode;
 
 public:
-  EndOfFunctionNodeBuilder(const CFGBlock* b, ExplodedNode* N, CoreEngine* e)
-    : Eng(*e), B(*b), Pred(N), hasGeneratedNode(false) {}
+  EndOfFunctionNodeBuilder(const CFGBlock* b, ExplodedNode* N, CoreEngine* e,
+                           void *checkerTag = 0)
+    : Eng(*e), B(*b), Pred(N), Tag(checkerTag), hasGeneratedNode(false) {}
 
   ~EndOfFunctionNodeBuilder();
+
+  EndOfFunctionNodeBuilder withCheckerTag(void *tag) {
+    return EndOfFunctionNodeBuilder(&B, Pred, &Eng, tag);
+  }
 
   WorkList &getWorkList() { return *Eng.WList; }
 
@@ -471,8 +477,8 @@ public:
                                            B.getBlockID());
   }
 
-  ExplodedNode* generateNode(const GRState* State, const void *tag = 0,
-                             ExplodedNode *P = 0);
+  ExplodedNode* generateNode(const GRState* State, ExplodedNode *P = 0,
+                             const void *tag = 0);
 
   void GenerateCallExitNode(const GRState *state);
 

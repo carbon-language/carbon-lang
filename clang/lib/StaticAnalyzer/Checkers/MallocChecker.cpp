@@ -599,7 +599,7 @@ void MallocChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
   for (RegionStateTy::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     RefState RS = I->second;
     if (RS.isAllocated()) {
-      ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
+      ExplodedNode *N = B.generateNode(state);
       if (N) {
         if (!BT_Leak)
           BT_Leak = new BuiltinBug("Memory leak",

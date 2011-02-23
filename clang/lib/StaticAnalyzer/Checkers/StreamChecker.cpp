@@ -435,7 +435,7 @@ void StreamChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
   for (SymMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     StreamState SS = I->second;
     if (SS.isOpened()) {
-      ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
+      ExplodedNode *N = B.generateNode(state);
       if (N) {
         if (!BT_ResourceLeak)
           BT_ResourceLeak = new BuiltinBug("Resource Leak", 

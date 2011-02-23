@@ -1440,7 +1440,8 @@ void ExprEngine::processEndOfFunction(EndOfFunctionNodeBuilder& builder) {
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
     void *tag = I->first;
     Checker *checker = I->second;
-    checker->evalEndPath(builder, tag, *this);
+    EndOfFunctionNodeBuilder B = builder.withCheckerTag(tag);
+    checker->evalEndPath(B, tag, *this);
   }
 }
 

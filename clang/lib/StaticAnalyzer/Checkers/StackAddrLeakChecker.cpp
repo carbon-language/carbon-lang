@@ -180,7 +180,7 @@ void StackAddrLeakChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
     return;
 
   // Generate an error node.
-  ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
+  ExplodedNode *N = B.generateNode(state);
   if (!N)
     return;
 
