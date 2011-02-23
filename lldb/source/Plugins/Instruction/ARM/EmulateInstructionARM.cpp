@@ -5080,7 +5080,7 @@ EmulateInstructionARM::EmulateLDRRegister (ARMEncoding encoding)
         addr_t address;
                   
         // offset = Shift(R[m], shift_t, shift_n, APSR.C);   -- Note "The APSR is an application level alias for the CPSR".
-        addr_t offset = Shift (Rm, shift_t, shift_n, Bit32 (m_inst_cpsr, CPSR_C));
+        addr_t offset = Shift (Rm, shift_t, shift_n, Bit32 (m_inst_cpsr, APSR_C));
                   
         // offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
         if (add)
@@ -6032,6 +6032,139 @@ EmulateInstructionARM::EmulateRSBReg (ARMEncoding encoding)
     return true;
 }
 
+// Reverse Subtract with Carry (immediate) subtracts a register value and the value of NOT (Carry flag) from
+// an immediate value, and writes the result to the destination register. It can optionally update the condition
+// flags based on the result.
+bool
+EmulateInstructionARM::EmulateRSCImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (result, carry, overflow) = AddWithCarry(NOT(R[n]), imm32, APSR.C);
+        if d == 15 then
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rd; // the destination register
+    uint32_t Rn; // the first operand
+    bool setflags;
+    uint32_t imm32; // the immediate value to be added to the value obtained from Rn
+    switch (encoding) {
+    case eEncodingA1:
+        Rd = Bits32(opcode, 15, 12);
+        Rn = Bits32(opcode, 19, 16);
+        setflags = BitIsSet(opcode, 20);
+        imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+        // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+        // TODO: Emulate SUBS PC, LR and related instructions.
+        if (Rd == 15 && setflags)
+            return false;
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from the operand register Rn.
+    uint32_t reg_val = ReadCoreReg(Rn, &success);
+    if (!success)
+        return false;
+                  
+    AddWithCarryResult res = AddWithCarry(~reg_val, imm32, APSR_C);
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs ();
+
+    if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+        return false;
+
+    return true;
+}
+
+// Reverse Subtract with Carry (register) subtracts a register value and the value of NOT (Carry flag) from an
+// optionally-shifted register value, and writes the result to the destination register. It can optionally update the
+// condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateRSCReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(NOT(R[n]), shifted, APSR.C);
+        if d == 15 then
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    uint32_t Rd; // the destination register
+    uint32_t Rn; // the first operand
+    uint32_t Rm; // the second operand
+    bool setflags;
+    ARM_ShifterType shift_t;
+    uint32_t shift_n; // the shift applied to the value read from Rm
+    switch (encoding) {
+    case eEncodingA1:
+        Rd = Bits32(opcode, 15, 12);
+        Rn = Bits32(opcode, 19, 16);
+        Rm = Bits32(opcode, 3, 0);
+        setflags = BitIsSet(opcode, 20);
+        shift_n = DecodeImmShiftARM(opcode, shift_t);
+        // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+        // TODO: Emulate SUBS PC, LR and related instructions.
+        if (Rd == 15 && setflags)
+            return false;
+        break;
+    default:
+        return false;
+    }
+    // Read the register value from register Rn.
+    uint32_t val1 = ReadCoreReg(Rn, &success);
+    if (!success)
+        return false;
+
+    // Read the register value from register Rm.
+    uint32_t val2 = ReadCoreReg(Rm, &success);
+    if (!success)
+        return false;
+                  
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    AddWithCarryResult res = AddWithCarry(~val1, shifted, APSR_C);
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextImmediate;
+    context.SetNoArgs();
+    if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+        return false;
+
+    return true;
+}
+
 // Test Equivalence (immediate) performs a bitwise exclusive OR operation on a register value and an
 // immediate value.  It updates the condition flags based on the result, and discards the result.
 bool
@@ -6380,6 +6513,10 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x02600000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSBImm, "rsb{s}<c> <Rd>, <Rn>, #<const>"},
         // rsb (register)
         { 0x0fe00010, 0x00600000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSBReg, "rsb{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // rsc (immediate)
+        { 0x0fe00000, 0x02e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSCImm, "rsc{s}<c> <Rd>, <Rn>, #<const>"},
+        // rsc (register)
+        { 0x0fe00010, 0x00e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSCReg, "rsc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // teq (immediate)
         { 0x0ff0f000, 0x03300000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #const"},
         // teq (register)

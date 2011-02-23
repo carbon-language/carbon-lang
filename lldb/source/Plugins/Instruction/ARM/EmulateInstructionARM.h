@@ -653,21 +653,21 @@ protected:
     bool
     EmulatePLIRegister (ARMEncoding encoding);
     
-    // A8.6.141 RSB (immediate) - Encoding T1, A1
+    // A8.6.141 RSB (immediate)
     bool
     EmulateRSBImm (ARMEncoding encoding);
     
-    // A8.6.142 RSB (register) - Encoding A1
+    // A8.6.142 RSB (register)
     bool
     EmulateRSBReg (ARMEncoding encoding);
     
-    // A8.6.144 RSC (immediate) - Encoding A1
+    // A8.6.144 RSC (immediate)
     bool
-    EmulateRSCImmediate (ARMEncoding encoding);
+    EmulateRSCImm (ARMEncoding encoding);
     
-    // A8.6.145 RSC (register) - Encoding A1
+    // A8.6.145 RSC (register)
     bool
-    EmulateRSCRegister (ARMEncoding encoding);
+    EmulateRSCReg (ARMEncoding encoding);
     
     // A8.6.150 SBC (immediate) - Encoding A1
     bool
