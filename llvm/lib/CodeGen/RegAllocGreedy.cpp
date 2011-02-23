@@ -74,6 +74,7 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
   std::auto_ptr<Spiller> SpillerInstance;
   std::auto_ptr<SplitAnalysis> SA;
   std::priority_queue<std::pair<unsigned, unsigned> > Queue;
+  IndexedMap<unsigned, VirtReg2IndexFunctor> Generation;
 
   // splitting state.
 
@@ -186,6 +187,7 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
 
 void RAGreedy::releaseMemory() {
   SpillerInstance.reset(0);
+  Generation.clear();
   RegAllocBase::releaseMemory();
 }
 
@@ -201,6 +203,11 @@ void RAGreedy::enqueue(LiveInterval *LI) {
   unsigned Hint = VRM->getRegAllocPref(Reg);
   if (TargetRegisterInfo::isPhysicalRegister(Hint))
     Size |= (1u << 30);
+
+  // Boost ranges that we see for the first time.
+  Generation.grow(Reg);
+  if (++Generation[Reg] == 1)
+    Size |= (1u << 31);
 
   Queue.push(std::make_pair(Size, Reg));
 }
