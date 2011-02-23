@@ -90,15 +90,28 @@ int test_pr9240() {
   return array[(unsigned long long) 100]; // expected-warning {{array index of '100' indexes past the end of an array (that contains 100 elements)}}
 }
 
+// PR 9284 - a template parameter can cause an array bounds access to be
+// infeasible.
 template <bool extendArray>
-void myFunc() {
+void pr9284() {
     int arr[3 + (extendArray ? 1 : 0)];
 
     if (extendArray)
-        arr[3] = 42;
+        arr[3] = 42; // no-warning
 }
 
-void f() {
-    myFunc<false>();
+template <bool extendArray>
+void pr9284b() {
+    int arr[3 + (extendArray ? 1 : 0)]; // expected-note {{array 'arr' declared here}}
+
+    if (!extendArray)
+        arr[3] = 42; // expected-warning{{array index of '3' indexes past the end of an array (that contains 3 elements)}}
+}
+
+void test_pr9284() {
+    pr9284<true>();
+    pr9284<false>();
+    pr9284b<true>();
+    pr9284b<false>(); // expected-note{{in instantiation of function template specialization 'pr9284b<false>' requested here}}
 }
 
