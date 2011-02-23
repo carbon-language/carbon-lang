@@ -50,4 +50,5 @@ let TargetPrefix = "xcore" in {  // All intrinsics start with "llvm.xcore.".
 
   // Intrinsics for events.
   def int_xcore_waitevent : Intrinsic<[llvm_ptr_ty],[], [IntrReadMem]>;
+  def int_xcore_clre : Intrinsic<[],[],[]>;
 }

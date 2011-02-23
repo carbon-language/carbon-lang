@@ -895,9 +895,11 @@ def SETV_1r : _F1R<(outs), (ins GRRegs:$r),
                [(int_xcore_setv GRRegs:$r, R11)]>;
 
 // Zero operand short
-// TODO clre, ssync, freet, ldspc, stspc, ldssr, stssr, ldsed, stsed,
+// TODO ssync, freet, ldspc, stspc, ldssr, stssr, ldsed, stsed,
 // stet, geted, getet, getkep, getksp, setkep, getid, kret, dcall, dret,
 // dentsp, drestsp
+
+def CLRE_0R : _F0R<(outs), (ins), "clre", [(int_xcore_clre)]>;
 
 let Defs = [R11] in
 def GETID_0R : _F0R<(outs), (ins),

@@ -2,10 +2,13 @@
 
 declare void @llvm.xcore.setv.p1i8(i8 addrspace(1)* %r, i8* %p)
 declare i8* @llvm.xcore.waitevent()
+declare void @llvm.xcore.clre()
 
 define i32 @f(i8 addrspace(1)* %r) nounwind {
 ; CHECK: f:
 entry:
+; CHECK: clre
+  call void @llvm.xcore.clre()
   call void @llvm.xcore.setv.p1i8(i8 addrspace(1)* %r, i8* blockaddress(@f, %L1))
   call void @llvm.xcore.setv.p1i8(i8 addrspace(1)* %r, i8* blockaddress(@f, %L2))
   %goto_addr = call i8* @llvm.xcore.waitevent()
