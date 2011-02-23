@@ -1,5 +1,23 @@
 // RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only
 
+// PR 8876 - don't warn about trivially unreachable null derefs.  Note that
+// we put this here because the reachability analysis only kicks in for
+// suppressing false positives when code has no errors.
+#define PR8876(err_ptr) do {\
+    if (err_ptr) *(int*)(err_ptr) = 1;\
+  } while (0)
+
+#define PR8876_pos(err_ptr) do {\
+    if (!err_ptr) *(int*)(err_ptr) = 1;\
+  } while (0)
+
+
+int test_pr8876() {
+  PR8876(0); // no-warning
+  PR8876_pos(0); // expected-warning{{indirection of non-volatile null pointer will be deleted, not trap}} expected-note{{consider using __builtin_trap() or qualifying pointer with 'volatile'}}
+  return 0;
+}
+
 // PR1966
 _Complex double test1() {
   return __extension__ 1.0if;
