@@ -62,9 +62,9 @@ void CheckerManager::runCheckersOnASTBody(const Decl *D, AnalysisManager& mgr,
 //===----------------------------------------------------------------------===//
 
 template <typename CHECK_CTX>
-static void runPathSensitiveCheckers(CHECK_CTX checkCtx,
-                                     ExplodedNodeSet &Dst,
-                                     ExplodedNodeSet &Src) {
+static void expandGraphWithCheckers(CHECK_CTX checkCtx,
+                                    ExplodedNodeSet &Dst,
+                                    ExplodedNodeSet &Src) {
 
   typename CHECK_CTX::CheckersTy::const_iterator
       I = checkCtx.checkers_begin(), E = checkCtx.checkers_end();
@@ -128,7 +128,7 @@ void CheckerManager::runCheckersForStmt(bool isPreVisit,
                                         ExprEngine &Eng) {
   CheckStmtContext C(isPreVisit, *getCachedStmtCheckersFor(S, isPreVisit),
                      S, Eng);
-  runPathSensitiveCheckers(C, Dst, Src);
+  expandGraphWithCheckers(C, Dst, Src);
 }
 
 namespace {
@@ -167,7 +167,7 @@ void CheckerManager::runCheckersForObjCMessage(bool isPreVisit,
                             isPreVisit ? PreObjCMessageCheckers
                                        : PostObjCMessageCheckers,
                             msg, Eng);
-  runPathSensitiveCheckers(C, Dst, Src);
+  expandGraphWithCheckers(C, Dst, Src);
 }
 
 namespace {
@@ -207,7 +207,7 @@ void CheckerManager::runCheckersForLocation(ExplodedNodeSet &Dst,
                                             const GRState *state,
                                             ExprEngine &Eng) {
   CheckLocationContext C(LocationCheckers, location, isLoad, S, state, Eng);
-  runPathSensitiveCheckers(C, Dst, Src);
+  expandGraphWithCheckers(C, Dst, Src);
 }
 
 void CheckerManager::runCheckersForEndAnalysis(ExplodedGraph &G,
