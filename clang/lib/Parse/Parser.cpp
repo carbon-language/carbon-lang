@@ -296,6 +296,10 @@ bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
     case tok::wide_string_literal:
       ConsumeStringToken();
       break;
+        
+    case tok::at:
+      return false;
+      
     case tok::semi:
       if (StopAtSemi)
         return false;
