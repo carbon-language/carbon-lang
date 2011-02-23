@@ -54,6 +54,10 @@ if(PYTHONINTERP_FOUND)
     set(LIT "${LLVM_SOURCE_DIR}/utils/lit/lit.py")
   else()
     set(LIT "${PATH_TO_LLVM_BUILD}/bin/${CMAKE_CFG_INTDIR}/llvm-lit")
+    # Installed LLVM does not contain ${CMAKE_CFG_INTDIR} in paths.
+    if( NOT EXISTS ${LIT} )
+      set(LIT "${PATH_TO_LLVM_BUILD}/bin/llvm-lit")
+    endif()
   endif()
 
   if( PATH_TO_LLVM_BUILD )
