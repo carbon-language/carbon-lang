@@ -63,6 +63,9 @@ public:
   virtual void EndCOFFSymbolDef() {
     assert(0 && "macho doesn't support this directive");
   }
+  virtual void EmitCOFFSecRel32(MCSymbol const *Symbol) {
+    assert(0 && "macho doesn't support this directive");
+  }
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
     assert(0 && "macho doesn't support this directive");
   }

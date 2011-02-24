@@ -239,6 +239,11 @@ namespace llvm {
     /// EndCOFFSymbolDef - Marks the end of the symbol definition.
     virtual void EndCOFFSymbolDef() = 0;
 
+    /// EmitCOFFSecRel32 - Emits a COFF section relative relocation.
+    ///
+    /// @param Symbol - Symbol the section relative realocation should point to.
+    virtual void EmitCOFFSecRel32(MCSymbol const *Symbol) = 0;
+
     /// EmitELFSize - Emit an ELF .size directive.
     ///
     /// This corresponds to an assembler statement such as:

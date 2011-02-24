@@ -481,6 +481,15 @@ void DwarfDebug::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
   Die->addValue(Attribute, Form, Value);
 }
 
+/// addSectionOffset - Add a Dwarf section relative label attribute data and
+/// value.
+///
+void DwarfDebug::addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
+                          const MCSymbol *Label) {
+  DIEValue *Value = new (DIEValueAllocator) DIESectionOffset(Label);
+  Die->addValue(Attribute, Form, Value);
+}
+
 /// addDelta - Add a label delta attribute data and value.
 ///
 void DwarfDebug::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
@@ -1904,8 +1913,8 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
   if (Asm->MAI->doesDwarfUsesAbsoluteLabelForStmtList())
-    addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_addr,
-             Asm->GetTempSymbol("section_line"));
+    addSectionOffset(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_addr,
+                     Asm->GetTempSymbol("section_line"));
   else
     addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
 

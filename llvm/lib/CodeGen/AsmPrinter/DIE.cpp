@@ -277,6 +277,29 @@ void DIELabel::print(raw_ostream &O) {
 #endif
 
 //===----------------------------------------------------------------------===//
+// DIESectionOffset Implementation
+//===----------------------------------------------------------------------===//
+
+/// EmitValue - Emit label value.
+///
+void DIESectionOffset::EmitValue(AsmPrinter *AP, unsigned Form) const {
+  AP->EmitSectionOffset (Label, Label);
+}
+
+/// SizeOf - Determine size of label value in bytes.
+///
+unsigned DIESectionOffset::SizeOf(AsmPrinter *AP, unsigned Form) const {
+  if (Form == dwarf::DW_FORM_data4) return 4;
+  return AP->getTargetData().getPointerSize();
+}
+
+#ifndef NDEBUG
+void DIESectionOffset::print(raw_ostream &O) {
+  O << "SecRelLbl: " << Label->getName();
+}
+#endif
+
+//===----------------------------------------------------------------------===//
 // DIEDelta Implementation
 //===----------------------------------------------------------------------===//
 

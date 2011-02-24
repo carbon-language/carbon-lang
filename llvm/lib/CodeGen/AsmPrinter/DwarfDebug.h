@@ -280,6 +280,12 @@ private:
   void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
                 const MCSymbol *Label);
 
+  /// addSectionOffset - Add a Dwarf section relative label attribute data and
+  /// value.
+  ///
+  void addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
+                const MCSymbol *Label);
+
   /// addDelta - Add a label delta attribute data and value.
   ///
   void addDelta(DIE *Die, unsigned Attribute, unsigned Form,

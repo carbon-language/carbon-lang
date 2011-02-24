@@ -333,6 +333,36 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
+  /// DIESectionOffset - A section relative label expression DIE.
+  //
+  class DIESectionOffset : public DIEValue {
+    const MCSymbol *Label;
+  public:
+    explicit DIESectionOffset(const MCSymbol *L) : DIEValue(isSectionOffset),
+      Label(L) {}
+
+    /// EmitValue - Emit label value.
+    ///
+    virtual void EmitValue(AsmPrinter *AP, unsigned Form) const;
+
+    /// getValue - Get MCSymbol.
+    ///
+    const MCSymbol *getValue()       const { return Label; }
+
+    /// SizeOf - Determine size of label value in bytes.
+    ///
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
+
+    // Implement isa/cast/dyncast.
+    static bool classof(const DIELabel *)  { return true; }
+    static bool classof(const DIEValue *L) { return L->getType() == isSectionOffset; }
+
+#ifndef NDEBUG
+    virtual void print(raw_ostream &O);
+#endif
+  };
+
+  //===--------------------------------------------------------------------===//
   /// DIEDelta - A simple label difference DIE.
   ///
   class DIEDelta : public DIEValue {
