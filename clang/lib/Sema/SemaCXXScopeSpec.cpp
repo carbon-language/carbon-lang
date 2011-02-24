@@ -139,6 +139,9 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
   case NestedNameSpecifier::Namespace:
     return NNS->getAsNamespace();
 
+  case NestedNameSpecifier::NamespaceAlias:
+    return NNS->getAsNamespaceAlias()->getNamespace();
+
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate: {
     const TagType *Tag = NNS->getAsType()->getAs<TagType>();
@@ -532,11 +535,8 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
       return false;
     }
 
-    // FIXME: It would be nice to maintain the namespace alias name, then
-    // see through that alias when resolving the nested-name-specifier down to
-    // a declaration context.
     if (NamespaceAliasDecl *Alias = dyn_cast<NamespaceAliasDecl>(SD)) {
-      SS.Extend(Context, Alias->getNamespace(), IdentifierLoc, CCLoc);
+      SS.Extend(Context, Alias, IdentifierLoc, CCLoc);
       return false;
     }
 
@@ -681,6 +681,7 @@ bool Sema::ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   switch (Qualifier->getKind()) {
   case NestedNameSpecifier::Global:
   case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
     // These are always namespace scopes.  We never want to enter a
     // namespace scope from anything but a file context.
     return CurContext->getRedeclContext()->isFileContext();

@@ -14,6 +14,7 @@
 
 #include "clang/Frontend/DocumentXML.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
@@ -216,6 +217,10 @@ void DocumentXML::addPtrAttribute(const char* pAttributeName,
   }
   case NestedNameSpecifier::Namespace: {
     addPtrAttribute(pAttributeName, pNNS->getAsNamespace());
+    break;
+  }
+  case NestedNameSpecifier::NamespaceAlias: {
+    addPtrAttribute(pAttributeName, pNNS->getAsNamespaceAlias());
     break;
   }
   case NestedNameSpecifier::TypeSpec: {

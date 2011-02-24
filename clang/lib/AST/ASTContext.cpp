@@ -2981,7 +2981,15 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const {
   case NestedNameSpecifier::Namespace:
     // A namespace is canonical; build a nested-name-specifier with
     // this namespace and no prefix.
-    return NestedNameSpecifier::Create(*this, 0, NNS->getAsNamespace());
+    return NestedNameSpecifier::Create(*this, 0, 
+                                 NNS->getAsNamespace()->getOriginalNamespace());
+
+  case NestedNameSpecifier::NamespaceAlias:
+    // A namespace is canonical; build a nested-name-specifier with
+    // this namespace and no prefix.
+    return NestedNameSpecifier::Create(*this, 0, 
+                                    NNS->getAsNamespaceAlias()->getNamespace()
+                                                      ->getOriginalNamespace());
 
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate: {

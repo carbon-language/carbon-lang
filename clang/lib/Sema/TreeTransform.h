@@ -877,6 +877,16 @@ public:
                                                   NamespaceDecl *NS);
 
   /// \brief Build a new nested-name-specifier given the prefix and the
+  /// namespace alias named in the next step in the nested-name-specifier.
+  ///
+  /// By default, performs semantic analysis when building the new
+  /// nested-name-specifier. Subclasses may override this routine to provide
+  /// different behavior.
+  NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
+                                                  SourceRange Range,
+                                                  NamespaceAliasDecl *Alias);
+
+  /// \brief Build a new nested-name-specifier given the prefix and the
   /// type named in the next step in the nested-name-specifier.
   ///
   /// By default, performs semantic analysis when building the new
@@ -2448,6 +2458,19 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
       return NNS;
 
     return getDerived().RebuildNestedNameSpecifier(Prefix, Range, NS);
+  }
+
+  case NestedNameSpecifier::NamespaceAlias: {
+    NamespaceAliasDecl *Alias
+      = cast_or_null<NamespaceAliasDecl>(
+                                    getDerived().TransformDecl(Range.getBegin(),
+                                                    NNS->getAsNamespaceAlias()));
+    if (!getDerived().AlwaysRebuild() &&
+        Prefix == NNS->getPrefix() &&
+        Alias == NNS->getAsNamespaceAlias())
+      return NNS;
+
+    return getDerived().RebuildNestedNameSpecifier(Prefix, Range, Alias);
   }
 
   case NestedNameSpecifier::Global:
@@ -7565,6 +7588,14 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                    SourceRange Range,
                                                    NamespaceDecl *NS) {
   return NestedNameSpecifier::Create(SemaRef.Context, Prefix, NS);
+}
+
+template<typename Derived>
+NestedNameSpecifier *
+TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
+                                                   SourceRange Range,
+                                                   NamespaceAliasDecl *Alias) {
+  return NestedNameSpecifier::Create(SemaRef.Context, Prefix, Alias);
 }
 
 template<typename Derived>

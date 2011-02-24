@@ -1895,6 +1895,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           break;
 
         case NestedNameSpecifier::Namespace:
+        case NestedNameSpecifier::NamespaceAlias:
         case NestedNameSpecifier::Global:
           llvm_unreachable("Nested-name-specifier must name a type");
           break;

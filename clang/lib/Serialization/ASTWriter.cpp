@@ -3470,6 +3470,10 @@ void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
       AddDeclRef(NNS->getAsNamespace(), Record);
       break;
 
+    case NestedNameSpecifier::NamespaceAlias:
+      AddDeclRef(NNS->getAsNamespaceAlias(), Record);
+      break;
+
     case NestedNameSpecifier::TypeSpec:
     case NestedNameSpecifier::TypeSpecWithTemplate:
       AddTypeRef(QualType(NNS->getAsType(), 0), Record);

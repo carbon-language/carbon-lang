@@ -74,6 +74,15 @@ void CXXScopeSpec::Extend(ASTContext &Context, NamespaceDecl *Namespace,
   Range.setEnd(ColonColonLoc);
 }
 
+void CXXScopeSpec::Extend(ASTContext &Context, NamespaceAliasDecl *Alias,
+                          SourceLocation AliasLoc, 
+                          SourceLocation ColonColonLoc) {
+  ScopeRep = NestedNameSpecifier::Create(Context, ScopeRep, Alias);
+  if (Range.getBegin().isInvalid())
+    Range.setBegin(AliasLoc);
+  Range.setEnd(ColonColonLoc);
+}
+
 void CXXScopeSpec::MakeGlobal(ASTContext &Context, 
                               SourceLocation ColonColonLoc) {
   assert(!ScopeRep && "Already have a nested-name-specifier!?");

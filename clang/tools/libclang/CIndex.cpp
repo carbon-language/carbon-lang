@@ -1163,10 +1163,12 @@ bool CursorVisitor::VisitNestedNameSpecifier(NestedNameSpecifier *NNS,
   
   switch (NNS->getKind()) {
   case NestedNameSpecifier::Namespace:
-    // FIXME: The token at this source location might actually have been a
-    // namespace alias, but we don't model that. Lame!
     return Visit(MakeCursorNamespaceRef(NNS->getAsNamespace(), Range.getBegin(),
                                         TU));
+
+  case NestedNameSpecifier::NamespaceAlias:
+    return Visit(MakeCursorNamespaceRef(NNS->getAsNamespaceAlias(), 
+                                        Range.getBegin(), TU));
 
   case NestedNameSpecifier::TypeSpec: {
     // If the type has a form where we know that the beginning of the source

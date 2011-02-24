@@ -2868,6 +2868,7 @@ bool UnnamedLocalNoLinkageFinder::VisitNestedNameSpecifier(
   switch (NNS->getKind()) {
   case NestedNameSpecifier::Identifier:
   case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
   case NestedNameSpecifier::Global:
     return false;
 

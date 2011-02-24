@@ -25,6 +25,7 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
+class NamespaceAliasDecl;
 class NamespaceDecl;
 class IdentifierInfo;
 struct PrintingPolicy;
@@ -41,13 +42,22 @@ class LangOptions;
 /// (for dependent names), or the global specifier ('::', must be the
 /// first specifier).
 class NestedNameSpecifier : public llvm::FoldingSetNode {
+
+  /// \brief Enumeration describing
+  enum StoredSpecifierKind {
+    StoredIdentifier = 0,
+    StoredNamespaceOrAlias = 1,
+    StoredTypeSpec = 2,
+    StoredTypeSpecWithTemplate = 3
+  };
+
   /// \brief The nested name specifier that precedes this nested name
   /// specifier.
   ///
   /// The pointer is the nested-name-specifier that precedes this
   /// one. The integer stores one of the first four values of type
   /// SpecifierKind.
-  llvm::PointerIntPair<NestedNameSpecifier *, 2> Prefix;
+  llvm::PointerIntPair<NestedNameSpecifier *, 2, StoredSpecifierKind> Prefix;
 
   /// \brief The last component in the nested name specifier, which
   /// can be an identifier, a declaration, or a type.
@@ -63,21 +73,23 @@ public:
   /// specifier.
   enum SpecifierKind {
     /// \brief An identifier, stored as an IdentifierInfo*.
-    Identifier = 0,
-    /// \brief A namespace, stored as a Namespace*.
-    Namespace = 1,
+    Identifier,
+    /// \brief A namespace, stored as a NamespaceDecl*.
+    Namespace,
+    /// \brief A namespace alias, stored as a NamespaceAliasDecl*.
+    NamespaceAlias,
     /// \brief A type, stored as a Type*.
-    TypeSpec = 2,
+    TypeSpec,
     /// \brief A type that was preceded by the 'template' keyword,
     /// stored as a Type*.
-    TypeSpecWithTemplate = 3,
+    TypeSpecWithTemplate,
     /// \brief The global specifier '::'. There is no stored value.
-    Global = 4
+    Global
   };
 
 private:
   /// \brief Builds the global specifier.
-  NestedNameSpecifier() : Prefix(0, 0), Specifier(0) { }
+  NestedNameSpecifier() : Prefix(0, StoredIdentifier), Specifier(0) { }
 
   /// \brief Copy constructor used internally to clone nested name
   /// specifiers.
@@ -108,6 +120,11 @@ public:
                                      NestedNameSpecifier *Prefix,
                                      NamespaceDecl *NS);
 
+  /// \brief Builds a nested name specifier that names a namespace alias.
+  static NestedNameSpecifier *Create(const ASTContext &Context,
+                                     NestedNameSpecifier *Prefix,
+                                     NamespaceAliasDecl *Alias);
+
   /// \brief Builds a nested name specifier that names a type.
   static NestedNameSpecifier *Create(const ASTContext &Context,
                                      NestedNameSpecifier *Prefix,
@@ -136,16 +153,12 @@ public:
   NestedNameSpecifier *getPrefix() const { return Prefix.getPointer(); }
 
   /// \brief Determine what kind of nested name specifier is stored.
-  SpecifierKind getKind() const {
-    if (Specifier == 0)
-      return Global;
-    return (SpecifierKind)Prefix.getInt();
-  }
+  SpecifierKind getKind() const;
 
   /// \brief Retrieve the identifier stored in this nested name
   /// specifier.
   IdentifierInfo *getAsIdentifier() const {
-    if (Prefix.getInt() == Identifier)
+    if (Prefix.getInt() == StoredIdentifier)
       return (IdentifierInfo *)Specifier;
 
     return 0;
@@ -153,17 +166,16 @@ public:
 
   /// \brief Retrieve the namespace stored in this nested name
   /// specifier.
-  NamespaceDecl *getAsNamespace() const {
-    if (Prefix.getInt() == Namespace)
-      return (NamespaceDecl *)Specifier;
+  NamespaceDecl *getAsNamespace() const;
 
-    return 0;
-  }
+  /// \brief Retrieve the namespace alias stored in this nested name
+  /// specifier.
+  NamespaceAliasDecl *getAsNamespaceAlias() const;
 
   /// \brief Retrieve the type stored in this nested name specifier.
   const Type *getAsType() const {
-    if (Prefix.getInt() == TypeSpec ||
-        Prefix.getInt() == TypeSpecWithTemplate)
+    if (Prefix.getInt() == StoredTypeSpec ||
+        Prefix.getInt() == StoredTypeSpecWithTemplate)
       return (const Type *)Specifier;
 
     return 0;

@@ -34,6 +34,7 @@ namespace clang {
   class LangOptions;
   class Diagnostic;
   class IdentifierInfo;
+  class NamespaceAliasDecl;
   class NamespaceDecl;
   class NestedNameSpecifier;
   class Preprocessor;
@@ -96,20 +97,33 @@ public:
               SourceLocation IdentifierLoc, SourceLocation ColonColonLoc);
 
   /// \brief Extend the current nested-name-specifier by another 
-  /// nested-name-specifier component of the form 'namespace-or-alias::'.
+  /// nested-name-specifier component of the form 'namespace::'.
   ///
   /// \param Context The AST context in which this nested-name-specifier
   /// resides.
   ///
   /// \param Namespace The namespace.
-  /// FIXME: This should also permit a namespace alias.
   ///
-  /// \param NamespaceLoc The location of the namespace or namespace alias 
-  /// name.
+  /// \param NamespaceLoc The location of the namespace name.
   ///
   /// \param ColonColonLoc The location of the trailing '::'.
   void Extend(ASTContext &Context, NamespaceDecl *Namespace,
               SourceLocation NamespaceLoc, SourceLocation ColonColonLoc);
+
+  /// \brief Extend the current nested-name-specifier by another 
+  /// nested-name-specifier component of the form 'namespace-alias::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param Alias The namespace alias.
+  ///
+  /// \param AliasLoc The location of the namespace alias 
+  /// name.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, NamespaceAliasDecl *Alias,
+              SourceLocation AliasLoc, SourceLocation ColonColonLoc);
 
   /// \brief Turn this (empty) nested-name-specifier into the global
   /// nested-name-specifier '::'.

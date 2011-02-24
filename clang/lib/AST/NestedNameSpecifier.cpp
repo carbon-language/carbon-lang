@@ -14,6 +14,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/Type.h"
 #include "llvm/Support/raw_ostream.h"
@@ -46,7 +47,7 @@ NestedNameSpecifier::Create(const ASTContext &Context,
 
   NestedNameSpecifier Mockup;
   Mockup.Prefix.setPointer(Prefix);
-  Mockup.Prefix.setInt(Identifier);
+  Mockup.Prefix.setInt(StoredIdentifier);
   Mockup.Specifier = II;
   return FindOrInsert(Context, Mockup);
 }
@@ -60,8 +61,23 @@ NestedNameSpecifier::Create(const ASTContext &Context,
          "Broken nested name specifier");
   NestedNameSpecifier Mockup;
   Mockup.Prefix.setPointer(Prefix);
-  Mockup.Prefix.setInt(Namespace);
+  Mockup.Prefix.setInt(StoredNamespaceOrAlias);
   Mockup.Specifier = NS;
+  return FindOrInsert(Context, Mockup);
+}
+
+NestedNameSpecifier *
+NestedNameSpecifier::Create(const ASTContext &Context,
+                            NestedNameSpecifier *Prefix, 
+                            NamespaceAliasDecl *Alias) {
+  assert(Alias && "Namespace alias cannot be NULL");
+  assert((!Prefix ||
+          (Prefix->getAsType() == 0 && Prefix->getAsIdentifier() == 0)) &&
+         "Broken nested name specifier");
+  NestedNameSpecifier Mockup;
+  Mockup.Prefix.setPointer(Prefix);
+  Mockup.Prefix.setInt(StoredNamespaceOrAlias);
+  Mockup.Specifier = Alias;
   return FindOrInsert(Context, Mockup);
 }
 
@@ -72,7 +88,7 @@ NestedNameSpecifier::Create(const ASTContext &Context,
   assert(T && "Type cannot be NULL");
   NestedNameSpecifier Mockup;
   Mockup.Prefix.setPointer(Prefix);
-  Mockup.Prefix.setInt(Template? TypeSpecWithTemplate : TypeSpec);
+  Mockup.Prefix.setInt(Template? StoredTypeSpecWithTemplate : StoredTypeSpec);
   Mockup.Specifier = const_cast<Type*>(T);
   return FindOrInsert(Context, Mockup);
 }
@@ -82,7 +98,7 @@ NestedNameSpecifier::Create(const ASTContext &Context, IdentifierInfo *II) {
   assert(II && "Identifier cannot be NULL");
   NestedNameSpecifier Mockup;
   Mockup.Prefix.setPointer(0);
-  Mockup.Prefix.setInt(Identifier);
+  Mockup.Prefix.setInt(StoredIdentifier);
   Mockup.Specifier = II;
   return FindOrInsert(Context, Mockup);
 }
@@ -94,6 +110,47 @@ NestedNameSpecifier::GlobalSpecifier(const ASTContext &Context) {
   return Context.GlobalNestedNameSpecifier;
 }
 
+NestedNameSpecifier::SpecifierKind NestedNameSpecifier::getKind() const {
+  if (Specifier == 0)
+    return Global;
+
+  switch (Prefix.getInt()) {
+  case StoredIdentifier:
+    return Identifier;
+
+  case StoredNamespaceOrAlias:
+    return isa<NamespaceDecl>(static_cast<NamedDecl *>(Specifier))? Namespace
+                                                            : NamespaceAlias;
+
+  case StoredTypeSpec:
+    return TypeSpec;
+
+  case StoredTypeSpecWithTemplate:
+    return TypeSpecWithTemplate;
+  }
+
+  return Global;
+}
+
+/// \brief Retrieve the namespace stored in this nested name
+/// specifier.
+NamespaceDecl *NestedNameSpecifier::getAsNamespace() const {
+  if (Prefix.getInt() == StoredNamespaceOrAlias)
+    return dyn_cast<NamespaceDecl>(static_cast<NamedDecl *>(Specifier));
+
+  return 0;
+}
+
+/// \brief Retrieve the namespace alias stored in this nested name
+/// specifier.
+NamespaceAliasDecl *NestedNameSpecifier::getAsNamespaceAlias() const {
+  if (Prefix.getInt() == StoredNamespaceOrAlias)
+    return dyn_cast<NamespaceAliasDecl>(static_cast<NamedDecl *>(Specifier));
+
+  return 0;
+}
+
+
 /// \brief Whether this nested name specifier refers to a dependent
 /// type or not.
 bool NestedNameSpecifier::isDependent() const {
@@ -103,6 +160,7 @@ bool NestedNameSpecifier::isDependent() const {
     return true;
 
   case Namespace:
+  case NamespaceAlias:
   case Global:
     return false;
 
@@ -121,6 +179,7 @@ bool NestedNameSpecifier::containsUnexpandedParameterPack() const {
     return getPrefix() && getPrefix()->containsUnexpandedParameterPack();
 
   case Namespace:
+  case NamespaceAlias:
   case Global:
     return false;
 
@@ -147,7 +206,11 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
     break;
 
   case Namespace:
-    OS << getAsNamespace()->getIdentifier()->getName();
+    OS << getAsNamespace()->getName();
+    break;
+
+  case NamespaceAlias:
+    OS << getAsNamespaceAlias()->getName();
     break;
 
   case Global:

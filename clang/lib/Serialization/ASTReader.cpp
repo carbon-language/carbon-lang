@@ -4730,6 +4730,13 @@ ASTReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
       break;
     }
 
+    case NestedNameSpecifier::NamespaceAlias: {
+      NamespaceAliasDecl *Alias
+        = cast<NamespaceAliasDecl>(GetDecl(Record[Idx++]));
+      NNS = NestedNameSpecifier::Create(*Context, Prev, Alias);
+      break;
+    }
+
     case NestedNameSpecifier::TypeSpec:
     case NestedNameSpecifier::TypeSpecWithTemplate: {
       const Type *T = GetType(Record[Idx++]).getTypePtrOrNull();

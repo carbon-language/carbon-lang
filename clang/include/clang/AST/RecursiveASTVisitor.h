@@ -502,6 +502,7 @@ bool RecursiveASTVisitor<Derived>::TraverseNestedNameSpecifier(
   switch (NNS->getKind()) {
   case NestedNameSpecifier::Identifier:
   case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
   case NestedNameSpecifier::Global:
     return true;
 

@@ -606,6 +606,9 @@ void CXXNameMangler::mangleUnresolvedScope(NestedNameSpecifier *Qualifier) {
   case NestedNameSpecifier::Namespace:
     mangleName(Qualifier->getAsNamespace());
     break;
+  case NestedNameSpecifier::NamespaceAlias:
+    mangleName(Qualifier->getAsNamespaceAlias()->getNamespace());
+    break;
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate: {
     const Type *QTy = Qualifier->getAsType();
