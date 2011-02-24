@@ -74,7 +74,8 @@ RNBRunLoopGetStartModeFromRemote (RNBRemote* remote)
     if (remote)
     {
         RNBContext& ctx = remote->Context();
-        uint32_t event_mask = RNBContext::event_read_packet_available;
+        uint32_t event_mask = RNBContext::event_read_packet_available |
+                              RNBContext::event_read_thread_exiting;
 
         // Spin waiting to get the A packet.
         while (1)
@@ -82,6 +83,12 @@ RNBRunLoopGetStartModeFromRemote (RNBRemote* remote)
             DNBLogThreadedIf (LOG_RNB_MAX, "%s ctx.Events().WaitForSetEvents( 0x%08x ) ...",__FUNCTION__, event_mask);
             nub_event_t set_events = ctx.Events().WaitForSetEvents(event_mask);
             DNBLogThreadedIf (LOG_RNB_MAX, "%s ctx.Events().WaitForSetEvents( 0x%08x ) => 0x%08x", __FUNCTION__, event_mask, set_events);
+
+            if (set_events & RNBContext::event_read_thread_exiting)
+            {
+                RNBLogSTDERR ("error: packet read thread exited.");
+                return eRNBRunLoopModeExit;
+            }
 
             if (set_events & RNBContext::event_read_packet_available)
             {
@@ -219,7 +226,9 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
         ctx.LaunchStatus().SetErrorString(launch_err_str);
     }
     else
+    {
         ctx.LaunchStatus().Clear();
+    }
 
     if (remote->Comm().IsConnected())
     {
@@ -682,6 +691,18 @@ main (int argc, char *argv[])
     signal (SIGPIPE, signal_handler);
     signal (SIGHUP, signal_handler);
 
+    g_remoteSP.reset (new RNBRemote ());
+    
+    
+    RNBRemote *remote = g_remoteSP.get();
+    if (remote == NULL)
+    {
+        RNBLogSTDERR ("error: failed to create a remote connection class\n");
+        return -1;
+    }
+    
+    RNBContext& ctx = remote->Context();
+
     int i;
     int attach_pid = INVALID_NUB_PROCESS;
 
@@ -690,14 +711,10 @@ main (int argc, char *argv[])
     // Parse our options
     int ch;
     int long_option_index = 0;
-    int use_native_registers = 0;
     int debug = 0;
     std::string compile_options;
     std::string waitfor_pid_name;           // Wait for a process that starts with this name
     std::string attach_pid_name;
-    std::string stdin_path;
-    std::string stdout_path;
-    std::string stderr_path;
     std::string arch_name;
     std::string working_dir;          // The new working directory to use for the inferior
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
@@ -859,7 +876,7 @@ main (int argc, char *argv[])
                 break;
 
             case 'r':
-                use_native_registers = 1;
+                remote->SetUseNativeRegisters (true);
                 break;
 
             case 'v':
@@ -867,21 +884,21 @@ main (int argc, char *argv[])
                 break;
 
             case 's':
-                stdin_path.assign(optarg);
-                stdout_path.assign(optarg);
-                stderr_path.assign(optarg);
+                ctx.GetSTDIN().assign(optarg);
+                ctx.GetSTDOUT().assign(optarg);
+                ctx.GetSTDERR().assign(optarg);
                 break;
 
             case 'I':
-                stdin_path.assign(optarg);
+                ctx.GetSTDIN().assign(optarg);
                 break;
 
             case 'O':
-                stdout_path.assign(optarg);
+                ctx.GetSTDOUT().assign(optarg);
                 break;
             
             case 'E':
-                stderr_path.assign(optarg);
+                ctx.GetSTDERR().assign(optarg);
                 break;
 
             case 'n':
@@ -910,11 +927,7 @@ main (int argc, char *argv[])
     
     if (arch_name.empty())
     {
-#if defined (__i386__)
-        arch_name.assign ("i386");
-#elif defined (__x86_64__)
-        arch_name.assign ("x86_64");
-#elif defined (__arm__) 
+#if defined (__arm__) 
         arch_name.assign ("arm");
 #endif
     }
@@ -923,24 +936,15 @@ main (int argc, char *argv[])
         DNBSetArchitecture (arch_name.c_str());
     }
 
-    if (arch_name.empty())
-    {
-        fprintf(stderr, "error: no architecture was specified\n");
-        exit (8);
-    }
+//    if (arch_name.empty())
+//    {
+//        fprintf(stderr, "error: no architecture was specified\n");
+//        exit (8);
+//    }
     // Skip any options we consumed with getopt_long
     argc -= optind;
     argv += optind;
 
-    g_remoteSP.reset (new RNBRemote (use_native_registers, arch_name.c_str()));
-    
-    
-    RNBRemote *remote = g_remoteSP.get();
-    if (remote == NULL)
-    {
-        RNBLogSTDERR ("error: failed to create a remote connection class\n");
-        return -1;
-    }
 
     if (!working_dir.empty())
     {
@@ -952,9 +956,6 @@ main (int argc, char *argv[])
     }
 
     remote->Initialize();
-
-    RNBContext& ctx = remote->Context();
-
 
     // It is ok for us to set NULL as the logfile (this will disable any logging)
 
@@ -1250,9 +1251,9 @@ main (int argc, char *argv[])
             case eRNBRunLoopModeInferiorLaunching:
                 {
                     mode = RNBRunLoopLaunchInferior (remote, 
-                                                     stdin_path.empty() ? NULL : stdin_path.c_str(), 
-                                                     stdout_path.empty() ? NULL : stdout_path.c_str(), 
-                                                     stderr_path.empty() ? NULL : stderr_path.c_str(), 
+                                                     ctx.GetSTDINPath(),
+                                                     ctx.GetSTDOUTPath(),
+                                                     ctx.GetSTDERRPath(),
                                                      no_stdio);
 
                     if (mode == eRNBRunLoopModeInferiorExecuting)

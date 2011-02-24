@@ -16,6 +16,16 @@
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2618D7921240116900F2B8FE /* SectionLoadList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618D7911240116900F2B8FE /* SectionLoadList.cpp */; };
 		2618D9EB12406FE600F2B8FE /* NameToDIE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618D9EA12406FE600F2B8FE /* NameToDIE.cpp */; };
+		2618EE651315B29C001D6D71 /* GDBRemoteCommunication.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618EE5B1315B29C001D6D71 /* GDBRemoteCommunication.cpp */; };
+		2618EE661315B29C001D6D71 /* GDBRemoteCommunication.h in Headers */ = {isa = PBXBuildFile; fileRef = 2618EE5C1315B29C001D6D71 /* GDBRemoteCommunication.h */; };
+		2618EE671315B29C001D6D71 /* GDBRemoteRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618EE5D1315B29C001D6D71 /* GDBRemoteRegisterContext.cpp */; };
+		2618EE681315B29C001D6D71 /* GDBRemoteRegisterContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 2618EE5E1315B29C001D6D71 /* GDBRemoteRegisterContext.h */; };
+		2618EE691315B29C001D6D71 /* ProcessGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618EE5F1315B29C001D6D71 /* ProcessGDBRemote.cpp */; };
+		2618EE6A1315B29C001D6D71 /* ProcessGDBRemote.h in Headers */ = {isa = PBXBuildFile; fileRef = 2618EE601315B29C001D6D71 /* ProcessGDBRemote.h */; };
+		2618EE6B1315B29C001D6D71 /* ProcessGDBRemoteLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618EE611315B29C001D6D71 /* ProcessGDBRemoteLog.cpp */; };
+		2618EE6C1315B29C001D6D71 /* ProcessGDBRemoteLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 2618EE621315B29C001D6D71 /* ProcessGDBRemoteLog.h */; };
+		2618EE6D1315B29C001D6D71 /* ThreadGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618EE631315B29C001D6D71 /* ThreadGDBRemote.cpp */; };
+		2618EE6E1315B29C001D6D71 /* ThreadGDBRemote.h in Headers */ = {isa = PBXBuildFile; fileRef = 2618EE641315B29C001D6D71 /* ThreadGDBRemote.h */; };
 		261B5A5411C3F2AD00AABD0A /* SharingPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
 		2635DA87127D0D0400675BC1 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -258,11 +268,6 @@
 		26D5B12E11B07550009A862E /* CommandObjectRegexCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DFBC59113B48F300DD817F /* CommandObjectRegexCommand.cpp */; };
 		26D5B12F11B07550009A862E /* Symbols.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2689B0B5113EE47E00A4AEDB /* Symbols.cpp */; };
 		26D5B13011B07550009A862E /* Debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263664921140A4930075843B /* Debugger.cpp */; };
-		26D5B13111B07550009A862E /* ProcessGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CEE62FA1145F2130064CF93 /* ProcessGDBRemote.cpp */; };
-		26D5B13211B07550009A862E /* ProcessGDBRemoteLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CEE62FC1145F2130064CF93 /* ProcessGDBRemoteLog.cpp */; };
-		26D5B13311B07550009A862E /* ThreadGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CEE62FE1145F2130064CF93 /* ThreadGDBRemote.cpp */; };
-		26D5B13411B07550009A862E /* GDBRemoteCommunication.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FE25221146CADE00F4085A /* GDBRemoteCommunication.cpp */; };
-		26D5B13511B07550009A862E /* GDBRemoteRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261E18CD1148966100BADCD3 /* GDBRemoteRegisterContext.cpp */; };
 		26D5B13611B07550009A862E /* UnixSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C00987011500B4300F316B0 /* UnixSignals.cpp */; };
 		26D5B13711B07550009A862E /* LogChannelDWARF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26109B3B1155D70100CC3529 /* LogChannelDWARF.cpp */; };
 		26D5B13811B07550009A862E /* PseudoTerminal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */; };
@@ -553,10 +558,18 @@
 		2618D7911240116900F2B8FE /* SectionLoadList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SectionLoadList.cpp; path = source/Target/SectionLoadList.cpp; sourceTree = "<group>"; };
 		2618D957124056C700F2B8FE /* NameToDIE.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NameToDIE.h; sourceTree = "<group>"; };
 		2618D9EA12406FE600F2B8FE /* NameToDIE.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NameToDIE.cpp; sourceTree = "<group>"; };
+		2618EE5B1315B29C001D6D71 /* GDBRemoteCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteCommunication.cpp; sourceTree = "<group>"; };
+		2618EE5C1315B29C001D6D71 /* GDBRemoteCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDBRemoteCommunication.h; sourceTree = "<group>"; };
+		2618EE5D1315B29C001D6D71 /* GDBRemoteRegisterContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteRegisterContext.cpp; sourceTree = "<group>"; };
+		2618EE5E1315B29C001D6D71 /* GDBRemoteRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDBRemoteRegisterContext.h; sourceTree = "<group>"; };
+		2618EE5F1315B29C001D6D71 /* ProcessGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessGDBRemote.cpp; sourceTree = "<group>"; };
+		2618EE601315B29C001D6D71 /* ProcessGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessGDBRemote.h; sourceTree = "<group>"; };
+		2618EE611315B29C001D6D71 /* ProcessGDBRemoteLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessGDBRemoteLog.cpp; sourceTree = "<group>"; };
+		2618EE621315B29C001D6D71 /* ProcessGDBRemoteLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessGDBRemoteLog.h; sourceTree = "<group>"; };
+		2618EE631315B29C001D6D71 /* ThreadGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadGDBRemote.cpp; sourceTree = "<group>"; };
+		2618EE641315B29C001D6D71 /* ThreadGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadGDBRemote.h; sourceTree = "<group>"; };
 		261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SharingPtr.cpp; path = source/Utility/SharingPtr.cpp; sourceTree = "<group>"; };
 		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = include/lldb/Utility/SharingPtr.h; sourceTree = "<group>"; };
-		261E18CC1148966100BADCD3 /* GDBRemoteRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GDBRemoteRegisterContext.h; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.h"; sourceTree = "<group>"; };
-		261E18CD1148966100BADCD3 /* GDBRemoteRegisterContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GDBRemoteRegisterContext.cpp; path = "source/Plugins/Process/gdb-remote/GDBRemoteRegisterContext.cpp"; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; };
 		26368A3B126B697600E8659F /* darwin-debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "darwin-debug.cpp"; path = "tools/darwin-debug/darwin-debug.cpp"; sourceTree = "<group>"; };
@@ -936,8 +949,6 @@
 		26F996A8119B79C300412154 /* ARM_GCC_Registers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARM_GCC_Registers.h; path = source/Utility/ARM_GCC_Registers.h; sourceTree = "<group>"; };
 		26FA4315130103F400E71120 /* FileSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileSpec.h; path = include/lldb/Host/FileSpec.h; sourceTree = "<group>"; };
 		26FA43171301048600E71120 /* FileSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FileSpec.cpp; sourceTree = "<group>"; };
-		26FE25221146CADE00F4085A /* GDBRemoteCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GDBRemoteCommunication.cpp; path = "source/Plugins/Process/gdb-remote/GDBRemoteCommunication.cpp"; sourceTree = "<group>"; };
-		26FE25231146CADE00F4085A /* GDBRemoteCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GDBRemoteCommunication.h; path = "source/Plugins/Process/gdb-remote/GDBRemoteCommunication.h"; sourceTree = "<group>"; };
 		4906FD4012F2255300A2A77C /* ASTDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTDumper.cpp; path = source/Expression/ASTDumper.cpp; sourceTree = "<group>"; };
 		4906FD4412F2257600A2A77C /* ASTDumper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDumper.h; path = include/lldb/Expression/ASTDumper.h; sourceTree = "<group>"; };
 		4911934B1226383D00578B7F /* ASTStructExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTStructExtractor.h; path = include/lldb/Expression/ASTStructExtractor.h; sourceTree = "<group>"; };
@@ -1025,12 +1036,6 @@
 		4CC2A148128C73ED001531C4 /* ThreadPlanTracer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanTracer.cpp; path = source/Target/ThreadPlanTracer.cpp; sourceTree = "<group>"; };
 		4CC2A14C128C7409001531C4 /* ThreadPlanTracer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanTracer.h; path = include/lldb/Target/ThreadPlanTracer.h; sourceTree = "<group>"; };
 		4CEDAED311754F5E00E875A6 /* ThreadPlanStepUntil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanStepUntil.h; path = include/lldb/Target/ThreadPlanStepUntil.h; sourceTree = "<group>"; };
-		4CEE62FA1145F2130064CF93 /* ProcessGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessGDBRemote.cpp; path = "source/Plugins/Process/gdb-remote/ProcessGDBRemote.cpp"; sourceTree = "<group>"; };
-		4CEE62FB1145F2130064CF93 /* ProcessGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProcessGDBRemote.h; path = "source/Plugins/Process/gdb-remote/ProcessGDBRemote.h"; sourceTree = "<group>"; };
-		4CEE62FC1145F2130064CF93 /* ProcessGDBRemoteLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessGDBRemoteLog.cpp; path = "source/Plugins/Process/gdb-remote/ProcessGDBRemoteLog.cpp"; sourceTree = "<group>"; };
-		4CEE62FD1145F2130064CF93 /* ProcessGDBRemoteLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProcessGDBRemoteLog.h; path = "source/Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"; sourceTree = "<group>"; };
-		4CEE62FE1145F2130064CF93 /* ThreadGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadGDBRemote.cpp; path = "source/Plugins/Process/gdb-remote/ThreadGDBRemote.cpp"; sourceTree = "<group>"; };
-		4CEE62FF1145F2130064CF93 /* ThreadGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadGDBRemote.h; path = "source/Plugins/Process/gdb-remote/ThreadGDBRemote.h"; sourceTree = "<group>"; };
 		69A01E1B1236C5D400C660B5 /* Condition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Condition.cpp; sourceTree = "<group>"; };
 		69A01E1C1236C5D400C660B5 /* Host.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Host.cpp; sourceTree = "<group>"; };
 		69A01E1E1236C5D400C660B5 /* Mutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Mutex.cpp; sourceTree = "<group>"; };
@@ -2263,19 +2268,19 @@
 		4CEE62F71145F1C70064CF93 /* GDB Remote */ = {
 			isa = PBXGroup;
 			children = (
-				26FE25231146CADE00F4085A /* GDBRemoteCommunication.h */,
-				26FE25221146CADE00F4085A /* GDBRemoteCommunication.cpp */,
-				261E18CC1148966100BADCD3 /* GDBRemoteRegisterContext.h */,
-				261E18CD1148966100BADCD3 /* GDBRemoteRegisterContext.cpp */,
-				4CEE62FB1145F2130064CF93 /* ProcessGDBRemote.h */,
-				4CEE62FA1145F2130064CF93 /* ProcessGDBRemote.cpp */,
-				4CEE62FD1145F2130064CF93 /* ProcessGDBRemoteLog.h */,
-				4CEE62FC1145F2130064CF93 /* ProcessGDBRemoteLog.cpp */,
-				4CEE62FF1145F2130064CF93 /* ThreadGDBRemote.h */,
-				4CEE62FE1145F2130064CF93 /* ThreadGDBRemote.cpp */,
+				2618EE5B1315B29C001D6D71 /* GDBRemoteCommunication.cpp */,
+				2618EE5C1315B29C001D6D71 /* GDBRemoteCommunication.h */,
+				2618EE5D1315B29C001D6D71 /* GDBRemoteRegisterContext.cpp */,
+				2618EE5E1315B29C001D6D71 /* GDBRemoteRegisterContext.h */,
+				2618EE5F1315B29C001D6D71 /* ProcessGDBRemote.cpp */,
+				2618EE601315B29C001D6D71 /* ProcessGDBRemote.h */,
+				2618EE611315B29C001D6D71 /* ProcessGDBRemoteLog.cpp */,
+				2618EE621315B29C001D6D71 /* ProcessGDBRemoteLog.h */,
+				2618EE631315B29C001D6D71 /* ThreadGDBRemote.cpp */,
+				2618EE641315B29C001D6D71 /* ThreadGDBRemote.h */,
 			);
 			name = "GDB Remote";
-			path = ../../..;
+			path = "gdb-remote";
 			sourceTree = "<group>";
 		};
 		69A01E1A1236C5D400C660B5 /* common */ = {
@@ -2360,6 +2365,11 @@
 				26FA4316130103F400E71120 /* FileSpec.h in Headers */,
 				260C6EA113011578005E16B0 /* File.h in Headers */,
 				4C626534130F1B0A00C889F6 /* StreamTee.h in Headers */,
+				2618EE661315B29C001D6D71 /* GDBRemoteCommunication.h in Headers */,
+				2618EE681315B29C001D6D71 /* GDBRemoteRegisterContext.h in Headers */,
+				2618EE6A1315B29C001D6D71 /* ProcessGDBRemote.h in Headers */,
+				2618EE6C1315B29C001D6D71 /* ProcessGDBRemoteLog.h in Headers */,
+				2618EE6E1315B29C001D6D71 /* ThreadGDBRemote.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2737,11 +2747,6 @@
 				26D5B12E11B07550009A862E /* CommandObjectRegexCommand.cpp in Sources */,
 				26D5B12F11B07550009A862E /* Symbols.cpp in Sources */,
 				26D5B13011B07550009A862E /* Debugger.cpp in Sources */,
-				26D5B13111B07550009A862E /* ProcessGDBRemote.cpp in Sources */,
-				26D5B13211B07550009A862E /* ProcessGDBRemoteLog.cpp in Sources */,
-				26D5B13311B07550009A862E /* ThreadGDBRemote.cpp in Sources */,
-				26D5B13411B07550009A862E /* GDBRemoteCommunication.cpp in Sources */,
-				26D5B13511B07550009A862E /* GDBRemoteRegisterContext.cpp in Sources */,
 				26D5B13611B07550009A862E /* UnixSignals.cpp in Sources */,
 				26D5B13711B07550009A862E /* LogChannelDWARF.cpp in Sources */,
 				26D5B13811B07550009A862E /* PseudoTerminal.cpp in Sources */,
@@ -2866,6 +2871,11 @@
 				268DA874130095ED00C9483A /* Terminal.cpp in Sources */,
 				26FA43181301048600E71120 /* FileSpec.cpp in Sources */,
 				260C6EA313011581005E16B0 /* File.cpp in Sources */,
+				2618EE651315B29C001D6D71 /* GDBRemoteCommunication.cpp in Sources */,
+				2618EE671315B29C001D6D71 /* GDBRemoteRegisterContext.cpp in Sources */,
+				2618EE691315B29C001D6D71 /* ProcessGDBRemote.cpp in Sources */,
+				2618EE6B1315B29C001D6D71 /* ProcessGDBRemoteLog.cpp in Sources */,
+				2618EE6D1315B29C001D6D71 /* ThreadGDBRemote.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

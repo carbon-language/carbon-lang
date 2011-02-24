@@ -515,6 +515,7 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                 default:
                     if (log)
                         log->Printf ("GDBRemoteCommunication::%s () unrecognized async packet", __FUNCTION__);
+                    state = eStateInvalid;
                     break;
                 }
             }
@@ -908,7 +909,7 @@ GDBRemoteCommunication::SendArgumentsPacket (char const *argv[], uint32_t timeou
             if (i > 0)
                 packet.PutChar(',');
             packet.Printf("%i,%i,", arg_len * 2, i);
-            packet.PutBytesAsRawHex8(arg, arg_len, lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
+            packet.PutBytesAsRawHex8 (arg, arg_len);
         }
 
         StringExtractorGDBRemote response;
@@ -1101,3 +1102,108 @@ GDBRemoteCommunication::DeallocateMemory (addr_t addr, uint32_t timeout_seconds)
     return false;
 }
 
+int
+GDBRemoteCommunication::SetSTDIN (char const *path)
+{
+    if (path && path[0])
+    {
+        StreamString packet;
+        packet.PutCString("QSetSTDIN:");
+        packet.PutBytesAsRawHex8(path, strlen(path));
+
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+        {
+            if (response.IsOKPacket())
+                return 0;
+            uint8_t error = response.GetError();
+            if (error)
+                return error;
+        }
+    }
+    return -1;
+}
+
+int
+GDBRemoteCommunication::SetSTDOUT (char const *path)
+{
+    if (path && path[0])
+    {
+        StreamString packet;
+        packet.PutCString("QSetSTDOUT:");
+        packet.PutBytesAsRawHex8(path, strlen(path));
+        
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+        {
+            if (response.IsOKPacket())
+                return 0;
+            uint8_t error = response.GetError();
+            if (error)
+                return error;
+        }
+    }
+    return -1;
+}
+
+int
+GDBRemoteCommunication::SetSTDERR (char const *path)
+{
+    if (path && path[0])
+    {
+        StreamString packet;
+        packet.PutCString("QSetSTDERR:");
+        packet.PutBytesAsRawHex8(path, strlen(path));
+        
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+        {
+            if (response.IsOKPacket())
+                return 0;
+            uint8_t error = response.GetError();
+            if (error)
+                return error;
+        }
+    }
+    return -1;
+}
+
+int
+GDBRemoteCommunication::SetWorkingDir (char const *path)
+{
+    if (path && path[0])
+    {
+        StreamString packet;
+        packet.PutCString("QSetWorkingDir:");
+        packet.PutBytesAsRawHex8(path, strlen(path));
+        
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+        {
+            if (response.IsOKPacket())
+                return 0;
+            uint8_t error = response.GetError();
+            if (error)
+                return error;
+        }
+    }
+    return -1;
+}
+
+int
+GDBRemoteCommunication::SetDisableASLR (bool enable)
+{
+    StreamString packet;
+    packet.Printf("QSetDisableASLR:%i", enable ? 1 : 0);
+       
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+    {
+        if (response.IsOKPacket())
+            return 0;
+        uint8_t error = response.GetError();
+        if (error)
+            return error;
+    }
+    return -1;
+}

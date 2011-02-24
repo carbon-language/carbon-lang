@@ -1512,6 +1512,9 @@ Process::Launch
         exe_module->GetFileSpec().GetPath(exec_file_path, sizeof(exec_file_path));
         if (exe_module->GetFileSpec().Exists())
         {
+            if (PrivateStateThreadIsValid ())
+                PausePrivateStateThread ();
+    
             error = WillLaunch (exe_module);
             if (error.Success())
             {
@@ -1579,7 +1582,11 @@ Process::Launch
                         // This delays passing the stopped event to listeners till DidLaunch gets
                         // a chance to complete...
                         HandlePrivateEvent (event_sp);
-                        StartPrivateStateThread ();
+
+                        if (PrivateStateThreadIsValid ())
+                            ResumePrivateStateThread ();
+                        else
+                            StartPrivateStateThread ();
                     }
                     else if (state == eStateExited)
                     {
@@ -1605,6 +1612,7 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
     switch (state) 
     {
         case eStateRunning:
+        case eStateConnected:
             return eEventActionRetry;
         
         case eStateStopped:
@@ -1776,31 +1784,13 @@ Process::ConnectRemote (const char *remote_url)
     Error error (DoConnectRemote (remote_url));
     if (error.Success())
     {
-        SetNextEventAction(new Process::AttachCompletionHandler(this));
-        StartPrivateStateThread();
-//        TimeValue timeout;
-//        timeout = TimeValue::Now();
-//        timeout.OffsetWithMicroSeconds(000);
-//        EventSP event_sp;
-//        StateType state = WaitForProcessStopPrivate(NULL, event_sp);
-//        
-//        if (state == eStateStopped || state == eStateCrashed)
-//        {
-//            DidLaunch ();
-//            
-//            // This delays passing the stopped event to listeners till DidLaunch gets
-//            // a chance to complete...
-//            HandlePrivateEvent (event_sp);
-//            StartPrivateStateThread ();
-//        }
-//        else if (state == eStateExited)
-//        {
-//            // We exited while trying to launch somehow.  Don't call DidLaunch as that's
-//            // not likely to work, and return an invalid pid.
-//            HandlePrivateEvent (event_sp);
-//        }
-//
-//        StartPrivateStateThread();
+        StartPrivateStateThread();        
+        // If we attached and actually have a process on the other end, then 
+        // this ended up being the equivalent of an attach.
+        if (GetID() != LLDB_INVALID_PROCESS_ID)
+        {
+            CompleteAttach ();
+        }
     }
     return error;
 }

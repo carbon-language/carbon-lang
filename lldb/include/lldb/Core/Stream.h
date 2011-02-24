@@ -181,14 +181,15 @@ public:
 
     int
     PutBytesAsRawHex8 (const void *src,
-        size_t src_len,
-        lldb::ByteOrder src_byte_order,
-        lldb::ByteOrder dst_byte_order);
+                       size_t src_len,
+                       lldb::ByteOrder src_byte_order = lldb::eByteOrderInvalid,
+                       lldb::ByteOrder dst_byte_order = lldb::eByteOrderInvalid);
 
     int
-    PutRawBytes (const void *s, size_t src_len,
-                 lldb::ByteOrder src_byte_order,
-                 lldb::ByteOrder dst_byte_order);
+    PutRawBytes (const void *s, 
+                 size_t src_len,
+                 lldb::ByteOrder src_byte_order = lldb::eByteOrderInvalid,
+                 lldb::ByteOrder dst_byte_order = lldb::eByteOrderInvalid);
 
     int
     PutCStringAsRawHex8 (const char *s);

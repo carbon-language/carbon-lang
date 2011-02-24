@@ -104,12 +104,25 @@ public:
                     }
 
     bool            SetWorkingDirectory (const char *path);
-                        
+
+    std::string&    GetSTDIN  () { return m_stdin; }
+    std::string&    GetSTDOUT () { return m_stdout; }
+    std::string&    GetSTDERR () { return m_stderr; }
+    std::string&    GetWorkingDir () { return m_working_dir; }
+
+    const char *    GetSTDINPath() { return m_stdin.empty() ? NULL : m_stdin.c_str(); }
+    const char *    GetSTDOUTPath() { return m_stdout.empty() ? NULL : m_stdout.c_str(); }
+    const char *    GetSTDERRPath() { return m_stderr.empty() ? NULL : m_stderr.c_str(); }
+    const char *    GetWorkingDirPath() { return m_working_dir.empty() ? NULL : m_working_dir.c_str(); }
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from RNBContext can see and modify these
     //------------------------------------------------------------------
     nub_process_t   m_pid;
+    std::string     m_stdin;
+    std::string     m_stdout;
+    std::string     m_stderr;
+    std::string     m_working_dir;
     nub_size_t      m_pid_stop_count;
     PThreadEvent    m_events;       // Threaded events that we can wait for
     pthread_t       m_pid_pthread;

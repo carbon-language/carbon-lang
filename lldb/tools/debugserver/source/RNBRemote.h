@@ -99,6 +99,10 @@ public:
         set_max_payload_size,           // 'QSetMaxPayloadSize:'
         set_environment_variable,       // 'QEnvironment:'
         set_disable_aslr,               // 'QSetDisableASLR:'
+        set_stdin,                      // 'QSetSTDIN:'
+        set_stdout,                     // 'QSetSTDOUT:'
+        set_stderr,                     // 'QSetSTDERR:'
+        set_working_dir,                // 'QSetWorkingDir:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
 
@@ -107,7 +111,7 @@ public:
 
     typedef rnb_err_t (RNBRemote::*HandlePacketCallback)(const char *p);
 
-    RNBRemote (bool use_native_regs, const char *arch);
+    RNBRemote ();
     ~RNBRemote ();
 
     void            Initialize();
@@ -161,6 +165,8 @@ public:
     rnb_err_t HandlePacket_QThreadSuffixSupported (const char *p);
     rnb_err_t HandlePacket_QSetLogging (const char *p);
     rnb_err_t HandlePacket_QSetDisableASLR (const char *p);
+    rnb_err_t HandlePacket_QSetSTDIO (const char *p);
+    rnb_err_t HandlePacket_QSetWorkingDir (const char *p);
     rnb_err_t HandlePacket_QSetMaxPayloadSize (const char *p);
     rnb_err_t HandlePacket_QSetMaxPacketSize (const char *p);
     rnb_err_t HandlePacket_QEnvironment (const char *p);
@@ -198,6 +204,11 @@ public:
     RNBContext&     Context() { return m_ctx; }
     RNBSocket&      Comm() { return m_comm; }
 
+    void
+    SetUseNativeRegisters (bool b)
+    {
+        m_use_native_regs = b;
+    }
 private:
     // Outlaw some contructors
     RNBRemote (const RNBRemote &);

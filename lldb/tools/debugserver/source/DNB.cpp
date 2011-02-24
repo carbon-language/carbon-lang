@@ -1971,6 +1971,16 @@ DNBProcessGetStopCount (nub_process_t pid)
     return 0;
 }
 
+uint32_t
+DNBProcessGetCPUType (nub_process_t pid)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+        return procSP->GetCPUType ();
+    return 0;
+    
+}
+
 nub_bool_t
 DNBResolveExecutablePath (const char *path, char *resolved_path, size_t resolved_path_size)
 {

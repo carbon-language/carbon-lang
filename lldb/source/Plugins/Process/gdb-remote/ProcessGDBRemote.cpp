@@ -440,113 +440,122 @@ ProcessGDBRemote::DoLaunch
         char connect_url[128];
         snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
 
-        const bool launch_process = true;
-        bool start_debugserver_with_inferior_args = false;
-        if (start_debugserver_with_inferior_args)
-        {
-            // We want to launch debugserver with the inferior program and its
-            // arguments on the command line. We should only do this if we
-            // the GDB server we are talking to doesn't support the 'A' packet.
-            error = StartDebugserverProcess (host_port,
-                                             argv,
-                                             envp,
-                                             stdin_path,
-                                             stdout_path,
-                                             stderr_path,
-                                             working_dir,
-                                             launch_process,
-                                             LLDB_INVALID_PROCESS_ID,
-                                             NULL, false,
-                                             launch_flags,
-                                             inferior_arch);
-            if (error.Fail())
-                return error;
-
-            error = ConnectToDebugserver (connect_url);
-            if (error.Success())
-            {
-                SetID (m_gdb_comm.GetCurrentProcessID (m_packet_timeout));
-            }
-        }
-        else
+        // Make sure we aren't already connected?
+        if (!m_gdb_comm.IsConnected())
         {
             error = StartDebugserverProcess (host_port,
                                              NULL,
                                              NULL,
-                                             stdin_path,
-                                             stdout_path,
-                                             stderr_path,
-                                             working_dir,
-                                             launch_process,
                                              LLDB_INVALID_PROCESS_ID,
                                              NULL, 
                                              false,
-                                             launch_flags,
                                              inferior_arch);
             if (error.Fail())
                 return error;
 
             error = ConnectToDebugserver (connect_url);
-            if (error.Success())
+        }
+        
+        if (error.Success())
+        {
+            lldb_utility::PseudoTerminal pty;
+            const bool disable_stdio = (launch_flags & eLaunchFlagDisableSTDIO) != 0;
+            if (disable_stdio)
             {
-                // Send the environment and the program + arguments after we connect
-                if (envp)
+                stdin_path = "/dev/null";
+                stdout_path = "/dev/null";
+                stderr_path = "/dev/null";
+            }
+            else
+            {
+                const char *slave_name = NULL;
+                if (stdin_path == NULL || stdout_path == NULL || stderr_path == NULL)
                 {
-                    const char *env_entry;
-                    for (int i=0; (env_entry = envp[i]); ++i)
-                    {
-                        if (m_gdb_comm.SendEnvironmentPacket(env_entry, m_packet_timeout) != 0)
-                            break;
-                    }
+                    if (pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
+                        slave_name = pty.GetSlaveName (NULL, 0);
                 }
+                if (stdin_path == NULL) 
+                    stdin_path = slave_name;
 
-				// FIXME: convert this to use the new set/show variables when they are available
-#if 0
-                if (::getenv ("LLDB_DEBUG_DEBUGSERVER"))
+                if (stdout_path == NULL)
+                    stdout_path = slave_name;
+
+                if (stderr_path == NULL)
+                    stderr_path = slave_name;
+            }
+
+            if (stdin_path == NULL && (stdout_path || stderr_path))
+                stdin_path = "/dev/null";
+            
+            if (stdout_path == NULL && (stdin_path || stderr_path))
+                stdout_path = "/dev/null";
+            
+            if (stderr_path == NULL && (stdin_path || stdout_path))
+                stderr_path = "/dev/null";
+
+            if (stdin_path) 
+                m_gdb_comm.SetSTDIN (stdin_path);
+            if (stdout_path)
+                m_gdb_comm.SetSTDOUT (stdout_path);
+            if (stderr_path)
+                m_gdb_comm.SetSTDERR (stderr_path);
+
+            m_gdb_comm.SetDisableASLR (launch_flags & eLaunchFlagDisableASLR);
+
+            
+            if (working_dir && working_dir[0])
+            {
+                m_gdb_comm.SetWorkingDir (working_dir);
+            }
+
+            // Send the environment and the program + arguments after we connect
+            if (envp)
+            {
+                const char *env_entry;
+                for (int i=0; (env_entry = envp[i]); ++i)
                 {
-                    const uint32_t attach_debugserver_secs = 10;
-                    ::printf ("attach to debugserver (pid = %i)\n", m_debugserver_pid);
-                    for (uint32_t i=0; i<attach_debugserver_secs; ++i)
-                    {
-                        printf ("%i\n", attach_debugserver_secs - i);
-                        sleep (1);
-                    }
+                    if (m_gdb_comm.SendEnvironmentPacket(env_entry, m_packet_timeout) != 0)
+                        break;
                 }
-#endif
+            }
 
-                const uint32_t arg_timeout_seconds = 10;
-                int arg_packet_err = m_gdb_comm.SendArgumentsPacket (argv, arg_timeout_seconds);
-                if (arg_packet_err == 0)
+            const uint32_t arg_timeout_seconds = 10;
+            int arg_packet_err = m_gdb_comm.SendArgumentsPacket (argv, arg_timeout_seconds);
+            if (arg_packet_err == 0)
+            {
+                std::string error_str;
+                if (m_gdb_comm.GetLaunchSuccess (m_packet_timeout, error_str))
                 {
-                    std::string error_str;
-                    if (m_gdb_comm.GetLaunchSuccess (m_packet_timeout, error_str))
-                    {
-                        SetID (m_gdb_comm.GetCurrentProcessID (m_packet_timeout));
-                    }
-                    else
-                    {
-                        error.SetErrorString (error_str.c_str());
-                    }
+                    SetID (m_gdb_comm.GetCurrentProcessID (m_packet_timeout));
                 }
                 else
                 {
-                    error.SetErrorStringWithFormat("'A' packet returned an error: %i.\n", arg_packet_err);
+                    error.SetErrorString (error_str.c_str());
                 }
+            }
+            else
+            {
+                error.SetErrorStringWithFormat("'A' packet returned an error: %i.\n", arg_packet_err);
+            }
                 
-                SetID (m_gdb_comm.GetCurrentProcessID (m_packet_timeout));
+            if (GetID() == LLDB_INVALID_PROCESS_ID)
+            {
+                KillDebugserverProcess ();
+                return error;
+            }
+
+            StringExtractorGDBRemote response;
+            if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, m_packet_timeout, false))
+            {
+                SetPrivateState (SetThreadStopInfo (response));
+                
+                if (!disable_stdio)
+                {
+                    if (pty.GetMasterFileDescriptor() != lldb_utility::PseudoTerminal::invalid_fd)
+                        SetUpProcessInputReader (pty.ReleaseMasterFileDescriptor());
+                }
             }
         }
-
-        if (GetID() == LLDB_INVALID_PROCESS_ID)
-        {
-            KillDebugserverProcess ();
-            return error;
-        }
-    
-        StringExtractorGDBRemote response;
-        if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, m_packet_timeout, false))
-            SetPrivateState (SetThreadStopInfo (response));
-
     }
     else
     {
@@ -669,47 +678,46 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     Error error;
     // Clear out and clean up from any current state
     Clear();
-    ArchSpec arch_spec = GetTarget().GetArchitecture();
+    const ArchSpec &arch_spec = GetTarget().GetArchitecture();
 
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
     {
-        char host_port[128];
-        snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
-        char connect_url[128];
-        snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
-
-        error = StartDebugserverProcess (host_port,                 // debugserver_url
-                                         NULL,                      // inferior_argv
-                                         NULL,                      // inferior_envp
-                                         NULL,                      // stdin_path
-                                         NULL,                      // stdout_path
-                                         NULL,                      // stderr_path
-                                         NULL,                      // working_dir
-                                         false,                     // launch_process == false (we are attaching)
-                                         LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
-                                         NULL,                      // Don't send any attach by process name option to debugserver
-                                         false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
-                                         0,                         // launch_flags
-                                         arch_spec);
-        
-        if (error.Fail())
+        // Make sure we aren't already connected?
+        if (!m_gdb_comm.IsConnected())
         {
-            const char *error_string = error.AsCString();
-            if (error_string == NULL)
-                error_string = "unable to launch " DEBUGSERVER_BASENAME;
+            char host_port[128];
+            snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
+            char connect_url[128];
+            snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
 
-            SetExitStatus (-1, error_string);
-        }
-        else
-        {
-            error = ConnectToDebugserver (connect_url);
-            if (error.Success())
+            error = StartDebugserverProcess (host_port,                 // debugserver_url
+                                             NULL,                      // inferior_argv
+                                             NULL,                      // inferior_envp
+                                             LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
+                                             NULL,                      // Don't send any attach by process name option to debugserver
+                                             false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
+                                             arch_spec);
+            
+            if (error.Fail())
             {
-                char packet[64];
-                const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%x", attach_pid);
-                
-                m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (packet, packet_len));
+                const char *error_string = error.AsCString();
+                if (error_string == NULL)
+                    error_string = "unable to launch " DEBUGSERVER_BASENAME;
+
+                SetExitStatus (-1, error_string);
             }
+            else
+            {
+                error = ConnectToDebugserver (connect_url);
+            }
+        }
+    
+        if (error.Success())
+        {
+            char packet[64];
+            const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%x", attach_pid);
+            
+            m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (packet, packet_len));
         }
     }
     return error;
@@ -742,56 +750,54 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
     Error error;
     // Clear out and clean up from any current state
     Clear();
-    // HACK: require arch be set correctly at the target level until we can
-    // figure out a good way to determine the arch of what we are attaching to
 
     if (process_name && process_name[0])
     {
-        ArchSpec arch_spec = GetTarget().GetArchitecture();
-
-        char host_port[128];
-        snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
-        char connect_url[128];
-        snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
-
-        error = StartDebugserverProcess (host_port,                 // debugserver_url
-                                         NULL,                      // inferior_argv
-                                         NULL,                      // inferior_envp
-                                         NULL,                      // stdin_path
-                                         NULL,                      // stdout_path
-                                         NULL,                      // stderr_path
-                                         NULL,                      // working_dir
-                                         false,                     // launch_process == false (we are attaching)
-                                         LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
-                                         NULL,                      // Don't send any attach by process name option to debugserver
-                                         false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
-                                         0,                         // launch_flags
-                                         arch_spec);
-        if (error.Fail())
+        // Make sure we aren't already connected?
+        if (!m_gdb_comm.IsConnected())
         {
-            const char *error_string = error.AsCString();
-            if (error_string == NULL)
-                error_string = "unable to launch " DEBUGSERVER_BASENAME;
 
-            SetExitStatus (-1, error_string);
-        }
-        else
-        {
-            error = ConnectToDebugserver (connect_url);
-            if (error.Success())
+            const ArchSpec &arch_spec = GetTarget().GetArchitecture();
+
+            char host_port[128];
+            snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
+            char connect_url[128];
+            snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
+
+            error = StartDebugserverProcess (host_port,                 // debugserver_url
+                                             NULL,                      // inferior_argv
+                                             NULL,                      // inferior_envp
+                                             LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
+                                             NULL,                      // Don't send any attach by process name option to debugserver
+                                             false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
+                                             arch_spec);
+            if (error.Fail())
             {
-                StreamString packet;
-                
-                if (wait_for_launch)
-                    packet.PutCString("vAttachWait");
-                else
-                    packet.PutCString("vAttachName");
-                packet.PutChar(';');
-                packet.PutBytesAsRawHex8(process_name, strlen(process_name), lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
-                
-                m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (packet.GetData(), packet.GetSize()));
+                const char *error_string = error.AsCString();
+                if (error_string == NULL)
+                    error_string = "unable to launch " DEBUGSERVER_BASENAME;
 
+                SetExitStatus (-1, error_string);
             }
+            else
+            {
+                error = ConnectToDebugserver (connect_url);
+            }
+        }
+
+        if (error.Success())
+        {
+            StreamString packet;
+            
+            if (wait_for_launch)
+                packet.PutCString("vAttachWait");
+            else
+                packet.PutCString("vAttachName");
+            packet.PutChar(';');
+            packet.PutBytesAsRawHex8(process_name, strlen(process_name), lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
+            
+            m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (packet.GetData(), packet.GetSize()));
+
         }
     }
     return error;
@@ -1369,7 +1375,6 @@ ProcessGDBRemote::InterruptIfRunning
         bool sent_interrupt = false;
         Mutex::Locker locker;
         
-        //m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
         if (!m_gdb_comm.SendInterrupt (locker, 1, sent_interrupt, timed_out))
         {
             if (timed_out)
@@ -1894,21 +1899,13 @@ ProcessGDBRemote::StartDebugserverProcess
     const char *debugserver_url,    // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
     char const *inferior_argv[],    // Arguments for the inferior program including the path to the inferior itself as the first argument
     char const *inferior_envp[],    // Environment to pass along to the inferior program
-    const char *stdin_path,
-    const char *stdout_path,
-    const char *stderr_path,
-    const char *working_dir,
-    bool launch_process,            // Set to true if we are going to be launching a the process
     lldb::pid_t attach_pid,         // If inferior inferior_argv == NULL, and attach_pid != LLDB_INVALID_PROCESS_ID send this pid as an argument to debugserver
     const char *attach_name,        // Wait for the next process to launch whose basename matches "attach_name"
     bool wait_for_launch,           // Wait for the process named "attach_name" to launch
-    uint32_t launch_flags,          // Launch flags
-    ArchSpec& inferior_arch         // The arch of the inferior that we will launch
+    const ArchSpec& inferior_arch   // The arch of the inferior that we will launch
 )
 {
     Error error;
-    bool disable_aslr = (launch_flags & eLaunchFlagDisableASLR) != 0;
-    bool no_stdio = (launch_flags & eLaunchFlagDisableSTDIO) != 0;
     if (m_debugserver_pid == LLDB_INVALID_PROCESS_ID)
     {
         // If we locate debugserver, keep that located version around
@@ -1968,53 +1965,8 @@ ProcessGDBRemote::StartDebugserverProcess
             if (error.Fail())
                 return error;
 
-#if !defined (__arm__)
-
-            // We don't need to do this for ARM, and we really shouldn't now 
-            // that we have multiple CPU subtypes and no posix_spawnattr call 
-            // that allows us to set which CPU subtype to launch...
-            cpu_type_t cpu = inferior_arch.GetMachOCPUType();
-            if (cpu != 0 && cpu != UINT32_MAX && cpu != LLDB_INVALID_CPUTYPE)
-            {
-                size_t ocount = 0;
-                error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
-                if (error.Fail() || log)
-                    error.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
-                
-                if (error.Fail() != 0 || ocount != 1)
-                    return error;
-            }
-
-#endif
-
             Args debugserver_args;
             char arg_cstr[PATH_MAX];
-
-            lldb_utility::PseudoTerminal pty;
-            const char *stdio_path = NULL;
-            if (launch_process && 
-                (stdin_path == NULL || stdout_path == NULL || stderr_path == NULL) &&
-                m_local_debugserver &&
-                no_stdio == false)
-            {
-                if (pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
-                {
-                    const char *slave_name = pty.GetSlaveName (NULL, 0);
-                    if (stdin_path == NULL
-                        && stdout_path == NULL
-                        && stderr_path == NULL)
-                        stdio_path = slave_name;
-                    else
-                    {
-                        if (stdin_path == NULL)
-                            stdin_path = slave_name;
-                        if (stdout_path == NULL)
-                            stdout_path = slave_name;
-                        if (stderr_path == NULL)
-                            stderr_path = slave_name;
-                    }
-                }
-            }
 
             // Start args with "debugserver /file/path -r --"
             debugserver_args.AppendArgument(debugserver_path);
@@ -2024,66 +1976,6 @@ ProcessGDBRemote::StartDebugserverProcess
             // make debugserver run in its own session so signals generated by 
             // special terminal key sequences (^C) don't affect debugserver
             debugserver_args.AppendArgument("--setsid");
-
-            if (disable_aslr)
-                debugserver_args.AppendArguments("--disable-aslr");
-            
-            // Only set the inferior
-            if (launch_process)
-            {
-                if (no_stdio)
-                    debugserver_args.AppendArgument("--no-stdio");
-                else
-                {
-                    if (stdin_path && stdout_path && stderr_path && 
-                        strcmp(stdin_path, stdout_path) == 0 &&
-                        strcmp(stdin_path, stderr_path) == 0)
-                    {
-                        stdio_path = stdin_path;
-                        stdin_path = stdout_path = stderr_path = NULL;
-                    }
-
-                    if (stdio_path)
-                    {
-                        // All file handles to stdin, stdout, stderr are the same...
-                        debugserver_args.AppendArgument("--stdio-path");
-                        debugserver_args.AppendArgument(stdio_path);
-                    }
-                    else
-                    {
-                        if (stdin_path == NULL && (stdout_path || stderr_path))
-                            stdin_path = "/dev/null";
-
-                        if (stdout_path == NULL && (stdin_path || stderr_path))
-                            stdout_path = "/dev/null";
-
-                        if (stderr_path == NULL && (stdin_path || stdout_path))
-                            stderr_path = "/dev/null";
-
-                        if (stdin_path)
-                        {
-                            debugserver_args.AppendArgument("--stdin-path");
-                            debugserver_args.AppendArgument(stdin_path);
-                        }
-                        if (stdout_path)
-                        {
-                            debugserver_args.AppendArgument("--stdout-path");
-                            debugserver_args.AppendArgument(stdout_path);
-                        }
-                        if (stderr_path)
-                        {
-                            debugserver_args.AppendArgument("--stderr-path");
-                            debugserver_args.AppendArgument(stderr_path);
-                        }
-                    }
-                }
-            }
-
-            if (working_dir)
-            {
-                debugserver_args.AppendArgument("--working-dir");
-                debugserver_args.AppendArgument(working_dir);
-            }
 
             const char *env_debugserver_log_file = getenv("LLDB_DEBUGSERVER_LOG_FILE");
             if (env_debugserver_log_file)
@@ -2102,21 +1994,13 @@ ProcessGDBRemote::StartDebugserverProcess
 //            debugserver_args.AppendArgument("--log-flags=0x802e0e");
 
             // Now append the program arguments
-            if (launch_process)
+            if (inferior_argv)
             {
-                if (inferior_argv)
-                {
-                    // Terminate the debugserver args so we can now append the inferior args
-                    debugserver_args.AppendArgument("--");
+                // Terminate the debugserver args so we can now append the inferior args
+                debugserver_args.AppendArgument("--");
 
-                    for (int i = 0; inferior_argv[i] != NULL; ++i)
-                        debugserver_args.AppendArgument (inferior_argv[i]);
-                }
-                else
-                {
-                    // Will send environment entries with the 'QEnvironment:' packet
-                    // Will send arguments with the 'A' packet
-                }
+                for (int i = 0; inferior_argv[i] != NULL; ++i)
+                    debugserver_args.AppendArgument (inferior_argv[i]);
             }
             else if (attach_pid != LLDB_INVALID_PROCESS_ID)
             {
@@ -2175,11 +2059,6 @@ ProcessGDBRemote::StartDebugserverProcess
             if (error.Fail() || log)
                 error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", m_debugserver_pid, debugserver_path, NULL, &attr, inferior_argv, inferior_envp);
 
-            if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID && !no_stdio)
-            {
-                if (pty.GetMasterFileDescriptor() != lldb_utility::PseudoTerminal::invalid_fd)
-                    SetUpProcessInputReader (pty.ReleaseMasterFileDescriptor());
-            }
         }
         else
         {
@@ -2399,6 +2278,8 @@ ProcessGDBRemote::AsyncThread (void *arg)
 
     if (listener.StartListeningForEvents (&process->m_async_broadcaster, desired_event_mask) == desired_event_mask)
     {
+        listener.StartListeningForEvents (&process->m_gdb_comm, Communication::eBroadcastBitReadThreadDidExit);
+    
         bool done = false;
         while (!done)
         {
@@ -2407,67 +2288,79 @@ ProcessGDBRemote::AsyncThread (void *arg)
             if (listener.WaitForEvent (NULL, event_sp))
             {
                 const uint32_t event_type = event_sp->GetType();
-                if (log)
-                    log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) Got an event of type: %d...", __FUNCTION__, arg, process->GetID(), event_type);
-
-                switch (event_type)
+                if (event_sp->BroadcasterIs (&process->m_async_broadcaster))
                 {
-                    case eBroadcastBitAsyncContinue:
-                        {
-                            const EventDataBytes *continue_packet = EventDataBytes::GetEventDataFromEvent(event_sp.get());
+                    if (log)
+                        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) Got an event of type: %d...", __FUNCTION__, arg, process->GetID(), event_type);
 
-                            if (continue_packet)
+                    switch (event_type)
+                    {
+                        case eBroadcastBitAsyncContinue:
                             {
-                                const char *continue_cstr = (const char *)continue_packet->GetBytes ();
-                                const size_t continue_cstr_len = continue_packet->GetByteSize ();
-                                if (log)
-                                    log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncContinue: %s", __FUNCTION__, arg, process->GetID(), continue_cstr);
+                                const EventDataBytes *continue_packet = EventDataBytes::GetEventDataFromEvent(event_sp.get());
 
-                                if (::strstr (continue_cstr, "vAttach") == NULL)
-                                    process->SetPrivateState(eStateRunning);
-                                StringExtractorGDBRemote response;
-                                StateType stop_state = process->GetGDBRemote().SendContinuePacketAndWaitForResponse (process, continue_cstr, continue_cstr_len, response);
-
-                                switch (stop_state)
+                                if (continue_packet)
                                 {
-                                case eStateStopped:
-                                case eStateCrashed:
-                                case eStateSuspended:
-                                    process->m_last_stop_packet = response;
-                                    process->m_last_stop_packet.SetFilePos (0);
-                                    process->SetPrivateState (stop_state);
-                                    break;
+                                    const char *continue_cstr = (const char *)continue_packet->GetBytes ();
+                                    const size_t continue_cstr_len = continue_packet->GetByteSize ();
+                                    if (log)
+                                        log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncContinue: %s", __FUNCTION__, arg, process->GetID(), continue_cstr);
 
-                                case eStateExited:
-                                    process->m_last_stop_packet = response;
-                                    process->m_last_stop_packet.SetFilePos (0);
-                                    response.SetFilePos(1);
-                                    process->SetExitStatus(response.GetHexU8(), NULL);
-                                    done = true;
-                                    break;
+                                    if (::strstr (continue_cstr, "vAttach") == NULL)
+                                        process->SetPrivateState(eStateRunning);
+                                    StringExtractorGDBRemote response;
+                                    StateType stop_state = process->GetGDBRemote().SendContinuePacketAndWaitForResponse (process, continue_cstr, continue_cstr_len, response);
 
-                                case eStateInvalid:
-                                    break;
+                                    switch (stop_state)
+                                    {
+                                    case eStateStopped:
+                                    case eStateCrashed:
+                                    case eStateSuspended:
+                                        process->m_last_stop_packet = response;
+                                        process->m_last_stop_packet.SetFilePos (0);
+                                        process->SetPrivateState (stop_state);
+                                        break;
 
-                                default:
-                                    process->SetPrivateState (stop_state);
-                                    break;
+                                    case eStateExited:
+                                        process->m_last_stop_packet = response;
+                                        process->m_last_stop_packet.SetFilePos (0);
+                                        response.SetFilePos(1);
+                                        process->SetExitStatus(response.GetHexU8(), NULL);
+                                        done = true;
+                                        break;
+
+                                    case eStateInvalid:
+                                        process->SetExitStatus(-1, "lost connection");
+                                        break;
+
+                                    default:
+                                        process->SetPrivateState (stop_state);
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                        break;
+                            break;
 
-                    case eBroadcastBitAsyncThreadShouldExit:
-                        if (log)
-                            log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
-                        done = true;
-                        break;
+                        case eBroadcastBitAsyncThreadShouldExit:
+                            if (log)
+                                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got eBroadcastBitAsyncThreadShouldExit...", __FUNCTION__, arg, process->GetID());
+                            done = true;
+                            break;
 
-                    default:
-                        if (log)
-                            log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
+                        default:
+                            if (log)
+                                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %i) got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
+                            done = true;
+                            break;
+                    }
+                }
+                else if (event_sp->BroadcasterIs (&process->m_gdb_comm))
+                {
+                    if (event_type & Communication::eBroadcastBitReadThreadDidExit)
+                    {
+                        process->SetExitStatus (-1, "lost connection");
                         done = true;
-                        break;
+                    }
                 }
             }
             else

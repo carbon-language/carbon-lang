@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <unistd.h>
 #include "MacOSX/CFUtils.h"
 #include "SysSignal.h"
@@ -91,6 +92,7 @@ IsSBProcess (nub_process_t pid)
 
 MachProcess::MachProcess() :
     m_pid               (0),
+    m_cpu_type          (0),
     m_child_stdin       (-1),
     m_child_stdout      (-1),
     m_child_stderr      (-1),
@@ -198,6 +200,14 @@ const char *
 MachProcess::GetThreadInfo(nub_thread_t tid) const
 {
     return m_thread_list.GetThreadInfo(tid);
+}
+
+uint32_t
+MachProcess::GetCPUType ()
+{
+    if (m_cpu_type == 0 && m_pid != 0)
+        m_cpu_type = MachProcess::GetCPUTypeForLocalProcess (m_pid);
+    return m_cpu_type;
 }
 
 const DNBRegisterSetInfo *
@@ -1662,14 +1672,16 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     // We don't need to do this for ARM, and we really shouldn't now that we
     // have multiple CPU subtypes and no posix_spawnattr call that allows us
     // to set which CPU subtype to launch...
-    size_t ocount = 0;
-    err.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu_type, &ocount), DNBError::POSIX);
-    if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-        err.LogThreaded("::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu_type, ocount);
+    if (cpu_type != 0)
+    {
+        size_t ocount = 0;
+        err.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu_type, &ocount), DNBError::POSIX);
+        if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
+            err.LogThreaded("::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu_type, ocount);
 
-    if (err.Fail() != 0 || ocount != 1)
-        return INVALID_NUB_PROCESS;
-
+        if (err.Fail() != 0 || ocount != 1)
+            return INVALID_NUB_PROCESS;
+    }
 #endif
 
     PseudoTerminal pty;
@@ -1712,21 +1724,25 @@ MachProcess::PosixSpawnChildForPTraceDebugging
         }
         else
         {
-            int slave_fd_err = open (stderr_path ? stderr_path : "/dev/null", O_NOCTTY | O_CREAT | O_RDWR   , 0640);
-            int slave_fd_in  = open (stdin_path  ? stdin_path  : "/dev/null", O_NOCTTY | O_RDONLY);
-            int slave_fd_out = open (stdout_path ? stdout_path : "/dev/null", O_NOCTTY | O_CREAT | O_WRONLY , 0640);
+            if ( stdin_path == NULL)  stdin_path = "/dev/null";
+            if (stdout_path == NULL) stdout_path = "/dev/null";
+            if (stderr_path == NULL) stderr_path = "/dev/null";
+            
+            int slave_fd_err = open (stderr_path, O_NOCTTY | O_CREAT | O_RDWR   , 0640);
+            int slave_fd_in  = open (stdin_path , O_NOCTTY | O_RDONLY);
+            int slave_fd_out = open (stdout_path, O_NOCTTY | O_CREAT | O_WRONLY , 0640);
 
             err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_err, STDERR_FILENO), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d, newfiledes = STDERR_FILENO )", slave_fd_err);
+                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d (\"%s\"), newfiledes = STDERR_FILENO )", slave_fd_err, stderr_path);
 
             err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_in, STDIN_FILENO), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d, newfiledes = STDIN_FILENO )", slave_fd_in);
+                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d (\"%s\"), newfiledes = STDIN_FILENO )", slave_fd_in, stdin_path);
 
             err.SetError( ::posix_spawn_file_actions_adddup2(&file_actions, slave_fd_out, STDOUT_FILENO), DNBError::POSIX);
             if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
-                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d, newfiledes = STDOUT_FILENO )", slave_fd_out);
+                err.LogThreaded("::posix_spawn_file_actions_adddup2 ( &file_actions, filedes = %d (\"%s\"), newfiledes = STDOUT_FILENO )", slave_fd_out, stdout_path);
         }
 
         // TODO: Verify if we can set the working directory back immediately
@@ -1763,8 +1779,15 @@ MachProcess::PosixSpawnChildForPTraceDebugging
             process->SetChildFileDescriptors(master_fd, master_fd, master_fd);
         }
     }
-    
     ::posix_spawnattr_destroy (&attr);
+
+    if (pid != INVALID_NUB_PROCESS)
+    {
+        cpu_type_t pid_cpu_type = MachProcess::GetCPUTypeForLocalProcess (pid);
+        DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s ( ) pid=%i, cpu_type=0x%8.8x", __FUNCTION__, pid, pid_cpu_type);
+        if (pid_cpu_type)
+            DNBArchProtocol::SetArchitecture (pid_cpu_type);
+    }
 
     if (file_actions_valid)
     {
@@ -1775,6 +1798,24 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     }
 
     return pid;
+}
+
+uint32_t
+MachProcess::GetCPUTypeForLocalProcess (pid_t pid)
+{
+    int mib[CTL_MAXNAME]={0,};
+    size_t len = CTL_MAXNAME;
+    if (::sysctlnametomib("sysctl.proc_cputype", mib, &len)) 
+        return 0;
+
+    mib[len] = pid;
+    len++;
+            
+    cpu_type_t cpu;
+    size_t cpu_len = sizeof(cpu);
+    if (::sysctl (mib, len, &cpu, &cpu_len, 0, 0))
+        cpu = 0;
+    return cpu;
 }
 
 pid_t

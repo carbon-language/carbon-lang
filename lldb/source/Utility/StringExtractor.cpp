@@ -146,8 +146,8 @@ StringExtractor::GetHexU8 (uint8_t fail_value)
 
         if (isxdigit(hi_nibble_char) && isxdigit(lo_nibble_char))
         {
-            uint8_t hi_nibble = xdigit_to_sint (hi_nibble_char);
-            uint8_t lo_nibble = xdigit_to_sint (lo_nibble_char);
+            uint8_t hi_nibble = xdigit_to_uint (hi_nibble_char);
+            uint8_t lo_nibble = xdigit_to_uint (lo_nibble_char);
             m_index += 2;
             return (hi_nibble << 4) + lo_nibble;
         }

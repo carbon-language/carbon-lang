@@ -87,7 +87,7 @@ public:
     SetImmediateErrorFile (FILE *fh, bool transfer_fh_ownership = false)
     {
         lldb::StreamSP stream_sp (new StreamFile (fh, transfer_fh_ownership));
-        m_out_stream.SetStreamAtIndex (eImmediateStreamIndex, stream_sp);
+        m_err_stream.SetStreamAtIndex (eImmediateStreamIndex, stream_sp);
     }
     
     void
@@ -99,7 +99,6 @@ public:
     void
     SetImmediateErrorStream (const lldb::StreamSP &stream_sp)
     {
-        // Ensure we always have our normal output stream
         m_err_stream.SetStreamAtIndex (eImmediateStreamIndex, stream_sp);
     }
     

@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <mach/exception_types.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 
 #include "DNB.h"
@@ -60,10 +61,9 @@
 
 extern void ASLLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
 
-RNBRemote::RNBRemote (bool use_native_regs, const char *arch) :
+RNBRemote::RNBRemote () :
     m_ctx (),
     m_comm (),
-    m_arch (),
     m_continue_thread(-1),
     m_thread(-1),
     m_mutex(),
@@ -77,12 +77,10 @@ RNBRemote::RNBRemote (bool use_native_regs, const char *arch) :
     m_extended_mode(false),
     m_noack_mode(false),
     m_thread_suffix_supported (false),
-    m_use_native_regs (use_native_regs)
+    m_use_native_regs (false)
 {
     DNBLogThreadedIf (LOG_RNB_REMOTE, "%s", __PRETTY_FUNCTION__);
     CreatePacketTable ();
-    if (arch && arch[0])
-        m_arch.assign (arch);
 }
 
 
@@ -178,6 +176,10 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (set_max_payload_size,          &RNBRemote::HandlePacket_QSetMaxPayloadSize     , NULL, "QSetMaxPayloadSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized payload gdb can handle"));
     t.push_back (Packet (set_environment_variable,      &RNBRemote::HandlePacket_QEnvironment           , NULL, "QEnvironment:", "Add an environment variable to the inferior's environment"));
     t.push_back (Packet (set_disable_aslr,              &RNBRemote::HandlePacket_QSetDisableASLR        , NULL, "QSetDisableASLR:", "Set wether to disable ASLR when launching the process with the set argv ('A') packet"));
+    t.push_back (Packet (set_stdin,                     &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDIN:", "Set the standard input for a process to be launched with the 'A' packet"));
+    t.push_back (Packet (set_stdout,                    &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDOUT:", "Set the standard output for a process to be launched with the 'A' packet"));
+    t.push_back (Packet (set_stderr,                    &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDERR:", "Set the standard error for a process to be launched with the 'A' packet"));
+    t.push_back (Packet (set_working_dir,               &RNBRemote::HandlePacket_QSetWorkingDir         , NULL, "QSetWorkingDir:", "Set the working directory for a process to be launched with the 'A' packet"));
 //  t.push_back (Packet (pass_signals_to_inferior,      &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "QPassSignals:", "Specify which signals are passed to the inferior"));
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
@@ -1002,7 +1004,7 @@ RNBRemote::InitializeRegisters ()
 
     if (m_use_native_regs)
     {
-        DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting native registers from DNB interface (%s)", __FUNCTION__, m_arch.c_str());
+        DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting native registers from DNB interface", __FUNCTION__);
         // Discover the registers by querying the DNB interface and letting it
         // state the registers that it would like to export. This allows the
         // registers to be discovered using multiple qRegisterInfo calls to get
@@ -1041,9 +1043,10 @@ RNBRemote::InitializeRegisters ()
     }
     else
     {
-        DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting gdb registers (%s)", __FUNCTION__, m_arch.c_str());
+        uint32_t cpu_type = DNBProcessGetCPUType (pid);
+        DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting gdb registers(%s)", __FUNCTION__, m_arch.c_str());
 #if defined (__i386__) || defined (__x86_64__)
-        if (m_arch.compare("x86_64") == 0)
+        if (cpu_type == CPU_TYPE_X86_64)
         {
             const size_t num_regs = sizeof (g_gdb_register_map_x86_64) / sizeof (register_map_entry_t);
             for (uint32_t i=0; i<num_regs; ++i)
@@ -1058,7 +1061,7 @@ RNBRemote::InitializeRegisters ()
             g_num_reg_entries = sizeof (g_gdb_register_map_x86_64) / sizeof (register_map_entry_t);
             return true;
         }
-        else if (m_arch.compare("i386") == 0)
+        else if (cpu_type == CPU_TYPE_I386)
         {
             const size_t num_regs = sizeof (g_gdb_register_map_i386) / sizeof (register_map_entry_t);
             for (uint32_t i=0; i<num_regs; ++i)
@@ -1074,7 +1077,7 @@ RNBRemote::InitializeRegisters ()
             return true;
         }
 #elif defined (__arm__)
-        if (m_arch.find ("arm") == 0)
+        if (cpu_type == CPU_TYPE_ARM)
         {
             const size_t num_regs = sizeof (g_gdb_register_map_arm) / sizeof (register_map_entry_t);
             for (uint32_t i=0; i<num_regs; ++i)
@@ -1748,6 +1751,80 @@ RNBRemote::HandlePacket_QSetDisableASLR (const char *p)
     return SendPacket ("OK");
 }
 
+rnb_err_t
+RNBRemote::HandlePacket_QSetSTDIO (const char *p)
+{
+    // Only set stdin/out/err if we don't already have a process
+    if (!m_ctx.HasValidProcessID())
+    {
+        bool success = false;
+        // Check the seventh character since the packet will be one of:
+        // QSetSTDIN
+        // QSetSTDOUT
+        // QSetSTDERR
+        StringExtractor packet(p);
+        packet.SetFilePos (7);
+        char ch = packet.GetChar();
+        while (packet.GetChar() != ':')
+            /* Do nothing. */;
+            
+        switch (ch)
+        {
+            case 'I': // STDIN
+                packet.GetHexByteString (m_ctx.GetSTDIN());
+                success = !m_ctx.GetSTDIN().empty();
+                break;
+
+            case 'O': // STDOUT
+                packet.GetHexByteString (m_ctx.GetSTDOUT());
+                success = !m_ctx.GetSTDOUT().empty();
+                break;
+
+            case 'E': // STDERR
+                packet.GetHexByteString (m_ctx.GetSTDERR());
+                success = !m_ctx.GetSTDERR().empty();
+                break;
+
+            default:
+                break;
+        }
+        if (success)
+            return SendPacket ("OK");
+        return SendPacket ("E57");
+    }
+    return SendPacket ("E58");
+}
+
+rnb_err_t 
+RNBRemote::HandlePacket_QSetWorkingDir (const char *p)
+{
+    // Only set the working directory if we don't already have a process
+    if (!m_ctx.HasValidProcessID())
+    {
+        StringExtractor packet(p += sizeof ("QSetWorkingDir:") - 1);
+        if (packet.GetHexByteString (m_ctx.GetWorkingDir()))
+        {
+            struct stat working_dir_stat;
+            if (::stat(m_ctx.GetWorkingDirPath(), &working_dir_stat) == -1)
+            {
+                m_ctx.GetWorkingDir().clear();
+                return SendPacket ("E61");    // Working directory doesn't exist...
+            }
+            else if ((working_dir_stat.st_mode & S_IFMT) == S_IFDIR)
+            {
+                return SendPacket ("OK");
+            }
+            else
+            {
+                m_ctx.GetWorkingDir().clear();
+                return SendPacket ("E62");    // Working directory isn't a directory...
+            }
+        }
+        return SendPacket ("E59");  // Invalid path
+    }
+    return SendPacket ("E60"); // Already had a process, too late to set working dir
+}
+
 
 rnb_err_t
 RNBRemote::HandlePacket_QSetMaxPayloadSize (const char *p)
@@ -1824,13 +1901,10 @@ append_hex_value (std::ostream& ostrm, const uint8_t* buf, size_t buf_size, bool
 
 
 void
-register_value_in_hex_fixed_width
-(
- std::ostream& ostrm,
- nub_process_t pid,
- nub_thread_t tid,
- const register_map_entry_t* reg
- )
+register_value_in_hex_fixed_width (std::ostream& ostrm,
+                                   nub_process_t pid,
+                                   nub_thread_t tid,
+                                   const register_map_entry_t* reg)
 {
     if (reg != NULL)
     {
@@ -1862,13 +1936,10 @@ register_value_in_hex_fixed_width
 
 
 void
-gdb_regnum_with_fixed_width_hex_register_value
-(
- std::ostream& ostrm,
- nub_process_t pid,
- nub_thread_t tid,
- const register_map_entry_t* reg
- )
+gdb_regnum_with_fixed_width_hex_register_value (std::ostream& ostrm,
+                                                nub_process_t pid,
+                                                nub_thread_t tid,
+                                                const register_map_entry_t* reg)
 {
     // Output the register number as 'NN:VVVVVVVV;' where NN is a 2 bytes HEX
     // gdb register number, and VVVVVVVV is the correct number of hex bytes

@@ -1928,6 +1928,12 @@ protected:
     
     void 
     RestorePrivateProcessEvents ();
+    
+    bool
+    PrivateStateThreadIsValid () const
+    {
+        return m_private_state_thread != LLDB_INVALID_HOST_THREAD;
+    }
 
     //------------------------------------------------------------------
     // Member variables

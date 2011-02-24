@@ -58,6 +58,8 @@ public:
                                             nub_launch_flavor_t launch_flavor, 
                                             int disable_aslr, 
                                             DNBError &err);
+
+    static uint32_t         GetCPUTypeForLocalProcess (pid_t pid);
     static pid_t            ForkChildForPTraceDebugging (const char *path, char const *argv[], char const *envp[], MachProcess* process, DNBError &err);
     static pid_t            PosixSpawnChildForPTraceDebugging (const char *path, 
                                                                cpu_type_t cpu_type, 
@@ -167,6 +169,7 @@ public:
     void                    DumpThreadStoppedReason(nub_thread_t tid) const;
     const char *            GetThreadInfo (nub_thread_t tid) const;
 
+    uint32_t                GetCPUType ();
     nub_state_t             GetState ();
     void                    SetState (nub_state_t state);
     bool                    IsRunning (nub_state_t state)
@@ -248,6 +251,7 @@ private:
     nub_state_t             DoSIGSTOP (bool clear_bps_and_wps, uint32_t *thread_idx_ptr = NULL);
 
     pid_t                       m_pid;                      // Process ID of child process
+    cpu_type_t                  m_cpu_type;                 // The CPU type of this process
     int                         m_child_stdin;
     int                         m_child_stdout;
     int                         m_child_stderr;

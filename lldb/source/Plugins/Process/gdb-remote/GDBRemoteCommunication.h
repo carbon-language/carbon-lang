@@ -196,6 +196,49 @@ public:
                 StringExtractorGDBRemote& response);
 
 
+    //------------------------------------------------------------------
+    /// Sets the path to use for stdin/out/err for a process
+    /// that will be launched with the 'A' packet.
+    ///
+    /// @param[in] path
+    ///     The path to use for stdin/out/err
+    ///
+    /// @return
+    ///     Zero if the for success, or an error code for failure.
+    //------------------------------------------------------------------
+    int
+    SetSTDIN (char const *path);
+    int
+    SetSTDOUT (char const *path);
+    int
+    SetSTDERR (char const *path);
+
+    //------------------------------------------------------------------
+    /// Sets the disable ASLR flag to \a enable for a process that will 
+    /// be launched with the 'A' packet.
+    ///
+    /// @param[in] enable
+    ///     A boolean value indicating wether to disable ASLR or not.
+    ///
+    /// @return
+    ///     Zero if the for success, or an error code for failure.
+    //------------------------------------------------------------------
+    int
+    SetDisableASLR (bool enable);
+
+    //------------------------------------------------------------------
+    /// Sets the working directory to \a path for a process that will 
+    /// be launched with the 'A' packet.
+    ///
+    /// @param[in] path
+    ///     The path to a directory to use when launching our processs
+    ///
+    /// @return
+    ///     Zero if the for success, or an error code for failure.
+    //------------------------------------------------------------------
+    int
+    SetWorkingDir (char const *path);
+
     lldb::addr_t
     AllocateMemory (size_t size, uint32_t permissions, uint32_t timeout_seconds);
 
