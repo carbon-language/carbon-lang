@@ -194,22 +194,26 @@ void RAGreedy::releaseMemory() {
 void RAGreedy::enqueue(LiveInterval *LI) {
   // Prioritize live ranges by size, assigning larger ranges first.
   // The queue holds (size, reg) pairs.
-  unsigned Size = LI->getSize();
-  unsigned Reg = LI->reg;
+  const unsigned Size = LI->getSize();
+  const unsigned Reg = LI->reg;
   assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
          "Can only enqueue virtual registers");
+  const unsigned Hint = VRM->getRegAllocPref(Reg);
+  unsigned Prio;
 
-  // Boost ranges that have a physical register hint.
-  unsigned Hint = VRM->getRegAllocPref(Reg);
-  if (TargetRegisterInfo::isPhysicalRegister(Hint))
-    Size |= (1u << 30);
-
-  // Boost ranges that we see for the first time.
   Generation.grow(Reg);
   if (++Generation[Reg] == 1)
-    Size |= (1u << 31);
+    // 1st generation ranges are handled first, long -> short.
+    Prio = (1u << 31) + Size;
+  else
+    // Repeat offenders are handled second, short -> long
+    Prio = (1u << 30) - Size;
 
-  Queue.push(std::make_pair(Size, Reg));
+  // Boost ranges that have a physical register hint.
+  if (TargetRegisterInfo::isPhysicalRegister(Hint))
+    Prio |= (1u << 30);
+
+  Queue.push(std::make_pair(Prio, Reg));
 }
 
 LiveInterval *RAGreedy::dequeue() {
@@ -1310,6 +1314,14 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
     return PhysReg;
 
   assert(NewVRegs.empty() && "Cannot append to existing NewVRegs");
+
+  // The first time we see a live range, don't try to split or spill.
+  // Wait until the second time, when all smaller ranges have been allocated.
+  // This gives a better picture of the interference to split around.
+  if (Generation[VirtReg.reg] == 1) {
+    NewVRegs.push_back(&VirtReg);
+    return 0;
+  }
 
   // Try splitting VirtReg or interferences.
   unsigned PhysReg = trySplit(VirtReg, Order, NewVRegs);
