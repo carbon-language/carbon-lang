@@ -699,7 +699,7 @@ protected:
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
   CharUnits getSize() const { 
-    assert(Size % 8 == 0);
+    assert(Size % Context.getCharWidth() == 0);
     return Context.toCharUnitsFromBits(Size); 
   }
   uint64_t getSizeInBits() const { return Size; }
@@ -708,7 +708,7 @@ protected:
   void setSize(uint64_t NewSize) { Size = NewSize; }
 
   CharUnits getDataSize() const { 
-    assert(DataSize % 8 == 0);
+    assert(DataSize % Context.getCharWidth() == 0);
     return Context.toCharUnitsFromBits(DataSize); 
   }
   uint64_t getDataSizeInBits() const { return DataSize; }
