@@ -231,7 +231,7 @@ void lto_codegen_set_cpu(lto_code_gen_t cg, const char* cpu)
 //
 void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char* path)
 {
-    cg->setAssemblerPath(path);
+  // In here only for backwards compatibility. We use MC now.
 }
 
 
@@ -241,7 +241,7 @@ void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char* path)
 void lto_codegen_set_assembler_args(lto_code_gen_t cg, const char** args,
                                     int nargs)
 {
-  cg->setAssemblerArgs(args, nargs);
+  // In here only for backwards compatibility. We use MC now.
 }
 
 //

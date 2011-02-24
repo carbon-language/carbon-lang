@@ -37,18 +37,14 @@ struct LTOCodeGenerator {
     bool                setDebugInfo(lto_debug_model, std::string& errMsg);
     bool                setCodePICModel(lto_codegen_model, std::string& errMsg);
     void                setCpu(const char *cpu);
-    void                setAssemblerPath(const char* path);
-    void                setAssemblerArgs(const char** args, int nargs);
     void                addMustPreserveSymbol(const char* sym);
     bool                writeMergedModules(const char* path, 
                                                            std::string& errMsg);
     const void*         compile(size_t* length, std::string& errMsg);
     void                setCodeGenDebugOptions(const char *opts); 
 private:
-    bool                generateAssemblyCode(llvm::raw_ostream& out, 
-                                             std::string& errMsg);
-    bool                assemble(const std::string& asmPath, 
-                            const std::string& objPath, std::string& errMsg);
+    bool                generateObjectFile(llvm::raw_ostream& out, 
+                                           std::string& errMsg);
     void                applyScopeRestrictions();
     bool                determineTarget(std::string& errMsg);
     
@@ -63,9 +59,7 @@ private:
     StringSet                   _mustPreserveSymbols;
     llvm::MemoryBuffer*         _nativeObjectFile;
     std::vector<const char*>    _codegenOptions;
-    llvm::sys::Path*            _assemblerPath;
     std::string                 _mCpu;
-    std::vector<std::string>    _assemblerArgs;
 };
 
 #endif // LTO_CODE_GENERATOR_H

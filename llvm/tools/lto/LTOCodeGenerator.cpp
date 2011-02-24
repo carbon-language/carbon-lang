@@ -71,10 +71,11 @@ LTOCodeGenerator::LTOCodeGenerator()
       _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
       _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-      _nativeObjectFile(NULL), _assemblerPath(NULL)
+      _nativeObjectFile(NULL)
 {
     InitializeAllTargets();
     InitializeAllAsmPrinters();
+    InitializeAllAsmParsers();
 }
 
 LTOCodeGenerator::~LTOCodeGenerator()
@@ -126,21 +127,6 @@ void LTOCodeGenerator::setCpu(const char* mCpu)
   _mCpu = mCpu;
 }
 
-void LTOCodeGenerator::setAssemblerPath(const char* path)
-{
-    if ( _assemblerPath )
-        delete _assemblerPath;
-    _assemblerPath = new sys::Path(path);
-}
-
-void LTOCodeGenerator::setAssemblerArgs(const char** args, int nargs)
-{
-  for (int i = 0; i < nargs; ++i) {
-    const char *arg = args[i];
-    _assemblerArgs.push_back(arg);
-  }
-}
-
 void LTOCodeGenerator::addMustPreserveSymbol(const char* sym)
 {
     _mustPreserveSymbols[sym] = 1;
@@ -183,55 +169,42 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
 
 const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
 {
-    // make unique temp .s file to put generated assembly code
-    sys::Path uniqueAsmPath("lto-llvm.s");
-    if ( uniqueAsmPath.createTemporaryFileOnDisk(false, &errMsg) )
-        return NULL;
-    sys::RemoveFileOnSignal(uniqueAsmPath);
-       
-    // generate assembly code
-    bool genResult = false;
-    {
-      tool_output_file asmFile(uniqueAsmPath.c_str(), errMsg);
-      if (!errMsg.empty())
-        return NULL;
-      genResult = this->generateAssemblyCode(asmFile.os(), errMsg);
-      asmFile.os().close();
-      if (asmFile.os().has_error()) {
-        asmFile.os().clear_error();
-        return NULL;
-      }
-      asmFile.keep();
-    }
-    if ( genResult ) {
-        uniqueAsmPath.eraseFromDisk();
-        return NULL;
-    }
-    
     // make unique temp .o file to put generated object file
     sys::PathWithStatus uniqueObjPath("lto-llvm.o");
     if ( uniqueObjPath.createTemporaryFileOnDisk(false, &errMsg) ) {
-        uniqueAsmPath.eraseFromDisk();
+        uniqueObjPath.eraseFromDisk();
         return NULL;
     }
     sys::RemoveFileOnSignal(uniqueObjPath);
 
-    // assemble the assembly code
-    const std::string& uniqueObjStr = uniqueObjPath.str();
-    bool asmResult = this->assemble(uniqueAsmPath.str(), uniqueObjStr, errMsg);
-    if ( !asmResult ) {
-        // remove old buffer if compile() called twice
-        delete _nativeObjectFile;
-
-        // read .o file into memory buffer
-        OwningPtr<MemoryBuffer> BuffPtr;
-        if (error_code ec = MemoryBuffer::getFile(uniqueObjStr.c_str(),BuffPtr))
-          errMsg = ec.message();
-        _nativeObjectFile = BuffPtr.take();
+    // generate object file
+    bool genResult = false;
+    tool_output_file objFile(uniqueObjPath.c_str(), errMsg);
+    if (!errMsg.empty())
+      return NULL;
+    genResult = this->generateObjectFile(objFile.os(), errMsg);
+    objFile.os().close();
+    if (objFile.os().has_error()) {
+      objFile.os().clear_error();
+      return NULL;
+    }
+    objFile.keep();
+    if ( genResult ) {
+      uniqueObjPath.eraseFromDisk();
+      return NULL;
     }
 
+    const std::string& uniqueObjStr = uniqueObjPath.str();
+    // remove old buffer if compile() called twice
+    delete _nativeObjectFile;
+
+    // read .o file into memory buffer
+    OwningPtr<MemoryBuffer> BuffPtr;
+    if (error_code ec = MemoryBuffer::getFile(uniqueObjStr.c_str(),BuffPtr))
+      errMsg = ec.message();
+    _nativeObjectFile = BuffPtr.take();
+
     // remove temp files
-    uniqueAsmPath.eraseFromDisk();
     uniqueObjPath.eraseFromDisk();
 
     // return buffer, unless error
@@ -240,67 +213,6 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     *length = _nativeObjectFile->getBufferSize();
     return _nativeObjectFile->getBufferStart();
 }
-
-
-bool LTOCodeGenerator::assemble(const std::string& asmPath, 
-                                const std::string& objPath, std::string& errMsg)
-{
-    sys::Path tool;
-    bool needsCompilerOptions = true;
-    if ( _assemblerPath ) {
-        tool = *_assemblerPath;
-        needsCompilerOptions = false;
-    } else {
-        // find compiler driver
-        tool = sys::Program::FindProgramByName("gcc");
-        if ( tool.isEmpty() ) {
-            errMsg = "can't locate gcc";
-            return true;
-        }
-    }
-
-    // build argument list
-    std::vector<const char*> args;
-    llvm::Triple targetTriple(_linker.getModule()->getTargetTriple());
-    const char *arch = targetTriple.getArchNameForAssembler();
-
-    args.push_back(tool.c_str());
-
-    if (targetTriple.getOS() == Triple::Darwin) {
-        // darwin specific command line options
-        if (arch != NULL) {
-            args.push_back("-arch");
-            args.push_back(arch);
-        }
-        // add -static to assembler command line when code model requires
-        if ( (_assemblerPath != NULL) &&
-            (_codeModel == LTO_CODEGEN_PIC_MODEL_STATIC) )
-            args.push_back("-static");
-    }
-    if ( needsCompilerOptions ) {
-        args.push_back("-c");
-        args.push_back("-x");
-        args.push_back("assembler");
-    } else {
-        for (std::vector<std::string>::iterator I = _assemblerArgs.begin(),
-               E = _assemblerArgs.end(); I != E; ++I) {
-            args.push_back(I->c_str());
-        }
-    }
-    args.push_back("-o");
-    args.push_back(objPath.c_str());
-    args.push_back(asmPath.c_str());
-    args.push_back(0);
-
-    // invoke assembler
-    if ( sys::Program::ExecuteAndWait(tool, &args[0], 0, 0, 0, 0, &errMsg) ) {
-        errMsg = "error in assembly";    
-        return true;
-    }
-    return false; // success
-}
-
-
 
 bool LTOCodeGenerator::determineTarget(std::string& errMsg)
 {
@@ -385,8 +297,8 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 }
 
 /// Optimize merged modules using various IPO passes
-bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
-                                            std::string& errMsg)
+bool LTOCodeGenerator::generateObjectFile(raw_ostream& out,
+                                          std::string& errMsg)
 {
     if ( this->determineTarget(errMsg) ) 
         return true;
@@ -423,7 +335,7 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
     formatted_raw_ostream Out(out);
 
     if (_target->addPassesToEmitFile(*codeGenPasses, Out,
-                                     TargetMachine::CGFT_AssemblyFile,
+                                     TargetMachine::CGFT_ObjectFile,
                                      CodeGenOpt::Aggressive)) {
       errMsg = "target file type not supported";
       return true;
