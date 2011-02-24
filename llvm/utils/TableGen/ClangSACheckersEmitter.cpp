@@ -148,6 +148,7 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
       // Create a pseudo-group to hold this checker.
       std::string fullName = getCheckerFullName(R);
       GroupInfo &info = groupInfoByName[fullName];
+      info.Hidden = R->getValueAsBit("Hidden");
       recordGroupMap[R] = &info;
       info.Checkers.push_back(R);
     } else {
