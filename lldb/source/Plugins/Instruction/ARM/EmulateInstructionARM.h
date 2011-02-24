@@ -366,6 +366,10 @@ protected:
     bool
     EmulateBXRm (ARMEncoding encoding);
 
+    // A8.6.26 BXJ
+    bool
+    EmulateBXJRm (ARMEncoding encoding);
+
     // A8.6.212 SUB (immediate, ARM) -- Rd == r7 and Rm == ip
     bool
     EmulateSUBR7IPImm (ARMEncoding encoding);

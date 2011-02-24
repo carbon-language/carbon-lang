@@ -129,6 +129,7 @@ uint32_t ITSession::GetCond()
 
 #define ARMV4T_ABOVE  (ARMv4T|ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
 #define ARMV5_ABOVE   (ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
+#define ARMV5J_ABOVE  (ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
 #define ARMV6T2_ABOVE (ARMv6T2|ARMv7|ARMv8)
 
 //----------------------------------------------------------------------
@@ -1247,7 +1248,6 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
 }
 
 // Branch and Exchange causes a branch to an address and instruction set specified by a register.
-// BX
 bool
 EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
 {
@@ -1278,6 +1278,68 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
             break;
         case eEncodingA1:
             Rm = Bits32(opcode, 3, 0);
+            break;
+        default:
+            return false;
+        }
+        addr_t target = ReadCoreReg (Rm, &success);
+        if (!success)
+            return false;
+                  
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
+        context.SetRegister (dwarf_reg);
+        if (!BXWritePC(context, target))
+            return false;
+    }
+    return true;
+}
+
+// Branch and Exchange Jazelle attempts to change to Jazelle state. If the attempt fails, it branches to an
+// address and instruction set specified by a register as though it were a BX instruction.
+//
+// TODO: Emulate Jazelle architecture?
+//       We currently assume that switching to Jazelle state fails, thus treating BXJ as a BX operation.
+bool
+EmulateInstructionARM::EmulateBXJRm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if (ConditionPassed())
+    {
+        EncodingSpecificOperations();
+        if JMCR.JE == ‘0’ || CurrentInstrSet() == InstrSet_ThumbEE then
+            BXWritePC(R[m]);
+        else
+            if JazelleAcceptsExecution() then
+                SwitchToJazelleExecution();
+            else
+                SUBARCHITECTURE_DEFINED handler call;
+    }
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextAbsoluteBranchRegister;
+        uint32_t Rm; // the register with the target address
+        switch (encoding) {
+        case eEncodingT1:
+            Rm = Bits32(opcode, 19, 16);
+            if (BadReg(Rm))
+                return false;
+            if (InITBlock() && !LastInITBlock())
+                return false;
+            break;
+        case eEncodingA1:
+            Rm = Bits32(opcode, 3, 0);
+            if (Rm == 15)
+                return false;
             break;
         default:
             return false;
@@ -7069,6 +7131,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0ffffff0, 0x012fff30, ARMV5_ABOVE,   eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         // for example, "bx lr"
         { 0x0ffffff0, 0x012fff10, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
+        // bxj
+        { 0x0ffffff0, 0x012fff20, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXJRm, "bxj <Rm>"},
 
         //----------------------------------------------------------------------
         // Data-processing instructions
@@ -7263,6 +7327,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         // for example, "bx lr"
         { 0xffffff87, 0x00004700, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
+        // bxj
+        { 0xfff0ffff, 0xf3c08f00, ARMV5J_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBXJRm, "bxj <Rm>"},
         // compare and branch
         { 0xfffff500, 0x0000b100, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCB, "cb{n}z <Rn>, <label>"},
         // table branch byte
