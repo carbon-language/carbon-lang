@@ -107,6 +107,19 @@ class TypeLocBuilder {
     return DI;
   }
 
+  /// \brief Copies the type-location information to the given AST context and 
+  /// returns a \c TypeLoc referring into the AST context.
+  TypeLoc getTypeLocInContext(ASTContext &Context, QualType T) {
+#ifndef NDEBUG
+    assert(T == LastTy && "type doesn't match last type pushed!");
+#endif
+    
+    size_t FullDataSize = Capacity - Index;
+    void *Mem = Context.Allocate(FullDataSize);
+    memcpy(Mem, &Buffer[Index], FullDataSize);
+    return TypeLoc(T, Mem);
+  }
+
 private:
   TypeLoc pushImpl(QualType T, size_t LocalSize) {
 #ifndef NDEBUG

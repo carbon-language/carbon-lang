@@ -14,6 +14,8 @@
 #include "clang/Parse/ParseDiagnostic.h" // FIXME: remove this back-dependency!
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/AST/NestedNameSpecifier.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
@@ -42,6 +44,41 @@ void UnqualifiedId::setConstructorTemplateId(TemplateIdAnnotation *TemplateId) {
   this->TemplateId = TemplateId;
   StartLocation = TemplateId->TemplateNameLoc;
   EndLocation = TemplateId->RAngleLoc;
+}
+
+void CXXScopeSpec::Extend(ASTContext &Context, SourceLocation TemplateKWLoc, 
+                          TypeLoc TL, SourceLocation ColonColonLoc) {
+  ScopeRep = NestedNameSpecifier::Create(Context, ScopeRep, 
+                                         TemplateKWLoc.isValid(), 
+                                         TL.getTypePtr());
+  if (Range.getBegin().isInvalid())
+    Range.setBegin(TL.getBeginLoc());
+  Range.setEnd(ColonColonLoc);
+}
+
+void CXXScopeSpec::Extend(ASTContext &Context, IdentifierInfo *Identifier,
+                          SourceLocation IdentifierLoc, 
+                          SourceLocation ColonColonLoc) {
+  ScopeRep = NestedNameSpecifier::Create(Context, ScopeRep, Identifier);
+  if (Range.getBegin().isInvalid())
+    Range.setBegin(IdentifierLoc);
+  Range.setEnd(ColonColonLoc);
+}
+
+void CXXScopeSpec::Extend(ASTContext &Context, NamespaceDecl *Namespace,
+                          SourceLocation NamespaceLoc, 
+                          SourceLocation ColonColonLoc) {
+  ScopeRep = NestedNameSpecifier::Create(Context, ScopeRep, Namespace);
+  if (Range.getBegin().isInvalid())
+    Range.setBegin(NamespaceLoc);
+  Range.setEnd(ColonColonLoc);
+}
+
+void CXXScopeSpec::MakeGlobal(ASTContext &Context, 
+                              SourceLocation ColonColonLoc) {
+  assert(!ScopeRep && "Already have a nested-name-specifier!?");
+  ScopeRep = NestedNameSpecifier::GlobalSpecifier(Context);
+  Range = SourceRange(ColonColonLoc);
 }
 
 /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.

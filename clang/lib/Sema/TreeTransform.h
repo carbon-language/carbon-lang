@@ -7559,12 +7559,14 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
   // FIXME: The source location information is all wrong.
   SS.setRange(Range);
   SS.setScopeRep(Prefix);
-  return static_cast<NestedNameSpecifier *>(
-                    SemaRef.BuildCXXNestedNameSpecifier(0, SS, Range.getEnd(),
-                                                        Range.getEnd(), II,
-                                                        ObjectType,
-                                                        FirstQualifierInScope,
-                                                        false, false));
+  if (SemaRef.BuildCXXNestedNameSpecifier(0, II, /*FIXME:*/Range.getBegin(),
+                                          /*FIXME:*/Range.getEnd(),
+                                          ObjectType, false,
+                                          SS, FirstQualifierInScope,
+                                          false))
+    return 0;
+  
+  return SS.getScopeRep();
 }
 
 template<typename Derived>

@@ -29,9 +29,12 @@
 #include "llvm/Support/ErrorHandling.h"
 
 namespace clang {
+  class ASTContext;
+  class TypeLoc;
   class LangOptions;
   class Diagnostic;
   class IdentifierInfo;
+  class NamespaceDecl;
   class NestedNameSpecifier;
   class Preprocessor;
   class Declarator;
@@ -51,7 +54,7 @@ namespace clang {
 class CXXScopeSpec {
   SourceRange Range;
   NestedNameSpecifier *ScopeRep;
-
+  
 public:
   CXXScopeSpec() : Range(), ScopeRep() { }
 
@@ -65,6 +68,54 @@ public:
   NestedNameSpecifier *getScopeRep() const { return ScopeRep; }
   void setScopeRep(NestedNameSpecifier *S) { ScopeRep = S; }
 
+  /// \brief Extend the current nested-name-specifier by another
+  /// nested-name-specifier component of the form 'type::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param TemplateKWLoc The location of the 'template' keyword, if present.
+  ///
+  /// \param TL The TypeLoc that describes the type preceding the '::'.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, SourceLocation TemplateKWLoc, TypeLoc TL,
+              SourceLocation ColonColonLoc);
+
+  /// \brief Extend the current nested-name-specifier by another 
+  /// nested-name-specifier component of the form 'identifier::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param Identifier The identifier.
+  ///
+  /// \param IdentifierLoc The location of the identifier.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, IdentifierInfo *Identifier,
+              SourceLocation IdentifierLoc, SourceLocation ColonColonLoc);
+
+  /// \brief Extend the current nested-name-specifier by another 
+  /// nested-name-specifier component of the form 'namespace-or-alias::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param Namespace The namespace.
+  /// FIXME: This should also permit a namespace alias.
+  ///
+  /// \param NamespaceLoc The location of the namespace or namespace alias 
+  /// name.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, NamespaceDecl *Namespace,
+              SourceLocation NamespaceLoc, SourceLocation ColonColonLoc);
+
+  /// \brief Turn this (empty) nested-name-specifier into the global
+  /// nested-name-specifier '::'.
+  void MakeGlobal(ASTContext &Context, SourceLocation ColonColonLoc);
+  
   /// No scope specifier.
   bool isEmpty() const { return !Range.isValid(); }
   /// A scope specifier is present, but may be valid or invalid.
@@ -75,6 +126,15 @@ public:
   /// A scope specifier is present, and it refers to a real scope.
   bool isValid() const { return isNotEmpty() && ScopeRep != 0; }
 
+  /// \brief Indicate that this nested-name-specifier is invalid.
+  void SetInvalid(SourceRange R) { 
+    assert(R.isValid() && "Must have a valid source range");
+    if (Range.getBegin().isInvalid())
+      Range.setBegin(R.getBegin());
+    Range.setEnd(R.getEnd());
+    ScopeRep = 0;
+  }
+  
   /// Deprecated.  Some call sites intend isNotEmpty() while others intend
   /// isValid().
   bool isSet() const { return ScopeRep != 0; }

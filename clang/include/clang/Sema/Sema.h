@@ -2591,11 +2591,19 @@ public:
   CXXRecordDecl *getCurrentInstantiationOf(NestedNameSpecifier *NNS);
   bool isUnknownSpecialization(const CXXScopeSpec &SS);
 
-  /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
-  /// global scope ('::').
-  NestedNameSpecifier *
-  ActOnCXXGlobalScopeSpecifier(Scope *S, SourceLocation CCLoc);
-
+  /// \brief The parser has parsed a global nested-name-specifier '::'.
+  ///
+  /// \param S The scope in which this nested-name-specifier occurs.
+  ///
+  /// \param CCLoc The location of the '::'.
+  ///
+  /// \param SS The nested-name-specifier, which will be updated in-place
+  /// to reflect the parsed nested-name-specifier.
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool ActOnCXXGlobalScopeSpecifier(Scope *S, SourceLocation CCLoc,
+                                    CXXScopeSpec &SS);
+  
   bool isAcceptableNestedNameSpecifier(NamedDecl *SD);
   NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);
 
@@ -2604,42 +2612,72 @@ public:
                                     IdentifierInfo &II,
                                     ParsedType ObjectType);
 
-  NestedNameSpecifier *BuildCXXNestedNameSpecifier(Scope *S,
-                                                   CXXScopeSpec &SS,
-                                                   SourceLocation IdLoc,
-                                                   SourceLocation CCLoc,
-                                                   IdentifierInfo &II,
-                                                   QualType ObjectType,
-                                                   NamedDecl *ScopeLookupResult,
-                                                   bool EnteringContext,
-                                                   bool ErrorRecoveryLookup);
+  bool BuildCXXNestedNameSpecifier(Scope *S,
+                                   IdentifierInfo &Identifier,
+                                   SourceLocation IdentifierLoc,
+                                   SourceLocation CCLoc,
+                                   QualType ObjectType,
+                                   bool EnteringContext,
+                                   CXXScopeSpec &SS,
+                                   NamedDecl *ScopeLookupResult,
+                                   bool ErrorRecoveryLookup);
 
-  NestedNameSpecifier *ActOnCXXNestedNameSpecifier(Scope *S,
-                                                   CXXScopeSpec &SS,
-                                                   SourceLocation IdLoc,
-                                                   SourceLocation CCLoc,
-                                                   IdentifierInfo &II,
-                                                   ParsedType ObjectType,
-                                                   bool EnteringContext);
+  /// \brief The parser has parsed a nested-name-specifier 'identifier::'.
+  ///
+  /// \param S The scope in which this nested-name-specifier occurs.
+  ///
+  /// \param Identifier The identifier preceding the '::'.
+  ///
+  /// \param IdentifierLoc The location of the identifier.
+  ///
+  /// \param CCLoc The location of the '::'.
+  ///
+  /// \param ObjectType The type of the object, if we're parsing 
+  /// nested-name-specifier in a member access expression.
+  ///
+  /// \param EnteringContext Whether we're entering the context nominated by
+  /// this nested-name-specifier.
+  ///
+  /// \param SS The nested-name-specifier, which is both an input
+  /// parameter (the nested-name-specifier before this type) and an
+  /// output parameter (containing the full nested-name-specifier,
+  /// including this new type).
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool ActOnCXXNestedNameSpecifier(Scope *S,
+                                   IdentifierInfo &Identifier,
+                                   SourceLocation IdentifierLoc,
+                                   SourceLocation CCLoc,
+                                   ParsedType ObjectType,
+                                   bool EnteringContext,
+                                   CXXScopeSpec &SS);
 
   bool IsInvalidUnlessNestedName(Scope *S, CXXScopeSpec &SS,
-                                 IdentifierInfo &II,
+                                 IdentifierInfo &Identifier,
+                                 SourceLocation IdentifierLoc,
+                                 SourceLocation ColonLoc,
                                  ParsedType ObjectType,
                                  bool EnteringContext);
 
-  /// ActOnCXXNestedNameSpecifier - Called during parsing of a
-  /// nested-name-specifier that involves a template-id, e.g.,
-  /// "foo::bar<int, float>::", and now we need to build a scope
-  /// specifier. \p SS is empty or the previously parsed nested-name
-  /// part ("foo::"), \p Type is the already-parsed class template
-  /// specialization (or other template-id that names a type), \p
-  /// TypeRange is the source range where the type is located, and \p
-  /// CCLoc is the location of the trailing '::'.
-  CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
-                                          const CXXScopeSpec &SS,
-                                          ParsedType Type,
-                                          SourceRange TypeRange,
-                                          SourceLocation CCLoc);
+  /// \brief The parser has parsed a nested-name-specifier 'type::'.
+  ///
+  /// \param S The scope in which this nested-name-specifier occurs.
+  ///
+  /// \param Type The type, which will be a template specialization
+  /// type, preceding the '::'.
+  ///
+  /// \param CCLoc The location of the '::'.
+  ///
+  /// \param SS The nested-name-specifier, which is both an input
+  /// parameter (the nested-name-specifier before this type) and an
+  /// output parameter (containing the full nested-name-specifier,
+  /// including this new type).
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool ActOnCXXNestedNameSpecifier(Scope *S,
+                                   ParsedType Type,
+                                   SourceLocation CCLoc,
+                                   CXXScopeSpec &SS);
 
   bool ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
 
