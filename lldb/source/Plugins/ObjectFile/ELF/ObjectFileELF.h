@@ -116,9 +116,6 @@ public:
     virtual lldb_private::Address
     GetImageInfoAddress();
 
-    lldb_private::ArchSpec 
-    GetArchitecture();
-
 private:
     ObjectFileELF(lldb_private::Module* module,
                   lldb::DataBufferSP& dataSP,

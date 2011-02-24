@@ -74,8 +74,9 @@ ObjectFileELF::CreateInstance(Module *module,
             {
                 std::auto_ptr<ObjectFileELF> objfile_ap(
                     new ObjectFileELF(module, data_sp, file, offset, length));
-                ArchSpec spec = objfile_ap->GetArchitecture();
-                if (spec.IsValid() && objfile_ap->SetModulesArchitecture(spec))
+                ArchSpec spec;
+                if (objfile_ap->GetArchitecture(spec) &&
+                    objfile_ap->SetModulesArchitecture(spec))
                     return objfile_ap.release();
             }
         }
@@ -83,14 +84,6 @@ ObjectFileELF::CreateInstance(Module *module,
     return NULL;
 }
 
-ArchSpec
-ObjectFileELF::GetArchitecture()
-{
-    if (!ParseHeader())
-        return ArchSpec();
-
-    return ArchSpec(eArchTypeELF, m_header.e_machine, m_header.e_flags);
-}
 
 //------------------------------------------------------------------
 // PluginInterface protocol
@@ -1046,7 +1039,10 @@ ObjectFileELF::DumpDependentModules(lldb_private::Stream *s)
 bool
 ObjectFileELF::GetArchitecture (ArchSpec &arch)
 {
-    arch.SetArchitecture (lldb::eArchTypeELF, m_header.e_machine, m_header.e_flags);
+    if (!ParseHeader())
+        return false;
+
+    arch.SetArchitecture (lldb::eArchTypeELF, m_header.e_machine, LLDB_INVALID_CPUTYPE);
     arch.GetTriple().setOSName (Host::GetOSString().GetCString());
     arch.GetTriple().setVendorName(Host::GetVendorString().GetCString());
     return true;
