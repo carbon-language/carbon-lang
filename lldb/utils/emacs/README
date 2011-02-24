@@ -6,3 +6,22 @@ To use it, load the file from within emacs and type 'M-x lldb' to invoke lldb.
 The lldb-gud-window.png is a screen capture of the gud (with lldb) at work on
 Aquamacs distribution 2.1 by loading the gud.el in this directory and 'M-x lldb'
 on the ../../test/condition_break directory.
+
+--------------------------------------------------------------------------------
+
+Versions of emacs that do not work:
+
+o This lldb-enhanced gud.el does not work on emacs 22.1.1 (dumb terminal).  This
+is the error I got:
+
+Debugger entered--Lisp error: (void-function split-string-and-unquote)
+  (split-string-and-unquote command-line)
+  (let* ((words ...) (program ...) (dir default-directory) (file-word ...) (file-subst ...) (args ...) (file ...) (filepart ...) (existing-buffer ...)) (pop-to$
+  gud-common-init("/Volumes/data/lldb/svn/trunk/build/Debug/lldb" nil gud-lldb-marker-filter)
+  lldb("/Volumes/data/lldb/svn/trunk/build/Debug/lldb")
+  call-interactively(lldb)
+  execute-extended-command(nil)
+  call-interactively(execute-extended-command)
+
+The gud-common-init elisp function references split-string-and-unquote function
+which is not defined there.
