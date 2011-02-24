@@ -65,13 +65,13 @@ LinuxThread::GetRegisterContext()
     {
         ArchSpec arch = process.GetTarget().GetArchitecture();
 
-        switch (arch.GetGenericCPUType())
+        switch (arch.GetCore())
         {
         default:
             assert(false && "CPU type not supported!");
             break;
 
-        case ArchSpec::eCPU_x86_64:
+        case ArchSpec::eCore_x86_64_x86_64:
             m_reg_context_sp.reset(new RegisterContextLinux_x86_64(*this, 0));
             break;
         }

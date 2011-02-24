@@ -353,14 +353,14 @@ ProcessLinux::GetSoftwareBreakpointTrapOpcode(BreakpointSite* bp_site)
     const uint8_t *opcode = NULL;
     size_t opcode_size = 0;
 
-    switch (arch.GetGenericCPUType())
+    switch (arch.GetCore())
     {
     default:
         assert(false && "CPU type not supported!");
         break;
 
-    case ArchSpec::eCPU_i386:
-    case ArchSpec::eCPU_x86_64:
+    case ArchSpec::eCore_x86_32_i386:
+    case ArchSpec::eCore_x86_64_x86_64:
         opcode = g_i386_opcode;
         opcode_size = sizeof(g_i386_opcode);
         break;
