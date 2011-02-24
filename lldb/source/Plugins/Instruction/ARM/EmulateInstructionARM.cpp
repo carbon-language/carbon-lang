@@ -4905,6 +4905,171 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
     return true;
 }
 
+// Bitwise Bit Clear (immediate) performs a bitwise AND of a register value and the complement of an
+// immediate value, and writes the result to the destination register.  It can optionally update the
+// condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateBICImm (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        result = R[n] AND NOT(imm32);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd, Rn;
+        uint32_t imm32; // the immediate value to be bitwise inverted and ANDed to the value obtained from Rn
+        bool setflags;
+        uint32_t carry; // the carry bit after ARM/Thumb Expand operation
+        switch (encoding)
+        {
+        case eEncodingT1:
+            Rd = Bits32(opcode, 11, 8);
+            Rn = Bits32(opcode, 19, 16);
+            setflags = BitIsSet(opcode, 20);
+            imm32 = ThumbExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
+            if (BadReg(Rd) || BadReg(Rn))
+                return false;
+            break;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            Rn = Bits32(opcode, 19, 16);
+            setflags = BitIsSet(opcode, 20);
+            imm32 = ARMExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
+            // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+            // TODO: Emulate SUBS PC, LR and related instructions.
+            if (Rd == 15 && setflags)
+                return false;
+            break;
+        default:
+            return false;
+        }
+
+        // Read the first operand.
+        uint32_t val1 = ReadCoreReg(Rn, &success);
+        if (!success)
+            return false;
+
+        uint32_t result = val1 & ~imm32;
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags, carry))
+            return false;
+    }
+    return true;
+}
+
+// Bitwise Bit Clear (register) performs a bitwise AND of a register value and the complement of an
+// optionally-shifted register value, and writes the result to the destination register.
+// It can optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateBICReg (ARMEncoding encoding)
+{
+#if 0
+    // ARM pseudo code...
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        (shifted, carry) = Shift_C(R[m], shift_t, shift_n, APSR.C);
+        result = R[n] AND NOT(shifted);
+        if d == 15 then         // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                // APSR.V unchanged
+#endif
+
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+
+    if (ConditionPassed())
+    {
+        uint32_t Rd, Rn, Rm;
+        ARM_ShifterType shift_t;
+        uint32_t shift_n; // the shift applied to the value read from Rm
+        bool setflags;
+        uint32_t carry;
+        switch (encoding)
+        {
+        case eEncodingT1:
+            Rd = Rn = Bits32(opcode, 2, 0);
+            Rm = Bits32(opcode, 5, 3);
+            setflags = !InITBlock();
+            shift_t = SRType_LSL;
+            shift_n = 0;
+            break;
+        case eEncodingT2:
+            Rd = Bits32(opcode, 11, 8);
+            Rn = Bits32(opcode, 19, 16);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            shift_n = DecodeImmShiftThumb(opcode, shift_t);
+            if (BadReg(Rd) || BadReg(Rn) || BadReg(Rm))
+                return false;
+            break;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            Rn = Bits32(opcode, 19, 16);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            shift_n = DecodeImmShiftARM(opcode, shift_t);
+            // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+            // TODO: Emulate SUBS PC, LR and related instructions.
+            if (Rd == 15 && setflags)
+                return false;
+            break;
+        default:
+            return false;
+        }
+
+        // Read the first operand.
+        uint32_t val1 = ReadCoreReg(Rn, &success);
+        if (!success)
+            return false;
+
+        // Read the second operand.
+        uint32_t val2 = ReadCoreReg(Rm, &success);
+        if (!success)
+            return false;
+
+        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry);
+        uint32_t result = val1 & ~shifted;
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextImmediate;
+        context.SetNoArgs ();
+
+        if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags, carry))
+            return false;
+    }
+    return true;
+}
+
 // LDR (immediate, ARM) calculates an address from a base register value and an immediate offset, loads a word 
 // from memory, and writes it to a register.  It can use offset, post-indexed, or pre-indexed addressing.
 bool
@@ -6923,6 +7088,10 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x02000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #const"},
         // and (register)
         { 0x0fe00010, 0x00000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // bic (immediate)
+        { 0x0fe00000, 0x03c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBICImm, "bic{s}<c> <Rd>, <Rn>, #const"},
+        // bic (register)
+        { 0x0fe00010, 0x01c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBICReg, "bic{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // eor (immediate)
         { 0x0fe00000, 0x02200000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateEORImm, "eor{s}<c> <Rd>, <Rn>, #const"},
         // eor (register)
@@ -7122,6 +7291,11 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // and (register)
         { 0xffffffc0, 0x00004000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateANDReg, "ands|and<c> <Rdn>, <Rm>"},
         { 0xffe08000, 0xea000000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // bic (immediate)
+        { 0xfbe08000, 0xf0200000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBICImm, "bic{s}<c> <Rd>, <Rn>, #<const>"},
+        // bic (register)
+        { 0xffffffc0, 0x00004380, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBICReg, "bics|bic<c> <Rdn>, <Rm>"},
+        { 0xffe08000, 0xea200000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBICReg, "bic{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // eor (immediate)
         { 0xfbe08000, 0xf0800000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateEORImm, "eor{s}<c> <Rd>, <Rn>, #<const>"},
         // eor (register)

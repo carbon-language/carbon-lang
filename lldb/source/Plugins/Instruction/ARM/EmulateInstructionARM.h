@@ -546,13 +546,13 @@ protected:
     bool
     EmulateANDReg (ARMEncoding encoding);
     
-    // A8.6.19 BIC (immediate) - Encoding A1
+    // A8.6.19 BIC (immediate)
     bool
-    EmulateBICImmediate (ARMEncoding encoding);
+    EmulateBICImm (ARMEncoding encoding);
     
-    // A8.6.20 BIC (register) - Encoding T1, A1
+    // A8.6.20 BIC (register)
     bool
-    EmulateBICRegister (ARMEncoding encoding);
+    EmulateBICReg (ARMEncoding encoding);
     
     // A8.6.26 BXJ
     bool
