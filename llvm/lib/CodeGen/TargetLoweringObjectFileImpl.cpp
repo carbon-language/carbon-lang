@@ -178,6 +178,10 @@ const MCSection *TargetLoweringObjectFileELF::getEHFrameSection() const {
 
 static SectionKind
 getELFKindForNamedSection(StringRef Name, SectionKind K) {
+  // FIXME: Why is this here? Codegen is should not be in the business
+  // of figuring section flags. If the user wrote section(".eh_frame"),
+  // we should just pass that to MC which will defer to the assembly
+  // or use its default if producing an object file.
   if (Name.empty() || Name[0] != '.') return K;
 
   // Some lame default implementation based on some magic section names.
@@ -202,6 +206,9 @@ getELFKindForNamedSection(StringRef Name, SectionKind K) {
       Name.startswith(".gnu.linkonce.tb.") ||
       Name.startswith(".llvm.linkonce.tb."))
     return SectionKind::getThreadBSS();
+
+  if (Name == ".eh_frame")
+    return SectionKind::getDataRel();
 
   return K;
 }
