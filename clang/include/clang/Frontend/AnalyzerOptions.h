@@ -75,7 +75,6 @@ public:
   unsigned VisualizeEGDot : 1;
   unsigned VisualizeEGUbi : 1;
   unsigned EnableExperimentalChecks : 1;
-  unsigned EnableExperimentalInternalChecks : 1;
   unsigned InlineCall : 1;
   unsigned UnoptimizedCFG : 1;
   unsigned CFGAddImplicitDtors : 1;
@@ -98,7 +97,6 @@ public:
     VisualizeEGDot = 0;
     VisualizeEGUbi = 0;
     EnableExperimentalChecks = 0;
-    EnableExperimentalInternalChecks = 0;
     InlineCall = 0;
     UnoptimizedCFG = 0;
     CFGAddImplicitDtors = 0;

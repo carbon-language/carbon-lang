@@ -73,9 +73,6 @@ def analyzer_display_progress : Flag<"-analyzer-display-progress">,
   HelpText<"Emit verbose output about the analyzer's progress">;
 def analyzer_experimental_checks : Flag<"-analyzer-experimental-checks">,
   HelpText<"Use experimental path-sensitive checks">;
-def analyzer_experimental_internal_checks :
-  Flag<"-analyzer-experimental-internal-checks">,
-  HelpText<"Use new default path-sensitive checks currently in testing">;
 def analyze_function : Separate<"-analyze-function">,
   HelpText<"Run analysis on specific function">;
 def analyze_function_EQ : Joined<"-analyze-function=">, Alias<analyze_function>;

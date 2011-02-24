@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify %s
 
 // BEGIN delta-debugging reduced header stuff
 

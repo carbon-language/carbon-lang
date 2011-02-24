@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -fexceptions -analyze -analyzer-experimental-internal-checks -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -fexceptions -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -fexceptions -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -fexceptions -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -fexceptions -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
+// RUN: %clang_cc1 -fexceptions -analyze -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
+// RUN: %clang_cc1 -fexceptions -analyze -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
+// RUN: %clang_cc1 -fexceptions -analyze -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
+// RUN: %clang_cc1 -fexceptions -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
+// RUN: %clang_cc1 -fexceptions -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code %s
 
 //===----------------------------------------------------------------------===//
 // Basic dead store checking (but in C++ mode).

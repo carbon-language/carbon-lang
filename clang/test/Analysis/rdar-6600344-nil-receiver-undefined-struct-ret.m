@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s -verify
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s -verify
 
 typedef struct Foo { int x; } Bar;
 

@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify %s
 
 typedef struct CGColorSpace *CGColorSpaceRef;
 extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void);

@@ -1,9 +1,9 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s  2>&1 | FileCheck -check-prefix=darwin8 %s
-// RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin8 %s
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s 2>&1 | FileCheck -check-prefix=darwin9 %s
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
-// RUN: %clang_cc1 -triple thumbv6-apple-darwin4.0.0-iphoneos -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s 2>&1 | FileCheck -check-prefix=darwin9 %s
-// RUN: %clang_cc1 -triple thumbv6-apple-darwin4.0.0-iphoneos -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s  2>&1 | FileCheck -check-prefix=darwin8 %s
+// RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin8 %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: %clang_cc1 -triple thumbv6-apple-darwin4.0.0-iphoneos -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=basic %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: %clang_cc1 -triple thumbv6-apple-darwin4.0.0-iphoneos -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
 
 @interface MyClass {}
 - (void *)voidPtrM;

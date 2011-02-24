@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks -analyzer-stats %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.DeadStores -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks -analyzer-stats %s
 
 int foo();
 

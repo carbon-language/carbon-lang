@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-output=plist -o - %s | FileCheck %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-output=plist -o - %s | FileCheck %s
 
 void test_null_init(void) {
   int *p = 0;

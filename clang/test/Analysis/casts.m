@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region -verify %s
 
 // Test function pointer casts.  Currently we track function addresses using
 // loc::FunctionVal.  Because casts can be arbitrary, do we need to model

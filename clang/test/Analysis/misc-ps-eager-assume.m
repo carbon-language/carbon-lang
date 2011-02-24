@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify -fblocks %s -analyzer-eagerly-assume
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify -fblocks %s -analyzer-eagerly-assume
 
 // Delta-reduced header stuff (needed for test cases).
 typedef signed char BOOL;

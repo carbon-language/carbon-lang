@@ -114,8 +114,6 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-analyzer-viz-egraph-ubigraph");
   if (Opts.EnableExperimentalChecks)
     Res.push_back("-analyzer-experimental-checks");
-  if (Opts.EnableExperimentalInternalChecks)
-    Res.push_back("-analyzer-experimental-internal-checks");
   if (Opts.BufferOverflows)
     Res.push_back("-analyzer-check-buffer-overflows");
 
@@ -875,8 +873,6 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.CFGAddImplicitDtors = Args.hasArg(OPT_analysis_CFGAddImplicitDtors);
   Opts.CFGAddInitializers = Args.hasArg(OPT_analysis_CFGAddInitializers);
   Opts.EnableExperimentalChecks = Args.hasArg(OPT_analyzer_experimental_checks);
-  Opts.EnableExperimentalInternalChecks =
-    Args.hasArg(OPT_analyzer_experimental_internal_checks);
   Opts.TrimGraph = Args.hasArg(OPT_trim_egraph);
   Opts.MaxNodes = Args.getLastArgIntValue(OPT_analyzer_max_nodes, 150000,Diags);
   Opts.MaxLoop = Args.getLastArgIntValue(OPT_analyzer_max_loop, 4, Diags);

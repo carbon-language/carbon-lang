@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-experimental-checks -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-experimental-checks -analyzer-store=region -verify %s
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);

@@ -24,9 +24,3 @@ void ento::RegisterExperimentalChecks(ExprEngine &Eng) {
   // within ExprEngine.
   RegisterMallocChecker(Eng); // ArrayBoundChecker depends on this.
 }
-
-void ento::RegisterExperimentalInternalChecks(ExprEngine &Eng) {
-  // These are internal checks that should eventually migrate to
-  // RegisterInternalChecks() once they have been further tested.
-  
-}

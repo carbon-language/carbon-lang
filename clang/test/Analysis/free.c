@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -fblocks -verify %s
 void free(void *);
 
 void t1 () {

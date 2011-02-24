@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-constraints=range -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin8 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-constraints=range -analyzer-store=region -verify %s
 
 // <rdar://problem/6888289> - This test case shows that a nil instance
 // variable can possibly be initialized by a method.

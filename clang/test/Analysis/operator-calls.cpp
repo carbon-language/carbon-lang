@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem  -analyzer-experimental-checks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem  -analyzer-experimental-checks -verify %s
 struct X0 { };
 bool operator==(const X0&, const X0&);
 

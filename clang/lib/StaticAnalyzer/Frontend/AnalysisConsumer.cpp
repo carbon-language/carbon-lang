@@ -340,9 +340,6 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
     return;
   ExprEngine Eng(mgr, TF.take());
 
-  if (C.Opts.EnableExperimentalInternalChecks)
-    RegisterExperimentalInternalChecks(Eng);
-
   RegisterNSErrorChecks(Eng.getBugReporter(), Eng, *D);
 
   if (C.Opts.EnableExperimentalChecks)

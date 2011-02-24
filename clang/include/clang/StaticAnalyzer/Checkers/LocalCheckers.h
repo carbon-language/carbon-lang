@@ -40,7 +40,6 @@ TransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                   const LangOptions& lopts);
 
 void RegisterExperimentalChecks(ExprEngine &Eng);
-void RegisterExperimentalInternalChecks(ExprEngine &Eng);
 
 void RegisterCallInliner(ExprEngine &Eng);
 

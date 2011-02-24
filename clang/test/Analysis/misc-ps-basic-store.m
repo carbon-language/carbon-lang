@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -verify -fblocks %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=basic -verify -fblocks %s
 
 //---------------------------------------------------------------------------
 // Test case 'checkaccess_union' differs for region store and basic store.
