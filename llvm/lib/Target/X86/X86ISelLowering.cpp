@@ -45,7 +45,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/VectorExtras.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -55,10 +54,6 @@ using namespace llvm;
 using namespace dwarf;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
-
-static cl::opt<bool>
-Disable256Bit("disable-256bit", cl::Hidden,
-              cl::desc("Disable use of 256-bit vectors"));
 
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
@@ -4337,7 +4332,6 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   // use shuffles to put them in place.
   if (VT.getSizeInBits() > 256 && 
       Subtarget->hasAVX() && 
-      !Disable256Bit &&
       !ISD::isBuildVectorAllZeros(Op.getNode())) {
     SmallVector<SDValue, 8> V;
     V.resize(NumElems);
