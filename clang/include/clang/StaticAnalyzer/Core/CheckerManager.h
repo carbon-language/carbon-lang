@@ -113,11 +113,6 @@ public:
     CHECKER::_register(checker, *this);
   }
 
-  typedef void (*RegisterToEngFunc)(ExprEngine &Eng);
-  void addCheckerRegisterFunction(RegisterToEngFunc fn) {
-    Funcs.push_back(fn);
-  }
-
 //===----------------------------------------------------------------------===//
 // Functions for running checkers for AST traversing..
 //===----------------------------------------------------------------------===//
@@ -215,10 +210,6 @@ public:
                               const ExplodedNodeSet &Src,
                               const CallExpr *CE, ExprEngine &Eng,
                               GraphExpander *defaultEval = 0);
-
-  // FIXME: Temporary until checker running is moved completely into
-  // CheckerManager.
-  void registerCheckersToEngine(ExprEngine &eng);
 
 //===----------------------------------------------------------------------===//
 // Internal registration functions for AST traversing.
@@ -320,8 +311,6 @@ private:
   static void destruct(void *obj) { delete static_cast<CHECKER *>(obj); }
 
   std::vector<CheckerDtor> CheckerDtors;
-
-  std::vector<RegisterToEngFunc> Funcs;
 
   struct DeclCheckerInfo {
     CheckDeclFunc CheckFn;

@@ -355,8 +355,6 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
   // FIXME: Eventually remove the TF object entirely.
   TF->RegisterChecks(*this);
   TF->RegisterPrinters(getStateManager().Printers);
-
-  mgr.getCheckerManager()->registerCheckersToEngine(*this);
   
   if (mgr.shouldEagerlyTrimExplodedGraph()) {
     // Enable eager node reclaimation when constructing the ExplodedGraph.  

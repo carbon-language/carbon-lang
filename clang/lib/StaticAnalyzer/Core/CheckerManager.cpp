@@ -336,11 +336,6 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
   }
 }
 
-void CheckerManager::registerCheckersToEngine(ExprEngine &eng) {
-  for (unsigned i = 0, e = Funcs.size(); i != e; ++i)
-    Funcs[i](eng);
-}
-
 //===----------------------------------------------------------------------===//
 // Internal registration functions for AST traversing.
 //===----------------------------------------------------------------------===//
