@@ -6652,7 +6652,7 @@ static void DiagnoseBadShiftValues(Sema& S, Expr *&lex, Expr *&rex,
   // integers have defined behavior modulo one more than the maximum value
   // representable in the result type, so never warn for those.
   llvm::APSInt Left;
-  if (!lex->isIntegerConstantExpr(Left, S.Context) ||
+  if (lex->isValueDependent() || !lex->isIntegerConstantExpr(Left, S.Context) ||
       LHSTy->hasUnsignedIntegerRepresentation())
     return;
   llvm::APInt ResultBits =
