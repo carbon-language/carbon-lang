@@ -298,6 +298,7 @@ namespace {
     Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
     Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
                                        SourceLocation OrigEnd);
+    bool IsDeclStmtInForeachHeader(DeclStmt *DS);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD,
                                       Expr **args, unsigned nargs,
                                       SourceLocation StartLoc=SourceLocation(),
@@ -5459,6 +5460,13 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
   return NewRep;
 }
 
+bool RewriteObjC::IsDeclStmtInForeachHeader(DeclStmt *DS) {
+  if (const ObjCForCollectionStmt * CS = 
+      dyn_cast<ObjCForCollectionStmt>(Stmts.back()))
+        return CS->getElement() == DS;
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Function Body / Expression rewriting
 //===----------------------------------------------------------------------===//
@@ -5681,7 +5689,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     //   for (id <FooProtocol> index in someArray) ;
     // This is because RewriteObjCForCollectionStmt() does textual rewriting 
     // and it depends on the original text locations/positions.
-    if (Stmts.empty() || !isa<ObjCForCollectionStmt>(Stmts.back()))
+    if (Stmts.empty() || !IsDeclStmtInForeachHeader(DS))
       RewriteObjCQualifiedInterfaceTypes(*DS->decl_begin());
 
     // Blocks rewrite rules.
