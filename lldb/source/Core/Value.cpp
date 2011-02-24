@@ -524,7 +524,15 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
 
     case eValueTypeScalar:
         data.SetByteOrder (lldb::endian::InlHostByteOrder());
-        data.SetAddressByteSize(sizeof(void *));
+        if (m_context_type == eContextTypeClangType && ast_context)
+        {
+            uint32_t ptr_bit_width = ClangASTType::GetClangTypeBitWidth (ast_context, 
+                                                                     ClangASTContext::GetVoidPtrType(ast_context, false));
+            uint32_t ptr_byte_size = (ptr_bit_width + 7) / 8;
+            data.SetAddressByteSize (ptr_byte_size);
+        }
+        else
+            data.SetAddressByteSize(sizeof(void *));
         if (m_value.GetData (data))
             return error;   // Success;
         error.SetErrorStringWithFormat("extracting data from value failed");
