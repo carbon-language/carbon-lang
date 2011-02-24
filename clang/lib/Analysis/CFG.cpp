@@ -1217,6 +1217,8 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(AbstractConditionalOperator *C,
       return 0;
     Block = NULL;
   }
+  else
+    LHSBlock = ConfluenceBlock;
 
   // Create the block for the RHS expression.
   Succ = ConfluenceBlock;
@@ -1229,23 +1231,23 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(AbstractConditionalOperator *C,
 
   // See if this is a known constant.
   const TryResult& KnownVal = tryEvaluateBool(C->getCond());
-  if (LHSBlock)
-    addSuccessor(Block, KnownVal.isFalse() ? NULL : LHSBlock);
+  addSuccessor(Block, KnownVal.isFalse() ? NULL : LHSBlock);
   addSuccessor(Block, KnownVal.isTrue() ? NULL : RHSBlock);
   Block->setTerminator(C);
   Expr *condExpr = C->getCond();
 
-  CFGBlock *result = 0;
+  if (opaqueValue) {
+    // Run the condition expression if it's not trivially expressed in
+    // terms of the opaque value (or if there is no opaque value).
+    if (condExpr != opaqueValue)
+      addStmt(condExpr);
 
-  // Run the condition expression if it's not trivially expressed in
-  // terms of the opaque value (or if there is no opaque value).
-  if (condExpr != opaqueValue) result = addStmt(condExpr);
-
-  // Before that, run the common subexpression if there was one.
-  // At least one of this or the above will be run.
-  if (opaqueValue) result = addStmt(BCO->getCommon());
-
-  return result;
+    // Before that, run the common subexpression if there was one.
+    // At least one of this or the above will be run.
+    return addStmt(BCO->getCommon());
+  }
+  
+  return addStmt(condExpr);
 }
 
 CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {

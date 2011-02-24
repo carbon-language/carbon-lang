@@ -1246,3 +1246,26 @@ void pr9269() {
        ++i) {}
 }
 
+// Test evaluation of GNU-style ?:.
+int pr9287(int type) { return type ? : 0; } // no-warning
+
+void pr9287_b(int type, int *p) { 
+  int x = type ? : 0;
+  if (x) {
+    p = 0;
+  }
+  if (type) {
+    *p = 0xDEADBEEF; // expected-warning {{null pointer}}
+  }
+}
+
+void pr9287_c(int type, int *p) { 
+  int x = type ? : 0;
+  if (x) {
+    p = 0;
+  }
+  if (!type) {
+    *p = 0xDEADBEEF; // no-warning
+  }
+}
+

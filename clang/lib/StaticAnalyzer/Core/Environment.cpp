@@ -32,6 +32,11 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
     switch (E->getStmtClass()) {
       case Stmt::AddrLabelExprClass:
         return svalBuilder.makeLoc(cast<AddrLabelExpr>(E));
+      case Stmt::OpaqueValueExprClass: {
+        const OpaqueValueExpr *ope = cast<OpaqueValueExpr>(E);
+        E = ope->getSourceExpr();
+        continue;        
+      }        
       case Stmt::ParenExprClass:
         // ParenExprs are no-ops.
         E = cast<ParenExpr>(E)->getSubExpr();
