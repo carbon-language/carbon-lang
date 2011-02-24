@@ -832,8 +832,25 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     CheckLineNumbers(LLVMBB);
 #endif
 
-    if (OptLevel != CodeGenOpt::None)
+    if (OptLevel != CodeGenOpt::None) {
+      bool AllPredsVisited = true;
+      for (const_pred_iterator PI = pred_begin(LLVMBB), PE = pred_end(LLVMBB);
+           PI != PE; ++PI) {
+        if (!FuncInfo->VisitedBBs.count(*PI)) {
+          AllPredsVisited = false;
+          break;
+        }
+      }
+
+      if (!AllPredsVisited) {
+        for (BasicBlock::const_iterator I = LLVMBB->begin(), E = LLVMBB->end();
+             I != E && isa<PHINode>(I); ++I) {
+          FuncInfo->InvalidatePHILiveOutRegInfo(cast<PHINode>(I));
+        }
+      }
+
       FuncInfo->VisitedBBs.insert(LLVMBB);
+    }
 
     FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
     FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();

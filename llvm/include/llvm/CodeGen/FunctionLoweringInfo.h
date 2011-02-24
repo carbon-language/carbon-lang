@@ -101,9 +101,11 @@ public:
 #endif
 
   struct LiveOutInfo {
-    unsigned NumSignBits;
+    unsigned NumSignBits : 31;
+    bool IsValid : 1;
     APInt KnownOne, KnownZero;
-    LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
+    LiveOutInfo() : NumSignBits(0), IsValid(true), KnownOne(1, 0),
+                    KnownZero(1, 0) {}
   };
 
   /// VisitedBBs - The set of basic blocks visited thus far by instruction
@@ -149,7 +151,12 @@ public:
   const LiveOutInfo *GetLiveOutRegInfo(unsigned Reg) {
     if (!LiveOutRegInfo.inBounds(Reg))
       return NULL;
-    return &LiveOutRegInfo[Reg];
+
+    const LiveOutInfo *LOI = &LiveOutRegInfo[Reg];
+    if (!LOI->IsValid)
+      return NULL;
+
+    return LOI;
   }
 
   /// AddLiveOutRegInfo - Adds LiveOutInfo for a register.
@@ -164,6 +171,14 @@ public:
     LOI.NumSignBits = NumSignBits;
     LOI.KnownOne = KnownOne;
     LOI.KnownZero = KnownZero;
+  }
+
+  /// InvalidatePHILiveOutRegInfo - Invalidates a PHI's LiveOutInfo, to be
+  /// called when a block is visited before all of its predecessors.
+  void InvalidatePHILiveOutRegInfo(const PHINode *PN) {
+    unsigned Reg = ValueMap[PN];
+    LiveOutRegInfo.grow(Reg);
+    LiveOutRegInfo[Reg].IsValid = false;
   }
 
   /// setByValArgumentFrameIndex - Record frame index for the byval
