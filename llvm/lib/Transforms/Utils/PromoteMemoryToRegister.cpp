@@ -35,6 +35,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Analysis/DIBuilder.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/ADT/DenseMap.h"
@@ -190,7 +191,7 @@ namespace {
     ///
     std::vector<AllocaInst*> Allocas;
     DominatorTree &DT;
-    DIFactory *DIF;
+    DIBuilder *DIB;
 
     /// AST - An AliasSetTracker object to update.  If null, don't update it.
     ///
@@ -235,9 +236,9 @@ namespace {
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
                    AliasSetTracker *ast)
-      : Allocas(A), DT(dt), DIF(0), AST(ast) {}
+      : Allocas(A), DT(dt), DIB(0), AST(ast) {}
     ~PromoteMem2Reg() {
-      delete DIF;
+      delete DIB;
     }
 
     void run();
@@ -951,9 +952,9 @@ void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   if (!DIVar.Verify())
     return;
 
-  if (!DIF)
-    DIF = new DIFactory(*SI->getParent()->getParent()->getParent());
-  Instruction *DbgVal = DIF->InsertDbgValueIntrinsic(SI->getOperand(0), 0,
+  if (!DIB)
+    DIB = new DIBuilder(*SI->getParent()->getParent()->getParent());
+  Instruction *DbgVal = DIB->insertDbgValueIntrinsic(SI->getOperand(0), 0,
                                                      DIVar, SI);
   
   // Propagate any debug metadata from the store onto the dbg.value.
