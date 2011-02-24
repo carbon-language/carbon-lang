@@ -104,9 +104,10 @@ static void collectCheckers(const CheckNameOption *checkName,
 
   // Enable/disable all subgroups along with this one.
   if (const short *subGroups = checkName->SubGroups) {
-    for (; *subGroups != -1; ++subGroups)
-      collectCheckers(&CheckNameTable[*subGroups], enable, checkers,
-                      collectHidden && checkName->Hidden);
+    for (; *subGroups != -1; ++subGroups) {
+      const CheckNameOption *sub = &CheckNameTable[*subGroups];
+      collectCheckers(sub, enable, checkers, collectHidden && !sub->Hidden);
+    }
   }
 }
 

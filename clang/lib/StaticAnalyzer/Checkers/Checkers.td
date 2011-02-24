@@ -137,7 +137,8 @@ def CStringChecker : Checker<"CString">,
 def UnreachableCodeChecker : Checker<"UnreachableCode">,
   InPackage<CoreExperimental>,
   HelpText<"Check unreachable code">,
-  DescFile<"UnreachableCodeChecker.cpp">;
+  DescFile<"UnreachableCodeChecker.cpp">,
+  Hidden; // Must be specified explicitly in order to run.
 
 def IdempotentOperationChecker : Checker<"IdempotentOps">,
   InPackage<CoreExperimental>,
