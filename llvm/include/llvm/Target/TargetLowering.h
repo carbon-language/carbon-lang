@@ -221,27 +221,41 @@ public:
           return Promote;
         return Expand;
       }
-      
-      // If this is a type smaller than a legal vector type, promote to that
-      // type, e.g. <2 x float> -> <4 x float>.
-      if (VT.getVectorElementType().isSimple() &&
-          VT.getVectorNumElements() != 1) {
-        MVT EltType = VT.getVectorElementType().getSimpleVT();
-        unsigned NumElts = VT.getVectorNumElements();
-        while (1) {
-          // Round up to the nearest power of 2.
-          NumElts = (unsigned)NextPowerOf2(NumElts);
-          
-          MVT LargerVector = MVT::getVectorVT(EltType, NumElts);
-          if (LargerVector == MVT()) break;
-          
-          // If this the larger type is legal, promote to it.
-          if (getTypeAction(LargerVector) == Legal) return Promote;
-        }
+
+      // Vectors with only one element are always scalarized.
+      if (VT.getVectorNumElements() == 1)
+        return Expand;
+
+      // Vectors with a number of elements that is not a power of two are always
+      // widened, for example <3 x float> -> <4 x float>.
+      if (!VT.isPow2VectorType())
+        return Promote;
+
+      // Vectors with a crazy element type are always expanded, for example
+      // <4 x i2> is expanded into two vectors of type <2 x i2>.
+      if (!VT.getVectorElementType().isSimple())
+        return Expand;
+
+      // If this type is smaller than a legal vector type then widen it,
+      // otherwise expand it.  E.g. <2 x float> -> <4 x float>.
+      MVT EltType = VT.getVectorElementType().getSimpleVT();
+      unsigned NumElts = VT.getVectorNumElements();
+      while (1) {
+        // Round up to the next power of 2.
+        NumElts = (unsigned)NextPowerOf2(NumElts);
+
+        // If there is no simple vector type with this many elements then there
+        // cannot be a larger legal vector type.  Note that this assumes that
+        // there are no skipped intermediate vector types in the simple types.
+        MVT LargerVector = MVT::getVectorVT(EltType, NumElts);
+        if (LargerVector == MVT())
+          return Expand;
+
+        // If this type is legal then widen the vector.
+        if (getTypeAction(LargerVector) == Legal)
+          return Promote;
       }
-      
-      return VT.isPow2VectorType() ? Expand : Promote;
-    }      
+    }
   public:
     ValueTypeActionImpl() {
       std::fill(ValueTypeActions, array_endof(ValueTypeActions), 0);
