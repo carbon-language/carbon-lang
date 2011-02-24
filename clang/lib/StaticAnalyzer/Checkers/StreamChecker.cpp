@@ -12,9 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
@@ -55,52 +56,50 @@ struct StreamState {
   }
 };
 
-class StreamChecker : public CheckerVisitor<StreamChecker> {
-  IdentifierInfo *II_fopen, *II_tmpfile, *II_fclose, *II_fread, *II_fwrite, 
+class StreamChecker : public CheckerV2<eval::Call,
+                                       check::DeadSymbols,
+                                       check::EndPath,
+                                       check::PreStmt<ReturnStmt> > {
+  mutable IdentifierInfo *II_fopen, *II_tmpfile, *II_fclose, *II_fread,
+                 *II_fwrite, 
                  *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
                  *II_clearerr, *II_feof, *II_ferror, *II_fileno;
-  BuiltinBug *BT_nullfp, *BT_illegalwhence, *BT_doubleclose, *BT_ResourceLeak;
+  mutable llvm::OwningPtr<BuiltinBug> BT_nullfp, BT_illegalwhence,
+                                      BT_doubleclose, BT_ResourceLeak;
 
 public:
   StreamChecker() 
     : II_fopen(0), II_tmpfile(0) ,II_fclose(0), II_fread(0), II_fwrite(0), 
       II_fseek(0), II_ftell(0), II_rewind(0), II_fgetpos(0), II_fsetpos(0), 
-      II_clearerr(0), II_feof(0), II_ferror(0), II_fileno(0), 
-      BT_nullfp(0), BT_illegalwhence(0), BT_doubleclose(0), 
-      BT_ResourceLeak(0) {}
+      II_clearerr(0), II_feof(0), II_ferror(0), II_fileno(0) {}
 
-  static void *getTag() {
-    static int x;
-    return &x;
-  }
-
-  virtual bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
-  void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper);
-  void evalEndPath(EndOfFunctionNodeBuilder &B, void *tag, ExprEngine &Eng);
-  void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
+  bool evalCall(const CallExpr *CE, CheckerContext &C) const;
+  void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
+  void checkEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng) const;
+  void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
 
 private:
-  void Fopen(CheckerContext &C, const CallExpr *CE);
-  void Tmpfile(CheckerContext &C, const CallExpr *CE);
-  void Fclose(CheckerContext &C, const CallExpr *CE);
-  void Fread(CheckerContext &C, const CallExpr *CE);
-  void Fwrite(CheckerContext &C, const CallExpr *CE);
-  void Fseek(CheckerContext &C, const CallExpr *CE);
-  void Ftell(CheckerContext &C, const CallExpr *CE);
-  void Rewind(CheckerContext &C, const CallExpr *CE);
-  void Fgetpos(CheckerContext &C, const CallExpr *CE);
-  void Fsetpos(CheckerContext &C, const CallExpr *CE);
-  void Clearerr(CheckerContext &C, const CallExpr *CE);
-  void Feof(CheckerContext &C, const CallExpr *CE);
-  void Ferror(CheckerContext &C, const CallExpr *CE);
-  void Fileno(CheckerContext &C, const CallExpr *CE);
+  void Fopen(CheckerContext &C, const CallExpr *CE) const;
+  void Tmpfile(CheckerContext &C, const CallExpr *CE) const;
+  void Fclose(CheckerContext &C, const CallExpr *CE) const;
+  void Fread(CheckerContext &C, const CallExpr *CE) const;
+  void Fwrite(CheckerContext &C, const CallExpr *CE) const;
+  void Fseek(CheckerContext &C, const CallExpr *CE) const;
+  void Ftell(CheckerContext &C, const CallExpr *CE) const;
+  void Rewind(CheckerContext &C, const CallExpr *CE) const;
+  void Fgetpos(CheckerContext &C, const CallExpr *CE) const;
+  void Fsetpos(CheckerContext &C, const CallExpr *CE) const;
+  void Clearerr(CheckerContext &C, const CallExpr *CE) const;
+  void Feof(CheckerContext &C, const CallExpr *CE) const;
+  void Ferror(CheckerContext &C, const CallExpr *CE) const;
+  void Fileno(CheckerContext &C, const CallExpr *CE) const;
 
-  void OpenFileAux(CheckerContext &C, const CallExpr *CE);
+  void OpenFileAux(CheckerContext &C, const CallExpr *CE) const;
   
   const GRState *CheckNullStream(SVal SV, const GRState *state, 
-                                 CheckerContext &C);
+                                 CheckerContext &C) const;
   const GRState *CheckDoubleClose(const CallExpr *CE, const GRState *state, 
-                                 CheckerContext &C);
+                                 CheckerContext &C) const;
 };
 
 } // end anonymous namespace
@@ -110,20 +109,12 @@ namespace ento {
   template <>
   struct GRStateTrait<StreamState> 
     : public GRStatePartialTrait<llvm::ImmutableMap<SymbolRef, StreamState> > {
-    static void *GDMIndex() { return StreamChecker::getTag(); }
+    static void *GDMIndex() { static int x; return &x; }
   };
 }
 }
 
-static void RegisterStreamChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new StreamChecker());
-}
-
-void ento::registerStreamChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterStreamChecker);
-}
-
-bool StreamChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
+bool StreamChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
@@ -221,15 +212,15 @@ bool StreamChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
   return false;
 }
 
-void StreamChecker::Fopen(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fopen(CheckerContext &C, const CallExpr *CE) const {
   OpenFileAux(C, CE);
 }
 
-void StreamChecker::Tmpfile(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Tmpfile(CheckerContext &C, const CallExpr *CE) const {
   OpenFileAux(C, CE);
 }
 
-void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
@@ -255,25 +246,25 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) {
   }
 }
 
-void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = CheckDoubleClose(CE, C.getState(), C);
   if (state)
     C.addTransition(state);
 }
 
-void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
     return;
 }
 
-void StreamChecker::Fwrite(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fwrite(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
     return;
 }
 
-void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!(state = CheckNullStream(state->getSVal(CE->getArg(0)), state, C)))
     return;
@@ -290,65 +281,65 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) {
 
   if (ExplodedNode *N = C.generateNode(state)) {
     if (!BT_illegalwhence)
-      BT_illegalwhence = new BuiltinBug("Illegal whence argument",
+      BT_illegalwhence.reset(new BuiltinBug("Illegal whence argument",
 					"The whence argument to fseek() should be "
-					"SEEK_SET, SEEK_END, or SEEK_CUR.");
+					"SEEK_SET, SEEK_END, or SEEK_CUR."));
     BugReport *R = new BugReport(*BT_illegalwhence, 
 				 BT_illegalwhence->getDescription(), N);
     C.EmitReport(R);
   }
 }
 
-void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-void StreamChecker::Rewind(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Rewind(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-void StreamChecker::Fgetpos(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fgetpos(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-void StreamChecker::Fsetpos(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fsetpos(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-void StreamChecker::Clearerr(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Clearerr(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-void StreamChecker::Feof(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Feof(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-void StreamChecker::Ferror(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Ferror(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) {
+void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) const {
   const GRState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
-                                    CheckerContext &C) {
+                                    CheckerContext &C) const {
   const DefinedSVal *DV = dyn_cast<DefinedSVal>(&SV);
   if (!DV)
     return 0;
@@ -360,8 +351,8 @@ const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
   if (!stateNotNull && stateNull) {
     if (ExplodedNode *N = C.generateSink(stateNull)) {
       if (!BT_nullfp)
-        BT_nullfp = new BuiltinBug("NULL stream pointer",
-                                     "Stream pointer might be NULL.");
+        BT_nullfp.reset(new BuiltinBug("NULL stream pointer",
+                                     "Stream pointer might be NULL."));
       BugReport *R =new BugReport(*BT_nullfp, BT_nullfp->getDescription(), N);
       C.EmitReport(R);
     }
@@ -372,7 +363,7 @@ const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
 
 const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
                                                const GRState *state,
-                                               CheckerContext &C) {
+                                               CheckerContext &C) const {
   SymbolRef Sym = state->getSVal(CE->getArg(0)).getAsSymbol();
   if (!Sym)
     return state;
@@ -389,9 +380,9 @@ const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
     ExplodedNode *N = C.generateSink();
     if (N) {
       if (!BT_doubleclose)
-        BT_doubleclose = new BuiltinBug("Double fclose",
+        BT_doubleclose.reset(new BuiltinBug("Double fclose",
                                         "Try to close a file Descriptor already"
-                                        " closed. Cause undefined behaviour.");
+                                        " closed. Cause undefined behaviour."));
       BugReport *R = new BugReport(*BT_doubleclose,
                                    BT_doubleclose->getDescription(), N);
       C.EmitReport(R);
@@ -403,7 +394,8 @@ const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
   return state->set<StreamState>(Sym, StreamState::getClosed(CE));
 }
 
-void StreamChecker::evalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
+void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
+                                     CheckerContext &C) const {
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
          E = SymReaper.dead_end(); I != E; ++I) {
     SymbolRef Sym = *I;
@@ -416,8 +408,8 @@ void StreamChecker::evalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
       ExplodedNode *N = C.generateSink();
       if (N) {
         if (!BT_ResourceLeak)
-          BT_ResourceLeak = new BuiltinBug("Resource Leak", 
-                          "Opened File never closed. Potential Resource leak.");
+          BT_ResourceLeak.reset(new BuiltinBug("Resource Leak", 
+                         "Opened File never closed. Potential Resource leak."));
         BugReport *R = new BugReport(*BT_ResourceLeak, 
                                      BT_ResourceLeak->getDescription(), N);
         C.EmitReport(R);
@@ -426,8 +418,8 @@ void StreamChecker::evalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
   }
 }
 
-void StreamChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
-                                ExprEngine &Eng) {
+void StreamChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
+                                 ExprEngine &Eng) const {
   const GRState *state = B.getState();
   typedef llvm::ImmutableMap<SymbolRef, StreamState> SymMap;
   SymMap M = state->get<StreamState>();
@@ -438,8 +430,8 @@ void StreamChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
       ExplodedNode *N = B.generateNode(state);
       if (N) {
         if (!BT_ResourceLeak)
-          BT_ResourceLeak = new BuiltinBug("Resource Leak", 
-                          "Opened File never closed. Potential Resource leak.");
+          BT_ResourceLeak.reset(new BuiltinBug("Resource Leak", 
+                         "Opened File never closed. Potential Resource leak."));
         BugReport *R = new BugReport(*BT_ResourceLeak, 
                                      BT_ResourceLeak->getDescription(), N);
         Eng.getBugReporter().EmitReport(R);
@@ -448,7 +440,7 @@ void StreamChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
   }
 }
 
-void StreamChecker::PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S) {
+void StreamChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   const Expr *RetE = S->getRetValue();
   if (!RetE)
     return;
@@ -467,4 +459,8 @@ void StreamChecker::PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S) {
     state = state->set<StreamState>(Sym, StreamState::getEscaped(S));
 
   C.addTransition(state);
+}
+
+void ento::registerStreamChecker(CheckerManager &mgr) {
+  mgr.registerChecker<StreamChecker>();
 }
