@@ -1402,6 +1402,7 @@ namespace {
     void setDoesNotAlias(Function &F, unsigned n);
     bool doInitialization(Module &M);
 
+    void inferPrototypeAttributes(Function &F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     }
   };
@@ -1597,688 +1598,654 @@ void SimplifyLibCalls::setDoesNotAlias(Function &F, unsigned n) {
   }
 }
 
+
+void SimplifyLibCalls::inferPrototypeAttributes(Function &F) {
+  const FunctionType *FTy = F.getFunctionType();
+  
+  StringRef Name = F.getName();
+  switch (Name[0]) {
+  case 's':
+    if (Name == "strlen") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setOnlyReadsMemory(F);
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "strchr" ||
+               Name == "strrchr") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isIntegerTy())
+        return;
+      setOnlyReadsMemory(F);
+      setDoesNotThrow(F);
+    } else if (Name == "strcpy" ||
+               Name == "stpcpy" ||
+               Name == "strcat" ||
+               Name == "strtol" ||
+               Name == "strtod" ||
+               Name == "strtof" ||
+               Name == "strtoul" ||
+               Name == "strtoll" ||
+               Name == "strtold" ||
+               Name == "strncat" ||
+               Name == "strncpy" ||
+               Name == "strtoull") {
+      if (FTy->getNumParams() < 2 ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "strxfrm") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "strcmp" ||
+               Name == "strspn" ||
+               Name == "strncmp" ||
+               Name == "strcspn" ||
+               Name == "strcoll" ||
+               Name == "strcasecmp" ||
+               Name == "strncasecmp") {
+      if (FTy->getNumParams() < 2 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setOnlyReadsMemory(F);
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "strstr" ||
+               Name == "strpbrk") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setOnlyReadsMemory(F);
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "strtok" ||
+               Name == "strtok_r") {
+      if (FTy->getNumParams() < 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "scanf" ||
+               Name == "setbuf" ||
+               Name == "setvbuf") {
+      if (FTy->getNumParams() < 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "strdup" ||
+               Name == "strndup") {
+      if (FTy->getNumParams() < 1 || !FTy->getReturnType()->isPointerTy() ||
+          !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "stat" ||
+               Name == "sscanf" ||
+               Name == "sprintf" ||
+               Name == "statvfs") {
+      if (FTy->getNumParams() < 2 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "snprintf") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(2)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 3);
+    } else if (Name == "setitimer") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(1)->isPointerTy() ||
+          !FTy->getParamType(2)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+      setDoesNotCapture(F, 3);
+    } else if (Name == "system") {
+      if (FTy->getNumParams() != 1 ||
+          !FTy->getParamType(0)->isPointerTy())
+        return;
+      // May throw; "system" is a valid pthread cancellation point.
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'm':
+    if (Name == "malloc") {
+      if (FTy->getNumParams() != 1 ||
+          !FTy->getReturnType()->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+    } else if (Name == "memcmp") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setOnlyReadsMemory(F);
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "memchr" ||
+               Name == "memrchr") {
+      if (FTy->getNumParams() != 3)
+        return;
+      setOnlyReadsMemory(F);
+      setDoesNotThrow(F);
+    } else if (Name == "modf" ||
+               Name == "modff" ||
+               Name == "modfl" ||
+               Name == "memcpy" ||
+               Name == "memccpy" ||
+               Name == "memmove") {
+      if (FTy->getNumParams() < 2 ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "memalign") {
+      if (!FTy->getReturnType()->isPointerTy())
+        return;
+      setDoesNotAlias(F, 0);
+    } else if (Name == "mkdir" ||
+               Name == "mktime") {
+      if (FTy->getNumParams() == 0 ||
+          !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'r':
+    if (Name == "realloc") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getReturnType()->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "read") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      // May throw; "read" is a valid pthread cancellation point.
+      setDoesNotCapture(F, 2);
+    } else if (Name == "rmdir" ||
+               Name == "rewind" ||
+               Name == "remove" ||
+               Name == "realpath") {
+      if (FTy->getNumParams() < 1 ||
+          !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "rename" ||
+               Name == "readlink") {
+      if (FTy->getNumParams() < 2 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    }
+    break;
+  case 'w':
+    if (Name == "write") {
+      if (FTy->getNumParams() != 3 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      // May throw; "write" is a valid pthread cancellation point.
+      setDoesNotCapture(F, 2);
+    }
+    break;
+  case 'b':
+    if (Name == "bcopy") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "bcmp") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setOnlyReadsMemory(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "bzero") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'c':
+    if (Name == "calloc") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getReturnType()->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+    } else if (Name == "chmod" ||
+               Name == "chown" ||
+               Name == "ctermid" ||
+               Name == "clearerr" ||
+               Name == "closedir") {
+      if (FTy->getNumParams() == 0 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'a':
+    if (Name == "atoi" ||
+        Name == "atol" ||
+        Name == "atof" ||
+        Name == "atoll") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setOnlyReadsMemory(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "access") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'f':
+    if (Name == "fopen") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getReturnType()->isPointerTy() ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "fdopen") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getReturnType()->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "feof" ||
+               Name == "free" ||
+               Name == "fseek" ||
+               Name == "ftell" ||
+               Name == "fgetc" ||
+               Name == "fseeko" ||
+               Name == "ftello" ||
+               Name == "fileno" ||
+               Name == "fflush" ||
+               Name == "fclose" ||
+               Name == "fsetpos" ||
+               Name == "flockfile" ||
+               Name == "funlockfile" ||
+               Name == "ftrylockfile") {
+      if (FTy->getNumParams() == 0 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "ferror") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setOnlyReadsMemory(F);
+    } else if (Name == "fputc" ||
+               Name == "fstat" ||
+               Name == "frexp" ||
+               Name == "frexpf" ||
+               Name == "frexpl" ||
+               Name == "fstatvfs") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "fgets") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(2)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 3);
+    } else if (Name == "fread" ||
+               Name == "fwrite") {
+      if (FTy->getNumParams() != 4 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(3)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 4);
+    } else if (Name == "fputs" ||
+               Name == "fscanf" ||
+               Name == "fprintf" ||
+               Name == "fgetpos") {
+      if (FTy->getNumParams() < 2 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    }
+    break;
+  case 'g':
+    if (Name == "getc" ||
+        Name == "getlogin_r" ||
+        Name == "getc_unlocked") {
+      if (FTy->getNumParams() == 0 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "getenv") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setOnlyReadsMemory(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "gets" ||
+               Name == "getchar") {
+      setDoesNotThrow(F);
+    } else if (Name == "getitimer") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "getpwnam") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'u':
+    if (Name == "ungetc") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "uname" ||
+               Name == "unlink" ||
+               Name == "unsetenv") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "utime" ||
+               Name == "utimes") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    }
+    break;
+  case 'p':
+    if (Name == "putc") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "puts" ||
+               Name == "printf" ||
+               Name == "perror") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "pread" ||
+               Name == "pwrite") {
+      if (FTy->getNumParams() != 4 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      // May throw; these are valid pthread cancellation points.
+      setDoesNotCapture(F, 2);
+    } else if (Name == "putchar") {
+      setDoesNotThrow(F);
+    } else if (Name == "popen") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getReturnType()->isPointerTy() ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "pclose") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'v':
+    if (Name == "vscanf") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "vsscanf" ||
+               Name == "vfscanf") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(1)->isPointerTy() ||
+          !FTy->getParamType(2)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "valloc") {
+      if (!FTy->getReturnType()->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+    } else if (Name == "vprintf") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "vfprintf" ||
+               Name == "vsprintf") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "vsnprintf") {
+      if (FTy->getNumParams() != 4 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(2)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 3);
+    }
+    break;
+  case 'o':
+    if (Name == "open") {
+      if (FTy->getNumParams() < 2 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      // May throw; "open" is a valid pthread cancellation point.
+      setDoesNotCapture(F, 1);
+    } else if (Name == "opendir") {
+      if (FTy->getNumParams() != 1 ||
+          !FTy->getReturnType()->isPointerTy() ||
+          !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 't':
+    if (Name == "tmpfile") {
+      if (!FTy->getReturnType()->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+    } else if (Name == "times") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'h':
+    if (Name == "htonl" ||
+        Name == "htons") {
+      setDoesNotThrow(F);
+      setDoesNotAccessMemory(F);
+    }
+    break;
+  case 'n':
+    if (Name == "ntohl" ||
+        Name == "ntohs") {
+      setDoesNotThrow(F);
+      setDoesNotAccessMemory(F);
+    }
+    break;
+  case 'l':
+    if (Name == "lstat") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "lchown") {
+      if (FTy->getNumParams() != 3 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  case 'q':
+    if (Name == "qsort") {
+      if (FTy->getNumParams() != 4 || !FTy->getParamType(3)->isPointerTy())
+        return;
+      // May throw; places call through function pointer.
+      setDoesNotCapture(F, 4);
+    }
+    break;
+  case '_':
+    if (Name == "__strdup" ||
+        Name == "__strndup") {
+      if (FTy->getNumParams() < 1 ||
+          !FTy->getReturnType()->isPointerTy() ||
+          !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "__strtok_r") {
+      if (FTy->getNumParams() != 3 ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "_IO_getc") {
+      if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "_IO_putc") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    }
+    break;
+  case 1:
+    if (Name == "\1__isoc99_scanf") {
+      if (FTy->getNumParams() < 1 ||
+          !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "\1stat64" ||
+               Name == "\1lstat64" ||
+               Name == "\1statvfs64" ||
+               Name == "\1__isoc99_sscanf") {
+      if (FTy->getNumParams() < 1 ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "\1fopen64") {
+      if (FTy->getNumParams() != 2 ||
+          !FTy->getReturnType()->isPointerTy() ||
+          !FTy->getParamType(0)->isPointerTy() ||
+          !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+      setDoesNotCapture(F, 1);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "\1fseeko64" ||
+               Name == "\1ftello64") {
+      if (FTy->getNumParams() == 0 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 1);
+    } else if (Name == "\1tmpfile64") {
+      if (!FTy->getReturnType()->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotAlias(F, 0);
+    } else if (Name == "\1fstat64" ||
+               Name == "\1fstatvfs64") {
+      if (FTy->getNumParams() != 2 || !FTy->getParamType(1)->isPointerTy())
+        return;
+      setDoesNotThrow(F);
+      setDoesNotCapture(F, 2);
+    } else if (Name == "\1open64") {
+      if (FTy->getNumParams() < 2 || !FTy->getParamType(0)->isPointerTy())
+        return;
+      // May throw; "open" is a valid pthread cancellation point.
+      setDoesNotCapture(F, 1);
+    }
+    break;
+  }
+}
+
 /// doInitialization - Add attributes to well-known functions.
 ///
 bool SimplifyLibCalls::doInitialization(Module &M) {
   Modified = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     Function &F = *I;
-    if (!F.isDeclaration())
-      continue;
-
-    if (!F.hasName())
-      continue;
-
-    const FunctionType *FTy = F.getFunctionType();
-
-    StringRef Name = F.getName();
-    switch (Name[0]) {
-      case 's':
-        if (Name == "strlen") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setOnlyReadsMemory(F);
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "strchr" ||
-                   Name == "strrchr") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isIntegerTy())
-            continue;
-          setOnlyReadsMemory(F);
-          setDoesNotThrow(F);
-        } else if (Name == "strcpy" ||
-                   Name == "stpcpy" ||
-                   Name == "strcat" ||
-                   Name == "strtol" ||
-                   Name == "strtod" ||
-                   Name == "strtof" ||
-                   Name == "strtoul" ||
-                   Name == "strtoll" ||
-                   Name == "strtold" ||
-                   Name == "strncat" ||
-                   Name == "strncpy" ||
-                   Name == "strtoull") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "strxfrm") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "strcmp" ||
-                   Name == "strspn" ||
-                   Name == "strncmp" ||
-                   Name == "strcspn" ||
-                   Name == "strcoll" ||
-                   Name == "strcasecmp" ||
-                   Name == "strncasecmp") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setOnlyReadsMemory(F);
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "strstr" ||
-                   Name == "strpbrk") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setOnlyReadsMemory(F);
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "strtok" ||
-                   Name == "strtok_r") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "scanf" ||
-                   Name == "setbuf" ||
-                   Name == "setvbuf") {
-          if (FTy->getNumParams() < 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "strdup" ||
-                   Name == "strndup") {
-          if (FTy->getNumParams() < 1 ||
-              !FTy->getReturnType()->isPointerTy() ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "stat" ||
-                   Name == "sscanf" ||
-                   Name == "sprintf" ||
-                   Name == "statvfs") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "snprintf") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(2)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 3);
-        } else if (Name == "setitimer") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(1)->isPointerTy() ||
-              !FTy->getParamType(2)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-          setDoesNotCapture(F, 3);
-        } else if (Name == "system") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          // May throw; "system" is a valid pthread cancellation point.
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'm':
-        if (Name == "malloc") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getReturnType()->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-        } else if (Name == "memcmp") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setOnlyReadsMemory(F);
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "memchr" ||
-                   Name == "memrchr") {
-          if (FTy->getNumParams() != 3)
-            continue;
-          setOnlyReadsMemory(F);
-          setDoesNotThrow(F);
-        } else if (Name == "modf" ||
-                   Name == "modff" ||
-                   Name == "modfl" ||
-                   Name == "memcpy" ||
-                   Name == "memccpy" ||
-                   Name == "memmove") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "memalign") {
-          if (!FTy->getReturnType()->isPointerTy())
-            continue;
-          setDoesNotAlias(F, 0);
-        } else if (Name == "mkdir" ||
-                   Name == "mktime") {
-          if (FTy->getNumParams() == 0 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'r':
-        if (Name == "realloc") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getReturnType()->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "read") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          // May throw; "read" is a valid pthread cancellation point.
-          setDoesNotCapture(F, 2);
-        } else if (Name == "rmdir" ||
-                   Name == "rewind" ||
-                   Name == "remove" ||
-                   Name == "realpath") {
-          if (FTy->getNumParams() < 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "rename" ||
-                   Name == "readlink") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        }
-        break;
-      case 'w':
-        if (Name == "write") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          // May throw; "write" is a valid pthread cancellation point.
-          setDoesNotCapture(F, 2);
-        }
-        break;
-      case 'b':
-        if (Name == "bcopy") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "bcmp") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setOnlyReadsMemory(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "bzero") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'c':
-        if (Name == "calloc") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getReturnType()->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-        } else if (Name == "chmod" ||
-                   Name == "chown" ||
-                   Name == "ctermid" ||
-                   Name == "clearerr" ||
-                   Name == "closedir") {
-          if (FTy->getNumParams() == 0 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'a':
-        if (Name == "atoi" ||
-            Name == "atol" ||
-            Name == "atof" ||
-            Name == "atoll") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setOnlyReadsMemory(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "access") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'f':
-        if (Name == "fopen") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getReturnType()->isPointerTy() ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "fdopen") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getReturnType()->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "feof" ||
-                   Name == "free" ||
-                   Name == "fseek" ||
-                   Name == "ftell" ||
-                   Name == "fgetc" ||
-                   Name == "fseeko" ||
-                   Name == "ftello" ||
-                   Name == "fileno" ||
-                   Name == "fflush" ||
-                   Name == "fclose" ||
-                   Name == "fsetpos" ||
-                   Name == "flockfile" ||
-                   Name == "funlockfile" ||
-                   Name == "ftrylockfile") {
-          if (FTy->getNumParams() == 0 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "ferror") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setOnlyReadsMemory(F);
-        } else if (Name == "fputc" ||
-                   Name == "fstat" ||
-                   Name == "frexp" ||
-                   Name == "frexpf" ||
-                   Name == "frexpl" ||
-                   Name == "fstatvfs") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "fgets") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(2)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 3);
-        } else if (Name == "fread" ||
-                   Name == "fwrite") {
-          if (FTy->getNumParams() != 4 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(3)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 4);
-        } else if (Name == "fputs" ||
-                   Name == "fscanf" ||
-                   Name == "fprintf" ||
-                   Name == "fgetpos") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        }
-        break;
-      case 'g':
-        if (Name == "getc" ||
-            Name == "getlogin_r" ||
-            Name == "getc_unlocked") {
-          if (FTy->getNumParams() == 0 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "getenv") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setOnlyReadsMemory(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "gets" ||
-                   Name == "getchar") {
-          setDoesNotThrow(F);
-        } else if (Name == "getitimer") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "getpwnam") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'u':
-        if (Name == "ungetc") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "uname" ||
-                   Name == "unlink" ||
-                   Name == "unsetenv") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "utime" ||
-                   Name == "utimes") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        }
-        break;
-      case 'p':
-        if (Name == "putc") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "puts" ||
-                   Name == "printf" ||
-                   Name == "perror") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "pread" ||
-                   Name == "pwrite") {
-          if (FTy->getNumParams() != 4 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          // May throw; these are valid pthread cancellation points.
-          setDoesNotCapture(F, 2);
-        } else if (Name == "putchar") {
-          setDoesNotThrow(F);
-        } else if (Name == "popen") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getReturnType()->isPointerTy() ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "pclose") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'v':
-        if (Name == "vscanf") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "vsscanf" ||
-                   Name == "vfscanf") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(1)->isPointerTy() ||
-              !FTy->getParamType(2)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "valloc") {
-          if (!FTy->getReturnType()->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-        } else if (Name == "vprintf") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "vfprintf" ||
-                   Name == "vsprintf") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "vsnprintf") {
-          if (FTy->getNumParams() != 4 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(2)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 3);
-        }
-        break;
-      case 'o':
-        if (Name == "open") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          // May throw; "open" is a valid pthread cancellation point.
-          setDoesNotCapture(F, 1);
-        } else if (Name == "opendir") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getReturnType()->isPointerTy() ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 't':
-        if (Name == "tmpfile") {
-          if (!FTy->getReturnType()->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-        } else if (Name == "times") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'h':
-        if (Name == "htonl" ||
-            Name == "htons") {
-          setDoesNotThrow(F);
-          setDoesNotAccessMemory(F);
-        }
-        break;
-      case 'n':
-        if (Name == "ntohl" ||
-            Name == "ntohs") {
-          setDoesNotThrow(F);
-          setDoesNotAccessMemory(F);
-        }
-        break;
-      case 'l':
-        if (Name == "lstat") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "lchown") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        }
-        break;
-      case 'q':
-        if (Name == "qsort") {
-          if (FTy->getNumParams() != 4 ||
-              !FTy->getParamType(3)->isPointerTy())
-            continue;
-          // May throw; places call through function pointer.
-          setDoesNotCapture(F, 4);
-        }
-        break;
-      case '_':
-        if (Name == "__strdup" ||
-            Name == "__strndup") {
-          if (FTy->getNumParams() < 1 ||
-              !FTy->getReturnType()->isPointerTy() ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "__strtok_r") {
-          if (FTy->getNumParams() != 3 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "_IO_getc") {
-          if (FTy->getNumParams() != 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "_IO_putc") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        }
-        break;
-      case 1:
-        if (Name == "\1__isoc99_scanf") {
-          if (FTy->getNumParams() < 1 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "\1stat64" ||
-                   Name == "\1lstat64" ||
-                   Name == "\1statvfs64" ||
-                   Name == "\1__isoc99_sscanf") {
-          if (FTy->getNumParams() < 1 ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "\1fopen64") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getReturnType()->isPointerTy() ||
-              !FTy->getParamType(0)->isPointerTy() ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-          setDoesNotCapture(F, 1);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "\1fseeko64" ||
-                   Name == "\1ftello64") {
-          if (FTy->getNumParams() == 0 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
-        } else if (Name == "\1tmpfile64") {
-          if (!FTy->getReturnType()->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotAlias(F, 0);
-        } else if (Name == "\1fstat64" ||
-                   Name == "\1fstatvfs64") {
-          if (FTy->getNumParams() != 2 ||
-              !FTy->getParamType(1)->isPointerTy())
-            continue;
-          setDoesNotThrow(F);
-          setDoesNotCapture(F, 2);
-        } else if (Name == "\1open64") {
-          if (FTy->getNumParams() < 2 ||
-              !FTy->getParamType(0)->isPointerTy())
-            continue;
-          // May throw; "open" is a valid pthread cancellation point.
-          setDoesNotCapture(F, 1);
-        }
-        break;
-    }
+    if (F.isDeclaration() && F.hasName())
+      inferPrototypeAttributes(F);
   }
   return Modified;
 }
