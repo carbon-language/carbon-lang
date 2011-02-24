@@ -18,6 +18,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/TemplateDeduction.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Decl.h"
@@ -1132,7 +1133,11 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
   if (AllowBuiltinCreation)
     return LookupBuiltin(*this, R);
 
-  return false;
+  // If we didn't find a use of this identifier, the ExternalSource 
+  // may be able to handle the situation. 
+  // Note: some lookup failures are expected!
+  // See e.g. R.isForRedeclaration().
+  return (ExternalSource && ExternalSource->LookupUnqualified(R, S));
 }
 
 /// @brief Perform qualified name lookup in the namespaces nominated by
