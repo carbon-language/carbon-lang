@@ -641,16 +641,17 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
       // If the source register was virtual and if we know something about it,
       // add an assert node.
       if (!TargetRegisterInfo::isVirtualRegister(Regs[Part+i]) ||
-          !RegisterVT.isInteger() || RegisterVT.isVector() ||
-          !FuncInfo.LiveOutRegInfo.inBounds(Regs[Part+i]))
+          !RegisterVT.isInteger() || RegisterVT.isVector())
         continue;
-      
-      const FunctionLoweringInfo::LiveOutInfo &LOI =
-        FuncInfo.LiveOutRegInfo[Regs[Part+i]];
+
+      const FunctionLoweringInfo::LiveOutInfo *LOI =
+        FuncInfo.GetLiveOutRegInfo(Regs[Part+i]);
+      if (!LOI)
+        continue;
 
       unsigned RegSize = RegisterVT.getSizeInBits();
-      unsigned NumSignBits = LOI.NumSignBits;
-      unsigned NumZeroBits = LOI.KnownZero.countLeadingOnes();
+      unsigned NumSignBits = LOI->NumSignBits;
+      unsigned NumZeroBits = LOI->KnownZero.countLeadingOnes();
 
       // FIXME: We capture more information than the dag can represent.  For
       // now, just use the tightest assertzext/assertsext possible.

@@ -105,9 +105,6 @@ public:
     APInt KnownOne, KnownZero;
     LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
   };
-  
-  /// LiveOutRegInfo - Information about live out vregs.
-  IndexedMap<LiveOutInfo, VirtReg2IndexFunctor> LiveOutRegInfo;
 
   /// PHINodesToUpdate - A list of phi instructions whose operand list will
   /// be updated after processing the current basic block.
@@ -143,12 +140,38 @@ public:
     return R = CreateRegs(V->getType());
   }
 
+  /// GetLiveOutRegInfo - Gets LiveOutInfo for a register, returning NULL if the
+  /// register is a PHI destination and the PHI's LiveOutInfo is not valid.
+  const LiveOutInfo *GetLiveOutRegInfo(unsigned Reg) {
+    if (!LiveOutRegInfo.inBounds(Reg))
+      return NULL;
+    return &LiveOutRegInfo[Reg];
+  }
+
+  /// AddLiveOutRegInfo - Adds LiveOutInfo for a register.
+  void AddLiveOutRegInfo(unsigned Reg, unsigned NumSignBits,
+                         const APInt &KnownZero, const APInt &KnownOne) {
+    // Only install this information if it tells us something.
+    if (NumSignBits == 1 && KnownZero == 0 && KnownOne == 0)
+      return;
+
+    LiveOutRegInfo.grow(Reg);
+    LiveOutInfo &LOI = LiveOutRegInfo[Reg];
+    LOI.NumSignBits = NumSignBits;
+    LOI.KnownOne = KnownOne;
+    LOI.KnownZero = KnownZero;
+  }
+
   /// setByValArgumentFrameIndex - Record frame index for the byval
   /// argument.
   void setByValArgumentFrameIndex(const Argument *A, int FI);
   
   /// getByValArgumentFrameIndex - Get frame index for the byval argument.
   int getByValArgumentFrameIndex(const Argument *A);
+
+private:
+  /// LiveOutRegInfo - Information about live out vregs.
+  IndexedMap<LiveOutInfo, VirtReg2IndexFunctor> LiveOutRegInfo;
 };
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector

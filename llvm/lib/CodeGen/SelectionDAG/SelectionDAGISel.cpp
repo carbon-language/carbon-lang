@@ -480,16 +480,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
     unsigned NumSignBits = CurDAG->ComputeNumSignBits(Src);
     Mask = APInt::getAllOnesValue(SrcVT.getSizeInBits());
     CurDAG->ComputeMaskedBits(Src, Mask, KnownZero, KnownOne);
-
-    // Only install this information if it tells us something.
-    if (NumSignBits != 1 || KnownZero != 0 || KnownOne != 0) {
-      FuncInfo->LiveOutRegInfo.grow(DestReg);
-      FunctionLoweringInfo::LiveOutInfo &LOI =
-        FuncInfo->LiveOutRegInfo[DestReg];
-      LOI.NumSignBits = NumSignBits;
-      LOI.KnownOne = KnownOne;
-      LOI.KnownZero = KnownZero;
-    }
+    FuncInfo->AddLiveOutRegInfo(DestReg, NumSignBits, KnownZero, KnownOne);
   } while (!Worklist.empty());
 }
 
