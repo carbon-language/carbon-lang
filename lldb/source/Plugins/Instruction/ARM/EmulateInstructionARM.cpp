@@ -7124,7 +7124,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Branch instructions
         //----------------------------------------------------------------------
-        { 0x0f000000, 0x0a000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "b #imm24"},
+        { 0x0f000000, 0x0a000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateB, "b #imm24"},
         // To resolve ambiguity, "blx <label>" should come before "bl <label>".
         { 0xfe000000, 0xfa000000, ARMV5_ABOVE,   eEncodingA2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
         { 0x0f000000, 0x0b000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
@@ -7317,9 +7317,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // To resolve ambiguity, "b<c> #imm8" should come after "svc #imm8".
         { 0xfffff000, 0x0000d000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm8 (outside IT)"},
-        { 0xffff8000, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b #imm11 (outside or last in IT)"},
+        { 0xffff8000, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm11 (outside or last in IT)"},
         { 0xf800d000, 0xf0008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
-        { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b.w #imm8 (outside or last in IT)"},
+        { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside or last in IT)"},
         // J1 == J2 == 1
         { 0xf800f800, 0xf000f800, ARMV4T_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
         // J1 == J2 == 1
