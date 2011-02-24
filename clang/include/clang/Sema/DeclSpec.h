@@ -66,7 +66,6 @@ public:
   SourceLocation getEndLoc() const { return Range.getEnd(); }
 
   NestedNameSpecifier *getScopeRep() const { return ScopeRep; }
-  void setScopeRep(NestedNameSpecifier *S) { ScopeRep = S; }
 
   /// \brief Extend the current nested-name-specifier by another
   /// nested-name-specifier component of the form 'type::'.
@@ -115,6 +114,13 @@ public:
   /// \brief Turn this (empty) nested-name-specifier into the global
   /// nested-name-specifier '::'.
   void MakeGlobal(ASTContext &Context, SourceLocation ColonColonLoc);
+  
+  /// \brief Adopt an existing nested-name-specifier and its source range
+  /// as our own.
+  void Adopt(NestedNameSpecifier *Qualifier, SourceRange R) {
+    ScopeRep = Qualifier;
+    Range = R;
+  }
   
   /// No scope specifier.
   bool isEmpty() const { return !Range.isValid(); }

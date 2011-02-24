@@ -107,7 +107,7 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
       // Nothing left to do.
     } else if (LookAtPrefix && (Prefix = NNS->getPrefix())) {
       CXXScopeSpec PrefixSS;
-      PrefixSS.setScopeRep(Prefix);
+      PrefixSS.Adopt(Prefix, SS.getRange());
       LookupCtx = computeDeclContext(PrefixSS, EnteringContext);
       isDependent = isDependentScopeSpecifier(PrefixSS);
     } else if (ObjectTypePtr) {

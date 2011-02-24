@@ -3610,7 +3610,7 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
         = NestedNameSpecifier::Create(Context, 0, false,
                                       ClassType.getTypePtr());
       CXXScopeSpec SS;
-      SS.setScopeRep(Qualifier);
+      SS.Adopt(Qualifier, Loc);
 
       // The actual value-ness of this is unimportant, but for
       // internal consistency's sake, references to instance methods
@@ -5997,8 +5997,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
                         SourceLocation KeywordLoc, SourceRange NNSRange,
                         SourceLocation IILoc) {
   CXXScopeSpec SS;
-  SS.setScopeRep(NNS);
-  SS.setRange(NNSRange);
+  SS.Adopt(NNS, NNSRange);
 
   DeclContext *Ctx = computeDeclContext(SS);
   if (!Ctx) {
@@ -6177,7 +6176,7 @@ bool Sema::RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS) {
     Rebuilder.TransformNestedNameSpecifier(NNS, SS.getRange());
   if (!Rebuilt) return true;
 
-  SS.setScopeRep(Rebuilt);
+  SS.Adopt(Rebuilt, SS.getRange());
   return false;
 }
 

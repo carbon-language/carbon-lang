@@ -956,8 +956,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         goto DoneWithDeclSpec;
 
       CXXScopeSpec SS;
-      SS.setScopeRep((NestedNameSpecifier*) Tok.getAnnotationValue());
-      SS.setRange(Tok.getAnnotationRange());
+      SS.Adopt(static_cast<NestedNameSpecifier *>(Tok.getAnnotationValue()),
+               Tok.getAnnotationRange());
 
       // We are looking for a qualified typename.
       Token Next = NextToken();

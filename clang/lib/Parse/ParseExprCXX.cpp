@@ -65,8 +65,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
          "Call sites of this function should be guarded by checking for C++");
 
   if (Tok.is(tok::annot_cxxscope)) {
-    SS.setScopeRep(static_cast<NestedNameSpecifier*>(Tok.getAnnotationValue()));
-    SS.setRange(Tok.getAnnotationRange());
+    SS.Adopt(static_cast<NestedNameSpecifier*>(Tok.getAnnotationValue()),
+             Tok.getAnnotationRange());
     ConsumeToken();
     return false;
   }

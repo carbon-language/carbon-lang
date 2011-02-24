@@ -7593,10 +7593,8 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                       SourceLocation RParenLoc) {
 
   CXXScopeSpec SS;
-  if (ULE->getQualifier()) {
-    SS.setScopeRep(ULE->getQualifier());
-    SS.setRange(ULE->getQualifierRange());
-  }
+  if (ULE->getQualifier())
+    SS.Adopt(ULE->getQualifier(), ULE->getQualifierRange());
 
   TemplateArgumentListInfo TABuffer;
   const TemplateArgumentListInfo *ExplicitTemplateArgs = 0;

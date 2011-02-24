@@ -759,8 +759,7 @@ public:
                                     SourceRange NNSRange,
                                     SourceLocation IdLoc) {
     CXXScopeSpec SS;
-    SS.setScopeRep(NNS);
-    SS.setRange(NNSRange);
+    SS.Adopt(NNS, NNSRange);
 
     if (NNS->isDependent()) {
       // If the name is still dependent, just build a new dependent name type.
@@ -1243,8 +1242,7 @@ public:
                                 const DeclarationNameInfo &NameInfo,
                                 TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
-    SS.setScopeRep(Qualifier);
-    SS.setRange(QualifierRange);
+    SS.Adopt(Qualifier, QualifierRange);
 
     // FIXME: loses template args.
 
@@ -1383,8 +1381,7 @@ public:
 
     CXXScopeSpec SS;
     if (Qualifier) {
-      SS.setRange(QualifierRange);
-      SS.setScopeRep(Qualifier);
+      SS.Adopt(Qualifier, QualifierRange);
     }
 
     getSema().DefaultFunctionArrayConversion(Base);
@@ -1875,8 +1872,7 @@ public:
                                        const DeclarationNameInfo &NameInfo,
                               const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
-    SS.setRange(QualifierRange);
-    SS.setScopeRep(NNS);
+    SS.Adopt(NNS, QualifierRange);
 
     if (TemplateArgs)
       return getSema().BuildQualifiedTemplateIdExpr(SS, NameInfo,
@@ -1961,8 +1957,7 @@ public:
                                    const DeclarationNameInfo &MemberNameInfo,
                               const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
-    SS.setRange(QualifierRange);
-    SS.setScopeRep(Qualifier);
+    SS.Adopt(Qualifier, QualifierRange);
 
     return SemaRef.BuildMemberReferenceExpr(BaseE, BaseType,
                                             OperatorLoc, IsArrow,
@@ -1985,8 +1980,7 @@ public:
                                                LookupResult &R,
                                 const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
-    SS.setRange(QualifierRange);
-    SS.setScopeRep(Qualifier);
+    SS.Adopt(Qualifier, QualifierRange);
 
     return SemaRef.BuildMemberReferenceExpr(BaseE, BaseType,
                                             OperatorLoc, IsArrow,
@@ -6449,10 +6443,8 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
   } else {
     // Look for a destructor known with the given name.
     CXXScopeSpec SS;
-    if (Qualifier) {
-      SS.setScopeRep(Qualifier);
-      SS.setRange(E->getQualifierRange());
-    }
+    if (Qualifier)
+      SS.Adopt(Qualifier, E->getQualifierRange());
     
     ParsedType T = SemaRef.getDestructorName(E->getTildeLoc(),
                                               *E->getDestroyedTypeIdentifier(),
@@ -6535,8 +6527,7 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
     if (!Qualifier)
       return ExprError();
     
-    SS.setScopeRep(Qualifier);
-    SS.setRange(Old->getQualifierRange());
+    SS.Adopt(Qualifier, Old->getQualifierRange());
   } 
   
   if (Old->getNamingClass()) {
@@ -7557,8 +7548,7 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                    NamedDecl *FirstQualifierInScope) {
   CXXScopeSpec SS;
   // FIXME: The source location information is all wrong.
-  SS.setRange(Range);
-  SS.setScopeRep(Prefix);
+  SS.Adopt(Prefix, Range);
   if (SemaRef.BuildCXXNestedNameSpecifier(0, II, /*FIXME:*/Range.getBegin(),
                                           /*FIXME:*/Range.getEnd(),
                                           ObjectType, false,
@@ -7611,8 +7601,7 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                             QualType ObjectType,
                                             NamedDecl *FirstQualifierInScope) {
   CXXScopeSpec SS;
-  SS.setRange(QualifierRange);
-  SS.setScopeRep(Qualifier);
+  SS.Adopt(Qualifier, QualifierRange);
   UnqualifiedId Name;
   Name.setIdentifier(&II, /*FIXME:*/getDerived().getBaseLocation());
   Sema::TemplateTy Template;
@@ -7632,8 +7621,7 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                             OverloadedOperatorKind Operator,
                                             QualType ObjectType) {
   CXXScopeSpec SS;
-  SS.setRange(SourceRange(getDerived().getBaseLocation()));
-  SS.setScopeRep(Qualifier);
+  SS.Adopt(Qualifier, SourceRange(getDerived().getBaseLocation()));
   UnqualifiedId Name;
   SourceLocation SymbolLocations[3]; // FIXME: Bogus location information.
   Name.setOperatorFunctionId(/*FIXME:*/getDerived().getBaseLocation(),
@@ -7746,10 +7734,8 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(Expr *Base,
                                                        SourceLocation TildeLoc,
                                         PseudoDestructorTypeStorage Destroyed) {
   CXXScopeSpec SS;
-  if (Qualifier) {
-    SS.setRange(QualifierRange);
-    SS.setScopeRep(Qualifier);
-  }
+  if (Qualifier)
+    SS.Adopt(Qualifier, QualifierRange);
 
   QualType BaseType = Base->getType();
   if (Base->isTypeDependent() || Destroyed.getIdentifier() ||
