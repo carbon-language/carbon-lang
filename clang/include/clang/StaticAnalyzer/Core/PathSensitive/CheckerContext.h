@@ -72,6 +72,7 @@ public:
   StmtNodeBuilder &getNodeBuilder() { return B; }
   ExplodedNode *&getPredecessor() { return Pred; }
   const GRState *getState() { return ST ? ST : B.GetState(Pred); }
+  const Stmt *getStmt() const { return statement; }
 
   ASTContext &getASTContext() {
     return Eng.getContext();

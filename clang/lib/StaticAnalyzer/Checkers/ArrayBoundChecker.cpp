@@ -12,9 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 
 using namespace clang;
@@ -22,21 +24,15 @@ using namespace ento;
 
 namespace {
 class ArrayBoundChecker : 
-    public CheckerVisitor<ArrayBoundChecker> {      
-  BuiltinBug *BT;
+    public CheckerV2<check::Location> {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
-  ArrayBoundChecker() : BT(0) {}
-  static void *getTag() { static int x = 0; return &x; }
-  void visitLocation(CheckerContext &C, const Stmt *S, SVal l, bool isLoad);
+  void checkLocation(SVal l, bool isLoad, CheckerContext &C) const;
 };
 }
 
-void ento::RegisterArrayBoundChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new ArrayBoundChecker());
-}
-
-void ArrayBoundChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l,
-                                      bool isLoad) {
+void ArrayBoundChecker::checkLocation(SVal l, bool isLoad,
+                                      CheckerContext &C) const {
   // Check for out of bound array element access.
   const MemRegion *R = l.getAsRegion();
   if (!R)
@@ -69,8 +65,8 @@ void ArrayBoundChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l,
       return;
   
     if (!BT)
-      BT = new BuiltinBug("Out-of-bound array access",
-                       "Access out-of-bound array element (buffer overflow)");
+      BT.reset(new BuiltinBug("Out-of-bound array access",
+                       "Access out-of-bound array element (buffer overflow)"));
 
     // FIXME: It would be nice to eventually make this diagnostic more clear,
     // e.g., by referencing the original declaration or by saying *why* this
@@ -80,7 +76,7 @@ void ArrayBoundChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l,
     RangedBugReport *report = 
       new RangedBugReport(*BT, BT->getDescription(), N);
 
-    report->addRange(S->getSourceRange());
+    report->addRange(C.getStmt()->getSourceRange());
     C.EmitReport(report);
     return;
   }
@@ -89,4 +85,8 @@ void ArrayBoundChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l,
   // should always succeed.
   assert(StInBound);
   C.addTransition(StInBound);
+}
+
+void ento::registerArrayBoundChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ArrayBoundChecker>();
 }

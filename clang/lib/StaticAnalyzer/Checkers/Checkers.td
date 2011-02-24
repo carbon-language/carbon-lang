@@ -179,6 +179,11 @@ def ReturnPointerRangeChecker : Checker<"ReturnPtrRange">,
   HelpText<"Check for an out-of-bound pointer being returned to callers">,
   DescFile<"ReturnPointerRangeChecker.cpp">;
 
+def ArrayBoundChecker : Checker<"ArrayBound">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check for an out-of-bound pointer being returned to callers">,
+  DescFile<"ArrayBoundChecker.cpp">;
+
 def ObjCDeallocChecker : Checker<"Dealloc">,
   InPackage<CocoaExperimental>,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">,

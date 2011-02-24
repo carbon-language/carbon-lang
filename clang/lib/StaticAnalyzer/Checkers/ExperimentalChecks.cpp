@@ -29,6 +29,5 @@ void ento::RegisterExperimentalInternalChecks(ExprEngine &Eng) {
   // These are internal checks that should eventually migrate to
   // RegisterInternalChecks() once they have been further tested.
   
-  RegisterArrayBoundChecker(Eng);
   RegisterCastSizeChecker(Eng);
 }
