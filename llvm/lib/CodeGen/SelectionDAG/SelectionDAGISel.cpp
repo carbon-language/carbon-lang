@@ -842,7 +842,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         }
       }
 
-      if (!AllPredsVisited) {
+      if (AllPredsVisited) {
+        for (BasicBlock::const_iterator I = LLVMBB->begin(), E = LLVMBB->end();
+             I != E && isa<PHINode>(I); ++I) {
+          FuncInfo->ComputePHILiveOutRegInfo(cast<PHINode>(I));
+        }
+      } else {
         for (BasicBlock::const_iterator I = LLVMBB->begin(), E = LLVMBB->end();
              I != E && isa<PHINode>(I); ++I) {
           FuncInfo->InvalidatePHILiveOutRegInfo(cast<PHINode>(I));

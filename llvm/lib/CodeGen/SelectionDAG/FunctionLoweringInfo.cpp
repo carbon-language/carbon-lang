@@ -255,6 +255,122 @@ unsigned FunctionLoweringInfo::CreateRegs(const Type *Ty) {
   return FirstReg;
 }
 
+/// GetLiveOutRegInfo - Gets LiveOutInfo for a register, returning NULL if the
+/// register is a PHI destination and the PHI's LiveOutInfo is not valid. If
+/// the register's LiveOutInfo is for a smaller bit width, it is extended to
+/// the larger bit width by zero extension. The bit width must be no smaller
+/// than the LiveOutInfo's existing bit width.
+const FunctionLoweringInfo::LiveOutInfo *
+FunctionLoweringInfo::GetLiveOutRegInfo(unsigned Reg, unsigned BitWidth) {
+  if (!LiveOutRegInfo.inBounds(Reg))
+    return NULL;
+
+  LiveOutInfo *LOI = &LiveOutRegInfo[Reg];
+  if (!LOI->IsValid)
+    return NULL;
+
+  if (BitWidth >= LOI->KnownZero.getBitWidth()) {
+    LOI->KnownZero = LOI->KnownZero.zextOrTrunc(BitWidth);
+    LOI->KnownOne = LOI->KnownOne.zextOrTrunc(BitWidth);
+  }
+
+  return LOI;
+}
+
+/// ComputePHILiveOutRegInfo - Compute LiveOutInfo for a PHI's destination
+/// register based on the LiveOutInfo of its operands.
+void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
+  const Type *Ty = PN->getType();
+  if (!Ty->isIntegerTy() || Ty->isVectorTy())
+    return;
+
+  SmallVector<EVT, 1> ValueVTs;
+  ComputeValueVTs(TLI, Ty, ValueVTs);
+  assert(ValueVTs.size() == 1 &&
+         "PHIs with non-vector integer types should have a single VT.");
+  EVT IntVT = ValueVTs[0];
+
+  if (TLI.getNumRegisters(PN->getContext(), IntVT) != 1)
+    return;
+  IntVT = TLI.getTypeToTransformTo(PN->getContext(), IntVT);
+  unsigned BitWidth = IntVT.getSizeInBits();
+
+  unsigned DestReg = ValueMap[PN];
+  if (!TargetRegisterInfo::isVirtualRegister(DestReg))
+    return;
+  LiveOutRegInfo.grow(DestReg);
+  LiveOutInfo &DestLOI = LiveOutRegInfo[DestReg];
+
+  Value *V = PN->getIncomingValue(0);
+  if (isa<UndefValue>(V) || isa<ConstantExpr>(V)) {
+    DestLOI.NumSignBits = 1;
+    APInt Zero(BitWidth, 0);
+    DestLOI.KnownZero = Zero;
+    DestLOI.KnownOne = Zero;
+    return;
+  }
+
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    APInt Val = CI->getValue().zextOrTrunc(BitWidth);
+    DestLOI.NumSignBits = Val.getNumSignBits();
+    DestLOI.KnownZero = ~Val;
+    DestLOI.KnownOne = Val;
+  } else {
+    assert(ValueMap.count(V) && "V should have been placed in ValueMap when its"
+                                "CopyToReg node was created.");
+    unsigned SrcReg = ValueMap[V];
+    if (!TargetRegisterInfo::isVirtualRegister(SrcReg)) {
+      DestLOI.IsValid = false;
+      return;
+    }
+    const LiveOutInfo *SrcLOI = GetLiveOutRegInfo(SrcReg, BitWidth);
+    if (!SrcLOI) {
+      DestLOI.IsValid = false;
+      return;
+    }
+    DestLOI = *SrcLOI;
+  }
+
+  assert(DestLOI.KnownZero.getBitWidth() == BitWidth &&
+         DestLOI.KnownOne.getBitWidth() == BitWidth &&
+         "Masks should have the same bit width as the type.");
+
+  for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i) {
+    Value *V = PN->getIncomingValue(i);
+    if (isa<UndefValue>(V) || isa<ConstantExpr>(V)) {
+      DestLOI.NumSignBits = 1;
+      APInt Zero(BitWidth, 0);
+      DestLOI.KnownZero = Zero;
+      DestLOI.KnownOne = Zero;
+      return;      
+    }
+
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      APInt Val = CI->getValue().zextOrTrunc(BitWidth);
+      DestLOI.NumSignBits = std::min(DestLOI.NumSignBits, Val.getNumSignBits());
+      DestLOI.KnownZero &= ~Val;
+      DestLOI.KnownOne &= Val;
+      continue;
+    }
+
+    assert(ValueMap.count(V) && "V should have been placed in ValueMap when "
+                                "its CopyToReg node was created.");
+    unsigned SrcReg = ValueMap[V];
+    if (!TargetRegisterInfo::isVirtualRegister(SrcReg)) {
+      DestLOI.IsValid = false;
+      return;
+    }
+    const LiveOutInfo *SrcLOI = GetLiveOutRegInfo(SrcReg, BitWidth);
+    if (!SrcLOI) {
+      DestLOI.IsValid = false;
+      return;
+    }
+    DestLOI.NumSignBits = std::min(DestLOI.NumSignBits, SrcLOI->NumSignBits);
+    DestLOI.KnownZero &= SrcLOI->KnownZero;
+    DestLOI.KnownOne &= SrcLOI->KnownOne;
+  }
+}
+
 /// setByValArgumentFrameIndex - Record frame index for the byval
 /// argument. This overrides previous frame index entry for this argument,
 /// if any.

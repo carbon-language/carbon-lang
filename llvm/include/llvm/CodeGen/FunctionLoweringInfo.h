@@ -159,6 +159,13 @@ public:
     return LOI;
   }
 
+  /// GetLiveOutRegInfo - Gets LiveOutInfo for a register, returning NULL if the
+  /// register is a PHI destination and the PHI's LiveOutInfo is not valid. If
+  /// the register's LiveOutInfo is for a smaller bit width, it is extended to
+  /// the larger bit width by zero extension. The bit width must be no smaller
+  /// than the LiveOutInfo's existing bit width.
+  const LiveOutInfo *GetLiveOutRegInfo(unsigned Reg, unsigned BitWidth);
+
   /// AddLiveOutRegInfo - Adds LiveOutInfo for a register.
   void AddLiveOutRegInfo(unsigned Reg, unsigned NumSignBits,
                          const APInt &KnownZero, const APInt &KnownOne) {
@@ -172,6 +179,10 @@ public:
     LOI.KnownOne = KnownOne;
     LOI.KnownZero = KnownZero;
   }
+
+  /// ComputePHILiveOutRegInfo - Compute LiveOutInfo for a PHI's destination
+  /// register based on the LiveOutInfo of its operands.
+  void ComputePHILiveOutRegInfo(const PHINode*);
 
   /// InvalidatePHILiveOutRegInfo - Invalidates a PHI's LiveOutInfo, to be
   /// called when a block is visited before all of its predecessors.
