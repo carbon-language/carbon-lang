@@ -18,6 +18,8 @@
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Mutex.h"
 
+#include "llvm/Support/Host.h"
+
 #include <dlfcn.h>
 #include <errno.h>
 
@@ -288,34 +290,31 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
     }
     
 #else // #if defined (__APPLE__)
-    
+
     if (g_supports_32 == false && g_supports_64 == false)
     {
-#if defined (__x86_64__)
+        llvm::Triple triple(llvm::sys::getHostTriple());
 
-        g_host_arch_64.SetTriple ("x86_64");
+        g_host_arch_32.Clear();
+        g_host_arch_64.Clear();
 
-#elif defined (__i386__)
+        switch (triple.getArch())
+        {
+        default:
+            g_host_arch_32.SetTriple(triple);
+            g_supports_32 = true;
+            break;
 
-        g_host_arch_32.SetTriple ("i386");
-
-#elif defined (__arm__)        
-
-        g_host_arch_32.SetTriple ("arm");
-
-#elif defined (__ppc64__)
-
-        g_host_arch_64.SetTriple ("ppc64");
-
-#elif defined (__powerpc__) || defined (__ppc__)
-
-        g_host_arch_32.SetTriple ("ppc");
-
-#else
-
-#error undefined architecture, define your architecture here
-
-#endif
+        case llvm::Triple::alpha:
+        case llvm::Triple::x86_64:
+        case llvm::Triple::sparcv9:
+        case llvm::Triple::ppc64:
+        case llvm::Triple::systemz:
+        case llvm::Triple::cellspu:
+            g_host_arch_64.SetTriple(triple);
+            g_supports_64 = true;
+            break;
+        }
 
         g_supports_32 = g_host_arch_32.IsValid();
         g_supports_64 = g_host_arch_64.IsValid();
