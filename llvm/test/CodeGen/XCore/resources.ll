@@ -18,6 +18,7 @@ declare i32 @llvm.xcore.getts.p1i8(i8 addrspace(1)* %r)
 declare void @llvm.xcore.syncr.p1i8(i8 addrspace(1)* %r)
 declare void @llvm.xcore.settw.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.setv.p1i8(i8 addrspace(1)* %r, i8* %p)
+declare void @llvm.xcore.eeu.p1i8(i8 addrspace(1)* %r)
 
 define i8 addrspace(1)* @getr() {
 ; CHECK: getr:
@@ -164,5 +165,12 @@ define void @setv(i8 addrspace(1)* %r, i8* %p) {
 ; CHECK: mov r11, r1
 ; CHECK-NEXT: setv res[r0], r11
 	call void @llvm.xcore.setv.p1i8(i8 addrspace(1)* %r, i8* %p)
+	ret void
+}
+
+define void @eeu(i8 addrspace(1)* %r) {
+; CHECK: eeu:
+; CHECK: eeu res[r0]
+	call void @llvm.xcore.eeu.p1i8(i8 addrspace(1)* %r)
 	ret void
 }

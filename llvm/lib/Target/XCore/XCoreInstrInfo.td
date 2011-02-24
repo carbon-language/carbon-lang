@@ -894,6 +894,10 @@ def SETV_1r : _F1R<(outs), (ins GRRegs:$r),
                "setv res[$r], r11",
                [(int_xcore_setv GRRegs:$r, R11)]>;
 
+def EEU_1r : _F1R<(outs), (ins GRRegs:$r),
+               "eeu res[$r]",
+               [(int_xcore_eeu GRRegs:$r)]>;
+
 // Zero operand short
 // TODO ssync, freet, ldspc, stspc, ldssr, stssr, ldsed, stsed,
 // stet, geted, getet, getkep, getksp, setkep, getid, kret, dcall, dret,
