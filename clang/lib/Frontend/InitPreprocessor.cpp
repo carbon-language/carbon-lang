@@ -174,15 +174,10 @@ static void DefineFloatMacros(MacroBuilder &Builder, llvm::StringRef Prefix,
 /// signedness of 'isSigned' and with a value suffix of 'ValSuffix' (e.g. LL).
 static void DefineTypeSize(llvm::StringRef MacroName, unsigned TypeWidth,
                            llvm::StringRef ValSuffix, bool isSigned,
-                           MacroBuilder& Builder) {
-  long long MaxVal;
-  if (isSigned) {
-    assert(TypeWidth != 1);
-    MaxVal = ~0ULL >> (65-TypeWidth);
-  } else
-    MaxVal = ~0ULL >> (64-TypeWidth);
-
-  Builder.defineMacro(MacroName, llvm::Twine(MaxVal) + ValSuffix);
+                           MacroBuilder &Builder) {
+  llvm::APInt MaxVal = isSigned ? llvm::APInt::getSignedMaxValue(TypeWidth)
+                                : llvm::APInt::getMaxValue(TypeWidth);
+  Builder.defineMacro(MacroName, MaxVal.toString(10, isSigned) + ValSuffix);
 }
 
 /// DefineTypeSize - An overloaded helper that uses TargetInfo to determine
