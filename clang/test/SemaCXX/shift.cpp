@@ -5,8 +5,8 @@
 #define WORD_BIT (sizeof(int) * CHAR_BIT)
 
 template <int N> void f() {
-  (void)(N << 30); // expected-warning {{the promoted type of the shift expression is 'int'}}
-  (void)(30 << N); // expected-warning {{the promoted type of the shift expression is 'int'}}
+  (void)(N << 30); // expected-warning {{bits to represent, but 'int' only has}}
+  (void)(30 << N); // expected-warning {{bits to represent, but 'int' only has}}
 }
 
 void test() {

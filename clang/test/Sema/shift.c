@@ -37,8 +37,8 @@ void test() {
 
   int i;
   i = 1 << (WORD_BIT - 2);
-  i = 2 << (WORD_BIT - 1); // expected-warning {{the promoted type of the shift expression is 'int'}}
-  i = 1 << (WORD_BIT - 1); // expected-warning {{overrides the sign bit of the promoted type of the shift expression ('int')}}
+  i = 2 << (WORD_BIT - 1); // expected-warning {{bits to represent, but 'int' only has}}
+  i = 1 << (WORD_BIT - 1); // expected-warning {{overrides the sign bit of the shift expression}}
   i = -1 << (WORD_BIT - 1);
   i = 0 << (WORD_BIT - 1);
   i = (char)1 << (WORD_BIT - 2);
@@ -48,7 +48,7 @@ void test() {
   u = 5U << (WORD_BIT - 1);
 
   long long int lli;
-  lli = INT_MIN << 2; // expected-warning {{the promoted type of the shift expression is 'int'}}
+  lli = INT_MIN << 2; // expected-warning {{bits to represent, but 'int' only has}}
   lli = 1LL << (sizeof(long long) * CHAR_BIT - 2);
 }
 
