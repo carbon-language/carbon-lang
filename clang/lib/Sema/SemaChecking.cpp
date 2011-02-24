@@ -875,7 +875,7 @@ bool Sema::SemaBuiltinLongjmp(CallExpr *TheCall) {
   return false;
 }
 
-// Handle i > 1 ? "x" : "y", recursivelly
+// Handle i > 1 ? "x" : "y", recursively.
 bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                                   bool HasVAListArg,
                                   unsigned format_idx, unsigned firstDataArg,
@@ -918,6 +918,12 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
     }
     return false;
 
+  case Stmt::PredefinedExprClass:
+    // While __func__, etc., are technically not string literals, they
+    // cannot contain format specifiers and thus are not a security
+    // liability.
+    return true;
+      
   case Stmt::DeclRefExprClass: {
     const DeclRefExpr *DR = cast<DeclRefExpr>(E);
 

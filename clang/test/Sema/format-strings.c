@@ -350,3 +350,11 @@ void posix_extensions() {
 void pr8486() {
   printf("%s", 1); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
 }
+
+// PR9314
+// Don't warn about string literals that are PreDefinedExprs, e.g. __func__.
+void pr9314() {
+  printf(__PRETTY_FUNCTION__); // no-warning
+  printf(__func__); // no-warning
+}
+
