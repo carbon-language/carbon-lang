@@ -177,23 +177,20 @@ namespace {
     SVal Loc;
     bool IsLoad;
     const Stmt *S;
-    const GRState *State;
     ExprEngine &Eng;
 
     CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
     CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
 
     CheckLocationContext(const CheckersTy &checkers,
-                         SVal loc, bool isLoad, const Stmt *s,
-                         const GRState *state, ExprEngine &eng)
-      : Checkers(checkers), Loc(loc), IsLoad(isLoad), S(s),
-        State(state), Eng(eng) { }
+                         SVal loc, bool isLoad, const Stmt *s, ExprEngine &eng)
+      : Checkers(checkers), Loc(loc), IsLoad(isLoad), S(s), Eng(eng) { }
 
     void runChecker(CheckerManager::CheckLocationFunc checkFn,
                     ExplodedNodeSet &Dst, ExplodedNode *Pred) {
       CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
                        IsLoad ? ProgramPoint::PreLoadKind :
-                       ProgramPoint::PreStoreKind, 0, S, State);
+                       ProgramPoint::PreStoreKind, 0, S);
       checkFn(Loc, IsLoad, C);
     }
   };
@@ -203,10 +200,8 @@ namespace {
 void CheckerManager::runCheckersForLocation(ExplodedNodeSet &Dst,
                                             const ExplodedNodeSet &Src,
                                             SVal location, bool isLoad,
-                                            const Stmt *S,
-                                            const GRState *state,
-                                            ExprEngine &Eng) {
-  CheckLocationContext C(LocationCheckers, location, isLoad, S, state, Eng);
+                                            const Stmt *S, ExprEngine &Eng) {
+  CheckLocationContext C(LocationCheckers, location, isLoad, S, Eng);
   expandGraphWithCheckers(C, Dst, Src);
 }
 

@@ -1955,14 +1955,21 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
     return;
   }
 
-  ExplodedNodeSet Src;
-  Src.Add(Pred);
   if (Checkers.empty()) {
+    ExplodedNodeSet Src;
+    if (Builder->GetState(Pred) == state) {
+      Src.Add(Pred);
+    } else {
+      // Associate this new state with an ExplodedNode.
+      Src.Add(Builder->generateNode(S, state, Pred));
+    }
     getCheckerManager().runCheckersForLocation(Dst, Src, location, isLoad, S,
-                                               state, *this);
+                                               *this);
     return;
   }
 
+  ExplodedNodeSet Src;
+  Src.Add(Pred);
   ExplodedNodeSet CheckersV1Dst;
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
@@ -1994,7 +2001,7 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
   }
 
   getCheckerManager().runCheckersForLocation(Dst, CheckersV1Dst, location,
-                                             isLoad, S, state, *this);
+                                             isLoad, S, *this);
 }
 
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, 

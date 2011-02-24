@@ -177,7 +177,6 @@ public:
                               const ExplodedNodeSet &Src,
                               SVal location, bool isLoad,
                               const Stmt *S,
-                              const GRState *state,
                               ExprEngine &Eng);
 
   /// \brief Run checkers for end of analysis.
