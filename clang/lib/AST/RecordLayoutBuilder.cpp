@@ -698,6 +698,25 @@ protected:
 
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
+  CharUnits getSize() const { 
+    assert(Size % 8 == 0);
+    return Context.toCharUnitsFromBits(Size); 
+  }
+  uint64_t getSizeInBits() const { return Size; }
+
+  void setSize(CharUnits NewSize) { Size = Context.toBits(NewSize); }
+  void setSize(uint64_t NewSize) { Size = NewSize; }
+
+  CharUnits getDataSize() const { 
+    assert(DataSize % 8 == 0);
+    return Context.toCharUnitsFromBits(DataSize); 
+  }
+  uint64_t getDataSizeInBits() const { return DataSize; }
+
+  void setDataSize(CharUnits NewSize) { DataSize = Context.toBits(NewSize); }
+  void setDataSize(uint64_t NewSize) { DataSize = NewSize; }
+
+
   RecordLayoutBuilder(const RecordLayoutBuilder&);   // DO NOT IMPLEMENT
   void operator=(const RecordLayoutBuilder&); // DO NOT IMPLEMENT
 public:
@@ -796,8 +815,8 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   assert(DataSize == 0 && "Vtable pointer must be at offset zero!");
 
   // Update the size.
-  Size += GetVirtualPointersSize(RD);
-  DataSize = Size;
+  setSize(getSizeInBits() + GetVirtualPointersSize(RD));
+  setDataSize(getSizeInBits());
 
   CharUnits UnpackedBaseAlign = 
     Context.toCharUnitsFromBits(Context.Target.getPointerAlign(0));
@@ -1090,7 +1109,7 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   if (Base->Class->isEmpty() &&
       EmptySubobjects->CanPlaceBaseAtOffset(Base, CharUnits::Zero())) {
     uint64_t RecordSizeInBits = Context.toBits(Layout.getSize());
-    Size = std::max(Size, RecordSizeInBits);
+    setSize(std::max(getSizeInBits(), RecordSizeInBits));
 
     return CharUnits::Zero();
   }
@@ -1106,7 +1125,7 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
 
   // Round up the current record size to the base's alignment boundary.
   uint64_t Offset = 
-    llvm::RoundUpToAlignment(DataSize, Context.toBits(BaseAlign));
+    llvm::RoundUpToAlignment(getDataSizeInBits(), Context.toBits(BaseAlign));
 
   // Try to place the base.
   while (!EmptySubobjects->CanPlaceBaseAtOffset(Base, 
@@ -1115,11 +1134,12 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
 
   if (!Base->Class->isEmpty()) {
     // Update the data size.
-    DataSize = Offset + Context.toBits(Layout.getNonVirtualSize());
+    setDataSize(Offset + Context.toBits(Layout.getNonVirtualSize()));
 
-    Size = std::max(Size, DataSize);
+    setSize(std::max(getSizeInBits(), getDataSizeInBits()));
   } else
-    Size = std::max(Size, Offset + Context.toBits(Layout.getSize()));
+    setSize(std::max(getSizeInBits(), 
+                     Offset + Context.toBits(Layout.getSize())));
 
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign, UnpackedBaseAlign);
@@ -1167,7 +1187,8 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
 
   LayoutFields(RD);
 
-  NonVirtualSize = Context.toCharUnitsFromBits(Size);
+  // FIXME: Size isn't always an exact multiple of the char width. Round up?
+  NonVirtualSize = Context.toCharUnitsFromBits(getSizeInBits());
   NonVirtualAlignment = Alignment;
 
   // Lay out the virtual bases and add the primary virtual base offsets.
@@ -1211,8 +1232,8 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
 
     // We start laying out ivars not at the end of the superclass
     // structure, but at the next byte following the last field.
-    Size = Context.toBits(SL.getDataSize());
-    DataSize = Size;
+    setSize(SL.getDataSize());
+    setDataSize(getSizeInBits());
   }
 
   InitializeLayout(D);
@@ -1270,20 +1291,20 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   UnfilledBitsInLastByte = 0;
 
   uint64_t FieldOffset;
-  uint64_t UnpaddedFieldOffset = DataSize - UnfilledBitsInLastByte;
+  uint64_t UnpaddedFieldOffset = getDataSizeInBits() - UnfilledBitsInLastByte;
 
   if (IsUnion) {
-    DataSize = std::max(DataSize, FieldSize);
+    setDataSize(std::max(getDataSizeInBits(), FieldSize));
     FieldOffset = 0;
   } else {
     // The bitfield is allocated starting at the next offset aligned appropriately
     // for T', with length n bits.
-    FieldOffset = llvm::RoundUpToAlignment(DataSize, TypeAlign);
+    FieldOffset = llvm::RoundUpToAlignment(getDataSizeInBits(), TypeAlign);
 
     uint64_t NewSizeInBits = FieldOffset + FieldSize;
 
-    DataSize = llvm::RoundUpToAlignment(NewSizeInBits, 8);
-    UnfilledBitsInLastByte = DataSize - NewSizeInBits;
+    setDataSize(llvm::RoundUpToAlignment(NewSizeInBits, 8));
+    UnfilledBitsInLastByte = getDataSizeInBits() - NewSizeInBits;
   }
 
   // Place this field at the current location.
@@ -1293,7 +1314,7 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
                     TypeAlign, FieldPacked, D);
 
   // Update the size.
-  Size = std::max(Size, DataSize);
+  setSize(std::max(getSizeInBits(), getDataSizeInBits()));
 
   // Remember max struct/class alignment.
   UpdateAlignment(Context.toCharUnitsFromBits(TypeAlign));
@@ -1301,7 +1322,7 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
 
 void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
-  uint64_t UnpaddedFieldOffset = DataSize - UnfilledBitsInLastByte;
+  uint64_t UnpaddedFieldOffset = getDataSizeInBits() - UnfilledBitsInLastByte;
   uint64_t FieldOffset = IsUnion ? 0 : UnpaddedFieldOffset;
   uint64_t FieldSize = D->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
 
@@ -1355,16 +1376,16 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // Update DataSize to include the last byte containing (part of) the bitfield.
   if (IsUnion) {
     // FIXME: I think FieldSize should be TypeSize here.
-    DataSize = std::max(DataSize, FieldSize);
+    setDataSize(std::max(getDataSizeInBits(), FieldSize));
   } else {
     uint64_t NewSizeInBits = FieldOffset + FieldSize;
 
-    DataSize = llvm::RoundUpToAlignment(NewSizeInBits, 8);
-    UnfilledBitsInLastByte = DataSize - NewSizeInBits;
+    setDataSize(llvm::RoundUpToAlignment(NewSizeInBits, 8));
+    UnfilledBitsInLastByte = getDataSizeInBits() - NewSizeInBits;
   }
 
   // Update the size.
-  Size = std::max(Size, DataSize);
+  setSize(std::max(getSizeInBits(), getDataSizeInBits()));
 
   // Remember max struct/class alignment.
   UpdateAlignment(Context.toCharUnitsFromBits(FieldAlign), 
@@ -1377,14 +1398,14 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     return;
   }
 
-  uint64_t UnpaddedFieldOffset = DataSize - UnfilledBitsInLastByte;
+  uint64_t UnpaddedFieldOffset = getDataSizeInBits() - UnfilledBitsInLastByte;
 
   // Reset the unfilled bits.
   UnfilledBitsInLastByte = 0;
 
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
   CharUnits FieldOffset = 
-    IsUnion ? CharUnits::Zero() : Context.toCharUnitsFromBits(DataSize);
+    IsUnion ? CharUnits::Zero() : getDataSize();
   CharUnits FieldSize;
   CharUnits FieldAlign;
 
@@ -1464,12 +1485,12 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   // Reserve space for this field.
   uint64_t FieldSizeInBits = Context.toBits(FieldSize);
   if (IsUnion)
-    Size = std::max(Size, FieldSizeInBits);
+    setSize(std::max(getSizeInBits(), FieldSizeInBits));
   else
-    Size = Context.toBits(FieldOffset) + FieldSizeInBits;
+    setSize(Context.toBits(FieldOffset) + FieldSizeInBits);
 
   // Update the data size.
-  DataSize = Size;
+  setDataSize(getSizeInBits());
 
   // Remember max struct/class alignment.
   UpdateAlignment(FieldAlign, UnpackedFieldAlign);
@@ -1477,29 +1498,30 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 
 void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
   // In C++, records cannot be of size 0.
-  if (Context.getLangOptions().CPlusPlus && Size == 0) {
+  if (Context.getLangOptions().CPlusPlus && getSizeInBits() == 0) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
       // Compatibility with gcc requires a class (pod or non-pod)
       // which is not empty but of size 0; such as having fields of
       // array of zero-length, remains of Size 0
       if (RD->isEmpty())
-        Size = 8;
+        setSize(8);
     }
     else
-      Size = 8;
+      setSize(8);
   }
   // Finally, round the size of the record up to the alignment of the
   // record itself.
-  uint64_t UnpaddedSize = Size - UnfilledBitsInLastByte;
+  uint64_t UnpaddedSize = getSizeInBits() - UnfilledBitsInLastByte;
   uint64_t UnpackedSize = 
-    llvm::RoundUpToAlignment(Size, Context.toBits(UnpackedAlignment));
-  Size = llvm::RoundUpToAlignment(Size, Context.toBits(Alignment));
+    llvm::RoundUpToAlignment(getSizeInBits(), 
+                             Context.toBits(UnpackedAlignment));
+  setSize(llvm::RoundUpToAlignment(getSizeInBits(), Context.toBits(Alignment)));
 
   unsigned CharBitNum = Context.Target.getCharWidth();
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
     // Warn if padding was introduced to the struct/class/union.
-    if (Size > UnpaddedSize) {
-      unsigned PadSize = Size - UnpaddedSize;
+    if (getSizeInBits() > UnpaddedSize) {
+      unsigned PadSize = getSizeInBits() - UnpaddedSize;
       bool InBits = true;
       if (PadSize % CharBitNum == 0) {
         PadSize = PadSize / CharBitNum;
@@ -1513,7 +1535,8 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
 
     // Warn if we packed it unnecessarily. If the alignment is 1 byte don't
     // bother since there won't be alignment issues.
-    if (Packed && UnpackedAlignment > CharUnits::One() && Size == UnpackedSize)
+    if (Packed && UnpackedAlignment > CharUnits::One() && 
+        getSizeInBits() == UnpackedSize)
       Diag(D->getLocation(), diag::warn_unnecessary_packed)
           << Context.getTypeDeclType(RD);
   }
