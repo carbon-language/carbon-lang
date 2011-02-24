@@ -227,8 +227,8 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
   }
   
   EDDisassembler::initialize();
-  EDDisassembler *disassembler =
-    EDDisassembler::getDisassembler(TS.c_str(), AS);
+  OwningPtr<EDDisassembler>
+    disassembler(EDDisassembler::getDisassembler(TS.c_str(), AS));
   
   if (disassembler == 0) {
     errs() << "error: couldn't get disassembler for " << TS << '\n';
@@ -236,8 +236,8 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
   }
   
   while (ByteArray.size()) {
-    EDInst *inst =
-      disassembler->createInst(byteArrayReader, 0, &ByteArray);
+    OwningPtr<EDInst>
+      inst(disassembler->createInst(byteArrayReader, 0, &ByteArray));
   
     ByteArray.erase (ByteArray.begin(), ByteArray.begin() + inst->byteSize());
                                
@@ -330,7 +330,7 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
       }
       
       uint64_t evaluatedResult;
-      void *Arg[] = { disassembler, &Out };
+      void *Arg[] = { disassembler.get(), &Out };
       if (operand->evaluate(evaluatedResult, verboseEvaluator, Arg)) {
         errs() << "error: Couldn't evaluate an operand\n";
         return -1;

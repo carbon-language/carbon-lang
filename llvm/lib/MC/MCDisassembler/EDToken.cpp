@@ -194,6 +194,10 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
     tokens.push_back(token);
   }
   
+  // Free any parsed operands.
+  for (unsigned i = 0, e = parsedOperands.size(); i != e; ++i)
+    delete parsedOperands[i];
+
   return 0;
 }
 
