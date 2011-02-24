@@ -64,5 +64,10 @@ namespace test3 {
   extern "C" void test3(A a) {}
 }
 
+namespace {
+  // CHECK: define void @test4(
+  extern "C" void test4(void) {}
+}
+
 // CHECK: define linkonce_odr i8* @_ZN5test21A1BILj0EE3fooEv(
 // CHECK: define linkonce_odr i8* @_ZN5test11A3fooILj0EEEPvv(

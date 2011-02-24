@@ -266,8 +266,12 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       return LinkageInfo::internal();
   }
 
-  if (D->isInAnonymousNamespace())
-    return LinkageInfo::uniqueExternal();
+  if (D->isInAnonymousNamespace()) {
+    const VarDecl *Var = dyn_cast<VarDecl>(D);
+    const FunctionDecl *Func = dyn_cast<FunctionDecl>(D);
+    if ((!Var || !Var->isExternC()) && (!Func || !Func->isExternC()))
+      return LinkageInfo::uniqueExternal();
+  }
 
   // Set up the defaults.
 
