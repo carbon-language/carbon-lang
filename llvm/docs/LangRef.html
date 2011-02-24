@@ -4575,12 +4575,12 @@ entry:
    type <tt>ty2</tt>.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>trunc</tt>' instruction takes a <tt>value</tt> to trunc, which must
-   be an <a href="#t_integer">integer</a> type, and a type that specifies the
-   size and type of the result, which must be
-   an <a href="#t_integer">integer</a> type. The bit size of <tt>value</tt> must
-   be larger than the bit size of <tt>ty2</tt>. Equal sized types are not
-   allowed.</p>
+<p>The '<tt>trunc</tt>' instruction takes a value to trunc, and a type to trunc it to.
+   Both types must be of <a href="#t_integer">integer</a> types, or vectors
+   of the same number of integers.
+   The bit size of the <tt>value</tt> must be larger than
+   the bit size of the destination type, <tt>ty2</tt>.
+   Equal sized types are not allowed.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>trunc</tt>' instruction truncates the high order bits
@@ -4590,9 +4590,10 @@ entry:
 
 <h5>Example:</h5>
 <pre>
-  %X = trunc i32 257 to i8              <i>; yields i8:1</i>
-  %Y = trunc i32 123 to i1              <i>; yields i1:true</i>
-  %Z = trunc i32 122 to i1              <i>; yields i1:false</i>
+  %X = trunc i32 257 to i8                        <i>; yields i8:1</i>
+  %Y = trunc i32 123 to i1                        <i>; yields i1:true</i>
+  %Z = trunc i32 122 to i1                        <i>; yields i1:false</i>
+  %W = trunc &lt;2 x i16&gt; &lt;i16 8, i16 7&gt; to &lt;2 x i8&gt; <i>; yields &lt;i8 8, i8 7&gt;</i>
 </pre>
 
 </div>
@@ -4651,10 +4652,11 @@ entry:
 <p>The '<tt>sext</tt>' sign extends <tt>value</tt> to the type <tt>ty2</tt>.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>sext</tt>' instruction takes a value to cast, which must be of
-   <a href="#t_integer">integer</a> type, and a type to cast it to, which must
-   also be of <a href="#t_integer">integer</a> type.  The bit size of the
-   <tt>value</tt> must be smaller than the bit size of the destination type,
+<p>The '<tt>sext</tt>' instruction takes a value to cast, and a type to cast it to.
+   Both types must be of <a href="#t_integer">integer</a> types, or vectors
+   of the same number of integers.
+   The bit size of the <tt>value</tt> must be smaller than
+   the bit size of the destination type,
    <tt>ty2</tt>.</p>
 
 <h5>Semantics:</h5>
@@ -4668,6 +4670,7 @@ entry:
 <pre>
   %X = sext i8  -1 to i16              <i>; yields i16   :65535</i>
   %Y = sext i1 true to i32             <i>; yields i32:-1</i>
+  %Z = sext &lt;2 x i16&gt; &lt;i16 8, i16 7&gt; to &lt;2 x i32&gt; <i>; yields &lt;i32 8, i32 7&gt;</i>
 </pre>
 
 </div>

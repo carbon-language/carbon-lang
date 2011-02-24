@@ -3685,7 +3685,9 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   }
 
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
-  if (ISD::isNON_EXTLoad(N0.getNode()) &&
+  // None of the supported targets knows how to perform load and sign extend
+  // in one instruction.  We only perform this transformation on scalars.
+  if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::SEXTLOAD, N0.getValueType()))) {
     bool DoXform = true;
@@ -4096,7 +4098,9 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   }
 
   // fold (aext (load x)) -> (aext (truncate (extload x)))
-  if (ISD::isNON_EXTLoad(N0.getNode()) &&
+  // None of the supported targets knows how to perform load and any_ext
+  // in one instruction.  We only perform this transformation on scalars.
+  if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
     bool DoXform = true;
@@ -4506,14 +4510,17 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   }
 
   // See if we can simplify the input to this truncate through knowledge that
-  // only the low bits are being used.  For example "trunc (or (shl x, 8), y)"
-  // -> trunc y
-  SDValue Shorter =
-    GetDemandedBits(N0, APInt::getLowBitsSet(N0.getValueSizeInBits(),
-                                             VT.getSizeInBits()));
-  if (Shorter.getNode())
-    return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, Shorter);
-
+  // only the low bits are being used.
+  // For example "trunc (or (shl x, 8), y)" // -> trunc y
+  // Currenly we only perform this optimization on scalars because vectors
+  // may have different active low bits.
+  if (!VT.isVector()) {
+    SDValue Shorter =
+      GetDemandedBits(N0, APInt::getLowBitsSet(N0.getValueSizeInBits(),
+                                               VT.getSizeInBits()));
+    if (Shorter.getNode())
+      return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, Shorter);
+  }
   // fold (truncate (load x)) -> (smaller load x)
   // fold (truncate (srl (load x), c)) -> (smaller load (x+c/evtbits))
   if (!LegalTypes || TLI.isTypeDesirableForOp(N0.getOpcode(), VT)) {
