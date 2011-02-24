@@ -25,13 +25,14 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/config.h"            // FIXME: Shouldn't depend on host!
 using namespace llvm;
 
 STATISTIC(NumSimplified, "Number of library calls simplified");
@@ -1369,6 +1370,8 @@ namespace {
   /// This pass optimizes well known library functions from libc and libm.
   ///
   class SimplifyLibCalls : public FunctionPass {
+    TargetLibraryInfo *TLI;
+    
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
     StrCatOpt StrCat; StrNCatOpt StrNCat; StrChrOpt StrChr; StrRChrOpt StrRChr;
@@ -1385,7 +1388,7 @@ namespace {
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
     PutsOpt Puts;
-
+    
     bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
@@ -1404,13 +1407,18 @@ namespace {
 
     void inferPrototypeAttributes(Function &F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetLibraryInfo>();
     }
   };
-  char SimplifyLibCalls::ID = 0;
 } // end anonymous namespace.
 
-INITIALIZE_PASS(SimplifyLibCalls, "simplify-libcalls",
-                "Simplify well-known library calls", false, false)
+char SimplifyLibCalls::ID = 0;
+
+INITIALIZE_PASS_BEGIN(SimplifyLibCalls, "simplify-libcalls",
+                      "Simplify well-known library calls", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_END(SimplifyLibCalls, "simplify-libcalls",
+                    "Simplify well-known library calls", false, false)
 
 // Public interface to the Simplify LibCalls pass.
 FunctionPass *llvm::createSimplifyLibCallsPass() {
@@ -1442,9 +1450,9 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["strcspn"] = &StrCSpn;
   Optimizations["strstr"] = &StrStr;
   Optimizations["memcmp"] = &MemCmp;
-  Optimizations["memcpy"] = &MemCpy;
+  if (TLI->has(LibFunc::memcpy)) Optimizations["memcpy"] = &MemCpy;
   Optimizations["memmove"] = &MemMove;
-  Optimizations["memset"] = &MemSet;
+  if (TLI->has(LibFunc::memset)) Optimizations["memset"] = &MemSet;
 
   // _chk variants of String and Memory LibCall Optimizations.
   Optimizations["__strcpy_chk"] = &StrCpyChk;
@@ -1507,6 +1515,8 @@ void SimplifyLibCalls::InitOptimizations() {
 /// runOnFunction - Top level algorithm.
 ///
 bool SimplifyLibCalls::runOnFunction(Function &F) {
+  TLI = &getAnalysis<TargetLibraryInfo>();
+
   if (Optimizations.empty())
     InitOptimizations();
 
