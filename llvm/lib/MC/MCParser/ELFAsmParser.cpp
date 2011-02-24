@@ -33,7 +33,9 @@ class ELFAsmParser : public MCAsmParserExtension {
   bool SeenIdent;
 
 public:
-  ELFAsmParser() : SeenIdent(false) {}
+  ELFAsmParser() : SeenIdent(false) {
+    BracketExpressionsSupported = true;
+  }
 
   virtual void Initialize(MCAsmParser &Parser) {
     // Call the base implementation.

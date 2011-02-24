@@ -38,6 +38,8 @@ protected:
     return (Obj->*Handler)(Directive, DirectiveLoc);
   }
 
+  bool BracketExpressionsSupported;
+
 public:
   virtual ~MCAsmParserExtension();
 
@@ -67,6 +69,8 @@ public:
   const AsmToken &Lex() { return getParser().Lex(); }
 
   const AsmToken &getTok() { return getParser().getTok(); }
+
+  bool HasBracketExpressions() const { return BracketExpressionsSupported; }
 
   /// @}
 };
