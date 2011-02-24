@@ -247,6 +247,11 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
     if (PBB->getFirstNonPHIOrDbg() != I)
       return false;
     break;
+  case Instruction::GetElementPtr:
+    // GEPs are cheap if all indices are constant.
+    if (!cast<GetElementPtrInst>(I)->hasAllConstantIndices())
+      return false;
+    break;
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::And:
