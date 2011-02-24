@@ -294,11 +294,12 @@ public:
     //------------------------------------------------------------------
     /// Architecture tripple setter.
     ///
-    /// Configures this ArchSpec according to the given triple.  At a
-    /// minimum, the given triple must describe a valid operating
-    /// system.  If archetecture or environment components are present
-    /// they too will be used to further resolve the CPU type and
-    /// subtype, endian characteristics, etc.
+    /// Configures this ArchSpec according to the given triple.  If the 
+    /// triple has unknown components in all of the vendor, OS, and 
+    /// the optional environment field (i.e. "i386-unknown-unknown")
+    /// then default values are taken from the host.  Architecture and
+    /// environment components are used to further resolve the CPU type
+    /// and subtype, endian characteristics, etc.
     ///
     /// @return A triple describing this ArchSpec.
     //------------------------------------------------------------------

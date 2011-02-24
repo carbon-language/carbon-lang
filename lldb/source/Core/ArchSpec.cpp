@@ -14,6 +14,7 @@
 #include <string>
 
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
@@ -407,14 +408,16 @@ ArchSpec::SetTriple (const llvm::Triple &triple)
         m_core = core_def->core;
         m_byte_order = core_def->default_byte_order;
 
-        // If the vendor, OS or environment aren't specified, default to the system?
-        const ArchSpec &host_arch_ref = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
-        if (m_triple.getVendor() == llvm::Triple::UnknownVendor)
-            m_triple.setVendor(host_arch_ref.GetTriple().getVendor());
-        if (m_triple.getOS() == llvm::Triple::UnknownOS)
-            m_triple.setOS(host_arch_ref.GetTriple().getOS());
-        if (m_triple.getEnvironment() == llvm::Triple::UnknownEnvironment)
-            m_triple.setEnvironment(host_arch_ref.GetTriple().getEnvironment());
+        if (m_triple.getVendor() == llvm::Triple::UnknownVendor &&
+            m_triple.getOS() == llvm::Triple::UnknownOS &&
+            m_triple.getEnvironment() == llvm::Triple::UnknownEnvironment)
+        {
+            llvm::Triple host_triple(llvm::sys::getHostTriple());
+
+            m_triple.setVendor(host_triple.getVendor());
+            m_triple.setOS(host_triple.getOS());
+            m_triple.setEnvironment(host_triple.getEnvironment());
+        }
     }
     else
     {
