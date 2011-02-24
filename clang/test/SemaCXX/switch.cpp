@@ -57,3 +57,10 @@ namespace test3 {
   template void foo<B>();
   template void foo<C>(); //expected-note {{in instantiation}}
 }
+
+// PR9304 and rdar://9045501
+void click_check_header_sizes() {
+  switch (0 == 8) {  // expected-warning {{switch condition has boolean value}}
+  case 0: ;
+  }
+}

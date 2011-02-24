@@ -502,8 +502,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   bool HasDependentValue
     = CondExpr->isTypeDependent() || CondExpr->isValueDependent();
   unsigned CondWidth
-    = HasDependentValue? 0
-      : static_cast<unsigned>(Context.getTypeSize(CondTypeBeforePromotion));
+    = HasDependentValue ? 0 : Context.getIntWidth(CondTypeBeforePromotion);
   bool CondIsSigned = CondTypeBeforePromotion->isSignedIntegerType();
 
   // Accumulate all of the case values in a vector so that we can sort them
