@@ -174,6 +174,11 @@ def SecuritySyntaxChecker : Checker<"SecuritySyntactic">,
   HelpText<"Perform quick security checks that require no data flow">,
   DescFile<"CheckSecuritySyntaxOnly.cpp">;
 
+def ReturnPointerRangeChecker : Checker<"ReturnPtrRange">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check for an out-of-bound pointer being returned to callers">,
+  DescFile<"ReturnPointerRangeChecker.cpp">;
+
 def ObjCDeallocChecker : Checker<"Dealloc">,
   InPackage<CocoaExperimental>,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">,

@@ -12,9 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 
 using namespace clang;
@@ -22,25 +24,15 @@ using namespace ento;
 
 namespace {
 class ReturnPointerRangeChecker : 
-    public CheckerVisitor<ReturnPointerRangeChecker> {      
-  BuiltinBug *BT;
+    public CheckerV2< check::PreStmt<ReturnStmt> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
-    ReturnPointerRangeChecker() : BT(0) {}
-    static void *getTag();
-    void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *RS);
+    void checkPreStmt(const ReturnStmt *RS, CheckerContext &C) const;
 };
 }
 
-void ento::RegisterReturnPointerRangeChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new ReturnPointerRangeChecker());
-}
-
-void *ReturnPointerRangeChecker::getTag() {
-  static int x = 0; return &x;
-}
-
-void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
-                                                   const ReturnStmt *RS) {
+void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
+                                             CheckerContext &C) const {
   const GRState *state = C.getState();
 
   const Expr *RetE = RS->getRetValue();
@@ -77,9 +69,9 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
     // FIXME: This bug correspond to CWE-466.  Eventually we should have bug
     // types explicitly reference such exploit categories (when applicable).
     if (!BT)
-      BT = new BuiltinBug("Return of pointer value outside of expected range",
+      BT.reset(new BuiltinBug("Return of pointer value outside of expected range",
            "Returned pointer value points outside the original object "
-           "(potential buffer overflow)");
+           "(potential buffer overflow)"));
 
     // FIXME: It would be nice to eventually make this diagnostic more clear,
     // e.g., by referencing the original declaration or by saying *why* this
@@ -92,4 +84,8 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
     report->addRange(RetE->getSourceRange());
     C.EmitReport(report);
   }
+}
+
+void ento::registerReturnPointerRangeChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ReturnPointerRangeChecker>();
 }
