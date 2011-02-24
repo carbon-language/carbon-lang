@@ -1,4 +1,3 @@
-; RUN: llc -O0 -mtriple=arm-apple-darwin < %s | grep DW_OP_fbreg
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin < %s | grep DW_OP_fbreg
 ; Use DW_OP_fbreg in variable's location expression if the variable is in a stack slot.
 
