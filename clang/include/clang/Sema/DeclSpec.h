@@ -37,6 +37,7 @@ namespace clang {
   class NamespaceAliasDecl;
   class NamespaceDecl;
   class NestedNameSpecifier;
+  class NestedNameSpecifierLoc;
   class Preprocessor;
   class Declarator;
   struct TemplateIdAnnotation;
@@ -55,10 +56,30 @@ namespace clang {
 class CXXScopeSpec {
   SourceRange Range;
   NestedNameSpecifier *ScopeRep;
-  
-public:
-  CXXScopeSpec() : Range(), ScopeRep() { }
 
+  /// \brief Buffer used to store source-location information for the
+  /// nested-name-specifier.
+  ///
+  /// Note that we explicitly manage the buffer (rather than using a 
+  /// SmallVector) because \c Declarator expects it to be possible to memcpy()
+  /// a \c CXXScopeSpec.
+  char *Buffer;
+  
+  /// \brief The size of the buffer used to store source-location information
+  /// for the nested-name-specifier.
+  unsigned BufferSize;
+  
+  /// \brief The capacity of the buffer used to store source-location 
+  /// information for the nested-name-specifier.
+  unsigned BufferCapacity;
+
+public:
+  CXXScopeSpec() : Range(), ScopeRep(), Buffer(0), BufferSize(0),
+                   BufferCapacity(0) { }
+  CXXScopeSpec(const CXXScopeSpec &Other);
+  CXXScopeSpec &operator=(const CXXScopeSpec &Other);
+  ~CXXScopeSpec();
+  
   const SourceRange &getRange() const { return Range; }
   void setRange(const SourceRange &R) { Range = R; }
   void setBeginLoc(SourceLocation Loc) { Range.setBegin(Loc); }
@@ -129,13 +150,26 @@ public:
   /// nested-name-specifier '::'.
   void MakeGlobal(ASTContext &Context, SourceLocation ColonColonLoc);
   
-  /// \brief Adopt an existing nested-name-specifier and its source range
-  /// as our own.
-  void Adopt(NestedNameSpecifier *Qualifier, SourceRange R) {
-    ScopeRep = Qualifier;
-    Range = R;
-  }
+  /// \brief Make a new nested-name-specifier from incomplete source-location
+  /// information.
+  ///
+  /// FIXME: This routine should be used very, very rarely, in cases where we
+  /// need to synthesize a nested-name-specifier. Most code should instead use
+  /// \c Adopt() with a proper \c NestedNameSpecifierLoc.
+  void MakeTrivial(ASTContext &Context, NestedNameSpecifier *Qualifier, 
+                   SourceRange R);
   
+  /// \brief Adopt an existing nested-name-specifier (with source-range 
+  /// information).
+  void Adopt(NestedNameSpecifierLoc Other);
+  
+  /// \brief Retrieve a nested-name-specifier with location information, copied
+  /// into the given AST context.
+  ///
+  /// \param Context The context into which this nested-name-specifier will be
+  /// copied.
+  NestedNameSpecifierLoc getWithLocInContext(ASTContext &Context);
+
   /// No scope specifier.
   bool isEmpty() const { return !Range.isValid(); }
   /// A scope specifier is present, but may be valid or invalid.
@@ -163,6 +197,13 @@ public:
     Range = SourceRange();
     ScopeRep = 0;
   }
+
+  /// \brief Retrieve the data associated with the source-location information.
+  char *location_data() const { return Buffer; }
+  
+  /// \brief Retrieve the size of the data associated with source-location 
+  /// information.
+  unsigned location_size() const { return BufferSize; }
 };
 
 /// DeclSpec - This class captures information about "declaration specifiers",

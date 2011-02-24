@@ -5085,8 +5085,10 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     // reference to operator=; this is required to suppress the virtual
     // call mechanism.
     CXXScopeSpec SS;
-    SS.Adopt(NestedNameSpecifier::Create(S.Context, 0, false, T.getTypePtr()),
-             Loc);
+    SS.MakeTrivial(S.Context, 
+                   NestedNameSpecifier::Create(S.Context, 0, false, 
+                                               T.getTypePtr()),
+                   Loc);
     
     // Create the reference to operator=.
     ExprResult OpEqualRef

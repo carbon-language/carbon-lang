@@ -829,7 +829,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
     TemplateId->RAngleLoc = RAngleLoc;
     ParsedTemplateArgument *Args = TemplateId->getTemplateArgs();
     for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); Arg != ArgEnd; ++Arg)
-      Args[Arg] = TemplateArgs[Arg];
+      Args[Arg] = ParsedTemplateArgument(TemplateArgs[Arg]);
     Tok.setAnnotationValue(TemplateId);
     if (TemplateKWLoc.isValid())
       Tok.setLocation(TemplateKWLoc);

@@ -203,6 +203,76 @@ public:
   void dump(const LangOptions &LO);
 };
 
+/// \brief A C++ nested-name-specifier augmented with source location
+/// information.
+class NestedNameSpecifierLoc {
+  NestedNameSpecifier *Qualifier;
+  void *Data;
+
+  /// \brief Determines the data length for the last component in the
+  /// given nested-name-specifier.
+  static unsigned getLocalDataLength(NestedNameSpecifier *Qualifier);
+
+  /// \brief Determines the data length for the entire
+  /// nested-name-specifier.
+  static unsigned getDataLength(NestedNameSpecifier *Qualifier);
+
+public:
+  /// \brief Construct an empty nested-name-specifier.
+  NestedNameSpecifierLoc() : Qualifier(0), Data(0) { }
+  
+  /// \brief Construct a nested-name-specifier with source location information
+  /// from 
+  NestedNameSpecifierLoc(NestedNameSpecifier *Qualifier, void *Data)
+    : Qualifier(Qualifier), Data(Data) { }
+  
+  /// \brief Evalutes true when this nested-name-specifier location is
+  /// non-empty.
+  operator bool() const { return Qualifier; }
+
+  /// \brief Retrieve the nested-name-specifier to which this instance
+  /// refers.
+  NestedNameSpecifier *getNestedNameSpecifier() const {
+    return Qualifier;
+  }
+
+  /// \brief Retrieve the opaque pointer that refers to source-location data.
+  void *getOpaqueData() const { return Data; }
+  
+  /// \brief Retrieve the source range covering the entirety of this
+  /// nested-name-specifier.
+  ///
+  /// For example, if this instance refers to a nested-name-specifier
+  /// \c ::std::vector<int>::, the returned source range would cover
+  /// from the initial '::' to the last '::'.
+  SourceRange getSourceRange();
+
+  /// \brief Retrieve the source range covering just the last part of
+  /// this nested-name-specifier, not including the prefix.
+  ///
+  /// For example, if this instance refers to a nested-name-specifier
+  /// \c ::std::vector<int>::, the returned source range would cover
+  /// from "vector" to the last '::'.
+  SourceRange getLocalSourceRange();
+
+  /// \brief Return the prefix of this nested-name-specifier.
+  ///
+  /// For example, if this instance refers to a nested-name-specifier
+  /// \c ::std::vector<int>::, the prefix is \c ::std::. Note that the
+  /// returned prefix may be empty, if this is the first component of
+  /// the nested-name-specifier.
+  NestedNameSpecifierLoc getPrefix() const {
+    if (!Qualifier)
+      return *this;
+
+    return NestedNameSpecifierLoc(Qualifier->getPrefix(), Data);
+  }
+  
+  /// \brief Determines the data length for the entire
+  /// nested-name-specifier.
+  unsigned getDataLength() const { return getDataLength(Qualifier); }
+};
+
 /// Insertion operator for diagnostics.  This allows sending NestedNameSpecifiers
 /// into a diagnostic with <<.
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,

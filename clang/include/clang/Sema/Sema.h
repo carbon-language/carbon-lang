@@ -2679,6 +2679,30 @@ public:
                                    SourceLocation CCLoc,
                                    CXXScopeSpec &SS);
 
+  /// \brief Given a C++ nested-name-specifier, produce an annotation value
+  /// that the parser can use later to reconstruct the given 
+  /// nested-name-specifier.
+  ///
+  /// \param SS A nested-name-specifier.
+  ///
+  /// \returns A pointer containing all of the information in the 
+  /// nested-name-specifier \p SS.
+  void *SaveNestedNameSpecifierAnnotation(CXXScopeSpec &SS);
+  
+  /// \brief Given an annotation pointer for a nested-name-specifier, restore 
+  /// the nested-name-specifier structure.
+  ///
+  /// \param Annotation The annotation pointer, produced by 
+  /// \c SaveNestedNameSpecifierAnnotation().
+  ///
+  /// \param AnnotationRange The source range corresponding to the annotation.
+  ///
+  /// \param SS The nested-name-specifier that will be updated with the contents
+  /// of the annotation pointer.
+  void RestoreNestedNameSpecifierAnnotation(void *Annotation, 
+                                            SourceRange AnnotationRange,
+                                            CXXScopeSpec &SS);
+  
   bool ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
 
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global

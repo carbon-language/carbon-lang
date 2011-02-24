@@ -65,8 +65,9 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
          "Call sites of this function should be guarded by checking for C++");
 
   if (Tok.is(tok::annot_cxxscope)) {
-    SS.Adopt(static_cast<NestedNameSpecifier*>(Tok.getAnnotationValue()),
-             Tok.getAnnotationRange());
+    Actions.RestoreNestedNameSpecifierAnnotation(Tok.getAnnotationValue(),
+                                                 Tok.getAnnotationRange(),
+                                                 SS);
     ConsumeToken();
     return false;
   }
@@ -207,10 +208,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
         SourceLocation CCLoc = ConsumeToken();
 
-        if (!HasScopeSpecifier) {
-          SS.setBeginLoc(TypeToken.getLocation());
+        if (!HasScopeSpecifier)
           HasScopeSpecifier = true;
-        }
 
         if (ParsedType T = getTypeAnnotation(TypeToken)) {
           if (Actions.ActOnCXXNestedNameSpecifier(getCurScope(), T, CCLoc, SS))

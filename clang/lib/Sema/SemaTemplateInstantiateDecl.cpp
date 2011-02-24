@@ -670,7 +670,7 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   if (isFriend) {
     if (Qualifier) {
       CXXScopeSpec SS;
-      SS.Adopt(Qualifier, Pattern->getQualifierRange());
+      SS.MakeTrivial(SemaRef.Context, Qualifier, Pattern->getQualifierRange());
       DC = SemaRef.computeDeclContext(SS);
       if (!DC) return 0;
     } else {
@@ -983,7 +983,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     DC = Owner;
   else if (isFriend && Qualifier) {
     CXXScopeSpec SS;
-    SS.Adopt(Qualifier, D->getQualifierRange());
+    SS.MakeTrivial(SemaRef.Context, Qualifier, D->getQualifierRange());
     DC = SemaRef.computeDeclContext(SS);
     if (!DC) return 0;
   } else {
@@ -1272,7 +1272,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   if (isFriend) {
     if (Qualifier) {
       CXXScopeSpec SS;
-      SS.Adopt(Qualifier, D->getQualifierRange());
+      SS.MakeTrivial(SemaRef.Context, Qualifier, D->getQualifierRange());
       DC = SemaRef.computeDeclContext(SS);
 
       if (DC && SemaRef.RequireCompleteDeclContext(SS, DC))
@@ -1688,7 +1688,7 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
                                        D->isTypeName());
 
   CXXScopeSpec SS;
-  SS.Adopt(NNS, D->getNestedNameRange());
+  SS.MakeTrivial(SemaRef.Context, NNS, D->getNestedNameRange());
 
   if (CheckRedeclaration) {
     Prev.setHideTags(false);
@@ -1756,7 +1756,7 @@ Decl * TemplateDeclInstantiator
     return 0;
 
   CXXScopeSpec SS;
-  SS.Adopt(NNS, D->getTargetNestedNameRange());
+  SS.MakeTrivial(SemaRef.Context, NNS, D->getTargetNestedNameRange());
 
   // Since NameInfo refers to a typename, it cannot be a C++ special name.
   // Hence, no tranformation is required for it.
@@ -1782,7 +1782,7 @@ Decl * TemplateDeclInstantiator
     return 0;
 
   CXXScopeSpec SS;
-  SS.Adopt(NNS, D->getTargetNestedNameRange());
+  SS.MakeTrivial(SemaRef.Context, NNS, D->getTargetNestedNameRange());
 
   DeclarationNameInfo NameInfo
     = SemaRef.SubstDeclarationNameInfo(D->getNameInfo(), TemplateArgs);

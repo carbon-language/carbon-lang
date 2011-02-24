@@ -7594,7 +7594,8 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 
   CXXScopeSpec SS;
   if (ULE->getQualifier())
-    SS.Adopt(ULE->getQualifier(), ULE->getQualifierRange());
+    SS.MakeTrivial(SemaRef.Context, 
+                   ULE->getQualifier(), ULE->getQualifierRange());
 
   TemplateArgumentListInfo TABuffer;
   const TemplateArgumentListInfo *ExplicitTemplateArgs = 0;

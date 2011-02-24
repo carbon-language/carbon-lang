@@ -177,6 +177,12 @@ namespace clang {
       = (TemplateIdAnnotation *)std::malloc(sizeof(TemplateIdAnnotation) +
                                       sizeof(ParsedTemplateArgument) * NumArgs);
       TemplateId->NumArgs = NumArgs;
+      
+      // Default-construct parsed template arguments.
+      ParsedTemplateArgument *TemplateArgs = TemplateId->getTemplateArgs();
+      for (unsigned I = 0; I != NumArgs; ++I)
+        new (TemplateArgs + I) ParsedTemplateArgument();
+      
       return TemplateId;
     }
     

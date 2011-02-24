@@ -658,6 +658,41 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   return false;
 }
 
+namespace {
+  /// \brief A structure that stores a nested-name-specifier annotation,
+  /// including both the nested-name-specifier 
+  struct NestedNameSpecifierAnnotation {
+    NestedNameSpecifier *NNS;
+  };
+}
+
+void *Sema::SaveNestedNameSpecifierAnnotation(CXXScopeSpec &SS) {
+  if (SS.isEmpty() || SS.isInvalid())
+    return 0;
+  
+  void *Mem = Context.Allocate((sizeof(NestedNameSpecifierAnnotation) +
+                                                        SS.location_size()),
+                               llvm::alignOf<NestedNameSpecifierAnnotation>());
+  NestedNameSpecifierAnnotation *Annotation
+    = new (Mem) NestedNameSpecifierAnnotation;
+  Annotation->NNS = SS.getScopeRep();
+  memcpy(Annotation + 1, SS.location_data(), SS.location_size());
+  return Annotation;
+}
+
+void Sema::RestoreNestedNameSpecifierAnnotation(void *AnnotationPtr, 
+                                                SourceRange AnnotationRange,
+                                                CXXScopeSpec &SS) {
+  if (!AnnotationPtr) {
+    SS.SetInvalid(AnnotationRange);
+    return;
+  }
+  
+  NestedNameSpecifierAnnotation *Annotation
+    = static_cast<NestedNameSpecifierAnnotation *>(AnnotationPtr);
+  SS.Adopt(NestedNameSpecifierLoc(Annotation->NNS, Annotation + 1));
+}
+
 bool Sema::ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
 

@@ -17,6 +17,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/TypeLoc.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 
@@ -261,4 +262,95 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
 
 void NestedNameSpecifier::dump(const LangOptions &LO) {
   print(llvm::errs(), PrintingPolicy(LO));
+}
+
+unsigned 
+NestedNameSpecifierLoc::getLocalDataLength(NestedNameSpecifier *Qualifier) {
+  assert(Qualifier && "Expected a non-NULL qualifier");
+
+  // Location of the trailing '::'.
+  unsigned Length = sizeof(unsigned);
+
+  switch (Qualifier->getKind()) {
+  case NestedNameSpecifier::Global:
+    // Nothing more to add.
+    break;
+
+  case NestedNameSpecifier::Identifier:
+  case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
+    // The location of the identifier or namespace name.
+    Length += sizeof(unsigned);
+    break;
+
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+  case NestedNameSpecifier::TypeSpec:
+    // The "void*" that points at the TypeLoc data.
+    // Note: the 'template' keyword is part of the TypeLoc.
+    Length += sizeof(void *);
+    break;
+  }
+
+  return Length;
+}
+
+unsigned 
+NestedNameSpecifierLoc::getDataLength(NestedNameSpecifier *Qualifier) {
+  unsigned Length = 0;
+  for (; Qualifier; Qualifier = Qualifier->getPrefix())
+    Length += getLocalDataLength(Qualifier);
+  return Length;
+}
+
+namespace {
+  /// \brief Load a (possibly unaligned) source location from a given address
+  /// and offset.
+  SourceLocation LoadSourceLocation(void *Data, unsigned Offset) {
+    unsigned Raw;
+    memcpy(&Raw, static_cast<char *>(Data) + Offset, sizeof(unsigned));
+    return SourceLocation::getFromRawEncoding(Raw);
+  }
+  
+  /// \brief Load a (possibly unaligned) pointer from a given address and
+  /// offset.
+  void *LoadPointer(void *Data, unsigned Offset) {
+    void *Result;
+    memcpy(&Result, static_cast<char *>(Data) + Offset, sizeof(void*));
+    return Result;
+  }
+}
+
+SourceRange NestedNameSpecifierLoc::getSourceRange() {
+  NestedNameSpecifierLoc First = *this;
+  while (NestedNameSpecifierLoc Prefix= First.getPrefix())
+    First = Prefix;
+  
+  return SourceRange(First.getLocalSourceRange().getBegin(), 
+                     getLocalSourceRange().getEnd());
+}
+
+SourceRange NestedNameSpecifierLoc::getLocalSourceRange() {
+  unsigned Offset = getDataLength(Qualifier->getPrefix());
+  switch (Qualifier->getKind()) {
+  case NestedNameSpecifier::Global:
+    return LoadSourceLocation(Data, Offset);
+
+  case NestedNameSpecifier::Identifier:
+  case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
+    return SourceRange(LoadSourceLocation(Data, Offset),
+                       LoadSourceLocation(Data, Offset + sizeof(unsigned)));
+
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+  case NestedNameSpecifier::TypeSpec: {
+    // The "void*" that points at the TypeLoc data.
+    // Note: the 'template' keyword is part of the TypeLoc.
+    void *TypeData = LoadPointer(Data, Offset);
+    TypeLoc TL(Qualifier->getAsType(), TypeData);
+    return SourceRange(TL.getBeginLoc(),
+                       LoadSourceLocation(Data, Offset + sizeof(void*)));
+  }
+  }
+  
+  return SourceRange();
 }
