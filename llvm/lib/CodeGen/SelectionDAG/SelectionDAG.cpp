@@ -2088,12 +2088,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
 
   case ISD::Constant: {
     const APInt &Val = cast<ConstantSDNode>(Op)->getAPIntValue();
-    // If negative, return # leading ones.
-    if (Val.isNegative())
-      return Val.countLeadingOnes();
-
-    // Return # leading zeros.
-    return Val.countLeadingZeros();
+    return Val.getNumSignBits();
   }
 
   case ISD::SIGN_EXTEND:

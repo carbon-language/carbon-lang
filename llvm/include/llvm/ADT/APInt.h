@@ -1193,6 +1193,12 @@ public:
   /// @brief Count the number of leading one bits.
   unsigned countLeadingOnes() const;
 
+  /// Computes the number of leading bits of this APInt that are equal to its
+  /// sign bit.
+  unsigned getNumSignBits() const {
+    return isNegative() ? countLeadingOnes() : countLeadingZeros();
+  }
+
   /// countTrailingZeros - This function is an APInt version of the
   /// countTrailingZeros_{32,64} functions in MathExtras.h. It counts
   /// the number of zeros from the least significant bit to the first set bit.
