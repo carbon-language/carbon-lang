@@ -953,10 +953,19 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (Callee->isDeclaration() && !isConvertible) return false;
   }
 
-  if (FT->getNumParams() < NumActualArgs && !FT->isVarArg() &&
-      Callee->isDeclaration())
-    return false;   // Do not delete arguments unless we have a function body.
+  if (Callee->isDeclaration()) {
+    // Do not delete arguments unless we have a function body.
+    if (FT->getNumParams() < NumActualArgs && !FT->isVarArg())
+      return false;
 
+    // If the callee is just a declaration, don't change the varargsness of the
+    // call.  We don't want to introduce a varargs call where one doesn't
+    // already exist.
+    const PointerType *APTy = cast<PointerType>(CS.getCalledValue()->getType());
+    if (FT->isVarArg()!=cast<FunctionType>(APTy->getElementType())->isVarArg())
+      return false;
+  }
+      
   if (FT->getNumParams() < NumActualArgs && FT->isVarArg() &&
       !CallerPAL.isEmpty())
     // In this case we have more arguments than the new function type, but we
@@ -970,8 +979,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         return false;
     }
 
+  
   // Okay, we decided that this is a safe thing to do: go ahead and start
-  // inserting cast instructions as necessary...
+  // inserting cast instructions as necessary.
   std::vector<Value*> Args;
   Args.reserve(NumActualArgs);
   SmallVector<AttributeWithIndex, 8> attrVec;

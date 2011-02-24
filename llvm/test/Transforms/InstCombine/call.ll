@@ -32,7 +32,7 @@ define i32 @test2(i32 %A) {
 
 ; Resolving this should insert a cast from sbyte to int, following the C 
 ; promotion rules.
-declare void @test3a(i8, ...)
+define void @test3a(i8, ...) {unreachable }
 
 define void @test3(i8 %A, i8 %B) {
         call void bitcast (void (i8, ...)* @test3a to void (i8, i8)*)( i8 %A, i8 %B 
@@ -115,4 +115,18 @@ try.handler:                                      ; preds = %entry
 ; right calling conv.
 ; CHECK: @test8() {
 ; CHECK-NEXT: invoke void @test8a()
+
+
+
+; Don't turn this into a direct call, because test9x is just a prototype and 
+; doing so will make it varargs.
+; rdar://9038601
+declare i8* @test9x(i8*, i8*, ...) noredzone
+define i8* @test9(i8* %arg, i8* %tmp3) nounwind ssp noredzone {
+entry:
+  %call = call i8* bitcast (i8* (i8*, i8*, ...)* @test9x to i8* (i8*, i8*)*)(i8* %arg, i8* %tmp3) noredzone
+  ret i8* %call
+; CHECK: @test9(
+; CHECK: call i8* bitcast
+}
 
