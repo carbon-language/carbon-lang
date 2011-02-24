@@ -27,7 +27,6 @@ void RegisterArrayBoundCheckerV2(ExprEngine &Eng);
 void RegisterAttrNonNullChecker(ExprEngine &Eng);
 void RegisterBuiltinFunctionChecker(ExprEngine &Eng);
 void RegisterCallAndMessageChecker(ExprEngine &Eng);
-void RegisterCastSizeChecker(ExprEngine &Eng);
 void RegisterDereferenceChecker(ExprEngine &Eng);
 void RegisterDivZeroChecker(ExprEngine &Eng);
 void RegisterNoReturnFunctionChecker(ExprEngine &Eng);

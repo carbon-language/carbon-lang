@@ -11,30 +11,25 @@
 // whether the size of the symbolic region is a multiple of the size of T.
 //
 //===----------------------------------------------------------------------===//
-#include "clang/AST/CharUnits.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
-#include "InternalChecks.h"
+#include "clang/AST/CharUnits.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
-class CastSizeChecker : public CheckerVisitor<CastSizeChecker> {
-  BuiltinBug *BT;
+class CastSizeChecker : public CheckerV2< check::PreStmt<CastExpr> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
-  CastSizeChecker() : BT(0) {}
-  static void *getTag();
-  void PreVisitCastExpr(CheckerContext &C, const CastExpr *B);
+  void checkPreStmt(const CastExpr *CE, CheckerContext &C) const;
 };
 }
 
-void *CastSizeChecker::getTag() {
-  static int x;
-  return &x;
-}
-
-void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
+void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
   const Expr *E = CE->getSubExpr();
   ASTContext &Ctx = C.getASTContext();
   QualType ToTy = Ctx.getCanonicalType(CE->getType());
@@ -74,9 +69,9 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
   if (regionSize % typeSize != 0) {
     if (ExplodedNode *errorNode = C.generateSink()) {
       if (!BT)
-        BT = new BuiltinBug("Cast region with wrong size.",
+        BT.reset(new BuiltinBug("Cast region with wrong size.",
                             "Cast a region whose size is not a multiple of the"
-                            " destination type size.");
+                            " destination type size."));
       RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(),
                                                errorNode);
       R->addRange(CE->getSourceRange());
@@ -86,6 +81,6 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
 }
 
 
-void ento::RegisterCastSizeChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new CastSizeChecker());
+void ento::registerCastSizeChecker(CheckerManager &mgr) {
+  mgr.registerChecker<CastSizeChecker>();  
 }

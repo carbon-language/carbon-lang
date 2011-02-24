@@ -184,6 +184,11 @@ def ArrayBoundChecker : Checker<"ArrayBound">,
   HelpText<"Check for an out-of-bound pointer being returned to callers">,
   DescFile<"ArrayBoundChecker.cpp">;
 
+def CastSizeChecker : Checker<"CastSize">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check when casting a malloc'ed type T, whether the size is a multiple of the size of T">,
+  DescFile<"CastSizeChecker.cpp">;
+
 def ObjCDeallocChecker : Checker<"Dealloc">,
   InPackage<CocoaExperimental>,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">,
