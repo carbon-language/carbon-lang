@@ -106,6 +106,10 @@ public:
     LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
   };
 
+  /// VisitedBBs - The set of basic blocks visited thus far by instruction
+  /// selection.
+  DenseSet<const BasicBlock*> VisitedBBs;
+
   /// PHINodesToUpdate - A list of phi instructions whose operand list will
   /// be updated after processing the current basic block.
   /// TODO: This isn't per-function state, it's per-basic-block state. But

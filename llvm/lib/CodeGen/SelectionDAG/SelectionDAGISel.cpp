@@ -831,6 +831,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 #ifndef NDEBUG
     CheckLineNumbers(LLVMBB);
 #endif
+
+    if (OptLevel != CodeGenOpt::None)
+      FuncInfo->VisitedBBs.insert(LLVMBB);
+
     FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
     FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();
 
