@@ -515,7 +515,7 @@ bool ExprEngine::wantsRegionChangeUpdate(const GRState* state) {
       return true;
   }
 
-  return false;
+  return getCheckerManager().wantsRegionChangeUpdate(state);
 }
 
 const GRState *
@@ -543,9 +543,9 @@ ExprEngine::processRegionChanges(const GRState *state,
     CO = CO_Ref;
   }
 
-  // If there are no checkers, just return the state as is.
+  // If there are no checkers, just delegate to the checker manager.
   if (CO->empty())
-    return state;
+    return getCheckerManager().runCheckersForRegionChanges(state, Begin, End);
 
   for (CheckersOrdered::iterator I = CO->begin(), E = CO->end(); I != E; ++I) {
     // If any checker declares the state infeasible (or if it starts that way),
@@ -568,7 +568,7 @@ ExprEngine::processRegionChanges(const GRState *state,
   if (NewCO.get())
     CO_Ref = NewCO.take();
 
-  return state;
+  return getCheckerManager().runCheckersForRegionChanges(state, Begin, End);
 }
 
 void ExprEngine::processEndWorklist(bool hasWorkRemaining) {
@@ -624,6 +624,8 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
       checker->MarkLiveSymbols(St, SymReaper);
     }
 
+    getCheckerManager().runCheckersForLiveSymbols(St, SymReaper);
+
     const StackFrameContext *SFC = LC->getCurrentStackFrame();
     CleanedState = StateMgr.removeDeadBindings(St, SFC, SymReaper);
   } else {
@@ -647,8 +649,9 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
     getTF().evalDeadSymbols(Tmp2, *this, *Builder, EntryNode,
                             CleanedState, SymReaper);
 
+    ExplodedNodeSet checkersV1Tmp;
     if (Checkers.empty())
-      Tmp.insert(Tmp2);
+      checkersV1Tmp.insert(Tmp2);
     else {
       ExplodedNodeSet Tmp3;
       ExplodedNodeSet *SrcSet = &Tmp2;
@@ -656,7 +659,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
            I != E; ++I) {
         ExplodedNodeSet *DstSet = 0;
         if (I+1 == E)
-          DstSet = &Tmp;
+          DstSet = &checkersV1Tmp;
         else {
           DstSet = (SrcSet == &Tmp2) ? &Tmp3 : &Tmp2;
           DstSet->clear();
@@ -671,6 +674,9 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
         SrcSet = DstSet;
       }
     }
+
+    getCheckerManager().runCheckersForDeadSymbols(Tmp, checkersV1Tmp,
+                                                 SymReaper, currentStmt, *this);
 
     if (!Builder->BuildSinks && !Builder->hasGeneratedNode)
       Tmp.Add(EntryNode);

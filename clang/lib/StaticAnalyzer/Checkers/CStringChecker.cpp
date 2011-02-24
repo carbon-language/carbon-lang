@@ -13,9 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "llvm/ADT/StringSwitch.h"
 
@@ -23,80 +24,86 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class CStringChecker : public CheckerVisitor<CStringChecker> {
-  BugType *BT_Null, *BT_Bounds, *BT_BoundsWrite, *BT_Overlap, *BT_NotCString;
+class CStringChecker : public CheckerV2< eval::Call,
+                                         check::PreStmt<DeclStmt>,
+                                         check::LiveSymbols,
+                                         check::DeadSymbols,
+                                         check::RegionChanges
+                                         > {
+  mutable llvm::OwningPtr<BugType> BT_Null, BT_Bounds, BT_BoundsWrite,
+                                   BT_Overlap, BT_NotCString;
 public:
-  CStringChecker()
-  : BT_Null(0), BT_Bounds(0), BT_BoundsWrite(0), BT_Overlap(0), BT_NotCString(0)
-  {}
   static void *getTag() { static int tag; return &tag; }
 
-  bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
-  void PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS);
-  void MarkLiveSymbols(const GRState *state, SymbolReaper &SR);
-  void evalDeadSymbols(CheckerContext &C, SymbolReaper &SR);
-  bool wantsRegionChangeUpdate(const GRState *state);
+  bool evalCall(const CallExpr *CE, CheckerContext &C) const;
+  void checkPreStmt(const DeclStmt *DS, CheckerContext &C) const;
+  void checkLiveSymbols(const GRState *state, SymbolReaper &SR) const;
+  void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const;
+  bool wantsRegionChangeUpdate(const GRState *state) const;
 
-  const GRState *EvalRegionChanges(const GRState *state,
-                                   const MemRegion * const *Begin,
-                                   const MemRegion * const *End,
-                                   bool*);
+  const GRState *checkRegionChanges(const GRState *state,
+                                    const MemRegion * const *Begin,
+                                    const MemRegion * const *End) const;
 
-  typedef void (CStringChecker::*FnCheck)(CheckerContext &, const CallExpr *);
+  typedef void (CStringChecker::*FnCheck)(CheckerContext &,
+                                          const CallExpr *) const;
 
-  void evalMemcpy(CheckerContext &C, const CallExpr *CE);
-  void evalMemmove(CheckerContext &C, const CallExpr *CE);
-  void evalBcopy(CheckerContext &C, const CallExpr *CE);
+  void evalMemcpy(CheckerContext &C, const CallExpr *CE) const;
+  void evalMemmove(CheckerContext &C, const CallExpr *CE) const;
+  void evalBcopy(CheckerContext &C, const CallExpr *CE) const;
   void evalCopyCommon(CheckerContext &C, const GRState *state,
                       const Expr *Size, const Expr *Source, const Expr *Dest,
-                      bool Restricted = false);
+                      bool Restricted = false) const;
 
-  void evalMemcmp(CheckerContext &C, const CallExpr *CE);
+  void evalMemcmp(CheckerContext &C, const CallExpr *CE) const;
 
-  void evalstrLength(CheckerContext &C, const CallExpr *CE);
-  void evalstrnLength(CheckerContext &C, const CallExpr *CE);
+  void evalstrLength(CheckerContext &C, const CallExpr *CE) const;
+  void evalstrnLength(CheckerContext &C, const CallExpr *CE) const;
   void evalstrLengthCommon(CheckerContext &C, const CallExpr *CE, 
-                           bool IsStrnlen = false);
+                           bool IsStrnlen = false) const;
 
-  void evalStrcpy(CheckerContext &C, const CallExpr *CE);
-  void evalStrncpy(CheckerContext &C, const CallExpr *CE);
-  void evalStpcpy(CheckerContext &C, const CallExpr *CE);
+  void evalStrcpy(CheckerContext &C, const CallExpr *CE) const;
+  void evalStrncpy(CheckerContext &C, const CallExpr *CE) const;
+  void evalStpcpy(CheckerContext &C, const CallExpr *CE) const;
   void evalStrcpyCommon(CheckerContext &C, const CallExpr *CE, bool returnEnd,
-                        bool isStrncpy);
+                        bool isStrncpy) const;
 
   // Utility methods
   std::pair<const GRState*, const GRState*>
-  assumeZero(CheckerContext &C, const GRState *state, SVal V, QualType Ty);
+  static assumeZero(CheckerContext &C,
+                    const GRState *state, SVal V, QualType Ty);
 
-  const GRState *setCStringLength(const GRState *state, const MemRegion *MR,
-                                  SVal strLength);
-  SVal getCStringLengthForRegion(CheckerContext &C, const GRState *&state,
-                                 const Expr *Ex, const MemRegion *MR);
+  static const GRState *setCStringLength(const GRState *state,
+                                         const MemRegion *MR, SVal strLength);
+  static SVal getCStringLengthForRegion(CheckerContext &C,
+                                        const GRState *&state,
+                                        const Expr *Ex, const MemRegion *MR);
   SVal getCStringLength(CheckerContext &C, const GRState *&state,
-                        const Expr *Ex, SVal Buf);
+                        const Expr *Ex, SVal Buf) const;
 
-  const GRState *InvalidateBuffer(CheckerContext &C, const GRState *state,
-                                  const Expr *Ex, SVal V);
+  static const GRState *InvalidateBuffer(CheckerContext &C,
+                                         const GRState *state,
+                                         const Expr *Ex, SVal V);
 
-  bool SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
-                       const MemRegion *MR);
+  static bool SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
+                              const MemRegion *MR);
 
   // Re-usable checks
   const GRState *checkNonNull(CheckerContext &C, const GRState *state,
-                               const Expr *S, SVal l);
+                               const Expr *S, SVal l) const;
   const GRState *CheckLocation(CheckerContext &C, const GRState *state,
                                const Expr *S, SVal l,
-                               bool IsDestination = false);
+                               bool IsDestination = false) const;
   const GRState *CheckBufferAccess(CheckerContext &C, const GRState *state,
                                    const Expr *Size,
                                    const Expr *FirstBuf,
                                    const Expr *SecondBuf = NULL,
-                                   bool FirstIsDestination = false);
+                                   bool FirstIsDestination = false) const;
   const GRState *CheckOverlap(CheckerContext &C, const GRState *state,
                               const Expr *Size, const Expr *First,
-                              const Expr *Second);
+                              const Expr *Second) const;
   void emitOverlapBug(CheckerContext &C, const GRState *state,
-                      const Stmt *First, const Stmt *Second);
+                      const Stmt *First, const Stmt *Second) const;
 };
 
 class CStringLength {
@@ -113,14 +120,6 @@ namespace ento {
     static void *GDMIndex() { return CStringChecker::getTag(); }
   };
 }
-}
-
-static void RegisterCStringChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new CStringChecker());
-}
-
-void ento::registerCStringChecker(CheckerManager &mgr) {
-  mgr.addCheckerRegisterFunction(RegisterCStringChecker);
 }
 
 //===----------------------------------------------------------------------===//
@@ -141,7 +140,7 @@ CStringChecker::assumeZero(CheckerContext &C, const GRState *state, SVal V,
 
 const GRState *CStringChecker::checkNonNull(CheckerContext &C,
                                             const GRState *state,
-                                            const Expr *S, SVal l) {
+                                            const Expr *S, SVal l) const {
   // If a previous check has failed, propagate the failure.
   if (!state)
     return NULL;
@@ -155,11 +154,11 @@ const GRState *CStringChecker::checkNonNull(CheckerContext &C,
       return NULL;
 
     if (!BT_Null)
-      BT_Null = new BuiltinBug("API",
-        "Null pointer argument in call to byte string function");
+      BT_Null.reset(new BuiltinBug("API",
+        "Null pointer argument in call to byte string function"));
 
     // Generate a report for this bug.
-    BuiltinBug *BT = static_cast<BuiltinBug*>(BT_Null);
+    BuiltinBug *BT = static_cast<BuiltinBug*>(BT_Null.get());
     EnhancedBugReport *report = new EnhancedBugReport(*BT,
                                                       BT->getDescription(), N);
 
@@ -178,7 +177,7 @@ const GRState *CStringChecker::checkNonNull(CheckerContext &C,
 const GRState *CStringChecker::CheckLocation(CheckerContext &C,
                                              const GRState *state,
                                              const Expr *S, SVal l,
-                                             bool IsDestination) {
+                                             bool IsDestination) const {
   // If a previous check has failed, propagate the failure.
   if (!state)
     return NULL;
@@ -214,16 +213,16 @@ const GRState *CStringChecker::CheckLocation(CheckerContext &C,
     BuiltinBug *BT;
     if (IsDestination) {
       if (!BT_BoundsWrite) {
-        BT_BoundsWrite = new BuiltinBug("Out-of-bound array access",
-          "Byte string function overflows destination buffer");
+        BT_BoundsWrite.reset(new BuiltinBug("Out-of-bound array access",
+          "Byte string function overflows destination buffer"));
       }
-      BT = static_cast<BuiltinBug*>(BT_BoundsWrite);
+      BT = static_cast<BuiltinBug*>(BT_BoundsWrite.get());
     } else {
       if (!BT_Bounds) {
-        BT_Bounds = new BuiltinBug("Out-of-bound array access",
-          "Byte string function accesses out-of-bound array element");
+        BT_Bounds.reset(new BuiltinBug("Out-of-bound array access",
+          "Byte string function accesses out-of-bound array element"));
       }
-      BT = static_cast<BuiltinBug*>(BT_Bounds);
+      BT = static_cast<BuiltinBug*>(BT_Bounds.get());
     }
 
     // FIXME: It would be nice to eventually make this diagnostic more clear,
@@ -248,7 +247,7 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
                                                  const Expr *Size,
                                                  const Expr *FirstBuf,
                                                  const Expr *SecondBuf,
-                                                 bool FirstIsDestination) {
+                                                bool FirstIsDestination) const {
   // If a previous check has failed, propagate the failure.
   if (!state)
     return NULL;
@@ -311,7 +310,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
                                             const GRState *state,
                                             const Expr *Size,
                                             const Expr *First,
-                                            const Expr *Second) {
+                                            const Expr *Second) const {
   // Do a simple check for overlap: if the two arguments are from the same
   // buffer, see if the end of the first is greater than the start of the second
   // or vice versa.
@@ -418,13 +417,13 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
 }
 
 void CStringChecker::emitOverlapBug(CheckerContext &C, const GRState *state,
-                                    const Stmt *First, const Stmt *Second) {
+                                  const Stmt *First, const Stmt *Second) const {
   ExplodedNode *N = C.generateSink(state);
   if (!N)
     return;
 
   if (!BT_Overlap)
-    BT_Overlap = new BugType("Unix API", "Improper arguments");
+    BT_Overlap.reset(new BugType("Unix API", "Improper arguments"));
 
   // Generate a report for this bug.
   RangedBugReport *report = 
@@ -485,13 +484,14 @@ SVal CStringChecker::getCStringLengthForRegion(CheckerContext &C,
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
   QualType sizeTy = svalBuilder.getContext().getSizeType();
-  SVal strLength = svalBuilder.getMetadataSymbolVal(getTag(), MR, Ex, sizeTy, Count);
+  SVal strLength = svalBuilder.getMetadataSymbolVal(CStringChecker::getTag(),
+                                                    MR, Ex, sizeTy, Count);
   state = state->set<CStringLength>(MR, strLength);
   return strLength;
 }
 
 SVal CStringChecker::getCStringLength(CheckerContext &C, const GRState *&state,
-                                      const Expr *Ex, SVal Buf) {
+                                      const Expr *Ex, SVal Buf) const {
   const MemRegion *MR = Buf.getAsRegion();
   if (!MR) {
     // If we can't get a region, see if it's something we /know/ isn't a
@@ -500,8 +500,8 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, const GRState *&state,
     if (loc::GotoLabel *Label = dyn_cast<loc::GotoLabel>(&Buf)) {
       if (ExplodedNode *N = C.generateNode(state)) {
         if (!BT_NotCString)
-          BT_NotCString = new BuiltinBug("API",
-            "Argument is not a null-terminated string.");
+          BT_NotCString.reset(new BuiltinBug("API",
+            "Argument is not a null-terminated string."));
 
         llvm::SmallString<120> buf;
         llvm::raw_svector_ostream os(buf);
@@ -556,8 +556,8 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, const GRState *&state,
     // The caller should always be prepared to handle this case.
     if (ExplodedNode *N = C.generateNode(state)) {
       if (!BT_NotCString)
-        BT_NotCString = new BuiltinBug("API",
-          "Argument is not a null-terminated string.");
+        BT_NotCString.reset(new BuiltinBug("API",
+          "Argument is not a null-terminated string."));
 
       llvm::SmallString<120> buf;
       llvm::raw_svector_ostream os(buf);
@@ -657,7 +657,7 @@ bool CStringChecker::SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
 
 void CStringChecker::evalCopyCommon(CheckerContext &C, const GRState *state,
                                     const Expr *Size, const Expr *Dest,
-                                    const Expr *Source, bool Restricted) {
+                                    const Expr *Source, bool Restricted) const {
   // See if the size argument is zero.
   SVal sizeVal = state->getSVal(Size);
   QualType sizeTy = Size->getType();
@@ -690,7 +690,7 @@ void CStringChecker::evalCopyCommon(CheckerContext &C, const GRState *state,
 }
 
 
-void CStringChecker::evalMemcpy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalMemcpy(CheckerContext &C, const CallExpr *CE) const {
   // void *memcpy(void *restrict dst, const void *restrict src, size_t n);
   // The return value is the address of the destination buffer.
   const Expr *Dest = CE->getArg(0);
@@ -699,7 +699,7 @@ void CStringChecker::evalMemcpy(CheckerContext &C, const CallExpr *CE) {
   evalCopyCommon(C, state, CE->getArg(2), Dest, CE->getArg(1), true);
 }
 
-void CStringChecker::evalMemmove(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalMemmove(CheckerContext &C, const CallExpr *CE) const {
   // void *memmove(void *dst, const void *src, size_t n);
   // The return value is the address of the destination buffer.
   const Expr *Dest = CE->getArg(0);
@@ -708,12 +708,12 @@ void CStringChecker::evalMemmove(CheckerContext &C, const CallExpr *CE) {
   evalCopyCommon(C, state, CE->getArg(2), Dest, CE->getArg(1));
 }
 
-void CStringChecker::evalBcopy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalBcopy(CheckerContext &C, const CallExpr *CE) const {
   // void bcopy(const void *src, void *dst, size_t n);
   evalCopyCommon(C, C.getState(), CE->getArg(2), CE->getArg(1), CE->getArg(0));
 }
 
-void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
   // int memcmp(const void *s1, const void *s2, size_t n);
   const Expr *Left = CE->getArg(0);
   const Expr *Right = CE->getArg(1);
@@ -779,18 +779,20 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) {
   }
 }
 
-void CStringChecker::evalstrLength(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalstrLength(CheckerContext &C,
+                                   const CallExpr *CE) const {
   // size_t strlen(const char *s);
   evalstrLengthCommon(C, CE, /* IsStrnlen = */ false);
 }
 
-void CStringChecker::evalstrnLength(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalstrnLength(CheckerContext &C,
+                                    const CallExpr *CE) const {
   // size_t strnlen(const char *s, size_t maxlen);
   evalstrLengthCommon(C, CE, /* IsStrnlen = */ true);
 }
 
 void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
-                                         bool IsStrnlen) {
+                                         bool IsStrnlen) const {
   const GRState *state = C.getState();
   const Expr *Arg = CE->getArg(0);
   SVal ArgVal = state->getSVal(Arg);
@@ -845,23 +847,23 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
   }
 }
 
-void CStringChecker::evalStrcpy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalStrcpy(CheckerContext &C, const CallExpr *CE) const {
   // char *strcpy(char *restrict dst, const char *restrict src);
   evalStrcpyCommon(C, CE, /* returnEnd = */ false, /* isStrncpy = */ false);
 }
 
-void CStringChecker::evalStrncpy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalStrncpy(CheckerContext &C, const CallExpr *CE) const {
   // char *strcpy(char *restrict dst, const char *restrict src);
   evalStrcpyCommon(C, CE, /* returnEnd = */ false, /* isStrncpy = */ true);
 }
 
-void CStringChecker::evalStpcpy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalStpcpy(CheckerContext &C, const CallExpr *CE) const {
   // char *stpcpy(char *restrict dst, const char *restrict src);
   evalStrcpyCommon(C, CE, /* returnEnd = */ true, /* isStrncpy = */ false);
 }
 
 void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
-                                      bool returnEnd, bool isStrncpy) {
+                                      bool returnEnd, bool isStrncpy) const {
   const GRState *state = C.getState();
 
   // Check that the destination is non-null
@@ -960,7 +962,7 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
 // The driver method, and other Checker callbacks.
 //===----------------------------------------------------------------------===//
 
-bool CStringChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
+bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   // Get the callee.  All the functions we care about are C functions
   // with simple identifiers.
   const GRState *state = C.getState();
@@ -999,7 +1001,7 @@ bool CStringChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
   return true;
 }
 
-void CStringChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
+void CStringChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   // Record string length for char a[] = "abc";
   const GRState *state = C.getState();
 
@@ -1035,15 +1037,15 @@ void CStringChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   C.addTransition(state);
 }
 
-bool CStringChecker::wantsRegionChangeUpdate(const GRState *state) {
+bool CStringChecker::wantsRegionChangeUpdate(const GRState *state) const {
   CStringLength::EntryMap Entries = state->get<CStringLength>();
   return !Entries.isEmpty();
 }
 
-const GRState *CStringChecker::EvalRegionChanges(const GRState *state,
-                                                 const MemRegion * const *Begin,
-                                                 const MemRegion * const *End,
-                                                 bool *) {
+const GRState *
+CStringChecker::checkRegionChanges(const GRState *state,
+                                   const MemRegion * const *Begin,
+                                   const MemRegion * const *End) const {
   CStringLength::EntryMap Entries = state->get<CStringLength>();
   if (Entries.isEmpty())
     return state;
@@ -1090,7 +1092,8 @@ const GRState *CStringChecker::EvalRegionChanges(const GRState *state,
   return state->set<CStringLength>(Entries);
 }
 
-void CStringChecker::MarkLiveSymbols(const GRState *state, SymbolReaper &SR) {
+void CStringChecker::checkLiveSymbols(const GRState *state,
+                                      SymbolReaper &SR) const {
   // Mark all symbols in our string length map as valid.
   CStringLength::EntryMap Entries = state->get<CStringLength>();
 
@@ -1102,7 +1105,8 @@ void CStringChecker::MarkLiveSymbols(const GRState *state, SymbolReaper &SR) {
   }
 }
 
-void CStringChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SR) {
+void CStringChecker::checkDeadSymbols(SymbolReaper &SR,
+                                      CheckerContext &C) const {
   if (!SR.hasDeadSymbols())
     return;
 
@@ -1123,4 +1127,8 @@ void CStringChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SR) {
 
   state = state->set<CStringLength>(Entries);
   C.generateNode(state);
+}
+
+void ento::registerCStringChecker(CheckerManager &mgr) {
+  mgr.registerChecker<CStringChecker>();
 }

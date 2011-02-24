@@ -227,6 +227,71 @@ void CheckerManager::runCheckersForEndPath(EndOfFunctionNodeBuilder &B,
   }
 }
 
+/// \brief Run checkers for live symbols.
+void CheckerManager::runCheckersForLiveSymbols(const GRState *state,
+                                               SymbolReaper &SymReaper) {
+  for (unsigned i = 0, e = LiveSymbolsCheckers.size(); i != e; ++i)
+    LiveSymbolsCheckers[i](state, SymReaper);
+}
+
+namespace {
+  struct CheckDeadSymbolsContext {
+    typedef std::vector<CheckerManager::CheckDeadSymbolsFunc> CheckersTy;
+    const CheckersTy &Checkers;
+    SymbolReaper &SR;
+    const Stmt *S;
+    ExprEngine &Eng;
+
+    CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
+    CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
+
+    CheckDeadSymbolsContext(const CheckersTy &checkers, SymbolReaper &sr,
+                            const Stmt *s, ExprEngine &eng)
+      : Checkers(checkers), SR(sr), S(s), Eng(eng) { }
+
+    void runChecker(CheckerManager::CheckDeadSymbolsFunc checkFn,
+                    ExplodedNodeSet &Dst, ExplodedNode *Pred) {
+      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
+                       ProgramPoint::PostPurgeDeadSymbolsKind, 0, S);
+      checkFn(SR, C);
+    }
+  };
+}
+
+/// \brief Run checkers for dead symbols.
+void CheckerManager::runCheckersForDeadSymbols(ExplodedNodeSet &Dst,
+                                               const ExplodedNodeSet &Src,
+                                               SymbolReaper &SymReaper,
+                                               const Stmt *S,
+                                               ExprEngine &Eng) {
+  CheckDeadSymbolsContext C(DeadSymbolsCheckers, SymReaper, S, Eng);
+  expandGraphWithCheckers(C, Dst, Src);
+}
+
+/// \brief True if at least one checker wants to check region changes.
+bool CheckerManager::wantsRegionChangeUpdate(const GRState *state) {
+  for (unsigned i = 0, e = RegionChangesCheckers.size(); i != e; ++i)
+    if (RegionChangesCheckers[i].WantUpdateFn(state))
+      return true;
+
+  return false;
+}
+
+/// \brief Run checkers for region changes.
+const GRState *
+CheckerManager::runCheckersForRegionChanges(const GRState *state,
+                                            const MemRegion * const *Begin,
+                                            const MemRegion * const *End) {
+  for (unsigned i = 0, e = RegionChangesCheckers.size(); i != e; ++i) {
+    // If any checker declares the state infeasible (or if it starts that way),
+    // bail out.
+    if (!state)
+      return NULL;
+    state = RegionChangesCheckers[i].CheckFn(state, Begin, End);
+  }
+  return state;
+}
+
 /// \brief Run checkers for evaluating a call.
 /// Only one checker will evaluate the call.
 void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
@@ -322,6 +387,20 @@ void CheckerManager::_registerForEndAnalysis(CheckEndAnalysisFunc checkfn) {
 
 void CheckerManager::_registerForEndPath(CheckEndPathFunc checkfn) {
   EndPathCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForLiveSymbols(CheckLiveSymbolsFunc checkfn) {
+  LiveSymbolsCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForDeadSymbols(CheckDeadSymbolsFunc checkfn) {
+  DeadSymbolsCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForRegionChanges(CheckRegionChangesFunc checkfn,
+                                     WantsRegionChangeUpdateFunc wantUpdateFn) {
+  RegionChangesCheckerInfo info = {checkfn, wantUpdateFn};
+  RegionChangesCheckers.push_back(info);
 }
 
 void CheckerManager::_registerForEvalCall(EvalCallFunc checkfn) {

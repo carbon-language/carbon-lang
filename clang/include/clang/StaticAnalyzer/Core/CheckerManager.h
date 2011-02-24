@@ -37,6 +37,8 @@ namespace ento {
   class ExplodedGraph;
   class GRState;
   class EndOfFunctionNodeBuilder;
+  class MemRegion;
+  class SymbolReaper;
 
 class GraphExpander {
 public:
@@ -190,6 +192,24 @@ public:
   /// \brief Run checkers for end of path.
   void runCheckersForEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng);
 
+  /// \brief Run checkers for live symbols.
+  void runCheckersForLiveSymbols(const GRState *state,
+                                 SymbolReaper &SymReaper);
+
+  /// \brief Run checkers for dead symbols.
+  void runCheckersForDeadSymbols(ExplodedNodeSet &Dst,
+                                 const ExplodedNodeSet &Src,
+                                 SymbolReaper &SymReaper, const Stmt *S,
+                                 ExprEngine &Eng);
+
+  /// \brief True if at least one checker wants to check region changes.
+  bool wantsRegionChangeUpdate(const GRState *state);
+
+  /// \brief Run checkers for region changes.
+  const GRState *runCheckersForRegionChanges(const GRState *state,
+                                             const MemRegion * const *Begin,
+                                             const MemRegion * const *End);
+
   /// \brief Run checkers for evaluating a call.
   void runCheckersForEvalCall(ExplodedNodeSet &Dst,
                               const ExplodedNodeSet &Src,
@@ -226,6 +246,8 @@ public:
   typedef CheckerFn<ExplodedGraph &, BugReporter &, ExprEngine &>
       CheckEndAnalysisFunc;
   typedef CheckerFn<EndOfFunctionNodeBuilder &, ExprEngine &> CheckEndPathFunc;
+  typedef CheckerFn<SymbolReaper &, CheckerContext &> CheckDeadSymbolsFunc;
+  typedef CheckerFn<const GRState *, SymbolReaper &> CheckLiveSymbolsFunc;
 
   typedef bool (*HandlesStmtFunc)(const Stmt *D);
   void _registerForPreStmt(CheckStmtFunc checkfn,
@@ -241,6 +263,40 @@ public:
   void _registerForEndAnalysis(CheckEndAnalysisFunc checkfn);
 
   void _registerForEndPath(CheckEndPathFunc checkfn);
+
+  void _registerForLiveSymbols(CheckLiveSymbolsFunc checkfn);
+
+  void _registerForDeadSymbols(CheckDeadSymbolsFunc checkfn);
+
+  class CheckRegionChangesFunc {
+    typedef const GRState * (*Func)(void *, const GRState *,
+                                    const MemRegion * const *,
+                                    const MemRegion * const *);
+    Func Fn;
+  public:
+    void *Checker;
+    CheckRegionChangesFunc(void *checker, Func fn) : Fn(fn), Checker(checker) {}
+    const GRState *operator()(const GRState *state,
+                              const MemRegion * const *begin,
+                              const MemRegion * const *end) {
+      return Fn(Checker, state, begin, end);
+    }
+  };
+
+  class WantsRegionChangeUpdateFunc {
+    typedef bool (*Func)(void *, const GRState *);
+    Func Fn;
+  public:
+    void *Checker;
+    WantsRegionChangeUpdateFunc(void *checker, Func fn)
+      : Fn(fn), Checker(checker) { }
+    bool operator()(const GRState *state) {
+      return Fn(Checker, state);
+    } 
+  };
+
+  void _registerForRegionChanges(CheckRegionChangesFunc checkfn,
+                                 WantsRegionChangeUpdateFunc wantUpdateFn);
 
   class EvalCallFunc {
     typedef bool (*Func)(void *, const CallExpr *, CheckerContext &);
@@ -324,6 +380,16 @@ private:
   std::vector<CheckEndAnalysisFunc> EndAnalysisCheckers;
 
   std::vector<CheckEndPathFunc> EndPathCheckers;
+
+  std::vector<CheckLiveSymbolsFunc> LiveSymbolsCheckers;
+
+  std::vector<CheckDeadSymbolsFunc> DeadSymbolsCheckers;
+
+  struct RegionChangesCheckerInfo {
+    CheckRegionChangesFunc CheckFn;
+    WantsRegionChangeUpdateFunc WantUpdateFn;
+  };
+  std::vector<RegionChangesCheckerInfo> RegionChangesCheckers;
 
   std::vector<EvalCallFunc> EvalCallCheckers;
 };
