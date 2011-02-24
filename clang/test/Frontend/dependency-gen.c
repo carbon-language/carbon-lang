@@ -10,8 +10,9 @@
 // PR8974
 // XFAIL: win32
 // RUN: rm -rf %t.dir
-// RUN: mkdir %t.dir
-// RUN: echo > %t.dir/x.h
-// RUN: %clang -include %t.dir/x.h -MD -MF %t.d -S -x c -o %t.o %s
-// RUN: grep ' %t.dir/x.h' %t.d
+// RUN: mkdir -p %t.dir/a/b
+// RUN: echo > %t.dir/a/b/x.h
+// RUN: cd %t.dir
+// RUN: %clang -include a/b/x.h -MD -MF %t.d -S -x c -o %t.o %s
+// RUN: grep ' a/b/x\.h' %t.d
 
