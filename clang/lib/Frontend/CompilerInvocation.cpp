@@ -891,8 +891,13 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     const Arg *A = *it;
     A->claim();
     bool enable = (A->getOption().getID() == OPT_analyzer_checker);
-    Opts.CheckersControlList.push_back(std::make_pair(A->getValue(Args),
-                                                      enable));
+    // We can have a list of comma separated checker names, e.g:
+    // '-analyzer-checker=cocoa,unix'
+    llvm::StringRef checkerList = A->getValue(Args);
+    llvm::SmallVector<llvm::StringRef, 4> checkers;
+    checkerList.split(checkers, ",");
+    for (unsigned i = 0, e = checkers.size(); i != e; ++i)
+      Opts.CheckersControlList.push_back(std::make_pair(checkers[i], enable));
   }
 }
 
