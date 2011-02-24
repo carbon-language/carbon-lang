@@ -263,3 +263,6 @@ namespace rdar7980179 {
   class A { void f0(); }; // expected-note {{previous}}
   int A::f0() {} // expected-error {{out-of-line definition of 'rdar7980179::A::f0' differ from the declaration in the return type}}
 }
+
+namespace alias = A;
+double *dp = (alias::C*)0; // expected-error{{cannot initialize a variable of type 'double *' with an rvalue of type 'alias::C *'}}
