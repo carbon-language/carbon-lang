@@ -632,6 +632,15 @@ EmulateInstructionARM::EmulateMOVRdRm (ARMEncoding encoding)
             if (!setflags && (Rd == 15 || Rm == 15 || (Rd == 13 && Rm == 13)))
                 return false;
             break;
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            Rm = Bits32(opcode, 3, 0);
+            setflags = BitIsSet(opcode, 20);
+            // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+            // TODO: Emulate SUBS PC, LR and related instructions.
+            if (Rd == 15 && setflags)
+                return false;
+            break;
         default:
             return false;
         }
@@ -7190,6 +7199,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0ff0f010, 0x01100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rn>, <Rm> {,<shift>}"},
 
 
+        // mov (register)
+        { 0x0fef0ff0, 0x01a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMOVRdRm, "mov{s}<c> <Rd>, <Rm>"},
         // mvn (immediate)
         { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s}<c> <Rd>, #<const>"},
         // mvn (register)
