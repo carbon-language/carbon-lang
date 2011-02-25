@@ -215,7 +215,13 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
 
   // Move past area 3.
-  if (DPRCSSize > 0) MBBI++;
+  if (DPRCSSize > 0) {
+    MBBI++;
+    // Since vpush register list cannot have gaps, there may be multiple vpush
+    // instructions in the epilogue.
+    while (MBBI->getOpcode() == ARM::VSTMDDB_UPD)
+      MBBI++;
+  }
 
   NumBytes = DPRCSOffset;
   if (NumBytes) {
@@ -370,7 +376,13 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
 
     // Increment past our save areas.
-    if (AFI->getDPRCalleeSavedAreaSize()) MBBI++;
+    if (AFI->getDPRCalleeSavedAreaSize()) {
+      MBBI++;
+      // Since vpop register list cannot have gaps, there may be multiple vpop
+      // instructions in the epilogue.
+      while (MBBI->getOpcode() == ARM::VLDMDIA_UPD)
+        MBBI++;
+    }
     if (AFI->getGPRCalleeSavedArea2Size()) MBBI++;
     if (AFI->getGPRCalleeSavedArea1Size()) MBBI++;
   }
