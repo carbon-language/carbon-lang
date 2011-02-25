@@ -24,8 +24,6 @@
 #include "llvm/ADT/FoldingSet.h"
 #include <algorithm>
 #include <cctype>
-#include <iomanip>
-#include <sstream>
 
 using namespace clang;
 
@@ -42,17 +40,11 @@ static void printIntegral(const TemplateArgument &TemplArg,
   if (T->isBooleanType()) {
     Out << (Val->getBoolValue() ? "true" : "false");
   } else if (T->isCharType()) {
-    char Ch = Val->getSExtValue();
-    if (std::isprint(Ch)) {
-      Out << "'";
-      if (Ch == '\'' || Ch == '\\')
-        Out << '\\';
-      Out << Ch << "'";
-    } else {
-      std::ostringstream Str;
-      Str << std::setw(2) << std::setfill('0') << std::hex << (int)Ch;
-      Out << "'\\x" << Str.str() << "'";
-    }
+    const unsigned char Ch = Val->getZExtValue();
+    const std::string Str(1, Ch);
+    Out << ((Ch == '\'') ? "'\\" : "'");
+    Out.write_escaped(Str, /*UseHexEscapes=*/ true);
+    Out << "'";
   } else {
     Out << Val->toString(10);
   }
