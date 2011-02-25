@@ -217,7 +217,9 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           
           continue;
         } else {
-          SS.SetInvalid(SourceRange(SS.getBeginLoc(), CCLoc));
+          SourceLocation Start = SS.getBeginLoc().isValid()? SS.getBeginLoc() 
+                                                           : CCLoc;
+          SS.SetInvalid(SourceRange(Start, CCLoc));
         }
         
         continue;
