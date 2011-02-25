@@ -96,19 +96,17 @@ class ProcessLaunchTestCase(TestBase):
         if not success:
             self.fail (err_msg)
 
-    dict = {'CXX_SOURCES' : 'print_cwd.cpp'}
+    d = {'CXX_SOURCES' : 'print_cwd.cpp'}
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_set_working_dir_with_dsym (self):
-        dict = {'CXX_SOURCES' : 'print_cwd.cpp'}
-        self.buildDsym(dictionary=dict)
-        self.setTearDownCleanup(dict)
+        self.buildDsym(dictionary=self.d)
+        self.setTearDownCleanup(self.d)
         self.my_working_dir_test()
 
     def test_set_working_dir_with_dwarf (self):
-        dict = {'CXX_SOURCES' : 'print_cwd.cpp'}
-        self.buildDwarf(dictionary=dict)
-        self.setTearDownCleanup(dict)
+        self.buildDwarf(dictionary=self.d)
+        self.setTearDownCleanup(self.d)
         self.my_working_dir_test()
 
     # rdar://problem/9056462
