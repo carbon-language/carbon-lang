@@ -10,6 +10,19 @@ define void @vst1lanei8(i8* %A, <8 x i8>* %B) nounwind {
 	ret void
 }
 
+;Check for a post-increment updating store.
+define void @vst1lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
+;CHECK: vst1lanei8_update:
+;CHECK: vst1.8 {d16[3]}, [r2]!
+	%A = load i8** %ptr
+	%tmp1 = load <8 x i8>* %B
+	%tmp2 = extractelement <8 x i8> %tmp1, i32 3
+	store i8 %tmp2, i8* %A, align 8
+	%tmp3 = getelementptr i8* %A, i32 1
+	store i8* %tmp3, i8** %ptr
+	ret void
+}
+
 define void @vst1lanei16(i16* %A, <4 x i16>* %B) nounwind {
 ;CHECK: vst1lanei16:
 ;Check the alignment value.  Max for this instruction is 16 bits:
@@ -63,6 +76,19 @@ define void @vst1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 	%tmp1 = load <4 x i32>* %B
         %tmp2 = extractelement <4 x i32> %tmp1, i32 3
         store i32 %tmp2, i32* %A, align 8
+	ret void
+}
+
+;Check for a post-increment updating store.
+define void @vst1laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
+;CHECK: vst1laneQi32_update:
+;CHECK: vst1.32 {d17[1]}, [r1, :32]!
+	%A = load i32** %ptr
+	%tmp1 = load <4 x i32>* %B
+	%tmp2 = extractelement <4 x i32> %tmp1, i32 3
+	store i32 %tmp2, i32* %A, align 8
+	%tmp3 = getelementptr i32* %A, i32 1
+	store i32* %tmp3, i32** %ptr
 	ret void
 }
 

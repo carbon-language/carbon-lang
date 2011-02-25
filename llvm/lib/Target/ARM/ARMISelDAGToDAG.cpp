@@ -126,6 +126,7 @@ public:
   bool SelectAddrMode5(SDValue N, SDValue &Base,
                        SDValue &Offset);
   bool SelectAddrMode6(SDNode *Parent, SDValue N, SDValue &Addr,SDValue &Align);
+  bool SelectAddrMode6Offset(SDNode *Op, SDValue N, SDValue &Offset);
 
   bool SelectAddrModePC(SDValue N, SDValue &Offset, SDValue &Label);
 
@@ -883,6 +884,20 @@ bool ARMDAGToDAGISel::SelectAddrMode6(SDNode *Parent, SDValue N, SDValue &Addr,
   }
 
   Align = CurDAG->getTargetConstant(Alignment, MVT::i32);
+  return true;
+}
+
+bool ARMDAGToDAGISel::SelectAddrMode6Offset(SDNode *Op, SDValue N,
+                                            SDValue &Offset) {
+  LSBaseSDNode *LdSt = cast<LSBaseSDNode>(Op);
+  ISD::MemIndexedMode AM = LdSt->getAddressingMode();
+  if (AM != ISD::POST_INC)
+    return false;
+  Offset = N;
+  if (ConstantSDNode *NC = dyn_cast<ConstantSDNode>(N)) {
+    if (NC->getZExtValue() * 8 == LdSt->getMemoryVT().getSizeInBits())
+      Offset = CurDAG->getRegister(0, MVT::i32);
+  }
   return true;
 }
 

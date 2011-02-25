@@ -1402,31 +1402,42 @@ def : Pat<(store (extractelt (v2f32 DPR:$src), imm:$lane), addrmode6:$addr),
 def : Pat<(store (extractelt (v4f32 QPR:$src), imm:$lane), addrmode6:$addr),
           (VST1LNq32Pseudo addrmode6:$addr, QPR:$src, imm:$lane)>;
 
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
-
 // ...with address register writeback:
-class VST1LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+class VST1LNWB<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
+               PatFrag StoreOp, SDNode ExtractOp>
   : NLdStLn<1, 0b00, op11_8, op7_4, (outs GPR:$wb),
           (ins addrmode6:$Rn, am6offset:$Rm,
            DPR:$Vd, nohash_imm:$lane), IIC_VST1lnu, "vst1", Dt,
           "\\{$Vd[$lane]\\}, $Rn$Rm",
-          "$Rn.addr = $wb", []>;
+          "$Rn.addr = $wb",
+          [(set GPR:$wb, (StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane),
+                                  addrmode6:$Rn, am6offset:$Rm))]>;
+class VST1QLNWBPseudo<ValueType Ty, PatFrag StoreOp, SDNode ExtractOp>
+  : VSTQLNWBPseudo<IIC_VST1lnu> {
+  let Pattern = [(set GPR:$wb, (StoreOp (ExtractOp (Ty QPR:$src), imm:$lane),
+                                        addrmode6:$addr, am6offset:$offset))];
+}
 
-def VST1LNd8_UPD  : VST1LNWB<0b0000, {?,?,?,0}, "8"> {
+def VST1LNd8_UPD  : VST1LNWB<0b0000, {?,?,?,0}, "8", v8i8, post_truncsti8,
+                             NEONvgetlaneu> {
   let Inst{7-5} = lane{2-0};
 }
-def VST1LNd16_UPD : VST1LNWB<0b0100, {?,?,0,?}, "16"> {
+def VST1LNd16_UPD : VST1LNWB<0b0100, {?,?,0,?}, "16", v4i16, post_truncsti16,
+                             NEONvgetlaneu> {
   let Inst{7-6} = lane{1-0};
   let Inst{4}   = Rn{5};
 }
-def VST1LNd32_UPD : VST1LNWB<0b1000, {?,0,?,?}, "32"> {
+def VST1LNd32_UPD : VST1LNWB<0b1000, {?,0,?,?}, "32", v2i32, post_store,
+                             extractelt> {
   let Inst{7}   = lane{0};
   let Inst{5-4} = Rn{5-4};
 }
 
-def VST1LNq8Pseudo_UPD  : VSTQLNWBPseudo<IIC_VST1lnu>;
-def VST1LNq16Pseudo_UPD : VSTQLNWBPseudo<IIC_VST1lnu>;
-def VST1LNq32Pseudo_UPD : VSTQLNWBPseudo<IIC_VST1lnu>;
+def VST1LNq8Pseudo_UPD  : VST1QLNWBPseudo<v16i8, post_truncsti8, NEONvgetlaneu>;
+def VST1LNq16Pseudo_UPD : VST1QLNWBPseudo<v8i16, post_truncsti16,NEONvgetlaneu>;
+def VST1LNq32Pseudo_UPD : VST1QLNWBPseudo<v4i32, post_store, extractelt>;
+
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 
 //   VST2LN   : Vector Store (single 2-element structure from one lane)
 class VST2LN<bits<4> op11_8, bits<4> op7_4, string Dt>

@@ -561,7 +561,9 @@ def addrmode6 : Operand<i32>,
   let EncoderMethod = "getAddrMode6AddressOpValue";
 }
 
-def am6offset : Operand<i32> {
+def am6offset : Operand<i32>,
+                ComplexPattern<i32, 1, "SelectAddrMode6Offset",
+                               [], [SDNPWantRoot]> {
   let PrintMethod = "printAddrMode6OffsetOperand";
   let MIOperandInfo = (ops GPR);
   let EncoderMethod = "getAddrMode6OffsetOpValue";
