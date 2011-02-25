@@ -123,11 +123,10 @@ if(PYTHONINTERP_FOUND)
                 COMMENT "Running Clang and LLVM regression tests")
     add_dependencies(check-all clang-test.deps)
     if ( LLVM_INCLUDE_TESTS )
-       add_dependencies(check-all check.deps)
+       add_dependencies(check-all check.deps ClangUnitTests)
     endif ( LLVM_INCLUDE_TESTS )
     add_dependencies(clang-test.deps
-                     ClangUnitTests
-                     llvm-dis opt
+                    llvm-dis opt
                      FileCheck count not
                      )
    set_target_properties(check-all PROPERTIES FOLDER "Clang tests")
