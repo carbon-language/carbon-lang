@@ -733,22 +733,27 @@ __num_get_signed_integral(const char* __a, const char* __a_end,
 {
     if (__a != __a_end)
     {
+        int __save_errno = errno;
+        errno = 0;
         char *__p2;
         long long __ll = strtoll_l(__a, &__p2, __base, 0);
+        int __current_errno = errno;
+        if (__current_errno == 0)
+            errno = __save_errno;
         if (__p2 != __a_end)
         {
             __err = ios_base::failbit;
             return 0;
         }
-        else if (__ll > numeric_limits<_Tp>::max())
+        else if (__current_errno == ERANGE         ||
+                 __ll < numeric_limits<_Tp>::min() ||
+                 numeric_limits<_Tp>::max() < __ll)
         {
             __err = ios_base::failbit;
-            return numeric_limits<_Tp>::max();
-        }
-        else if (__ll < numeric_limits<_Tp>::min())
-        {
-            __err = ios_base::failbit;
-            return numeric_limits<_Tp>::min();
+            if (__ll > 0)
+                return numeric_limits<_Tp>::max();
+            else
+                return numeric_limits<_Tp>::min();
         }
         return static_cast<_Tp>(__ll);
     }
@@ -763,14 +768,25 @@ __num_get_unsigned_integral(const char* __a, const char* __a_end,
 {
     if (__a != __a_end)
     {
+        if (*__a == '-')
+        {
+            __err = ios_base::failbit;
+            return 0;
+        }
+        int __save_errno = errno;
+        errno = 0;
         char *__p2;
         unsigned long long __ll = strtoull_l(__a, &__p2, __base, 0);
+        int __current_errno = errno;
+        if (__current_errno == 0)
+            errno = __save_errno;
         if (__p2 != __a_end)
         {
             __err = ios_base::failbit;
             return 0;
         }
-        else if (__ll > numeric_limits<_Tp>::max())
+        else if (__current_errno == ERANGE ||
+                 numeric_limits<_Tp>::max() < __ll)
         {
             __err = ios_base::failbit;
             return numeric_limits<_Tp>::max();
