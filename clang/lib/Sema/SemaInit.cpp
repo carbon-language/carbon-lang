@@ -2441,6 +2441,10 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
 
   FunctionDecl *Function = Best->Function;
 
+  // This is the overload that will actually be used for the initialization, so
+  // mark it as used.
+  S.MarkDeclarationReferenced(DeclLoc, Function);
+
   // Compute the returned type of the conversion.
   if (isa<CXXConversionDecl>(Function))
     T2 = Function->getResultType();
@@ -3045,6 +3049,7 @@ static void TryUserDefinedConversion(Sema &S,
   }
 
   FunctionDecl *Function = Best->Function;
+  S.MarkDeclarationReferenced(DeclLoc, Function);
 
   if (isa<CXXConstructorDecl>(Function)) {
     // Add the user-defined conversion step. Any cv-qualification conversion is
@@ -3478,9 +3483,7 @@ static ExprResult CopyObject(Sema &S,
   }
 
   OverloadCandidateSet::iterator Best;
-  switch (CandidateSet.BestViableFunction(S, Loc, Best,
-                                          /*UserDefinedConversion=*/ false,
-                                          IsExtraneousCopy)) {
+  switch (CandidateSet.BestViableFunction(S, Loc, Best)) {
   case OR_Success:
     break;
 
@@ -3543,6 +3546,8 @@ static ExprResult CopyObject(Sema &S,
 
     return S.Owned(CurInitExpr);
   }
+
+  S.MarkDeclarationReferenced(Loc, Constructor);
 
   // Determine the arguments required to actually perform the
   // constructor call (we might have derived-to-base conversions, or

@@ -1349,6 +1349,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   case OR_Success: {
     // Got one!
     FunctionDecl *FnDecl = Best->Function;
+    MarkDeclarationReferenced(StartLoc, FnDecl);
     // The first argument is size_t, and the first parameter must be size_t,
     // too. This is checked on declaration and can be assumed. (It can't be
     // asserted on, though, since invalid decls are left in there.)
@@ -2922,6 +2923,8 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
           Self.PerformImplicitConversion(RHS, Best->BuiltinTypes.ParamTypes[1],
                                          Best->Conversions[1], Sema::AA_Converting))
         break;
+      if (Best->Function)
+        Self.MarkDeclarationReferenced(QuestionLoc, Best->Function);
       return false;
 
     case OR_No_Viable_Function:
