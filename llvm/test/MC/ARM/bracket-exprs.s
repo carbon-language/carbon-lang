@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
+// RUN: llvm-mc -triple arm-unknown-linux %s | FileCheck %s
 
 // CHECK: .byte 1
 .if [~0 >> 1] == -1
