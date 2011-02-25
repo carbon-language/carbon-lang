@@ -30,15 +30,10 @@ add_clang_library(libclang
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  # dylib versioning information
-  # FIXME: Is there a more CMake-ish way to handle this?
-  set(LIBCLANG_VERSION 1 
-      CACHE STRING "Version number of the libclang library")
-  set(LIBCLANG_SUBVERSION 0
-      CACHE STRING "Minor version number of the libclang library")
-  set(LIBCLANG_LINK_FLAGS 
-      "-Wl,-current_version -Wl,${LIBCLANG_VERSION}.${LIBCLANG_SUBVERSION} -Wl,-compatibility_version -Wl,1")
+  # Darwin-specific linker flags
 
+  set(LIBCLANG_LINK_FLAGS "-Wl,-compatibility_version -Wl,1")
+                        
   set(LIBCLANG_LINK_FLAGS 
       "${LIBCLANG_LINK_FLAGS} -Wl,-dead_strip -Wl,-seg1addr -Wl,0xE0000000")
 
@@ -47,6 +42,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     LINK_FLAGS "${LIBCLANG_LINK_FLAGS}"
     INSTALL_NAME_DIR "@executable_path/../lib")
 endif()
+
+# Versioning information
+set_target_properties(libclang PROPERTIES VERSION ${LIBCLANG_LIBRARY_VERSION})
 
 if(MSVC)
   # windows.h doesn't compile with /Za

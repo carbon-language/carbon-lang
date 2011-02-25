@@ -234,6 +234,16 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
 
 add_definitions( -D_GNU_SOURCE -DHAVE_CLANG_CONFIG_H )
 
+# Clang version information
+set(CLANG_EXECUTABLE_VERSION
+     "${CLANG_VERSION_MAJOR}.${CLANG_VERSION_MINOR}" CACHE STRING
+    "Version number that will be placed into the clang executable, in the form XX.YY")
+set(LIBCLANG_LIBRARY_VERSION
+     "${CLANG_VERSION_MAJOR}.${CLANG_VERSION_MINOR}" CACHE STRING
+    "Version number that will be placed into the libclang library , in the form XX.YY")
+mark_as_advanced(CLANG_EXECUTABLE_VERSION LIBCLANG_LIBRARY_VERSION)
+
+
 option(CLANG_BUILD_EXAMPLES "Build CLANG example programs." OFF)
 if(CLANG_BUILD_EXAMPLES)
   add_subdirectory(examples)

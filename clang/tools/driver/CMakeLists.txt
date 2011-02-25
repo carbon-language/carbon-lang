@@ -33,6 +33,8 @@ add_clang_executable(clang
   cc1as_main.cpp
   )
 
+set_target_properties(clang PROPERTIES VERSION ${CLANG_EXECUTABLE_VERSION})
+
 if(UNIX)
   set(CLANGXX_LINK_OR_COPY create_symlink)
 else()
@@ -47,6 +49,7 @@ add_custom_target(clang++ ALL
     "${clang_pp}"
   DEPENDS clang)
 set_target_properties(clang++ PROPERTIES FOLDER "Clang executables")
+
 set_property(DIRECTORY APPEND
   PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${clang_pp})
 
