@@ -41,7 +41,16 @@ struct X2 : outer::inner::vector<T> {
   using outer::inner::vector<type>::push_back;
 };
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:42:1 %s | FileCheck %s
+namespace outer {
+  namespace inner {
+    namespace secret {
+    }
+  }
+}
+
+using namespace outer_alias::inner::secret;
+
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:52:1 %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
@@ -89,3 +98,12 @@ struct X2 : outer::inner::vector<T> {
 // CHECK: Punctuation: ">" [41:34 - 41:35] UsingDeclaration=push_back:41:37
 // CHECK: Punctuation: "::" [41:35 - 41:37] UsingDeclaration=push_back:41:37
 // CHECK: Identifier: "push_back" [41:37 - 41:46] UsingDeclaration=push_back:41:37
+
+// Using directive
+// CHECK: Keyword: "using" [51:1 - 51:6] UsingDirective=:51:37
+// CHECK: Keyword: "namespace" [51:7 - 51:16] UsingDirective=:51:37
+// CHECK: Identifier: "outer_alias" [51:17 - 51:28] NamespaceRef=outer_alias:10:11
+// CHECK: Punctuation: "::" [51:28 - 51:30] UsingDirective=:51:37
+// CHECK: Identifier: "inner" [51:30 - 51:35] NamespaceRef=inner:45:13
+// CHECK: Punctuation: "::" [51:35 - 51:37] UsingDirective=:51:37
+// CHECK: Identifier: "secret" [51:37 - 51:43] NamespaceRef=secret:46:15

@@ -841,8 +841,10 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   // UsingDirectiveDecl's are not really NamedDecl's, and all have same name.
   // We want to keep it, unless it nominates same namespace.
   if (getKind() == Decl::UsingDirective) {
-    return cast<UsingDirectiveDecl>(this)->getNominatedNamespace() ==
-           cast<UsingDirectiveDecl>(OldD)->getNominatedNamespace();
+    return cast<UsingDirectiveDecl>(this)->getNominatedNamespace()
+             ->getOriginalNamespace() ==
+           cast<UsingDirectiveDecl>(OldD)->getNominatedNamespace()
+             ->getOriginalNamespace();
   }
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))

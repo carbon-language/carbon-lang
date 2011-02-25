@@ -3623,8 +3623,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
         = UsingDirectiveDecl::Create(Context, CurContext,
                                      /* 'using' */ LBrace,
                                      /* 'namespace' */ SourceLocation(),
-                                     /* qualifier */ SourceRange(),
-                                     /* NNS */ NULL,
+                                     /* qualifier */ NestedNameSpecifierLoc(),
                                      /* identifier */ SourceLocation(),
                                      Namespc,
                                      /* Ancestor */ CurContext);
@@ -3768,8 +3767,7 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
       CommonAncestor = CommonAncestor->getParent();
 
     UDir = UsingDirectiveDecl::Create(Context, CurContext, UsingLoc, NamespcLoc,
-                                      SS.getRange(),
-                                      (NestedNameSpecifier *)SS.getScopeRep(),
+                                      SS.getWithLocInContext(Context),
                                       IdentLoc, Named, CommonAncestor);
     PushUsingDirective(S, UDir);
   } else {

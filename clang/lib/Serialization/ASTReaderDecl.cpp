@@ -776,8 +776,7 @@ void ASTDeclReader::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   VisitNamedDecl(D);
   D->UsingLoc = ReadSourceLocation(Record, Idx);
   D->NamespaceLoc = ReadSourceLocation(Record, Idx);
-  D->QualifierRange = ReadSourceRange(Record, Idx);
-  D->Qualifier = Reader.ReadNestedNameSpecifier(Record, Idx);
+  D->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
   D->NominatedNamespace = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
   D->CommonAncestor = cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++]));
 }
@@ -1442,7 +1441,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     break;
   case DECL_USING_DIRECTIVE:
     D = UsingDirectiveDecl::Create(*Context, 0, SourceLocation(),
-                                   SourceLocation(), SourceRange(), 0,
+                                   SourceLocation(), NestedNameSpecifierLoc(),
                                    SourceLocation(), 0, 0);
     break;
   case DECL_UNRESOLVED_USING_VALUE:

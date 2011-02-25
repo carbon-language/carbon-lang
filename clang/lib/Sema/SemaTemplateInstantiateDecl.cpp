@@ -1638,12 +1638,13 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
 }
 
 Decl *TemplateDeclInstantiator::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
-  // Using directives are never dependent, so they require no explicit
+  // Using directives are never dependent (and never contain any types or
+  // expressions), so they require no explicit instantiation work.
   
   UsingDirectiveDecl *Inst
     = UsingDirectiveDecl::Create(SemaRef.Context, Owner, D->getLocation(),
                                  D->getNamespaceKeyLocation(), 
-                                 D->getQualifierRange(), D->getQualifier(), 
+                                 D->getQualifierLoc(),
                                  D->getIdentLocation(), 
                                  D->getNominatedNamespace(), 
                                  D->getCommonAncestor());

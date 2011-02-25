@@ -1267,15 +1267,14 @@ LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
 UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
                                                SourceLocation L,
                                                SourceLocation NamespaceLoc,
-                                               SourceRange QualifierRange,
-                                               NestedNameSpecifier *Qualifier,
+                                           NestedNameSpecifierLoc QualifierLoc,
                                                SourceLocation IdentLoc,
                                                NamedDecl *Used,
                                                DeclContext *CommonAncestor) {
   if (NamespaceDecl *NS = dyn_cast_or_null<NamespaceDecl>(Used))
     Used = NS->getOriginalNamespace();
-  return new (C) UsingDirectiveDecl(DC, L, NamespaceLoc, QualifierRange,
-                                    Qualifier, IdentLoc, Used, CommonAncestor);
+  return new (C) UsingDirectiveDecl(DC, L, NamespaceLoc, QualifierLoc,
+                                    IdentLoc, Used, CommonAncestor);
 }
 
 NamespaceDecl *UsingDirectiveDecl::getNominatedNamespace() {

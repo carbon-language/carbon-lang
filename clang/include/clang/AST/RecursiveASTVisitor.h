@@ -1178,7 +1178,7 @@ DEF_TRAVERSE_DECL(UsingDecl, {
   })
 
 DEF_TRAVERSE_DECL(UsingDirectiveDecl, {
-    TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
+    TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
   })
 
 DEF_TRAVERSE_DECL(UsingShadowDecl, { })

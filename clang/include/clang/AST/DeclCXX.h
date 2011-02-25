@@ -1741,13 +1741,8 @@ class UsingDirectiveDecl : public NamedDecl {
   /// SourceLocation - Location of 'namespace' token.
   SourceLocation NamespaceLoc;
 
-  /// \brief The source range that covers the nested-name-specifier
-  /// preceding the namespace name.
-  SourceRange QualifierRange;
-
-  /// \brief The nested-name-specifier that precedes the namespace
-  /// name, if any.
-  NestedNameSpecifier *Qualifier;
+  /// \brief The nested-name-specifier that precedes the namespace.
+  NestedNameSpecifierLoc QualifierLoc;
 
   /// NominatedNamespace - Namespace nominated by using-directive.
   NamedDecl *NominatedNamespace;
@@ -1765,25 +1760,24 @@ class UsingDirectiveDecl : public NamedDecl {
 
   UsingDirectiveDecl(DeclContext *DC, SourceLocation UsingLoc,
                      SourceLocation NamespcLoc,
-                     SourceRange QualifierRange,
-                     NestedNameSpecifier *Qualifier,
+                     NestedNameSpecifierLoc QualifierLoc,
                      SourceLocation IdentLoc,
                      NamedDecl *Nominated,
                      DeclContext *CommonAncestor)
     : NamedDecl(UsingDirective, DC, IdentLoc, getName()), UsingLoc(UsingLoc),
-      NamespaceLoc(NamespcLoc), QualifierRange(QualifierRange),
-      Qualifier(Qualifier), NominatedNamespace(Nominated),
-      CommonAncestor(CommonAncestor) {
-  }
+      NamespaceLoc(NamespcLoc), QualifierLoc(QualifierLoc),
+      NominatedNamespace(Nominated), CommonAncestor(CommonAncestor) { }
 
 public:
-  /// \brief Retrieve the source range of the nested-name-specifier
-  /// that qualifies the namespace name.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-
+  /// \brief Retrieve the nested-name-specifier that qualifies the
+  /// name of the namespace, with source-location information.
+  NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
+  
   /// \brief Retrieve the nested-name-specifier that qualifies the
   /// name of the namespace.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  NestedNameSpecifier *getQualifier() const { 
+    return QualifierLoc.getNestedNameSpecifier(); 
+  }
 
   NamedDecl *getNominatedNamespaceAsWritten() { return NominatedNamespace; }
   const NamedDecl *getNominatedNamespaceAsWritten() const {
@@ -1815,8 +1809,7 @@ public:
   static UsingDirectiveDecl *Create(ASTContext &C, DeclContext *DC,
                                     SourceLocation UsingLoc,
                                     SourceLocation NamespaceLoc,
-                                    SourceRange QualifierRange,
-                                    NestedNameSpecifier *Qualifier,
+                                    NestedNameSpecifierLoc QualifierLoc,
                                     SourceLocation IdentLoc,
                                     NamedDecl *Nominated,
                                     DeclContext *CommonAncestor);

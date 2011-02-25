@@ -1103,8 +1103,8 @@ bool CursorVisitor::VisitUsingDecl(UsingDecl *D) {
 
 bool CursorVisitor::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   // Visit nested-name-specifier.
-  if (NestedNameSpecifier *Qualifier = D->getQualifier())
-    if (VisitNestedNameSpecifier(Qualifier, D->getQualifierRange()))
+  if (NestedNameSpecifierLoc QualifierLoc = D->getQualifierLoc())
+    if (VisitNestedNameSpecifierLoc(QualifierLoc))
       return true;
 
   return Visit(MakeCursorNamespaceRef(D->getNominatedNamespaceAsWritten(),
