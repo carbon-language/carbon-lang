@@ -1661,11 +1661,10 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
   //     template struct t<int>;
   // Here, in using s1::f1, s1 refers to t<T>::s1;
   // we need to substitute for t<int>::s1.
-  NestedNameSpecifier *NNS 
-    = SemaRef.SubstNestedNameSpecifier(D->getQualifier(), 
-                                       D->getQualifierRange(),
-                                       TemplateArgs);
-  if (!NNS)
+  NestedNameSpecifierLoc QualifierLoc
+    = SemaRef.SubstNestedNameSpecifierLoc(D->getQualifierLoc(),
+                                          TemplateArgs);
+  if (!QualifierLoc)
     return 0;
 
   // The name info is non-dependent, so no transformation
@@ -1680,18 +1679,14 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
   LookupResult Prev(SemaRef, NameInfo, Sema::LookupUsingDeclName,
                     Sema::ForRedeclaration);
 
-  CXXScopeSpec SS;
-  if (NNS == D->getQualifier())
-    SS.Adopt(D->getQualifierLoc());
-  else
-    SS.MakeTrivial(SemaRef.Context, NNS, D->getQualifierRange());
-
   UsingDecl *NewUD = UsingDecl::Create(SemaRef.Context, Owner,
                                        D->getUsingLocation(),
-                                       SS.getWithLocInContext(SemaRef.Context),
+                                       QualifierLoc,
                                        NameInfo,
                                        D->isTypeName());
 
+  CXXScopeSpec SS;
+  SS.Adopt(QualifierLoc);
   if (CheckRedeclaration) {
     Prev.setHideTags(false);
     SemaRef.LookupQualifiedName(Prev, Owner);
@@ -1750,14 +1745,14 @@ Decl *TemplateDeclInstantiator::VisitUsingShadowDecl(UsingShadowDecl *D) {
 
 Decl * TemplateDeclInstantiator
     ::VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D) {
-  NestedNameSpecifier *NNS =
-    SemaRef.SubstNestedNameSpecifier(D->getQualifier(), D->getQualifierRange(),
-                                     TemplateArgs);
-  if (!NNS)
+  NestedNameSpecifierLoc QualifierLoc
+    = SemaRef.SubstNestedNameSpecifierLoc(D->getQualifierLoc(), 
+                                          TemplateArgs);
+  if (!QualifierLoc)
     return 0;
 
   CXXScopeSpec SS;
-  SS.MakeTrivial(SemaRef.Context, NNS, D->getQualifierRange());
+  SS.Adopt(QualifierLoc);
 
   // Since NameInfo refers to a typename, it cannot be a C++ special name.
   // Hence, no tranformation is required for it.
@@ -1775,14 +1770,13 @@ Decl * TemplateDeclInstantiator
 
 Decl * TemplateDeclInstantiator
     ::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
-  NestedNameSpecifier *NNS =
-    SemaRef.SubstNestedNameSpecifier(D->getQualifier(), D->getQualifierRange(),
-                                     TemplateArgs);
-  if (!NNS)
+  NestedNameSpecifierLoc QualifierLoc
+      = SemaRef.SubstNestedNameSpecifierLoc(D->getQualifierLoc(), TemplateArgs);
+  if (!QualifierLoc)
     return 0;
-
+  
   CXXScopeSpec SS;
-  SS.MakeTrivial(SemaRef.Context, NNS, D->getQualifierRange());
+  SS.Adopt(QualifierLoc);
 
   DeclarationNameInfo NameInfo
     = SemaRef.SubstDeclarationNameInfo(D->getNameInfo(), TemplateArgs);
