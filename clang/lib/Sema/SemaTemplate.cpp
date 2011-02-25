@@ -400,8 +400,7 @@ Sema::BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
                                 const DeclarationNameInfo &NameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs) {
   return Owned(DependentScopeDeclRefExpr::Create(Context,
-               static_cast<NestedNameSpecifier*>(SS.getScopeRep()),
-                                                 SS.getRange(),
+                                               SS.getWithLocInContext(Context),
                                                  NameInfo,
                                                  TemplateArgs));
 }
@@ -2332,9 +2331,13 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
         DeclarationNameInfo NameInfo(DTN->getIdentifier(),
                                      Arg.getTemplateNameLoc());
 
+        // FIXME: TemplateArgumentLoc should store a NestedNameSpecifierLoc
+        // for the template name.
+        CXXScopeSpec SS;
+        SS.MakeTrivial(Context, DTN->getQualifier(), 
+                       Arg.getTemplateQualifierRange());
         Expr *E = DependentScopeDeclRefExpr::Create(Context,
-                                                    DTN->getQualifier(),
-                                               Arg.getTemplateQualifierRange(),
+                                                SS.getWithLocInContext(Context),
                                                     NameInfo);
 
         // If we parsed the template argument as a pack expansion, create a

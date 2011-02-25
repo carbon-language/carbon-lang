@@ -283,15 +283,16 @@ CXXRecordDecl *OverloadExpr::getNamingClass() const {
 
 // DependentScopeDeclRefExpr
 DependentScopeDeclRefExpr::DependentScopeDeclRefExpr(QualType T,
-                            NestedNameSpecifier *Qualifier,
-                            SourceRange QualifierRange,
+                            NestedNameSpecifierLoc QualifierLoc,
                             const DeclarationNameInfo &NameInfo,
                             const TemplateArgumentListInfo *Args)
   : Expr(DependentScopeDeclRefExprClass, T, VK_LValue, OK_Ordinary,
          true, true,
          (NameInfo.containsUnexpandedParameterPack() ||
-          (Qualifier && Qualifier->containsUnexpandedParameterPack()))),
-    NameInfo(NameInfo), QualifierRange(QualifierRange), Qualifier(Qualifier),
+          (QualifierLoc && 
+           QualifierLoc.getNestedNameSpecifier()
+                            ->containsUnexpandedParameterPack()))),
+    QualifierLoc(QualifierLoc), NameInfo(NameInfo), 
     HasExplicitTemplateArgs(Args != 0)
 {
   if (Args) {
@@ -307,16 +308,14 @@ DependentScopeDeclRefExpr::DependentScopeDeclRefExpr(QualType T,
 
 DependentScopeDeclRefExpr *
 DependentScopeDeclRefExpr::Create(ASTContext &C,
-                                  NestedNameSpecifier *Qualifier,
-                                  SourceRange QualifierRange,
+                                  NestedNameSpecifierLoc QualifierLoc,
                                   const DeclarationNameInfo &NameInfo,
                                   const TemplateArgumentListInfo *Args) {
   std::size_t size = sizeof(DependentScopeDeclRefExpr);
   if (Args)
     size += ExplicitTemplateArgumentList::sizeFor(*Args);
   void *Mem = C.Allocate(size);
-  return new (Mem) DependentScopeDeclRefExpr(C.DependentTy,
-                                             Qualifier, QualifierRange,
+  return new (Mem) DependentScopeDeclRefExpr(C.DependentTy, QualifierLoc, 
                                              NameInfo, Args);
 }
 
@@ -329,7 +328,7 @@ DependentScopeDeclRefExpr::CreateEmpty(ASTContext &C,
     size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
   void *Mem = C.Allocate(size);
   DependentScopeDeclRefExpr *E 
-    = new (Mem) DependentScopeDeclRefExpr(QualType(), 0, SourceRange(),
+    = new (Mem) DependentScopeDeclRefExpr(QualType(), NestedNameSpecifierLoc(),
                                           DeclarationNameInfo(), 0);
   E->HasExplicitTemplateArgs = HasExplicitTemplateArgs;
   return E;

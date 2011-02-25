@@ -1864,8 +1864,7 @@ void EnqueueVisitor::VisitDeclRefExpr(DeclRefExpr *DR) {
 void EnqueueVisitor::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
   AddExplicitTemplateArgs(E->getOptionalExplicitTemplateArgs());
   AddDeclarationNameInfo(E);
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    AddNestedNameSpecifier(Qualifier, E->getQualifierRange());
+  AddNestedNameSpecifierLoc(E->getQualifierLoc());
 }
 void EnqueueVisitor::VisitDeclStmt(DeclStmt *S) {
   unsigned size = WL.size();

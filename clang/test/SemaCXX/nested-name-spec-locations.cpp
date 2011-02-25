@@ -61,3 +61,10 @@ void PseudoDestructorExprCheck(
                     PseudoDestructorExprTester<HasInnerTemplate, float> tester) {
   tester.f(0); // expected-note{{in instantiation of member function}}
 }
+
+template<typename T>
+struct DependentScopedDeclRefExpr {
+  void f() {
+    outer_alias::inner::X0<T>::value = 17;
+  }
+};

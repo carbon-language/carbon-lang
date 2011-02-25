@@ -1216,9 +1216,8 @@ ASTStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
     AddExplicitTemplateArgumentList(Args);
   }
 
+  Writer.AddNestedNameSpecifierLoc(E->getQualifierLoc(), Record);
   Writer.AddDeclarationNameInfo(E->NameInfo, Record);
-  Writer.AddSourceRange(E->getQualifierRange(), Record);
-  Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
   Code = serialization::EXPR_CXX_DEPENDENT_SCOPE_DECL_REF;
 }
 

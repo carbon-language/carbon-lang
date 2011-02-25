@@ -1873,30 +1873,26 @@ public:
 /// ("value"). Such expressions will instantiate to a DeclRefExpr once the
 /// declaration can be found.
 class DependentScopeDeclRefExpr : public Expr {
-  /// The name of the entity we will be referencing.
-  DeclarationNameInfo NameInfo;
-
-  /// QualifierRange - The source range that covers the
-  /// nested-name-specifier.
-  SourceRange QualifierRange;
-
   /// \brief The nested-name-specifier that qualifies this unresolved
   /// declaration name.
-  NestedNameSpecifier *Qualifier;
+  NestedNameSpecifierLoc QualifierLoc;
+  
+  /// The name of the entity we will be referencing.
+  DeclarationNameInfo NameInfo;
 
   /// \brief Whether the name includes explicit template arguments.
   bool HasExplicitTemplateArgs;
 
   DependentScopeDeclRefExpr(QualType T,
-                            NestedNameSpecifier *Qualifier,
-                            SourceRange QualifierRange,
+                            NestedNameSpecifierLoc QualifierLoc,
                             const DeclarationNameInfo &NameInfo,
                             const TemplateArgumentListInfo *Args);
 
+  friend class ASTStmtReader;
+  
 public:
   static DependentScopeDeclRefExpr *Create(ASTContext &C,
-                                           NestedNameSpecifier *Qualifier,
-                                           SourceRange QualifierRange,
+                                           NestedNameSpecifierLoc QualifierLoc,
                                            const DeclarationNameInfo &NameInfo,
                               const TemplateArgumentListInfo *TemplateArgs = 0);
 
@@ -1906,24 +1902,23 @@ public:
 
   /// \brief Retrieve the name that this expression refers to.
   const DeclarationNameInfo &getNameInfo() const { return NameInfo; }
-  void setNameInfo(const DeclarationNameInfo &N) { NameInfo =  N; }
 
   /// \brief Retrieve the name that this expression refers to.
   DeclarationName getDeclName() const { return NameInfo.getName(); }
-  void setDeclName(DeclarationName N) { NameInfo.setName(N); }
 
   /// \brief Retrieve the location of the name within the expression.
   SourceLocation getLocation() const { return NameInfo.getLoc(); }
-  void setLocation(SourceLocation L) { NameInfo.setLoc(L); }
 
-  /// \brief Retrieve the source range of the nested-name-specifier.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-  void setQualifierRange(SourceRange R) { QualifierRange = R; }
-
+  /// \brief Retrieve the nested-name-specifier that qualifies the
+  /// name, with source location information.
+  NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
+  
+  
   /// \brief Retrieve the nested-name-specifier that qualifies this
   /// declaration.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
-  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
+  NestedNameSpecifier *getQualifier() const { 
+    return QualifierLoc.getNestedNameSpecifier(); 
+  }
 
   /// Determines whether this lookup had explicit template arguments.
   bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
@@ -1974,7 +1969,7 @@ public:
   }
 
   SourceRange getSourceRange() const {
-    SourceRange Range(QualifierRange.getBegin(), getLocation());
+    SourceRange Range(QualifierLoc.getBeginLoc(), getLocation());
     if (hasExplicitTemplateArgs())
       Range.setEnd(getRAngleLoc());
     return Range;

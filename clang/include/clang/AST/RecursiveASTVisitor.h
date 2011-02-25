@@ -1692,20 +1692,18 @@ DEF_TRAVERSE_STMT(CXXDependentScopeMemberExpr, {
   })
 
 DEF_TRAVERSE_STMT(DeclRefExpr, {
+    TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
     TRY_TO(TraverseTemplateArgumentLocsHelper(
         S->getTemplateArgs(), S->getNumTemplateArgs()));
-    // FIXME: Should we be recursing on the qualifier?
-    TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
   })
 
 DEF_TRAVERSE_STMT(DependentScopeDeclRefExpr, {
-    // FIXME: Should we be recursing on these two things?
+    TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
     if (S->hasExplicitTemplateArgs()) {
       TRY_TO(TraverseTemplateArgumentLocsHelper(
           S->getExplicitTemplateArgs().getTemplateArgs(),
           S->getNumTemplateArgs()));
     }
-    TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
   })
 
 DEF_TRAVERSE_STMT(MemberExpr, {

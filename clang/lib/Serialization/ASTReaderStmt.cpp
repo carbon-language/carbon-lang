@@ -1219,10 +1219,9 @@ ASTStmtReader::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
   if (Record[Idx++])
     ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(), 
                                      Record[Idx++]);
-  
+
+  E->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
   ReadDeclarationNameInfo(E->NameInfo, Record, Idx);
-  E->setQualifierRange(ReadSourceRange(Record, Idx));
-  E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
 }
 
 void

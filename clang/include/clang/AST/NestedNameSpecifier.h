@@ -300,6 +300,16 @@ public:
   /// \brief Determines the data length for the entire
   /// nested-name-specifier.
   unsigned getDataLength() const { return getDataLength(Qualifier); }
+  
+  friend bool operator==(NestedNameSpecifierLoc X, 
+                         NestedNameSpecifierLoc Y) {
+    return X.Qualifier == Y.Qualifier && X.Data == Y.Data;
+  }
+
+  friend bool operator!=(NestedNameSpecifierLoc X, 
+                         NestedNameSpecifierLoc Y) {
+    return !(X == Y);
+  }
 };
 
 /// Insertion operator for diagnostics.  This allows sending NestedNameSpecifiers

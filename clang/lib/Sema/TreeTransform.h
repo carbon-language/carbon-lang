@@ -1887,12 +1887,12 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildDependentScopeDeclRefExpr(NestedNameSpecifier *NNS,
-                                                SourceRange QualifierRange,
+  ExprResult RebuildDependentScopeDeclRefExpr(
+                                          NestedNameSpecifierLoc QualifierLoc,
                                        const DeclarationNameInfo &NameInfo,
                               const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
-    SS.MakeTrivial(SemaRef.Context, NNS, QualifierRange);
+    SS.Adopt(QualifierLoc);
 
     if (TemplateArgs)
       return getSema().BuildQualifiedTemplateIdExpr(SS, NameInfo,
@@ -6787,10 +6787,9 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
                                                DependentScopeDeclRefExpr *E) {
-  NestedNameSpecifier *NNS
-    = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                E->getQualifierRange());
-  if (!NNS)
+  NestedNameSpecifierLoc QualifierLoc
+  = getDerived().TransformNestedNameSpecifierLoc(E->getQualifierLoc());
+  if (!QualifierLoc)
     return ExprError();
 
   // TODO: If this is a conversion-function-id, verify that the
@@ -6804,14 +6803,13 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
 
   if (!E->hasExplicitTemplateArgs()) {
     if (!getDerived().AlwaysRebuild() &&
-        NNS == E->getQualifier() &&
+        QualifierLoc == E->getQualifierLoc() &&
         // Note: it is sufficient to compare the Name component of NameInfo:
         // if name has not changed, DNLoc has not changed either.
         NameInfo.getName() == E->getDeclName())
       return SemaRef.Owned(E);
 
-    return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
-                                                         E->getQualifierRange(),
+    return getDerived().RebuildDependentScopeDeclRefExpr(QualifierLoc,
                                                          NameInfo,
                                                          /*TemplateArgs*/ 0);
   }
@@ -6822,8 +6820,7 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
                                               TransArgs))
     return ExprError();
 
-  return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
-                                                       E->getQualifierRange(),
+  return getDerived().RebuildDependentScopeDeclRefExpr(QualifierLoc,
                                                        NameInfo,
                                                        &TransArgs);
 }
