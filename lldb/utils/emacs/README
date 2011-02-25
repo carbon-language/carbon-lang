@@ -25,3 +25,12 @@ Debugger entered--Lisp error: (void-function split-string-and-unquote)
 
 The gud-common-init elisp function references split-string-and-unquote function
 which is not defined there.
+
+--------------------------------------------------------------------------------
+
+Versions of emacs that do work (with minimal testing):
+
+o I downloaded the Emacs Version 23.2 (Released 2010-05-08) from http://emacsformacosx.com/,
+ran it with "/Volumes/data/Applications/Emacs.app/Contents/MacOS/Emacs -nw" (as a dumb terminal
+application), loaded the gud.el file, cd to test/breakpoint_condition, and M-x lldb to run my
+built lldb against the a.out executable, it seems to work ok.
