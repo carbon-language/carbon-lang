@@ -3582,14 +3582,14 @@ ExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
 }
 
 ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
-                                                       SourceLocation OpLoc,
-                                                       tok::TokenKind OpKind,
-                                                       const CXXScopeSpec &SS,
-                                                 TypeSourceInfo *ScopeTypeInfo,
-                                                       SourceLocation CCLoc,
-                                                       SourceLocation TildeLoc,
+                                           SourceLocation OpLoc,
+                                           tok::TokenKind OpKind,
+                                           const CXXScopeSpec &SS,
+                                           TypeSourceInfo *ScopeTypeInfo,
+                                           SourceLocation CCLoc,
+                                           SourceLocation TildeLoc,
                                          PseudoDestructorTypeStorage Destructed,
-                                                       bool HasTrailingLParen) {
+                                           bool HasTrailingLParen) {
   TypeSourceInfo *DestructedTypeInfo = Destructed.getTypeSourceInfo();
 
   // C++ [expr.pseudo]p2:
@@ -3677,14 +3677,14 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
 }
 
 ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
-                                                       SourceLocation OpLoc,
-                                                       tok::TokenKind OpKind,
-                                                       CXXScopeSpec &SS,
-                                                  UnqualifiedId &FirstTypeName,
-                                                       SourceLocation CCLoc,
-                                                       SourceLocation TildeLoc,
-                                                 UnqualifiedId &SecondTypeName,
-                                                       bool HasTrailingLParen) {
+                                           SourceLocation OpLoc,
+                                           tok::TokenKind OpKind,
+                                           CXXScopeSpec &SS,
+                                           UnqualifiedId &FirstTypeName,
+                                           SourceLocation CCLoc,
+                                           SourceLocation TildeLoc,
+                                           UnqualifiedId &SecondTypeName,
+                                           bool HasTrailingLParen) {
   assert((FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId ||
           FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
          "Invalid first type name in pseudo-destructor");
@@ -3716,8 +3716,8 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
   // record types and dependent types matter.
   ParsedType ObjectTypePtrForLookup;
   if (!SS.isSet()) {
-    if (const Type *T = ObjectType->getAs<RecordType>())
-      ObjectTypePtrForLookup = ParsedType::make(QualType(T, 0));
+    if (ObjectType->isRecordType())
+      ObjectTypePtrForLookup = ParsedType::make(ObjectType);
     else if (ObjectType->isDependentType())
       ObjectTypePtrForLookup = ParsedType::make(Context.DependentTy);
   }
