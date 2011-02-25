@@ -379,6 +379,9 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
     // Best so far.
     BestPhys = PhysReg;
     BestWeight = Weight;
+    // Stop if the hint can be used.
+    if (Order.isHint(PhysReg))
+      break;
   }
 
   if (!BestPhys)

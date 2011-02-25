@@ -47,6 +47,8 @@ public:
   /// rewind - Start over from the beginning.
   void rewind() { Pos = 0; }
 
+  /// isHint - Return true if PhysReg is a preferred register.
+  bool isHint(unsigned PhysReg) const { return PhysReg == Hint; }
 };
 
 } // end namespace llvm
