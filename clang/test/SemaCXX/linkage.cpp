@@ -3,7 +3,7 @@
 // compared against the earlier cached value.  If we had a way of
 // testing linkage directly in Sema, that would be better.
 
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -Werror -triple x86_64-apple-darwin10 -emit-llvm %s -o - | FileCheck %s
 
 // PR8926
 namespace test0 {
@@ -67,6 +67,29 @@ namespace test3 {
 namespace {
   // CHECK: define void @test4(
   extern "C" void test4(void) {}
+}
+
+// PR9316: Ensure that even non-namespace-scope function declarations in
+// a C declaration context respect that over the anonymous namespace.
+extern "C" {
+  namespace {
+    struct X {
+      int f() {
+        extern int g();
+        extern int a;
+
+        // Test both for mangling in the code generation and warnings from use
+        // of internal, undefined names via -Werror.
+        // CHECK: call i32 @g(
+        // CHECK: load i32* @a,
+        return g() + a;
+      }
+    };
+  }
+  // Force the above function to be emitted by codegen.
+  int test(X& x) {
+    return x.f();
+  }
 }
 
 // CHECK: define linkonce_odr i8* @_ZN5test21A1BILj0EE3fooEv(

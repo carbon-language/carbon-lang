@@ -708,7 +708,7 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
   //   external linkage.
   if (D->getLexicalDeclContext()->isFunctionOrMethod()) {
     if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-      if (Function->isInAnonymousNamespace())
+      if (Function->isInAnonymousNamespace() && !Function->isExternC())
         return LinkageInfo::uniqueExternal();
 
       LinkageInfo LV;
@@ -729,7 +729,7 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
     if (const VarDecl *Var = dyn_cast<VarDecl>(D))
       if (Var->getStorageClass() == SC_Extern ||
           Var->getStorageClass() == SC_PrivateExtern) {
-        if (Var->isInAnonymousNamespace())
+        if (Var->isInAnonymousNamespace() && !Var->isExternC())
           return LinkageInfo::uniqueExternal();
 
         LinkageInfo LV;
@@ -1041,8 +1041,11 @@ bool VarDecl::isExternC() const {
             getStorageClass() != SC_Static) ||
       (getDeclContext()->isFunctionOrMethod() && hasExternalStorage());
 
-  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit();
-       DC = DC->getParent()) {
+  const DeclContext *DC = getDeclContext();
+  if (DC->isFunctionOrMethod())
+    return false;
+
+  for (; !DC->isTranslationUnit(); DC = DC->getParent()) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
       if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
         return getStorageClass() != SC_Static;
@@ -1050,8 +1053,6 @@ bool VarDecl::isExternC() const {
       break;
     }
 
-    if (DC->isFunctionOrMethod())
-      return false;
   }
 
   return false;
@@ -1367,8 +1368,11 @@ bool FunctionDecl::isExternC() const {
   if (!Context.getLangOptions().CPlusPlus)
     return getStorageClass() != SC_Static && !getAttr<OverloadableAttr>();
 
-  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit();
-       DC = DC->getParent()) {
+  const DeclContext *DC = getDeclContext();
+  if (DC->isRecord())
+    return false;
+
+  for (; !DC->isTranslationUnit(); DC = DC->getParent()) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
       if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
         return getStorageClass() != SC_Static &&
@@ -1376,9 +1380,6 @@ bool FunctionDecl::isExternC() const {
 
       break;
     }
-    
-    if (DC->isRecord())
-      break;
   }
 
   return isMain();
