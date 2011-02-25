@@ -697,9 +697,8 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
 void ASTDeclWriter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   VisitNamedDecl(D);
   Writer.AddSourceLocation(D->getNamespaceLoc(), Record);
-  Writer.AddSourceRange(D->getQualifierRange(), Record);
-  Writer.AddNestedNameSpecifier(D->getQualifier(), Record);
   Writer.AddSourceLocation(D->getTargetNameLoc(), Record);
+  Writer.AddNestedNameSpecifierLoc(D->getQualifierLoc(), Record);
   Writer.AddDeclRef(D->getNamespace(), Record);
   Code = serialization::DECL_NAMESPACE_ALIAS;
 }

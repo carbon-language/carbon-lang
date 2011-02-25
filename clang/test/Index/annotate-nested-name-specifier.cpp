@@ -49,8 +49,9 @@ namespace outer {
 }
 
 using namespace outer_alias::inner::secret;
+namespace super_secret = outer_alias::inner::secret;
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:52:1 %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:53:1 %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
@@ -107,3 +108,15 @@ using namespace outer_alias::inner::secret;
 // CHECK: Identifier: "inner" [51:30 - 51:35] NamespaceRef=inner:45:13
 // CHECK: Punctuation: "::" [51:35 - 51:37] UsingDirective=:51:37
 // CHECK: Identifier: "secret" [51:37 - 51:43] NamespaceRef=secret:46:15
+
+// Namespace alias
+// CHECK: Keyword: "namespace" [52:1 - 52:10] NamespaceAlias=super_secret:52:11
+// CHECK: Identifier: "super_secret" [52:11 - 52:23] NamespaceAlias=super_secret:52:11
+// CHECK: Punctuation: "=" [52:24 - 52:25] NamespaceAlias=super_secret:52:11
+// CHECK: Identifier: "outer_alias" [52:26 - 52:37] NamespaceRef=outer_alias:10:11
+// CHECK: Punctuation: "::" [52:37 - 52:39] NamespaceAlias=super_secret:52:11
+// CHECK: Identifier: "inner" [52:39 - 52:44] NamespaceRef=inner:45:13
+// CHECK: Punctuation: "::" [52:44 - 52:46] NamespaceAlias=super_secret:52:11
+// CHECK: Identifier: "secret" [52:46 - 52:52] NamespaceRef=secret:46:15
+// CHECK: Punctuation: ";" [52:52 - 52:53]
+

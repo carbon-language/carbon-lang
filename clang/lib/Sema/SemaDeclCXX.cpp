@@ -4542,8 +4542,7 @@ Decl *Sema::ActOnNamespaceAliasDef(Scope *S,
 
   NamespaceAliasDecl *AliasDecl =
     NamespaceAliasDecl::Create(Context, CurContext, NamespaceLoc, AliasLoc,
-                               Alias, SS.getRange(),
-                               (NestedNameSpecifier *)SS.getScopeRep(),
+                               Alias, SS.getWithLocInContext(Context),
                                IdentLoc, R.getFoundDecl());
 
   PushOnScopeChains(AliasDecl, S);

@@ -1288,14 +1288,13 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                                SourceLocation UsingLoc,
                                                SourceLocation AliasLoc,
                                                IdentifierInfo *Alias,
-                                               SourceRange QualifierRange,
-                                               NestedNameSpecifier *Qualifier,
+                                           NestedNameSpecifierLoc QualifierLoc,
                                                SourceLocation IdentLoc,
                                                NamedDecl *Namespace) {
   if (NamespaceDecl *NS = dyn_cast_or_null<NamespaceDecl>(Namespace))
     Namespace = NS->getOriginalNamespace();
-  return new (C) NamespaceAliasDecl(DC, UsingLoc, AliasLoc, Alias, QualifierRange,
-                                    Qualifier, IdentLoc, Namespace);
+  return new (C) NamespaceAliasDecl(DC, UsingLoc, AliasLoc, Alias, 
+                                    QualifierLoc, IdentLoc, Namespace);
 }
 
 UsingDecl *UsingShadowDecl::getUsingDecl() const {

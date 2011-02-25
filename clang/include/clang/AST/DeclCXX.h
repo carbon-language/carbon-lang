@@ -1837,49 +1837,37 @@ class NamespaceAliasDecl : public NamedDecl {
   /// \brief The location of the "namespace" keyword.
   SourceLocation NamespaceLoc;
 
-  /// \brief The source range that covers the nested-name-specifier
-  /// preceding the namespace name.
-  SourceRange QualifierRange;
-
-  /// \brief The nested-name-specifier that precedes the namespace
-  /// name, if any.
-  NestedNameSpecifier *Qualifier;
-
   /// IdentLoc - Location of namespace identifier. Accessed by TargetNameLoc.
   SourceLocation IdentLoc;
-
+  
+  /// \brief The nested-name-specifier that precedes the namespace.
+  NestedNameSpecifierLoc QualifierLoc;
+  
   /// Namespace - The Decl that this alias points to. Can either be a
   /// NamespaceDecl or a NamespaceAliasDecl.
   NamedDecl *Namespace;
 
   NamespaceAliasDecl(DeclContext *DC, SourceLocation NamespaceLoc,
                      SourceLocation AliasLoc, IdentifierInfo *Alias,
-                     SourceRange QualifierRange,
-                     NestedNameSpecifier *Qualifier,
+                     NestedNameSpecifierLoc QualifierLoc,
                      SourceLocation IdentLoc, NamedDecl *Namespace)
     : NamedDecl(NamespaceAlias, DC, AliasLoc, Alias), 
-      NamespaceLoc(NamespaceLoc), QualifierRange(QualifierRange), 
-      Qualifier(Qualifier), IdentLoc(IdentLoc), Namespace(Namespace) { }
+      NamespaceLoc(NamespaceLoc), IdentLoc(IdentLoc),
+      QualifierLoc(QualifierLoc), Namespace(Namespace) { }
 
   friend class ASTDeclReader;
   
 public:
-  /// \brief Retrieve the source range of the nested-name-specifier
-  /// that qualifiers the namespace name.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-
-  /// \brief Set the source range of the nested-name-specifier that qualifies
-  /// the namespace name.
-  void setQualifierRange(SourceRange R) { QualifierRange = R; }
-
+  /// \brief Retrieve the nested-name-specifier that qualifies the
+  /// name of the namespace, with source-location information.
+  NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
+  
   /// \brief Retrieve the nested-name-specifier that qualifies the
   /// name of the namespace.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
-
-  /// \brief Set the nested-name-specifier that qualifies the name of the
-  /// namespace.
-  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
-
+  NestedNameSpecifier *getQualifier() const { 
+    return QualifierLoc.getNestedNameSpecifier(); 
+  }
+  
   /// \brief Retrieve the namespace declaration aliased by this directive.
   NamespaceDecl *getNamespace() {
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(Namespace))
@@ -1910,8 +1898,7 @@ public:
                                     SourceLocation NamespaceLoc, 
                                     SourceLocation AliasLoc,
                                     IdentifierInfo *Alias,
-                                    SourceRange QualifierRange,
-                                    NestedNameSpecifier *Qualifier,
+                                    NestedNameSpecifierLoc QualifierLoc,
                                     SourceLocation IdentLoc,
                                     NamedDecl *Namespace);
 

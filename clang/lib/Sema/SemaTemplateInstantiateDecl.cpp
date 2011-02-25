@@ -120,9 +120,8 @@ TemplateDeclInstantiator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
     = NamespaceAliasDecl::Create(SemaRef.Context, Owner,
                                  D->getNamespaceLoc(),
                                  D->getAliasLoc(),
-                                 D->getNamespace()->getIdentifier(),
-                                 D->getQualifierRange(),
-                                 D->getQualifier(),
+                                 D->getIdentifier(),
+                                 D->getQualifierLoc(),
                                  D->getTargetNameLoc(),
                                  D->getNamespace());
   Owner->addDecl(Inst);

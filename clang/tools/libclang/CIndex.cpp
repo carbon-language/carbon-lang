@@ -1080,8 +1080,8 @@ bool CursorVisitor::VisitNamespaceDecl(NamespaceDecl *D) {
 
 bool CursorVisitor::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   // Visit nested-name-specifier.
-  if (NestedNameSpecifier *Qualifier = D->getQualifier())
-    if (VisitNestedNameSpecifier(Qualifier, D->getQualifierRange()))
+  if (NestedNameSpecifierLoc QualifierLoc = D->getQualifierLoc())
+    if (VisitNestedNameSpecifierLoc(QualifierLoc))
       return true;
   
   return Visit(MakeCursorNamespaceRef(D->getAliasedNamespace(), 

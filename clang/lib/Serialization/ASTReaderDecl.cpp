@@ -744,9 +744,8 @@ void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
 void ASTDeclReader::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   VisitNamedDecl(D);
   D->NamespaceLoc = ReadSourceLocation(Record, Idx);
-  D->setQualifierRange(ReadSourceRange(Record, Idx));
-  D->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
   D->IdentLoc = ReadSourceLocation(Record, Idx);
+  D->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
   D->Namespace = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
 }
 
@@ -1428,7 +1427,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     break;
   case DECL_NAMESPACE_ALIAS:
     D = NamespaceAliasDecl::Create(*Context, 0, SourceLocation(),
-                                   SourceLocation(), 0, SourceRange(), 0,
+                                   SourceLocation(), 0, 
+                                   NestedNameSpecifierLoc(),
                                    SourceLocation(), 0);
     break;
   case DECL_USING:
