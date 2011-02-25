@@ -6248,7 +6248,8 @@ isBetterOverloadCandidate(Sema &S,
 OverloadingResult
 OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
                                          iterator &Best,
-                                         bool UserDefinedConversion) {
+                                         bool UserDefinedConversion,
+                                         bool IsExtraneousCopy) {
   // Find the best viable function.
   Best = end();
   for (iterator Cand = begin(); Cand != end(); ++Cand) {
@@ -6286,7 +6287,13 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
   //   covers calls to named functions (5.2.2), operator overloading
   //   (clause 13), user-defined conversions (12.3.2), allocation function for
   //   placement new (5.3.4), as well as non-default initialization (8.5).
-  if (Best->Function)
+  //
+  // As a special exception, we don't mark functions selected for extraneous
+  // copy constructor calls as used; the nature of extraneous copy constructor
+  // calls is that they are never in fact called.
+  // FIXME: This doesn't seem like the right approach. Should we be doing
+  // overload resolution at all for extraneous copies?
+  if (Best->Function && !IsExtraneousCopy)
     S.MarkDeclarationReferenced(Loc, Best->Function);
 
   return OR_Success;

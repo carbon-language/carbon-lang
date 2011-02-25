@@ -3478,7 +3478,9 @@ static ExprResult CopyObject(Sema &S,
   }
 
   OverloadCandidateSet::iterator Best;
-  switch (CandidateSet.BestViableFunction(S, Loc, Best)) {
+  switch (CandidateSet.BestViableFunction(S, Loc, Best,
+                                          /*UserDefinedConversion=*/ false,
+                                          IsExtraneousCopy)) {
   case OR_Success:
     break;
 

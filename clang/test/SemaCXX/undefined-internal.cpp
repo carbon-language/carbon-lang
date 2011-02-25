@@ -105,3 +105,20 @@ namespace test6 {
     a.value = A<Internal>::two;
   }
 }
+
+// We support (as an extension) private, undefined copy constructors when
+// a temporary is bound to a reference even in C++98. Similarly, we shouldn't
+// warn about this copy constructor being used without a definition.
+namespace PR9323 {
+  namespace {
+    struct Uncopyable {
+      Uncopyable() {}
+    private:
+      Uncopyable(const Uncopyable&); // expected-note {{declared private here}}
+    };
+  }
+  void f(const Uncopyable&) {}
+  void test() {
+    f(Uncopyable()); // expected-warning {{C++98 requires an accessible copy constructor}}
+  };
+}

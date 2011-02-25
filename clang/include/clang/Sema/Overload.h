@@ -653,7 +653,8 @@ namespace clang {
     /// Find the best viable function on this overload set, if it exists.
     OverloadingResult BestViableFunction(Sema &S, SourceLocation Loc,
                                          OverloadCandidateSet::iterator& Best,
-                                         bool UserDefinedConversion = false);
+                                         bool UserDefinedConversion = false,
+                                         bool IsExtraneousCopy = false);
 
     void NoteCandidates(Sema &S,
                         OverloadCandidateDisplayKind OCD,
