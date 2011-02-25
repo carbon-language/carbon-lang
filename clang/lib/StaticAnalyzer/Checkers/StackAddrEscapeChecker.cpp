@@ -1,4 +1,4 @@
-//=== StackAddrLeakChecker.cpp ------------------------------------*- C++ -*--//
+//=== StackAddrEscapeChecker.cpp ----------------------------------*- C++ -*--//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,7 +24,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class StackAddrLeakChecker : public CheckerV2< check::PreStmt<ReturnStmt>,
+class StackAddrEscapeChecker : public CheckerV2< check::PreStmt<ReturnStmt>,
                                                check::EndPath > {
   mutable llvm::OwningPtr<BuiltinBug> BT_stackleak;
   mutable llvm::OwningPtr<BuiltinBug> BT_returnstack;
@@ -40,7 +40,7 @@ private:
 };
 }
 
-SourceRange StackAddrLeakChecker::GenName(llvm::raw_ostream &os,
+SourceRange StackAddrEscapeChecker::GenName(llvm::raw_ostream &os,
                                           const MemRegion *R,
                                           SourceManager &SM) {
     // Get the base region, stripping away fields and elements.
@@ -83,7 +83,7 @@ SourceRange StackAddrLeakChecker::GenName(llvm::raw_ostream &os,
   return range;
 }
 
-void StackAddrLeakChecker::EmitStackError(CheckerContext &C, const MemRegion *R,
+void StackAddrEscapeChecker::EmitStackError(CheckerContext &C, const MemRegion *R,
                                           const Expr *RetE) const {
   ExplodedNode *N = C.generateSink();
 
@@ -107,7 +107,7 @@ void StackAddrLeakChecker::EmitStackError(CheckerContext &C, const MemRegion *R,
   C.EmitReport(report);
 }
 
-void StackAddrLeakChecker::checkPreStmt(const ReturnStmt *RS,
+void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
                                         CheckerContext &C) const {
   
   const Expr *RetE = RS->getRetValue();
@@ -126,7 +126,7 @@ void StackAddrLeakChecker::checkPreStmt(const ReturnStmt *RS,
   }
 }
 
-void StackAddrLeakChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
+void StackAddrEscapeChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
                                         ExprEngine &Eng) const {
 
   const GRState *state = B.getState();
@@ -200,6 +200,6 @@ void StackAddrLeakChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
   }
 }
 
-void ento::registerStackAddrLeakChecker(CheckerManager &mgr) {
-  mgr.registerChecker<StackAddrLeakChecker>();
+void ento::registerStackAddrEscapeChecker(CheckerManager &mgr) {
+  mgr.registerChecker<StackAddrEscapeChecker>();
 }

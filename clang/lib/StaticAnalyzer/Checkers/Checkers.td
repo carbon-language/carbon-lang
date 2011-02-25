@@ -59,8 +59,8 @@ def ClassReleaseChecker : Checker<"ClassRelease">,
   HelpText<"Check for sending 'retain', 'release', or 'autorelease' directly to a Class">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
-def NSAutoreleasePoolChecker : Checker<"NSAutoreleasePool">,
-  HelpText<"Warn for subpar uses of NSAutoreleasePool">,
+def NSAutoreleasePoolChecker : Checker<"NSAutoReleasePool">,
+  HelpText<"Warn for subpar uses of NSAutoReleasePool">,
   DescFile<"NSAutoreleasePoolChecker.cpp">;
 
 def ObjCMethSigsChecker : Checker<"MethodSigs">,
@@ -71,16 +71,16 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
   HelpText<"Warn about private ivars that are never used">,
   DescFile<"ObjCUnusedIVarsChecker.cpp">;
 
-}
+} // end "cocoa"
 
-def StackAddrLeakChecker : Checker<"StackAddrLeak">,
+def StackAddrEscapeChecker : Checker<"StackAddrEscape">,
   InPackage<Core>,
-  HelpText<"Check that addresses to stack memory are not leaked outside the function">,
-  DescFile<"StackAddrLeakChecker.cpp">;
+  HelpText<"Check that addresses to stack memory do not escape the function">,
+  DescFile<"StackAddrEscapeChecker.cpp">;
 
 def DeadStoresChecker : Checker<"DeadStores">,
   InPackage<Core>,
-  HelpText<"Check for stores to dead variables">,
+  HelpText<"Check for values stored to a variables that are never read afterwards">,
   DescFile<"DeadStoresChecker.cpp">;
 
 def UnixAPIChecker : Checker<"API">,
@@ -90,12 +90,12 @@ def UnixAPIChecker : Checker<"API">,
 
 def MacOSXAPIChecker : Checker<"API">,
   InPackage<MacOSX>,
-  HelpText<"Check calls to various MacOSXAPIChecker">,
+  HelpText<"Check for proper uses of various Mac OS X APIs">,
   DescFile<"MacOSXAPIChecker.cpp">;
 
 def CFNumberCreateChecker : Checker<"CFNumber">,
   InPackage<MacOSX>,
-  HelpText<"Check for CFNumberCreate">,
+  HelpText<"Check for proper uses of CFNumberCreate">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
 def CFRetainReleaseChecker : Checker<"CFRetainRelease">,
