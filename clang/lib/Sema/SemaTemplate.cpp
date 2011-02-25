@@ -6167,16 +6167,18 @@ ExprResult Sema::RebuildExprInCurrentInstantiation(Expr *E) {
 }
 
 bool Sema::RebuildNestedNameSpecifierInCurrentInstantiation(CXXScopeSpec &SS) {
-  if (SS.isInvalid()) return true;
+  if (SS.isInvalid()) 
+    return true;
 
-  NestedNameSpecifier *NNS = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+  NestedNameSpecifierLoc QualifierLoc = SS.getWithLocInContext(Context);
   CurrentInstantiationRebuilder Rebuilder(*this, SS.getRange().getBegin(),
                                           DeclarationName());
-  NestedNameSpecifier *Rebuilt =
-    Rebuilder.TransformNestedNameSpecifier(NNS, SS.getRange());
-  if (!Rebuilt) return true;
+  NestedNameSpecifierLoc Rebuilt 
+    = Rebuilder.TransformNestedNameSpecifierLoc(QualifierLoc);
+  if (!Rebuilt) 
+    return true;
 
-  SS.MakeTrivial(Context, Rebuilt, SS.getRange());
+  SS.Adopt(Rebuilt);
   return false;
 }
 
