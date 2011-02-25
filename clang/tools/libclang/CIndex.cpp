@@ -140,6 +140,7 @@ public:
               DeclRefExprPartsKind, LabelRefVisitKind,
               ExplicitTemplateArgsVisitKind,
               NestedNameSpecifierVisitKind,
+              NestedNameSpecifierLocVisitKind,
               DeclarationNameInfoVisitKind,
               MemberRefVisitKind, SizeOfPackExprPartsKind };
 protected:
@@ -1615,6 +1616,24 @@ public:
     return SourceRange(A, B);
   }
 };
+  
+class NestedNameSpecifierLocVisit : public VisitorJob {
+public:
+  NestedNameSpecifierLocVisit(NestedNameSpecifierLoc Qualifier, CXCursor parent)
+    : VisitorJob(parent, VisitorJob::NestedNameSpecifierLocVisitKind,
+                 Qualifier.getNestedNameSpecifier(),
+                 Qualifier.getOpaqueData()) { }
+  
+  static bool classof(const VisitorJob *VJ) {
+    return VJ->getKind() == VisitorJob::NestedNameSpecifierLocVisitKind;
+  }
+  
+  NestedNameSpecifierLoc get() const {
+    return NestedNameSpecifierLoc(static_cast<NestedNameSpecifier*>(data[0]), 
+                                  data[1]);
+  }
+};
+  
 class DeclarationNameInfoVisit : public VisitorJob {
 public:
   DeclarationNameInfoVisit(Stmt *S, CXCursor parent)
@@ -1697,6 +1716,7 @@ public:
 private:
   void AddDeclarationNameInfo(Stmt *S);
   void AddNestedNameSpecifier(NestedNameSpecifier *NS, SourceRange R);
+  void AddNestedNameSpecifierLoc(NestedNameSpecifierLoc Qualifier);
   void AddExplicitTemplateArgs(const ExplicitTemplateArgumentList *A);
   void AddMemberRef(FieldDecl *D, SourceLocation L);
   void AddStmt(Stmt *S);
@@ -1716,6 +1736,13 @@ void EnqueueVisitor::AddNestedNameSpecifier(NestedNameSpecifier *N,
   if (N)
     WL.push_back(NestedNameSpecifierVisit(N, R, Parent));
 }
+
+void 
+EnqueueVisitor::AddNestedNameSpecifierLoc(NestedNameSpecifierLoc Qualifier) {
+  if (Qualifier)
+    WL.push_back(NestedNameSpecifierLocVisit(Qualifier, Parent));
+}
+
 void EnqueueVisitor::AddStmt(Stmt *S) {
   if (S)
     WL.push_back(StmtVisit(S, Parent));
@@ -1800,8 +1827,8 @@ void EnqueueVisitor::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   // but isn't.
   AddTypeLoc(E->getScopeTypeInfo());
   // Visit the nested-name-specifier.
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    AddNestedNameSpecifier(Qualifier, E->getQualifierRange());
+  if (NestedNameSpecifierLoc QualifierLoc = E->getQualifierLoc())
+    AddNestedNameSpecifierLoc(QualifierLoc);
   // Visit base expression.
   AddStmt(E->getBase());
 }
@@ -2048,12 +2075,21 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         }
         continue;
       }
+        
       case VisitorJob::NestedNameSpecifierVisitKind: {
         NestedNameSpecifierVisit *V = cast<NestedNameSpecifierVisit>(&LI);
         if (VisitNestedNameSpecifier(V->get(), V->getSourceRange()))
           return true;
         continue;
       }
+        
+      case VisitorJob::NestedNameSpecifierLocVisitKind: {
+        NestedNameSpecifierLocVisit *V = cast<NestedNameSpecifierLocVisit>(&LI);
+        if (VisitNestedNameSpecifierLoc(V->get()))
+          return true;
+        continue;
+      }
+        
       case VisitorJob::DeclarationNameInfoVisitKind: {
         if (VisitDeclarationNameInfo(cast<DeclarationNameInfoVisit>(&LI)
                                      ->get()))

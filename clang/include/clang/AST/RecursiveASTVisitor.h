@@ -1846,7 +1846,7 @@ DEF_TRAVERSE_STMT(CXXDeleteExpr, { })
 DEF_TRAVERSE_STMT(ExprWithCleanups, { })
 DEF_TRAVERSE_STMT(CXXNullPtrLiteralExpr, { })
 DEF_TRAVERSE_STMT(CXXPseudoDestructorExpr, { 
-  TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
+  TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
   if (TypeSourceInfo *ScopeInfo = S->getScopeTypeInfo())
     TRY_TO(TraverseTypeLoc(ScopeInfo->getTypeLoc()));
   if (TypeSourceInfo *DestroyedTypeInfo = S->getDestroyedTypeInfo())

@@ -3664,7 +3664,7 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
   Expr *Result
     = new (Context) CXXPseudoDestructorExpr(Context, Base,
                                             OpKind == tok::arrow, OpLoc,
-                                            SS.getScopeRep(), SS.getRange(),
+                                            SS.getWithLocInContext(Context),
                                             ScopeTypeInfo,
                                             CCLoc,
                                             TildeLoc,
@@ -3786,7 +3786,7 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
     if (FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) {
       ParsedType T = getTypeName(*FirstTypeName.Identifier,
                                  FirstTypeName.StartLocation,
-                                 S, &SS, false, false, ObjectTypePtrForLookup);
+                                 S, &SS, true, false, ObjectTypePtrForLookup);
       if (!T) {
         Diag(FirstTypeName.StartLocation,
              diag::err_pseudo_dtor_destructor_non_type)

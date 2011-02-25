@@ -1167,14 +1167,13 @@ void ASTStmtReader::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
 void ASTStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   VisitExpr(E);
 
-  E->setBase(Reader.ReadSubExpr());
-  E->setArrow(Record[Idx++]);
-  E->setOperatorLoc(ReadSourceLocation(Record, Idx));
-  E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
-  E->setQualifierRange(ReadSourceRange(Record, Idx));
-  E->setScopeTypeInfo(GetTypeSourceInfo(Record, Idx));
-  E->setColonColonLoc(ReadSourceLocation(Record, Idx));
-  E->setTildeLoc(ReadSourceLocation(Record, Idx));
+  E->Base = Reader.ReadSubExpr();
+  E->IsArrow = Record[Idx++];
+  E->OperatorLoc = ReadSourceLocation(Record, Idx);
+  E->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
+  E->ScopeType = GetTypeSourceInfo(Record, Idx);
+  E->ColonColonLoc = ReadSourceLocation(Record, Idx);
+  E->TildeLoc = ReadSourceLocation(Record, Idx);
   
   IdentifierInfo *II = Reader.GetIdentifierInfo(Record, Idx);
   if (II)

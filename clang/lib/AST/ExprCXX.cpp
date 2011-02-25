@@ -128,10 +128,10 @@ PseudoDestructorTypeStorage::PseudoDestructorTypeStorage(TypeSourceInfo *Info)
 }
 
 CXXPseudoDestructorExpr::CXXPseudoDestructorExpr(ASTContext &Context,
-    Expr *Base, bool isArrow, SourceLocation OperatorLoc,
-    NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
-    TypeSourceInfo *ScopeType, SourceLocation ColonColonLoc,
-    SourceLocation TildeLoc, PseudoDestructorTypeStorage DestroyedType)
+                Expr *Base, bool isArrow, SourceLocation OperatorLoc,
+                NestedNameSpecifierLoc QualifierLoc, TypeSourceInfo *ScopeType, 
+                SourceLocation ColonColonLoc, SourceLocation TildeLoc, 
+                PseudoDestructorTypeStorage DestroyedType)
   : Expr(CXXPseudoDestructorExprClass,
          Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
                                          FunctionProtoType::ExtProtoInfo())),
@@ -142,15 +142,16 @@ CXXPseudoDestructorExpr::CXXPseudoDestructorExpr(ASTContext &Context,
          /*isValueDependent=*/Base->isValueDependent(),
          // ContainsUnexpandedParameterPack
          (Base->containsUnexpandedParameterPack() ||
-          (Qualifier && Qualifier->containsUnexpandedParameterPack()) ||
+          (QualifierLoc && 
+           QualifierLoc.getNestedNameSpecifier()
+                                        ->containsUnexpandedParameterPack()) ||
           (ScopeType && 
            ScopeType->getType()->containsUnexpandedParameterPack()) ||
           (DestroyedType.getTypeSourceInfo() &&
            DestroyedType.getTypeSourceInfo()->getType()
                                    ->containsUnexpandedParameterPack()))),
     Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),
-    OperatorLoc(OperatorLoc), Qualifier(Qualifier),
-    QualifierRange(QualifierRange), 
+    OperatorLoc(OperatorLoc), QualifierLoc(QualifierLoc),
     ScopeType(ScopeType), ColonColonLoc(ColonColonLoc), TildeLoc(TildeLoc),
     DestroyedType(DestroyedType) { }
 

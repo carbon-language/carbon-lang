@@ -1331,13 +1331,9 @@ class CXXPseudoDestructorExpr : public Expr {
 
   /// \brief The location of the '.' or '->' operator.
   SourceLocation OperatorLoc;
-
+  
   /// \brief The nested-name-specifier that follows the operator, if present.
-  NestedNameSpecifier *Qualifier;
-
-  /// \brief The source range that covers the nested-name-specifier, if
-  /// present.
-  SourceRange QualifierRange;
+  NestedNameSpecifierLoc QualifierLoc;
 
   /// \brief The type that precedes the '::' in a qualified pseudo-destructor
   /// expression.
@@ -1354,11 +1350,12 @@ class CXXPseudoDestructorExpr : public Expr {
   /// resolve the name.
   PseudoDestructorTypeStorage DestroyedType;
 
+  friend class ASTStmtReader;
+  
 public:
   CXXPseudoDestructorExpr(ASTContext &Context,
                           Expr *Base, bool isArrow, SourceLocation OperatorLoc,
-                          NestedNameSpecifier *Qualifier,
-                          SourceRange QualifierRange,
+                          NestedNameSpecifierLoc QualifierLoc,
                           TypeSourceInfo *ScopeType,
                           SourceLocation ColonColonLoc,
                           SourceLocation TildeLoc,
@@ -1366,36 +1363,32 @@ public:
 
   explicit CXXPseudoDestructorExpr(EmptyShell Shell)
     : Expr(CXXPseudoDestructorExprClass, Shell),
-      Base(0), IsArrow(false), Qualifier(0), ScopeType(0) { }
+      Base(0), IsArrow(false), QualifierLoc(), ScopeType(0) { }
 
-  void setBase(Expr *E) { Base = E; }
   Expr *getBase() const { return cast<Expr>(Base); }
 
   /// \brief Determines whether this member expression actually had
   /// a C++ nested-name-specifier prior to the name of the member, e.g.,
   /// x->Base::foo.
-  bool hasQualifier() const { return Qualifier != 0; }
+  bool hasQualifier() const { return QualifierLoc; }
 
-  /// \brief If the member name was qualified, retrieves the source range of
-  /// the nested-name-specifier that precedes the member name. Otherwise,
-  /// returns an empty source range.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-  void setQualifierRange(SourceRange R) { QualifierRange = R; }
-
+  /// \brief Retrieves the nested-name-specifier that qualifies the type name,
+  /// with source-location information.
+  NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
+  
   /// \brief If the member name was qualified, retrieves the
   /// nested-name-specifier that precedes the member name. Otherwise, returns
   /// NULL.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
-  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
+  NestedNameSpecifier *getQualifier() const { 
+    return QualifierLoc.getNestedNameSpecifier(); 
+  }
 
   /// \brief Determine whether this pseudo-destructor expression was written
   /// using an '->' (otherwise, it used a '.').
   bool isArrow() const { return IsArrow; }
-  void setArrow(bool A) { IsArrow = A; }
 
   /// \brief Retrieve the location of the '.' or '->' operator.
   SourceLocation getOperatorLoc() const { return OperatorLoc; }
-  void setOperatorLoc(SourceLocation L) { OperatorLoc = L; }
 
   /// \brief Retrieve the scope type in a qualified pseudo-destructor 
   /// expression.
@@ -1407,16 +1400,13 @@ public:
   /// nested-name-specifier. It is stored as the "scope type" of the pseudo-
   /// destructor expression.
   TypeSourceInfo *getScopeTypeInfo() const { return ScopeType; }
-  void setScopeTypeInfo(TypeSourceInfo *Info) { ScopeType = Info; }
   
   /// \brief Retrieve the location of the '::' in a qualified pseudo-destructor
   /// expression.
   SourceLocation getColonColonLoc() const { return ColonColonLoc; }
-  void setColonColonLoc(SourceLocation L) { ColonColonLoc = L; }
   
   /// \brief Retrieve the location of the '~'.
   SourceLocation getTildeLoc() const { return TildeLoc; }
-  void setTildeLoc(SourceLocation L) { TildeLoc = L; }
   
   /// \brief Retrieve the source location information for the type
   /// being destroyed.

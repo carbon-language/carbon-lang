@@ -51,7 +51,14 @@ namespace outer {
 using namespace outer_alias::inner::secret;
 namespace super_secret = outer_alias::inner::secret;
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:53:1 %s | FileCheck %s
+template<typename T>
+struct X3 {
+  void f(T *t) {
+    t->::outer_alias::inner::template vector<T>::~vector<T>();
+  }
+};
+
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:60:1 %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
@@ -120,3 +127,24 @@ namespace super_secret = outer_alias::inner::secret;
 // CHECK: Identifier: "secret" [52:46 - 52:52] NamespaceRef=secret:46:15
 // CHECK: Punctuation: ";" [52:52 - 52:53]
 
+// Pseudo-destructor
+// CHECK: Identifier: "t" [57:5 - 57:6] DeclRefExpr=t:56:13
+// CHECK: Punctuation: "->" [57:6 - 57:8] UnexposedExpr=
+// CHECK: Punctuation: "::" [57:8 - 57:10] UnexposedExpr=
+// CHECK: Identifier: "outer_alias" [57:10 - 57:21] NamespaceRef=outer_alias:10:11
+// CHECK: Punctuation: "::" [57:21 - 57:23] UnexposedExpr=
+// CHECK: Identifier: "inner" [57:23 - 57:28] NamespaceRef=inner:45:13
+// CHECK: Punctuation: "::" [57:28 - 57:30] UnexposedExpr=
+// CHECK: Keyword: "template" [57:30 - 57:38] UnexposedExpr=
+// CHECK: Identifier: "vector" [57:39 - 57:45] TemplateRef=vector:4:12
+// CHECK: Punctuation: "<" [57:45 - 57:46] UnexposedExpr=
+// CHECK: Identifier: "T" [57:46 - 57:47] UnexposedExpr=
+// CHECK: Punctuation: ">" [57:47 - 57:48] UnexposedExpr=
+// CHECK: Punctuation: "::" [57:48 - 57:50] UnexposedExpr=
+// CHECK: Punctuation: "~" [57:50 - 57:51] UnexposedExpr=
+// CHECK: Identifier: "vector" [57:51 - 57:57] TemplateRef=vector:4:12
+// CHECK: Punctuation: "<" [57:57 - 57:58] UnexposedExpr=
+// CHECK: Identifier: "T" [57:58 - 57:59] UnexposedExpr=
+// CHECK: Punctuation: ">" [57:59 - 57:60] UnexposedExpr=
+// CHECK: Punctuation: "(" [57:60 - 57:61] CallExpr=
+// CHECK: Punctuation: ")" [57:61 - 57:62] CallExpr=
