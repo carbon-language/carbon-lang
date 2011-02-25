@@ -38,8 +38,12 @@ public:
   // Binary Operators
   //===--------------------------------------------------------------------===//
 
-  Instruction *CreateAdd(Constant *LHS, Constant *RHS) const {
-    return BinaryOperator::CreateAdd(LHS, RHS);
+  Instruction *CreateAdd(Constant *LHS, Constant *RHS,
+                         bool HasNUW = false, bool HasNSW = false) const {
+    BinaryOperator *BO = BinaryOperator::CreateAdd(LHS, RHS);
+    if (HasNUW) BO->setHasNoUnsignedWrap();
+    if (HasNSW) BO->setHasNoSignedWrap();
+    return BO;
   }
   Instruction *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWAdd(LHS, RHS);
@@ -50,8 +54,12 @@ public:
   Instruction *CreateFAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFAdd(LHS, RHS);
   }
-  Instruction *CreateSub(Constant *LHS, Constant *RHS) const {
-    return BinaryOperator::CreateSub(LHS, RHS);
+  Instruction *CreateSub(Constant *LHS, Constant *RHS,
+                         bool HasNUW = false, bool HasNSW = false) const {
+    BinaryOperator *BO = BinaryOperator::CreateSub(LHS, RHS);
+    if (HasNUW) BO->setHasNoUnsignedWrap();
+    if (HasNSW) BO->setHasNoSignedWrap();
+    return BO;
   }
   Instruction *CreateNSWSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWSub(LHS, RHS);
@@ -62,8 +70,12 @@ public:
   Instruction *CreateFSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFSub(LHS, RHS);
   }
-  Instruction *CreateMul(Constant *LHS, Constant *RHS) const {
-    return BinaryOperator::CreateMul(LHS, RHS);
+  Instruction *CreateMul(Constant *LHS, Constant *RHS,
+                         bool HasNUW = false, bool HasNSW = false) const {
+    BinaryOperator *BO = BinaryOperator::CreateMul(LHS, RHS);
+    if (HasNUW) BO->setHasNoUnsignedWrap();
+    if (HasNSW) BO->setHasNoSignedWrap();
+    return BO;
   }
   Instruction *CreateNSWMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWMul(LHS, RHS);
@@ -74,14 +86,20 @@ public:
   Instruction *CreateFMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFMul(LHS, RHS);
   }
-  Instruction *CreateUDiv(Constant *LHS, Constant *RHS) const {
-    return BinaryOperator::CreateUDiv(LHS, RHS);
+  Instruction *CreateUDiv(Constant *LHS, Constant *RHS,
+                          bool isExact = false) const {
+    if (!isExact)
+      return BinaryOperator::CreateUDiv(LHS, RHS);
+    return BinaryOperator::CreateExactUDiv(LHS, RHS);
   }
   Instruction *CreateExactUDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateExactUDiv(LHS, RHS);
   }
-  Instruction *CreateSDiv(Constant *LHS, Constant *RHS) const {
-    return BinaryOperator::CreateSDiv(LHS, RHS);
+  Instruction *CreateSDiv(Constant *LHS, Constant *RHS,
+                          bool isExact = false) const {
+    if (!isExact)
+      return BinaryOperator::CreateSDiv(LHS, RHS);
+    return BinaryOperator::CreateExactSDiv(LHS, RHS);
   }
   Instruction *CreateExactSDiv(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateExactSDiv(LHS, RHS);
@@ -98,14 +116,24 @@ public:
   Instruction *CreateFRem(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFRem(LHS, RHS);
   }
-  Instruction *CreateShl(Constant *LHS, Constant *RHS) const {
-    return BinaryOperator::CreateShl(LHS, RHS);
+  Instruction *CreateShl(Constant *LHS, Constant *RHS, bool HasNUW = false,
+                         bool HasNSW = false) const {
+    BinaryOperator *BO = BinaryOperator::CreateShl(LHS, RHS);
+    if (HasNUW) BO->setHasNoUnsignedWrap();
+    if (HasNSW) BO->setHasNoSignedWrap();
+    return BO;
   }
-  Instruction *CreateLShr(Constant *LHS, Constant *RHS) const {
-    return BinaryOperator::CreateLShr(LHS, RHS);
+  Instruction *CreateLShr(Constant *LHS, Constant *RHS,
+                          bool isExact = false) const {
+    if (!isExact)
+      return BinaryOperator::CreateLShr(LHS, RHS);
+    return BinaryOperator::CreateExactLShr(LHS, RHS);
   }
-  Instruction *CreateAShr(Constant *LHS, Constant *RHS) const {
-    return BinaryOperator::CreateAShr(LHS, RHS);
+  Instruction *CreateAShr(Constant *LHS, Constant *RHS,
+                          bool isExact = false) const {
+    if (!isExact)
+      return BinaryOperator::CreateAShr(LHS, RHS);
+    return BinaryOperator::CreateExactAShr(LHS, RHS);
   }
   Instruction *CreateAnd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateAnd(LHS, RHS);
@@ -126,8 +154,12 @@ public:
   // Unary Operators
   //===--------------------------------------------------------------------===//
 
-  Instruction *CreateNeg(Constant *C) const {
-    return BinaryOperator::CreateNeg(C);
+  Instruction *CreateNeg(Constant *C,
+                         bool HasNUW = false, bool HasNSW = false) const {
+    BinaryOperator *BO = BinaryOperator::CreateNeg(C);
+    if (HasNUW) BO->setHasNoUnsignedWrap();
+    if (HasNSW) BO->setHasNoSignedWrap();
+    return BO;
   }
   Instruction *CreateNSWNeg(Constant *C) const {
     return BinaryOperator::CreateNSWNeg(C);
