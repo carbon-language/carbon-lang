@@ -18,3 +18,14 @@ void test_foo(short* sp) {
   int &(*fp3)(int) = foo;
   void (*fp4)(...) = foo; // expected-error{{'foo' is unavailable}}
 }
+
+namespace radar9046492 {
+// rdar://9046492
+#define FOO __attribute__((unavailable("not available - replaced")))
+
+void foo() FOO; // expected-note {{candidate function has been explicitly made unavailable}}
+
+void bar() {
+  foo(); // expected-error {{call to unavailable function 'foo': not available - replaced}}
+}
+}

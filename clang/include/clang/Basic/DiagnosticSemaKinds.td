@@ -1312,6 +1312,8 @@ def err_ovl_ambiguous_call : Error<
   "call to %0 is ambiguous">;
 def err_ovl_deleted_call : Error<
   "call to %select{unavailable|deleted}0 function %1">;
+def err_ovl_unavailable_call : Error<
+  "call to unavailable function %0: %1">;
 def err_ovl_ambiguous_member_call : Error<
   "call to member function %0 is ambiguous">;
 def err_ovl_deleted_member_call : Error<

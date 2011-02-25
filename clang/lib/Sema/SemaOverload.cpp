@@ -7709,11 +7709,24 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     break;
 
   case OR_Deleted:
-    Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_deleted_call)
-      << Best->Function->isDeleted()
-      << ULE->getName()
-      << Fn->getSourceRange();
-    CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+    {
+      llvm::StringRef Message;
+      if (const UnavailableAttr *UA = 
+            Best->Function->getAttr<UnavailableAttr>()) 
+        Message = UA->getMessage();
+
+      if (Message.empty())
+        Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_deleted_call)
+          << Best->Function->isDeleted()
+          << ULE->getName()
+          << Fn->getSourceRange();
+      else
+        Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_unavailable_call)
+          << ULE->getName()
+          << Message
+          << Fn->getSourceRange();
+      CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+    }
     break;
   }
 
