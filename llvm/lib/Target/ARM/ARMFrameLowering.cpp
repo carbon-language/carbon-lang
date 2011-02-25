@@ -218,7 +218,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (DPRCSSize > 0) {
     MBBI++;
     // Since vpush register list cannot have gaps, there may be multiple vpush
-    // instructions in the epilogue.
+    // instructions in the prologue.
     while (MBBI->getOpcode() == ARM::VSTMDDB_UPD)
       MBBI++;
   }
