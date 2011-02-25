@@ -341,6 +341,9 @@ else
 fi
 rm -f lib/libLTO.a lib/libLTO.la
 
+// Omit lto.h from the result.  Clang will supply.
+find $DEST_DIR$DEST_ROOT -name lto.h -delete
+
 ################################################################################
 # Remove debugging information from DEST_DIR.
 
