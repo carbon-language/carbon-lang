@@ -188,14 +188,16 @@ private:
   /// \param Loc The source location we are interested in finding out the
   /// diagnostic state. Can be null in order to query the latest state.
   DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
-                                          const Diagnostic &Diag) const;
+                                          const Diagnostic &Diag,
+                                          diag::Mapping *mapping = 0) const;
 
   /// getDiagnosticLevel - This is an internal implementation helper used when
   /// DiagClass is already known.
   DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID,
                                           unsigned DiagClass,
                                           SourceLocation Loc,
-                                          const Diagnostic &Diag) const;
+                                          const Diagnostic &Diag,
+                                          diag::Mapping *mapping = 0) const;
 
   /// ProcessDiag - This is the method used to report a diagnostic that is
   /// finally fully formed.

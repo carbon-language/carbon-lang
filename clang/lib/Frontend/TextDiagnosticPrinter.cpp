@@ -905,9 +905,21 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
   std::string OptionName;
   if (DiagOpts->ShowOptionNames) {
+    // Was this a warning mapped to an error using -Werror or pragma?
+    if (Level == Diagnostic::Error &&
+        DiagnosticIDs::isBuiltinWarningOrExtension(Info.getID())) {
+      diag::Mapping mapping = diag::MAP_IGNORE;
+      Info.getDiags()->getDiagnosticLevel(Info.getID(), Info.getLocation(), 
+                                          &mapping);
+      if (mapping == diag::MAP_WARNING)
+        OptionName += "-Werror";
+    }
+
     if (const char *
           Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID())) {
-      OptionName = "-W";
+      if (!OptionName.empty())
+        OptionName += ',';
+      OptionName += "-W";
       OptionName += Opt;
     } else if (Info.getID() == diag::fatal_too_many_errors) {
       OptionName = "-ferror-limit=";

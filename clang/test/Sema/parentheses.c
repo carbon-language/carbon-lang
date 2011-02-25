@@ -37,3 +37,7 @@ void bitwise_rel(unsigned i) {
   (void)(i && i || 0); // no warning.
   (void)(0 || i && i); // no warning.
 }
+
+// RUN: %clang_cc1 -fsyntax-only -Wparentheses -Werror -fdiagnostics-show-option %s 2>&1 | FileCheck %s
+// CHECK: error: using the result of an assignment as a condition without parentheses [-Werror,-Wparentheses]
+
