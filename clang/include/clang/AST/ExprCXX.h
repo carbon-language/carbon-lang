@@ -1888,8 +1888,6 @@ class DependentScopeDeclRefExpr : public Expr {
                             const DeclarationNameInfo &NameInfo,
                             const TemplateArgumentListInfo *Args);
 
-  friend class ASTStmtReader;
-  
 public:
   static DependentScopeDeclRefExpr *Create(ASTContext &C,
                                            NestedNameSpecifierLoc QualifierLoc,
