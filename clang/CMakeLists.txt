@@ -246,12 +246,11 @@ add_subdirectory(runtime)
 
 # TODO: docs.
 if( LLVM_INCLUDE_TESTS )
-add_subdirectory(test)
-endif()
+  add_subdirectory(test)
 
-# FIXME: unittests require gtest.
-if( NOT CLANG_BUILT_STANDALONE )
-  add_subdirectory(unittests)
+  if( NOT CLANG_BUILT_STANDALONE )
+    add_subdirectory(unittests)
+  endif()
 endif()
 
 # Workaround for MSVS10 to avoid the Dialog Hell
