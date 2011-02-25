@@ -2027,9 +2027,10 @@ def err_redefinition_extern_inline : Error<
 
 // This should eventually be an error.
 def warn_undefined_internal : Warning<
-  "%select{function|variable}0 %q1 has internal linkage but is not defined">;
+  "%select{function|variable}0 %q1 has internal linkage but is not defined">,
+  DiagGroup<"undefined-internal">;
 def note_used_here : Note<"used here">;
-  
+
 def warn_redefinition_of_typedef : Warning<
   "redefinition of typedef %0 is invalid in C">,
   InGroup<DiagGroup<"typedef-redefinition"> >, DefaultError;
