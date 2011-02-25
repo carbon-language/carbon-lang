@@ -42,7 +42,7 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple)
   // Compute the initial Darwin version based on the host.
   bool HadExtra;
   std::string OSName = Triple.getOSName();
-  if (!Driver::GetReleaseVersion(&OSName[6],
+  if (!Driver::GetReleaseVersion(&OSName.c_str()[6],
                                  DarwinVersion[0], DarwinVersion[1],
                                  DarwinVersion[2], HadExtra))
     getDriver().Diag(clang::diag::err_drv_invalid_darwin_version) << OSName;
