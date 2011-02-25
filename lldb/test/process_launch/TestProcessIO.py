@@ -20,9 +20,6 @@ class ProcessLaunchIOTestCase(TestBase):
         self.buildDwarf ()
         self.process_io_test ()
 
-    def do_nothing (self):
-        i = 1
-
     def process_io_test (self):
         """Test that process launch I/O redirection flags work properly."""
         exe = os.path.join (os.getcwd(), "a.out")
@@ -39,14 +36,12 @@ class ProcessLaunchIOTestCase(TestBase):
         try:
             os.remove (out_file)
         except OSError:
-            # do_nothing (self)
-            i = 1
+            pass
 
         try:
             os.remove (err_file)
         except OSError:
-            # do_nothing (self)
-            i = 1
+            pass
 
         launch_command = "process launch -i " + in_file + " -o " + out_file + " -e " + err_file
         
@@ -75,8 +70,7 @@ class ProcessLaunchIOTestCase(TestBase):
         try:
             os.remove (out_file)
         except OSError:
-            # do_nothing (self)
-            i = 1
+            pass
 
         # Check to see if the 'stderr' file was created
         try:
@@ -97,8 +91,7 @@ class ProcessLaunchIOTestCase(TestBase):
         try:
             os.remove (err_file)
         except OSError:
-            # do_nothing (self)
-            i = 1
+            pass
 
         if not success:
             self.fail (err_msg)
