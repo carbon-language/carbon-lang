@@ -163,7 +163,7 @@ def add_options(parser):
                             " [default: %default]"))
     parser.add_option("--src", action="append",
                       help=("Top-level source directory [default: %default]"))
-    parser.add_option("--build", action="append", default=["debug"],
+    parser.add_option("--build", action="append",
                       help=("Build types to run [default: %default]"))
     parser.add_option("--branch", action="append",
                       help=("Source branch to build [default: %default]"))
@@ -181,6 +181,14 @@ def add_options(parser):
                       help=("Root install directory [default: %default]"))
     parser.add_option("--builddir",
                       help=("Root build directory [default: %default]"))
+    parser.add_option("--extra-llvm-config-flags", default="",
+                      help=("Extra flags to pass to llvm configure [default: %default]"))
+    parser.add_option("--extra-llvm-gcc-config-flags", default="",
+                      help=("Extra flags to pass to llvm-gcc configure [default: %default]"))
+    parser.add_option("--extra-gcc-config-flags", default="",
+                      help=("Extra flags to pass to gcc configure [default: %default]"))
+    parser.add_option("--force-configure", default=False, action="store_true",
+                      help=("Force reconfigure of all components"))
     return
 
 def check_options(parser, options, valid_builds):
@@ -284,18 +292,20 @@ class Builder(threading.Thread):
     class ExecutableNotFound(Exception): pass
     class FileNotExecutable(Exception): pass
 
-    def __init__(self, work_queue, jobs, cc, cxx, build_abbrev, source_abbrev,
-                 branch_abbrev, build_prefix, install_prefix):
+    def __init__(self, work_queue, jobs,
+                 build_abbrev, source_abbrev, branch_abbrev,
+                 options):
         super().__init__()
         self.work_queue = work_queue
         self.jobs = jobs
-        self.cc = cc
-        self.cxx = cxx
+        self.cc = options.cc
+        self.cxx = options.cxx
         self.build_abbrev = build_abbrev
         self.source_abbrev = source_abbrev
         self.branch_abbrev = branch_abbrev
-        self.build_prefix = build_prefix
-        self.install_prefix = install_prefix
+        self.build_prefix = options.builddir
+        self.install_prefix = options.prefix
+        self.options = options
         self.component_abbrev = dict(
             llvm="llvm",
             llvm_gcc="lgcc",
@@ -399,13 +409,16 @@ class Builder(threading.Thread):
 
         configure_flags = dict(
             llvm=dict(debug=["--prefix=" + self.install_prefix,
+                             "--with-extra-options=-Werror",
                              "--with-cxx-include-root=" + cxxroot,
                              "--with-cxx-include-arch=" + cxxarch],
                       release=["--prefix=" + self.install_prefix,
+                               "--with-extra-options=-Werror",
                                "--enable-optimized",
                                "--with-cxx-include-root=" + cxxroot,
                                "--with-cxx-include-arch=" + cxxarch],
                       paranoid=["--prefix=" + self.install_prefix,
+                                "--with-extra-options=-Werror",
                                 "--enable-expensive-checks",
                                 "--with-cxx-include-root=" + cxxroot,
                                 "--with-cxx-include-arch=" + cxxarch]),
@@ -413,26 +426,35 @@ class Builder(threading.Thread):
                                  "--enable-checking",
                                  "--program-prefix=llvm-",
                                  "--enable-llvm=" + self.build_prefix + "/llvm/" + build_suffix,
-                                 "--enable-languages=c,c++,fortran"],
+# Fortran install seems to be broken.
+#                                 "--enable-languages=c,c++,fortran"],
+                                 "--enable-languages=c,c++"],
                           release=["--prefix=" + self.install_prefix,
                                    "--program-prefix=llvm-",
                                    "--enable-llvm=" + self.build_prefix + "/llvm/" + build_suffix,
-                                   "--enable-languages=c,c++,fortran"],
+# Fortran install seems to be broken.
+#                                   "--enable-languages=c,c++,fortran"],
+                                   "--enable-languages=c,c++"],
                           paranoid=["--prefix=" + self.install_prefix,
                                     "--enable-checking",
                                     "--program-prefix=llvm-",
                                     "--enable-llvm=" + self.build_prefix + "/llvm/" + build_suffix,
-                                    "--enable-languages=c,c++,fortran"]),
+# Fortran install seems to be broken.
+#                                    "--enable-languages=c,c++,fortran"]),
+                                    "--enable-languages=c,c++"]),
             llvm2=dict(debug=["--prefix=" + self.install_prefix,
+                              "--with-extra-options=-Werror",
                               "--with-llvmgccdir=" + self.install_prefix + "/bin",
                               "--with-cxx-include-root=" + cxxroot,
                               "--with-cxx-include-arch=" + cxxarch],
                        release=["--prefix=" + self.install_prefix,
+                                "--with-extra-options=-Werror",
                                 "--enable-optimized",
                                 "--with-llvmgccdir=" + self.install_prefix + "/bin",
                                 "--with-cxx-include-root=" + cxxroot,
                                 "--with-cxx-include-arch=" + cxxarch],
                        paranoid=["--prefix=" + self.install_prefix,
+                                 "--with-extra-options=-Werror",
                                  "--enable-expensive-checks",
                                  "--with-llvmgccdir=" + self.install_prefix + "/bin",
                                  "--with-cxx-include-root=" + cxxroot,
@@ -599,28 +621,37 @@ class Builder(threading.Thread):
             if (branch is not None):
                 srcdir += "/" + branch
 
+            comp_key = comp.replace("-", "_")
+
+            config_args = configure_flags[comp_key][build][:]
+            config_args.extend(getattr(self.options,
+                                       "extra_" + comp_key
+                                       + "_config_flags").split())
+
             self.logger.info("Configuring " + component + " in " + builddir)
             self.configure(component, srcdir, builddir,
-                           configure_flags[comp.replace("-", "_")][build],
-                           configure_env[comp.replace("-", "_")][build])
+                           config_args,
+                           configure_env[comp_key][build])
 
             self.logger.info("Building " + component + " in " + builddir)
             self.make(component, srcdir, builddir,
-                      make_flags[comp.replace("-", "_")][build],
-                      make_env[comp.replace("-", "_")][build])
+                      make_flags[comp_key][build],
+                      make_env[comp_key][build])
 
             self.logger.info("Installing " + component + " in " + installdir)
             self.make(component, srcdir, builddir,
-                      make_install_flags[comp.replace("-", "_")][build],
-                      make_install_env[comp.replace("-", "_")][build])
+                      make_install_flags[comp_key][build],
+                      make_install_env[comp_key][build])
 
             self.logger.info("Testing " + component + " in " + builddir)
             self.make(component, srcdir, builddir,
-                      make_check_flags[comp.replace("-", "_")][build],
-                      make_check_env[comp.replace("-", "_")][build])
+                      make_check_flags[comp_key][build],
+                      make_check_env[comp_key][build])
 
 
     def configure(self, component, srcdir, builddir, flags, env):
+        self.logger.debug("Configure " + str(flags))
+
         configure_files = dict(
             llvm=[(srcdir + "/configure", builddir + "/Makefile")],
             llvm_gcc=[(srcdir + "/configure", builddir + "/Makefile"),
@@ -630,8 +661,11 @@ class Builder(threading.Thread):
                  (srcdir + "/gcc/configure", builddir + "/gcc/Makefile")],
             dragonegg=[()])
 
+
         doconfig = False
         for conf, mf in configure_files[component.replace("-", "_")]:
+            if not os.path.exists(conf):
+                return
             if os.path.exists(conf) and os.path.exists(mf):
                 confstat = os.stat(conf)
                 makestat = os.stat(mf)
@@ -642,7 +676,7 @@ class Builder(threading.Thread):
                 doconfig = True
                 break
 
-        if not doconfig:
+        if not doconfig and not self.options.force_configure:
             return
 
         program = srcdir + "/configure"
@@ -689,9 +723,9 @@ work_queue = queue.Queue()
 
 for t in range(options.threads):
     jobs = options.jobs // options.threads
-    builder = Builder(work_queue, jobs, options.cc.strip(), options.cxx.strip(),
+    builder = Builder(work_queue, jobs,
                       build_abbrev, source_abbrev, branch_abbrev,
-                      options.builddir.strip(), options.prefix.strip())
+                      options)
     builder.daemon = True
     builder.start()
 
