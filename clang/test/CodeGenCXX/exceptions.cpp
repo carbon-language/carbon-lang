@@ -293,3 +293,15 @@ namespace test5 {
     }
   }
 }
+
+// PR9303: invalid assert on this
+namespace test6 {
+  bool cond();
+  void test() {
+    try {
+    lbl:
+      if (cond()) goto lbl;
+    } catch (...) {
+    }
+  }
+}
