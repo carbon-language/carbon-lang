@@ -1005,12 +1005,95 @@ ADVANCED OPTIONS:
               cost of speed.
 ENDTEXT
 
-# FIXME: Print out available analyesis.
+# Query clang for list of checkers that are enabled.
+my %EnabledCheckers;
+foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
+  pipe(FROM_CHILD, TO_PARENT);
+  my $pid = fork();
+  if ($pid == 0) {
+    close FROM_CHILD;
+    open(STDOUT,">&", \*TO_PARENT);
+    open(STDERR,">&", \*TO_PARENT);
+    exec $Clang, ('--analyze', '-x', $lang, '-', '-###');
+  }
+  close(TO_PARENT);
+  while(<FROM_CHILD>) {
+    foreach my $val (split /\s+/) {
+      $val =~ s/\"//g;
+      if ($val =~ /-analyzer-checker\=([^\s]+)/) {
+        $EnabledCheckers{$1} = 1;
+      }
+    }
+  }
+  waitpid($pid,0);
+  close(FROM_CHILD);
+}
+
+# Query clang for complete list of checkers.
+pipe(FROM_CHILD, TO_PARENT);
+my $pid = fork();
+if ($pid == 0) {
+  close FROM_CHILD;
+  open(STDOUT,">&", \*TO_PARENT);
+  open(STDERR,">&", \*TO_PARENT);
+  exec $Clang, ('-cc1', '-analyzer-checker-help');
+}
+close(TO_PARENT);
+my $foundCheckers = 0;
+while(<FROM_CHILD>) {
+  if (/CHECKERS:/) {
+    $foundCheckers = 1;
+    last;
+  }
+}
+if (!$foundCheckers) {
+  print "  *** Could not query Clang for the list of available checkers.";
+}
+else {
+  print("\nAVAILABLE CHECKERS:\n\n");
+  my $skip = 0;
+  while(<FROM_CHILD>) {
+    if (/core\.experimental/ or /debug\./ or /unix.experimental/ or /cocoa.experimental/) {
+      $skip = 1;
+      next;
+    }
+    if ($skip) {
+      next if (!/^\s\s[^\s]/);
+      $skip = 0;
+    }
+    s/^\s\s//;
+    if (/^([^\s]+)/) {
+      # Is the checker enabled?
+      my $checker = $1;
+      my $enabled = 0;
+      my $aggregate = "";
+      foreach my $domain (split /\./, $checker) {
+        $aggregate .= $domain;
+        if ($EnabledCheckers{$aggregate}) {
+          $enabled =1;
+          last;
+        }        
+      }
+      
+      if ($enabled) {
+        print " + ";
+      }
+      else {
+        print "   ";
+      }
+    }
+    else {
+      print "   ";
+    }
+    print $_;
+  } 
+}
+waitpid($pid,0);
+close(FROM_CHILD);
 
 print <<ENDTEXT
 
- NOTE: "(+)" indicates that an analysis is enabled by default unless one
-       or more analysis options are specified
+ NOTE: "+" indicates that an analysis is enabled by default.
 
 BUILD OPTIONS
 
@@ -1074,6 +1157,9 @@ if (!@ARGV) {
   exit 1;
 }
 
+
+my $displayHelp = 0;
+
 while (@ARGV) {
   
   # Scan for options we recognize.
@@ -1081,8 +1167,9 @@ while (@ARGV) {
   my $arg = $ARGV[0];
 
   if ($arg eq "-h" or $arg eq "--help") {
-    DisplayHelp();
-    exit 0;
+    $displayHelp = 1;
+    shift @ARGV;
+    next;
   }
   
   if ($arg eq '-analyze-headers') {
@@ -1224,12 +1311,17 @@ while (@ARGV) {
   last;
 }
 
-if (!@ARGV) {
+if (!@ARGV and $displayHelp == 0) {
   Diag("No build command specified.\n\n");
+  $displayHelp = 1;
+}
+
+if ($displayHelp) {
   DisplayHelp();
   exit 1;
 }
 
+# Determine where results go.
 $CmdArgs = HtmlEscape(join(' ', map(ShellEscape($_), @ARGV)));
 $HtmlTitle = "${CurrentDirSuffix} - scan-build results"
   unless (defined($HtmlTitle));
@@ -1238,9 +1330,7 @@ $HtmlTitle = "${CurrentDirSuffix} - scan-build results"
 my $BaseDir = $HtmlDir;
 $HtmlDir = GetHTMLRunDir($HtmlDir);
 
-# Set the appropriate environment variables.
-SetHtmlEnv(\@ARGV, $HtmlDir);
-
+# Determine the location of ccc-analyzer.
 my $AbsRealBin = Cwd::realpath($RealBin);
 my $Cmd = "$AbsRealBin/libexec/ccc-analyzer";
 my $CmdCXX = "$AbsRealBin/libexec/c++-analyzer";
@@ -1259,27 +1349,24 @@ if (!defined $ClangSB || ! -x $ClangSB) {
   Diag("Using 'clang' from path: $Clang\n");
 }
 
+# Set the appropriate environment variables.
+SetHtmlEnv(\@ARGV, $HtmlDir);
 $ENV{'CC'} = $Cmd;
 $ENV{'CXX'} = $CmdCXX;
 $ENV{'CLANG'} = $Clang;
 $ENV{'CLANG_CXX'} = $ClangCXX;
-
 if ($Verbose >= 2) {
   $ENV{'CCC_ANALYZER_VERBOSE'} = 1;
 }
-
 if ($Verbose >= 3) {
   $ENV{'CCC_ANALYZER_LOG'} = 1;
 }
-
 if ($AnalyzeHeaders) {
   push @AnalysesToRun,"-analyzer-opt-analyze-headers";  
 }
-
 if ($AnalyzerStats) {
   push @AnalysesToRun, '-analyzer-stats';
 }
-
 if ($MaxLoop > 0) {
   push @AnalysesToRun, '-analyzer-max-loop ' . $MaxLoop;
 }
@@ -1289,11 +1376,9 @@ $ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
 if (defined $StoreModel) {
   $ENV{'CCC_ANALYZER_STORE_MODEL'} = $StoreModel;
 }
-
 if (defined $ConstraintsModel) {
   $ENV{'CCC_ANALYZER_CONSTRAINTS_MODEL'} = $ConstraintsModel;
 }
-
 if (defined $OutputFormat) {
   $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'} = $OutputFormat;
 }
