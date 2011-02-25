@@ -1663,8 +1663,11 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
   ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags);
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
-  if (DashX != IK_AST && DashX != IK_LLVM_IR)
+  if (DashX != IK_AST && DashX != IK_LLVM_IR) {
     ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
+    if (Res.getFrontendOpts().ProgramAction == frontend::RewriteObjC)
+      Res.getLangOpts().ObjCExceptions = 1;
+  }
   // FIXME: ParsePreprocessorArgs uses the FileManager to read the contents of
   // PCH file and find the original header name. Remove the need to do that in
   // ParsePreprocessorArgs and remove the FileManager 
