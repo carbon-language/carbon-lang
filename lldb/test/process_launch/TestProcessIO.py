@@ -1,5 +1,5 @@
 """
-Test lldb process IO launch flags..
+Test lldb process launch flags..
 """
 
 import os, time
@@ -7,16 +7,16 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class ProcessLaunchIOTestCase(TestBase):
+class ProcessLaunchTestCase(TestBase):
 
     mydir = "process_launch"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_with_dsym (self):
+    def test_io_with_dsym (self):
         self.buildDsym ()
         self.process_io_test ()
 
-    def test_with_dwarf (self):
+    def test_io_with_dwarf (self):
         self.buildDwarf ()
         self.process_io_test ()
 
