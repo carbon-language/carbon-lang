@@ -1337,35 +1337,31 @@ void UsingDecl::removeShadowDecl(UsingShadowDecl *S) {
   S->UsingOrNextShadow = this;
 }
 
-UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC,
-                             SourceRange NNR, SourceLocation UL,
-                             NestedNameSpecifier* TargetNNS,
+UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation UL,
+                             NestedNameSpecifierLoc QualifierLoc,
                              const DeclarationNameInfo &NameInfo,
                              bool IsTypeNameArg) {
-  return new (C) UsingDecl(DC, NNR, UL, TargetNNS, NameInfo, IsTypeNameArg);
+  return new (C) UsingDecl(DC, UL, QualifierLoc, NameInfo, IsTypeNameArg);
 }
 
 UnresolvedUsingValueDecl *
 UnresolvedUsingValueDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation UsingLoc,
-                                 SourceRange TargetNNR,
-                                 NestedNameSpecifier *TargetNNS,
+                                 NestedNameSpecifierLoc QualifierLoc,
                                  const DeclarationNameInfo &NameInfo) {
   return new (C) UnresolvedUsingValueDecl(DC, C.DependentTy, UsingLoc,
-                                          TargetNNR, TargetNNS, NameInfo);
+                                          QualifierLoc, NameInfo);
 }
 
 UnresolvedUsingTypenameDecl *
 UnresolvedUsingTypenameDecl::Create(ASTContext &C, DeclContext *DC,
                                     SourceLocation UsingLoc,
                                     SourceLocation TypenameLoc,
-                                    SourceRange TargetNNR,
-                                    NestedNameSpecifier *TargetNNS,
+                                    NestedNameSpecifierLoc QualifierLoc,
                                     SourceLocation TargetNameLoc,
                                     DeclarationName TargetName) {
   return new (C) UnresolvedUsingTypenameDecl(DC, UsingLoc, TypenameLoc,
-                                             TargetNNR, TargetNNS,
-                                             TargetNameLoc,
+                                             QualifierLoc, TargetNameLoc,
                                              TargetName.getAsIdentifierInfo());
 }
 

@@ -30,6 +30,7 @@ class NamespaceDecl;
 class IdentifierInfo;
 struct PrintingPolicy;
 class Type;
+class TypeLoc;
 class LangOptions;
 
 /// \brief Represents a C++ nested name specifier, such as
@@ -245,7 +246,7 @@ public:
   /// For example, if this instance refers to a nested-name-specifier
   /// \c ::std::vector<int>::, the returned source range would cover
   /// from the initial '::' to the last '::'.
-  SourceRange getSourceRange();
+  SourceRange getSourceRange() const;
 
   /// \brief Retrieve the source range covering just the last part of
   /// this nested-name-specifier, not including the prefix.
@@ -253,7 +254,19 @@ public:
   /// For example, if this instance refers to a nested-name-specifier
   /// \c ::std::vector<int>::, the returned source range would cover
   /// from "vector" to the last '::'.
-  SourceRange getLocalSourceRange();
+  SourceRange getLocalSourceRange() const;
+
+  /// \brief Retrieve the location of the beginning of this
+  /// nested-name-specifier.
+  SourceLocation getBeginLoc() const { 
+    return getSourceRange().getBegin();
+  }
+
+  /// \brief Retrieve the location of the end of this
+  /// nested-name-specifier.
+  SourceLocation getEndLoc() const { 
+    return getSourceRange().getEnd();
+  }
 
   /// \brief Return the prefix of this nested-name-specifier.
   ///
@@ -267,7 +280,11 @@ public:
 
     return NestedNameSpecifierLoc(Qualifier->getPrefix(), Data);
   }
-  
+
+  /// \brief For a nested-name-specifier that refers to a type,
+  /// retrieve the type with source-location information.
+  TypeLoc getTypeLoc() const;
+
   /// \brief Determines the data length for the entire
   /// nested-name-specifier.
   unsigned getDataLength() const { return getDataLength(Qualifier); }

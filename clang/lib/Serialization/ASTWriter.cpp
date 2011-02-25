@@ -3276,15 +3276,21 @@ void ASTWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
                              Record);
 }
 
-void ASTWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordDataImpl &Record) {
+void ASTWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, 
+                                  RecordDataImpl &Record) {
   if (TInfo == 0) {
     AddTypeRef(QualType(), Record);
     return;
   }
 
-  AddTypeRef(TInfo->getType(), Record);
+  AddTypeLoc(TInfo->getTypeLoc(), Record);
+}
+
+void ASTWriter::AddTypeLoc(TypeLoc TL, RecordDataImpl &Record) {
+  AddTypeRef(TL.getType(), Record);
+
   TypeLocWriter TLW(*this, Record);
-  for (TypeLoc TL = TInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
+  for (; !TL.isNull(); TL = TL.getNextTypeLoc())
     TLW.Visit(TL);
 }
 
@@ -3482,6 +3488,55 @@ void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
 
     case NestedNameSpecifier::Global:
       // Don't need to write an associated value.
+      break;
+    }
+  }
+}
+
+void ASTWriter::AddNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
+                                          RecordDataImpl &Record) {
+  // Nested name specifiers usually aren't too long. I think that 8 would
+  // typically accomodate the vast majority.
+  llvm::SmallVector<NestedNameSpecifierLoc , 8> NestedNames;
+
+  // Push each of the nested-name-specifiers's onto a stack for
+  // serialization in reverse order.
+  while (NNS) {
+    NestedNames.push_back(NNS);
+    NNS = NNS.getPrefix();
+  }
+
+  Record.push_back(NestedNames.size());
+  while(!NestedNames.empty()) {
+    NNS = NestedNames.pop_back_val();
+    NestedNameSpecifier::SpecifierKind Kind
+      = NNS.getNestedNameSpecifier()->getKind();
+    Record.push_back(Kind);
+    switch (Kind) {
+    case NestedNameSpecifier::Identifier:
+      AddIdentifierRef(NNS.getNestedNameSpecifier()->getAsIdentifier(), Record);
+      AddSourceRange(NNS.getLocalSourceRange(), Record);
+      break;
+
+    case NestedNameSpecifier::Namespace:
+      AddDeclRef(NNS.getNestedNameSpecifier()->getAsNamespace(), Record);
+      AddSourceRange(NNS.getLocalSourceRange(), Record);
+      break;
+
+    case NestedNameSpecifier::NamespaceAlias:
+      AddDeclRef(NNS.getNestedNameSpecifier()->getAsNamespaceAlias(), Record);
+      AddSourceRange(NNS.getLocalSourceRange(), Record);
+      break;
+
+    case NestedNameSpecifier::TypeSpec:
+    case NestedNameSpecifier::TypeSpecWithTemplate:
+      Record.push_back(Kind == NestedNameSpecifier::TypeSpecWithTemplate);
+      AddTypeLoc(NNS.getTypeLoc(), Record);
+      AddSourceLocation(NNS.getLocalSourceRange().getEnd(), Record);
+      break;
+
+    case NestedNameSpecifier::Global:
+      AddSourceLocation(NNS.getLocalSourceRange().getEnd(), Record);
       break;
     }
   }

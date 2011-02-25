@@ -706,9 +706,8 @@ void ASTDeclWriter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
 
 void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
   VisitNamedDecl(D);
-  Writer.AddSourceRange(D->getNestedNameRange(), Record);
   Writer.AddSourceLocation(D->getUsingLocation(), Record);
-  Writer.AddNestedNameSpecifier(D->getTargetNestedNameDecl(), Record);
+  Writer.AddNestedNameSpecifierLoc(D->getQualifierLoc(), Record);
   Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
   Writer.AddDeclRef(D->FirstUsingShadow, Record);
   Record.push_back(D->isTypeName());
@@ -737,9 +736,8 @@ void ASTDeclWriter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
 
 void ASTDeclWriter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   VisitValueDecl(D);
-  Writer.AddSourceRange(D->getTargetNestedNameRange(), Record);
   Writer.AddSourceLocation(D->getUsingLoc(), Record);
-  Writer.AddNestedNameSpecifier(D->getTargetNestedNameSpecifier(), Record);
+  Writer.AddNestedNameSpecifierLoc(D->getQualifierLoc(), Record);
   Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
   Code = serialization::DECL_UNRESOLVED_USING_VALUE;
 }
@@ -747,10 +745,9 @@ void ASTDeclWriter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
 void ASTDeclWriter::VisitUnresolvedUsingTypenameDecl(
                                                UnresolvedUsingTypenameDecl *D) {
   VisitTypeDecl(D);
-  Writer.AddSourceRange(D->getTargetNestedNameRange(), Record);
   Writer.AddSourceLocation(D->getUsingLoc(), Record);
   Writer.AddSourceLocation(D->getTypenameLoc(), Record);
-  Writer.AddNestedNameSpecifier(D->getTargetNestedNameSpecifier(), Record);
+  Writer.AddNestedNameSpecifierLoc(D->getQualifierLoc(), Record);
   Code = serialization::DECL_UNRESOLVED_USING_TYPENAME;
 }
 

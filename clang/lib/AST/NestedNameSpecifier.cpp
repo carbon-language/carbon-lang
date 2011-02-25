@@ -320,7 +320,7 @@ namespace {
   }
 }
 
-SourceRange NestedNameSpecifierLoc::getSourceRange() {
+SourceRange NestedNameSpecifierLoc::getSourceRange() const {
   NestedNameSpecifierLoc First = *this;
   while (NestedNameSpecifierLoc Prefix= First.getPrefix())
     First = Prefix;
@@ -329,7 +329,7 @@ SourceRange NestedNameSpecifierLoc::getSourceRange() {
                      getLocalSourceRange().getEnd());
 }
 
-SourceRange NestedNameSpecifierLoc::getLocalSourceRange() {
+SourceRange NestedNameSpecifierLoc::getLocalSourceRange() const {
   unsigned Offset = getDataLength(Qualifier->getPrefix());
   switch (Qualifier->getKind()) {
   case NestedNameSpecifier::Global:
@@ -353,4 +353,15 @@ SourceRange NestedNameSpecifierLoc::getLocalSourceRange() {
   }
   
   return SourceRange();
+}
+
+TypeLoc NestedNameSpecifierLoc::getTypeLoc() const {
+  assert((Qualifier->getKind() == NestedNameSpecifier::TypeSpec ||
+          Qualifier->getKind() == NestedNameSpecifier::TypeSpecWithTemplate) &&
+         "Nested-name-specifier location is not a type");
+
+  // The "void*" that points at the TypeLoc data.
+  unsigned Offset = getDataLength(Qualifier->getPrefix());
+  void *TypeData = LoadPointer(Data, Offset);
+  return TypeLoc(Qualifier->getAsType(), TypeData);
 }

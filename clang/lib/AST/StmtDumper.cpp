@@ -279,8 +279,8 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     // print using decl (e.g. "using std::string;")
     const char *tn = UD->isTypeName() ? "typename " : "";
     OS << '"' << UD->getDeclKindName() << tn;
-    UD->getTargetNestedNameDecl()->print(OS,
-        PrintingPolicy(UD->getASTContext().getLangOptions()));
+    UD->getQualifier()->print(OS,
+                        PrintingPolicy(UD->getASTContext().getLangOptions()));
     OS << ";\"";
   } else if (LabelDecl *LD = dyn_cast<LabelDecl>(D)) {
     OS << "label " << LD->getNameAsString();

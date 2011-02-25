@@ -6036,7 +6036,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
       << Name << Ctx << FullRange;
     if (UnresolvedUsingValueDecl *Using
           = dyn_cast<UnresolvedUsingValueDecl>(Result.getRepresentativeDecl())){
-      SourceLocation Loc = Using->getTargetNestedNameRange().getBegin();
+      SourceLocation Loc = Using->getQualifierLoc().getBeginLoc();
       Diag(Loc, diag::note_using_value_decl_missing_typename)
         << FixItHint::CreateInsertion(Loc, "typename ");
     }

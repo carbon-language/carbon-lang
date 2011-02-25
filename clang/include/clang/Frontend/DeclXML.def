@@ -349,7 +349,7 @@ NODE_XML(UsingDecl, "Using")
   ID_ATTRIBUTE_XML
   ATTRIBUTE_FILE_LOCATION_XML
   ATTRIBUTE_XML(getDeclContext(), "context")
-  ATTRIBUTE_XML(getTargetNestedNameDecl(), "target_nested_namespace_decl")
+  ATTRIBUTE_XML(getQualifier(), "target_nested_namespace_decl")
   ATTRIBUTE_XML(isTypeName(), "is_typename")
 END_NODE_XML
 

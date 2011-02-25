@@ -918,20 +918,20 @@ void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
 
 void DeclPrinter::VisitUsingDecl(UsingDecl *D) {
   Out << "using ";
-  D->getTargetNestedNameDecl()->print(Out, Policy);
+  D->getQualifier()->print(Out, Policy);
   Out << D;
 }
 
 void
 DeclPrinter::VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D) {
   Out << "using typename ";
-  D->getTargetNestedNameSpecifier()->print(Out, Policy);
+  D->getQualifier()->print(Out, Policy);
   Out << D->getDeclName();
 }
 
 void DeclPrinter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   Out << "using ";
-  D->getTargetNestedNameSpecifier()->print(Out, Policy);
+  D->getQualifier()->print(Out, Policy);
   Out << D->getDeclName();
 }
 

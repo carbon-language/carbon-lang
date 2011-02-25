@@ -443,6 +443,9 @@ public:
   /// \brief Emits a reference to a declarator info.
   void AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordDataImpl &Record);
 
+  /// \brief Emits a type with source-location information.
+  void AddTypeLoc(TypeLoc TL, RecordDataImpl &Record);
+
   /// \brief Emits a template argument location info.
   void AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
                                   const TemplateArgumentLocInfo &Arg,
@@ -474,6 +477,10 @@ public:
 
   /// \brief Emit a nested name specifier.
   void AddNestedNameSpecifier(NestedNameSpecifier *NNS, RecordDataImpl &Record);
+
+  /// \brief Emit a nested name specifier with source-location information.
+  void AddNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS, 
+                                 RecordDataImpl &Record);
   
   /// \brief Emit a template name.
   void AddTemplateName(TemplateName Name, RecordDataImpl &Record);

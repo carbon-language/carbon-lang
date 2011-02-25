@@ -3919,16 +3919,16 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
       if (OrigDC == CurContext) {
         Diag(Using->getLocation(),
              diag::err_using_decl_nested_name_specifier_is_current_class)
-          << Using->getNestedNameRange();
+          << Using->getQualifierLoc().getSourceRange();
         Diag(Orig->getLocation(), diag::note_using_decl_target);
         return true;
       }
 
-      Diag(Using->getNestedNameRange().getBegin(),
+      Diag(Using->getQualifierLoc().getBeginLoc(),
            diag::err_using_decl_nested_name_specifier_is_not_base_class)
-        << Using->getTargetNestedNameDecl()
+        << Using->getQualifier()
         << cast<CXXRecordDecl>(CurContext)
-        << Using->getNestedNameRange();
+        << Using->getQualifierLoc().getSourceRange();
       Diag(Orig->getLocation(), diag::note_using_decl_target);
       return true;
     }
@@ -4134,8 +4134,6 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     LookupQualifiedName(Previous, CurContext);
   }
 
-  NestedNameSpecifier *NNS = SS.getScopeRep();
-
   // Check for invalid redeclarations.
   if (CheckUsingDeclRedeclaration(UsingLoc, IsTypeName, SS, IdentLoc, Previous))
     return 0;
@@ -4146,22 +4144,21 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 
   DeclContext *LookupContext = computeDeclContext(SS);
   NamedDecl *D;
+  NestedNameSpecifierLoc QualifierLoc = SS.getWithLocInContext(Context);
   if (!LookupContext) {
     if (IsTypeName) {
       // FIXME: not all declaration name kinds are legal here
       D = UnresolvedUsingTypenameDecl::Create(Context, CurContext,
                                               UsingLoc, TypenameLoc,
-                                              SS.getRange(), NNS,
+                                              QualifierLoc,
                                               IdentLoc, NameInfo.getName());
     } else {
-      D = UnresolvedUsingValueDecl::Create(Context, CurContext,
-                                           UsingLoc, SS.getRange(),
-                                           NNS, NameInfo);
+      D = UnresolvedUsingValueDecl::Create(Context, CurContext, UsingLoc, 
+                                           QualifierLoc, NameInfo);
     }
   } else {
-    D = UsingDecl::Create(Context, CurContext,
-                          SS.getRange(), UsingLoc, NNS, NameInfo,
-                          IsTypeName);
+    D = UsingDecl::Create(Context, CurContext, UsingLoc, QualifierLoc,
+                          NameInfo, IsTypeName);
   }
   D->setAccess(AS);
   CurContext->addDecl(D);
@@ -4252,7 +4249,7 @@ bool Sema::CheckInheritedConstructorUsingDecl(UsingDecl *UD) {
     return true;
   }
 
-  const Type *SourceType = UD->getTargetNestedNameDecl()->getAsType();
+  const Type *SourceType = UD->getQualifier()->getAsType();
   assert(SourceType &&
          "Using decl naming constructor doesn't have type in scope spec.");
   CXXRecordDecl *TargetClass = cast<CXXRecordDecl>(CurContext);
@@ -4309,15 +4306,15 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
     NestedNameSpecifier *DQual;
     if (UsingDecl *UD = dyn_cast<UsingDecl>(D)) {
       DTypename = UD->isTypeName();
-      DQual = UD->getTargetNestedNameDecl();
+      DQual = UD->getQualifier();
     } else if (UnresolvedUsingValueDecl *UD
                  = dyn_cast<UnresolvedUsingValueDecl>(D)) {
       DTypename = false;
-      DQual = UD->getTargetNestedNameSpecifier();
+      DQual = UD->getQualifier();
     } else if (UnresolvedUsingTypenameDecl *UD
                  = dyn_cast<UnresolvedUsingTypenameDecl>(D)) {
       DTypename = true;
-      DQual = UD->getTargetNestedNameSpecifier();
+      DQual = UD->getQualifier();
     } else continue;
 
     // using decls differ if one says 'typename' and the other doesn't.

@@ -1133,6 +1133,10 @@ public:
   NestedNameSpecifier *ReadNestedNameSpecifier(const RecordData &Record,
                                                unsigned &Idx);
 
+  NestedNameSpecifierLoc ReadNestedNameSpecifierLoc(PerFileData &F, 
+                                                    const RecordData &Record,
+                                                    unsigned &Idx);
+
   /// \brief Read a template name.
   TemplateName ReadTemplateName(PerFileData &F, const RecordData &Record, 
                                 unsigned &Idx);

@@ -181,6 +181,12 @@ public:
   /// \returns false if the visitation was terminated early, true otherwise.
   bool TraverseNestedNameSpecifier(NestedNameSpecifier *NNS);
 
+  /// \brief Recursively visit a C++ nested-name-specifier with location 
+  /// information.
+  ///
+  /// \returns false if the visitation was terminated early, true otherwise.
+  bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS);
+
   /// \brief Recursively visit a template name and dispatch to the
   /// appropriate method.
   ///
@@ -511,6 +517,31 @@ bool RecursiveASTVisitor<Derived>::TraverseNestedNameSpecifier(
     TRY_TO(TraverseType(QualType(NNS->getAsType(), 0)));
   }
 
+  return true;
+}
+
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseNestedNameSpecifierLoc(
+                                                  NestedNameSpecifierLoc NNS) {
+  if (!NNS)
+    return true;
+  
+   if (NestedNameSpecifierLoc Prefix = NNS.getPrefix())
+     TRY_TO(TraverseNestedNameSpecifierLoc(Prefix));
+           
+  switch (NNS.getNestedNameSpecifier()->getKind()) {
+  case NestedNameSpecifier::Identifier:
+  case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
+  case NestedNameSpecifier::Global:
+    return true;
+     
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+    TRY_TO(TraverseTypeLoc(NNS.getTypeLoc()));
+    break;
+  }
+  
   return true;
 }
 
@@ -1143,7 +1174,7 @@ DEF_TRAVERSE_DECL(ObjCPropertyDecl, {
   })
 
 DEF_TRAVERSE_DECL(UsingDecl, {
-    TRY_TO(TraverseNestedNameSpecifier(D->getTargetNestedNameDecl()));
+    TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
   })
 
 DEF_TRAVERSE_DECL(UsingDirectiveDecl, {
@@ -1313,7 +1344,7 @@ DEF_TRAVERSE_DECL(TypedefDecl, {
 DEF_TRAVERSE_DECL(UnresolvedUsingTypenameDecl, {
     // A dependent using declaration which was marked with 'typename'.
     //   template<class T> class A : public B<T> { using typename B<T>::foo; };
-    TRY_TO(TraverseNestedNameSpecifier(D->getTargetNestedNameSpecifier()));
+    TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
     // We shouldn't traverse D->getTypeForDecl(); it's a result of
     // declaring the type, not something that was written in the
     // source.
@@ -1426,7 +1457,7 @@ DEF_TRAVERSE_DECL(EnumConstantDecl, {
 DEF_TRAVERSE_DECL(UnresolvedUsingValueDecl, {
     // Like UnresolvedUsingTypenameDecl, but without the 'typename':
     //    template <class T> Class A : public Base<T> { using Base<T>::foo; };
-    TRY_TO(TraverseNestedNameSpecifier(D->getTargetNestedNameSpecifier()));
+    TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
   })
 
 DEF_TRAVERSE_DECL(IndirectFieldDecl, {})
