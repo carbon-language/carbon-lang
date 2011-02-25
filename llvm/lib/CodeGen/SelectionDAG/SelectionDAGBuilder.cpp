@@ -1916,7 +1916,7 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
   DEBUG(dbgs() << "Lowering jump table\n"
                << "First entry: " << First << ". Last entry: " << Last << '\n'
                << "Range: " << Range
-               << "Size: " << TSize << ". Density: " << Density << "\n\n");
+               << ". Size: " << TSize << ". Density: " << Density << "\n\n");
 
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
