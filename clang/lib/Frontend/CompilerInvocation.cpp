@@ -78,6 +78,8 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
                                std::vector<std::string> &Res) {
   for (unsigned i = 0, e = Opts.AnalysisList.size(); i != e; ++i)
     Res.push_back(getAnalysisName(Opts.AnalysisList[i]));
+  if (Opts.ShowCheckerHelp)
+    Res.push_back("-analyzer-checker-help");
   if (Opts.AnalysisStoreOpt != BasicStoreModel) {
     Res.push_back("-analyzer-store");
     Res.push_back(getAnalysisStoreName(Opts.AnalysisStoreOpt));
@@ -859,6 +861,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
       Opts.AnalysisDiagOpt = Value;
   }
 
+  Opts.ShowCheckerHelp = Args.hasArg(OPT_analyzer_checker_help);
   Opts.VisualizeEGDot = Args.hasArg(OPT_analyzer_viz_egraph_graphviz);
   Opts.VisualizeEGUbi = Args.hasArg(OPT_analyzer_viz_egraph_ubigraph);
   Opts.AnalyzeAll = Args.hasArg(OPT_analyzer_opt_analyze_headers);

@@ -12,12 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Frontend/CheckerRegistration.h"
+#include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
 #include "../Checkers/ClangSACheckerProvider.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/CheckerProvider.h"
 #include "clang/Frontend/AnalyzerOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -48,4 +50,17 @@ CheckerManager *ento::registerCheckers(const AnalyzerOptions &opts,
   }
 
   return checkerMgr.take();
+}
+
+void ento::printCheckerHelp(llvm::raw_ostream &OS) {
+  OS << "OVERVIEW: Clang Static Analyzer Checkers List\n";
+  OS << '\n';
+  OS << "USAGE: -analyzer-checker <check1,check2,...>\n";
+  OS << '\n';
+  OS << "CHECKERS:\n";
+
+  llvm::OwningPtr<CheckerProvider> provider(createClangSACheckerProvider());
+  provider->printHelp(OS);
+
+  // FIXME: Load CheckerProviders from plugins.
 }

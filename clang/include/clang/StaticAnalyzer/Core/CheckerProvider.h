@@ -17,6 +17,10 @@
 #include "llvm/ADT/StringRef.h"
 #include <vector>
 
+namespace llvm {
+  class raw_ostream;
+}
+
 namespace clang {
 
 namespace ento {
@@ -45,6 +49,7 @@ public:
   virtual ~CheckerProvider();
   virtual void registerCheckers(CheckerManager &checkerMgr,
                           CheckerOptInfo *checkOpts, unsigned numCheckOpts) = 0;
+  virtual void printHelp(llvm::raw_ostream &OS) = 0;
 };
 
 } // end ento namespace

@@ -26,6 +26,8 @@ protected:
                                          llvm::StringRef InFile);
 };
 
+void printCheckerHelp(llvm::raw_ostream &OS);
+
 } // end GR namespace
 
 } // end namespace clang

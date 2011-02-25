@@ -108,6 +108,12 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
     return 0;
   }
 
+  // Honor -analyzer-checker-help.
+  if (Clang->getAnalyzerOpts().ShowCheckerHelp) {
+    ento::printCheckerHelp(llvm::outs());
+    return 0;
+  }
+
   // Honor -version.
   //
   // FIXME: Use a better -version message?

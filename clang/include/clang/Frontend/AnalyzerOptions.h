@@ -64,6 +64,7 @@ public:
   std::string AnalyzeSpecificFunction;
   unsigned MaxNodes;
   unsigned MaxLoop;
+  unsigned ShowCheckerHelp : 1;
   unsigned AnalyzeAll : 1;
   unsigned AnalyzerDisplayProgress : 1;
   unsigned AnalyzeNestedBlocks : 1;
@@ -86,6 +87,7 @@ public:
     AnalysisStoreOpt = BasicStoreModel;
     AnalysisConstraintsOpt = RangeConstraintsModel;
     AnalysisDiagOpt = PD_HTML;
+    ShowCheckerHelp = 0;
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;
     AnalyzeNestedBlocks = 0;

@@ -16,7 +16,9 @@
 #include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/CheckerProvider.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseSet.h"
+#include "map"
 
 using namespace clang;
 using namespace ento;
@@ -28,6 +30,7 @@ class ClangSACheckerProvider : public CheckerProvider {
 public:
   virtual void registerCheckers(CheckerManager &checkerMgr,
                               CheckerOptInfo *checkOpts, unsigned numCheckOpts);
+  virtual void printHelp(llvm::raw_ostream &OS);
 };
 
 }
@@ -41,6 +44,7 @@ namespace {
 struct StaticCheckerInfoRec {
   const char *FullName;
   void (*RegFunc)(CheckerManager &mgr);
+  const char *HelpText;
   bool Hidden;
 };
 
@@ -49,12 +53,15 @@ struct StaticCheckerInfoRec {
 static const StaticCheckerInfoRec StaticCheckerInfo[] = {
 #define GET_CHECKERS
 #define CHECKER(FULLNAME,CLASS,DESCFILE,HELPTEXT,HIDDEN)    \
-  { FULLNAME, register##CLASS, HIDDEN },
+  { FULLNAME, register##CLASS, HELPTEXT, HIDDEN },
 #include "Checkers.inc"
-  { 0, 0, 0}
+  { 0, 0, 0, 0}
 #undef CHECKER
 #undef GET_CHECKERS
 };
+
+static const unsigned NumCheckers =   sizeof(StaticCheckerInfo)
+                                    / sizeof(StaticCheckerInfoRec) - 1;
 
 namespace {
 
@@ -135,4 +142,42 @@ void ClangSACheckerProvider::registerCheckers(CheckerManager &checkerMgr,
          I = enabledCheckers.begin(), E = enabledCheckers.end(); I != E; ++I) {
     (*I)->RegFunc(checkerMgr);
   }
+}
+
+typedef std::map<std::string, const StaticCheckerInfoRec *> SortedCheckers;
+
+static void printCheckerOption(llvm::raw_ostream &OS,SortedCheckers &checkers) {
+  // Find the maximum option length.
+  unsigned OptionFieldWidth = 0;
+  for (SortedCheckers::iterator
+         I = checkers.begin(), E = checkers.end(); I != E; ++I) {
+    // Limit the amount of padding we are willing to give up for alignment.
+    unsigned Length = strlen(I->second->FullName);
+    if (Length <= 30)
+      OptionFieldWidth = std::max(OptionFieldWidth, Length);
+  }
+
+  const unsigned InitialPad = 2;
+  for (SortedCheckers::iterator
+         I = checkers.begin(), E = checkers.end(); I != E; ++I) {
+    const std::string &Option = I->first;
+    int Pad = OptionFieldWidth - int(Option.size());
+    OS.indent(InitialPad) << Option;
+
+    // Break on long option names.
+    if (Pad < 0) {
+      OS << "\n";
+      Pad = OptionFieldWidth + InitialPad;
+    }
+    OS.indent(Pad + 1) << I->second->HelpText << '\n';
+  }
+}
+
+void ClangSACheckerProvider::printHelp(llvm::raw_ostream &OS) {
+  // Sort checkers according to their full name.
+  SortedCheckers checkers;
+  for (unsigned i = 0; i != NumCheckers; ++i)
+    checkers[StaticCheckerInfo[i].FullName] = &StaticCheckerInfo[i];
+
+  printCheckerOption(OS, checkers);
 }
