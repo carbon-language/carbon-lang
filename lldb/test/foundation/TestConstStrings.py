@@ -17,11 +17,13 @@ class ConstStringTestCase(TestBase):
     def test_break_with_dsym(self):
         """Test constant string generation amd comparison by the expression parser."""
         self.buildDsym(dictionary=self.d)
+        self.setTearDownCleanup(self.d)
         self.objc_const_strings()
 
     def test_break_with_dwarf(self):
         """Test constant string generation amd comparison by the expression parser."""
         self.buildDwarf(dictionary=self.d)
+        self.setTearDownCleanup(self.d)
         self.objc_const_strings()
 
     def setUp(self):
