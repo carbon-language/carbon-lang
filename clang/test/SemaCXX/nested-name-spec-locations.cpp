@@ -1,4 +1,4 @@
-// RUN: %clang-cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Note: the formatting in this test case is intentionally funny, with
 // nested-name-specifiers stretched out vertically so that we can
