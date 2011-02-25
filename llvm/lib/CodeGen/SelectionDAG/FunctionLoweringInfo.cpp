@@ -269,7 +269,7 @@ FunctionLoweringInfo::GetLiveOutRegInfo(unsigned Reg, unsigned BitWidth) {
   if (!LOI->IsValid)
     return NULL;
 
-  if (BitWidth >= LOI->KnownZero.getBitWidth()) {
+  if (BitWidth > LOI->KnownZero.getBitWidth()) {
     LOI->KnownZero = LOI->KnownZero.zextOrTrunc(BitWidth);
     LOI->KnownOne = LOI->KnownOne.zextOrTrunc(BitWidth);
   }
