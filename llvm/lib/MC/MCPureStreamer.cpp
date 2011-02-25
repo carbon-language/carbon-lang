@@ -83,9 +83,6 @@ public:
   virtual void EndCOFFSymbolDef() {
     report_fatal_error("unsupported directive in pure streamer");
   }
-  virtual void EmitCOFFSecRel32(MCSymbol const *Symbol) {
-    report_fatal_error("unsupported directive in pure streamer");
-  }
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
     report_fatal_error("unsupported directive in pure streamer");
   }

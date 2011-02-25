@@ -124,7 +124,6 @@ public:
   virtual void EmitCOFFSymbolStorageClass(int StorageClass);
   virtual void EmitCOFFSymbolType(int Type);
   virtual void EndCOFFSymbolDef();
-  virtual void EmitCOFFSecRel32(MCSymbol const *Symbol);
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
@@ -277,8 +276,6 @@ void PTXMCAsmStreamer::EmitCOFFSymbolStorageClass (int StorageClass) {}
 void PTXMCAsmStreamer::EmitCOFFSymbolType (int Type) {}
 
 void PTXMCAsmStreamer::EndCOFFSymbolDef() {}
-
-void PTXMCAsmStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {}
 
 void PTXMCAsmStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
 

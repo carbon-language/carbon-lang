@@ -31,9 +31,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-
-#include "../Target/X86/X86FixupKinds.h"
-
 using namespace llvm;
 
 namespace {
@@ -62,7 +59,6 @@ public:
   virtual void EmitCOFFSymbolStorageClass(int StorageClass);
   virtual void EmitCOFFSymbolType(int Type);
   virtual void EndCOFFSymbolDef();
-  virtual void EmitCOFFSecRel32(MCSymbol const *Symbol);
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
@@ -294,16 +290,6 @@ void WinCOFFStreamer::EndCOFFSymbolDef() {
   CurSymbol = NULL;
 }
 
-void WinCOFFStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol)
-{
-  MCDataFragment *DF = getOrCreateDataFragment();
-
-  DF->addFixup(MCFixup::Create(DF->getContents().size(),
-                               MCSymbolRefExpr::Create (Symbol, getContext ()),
-                               (MCFixupKind)X86::reloc_coff_secrel32));
-  DF->getContents().resize(DF->getContents().size() + 4, 0);
-}
-
 void WinCOFFStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
   llvm_unreachable("not implemented");
 }
@@ -381,10 +367,6 @@ void WinCOFFStreamer::EmitInstruction(const MCInst &Instruction) {
       AddValueSymbols(Instruction.getOperand(i).getExpr());
 
   getCurrentSectionData()->setHasInstructions(true);
-
-  // Now that a machine instruction has been assembled into this section, make
-  // a line entry for any .loc directive that has been seen.
-  MCLineEntry::Make(this, getCurrentSection());
 
   MCInstFragment *Fragment =
     new MCInstFragment(Instruction, getCurrentSectionData());

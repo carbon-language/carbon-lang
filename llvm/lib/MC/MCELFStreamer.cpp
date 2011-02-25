@@ -108,10 +108,6 @@ public:
     assert(0 && "ELF doesn't support this directive");
   }
 
-  virtual void EmitCOFFSecRel32(MCSymbol const *Symbol) {
-    assert(0 && "ELF doesn't support this directive");
-  }
-
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
      MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
      SD.setSize(Value);
