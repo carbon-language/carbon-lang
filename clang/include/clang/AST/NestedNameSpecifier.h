@@ -268,6 +268,18 @@ public:
     return getSourceRange().getEnd();
   }
 
+  /// \brief Retrieve the location of the beginning of this
+  /// component of the nested-name-specifier.
+  SourceLocation getLocalBeginLoc() const { 
+    return getLocalSourceRange().getBegin();
+  }
+  
+  /// \brief Retrieve the location of the end of this component of the
+  /// nested-name-specifier.
+  SourceLocation getLocalEndLoc() const { 
+    return getLocalSourceRange().getEnd();
+  }
+
   /// \brief Return the prefix of this nested-name-specifier.
   ///
   /// For example, if this instance refers to a nested-name-specifier

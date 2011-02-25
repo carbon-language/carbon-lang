@@ -783,8 +783,7 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
 
 static void SetNestedNameSpecifier(TagDecl *T, const CXXScopeSpec &SS) {
   if (SS.isSet())
-    T->setQualifierInfo(static_cast<NestedNameSpecifier*>(SS.getScopeRep()),
-                        SS.getRange());
+    T->setQualifierInfo(SS.getWithLocInContext(T->getASTContext()));
 }
 
 DeclResult

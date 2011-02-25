@@ -265,7 +265,8 @@ void CXXScopeSpec::Adopt(NestedNameSpecifierLoc Other) {
   BufferCapacity = 0;
 }
 
-NestedNameSpecifierLoc CXXScopeSpec::getWithLocInContext(ASTContext &Context) {
+NestedNameSpecifierLoc 
+CXXScopeSpec::getWithLocInContext(ASTContext &Context) const {
   if (isEmpty() || isInvalid())
     return NestedNameSpecifierLoc();
   

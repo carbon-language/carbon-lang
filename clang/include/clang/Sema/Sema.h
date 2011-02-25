@@ -4293,6 +4293,11 @@ public:
   SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
                            SourceRange Range,
                            const MultiLevelTemplateArgumentList &TemplateArgs);
+
+  NestedNameSpecifierLoc
+  SubstNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
+                           const MultiLevelTemplateArgumentList &TemplateArgs);
+
   DeclarationNameInfo
   SubstDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
                            const MultiLevelTemplateArgumentList &TemplateArgs);

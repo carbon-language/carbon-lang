@@ -4480,8 +4480,7 @@ void ASTReader::ReadDeclarationNameInfo(PerFileData &F,
 
 void ASTReader::ReadQualifierInfo(PerFileData &F, QualifierInfo &Info,
                                   const RecordData &Record, unsigned &Idx) {
-  Info.NNS = ReadNestedNameSpecifier(Record, Idx);
-  Info.NNSRange = ReadSourceRange(F, Record, Idx);
+  Info.QualifierLoc = ReadNestedNameSpecifierLoc(F, Record, Idx);
   unsigned NumTPLists = Record[Idx++];
   Info.NumTemplParamLists = NumTPLists;
   if (NumTPLists) {

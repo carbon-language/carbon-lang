@@ -2097,11 +2097,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
                                   D->isScoped(), D->isScopedUsingClassTag(),
                                   D->isFixed());
   // Import the qualifier, if any.
-  if (D->getQualifier()) {
-    NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
-    SourceRange NNSRange = Importer.Import(D->getQualifierRange());
-    D2->setQualifierInfo(NNS, NNSRange);
-  }
+  D2->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
   D2->setAccess(D->getAccess());
   D2->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, D2);
@@ -2225,12 +2221,8 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
                                     Name.getAsIdentifierInfo(), 
                                     Importer.Import(D->getTagKeywordLoc()));
     }
-    // Import the qualifier, if any.
-    if (D->getQualifier()) {
-      NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
-      SourceRange NNSRange = Importer.Import(D->getQualifierRange());
-      D2->setQualifierInfo(NNS, NNSRange);
-    }
+    
+    D2->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
     D2->setLexicalDeclContext(LexicalDC);
     LexicalDC->addDecl(D2);
   }
@@ -2408,11 +2400,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   }
 
   // Import the qualifier, if any.
-  if (D->getQualifier()) {
-    NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
-    SourceRange NNSRange = Importer.Import(D->getQualifierRange());
-    ToFunction->setQualifierInfo(NNS, NNSRange);
-  }
+  ToFunction->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
   ToFunction->setAccess(D->getAccess());
   ToFunction->setLexicalDeclContext(LexicalDC);
   ToFunction->setVirtualAsWritten(D->isVirtualAsWritten());
@@ -2666,12 +2654,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
                                    Name.getAsIdentifierInfo(), T, TInfo,
                                    D->getStorageClass(),
                                    D->getStorageClassAsWritten());
-  // Import the qualifier, if any.
-  if (D->getQualifier()) {
-    NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
-    SourceRange NNSRange = Importer.Import(D->getQualifierRange());
-    ToVar->setQualifierInfo(NNS, NNSRange);
-  }
+  ToVar->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
   ToVar->setAccess(D->getAccess());
   ToVar->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToVar);
@@ -3591,14 +3574,7 @@ Decl *ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
                                                      Name.getAsIdentifierInfo(),                                                       
                                Importer.Import(DTemplated->getTagKeywordLoc()));
   D2Templated->setAccess(DTemplated->getAccess());
-  
-  
-  // Import the qualifier, if any.
-  if (DTemplated->getQualifier()) {
-    NestedNameSpecifier *NNS = Importer.Import(DTemplated->getQualifier());
-    SourceRange NNSRange = Importer.Import(DTemplated->getQualifierRange());
-    D2Templated->setQualifierInfo(NNS, NNSRange);
-  }
+  D2Templated->setQualifierInfo(Importer.Import(DTemplated->getQualifierLoc()));
   D2Templated->setLexicalDeclContext(LexicalDC);
   
   // Create the class template declaration itself.
@@ -3703,12 +3679,7 @@ Decl *ASTNodeImporter::VisitClassTemplateSpecializationDecl(
     ClassTemplate->AddSpecialization(D2, InsertPos);
     
     // Import the qualifier, if any.
-    if (D->getQualifier()) {
-      NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
-      SourceRange NNSRange = Importer.Import(D->getQualifierRange());
-      D2->setQualifierInfo(NNS, NNSRange);
-    }
-
+    D2->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
     
     // Add the specialization to this context.
     D2->setLexicalDeclContext(LexicalDC);
@@ -4065,6 +4036,11 @@ NestedNameSpecifier *ASTImporter::Import(NestedNameSpecifier *FromNNS) {
 
   // FIXME: Implement!
   return 0;
+}
+
+NestedNameSpecifierLoc ASTImporter::Import(NestedNameSpecifierLoc FromNNS) {
+  // FIXME: Implement!
+  return NestedNameSpecifierLoc();
 }
 
 TemplateName ASTImporter::Import(TemplateName From) {

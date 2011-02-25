@@ -935,9 +935,8 @@ SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
   return SourceLocation();
 }
 
-void DeclaratorDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
-                                      SourceRange QualifierRange) {
-  if (Qualifier) {
+void DeclaratorDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
+  if (QualifierLoc) {
     // Make sure the extended decl info is allocated.
     if (!hasExtInfo()) {
       // Save (non-extended) type source info pointer.
@@ -948,12 +947,10 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
       getExtInfo()->TInfo = savedTInfo;
     }
     // Set qualifier info.
-    getExtInfo()->NNS = Qualifier;
-    getExtInfo()->NNSRange = QualifierRange;
+    getExtInfo()->QualifierLoc = QualifierLoc;
   }
   else {
     // Here Qualifier == 0, i.e., we are removing the qualifier (if any).
-    assert(QualifierRange.isInvalid());
     if (hasExtInfo()) {
       // Save type source info pointer.
       TypeSourceInfo *savedTInfo = getExtInfo()->TInfo;
@@ -975,7 +972,7 @@ QualifierInfo::setTemplateParameterListsInfo(ASTContext &Context,
                                              TemplateParameterList **TPLists) {
   assert((NumTPLists == 0 || TPLists != 0) &&
          "Empty array of template parameters with positive size!");
-  assert((NumTPLists == 0 || NNS) &&
+  assert((NumTPLists == 0 || QualifierLoc) &&
          "Nonempty array of template parameters with no qualifier!");
 
   // Free previous template parameters (if any).
@@ -2027,19 +2024,16 @@ TagDecl* TagDecl::getDefinition() const {
   return 0;
 }
 
-void TagDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
-                               SourceRange QualifierRange) {
-  if (Qualifier) {
+void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
+  if (QualifierLoc) {
     // Make sure the extended qualifier info is allocated.
     if (!hasExtInfo())
       TypedefDeclOrQualifier = new (getASTContext()) ExtInfo;
     // Set qualifier info.
-    getExtInfo()->NNS = Qualifier;
-    getExtInfo()->NNSRange = QualifierRange;
+    getExtInfo()->QualifierLoc = QualifierLoc;
   }
   else {
     // Here Qualifier == 0, i.e., we are removing the qualifier (if any).
-    assert(QualifierRange.isInvalid());
     if (hasExtInfo()) {
       getASTContext().Deallocate(getExtInfo());
       TypedefDeclOrQualifier = (TypedefDecl*) 0;

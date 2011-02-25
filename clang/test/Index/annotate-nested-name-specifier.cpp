@@ -17,9 +17,24 @@ struct X_vector : outer_alias::inner::vector<X> {
   using outer_alias::inner::vector<X>::iterator;
 };
 
+namespace outer {
+  namespace inner {
+    template<typename T, unsigned N>
+    struct array {
+      void foo();
+      static int max_size;
+    };
+  }
+}
 
+template<typename T, unsigned N>
+void outer::inner::array<T, N>::foo() {
+}
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:19:1 %s | FileCheck %s
+template<typename T, unsigned N>
+int outer::inner::array<T, N>::max_size = 17;
+
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:36:1 %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
@@ -40,3 +55,5 @@ struct X_vector : outer_alias::inner::vector<X> {
 // CHECK: Punctuation: ">" [17:37 - 17:38] UsingDeclaration=iterator[5:18]
 // CHECK: Punctuation: "::" [17:38 - 17:40] UsingDeclaration=iterator[5:18]
 // CHECK: Identifier: "iterator" [17:40 - 17:48] OverloadedDeclRef=iterator[5:18]
+
+// FIXME: Check nested-name-specifiers on VarDecl, CXXMethodDecl.

@@ -475,10 +475,7 @@ public:
 /// QualifierInfo - A struct with extended info about a syntactic
 /// name qualifier, to be used for the case of out-of-line declarations.
 struct QualifierInfo {
-  /// NNS - The syntactic name qualifier.
-  NestedNameSpecifier *NNS;
-  /// NNSRange - The source range for the qualifier.
-  SourceRange NNSRange;
+  NestedNameSpecifierLoc QualifierLoc;
   /// NumTemplParamLists - The number of template parameter lists
   /// that were matched against the template-ids occurring into the NNS.
   unsigned NumTemplParamLists;
@@ -487,8 +484,7 @@ struct QualifierInfo {
   TemplateParameterList** TemplParamLists;
 
   /// Default constructor.
-  QualifierInfo()
-    : NNS(0), NNSRange(), NumTemplParamLists(0), TemplParamLists(0) {}
+  QualifierInfo() : QualifierLoc(), NumTemplParamLists(0), TemplParamLists(0) {}
   /// setTemplateParameterListsInfo - Sets info about matched template
   /// parameter lists.
   void setTemplateParameterListsInfo(ASTContext &Context,
@@ -545,14 +541,22 @@ public:
     return SourceRange(getOuterLocStart(), getLocation());
   }
 
+  /// \brief Retrieve the nested-name-specifier that qualifies the name of this
+  /// declaration, if it was present in the source.
   NestedNameSpecifier *getQualifier() const {
-    return hasExtInfo() ? getExtInfo()->NNS : 0;
+    return hasExtInfo() ? getExtInfo()->QualifierLoc.getNestedNameSpecifier()
+                        : 0;
   }
-  SourceRange getQualifierRange() const {
-    return hasExtInfo() ? getExtInfo()->NNSRange : SourceRange();
+  
+  /// \brief Retrieve the nested-name-specifier (with source-location 
+  /// information) that qualifies the name of this declaration, if it was 
+  /// present in the source.
+  NestedNameSpecifierLoc getQualifierLoc() const {
+    return hasExtInfo() ? getExtInfo()->QualifierLoc
+                        : NestedNameSpecifierLoc();
   }
-  void setQualifierInfo(NestedNameSpecifier *Qualifier,
-                        SourceRange QualifierRange);
+  
+  void setQualifierInfo(NestedNameSpecifierLoc QualifierLoc);
 
   unsigned getNumTemplateParameterLists() const {
     return hasExtInfo() ? getExtInfo()->NumTemplParamLists : 0;
@@ -2140,14 +2144,22 @@ public:
 
   void setTypedefForAnonDecl(TypedefDecl *TDD);
 
+  /// \brief Retrieve the nested-name-specifier that qualifies the name of this
+  /// declaration, if it was present in the source.
   NestedNameSpecifier *getQualifier() const {
-    return hasExtInfo() ? getExtInfo()->NNS : 0;
+    return hasExtInfo() ? getExtInfo()->QualifierLoc.getNestedNameSpecifier()
+                        : 0;
   }
-  SourceRange getQualifierRange() const {
-    return hasExtInfo() ? getExtInfo()->NNSRange : SourceRange();
+  
+  /// \brief Retrieve the nested-name-specifier (with source-location 
+  /// information) that qualifies the name of this declaration, if it was 
+  /// present in the source.
+  NestedNameSpecifierLoc getQualifierLoc() const {
+    return hasExtInfo() ? getExtInfo()->QualifierLoc
+                        : NestedNameSpecifierLoc();
   }
-  void setQualifierInfo(NestedNameSpecifier *Qualifier,
-                        SourceRange QualifierRange);
+    
+  void setQualifierInfo(NestedNameSpecifierLoc QualifierLoc);
 
   unsigned getNumTemplateParameterLists() const {
     return hasExtInfo() ? getExtInfo()->NumTemplParamLists : 0;

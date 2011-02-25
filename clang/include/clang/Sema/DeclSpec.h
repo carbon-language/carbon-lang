@@ -168,7 +168,7 @@ public:
   ///
   /// \param Context The context into which this nested-name-specifier will be
   /// copied.
-  NestedNameSpecifierLoc getWithLocInContext(ASTContext &Context);
+  NestedNameSpecifierLoc getWithLocInContext(ASTContext &Context) const;
 
   /// No scope specifier.
   bool isEmpty() const { return !Range.isValid(); }

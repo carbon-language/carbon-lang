@@ -145,7 +145,14 @@ namespace clang {
     /// \returns the equivalent nested-name-specifier in the "to"
     /// context, or NULL if an error occurred.
     NestedNameSpecifier *Import(NestedNameSpecifier *FromNNS);
-    
+
+    /// \brief Import the given nested-name-specifier from the "from"
+    /// context into the "to" context.
+    ///
+    /// \returns the equivalent nested-name-specifier in the "to"
+    /// context.
+    NestedNameSpecifierLoc Import(NestedNameSpecifierLoc FromNNS);
+
     /// \brief Import the goven template name from the "from" context into the
     /// "to" context.
     TemplateName Import(TemplateName From);

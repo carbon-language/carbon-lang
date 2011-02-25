@@ -686,6 +686,11 @@ bool CursorVisitor::VisitDeclaratorDecl(DeclaratorDecl *DD) {
     if (Visit(TSInfo->getTypeLoc()))
       return true;
 
+  // Visit the nested-name-specifier, if present.
+  if (NestedNameSpecifierLoc QualifierLoc = DD->getQualifierLoc())
+    if (VisitNestedNameSpecifierLoc(QualifierLoc))
+      return true;
+
   return false;
 }
 
@@ -719,8 +724,8 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
       return true;
     
     // Visit the nested-name-specifier, if present.
-    if (NestedNameSpecifier *Qualifier = ND->getQualifier())
-      if (VisitNestedNameSpecifier(Qualifier, ND->getQualifierRange()))
+    if (NestedNameSpecifierLoc QualifierLoc = ND->getQualifierLoc())
+      if (VisitNestedNameSpecifierLoc(QualifierLoc))
         return true;
     
     // Visit the declaration name.
@@ -1209,7 +1214,7 @@ CursorVisitor::VisitNestedNameSpecifierLoc(NestedNameSpecifierLoc Qualifier) {
     switch (NNS->getKind()) {
     case NestedNameSpecifier::Namespace:
       if (Visit(MakeCursorNamespaceRef(NNS->getAsNamespace(), 
-                                       Q.getLocalSourceRange().getBegin(),
+                                       Q.getLocalBeginLoc(),
                                        TU)))
         return true;
         
@@ -1217,7 +1222,7 @@ CursorVisitor::VisitNestedNameSpecifierLoc(NestedNameSpecifierLoc Qualifier) {
       
     case NestedNameSpecifier::NamespaceAlias:
       if (Visit(MakeCursorNamespaceRef(NNS->getAsNamespaceAlias(), 
-                                       Q.getLocalSourceRange().getBegin(),
+                                       Q.getLocalBeginLoc(),
                                        TU)))
         return true;
         
@@ -1502,6 +1507,11 @@ bool CursorVisitor::VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  // Visit the nested-name-specifier, if present.
+  if (NestedNameSpecifierLoc QualifierLoc = D->getQualifierLoc())
+    if (VisitNestedNameSpecifierLoc(QualifierLoc))
+      return true;
+
   if (D->isDefinition()) {
     for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
          E = D->bases_end(); I != E; ++I) {

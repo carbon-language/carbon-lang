@@ -3443,8 +3443,7 @@ void ASTWriter::AddDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
 
 void ASTWriter::AddQualifierInfo(const QualifierInfo &Info,
                                  RecordDataImpl &Record) {
-  AddNestedNameSpecifier(Info.NNS, Record);
-  AddSourceRange(Info.NNSRange, Record);
+  AddNestedNameSpecifierLoc(Info.QualifierLoc, Record);
   Record.push_back(Info.NumTemplParamLists);
   for (unsigned i=0, e=Info.NumTemplParamLists; i != e; ++i)
     AddTemplateParameterList(Info.TemplParamLists[i], Record);

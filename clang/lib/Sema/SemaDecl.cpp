@@ -2895,8 +2895,7 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
 static void SetNestedNameSpecifier(DeclaratorDecl *DD, Declarator &D) {
   CXXScopeSpec &SS = D.getCXXScopeSpec();
   if (!SS.isSet()) return;
-  DD->setQualifierInfo(static_cast<NestedNameSpecifier*>(SS.getScopeRep()),
-                       SS.getRange());
+  DD->setQualifierInfo(SS.getWithLocInContext(DD->getASTContext()));
 }
 
 NamedDecl*
@@ -6445,9 +6444,7 @@ CreateNewDecl:
   // Maybe add qualifier info.
   if (SS.isNotEmpty()) {
     if (SS.isSet()) {
-      NestedNameSpecifier *NNS
-        = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
-      New->setQualifierInfo(NNS, SS.getRange());
+      New->setQualifierInfo(SS.getWithLocInContext(Context));
       if (NumMatchedTemplateParamLists > 0) {
         New->setTemplateParameterListsInfo(Context,
                                            NumMatchedTemplateParamLists,
