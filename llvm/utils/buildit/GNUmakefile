@@ -80,6 +80,10 @@ EmbeddedSim:
 	export MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`; \
 	$(MAKE) IOS_SIM_BUILD=yes PREFIX=$(SDKROOT)/usr/local install
 
+Embedded:
+	ARM_PLATFORM=`xcodebuild -version -sdk iphoneos PlatformPath` && \
+	$(MAKE) DSTROOT=$(DSTROOT)$$ARM_PLATFORM install
+
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
 installhdrs:
@@ -128,4 +132,4 @@ clean:
 $(OBJROOT) $(SYMROOT) $(DSTROOT):
 	mkdir -p $@
 
-.PHONY: install installsrc clean EmbeddedHosted EmbeddedSim
+.PHONY: install installsrc clean EmbeddedHosted EmbeddedSim Embedded
