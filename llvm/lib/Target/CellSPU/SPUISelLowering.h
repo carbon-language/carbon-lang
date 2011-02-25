@@ -109,6 +109,8 @@ namespace llvm {
     /// getSetCCResultType - Return the ValueType for ISD::SETCC
     virtual MVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
+    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
+
     //! Custom lowering hooks
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
@@ -179,9 +181,9 @@ namespace llvm {
 
     virtual bool isLegalICmpImmediate(int64_t Imm) const;
 
-    virtual bool isLegalAddressingMode(const AddrMode &AM, 
+    virtual bool isLegalAddressingMode(const AddrMode &AM,
                                        const Type *Ty) const;
- 
+
     /// After allocating this many registers, the allocator should feel
     /// register pressure. The value is a somewhat random guess, based on the
     /// number of non callee saved registers in the C calling convention.

@@ -32,6 +32,7 @@ namespace llvm {
   class BlackfinTargetLowering : public TargetLowering {
   public:
     BlackfinTargetLowering(TargetMachine &TM);
+    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i16; }
     virtual MVT::SimpleValueType getSetCCResultType(EVT VT) const;
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
     virtual void ReplaceNodeResults(SDNode *N,

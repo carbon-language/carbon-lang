@@ -177,25 +177,27 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FCOPYSIGN(SDNode *N) {
   // First get the sign bit of second operand.
   SDValue SignBit = DAG.getNode(ISD::SHL, dl, RVT, DAG.getConstant(1, RVT),
                                   DAG.getConstant(RSize - 1,
-                                                  TLI.getShiftAmountTy()));
+                                                  TLI.getShiftAmountTy(RVT)));
   SignBit = DAG.getNode(ISD::AND, dl, RVT, RHS, SignBit);
 
   // Shift right or sign-extend it if the two operands have different types.
   int SizeDiff = RVT.getSizeInBits() - LVT.getSizeInBits();
   if (SizeDiff > 0) {
     SignBit = DAG.getNode(ISD::SRL, dl, RVT, SignBit,
-                          DAG.getConstant(SizeDiff, TLI.getShiftAmountTy()));
+                          DAG.getConstant(SizeDiff,
+                                 TLI.getShiftAmountTy(SignBit.getValueType())));
     SignBit = DAG.getNode(ISD::TRUNCATE, dl, LVT, SignBit);
   } else if (SizeDiff < 0) {
     SignBit = DAG.getNode(ISD::ANY_EXTEND, dl, LVT, SignBit);
     SignBit = DAG.getNode(ISD::SHL, dl, LVT, SignBit,
-                          DAG.getConstant(-SizeDiff, TLI.getShiftAmountTy()));
+                          DAG.getConstant(-SizeDiff,
+                                 TLI.getShiftAmountTy(SignBit.getValueType())));
   }
 
   // Clear the sign bit of the first operand.
   SDValue Mask = DAG.getNode(ISD::SHL, dl, LVT, DAG.getConstant(1, LVT),
                                DAG.getConstant(LSize - 1,
-                                               TLI.getShiftAmountTy()));
+                                               TLI.getShiftAmountTy(LVT)));
   Mask = DAG.getNode(ISD::SUB, dl, LVT, Mask, DAG.getConstant(1, LVT));
   LHS = DAG.getNode(ISD::AND, dl, LVT, LHS, Mask);
 

@@ -73,6 +73,8 @@ namespace llvm {
   public:
     explicit MSP430TargetLowering(MSP430TargetMachine &TM);
 
+    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i8; }
+
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 

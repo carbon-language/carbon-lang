@@ -20,11 +20,11 @@
 #include "XCore.h"
 
 namespace llvm {
-  
+
   // Forward delcarations
   class XCoreSubtarget;
   class XCoreTargetMachine;
-  
+
   namespace XCoreISD {
     enum NodeType {
       // Start the numbering where the builtin ops and target ops leave off.
@@ -38,16 +38,16 @@ namespace llvm {
 
       // dp relative address
       DPRelativeWrapper,
-      
+
       // cp relative address
       CPRelativeWrapper,
-      
+
       // Store word to stack
       STWSP,
 
       // Corresponds to retsp instruction
       RETSP,
-      
+
       // Corresponds to LADD instruction
       LADD,
 
@@ -74,13 +74,14 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   // TargetLowering Implementation
   //===--------------------------------------------------------------------===//
-  class XCoreTargetLowering : public TargetLowering 
+  class XCoreTargetLowering : public TargetLowering
   {
   public:
 
     explicit XCoreTargetLowering(XCoreTargetMachine &TM);
 
     virtual unsigned getJumpTableEncoding() const;
+    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
@@ -91,10 +92,10 @@ namespace llvm {
     virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
                                     SelectionDAG &DAG) const;
 
-    /// getTargetNodeName - This method returns the name of a target specific 
+    /// getTargetNodeName - This method returns the name of a target specific
     //  DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
-  
+
     virtual MachineBasicBlock *
       EmitInstrWithCustomInserter(MachineInstr *MI,
                                   MachineBasicBlock *MBB) const;
@@ -108,7 +109,7 @@ namespace llvm {
   private:
     const XCoreTargetMachine &TM;
     const XCoreSubtarget &Subtarget;
-  
+
     // Lower Operand helpers
     SDValue LowerCCCArguments(SDValue Chain,
                               CallingConv::ID CallConv,
@@ -148,12 +149,12 @@ namespace llvm {
     SDValue LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
-  
+
     // Inline asm support
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
               EVT VT) const;
-  
+
     // Expand specifics
     SDValue TryExpandADDWithMul(SDNode *Op, SelectionDAG &DAG) const;
     SDValue ExpandADDSUB(SDNode *Op, SelectionDAG &DAG) const;

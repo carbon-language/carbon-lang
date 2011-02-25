@@ -48,7 +48,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   // Set up the TargetLowering object.
   //I am having problems with shr n i8 1
-  setShiftAmountType(MVT::i64);
   setBooleanContents(ZeroOrOneBooleanContent);
 
   addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);

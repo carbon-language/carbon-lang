@@ -435,7 +435,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   setOperationAction(ISD::FDIV, MVT::v4f32, Legal);
 
-  setShiftAmountType(MVT::i32);
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
 
   setStackPointerRegisterToSaveRestore(SPU::R1);
@@ -2190,7 +2189,7 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
 {
   SDValue N0 = Op.getOperand(0);      // Everything has at least one operand
   DebugLoc dl = Op.getDebugLoc();
-  EVT ShiftVT = TLI.getShiftAmountTy();
+  EVT ShiftVT = TLI.getShiftAmountTy(N0.getValueType());
 
   assert(Op.getValueType() == MVT::i8);
   switch (Opc) {

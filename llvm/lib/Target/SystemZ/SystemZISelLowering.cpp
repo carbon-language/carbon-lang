@@ -59,9 +59,6 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   // Compute derived properties from the register classes
   computeRegisterProperties();
 
-  // Set shifts properties
-  setShiftAmountType(MVT::i64);
-
   // Provide all sorts of operation actions
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);

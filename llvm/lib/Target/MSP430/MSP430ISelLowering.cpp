@@ -77,10 +77,6 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   // Division is expensive
   setIntDivIsCheap(false);
 
-  // Even if we have only 1 bit shift here, we can perform
-  // shifts of the whole bitwidth 1 bit per step.
-  setShiftAmountType(MVT::i8);
-
   setStackPointerRegisterToSaveRestore(MSP430::SPW);
   setBooleanContents(ZeroOrOneBooleanContent);
   setSchedulingPreference(Sched::Latency);
@@ -330,7 +326,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
       // Arguments passed in registers
       EVT RegVT = VA.getLocVT();
       switch (RegVT.getSimpleVT().SimpleTy) {
-      default: 
+      default:
         {
 #ifndef NDEBUG
           errs() << "LowerFormalArguments Unhandled argument type: "

@@ -111,7 +111,7 @@ public:
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
   MVT getPointerTy() const { return PointerTy; }
-  MVT getShiftAmountTy() const { return ShiftAmountTy; }
+  virtual MVT getShiftAmountTy(EVT LHSTy) const;
 
   /// isSelectExpensive - Return true if the select operation is expensive for
   /// this target.
@@ -210,7 +210,7 @@ public:
     /// ValueTypeActions - For each value type, keep a LegalizeAction enum
     /// that indicates how instruction selection should deal with the type.
     uint8_t ValueTypeActions[MVT::LAST_VALUETYPE];
-    
+
     LegalizeAction getExtendedTypeAction(EVT VT) const {
       // Handle non-vector integers.
       if (!VT.isVector()) {
@@ -260,17 +260,17 @@ public:
     ValueTypeActionImpl() {
       std::fill(ValueTypeActions, array_endof(ValueTypeActions), 0);
     }
-    
+
     LegalizeAction getTypeAction(EVT VT) const {
       if (!VT.isExtended())
         return getTypeAction(VT.getSimpleVT());
       return getExtendedTypeAction(VT);
     }
-    
+
     LegalizeAction getTypeAction(MVT VT) const {
       return (LegalizeAction)ValueTypeActions[VT.SimpleTy];
     }
-    
+
     void setTypeAction(EVT VT, LegalizeAction Action) {
       unsigned I = VT.getSimpleVT().SimpleTy;
       ValueTypeActions[I] = Action;
@@ -291,7 +291,7 @@ public:
   LegalizeAction getTypeAction(MVT VT) const {
     return ValueTypeActions.getTypeAction(VT);
   }
-  
+
   /// getTypeToTransformTo - For types supported by the target, this is an
   /// identity function.  For types that must be promoted to larger types, this
   /// returns the larger type to promote to.  For integer types that are larger
@@ -324,7 +324,7 @@ public:
       EVT NVT = VT.getRoundIntegerType(Context);
       if (NVT == VT)      // Size is a power of two - expand to half the size.
         return EVT::getIntegerVT(Context, VT.getSizeInBits() / 2);
-      
+
       // Promote to a power of two size, avoiding multi-step promotion.
       return getTypeAction(NVT) == Promote ?
         getTypeToTransformTo(Context, NVT) : NVT;
@@ -997,10 +997,6 @@ public:
   //
 
 protected:
-  /// setShiftAmountType - Describe the type that should be used for shift
-  /// amounts.  This type defaults to the pointer type.
-  void setShiftAmountType(MVT VT) { ShiftAmountTy = VT; }
-
   /// setBooleanContents - Specify how the target extends the result of a
   /// boolean value from i1 to a wider type.  See getBooleanContents.
   void setBooleanContents(BooleanContent Ty) { BooleanContents = Ty; }
@@ -1047,12 +1043,12 @@ protected:
 
   /// SelectIsExpensive - Tells the code generator not to expand operations
   /// into sequences that use the select operations if possible.
-  void setSelectIsExpensive(bool isExpensive = true) { 
-    SelectIsExpensive = isExpensive; 
+  void setSelectIsExpensive(bool isExpensive = true) {
+    SelectIsExpensive = isExpensive;
   }
 
-  /// JumpIsExpensive - Tells the code generator not to expand sequence of 
-  /// operations into a seperate sequences that increases the amount of 
+  /// JumpIsExpensive - Tells the code generator not to expand sequence of
+  /// operations into a seperate sequences that increases the amount of
   /// flow control.
   void setJumpIsExpensive(bool isExpensive = true) {
     JumpIsExpensive = isExpensive;
@@ -1369,7 +1365,7 @@ public:
     CW_Good     = 1,      // Good weight.
     CW_Better   = 2,      // Better weight.
     CW_Best     = 3,      // Best weight.
-    
+
     // Well-known weights.
     CW_SpecificReg  = CW_Okay,    // Specific register operands.
     CW_Register     = CW_Good,    // Register operands.
@@ -1422,21 +1418,21 @@ public:
         CallOperandVal(0), ConstraintVT(MVT::Other) {
     }
   };
-  
+
   typedef std::vector<AsmOperandInfo> AsmOperandInfoVector;
-  
+
   /// ParseConstraints - Split up the constraint string from the inline
   /// assembly value into the specific constraints and their prefixes,
   /// and also tie in the associated operand values.
   /// If this returns an empty vector, and if the constraint string itself
   /// isn't empty, there was an error parsing.
   virtual AsmOperandInfoVector ParseConstraints(ImmutableCallSite CS) const;
-  
+
   /// Examine constraint type and operand type and determine a weight value.
   /// The operand object must already have been set up with the operand type.
   virtual ConstraintWeight getMultipleConstraintMatchWeight(
       AsmOperandInfo &info, int maIndex) const;
-  
+
   /// Examine constraint string and operand type and determine a weight value.
   /// The operand object must already have been set up with the operand type.
   virtual ConstraintWeight getSingleConstraintMatchWeight(
@@ -1446,7 +1442,7 @@ public:
   /// type to use for the specific AsmOperandInfo, setting
   /// OpInfo.ConstraintCode and OpInfo.ConstraintType.  If the actual operand
   /// being passed in is available, it can be passed in as Op, otherwise an
-  /// empty SDValue can be passed. 
+  /// empty SDValue can be passed.
   virtual void ComputeConstraintToUse(AsmOperandInfo &OpInfo,
                                       SDValue Op,
                                       SelectionDAG *DAG = 0) const;
@@ -1659,10 +1655,6 @@ private:
   /// UseUnderscoreLongJmp - This target prefers to use _longjmp to implement
   /// llvm.longjmp.  Defaults to false.
   bool UseUnderscoreLongJmp;
-
-  /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
-  /// PointerTy is.
-  MVT ShiftAmountTy;
 
   /// BooleanContents - Information about the contents of the high-bits in
   /// boolean values held in a type wider than i1.  See getBooleanContents.

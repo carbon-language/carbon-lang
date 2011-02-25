@@ -220,7 +220,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   static MVT IntVTs[] = { MVT::i8, MVT::i16, MVT::i32, MVT::i64 };
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
-  setShiftAmountType(MVT::i8);
   setBooleanContents(ZeroOrOneBooleanContent);
   setSchedulingPreference(Sched::RegPressure);
   setStackPointerRegisterToSaveRestore(X86StackPtr);
@@ -4181,7 +4180,8 @@ static SDValue getVShift(bool isLeft, EVT VT, SDValue SrcOp,
   SrcOp = DAG.getNode(ISD::BITCAST, dl, ShVT, SrcOp);
   return DAG.getNode(ISD::BITCAST, dl, VT,
                      DAG.getNode(Opc, dl, ShVT, SrcOp,
-                             DAG.getConstant(NumBits, TLI.getShiftAmountTy())));
+                             DAG.getConstant(NumBits,
+                                  TLI.getShiftAmountTy(SrcOp.getValueType()))));
 }
 
 SDValue
@@ -4330,15 +4330,15 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
   // For AVX-length vectors, build the individual 128-bit pieces and
   // use shuffles to put them in place.
-  if (VT.getSizeInBits() > 256 && 
-      Subtarget->hasAVX() && 
+  if (VT.getSizeInBits() > 256 &&
+      Subtarget->hasAVX() &&
       !ISD::isBuildVectorAllZeros(Op.getNode())) {
     SmallVector<SDValue, 8> V;
     V.resize(NumElems);
     for (unsigned i = 0; i < NumElems; ++i) {
       V[i] = Op.getOperand(i);
     }
- 
+
     EVT HVT = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems/2);
 
     // Build the lower subvector.
@@ -5046,7 +5046,8 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
                            DAG.getIntPtrConstant(Elt1 / 2));
       if ((Elt1 & 1) == 0)
         InsElt = DAG.getNode(ISD::SHL, dl, MVT::i16, InsElt,
-                             DAG.getConstant(8, TLI.getShiftAmountTy()));
+                             DAG.getConstant(8,
+                                  TLI.getShiftAmountTy(InsElt.getValueType())));
       else if (Elt0 >= 0)
         InsElt = DAG.getNode(ISD::AND, dl, MVT::i16, InsElt,
                              DAG.getConstant(0xFF00, MVT::i16));
@@ -5060,7 +5061,8 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
                                     Elt0Src, DAG.getIntPtrConstant(Elt0 / 2));
       if ((Elt0 & 1) != 0)
         InsElt0 = DAG.getNode(ISD::SRL, dl, MVT::i16, InsElt0,
-                              DAG.getConstant(8, TLI.getShiftAmountTy()));
+                              DAG.getConstant(8,
+                                 TLI.getShiftAmountTy(InsElt0.getValueType())));
       else if (Elt1 >= 0)
         InsElt0 = DAG.getNode(ISD::AND, dl, MVT::i16, InsElt0,
                              DAG.getConstant(0x00FF, MVT::i16));
@@ -5477,7 +5479,7 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   // Both of them can't be memory operations though.
   if (MayFoldVectorLoad(V1) && MayFoldVectorLoad(V2))
     CanFoldLoad = false;
-  
+
   if (CanFoldLoad) {
     if (HasSSE2 && NumElems == 2)
       return getTargetShuffleNode(X86ISD::MOVLPD, dl, VT, V1, V2, DAG);
@@ -6090,7 +6092,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
     SDValue ScaledN2 = N2;
     if (Upper)
       ScaledN2 = DAG.getNode(ISD::SUB, dl, N2.getValueType(), N2,
-                             DAG.getConstant(NumElems / 
+                             DAG.getConstant(NumElems /
                                              (VT.getSizeInBits() / 128),
                                              N2.getValueType()));
     Op = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, SubN0.getValueType(), SubN0,

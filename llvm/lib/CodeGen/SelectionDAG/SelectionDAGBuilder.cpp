@@ -909,7 +909,7 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
                               Val.getResNo(), Offset, dl, DbgSDNodeOrder);
         DAG.AddDbgValue(SDV, Val.getNode(), false);
       }
-    } else 
+    } else
       DEBUG(dbgs() << "Dropping debug info for " << DI);
     DanglingDebugInfoMap[V] = DanglingDebugInfo();
   }
@@ -1418,7 +1418,7 @@ void SelectionDAGBuilder::visitBr(const BranchInst &I) {
   //     jle foo
   //
   if (const BinaryOperator *BOp = dyn_cast<BinaryOperator>(CondVal)) {
-    if (!TLI.isJumpExpensive() && 
+    if (!TLI.isJumpExpensive() &&
         BOp->hasOneUse() &&
         (BOp->getOpcode() == Instruction::And ||
          BOp->getOpcode() == Instruction::Or)) {
@@ -2409,19 +2409,19 @@ void SelectionDAGBuilder::visitBinary(const User &I, unsigned OpCode) {
 void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  
-  MVT ShiftTy = TLI.getShiftAmountTy();
-  
+
+  MVT ShiftTy = TLI.getShiftAmountTy(Op2.getValueType());
+
   // Coerce the shift amount to the right type if we can.
   if (!I.getType()->isVectorTy() && Op2.getValueType() != ShiftTy) {
     unsigned ShiftSize = ShiftTy.getSizeInBits();
     unsigned Op2Size = Op2.getValueType().getSizeInBits();
     DebugLoc DL = getCurDebugLoc();
-    
+
     // If the operand is smaller than the shift count type, promote it.
     if (ShiftSize > Op2Size)
       Op2 = DAG.getNode(ISD::ZERO_EXTEND, DL, ShiftTy, Op2);
-    
+
     // If the operand is larger than the shift count type but the shift
     // count type has enough bits to represent any shift value, truncate
     // it now. This is a common case and it exposes the truncate to

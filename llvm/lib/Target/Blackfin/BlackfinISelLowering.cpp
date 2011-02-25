@@ -41,7 +41,6 @@ using namespace llvm;
 
 BlackfinTargetLowering::BlackfinTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
-  setShiftAmountType(MVT::i16);
   setBooleanContents(ZeroOrOneBooleanContent);
   setStackPointerRegisterToSaveRestore(BF::SP);
   setIntDivIsCheap(false);

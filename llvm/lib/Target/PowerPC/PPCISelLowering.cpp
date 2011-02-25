@@ -362,7 +362,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
   }
 
-  setShiftAmountType(MVT::i32);
   setBooleanContents(ZeroOrOneBooleanContent);
 
   if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {

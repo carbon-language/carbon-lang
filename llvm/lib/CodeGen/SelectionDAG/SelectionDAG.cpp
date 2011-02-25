@@ -1420,7 +1420,7 @@ SDValue SelectionDAG::getMDNode(const MDNode *MD) {
 /// the target's desired shift amount type.
 SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
   EVT OpTy = Op.getValueType();
-  MVT ShTy = TLI.getShiftAmountTy();
+  MVT ShTy = TLI.getShiftAmountTy(OpTy);
   if (OpTy == ShTy || OpTy.isVector()) return Op;
 
   ISD::NodeType Opcode = OpTy.bitsGT(ShTy) ?  ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -2048,7 +2048,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
       return;
     }
     break;
-      
+
   default:
     // Allow the target to implement this method for its nodes.
     if (Op.getOpcode() >= ISD::BUILTIN_OP_END) {
@@ -2292,12 +2292,12 @@ bool SelectionDAG::isBaseWithConstantOffset(SDValue Op) const {
   if ((Op.getOpcode() != ISD::ADD && Op.getOpcode() != ISD::OR) ||
       !isa<ConstantSDNode>(Op.getOperand(1)))
     return false;
-  
-  if (Op.getOpcode() == ISD::OR && 
+
+  if (Op.getOpcode() == ISD::OR &&
       !MaskedValueIsZero(Op.getOperand(0),
                      cast<ConstantSDNode>(Op.getOperand(1))->getAPIntValue()))
     return false;
-  
+
   return true;
 }
 
@@ -2748,7 +2748,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     // i8, which is easy to fall into in generic code that uses
     // TLI.getShiftAmount().
     assert(N2.getValueType().getSizeInBits() >=
-                   Log2_32_Ceil(N1.getValueType().getSizeInBits()) && 
+                   Log2_32_Ceil(N1.getValueType().getSizeInBits()) &&
            "Invalid use of small shift amount with oversized value!");
 
     // Always fold shifts of i1 values so the code generator doesn't need to

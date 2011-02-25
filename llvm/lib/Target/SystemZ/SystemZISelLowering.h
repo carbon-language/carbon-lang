@@ -57,6 +57,8 @@ namespace llvm {
   public:
     explicit SystemZTargetLowering(SystemZTargetMachine &TM);
 
+    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i64; }
+
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 

@@ -31,25 +31,25 @@ namespace llvm {
 
       /// GPRelHi/GPRelLo - These represent the high and low 16-bit
       /// parts of a global address respectively.
-      GPRelHi, GPRelLo, 
+      GPRelHi, GPRelLo,
 
       /// RetLit - Literal Relocation of a Global
       RelLit,
 
       /// GlobalRetAddr - used to restore the return address
       GlobalRetAddr,
-      
+
       /// CALL - Normal call.
       CALL,
 
       /// DIVCALL - used for special library calls for div and rem
       DivCall,
-      
+
       /// return flag operand
       RET_FLAG,
 
       /// CHAIN = COND_BRANCH CHAIN, OPC, (G|F)PRC, DESTBB [, INFLAG] - This
-      /// corresponds to the COND_BRANCH pseudo instruction.  
+      /// corresponds to the COND_BRANCH pseudo instruction.
       /// *PRC is the input register to compare to zero,
       /// OPC is the branch opcode to use (e.g. Alpha::BEQ),
       /// DESTBB is the destination block to branch to, and INFLAG is
@@ -62,7 +62,9 @@ namespace llvm {
   class AlphaTargetLowering : public TargetLowering {
   public:
     explicit AlphaTargetLowering(TargetMachine &TM);
-    
+
+    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i64; }
+
     /// getSetCCResultType - Get the SETCC result ValueType
     virtual MVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
@@ -92,7 +94,7 @@ namespace llvm {
     ConstraintWeight getSingleConstraintMatchWeight(
       AsmOperandInfo &info, const char *constraint) const;
 
-    std::vector<unsigned> 
+    std::vector<unsigned>
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         EVT VT) const;
 
