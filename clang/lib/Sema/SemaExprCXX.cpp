@@ -1387,7 +1387,10 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   case OR_Deleted:
     Diag(StartLoc, diag::err_ovl_deleted_call)
       << Best->Function->isDeleted()
-      << Name << Range;
+      << Name 
+      << Best->Function->getMessageUnavailableAttr(
+             !Best->Function->isDeleted())
+      << Range;
     Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
     return true;
   }

@@ -119,6 +119,14 @@ public:
     return getIdentifier() ? getIdentifier()->getName() : "";
   }
 
+  llvm::StringRef getMessageUnavailableAttr(bool unavailable) const {
+    if (!unavailable)
+      return "";
+    if (const UnavailableAttr *UA = getAttr<UnavailableAttr>())
+      return UA->getMessage();
+    return "";
+  }
+
   /// getNameAsString - Get a human-readable name for the declaration, even if
   /// it is one of the special kinds of names (C++ constructor, Objective-C
   /// selector, etc).  Creating this name requires expensive string

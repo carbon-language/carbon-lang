@@ -1311,13 +1311,11 @@ def err_ovl_no_viable_member_function_in_call : Error<
 def err_ovl_ambiguous_call : Error<
   "call to %0 is ambiguous">;
 def err_ovl_deleted_call : Error<
-  "call to %select{unavailable|deleted}0 function %1">;
-def err_ovl_unavailable_call : Error<
-  "call to unavailable function %0: %1">;
+  "call to %select{unavailable|deleted}0 function %1 %2">;
 def err_ovl_ambiguous_member_call : Error<
   "call to member function %0 is ambiguous">;
 def err_ovl_deleted_member_call : Error<
-  "call to %select{unavailable|deleted}0 member function %1">;
+  "call to %select{unavailable|deleted}0 member function %1 %2">;
 def note_ovl_too_many_candidates : Note<
     "remaining %0 candidate%s0 omitted; "
     "pass -fshow-overloads=all to show them">;
@@ -1469,7 +1467,7 @@ def err_ovl_ambiguous_oper_binary : Error<
   "use of overloaded operator '%0' is ambiguous (with operand types %1 and %2)">;
 def err_ovl_no_viable_oper : Error<"no viable overloaded '%0'">;
 def err_ovl_deleted_oper : Error<
-  "overload resolution selected %select{unavailable|deleted}0 operator '%1'">;
+  "overload resolution selected %select{unavailable|deleted}0 operator '%1' %2">;
 def err_ovl_no_viable_subscript :
     Error<"no viable overloaded operator[] for type %0">;
 def err_ovl_no_oper :
@@ -1483,7 +1481,7 @@ def err_ovl_no_viable_object_call : Error<
 def err_ovl_ambiguous_object_call : Error<
   "call to object of type %0 is ambiguous">;
 def err_ovl_deleted_object_call : Error<
-  "call to %select{unavailable|deleted}0 function call operator in type %1">;
+  "call to %select{unavailable|deleted}0 function call operator in type %1 %2">;
 def note_ovl_surrogate_cand : Note<"conversion candidate of type %0">;
 def err_member_call_without_object : Error<
   "call to non-static member function without an object argument">;
