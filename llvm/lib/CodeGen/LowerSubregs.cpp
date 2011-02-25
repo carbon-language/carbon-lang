@@ -37,7 +37,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     LowerSubregsInstructionPass() : MachineFunctionPass(ID) {}
-    
+
     const char *getPassName() const {
       return "Subregister lowering instruction pass";
     }
@@ -64,8 +64,8 @@ namespace {
   char LowerSubregsInstructionPass::ID = 0;
 }
 
-FunctionPass *llvm::createLowerSubregsPass() { 
-  return new LowerSubregsInstructionPass(); 
+FunctionPass *llvm::createLowerSubregsPass() {
+  return new LowerSubregsInstructionPass();
 }
 
 /// TransferDeadFlag - MI is a pseudo-instruction with DstReg dead,
@@ -192,9 +192,9 @@ bool LowerSubregsInstructionPass::LowerCopy(MachineInstr *MI) {
 /// copies.
 ///
 bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
-  DEBUG(dbgs() << "Machine Function\n"  
+  DEBUG(dbgs() << "Machine Function\n"
                << "********** LOWERING SUBREG INSTRS **********\n"
-               << "********** Function: " 
+               << "********** Function: "
                << MF.getFunction()->getName() << '\n');
   TRI = MF.getTarget().getRegisterInfo();
   TII = MF.getTarget().getInstrInfo();
