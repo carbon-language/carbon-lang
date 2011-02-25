@@ -59,8 +59,8 @@ def ClassReleaseChecker : Checker<"ClassRelease">,
   HelpText<"Check for sending 'retain', 'release', or 'autorelease' directly to a Class">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
-def NSAutoreleasePoolChecker : Checker<"NSAutoReleasePool">,
-  HelpText<"Warn for subpar uses of NSAutoReleasePool">,
+def NSAutoreleasePoolChecker : Checker<"NSAutoreleasePool">,
+  HelpText<"Warn for subpar uses of NSAutoreleasePool">,
   DescFile<"NSAutoreleasePoolChecker.cpp">;
 
 def ObjCMethSigsChecker : Checker<"MethodSigs">,

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.StackAddrLeak -analyzer-store=basic -fblocks -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.StackAddrLeak -analyzer-store=region -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.StackAddrEscape -analyzer-store=basic -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.StackAddrEscape -analyzer-store=region -fblocks -verify %s
 
 int* f1() {
   int x = 0;
