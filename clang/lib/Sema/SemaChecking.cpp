@@ -66,6 +66,26 @@ bool Sema::CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall) {
   return false;
 }
 
+/// Checks that a call expression's argument count is the desired number.
+/// This is useful when doing custom type-checking.  Returns true on error.
+static bool checkArgCount(Sema &S, CallExpr *call, unsigned desiredArgCount) {
+  unsigned argCount = call->getNumArgs();
+  if (argCount == desiredArgCount) return false;
+
+  if (argCount < desiredArgCount)
+    return S.Diag(call->getLocEnd(), diag::err_typecheck_call_too_few_args)
+        << 0 /*function call*/ << desiredArgCount << argCount
+        << call->getSourceRange();
+
+  // Highlight all the excess arguments.
+  SourceRange range(call->getArg(desiredArgCount)->getLocStart(),
+                    call->getArg(argCount - 1)->getLocEnd());
+    
+  return S.Diag(range.getBegin(), diag::err_typecheck_call_too_many_args)
+    << 0 /*function call*/ << desiredArgCount << argCount
+    << call->getArg(1)->getSourceRange();
+}
+
 ExprResult
 Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   ExprResult TheCallResult(Owned(TheCall));
@@ -137,15 +157,14 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinLongjmp(TheCall))
       return ExprError();
     break;
+
+  case Builtin::BI__builtin_classify_type:
+    if (checkArgCount(*this, TheCall, 1)) return true;
+    TheCall->setType(Context.IntTy);
+    break;
   case Builtin::BI__builtin_constant_p:
-    if (TheCall->getNumArgs() == 0)
-      return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-        << 0 /*function call*/ << 1 << 0 << TheCall->getSourceRange();
-    if (TheCall->getNumArgs() > 1)
-      return Diag(TheCall->getArg(1)->getLocStart(),
-                  diag::err_typecheck_call_too_many_args)
-        << 0 /*function call*/ << 1 << TheCall->getNumArgs()
-        << TheCall->getArg(1)->getSourceRange();
+    if (checkArgCount(*this, TheCall, 1)) return true;
+    TheCall->setType(Context.IntTy);
     break;
   case Builtin::BI__sync_fetch_and_add:
   case Builtin::BI__sync_fetch_and_sub:

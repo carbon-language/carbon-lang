@@ -4281,6 +4281,13 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                               const FunctionProtoType *Proto,
                               Expr **Args, unsigned NumArgs,
                               SourceLocation RParenLoc) {
+  // Bail out early if calling a builtin with custom typechecking.
+  // We don't need to do this in the 
+  if (FDecl)
+    if (unsigned ID = FDecl->getBuiltinID())
+      if (Context.BuiltinInfo.hasCustomTypechecking(ID))
+        return false;
+
   // C99 6.5.2.2p7 - the arguments are implicitly converted, as if by
   // assignment, to the types of the corresponding parameter, ...
   unsigned NumArgsInProto = Proto->getNumArgs();
@@ -4608,22 +4615,27 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
                                      RParenLoc);
   }
 
+  unsigned BuiltinID = (FDecl ? FDecl->getBuiltinID() : 0);
+
+  // Bail out early if calling a builtin with custom typechecking.
+  if (BuiltinID && Context.BuiltinInfo.hasCustomTypechecking(BuiltinID))
+    return CheckBuiltinFunctionCall(BuiltinID, TheCall);
+
   const FunctionType *FuncT;
-  if (!Fn->getType()->isBlockPointerType()) {
+  if (const PointerType *PT = Fn->getType()->getAs<PointerType>()) {
     // C99 6.5.2.2p1 - "The expression that denotes the called function shall
     // have type pointer to function".
-    const PointerType *PT = Fn->getType()->getAs<PointerType>();
-    if (PT == 0)
-      return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
-        << Fn->getType() << Fn->getSourceRange());
     FuncT = PT->getPointeeType()->getAs<FunctionType>();
-  } else { // This is a block call.
-    FuncT = Fn->getType()->getAs<BlockPointerType>()->getPointeeType()->
-                getAs<FunctionType>();
-  }
-  if (FuncT == 0)
+    if (FuncT == 0)
+      return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
+                         << Fn->getType() << Fn->getSourceRange());
+  } else if (const BlockPointerType *BPT =
+               Fn->getType()->getAs<BlockPointerType>()) {
+    FuncT = BPT->getPointeeType()->castAs<FunctionType>();
+  } else {
     return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
       << Fn->getType() << Fn->getSourceRange());
+  }
 
   if (getLangOptions().CUDA) {
     if (Config) {
@@ -4718,7 +4730,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
     if (CheckFunctionCall(FDecl, TheCall))
       return ExprError();
 
-    if (unsigned BuiltinID = FDecl->getBuiltinID())
+    if (BuiltinID)
       return CheckBuiltinFunctionCall(BuiltinID, TheCall);
   } else if (NDecl) {
     if (CheckBlockCall(NDecl, TheCall))

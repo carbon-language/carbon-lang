@@ -117,6 +117,11 @@ public:
     return strchr(GetRecord(ID).Attributes, 'f') != 0;
   }
 
+  /// \brief Determines whether this builtin has custom typechecking.
+  bool hasCustomTypechecking(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 't') != 0;
+  }
+
   /// \brief Completely forget that the given ID was ever considered a builtin,
   /// e.g., because the user provided a conflicting signature.
   void ForgetBuiltin(unsigned ID, IdentifierTable &Table);

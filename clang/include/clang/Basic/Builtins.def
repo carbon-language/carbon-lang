@@ -60,6 +60,7 @@
 //  n -> nothrow
 //  r -> noreturn
 //  c -> const
+//  t -> signature is meaningless, use custom typechecking
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
 //  f -> this is a libc/libm function without the '__builtin_' prefix. It can
 //       be followed by ':headername:' to state which header this function
@@ -383,8 +384,8 @@ BUILTIN(__builtin_bswap32, "UiUi", "nc")
 BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
 
 // Random GCC builtins
-BUILTIN(__builtin_constant_p, "i.", "nc")
-BUILTIN(__builtin_classify_type, "i.", "nc")
+BUILTIN(__builtin_constant_p, "i.", "nct")
+BUILTIN(__builtin_classify_type, "i.", "nct")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
 BUILTIN(__builtin___NSStringMakeConstantString, "FC*cC*", "nc")
 BUILTIN(__builtin_va_start, "vA.", "n")
