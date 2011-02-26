@@ -66,6 +66,8 @@ int illegaldiv1b[1 && 1/0];  // expected-warning {{division by zero is undefined
 int illegaldiv2[1/0]; // expected-error {{variable length array declaration not allowed at file scope}} \
                       // expected-warning {{division by zero is undefined}}
 int illegaldiv3[INT_MIN / -1]; // expected-error {{variable length array declaration not allowed at file scope}}
+// PR9262
+int illegaldiv4[0 / (1 / 0)]; // expected-warning {{division by zero is undefined}} expected-error {{variable length array declaration not allowed at file scope}}
 
 int chooseexpr[__builtin_choose_expr(1, 1, expr)];
 int realop[(__real__ 4) == 4 ? 1 : -1];

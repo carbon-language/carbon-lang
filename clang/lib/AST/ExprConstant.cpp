@@ -2926,7 +2926,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
           Exp->getOpcode() == BO_Rem) {
         // Evaluate gives an error for undefined Div/Rem, so make sure
         // we don't evaluate one.
-        if (LHSResult.Val != 2 && RHSResult.Val != 2) {
+        if (LHSResult.Val == 0 && RHSResult.Val == 0) {
           llvm::APSInt REval = Exp->getRHS()->EvaluateAsInt(Ctx);
           if (REval == 0)
             return ICEDiag(1, E->getLocStart());
