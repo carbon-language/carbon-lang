@@ -1349,13 +1349,13 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
     MsgExpr = ObjCMessageExpr::Create(*Context, 
                                       Ty.getNonReferenceType(),
                                       Expr::getValueKindForType(Ty),
-                                      /*FIXME?*/SourceLocation(),
+                                      PropOrGetterRefExpr->getLocStart(),
                                       SuperLocation,
                                       /*IsInstanceSuper=*/true,
                                       SuperTy,
                                       Sel, SelectorLoc, OMD,
                                       0, 0, 
-                                      /*FIXME:*/SourceLocation());
+                                      PropOrGetterRefExpr->getLocEnd());
   else {
     assert (Receiver && "RewritePropertyOrImplicitGetter - Receiver is null");
     if (Expr *Exp = dyn_cast<Expr>(Receiver))
@@ -1365,14 +1365,15 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
     MsgExpr = ObjCMessageExpr::Create(*Context, 
                                       Ty.getNonReferenceType(),
                                       Expr::getValueKindForType(Ty),
-                                      /*FIXME:*/SourceLocation(),
+                                      PropOrGetterRefExpr->getLocStart(),
                                       cast<Expr>(Receiver),
                                       Sel, SelectorLoc, OMD,
                                       0, 0, 
-                                      /*FIXME:*/SourceLocation());
+                                      PropOrGetterRefExpr->getLocEnd());
   }
 
-  Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
+  Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr, MsgExpr->getLocStart(),
+                                         MsgExpr->getLocEnd());
 
   if (!PropParentMap)
     PropParentMap = new ParentMap(CurrentBody);
