@@ -21,6 +21,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeLoc.h"
@@ -1476,17 +1477,61 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr **Args,
 MemInitResult
 Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo,
                                  Expr **Args, unsigned NumArgs,
+                                 SourceLocation NameLoc,
                                  SourceLocation LParenLoc,
                                  SourceLocation RParenLoc,
-                                 CXXRecordDecl *ClassDecl,
-                                 SourceLocation EllipsisLoc) {
+                                 CXXRecordDecl *ClassDecl) {
   SourceLocation Loc = TInfo->getTypeLoc().getLocalSourceRange().getBegin();
   if (!LangOpts.CPlusPlus0x)
     return Diag(Loc, diag::err_delegation_0x_only)
       << TInfo->getTypeLoc().getLocalSourceRange();
 
-  return Diag(Loc, diag::err_delegation_unimplemented)
-    << TInfo->getTypeLoc().getLocalSourceRange();
+  // Initialize the object.
+  InitializedEntity DelegationEntity = InitializedEntity::InitializeDelegation(
+                                     QualType(ClassDecl->getTypeForDecl(), 0));
+  InitializationKind Kind =
+    InitializationKind::CreateDirect(NameLoc, LParenLoc, RParenLoc);
+
+  InitializationSequence InitSeq(*this, DelegationEntity, Kind, Args, NumArgs);
+
+  ExprResult DelegationInit =
+    InitSeq.Perform(*this, DelegationEntity, Kind,
+                    MultiExprArg(*this, Args, NumArgs), 0);
+  if (DelegationInit.isInvalid())
+    return true;
+
+  CXXConstructExpr *ConExpr = cast<CXXConstructExpr>(DelegationInit.get());
+  CXXConstructorDecl *Constructor = ConExpr->getConstructor();
+  assert(Constructor && "Delegating constructor with no target?");
+
+  CheckImplicitConversions(DelegationInit.get(), LParenLoc);
+
+  // C++0x [class.base.init]p7:
+  //   The initialization of each base and member constitutes a
+  //   full-expression.
+  DelegationInit = MaybeCreateExprWithCleanups(DelegationInit);
+  if (DelegationInit.isInvalid())
+    return true;
+
+  // If we are in a dependent context, template instantiation will
+  // perform this type-checking again. Just save the arguments that we
+  // received in a ParenListExpr.
+  // FIXME: This isn't quite ideal, since our ASTs don't capture all
+  // of the information that we have about the base
+  // initializer. However, deconstructing the ASTs is a dicey process,
+  // and this approach is far more likely to get the corner cases right.
+  if (CurContext->isDependentContext()) {
+    ExprResult Init
+      = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args,
+                                          NumArgs, RParenLoc));
+    return new (Context) CXXCtorInitializer(Context, Loc, LParenLoc,
+                                            Constructor, Init.takeAs<Expr>(),
+                                            RParenLoc);
+  }
+
+  return new (Context) CXXCtorInitializer(Context, Loc, LParenLoc, Constructor,
+                                          DelegationInit.takeAs<Expr>(),
+                                          RParenLoc);
 }
 
 MemInitResult
@@ -1538,9 +1583,8 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   if (!Dependent) { 
     if (Context.hasSameUnqualifiedType(QualType(ClassDecl->getTypeForDecl(),0),
                                        BaseType))
-      return BuildDelegatingInitializer(BaseTInfo, Args, NumArgs,
-                                        LParenLoc, RParenLoc, ClassDecl,
-                                        EllipsisLoc);
+      return BuildDelegatingInitializer(BaseTInfo, Args, NumArgs, BaseLoc,
+                                        LParenLoc, RParenLoc, ClassDecl);
 
     FindBaseInitializer(*this, ClassDecl, BaseType, DirectBaseSpec, 
                         VirtualBaseSpec);
@@ -2340,10 +2384,19 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
       if (CheckRedundantInit(*this, Init, Members[Field]) ||
           CheckRedundantUnionInit(*this, Init, MemberUnions))
         HadError = true;
-    } else {
+    } else if (Init->isBaseInitializer()) {
       void *Key = GetKeyForBase(Context, QualType(Init->getBaseClass(), 0));
       if (CheckRedundantInit(*this, Init, Members[Key]))
         HadError = true;
+    } else {
+      assert(Init->isDelegatingInitializer());
+      // This must be the only initializer
+      if (i != 0 || NumMemInits > 1) {
+        Diag(MemInits[0]->getSourceLocation(),
+             diag::err_delegating_initializer_alone)
+          << MemInits[0]->getSourceRange();
+        HadError = true;
+      }
     }
   }
 

@@ -2818,10 +2818,10 @@ public:
 
   MemInitResult BuildDelegatingInitializer(TypeSourceInfo *TInfo,
                                            Expr **Args, unsigned NumArgs,
+                                           SourceLocation BaseLoc,
                                            SourceLocation RParenLoc,
                                            SourceLocation LParenLoc,
-                                           CXXRecordDecl *ClassDecl,
-                                           SourceLocation EllipsisLoc);
+                                           CXXRecordDecl *ClassDecl);
 
   bool SetCtorInitializers(CXXConstructorDecl *Constructor,
                            CXXCtorInitializer **Initializers,

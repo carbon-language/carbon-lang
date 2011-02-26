@@ -1033,6 +1033,16 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
 }
 
 CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
+                                       SourceLocation D, SourceLocation L,
+                                       CXXConstructorDecl *Target, Expr *Init,
+                                       SourceLocation R)
+  : Initializee(Target), MemberOrEllipsisLocation(D), Init(Init),
+    LParenLoc(L), RParenLoc(R), IsVirtual(false),
+    IsWritten(false), SourceOrderOrNumArrayIndices(0)
+{
+}
+
+CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        FieldDecl *Member,
                                        SourceLocation MemberLoc,
                                        SourceLocation L, Expr *Init,
@@ -1076,7 +1086,7 @@ const Type *CXXCtorInitializer::getBaseClass() const {
 }
 
 SourceLocation CXXCtorInitializer::getSourceLocation() const {
-  if (isAnyMemberInitializer())
+  if (isAnyMemberInitializer() || isDelegatingInitializer())
     return getMemberLocation();
   
   return getBaseClassLoc().getLocalSourceRange().getBegin();

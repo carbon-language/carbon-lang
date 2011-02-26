@@ -1148,13 +1148,16 @@ public:
 /// @endcode
 class CXXCtorInitializer {
   /// \brief Either the base class name (stored as a TypeSourceInfo*), an normal
-  /// field (FieldDecl) or an anonymous field (IndirectFieldDecl*) being 
-  /// initialized.
-  llvm::PointerUnion3<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *>
+  /// field (FieldDecl), anonymous field (IndirectFieldDecl*), or target
+  /// constructor (CXXConstructorDecl*) being initialized.
+  llvm::PointerUnion4<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *,
+                      CXXConstructorDecl *>
     Initializee;
   
   /// \brief The source location for the field name or, for a base initializer
-  /// pack expansion, the location of the ellipsis.
+  /// pack expansion, the location of the ellipsis. In the case of a delegating
+  /// constructor, it will still include the type's source location as the
+  /// Initializee points to the CXXConstructorDecl (to allow loop detection).
   SourceLocation MemberOrEllipsisLocation;
   
   /// \brief The argument used to initialize the base or member, which may
@@ -1199,10 +1202,16 @@ public:
                      SourceLocation MemberLoc, SourceLocation L, Expr *Init,
                      SourceLocation R);
 
+  /// CXXCtorInitializer - Creates a new anonymous field initializer.
   explicit
   CXXCtorInitializer(ASTContext &Context, IndirectFieldDecl *Member,
                      SourceLocation MemberLoc, SourceLocation L, Expr *Init,
                      SourceLocation R);
+
+  /// CXXCtorInitializer - Creates a new delegating Initializer.
+  explicit
+  CXXCtorInitializer(ASTContext &Context, SourceLocation D, SourceLocation L,
+                     CXXConstructorDecl *Target, Expr *Init, SourceLocation R);
 
   /// \brief Creates a new member initializer that optionally contains 
   /// array indices used to describe an elementwise initialization.
@@ -1225,6 +1234,12 @@ public:
 
   bool isIndirectMemberInitializer() const {
     return Initializee.is<IndirectFieldDecl*>();
+  }
+
+  /// isDelegatingInitializer - Returns true when this initializer is creating
+  /// a delegating constructor.
+  bool isDelegatingInitializer() const {
+    return Initializee.is<CXXConstructorDecl *>();
   }
 
   /// \brief Determine whether this initializer is a pack expansion.
@@ -1280,6 +1295,13 @@ public:
   IndirectFieldDecl *getIndirectMember() const {
     if (isIndirectMemberInitializer())
       return Initializee.get<IndirectFieldDecl*>();
+    else
+      return 0;
+  }
+
+  CXXConstructorDecl *getTargetConstructor() const {
+    if (isDelegatingInitializer())
+      return Initializee.get<CXXConstructorDecl*>();
     else
       return 0;
   }

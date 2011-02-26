@@ -64,6 +64,8 @@ public:
     EK_Temporary,
     /// \brief The entity being initialized is a base member subobject.
     EK_Base,
+    /// \brief The initialization is being done by a delegating constructor.
+    EK_Delegation,
     /// \brief The entity being initialized is an element of a vector.
     /// or vector.
     EK_VectorElement,
@@ -210,6 +212,11 @@ public:
   static InitializedEntity InitializeBase(ASTContext &Context,
                                           CXXBaseSpecifier *Base,
                                           bool IsInheritedVirtualBase);
+
+  /// \brief Create the initialization entity for a delegated constructor.
+  static InitializedEntity InitializeDelegation(QualType Type) {
+    return InitializedEntity(EK_Delegation, SourceLocation(), Type);
+  }
   
   /// \brief Create the initialization entity for a member subobject.
   static InitializedEntity InitializeMember(FieldDecl *Member,

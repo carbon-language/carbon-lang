@@ -798,8 +798,8 @@ def err_ident_in_pseudo_dtor_not_a_type : Error<
 def err_init_conversion_failed : Error<
   "cannot initialize %select{a variable|a parameter|return object|an "
   "exception object|a member subobject|an array element|a new value|a value|a "
-  "base class|a vector element}0 of type %1 with an %select{rvalue|lvalue}2 of "
-  "type %3">;
+  "base class|a constructor delegation|a vector element}0 of type %1 with an "
+  "%select{rvalue|lvalue}2 of type %3">;
 
 def err_lvalue_to_rvalue_ref : Error<"rvalue reference to type %0 cannot bind "
   "to lvalue of type %1">;
@@ -969,6 +969,8 @@ def err_delegation_0x_only : Error<
   "delegating constructors are permitted only in C++0x">;
 def err_delegation_unimplemented : Error<
   "delegating constructors are not fully implemented">;
+def err_delegating_initializer_alone : Error<
+  "an initializer for a delegating constructor must appear alone">;
   
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<
