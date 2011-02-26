@@ -1,4 +1,7 @@
-// RUN: %clang_cc1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK-NF
+
+// Most of this test is apparently just verifying that we don't crash.
 
 int printf(const char *, ...);
 
@@ -140,3 +143,21 @@ typedef struct {
   return 5;
 }
 @end
+
+// rdar://problem/7854674
+// CHECK:    define void @test0([[A:%.*]]*
+// CHECK-NF: define void @test0([[A:%.*]]*
+void test0(A *a) {
+  // CHECK:         alloca [[A]]*
+  // CHECK-NEXT:    [[POINT:%.*]] = alloca [[POINT_T:%.*]],
+  // CHECK-NF:      alloca [[A]]*
+  // CHECK-NF-NEXT: [[POINT:%.*]] = alloca [[POINT_T:%.*]],
+
+  // CHECK:         [[T0:%.*]] = bitcast [[POINT_T]]* [[POINT]] to i8*
+  // CHECK-NEXT:    call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 48, i32 4, i1 false)
+  // CHECK-NEXT:    call {{.*}} @objc_msgSend_stret to
+  // CHECK-NF:      [[T0:%.*]] = bitcast [[POINT_T]]* [[POINT]] to i8*
+  // CHECK-NF-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 48, i32 4, i1 false)
+  // CHECK-NF-NEXT: call {{.*}} @objc_msgSend_stret to
+  MyPoint point = [a returnAPoint];
+}

@@ -1639,6 +1639,7 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
 
   llvm::Constant *Fn = NULL;
   if (CGM.ReturnTypeUsesSRet(FnInfo)) {
+    CGF.EmitNullInitialization(Return.getValue(), ResultType);
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
       : ObjCTypes.getSendStretFn(IsSuper);
   } else if (CGM.ReturnTypeUsesFPRet(ResultType)) {
@@ -5629,6 +5630,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   llvm::Constant *Fn = 0;
   std::string Name("\01l_");
   if (CGM.ReturnTypeUsesSRet(FnInfo)) {
+    CGF.EmitNullInitialization(Return.getValue(), ResultType);
     if (IsSuper) {
       Fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
       Name += "objc_msgSendSuper2_stret_fixup";
