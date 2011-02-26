@@ -46,6 +46,15 @@ using namespace CodeGen;
 // don't belong in CGObjCRuntime either so we will live with it for
 // now.
 
+static void EmitNullReturnInitialization(CodeGenFunction &CGF,
+                                         ReturnValueSlot &returnSlot,
+                                         QualType resultType) {
+  // Force the return slot to exist.
+  if (!returnSlot.getValue())
+    returnSlot = ReturnValueSlot(CGF.CreateMemTemp(resultType), false);
+  CGF.EmitNullInitialization(returnSlot.getValue(), resultType);
+}
+
 static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
                                      const ObjCInterfaceDecl *OID,
                                      const ObjCImplementationDecl *ID,
@@ -1639,7 +1648,7 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
 
   llvm::Constant *Fn = NULL;
   if (CGM.ReturnTypeUsesSRet(FnInfo)) {
-    CGF.EmitNullInitialization(Return.getValue(), ResultType);
+    EmitNullReturnInitialization(CGF, Return, ResultType);
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
       : ObjCTypes.getSendStretFn(IsSuper);
   } else if (CGM.ReturnTypeUsesFPRet(ResultType)) {
@@ -5630,7 +5639,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   llvm::Constant *Fn = 0;
   std::string Name("\01l_");
   if (CGM.ReturnTypeUsesSRet(FnInfo)) {
-    CGF.EmitNullInitialization(Return.getValue(), ResultType);
+    EmitNullReturnInitialization(CGF, Return, ResultType);
     if (IsSuper) {
       Fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
       Name += "objc_msgSendSuper2_stret_fixup";
