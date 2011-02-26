@@ -267,8 +267,9 @@ fi
 # The Hello dylib is an example of how to build a pass.
 # The BugpointPasses module is only used to test bugpoint.
 # These unversioned dylibs cause verification failures, so do not install them.
-rm $DEST_DIR$DEST_ROOT/lib/libLLVMHello.dylib
-rm $DEST_DIR$DEST_ROOT/lib/libBugpointPasses.dylib
+# (The wildcards are used to match a "lib" prefix if it is present.)
+rm $DEST_DIR$DEST_ROOT/lib/*LLVMHello.dylib
+rm $DEST_DIR$DEST_ROOT/lib/*BugpointPasses.dylib
 
 # Compress manpages
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
