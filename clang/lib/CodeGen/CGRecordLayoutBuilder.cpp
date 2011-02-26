@@ -207,8 +207,9 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
                                uint64_t ContainingTypeSizeInBits,
                                unsigned ContainingTypeAlign) {
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(FD->getType());
-  uint64_t TypeSizeInBytes = Types.getTargetData().getTypeAllocSize(Ty);
-  uint64_t TypeSizeInBits = TypeSizeInBytes * 8;
+  CharUnits TypeSizeInBytes =
+    CharUnits::fromQuantity(Types.getTargetData().getTypeAllocSize(Ty));
+  uint64_t TypeSizeInBits = Types.getContext().toBits(TypeSizeInBytes);
 
   bool IsSigned = FD->getType()->isSignedIntegerType();
 
@@ -249,7 +250,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
   uint64_t AccessStart = FieldOffset - (FieldOffset % AccessWidth);
 
   // Adjust initial access size to fit within record.
-  while (AccessWidth > 8 &&
+  while (AccessWidth > Types.getTarget().getCharWidth() &&
          AccessStart + AccessWidth > ContainingTypeSizeInBits) {
     AccessWidth >>= 1;
     AccessStart = FieldOffset - (FieldOffset % AccessWidth);
@@ -262,7 +263,8 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     if (AccessStart + AccessWidth > ContainingTypeSizeInBits) {
       // If so, reduce access size to the next smaller power-of-two and retry.
       AccessWidth >>= 1;
-      assert(AccessWidth >= 8 && "Cannot access under byte size!");
+      assert(AccessWidth >= Types.getTarget().getCharWidth()
+             && "Cannot access under byte size!");
       continue;
     }
 
@@ -329,7 +331,7 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   if (fieldSize == 0)
     return;
 
-  uint64_t nextFieldOffsetInBits = NextFieldOffset.getQuantity() * 8;
+  uint64_t nextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
   unsigned numBytesToAppend;
 
   if (fieldOffset < nextFieldOffsetInBits) {
@@ -378,8 +380,10 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
 
   CheckZeroInitializable(D->getType());
 
-  assert(fieldOffset % 8 == 0 && "FieldOffset is not on a byte boundary!");
-  CharUnits fieldOffsetInBytes = CharUnits::fromQuantity(fieldOffset / 8);
+  assert(fieldOffset % Types.getTarget().getCharWidth() == 0
+         && "field offset is not on a byte boundary!");
+  CharUnits fieldOffsetInBytes
+    = Types.getContext().toCharUnitsFromBits(fieldOffset);
 
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(D->getType());
   CharUnits typeAlignment = getTypeAlignment(Ty);
@@ -396,7 +400,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
       const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
       if (const MaxFieldAlignmentAttr *MFAA =
             RD->getAttr<MaxFieldAlignmentAttr>()) {
-        if (MFAA->getAlignment() != typeAlignment.getQuantity() * 8)
+        if (MFAA->getAlignment() != Types.getContext().toBits(typeAlignment))
           return false;
       }
     }
@@ -728,7 +732,8 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 void CGRecordLayoutBuilder::AppendTailPadding(uint64_t RecordSize) {
   assert(RecordSize % 8 == 0 && "Invalid record size!");
 
-  CharUnits RecordSizeInBytes = CharUnits::fromQuantity(RecordSize / 8);
+  CharUnits RecordSizeInBytes =
+    Types.getContext().toCharUnitsFromBits(RecordSize);
   assert(NextFieldOffset <= RecordSizeInBytes && "Size mismatch!");
 
   CharUnits AlignedNextFieldOffset =
@@ -920,7 +925,8 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 
       // Verify that every component access is within the structure.
       uint64_t FieldOffset = SL->getElementOffsetInBits(AI.FieldIndex);
-      uint64_t AccessBitOffset = FieldOffset + AI.FieldByteOffset * 8;
+      uint64_t AccessBitOffset = FieldOffset +
+        getContext().toBits(CharUnits::fromQuantity(AI.FieldByteOffset));
       assert(AccessBitOffset + AI.AccessWidth <= TypeSizeInBits &&
              "Invalid bit-field access (out of range)!");
     }
