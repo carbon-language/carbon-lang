@@ -2988,9 +2988,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // Make all implicit casts explicit...ICE comes in handy:-)
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(userExpr)) {
       // Reuse the ICE type, it is exactly what the doctor ordered.
-      QualType type = ICE->getType()->isObjCQualifiedIdType()
-                                ? Context->getObjCIdType()
-                                : ICE->getType();
+      QualType type = ICE->getType();
+      if (needToScanForQualifiers(type))
+        type = Context->getObjCIdType();
       // Make sure we convert "type (^)(...)" to "type (*)(...)".
       (void)convertBlockPointerToFunctionPointer(type);
       userExpr = NoTypeInfoCStyleCastExpr(Context, type, CK_BitCast,
