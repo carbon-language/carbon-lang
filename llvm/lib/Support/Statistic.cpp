@@ -101,6 +101,10 @@ void llvm::EnableStatistics() {
   Enabled.setValue(true);
 }
 
+bool llvm::AreStatisticsEnabled() {
+  return Enabled;
+}
+
 void llvm::PrintStatistics(raw_ostream &OS) {
   StatisticInfo &Stats = *StatInfo;
 
