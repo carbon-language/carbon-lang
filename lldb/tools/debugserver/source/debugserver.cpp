@@ -204,10 +204,12 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
 
     char launch_err_str[PATH_MAX];
     launch_err_str[0] = '\0';
+    const char * cwd = (ctx.GetWorkingDirPath() != NULL ? ctx.GetWorkingDirPath()
+                                                        : ctx.GetWorkingDirectory());
     nub_process_t pid = DNBProcessLaunch (resolved_path,
                                           &inferior_argv[0],
                                           &inferior_envp[0],
-                                          ctx.GetWorkingDirectory(),
+                                          cwd,
                                           stdin_path,
                                           stdout_path,
                                           stderr_path,
