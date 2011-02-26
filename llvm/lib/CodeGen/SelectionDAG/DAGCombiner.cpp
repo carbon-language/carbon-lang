@@ -1290,6 +1290,16 @@ SDValue combineShlAddConstant(DebugLoc DL, SDValue N0, SDValue N1,
   return SDValue();
 }
 
+/// isCarryMaterialization - Returns true if V is an ADDE node that is known to
+/// return 0 or 1 depending on the carry flag.
+static bool isCarryMaterialization(SDValue V) {
+  if (V.getOpcode() != ISD::ADDE)
+    return false;
+
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V.getOperand(0));
+  return C && C->isNullValue() && V.getOperand(0) == V.getOperand(1);
+}
+
 SDValue DAGCombiner::visitADD(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -1453,6 +1463,18 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     return DAG.getNode(ISD::SUB, DL, VT, N1, ZExt);
   }
 
+  // add (adde 0, 0, glue), X -> adde X, 0, glue
+  if (N0->hasOneUse() && isCarryMaterialization(N0))
+    return DAG.getNode(ISD::ADDE, N->getDebugLoc(),
+                       DAG.getVTList(VT, MVT::Glue), N1, N0.getOperand(0),
+                       N0.getOperand(2));
+
+  // add X, (adde 0, 0, glue) -> adde X, 0, glue
+  if (N1->hasOneUse() && isCarryMaterialization(N1))
+    return DAG.getNode(ISD::ADDE, N->getDebugLoc(),
+                       DAG.getVTList(VT, MVT::Glue), N0, N1.getOperand(0),
+                       N1.getOperand(2));
+
   return SDValue();
 }
 
@@ -1496,6 +1518,16 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
                                    N->getDebugLoc(), MVT::Glue));
   }
 
+  // addc (adde 0, 0, glue), X -> adde X, 0, glue
+  if (N0->hasOneUse() && isCarryMaterialization(N0))
+    return DAG.getNode(ISD::ADDE, N->getDebugLoc(), N->getVTList(), N1,
+                       DAG.getConstant(0, VT), N0.getOperand(2));
+
+  // addc X, (adde 0, 0, glue) -> adde X, 0, glue
+  if (N1->hasOneUse() && isCarryMaterialization(N1))
+    return DAG.getNode(ISD::ADDE, N->getDebugLoc(), N->getVTList(), N0,
+                       DAG.getConstant(0, VT), N1.getOperand(2));
+
   return SDValue();
 }
 
@@ -1505,6 +1537,12 @@ SDValue DAGCombiner::visitADDE(SDNode *N) {
   SDValue CarryIn = N->getOperand(2);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+
+  // If both operands are null we know that carry out will always be false.
+  if (N0C && N0C->isNullValue() && N0 == N1)
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), DAG.getNode(ISD::CARRY_FALSE,
+                                                             N->getDebugLoc(),
+                                                             MVT::Glue));
 
   // canonicalize constant to RHS
   if (N0C && !N1C)
