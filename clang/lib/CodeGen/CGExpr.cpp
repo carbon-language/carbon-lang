@@ -1610,39 +1610,67 @@ LValue CodeGenFunction::EmitLValueForAnonRecordField(llvm::Value *BaseValue,
   }
 }
 
-LValue CodeGenFunction::EmitLValueForField(llvm::Value *BaseValue,
-                                           const FieldDecl *Field,
-                                           unsigned CVRQualifiers) {
-  if (Field->isBitField())
-    return EmitLValueForBitfield(BaseValue, Field, CVRQualifiers);
+LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
+                                           const FieldDecl *field,
+                                           unsigned cvr) {
+  if (field->isBitField())
+    return EmitLValueForBitfield(baseAddr, field, cvr);
 
-  const CGRecordLayout &RL =
-    CGM.getTypes().getCGRecordLayout(Field->getParent());
-  unsigned idx = RL.getLLVMFieldNo(Field);
-  llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
+  const RecordDecl *rec = field->getParent();
+  QualType type = field->getType();
 
-  // Match union field type.
-  if (Field->getParent()->isUnion()) {
-    const llvm::Type *FieldTy =
-      CGM.getTypes().ConvertTypeForMem(Field->getType());
-    const llvm::PointerType *BaseTy =
-      cast<llvm::PointerType>(BaseValue->getType());
-    unsigned AS = BaseTy->getAddressSpace();
-    V = Builder.CreateBitCast(V,
-                              llvm::PointerType::get(FieldTy, AS),
-                              "tmp");
+  bool mayAlias = rec->hasAttr<MayAliasAttr>();
+
+  llvm::Value *addr;
+  if (rec->isUnion()) {
+    // For unions, we just cast to the appropriate type.
+    assert(!type->isReferenceType() && "union has reference member");
+
+    const llvm::Type *llvmType = CGM.getTypes().ConvertTypeForMem(type);
+    unsigned AS =
+      cast<llvm::PointerType>(baseAddr->getType())->getAddressSpace();
+    addr = Builder.CreateBitCast(baseAddr, llvmType->getPointerTo(AS),
+                                 field->getName());
+  } else {
+    // For structs, we GEP to the field that the record layout suggests.
+    unsigned idx = CGM.getTypes().getCGRecordLayout(rec).getLLVMFieldNo(field);
+    addr = Builder.CreateStructGEP(baseAddr, idx, field->getName());
+
+    // If this is a reference field, load the reference right now.
+    if (const ReferenceType *refType = type->getAs<ReferenceType>()) {
+      llvm::LoadInst *load = Builder.CreateLoad(addr, "ref");
+      if (cvr & Qualifiers::Volatile) load->setVolatile(true);
+
+      if (CGM.shouldUseTBAA()) {
+        llvm::MDNode *tbaa;
+        if (mayAlias)
+          tbaa = CGM.getTBAAInfo(getContext().CharTy);
+        else
+          tbaa = CGM.getTBAAInfo(type);
+        CGM.DecorateInstruction(load, tbaa);
+      }
+
+      addr = load;
+      mayAlias = false;
+      type = refType->getPointeeType();
+      cvr = 0; // qualifiers don't recursively apply to referencee
+    }
   }
-  if (Field->getType()->isReferenceType())
-    V = Builder.CreateLoad(V, "tmp");
 
-  unsigned Alignment = getContext().getDeclAlign(Field).getQuantity();
-  LValue LV = MakeAddrLValue(V, Field->getType(), Alignment);
-  LV.getQuals().addCVRQualifiers(CVRQualifiers);
+  unsigned alignment = getContext().getDeclAlign(field).getQuantity();
+  LValue LV = MakeAddrLValue(addr, type, alignment);
+  LV.getQuals().addCVRQualifiers(cvr);
 
   // __weak attribute on a field is ignored.
   if (LV.getQuals().getObjCGCAttr() == Qualifiers::Weak)
     LV.getQuals().removeObjCGCAttr();
-  
+
+  // Fields of may_alias structs act like 'char' for TBAA purposes.
+  // FIXME: this should get propagated down through anonymous structs
+  // and unions.
+  if (mayAlias && LV.getTBAAInfo())
+    LV.setTBAAInfo(CGM.getTBAAInfo(getContext().CharTy));
+
   return LV;
 }
 

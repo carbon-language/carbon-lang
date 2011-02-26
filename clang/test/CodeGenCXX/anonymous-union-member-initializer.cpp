@@ -84,11 +84,11 @@ namespace test3 {
   // CHECK: define void @_ZN5test31AC2Ev(
   // CHECK: [[THIS:%.*]] = load
   // CHECK-NEXT: [[UNION:%.*]] = getelementptr inbounds {{.*}} [[THIS]], i32 0, i32 0
-  // CHECK-NEXT: [[STRUCT:%.*]] = getelementptr inbounds {{.*}} [[UNION]], i32 0, i32 0
+  // CHECK-NEXT: [[STRUCT:%.*]] = bitcast {{.*}}* [[UNION]] to 
   // CHECK-NEXT: [[CALLBACK:%.*]] = getelementptr inbounds {{.*}} [[STRUCT]], i32 0, i32 0
   // CHECK-NEXT: store void (i8*)* null, void (i8*)** [[CALLBACK]]
   // CHECK-NEXT: [[UNION:%.*]] = getelementptr inbounds {{.*}} [[THIS]], i32 0, i32 0
-  // CHECK-NEXT: [[STRUCT:%.*]] = getelementptr inbounds {{.*}} [[UNION]], i32 0, i32 0
+  // CHECK-NEXT: [[STRUCT:%.*]] = bitcast {{.*}}* [[UNION]] to 
   // CHECK-NEXT: [[CVALUE:%.*]] = getelementptr inbounds {{.*}} [[STRUCT]], i32 0, i32 1
   // CHECK-NEXT: store i8* null, i8** [[CVALUE]]
 }

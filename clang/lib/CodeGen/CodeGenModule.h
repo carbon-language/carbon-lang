@@ -295,6 +295,8 @@ public:
   const TargetCodeGenInfo &getTargetCodeGenInfo();
   bool isTargetDarwin() const;
 
+  bool shouldUseTBAA() const { return TBAA != 0; }
+
   llvm::MDNode *getTBAAInfo(QualType QTy);
 
   static void DecorateInstruction(llvm::Instruction *Inst,
