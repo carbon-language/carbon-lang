@@ -73,7 +73,6 @@ namespace options {
   static generate_bc generate_bc_file = BC_NO;
   static std::string bc_path;
   static std::string obj_path;
-  static std::vector<std::string> pass_through;
   static std::string extra_library_path;
   static std::string triple;
   static std::string mcpu;
@@ -96,9 +95,6 @@ namespace options {
       mcpu = opt.substr(strlen("mcpu="));
     } else if (opt.startswith("extra-library-path=")) {
       extra_library_path = opt.substr(strlen("extra_library_path="));
-    } else if (opt.startswith("pass-through=")) {
-      llvm::StringRef item = opt.substr(strlen("pass-through="));
-      pass_through.push_back(item.str());
     } else if (opt.startswith("mtriple=")) {
       triple = opt.substr(strlen("mtriple="));
     } else if (opt.startswith("obj-path=")) {
@@ -487,24 +483,6 @@ static ld_plugin_status all_symbols_read_hook(void) {
       set_extra_library_path(options::extra_library_path.c_str()) != LDPS_OK) {
     (*message)(LDPL_ERROR, "Unable to set the extra library path.");
     return LDPS_ERR;
-  }
-
-  for (std::vector<std::string>::iterator i = options::pass_through.begin(),
-                                          e = options::pass_through.end();
-       i != e; ++i) {
-    std::string &item = *i;
-    const char *item_p = item.c_str();
-    if (llvm::StringRef(item).startswith("-l")) {
-      if (add_input_library(item_p + 2) != LDPS_OK) {
-        (*message)(LDPL_ERROR, "Unable to add library to the link.");
-        return LDPS_ERR;
-      }
-    } else {
-      if (add_input_file(item_p) != LDPS_OK) {
-        (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
-        return LDPS_ERR;
-      }
-    }
   }
 
   if (options::obj_path.empty())
