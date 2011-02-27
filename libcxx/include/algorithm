@@ -1559,8 +1559,17 @@ typename enable_if
 >::type
 copy_n(_InputIterator __first, _Size __n, _OutputIterator __result)
 {
-    for (; __n > 0; --__n, ++__first, ++__result)
+    if (__n > 0)
+    {
         *__result = *__first;
+        ++__result;
+        for (--__n; __n > 0; --__n)
+        {
+            ++__first;
+            *__result = *__first;
+            ++__result;
+        }
+    }
     return __result;
 }
 
