@@ -749,7 +749,7 @@ static int readSIB(struct InternalInstruction* insn) {
     insn->sibIndex = SIB_INDEX_NONE;
     break;
   default:
-    insn->sibIndex = (EABase)(sibIndexBase + index);
+    insn->sibIndex = (SIBIndex)(sibIndexBase + index);
     if (insn->sibIndex == SIB_INDEX_sib ||
         insn->sibIndex == SIB_INDEX_sib64)
       insn->sibIndex = SIB_INDEX_NONE;
@@ -796,7 +796,7 @@ static int readSIB(struct InternalInstruction* insn) {
     }
     break;
   default:
-    insn->sibBase = (EABase)(sibBaseBase + base);
+    insn->sibBase = (SIBBase)(sibBaseBase + base);
     break;
   }
   
