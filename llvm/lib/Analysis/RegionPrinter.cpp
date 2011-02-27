@@ -70,6 +70,32 @@ struct DOTGraphTraits<RegionInfo*> : public DOTGraphTraits<RegionNode*> {
                                                      G->getTopLevelRegion());
   }
 
+  std::string getEdgeAttributes(RegionNode *srcNode,
+    GraphTraits<RegionInfo*>::ChildIteratorType CI, RegionInfo *RI) {
+
+    RegionNode *destNode = *CI;
+
+    if (srcNode->isSubRegion() || destNode->isSubRegion())
+      return "";
+
+    // In case of a backedge, do not use it to define the layout of the nodes.
+    BasicBlock *srcBB = srcNode->getNodeAs<BasicBlock>();
+    BasicBlock *destBB = destNode->getNodeAs<BasicBlock>();
+
+    Region *R = RI->getRegionFor(destBB);
+
+    while (R && R->getParent())
+      if (R->getParent()->getEntry() == destBB)
+        R = R->getParent();
+      else
+        break;
+
+    if (R->getEntry() == destBB && R->contains(srcBB))
+      return "constraint=false";
+
+    return "";
+  }
+
   // Print the cluster of the subregions. This groups the single basic blocks
   // and adds a different background color for each group.
   static void printRegionCluster(const Region *R, GraphWriter<RegionInfo*> &GW,
