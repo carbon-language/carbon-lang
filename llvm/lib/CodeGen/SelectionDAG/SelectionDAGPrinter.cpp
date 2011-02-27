@@ -90,7 +90,8 @@ namespace llvm {
     /// If you want to override the dot attributes printed for a particular
     /// edge, override this method.
     template<typename EdgeIter>
-    static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
+    static std::string getEdgeAttributes(const void *Node, EdgeIter EI,
+                                         const SelectionDAG *Graph) {
       SDValue Op = EI.getNode()->getOperand(EI.getOperand());
       EVT VT = Op.getValueType();
       if (VT == MVT::Glue)

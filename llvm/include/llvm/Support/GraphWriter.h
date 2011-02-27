@@ -240,7 +240,7 @@ public:
 
       emitEdge(static_cast<const void*>(Node), edgeidx,
                static_cast<const void*>(TargetNode), DestPort,
-               DTraits.getEdgeAttributes(Node, EI));
+               DTraits.getEdgeAttributes(Node, EI, G));
     }
   }
 

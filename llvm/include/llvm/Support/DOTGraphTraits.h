@@ -89,8 +89,9 @@ public:
 
   /// If you want to override the dot attributes printed for a particular edge,
   /// override this method.
-  template<typename EdgeIter>
-  static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
+  template<typename EdgeIter, typename GraphType>
+  static std::string getEdgeAttributes(const void *Node, EdgeIter EI,
+                                       const GraphType& Graph) {
     return "";
   }
 

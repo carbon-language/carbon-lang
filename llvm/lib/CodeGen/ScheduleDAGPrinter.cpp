@@ -51,7 +51,8 @@ namespace llvm {
     /// If you want to override the dot attributes printed for a particular
     /// edge, override this method.
     static std::string getEdgeAttributes(const SUnit *Node,
-                                         SUnitIterator EI) {
+                                         SUnitIterator EI,
+                                         const ScheduleDAG *Graph) {
       if (EI.isArtificialDep())
         return "color=cyan,style=dashed";
       if (EI.isCtrlDep())
