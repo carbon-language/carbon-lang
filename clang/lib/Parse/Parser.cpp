@@ -1051,15 +1051,17 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
         return true;
       }
 
-      AnnotateTemplateIdTokenAsType(0);
-      assert(Tok.is(tok::annot_typename) &&
-             "AnnotateTemplateIdTokenAsType isn't working properly");
-      if (Tok.getAnnotationValue())
-        Ty = Actions.ActOnTypenameType(getCurScope(), TypenameLoc, SS, 
-                                       SourceLocation(),
-                                       getTypeAnnotation(Tok));
-      else
-        Ty = true;
+      ASTTemplateArgsPtr TemplateArgsPtr(Actions,
+                                         TemplateId->getTemplateArgs(),
+                                         TemplateId->NumArgs);
+      
+      Ty = Actions.ActOnTypenameType(getCurScope(), TypenameLoc, SS,
+                                     /*FIXME:*/SourceLocation(),
+                                     TemplateId->Template,
+                                     TemplateId->TemplateNameLoc,
+                                     TemplateId->LAngleLoc,
+                                     TemplateArgsPtr, 
+                                     TemplateId->RAngleLoc);
     } else {
       Diag(Tok, diag::err_expected_type_name_after_typename)
         << SS.getRange();

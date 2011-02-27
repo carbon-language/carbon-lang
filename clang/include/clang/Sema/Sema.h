@@ -3384,11 +3384,20 @@ public:
   /// \param TypenameLoc the location of the 'typename' keyword
   /// \param SS the nested-name-specifier following the typename (e.g., 'T::').
   /// \param TemplateLoc the location of the 'template' keyword, if any.
-  /// \param Ty the type that the typename specifier refers to.
+  /// \param TemplateName The template name.
+  /// \param TemplateNameLoc The location of the template name.
+  /// \param LAngleLoc The location of the opening angle bracket  ('<').
+  /// \param TemplateArgs The template arguments.
+  /// \param RAngleLoc The location of the closing angle bracket  ('>').
   TypeResult
   ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
-                    const CXXScopeSpec &SS, SourceLocation TemplateLoc, 
-                    ParsedType Ty);
+                    const CXXScopeSpec &SS, 
+                    SourceLocation TemplateLoc, 
+                    TemplateTy Template,
+                    SourceLocation TemplateNameLoc,
+                    SourceLocation LAngleLoc,
+                    ASTTemplateArgsPtr TemplateArgs,
+                    SourceLocation RAngleLoc);
 
   QualType CheckTypenameType(ElaboratedTypeKeyword Keyword,
                              NestedNameSpecifier *NNS,

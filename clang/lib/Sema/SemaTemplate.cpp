@@ -5923,74 +5923,86 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
 }
 
 TypeResult
-Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
-                        const CXXScopeSpec &SS, SourceLocation TemplateLoc,
-                        ParsedType Ty) {
+Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
+                        const CXXScopeSpec &SS, 
+                        SourceLocation TemplateLoc, 
+                        TemplateTy TemplateIn,
+                        SourceLocation TemplateNameLoc,
+                        SourceLocation LAngleLoc,
+                        ASTTemplateArgsPtr TemplateArgsIn,
+                        SourceLocation RAngleLoc) {
   if (TypenameLoc.isValid() && S && !S->getTemplateParamParent() &&
       !getLangOptions().CPlusPlus0x)
     Diag(TypenameLoc, diag::ext_typename_outside_of_template)
-      << FixItHint::CreateRemoval(TypenameLoc);
-
-  TypeSourceInfo *InnerTSI = 0;
-  QualType T = GetTypeFromParser(Ty, &InnerTSI);
-
-  assert(isa<TemplateSpecializationType>(T) &&
-         "Expected a template specialization type");
-
+    << FixItHint::CreateRemoval(TypenameLoc);
+  
+  // Translate the parser's template argument list in our AST format.
+  TemplateArgumentListInfo TemplateArgs(LAngleLoc, RAngleLoc);
+  translateTemplateArguments(TemplateArgsIn, TemplateArgs);
+  
+  TemplateName Template = TemplateIn.get();
+  
   if (computeDeclContext(SS, false)) {
     // If we can compute a declaration context, then the "typename"
     // keyword was superfluous. Just build an ElaboratedType to keep
     // track of the nested-name-specifier.
-
-    // Push the inner type, preserving its source locations if possible.
+    
+    QualType T = CheckTemplateIdType(Template, TemplateNameLoc, TemplateArgs);
+    if (T.isNull())
+      return true;
+    
+    // Provide source-location information for the template specialization 
+    // type.
     TypeLocBuilder Builder;
-    if (InnerTSI)
-      Builder.pushFullCopy(InnerTSI->getTypeLoc());
-    else
-      Builder.push<TemplateSpecializationTypeLoc>(T).initialize(Context,
-                                                                TemplateLoc);
-
+    TemplateSpecializationTypeLoc SpecTL 
+    = Builder.push<TemplateSpecializationTypeLoc>(T);
+    
+    // FIXME: No place to set the location of the 'template' keyword!
+    SpecTL.setLAngleLoc(LAngleLoc);
+    SpecTL.setRAngleLoc(RAngleLoc);
+    SpecTL.setTemplateNameLoc(TemplateNameLoc);
+    for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
+      SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
+    
+    // FIXME: This is a hack. We really want to push the nested-name-specifier
+    // into TemplateSpecializationType.
+    
     /* Note: NNS already embedded in template specialization type T. */
     T = Context.getElaboratedType(ETK_Typename, /*NNS=*/0, T);
     ElaboratedTypeLoc TL = Builder.push<ElaboratedTypeLoc>(T);
     TL.setKeywordLoc(TypenameLoc);
     TL.setQualifierRange(SS.getRange());
-
+    
     TypeSourceInfo *TSI = Builder.getTypeSourceInfo(Context, T);
     return CreateParsedType(T, TSI);
   }
-
-  // TODO: it's really silly that we make a template specialization
-  // type earlier only to drop it again here.
-  const TemplateSpecializationType *TST = cast<TemplateSpecializationType>(T);
-  DependentTemplateName *DTN =
-    TST->getTemplateName().getAsDependentTemplateName();
+  
+  // Construct a dependent template specialization type.
+  DependentTemplateName *DTN = Template.getAsDependentTemplateName();
   assert(DTN && "dependent template has non-dependent name?");
   assert(DTN->getQualifier()
          == static_cast<NestedNameSpecifier*>(SS.getScopeRep()));
-  T = Context.getDependentTemplateSpecializationType(ETK_Typename,
-                                                     DTN->getQualifier(),
-                                                     DTN->getIdentifier(),
-                                                     TST->getNumArgs(),
-                                                     TST->getArgs());
-  TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
-  DependentTemplateSpecializationTypeLoc TL =
-    cast<DependentTemplateSpecializationTypeLoc>(TSI->getTypeLoc());
-  if (InnerTSI) {
-    TemplateSpecializationTypeLoc TSTL =
-      cast<TemplateSpecializationTypeLoc>(InnerTSI->getTypeLoc());
-    TL.setLAngleLoc(TSTL.getLAngleLoc());
-    TL.setRAngleLoc(TSTL.getRAngleLoc());
-    for (unsigned I = 0, E = TST->getNumArgs(); I != E; ++I)
-      TL.setArgLocInfo(I, TSTL.getArgLocInfo(I));
-  } else {
-    // FIXME: Poor source-location information here.
-    TL.initializeLocal(Context, TemplateLoc);
-  }
-  TL.setKeywordLoc(TypenameLoc);
-  TL.setQualifierRange(SS.getRange());
-  return CreateParsedType(T, TSI);
+  QualType T = Context.getDependentTemplateSpecializationType(ETK_Typename,
+                                                          DTN->getQualifier(),
+                                                          DTN->getIdentifier(),
+                                                              TemplateArgs);
+  
+  // Create source-location information for this type.
+  TypeLocBuilder Builder;
+  DependentTemplateSpecializationTypeLoc SpecTL 
+  = Builder.push<DependentTemplateSpecializationTypeLoc>(T);
+  SpecTL.setLAngleLoc(LAngleLoc);
+  SpecTL.setRAngleLoc(RAngleLoc);
+  SpecTL.setKeywordLoc(TypenameLoc);
+  SpecTL.setNameLoc(TemplateNameLoc);
+  for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
+    SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
+  
+  // FIXME: Nested-name-specifier source locations.
+  SpecTL.setQualifierRange(SS.getRange());
+  return CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
 }
+
 
 /// \brief Build the type that describes a C++ typename specifier,
 /// e.g., "typename T::type".
