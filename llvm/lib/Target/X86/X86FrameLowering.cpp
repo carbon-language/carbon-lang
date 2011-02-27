@@ -892,7 +892,6 @@ bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   MachineFunction &MF = *MBB.getParent();
 
-  bool isWin64 = STI.isTargetWin64();
   unsigned SlotSize = STI.is64Bit() ? 8 : 4;
   unsigned FPReg = TRI->getFrameRegister(MF);
   unsigned CalleeFrameSize = 0;
@@ -900,25 +899,39 @@ bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
 
+  // Push GPRs. It increases frame size.
   unsigned Opc = STI.is64Bit() ? X86::PUSH64r : X86::PUSH32r;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
+    if (!X86::GR64RegClass.contains(Reg) &&
+        !X86::GR32RegClass.contains(Reg))
+      continue;
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
     if (Reg == FPReg)
       // X86RegisterInfo::emitPrologue will handle spilling of frame register.
       continue;
-    if (!X86::VR128RegClass.contains(Reg) && !isWin64) {
-      CalleeFrameSize += SlotSize;
-      BuildMI(MBB, MI, DL, TII.get(Opc)).addReg(Reg, RegState::Kill);
-    } else {
-      const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-      TII.storeRegToStackSlot(MBB, MI, Reg, true, CSI[i-1].getFrameIdx(),
-                              RC, TRI);
-    }
+    CalleeFrameSize += SlotSize;
+    BuildMI(MBB, MI, DL, TII.get(Opc)).addReg(Reg, RegState::Kill);
   }
 
   X86FI->setCalleeSavedFrameSize(CalleeFrameSize);
+
+  // Make XMM regs spilled. X86 does not have ability of push/pop XMM.
+  // It can be done by spilling XMMs to stack frame.
+  // Note that only Win64 ABI might spill XMMs.
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    if (X86::GR64RegClass.contains(Reg) ||
+        X86::GR32RegClass.contains(Reg))
+      continue;
+    // Add the callee-saved register as live-in. It's killed at the spill.
+    MBB.addLiveIn(Reg);
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+    TII.storeRegToStackSlot(MBB, MI, Reg, true, CSI[i-1].getFrameIdx(),
+                            RC, TRI);
+  }
+
   return true;
 }
 
@@ -933,21 +946,30 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+
+  // Reload XMMs from stack frame.
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    if (X86::GR64RegClass.contains(Reg) ||
+        X86::GR32RegClass.contains(Reg))
+      continue;
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+    TII.loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(),
+                             RC, TRI);
+  }
+
+  // POP GPRs.
   unsigned FPReg = TRI->getFrameRegister(MF);
-  bool isWin64 = STI.isTargetWin64();
   unsigned Opc = STI.is64Bit() ? X86::POP64r : X86::POP32r;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
+    if (!X86::GR64RegClass.contains(Reg) &&
+        !X86::GR32RegClass.contains(Reg))
+      continue;
     if (Reg == FPReg)
       // X86RegisterInfo::emitEpilogue will handle restoring of frame register.
       continue;
-    if (!X86::VR128RegClass.contains(Reg) && !isWin64) {
-      BuildMI(MBB, MI, DL, TII.get(Opc), Reg);
-    } else {
-      const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-      TII.loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(),
-                               RC, TRI);
-    }
+    BuildMI(MBB, MI, DL, TII.get(Opc), Reg);
   }
   return true;
 }
