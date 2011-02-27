@@ -493,11 +493,11 @@ class _LIBCPP_VISIBLE __map_iterator
     _TreeIterator __i_;
 
     typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
-    typedef const typename _TreeIterator::value_type::first_type key_type;
-    typedef typename _TreeIterator::value_type::second_type      mapped_type;
+    typedef const typename _TreeIterator::value_type::first_type __key_type;
+    typedef typename _TreeIterator::value_type::second_type      __mapped_type;
 public:
     typedef bidirectional_iterator_tag                           iterator_category;
-    typedef pair<key_type, mapped_type>                          value_type;
+    typedef pair<__key_type, __mapped_type>                      value_type;
     typedef typename _TreeIterator::difference_type              difference_type;
     typedef value_type&                                          reference;
     typedef typename __pointer_traits::template
@@ -558,11 +558,11 @@ class _LIBCPP_VISIBLE __map_const_iterator
     _TreeIterator __i_;
 
     typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
-    typedef const typename _TreeIterator::value_type::first_type key_type;
-    typedef typename _TreeIterator::value_type::second_type      mapped_type;
+    typedef const typename _TreeIterator::value_type::first_type __key_type;
+    typedef typename _TreeIterator::value_type::second_type      __mapped_type;
 public:
     typedef bidirectional_iterator_tag                           iterator_category;
-    typedef pair<key_type, mapped_type>                          value_type;
+    typedef pair<__key_type, __mapped_type>                      value_type;
     typedef typename _TreeIterator::difference_type              difference_type;
     typedef const value_type&                                    reference;
     typedef typename __pointer_traits::template

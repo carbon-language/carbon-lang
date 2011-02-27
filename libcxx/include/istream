@@ -801,6 +801,13 @@ operator>>(basic_istream<_CharT, _Traits>& __is, _CharT& __c)
         typename basic_istream<_CharT, _Traits>::sentry __sen(__is);
         if (__sen)
         {
+#if 1
+            typename _Traits::int_type __i = __is.rdbuf()->sbumpc();
+            if (_Traits::eq_int_type(__i, _Traits::eof()))
+                __is.setstate(ios_base::eofbit | ios_base::failbit);
+            else
+                __c = _Traits::to_char_type(__i);
+#else
             typedef istreambuf_iterator<_CharT, _Traits> _I;
             _I __i(__is);
             _I __eof;
@@ -812,6 +819,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is, _CharT& __c)
             }
             else
                 __is.setstate(ios_base::eofbit | ios_base::failbit);
+#endif
         }
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }

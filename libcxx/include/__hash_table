@@ -29,9 +29,9 @@ template <class _NodePtr>
 struct __hash_node_base
 {
     typedef __hash_node_base __first_node;
-    typedef _NodePtr pointer;
+ //   typedef _NodePtr pointer;
 
-    pointer    __next_;
+    _NodePtr    __next_;
 
     _LIBCPP_INLINE_VISIBILITY __hash_node_base() : __next_(nullptr) {}
 };
