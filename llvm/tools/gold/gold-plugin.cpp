@@ -274,19 +274,8 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     }
     free(buf);
   } else {
-    // FIXME: We should not need to pass -1 as the file size, but there
-    // is a bug in BFD that causes it to pass 0 to us. Remove this once
-    // that is fixed.
-    off_t size = file->filesize ? file->filesize : -1;
-
-    // FIXME: We should not need to reset the position in the file, but there
-    // is a bug in BFD. Remove this once that is fixed.
-    off_t old_pos = lseek(file->fd, 0, SEEK_CUR);
-
     lseek(file->fd, 0, SEEK_SET);
-    M = lto_module_create_from_fd(file->fd, file->name, size);
-
-    lseek(file->fd, old_pos, SEEK_SET);
+    M = lto_module_create_from_fd(file->fd, file->name, file->filesize);
     if (!M)
       return LDPS_OK;
   }
