@@ -1,22 +1,27 @@
 set(files
   altivec.h
   avxintrin.h
-  emmintrin.h	
-  float.h		
+  emmintrin.h
+  float.h
   immintrin.h
-  iso646.h	
-  limits.h	
-  mm_malloc.h	
-  mmintrin.h	
-  pmmintrin.h	
+  iso646.h
+  limits.h
+  mmintrin.h
+  mm_malloc.h
+  nmmintrin.h
+  pmmintrin.h
   smmintrin.h
-  stdarg.h	
-  stdbool.h	
-  stddef.h	
-  stdint.h	
+  stdarg.h
+  stdbool.h
+  stddef.h
+  stdint.h
   tgmath.h
   tmmintrin.h
-  xmmintrin.h)
+  varargs.h
+  wmmintrin.h
+  x86intrin.h
+  xmmintrin.h
+  )
 
 set(output_dir ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/include)
 
