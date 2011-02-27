@@ -3726,7 +3726,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
   // None of the supported targets knows how to perform load and sign extend
-  // in one instruction.  We only perform this transformation on scalars.
+  // on vectors in one instruction.  We only perform this transformation on
+  // scalars.
   if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::SEXTLOAD, N0.getValueType()))) {
@@ -3930,7 +3931,8 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
   // None of the supported targets knows how to perform load and vector_zext
-  // in one instruction.  We only perform this transformation on scalar zext.
+  // on vectors in one instruction.  We only perform this transformation on
+  // scalars.
   if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::ZEXTLOAD, N0.getValueType()))) {
@@ -4139,7 +4141,8 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
 
   // fold (aext (load x)) -> (aext (truncate (extload x)))
   // None of the supported targets knows how to perform load and any_ext
-  // in one instruction.  We only perform this transformation on scalars.
+  // on vectors in one instruction.  We only perform this transformation on
+  // scalars.
   if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
       ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
@@ -4552,7 +4555,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   // See if we can simplify the input to this truncate through knowledge that
   // only the low bits are being used.
   // For example "trunc (or (shl x, 8), y)" // -> trunc y
-  // Currenly we only perform this optimization on scalars because vectors
+  // Currently we only perform this optimization on scalars because vectors
   // may have different active low bits.
   if (!VT.isVector()) {
     SDValue Shorter =
