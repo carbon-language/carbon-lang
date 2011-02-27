@@ -453,7 +453,7 @@
 #cmakedefine HAVE_WRITEV ${HAVE_WRITEV}
 
 /* Define if the xdot.py program is available */
-#undef HAVE_XDOT_PY
+#cmakedefine HAVE_XDOT_PY ${HAVE_XDOT_PY}
 
 /* Have host's _alloca */
 #cmakedefine HAVE__ALLOCA ${HAVE__ALLOCA}
@@ -585,7 +585,7 @@
 #cmakedefine LLVM_PATH_TWOPI "${LLVM_PATH_TWOPI}"
 
 /* Define to path to xdot.py program if found or 'echo xdot.py' otherwise */
-#undef LLVM_PATH_XDOT_PY
+#cmakedefine LLVM_PATH_XDOT_PY "${LLVM_PATH_XDOT_PY}"
 
 /* Installation prefix directory */
 #cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"

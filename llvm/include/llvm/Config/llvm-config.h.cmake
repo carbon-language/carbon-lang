@@ -91,6 +91,9 @@
 /* Define to path to twopi program if found or 'echo twopi' otherwise */
 #cmakedefine LLVM_PATH_TWOPI "${LLVM_PATH_TWOPI}"
 
+/* Define to path to xdot.py program if found or 'echo xdot.py' otherwise */
+#cmakedefine LLVM_PATH_XDOT_PY "${LLVM_PATH_XDOT.PY}"
+
 /* Installation prefix directory */
 #cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"
 
