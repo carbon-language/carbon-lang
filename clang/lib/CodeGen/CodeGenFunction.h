@@ -2045,10 +2045,9 @@ public:
   static bool ContainsLabel(const Stmt *S, bool IgnoreCaseStmts = false);
 
   /// ConstantFoldsToSimpleInteger - If the specified expression does not fold
-  /// to a constant, or if it does but contains a label, return 0.  If it
-  /// constant folds to 'true' and does not contain a label, return 1, if it
-  /// constant folds to 'false' and does not contain a label, return -1.
-  int ConstantFoldsToSimpleInteger(const Expr *Cond);
+  /// to a constant, or if it does but contains a label, return false.  If it
+  /// constant folds return true and set the boolean result in Result.
+  bool ConstantFoldsToSimpleInteger(const Expr *Cond, bool &Result);
 
   /// EmitBranchOnBoolExpr - Emit a branch on a boolean condition (e.g. for an
   /// if statement) to the specified blocks.  Based on the condition, this might

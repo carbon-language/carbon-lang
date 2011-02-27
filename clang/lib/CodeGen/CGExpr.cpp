@@ -1715,10 +1715,10 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   }
 
   const Expr *condExpr = expr->getCond();
-
-  if (int condValue = ConstantFoldsToSimpleInteger(condExpr)) {
+  bool CondExprBool;
+  if (ConstantFoldsToSimpleInteger(condExpr, CondExprBool)) {
     const Expr *live = expr->getTrueExpr(), *dead = expr->getFalseExpr();
-    if (condValue == -1) std::swap(live, dead);
+    if (!CondExprBool) std::swap(live, dead);
 
     if (!ContainsLabel(dead))
       return EmitLValue(live);

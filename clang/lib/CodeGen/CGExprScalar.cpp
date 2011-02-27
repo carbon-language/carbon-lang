@@ -2257,8 +2257,9 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   
   // If we have 0 && RHS, see if we can elide RHS, if so, just return 0.
   // If we have 1 && X, just emit X without inserting the control flow.
-  if (int Cond = CGF.ConstantFoldsToSimpleInteger(E->getLHS())) {
-    if (Cond == 1) { // If we have 1 && X, just emit X.
+  bool LHSCondVal;
+  if (CGF.ConstantFoldsToSimpleInteger(E->getLHS(), LHSCondVal)) {
+    if (LHSCondVal) { // If we have 1 && X, just emit X.
       Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
       // ZExt result to int or bool.
       return Builder.CreateZExtOrBitCast(RHSCond, ResTy, "land.ext");
@@ -2309,8 +2310,9 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   
   // If we have 1 || RHS, see if we can elide RHS, if so, just return 1.
   // If we have 0 || X, just emit X without inserting the control flow.
-  if (int Cond = CGF.ConstantFoldsToSimpleInteger(E->getLHS())) {
-    if (Cond == -1) { // If we have 0 || X, just emit X.
+  bool LHSCondVal;
+  if (CGF.ConstantFoldsToSimpleInteger(E->getLHS(), LHSCondVal)) {
+    if (!LHSCondVal) { // If we have 0 || X, just emit X.
       Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
       // ZExt result to int or bool.
       return Builder.CreateZExtOrBitCast(RHSCond, ResTy, "lor.ext");
@@ -2409,9 +2411,10 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
 
   // If the condition constant folds and can be elided, try to avoid emitting
   // the condition and the dead arm.
-  if (int Cond = CGF.ConstantFoldsToSimpleInteger(condExpr)){
+  bool CondExprBool;
+  if (CGF.ConstantFoldsToSimpleInteger(condExpr, CondExprBool)) {
     Expr *live = lhsExpr, *dead = rhsExpr;
-    if (Cond == -1) std::swap(live, dead);
+    if (!CondExprBool) std::swap(live, dead);
 
     // If the dead side doesn't have labels we need, and if the Live side isn't
     // the gnu missing ?: extension (which we could handle, but don't bother
