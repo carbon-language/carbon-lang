@@ -96,6 +96,9 @@ public:
   ScopedHashTableScope(ScopedHashTable<K, V, KInfo, AllocatorTy> &HT);
   ~ScopedHashTableScope();
 
+  ScopedHashTableScope *getParentScope() { return PrevScope; }
+  const ScopedHashTableScope *getParentScope() const { return PrevScope; }
+  
 private:
   friend class ScopedHashTable<K, V, KInfo, AllocatorTy>;
   ScopedHashTableVal<K, V> *getLastValInScope() {
@@ -141,9 +144,14 @@ public:
 
 template <typename K, typename V, typename KInfo, typename AllocatorTy>
 class ScopedHashTable {
+public:
+  /// ScopeTy - This is a helpful typedef that allows clients to get easy access
+  /// to the name of the scope for this hash table.
+  typedef ScopedHashTableScope<K, V, KInfo, AllocatorTy> ScopeTy;
+private:
   typedef ScopedHashTableVal<K, V> ValTy;
   DenseMap<K, ValTy*, KInfo> TopLevelMap;
-  ScopedHashTableScope<K, V, KInfo, AllocatorTy> *CurScope;
+  ScopeTy *CurScope;
   
   AllocatorTy Allocator;
   
@@ -157,9 +165,6 @@ public:
     assert(CurScope == 0 && TopLevelMap.empty() && "Scope imbalance!");
   }
   
-  /// ScopeTy - This is a helpful typedef that allows clients to get easy access
-  /// to the name of the scope for this hash table.
-  typedef ScopedHashTableScope<K, V, KInfo, AllocatorTy> ScopeTy;
 
   /// Access to the allocator.
   typedef typename ReferenceAdder<AllocatorTy>::result AllocatorRefTy;
@@ -180,13 +185,7 @@ public:
   }
 
   void insert(const K &Key, const V &Val) {
-    assert(CurScope && "No scope active!");
-
-    ScopedHashTableVal<K, V> *&KeyEntry = TopLevelMap[Key];
-
-    KeyEntry = ValTy::Create(CurScope->getLastValInScope(), KeyEntry, Key, Val,
-                             Allocator);
-    CurScope->setLastValInScope(KeyEntry);
+    insertIntoScope(CurScope, Key, Val);
   }
 
   typedef ScopedHashTableIterator<K, V, KInfo> iterator;
@@ -198,6 +197,21 @@ public:
       TopLevelMap.find(Key);
     if (I == TopLevelMap.end()) return end();
     return iterator(I->second);
+  }
+  
+  ScopeTy *getCurScope() { return CurScope; }
+  const ScopeTy *getCurScope() const { return CurScope; }
+
+  /// insertIntoScope - This inserts the specified key/value at the specified
+  /// (possibly not the current) scope.  While it is ok to insert into a scope
+  /// that isn't the current one, it isn't ok to insert *underneath* an existing
+  /// value of the specified key.
+  void insertIntoScope(ScopeTy *S, const K &Key, const V &Val) {
+    assert(S && "No scope active!");
+    ScopedHashTableVal<K, V> *&KeyEntry = TopLevelMap[Key];
+    KeyEntry = ValTy::Create(S->getLastValInScope(), KeyEntry, Key, Val,
+                             Allocator);
+    S->setLastValInScope(KeyEntry);
   }
 };
 
