@@ -168,7 +168,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
 
   // When running with -disable-free, don't do any destruction or shutdown.
   if (Clang->getFrontendOpts().DisableFree) {
-    if (llvm::AreStatisticsEnabled || Clang->getFrontendOpts().ShowStats)
+    if (llvm::AreStatisticsEnabled() || Clang->getFrontendOpts().ShowStats)
       llvm::PrintStatistics();
     Clang.take();
     return !Success;
