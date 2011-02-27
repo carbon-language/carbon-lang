@@ -79,6 +79,8 @@ namespace llvm {
     /// empty - Check if the array is empty.
     bool empty() const { return Length == 0; }
     
+    const T *data() const { return Data; }
+    
     /// size - Get the array size.
     size_t size() const { return Length; }
     
