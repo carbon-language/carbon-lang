@@ -260,6 +260,7 @@ install(DIRECTORY include/
   PATTERN "*.h"
   PATTERN "*.td"
   PATTERN "*.inc"
+  PATTERN "LICENSE.TXT"
   PATTERN ".svn" EXCLUDE
   )
 
