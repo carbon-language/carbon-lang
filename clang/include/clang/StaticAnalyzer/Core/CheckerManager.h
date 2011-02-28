@@ -99,6 +99,7 @@ public:
   const LangOptions &getLangOptions() const { return LangOpts; }
 
   typedef void *CheckerRef;
+  typedef void *CheckerTag;
   typedef CheckerFn<> CheckerDtor;
 
 //===----------------------------------------------------------------------===//
@@ -106,11 +107,20 @@ public:
 //===----------------------------------------------------------------------===//
 
   /// \brief Used to register checkers.
+  ///
+  /// \returns a pointer to the checker object.
   template <typename CHECKER>
-  void registerChecker() {
+  CHECKER *registerChecker() {
+    CheckerTag tag = getCheckerTag<CHECKER>();
+    CheckerRef &ref = CheckerTags[tag];
+    if (ref)
+      return static_cast<CHECKER *>(ref); // already registered.
+
     CHECKER *checker = new CHECKER();
     CheckerDtors.push_back(CheckerDtor(checker, destruct<CHECKER>));
     CHECKER::_register(checker, *this);
+    ref = checker;
+    return checker;
   }
 
 //===----------------------------------------------------------------------===//
@@ -308,6 +318,11 @@ public:
 private:
   template <typename CHECKER>
   static void destruct(void *obj) { delete static_cast<CHECKER *>(obj); }
+
+  template <typename CHECKER>
+  static CheckerTag getCheckerTag() { static int tag; return &tag; }
+
+  llvm::DenseMap<CheckerTag, CheckerRef> CheckerTags;
 
   std::vector<CheckerDtor> CheckerDtors;
 
