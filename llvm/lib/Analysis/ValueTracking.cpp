@@ -685,7 +685,7 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
       isPowerOfTwo(SI->getFalseValue(), TD, Depth);
 
   // An exact divide or right shift can only shift off zero bits, so the result
-  // is non-zero only if the first operand is non-zero.
+  // is a power of two only if the first operand is a power of two.
   if (match(V, m_Shr(m_Value(), m_Value())) ||
       match(V, m_IDiv(m_Value(), m_Value()))) {
     BinaryOperator *BO = cast<BinaryOperator>(V);
