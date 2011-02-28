@@ -296,3 +296,25 @@ class Pseudo<dag OOL, dag IOL, string asmstr, list<dag> pattern>
   let Pattern = pattern;
   let Inst{31-0} = 0;
 }
+
+//===----------------------------------------------------------------------===//
+// Branch hint formats
+//===----------------------------------------------------------------------===//
+// For hbrr and hbra
+class HBI16Form<bits<7> opcode, dag IOL, string asmstr>
+        : Instruction {
+  field bits<32> Inst;
+  bits<16>i16;
+  bits<9>RO;
+
+  let Namespace = "SPU";
+  let InOperandList = IOL;
+  let OutOperandList = (outs); //no output
+  let AsmString = asmstr;
+  let Itinerary = BranchHints;
+
+  let Inst{0-6} = opcode;
+  let Inst{7-8} = RO{8-7};
+  let Inst{9-24} = i16;
+  let Inst{25-31} = RO{6-0};
+}

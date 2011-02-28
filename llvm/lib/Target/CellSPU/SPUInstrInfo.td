@@ -28,6 +28,8 @@ let hasCtrlDep = 1, Defs = [R1], Uses = [R1] in {
   def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm_i32:$amt),
                                 "${:comment} ADJCALLSTACKUP",
                                 [(callseq_end timm:$amt)]>;
+  def HBR_LABEL        : Pseudo<(outs), (ins hbrtarget:$targ), 
+                                "$targ:\t${:comment}branch hint target",[ ]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4208,8 +4210,8 @@ def : Pat<(fabs (v4f32 VECREG:$rA)),
 //===----------------------------------------------------------------------===//
 // Hint for branch instructions:
 //===----------------------------------------------------------------------===//
-
-/* def HBR : SPUInstr<(outs), (ins), "hbr\t" */
+def HBRA :
+    HBI16Form<0b0001001,(ins hbrtarget:$brinst, brtarget:$btarg), "hbra\t$brinst, $btarg">;
 
 //===----------------------------------------------------------------------===//
 // Execution, Load NOP (execute NOPs belong in even pipeline, load NOPs belong
