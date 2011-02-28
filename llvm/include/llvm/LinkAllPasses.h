@@ -143,7 +143,6 @@ namespace {
       (void) llvm::createDbgInfoPrinterPass();
       (void) llvm::createModuleDebugInfoPrinterPass();
       (void) llvm::createPartialInliningPass();
-      (void) llvm::createGEPSplitterPass();
       (void) llvm::createLintPass();
       (void) llvm::createSinkingPass();
       (void) llvm::createLowerAtomicPass();

@@ -99,7 +99,6 @@ void initializeExpandISelPseudosPass(PassRegistry&);
 void initializeFindUsedTypesPass(PassRegistry&);
 void initializeFunctionAttrsPass(PassRegistry&);
 void initializeGCModuleInfoPass(PassRegistry&);
-void initializeGEPSplitterPass(PassRegistry&);
 void initializeGVNPass(PassRegistry&);
 void initializeGlobalDCEPass(PassRegistry&);
 void initializeGlobalOptPass(PassRegistry&);

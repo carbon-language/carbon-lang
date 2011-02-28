@@ -98,12 +98,6 @@ static cl::opt<cl::boolOrDefault>
 EnableFastISelOption("fast-isel", cl::Hidden,
   cl::desc("Enable the \"fast\" instruction selector"));
 
-// Enable or disable an experimental optimization to split GEPs
-// and run a special GVN pass which does not examine loads, in
-// an effort to factor out redundancy implicit in complex GEPs.
-static cl::opt<bool> EnableSplitGEPGVN("split-gep-gvn", cl::Hidden,
-    cl::desc("Split GEPs and run no-load GVN"));
-
 LLVMTargetMachine::LLVMTargetMachine(const Target &T,
                                      const std::string &Triple)
   : TargetMachine(T), TargetTriple(Triple) {
@@ -271,12 +265,6 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // coming from the front-end and/or optimizer is valid.
   if (!DisableVerify)
     PM.add(createVerifierPass());
-
-  // Optionally, tun split-GEPs and no-load GVN.
-  if (EnableSplitGEPGVN) {
-    PM.add(createGEPSplitterPass());
-    PM.add(createGVNPass(/*NoLoads=*/true));
-  }
 
   // Run loop strength reduction before anything else.
   if (OptLevel != CodeGenOpt::None && !DisableLSR) {
