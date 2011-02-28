@@ -26,7 +26,6 @@ void RegisterAdjustedReturnValueChecker(ExprEngine &Eng);
 void RegisterAttrNonNullChecker(ExprEngine &Eng);
 void RegisterCallAndMessageChecker(ExprEngine &Eng);
 void RegisterDereferenceChecker(ExprEngine &Eng);
-void RegisterVLASizeChecker(ExprEngine &Eng);
 
 } // end GR namespace
 

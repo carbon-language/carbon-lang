@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def VLASizeChecker : Checker<"VLASize">,
+  HelpText<"Check for declarations of VLA of undefined or zero size">,
+  DescFile<"VLASizeChecker.cpp">;
+
 def DivZeroChecker : Checker<"DivZero">,
   HelpText<"Check for division by zeros">,
   DescFile<"DivZeroChecker.cpp">;

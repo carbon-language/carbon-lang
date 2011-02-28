@@ -325,7 +325,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   RegisterCallAndMessageChecker(Eng);
   RegisterAttrNonNullChecker(Eng);
   RegisterDereferenceChecker(Eng);
-  RegisterVLASizeChecker(Eng);
 }
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
