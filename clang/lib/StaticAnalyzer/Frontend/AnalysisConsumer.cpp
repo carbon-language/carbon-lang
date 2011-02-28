@@ -318,14 +318,6 @@ void AnalysisConsumer::HandleCode(Decl *D, Actions& actions) {
 // Analyses
 //===----------------------------------------------------------------------===//
 
-static void ActionWarnUninitVals(AnalysisConsumer &C, AnalysisManager& mgr,
-                                 Decl *D) {
-  if (CFG* c = mgr.getCFG(D)) {
-    CheckUninitializedValues(*c, mgr.getASTContext(), mgr.getDiagnostic());
-  }
-}
-
-
 static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
                                Decl *D,
                                TransferFuncs* tf) {

@@ -42,8 +42,6 @@ def analysis_CFGAddImplicitDtors : Flag<"-cfg-add-implicit-dtors">,
   HelpText<"Add C++ implicit destructors to CFGs for all analyses">;
 def analysis_CFGAddInitializers : Flag<"-cfg-add-initializers">,
   HelpText<"Add C++ initializers to CFGs for all analyses">;
-def analysis_WarnUninitVals : Flag<"-warn-uninit-values">,
-  HelpText<"Warn about uses of uninitialized variables">;
 def analysis_ObjCMemChecker : Flag<"-analyzer-check-objc-mem">,
   HelpText<"Run the [Core] Foundation reference count checker">;
 

@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -analyze -warn-uninit-values -verify %s
+// FIXME: The current UninitializedValuesChecker will go away; replace it and re-enable test.
+// XFAIL: *
 
 int f1() {
   int x;
