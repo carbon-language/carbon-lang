@@ -628,14 +628,14 @@ void SwitchStmt::setConditionVariable(ASTContext &C, VarDecl *V) {
 }
 
 Stmt *SwitchCase::getSubStmt() {
-  if (isa<CaseStmt>(this)) return cast<CaseStmt>(this)->getSubStmt();
+  if (isa<CaseStmt>(this))
+    return cast<CaseStmt>(this)->getSubStmt();
   return cast<DefaultStmt>(this)->getSubStmt();
 }
 
 WhileStmt::WhileStmt(ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body, 
                      SourceLocation WL)
-: Stmt(WhileStmtClass)
-{
+  : Stmt(WhileStmtClass) {
   setConditionVariable(C, Var);
   SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
   SubExprs[BODY] = body;
