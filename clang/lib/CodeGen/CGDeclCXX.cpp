@@ -166,7 +166,7 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
       Fn->setSection(Section);
   }
 
-  if (!CGM.getLangOptions().areExceptionsEnabled())
+  if (!CGM.getLangOptions().Exceptions)
     Fn->setDoesNotThrow();
 
   return Fn;

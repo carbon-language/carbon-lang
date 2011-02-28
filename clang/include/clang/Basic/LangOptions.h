@@ -239,10 +239,6 @@ public:
   void setSignedOverflowBehavior(SignedOverflowBehaviorTy V) {
     SignedOverflowBehavior = (unsigned)V;
   }
-
-  bool areExceptionsEnabled() const {
-    return Exceptions;
-  }
 };
 
 /// Floating point control options
