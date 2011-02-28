@@ -1348,16 +1348,6 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       }
     }
     break;
-
-  case Instruction::SRem: {
-    bool TrueIfSigned;
-    if (LHSI->hasOneUse() &&
-        isSignBitCheck(ICI.getPredicate(), RHS, TrueIfSigned)) {
-      // srem has the same sign as its dividend so the divisor is irrelevant.
-      return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0), RHS);
-    }
-    break;
-  }
   }
   
   // Simplify icmp_eq and icmp_ne instructions with integer constant RHS.

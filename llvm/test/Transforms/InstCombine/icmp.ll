@@ -378,28 +378,18 @@ define i1 @test38(i32 %x, i32 %y, i32 %z) {
   ret i1 %c
 }
 
-; PR9343 #7
-; CHECK: @test39
-; CHECK: ret i1 false
-define i1 @test39(i31 %X, i32 %Y) {
-  %A = zext i31 %X to i32
-  %B = srem i32 %A, %Y
-  %C = icmp slt i32 %B, 0
-  ret i1 %C
-}
-
 ; PR9343 #1
-; CHECK: test40
+; CHECK: test39
 ; CHECK %B = icmp eq i32 %X, 0
-define i1 @test40(i32 %X, i32 %Y) {
+define i1 @test39(i32 %X, i32 %Y) {
   %A = ashr exact i32 %X, %Y
   %B = icmp eq i32 %A, 0
   ret i1 %B
 }
 
-; CHECK: test41
-; CHECK %B = icmp ne i32 %X, 0
-define i1 @test41(i32 %X, i32 %Y) {
+; CHECK: test40
+; CHECK: %B = icmp ne i32 %X, 0
+define i1 @test40(i32 %X, i32 %Y) {
   %A = lshr exact i32 %X, %Y
   %B = icmp ne i32 %A, 0
   ret i1 %B

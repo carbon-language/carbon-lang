@@ -460,18 +460,6 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
         assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       }
     }
-    if (Mask.isNegative()) {  // We're looking for the sign bit.
-      APInt Mask2 = APInt::getSignBit(BitWidth);
-      KnownZero2 = 0;
-      KnownOne2 = 0;
-      ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero2, KnownOne2, TD, 
-                        Depth+1);
-      if (KnownOne2[BitWidth-1])
-        KnownOne |= Mask2;
-      if (KnownZero2[BitWidth-1])
-        KnownZero |= Mask2;
-      assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
-    }
     break;
   case Instruction::URem: {
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
