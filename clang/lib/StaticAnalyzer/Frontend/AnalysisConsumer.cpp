@@ -236,6 +236,8 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
         
         for (ObjCImplementationDecl::method_iterator MI = ID->meth_begin(), 
              ME = ID->meth_end(); MI != ME; ++MI) {
+          checkerMgr->runCheckersOnASTDecl(*MI, *Mgr, BR);
+
           if ((*MI)->isThisDeclarationADefinition()) {
             if (!Opts.AnalyzeSpecificFunction.empty() &&
                 Opts.AnalyzeSpecificFunction != (*MI)->getSelector().getAsString())
