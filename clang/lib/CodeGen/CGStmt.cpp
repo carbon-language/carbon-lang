@@ -829,6 +829,122 @@ void CodeGenFunction::EmitDefaultStmt(const DefaultStmt &S) {
   EmitStmt(S.getSubStmt());
 }
 
+/// CollectStatementsForCase - Given the body of a 'switch' statement and a
+/// constant value that is being switched on, see if we can dead code eliminate
+/// the body of the switch to a simple series of statements to emit.  Basically,
+/// on a switch (5) we want to find these statements:
+///    case 5:
+///      printf(...);    <--
+///      ++i;            <--
+///      break;
+///
+/// and add them to the ResultStmts vector.  If it is unsafe to do this
+/// transformation (for example, one of the elided statements contains a label
+/// that might be jumped to), return CSFC_Failure.  If we handled it and 'S'
+/// should include statements after it (e.g. the printf() line is a substmt of
+/// the case) then return CSFC_FallThrough.  If we handled it and found a break
+/// statement, then return CSFC_Success.
+///
+/// If Case is non-null, then we are looking for the specified case, checking
+/// that nothing we jump over contains labels.  If Case is null, then we found
+/// the case and are looking for the break.
+///
+/// If the recursive walk actually finds our Case, then we set FoundCase to
+/// true.
+///
+enum CSFC_Result { CSFC_Failure, CSFC_FallThrough, CSFC_Success };
+static CSFC_Result CollectStatementsForCase(const Stmt *S,
+                                            const SwitchCase *Case,
+                                            bool &FoundCase,
+                              llvm::SmallVectorImpl<const Stmt*> &ResultStmts) {
+  // If this is the switchcase (case 4: or default) that we're looking for, then
+  // we're in business.  Just add the substatement.
+  if (const SwitchCase *SC = dyn_cast<SwitchCase>(S)) {
+    if (S == Case) {
+      FoundCase = true;
+      return CollectStatementsForCase(SC->getSubStmt(), 0, FoundCase,
+                                      ResultStmts);
+    }
+    
+    // Otherwise, this is some other case or default statement, just ignore it.
+    return CollectStatementsForCase(SC->getSubStmt(), Case, FoundCase,
+                                    ResultStmts);
+  }
+  
+  // Okay, this is some other statement that we don't handle explicitly, like a
+  // for statement or increment etc.  If we are skipping over this statement,
+  // just verify it doesn't have labels, which would make it invalid to elide.
+  if (Case) {
+    if (CodeGenFunction::ContainsLabel(S, true))
+      return CSFC_Failure;
+    return CSFC_Success;
+  }
+  
+  // Otherwise, we want to include this statement.  Everything is cool with that
+  // so long as it doesn't contain a break out of the switch we're in.
+  if (CodeGenFunction::containsBreak(S)) return CSFC_Failure;
+  
+  // Otherwise, everything is great.  Include the statement and tell the caller
+  // that we fall through and include the next statement as well.
+  ResultStmts.push_back(S);
+  return CSFC_FallThrough;
+}
+
+/// FindCaseStatementsForValue - Find the case statement being jumped to and
+/// then invoke CollectStatementsForCase to find the list of statements to emit
+/// for a switch on constant.  See the comment above CollectStatementsForCase
+/// for more details.
+static bool FindCaseStatementsForValue(const SwitchStmt &S,
+                                       const llvm::APInt &ConstantCondValue,
+                                llvm::SmallVectorImpl<const Stmt*> &ResultStmts,
+                                       ASTContext &C) {
+  // First step, find the switch case that is being branched to.  We can do this
+  // efficiently by scanning the SwitchCase list.
+  const SwitchCase *Case = S.getSwitchCaseList();
+  const DefaultStmt *DefaultCase = 0;
+  
+  for (; Case; Case = Case->getNextSwitchCase()) {
+    // It's either a default or case.  Just remember the default statement in
+    // case we're not jumping to any numbered cases.
+    if (const DefaultStmt *DS = dyn_cast<DefaultStmt>(Case)) {
+      DefaultCase = DS;
+      continue;
+    }
+    
+    // Check to see if this case is the one we're looking for.
+    const CaseStmt *CS = cast<CaseStmt>(Case);
+    // Don't handle case ranges yet.
+    if (CS->getRHS()) return false;
+    
+    // If we found our case, remember it as 'case'.
+    if (CS->getLHS()->EvaluateAsInt(C) == ConstantCondValue)
+      break;
+  }
+  
+  // If we didn't find a matching case, we use a default if it exists, or we
+  // elide the whole switch body!
+  if (Case == 0) {
+    // It is safe to elide the body of the switch if it doesn't contain labels
+    // etc.  If it is safe, return successfully with an empty ResultStmts list.
+    if (DefaultCase == 0)
+      return !CodeGenFunction::ContainsLabel(&S);
+    Case = DefaultCase;
+  }
+
+  // Ok, we know which case is being jumped to, try to collect all the
+  // statements that follow it.  This can fail for a variety of reasons.  Also,
+  // check to see that the recursive walk actually found our case statement.
+  // Insane cases like this can fail to find it in the recursive walk since we
+  // don't handle every stmt kind:
+  // switch (4) {
+  //   while (1) {
+  //     case 4: ...
+  bool FoundCase = false;
+  return CollectStatementsForCase(S.getBody(), Case, FoundCase,
+                                  ResultStmts) != CSFC_Failure &&
+         FoundCase;
+}
+
 void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   JumpDest SwitchExit = getJumpDestInCurrentScope("sw.epilog");
 
@@ -837,6 +953,23 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   if (S.getConditionVariable())
     EmitAutoVarDecl(*S.getConditionVariable());
 
+  // See if we can constant fold the condition of the switch and therefore only
+  // emit the live case statement (if any) of the switch.
+  llvm::APInt ConstantCondValue;
+  if (ConstantFoldsToSimpleInteger(S.getCond(), ConstantCondValue)) {
+    llvm::SmallVector<const Stmt*, 4> CaseStmts;
+    if (FindCaseStatementsForValue(S, ConstantCondValue, CaseStmts,
+                                   getContext())) {
+      RunCleanupsScope ExecutedScope(*this);
+
+      // Okay, we can dead code eliminate everything except this case.  Emit the
+      // specified series of statements and we're good.
+      for (unsigned i = 0, e = CaseStmts.size(); i != e; ++i)
+        EmitStmt(CaseStmts[i]);
+      return;
+    }
+  }
+    
   llvm::Value *CondV = EmitScalarExpr(S.getCond());
 
   // Handle nested switch statements.
