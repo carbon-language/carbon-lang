@@ -762,6 +762,24 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
 }
 
+static bool 
+shouldUseExceptionTablesForObjCExceptions(const ArgList &Args, 
+                                          const llvm::Triple &Triple) {
+  // We use the zero-cost exception tables for Objective-C if the non-fragile
+  // ABI is enabled or when compiling for x86_64 and ARM on Snow Leopard and
+  // later.
+
+  if (Args.hasArg(options::OPT_fobjc_nonfragile_abi))
+    return true;
+
+  if (Triple.getOS() != llvm::Triple::Darwin)
+    return false;
+
+  return (Triple.getDarwinMajorNumber() >= 9 &&
+          (Triple.getArch() == llvm::Triple::x86_64 ||
+           Triple.getArch() == llvm::Triple::arm));  
+}
+
 static bool needsExceptions(const ArgList &Args,  types::ID InputType,
                             const llvm::Triple &Triple) {
   // Handle -fno-exceptions.
@@ -777,17 +795,8 @@ static bool needsExceptions(const ArgList &Args,  types::ID InputType,
   if (types::isCXX(InputType))
     return true;
 
-  // As do Objective-C non-fragile ABI inputs and all Objective-C inputs on
-  // x86_64 and ARM after SnowLeopard.
-  if (types::isObjC(InputType)) {
-    if (Args.hasArg(options::OPT_fobjc_nonfragile_abi))
-      return true;
-    if (Triple.getOS() != llvm::Triple::Darwin)
-      return false;
-    return (Triple.getDarwinMajorNumber() >= 9 &&
-            (Triple.getArch() == llvm::Triple::x86_64 ||
-             Triple.getArch() == llvm::Triple::arm));
-  }
+  if (types::isObjC(InputType))
+    return shouldUseExceptionTablesForObjCExceptions(Args, Triple);
 
   return false;
 }
