@@ -97,6 +97,8 @@ public:
   CheckerManager(const LangOptions &langOpts) : LangOpts(langOpts) { }
   ~CheckerManager();
 
+  void finishedCheckerRegistration();
+
   const LangOptions &getLangOptions() const { return LangOpts; }
 
   typedef void *CheckerRef;
@@ -112,7 +114,7 @@ public:
   /// \returns a pointer to the checker object.
   template <typename CHECKER>
   CHECKER *registerChecker() {
-    CheckerTag tag = getCheckerTag<CHECKER>();
+    CheckerTag tag = getTag<CHECKER>();
     CheckerRef &ref = CheckerTags[tag];
     if (ref)
       return static_cast<CHECKER *>(ref); // already registered.
@@ -350,6 +352,46 @@ public:
   void _registerForEvalCall(EvalCallFunc checkfn);
 
 //===----------------------------------------------------------------------===//
+// Internal registration functions for events.
+//===----------------------------------------------------------------------===//
+
+  typedef void *EventTag;
+
+  class CheckEventFunc {
+    typedef void (*Func)(void *, const void *);
+    Func Fn;
+  public:
+    void *Checker;
+    CheckEventFunc(void *checker, Func fn)
+      : Fn(fn), Checker(checker) { }
+    void operator()(const void *event) const {
+      return Fn(Checker, event);
+    } 
+  };
+
+  template <typename EVENT>
+  void _registerListenerForEvent(CheckEventFunc checkfn) {
+    EventInfo &info = Events[getTag<EVENT>()];
+    info.Checkers.push_back(checkfn);    
+  }
+
+  template <typename EVENT>
+  void _registerDispatcherForEvent() {
+    EventInfo &info = Events[getTag<EVENT>()];
+    info.HasDispatcher = true;
+  }
+
+  template <typename EVENT>
+  void _dispatchEvent(const EVENT &event) const {
+    EventsTy::const_iterator I = Events.find(getTag<EVENT>());
+    if (I == Events.end())
+      return;
+    const EventInfo &info = I->second;
+    for (unsigned i = 0, e = info.Checkers.size(); i != e; ++i)
+      info.Checkers[i](&event);
+  }
+
+//===----------------------------------------------------------------------===//
 // Implementation details.
 //===----------------------------------------------------------------------===//
 
@@ -357,8 +399,8 @@ private:
   template <typename CHECKER>
   static void destruct(void *obj) { delete static_cast<CHECKER *>(obj); }
 
-  template <typename CHECKER>
-  static CheckerTag getCheckerTag() { static int tag; return &tag; }
+  template <typename T>
+  static void *getTag() { static int tag; return &tag; }
 
   llvm::DenseMap<CheckerTag, CheckerRef> CheckerTags;
 
@@ -439,6 +481,15 @@ private:
   std::vector<EvalAssumeFunc> EvalAssumeCheckers;
 
   std::vector<EvalCallFunc> EvalCallCheckers;
+
+  struct EventInfo {
+    llvm::SmallVector<CheckEventFunc, 4> Checkers;
+    bool HasDispatcher;
+    EventInfo() : HasDispatcher(false) { }
+  };
+  
+  typedef llvm::DenseMap<EventTag, EventInfo> EventsTy;
+  EventsTy Events;
 };
 
 } // end ento namespace

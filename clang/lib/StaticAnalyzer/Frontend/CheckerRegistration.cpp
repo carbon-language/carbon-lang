@@ -43,6 +43,8 @@ CheckerManager *ento::registerCheckers(const AnalyzerOptions &opts,
 
   // FIXME: Load CheckerProviders from plugins.
 
+  checkerMgr->finishedCheckerRegistration();
+
   for (unsigned i = 0, e = checkerOpts.size(); i != e; ++i) {
     if (checkerOpts[i].isUnclaimed())
       diags.Report(diag::warn_unkwown_analyzer_checker)

@@ -20,6 +20,16 @@
 using namespace clang;
 using namespace ento;
 
+void CheckerManager::finishedCheckerRegistration() {
+#ifndef NDEBUG
+  // Make sure that for every event that has listeners, there is at least
+  // one dispatcher registered for it.
+  for (llvm::DenseMap<EventTag, EventInfo>::iterator
+         I = Events.begin(), E = Events.end(); I != E; ++I)
+    assert(I->second.HasDispatcher && "No dispatcher registered for an event");
+#endif
+}
+
 //===----------------------------------------------------------------------===//
 // Functions for running checkers for AST traversing..
 //===----------------------------------------------------------------------===//

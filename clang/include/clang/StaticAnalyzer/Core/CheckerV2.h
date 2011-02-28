@@ -259,6 +259,20 @@ public:
   }
 };
 
+template <typename EVENT>
+class Event {
+  template <typename CHECKER>
+  static void _checkEvent(void *checker, const void *event) {
+    ((const CHECKER *)checker)->checkEvent(*(const EVENT *)event);
+  }
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerListenerForEvent<EVENT>(
+                 CheckerManager::CheckEventFunc(checker, _checkEvent<CHECKER>));
+  }
+};
+
 } // end check namespace
 
 namespace eval {
@@ -300,22 +314,47 @@ template <typename CHECK1, typename CHECK2=check::_VoidCheck,
           typename CHECK7=check::_VoidCheck, typename CHECK8=check::_VoidCheck,
           typename CHECK9=check::_VoidCheck, typename CHECK10=check::_VoidCheck,
           typename CHECK11=check::_VoidCheck,typename CHECK12=check::_VoidCheck>
-class CheckerV2 {
+class CheckerV2;
+
+template <>
+class CheckerV2<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck> {
+public:
+  static void _register(void *checker, CheckerManager &mgr) { }
+};
+
+template <typename CHECK1, typename CHECK2, typename CHECK3, typename CHECK4,
+          typename CHECK5, typename CHECK6, typename CHECK7, typename CHECK8,
+          typename CHECK9, typename CHECK10,typename CHECK11,typename CHECK12>
+class CheckerV2
+    : public CHECK1,
+      public CheckerV2<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7, CHECK8,
+                       CHECK9, CHECK10, CHECK11, CHECK12> {
 public:
   template <typename CHECKER>
   static void _register(CHECKER *checker, CheckerManager &mgr) {
     CHECK1::_register(checker, mgr);
-    CHECK2::_register(checker, mgr);
-    CHECK3::_register(checker, mgr);
-    CHECK4::_register(checker, mgr);
-    CHECK5::_register(checker, mgr);
-    CHECK6::_register(checker, mgr);
-    CHECK7::_register(checker, mgr);
-    CHECK8::_register(checker, mgr);
-    CHECK9::_register(checker, mgr);
-    CHECK10::_register(checker, mgr);
-    CHECK11::_register(checker, mgr);
-    CHECK12::_register(checker, mgr);
+    CheckerV2<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7, CHECK8, CHECK9,
+              CHECK10, CHECK11,CHECK12>::_register(checker, mgr);
+  }
+};
+
+template <typename EVENT>
+class EventDispatcher {
+  CheckerManager *Mgr;
+public:
+  EventDispatcher() : Mgr(0) { }
+
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerDispatcherForEvent<EVENT>();
+    static_cast<EventDispatcher<EVENT> *>(checker)->Mgr = &mgr;
+  }
+
+  void dispatchEvent(const EVENT &event) const {
+    Mgr->_dispatchEvent(event);
   }
 };
 
