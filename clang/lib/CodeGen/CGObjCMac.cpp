@@ -183,7 +183,7 @@ private:
     Params.push_back(SelectorPtrTy);
     return
       CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                        Params, false),
+                                                        Params, true),
                                 "objc_msgSend");
   }
 
@@ -194,7 +194,7 @@ private:
     Params.push_back(SelectorPtrTy);
     return
       CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                                                        Params, false),
+                                                        Params, true),
                                 "objc_msgSend_stret");
 
   }
@@ -209,7 +209,7 @@ private:
       CGM.CreateRuntimeFunction(llvm::FunctionType::get(
                                              llvm::Type::getDoubleTy(VMContext),
                                                         Params,
-                                                        false),
+                                                        true),
                                 "objc_msgSend_fpret");
 
   }
@@ -221,7 +221,7 @@ private:
     Params.push_back(SuperPtrTy);
     Params.push_back(SelectorPtrTy);
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                             Params, false),
+                                                             Params, true),
                                      SuperName);
   }
 
@@ -232,7 +232,7 @@ private:
     Params.push_back(SuperPtrTy);
     Params.push_back(SelectorPtrTy);
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                             Params, false),
+                                                             Params, true),
                                      SuperName);
   }
 
@@ -245,7 +245,7 @@ private:
     Params.push_back(SelectorPtrTy);
     return CGM.CreateRuntimeFunction(
       llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                              Params, false),
+                              Params, true),
       "objc_msgSendSuper_stret");
   }
 
@@ -258,7 +258,7 @@ private:
     Params.push_back(SelectorPtrTy);
     return CGM.CreateRuntimeFunction(
       llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                              Params, false),
+                              Params, true),
       "objc_msgSendSuper2_stret");
   }
 
@@ -721,7 +721,7 @@ public:
     Params.push_back(ObjectPtrTy);
     Params.push_back(MessageRefPtrTy);
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                             Params, false),
+                                                             Params, true),
                                      "objc_msgSend_fixup");
   }
 
@@ -731,7 +731,7 @@ public:
     Params.push_back(ObjectPtrTy);
     Params.push_back(MessageRefPtrTy);
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                             Params, false),
+                                                             Params, true),
                                      "objc_msgSend_fpret_fixup");
   }
 
@@ -741,7 +741,7 @@ public:
     Params.push_back(ObjectPtrTy);
     Params.push_back(MessageRefPtrTy);
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                             Params, false),
+                                                             Params, true),
                                      "objc_msgSend_stret_fixup");
   }
 
@@ -752,7 +752,7 @@ public:
     Params.push_back(SuperPtrTy);
     Params.push_back(SuperMessageRefPtrTy);
     return  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                              Params, false),
+                                                              Params, true),
                                       "objc_msgSendSuper2_fixup");
   }
 
@@ -763,7 +763,7 @@ public:
     Params.push_back(SuperPtrTy);
     Params.push_back(SuperMessageRefPtrTy);
     return  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
-                                                              Params, false),
+                                                              Params, true),
                                       "objc_msgSendSuper2_stret_fixup");
   }
 
@@ -5693,7 +5693,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
                                                       FunctionType::ExtInfo());
   llvm::Value *Callee = CGF.Builder.CreateStructGEP(Arg1, 0);
   Callee = CGF.Builder.CreateLoad(Callee);
-  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo1, false);
+  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo1, true);
   Callee = CGF.Builder.CreateBitCast(Callee,
                                      llvm::PointerType::getUnqual(FTy));
   return CGF.EmitCall(FnInfo1, Callee, Return, ActualArgs);

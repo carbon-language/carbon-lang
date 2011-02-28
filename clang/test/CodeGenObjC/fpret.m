@@ -15,21 +15,21 @@
 
 
 // CHECK-X86_32: define void @t0()
-// CHECK-X86_32: call float bitcast (double (i8*, i8*)* @objc_msgSend_fpret to
-// CHECK-X86_32: call double @objc_msgSend_fpret(
-// CHECK-X86_32: call x86_fp80 bitcast (double (i8*, i8*)* @objc_msgSend_fpret to
+// CHECK-X86_32: call float bitcast {{.*}} @objc_msgSend_fpret to
+// CHECK-X86_32: call double {{.*}} @objc_msgSend_fpret(
+// CHECK-X86_32: call x86_fp80 bitcast {{.*}} @objc_msgSend_fpret to
 // CHECK-X86_32: }
 //
 // CHECK-X86_64: define void @t0()
-// CHECK-X86_64: call float bitcast (i8* (i8*, i8*)* @objc_msgSend to
-// CHECK-X86_64: call double bitcast (i8* (i8*, i8*)* @objc_msgSend to
-// CHECK-X86_64: call x86_fp80 bitcast (double (i8*, i8*)* @objc_msgSend_fpret to
+// CHECK-X86_64: call float bitcast {{.*}} @objc_msgSend to
+// CHECK-X86_64: call double bitcast {{.*}} @objc_msgSend to
+// CHECK-X86_64: call x86_fp80 bitcast {{.*}} @objc_msgSend_fpret to
 // CHECK-X86_64: }
 //
 // CHECK-ARMV7: define void @t0()
-// CHECK-ARMV7: call float bitcast (i8* (i8*, i8*)* @objc_msgSend to
-// CHECK-ARMV7: call double bitcast (i8* (i8*, i8*)* @objc_msgSend to
-// CHECK-ARMV7: call double bitcast (i8* (i8*, i8*)* @objc_msgSend to
+// CHECK-ARMV7: call float bitcast {{.*}} @objc_msgSend to
+// CHECK-ARMV7: call double bitcast {{.*}} @objc_msgSend to
+// CHECK-ARMV7: call double bitcast {{.*}} @objc_msgSend to
 // CHECK-ARMV7: }
 void t0() {
   [(A*)0 floatValue];

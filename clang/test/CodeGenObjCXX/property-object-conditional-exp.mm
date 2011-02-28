@@ -22,7 +22,7 @@ extern "C" bool CGRectIsEmpty(CGRect);
     CGRect dataRect;
     CGRect virtualBounds;
 
-// CHECK: [[SRC:%.*]] = call %struct.CGRect bitcast (i8* (i8*, i8*)* @objc_msgSend
+// CHECK: [[SRC:%.*]] = call %struct.CGRect bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
 // CHECK-NEXT:store %struct.CGRect [[SRC]], %struct.CGRect*
   dataRect = CGRectIsEmpty(virtualBounds) ? self.bounds : virtualBounds;
   dataRect = CGRectIsEmpty(virtualBounds) ? [self bounds] : virtualBounds;
