@@ -17,8 +17,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ParentMap.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/Analyses/UninitializedValues.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/StaticAnalyzer/Frontend/CheckerRegistration.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
@@ -29,9 +27,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
 #include "clang/StaticAnalyzer/Core/PathDiagnosticClients.h"
-
-// FIXME: Restructure checker registration.
-#include "../Checkers/BasicObjCFoundationChecks.h"
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -66,20 +61,6 @@ createPlistHTMLDiagnosticClient(const std::string& prefix,
 namespace {
 
 class AnalysisConsumer : public ASTConsumer {
-public:
-  typedef void (*CodeAction)(AnalysisConsumer &C, AnalysisManager &M, Decl *D);
-  typedef void (*TUAction)(AnalysisConsumer &C, AnalysisManager &M,
-                           TranslationUnitDecl &TU);
-
-private:
-  typedef std::vector<CodeAction> Actions;
-  typedef std::vector<TUAction> TUActions;
-
-  Actions FunctionActions;
-  Actions ObjCMethodActions;
-  Actions ObjCImplementationActions;
-  Actions CXXMethodActions;
-
 public:
   ASTContext* Ctx;
   const Preprocessor &PP;
@@ -160,16 +141,6 @@ public:
     }
   }
 
-  void addCodeAction(CodeAction action) {
-    FunctionActions.push_back(action);
-    ObjCMethodActions.push_back(action);
-    CXXMethodActions.push_back(action);
-  }
-
-  void addObjCImplementationAction(CodeAction action) {
-    ObjCImplementationActions.push_back(action);
-  }
-
   virtual void Initialize(ASTContext &Context) {
     Ctx = &Context;
     checkerMgr.reset(registerCheckers(Opts, PP.getLangOptions(),
@@ -191,7 +162,7 @@ public:
   virtual void HandleTranslationUnit(ASTContext &C);
   void HandleDeclContext(ASTContext &C, DeclContext *dc);
 
-  void HandleCode(Decl *D, Actions& actions);
+  void HandleCode(Decl *D);
 };
 } // end anonymous namespace
 
@@ -225,14 +196,14 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
               FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
             break;
           DisplayFunction(FD);
-          HandleCode(FD, FunctionActions);
+          HandleCode(FD);
         }
         break;
       }
         
       case Decl::ObjCImplementation: {
         ObjCImplementationDecl* ID = cast<ObjCImplementationDecl>(*I);
-        HandleCode(ID, ObjCImplementationActions);
+        HandleCode(ID);
         
         for (ObjCImplementationDecl::method_iterator MI = ID->meth_begin(), 
              ME = ID->meth_end(); MI != ME; ++MI) {
@@ -243,7 +214,7 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
                 Opts.AnalyzeSpecificFunction != (*MI)->getSelector().getAsString())
               break;
             DisplayFunction(*MI);
-            HandleCode(*MI, ObjCMethodActions);
+            HandleCode(*MI);
           }
         }
         break;
@@ -281,7 +252,7 @@ static void FindBlocks(DeclContext *D, llvm::SmallVectorImpl<Decl*> &WL) {
 static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,
                                  Decl *D);
 
-void AnalysisConsumer::HandleCode(Decl *D, Actions& actions) {
+void AnalysisConsumer::HandleCode(Decl *D) {
 
   // Don't run the actions if an error has occured with parsing the file.
   Diagnostic &Diags = PP.getDiagnostics();

@@ -13,9 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// FIXME: Restructure checker registration.
-#include "InternalChecks.h"
-
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"

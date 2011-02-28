@@ -14,7 +14,6 @@
 
 #include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/CheckerV2.h"
-#include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
