@@ -73,15 +73,21 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 } // end "cocoa"
 
+let ParentPackage = Core in {
+
+def BuiltinFunctionChecker : Checker<"BuiltinFunc">,
+  HelpText<"Evaluate clang builtin functions">,
+  DescFile<"BuiltinFunctionChecker.cpp">;
+
 def StackAddrEscapeChecker : Checker<"StackAddrEscape">,
-  InPackage<Core>,
   HelpText<"Check that addresses to stack memory do not escape the function">,
   DescFile<"StackAddrEscapeChecker.cpp">;
 
 def DeadStoresChecker : Checker<"DeadStores">,
-  InPackage<Core>,
   HelpText<"Check for values stored to a variables that are never read afterwards">,
   DescFile<"DeadStoresChecker.cpp">;
+
+} // end "core"
 
 def UnixAPIChecker : Checker<"API">,
   InPackage<Unix>,
