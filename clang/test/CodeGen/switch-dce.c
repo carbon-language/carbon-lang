@@ -1,18 +1,169 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown -O0 %s -emit-llvm -o - | FileCheck %s
 
+// PR9322 and rdar://6970405
+
 // CHECK: @test1
 // CHECK-NOT: switch
+// CHECK-NOT: @dead
 // CHECK: add nsw i32 {{.*}}, 1
 // CHECK-NOT: switch
-// CHECK-NOT: add nsw i32
+// CHECK-NOT: @dead
 // CHECK: ret void
+int i;
+void dead();
+
 void test1() {
-  int i;
   switch (1)
     case 1:
       ++i;
 
   switch (0)
     case 1:
-      i+=2;
+      dead();
 } 
+
+
+// CHECK: @test2
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: add nsw i32 {{.*}}, 2
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: ret void
+void test2() {
+  switch (4) {
+  case 1:
+    dead();
+    break;
+  case 4:
+    i += 2;
+    // Fall off the end of the switch.
+  } 
+}
+
+
+// CHECK: @test3
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: add nsw i32 {{.*}}, 2
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: ret void
+void test3() {
+  switch (4) {
+  case 1:
+    dead();
+    break;
+  case 4: {
+    i += 2;
+    break;
+  }
+  } 
+}
+
+// CHECK: @test4
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: add nsw i32 {{.*}}, 2
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: ret void
+void test4() {
+  switch (4) {
+    case 1:
+      dead();
+      break;
+    default: {
+      i += 2;
+      break;
+    }
+  } 
+}
+
+// This shouldn't crash codegen, but we don't have to optimize out the switch
+// in this case.
+void test5() {
+  switch (1) {
+    int x;  // eliding var decl?
+    case 1:
+      x = 4;
+      break;
+  } 
+}
+
+// CHECK: @test6
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: ret void
+void test6() {
+  // Neither case is reachable.
+  switch (40) {
+  case 1:
+   dead();
+    break;
+  case 4: {
+    dead();
+    break;
+  }
+  } 
+}
+
+// CHECK: @test7
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: add nsw i32
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: ret void
+void test7() {
+  switch (4) {
+  case 1:
+      dead();
+    break;
+    {
+      case 4:   // crazy brace scenario
+        ++i;
+    }
+    break;
+  } 
+}
+
+// CHECK: @test8
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: add nsw i32
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: ret void
+void test8() {
+  switch (4) {
+  case 1:
+    dead();
+    break;
+  case 4:
+    ++i;
+    // Fall off the end of the switch.
+  } 
+}
+
+// CHECK: @test9
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: add nsw i32
+// CHECK: add nsw i32
+// CHECK-NOT: switch
+// CHECK-NOT: @dead
+// CHECK: ret void
+void test9(int i) {
+  switch (1) {
+  case 5:
+    dead();
+  case 1:
+    ++i;
+    // Fall through is fine.
+  case 4:
+    ++i;
+    break;
+  } 
+}
+

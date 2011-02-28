@@ -857,6 +857,13 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
                                             const SwitchCase *Case,
                                             bool &FoundCase,
                               llvm::SmallVectorImpl<const Stmt*> &ResultStmts) {
+  assert((!FoundCase || Case == 0) &&
+         "Can't be looking for the case if we already found it!");
+  
+  // If this is a null statement, just succeed.
+  if (S == 0)
+    return Case ? CSFC_Success : CSFC_FallThrough;
+    
   // If this is the switchcase (case 4: or default) that we're looking for, then
   // we're in business.  Just add the substatement.
   if (const SwitchCase *SC = dyn_cast<SwitchCase>(S)) {
@@ -870,12 +877,72 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
     return CollectStatementsForCase(SC->getSubStmt(), Case, FoundCase,
                                     ResultStmts);
   }
+
+  // If we are in the live part of the code and we found our break statement,
+  // return a success!
+  if (Case == 0 && isa<BreakStmt>(S))
+    return CSFC_Success;
   
+  // If this is a switch statement, then it might contain the SwitchCase, the
+  // break, or neither.
+  if (const CompoundStmt *CS = dyn_cast<CompoundStmt>(S)) {
+    // Handle this as two cases: we might be looking for the SwitchCase (if so
+    // the skipped statements must be skippable) or we might already have it.
+    CompoundStmt::const_body_iterator I = CS->body_begin(), E = CS->body_end();
+    if (Case) {
+      // If we're looking for the case, just see if we can skip each of the
+      // substatements.
+      for (; Case && I != E; ++I) {
+        switch (CollectStatementsForCase(*I, Case, FoundCase, ResultStmts)) {
+        case CSFC_Failure: return CSFC_Failure;
+        case CSFC_Success:
+          // A successful result means that either 1) that the statement doesn't
+          // have the case and is skippable, or 2) does contain the case value
+          // and also contains the break to exit the switch.  In either case,
+          // we continue scanning the body of the compound statement to see if
+          // the rest are skippable or have the case.
+          break;
+        case CSFC_FallThrough:
+          // If we have a fallthrough condition, then we must have found the
+          // case started to include statements.  Consider the rest of the
+          // statements in the compound statement as candidates for inclusion.
+          assert(FoundCase && "Didn't find case but returned fallthrough?");
+          // We recursively found Case, so we're not looking for it anymore.
+          Case = 0;
+          break;
+        }
+      }
+    }
+
+    // If we have statements in our range, then we know that the statements are
+    // live and need to be added to the set of statements we're tracking.
+    for (; I != E; ++I) {
+      switch (CollectStatementsForCase(*I, 0, FoundCase, ResultStmts)) {
+      case CSFC_Failure: return CSFC_Failure;
+      case CSFC_FallThrough:
+        // A fallthrough result means that the statement was simple and just
+        // included in ResultStmt, keep adding them afterwards.
+        break;
+      case CSFC_Success:
+        // A successful result means that we found the break statement and
+        // stopped statement inclusion.  We just ensure that any leftover stmts
+        // are skippable and return success ourselves.
+        for (++I; I != E; ++I)
+          if (CodeGenFunction::ContainsLabel(*I, true))
+            return CSFC_Failure;
+        return CSFC_Success;
+      }      
+    }
+    
+    return Case ? CSFC_Success : CSFC_FallThrough;
+  }
+
   // Okay, this is some other statement that we don't handle explicitly, like a
   // for statement or increment etc.  If we are skipping over this statement,
   // just verify it doesn't have labels, which would make it invalid to elide.
   if (Case) {
-    if (CodeGenFunction::ContainsLabel(S, true))
+    if (CodeGenFunction::ContainsLabel(S, true) ||
+        isa<DeclStmt>(S))
       return CSFC_Failure;
     return CSFC_Success;
   }
