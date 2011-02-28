@@ -1264,13 +1264,12 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildDeclRefExpr(NestedNameSpecifier *Qualifier,
-                                SourceRange QualifierRange,
+  ExprResult RebuildDeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
                                 ValueDecl *VD,
                                 const DeclarationNameInfo &NameInfo,
                                 TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
-    SS.MakeTrivial(SemaRef.Context, Qualifier, QualifierRange);
+    SS.Adopt(QualifierLoc);
 
     // FIXME: loses template args.
 
@@ -1378,8 +1377,7 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildMemberExpr(Expr *Base, SourceLocation OpLoc,
                                bool isArrow,
-                               NestedNameSpecifier *Qualifier,
-                               SourceRange QualifierRange,
+                               NestedNameSpecifierLoc QualifierLoc,
                                const DeclarationNameInfo &MemberNameInfo,
                                ValueDecl *Member,
                                NamedDecl *FoundDecl,
@@ -1389,11 +1387,12 @@ public:
       // We have a reference to an unnamed field.  This is always the
       // base of an anonymous struct/union member access, i.e. the
       // field is always of record type.
-      assert(!Qualifier && "Can't have an unnamed field with a qualifier!");
+      assert(!QualifierLoc && "Can't have an unnamed field with a qualifier!");
       assert(Member->getType()->isRecordType() &&
              "unnamed member not of record type?");
 
-      if (getSema().PerformObjectMemberConversion(Base, Qualifier,
+      if (getSema().PerformObjectMemberConversion(Base, 
+                                        QualifierLoc.getNestedNameSpecifier(),
                                                   FoundDecl, Member))
         return ExprError();
 
@@ -1407,9 +1406,7 @@ public:
     }
 
     CXXScopeSpec SS;
-    if (Qualifier) {
-      SS.MakeTrivial(SemaRef.Context, Qualifier, QualifierRange);
-    }
+    SS.Adopt(QualifierLoc);
 
     getSema().DefaultFunctionArrayConversion(Base);
     QualType BaseType = Base->getType();
@@ -5438,11 +5435,11 @@ TreeTransform<Derived>::TransformPredefinedExpr(PredefinedExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
-  NestedNameSpecifier *Qualifier = 0;
-  if (E->getQualifier()) {
-    Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                       E->getQualifierRange());
-    if (!Qualifier)
+  NestedNameSpecifierLoc QualifierLoc;
+  if (E->getQualifierLoc()) {
+    QualifierLoc
+      = getDerived().TransformNestedNameSpecifierLoc(E->getQualifierLoc());
+    if (!QualifierLoc)
       return ExprError();
   }
 
@@ -5460,7 +5457,7 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   }
 
   if (!getDerived().AlwaysRebuild() &&
-      Qualifier == E->getQualifier() &&
+      QualifierLoc == E->getQualifierLoc() &&
       ND == E->getDecl() &&
       NameInfo.getName() == E->getDecl()->getDeclName() &&
       !E->hasExplicitTemplateArgs()) {
@@ -5483,8 +5480,8 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
       return ExprError();
   }
 
-  return getDerived().RebuildDeclRefExpr(Qualifier, E->getQualifierRange(),
-                                         ND, NameInfo, TemplateArgs);
+  return getDerived().RebuildDeclRefExpr(QualifierLoc, ND, NameInfo, 
+                                         TemplateArgs);
 }
 
 template<typename Derived>
@@ -5716,12 +5713,12 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
   if (Base.isInvalid())
     return ExprError();
 
-  NestedNameSpecifier *Qualifier = 0;
+  NestedNameSpecifierLoc QualifierLoc;
   if (E->hasQualifier()) {
-    Qualifier
-      = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                  E->getQualifierRange());
-    if (Qualifier == 0)
+    QualifierLoc
+      = getDerived().TransformNestedNameSpecifierLoc(E->getQualifierLoc());
+    
+    if (!QualifierLoc)
       return ExprError();
   }
 
@@ -5743,7 +5740,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
 
   if (!getDerived().AlwaysRebuild() &&
       Base.get() == E->getBase() &&
-      Qualifier == E->getQualifier() &&
+      QualifierLoc == E->getQualifierLoc() &&
       Member == E->getMemberDecl() &&
       FoundDecl == E->getFoundDecl() &&
       !E->hasExplicitTemplateArgs()) {
@@ -5776,8 +5773,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
 
   return getDerived().RebuildMemberExpr(Base.get(), FakeOperatorLoc,
                                         E->isArrow(),
-                                        Qualifier,
-                                        E->getQualifierRange(),
+                                        QualifierLoc,
                                         E->getMemberNameInfo(),
                                         Member,
                                         FoundDecl,
@@ -7555,8 +7551,6 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
-  NestedNameSpecifier *Qualifier = 0;
-    
   ValueDecl *ND
   = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getLocation(),
                                                        E->getDecl()));
@@ -7573,7 +7567,7 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
   }
   
   DeclarationNameInfo NameInfo(E->getDecl()->getDeclName(), E->getLocation());
-  return getDerived().RebuildDeclRefExpr(Qualifier, SourceLocation(),
+  return getDerived().RebuildDeclRefExpr(NestedNameSpecifierLoc(), 
                                          ND, NameInfo, 0);
 }
 

@@ -974,8 +974,8 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
   MarkDeclarationReferenced(NameInfo.getLoc(), D);
 
   Expr *E = DeclRefExpr::Create(Context,
-                              SS? (NestedNameSpecifier *)SS->getScopeRep() : 0,
-                                SS? SS->getRange() : SourceRange(),
+                                SS? SS->getWithLocInContext(Context) 
+                                  : NestedNameSpecifierLoc(),
                                 D, NameInfo, Ty, VK);
 
   // Just in case we're building an illegal pointer-to-member.
@@ -2064,14 +2064,7 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
                                    QualType Ty,
                                    ExprValueKind VK, ExprObjectKind OK,
                           const TemplateArgumentListInfo *TemplateArgs = 0) {
-  NestedNameSpecifier *Qualifier = 0;
-  SourceRange QualifierRange;
-  if (SS.isSet()) {
-    Qualifier = (NestedNameSpecifier *) SS.getScopeRep();
-    QualifierRange = SS.getRange();
-  }
-
-  return MemberExpr::Create(C, Base, isArrow, Qualifier, QualifierRange,
+  return MemberExpr::Create(C, Base, isArrow, SS.getWithLocInContext(C),
                             Member, FoundDecl, MemberNameInfo,
                             TemplateArgs, Ty, VK, OK);
 }

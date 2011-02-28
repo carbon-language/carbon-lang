@@ -1783,7 +1783,8 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
                           diag::err_invalid_use_of_array_type)
                      << ConditionVar->getSourceRange());
 
-  Expr *Condition = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
+  Expr *Condition = DeclRefExpr::Create(Context, NestedNameSpecifierLoc(), 
+                                        ConditionVar,
                                         ConditionVar->getLocation(),
                             ConditionVar->getType().getNonReferenceType(),
                                         VK_LValue);

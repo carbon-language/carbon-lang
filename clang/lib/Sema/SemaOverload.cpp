@@ -8928,10 +8928,8 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
       TemplateArgs = &TemplateArgsBuffer;
     }
 
-    // FIXME: Nested-name-specifier source location information for DeclRefExpr.
     return DeclRefExpr::Create(Context,
-                               ULE->getQualifier(),
-                               ULE->getQualifierLoc().getSourceRange(),
+                               ULE->getQualifierLoc(),
                                Fn,
                                ULE->getNameLoc(),
                                Fn->getType(),
@@ -8952,11 +8950,9 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     // If we're filling in a static method where we used to have an
     // implicit member access, rewrite to a simple decl ref.
     if (MemExpr->isImplicitAccess()) {
-      // FIXME: Source location information for DeclRefExpr
       if (cast<CXXMethodDecl>(Fn)->isStatic()) {
         return DeclRefExpr::Create(Context,
-                                   MemExpr->getQualifier(),
-                                   MemExpr->getQualifierLoc().getSourceRange(),
+                                   MemExpr->getQualifierLoc(),
                                    Fn,
                                    MemExpr->getMemberLoc(),
                                    Fn->getType(),
@@ -8973,11 +8969,9 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     } else
       Base = MemExpr->getBase();
 
-    // FIXME: Source location information for MemberExpr
     return MemberExpr::Create(Context, Base,
                               MemExpr->isArrow(),
-                              MemExpr->getQualifier(),
-                              MemExpr->getQualifierLoc().getSourceRange(),
+                              MemExpr->getQualifierLoc(),
                               Fn,
                               Found,
                               MemExpr->getMemberNameInfo(),

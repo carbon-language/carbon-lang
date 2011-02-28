@@ -2124,8 +2124,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         MemberExpr *M = cast<MemberExprParts>(&LI)->get();
         
         // Visit the nested-name-specifier
-        if (NestedNameSpecifier *Qualifier = M->getQualifier())
-          if (VisitNestedNameSpecifier(Qualifier, M->getQualifierRange()))
+        if (NestedNameSpecifierLoc QualifierLoc = M->getQualifierLoc())
+          if (VisitNestedNameSpecifierLoc(QualifierLoc))
             return true;
         
         // Visit the declaration name.
@@ -2146,8 +2146,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
       case VisitorJob::DeclRefExprPartsKind: {
         DeclRefExpr *DR = cast<DeclRefExprParts>(&LI)->get();
         // Visit nested-name-specifier, if present.
-        if (NestedNameSpecifier *Qualifier = DR->getQualifier())
-          if (VisitNestedNameSpecifier(Qualifier, DR->getQualifierRange()))
+        if (NestedNameSpecifierLoc QualifierLoc = DR->getQualifierLoc())
+          if (VisitNestedNameSpecifierLoc(QualifierLoc))
             return true;
         // Visit declaration name.
         if (VisitDeclarationNameInfo(DR->getNameInfo()))

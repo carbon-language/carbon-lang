@@ -3728,8 +3728,8 @@ Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
   if (T.isNull())
     return 0;
   
-  return DeclRefExpr::Create(Importer.getToContext(), Qualifier,
-                             Importer.Import(E->getQualifierRange()),
+  return DeclRefExpr::Create(Importer.getToContext(), 
+                             Importer.Import(E->getQualifierLoc()),
                              ToD,
                              Importer.Import(E->getLocation()),
                              T, E->getValueKind(),

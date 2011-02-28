@@ -1728,7 +1728,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     QualType ParamType = Param->getType().getNonReferenceType();
     
     Expr *CopyCtorArg = 
-      DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
+      DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
                           Constructor->getLocation(), ParamType,
                           VK_LValue, 0);
     
@@ -1789,7 +1789,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     QualType ParamType = Param->getType().getNonReferenceType();
     
     Expr *MemberExprBase = 
-      DeclRefExpr::Create(SemaRef.Context, 0, SourceRange(), Param, 
+      DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
                           Loc, ParamType, VK_LValue, 0);
 
     // Build a reference to this field within the parameter.

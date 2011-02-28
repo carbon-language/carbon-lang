@@ -382,10 +382,8 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   Record.push_back(E->hasQualifier());
   Record.push_back(E->hasExplicitTemplateArgs());
 
-  if (E->hasQualifier()) {
-    Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
-    Writer.AddSourceRange(E->getQualifierRange(), Record);
-  }
+  if (E->hasQualifier())
+    Writer.AddNestedNameSpecifierLoc(E->getQualifierLoc(), Record);
 
   if (E->hasExplicitTemplateArgs()) {
     unsigned NumTemplateArgs = E->getNumTemplateArgs();
@@ -541,10 +539,8 @@ void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
   // Don't call VisitExpr, we'll write everything here.
 
   Record.push_back(E->hasQualifier());
-  if (E->hasQualifier()) {
-    Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
-    Writer.AddSourceRange(E->getQualifierRange(), Record);
-  }
+  if (E->hasQualifier())
+    Writer.AddNestedNameSpecifierLoc(E->getQualifierLoc(), Record);
 
   Record.push_back(E->hasExplicitTemplateArgs());
   if (E->hasExplicitTemplateArgs()) {

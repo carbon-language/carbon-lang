@@ -429,8 +429,8 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
          ? DeclRefExpr::HasExplicitTemplateArgumentListFlag : 0));
   
   if (HasQualifier) {
-    E->getNameQualifier()->NNS = Reader.ReadNestedNameSpecifier(Record, Idx);
-    E->getNameQualifier()->Range = ReadSourceRange(Record, Idx);
+    E->getNameQualifier()->QualifierLoc
+      = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
   }
 
   if (HasExplicitTemplateArgs) {
@@ -1563,11 +1563,9 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       // logic with a MemberExpr::CreateEmpty.
 
       assert(Idx == 0);
-      NestedNameSpecifier *NNS = 0;
-      SourceRange QualifierRange;
+      NestedNameSpecifierLoc QualifierLoc;
       if (Record[Idx++]) { // HasQualifier.
-        NNS = ReadNestedNameSpecifier(Record, Idx);
-        QualifierRange = ReadSourceRange(F, Record, Idx);
+        QualifierLoc = ReadNestedNameSpecifierLoc(F, Record, Idx);
       }
 
       TemplateArgumentListInfo ArgInfo;
@@ -1593,7 +1591,7 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       DeclarationNameInfo MemberNameInfo(MemberD->getDeclName(), MemberLoc);
       bool IsArrow = Record[Idx++];
 
-      S = MemberExpr::Create(*Context, Base, IsArrow, NNS, QualifierRange,
+      S = MemberExpr::Create(*Context, Base, IsArrow, QualifierLoc,
                              MemberD, FoundDecl, MemberNameInfo,
                              HasExplicitTemplateArgs ? &ArgInfo : 0, T, VK, OK);
       ReadDeclarationNameLoc(F, cast<MemberExpr>(S)->MemberDNLoc,
