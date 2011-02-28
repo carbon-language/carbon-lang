@@ -27,4 +27,6 @@ ifneq ($(HAVE_PTHREAD), 1)
   CPP.Flags += -DGTEST_HAS_PTHREAD=0
 endif
 
+NO_INSTALL = 1
+
 include $(LEVEL)/Makefile.common
