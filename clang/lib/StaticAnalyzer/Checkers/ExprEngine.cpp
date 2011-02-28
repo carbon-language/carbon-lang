@@ -337,7 +337,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   // This is not a checker yet.
   RegisterNoReturnFunctionChecker(Eng);
   RegisterBuiltinFunctionChecker(Eng);
-  RegisterOSAtomicChecker(Eng);
 }
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)

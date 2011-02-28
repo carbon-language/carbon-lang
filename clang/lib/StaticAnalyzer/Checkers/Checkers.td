@@ -93,6 +93,11 @@ def MacOSXAPIChecker : Checker<"API">,
   HelpText<"Check for proper uses of various Mac OS X APIs">,
   DescFile<"MacOSXAPIChecker.cpp">;
 
+def OSAtomicChecker : Checker<"AtomicCAS">,
+  InPackage<MacOSX>,
+  HelpText<"Evaluate calls to OSAtomic functions">,
+  DescFile<"OSAtomicChecker.cpp">;
+
 def CFNumberCreateChecker : Checker<"CFNumber">,
   InPackage<MacOSX>,
   HelpText<"Check for proper uses of CFNumberCreate">,

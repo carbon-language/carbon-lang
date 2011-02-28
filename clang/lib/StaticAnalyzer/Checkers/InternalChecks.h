@@ -37,9 +37,6 @@ void RegisterUndefinedArraySubscriptChecker(ExprEngine &Eng);
 void RegisterUndefinedAssignmentChecker(ExprEngine &Eng);
 void RegisterVLASizeChecker(ExprEngine &Eng);
 
-// API checks.
-void RegisterOSAtomicChecker(ExprEngine &Eng);
-
 } // end GR namespace
 
 } // end clang namespace
