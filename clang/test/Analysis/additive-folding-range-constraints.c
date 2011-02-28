@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-experimental-checks -verify -analyzer-constraints=range %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.experimental -verify -analyzer-constraints=range %s
 
 // These are used to trigger warnings.
 typedef typeof(sizeof(int)) size_t;

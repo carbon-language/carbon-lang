@@ -39,8 +39,6 @@ class ExprEngine;
 TransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                   const LangOptions& lopts);
 
-void RegisterExperimentalChecks(ExprEngine &Eng);
-
 void RegisterCallInliner(ExprEngine &Eng);
 
 } // end GR namespace

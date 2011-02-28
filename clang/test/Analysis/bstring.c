@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental.CString -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
-// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -analyzer-checker=core.experimental.CString -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
-// RUN: %clang_cc1 -analyze -DVARIANT -analyzer-checker=core.experimental.CString -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
-// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=core.experimental.CString -analyzer-check-objc-mem -analyzer-store=region -analyzer-experimental-checks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental.CString -analyzer-check-objc-mem -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -analyzer-checker=core.experimental.CString -analyzer-check-objc-mem -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -DVARIANT -analyzer-checker=core.experimental.CString -analyzer-check-objc-mem -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=core.experimental.CString -analyzer-check-objc-mem -analyzer-store=region -verify %s
 
 //===----------------------------------------------------------------------===
 // Declarations

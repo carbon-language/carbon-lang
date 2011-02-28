@@ -22,7 +22,6 @@ namespace ento {
 class ExprEngine;
 
 void RegisterAnalyzerStatsChecker(ExprEngine &Eng);
-void RegisterMallocChecker(ExprEngine &Eng);
 
 } // end GR namespace
 

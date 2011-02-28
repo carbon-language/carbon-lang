@@ -71,8 +71,6 @@ def analyzer_opt_analyze_nested_blocks : Flag<"-analyzer-opt-analyze-nested-bloc
   HelpText<"Analyze the definitions of blocks in addition to functions">;
 def analyzer_display_progress : Flag<"-analyzer-display-progress">,
   HelpText<"Emit verbose output about the analyzer's progress">;
-def analyzer_experimental_checks : Flag<"-analyzer-experimental-checks">,
-  HelpText<"Use experimental path-sensitive checks">;
 def analyze_function : Separate<"-analyze-function">,
   HelpText<"Run analysis on specific function">;
 def analyze_function_EQ : Joined<"-analyze-function=">, Alias<analyze_function>;

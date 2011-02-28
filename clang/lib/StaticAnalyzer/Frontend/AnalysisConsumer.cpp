@@ -342,9 +342,6 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
 
   RegisterNSErrorChecks(Eng.getBugReporter(), Eng, *D);
 
-  if (C.Opts.EnableExperimentalChecks)
-    RegisterExperimentalChecks(Eng);
-
   if (C.Opts.BufferOverflows)
     RegisterArrayBoundCheckerV2(Eng);
 
