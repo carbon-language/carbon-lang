@@ -68,7 +68,6 @@ public:
   unsigned AnalyzeAll : 1;
   unsigned AnalyzerDisplayProgress : 1;
   unsigned AnalyzeNestedBlocks : 1;
-  unsigned AnalyzerStats : 1;
   unsigned EagerlyAssume : 1;
   unsigned BufferOverflows : 1;
   unsigned PurgeDead : 1;
@@ -90,7 +89,6 @@ public:
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;
     AnalyzeNestedBlocks = 0;
-    AnalyzerStats = 0;
     EagerlyAssume = 0;
     BufferOverflows = 0;    
     PurgeDead = 1;

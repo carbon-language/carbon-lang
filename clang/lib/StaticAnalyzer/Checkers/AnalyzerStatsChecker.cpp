@@ -9,12 +9,12 @@
 // This file reports various statistics about analyzer visitation.
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
-
-// FIXME: Restructure checker registration.
-#include "ExperimentalChecks.h"
 
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -23,32 +23,20 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class AnalyzerStatsChecker : public CheckerVisitor<AnalyzerStatsChecker> {
+class AnalyzerStatsChecker : public CheckerV2<check::EndAnalysis> {
 public:
-  static void *getTag();
-  void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B, ExprEngine &Eng);
-
-private:
-  llvm::SmallPtrSet<const CFGBlock*, 256> reachable;
+  void checkEndAnalysis(ExplodedGraph &G, BugReporter &B,ExprEngine &Eng) const;
 };
 }
 
-void *AnalyzerStatsChecker::getTag() {
-  static int x = 0;
-  return &x;
-}
-
-void ento::RegisterAnalyzerStatsChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new AnalyzerStatsChecker());
-}
-
-void AnalyzerStatsChecker::VisitEndAnalysis(ExplodedGraph &G,
+void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
                                             BugReporter &B,
-                                            ExprEngine &Eng) {
+                                            ExprEngine &Eng) const {
   const CFG *C  = 0;
   const Decl *D = 0;
   const LocationContext *LC = 0;
   const SourceManager &SM = B.getSourceManager();
+  llvm::SmallPtrSet<const CFGBlock*, 256> reachable;
 
   // Iterate over explodedgraph
   for (ExplodedGraph::node_iterator I = G.nodes_begin();
@@ -120,4 +108,8 @@ void AnalyzerStatsChecker::VisitEndAnalysis(ExplodedGraph &G,
       B.EmitBasicReport("Bailout Point", "Internal Statistics", "The analyzer "
           "stopped analyzing at this point", CS->getStmt()->getLocStart());
   }
+}
+
+void ento::registerAnalyzerStatsChecker(CheckerManager &mgr) {
+  mgr.registerChecker<AnalyzerStatsChecker>();
 }

@@ -123,6 +123,11 @@ def CFGDumper : Checker<"DumpCFG">,
   HelpText<"Display Control-Flow Graphs">,
   DescFile<"DebugCheckers.cpp">;
 
+def AnalyzerStatsChecker : Checker<"Stats">,
+  InPackage<Debug>,
+  HelpText<"Emit warnings with analyzer statistics">,
+  DescFile<"AnalyzerStatsChecker.cpp">;
+
 //===----------------------------------------------------------------------===//
 // Hidden experimental checkers.
 //===----------------------------------------------------------------------===//

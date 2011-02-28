@@ -46,8 +46,6 @@ def analysis_WarnUninitVals : Flag<"-warn-uninit-values">,
   HelpText<"Warn about uses of uninitialized variables">;
 def analysis_ObjCMemChecker : Flag<"-analyzer-check-objc-mem">,
   HelpText<"Run the [Core] Foundation reference count checker">;
-def analysis_AnalyzerStats : Flag<"-analyzer-stats">,
-  HelpText<"Emit warnings with analyzer statistics">;
 def analysis_WarnBufferOverflows : Flag<"-analyzer-check-buffer-overflows">,
   HelpText<"Warn about buffer overflows">;
 
