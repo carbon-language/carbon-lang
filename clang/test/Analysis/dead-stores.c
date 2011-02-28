@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core.DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core.DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core.DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core.DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=core.DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-checker=DeadStores,core.experimental.IdempotentOps -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
 
 void f1() {
   int k, y; // expected-warning{{unused variable 'k'}} expected-warning{{unused variable 'y'}}

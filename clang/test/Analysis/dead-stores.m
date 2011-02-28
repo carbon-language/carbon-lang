@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-checker=core.DeadStores -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-checker=DeadStores -verify %s
 
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;

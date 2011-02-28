@@ -83,11 +83,11 @@ def StackAddrEscapeChecker : Checker<"StackAddrEscape">,
   HelpText<"Check that addresses to stack memory do not escape the function">,
   DescFile<"StackAddrEscapeChecker.cpp">;
 
+} // end "core"
+
 def DeadStoresChecker : Checker<"DeadStores">,
   HelpText<"Check for values stored to a variables that are never read afterwards">,
   DescFile<"DeadStoresChecker.cpp">;
-
-} // end "core"
 
 def UnixAPIChecker : Checker<"API">,
   InPackage<Unix>,

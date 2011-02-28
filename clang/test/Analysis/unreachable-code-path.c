@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.DeadStores,core.experimental.UnreachableCode -analyzer-check-objc-mem -verify -analyzer-opt-analyze-nested-blocks -Wno-unused-value %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=DeadStores,core.experimental.UnreachableCode -analyzer-check-objc-mem -verify -analyzer-opt-analyze-nested-blocks -Wno-unused-value %s
 
 extern void foo(int a);
 
