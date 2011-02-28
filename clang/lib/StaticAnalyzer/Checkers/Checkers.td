@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def CallAndMessageChecker : Checker<"CallAndMsg">,
+  HelpText<"Check for errors of call and objc message expressions">,
+  DescFile<"CallAndMessageChecker.cpp">;
+
 def AdjustedReturnValueChecker : Checker<"AdjustRet">,
   HelpText<"Check to see if the return value of a function call is different than the caller expects">,
   DescFile<"AdjustedReturnValueChecker.cpp">;

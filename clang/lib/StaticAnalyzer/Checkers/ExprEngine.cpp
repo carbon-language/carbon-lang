@@ -321,7 +321,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   // object.
   // CallAndMessageChecker should be registered before AttrNonNullChecker,
   // where we assume arguments are not undefined.
-  RegisterCallAndMessageChecker(Eng);
   RegisterDereferenceChecker(Eng);
 }
 
