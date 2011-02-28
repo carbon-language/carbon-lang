@@ -12,39 +12,32 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 class UndefinedArraySubscriptChecker
-  : public CheckerVisitor<UndefinedArraySubscriptChecker> {
-  BugType *BT;
+  : public CheckerV2< check::PreStmt<ArraySubscriptExpr> > {
+  mutable llvm::OwningPtr<BugType> BT;
+
 public:
-  UndefinedArraySubscriptChecker() : BT(0) {}
-  static void *getTag() {
-    static int x = 0;
-    return &x;
-  }
-  void PreVisitArraySubscriptExpr(CheckerContext &C, 
-                                  const ArraySubscriptExpr *A);
+  void checkPreStmt(const ArraySubscriptExpr *A, CheckerContext &C) const;
 };
 } // end anonymous namespace
 
-void ento::RegisterUndefinedArraySubscriptChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new UndefinedArraySubscriptChecker());
-}
-
 void 
-UndefinedArraySubscriptChecker::PreVisitArraySubscriptExpr(CheckerContext &C, 
-                                                const ArraySubscriptExpr *A) {
+UndefinedArraySubscriptChecker::checkPreStmt(const ArraySubscriptExpr *A,
+                                             CheckerContext &C) const {
   if (C.getState()->getSVal(A->getIdx()).isUndef()) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT)
-        BT = new BuiltinBug("Array subscript is undefined");
+        BT.reset(new BuiltinBug("Array subscript is undefined"));
 
       // Generate a report for this bug.
       EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName(), N);
@@ -54,4 +47,8 @@ UndefinedArraySubscriptChecker::PreVisitArraySubscriptExpr(CheckerContext &C,
       C.EmitReport(R);
     }
   }
+}
+
+void ento::registerUndefinedArraySubscriptChecker(CheckerManager &mgr) {
+  mgr.registerChecker<UndefinedArraySubscriptChecker>();
 }
