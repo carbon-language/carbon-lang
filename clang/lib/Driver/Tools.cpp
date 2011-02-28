@@ -845,7 +845,7 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
                                  options::OPT_fno_exceptions)) {
       if (A->getOption().matches(options::OPT_fcxx_exceptions))
         CXXExceptionsEnabled = true;
-      else
+      else if (A->getOption().matches(options::OPT_fno_cxx_exceptions))
         CXXExceptionsEnabled = false;
     }
 
