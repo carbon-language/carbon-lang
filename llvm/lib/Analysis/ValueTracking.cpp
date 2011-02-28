@@ -696,6 +696,15 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
     return isPowerOfTwo(SI->getTrueValue(), TD, Depth) &&
       isPowerOfTwo(SI->getFalseValue(), TD, Depth);
 
+  // An exact divide or right shift can only shift off zero bits, so the result
+  // is non-zero only if the first operand is non-zero.
+  if (match(V, m_Shr(m_Value(), m_Value())) ||
+      match(V, m_IDiv(m_Value(), m_Value()))) {
+    BinaryOperator *BO = cast<BinaryOperator>(V);
+    if (BO->isExact())
+      return isPowerOfTwo(BO->getOperand(0), TD, Depth);
+  }
+
   return false;
 }
 
@@ -732,6 +741,11 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
   // shl X, Y != 0 if X is odd.  Note that the value of the shift is undefined
   // if the lowest bit is shifted off the end.
   if (BitWidth && match(V, m_Shl(m_Value(X), m_Value(Y)))) {
+    // shl nuw can't remove any non-zero bits.
+    BinaryOperator *BO = cast<BinaryOperator>(V);
+    if (BO->hasNoUnsignedWrap())
+      return isKnownNonZero(X, TD, Depth);
+
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
     ComputeMaskedBits(X, APInt(BitWidth, 1), KnownZero, KnownOne, TD, Depth);
@@ -741,10 +755,21 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
   // shr X, Y != 0 if X is negative.  Note that the value of the shift is not
   // defined if the sign bit is shifted off the end.
   else if (match(V, m_Shr(m_Value(X), m_Value(Y)))) {
+    // shr exact can only shift out zero bits.
+    BinaryOperator *BO = cast<BinaryOperator>(V);
+    if (BO->isExact())
+      return isKnownNonZero(X, TD, Depth);
+
     bool XKnownNonNegative, XKnownNegative;
     ComputeSignBit(X, XKnownNonNegative, XKnownNegative, TD, Depth);
     if (XKnownNegative)
       return true;
+  }
+  // div exact can only produce a zero if the dividend is zero.
+  else if (match(V, m_IDiv(m_Value(X), m_Value()))) {
+    BinaryOperator *BO = cast<BinaryOperator>(V);
+    if (BO->isExact())
+      return isKnownNonZero(X, TD, Depth);
   }
   // X + Y.
   else if (match(V, m_Add(m_Value(X), m_Value(Y)))) {
