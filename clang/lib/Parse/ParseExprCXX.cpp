@@ -199,29 +199,32 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
 
       if (TemplateId->Kind == TNK_Type_template ||
           TemplateId->Kind == TNK_Dependent_template_name) {
-        AnnotateTemplateIdTokenAsType(&SS);
-
-        assert(Tok.is(tok::annot_typename) &&
-               "AnnotateTemplateIdTokenAsType isn't working");
-        Token TypeToken = Tok;
+        // Consume the template-id token.
         ConsumeToken();
+        
         assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
         SourceLocation CCLoc = ConsumeToken();
 
         if (!HasScopeSpecifier)
           HasScopeSpecifier = true;
-
-        if (ParsedType T = getTypeAnnotation(TypeToken)) {
-          if (Actions.ActOnCXXNestedNameSpecifier(getCurScope(), T, CCLoc, SS))
-            SS.SetInvalid(SourceRange(SS.getBeginLoc(), CCLoc));
-          
-          continue;
-        } else {
-          SourceLocation Start = SS.getBeginLoc().isValid()? SS.getBeginLoc() 
-                                                           : CCLoc;
-          SS.SetInvalid(SourceRange(Start, CCLoc));
-        }
         
+        ASTTemplateArgsPtr TemplateArgsPtr(Actions,
+                                           TemplateId->getTemplateArgs(),
+                                           TemplateId->NumArgs);
+        
+        if (Actions.ActOnCXXNestedNameSpecifier(getCurScope(),
+                                                /*FIXME:*/SourceLocation(),
+                                                SS, 
+                                                TemplateId->Template,
+                                                TemplateId->TemplateNameLoc,
+                                                TemplateId->LAngleLoc,
+                                                TemplateArgsPtr,
+                                                TemplateId->RAngleLoc,
+                                                CCLoc,
+                                                EnteringContext))
+          SS.SetInvalid(SourceRange(SS.getBeginLoc(), CCLoc));
+        
+        TemplateId->Destroy();
         continue;
       }
 

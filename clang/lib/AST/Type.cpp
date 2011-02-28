@@ -1040,9 +1040,9 @@ DependentTemplateSpecializationType::DependentTemplateSpecializationType(
                          QualType Canon)
   : TypeWithKeyword(Keyword, DependentTemplateSpecialization, Canon, true,
                     /*VariablyModified=*/false,
-                    NNS->containsUnexpandedParameterPack()),
+                    NNS && NNS->containsUnexpandedParameterPack()),
     NNS(NNS), Name(Name), NumArgs(NumArgs) {
-  assert(NNS && NNS->isDependent() &&
+  assert((!NNS || NNS->isDependent()) &&
          "DependentTemplateSpecializatonType requires dependent qualifier");
   for (unsigned I = 0; I != NumArgs; ++I) {
     if (Args[I].containsUnexpandedParameterPack())

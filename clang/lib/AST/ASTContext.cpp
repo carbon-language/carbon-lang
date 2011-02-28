@@ -2377,7 +2377,8 @@ ASTContext::getDependentTemplateSpecializationType(
                                  const IdentifierInfo *Name,
                                  unsigned NumArgs,
                                  const TemplateArgument *Args) const {
-  assert(NNS->isDependent() && "nested-name-specifier must be dependent");
+  assert((!NNS || NNS->isDependent()) && 
+         "nested-name-specifier must be dependent");
 
   llvm::FoldingSetNodeID ID;
   DependentTemplateSpecializationType::Profile(ID, *this, Keyword, NNS,
@@ -3014,10 +3015,11 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const {
           = T->getAs<DependentTemplateSpecializationType>()) {
       NestedNameSpecifier *Prefix
         = getCanonicalNestedNameSpecifier(DTST->getQualifier());
-      TemplateName Name
-        = getDependentTemplateName(Prefix, DTST->getIdentifier());
-      T = getTemplateSpecializationType(Name, 
-                                        DTST->getArgs(), DTST->getNumArgs());
+      
+      T = getDependentTemplateSpecializationType(DTST->getKeyword(),
+                                                 Prefix, DTST->getIdentifier(),
+                                                 DTST->getNumArgs(),
+                                                 DTST->getArgs());
       T = getCanonicalType(T);
     }
     

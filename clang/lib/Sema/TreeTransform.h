@@ -754,6 +754,9 @@ public:
       getDerived().RebuildTemplateSpecializationType(InstName, NameLoc, Args);
     if (T.isNull()) return QualType();
 
+    if (Keyword == ETK_None)
+      return T;
+    
     // NOTE: NNS is already recorded in template specialization type T.
     return SemaRef.Context.getElaboratedType(Keyword, /*NNS=*/0, T);
   }

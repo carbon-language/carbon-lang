@@ -641,20 +641,73 @@ bool Sema::IsInvalidUnlessNestedName(Scope *S, CXXScopeSpec &SS,
 }
 
 bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
-                                       ParsedType Type,
+                                       SourceLocation TemplateLoc, 
+                                       CXXScopeSpec &SS, 
+                                       TemplateTy Template,
+                                       SourceLocation TemplateNameLoc,
+                                       SourceLocation LAngleLoc,
+                                       ASTTemplateArgsPtr TemplateArgsIn,
+                                       SourceLocation RAngleLoc,
                                        SourceLocation CCLoc,
-                                       CXXScopeSpec &SS) {
+                                       bool EnteringContext) {
   if (SS.isInvalid())
     return true;
   
-  TypeSourceInfo *TSInfo;
-  QualType T = GetTypeFromParser(Type, &TSInfo);
+  // Translate the parser's template argument list in our AST format.
+  TemplateArgumentListInfo TemplateArgs(LAngleLoc, RAngleLoc);
+  translateTemplateArguments(TemplateArgsIn, TemplateArgs);
+
+  if (DependentTemplateName *DTN = Template.get().getAsDependentTemplateName()){
+    // Handle a dependent template specialization for which we cannot resolve
+    // the template name.
+    assert(DTN->getQualifier()
+             == static_cast<NestedNameSpecifier*>(SS.getScopeRep()));
+    QualType T = Context.getDependentTemplateSpecializationType(ETK_None,
+                                                                DTN->getQualifier(),
+                                                                DTN->getIdentifier(),
+                                                                TemplateArgs);
+    
+    // Create source-location information for this type.
+    TypeLocBuilder Builder;
+    DependentTemplateSpecializationTypeLoc SpecTL 
+      = Builder.push<DependentTemplateSpecializationTypeLoc>(T);
+    SpecTL.setLAngleLoc(LAngleLoc);
+    SpecTL.setRAngleLoc(RAngleLoc);
+    SpecTL.setKeywordLoc(SourceLocation());
+    SpecTL.setNameLoc(TemplateNameLoc);
+    for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
+      SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
+    
+    SS.Extend(Context, TemplateLoc, Builder.getTypeLocInContext(Context, T), 
+              CCLoc);
+    return false;
+  }
+  
+  // We were able to resolve the template name to an actual template. 
+  // Build an appropriate nested-name-specifier.
+  QualType T = CheckTemplateIdType(Template.get(), TemplateNameLoc, 
+                                   TemplateArgs);
   if (T.isNull())
     return true;
 
-  assert(TSInfo && "Not TypeSourceInfo in nested-name-specifier?");
-  // FIXME: location of the 'template' keyword?
-  SS.Extend(Context, SourceLocation(), TSInfo->getTypeLoc(), CCLoc);
+  // FIXME: Template aliases will need to check the resulting type to make
+  // sure that it's either dependent or a tag type.
+
+  // Provide source-location information for the template specialization 
+  // type.
+  TypeLocBuilder Builder;
+  TemplateSpecializationTypeLoc SpecTL 
+    = Builder.push<TemplateSpecializationTypeLoc>(T);
+  
+  SpecTL.setLAngleLoc(LAngleLoc);
+  SpecTL.setRAngleLoc(RAngleLoc);
+  SpecTL.setTemplateNameLoc(TemplateNameLoc);
+  for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
+    SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
+
+
+  SS.Extend(Context, TemplateLoc, Builder.getTypeLocInContext(Context, T), 
+            CCLoc);
   return false;
 }
 

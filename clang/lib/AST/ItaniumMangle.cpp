@@ -625,6 +625,17 @@ void CXXNameMangler::mangleUnresolvedScope(NestedNameSpecifier *Qualifier) {
                            TST->getNumArgs());
         addSubstitution(QualType(TST, 0));
       }
+    } else if (const DependentTemplateSpecializationType *DTST
+                         = dyn_cast<DependentTemplateSpecializationType>(QTy)) {
+      TemplateName Template
+        = getASTContext().getDependentTemplateName(DTST->getQualifier(), 
+                                                   DTST->getIdentifier());
+      mangleTemplatePrefix(Template);
+
+      // FIXME: GCC does not appear to mangle the template arguments when
+      // the template in question is a dependent template name. Should we
+      // emulate that badness?
+      mangleTemplateArgs(Template, DTST->getArgs(), DTST->getNumArgs());
     } else {
       // We use the QualType mangle type variant here because it handles
       // substitutions.
@@ -1596,7 +1607,7 @@ void CXXNameMangler::mangleType(const DependentNameType *T) {
 }
 
 void CXXNameMangler::mangleType(const DependentTemplateSpecializationType *T) {
-  // Dependently-scoped template types are always nested
+  // Dependently-scoped template types are nested if they have a prefix.
   Out << 'N';
 
   // TODO: avoid making this TemplateName.

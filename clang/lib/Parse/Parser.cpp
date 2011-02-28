@@ -1062,6 +1062,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
                                      TemplateId->LAngleLoc,
                                      TemplateArgsPtr, 
                                      TemplateId->RAngleLoc);
+      TemplateId->Destroy();
     } else {
       Diag(Tok, diag::err_expected_type_name_after_typename)
         << SS.getRange();

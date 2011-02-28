@@ -2659,25 +2659,41 @@ public:
                                  ParsedType ObjectType,
                                  bool EnteringContext);
 
-  /// \brief The parser has parsed a nested-name-specifier 'type::'.
+  /// \brief The parser has parsed a nested-name-specifier 
+  /// 'template[opt] template-name < template-args >::'.
   ///
   /// \param S The scope in which this nested-name-specifier occurs.
   ///
-  /// \param Type The type, which will be a template specialization
-  /// type, preceding the '::'.
-  ///
-  /// \param CCLoc The location of the '::'.
+  /// \param TemplateLoc The location of the 'template' keyword, if any.
   ///
   /// \param SS The nested-name-specifier, which is both an input
   /// parameter (the nested-name-specifier before this type) and an
   /// output parameter (containing the full nested-name-specifier,
   /// including this new type).
+  /// 
+  /// \param TemplateLoc the location of the 'template' keyword, if any.
+  /// \param TemplateName The template name.
+  /// \param TemplateNameLoc The location of the template name.
+  /// \param LAngleLoc The location of the opening angle bracket  ('<').
+  /// \param TemplateArgs The template arguments.
+  /// \param RAngleLoc The location of the closing angle bracket  ('>').
+  /// \param CCLoc The location of the '::'.
+  
+  /// \param EnteringContext Whether we're entering the context of the 
+  /// nested-name-specifier.
+  ///
   ///
   /// \returns true if an error occurred, false otherwise.
   bool ActOnCXXNestedNameSpecifier(Scope *S,
-                                   ParsedType Type,
+                                   SourceLocation TemplateLoc, 
+                                   CXXScopeSpec &SS, 
+                                   TemplateTy Template,
+                                   SourceLocation TemplateNameLoc,
+                                   SourceLocation LAngleLoc,
+                                   ASTTemplateArgsPtr TemplateArgs,
+                                   SourceLocation RAngleLoc,
                                    SourceLocation CCLoc,
-                                   CXXScopeSpec &SS);
+                                   bool EnteringContext);
 
   /// \brief Given a C++ nested-name-specifier, produce an annotation value
   /// that the parser can use later to reconstruct the given 
