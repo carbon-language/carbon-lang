@@ -387,9 +387,12 @@ bool CodeGenFunction::ContainsLabel(const Stmt *S, bool IgnoreCaseStmts) {
 
   // If this is a label, we have to emit the code, consider something like:
   // if (0) {  ...  foo:  bar(); }  goto foo;
+  //
+  // TODO: If anyone cared, we could track __label__'s, since we know that you
+  // can't jump to one from outside their declared region.
   if (isa<LabelStmt>(S))
     return true;
-
+  
   // If this is a case/default statement, and we haven't seen a switch, we have
   // to emit the code.
   if (isa<SwitchCase>(S) && !IgnoreCaseStmts)
@@ -407,25 +410,60 @@ bool CodeGenFunction::ContainsLabel(const Stmt *S, bool IgnoreCaseStmts) {
   return false;
 }
 
+/// containsBreak - Return true if the statement contains a break out of it.
+/// If the statement (recursively) contains a switch or loop with a break
+/// inside of it, this is fine.
+bool CodeGenFunction::containsBreak(const Stmt *S) {
+  // Null statement, not a label!
+  if (S == 0) return false;
+
+  // If this is a switch or loop that defines its own break scope, then we can
+  // include it and anything inside of it.
+  if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || isa<DoStmt>(S) ||
+      isa<ForStmt>(S))
+    return true;
+  
+  // Scan subexpressions for verboten breaks.
+  for (Stmt::const_child_range I = S->children(); I; ++I)
+    if (containsBreak(*I))
+      return true;
+  
+  return false;
+}
+
 
 /// ConstantFoldsToSimpleInteger - If the specified expression does not fold
 /// to a constant, or if it does but contains a label, return false.  If it
 /// constant folds return true and set the boolean result in Result.
 bool CodeGenFunction::ConstantFoldsToSimpleInteger(const Expr *Cond,
                                                    bool &ResultBool) {
+  llvm::APInt ResultInt;
+  if (!ConstantFoldsToSimpleInteger(Cond, ResultInt))
+    return false;
+  
+  ResultBool = ResultInt.getBoolValue();
+  return true;
+}
+
+/// ConstantFoldsToSimpleInteger - If the specified expression does not fold
+/// to a constant, or if it does but contains a label, return false.  If it
+/// constant folds return true and set the folded value.
+bool CodeGenFunction::
+ConstantFoldsToSimpleInteger(const Expr *Cond, llvm::APInt &ResultInt) {
   // FIXME: Rename and handle conversion of other evaluatable things
   // to bool.
   Expr::EvalResult Result;
   if (!Cond->Evaluate(Result, getContext()) || !Result.Val.isInt() ||
       Result.HasSideEffects)
     return false;  // Not foldable, not integer or not fully evaluatable.
-
+  
   if (CodeGenFunction::ContainsLabel(Cond))
     return false;  // Contains a label.
-
-  ResultBool = Result.Val.getInt().getBoolValue();
+  
+  ResultInt = Result.Val.getInt();
   return true;
 }
+
 
 
 /// EmitBranchOnBoolExpr - Emit a branch on a boolean condition (e.g. for an if

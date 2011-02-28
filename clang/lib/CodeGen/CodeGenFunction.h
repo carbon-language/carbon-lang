@@ -2044,11 +2044,21 @@ public:
   /// that we can just remove the code.
   static bool ContainsLabel(const Stmt *S, bool IgnoreCaseStmts = false);
 
+  /// containsBreak - Return true if the statement contains a break out of it.
+  /// If the statement (recursively) contains a switch or loop with a break
+  /// inside of it, this is fine.
+  static bool containsBreak(const Stmt *S);
+  
   /// ConstantFoldsToSimpleInteger - If the specified expression does not fold
   /// to a constant, or if it does but contains a label, return false.  If it
   /// constant folds return true and set the boolean result in Result.
   bool ConstantFoldsToSimpleInteger(const Expr *Cond, bool &Result);
 
+  /// ConstantFoldsToSimpleInteger - If the specified expression does not fold
+  /// to a constant, or if it does but contains a label, return false.  If it
+  /// constant folds return true and set the folded value.
+  bool ConstantFoldsToSimpleInteger(const Expr *Cond, llvm::APInt &Result);
+  
   /// EmitBranchOnBoolExpr - Emit a branch on a boolean condition (e.g. for an
   /// if statement) to the specified blocks.  Based on the condition, this might
   /// try to simplify the codegen of the conditional based on the branch.
