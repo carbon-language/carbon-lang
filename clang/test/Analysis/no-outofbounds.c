@@ -25,7 +25,9 @@ void free(void *);
 
 void field() {
   struct vec { size_t len; int data[0]; };
-  struct vec *a = malloc(sizeof(struct vec) + 10);
+  // FIXME: Not warn for this.
+  struct vec *a = malloc(sizeof(struct vec) + 10); // expected-warning {{Cast a region whose size is not a multiple of the destination type size}}
   a->len = 10;
   a->data[1] = 5; // no-warning
+  free(a);
 }

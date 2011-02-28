@@ -129,6 +129,11 @@ def CFGDumper : Checker<"DumpCFG">,
 
 let Group = AllExperimental in {
 
+def MallocChecker : Checker<"Malloc">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check for potential memory leaks, double free, and use-after-free problems">,
+  DescFile<"MallocChecker.cpp">;
+
 def CStringChecker : Checker<"CString">,
   InPackage<CoreExperimental>,
   HelpText<"Check calls to functions in <string.h>">,

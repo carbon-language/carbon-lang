@@ -22,5 +22,4 @@ using namespace ento;
 void ento::RegisterExperimentalChecks(ExprEngine &Eng) {
   // These are checks that never belong as internal checks
   // within ExprEngine.
-  RegisterMallocChecker(Eng); // ArrayBoundChecker depends on this.
 }

@@ -205,6 +205,40 @@ void CheckerManager::runCheckersForLocation(ExplodedNodeSet &Dst,
   expandGraphWithCheckers(C, Dst, Src);
 }
 
+namespace {
+  struct CheckBindContext {
+    typedef std::vector<CheckerManager::CheckBindFunc> CheckersTy;
+    const CheckersTy &Checkers;
+    SVal Loc;
+    SVal Val;
+    const Stmt *S;
+    ExprEngine &Eng;
+
+    CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
+    CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
+
+    CheckBindContext(const CheckersTy &checkers,
+                     SVal loc, SVal val, const Stmt *s, ExprEngine &eng)
+      : Checkers(checkers), Loc(loc), Val(val), S(s), Eng(eng) { }
+
+    void runChecker(CheckerManager::CheckBindFunc checkFn,
+                    ExplodedNodeSet &Dst, ExplodedNode *Pred) {
+      CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
+                       ProgramPoint::PreStmtKind, 0, S);
+      checkFn(Loc, Val, C);
+    }
+  };
+}
+
+/// \brief Run checkers for binding of a value to a location.
+void CheckerManager::runCheckersForBind(ExplodedNodeSet &Dst,
+                                        const ExplodedNodeSet &Src,
+                                        SVal location, SVal val,
+                                        const Stmt *S, ExprEngine &Eng) {
+  CheckBindContext C(BindCheckers, location, val, S, Eng);
+  expandGraphWithCheckers(C, Dst, Src);
+}
+
 void CheckerManager::runCheckersForEndAnalysis(ExplodedGraph &G,
                                                BugReporter &BR,
                                                ExprEngine &Eng) {
@@ -283,6 +317,20 @@ CheckerManager::runCheckersForRegionChanges(const GRState *state,
     if (!state)
       return NULL;
     state = RegionChangesCheckers[i].CheckFn(state, Begin, End);
+  }
+  return state;
+}
+
+/// \brief Run checkers for handling assumptions on symbolic values.
+const GRState *
+CheckerManager::runCheckersForEvalAssume(const GRState *state,
+                                         SVal Cond, bool Assumption) {
+  for (unsigned i = 0, e = EvalAssumeCheckers.size(); i != e; ++i) {
+    // If any checker declares the state infeasible (or if it starts that way),
+    // bail out.
+    if (!state)
+      return NULL;
+    state = EvalAssumeCheckers[i](state, Cond, Assumption);
   }
   return state;
 }
@@ -371,6 +419,10 @@ void CheckerManager::_registerForLocation(CheckLocationFunc checkfn) {
   LocationCheckers.push_back(checkfn);
 }
 
+void CheckerManager::_registerForBind(CheckBindFunc checkfn) {
+  BindCheckers.push_back(checkfn);
+}
+
 void CheckerManager::_registerForEndAnalysis(CheckEndAnalysisFunc checkfn) {
   EndAnalysisCheckers.push_back(checkfn);
 }
@@ -391,6 +443,10 @@ void CheckerManager::_registerForRegionChanges(CheckRegionChangesFunc checkfn,
                                      WantsRegionChangeUpdateFunc wantUpdateFn) {
   RegionChangesCheckerInfo info = {checkfn, wantUpdateFn};
   RegionChangesCheckers.push_back(info);
+}
+
+void CheckerManager::_registerForEvalAssume(EvalAssumeFunc checkfn) {
+  EvalAssumeCheckers.push_back(checkfn);
 }
 
 void CheckerManager::_registerForEvalCall(EvalCallFunc checkfn) {

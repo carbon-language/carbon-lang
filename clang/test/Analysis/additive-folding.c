@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-experimental-checks -analyzer-checker=core.experimental.UnreachableCode -verify -analyzer-constraints=basic %s
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-experimental-checks -analyzer-checker=core.experimental.UnreachableCode -verify -analyzer-constraints=range %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.experimental.UnreachableCode,core.experimental.Malloc -verify -analyzer-constraints=basic %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=core.experimental.UnreachableCode,core.experimental.Malloc -verify -analyzer-constraints=range %s
 
 // These are used to trigger warnings.
 typedef typeof(sizeof(int)) size_t;

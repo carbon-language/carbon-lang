@@ -267,10 +267,12 @@ void ExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
                                     SVal val, bool isPrevisit) {
 
   if (Checkers.empty()) {
-    Dst.insert(Src);
+    getCheckerManager().runCheckersForBind(Dst, Src, location, val, StoreE,
+                                           *this);
     return;
   }
 
+  ExplodedNodeSet CheckerV1Tmp;
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
 
@@ -278,7 +280,7 @@ void ExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
   {
     ExplodedNodeSet *CurrSet = 0;
     if (I+1 == E)
-      CurrSet = &Dst;
+      CurrSet = &CheckerV1Tmp;
     else {
       CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
       CurrSet->clear();
@@ -296,6 +298,9 @@ void ExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
     PrevSet = CurrSet;
   }
 
+  getCheckerManager().runCheckersForBind(Dst, CheckerV1Tmp, location, val,
+                                         StoreE, *this);
+  
   // Don't autotransition.  The CheckerContext objects should do this
   // automatically.
 }
@@ -492,6 +497,8 @@ const GRState *ExprEngine::processAssume(const GRState *state, SVal cond,
     if (NewCO.get())
       CO_Ref = NewCO.take();
   }
+
+  state = getCheckerManager().runCheckersForEvalAssume(state, cond, assumption);
 
   // If the state is infeasible at this point, bail out.
   if (!state)

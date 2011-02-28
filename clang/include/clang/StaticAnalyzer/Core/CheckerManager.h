@@ -189,6 +189,12 @@ public:
                               const Stmt *S,
                               ExprEngine &Eng);
 
+  /// \brief Run checkers for binding of a value to a location.
+  void runCheckersForBind(ExplodedNodeSet &Dst,
+                          const ExplodedNodeSet &Src,
+                          SVal location, SVal val,
+                          const Stmt *S, ExprEngine &Eng);
+
   /// \brief Run checkers for end of analysis.
   void runCheckersForEndAnalysis(ExplodedGraph &G, BugReporter &BR,
                                  ExprEngine &Eng);
@@ -213,6 +219,10 @@ public:
   const GRState *runCheckersForRegionChanges(const GRState *state,
                                              const MemRegion * const *Begin,
                                              const MemRegion * const *End);
+
+  /// \brief Run checkers for handling assumptions on symbolic values.
+  const GRState *runCheckersForEvalAssume(const GRState *state,
+                                          SVal Cond, bool Assumption);
 
   /// \brief Run checkers for evaluating a call.
   void runCheckersForEvalCall(ExplodedNodeSet &Dst,
@@ -243,6 +253,8 @@ public:
   typedef CheckerFn<const ObjCMessage &, CheckerContext &> CheckObjCMessageFunc;
   typedef CheckerFn<const SVal &/*location*/, bool/*isLoad*/, CheckerContext &>
       CheckLocationFunc;
+  typedef CheckerFn<const SVal &/*location*/, const SVal &/*val*/,
+                    CheckerContext &> CheckBindFunc;
   typedef CheckerFn<ExplodedGraph &, BugReporter &, ExprEngine &>
       CheckEndAnalysisFunc;
   typedef CheckerFn<EndOfFunctionNodeBuilder &, ExprEngine &> CheckEndPathFunc;
@@ -259,6 +271,8 @@ public:
   void _registerForPostObjCMessage(CheckObjCMessageFunc checkfn);
 
   void _registerForLocation(CheckLocationFunc checkfn);
+
+  void _registerForBind(CheckBindFunc checkfn);
 
   void _registerForEndAnalysis(CheckEndAnalysisFunc checkfn);
 
@@ -297,6 +311,21 @@ public:
 
   void _registerForRegionChanges(CheckRegionChangesFunc checkfn,
                                  WantsRegionChangeUpdateFunc wantUpdateFn);
+
+  class EvalAssumeFunc {
+    typedef const GRState * (*Func)(void *, const GRState *,
+                                    const SVal &/*cond*/, bool /*assumption*/);
+    Func Fn;
+  public:
+    void *Checker;
+    EvalAssumeFunc(void *checker, Func fn) : Fn(fn), Checker(checker) {}
+    const GRState *operator()(const GRState *state,
+                              const SVal &cond, bool assumption) {
+      return Fn(Checker, state, cond, assumption);
+    }
+  };
+
+  void _registerForEvalAssume(EvalAssumeFunc checkfn);
 
   class EvalCallFunc {
     typedef bool (*Func)(void *, const CallExpr *, CheckerContext &);
@@ -380,6 +409,8 @@ private:
 
   std::vector<CheckLocationFunc> LocationCheckers;
 
+  std::vector<CheckBindFunc> BindCheckers;
+
   std::vector<CheckEndAnalysisFunc> EndAnalysisCheckers;
 
   std::vector<CheckEndPathFunc> EndPathCheckers;
@@ -393,6 +424,8 @@ private:
     WantsRegionChangeUpdateFunc WantUpdateFn;
   };
   std::vector<RegionChangesCheckerInfo> RegionChangesCheckers;
+
+  std::vector<EvalAssumeFunc> EvalAssumeCheckers;
 
   std::vector<EvalCallFunc> EvalCallCheckers;
 };
