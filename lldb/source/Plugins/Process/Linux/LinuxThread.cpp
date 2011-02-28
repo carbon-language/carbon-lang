@@ -12,6 +12,7 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
@@ -19,6 +20,7 @@
 #include "LinuxThread.h"
 #include "ProcessLinux.h"
 #include "ProcessMonitor.h"
+#include "RegisterContextLinux_i386.h"
 #include "RegisterContextLinux_x86_64.h"
 #include "UnwindLLDB.h"
 
@@ -59,16 +61,20 @@ LinuxThread::GetInfo()
 lldb::RegisterContextSP
 LinuxThread::GetRegisterContext()
 {
-    ProcessLinux &process = static_cast<ProcessLinux&>(GetProcess());
-
     if (!m_reg_context_sp)
     {
-        ArchSpec arch = process.GetTarget().GetArchitecture();
+        ArchSpec arch = Host::GetArchitecture();
 
         switch (arch.GetCore())
         {
         default:
             assert(false && "CPU type not supported!");
+            break;
+
+        case ArchSpec::eCore_x86_32_i386:
+        case ArchSpec::eCore_x86_32_i486:
+        case ArchSpec::eCore_x86_32_i486sx:
+            m_reg_context_sp.reset(new RegisterContextLinux_i386(*this, 0));
             break;
 
         case ArchSpec::eCore_x86_64_x86_64:
@@ -99,7 +105,7 @@ LinuxThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
 
     if (frame)
         concrete_frame_idx = frame->GetConcreteFrameIndex();
-        
+
     if (concrete_frame_idx == 0)
         reg_ctx_sp = GetRegisterContext();
     else
