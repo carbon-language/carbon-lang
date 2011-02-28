@@ -1322,7 +1322,7 @@ void ExprEngine::processBranch(const Stmt* Condition, const Stmt* Term,
   const GRState* PrevState = builder.getState();
   SVal X = PrevState->getSVal(Condition);
 
-  if (X.isUnknown()) {
+  if (X.isUnknownOrUndef()) {
     // Give it a chance to recover from unknown.
     if (const Expr *Ex = dyn_cast<Expr>(Condition)) {
       if (Ex->getType()->isIntegerType()) {
@@ -1340,7 +1340,7 @@ void ExprEngine::processBranch(const Stmt* Condition, const Stmt* Term,
       }
     }
     // If the condition is still unknown, give up.
-    if (X.isUnknown()) {
+    if (X.isUnknownOrUndef()) {
       builder.generateNode(MarkBranch(PrevState, Term, true), true);
       builder.generateNode(MarkBranch(PrevState, Term, false), false);
       return;
@@ -1858,7 +1858,8 @@ void ExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
   if (Tmp.empty())
     return;
 
-  assert(!location.isUndef());
+  if (location.isUndef())
+    return;
 
   SaveAndRestore<ProgramPoint::Kind> OldSPointKind(Builder->PointKind,
                                                    ProgramPoint::PostStoreKind);
@@ -1918,7 +1919,8 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet& Dst, const Expr *Ex,
   if (Tmp.empty())
     return;
 
-  assert(!location.isUndef());
+  if (location.isUndef())
+    return;
 
   SaveAndRestore<ProgramPoint::Kind> OldSPointKind(Builder->PointKind);
 

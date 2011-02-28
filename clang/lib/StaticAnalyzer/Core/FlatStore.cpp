@@ -90,6 +90,19 @@ StoreManager *ento::CreateFlatStoreManager(GRStateManager &StMgr) {
 }
 
 SVal FlatStoreManager::Retrieve(Store store, Loc L, QualType T) {
+  // For access to concrete addresses, return UnknownVal.  Checks
+  // for null dereferences (and similar errors) are done by checkers, not
+  // the Store.
+  // FIXME: We can consider lazily symbolicating such memory, but we really
+  // should defer this when we can reason easily about symbolicating arrays
+  // of bytes.
+  if (isa<loc::ConcreteInt>(L)) {
+    return UnknownVal();
+  }
+  if (!isa<loc::MemRegionVal>(L)) {
+    return UnknownVal();
+  }
+
   const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
   RegionInterval RI = RegionToInterval(R);
   // FIXME: FlatStore should handle regions with unknown intervals.
