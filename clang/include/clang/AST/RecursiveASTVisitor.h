@@ -1869,7 +1869,7 @@ DEF_TRAVERSE_STMT(PredefinedExpr, { })
 DEF_TRAVERSE_STMT(ShuffleVectorExpr, { })
 DEF_TRAVERSE_STMT(StmtExpr, { })
 DEF_TRAVERSE_STMT(UnresolvedLookupExpr, {
-  TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
+  TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
   if (S->hasExplicitTemplateArgs()) {
     TRY_TO(TraverseTemplateArgumentLocsHelper(S->getTemplateArgs(), 
                                               S->getNumTemplateArgs()));
@@ -1877,7 +1877,7 @@ DEF_TRAVERSE_STMT(UnresolvedLookupExpr, {
 })
   
 DEF_TRAVERSE_STMT(UnresolvedMemberExpr, {
-  TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
+  TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
   if (S->hasExplicitTemplateArgs()) {
     TRY_TO(TraverseTemplateArgumentLocsHelper(S->getTemplateArgs(), 
                                               S->getNumTemplateArgs()));

@@ -1351,12 +1351,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             if (ULE->hasExplicitTemplateArgs())
               ULE->copyTemplateArgumentsInto(TList);
             
-            // FIXME: We should have nested-name-specifier location info in
-            // the ULE itself.
             CXXScopeSpec SS;
-            SS.MakeTrivial(Context, ULE->getQualifier(), 
-                           ULE->getQualifierRange());
-
+            SS.Adopt(ULE->getQualifierLoc());
             CXXDependentScopeMemberExpr *DepExpr =
                 CXXDependentScopeMemberExpr::Create(
                     Context, DepThis, DepThisType, true, SourceLocation(),
@@ -2283,8 +2279,8 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
 
   UnresolvedLookupExpr *ULE
     = UnresolvedLookupExpr::Create(Context, R.getNamingClass(),
-                                   (NestedNameSpecifier*) SS.getScopeRep(),
-                                   SS.getRange(), R.getLookupNameInfo(),
+                                   SS.getWithLocInContext(Context),
+                                   R.getLookupNameInfo(),
                                    NeedsADL, R.isOverloadedResult(),
                                    R.begin(), R.end());
 
@@ -3483,7 +3479,6 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
   }
   R.setBaseObjectType(BaseType);
 
-  NestedNameSpecifier *Qualifier = SS.getScopeRep();
   const DeclarationNameInfo &MemberNameInfo = R.getLookupNameInfo();
   DeclarationName MemberName = MemberNameInfo.getName();
   SourceLocation MemberLoc = MemberNameInfo.getLoc();
@@ -3528,7 +3523,7 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
       = UnresolvedMemberExpr::Create(Context, R.isUnresolvableResult(),
                                      BaseExpr, BaseExprType,
                                      IsArrow, OpLoc,
-                                     Qualifier, SS.getRange(),
+                                     SS.getWithLocInContext(Context),
                                      MemberNameInfo,
                                      TemplateArgs, R.begin(), R.end());
 

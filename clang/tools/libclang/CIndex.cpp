@@ -2157,8 +2157,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
       case VisitorJob::OverloadExprPartsKind: {
         OverloadExpr *O = cast<OverloadExprParts>(&LI)->get();
         // Visit the nested-name-specifier.
-        if (NestedNameSpecifier *Qualifier = O->getQualifier())
-          if (VisitNestedNameSpecifier(Qualifier, O->getQualifierRange()))
+        if (NestedNameSpecifierLoc QualifierLoc = O->getQualifierLoc())
+          if (VisitNestedNameSpecifierLoc(QualifierLoc))
             return true;
         // Visit the declaration name.
         if (VisitDeclarationNameInfo(O->getNameInfo()))

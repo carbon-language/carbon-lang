@@ -7590,9 +7590,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                       SourceLocation RParenLoc) {
 
   CXXScopeSpec SS;
-  if (ULE->getQualifier())
-    SS.MakeTrivial(SemaRef.Context, 
-                   ULE->getQualifier(), ULE->getQualifierRange());
+  SS.Adopt(ULE->getQualifierLoc());
 
   TemplateArgumentListInfo TABuffer;
   const TemplateArgumentListInfo *ExplicitTemplateArgs = 0;
@@ -7776,11 +7774,11 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
     CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, NamingClass,
-                                     0, SourceRange(), OpNameInfo,
+                                     NestedNameSpecifierLoc(), OpNameInfo,
                                      /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
-                                                   &Args[0], NumArgs,
+                                                  &Args[0], NumArgs,
                                                    Context.DependentTy,
                                                    VK_RValue,
                                                    OpLoc));
@@ -7956,8 +7954,9 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     // TODO: provide better source location info in DNLoc component.
     DeclarationNameInfo OpNameInfo(OpName, OpLoc);
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, NamingClass, 0, SourceRange(),
-                                     OpNameInfo, /*ADL*/ true, IsOverloaded(Fns),
+      = UnresolvedLookupExpr::Create(Context, NamingClass, 
+                                     NestedNameSpecifierLoc(), OpNameInfo, 
+                                     /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
                                                    Args, 2,
@@ -8187,7 +8186,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     OpNameInfo.setCXXOperatorNameRange(SourceRange(LLoc, RLoc));
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, NamingClass,
-                                     0, SourceRange(), OpNameInfo,
+                                     NestedNameSpecifierLoc(), OpNameInfo,
                                      /*ADL*/ true, /*Overloaded*/ false,
                                      UnresolvedSetIterator(),
                                      UnresolvedSetIterator());
@@ -8929,9 +8928,10 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
       TemplateArgs = &TemplateArgsBuffer;
     }
 
+    // FIXME: Nested-name-specifier source location information for DeclRefExpr.
     return DeclRefExpr::Create(Context,
                                ULE->getQualifier(),
-                               ULE->getQualifierRange(),
+                               ULE->getQualifierLoc().getSourceRange(),
                                Fn,
                                ULE->getNameLoc(),
                                Fn->getType(),
@@ -8952,10 +8952,11 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     // If we're filling in a static method where we used to have an
     // implicit member access, rewrite to a simple decl ref.
     if (MemExpr->isImplicitAccess()) {
+      // FIXME: Source location information for DeclRefExpr
       if (cast<CXXMethodDecl>(Fn)->isStatic()) {
         return DeclRefExpr::Create(Context,
                                    MemExpr->getQualifier(),
-                                   MemExpr->getQualifierRange(),
+                                   MemExpr->getQualifierLoc().getSourceRange(),
                                    Fn,
                                    MemExpr->getMemberLoc(),
                                    Fn->getType(),
@@ -8964,7 +8965,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
       } else {
         SourceLocation Loc = MemExpr->getMemberLoc();
         if (MemExpr->getQualifier())
-          Loc = MemExpr->getQualifierRange().getBegin();
+          Loc = MemExpr->getQualifierLoc().getBeginLoc();
         Base = new (Context) CXXThisExpr(Loc,
                                          MemExpr->getBaseType(),
                                          /*isImplicit=*/true);
@@ -8972,10 +8973,11 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     } else
       Base = MemExpr->getBase();
 
+    // FIXME: Source location information for MemberExpr
     return MemberExpr::Create(Context, Base,
                               MemExpr->isArrow(),
                               MemExpr->getQualifier(),
-                              MemExpr->getQualifierRange(),
+                              MemExpr->getQualifierLoc().getSourceRange(),
                               Fn,
                               Found,
                               MemExpr->getMemberNameInfo(),

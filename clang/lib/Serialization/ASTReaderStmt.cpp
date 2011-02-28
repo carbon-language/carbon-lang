@@ -1253,24 +1253,23 @@ void ASTStmtReader::VisitOverloadExpr(OverloadExpr *E) {
   E->initializeResults(*Reader.getContext(), Decls.begin(), Decls.end());
 
   ReadDeclarationNameInfo(E->NameInfo, Record, Idx);
-  E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
-  E->setQualifierRange(ReadSourceRange(Record, Idx));
+  E->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
 }
 
 void ASTStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
   VisitOverloadExpr(E);
-  E->setArrow(Record[Idx++]);
-  E->setHasUnresolvedUsing(Record[Idx++]);
-  E->setBase(Reader.ReadSubExpr());
-  E->setBaseType(Reader.GetType(Record[Idx++]));
-  E->setOperatorLoc(ReadSourceLocation(Record, Idx));
+  E->IsArrow = Record[Idx++];
+  E->HasUnresolvedUsing = Record[Idx++];
+  E->Base = Reader.ReadSubExpr();
+  E->BaseType = Reader.GetType(Record[Idx++]);
+  E->OperatorLoc = ReadSourceLocation(Record, Idx);
 }
 
 void ASTStmtReader::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   VisitOverloadExpr(E);
-  E->setRequiresADL(Record[Idx++]);
-  E->setOverloaded(Record[Idx++]);
-  E->setNamingClass(cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++])));
+  E->RequiresADL = Record[Idx++];
+  E->Overloaded = Record[Idx++];
+  E->NamingClass = cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
 }
 
 void ASTStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {

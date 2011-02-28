@@ -1832,8 +1832,8 @@ TypeResult Sema::ActOnTagTemplateIdType(CXXScopeSpec &SS,
 }
 
 ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
-                                                 LookupResult &R,
-                                                 bool RequiresADL,
+                                     LookupResult &R,
+                                     bool RequiresADL,
                                  const TemplateArgumentListInfo &TemplateArgs) {
   // FIXME: Can we do any checking at this point? I guess we could check the
   // template arguments that we have against the template name, if the template
@@ -1849,19 +1849,12 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
   assert(!R.empty() && "empty lookup results when building templateid");
   assert(!R.isAmbiguous() && "ambiguous lookup when building templateid");
 
-  NestedNameSpecifier *Qualifier = 0;
-  SourceRange QualifierRange;
-  if (SS.isSet()) {
-    Qualifier = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
-    QualifierRange = SS.getRange();
-  }
-
   // We don't want lookup warnings at this point.
   R.suppressDiagnostics();
 
   UnresolvedLookupExpr *ULE
     = UnresolvedLookupExpr::Create(Context, R.getNamingClass(),
-                                   Qualifier, QualifierRange,
+                                   SS.getWithLocInContext(Context),
                                    R.getLookupNameInfo(),
                                    RequiresADL, TemplateArgs,
                                    R.begin(), R.end());

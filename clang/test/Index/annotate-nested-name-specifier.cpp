@@ -58,7 +58,27 @@ struct X3 {
   }
 };
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:60:1 %s | FileCheck %s
+namespace outer {
+  namespace inner {
+    void f(int);
+    void f(float);
+  }
+}
+
+template<typename T>
+struct X4 {
+  typedef T type;
+  void g(int);
+  void g(float);
+
+  void h(T t) {
+    ::outer_alias::inner::f(t);
+    ::X4<type>::g(t);
+    this->::X4<type>::g(t);
+  }
+};
+
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:78:1 %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
@@ -148,3 +168,37 @@ struct X3 {
 // CHECK: Punctuation: ">" [57:59 - 57:60] UnexposedExpr=
 // CHECK: Punctuation: "(" [57:60 - 57:61] CallExpr=
 // CHECK: Punctuation: ")" [57:61 - 57:62] CallExpr=
+
+// Unresolved member and non-member references
+// CHECK: Punctuation: "::" [75:5 - 75:7] UnexposedExpr=[63:10, 64:10]
+// CHECK: Identifier: "outer_alias" [75:7 - 75:18] NamespaceRef=outer_alias:10:11
+// CHECK: Punctuation: "::" [75:18 - 75:20] UnexposedExpr=[63:10, 64:10]
+// CHECK: Identifier: "inner" [75:20 - 75:25] NamespaceRef=inner:62:13
+// CHECK: Punctuation: "::" [75:25 - 75:27] UnexposedExpr=[63:10, 64:10]
+// CHECK: Identifier: "f" [75:27 - 75:28] OverloadedDeclRef=f[63:10, 64:10]
+// CHECK: Punctuation: "(" [75:28 - 75:29] CallExpr=
+// CHECK: Identifier: "t" [75:29 - 75:30] DeclRefExpr=t:74:12
+// CHECK: Punctuation: ")" [75:30 - 75:31] CallExpr=
+// CHECK: Punctuation: "::" [76:5 - 76:7] UnexposedExpr=[71:8, 72:8]
+// CHECK: Identifier: "X4" [76:7 - 76:9] TemplateRef=X4:69:8
+// CHECK: Punctuation: "<" [76:9 - 76:10] UnexposedExpr=[71:8, 72:8]
+// CHECK: Identifier: "type" [76:10 - 76:14] TypeRef=type:70:13
+// CHECK: Punctuation: ">" [76:14 - 76:15] UnexposedExpr=[71:8, 72:8]
+// CHECK: Punctuation: "::" [76:15 - 76:17] UnexposedExpr=[71:8, 72:8]
+// CHECK: Identifier: "g" [76:17 - 76:18] OverloadedDeclRef=g[71:8, 72:8]
+// CHECK: Punctuation: "(" [76:18 - 76:19] CallExpr=
+// CHECK: Identifier: "t" [76:19 - 76:20] DeclRefExpr=t:74:12
+// CHECK: Punctuation: ")" [76:20 - 76:21] CallExpr=
+// CHECK: Punctuation: ";" [76:21 - 76:22] UnexposedStmt=
+// CHECK: Keyword: "this" [77:5 - 77:9] UnexposedExpr=
+// CHECK: Punctuation: "->" [77:9 - 77:11] UnexposedExpr=
+// CHECK: Punctuation: "::" [77:11 - 77:13] UnexposedExpr=
+// CHECK: Identifier: "X4" [77:13 - 77:15] TemplateRef=X4:69:8
+// CHECK: Punctuation: "<" [77:15 - 77:16] UnexposedExpr=
+// CHECK: Identifier: "type" [77:16 - 77:20] TypeRef=type:70:13
+// CHECK: Punctuation: ">" [77:20 - 77:21] UnexposedExpr=
+// CHECK: Punctuation: "::" [77:21 - 77:23] UnexposedExpr=
+// CHECK: Identifier: "g" [77:23 - 77:24] UnexposedExpr=
+// CHECK: Punctuation: "(" [77:24 - 77:25] CallExpr=
+// CHECK: Identifier: "t" [77:25 - 77:26] DeclRefExpr=t:74:12
+// CHECK: Punctuation: ")" [77:26 - 77:27] CallExpr=

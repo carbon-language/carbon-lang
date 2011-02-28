@@ -1252,8 +1252,7 @@ void ASTStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
   }
 
   Writer.AddDeclarationNameInfo(E->NameInfo, Record);
-  Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
-  Writer.AddSourceRange(E->getQualifierRange(), Record);
+  Writer.AddNestedNameSpecifierLoc(E->getQualifierLoc(), Record);
 }
 
 void ASTStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {

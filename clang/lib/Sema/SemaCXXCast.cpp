@@ -642,7 +642,8 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     if (SrcExpr->getType() == Self.Context.OverloadTy) {
       OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
       Self.Diag(OpRange.getBegin(), diag::err_bad_static_cast_overload)
-        << oe->getName() << DestType << OpRange << oe->getQualifierRange();
+        << oe->getName() << DestType << OpRange 
+        << oe->getQualifierLoc().getSourceRange();
       Self.NoteAllOverloadCandidates(SrcExpr);
     } else {
       diagnoseBadCast(Self, msg, CT_Static, OpRange, SrcExpr, DestType);
@@ -1289,7 +1290,7 @@ static ExprResult ResolveAndFixSingleFunctionTemplateSpecialization(
     OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
     Self.Diag(OpRangeForComplaining.getBegin(), DiagIDForComplaining)
       << oe->getName() << DestTypeForComplaining << OpRangeForComplaining 
-              << oe->getQualifierRange();
+      << oe->getQualifierLoc().getSourceRange();
     Self.NoteAllOverloadCandidates(SrcExpr);
   }
   return SingleFunctionExpression;

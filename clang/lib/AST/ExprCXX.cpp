@@ -174,8 +174,7 @@ SourceRange CXXPseudoDestructorExpr::getSourceRange() const {
 UnresolvedLookupExpr *
 UnresolvedLookupExpr::Create(ASTContext &C, 
                              CXXRecordDecl *NamingClass,
-                             NestedNameSpecifier *Qualifier,
-                             SourceRange QualifierRange,
+                             NestedNameSpecifierLoc QualifierLoc,
                              const DeclarationNameInfo &NameInfo,
                              bool ADL,
                              const TemplateArgumentListInfo &Args,
@@ -184,8 +183,7 @@ UnresolvedLookupExpr::Create(ASTContext &C,
 {
   void *Mem = C.Allocate(sizeof(UnresolvedLookupExpr) + 
                          ExplicitTemplateArgumentList::sizeFor(Args));
-  return new (Mem) UnresolvedLookupExpr(C, NamingClass,
-                                        Qualifier, QualifierRange, NameInfo,
+  return new (Mem) UnresolvedLookupExpr(C, NamingClass, QualifierLoc, NameInfo,
                                         ADL, /*Overload*/ true, &Args,
                                         Begin, End);
 }
@@ -204,7 +202,7 @@ UnresolvedLookupExpr::CreateEmpty(ASTContext &C, bool HasExplicitTemplateArgs,
 }
 
 OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C, 
-                           NestedNameSpecifier *Qualifier, SourceRange QRange,
+                           NestedNameSpecifierLoc QualifierLoc,
                            const DeclarationNameInfo &NameInfo,
                            const TemplateArgumentListInfo *TemplateArgs,
                            UnresolvedSetIterator Begin, 
@@ -215,10 +213,11 @@ OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C,
          KnownDependent,
          (KnownContainsUnexpandedParameterPack ||
           NameInfo.containsUnexpandedParameterPack() ||
-          (Qualifier && Qualifier->containsUnexpandedParameterPack()))),
+          (QualifierLoc && 
+           QualifierLoc.getNestedNameSpecifier()
+                                      ->containsUnexpandedParameterPack()))),
     Results(0), NumResults(End - Begin), NameInfo(NameInfo), 
-    Qualifier(Qualifier), QualifierRange(QRange), 
-    HasExplicitTemplateArgs(TemplateArgs != 0)
+    QualifierLoc(QualifierLoc), HasExplicitTemplateArgs(TemplateArgs != 0)
 {
   NumResults = End - Begin;
   if (NumResults) {
@@ -784,19 +783,59 @@ CXXDependentScopeMemberExpr::CreateEmpty(ASTContext &C,
   return E;
 }
 
+/// \brief Determine whether this expression is an implicit C++ 'this'.
+static bool isImplicitThis(const Expr *E) {
+  // Strip away parentheses and casts we don't care about.
+  while (true) {
+    if (const ParenExpr *Paren = dyn_cast<ParenExpr>(E)) {
+      E = Paren->getSubExpr();
+      continue;
+    }
+    
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+      if (ICE->getCastKind() == CK_NoOp ||
+          ICE->getCastKind() == CK_LValueToRValue ||
+          ICE->getCastKind() == CK_DerivedToBase || 
+          ICE->getCastKind() == CK_UncheckedDerivedToBase) {
+        E = ICE->getSubExpr();
+        continue;
+      }
+    }
+    
+    if (const UnaryOperator* UnOp = dyn_cast<UnaryOperator>(E)) {
+      if (UnOp->getOpcode() == UO_Extension) {
+        E = UnOp->getSubExpr();
+        continue;
+      }
+    }
+    
+    break;
+  }
+  
+  if (const CXXThisExpr *This = dyn_cast<CXXThisExpr>(E))
+    return This->isImplicit();
+  
+  return false;
+}
+
+bool CXXDependentScopeMemberExpr::isImplicitAccess() const {
+  if (Base == 0)
+    return true;
+  
+  return isImplicitThis(cast<Expr>(Base));
+}
+
 UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, 
                                            bool HasUnresolvedUsing,
                                            Expr *Base, QualType BaseType,
                                            bool IsArrow,
                                            SourceLocation OperatorLoc,
-                                           NestedNameSpecifier *Qualifier,
-                                           SourceRange QualifierRange,
+                                           NestedNameSpecifierLoc QualifierLoc,
                                    const DeclarationNameInfo &MemberNameInfo,
                                    const TemplateArgumentListInfo *TemplateArgs,
                                            UnresolvedSetIterator Begin, 
                                            UnresolvedSetIterator End)
-  : OverloadExpr(UnresolvedMemberExprClass, C, 
-                 Qualifier, QualifierRange, MemberNameInfo,
+  : OverloadExpr(UnresolvedMemberExprClass, C, QualifierLoc, MemberNameInfo,
                  TemplateArgs, Begin, End,
                  // Dependent
                  ((Base && Base->isTypeDependent()) ||
@@ -808,13 +847,19 @@ UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C,
     Base(Base), BaseType(BaseType), OperatorLoc(OperatorLoc) {
 }
 
+bool UnresolvedMemberExpr::isImplicitAccess() const {
+  if (Base == 0)
+    return true;
+  
+  return isImplicitThis(cast<Expr>(Base));
+}
+
 UnresolvedMemberExpr *
 UnresolvedMemberExpr::Create(ASTContext &C, 
                              bool HasUnresolvedUsing,
                              Expr *Base, QualType BaseType, bool IsArrow,
                              SourceLocation OperatorLoc,
-                             NestedNameSpecifier *Qualifier,
-                             SourceRange QualifierRange,
+                             NestedNameSpecifierLoc QualifierLoc,
                              const DeclarationNameInfo &MemberNameInfo,
                              const TemplateArgumentListInfo *TemplateArgs,
                              UnresolvedSetIterator Begin, 
@@ -826,7 +871,7 @@ UnresolvedMemberExpr::Create(ASTContext &C,
   void *Mem = C.Allocate(size, llvm::alignOf<UnresolvedMemberExpr>());
   return new (Mem) UnresolvedMemberExpr(C, 
                              HasUnresolvedUsing, Base, BaseType,
-                             IsArrow, OperatorLoc, Qualifier, QualifierRange,
+                             IsArrow, OperatorLoc, QualifierLoc,
                              MemberNameInfo, TemplateArgs, Begin, End);
 }
 

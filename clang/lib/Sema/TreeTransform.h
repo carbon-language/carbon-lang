@@ -2000,13 +2000,12 @@ public:
                                                QualType BaseType,
                                                SourceLocation OperatorLoc,
                                                bool IsArrow,
-                                               NestedNameSpecifier *Qualifier,
-                                               SourceRange QualifierRange,
+                                           NestedNameSpecifierLoc QualifierLoc,
                                                NamedDecl *FirstQualifierInScope,
                                                LookupResult &R,
                                 const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
-    SS.MakeTrivial(SemaRef.Context, Qualifier, QualifierRange);
+    SS.Adopt(QualifierLoc);
 
     return SemaRef.BuildMemberReferenceExpr(BaseE, BaseType,
                                             OperatorLoc, IsArrow,
@@ -6779,14 +6778,13 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
 
   // Rebuild the nested-name qualifier, if present.
   CXXScopeSpec SS;
-  NestedNameSpecifier *Qualifier = 0;
-  if (Old->getQualifier()) {
-    Qualifier = getDerived().TransformNestedNameSpecifier(Old->getQualifier(),
-                                                    Old->getQualifierRange());
-    if (!Qualifier)
+  if (Old->getQualifierLoc()) {
+    NestedNameSpecifierLoc QualifierLoc
+      = getDerived().TransformNestedNameSpecifierLoc(Old->getQualifierLoc());
+    if (!QualifierLoc)
       return ExprError();
     
-    SS.MakeTrivial(SemaRef.Context, Qualifier, Old->getQualifierRange());
+    SS.Adopt(QualifierLoc);
   } 
   
   if (Old->getNamingClass()) {
@@ -7139,12 +7137,11 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
     BaseType = getDerived().TransformType(Old->getBaseType());
   }
 
-  NestedNameSpecifier *Qualifier = 0;
-  if (Old->getQualifier()) {
-    Qualifier
-      = getDerived().TransformNestedNameSpecifier(Old->getQualifier(),
-                                                  Old->getQualifierRange());
-    if (Qualifier == 0)
+  NestedNameSpecifierLoc QualifierLoc;
+  if (Old->getQualifierLoc()) {
+    QualifierLoc
+    = getDerived().TransformNestedNameSpecifierLoc(Old->getQualifierLoc());
+    if (!QualifierLoc)
       return ExprError();
   }
 
@@ -7212,8 +7209,7 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
                                                   BaseType,
                                                   Old->getOperatorLoc(),
                                                   Old->isArrow(),
-                                                  Qualifier,
-                                                  Old->getQualifierRange(),
+                                                  QualifierLoc,
                                                   FirstQualifierInScope,
                                                   R,
                                               (Old->hasExplicitTemplateArgs()
