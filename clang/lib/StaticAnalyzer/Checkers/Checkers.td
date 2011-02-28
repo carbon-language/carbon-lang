@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def AdjustedReturnValueChecker : Checker<"AdjustRet">,
+  HelpText<"Check to see if the return value of a function call is different than the caller expects">,
+  DescFile<"AdjustedReturnValueChecker.cpp">;
+
 def AttrNonNullChecker : Checker<"AttrNonNull">,
   HelpText<"Check for arguments declared to have nonnull attribute">,
   DescFile<"AttrNonNullChecker.cpp">;

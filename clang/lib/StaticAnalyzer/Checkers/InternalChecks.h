@@ -22,7 +22,6 @@ namespace ento {
 class ExprEngine;
 
 // Foundational checks that handle basic semantics.
-void RegisterAdjustedReturnValueChecker(ExprEngine &Eng);
 void RegisterCallAndMessageChecker(ExprEngine &Eng);
 void RegisterDereferenceChecker(ExprEngine &Eng);
 

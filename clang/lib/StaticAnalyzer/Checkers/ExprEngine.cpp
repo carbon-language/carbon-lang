@@ -319,7 +319,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   // their associated BugType will get registered with the BugReporter
   // automatically.  Note that the check itself is owned by the ExprEngine
   // object.
-  RegisterAdjustedReturnValueChecker(Eng);
   // CallAndMessageChecker should be registered before AttrNonNullChecker,
   // where we assume arguments are not undefined.
   RegisterCallAndMessageChecker(Eng);

@@ -13,34 +13,25 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 class AdjustedReturnValueChecker : 
-    public CheckerVisitor<AdjustedReturnValueChecker> {      
+    public CheckerV2< check::PostStmt<CallExpr> > {
 public:
-  AdjustedReturnValueChecker() {}
-
-  void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
-      
-  static void *getTag() {
-    static int x = 0; return &x;
-  }      
+  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
 };
 }
 
-void ento::RegisterAdjustedReturnValueChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new AdjustedReturnValueChecker());
-}
-
-void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
-                                                   const CallExpr *CE) {
+void AdjustedReturnValueChecker::checkPostStmt(const CallExpr *CE,
+                                               CheckerContext &C) const {
   
   // Get the result type of the call.
   QualType expectedResultTy = CE->getType();
@@ -93,4 +84,8 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
     V = svalBuilder.evalCast(V, expectedResultTy, actualResultTy);
     C.generateNode(state->BindExpr(CE, V));
   }
+}
+
+void ento::registerAdjustedReturnValueChecker(CheckerManager &mgr) {
+  mgr.registerChecker<AdjustedReturnValueChecker>();
 }
