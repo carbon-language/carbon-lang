@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def DivZeroChecker : Checker<"DivZero">,
+  HelpText<"Check for division by zeros">,
+  DescFile<"DivZeroChecker.cpp">;
+
 def ReturnUndefChecker : Checker<"UndefReturn">,
   HelpText<"Check for undefined or garbage values being returned to the caller">,
   DescFile<"ReturnUndefChecker.cpp">;

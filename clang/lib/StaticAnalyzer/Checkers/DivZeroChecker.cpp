@@ -12,34 +12,25 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
-class DivZeroChecker : public CheckerVisitor<DivZeroChecker> {
-  BuiltinBug *BT;
+class DivZeroChecker : public CheckerV2< check::PreStmt<BinaryOperator> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
-  DivZeroChecker() : BT(0) {}  
-  static void *getTag();
-  void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
+  void checkPreStmt(const BinaryOperator *B, CheckerContext &C) const;
 };  
 } // end anonymous namespace
 
-void ento::RegisterDivZeroChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new DivZeroChecker());
-}
-
-void *DivZeroChecker::getTag() {
-  static int x;
-  return &x;
-}
-
-void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
-                                            const BinaryOperator *B) {
+void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
+                                  CheckerContext &C) const {
   BinaryOperator::Opcode Op = B->getOpcode();
   if (Op != BO_Div &&
       Op != BO_Rem &&
@@ -67,7 +58,7 @@ void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
   if (stateZero && !stateNotZero) {
     if (ExplodedNode *N = C.generateSink(stateZero)) {
       if (!BT)
-        BT = new BuiltinBug("Division by zero");
+        BT.reset(new BuiltinBug("Division by zero"));
 
       EnhancedBugReport *R = 
         new EnhancedBugReport(*BT, BT->getDescription(), N);
@@ -83,4 +74,8 @@ void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
   // If we get here, then the denom should not be zero. We abandon the implicit
   // zero denom case for now.
   C.addTransition(stateNotZero);
+}
+
+void ento::registerDivZeroChecker(CheckerManager &mgr) {
+  mgr.registerChecker<DivZeroChecker>();
 }
