@@ -43,7 +43,6 @@ void llvm::initializeAnalysis(PassRegistry &Registry) {
   initializeLazyValueInfoPass(Registry);
   initializeLibCallAliasAnalysisPass(Registry);
   initializeLintPass(Registry);
-  initializeLiveValuesPass(Registry);
   initializeLoopDependenceAnalysisPass(Registry);
   initializeLoopInfoPass(Registry);
   initializeMemDepPrinterPass(Registry);

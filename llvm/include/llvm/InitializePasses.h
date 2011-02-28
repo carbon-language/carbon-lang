@@ -123,7 +123,6 @@ void initializeLintPass(PassRegistry&);
 void initializeLiveDebugVariablesPass(PassRegistry&);
 void initializeLiveIntervalsPass(PassRegistry&);
 void initializeLiveStacksPass(PassRegistry&);
-void initializeLiveValuesPass(PassRegistry&);
 void initializeLiveVariablesPass(PassRegistry&);
 void initializeLoaderPassPass(PassRegistry&);
 void initializePathProfileLoaderPassPass(PassRegistry&);

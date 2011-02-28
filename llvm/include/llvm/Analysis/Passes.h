@@ -159,12 +159,6 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createLiveValuesPass - This creates an instance of the LiveValues pass.
-  //
-  FunctionPass *createLiveValuesPass();
-
-  //===--------------------------------------------------------------------===//
-  //
   /// createLazyValueInfoPass - This creates an instance of the LazyValueInfo
   /// pass.
   FunctionPass *createLazyValueInfoPass();
