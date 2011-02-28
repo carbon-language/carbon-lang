@@ -1756,6 +1756,26 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   TemplateArgumentListInfo TemplateArgs(LAngleLoc, RAngleLoc);
   translateTemplateArguments(TemplateArgsIn, TemplateArgs);
 
+  if (DependentTemplateName *DTN = Template.getAsDependentTemplateName()) {
+    QualType T = Context.getDependentTemplateSpecializationType(ETK_None,
+                                                           DTN->getQualifier(), 
+                                                           DTN->getIdentifier(), 
+                                                                TemplateArgs);
+    
+    // Build type-source information.    
+    TypeLocBuilder TLB;
+    DependentTemplateSpecializationTypeLoc SpecTL
+      = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
+    SpecTL.setKeywordLoc(SourceLocation()); // FIXME: 'template' location
+    SpecTL.setNameLoc(TemplateLoc);
+    SpecTL.setLAngleLoc(LAngleLoc);
+    SpecTL.setRAngleLoc(RAngleLoc);
+    SpecTL.setQualifierRange(TemplateLoc); // FIXME: nested-name-specifier loc
+    for (unsigned I = 0, N = SpecTL.getNumArgs(); I != N; ++I)
+      SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
+    return CreateParsedType(T, TLB.getTypeSourceInfo(Context, T));
+  }
+  
   QualType Result = CheckTemplateIdType(Template, TemplateLoc, TemplateArgs);
   TemplateArgsIn.release();
 

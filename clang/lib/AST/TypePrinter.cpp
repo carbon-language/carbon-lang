@@ -737,7 +737,8 @@ void TypePrinter::printDependentTemplateSpecialization(
     if (T->getKeyword() != ETK_None)
       OS << " ";
     
-    T->getQualifier()->print(OS, Policy);    
+    if (T->getQualifier())
+      T->getQualifier()->print(OS, Policy);    
     OS << T->getIdentifier()->getName();
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                             T->getArgs(),

@@ -1357,10 +1357,11 @@ TemplateSpecializationType(TemplateName T,
                            unsigned NumArgs, QualType Canon)
   : Type(TemplateSpecialization,
          Canon.isNull()? QualType(this, 0) : Canon,
-         T.isDependent(), false,
-         T.containsUnexpandedParameterPack()),
+         T.isDependent(), false, T.containsUnexpandedParameterPack()),
     Template(T), NumArgs(NumArgs) 
 {
+  assert(!T.getAsDependentTemplateName() && 
+         "Use DependentTemplateSpecializationType for dependent template-name");
   assert((!Canon.isNull() ||
           T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)) &&
          "No canonical type for non-dependent class template specialization");
