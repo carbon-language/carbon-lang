@@ -425,6 +425,8 @@ public:
                        const std::vector<Constant*> &V, bool Packed);
   static Constant *get(LLVMContext &Context,
                        Constant *const *Vals, unsigned NumVals, bool Packed);
+  static Constant *get(LLVMContext &Context, bool Packed,
+                       Constant * Val, ...) END_WITH_NULL;
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

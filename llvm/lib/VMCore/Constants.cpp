@@ -33,6 +33,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
 #include <map>
+#include <cstdarg>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -596,8 +597,6 @@ Constant *ConstantArray::get(LLVMContext &Context, StringRef Str,
   return get(ATy, ElementVals);
 }
 
-
-
 ConstantStruct::ConstantStruct(const StructType *T,
                                const std::vector<Constant*> &V)
   : Constant(T, ConstantStructVal,
@@ -642,6 +641,18 @@ Constant *ConstantStruct::get(LLVMContext &Context,
                               bool Packed) {
   // FIXME: make this the primary ctor method.
   return get(Context, std::vector<Constant*>(Vals, Vals+NumVals), Packed);
+}
+
+Constant* ConstantStruct::get(LLVMContext &Context, bool Packed,
+                              Constant * Val, ...) {
+  va_list ap;
+  std::vector<Constant*> Values;
+  va_start(ap, Val);
+  while (Val) {
+    Values.push_back(Val);
+    Val = va_arg(ap, llvm::Constant*);
+  }
+  return get(Context, Values, Packed);
 }
 
 ConstantVector::ConstantVector(const VectorType *T,
