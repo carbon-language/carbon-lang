@@ -2426,33 +2426,34 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
 
     if (const Expr *Receiver = msg.getInstanceReceiver()) {
       const GRState *state = GetState(Pred);
-
-      // Bifurcate the state into nil and non-nil ones.
-      DefinedOrUnknownSVal receiverVal =
-        cast<DefinedOrUnknownSVal>(state->getSVal(Receiver));
-
-      const GRState *notNilState, *nilState;
-      llvm::tie(notNilState, nilState) = state->assume(receiverVal);
-
-      // There are three cases: can be nil or non-nil, must be nil, must be
-      // non-nil. We handle must be nil, and merge the rest two into non-nil.
-      if (nilState && !notNilState) {
-        CheckerEvalNilReceiver(msg, dstEval, nilState, Pred);
-        continue;
+      SVal recVal = state->getSVal(Receiver);
+      if (!recVal.isUndef()) {
+        // Bifurcate the state into nil and non-nil ones.
+        DefinedOrUnknownSVal receiverVal = cast<DefinedOrUnknownSVal>(recVal);
+    
+        const GRState *notNilState, *nilState;
+        llvm::tie(notNilState, nilState) = state->assume(receiverVal);
+    
+        // There are three cases: can be nil or non-nil, must be nil, must be
+        // non-nil. We handle must be nil, and merge the rest two into non-nil.
+        if (nilState && !notNilState) {
+          CheckerEvalNilReceiver(msg, dstEval, nilState, Pred);
+          continue;
+        }
+    
+        // Check if the "raise" message was sent.
+        assert(notNilState);
+        if (msg.getSelector() == RaiseSel)
+          RaisesException = true;
+    
+        // Check if we raise an exception.  For now treat these as sinks.
+        // Eventually we will want to handle exceptions properly.
+        if (RaisesException)
+          Builder->BuildSinks = true;
+    
+        // Dispatch to plug-in transfer function.
+        evalObjCMessage(dstEval, msg, Pred, notNilState);
       }
-
-      // Check if the "raise" message was sent.
-      assert(notNilState);
-      if (msg.getSelector() == RaiseSel)
-        RaisesException = true;
-
-      // Check if we raise an exception.  For now treat these as sinks.
-      // Eventually we will want to handle exceptions properly.
-      if (RaisesException)
-        Builder->BuildSinks = true;
-
-      // Dispatch to plug-in transfer function.
-      evalObjCMessage(dstEval, msg, Pred, notNilState);
     }
     else if (const ObjCInterfaceDecl *Iface = msg.getReceiverInterface()) {
       IdentifierInfo* ClsName = Iface->getIdentifier();
