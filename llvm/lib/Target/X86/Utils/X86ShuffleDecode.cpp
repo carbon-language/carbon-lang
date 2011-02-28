@@ -1,4 +1,4 @@
-//===-- X86ShuffleDecode.h - X86 shuffle decode logic ---------------------===//
+//===-- X86ShuffleDecode.cpp - X86 shuffle decode logic -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -95,12 +95,29 @@ void DecodePSHUFLWMask(unsigned Imm,
   ShuffleMask.push_back(7);
 }
 
-void DecodePUNPCKLMask(unsigned NElts,
+void DecodePUNPCKLBWMask(unsigned NElts,
+                         SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i8, NElts), ShuffleMask);
+}
+
+void DecodePUNPCKLWDMask(unsigned NElts,
+                         SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i16, NElts), ShuffleMask);
+}
+
+void DecodePUNPCKLDQMask(unsigned NElts,
+                         SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i32, NElts), ShuffleMask);
+}
+
+void DecodePUNPCKLQDQMask(unsigned NElts,
+                          SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i64, NElts), ShuffleMask);
+}
+
+void DecodePUNPCKLMask(EVT VT,
                        SmallVectorImpl<unsigned> &ShuffleMask) {
-  for (unsigned i = 0; i != NElts/2; ++i) {
-    ShuffleMask.push_back(i);
-    ShuffleMask.push_back(i+NElts);
-  }
+  DecodeUNPCKLPMask(VT, ShuffleMask);
 }
 
 void DecodePUNPCKHMask(unsigned NElts,
@@ -133,12 +150,24 @@ void DecodeUNPCKHPMask(unsigned NElts,
   }
 }
 
+void DecodeUNPCKLPSMask(unsigned NElts,
+                        SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i32, NElts), ShuffleMask);
+}
+
+void DecodeUNPCKLPDMask(unsigned NElts,
+                        SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i64, NElts), ShuffleMask);
+}
 
 /// DecodeUNPCKLPMask - This decodes the shuffle masks for unpcklps/unpcklpd
-/// etc.  NElts indicates the number of elements in the vector allowing it to
-/// handle different datatypes and vector widths.
-void DecodeUNPCKLPMask(unsigned NElts,
+/// etc.  VT indicates the type of the vector allowing it to handle different
+/// datatypes and vector widths.
+void DecodeUNPCKLPMask(EVT VT,
                        SmallVectorImpl<unsigned> &ShuffleMask) {
+
+  int NElts = VT.getVectorNumElements();
+
   for (unsigned i = 0; i != NElts/2; ++i) {
     ShuffleMask.push_back(i);        // Reads from dest
     ShuffleMask.push_back(i+NElts);  // Reads from src

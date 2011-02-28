@@ -3895,11 +3895,15 @@ SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     case X86ISD::PUNPCKLWD:
     case X86ISD::PUNPCKLDQ:
     case X86ISD::PUNPCKLQDQ:
-      DecodePUNPCKLMask(NumElems, ShuffleMask);
+      DecodePUNPCKLMask(VT, ShuffleMask);
       break;
     case X86ISD::UNPCKLPS:
     case X86ISD::UNPCKLPD:
-      DecodeUNPCKLPMask(NumElems, ShuffleMask);
+    case X86ISD::VUNPCKLPS:
+    case X86ISD::VUNPCKLPD:
+    case X86ISD::VUNPCKLPSY:
+    case X86ISD::VUNPCKLPDY:
+      DecodeUNPCKLPMask(VT, ShuffleMask);
       break;
     case X86ISD::MOVHLPS:
       DecodeMOVHLPSMask(NumElems, ShuffleMask);
@@ -5263,6 +5267,7 @@ LowerVECTOR_SHUFFLE_4wide(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
 
   // Break it into (shuffle shuffle_hi, shuffle_lo).
   Locs.clear();
+  Locs.resize(4);
   SmallVector<int,8> LoMask(4U, -1);
   SmallVector<int,8> HiMask(4U, -1);
 
@@ -5508,12 +5513,16 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
                               X86::getShuffleSHUFImmediate(SVOp), DAG);
 }
 
-static inline unsigned getUNPCKLOpcode(EVT VT) {
+static inline unsigned getUNPCKLOpcode(EVT VT, const X86Subtarget *Subtarget) {
   switch(VT.getSimpleVT().SimpleTy) {
   case MVT::v4i32: return X86ISD::PUNPCKLDQ;
   case MVT::v2i64: return X86ISD::PUNPCKLQDQ;
-  case MVT::v4f32: return X86ISD::UNPCKLPS;
-  case MVT::v2f64: return X86ISD::UNPCKLPD;
+  case MVT::v4f32:
+    return Subtarget->hasAVX() ? X86ISD::VUNPCKLPS : X86ISD::UNPCKLPS;
+  case MVT::v2f64:
+    return Subtarget->hasAVX() ? X86ISD::VUNPCKLPD : X86ISD::UNPCKLPD;
+  case MVT::v8f32: return X86ISD::VUNPCKLPSY;
+  case MVT::v4f64: return X86ISD::VUNPCKLPDY;
   case MVT::v16i8: return X86ISD::PUNPCKLBW;
   case MVT::v8i16: return X86ISD::PUNPCKLWD;
   default:
@@ -5641,7 +5650,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // unpckh_undef). Only use pshufd if speed is more important than size.
   if (OptForSize && X86::isUNPCKL_v_undef_Mask(SVOp))
     if (VT != MVT::v2i64 && VT != MVT::v2f64)
-      return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V1, DAG);
+      return getTargetShuffleNode(getUNPCKLOpcode(VT, getSubtarget()), dl, VT, V1, V1, DAG);
   if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp))
     if (VT != MVT::v2i64 && VT != MVT::v2f64)
       return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
@@ -5762,7 +5771,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (X86::isUNPCKLMask(SVOp))
-    return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V2, DAG);
+    return getTargetShuffleNode(getUNPCKLOpcode(VT, getSubtarget()),
+                                dl, VT, V1, V2, DAG);
 
   if (X86::isUNPCKHMask(SVOp))
     return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V2, DAG);
@@ -5789,7 +5799,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     ShuffleVectorSDNode *NewSVOp = cast<ShuffleVectorSDNode>(NewOp);
 
     if (X86::isUNPCKLMask(NewSVOp))
-      return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V2, V1, DAG);
+      return getTargetShuffleNode(getUNPCKLOpcode(VT, getSubtarget()),
+                                  dl, VT, V2, V1, DAG);
 
     if (X86::isUNPCKHMask(NewSVOp))
       return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V2, V1, DAG);
@@ -5812,8 +5823,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
       SVOp->getSplatIndex() == 0 && V2IsUndef) {
-    if (VT == MVT::v2f64)
-      return getTargetShuffleNode(X86ISD::UNPCKLPD, dl, VT, V1, V1, DAG);
+    if (VT == MVT::v2f64) {
+      X86ISD::NodeType Opcode =
+        getSubtarget()->hasAVX() ? X86ISD::VUNPCKLPD : X86ISD::UNPCKLPD;
+      return getTargetShuffleNode(Opcode, dl, VT, V1, V1, DAG);
+    }
     if (VT == MVT::v2i64)
       return getTargetShuffleNode(X86ISD::PUNPCKLQDQ, dl, VT, V1, V1, DAG);
   }
@@ -5840,7 +5854,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (X86::isUNPCKL_v_undef_Mask(SVOp))
     if (VT != MVT::v2i64 && VT != MVT::v2f64)
-      return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V1, DAG);
+      return getTargetShuffleNode(getUNPCKLOpcode(VT, getSubtarget()),
+                                  dl, VT, V1, V1, DAG);
   if (X86::isUNPCKH_v_undef_Mask(SVOp))
     if (VT != MVT::v2i64 && VT != MVT::v2f64)
       return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
