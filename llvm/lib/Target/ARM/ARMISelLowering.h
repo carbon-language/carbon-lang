@@ -435,6 +435,9 @@ namespace llvm {
                 DebugLoc dl, SelectionDAG &DAG,
                 SmallVectorImpl<SDValue> &InVals) const;
 
+    /// HandleByVal - Target-specific cleanup for ByVal support.
+    virtual void HandleByVal(CCState *) const;
+
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Targets which want to do tail call
     /// optimization should implement this function.

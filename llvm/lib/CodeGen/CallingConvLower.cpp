@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetLowering.h"
 using namespace llvm;
 
 CCState::CCState(CallingConv::ID CC, bool isVarArg, const TargetMachine &tm,
@@ -47,6 +48,7 @@ void CCState::HandleByVal(unsigned ValNo, MVT ValVT,
   unsigned Offset = AllocateStack(Size, Align);
 
   addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+  TM.getTargetLowering()->HandleByVal(const_cast<CCState*>(this));
 }
 
 /// MarkAllocated - Mark a register and all of its aliases as allocated.

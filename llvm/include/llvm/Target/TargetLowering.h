@@ -39,6 +39,7 @@ namespace llvm {
   class AllocaInst;
   class APFloat;
   class CallInst;
+  class CCState;
   class Function;
   class FastISel;
   class FunctionLoweringInfo;
@@ -1257,6 +1258,9 @@ public:
     assert(0 && "Not Implemented");
     return SDValue();    // this is here to silence compiler errors
   }
+
+  /// HandleByVal - Target-specific cleanup for formal ByVal parameters.
+  virtual void HandleByVal(CCState *) const {};
 
   /// CanLowerReturn - This hook should be implemented to check whether the
   /// return values described by the Outs array can fit into the return

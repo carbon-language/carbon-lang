@@ -1253,6 +1253,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     CCValAssign &VA = ArgLocs[i];
     SDValue Arg = OutVals[realArgIdx];
     ISD::ArgFlagsTy Flags = Outs[realArgIdx].Flags;
+    bool isByVal = Flags.isByVal();
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -1299,7 +1300,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       }
     } else if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-    } else if (!IsSibCall) {
+    } else if (!IsSibCall || isByVal) {
       assert(VA.isMemLoc());
 
       MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
@@ -1490,6 +1491,17 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // return.
   return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins,
                          dl, DAG, InVals);
+}
+
+/// HandleByVal - Every parameter *after* a byval parameter is passed
+/// on the stack.  Confiscate all the parameter registers to insure
+/// this.
+void
+llvm::ARMTargetLowering::HandleByVal(CCState *State) const {
+  static const unsigned RegList1[] = {
+    ARM::R0, ARM::R1, ARM::R2, ARM::R3
+  };
+  do {} while (State->AllocateReg(RegList1, 4));
 }
 
 /// MatchingStackOffset - Return true if the given stack call argument is
@@ -2280,7 +2292,9 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
                                                   isVarArg));
 
   SmallVector<SDValue, 16> ArgValues;
+  int lastInsIndex = -1;
 
+  SDValue ArgValue;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
 
@@ -2288,7 +2302,6 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
 
-      SDValue ArgValue;
       if (VA.needsCustom()) {
         // f64 and vector types are split up into multiple registers or
         // combinations of registers and stack slots.
@@ -2364,14 +2377,33 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       assert(VA.isMemLoc());
       assert(VA.getValVT() != MVT::i64 && "i64 should already be lowered");
 
-      unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
-      int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset(), true);
+      int index = ArgLocs[i].getValNo();
+      
+      // Some Ins[] entries become multiple ArgLoc[] entries.
+      // Process them only once.
+      if (index != lastInsIndex)
+        {
+          ISD::ArgFlagsTy Flags = Ins[index].Flags;
+          // FIXME: For now, all byval parameter objects are marked mutable. This can be
+          // changed with more analysis.
+          // In case of tail call optimization mark all arguments mutable. Since they
+          // could be overwritten by lowering of arguments in case of a tail call.
+          if (Flags.isByVal()) {
+            int FI = MFI->CreateFixedObject(Flags.getByValSize(),
+                                            VA.getLocMemOffset(), false);
+            InVals.push_back(DAG.getFrameIndex(FI, getPointerTy()));
+          } else {
+            int FI = MFI->CreateFixedObject(VA.getLocVT().getSizeInBits()/8,
+                                            VA.getLocMemOffset(), true);
 
-      // Create load nodes to retrieve arguments from the stack.
-      SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-      InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN,
-                                   MachinePointerInfo::getFixedStack(FI),
-                                   false, false, 0));
+            // Create load nodes to retrieve arguments from the stack.
+            SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+            InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN,
+                                         MachinePointerInfo::getFixedStack(FI),
+                                         false, false, 0));
+          }
+          lastInsIndex = index;
+        }
     }
   }
 

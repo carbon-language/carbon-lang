@@ -22,6 +22,9 @@ class CCIfAlign<string Align, CCAction A>:
 //===----------------------------------------------------------------------===//
 def CC_ARM_APCS : CallingConv<[
 
+  // Handles byval parameters.
+  CCIfByVal<CCPassByVal<8, 8>>,
+    
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
   // Handle all vector types as either f64 or v2f64.
