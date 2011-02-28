@@ -1720,7 +1720,7 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
   }
 
   // Some instructions have predicate operands first before the immediate.
-  if(Opcode == ARM::tBLXi_r9 || Opcode == ARM::tBLr9) {
+  if (Opcode == ARM::tBLXi_r9 || Opcode == ARM::tBLr9) {
     // Handling the two predicate operands before the imm operand.
     if (B->DoPredicateOperands(MI, Opcode, insn, NumOps))
       NumOpsAdded += 2;
