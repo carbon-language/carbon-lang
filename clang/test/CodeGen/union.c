@@ -42,3 +42,5 @@ int RRF(void) {return RRU.a;}
 // PR6164
 typedef union T0 { unsigned int : 0; } T0;
 T0 t0;
+
+union { int large_bitfield: 31; char c } u2;

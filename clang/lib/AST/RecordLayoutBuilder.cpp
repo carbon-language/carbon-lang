@@ -815,8 +815,8 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   assert(DataSize == 0 && "Vtable pointer must be at offset zero!");
 
   // Update the size.
-  setSize(getSizeInBits() + GetVirtualPointersSize(RD));
-  setDataSize(getSizeInBits());
+  setSize(getSize() + Context.toCharUnitsFromBits(GetVirtualPointersSize(RD)));
+  setDataSize(getSize());
 
   CharUnits UnpackedBaseAlign = 
     Context.toCharUnitsFromBits(Context.Target.getPointerAlign(0));
@@ -1108,8 +1108,7 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   // If we have an empty base class, try to place it at offset 0.
   if (Base->Class->isEmpty() &&
       EmptySubobjects->CanPlaceBaseAtOffset(Base, CharUnits::Zero())) {
-    uint64_t RecordSizeInBits = Context.toBits(Layout.getSize());
-    setSize(std::max(getSizeInBits(), RecordSizeInBits));
+    setSize(std::max(getSize(), Layout.getSize()));
 
     return CharUnits::Zero();
   }
@@ -1124,27 +1123,24 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   }
 
   // Round up the current record size to the base's alignment boundary.
-  uint64_t Offset = 
-    llvm::RoundUpToAlignment(getDataSizeInBits(), Context.toBits(BaseAlign));
+  CharUnits Offset = getDataSize().RoundUpToAlignment(BaseAlign);
 
   // Try to place the base.
-  while (!EmptySubobjects->CanPlaceBaseAtOffset(Base, 
-                                          Context.toCharUnitsFromBits(Offset)))
-    Offset += Context.toBits(BaseAlign);
+  while (!EmptySubobjects->CanPlaceBaseAtOffset(Base, Offset))
+    Offset += BaseAlign;
 
   if (!Base->Class->isEmpty()) {
     // Update the data size.
-    setDataSize(Offset + Context.toBits(Layout.getNonVirtualSize()));
+    setDataSize(Offset + Layout.getNonVirtualSize());
 
-    setSize(std::max(getSizeInBits(), getDataSizeInBits()));
+    setSize(std::max(getSize(), getDataSize()));
   } else
-    setSize(std::max(getSizeInBits(), 
-                     Offset + Context.toBits(Layout.getSize())));
+    setSize(std::max(getSize(), Offset + Layout.getSize()));
 
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign, UnpackedBaseAlign);
 
-  return Context.toCharUnitsFromBits(Offset);
+  return Offset;
 }
 
 void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
@@ -1233,7 +1229,7 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
     // We start laying out ivars not at the end of the superclass
     // structure, but at the next byte following the last field.
     setSize(SL.getDataSize());
-    setDataSize(getSizeInBits());
+    setDataSize(getSize());
   }
 
   InitializeLayout(D);
@@ -1487,7 +1483,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   if (IsUnion)
     setSize(std::max(getSizeInBits(), FieldSizeInBits));
   else
-    setSize(Context.toBits(FieldOffset) + FieldSizeInBits);
+    setSize(FieldOffset + FieldSize);
 
   // Update the data size.
   setDataSize(getSizeInBits());
@@ -1504,17 +1500,18 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
       // which is not empty but of size 0; such as having fields of
       // array of zero-length, remains of Size 0
       if (RD->isEmpty())
-        setSize(8);
+        setSize(CharUnits::One());
     }
     else
-      setSize(8);
+      setSize(CharUnits::One());
   }
   // Finally, round the size of the record up to the alignment of the
   // record itself.
   uint64_t UnpaddedSize = getSizeInBits() - UnfilledBitsInLastByte;
-  uint64_t UnpackedSize = 
+  uint64_t UnpackedSizeInBits = 
     llvm::RoundUpToAlignment(getSizeInBits(), 
                              Context.toBits(UnpackedAlignment));
+  CharUnits UnpackedSize = Context.toCharUnitsFromBits(UnpackedSizeInBits);
   setSize(llvm::RoundUpToAlignment(getSizeInBits(), Context.toBits(Alignment)));
 
   unsigned CharBitNum = Context.Target.getCharWidth();
@@ -1536,7 +1533,7 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
     // Warn if we packed it unnecessarily. If the alignment is 1 byte don't
     // bother since there won't be alignment issues.
     if (Packed && UnpackedAlignment > CharUnits::One() && 
-        getSizeInBits() == UnpackedSize)
+        getSize() == UnpackedSize)
       Diag(D->getLocation(), diag::warn_unnecessary_packed)
           << Context.getTypeDeclType(RD);
   }
@@ -1713,17 +1710,15 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     bool IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
 
     // FIXME: This should be done in FinalizeLayout.
-    uint64_t DataSize =
-      IsPODForThePurposeOfLayout ? Builder->Size : Builder->DataSize;
-    CharUnits NonVirtualSize =
-      IsPODForThePurposeOfLayout ? 
-        toCharUnitsFromBits(DataSize) : Builder->NonVirtualSize;
+    CharUnits DataSize =
+      IsPODForThePurposeOfLayout ? Builder->getSize() : Builder->getDataSize();
+    CharUnits NonVirtualSize = 
+      IsPODForThePurposeOfLayout ? DataSize : Builder->NonVirtualSize;
 
-    CharUnits RecordSize = toCharUnitsFromBits(Builder->Size);
     NewEntry =
-      new (*this) ASTRecordLayout(*this, RecordSize, 
+      new (*this) ASTRecordLayout(*this, Builder->getSize(), 
                                   Builder->Alignment,
-                                  toCharUnitsFromBits(DataSize), 
+                                  DataSize, 
                                   Builder->FieldOffsets.data(),
                                   Builder->FieldOffsets.size(),
                                   NonVirtualSize,
@@ -1736,12 +1731,10 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
     Builder.Layout(D);
 
-    CharUnits RecordSize = toCharUnitsFromBits(Builder.Size);
-
     NewEntry =
-      new (*this) ASTRecordLayout(*this, RecordSize, 
+      new (*this) ASTRecordLayout(*this, Builder.getSize(), 
                                   Builder.Alignment,
-                                  toCharUnitsFromBits(Builder.Size),
+                                  Builder.getSize(),
                                   Builder.FieldOffsets.data(),
                                   Builder.FieldOffsets.size());
   }
@@ -1797,12 +1790,10 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
   Builder.Layout(D);
 
-  CharUnits RecordSize = toCharUnitsFromBits(Builder.Size);
-
   const ASTRecordLayout *NewEntry =
-    new (*this) ASTRecordLayout(*this, RecordSize, 
+    new (*this) ASTRecordLayout(*this, Builder.getSize(), 
                                 Builder.Alignment,
-                                toCharUnitsFromBits(Builder.DataSize),
+                                Builder.getDataSize(),
                                 Builder.FieldOffsets.data(),
                                 Builder.FieldOffsets.size());
 
