@@ -60,6 +60,16 @@ const FunctionDecl *SVal::getAsFunctionDecl() const {
   return NULL;
 }
 
+const VarDecl* SVal::getAsVarDecl() const {
+  if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(this)) {
+    const MemRegion* R = X->getRegion();
+    if (const VarRegion *VR = R->getAs<VarRegion>())
+      return cast<VarDecl>(VR->getDecl());
+  }
+
+  return NULL;
+}
+
 /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and
 ///  wraps a symbol, return that SymbolRef.  Otherwise return 0.
 // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?

@@ -125,6 +125,10 @@ public:
   /// Otherwise return 0.
   const FunctionDecl* getAsFunctionDecl() const;
 
+  /// \brief If this SVal is a MemRegionVal and wraps a VarDecl,
+  /// return that VarDecl. Otherwise return 0.
+  const VarDecl* getAsVarDecl() const;
+
   /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and
   ///  wraps a symbol, return that SymbolRef.  Otherwise return NULL.
   SymbolRef getAsLocSymbol() const;
