@@ -1459,7 +1459,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fblocks=0 is default.
   if (Args.hasFlag(options::OPT_fblocks, options::OPT_fno_blocks,
-                   getToolChain().IsBlocksDefault())) {
+                   getToolChain().IsBlocksDefault()) ||
+        (Args.hasArg(options::OPT_fgnu_runtime) &&
+         Args.hasArg(options::OPT_fobjc_nonfragile_abi) &&
+         !Args.hasArg(options::OPT_fno_blocks))) {
     CmdArgs.push_back("-fblocks");
   }
 
