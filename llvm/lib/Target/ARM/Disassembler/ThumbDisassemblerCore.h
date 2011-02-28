@@ -1719,6 +1719,17 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
     return true;
   }
 
+  // Some instructions have predicate operands first before the immediate.
+  if(Opcode == ARM::tBLXi_r9 || Opcode == ARM::tBLr9) {
+    // Handling the two predicate operands before the imm operand.
+    if (B->DoPredicateOperands(MI, Opcode, insn, NumOps))
+      NumOpsAdded += 2;
+    else {
+      DEBUG(errs() << "Expected predicate operands not found.\n");
+      return false;
+    }
+  }
+
   // Add the imm operand.
   int Offset = 0;
 
@@ -1745,7 +1756,8 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
   // to compensate.
   MI.addOperand(MCOperand::CreateImm(Offset + 4));
 
-  NumOpsAdded = 1;
+  // This is an increment as some predicate operands may have been added first.
+  NumOpsAdded += 1;
 
   return true;
 }
