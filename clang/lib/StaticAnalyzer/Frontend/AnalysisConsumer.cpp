@@ -339,8 +339,6 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
     return;
   ExprEngine Eng(mgr, TF.take());
 
-  RegisterNSErrorChecks(Eng.getBugReporter(), Eng, *D);
-
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
   if (mgr.shouldVisualizeUbigraph()) {

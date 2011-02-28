@@ -15,6 +15,7 @@
 #define LLVM_CLANG_SA_CORE_CHECKERV2
 
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/Support/Casting.h"
 
 namespace clang {
@@ -356,6 +357,14 @@ public:
   void dispatchEvent(const EVENT &event) const {
     Mgr->_dispatchEvent(event);
   }
+};
+
+/// \brief We dereferenced a location that may be null.
+struct ImplicitNullDerefEvent {
+  SVal Location;
+  bool IsLoad;
+  ExplodedNode *SinkNode;
+  BugReporter *BR;
 };
 
 } // end ento namespace

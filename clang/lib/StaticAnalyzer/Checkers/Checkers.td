@@ -70,10 +70,18 @@ def ObjCMethSigsChecker : Checker<"MethodSigs">,
 def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
   HelpText<"Warn about private ivars that are never used">,
   DescFile<"ObjCUnusedIVarsChecker.cpp">;
+ 
+def NSErrorChecker : Checker<"NSError">,
+  HelpText<"Check usage of NSError** parameters">,
+  DescFile<"NSErrorChecker.cpp">;
 
 } // end "cocoa"
 
 let ParentPackage = Core in {
+
+def DereferenceChecker : Checker<"Deref">,
+  HelpText<"Check for null pointers at loads and stores">,
+  DescFile<"DereferenceChecker.cpp">;
 
 def CallAndMessageChecker : Checker<"CallAndMsg">,
   HelpText<"Check for errors of call and objc message expressions">,
@@ -161,6 +169,11 @@ def CFRetainReleaseChecker : Checker<"CFRetainRelease">,
   InPackage<MacOSX>,
   HelpText<"Check for null arguments to CFRetain/CFRelease">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
+
+def CFErrorChecker : Checker<"CFError">,
+  InPackage<MacOSX>,
+  HelpText<"Check usage of CFErrorRef* parameters">,
+  DescFile<"NSErrorChecker.cpp">;
 
 def LLVMConventionsChecker : Checker<"Conventions">,
   InPackage<LLVM>,

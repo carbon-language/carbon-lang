@@ -12,50 +12,30 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Checkers/DereferenceChecker.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/Checker.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
-class DereferenceChecker : public Checker {
-  BuiltinBug *BT_null;
-  BuiltinBug *BT_undef;
-  llvm::SmallVector<ExplodedNode*, 2> ImplicitNullDerefNodes;
-public:
-  DereferenceChecker() : BT_null(0), BT_undef(0) {}
-  static void *getTag() { static int tag = 0; return &tag; }
-  void visitLocation(CheckerContext &C, const Stmt *S, SVal location,
-                     bool isLoad);
+class DereferenceChecker
+    : public CheckerV2< check::Location,
+                        EventDispatcher<ImplicitNullDerefEvent> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT_null;
+  mutable llvm::OwningPtr<BuiltinBug> BT_undef;
 
-  std::pair<ExplodedNode * const*, ExplodedNode * const*>
-  getImplicitNodes() const {
-    return std::make_pair(ImplicitNullDerefNodes.data(),
-                          ImplicitNullDerefNodes.data() +
-                          ImplicitNullDerefNodes.size());
-  }
-  void AddDerefSource(llvm::raw_ostream &os,
-                      llvm::SmallVectorImpl<SourceRange> &Ranges,
-                      const Expr *Ex, bool loadedFrom = false);
+public:
+  void checkLocation(SVal location, bool isLoad, CheckerContext &C) const;
+
+  static void AddDerefSource(llvm::raw_ostream &os,
+                             llvm::SmallVectorImpl<SourceRange> &Ranges,
+                             const Expr *Ex, bool loadedFrom = false);
 };
 } // end anonymous namespace
-
-void ento::RegisterDereferenceChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new DereferenceChecker());
-}
-
-std::pair<ExplodedNode * const *, ExplodedNode * const *>
-ento::GetImplicitNullDereferences(ExprEngine &Eng) {
-  DereferenceChecker *checker = Eng.getChecker<DereferenceChecker>();
-  if (!checker)
-    return std::make_pair((ExplodedNode * const *) 0,
-                          (ExplodedNode * const *) 0);
-  return checker->getImplicitNodes();
-}
 
 void DereferenceChecker::AddDerefSource(llvm::raw_ostream &os,
                                      llvm::SmallVectorImpl<SourceRange> &Ranges,
@@ -85,13 +65,13 @@ void DereferenceChecker::AddDerefSource(llvm::raw_ostream &os,
   }
 }
 
-void DereferenceChecker::visitLocation(CheckerContext &C, const Stmt *S,
-                                       SVal l, bool isLoad) {
+void DereferenceChecker::checkLocation(SVal l, bool isLoad,
+                                       CheckerContext &C) const {
   // Check for dereference of an undefined value.
   if (l.isUndef()) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_undef)
-        BT_undef = new BuiltinBug("Dereference of undefined pointer value");
+        BT_undef.reset(new BuiltinBug("Dereference of undefined pointer value"));
 
       EnhancedBugReport *report =
         new EnhancedBugReport(*BT_undef, BT_undef->getDescription(), N);
@@ -108,6 +88,7 @@ void DereferenceChecker::visitLocation(CheckerContext &C, const Stmt *S,
   if (!isa<Loc>(location))
     return;
 
+  const Stmt *S = C.getStmt();
   const GRState *state = C.getState();
   const GRState *notNullState, *nullState;
   llvm::tie(notNullState, nullState) = state->assume(location);
@@ -123,7 +104,7 @@ void DereferenceChecker::visitLocation(CheckerContext &C, const Stmt *S,
       // We know that 'location' cannot be non-null.  This is what
       // we call an "explicit" null dereference.
       if (!BT_null)
-        BT_null = new BuiltinBug("Dereference of null pointer");
+        BT_null.reset(new BuiltinBug("Dereference of null pointer"));
 
       llvm::SmallString<100> buf;
       llvm::SmallVector<SourceRange, 2> Ranges;
@@ -195,11 +176,17 @@ void DereferenceChecker::visitLocation(CheckerContext &C, const Stmt *S,
       // Otherwise, we have the case where the location could either be
       // null or not-null.  Record the error node as an "implicit" null
       // dereference.
-      if (ExplodedNode *N = C.generateSink(nullState))
-        ImplicitNullDerefNodes.push_back(N);
+      if (ExplodedNode *N = C.generateSink(nullState)) {
+        ImplicitNullDerefEvent event = { l, isLoad, N, &C.getBugReporter() };
+        dispatchEvent(event);
+      }
     }
   }
 
   // From this point forward, we know that the location is not null.
   C.addTransition(notNullState);
+}
+
+void ento::registerDereferenceChecker(CheckerManager &mgr) {
+  mgr.registerChecker<DereferenceChecker>();
 }

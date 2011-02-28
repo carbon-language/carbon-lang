@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=flat -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-check-objc-mem -analyzer-store=flat -verify %s
 #define FAIL ((void)*(char*)0)
 struct simple { int x; };
 

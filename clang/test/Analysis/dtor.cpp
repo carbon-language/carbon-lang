@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store region -analyzer-inline-call -cfg-add-implicit-dtors -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-check-objc-mem -analyzer-store region -analyzer-inline-call -cfg-add-implicit-dtors -verify %s
 
 class A {
 public:

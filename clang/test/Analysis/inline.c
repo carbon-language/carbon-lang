@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-inline-call -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-check-objc-mem -analyzer-inline-call -analyzer-store region -verify %s
 
 int test1_f1() {
   int y = 1;

@@ -308,22 +308,6 @@ void ExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
 
-static void RegisterInternalChecks(ExprEngine &Eng) {
-  // Register internal "built-in" BugTypes with the BugReporter. These BugTypes
-  // are different than what probably many checks will do since they don't
-  // create BugReports on-the-fly but instead wait until ExprEngine finishes
-  // analyzing a function.  Generation of BugReport objects is done via a call
-  // to 'FlushReports' from BugReporter.
-  // The following checks do not need to have their associated BugTypes
-  // explicitly registered with the BugReporter.  If they issue any BugReports,
-  // their associated BugType will get registered with the BugReporter
-  // automatically.  Note that the check itself is owned by the ExprEngine
-  // object.
-  // CallAndMessageChecker should be registered before AttrNonNullChecker,
-  // where we assume arguments are not undefined.
-  RegisterDereferenceChecker(Eng);
-}
-
 ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
   : AMgr(mgr),
     Engine(*this),
@@ -338,8 +322,6 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
     BR(mgr, *this), TF(tf) {
-  // Register internal checks.
-  RegisterInternalChecks(*this);
 
   // FIXME: Eventually remove the TF object entirely.
   TF->RegisterChecks(*this);
