@@ -87,6 +87,7 @@ void test5() {
     int x;  // eliding var decl?
     case 1:
       x = 4;
+      i = x;
       break;
   } 
 }
@@ -196,3 +197,22 @@ void test11() {
       break;
   }
 }
+
+// CHECK: @test12
+// CHECK-NOT: switch
+// CHECK: ret void
+void test12() {
+  switch (1) {
+  case 2: {
+     int a;   // Ok to skip this vardecl.
+     a = 42;
+   }
+  case 1:
+    break;
+  case 42: ;
+    int x;  // eliding var decl?
+    x = 4;
+    break;
+  }
+}
+

@@ -887,9 +887,16 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
     // the skipped statements must be skippable) or we might already have it.
     CompoundStmt::const_body_iterator I = CS->body_begin(), E = CS->body_end();
     if (Case) {
+      // Keep track of whether we see a skipped declaration.  The code could be
+      // using the declaration even if it is skipped, so we can't optimize out
+      // the decl if the kept statements might refer to it.
+      bool HadSkippedDecl = false;
+      
       // If we're looking for the case, just see if we can skip each of the
       // substatements.
       for (; Case && I != E; ++I) {
+        HadSkippedDecl |= isa<DeclStmt>(I);
+        
         switch (CollectStatementsForCase(*I, Case, FoundCase, ResultStmts)) {
         case CSFC_Failure: return CSFC_Failure;
         case CSFC_Success:
@@ -898,6 +905,11 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
           // and also contains the break to exit the switch.  In the later case,
           // we just verify the rest of the statements are elidable.
           if (FoundCase) {
+            // If we found the case and skipped declarations, we can't do the
+            // optimization.
+            if (HadSkippedDecl)
+              return CSFC_Failure;
+            
             for (++I; I != E; ++I)
               if (CodeGenFunction::ContainsLabel(*I, true))
                 return CSFC_Failure;
@@ -911,6 +923,11 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
           assert(FoundCase && "Didn't find case but returned fallthrough?");
           // We recursively found Case, so we're not looking for it anymore.
           Case = 0;
+            
+          // If we found the case and skipped declarations, we can't do the
+          // optimization.
+          if (HadSkippedDecl)
+            return CSFC_Failure;
           break;
         }
       }
@@ -943,9 +960,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
   // for statement or increment etc.  If we are skipping over this statement,
   // just verify it doesn't have labels, which would make it invalid to elide.
   if (Case) {
-    if (CodeGenFunction::ContainsLabel(S, true) ||
-        // Don't skip over DeclStmts, which can be used even if skipped over.
-        isa<DeclStmt>(S))
+    if (CodeGenFunction::ContainsLabel(S, true))
       return CSFC_Failure;
     return CSFC_Success;
   }
