@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fexceptions -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -verify %s -std=c++0x
 
 struct S {
   virtual ~S();

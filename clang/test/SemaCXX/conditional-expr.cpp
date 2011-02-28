@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fexceptions -fsyntax-only -verify -std=c++0x -Wsign-compare %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -verify -std=c++0x -Wsign-compare %s
 
 // C++ rules for ?: are a lot stricter than C rules, and have to take into
 // account more conversion options.

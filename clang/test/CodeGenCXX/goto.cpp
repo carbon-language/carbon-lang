@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -fexceptions -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -fcxx-exceptions -fexceptions -emit-llvm -o - | FileCheck %s
 
 // Reduced from a crash on boost::interprocess's node_allocator_test.cpp.
 namespace test0 {

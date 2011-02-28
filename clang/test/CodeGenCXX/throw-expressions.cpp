@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fexceptions -emit-llvm-only -verify %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -emit-llvm-only -verify %s -Wno-unreachable-code
 
 int val = 42;
 int& test1() {

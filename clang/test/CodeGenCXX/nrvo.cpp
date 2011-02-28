@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -O1 -o - %s | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm -O1 -fexceptions -o - %s | FileCheck --check-prefix=CHECK-EH %s
+// RUN: %clang_cc1 -emit-llvm -O1 -fcxx-exceptions -fexceptions -o - %s | FileCheck --check-prefix=CHECK-EH %s
 
 // Test code generation for the named return value optimization.
 class X {

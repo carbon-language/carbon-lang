@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fexceptions -fsyntax-only -Wignored-qualifiers -verify
+// RUN: %clang_cc1 %s -fcxx-exceptions -fexceptions -fsyntax-only -Wignored-qualifiers -verify
 
 int test1() {
   throw;

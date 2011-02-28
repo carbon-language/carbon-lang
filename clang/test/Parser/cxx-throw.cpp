@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fexceptions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -verify %s
 
 int i;
 
