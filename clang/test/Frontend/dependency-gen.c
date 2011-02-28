@@ -8,7 +8,8 @@
 // RUN: grep 'dependency-gen.c' %t.d
 
 // PR8974
-// XFAIL: win32
+// REQUIRES: shell
+// "cd %t.dir" requires shell.
 // RUN: rm -rf %t.dir
 // RUN: mkdir -p %t.dir/a/b
 // RUN: echo > %t.dir/a/b/x.h
