@@ -24,6 +24,7 @@ add_clang_library(clangAST
   ExprClassification.cpp
   ExprConstant.cpp
   ExprCXX.cpp
+  ExternalASTSource.cpp
   InheritViz.cpp
   ItaniumCXXABI.cpp
   ItaniumMangle.cpp
