@@ -895,9 +895,14 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
         case CSFC_Success:
           // A successful result means that either 1) that the statement doesn't
           // have the case and is skippable, or 2) does contain the case value
-          // and also contains the break to exit the switch.  In either case,
-          // we continue scanning the body of the compound statement to see if
-          // the rest are skippable or have the case.
+          // and also contains the break to exit the switch.  In the later case,
+          // we just verify the rest of the statements are elidable.
+          if (FoundCase) {
+            for (++I; I != E; ++I)
+              if (CodeGenFunction::ContainsLabel(*I, true))
+                return CSFC_Failure;
+            return CSFC_Success;
+          }
           break;
         case CSFC_FallThrough:
           // If we have a fallthrough condition, then we must have found the

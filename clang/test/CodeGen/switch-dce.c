@@ -167,7 +167,9 @@ void test9(int i) {
   } 
 }
 
-
+// CHECK: @test10
+// CHECK-NOT: switch
+// CHECK: ret i32
 int test10(void) {
 	switch(8) {
 		case 8:
@@ -179,4 +181,18 @@ int test10(void) {
 	}
 	
 	return 0;
+}
+
+// CHECK: @test11
+// CHECK-NOT: switch
+// CHECK: ret void
+void test11() {
+  switch (1) {
+    case 1:
+      break;
+    case 42: ;
+      int x;  // eliding var decl?
+      x = 4;
+      break;
+  }
 }
