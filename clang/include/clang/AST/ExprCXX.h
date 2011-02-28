@@ -2210,8 +2210,6 @@ class CXXDependentScopeMemberExpr : public Expr {
                           DeclarationNameInfo MemberNameInfo,
                           const TemplateArgumentListInfo *TemplateArgs);
 
-  friend class ASTStmtReader;
-  
 public:
   CXXDependentScopeMemberExpr(ASTContext &C,
                               Expr *Base, QualType BaseType,
