@@ -28,6 +28,7 @@ static const struct map_entry {
   const int opcode;
 } map[] = {
   { &PTX::RRegs32RegClass, PTX::MOVrr },
+  { &PTX::RRegf32RegClass, PTX::MOVrr },
   { &PTX::PredsRegClass,   PTX::MOVpp }
 };
 
@@ -35,12 +36,13 @@ void PTXInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator I, DebugLoc DL,
                                unsigned DstReg, unsigned SrcReg,
                                bool KillSrc) const {
-  for (int i = 0, e = sizeof(map)/sizeof(map[0]); i != e; ++ i)
-    if (PTX::RRegs32RegClass.contains(DstReg, SrcReg)) {
+  for (int i = 0, e = sizeof(map)/sizeof(map[0]); i != e; ++ i) {
+    if (map[i].cls->contains(DstReg, SrcReg)) {
       BuildMI(MBB, I, DL,
-              get(PTX::MOVrr), DstReg).addReg(SrcReg, getKillRegState(KillSrc));
+              get(map[i].opcode), DstReg).addReg(SrcReg, getKillRegState(KillSrc));
       return;
     }
+  }
 
   llvm_unreachable("Impossible reg-to-reg copy");
 }

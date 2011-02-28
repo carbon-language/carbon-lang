@@ -85,6 +85,40 @@ def R29 : PTXReg<"r29">;
 def R30 : PTXReg<"r30">;
 def R31 : PTXReg<"r31">;
 
+def F0  : PTXReg<"f0">;
+def F1  : PTXReg<"f1">;
+def F2  : PTXReg<"f2">;
+def F3  : PTXReg<"f3">;
+def F4  : PTXReg<"f4">;
+def F5  : PTXReg<"f5">;
+def F6  : PTXReg<"f6">;
+def F7  : PTXReg<"f7">;
+def F8  : PTXReg<"f8">;
+def F9  : PTXReg<"f9">;
+def F10 : PTXReg<"f10">;
+def F11 : PTXReg<"f11">;
+def F12 : PTXReg<"f12">;
+def F13 : PTXReg<"f13">;
+def F14 : PTXReg<"f14">;
+def F15 : PTXReg<"f15">;
+def F16 : PTXReg<"f16">;
+def F17 : PTXReg<"f17">;
+def F18 : PTXReg<"f18">;
+def F19 : PTXReg<"f19">;
+def F20 : PTXReg<"f20">;
+def F21 : PTXReg<"f21">;
+def F22 : PTXReg<"f22">;
+def F23 : PTXReg<"f23">;
+def F24 : PTXReg<"f24">;
+def F25 : PTXReg<"f25">;
+def F26 : PTXReg<"f26">;
+def F27 : PTXReg<"f27">;
+def F28 : PTXReg<"f28">;
+def F29 : PTXReg<"f29">;
+def F30 : PTXReg<"f30">;
+def F31 : PTXReg<"f31">;
+
+
 //===----------------------------------------------------------------------===//
 //  Register classes
 //===----------------------------------------------------------------------===//
@@ -100,3 +134,9 @@ def RRegs32 : RegisterClass<"PTX", [i32], 32,
                              R8, R9, R10, R11, R12, R13, R14, R15,
                              R16, R17, R18, R19, R20, R21, R22, R23,
                              R24, R25, R26, R27, R28, R29, R30, R31]>;
+
+def RRegf32 : RegisterClass<"PTX", [f32], 32,
+                            [F0, F1, F2, F3, F4, F5, F6, F7,
+                             F8, F9, F10, F11, F12, F13, F14, F15,
+                             F16, F17, F18, F19, F20, F21, F22, F23,
+                             F24, F25, F26, F27, F28, F29, F30, F31]>;

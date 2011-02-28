@@ -143,6 +143,18 @@ def PTXret
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
+// Three-operand f32 instruction template
+multiclass FLOAT3<string opcstr, SDNode opnode> {
+  def rr : InstPTX<(outs RRegf32:$d),
+                   (ins RRegf32:$a, RRegf32:$b),
+                   !strconcat(opcstr, ".%type\t$d, $a, $b"),
+                   [(set RRegf32:$d, (opnode RRegf32:$a, RRegf32:$b))]>;
+  def ri : InstPTX<(outs RRegf32:$d),
+                   (ins RRegf32:$a, f32imm:$b),
+                   !strconcat(opcstr, ".%type\t$d, $a, $b"),
+                   [(set RRegf32:$d, (opnode RRegf32:$a, fpimm:$b))]>;
+}
+
 multiclass INT3<string opcstr, SDNode opnode> {
   def rr : InstPTX<(outs RRegs32:$d),
                    (ins RRegs32:$a, RRegs32:$b),
@@ -204,6 +216,12 @@ multiclass PTX_ST<string opstr, RegisterClass RC, PatFrag pat_store> {
 // Instructions
 //===----------------------------------------------------------------------===//
 
+///===- Floating-Point Arithmetic Instructions ----------------------------===//
+
+defm FADD : FLOAT3<"add", fadd>;
+defm FSUB : FLOAT3<"sub", fsub>;
+defm FMUL : FLOAT3<"mul", fmul>;
+
 ///===- Integer Arithmetic Instructions -----------------------------------===//
 
 defm ADD : INT3<"add", add>;
@@ -223,6 +241,8 @@ let neverHasSideEffects = 1 in {
     : InstPTX<(outs Preds:$d), (ins Preds:$a), "mov.pred\t$d, $a", []>;
   def MOVrr
     : InstPTX<(outs RRegs32:$d), (ins RRegs32:$a), "mov.%type\t$d, $a", []>;
+  def FMOVrr
+    : InstPTX<(outs RRegf32:$d), (ins RRegf32:$a), "mov.f32\t$d, $a", []>;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
@@ -232,8 +252,12 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def MOVri
     : InstPTX<(outs RRegs32:$d), (ins i32imm:$a), "mov.s32\t$d, $a",
               [(set RRegs32:$d, imm:$a)]>;
+  def FMOVri
+    : InstPTX<(outs RRegf32:$d), (ins f32imm:$a), "mov.f32\t$d, $a",
+              [(set RRegf32:$d, fpimm:$a)]>;
 }
 
+// Integer loads
 defm LDg : PTX_LD<"ld.global", RRegs32, load_global>;
 defm LDc : PTX_LD<"ld.const",  RRegs32, load_constant>;
 defm LDl : PTX_LD<"ld.local",  RRegs32, load_local>;
@@ -243,11 +267,29 @@ defm LDs : PTX_LD<"ld.shared", RRegs32, load_shared>;
 def LDpi : InstPTX<(outs RRegs32:$d), (ins MEMpi:$a),
                    "ld.param.%type\t$d, [$a]", []>;
 
+// Floating-point loads
+defm FLDg : PTX_LD<"ld.global", RRegf32, load_global>;
+defm FLDc : PTX_LD<"ld.const",  RRegf32, load_constant>;
+defm FLDl : PTX_LD<"ld.local",  RRegf32, load_local>;
+defm FLDp : PTX_LD<"ld.param",  RRegf32, load_parameter>;
+defm FLDs : PTX_LD<"ld.shared", RRegf32, load_shared>;
+
+def FLDpi : InstPTX<(outs RRegf32:$d), (ins MEMpi:$a),
+                   "ld.param.%type\t$d, [$a]", []>;
+
+// Integer stores
 defm STg : PTX_ST<"st.global", RRegs32, store_global>;
 defm STl : PTX_ST<"st.local",  RRegs32, store_local>;
 // Store to parameter state space requires PTX 2.0 or higher?
 // defm STp : PTX_ST<"st.param",  RRegs32, store_parameter>;
 defm STs : PTX_ST<"st.shared", RRegs32, store_shared>;
+
+// Floating-point stores
+defm FSTg : PTX_ST<"st.global", RRegf32, store_global>;
+defm FSTl : PTX_ST<"st.local",  RRegf32, store_local>;
+// Store to parameter state space requires PTX 2.0 or higher?
+// defm FSTp : PTX_ST<"st.param",  RRegf32, store_parameter>;
+defm FSTs : PTX_ST<"st.shared", RRegf32, store_shared>;
 
 ///===- Control Flow Instructions -----------------------------------------===//
 

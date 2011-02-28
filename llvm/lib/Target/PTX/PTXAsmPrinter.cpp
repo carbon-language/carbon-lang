@@ -84,6 +84,7 @@ static const char PARAM_PREFIX[] = "__param_";
 static const char *getRegisterTypeName(unsigned RegNo) {
 #define TEST_REGCLS(cls, clsstr) \
   if (PTX::cls ## RegisterClass->contains(RegNo)) return # clsstr;
+  TEST_REGCLS(RRegf32, f32);
   TEST_REGCLS(RRegs32, s32);
   TEST_REGCLS(Preds, pred);
 #undef TEST_REGCLS
@@ -111,6 +112,21 @@ static const char *getStateSpaceName(unsigned addressSpace) {
   case PTX::LOCAL:     return "local";
   case PTX::PARAMETER: return "param";
   case PTX::SHARED:    return "shared";
+  }
+  return NULL;
+}
+
+static const char *getTypeName(const Type* type) {
+  while (true) {
+    switch (type->getTypeID()) {
+      default: llvm_unreachable("Unknown type");
+      case Type::FloatTyID: return ".f32";
+      case Type::IntegerTyID: return ".s32";    // TODO:  Handle 64-bit types.
+      case Type::ArrayTyID:
+      case Type::PointerTyID:
+        type = dyn_cast<const SequentialType>(type)->getElementType();
+        break;
+    }
   }
   return NULL;
 }
@@ -218,6 +234,15 @@ void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     case MachineOperand::MO_Register:
       OS << getRegisterName(MO.getReg());
       break;
+    case MachineOperand::MO_FPImmediate:
+      APInt constFP = MO.getFPImm()->getValueAPF().bitcastToAPInt();
+      if (constFP.getZExtValue() > 0) {
+        OS << "0F" << constFP.toString(16, false);
+      }
+      else {
+        OS << "0F00000000";
+      }
+      break;
   }
 }
 
@@ -265,8 +290,8 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
     decl += " ";
   }
 
-  // TODO: add types
-  decl += ".s32 ";
+  decl += getTypeName(gv->getType());
+  decl += " ";
 
   decl += gvsym->getName();
 

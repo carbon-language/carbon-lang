@@ -28,9 +28,12 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   // Set up the register classes.
   addRegisterClass(MVT::i1,  PTX::PredsRegisterClass);
   addRegisterClass(MVT::i32, PTX::RRegs32RegisterClass);
-
+  addRegisterClass(MVT::f32, PTX::RRegf32RegisterClass);
+  
   setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
 
+  setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
+  
   // Customize translation of memory addresses
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
 
@@ -87,7 +90,8 @@ struct argmap_entry {
   bool operator==(MVT::SimpleValueType _VT) const { return VT == _VT; }
 } argmap[] = {
   argmap_entry(MVT::i1,  PTX::PredsRegisterClass),
-  argmap_entry(MVT::i32, PTX::RRegs32RegisterClass)
+  argmap_entry(MVT::i32, PTX::RRegs32RegisterClass),
+  argmap_entry(MVT::f32, PTX::RRegf32RegisterClass)
 };
 } // end anonymous namespace
 
@@ -185,10 +189,18 @@ SDValue PTXTargetLowering::
   if (Outs.size() == 0)
     return DAG.getNode(PTXISD::RET, dl, MVT::Other, Chain);
 
-  assert(Outs[0].VT == MVT::i32 && "Can return only basic types");
-
   SDValue Flag;
-  unsigned reg = PTX::R0;
+  unsigned reg;
+
+  if (Outs[0].VT == MVT::i32) {
+    reg = PTX::R0;
+  }
+  else if (Outs[0].VT == MVT::f32) {
+    reg = PTX::F0;
+  }
+  else {
+    assert(false && "Can return only basic types");
+  }
 
   MachineFunction &MF = DAG.getMachineFunction();
   PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
