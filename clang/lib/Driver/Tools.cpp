@@ -1008,10 +1008,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-analyzer-checker=cocoa");
       }
 
-      // NOTE: Leaving -analyzer-check-objc-mem here is intentional.
-      // It also checks C code.
-      CmdArgs.push_back("-analyzer-check-objc-mem");
-
       CmdArgs.push_back("-analyzer-eagerly-assume");
     }
 

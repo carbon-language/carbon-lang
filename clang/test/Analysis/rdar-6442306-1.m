@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem %s -analyzer-store=basic -verify
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem %s -analyzer-store=region -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental %s -analyzer-store=basic -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental %s -analyzer-store=region -verify
 
 typedef int bar_return_t;
 typedef struct {

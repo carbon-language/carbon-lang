@@ -30,16 +30,6 @@
 #include "llvm/Support/Path.h"
 using namespace clang;
 
-static const char *getAnalysisName(Analyses Kind) {
-  switch (Kind) {
-  default:
-    llvm_unreachable("Unknown analysis kind!");
-#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
-  case NAME: return "-" CMDFLAG;
-#include "clang/Frontend/Analyses.def"
-  }
-}
-
 static const char *getAnalysisStoreName(AnalysisStores Kind) {
   switch (Kind) {
   default:
@@ -76,8 +66,6 @@ static const char *getAnalysisDiagClientName(AnalysisDiagClients Kind) {
 
 static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
                                std::vector<std::string> &Res) {
-  for (unsigned i = 0, e = Opts.AnalysisList.size(); i != e; ++i)
-    Res.push_back(getAnalysisName(Opts.AnalysisList[i]));
   if (Opts.ShowCheckerHelp)
     Res.push_back("-analyzer-checker-help");
   if (Opts.AnalysisStoreOpt != BasicStoreModel) {
@@ -804,11 +792,6 @@ static unsigned getOptimizationLevel(ArgList &Args, InputKind IK,
 static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
                               Diagnostic &Diags) {
   using namespace cc1options;
-
-  Opts.AnalysisList.clear();
-#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE) \
-  if (Args.hasArg(OPT_analysis_##NAME)) Opts.AnalysisList.push_back(NAME);
-#include "clang/Frontend/Analyses.def"
 
   if (Arg *A = Args.getLastArg(OPT_analyzer_store)) {
     llvm::StringRef Name = A->getValue(Args);

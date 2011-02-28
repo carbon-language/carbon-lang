@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=basic %s
+// RUN: %clang_cc1 -verify -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic %s
 
 struct tea_cheese { unsigned magic; };
 typedef struct tea_cheese kernel_tea_cheese_t;

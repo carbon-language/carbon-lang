@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=basic -verify %s
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -verify %s
 
 // This test case was crashing due to how CFRefCount.cpp resolved the
 // ObjCInterfaceDecl* and ClassName in EvalObjCMessageExpr.

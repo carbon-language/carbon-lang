@@ -55,7 +55,6 @@ NUM_ANALYSIS_DIAG_CLIENTS
 
 class AnalyzerOptions {
 public:
-  std::vector<Analyses> AnalysisList;
   /// \brief Pair of checker name and enable/disable.
   std::vector<std::pair<std::string, bool> > CheckersControlList;
   AnalysisStores AnalysisStoreOpt;

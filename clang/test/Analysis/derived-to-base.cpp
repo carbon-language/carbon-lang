@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store region %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store region %s
 
 class A {
 protected:

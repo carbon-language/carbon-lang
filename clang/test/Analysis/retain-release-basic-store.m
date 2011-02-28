@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=basic -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

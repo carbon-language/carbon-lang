@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=unix.experimental.Chroot -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=unix.experimental.Chroot -analyzer-store region -verify %s
 
 extern int chroot(const char* path);
 extern int chdir(const char* path);

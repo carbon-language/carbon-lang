@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=flat -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=flat -verify %s
 
 void f1() {
   int x;

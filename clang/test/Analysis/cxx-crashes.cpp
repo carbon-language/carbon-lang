@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -verify %s
 
 int f1(char *dst) {
   char *p = dst + 4;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-checker=unix.experimental.Stream -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=unix.experimental.Stream -analyzer-store region -verify %s
 
 typedef __typeof__(sizeof(int)) size_t;
 typedef struct _IO_FILE FILE;

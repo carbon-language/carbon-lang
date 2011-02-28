@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental.UnreachableCode -analyzer-check-objc-mem -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental.UnreachableCode -verify %s
 
 // Trigger a warning if the analyzer reaches this point in the control flow.
 #define WARN ((void)*(char*)0)

@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -verify -fblocks %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -verify -fblocks %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -verify -fblocks %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify -fblocks %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -analyzer-constraints=basic -verify -fblocks %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -analyzer-constraints=range -verify -fblocks %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -analyzer-constraints=basic -verify -fblocks %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -analyzer-constraints=range -verify -fblocks %s
 
 // <rdar://problem/6440393> - A bunch of misc. failures involving evaluating
 //  these expressions and building CFGs.  These tests are here to prevent

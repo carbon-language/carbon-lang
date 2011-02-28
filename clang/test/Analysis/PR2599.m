@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-constraints=basic -analyzer-store=basic -analyzer-check-objc-mem -fobjc-gc -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-constraints=range -analyzer-store=basic -analyzer-check-objc-mem -fobjc-gc -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-constraints=basic -analyzer-store=basic -analyzer-check-objc-mem -fobjc-gc -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-constraints=range -analyzer-store=region -analyzer-check-objc-mem -fobjc-gc -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=basic -analyzer-store=basic -fobjc-gc -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=range -analyzer-store=basic -fobjc-gc -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=basic -analyzer-store=basic -fobjc-gc -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=range -analyzer-store=region -fobjc-gc -verify %s
 
 typedef const void * CFTypeRef;
 typedef const struct __CFString * CFStringRef;

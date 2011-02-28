@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-check-objc-mem -analyzer-store=region %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region %s
 
 typedef struct added_obj_st {
   int type;

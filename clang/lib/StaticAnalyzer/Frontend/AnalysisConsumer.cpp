@@ -394,16 +394,6 @@ ASTConsumer* ento::CreateAnalysisConsumer(const Preprocessor& pp,
                                            const AnalyzerOptions& Opts) {
   llvm::OwningPtr<AnalysisConsumer> C(new AnalysisConsumer(pp, OutDir, Opts));
 
-  for (unsigned i = 0; i < Opts.AnalysisList.size(); ++i)
-    switch (Opts.AnalysisList[i]) {
-#define ANALYSIS(NAME, CMD, DESC, SCOPE)\
-    case NAME:\
-      C->add ## SCOPE ## Action(&Action ## NAME);\
-      break;
-#include "clang/Frontend/Analyses.def"
-    default: break;
-    }
-
   // Last, disable the effects of '-Werror' when using the AnalysisConsumer.
   pp.getDiagnostics().setWarningsAsErrors(false);
 
