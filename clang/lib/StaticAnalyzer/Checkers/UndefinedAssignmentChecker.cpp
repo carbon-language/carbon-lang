@@ -7,43 +7,32 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines UndefinedAssginmentChecker, a builtin check in ExprEngine that
+// This defines UndefinedAssignmentChecker, a builtin check in ExprEngine that
 // checks for assigning undefined values.
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 class UndefinedAssignmentChecker
-  : public CheckerVisitor<UndefinedAssignmentChecker> {
-  BugType *BT;
+  : public CheckerV2<check::Bind> {
+  mutable llvm::OwningPtr<BugType> BT;
+
 public:
-  UndefinedAssignmentChecker() : BT(0) {}
-  static void *getTag();
-  virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
-                            SVal location, SVal val);
+  void checkBind(SVal location, SVal val, CheckerContext &C) const;
 };
 }
 
-void ento::RegisterUndefinedAssignmentChecker(ExprEngine &Eng){
-  Eng.registerCheck(new UndefinedAssignmentChecker());
-}
-
-void *UndefinedAssignmentChecker::getTag() {
-  static int x = 0;
-  return &x;
-}
-
-void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
-                                              const Stmt *StoreE,
-                                              SVal location,
-                                              SVal val) {
+void UndefinedAssignmentChecker::checkBind(SVal location, SVal val,
+                                           CheckerContext &C) const {
   if (!val.isUndef())
     return;
 
@@ -55,11 +44,12 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
   const char *str = "Assigned value is garbage or undefined";
 
   if (!BT)
-    BT = new BuiltinBug(str);
+    BT.reset(new BuiltinBug(str));
 
   // Generate a report for this bug.
   const Expr *ex = 0;
 
+  const Stmt *StoreE = C.getStmt();
   while (StoreE) {
     if (const BinaryOperator *B = dyn_cast<BinaryOperator>(StoreE)) {
       if (B->isCompoundAssignmentOp()) {
@@ -92,3 +82,6 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
   C.EmitReport(R);
 }
 
+void ento::registerUndefinedAssignmentChecker(CheckerManager &mgr) {
+  mgr.registerChecker<UndefinedAssignmentChecker>();
+}

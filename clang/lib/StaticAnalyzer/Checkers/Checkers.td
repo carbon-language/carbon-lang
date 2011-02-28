@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def UndefinedAssignmentChecker : Checker<"UndefAssign">,
+  HelpText<"Check for assigning undefined values">,
+  DescFile<"UndefinedAssignmentChecker.cpp">;
+
 def UndefBranchChecker : Checker<"UndefBranch">,
   HelpText<"Check for undefined branch conditions">,
   DescFile<"UndefBranchChecker.cpp">;

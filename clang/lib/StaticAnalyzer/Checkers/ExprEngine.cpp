@@ -329,7 +329,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   RegisterDivZeroChecker(Eng);
   RegisterReturnUndefChecker(Eng);
   RegisterUndefinedArraySubscriptChecker(Eng);
-  RegisterUndefinedAssignmentChecker(Eng);
 }
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
