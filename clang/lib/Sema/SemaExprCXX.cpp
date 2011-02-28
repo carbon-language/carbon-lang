@@ -477,7 +477,7 @@ Sema::ActOnCXXNullPtrLiteral(SourceLocation Loc) {
 ExprResult
 Sema::ActOnCXXThrow(SourceLocation OpLoc, Expr *Ex) {
   // Don't report an error if 'throw' is used in system headers.
-  if (!getLangOptions().Exceptions &&
+  if (!getLangOptions().CXXExceptions &&
       !getSourceManager().isInSystemHeader(OpLoc))
     Diag(OpLoc, diag::err_exceptions_disabled) << "throw";
 
