@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def NoReturnFunctionChecker : Checker<"NoReturnFunc">,
+  HelpText<"Evaluate functions that do not return to the caller">,
+  DescFile<"NoReturnFunctionChecker.cpp">;
+
 def BuiltinFunctionChecker : Checker<"BuiltinFunc">,
   HelpText<"Evaluate clang builtin functions">,
   DescFile<"BuiltinFunctionChecker.cpp">;

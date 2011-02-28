@@ -333,9 +333,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   RegisterUndefBranchChecker(Eng);
   RegisterUndefCapturedBlockVarChecker(Eng);
   RegisterUndefResultChecker(Eng);
-
-  // This is not a checker yet.
-  RegisterNoReturnFunctionChecker(Eng);
 }
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)

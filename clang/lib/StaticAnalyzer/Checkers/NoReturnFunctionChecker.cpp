@@ -12,8 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
@@ -21,20 +23,15 @@ using namespace ento;
 
 namespace {
 
-class NoReturnFunctionChecker : public CheckerVisitor<NoReturnFunctionChecker> {
+class NoReturnFunctionChecker : public CheckerV2< check::PostStmt<CallExpr> > {
 public:
-  static void *getTag() { static int tag = 0; return &tag; }
-  void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
 };
 
 }
 
-void ento::RegisterNoReturnFunctionChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new NoReturnFunctionChecker());
-}
-
-void NoReturnFunctionChecker::PostVisitCallExpr(CheckerContext &C,
-                                                const CallExpr *CE) {
+void NoReturnFunctionChecker::checkPostStmt(const CallExpr *CE,
+                                            CheckerContext &C) const {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
 
@@ -77,4 +74,8 @@ void NoReturnFunctionChecker::PostVisitCallExpr(CheckerContext &C,
 
   if (BuildSinks)
     C.generateSink(CE);
+}
+
+void ento::registerNoReturnFunctionChecker(CheckerManager &mgr) {
+  mgr.registerChecker<NoReturnFunctionChecker>();
 }
