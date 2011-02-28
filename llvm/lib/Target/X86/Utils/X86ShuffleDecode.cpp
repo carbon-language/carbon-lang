@@ -166,7 +166,7 @@ void DecodeUNPCKLPDMask(unsigned NElts,
 void DecodeUNPCKLPMask(EVT VT,
                        SmallVectorImpl<unsigned> &ShuffleMask) {
 
-  int NElts = VT.getVectorNumElements();
+  unsigned NElts = VT.getVectorNumElements();
 
   for (unsigned i = 0; i != NElts/2; ++i) {
     ShuffleMask.push_back(i);        // Reads from dest
