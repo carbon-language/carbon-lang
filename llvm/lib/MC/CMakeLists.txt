@@ -8,6 +8,7 @@ add_llvm_library(LLVMMC
   MCCodeEmitter.cpp
   MCContext.cpp
   MCDisassembler.cpp
+  MCELF.cpp
   MCELFObjectTargetWriter.cpp
   MCELFStreamer.cpp
   MCExpr.cpp

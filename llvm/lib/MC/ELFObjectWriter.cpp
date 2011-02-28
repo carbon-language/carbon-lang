@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCELF.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
@@ -38,76 +39,33 @@
 #include <vector>
 using namespace llvm;
 
-static unsigned GetType(const MCSymbolData &SD) {
-  uint32_t Type = (SD.getFlags() & (0xf << ELF_STT_Shift)) >> ELF_STT_Shift;
-  assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
-         Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
-         Type == ELF::STT_FILE || Type == ELF::STT_COMMON ||
-         Type == ELF::STT_TLS);
-  return Type;
-}
-
-static unsigned GetBinding(const MCSymbolData &SD) {
-  uint32_t Binding = (SD.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
-  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK);
-  return Binding;
-}
-
-static void SetBinding(MCSymbolData &SD, unsigned Binding) {
-  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK);
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STB_Shift);
-  SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
-}
-
-static unsigned GetVisibility(MCSymbolData &SD) {
-  unsigned Visibility =
-    (SD.getFlags() & (0xf << ELF_STV_Shift)) >> ELF_STV_Shift;
-  assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
-         Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
-  return Visibility;
-}
-
-
-static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant) {
-  switch (Variant) {
-  default:
-    return false;
-  case MCSymbolRefExpr::VK_GOT:
-  case MCSymbolRefExpr::VK_PLT:
-  case MCSymbolRefExpr::VK_GOTPCREL:
-  case MCSymbolRefExpr::VK_TPOFF:
-  case MCSymbolRefExpr::VK_TLSGD:
-  case MCSymbolRefExpr::VK_GOTTPOFF:
-  case MCSymbolRefExpr::VK_INDNTPOFF:
-  case MCSymbolRefExpr::VK_NTPOFF:
-  case MCSymbolRefExpr::VK_GOTNTPOFF:
-  case MCSymbolRefExpr::VK_TLSLDM:
-  case MCSymbolRefExpr::VK_DTPOFF:
-  case MCSymbolRefExpr::VK_TLSLD:
-    return true;
-  }
-}
-
-static bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
-  const MCFixupKindInfo &FKI =
-    Asm.getBackend().getFixupKindInfo((MCFixupKind) Kind);
-
-  return FKI.Flags & MCFixupKindInfo::FKF_IsPCRel;
-}
-
 namespace {
   class ELFObjectWriter : public MCObjectWriter {
   protected:
+
+    static bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind);
+    static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant);
+    static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout);
+    static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
+                           bool Used, bool Renamed);
+    static bool isLocal(const MCSymbolData &Data, bool isSignature,
+                        bool isUsedInReloc);
+    static bool IsELFMetaDataSection(const MCSectionData &SD);
+    static uint64_t DataSectionSize(const MCSectionData &SD);
+    static uint64_t GetSectionFileSize(const MCAsmLayout &Layout,
+                                       const MCSectionData &SD);
+    static uint64_t GetSectionAddressSize(const MCAsmLayout &Layout,
+                                          const MCSectionData &SD);
+    static void WriteDataSectionData(ELFObjectWriter *W,
+                                     const MCSectionData &SD);
+
     /*static bool isFixupKindX86RIPRel(unsigned Kind) {
       return Kind == X86::reloc_riprel_4byte ||
         Kind == X86::reloc_riprel_4byte_movq_load;
     }*/
 
-
-    /// ELFSymbolData - Helper struct for containing some precomputed information
-    /// on symbols.
+    /// ELFSymbolData - Helper struct for containing some precomputed
+    /// information on symbols.
     struct ELFSymbolData {
       MCSymbolData *SymbolData;
       uint64_t StringIndex;
@@ -115,9 +73,9 @@ namespace {
 
       // Support lexicographic sorting.
       bool operator<(const ELFSymbolData &RHS) const {
-        if (GetType(*SymbolData) == ELF::STT_FILE)
+        if (MCELF::GetType(*SymbolData) == ELF::STT_FILE)
           return true;
-        if (GetType(*RHS.SymbolData) == ELF::STT_FILE)
+        if (MCELF::GetType(*RHS.SymbolData) == ELF::STT_FILE)
           return false;
         return SymbolData->getSymbol().getName() <
                RHS.SymbolData->getSymbol().getName();
@@ -429,6 +387,33 @@ namespace {
   };
 }
 
+bool ELFObjectWriter::isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
+  const MCFixupKindInfo &FKI =
+    Asm.getBackend().getFixupKindInfo((MCFixupKind) Kind);
+
+  return FKI.Flags & MCFixupKindInfo::FKF_IsPCRel;
+}
+
+bool ELFObjectWriter::RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant) {
+  switch (Variant) {
+  default:
+    return false;
+  case MCSymbolRefExpr::VK_GOT:
+  case MCSymbolRefExpr::VK_PLT:
+  case MCSymbolRefExpr::VK_GOTPCREL:
+  case MCSymbolRefExpr::VK_TPOFF:
+  case MCSymbolRefExpr::VK_TLSGD:
+  case MCSymbolRefExpr::VK_GOTTPOFF:
+  case MCSymbolRefExpr::VK_INDNTPOFF:
+  case MCSymbolRefExpr::VK_NTPOFF:
+  case MCSymbolRefExpr::VK_GOTNTPOFF:
+  case MCSymbolRefExpr::VK_TLSLDM:
+  case MCSymbolRefExpr::VK_DTPOFF:
+  case MCSymbolRefExpr::VK_TLSLD:
+    return true;
+  }
+}
+
 ELFObjectWriter::~ELFObjectWriter()
 {}
 
@@ -533,7 +518,8 @@ void ELFObjectWriter::WriteSymbolEntry(MCDataFragment *SymtabF,
   }
 }
 
-static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
+uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &Data,
+                                      const MCAsmLayout &Layout) {
   if (Data.isCommon() && Data.isExternal())
     return Data.getCommonAlignment();
 
@@ -579,7 +565,7 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
     // Aliases defined with .symvar copy the binding from the symbol they alias.
     // This is the first place we are able to copy this information.
     it->setExternal(SD.isExternal());
-    SetBinding(*it, GetBinding(SD));
+    MCELF::SetBinding(*it, MCELF::GetBinding(SD));
 
     StringRef Rest = AliasName.substr(Pos);
     if (!Symbol.isUndefined() && !Rest.startswith("@@@"))
@@ -605,9 +591,9 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
   bool IsReserved = Data.isCommon() || Data.getSymbol().isAbsolute() ||
     Data.getSymbol().isVariable();
 
-  uint8_t Binding = GetBinding(OrigData);
-  uint8_t Visibility = GetVisibility(OrigData);
-  uint8_t Type = GetType(Data);
+  uint8_t Binding = MCELF::GetBinding(OrigData);
+  uint8_t Visibility = MCELF::GetVisibility(OrigData);
+  uint8_t Type = MCELF::GetType(Data);
 
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
   uint8_t Other = Visibility;
@@ -673,7 +659,7 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
             (Data.getFlags() & ELF_STB_Weak)) &&
            "External symbol requires STB_GLOBAL or STB_WEAK flag");
     WriteSymbol(SymtabF, ShndxF, MSD, Layout);
-    if (GetBinding(Data) == ELF::STB_LOCAL)
+    if (MCELF::GetBinding(Data) == ELF::STB_LOCAL)
       LastLocalSymbolIndex++;
   }
 
@@ -681,7 +667,7 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
     ELFSymbolData &MSD = UndefinedSymbolData[i];
     MCSymbolData &Data = *MSD.SymbolData;
     WriteSymbol(SymtabF, ShndxF, MSD, Layout);
-    if (GetBinding(Data) == ELF::STB_LOCAL)
+    if (MCELF::GetBinding(Data) == ELF::STB_LOCAL)
       LastLocalSymbolIndex++;
   }
 }
@@ -798,7 +784,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   FixedValue = Value;
   unsigned Type = GetRelocType(Target, Fixup, IsPCRel,
                                (RelocSymbol != 0), Addend);
-  
+
   uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
 
@@ -816,8 +802,9 @@ ELFObjectWriter::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
   return SD.getIndex();
 }
 
-static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
-                       bool Used, bool Renamed) {
+bool ELFObjectWriter::isInSymtab(const MCAssembler &Asm,
+                                 const MCSymbolData &Data,
+                                 bool Used, bool Renamed) {
   if (Data.getFlags() & ELF_Other_Weakref)
     return false;
 
@@ -836,7 +823,7 @@ static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
   if (Symbol.isVariable() && !A.isVariable() && A.isUndefined())
     return false;
 
-  bool IsGlobal = GetBinding(Data) == ELF::STB_GLOBAL;
+  bool IsGlobal = MCELF::GetBinding(Data) == ELF::STB_GLOBAL;
   if (!Symbol.isVariable() && Symbol.isUndefined() && !IsGlobal)
     return false;
 
@@ -849,8 +836,8 @@ static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
   return true;
 }
 
-static bool isLocal(const MCSymbolData &Data, bool isSignature,
-                    bool isUsedInReloc) {
+bool ELFObjectWriter::isLocal(const MCSymbolData &Data, bool isSignature,
+                              bool isUsedInReloc) {
   if (Data.isExternal())
     return false;
 
@@ -898,7 +885,7 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
     MCSymbol *Sym = Asm.getContext().GetOrCreateSymbol(Name);
     MCSymbolData &Data = Asm.getOrCreateSymbolData(*Sym);
     Data.setExternal(true);
-    SetBinding(Data, ELF::STB_GLOBAL);
+    MCELF::SetBinding(Data, ELF::STB_GLOBAL);
   }
 
   // Build section lookup table.
@@ -929,14 +916,14 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
     // Undefined symbols are global, but this is the first place we
     // are able to set it.
     bool Local = isLocal(*it, isSignature, Used);
-    if (!Local && GetBinding(*it) == ELF::STB_LOCAL) {
+    if (!Local && MCELF::GetBinding(*it) == ELF::STB_LOCAL) {
       MCSymbolData &SD = Asm.getSymbolData(RefSymbol);
-      SetBinding(*it, ELF::STB_GLOBAL);
-      SetBinding(SD, ELF::STB_GLOBAL);
+      MCELF::SetBinding(*it, ELF::STB_GLOBAL);
+      MCELF::SetBinding(SD, ELF::STB_GLOBAL);
     }
 
     if (RefSymbol.isUndefined() && !Used && WeakrefUsed)
-      SetBinding(*it, ELF::STB_WEAK);
+      MCELF::SetBinding(*it, ELF::STB_WEAK);
 
     if (it->isCommon()) {
       assert(!Local);
@@ -1304,12 +1291,12 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
                    Alignment, Section.getEntrySize());
 }
 
-static bool IsELFMetaDataSection(const MCSectionData &SD) {
+bool ELFObjectWriter::IsELFMetaDataSection(const MCSectionData &SD) {
   return SD.getOrdinal() == ~UINT32_C(0) &&
     !SD.getSection().isVirtualSection();
 }
 
-static uint64_t DataSectionSize(const MCSectionData &SD) {
+uint64_t ELFObjectWriter::DataSectionSize(const MCSectionData &SD) {
   uint64_t Ret = 0;
   for (MCSectionData::const_iterator i = SD.begin(), e = SD.end(); i != e;
        ++i) {
@@ -1320,21 +1307,22 @@ static uint64_t DataSectionSize(const MCSectionData &SD) {
   return Ret;
 }
 
-static uint64_t GetSectionFileSize(const MCAsmLayout &Layout,
-                                   const MCSectionData &SD) {
+uint64_t ELFObjectWriter::GetSectionFileSize(const MCAsmLayout &Layout,
+                                             const MCSectionData &SD) {
   if (IsELFMetaDataSection(SD))
     return DataSectionSize(SD);
   return Layout.getSectionFileSize(&SD);
 }
 
-static uint64_t GetSectionAddressSize(const MCAsmLayout &Layout,
-                                      const MCSectionData &SD) {
+uint64_t ELFObjectWriter::GetSectionAddressSize(const MCAsmLayout &Layout,
+                                                const MCSectionData &SD) {
   if (IsELFMetaDataSection(SD))
     return DataSectionSize(SD);
   return Layout.getSectionAddressSize(&SD);
 }
 
-static void WriteDataSectionData(ELFObjectWriter *W, const MCSectionData &SD) {
+void ELFObjectWriter::WriteDataSectionData(ELFObjectWriter *W,
+                                           const MCSectionData &SD) {
   for (MCSectionData::const_iterator i = SD.begin(), e = SD.end(); i != e;
        ++i) {
     const MCFragment &F = *i;

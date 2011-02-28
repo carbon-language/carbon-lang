@@ -13,6 +13,7 @@
 
 #include "llvm/MC/MCStreamer.h"
 
+#include "MCELF.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -35,38 +36,6 @@
 using namespace llvm;
 
 namespace {
-
-static void SetBinding(MCSymbolData &SD, unsigned Binding) {
-  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK);
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STB_Shift);
-  SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
-}
-
-static unsigned GetBinding(const MCSymbolData &SD) {
-  uint32_t Binding = (SD.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
-  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK);
-  return Binding;
-}
-
-static void SetType(MCSymbolData &SD, unsigned Type) {
-  assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
-         Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
-         Type == ELF::STT_FILE || Type == ELF::STT_COMMON ||
-         Type == ELF::STT_TLS);
-
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STT_Shift);
-  SD.setFlags(OtherFlags | (Type << ELF_STT_Shift));
-}
-
-static void SetVisibility(MCSymbolData &SD, unsigned Visibility) {
-  assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
-         Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
-
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STV_Shift);
-  SD.setFlags(OtherFlags | (Visibility << ELF_STV_Shift));
-}
 
 class MCELFStreamer : public MCObjectStreamer {
 public:
@@ -194,7 +163,7 @@ void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
     static_cast<const MCSectionELF&>(Symbol->getSection());
   MCSymbolData &SD = getAssembler().getSymbolData(*Symbol);
   if (Section.getFlags() & ELF::SHF_TLS)
-    SetType(SD, ELF::STT_TLS);
+    MCELF::SetType(SD, ELF::STT_TLS);
 }
 
 void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
@@ -281,54 +250,54 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     break;
 
   case MCSA_Global:
-    SetBinding(SD, ELF::STB_GLOBAL);
+    MCELF::SetBinding(SD, ELF::STB_GLOBAL);
     SD.setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_WeakReference:
   case MCSA_Weak:
-    SetBinding(SD, ELF::STB_WEAK);
+    MCELF::SetBinding(SD, ELF::STB_WEAK);
     SD.setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_Local:
-    SetBinding(SD, ELF::STB_LOCAL);
+    MCELF::SetBinding(SD, ELF::STB_LOCAL);
     SD.setExternal(false);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_ELF_TypeFunction:
-    SetType(SD, ELF::STT_FUNC);
+    MCELF::SetType(SD, ELF::STT_FUNC);
     break;
 
   case MCSA_ELF_TypeObject:
-    SetType(SD, ELF::STT_OBJECT);
+    MCELF::SetType(SD, ELF::STT_OBJECT);
     break;
 
   case MCSA_ELF_TypeTLS:
-    SetType(SD, ELF::STT_TLS);
+    MCELF::SetType(SD, ELF::STT_TLS);
     break;
 
   case MCSA_ELF_TypeCommon:
-    SetType(SD, ELF::STT_COMMON);
+    MCELF::SetType(SD, ELF::STT_COMMON);
     break;
 
   case MCSA_ELF_TypeNoType:
-    SetType(SD, ELF::STT_NOTYPE);
+    MCELF::SetType(SD, ELF::STT_NOTYPE);
     break;
 
   case MCSA_Protected:
-    SetVisibility(SD, ELF::STV_PROTECTED);
+    MCELF::SetVisibility(SD, ELF::STV_PROTECTED);
     break;
 
   case MCSA_Hidden:
-    SetVisibility(SD, ELF::STV_HIDDEN);
+    MCELF::SetVisibility(SD, ELF::STV_HIDDEN);
     break;
 
   case MCSA_Internal:
-    SetVisibility(SD, ELF::STV_INTERNAL);
+    MCELF::SetVisibility(SD, ELF::STV_INTERNAL);
     break;
   }
 }
@@ -338,13 +307,13 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
 
   if (!BindingExplicitlySet.count(Symbol)) {
-    SetBinding(SD, ELF::STB_GLOBAL);
+    MCELF::SetBinding(SD, ELF::STB_GLOBAL);
     SD.setExternal(true);
   }
 
-  SetType(SD, ELF::STT_OBJECT);
+  MCELF::SetType(SD, ELF::STT_OBJECT);
 
-  if (GetBinding(SD) == ELF_STB_Local) {
+  if (MCELF::GetBinding(SD) == ELF_STB_Local) {
     const MCSection *Section = getAssembler().getContext().getELFSection(".bss",
                                                                     ELF::SHT_NOBITS,
                                                                     ELF::SHF_WRITE |
@@ -364,7 +333,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {
   // FIXME: Should this be caught and done earlier?
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
-  SetBinding(SD, ELF::STB_LOCAL);
+  MCELF::SetBinding(SD, ELF::STB_LOCAL);
   SD.setExternal(false);
   BindingExplicitlySet.insert(Symbol);
   // FIXME: ByteAlignment is not needed here, but is required.
@@ -449,7 +418,7 @@ void  MCELFStreamer::fixSymbolsInTLSFixups(const MCExpr *expr) {
       break;
     }
     MCSymbolData &SD = getAssembler().getOrCreateSymbolData(symRef.getSymbol());
-    SetType(SD, ELF::STT_TLS);
+    MCELF::SetType(SD, ELF::STT_TLS);
     break;
   }
 
