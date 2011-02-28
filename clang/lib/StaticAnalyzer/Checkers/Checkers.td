@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def AttrNonNullChecker : Checker<"AttrNonNull">,
+  HelpText<"Check for arguments declared to have nonnull attribute">,
+  DescFile<"AttrNonNullChecker.cpp">;
+
 def VLASizeChecker : Checker<"VLASize">,
   HelpText<"Check for declarations of VLA of undefined or zero size">,
   DescFile<"VLASizeChecker.cpp">;

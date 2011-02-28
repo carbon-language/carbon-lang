@@ -23,7 +23,6 @@ class ExprEngine;
 
 // Foundational checks that handle basic semantics.
 void RegisterAdjustedReturnValueChecker(ExprEngine &Eng);
-void RegisterAttrNonNullChecker(ExprEngine &Eng);
 void RegisterCallAndMessageChecker(ExprEngine &Eng);
 void RegisterDereferenceChecker(ExprEngine &Eng);
 

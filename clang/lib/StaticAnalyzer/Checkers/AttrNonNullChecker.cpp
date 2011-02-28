@@ -12,33 +12,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 class AttrNonNullChecker
-  : public CheckerVisitor<AttrNonNullChecker> {
-  BugType *BT;
+  : public CheckerV2< check::PreStmt<CallExpr> > {
+  mutable llvm::OwningPtr<BugType> BT;
 public:
-  AttrNonNullChecker() : BT(0) {}
-  static void *getTag() {
-    static int x = 0;
-    return &x;
-  }
-  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 };
 } // end anonymous namespace
 
-void ento::RegisterAttrNonNullChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new AttrNonNullChecker());
-}
-
-void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C, 
-                                          const CallExpr *CE) {
+void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
+                                      CheckerContext &C) const {
   const GRState *state = C.getState();
 
   // Check if the callee has a 'nonnull' attribute.
@@ -103,8 +97,8 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
         // created. Ownership is transferred to the BugReporter object once
         // the BugReport is passed to 'EmitWarning'.
         if (!BT)
-          BT = new BugType("Argument with 'nonnull' attribute passed null",
-                           "API");
+          BT.reset(new BugType("Argument with 'nonnull' attribute passed null",
+                               "API"));
 
         EnhancedBugReport *R =
           new EnhancedBugReport(*BT,
@@ -133,4 +127,8 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
   // If we reach here all of the arguments passed the nonnull check.
   // If 'state' has been updated generated a new node.
   C.addTransition(state);
+}
+
+void ento::registerAttrNonNullChecker(CheckerManager &mgr) {
+  mgr.registerChecker<AttrNonNullChecker>();
 }
