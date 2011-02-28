@@ -1825,6 +1825,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // care to warn the user about.
   Args.ClaimAllArgs(options::OPT_clang_ignored_f_Group);
   Args.ClaimAllArgs(options::OPT_clang_ignored_m_Group);
+
+  Args.ClaimAllArgs(options::OPT_use_gold_plugin);
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
