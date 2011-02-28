@@ -377,3 +377,13 @@ define i1 @test38(i32 %x, i32 %y, i32 %z) {
   %c = icmp ugt i32 %lhs, %rhs
   ret i1 %c
 }
+
+; PR9343 #7
+; CHECK: @test39
+; CHECK: ret i1 false
+define i1 @test39(i31 %X, i32 %Y) {
+  %A = zext i31 %X to i32
+  %B = srem i32 %A, %Y
+  %C = icmp slt i32 %B, 0
+  ret i1 %C
+}

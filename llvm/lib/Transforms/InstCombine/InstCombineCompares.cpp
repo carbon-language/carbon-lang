@@ -1340,6 +1340,16 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       }
     }
     break;
+
+  case Instruction::SRem: {
+    bool TrueIfSigned;
+    if (LHSI->hasOneUse() &&
+        isSignBitCheck(ICI.getPredicate(), RHS, TrueIfSigned)) {
+      // srem has the same sign as its dividend so the divisor is irrelevant.
+      return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0), RHS);
+    }
+    break;
+  }
   }
   
   // Simplify icmp_eq and icmp_ne instructions with integer constant RHS.
@@ -1855,11 +1865,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(ICmpInst::ICMP_SLT, Op0,
                           ConstantInt::get(CI->getContext(), CI->getValue()+1));
     case ICmpInst::ICMP_UGE:
-      assert(!CI->isMinValue(false));                  // A >=u MIN -> TRUE
+      assert(!CI->isMinValue(false));                 // A >=u MIN -> TRUE
       return new ICmpInst(ICmpInst::ICMP_UGT, Op0,
                           ConstantInt::get(CI->getContext(), CI->getValue()-1));
     case ICmpInst::ICMP_SGE:
-      assert(!CI->isMinValue(true));                   // A >=s MIN -> TRUE
+      assert(!CI->isMinValue(true));                  // A >=s MIN -> TRUE
       return new ICmpInst(ICmpInst::ICMP_SGT, Op0,
                           ConstantInt::get(CI->getContext(), CI->getValue()-1));
     }
@@ -1913,7 +1923,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                           ConstantInt::get(I.getContext(), Op1Min));
 
     // Based on the range information we know about the LHS, see if we can
-    // simplify this comparison.  For example, (x&4) < 8  is always true.
+    // simplify this comparison.  For example, (x&4) < 8 is always true.
     switch (I.getPredicate()) {
     default: llvm_unreachable("Unknown icmp opcode!");
     case ICmpInst::ICMP_EQ: {
