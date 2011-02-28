@@ -12,9 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/AST/CharUnits.h"
 
@@ -23,18 +25,16 @@ using namespace ento;
 
 namespace {
 class ArrayBoundCheckerV2 : 
-    public CheckerVisitor<ArrayBoundCheckerV2> {      
-  BuiltinBug *BT;
+    public CheckerV2<check::Location> {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
       
   enum OOB_Kind { OOB_Precedes, OOB_Excedes };
   
   void reportOOB(CheckerContext &C, const GRState *errorState,
-                 OOB_Kind kind);
+                 OOB_Kind kind) const;
       
 public:
-  ArrayBoundCheckerV2() : BT(0) {}
-  static void *getTag() { static int x = 0; return &x; }
-  void visitLocation(CheckerContext &C, const Stmt *S, SVal l, bool isLoad);
+  void checkLocation(SVal l, bool isLoad, CheckerContext &C) const;
 };
 
 // FIXME: Eventually replace RegionRawOffset with this class.
@@ -62,13 +62,8 @@ public:
 };
 }
 
-void ento::RegisterArrayBoundCheckerV2(ExprEngine &Eng) {
-  Eng.registerCheck(new ArrayBoundCheckerV2());
-}
-
-void ArrayBoundCheckerV2::visitLocation(CheckerContext &checkerContext,
-                                        const Stmt *S,
-                                        SVal location, bool isLoad) {
+void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
+                                        CheckerContext &checkerContext) const {
 
   // NOTE: Instead of using GRState::assumeInBound(), we are prototyping
   // some new logic here that reasons directly about memory region extents.
@@ -153,14 +148,14 @@ void ArrayBoundCheckerV2::visitLocation(CheckerContext &checkerContext,
 
 void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,
                                     const GRState *errorState,
-                                    OOB_Kind kind) {
+                                    OOB_Kind kind) const {
   
   ExplodedNode *errorNode = checkerContext.generateSink(errorState);
   if (!errorNode)
     return;
 
   if (!BT)
-    BT = new BuiltinBug("Out-of-bound access");
+    BT.reset(new BuiltinBug("Out-of-bound access"));
 
   // FIXME: This diagnostics are preliminary.  We should get far better
   // diagnostics for explaining buffer overruns.
@@ -274,4 +269,6 @@ RegionRawOffsetV2 RegionRawOffsetV2::computeOffset(const GRState *state,
 }
 
 
-
+void ento::registerArrayBoundCheckerV2(CheckerManager &mgr) {
+  mgr.registerChecker<ArrayBoundCheckerV2>();
+}

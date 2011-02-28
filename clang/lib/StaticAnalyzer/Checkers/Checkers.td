@@ -134,6 +134,12 @@ def AnalyzerStatsChecker : Checker<"Stats">,
 
 let Group = AllExperimental in {
 
+def ArrayBoundCheckerV2 : Checker<"Overflow">,
+  InPackage<CoreExperimental>,
+  HelpText<"Warn about buffer overflows">,
+  DescFile<"ArrayBoundCheckerV2.cpp">,
+  Hidden; // Must be specified explicitly in order to run.
+
 def MallocChecker : Checker<"Malloc">,
   InPackage<CoreExperimental>,
   HelpText<"Check for potential memory leaks, double free, and use-after-free problems">,

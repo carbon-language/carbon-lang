@@ -69,7 +69,6 @@ public:
   unsigned AnalyzerDisplayProgress : 1;
   unsigned AnalyzeNestedBlocks : 1;
   unsigned EagerlyAssume : 1;
-  unsigned BufferOverflows : 1;
   unsigned PurgeDead : 1;
   unsigned TrimGraph : 1;
   unsigned VisualizeEGDot : 1;
@@ -90,7 +89,6 @@ public:
     AnalyzerDisplayProgress = 0;
     AnalyzeNestedBlocks = 0;
     EagerlyAssume = 0;
-    BufferOverflows = 0;    
     PurgeDead = 1;
     TrimGraph = 0;
     VisualizeEGDot = 0;

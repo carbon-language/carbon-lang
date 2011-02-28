@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wno-array-bounds -analyze -analyzer-check-objc-mem -analyzer-check-buffer-overflows -verify %s
+// RUN: %clang_cc1 -Wno-array-bounds -analyze -analyzer-check-objc-mem -analyzer-checker=core.experimental.Overflow -verify %s
 
 // Tests doing an out-of-bounds access after the end of an array using:
 // - constant integer index
