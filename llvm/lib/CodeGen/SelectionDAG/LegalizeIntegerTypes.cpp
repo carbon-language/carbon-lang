@@ -1428,9 +1428,9 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
       HiOps[2] = Lo.getValue(1);
       Hi = DAG.getNode(ISD::SUBE, dl, VTList, HiOps, 3);
     }
-    return;    
+    return;
   }
-  
+
   if (N->getOpcode() == ISD::ADD) {
     Lo = DAG.getNode(ISD::ADD, dl, NVT, LoOps, 2);
     Hi = DAG.getNode(ISD::ADD, dl, NVT, HiOps, 2);
@@ -2139,7 +2139,7 @@ void DAGTypeLegalizer::ExpandIntRes_UMULSMULO(SDNode *N,
   // non-overflow-checking operation.
   SDValue Ret = DAG.getNode(ISD::MUL, dl, LHS.getValueType(), LHS, RHS);
   SplitInteger(Ret, Lo, Hi);
-  
+
   // Now calculate overflow.
   SDValue Ofl;
   if (N->getOpcode() == ISD::UMULO)
