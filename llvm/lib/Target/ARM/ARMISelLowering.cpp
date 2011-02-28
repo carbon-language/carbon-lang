@@ -2905,7 +2905,7 @@ SDValue ARMTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
     SDValue Res = DAG.getNode(ISD::OR, dl, OpVT,
                               DAG.getNode(ISD::AND, dl, OpVT, Tmp1, Mask),
                               DAG.getNode(ISD::AND, dl, OpVT, Tmp0, MaskNot));
-    if (SrcVT == MVT::f32) {
+    if (VT == MVT::f32) {
       Res = DAG.getNode(ISD::BITCAST, dl, MVT::v2f32, Res);
       Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f32, Res,
                         DAG.getConstant(0, MVT::i32));
