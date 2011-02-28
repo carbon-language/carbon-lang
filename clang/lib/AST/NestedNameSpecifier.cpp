@@ -371,3 +371,249 @@ TypeLoc NestedNameSpecifierLoc::getTypeLoc() const {
   void *TypeData = LoadPointer(Data, Offset);
   return TypeLoc(Qualifier->getAsType(), TypeData);
 }
+
+namespace {
+  void Append(char *Start, char *End, char *&Buffer, unsigned &BufferSize,
+              unsigned &BufferCapacity) {
+    if (BufferSize + (End - Start) > BufferCapacity) {
+      // Reallocate the buffer.
+      unsigned NewCapacity 
+      = std::max((unsigned)(BufferCapacity? BufferCapacity * 2 
+                            : sizeof(void*) * 2),
+                 (unsigned)(BufferSize + (End - Start)));
+      char *NewBuffer = static_cast<char *>(malloc(NewCapacity));
+      memcpy(NewBuffer, Buffer, BufferSize);
+      
+      if (BufferCapacity)
+        free(Buffer);
+      Buffer = NewBuffer;
+      BufferCapacity = NewCapacity;
+    }
+    
+    memcpy(Buffer + BufferSize, Start, End - Start);
+    BufferSize += End-Start;
+  }
+  
+  /// \brief Save a source location to the given buffer.
+  void SaveSourceLocation(SourceLocation Loc, char *&Buffer,
+                          unsigned &BufferSize, unsigned &BufferCapacity) {
+    unsigned Raw = Loc.getRawEncoding();
+    Append(reinterpret_cast<char *>(&Raw),
+           reinterpret_cast<char *>(&Raw) + sizeof(unsigned),
+           Buffer, BufferSize, BufferCapacity);
+  }
+  
+  /// \brief Save a pointer to the given buffer.
+  void SavePointer(void *Ptr, char *&Buffer, unsigned &BufferSize,
+                   unsigned &BufferCapacity) {
+    Append(reinterpret_cast<char *>(&Ptr),
+           reinterpret_cast<char *>(&Ptr) + sizeof(void *),
+           Buffer, BufferSize, BufferCapacity);
+  }
+}
+
+NestedNameSpecifierLocBuilder::NestedNameSpecifierLocBuilder()
+  : Representation(0), Buffer(0), BufferSize(0), BufferCapacity(0) { }
+
+NestedNameSpecifierLocBuilder::
+NestedNameSpecifierLocBuilder(const NestedNameSpecifierLocBuilder &Other) 
+  : Representation(Other.Representation), Buffer(0),
+    BufferSize(0), BufferCapacity(0)
+{
+  if (!Other.Buffer)
+    return;
+  
+  if (Other.BufferCapacity == 0) {
+    // Shallow copy is okay.
+    Buffer = Other.Buffer;
+    BufferSize = Other.BufferSize;
+    return;
+  }
+  
+  // Deep copy
+  BufferSize = Other.BufferSize;
+  BufferCapacity = Other.BufferSize;
+  Buffer = static_cast<char *>(malloc(BufferCapacity));
+  memcpy(Buffer, Other.Buffer, BufferSize);
+}
+
+NestedNameSpecifierLocBuilder &
+NestedNameSpecifierLocBuilder::
+operator=(const NestedNameSpecifierLocBuilder &Other) {
+  Representation = Other.Representation;
+  
+  if (Buffer && Other.Buffer && BufferCapacity >= Other.BufferSize) {
+    // Re-use our storage.
+    BufferSize = Other.BufferSize;
+    memcpy(Buffer, Other.Buffer, BufferSize);
+    return *this;
+  }
+  
+  // Free our storage, if we have any.
+  if (BufferCapacity) {
+    free(Buffer);
+    BufferCapacity = 0;
+  }
+  
+  if (!Other.Buffer) {
+    // Empty.
+    Buffer = 0;
+    BufferSize = 0;
+    return *this;
+  }
+  
+  if (Other.BufferCapacity == 0) {
+    // Shallow copy is okay.
+    Buffer = Other.Buffer;
+    BufferSize = Other.BufferSize;
+    return *this;
+  }
+  
+  // Deep copy.
+  BufferSize = Other.BufferSize;
+  BufferCapacity = BufferSize;
+  Buffer = static_cast<char *>(malloc(BufferSize));
+  memcpy(Buffer, Other.Buffer, BufferSize);
+  return *this;
+}
+
+NestedNameSpecifierLocBuilder::~NestedNameSpecifierLocBuilder() {
+  if (BufferCapacity)
+    free(Buffer);
+}
+
+void NestedNameSpecifierLocBuilder::Extend(ASTContext &Context, 
+                                           SourceLocation TemplateKWLoc, 
+                                           TypeLoc TL, 
+                                           SourceLocation ColonColonLoc) {
+  Representation = NestedNameSpecifier::Create(Context, Representation, 
+                                               TemplateKWLoc.isValid(), 
+                                               TL.getTypePtr());
+  
+  // Push source-location info into the buffer.
+  SavePointer(TL.getOpaqueData(), Buffer, BufferSize, BufferCapacity);
+  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
+}
+
+void NestedNameSpecifierLocBuilder::Extend(ASTContext &Context, 
+                                           IdentifierInfo *Identifier,
+                                           SourceLocation IdentifierLoc, 
+                                           SourceLocation ColonColonLoc) {
+  Representation = NestedNameSpecifier::Create(Context, Representation, 
+                                               Identifier);
+  
+  // Push source-location info into the buffer.
+  SaveSourceLocation(IdentifierLoc, Buffer, BufferSize, BufferCapacity);
+  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
+}
+
+void NestedNameSpecifierLocBuilder::Extend(ASTContext &Context, 
+                                           NamespaceDecl *Namespace,
+                                           SourceLocation NamespaceLoc, 
+                                           SourceLocation ColonColonLoc) {
+  Representation = NestedNameSpecifier::Create(Context, Representation, 
+                                               Namespace);
+  
+  // Push source-location info into the buffer.
+  SaveSourceLocation(NamespaceLoc, Buffer, BufferSize, BufferCapacity);
+  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
+}
+
+void NestedNameSpecifierLocBuilder::Extend(ASTContext &Context,
+                                           NamespaceAliasDecl *Alias,
+                                           SourceLocation AliasLoc, 
+                                           SourceLocation ColonColonLoc) {
+  Representation = NestedNameSpecifier::Create(Context, Representation, Alias);
+  
+  // Push source-location info into the buffer.
+  SaveSourceLocation(AliasLoc, Buffer, BufferSize, BufferCapacity);
+  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
+}
+
+void NestedNameSpecifierLocBuilder::MakeGlobal(ASTContext &Context, 
+                                               SourceLocation ColonColonLoc) {
+  assert(!Representation && "Already have a nested-name-specifier!?");
+  Representation = NestedNameSpecifier::GlobalSpecifier(Context);
+  
+  // Push source-location info into the buffer.
+  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
+}
+
+void NestedNameSpecifierLocBuilder::MakeTrivial(ASTContext &Context, 
+                                                NestedNameSpecifier *Qualifier, 
+                                                SourceRange R) {
+  Representation = Qualifier;
+  
+  // Construct bogus (but well-formed) source information for the 
+  // nested-name-specifier.
+  BufferSize = 0;
+  llvm::SmallVector<NestedNameSpecifier *, 4> Stack;
+  for (NestedNameSpecifier *NNS = Qualifier; NNS; NNS = NNS->getPrefix())
+    Stack.push_back(NNS);
+  while (!Stack.empty()) {
+    NestedNameSpecifier *NNS = Stack.back();
+    Stack.pop_back();
+    switch (NNS->getKind()) {
+      case NestedNameSpecifier::Identifier:
+      case NestedNameSpecifier::Namespace:
+      case NestedNameSpecifier::NamespaceAlias:
+        SaveSourceLocation(R.getBegin(), Buffer, BufferSize, BufferCapacity);
+        break;
+        
+      case NestedNameSpecifier::TypeSpec:
+      case NestedNameSpecifier::TypeSpecWithTemplate: {
+        TypeSourceInfo *TSInfo
+        = Context.getTrivialTypeSourceInfo(QualType(NNS->getAsType(), 0),
+                                           R.getBegin());
+        SavePointer(TSInfo->getTypeLoc().getOpaqueData(), Buffer, BufferSize, 
+                    BufferCapacity);
+        break;
+      }
+        
+      case NestedNameSpecifier::Global:
+        break;
+    }
+    
+    // Save the location of the '::'.
+    SaveSourceLocation(Stack.empty()? R.getEnd() : R.getBegin(), 
+                       Buffer, BufferSize, BufferCapacity);
+  }
+}
+
+void NestedNameSpecifierLocBuilder::Adopt(NestedNameSpecifierLoc Other) {
+  if (BufferCapacity)
+    free(Buffer);
+
+  if (!Other) {
+    Representation = 0;
+    BufferSize = 0;
+    return;
+  }
+  
+  // Rather than copying the data (which is wasteful), "adopt" the 
+  // pointer (which points into the ASTContext) but set the capacity to zero to
+  // indicate that we don't own it.
+  Representation = Other.getNestedNameSpecifier();
+  Buffer = static_cast<char *>(Other.getOpaqueData());
+  BufferSize = Other.getDataLength();
+  BufferCapacity = 0;
+}
+
+NestedNameSpecifierLoc 
+NestedNameSpecifierLocBuilder::getWithLocInContext(ASTContext &Context) const {
+  if (!Representation)
+    return NestedNameSpecifierLoc();
+  
+  // If we adopted our data pointer from elsewhere in the AST context, there's
+  // no need to copy the memory.
+  if (BufferCapacity == 0)
+    return NestedNameSpecifierLoc(Representation, Buffer);
+  
+  // FIXME: After copying the source-location information, should we free
+  // our (temporary) buffer and adopt the ASTContext-allocated memory?
+  // Doing so would optimize repeated calls to getWithLocInContext().
+  void *Mem = Context.Allocate(BufferSize, llvm::alignOf<void *>());
+  memcpy(Mem, Buffer, BufferSize);
+  return NestedNameSpecifierLoc(Representation, Mem);
+}
+

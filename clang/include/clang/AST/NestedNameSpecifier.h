@@ -312,6 +312,146 @@ public:
   }
 };
 
+/// \brief Class that aids in the construction of nested-name-specifiers along
+/// with source-location information for all of the components of the
+/// nested-name-specifier.
+class NestedNameSpecifierLocBuilder {
+  /// \brief The current representation of the nested-name-specifier we're 
+  /// building.
+  NestedNameSpecifier *Representation;
+  
+  /// \brief Buffer used to store source-location information for the
+  /// nested-name-specifier.
+  ///
+  /// Note that we explicitly manage the buffer (rather than using a 
+  /// SmallVector) because \c Declarator expects it to be possible to memcpy()
+  /// a \c CXXScopeSpec, and CXXScopeSpec uses a NestedNameSpecifierLocBuilder.
+  char *Buffer;
+  
+  /// \brief The size of the buffer used to store source-location information
+  /// for the nested-name-specifier.
+  unsigned BufferSize;
+  
+  /// \brief The capacity of the buffer used to store source-location 
+  /// information for the nested-name-specifier.
+  unsigned BufferCapacity;
+
+public:
+  NestedNameSpecifierLocBuilder();
+  
+  NestedNameSpecifierLocBuilder(const NestedNameSpecifierLocBuilder &Other);
+  
+  NestedNameSpecifierLocBuilder &
+  operator=(const NestedNameSpecifierLocBuilder &Other);
+  
+  ~NestedNameSpecifierLocBuilder();
+  
+  /// \brief Retrieve the representation of the nested-name-specifier.
+  NestedNameSpecifier *getRepresentation() const { return Representation; }
+  
+  /// \brief Extend the current nested-name-specifier by another
+  /// nested-name-specifier component of the form 'type::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param TemplateKWLoc The location of the 'template' keyword, if present.
+  ///
+  /// \param TL The TypeLoc that describes the type preceding the '::'.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, SourceLocation TemplateKWLoc, TypeLoc TL,
+              SourceLocation ColonColonLoc);
+  
+  /// \brief Extend the current nested-name-specifier by another 
+  /// nested-name-specifier component of the form 'identifier::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param Identifier The identifier.
+  ///
+  /// \param IdentifierLoc The location of the identifier.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, IdentifierInfo *Identifier,
+              SourceLocation IdentifierLoc, SourceLocation ColonColonLoc);
+  
+  /// \brief Extend the current nested-name-specifier by another 
+  /// nested-name-specifier component of the form 'namespace::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param Namespace The namespace.
+  ///
+  /// \param NamespaceLoc The location of the namespace name.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, NamespaceDecl *Namespace,
+              SourceLocation NamespaceLoc, SourceLocation ColonColonLoc);
+  
+  /// \brief Extend the current nested-name-specifier by another 
+  /// nested-name-specifier component of the form 'namespace-alias::'.
+  ///
+  /// \param Context The AST context in which this nested-name-specifier
+  /// resides.
+  ///
+  /// \param Alias The namespace alias.
+  ///
+  /// \param AliasLoc The location of the namespace alias 
+  /// name.
+  ///
+  /// \param ColonColonLoc The location of the trailing '::'.
+  void Extend(ASTContext &Context, NamespaceAliasDecl *Alias,
+              SourceLocation AliasLoc, SourceLocation ColonColonLoc);
+  
+  /// \brief Turn this (empty) nested-name-specifier into the global
+  /// nested-name-specifier '::'.
+  void MakeGlobal(ASTContext &Context, SourceLocation ColonColonLoc);
+  
+  /// \brief Make a new nested-name-specifier from incomplete source-location
+  /// information.
+  ///
+  /// This routine should be used very, very rarely, in cases where we
+  /// need to synthesize a nested-name-specifier. Most code should instead use
+  /// \c Adopt() with a proper \c NestedNameSpecifierLoc.
+  void MakeTrivial(ASTContext &Context, NestedNameSpecifier *Qualifier, 
+                   SourceRange R);
+  
+  /// \brief Adopt an existing nested-name-specifier (with source-range 
+  /// information).
+  void Adopt(NestedNameSpecifierLoc Other);
+  
+  /// \brief Retrieve the source range covered by this nested-name-specifier.
+  SourceRange getSourceRange() const {
+    return NestedNameSpecifierLoc(Representation, Buffer).getSourceRange();
+  }
+    
+  /// \brief Retrieve a nested-name-specifier with location information,
+  /// copied into the given AST context.
+  ///
+  /// \param Context The context into which this nested-name-specifier will be
+  /// copied.
+  NestedNameSpecifierLoc getWithLocInContext(ASTContext &Context) const;
+
+  /// \brief Clear out this builder, and prepare it to build another
+  /// nested-name-specifier with source-location information.
+  void Clear() {
+    Representation = 0;
+    BufferSize = 0;
+  }
+  
+  /// \brief Retrieve the underlying buffer.
+  ///
+  /// \returns A pair containing a pointer to the buffer of source-location
+  /// data and the size of the source-location data that resides in that
+  /// buffer.
+  std::pair<char *, unsigned> getBuffer() const {
+    return std::make_pair(Buffer, BufferSize);
+  }
+};
+  
 /// Insertion operator for diagnostics.  This allows sending NestedNameSpecifiers
 /// into a diagnostic with <<.
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,

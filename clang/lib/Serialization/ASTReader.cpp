@@ -23,6 +23,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/Lex/MacroInfo.h"
@@ -4762,103 +4763,57 @@ NestedNameSpecifierLoc
 ASTReader::ReadNestedNameSpecifierLoc(PerFileData &F, const RecordData &Record, 
                                       unsigned &Idx) {
   unsigned N = Record[Idx++];
-  NestedNameSpecifier *NNS = 0, *Prev = 0;
-  llvm::SmallVector<char, 32> LocationData;
+  NestedNameSpecifierLocBuilder Builder;
   for (unsigned I = 0; I != N; ++I) {
     NestedNameSpecifier::SpecifierKind Kind
       = (NestedNameSpecifier::SpecifierKind)Record[Idx++];
     switch (Kind) {
     case NestedNameSpecifier::Identifier: {
-      // Nested-name-specifier
-      IdentifierInfo *II = GetIdentifierInfo(Record, Idx);
-      NNS = NestedNameSpecifier::Create(*Context, Prev, II);
-      
-      // Location information
+      IdentifierInfo *II = GetIdentifierInfo(Record, Idx);      
       SourceRange Range = ReadSourceRange(F, Record, Idx);
-      unsigned RawStart = Range.getBegin().getRawEncoding();
-      unsigned RawEnd = Range.getEnd().getRawEncoding();
-      LocationData.append(reinterpret_cast<char*>(&RawStart),
-                          reinterpret_cast<char*>(&RawStart) +sizeof(unsigned));
-      LocationData.append(reinterpret_cast<char*>(&RawEnd),
-                          reinterpret_cast<char*>(&RawEnd) + sizeof(unsigned));
+      Builder.Extend(*Context, II, Range.getBegin(), Range.getEnd());
       break;
     }
 
     case NestedNameSpecifier::Namespace: {
-      // Nested-name-specifier
       NamespaceDecl *NS = cast<NamespaceDecl>(GetDecl(Record[Idx++]));
-      NNS = NestedNameSpecifier::Create(*Context, Prev, NS);
-
-      // Location information
       SourceRange Range = ReadSourceRange(F, Record, Idx);
-      unsigned RawStart = Range.getBegin().getRawEncoding();
-      unsigned RawEnd = Range.getEnd().getRawEncoding();
-      LocationData.append(reinterpret_cast<char*>(&RawStart),
-                          reinterpret_cast<char*>(&RawStart) +sizeof(unsigned));
-      LocationData.append(reinterpret_cast<char*>(&RawEnd),
-                          reinterpret_cast<char*>(&RawEnd) + sizeof(unsigned));
+      Builder.Extend(*Context, NS, Range.getBegin(), Range.getEnd());
       break;
     }
 
     case NestedNameSpecifier::NamespaceAlias: {
-      // Nested-name-specifier
       NamespaceAliasDecl *Alias
         = cast<NamespaceAliasDecl>(GetDecl(Record[Idx++]));
-      NNS = NestedNameSpecifier::Create(*Context, Prev, Alias);
-      
-      // Location information
       SourceRange Range = ReadSourceRange(F, Record, Idx);
-      unsigned RawStart = Range.getBegin().getRawEncoding();
-      unsigned RawEnd = Range.getEnd().getRawEncoding();
-      LocationData.append(reinterpret_cast<char*>(&RawStart),
-                          reinterpret_cast<char*>(&RawStart) +sizeof(unsigned));
-      LocationData.append(reinterpret_cast<char*>(&RawEnd),
-                          reinterpret_cast<char*>(&RawEnd) + sizeof(unsigned));
-
+      Builder.Extend(*Context, Alias, Range.getBegin(), Range.getEnd());
       break;
     }
 
     case NestedNameSpecifier::TypeSpec:
     case NestedNameSpecifier::TypeSpecWithTemplate: {
-      // Nested-name-specifier
       bool Template = Record[Idx++];
       TypeSourceInfo *T = GetTypeSourceInfo(F, Record, Idx);
       if (!T)
         return NestedNameSpecifierLoc();
-      NNS = NestedNameSpecifier::Create(*Context, Prev, Template, 
-                                        T->getType().getTypePtr());
-
-      // Location information.
       SourceLocation ColonColonLoc = ReadSourceLocation(F, Record, Idx);
-      unsigned RawLocation = ColonColonLoc.getRawEncoding();
-      void *OpaqueTypeData = T->getTypeLoc().getOpaqueData();
-      LocationData.append(reinterpret_cast<char*>(&OpaqueTypeData),
-                          (reinterpret_cast<char*>(&OpaqueTypeData) 
-                             + sizeof(void *)));
-      LocationData.append(reinterpret_cast<char*>(&RawLocation),
-                          (reinterpret_cast<char*>(&RawLocation) +
-                             sizeof(unsigned)));
+
+      // FIXME: 'template' keyword location not saved anywhere, so we fake it.
+      Builder.Extend(*Context, 
+                     Template? T->getTypeLoc().getBeginLoc() : SourceLocation(),
+                     T->getTypeLoc(), ColonColonLoc);
       break;
     }
 
     case NestedNameSpecifier::Global: {
-      // Nested-name-specifier
-      NNS = NestedNameSpecifier::GlobalSpecifier(*Context);
-
       SourceLocation ColonColonLoc = ReadSourceLocation(F, Record, Idx);
-      unsigned RawLocation = ColonColonLoc.getRawEncoding();
-      LocationData.append(reinterpret_cast<char*>(&RawLocation),
-                          (reinterpret_cast<char*>(&RawLocation) +
-                             sizeof(unsigned)));
+      Builder.MakeGlobal(*Context, ColonColonLoc);
       break;
     }
     }
-    Prev = NNS;
   }
   
-  void *Mem = Context->Allocate(LocationData.size(), llvm::alignOf<void*>());
-  memcpy(Mem, LocationData.data(), LocationData.size());
-  return NestedNameSpecifierLoc(NNS, Mem);
+  return Builder.getWithLocInContext(*Context);
 }
 
 SourceRange

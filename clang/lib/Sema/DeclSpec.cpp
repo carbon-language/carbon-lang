@@ -47,222 +47,81 @@ void UnqualifiedId::setConstructorTemplateId(TemplateIdAnnotation *TemplateId) {
   EndLocation = TemplateId->RAngleLoc;
 }
 
-CXXScopeSpec::CXXScopeSpec(const CXXScopeSpec &Other)
-  : Range(Other.Range), ScopeRep(Other.ScopeRep), Buffer(0), 
-    BufferSize(Other.BufferSize), BufferCapacity(Other.BufferSize) 
-{
-  if (BufferSize) {
-    Buffer = static_cast<char *>(malloc(BufferSize));
-    memcpy(Buffer, Other.Buffer, BufferSize);
-  }
-}
-
-CXXScopeSpec &CXXScopeSpec::operator=(const CXXScopeSpec &Other) {
-  Range = Other.Range;
-  ScopeRep = Other.ScopeRep;
-  if (Buffer && Other.Buffer && BufferCapacity >= Other.BufferSize) {
-    // Re-use our storage.
-    BufferSize = Other.BufferSize;
-    memcpy(Buffer, Other.Buffer, BufferSize);
-    return *this;
-  }
-  
-  if (BufferCapacity)
-    free(Buffer);
-  if (Other.Buffer) {
-    BufferSize = Other.BufferSize;
-    BufferCapacity = BufferSize;
-    Buffer = static_cast<char *>(malloc(BufferSize));
-    memcpy(Buffer, Other.Buffer, BufferSize);
-  } else {
-    Buffer = 0;
-    BufferSize = 0;
-    BufferCapacity = 0;
-  }
-  return *this;
-}
-
-CXXScopeSpec::~CXXScopeSpec() {
-  if (BufferCapacity)
-    free(Buffer);
-}
-
-namespace {
-  void Append(char *Start, char *End, char *&Buffer, unsigned &BufferSize,
-              unsigned &BufferCapacity) {
-    if (BufferSize + (End - Start) > BufferCapacity) {
-      // Reallocate the buffer.
-      unsigned NewCapacity 
-        = std::max((unsigned)(BufferCapacity? BufferCapacity * 2 
-                                            : sizeof(void*) * 2),
-                   (unsigned)(BufferSize + (End - Start)));
-      char *NewBuffer = static_cast<char *>(malloc(NewCapacity));
-      memcpy(NewBuffer, Buffer, BufferSize);
-      
-      if (BufferCapacity)
-        free(Buffer);
-      Buffer = NewBuffer;
-      BufferCapacity = NewCapacity;
-    }
-    
-    memcpy(Buffer + BufferSize, Start, End - Start);
-    BufferSize += End-Start;
-  }
-  
-  /// \brief Save a source location to the given buffer.
-  void SaveSourceLocation(SourceLocation Loc, char *&Buffer,
-                          unsigned &BufferSize, unsigned &BufferCapacity) {
-    unsigned Raw = Loc.getRawEncoding();
-    Append(reinterpret_cast<char *>(&Raw),
-           reinterpret_cast<char *>(&Raw) + sizeof(unsigned),
-           Buffer, BufferSize, BufferCapacity);
-  }
-  
-  /// \brief Save a pointer to the given buffer.
-  void SavePointer(void *Ptr, char *&Buffer, unsigned &BufferSize,
-                   unsigned &BufferCapacity) {
-    Append(reinterpret_cast<char *>(&Ptr),
-           reinterpret_cast<char *>(&Ptr) + sizeof(void *),
-           Buffer, BufferSize, BufferCapacity);
-  }
-}
 void CXXScopeSpec::Extend(ASTContext &Context, SourceLocation TemplateKWLoc, 
                           TypeLoc TL, SourceLocation ColonColonLoc) {
-  ScopeRep = NestedNameSpecifier::Create(Context, ScopeRep, 
-                                         TemplateKWLoc.isValid(), 
-                                         TL.getTypePtr());
+  Builder.Extend(Context, TemplateKWLoc, TL, ColonColonLoc);
   if (Range.getBegin().isInvalid())
     Range.setBegin(TL.getBeginLoc());
   Range.setEnd(ColonColonLoc);
 
-  // Push source-location info into the buffer.
-  SavePointer(TL.getOpaqueData(), Buffer, BufferSize, BufferCapacity);
-  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
-
-  assert(Range == NestedNameSpecifierLoc(ScopeRep, Buffer).getSourceRange() &&
+  assert(Range == Builder.getSourceRange() &&
          "NestedNameSpecifierLoc range computation incorrect");
 }
 
 void CXXScopeSpec::Extend(ASTContext &Context, IdentifierInfo *Identifier,
                           SourceLocation IdentifierLoc, 
                           SourceLocation ColonColonLoc) {
-  ScopeRep = NestedNameSpecifier::Create(Context, ScopeRep, Identifier);
+  Builder.Extend(Context, Identifier, IdentifierLoc, ColonColonLoc);
+  
   if (Range.getBegin().isInvalid())
     Range.setBegin(IdentifierLoc);
   Range.setEnd(ColonColonLoc);
   
-  // Push source-location info into the buffer.
-  SaveSourceLocation(IdentifierLoc, Buffer, BufferSize, BufferCapacity);
-  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
-  
-  assert(Range == NestedNameSpecifierLoc(ScopeRep, Buffer).getSourceRange() &&
+  assert(Range == Builder.getSourceRange() &&
          "NestedNameSpecifierLoc range computation incorrect");
 }
 
 void CXXScopeSpec::Extend(ASTContext &Context, NamespaceDecl *Namespace,
                           SourceLocation NamespaceLoc, 
                           SourceLocation ColonColonLoc) {
-  ScopeRep = NestedNameSpecifier::Create(Context, ScopeRep, Namespace);
+  Builder.Extend(Context, Namespace, NamespaceLoc, ColonColonLoc);
+  
   if (Range.getBegin().isInvalid())
     Range.setBegin(NamespaceLoc);
   Range.setEnd(ColonColonLoc);
 
-  // Push source-location info into the buffer.
-  SaveSourceLocation(NamespaceLoc, Buffer, BufferSize, BufferCapacity);
-  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
-  
-  assert(Range == NestedNameSpecifierLoc(ScopeRep, Buffer).getSourceRange() &&
+  assert(Range == Builder.getSourceRange() &&
          "NestedNameSpecifierLoc range computation incorrect");
 }
 
 void CXXScopeSpec::Extend(ASTContext &Context, NamespaceAliasDecl *Alias,
                           SourceLocation AliasLoc, 
                           SourceLocation ColonColonLoc) {
-  ScopeRep = NestedNameSpecifier::Create(Context, ScopeRep, Alias);
+  Builder.Extend(Context, Alias, AliasLoc, ColonColonLoc);
+  
   if (Range.getBegin().isInvalid())
     Range.setBegin(AliasLoc);
   Range.setEnd(ColonColonLoc);
 
-  // Push source-location info into the buffer.
-  SaveSourceLocation(AliasLoc, Buffer, BufferSize, BufferCapacity);
-  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
-  
-  assert(Range == NestedNameSpecifierLoc(ScopeRep, Buffer).getSourceRange() &&
+  assert(Range == Builder.getSourceRange() &&
          "NestedNameSpecifierLoc range computation incorrect");
 }
 
 void CXXScopeSpec::MakeGlobal(ASTContext &Context, 
                               SourceLocation ColonColonLoc) {
-  assert(!ScopeRep && "Already have a nested-name-specifier!?");
-  ScopeRep = NestedNameSpecifier::GlobalSpecifier(Context);
+  Builder.MakeGlobal(Context, ColonColonLoc);
+  
   Range = SourceRange(ColonColonLoc);
   
-  // Push source-location info into the buffer.
-  SaveSourceLocation(ColonColonLoc, Buffer, BufferSize, BufferCapacity);
-  
-  assert(Range == NestedNameSpecifierLoc(ScopeRep, Buffer).getSourceRange() &&
+  assert(Range == Builder.getSourceRange() &&
          "NestedNameSpecifierLoc range computation incorrect");
 }
 
 void CXXScopeSpec::MakeTrivial(ASTContext &Context, 
                                NestedNameSpecifier *Qualifier, SourceRange R) {
-  ScopeRep = Qualifier;
+  Builder.MakeTrivial(Context, Qualifier, R);
   Range = R;
-
-  // Construct bogus (but well-formed) source information for the 
-  // nested-name-specifier.
-  BufferSize = 0;
-  llvm::SmallVector<NestedNameSpecifier *, 4> Stack;
-  for (NestedNameSpecifier *NNS = Qualifier; NNS; NNS = NNS->getPrefix())
-    Stack.push_back(NNS);
-  while (!Stack.empty()) {
-    NestedNameSpecifier *NNS = Stack.back();
-    Stack.pop_back();
-    switch (NNS->getKind()) {
-    case NestedNameSpecifier::Identifier:
-    case NestedNameSpecifier::Namespace:
-    case NestedNameSpecifier::NamespaceAlias:
-      SaveSourceLocation(R.getBegin(), Buffer, BufferSize, BufferCapacity);
-      break;
-
-    case NestedNameSpecifier::TypeSpec:
-    case NestedNameSpecifier::TypeSpecWithTemplate: {
-      TypeSourceInfo *TSInfo
-        = Context.getTrivialTypeSourceInfo(QualType(NNS->getAsType(), 0),
-                                           R.getBegin());
-      SavePointer(TSInfo->getTypeLoc().getOpaqueData(), Buffer, BufferSize, 
-                  BufferCapacity);
-      break;
-    }
-        
-    case NestedNameSpecifier::Global:
-      break;
-    }
-
-    // Save the location of the '::'.
-    SaveSourceLocation(Stack.empty()? R.getEnd() : R.getBegin(), 
-                       Buffer, BufferSize, BufferCapacity);
-  }
 }
 
 void CXXScopeSpec::Adopt(NestedNameSpecifierLoc Other) {
   if (!Other) {
     Range = SourceRange();
-    ScopeRep = 0;
+    Builder.Clear();
     return;
   }
-    
-  if (BufferCapacity)
-    free(Buffer);
-  
-  // Rather than copying the data (which is wasteful), "adopt" the 
-  // pointer (which points into the ASTContext) but set the capacity to zero to
-  // indicate that we don't own it.
+
   Range = Other.getSourceRange();
-  ScopeRep = Other.getNestedNameSpecifier();
-  Buffer = static_cast<char *>(Other.getOpaqueData());
-  BufferSize = Other.getDataLength();
-  BufferCapacity = 0;
+  Builder.Adopt(Other);
 }
 
 NestedNameSpecifierLoc 
@@ -270,14 +129,7 @@ CXXScopeSpec::getWithLocInContext(ASTContext &Context) const {
   if (isEmpty() || isInvalid())
     return NestedNameSpecifierLoc();
   
-  // If we adopted our data pointer from elsewhere in the AST context, there's
-  // no need to copy the memory.
-  if (BufferCapacity == 0)
-    return NestedNameSpecifierLoc(ScopeRep, Buffer);
-  
-  void *Mem = Context.Allocate(BufferSize, llvm::alignOf<void *>());
-  memcpy(Mem, Buffer, BufferSize);
-  return NestedNameSpecifierLoc(ScopeRep, Mem);
+  return Builder.getWithLocInContext(Context);
 }
 
 /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.

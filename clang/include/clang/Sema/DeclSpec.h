@@ -22,6 +22,7 @@
 
 #include "clang/Sema/AttributeList.h"
 #include "clang/Sema/Ownership.h"
+#include "clang/AST/NestedNameSpecifier.h"
 #include "clang/Lex/Token.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/Specifiers.h"
@@ -54,32 +55,10 @@ namespace clang {
 ///
 /// The actual scope is described by getScopeRep().
 class CXXScopeSpec {
-  SourceRange Range;
-  NestedNameSpecifier *ScopeRep;
-
-  /// \brief Buffer used to store source-location information for the
-  /// nested-name-specifier.
-  ///
-  /// Note that we explicitly manage the buffer (rather than using a 
-  /// SmallVector) because \c Declarator expects it to be possible to memcpy()
-  /// a \c CXXScopeSpec.
-  char *Buffer;
-  
-  /// \brief The size of the buffer used to store source-location information
-  /// for the nested-name-specifier.
-  unsigned BufferSize;
-  
-  /// \brief The capacity of the buffer used to store source-location 
-  /// information for the nested-name-specifier.
-  unsigned BufferCapacity;
+  SourceRange Range;  
+  NestedNameSpecifierLocBuilder Builder;
 
 public:
-  CXXScopeSpec() : Range(), ScopeRep(), Buffer(0), BufferSize(0),
-                   BufferCapacity(0) { }
-  CXXScopeSpec(const CXXScopeSpec &Other);
-  CXXScopeSpec &operator=(const CXXScopeSpec &Other);
-  ~CXXScopeSpec();
-  
   const SourceRange &getRange() const { return Range; }
   void setRange(const SourceRange &R) { Range = R; }
   void setBeginLoc(SourceLocation Loc) { Range.setBegin(Loc); }
@@ -87,7 +66,10 @@ public:
   SourceLocation getBeginLoc() const { return Range.getBegin(); }
   SourceLocation getEndLoc() const { return Range.getEnd(); }
 
-  NestedNameSpecifier *getScopeRep() const { return ScopeRep; }
+  /// \brief Retrieve the representation of the nested-name-specifier.
+  NestedNameSpecifier *getScopeRep() const { 
+    return Builder.getRepresentation(); 
+  }
 
   /// \brief Extend the current nested-name-specifier by another
   /// nested-name-specifier component of the form 'type::'.
@@ -176,9 +158,9 @@ public:
   bool isNotEmpty() const { return !isEmpty(); }
 
   /// An error occured during parsing of the scope specifier.
-  bool isInvalid() const { return isNotEmpty() && ScopeRep == 0; }
+  bool isInvalid() const { return isNotEmpty() && getScopeRep() == 0; }
   /// A scope specifier is present, and it refers to a real scope.
-  bool isValid() const { return isNotEmpty() && ScopeRep != 0; }
+  bool isValid() const { return isNotEmpty() && getScopeRep() != 0; }
 
   /// \brief Indicate that this nested-name-specifier is invalid.
   void SetInvalid(SourceRange R) { 
@@ -186,24 +168,24 @@ public:
     if (Range.getBegin().isInvalid())
       Range.setBegin(R.getBegin());
     Range.setEnd(R.getEnd());
-    ScopeRep = 0;
+    Builder.Clear();
   }
   
   /// Deprecated.  Some call sites intend isNotEmpty() while others intend
   /// isValid().
-  bool isSet() const { return ScopeRep != 0; }
+  bool isSet() const { return getScopeRep() != 0; }
 
   void clear() {
     Range = SourceRange();
-    ScopeRep = 0;
+    Builder.Clear();
   }
 
   /// \brief Retrieve the data associated with the source-location information.
-  char *location_data() const { return Buffer; }
+  char *location_data() const { return Builder.getBuffer().first; }
   
   /// \brief Retrieve the size of the data associated with source-location 
   /// information.
-  unsigned location_size() const { return BufferSize; }
+  unsigned location_size() const { return Builder.getBuffer().second; }
 };
 
 /// DeclSpec - This class captures information about "declaration specifiers",
