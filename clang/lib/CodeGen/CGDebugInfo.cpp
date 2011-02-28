@@ -1012,14 +1012,10 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     DBuilder.getOrCreateArray(EltTys.data(), EltTys.size());
   llvm::MDNode *RealDecl = NULL;
 
-  if (RD->isStruct()) 
-    RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
-                                         Size, Align, 0, Elements);
-  else if (RD->isUnion())
+  if (RD->isUnion())
     RealDecl = DBuilder.createUnionType(RDContext, RDName, DefUnit, Line,
-                                         Size, Align, 0, Elements);
-  else {
-    assert(RD->isClass() && "Unknown RecordType!");
+                                        Size, Align, 0, Elements);
+  else if (CXXDecl) {
     RDName = getClassName(RD);
      // A class's primary base or the class itself contains the vtable.
     llvm::MDNode *ContainingType = NULL;
@@ -1045,7 +1041,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
                                        Size, Align, 0, 0, llvm::DIType(),
                                        Elements, ContainingType,
                                        TParamsArray);
-  }
+  } else 
+    RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
+                                         Size, Align, 0, Elements);
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
