@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-check-objc-mem -analyzer-store region -verify %s
 char PR7218(char a) {
     char buf[2];
     buf[0] = a;

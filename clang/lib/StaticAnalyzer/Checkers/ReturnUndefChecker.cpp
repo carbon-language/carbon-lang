@@ -13,35 +13,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 class ReturnUndefChecker : 
-    public CheckerVisitor<ReturnUndefChecker> {      
-  BuiltinBug *BT;
+    public CheckerV2< check::PreStmt<ReturnStmt> > {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
-    ReturnUndefChecker() : BT(0) {}
-    static void *getTag();
-    void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *RS);
+  void checkPreStmt(const ReturnStmt *RS, CheckerContext &C) const;
 };
 }
 
-void ento::RegisterReturnUndefChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new ReturnUndefChecker());
-}
-
-void *ReturnUndefChecker::getTag() {
-  static int x = 0; return &x;
-}
-
-void ReturnUndefChecker::PreVisitReturnStmt(CheckerContext &C,
-                                            const ReturnStmt *RS) {
+void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
+                                      CheckerContext &C) const {
  
   const Expr *RetE = RS->getRetValue();
   if (!RetE)
@@ -56,8 +47,8 @@ void ReturnUndefChecker::PreVisitReturnStmt(CheckerContext &C,
     return;
   
   if (!BT)
-    BT = new BuiltinBug("Garbage return value",
-                        "Undefined or garbage value returned to caller");
+    BT.reset(new BuiltinBug("Garbage return value",
+                            "Undefined or garbage value returned to caller"));
     
   EnhancedBugReport *report = 
     new EnhancedBugReport(*BT, BT->getDescription(), N);
@@ -66,4 +57,8 @@ void ReturnUndefChecker::PreVisitReturnStmt(CheckerContext &C,
   report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, RetE);
 
   C.EmitReport(report);
+}
+
+void ento::registerReturnUndefChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ReturnUndefChecker>();
 }
