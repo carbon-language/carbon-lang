@@ -421,6 +421,9 @@ bool CodeGenFunction::containsBreak(const Stmt *S) {
   // include it and anything inside of it.
   if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || isa<DoStmt>(S) ||
       isa<ForStmt>(S))
+    return false;
+  
+  if (isa<BreakStmt>(S))
     return true;
   
   // Scan subexpressions for verboten breaks.
