@@ -221,7 +221,6 @@ install(DIRECTORY include/
   FILES_MATCHING
   PATTERN "*.def"
   PATTERN "*.h"
-  PATTERN "*.td"
   PATTERN ".svn" EXCLUDE
   )
 
