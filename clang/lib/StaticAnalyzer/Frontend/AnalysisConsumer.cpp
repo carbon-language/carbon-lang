@@ -278,6 +278,9 @@ static void FindBlocks(DeclContext *D, llvm::SmallVectorImpl<Decl*> &WL) {
       FindBlocks(DC, WL);
 }
 
+static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,
+                                 Decl *D);
+
 void AnalysisConsumer::HandleCode(Decl *D, Actions& actions) {
 
   // Don't run the actions if an error has occured with parsing the file.
@@ -305,17 +308,15 @@ void AnalysisConsumer::HandleCode(Decl *D, Actions& actions) {
   BugReporter BR(*Mgr);
   for (llvm::SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
        WI != WE; ++WI)
-    if ((*WI)->hasBody())
+    if ((*WI)->hasBody()) {
       checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
-
-  for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
-    for (llvm::SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
-         WI != WE; ++WI)
-      (*I)(*this, *Mgr, *WI);
+      if (checkerMgr->hasPathSensitiveCheckers())
+        ActionObjCMemChecker(*this, *Mgr, *WI);
+    }
 }
 
 //===----------------------------------------------------------------------===//
-// Analyses
+// Path-sensitive checking.
 //===----------------------------------------------------------------------===//
 
 static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,

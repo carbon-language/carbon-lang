@@ -97,6 +97,8 @@ public:
   CheckerManager(const LangOptions &langOpts) : LangOpts(langOpts) { }
   ~CheckerManager();
 
+  bool hasPathSensitiveCheckers() const;
+
   void finishedCheckerRegistration();
 
   const LangOptions &getLangOptions() const { return LangOpts; }

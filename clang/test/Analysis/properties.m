@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -verify %s
 
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;

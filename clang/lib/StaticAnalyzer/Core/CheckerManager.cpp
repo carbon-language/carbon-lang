@@ -20,6 +20,22 @@
 using namespace clang;
 using namespace ento;
 
+bool CheckerManager::hasPathSensitiveCheckers() const {
+  return !StmtCheckers.empty()              ||
+         !PreObjCMessageCheckers.empty()    ||
+         !PostObjCMessageCheckers.empty()   ||
+         !LocationCheckers.empty()          ||
+         !BindCheckers.empty()              ||
+         !EndAnalysisCheckers.empty()       ||
+         !EndPathCheckers.empty()           ||
+         !BranchConditionCheckers.empty()   ||
+         !LiveSymbolsCheckers.empty()       ||
+         !DeadSymbolsCheckers.empty()       ||
+         !RegionChangesCheckers.empty()     ||
+         !EvalAssumeCheckers.empty()        ||
+         !EvalCallCheckers.empty();
+}
+
 void CheckerManager::finishedCheckerRegistration() {
 #ifndef NDEBUG
   // Make sure that for every event that has listeners, there is at least

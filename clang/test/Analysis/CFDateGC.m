@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=basic %s  -Wno-implicit-function-declaration
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=range %s  -Wno-implicit-function-declaration
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=basic -verify -fobjc-gc -disable-free %s  -Wno-implicit-function-declaration
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -verify -fobjc-gc %s  -Wno-implicit-function-declaration
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify -fobjc-gc %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=basic %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=range %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=basic -verify -fobjc-gc -disable-free %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -analyzer-constraints=basic -verify -fobjc-gc %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -analyzer-constraints=range -verify -fobjc-gc %s  -Wno-implicit-function-declaration
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
