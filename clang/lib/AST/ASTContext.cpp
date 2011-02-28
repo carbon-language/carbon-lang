@@ -5559,10 +5559,6 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
   }
 }
 
-ExternalASTSource::~ExternalASTSource() { }
-
-void ExternalASTSource::PrintStats() { }
-
 ASTMutationListener::~ASTMutationListener() { }
 
 

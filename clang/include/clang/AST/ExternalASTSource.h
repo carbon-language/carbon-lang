@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines the ExternalASTSource interface, which enables
-//  construction of AST nodes from some external source.x
+//  construction of AST nodes from some external source.
 //
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
@@ -16,7 +16,6 @@
 
 #include "clang/AST/DeclBase.h"
 #include <cassert>
-#include <vector>
 
 namespace llvm {
 template <class T> class SmallVectorImpl;
@@ -26,9 +25,6 @@ namespace clang {
 
 class ASTConsumer;
 class CXXBaseSpecifier;
-class Decl;
-class DeclContext;
-class DeclContextLookupResult;
 class DeclarationName;
 class ExternalSemaSource; // layering violation required for downcasting
 class NamedDecl;
@@ -74,17 +70,23 @@ public:
   ///
   /// This method only needs to be implemented if the AST source ever
   /// passes back decl sets as VisibleDeclaration objects.
-  virtual Decl *GetExternalDecl(uint32_t ID) = 0;
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual Decl *GetExternalDecl(uint32_t ID);
 
   /// \brief Resolve a selector ID into a selector.
   ///
   /// This operation only needs to be implemented if the AST source
   /// returns non-zero for GetNumKnownSelectors().
-  virtual Selector GetExternalSelector(uint32_t ID) = 0;
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual Selector GetExternalSelector(uint32_t ID);
 
   /// \brief Returns the number of selectors known to the external AST
   /// source.
-  virtual uint32_t GetNumExternalSelectors() = 0;
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual uint32_t GetNumExternalSelectors();
 
   /// \brief Resolve the offset of a statement in the decl stream into
   /// a statement.
@@ -92,21 +94,26 @@ public:
   /// This operation is meant to be used via a LazyOffsetPtr.  It only
   /// needs to be implemented if the AST source uses methods like
   /// FunctionDecl::setLazyBody when building decls.
-  virtual Stmt *GetExternalDeclStmt(uint64_t Offset) = 0;
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual Stmt *GetExternalDeclStmt(uint64_t Offset);
 
   /// \brief Resolve the offset of a set of C++ base specifiers in the decl
   /// stream into an array of specifiers.
-  virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset) = 0;
-  
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
+
   /// \brief Finds all declarations with the given name in the
   /// given context.
   ///
   /// Generally the final step of this method is either to call
   /// SetExternalVisibleDeclsForName or to recursively call lookup on
   /// the DeclContext after calling SetExternalVisibleDecls.
+  ///
+  /// The default implementation of this method is a no-op.
   virtual DeclContextLookupResult
-  FindExternalVisibleDeclsByName(const DeclContext *DC,
-                                 DeclarationName Name) = 0;
+  FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name);
 
   /// \brief Deserialize all the visible declarations from external storage.
   ///
@@ -114,7 +121,9 @@ public:
   /// may not have a complete name lookup table. This function deserializes
   /// the rest of visible declarations from the external storage and completes
   /// the name lookup table of the DeclContext.
-  virtual void MaterializeVisibleDecls(const DeclContext *DC) = 0;
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual void MaterializeVisibleDecls(const DeclContext *DC);
 
   /// \brief Finds all declarations lexically contained within the given
   /// DeclContext, after applying an optional filter predicate.
@@ -124,9 +133,11 @@ public:
   /// are returned.
   ///
   /// \return true if an error occurred
+  ///
+  /// The default implementation of this method is a no-op.
   virtual bool FindExternalLexicalDecls(const DeclContext *DC,
                                         bool (*isKindWeWant)(Decl::Kind),
-                                      llvm::SmallVectorImpl<Decl*> &Result) = 0;
+                                        llvm::SmallVectorImpl<Decl*> &Result);
 
   /// \brief Finds all declarations lexically contained within the given
   /// DeclContext.
@@ -154,7 +165,7 @@ public:
   /// set on the ObjCInterfaceDecl via the function 
   /// \c ObjCInterfaceDecl::setExternallyCompleted().
   virtual void CompleteType(ObjCInterfaceDecl *Class) { }
-  
+
   /// \brief Notify ExternalASTSource that we started deserialization of
   /// a decl or type so until FinishedDeserializing is called there may be
   /// decls that are initializing. Must be paired with FinishedDeserializing.
@@ -270,7 +281,7 @@ typedef LazyOffsetPtr<Decl, uint32_t, &ExternalASTSource::GetExternalDecl>
 typedef LazyOffsetPtr<CXXBaseSpecifier, uint64_t, 
                       &ExternalASTSource::GetExternalCXXBaseSpecifiers>
   LazyCXXBaseSpecifiersPtr;
-  
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
