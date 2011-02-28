@@ -46,7 +46,7 @@ entry:
 ; SOFT: test4:
 ; SOFT: vcvt.f32.f64 s0, 
 ; SOFT: vmov.i32 [[REG4:(d[0-9]+)]], #0x80000000
-; SOFT: vbic [[REG5:(d[0-9]+))], d0, [[REG4]]
+; SOFT: vbic [[REG5:(d[0-9]+)]], d0, [[REG4]]
 ; SOFT: vorr d0, [[REG4]], [[REG5]]
   %call80 = tail call double @copysign(double 1.000000e+00, double undef)
   %conv81 = fptrunc double %call80 to float
