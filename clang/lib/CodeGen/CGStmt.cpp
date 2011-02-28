@@ -857,9 +857,6 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
                                             const SwitchCase *Case,
                                             bool &FoundCase,
                               llvm::SmallVectorImpl<const Stmt*> &ResultStmts) {
-  assert((!FoundCase || Case == 0) &&
-         "Can't be looking for the case if we already found it!");
-  
   // If this is a null statement, just succeed.
   if (S == 0)
     return Case ? CSFC_Success : CSFC_FallThrough;
@@ -942,6 +939,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
   // just verify it doesn't have labels, which would make it invalid to elide.
   if (Case) {
     if (CodeGenFunction::ContainsLabel(S, true) ||
+        // Don't skip over DeclStmts, which can be used even if skipped over.
         isa<DeclStmt>(S))
       return CSFC_Failure;
     return CSFC_Success;

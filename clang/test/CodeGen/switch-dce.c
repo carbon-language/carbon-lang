@@ -167,3 +167,16 @@ void test9(int i) {
   } 
 }
 
+
+int test10(void) {
+	switch(8) {
+		case 8:
+			break;
+		case 4:
+			break;
+		default:
+			dead();
+	}
+	
+	return 0;
+}
