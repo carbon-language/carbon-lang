@@ -17,7 +17,8 @@
 <div class="doc_author">
   <p>Written by <a href="mailto:tonic@nondot.org">Tanya Lattner</a>,
   <a href="mailto:rspencer@x10sys.com">Reid Spencer</a>,
-  <a href="mailto:criswell@cs.uiuc.edu">John Criswell</a>
+  <a href="mailto:criswell@cs.uiuc.edu">John Criswell</a>, &amp;
+  <a href="mailto:wendling@apple.com">Bill Wendling</a>
   </p>
 </div>
 
@@ -26,486 +27,588 @@
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-  <p>
-  This document collects information about successfully releasing LLVM 
-  (including subprojects llvm-gcc and Clang) to the public. 
-  It is the release manager's responsibility to ensure that a high quality 
-  build of LLVM is released. 
-  </p>
+
+<p>This document contains information about successfully releasing LLVM &mdash;
+   including subprojects: e.g., <tt>llvm-gcc</tt> and <tt>clang</tt> &mdash; to
+   the public. It is the Release Manager's responsibility to ensure that a high
+   quality build of LLVM is released.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"><a name="process">Release Timeline</a></div>
 <!-- *********************************************************************** -->
 <div class="doc_text">
-  <p>LLVM is released on a time based schedule (currently every 6 months). We
-  do not have dot releases because of the nature of LLVM incremental 
-  development philosophy. The release schedule is roughly as follows:
-  </p>
-<ol>
-<li>Set code freeze and branch creation date for 6 months after last code freeze 
-date. Announce release schedule to the LLVM community and update the website.</li>
-<li>Create release branch and begin release process. </li>
-<li>Send out pre-release for first round of testing. Testing will last 7-10 days.
-During the first round of testing, regressions should be found and fixed. Patches
-are merged from mainline to the release branch.</li>
-<li>Generate and send out second pre-release. Bugs found during this time will
-not be fixed unless absolutely critical. Bugs introduce by patches merged in
-will be fixed and if so, a 3rd round of testing is needed.</li>
-<li>The release notes should be updated during the first and second round of
-pre-release testing.</li>
-<li>Finally, release!</li>
-</ol>
-</div>
 
+<p>LLVM is released on a time based schedule &mdash; roughly every 6 months. We
+   do not normally have dot releases because of the nature of LLVM's incremental
+   development philosophy. That said, the only thing preventing dot releases for
+   critical bug fixes from happening is a lack of resources &mdash; testers,
+   machines, time, etc. And, because of the high quality we desire for LLVM
+   releases, we cannot allow for a truncated form of release qualification.</p>
+
+<p>The release process is roughly as follows:</p>
+
+<ul>
+  <li><p>Set code freeze and branch creation date for 6 months after last code
+      freeze date. Announce release schedule to the LLVM community and update
+      the website.</p></li>
+
+  <li><p>Create release branch and begin release process.</p></li>
+
+  <li><p>Send out release candidate sources for first round of testing. Testing
+      lasts 7-10 days. During the first round of testing, any regressions found
+      should be fixed. Patches are merged from mainline into the release
+      branch. Also, all features need to be completed during this time. Any
+      features not completed at the end of the first round of testing will be
+      removed or disabled for the release.</p></li>
+
+  <li><p>Generate and send out the second release candidate sources. Only
+      <em>critial</em> bugs found during this testing phase will be fixed. Any
+      bugs introduced by merged patches will be fixed. If so a third round of
+      testing is needed.</p></li>
+
+  <li><p>The release notes are updated.</p></li>
+
+  <li><p>Finally, release!</p></li>
+</ul>
+
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"><a name="process">Release Process</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
+
+<ol>
+  <li><a href="#release-admin">Release Administrative Tasks</a></li>
   <ol>
-    <li><a href="#release-admin">Release Administrative Tasks</a></li>
-    <ol>
     <li><a href="#branch">Create Release Branch</a></li>
     <li><a href="#verchanges">Update Version Numbers</a></li>
-    </ol>
-    <li><a href="#release-build">Building the Release</a></li>
-    <ol>
+  </ol>
+  <li><a href="#release-build">Building the Release</a></li>
+  <ol>
     <li><a href="#dist">Build the LLVM Source Distributions</a></li>
     <li><a href="#build">Build LLVM</a></li>
     <li><a href="#llvmgccbin">Build the LLVM-GCC Binary Distribution</a></li>
     <li><a href="#clangbin">Build the Clang Binary Distribution</a></li>
     <li><a href="#target-build">Target Specific Build Details</a></li>
-    </ol>
-    
-    <li><a href="#release-qualify">Release Qualification Criteria</a></li>
-    <ol>
+  </ol>
+  <li><a href="#release-qualify">Release Qualification Criteria</a></li>
+  <ol>
     <li><a href="#llvm-qualify">Qualify LLVM</a></li>
     <li><a href="#llvmgcc-qualify">Qualify LLVM-GCC</a></li>
     <li><a href="#clang-qualify">Qualify Clang</a></li>
     <li><a href="#targets">Specific Target Qualification Details</a></li>
-    </ol>
-    
-    <li><a href="#commTest">Community Testing</a></li>    
-    <li><a href="#release-patch">Release Patch Rules</a></li>
+  </ol>
 
-    
-    <li><a href="#release-final">Release final tasks</a></li>
-    <ol>
+  <li><a href="#commTest">Community Testing</a></li>    
+  <li><a href="#release-patch">Release Patch Rules</a></li>
+  <li><a href="#release-final">Release final tasks</a></li>
+
+  <ol>
     <li><a href="#updocs">Update Documentation</a></li>
-    <li><a href="#tag">Tag the LLVM Release Branch</a></li>
+    <li><a href="#tag">Tag the LLVM Final Release</a></li>
     <li><a href="#updemo">Update the LLVM Demo Page</a></li>
     <li><a href="#webupdates">Update the LLVM Website</a></li>
     <li><a href="#announce">Announce the Release</a></li>
-    </ol>
-    
   </ol>
+</ol>
+
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="release-admin">
-Release Administrative Tasks</a></div>
+<div class="doc_subsection"><a name="release-admin">Release Administrative Tasks</a></div>
 
 <div class="doc_text">
-This section describes a few administrative tasks that need to be done for the
-release process to begin. Specifically, it involves creating the release branch,
- resetting version numbers, and creating the release tarballs for the release 
- team to begin testing.
+
+<p>This section describes a few administrative tasks that need to be done for
+   the release process to begin. Specifically, it involves:</p>
+
+<ul>
+  <li>Creating the release branch,</li>
+  <li>Setting version numbers, and</li>
+  <li>Tagging release candidates for the release team to begin testing</li>
+</ul>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="branch">Create Release Branch</a></div>
+
 <div class="doc_text">
-<p>Branch the Subversion HEAD using the following procedure:</p>
-  <ol>
-    <li>
-    <p>Verify that the current Subversion HEAD is in decent shape by examining 
-    nightly tester or buildbot results.</p></li>
-    <li>
-    <p>Request all developers to refrain from committing. Offenders get commit
-    rights taken away (temporarily).</p></li>
-  <li>
-  <p> Create the release branch for <tt>llvm</tt>, <tt>llvm-gcc4.2</tt>, 
-  <tt>clang</tt>, and the <tt>test-suite</tt>. The branch name will be 
-  <tt>release_XX</tt>,where <tt>XX</tt> is the major and minor release numbers.
-  <tt>Clang</tt> will have a different release number than <tt>llvm</tt>/
-  <tt>llvm-gcc4</tt> since its first release was years later 
-  (still deciding if this will be true or not). These branches 
-  can be created without checking out anything from subversion.
-  </p>
-  
-  <div class="doc_code">
-<pre>
-svn copy https://llvm.org/svn/llvm-project/llvm/trunk \
-         https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XX</i>
-svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.2/trunk \
-         https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i>
-svn copy https://llvm.org/svn/llvm-project/test-suite/trunk \
-         https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
-svn copy https://llvm.org/svn/llvm-project/cfe/trunk \
-         https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XX</i>
-</pre>
-  </div>
 
-  <li>
-    <p>Advise developers they can work on Subversion HEAD again.</p></li>
-  
-  <li>
-    <p>The Release Manager should switch to the release branch (as all changes 
-    to the release will now be done in the branch).  The easiest way to do this 
-    is to grab another working copy using the following commands:</p>
+<p>Branch the Subversion trunk using the following procedure:</p>
 
+<ol>
+  <li><p>Remind developers that the release branching is imminent and to refrain
+      from committing patches that might break the build. E.g., new features,
+      large patches for works in progress, an overhaul of the type system, an
+      exciting new TableGen feature, etc.</p></li>
+
+  <li><p>Verify that the current Subversion trunk is in decent shape by
+      examining nightly tester and buildbot results.</p></li>
+
+  <li><p>Create the release branch for <tt>llvm</tt>, <tt>llvm-gcc-4.2</tt>,
+      <tt>clang</tt>, and the <tt>test-suite</tt> from the last known good
+      revision. The branch's name is <tt>release_XY</tt>, where <tt>X</tt> is
+      the major and <tt>Y</tt> the minor release numbers. The branches should be
+      created using the following commands:</p>
+  
 <div class="doc_code">
 <pre>
-svn co https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XX</i>
-svn co https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i>
-svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
-svn co https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XX</i>
+$ svn copy https://llvm.org/svn/llvm-project/llvm/trunk \
+           https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XY</i>
+
+$ svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.2/trunk \
+           https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XY</i>
+
+$ svn copy https://llvm.org/svn/llvm-project/test-suite/trunk \
+           https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XY</i>
+
+$ svn copy https://llvm.org/svn/llvm-project/cfe/trunk \
+           https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XY</i>
 </pre>
 </div></li>
 
-  </ol>
+  <li><p>Advise developers that they may now check their patches into the
+      Subversion tree again.</p></li>
+
+  <li><p>The Release Manager should switch to the release branch, because all
+      changes to the release will now be done in the branch. The easiest way to
+      do this is to grab a working copy using the following commands:</p>
+
+<div class="doc_code">
+<pre>
+$ svn co https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XY</i> llvm-<i>X.Y</i>
+
+$ svn co https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XY</i> llvm-gcc-4.2-<i>X.Y</i>
+
+$ svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XY</i> test-suite-<i>X.Y</i>
+
+$ svn co https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XY</i> clang-<i>X.Y</i>
+</pre>
+</div></li>
+</ol>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="verchanges">Update LLVM Version</a></div>
+
 <div class="doc_text">
-  <p>
-  After creating the LLVM release branch, update the release branches'
-  autoconf/configure.ac version from X.Xsvn to just X.X. Update it on mainline
-  as well to be the next version (X.X+1svn). Regenerated the configure script
-  for both. This must be done for both <tt>llvm</tt> and the 
-  <tt>test-suite</tt>.
-  </p>
-  <p>FIXME: Add a note about <tt>clang</tt>.</p>
-  <p>In addition, the version number of all the Bugzilla components must be
-  updated for the next release.
-  </p>
+
+<p>After creating the LLVM release branch, update the release branches'
+   <tt>autoconf</tt> and <tt>configure.ac</tt> versions from '<tt>X.Ysvn</tt>'
+   to '<tt>X.Y</tt>'. Update it on mainline as well to be the next version
+   ('<tt>X.Y+1svn</tt>'). Regenerate the configure scripts for both
+   <tt>llvm</tt> and the <tt>test-suite</tt>.</p>
+
+<p>In addition, the version numbers of all the Bugzilla components must be
+   updated for the next release.</p>
+
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="dist">Build the LLVM Source Distributions</a></div>
+<div class="doc_subsubsection"><a name="dist">Build the LLVM Release Candidates</a></div>
+
 <div class="doc_text">
-  <p>
-  Create source distributions for <tt>LLVM</tt>, <tt>LLVM-GCC</tt>,  
-  <tt>clang</tt>, and the llvm <tt>test-suite</tt> by exporting the source from 
-  Subversion and archiving it.  This can be done with the following commands:
-  </p>
+
+<p>Create release candidates for <tt>llvm</tt>, <tt>llvm-gcc</tt>,
+   <tt>clang</tt>, and the LLVM <tt>test-suite</tt> by tagging the branch with
+   the respective release candidate number. For instance, to create <b>Release
+   Candidate 1</b> you would issue the following commands:</p>
 
 <div class="doc_code">
 <pre>
-svn export https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XX</i> llvm-X.X
-svn export https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i> llvm-gcc4.2-X.X.source
-svn export https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i> llvm-test-X.X
-svn export https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XX</i> clang-X.X
-tar -czvf - llvm-X.X          | gzip &gt; llvm-X.X.tar.gz
-tar -czvf - llvm-test-X.X     | gzip &gt; llvm-test-X.X.tar.gz
-tar -czvf - llvm-gcc4.2-X.X.source | gzip &gt; llvm-gcc-4.2-X.X.source.tar.gz
-tar -czvf - clang-X.X | gzip &gt; clang-X.X.tar.gz
+$ svn mkdir https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_<i>XY</i>
+$ svn copy https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XY</i> \
+           https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_<i>XY</i>/RC1
+
+$ svn mkdir https://llvm.org/svn/llvm-project/llvm-gcc-4.2/tags/RELEASE_<i>XY</i>
+$ svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XY</i> \
+           https://llvm.org/svn/llvm-project/llvm-gcc-4.2/tags/RELEASE_<i>XY</i>/RC1
+
+$ svn mkdir https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_<i>XY</i>
+$ svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XY</i> \
+           https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_<i>XY</i>/RC1
+
+$ svn mkdir https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_<i>XY</i>
+$ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XY</i> \
+           https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_<i>XY</i>/RC1
 </pre>
 </div>
+
+<p>Similarly, <b>Release Candidate 2</b> would be named <tt>RC2</tt> and so
+   on. This keeps a permanent copy of the release candidate around for people to
+   export and build as they wish. The final released sources will be tagged in
+   the <tt>RELEASE_<i>XY</i></tt> directory as <tt>Final</tt>
+   (c.f. <a href="#tag">Tag the LLVM Final Release</a>).</p>
+
+<p>The Release Manager may supply pre-packaged source tarballs for users. This
+   can be done with the following commands:</p>
+
+<div class="doc_code">
+<pre>
+$ svn export https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_<i>XY</i>/RC1 llvm-<i>X.Y</i>rc1
+$ svn export https://llvm.org/svn/llvm-project/llvm-gcc-4.2/tags/RELEASE_<i>XY</i>/RC1 llvm-gcc4.2-<i>X.Y</i>rc1
+$ svn export https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_<i>XY</i>/RC1 llvm-test-<i>X.Y</i>rc1
+$ svn export https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_<i>XY</i>/RC1 clang-<i>X.Y</i>rc1
+
+$ tar -czvf - llvm-<i>X.Y</i>rc1        | gzip &gt; llvm-<i>X.Y</i>rc1.src.tar.gz
+$ tar -czvf - llvm-test-<i>X.Y</i>rc1   | gzip &gt; llvm-test-<i>X.Y</i>rc1.src.tar.gz
+$ tar -czvf - llvm-gcc4.2-<i>X.Y</i>rc1 | gzip &gt; llvm-gcc-4.2-<i>X.Y</i>rc1.src.tar.gz
+$ tar -czvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.gz
+</pre>
+</div>
+
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="release-build">
-Building the Release</a></div>
+<div class="doc_subsection"><a name="release-build">Building the Release</a></div>
 
 <div class="doc_text">
-The build of <tt>llvm</tt>, <tt>llvm-gcc</tt>, and <tt>clang</tt> must be free
-of errors and warnings in both debug, release+asserts, and release builds. 
-If all builds are clean, then the release passes build qualification.
 
-<ol>
-<li>debug: ENABLE_OPTIMIZED=0</li>
-<li>release+asserts: ENABLE_OPTIMIZED=1</li>
-<li>release: ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1</li>
-</ol>
+<p>The builds of <tt>llvm</tt>, <tt>llvm-gcc</tt>, and <tt>clang</tt>
+   <em>must</em> be free of errors and warnings in Debug, Release+Asserts, and
+   Release builds. If all builds are clean, then the release passes Build
+   Qualification.</p>
+
+<p>The <tt>make</tt> options for building the different modes:</p>
+
+<table>
+  <tr><th>Mode</th><th>Options</th></tr>
+  <tr align="left"><td>Debug</td><td><tt>ENABLE_OPTIMIZED=0</tt></td></tr>
+  <tr align="left"><td>Release+Asserts</td><td><tt>ENABLE_OPTIMIZED=1</tt></td></tr>
+  <tr align="left"><td>Release</td><td><tt>ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1</tt></td></tr>
+</table>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="build">Build LLVM</a></div>
+
 <div class="doc_text">
-  <p>
-  Build both debug, release+asserts (optimized), and release versions of 
-  LLVM on all supported platforms. Direction to build llvm are 
-  <a href="http://llvm.org/docs/GettingStarted.html#quickstart">here</a>.
-  </p>
+
+<p>Build <tt>Debug</tt>, <tt>Release+Asserts</tt>, and <tt>Release</tt> versions
+   of <tt>llvm</tt> on all supported platforms. Directions to build
+   <tt>llvm</tt> are
+   <a href="http://llvm.org/docs/GettingStarted.html#quickstart">here</a>.</p>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="llvmgccbin">Build the LLVM GCC Binary Distribution</a></div>
+
 <div class="doc_text">
-  <p>
-  Creating the LLVM GCC binary distribution (release/optimized) requires 
-  performing the following steps for each supported platform:
-  </p>
 
-  <ol>
-    <li>
-    Build the LLVM GCC front-end by following the directions in the README.LLVM
-    file. The frontend must be compiled with c, c++, objc (mac only), 
-    objc++ (mac only) and fortran support. </li>
-    <li>Please boostrap as well.</li>
-    <li>Be sure to build with LLVM_VERSION_INFO=X.X, where X is the major and
-    minor release numbers.
-    </li>
+<p>Creating the <tt>llvm-gcc</tt> binary distribution (Release/Optimized)
+   requires performing the following steps for each supported platform:</p>
 
-    <li>
-    Copy the installation directory to a directory named for the specific target.
-    For example on Red Hat Enterprise Linux, the directory would be named
-    <tt>llvm-gcc4.2-2.6-x86-linux-RHEL4</tt>. Archive and compress the new directory.  
-    </li>
-  </ol>
+<ol>
+  <li><p>Build the <tt>llvm-gcc</tt> front-end by following the directions in
+      the <tt>README.LLVM</tt> file. The front-end must be compiled with C, C++,
+      Objective-C (Mac only), Objective-C++ (Mac only), and Fortran
+      support.</p></li>
+
+  <li><p>Boostrapping must be enabled.</p></li>
+
+  <li><p>Be sure to build with <tt>LLVM_VERSION_INFO=X.Y</tt>, where <tt>X</tt>
+      is the major and <tt>Y</tt> is the minor release numbers.</p></li>
+
+  <li><p>Copy the installation directory to a directory named for the specific
+      target. For example on Red Hat Enterprise Linux, the directory would be
+      named <tt>llvm-gcc4.2-2.6-x86-linux-RHEL4</tt>. Archive and compress the
+      new directory.</p></li>
+</ol>
+
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="clangbin">Build Clang 
-Binary Distribution</a></div>
+<div class="doc_subsubsection"><a name="clangbin">Build Clang Binary Distribution</a></div>
+
 <div class="doc_text">
-  <p>
-  Creating the Clang binary distribution (debug/release/release) requires
-  performing the following steps for each supported platform:
-  </p>
 
-  <ol>
-    <li>
-    Build clang according to the directions 
-    <a href="http://clang.llvm.org/get_started.html">here</a>.
-    </li>
-    
-    <li>Build both a debug and release version of clang, but the binary
-    will be a release build.</lI>
+<p>Creating the <tt>clang</tt> binary distribution
+   (Debug/Release+Asserts/Release) requires performing the following steps for
+   each supported platform:</p>
 
-    <li>
-    Package clang (details to follow).
-    </li>
-  </ol>
+<ol>
+  <li>Build clang according to the directions
+      <a href="http://clang.llvm.org/get_started.html">here</a>.</li>
+
+  <li>Build both a debug and release version of clang. The binary will be the
+      release build.</lI>
+
+  <li>Package <tt>clang</tt> (details to follow).</li>
+</ol>
+
 </div>
 
-
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="target-build">Target Specific Build 
-Details</a></div>
+<div class="doc_subsubsection"><a name="target-build">Target Specific Build Details</a></div>
+
 <div class="doc_text">
-  <p>
-  The table below specifies which compilers are used for each arch/os combination
-  when qualifying the build of <tt>llvm</tt>, <tt>llvm-gcc</tt>, <tt>clang.
-  </tt></p>
-  
-  <p>
-  <table>
+
+<p>The table below specifies which compilers are used for each Arch/OS
+   combination when qualifying the build of <tt>llvm</tt>, <tt>llvm-gcc</tt>,
+   and <tt>clang</tt>.</p>
+
+<table>
   <tr><th>Architecture</th><th>OS</th><th>compiler</th></tr>
   <tr><td>x86-32</td><td>Mac OS 10.5</td><td>gcc 4.0.1</td></tr>
   <tr><td>x86-32</td><td>Linux</td><td>gcc 4.2.X, gcc 4.3.X</td></tr>
   <tr><td>x86-32</td><td>FreeBSD</td><td>gcc 4.2.X</td></tr>
-   <tr><td>x86-32</td><td>mingw</td><td>gcc 3.4.5</td></tr>
+  <tr><td>x86-32</td><td>mingw</td><td>gcc 3.4.5</td></tr>
   <tr><td>x86-64</td><td>Mac OS 10.5</td><td>gcc 4.0.1</td></tr>
   <tr><td>x86-64</td><td>Linux</td><td>gcc 4.2.X, gcc 4.3.X</td></tr>
   <tr><td>x86-64</td><td>FreeBSD</td><td>gcc 4.2.X</td></tr>
- 
-  </table> 
-  </p>
+</table> 
 
 </div>
-
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="release-qualify">
 Building the Release</a></div>
 
 <div class="doc_text">
- A release is qualified when it has no regressions from the previous 
- release (or baseline). Regressions are related to correctness only and not 
- performance at this time. <b>Regressions are new failures in the set of tests that
- are used to qualify each product and only include things on the list. 
- Ultimately, there is no end to the number of possible bugs in a release.  We 
- need a very concrete and definitive release criteria that ensures we have 
- monotonically improving quality on some metric.  The metric we use is 
- described below.  This doesn't mean that we don't care about other things, 
- but this are things that must be satisfied before a release can go out</b>
-</div>
 
+<p>A release is qualified when it has no regressions from the previous release
+   (or baseline). Regressions are related to correctness first and performance
+   second. (We may tolerate some minor performance regressions if they are
+   deemed necessary for the general quality of the compiler.)</p>
+
+<p><b>Regressions are new failures in the set of tests that are used to qualify
+   each product and only include things on the list. Every release will have
+   some bugs in it. It is the reality of developing a complex piece of
+   software. We need a very concrete and definitive release criteria that
+   ensures we have monotonically improving quality on some metric. The metric we
+   use is described below. This doesn't mean that we don't care about other
+   criteria, but these are the criteria which we found to be most important and
+   which must be satisfied before a release can go out</b></p>
+
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="llvm-qualify">Qualify LLVM</a></div>
+
 <div class="doc_text">
-  <p>
-  LLVM is qualified when it has a clean dejagnu test run without a frontend and 
-  it has no regressions when using either <tt>llvm-gcc</tt> or <tt>clang</tt> 
-  with the <tt>test-suite</tt> from the previous release.
-</p>
+
+<p>LLVM is qualified when it has a clean test run without a front-end. And it
+   has no regressions when using either <tt>llvm-gcc</tt> or <tt>clang</tt> with
+   the <tt>test-suite</tt> from the previous release.</p>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="llvmgcc-qualify">Qualify LLVM-GCC</a></div>
+
 <div class="doc_text">
-  <p>
-  <tt>LLVM-GCC</tt> is qualified when front-end specific tests in the 
-  <tt>llvm</tt> dejagnu test suite all pass and there are no regressions in 
-  the <tt>test-suite</tt>.</p>
-  <p>We do not use the gcc dejagnu test suite as release criteria.</p>
+
+<p><tt>LLVM-GCC</tt> is qualified when front-end specific tests in the
+   <tt>llvm</tt> regression test suite all pass and there are no regressions in
+   the <tt>test-suite</tt>.</p>
+
+<p>We do not use the GCC DejaGNU test suite as release criteria.</p>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="clang-qualify">Qualify Clang</a></div>
+
 <div class="doc_text">
-    <tt>Clang</tt> is qualified when front-end specific tests in the 
-  <tt>llvm</tt> dejagnu test suite all pass, clang's own test suite passes 
-  cleanly, and there are no regressions in the <tt>test-suite</tt>.</p>
+
+<p><tt>Clang</tt> is qualified when front-end specific tests in the 
+   <tt>llvm</tt> dejagnu test suite all pass, clang's own test suite passes
+   cleanly, and there are no regressions in the <tt>test-suite</tt>.</p>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="targets">Specific Target 
 Qualification Details</a></div>
+
 <div class="doc_text">
-  <p><table>
-  <tr><th>Architecture</th><th>OS</th><th>llvm-gcc baseline</th><th>clang baseline
-  </th><th>tests</th></tr>
+
+<table>
+  <tr><th>Architecture</th><th>OS</th><th>llvm-gcc baseline</th><th>clang baseline</th><th>tests</th></tr>
   <tr><td>x86-32</td><td>Linux</td><td>last release</td><td>last release</td><td>llvm dejagnu, clang tests, test-suite (including spec)</td></tr>
   <tr><td>x86-32</td><td>FreeBSD</td><td>none</td><td>last release</td><td>llvm dejagnu, clang tests, test-suite</td></tr>
   <tr><td>x86-32</td><td>mingw</td><td>last release</td><td>none</td><td>QT</td></tr>
   <tr><td>x86-64</td><td>Mac OS 10.X</td><td>last release</td><td>last release</td><td>llvm dejagnu, clang tests, test-suite (including spec)</td></tr>
   <tr><td>x86-64</td><td>Linux</td><td>last release</td><td>last release</td><td>llvm dejagnu, clang tests, test-suite (including spec)</td></tr>
   <tr><td>x86-64</td><td>FreeBSD</td><td>none</td><td>last release</td><td>llvm dejagnu, clang tests, test-suite</td></tr>
-  </table></p>
+</table>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="commTest">Community Testing</a></div>
 <div class="doc_text">
-  <p>
-  Once all testing has been completed and appropriate bugs filed, the pre-release
-  tar balls may be put on the website and the LLVM community is notified. Ask that
-  all LLVM developers test the release in 2 ways:</p>
-  <ol>
-  <li>Download llvm-X.X, llvm-test-X.X, and the appropriate llvm-gcc4 
-  and/or clang binary. Build LLVM.
-  Run "make check" and the full llvm-test suite (make TEST=nightly report).</li>
-  <li>Download llvm-X.X, llvm-test-X.X, and the llvm-gcc4 and/or clang source. 
-  Compile everything. Run "make check" and the full llvm-test suite (make TEST=nightly 
-  report).</li>
-  </ol>
-  <p>Ask LLVM developers to submit the report and make check results to the list.
-  Attempt to verify that there are no regressions from the previous release. 
-  The results are not used to qualify a release, but to spot other potential 
-  problems. For unsupported targets, verify that make check at least is 
-  clean.</p>
+
+<p>Once all testing has been completed and appropriate bugs filed, the release
+   candidate tarballs are put on the website and the LLVM community is
+   notified. Ask that all LLVM developers test the release in 2 ways:</p>
+
+<ol>
+  <li>Download <tt>llvm-<i>X.Y</i></tt>, <tt>llvm-test-<i>X.Y</i></tt>, and the
+      appropriate <tt>llvm-gcc</tt> and/or <tt>clang</tt> binary. Build
+      LLVM. Run <tt>make check</tt> and the full LLVM test suite (<tt>make
+      TEST=nightly report</tt>).</li>
+
+  <li>Download <tt>llvm-<i>X.Y</i></tt>, <tt>llvm-test-<i>X.Y</i></tt>, and the
+      <tt>llvm-gcc</tt> and/or <tt>clang</tt> source. Compile everything. Run
+      <tt>make check</tt> and the full LLVM test suite (<tt>make TEST=nightly
+      report</tt>).</li>
+</ol>
+
+<p>Ask LLVM developers to submit the test suite report and <tt>make check</tt>
+   results to the list. Verify that there are no regressions from the previous
+   release. The results are not used to qualify a release, but to spot other
+   potential problems. For unsupported targets, verify that <tt>make check</tt>
+   is at least clean.</p>
   
-  <p>During the first round of testing time,
-  all regressions must be fixed before the second pre-release is created.</p>
+<p>During the first round of testing, all regressions must be fixed before the
+   second release candidate is tagged.</p>
   
-  <p>If this is the second round of testing, this is only to ensure the bug 
-  fixes previously merged in have not created new major problems. This is not 
-  the time to solve additional and unrelated bugs. If no patches are merged in, 
-  the release is determined to be ready and the release manager may move onto 
-  the next step.
-  </p>
+<p>If this is the second round of testing, the testing is only to ensure that
+   bug fixes previously merged in have not created new major problems. <i>This
+   is not the time to solve additional and unrelated bugs!</i> If no patches are
+   merged in, the release is determined to be ready and the release manager may
+   move onto the next stage.</p>
+
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="release-patch">Release Patch Rules 
-</a></div>
-<div class="doc_text">
-  <p>
-  Below are the rules regarding patching the release branch.</p>
-  <p>
-  <li>Patches applied to the release branch are only applied by the release 
-  manager.</li>
-  <li>During the first round of testing, patches that fix regressions or that
-  are small and relatively risk free (verified by the appropriate code owner)
-  are applied to the branch. Code owners are asked to be very conservative in 
-  approving patches for the branch and we reserve the right to reject any patch 
-  that does not fix a regression as previously defined.</li>
-  <li>During the remaining rounds of testing, only patches that fix regressions
-  may be applied.</li>
-  
-  </p>
-</div>
+<div class="doc_subsection"><a name="release-patch">Release Patch Rules</a></div>
 
+<div class="doc_text">
+
+<p>Below are the rules regarding patching the release branch:</p>
+
+<ol>
+  <li><p>Patches applied to the release branch may only be applied by the
+      release manager.</p></li>
+
+  <li><p>During the first round of testing, patches that fix regressions or that
+      are small and relatively risk free (verified by the appropriate code
+      owner) are applied to the branch. Code owners are asked to be very
+      conservative in approving patches for the branch. We reserve the right to
+      reject any patch that does not fix a regression as previously
+      defined.</p></li>
+
+  <li><p>During the remaining rounds of testing, only patches that fix critical
+      regressions may be applied.</p></li>
+</ol>
+
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="release-final">Release Final Tasks 
 </a></div>
+
 <div class="doc_text">
-  <p>
-  The final stages of the release process involving tagging the release branch,
-  updating documentation that refers to the release, and updating the demo
-  page.</p>
-  <p>FIXME: Add a note if anything needs to be done to the clang website. 
-  Eventually the websites will be merged hopefully.</p>
+
+<p>The final stages of the release process involves tagging the "final" release
+   branch, updating documentation that refers to the release, and updating the
+   demo page.</p>
+
 </div>
 
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="updocs">Update Documentation</a></div>
+
 <div class="doc_text">
-  <p>
-  Review the documentation and ensure that it is up to date.  The Release Notes
-  must be updated to reflect bug fixes, new known issues, and changes in the
-  list of supported platforms.  The Getting Started Guide should be updated to
-  reflect the new release version number tag avaiable from Subversion and
-  changes in basic system requirements. Merge both changes from mainline into 
-  the release branch.
-  </p>
+
+<p>Review the documentation and ensure that it is up to date. The "Release
+   Notes" must be updated to reflect new features, bug fixes, new known issues,
+   and changes in the list of supported platforms. The "Getting Started Guide"
+   should be updated to reflect the new release version number tag avaiable from
+   Subversion and changes in basic system requirements. Merge both changes from
+   mainline into the release branch.</p>
+
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="tag">Tag the Release Branch</a></div>
+<div class="doc_subsubsection"><a name="tag">Tag the LLVM Final Release</a></div>
+
 <div class="doc_text">
-  <p>Tag the release branch using the following procedure:</p>
+
+<p>Tag the final release sources using the following procedure:</p>
+
 <div class="doc_code">
 <pre>
-svn copy https://llvm.org/svn/llvm-project/llvm/branches/release_XX \
-         https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_<i>XX</i>
-svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_XX \
-         https://llvm.org/svn/llvm-project/llvm-gcc-4.2/tags/RELEASE_<i>XX</i>
-svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XX \
-         https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_<i>XX</i>
+$ svn copy https://llvm.org/svn/llvm-project/llvm/branches/release_XY \
+           https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_<i>XY</i>/Final
+
+$ svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_XY \
+           https://llvm.org/svn/llvm-project/llvm-gcc-4.2/tags/RELEASE_<i>XY</i>/Final
+
+$ svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XY \
+           https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_<i>XY</i>/Final
+
+$ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
+           https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_<i>XY</i>/Final
 </pre>
 </div>
+
 </div>
-
-
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="updemo">Update the LLVM Demo Page</a></div>
+
 <div class="doc_text">
-  <p>
-  The LLVM demo page must be updated to use the new release. This consists of
-  using the llvm-gcc binary and building LLVM. Update the website demo page
-  configuration to use the new release.</p>
+
+<p>The LLVM demo page must be updated to use the new release. This consists of
+   using the new <tt>llvm-gcc</tt> binary and building LLVM.</p>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="webupdates">Update the LLVM Website</a></div>
+
 <div class="doc_text">
-  <p>
-  The website must be updated before the release announcement is sent out. Here is
-  what to do:</p>
-  <ol>
-  <li> Check out the <tt>website</tt> module from CVS. </li> 
-  <li> Create a new subdirectory X.X in the releases directory. </li> 
-  <li> Commit the <tt>llvm</tt>, <tt>test-suite</tt>, <tt>llvm-gcc</tt> source,
-  <tt>clang source</tt>, <tt>clang binaries</tt>, 
-  and <tt>llvm-gcc</tt> binaries in this new directory. </li>
-  <li> Copy and commit the <tt>llvm/docs</tt> and <tt>LICENSE.txt</tt>
-  files into this new directory. The docs should be built with BUILD_FOR_WEBSITE=1.</li>
-  <li> Commit the index.html to the release/X.X directory to redirect (use from previous
-  release. </li>
-  <li> Update the <tt>releases/download.html</tt> file with the new release. </li>
-  <li>Update the <tt>releases/index.html</tt> with the new release and link to 
-  release documentation.</li>
-  <li> Finally, update the main page (<tt>index.html</tt> and sidebar) to
-  point to the new release and release announcement. Make sure this all gets
-  committed back into Subversion.</li>
-  </ol>
+
+<p>The website must be updated before the release announcement is sent out. Here
+   is what to do:</p>
+
+<ol>
+  <li>Check out the <tt>www</tt> module from Subversion.</li>
+
+  <li>Create a new subdirectory <tt>X.Y</tt> in the releases directory.</li>
+
+  <li>Commit the <tt>llvm</tt>, <tt>test-suite</tt>, <tt>llvm-gcc</tt> source,
+      <tt>clang source</tt>, <tt>clang binaries</tt>, and <tt>llvm-gcc</tt>
+      binaries in this new directory.</li>
+
+  <li>Copy and commit the <tt>llvm/docs</tt> and <tt>LICENSE.txt</tt> files
+      into this new directory. The docs should be built with
+      <tt>BUILD_FOR_WEBSITE=1</tt>.</li>
+
+  <li>Commit the <tt>index.html</tt> to the <tt>release/X.Y</tt> directory to
+      redirect (use from previous release.</li>
+
+  <li>Update the <tt>releases/download.html</tt> file with the new release.</li>
+
+  <li>Update the <tt>releases/index.html</tt> with the new release and link to
+      release documentation.</li>
+
+  <li>Finally, update the main page (<tt>index.html</tt> and sidebar) to point
+      to the new release and release announcement. Make sure this all gets
+      committed back into Subversion.</li>
+</ol>
+
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="announce">Announce the Release</a></div>
+
 <div class="doc_text">
-  <p>Have Chris send out the release announcement when everything is finished.</p>
+
+<p>Have Chris send out the release announcement when everything is finished.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
