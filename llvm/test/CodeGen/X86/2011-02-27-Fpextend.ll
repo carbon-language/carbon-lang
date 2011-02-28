@@ -1,4 +1,4 @@
-; RUN: llc < %s
+; RUN: llc -march=x86-64 < %s
 ; PR9309
 
 define <4 x double> @f_fu(<4 x float>) nounwind {
