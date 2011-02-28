@@ -1289,13 +1289,21 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
   }
     
   case Instruction::LShr:         // (icmp pred (shr X, ShAmt), CI)
-  case Instruction::AShr:
-    // Only handle equality comparisons of shift-by-constant.
-    if (ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1)))
-      if (Instruction *Res = FoldICmpShrCst(ICI, cast<BinaryOperator>(LHSI),
-                                            ShAmt))
+  case Instruction::AShr: {
+    // Handle equality comparisons of shift-by-constant.
+    BinaryOperator *BO = cast<BinaryOperator>(LHSI);
+    if (ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
+      if (Instruction *Res = FoldICmpShrCst(ICI, BO, ShAmt))
         return Res;
+    }
+
+    // Handle exact shr's.
+    if (ICI.isEquality() && BO->isExact() && BO->hasOneUse()) {
+      if (RHSV.isMinValue())
+        return new ICmpInst(ICI.getPredicate(), BO->getOperand(0), RHS);
+    }
     break;
+  }
     
   case Instruction::SDiv:
   case Instruction::UDiv:

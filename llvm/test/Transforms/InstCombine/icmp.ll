@@ -387,3 +387,20 @@ define i1 @test39(i31 %X, i32 %Y) {
   %C = icmp slt i32 %B, 0
   ret i1 %C
 }
+
+; PR9343 #1
+; CHECK: test40
+; CHECK %B = icmp eq i32 %X, 0
+define i1 @test40(i32 %X, i32 %Y) {
+  %A = ashr exact i32 %X, %Y
+  %B = icmp eq i32 %A, 0
+  ret i1 %B
+}
+
+; CHECK: test41
+; CHECK %B = icmp ne i32 %X, 0
+define i1 @test41(i32 %X, i32 %Y) {
+  %A = lshr exact i32 %X, %Y
+  %B = icmp ne i32 %A, 0
+  ret i1 %B
+}
