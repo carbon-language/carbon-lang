@@ -88,6 +88,11 @@ namespace {
       case ARMBuildAttrs::CPU_name:
         Streamer.EmitRawText(StringRef("\t.cpu ") + LowercaseString(String));
         break;
+      /* GAS requires .fpu to be emitted regardless of EABI attribute */
+      case ARMBuildAttrs::Advanced_SIMD_arch:
+      case ARMBuildAttrs::VFP_arch:
+        Streamer.EmitRawText(StringRef("\t.fpu ") + LowercaseString(String));
+        break;    
       default: assert(0 && "Unsupported Text attribute in ASM Mode"); break;
       }
     }
@@ -453,10 +458,13 @@ void ARMAsmPrinter::emitAttributes() {
 
   emitARMAttributeSection();
 
+  /* GAS expect .fpu to be emitted, regardless of VFP build attribute */
+  bool emitFPU = false;
   AttributeEmitter *AttrEmitter;
-  if (OutStreamer.hasRawTextSupport())
+  if (OutStreamer.hasRawTextSupport()) {
     AttrEmitter = new AsmAttributeEmitter(OutStreamer);
-  else {
+    emitFPU = true;
+  } else {
     MCObjectStreamer &O = static_cast<MCObjectStreamer&>(OutStreamer);
     AttrEmitter = new ObjectAttributeEmitter(O);
   }
@@ -490,10 +498,36 @@ void ARMAsmPrinter::emitAttributes() {
                                ARMBuildAttrs::Allowed);
   }
 
-  // FIXME: Emit FPU type
-  if (Subtarget->hasVFP2())
+  if (Subtarget->hasNEON()) {
+    /* NEON is not exactly a VFP architecture, but GAS emit one of
+     * neon/vfpv3/vfpv2 for .fpu parameters */
+    AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch, "neon");
+    /* If emitted for NEON, omit from VFP below, since you can have both
+     * NEON and VFP in build attributes but only one .fpu */
+    emitFPU = false;
+  }
+
+  /* VFPv3 + .fpu */
+  if (Subtarget->hasVFP3()) {
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
+                               ARMBuildAttrs::AllowFPv3A);
+    if (emitFPU)
+      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv3");
+
+  /* VFPv2 + .fpu */
+  } else if (Subtarget->hasVFP2()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
                                ARMBuildAttrs::AllowFPv2);
+    if (emitFPU)
+      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv2");
+  }
+
+  /* TODO: ARMBuildAttrs::Allowed is not completely accurate,
+   * since NEON can have 1 (allowed) or 2 (fused MAC operations) */
+  if (Subtarget->hasNEON()) {
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
+                               ARMBuildAttrs::Allowed);
+  }
 
   // Signal various FP modes.
   if (!UnsafeFPMath) {
