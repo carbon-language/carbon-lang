@@ -202,7 +202,6 @@ void initializeScalarEvolutionAliasAnalysisPass(PassRegistry&);
 void initializeScalarEvolutionPass(PassRegistry&);
 void initializeSimpleInlinerPass(PassRegistry&);
 void initializeSimpleRegisterCoalescingPass(PassRegistry&);
-void initializeSimplifyHalfPowrLibCallsPass(PassRegistry&);
 void initializeSimplifyLibCallsPass(PassRegistry&);
 void initializeSingleLoopExtractorPass(PassRegistry&);
 void initializeSinkingPass(PassRegistry&);
