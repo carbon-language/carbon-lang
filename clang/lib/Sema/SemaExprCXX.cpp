@@ -236,19 +236,11 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
   if (isDependent) {
     // We didn't find our type, but that's okay: it's dependent
     // anyway.
-    NestedNameSpecifier *NNS = 0;
-    SourceRange Range;
-    if (SS.isSet()) {
-      NNS = (NestedNameSpecifier *)SS.getScopeRep();
-      Range = SourceRange(SS.getRange().getBegin(), NameLoc);
-    } else {
-      NNS = NestedNameSpecifier::Create(Context, &II);
-      Range = SourceRange(NameLoc);
-    }
-
-    QualType T = CheckTypenameType(ETK_None, NNS, II,
-                                   SourceLocation(),
-                                   Range, NameLoc);
+    
+    // FIXME: What if we have no nested-name-specifier?
+    QualType T = CheckTypenameType(ETK_None, SourceLocation(),
+                                   SS.getWithLocInContext(Context),
+                                   II, NameLoc);
     return ParsedType::make(T);
   }
 

@@ -1226,10 +1226,9 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
         if (!NotUnknownSpecialization) {
           // When the scope specifier can refer to a member of an unknown
           // specialization, we take it as a type name.
-          BaseType = CheckTypenameType(ETK_None,
-                                       (NestedNameSpecifier *)SS.getScopeRep(),
-                                       *MemberOrBase, SourceLocation(),
-                                       SS.getRange(), IdLoc);
+          BaseType = CheckTypenameType(ETK_None, SourceLocation(),
+                                       SS.getWithLocInContext(Context),
+                                       *MemberOrBase, IdLoc);
           if (BaseType.isNull())
             return true;
 
@@ -6916,8 +6915,9 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
   if (isAllExplicitSpecializations) {
     ElaboratedTypeKeyword Keyword
       = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
-    QualType T = CheckTypenameType(Keyword, SS.getScopeRep(), *Name,
-                                   TagLoc, SS.getRange(), NameLoc);
+    QualType T = CheckTypenameType(Keyword, TagLoc, 
+                                   SS.getWithLocInContext(Context),
+                                   *Name, NameLoc);
     if (T.isNull())
       return 0;
 

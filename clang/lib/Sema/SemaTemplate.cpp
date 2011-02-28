@@ -5901,18 +5901,17 @@ TypeResult
 Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
                         const CXXScopeSpec &SS, const IdentifierInfo &II,
                         SourceLocation IdLoc) {
-  NestedNameSpecifier *NNS
-    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-  if (!NNS)
+  if (SS.isInvalid())
     return true;
-
+  
   if (TypenameLoc.isValid() && S && !S->getTemplateParamParent() &&
       !getLangOptions().CPlusPlus0x)
     Diag(TypenameLoc, diag::ext_typename_outside_of_template)
       << FixItHint::CreateRemoval(TypenameLoc);
 
-  QualType T = CheckTypenameType(ETK_Typename, NNS, II,
-                                 TypenameLoc, SS.getRange(), IdLoc);
+  QualType T = CheckTypenameType(ETK_Typename, TypenameLoc,
+                                 SS.getWithLocInContext(Context),
+                                 II, IdLoc);
   if (T.isNull())
     return true;
 
@@ -6017,19 +6016,22 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
 /// \brief Build the type that describes a C++ typename specifier,
 /// e.g., "typename T::type".
 QualType
-Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
-                        NestedNameSpecifier *NNS, const IdentifierInfo &II,
-                        SourceLocation KeywordLoc, SourceRange NNSRange,
+Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword, 
+                        SourceLocation KeywordLoc,
+                        NestedNameSpecifierLoc QualifierLoc, 
+                        const IdentifierInfo &II,
                         SourceLocation IILoc) {
   CXXScopeSpec SS;
-  SS.MakeTrivial(Context, NNS, NNSRange);
+  SS.Adopt(QualifierLoc);
 
   DeclContext *Ctx = computeDeclContext(SS);
   if (!Ctx) {
     // If the nested-name-specifier is dependent and couldn't be
     // resolved to a type, build a typename type.
-    assert(NNS->isDependent());
-    return Context.getDependentNameType(Keyword, NNS, &II);
+    assert(QualifierLoc.getNestedNameSpecifier()->isDependent());
+    return Context.getDependentNameType(Keyword, 
+                                        QualifierLoc.getNestedNameSpecifier(), 
+                                        &II);
   }
 
   // If the nested-name-specifier refers to the current instantiation,
@@ -6054,7 +6056,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
   case LookupResult::FoundUnresolvedValue: {
     // We found a using declaration that is a value. Most likely, the using
     // declaration itself is meant to have the 'typename' keyword.
-    SourceRange FullRange(KeywordLoc.isValid() ? KeywordLoc : NNSRange.getBegin(),
+    SourceRange FullRange(KeywordLoc.isValid() ? KeywordLoc : SS.getBeginLoc(),
                           IILoc);
     Diag(IILoc, diag::err_typename_refers_to_using_value_decl)
       << Name << Ctx << FullRange;
@@ -6070,13 +6072,16 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
 
   case LookupResult::NotFoundInCurrentInstantiation:
     // Okay, it's a member of an unknown instantiation.
-    return Context.getDependentNameType(Keyword, NNS, &II);
+    return Context.getDependentNameType(Keyword, 
+                                        QualifierLoc.getNestedNameSpecifier(), 
+                                        &II);
 
   case LookupResult::Found:
     if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {
       // We found a type. Build an ElaboratedType, since the
       // typename-specifier was just sugar.
-      return Context.getElaboratedType(ETK_Typename, NNS,
+      return Context.getElaboratedType(ETK_Typename, 
+                                       QualifierLoc.getNestedNameSpecifier(),
                                        Context.getTypeDeclType(Type));
     }
 
@@ -6099,7 +6104,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
 
   // If we get here, it's because name lookup did not find a
   // type. Emit an appropriate diagnostic and return an error.
-  SourceRange FullRange(KeywordLoc.isValid() ? KeywordLoc : NNSRange.getBegin(),
+  SourceRange FullRange(KeywordLoc.isValid() ? KeywordLoc : SS.getBeginLoc(),
                         IILoc);
   Diag(IILoc, DiagID) << FullRange << Name << Ctx;
   if (Referenced)

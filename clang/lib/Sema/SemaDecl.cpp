@@ -88,8 +88,9 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
         // We know from the grammar that this name refers to a type,
         // so build a dependent node to describe the type.
         QualType T =
-          CheckTypenameType(ETK_None, SS->getScopeRep(), II,
-                            SourceLocation(), SS->getRange(), NameLoc);
+          CheckTypenameType(ETK_None, SourceLocation(),
+                            SS->getWithLocInContext(Context),
+                            II, NameLoc);
         return ParsedType::make(T);
       }
       

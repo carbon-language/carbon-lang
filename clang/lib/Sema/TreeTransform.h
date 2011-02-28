@@ -786,8 +786,9 @@ public:
     }
 
     if (Keyword == ETK_None || Keyword == ETK_Typename)
-      return SemaRef.CheckTypenameType(Keyword, NNS, *Id,
-                                       KeywordLoc, NNSRange, IdLoc);
+      return SemaRef.CheckTypenameType(Keyword, KeywordLoc,
+                                       SS.getWithLocInContext(SemaRef.Context),
+                                       *Id, IdLoc);
 
     TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForKeyword(Keyword);
 
