@@ -600,7 +600,7 @@ protected:
     
     // A8.6.73 LDRH (immediate, Thumb) - Encoding T1, T2
     bool
-    EmulateLDRHImmediateThumb (ARMEncoding encoding);
+    EmulateLDRHImmediate (ARMEncoding encoding);
     
     // A8.6.75 LDRH (literal) - Encoding T1
     bool

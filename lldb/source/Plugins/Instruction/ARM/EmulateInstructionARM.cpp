@@ -5870,6 +5870,159 @@ EmulateInstructionARM::EmulateLDRBRegister (ARMEncoding encoding)
     }
     return true;
 }
+ 
+// LDRH (immediate, Thumb) calculates an address from a base register value and an immediate offset, loads a 
+// halfword from memory, zero-extends it to form a 32-bit word, and writes it to a register.  It can use offset, 
+// post-indexed, or pre-indexed addressing.
+bool
+EmulateInstructionARM::EmulateLDRHImmediate (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
+        address = if index then offset_addr else R[n]; 
+        data = MemU[address,2]; 
+        if wback then R[n] = offset_addr; 
+        if UnalignedSupport() || address<0> = ’0’ then
+            R[t] = ZeroExtend(data, 32); 
+        else // Can only apply before ARMv7
+            R[t] = bits(32) UNKNOWN;
+#endif
+                  
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed())
+    {
+        uint32_t t;
+        uint32_t n;
+        uint32_t imm32;
+        bool index;
+        bool add;
+        bool wback;
+                  
+        // EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm5:’0’, 32);
+                t = Bits32 (opcode, 2, 0);
+                n = Bits32 (opcode, 5, 3);
+                imm32 = Bits32 (opcode, 10, 6) << 1;
+                  
+                // index = TRUE; add = TRUE; wback = FALSE;
+                index = true;
+                add = true;
+                wback = false;
+                  
+                break;
+                  
+            case eEncodingT2:
+                // if Rt == ’1111’ then SEE "Unallocated memory hints"; 
+                // if Rn == ’1111’ then SEE LDRH (literal); 
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 11, 0);
+                  
+                // index = TRUE; add = TRUE; wback = FALSE; 
+                index = true;
+                add = true;
+                wback = false;
+                  
+                // if t == 13 then UNPREDICTABLE;
+                if (t == 13)
+                    return false;
+                break;
+                  
+            case eEncodingT3:
+                // if Rn == ’1111’ then SEE LDRH (literal); 
+                // if Rt == ’1111’ && P == ’1’ && U == ’0’ && W == ’0’ then SEE "Unallocated memory hints"; 
+                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE LDRHT; 
+                // if P == ’0’ && W == ’0’ then UNDEFINED; 
+                if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
+                    return false;
+                  
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm8, 32); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 7, 0);
+                  
+                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’); 
+                index = BitIsSet (opcode, 10);
+                add = BitIsSet (opcode, 9);
+                wback = BitIsSet (opcode, 8);
+                  
+                // if BadReg(t) || (wback && n == t) then UNPREDICTABLE;
+                if (BadReg (t) || (wback && (n == t)))
+                    return false;
+                break;
+                  
+            default:
+                return false;
+        }
+            
+        // offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
+        uint32_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+                  
+        addr_t offset_addr;
+        addr_t address;
+        
+        if (add)
+            offset_addr = Rn + imm32;
+        else
+            offset_addr = Rn - imm32;
+                  
+        // address = if index then offset_addr else R[n]; 
+        if (index)
+            address = offset_addr;
+        else
+            address = Rn;
+                  
+        // data = MemU[address,2]; 
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+                  
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterLoad;
+        context.SetRegisterPlusOffset (base_reg, address - Rn);
+                  
+        uint64_t data = MemURead (context, address, 2, 0, &success);
+        if (!success)
+            return false;
+                  
+        // if wback then R[n] = offset_addr;
+        if (wback)
+        {
+            context.type = eContextAdjustBaseRegister;
+            context.SetAddress (offset_addr);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, offset_addr))
+                return false;
+        }
+                  
+        // if UnalignedSupport() || address<0> = ’0’ then
+        if (UnalignedSupport () || BitIsClear (address, 0))
+        {
+            // R[t] = ZeroExtend(data, 32); 
+            context.type = eContextRegisterLoad;
+            context.SetRegisterPlusOffset (base_reg, address - Rn);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, data))
+                return false;
+        }
+        else // Can only apply before ARMv7
+        {
+            // R[t] = bits(32) UNKNOWN;
+            WriteBits32Unknown (t);
+        }
+    }
+    return true;
+}
                   
 // Bitwise Exclusive OR (immediate) performs a bitwise exclusive OR of a register value and an immediate value,
 // and writes the result to the destination register.  It can optionally update the condition flags based on
@@ -7242,7 +7395,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0e500000, 0x04100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRImmediateARM, "ldr<c> <Rt> [<Rn> {#+/-<imm12>}]" },
         { 0x0e500010, 0x06100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c> <Rt> [<Rn> +/-<Rm> {<shift>}] {!}" },
         { 0x0e5f0000, 0x045f0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>, [...]"},
-        { 0xfe500010, 0x06500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>, [<Rn>,+/-<Rm>{, <shift>}]{!}" }, 
+        { 0xfe500010, 0x06500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>, [<Rn>,+/-<Rm>{, <shift>}]{!}" },
                   
         //----------------------------------------------------------------------
         // Store instructions
@@ -7481,6 +7634,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xff7f0000, 0xf81f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>,[...]" },
         { 0xfffffe00, 0x00005c00, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>,[<Rn>,<Rm>]" },
         {  0xfff00fc0, 0xf8100000, ARMV6T2_ABOVE, eEncodingT2, eSize32,&EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c>.w <Rt>,[<Rn>,<Rm>{,LSL #imm2>}]" },
+        { 0xfffff800, 0x00008800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c> <Rt>, [<Rn>{,#<imm>}]"  },
+        { 0xfff00000, 0xf8b00000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c>.w <Rt>,[<Rn>{,#<imm12>}]" },
+        { 0xfff00800, 0xf8300800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c> <Rt>,[<Rn>,#+/-<imm8>]{!}"  },
                   
         //----------------------------------------------------------------------
         // Store instructions
