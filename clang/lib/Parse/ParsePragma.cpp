@@ -74,7 +74,7 @@ void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP,
     return;
   }
   PP.Lex(Tok);
-  if (Tok.isNot(tok::eom)) {
+  if (Tok.isNot(tok::eod)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
       << "visibility";
     return;
@@ -168,7 +168,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
 
   SourceLocation RParenLoc = Tok.getLocation();
   PP.Lex(Tok);
-  if (Tok.isNot(tok::eom)) {
+  if (Tok.isNot(tok::eod)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) << "pack";
     return;
   }
@@ -228,7 +228,7 @@ static void ParseAlignPragma(Sema &Actions, Preprocessor &PP, Token &FirstTok,
 
   SourceLocation KindLoc = Tok.getLocation();
   PP.Lex(Tok);
-  if (Tok.isNot(tok::eom)) {
+  if (Tok.isNot(tok::eod)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
       << (IsOptions ? "options" : "align");
     return;
@@ -302,7 +302,7 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP,
   }
 
   PP.Lex(Tok);
-  if (Tok.isNot(tok::eom)) {
+  if (Tok.isNot(tok::eod)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) <<
         "unused";
     return;
@@ -359,7 +359,7 @@ void PragmaWeakHandler::HandlePragma(Preprocessor &PP,
     PP.Lex(Tok);
   }
 
-  if (Tok.isNot(tok::eom)) {
+  if (Tok.isNot(tok::eod)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) << "weak";
     return;
   }

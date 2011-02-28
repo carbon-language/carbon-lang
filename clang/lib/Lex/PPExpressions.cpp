@@ -180,7 +180,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   default:  // Non-value token.
     PP.Diag(PeekTok, diag::err_pp_expr_bad_token_start_expr);
     return true;
-  case tok::eom:
+  case tok::eod:
   case tok::r_paren:
     // If there is no expression, report and exit.
     PP.Diag(PeekTok, diag::err_pp_expected_value_in_expr);
@@ -372,7 +372,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
 /// token.  This returns:
 ///   ~0 - Invalid token.
 ///   14 -> 3 - various operators.
-///    0 - 'eom' or ')'
+///    0 - 'eod' or ')'
 static unsigned getPrecedence(tok::TokenKind Kind) {
   switch (Kind) {
   default: return ~0U;
@@ -397,8 +397,8 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
   case tok::question:             return 4;
   case tok::comma:                return 3;
   case tok::colon:                return 2;
-  case tok::r_paren:              return 0;   // Lowest priority, end of expr.
-  case tok::eom:                  return 0;   // Lowest priority, end of macro.
+  case tok::r_paren:              return 0;// Lowest priority, end of expr.
+  case tok::eod:                  return 0;// Lowest priority, end of directive.
   }
 }
 
@@ -713,7 +713,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   DefinedTracker DT;
   if (EvaluateValue(ResVal, Tok, DT, true, *this)) {
     // Parse error, skip the rest of the macro line.
-    if (Tok.isNot(tok::eom))
+    if (Tok.isNot(tok::eod))
       DiscardUntilEndOfDirective();
     
     // Restore 'DisableMacroExpansion'.
@@ -724,7 +724,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // If we are at the end of the expression after just parsing a value, there
   // must be no (unparenthesized) binary operators involved, so we can exit
   // directly.
-  if (Tok.is(tok::eom)) {
+  if (Tok.is(tok::eod)) {
     // If the expression we parsed was of the form !defined(macro), return the
     // macro in IfNDefMacro.
     if (DT.State == DefinedTracker::NotDefinedMacro)
@@ -740,7 +740,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   if (EvaluateDirectiveSubExpr(ResVal, getPrecedence(tok::question),
                                Tok, true, *this)) {
     // Parse error, skip the rest of the macro line.
-    if (Tok.isNot(tok::eom))
+    if (Tok.isNot(tok::eod))
       DiscardUntilEndOfDirective();
     
     // Restore 'DisableMacroExpansion'.
@@ -748,9 +748,9 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
     return false;
   }
 
-  // If we aren't at the tok::eom token, something bad happened, like an extra
+  // If we aren't at the tok::eod token, something bad happened, like an extra
   // ')' token.
-  if (Tok.isNot(tok::eom)) {
+  if (Tok.isNot(tok::eod)) {
     Diag(Tok, diag::err_pp_expected_eol);
     DiscardUntilEndOfDirective();
   }

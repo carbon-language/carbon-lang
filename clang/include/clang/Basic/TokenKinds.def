@@ -94,7 +94,8 @@ PPKEYWORD(unassert)
 
 TOK(unknown)             // Not a token.
 TOK(eof)                 // End of file.
-TOK(eom)                 // End of macro (end of line inside a macro).
+TOK(eod)                 // End of preprocessing directive (end of line inside a
+                         // directive).
 TOK(code_completion)     // Code completion marker
 TOK(cxx_defaultarg_end)  // C++ default argument end marker
 

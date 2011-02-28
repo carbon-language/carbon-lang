@@ -36,7 +36,7 @@ protected:
   //===--------------------------------------------------------------------===//
 
   /// ParsingPreprocessorDirective - This is true when parsing #XXX.  This turns
-  /// '\n' into a tok::eom token.
+  /// '\n' into a tok::eod token.
   bool ParsingPreprocessorDirective;
 
   /// ParsingFilename - True after #include: this turns <xx> into a
@@ -131,7 +131,7 @@ public:
 
   /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
   /// (potentially) macro expand the filename.  If the sequence parsed is not
-  /// lexically legal, emit a diagnostic and return a result EOM token.
+  /// lexically legal, emit a diagnostic and return a result EOD token.
   void LexIncludeFilename(Token &Result);
 
   /// setParsingPreprocessorDirective - Inform the lexer whether or not

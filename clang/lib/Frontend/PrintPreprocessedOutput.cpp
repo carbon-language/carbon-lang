@@ -432,7 +432,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
     Callbacks->OS.write(Prefix, strlen(Prefix));
     Callbacks->SetEmittedTokensOnThisLine();
     // Read and print all of the pragma tokens.
-    while (PragmaTok.isNot(tok::eom)) {
+    while (PragmaTok.isNot(tok::eod)) {
       if (PragmaTok.hasLeadingSpace())
         Callbacks->OS << ' ';
       std::string TokSpell = PP.getSpelling(PragmaTok);

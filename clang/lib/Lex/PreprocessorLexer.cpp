@@ -34,7 +34,7 @@ void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {
   ParsingFilename = false;
 
   // No filename?
-  if (FilenameTok.is(tok::eom))
+  if (FilenameTok.is(tok::eod))
     PP->Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
 }
 

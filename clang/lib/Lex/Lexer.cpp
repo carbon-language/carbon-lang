@@ -178,7 +178,7 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
                                          InstantiationLocEnd, TokLen);
 
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
-  // return an EOM token.
+  // return an EOD token.
   L->ParsingPreprocessorDirective = true;
 
   // This lexer really is for _Pragma.
@@ -1407,7 +1407,7 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
     return SaveBCPLComment(Result, CurPtr);
 
   // If we are inside a preprocessor directive and we see the end of line,
-  // return immediately, so that the lexer can return this as an EOM token.
+  // return immediately, so that the lexer can return this as an EOD token.
   if (ParsingPreprocessorDirective || CurPtr == BufferEnd) {
     BufferPtr = CurPtr;
     return false;
@@ -1715,14 +1715,14 @@ std::string Lexer::ReadToEndOfLine() {
       assert(CurPtr[-1] == Char && "Trigraphs for newline?");
       BufferPtr = CurPtr-1;
 
-      // Next, lex the character, which should handle the EOM transition.
+      // Next, lex the character, which should handle the EOD transition.
       Lex(Tmp);
       if (Tmp.is(tok::code_completion)) {
         if (PP && PP->getCodeCompletionHandler())
           PP->getCodeCompletionHandler()->CodeCompleteNaturalLanguage();
         Lex(Tmp);
       }
-      assert(Tmp.is(tok::eom) && "Unexpected token!");
+      assert(Tmp.is(tok::eod) && "Unexpected token!");
 
       // Finally, we're done, return the string we found.
       return Result;
@@ -1758,7 +1758,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     // Done parsing the "line".
     ParsingPreprocessorDirective = false;
     // Update the location of token as well as BufferPtr.
-    FormTokenWithChars(Result, CurPtr, tok::eom);
+    FormTokenWithChars(Result, CurPtr, tok::eod);
 
     // Restore comment saving mode, in case it was disabled for directive.
     SetCommentRetentionState(PP->getCommentRetentionState());
@@ -2006,7 +2006,7 @@ LexNextToken:
   case '\n':
   case '\r':
     // If we are inside a preprocessor directive and we see the end of line,
-    // we know we are done with the directive, so return an EOM token.
+    // we know we are done with the directive, so return an EOD token.
     if (ParsingPreprocessorDirective) {
       // Done parsing the "line".
       ParsingPreprocessorDirective = false;
@@ -2017,7 +2017,7 @@ LexNextToken:
       // Since we consumed a newline, we are back at the start of a line.
       IsAtStartOfLine = true;
 
-      Kind = tok::eom;
+      Kind = tok::eod;
       break;
     }
     // The returned token is at the start of the line.

@@ -247,8 +247,8 @@ def ext_stdc_pragma_ignored : ExtWarn<"unknown pragma in STDC namespace">,
 def ext_on_off_switch_syntax :
    ExtWarn<"expected 'ON' or 'OFF' or 'DEFAULT' in pragma">,
    InGroup<UnknownPragmas>;
-def ext_pragma_syntax_eom :
-   ExtWarn<"expected end of macro in pragma">,
+def ext_pragma_syntax_eod :
+   ExtWarn<"expected end of directive in pragma">,
    InGroup<UnknownPragmas>;
 def warn_stdc_fenv_access_not_supported :
    Warning<"pragma STDC FENV_ACCESS ON is not supported, ignoring pragma">,

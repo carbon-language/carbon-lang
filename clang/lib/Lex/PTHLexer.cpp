@@ -125,7 +125,7 @@ LexNextToken:
     return PP->Lex(Tok);
   }
 
-  if (TKind == tok::eom) {
+  if (TKind == tok::eod) {
     assert(ParsingPreprocessorDirective);
     ParsingPreprocessorDirective = false;
     return;

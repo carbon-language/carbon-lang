@@ -782,13 +782,13 @@ public:
   /// read is the correct one.
   void HandleDirective(Token &Result);
 
-  /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
-  /// not, emit a diagnostic and consume up until the eom.  If EnableMacros is
+  /// CheckEndOfDirective - Ensure that the next token is a tok::eod token.  If
+  /// not, emit a diagnostic and consume up until the eod.  If EnableMacros is
   /// true, then we consider macros that expand to zero tokens as being ok.
   void CheckEndOfDirective(const char *Directive, bool EnableMacros = false);
 
   /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
-  /// current line until the tok::eom token is found.
+  /// current line until the tok::eod token is found.
   void DiscardUntilEndOfDirective();
 
   /// SawDateOrTime - This returns true if the preprocessor has seen a use of
@@ -839,12 +839,12 @@ public:
   ///
   /// This code concatenates and consumes tokens up to the '>' token.  It
   /// returns false if the > was found, otherwise it returns true if it finds
-  /// and consumes the EOM marker.
+  /// and consumes the EOD marker.
   bool ConcatenateIncludeName(llvm::SmallString<128> &FilenameBuffer,
                               SourceLocation &End);
 
   /// LexOnOffSwitch - Lex an on-off-switch (C99 6.10.6p2) and verify that it is
-  /// followed by EOM.  Return true if the token is not a valid on-off-switch.
+  /// followed by EOD.  Return true if the token is not a valid on-off-switch.
   bool LexOnOffSwitch(tok::OnOffSwitch &OOS);
 
 private:
@@ -875,7 +875,7 @@ private:
   void ReleaseMacroInfo(MacroInfo* MI);
 
   /// ReadMacroName - Lex and validate a macro name, which occurs after a
-  /// #define or #undef.  This emits a diagnostic, sets the token kind to eom,
+  /// #define or #undef.  This emits a diagnostic, sets the token kind to eod,
   /// and discards the rest of the macro line if the macro name is invalid.
   void ReadMacroName(Token &MacroNameTok, char isDefineUndef = 0);
 

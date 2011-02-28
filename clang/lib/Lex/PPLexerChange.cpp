@@ -301,7 +301,7 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
 
   // We handle this by scanning for the closest real lexer, switching it to
   // raw mode and preprocessor mode.  This will cause it to return \n as an
-  // explicit EOM token.
+  // explicit EOD token.
   PreprocessorLexer *FoundLexer = 0;
   bool LexerWasInPPMode = false;
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
@@ -309,11 +309,11 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
     if (ISI.ThePPLexer == 0) continue;  // Scan for a real lexer.
 
     // Once we find a real lexer, mark it as raw mode (disabling macro
-    // expansions) and preprocessor mode (return EOM).  We know that the lexer
+    // expansions) and preprocessor mode (return EOD).  We know that the lexer
     // was *not* in raw mode before, because the macro that the comment came
     // from was expanded.  However, it could have already been in preprocessor
     // mode (#if COMMENT) in which case we have to return it to that mode and
-    // return EOM.
+    // return EOD.
     FoundLexer = ISI.ThePPLexer;
     FoundLexer->LexingRawMode = true;
     LexerWasInPPMode = FoundLexer->ParsingPreprocessorDirective;
@@ -326,22 +326,22 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
   // the next token.
   if (!HandleEndOfTokenLexer(Tok)) Lex(Tok);
 
-  // Discarding comments as long as we don't have EOF or EOM.  This 'comments
+  // Discarding comments as long as we don't have EOF or EOD.  This 'comments
   // out' the rest of the line, including any tokens that came from other macros
   // that were active, as in:
   //  #define submacro a COMMENT b
   //    submacro c
   // which should lex to 'a' only: 'b' and 'c' should be removed.
-  while (Tok.isNot(tok::eom) && Tok.isNot(tok::eof))
+  while (Tok.isNot(tok::eod) && Tok.isNot(tok::eof))
     Lex(Tok);
 
-  // If we got an eom token, then we successfully found the end of the line.
-  if (Tok.is(tok::eom)) {
+  // If we got an eod token, then we successfully found the end of the line.
+  if (Tok.is(tok::eod)) {
     assert(FoundLexer && "Can't get end of line without an active lexer");
     // Restore the lexer back to normal mode instead of raw mode.
     FoundLexer->LexingRawMode = false;
 
-    // If the lexer was already in preprocessor mode, just return the EOM token
+    // If the lexer was already in preprocessor mode, just return the EOD token
     // to finish the preprocessor line.
     if (LexerWasInPPMode) return;
 
@@ -352,7 +352,7 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
 
   // If we got an EOF token, then we reached the end of the token stream but
   // didn't find an explicit \n.  This can only happen if there was no lexer
-  // active (an active lexer would return EOM at EOF if there was no \n in
+  // active (an active lexer would return EOD at EOF if there was no \n in
   // preprocessor directive mode), so just return EOF as our token.
-  assert(!FoundLexer && "Lexer should return EOM before EOF in PP mode");
+  assert(!FoundLexer && "Lexer should return EOD before EOF in PP mode");
 }

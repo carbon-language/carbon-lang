@@ -288,12 +288,12 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
 
     if ((Tok.isAtStartOfLine() || Tok.is(tok::eof)) &&
         ParsingPreprocessorDirective) {
-      // Insert an eom token into the token cache.  It has the same
+      // Insert an eod token into the token cache.  It has the same
       // position as the next token that is not on the same line as the
       // preprocessor directive.  Observe that we continue processing
       // 'Tok' when we exit this branch.
       Token Tmp = Tok;
-      Tmp.setKind(tok::eom);
+      Tmp.setKind(tok::eod);
       Tmp.clearFlag(Token::StartOfLine);
       Tmp.setIdentifierInfo(0);
       EmitToken(Tmp);

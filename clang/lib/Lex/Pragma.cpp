@@ -229,8 +229,8 @@ void Preprocessor::HandleMicrosoft__pragma(Token &Tok) {
 
   PragmaToks.front().setFlag(Token::LeadingSpace);
 
-  // Replace the ')' with an EOM to mark the end of the pragma.
-  PragmaToks.back().setKind(tok::eom);
+  // Replace the ')' with an EOD to mark the end of the pragma.
+  PragmaToks.back().setKind(tok::eod);
 
   Token *TokArray = new Token[PragmaToks.size()];
   std::copy(PragmaToks.begin(), PragmaToks.end(), TokArray);
@@ -283,7 +283,7 @@ void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
     if (CurPPLexer) CurPPLexer->LexingRawMode = false;
 
     // If we reached the end of line, we're done.
-    if (Tok.is(tok::eom)) return;
+    if (Tok.is(tok::eod)) return;
 
     // Can only poison identifiers.
     if (Tok.isNot(tok::raw_identifier)) {
@@ -348,8 +348,8 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   Token FilenameTok;
   CurPPLexer->LexIncludeFilename(FilenameTok);
 
-  // If the token kind is EOM, the error has already been diagnosed.
-  if (FilenameTok.is(tok::eom))
+  // If the token kind is EOD, the error has already been diagnosed.
+  if (FilenameTok.is(tok::eod))
     return;
 
   // Reserve a buffer to get the spelling.
@@ -381,7 +381,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
     // Lex tokens at the end of the message and include them in the message.
     std::string Message;
     Lex(DependencyTok);
-    while (DependencyTok.isNot(tok::eom)) {
+    while (DependencyTok.isNot(tok::eod)) {
       Message += getSpelling(DependencyTok) + " ";
       Lex(DependencyTok);
     }
@@ -470,7 +470,7 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
   }
   Lex(Tok);  // eat the r_paren.
 
-  if (Tok.isNot(tok::eom)) {
+  if (Tok.isNot(tok::eod)) {
     Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
     return;
   }
@@ -541,7 +541,7 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
     Lex(Tok);  // eat the r_paren.
   }
 
-  if (Tok.isNot(tok::eom)) {
+  if (Tok.isNot(tok::eod)) {
     Diag(Tok.getLocation(), diag::err_pragma_message_malformed);
     return;
   }
@@ -737,10 +737,10 @@ bool Preprocessor::LexOnOffSwitch(tok::OnOffSwitch &Result) {
     return true;
   }
 
-  // Verify that this is followed by EOM.
+  // Verify that this is followed by EOD.
   LexUnexpandedToken(Tok);
-  if (Tok.isNot(tok::eom))
-    Diag(Tok, diag::ext_pragma_syntax_eom);
+  if (Tok.isNot(tok::eod))
+    Diag(Tok, diag::ext_pragma_syntax_eod);
   return false;
 }
 
@@ -883,7 +883,7 @@ public:
       PP.LexUnexpandedToken(Tok);
     }
 
-    if (Tok.isNot(tok::eom)) {
+    if (Tok.isNot(tok::eod)) {
       PP.Diag(Tok.getLocation(), diag::warn_pragma_diagnostic_invalid_token);
       return;
     }
