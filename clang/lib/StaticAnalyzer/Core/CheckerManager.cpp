@@ -256,6 +256,16 @@ void CheckerManager::runCheckersForEndPath(EndOfFunctionNodeBuilder &B,
   }
 }
 
+/// \brief Run checkers for branch condition.
+void CheckerManager::runCheckersForBranchCondition(const Stmt *condition,
+                                                   BranchNodeBuilder &B,
+                                                   ExprEngine &Eng) {
+  for (unsigned i = 0, e = BranchConditionCheckers.size(); i != e; ++i) {
+    CheckBranchConditionFunc fn = BranchConditionCheckers[i];
+    fn(condition, B, Eng);
+  }
+}
+
 /// \brief Run checkers for live symbols.
 void CheckerManager::runCheckersForLiveSymbols(const GRState *state,
                                                SymbolReaper &SymReaper) {
@@ -429,6 +439,11 @@ void CheckerManager::_registerForEndAnalysis(CheckEndAnalysisFunc checkfn) {
 
 void CheckerManager::_registerForEndPath(CheckEndPathFunc checkfn) {
   EndPathCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForBranchCondition(
+                                             CheckBranchConditionFunc checkfn) {
+  BranchConditionCheckers.push_back(checkfn);
 }
 
 void CheckerManager::_registerForLiveSymbols(CheckLiveSymbolsFunc checkfn) {

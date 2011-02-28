@@ -330,7 +330,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   RegisterReturnUndefChecker(Eng);
   RegisterUndefinedArraySubscriptChecker(Eng);
   RegisterUndefinedAssignmentChecker(Eng);
-  RegisterUndefBranchChecker(Eng);
 }
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
@@ -1318,6 +1317,8 @@ void ExprEngine::processBranch(const Stmt* Condition, const Stmt* Term,
     Checker *checker = I->second;
     checker->VisitBranchCondition(builder, *this, Condition, tag);
   }
+
+  getCheckerManager().runCheckersForBranchCondition(Condition, builder, *this);
 
   // If the branch condition is undefined, return;
   if (!builder.isFeasible(true) && !builder.isFeasible(false))

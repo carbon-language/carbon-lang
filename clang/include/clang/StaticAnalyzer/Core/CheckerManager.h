@@ -37,6 +37,7 @@ namespace ento {
   class ExplodedGraph;
   class GRState;
   class EndOfFunctionNodeBuilder;
+  class BranchNodeBuilder;
   class MemRegion;
   class SymbolReaper;
 
@@ -202,6 +203,10 @@ public:
   /// \brief Run checkers for end of path.
   void runCheckersForEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng);
 
+  /// \brief Run checkers for branch condition.
+  void runCheckersForBranchCondition(const Stmt *condition,
+                                     BranchNodeBuilder &B, ExprEngine &Eng);
+
   /// \brief Run checkers for live symbols.
   void runCheckersForLiveSymbols(const GRState *state,
                                  SymbolReaper &SymReaper);
@@ -239,7 +244,6 @@ public:
 
   typedef CheckerFn<const Decl *, AnalysisManager&, BugReporter &>
       CheckDeclFunc;
-  typedef CheckerFn<const Stmt *, CheckerContext &> CheckStmtFunc;
 
   typedef bool (*HandlesDeclFunc)(const Decl *D);
   void _registerForDecl(CheckDeclFunc checkfn, HandlesDeclFunc isForDeclFn);
@@ -250,6 +254,7 @@ public:
 // Internal registration functions for path-sensitive checking.
 //===----------------------------------------------------------------------===//
 
+  typedef CheckerFn<const Stmt *, CheckerContext &> CheckStmtFunc;
   typedef CheckerFn<const ObjCMessage &, CheckerContext &> CheckObjCMessageFunc;
   typedef CheckerFn<const SVal &/*location*/, bool/*isLoad*/, CheckerContext &>
       CheckLocationFunc;
@@ -258,6 +263,8 @@ public:
   typedef CheckerFn<ExplodedGraph &, BugReporter &, ExprEngine &>
       CheckEndAnalysisFunc;
   typedef CheckerFn<EndOfFunctionNodeBuilder &, ExprEngine &> CheckEndPathFunc;
+  typedef CheckerFn<const Stmt *, BranchNodeBuilder &, ExprEngine &>
+      CheckBranchConditionFunc;
   typedef CheckerFn<SymbolReaper &, CheckerContext &> CheckDeadSymbolsFunc;
   typedef CheckerFn<const GRState *, SymbolReaper &> CheckLiveSymbolsFunc;
 
@@ -277,6 +284,8 @@ public:
   void _registerForEndAnalysis(CheckEndAnalysisFunc checkfn);
 
   void _registerForEndPath(CheckEndPathFunc checkfn);
+
+  void _registerForBranchCondition(CheckBranchConditionFunc checkfn);
 
   void _registerForLiveSymbols(CheckLiveSymbolsFunc checkfn);
 
@@ -414,6 +423,8 @@ private:
   std::vector<CheckEndAnalysisFunc> EndAnalysisCheckers;
 
   std::vector<CheckEndPathFunc> EndPathCheckers;
+
+  std::vector<CheckBranchConditionFunc> BranchConditionCheckers;
 
   std::vector<CheckLiveSymbolsFunc> LiveSymbolsCheckers;
 

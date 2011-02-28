@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def UndefBranchChecker : Checker<"UndefBranch">,
+  HelpText<"Check for undefined branch conditions">,
+  DescFile<"UndefBranchChecker.cpp">;
+
 def UndefCapturedBlockVarChecker : Checker<"UndefBlockVar">,
   HelpText<"Check for blocks that capture uninitialized values">,
   DescFile<"UndefCapturedBlockVarChecker.cpp">;

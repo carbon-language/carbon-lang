@@ -12,17 +12,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InternalChecks.h"
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/Checker.h"
 
 using namespace clang;
 using namespace ento;
 
 namespace {
 
-class UndefBranchChecker : public Checker {
-  BuiltinBug *BT;
+class UndefBranchChecker : public CheckerV2<check::BranchCondition> {
+  mutable llvm::OwningPtr<BuiltinBug> BT;
 
   struct FindUndefExpr {
     GRStateManager& VM;
@@ -48,26 +50,15 @@ class UndefBranchChecker : public Checker {
   };
 
 public:
-  UndefBranchChecker() : BT(0) {}
-  static void *getTag();
-  void VisitBranchCondition(BranchNodeBuilder &Builder, ExprEngine &Eng,
-                            const Stmt *Condition, void *tag);
+  void checkBranchCondition(const Stmt *Condition, BranchNodeBuilder &Builder,
+                            ExprEngine &Eng) const;
 };
 
 }
 
-void ento::RegisterUndefBranchChecker(ExprEngine &Eng) {
-  Eng.registerCheck(new UndefBranchChecker());
-}
-
-void *UndefBranchChecker::getTag() {
-  static int x;
-  return &x;
-}
-
-void UndefBranchChecker::VisitBranchCondition(BranchNodeBuilder &Builder, 
-                                              ExprEngine &Eng,
-                                              const Stmt *Condition, void *tag){
+void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
+                                              BranchNodeBuilder &Builder,
+                                              ExprEngine &Eng) const {
   const GRState *state = Builder.getState();
   SVal X = state->getSVal(Condition);
   if (X.isUndef()) {
@@ -75,7 +66,8 @@ void UndefBranchChecker::VisitBranchCondition(BranchNodeBuilder &Builder,
     if (N) {
       N->markAsSink();
       if (!BT)
-        BT = new BuiltinBug("Branch condition evaluates to a garbage value");
+        BT.reset(
+               new BuiltinBug("Branch condition evaluates to a garbage value"));
 
       // What's going on here: we want to highlight the subexpression of the
       // condition that is the most likely source of the "uninitialized
@@ -117,4 +109,8 @@ void UndefBranchChecker::VisitBranchCondition(BranchNodeBuilder &Builder,
     Builder.markInfeasible(true);
     Builder.markInfeasible(false);
   }
+}
+
+void ento::registerUndefBranchChecker(CheckerManager &mgr) {
+  mgr.registerChecker<UndefBranchChecker>();
 }

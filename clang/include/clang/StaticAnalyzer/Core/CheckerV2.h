@@ -190,6 +190,22 @@ public:
   }
 };
 
+class BranchCondition {
+  template <typename CHECKER>
+  static void _checkBranchCondition(void *checker, const Stmt *condition,
+                                    BranchNodeBuilder &B, ExprEngine &Eng) {
+    ((const CHECKER *)checker)->checkBranchCondition(condition, B, Eng);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForBranchCondition(
+      CheckerManager::CheckBranchConditionFunc(checker,
+                                               _checkBranchCondition<CHECKER>));
+  }
+};
+
 class LiveSymbols {
   template <typename CHECKER>
   static void _checkLiveSymbols(void *checker, const GRState *state,

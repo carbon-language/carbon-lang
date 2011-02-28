@@ -28,7 +28,6 @@ void RegisterCallAndMessageChecker(ExprEngine &Eng);
 void RegisterDereferenceChecker(ExprEngine &Eng);
 void RegisterDivZeroChecker(ExprEngine &Eng);
 void RegisterReturnUndefChecker(ExprEngine &Eng);
-void RegisterUndefBranchChecker(ExprEngine &Eng);
 void RegisterUndefinedArraySubscriptChecker(ExprEngine &Eng);
 void RegisterUndefinedAssignmentChecker(ExprEngine &Eng);
 void RegisterVLASizeChecker(ExprEngine &Eng);
