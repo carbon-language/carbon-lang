@@ -75,6 +75,10 @@ def ObjCUnusedIvarsChecker : Checker<"UnusedIvars">,
 
 let ParentPackage = Core in {
 
+def UndefResultChecker : Checker<"UndefBinOpResult">,
+  HelpText<"Check for undefined results of non-assignment binary operators">,
+  DescFile<"UndefResultChecker.cpp">;
+
 def NoReturnFunctionChecker : Checker<"NoReturnFunc">,
   HelpText<"Evaluate functions that do not return to the caller">,
   DescFile<"NoReturnFunctionChecker.cpp">;
