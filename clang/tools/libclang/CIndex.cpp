@@ -1797,8 +1797,8 @@ void EnqueueVisitor::
 VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E) {
   AddExplicitTemplateArgs(E->getOptionalExplicitTemplateArgs());
   AddDeclarationNameInfo(E);
-  if (NestedNameSpecifier *Qualifier = E->getQualifier())
-    AddNestedNameSpecifier(Qualifier, E->getQualifierRange());
+  if (NestedNameSpecifierLoc QualifierLoc = E->getQualifierLoc())
+    AddNestedNameSpecifierLoc(QualifierLoc);
   if (!E->isImplicitAccess())
     AddStmt(E->getBase());
 }

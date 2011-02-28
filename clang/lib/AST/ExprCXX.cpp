@@ -689,20 +689,20 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
                                                  Expr *Base, QualType BaseType,
                                                  bool IsArrow,
                                                  SourceLocation OperatorLoc,
-                                                 NestedNameSpecifier *Qualifier,
-                                                 SourceRange QualifierRange,
+                                           NestedNameSpecifierLoc QualifierLoc,
                                           NamedDecl *FirstQualifierFoundInScope,
                                           DeclarationNameInfo MemberNameInfo,
                                    const TemplateArgumentListInfo *TemplateArgs)
   : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
          VK_LValue, OK_Ordinary, true, true,
          ((Base && Base->containsUnexpandedParameterPack()) ||
-          (Qualifier && Qualifier->containsUnexpandedParameterPack()) ||
+          (QualifierLoc && 
+           QualifierLoc.getNestedNameSpecifier()
+                                       ->containsUnexpandedParameterPack()) ||
           MemberNameInfo.containsUnexpandedParameterPack())),
     Base(Base), BaseType(BaseType), IsArrow(IsArrow),
     HasExplicitTemplateArgs(TemplateArgs != 0),
-    OperatorLoc(OperatorLoc),
-    Qualifier(Qualifier), QualifierRange(QualifierRange),
+    OperatorLoc(OperatorLoc), QualifierLoc(QualifierLoc), 
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
     MemberNameInfo(MemberNameInfo) {
   if (TemplateArgs) {
@@ -719,18 +719,19 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
                           Expr *Base, QualType BaseType,
                           bool IsArrow,
                           SourceLocation OperatorLoc,
-                          NestedNameSpecifier *Qualifier,
-                          SourceRange QualifierRange,
+                          NestedNameSpecifierLoc QualifierLoc,
                           NamedDecl *FirstQualifierFoundInScope,
                           DeclarationNameInfo MemberNameInfo)
   : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
          VK_LValue, OK_Ordinary, true, true,
          ((Base && Base->containsUnexpandedParameterPack()) ||
-          (Qualifier && Qualifier->containsUnexpandedParameterPack()) ||
+          (QualifierLoc && 
+           QualifierLoc.getNestedNameSpecifier()->
+                                         containsUnexpandedParameterPack()) ||
           MemberNameInfo.containsUnexpandedParameterPack())),
     Base(Base), BaseType(BaseType), IsArrow(IsArrow),
     HasExplicitTemplateArgs(false), OperatorLoc(OperatorLoc),
-    Qualifier(Qualifier), QualifierRange(QualifierRange),
+    QualifierLoc(QualifierLoc), 
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
     MemberNameInfo(MemberNameInfo) { }
 
@@ -738,15 +739,14 @@ CXXDependentScopeMemberExpr *
 CXXDependentScopeMemberExpr::Create(ASTContext &C,
                                 Expr *Base, QualType BaseType, bool IsArrow,
                                 SourceLocation OperatorLoc,
-                                NestedNameSpecifier *Qualifier,
-                                SourceRange QualifierRange,
+                                NestedNameSpecifierLoc QualifierLoc,
                                 NamedDecl *FirstQualifierFoundInScope,
                                 DeclarationNameInfo MemberNameInfo,
                                 const TemplateArgumentListInfo *TemplateArgs) {
   if (!TemplateArgs)
     return new (C) CXXDependentScopeMemberExpr(C, Base, BaseType,
                                                IsArrow, OperatorLoc,
-                                               Qualifier, QualifierRange,
+                                               QualifierLoc,
                                                FirstQualifierFoundInScope,
                                                MemberNameInfo);
 
@@ -757,7 +757,7 @@ CXXDependentScopeMemberExpr::Create(ASTContext &C,
   void *Mem = C.Allocate(size, llvm::alignOf<CXXDependentScopeMemberExpr>());
   return new (Mem) CXXDependentScopeMemberExpr(C, Base, BaseType,
                                                IsArrow, OperatorLoc,
-                                               Qualifier, QualifierRange,
+                                               QualifierLoc,
                                                FirstQualifierFoundInScope,
                                                MemberNameInfo, TemplateArgs);
 }
@@ -768,8 +768,8 @@ CXXDependentScopeMemberExpr::CreateEmpty(ASTContext &C,
                                          unsigned NumTemplateArgs) {
   if (!HasExplicitTemplateArgs)
     return new (C) CXXDependentScopeMemberExpr(C, 0, QualType(),
-                                               0, SourceLocation(), 0,
-                                               SourceRange(), 0,
+                                               0, SourceLocation(), 
+                                               NestedNameSpecifierLoc(), 0,
                                                DeclarationNameInfo());
 
   std::size_t size = sizeof(CXXDependentScopeMemberExpr) +
@@ -777,8 +777,8 @@ CXXDependentScopeMemberExpr::CreateEmpty(ASTContext &C,
   void *Mem = C.Allocate(size, llvm::alignOf<CXXDependentScopeMemberExpr>());
   CXXDependentScopeMemberExpr *E
     =  new (Mem) CXXDependentScopeMemberExpr(C, 0, QualType(),
-                                             0, SourceLocation(), 0,
-                                             SourceRange(), 0,
+                                             0, SourceLocation(), 
+                                             NestedNameSpecifierLoc(), 0,
                                              DeclarationNameInfo(), 0);
   E->HasExplicitTemplateArgs = true;
   return E;

@@ -1196,8 +1196,7 @@ ASTStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   Writer.AddTypeRef(E->getBaseType(), Record);
   Record.push_back(E->isArrow());
   Writer.AddSourceLocation(E->getOperatorLoc(), Record);
-  Writer.AddNestedNameSpecifier(E->getQualifier(), Record);
-  Writer.AddSourceRange(E->getQualifierRange(), Record);
+  Writer.AddNestedNameSpecifierLoc(E->getQualifierLoc(), Record);
   Writer.AddDeclRef(E->getFirstQualifierFoundInScope(), Record);
   Writer.AddDeclarationNameInfo(E->MemberNameInfo, Record);
   Code = serialization::EXPR_CXX_DEPENDENT_SCOPE_MEMBER;

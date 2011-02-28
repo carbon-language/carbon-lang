@@ -1975,16 +1975,15 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildCXXDependentScopeMemberExpr(Expr *BaseE,
-                                                  QualType BaseType,
-                                                  bool IsArrow,
-                                                  SourceLocation OperatorLoc,
-                                              NestedNameSpecifier *Qualifier,
-                                                  SourceRange QualifierRange,
+                                                QualType BaseType,
+                                                bool IsArrow,
+                                                SourceLocation OperatorLoc,
+                                          NestedNameSpecifierLoc QualifierLoc,
                                             NamedDecl *FirstQualifierInScope,
                                    const DeclarationNameInfo &MemberNameInfo,
                               const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
-    SS.MakeTrivial(SemaRef.Context, Qualifier, QualifierRange);
+    SS.Adopt(QualifierLoc);
 
     return SemaRef.BuildMemberReferenceExpr(BaseE, BaseType,
                                             OperatorLoc, IsArrow,
@@ -2601,10 +2600,11 @@ TreeTransform<Derived>::TransformNestedNameSpecifierLoc(
         << TL.getType() << SS.getRange();
       return NestedNameSpecifierLoc();
     }
-  }
+    }
     
-    // The qualifier-in-scope only applies to the leftmost entity.
+    // The qualifier-in-scope and object type only apply to the leftmost entity.
     FirstQualifierInScope = 0;
+    ObjectType = QualType();
   }
   
   // Don't rebuild the nested-name-specifier if we don't have to.
@@ -3273,17 +3273,6 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
                                                    CXXScopeSpec &SS) {
   // FIXME: Painfully copy-paste from the above!
   
-  // TODO: in some cases, we might have some verification to do here.
-  if (ObjectType.isNull()) {
-    TypeLocBuilder TLB;
-    TLB.reserve(TL.getFullDataSize());
-    QualType Result = getDerived().TransformType(TLB, TL);
-    if (Result.isNull())
-      return TypeLoc();
-    
-    return TLB.getTypeSourceInfo(SemaRef.Context, Result)->getTypeLoc();
-  }
-  
   QualType T = TL.getType();
   if (getDerived().AlreadyTransformed(T))
     return TL;
@@ -3308,12 +3297,9 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
       = cast<DependentTemplateSpecializationTypeLoc>(TL);
     
     TemplateName Template
-    = SemaRef.Context.getDependentTemplateName(
-                                         SpecTL.getTypePtr()->getQualifier(),
-                                         SpecTL.getTypePtr()->getIdentifier());
-    
-    Template = getDerived().TransformTemplateName(Template, ObjectType, 
-                                                  UnqualLookup);
+      = getDerived().RebuildTemplateName(SS.getScopeRep(), SS.getRange(), 
+                                         *SpecTL.getTypePtr()->getIdentifier(), 
+                                         ObjectType, UnqualLookup);
     if (Template.isNull())
       return TypeLoc();
     
@@ -7079,16 +7065,16 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
   // the member name.
   NamedDecl *FirstQualifierInScope
     = getDerived().TransformFirstQualifierInScope(
-                                          E->getFirstQualifierFoundInScope(),
-                                          E->getQualifierRange().getBegin());
+                                            E->getFirstQualifierFoundInScope(),
+                                            E->getQualifierLoc().getBeginLoc());
 
-  NestedNameSpecifier *Qualifier = 0;
+  NestedNameSpecifierLoc QualifierLoc;
   if (E->getQualifier()) {
-    Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                      E->getQualifierRange(),
-                                                      ObjectType,
-                                                      FirstQualifierInScope);
-    if (!Qualifier)
+    QualifierLoc
+      = getDerived().TransformNestedNameSpecifierLoc(E->getQualifierLoc(),
+                                                     ObjectType,
+                                                     FirstQualifierInScope);
+    if (!QualifierLoc)
       return ExprError();
   }
 
@@ -7107,7 +7093,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
     if (!getDerived().AlwaysRebuild() &&
         Base.get() == OldBase &&
         BaseType == E->getBaseType() &&
-        Qualifier == E->getQualifier() &&
+        QualifierLoc == E->getQualifierLoc() &&
         NameInfo.getName() == E->getMember() &&
         FirstQualifierInScope == E->getFirstQualifierFoundInScope())
       return SemaRef.Owned(E);
@@ -7116,8 +7102,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                                        BaseType,
                                                        E->isArrow(),
                                                        E->getOperatorLoc(),
-                                                       Qualifier,
-                                                       E->getQualifierRange(),
+                                                       QualifierLoc,
                                                        FirstQualifierInScope,
                                                        NameInfo,
                                                        /*TemplateArgs*/ 0);
@@ -7133,8 +7118,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                                      BaseType,
                                                      E->isArrow(),
                                                      E->getOperatorLoc(),
-                                                     Qualifier,
-                                                     E->getQualifierRange(),
+                                                     QualifierLoc,
                                                      FirstQualifierInScope,
                                                      NameInfo,
                                                      &TransArgs);

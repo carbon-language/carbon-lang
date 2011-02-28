@@ -65,6 +65,12 @@ void PseudoDestructorExprCheck(
 template<typename T>
 struct DependentScopedDeclRefExpr {
   void f() {
-    outer_alias::inner::X0<T>::value = 17;
+    outer_alias::inner::X0<typename add_reference<T>::type 
+      * // expected-error{{as a pointer to a reference of type}}
+      >::value = 17;
   }
 };
+
+void DependentScopedDeclRefExprCheck(DependentScopedDeclRefExpr<int> t) {
+  t.f(); // expected-note{{in instantiation of member function}}
+}

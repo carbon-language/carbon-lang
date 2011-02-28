@@ -2186,10 +2186,7 @@ class CXXDependentScopeMemberExpr : public Expr {
   SourceLocation OperatorLoc;
 
   /// \brief The nested-name-specifier that precedes the member name, if any.
-  NestedNameSpecifier *Qualifier;
-
-  /// \brief The source range covering the nested name specifier.
-  SourceRange QualifierRange;
+  NestedNameSpecifierLoc QualifierLoc;
 
   /// \brief In a qualified member access expression such as t->Base::f, this
   /// member stores the resolves of name lookup in the context of the member
@@ -2208,19 +2205,19 @@ class CXXDependentScopeMemberExpr : public Expr {
   CXXDependentScopeMemberExpr(ASTContext &C,
                           Expr *Base, QualType BaseType, bool IsArrow,
                           SourceLocation OperatorLoc,
-                          NestedNameSpecifier *Qualifier,
-                          SourceRange QualifierRange,
+                          NestedNameSpecifierLoc QualifierLoc,
                           NamedDecl *FirstQualifierFoundInScope,
                           DeclarationNameInfo MemberNameInfo,
                           const TemplateArgumentListInfo *TemplateArgs);
 
+  friend class ASTStmtReader;
+  
 public:
   CXXDependentScopeMemberExpr(ASTContext &C,
                               Expr *Base, QualType BaseType,
                               bool IsArrow,
                               SourceLocation OperatorLoc,
-                              NestedNameSpecifier *Qualifier,
-                              SourceRange QualifierRange,
+                              NestedNameSpecifierLoc QualifierLoc,
                               NamedDecl *FirstQualifierFoundInScope,
                               DeclarationNameInfo MemberNameInfo);
 
@@ -2228,8 +2225,7 @@ public:
   Create(ASTContext &C,
          Expr *Base, QualType BaseType, bool IsArrow,
          SourceLocation OperatorLoc,
-         NestedNameSpecifier *Qualifier,
-         SourceRange QualifierRange,
+         NestedNameSpecifierLoc QualifierLoc,
          NamedDecl *FirstQualifierFoundInScope,
          DeclarationNameInfo MemberNameInfo,
          const TemplateArgumentListInfo *TemplateArgs);
@@ -2249,30 +2245,27 @@ public:
     assert(!isImplicitAccess());
     return cast<Expr>(Base);
   }
-  void setBase(Expr *E) { Base = E; }
 
   QualType getBaseType() const { return BaseType; }
-  void setBaseType(QualType T) { BaseType = T; }
 
   /// \brief Determine whether this member expression used the '->'
   /// operator; otherwise, it used the '.' operator.
   bool isArrow() const { return IsArrow; }
-  void setArrow(bool A) { IsArrow = A; }
 
   /// \brief Retrieve the location of the '->' or '.' operator.
   SourceLocation getOperatorLoc() const { return OperatorLoc; }
-  void setOperatorLoc(SourceLocation L) { OperatorLoc = L; }
 
   /// \brief Retrieve the nested-name-specifier that qualifies the member
   /// name.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
-  void setQualifier(NestedNameSpecifier *NNS) { Qualifier = NNS; }
+  NestedNameSpecifier *getQualifier() const { 
+    return QualifierLoc.getNestedNameSpecifier(); 
+  }
 
-  /// \brief Retrieve the source range covering the nested-name-specifier
-  /// that qualifies the member name.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-  void setQualifierRange(SourceRange R) { QualifierRange = R; }
-
+  /// \brief Retrieve the nested-name-specifier that qualifies the member
+  /// name, with source location information.
+  NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
+  
+  
   /// \brief Retrieve the first part of the nested-name-specifier that was
   /// found in the scope of the member access expression when the member access
   /// was initially parsed.
@@ -2287,26 +2280,20 @@ public:
   NamedDecl *getFirstQualifierFoundInScope() const {
     return FirstQualifierFoundInScope;
   }
-  void setFirstQualifierFoundInScope(NamedDecl *D) {
-    FirstQualifierFoundInScope = D;
-  }
 
   /// \brief Retrieve the name of the member that this expression
   /// refers to.
   const DeclarationNameInfo &getMemberNameInfo() const {
     return MemberNameInfo;
   }
-  void setMemberNameInfo(const DeclarationNameInfo &N) { MemberNameInfo = N; }
 
   /// \brief Retrieve the name of the member that this expression
   /// refers to.
   DeclarationName getMember() const { return MemberNameInfo.getName(); }
-  void setMember(DeclarationName N) { MemberNameInfo.setName(N); }
 
   // \brief Retrieve the location of the name of the member that this
   // expression refers to.
   SourceLocation getMemberLoc() const { return MemberNameInfo.getLoc(); }
-  void setMemberLoc(SourceLocation L) { MemberNameInfo.setLoc(L); }
 
   /// \brief Determines whether this member expression actually had a C++
   /// template argument list explicitly specified, e.g., x.f<int>.
@@ -2376,7 +2363,7 @@ public:
     if (!isImplicitAccess())
       Range.setBegin(Base->getSourceRange().getBegin());
     else if (getQualifier())
-      Range.setBegin(getQualifierRange().getBegin());
+      Range.setBegin(getQualifierLoc().getBeginLoc());
     else
       Range.setBegin(MemberNameInfo.getBeginLoc());
 

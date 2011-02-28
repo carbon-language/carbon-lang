@@ -368,9 +368,6 @@ Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
                                  const DeclarationNameInfo &NameInfo,
                                  bool isAddressOfOperand,
                            const TemplateArgumentListInfo *TemplateArgs) {
-  NestedNameSpecifier *Qualifier
-    = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
-
   DeclContext *DC = getFunctionLevelDeclContext();
 
   if (!isAddressOfOperand &&
@@ -386,7 +383,7 @@ Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
                                                      /*This*/ 0, ThisType,
                                                      /*IsArrow*/ true,
                                                      /*Op*/ SourceLocation(),
-                                                     Qualifier, SS.getRange(),
+                                               SS.getWithLocInContext(Context),
                                                      FirstQualifierInScope,
                                                      NameInfo,
                                                      TemplateArgs));

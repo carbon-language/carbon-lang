@@ -2183,6 +2183,8 @@ ASTContext::getTemplateSpecializationTypeInfo(TemplateName Name,
                                               SourceLocation NameLoc,
                                         const TemplateArgumentListInfo &Args,
                                               QualType CanonType) const {
+  assert(!Name.getAsDependentTemplateName() && 
+         "No dependent template names here!");
   QualType TST = getTemplateSpecializationType(Name, Args, CanonType);
 
   TypeSourceInfo *DI = CreateTypeSourceInfo(TST);
@@ -2200,6 +2202,9 @@ QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgumentListInfo &Args,
                                           QualType Canon) const {
+  assert(!Template.getAsDependentTemplateName() && 
+         "No dependent template names here!");
+  
   unsigned NumArgs = Args.size();
 
   llvm::SmallVector<TemplateArgument, 4> ArgVec;
@@ -2216,6 +2221,9 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgument *Args,
                                           unsigned NumArgs,
                                           QualType Canon) const {
+  assert(!Template.getAsDependentTemplateName() && 
+         "No dependent template names here!");
+  
   if (!Canon.isNull())
     Canon = getCanonicalType(Canon);
   else
@@ -2240,6 +2248,9 @@ QualType
 ASTContext::getCanonicalTemplateSpecializationType(TemplateName Template,
                                                    const TemplateArgument *Args,
                                                    unsigned NumArgs) const {
+  assert(!Template.getAsDependentTemplateName() && 
+         "No dependent template names here!");
+  
   // Build the canonical template specialization type.
   TemplateName CanonTemplate = getCanonicalTemplateName(Template);
   llvm::SmallVector<TemplateArgument, 4> CanonArgs;

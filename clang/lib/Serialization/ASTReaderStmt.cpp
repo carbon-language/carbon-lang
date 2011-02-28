@@ -1201,14 +1201,13 @@ ASTStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
     ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
                                      Record[Idx++]);
 
-  E->setBase(Reader.ReadSubExpr());
-  E->setBaseType(Reader.GetType(Record[Idx++]));
-  E->setArrow(Record[Idx++]);
-  E->setOperatorLoc(ReadSourceLocation(Record, Idx));
-  E->setQualifier(Reader.ReadNestedNameSpecifier(Record, Idx));
-  E->setQualifierRange(ReadSourceRange(Record, Idx));
-  E->setFirstQualifierFoundInScope(
-                        cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  E->Base = Reader.ReadSubExpr();
+  E->BaseType = Reader.GetType(Record[Idx++]);
+  E->IsArrow = Record[Idx++];
+  E->OperatorLoc = ReadSourceLocation(Record, Idx);
+  E->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
+  E->FirstQualifierFoundInScope
+                      = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
   ReadDeclarationNameInfo(E->MemberNameInfo, Record, Idx);
 }
 

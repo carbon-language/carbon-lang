@@ -1350,10 +1350,17 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             TemplateArgumentListInfo TList;
             if (ULE->hasExplicitTemplateArgs())
               ULE->copyTemplateArgumentsInto(TList);
+            
+            // FIXME: We should have nested-name-specifier location info in
+            // the ULE itself.
+            CXXScopeSpec SS;
+            SS.MakeTrivial(Context, ULE->getQualifier(), 
+                           ULE->getQualifierRange());
+
             CXXDependentScopeMemberExpr *DepExpr =
                 CXXDependentScopeMemberExpr::Create(
                     Context, DepThis, DepThisType, true, SourceLocation(),
-                    ULE->getQualifier(), ULE->getQualifierRange(), NULL,
+                    SS.getWithLocInContext(Context), NULL,
                     R.getLookupNameInfo(), &TList);
             CallsUndergoingInstantiation.back()->setCallee(DepExpr);
           } else {
@@ -3269,8 +3276,7 @@ Sema::ActOnDependentMemberExpr(Expr *BaseExpr, QualType BaseType,
   // must have pointer type, and the accessed type is the pointee.
   return Owned(CXXDependentScopeMemberExpr::Create(Context, BaseExpr, BaseType,
                                                    IsArrow, OpLoc,
-                                                   SS.getScopeRep(),
-                                                   SS.getRange(),
+                                               SS.getWithLocInContext(Context),
                                                    FirstQualifierInScope,
                                                    NameInfo, TemplateArgs));
 }

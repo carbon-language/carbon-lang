@@ -1684,7 +1684,7 @@ DEF_TRAVERSE_STMT(WhileStmt, { })
 
 
 DEF_TRAVERSE_STMT(CXXDependentScopeMemberExpr, {
-    TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
+    TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
     if (S->hasExplicitTemplateArgs()) {
       TRY_TO(TraverseTemplateArgumentLocsHelper(
           S->getTemplateArgs(), S->getNumTemplateArgs()));
