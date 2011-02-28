@@ -516,6 +516,9 @@ public:
   void setNextSwitchCase(SwitchCase *SC) { NextSwitchCase = SC; }
 
   Stmt *getSubStmt();
+  const Stmt *getSubStmt() const {
+    return const_cast<SwitchCase*>(this)->getSubStmt();
+  }
 
   SourceRange getSourceRange() const { return SourceRange(); }
 
