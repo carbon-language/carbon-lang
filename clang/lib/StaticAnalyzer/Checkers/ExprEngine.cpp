@@ -331,7 +331,6 @@ static void RegisterInternalChecks(ExprEngine &Eng) {
   RegisterUndefinedArraySubscriptChecker(Eng);
   RegisterUndefinedAssignmentChecker(Eng);
   RegisterUndefBranchChecker(Eng);
-  RegisterUndefCapturedBlockVarChecker(Eng);
 }
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
