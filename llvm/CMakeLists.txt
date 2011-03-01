@@ -135,15 +135,27 @@ include(AddLLVMDefinitions)
 
 option(LLVM_ENABLE_PIC "Build Position-Independent Code" ON)
 
-include(config-ix)
+# MSVC has a gazillion warnings with this.
+if( MSVC )
+  option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." OFF)
+else( MSVC )
+  option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
+endif()
 
-include(HandleLLVMOptions)
+option(LLVM_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
+option(LLVM_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 
 if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
   option(LLVM_ENABLE_ASSERTIONS "Enable assertions" OFF)
 else()
   option(LLVM_ENABLE_ASSERTIONS "Enable assertions" ON)
 endif()
+
+# All options refered to from HandleLLVMOptions have to be specified
+# BEFORE this include, otherwise options will not be correctly set on
+# first cmake run
+include(config-ix)
+include(HandleLLVMOptions)
 
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/config.h.cmake
@@ -160,16 +172,6 @@ configure_file(
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
-
-# MSVC has a gazillion warnings with this.
-if( MSVC )
-  option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." OFF)
-else( MSVC )
-  option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
-endif()
-
-option(LLVM_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
-option(LLVM_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
