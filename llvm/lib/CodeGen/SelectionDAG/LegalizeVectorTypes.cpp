@@ -63,27 +63,33 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::VECTOR_SHUFFLE:    R = ScalarizeVecRes_VECTOR_SHUFFLE(N); break;
   case ISD::VSETCC:            R = ScalarizeVecRes_VSETCC(N); break;
 
+  case ISD::ANY_EXTEND:
   case ISD::CTLZ:
   case ISD::CTPOP:
   case ISD::CTTZ:
   case ISD::FABS:
+  case ISD::FCEIL:
   case ISD::FCOS:
+  case ISD::FEXP:
+  case ISD::FEXP2:
+  case ISD::FFLOOR:
+  case ISD::FLOG:
+  case ISD::FLOG10:
+  case ISD::FLOG2:
+  case ISD::FNEARBYINT:
   case ISD::FNEG:
+  case ISD::FP_EXTEND:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
+  case ISD::FRINT:
   case ISD::FSIN:
   case ISD::FSQRT:
   case ISD::FTRUNC:
-  case ISD::FFLOOR:
-  case ISD::FCEIL:
-  case ISD::FRINT:
-  case ISD::FNEARBYINT:
-  case ISD::UINT_TO_FP:
+  case ISD::SIGN_EXTEND:
   case ISD::SINT_TO_FP:
   case ISD::TRUNCATE:
-  case ISD::SIGN_EXTEND:
+  case ISD::UINT_TO_FP:
   case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND:
     R = ScalarizeVecRes_UnaryOp(N);
     break;
 
@@ -427,33 +433,33 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
     SplitVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N), Lo, Hi);
     break;
 
-  case ISD::CTTZ:
+  case ISD::ANY_EXTEND:
   case ISD::CTLZ:
   case ISD::CTPOP:
-  case ISD::FNEG:
+  case ISD::CTTZ:
   case ISD::FABS:
-  case ISD::FSQRT:
-  case ISD::FSIN:
-  case ISD::FCOS:
-  case ISD::FTRUNC:
-  case ISD::FFLOOR:
   case ISD::FCEIL:
-  case ISD::FRINT:
+  case ISD::FCOS:
+  case ISD::FEXP:
+  case ISD::FEXP2:
+  case ISD::FFLOOR:
+  case ISD::FLOG:
+  case ISD::FLOG10:
+  case ISD::FLOG2:
   case ISD::FNEARBYINT:
+  case ISD::FNEG:
   case ISD::FP_EXTEND:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
-  case ISD::SINT_TO_FP:
-  case ISD::UINT_TO_FP:
-  case ISD::TRUNCATE:
+  case ISD::FRINT:
+  case ISD::FSIN:
+  case ISD::FSQRT:
+  case ISD::FTRUNC:
   case ISD::SIGN_EXTEND:
+  case ISD::SINT_TO_FP:
+  case ISD::TRUNCATE:
+  case ISD::UINT_TO_FP:
   case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND:
-  case ISD::FEXP:
-  case ISD::FEXP2:
-  case ISD::FLOG:
-  case ISD::FLOG2:
-  case ISD::FLOG10:
     SplitVecRes_UnaryOp(N, Lo, Hi);
     break;
 
@@ -990,11 +996,11 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::CTTZ:
     case ISD::CTLZ:
     case ISD::CTPOP:
+    case ISD::FP_EXTEND:
     case ISD::FP_TO_SINT:
     case ISD::FP_TO_UINT:
     case ISD::SINT_TO_FP:
     case ISD::UINT_TO_FP:
-    case ISD::FP_EXTEND:
     case ISD::FTRUNC:
     case ISD::TRUNCATE:
     case ISD::SIGN_EXTEND:
@@ -1271,15 +1277,16 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
     Res = WidenVecRes_Shift(N);
     break;
 
+  case ISD::ANY_EXTEND:
+  case ISD::FP_EXTEND:
   case ISD::FP_ROUND:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
-  case ISD::SINT_TO_FP:
-  case ISD::UINT_TO_FP:
-  case ISD::TRUNCATE:
   case ISD::SIGN_EXTEND:
+  case ISD::SINT_TO_FP:
+  case ISD::TRUNCATE:
+  case ISD::UINT_TO_FP:
   case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND:
     Res = WidenVecRes_Convert(N);
     break;
 
@@ -1287,15 +1294,20 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::CTPOP:
   case ISD::CTTZ:
   case ISD::FABS:
+  case ISD::FCEIL:
   case ISD::FCOS:
-  case ISD::FNEG:
-  case ISD::FSIN:
-  case ISD::FSQRT:
   case ISD::FEXP:
   case ISD::FEXP2:
+  case ISD::FFLOOR:
   case ISD::FLOG:
-  case ISD::FLOG2:
   case ISD::FLOG10:
+  case ISD::FLOG2:
+  case ISD::FNEARBYINT:
+  case ISD::FNEG:
+  case ISD::FRINT:
+  case ISD::FSIN:
+  case ISD::FSQRT:
+  case ISD::FTRUNC:
     Res = WidenVecRes_Unary(N);
     break;
   }
@@ -2005,8 +2017,8 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
   case ISD::EXTRACT_VECTOR_ELT: Res = WidenVecOp_EXTRACT_VECTOR_ELT(N); break;
   case ISD::STORE:              Res = WidenVecOp_STORE(N); break;
 
-  case ISD::FP_ROUND:
   case ISD::FP_EXTEND:
+  case ISD::FP_ROUND:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:
