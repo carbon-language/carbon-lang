@@ -701,7 +701,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   // the addressing mode obtained from the non-PHI roots of the graph
   // are equivalent.
   Value *Consensus = 0;
-  unsigned NumUses = 0;
+  unsigned NumUsesConsensus = 0;
   SmallVector<Instruction*, 16> AddrModeInsts;
   ExtAddrMode AddrMode;
   while (!worklist.empty()) {
@@ -734,9 +734,10 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     // such root as representative, select the one with the most uses in order
     // to keep the cost modeling heuristics in AddressingModeMatcher applicable.
     if (!Consensus || NewAddrMode == AddrMode) {
-      if (V->getNumUses() > NumUses) {
+      unsigned NumUses = V->getNumUses();
+      if (NumUses > NumUsesConsensus) {
         Consensus = V;
-        NumUses = V->getNumUses();
+        NumUsesConsensus = NumUses;
         AddrMode = NewAddrMode;
         AddrModeInsts = NewAddrModeInsts;
       }
