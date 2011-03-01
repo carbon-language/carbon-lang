@@ -16,6 +16,7 @@ add_clang_library(clangStaticAnalyzerCore
   CheckerManager.cpp
   Environment.cpp
   ExplodedGraph.cpp
+  ExprEngine.cpp
   FlatStore.cpp
   BlockCounter.cpp
   CXXExprEngine.cpp

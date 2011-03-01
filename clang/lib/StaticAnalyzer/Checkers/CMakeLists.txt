@@ -27,7 +27,6 @@ add_clang_library(clangStaticAnalyzerCheckers
   DebugCheckers.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
-  ExprEngine.cpp
   FixedAddressChecker.cpp
   IdempotentOperationChecker.cpp
   LLVMConventionsChecker.cpp
