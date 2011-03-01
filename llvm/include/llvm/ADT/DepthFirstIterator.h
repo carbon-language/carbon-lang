@@ -143,8 +143,7 @@ public:
   static inline _Self end(const GraphT& G, SetType &S) { return _Self(S); }
 
   inline bool operator==(const _Self& x) const {
-    return VisitStack.size() == x.VisitStack.size() &&
-           VisitStack == x.VisitStack;
+    return VisitStack == x.VisitStack;
   }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
