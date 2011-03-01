@@ -1750,7 +1750,8 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
 
 /// EmitDeclare - Emit local variable declaration debug info.
 void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
-                              llvm::Value *Storage, CGBuilderTy &Builder) {
+                              llvm::Value *Storage, 
+                              unsigned ArgNo, CGBuilderTy &Builder) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
@@ -1810,7 +1811,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
         DBuilder.createComplexVariable(Tag, 
                                        llvm::DIDescriptor(RegionStack.back()),
                                        VD->getName(), Unit, Line, Ty,
-                                       addr.data(), addr.size());
+                                       addr.data(), addr.size(), ArgNo);
       
       // Insert an llvm.dbg.declare into the current block.
       llvm::Instruction *Call =
@@ -1823,7 +1824,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     llvm::DIVariable D =
       DBuilder.createLocalVariable(Tag, llvm::DIDescriptor(Scope), 
                                    Name, Unit, Line, Ty, 
-                                   CGM.getLangOptions().Optimize, Flags);
+                                   CGM.getLangOptions().Optimize, Flags, ArgNo);
     
     // Insert an llvm.dbg.declare into the current block.
     llvm::Instruction *Call =
@@ -1853,7 +1854,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
         llvm::DIVariable D =
           DBuilder.createLocalVariable(Tag, llvm::DIDescriptor(Scope),
                                        FieldName, Unit, Line, FieldTy, 
-                                       CGM.getLangOptions().Optimize, Flags);
+                                       CGM.getLangOptions().Optimize, Flags,
+                                       ArgNo);
           
         // Insert an llvm.dbg.declare into the current block.
         llvm::Instruction *Call =
@@ -1927,7 +1929,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
                                             llvm::Value *Storage,
                                             CGBuilderTy &Builder) {
-  EmitDeclare(VD, llvm::dwarf::DW_TAG_auto_variable, Storage, Builder);
+  EmitDeclare(VD, llvm::dwarf::DW_TAG_auto_variable, Storage, 0, Builder);
 }
 
 void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
@@ -1940,8 +1942,9 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
 /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
 /// variable declaration.
 void CGDebugInfo::EmitDeclareOfArgVariable(const VarDecl *VD, llvm::Value *AI,
+                                           unsigned ArgNo,
                                            CGBuilderTy &Builder) {
-  EmitDeclare(VD, llvm::dwarf::DW_TAG_arg_variable, AI, Builder);
+  EmitDeclare(VD, llvm::dwarf::DW_TAG_arg_variable, AI, ArgNo, Builder);
 }
 
 namespace {
@@ -2076,7 +2079,8 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
     DBuilder.createLocalVariable(llvm::dwarf::DW_TAG_arg_variable,
                                  llvm::DIDescriptor(scope), 
                                  name, tunit, line, type, 
-                                 CGM.getLangOptions().Optimize, flags);
+                                 CGM.getLangOptions().Optimize, flags,
+                                 cast<llvm::Argument>(addr)->getArgNo() + 1);
     
   // Insert an llvm.dbg.value into the current block.
   llvm::Instruction *declare =
