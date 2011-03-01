@@ -1104,13 +1104,9 @@ FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
         llvm::Triple::x86_64)
     Lib32 = true;
     
-  getProgramPaths().push_back(getDriver().Dir + "/../libexec");
-  getProgramPaths().push_back("/usr/libexec");
   if (Lib32) {
-    getFilePaths().push_back(getDriver().Dir + "/../lib32");
     getFilePaths().push_back("/usr/lib32");
   } else {
-    getFilePaths().push_back(getDriver().Dir + "/../lib");
     getFilePaths().push_back("/usr/lib");
   }
 }
