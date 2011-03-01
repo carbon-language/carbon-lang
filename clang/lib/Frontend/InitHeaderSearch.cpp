@@ -428,6 +428,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
   llvm::Triple::OSType os = triple.getOS();
 
   switch (os) {
+  case llvm::Triple::FreeBSD:
   case llvm::Triple::NetBSD:
     break;
   default:
