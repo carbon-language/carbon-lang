@@ -221,8 +221,12 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                                 TemplateArgsPtr,
                                                 TemplateId->RAngleLoc,
                                                 CCLoc,
-                                                EnteringContext))
-          SS.SetInvalid(SourceRange(SS.getBeginLoc(), CCLoc));
+                                                EnteringContext)) {
+          SourceLocation StartLoc 
+            = SS.getBeginLoc().isValid()? SS.getBeginLoc()
+                                        : TemplateId->TemplateNameLoc;
+          SS.SetInvalid(SourceRange(StartLoc, CCLoc));
+        }
         
         TemplateId->Destroy();
         continue;
