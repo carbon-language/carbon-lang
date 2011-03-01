@@ -191,18 +191,20 @@ void ExprEngine::processEndWorklist(bool hasWorkRemaining) {
 void ExprEngine::processCFGElement(const CFGElement E, 
                                   StmtNodeBuilder& builder) {
   switch (E.getKind()) {
-  case CFGElement::Statement:
-    ProcessStmt(E.getAs<CFGStmt>(), builder);
-    break;
-  case CFGElement::Initializer:
-    ProcessInitializer(E.getAs<CFGInitializer>(), builder);
-    break;
-  case CFGElement::ImplicitDtor:
-    ProcessImplicitDtor(E.getAs<CFGImplicitDtor>(), builder);
-    break;
-  default:
-    // Suppress compiler warning.
-    llvm_unreachable("Unexpected CFGElement kind.");
+    case CFGElement::Invalid:
+      llvm_unreachable("Unexpected CFGElement kind.");
+    case CFGElement::Statement:
+      ProcessStmt(E.getAs<CFGStmt>()->getStmt(), builder);
+      return;
+    case CFGElement::Initializer:
+      ProcessInitializer(E.getAs<CFGInitializer>()->getInitializer(), builder);
+      return;
+    case CFGElement::AutomaticObjectDtor:
+    case CFGElement::BaseDtor:
+    case CFGElement::MemberDtor:
+    case CFGElement::TemporaryDtor:
+      ProcessImplicitDtor(*E.getAs<CFGImplicitDtor>(), builder);
+      return;
   }
 }
 
@@ -345,7 +347,7 @@ void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
                                        StmtNodeBuilder &builder) {
   Builder = &builder;
 
-  switch (D.getDtorKind()) {
+  switch (D.getKind()) {
   case CFGElement::AutomaticObjectDtor:
     ProcessAutomaticObjDtor(cast<CFGAutomaticObjDtor>(D), builder);
     break;

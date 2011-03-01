@@ -219,11 +219,8 @@ public:
   /// getStmt - Return the current block-level expression associated with
   ///  this builder.
   const Stmt* getStmt() const { 
-    CFGStmt CS = B[Idx].getAs<CFGStmt>();
-    if (CS)
-      return CS.getStmt();
-    else
-      return 0;
+    const CFGStmt *CS = B[Idx].getAs<CFGStmt>();
+    return CS ? CS->getStmt() : 0;
   }
 
   /// getBlock - Return the CFGBlock associated with the block-level expression

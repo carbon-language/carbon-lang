@@ -1170,13 +1170,14 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       }
 
       if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
-        if (CFGStmt S = BE->getFirstElement().getAs<CFGStmt>()) {
-          if (IsControlFlowExpr(S)) {
+        if (const CFGStmt *S = BE->getFirstElement().getAs<CFGStmt>()) {
+          const Stmt *stmt = S->getStmt();
+          if (IsControlFlowExpr(stmt)) {
             // Add the proper context for '&&', '||', and '?'.
-            EB.addContext(S);
+            EB.addContext(stmt);
           }
           else
-            EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
+            EB.addExtendedContext(PDB.getEnclosingStmtLocation(stmt).asStmt());
         }
         
         break;

@@ -2704,6 +2704,10 @@ CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
   return Builder.buildCFG(D, Statement, C, BO);
 }
 
+const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 // CFG: Queries for BlkExprs.
 //===----------------------------------------------------------------------===//
@@ -2740,8 +2744,8 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
 
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
     for (CFGBlock::iterator BI=(*I)->begin(), EI=(*I)->end(); BI != EI; ++BI)
-      if (CFGStmt S = BI->getAs<CFGStmt>())
-        FindSubExprAssignments(S, SubExprAssignments);
+      if (const CFGStmt *S = BI->getAs<CFGStmt>())
+        FindSubExprAssignments(S->getStmt(), SubExprAssignments);
 
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I) {
 
@@ -2749,10 +2753,10 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
     // block-level that are block-level expressions.
 
     for (CFGBlock::iterator BI=(*I)->begin(), EI=(*I)->end(); BI != EI; ++BI) {
-      CFGStmt CS = BI->getAs<CFGStmt>();
-      if (!CS.isValid())
+      const CFGStmt *CS = BI->getAs<CFGStmt>();
+      if (!CS)
         continue;
-      if (Expr* Exp = dyn_cast<Expr>(CS.getStmt())) {
+      if (Expr* Exp = dyn_cast<Expr>(CS->getStmt())) {
 
         if (BinaryOperator* B = dyn_cast<BinaryOperator>(Exp)) {
           // Assignment expressions that are not nested within another
@@ -2845,8 +2849,8 @@ CFG::~CFG() {
 namespace {
 
 class StmtPrinterHelper : public PrinterHelper  {
-  typedef llvm::DenseMap<Stmt*,std::pair<unsigned,unsigned> > StmtMapTy;
-  typedef llvm::DenseMap<Decl*,std::pair<unsigned,unsigned> > DeclMapTy;
+  typedef llvm::DenseMap<const Stmt*,std::pair<unsigned,unsigned> > StmtMapTy;
+  typedef llvm::DenseMap<const Decl*,std::pair<unsigned,unsigned> > DeclMapTy;
   StmtMapTy StmtMap;
   DeclMapTy DeclMap;
   signed currentBlock;
@@ -2855,42 +2859,62 @@ class StmtPrinterHelper : public PrinterHelper  {
 public:
 
   StmtPrinterHelper(const CFG* cfg, const LangOptions &LO)
-    : currentBlock(0), currentStmt(0), LangOpts(LO) {
+    : currentBlock(0), currentStmt(0), LangOpts(LO)
+  {
     for (CFG::const_iterator I = cfg->begin(), E = cfg->end(); I != E; ++I ) {
       unsigned j = 1;
       for (CFGBlock::const_iterator BI = (*I)->begin(), BEnd = (*I)->end() ;
            BI != BEnd; ++BI, ++j ) {        
-        if (CFGStmt SE = BI->getAs<CFGStmt>()) {
+        if (const CFGStmt *SE = BI->getAs<CFGStmt>()) {
+          const Stmt *stmt= SE->getStmt();
           std::pair<unsigned, unsigned> P((*I)->getBlockID(), j);
-          StmtMap[SE] = P;
+          StmtMap[stmt] = P;
 
-          if (DeclStmt* DS = dyn_cast<DeclStmt>(SE.getStmt())) {
-              DeclMap[DS->getSingleDecl()] = P;
-
-          } else if (IfStmt* IS = dyn_cast<IfStmt>(SE.getStmt())) {
-            if (VarDecl* VD = IS->getConditionVariable())
-              DeclMap[VD] = P;
-
-          } else if (ForStmt* FS = dyn_cast<ForStmt>(SE.getStmt())) {
-            if (VarDecl* VD = FS->getConditionVariable())
-              DeclMap[VD] = P;
-
-          } else if (WhileStmt* WS = dyn_cast<WhileStmt>(SE.getStmt())) {
-            if (VarDecl* VD = WS->getConditionVariable())
-              DeclMap[VD] = P;
-
-          } else if (SwitchStmt* SS = dyn_cast<SwitchStmt>(SE.getStmt())) {
-            if (VarDecl* VD = SS->getConditionVariable())
-              DeclMap[VD] = P;
-
-          } else if (CXXCatchStmt* CS = dyn_cast<CXXCatchStmt>(SE.getStmt())) {
-            if (VarDecl* VD = CS->getExceptionDecl())
-              DeclMap[VD] = P;
+          switch (stmt->getStmtClass()) {
+            case Stmt::DeclStmtClass:
+                DeclMap[cast<DeclStmt>(stmt)->getSingleDecl()] = P;
+                break;
+            case Stmt::IfStmtClass: {
+              const VarDecl *var = cast<IfStmt>(stmt)->getConditionVariable();
+              if (var)
+                DeclMap[var] = P;
+              break;
+            }
+            case Stmt::ForStmtClass: {
+              const VarDecl *var = cast<ForStmt>(stmt)->getConditionVariable();
+              if (var)
+                DeclMap[var] = P;
+              break;
+            }
+            case Stmt::WhileStmtClass: {
+              const VarDecl *var =
+                cast<WhileStmt>(stmt)->getConditionVariable();
+              if (var)
+                DeclMap[var] = P;
+              break;
+            }
+            case Stmt::SwitchStmtClass: {
+              const VarDecl *var =
+                cast<SwitchStmt>(stmt)->getConditionVariable();
+              if (var)
+                DeclMap[var] = P;
+              break;
+            }
+            case Stmt::CXXCatchStmtClass: {
+              const VarDecl *var =
+                cast<CXXCatchStmt>(stmt)->getExceptionDecl();
+              if (var)
+                DeclMap[var] = P;
+              break;
+            }
+            default:
+              break;
           }
         }
       }
     }
   }
+  
 
   virtual ~StmtPrinterHelper() {}
 
@@ -2913,7 +2937,7 @@ public:
     return true;
   }
 
-  bool handleDecl(Decl* D, llvm::raw_ostream& OS) {
+  bool handleDecl(const Decl* D, llvm::raw_ostream& OS) {
     DeclMapTy::iterator I = DeclMap.find(D);
 
     if (I == DeclMap.end())
@@ -3031,8 +3055,8 @@ public:
 
 static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
                        const CFGElement &E) {
-  if (CFGStmt CS = E.getAs<CFGStmt>()) {
-    Stmt *S = CS;
+  if (const CFGStmt *CS = E.getAs<CFGStmt>()) {
+    Stmt *S = CS->getStmt();
     
     if (Helper) {
 
@@ -3069,8 +3093,8 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     if (isa<Expr>(S))
       OS << '\n';
 
-  } else if (CFGInitializer IE = E.getAs<CFGInitializer>()) {
-    CXXCtorInitializer* I = IE;
+  } else if (const CFGInitializer *IE = E.getAs<CFGInitializer>()) {
+    const CXXCtorInitializer *I = IE->getInitializer();
     if (I->isBaseInitializer())
       OS << I->getBaseClass()->getAsCXXRecordDecl()->getName();
     else OS << I->getAnyMember()->getName();
@@ -3084,8 +3108,8 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
       OS << " (Base initializer)\n";
     else OS << " (Member initializer)\n";
 
-  } else if (CFGAutomaticObjDtor DE = E.getAs<CFGAutomaticObjDtor>()){
-    VarDecl* VD = DE.getVarDecl();
+  } else if (const CFGAutomaticObjDtor *DE = E.getAs<CFGAutomaticObjDtor>()){
+    const VarDecl* VD = DE->getVarDecl();
     Helper->handleDecl(VD, OS);
 
     const Type* T = VD->getType().getTypePtr();
@@ -3097,13 +3121,13 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     OS << ".~" << T->getAsCXXRecordDecl()->getName().str() << "()";
     OS << " (Implicit destructor)\n";
 
-  } else if (CFGBaseDtor BE = E.getAs<CFGBaseDtor>()) {
-    const CXXBaseSpecifier *BS = BE.getBaseSpecifier();
+  } else if (const CFGBaseDtor *BE = E.getAs<CFGBaseDtor>()) {
+    const CXXBaseSpecifier *BS = BE->getBaseSpecifier();
     OS << "~" << BS->getType()->getAsCXXRecordDecl()->getName() << "()";
     OS << " (Base object destructor)\n";
 
-  } else if (CFGMemberDtor ME = E.getAs<CFGMemberDtor>()) {
-    FieldDecl *FD = ME.getFieldDecl();
+  } else if (const CFGMemberDtor *ME = E.getAs<CFGMemberDtor>()) {
+    const FieldDecl *FD = ME->getFieldDecl();
 
     const Type *T = FD->getType().getTypePtr();
     if (const Type *ET = T->getArrayElementTypeNoTypeQual())
@@ -3113,8 +3137,8 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
     OS << ".~" << T->getAsCXXRecordDecl()->getName() << "()";
     OS << " (Member object destructor)\n";
 
-  } else if (CFGTemporaryDtor TE = E.getAs<CFGTemporaryDtor>()) {
-    CXXBindTemporaryExpr *BT = TE.getBindTemporaryExpr();
+  } else if (const CFGTemporaryDtor *TE = E.getAs<CFGTemporaryDtor>()) {
+    const CXXBindTemporaryExpr *BT = TE->getBindTemporaryExpr();
     OS << "~" << BT->getType()->getAsCXXRecordDecl()->getName() << "()";
     OS << " (Temporary object destructor)\n";
   }

@@ -277,8 +277,8 @@ private:
     
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {
       CFGElement El = *I;
-      if (CFGStmt S = El.getAs<CFGStmt>())
-        ProcessStmt(S, recordStmtValues, AnalysisDirTag());
+      if (const CFGStmt *S = El.getAs<CFGStmt>())
+        ProcessStmt(S->getStmt(), recordStmtValues, AnalysisDirTag());
     }
 
     TF.VisitTerminator(const_cast<CFGBlock*>(B));
@@ -293,8 +293,8 @@ private:
 
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {
       CFGElement El = *I;
-      if (CFGStmt S = El.getAs<CFGStmt>())
-        ProcessStmt(S, recordStmtValues, AnalysisDirTag());
+      if (const CFGStmt *S = El.getAs<CFGStmt>())
+        ProcessStmt(S->getStmt(), recordStmtValues, AnalysisDirTag());
     }
   }
 

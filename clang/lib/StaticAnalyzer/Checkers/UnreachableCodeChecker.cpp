@@ -112,8 +112,8 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
     // such as llvm_unreachable.
     if (!CB->empty()) {
       CFGElement First = CB->front();
-      if (CFGStmt S = First.getAs<CFGStmt>()) {
-        if (const CallExpr *CE = dyn_cast<CallExpr>(S.getStmt())) {
+      if (const CFGStmt *S = First.getAs<CFGStmt>()) {
+        if (const CallExpr *CE = dyn_cast<CallExpr>(S->getStmt())) {
           if (CE->isBuiltinCall(Ctx) == Builtin::BI__builtin_unreachable)
             continue;
         }
@@ -164,8 +164,8 @@ void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB,
 // Find the Stmt* in a CFGBlock for reporting a warning
 const Stmt *UnreachableCodeChecker::getUnreachableStmt(const CFGBlock *CB) {
   for (CFGBlock::const_iterator I = CB->begin(), E = CB->end(); I != E; ++I) {
-    if (CFGStmt S = I->getAs<CFGStmt>())
-      return S;
+    if (const CFGStmt *S = I->getAs<CFGStmt>())
+      return S->getStmt();
   }
   if (const Stmt *S = CB->getTerminator())
     return S;

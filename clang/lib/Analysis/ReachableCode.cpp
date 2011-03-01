@@ -31,11 +31,11 @@ static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
   R1 = R2 = SourceRange();
 
   if (sn < b.size()) {
-    CFGStmt CS = b[sn].getAs<CFGStmt>();
+    const CFGStmt *CS = b[sn].getAs<CFGStmt>();
     if (!CS)
       return SourceLocation();
 
-    S = CS.getStmt(); 
+    S = CS->getStmt(); 
   } else if (b.getTerminator())
     S = b.getTerminator();
   else
@@ -49,7 +49,7 @@ static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
       const BinaryOperator *BO = cast<BinaryOperator>(S);
       if (BO->getOpcode() == BO_Comma) {
         if (sn+1 < b.size())
-          return b[sn+1].getAs<CFGStmt>().getStmt()->getLocStart();
+          return b[sn+1].getAs<CFGStmt>()->getStmt()->getLocStart();
         const CFGBlock *n = &b;
         while (1) {
           if (n->getTerminator())
@@ -60,7 +60,7 @@ static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
           if (n->pred_size() != 1)
             return SourceLocation();
           if (!n->empty())
-            return n[0][0].getAs<CFGStmt>().getStmt()->getLocStart();
+            return n[0][0].getAs<CFGStmt>()->getStmt()->getLocStart();
         }
       }
       R1 = BO->getLHS()->getSourceRange();
