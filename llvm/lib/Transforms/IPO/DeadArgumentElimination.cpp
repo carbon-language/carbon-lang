@@ -294,7 +294,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
 /// instead.
 bool DAE::RemoveDeadArgumentsFromCallers(Function &Fn)
 {
-  if (Fn.isDeclaration())
+  if (Fn.isDeclaration() || Fn.mayBeOverridden())
     return false;
 
   // Functions with local linkage should already have been handled.

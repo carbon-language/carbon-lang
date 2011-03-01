@@ -37,3 +37,16 @@ entry:
   call void @f(i32 %tmp)
   ret void
 }
+
+; Check that callers are not transformed for weak definitions.
+define weak i32 @weak_f(i32 %x) nounwind {
+entry:
+  ret i32 0
+}
+define void @weak_f_caller() nounwind {
+entry:
+; CHECK: call i32 @weak_f(i32 10)
+  %call = tail call i32 @weak_f(i32 10)
+  ret void
+}
+
