@@ -595,7 +595,7 @@ public:
   void replace_filename(const Twine &filename, file_status st = file_status(),
                               file_status symlink_st = file_status());
 
-  StringRef path() const { return Path; }
+  const std::string &path() const { return Path; }
   error_code status(file_status &result) const;
   error_code symlink_status(file_status &result) const;
 
