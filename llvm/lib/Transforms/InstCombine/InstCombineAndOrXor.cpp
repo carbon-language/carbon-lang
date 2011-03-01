@@ -14,6 +14,7 @@
 #include "InstCombine.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
@@ -767,7 +768,17 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       LHSCC == ICmpInst::ICMP_SGE || LHSCC == ICmpInst::ICMP_SLE ||
       RHSCC == ICmpInst::ICMP_SGE || RHSCC == ICmpInst::ICMP_SLE)
     return 0;
-  
+
+  // Make a constant range that's the intersection of the two icmp ranges.
+  // If the intersection is empty, we know that the result is false.
+  ConstantRange LHSRange = 
+    ConstantRange::makeICmpRegion(LHSCC, LHSCst->getValue());
+  ConstantRange RHSRange = 
+    ConstantRange::makeICmpRegion(RHSCC, RHSCst->getValue());
+
+  if (LHSRange.intersectWith(RHSRange).isEmptySet())
+    return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
+
   // We can't fold (ugt x, C) & (sgt x, C2).
   if (!PredicatesFoldable(LHSCC, RHSCC))
     return 0;
@@ -800,10 +811,6 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   case ICmpInst::ICMP_EQ:
     switch (RHSCC) {
     default: llvm_unreachable("Unknown integer condition code!");
-    case ICmpInst::ICMP_EQ:         // (X == 13 & X == 15) -> false
-    case ICmpInst::ICMP_UGT:        // (X == 13 & X >  15) -> false
-    case ICmpInst::ICMP_SGT:        // (X == 13 & X >  15) -> false
-      return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
     case ICmpInst::ICMP_NE:         // (X == 13 & X != 15) -> X == 13
     case ICmpInst::ICMP_ULT:        // (X == 13 & X <  15) -> X == 13
     case ICmpInst::ICMP_SLT:        // (X == 13 & X <  15) -> X == 13
@@ -851,9 +858,6 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   case ICmpInst::ICMP_SLT:
     switch (RHSCC) {
     default: llvm_unreachable("Unknown integer condition code!");
-    case ICmpInst::ICMP_EQ:         // (X s< 13 & X == 15) -> false
-    case ICmpInst::ICMP_SGT:        // (X s< 13 & X s> 15) -> false
-      return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
     case ICmpInst::ICMP_UGT:        // (X s< 13 & X u> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X s< 13 & X != 15) -> X < 13

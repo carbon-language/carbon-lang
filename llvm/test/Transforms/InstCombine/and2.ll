@@ -26,3 +26,12 @@ define i32 @test3(i32 %X, i32 %Y) {
 ; CHECK-NEXT: and i32 %X, %Y
 ; CHECK-NEXT: ret
 }
+
+define i1 @test4(i32 %X) {
+  %a = icmp ult i32 %X, 31
+  %b = icmp slt i32 %X, 0
+  %c = and i1 %a, %b
+  ret i1 %c
+; CHECK: @test4
+; CHECK-NEXT: ret i1 false
+}
