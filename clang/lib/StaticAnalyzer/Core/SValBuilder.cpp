@@ -25,12 +25,12 @@ using namespace ento;
 // Basic SVal creation.
 //===----------------------------------------------------------------------===//
 
-DefinedOrUnknownSVal SValBuilder::makeZeroVal(QualType T) {
-  if (Loc::isLocType(T))
+DefinedOrUnknownSVal SValBuilder::makeZeroVal(QualType type) {
+  if (Loc::isLocType(type))
     return makeNull();
 
-  if (T->isIntegerType())
-    return makeIntVal(0, T);
+  if (type->isIntegerType())
+    return makeIntVal(0, type);
 
   // FIXME: Handle floats.
   // FIXME: Handle structs.
@@ -39,44 +39,44 @@ DefinedOrUnknownSVal SValBuilder::makeZeroVal(QualType T) {
 
 
 NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
-                                const llvm::APSInt& v, QualType T) {
+                                const llvm::APSInt& rhs, QualType type) {
   // The Environment ensures we always get a persistent APSInt in
   // BasicValueFactory, so we don't need to get the APSInt from
   // BasicValueFactory again.
-  assert(!Loc::isLocType(T));
-  return nonloc::SymExprVal(SymMgr.getSymIntExpr(lhs, op, v, T));
+  assert(!Loc::isLocType(type));
+  return nonloc::SymExprVal(SymMgr.getSymIntExpr(lhs, op, rhs, type));
 }
 
 NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
-                                const SymExpr *rhs, QualType T) {
+                               const SymExpr *rhs, QualType type) {
   assert(SymMgr.getType(lhs) == SymMgr.getType(rhs));
-  assert(!Loc::isLocType(T));
-  return nonloc::SymExprVal(SymMgr.getSymSymExpr(lhs, op, rhs, T));
+  assert(!Loc::isLocType(type));
+  return nonloc::SymExprVal(SymMgr.getSymSymExpr(lhs, op, rhs, type));
 }
 
 
-SVal SValBuilder::convertToArrayIndex(SVal V) {
-  if (V.isUnknownOrUndef())
-    return V;
+SVal SValBuilder::convertToArrayIndex(SVal val) {
+  if (val.isUnknownOrUndef())
+    return val;
 
   // Common case: we have an appropriately sized integer.
-  if (nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&V)) {
+  if (nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&val)) {
     const llvm::APSInt& I = CI->getValue();
     if (I.getBitWidth() == ArrayIndexWidth && I.isSigned())
-      return V;
+      return val;
   }
 
-  return evalCastNL(cast<NonLoc>(V), ArrayIndexTy);
+  return evalCastFromNonLoc(cast<NonLoc>(val), ArrayIndexTy);
 }
 
 DefinedOrUnknownSVal 
-SValBuilder::getRegionValueSymbolVal(const TypedRegion* R) {
-  QualType T = R->getValueType();
+SValBuilder::getRegionValueSymbolVal(const TypedRegion* region) {
+  QualType T = region->getValueType();
 
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
-  SymbolRef sym = SymMgr.getRegionValueSymbol(R);
+  SymbolRef sym = SymMgr.getRegionValueSymbol(region);
 
   if (Loc::isLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
@@ -84,15 +84,15 @@ SValBuilder::getRegionValueSymbolVal(const TypedRegion* R) {
   return nonloc::SymbolVal(sym);
 }
 
-DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *SymbolTag,
-                                                        const Expr *E,
-                                                        unsigned Count) {
-  QualType T = E->getType();
+DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
+                                                       const Expr *expr,
+                                                       unsigned count) {
+  QualType T = expr->getType();
 
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
-  SymbolRef sym = SymMgr.getConjuredSymbol(E, Count, SymbolTag);
+  SymbolRef sym = SymMgr.getConjuredSymbol(expr, count, symbolTag);
 
   if (Loc::isLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
@@ -100,31 +100,32 @@ DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *SymbolTag,
   return nonloc::SymbolVal(sym);
 }
 
-DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *SymbolTag,
-                                                        const Expr *E,
-                                                        QualType T,
-                                                        unsigned Count) {
+DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
+                                                       const Expr *expr,
+                                                       QualType type,
+                                                       unsigned count) {
   
-  if (!SymbolManager::canSymbolicate(T))
+  if (!SymbolManager::canSymbolicate(type))
     return UnknownVal();
 
-  SymbolRef sym = SymMgr.getConjuredSymbol(E, T, Count, SymbolTag);
+  SymbolRef sym = SymMgr.getConjuredSymbol(expr, type, count, symbolTag);
 
-  if (Loc::isLocType(T))
+  if (Loc::isLocType(type))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   return nonloc::SymbolVal(sym);
 }
 
-DefinedSVal SValBuilder::getMetadataSymbolVal(const void *SymbolTag,
-                                               const MemRegion *MR,
-                                               const Expr *E, QualType T,
-                                               unsigned Count) {
-  assert(SymbolManager::canSymbolicate(T) && "Invalid metadata symbol type");
+DefinedSVal SValBuilder::getMetadataSymbolVal(const void *symbolTag,
+                                              const MemRegion *region,
+                                              const Expr *expr, QualType type,
+                                              unsigned count) {
+  assert(SymbolManager::canSymbolicate(type) && "Invalid metadata symbol type");
 
-  SymbolRef sym = SymMgr.getMetadataSymbol(MR, E, T, Count, SymbolTag);
+  SymbolRef sym =
+      SymMgr.getMetadataSymbol(region, expr, type, count, symbolTag);
 
-  if (Loc::isLocType(T))
+  if (Loc::isLocType(type))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
 
   return nonloc::SymbolVal(sym);
@@ -132,13 +133,13 @@ DefinedSVal SValBuilder::getMetadataSymbolVal(const void *SymbolTag,
 
 DefinedOrUnknownSVal
 SValBuilder::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
-                                             const TypedRegion *R) {
-  QualType T = R->getValueType();
+                                             const TypedRegion *region) {
+  QualType T = region->getValueType();
 
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
-  SymbolRef sym = SymMgr.getDerivedSymbol(parentSymbol, R);
+  SymbolRef sym = SymMgr.getDerivedSymbol(parentSymbol, region);
 
   if (Loc::isLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
@@ -146,53 +147,53 @@ SValBuilder::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
   return nonloc::SymbolVal(sym);
 }
 
-DefinedSVal SValBuilder::getFunctionPointer(const FunctionDecl* FD) {
-  return loc::MemRegionVal(MemMgr.getFunctionTextRegion(FD));
+DefinedSVal SValBuilder::getFunctionPointer(const FunctionDecl* func) {
+  return loc::MemRegionVal(MemMgr.getFunctionTextRegion(func));
 }
 
-DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *D,
-                                          CanQualType locTy,
-                                          const LocationContext *LC) {
+DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *block,
+                                         CanQualType locTy,
+                                         const LocationContext *locContext) {
   const BlockTextRegion *BC =
-    MemMgr.getBlockTextRegion(D, locTy, LC->getAnalysisContext());
-  const BlockDataRegion *BD = MemMgr.getBlockDataRegion(BC, LC);
+    MemMgr.getBlockTextRegion(block, locTy, locContext->getAnalysisContext());
+  const BlockDataRegion *BD = MemMgr.getBlockDataRegion(BC, locContext);
   return loc::MemRegionVal(BD);
 }
 
 //===----------------------------------------------------------------------===//
 
-SVal SValBuilder::evalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
-                          SVal L, SVal R, QualType T) {
+SVal SValBuilder::evalBinOp(const GRState *state, BinaryOperator::Opcode op,
+                            SVal lhs, SVal rhs, QualType type) {
 
-  if (L.isUndef() || R.isUndef())
+  if (lhs.isUndef() || rhs.isUndef())
     return UndefinedVal();
 
-  if (L.isUnknown() || R.isUnknown())
+  if (lhs.isUnknown() || rhs.isUnknown())
     return UnknownVal();
 
-  if (isa<Loc>(L)) {
-    if (isa<Loc>(R))
-      return evalBinOpLL(ST, Op, cast<Loc>(L), cast<Loc>(R), T);
+  if (isa<Loc>(lhs)) {
+    if (isa<Loc>(rhs))
+      return evalBinOpLL(state, op, cast<Loc>(lhs), cast<Loc>(rhs), type);
 
-    return evalBinOpLN(ST, Op, cast<Loc>(L), cast<NonLoc>(R), T);
+    return evalBinOpLN(state, op, cast<Loc>(lhs), cast<NonLoc>(rhs), type);
   }
 
-  if (isa<Loc>(R)) {
+  if (isa<Loc>(rhs)) {
     // Support pointer arithmetic where the addend is on the left
     // and the pointer on the right.
-    assert(Op == BO_Add);
+    assert(op == BO_Add);
 
     // Commute the operands.
-    return evalBinOpLN(ST, Op, cast<Loc>(R), cast<NonLoc>(L), T);
+    return evalBinOpLN(state, op, cast<Loc>(rhs), cast<NonLoc>(lhs), type);
   }
 
-  return evalBinOpNN(ST, Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
+  return evalBinOpNN(state, op, cast<NonLoc>(lhs), cast<NonLoc>(rhs), type);
 }
 
-DefinedOrUnknownSVal SValBuilder::evalEQ(const GRState *ST,
-                                       DefinedOrUnknownSVal L,
-                                       DefinedOrUnknownSVal R) {
-  return cast<DefinedOrUnknownSVal>(evalBinOp(ST, BO_EQ, L, R,
+DefinedOrUnknownSVal SValBuilder::evalEQ(const GRState *state,
+                                         DefinedOrUnknownSVal lhs,
+                                         DefinedOrUnknownSVal rhs) {
+  return cast<DefinedOrUnknownSVal>(evalBinOp(state, BO_EQ, lhs, rhs,
                                               Context.IntTy));
 }
 
@@ -213,11 +214,11 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
   
   // Check for casts from integers to integers.
   if (castTy->isIntegerType() && originalTy->isIntegerType())
-    return evalCastNL(cast<NonLoc>(val), castTy);
+    return evalCastFromNonLoc(cast<NonLoc>(val), castTy);
 
   // Check for casts from pointers to integers.
   if (castTy->isIntegerType() && Loc::isLocType(originalTy))
-    return evalCastL(cast<Loc>(val), castTy);
+    return evalCastFromLoc(cast<Loc>(val), castTy);
 
   // Check for casts from integers to pointers.
   if (Loc::isLocType(castTy) && originalTy->isIntegerType()) {
@@ -256,7 +257,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     // need the original decayed type.
     //    QualType elemTy = cast<ArrayType>(originalTy)->getElementType();
     //    QualType pointerTy = C.getPointerType(elemTy);
-    return evalCastL(cast<Loc>(val), castTy);
+    return evalCastFromLoc(cast<Loc>(val), castTy);
   }
 
   // Check for casts from a region to a specific type.
@@ -305,6 +306,6 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
 
 DispatchCast:
   // All other cases.
-  return isa<Loc>(val) ? evalCastL(cast<Loc>(val), castTy)
-                       : evalCastNL(cast<NonLoc>(val), castTy);
+  return isa<Loc>(val) ? evalCastFromLoc(cast<Loc>(val), castTy)
+                       : evalCastFromNonLoc(cast<NonLoc>(val), castTy);
 }

@@ -49,10 +49,10 @@ protected:
   const unsigned ArrayIndexWidth;
 
 public:
-  // FIXME: Make these protected again one RegionStoreManager correctly
-  // handles loads from differening bound value types.
-  virtual SVal evalCastNL(NonLoc val, QualType castTy) = 0;
-  virtual SVal evalCastL(Loc val, QualType castTy) = 0;
+  // FIXME: Make these protected again once RegionStoreManager correctly
+  // handles loads from different bound value types.
+  virtual SVal evalCastFromNonLoc(NonLoc val, QualType castTy) = 0;
+  virtual SVal evalCastFromLoc(Loc val, QualType castTy) = 0;
 
 public:
   SValBuilder(llvm::BumpPtrAllocator &alloc, ASTContext &context,
@@ -66,30 +66,30 @@ public:
 
   virtual ~SValBuilder() {}
 
-  SVal evalCast(SVal V, QualType castTy, QualType originalType);
+  SVal evalCast(SVal val, QualType castTy, QualType originalType);
   
   virtual SVal evalMinus(NonLoc val) = 0;
 
   virtual SVal evalComplement(NonLoc val) = 0;
 
-  virtual SVal evalBinOpNN(const GRState *state, BinaryOperator::Opcode Op,
+  virtual SVal evalBinOpNN(const GRState *state, BinaryOperator::Opcode op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy) = 0;
 
-  virtual SVal evalBinOpLL(const GRState *state, BinaryOperator::Opcode Op,
+  virtual SVal evalBinOpLL(const GRState *state, BinaryOperator::Opcode op,
                            Loc lhs, Loc rhs, QualType resultTy) = 0;
 
-  virtual SVal evalBinOpLN(const GRState *state, BinaryOperator::Opcode Op,
+  virtual SVal evalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy) = 0;
 
   /// getKnownValue - evaluates a given SVal. If the SVal has only one possible
   ///  (integer) value, that value is returned. Otherwise, returns NULL.
-  virtual const llvm::APSInt *getKnownValue(const GRState *state, SVal V) = 0;
+  virtual const llvm::APSInt *getKnownValue(const GRState *state, SVal val) = 0;
   
-  SVal evalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
-                 SVal L, SVal R, QualType T);
+  SVal evalBinOp(const GRState *state, BinaryOperator::Opcode op,
+                 SVal lhs, SVal rhs, QualType type);
   
-  DefinedOrUnknownSVal evalEQ(const GRState *ST, DefinedOrUnknownSVal L,
-                              DefinedOrUnknownSVal R);
+  DefinedOrUnknownSVal evalEQ(const GRState *state, DefinedOrUnknownSVal lhs,
+                              DefinedOrUnknownSVal rhs);
 
   ASTContext &getContext() { return Context; }
   const ASTContext &getContext() const { return Context; }
@@ -115,46 +115,48 @@ public:
 
   // Forwarding methods to SymbolManager.
 
-  const SymbolConjured* getConjuredSymbol(const Stmt* E, QualType T,
-                                          unsigned VisitCount,
-                                          const void* SymbolTag = 0) {
-    return SymMgr.getConjuredSymbol(E, T, VisitCount, SymbolTag);
+  const SymbolConjured* getConjuredSymbol(const Stmt* stmt, QualType type,
+                                          unsigned visitCount,
+                                          const void* symbolTag = 0) {
+    return SymMgr.getConjuredSymbol(stmt, type, visitCount, symbolTag);
   }
 
-  const SymbolConjured* getConjuredSymbol(const Expr* E, unsigned VisitCount,
-                                          const void* SymbolTag = 0) {
-    return SymMgr.getConjuredSymbol(E, VisitCount, SymbolTag);
+  const SymbolConjured* getConjuredSymbol(const Expr* expr, unsigned visitCount,
+                                          const void* symbolTag = 0) {
+    return SymMgr.getConjuredSymbol(expr, visitCount, symbolTag);
   }
 
   /// makeZeroVal - Construct an SVal representing '0' for the specified type.
-  DefinedOrUnknownSVal makeZeroVal(QualType T);
+  DefinedOrUnknownSVal makeZeroVal(QualType type);
 
-  /// getRegionValueSymbolVal - make a unique symbol for value of R.
-  DefinedOrUnknownSVal getRegionValueSymbolVal(const TypedRegion *R);
+  /// getRegionValueSymbolVal - make a unique symbol for value of region.
+  DefinedOrUnknownSVal getRegionValueSymbolVal(const TypedRegion *region);
 
-  DefinedOrUnknownSVal getConjuredSymbolVal(const void *SymbolTag,
-                                            const Expr *E, unsigned Count);
-  DefinedOrUnknownSVal getConjuredSymbolVal(const void *SymbolTag,
-                                            const Expr *E, QualType T,
-                                            unsigned Count);
+  DefinedOrUnknownSVal getConjuredSymbolVal(const void *symbolTag,
+                                            const Expr *expr, unsigned count);
+  DefinedOrUnknownSVal getConjuredSymbolVal(const void *symbolTag,
+                                            const Expr *expr, QualType type,
+                                            unsigned count);
 
-  DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
-                                                      const TypedRegion *R);
+  DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(
+      SymbolRef parentSymbol, const TypedRegion *region);
 
-  DefinedSVal getMetadataSymbolVal(const void *SymbolTag, const MemRegion *MR,
-                                   const Expr *E, QualType T, unsigned Count);
+  DefinedSVal getMetadataSymbolVal(
+      const void *symbolTag, const MemRegion *region,
+      const Expr *expr, QualType type, unsigned count);
 
-  DefinedSVal getFunctionPointer(const FunctionDecl *FD);
+  DefinedSVal getFunctionPointer(const FunctionDecl *func);
   
-  DefinedSVal getBlockPointer(const BlockDecl *BD, CanQualType locTy,
-                              const LocationContext *LC);
+  DefinedSVal getBlockPointer(const BlockDecl *block, CanQualType locTy,
+                              const LocationContext *locContext);
 
-  NonLoc makeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals) {
-    return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
+  NonLoc makeCompoundVal(QualType type, llvm::ImmutableList<SVal> vals) {
+    return nonloc::CompoundVal(BasicVals.getCompoundValData(type, vals));
   }
 
-  NonLoc makeLazyCompoundVal(const void *store, const TypedRegion *R) {
-    return nonloc::LazyCompoundVal(BasicVals.getLazyCompoundValData(store, R));
+  NonLoc makeLazyCompoundVal(const void *store, const TypedRegion *region) {
+    return nonloc::LazyCompoundVal(
+        BasicVals.getLazyCompoundValData(store, region));
   }
 
   NonLoc makeZeroArrayIndex() {
@@ -165,60 +167,63 @@ public:
     return nonloc::ConcreteInt(BasicVals.getValue(idx, ArrayIndexTy));
   }
 
-  SVal convertToArrayIndex(SVal V);
+  SVal convertToArrayIndex(SVal val);
 
-  nonloc::ConcreteInt makeIntVal(const IntegerLiteral* I) {
-    return nonloc::ConcreteInt(BasicVals.getValue(I->getValue(),
-                                        I->getType()->isUnsignedIntegerType()));
+  nonloc::ConcreteInt makeIntVal(const IntegerLiteral* integer) {
+    return nonloc::ConcreteInt(
+        BasicVals.getValue(integer->getValue(),
+                           integer->getType()->isUnsignedIntegerType()));
   }
 
-  nonloc::ConcreteInt makeBoolVal(const CXXBoolLiteralExpr *E) {
-    return makeTruthVal(E->getValue());
+  nonloc::ConcreteInt makeBoolVal(const CXXBoolLiteralExpr *boolean) {
+    return makeTruthVal(boolean->getValue());
   }
 
-  nonloc::ConcreteInt makeIntVal(const llvm::APSInt& V) {
-    return nonloc::ConcreteInt(BasicVals.getValue(V));
+  nonloc::ConcreteInt makeIntVal(const llvm::APSInt& integer) {
+    return nonloc::ConcreteInt(BasicVals.getValue(integer));
   }
 
-  loc::ConcreteInt makeIntLocVal(const llvm::APSInt &v) {
-    return loc::ConcreteInt(BasicVals.getValue(v));
+  loc::ConcreteInt makeIntLocVal(const llvm::APSInt &integer) {
+    return loc::ConcreteInt(BasicVals.getValue(integer));
   }
 
-  NonLoc makeIntVal(const llvm::APInt& V, bool isUnsigned) {
-    return nonloc::ConcreteInt(BasicVals.getValue(V, isUnsigned));
+  NonLoc makeIntVal(const llvm::APInt& integer, bool isUnsigned) {
+    return nonloc::ConcreteInt(BasicVals.getValue(integer, isUnsigned));
   }
 
-  DefinedSVal makeIntVal(uint64_t X, QualType T) {
-    if (Loc::isLocType(T))
-      return loc::ConcreteInt(BasicVals.getValue(X, T));
+  DefinedSVal makeIntVal(uint64_t integer, QualType type) {
+    if (Loc::isLocType(type))
+      return loc::ConcreteInt(BasicVals.getValue(integer, type));
 
-    return nonloc::ConcreteInt(BasicVals.getValue(X, T));
+    return nonloc::ConcreteInt(BasicVals.getValue(integer, type));
   }
 
-  NonLoc makeIntVal(uint64_t X, bool isUnsigned) {
-    return nonloc::ConcreteInt(BasicVals.getIntValue(X, isUnsigned));
+  NonLoc makeIntVal(uint64_t integer, bool isUnsigned) {
+    return nonloc::ConcreteInt(BasicVals.getIntValue(integer, isUnsigned));
   }
 
-  NonLoc makeIntValWithPtrWidth(uint64_t X, bool isUnsigned) {
-    return nonloc::ConcreteInt(BasicVals.getIntWithPtrWidth(X, isUnsigned));
+  NonLoc makeIntValWithPtrWidth(uint64_t integer, bool isUnsigned) {
+    return nonloc::ConcreteInt(
+        BasicVals.getIntWithPtrWidth(integer, isUnsigned));
   }
 
-  NonLoc makeIntVal(uint64_t X, unsigned BitWidth, bool isUnsigned) {
-    return nonloc::ConcreteInt(BasicVals.getValue(X, BitWidth, isUnsigned));
+  NonLoc makeIntVal(uint64_t integer, unsigned bitWidth, bool isUnsigned) {
+    return nonloc::ConcreteInt(
+        BasicVals.getValue(integer, bitWidth, isUnsigned));
   }
 
-  NonLoc makeLocAsInteger(Loc V, unsigned Bits) {
-    return nonloc::LocAsInteger(BasicVals.getPersistentSValWithData(V, Bits));
+  NonLoc makeLocAsInteger(Loc loc, unsigned bits) {
+    return nonloc::LocAsInteger(BasicVals.getPersistentSValWithData(loc, bits));
   }
 
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
-                    const llvm::APSInt& rhs, QualType T);
+                    const llvm::APSInt& rhs, QualType type);
 
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
-                    const SymExpr *rhs, QualType T);
+                    const SymExpr *rhs, QualType type);
 
-  nonloc::ConcreteInt makeTruthVal(bool b, QualType T) {
-    return nonloc::ConcreteInt(BasicVals.getTruthValue(b, T));
+  nonloc::ConcreteInt makeTruthVal(bool b, QualType type) {
+    return nonloc::ConcreteInt(BasicVals.getTruthValue(b, type));
   }
 
   nonloc::ConcreteInt makeTruthVal(bool b) {
@@ -229,20 +234,20 @@ public:
     return loc::ConcreteInt(BasicVals.getZeroWithPtrWidth());
   }
 
-  Loc makeLoc(SymbolRef Sym) {
-    return loc::MemRegionVal(MemMgr.getSymbolicRegion(Sym));
+  Loc makeLoc(SymbolRef sym) {
+    return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
   }
 
-  Loc makeLoc(const MemRegion* R) {
-    return loc::MemRegionVal(R);
+  Loc makeLoc(const MemRegion* region) {
+    return loc::MemRegionVal(region);
   }
 
-  Loc makeLoc(const AddrLabelExpr *E) {
-    return loc::GotoLabel(E->getLabel());
+  Loc makeLoc(const AddrLabelExpr *expr) {
+    return loc::GotoLabel(expr->getLabel());
   }
 
-  Loc makeLoc(const llvm::APSInt& V) {
-    return loc::ConcreteInt(BasicVals.getValue(V));
+  Loc makeLoc(const llvm::APSInt& integer) {
+    return loc::ConcreteInt(BasicVals.getValue(integer));
   }
 
 };
