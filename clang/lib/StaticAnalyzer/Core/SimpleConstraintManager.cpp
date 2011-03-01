@@ -15,7 +15,6 @@
 #include "SimpleConstraintManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/Checker.h"
 
 namespace clang {
 

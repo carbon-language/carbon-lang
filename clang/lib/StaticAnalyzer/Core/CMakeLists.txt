@@ -11,7 +11,7 @@ add_clang_library(clangStaticAnalyzerCore
   BugReporter.cpp
   BugReporterVisitors.cpp
   CFRefCount.cpp
-  Checker.cpp
+  CheckerContext.cpp
   CheckerHelpers.cpp
   CheckerManager.cpp
   Environment.cpp

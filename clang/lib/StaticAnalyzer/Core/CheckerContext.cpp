@@ -1,4 +1,4 @@
-//== Checker.h - Abstract interface for checkers -----------------*- C++ -*--=//
+//== CheckerContext.cpp - Context info for path-sensitive checkers-----------=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines Checker and CheckerVisitor, classes used for creating
-//  domain-specific checks.
+//  This file defines CheckerContext that provides contextual info for
+//  path-sensitive checkers.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Core/PathSensitive/Checker.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 using namespace clang;
 using namespace ento;
-
-Checker::~Checker() {}
 
 CheckerContext::~CheckerContext() {
   // Do we need to autotransition?  'Dst' can get populated in a variety of
