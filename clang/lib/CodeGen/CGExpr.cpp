@@ -1425,7 +1425,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     llvm::Value *Base = EmitScalarExpr(E->getBase());
 
     Address = EmitCastToVoidPtr(Base);
-    Address = Builder.CreateInBoundsGEP(Address, Idx, "arrayidx");
+    if (getContext().getLangOptions().isSignedOverflowDefined())
+      Address = Builder.CreateGEP(Address, Idx, "arrayidx");
+    else
+      Address = Builder.CreateInBoundsGEP(Address, Idx, "arrayidx");
     Address = Builder.CreateBitCast(Address, Base->getType());
   } else if (const ObjCObjectType *OIT = E->getType()->getAs<ObjCObjectType>()){
     // Indexing over an interface, as in "NSString *P; P[4];"
@@ -1451,11 +1454,17 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     llvm::Value *Zero = llvm::ConstantInt::get(Int32Ty, 0);
     llvm::Value *Args[] = { Zero, Idx };
     
-    Address = Builder.CreateInBoundsGEP(ArrayPtr, Args, Args+2, "arrayidx");
+    if (getContext().getLangOptions().isSignedOverflowDefined())
+      Address = Builder.CreateGEP(ArrayPtr, Args, Args+2, "arrayidx");
+    else
+      Address = Builder.CreateInBoundsGEP(ArrayPtr, Args, Args+2, "arrayidx");
   } else {
     // The base must be a pointer, which is not an aggregate.  Emit it.
     llvm::Value *Base = EmitScalarExpr(E->getBase());
-    Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
+    if (getContext().getLangOptions().isSignedOverflowDefined())
+      Address = Builder.CreateGEP(Base, Idx, "arrayidx");
+    else
+      Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
   }
 
   QualType T = E->getBase()->getType()->getPointeeType();

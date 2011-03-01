@@ -239,6 +239,10 @@ public:
   void setSignedOverflowBehavior(SignedOverflowBehaviorTy V) {
     SignedOverflowBehavior = (unsigned)V;
   }
+
+  bool isSignedOverflowDefined() const {
+    return getSignedOverflowBehavior() == SOB_Defined;
+  }
 };
 
 /// Floating point control options

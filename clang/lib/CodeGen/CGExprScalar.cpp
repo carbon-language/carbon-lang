@@ -1295,7 +1295,10 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
         CGF.GetVLASize(CGF.getContext().getAsVariableArrayType(type));
       value = CGF.EmitCastToVoidPtr(value);
       if (!isInc) vlaSize = Builder.CreateNSWNeg(vlaSize, "vla.negsize");
-      value = Builder.CreateInBoundsGEP(value, vlaSize, "vla.inc");
+      if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
+        value = Builder.CreateGEP(value, vlaSize, "vla.inc");
+      else
+        value = Builder.CreateInBoundsGEP(value, vlaSize, "vla.inc");
       value = Builder.CreateBitCast(value, input->getType());
     
     // Arithmetic on function pointers (!) is just +-1.
@@ -1303,13 +1306,19 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
       llvm::Value *amt = llvm::ConstantInt::get(CGF.Int32Ty, amount);
 
       value = CGF.EmitCastToVoidPtr(value);
-      value = Builder.CreateInBoundsGEP(value, amt, "incdec.funcptr");
+      if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
+        value = Builder.CreateGEP(value, amt, "incdec.funcptr");
+      else
+        value = Builder.CreateInBoundsGEP(value, amt, "incdec.funcptr");
       value = Builder.CreateBitCast(value, input->getType());
 
     // For everything else, we can just do a simple increment.
     } else {
       llvm::Value *amt = llvm::ConstantInt::get(CGF.Int32Ty, amount);
-      value = Builder.CreateInBoundsGEP(value, amt, "incdec.ptr");
+      if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
+        value = Builder.CreateGEP(value, amt, "incdec.ptr");
+      else
+        value = Builder.CreateInBoundsGEP(value, amt, "incdec.ptr");
     }
 
   // Vector increment/decrement.
@@ -1357,7 +1366,10 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     llvm::Value *sizeValue =
       llvm::ConstantInt::get(CGF.SizeTy, size.getQuantity());
 
-    value = Builder.CreateInBoundsGEP(value, sizeValue, "incdec.objptr");
+    if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
+      value = Builder.CreateGEP(value, sizeValue, "incdec.objptr");
+    else
+      value = Builder.CreateInBoundsGEP(value, sizeValue, "incdec.objptr");
     value = Builder.CreateBitCast(value, input->getType());
   }
   
@@ -1889,6 +1901,8 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     return Builder.CreateBitCast(Res, Ptr->getType());
   }
 
+  if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
+    return Builder.CreateGEP(Ptr, Idx, "add.ptr");
   return Builder.CreateInBoundsGEP(Ptr, Idx, "add.ptr");
 }
 
@@ -1964,38 +1978,39 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
       return Builder.CreateBitCast(Res, Ops.LHS->getType());
     }
 
+    if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
+      return Builder.CreateGEP(Ops.LHS, Idx, "sub.ptr");
     return Builder.CreateInBoundsGEP(Ops.LHS, Idx, "sub.ptr");
-  } else {
-    // pointer - pointer
-    Value *LHS = Ops.LHS;
-    Value *RHS = Ops.RHS;
-
-    CharUnits ElementSize;
-
-    // Handle GCC extension for pointer arithmetic on void* and function pointer
-    // types.
-    if (LHSElementType->isVoidType() || LHSElementType->isFunctionType()) {
-      ElementSize = CharUnits::One();
-    } else {
-      ElementSize = CGF.getContext().getTypeSizeInChars(LHSElementType);
-    }
-
-    const llvm::Type *ResultType = ConvertType(Ops.Ty);
-    LHS = Builder.CreatePtrToInt(LHS, ResultType, "sub.ptr.lhs.cast");
-    RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
-    Value *BytesBetween = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
-
-    // Optimize out the shift for element size of 1.
-    if (ElementSize.isOne())
-      return BytesBetween;
-
-    // Otherwise, do a full sdiv. This uses the "exact" form of sdiv, since
-    // pointer difference in C is only defined in the case where both operands
-    // are pointing to elements of an array.
-    Value *BytesPerElt = 
-        llvm::ConstantInt::get(ResultType, ElementSize.getQuantity());
-    return Builder.CreateExactSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
   }
+  
+  // pointer - pointer
+  Value *LHS = Ops.LHS;
+  Value *RHS = Ops.RHS;
+
+  CharUnits ElementSize;
+
+  // Handle GCC extension for pointer arithmetic on void* and function pointer
+  // types.
+  if (LHSElementType->isVoidType() || LHSElementType->isFunctionType())
+    ElementSize = CharUnits::One();
+  else
+    ElementSize = CGF.getContext().getTypeSizeInChars(LHSElementType);
+
+  const llvm::Type *ResultType = ConvertType(Ops.Ty);
+  LHS = Builder.CreatePtrToInt(LHS, ResultType, "sub.ptr.lhs.cast");
+  RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
+  Value *BytesBetween = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
+
+  // Optimize out the shift for element size of 1.
+  if (ElementSize.isOne())
+    return BytesBetween;
+
+  // Otherwise, do a full sdiv. This uses the "exact" form of sdiv, since
+  // pointer difference in C is only defined in the case where both operands
+  // are pointing to elements of an array.
+  Value *BytesPerElt = 
+      llvm::ConstantInt::get(ResultType, ElementSize.getQuantity());
+  return Builder.CreateExactSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
 }
 
 Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
