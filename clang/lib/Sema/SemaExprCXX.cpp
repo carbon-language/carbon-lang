@@ -2036,8 +2036,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     }
 
     // Check for trivial buffer overflows.
-    if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(From))
-      CheckArrayAccess(AE);
+    CheckArrayAccess(From);
 
     FromType = FromType.getUnqualifiedType();
     From = ImplicitCastExpr::Create(Context, FromType, CK_LValueToRValue,

@@ -5199,7 +5199,7 @@ public:
                                                 unsigned ByteNo) const;
 
 private:  
-  void CheckArrayAccess(const ArraySubscriptExpr *E);
+  void CheckArrayAccess(const Expr *E);
   bool CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
   bool CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
 

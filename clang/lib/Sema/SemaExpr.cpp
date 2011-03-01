@@ -301,8 +301,7 @@ void Sema::DefaultLvalueConversion(Expr *&E) {
   if (T.hasQualifiers())
     T = T.getUnqualifiedType();
 
-  if (const ArraySubscriptExpr *ae = dyn_cast<ArraySubscriptExpr>(E))
-    CheckArrayAccess(ae);
+  CheckArrayAccess(E);
   
   E = ImplicitCastExpr::Create(Context, T, CK_LValueToRValue,
                                E, 0, VK_RValue);
@@ -7432,9 +7431,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
   }
   
   // Check for trivial buffer overflows.
-  if (const ArraySubscriptExpr *ae
-      = dyn_cast<ArraySubscriptExpr>(LHS->IgnoreParenCasts()))
-    CheckArrayAccess(ae);
+  CheckArrayAccess(LHS->IgnoreParenCasts());
   
   // C99 6.5.16p3: The type of an assignment expression is the type of the
   // left operand unless the left operand has qualified type, in which case

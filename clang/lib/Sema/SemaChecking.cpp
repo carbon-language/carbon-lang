@@ -3134,10 +3134,11 @@ void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
     << TRange << Op->getSourceRange();
 }
 
-void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
+static void CheckArrayAccess_Check(Sema &S,
+                                   const clang::ArraySubscriptExpr *E) {
   const Expr *BaseExpr = E->getBase()->IgnoreParenImpCasts();
   const ConstantArrayType *ArrayTy =
-    Context.getAsConstantArrayType(BaseExpr->getType());
+    S.Context.getAsConstantArrayType(BaseExpr->getType());
   if (!ArrayTy)
     return;
 
@@ -3145,7 +3146,7 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
   if (IndexExpr->isValueDependent())
     return;
   llvm::APSInt index;
-  if (!IndexExpr->isIntegerConstantExpr(index, Context))
+  if (!IndexExpr->isIntegerConstantExpr(index, S.Context))
     return;
 
   if (index.isUnsigned() || !index.isNegative()) {
@@ -3160,15 +3161,16 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
     if (index.slt(size))
       return;
 
-    DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
-                        PDiag(diag::warn_array_index_exceeds_bounds)
-                        << index.toString(10, true) << size.toString(10, true)
-                        << IndexExpr->getSourceRange());
+    S.DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
+                          S.PDiag(diag::warn_array_index_exceeds_bounds)
+                            << index.toString(10, true)
+                            << size.toString(10, true)
+                            << IndexExpr->getSourceRange());
   } else {
-    DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
-                        PDiag(diag::warn_array_index_precedes_bounds)
-                          << index.toString(10, true)
-                          << IndexExpr->getSourceRange());
+    S.DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
+                          S.PDiag(diag::warn_array_index_precedes_bounds)
+                            << index.toString(10, true)
+                            << IndexExpr->getSourceRange());
   }
 
   const NamedDecl *ND = NULL;
@@ -3177,8 +3179,29 @@ void Sema::CheckArrayAccess(const clang::ArraySubscriptExpr *E) {
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr))
     ND = dyn_cast<NamedDecl>(ME->getMemberDecl());
   if (ND)
-    DiagRuntimeBehavior(ND->getLocStart(), BaseExpr,
-                        PDiag(diag::note_array_index_out_of_bounds)
-                          << ND->getDeclName());
+    S.DiagRuntimeBehavior(ND->getLocStart(), BaseExpr,
+                          S.PDiag(diag::note_array_index_out_of_bounds)
+                            << ND->getDeclName());
 }
 
+void Sema::CheckArrayAccess(const Expr *expr) {
+  while (true)
+    switch (expr->getStmtClass()) {
+      case Stmt::ParenExprClass:
+        expr = cast<ParenExpr>(expr)->getSubExpr();
+        continue;
+      case Stmt::ArraySubscriptExprClass:
+        CheckArrayAccess_Check(*this, cast<ArraySubscriptExpr>(expr));
+        return;
+      case Stmt::ConditionalOperatorClass: {
+        const ConditionalOperator *cond = cast<ConditionalOperator>(expr);
+        if (const Expr *lhs = cond->getLHS())
+          CheckArrayAccess(lhs);
+        if (const Expr *rhs = cond->getRHS())
+          CheckArrayAccess(rhs);
+        return;
+      }
+      default:
+        return;
+    }
+}

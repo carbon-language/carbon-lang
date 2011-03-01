@@ -120,3 +120,11 @@ int test_pr9296() {
     return array[true]; // no-warning
 }
 
+int test_sizeof_as_condition(int flag) {
+  int arr[2] = { 0, 0 }; // expected-note {{array 'arr' declared here}}
+  if (flag) 
+    return sizeof(char) != sizeof(char) ? arr[2] : arr[1];
+  return sizeof(char) == sizeof(char) ? arr[2] : arr[1]; // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
+}
+
+
