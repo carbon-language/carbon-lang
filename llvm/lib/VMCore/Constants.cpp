@@ -652,6 +652,7 @@ Constant* ConstantStruct::get(LLVMContext &Context, bool Packed,
     Values.push_back(Val);
     Val = va_arg(ap, llvm::Constant*);
   }
+  va_end(ap);
   return get(Context, Values, Packed);
 }
 
