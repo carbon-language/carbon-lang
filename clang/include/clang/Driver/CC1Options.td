@@ -157,6 +157,8 @@ def mregparm : Separate<"-mregparm">,
   HelpText<"Limit the number of registers available for integer arguments">;
 def mrelax_all : Flag<"-mrelax-all">,
   HelpText<"Relax all machine instructions">;
+def mrtd: Flag<"-mrtd">,
+  HelpText<"Make StdCall calling convention the default">;
 def mrelocation_model : Separate<"-mrelocation-model">,
   HelpText<"The relocation model to use">;
 def munwind_tables : Flag<"-munwind-tables">,

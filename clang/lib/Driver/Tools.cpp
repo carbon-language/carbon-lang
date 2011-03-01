@@ -1081,6 +1081,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  if (Args.hasFlag(options::OPT_mrtd, options::OPT_mno_rtd, false))
+    CmdArgs.push_back("-mrtd");
+
   // FIXME: Set --enable-unsafe-fp-math.
   if (Args.hasFlag(options::OPT_fno_omit_frame_pointer,
                    options::OPT_fomit_frame_pointer))

@@ -1862,7 +1862,9 @@ ASTContext::getDependentSizedExtVectorType(QualType vecType,
 QualType
 ASTContext::getFunctionNoProtoType(QualType ResultTy,
                                    const FunctionType::ExtInfo &Info) const {
-  const CallingConv CallConv = Info.getCC();
+  const CallingConv DefaultCC = Info.getCC();
+  const CallingConv CallConv = (LangOpts.MRTD && DefaultCC == CC_Default) ?
+                               CC_X86StdCall : DefaultCC;
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
@@ -1886,8 +1888,9 @@ ASTContext::getFunctionNoProtoType(QualType ResultTy,
     assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
 
+  FunctionProtoType::ExtInfo newInfo = Info.withCallingConv(CallConv);
   FunctionNoProtoType *New = new (*this, TypeAlignment)
-    FunctionNoProtoType(ResultTy, Canonical, Info);
+    FunctionNoProtoType(ResultTy, Canonical, newInfo);
   Types.push_back(New);
   FunctionNoProtoTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -1915,7 +1918,9 @@ ASTContext::getFunctionType(QualType ResultTy,
     if (!ArgArray[i].isCanonicalAsParam())
       isCanonical = false;
 
-  const CallingConv CallConv = EPI.ExtInfo.getCC();
+  const CallingConv DefaultCC = EPI.ExtInfo.getCC();
+  const CallingConv CallConv = (LangOpts.MRTD && DefaultCC == CC_Default) ?
+                               CC_X86StdCall : DefaultCC;
 
   // If this type isn't canonical, get the canonical version of it.
   // The exception spec is not part of the canonical type.
@@ -1952,7 +1957,9 @@ ASTContext::getFunctionType(QualType ResultTy,
                 NumArgs * sizeof(QualType) +
                 EPI.NumExceptions * sizeof(QualType);
   FunctionProtoType *FTP = (FunctionProtoType*) Allocate(Size, TypeAlignment);
-  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, Canonical, EPI);
+  FunctionProtoType::ExtProtoInfo newEPI = EPI;
+  newEPI.ExtInfo = EPI.ExtInfo.withCallingConv(CallConv);
+  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, Canonical, newEPI);
   Types.push_back(FTP);
   FunctionProtoTypes.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);

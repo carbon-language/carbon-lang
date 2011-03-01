@@ -2839,6 +2839,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(DefaultFPContract);
     PARSE_LANGOPT(ElideConstructors);
     PARSE_LANGOPT(SpellChecking);
+    PARSE_LANGOPT(MRTD);
   #undef PARSE_LANGOPT
 
     return Listener->ReadLanguageOptions(LangOpts);

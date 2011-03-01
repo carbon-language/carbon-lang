@@ -124,6 +124,8 @@ public:
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
 
+  unsigned MRTD : 1;            // -mrtd calling convention
+
 private:
   // We declare multibit enums as unsigned because MSVC insists on making enums
   // signed.  Set/Query these values using accessors.
@@ -216,6 +218,7 @@ public:
     FastRelaxedMath = 0;
     DefaultFPContract = 0;
     NoBitFieldTypeAlign = 0;
+    MRTD = 0;
   }
 
   GCMode getGCMode() const { return (GCMode) GC; }

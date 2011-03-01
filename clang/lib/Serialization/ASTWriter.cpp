@@ -1072,6 +1072,7 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.DefaultFPContract);
   Record.push_back(LangOpts.ElideConstructors);
   Record.push_back(LangOpts.SpellChecking);
+  Record.push_back(LangOpts.MRTD);
   Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
 }
 
