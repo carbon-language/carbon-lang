@@ -145,7 +145,6 @@ private:
   bool checkUncachedInterference(LiveInterval&, unsigned);
   LiveInterval *getSingleInterference(LiveInterval&, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
-  float calcInterferenceWeight(LiveInterval&, unsigned);
   float calcInterferenceInfo(LiveInterval&, unsigned);
   float calcGlobalSplitCost(const BitVector&);
   void splitAroundRegion(LiveInterval&, unsigned, const BitVector&,
@@ -166,8 +165,6 @@ private:
     SmallVectorImpl<LiveInterval*>&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
                     SmallVectorImpl<LiveInterval*>&);
-  unsigned trySpillInterferences(LiveInterval&, AllocationOrder&,
-                                 SmallVectorImpl<LiveInterval*>&);
 };
 } // end anonymous namespace
 
@@ -1284,68 +1281,6 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
 
 //===----------------------------------------------------------------------===//
-//                                Spilling
-//===----------------------------------------------------------------------===//
-
-/// calcInterferenceWeight - Calculate the combined spill weight of
-/// interferences when assigning VirtReg to PhysReg.
-float RAGreedy::calcInterferenceWeight(LiveInterval &VirtReg, unsigned PhysReg){
-  float Sum = 0;
-  for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
-    LiveIntervalUnion::Query &Q = query(VirtReg, *AI);
-    Q.collectInterferingVRegs();
-    if (Q.seenUnspillableVReg())
-      return HUGE_VALF;
-    for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i)
-      Sum += Q.interferingVRegs()[i]->weight;
-  }
-  return Sum;
-}
-
-/// trySpillInterferences - Try to spill interfering registers instead of the
-/// current one. Only do it if the accumulated spill weight is smaller than the
-/// current spill weight.
-unsigned RAGreedy::trySpillInterferences(LiveInterval &VirtReg,
-                                         AllocationOrder &Order,
-                                     SmallVectorImpl<LiveInterval*> &NewVRegs) {
-  NamedRegionTimer T("Spill Interference", TimerGroupName, TimePassesIsEnabled);
-  unsigned BestPhys = 0;
-  float BestWeight = 0;
-
-  Order.rewind();
-  while (unsigned PhysReg = Order.next()) {
-    float Weight = calcInterferenceWeight(VirtReg, PhysReg);
-    if (Weight == HUGE_VALF || Weight >= VirtReg.weight)
-      continue;
-    if (!BestPhys || Weight < BestWeight)
-      BestPhys = PhysReg, BestWeight = Weight;
-  }
-
-  // No candidates found.
-  if (!BestPhys)
-    return 0;
-
-  // Collect all interfering registers.
-  SmallVector<LiveInterval*, 8> Spills;
-  for (const unsigned *AI = TRI->getOverlaps(BestPhys); *AI; ++AI) {
-    LiveIntervalUnion::Query &Q = query(VirtReg, *AI);
-    Spills.append(Q.interferingVRegs().begin(), Q.interferingVRegs().end());
-    for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
-      LiveInterval *VReg = Q.interferingVRegs()[i];
-      unassign(*VReg, *AI);
-    }
-  }
-
-  // Spill them all.
-  DEBUG(dbgs() << "spilling " << Spills.size() << " interferences with weight "
-               << BestWeight << '\n');
-  for (unsigned i = 0, e = Spills.size(); i != e; ++i)
-    spiller().spill(Spills[i], NewVRegs, Spills);
-  return BestPhys;
-}
-
-
-//===----------------------------------------------------------------------===//
 //                            Main Entry Point
 //===----------------------------------------------------------------------===//
 
@@ -1383,11 +1318,6 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // Try splitting VirtReg or interferences.
   unsigned PhysReg = trySplit(VirtReg, Order, NewVRegs);
   if (PhysReg || !NewVRegs.empty())
-    return PhysReg;
-
-  // Try to spill another interfering reg with less spill weight.
-  PhysReg = trySpillInterferences(VirtReg, Order, NewVRegs);
-  if (PhysReg)
     return PhysReg;
 
   // Finally spill VirtReg itself.
