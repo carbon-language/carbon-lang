@@ -73,7 +73,7 @@ TEST(MathExtras, CountLeadingOnes_64) {
 }
 
 TEST(MathExtras, FloatBits) {
-  static const float kValue = 5632.34;
+  static const float kValue = 5632.34f;
   EXPECT_FLOAT_EQ(kValue, BitsToFloat(FloatToBits(kValue)));
 }
 

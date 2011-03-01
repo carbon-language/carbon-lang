@@ -274,8 +274,8 @@ public:
     if (is64Bit())
       Write32(0); // reserved3
 
-    assert(OS.tell() - Start == is64Bit() ? macho::Section64Size :
-           macho::Section32Size);
+    assert(OS.tell() - Start == (is64Bit() ? macho::Section64Size :
+           macho::Section32Size));
   }
 
   void WriteSymtabLoadCommand(uint32_t SymbolOffset, uint32_t NumSymbols,
