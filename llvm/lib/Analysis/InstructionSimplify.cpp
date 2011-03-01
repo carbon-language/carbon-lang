@@ -1434,6 +1434,9 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         return ConstantInt::getTrue(CI->getContext());
       break;
     }
+
+    // TODO: integer div and rem with constant RHS all produce values in a
+    // constant range. We should check whether the comparison is a tautology.
   }
 
   // Compare of cast, for example (zext X) != 0 -> X != 0
@@ -1641,6 +1644,21 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       Value *Z = (C == A || C == B) ? D : C;
       if (Value *V = SimplifyICmpInst(Pred, Y, Z, TD, DT, MaxRecurse-1))
         return V;
+    }
+  }
+
+  if (LBO && match(LBO, m_URem(m_Value(), m_Specific(RHS)))) {
+    switch (Pred) {
+    default:
+      break;
+    case ICmpInst::ICMP_EQ:
+    case ICmpInst::ICMP_UGT:
+    case ICmpInst::ICMP_UGE:
+      return ConstantInt::getFalse(RHS->getContext());
+    case ICmpInst::ICMP_NE:
+    case ICmpInst::ICMP_ULT:
+    case ICmpInst::ICMP_ULE:
+      return ConstantInt::getTrue(RHS->getContext());
     }
   }
 

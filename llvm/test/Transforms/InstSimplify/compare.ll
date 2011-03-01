@@ -187,3 +187,19 @@ define i1 @select4(i1 %cond) {
   ret i1 %c
 ; CHECK: ret i1 %cond
 }
+
+define i1 @urem1(i32 %X, i32 %Y) {
+; CHECK: @urem1
+  %A = urem i32 %X, %Y
+  %B = icmp ult i32 %A, %Y
+  ret i1 %B
+; CHECK: ret i1 true
+}
+
+define i1 @urem2(i32 %X, i32 %Y) {
+; CHECK: @urem2
+  %A = urem i32 %X, %Y
+  %B = icmp eq i32 %A, %Y
+  ret i1 %B
+; CHECK ret i1 false
+}
