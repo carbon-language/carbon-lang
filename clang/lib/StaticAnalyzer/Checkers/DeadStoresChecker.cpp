@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
@@ -341,7 +341,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 namespace {
-class DeadStoresChecker : public CheckerV2<check::ASTCodeBody> {
+class DeadStoresChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {

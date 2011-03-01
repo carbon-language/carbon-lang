@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -22,7 +22,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class CastSizeChecker : public CheckerV2< check::PreStmt<CastExpr> > {
+class CastSizeChecker : public Checker< check::PreStmt<CastExpr> > {
   mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
   void checkPreStmt(const CastExpr *CE, CheckerContext &C) const;

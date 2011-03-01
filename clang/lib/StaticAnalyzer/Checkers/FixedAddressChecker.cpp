@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -24,7 +24,7 @@ using namespace ento;
 
 namespace {
 class FixedAddressChecker 
-  : public CheckerV2< check::PreStmt<BinaryOperator> > {
+  : public Checker< check::PreStmt<BinaryOperator> > {
   mutable llvm::OwningPtr<BuiltinBug> BT;
 
 public:

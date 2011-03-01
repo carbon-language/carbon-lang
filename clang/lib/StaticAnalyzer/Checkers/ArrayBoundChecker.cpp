@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -24,7 +24,7 @@ using namespace ento;
 
 namespace {
 class ArrayBoundChecker : 
-    public CheckerV2<check::Location> {
+    public Checker<check::Location> {
   mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
   void checkLocation(SVal l, bool isLoad, CheckerContext &C) const;

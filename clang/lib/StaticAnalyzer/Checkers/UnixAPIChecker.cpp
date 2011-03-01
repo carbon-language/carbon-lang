@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -27,7 +27,7 @@ using namespace ento;
 using llvm::Optional;
 
 namespace {
-class UnixAPIChecker : public CheckerV2< check::PreStmt<CallExpr> > {
+class UnixAPIChecker : public Checker< check::PreStmt<CallExpr> > {
   enum SubChecks {
     OpenFn = 0,
     PthreadOnceFn = 1,

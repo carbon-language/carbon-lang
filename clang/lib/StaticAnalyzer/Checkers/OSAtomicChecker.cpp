@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/Basic/Builtins.h"
@@ -22,7 +22,7 @@ using namespace ento;
 
 namespace {
 
-class OSAtomicChecker : public CheckerV2<eval::Call> {
+class OSAtomicChecker : public Checker<eval::Call> {
 public:
   bool evalCall(const CallExpr *CE, CheckerContext &C) const;
 

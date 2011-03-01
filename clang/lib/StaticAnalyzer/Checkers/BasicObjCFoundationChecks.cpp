@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
@@ -66,7 +66,7 @@ static inline bool isNil(SVal X) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class NilArgChecker : public CheckerV2<check::PreObjCMessage> {
+  class NilArgChecker : public Checker<check::PreObjCMessage> {
     mutable llvm::OwningPtr<APIMisuse> BT;
 
     void WarnNilArg(CheckerContext &C,
@@ -137,7 +137,7 @@ void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class CFNumberCreateChecker : public CheckerV2< check::PreStmt<CallExpr> > {
+class CFNumberCreateChecker : public Checker< check::PreStmt<CallExpr> > {
   mutable llvm::OwningPtr<APIMisuse> BT;
   mutable IdentifierInfo* II;
 public:
@@ -344,7 +344,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class CFRetainReleaseChecker : public CheckerV2< check::PreStmt<CallExpr> > {
+class CFRetainReleaseChecker : public Checker< check::PreStmt<CallExpr> > {
   mutable llvm::OwningPtr<APIMisuse> BT;
   mutable IdentifierInfo *Retain, *Release;
 public:
@@ -426,7 +426,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr* CE,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class ClassReleaseChecker : public CheckerV2<check::PreObjCMessage> {
+class ClassReleaseChecker : public Checker<check::PreObjCMessage> {
   mutable Selector releaseS;
   mutable Selector retainS;
   mutable Selector autoreleaseS;

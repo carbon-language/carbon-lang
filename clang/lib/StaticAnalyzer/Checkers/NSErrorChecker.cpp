@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
@@ -37,7 +37,7 @@ static bool IsCFError(const ParmVarDecl *PD, IdentifierInfo *II);
 
 namespace {
 class NSErrorMethodChecker
-    : public CheckerV2< check::ASTDecl<ObjCMethodDecl> > {
+    : public Checker< check::ASTDecl<ObjCMethodDecl> > {
   mutable IdentifierInfo *II;
 
 public:
@@ -83,7 +83,7 @@ void NSErrorMethodChecker::checkASTDecl(const ObjCMethodDecl *D,
 
 namespace {
 class CFErrorFunctionChecker
-    : public CheckerV2< check::ASTDecl<FunctionDecl> > {
+    : public Checker< check::ASTDecl<FunctionDecl> > {
   mutable IdentifierInfo *II;
 
 public:
@@ -145,7 +145,7 @@ public:
 
 namespace {
 class NSOrCFErrorDerefChecker
-    : public CheckerV2< check::Location,
+    : public Checker< check::Location,
                         check::Event<ImplicitNullDerefEvent> > {
   mutable IdentifierInfo *NSErrorII, *CFErrorII;
 public:

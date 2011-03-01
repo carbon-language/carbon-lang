@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/StmtVisitor.h"
@@ -502,7 +502,7 @@ void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class SecuritySyntaxChecker : public CheckerV2<check::ASTCodeBody> {
+class SecuritySyntaxChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {

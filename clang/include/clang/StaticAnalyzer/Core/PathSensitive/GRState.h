@@ -35,7 +35,6 @@ class ASTContext;
 namespace ento {
 
 class GRStateManager;
-class Checker;
 
 typedef ConstraintManager* (*ConstraintManagerCreator)(GRStateManager&,
                                                        SubEngine&);

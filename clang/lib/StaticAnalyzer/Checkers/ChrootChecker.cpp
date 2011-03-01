@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -38,7 +38,7 @@ bool isRootChanged(intptr_t k) { return k == ROOT_CHANGED; }
 //         ROOT_CHANGED<--chdir(..)--      JAIL_ENTERED<--chdir(..)--
 //                                  |                               |
 //                      bug<--foo()--          JAIL_ENTERED<--foo()--
-class ChrootChecker : public CheckerV2<eval::Call, check::PreStmt<CallExpr> > {
+class ChrootChecker : public Checker<eval::Call, check::PreStmt<CallExpr> > {
   mutable IdentifierInfo *II_chroot, *II_chdir;
   // This bug refers to possibly break out of a chroot() jail.
   mutable llvm::OwningPtr<BuiltinBug> BT_BreakJail;

@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
@@ -25,7 +25,7 @@ using namespace ento;
 
 namespace {
 class PthreadLockChecker
-  : public CheckerV2< check::PostStmt<CallExpr> > {
+  : public Checker< check::PostStmt<CallExpr> > {
 public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
     

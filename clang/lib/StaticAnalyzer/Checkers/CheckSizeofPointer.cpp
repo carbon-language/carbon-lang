@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/StmtVisitor.h"
 
@@ -72,7 +72,7 @@ void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class SizeofPointerChecker : public CheckerV2<check::ASTCodeBody> {
+class SizeofPointerChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {

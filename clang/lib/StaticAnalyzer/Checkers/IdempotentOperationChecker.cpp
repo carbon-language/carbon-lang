@@ -46,7 +46,7 @@
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/Analysis/Analyses/CFGReachabilityAnalysis.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
@@ -66,7 +66,7 @@ using namespace ento;
 
 namespace {
 class IdempotentOperationChecker
-  : public CheckerV2<check::PreStmt<BinaryOperator>,
+  : public Checker<check::PreStmt<BinaryOperator>,
                      check::PostStmt<BinaryOperator>,
                      check::EndAnalysis> {
 public:

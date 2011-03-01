@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -64,7 +64,7 @@ public:
 
 class RegionState {};
 
-class MallocChecker : public CheckerV2<eval::Call, check::DeadSymbols, check::EndPath, check::PreStmt<ReturnStmt>, check::Location,
+class MallocChecker : public Checker<eval::Call, check::DeadSymbols, check::EndPath, check::PreStmt<ReturnStmt>, check::Location,
                                check::Bind, eval::Assume> {
   mutable llvm::OwningPtr<BuiltinBug> BT_DoubleFree;
   mutable llvm::OwningPtr<BuiltinBug> BT_Leak;

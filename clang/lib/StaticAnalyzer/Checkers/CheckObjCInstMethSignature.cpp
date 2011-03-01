@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/DeclObjC.h"
@@ -125,7 +125,7 @@ static void CheckObjCInstMethSignature(const ObjCImplementationDecl* ID,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class ObjCMethSigsChecker : public CheckerV2<
+class ObjCMethSigsChecker : public Checker<
                                       check::ASTDecl<ObjCImplementationDecl> > {
 public:
   void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager& mgr,

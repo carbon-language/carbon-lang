@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -3397,7 +3397,7 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
 
 namespace {
 class RetainReleaseChecker
-  : public CheckerV2< check::PostStmt<BlockExpr> > {
+  : public Checker< check::PostStmt<BlockExpr> > {
 public:
     void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
 };

@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -23,7 +23,7 @@ using namespace ento;
 
 namespace {
 
-class NoReturnFunctionChecker : public CheckerV2< check::PostStmt<CallExpr> > {
+class NoReturnFunctionChecker : public Checker< check::PostStmt<CallExpr> > {
 public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
 };

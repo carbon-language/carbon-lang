@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 
@@ -24,7 +24,7 @@ using namespace ento;
 //===----------------------------------------------------------------------===//
 
 namespace {
-class LiveVariablesDumper : public CheckerV2<check::ASTCodeBody> {
+class LiveVariablesDumper : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
@@ -44,7 +44,7 @@ void ento::registerLiveVariablesDumper(CheckerManager &mgr) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class CFGViewer : public CheckerV2<check::ASTCodeBody> {
+class CFGViewer : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
@@ -64,7 +64,7 @@ void ento::registerCFGViewer(CheckerManager &mgr) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class CFGDumper : public CheckerV2<check::ASTCodeBody> {
+class CFGDumper : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {

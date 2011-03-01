@@ -47,7 +47,7 @@
 // http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjectiveC/Articles/ocAllocInit.html
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
@@ -64,7 +64,7 @@ static bool isInitMessage(const ObjCMessage &msg);
 static bool isSelfVar(SVal location, CheckerContext &C);
 
 namespace {
-class ObjCSelfInitChecker : public CheckerV2<
+class ObjCSelfInitChecker : public Checker<
                                              check::PostObjCMessage,
                                              check::PostStmt<ObjCIvarRefExpr>,
                                              check::PreStmt<ReturnStmt>,

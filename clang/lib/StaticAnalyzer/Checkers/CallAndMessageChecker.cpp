@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -25,7 +25,7 @@ using namespace ento;
 
 namespace {
 class CallAndMessageChecker
-  : public CheckerV2< check::PreStmt<CallExpr>, check::PreObjCMessage > {
+  : public Checker< check::PreStmt<CallExpr>, check::PreObjCMessage > {
   mutable llvm::OwningPtr<BugType> BT_call_null;
   mutable llvm::OwningPtr<BugType> BT_call_undef;
   mutable llvm::OwningPtr<BugType> BT_call_arg;

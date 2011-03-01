@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -23,7 +23,7 @@ using namespace ento;
 
 namespace {
 
-class UndefBranchChecker : public CheckerV2<check::BranchCondition> {
+class UndefBranchChecker : public Checker<check::BranchCondition> {
   mutable llvm::OwningPtr<BuiltinBug> BT;
 
   struct FindUndefExpr {

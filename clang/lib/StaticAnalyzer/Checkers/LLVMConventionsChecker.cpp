@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
@@ -288,7 +288,7 @@ void ASTFieldVisitor::ReportError(QualType T) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class LLVMConventionsChecker : public CheckerV2<
+class LLVMConventionsChecker : public Checker<
                                                 check::ASTDecl<CXXRecordDecl>,
                                                 check::ASTCodeBody > {
 public:

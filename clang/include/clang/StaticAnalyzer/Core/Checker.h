@@ -1,4 +1,4 @@
-//== CheckerV2.h - Registration mechanism for checkers -----------*- C++ -*--=//
+//== Checker.h - Registration mechanism for checkers -------------*- C++ -*--=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines CheckerV2, used to create and register checkers.
+//  This file defines Checker, used to create and register checkers.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SA_CORE_CHECKERV2
-#define LLVM_CLANG_SA_CORE_CHECKERV2
+#ifndef LLVM_CLANG_SA_CORE_CHECKER
+#define LLVM_CLANG_SA_CORE_CHECKER
 
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
@@ -315,10 +315,10 @@ template <typename CHECK1, typename CHECK2=check::_VoidCheck,
           typename CHECK7=check::_VoidCheck, typename CHECK8=check::_VoidCheck,
           typename CHECK9=check::_VoidCheck, typename CHECK10=check::_VoidCheck,
           typename CHECK11=check::_VoidCheck,typename CHECK12=check::_VoidCheck>
-class CheckerV2;
+class Checker;
 
 template <>
-class CheckerV2<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+class Checker<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
                 check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
                 check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
                 check::_VoidCheck, check::_VoidCheck, check::_VoidCheck> {
@@ -329,15 +329,15 @@ public:
 template <typename CHECK1, typename CHECK2, typename CHECK3, typename CHECK4,
           typename CHECK5, typename CHECK6, typename CHECK7, typename CHECK8,
           typename CHECK9, typename CHECK10,typename CHECK11,typename CHECK12>
-class CheckerV2
+class Checker
     : public CHECK1,
-      public CheckerV2<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7, CHECK8,
+      public Checker<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7, CHECK8,
                        CHECK9, CHECK10, CHECK11, CHECK12> {
 public:
   template <typename CHECKER>
   static void _register(CHECKER *checker, CheckerManager &mgr) {
     CHECK1::_register(checker, mgr);
-    CheckerV2<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7, CHECK8, CHECK9,
+    Checker<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7, CHECK8, CHECK9,
               CHECK10, CHECK11,CHECK12>::_register(checker, mgr);
   }
 };

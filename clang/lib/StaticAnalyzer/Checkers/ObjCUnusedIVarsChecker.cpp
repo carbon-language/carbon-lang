@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/ExprObjC.h"
@@ -169,7 +169,7 @@ static void checkObjCUnusedIvar(const ObjCImplementationDecl *D,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class ObjCUnusedIvarsChecker : public CheckerV2<
+class ObjCUnusedIvarsChecker : public Checker<
                                       check::ASTDecl<ObjCImplementationDecl> > {
 public:
   void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager& mgr,

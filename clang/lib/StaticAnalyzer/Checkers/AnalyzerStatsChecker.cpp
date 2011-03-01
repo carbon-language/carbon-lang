@@ -10,7 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
@@ -23,7 +23,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class AnalyzerStatsChecker : public CheckerV2<check::EndAnalysis> {
+class AnalyzerStatsChecker : public Checker<check::EndAnalysis> {
 public:
   void checkEndAnalysis(ExplodedGraph &G, BugReporter &B,ExprEngine &Eng) const;
 };

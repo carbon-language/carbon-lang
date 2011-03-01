@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
@@ -267,7 +267,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl* D,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class ObjCDeallocChecker : public CheckerV2<
+class ObjCDeallocChecker : public Checker<
                                       check::ASTDecl<ObjCImplementationDecl> > {
 public:
   void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager& mgr,

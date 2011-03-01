@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
@@ -29,7 +29,7 @@ using namespace ento;
 
 namespace {
 class NSAutoreleasePoolChecker
-  : public CheckerV2<check::PreObjCMessage> {
+  : public Checker<check::PreObjCMessage> {
       
   mutable Selector releaseS;
 

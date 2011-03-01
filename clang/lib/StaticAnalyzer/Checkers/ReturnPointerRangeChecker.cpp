@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -24,7 +24,7 @@ using namespace ento;
 
 namespace {
 class ReturnPointerRangeChecker : 
-    public CheckerV2< check::PreStmt<ReturnStmt> > {
+    public Checker< check::PreStmt<ReturnStmt> > {
   mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
     void checkPreStmt(const ReturnStmt *RS, CheckerContext &C) const;

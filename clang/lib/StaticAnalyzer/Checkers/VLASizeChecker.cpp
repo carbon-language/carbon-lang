@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
-#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
@@ -25,7 +25,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class VLASizeChecker : public CheckerV2< check::PreStmt<DeclStmt> > {
+class VLASizeChecker : public Checker< check::PreStmt<DeclStmt> > {
   mutable llvm::OwningPtr<BugType> BT_zero;
   mutable llvm::OwningPtr<BugType> BT_undef;
   

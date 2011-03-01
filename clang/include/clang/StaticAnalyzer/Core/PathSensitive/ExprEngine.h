@@ -34,7 +34,6 @@ class ObjCForCollectionStmt;
 namespace ento {
 
 class AnalysisManager;
-class Checker;
 
 class ExprEngine : public SubEngine {
   AnalysisManager &AMgr;
