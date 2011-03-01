@@ -78,7 +78,7 @@ class GraphWriter {
       if (i)
         O << "|";
 
-      O << "<s" << i << ">" << label;
+      O << "<s" << i << ">" << DOT::EscapeString(label);
     }
 
     if (EI != EE && hasEdgeSourceLabels)
