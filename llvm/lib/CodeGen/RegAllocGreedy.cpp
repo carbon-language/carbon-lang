@@ -72,11 +72,45 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
 
   // state
   std::auto_ptr<Spiller> SpillerInstance;
-  std::auto_ptr<SplitAnalysis> SA;
   std::priority_queue<std::pair<unsigned, unsigned> > Queue;
-  IndexedMap<unsigned, VirtReg2IndexFunctor> Generation;
+
+  // Live ranges pass through a number of stages as we try to allocate them.
+  // Some of the stages may also create new live ranges:
+  //
+  // - Region splitting.
+  // - Per-block splitting.
+  // - Local splitting.
+  // - Spilling.
+  //
+  // Ranges produced by one of the stages skip the previous stages when they are
+  // dequeued. This improves performance because we can skip interference checks
+  // that are unlikely to give any results. It also guarantees that the live
+  // range splitting algorithm terminates, something that is otherwise hard to
+  // ensure.
+  enum LiveRangeStage {
+    RS_Original, ///< Never seen before, never split.
+    RS_Second,   ///< Second time in the queue.
+    RS_Region,   ///< Produced by region splitting.
+    RS_Block,    ///< Produced by per-block splitting.
+    RS_Local,    ///< Produced by local splitting.
+    RS_Spill     ///< Produced by spilling.
+  };
+
+  IndexedMap<unsigned char, VirtReg2IndexFunctor> LRStage;
+
+  LiveRangeStage getStage(const LiveInterval &VirtReg) const {
+    return LiveRangeStage(LRStage[VirtReg.reg]);
+  }
+
+  template<typename Iterator>
+  void setStage(Iterator Begin, Iterator End, LiveRangeStage NewStage) {
+    LRStage.resize(MRI->getNumVirtRegs());
+    for (;Begin != End; ++Begin)
+      LRStage[(*Begin)->reg] = NewStage;
+  }
 
   // splitting state.
+  std::auto_ptr<SplitAnalysis> SA;
 
   /// All basic blocks where the current register is live.
   SmallVector<SpillPlacement::BlockConstraint, 8> SpillConstraints;
@@ -143,7 +177,7 @@ FunctionPass* llvm::createGreedyRegisterAllocator() {
   return new RAGreedy();
 }
 
-RAGreedy::RAGreedy(): MachineFunctionPass(ID) {
+RAGreedy::RAGreedy(): MachineFunctionPass(ID), LRStage(RS_Original) {
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
   initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
@@ -187,7 +221,7 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
 
 void RAGreedy::releaseMemory() {
   SpillerInstance.reset(0);
-  Generation.clear();
+  LRStage.clear();
   RegAllocBase::releaseMemory();
 }
 
@@ -198,11 +232,10 @@ void RAGreedy::enqueue(LiveInterval *LI) {
   const unsigned Reg = LI->reg;
   assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
          "Can only enqueue virtual registers");
-  const unsigned Hint = VRM->getRegAllocPref(Reg);
   unsigned Prio;
 
-  Generation.grow(Reg);
-  if (++Generation[Reg] == 1)
+  LRStage.grow(Reg);
+  if (LRStage[Reg] == RS_Original)
     // 1st generation ranges are handled first, long -> short.
     Prio = (1u << 31) + Size;
   else
@@ -210,6 +243,7 @@ void RAGreedy::enqueue(LiveInterval *LI) {
     Prio = (1u << 30) - Size;
 
   // Boost ranges that have a physical register hint.
+  const unsigned Hint = VRM->getRegAllocPref(Reg);
   if (TargetRegisterInfo::isPhysicalRegister(Hint))
     Prio |= (1u << 30);
 
@@ -926,6 +960,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     return 0;
 
   splitAroundRegion(VirtReg, BestReg, BestBundles, NewVRegs);
+  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Region);
   return 0;
 }
 
@@ -1191,6 +1226,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SE.useIntv(SegStart, SegStop);
   SE.closeIntv();
   SE.finish();
+  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Local);
   ++NumLocalSplits;
 
   return 0;
@@ -1205,29 +1241,41 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 /// @return Physreg when VirtReg may be assigned and/or new NewVRegs.
 unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
                             SmallVectorImpl<LiveInterval*>&NewVRegs) {
-  SA->analyze(&VirtReg);
-
   // Local intervals are handled separately.
   if (LIS->intervalIsInOneMBB(VirtReg)) {
     NamedRegionTimer T("Local Splitting", TimerGroupName, TimePassesIsEnabled);
+    SA->analyze(&VirtReg);
     return tryLocalSplit(VirtReg, Order, NewVRegs);
   }
 
   NamedRegionTimer T("Global Splitting", TimerGroupName, TimePassesIsEnabled);
 
+  // Don't iterate global splitting.
+  // Move straight to spilling if this range was produced by a global split.
+  LiveRangeStage Stage = getStage(VirtReg);
+  if (Stage >= RS_Block)
+    return 0;
+
+  SA->analyze(&VirtReg);
+
   // First try to split around a region spanning multiple blocks.
-  unsigned PhysReg = tryRegionSplit(VirtReg, Order, NewVRegs);
-  if (PhysReg || !NewVRegs.empty())
-    return PhysReg;
+  if (Stage < RS_Region) {
+    unsigned PhysReg = tryRegionSplit(VirtReg, Order, NewVRegs);
+    if (PhysReg || !NewVRegs.empty())
+      return PhysReg;
+  }
 
   // Then isolate blocks with multiple uses.
-  SplitAnalysis::BlockPtrSet Blocks;
-  if (SA->getMultiUseBlocks(Blocks)) {
-    SmallVector<LiveInterval*, 4> SpillRegs;
-    LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
-    SplitEditor(*SA, *LIS, *VRM, *DomTree, LREdit).splitSingleBlocks(Blocks);
-    if (VerifyEnabled)
-      MF->verify(this, "After splitting live range around basic blocks");
+  if (Stage < RS_Block) {
+    SplitAnalysis::BlockPtrSet Blocks;
+    if (SA->getMultiUseBlocks(Blocks)) {
+      SmallVector<LiveInterval*, 4> SpillRegs;
+      LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
+      SplitEditor(*SA, *LIS, *VRM, *DomTree, LREdit).splitSingleBlocks(Blocks);
+      setStage(NewVRegs.begin(), NewVRegs.end(), RS_Block);
+      if (VerifyEnabled)
+        MF->verify(this, "After splitting live range around basic blocks");
+    }
   }
 
   // Don't assign any physregs.
@@ -1303,6 +1351,10 @@ unsigned RAGreedy::trySpillInterferences(LiveInterval &VirtReg,
 
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  LiveRangeStage Stage = getStage(VirtReg);
+  if (Stage == RS_Original)
+    LRStage[VirtReg.reg] = RS_Second;
+
   // First try assigning a free register.
   AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
   while (unsigned PhysReg = Order.next()) {
@@ -1321,10 +1373,12 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // The first time we see a live range, don't try to split or spill.
   // Wait until the second time, when all smaller ranges have been allocated.
   // This gives a better picture of the interference to split around.
-  if (Generation[VirtReg.reg] == 1) {
+  if (Stage == RS_Original) {
     NewVRegs.push_back(&VirtReg);
     return 0;
   }
+
+  assert(Stage < RS_Spill && "Cannot allocate after spilling");
 
   // Try splitting VirtReg or interferences.
   unsigned PhysReg = trySplit(VirtReg, Order, NewVRegs);
@@ -1366,6 +1420,8 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   SpillPlacer = &getAnalysis<SpillPlacement>();
 
   SA.reset(new SplitAnalysis(*VRM, *LIS, *Loops));
+  LRStage.clear();
+  LRStage.resize(MRI->getNumVirtRegs());
 
   allocatePhysRegs();
   addMBBLiveIns(MF);
