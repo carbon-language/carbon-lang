@@ -1767,7 +1767,11 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
     SpecTL.setNameLoc(TemplateLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
-    SpecTL.setQualifierRange(TemplateLoc); // FIXME: nested-name-specifier loc
+    
+    // FIXME: Poor nested-name-specifier source-location information.
+    CXXScopeSpec SS;
+    SS.MakeTrivial(Context, DTN->getQualifier(), TemplateLoc);
+    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
     for (unsigned I = 0, N = SpecTL.getNumArgs(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     return CreateParsedType(T, TLB.getTypeSourceInfo(Context, T));
@@ -5967,12 +5971,10 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
     SpecTL.setKeywordLoc(TypenameLoc);
+    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
     SpecTL.setNameLoc(TemplateNameLoc);
     for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
-    
-    // FIXME: Nested-name-specifier source locations.
-    SpecTL.setQualifierRange(SS.getRange());
     return CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
   }
   

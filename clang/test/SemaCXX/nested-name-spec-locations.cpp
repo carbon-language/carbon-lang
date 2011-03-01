@@ -85,3 +85,28 @@ struct TypenameTypeTester {
 };
 
 TypenameTypeTester<int> TypenameTypeCheck; // expected-note{{in instantiation of template class}}
+
+template<typename T, typename U>
+struct DependentTemplateSpecializationTypeTester {
+  typedef typename T::template apply<typename add_reference<U>::type 
+                                     * // expected-error{{declared as a pointer to a reference of type}}
+                                     >::type type;
+};
+
+struct HasApply {
+  template<typename T>
+  struct apply {
+    typedef T type;
+  };
+};
+
+DependentTemplateSpecializationTypeTester<HasApply, int> DTSTCheck; // expected-note{{in instantiation of template class}}
+
+template<typename T, typename U>
+struct DependentTemplateSpecializationTypeTester2 {
+  typedef typename T::template apply<typename add_reference<U>::type 
+                                     * // expected-error{{declared as a pointer to a reference of type}}
+                                     > type;
+};
+
+DependentTemplateSpecializationTypeTester2<HasApply, int> DTSTCheck2; // expected-note{{in instantiation of template class}}

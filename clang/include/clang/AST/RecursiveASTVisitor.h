@@ -999,7 +999,10 @@ DEF_TRAVERSE_TYPELOC(DependentNameType, {
   })
 
 DEF_TRAVERSE_TYPELOC(DependentTemplateSpecializationType, {
-    TRY_TO(TraverseNestedNameSpecifier(TL.getTypePtr()->getQualifier()));
+    if (TL.getQualifierLoc()) {
+      TRY_TO(TraverseNestedNameSpecifierLoc(TL.getQualifierLoc()));
+    }
+    
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
       TRY_TO(TraverseTemplateArgumentLoc(TL.getArgLoc(I)));
     }

@@ -663,8 +663,8 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     assert(DTN->getQualifier()
              == static_cast<NestedNameSpecifier*>(SS.getScopeRep()));
     QualType T = Context.getDependentTemplateSpecializationType(ETK_None,
-                                                                DTN->getQualifier(),
-                                                                DTN->getIdentifier(),
+                                                          DTN->getQualifier(),
+                                                          DTN->getIdentifier(),
                                                                 TemplateArgs);
     
     // Create source-location information for this type.
@@ -675,7 +675,7 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     SpecTL.setRAngleLoc(RAngleLoc);
     SpecTL.setKeywordLoc(SourceLocation());
     SpecTL.setNameLoc(TemplateNameLoc);
-    SpecTL.setQualifierRange(SS.getRange());
+    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
     for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     

@@ -101,7 +101,14 @@ struct X5 {
   typedef typename outer_alias::inner::vector<int>::iterator int_ptr_type;
 };
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:102:1 %s | FileCheck %s
+template<typename T>
+struct X6 {
+  typedef T type;
+  typedef typename outer_alias::inner::vector<type>::template rebind<type> type1;
+  typedef typename outer_alias::inner::vector<type>::template rebind<type>::other type2;
+};
+
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:109:1 %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
@@ -321,3 +328,40 @@ struct X5 {
 // CHECK: Identifier: "iterator" [101:53 - 101:61] TypeRef=iterator:5:18
 // CHECK: Identifier: "int_ptr_type" [101:62 - 101:74] TypedefDecl=int_ptr_type:101:62 (Definition)
 
+// Dependent template specialization types
+// CHECK: Keyword: "typename" [107:11 - 107:19] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Identifier: "outer_alias" [107:20 - 107:31] NamespaceRef=outer_alias:10:11
+// CHECK: Punctuation: "::" [107:31 - 107:33] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Identifier: "inner" [107:33 - 107:38] NamespaceRef=inner:62:13
+// CHECK: Punctuation: "::" [107:38 - 107:40] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Identifier: "vector" [107:40 - 107:46] TemplateRef=vector:4:12
+// CHECK: Punctuation: "<" [107:46 - 107:47] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Identifier: "type" [107:47 - 107:51] TypeRef=type:106:13
+// CHECK: Punctuation: ">" [107:51 - 107:52] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Punctuation: "::" [107:52 - 107:54] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Keyword: "template" [107:54 - 107:62] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Identifier: "rebind" [107:63 - 107:69] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Punctuation: "<" [107:69 - 107:70] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Identifier: "type" [107:70 - 107:74] TypeRef=type:106:13
+// CHECK: Punctuation: ">" [107:74 - 107:75] TypedefDecl=type1:107:76 (Definition)
+// CHECK: Identifier: "type1" [107:76 - 107:81] TypedefDecl=type1:107:76 (Definition)
+
+// CHECK: Keyword: "typedef" [108:3 - 108:10] ClassTemplate=X6:105:8 (Definition)
+// CHECK: Keyword: "typename" [108:11 - 108:19] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Identifier: "outer_alias" [108:20 - 108:31] NamespaceRef=outer_alias:10:11
+// CHECK: Punctuation: "::" [108:31 - 108:33] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Identifier: "inner" [108:33 - 108:38] NamespaceRef=inner:62:13
+// CHECK: Punctuation: "::" [108:38 - 108:40] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Identifier: "vector" [108:40 - 108:46] TemplateRef=vector:4:12
+// CHECK: Punctuation: "<" [108:46 - 108:47] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Identifier: "type" [108:47 - 108:51] TypeRef=type:106:13
+// CHECK: Punctuation: ">" [108:51 - 108:52] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Punctuation: "::" [108:52 - 108:54] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Keyword: "template" [108:54 - 108:62] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Identifier: "rebind" [108:63 - 108:69] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Punctuation: "<" [108:69 - 108:70] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Identifier: "type" [108:70 - 108:74] TypeRef=type:106:13
+// CHECK: Punctuation: ">" [108:74 - 108:75] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Punctuation: "::" [108:75 - 108:77] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Identifier: "other" [108:77 - 108:82] TypedefDecl=type2:108:83 (Definition)
+// CHECK: Identifier: "type2" [108:83 - 108:88] TypedefDecl=type2:108:83 (Definition)

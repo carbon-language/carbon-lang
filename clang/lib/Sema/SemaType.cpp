@@ -2276,8 +2276,7 @@ namespace {
                        ? DS.getTypeSpecTypeLoc()
                        : SourceLocation());
       const CXXScopeSpec& SS = DS.getTypeSpecScope();
-      TL.setQualifierRange(SS.isEmpty() ? SourceRange() : SS.getRange());
-      // FIXME: load appropriate source location.
+      TL.setQualifierLoc(SS.getWithLocInContext(Context));
       TL.setNameLoc(DS.getTypeSpecTypeLoc());
     }
 

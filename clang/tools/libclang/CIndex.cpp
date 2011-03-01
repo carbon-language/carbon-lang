@@ -343,6 +343,8 @@ public:
   bool VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL);
   bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
   bool VisitDependentNameTypeLoc(DependentNameTypeLoc TL);
+  bool VisitDependentTemplateSpecializationTypeLoc(
+                                    DependentTemplateSpecializationTypeLoc TL);
   bool VisitElaboratedTypeLoc(ElaboratedTypeLoc TL);
   
   // Data-recursive visitor functions.
@@ -1509,6 +1511,21 @@ bool CursorVisitor::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
   if (VisitNestedNameSpecifierLoc(TL.getQualifierLoc()))
     return true;
   
+  return false;
+}
+
+bool CursorVisitor::VisitDependentTemplateSpecializationTypeLoc(
+                                    DependentTemplateSpecializationTypeLoc TL) {
+  // Visit the nested-name-specifier, if there is one.
+  if (TL.getQualifierLoc() &&
+      VisitNestedNameSpecifierLoc(TL.getQualifierLoc()))
+    return true;
+  
+  // Visit the template arguments.
+  for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
+    if (VisitTemplateArgumentLoc(TL.getArgLoc(I)))
+      return true;
+
   return false;
 }
 
