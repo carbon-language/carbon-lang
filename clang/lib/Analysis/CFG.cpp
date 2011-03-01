@@ -210,6 +210,25 @@ struct BlockScopePosPair {
   LocalScope::const_iterator scopePosition;
 };
 
+/// TryResult - a class representing a variant over the values
+///  'true', 'false', or 'unknown'.  This is returned by tryEvaluateBool,
+///  and is used by the CFGBuilder to decide if a branch condition
+///  can be decided up front during CFG construction.
+class TryResult {
+  int X;
+public:
+  TryResult(bool b) : X(b ? 1 : 0) {}
+  TryResult() : X(-1) {}
+  
+  bool isTrue() const { return X == 1; }
+  bool isFalse() const { return X == 0; }
+  bool isKnown() const { return X >= 0; }
+  void negate() {
+    assert(isKnown());
+    X ^= 0x1;
+  }
+};
+
 /// CFGBuilder - This class implements CFG construction from an AST.
 ///   The builder is stateful: an instance of the builder should be used to only
 ///   construct a single CFG.
@@ -238,7 +257,7 @@ class CFGBuilder {
   CFGBlock* SwitchTerminatedBlock;
   CFGBlock* DefaultCaseBlock;
   CFGBlock* TryTerminatedBlock;
-
+  
   // Current position in local scope.
   LocalScope::const_iterator ScopePos;
 
@@ -257,12 +276,17 @@ class CFGBuilder {
 
   bool badCFG;
   CFG::BuildOptions BuildOpts;
+  
+  // State to track for building switch statements.
+  bool switchExclusivelyCovered;
+  Expr::EvalResult switchCond;
 
 public:
   explicit CFGBuilder() : cfg(new CFG()), // crew a new CFG
                           Block(NULL), Succ(NULL),
                           SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
-                          TryTerminatedBlock(NULL), badCFG(false) {}
+                          TryTerminatedBlock(NULL), badCFG(false),
+                          switchExclusivelyCovered(false) {}
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C,
@@ -387,45 +411,34 @@ private:
     B->addSuccessor(S, cfg->getBumpVectorContext());
   }
 
-  /// TryResult - a class representing a variant over the values
-  ///  'true', 'false', or 'unknown'.  This is returned by tryEvaluateBool,
-  ///  and is used by the CFGBuilder to decide if a branch condition
-  ///  can be decided up front during CFG construction.
-  class TryResult {
-    int X;
-  public:
-    TryResult(bool b) : X(b ? 1 : 0) {}
-    TryResult() : X(-1) {}
-
-    bool isTrue() const { return X == 1; }
-    bool isFalse() const { return X == 0; }
-    bool isKnown() const { return X >= 0; }
-    void negate() {
-      assert(isKnown());
-      X ^= 0x1;
-    }
-  };
+  /// Try and evaluate an expression to an integer constant.
+  bool tryEvaluate(Expr *S, Expr::EvalResult &outResult) {
+    if (!BuildOpts.PruneTriviallyFalseEdges)
+      return false;
+    return !S->isTypeDependent() && 
+    !S->isValueDependent() &&
+    S->Evaluate(outResult, *Context);
+  }
 
   /// tryEvaluateBool - Try and evaluate the Stmt and return 0 or 1
   /// if we can evaluate to a known value, otherwise return -1.
   TryResult tryEvaluateBool(Expr *S) {
-    if (!BuildOpts.PruneTriviallyFalseEdges)
-      return TryResult();
-
     Expr::EvalResult Result;
-    if (!S->isTypeDependent() && !S->isValueDependent() &&
-        S->Evaluate(Result, *Context)) {      
-      if (Result.Val.isInt())
-        return Result.Val.getInt().getBoolValue();
-      if (Result.Val.isLValue()) {
-        Expr *e = Result.Val.getLValueBase();
-        const CharUnits &c = Result.Val.getLValueOffset();        
-        if (!e && c.isZero())
-          return false;        
-      }
+    if (!tryEvaluate(S, Result))
+      return TryResult();
+    
+    if (Result.Val.isInt())
+      return Result.Val.getInt().getBoolValue();
+
+    if (Result.Val.isLValue()) {
+      Expr *e = Result.Val.getLValueBase();
+      const CharUnits &c = Result.Val.getLValueOffset();        
+      if (!e && c.isZero())
+        return false;        
     }
     return TryResult();
   }
+  
 };
 
 // FIXME: Add support for dependent-sized array types in C++?
@@ -2180,6 +2193,17 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   assert(Terminator->getBody() && "switch must contain a non-NULL body");
   Block = NULL;
 
+  // For pruning unreachable case statements, save the current state
+  // for tracking the condition value.
+  SaveAndRestore<bool> save_switchExclusivelyCovered(switchExclusivelyCovered,
+                                                     false);
+  SaveAndRestore<Expr::EvalResult> save_switchCond(switchCond);
+  
+  
+  // Determine if the switch condition can be explicitly evaluated.
+  assert(Terminator->getCond() && "switch condition must be non-NULL");
+  tryEvaluate(Terminator->getCond(), switchCond);
+  
   // If body is not a compound statement create implicit scope
   // and add destructors.
   if (!isa<CompoundStmt>(Terminator->getBody()))
@@ -2193,11 +2217,11 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
 
   // If we have no "default:" case, the default transition is to the code
   // following the switch body.
-  addSuccessor(SwitchTerminatedBlock, DefaultCaseBlock);
+  addSuccessor(SwitchTerminatedBlock,
+               switchExclusivelyCovered ? 0 : DefaultCaseBlock);
 
   // Add the terminator and condition in the switch block.
   SwitchTerminatedBlock->setTerminator(Terminator);
-  assert(Terminator->getCond() && "switch condition must be non-NULL");
   Block = SwitchTerminatedBlock;
   Block = addStmt(Terminator->getCond());
 
@@ -2212,6 +2236,44 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   }
 
   return Block;
+}
+  
+static bool shouldAddCase(bool &switchExclusivelyCovered,
+                          const Expr::EvalResult &switchCond,
+                          const CaseStmt *CS,
+                          ASTContext &Ctx) {
+  bool addCase = false;
+  
+  if (!switchExclusivelyCovered) {
+    if (switchCond.Val.isInt()) {
+      // Evaluate the LHS of the case value.
+      Expr::EvalResult V1;
+      CS->getLHS()->Evaluate(V1, Ctx);
+      assert(V1.Val.isInt());
+      const llvm::APSInt &condInt = switchCond.Val.getInt();
+      const llvm::APSInt &lhsInt = V1.Val.getInt();
+      
+      if (condInt == lhsInt) {
+        addCase = true;
+        switchExclusivelyCovered = true;
+      }
+      else if (condInt < lhsInt) {
+        if (const Expr *RHS = CS->getRHS()) {
+          // Evaluate the RHS of the case value.
+          Expr::EvalResult V2;
+          RHS->Evaluate(V2, Ctx);
+          assert(V2.Val.isInt());
+          if (V2.Val.getInt() <= condInt) {
+            addCase = true;
+            switchExclusivelyCovered = true;
+          }
+        }
+      }
+    }
+    else
+      addCase = true;
+  }
+  return addCase;  
 }
 
 CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
@@ -2232,9 +2294,12 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
       else
         TopBlock = currentBlock;
 
-      addSuccessor(SwitchTerminatedBlock, currentBlock);
-      LastBlock = currentBlock;
+      addSuccessor(SwitchTerminatedBlock,
+                   shouldAddCase(switchExclusivelyCovered, switchCond,
+                                 CS, *Context)
+                   ? currentBlock : 0);
 
+      LastBlock = currentBlock;
       CS = cast<CaseStmt>(Sub);
       Sub = CS->getSubStmt();
     }
@@ -2256,7 +2321,10 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
   // Add this block to the list of successors for the block with the switch
   // statement.
   assert(SwitchTerminatedBlock);
-  addSuccessor(SwitchTerminatedBlock, CaseBlock);
+  addSuccessor(SwitchTerminatedBlock,
+               shouldAddCase(switchExclusivelyCovered, switchCond,
+                             CS, *Context)
+               ? CaseBlock : 0);
 
   // We set Block to NULL to allow lazy creation of a new block (if necessary)
   Block = NULL;

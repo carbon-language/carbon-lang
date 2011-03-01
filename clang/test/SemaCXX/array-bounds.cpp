@@ -127,4 +127,23 @@ int test_sizeof_as_condition(int flag) {
   return sizeof(char) == sizeof(char) ? arr[2] : arr[1]; // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
 }
 
+void test_switch() {
+  switch (4) {
+    case 1: {
+      int arr[2];
+      arr[2] = 1; // no-warning
+      break;
+    }
+    case 4: {
+      int arr[2]; // expected-note {{array 'arr' declared here}}
+      arr[2] = 1; // expected-warning {{array index of '2' indexes past the end of an array (that contains 2 elements)}}
+      break;
+    }
+    default: {
+      int arr[2];
+      arr[2] = 1; // no-warning
+      break;
+    }
+  }
+}
 

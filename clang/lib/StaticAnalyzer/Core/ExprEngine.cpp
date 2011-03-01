@@ -1043,6 +1043,10 @@ void ExprEngine::processSwitch(SwitchNodeBuilder& builder) {
   bool defaultIsFeasible = I == EI;
 
   for ( ; I != EI; ++I) {
+    // Successor may be pruned out during CFG construction.
+    if (!I.getBlock())
+      continue;
+    
     const CaseStmt* Case = I.getCase();
 
     // Evaluate the LHS of the case value.

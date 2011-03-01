@@ -1269,3 +1269,22 @@ void pr9287_c(int type, int *p) {
   }
 }
 
+void test_switch() {
+  switch (4) {
+    case 1: {
+      int *p = 0;
+      *p = 0xDEADBEEF; // no-warning
+      break;
+    }
+    case 4: {
+      int *p = 0;
+      *p = 0xDEADBEEF; // expected-warning {{null}}
+      break;
+    }
+    default: {
+      int *p = 0;
+      *p = 0xDEADBEEF; // no-warning
+      break;
+    }
+  }
+}
