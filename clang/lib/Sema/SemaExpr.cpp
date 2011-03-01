@@ -6641,7 +6641,9 @@ static void DiagnoseBadShiftValues(Sema& S, Expr *&lex, Expr *&rex,
     return;
 
   if (Right.isNegative()) {
-    S.Diag(Loc, diag::warn_shift_negative) << rex->getSourceRange();
+    S.DiagRuntimeBehavior(Loc, rex,
+                          S.PDiag(diag::warn_shift_negative)
+                            << rex->getSourceRange());
     return;
   }
   llvm::APInt LeftBits(Right.getBitWidth(),
