@@ -16,6 +16,7 @@ TARGET_DIR=$2
 CONFIG_BUILD_DIR=$3
 PYTHON_INSTALL_DIR=$4
 debug_flag=$5 
+SWIG=$6
 
 swig_output_file=${SRC_ROOT}/source/LLDBWrapPython.cpp
 swig_input_file=${SRC_ROOT}/scripts/lldb.swig
@@ -170,7 +171,7 @@ fi
 
 # Build the SWIG C++ wrapper file for Python.
 
-swig -c++ -shadow -python -I"/usr/include" -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
+$SWIG -c++ -shadow -python -I"/usr/include" -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
 
 # Append global variable to lldb Python module.
 

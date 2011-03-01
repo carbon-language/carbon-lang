@@ -55,6 +55,27 @@ then
 fi
 
 #
+# Next look for swig
+#
+
+SWIG=
+if [ -f /usr/bin/swig ]
+then
+    SWIG=/usr/bin/swig
+else
+    if [ -f /usr/local/bin/swig ]
+    then
+        SWIG=/usr/local/bin/swig
+    fi
+fi
+
+if [ ${SWIG}a == a ]
+then
+    echo Error: could not find the swig binary
+    exit 1
+fi
+
+#
 # For each scripting language, make sure the build script for that language
 # exists, and if so, call it.
 #
@@ -98,7 +119,7 @@ do
                 echo "Executing $curlang build script..."
             fi
 
-            ./build-swig-${curlang}.sh  $SRC_ROOT $TARGET_DIR $CONFIG_BUILD_DIR "${PREFIX}" "${debug_flag}"
+            ./build-swig-${curlang}.sh  $SRC_ROOT $TARGET_DIR $CONFIG_BUILD_DIR "${PREFIX}" "${debug_flag}" "${SWIG}"
         fi
     fi
 done
