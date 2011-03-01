@@ -41,3 +41,11 @@ char* volatile i(); // expected-warning{{'volatile' type qualifier on return typ
 
 const volatile int scalar_cv(); // expected-warning{{'const volatile' type qualifiers on return type have no effect}}
 }
+
+namespace PR9328 {
+  typedef char *PCHAR;
+  class Test 
+  {
+    const PCHAR GetName() { return 0; } // expected-warning{{'const' type qualifier on return type has no effect}}
+  };
+}
