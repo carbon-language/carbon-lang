@@ -1385,7 +1385,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_flimit_debug_info);
-  Args.AddLastArg(CmdArgs, options::OPT_pg);
+  if (getToolChain().SupportsProfiling())
+    Args.AddLastArg(CmdArgs, options::OPT_pg);
 
   // -flax-vector-conversions is default.
   if (!Args.hasFlag(options::OPT_flax_vector_conversions,
@@ -2184,7 +2185,8 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
 
   if (Args.hasArg(options::OPT_v))
     CmdArgs.push_back("-version");
-  if (Args.hasArg(options::OPT_pg))
+  if (Args.hasArg(options::OPT_pg) &&
+      getToolChain().SupportsProfiling())
     CmdArgs.push_back("-p");
   Args.AddLastArg(CmdArgs, options::OPT_p);
 
@@ -2817,7 +2819,8 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
           }
         }
       } else {
-        if (Args.hasArg(options::OPT_pg)) {
+        if (Args.hasArg(options::OPT_pg) &&
+            getToolChain().SupportsProfiling()) {
           if (Args.hasArg(options::OPT_static) ||
               Args.hasArg(options::OPT_object) ||
               Args.hasArg(options::OPT_preload)) {

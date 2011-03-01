@@ -212,6 +212,8 @@ public:
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
 
+  virtual bool SupportsProfiling() const;
+
   virtual bool SupportsObjCGC() const;
 
   virtual bool UseDwarfDebugFlags() const;

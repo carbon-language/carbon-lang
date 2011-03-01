@@ -151,6 +151,9 @@ public:
   /// particular PIC mode.
   virtual const char *GetForcedPicModel() const = 0;
 
+  /// SupportsProfiling - Does this tool chain support -pg.
+  virtual bool SupportsProfiling() const { return true; }
+
   /// Does this tool chain support Objective-C garbage collection.
   virtual bool SupportsObjCGC() const { return false; }
 

@@ -918,6 +918,11 @@ const char *Darwin::GetForcedPicModel() const {
   return 0;
 }
 
+bool Darwin::SupportsProfiling() const {
+  // Profiling instrumentation is only supported on x86.
+  return getArchName() == "i386" || getArchName() == "x86_64";
+}
+
 bool Darwin::SupportsObjCGC() const {
   // Garbage collection is supported everywhere except on iPhone OS.
   return !isTargetIPhoneOS();
