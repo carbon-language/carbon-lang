@@ -210,39 +210,7 @@ makeVV(const VNInfo *a, VNInfo *b) {
 
 void LiveIntervalMap::reset(LiveInterval *li) {
   LI = li;
-  Values.clear();
   LiveOutCache.clear();
-}
-
-bool LiveIntervalMap::isComplexMapped(const VNInfo *ParentVNI) const {
-  ValueMap::const_iterator i = Values.find(ParentVNI);
-  return i != Values.end() && i->second == 0;
-}
-
-// defValue - Introduce a LI def for ParentVNI that could be later than
-// ParentVNI->def.
-VNInfo *LiveIntervalMap::defValue(const VNInfo *ParentVNI, SlotIndex Idx) {
-  assert(LI && "call reset first");
-  assert(ParentVNI && "Mapping  NULL value");
-  assert(Idx.isValid() && "Invalid SlotIndex");
-  assert(ParentLI.getVNInfoAt(Idx) == ParentVNI && "Bad ParentVNI");
-
-  // Create a new value.
-  VNInfo *VNI = LI->getNextValue(Idx, 0, LIS.getVNInfoAllocator());
-
-  // Preserve the PHIDef bit.
-  if (ParentVNI->isPHIDef() && Idx == ParentVNI->def)
-    VNI->setIsPHIDef(true);
-
-  // Use insert for lookup, so we can add missing values with a second lookup.
-  std::pair<ValueMap::iterator,bool> InsP =
-    Values.insert(makeVV(ParentVNI, Idx == ParentVNI->def ? VNI : 0));
-
-  // This is now a complex def. Mark with a NULL in valueMap.
-  if (!InsP.second)
-    InsP.first->second = 0;
-
-  return VNI;
 }
 
 
@@ -254,23 +222,6 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
   assert(ParentVNI && "Mapping  NULL value");
   assert(Idx.isValid() && "Invalid SlotIndex");
   assert(ParentLI.getVNInfoAt(Idx) == ParentVNI && "Bad ParentVNI");
-
-  // Use insert for lookup, so we can add missing values with a second lookup.
-  std::pair<ValueMap::iterator,bool> InsP =
-    Values.insert(makeVV(ParentVNI, 0));
-
-  // This was an unknown value. Create a simple mapping.
-  if (InsP.second) {
-    if (simple) *simple = true;
-    return InsP.first->second = LI->createValueCopy(ParentVNI,
-                                                     LIS.getVNInfoAllocator());
-  }
-
-  // This was a simple mapped value.
-  if (InsP.first->second) {
-    if (simple) *simple = true;
-    return InsP.first->second;
-  }
 
   // This is a complex mapped value. There may be multiple defs, and we may need
   // to create phi-defs.
@@ -589,6 +540,60 @@ void SplitEditor::dump() const {
   dbgs() << '\n';
 }
 
+VNInfo *SplitEditor::defValue(unsigned RegIdx,
+                              const VNInfo *ParentVNI,
+                              SlotIndex Idx) {
+  assert(ParentVNI && "Mapping  NULL value");
+  assert(Idx.isValid() && "Invalid SlotIndex");
+  assert(Edit.getParent().getVNInfoAt(Idx) == ParentVNI && "Bad Parent VNI");
+  LiveInterval *LI = Edit.get(RegIdx);
+
+  // Create a new value.
+  VNInfo *VNI = LI->getNextValue(Idx, 0, LIS.getVNInfoAllocator());
+
+  // Preserve the PHIDef bit.
+  if (ParentVNI->isPHIDef() && Idx == ParentVNI->def)
+    VNI->setIsPHIDef(true);
+
+  // Use insert for lookup, so we can add missing values with a second lookup.
+  std::pair<ValueMap::iterator, bool> InsP =
+    Values.insert(std::make_pair(std::make_pair(RegIdx, ParentVNI->id), VNI));
+
+  // This was the first time (RegIdx, ParentVNI) was mapped.
+  // Keep it as a simple def without any liveness.
+  if (InsP.second)
+    return VNI;
+
+  // If the previous value was a simple mapping, add liveness for it now.
+  if (VNInfo *OldVNI = InsP.first->second) {
+    SlotIndex Def = OldVNI->def;
+    LI->addRange(LiveRange(Def, Def.getNextSlot(), OldVNI));
+    // No longer a simple mapping.
+    InsP.first->second = 0;
+  }
+
+  // This is a complex mapping, add liveness for VNI
+  SlotIndex Def = VNI->def;
+  LI->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
+
+  return VNI;
+}
+
+void SplitEditor::markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI) {
+  assert(ParentVNI && "Mapping  NULL value");
+  VNInfo *&VNI = Values[std::make_pair(RegIdx, ParentVNI->id)];
+
+  // ParentVNI was either unmapped or already complex mapped. Either way.
+  if (!VNI)
+    return;
+
+  // This was previously a single mapping. Make sure the old def is represented
+  // by a trivial live range.
+  SlotIndex Def = VNI->def;
+  Edit.get(RegIdx)->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
+  VNI = 0;
+}
+
 VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
                                    VNInfo *ParentVNI,
                                    SlotIndex UseIdx,
@@ -609,12 +614,12 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
     Def = LIS.InsertMachineInstrInMaps(CopyMI).getDefIndex();
   }
 
-  // Define the value in Reg.
-  VNInfo *VNI = LIMappers[RegIdx].defValue(ParentVNI, Def);
-  VNI->setCopy(CopyMI);
+  // Temporarily mark all values as complex mapped.
+  markComplexMapped(RegIdx, ParentVNI);
 
-  // Add minimal liveness for the new value.
-  Edit.get(RegIdx)->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
+  // Define the value in Reg.
+  VNInfo *VNI = defValue(RegIdx, ParentVNI, Def);
+  VNI->setCopy(CopyMI);
   return VNI;
 }
 
@@ -833,13 +838,11 @@ void SplitEditor::finish() {
     const VNInfo *ParentVNI = *I;
     if (ParentVNI->isUnused())
       continue;
-    LiveIntervalMap &LIM = LIMappers[RegAssign.lookup(ParentVNI->def)];
-    VNInfo *VNI = LIM.defValue(ParentVNI, ParentVNI->def);
-    LIM.getLI()->addRange(LiveRange(ParentVNI->def,
-                                    ParentVNI->def.getNextSlot(), VNI));
+    unsigned RegIdx = RegAssign.lookup(ParentVNI->def);
     // Mark all values as complex to force liveness computation.
     // This should really only be necessary for remat victims, but we are lazy.
-    LIM.markComplexMapped(ParentVNI);
+    markComplexMapped(RegIdx, ParentVNI);
+    defValue(RegIdx, ParentVNI, ParentVNI->def);
   }
 
 #ifndef NDEBUG

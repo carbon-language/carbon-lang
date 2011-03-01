@@ -162,14 +162,6 @@ class LiveIntervalMap {
   // The child interval's values are fully contained inside ParentLI values.
   LiveInterval *LI;
 
-  typedef DenseMap<const VNInfo*, VNInfo*> ValueMap;
-
-  // Map ParentLI values to simple values in LI that are defined at the same
-  // SlotIndex, or NULL for ParentLI values that have complex LI defs.
-  // Note there is a difference between values mapping to NULL (complex), and
-  // values not present (unknown/unmapped).
-  ValueMap Values;
-
   typedef std::pair<VNInfo*, MachineDomTreeNode*> LiveOutPair;
   typedef DenseMap<MachineBasicBlock*,LiveOutPair> LiveOutMap;
 
@@ -203,12 +195,6 @@ public:
   /// getLI - return the current live interval.
   LiveInterval *getLI() const { return LI; }
 
-  /// defValue - define a value in LI from the ParentLI value VNI and Idx.
-  /// Idx does not have to be ParentVNI->def, but it must be contained within
-  /// ParentVNI's live range in ParentLI.
-  /// Return the new LI value.
-  VNInfo *defValue(const VNInfo *ParentVNI, SlotIndex Idx);
-
   /// mapValue - map ParentVNI to the corresponding LI value at Idx. It is
   /// assumed that ParentVNI is live at Idx.
   /// If ParentVNI has not been defined by defValue, it is assumed that
@@ -224,20 +210,6 @@ public:
   // parentli is assumed to be live at Idx. Extend the live range to include
   // Idx. Return the found VNInfo, or NULL.
   VNInfo *extendTo(const MachineBasicBlock *MBB, SlotIndex Idx);
-
-  /// isMapped - Return true is ParentVNI is a known mapped value. It may be a
-  /// simple 1-1 mapping or a complex mapping to later defs.
-  bool isMapped(const VNInfo *ParentVNI) const {
-    return Values.count(ParentVNI);
-  }
-
-  /// isComplexMapped - Return true if ParentVNI has received new definitions
-  /// with defValue.
-  bool isComplexMapped(const VNInfo *ParentVNI) const;
-
-  /// markComplexMapped - Mark ParentVNI as complex mapped regardless of the
-  /// number of definitions.
-  void markComplexMapped(const VNInfo *ParentVNI) { Values[ParentVNI] = 0; }
 
   // addSimpleRange - Add a simple range from ParentLI to LI.
   // ParentVNI must be live in the [Start;End) interval.
@@ -291,6 +263,29 @@ class SplitEditor {
 
   /// LIMappers - One LiveIntervalMap or each interval in Edit.
   SmallVector<LiveIntervalMap, 4> LIMappers;
+
+  typedef DenseMap<std::pair<unsigned, unsigned>, VNInfo*> ValueMap;
+
+  /// Values - keep track of the mapping from parent values to values in the new
+  /// intervals. Given a pair (RegIdx, ParentVNI->id), Values contains:
+  ///
+  /// 1. No entry - the value is not mapped to Edit.get(RegIdx).
+  /// 2. Null - the value is mapped to multiple values in Edit.get(RegIdx).
+  ///    Each value is represented by a minimal live range at its def.
+  /// 3. A non-null VNInfo - the value is mapped to a single new value.
+  ///    The new value has no live ranges anywhere.
+  ValueMap Values;
+
+  /// defValue - define a value in RegIdx from ParentVNI at Idx.
+  /// Idx does not have to be ParentVNI->def, but it must be contained within
+  /// ParentVNI's live range in ParentLI. The new value is added to the value
+  /// map.
+  /// Return the new LI value.
+  VNInfo *defValue(unsigned RegIdx, const VNInfo *ParentVNI, SlotIndex Idx);
+
+  /// markComplexMapped - Mark ParentVNI as complex mapped in RegIdx regardless
+  /// of the number of defs.
+  void markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI);
 
   /// defFromParent - Define Reg from ParentVNI at UseIdx using either
   /// rematerialization or a COPY from parent. Return the new value.
