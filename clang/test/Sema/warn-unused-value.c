@@ -72,6 +72,15 @@ int test_logical_bar() {
   return x;
 }
 
+// PR8282
+void conditional_for_control_flow(int cond, int x, int y)
+{
+    cond? y++ : x; // no-warning
+    cond? y : ++x; // no-warning
+    cond? (x |= y) : ++x; // no-warning
+    cond? y : x; // expected-warning {{expression result unused}}
+}
+
 struct s0 { int f0; };
 
 void f0(int a);
