@@ -6648,7 +6648,9 @@ static void DiagnoseBadShiftValues(Sema& S, Expr *&lex, Expr *&rex,
   llvm::APInt LeftBits(Right.getBitWidth(),
                        S.Context.getTypeSize(lex->getType()));
   if (Right.uge(LeftBits)) {
-    S.Diag(Loc, diag::warn_shift_gt_typewidth) << rex->getSourceRange();
+    S.DiagRuntimeBehavior(Loc, rex,
+                          S.PDiag(diag::warn_shift_gt_typewidth)
+                            << rex->getSourceRange());
     return;
   }
   if (Opc != BO_Shl)
