@@ -210,15 +210,6 @@ public:
   // parentli is assumed to be live at Idx. Extend the live range to include
   // Idx. Return the found VNInfo, or NULL.
   VNInfo *extendTo(const MachineBasicBlock *MBB, SlotIndex Idx);
-
-  // addSimpleRange - Add a simple range from ParentLI to LI.
-  // ParentVNI must be live in the [Start;End) interval.
-  void addSimpleRange(SlotIndex Start, SlotIndex End, const VNInfo *ParentVNI);
-
-  /// addRange - Add live ranges to LI where [Start;End) intersects ParentLI.
-  /// All needed values whose def is not inside [Start;End) must be defined
-  /// beforehand so mapValue will work.
-  void addRange(SlotIndex Start, SlotIndex End);
 };
 
 

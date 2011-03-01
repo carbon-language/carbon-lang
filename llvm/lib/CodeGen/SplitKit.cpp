@@ -445,65 +445,6 @@ VNInfo *LiveIntervalMap::extendTo(const MachineBasicBlock *MBB, SlotIndex Idx) {
   return I->valno;
 }
 
-// addSimpleRange - Add a simple range from ParentLI to LI.
-// ParentVNI must be live in the [Start;End) interval.
-void LiveIntervalMap::addSimpleRange(SlotIndex Start, SlotIndex End,
-                                     const VNInfo *ParentVNI) {
-  assert(LI && "call reset first");
-  bool simple;
-  VNInfo *VNI = mapValue(ParentVNI, Start, &simple);
-  // A simple mapping is easy.
-  if (simple) {
-    LI->addRange(LiveRange(Start, End, VNI));
-    return;
-  }
-
-  // ParentVNI is a complex value. We must map per MBB.
-  MachineFunction::iterator MBB = LIS.getMBBFromIndex(Start);
-  MachineFunction::iterator MBBE = LIS.getMBBFromIndex(End.getPrevSlot());
-
-  if (MBB == MBBE) {
-    LI->addRange(LiveRange(Start, End, VNI));
-    return;
-  }
-
-  // First block.
-  LI->addRange(LiveRange(Start, LIS.getMBBEndIdx(MBB), VNI));
-
-  // Run sequence of full blocks.
-  for (++MBB; MBB != MBBE; ++MBB) {
-    Start = LIS.getMBBStartIdx(MBB);
-    LI->addRange(LiveRange(Start, LIS.getMBBEndIdx(MBB),
-                            mapValue(ParentVNI, Start)));
-  }
-
-  // Final block.
-  Start = LIS.getMBBStartIdx(MBB);
-  if (Start != End)
-    LI->addRange(LiveRange(Start, End, mapValue(ParentVNI, Start)));
-}
-
-/// addRange - Add live ranges to LI where [Start;End) intersects ParentLI.
-/// All needed values whose def is not inside [Start;End) must be defined
-/// beforehand so mapValue will work.
-void LiveIntervalMap::addRange(SlotIndex Start, SlotIndex End) {
-  assert(LI && "call reset first");
-  LiveInterval::const_iterator B = ParentLI.begin(), E = ParentLI.end();
-  LiveInterval::const_iterator I = std::lower_bound(B, E, Start);
-
-  // Check if --I begins before Start and overlaps.
-  if (I != B) {
-    --I;
-    if (I->end > Start)
-      addSimpleRange(Start, std::min(End, I->end), I->valno);
-    ++I;
-  }
-
-  // The remaining ranges begin after Start.
-  for (;I != E && I->start < End; ++I)
-    addSimpleRange(I->start, std::min(End, I->end), I->valno);
-}
-
 
 //===----------------------------------------------------------------------===//
 //                               Split Editor
