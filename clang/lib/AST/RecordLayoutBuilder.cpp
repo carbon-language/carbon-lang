@@ -1281,7 +1281,7 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   }
   assert(!Type.isNull() && "Did not find a type!");
 
-  unsigned TypeAlign = Context.getTypeAlign(Type);
+  CharUnits TypeAlign = Context.getTypeAlignInChars(Type);
 
   // We're not going to use any of the unfilled bits in the last byte.
   UnfilledBitsInLastByte = 0;
@@ -1295,7 +1295,8 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   } else {
     // The bitfield is allocated starting at the next offset aligned appropriately
     // for T', with length n bits.
-    FieldOffset = llvm::RoundUpToAlignment(getDataSizeInBits(), TypeAlign);
+    FieldOffset = llvm::RoundUpToAlignment(getDataSizeInBits(), 
+                                           Context.toBits(TypeAlign));
 
     uint64_t NewSizeInBits = FieldOffset + FieldSize;
 
@@ -1307,13 +1308,13 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   FieldOffsets.push_back(FieldOffset);
 
   CheckFieldPadding(FieldOffset, UnpaddedFieldOffset, FieldOffset,
-                    TypeAlign, FieldPacked, D);
+                    Context.toBits(TypeAlign), FieldPacked, D);
 
   // Update the size.
   setSize(std::max(getSizeInBits(), getDataSizeInBits()));
 
   // Remember max struct/class alignment.
-  UpdateAlignment(Context.toCharUnitsFromBits(TypeAlign));
+  UpdateAlignment(TypeAlign);
 }
 
 void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
