@@ -191,12 +191,16 @@ static void setFlag(const GRState *state, SVal val, CheckerContext &C) {
     C.addTransition(state->set<T>(sym, true));
 }
 
-static QualType parameterTypeFromSVal(SVal val) {
+static QualType parameterTypeFromSVal(SVal val, CheckerContext &C) {
+  const StackFrameContext *
+    SFC = C.getPredecessor()->getLocationContext()->getCurrentStackFrame();
   if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(&val)) {
     const MemRegion* R = X->getRegion();
     if (const VarRegion *VR = R->getAs<VarRegion>())
-      if (VR->hasStackParametersStorage())
-        return VR->getValueType();
+      if (const StackArgumentsSpaceRegion *
+          stackReg = dyn_cast<StackArgumentsSpaceRegion>(VR->getMemorySpace()))
+        if (stackReg->getStackFrame() == SFC)
+          return VR->getValueType();
   }
 
   return QualType();
@@ -218,7 +222,7 @@ void NSOrCFErrorDerefChecker::checkLocation(SVal loc, bool isLoad,
   // FIXME: Cumbersome! Maybe add hook at construction of SVals at start of
   // function ?
 
-  QualType parmT = parameterTypeFromSVal(loc);
+  QualType parmT = parameterTypeFromSVal(loc, C);
   if (parmT.isNull())
     return;
 
