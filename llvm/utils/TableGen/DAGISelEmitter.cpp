@@ -27,7 +27,7 @@ using namespace llvm;
 static unsigned getResultPatternCost(TreePatternNode *P,
                                      CodeGenDAGPatterns &CGP) {
   if (P->isLeaf()) return 0;
-  
+
   unsigned Cost = 0;
   Record *Op = P->getOperator();
   if (Op->isSubClassOf("Instruction")) {
@@ -43,7 +43,7 @@ static unsigned getResultPatternCost(TreePatternNode *P,
 
 /// getResultPatternCodeSize - Compute the code size of instructions for this
 /// pattern.
-static unsigned getResultPatternSize(TreePatternNode *P, 
+static unsigned getResultPatternSize(TreePatternNode *P,
                                      CodeGenDAGPatterns &CGP) {
   if (P->isLeaf()) return 0;
 
@@ -64,21 +64,21 @@ namespace {
 struct PatternSortingPredicate {
   PatternSortingPredicate(CodeGenDAGPatterns &cgp) : CGP(cgp) {}
   CodeGenDAGPatterns &CGP;
-  
+
   bool operator()(const PatternToMatch *LHS, const PatternToMatch *RHS) {
     const TreePatternNode *LHSSrc = LHS->getSrcPattern();
     const TreePatternNode *RHSSrc = RHS->getSrcPattern();
-    
+
     if (LHSSrc->getNumTypes() != 0 && RHSSrc->getNumTypes() != 0 &&
         LHSSrc->getType(0) != RHSSrc->getType(0)) {
       MVT::SimpleValueType V1 = LHSSrc->getType(0), V2 = RHSSrc->getType(0);
       if (MVT(V1).isVector() != MVT(V2).isVector())
         return MVT(V2).isVector();
-      
+
       if (MVT(V1).isFloatingPoint() != MVT(V2).isFloatingPoint())
         return MVT(V2).isFloatingPoint();
     }
-    
+
     // Otherwise, if the patterns might both match, sort based on complexity,
     // which means that we prefer to match patterns that cover more nodes in the
     // input over nodes that cover fewer.
@@ -86,18 +86,18 @@ struct PatternSortingPredicate {
     unsigned RHSSize = RHS->getPatternComplexity(CGP);
     if (LHSSize > RHSSize) return true;   // LHS -> bigger -> less cost
     if (LHSSize < RHSSize) return false;
-    
+
     // If the patterns have equal complexity, compare generated instruction cost
     unsigned LHSCost = getResultPatternCost(LHS->getDstPattern(), CGP);
     unsigned RHSCost = getResultPatternCost(RHS->getDstPattern(), CGP);
     if (LHSCost < RHSCost) return true;
     if (LHSCost > RHSCost) return false;
-    
+
     unsigned LHSPatSize = getResultPatternSize(LHS->getDstPattern(), CGP);
     unsigned RHSPatSize = getResultPatternSize(RHS->getDstPattern(), CGP);
     if (LHSPatSize < RHSPatSize) return true;
     if (LHSPatSize > RHSPatSize) return false;
-    
+
     // Sort based on the UID of the pattern, giving us a deterministic ordering
     // if all other sorting conditions fail.
     assert(LHS == RHS || LHS->ID != RHS->ID);
@@ -110,7 +110,7 @@ struct PatternSortingPredicate {
 void DAGISelEmitter::run(raw_ostream &OS) {
   EmitSourceFileHeader("DAG Instruction Selector for the " +
                        CGP.getTargetInfo().getName() + " target", OS);
-  
+
   OS << "// *** NOTE: This file is #included into the middle of the target\n"
      << "// *** instruction selector class.  These functions are really "
      << "methods.\n\n";
@@ -132,8 +132,8 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   // We want to process the matches in order of minimal cost.  Sort the patterns
   // so the least cost one is at the start.
   std::sort(Patterns.begin(), Patterns.end(), PatternSortingPredicate(CGP));
-  
-  
+
+
   // Convert each variant of each pattern into a Matcher.
   std::vector<Matcher*> PatternMatchers;
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
@@ -144,7 +144,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
         break;
     }
   }
-          
+
   Matcher *TheMatcher = new ScopeMatcher(&PatternMatchers[0],
                                          PatternMatchers.size());
 

@@ -764,7 +764,7 @@ bool SelectionDAGISel::TryToFoldFastISelLoad(const LoadInst *LI,
          "The only use of the vreg must be a use, we haven't emitted the def!");
 
   MachineInstr *User = &*RI;
-  
+
   // Set the insertion point properly.  Folding the load can cause generation of
   // other random instructions (like sign extends) for addressing modes, make
   // sure they get inserted in a logical place before the new instruction.
