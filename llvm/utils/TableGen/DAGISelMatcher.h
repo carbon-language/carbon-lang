@@ -29,7 +29,7 @@ Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,unsigned Variant,
                                  const CodeGenDAGPatterns &CGP);
 Matcher *OptimizeMatcher(Matcher *Matcher, const CodeGenDAGPatterns &CGP);
 void EmitMatcherTable(const Matcher *Matcher, const CodeGenDAGPatterns &CGP,
-                      raw_ostream &OS);
+                      bool useEmitRegister2, raw_ostream &OS);
 
 
 /// Matcher - Base class for all the the DAG ISel Matcher representation

@@ -43,8 +43,11 @@ class MatcherTableEmitter {
   DenseMap<Record*, unsigned> NodeXFormMap;
   std::vector<Record*> NodeXForms;
 
+  bool useEmitRegister2;
+
 public:
-  MatcherTableEmitter(const CodeGenDAGPatterns &cgp) : CGP(cgp) {}
+  MatcherTableEmitter(const CodeGenDAGPatterns &cgp, bool _useEmitRegister2)
+    : CGP(cgp), useEmitRegister2(_useEmitRegister2) {}
 
   unsigned EmitMatcherList(const Matcher *N, unsigned Indent,
                            unsigned StartIdx, formatted_raw_ostream &OS);
@@ -255,7 +258,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   }
 
   case Matcher::CheckOpcode:
-    OS << "OPC_CheckOpcode, TARGET_OPCODE("
+    OS << "OPC_CheckOpcode, TARGET_VAL("
        << cast<CheckOpcodeMatcher>(N)->getOpcode().getEnumName() << "),\n";
     return 3;
       
@@ -321,7 +324,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       
       OS << ' ';
       if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N))
-        OS << "TARGET_OPCODE(" << SOM->getCaseOpcode(i).getEnumName() << "),";
+        OS << "TARGET_VAL(" << SOM->getCaseOpcode(i).getEnumName() << "),";
       else
         OS << getEnumName(cast<SwitchTypeMatcher>(N)->getCaseType(i)) << ',';
 
@@ -429,17 +432,31 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   }
       
   case Matcher::EmitRegister:
-    OS << "OPC_EmitRegister, "
-       << getEnumName(cast<EmitRegisterMatcher>(N)->getVT()) << ", ";
-    if (Record *R = cast<EmitRegisterMatcher>(N)->getReg())
-      OS << getQualifiedName(R) << ",\n";
-    else {
-      OS << "0 ";
-      if (!OmitComments)
-        OS << "/*zero_reg*/";
-      OS << ",\n";
+    if (useEmitRegister2) {
+      OS << "OPC_EmitRegister2, "
+        << getEnumName(cast<EmitRegisterMatcher>(N)->getVT()) << ", ";
+      if (Record *R = cast<EmitRegisterMatcher>(N)->getReg())
+        OS << "TARGET_VAL(" << getQualifiedName(R) << "),\n";
+      else {
+        OS << "TARGET_VAL(0) ";
+        if (!OmitComments)
+          OS << "/*zero_reg*/";
+        OS << ",\n";
+      }
+      return 4;
+    } else {
+      OS << "OPC_EmitRegister, "
+        << getEnumName(cast<EmitRegisterMatcher>(N)->getVT()) << ", ";
+      if (Record *R = cast<EmitRegisterMatcher>(N)->getReg())
+        OS << getQualifiedName(R) << ",\n";
+      else {
+        OS << "0 ";
+        if (!OmitComments)
+          OS << "/*zero_reg*/";
+        OS << ",\n";
+      }
+      return 3;
     }
-    return 3;
       
   case Matcher::EmitConvertToTarget:
     OS << "OPC_EmitConvertToTarget, "
@@ -482,7 +499,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   case Matcher::MorphNodeTo: {
     const EmitNodeMatcherCommon *EN = cast<EmitNodeMatcherCommon>(N);
     OS << (isa<EmitNodeMatcher>(EN) ? "OPC_EmitNode" : "OPC_MorphNodeTo");
-    OS << ", TARGET_OPCODE(" << EN->getOpcodeName() << "), 0";
+    OS << ", TARGET_VAL(" << EN->getOpcodeName() << "), 0";
     
     if (EN->hasChain())   OS << "|OPFL_Chain";
     if (EN->hasInFlag())  OS << "|OPFL_GlueInput";
@@ -782,23 +799,26 @@ void MatcherTableEmitter::EmitHistogram(const Matcher *M,
 
 
 void llvm::EmitMatcherTable(const Matcher *TheMatcher,
-                            const CodeGenDAGPatterns &CGP, raw_ostream &O) {
+                            const CodeGenDAGPatterns &CGP,
+                            bool useEmitRegister2,
+                            raw_ostream &O) {
   formatted_raw_ostream OS(O);
   
   OS << "// The main instruction selector code.\n";
   OS << "SDNode *SelectCode(SDNode *N) {\n";
 
-  MatcherTableEmitter MatcherEmitter(CGP);
+  MatcherTableEmitter MatcherEmitter(CGP, useEmitRegister2);
 
-  OS << "  // Opcodes are emitted as 2 bytes, TARGET_OPCODE handles this.\n";
-  OS << "  #define TARGET_OPCODE(X) X & 255, unsigned(X) >> 8\n";
+  OS << "  // Some target values are emitted as 2 bytes, TARGET_VAL handles\n";
+  OS << "  // this.\n";
+  OS << "  #define TARGET_VAL(X) X & 255, unsigned(X) >> 8\n";
   OS << "  static const unsigned char MatcherTable[] = {\n";
   unsigned TotalSize = MatcherEmitter.EmitMatcherList(TheMatcher, 5, 0, OS);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
   
   MatcherEmitter.EmitHistogram(TheMatcher, OS);
   
-  OS << "  #undef TARGET_OPCODE\n";
+  OS << "  #undef TARGET_VAL\n";
   OS << "  return SelectCodeCommon(N, MatcherTable,sizeof(MatcherTable));\n}\n";
   OS << '\n';
   

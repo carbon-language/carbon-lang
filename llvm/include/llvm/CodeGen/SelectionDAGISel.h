@@ -127,6 +127,7 @@ public:
 
     OPC_EmitInteger,
     OPC_EmitRegister,
+    OPC_EmitRegister2,
     OPC_EmitConvertToTarget,
     OPC_EmitMergeInputChains,
     OPC_EmitMergeInputChains1_0,

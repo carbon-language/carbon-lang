@@ -2392,6 +2392,18 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
                               CurDAG->getRegister(RegNo, VT), (SDNode*)0));
       continue;
     }
+    case OPC_EmitRegister2: {
+      // For targets w/ more than 256 register names, the register enum
+      // values are stored in two bytes in the matcher table (just like
+      // opcodes).
+      MVT::SimpleValueType VT =
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      unsigned RegNo = MatcherTable[MatcherIndex++];
+      RegNo |= MatcherTable[MatcherIndex++] << 8;
+      RecordedNodes.push_back(std::pair<SDValue, SDNode*>(
+                              CurDAG->getRegister(RegNo, VT), (SDNode*)0));
+      continue;
+    }
 
     case OPC_EmitConvertToTarget:  {
       // Convert from IMM/FPIMM to target version.
