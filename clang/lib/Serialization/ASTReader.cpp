@@ -2837,7 +2837,8 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(CUDA);
     PARSE_LANGOPT(CatchUndefined);
     PARSE_LANGOPT(DefaultFPContract);
-    // FIXME: Missing ElideConstructors?!
+    PARSE_LANGOPT(ElideConstructors);
+    PARSE_LANGOPT(SpellChecking);
   #undef PARSE_LANGOPT
 
     return Listener->ReadLanguageOptions(LangOpts);
