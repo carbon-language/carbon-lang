@@ -726,6 +726,11 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
         CPUName = "x86-64";
       else if (getToolChain().getArchName() == "i386")
         CPUName = "i486";
+    } else if (getToolChain().getOS().startswith("freebsd"))  {
+      if (getToolChain().getArchName() == "x86_64")
+        CPUName = "x86-64";
+      else if (getToolChain().getArchName() == "i386")
+        CPUName = "i486";
     } else if (getToolChain().getOS().startswith("netbsd"))  {
       if (getToolChain().getArchName() == "x86_64")
         CPUName = "x86-64";
