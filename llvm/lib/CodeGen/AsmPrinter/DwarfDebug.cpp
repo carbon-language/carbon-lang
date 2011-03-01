@@ -1802,6 +1802,14 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
     return NULL;
 
   SmallVector <DIE *, 8> Children;
+
+  // Collect arguments for current function.
+  if (Scope == CurrentFnDbgScope)
+    for (unsigned i = 0, N = CurrentFnArguments.size(); i < N; ++i)
+      if (DbgVariable *ArgDV = CurrentFnArguments[i])
+        if (DIE *Arg = constructVariableDIE(ArgDV, Scope))
+          Children.push_back(Arg);
+
   // Collect lexical scope childrens first.
   const SmallVector<DbgVariable *, 8> &Variables = Scope->getDbgVariables();
   for (unsigned i = 0, N = Variables.size(); i < N; ++i)
@@ -2309,6 +2317,25 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
   return AbsDbgVariable;
 }
 
+/// addCurrentFnArgument - If Var is an current function argument that add
+/// it in CurrentFnArguments list.
+bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
+                                      DbgVariable *Var, DbgScope *Scope) {
+  if (Scope != CurrentFnDbgScope) 
+    return false;
+  DIVariable DV = Var->getVariable();
+  if (DV.getTag() != dwarf::DW_TAG_arg_variable)
+    return false;
+  unsigned ArgNo = DV.getArgNumber();
+  if (ArgNo == 0) 
+    return false;
+
+  if (CurrentFnArguments.size() == 0)
+    CurrentFnArguments.resize(MF->getFunction()->arg_size());
+  CurrentFnArguments[ArgNo - 1] = Var;
+  return true;
+}
+
 /// collectVariableInfoFromMMITable - Collect variable information from
 /// side table maintained by MMI.
 void
@@ -2337,7 +2364,8 @@ DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction * MF,
     DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.second);
     DbgVariable *RegVar = new DbgVariable(DV);
     recordVariableFrameIndex(RegVar, VP.first);
-    Scope->addVariable(RegVar);
+    if (!addCurrentFnArgument(MF, RegVar, Scope))
+      Scope->addVariable(RegVar);
     if (AbsDbgVariable) {
       recordVariableFrameIndex(AbsDbgVariable, VP.first);
       VarToAbstractVarMap[RegVar] = AbsDbgVariable;
@@ -2409,7 +2437,8 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
 
     Processed.insert(DV);
     DbgVariable *RegVar = new DbgVariable(DV);
-    Scope->addVariable(RegVar);
+    if (!addCurrentFnArgument(MF, RegVar, Scope))
+      Scope->addVariable(RegVar);
     if (DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc())) {
       DbgVariableToDbgInstMap[AbsVar] = MInsn;
       VarToAbstractVarMap[RegVar] = AbsVar;
@@ -2973,6 +3002,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 
   // Clear debug info
   CurrentFnDbgScope = NULL;
+  CurrentFnArguments.clear();
   InsnNeedsLabel.clear();
   DbgVariableToFrameIndexMap.clear();
   VarToAbstractVarMap.clear();

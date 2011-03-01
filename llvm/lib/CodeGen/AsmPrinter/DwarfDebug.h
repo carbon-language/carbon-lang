@@ -139,10 +139,13 @@ class DwarfDebug {
   ///
   UniqueVector<const MCSection*> SectionMap;
 
-  // CurrentFnDbgScope - Top level scope for the current function.
-  //
+  /// CurrentFnDbgScope - Top level scope for the current function.
+  ///
   DbgScope *CurrentFnDbgScope;
   
+  /// CurrentFnArguments - List of Arguments (DbgValues) for current function.
+  SmallVector<DbgVariable *, 8> CurrentFnArguments;
+
   /// DbgScopeMap - Tracks the scopes in the current function.  Owns the
   /// contained DbgScope*s.
   ///
@@ -546,6 +549,11 @@ private:
   /// and collect DbgScopes. Return true, if atleast one scope was found.
   bool extractScopeInformation();
   
+  /// addCurrentFnArgument - If Var is an current function argument that add
+  /// it in CurrentFnArguments list.
+  bool addCurrentFnArgument(const MachineFunction *MF,
+                            DbgVariable *Var, DbgScope *Scope);
+
   /// collectVariableInfo - Populate DbgScope entries with variables' info.
   void collectVariableInfo(const MachineFunction *,
                            SmallPtrSet<const MDNode *, 16> &ProcessedVars);
