@@ -675,6 +675,7 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     SpecTL.setRAngleLoc(RAngleLoc);
     SpecTL.setKeywordLoc(SourceLocation());
     SpecTL.setNameLoc(TemplateNameLoc);
+    SpecTL.setQualifierRange(SS.getRange());
     for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     

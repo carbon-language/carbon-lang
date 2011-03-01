@@ -6930,7 +6930,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
     } else {
       ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
       TL.setKeywordLoc(TagLoc);
-      TL.setQualifierRange(SS.getRange());
+      TL.setQualifierLoc(QualifierLoc);
       cast<TypeSpecTypeLoc>(TL.getNamedTypeLoc()).setNameLoc(NameLoc);
     }
 

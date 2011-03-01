@@ -3520,7 +3520,7 @@ void TypeLocReader::VisitParenTypeLoc(ParenTypeLoc TL) {
 }
 void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   TL.setKeywordLoc(ReadSourceLocation(Record, Idx));
-  TL.setQualifierRange(Reader.ReadSourceRange(F, Record, Idx));
+  TL.setQualifierLoc(Reader.ReadNestedNameSpecifierLoc(F, Record, Idx));
 }
 void TypeLocReader::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   TL.setNameLoc(ReadSourceLocation(Record, Idx));
