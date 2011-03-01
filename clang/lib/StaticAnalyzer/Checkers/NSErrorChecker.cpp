@@ -28,8 +28,8 @@
 using namespace clang;
 using namespace ento;
 
-static bool IsNSError(const ParmVarDecl *PD, IdentifierInfo *II);
-static bool IsCFError(const ParmVarDecl *PD, IdentifierInfo *II);
+static bool IsNSError(QualType T, IdentifierInfo *II);
+static bool IsCFError(QualType T, IdentifierInfo *II);
 
 //===----------------------------------------------------------------------===//
 // NSErrorMethodChecker
@@ -62,7 +62,7 @@ void NSErrorMethodChecker::checkASTDecl(const ObjCMethodDecl *D,
   bool hasNSError = false;
   for (ObjCMethodDecl::param_iterator
          I = D->param_begin(), E = D->param_end(); I != E; ++I)  {
-    if (IsNSError(*I, II)) {
+    if (IsNSError((*I)->getType(), II)) {
       hasNSError = true;
       break;
     }
@@ -108,7 +108,7 @@ void CFErrorFunctionChecker::checkASTDecl(const FunctionDecl *D,
   bool hasCFError = false;
   for (FunctionDecl::param_const_iterator
          I = D->param_begin(), E = D->param_end(); I != E; ++I)  {
-    if (IsCFError(*I, II)) {
+    if (IsCFError((*I)->getType(), II)) {
       hasCFError = true;
       break;
     }
@@ -191,6 +191,17 @@ static void setFlag(const GRState *state, SVal val, CheckerContext &C) {
     C.addTransition(state->set<T>(sym, true));
 }
 
+static QualType parameterTypeFromSVal(SVal val) {
+  if (const loc::MemRegionVal* X = dyn_cast<loc::MemRegionVal>(&val)) {
+    const MemRegion* R = X->getRegion();
+    if (const VarRegion *VR = R->getAs<VarRegion>())
+      if (VR->hasStackParametersStorage())
+        return VR->getValueType();
+  }
+
+  return QualType();
+}
+
 void NSOrCFErrorDerefChecker::checkLocation(SVal loc, bool isLoad,
                                             CheckerContext &C) const {
   if (!isLoad)
@@ -198,6 +209,7 @@ void NSOrCFErrorDerefChecker::checkLocation(SVal loc, bool isLoad,
   if (loc.isUndef() || !isa<Loc>(loc))
     return;
 
+  ASTContext &Ctx = C.getASTContext();
   const GRState *state = C.getState();
 
   // If we are loading from NSError**/CFErrorRef* parameter, mark the resulting
@@ -205,23 +217,22 @@ void NSOrCFErrorDerefChecker::checkLocation(SVal loc, bool isLoad,
   // ImplicitNullDerefEvent event.
   // FIXME: Cumbersome! Maybe add hook at construction of SVals at start of
   // function ?
-  
-  const VarDecl *VD = loc.getAsVarDecl();
-  if (!VD) return;
-  const ParmVarDecl *PD = dyn_cast<ParmVarDecl>(VD);
-  if (!PD) return;
+
+  QualType parmT = parameterTypeFromSVal(loc);
+  if (parmT.isNull())
+    return;
 
   if (!NSErrorII)
-    NSErrorII = &PD->getASTContext().Idents.get("NSError");
+    NSErrorII = &Ctx.Idents.get("NSError");
   if (!CFErrorII)
-    CFErrorII = &PD->getASTContext().Idents.get("CFErrorRef");
+    CFErrorII = &Ctx.Idents.get("CFErrorRef");
 
-  if (ShouldCheckNSError && IsNSError(PD, NSErrorII)) {
+  if (ShouldCheckNSError && IsNSError(parmT, NSErrorII)) {
     setFlag<NSErrorOut>(state, state->getSVal(cast<Loc>(loc)), C);
     return;
   }
 
-  if (ShouldCheckCFError && IsCFError(PD, CFErrorII)) {
+  if (ShouldCheckCFError && IsCFError(parmT, CFErrorII)) {
     setFlag<CFErrorOut>(state, state->getSVal(cast<Loc>(loc)), C);
     return;
   }
@@ -267,9 +278,9 @@ void NSOrCFErrorDerefChecker::checkEvent(ImplicitNullDerefEvent event) const {
   BR.EmitReport(report);
 }
 
-static bool IsNSError(const ParmVarDecl *PD, IdentifierInfo *II) {
+static bool IsNSError(QualType T, IdentifierInfo *II) {
 
-  const PointerType* PPT = PD->getType()->getAs<PointerType>();
+  const PointerType* PPT = T->getAs<PointerType>();
   if (!PPT)
     return false;
 
@@ -288,8 +299,8 @@ static bool IsNSError(const ParmVarDecl *PD, IdentifierInfo *II) {
   return false;
 }
 
-static bool IsCFError(const ParmVarDecl *PD, IdentifierInfo *II) {
-  const PointerType* PPT = PD->getType()->getAs<PointerType>();
+static bool IsCFError(QualType T, IdentifierInfo *II) {
+  const PointerType* PPT = T->getAs<PointerType>();
   if (!PPT) return false;
 
   const TypedefType* TT = PPT->getPointeeType()->getAs<TypedefType>();
