@@ -1294,7 +1294,8 @@ private:
                                   llvm::Value *Receiver,
                                   QualType Arg0Ty,
                                   bool IsSuper,
-                                  const CallArgList &CallArgs);
+                                  const CallArgList &CallArgs,
+                                  const ObjCMethodDecl *Method);
 
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
@@ -5622,7 +5623,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   llvm::Value *Receiver,
   QualType Arg0Ty,
   bool IsSuper,
-  const CallArgList &CallArgs) {
+  const CallArgList &CallArgs,
+  const ObjCMethodDecl *Method) {
   // FIXME. Even though IsSuper is passes. This function doese not handle calls
   // to 'super' receivers.
   CodeGenTypes &Types = CGM.getTypes();
@@ -5693,7 +5695,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
                                                       FunctionType::ExtInfo());
   llvm::Value *Callee = CGF.Builder.CreateStructGEP(Arg1, 0);
   Callee = CGF.Builder.CreateLoad(Callee);
-  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo1, true);
+  const llvm::FunctionType *FTy = 
+    Types.GetFunctionType(FnInfo1, Method ? Method->isVariadic() : false);
   Callee = CGF.Builder.CreateBitCast(Callee,
                                      llvm::PointerType::getUnqual(FTy));
   return CGF.EmitCall(FnInfo1, Callee, Return, ActualArgs);
@@ -5716,7 +5719,7 @@ CGObjCNonFragileABIMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                             false, CallArgs, Method, ObjCTypes)
     : EmitMessageSend(CGF, Return, ResultType, Sel,
                       Receiver, CGF.getContext().getObjCIdType(),
-                      false, CallArgs);
+                      false, CallArgs, Method);
 }
 
 llvm::GlobalVariable *
@@ -5870,7 +5873,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                             true, CallArgs, Method, ObjCTypes)
     : EmitMessageSend(CGF, Return, ResultType, Sel,
                       ObjCSuper, ObjCTypes.SuperPtrCTy,
-                      true, CallArgs);
+                      true, CallArgs, Method);
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,

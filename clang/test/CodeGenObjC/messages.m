@@ -13,8 +13,8 @@ void f0(id a) {
   int i;
   MyPoint pt = { 1, 2};
 
-  // CHECK-MAC: call {{.*}} @objc_msgSend(
-  // CHECK-MAC-NF: call {{.*}} @objc_msgSend(
+  // CHECK-MAC: call {{.*}} @objc_msgSend to
+  // CHECK-MAC-NF: call {{.*}} @objc_msgSend to
   // CHECK-GNU: call {{.*}} @objc_msg_lookup(
   // CHECK-GNU-NF: call {{.*}} @objc_msg_lookup_sender(
   [a print0];

@@ -1275,7 +1275,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       if (CE->getOpcode() == llvm::Instruction::BitCast &&
           ActualFT->getReturnType() == CurFT->getReturnType() &&
           ActualFT->getNumParams() == CurFT->getNumParams() &&
-          ActualFT->getNumParams() == Args.size()) {
+          ActualFT->getNumParams() == Args.size() &&
+          (CurFT->isVarArg() || !ActualFT->isVarArg())) {
         bool ArgsMatch = true;
         for (unsigned i = 0, e = ActualFT->getNumParams(); i != e; ++i)
           if (ActualFT->getParamType(i) != CurFT->getParamType(i)) {

@@ -16,7 +16,7 @@
 
 // CHECK-X86_32: define void @t0()
 // CHECK-X86_32: call float bitcast {{.*}} @objc_msgSend_fpret to
-// CHECK-X86_32: call double {{.*}} @objc_msgSend_fpret(
+// CHECK-X86_32: call double bitcast {{.*}} @objc_msgSend_fpret to
 // CHECK-X86_32: call x86_fp80 bitcast {{.*}} @objc_msgSend_fpret to
 // CHECK-X86_32: }
 //
