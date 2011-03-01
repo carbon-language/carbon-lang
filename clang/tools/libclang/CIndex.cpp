@@ -343,6 +343,7 @@ public:
   bool VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL);
   bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
   bool VisitDependentNameTypeLoc(DependentNameTypeLoc TL);
+  bool VisitElaboratedTypeLoc(ElaboratedTypeLoc TL);
   
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
@@ -1509,6 +1510,13 @@ bool CursorVisitor::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
     return true;
   
   return false;
+}
+
+bool CursorVisitor::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
+  if (VisitNestedNameSpecifierLoc(TL.getQualifierLoc()))
+    return true;
+  
+  return Visit(TL.getNamedTypeLoc());
 }
 
 bool CursorVisitor::VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL) {

@@ -792,7 +792,8 @@ public:
                          Scope *S, CXXScopeSpec *SS = 0,
                          bool isClassName = false,
                          bool HasTrailingDot = false,
-                         ParsedType ObjectType = ParsedType());
+                         ParsedType ObjectType = ParsedType(),
+                         bool WantNontrivialTypeSourceInfo = false);
   TypeSpecifierType isTagName(IdentifierInfo &II, Scope *S);
   bool DiagnoseUnknownTypeName(const IdentifierInfo &II,
                                SourceLocation IILoc,

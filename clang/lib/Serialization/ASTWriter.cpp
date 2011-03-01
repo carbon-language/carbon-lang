@@ -532,7 +532,7 @@ void TypeLocWriter::VisitParenTypeLoc(ParenTypeLoc TL) {
 }
 void TypeLocWriter::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   Writer.AddSourceLocation(TL.getKeywordLoc(), Record);
-  Writer.AddSourceRange(TL.getQualifierRange(), Record);
+  Writer.AddNestedNameSpecifierLoc(TL.getQualifierLoc(), Record);
 }
 void TypeLocWriter::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
