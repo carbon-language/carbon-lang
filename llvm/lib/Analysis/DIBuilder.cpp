@@ -586,13 +586,14 @@ createStaticVariable(DIDescriptor Context, StringRef Name,
 DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
                                           StringRef Name, DIFile File,
                                           unsigned LineNo, DIType Ty, 
-                                          bool AlwaysPreserve, unsigned Flags) {
+                                          bool AlwaysPreserve, unsigned Flags,
+                                          unsigned ArgNo) {
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
     Scope,
     MDString::get(VMContext, Name),
     File,
-    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
+    ConstantInt::get(Type::getInt32Ty(VMContext), (LineNo | (ArgNo << 24))),
     Ty,
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags)
   };
@@ -620,13 +621,13 @@ DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
                                             StringRef Name, DIFile F,
                                             unsigned LineNo,
                                             DIType Ty, Value *const *Addr,
-                                            unsigned NumAddr) {
+                                            unsigned NumAddr, unsigned ArgNo) {
   SmallVector<Value *, 15> Elts;
   Elts.push_back(GetTagConstant(VMContext, Tag));
   Elts.push_back(Scope);
   Elts.push_back(MDString::get(VMContext, Name));
   Elts.push_back(F);
-  Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext), LineNo));
+  Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext), (LineNo | (ArgNo << 24))));
   Elts.push_back(Ty);
   Elts.append(Addr, Addr+NumAddr);
 
@@ -642,7 +643,6 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
                                        bool isLocalToUnit, bool isDefinition,
                                        unsigned Flags, bool isOptimized,
                                        Function *Fn) {
-
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),

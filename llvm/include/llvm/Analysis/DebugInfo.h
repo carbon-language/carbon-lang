@@ -564,7 +564,13 @@ namespace llvm {
       DIFile F = getFieldAs<DIFile>(3); 
       return F.getCompileUnit();
     }
-    unsigned getLineNumber() const      { return getUnsignedField(4); }
+    unsigned getLineNumber() const      { 
+      return (getUnsignedField(4) << 8) >> 8; 
+    }
+    unsigned getArgNumber() const       {
+      unsigned L = getUnsignedField(4); 
+      return L >> 24;
+    }
     DIType getType() const              { return getFieldAs<DIType>(5); }
     
     /// isArtificial - Return true if this variable is marked as "artificial".

@@ -326,11 +326,14 @@ namespace llvm {
     /// @param AlwaysPreserve Boolean. Set to true if debug info for this
     ///                       variable should be preserved in optimized build.
     /// @param Flags          Flags, e.g. artificial variable.
+    /// @param ArgNo       If this variable is an arugment then this argument's
+    ///                    number. 1 indicates 1st argument.
     DIVariable createLocalVariable(unsigned Tag, DIDescriptor Scope,
                                    StringRef Name,
                                    DIFile File, unsigned LineNo,
                                    DIType Ty, bool AlwaysPreserve = false,
-                                   unsigned Flags = 0);
+                                   unsigned Flags = 0,
+                                   unsigned ArgNo = 0);
 
 
     /// createComplexVariable - Create a new descriptor for the specified
@@ -344,10 +347,12 @@ namespace llvm {
     /// @param Ty          Variable Type
     /// @param Addr        A pointer to a vector of complex address operations.
     /// @param NumAddr     Num of address operations in the vector.
+    /// @param ArgNo       If this variable is an arugment then this argument's
+    ///                    number. 1 indicates 1st argument.
     DIVariable createComplexVariable(unsigned Tag, DIDescriptor Scope,
                                      StringRef Name, DIFile F, unsigned LineNo,
                                      DIType Ty, Value *const *Addr,
-                                     unsigned NumAddr);
+                                     unsigned NumAddr, unsigned ArgNo = 0);
 
     /// createFunction - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.
