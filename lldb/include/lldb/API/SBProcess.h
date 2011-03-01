@@ -53,6 +53,9 @@ public:
     lldb::SBTarget
     GetTarget() const;
 
+    lldb::ByteOrder
+    GetByteOrder() const;
+
     size_t
     PutSTDIN (const char *src, size_t src_len);
 

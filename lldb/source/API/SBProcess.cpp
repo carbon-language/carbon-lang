@@ -366,6 +366,20 @@ SBProcess::GetProcessID ()
     return ret_val;
 }
 
+ByteOrder
+SBProcess::GetByteOrder () const
+{
+    ByteOrder byteOrder = eByteOrderInvalid;
+    if (m_opaque_sp)
+        byteOrder = m_opaque_sp->GetTarget().GetArchitecture().GetByteOrder();
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBProcess(%p)::GetByteOrder () => %d", m_opaque_sp.get(), byteOrder);
+
+    return byteOrder;
+}
+
 uint32_t
 SBProcess::GetAddressByteSize () const
 {

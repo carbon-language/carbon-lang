@@ -37,6 +37,19 @@ class ProcessAPITestCase(TestBase):
         self.buildDwarf()
         self.write_memory()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
+    def test_access_my_int_with_dsym(self):
+        """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
+        self.buildDsym()
+        self.access_my_int()
+
+    @python_api_test
+    def test_access_my_int_with_dwarf(self):
+        """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
+        self.buildDwarf()
+        self.access_my_int()
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -131,6 +144,83 @@ class ProcessAPITestCase(TestBase):
         self.expect(content, "Result from SBProcess.ReadMemory() matches our expected output: 'a'",
                     exe=False,
             startstr = 'a')
+
+    def access_my_int(self):
+        """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+
+        # Launch the process, and do not stop at the entry point.
+        error = lldb.SBError()
+        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+
+        thread = self.process.GetThreadAtIndex(0);
+        frame = thread.GetFrameAtIndex(0);
+
+        # Get the SBValue for the global variable 'my_int'.
+        val = frame.FindValue("my_int", lldb.eValueTypeVariableGlobal)
+        self.DebugSBValue(frame, val)
+
+        # If the variable does not have a load address, there's no sense continuing.
+        if not val.GetLocation(frame).startswith("0x"):
+            return
+
+        # OK, let's get the hex location of the variable.
+        location = int(val.GetLocation(frame), 16)
+
+        byteSize = val.GetByteSize()
+        byteOrder = self.process.GetByteOrder()
+        bytes = bytearray(byteSize)
+
+        if byteOrder == lldb.eByteOrderBig:
+            # 256 in big endian => 0x00000100
+            # the second byte counted from the end is to be 0b00000001
+            bytes[-2] = 0b00000001
+        elif byteOrder == lldb.eByteOrderLittle:
+            # 256 in little endian => 0x00010000
+            # the second byte counted from the start is to be 0b00000001
+            bytes[1] = 0b00000001
+        else:
+            # Neither big endian nor little endian?  Return for now.
+            return
+
+        # The program logic makes the 'my_int' variable to have int type and value of 0.
+        # But we want to use the WriteMemory() API to assign 256 to the variable.
+
+        # Now use WriteMemory() API to write 256 into the global variable.
+        new_value = str(bytes)
+        result = self.process.WriteMemory(location, new_value, error)
+        if not error.Success() or result != byteSize:
+            self.fail("SBProcess.WriteMemory() failed")
+
+        # Get the SBValue for the global variable 'my_int' again, with its updated value.
+        val = frame.FindValue("my_int", lldb.eValueTypeVariableGlobal)
+        self.expect(val.GetValue(frame),
+                    "SBProcess.ReadMemory() successfully writes (int)256 to the memory location for 'my_int'",
+                    exe=False,
+            startstr = '256')
+
+        # Now read the memory content.  The bytearray should have (byte)1 as the second element.
+        content = self.process.ReadMemory(location, byteSize, error)
+        if not error.Success():
+            self.fail("SBProcess.ReadMemory() failed")
+        new_bytes = bytearray(content, "ascii")
+        if byteOrder == lldb.eByteOrderBig:
+            if new_bytes[-2] != 0b00000001:
+                self.fail("Memory content read from 'my_int' does not match (int)256")
+        elif byteOrder == lldb.eByteOrderLittle:
+            if new_bytes[1] != 0b00000001:
+                self.fail("Memory content read from 'my_int' does not match (int)256")
+
+        # Dump the memory content....
+        for i in new_bytes:
+            print "byte:", i
 
 
 if __name__ == '__main__':
