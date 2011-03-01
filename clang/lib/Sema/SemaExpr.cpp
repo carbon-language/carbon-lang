@@ -7024,6 +7024,12 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       ImpCastExprToType(rex, T, CK_BitCast);
       return ResultTy;
     }
+
+    // Handle scoped enumeration types specifically, since they don't promote
+    // to integers.
+    if (lex->getType()->isEnumeralType() &&
+        Context.hasSameUnqualifiedType(lex->getType(), rex->getType()))
+      return ResultTy;
   }
 
   // Handle block pointer types.
@@ -7123,6 +7129,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     ImpCastExprToType(lex, rType, CK_NullToPointer);
     return ResultTy;
   }
+
   return InvalidOperands(Loc, lex, rex);
 }
 

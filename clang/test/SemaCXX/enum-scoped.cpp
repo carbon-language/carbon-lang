@@ -103,3 +103,9 @@ enum : long {
 
 enum : long x; // expected-error{{unnamed enumeration must be a definition}} \
 // expected-warning{{declaration does not declare anything}}
+
+void PR9333() {
+  enum class scoped_enum { yes, no, maybe };
+  scoped_enum e = scoped_enum::yes;
+  if (e == scoped_enum::no) { }
+}
