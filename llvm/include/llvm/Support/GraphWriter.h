@@ -70,7 +70,7 @@ class GraphWriter {
     for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i) {
       std::string label = DTraits.getEdgeSourceLabel(Node, EI);
 
-      if (label == "")
+      if (label.empty())
         continue;
 
       hasEdgeSourceLabels = true;
@@ -78,7 +78,7 @@ class GraphWriter {
       if (i)
         O << "|";
 
-      O << "<s" << i << ">" << DTraits.getEdgeSourceLabel(Node, EI);
+      O << "<s" << i << ">" << label;
     }
 
     if (EI != EE && hasEdgeSourceLabels)
@@ -235,7 +235,7 @@ public:
         DestPort = static_cast<int>(Offset);
       }
 
-      if (DTraits.getEdgeSourceLabel(Node, EI) == "")
+      if (DTraits.getEdgeSourceLabel(Node, EI).empty())
         edgeidx = -1;
 
       emitEdge(static_cast<const void*>(Node), edgeidx,
