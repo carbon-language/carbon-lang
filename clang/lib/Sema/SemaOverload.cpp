@@ -1939,8 +1939,8 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
   if (CXXBoolLiteralExpr* LitBool
                           = dyn_cast<CXXBoolLiteralExpr>(From->IgnoreParens()))
     if (!IsCStyleOrFunctionalCast && LitBool->getValue() == false)
-      Diag(LitBool->getExprLoc(), diag::warn_init_pointer_from_false)
-        << ToType;
+      DiagRuntimeBehavior(LitBool->getExprLoc(), From,
+                          PDiag(diag::warn_init_pointer_from_false) << ToType);
 
   if (const PointerType *FromPtrType = FromType->getAs<PointerType>())
     if (const PointerType *ToPtrType = ToType->getAs<PointerType>()) {
