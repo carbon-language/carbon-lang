@@ -154,3 +154,11 @@ namespace rdar8740998 {
     xi.f();
   }
 }
+
+namespace rdar9068589 {
+  // From GCC PR c++/13950
+  template <class T> struct Base {};
+  template <class T> struct Derived: public Base<T> {
+    typename Derived::template Base<double>* p1;
+  };
+}

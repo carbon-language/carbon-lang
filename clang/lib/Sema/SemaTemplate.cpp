@@ -5950,62 +5950,56 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   translateTemplateArguments(TemplateArgsIn, TemplateArgs);
   
   TemplateName Template = TemplateIn.get();
-  
-  if (computeDeclContext(SS, false)) {
-    // If we can compute a declaration context, then the "typename"
-    // keyword was superfluous. Just build an ElaboratedType to keep
-    // track of the nested-name-specifier.
+  if (DependentTemplateName *DTN = Template.getAsDependentTemplateName()) {
+    // Construct a dependent template specialization type.
+    assert(DTN && "dependent template has non-dependent name?");
+    assert(DTN->getQualifier()
+           == static_cast<NestedNameSpecifier*>(SS.getScopeRep()));
+    QualType T = Context.getDependentTemplateSpecializationType(ETK_Typename,
+                                                          DTN->getQualifier(),
+                                                          DTN->getIdentifier(),
+                                                                TemplateArgs);
     
-    QualType T = CheckTemplateIdType(Template, TemplateNameLoc, TemplateArgs);
-    if (T.isNull())
-      return true;
-    
-    // Provide source-location information for the template specialization 
-    // type.
+    // Create source-location information for this type.
     TypeLocBuilder Builder;
-    TemplateSpecializationTypeLoc SpecTL 
-      = Builder.push<TemplateSpecializationTypeLoc>(T);
-    
-    // FIXME: No place to set the location of the 'template' keyword!
+    DependentTemplateSpecializationTypeLoc SpecTL 
+    = Builder.push<DependentTemplateSpecializationTypeLoc>(T);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
-    SpecTL.setTemplateNameLoc(TemplateNameLoc);
+    SpecTL.setKeywordLoc(TypenameLoc);
+    SpecTL.setNameLoc(TemplateNameLoc);
     for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     
-    T = Context.getElaboratedType(ETK_Typename, SS.getScopeRep(), T);
-    ElaboratedTypeLoc TL = Builder.push<ElaboratedTypeLoc>(T);
-    TL.setKeywordLoc(TypenameLoc);
-    TL.setQualifierLoc(SS.getWithLocInContext(Context));
-    
-    TypeSourceInfo *TSI = Builder.getTypeSourceInfo(Context, T);
-    return CreateParsedType(T, TSI);
+    // FIXME: Nested-name-specifier source locations.
+    SpecTL.setQualifierRange(SS.getRange());
+    return CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
   }
   
-  // Construct a dependent template specialization type.
-  DependentTemplateName *DTN = Template.getAsDependentTemplateName();
-  assert(DTN && "dependent template has non-dependent name?");
-  assert(DTN->getQualifier()
-         == static_cast<NestedNameSpecifier*>(SS.getScopeRep()));
-  QualType T = Context.getDependentTemplateSpecializationType(ETK_Typename,
-                                                          DTN->getQualifier(),
-                                                          DTN->getIdentifier(),
-                                                              TemplateArgs);
+  QualType T = CheckTemplateIdType(Template, TemplateNameLoc, TemplateArgs);
+  if (T.isNull())
+    return true;
   
-  // Create source-location information for this type.
+  // Provide source-location information for the template specialization 
+  // type.
   TypeLocBuilder Builder;
-  DependentTemplateSpecializationTypeLoc SpecTL 
-  = Builder.push<DependentTemplateSpecializationTypeLoc>(T);
+  TemplateSpecializationTypeLoc SpecTL 
+    = Builder.push<TemplateSpecializationTypeLoc>(T);
+  
+  // FIXME: No place to set the location of the 'template' keyword!
   SpecTL.setLAngleLoc(LAngleLoc);
   SpecTL.setRAngleLoc(RAngleLoc);
-  SpecTL.setKeywordLoc(TypenameLoc);
-  SpecTL.setNameLoc(TemplateNameLoc);
+  SpecTL.setTemplateNameLoc(TemplateNameLoc);
   for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
     SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
   
-  // FIXME: Nested-name-specifier source locations.
-  SpecTL.setQualifierRange(SS.getRange());
-  return CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
+  T = Context.getElaboratedType(ETK_Typename, SS.getScopeRep(), T);
+  ElaboratedTypeLoc TL = Builder.push<ElaboratedTypeLoc>(T);
+  TL.setKeywordLoc(TypenameLoc);
+  TL.setQualifierLoc(SS.getWithLocInContext(Context));
+  
+  TypeSourceInfo *TSI = Builder.getTypeSourceInfo(Context, T);
+  return CreateParsedType(T, TSI);
 }
 
 
