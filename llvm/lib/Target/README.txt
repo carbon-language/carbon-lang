@@ -1325,6 +1325,21 @@ codegen.
 
 //===---------------------------------------------------------------------===//
 
+simplifylibcalls should turn these snprintf idioms into memcpy (GCC PR47917)
+
+char buf1[6], buf2[6], buf3[4], buf4[4];
+int i;
+
+int foo (void) {
+  int ret = snprintf (buf1, sizeof buf1, "abcde");
+  ret += snprintf (buf2, sizeof buf2, "abcdef") * 16;
+  ret += snprintf (buf3, sizeof buf3, "%s", i++ < 6 ? "abc" : "def") * 256;
+  ret += snprintf (buf4, sizeof buf4, "%s", i++ > 10 ? "abcde" : "defgh")*4096;
+  return ret;
+}
+
+//===---------------------------------------------------------------------===//
+
 "gas" uses this idiom:
   else if (strchr ("+-/*%|&^:[]()~", *intel_parser.op_string))
 ..
