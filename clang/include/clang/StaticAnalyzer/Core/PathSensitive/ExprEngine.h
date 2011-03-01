@@ -74,39 +74,6 @@ class ExprEngine : public SubEngine {
   Selector* NSExceptionInstanceRaiseSelectors;
   Selector RaiseSel;
 
-  enum CallbackKind {
-    PreVisitStmtCallback,
-    PostVisitStmtCallback,
-    processAssumeCallback,
-    EvalRegionChangesCallback
-  };
-
-  typedef uint32_t CallbackTag;
-
-  /// GetCallbackTag - Create a tag for a certain kind of callback. The 'Sub'
-  ///  argument can be used to differentiate callbacks that depend on another
-  ///  value from a small set of possibilities, such as statement classes.
-  static inline CallbackTag GetCallbackTag(CallbackKind K, uint32_t Sub = 0) {
-    assert(Sub == ((Sub << 8) >> 8) && "Tag sub-kind must fit into 24 bits");
-    return K | (Sub << 8);
-  }
-
-  typedef llvm::DenseMap<void *, unsigned> CheckerMap;
-  typedef std::vector<std::pair<void *, Checker*> > CheckersOrdered;
-  typedef llvm::DenseMap<CallbackTag, CheckersOrdered *> CheckersOrderedCache;
-  
-  /// A registration map from checker tag to the index into the
-  ///  ordered checkers vector.
-  CheckerMap CheckerM;
-
-  /// An ordered vector of checkers that are called when evaluating
-  ///  various expressions and statements.
-  CheckersOrdered Checkers;
-
-  /// A map used for caching the checkers that respond to the callback for
-  ///  a particular callback tag.
-  CheckersOrderedCache COCache;
-
   /// The BugReporter associated with this engine.  It is important that
   ///  this object be placed at the very end of member variables so that its
   ///  destructor is called before the rest of the ExprEngine is destroyed.
@@ -164,21 +131,6 @@ public:
 
   ExplodedGraph& getGraph() { return G; }
   const ExplodedGraph& getGraph() const { return G; }
-
-  template <typename CHECKER>
-  void registerCheck(CHECKER *check) {
-    unsigned entry = Checkers.size();
-    void *tag = CHECKER::getTag();
-    Checkers.push_back(std::make_pair(tag, check));
-    CheckerM[tag] = entry;
-  }
-  
-  Checker *lookupChecker(void *tag) const;
-
-  template <typename CHECKER>
-  CHECKER *getChecker() const {
-     return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
-  }
 
   /// processCFGElement - Called by CoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a CFG element.
@@ -280,27 +232,6 @@ public:
                          ExplodedNode* Pred, const GRState* St,
                          ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                          const void *tag = 0);
-
-  /// CheckerVisit - Dispatcher for performing checker-specific logic
-  ///  at specific statements.
-  void CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
-                    CallbackKind Kind);
-
-  void CheckerVisitObjCMessage(const ObjCMessage &msg, ExplodedNodeSet &Dst,
-                               ExplodedNodeSet &Src, bool isPrevisit);
-
-  bool CheckerEvalCall(const CallExpr *CE, 
-                       ExplodedNodeSet &Dst, 
-                       ExplodedNode *Pred);
-
-  void CheckerEvalNilReceiver(const ObjCMessage &msg,
-                              ExplodedNodeSet &Dst,
-                              const GRState *state,
-                              ExplodedNode *Pred);
-  
-  void CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
-                        ExplodedNodeSet &Src,  SVal location, SVal val,
-                        bool isPrevisit);
 
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.

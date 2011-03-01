@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/StaticAnalyzer/Core/CheckerV2.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/LangOptions.h"
@@ -20,7 +23,6 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
 #include "clang/Analysis/DomainSpecific/CocoaConventions.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngineBuilders.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
@@ -3395,19 +3397,15 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
 
 namespace {
 class RetainReleaseChecker
-  : public CheckerVisitor<RetainReleaseChecker> {
-  CFRefCount *TF;
+  : public CheckerV2< check::PostStmt<BlockExpr> > {
 public:
-    RetainReleaseChecker(CFRefCount *tf) : TF(tf) {}
-    static void* getTag() { static int x = 0; return &x; }
-
-    void PostVisitBlockExpr(CheckerContext &C, const BlockExpr *BE);
+    void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
 };
 } // end anonymous namespace
 
 
-void RetainReleaseChecker::PostVisitBlockExpr(CheckerContext &C,
-                                              const BlockExpr *BE) {
+void RetainReleaseChecker::checkPostStmt(const BlockExpr *BE,
+                                         CheckerContext &C) const {
 
   // Scan the BlockDecRefExprs for any object the retain/release checker
   // may be tracking.
@@ -3510,7 +3508,9 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   // Register the RetainReleaseChecker with the ExprEngine object.
   // Functionality in CFRefCount will be migrated to RetainReleaseChecker
   // over time.
-  Eng.registerCheck(new RetainReleaseChecker(this));
+  // FIXME: HACK! Remove TransferFuncs and turn all of CFRefCount into fully
+  // using the checker mechanism.
+  Eng.getCheckerManager().registerChecker<RetainReleaseChecker>();
 }
 
 TransferFuncs* ento::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,

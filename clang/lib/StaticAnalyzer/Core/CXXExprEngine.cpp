@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/AST/DeclCXX.h"
@@ -224,11 +225,11 @@ void ExprEngine::evalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
                                   ExplodedNodeSet &Src, ExplodedNodeSet &Dst) {
   // Allow checkers to pre-visit the member call.
   ExplodedNodeSet PreVisitChecks;
-  CheckerVisit(MCE, PreVisitChecks, Src, PreVisitStmtCallback);
+  getCheckerManager().runCheckersForPreStmt(PreVisitChecks, Src, MCE, *this);
 
   if (!(MD->isThisDeclarationADefinition() && AMgr.shouldInlineCall())) {
     // FIXME: conservative method call evaluation.
-    CheckerVisit(MCE, Dst, PreVisitChecks, PostVisitStmtCallback);
+    getCheckerManager().runCheckersForPostStmt(Dst, PreVisitChecks, MCE, *this);
     return;
   }
 

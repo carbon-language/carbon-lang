@@ -60,248 +60,6 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 }
 
 //===----------------------------------------------------------------------===//
-// Checker worklist routines.
-//===----------------------------------------------------------------------===//
-
-void ExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
-                                ExplodedNodeSet &Src, CallbackKind Kind) {
-
-  // Determine if we already have a cached 'CheckersOrdered' vector
-  // specifically tailored for the provided <CallbackKind, Stmt kind>.  This
-  // can reduce the number of checkers actually called.
-  CheckersOrdered *CO = &Checkers;
-  llvm::OwningPtr<CheckersOrdered> NewCO;
-
-  // The cache key is made up of the and the callback kind (pre- or post-visit)
-  // and the statement kind.
-  CallbackTag K = GetCallbackTag(Kind, S->getStmtClass());
-
-  CheckersOrdered *& CO_Ref = COCache[K];
-  
-  if (!CO_Ref) {
-    // If we have no previously cached CheckersOrdered vector for this
-    // statement kind, then create one.
-    NewCO.reset(new CheckersOrdered);
-  }
-  else {
-    // Use the already cached set.
-    CO = CO_Ref;
-  }
-  
-  if (CO->empty()) {
-    // If there are no checkers, just delegate to the checker manager.
-    getCheckerManager().runCheckersForStmt(Kind == PreVisitStmtCallback,
-                                           Dst, Src, S, *this);
-    return;
-  }
-
-  ExplodedNodeSet CheckersV1Dst;
-  ExplodedNodeSet Tmp;
-  ExplodedNodeSet *PrevSet = &Src;
-  unsigned checkersEvaluated = 0;
-
-  for (CheckersOrdered::iterator I=CO->begin(), E=CO->end(); I!=E; ++I) {
-    // If all nodes are sunk, bail out early.
-    if (PrevSet->empty())
-      break;
-    ExplodedNodeSet *CurrSet = 0;
-    if (I+1 == E)
-      CurrSet = &CheckersV1Dst;
-    else {
-      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
-      CurrSet->clear();
-    }
-    void *tag = I->first;
-    Checker *checker = I->second;
-    bool respondsToCallback = true;
-
-    for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
-         NI != NE; ++NI) {
-
-      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, tag,
-                        Kind == PreVisitStmtCallback, respondsToCallback);
-      
-    }
-
-    PrevSet = CurrSet;
-
-    if (NewCO.get()) {
-      ++checkersEvaluated;
-      if (respondsToCallback)
-        NewCO->push_back(*I);
-    }    
-  }
-  
-  // If we built NewCO, check if we called all the checkers.  This is important
-  // so that we know that we accurately determined the entire set of checkers
-  // that responds to this callback.  Note that 'checkersEvaluated' might
-  // not be the same as Checkers.size() if one of the Checkers generates
-  // a sink node.
-  if (NewCO.get() && checkersEvaluated == Checkers.size())
-    CO_Ref = NewCO.take();
-
-  // Don't autotransition.  The CheckerContext objects should do this
-  // automatically.
-
-  getCheckerManager().runCheckersForStmt(Kind == PreVisitStmtCallback,
-                                         Dst, CheckersV1Dst, S, *this);
-}
-
-void ExprEngine::CheckerVisitObjCMessage(const ObjCMessage &msg,
-                                         ExplodedNodeSet &Dst,
-                                         ExplodedNodeSet &Src,
-                                         bool isPrevisit) {
-
-  if (Checkers.empty()) {
-    getCheckerManager().runCheckersForObjCMessage(isPrevisit, Dst, Src, msg,
-                                                  *this);
-    return;
-  }
-
-  ExplodedNodeSet CheckersV1Dst;
-  ExplodedNodeSet Tmp;
-  ExplodedNodeSet *PrevSet = &Src;
-
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
-  {
-    ExplodedNodeSet *CurrSet = 0;
-    if (I+1 == E)
-      CurrSet = &CheckersV1Dst;
-    else {
-      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
-      CurrSet->clear();
-    }
-
-    void *tag = I->first;
-    Checker *checker = I->second;
-
-    for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
-         NI != NE; ++NI)
-      checker->GR_visitObjCMessage(*CurrSet, *Builder, *this, msg,
-                                   *NI, tag, isPrevisit);
-
-    // Update which NodeSet is the current one.
-    PrevSet = CurrSet;
-  }
-
-  getCheckerManager().runCheckersForObjCMessage(isPrevisit, Dst, CheckersV1Dst,
-                                                msg, *this);
-}
-
-void ExprEngine::CheckerEvalNilReceiver(const ObjCMessage &msg,
-                                        ExplodedNodeSet &Dst,
-                                        const GRState *state,
-                                        ExplodedNode *Pred) {
-  bool evaluated = false;
-  ExplodedNodeSet DstTmp;
-
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end();I!=E;++I) {
-    void *tag = I->first;
-    Checker *checker = I->second;
-
-    if (checker->GR_evalNilReceiver(DstTmp, *Builder, *this, msg, Pred, state,
-                                    tag)) {
-      evaluated = true;
-      break;
-    } else
-      // The checker didn't evaluate the expr. Restore the Dst.
-      DstTmp.clear();
-  }
-
-  if (evaluated)
-    Dst.insert(DstTmp);
-  else
-    Dst.insert(Pred);
-}
-
-// CheckerEvalCall returns true if one of the checkers processed the node.
-// This may return void when all call evaluation logic goes to some checker
-// in the future.
-bool ExprEngine::CheckerEvalCall(const CallExpr *CE,
-                                   ExplodedNodeSet &Dst,
-                                   ExplodedNode *Pred) {
-  bool evaluated = false;
-  ExplodedNodeSet DstTmp;
-
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end();I!=E;++I) {
-    void *tag = I->first;
-    Checker *checker = I->second;
-
-    if (checker->GR_evalCallExpr(DstTmp, *Builder, *this, CE, Pred, tag)) {
-      evaluated = true;
-      break;
-    } else
-      // The checker didn't evaluate the expr. Restore the DstTmp set.
-      DstTmp.clear();
-  }
-
-  if (evaluated) {
-    Dst.insert(DstTmp);
-    return evaluated;
-  }
-
-  class DefaultEval : public GraphExpander {
-    bool &Evaluated;
-  public:
-    DefaultEval(bool &evaluated) : Evaluated(evaluated) { }
-    virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) {
-      Evaluated = false;
-      Dst.insert(Pred);
-    }
-  };
-
-  evaluated = true;
-  DefaultEval defaultEval(evaluated);
-  getCheckerManager().runCheckersForEvalCall(Dst, Pred, CE, *this,
-                                             &defaultEval);
-  return evaluated;
-}
-
-// FIXME: This is largely copy-paste from CheckerVisit().  Need to
-// unify.
-void ExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
-                                    ExplodedNodeSet &Src, SVal location,
-                                    SVal val, bool isPrevisit) {
-
-  if (Checkers.empty()) {
-    getCheckerManager().runCheckersForBind(Dst, Src, location, val, StoreE,
-                                           *this);
-    return;
-  }
-
-  ExplodedNodeSet CheckerV1Tmp;
-  ExplodedNodeSet Tmp;
-  ExplodedNodeSet *PrevSet = &Src;
-
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
-  {
-    ExplodedNodeSet *CurrSet = 0;
-    if (I+1 == E)
-      CurrSet = &CheckerV1Tmp;
-    else {
-      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
-      CurrSet->clear();
-    }
-
-    void *tag = I->first;
-    Checker *checker = I->second;
-
-    for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
-         NI != NE; ++NI)
-      checker->GR_VisitBind(*CurrSet, *Builder, *this, StoreE,
-                            *NI, tag, location, val, isPrevisit);
-
-    // Update which NodeSet is the current one.
-    PrevSet = CurrSet;
-  }
-
-  getCheckerManager().runCheckersForBind(Dst, CheckerV1Tmp, location, val,
-                                         StoreE, *this);
-  
-  // Don't autotransition.  The CheckerContext objects should do this
-  // automatically.
-}
-//===----------------------------------------------------------------------===//
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
 
@@ -333,14 +91,6 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
 ExprEngine::~ExprEngine() {
   BR.FlushReports();
   delete [] NSExceptionInstanceRaiseSelectors;
-  
-  // Delete the set of checkers.
-  for (CheckersOrdered::iterator I=Checkers.begin(), E=Checkers.end(); I!=E;++I)
-    delete I->second;
-  
-  for (CheckersOrderedCache::iterator I=COCache.begin(), E=COCache.end();
-       I!=E;++I)
-    delete I->second;
 }
 
 //===----------------------------------------------------------------------===//
@@ -415,52 +165,6 @@ const GRState* ExprEngine::getInitialState(const LocationContext *InitLoc) {
 ///  logic for handling assumptions on symbolic values.
 const GRState *ExprEngine::processAssume(const GRState *state, SVal cond,
                                            bool assumption) {
-  // Determine if we already have a cached 'CheckersOrdered' vector
-  // specifically tailored for processing assumptions.  This
-  // can reduce the number of checkers actually called.
-  CheckersOrdered *CO = &Checkers;
-  llvm::OwningPtr<CheckersOrdered> NewCO;
-
-  CallbackTag K = GetCallbackTag(processAssumeCallback);
-  CheckersOrdered *& CO_Ref = COCache[K];
-
-  if (!CO_Ref) {
-    // If we have no previously cached CheckersOrdered vector for this
-    // statement kind, then create one.
-    NewCO.reset(new CheckersOrdered);
-  }
-  else {
-    // Use the already cached set.
-    CO = CO_Ref;
-  }
-
-  if (!CO->empty()) {
-    // Let the checkers have a crack at the assume before the transfer functions
-    // get their turn.
-    for (CheckersOrdered::iterator I = CO->begin(), E = CO->end(); I!=E; ++I) {
-
-      // If any checker declares the state infeasible (or if it starts that
-      // way), bail out.
-      if (!state)
-        return NULL;
-
-      Checker *C = I->second;
-      bool respondsToCallback = true;
-
-      state = C->evalAssume(state, cond, assumption, &respondsToCallback);
-
-      // Check if we're building the cache of checkers that care about
-      // assumptions.
-      if (NewCO.get() && respondsToCallback)
-        NewCO->push_back(*I);
-    }
-
-    // If we got through all the checkers, and we built a list of those that
-    // care about assumptions, save it.
-    if (NewCO.get())
-      CO_Ref = NewCO.take();
-  }
-
   state = getCheckerManager().runCheckersForEvalAssume(state, cond, assumption);
 
   // If the state is infeasible at this point, bail out.
@@ -471,18 +175,6 @@ const GRState *ExprEngine::processAssume(const GRState *state, SVal cond,
 }
 
 bool ExprEngine::wantsRegionChangeUpdate(const GRState* state) {
-  CallbackTag K = GetCallbackTag(EvalRegionChangesCallback);
-  CheckersOrdered *CO = COCache[K];
-
-  if (!CO)
-    CO = &Checkers;
-
-  for (CheckersOrdered::iterator I = CO->begin(), E = CO->end(); I != E; ++I) {
-    Checker *C = I->second;
-    if (C->wantsRegionChangeUpdate(state))
-      return true;
-  }
-
   return getCheckerManager().wantsRegionChangeUpdate(state);
 }
 
@@ -490,60 +182,10 @@ const GRState *
 ExprEngine::processRegionChanges(const GRState *state,
                                    const MemRegion * const *Begin,
                                    const MemRegion * const *End) {
-  // FIXME: Most of this method is copy-pasted from processAssume.
-
-  // Determine if we already have a cached 'CheckersOrdered' vector
-  // specifically tailored for processing region changes.  This
-  // can reduce the number of checkers actually called.
-  CheckersOrdered *CO = &Checkers;
-  llvm::OwningPtr<CheckersOrdered> NewCO;
-
-  CallbackTag K = GetCallbackTag(EvalRegionChangesCallback);
-  CheckersOrdered *& CO_Ref = COCache[K];
-
-  if (!CO_Ref) {
-    // If we have no previously cached CheckersOrdered vector for this
-    // callback, then create one.
-    NewCO.reset(new CheckersOrdered);
-  }
-  else {
-    // Use the already cached set.
-    CO = CO_Ref;
-  }
-
-  // If there are no checkers, just delegate to the checker manager.
-  if (CO->empty())
-    return getCheckerManager().runCheckersForRegionChanges(state, Begin, End);
-
-  for (CheckersOrdered::iterator I = CO->begin(), E = CO->end(); I != E; ++I) {
-    // If any checker declares the state infeasible (or if it starts that way),
-    // bail out.
-    if (!state)
-      return NULL;
-
-    Checker *C = I->second;
-    bool respondsToCallback = true;
-
-    state = C->EvalRegionChanges(state, Begin, End, &respondsToCallback);
-
-    // See if we're building a cache of checkers that care about region changes.
-    if (NewCO.get() && respondsToCallback)
-      NewCO->push_back(*I);
-  }
-
-  // If we got through all the checkers, and we built a list of those that
-  // care about region changes, save it.
-  if (NewCO.get())
-    CO_Ref = NewCO.take();
-
   return getCheckerManager().runCheckersForRegionChanges(state, Begin, End);
 }
 
 void ExprEngine::processEndWorklist(bool hasWorkRemaining) {
-  for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
-       I != E; ++I) {
-    I->second->VisitEndAnalysis(G, BR, *this);
-  }
   getCheckerManager().runCheckersForEndAnalysis(G, BR, *this);
 }
 
@@ -585,13 +227,6 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
 
   if (AMgr.shouldPurgeDead()) {
     const GRState *St = EntryNode->getState();
-
-    for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
-         I != E; ++I) {
-      Checker *checker = I->second;
-      checker->MarkLiveSymbols(St, SymReaper);
-    }
-
     getCheckerManager().runCheckersForLiveSymbols(St, SymReaper);
 
     const StackFrameContext *SFC = LC->getCurrentStackFrame();
@@ -617,33 +252,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
     getTF().evalDeadSymbols(Tmp2, *this, *Builder, EntryNode,
                             CleanedState, SymReaper);
 
-    ExplodedNodeSet checkersV1Tmp;
-    if (Checkers.empty())
-      checkersV1Tmp.insert(Tmp2);
-    else {
-      ExplodedNodeSet Tmp3;
-      ExplodedNodeSet *SrcSet = &Tmp2;
-      for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
-           I != E; ++I) {
-        ExplodedNodeSet *DstSet = 0;
-        if (I+1 == E)
-          DstSet = &checkersV1Tmp;
-        else {
-          DstSet = (SrcSet == &Tmp2) ? &Tmp3 : &Tmp2;
-          DstSet->clear();
-        }
-
-        void *tag = I->first;
-        Checker *checker = I->second;
-        for (ExplodedNodeSet::iterator NI = SrcSet->begin(), NE = SrcSet->end();
-             NI != NE; ++NI)
-          checker->GR_evalDeadSymbols(*DstSet, *Builder, *this, currentStmt,
-                                      *NI, SymReaper, tag);
-        SrcSet = DstSet;
-      }
-    }
-
-    getCheckerManager().runCheckersForDeadSymbols(Tmp, checkersV1Tmp,
+    getCheckerManager().runCheckersForDeadSymbols(Tmp, Tmp2,
                                                  SymReaper, currentStmt, *this);
 
     if (!Builder->BuildSinks && !Builder->hasGeneratedNode)
@@ -1283,12 +892,6 @@ void ExprEngine::processBranch(const Stmt* Condition, const Stmt* Term,
                                 Condition->getLocStart(),
                                 "Error evaluating branch");
 
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end();I!=E;++I) {
-    void *tag = I->first;
-    Checker *checker = I->second;
-    checker->VisitBranchCondition(builder, *this, Condition, tag);
-  }
-
   getCheckerManager().runCheckersForBranchCondition(Condition, builder, *this);
 
   // If the branch condition is undefined, return;
@@ -1413,12 +1016,6 @@ void ExprEngine::VisitGuardedExpr(const Expr* Ex, const Expr* L,
 void ExprEngine::processEndOfFunction(EndOfFunctionNodeBuilder& builder) {
   getTF().evalEndPath(*this, builder);
   StateMgr.EndPath(builder.getState());
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
-    void *tag = I->first;
-    Checker *checker = I->second;
-    EndOfFunctionNodeBuilder B = builder.withCheckerTag(tag);
-    checker->evalEndPath(B, tag, *this);
-  }
   getCheckerManager().runCheckersForEndPath(builder, *this);
 }
 
@@ -1638,7 +1235,7 @@ void ExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
            ProgramPoint::PostLValueKind);
 
   // Post-visit the BlockExpr.
-  CheckerVisit(BE, Dst, Tmp, PostVisitStmtCallback);
+  getCheckerManager().runCheckersForPostStmt(Dst, Tmp, BE, *this);
 }
 
 void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
@@ -1695,7 +1292,7 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr* A,
     ExplodedNodeSet Tmp2;
     Visit(Idx, *I1, Tmp2);     // Evaluate the index.
     ExplodedNodeSet Tmp3;
-    CheckerVisit(A, Tmp3, Tmp2, PreVisitStmtCallback);
+    getCheckerManager().runCheckersForPreStmt(Tmp3, Tmp2, A, *this);
 
     for (ExplodedNodeSet::iterator I2=Tmp3.begin(),E2=Tmp3.end();I2!=E2; ++I2) {
       const GRState* state = GetState(*I2);
@@ -1756,7 +1353,8 @@ void ExprEngine::evalBind(ExplodedNodeSet& Dst, const Stmt* StoreE,
   // Do a previsit of the bind.
   ExplodedNodeSet CheckedSet, Src;
   Src.Add(Pred);
-  CheckerVisitBind(StoreE, CheckedSet, Src, location, Val, true);
+  getCheckerManager().runCheckersForBind(CheckedSet, Src, location, Val, StoreE,
+                                         *this);
 
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I!=E; ++I) {
@@ -1929,53 +1527,23 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
     return;
   }
 
-  if (Checkers.empty()) {
-    ExplodedNodeSet Src;
-    if (Builder->GetState(Pred) == state) {
-      Src.Add(Pred);
-    } else {
-      // Associate this new state with an ExplodedNode.
-      Src.Add(Builder->generateNode(S, state, Pred));
-    }
-    getCheckerManager().runCheckersForLocation(Dst, Src, location, isLoad, S,
-                                               *this);
-    return;
-  }
-
   ExplodedNodeSet Src;
-  Src.Add(Pred);
-  ExplodedNodeSet CheckersV1Dst;
-  ExplodedNodeSet Tmp;
-  ExplodedNodeSet *PrevSet = &Src;
-
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
-  {
-    ExplodedNodeSet *CurrSet = 0;
-    if (I+1 == E)
-      CurrSet = &CheckersV1Dst;
-    else {
-      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
-      CurrSet->clear();
-    }
-
-    void *tag = I->first;
-    Checker *checker = I->second;
-
-    for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
-         NI != NE; ++NI) {
-      // Use the 'state' argument only when the predecessor node is the
-      // same as Pred.  This allows us to catch updates to the state.
-      checker->GR_visitLocation(*CurrSet, *Builder, *this, S, *NI,
-                                *NI == Pred ? state : GetState(*NI),
-                                location, tag, isLoad);
-    }
-
-    // Update which NodeSet is the current one.
-    PrevSet = CurrSet;
+  if (Builder->GetState(Pred) == state) {
+    Src.Add(Pred);
+  } else {
+    // Associate this new state with an ExplodedNode.
+    // FIXME: If I pass null tag, the graph is incorrect, e.g for
+    //   int *p;
+    //   p = 0;
+    //   *p = 0xDEADBEEF;
+    // "p = 0" is not noted as "Null pointer value stored to 'p'" but
+    // instead "int *p" is noted as
+    // "Variable 'p' initialized to a null pointer value"
+    ExplodedNode *N = Builder->generateNode(S, state, Pred, this);
+    Src.Add(N ? N : Pred);
   }
-
-  getCheckerManager().runCheckersForLocation(Dst, CheckersV1Dst, location,
-                                             isLoad, S, *this);
+  getCheckerManager().runCheckersForLocation(Dst, Src, location, isLoad, S,
+                                             *this);
 }
 
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, 
@@ -2044,58 +1612,59 @@ void ExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
     ExplodedNodeSet DstTmp2;
     Visit(Callee, *NI, DstTmp2);
     // Perform the previsit of the CallExpr, storing the results in DstTmp.
-    CheckerVisit(CE, DstTmp, DstTmp2, PreVisitStmtCallback);
+    getCheckerManager().runCheckersForPreStmt(DstTmp, DstTmp2, CE, *this);
   }
+
+  class DefaultEval : public GraphExpander {
+    ExprEngine &Eng;
+    const CallExpr *CE;
+  public:
+    bool Inlined;
+    
+    DefaultEval(ExprEngine &eng, const CallExpr *ce)
+      : Eng(eng), CE(ce), Inlined(false) { }
+    virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) {
+      if (Eng.getAnalysisManager().shouldInlineCall() &&
+          Eng.InlineCall(Dst, CE, Pred)) {
+        Inlined = true;
+      } else {
+        StmtNodeBuilder &Builder = Eng.getBuilder();
+        assert(&Builder && "StmtNodeBuilder must be defined.");
+
+        // Dispatch to the plug-in transfer function.
+        unsigned oldSize = Dst.size();
+        SaveOr OldHasGen(Builder.hasGeneratedNode);
+
+        // Dispatch to transfer function logic to handle the call itself.
+        const Expr* Callee = CE->getCallee()->IgnoreParens();
+        const GRState* state = Eng.GetState(Pred);
+        SVal L = state->getSVal(Callee);
+        Eng.getTF().evalCall(Dst, Eng, Builder, CE, L, Pred);
+
+        // Handle the case where no nodes where generated.  Auto-generate that
+        // contains the updated state if we aren't generating sinks.
+        if (!Builder.BuildSinks && Dst.size() == oldSize &&
+            !Builder.hasGeneratedNode)
+          Eng.MakeNode(Dst, CE, Pred, state);
+      }
+    }
+  };
 
   // Finally, evaluate the function call.  We try each of the checkers
   // to see if the can evaluate the function call.
   ExplodedNodeSet DstTmp3;
+  DefaultEval defEval(*this, CE);
 
-  for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
-       DI != DE; ++DI) {
+  getCheckerManager().runCheckersForEvalCall(DstTmp3, DstTmp, CE,
+                                             *this, &defEval);
 
-    const GRState* state = GetState(*DI);
-    SVal L = state->getSVal(Callee);
-
-    // FIXME: Add support for symbolic function calls (calls involving
-    //  function pointer values that are symbolic).
-    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-    ExplodedNodeSet DstChecker;
-
-    // If the callee is processed by a checker, skip the rest logic.
-    if (CheckerEvalCall(CE, DstChecker, *DI))
-      DstTmp3.insert(DstChecker);
-    else if (AMgr.shouldInlineCall() && InlineCall(Dst, CE, *DI)) {
-      // Callee is inlined. We shouldn't do post call checking.
-      return;
-    }
-    else {
-      for (ExplodedNodeSet::iterator DI_Checker = DstChecker.begin(),
-           DE_Checker = DstChecker.end();
-           DI_Checker != DE_Checker; ++DI_Checker) {
-
-        // Dispatch to the plug-in transfer function.
-        unsigned oldSize = DstTmp3.size();
-        SaveOr OldHasGen(Builder->hasGeneratedNode);
-        Pred = *DI_Checker;
-
-        // Dispatch to transfer function logic to handle the call itself.
-        // FIXME: Allow us to chain together transfer functions.
-        assert(Builder && "StmtNodeBuilder must be defined.");
-        getTF().evalCall(DstTmp3, *this, *Builder, CE, L, Pred);
-
-        // Handle the case where no nodes where generated.  Auto-generate that
-        // contains the updated state if we aren't generating sinks.
-        if (!Builder->BuildSinks && DstTmp3.size() == oldSize &&
-            !Builder->hasGeneratedNode)
-          MakeNode(DstTmp3, CE, Pred, state);
-      }
-    }
-  }
+  // Callee is inlined. We shouldn't do post call checking.
+  if (defEval.Inlined)
+    return;
 
   // Finally, perform the post-condition check of the CallExpr and store
   // the created nodes in 'Dst'.
-  CheckerVisit(CE, Dst, DstTmp3, PostVisitStmtCallback);
+  getCheckerManager().runCheckersForPostStmt(Dst, DstTmp3, CE, *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2187,7 +1756,7 @@ void ExprEngine::VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
   // Pre-visit the ObjCAtSynchronizedStmt.
   ExplodedNodeSet Tmp;
   Tmp.Add(Pred);
-  CheckerVisit(S, Dst, Tmp, PreVisitStmtCallback);
+  getCheckerManager().runCheckersForPreStmt(Dst, Tmp, S, *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2218,7 +1787,7 @@ void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr* Ex,
 
   // Perform the post-condition check of the ObjCIvarRefExpr and store
   // the created nodes in 'Dst'.
-  CheckerVisit(Ex, Dst, dstIvar, PostVisitStmtCallback);
+  getCheckerManager().runCheckersForPostStmt(Dst, dstIvar, Ex, *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2388,7 +1957,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
 
   // Handle the previsits checks.
   ExplodedNodeSet DstPrevisit;
-  CheckerVisitObjCMessage(msg, DstPrevisit, Src, /*isPreVisit=*/true);
+  getCheckerManager().runCheckersForPreObjCMessage(DstPrevisit, Src, msg,*this);
 
   // Proceed with evaluate the message expression.
   ExplodedNodeSet dstEval;
@@ -2413,9 +1982,9 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
         llvm::tie(notNilState, nilState) = state->assume(receiverVal);
     
         // There are three cases: can be nil or non-nil, must be nil, must be
-        // non-nil. We handle must be nil, and merge the rest two into non-nil.
+        // non-nil. We ignore must be nil, and merge the rest two into non-nil.
         if (nilState && !notNilState) {
-          CheckerEvalNilReceiver(msg, dstEval, nilState, Pred);
+          dstEval.insert(Pred);
           continue;
         }
     
@@ -2491,7 +2060,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
 
   // Finally, perform the post-condition check of the ObjCMessageExpr and store
   // the created nodes in 'Dst'.
-  CheckerVisitObjCMessage(msg, Dst, dstEval, /*isPreVisit=*/false);
+  getCheckerManager().runCheckersForPostObjCMessage(Dst, dstEval, msg, *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2504,7 +2073,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   ExplodedNodeSet S1;
   Visit(Ex, Pred, S1);
   ExplodedNodeSet S2;
-  CheckerVisit(CastE, S2, S1, PreVisitStmtCallback);
+  getCheckerManager().runCheckersForPreStmt(S2, S1, CastE, *this);
   
   if (CastE->getCastKind() == CK_LValueToRValue ||
       CastE->getCastKind() == CK_GetObjCProperty) {
@@ -2677,7 +2246,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
     Tmp.Add(Pred);
 
   ExplodedNodeSet Tmp2;
-  CheckerVisit(DS, Tmp2, Tmp, PreVisitStmtCallback);
+  getCheckerManager().runCheckersForPreStmt(Tmp2, Tmp, DS, *this);
 
   for (ExplodedNodeSet::iterator I=Tmp2.begin(), E=Tmp2.end(); I!=E; ++I) {
     ExplodedNode *N = *I;
@@ -3238,7 +2807,7 @@ void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
   }
 
   ExplodedNodeSet CheckedSet;
-  CheckerVisit(RS, CheckedSet, Src, PreVisitStmtCallback);
+  getCheckerManager().runCheckersForPreStmt(CheckedSet, Src, RS, *this);
 
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I != E; ++I) {
@@ -3280,7 +2849,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     Visit(RHS, *I1, Tmp2);
 
     ExplodedNodeSet CheckedSet;
-    CheckerVisit(B, CheckedSet, Tmp2, PreVisitStmtCallback);
+    getCheckerManager().runCheckersForPreStmt(CheckedSet, Tmp2, B, *this);
 
     // With both the LHS and RHS evaluated, process the operation itself.
 
@@ -3407,16 +2976,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     }
   }
 
-  CheckerVisit(B, Dst, Tmp3, PostVisitStmtCallback);
-}
-
-//===----------------------------------------------------------------------===//
-// Checker registration/lookup.
-//===----------------------------------------------------------------------===//
-
-Checker *ExprEngine::lookupChecker(void *tag) const {
-  CheckerMap::const_iterator I = CheckerM.find(tag);
-  return (I == CheckerM.end()) ? NULL : Checkers[I->second].second;
+  getCheckerManager().runCheckersForPostStmt(Dst, Tmp3, B, *this);
 }
 
 //===----------------------------------------------------------------------===//
