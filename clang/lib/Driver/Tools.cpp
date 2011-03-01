@@ -1826,7 +1826,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_clang_ignored_f_Group);
   Args.ClaimAllArgs(options::OPT_clang_ignored_m_Group);
 
+  // Disable warnings for clang -E -use-gold-plugin -emit-llvm foo.c
   Args.ClaimAllArgs(options::OPT_use_gold_plugin);
+  Args.ClaimAllArgs(options::OPT_emit_llvm);
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
@@ -1841,6 +1843,10 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Don't warn about "clang -w -c foo.s"
   Args.ClaimAllArgs(options::OPT_w);
+  // and "clang -emit-llvm -c foo.s"
+  Args.ClaimAllArgs(options::OPT_emit_llvm);
+  // and "clang -use-gold-plugin -c foo.s"
+  Args.ClaimAllArgs(options::OPT_use_gold_plugin);
 
   // Invoke ourselves in -cc1as mode.
   //
@@ -3541,6 +3547,8 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Silence warning for "clang -g foo.o -o foo"
   Args.ClaimAllArgs(options::OPT_g_Group);
+  // and "clang -emit-llvm foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_emit_llvm);
   // and for "clang -g foo.o -o foo". Other warning options are already
   // handled somewhere else.
   Args.ClaimAllArgs(options::OPT_w);
