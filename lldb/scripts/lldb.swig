@@ -56,7 +56,7 @@
 
 
 // typemap for an outgoing buffer
-%typemap(in) (const void *wbuffer, size_t len) {
+%typemap(in) (const void *buf, size_t size) {
    if (!PyString_Check($input)) {
        PyErr_SetString(PyExc_ValueError, "Expecting a string");
        return NULL;
@@ -66,7 +66,7 @@
 }
 
 // typemap for an incoming buffer
-%typemap(in) (void *rbuffer, size_t len) {
+%typemap(in) (void *buf, size_t size) {
    if (!PyInt_Check($input)) {
        PyErr_SetString(PyExc_ValueError, "Expecting an integer");
        return NULL;
@@ -80,14 +80,14 @@
 }
 
 // Return the buffer.  Discarding any previous return result
-%typemap(argout) (void *rbuffer, size_t len) {
+%typemap(argout) (void *buf, size_t size) {
    Py_XDECREF($result);   /* Blow away any previous result */
    if (result < 0) {      /* Check for I/O error */
        free($1);
        PyErr_SetFromErrno(PyExc_IOError);
        return NULL;
    }
-   $result = PyString_FromStringAndSize($1,result);
+   $result = PyString_FromStringAndSize(static_cast<const char*>($1),result);
    free($1);
 }
 
