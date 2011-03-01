@@ -7,7 +7,6 @@ import unittest2
 import lldb
 from lldbtest import *
 
-@unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class ProcessAPITestCase(TestBase):
 
     mydir = os.path.join("python_api", "process")
