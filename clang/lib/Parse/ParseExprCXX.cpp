@@ -1472,9 +1472,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
         Actions.isCurrentClassName(*Id, getCurScope(), &SS)) {
       // We have parsed a constructor name.
       Result.setConstructorName(Actions.getTypeName(*Id, IdLoc, getCurScope(),
-                                                    &SS, false, false,
-                                                    ParsedType(),
-                                            /*NonTrivialTypeSourceInfo=*/true),
+                                                    &SS, false),
                                 IdLoc, IdLoc);
     } else {
       // We have parsed an identifier.
@@ -1512,9 +1510,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
         Result.setConstructorName(Actions.getTypeName(*TemplateId->Name,
                                                   TemplateId->TemplateNameLoc, 
                                                       getCurScope(),
-                                                      &SS, false, false,
-                                                      ParsedType(),
-                                            /*NontrivialTypeSourceInfo=*/true),
+                                                      &SS, false),
                                   TemplateId->TemplateNameLoc, 
                                   TemplateId->RAngleLoc);
         TemplateId->Destroy();

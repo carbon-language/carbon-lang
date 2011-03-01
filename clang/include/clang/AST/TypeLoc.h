@@ -1388,10 +1388,7 @@ class AutoTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
 
 struct ElaboratedLocInfo {
   SourceLocation KeywordLoc;
-  
-  /// \brief Opaque data pointer used to reconstruct a nested-name-specifier
-  /// from 
-  void *QualifierData;
+  SourceRange QualifierRange;
 };
 
 class ElaboratedTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
@@ -1406,29 +1403,27 @@ public:
     this->getLocalData()->KeywordLoc = Loc;
   }
 
-  NestedNameSpecifierLoc getQualifierLoc() const {
-    return NestedNameSpecifierLoc(getTypePtr()->getQualifier(), 
-                                  getLocalData()->QualifierData);
+  SourceRange getQualifierRange() const {
+    return this->getLocalData()->QualifierRange;
   }
- 
-  void setQualifierLoc(NestedNameSpecifierLoc QualifierLoc) {
-    assert(QualifierLoc.getNestedNameSpecifier() 
-                                            == getTypePtr()->getQualifier() &&
-           "Inconsistent nested-name-specifier pointer");
-    getLocalData()->QualifierData = QualifierLoc.getOpaqueData();
+  void setQualifierRange(SourceRange Range) {
+    this->getLocalData()->QualifierRange = Range;
   }
 
   SourceRange getLocalSourceRange() const {
     if (getKeywordLoc().isValid())
-      if (getQualifierLoc())
-        return SourceRange(getKeywordLoc(), getQualifierLoc().getEndLoc());
+      if (getQualifierRange().getEnd().isValid())
+        return SourceRange(getKeywordLoc(), getQualifierRange().getEnd());
       else
         return SourceRange(getKeywordLoc());
     else
-      return getQualifierLoc().getSourceRange();
+      return getQualifierRange();
   }
 
-  void initializeLocal(ASTContext &Context, SourceLocation Loc);
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
+    setKeywordLoc(Loc);
+    setQualifierRange(SourceRange(Loc));
+  }
 
   TypeLoc getNamedTypeLoc() const {
     return getInnerTypeLoc();
@@ -1501,10 +1496,9 @@ public:
   void initializeLocal(ASTContext &Context, SourceLocation Loc);
 };
 
-struct DependentTemplateSpecializationLocInfo {
-  SourceLocation KeywordLoc;
-  SourceLocation NameLoc;
-  SourceRange QualifierRange;
+// This is exactly the structure of an ElaboratedTypeLoc whose inner
+// type is some sort of TemplateSpecializationTypeLoc.
+struct DependentTemplateSpecializationLocInfo : DependentNameLocInfo {
   SourceLocation LAngleLoc;
   SourceLocation RAngleLoc;
   // followed by a TemplateArgumentLocInfo[]

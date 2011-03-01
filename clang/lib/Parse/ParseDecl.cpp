@@ -1056,9 +1056,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       ParsedType TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
                                                Next.getLocation(),
-                                               getCurScope(), &SS,
-                                               false, false, ParsedType(),
-                                               /*NonTrivialSourceInfo=*/true);
+                                               getCurScope(), &SS);
 
       // If the referenced identifier is not a type, then this declspec is
       // erroneous: We already checked about that it has no type specifier, and

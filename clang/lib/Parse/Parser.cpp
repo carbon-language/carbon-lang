@@ -1091,9 +1091,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     if (ParsedType Ty = Actions.getTypeName(*Tok.getIdentifierInfo(),
                                             Tok.getLocation(), getCurScope(),
                                             &SS, false, 
-                                            NextToken().is(tok::period),
-                                            ParsedType(),
-                                            /*NonTrivialTypeSourceInfo*/true)) {
+                                            NextToken().is(tok::period))) {
       // This is a typename. Replace the current token in-place with an
       // annotation type token.
       Tok.setKind(tok::annot_typename);

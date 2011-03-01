@@ -2237,7 +2237,7 @@ namespace {
                        ? DS.getTypeSpecTypeLoc()
                        : SourceLocation());
       const CXXScopeSpec& SS = DS.getTypeSpecScope();
-      TL.setQualifierLoc(SS.getWithLocInContext(Context));
+      TL.setQualifierRange(SS.isEmpty() ? SourceRange(): SS.getRange());
       Visit(TL.getNextTypeLoc().getUnqualifiedLoc());
     }
     void VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {

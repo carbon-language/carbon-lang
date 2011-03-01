@@ -730,8 +730,7 @@ namespace {
     /// elaborated type.
     QualType RebuildElaboratedType(SourceLocation KeywordLoc,
                                    ElaboratedTypeKeyword Keyword,
-                                   NestedNameSpecifierLoc QualifierLoc,
-                                   QualType T);
+                                   NestedNameSpecifier *NNS, QualType T);
 
     TemplateName TransformTemplateName(TemplateName Name,
                                        QualType ObjectType = QualType(),
@@ -893,7 +892,7 @@ VarDecl *TemplateInstantiator::RebuildObjCExceptionDecl(VarDecl *ExceptionDecl,
 QualType
 TemplateInstantiator::RebuildElaboratedType(SourceLocation KeywordLoc,
                                             ElaboratedTypeKeyword Keyword,
-                                            NestedNameSpecifierLoc QualifierLoc,
+                                            NestedNameSpecifier *NNS,
                                             QualType T) {
   if (const TagType *TT = T->getAs<TagType>()) {
     TagDecl* TD = TT->getDecl();
@@ -919,8 +918,7 @@ TemplateInstantiator::RebuildElaboratedType(SourceLocation KeywordLoc,
 
   return TreeTransform<TemplateInstantiator>::RebuildElaboratedType(KeywordLoc,
                                                                     Keyword,
-                                                                  QualifierLoc,
-                                                                    T);
+                                                                    NNS, T);
 }
 
 TemplateName TemplateInstantiator::TransformTemplateName(TemplateName Name,

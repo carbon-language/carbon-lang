@@ -577,9 +577,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
   }
 
   // We have an identifier; check whether it is actually a type.
-  ParsedType Type = Actions.getTypeName(*Id, IdLoc, getCurScope(), SS, true,
-                                        false, ParsedType(),
-                                        /*NonTrivialTypeSourceInfo=*/true);
+  ParsedType Type = Actions.getTypeName(*Id, IdLoc, getCurScope(), SS, true);
   if (!Type) {
     Diag(IdLoc, diag::err_expected_class_name);
     return true;

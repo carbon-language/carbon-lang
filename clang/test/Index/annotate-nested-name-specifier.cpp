@@ -307,17 +307,4 @@ struct X5 {
 // CHECK: Identifier: "iterator" [100:54 - 100:62] TypedefDecl=iter_type:100:63 (Definition)
 // CHECK: Identifier: "iter_type" [100:63 - 100:72] TypedefDecl=iter_type:100:63 (Definition)
 
-// CHECK: Keyword: "typedef" [101:3 - 101:10] ClassTemplate=X5:98:8 (Definition)
-// CHECK: Keyword: "typename" [101:11 - 101:19] TypedefDecl=int_ptr_type:101:62 (Definition)
-// CHECK: Identifier: "outer_alias" [101:20 - 101:31] NamespaceRef=outer_alias:10:11
-// CHECK: Punctuation: "::" [101:31 - 101:33] TypedefDecl=int_ptr_type:101:62 (Definition)
-// CHECK: Identifier: "inner" [101:33 - 101:38] NamespaceRef=inner:62:13
-// CHECK: Punctuation: "::" [101:38 - 101:40] TypedefDecl=int_ptr_type:101:62 (Definition)
-// CHECK: Identifier: "vector" [101:40 - 101:46] TemplateRef=vector:4:12
-// CHECK: Punctuation: "<" [101:46 - 101:47] TypedefDecl=int_ptr_type:101:62 (Definition)
-// CHECK: Keyword: "int" [101:47 - 101:50] TypedefDecl=int_ptr_type:101:62 (Definition)
-// CHECK: Punctuation: ">" [101:50 - 101:51] TypedefDecl=int_ptr_type:101:62 (Definition)
-// CHECK: Punctuation: "::" [101:51 - 101:53] TypedefDecl=int_ptr_type:101:62 (Definition)
-// CHECK: Identifier: "iterator" [101:53 - 101:61] TypeRef=iterator:5:18
-// CHECK: Identifier: "int_ptr_type" [101:62 - 101:74] TypedefDecl=int_ptr_type:101:62 (Definition)
 

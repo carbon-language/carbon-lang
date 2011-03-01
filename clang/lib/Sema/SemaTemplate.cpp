@@ -1821,12 +1821,12 @@ TypeResult Sema::ActOnTagTemplateIdType(CXXScopeSpec &SS,
 
   ElaboratedTypeKeyword Keyword
     = TypeWithKeyword::getKeywordForTagTypeKind(TagKind);
-  QualType ElabType = Context.getElaboratedType(Keyword, SS.getScopeRep(), Type);
+  QualType ElabType = Context.getElaboratedType(Keyword, /*NNS=*/0, Type);
 
   TypeSourceInfo *ElabDI = Context.CreateTypeSourceInfo(ElabType);
   ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(ElabDI->getTypeLoc());
   TL.setKeywordLoc(TagLoc);
-  TL.setQualifierLoc(SS.getWithLocInContext(Context));
+  TL.setQualifierRange(SS.getRange());
   TL.getNamedTypeLoc().initializeFullCopy(DI->getTypeLoc());
   return CreateParsedType(ElabType, ElabDI);
 }
@@ -5910,8 +5910,8 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
       << FixItHint::CreateRemoval(TypenameLoc);
 
   NestedNameSpecifierLoc QualifierLoc = SS.getWithLocInContext(Context);
-  QualType T = CheckTypenameType(TypenameLoc.isValid()? ETK_Typename : ETK_None,
-                                 TypenameLoc, QualifierLoc, II, IdLoc);
+  QualType T = CheckTypenameType(ETK_Typename, TypenameLoc, QualifierLoc,
+                                 II, IdLoc);
   if (T.isNull())
     return true;
 
@@ -5924,7 +5924,7 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   } else {
     ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
     TL.setKeywordLoc(TypenameLoc);
-    TL.setQualifierLoc(QualifierLoc);
+    TL.setQualifierRange(SS.getRange());
     cast<TypeSpecTypeLoc>(TL.getNamedTypeLoc()).setNameLoc(IdLoc);
   }
 
@@ -5996,8 +5996,7 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   T = Context.getElaboratedType(ETK_Typename, SS.getScopeRep(), T);
   ElaboratedTypeLoc TL = Builder.push<ElaboratedTypeLoc>(T);
   TL.setKeywordLoc(TypenameLoc);
-  TL.setQualifierLoc(SS.getWithLocInContext(Context));
-  
+  TL.setQualifierRange(SS.getRange());
   TypeSourceInfo *TSI = Builder.getTypeSourceInfo(Context, T);
   return CreateParsedType(T, TSI);
 }
