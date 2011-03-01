@@ -2315,9 +2315,9 @@ class N2VLSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 // Narrow shift by immediate.
 class N2VNSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
              InstrItinClass itin, string OpcodeStr, string Dt,
-             ValueType ResTy, ValueType OpTy, SDNode OpNode>
+             ValueType ResTy, ValueType OpTy, Operand ImmTy, SDNode OpNode>
   : N2VImm<op24, op23, op11_8, op7, op6, op4,
-           (outs DPR:$Vd), (ins QPR:$Vm, i32imm:$SIMM), N2RegVShRFrm, itin,
+           (outs DPR:$Vd), (ins QPR:$Vm, ImmTy:$SIMM), N2RegVShRFrm, itin,
            OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "",
            [(set DPR:$Vd, (ResTy (OpNode (OpTy QPR:$Vm),
                                           (i32 imm:$SIMM))))]>;
@@ -3153,15 +3153,18 @@ multiclass N2VNSh_HSD<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6,
                       bit op4, InstrItinClass itin, string OpcodeStr, string Dt,
                       SDNode OpNode> {
   def v8i8 : N2VNSh<op24, op23, op11_8, op7, op6, op4, itin,
-                    OpcodeStr, !strconcat(Dt, "16"), v8i8, v8i16, OpNode> {
+                    OpcodeStr, !strconcat(Dt, "16"),
+                    v8i8, v8i16, nsr16_imm, OpNode> {
     let Inst{21-19} = 0b001; // imm6 = 001xxx
   }
   def v4i16 : N2VNSh<op24, op23, op11_8, op7, op6, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "32"), v4i16, v4i32, OpNode> {
+                     OpcodeStr, !strconcat(Dt, "32"),
+                     v4i16, v4i32, nsr32_imm, OpNode> {
     let Inst{21-20} = 0b01;  // imm6 = 01xxxx
   }
   def v2i32 : N2VNSh<op24, op23, op11_8, op7, op6, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "64"), v2i32, v2i64, OpNode> {
+                     OpcodeStr, !strconcat(Dt, "64"),
+                     v2i32, v2i64, nsr64_imm, OpNode> {
     let Inst{21} = 0b1;      // imm6 = 1xxxxx
   }
 }

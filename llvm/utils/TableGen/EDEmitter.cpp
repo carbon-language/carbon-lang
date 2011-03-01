@@ -598,6 +598,9 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("t2adrlabel");
   IMM("shift_imm");
   IMM("neon_vcvt_imm32");
+  IMM("nsr16_imm");
+  IMM("nsr32_imm");
+  IMM("nsr64_imm");
 
   MISC("brtarget", "kOperandTypeARMBranchTarget");                // ?
   MISC("uncondbrtarget", "kOperandTypeARMBranchTarget");           // ?

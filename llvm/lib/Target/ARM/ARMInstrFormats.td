@@ -221,6 +221,22 @@ def neg_zero : Operand<i32> {
   let PrintMethod = "printNegZeroOperand";
 }
 
+// Narrow Shift Right Immediate - A narrow shift right immediate is encoded
+// differently from other shift immediates. The imm6 field is encoded like so:
+//
+//   16-bit: imm6<5:3> = '001', 8 - <imm> is encded in imm6<2:0>
+//   32-bit: imm6<5:4> = '01',16 - <imm> is encded in imm6<3:0>
+//   64-bit: imm6<5> = '1', 32 - <imm> is encded in imm6<4:0>
+def nsr16_imm : Operand<i32> {
+  let EncoderMethod = "getNarrowShiftRight16Imm";
+}
+def nsr32_imm : Operand<i32> {
+  let EncoderMethod = "getNarrowShiftRight32Imm";
+}
+def nsr64_imm : Operand<i32> {
+  let EncoderMethod = "getNarrowShiftRight64Imm";
+}
+
 //===----------------------------------------------------------------------===//
 // ARM Instruction templates.
 //

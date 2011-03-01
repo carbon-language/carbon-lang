@@ -158,3 +158,5 @@
 	vrshrn.i32	d16, q8, #16
 @ CHECK: vrshrn.i64	d16, q8, #32    @ encoding: [0x70,0x08,0xe0,0xf2]
 	vrshrn.i64	d16, q8, #32
+@ CHECK: vqrshrn.s32	d16, q8, #13    @ encoding: [0x70,0x09,0xd3,0xf2]
+        vqrshrn.s32	d16, q8, #13
