@@ -940,7 +940,7 @@ Darwin_Generic_GCC::ComputeEffectiveClangTriple(const ArgList &Args) const {
 Generic_GCC::Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
   : ToolChain(Host, Triple) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
-  if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
+  if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
 }
 
@@ -1235,7 +1235,7 @@ AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
 
   getProgramPaths().push_back(getDriver().getInstalledDir());
-  if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
+  if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
 
   getFilePaths().push_back(getDriver().Dir + "/../lib");
@@ -1565,7 +1565,7 @@ DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
 
   // Path mangling to find libexec
   getProgramPaths().push_back(getDriver().getInstalledDir());
-  if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
+  if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
 
   getFilePaths().push_back(getDriver().Dir + "/../lib");
