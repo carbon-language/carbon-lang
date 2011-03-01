@@ -17,7 +17,6 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/TypeOrdering.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
@@ -136,28 +135,34 @@ InheritanceHierarchyWriter::WriteNodeReference(QualType Type,
 /// class using GraphViz.
 void CXXRecordDecl::viewInheritance(ASTContext& Context) const {
   QualType Self = Context.getTypeDeclType(const_cast<CXXRecordDecl *>(this));
-  // Create temp directory
-  SmallString<128> Filename;
-  int FileFD = 0;
-  if (error_code ec = sys::fs::unique_file(
-    "clang-class-inheritance-hierarchy-%%-%%-%%-%%-" +
-    Self.getAsString() + ".dot",
-    FileFD, Filename)) {
-    errs() << "Error creating temporary output file: " << ec.message() << '\n';
+  std::string ErrMsg;
+  sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
+  if (Filename.isEmpty()) {
+    llvm::errs() << "Error: " << ErrMsg << "\n";
+    return;
+  }
+  Filename.appendComponent(Self.getAsString() + ".dot");
+  if (Filename.makeUnique(true,&ErrMsg)) {
+    llvm::errs() << "Error: " << ErrMsg << "\n";
     return;
   }
 
-  llvm::errs() << "Writing '" << Filename << "'... ";
+  llvm::errs() << "Writing '" << Filename.c_str() << "'... ";
 
-  llvm::raw_fd_ostream O(FileFD, true);
-  InheritanceHierarchyWriter Writer(Context, O);
-  Writer.WriteGraph(Self);
+  llvm::raw_fd_ostream O(Filename.c_str(), ErrMsg);
 
-  llvm::errs() << " done. \n";
-  O.close();
+  if (ErrMsg.empty()) {
+    InheritanceHierarchyWriter Writer(Context, O);
+    Writer.WriteGraph(Self);
+    llvm::errs() << " done. \n";
 
-  // Display the graph
-  DisplayGraph(sys::Path(Filename));
+    O.close();
+
+    // Display the graph
+    DisplayGraph(Filename);
+  } else {
+    llvm::errs() << "error opening file for writing!\n";
+  }
 }
 
 }
