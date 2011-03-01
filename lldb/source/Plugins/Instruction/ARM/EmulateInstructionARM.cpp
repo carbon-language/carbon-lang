@@ -6310,6 +6310,156 @@ EmulateInstructionARM::EmulateLDRHRegister (ARMEncoding encoding)
     return true;
 }
                                                                             
+// LDRSB (immediate) calculates an address from a base register value and an immediate offset, loads a byte from 
+// memory, sign-extends it to form a 32-bit word, and writes it to a register.  It can use offset, post-indexed, 
+// or pre-indexed addressing.
+bool
+EmulateInstructionARM::EmulateLDRSBImmediate (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
+        address = if index then offset_addr else R[n]; 
+        R[t] = SignExtend(MemU[address,1], 32); 
+        if wback then R[n] = offset_addr;
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed ())
+    {
+        uint32_t t;
+        uint32_t n;
+        uint32_t imm32;
+        bool index;
+        bool add;
+        bool wback;
+                  
+        // EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // if Rt == ’1111’ then SEE PLI; 
+                // if Rn == ’1111’ then SEE LDRSB (literal); 
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 11, 0);
+                  
+                // index = TRUE; add = TRUE; wback = FALSE; 
+                index = true;
+                add = true;
+                wback = false;
+                  
+                // if t == 13 then UNPREDICTABLE;
+                if (t == 13)
+                    return false;
+                  
+                break;
+                  
+            case eEncodingT2:
+                // if Rt == ’1111’ && P == ’1’ && U == ’0’ && W == ’0’ then SEE PLI; 
+                // if Rn == ’1111’ then SEE LDRSB (literal); 
+                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE LDRSBT; 
+                // if P == ’0’ && W == ’0’ then UNDEFINED;
+                if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
+                    return false;
+                  
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm8, 32); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 7, 0);
+                  
+                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’); 
+                index = BitIsSet (opcode, 10);
+                add = BitIsSet (opcode, 9);
+                wback = BitIsSet (opcode, 8);
+                  
+                // if BadReg(t) || (wback && n == t) then UNPREDICTABLE;
+                if (BadReg (t) || (wback && (n == t)))
+                    return false;
+                  
+                break;
+                  
+            case eEncodingA1:
+            {
+                // if Rn == ’1111’ then SEE LDRSB (literal); 
+                // if P == ’0’ && W == ’1’ then SEE LDRSBT; 
+                // t == UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm4H:imm4L, 32); 
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+            
+                uint32_t imm4H = Bits32 (opcode, 11, 8);
+                uint32_t imm4L = Bits32 (opcode, 3, 0);
+                imm32 = (imm4H << 4) & imm4L;
+                  
+                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                index = BitIsSet (opcode, 24);
+                add = BitIsSet (opcode, 23);
+                wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
+                  
+                // if t == 15 || (wback && n == t) then UNPREDICTABLE;
+                if ((t == 15) || (wback && (n == t)))
+                    return false;
+                  
+                break;
+            }
+                  
+            default:
+                return false;
+        }
+                  
+        uint64_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+                  
+        addr_t offset_addr;
+        addr_t address;
+                  
+        // offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
+        if (add)
+            offset_addr = Rn + imm32;
+        else
+            offset_addr = Rn - imm32;
+                      
+        // address = if index then offset_addr else R[n]; 
+        if (index)
+            address = offset_addr;
+        else
+            address = Rn;
+        
+        // R[t] = SignExtend(MemU[address,1], 32);
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+                  
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterLoad;
+        context.SetRegisterPlusOffset (base_reg, address - Rn);
+                  
+        uint64_t unsigned_data = MemURead (context, address, 1, 0, &success);
+        if (!success)
+            return false;
+                  
+        int64_t signed_data = llvm::SignExtend64<8>(unsigned_data);
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, (uint64_t) signed_data))
+            return false;
+                  
+        // if wback then R[n] = offset_addr;
+        if (wback)
+        {
+            context.type = eContextAdjustBaseRegister;
+            context.SetAddress (offset_addr);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, offset_addr))
+                return false;
+        }
+    }
+                        
+    return true;
+}
                   
 // Bitwise Exclusive OR (immediate) performs a bitwise exclusive OR of a register value and an immediate value,
 // and writes the result to the destination register.  It can optionally update the condition flags based on
@@ -7685,6 +7835,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0xfe500010, 0x06500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>, [<Rn>,+/-<Rm>{, <shift>}]{!}" },
         { 0x0e5f00f0, 0x005f00b0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRHLiteral, "ldrh<c> <Rt>, <label>" },
         { 0x0e5000f0, 0x001000b0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c> <Rt>,[<Rn>,+/-<Rm>]{!}"  }, 
+        { 0x0e5000f0, 0x005000d0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>, [<Rn>{,#+/-<imm8>}]" },
                   
         //----------------------------------------------------------------------
         // Store instructions
@@ -7929,6 +8080,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xff7f0000, 0xf83f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRHLiteral, "ldrh<c> <Rt>, <label>" },
         { 0xfffffe00, 0x00005a00, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c> <Rt>, [<Rn>,<Rm>]" },
         { 0xfff00fc0, 0xf8300000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
+        { 0xfff00000, 0xf9900000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>,[<Rn>,#<imm12>]" },
+        { 0xfff00800, 0xf9100800, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>,[<Rn>,#+/-<imm8>]" },
                   
         //----------------------------------------------------------------------
         // Store instructions
