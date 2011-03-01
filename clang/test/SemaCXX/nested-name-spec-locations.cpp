@@ -74,3 +74,14 @@ struct DependentScopedDeclRefExpr {
 void DependentScopedDeclRefExprCheck(DependentScopedDeclRefExpr<int> t) {
   t.f(); // expected-note{{in instantiation of member function}}
 }
+
+
+template<typename T>
+struct TypenameTypeTester {
+  typedef typename outer::inner::X0<
+          typename add_reference<T>::type 
+    * // expected-error{{declared as a pointer to a reference of type}}
+        >::type type;
+};
+
+TypenameTypeTester<int> TypenameTypeCheck; // expected-note{{in instantiation of template class}}

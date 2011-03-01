@@ -771,23 +771,23 @@ public:
   /// (or elaborated type). Subclasses may override this routine to provide
   /// different behavior.
   QualType RebuildDependentNameType(ElaboratedTypeKeyword Keyword,
-                                    NestedNameSpecifier *NNS,
-                                    const IdentifierInfo *Id,
                                     SourceLocation KeywordLoc,
-                                    SourceRange NNSRange,
+                                    NestedNameSpecifierLoc QualifierLoc,
+                                    const IdentifierInfo *Id,
                                     SourceLocation IdLoc) {
     CXXScopeSpec SS;
-    SS.MakeTrivial(SemaRef.Context, NNS, NNSRange);
+    SS.Adopt(QualifierLoc);
 
-    if (NNS->isDependent()) {
+    if (QualifierLoc.getNestedNameSpecifier()->isDependent()) {
       // If the name is still dependent, just build a new dependent name type.
       if (!SemaRef.computeDeclContext(SS))
-        return SemaRef.Context.getDependentNameType(Keyword, NNS, Id);
+        return SemaRef.Context.getDependentNameType(Keyword, 
+                                          QualifierLoc.getNestedNameSpecifier(), 
+                                                    Id);
     }
 
     if (Keyword == ETK_None || Keyword == ETK_Typename)
-      return SemaRef.CheckTypenameType(Keyword, KeywordLoc,
-                                       SS.getWithLocInContext(SemaRef.Context),
+      return SemaRef.CheckTypenameType(Keyword, KeywordLoc, QualifierLoc,
                                        *Id, IdLoc);
 
     TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForKeyword(Keyword);
@@ -858,7 +858,9 @@ public:
 
     // Build the elaborated-type-specifier type.
     QualType T = SemaRef.Context.getTypeDeclType(Tag);
-    return SemaRef.Context.getElaboratedType(Keyword, NNS, T);
+    return SemaRef.Context.getElaboratedType(Keyword, 
+                                         QualifierLoc.getNestedNameSpecifier(), 
+                                             T);
   }
 
   /// \brief Build a new pack expansion type.
@@ -4528,17 +4530,16 @@ QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
                                                       DependentNameTypeLoc TL) {
   const DependentNameType *T = TL.getTypePtr();
 
-  NestedNameSpecifier *NNS
-    = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
-                                                TL.getQualifierRange());
-  if (!NNS)
+  NestedNameSpecifierLoc QualifierLoc
+    = getDerived().TransformNestedNameSpecifierLoc(TL.getQualifierLoc());
+  if (!QualifierLoc)
     return QualType();
 
   QualType Result
-    = getDerived().RebuildDependentNameType(T->getKeyword(), NNS,
-                                            T->getIdentifier(),
+    = getDerived().RebuildDependentNameType(T->getKeyword(),
                                             TL.getKeywordLoc(),
-                                            TL.getQualifierRange(),
+                                            QualifierLoc,
+                                            T->getIdentifier(),
                                             TL.getNameLoc());
   if (Result.isNull())
     return QualType();
@@ -4549,11 +4550,11 @@ QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
 
     ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
-    NewTL.setQualifierRange(TL.getQualifierRange());
+    NewTL.setQualifierRange(QualifierLoc.getSourceRange());
   } else {
     DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
-    NewTL.setQualifierRange(TL.getQualifierRange());
+    NewTL.setQualifierLoc(QualifierLoc);
     NewTL.setNameLoc(TL.getNameLoc());
   }
   return Result;

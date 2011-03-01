@@ -5909,8 +5909,8 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
     Diag(TypenameLoc, diag::ext_typename_outside_of_template)
       << FixItHint::CreateRemoval(TypenameLoc);
 
-  QualType T = CheckTypenameType(ETK_Typename, TypenameLoc,
-                                 SS.getWithLocInContext(Context),
+  NestedNameSpecifierLoc QualifierLoc = SS.getWithLocInContext(Context);
+  QualType T = CheckTypenameType(ETK_Typename, TypenameLoc, QualifierLoc,
                                  II, IdLoc);
   if (T.isNull())
     return true;
@@ -5919,7 +5919,7 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   if (isa<DependentNameType>(T)) {
     DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
     TL.setKeywordLoc(TypenameLoc);
-    TL.setQualifierRange(SS.getRange());
+    TL.setQualifierLoc(QualifierLoc);
     TL.setNameLoc(IdLoc);
   } else {
     ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());

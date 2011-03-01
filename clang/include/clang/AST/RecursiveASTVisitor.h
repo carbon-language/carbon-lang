@@ -995,9 +995,8 @@ DEF_TRAVERSE_TYPELOC(ElaboratedType, {
     TRY_TO(TraverseTypeLoc(TL.getNamedTypeLoc()));
   })
 
-// FIXME: use the sourceloc on qualifier?
 DEF_TRAVERSE_TYPELOC(DependentNameType, {
-    TRY_TO(TraverseNestedNameSpecifier(TL.getTypePtr()->getQualifier()));
+    TRY_TO(TraverseNestedNameSpecifierLoc(TL.getQualifierLoc()));
   })
 
 DEF_TRAVERSE_TYPELOC(DependentTemplateSpecializationType, {

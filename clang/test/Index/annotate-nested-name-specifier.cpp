@@ -93,7 +93,15 @@ struct X4<Integer> {
   }
 };
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:93:1 %s | FileCheck %s
+
+template<typename T>
+struct X5 {
+  typedef T type;
+  typedef typename outer_alias::inner::vector<type>::iterator iter_type;
+  typedef typename outer_alias::inner::vector<int>::iterator int_ptr_type;
+};
+
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:102:1 %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
@@ -115,7 +123,38 @@ struct X4<Integer> {
 // CHECK: Punctuation: "::" [17:38 - 17:40] UsingDeclaration=iterator[5:18]
 // CHECK: Identifier: "iterator" [17:40 - 17:48] OverloadedDeclRef=iterator[5:18]
 
-// FIXME: Check nested-name-specifiers on VarDecl, CXXMethodDecl.
+// CHECK: Keyword: "void" [31:1 - 31:5] CXXMethod=foo:31:33 (Definition)
+// CHECK: Identifier: "outer" [31:6 - 31:11] NamespaceRef=outer:20:11
+// CHECK: Punctuation: "::" [31:11 - 31:13] CXXMethod=foo:31:33 (Definition)
+// CHECK: Identifier: "inner" [31:13 - 31:18] NamespaceRef=inner:21:13
+// CHECK: Punctuation: "::" [31:18 - 31:20] CXXMethod=foo:31:33 (Definition)
+// CHECK: Identifier: "array" [31:20 - 31:25] TemplateRef=array:23:12
+// CHECK: Punctuation: "<" [31:25 - 31:26] CXXMethod=foo:31:33 (Definition)
+// CHECK: Identifier: "T" [31:26 - 31:27] CXXMethod=foo:31:33 (Definition)
+// CHECK: Punctuation: "," [31:27 - 31:28] CXXMethod=foo:31:33 (Definition)
+// CHECK: Identifier: "N" [31:29 - 31:30] DeclRefExpr=N:30:31
+// CHECK: Punctuation: ">" [31:30 - 31:31] CXXMethod=foo:31:33 (Definition)
+// CHECK: Punctuation: "::" [31:31 - 31:33] CXXMethod=foo:31:33 (Definition)
+// CHECK: Identifier: "foo" [31:33 - 31:36] CXXMethod=foo:31:33 (Definition)
+// CHECK: Punctuation: "(" [31:36 - 31:37] CXXMethod=foo:31:33 (Definition)
+// CHECK: Punctuation: ")" [31:37 - 31:38] CXXMethod=foo:31:33 (Definition)
+
+// CHECK: Keyword: "int" [35:1 - 35:4] VarDecl=max_size:35:32 (Definition)
+// CHECK: Identifier: "outer" [35:5 - 35:10] NamespaceRef=outer:20:11
+// CHECK: Punctuation: "::" [35:10 - 35:12] VarDecl=max_size:35:32 (Definition)
+// CHECK: Identifier: "inner" [35:12 - 35:17] NamespaceRef=inner:21:13
+// CHECK: Punctuation: "::" [35:17 - 35:19] VarDecl=max_size:35:32 (Definition)
+// CHECK: Identifier: "array" [35:19 - 35:24] TemplateRef=array:23:12
+// CHECK: Punctuation: "<" [35:24 - 35:25] VarDecl=max_size:35:32 (Definition)
+// CHECK: Identifier: "T" [35:25 - 35:26] VarDecl=max_size:35:32 (Definition)
+// CHECK: Punctuation: "," [35:26 - 35:27] VarDecl=max_size:35:32 (Definition)
+// CHECK: Identifier: "N" [35:28 - 35:29] DeclRefExpr=N:34:31
+// CHECK: Punctuation: ">" [35:29 - 35:30] VarDecl=max_size:35:32 (Definition)
+// CHECK: Punctuation: "::" [35:30 - 35:32] VarDecl=max_size:35:32 (Definition)
+// CHECK: Identifier: "max_size" [35:32 - 35:40] VarDecl=max_size:35:32 (Definition)
+// CHECK: Punctuation: "=" [35:41 - 35:42] VarDecl=max_size:35:32 (Definition)
+// CHECK: Literal: "17" [35:43 - 35:45] UnexposedExpr=
+// CHECK: Punctuation: ";" [35:45 - 35:46]
 
 // CHECK: Keyword: "using" [40:3 - 40:8] UsingDeclaration=iterator:40:46
 // CHECK: Keyword: "typename" [40:9 - 40:17] UsingDeclaration=iterator:40:46
@@ -252,3 +291,20 @@ struct X4<Integer> {
 // CHECK: Punctuation: "(" [92:24 - 92:25] CallExpr=g:86:8
 // CHECK: Identifier: "t" [92:25 - 92:26] DeclRefExpr=t:89:15
 // CHECK: Punctuation: ")" [92:26 - 92:27] CallExpr=g:86:8
+
+// Dependent name type
+// CHECK: Keyword: "typedef" [100:3 - 100:10] ClassTemplate=X5:98:8 (Definition)
+// CHECK: Keyword: "typename" [100:11 - 100:19] TypedefDecl=iter_type:100:63 (Definition)
+// CHECK: Identifier: "outer_alias" [100:20 - 100:31] NamespaceRef=outer_alias:10:11
+// CHECK: Punctuation: "::" [100:31 - 100:33] TypedefDecl=iter_type:100:63 (Definition)
+// CHECK: Identifier: "inner" [100:33 - 100:38] NamespaceRef=inner:62:13
+// CHECK: Punctuation: "::" [100:38 - 100:40] TypedefDecl=iter_type:100:63 (Definition)
+// CHECK: Identifier: "vector" [100:40 - 100:46] TemplateRef=vector:4:12
+// CHECK: Punctuation: "<" [100:46 - 100:47] TypedefDecl=iter_type:100:63 (Definition)
+// CHECK: Identifier: "type" [100:47 - 100:51] TypeRef=type:99:13
+// CHECK: Punctuation: ">" [100:51 - 100:52] TypedefDecl=iter_type:100:63 (Definition)
+// CHECK: Punctuation: "::" [100:52 - 100:54] TypedefDecl=iter_type:100:63 (Definition)
+// CHECK: Identifier: "iterator" [100:54 - 100:62] TypedefDecl=iter_type:100:63 (Definition)
+// CHECK: Identifier: "iter_type" [100:63 - 100:72] TypedefDecl=iter_type:100:63 (Definition)
+
+

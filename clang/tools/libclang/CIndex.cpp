@@ -342,7 +342,8 @@ public:
   bool VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL);
   bool VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL);
   bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
-
+  bool VisitDependentNameTypeLoc(DependentNameTypeLoc TL);
+  
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
   bool RunVisitorWorkList(VisitorWorkList &WL);
@@ -1500,6 +1501,13 @@ bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
   if (TypeSourceInfo *TSInfo = TL.getUnderlyingTInfo())
     return Visit(TSInfo->getTypeLoc());
 
+  return false;
+}
+
+bool CursorVisitor::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
+  if (VisitNestedNameSpecifierLoc(TL.getQualifierLoc()))
+    return true;
+  
   return false;
 }
 
@@ -3587,25 +3595,30 @@ static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr) {
   if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
     Decl *D = cxcursor::getCursorDecl(C);
     SourceRange R = D->getSourceRange();
-    
-    if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
-      if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
-        TypeLoc TL = TI->getTypeLoc();
-        SourceLocation TLoc = TL.getSourceRange().getBegin();
-        if (TLoc.isValid() && R.getBegin().isValid() &&
-            SrcMgr.isBeforeInTranslationUnit(TLoc, R.getBegin()))
-          R.setBegin(TLoc);
-      }
 
-      // FIXME: Multiple variables declared in a single declaration
-      // currently lack the information needed to correctly determine their
-      // ranges when accounting for the type-specifier.  We use context
-      // stored in the CXCursor to determine if the VarDecl is in a DeclGroup,
-      // and if so, whether it is the first decl.
-      if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-        if (!cxcursor::isFirstInDeclGroup(C))
-          R.setBegin(VD->getLocation());
-      }
+    // Adjust the start of the location for declarations preceded by
+    // declaration specifiers.
+    SourceLocation StartLoc;
+    if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
+      if (TypeSourceInfo *TI = DD->getTypeSourceInfo())
+        StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
+    } else if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(D)) {
+      if (TypeSourceInfo *TI = Typedef->getTypeSourceInfo())
+        StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
+    }
+
+    if (StartLoc.isValid() && R.getBegin().isValid() &&
+        SrcMgr.isBeforeInTranslationUnit(StartLoc, R.getBegin()))
+      R.setBegin(StartLoc);
+
+    // FIXME: Multiple variables declared in a single declaration
+    // currently lack the information needed to correctly determine their
+    // ranges when accounting for the type-specifier.  We use context
+    // stored in the CXCursor to determine if the VarDecl is in a DeclGroup,
+    // and if so, whether it is the first decl.
+    if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+      if (!cxcursor::isFirstInDeclGroup(C))
+        R.setBegin(VD->getLocation());
     }
 
     return R;    
@@ -4342,15 +4355,19 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
       if (MD->isSynthesized())
         return CXChildVisit_Continue;
     }
+    
+    SourceLocation StartLoc;
     if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
-      if (TypeSourceInfo *TI = DD->getTypeSourceInfo()) {
-        TypeLoc TL = TI->getTypeLoc();
-        SourceLocation TLoc = TL.getSourceRange().getBegin();
-        if (TLoc.isValid() && L.isValid() &&
-            SrcMgr.isBeforeInTranslationUnit(TLoc, L))
-          cursorRange.setBegin(TLoc);
-      }
+      if (TypeSourceInfo *TI = DD->getTypeSourceInfo())
+        StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
+    } else if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(D)) {
+      if (TypeSourceInfo *TI = Typedef->getTypeSourceInfo())
+        StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
     }
+
+    if (StartLoc.isValid() && L.isValid() &&
+        SrcMgr.isBeforeInTranslationUnit(StartLoc, L))
+      cursorRange.setBegin(StartLoc);
   }
   
   // If the location of the cursor occurs within a macro instantiation, record

@@ -229,6 +229,15 @@ TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {
   return TL;
 }
 
+void DependentNameTypeLoc::initializeLocal(ASTContext &Context, 
+                                           SourceLocation Loc) {
+  setKeywordLoc(Loc);
+  NestedNameSpecifierLocBuilder Builder;
+  Builder.MakeTrivial(Context, getTypePtr()->getQualifier(), Loc);
+  setQualifierLoc(Builder.getWithLocInContext(Context));
+  setNameLoc(Loc);
+}
+
 void TemplateSpecializationTypeLoc::initializeArgLocs(ASTContext &Context, 
                                                       unsigned NumArgs,
                                                   const TemplateArgument *Args,
