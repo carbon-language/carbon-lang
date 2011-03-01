@@ -17,6 +17,7 @@
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
+#include "TypeLocBuilder.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -61,7 +62,8 @@ Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(Decl *Ptr) {
 ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                              Scope *S, CXXScopeSpec *SS,
                              bool isClassName, bool HasTrailingDot,
-                             ParsedType ObjectTypePtr) {
+                             ParsedType ObjectTypePtr,
+                             bool WantNontrivialTypeSourceInfo) {
   // Determine where we will perform name lookup.
   DeclContext *LookupCtx = 0;
   if (ObjectTypePtr) {
@@ -87,11 +89,15 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
         
         // We know from the grammar that this name refers to a type,
         // so build a dependent node to describe the type.
+        if (WantNontrivialTypeSourceInfo)
+          return ActOnTypenameType(S, SourceLocation(), *SS, II, NameLoc).get();
+        
+        NestedNameSpecifierLoc QualifierLoc = SS->getWithLocInContext(Context);
         QualType T =
-          CheckTypenameType(ETK_None, SourceLocation(),
-                            SS->getWithLocInContext(Context),
+          CheckTypenameType(ETK_None, SourceLocation(), QualifierLoc,
                             II, NameLoc);
-        return ParsedType::make(T);
+        
+          return ParsedType::make(T);
       }
       
       return ParsedType();
@@ -190,9 +196,21 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     if (T.isNull())
       T = Context.getTypeDeclType(TD);
     
-    if (SS)
-      T = getElaboratedType(ETK_None, *SS, T);
-    
+    if (SS && SS->isNotEmpty()) {
+      if (WantNontrivialTypeSourceInfo) {
+        // Construct a type with type-source information.
+        TypeLocBuilder Builder;
+        Builder.pushTypeSpec(T).setNameLoc(NameLoc);
+        
+        T = getElaboratedType(ETK_None, *SS, T);
+        ElaboratedTypeLoc ElabTL = Builder.push<ElaboratedTypeLoc>(T);
+        ElabTL.setKeywordLoc(SourceLocation());
+        ElabTL.setQualifierLoc(SS->getWithLocInContext(Context));
+        return CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
+      } else {
+        T = getElaboratedType(ETK_None, *SS, T);
+      }
+    }
   } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
     if (!HasTrailingDot)
       T = Context.getObjCInterfaceType(IDecl);
@@ -264,7 +282,9 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
         Diag(Result->getLocation(), diag::note_previous_decl)
           << Result->getDeclName();
         
-        SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS);
+        SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS,
+                                    false, false, ParsedType(),
+                                    /*NonTrivialTypeSourceInfo=*/true);
         return true;
       }
     } else if (Lookup.empty()) {

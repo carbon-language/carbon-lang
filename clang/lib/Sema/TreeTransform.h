@@ -723,8 +723,11 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   QualType RebuildElaboratedType(SourceLocation KeywordLoc,
                                  ElaboratedTypeKeyword Keyword,
-                                 NestedNameSpecifier *NNS, QualType Named) {
-    return SemaRef.Context.getElaboratedType(Keyword, NNS, Named);
+                                 NestedNameSpecifierLoc QualifierLoc,
+                                 QualType Named) {
+    return SemaRef.Context.getElaboratedType(Keyword, 
+                                         QualifierLoc.getNestedNameSpecifier(), 
+                                             Named);
   }
 
   /// \brief Build a new typename type that refers to a template-id.
@@ -4436,12 +4439,12 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
                                                 ElaboratedTypeLoc TL) {
   const ElaboratedType *T = TL.getTypePtr();
 
-  NestedNameSpecifier *NNS = 0;
+  NestedNameSpecifierLoc QualifierLoc;
   // NOTE: the qualifier in an ElaboratedType is optional.
-  if (T->getQualifier() != 0) {
-    NNS = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
-                                                    TL.getQualifierRange());
-    if (!NNS)
+  if (TL.getQualifierLoc()) {
+    QualifierLoc 
+      = getDerived().TransformNestedNameSpecifierLoc(TL.getQualifierLoc());
+    if (!QualifierLoc)
       return QualType();
   }
 
@@ -4451,18 +4454,18 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
-      NNS != T->getQualifier() ||
+      QualifierLoc != TL.getQualifierLoc() ||
       NamedT != T->getNamedType()) {
     Result = getDerived().RebuildElaboratedType(TL.getKeywordLoc(),
-                                                T->getKeyword(), NNS, NamedT);
+                                                T->getKeyword(), 
+                                                QualifierLoc, NamedT);
     if (Result.isNull())
       return QualType();
   }
 
   ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
   NewTL.setKeywordLoc(TL.getKeywordLoc());
-  NewTL.setQualifierRange(TL.getQualifierRange());
-
+  NewTL.setQualifierLoc(QualifierLoc);
   return Result;
 }
 
@@ -4550,7 +4553,7 @@ QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
 
     ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
-    NewTL.setQualifierRange(QualifierLoc.getSourceRange());
+    NewTL.setQualifierLoc(QualifierLoc);
   } else {
     DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
@@ -4621,7 +4624,12 @@ QualType TreeTransform<Derived>::
     // Copy information relevant to the elaborated type.
     ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
-    NewTL.setQualifierRange(TL.getQualifierRange());
+    
+    // FIXME: DependentTemplateSpecializationType needs better source-location
+    // info.
+    NestedNameSpecifierLocBuilder Builder;
+    Builder.MakeTrivial(SemaRef.Context, NNS, TL.getQualifierRange());
+    NewTL.setQualifierLoc(Builder.getWithLocInContext(SemaRef.Context));
   } else {
     TypeLoc NewTL(Result, TL.getOpaqueData());
     TLB.pushFullCopy(NewTL);
