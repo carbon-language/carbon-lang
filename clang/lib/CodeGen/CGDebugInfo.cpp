@@ -2049,10 +2049,24 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
     }
 
     const VarDecl *variable = capture->getVariable();
-    QualType type = (capture->isByRef() ? C.VoidPtrTy : variable->getType());
     llvm::StringRef name = variable->getName();
-    fields.push_back(createFieldType(name, type, 0, loc, AS_public,
-                                     offsetInBits, tunit));
+
+    llvm::DIType fieldType;
+    if (capture->isByRef()) {
+      std::pair<uint64_t,unsigned> ptrInfo = C.getTypeInfo(C.VoidPtrTy);
+
+      // FIXME: this creates a second copy of this type!
+      uint64_t xoffset;
+      fieldType = EmitTypeForVarWithBlocksAttr(variable, &xoffset);
+      fieldType = DBuilder.createPointerType(fieldType, ptrInfo.first);
+      fieldType = DBuilder.createMemberType(name, tunit, line,
+                                            ptrInfo.first, ptrInfo.second,
+                                            offsetInBits, 0, fieldType);
+    } else {
+      fieldType = createFieldType(name, variable->getType(), 0,
+                                  loc, AS_public, offsetInBits, tunit);
+    }
+    fields.push_back(fieldType);
   }
 
   llvm::SmallString<36> typeName;
