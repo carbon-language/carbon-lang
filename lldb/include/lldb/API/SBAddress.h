@@ -50,9 +50,11 @@ public:
 protected:
 
     friend class SBFrame;
+    friend class SBFunction;
     friend class SBLineEntry;
     friend class SBInstruction;
     friend class SBModule;
+    friend class SBSymbol;
     friend class SBSymbolContext;
     friend class SBTarget;
     friend class SBThread;

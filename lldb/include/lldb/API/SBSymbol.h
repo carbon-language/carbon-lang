@@ -11,6 +11,7 @@
 #define LLDB_SBSymbol_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBAddress.h"
 #include "lldb/API/SBInstructionList.h"
 #include "lldb/API/SBTarget.h"
 
@@ -43,6 +44,15 @@ public:
 
     lldb::SBInstructionList
     GetInstructions (lldb::SBTarget target);
+
+    SBAddress
+    GetStartAddress ();
+    
+    SBAddress
+    GetEndAddress ();
+    
+    uint32_t
+    GetPrologueByteSize ();
 
 #ifndef SWIG
     bool

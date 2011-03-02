@@ -156,3 +156,38 @@ SBFunction::reset (lldb_private::Function *lldb_object_ptr)
     m_opaque_ptr = lldb_object_ptr;
 }
 
+SBAddress
+SBFunction::GetStartAddress ()
+{
+    SBAddress addr;
+    if (m_opaque_ptr)
+        addr.SetAddress (&m_opaque_ptr->GetAddressRange().GetBaseAddress());
+    return addr;
+}
+
+SBAddress
+SBFunction::GetEndAddress ()
+{
+    SBAddress addr;
+    if (m_opaque_ptr)
+    {
+        addr_t byte_size = m_opaque_ptr->GetAddressRange().GetByteSize();
+        if (byte_size > 0)
+        {
+            addr.SetAddress (&m_opaque_ptr->GetAddressRange().GetBaseAddress());
+            addr->Slide (byte_size);
+        }
+    }
+    return addr;
+}
+
+
+uint32_t
+SBFunction::GetPrologueByteSize ()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetPrologueByteSize();
+    return 0;
+}
+
+

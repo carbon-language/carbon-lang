@@ -153,3 +153,47 @@ SBSymbol::reset (lldb_private::Symbol *symbol)
 {
     m_opaque_ptr = symbol;
 }
+
+SBAddress
+SBSymbol::GetStartAddress ()
+{
+    SBAddress addr;
+    if (m_opaque_ptr)
+    {
+        // Make sure the symbol is an address based symbol first:
+        AddressRange *symbol_arange_ptr = m_opaque_ptr->GetAddressRangePtr();
+        if (symbol_arange_ptr)
+        {
+            addr.SetAddress (&symbol_arange_ptr->GetBaseAddress());
+        }
+    }
+    return addr;
+}
+
+SBAddress
+SBSymbol::GetEndAddress ()
+{
+    SBAddress addr;
+    if (m_opaque_ptr)
+    {
+        AddressRange *symbol_arange_ptr = m_opaque_ptr->GetAddressRangePtr();
+        if (symbol_arange_ptr)
+        {
+            addr_t byte_size = symbol_arange_ptr->GetByteSize();
+            if (byte_size > 0)
+            {
+                addr.SetAddress (&symbol_arange_ptr->GetBaseAddress());
+                addr->Slide (byte_size);
+            }
+        }
+    }
+    return addr;
+}
+
+uint32_t
+SBSymbol::GetPrologueByteSize ()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetPrologueByteSize();
+    return 0;
+}
