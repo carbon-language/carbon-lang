@@ -174,7 +174,9 @@ class ProcessAPITestCase(TestBase):
         # OK, let's get the hex location of the variable.
         location = int(val.GetLocation(frame), 16)
 
+        # Note that the canonical from of the bytearray is little endian.
         from lldbutil import int_to_bytearray, bytearray_to_int
+
         byteSize = val.GetByteSize()
         bytes = int_to_bytearray(256, byteSize)
 
@@ -208,6 +210,8 @@ class ProcessAPITestCase(TestBase):
         content = self.process.ReadMemory(location, byteSize, error)
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
+
+        # Use "ascii" as the encoding because each element of 'content' is in the range [0..255].
         new_bytes = bytearray(content, "ascii")
 
         # The bytearray_to_int utility function expects a little endian bytearray.
