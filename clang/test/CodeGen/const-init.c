@@ -4,6 +4,10 @@
 
 // Brace-enclosed string array initializers
 char a[] = { "asdf" };
+// CHECK: @a = global [5 x i8] c"asdf\00"
+
+char a2[2][5] = { "asdf" };
+// CHECK: @a2 = global [2 x [5 x i8]] {{\[}}[5 x i8] c"asdf\00", [5 x i8] zeroinitializer]
 
 // Double-implicit-conversions of array/functions (not legal C, but
 // clang accepts it for gcc compat).
