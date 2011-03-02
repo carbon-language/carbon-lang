@@ -19,6 +19,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 
 #include <string>
 
@@ -46,6 +47,10 @@ private:
     bool                generateObjectFile(llvm::raw_ostream& out, 
                                            std::string& errMsg);
     void                applyScopeRestrictions();
+    void                applyRestriction(llvm::GlobalValue &GV,
+                                     std::vector<const char*> &mustPreserveList,
+                        llvm::SmallPtrSet<llvm::GlobalValue*, 8> &asmUsed,
+                                         llvm::Mangler &mangler);
     bool                determineTarget(std::string& errMsg);
     
     typedef llvm::StringMap<uint8_t> StringSet;
@@ -57,6 +62,7 @@ private:
     bool                        _scopeRestrictionsDone;
     lto_codegen_model           _codeModel;
     StringSet                   _mustPreserveSymbols;
+    StringSet                   _asmUndefinedRefs;
     llvm::MemoryBuffer*         _nativeObjectFile;
     std::vector<const char*>    _codegenOptions;
     std::string                 _mCpu;

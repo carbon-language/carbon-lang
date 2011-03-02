@@ -249,11 +249,7 @@ bool LLParser::ParseModuleAsm() {
   if (ParseToken(lltok::kw_asm, "expected 'module asm'") ||
       ParseStringConstant(AsmStr)) return true;
 
-  const std::string &AsmSoFar = M->getModuleInlineAsm();
-  if (AsmSoFar.empty())
-    M->setModuleInlineAsm(AsmStr);
-  else
-    M->setModuleInlineAsm(AsmSoFar+"\n"+AsmStr);
+  M->appendModuleInlineAsm(AsmStr);
   return false;
 }
 

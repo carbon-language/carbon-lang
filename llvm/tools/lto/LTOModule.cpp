@@ -26,11 +26,18 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
@@ -73,7 +80,7 @@ bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
 
 
 LTOModule::LTOModule(Module *m, TargetMachine *t)
-  : _module(m), _target(t), _symbolsParsed(false)
+  : _module(m), _target(t)
 {
 }
 
@@ -123,7 +130,12 @@ LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
 
 LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
                                     std::string &errMsg) {
-  InitializeAllTargets();
+  static bool Initialized = false;
+  if (!Initialized) {
+    InitializeAllTargets();
+    InitializeAllAsmParsers();
+    Initialized = true;
+  }
 
   // parse bitcode buffer
   OwningPtr<Module> m(ParseBitcodeFile(buffer, getGlobalContext(), &errMsg));
@@ -144,7 +156,13 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   Features.getDefaultSubtargetFeatures("" /* cpu */, llvm::Triple(Triple));
   std::string FeatureStr = Features.getString();
   TargetMachine *target = march->createTargetMachine(Triple, FeatureStr);
-  return new LTOModule(m.take(), target);
+  LTOModule *Ret = new LTOModule(m.take(), target);
+  bool Err = Ret->ParseSymbols();
+  if (Err) {
+    delete Ret;
+    return NULL;
+  }
+  return Ret;
 }
 
 
@@ -383,7 +401,8 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
   _symbols.push_back(info);
 }
 
-void LTOModule::addAsmGlobalSymbol(const char *name) {
+void LTOModule::addAsmGlobalSymbol(const char *name,
+                                   lto_symbol_attributes scope) {
   StringSet::value_type &entry = _defines.GetOrCreateValue(name);
 
   // only add new define if not already defined
@@ -393,11 +412,30 @@ void LTOModule::addAsmGlobalSymbol(const char *name) {
   entry.setValue(1);
   const char *symbolName = entry.getKey().data();
   uint32_t attr = LTO_SYMBOL_DEFINITION_REGULAR;
-  attr |= LTO_SYMBOL_SCOPE_DEFAULT;
+  attr |= scope;
   NameAndAttributes info;
   info.name = symbolName;
   info.attributes = (lto_symbol_attributes)attr;
   _symbols.push_back(info);
+}
+
+void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
+  StringMap<NameAndAttributes>::value_type &entry =
+    _undefines.GetOrCreateValue(name);
+
+  _asm_undefines.push_back(entry.getKey().data());
+
+  // we already have the symbol
+  if (entry.getValue().name)
+    return;
+
+  uint32_t attr = LTO_SYMBOL_DEFINITION_UNDEFINED;;
+  attr |= LTO_SYMBOL_SCOPE_DEFAULT;
+  NameAndAttributes info;
+  info.name = entry.getKey().data();
+  info.attributes = (lto_symbol_attributes)attr;
+
+  entry.setValue(info);
 }
 
 void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl,
@@ -454,12 +492,194 @@ void LTOModule::findExternalRefs(Value *value, Mangler &mangler) {
   }
 }
 
-void LTOModule::lazyParseSymbols() {
-  if (_symbolsParsed)
-    return;
+namespace {
+  class RecordStreamer : public MCStreamer {
+  public:
+    enum State { NeverSeen, Global, Defined, DefinedGlobal, Used};
 
-  _symbolsParsed = true;
+  private:
+    StringMap<State> Symbols;
 
+    void markDefined(const MCSymbol &Symbol) {
+      State &S = Symbols[Symbol.getName()];
+      switch (S) {
+      case DefinedGlobal:
+      case Global:
+        S = DefinedGlobal;
+        break;
+      case NeverSeen:
+      case Defined:
+      case Used:
+        S = Defined;
+        break;
+      }
+    }
+    void markGlobal(const MCSymbol &Symbol) {
+      State &S = Symbols[Symbol.getName()];
+      switch (S) {
+      case DefinedGlobal:
+      case Defined:
+        S = DefinedGlobal;
+        break;
+
+      case NeverSeen:
+      case Global:
+      case Used:
+        S = Global;
+        break;
+      }
+    }
+    void markUsed(const MCSymbol &Symbol) {
+      State &S = Symbols[Symbol.getName()];
+      switch (S) {
+      case DefinedGlobal:
+      case Defined:
+      case Global:
+        break;
+
+      case NeverSeen:
+      case Used:
+        S = Used;
+        break;
+      }
+    }
+
+    // FIXME: mostly copied for the obj streamer.
+    void AddValueSymbols(const MCExpr *Value) {
+      switch (Value->getKind()) {
+      case MCExpr::Target:
+        // FIXME: What should we do in here?
+        break;
+
+      case MCExpr::Constant:
+        break;
+
+      case MCExpr::Binary: {
+        const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
+        AddValueSymbols(BE->getLHS());
+        AddValueSymbols(BE->getRHS());
+        break;
+      }
+
+      case MCExpr::SymbolRef:
+        markUsed(cast<MCSymbolRefExpr>(Value)->getSymbol());
+        break;
+
+      case MCExpr::Unary:
+        AddValueSymbols(cast<MCUnaryExpr>(Value)->getSubExpr());
+        break;
+      }
+    }
+
+  public:
+    typedef StringMap<State>::const_iterator const_iterator;
+
+    const_iterator begin() {
+      return Symbols.begin();
+    }
+
+    const_iterator end() {
+      return Symbols.end();
+    }
+
+    RecordStreamer(MCContext &Context) : MCStreamer(Context) {}
+
+    virtual void ChangeSection(const MCSection *Section) {}
+    virtual void InitSections() {}
+    virtual void EmitLabel(MCSymbol *Symbol) {
+      Symbol->setSection(*getCurrentSection());
+      markDefined(*Symbol);
+    }
+    virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
+    virtual void EmitThumbFunc(MCSymbol *Func) {}
+    virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
+      // FIXME: should we handle aliases?
+      markDefined(*Symbol);
+    }
+    virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
+      if (Attribute == MCSA_Global)
+        markGlobal(*Symbol);
+    }
+    virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
+    virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {}
+    virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {}
+    virtual void EmitCOFFSymbolStorageClass(int StorageClass) {}
+    virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
+                              unsigned Size , unsigned ByteAlignment) {
+      markDefined(*Symbol);
+    }
+    virtual void EmitCOFFSymbolType(int Type) {}
+    virtual void EndCOFFSymbolDef() {}
+    virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                                  unsigned ByteAlignment) {
+      markDefined(*Symbol);
+    }
+    virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
+    virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {}
+    virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+                                uint64_t Size, unsigned ByteAlignment) {}
+    virtual void EmitBytes(StringRef Data, unsigned AddrSpace) {}
+    virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
+                               bool isPCRel, unsigned AddrSpace) {}
+    virtual void EmitULEB128Value(const MCExpr *Value,
+                                  unsigned AddrSpace = 0) {}
+    virtual void EmitSLEB128Value(const MCExpr *Value,
+                                  unsigned AddrSpace = 0) {}
+    virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
+                                      unsigned ValueSize,
+                                      unsigned MaxBytesToEmit) {}
+    virtual void EmitCodeAlignment(unsigned ByteAlignment,
+                                   unsigned MaxBytesToEmit) {}
+    virtual void EmitValueToOffset(const MCExpr *Offset,
+                                   unsigned char Value ) {}
+    virtual void EmitFileDirective(StringRef Filename) {}
+    virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                          const MCSymbol *LastLabel,
+                                        const MCSymbol *Label) {}
+
+    virtual void EmitInstruction(const MCInst &Inst) {
+      // Scan for values.
+      for (unsigned i = Inst.getNumOperands(); i--; )
+        if (Inst.getOperand(i).isExpr())
+          AddValueSymbols(Inst.getOperand(i).getExpr());
+    }
+    virtual void Finish() {}
+  };
+}
+
+bool LTOModule::addAsmGlobalSymbols(MCContext &Context) {
+  const std::string &inlineAsm = _module->getModuleInlineAsm();
+
+  OwningPtr<RecordStreamer> Streamer(new RecordStreamer(Context));
+  MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(inlineAsm);
+  SourceMgr SrcMgr;
+  SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
+  OwningPtr<MCAsmParser> Parser(createMCAsmParser(_target->getTarget(), SrcMgr,
+                                                  Context, *Streamer,
+                                                  *_target->getMCAsmInfo()));
+  OwningPtr<TargetAsmParser>
+    TAP(_target->getTarget().createAsmParser(*Parser.get(), *_target.get()));
+  Parser->setTargetParser(*TAP);
+  int Res = Parser->Run(false);
+  if (Res)
+    return true;
+
+  for (RecordStreamer::const_iterator i = Streamer->begin(),
+         e = Streamer->end(); i != e; ++i) {
+    StringRef Key = i->first();
+    RecordStreamer::State Value = i->second;
+    if (Value == RecordStreamer::DefinedGlobal)
+      addAsmGlobalSymbol(Key.data(), LTO_SYMBOL_SCOPE_DEFAULT);
+    else if (Value == RecordStreamer::Defined)
+      addAsmGlobalSymbol(Key.data(), LTO_SYMBOL_SCOPE_INTERNAL);
+    else if (Value == RecordStreamer::Global ||
+             Value == RecordStreamer::Used)
+      addAsmGlobalSymbolUndef(Key.data());
+  }
+  return false;
+}
+
+bool LTOModule::ParseSymbols() {
   // Use mangler to add GlobalPrefix to names to match linker names.
   MCContext Context(*_target->getMCAsmInfo(), NULL);
   Mangler mangler(Context, *_target->getTargetData());
@@ -482,30 +702,8 @@ void LTOModule::lazyParseSymbols() {
   }
 
   // add asm globals
-  const std::string &inlineAsm = _module->getModuleInlineAsm();
-  const std::string glbl = ".globl";
-  std::string asmSymbolName;
-  std::string::size_type pos = inlineAsm.find(glbl, 0);
-  while (pos != std::string::npos) {
-    // eat .globl
-    pos = pos + 6;
-
-    // skip white space between .globl and symbol name
-    std::string::size_type pbegin = inlineAsm.find_first_not_of(' ', pos);
-    if (pbegin == std::string::npos)
-      break;
-
-    // find end-of-line
-    std::string::size_type pend = inlineAsm.find_first_of('\n', pbegin);
-    if (pend == std::string::npos)
-      break;
-
-    asmSymbolName.assign(inlineAsm, pbegin, pend - pbegin);
-    addAsmGlobalSymbol(asmSymbolName.c_str());
-
-    // search next .globl
-    pos = inlineAsm.find(glbl, pend);
-  }
+  if (addAsmGlobalSymbols(Context))
+    return true;
 
   // add aliases
   for (Module::alias_iterator i = _module->alias_begin(),
@@ -526,17 +724,16 @@ void LTOModule::lazyParseSymbols() {
       _symbols.push_back(info);
     }
   }
+  return false;
 }
 
 
 uint32_t LTOModule::getSymbolCount() {
-  lazyParseSymbols();
   return _symbols.size();
 }
 
 
 lto_symbol_attributes LTOModule::getSymbolAttributes(uint32_t index) {
-  lazyParseSymbols();
   if (index < _symbols.size())
     return _symbols[index].attributes;
   else
@@ -544,7 +741,6 @@ lto_symbol_attributes LTOModule::getSymbolAttributes(uint32_t index) {
 }
 
 const char *LTOModule::getSymbolName(uint32_t index) {
-  lazyParseSymbols();
   if (index < _symbols.size())
     return _symbols[index].name;
   else

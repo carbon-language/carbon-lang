@@ -1338,9 +1338,12 @@ void AssemblyWriter::printModule(const Module *M) {
       CurPos = NewLine+1;
       NewLine = Asm.find_first_of('\n', CurPos);
     }
-    Out << "module asm \"";
-    PrintEscapedString(std::string(Asm.begin()+CurPos, Asm.end()), Out);
-    Out << "\"\n";
+    std::string rest(Asm.begin()+CurPos, Asm.end());
+    if (!rest.empty()) {
+      Out << "module asm \"";
+      PrintEscapedString(rest, Out);
+      Out << "\"\n";
+    }
   }
 
   // Loop over the dependent libraries and emit them.

@@ -211,15 +211,20 @@ public:
   void setTargetTriple(StringRef T) { TargetTriple = T; }
 
   /// Set the module-scope inline assembly blocks.
-  void setModuleInlineAsm(StringRef Asm) { GlobalScopeAsm = Asm; }
+  void setModuleInlineAsm(StringRef Asm) {
+    GlobalScopeAsm = Asm;
+    if (!GlobalScopeAsm.empty() &&
+        GlobalScopeAsm[GlobalScopeAsm.size()-1] != '\n')
+      GlobalScopeAsm += '\n';
+  }
 
   /// Append to the module-scope inline assembly blocks, automatically inserting
   /// a separating newline if necessary.
   void appendModuleInlineAsm(StringRef Asm) {
+    GlobalScopeAsm += Asm;
     if (!GlobalScopeAsm.empty() &&
         GlobalScopeAsm[GlobalScopeAsm.size()-1] != '\n')
       GlobalScopeAsm += '\n';
-    GlobalScopeAsm += Asm;
   }
 
 /// @}
