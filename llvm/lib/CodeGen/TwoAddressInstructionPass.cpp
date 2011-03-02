@@ -105,7 +105,7 @@ namespace {
                             MachineFunction::iterator &mbbi,
                             unsigned RegB, unsigned RegC, unsigned Dist);
 
-    bool isProfitableToConv3Addr(unsigned RegA);
+    bool isProfitableToConv3Addr(unsigned RegA, unsigned RegB);
 
     bool ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
                             MachineBasicBlock::iterator &nmi,
@@ -124,7 +124,11 @@ namespace {
                                  MachineBasicBlock::iterator &nmi,
                                  MachineFunction::iterator &mbbi,
                                  unsigned SrcIdx, unsigned DstIdx,
-                                 unsigned Dist);
+                                 unsigned Dist,
+                                 SmallPtrSet<MachineInstr*, 8> &Processed);
+
+    void ScanUses(unsigned DstReg, MachineBasicBlock *MBB,
+                  SmallPtrSet<MachineInstr*, 8> &Processed);
 
     void ProcessCopy(MachineInstr *MI, MachineBasicBlock *MBB,
                      SmallPtrSet<MachineInstr*, 8> &Processed);
@@ -615,16 +619,18 @@ TwoAddressInstructionPass::CommuteInstruction(MachineBasicBlock::iterator &mi,
 /// isProfitableToConv3Addr - Return true if it is profitable to convert the
 /// given 2-address instruction to a 3-address one.
 bool
-TwoAddressInstructionPass::isProfitableToConv3Addr(unsigned RegA) {
+TwoAddressInstructionPass::isProfitableToConv3Addr(unsigned RegA,unsigned RegB){
   // Look for situations like this:
   // %reg1024<def> = MOV r1
   // %reg1025<def> = MOV r0
   // %reg1026<def> = ADD %reg1024, %reg1025
   // r2            = MOV %reg1026
   // Turn ADD into a 3-address instruction to avoid a copy.
-  unsigned FromRegA = getMappedReg(RegA, SrcRegMap);
+  unsigned FromRegB = getMappedReg(RegB, SrcRegMap);
+  if (!FromRegB)
+    return false;
   unsigned ToRegA = getMappedReg(RegA, DstRegMap);
-  return (FromRegA && ToRegA && !regsAreCompatible(FromRegA, ToRegA, TRI));
+  return (ToRegA && !regsAreCompatible(FromRegB, ToRegA, TRI));
 }
 
 /// ConvertInstTo3Addr - Convert the specified two-address instruction into a
@@ -664,6 +670,54 @@ TwoAddressInstructionPass::ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
   return false;
 }
 
+/// ScanUses - Scan forward recursively for only uses, update maps if the use
+/// is a copy or a two-address instruction.
+void
+TwoAddressInstructionPass::ScanUses(unsigned DstReg, MachineBasicBlock *MBB,
+                                    SmallPtrSet<MachineInstr*, 8> &Processed) {
+  SmallVector<unsigned, 4> VirtRegPairs;
+  bool IsDstPhys;
+  bool IsCopy = false;
+  unsigned NewReg = 0;
+  unsigned Reg = DstReg;
+  while (MachineInstr *UseMI = findOnlyInterestingUse(Reg, MBB, MRI, TII,IsCopy,
+                                                      NewReg, IsDstPhys)) {
+    if (IsCopy && !Processed.insert(UseMI))
+      break;
+
+    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UseMI);
+    if (DI != DistanceMap.end())
+      // Earlier in the same MBB.Reached via a back edge.
+      break;
+
+    if (IsDstPhys) {
+      VirtRegPairs.push_back(NewReg);
+      break;
+    }
+    bool isNew = SrcRegMap.insert(std::make_pair(NewReg, Reg)).second;
+    if (!isNew)
+      assert(SrcRegMap[NewReg] == Reg && "Can't map to two src registers!");
+    VirtRegPairs.push_back(NewReg);
+    Reg = NewReg;
+  }
+
+  if (!VirtRegPairs.empty()) {
+    unsigned ToReg = VirtRegPairs.back();
+    VirtRegPairs.pop_back();
+    while (!VirtRegPairs.empty()) {
+      unsigned FromReg = VirtRegPairs.back();
+      VirtRegPairs.pop_back();
+      bool isNew = DstRegMap.insert(std::make_pair(FromReg, ToReg)).second;
+      if (!isNew)
+        assert(DstRegMap[FromReg] == ToReg &&"Can't map to two dst registers!");
+      ToReg = FromReg;
+    }
+    bool isNew = DstRegMap.insert(std::make_pair(DstReg, ToReg)).second;
+    if (!isNew)
+      assert(DstRegMap[DstReg] == ToReg && "Can't map to two dst registers!");
+  }
+}
+
 /// ProcessCopy - If the specified instruction is not yet processed, process it
 /// if it's a copy. For a copy instruction, we find the physical registers the
 /// source and destination registers might be mapped to. These are kept in
@@ -695,49 +749,11 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
       assert(SrcRegMap[DstReg] == SrcReg &&
              "Can't map to two src physical registers!");
 
-    SmallVector<unsigned, 4> VirtRegPairs;
-    bool IsCopy = false;
-    unsigned NewReg = 0;
-    while (MachineInstr *UseMI = findOnlyInterestingUse(DstReg, MBB, MRI,TII,
-                                                   IsCopy, NewReg, IsDstPhys)) {
-      if (IsCopy) {
-        if (!Processed.insert(UseMI))
-          break;
-      }
-
-      DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UseMI);
-      if (DI != DistanceMap.end())
-        // Earlier in the same MBB.Reached via a back edge.
-        break;
-
-      if (IsDstPhys) {
-        VirtRegPairs.push_back(NewReg);
-        break;
-      }
-      bool isNew = SrcRegMap.insert(std::make_pair(NewReg, DstReg)).second;
-      if (!isNew)
-        assert(SrcRegMap[NewReg] == DstReg &&
-               "Can't map to two src physical registers!");
-      VirtRegPairs.push_back(NewReg);
-      DstReg = NewReg;
-    }
-
-    if (!VirtRegPairs.empty()) {
-      unsigned ToReg = VirtRegPairs.back();
-      VirtRegPairs.pop_back();
-      while (!VirtRegPairs.empty()) {
-        unsigned FromReg = VirtRegPairs.back();
-        VirtRegPairs.pop_back();
-        bool isNew = DstRegMap.insert(std::make_pair(FromReg, ToReg)).second;
-        if (!isNew)
-          assert(DstRegMap[FromReg] == ToReg &&
-                 "Can't map to two dst physical registers!");
-        ToReg = FromReg;
-      }
-    }
+    ScanUses(DstReg, MBB, Processed);
   }
 
   Processed.insert(MI);
+  return;
 }
 
 /// isSafeToDelete - If the specified instruction does not produce any side
@@ -836,7 +852,8 @@ bool TwoAddressInstructionPass::
 TryInstructionTransform(MachineBasicBlock::iterator &mi,
                         MachineBasicBlock::iterator &nmi,
                         MachineFunction::iterator &mbbi,
-                        unsigned SrcIdx, unsigned DstIdx, unsigned Dist) {
+                        unsigned SrcIdx, unsigned DstIdx, unsigned Dist,
+                        SmallPtrSet<MachineInstr*, 8> &Processed) {
   const TargetInstrDesc &TID = mi->getDesc();
   unsigned regA = mi->getOperand(DstIdx).getReg();
   unsigned regB = mi->getOperand(SrcIdx).getReg();
@@ -887,10 +904,13 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
     return false;
   }
 
+  if (TargetRegisterInfo::isVirtualRegister(regA))
+    ScanUses(regA, &*mbbi, Processed);
+
   if (TID.isConvertibleTo3Addr()) {
     // This instruction is potentially convertible to a true
     // three-address instruction.  Check if it is profitable.
-    if (!regBKilled || isProfitableToConv3Addr(regA)) {
+    if (!regBKilled || isProfitableToConv3Addr(regA, regB)) {
       // Try to convert it.
       if (ConvertInstTo3Addr(mi, nmi, mbbi, regA, regB, Dist)) {
         ++NumConvertedTo3Addr;
@@ -951,7 +971,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
         MachineBasicBlock::iterator NewMI = NewMIs[1];
         bool TransformSuccess =
           TryInstructionTransform(NewMI, mi, mbbi,
-                                  NewSrcIdx, NewDstIdx, Dist);
+                                  NewSrcIdx, NewDstIdx, Dist, Processed);
         if (TransformSuccess ||
             NewMIs[1]->getOperand(NewSrcIdx).isKill()) {
           // Success, or at least we made an improvement. Keep the unfolded
@@ -1100,7 +1120,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               mi->getOperand(DstIdx).getReg())
             break; // Done with this instruction.
 
-          if (TryInstructionTransform(mi, nmi, mbbi, SrcIdx, DstIdx, Dist))
+          if (TryInstructionTransform(mi, nmi, mbbi, SrcIdx, DstIdx, Dist,
+                                      Processed))
             break; // The tied operands have been eliminated.
         }
 

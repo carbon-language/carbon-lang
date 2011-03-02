@@ -34,3 +34,14 @@ entry:
  %add5 = add i32 %add3, %d
  ret i32 %add5
 }
+
+; rdar://9002648
+define i64 @test3(i64 %x) nounwind readnone ssp {
+entry:
+; CHECK: test3:
+; CHECK: leaq (%rdi,%rdi), %rax
+; CHECK-NOT: addq
+; CHECK-NEXT: ret
+  %0 = shl i64 %x, 1
+  ret i64 %0
+}

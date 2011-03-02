@@ -1,12 +1,11 @@
 ; RUN: llc < %s -march=x86-64 -stats  |& \
-; RUN:   grep {6 .*Number of machine instrs printed}
+; RUN:   grep {5 .*Number of machine instrs printed}
 
 ;; Integer absolute value, should produce something at least as good as:
-;;       movl %edi, %eax
-;;       sarl $31, %eax
-;;       addl %eax, %edi
-;;       xorl %eax, %edi
-;;       movl %edi, %eax
+;;       movl %edi, %ecx
+;;       sarl $31, %ecx
+;;       leal (%rdi,%rcx), %eax
+;;       xorl %ecx, %eax
 ;;       ret
 define i32 @test(i32 %a) nounwind {
         %tmp1neg = sub i32 0, %a
