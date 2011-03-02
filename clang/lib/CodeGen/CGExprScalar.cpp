@@ -245,6 +245,9 @@ public:
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E) {
+    if (E->getMethodDecl() && 
+        E->getMethodDecl()->getResultType()->isReferenceType())
+      return EmitLoadOfLValue(E);
     return CGF.EmitObjCMessageExpr(E).getScalarVal();
   }
 
