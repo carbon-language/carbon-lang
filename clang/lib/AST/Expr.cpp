@@ -943,6 +943,28 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
   return E;
 }
 
+SourceRange MemberExpr::getSourceRange() const {
+  SourceLocation StartLoc;
+  if (isImplicitAccess()) {
+    if (hasQualifier())
+      StartLoc = getQualifierLoc().getBeginLoc();
+    else
+      StartLoc = MemberLoc;
+  } else {
+    // FIXME: We don't want this to happen. Rather, we should be able to
+    // detect all kinds of implicit accesses more cleanly.
+    StartLoc = getBase()->getLocStart();
+    if (StartLoc.isInvalid())
+      StartLoc = MemberLoc;
+  }
+  
+  SourceLocation EndLoc = 
+    HasExplicitTemplateArgumentList? getRAngleLoc() 
+                                   : getMemberNameInfo().getEndLoc();
+  
+  return SourceRange(StartLoc, EndLoc);
+}
+
 const char *CastExpr::getCastKindName() const {
   switch (getCastKind()) {
   case CK_Dependent:
@@ -2015,6 +2037,42 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
     return false;
 
   return true;
+}
+
+bool Expr::isImplicitCXXThis() const {
+  const Expr *E = this;
+  
+  // Strip away parentheses and casts we don't care about.
+  while (true) {
+    if (const ParenExpr *Paren = dyn_cast<ParenExpr>(E)) {
+      E = Paren->getSubExpr();
+      continue;
+    }
+    
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+      if (ICE->getCastKind() == CK_NoOp ||
+          ICE->getCastKind() == CK_LValueToRValue ||
+          ICE->getCastKind() == CK_DerivedToBase || 
+          ICE->getCastKind() == CK_UncheckedDerivedToBase) {
+        E = ICE->getSubExpr();
+        continue;
+      }
+    }
+    
+    if (const UnaryOperator* UnOp = dyn_cast<UnaryOperator>(E)) {
+      if (UnOp->getOpcode() == UO_Extension) {
+        E = UnOp->getSubExpr();
+        continue;
+      }
+    }
+    
+    break;
+  }
+  
+  if (const CXXThisExpr *This = dyn_cast<CXXThisExpr>(E))
+    return This->isImplicit();
+  
+  return false;
 }
 
 /// hasAnyTypeDependentArguments - Determines if any of the expressions

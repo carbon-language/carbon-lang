@@ -1979,12 +1979,8 @@ void EnqueueVisitor::VisitMemberExpr(MemberExpr *M) {
   // visit it.
   // FIXME: If we ever want to show these implicit accesses, this will be
   // unfortunate. However, clang_getCursor() relies on this behavior.
-  if (CXXThisExpr *This
-            = llvm::dyn_cast<CXXThisExpr>(M->getBase()->IgnoreParenImpCasts()))
-    if (This->isImplicit())
-      return;
-  
-  AddStmt(M->getBase());
+  if (!M->isImplicitAccess())
+    AddStmt(M->getBase());
 }
 void EnqueueVisitor::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   AddTypeLoc(E->getEncodedTypeSourceInfo());

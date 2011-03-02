@@ -126,7 +126,18 @@ struct X7 {
   typedef outer_alias::inner::apply_meta<T_type, U_type::template apply> type;
 };
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:128:1 %s | FileCheck %s
+struct X8 {
+  void f();
+};
+
+struct X9 : X8 {
+  typedef X8 inherited;
+  void f() { 
+    inherited::f();
+  }
+};
+
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:137:1 %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
@@ -449,3 +460,7 @@ struct X7 {
 // CHECK: Punctuation: ">" [126:72 - 126:73] TypedefDecl=type:126:74 (Definition)
 // CHECK: Identifier: "type" [126:74 - 126:78] TypedefDecl=type:126:74 (Definition)
 
+// Member access expressions
+// CHECK: Identifier: "inherited" [136:5 - 136:14] TypeRef=inherited:134:14
+// CHECK: Punctuation: "::" [136:14 - 136:16] MemberRefExpr=f:130:8
+// CHECK: Identifier: "f" [136:16 - 136:17] MemberRefExpr=f:130:8

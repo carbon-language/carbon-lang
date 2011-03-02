@@ -783,46 +783,11 @@ CXXDependentScopeMemberExpr::CreateEmpty(ASTContext &C,
   return E;
 }
 
-/// \brief Determine whether this expression is an implicit C++ 'this'.
-static bool isImplicitThis(const Expr *E) {
-  // Strip away parentheses and casts we don't care about.
-  while (true) {
-    if (const ParenExpr *Paren = dyn_cast<ParenExpr>(E)) {
-      E = Paren->getSubExpr();
-      continue;
-    }
-    
-    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-      if (ICE->getCastKind() == CK_NoOp ||
-          ICE->getCastKind() == CK_LValueToRValue ||
-          ICE->getCastKind() == CK_DerivedToBase || 
-          ICE->getCastKind() == CK_UncheckedDerivedToBase) {
-        E = ICE->getSubExpr();
-        continue;
-      }
-    }
-    
-    if (const UnaryOperator* UnOp = dyn_cast<UnaryOperator>(E)) {
-      if (UnOp->getOpcode() == UO_Extension) {
-        E = UnOp->getSubExpr();
-        continue;
-      }
-    }
-    
-    break;
-  }
-  
-  if (const CXXThisExpr *This = dyn_cast<CXXThisExpr>(E))
-    return This->isImplicit();
-  
-  return false;
-}
-
 bool CXXDependentScopeMemberExpr::isImplicitAccess() const {
   if (Base == 0)
     return true;
   
-  return isImplicitThis(cast<Expr>(Base));
+  return cast<Expr>(Base)->isImplicitCXXThis();
 }
 
 UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, 
@@ -851,7 +816,7 @@ bool UnresolvedMemberExpr::isImplicitAccess() const {
   if (Base == 0)
     return true;
   
-  return isImplicitThis(cast<Expr>(Base));
+  return cast<Expr>(Base)->isImplicitCXXThis();
 }
 
 UnresolvedMemberExpr *

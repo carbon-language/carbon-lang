@@ -536,6 +536,9 @@ public:
   /// temporary object of the given class type.
   bool isTemporaryObject(ASTContext &Ctx, const CXXRecordDecl *TempTy) const;
 
+  /// \brief Whether this expression is an implicit reference to 'this' in C++.
+  bool isImplicitCXXThis() const;
+  
   const Expr *IgnoreParens() const {
     return const_cast<Expr*>(this)->IgnoreParens();
   }
@@ -2070,21 +2073,15 @@ public:
   SourceLocation getMemberLoc() const { return MemberLoc; }
   void setMemberLoc(SourceLocation L) { MemberLoc = L; }
 
-  SourceRange getSourceRange() const {
-    // If we have an implicit base (like a C++ implicit this),
-    // make sure not to return its location
-    // FIXME: This isn't the way to do the above.
-    SourceLocation EndLoc = (HasExplicitTemplateArgumentList)
-      ? getRAngleLoc() : getMemberNameInfo().getEndLoc();
-
-    SourceLocation BaseLoc = getBase()->getLocStart();
-    if (BaseLoc.isInvalid())
-      return SourceRange(MemberLoc, EndLoc);
-    return SourceRange(BaseLoc, EndLoc);
-  }
-
+  SourceRange getSourceRange() const;
+  
   SourceLocation getExprLoc() const { return MemberLoc; }
 
+  /// \brief Determine whether the base of this explicit is implicit.
+  bool isImplicitAccess() const {
+    return getBase() && getBase()->isImplicitCXXThis();
+  }
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == MemberExprClass;
   }
