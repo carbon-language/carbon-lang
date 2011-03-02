@@ -781,46 +781,34 @@ void LiveIntervals::shrinkToUses(LiveInterval *li) {
     NewLI.addRange(LiveRange(VNI->def, VNI->def.getNextSlot(), VNI));
   }
 
+  // Keep track of the PHIs that are in use.
+  SmallPtrSet<VNInfo*, 8> UsedPHIs;
+
   // Extend intervals to reach all uses in WorkList.
   while (!WorkList.empty()) {
     SlotIndex Idx = WorkList.back().first;
     VNInfo *VNI = WorkList.back().second;
     WorkList.pop_back();
-
-    // Extend the live range for VNI to be live at Idx.
-    LiveInterval::iterator I = NewLI.find(Idx);
-
-    // Already got it?
-    if (I != NewLI.end() && I->start <= Idx) {
-      assert(I->valno == VNI && "Unexpected existing value number");
-      continue;
-    }
-
-    // Is there already a live range in the block containing Idx?
     const MachineBasicBlock *MBB = getMBBFromIndex(Idx);
     SlotIndex BlockStart = getMBBStartIdx(MBB);
-    DEBUG(dbgs() << "Shrink: Use val#" << VNI->id << " at " << Idx
-                 << " in BB#" << MBB->getNumber() << '@' << BlockStart);
-    if (I != NewLI.begin() && (--I)->end > BlockStart) {
-      assert(I->valno == VNI && "Wrong reaching def");
-      DEBUG(dbgs() << " extend [" << I->start << ';' << I->end << ")\n");
-      // Is this the first use of a PHIDef in its defining block?
-      if (VNI->isPHIDef() && I->end == VNI->def.getNextSlot()) {
-        // The PHI is live, make sure the predecessors are live-out.
-        for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
-             PE = MBB->pred_end(); PI != PE; ++PI) {
-          SlotIndex Stop = getMBBEndIdx(*PI).getPrevSlot();
-          VNInfo *PVNI = li->getVNInfoAt(Stop);
-          // A predecessor is not required to have a live-out value for a PHI.
-          if (PVNI) {
-            assert(PVNI->hasPHIKill() && "Missing hasPHIKill flag");
-            WorkList.push_back(std::make_pair(Stop, PVNI));
-          }
+
+    // Extend the live range for VNI to be live at Idx.
+    if (VNInfo *ExtVNI = NewLI.extendInBlock(BlockStart, Idx)) {
+      assert(ExtVNI == VNI && "Unexpected existing value number");
+      // Is this a PHIDef we haven't seen before?
+      if (!VNI->isPHIDef() || !UsedPHIs.insert(VNI))
+        continue;
+      // The PHI is live, make sure the predecessors are live-out.
+      for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
+           PE = MBB->pred_end(); PI != PE; ++PI) {
+        SlotIndex Stop = getMBBEndIdx(*PI).getPrevSlot();
+        VNInfo *PVNI = li->getVNInfoAt(Stop);
+        // A predecessor is not required to have a live-out value for a PHI.
+        if (PVNI) {
+          assert(PVNI->hasPHIKill() && "Missing hasPHIKill flag");
+          WorkList.push_back(std::make_pair(Stop, PVNI));
         }
       }
-
-      // Extend the live range in the block to include Idx.
-      NewLI.addRange(LiveRange(I->end, Idx.getNextSlot(), VNI));
       continue;
     }
 
