@@ -1609,7 +1609,7 @@ public:
                          llvm::GlobalValue::LinkageTypes Linkage);
 
   /// EmitParmDecl - Emit a ParmVarDecl or an ImplicitParamDecl.
-  void EmitParmDecl(const VarDecl &D, llvm::Value *Arg);
+  void EmitParmDecl(const VarDecl &D, llvm::Value *Arg, unsigned ArgNo);
 
   /// protectFromPeepholes - Protect a value that we're intending to
   /// store to the side, but which will probably be used later, from

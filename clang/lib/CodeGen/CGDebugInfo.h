@@ -181,7 +181,7 @@ public:
   /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
   /// variable declaration.
   void EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
-                                CGBuilderTy &Builder);
+                                unsigned ArgNo, CGBuilderTy &Builder);
 
   /// EmitDeclareOfBlockLiteralArgVariable - Emit call to
   /// llvm.dbg.declare for the block-literal argument to a block
@@ -204,7 +204,7 @@ public:
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
-                   CGBuilderTy &Builder);
+                   unsigned ArgNo, CGBuilderTy &Builder);
 
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable
   /// declaration from an enclosing block.
