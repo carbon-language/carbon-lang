@@ -205,11 +205,6 @@ public:
   /// If simple is not NULL, *simple will indicate if ParentVNI is a simply
   /// mapped value.
   VNInfo *mapValue(const VNInfo *ParentVNI, SlotIndex Idx, bool *simple = 0);
-
-  // extendTo - Find the last LI value defined in MBB at or before Idx. The
-  // parentli is assumed to be live at Idx. Extend the live range to include
-  // Idx. Return the found VNInfo, or NULL.
-  VNInfo *extendTo(const MachineBasicBlock *MBB, SlotIndex Idx);
 };
 
 

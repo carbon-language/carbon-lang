@@ -230,7 +230,7 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
   assert(IdxMBB && "No MBB at Idx");
 
   // Is there a def in the same MBB we can extend?
-  if (VNInfo *VNI = extendTo(IdxMBB, Idx))
+  if (VNInfo *VNI = LI->extendInBlock(LIS.getMBBStartIdx(IdxMBB), Idx))
     return VNI;
 
   // Now for the fun part. We know that ParentVNI potentially has multiple defs,
@@ -262,8 +262,10 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
        }
 
        // Does Pred provide a live-out value?
-       SlotIndex Last = LIS.getMBBEndIdx(Pred).getPrevSlot();
-       if (VNInfo *VNI = extendTo(Pred, Last)) {
+       SlotIndex Start, Last;
+       tie(Start, Last) = LIS.getSlotIndexes()->getMBBRange(Pred);
+       Last = Last.getPrevSlot();
+       if (VNInfo *VNI = LI->extendInBlock(Start, Last)) {
          MachineBasicBlock *DefMBB = LIS.getMBBFromIndex(VNI->def);
          DEBUG(dbgs() << "    found valno #" << VNI->id
                       << " from BB#" << DefMBB->getNumber()
@@ -428,22 +430,6 @@ void LiveIntervalMap::dumpCache() {
   dbgs() << "    cache: " << LiveOutCache.size() << " entries.\n";
 }
 #endif
-
-// extendTo - Find the last LI value defined in MBB at or before Idx. The
-// ParentLI is assumed to be live at Idx. Extend the live range to Idx.
-// Return the found VNInfo, or NULL.
-VNInfo *LiveIntervalMap::extendTo(const MachineBasicBlock *MBB, SlotIndex Idx) {
-  assert(LI && "call reset first");
-  LiveInterval::iterator I = std::upper_bound(LI->begin(), LI->end(), Idx);
-  if (I == LI->begin())
-    return 0;
-  --I;
-  if (I->end <= LIS.getMBBStartIdx(MBB))
-    return 0;
-  if (I->end <= Idx)
-    I->end = Idx.getNextSlot();
-  return I->valno;
-}
 
 
 //===----------------------------------------------------------------------===//

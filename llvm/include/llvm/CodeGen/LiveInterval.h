@@ -447,6 +447,11 @@ namespace llvm {
       addRangeFrom(LR, ranges.begin());
     }
 
+    /// extendInBlock - If this interval is live before UseIdx in the basic
+    /// block that starts at StartIdx, extend it to be live at UseIdx and return
+    /// the value. If there is no live range before UseIdx, return NULL.
+    VNInfo *extendInBlock(SlotIndex StartIdx, SlotIndex UseIdx);
+
     /// join - Join two live intervals (this, and other) together.  This applies
     /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
     /// the intervals are not joinable, this aborts.
