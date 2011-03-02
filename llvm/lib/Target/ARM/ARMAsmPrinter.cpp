@@ -498,7 +498,7 @@ void ARMAsmPrinter::emitAttributes() {
                                ARMBuildAttrs::Allowed);
   }
 
-  if (Subtarget->hasNEON()) {
+  if (Subtarget->hasNEON() && emitFPU) {
     /* NEON is not exactly a VFP architecture, but GAS emit one of
      * neon/vfpv3/vfpv2 for .fpu parameters */
     AttrEmitter->EmitTextAttribute(ARMBuildAttrs::Advanced_SIMD_arch, "neon");
