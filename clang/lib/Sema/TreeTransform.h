@@ -502,11 +502,6 @@ public:
 
   QualType 
   TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
-                                      DependentTemplateSpecializationTypeLoc TL,
-                                               NestedNameSpecifier *Prefix);
-
-  QualType 
-  TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
                                                DependentTemplateSpecializationTypeLoc TL,
                                          NestedNameSpecifierLoc QualifierLoc);
 
@@ -4449,66 +4444,6 @@ QualType TreeTransform<Derived>::
             
   return getDerived()
            .TransformDependentTemplateSpecializationType(TLB, TL, QualifierLoc);
-}
-
-template<typename Derived>
-QualType TreeTransform<Derived>::
-          TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
-                                 DependentTemplateSpecializationTypeLoc TL,
-                                                  NestedNameSpecifier *NNS) {
-  // FIXME: This routine needs to go away.
-  const DependentTemplateSpecializationType *T = TL.getTypePtr();
-
-  TemplateArgumentListInfo NewTemplateArgs;
-  NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
-  NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
-      
-  // FIXME: Nested-name-specifier source location info!
-  typedef TemplateArgumentLocContainerIterator<
-                            DependentTemplateSpecializationTypeLoc> ArgIterator;
-  if (getDerived().TransformTemplateArguments(ArgIterator(TL, 0),
-                                              ArgIterator(TL, TL.getNumArgs()),
-                                              NewTemplateArgs))
-    return QualType();
-
-  CXXScopeSpec SS;
-  SS.MakeTrivial(SemaRef.Context, NNS, 
-                 TL.getQualifierLoc().getSourceRange());
-  QualType Result
-    = getDerived().RebuildDependentTemplateSpecializationType(T->getKeyword(),
-                                        SS.getWithLocInContext(SemaRef.Context),
-                                                            T->getIdentifier(),
-                                                              TL.getNameLoc(),
-                                                              NewTemplateArgs);
-  if (Result.isNull())
-    return QualType();
-
-  if (const ElaboratedType *ElabT = dyn_cast<ElaboratedType>(Result)) {
-    QualType NamedT = ElabT->getNamedType();
-
-    // Copy information relevant to the template specialization.
-    TemplateSpecializationTypeLoc NamedTL
-      = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
-    NamedTL.setLAngleLoc(TL.getLAngleLoc());
-    NamedTL.setRAngleLoc(TL.getRAngleLoc());
-    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
-      NamedTL.setArgLocInfo(I, TL.getArgLocInfo(I));
-
-    // Copy information relevant to the elaborated type.
-    ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
-    NewTL.setKeywordLoc(TL.getKeywordLoc());
-    
-    // FIXME: DependentTemplateSpecializationType needs better source-location
-    // info.
-    NestedNameSpecifierLocBuilder Builder;
-    Builder.MakeTrivial(SemaRef.Context, 
-                        NNS, TL.getQualifierLoc().getSourceRange());
-    NewTL.setQualifierLoc(Builder.getWithLocInContext(SemaRef.Context));
-  } else {
-    TypeLoc NewTL(Result, TL.getOpaqueData());
-    TLB.pushFullCopy(NewTL);
-  }
-  return Result;
 }
 
 template<typename Derived>
