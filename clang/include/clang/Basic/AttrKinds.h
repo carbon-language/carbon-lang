@@ -22,6 +22,7 @@ namespace attr {
 enum Kind {
 #define ATTR(X) X,
 #define LAST_INHERITABLE_ATTR(X) X, LAST_INHERITABLE = X,
+#define LAST_INHERITABLE_PARAM_ATTR(X) X, LAST_INHERITABLE_PARAM = X,
 #include "clang/Basic/AttrList.inc"
   NUM_ATTRS
 };

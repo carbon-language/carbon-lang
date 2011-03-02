@@ -120,6 +120,19 @@ public:
   static bool classof(const InheritableAttr *) { return true; }
 };
 
+class InheritableParamAttr : public InheritableAttr {
+protected:
+  InheritableParamAttr(attr::Kind AK, SourceLocation L)
+    : InheritableAttr(AK, L) {}
+
+public:
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() <= attr::LAST_INHERITABLE_PARAM;
+  }
+  static bool classof(const InheritableParamAttr *) { return true; }
+};
+
 #include "clang/AST/Attrs.inc"
 
 /// AttrVec - A vector of Attr, which is how they are stored on the AST.

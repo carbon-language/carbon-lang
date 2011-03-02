@@ -1068,6 +1068,7 @@ public:
   void MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
+  void mergeObjCMethodDecls(ObjCMethodDecl *New, const ObjCMethodDecl *Old);
   void MergeVarDeclTypes(VarDecl *New, VarDecl *Old);
   void MergeVarDecl(VarDecl *New, LookupResult &OldDecls);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);

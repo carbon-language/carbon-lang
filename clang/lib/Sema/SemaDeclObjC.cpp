@@ -1888,16 +1888,9 @@ Decl *Sema::ActOnMethodDeclaration(
     Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
   }
 
-  // If the interface declared this method, and it was deprecated there,
-  // mark it deprecated here.
+  // Merge information down from the interface declaration if we have one.
   if (InterfaceMD)
-   if (Attr *DA = InterfaceMD->getAttr<DeprecatedAttr>()) {
-    StringLiteral *SE = StringLiteral::CreateEmpty(Context, 1);
-    ObjCMethod->addAttr(::new (Context) 
-                        DeprecatedAttr(DA->getLocation(),
-                                       Context, 
-                                       SE->getString()));
-   }
+    mergeObjCMethodDecls(ObjCMethod, InterfaceMD);
 
   return ObjCMethod;
 }

@@ -1054,23 +1054,58 @@ DeclHasAttr(const Decl *D, const Attr *A) {
   return false;
 }
 
-/// MergeDeclAttributes - append attributes from the Old decl to the New one.
-static void MergeDeclAttributes(Decl *New, Decl *Old, ASTContext &C) {
-  if (!Old->hasAttrs())
+/// mergeDeclAttributes - Copy attributes from the Old decl to the New one.
+static void mergeDeclAttributes(Decl *newDecl, const Decl *oldDecl,
+                                ASTContext &C) {
+  if (!oldDecl->hasAttrs())
     return;
+
+  bool foundAny = newDecl->hasAttrs();
+
   // Ensure that any moving of objects within the allocated map is done before
   // we process them.
-  if (!New->hasAttrs())
-    New->setAttrs(AttrVec());
+  if (!foundAny) newDecl->setAttrs(AttrVec());
+
   for (specific_attr_iterator<InheritableAttr>
-       i = Old->specific_attr_begin<InheritableAttr>(),
-       e = Old->specific_attr_end<InheritableAttr>(); i != e; ++i) {
-    if (!DeclHasAttr(New, *i)) {
-      InheritableAttr *NewAttr = cast<InheritableAttr>((*i)->clone(C));
-      NewAttr->setInherited(true);
-      New->addAttr(NewAttr);
+       i = oldDecl->specific_attr_begin<InheritableAttr>(),
+       e = oldDecl->specific_attr_end<InheritableAttr>(); i != e; ++i) {
+    if (!DeclHasAttr(newDecl, *i)) {
+      InheritableAttr *newAttr = cast<InheritableAttr>((*i)->clone(C));
+      newAttr->setInherited(true);
+      newDecl->addAttr(newAttr);
+      foundAny = true;
     }
   }
+
+  if (!foundAny) newDecl->dropAttrs();
+}
+
+/// mergeParamDeclAttributes - Copy attributes from the old parameter
+/// to the new one.
+static void mergeParamDeclAttributes(ParmVarDecl *newDecl,
+                                     const ParmVarDecl *oldDecl,
+                                     ASTContext &C) {
+  if (!oldDecl->hasAttrs())
+    return;
+
+  bool foundAny = newDecl->hasAttrs();
+
+  // Ensure that any moving of objects within the allocated map is
+  // done before we process them.
+  if (!foundAny) newDecl->setAttrs(AttrVec());
+
+  for (specific_attr_iterator<InheritableParamAttr>
+       i = oldDecl->specific_attr_begin<InheritableParamAttr>(),
+       e = oldDecl->specific_attr_end<InheritableParamAttr>(); i != e; ++i) {
+    if (!DeclHasAttr(newDecl, *i)) {
+      InheritableAttr *newAttr = cast<InheritableParamAttr>((*i)->clone(C));
+      newAttr->setInherited(true);
+      newDecl->addAttr(newAttr);
+      foundAny = true;
+    }
+  }
+
+  if (!foundAny) newDecl->dropAttrs();
 }
 
 namespace {
@@ -1471,7 +1506,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 /// \returns false
 bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   // Merge the attributes
-  MergeDeclAttributes(New, Old, Context);
+  mergeDeclAttributes(New, Old, Context);
 
   // Merge the storage class.
   if (Old->getStorageClass() != SC_Extern &&
@@ -1486,10 +1521,29 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   if (Old->isDeleted())
     New->setDeleted();
 
+  // Merge attributes from the parameters.  These can mismatch with K&R
+  // declarations.
+  if (New->getNumParams() == Old->getNumParams())
+    for (unsigned i = 0, e = New->getNumParams(); i != e; ++i)
+      mergeParamDeclAttributes(New->getParamDecl(i), Old->getParamDecl(i),
+                               Context);
+
   if (getLangOptions().CPlusPlus)
     return MergeCXXFunctionDecl(New, Old);
 
   return false;
+}
+
+void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
+                                const ObjCMethodDecl *oldMethod) {
+  // Merge the attributes.
+  mergeDeclAttributes(newMethod, oldMethod, Context);
+
+  // Merge attributes from the parameters.
+  for (ObjCMethodDecl::param_iterator oi = oldMethod->param_begin(),
+         ni = newMethod->param_begin(), ne = newMethod->param_end();
+       ni != ne; ++ni, ++oi)
+    mergeParamDeclAttributes(*ni, *oi, Context);    
 }
 
 /// MergeVarDecl - We parsed a variable 'New' which has the same name and scope
@@ -1585,7 +1639,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     New->setInvalidDecl();
   }
   
-  MergeDeclAttributes(New, Old, Context);
+  mergeDeclAttributes(New, Old, Context);
 
   // Merge the types.
   MergeVarDeclTypes(New, Old);
