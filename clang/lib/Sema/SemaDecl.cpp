@@ -1,12 +1,3 @@
-template<typename T>
-struct vector {
-
-};
-
-void f() {
-  vector<int> v;
-}
-
 //===--- SemaDecl.cpp - Semantic Analysis for Declarations ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
