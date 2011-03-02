@@ -2142,16 +2142,6 @@ bool Sema::SubstExprs(Expr **Exprs, unsigned NumExprs, bool IsCall,
   return Instantiator.TransformExprs(Exprs, NumExprs, IsCall, Outputs);
 }
 
-/// \brief Do template substitution on a nested-name-specifier.
-NestedNameSpecifier *
-Sema::SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
-                               SourceRange Range,
-                         const MultiLevelTemplateArgumentList &TemplateArgs) {
-  TemplateInstantiator Instantiator(*this, TemplateArgs, Range.getBegin(),
-                                    DeclarationName());
-  return Instantiator.TransformNestedNameSpecifier(NNS, Range);
-}
-
 NestedNameSpecifierLoc
 Sema::SubstNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
                         const MultiLevelTemplateArgumentList &TemplateArgs) {  

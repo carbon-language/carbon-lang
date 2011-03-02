@@ -67,7 +67,7 @@ using namespace sema;
 ///
 /// Subclasses can customize the transformation at various levels. The
 /// most coarse-grained transformations involve replacing TransformType(),
-/// TransformExpr(), TransformDecl(), TransformNestedNameSpecifier(),
+/// TransformExpr(), TransformDecl(), TransformNestedNameSpecifierLoc(),
 /// TransformTemplateName(), or TransformTemplateArgument() with entirely
 /// new implementations.
 ///
@@ -375,16 +375,6 @@ public:
     return cast_or_null<NamedDecl>(getDerived().TransformDecl(Loc, D)); 
   }
   
-  /// \brief Transform the given nested-name-specifier.
-  ///
-  /// By default, transforms all of the types and declarations within the
-  /// nested-name-specifier. Subclasses may override this function to provide
-  /// alternate behavior.
-  NestedNameSpecifier *TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
-                                                    SourceRange Range,
-                                              QualType ObjectType = QualType(),
-                                          NamedDecl *FirstQualifierInScope = 0);
-
   /// \brief Transform the given nested-name-specifier with source-location
   /// information.
   ///
@@ -2453,106 +2443,6 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
   }
   
   return false;
-}
-
-template<typename Derived>
-NestedNameSpecifier *
-TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
-                                                     SourceRange Range,
-                                                     QualType ObjectType,
-                                             NamedDecl *FirstQualifierInScope) {
-  NestedNameSpecifier *Prefix = NNS->getPrefix();
-
-  // Transform the prefix of this nested name specifier.
-  if (Prefix) {
-    Prefix = getDerived().TransformNestedNameSpecifier(Prefix, Range,
-                                                       ObjectType,
-                                                       FirstQualifierInScope);
-    if (!Prefix)
-      return 0;
-  }
-
-  switch (NNS->getKind()) {
-  case NestedNameSpecifier::Identifier:
-    if (Prefix) {
-      // The object type and qualifier-in-scope really apply to the
-      // leftmost entity.
-      ObjectType = QualType();
-      FirstQualifierInScope = 0;
-    }
-
-    assert((Prefix || !ObjectType.isNull()) &&
-            "Identifier nested-name-specifier with no prefix or object type");
-    if (!getDerived().AlwaysRebuild() && Prefix == NNS->getPrefix() &&
-        ObjectType.isNull())
-      return NNS;
-
-    return getDerived().RebuildNestedNameSpecifier(Prefix, Range,
-                                                   *NNS->getAsIdentifier(),
-                                                   ObjectType,
-                                                   FirstQualifierInScope);
-
-  case NestedNameSpecifier::Namespace: {
-    NamespaceDecl *NS
-      = cast_or_null<NamespaceDecl>(
-                                    getDerived().TransformDecl(Range.getBegin(),
-                                                       NNS->getAsNamespace()));
-    if (!getDerived().AlwaysRebuild() &&
-        Prefix == NNS->getPrefix() &&
-        NS == NNS->getAsNamespace())
-      return NNS;
-
-    return getDerived().RebuildNestedNameSpecifier(Prefix, Range, NS);
-  }
-
-  case NestedNameSpecifier::NamespaceAlias: {
-    NamespaceAliasDecl *Alias
-      = cast_or_null<NamespaceAliasDecl>(
-                                    getDerived().TransformDecl(Range.getBegin(),
-                                                    NNS->getAsNamespaceAlias()));
-    if (!getDerived().AlwaysRebuild() &&
-        Prefix == NNS->getPrefix() &&
-        Alias == NNS->getAsNamespaceAlias())
-      return NNS;
-
-    return getDerived().RebuildNestedNameSpecifier(Prefix, Range, Alias);
-  }
-
-  case NestedNameSpecifier::Global:
-    // There is no meaningful transformation that one could perform on the
-    // global scope.
-    return NNS;
-
-  case NestedNameSpecifier::TypeSpecWithTemplate:
-  case NestedNameSpecifier::TypeSpec: {
-    TemporaryBase Rebase(*this, Range.getBegin(), DeclarationName());
-    CXXScopeSpec SS;
-    SS.MakeTrivial(SemaRef.Context, Prefix, Range);
-    
-    TypeSourceInfo *TSInfo
-      = SemaRef.Context.getTrivialTypeSourceInfo(QualType(NNS->getAsType(), 0),
-                                                 Range.getEnd());
-    TSInfo = TransformTypeInObjectScope(TSInfo,
-                                        ObjectType,
-                                        FirstQualifierInScope,
-                                        SS);
-    if (!TSInfo)
-      return 0;
-
-    QualType T = TSInfo->getType();
-    if (!getDerived().AlwaysRebuild() &&
-        Prefix == NNS->getPrefix() &&
-        T == QualType(NNS->getAsType(), 0))
-      return NNS;
-
-    return getDerived().RebuildNestedNameSpecifier(Prefix, Range,
-                  NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate,
-                                                   T);
-  }
-  }
-
-  // Required to silence a GCC warning
-  return 0;
 }
 
 template<typename Derived>
