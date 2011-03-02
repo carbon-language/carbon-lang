@@ -2774,6 +2774,7 @@ CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
 
 const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
   switch (getKind()) {
+    default: assert(0 && "Unknown CFGElement");
     case CFGElement::Invalid:
     case CFGElement::Statement:
     case CFGElement::Initializer:
