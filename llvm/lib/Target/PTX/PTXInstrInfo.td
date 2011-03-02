@@ -114,7 +114,7 @@ def ADDRii : ComplexPattern<i32, 2, "SelectADDRii", [], []>;
 // Address operands
 def MEMri : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops RRegs32, i32imm);
+  let MIOperandInfo = (ops RRegu32, i32imm);
 }
 def MEMii : Operand<i32> {
   let PrintMethod = "printMemOperand";
@@ -143,73 +143,113 @@ def PTXret
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
-// Three-operand f32 instruction template
+// Three-operand floating-point instruction template
 multiclass FLOAT3<string opcstr, SDNode opnode> {
-  def rr : InstPTX<(outs RRegf32:$d),
-                   (ins RRegf32:$a, RRegf32:$b),
-                   !strconcat(opcstr, ".%type\t$d, $a, $b"),
-                   [(set RRegf32:$d, (opnode RRegf32:$a, RRegf32:$b))]>;
-  def ri : InstPTX<(outs RRegf32:$d),
-                   (ins RRegf32:$a, f32imm:$b),
-                   !strconcat(opcstr, ".%type\t$d, $a, $b"),
-                   [(set RRegf32:$d, (opnode RRegf32:$a, fpimm:$b))]>;
+  def rr32 : InstPTX<(outs RRegf32:$d),
+                     (ins RRegf32:$a, RRegf32:$b),
+                     !strconcat(opcstr, ".f32\t$d, $a, $b"),
+                     [(set RRegf32:$d, (opnode RRegf32:$a, RRegf32:$b))]>;
+  def ri32 : InstPTX<(outs RRegf32:$d),
+                     (ins RRegf32:$a, f32imm:$b),
+                     !strconcat(opcstr, ".f32\t$d, $a, $b"),
+                     [(set RRegf32:$d, (opnode RRegf32:$a, fpimm:$b))]>;
+  def rr64 : InstPTX<(outs RRegf64:$d),
+                     (ins RRegf64:$a, RRegf64:$b),
+                     !strconcat(opcstr, ".f64\t$d, $a, $b"),
+                     [(set RRegf64:$d, (opnode RRegf64:$a, RRegf64:$b))]>;
+  def ri64 : InstPTX<(outs RRegf64:$d),
+                     (ins RRegf64:$a, f64imm:$b),
+                     !strconcat(opcstr, ".f64\t$d, $a, $b"),
+                     [(set RRegf64:$d, (opnode RRegf64:$a, fpimm:$b))]>;
 }
 
 multiclass INT3<string opcstr, SDNode opnode> {
-  def rr : InstPTX<(outs RRegs32:$d),
-                   (ins RRegs32:$a, RRegs32:$b),
-                   !strconcat(opcstr, ".%type\t$d, $a, $b"),
-                   [(set RRegs32:$d, (opnode RRegs32:$a, RRegs32:$b))]>;
-  def ri : InstPTX<(outs RRegs32:$d),
-                   (ins RRegs32:$a, i32imm:$b),
-                   !strconcat(opcstr, ".%type\t$d, $a, $b"),
-                   [(set RRegs32:$d, (opnode RRegs32:$a, imm:$b))]>;
+  def rr16 : InstPTX<(outs RRegu16:$d),
+                     (ins RRegu16:$a, RRegu16:$b),
+                     !strconcat(opcstr, ".u16\t$d, $a, $b"),
+                     [(set RRegu16:$d, (opnode RRegu16:$a, RRegu16:$b))]>;
+  def ri16 : InstPTX<(outs RRegu16:$d),
+                     (ins RRegu16:$a, i16imm:$b),
+                     !strconcat(opcstr, ".u16\t$d, $a, $b"),
+                     [(set RRegu16:$d, (opnode RRegu16:$a, imm:$b))]>;
+  def rr32 : InstPTX<(outs RRegu32:$d),
+                     (ins RRegu32:$a, RRegu32:$b),
+                     !strconcat(opcstr, ".u32\t$d, $a, $b"),
+                     [(set RRegu32:$d, (opnode RRegu32:$a, RRegu32:$b))]>;
+  def ri32 : InstPTX<(outs RRegu32:$d),
+                     (ins RRegu32:$a, i32imm:$b),
+                     !strconcat(opcstr, ".u32\t$d, $a, $b"),
+                     [(set RRegu32:$d, (opnode RRegu32:$a, imm:$b))]>;
+  def rr64 : InstPTX<(outs RRegu64:$d),
+                     (ins RRegu64:$a, RRegu64:$b),
+                     !strconcat(opcstr, ".u64\t$d, $a, $b"),
+                     [(set RRegu64:$d, (opnode RRegu64:$a, RRegu64:$b))]>;
+  def ri64 : InstPTX<(outs RRegu64:$d),
+                     (ins RRegu64:$a, i64imm:$b),
+                     !strconcat(opcstr, ".u64\t$d, $a, $b"),
+                     [(set RRegu64:$d, (opnode RRegu64:$a, imm:$b))]>;
 }
 
 // no %type directive, non-communtable
 multiclass INT3ntnc<string opcstr, SDNode opnode> {
-  def rr : InstPTX<(outs RRegs32:$d),
-                   (ins RRegs32:$a, RRegs32:$b),
+  def rr : InstPTX<(outs RRegu32:$d),
+                   (ins RRegu32:$a, RRegu32:$b),
                    !strconcat(opcstr, "\t$d, $a, $b"),
-                   [(set RRegs32:$d, (opnode RRegs32:$a, RRegs32:$b))]>;
-  def ri : InstPTX<(outs RRegs32:$d),
-                   (ins RRegs32:$a, i32imm:$b),
+                   [(set RRegu32:$d, (opnode RRegu32:$a, RRegu32:$b))]>;
+  def ri : InstPTX<(outs RRegu32:$d),
+                   (ins RRegu32:$a, i32imm:$b),
                    !strconcat(opcstr, "\t$d, $a, $b"),
-                   [(set RRegs32:$d, (opnode RRegs32:$a, imm:$b))]>;
-  def ir : InstPTX<(outs RRegs32:$d),
-                   (ins i32imm:$a, RRegs32:$b),
+                   [(set RRegu32:$d, (opnode RRegu32:$a, imm:$b))]>;
+  def ir : InstPTX<(outs RRegu32:$d),
+                   (ins i32imm:$a, RRegu32:$b),
                    !strconcat(opcstr, "\t$d, $a, $b"),
-                   [(set RRegs32:$d, (opnode imm:$a, RRegs32:$b))]>;
+                   [(set RRegu32:$d, (opnode imm:$a, RRegu32:$b))]>;
 }
 
-multiclass PTX_LD<string opstr, RegisterClass RC, PatFrag pat_load> {
+multiclass PTX_LD<string opstr, string typestr, RegisterClass RC, PatFrag pat_load> {
   def rr : InstPTX<(outs RC:$d),
                    (ins MEMri:$a),
-                   !strconcat(opstr, ".%type\t$d, [$a]"),
+                   !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
                    [(set RC:$d, (pat_load ADDRrr:$a))]>;
   def ri : InstPTX<(outs RC:$d),
                    (ins MEMri:$a),
-                   !strconcat(opstr, ".%type\t$d, [$a]"),
+                   !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
                    [(set RC:$d, (pat_load ADDRri:$a))]>;
   def ii : InstPTX<(outs RC:$d),
                    (ins MEMii:$a),
-                   !strconcat(opstr, ".%type\t$d, [$a]"),
+                   !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
                    [(set RC:$d, (pat_load ADDRii:$a))]>;
 }
 
-multiclass PTX_ST<string opstr, RegisterClass RC, PatFrag pat_store> {
+multiclass PTX_LD_ALL<string opstr, PatFrag pat_load> {
+  defm u16 : PTX_LD<opstr, ".u16", RRegu16, pat_load>;
+  defm u32 : PTX_LD<opstr, ".u32", RRegu32, pat_load>;
+  defm u64 : PTX_LD<opstr, ".u64", RRegu64, pat_load>;
+  defm f32 : PTX_LD<opstr, ".f32", RRegf32, pat_load>;
+  defm f64 : PTX_LD<opstr, ".f64", RRegf64, pat_load>;
+}
+
+multiclass PTX_ST<string opstr, string typestr, RegisterClass RC, PatFrag pat_store> {
   def rr : InstPTX<(outs),
                    (ins RC:$d, MEMri:$a),
-                   !strconcat(opstr, ".%type\t[$a], $d"),
+                   !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
                    [(pat_store RC:$d, ADDRrr:$a)]>;
   def ri : InstPTX<(outs),
                    (ins RC:$d, MEMri:$a),
-                   !strconcat(opstr, ".%type\t[$a], $d"),
+                   !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
                    [(pat_store RC:$d, ADDRri:$a)]>;
   def ii : InstPTX<(outs),
                    (ins RC:$d, MEMii:$a),
-                   !strconcat(opstr, ".%type\t[$a], $d"),
+                   !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
                    [(pat_store RC:$d, ADDRii:$a)]>;
+}
+
+multiclass PTX_ST_ALL<string opstr, PatFrag pat_store> {
+  defm u16 : PTX_ST<opstr, ".u16", RRegu16, pat_store>;
+  defm u32 : PTX_ST<opstr, ".u32", RRegu32, pat_store>;
+  defm u64 : PTX_ST<opstr, ".u64", RRegu64, pat_store>;
+  defm f32 : PTX_ST<opstr, ".f32", RRegf32, pat_store>;
+  defm f64 : PTX_ST<opstr, ".f64", RRegf64, pat_store>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -236,60 +276,67 @@ defm SRA : INT3ntnc<"shr.s32", PTXsra>;
 ///===- Data Movement and Conversion Instructions -------------------------===//
 
 let neverHasSideEffects = 1 in {
-  // rely on isMoveInstr to separate MOVpp, MOVrr, etc.
-  def MOVpp
+  def MOVPREDrr
     : InstPTX<(outs Preds:$d), (ins Preds:$a), "mov.pred\t$d, $a", []>;
-  def MOVrr
-    : InstPTX<(outs RRegs32:$d), (ins RRegs32:$a), "mov.%type\t$d, $a", []>;
-  def FMOVrr
+  def MOVU16rr
+    : InstPTX<(outs RRegu16:$d), (ins RRegu16:$a), "mov.u16\t$d, $a", []>;
+  def MOVU32rr
+    : InstPTX<(outs RRegu32:$d), (ins RRegu32:$a), "mov.u32\t$d, $a", []>;
+  def MOVU64rr
+    : InstPTX<(outs RRegu64:$d), (ins RRegu64:$a), "mov.u64\t$d, $a", []>;
+  def MOVF32rr
     : InstPTX<(outs RRegf32:$d), (ins RRegf32:$a), "mov.f32\t$d, $a", []>;
+  def MOVF64rr
+    : InstPTX<(outs RRegf64:$d), (ins RRegf64:$a), "mov.f64\t$d, $a", []>;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-  def MOVpi
+  def MOVPREDri
     : InstPTX<(outs Preds:$d), (ins i1imm:$a), "mov.pred\t$d, $a",
               [(set Preds:$d, imm:$a)]>;
-  def MOVri
-    : InstPTX<(outs RRegs32:$d), (ins i32imm:$a), "mov.s32\t$d, $a",
-              [(set RRegs32:$d, imm:$a)]>;
-  def FMOVri
+  def MOVU16ri
+    : InstPTX<(outs RRegu16:$d), (ins i16imm:$a), "mov.u16\t$d, $a",
+              [(set RRegu16:$d, imm:$a)]>;
+  def MOVU32ri
+    : InstPTX<(outs RRegu32:$d), (ins i32imm:$a), "mov.u32\t$d, $a",
+              [(set RRegu32:$d, imm:$a)]>;
+  def MOVU164ri
+    : InstPTX<(outs RRegu64:$d), (ins i64imm:$a), "mov.u64\t$d, $a",
+              [(set RRegu64:$d, imm:$a)]>;
+  def MOVF32ri
     : InstPTX<(outs RRegf32:$d), (ins f32imm:$a), "mov.f32\t$d, $a",
               [(set RRegf32:$d, fpimm:$a)]>;
+  def MOVF64ri
+    : InstPTX<(outs RRegf64:$d), (ins f64imm:$a), "mov.f64\t$d, $a",
+              [(set RRegf64:$d, fpimm:$a)]>;
 }
 
-// Integer loads
-defm LDg : PTX_LD<"ld.global", RRegs32, load_global>;
-defm LDc : PTX_LD<"ld.const",  RRegs32, load_constant>;
-defm LDl : PTX_LD<"ld.local",  RRegs32, load_local>;
-defm LDp : PTX_LD<"ld.param",  RRegs32, load_parameter>;
-defm LDs : PTX_LD<"ld.shared", RRegs32, load_shared>;
+// Loads
+defm LDg : PTX_LD_ALL<"ld.global", load_global>;
+defm LDc : PTX_LD_ALL<"ld.const",  load_constant>;
+defm LDl : PTX_LD_ALL<"ld.local",  load_local>;
+defm LDs : PTX_LD_ALL<"ld.shared", load_shared>;
 
-def LDpi : InstPTX<(outs RRegs32:$d), (ins MEMpi:$a),
-                   "ld.param.%type\t$d, [$a]", []>;
+// This is a special instruction that is manually inserted for kernel parameters
+def LDpiU16 : InstPTX<(outs RRegu16:$d), (ins MEMpi:$a),
+                      "ld.param.u16\t$d, [$a]", []>;
+def LDpiU32 : InstPTX<(outs RRegu32:$d), (ins MEMpi:$a),
+                      "ld.param.u32\t$d, [$a]", []>;
+def LDpiU64 : InstPTX<(outs RRegu64:$d), (ins MEMpi:$a),
+                      "ld.param.u64\t$d, [$a]", []>;
+def LDpiF32 : InstPTX<(outs RRegf32:$d), (ins MEMpi:$a),
+                      "ld.param.f32\t$d, [$a]", []>;
+def LDpiF64 : InstPTX<(outs RRegf64:$d), (ins MEMpi:$a),
+                      "ld.param.f64\t$d, [$a]", []>;
 
-// Floating-point loads
-defm FLDg : PTX_LD<"ld.global", RRegf32, load_global>;
-defm FLDc : PTX_LD<"ld.const",  RRegf32, load_constant>;
-defm FLDl : PTX_LD<"ld.local",  RRegf32, load_local>;
-defm FLDp : PTX_LD<"ld.param",  RRegf32, load_parameter>;
-defm FLDs : PTX_LD<"ld.shared", RRegf32, load_shared>;
+// Stores
+defm STg : PTX_ST_ALL<"st.global", store_global>;
+defm STl : PTX_ST_ALL<"st.local",  store_local>;
+defm STs : PTX_ST_ALL<"st.shared", store_shared>;
 
-def FLDpi : InstPTX<(outs RRegf32:$d), (ins MEMpi:$a),
-                   "ld.param.%type\t$d, [$a]", []>;
-
-// Integer stores
-defm STg : PTX_ST<"st.global", RRegs32, store_global>;
-defm STl : PTX_ST<"st.local",  RRegs32, store_local>;
-// Store to parameter state space requires PTX 2.0 or higher?
-// defm STp : PTX_ST<"st.param",  RRegs32, store_parameter>;
-defm STs : PTX_ST<"st.shared", RRegs32, store_shared>;
-
-// Floating-point stores
-defm FSTg : PTX_ST<"st.global", RRegf32, store_global>;
-defm FSTl : PTX_ST<"st.local",  RRegf32, store_local>;
-// Store to parameter state space requires PTX 2.0 or higher?
-// defm FSTp : PTX_ST<"st.param",  RRegf32, store_parameter>;
-defm FSTs : PTX_ST<"st.shared", RRegf32, store_shared>;
+// defm STp : PTX_ST_ALL<"st.param",  store_parameter>;
+// defm LDp : PTX_LD_ALL<"ld.param",  load_parameter>;
+// TODO: Do something with st.param if/when it is needed.
 
 ///===- Control Flow Instructions -----------------------------------------===//
 

@@ -15,6 +15,7 @@
 #include "PTXTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -66,14 +67,34 @@ SDNode *PTXDAGToDAGISel::Select(SDNode *Node) {
 }
 
 SDNode *PTXDAGToDAGISel::SelectREAD_PARAM(SDNode *Node) {
-  SDValue index = Node->getOperand(1);
-  DebugLoc dl = Node->getDebugLoc();
+  SDValue  index = Node->getOperand(1);
+  DebugLoc dl    = Node->getDebugLoc();
+  unsigned opcode;
 
   if (index.getOpcode() != ISD::TargetConstant)
     llvm_unreachable("READ_PARAM: index is not ISD::TargetConstant");
 
+  if (Node->getValueType(0) == MVT::i16) {
+    opcode = PTX::LDpiU16;
+  }
+  else if (Node->getValueType(0) == MVT::i32) {
+    opcode = PTX::LDpiU32;
+  }
+  else if (Node->getValueType(0) == MVT::i64) {
+    opcode = PTX::LDpiU64;
+  }
+  else if (Node->getValueType(0) == MVT::f32) {
+    opcode = PTX::LDpiF32;
+  }
+  else if (Node->getValueType(0) == MVT::f64) {
+    opcode = PTX::LDpiF64;
+  }
+  else {
+    llvm_unreachable("Unknown parameter type for ld.param");
+  }
+
   return PTXInstrInfo::
-    GetPTXMachineNode(CurDAG, PTX::LDpi, dl, MVT::i32, index);
+    GetPTXMachineNode(CurDAG, opcode, dl, Node->getValueType(0), index);
 }
 
 // Match memory operand of the form [reg+reg]

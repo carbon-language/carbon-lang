@@ -79,12 +79,12 @@ bool PTXMFInfoExtract::runOnMachineFunction(MachineFunction &MF) {
 
   DEBUG(for (PTXMachineFunctionInfo::reg_iterator
              i = MFI->argRegBegin(), e = MFI->argRegEnd();
-	     i != e; ++i)
+             i != e; ++i)
         dbgs() << "Arg Reg: " << *i << "\n";);
 
   DEBUG(for (PTXMachineFunctionInfo::reg_iterator
              i = MFI->localVarRegBegin(), e = MFI->localVarRegEnd();
-	     i != e; ++i)
+             i != e; ++i)
         dbgs() << "Local Var Reg: " << *i << "\n";);
 
   return false;

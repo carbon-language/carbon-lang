@@ -27,9 +27,12 @@ static const struct map_entry {
   const TargetRegisterClass *cls;
   const int opcode;
 } map[] = {
-  { &PTX::RRegs32RegClass, PTX::MOVrr },
-  { &PTX::RRegf32RegClass, PTX::MOVrr },
-  { &PTX::PredsRegClass,   PTX::MOVpp }
+  { &PTX::RRegu16RegClass, PTX::MOVU16rr },
+  { &PTX::RRegu32RegClass, PTX::MOVU32rr },
+  { &PTX::RRegu64RegClass, PTX::MOVU64rr },
+  { &PTX::RRegf32RegClass, PTX::MOVF32rr },
+  { &PTX::RRegf64RegClass, PTX::MOVF64rr },
+  { &PTX::PredsRegClass,   PTX::MOVPREDrr }
 };
 
 void PTXInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
@@ -76,8 +79,12 @@ bool PTXInstrInfo::isMoveInstr(const MachineInstr& MI,
   switch (MI.getOpcode()) {
     default:
       return false;
-    case PTX::MOVpp:
-    case PTX::MOVrr:
+    case PTX::MOVU16rr:
+    case PTX::MOVU32rr:
+    case PTX::MOVU64rr:
+    case PTX::MOVF32rr:
+    case PTX::MOVF64rr:
+    case PTX::MOVPREDrr:
       assert(MI.getNumOperands() >= 2 &&
              MI.getOperand(0).isReg() && MI.getOperand(1).isReg() &&
              "Invalid register-register move instruction");

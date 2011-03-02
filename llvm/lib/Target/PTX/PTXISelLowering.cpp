@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -27,13 +28,17 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   // Set up the register classes.
   addRegisterClass(MVT::i1,  PTX::PredsRegisterClass);
-  addRegisterClass(MVT::i32, PTX::RRegs32RegisterClass);
+  addRegisterClass(MVT::i16, PTX::RRegu16RegisterClass);
+  addRegisterClass(MVT::i32, PTX::RRegu32RegisterClass);
+  addRegisterClass(MVT::i64, PTX::RRegu64RegisterClass);
   addRegisterClass(MVT::f32, PTX::RRegf32RegisterClass);
-  
+  addRegisterClass(MVT::f64, PTX::RRegf64RegisterClass);
+
   setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
 
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
-  
+  setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
+
   // Customize translation of memory addresses
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
 
@@ -90,10 +95,13 @@ struct argmap_entry {
   bool operator==(MVT::SimpleValueType _VT) const { return VT == _VT; }
 } argmap[] = {
   argmap_entry(MVT::i1,  PTX::PredsRegisterClass),
-  argmap_entry(MVT::i32, PTX::RRegs32RegisterClass),
-  argmap_entry(MVT::f32, PTX::RRegf32RegisterClass)
+  argmap_entry(MVT::i16, PTX::RRegu16RegisterClass),
+  argmap_entry(MVT::i32, PTX::RRegu32RegisterClass),
+  argmap_entry(MVT::i64, PTX::RRegu64RegisterClass),
+  argmap_entry(MVT::f32, PTX::RRegf32RegisterClass),
+  argmap_entry(MVT::f64, PTX::RRegf64RegisterClass)
 };
-} // end anonymous namespace
+}                               // end anonymous namespace
 
 SDValue PTXTargetLowering::
   LowerFormalArguments(SDValue Chain,
@@ -192,11 +200,20 @@ SDValue PTXTargetLowering::
   SDValue Flag;
   unsigned reg;
 
-  if (Outs[0].VT == MVT::i32) {
+  if (Outs[0].VT == MVT::i16) {
+    reg = PTX::RH0;
+  }
+  else if (Outs[0].VT == MVT::i32) {
     reg = PTX::R0;
+  }
+  else if (Outs[0].VT == MVT::i64) {
+    reg = PTX::RD0;
   }
   else if (Outs[0].VT == MVT::f32) {
     reg = PTX::F0;
+  }
+  else if (Outs[0].VT == MVT::f64) {
+    reg = PTX::FD0;
   }
   else {
     assert(false && "Can return only basic types");
