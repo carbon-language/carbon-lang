@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the pass that optimize code placement and align loop
-// headers to target specific alignment boundary.
+// This file implements the pass that optimizes code placement and aligns loop
+// headers to target-specific alignment boundaries.
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,7 +40,7 @@ namespace {
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const {
-      return "Code Placement Optimizater";
+      return "Code Placement Optimizer";
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
