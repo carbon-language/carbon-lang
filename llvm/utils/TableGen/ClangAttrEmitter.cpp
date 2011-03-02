@@ -589,23 +589,37 @@ void ClangAttrListEmitter::run(raw_ostream &OS) {
   OS << "#define LAST_INHERITABLE_ATTR(NAME) INHERITABLE_ATTR(NAME)\n";
   OS << "#endif\n\n";
 
+  OS << "#ifndef INHERITABLE_PARAM_ATTR\n";
+  OS << "#define INHERITABLE_PARAM_ATTR(NAME) ATTR(NAME)\n";
+  OS << "#endif\n\n";
+
+  OS << "#ifndef LAST_INHERITABLE_PARAM_ATTR\n";
+  OS << "#define LAST_INHERITABLE_PARAM_ATTR(NAME)"
+        " INHERITABLE_PARAM_ATTR(NAME)\n";
+  OS << "#endif\n\n";
+
   Record *InhClass = Records.getClass("InheritableAttr");
+  Record *InhParamClass = Records.getClass("InheritableParamAttr");
   std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr"),
-                       NonInhAttrs, InhAttrs;
+                       NonInhAttrs, InhAttrs, InhParamAttrs;
   for (std::vector<Record*>::iterator i = Attrs.begin(), e = Attrs.end();
        i != e; ++i) {
-    if ((*i)->isSubClassOf(InhClass))
+    if ((*i)->isSubClassOf(InhParamClass))
+      InhParamAttrs.push_back(*i);
+    else if ((*i)->isSubClassOf(InhClass))
       InhAttrs.push_back(*i);
     else
       NonInhAttrs.push_back(*i);
   }
 
+  EmitAttrList(OS, "INHERITABLE_PARAM_ATTR", InhParamAttrs);
   EmitAttrList(OS, "INHERITABLE_ATTR", InhAttrs);
   EmitAttrList(OS, "ATTR", NonInhAttrs);
 
   OS << "#undef LAST_ATTR\n";
   OS << "#undef INHERITABLE_ATTR\n";
   OS << "#undef LAST_INHERITABLE_ATTR\n";
+  OS << "#undef LAST_INHERITABLE_PARAM_ATTR\n";
   OS << "#undef ATTR\n";
 }
 
