@@ -6226,6 +6226,9 @@ static void printrWithDepthHelper(raw_ostream &OS, const SDNode *N,
     return;
 
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    // Don't follow chain operands.
+    if (N->getOperand(i).getValueType() == MVT::Other)
+      continue;
     OS << '\n';
     printrWithDepthHelper(OS, N->getOperand(i).getNode(), G, depth-1, indent+2);
   }
@@ -6238,7 +6241,7 @@ void SDNode::printrWithDepth(raw_ostream &OS, const SelectionDAG *G,
 
 void SDNode::printrFull(raw_ostream &OS, const SelectionDAG *G) const {
   // Don't print impossibly deep things.
-  printrWithDepth(OS, G, 100);
+  printrWithDepth(OS, G, 10);
 }
 
 void SDNode::dumprWithDepth(const SelectionDAG *G, unsigned depth) const {
@@ -6247,7 +6250,7 @@ void SDNode::dumprWithDepth(const SelectionDAG *G, unsigned depth) const {
 
 void SDNode::dumprFull(const SelectionDAG *G) const {
   // Don't print impossibly deep things.
-  dumprWithDepth(G, 100);
+  dumprWithDepth(G, 10);
 }
 
 static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
