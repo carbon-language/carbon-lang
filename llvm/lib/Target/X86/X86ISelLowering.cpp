@@ -3173,7 +3173,8 @@ bool X86::isMOVLPMask(ShuffleVectorSDNode *N) {
 bool X86::isMOVLHPSMask(ShuffleVectorSDNode *N) {
   unsigned NumElems = N->getValueType(0).getVectorNumElements();
 
-  if (NumElems != 2 && NumElems != 4)
+  if ((NumElems != 2 && NumElems != 4)
+      || N->getValueType(0).getSizeInBits() > 128)
     return false;
 
   for (unsigned i = 0; i < NumElems/2; ++i)
@@ -3195,19 +3196,36 @@ static bool isUNPCKLMask(const SmallVectorImpl<int> &Mask, EVT VT,
   if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
     return false;
 
-  for (int i = 0, j = 0; i != NumElts; i += 2, ++j) {
-    int BitI  = Mask[i];
-    int BitI1 = Mask[i+1];
-    if (!isUndefOrEqual(BitI, j))
-      return false;
-    if (V2IsSplat) {
-      if (!isUndefOrEqual(BitI1, NumElts))
+  // Handle vector lengths > 128 bits.  Define a "section" as a set of
+  // 128 bits.  AVX defines UNPCK* to operate independently on 128-bit
+  // sections.
+  unsigned NumSections = VT.getSizeInBits() / 128;
+  if (NumSections == 0 ) NumSections = 1;  // Handle MMX
+  unsigned NumSectionElts = NumElts / NumSections;
+
+  unsigned Start = 0;
+  unsigned End = NumSectionElts;
+  for (unsigned s = 0; s < NumSections; ++s) {
+    for (unsigned i = Start, j = s * NumSectionElts;
+         i != End;
+         i += 2, ++j) {
+      int BitI  = Mask[i];
+      int BitI1 = Mask[i+1];
+      if (!isUndefOrEqual(BitI, j))
         return false;
-    } else {
-      if (!isUndefOrEqual(BitI1, j + NumElts))
-        return false;
+      if (V2IsSplat) {
+        if (!isUndefOrEqual(BitI1, NumElts))
+          return false;
+      } else {
+        if (!isUndefOrEqual(BitI1, j + NumElts))
+          return false;
+      }
     }
+    // Process the next 128 bits.
+    Start += NumSectionElts;
+    End += NumSectionElts;
   }
+
   return true;
 }
 
@@ -3255,14 +3273,27 @@ static bool isUNPCKL_v_undef_Mask(const SmallVectorImpl<int> &Mask, EVT VT) {
   if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
 
-  for (int i = 0, j = 0; i != NumElems; i += 2, ++j) {
-    int BitI  = Mask[i];
-    int BitI1 = Mask[i+1];
-    if (!isUndefOrEqual(BitI, j))
-      return false;
-    if (!isUndefOrEqual(BitI1, j))
-      return false;
+  // Handle vector lengths > 128 bits.  Define a "section" as a set of
+  // 128 bits.  AVX defines UNPCK* to operate independently on 128-bit
+  // sections.
+  unsigned NumSections = VT.getSizeInBits() / 128;
+  if (NumSections == 0 ) NumSections = 1;  // Handle MMX
+  unsigned NumSectionElts = NumElems / NumSections;
+
+  for (unsigned s = 0; s < NumSections; ++s) {
+    for (unsigned i = s * NumSectionElts, j = s * NumSectionElts;
+         i != NumSectionElts * (s + 1);
+         i += 2, ++j) {
+      int BitI  = Mask[i];
+      int BitI1 = Mask[i+1];
+
+      if (!isUndefOrEqual(BitI, j))
+        return false;
+      if (!isUndefOrEqual(BitI1, j))
+        return false;
+    }
   }
+
   return true;
 }
 

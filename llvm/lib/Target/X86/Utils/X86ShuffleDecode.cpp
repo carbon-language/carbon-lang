@@ -165,12 +165,25 @@ void DecodeUNPCKLPDMask(unsigned NElts,
 /// datatypes and vector widths.
 void DecodeUNPCKLPMask(EVT VT,
                        SmallVectorImpl<unsigned> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
 
-  unsigned NElts = VT.getVectorNumElements();
+  // Handle vector lengths > 128 bits.  Define a "section" as a set of
+  // 128 bits.  AVX defines UNPCK* to operate independently on 128-bit
+  // sections.
+  unsigned NumSections = VT.getSizeInBits() / 128;
+  if (NumSections == 0 ) NumSections = 1;  // Handle MMX
+  unsigned NumSectionElts = NumElts / NumSections;
 
-  for (unsigned i = 0; i != NElts/2; ++i) {
-    ShuffleMask.push_back(i);        // Reads from dest
-    ShuffleMask.push_back(i+NElts);  // Reads from src
+  unsigned Start = 0;
+  unsigned End = NumSectionElts / 2;
+  for (unsigned s = 0; s < NumSections; ++s) {
+    for (unsigned i = Start; i != End; ++i) {
+      ShuffleMask.push_back(i);                 // Reads from dest/src1
+      ShuffleMask.push_back(i+NumSectionElts);  // Reads from src/src2
+    }
+    // Process the next 128 bits.
+    Start += NumSectionElts;
+    End += NumSectionElts;
   }
 }
 

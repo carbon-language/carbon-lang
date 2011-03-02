@@ -132,6 +132,8 @@ def X86Movlpd : SDNode<"X86ISD::MOVLPD", SDTShuff2Op>;
 
 def X86Unpcklps : SDNode<"X86ISD::UNPCKLPS", SDTShuff2Op>;
 def X86Unpcklpd : SDNode<"X86ISD::UNPCKLPD", SDTShuff2Op>;
+def X86Unpcklpsy : SDNode<"X86ISD::VUNPCKLPSY", SDTShuff2Op>;
+def X86Unpcklpdy : SDNode<"X86ISD::VUNPCKLPDY", SDTShuff2Op>;
 def X86Unpckhps : SDNode<"X86ISD::UNPCKHPS", SDTShuff2Op>;
 def X86Unpckhpd : SDNode<"X86ISD::UNPCKHPD", SDTShuff2Op>;
 
