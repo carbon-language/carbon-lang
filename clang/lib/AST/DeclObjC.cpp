@@ -400,7 +400,7 @@ ObjCMethodDecl *ObjCMethodDecl::getCanonicalDecl() {
 
 ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
   ObjCMethodFamily family = static_cast<ObjCMethodFamily>(Family);
-  if (family != InvalidObjCMethodFamily)
+  if (family != static_cast<unsigned>(InvalidObjCMethodFamily))
     return family;
 
   // Check for an explicit attribute.
