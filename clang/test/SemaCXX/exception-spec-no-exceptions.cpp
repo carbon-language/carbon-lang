@@ -1,7 +1,8 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions -fobjc-exceptions %s
 
-// Note: this is intentionally -fno-exceptions, not just accidentally
-// so because that's the current -cc1 default.
+// Note that we're specifically excluding -fcxx-exceptions in the command line above.
+
+// That this should work even with -fobjc-exceptions is PR9358
 
 // PR7243: redeclarations
 namespace test0 {

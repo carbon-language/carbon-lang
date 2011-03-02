@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -Wmicrosoft -verify -fms-extensions -fexceptions
+// RUN: %clang_cc1 %s -fsyntax-only -Wmicrosoft -verify -fms-extensions -fexceptions -fcxx-exceptions
 
 
 // ::type_info is predeclared with forward class declartion

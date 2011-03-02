@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fexceptions -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fexceptions -fcxx-exceptions -verify %s
 int *use_new(int N) {
   if (N == 1)
     return new int;

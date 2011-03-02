@@ -160,7 +160,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 
     // If exceptions are disabled, suppress the warning about missing
     // exception specifications for new and delete operators.
-    if (!getLangOptions().Exceptions) {
+    if (!getLangOptions().CXXExceptions) {
       switch (New->getDeclName().getCXXOverloadedOperator()) {
       case OO_New:
       case OO_Array_New:
@@ -249,7 +249,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
                                         bool *MissingExceptionSpecification,
                                      bool *MissingEmptyExceptionSpecification)  {
   // Just completely ignore this under -fno-exceptions.
-  if (!getLangOptions().Exceptions)
+  if (!getLangOptions().CXXExceptions)
     return false;
 
   if (MissingExceptionSpecification)
@@ -331,7 +331,7 @@ bool Sema::CheckExceptionSpecSubset(
     const FunctionProtoType *Subset, SourceLocation SubLoc) {
 
   // Just auto-succeed under -fno-exceptions.
-  if (!getLangOptions().Exceptions)
+  if (!getLangOptions().CXXExceptions)
     return false;
 
   // FIXME: As usual, we could be more specific in our error messages, but

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fexceptions -verify %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -verify %s
 struct A { };
 struct B { };
 struct C { };

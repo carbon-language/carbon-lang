@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fexceptions -fcxx-exceptions %s
 
 // Straight from the standard:
 // Plain function with spec

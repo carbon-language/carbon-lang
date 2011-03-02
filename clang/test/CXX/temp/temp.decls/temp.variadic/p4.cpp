@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -fexceptions -verify %s
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -fexceptions -fcxx-exceptions -verify %s
 
 template<typename... Types> struct tuple;
 template<int I> struct int_c;
