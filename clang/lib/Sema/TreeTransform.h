@@ -4318,10 +4318,8 @@ QualType TreeTransform<Derived>::TransformDependentTemplateSpecializationType(
       = TLB.push<DependentTemplateSpecializationTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
     
-    // FIXME: Poor nested-name-specifier source-location information.
     CXXScopeSpec SS;
-    SS.MakeTrivial(SemaRef.Context, 
-                   DTN->getQualifier(), TL.getQualifierLoc().getSourceRange());
+    SS.Adopt(TL.getQualifierLoc());
     NewTL.setQualifierLoc(SS.getWithLocInContext(SemaRef.Context));
     NewTL.setNameLoc(TL.getNameLoc());
     NewTL.setLAngleLoc(TL.getLAngleLoc());
