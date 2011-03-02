@@ -1126,8 +1126,7 @@ public:
   void StartFunction(GlobalDecl GD, QualType RetTy,
                      llvm::Function *Fn,
                      const FunctionArgList &Args,
-                     SourceLocation StartLoc,
-                     CallingConv CC);
+                     SourceLocation StartLoc);
 
   void EmitConstructorBody(FunctionArgList &Args);
   void EmitDestructorBody(FunctionArgList &Args);

@@ -211,8 +211,7 @@ void CodeGenFunction::EmitMCountInstrumentation() {
 void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args,
-                                    SourceLocation StartLoc,
-                                    CallingConv CC) {
+                                    SourceLocation StartLoc) {
   const Decl *D = GD.getDecl();
   
   DidCallStackSave = false;
@@ -279,7 +278,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   // FIXME: Leaked.
   // CC info is ignored, hopefully?
   CurFnInfo = &CGM.getTypes().getFunctionInfo(FnRetTy, Args,
-                                              FunctionType::ExtInfo().withCallingConv(CC));
+                                              FunctionType::ExtInfo());
 
   if (RetTy->isVoidType()) {
     // Void type; nothing to return.
@@ -360,7 +359,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
   if (Stmt *Body = FD->getBody()) BodyRange = Body->getSourceRange();
 
   // Emit the standard function prologue.
-  StartFunction(GD, ResTy, Fn, Args, BodyRange.getBegin(), CC_Default);
+  StartFunction(GD, ResTy, Fn, Args, BodyRange.getBegin());
 
   // Generate the body of the function.
   if (isa<CXXDestructorDecl>(FD))

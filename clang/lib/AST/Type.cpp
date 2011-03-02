@@ -1157,7 +1157,6 @@ llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   case CC_X86FastCall: return "fastcall";
   case CC_X86ThisCall: return "thiscall";
   case CC_X86Pascal: return "pascal";
-  case CC_Win64ThisCall: return "win64_thiscall";
   }
 
   llvm_unreachable("Invalid calling convention.");

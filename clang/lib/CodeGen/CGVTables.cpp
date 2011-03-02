@@ -2582,11 +2582,8 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
     
     FunctionArgs.push_back(std::make_pair(Param, Param->getType()));
   }
-
-  const bool IsWin64 = CGM.getContext().Target.isWin64();
-
-  StartFunction(GlobalDecl(), ResultType, Fn, FunctionArgs, SourceLocation(),
-                IsWin64 ? CC_Win64ThisCall : CC_Default);
+  
+  StartFunction(GlobalDecl(), ResultType, Fn, FunctionArgs, SourceLocation());
 
   CGM.getCXXABI().EmitInstanceFunctionProlog(*this);
 
@@ -2617,14 +2614,9 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
                                    FPT->isVariadic());
   llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
 
-  FunctionType::ExtInfo Info = FPT->getExtInfo();
-
-  if (IsWin64) {
-      Info = Info.withCallingConv(CC_Win64ThisCall);
-  }
-
   const CGFunctionInfo &FnInfo = 
-    CGM.getTypes().getFunctionInfo(ResultType, CallArgs, Info);
+    CGM.getTypes().getFunctionInfo(ResultType, CallArgs,
+                                   FPT->getExtInfo());
   
   // Determine whether we have a return value slot to use.
   ReturnValueSlot Slot;

@@ -879,9 +879,6 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T,
     case CC_X86ThisCall: Out << 'E'; break;
     case CC_X86StdCall: Out << 'G'; break;
     case CC_X86FastCall: Out << 'I'; break;
-    case CC_Win64ThisCall:
-      assert(false && "Don't know how to mangle Win64 thiscall cc yet!");
-      break;
   }
 }
 void MicrosoftCXXNameMangler::mangleThrowSpecification(

@@ -530,12 +530,6 @@ public:
   virtual const char *getStaticInitSectionSpecifier() const {
     return 0;
   }
-
-  // isWin64 - Whether the target is MSVC Win64.
-  bool isWin64() const {
-    return     (Triple.getArch() == llvm::Triple::x86_64)
-            && (Triple.getOS()   == llvm::Triple::Win32);
-  }
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
     return PointerWidth;

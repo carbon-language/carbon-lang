@@ -911,7 +911,6 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     case CC_X86StdCall: return set("cc", "x86_stdcall");
     case CC_X86ThisCall: return set("cc", "x86_thiscall");
     case CC_X86Pascal: return set("cc", "x86_pascal");
-    case CC_Win64ThisCall: return set("cc", "win64_thiscall");
     }
   }
 

@@ -2121,7 +2121,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
   CallArgList Args;
   EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd);
 
-  return EmitCall(CGM.getTypes().getFunctionInfo(Args, FnType, CC_Default),
+  return EmitCall(CGM.getTypes().getFunctionInfo(Args, FnType),
                   Callee, ReturnValue, Args, TargetDecl);
 }
 

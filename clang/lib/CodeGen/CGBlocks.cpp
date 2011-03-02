@@ -922,7 +922,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
   // Begin generating the function.
   StartFunction(blockDecl, fnType->getResultType(), fn, args,
-                blockInfo.getBlockExpr()->getBody()->getLocEnd(), CC_Default);
+                blockInfo.getBlockExpr()->getBody()->getLocEnd());
   CurFuncDecl = outerFnDecl; // StartFunction sets this to blockDecl
 
   // Okay.  Undo some of what StartFunction did.
@@ -1078,7 +1078,7 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SC_None,
                                           false,
                                           true);
-  StartFunction(FD, C.VoidTy, Fn, args, SourceLocation(), CC_Default);
+  StartFunction(FD, C.VoidTy, Fn, args, SourceLocation());
 
   const llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
 
@@ -1167,7 +1167,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SC_Static,
                                           SC_None,
                                           false, true);
-  StartFunction(FD, C.VoidTy, Fn, args, SourceLocation(), CC_Default);
+  StartFunction(FD, C.VoidTy, Fn, args, SourceLocation());
 
   const llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
 
@@ -1270,7 +1270,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, BlockFieldFlags flags,
                                           SC_Static,
                                           SC_None,
                                           false, true);
-  StartFunction(FD, R, Fn, Args, SourceLocation(), CC_Default);
+  StartFunction(FD, R, Fn, Args, SourceLocation());
 
   // dst->x
   llvm::Value *V = GetAddrOfLocalVar(Dst);
@@ -1340,7 +1340,7 @@ CodeGenFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
                                           SC_Static,
                                           SC_None,
                                           false, true);
-  StartFunction(FD, R, Fn, Args, SourceLocation(), CC_Default);
+  StartFunction(FD, R, Fn, Args, SourceLocation());
 
   llvm::Value *V = GetAddrOfLocalVar(Src);
   V = Builder.CreateBitCast(V, llvm::PointerType::get(T, 0));
