@@ -2309,20 +2309,15 @@ public:
   }
   
 private:
-  QualType TransformTypeInObjectScope(QualType T,
-                                      QualType ObjectType,
-                                      NamedDecl *FirstQualifierInScope,
-                                      NestedNameSpecifier *Prefix);
-
-  TypeSourceInfo *TransformTypeInObjectScope(TypeSourceInfo *T,
-                                             QualType ObjectType,
-                                             NamedDecl *FirstQualifierInScope,
-                                             NestedNameSpecifier *Prefix);
-  
   TypeLoc TransformTypeInObjectScope(TypeLoc TL,
                                      QualType ObjectType,
                                      NamedDecl *FirstQualifierInScope,
                                      CXXScopeSpec &SS);
+
+  TypeSourceInfo *TransformTypeInObjectScope(TypeSourceInfo *TSInfo,
+                                             QualType ObjectType,
+                                             NamedDecl *FirstQualifierInScope,
+                                             CXXScopeSpec &SS);
 };
 
 template<typename Derived>
@@ -2540,13 +2535,20 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
   case NestedNameSpecifier::TypeSpecWithTemplate:
   case NestedNameSpecifier::TypeSpec: {
     TemporaryBase Rebase(*this, Range.getBegin(), DeclarationName());
-    QualType T = TransformTypeInObjectScope(QualType(NNS->getAsType(), 0),
-                                            ObjectType,
-                                            FirstQualifierInScope,
-                                            Prefix);
-    if (T.isNull())
+    CXXScopeSpec SS;
+    SS.MakeTrivial(SemaRef.Context, Prefix, Range);
+    
+    TypeSourceInfo *TSInfo
+      = SemaRef.Context.getTrivialTypeSourceInfo(QualType(NNS->getAsType(), 0),
+                                                 Range.getEnd());
+    TSInfo = TransformTypeInObjectScope(TSInfo,
+                                        ObjectType,
+                                        FirstQualifierInScope,
+                                        SS);
+    if (!TSInfo)
       return 0;
 
+    QualType T = TSInfo->getType();
     if (!getDerived().AlwaysRebuild() &&
         Prefix == NNS->getPrefix() &&
         T == QualType(NNS->getAsType(), 0))
@@ -3332,95 +3334,12 @@ TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
   return Result;
 }
 
-/// \brief Transforms a type that was written in a scope specifier,
-/// given an object type, the results of unqualified lookup, and
-/// an already-instantiated prefix.
-///
-/// The object type is provided iff the scope specifier qualifies the
-/// member of a dependent member-access expression.  The prefix is
-/// provided iff the the scope specifier in which this appears has a
-/// prefix.
-///
-/// This is private to TreeTransform.
-template<typename Derived>
-QualType
-TreeTransform<Derived>::TransformTypeInObjectScope(QualType T,
-                                                   QualType ObjectType,
-                                                   NamedDecl *UnqualLookup,
-                                                  NestedNameSpecifier *Prefix) {
-  if (getDerived().AlreadyTransformed(T))
-    return T;
-
-  TypeSourceInfo *TSI =
-    SemaRef.Context.getTrivialTypeSourceInfo(T, getDerived().getBaseLocation());
-
-  TSI = getDerived().TransformTypeInObjectScope(TSI, ObjectType,
-                                                UnqualLookup, Prefix);
-  if (!TSI) return QualType();
-  return TSI->getType();
-}
-
-template<typename Derived>
-TypeSourceInfo *
-TreeTransform<Derived>::TransformTypeInObjectScope(TypeSourceInfo *TSI,
-                                                   QualType ObjectType,
-                                                   NamedDecl *UnqualLookup,
-                                                  NestedNameSpecifier *Prefix) {
-  // TODO: in some cases, we might have some verification to do here.
-  if (ObjectType.isNull())
-    return getDerived().TransformType(TSI);
-
-  QualType T = TSI->getType();
-  if (getDerived().AlreadyTransformed(T))
-    return TSI;
-
-  TypeLocBuilder TLB;
-  QualType Result;
-
-  if (isa<TemplateSpecializationType>(T)) {
-    TemplateSpecializationTypeLoc TL
-      = cast<TemplateSpecializationTypeLoc>(TSI->getTypeLoc());
-
-    TemplateName Template =
-      getDerived().TransformTemplateName(TL.getTypePtr()->getTemplateName(),
-                                         ObjectType, UnqualLookup);
-    if (Template.isNull()) return 0;
-
-    Result = getDerived()
-      .TransformTemplateSpecializationType(TLB, TL, Template);
-  } else if (isa<DependentTemplateSpecializationType>(T)) {
-    DependentTemplateSpecializationTypeLoc TL
-      = cast<DependentTemplateSpecializationTypeLoc>(TSI->getTypeLoc());
-
-    TemplateName Template
-      = SemaRef.Context.getDependentTemplateName(
-                                                TL.getTypePtr()->getQualifier(),
-                                              TL.getTypePtr()->getIdentifier());
-    
-    Template = getDerived().TransformTemplateName(Template, ObjectType, 
-                                                  UnqualLookup);
-    if (Template.isNull())
-      return 0;
-
-    Result = getDerived().TransformDependentTemplateSpecializationType(TLB, TL,
-                                                                     Template);
-  } else {
-    // Nothing special needs to be done for these.
-    Result = getDerived().TransformType(TLB, TSI->getTypeLoc());
-  }
-
-  if (Result.isNull()) return 0;
-  return TLB.getTypeSourceInfo(SemaRef.Context, Result);
-}
-
 template<typename Derived>
 TypeLoc
 TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
                                                    QualType ObjectType,
                                                    NamedDecl *UnqualLookup,
                                                    CXXScopeSpec &SS) {
-  // FIXME: Painfully copy-paste from the above!
-  
   QualType T = TL.getType();
   if (getDerived().AlreadyTransformed(T))
     return TL;
@@ -3466,6 +3385,62 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
     return TypeLoc();
   
   return TLB.getTypeSourceInfo(SemaRef.Context, Result)->getTypeLoc();
+}
+
+template<typename Derived>
+TypeSourceInfo *
+TreeTransform<Derived>::TransformTypeInObjectScope(TypeSourceInfo *TSInfo,
+                                                   QualType ObjectType,
+                                                   NamedDecl *UnqualLookup,
+                                                   CXXScopeSpec &SS) {
+  // FIXME: Painfully copy-paste from the above!
+  
+  QualType T = TSInfo->getType();
+  if (getDerived().AlreadyTransformed(T))
+    return TSInfo;
+  
+  TypeLocBuilder TLB;
+  QualType Result;
+  
+  TypeLoc TL = TSInfo->getTypeLoc();
+  if (isa<TemplateSpecializationType>(T)) {
+    TemplateSpecializationTypeLoc SpecTL
+      = cast<TemplateSpecializationTypeLoc>(TL);
+    
+    TemplateName Template
+    = getDerived().TransformTemplateName(SS,
+                                         SpecTL.getTypePtr()->getTemplateName(),
+                                         SpecTL.getTemplateNameLoc(),
+                                         ObjectType, UnqualLookup);
+    if (Template.isNull()) 
+      return 0;
+    
+    Result = getDerived().TransformTemplateSpecializationType(TLB, SpecTL, 
+                                                              Template);
+  } else if (isa<DependentTemplateSpecializationType>(T)) {
+    DependentTemplateSpecializationTypeLoc SpecTL
+      = cast<DependentTemplateSpecializationTypeLoc>(TL);
+    
+    TemplateName Template
+      = getDerived().RebuildTemplateName(SS, 
+                                         *SpecTL.getTypePtr()->getIdentifier(), 
+                                         SpecTL.getNameLoc(),
+                                         ObjectType, UnqualLookup);
+    if (Template.isNull())
+      return 0;
+    
+    Result = getDerived().TransformDependentTemplateSpecializationType(TLB, 
+                                                                       SpecTL,
+                                                                       Template);
+  } else {
+    // Nothing special needs to be done for these.
+    Result = getDerived().TransformType(TLB, TL);
+  }
+  
+  if (Result.isNull()) 
+    return 0;
+  
+  return TLB.getTypeSourceInfo(SemaRef.Context, Result);
 }
 
 template <class TyLoc> static inline
@@ -6912,8 +6887,7 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
   if (E->getDestroyedTypeInfo()) {
     TypeSourceInfo *DestroyedTypeInfo
       = getDerived().TransformTypeInObjectScope(E->getDestroyedTypeInfo(),
-                                                ObjectType, 0, 
-                                        QualifierLoc.getNestedNameSpecifier());
+                                                ObjectType, 0, SS);
     if (!DestroyedTypeInfo)
       return ExprError();
     Destroyed = DestroyedTypeInfo;
