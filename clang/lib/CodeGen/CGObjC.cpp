@@ -779,7 +779,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     = Builder.CreateLoad(StateMutationsPtr, "statemutations");
 
   llvm::BasicBlock *WasMutatedBB = createBasicBlock("forcoll.mutated");
-  llvm::BasicBlock *WasNotMutatedBB = createBasicBlock("forcool.notmutated");
+  llvm::BasicBlock *WasNotMutatedBB = createBasicBlock("forcoll.notmutated");
 
   Builder.CreateCondBr(Builder.CreateICmpEQ(currentMutations, initialMutations),
                        WasNotMutatedBB, WasMutatedBB);
