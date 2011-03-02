@@ -2266,32 +2266,6 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
 
   int64_t CurrentIndex = 0;
   
-  // The MSVC Win64 ABI uses a different ordering of the
-  // virtual function pointers:
-  //
-  // The order of the virtual function pointers in a virtual table is
-  // the reverse order of declaration of the corresponding member functions
-  // in the class except for overloaded member functions. Overloaded member
-  // functions are moved below the first declaration of the
-  // respective overloaded member function. All declarations for one
-  // overloaded member function are added in reverse order of declaration.
-  //
-  // E.g. for the following class:
-  // class A {
-  //   virtual b();
-  //   virtual a(int a);
-  //   virtual c();
-  //   virtual a(float a);
-  // };
-  //
-  // The vtable layout looks like this:
-  // c()
-  // a(float b)
-  // a(int a)
-  // b()
-  //
-  const bool IsWin64 = CGM.getContext().Target.isWin64();
-
   const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
   
@@ -2311,9 +2285,6 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
 
   const CXXDestructorDecl *ImplicitVirtualDtor = 0;
   
-  llvm::StringMap<llvm::SmallVector<const CXXMethodDecl *, 16> *> Methods;
-  llvm::SmallVector<llvm::SmallVector<const CXXMethodDecl *, 16> *, 16> Order;
-
   for (CXXRecordDecl::method_iterator i = RD->method_begin(),
        e = RD->method_end(); i != e; ++i) {
     const CXXMethodDecl *MD = *i;
@@ -2321,20 +2292,6 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
     // We only want virtual methods.
     if (!MD->isVirtual())
       continue;
-
-    if (IsWin64) {
-      if (Methods.count(MD->getNameAsString()) == 0) {
-        // No entry yet.
-        llvm::SmallVector<const CXXMethodDecl *, 16> *entry = new llvm::SmallVector<const CXXMethodDecl *, 16>();
-        entry->push_back(MD);
-        Methods[MD->getNameAsString()] = entry;
-        Order.push_back(entry);
-      } else {
-        // This is an overloaded method, add to already existing entry.
-        llvm::SmallVector<const CXXMethodDecl *, 16> *entry = Methods[MD->getNameAsString()];
-        entry->push_back(MD);
-      }
-    }
 
     // Check if this method overrides a method in the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
@@ -2370,7 +2327,7 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
         ImplicitVirtualDtor = DD;
         continue;
       } 
-      assert(!IsWin64 && "Need support for dtor!");
+
       // Add the complete dtor.
       MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)] = CurrentIndex++;
       
@@ -2378,14 +2335,11 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
       MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] = CurrentIndex++;
     } else {
       // Add the entry.
-      if (!IsWin64) {
-        MethodVTableIndices[MD] = CurrentIndex++;
-      }
+      MethodVTableIndices[MD] = CurrentIndex++;
     }
   }
 
   if (ImplicitVirtualDtor) {
-    assert(!IsWin64 && "Need support for implicit virtual dtor!");
     // Itanium C++ ABI 2.5.2:
     //   If a class has an implicitly-defined virtual destructor, 
     //   its entries come after the declared virtual function pointers.
@@ -2399,19 +2353,6 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
       CurrentIndex++;
   }
   
-  if (IsWin64) {
-    for (llvm::SmallVector<llvm::SmallVector<const CXXMethodDecl *, 16> *, 16>::iterator i = Order.begin(),
-         e = Order.end(); i != e; ++i) {
-        llvm::SmallVector<const CXXMethodDecl *, 16> *elem = *i;
-
-        while (elem->size() > 0) {
-            const CXXMethodDecl *method = elem->pop_back_val();
-            // Add the entry.
-            MethodVTableIndices[method] = CurrentIndex++;
-        }
-    }
-  }
-
   NumVirtualFunctionPointers[RD] = CurrentIndex;
 }
 
