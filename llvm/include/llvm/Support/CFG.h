@@ -41,6 +41,7 @@ class PredIterator : public std::iterator<std::forward_iterator_tag,
 public:
   typedef typename super::pointer pointer;
 
+  PredIterator() {}
   explicit inline PredIterator(Ptr *bb) : It(bb->use_begin()) {
     advancePastNonTerminators();
   }
@@ -63,6 +64,12 @@ public:
 
   inline Self operator++(int) { // Postincrement
     Self tmp = *this; ++*this; return tmp;
+  }
+
+  /// getOperandNo - Return the operand number in the predecessor's
+  /// terminator of the successor.
+  unsigned getOperandNo() const {
+    return It.getOperandNo();
   }
 };
 
