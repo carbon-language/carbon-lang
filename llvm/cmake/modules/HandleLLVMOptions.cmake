@@ -102,6 +102,31 @@ if( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
   endif( LLVM_BUILD_32_BITS )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32 )
 
+message(STATUS "uno"
+"dos")
+if( MSVC_IDE AND ( MSVC90 OR MSVC10 ) )
+  # Only Visual Studio 2008 and 2010 officially supports /MP.
+  # Visual Studio 2005 do support it but it's experimental there.
+  set(LLVM_COMPILER_JOBS "0" CACHE STRING
+    "Number of parallel compiler jobs. 0 means use all processors. Default is 0.")
+  if( NOT LLVM_COMPILER_JOBS STREQUAL "1" )
+    if( LLVM_COMPILER_JOBS STREQUAL "0" )
+      add_llvm_definitions( /MP )
+    else()
+      if (MSVC10)
+        message(FATAL_ERROR
+          "Due to a bug in CMake only 0 and 1 is supported for "
+          "LLVM_COMPILER_JOBS when generating for Visual Studio 2010")
+      else()
+        message(STATUS "Number of parallel compiler jobs set to " ${LLVM_COMPILER_JOBS})
+        add_llvm_definitions( /MP${LLVM_COMPILER_JOBS} )
+      endif()
+    endif()
+  else()
+    message(STATUS "Parallel compilation disabled")
+  endif()
+endif()
+
 if( MSVC )
   include(ChooseMSVCCRT)
 
