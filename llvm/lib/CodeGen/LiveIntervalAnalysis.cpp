@@ -847,7 +847,7 @@ void LiveIntervals::shrinkToUses(LiveInterval *li) {
     assert(LII != NewLI.end() && "Missing live range for PHI");
     if (LII->end != VNI->def.getNextSlot())
       continue;
-    if (!VNI->isPHIDef()) {
+    if (VNI->isPHIDef()) {
       // This is a dead PHI. Remove it.
       VNI->setIsUnused(true);
       NewLI.removeRange(*LII);
