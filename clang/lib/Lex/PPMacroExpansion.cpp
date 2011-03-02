@@ -540,6 +540,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("attribute_ns_consumed", true)
            .Case("attribute_cf_consumed", true)
            .Case("attribute_objc_ivar_unused", true)
+           .Case("attribute_objc_method_family", true)
            .Case("attribute_overloadable", true)
            .Case("attribute_unavailable_with_message", true)
            .Case("blocks", LangOpts.Blocks)

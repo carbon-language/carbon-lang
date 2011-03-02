@@ -1028,6 +1028,7 @@ def err_format_attribute_result_not : Error<"function does not return %0">;
 def err_format_attribute_implicit_this_format_string : Error<
   "format attribute cannot specify the implicit this argument as the format "
   "string">;
+def warn_unknown_method_family : Warning<"unrecognized method family">;
 def err_attribute_invalid_size : Error<
   "vector size not an integral multiple of component size">;
 def err_attribute_zero_size : Error<"zero vector size">;

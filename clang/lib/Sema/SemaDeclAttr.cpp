@@ -1094,6 +1094,51 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) VisibilityAttr(Attr.getLoc(), S.Context, type));
 }
 
+static void HandleObjCMethodFamilyAttr(Decl *decl, const AttributeList &attr,
+                                       Sema &S) {
+  ObjCMethodDecl *method = dyn_cast<ObjCMethodDecl>(decl);
+  if (!method) {
+    S.Diag(attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << 13; // methods
+    return;
+  }
+
+  if (attr.getNumArgs() != 0 || !attr.getParameterName()) {
+    if (!attr.getParameterName() && attr.getNumArgs() == 1) {
+      S.Diag(attr.getLoc(), diag::err_attribute_argument_n_not_string)
+        << "objc_method_family" << 1;
+    } else {
+      S.Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    }
+    attr.setInvalid();
+    return;
+  }
+
+  llvm::StringRef param = attr.getParameterName()->getName();
+  ObjCMethodFamilyAttr::FamilyKind family;
+  if (param == "none")
+    family = ObjCMethodFamilyAttr::OMF_None;
+  else if (param == "alloc")
+    family = ObjCMethodFamilyAttr::OMF_alloc;
+  else if (param == "copy")
+    family = ObjCMethodFamilyAttr::OMF_copy;
+  else if (param == "init")
+    family = ObjCMethodFamilyAttr::OMF_init;
+  else if (param == "mutableCopy")
+    family = ObjCMethodFamilyAttr::OMF_mutableCopy;
+  else if (param == "new")
+    family = ObjCMethodFamilyAttr::OMF_new;
+  else {
+    // Just warn and ignore it.  This is future-proof against new
+    // families being used in system headers.
+    S.Diag(attr.getParameterLoc(), diag::warn_unknown_method_family);
+    return;
+  }
+
+  decl->addAttr(new (S.Context) ObjCMethodFamilyAttr(attr.getLoc(),
+                                                     S.Context, family));
+}
+
 static void HandleObjCExceptionAttr(Decl *D, const AttributeList &Attr,
                                     Sema &S) {
   if (Attr.getNumArgs() != 0) {
@@ -2751,6 +2796,9 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
     break;
   case AttributeList::AT_objc_exception:
     HandleObjCExceptionAttr(D, Attr, S);
+    break;
+  case AttributeList::AT_objc_method_family:
+    HandleObjCMethodFamilyAttr(D, Attr, S);
     break;
   case AttributeList::AT_nsobject:    HandleObjCNSObject    (D, Attr, S); break;
   case AttributeList::AT_blocks:      HandleBlocksAttr      (D, Attr, S); break;

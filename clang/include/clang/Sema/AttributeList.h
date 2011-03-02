@@ -125,6 +125,7 @@ public:
     AT_nothrow,
     AT_nsobject,
     AT_objc_exception,
+    AT_objc_method_family,
     AT_cf_returns_not_retained, // Clang-specific.
     AT_cf_returns_retained,     // Clang-specific.
     AT_ns_returns_not_retained, // Clang-specific.

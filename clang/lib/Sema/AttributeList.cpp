@@ -98,6 +98,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("returns_twice", IgnoredAttribute)
     .Case("vec_type_hint", IgnoredAttribute)
     .Case("objc_exception", AT_objc_exception)
+    .Case("objc_method_family", AT_objc_method_family)
     .Case("ext_vector_type", AT_ext_vector_type)
     .Case("neon_vector_type", AT_neon_vector_type)
     .Case("neon_polyvector_type", AT_neon_polyvector_type)

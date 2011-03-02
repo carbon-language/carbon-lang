@@ -369,6 +369,15 @@ def ObjCException : InheritableAttr {
   let Spellings = ["objc_exception"];
 }
 
+def ObjCMethodFamily : InheritableAttr {
+  let Spellings = ["objc_method_family"];
+  let Subjects = [ObjCMethod];
+  let Args = [EnumArgument<"Family", "FamilyKind",
+               ["none", "alloc", "copy", "init", "mutableCopy", "new"],
+               ["OMF_None", "OMF_alloc", "OMF_copy", "OMF_init",
+                "OMF_mutableCopy", "OMF_new"]>];
+}
+
 def ObjCNSObject : InheritableAttr {
   let Spellings = ["NSObject"];
 }
