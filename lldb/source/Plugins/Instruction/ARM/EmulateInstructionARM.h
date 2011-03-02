@@ -414,6 +414,10 @@ protected:
     bool
     EmulateTB (ARMEncoding encoding);
 
+    // A8.6.4 ADD (immediate, Thumb)
+    bool
+    EmulateADDImmThumb (ARMEncoding encoding);
+
     // A8.6.5 ADD (immediate, ARM)
     bool
     EmulateADDImmARM (ARMEncoding encoding);

@@ -2249,6 +2249,122 @@ EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
     return true;
 }
 
+// This instruction adds an immediate value to a register value, and writes the result to the destination register.  
+// It can optionally update the condition flags based on the result.
+bool
+EmulateInstructionARM::EmulateADDImmThumb (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); 
+        (result, carry, overflow) = AddWithCarry(R[n], imm32, ’0’); 
+        R[d] = result; 
+        if setflags then
+            APSR.N = result<31>;  
+            APSR.Z = IsZeroBit(result); 
+            APSR.C = carry;  
+            APSR.V = overflow;
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed())
+    {
+        uint32_t d;
+        uint32_t n;
+        bool setflags;
+        uint32_t imm32;
+        uint32_t carry_out;
+        
+        //EncodingSpecificOperations(); 
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // d = UInt(Rd); n = UInt(Rn); setflags = !InITBlock(); imm32 = ZeroExtend(imm3, 32);
+                d = Bits32 (opcode, 2, 0);
+                n = Bits32 (opcode, 5, 3);
+                setflags = !InITBlock();
+                imm32 = Bits32 (opcode, 8,6);
+                
+                break;
+                
+            case eEncodingT2:
+                // d = UInt(Rdn); n = UInt(Rdn); setflags = !InITBlock(); imm32 = ZeroExtend(imm8, 32);
+                d = Bits32 (opcode, 10, 8);
+                n = Bits32 (opcode, 10, 8);
+                setflags = !InITBlock();
+                imm32 = Bits32 (opcode, 7, 0);
+                
+                break;
+                
+            case eEncodingT3:
+                // if Rd == ’1111’ && S == ’1’ then SEE CMN (immediate); 
+                // if Rn == ’1101’ then SEE ADD (SP plus immediate); 
+                // d = UInt(Rd); n = UInt(Rn); setflags = (S == ’1’); imm32 = ThumbExpandImm(i:imm3:imm8); 
+                d = Bits32 (opcode, 11, 8);
+                n = Bits32 (opcode, 19, 16);
+                setflags = BitIsSet (opcode, 20);
+                imm32 = ThumbExpandImm_C (opcode, APSR_C, carry_out);
+                
+                // if BadReg(d) || n == 15 then UNPREDICTABLE;
+                if (BadReg (d) || (n == 15))
+                    return false;
+                
+                break;
+                
+            case eEncodingT4:
+            {
+                // if Rn == ’1111’ then SEE ADR; 
+                // if Rn == ’1101’ then SEE ADD (SP plus immediate); 
+                // d = UInt(Rd); n = UInt(Rn); setflags = FALSE; imm32 = ZeroExtend(i:imm3:imm8, 32); 
+                d = Bits32 (opcode, 11, 8);
+                n = Bits32 (opcode, 19, 16);
+                setflags = false;
+                uint32_t i = Bit32 (opcode, 26);
+                uint32_t imm3 = Bits32 (opcode, 14, 12);
+                uint32_t imm8 = Bits32 (opcode, 7, 0);
+                imm32 = (i << 11) | (imm3 << 8) | imm8;
+                
+                // if BadReg(d) then UNPREDICTABLE;
+                if (BadReg (d))
+                    return false;
+                    
+                break;
+            }   
+            default:
+                return false;
+        }
+        
+        uint64_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+        
+        //(result, carry, overflow) = AddWithCarry(R[n], imm32, ’0’); 
+        AddWithCarryResult res = AddWithCarry (Rn, imm32, 0);
+        
+        Register reg_n;
+        reg_n.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        
+        EmulateInstruction::Context context;
+        context.type = eContextAddition;
+        context.SetRegisterPlusOffset (reg_n, imm32);
+        
+        //R[d] = result; 
+        //if setflags then
+            //APSR.N = result<31>;  
+            //APSR.Z = IsZeroBit(result); 
+            //APSR.C = carry;  
+            //APSR.V = overflow;
+        if (!WriteCoreRegOptionalFlags (context, res.result, d, setflags, res.carry_out, res.overflow))
+            return false;
+        
+    }
+    return true;
+}
+                  
 // This instruction adds an immediate value to a register value, and writes the result to the destination
 // register.  It can optionally update the condition flags based on the result.
 bool
@@ -8829,6 +8945,11 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // sbc (register)
         { 0xffffffc0, 0x00004180, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSBCReg, "sbcs|sbc<c> <Rdn>, <Rm>"},
         { 0xffe08000, 0xeb600000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // add (immediate, Thumb)
+        { 0xfffffe00, 0x00001c00, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDImmThumb, "adds|add<c> <Rd>,<Rn>,#<imm3>" },
+        { 0xfffff800, 0x00003000, ARMV4T_ABOVE,  eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDImmThumb, "adds|add<c> <Rdn>,#<imm8>" },
+        { 0xfbe08000, 0xf1000000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateADDImmThumb, "add{s}<c>.w <Rd>,<Rn>,#<const>" },
+        { 0xfbf08000, 0xf2000000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateADDImmThumb, "addw<c> <Rd>,<Rn>,#<imm12>" },
         // sub (immediate, Thumb)
         { 0xfffffe00, 0x00001e00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBImmThumb, "subs|sub<c> <Rd>, <Rn> #imm3"},
         { 0xfffff800, 0x00003800, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateSUBImmThumb, "subs|sub<c> <Rdn>, #imm8"},

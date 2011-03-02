@@ -170,7 +170,8 @@ public:
         // arg2 = don't care
         eContextWriteMemoryRandomBits,
         
-        eContextMultiplication
+        eContextMultiplication,
+        eContextAddition
     };
     
     enum InfoType {
