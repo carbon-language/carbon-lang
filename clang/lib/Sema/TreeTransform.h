@@ -894,49 +894,6 @@ public:
                                         NumExpansions);
   }
 
-  /// \brief Build a new nested-name-specifier given the prefix and an
-  /// identifier that names the next step in the nested-name-specifier.
-  ///
-  /// By default, performs semantic analysis when building the new
-  /// nested-name-specifier. Subclasses may override this routine to provide
-  /// different behavior.
-  NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
-                                                  SourceRange Range,
-                                                  IdentifierInfo &II,
-                                                  QualType ObjectType,
-                                              NamedDecl *FirstQualifierInScope);
-
-  /// \brief Build a new nested-name-specifier given the prefix and the
-  /// namespace named in the next step in the nested-name-specifier.
-  ///
-  /// By default, performs semantic analysis when building the new
-  /// nested-name-specifier. Subclasses may override this routine to provide
-  /// different behavior.
-  NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
-                                                  SourceRange Range,
-                                                  NamespaceDecl *NS);
-
-  /// \brief Build a new nested-name-specifier given the prefix and the
-  /// namespace alias named in the next step in the nested-name-specifier.
-  ///
-  /// By default, performs semantic analysis when building the new
-  /// nested-name-specifier. Subclasses may override this routine to provide
-  /// different behavior.
-  NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
-                                                  SourceRange Range,
-                                                  NamespaceAliasDecl *Alias);
-
-  /// \brief Build a new nested-name-specifier given the prefix and the
-  /// type named in the next step in the nested-name-specifier.
-  ///
-  /// By default, performs semantic analysis when building the new
-  /// nested-name-specifier. Subclasses may override this routine to provide
-  /// different behavior.
-  NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
-                                                  SourceRange Range,
-                                                  bool TemplateKW,
-                                                  QualType T);
-
   /// \brief Build a new template name given a nested name specifier, a flag
   /// indicating whether the "template" keyword was provided, and the template
   /// that the template name refers to.
@@ -7756,59 +7713,6 @@ QualType TreeTransform<Derived>::RebuildTemplateSpecializationType(
                                              SourceLocation TemplateNameLoc,
                                const TemplateArgumentListInfo &TemplateArgs) {
   return SemaRef.CheckTemplateIdType(Template, TemplateNameLoc, TemplateArgs);
-}
-
-template<typename Derived>
-NestedNameSpecifier *
-TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
-                                                   SourceRange Range,
-                                                   IdentifierInfo &II,
-                                                   QualType ObjectType,
-                                                   NamedDecl *FirstQualifierInScope) {
-  CXXScopeSpec SS;
-  // FIXME: The source location information is all wrong.
-  SS.MakeTrivial(SemaRef.Context, Prefix, Range);
-  if (SemaRef.BuildCXXNestedNameSpecifier(0, II, /*FIXME:*/Range.getBegin(),
-                                          /*FIXME:*/Range.getEnd(),
-                                          ObjectType, false,
-                                          SS, FirstQualifierInScope,
-                                          false))
-    return 0;
-  
-  return SS.getScopeRep();
-}
-
-template<typename Derived>
-NestedNameSpecifier *
-TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
-                                                   SourceRange Range,
-                                                   NamespaceDecl *NS) {
-  return NestedNameSpecifier::Create(SemaRef.Context, Prefix, NS);
-}
-
-template<typename Derived>
-NestedNameSpecifier *
-TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
-                                                   SourceRange Range,
-                                                   NamespaceAliasDecl *Alias) {
-  return NestedNameSpecifier::Create(SemaRef.Context, Prefix, Alias);
-}
-
-template<typename Derived>
-NestedNameSpecifier *
-TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
-                                                   SourceRange Range,
-                                                   bool TemplateKW,
-                                                   QualType T) {
-  if (T->isDependentType() || T->isRecordType() ||
-      (SemaRef.getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
-    assert(!T.hasLocalQualifiers() && "Can't get cv-qualifiers here");
-    return NestedNameSpecifier::Create(SemaRef.Context, Prefix, TemplateKW,
-                                       T.getTypePtr());
-  }
-
-  SemaRef.Diag(Range.getBegin(), diag::err_nested_name_spec_non_tag) << T;
-  return 0;
 }
 
 template<typename Derived>
