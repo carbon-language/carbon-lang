@@ -216,3 +216,21 @@ namespace ExpandingNonTypeTemplateParameters {
 
   tuple_of_values<int&, float&>::apply<i, f, i>::type tv4; // expected-error{{too many template arguments for class template 'apply'}}
 }
+
+namespace ExpandingFunctionParameters {
+  template<typename ...T>
+  struct X0 {
+    typedef int type;
+  };
+
+  template<typename ...T>
+  struct X1 {
+    template<typename ... U>
+    typename X0<T(T, U...)...>::type f(U...);
+  };
+
+  void test() {
+    X1<float> x1;
+    x1.f(17, 3.14159);
+  }
+}

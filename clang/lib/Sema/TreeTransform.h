@@ -3827,6 +3827,7 @@ bool TreeTransform<Derived>::
   for (unsigned i = 0; i != NumParams; ++i) {
     if (ParmVarDecl *OldParm = Params[i]) {
       llvm::Optional<unsigned> NumExpansions;
+      ParmVarDecl *NewParm = 0;
       if (OldParm->isParameterPack()) {
         // We have a function parameter pack that may need to be expanded.
         llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
@@ -3836,7 +3837,8 @@ bool TreeTransform<Derived>::
         PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(TL);
         TypeLoc Pattern = ExpansionTL.getPatternLoc();
         SemaRef.collectUnexpandedParameterPacks(Pattern, Unexpanded);
-        
+        assert(Unexpanded.size() > 0 && "Could not find parameter packs!");
+
         // Determine whether we should expand the parameter packs.
         bool ShouldExpand = false;
         bool RetainExpansion = false;
@@ -3891,11 +3893,14 @@ bool TreeTransform<Derived>::
         
         // We'll substitute the parameter now without expanding the pack 
         // expansion.
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
+        NewParm = getDerived().TransformFunctionTypeParam(OldParm,
+                                                          NumExpansions);
+      } else {
+        NewParm = getDerived().TransformFunctionTypeParam(OldParm,
+                                                  llvm::Optional<unsigned>());
       }
-      
-      Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
-      ParmVarDecl *NewParm = getDerived().TransformFunctionTypeParam(OldParm,
-                                                                 NumExpansions);
+
       if (!NewParm)
         return true;
       
@@ -3910,6 +3915,7 @@ bool TreeTransform<Derived>::
     QualType OldType = ParamTypes[i];
     bool IsPackExpansion = false;
     llvm::Optional<unsigned> NumExpansions;
+    QualType NewType;
     if (const PackExpansionType *Expansion 
                                        = dyn_cast<PackExpansionType>(OldType)) {
       // We have a function parameter pack that may need to be expanded.
@@ -3964,10 +3970,12 @@ bool TreeTransform<Derived>::
       // expansion.
       OldType = Expansion->getPattern();
       IsPackExpansion = true;
+      Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
+      NewType = getDerived().TransformType(OldType);
+    } else {
+      NewType = getDerived().TransformType(OldType);
     }
     
-    Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
-    QualType NewType = getDerived().TransformType(OldType);
     if (NewType.isNull())
       return true;
 

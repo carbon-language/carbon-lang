@@ -1510,6 +1510,7 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
     }
 
     SourceLocation EllipsisLoc;
+    TypeSourceInfo *BaseTypeLoc;
     if (Base->isPackExpansion()) {
       // This is a pack expansion. See whether we should expand it now, or
       // wait until later.
@@ -1560,13 +1561,18 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
       
       // The resulting base specifier will (still) be a pack expansion.
       EllipsisLoc = Base->getEllipsisLoc();
+      Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(*this, -1);
+      BaseTypeLoc = SubstType(Base->getTypeSourceInfo(),
+                              TemplateArgs,
+                              Base->getSourceRange().getBegin(),
+                              DeclarationName());
+    } else {
+      BaseTypeLoc = SubstType(Base->getTypeSourceInfo(),
+                              TemplateArgs,
+                              Base->getSourceRange().getBegin(),
+                              DeclarationName());
     }
     
-    Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(*this, -1);
-    TypeSourceInfo *BaseTypeLoc = SubstType(Base->getTypeSourceInfo(),
-                                            TemplateArgs,
-                                            Base->getSourceRange().getBegin(),
-                                            DeclarationName());
     if (!BaseTypeLoc) {
       Invalid = true;
       continue;

@@ -600,8 +600,8 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateArgumentLoc(
     // FIXME: how can TSI ever be NULL?
     if (TypeSourceInfo *TSI = ArgLoc.getTypeSourceInfo())
       return getDerived().TraverseTypeLoc(TSI->getTypeLoc());
-    else
-      return true;
+    else 
+      getDerived().TraverseType(Arg.getAsType());
   }
 
   case TemplateArgument::Template:
@@ -933,7 +933,11 @@ DEF_TRAVERSE_TYPELOC(FunctionProtoType, {
     const FunctionProtoType *T = TL.getTypePtr();
 
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
-      TRY_TO(TraverseDecl(TL.getArg(I)));
+      if (TL.getArg(I)) {
+        TRY_TO(TraverseDecl(TL.getArg(I)));
+      } else if (I < T->getNumArgs()) {
+        TRY_TO(TraverseType(T->getArgType(I)));
+      }
     }
 
     for (FunctionProtoType::exception_iterator E = T->exception_begin(),
@@ -1468,6 +1472,8 @@ bool RecursiveASTVisitor<Derived>::TraverseDeclaratorHelper(DeclaratorDecl *D) {
   TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
   if (D->getTypeSourceInfo())
     TRY_TO(TraverseTypeLoc(D->getTypeSourceInfo()->getTypeLoc()));
+  else
+    TRY_TO(TraverseType(D->getType()));
   return true;
 }
 
