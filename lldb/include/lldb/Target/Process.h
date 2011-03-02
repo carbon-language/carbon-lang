@@ -1790,12 +1790,30 @@ public:
         m_dynamic_checkers_ap.reset(dynamic_checkers);
     }
 
+    //------------------------------------------------------------------
+    /// Call this to set the lldb in the mode where it breaks on new thread
+    /// creations, and then auto-restarts.  This is useful when you are trying
+    /// to run only one thread, but either that thread or the kernel is creating
+    /// new threads in the process.  If you stop when the thread is created, you
+    /// can immediately suspend it, and keep executing only the one thread you intend.
+    ///
+    /// @return
+    ///     Returns \b true if we were able to start up the notification
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
     virtual bool
     StartNoticingNewThreads()
     {   
         return true;
     }
     
+    //------------------------------------------------------------------
+    /// Call this to turn off the stop & notice new threads mode.
+    ///
+    /// @return
+    ///     Returns \b true if we were able to start up the notification
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
     virtual bool
     StopNoticingNewThreads()
     {   
