@@ -187,6 +187,7 @@ def Conversion : DiagGroup<"conversion",
                            [DiagGroup<"shorten-64-to-32">,
                             DiagGroup<"constant-conversion">,
                             DiagGroup<"literal-conversion">,
+                            DiagGroup<"sign-conversion">,
                             BoolConversions]>,
                  DiagCategory<"Value Conversion Issue">;
 
