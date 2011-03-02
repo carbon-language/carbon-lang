@@ -215,6 +215,13 @@ def CC_X86_Win64_C : CallingConv<[
   // The first 4 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToRegWithShadow<[ECX , EDX , R8D , R9D ],
                                           [XMM0, XMM1, XMM2, XMM3]>>,
+  
+  // Do not pass the sret argument in RCX, the Win64 thiscall calling
+  // convention requires "this" to be passed in RCX.                                        
+  CCIfCC<"CallingConv::Win64_ThisCall", 
+    CCIfSRet<CCIfType<[i64], CCAssignToRegWithShadow<[RDX , R8  , R9  ],
+                                                     [XMM1, XMM2, XMM3]>>>>,
+
   CCIfType<[i64], CCAssignToRegWithShadow<[RCX , RDX , R8  , R9  ],
                                           [XMM0, XMM1, XMM2, XMM3]>>,
 

@@ -94,7 +94,10 @@ namespace CallingConv {
 
     /// MBLAZE_INTR - Calling convention used for MBlaze interrupt support
     /// routines (i.e. GCC's save_volatiles attribute).
-    MBLAZE_SVOL = 74
+    MBLAZE_SVOL = 74,
+
+    /// Win64_ThisCall - Calling convention used for method calls on Win64.
+    Win64_ThisCall = 75
   };
 } // End CallingConv namespace
 
