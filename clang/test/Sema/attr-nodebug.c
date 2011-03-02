@@ -4,5 +4,5 @@ int a __attribute__((nodebug)); // expected-warning {{'nodebug' attribute only a
 
 void t1() __attribute__((nodebug));
 
-void t2() __attribute__((nodebug(2))); // expected-error {{attribute requires 0 argument(s)}}
+void t2() __attribute__((nodebug(2))); // expected-error {{attribute takes no arguments}}
 

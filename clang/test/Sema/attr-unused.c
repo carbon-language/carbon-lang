@@ -9,7 +9,7 @@ int f1() __attribute__((unused));
 
 int g0 __attribute__((unused));
 
-int f2() __attribute__((unused(1, 2))); // expected-error {{attribute requires 0 argument(s)}}
+int f2() __attribute__((unused(1, 2))); // expected-error {{attribute takes no arguments}}
 
 struct Test0_unused {} __attribute__((unused));
 struct Test0_not_unused {};

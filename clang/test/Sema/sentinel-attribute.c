@@ -5,7 +5,7 @@ void f1(int a, ...) __attribute__ ((sentinel));
 void f2(int a, ...) __attribute__ ((sentinel(1)));
 
 void f3(int a, ...) __attribute__ ((sentinel("hello"))); //expected-error{{'sentinel' attribute requires parameter 1 to be an integer constant}}
-void f4(int a, ...) __attribute__ ((sentinel(1, 2, 3))); //expected-error{{attribute requires 0, 1 or 2 argument(s)}}
+void f4(int a, ...) __attribute__ ((sentinel(1, 2, 3))); //expected-error{{attribute takes no more than 2 arguments}}
 void f4(int a, ...) __attribute__ ((sentinel(-1))); //expected-error{{parameter 1 less than zero}}
 void f4(int a, ...) __attribute__ ((sentinel(0, 2))); // expected-error{{parameter 2 not 0 or 1}}
 

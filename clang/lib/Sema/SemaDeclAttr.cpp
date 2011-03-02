@@ -953,9 +953,8 @@ static void HandleUsedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
-  if (Attr.getNumArgs() != 0 && Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << "0 or 1";
+  if (Attr.getNumArgs() > 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 1;
     return;
   }
 
@@ -984,9 +983,8 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
-  if (Attr.getNumArgs() != 0 && Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-       << "0 or 1";
+  if (Attr.getNumArgs() > 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 1;
     return;
   }
 
@@ -1016,8 +1014,7 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned NumArgs = Attr.getNumArgs();
   if (NumArgs > 1) {
-    S.Diag(Attr.getLoc(), 
-           diag::err_attribute_wrong_number_arguments) << "0 or 1";
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 1;
     return;
   }
   
@@ -1039,8 +1036,7 @@ static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned NumArgs = Attr.getNumArgs();
   if (NumArgs > 1) {
-    S.Diag(Attr.getLoc(),
-           diag::err_attribute_wrong_number_arguments) << "0 or 1";
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 1;
     return;
   }
   
@@ -1213,8 +1209,7 @@ static void HandleBlocksAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 2) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << "0, 1 or 2";
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 2;
     return;
   }
 
@@ -2461,8 +2456,8 @@ static void HandleLaunchBoundsAttr(Decl *d, const AttributeList &Attr, Sema &S){
   if (S.LangOpts.CUDA) {
     // check the attribute arguments.
     if (Attr.getNumArgs() != 1 && Attr.getNumArgs() != 2) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-        << "1 or 2";
+      // FIXME: 0 is not okay.
+      S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 2;
       return;
     }
 

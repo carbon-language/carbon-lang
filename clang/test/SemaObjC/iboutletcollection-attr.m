@@ -16,13 +16,13 @@
 
 typedef void *PV;
 @interface BAD {
-    __attribute__((iboutletcollection(I, 1))) id ivar1; // expected-error {{attribute requires 1 argument(s)}}
+    __attribute__((iboutletcollection(I, 1))) id ivar1; // expected-error {{attribute takes one argument}}
     __attribute__((iboutletcollection(B))) id ivar2; // expected-error {{invalid type 'B' as argument of iboutletcollection attribute}}
     __attribute__((iboutletcollection(PV))) id ivar3; // expected-error {{invalid type 'PV' as argument of iboutletcollection attribute}}
     __attribute__((iboutletcollection(PV))) void *ivar4; // expected-error {{ivar with iboutletcollection attribute must have object type (invalid 'void *')}}
     __attribute__((iboutletcollection(int))) id ivar5; // expected-error {{type argument of iboutletcollection attribute cannot be a builtin type}}
 }
-@property (nonatomic, retain) __attribute__((iboutletcollection(I,2,3))) id prop1; // expected-error {{attribute requires 1 argument(s)}}
+@property (nonatomic, retain) __attribute__((iboutletcollection(I,2,3))) id prop1; // expected-error {{attribute takes one argument}}
 @property (nonatomic, retain) __attribute__((iboutletcollection(B))) id prop2; // expected-error {{invalid type 'B' as argument of iboutletcollection attribute}}
 
 @property __attribute__((iboutletcollection(BAD))) int prop3; // expected-error {{property with iboutletcollection attribute must have object type (invalid 'int')}}

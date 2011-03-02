@@ -19,7 +19,7 @@ extern Two koo[];
 
 Two foo __attribute__((init_priority(101))) ( 5, 6 );
 
-Two goo __attribute__((init_priority(2,3))) ( 5, 6 ); // expected-error {{attribute requires 1 argument(s)}}
+Two goo __attribute__((init_priority(2,3))) ( 5, 6 ); // expected-error {{attribute takes one argument}}
 
 Two coo[2]  __attribute__((init_priority(3)));	// expected-error {{init_priority attribute requires integer constant between 101 and 65535 inclusive}}
 
