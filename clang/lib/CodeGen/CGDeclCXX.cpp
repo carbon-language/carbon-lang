@@ -261,7 +261,7 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                                                        const VarDecl *D,
                                                  llvm::GlobalVariable *Addr) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
-                SourceLocation());
+                SourceLocation(), CC_Default);
 
   // Use guarded initialization if the global variable is weak due to
   // being a class template's static data member.
@@ -278,7 +278,7 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                                 llvm::Constant **Decls,
                                                 unsigned NumDecls) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
-                SourceLocation());
+                SourceLocation(), CC_Default);
 
   for (unsigned i = 0; i != NumDecls; ++i)
     if (Decls[i])
@@ -290,8 +290,10 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
 void CodeGenFunction::GenerateCXXGlobalDtorFunc(llvm::Function *Fn,
                   const std::vector<std::pair<llvm::WeakVH, llvm::Constant*> >
                                                 &DtorsAndObjects) {
+  const bool IsWin64 = getContext().Target.isWin64();
+
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
-                SourceLocation());
+                SourceLocation(), IsWin64 ? CC_Win64ThisCall : CC_Default);
 
   // Emit the dtors, in reverse order from construction.
   for (unsigned i = 0, e = DtorsAndObjects.size(); i != e; ++i) {
@@ -327,7 +329,8 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
   llvm::Function *Fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
 
-  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, Args, SourceLocation());
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, Args, SourceLocation(),
+                CC_Default);
 
   QualType BaseElementTy = getContext().getBaseElementType(Array);
   const llvm::Type *BasePtr = ConvertType(BaseElementTy)->getPointerTo();

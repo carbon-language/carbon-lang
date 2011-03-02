@@ -161,9 +161,11 @@ public:
                                         CXXDtorType Type);
 
   const CGFunctionInfo &getFunctionInfo(const CallArgList &Args,
-                                        const FunctionType *Ty) {
-    return getFunctionInfo(Ty->getResultType(), Args,
-                           Ty->getExtInfo());
+                                        const FunctionType *Ty,
+                                        CallingConv CC) {
+    FunctionType::ExtInfo Info = Ty->getExtInfo().withCallingConv(CC);
+
+    return getFunctionInfo(Ty->getResultType(), Args, Info);
   }
 
   const CGFunctionInfo &getFunctionInfo(CanQual<FunctionProtoType> Ty,

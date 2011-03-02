@@ -48,8 +48,13 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
 
   QualType ResultType = FPT->getResultType();
-  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
-                                                 FPT->getExtInfo()),
+  FunctionType::ExtInfo Info = FPT->getExtInfo();
+
+  if (getContext().Target.isWin64()) {
+      Info = Info.withCallingConv(CC_Win64ThisCall);
+  }
+
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args, Info),
                   Callee, ReturnValue, Args, MD);
 }
 
@@ -292,8 +297,11 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
   // And the rest of the call args
   EmitCallArgs(Args, FPT, E->arg_begin(), E->arg_end());
   const FunctionType *BO_FPT = BO->getType()->getAs<FunctionProtoType>();
-  return EmitCall(CGM.getTypes().getFunctionInfo(Args, BO_FPT), Callee, 
-                  ReturnValue, Args);
+
+  const CGFunctionInfo &FI = CGM.getTypes().getFunctionInfo(Args, BO_FPT,
+          CGM.getContext().Target.isWin64() ? CC_Win64ThisCall : CC_Default);
+
+  return EmitCall(FI , Callee, ReturnValue, Args);
 }
 
 RValue
@@ -810,8 +818,10 @@ namespace {
       for (unsigned I = 0; I != NumPlacementArgs; ++I)
         DeleteArgs.push_back(std::make_pair(getPlacementArgs()[I], *AI++));
 
+      // FIXME Check whether this needs thiscall on Win64.
       // Call 'operator delete'.
-      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(DeleteArgs, FPT),
+      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(DeleteArgs, FPT,
+                                                      CC_Default),
                    CGF.CGM.GetAddrOfFunction(OperatorDelete),
                    ReturnValueSlot(), DeleteArgs, OperatorDelete);
     }
@@ -871,8 +881,10 @@ namespace {
         DeleteArgs.push_back(std::make_pair(RV, *AI++));
       }
 
+      // FIXME Check whether this needs thiscall on Win64.
       // Call 'operator delete'.
-      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(DeleteArgs, FPT),
+      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(DeleteArgs, FPT,
+                                                      CC_Default),
                    CGF.CGM.GetAddrOfFunction(OperatorDelete),
                    ReturnValueSlot(), DeleteArgs, OperatorDelete);
     }
@@ -976,7 +988,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 
   // Emit the call to new.
   RValue RV =
-    EmitCall(CGM.getTypes().getFunctionInfo(NewArgs, NewFTy),
+    EmitCall(CGM.getTypes().getFunctionInfo(NewArgs, NewFTy, CC_Default),
              CGM.GetAddrOfFunction(NewFD), ReturnValueSlot(), NewArgs, NewFD);
 
   // If an allocation function is declared with an empty exception specification
@@ -1086,7 +1098,7 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
     DeleteArgs.push_back(std::make_pair(RValue::get(Size), SizeTy));
 
   // Emit the call to delete.
-  EmitCall(CGM.getTypes().getFunctionInfo(DeleteArgs, DeleteFTy),
+  EmitCall(CGM.getTypes().getFunctionInfo(DeleteArgs, DeleteFTy, CC_Default),
            CGM.GetAddrOfFunction(DeleteFD), ReturnValueSlot(), 
            DeleteArgs, DeleteFD);
 }
@@ -1207,7 +1219,7 @@ namespace {
       }
 
       // Emit the call to delete.
-      CGF.EmitCall(CGF.getTypes().getFunctionInfo(Args, DeleteFTy),
+      CGF.EmitCall(CGF.getTypes().getFunctionInfo(Args, DeleteFTy, CC_Default),
                    CGF.CGM.GetAddrOfFunction(OperatorDelete),
                    ReturnValueSlot(), Args, OperatorDelete);
     }

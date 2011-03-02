@@ -140,7 +140,8 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
 
   CurGD = OMD;
 
-  StartFunction(OMD, OMD->getResultType(), Fn, Args, OMD->getLocStart());
+  StartFunction(OMD, OMD->getResultType(), Fn, Args, OMD->getLocStart(),
+                CC_Default);
 }
 
 void CodeGenFunction::GenerateObjCGetterBody(ObjCIvarDecl *Ivar, 

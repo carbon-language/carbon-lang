@@ -354,7 +354,8 @@ enum CallingConv {
   CC_X86StdCall,  // __attribute__((stdcall))
   CC_X86FastCall, // __attribute__((fastcall))
   CC_X86ThisCall, // __attribute__((thiscall))
-  CC_X86Pascal    // __attribute__((pascal))
+  CC_X86Pascal,   // __attribute__((pascal))
+  CC_Win64ThisCall
 };
 
 typedef std::pair<const Type*, Qualifiers> SplitQualType;

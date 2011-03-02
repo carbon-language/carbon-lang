@@ -942,6 +942,26 @@ public:
 
     return false;
   }
+
+  void SetTargetAttributes(const Decl *D,
+                           llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &M) const {
+    if (M.getContext().Target.isWin64()) {
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        const CXXMethodDecl *M = dyn_cast<CXXMethodDecl>(FD);
+
+        if ((M && M->isInstance())
+            || dyn_cast<CXXConstructorDecl>(FD)
+            || dyn_cast<CXXDestructorDecl>(FD)) {
+              // When using the MSVC Win64 ABI, methods/constructors/destructors
+              // use the Win64 thiscall calling convention.
+              llvm::Function *F = cast<llvm::Function>(GV);
+              F->setCallingConv(llvm::CallingConv::Win64_ThisCall);
+        }
+      }
+    }
+  }
+
 };
 
 }

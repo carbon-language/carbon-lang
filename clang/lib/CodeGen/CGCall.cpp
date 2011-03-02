@@ -36,6 +36,7 @@ static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
   case CC_X86StdCall: return llvm::CallingConv::X86_StdCall;
   case CC_X86FastCall: return llvm::CallingConv::X86_FastCall;
   case CC_X86ThisCall: return llvm::CallingConv::X86_ThisCall;
+  case CC_Win64ThisCall: return llvm::CallingConv::Win64_ThisCall;
   // TODO: add support for CC_X86Pascal to llvm
   }
 }
@@ -75,19 +76,23 @@ CodeGenTypes::getFunctionInfo(CanQual<FunctionNoProtoType> FTNP,
 static const CGFunctionInfo &getFunctionInfo(CodeGenTypes &CGT,
                                   llvm::SmallVectorImpl<CanQualType> &ArgTys,
                                              CanQual<FunctionProtoType> FTP,
+                                             CallingConv CC,
                                              bool IsRecursive = false) {
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
   CanQualType ResTy = FTP->getResultType().getUnqualifiedType();
-  return CGT.getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo(), IsRecursive);
+
+  return CGT.getFunctionInfo(ResTy, ArgTys,
+                             FTP->getExtInfo().withCallingConv(CC),
+                             IsRecursive);
 }
 
 const CGFunctionInfo &
 CodeGenTypes::getFunctionInfo(CanQual<FunctionProtoType> FTP,
                               bool IsRecursive) {
   llvm::SmallVector<CanQualType, 16> ArgTys;
-  return ::getFunctionInfo(*this, ArgTys, FTP, IsRecursive);
+  return ::getFunctionInfo(*this, ArgTys, FTP, CC_Default, IsRecursive);
 }
 
 static CallingConv getCallingConventionForDecl(const Decl *D) {
@@ -114,8 +119,10 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXRecordDecl *RD,
   // Add the 'this' pointer.
   ArgTys.push_back(GetThisType(Context, RD));
 
+  CallingConv CC = Context.Target.isWin64() ? CC_Win64ThisCall : CC_Default;
+
   return ::getFunctionInfo(*this, ArgTys,
-              FTP->getCanonicalTypeUnqualified().getAs<FunctionProtoType>());
+           FTP->getCanonicalTypeUnqualified().getAs<FunctionProtoType>(), CC);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
@@ -128,7 +135,9 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
   if (MD->isInstance())
     ArgTys.push_back(GetThisType(Context, MD->getParent()));
 
-  return ::getFunctionInfo(*this, ArgTys, GetFormalType(MD));
+  CallingConv CC = Context.Target.isWin64() ? CC_Win64ThisCall : CC_Default;
+
+  return ::getFunctionInfo(*this, ArgTys, GetFormalType(MD), CC);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXConstructorDecl *D,
@@ -145,7 +154,9 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXConstructorDecl *D,
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
 
-  return getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo());
+  CallingConv CC = Context.Target.isWin64() ? CC_Win64ThisCall : CC_Default;
+
+  return getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo().withCallingConv(CC));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXDestructorDecl *D,
@@ -159,7 +170,9 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXDestructorDecl *D,
   CanQual<FunctionProtoType> FTP = GetFormalType(D);
   assert(FTP->getNumArgs() == 0 && "dtor with formal parameters");
 
-  return getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo());
+  CallingConv CC = Context.Target.isWin64() ? CC_Win64ThisCall : CC_Default;
+
+  return getFunctionInfo(ResTy, ArgTys, FTP->getExtInfo().withCallingConv(CC));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
@@ -250,8 +263,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
     return *FI;
 
   // Construct the function info.
-  FI = new CGFunctionInfo(CC, Info.getNoReturn(), Info.getRegParm(), ResTy,
-                          ArgTys.data(), ArgTys.size());
+  FI = new CGFunctionInfo(CC, Info.getNoReturn(), Info.getRegParm(),
+                          ResTy, ArgTys.data(), ArgTys.size());
   FunctionInfos.InsertNode(FI, InsertPos);
 
   // Compute ABI information.
