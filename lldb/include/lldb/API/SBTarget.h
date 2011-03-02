@@ -204,6 +204,10 @@ public:
     ResolveLoadAddress (lldb::addr_t vm_addr, 
                         lldb::SBAddress& addr);
 
+    SBSymbolContext
+    ResolveSymbolContextForAddress (const SBAddress& addr, 
+                                    uint32_t resolve_scope);
+
     lldb::SBBreakpoint
     BreakpointCreateByLocation (const char *file, uint32_t line);
 

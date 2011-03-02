@@ -460,13 +460,12 @@ ProcessGDBRemote::DoLaunch
         {
             lldb_utility::PseudoTerminal pty;
             const bool disable_stdio = (launch_flags & eLaunchFlagDisableSTDIO) != 0;
-            if (disable_stdio)
-            {
-                stdin_path = "/dev/null";
-                stdout_path = "/dev/null";
-                stderr_path = "/dev/null";
-            }
-            else
+
+            // If the debugserver is local and we aren't disabling STDIO, lets use
+            // a pseudo terminal to instead of relying on the 'O' packets for stdio
+            // since 'O' packets can really slow down debugging if the inferior 
+            // does a lot of output.
+            if (m_local_debugserver && !disable_stdio)
             {
                 const char *slave_name = NULL;
                 if (stdin_path == NULL || stdout_path == NULL || stderr_path == NULL)
@@ -484,13 +483,19 @@ ProcessGDBRemote::DoLaunch
                     stderr_path = slave_name;
             }
 
-            if (stdin_path == NULL && (stdout_path || stderr_path))
+            // Set STDIN to /dev/null if we want STDIO disabled or if either
+            // STDOUT or STDERR have been set to something and STDIN hasn't
+            if (disable_stdio || (stdin_path == NULL && (stdout_path || stderr_path)))
                 stdin_path = "/dev/null";
             
-            if (stdout_path == NULL && (stdin_path || stderr_path))
+            // Set STDOUT to /dev/null if we want STDIO disabled or if either
+            // STDIN or STDERR have been set to something and STDOUT hasn't
+            if (disable_stdio || (stdout_path == NULL && (stdin_path || stderr_path)))
                 stdout_path = "/dev/null";
             
-            if (stderr_path == NULL && (stdin_path || stdout_path))
+            // Set STDERR to /dev/null if we want STDIO disabled or if either
+            // STDIN or STDOUT have been set to something and STDERR hasn't
+            if (disable_stdio || (stderr_path == NULL && (stdin_path || stdout_path)))
                 stderr_path = "/dev/null";
 
             if (stdin_path) 

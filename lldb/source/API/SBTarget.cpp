@@ -442,6 +442,16 @@ SBTarget::ResolveLoadAddress (lldb::addr_t vm_addr,
     return false;    
 }
 
+SBSymbolContext
+SBTarget::ResolveSymbolContextForAddress (const SBAddress& addr, uint32_t resolve_scope)
+{
+    SBSymbolContext sc;
+    if (m_opaque_sp)
+        m_opaque_sp->GetImages().ResolveSymbolContextForAddress (*addr, resolve_scope, sc.ref());
+    return sc;
+}
+
+
 SBBreakpoint
 SBTarget::BreakpointCreateByLocation (const char *file, uint32_t line)
 {
