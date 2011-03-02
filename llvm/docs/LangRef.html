@@ -2690,16 +2690,21 @@ call void asm sideeffect "something bad", ""()<b>, !srcloc !42</b>
 <p>Metadata can be used as function arguments. Here <tt>llvm.dbg.value</tt> 
    function is using two metadata arguments.</p>
 
-     <pre class="doc_code">
-       call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
-     </pre>
+<div class="doc_code">
+<pre>
+call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
+</pre>
+</div>
 
 <p>Metadata can be attached with an instruction. Here metadata <tt>!21</tt> is
    attached with <tt>add</tt> instruction using <tt>!dbg</tt> identifier.</p>
 
-    <pre class="doc_code">
-      %indvar.next = add i64 %indvar, 1, !dbg !21
-    </pre>
+<div class="doc_code">
+<pre>
+%indvar.next = add i64 %indvar, 1, !dbg !21
+</pre>
+</div>
+
 </div>
 
 
