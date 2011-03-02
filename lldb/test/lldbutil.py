@@ -6,6 +6,63 @@ import lldb
 import sys
 import StringIO
 
+# ==========================================================
+# Integer (byte size 1, 2, 4, and 8) to bytearray conversion
+# ==========================================================
+
+def int_to_bytearray(val, bytesize):
+    """Utility function to convert an integer into a bytearray.
+
+    It returns the bytearray in the little endian format.
+    It is easy to get the big endian representation, just do
+    ba.reverse() on the returned bytearray object.
+    """
+    from struct import *
+
+    if bytesize == 1:
+        return bytearray([val])
+
+    # Little endian followed by a format character.
+    template = "<%c"
+    if bytesize == 2:
+        fmt = template % 'h'
+    elif bytesize == 4:
+        fmt = template % 'i'
+    elif bytesize == 4:
+        fmt = template % 'q'
+    else:
+        return None
+
+    packed = pack(fmt, val)
+    return bytearray(map(ord, packed))
+
+def bytearray_to_int(bytes, bytesize):
+    """Utility function to convert a bytearray into an integer.
+
+    It interprets the bytearray in the little endian format.
+    It is easy to get the big endian representation, just do
+    ba.reverse() on the bytearray object before passing it in.
+    """
+    from struct import *
+
+    if bytesize == 1:
+        return ba[0]
+
+    # Little endian followed by a format character.
+    template = "<%c"
+    if bytesize == 2:
+        fmt = template % 'h'
+    elif bytesize == 4:
+        fmt = template % 'i'
+    elif bytesize == 4:
+        fmt = template % 'q'
+    else:
+        return None
+
+    unpacked = unpack(fmt, str(bytes))
+    return unpacked[0]
+
+
 # ===========================================
 # Iterator for lldb aggregate data structures
 # ===========================================

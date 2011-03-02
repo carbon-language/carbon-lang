@@ -174,20 +174,18 @@ class ProcessAPITestCase(TestBase):
         # OK, let's get the hex location of the variable.
         location = int(val.GetLocation(frame), 16)
 
+        from lldbutil import int_to_bytearray, bytearray_to_int
         byteSize = val.GetByteSize()
-        byteOrder = self.process.GetByteOrder()
-        bytes = bytearray(byteSize)
+        bytes = int_to_bytearray(256, byteSize)
 
+        byteOrder = self.process.GetByteOrder()
         if byteOrder == lldb.eByteOrderBig:
-            # 256 in big endian => 0x00000100
-            # the second byte counted from the end is to be 0b00000001
-            bytes[-2] = 0b00000001
+            bytes.reverse()
         elif byteOrder == lldb.eByteOrderLittle:
-            # 256 in little endian => 0x00010000
-            # the second byte counted from the start is to be 0b00000001
-            bytes[1] = 0b00000001
+            pass
         else:
             # Neither big endian nor little endian?  Return for now.
+            # Add more logic here if we want to handle other types.
             return
 
         # The program logic makes the 'my_int' variable to have int type and value of 0.
@@ -211,12 +209,14 @@ class ProcessAPITestCase(TestBase):
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
         new_bytes = bytearray(content, "ascii")
+
+        # The bytearray_to_int utility function expects a little endian bytearray.
         if byteOrder == lldb.eByteOrderBig:
-            if new_bytes[-2] != 0b00000001:
-                self.fail("Memory content read from 'my_int' does not match (int)256")
-        elif byteOrder == lldb.eByteOrderLittle:
-            if new_bytes[1] != 0b00000001:
-                self.fail("Memory content read from 'my_int' does not match (int)256")
+            new_bytes.reverse()
+
+        new_value = bytearray_to_int(new_bytes, byteSize)
+        if new_value != 256:
+            self.fail("Memory content read from 'my_int' does not match (int)256")
 
         # Dump the memory content....
         for i in new_bytes:
