@@ -96,10 +96,22 @@ namespace llvm {
       return Data[Length-1];
     }
     
+    /// slice(n) - Chop off the first N elements of the array.
+    ArrayRef<T> slice(unsigned N) {
+      assert(N <= size() && "Invalid specifier");
+      return ArrayRef<T>(data()+N, size()-N);
+    }
+
+    /// slice(n, m) - Chop off the first N elements of the array, and keep M
+    /// elements in the array.
+    ArrayRef<T> slice(unsigned N, unsigned M) {
+      assert(N+M <= size() && "Invalid specifier");
+      return ArrayRef<T>(data()+N, M);
+    }
+    
     /// @}
     /// @name Operator Overloads
     /// @{
-    
     const T &operator[](size_t Index) const {
       assert(Index < Length && "Invalid index!");
       return Data[Index];
@@ -108,7 +120,6 @@ namespace llvm {
     /// @}
     /// @name Expensive Operations
     /// @{
-    
     std::vector<T> vec() const {
       return std::vector<T>(Data, Data+Length);
     }
