@@ -165,7 +165,7 @@ class SplitEditor {
   const TargetRegisterInfo &TRI;
 
   /// Edit - The current parent register and new intervals created.
-  LiveRangeEdit &Edit;
+  LiveRangeEdit *Edit;
 
   /// Index into Edit of the currently open interval.
   /// The index 0 is used for the complement, so the first interval started by

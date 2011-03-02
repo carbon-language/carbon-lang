@@ -216,13 +216,13 @@ SplitEditor::SplitEditor(SplitAnalysis &sa,
     MDT(mdt),
     TII(*vrm.getMachineFunction().getTarget().getInstrInfo()),
     TRI(*vrm.getMachineFunction().getTarget().getRegisterInfo()),
-    Edit(edit),
+    Edit(&edit),
     OpenIdx(0),
     RegAssign(Allocator)
 {
   // We don't need an AliasAnalysis since we will only be performing
   // cheap-as-a-copy remats anyway.
-  Edit.anyRematerializable(LIS, TII, 0);
+  Edit->anyRematerializable(LIS, TII, 0);
 }
 
 void SplitEditor::dump() const {
@@ -241,8 +241,8 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
                               SlotIndex Idx) {
   assert(ParentVNI && "Mapping  NULL value");
   assert(Idx.isValid() && "Invalid SlotIndex");
-  assert(Edit.getParent().getVNInfoAt(Idx) == ParentVNI && "Bad Parent VNI");
-  LiveInterval *LI = Edit.get(RegIdx);
+  assert(Edit->getParent().getVNInfoAt(Idx) == ParentVNI && "Bad Parent VNI");
+  LiveInterval *LI = Edit->get(RegIdx);
 
   // Create a new value.
   VNInfo *VNI = LI->getNextValue(Idx, 0, LIS.getVNInfoAllocator());
@@ -286,7 +286,7 @@ void SplitEditor::markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI) {
   // This was previously a single mapping. Make sure the old def is represented
   // by a trivial live range.
   SlotIndex Def = VNI->def;
-  Edit.get(RegIdx)->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
+  Edit->get(RegIdx)->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
   VNI = 0;
 }
 
@@ -296,7 +296,7 @@ void SplitEditor::extendRange(unsigned RegIdx, SlotIndex Idx) {
   assert(Idx.isValid() && "Invalid SlotIndex");
   MachineBasicBlock *IdxMBB = LIS.getMBBFromIndex(Idx);
   assert(IdxMBB && "No MBB at Idx");
-  LiveInterval *LI = Edit.get(RegIdx);
+  LiveInterval *LI = Edit->get(RegIdx);
 
   // Is there a def in the same MBB we can extend?
   if (LI->extendInBlock(LIS.getMBBStartIdx(IdxMBB), Idx))
@@ -384,7 +384,7 @@ VNInfo *SplitEditor::updateSSA(unsigned RegIdx,
                                const MachineBasicBlock *IdxMBB) {
   // This is essentially the same iterative algorithm that SSAUpdater uses,
   // except we already have a dominator tree, so we don't have to recompute it.
-  LiveInterval *LI = Edit.get(RegIdx);
+  LiveInterval *LI = Edit->get(RegIdx);
   VNInfo *IdxVNI = 0;
   unsigned Changes;
   do {
@@ -488,16 +488,16 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
                                    MachineBasicBlock::iterator I) {
   MachineInstr *CopyMI = 0;
   SlotIndex Def;
-  LiveInterval *LI = Edit.get(RegIdx);
+  LiveInterval *LI = Edit->get(RegIdx);
 
   // Attempt cheap-as-a-copy rematerialization.
   LiveRangeEdit::Remat RM(ParentVNI);
-  if (Edit.canRematerializeAt(RM, UseIdx, true, LIS)) {
-    Def = Edit.rematerializeAt(MBB, I, LI->reg, RM, LIS, TII, TRI);
+  if (Edit->canRematerializeAt(RM, UseIdx, true, LIS)) {
+    Def = Edit->rematerializeAt(MBB, I, LI->reg, RM, LIS, TII, TRI);
   } else {
     // Can't remat, just insert a copy from parent.
     CopyMI = BuildMI(MBB, I, DebugLoc(), TII.get(TargetOpcode::COPY), LI->reg)
-               .addReg(Edit.getReg());
+               .addReg(Edit->getReg());
     Def = LIS.InsertMachineInstrInMaps(CopyMI).getDefIndex();
   }
 
@@ -512,19 +512,19 @@ void SplitEditor::openIntv() {
   assert(!OpenIdx && "Previous LI not closed before openIntv");
 
   // Create the complement as index 0.
-  if (Edit.empty())
-    Edit.create(MRI, LIS, VRM);
+  if (Edit->empty())
+    Edit->create(MRI, LIS, VRM);
 
   // Create the open interval.
-  OpenIdx = Edit.size();
-  Edit.create(MRI, LIS, VRM);
+  OpenIdx = Edit->size();
+  Edit->create(MRI, LIS, VRM);
 }
 
 SlotIndex SplitEditor::enterIntvBefore(SlotIndex Idx) {
   assert(OpenIdx && "openIntv not called before enterIntvBefore");
   DEBUG(dbgs() << "    enterIntvBefore " << Idx);
   Idx = Idx.getBaseIndex();
-  VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Idx);
+  VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Idx);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return Idx;
@@ -542,14 +542,14 @@ SlotIndex SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   SlotIndex End = LIS.getMBBEndIdx(&MBB);
   SlotIndex Last = End.getPrevSlot();
   DEBUG(dbgs() << "    enterIntvAtEnd BB#" << MBB.getNumber() << ", " << Last);
-  VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Last);
+  VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Last);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return End;
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
   VNInfo *VNI = defFromParent(OpenIdx, ParentVNI, Last, MBB,
-                              LIS.getLastSplitPoint(Edit.getParent(), &MBB));
+                              LIS.getLastSplitPoint(Edit->getParent(), &MBB));
   RegAssign.insert(VNI->def, End, OpenIdx);
   DEBUG(dump());
   return VNI->def;
@@ -573,7 +573,7 @@ SlotIndex SplitEditor::leaveIntvAfter(SlotIndex Idx) {
 
   // The interval must be live beyond the instruction at Idx.
   Idx = Idx.getBoundaryIndex();
-  VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Idx);
+  VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Idx);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return Idx.getNextSlot();
@@ -593,7 +593,7 @@ SlotIndex SplitEditor::leaveIntvBefore(SlotIndex Idx) {
 
   // The interval must be live into the instruction at Idx.
   Idx = Idx.getBoundaryIndex();
-  VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Idx);
+  VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Idx);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return Idx.getNextSlot();
@@ -611,7 +611,7 @@ SlotIndex SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
   SlotIndex Start = LIS.getMBBStartIdx(&MBB);
   DEBUG(dbgs() << "    leaveIntvAtTop BB#" << MBB.getNumber() << ", " << Start);
 
-  VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Start);
+  VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Start);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
     return Start;
@@ -626,8 +626,8 @@ SlotIndex SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
 
 void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
   assert(OpenIdx && "openIntv not called before overlapIntv");
-  const VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Start);
-  assert(ParentVNI == Edit.getParent().getVNInfoAt(End.getPrevSlot()) &&
+  const VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Start);
+  assert(ParentVNI == Edit->getParent().getVNInfoAt(End.getPrevSlot()) &&
          "Parent changes value in extended range");
   assert(LIS.getMBBFromIndex(Start) == LIS.getMBBFromIndex(End) &&
          "Range cannot span basic blocks");
@@ -652,8 +652,8 @@ void SplitEditor::closeIntv() {
 bool SplitEditor::transferSimpleValues() {
   bool Skipped = false;
   RegAssignMap::const_iterator AssignI = RegAssign.begin();
-  for (LiveInterval::const_iterator ParentI = Edit.getParent().begin(),
-         ParentE = Edit.getParent().end(); ParentI != ParentE; ++ParentI) {
+  for (LiveInterval::const_iterator ParentI = Edit->getParent().begin(),
+         ParentE = Edit->getParent().end(); ParentI != ParentE; ++ParentI) {
     DEBUG(dbgs() << "  blit " << *ParentI << ':');
     VNInfo *ParentVNI = ParentI->valno;
     // RegAssign has holes where RegIdx 0 should be used.
@@ -677,7 +677,7 @@ bool SplitEditor::transferSimpleValues() {
       DEBUG(dbgs() << " [" << Start << ';' << End << ")=" << RegIdx);
       if (VNInfo *VNI = Values.lookup(std::make_pair(RegIdx, ParentVNI->id))) {
         DEBUG(dbgs() << ':' << VNI->id);
-        Edit.get(RegIdx)->addRange(LiveRange(Start, End, VNI));
+        Edit->get(RegIdx)->addRange(LiveRange(Start, End, VNI));
       } else
         Skipped = true;
       Start = End;
@@ -689,8 +689,8 @@ bool SplitEditor::transferSimpleValues() {
 
 void SplitEditor::extendPHIKillRanges() {
     // Extend live ranges to be live-out for successor PHI values.
-  for (LiveInterval::const_vni_iterator I = Edit.getParent().vni_begin(),
-       E = Edit.getParent().vni_end(); I != E; ++I) {
+  for (LiveInterval::const_vni_iterator I = Edit->getParent().vni_begin(),
+       E = Edit->getParent().vni_end(); I != E; ++I) {
     const VNInfo *PHIVNI = *I;
     if (PHIVNI->isUnused() || !PHIVNI->isPHIDef())
       continue;
@@ -701,7 +701,7 @@ void SplitEditor::extendPHIKillRanges() {
       SlotIndex End = LIS.getMBBEndIdx(*PI).getPrevSlot();
       // The predecessor may not have a live-out value. That is OK, like an
       // undef PHI operand.
-      if (Edit.getParent().liveAt(End)) {
+      if (Edit->getParent().liveAt(End)) {
         assert(RegAssign.lookup(End) == RegIdx &&
                "Different register assignment in phi predecessor");
         extendRange(RegIdx, End);
@@ -710,9 +710,9 @@ void SplitEditor::extendPHIKillRanges() {
   }
 }
 
-/// rewriteAssigned - Rewrite all uses of Edit.getReg().
+/// rewriteAssigned - Rewrite all uses of Edit->getReg().
 void SplitEditor::rewriteAssigned(bool ExtendRanges) {
-  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Edit.getReg()),
+  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Edit->getReg()),
        RE = MRI.reg_end(); RI != RE;) {
     MachineOperand &MO = RI.getOperand();
     MachineInstr *MI = MO.getParent();
@@ -727,7 +727,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
     // <undef> operands don't really read the register, so just assign them to
     // the complement.
     if (MO.isUse() && MO.isUndef()) {
-      MO.setReg(Edit.get(0)->reg);
+      MO.setReg(Edit->get(0)->reg);
       continue;
     }
 
@@ -736,7 +736,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
 
     // Rewrite to the mapped register at Idx.
     unsigned RegIdx = RegAssign.lookup(Idx);
-    MO.setReg(Edit.get(RegIdx)->reg);
+    MO.setReg(Edit->get(RegIdx)->reg);
     DEBUG(dbgs() << "  rewr BB#" << MI->getParent()->getNumber() << '\t'
                  << Idx << ':' << RegIdx << '\t' << *MI);
 
@@ -776,8 +776,8 @@ void SplitEditor::finish() {
   // the inserted copies.
 
   // Add the original defs from the parent interval.
-  for (LiveInterval::const_vni_iterator I = Edit.getParent().vni_begin(),
-         E = Edit.getParent().vni_end(); I != E; ++I) {
+  for (LiveInterval::const_vni_iterator I = Edit->getParent().vni_begin(),
+         E = Edit->getParent().vni_end(); I != E; ++I) {
     const VNInfo *ParentVNI = *I;
     if (ParentVNI->isUnused())
       continue;
@@ -785,14 +785,14 @@ void SplitEditor::finish() {
     defValue(RegIdx, ParentVNI, ParentVNI->def);
     // Mark rematted values as complex everywhere to force liveness computation.
     // The new live ranges may be truncated.
-    if (Edit.didRematerialize(ParentVNI))
-      for (unsigned i = 0, e = Edit.size(); i != e; ++i)
+    if (Edit->didRematerialize(ParentVNI))
+      for (unsigned i = 0, e = Edit->size(); i != e; ++i)
         markComplexMapped(i, ParentVNI);
   }
 
 #ifndef NDEBUG
   // Every new interval must have a def by now, otherwise the split is bogus.
-  for (LiveRangeEdit::iterator I = Edit.begin(), E = Edit.end(); I != E; ++I)
+  for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I)
     assert((*I)->hasAtLeastOneValue() && "Split interval has no value");
 #endif
 
@@ -809,14 +809,14 @@ void SplitEditor::finish() {
   // FIXME: Delete defs that were rematted everywhere.
 
   // Get rid of unused values and set phi-kill flags.
-  for (LiveRangeEdit::iterator I = Edit.begin(), E = Edit.end(); I != E; ++I)
+  for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I)
     (*I)->RenumberValues(LIS);
 
   // Now check if any registers were separated into multiple components.
   ConnectedVNInfoEqClasses ConEQ(LIS);
-  for (unsigned i = 0, e = Edit.size(); i != e; ++i) {
+  for (unsigned i = 0, e = Edit->size(); i != e; ++i) {
     // Don't use iterators, they are invalidated by create() below.
-    LiveInterval *li = Edit.get(i);
+    LiveInterval *li = Edit->get(i);
     unsigned NumComp = ConEQ.Classify(li);
     if (NumComp <= 1)
       continue;
@@ -824,14 +824,14 @@ void SplitEditor::finish() {
     SmallVector<LiveInterval*, 8> dups;
     dups.push_back(li);
     for (unsigned i = 1; i != NumComp; ++i)
-      dups.push_back(&Edit.create(MRI, LIS, VRM));
+      dups.push_back(&Edit->create(MRI, LIS, VRM));
     rewriteComponents(dups, ConEQ);
     ConEQ.Distribute(&dups[0]);
   }
 
   // Calculate spill weight and allocation hints for new intervals.
   VirtRegAuxInfo vrai(VRM.getMachineFunction(), LIS, SA.Loops);
-  for (LiveRangeEdit::iterator I = Edit.begin(), E = Edit.end(); I != E; ++I){
+  for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I){
     LiveInterval &li = **I;
     vrai.CalculateRegClass(li.reg);
     vrai.CalculateWeightAndHint(li);
