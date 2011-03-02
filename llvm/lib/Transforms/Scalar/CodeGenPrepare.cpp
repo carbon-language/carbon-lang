@@ -71,10 +71,6 @@ namespace {
     /// update it.
     BasicBlock::iterator CurInstIterator;
 
-    /// BackEdges - Keep a set of all the loop back edges.
-    ///
-    SmallSet<std::pair<const BasicBlock*, const BasicBlock*>, 8> BackEdges;
-
     // Keeps track of non-local addresses that have been sunk into a block. This
     // allows us to avoid inserting duplicate code for blocks with multiple
     // load/stores of the same address.
@@ -93,10 +89,6 @@ namespace {
       AU.addPreserved<ProfileInfo>();
     }
 
-    virtual void releaseMemory() {
-      BackEdges.clear();
-    }
-
   private:
     bool EliminateMostlyEmptyBlocks(Function &F);
     bool CanMergeBlocks(const BasicBlock *BB, const BasicBlock *DestBB) const;
@@ -108,7 +100,6 @@ namespace {
     bool OptimizeCallInst(CallInst *CI);
     bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
-    void findLoopBackEdges(const Function &F);
   };
 }
 
@@ -119,16 +110,6 @@ INITIALIZE_PASS(CodeGenPrepare, "codegenprepare",
 FunctionPass *llvm::createCodeGenPreparePass(const TargetLowering *TLI) {
   return new CodeGenPrepare(TLI);
 }
-
-/// findLoopBackEdges - Do a DFS walk to find loop back edges.
-///
-void CodeGenPrepare::findLoopBackEdges(const Function &F) {
-  SmallVector<std::pair<const BasicBlock*,const BasicBlock*>, 32> Edges;
-  FindFunctionBackedges(F, Edges);
-  
-  BackEdges.insert(Edges.begin(), Edges.end());
-}
-
 
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
