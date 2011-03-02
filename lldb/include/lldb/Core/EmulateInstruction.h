@@ -168,13 +168,16 @@ public:
         // arg0 = target memory address
         // arg1 = don't care
         // arg2 = don't care
-        eContextWriteMemoryRandomBits
+        eContextWriteMemoryRandomBits,
+        
+        eContextMultiplication
     };
     
     enum InfoType {
         eInfoTypeRegisterPlusOffset,
         eInfoTypeRegisterPlusIndirectOffset,
         eInfoTypeRegisterToRegisterPlusOffset,
+        eInfoTypeRegisterRegisterOperands,
         eInfoTypeOffset,
         eInfoTypeRegister,
         eInfoTypeImmediate,
@@ -224,6 +227,12 @@ public:
                 Register base_reg;  // base register for address calculation
                 int64_t offset;     // offset for address calculation
             } RegisterToRegisterPlusOffset;
+            
+            struct RegisterRegisterOperands
+            {
+                Register operand1;  // register containing first operand for binary op
+                Register operand2;  // register containing second operand for binary op
+            } RegisterRegisterOperands;
             
             int64_t signed_offset; // signed offset by which to adjust self (for registers only)
             
@@ -278,6 +287,15 @@ public:
             info.RegisterToRegisterPlusOffset.data_reg = data_reg;
             info.RegisterToRegisterPlusOffset.base_reg = base_reg;
             info.RegisterToRegisterPlusOffset.offset   = offset;
+        }
+        
+        void
+        SetRegisterRegisterOperands (Register op1_reg,
+                                     Register op2_reg)
+        {
+            info_type = eInfoTypeRegisterRegisterOperands;
+            info.RegisterRegisterOperands.operand1 = op1_reg;
+            info.RegisterRegisterOperands.operand2 = op2_reg;
         }
         
         void

@@ -725,6 +725,140 @@ EmulateInstructionARM::EmulateMOVRdImm (ARMEncoding encoding)
     return true;
 }
 
+// MUL multiplies two register values.  The least significant 32 bits of the result are written to the destination 
+// register.  These 32 bits do not depend on whether the source register values are considered to be signed values or 
+// unsigned values.
+//
+// Optionally, it can update the condition flags based on the result.  In the Thumb instruction set, this option is 
+// limited to only a few forms of the instruction.
+bool
+EmulateInstructionARM::EmulateMUL (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); 
+        operand1 = SInt(R[n]); // operand1 = UInt(R[n]) produces the same final results 
+        operand2 = SInt(R[m]); // operand2 = UInt(R[m]) produces the same final results 
+        result = operand1 * operand2; 
+        R[d] = result<31:0>; 
+        if setflags then
+            APSR.N = result<31>; 
+            APSR.Z = IsZeroBit(result); 
+            if ArchVersion() == 4 then
+                APSR.C = bit UNKNOWN; 
+            // else APSR.C unchanged 
+            // APSR.V always unchanged
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+    
+    if (ConditionPassed())
+    {
+        uint32_t d;
+        uint32_t n;
+        uint32_t m;
+        bool setflags;
+                  
+        // EncodingSpecificOperations(); 
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // d = UInt(Rdm); n = UInt(Rn); m = UInt(Rdm); setflags = !InITBlock(); 
+                d = Bits32 (opcode, 2, 0);
+                n = Bits32 (opcode, 5, 3);
+                m = Bits32 (opcode, 2, 0);
+                setflags = !InITBlock();
+                  
+                // if ArchVersion() < 6 && d == n then UNPREDICTABLE;
+                if ((ArchVersion() < ARMv6) && (d == n))
+                    return false;
+                  
+                break;
+                  
+            case eEncodingT2:
+                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = FALSE; 
+                d = Bits32 (opcode, 11, 8);
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                setflags = false;
+                  
+                // if BadReg(d) || BadReg(n) || BadReg(m) then UNPREDICTABLE;
+                if (BadReg (d) || BadReg (n) || BadReg (m))
+                    return false;
+                  
+                break;
+                  
+            case eEncodingA1:
+                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = (S == ’1’); 
+                d = Bits32 (opcode, 19, 16);
+                n = Bits32 (opcode, 3, 0);
+                m = Bits32 (opcode, 11, 8);
+                setflags = BitIsSet (opcode, 20);
+                  
+                // if d == 15 || n == 15 || m == 15 then UNPREDICTABLE; 
+                if ((d == 15) ||  (n == 15) || (m == 15))
+                    return false;
+                  
+                // if ArchVersion() < 6 && d == n then UNPREDICTABLE;
+                if ((ArchVersion() < ARMv6) && (d == n))
+                    return false;
+                  
+                break;
+                  
+            default:
+                return false;
+        }
+                  
+        // operand1 = SInt(R[n]); // operand1 = UInt(R[n]) produces the same final results
+        uint64_t operand1 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        if (!success)
+            return false;
+                  
+        // operand2 = SInt(R[m]); // operand2 = UInt(R[m]) produces the same final results 
+        uint64_t operand2 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + m, 0, &success);
+        if (!success)
+            return false;
+                  
+        // result = operand1 * operand2; 
+        uint64_t result = operand1 * operand2;
+                  
+        // R[d] = result<31:0>; 
+        Register op1_reg;
+        Register op2_reg;
+        op1_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        op2_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + m);
+                  
+        EmulateInstruction::Context context;
+        context.type = eContextMultiplication;
+        context.SetRegisterRegisterOperands (op1_reg, op2_reg);
+                  
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, (0x0000ffff & result)))
+            return false;
+                  
+        // if setflags then
+        if (setflags)
+        {
+            // APSR.N = result<31>; 
+            // APSR.Z = IsZeroBit(result);
+            m_new_inst_cpsr = m_inst_cpsr;
+            SetBit32 (m_new_inst_cpsr, CPSR_N_POS, Bit32 (result, 31));
+            SetBit32 (m_new_inst_cpsr, CPSR_Z_POS, result == 0 ? 1 : 0);
+            if (m_new_inst_cpsr != m_inst_cpsr)
+            {
+                if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+                    return false;
+            }
+            
+            // if ArchVersion() == 4 then
+                // APSR.C = bit UNKNOWN;   
+        }
+    }
+    return true;
+}
+                  
 // Bitwise NOT (immediate) writes the bitwise inverse of an immediate value to the destination register.
 // It can optionally update the condition flags based on the value.
 bool
@@ -8523,6 +8657,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fef0070, 0x01a00060, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRORImm, "ror{s}<c> <Rd>, <Rm>, #imm"},
         // ror (register)
         { 0x0fef00f0, 0x01a00070, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c> <Rd>, <Rn>, <Rm>"},
+        // mul
+        { 0x0fe000f0, 0x00000090, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMUL, "mul{s}<c> <Rd>,<R>,<Rm>" },
 
         //----------------------------------------------------------------------
         // Load instructions
@@ -8763,6 +8899,10 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // ror (register)
         { 0xffffffc0, 0x000041c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateRORReg, "rors|ror<c> <Rdn>, <Rm>"},
         { 0xffe0f0f0, 0xfa60f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c>.w <Rd>, <Rn>, <Rm>"},
+        // mul
+        { 0xffffffc0, 0x00004340, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMUL, "muls <Rdm>,<Rn>,<Rdm>" },
+        // mul
+        { 0xfff0f0f0, 0xfb00f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMUL, "mul<c> <Rd>,<Rn>,<Rm>" },
 
         //----------------------------------------------------------------------
         // Load instructions
