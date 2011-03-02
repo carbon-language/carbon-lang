@@ -361,7 +361,8 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
       unsigned cnt = 0;
       //for (int i = 0, e = MFI->getNumArg(); i != e; ++i) {
       for(PTXMachineFunctionInfo::reg_reverse_iterator
-          i = MFI->argRegReverseBegin(), e = MFI->argRegReverseEnd(), b = i; i != e; ++i) {
+          i = MFI->argRegReverseBegin(), e = MFI->argRegReverseEnd(), b = i;
+          i != e; ++i) {
         reg = *i;
         assert(reg != PTX::NoRegister && "Not a valid register!");
         if (i != b)
@@ -374,7 +375,8 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
       }
     } else {
       for (PTXMachineFunctionInfo::reg_reverse_iterator
-           i = MFI->argRegReverseBegin(), e = MFI->argRegReverseEnd(), b = i; i != e; ++i) {
+           i = MFI->argRegReverseBegin(), e = MFI->argRegReverseEnd(), b = i;
+           i != e; ++i) {
         reg = *i;
         assert(reg != PTX::NoRegister && "Not a valid register!");
         if (i != b)
