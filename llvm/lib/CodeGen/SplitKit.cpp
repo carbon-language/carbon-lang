@@ -646,6 +646,29 @@ void SplitEditor::closeIntv() {
   OpenIdx = 0;
 }
 
+void SplitEditor::extendPHIKillRanges() {
+    // Extend live ranges to be live-out for successor PHI values.
+  for (LiveInterval::const_vni_iterator I = Edit.getParent().vni_begin(),
+       E = Edit.getParent().vni_end(); I != E; ++I) {
+    const VNInfo *PHIVNI = *I;
+    if (PHIVNI->isUnused() || !PHIVNI->isPHIDef())
+      continue;
+    unsigned RegIdx = RegAssign.lookup(PHIVNI->def);
+    MachineBasicBlock *MBB = LIS.getMBBFromIndex(PHIVNI->def);
+    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         PE = MBB->pred_end(); PI != PE; ++PI) {
+      SlotIndex End = LIS.getMBBEndIdx(*PI).getPrevSlot();
+      // The predecessor may not have a live-out value. That is OK, like an
+      // undef PHI operand.
+      if (Edit.getParent().liveAt(End)) {
+        assert(RegAssign.lookup(End) == RegIdx &&
+               "Different register assignment in phi predecessor");
+        extendRange(RegIdx, End);
+      }
+    }
+  }
+}
+
 /// rewriteAssigned - Rewrite all uses of Edit.getReg().
 void SplitEditor::rewriteAssigned() {
   for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Edit.getReg()),
@@ -737,34 +760,8 @@ void SplitEditor::finish() {
   // All other values have simple liveness that can be computed from RegAssign
   // and the parent live interval.
 
-  // Extend live ranges to be live-out for successor PHI values.
-  for (LiveInterval::const_vni_iterator I = Edit.getParent().vni_begin(),
-       E = Edit.getParent().vni_end(); I != E; ++I) {
-    const VNInfo *PHIVNI = *I;
-    if (PHIVNI->isUnused() || !PHIVNI->isPHIDef())
-      continue;
-    unsigned RegIdx = RegAssign.lookup(PHIVNI->def);
-    MachineBasicBlock *MBB = LIS.getMBBFromIndex(PHIVNI->def);
-    DEBUG(dbgs() << "  map phi in BB#" << MBB->getNumber() << '@' << PHIVNI->def
-                 << " -> " << RegIdx << '\n');
-    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-         PE = MBB->pred_end(); PI != PE; ++PI) {
-      SlotIndex End = LIS.getMBBEndIdx(*PI).getPrevSlot();
-      DEBUG(dbgs() << "    pred BB#" << (*PI)->getNumber() << '@' << End);
-      // The predecessor may not have a live-out value. That is OK, like an
-      // undef PHI operand.
-      if (Edit.getParent().liveAt(End)) {
-        DEBUG(dbgs() << " has parent live out\n");
-        assert(RegAssign.lookup(End) == RegIdx &&
-               "Different register assignment in phi predecessor");
-        extendRange(RegIdx, End);
-      } else
-        DEBUG(dbgs() << " is not live-out\n");
-    }
-    DEBUG(dbgs() << "    " << *Edit.get(RegIdx) << '\n');
-  }
-
   // Rewrite instructions.
+  extendPHIKillRanges();
   rewriteAssigned();
 
   // FIXME: Delete defs that were rematted everywhere.

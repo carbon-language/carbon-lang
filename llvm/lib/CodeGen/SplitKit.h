@@ -246,6 +246,10 @@ class SplitEditor {
                     SlotIndex Idx,
                     const MachineBasicBlock *IdxMBB);
 
+  /// extendPHIKillRanges - Extend the ranges of all values killed by original
+  /// parent PHIDefs.
+  void extendPHIKillRanges();
+
   /// rewriteAssigned - Rewrite all uses of Edit.getReg() to assigned registers.
   void rewriteAssigned();
 
