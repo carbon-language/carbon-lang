@@ -41,11 +41,11 @@ class LiveRangeEdit {
 
   /// remattable_ - Values defined by remattable instructions as identified by
   /// tii.isTriviallyReMaterializable().
-  SmallPtrSet<VNInfo*,4> remattable_;
+  SmallPtrSet<const VNInfo*,4> remattable_;
 
   /// rematted_ - Values that were actually rematted, and so need to have their
   /// live range trimmed or entirely removed.
-  SmallPtrSet<VNInfo*,4> rematted_;
+  SmallPtrSet<const VNInfo*,4> rematted_;
 
   /// scanRemattable - Identify the parent_ values that may rematerialize.
   void scanRemattable(LiveIntervals &lis,
@@ -120,12 +120,12 @@ public:
 
   /// markRematerialized - explicitly mark a value as rematerialized after doing
   /// it manually.
-  void markRematerialized(VNInfo *ParentVNI) {
+  void markRematerialized(const VNInfo *ParentVNI) {
     rematted_.insert(ParentVNI);
   }
 
   /// didRematerialize - Return true if ParentVNI was rematerialized anywhere.
-  bool didRematerialize(VNInfo *ParentVNI) const {
+  bool didRematerialize(const VNInfo *ParentVNI) const {
     return rematted_.count(ParentVNI);
   }
 };

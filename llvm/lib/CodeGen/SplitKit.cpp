@@ -16,6 +16,7 @@
 #include "SplitKit.h"
 #include "LiveRangeEdit.h"
 #include "VirtRegMap.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -32,6 +33,9 @@ using namespace llvm;
 static cl::opt<bool>
 AllowSplit("spiller-splits-edges",
            cl::desc("Allow critical edge splitting during spilling"));
+
+STATISTIC(NumFinished, "Number of splits finished");
+STATISTIC(NumSimple,   "Number of splits that were simple");
 
 //===----------------------------------------------------------------------===//
 //                                 Split Analysis
@@ -497,9 +501,6 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
     Def = LIS.InsertMachineInstrInMaps(CopyMI).getDefIndex();
   }
 
-  // Temporarily mark all values as complex mapped.
-  markComplexMapped(RegIdx, ParentVNI);
-
   // Define the value in Reg.
   VNInfo *VNI = defValue(RegIdx, ParentVNI, Def);
   VNI->setCopy(CopyMI);
@@ -625,15 +626,14 @@ SlotIndex SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
 
 void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
   assert(OpenIdx && "openIntv not called before overlapIntv");
-  assert(Edit.getParent().getVNInfoAt(Start) ==
-         Edit.getParent().getVNInfoAt(End.getPrevSlot()) &&
+  const VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Start);
+  assert(ParentVNI == Edit.getParent().getVNInfoAt(End.getPrevSlot()) &&
          "Parent changes value in extended range");
-  assert(Edit.get(0)->getVNInfoAt(Start) && "Start must come from leaveIntv*");
   assert(LIS.getMBBFromIndex(Start) == LIS.getMBBFromIndex(End) &&
          "Range cannot span basic blocks");
 
-  // Treat this as useIntv() for now.
   // The complement interval will be extended as needed by extendRange().
+  markComplexMapped(0, ParentVNI);
   DEBUG(dbgs() << "    overlapIntv [" << Start << ';' << End << "):");
   RegAssign.insert(Start, End, OpenIdx);
   DEBUG(dump());
@@ -644,6 +644,47 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
 void SplitEditor::closeIntv() {
   assert(OpenIdx && "openIntv not called before closeIntv");
   OpenIdx = 0;
+}
+
+/// transferSimpleValues - Transfer all simply defined values to the new live
+/// ranges.
+/// Values that were rematerialized or that have multiple defs are left alone.
+bool SplitEditor::transferSimpleValues() {
+  bool Skipped = false;
+  RegAssignMap::const_iterator AssignI = RegAssign.begin();
+  for (LiveInterval::const_iterator ParentI = Edit.getParent().begin(),
+         ParentE = Edit.getParent().end(); ParentI != ParentE; ++ParentI) {
+    DEBUG(dbgs() << "  blit " << *ParentI << ':');
+    VNInfo *ParentVNI = ParentI->valno;
+    // RegAssign has holes where RegIdx 0 should be used.
+    SlotIndex Start = ParentI->start;
+    AssignI.advanceTo(Start);
+    do {
+      unsigned RegIdx;
+      SlotIndex End = ParentI->end;
+      if (!AssignI.valid()) {
+        RegIdx = 0;
+      } else if (AssignI.start() <= Start) {
+        RegIdx = AssignI.value();
+        if (AssignI.stop() < End) {
+          End = AssignI.stop();
+          ++AssignI;
+        }
+      } else {
+        RegIdx = 0;
+        End = std::min(End, AssignI.start());
+      }
+      DEBUG(dbgs() << " [" << Start << ';' << End << ")=" << RegIdx);
+      if (VNInfo *VNI = Values.lookup(std::make_pair(RegIdx, ParentVNI->id))) {
+        DEBUG(dbgs() << ':' << VNI->id);
+        Edit.get(RegIdx)->addRange(LiveRange(Start, End, VNI));
+      } else
+        Skipped = true;
+      Start = End;
+    } while (Start != ParentI->end);
+    DEBUG(dbgs() << '\n');
+  }
+  return Skipped;
 }
 
 void SplitEditor::extendPHIKillRanges() {
@@ -670,7 +711,7 @@ void SplitEditor::extendPHIKillRanges() {
 }
 
 /// rewriteAssigned - Rewrite all uses of Edit.getReg().
-void SplitEditor::rewriteAssigned() {
+void SplitEditor::rewriteAssigned(bool ExtendRanges) {
   for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Edit.getReg()),
        RE = MRI.reg_end(); RI != RE;) {
     MachineOperand &MO = RI.getOperand();
@@ -700,7 +741,8 @@ void SplitEditor::rewriteAssigned() {
                  << Idx << ':' << RegIdx << '\t' << *MI);
 
     // Extend liveness to Idx.
-    extendRange(RegIdx, Idx);
+    if (ExtendRanges)
+      extendRange(RegIdx, Idx);
   }
 }
 
@@ -728,6 +770,7 @@ void SplitEditor::rewriteComponents(const SmallVectorImpl<LiveInterval*> &Intvs,
 
 void SplitEditor::finish() {
   assert(OpenIdx == 0 && "Previous LI not closed before rewrite");
+  ++NumFinished;
 
   // At this point, the live intervals in Edit contain VNInfos corresponding to
   // the inserted copies.
@@ -739,10 +782,12 @@ void SplitEditor::finish() {
     if (ParentVNI->isUnused())
       continue;
     unsigned RegIdx = RegAssign.lookup(ParentVNI->def);
-    // Mark all values as complex to force liveness computation.
-    // This should really only be necessary for remat victims, but we are lazy.
-    markComplexMapped(RegIdx, ParentVNI);
     defValue(RegIdx, ParentVNI, ParentVNI->def);
+    // Mark rematted values as complex everywhere to force liveness computation.
+    // The new live ranges may be truncated.
+    if (Edit.didRematerialize(ParentVNI))
+      for (unsigned i = 0, e = Edit.size(); i != e; ++i)
+        markComplexMapped(i, ParentVNI);
   }
 
 #ifndef NDEBUG
@@ -751,18 +796,15 @@ void SplitEditor::finish() {
     assert((*I)->hasAtLeastOneValue() && "Split interval has no value");
 #endif
 
-  // FIXME: Don't recompute the liveness of all values, infer it from the
-  // overlaps between the parent live interval and RegAssign.
-  // The extendRange algorithm is only necessary when:
-  // - The parent value maps to multiple defs, and new phis are needed, or
-  // - The value has been rematerialized before some uses, and we want to
-  //   minimize the live range so it only reaches the remaining uses.
-  // All other values have simple liveness that can be computed from RegAssign
-  // and the parent live interval.
+  // Transfer the simply mapped values, check if any are complex.
+  bool Complex = transferSimpleValues();
+  if (Complex)
+    extendPHIKillRanges();
+  else
+    ++NumSimple;
 
-  // Rewrite instructions.
-  extendPHIKillRanges();
-  rewriteAssigned();
+  // Rewrite virtual registers, possibly extending ranges.
+  rewriteAssigned(Complex);
 
   // FIXME: Delete defs that were rematted everywhere.
 

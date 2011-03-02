@@ -246,12 +246,16 @@ class SplitEditor {
                     SlotIndex Idx,
                     const MachineBasicBlock *IdxMBB);
 
+  /// transferSimpleValues - Transfer simply defined values to the new ranges.
+  /// Return true if any complex ranges were skipped.
+  bool transferSimpleValues();
+
   /// extendPHIKillRanges - Extend the ranges of all values killed by original
   /// parent PHIDefs.
   void extendPHIKillRanges();
 
   /// rewriteAssigned - Rewrite all uses of Edit.getReg() to assigned registers.
-  void rewriteAssigned();
+  void rewriteAssigned(bool ExtendRanges);
 
   /// rewriteComponents - Rewrite all uses of Intv[0] according to the eq
   /// classes in ConEQ.
