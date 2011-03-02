@@ -856,10 +856,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
   assert(FI.arg_size() == Args.size() &&
          "Mismatch between function signature & arguments.");
-  unsigned ArgNo = 0;
   CGFunctionInfo::const_arg_iterator info_it = FI.arg_begin();
-  for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end(); 
-       i != e; ++i, ++info_it, ++ArgNo) {
+  for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
+       i != e; ++i, ++info_it) {
     const VarDecl *Arg = i->first;
     QualType Ty = info_it->type;
     const ABIArgInfo &ArgI = info_it->info;
@@ -899,7 +898,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           V = EmitScalarConversion(V, Ty, Arg->getType());
         }
       }
-      EmitParmDecl(*Arg, V, ArgNo);
+      EmitParmDecl(*Arg, V);
       break;
     }
 
@@ -920,7 +919,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           // "void a(x) short x; {..."
           V = EmitScalarConversion(V, Ty, Arg->getType());
         }
-        EmitParmDecl(*Arg, V, ArgNo);
+        EmitParmDecl(*Arg, V);
         break;
       }
 
@@ -975,7 +974,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           V = EmitScalarConversion(V, Ty, Arg->getType());
         }
       }
-      EmitParmDecl(*Arg, V, ArgNo);
+      EmitParmDecl(*Arg, V);
       continue;  // Skip ++AI increment, already done.
     }
 
@@ -986,7 +985,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       llvm::Value *Temp = CreateMemTemp(Ty, Arg->getName() + ".addr");
       llvm::Function::arg_iterator End =
         ExpandTypeFromArgs(Ty, MakeAddrLValue(Temp, Ty), AI);
-      EmitParmDecl(*Arg, Temp, ArgNo);
+      EmitParmDecl(*Arg, Temp);
 
       // Name the arguments used in expansion and increment AI.
       unsigned Index = 0;
@@ -998,10 +997,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     case ABIArgInfo::Ignore:
       // Initialize the local variable appropriately.
       if (hasAggregateLLVMType(Ty))
-        EmitParmDecl(*Arg, CreateMemTemp(Ty), ArgNo);
+        EmitParmDecl(*Arg, CreateMemTemp(Ty));
       else
-        EmitParmDecl(*Arg, llvm::UndefValue::get(ConvertType(Arg->getType())),
-                     ArgNo);
+        EmitParmDecl(*Arg, llvm::UndefValue::get(ConvertType(Arg->getType())));
 
       // Skip increment, no matching LLVM parameter.
       continue;
