@@ -1278,10 +1278,12 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
 
     llvm::Value *amt = llvm::ConstantInt::get(value->getType(), amount);
 
-    if (type->isSignedIntegerType())
+    // Note that signed integer inc/dec with width less than int can't
+    // overflow because of promotion rules; we're just eliding a few steps here.
+    if (type->isSignedIntegerType() &&
+        value->getType()->getPrimitiveSizeInBits() >=
+            CGF.CGM.IntTy->getBitWidth())
       value = EmitAddConsiderOverflowBehavior(E, value, amt, isInc);
-
-    // Unsigned integer inc is always two's complement.
     else
       value = Builder.CreateAdd(value, amt, isInc ? "inc" : "dec");
   
