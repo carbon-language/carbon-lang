@@ -907,7 +907,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     if (TemplateId->Kind != TNK_Type_template)
       return TPResult::False();
     CXXScopeSpec SS;
-    AnnotateTemplateIdTokenAsType(&SS);
+    AnnotateTemplateIdTokenAsType();
     assert(Tok.is(tok::annot_typename));
     goto case_typename;
   }

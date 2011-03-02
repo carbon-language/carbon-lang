@@ -139,6 +139,9 @@ namespace clang {
   /// tokens. All of the information about template arguments is allocated 
   /// directly after this structure.
   struct TemplateIdAnnotation {
+    /// \brief The nested-name-specifier that precedes the template name.
+    CXXScopeSpec SS;
+    
     /// TemplateNameLoc - The location of the template name within the
     /// source.
     SourceLocation TemplateNameLoc;
@@ -174,9 +177,12 @@ namespace clang {
     
     static TemplateIdAnnotation* Allocate(unsigned NumArgs) {
       TemplateIdAnnotation *TemplateId
-      = (TemplateIdAnnotation *)std::malloc(sizeof(TemplateIdAnnotation) +
+        = (TemplateIdAnnotation *)std::malloc(sizeof(TemplateIdAnnotation) +
                                       sizeof(ParsedTemplateArgument) * NumArgs);
       TemplateId->NumArgs = NumArgs;
+      
+      // Default-construct nested-name-specifier.
+      new (&TemplateId->SS) CXXScopeSpec();
       
       // Default-construct parsed template arguments.
       ParsedTemplateArgument *TemplateArgs = TemplateId->getTemplateArgs();
@@ -186,7 +192,10 @@ namespace clang {
       return TemplateId;
     }
     
-    void Destroy() { free(this); }
+    void Destroy() { 
+      SS.~CXXScopeSpec();
+      free(this); 
+    }
   };
 
   /// Retrieves the range of the given template parameter lists.

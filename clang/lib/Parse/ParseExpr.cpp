@@ -904,7 +904,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         // cast expression.
         CXXScopeSpec SS;
         ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
-        AnnotateTemplateIdTokenAsType(&SS);
+        AnnotateTemplateIdTokenAsType();
         return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
                                    NotCastExpr, TypeOfCast);
       }

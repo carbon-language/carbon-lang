@@ -1743,10 +1743,14 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 }
 
 TypeResult
-Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
+Sema::ActOnTemplateIdType(CXXScopeSpec &SS,
+                          TemplateTy TemplateD, SourceLocation TemplateLoc,
                           SourceLocation LAngleLoc,
                           ASTTemplateArgsPtr TemplateArgsIn,
                           SourceLocation RAngleLoc) {
+  if (SS.isInvalid())
+    return true;
+
   TemplateName Template = TemplateD.getAsVal<TemplateName>();
 
   // Translate the parser's template argument list in our AST format.
@@ -1763,14 +1767,10 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
     TypeLocBuilder TLB;
     DependentTemplateSpecializationTypeLoc SpecTL
       = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
-    SpecTL.setKeywordLoc(SourceLocation()); // FIXME: 'template' location
+    SpecTL.setKeywordLoc(SourceLocation());
     SpecTL.setNameLoc(TemplateLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
-    
-    // FIXME: Poor nested-name-specifier source-location information.
-    CXXScopeSpec SS;
-    SS.MakeTrivial(Context, DTN->getQualifier(), TemplateLoc);
     SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
     for (unsigned I = 0, N = SpecTL.getNumArgs(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
@@ -1783,56 +1783,103 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   if (Result.isNull())
     return true;
 
-  TypeSourceInfo *DI = Context.CreateTypeSourceInfo(Result);
-  TemplateSpecializationTypeLoc TL
-    = cast<TemplateSpecializationTypeLoc>(DI->getTypeLoc());
-  TL.setTemplateNameLoc(TemplateLoc);
-  TL.setLAngleLoc(LAngleLoc);
-  TL.setRAngleLoc(RAngleLoc);
-  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
-    TL.setArgLocInfo(i, TemplateArgs[i].getLocInfo());
+  // Build type-source information.
+  TypeLocBuilder TLB;  
+  TemplateSpecializationTypeLoc SpecTL
+    = TLB.push<TemplateSpecializationTypeLoc>(Result);
+  SpecTL.setTemplateNameLoc(TemplateLoc);
+  SpecTL.setLAngleLoc(LAngleLoc);
+  SpecTL.setRAngleLoc(RAngleLoc);
+  for (unsigned i = 0, e = SpecTL.getNumArgs(); i != e; ++i)
+    SpecTL.setArgLocInfo(i, TemplateArgs[i].getLocInfo());
 
-  return CreateParsedType(Result, DI);
+  if (SS.isNotEmpty()) {
+    // Create an elaborated-type-specifier containing the nested-name-specifier.
+    Result = Context.getElaboratedType(ETK_None, SS.getScopeRep(), Result);
+    ElaboratedTypeLoc ElabTL = TLB.push<ElaboratedTypeLoc>(Result);
+    ElabTL.setKeywordLoc(SourceLocation());
+    ElabTL.setQualifierLoc(SS.getWithLocInContext(Context));
+  }
+  
+  return CreateParsedType(Result, TLB.getTypeSourceInfo(Context, Result));
 }
 
-TypeResult Sema::ActOnTagTemplateIdType(CXXScopeSpec &SS,
-                                        TypeResult TypeResult,
-                                        TagUseKind TUK,
+TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
                                         TypeSpecifierType TagSpec,
-                                        SourceLocation TagLoc) {
-  if (TypeResult.isInvalid())
-    return ::TypeResult();
-
-  TypeSourceInfo *DI;
-  QualType Type = GetTypeFromParser(TypeResult.get(), &DI);
-
-  // Verify the tag specifier.
+                                        SourceLocation TagLoc,
+                                        CXXScopeSpec &SS,
+                                        TemplateTy TemplateD, 
+                                        SourceLocation TemplateLoc,
+                                        SourceLocation LAngleLoc,
+                                        ASTTemplateArgsPtr TemplateArgsIn,
+                                        SourceLocation RAngleLoc) {
+  TemplateName Template = TemplateD.getAsVal<TemplateName>();
+  
+  // Translate the parser's template argument list in our AST format.
+  TemplateArgumentListInfo TemplateArgs(LAngleLoc, RAngleLoc);
+  translateTemplateArguments(TemplateArgsIn, TemplateArgs);
+  
+  // Determine the tag kind
   TagTypeKind TagKind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
+  ElaboratedTypeKeyword Keyword
+    = TypeWithKeyword::getKeywordForTagTypeKind(TagKind);
 
-  if (const RecordType *RT = Type->getAs<RecordType>()) {
+  if (DependentTemplateName *DTN = Template.getAsDependentTemplateName()) {
+    QualType T = Context.getDependentTemplateSpecializationType(Keyword,
+                                                          DTN->getQualifier(), 
+                                                          DTN->getIdentifier(), 
+                                                                TemplateArgs);
+    
+    // Build type-source information.    
+    TypeLocBuilder TLB;
+    DependentTemplateSpecializationTypeLoc SpecTL
+    = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
+    SpecTL.setKeywordLoc(TagLoc);
+    SpecTL.setNameLoc(TemplateLoc);
+    SpecTL.setLAngleLoc(LAngleLoc);
+    SpecTL.setRAngleLoc(RAngleLoc);
+    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    for (unsigned I = 0, N = SpecTL.getNumArgs(); I != N; ++I)
+      SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
+    return CreateParsedType(T, TLB.getTypeSourceInfo(Context, T));
+  }
+  
+  QualType Result = CheckTemplateIdType(Template, TemplateLoc, TemplateArgs);
+  if (Result.isNull())
+    return TypeResult();
+  
+  // Check the tag kind
+  if (const RecordType *RT = Result->getAs<RecordType>()) {
     RecordDecl *D = RT->getDecl();
-
+    
     IdentifierInfo *Id = D->getIdentifier();
     assert(Id && "templated class must have an identifier");
-
+    
     if (!isAcceptableTagRedeclaration(D, TagKind, TagLoc, *Id)) {
       Diag(TagLoc, diag::err_use_with_wrong_tag)
-        << Type
+        << Result
         << FixItHint::CreateReplacement(SourceRange(TagLoc), D->getKindName());
       Diag(D->getLocation(), diag::note_previous_use);
     }
   }
+  
+  // Provide source-location information for the template specialization.
+  TypeLocBuilder TLB;
+  TemplateSpecializationTypeLoc SpecTL
+    = TLB.push<TemplateSpecializationTypeLoc>(Result);
+  SpecTL.setTemplateNameLoc(TemplateLoc);
+  SpecTL.setLAngleLoc(LAngleLoc);
+  SpecTL.setRAngleLoc(RAngleLoc);
+  for (unsigned i = 0, e = SpecTL.getNumArgs(); i != e; ++i)
+    SpecTL.setArgLocInfo(i, TemplateArgs[i].getLocInfo());
 
-  ElaboratedTypeKeyword Keyword
-    = TypeWithKeyword::getKeywordForTagTypeKind(TagKind);
-  QualType ElabType = Context.getElaboratedType(Keyword, SS.getScopeRep(), Type);
-
-  TypeSourceInfo *ElabDI = Context.CreateTypeSourceInfo(ElabType);
-  ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(ElabDI->getTypeLoc());
-  TL.setKeywordLoc(TagLoc);
-  TL.setQualifierLoc(SS.getWithLocInContext(Context));
-  TL.getNamedTypeLoc().initializeFullCopy(DI->getTypeLoc());
-  return CreateParsedType(ElabType, ElabDI);
+  // Construct an elaborated type containing the nested-name-specifier (if any)
+  // and keyword.
+  Result = Context.getElaboratedType(Keyword, SS.getScopeRep(), Result);
+  ElaboratedTypeLoc ElabTL = TLB.push<ElaboratedTypeLoc>(Result);
+  ElabTL.setKeywordLoc(TagLoc);
+  ElabTL.setQualifierLoc(SS.getWithLocInContext(Context));
+  return CreateParsedType(Result, TLB.getTypeSourceInfo(Context, Result));
 }
 
 ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
@@ -5897,8 +5944,17 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     return true;
   }
 
+  // Create the resulting type.
   ElaboratedTypeKeyword Kwd = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
-  return ParsedType::make(Context.getDependentNameType(Kwd, NNS, Name));
+  QualType Result = Context.getDependentNameType(Kwd, NNS, Name);
+  
+  // Create type-source location information for this type.
+  TypeLocBuilder TLB;
+  DependentNameTypeLoc TL = TLB.push<DependentNameTypeLoc>(Result);
+  TL.setKeywordLoc(TagLoc);
+  TL.setQualifierLoc(SS.getWithLocInContext(Context));
+  TL.setNameLoc(NameLoc);
+  return CreateParsedType(Result, TLB.getTypeSourceInfo(Context, Result));
 }
 
 TypeResult

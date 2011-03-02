@@ -1129,7 +1129,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
                                    Template, MemberOfUnknownSpecialization)) {
         // Consume the identifier.
         ConsumeToken();
-        if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName)) {
+        if (AnnotateTemplateIdToken(Template, TNK, SS, TemplateName)) {
           // If an unrecoverable error occurred, we need to return true here,
           // because the token stream is in a damaged state.  We may not return
           // a valid identifier.
@@ -1152,7 +1152,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       // template-id annotation in a context where we weren't allowed
       // to produce a type annotation token. Update the template-id
       // annotation token to a type annotation token now.
-      AnnotateTemplateIdTokenAsType(&SS);
+      AnnotateTemplateIdTokenAsType();
       return false;
     }
   }

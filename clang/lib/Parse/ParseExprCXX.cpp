@@ -173,7 +173,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                                                     ObjectType, 
                                                                 EnteringContext,
                                                                     Template)) {
-        if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName, 
+        if (AnnotateTemplateIdToken(Template, TNK, SS, TemplateName, 
                                     TemplateKWLoc, false))
           return true;
       } else
@@ -312,7 +312,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         // specializations) still want to see the original template-id
         // token.
         ConsumeToken();
-        if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName, 
+        if (AnnotateTemplateIdToken(Template, TNK, SS, TemplateName, 
                                     SourceLocation(), false))
           return true;
         continue;
@@ -335,7 +335,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                                    EnteringContext, Template)) {
           // Consume the identifier.
           ConsumeToken();
-          if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName, 
+          if (AnnotateTemplateIdToken(Template, TNK, SS, TemplateName, 
                                       SourceLocation(), false))
             return true;                
         }
@@ -1164,7 +1164,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
   TemplateArgList TemplateArgs;
   if (Tok.is(tok::less) &&
       ParseTemplateIdAfterTemplateName(Template, Id.StartLocation,
-                                       &SS, true, LAngleLoc,
+                                       SS, true, LAngleLoc,
                                        TemplateArgs,
                                        RAngleLoc))
     return true;
@@ -1187,6 +1187,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
       TemplateId->TemplateNameLoc = Id.StartLocation;
     }
 
+    TemplateId->SS = SS;
     TemplateId->Template = Template;
     TemplateId->Kind = TNK;
     TemplateId->LAngleLoc = LAngleLoc;
@@ -1206,7 +1207,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
   
   // Constructor and destructor names.
   TypeResult Type
-    = Actions.ActOnTemplateIdType(Template, NameLoc,
+    = Actions.ActOnTemplateIdType(SS, Template, NameLoc,
                                   LAngleLoc, TemplateArgsPtr,
                                   RAngleLoc);
   if (Type.isInvalid())

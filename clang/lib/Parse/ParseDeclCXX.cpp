@@ -508,14 +508,14 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
 ///         simple-template-id
 ///
 Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
-                                          CXXScopeSpec *SS) {
+                                          CXXScopeSpec &SS) {
   // Check whether we have a template-id that names a type.
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId
       = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
     if (TemplateId->Kind == TNK_Type_template ||
         TemplateId->Kind == TNK_Dependent_template_name) {
-      AnnotateTemplateIdTokenAsType(SS);
+      AnnotateTemplateIdTokenAsType();
 
       assert(Tok.is(tok::annot_typename) && "template-id -> type failed");
       ParsedType Type = getTypeAnnotation(Tok);
@@ -544,7 +544,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
     TemplateNameKind TNK = TNK_Type_template;
     TemplateTy Template;
     if (!Actions.DiagnoseUnknownTemplateName(*Id, IdLoc, getCurScope(),
-                                             SS, Template, TNK)) {
+                                             &SS, Template, TNK)) {
       Diag(IdLoc, diag::err_unknown_template_name)
         << Id;
     }
@@ -561,7 +561,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
                                 SourceLocation(), true))
       return true;
     if (TNK == TNK_Dependent_template_name)
-      AnnotateTemplateIdTokenAsType(SS);
+      AnnotateTemplateIdTokenAsType();
 
     // If we didn't end up with a typename token, there's nothing more we
     // can do.
@@ -577,7 +577,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
   }
 
   // We have an identifier; check whether it is actually a type.
-  ParsedType Type = Actions.getTypeName(*Id, IdLoc, getCurScope(), SS, true,
+  ParsedType Type = Actions.getTypeName(*Id, IdLoc, getCurScope(), &SS, true,
                                         false, ParsedType(),
                                         /*NonTrivialTypeSourceInfo=*/true);
   if (!Type) {
@@ -592,7 +592,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
   DeclSpec DS;
   DS.SetRangeStart(IdLoc);
   DS.SetRangeEnd(EndLocation);
-  DS.getTypeSpecScope() = *SS;
+  DS.getTypeSpecScope() = SS;
 
   const char *PrevSpec = 0;
   unsigned DiagID;
@@ -739,7 +739,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // a class (or template thereof).
       TemplateArgList TemplateArgs;
       SourceLocation LAngleLoc, RAngleLoc;
-      if (ParseTemplateIdAfterTemplateName(TemplateTy(), NameLoc, &SS,
+      if (ParseTemplateIdAfterTemplateName(TemplateTy(), NameLoc, SS,
                                            true, LAngleLoc,
                                            TemplateArgs, RAngleLoc)) {
         // We couldn't parse the template argument list at all, so don't
@@ -781,7 +781,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     TemplateId = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
     NameLoc = ConsumeToken();
 
-    if (TemplateId->Kind != TNK_Type_template) {
+    if (TemplateId->Kind != TNK_Type_template &&
+        TemplateId->Kind != TNK_Dependent_template_name) {
       // The template-name in the simple-template-id refers to
       // something other than a class template. Give an appropriate
       // error message and skip to the ';'.
@@ -893,15 +894,14 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     } else if (TUK == Sema::TUK_Reference ||
                (TUK == Sema::TUK_Friend &&
                 TemplateInfo.Kind == ParsedTemplateInfo::NonTemplate)) {
-      TypeResult
-        = Actions.ActOnTemplateIdType(TemplateId->Template,
-                                      TemplateId->TemplateNameLoc,
-                                      TemplateId->LAngleLoc,
-                                      TemplateArgsPtr,
-                                      TemplateId->RAngleLoc);
-
-      TypeResult = Actions.ActOnTagTemplateIdType(SS, TypeResult, TUK,
-                                                  TagType, StartLoc);
+      TypeResult = Actions.ActOnTagTemplateIdType(TUK, TagType, 
+                                                  StartLoc, 
+                                                  TemplateId->SS,
+                                                  TemplateId->Template,
+                                                  TemplateId->TemplateNameLoc,
+                                                  TemplateId->LAngleLoc,
+                                                  TemplateArgsPtr,
+                                                  TemplateId->RAngleLoc);                                                  
     } else {
       // This is an explicit specialization or a class template
       // partial specialization.
@@ -1197,7 +1197,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
 
   // Parse the class-name.
   SourceLocation EndLocation;
-  TypeResult BaseType = ParseClassName(EndLocation, &SS);
+  TypeResult BaseType = ParseClassName(EndLocation, SS);
   if (BaseType.isInvalid())
     return true;
 
@@ -1958,7 +1958,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
       = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
     if (TemplateId->Kind == TNK_Type_template ||
         TemplateId->Kind == TNK_Dependent_template_name) {
-      AnnotateTemplateIdTokenAsType(&SS);
+      AnnotateTemplateIdTokenAsType();
       assert(Tok.is(tok::annot_typename) && "template-id -> type failed");
       TemplateTypeTy = getTypeAnnotation(Tok);
     }

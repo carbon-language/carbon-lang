@@ -102,6 +102,8 @@ SourceLocation TypeLoc::getBeginLoc() const {
     // FIXME: Currently QualifiedTypeLoc does not have a source range
     // case Qualified:
     case Elaborated:
+    case DependentName:
+    case DependentTemplateSpecialization:
       break;
     default:
       TypeLoc Next = Cur.getNextTypeLoc();

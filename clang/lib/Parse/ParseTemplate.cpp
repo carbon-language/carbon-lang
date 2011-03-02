@@ -661,7 +661,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
 bool
 Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
                                          SourceLocation TemplateNameLoc,
-                                         const CXXScopeSpec *SS,
+                                         const CXXScopeSpec &SS,
                                          bool ConsumeLastToken,
                                          SourceLocation &LAngleLoc,
                                          TemplateArgList &TemplateArgs,
@@ -756,7 +756,7 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
 /// formed, this function returns true.
 ///
 bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
-                                     const CXXScopeSpec *SS,
+                                     CXXScopeSpec &SS,
                                      UnqualifiedId &TemplateName,
                                      SourceLocation TemplateKWLoc,
                                      bool AllowTypeAnnotation) {
@@ -790,7 +790,8 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
   // Build the annotation token.
   if (TNK == TNK_Type_template && AllowTypeAnnotation) {
     TypeResult Type
-      = Actions.ActOnTemplateIdType(Template, TemplateNameLoc,
+      = Actions.ActOnTemplateIdType(SS, 
+                                    Template, TemplateNameLoc,
                                     LAngleLoc, TemplateArgsPtr,
                                     RAngleLoc);
     if (Type.isInvalid()) {
@@ -803,8 +804,8 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
 
     Tok.setKind(tok::annot_typename);
     setTypeAnnotation(Tok, Type.get());
-    if (SS && SS->isNotEmpty())
-      Tok.setLocation(SS->getBeginLoc());
+    if (SS.isNotEmpty())
+      Tok.setLocation(SS.getBeginLoc());
     else if (TemplateKWLoc.isValid())
       Tok.setLocation(TemplateKWLoc);
     else
@@ -823,6 +824,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
       TemplateId->Name = 0;
       TemplateId->Operator = TemplateName.OperatorFunctionId.Operator;
     }
+    TemplateId->SS = SS;
     TemplateId->Template = Template;
     TemplateId->Kind = TNK;
     TemplateId->LAngleLoc = LAngleLoc;
@@ -854,7 +856,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
 /// If there was a failure when forming the type from the template-id,
 /// a type annotation token will still be created, but will have a
 /// NULL type pointer to signify an error.
-void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
+void Parser::AnnotateTemplateIdTokenAsType() {
   assert(Tok.is(tok::annot_template_id) && "Requires template-id tokens");
 
   TemplateIdAnnotation *TemplateId
@@ -868,7 +870,8 @@ void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
                                      TemplateId->NumArgs);
 
   TypeResult Type
-    = Actions.ActOnTemplateIdType(TemplateId->Template,
+    = Actions.ActOnTemplateIdType(TemplateId->SS,
+                                  TemplateId->Template,
                                   TemplateId->TemplateNameLoc,
                                   TemplateId->LAngleLoc,
                                   TemplateArgsPtr,
@@ -876,8 +879,8 @@ void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
   // Create the new "type" annotation token.
   Tok.setKind(tok::annot_typename);
   setTypeAnnotation(Tok, Type.isInvalid() ? ParsedType() : Type.get());
-  if (SS && SS->isNotEmpty()) // it was a C++ qualified type name.
-    Tok.setLocation(SS->getBeginLoc());
+  if (TemplateId->SS.isNotEmpty()) // it was a C++ qualified type name.
+    Tok.setLocation(TemplateId->SS.getBeginLoc());
   // End location stays the same
 
   // Replace the template-id annotation token, and possible the scope-specifier

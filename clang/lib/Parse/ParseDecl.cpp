@@ -1013,7 +1013,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         ConsumeToken(); // The C++ scope.
         assert(Tok.is(tok::annot_template_id) &&
                "ParseOptionalCXXScopeSpecifier not working");
-        AnnotateTemplateIdTokenAsType(&SS);
+        AnnotateTemplateIdTokenAsType();
         continue;
       }
 
