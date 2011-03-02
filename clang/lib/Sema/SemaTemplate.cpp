@@ -2105,7 +2105,6 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
 ///
 /// \param Converted the list of template arguments provided for template
 /// parameters that precede \p Param in the template parameter list.
-///
 /// \returns the substituted template argument, or NULL if an error occurred.
 static TypeSourceInfo *
 SubstDefaultTemplateArgument(Sema &SemaRef,
@@ -2202,8 +2201,8 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
 /// \param Converted the list of template arguments provided for template
 /// parameters that precede \p Param in the template parameter list.
 ///
-/// \param QualifierLoc The nested-name-specifier, with source-location 
-/// information, which will also be instantiated and updated.
+/// \param QualifierLoc Will be set to the nested-name-specifier (with 
+/// source-location information) that precedes the template name.
 ///
 /// \returns the substituted template argument, or NULL if an error occurred.
 static TemplateName
@@ -2226,6 +2225,7 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
                                    SourceRange(TemplateLoc, RAngleLoc));
 
   // Substitute into the nested-name-specifier first, 
+  QualifierLoc = Param->getDefaultArgument().getTemplateQualifierLoc();
   if (QualifierLoc) {
     QualifierLoc = SemaRef.SubstNestedNameSpecifierLoc(QualifierLoc, 
                                                        AllTemplateArgs);
@@ -2233,7 +2233,7 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
       return TemplateName();
   }
   
-  return SemaRef.SubstTemplateName(
+  return SemaRef.SubstTemplateName(QualifierLoc,
                       Param->getDefaultArgument().getArgument().getAsTemplate(),
                               Param->getDefaultArgument().getTemplateNameLoc(),
                                    AllTemplateArgs);
@@ -2286,8 +2286,7 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
     return TemplateArgumentLoc();
 
 
-  NestedNameSpecifierLoc QualifierLoc
-    = TempTempParm->getDefaultArgument().getTemplateQualifierLoc();
+  NestedNameSpecifierLoc QualifierLoc;
   TemplateName TName = SubstDefaultTemplateArgument(*this, Template,
                                                     TemplateLoc,
                                                     RAngleLoc,
@@ -2679,8 +2678,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         break;
       }
 
-      NestedNameSpecifierLoc QualifierLoc
-        = TempParm->getDefaultArgument().getTemplateQualifierLoc();
+      NestedNameSpecifierLoc QualifierLoc;
       TemplateName Name = SubstDefaultTemplateArgument(*this, Template,
                                                        TemplateLoc,
                                                        RAngleLoc,

@@ -733,10 +733,6 @@ namespace {
                                    NestedNameSpecifierLoc QualifierLoc,
                                    QualType T);
 
-    TemplateName TransformTemplateName(TemplateName Name,
-                                       QualType ObjectType = QualType(),
-                                       NamedDecl *FirstQualifierInScope = 0);
-
     TemplateName TransformTemplateName(CXXScopeSpec &SS,
                                        TemplateName Name,
                                        SourceLocation NameLoc,                                     
@@ -927,60 +923,6 @@ TemplateInstantiator::RebuildElaboratedType(SourceLocation KeywordLoc,
                                                                     Keyword,
                                                                   QualifierLoc,
                                                                     T);
-}
-
-TemplateName TemplateInstantiator::TransformTemplateName(TemplateName Name,
-                                                         QualType ObjectType,
-                                             NamedDecl *FirstQualifierInScope) {
-  if (TemplateTemplateParmDecl *TTP
-       = dyn_cast_or_null<TemplateTemplateParmDecl>(Name.getAsTemplateDecl())) {
-    if (TTP->getDepth() < TemplateArgs.getNumLevels()) {
-      // If the corresponding template argument is NULL or non-existent, it's
-      // because we are performing instantiation from explicitly-specified
-      // template arguments in a function template, but there were some
-      // arguments left unspecified.
-      if (!TemplateArgs.hasTemplateArgument(TTP->getDepth(),
-                                            TTP->getPosition()))
-        return Name;
-      
-      TemplateArgument Arg = TemplateArgs(TTP->getDepth(), TTP->getPosition());
-      
-      if (TTP->isParameterPack()) {
-        assert(Arg.getKind() == TemplateArgument::Pack && 
-               "Missing argument pack");
-        
-        if (getSema().ArgumentPackSubstitutionIndex == -1) {
-          // We have the template argument pack to substitute, but we're not
-          // actually expanding the enclosing pack expansion yet. So, just
-          // keep the entire argument pack.
-          return getSema().Context.getSubstTemplateTemplateParmPack(TTP, Arg);
-        }
-        
-        assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
-        Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
-      }
-      
-      TemplateName Template = Arg.getAsTemplate();
-      assert(!Template.isNull() && Template.getAsTemplateDecl() &&
-             "Wrong kind of template template argument");
-      return Template;
-    }
-  }
-  
-  if (SubstTemplateTemplateParmPackStorage *SubstPack
-                                  = Name.getAsSubstTemplateTemplateParmPack()) {
-    if (getSema().ArgumentPackSubstitutionIndex == -1)
-      return Name;
-
-    const TemplateArgument &ArgPack = SubstPack->getArgumentPack();
-    assert(getSema().ArgumentPackSubstitutionIndex < (int)ArgPack.pack_size() &&
-           "Pack substitution index out-of-range");
-    return ArgPack.pack_begin()[getSema().ArgumentPackSubstitutionIndex]
-                                                               .getAsTemplate();
-  }
-  
-  return inherited::TransformTemplateName(Name, ObjectType, 
-                                          FirstQualifierInScope);
 }
 
 TemplateName TemplateInstantiator::TransformTemplateName(CXXScopeSpec &SS,
@@ -2231,11 +2173,14 @@ Sema::SubstDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
 }
 
 TemplateName
-Sema::SubstTemplateName(TemplateName Name, SourceLocation Loc,
+Sema::SubstTemplateName(NestedNameSpecifierLoc QualifierLoc,
+                        TemplateName Name, SourceLocation Loc,
                         const MultiLevelTemplateArgumentList &TemplateArgs) {
   TemplateInstantiator Instantiator(*this, TemplateArgs, Loc,
                                     DeclarationName());
-  return Instantiator.TransformTemplateName(Name);
+  CXXScopeSpec SS;
+  SS.Adopt(QualifierLoc);
+  return Instantiator.TransformTemplateName(SS, Name, Loc);
 }
 
 bool Sema::Subst(const TemplateArgumentLoc *Args, unsigned NumArgs,

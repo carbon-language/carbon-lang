@@ -407,15 +407,6 @@ public:
 
   /// \brief Transform the given template name.
   ///
-  /// By default, transforms the template name by transforming the declarations
-  /// and nested-name-specifiers that occur within the template name.
-  /// Subclasses may override this function to provide alternate behavior.
-  TemplateName TransformTemplateName(TemplateName Name,
-                                     QualType ObjectType = QualType(),
-                                     NamedDecl *FirstQualifierInScope = 0);
-
-  /// \brief Transform the given template name.
-  ///
   /// \param SS The nested-name-specifier that qualifies the template
   /// name. This nested-name-specifier must already have been transformed.
   ///
@@ -2716,113 +2707,6 @@ TreeTransform<Derived>
 
 template<typename Derived>
 TemplateName
-TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
-                                              QualType ObjectType,
-                                              NamedDecl *FirstQualifierInScope) {
-  // FIXME: This routine needs to go away.
-  SourceLocation Loc = getDerived().getBaseLocation();
-
-  if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName()) {
-    NestedNameSpecifier *NNS
-      = getDerived().TransformNestedNameSpecifier(QTN->getQualifier(),
-                                                  /*FIXME*/ SourceRange(Loc),
-                                                  ObjectType,
-                                                  FirstQualifierInScope);
-    if (!NNS)
-      return TemplateName();
-
-    if (TemplateDecl *Template = QTN->getTemplateDecl()) {
-      TemplateDecl *TransTemplate
-        = cast_or_null<TemplateDecl>(getDerived().TransformDecl(Loc, Template));
-      if (!TransTemplate)
-        return TemplateName();
-
-      if (!getDerived().AlwaysRebuild() &&
-          NNS == QTN->getQualifier() &&
-          TransTemplate == Template)
-        return Name;
-
-      CXXScopeSpec SS;
-      SS.MakeTrivial(SemaRef.Context, NNS, Loc);
-      return getDerived().RebuildTemplateName(SS, QTN->hasTemplateKeyword(),
-                                              TransTemplate);
-    }
-
-    // These should be getting filtered out before they make it into the AST.
-    llvm_unreachable("overloaded template name survived to here");
-  }
-
-  if (DependentTemplateName *DTN = Name.getAsDependentTemplateName()) {
-    NestedNameSpecifier *NNS = DTN->getQualifier();
-    if (NNS) {
-      NNS = getDerived().TransformNestedNameSpecifier(NNS,
-                                                  /*FIXME:*/SourceRange(Loc),
-                                                      ObjectType,
-                                                      FirstQualifierInScope);
-      if (!NNS) return TemplateName();
-
-      // These apply to the scope specifier, not the template.
-      ObjectType = QualType();
-      FirstQualifierInScope = 0;
-    }
-
-    if (!getDerived().AlwaysRebuild() &&
-        NNS == DTN->getQualifier() &&
-        ObjectType.isNull())
-      return Name;
-
-    // FIXME: Bad source-location information all around.
-    CXXScopeSpec SS;
-    SS.MakeTrivial(SemaRef.Context, NNS, getDerived().getBaseLocation());
-    if (DTN->isIdentifier()) {
-      return getDerived().RebuildTemplateName(SS,
-                                              *DTN->getIdentifier(),
-                                              getDerived().getBaseLocation(),
-                                              ObjectType,
-                                              FirstQualifierInScope);
-    }
-    
-    return getDerived().RebuildTemplateName(SS, DTN->getOperator(), 
-                                            getDerived().getBaseLocation(),
-                                            ObjectType);
-  }
-
-  if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
-    TemplateDecl *TransTemplate
-      = cast_or_null<TemplateDecl>(getDerived().TransformDecl(Loc, Template));
-    if (!TransTemplate)
-      return TemplateName();
-
-    if (!getDerived().AlwaysRebuild() &&
-        TransTemplate == Template)
-      return Name;
-
-    return TemplateName(TransTemplate);
-  }
-
-  if (SubstTemplateTemplateParmPackStorage *SubstPack
-                                 = Name.getAsSubstTemplateTemplateParmPack()) {
-    TemplateTemplateParmDecl *TransParam
-      = cast_or_null<TemplateTemplateParmDecl>(
-               getDerived().TransformDecl(Loc, SubstPack->getParameterPack()));
-    if (!TransParam)
-      return TemplateName();
-    
-    if (!getDerived().AlwaysRebuild() &&
-        TransParam == SubstPack->getParameterPack())
-      return Name;
-    
-    return getDerived().RebuildTemplateName(TransParam, 
-                                            SubstPack->getArgumentPack());
-  }
-  
-  // These should be getting filtered out before they reach the AST.
-  llvm_unreachable("overloaded function decl survived to here");
-  return TemplateName();
-}
-
-template<typename Derived>
-TemplateName
 TreeTransform<Derived>::TransformTemplateName(CXXScopeSpec &SS,
                                               TemplateName Name,
                                               SourceLocation NameLoc,
@@ -3007,9 +2891,11 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
         return true;
     }
     
-    TemporaryBase Rebase(*this, Input.getLocation(), DeclarationName());    
+    CXXScopeSpec SS;
+    SS.Adopt(QualifierLoc);
     TemplateName Template
-      = getDerived().TransformTemplateName(Arg.getAsTemplate());
+      = getDerived().TransformTemplateName(SS, Arg.getAsTemplate(),
+                                           Input.getTemplateNameLoc());
     if (Template.isNull())
       return true;
     
@@ -4399,8 +4285,12 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
                                            TemplateSpecializationTypeLoc TL) {
   const TemplateSpecializationType *T = TL.getTypePtr();
 
+  // The nested-name-specifier never matters in a TemplateSpecializationType,
+  // because we can't have a dependent nested-name-specifier anyway.
+  CXXScopeSpec SS;
   TemplateName Template
-    = getDerived().TransformTemplateName(T->getTemplateName());
+    = getDerived().TransformTemplateName(SS, T->getTemplateName(),
+                                         TL.getTemplateNameLoc());
   if (Template.isNull())
     return QualType();
 
