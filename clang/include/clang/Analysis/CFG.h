@@ -130,6 +130,7 @@ protected:
 
 public:
   const CXXDestructorDecl *getDestructorDecl() const;
+  bool isNoReturn() const;
 
   static bool classof(const CFGElement *E) {
     Kind kind = E->getKind();

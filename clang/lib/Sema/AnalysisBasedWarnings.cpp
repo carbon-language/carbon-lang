@@ -129,11 +129,26 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
     // normal.  We need to look pass the destructors for the return
     // statement (if it exists).
     CFGBlock::const_reverse_iterator ri = B.rbegin(), re = B.rend();
+    bool hasNoReturnDtor = false;
+    
     for ( ; ri != re ; ++ri) {
       CFGElement CE = *ri;
+
+      // FIXME: The right solution is to just sever the edges in the
+      // CFG itself.
+      if (const CFGImplicitDtor *iDtor = ri->getAs<CFGImplicitDtor>())
+        if (iDtor->isNoReturn()) {
+          hasNoReturnDtor = true;
+          HasFakeEdge = true;
+          break;
+        }
+      
       if (isa<CFGStmt>(CE))
         break;
     }
+    
+    if (hasNoReturnDtor)
+      continue;
     
     // No more CFGElements in the block?
     if (ri == re) {

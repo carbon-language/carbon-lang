@@ -2773,7 +2773,40 @@ CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
 }
 
 const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
-  return 0;
+  switch (getKind()) {
+    case CFGElement::Invalid:
+    case CFGElement::Statement:
+    case CFGElement::Initializer:
+      llvm_unreachable("getDestructorDecl should only be used with "
+                       "ImplicitDtors");
+    case CFGElement::AutomaticObjectDtor: {
+      const VarDecl *var = cast<CFGAutomaticObjDtor>(this)->getVarDecl();
+      QualType ty = var->getType();
+      const RecordType *recordType = ty->getAs<RecordType>();
+      const CXXRecordDecl *classDecl =
+        cast<CXXRecordDecl>(recordType->getDecl());
+      return classDecl->getDestructor();      
+    }
+    case CFGElement::TemporaryDtor: {
+      const CXXBindTemporaryExpr *bindExpr =
+        cast<CFGTemporaryDtor>(this)->getBindTemporaryExpr();
+      const CXXTemporary *temp = bindExpr->getTemporary();
+      return temp->getDestructor();
+    }
+    case CFGElement::BaseDtor:
+    case CFGElement::MemberDtor:
+
+      // Not yet supported.
+      return 0;
+  }
+}
+
+bool CFGImplicitDtor::isNoReturn() const {
+  if (const CXXDestructorDecl *cdecl = getDestructorDecl()) {
+    QualType ty = cdecl->getType();
+    return cast<FunctionType>(ty)->getNoReturnAttr();
+  }
+  return false;
 }
 
 //===----------------------------------------------------------------------===//

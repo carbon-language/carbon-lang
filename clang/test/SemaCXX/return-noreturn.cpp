@@ -1,18 +1,29 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code
-// XFAIL: *
 
 // A destructor may be marked noreturn and should still influence the CFG.
-namespace PR6884 {
-  struct abort_struct {
-    abort_struct() {} // Make this non-POD so the destructor is invoked.
-    ~abort_struct() __attribute__((noreturn));
-  };
+void pr6884_abort() __attribute__((noreturn));
 
-  int f() {
-    abort_struct();
-  }
+struct pr6884_abort_struct {
+  pr6884_abort_struct() {}
+  ~pr6884_abort_struct() __attribute__((noreturn)) { pr6884_abort(); }
+};
 
-  int f2() {
-    abort_struct s;
+int pr6884_f(int x) {
+  switch (x) { default: pr6884_abort(); }
+}
+
+int pr6884_g(int x) {
+  switch (x) { default: pr6884_abort_struct(); }
+}
+
+int pr6884_g_positive(int x) {
+  switch (x) { default: ; }
+} // expected-warning {{control reaches end of non-void function}}
+
+int pr6884_h(int x) {
+  switch (x) {
+    default: {
+      pr6884_abort_struct a;
+    }
   }
 }
