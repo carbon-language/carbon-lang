@@ -6603,8 +6603,6 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformUnresolvedLookupExpr(
                                                   UnresolvedLookupExpr *Old) {
-  TemporaryBase Rebase(*this, Old->getNameLoc(), DeclarationName());
-
   LookupResult R(SemaRef, Old->getName(), Old->getNameLoc(),
                  Sema::LookupOrdinaryName);
 
