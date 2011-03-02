@@ -858,7 +858,8 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
         // loop already visited by LSR for example, but it wouldn't have
         // to be.
         do {
-          if (IncV->getNumOperands() == 0 || isa<PHINode>(IncV)) {
+          if (IncV->getNumOperands() == 0 || isa<PHINode>(IncV) ||
+              isa<CastInst>(IncV)) {
             IncV = 0;
             break;
           }
