@@ -5142,7 +5142,9 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   EVT OpVT = N0.getValueType();
 
   // fold (sint_to_fp c1) -> c1fp
-  if (N0C && OpVT != MVT::ppcf128)
+  if (N0C && OpVT != MVT::ppcf128 &&
+      // ...but only if the target supports immediate floating-point values
+      (Level == llvm::Unrestricted || TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT)))
     return DAG.getNode(ISD::SINT_TO_FP, N->getDebugLoc(), VT, N0);
 
   // If the input is a legal type, and SINT_TO_FP is not legal on this target,
@@ -5164,7 +5166,9 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   EVT OpVT = N0.getValueType();
 
   // fold (uint_to_fp c1) -> c1fp
-  if (N0C && OpVT != MVT::ppcf128)
+  if (N0C && OpVT != MVT::ppcf128 &&
+      // ...but only if the target supports immediate floating-point values
+      (Level == llvm::Unrestricted || TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT)))
     return DAG.getNode(ISD::UINT_TO_FP, N->getDebugLoc(), VT, N0);
 
   // If the input is a legal type, and UINT_TO_FP is not legal on this target,
