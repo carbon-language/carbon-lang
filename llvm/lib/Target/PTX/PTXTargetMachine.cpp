@@ -16,6 +16,7 @@
 #include "PTXTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -34,16 +35,24 @@ extern "C" void LLVMInitializePTXTarget() {
   TargetRegistry::RegisterAsmStreamer(ThePTXTarget, createPTXAsmStreamer);
 }
 
+namespace {
+  const char* DataLayout32 = "e-p:32:32-i64:32:32-f64:32:32-v128:32:128-v64:32:64-n32:64";
+  const char* DataLayout64 = "e-p:64:64-i64:32:32-f64:32:32-v128:32:128-v64:32:64-n32:64";
+}
+
 // DataLayout and FrameLowering are filled with dummy data
 PTXTargetMachine::PTXTargetMachine(const Target &T,
                                    const std::string &TT,
                                    const std::string &FS)
-  : LLVMTargetMachine(T, TT),
-    DataLayout("e-p:32:32-i64:32:32-f64:32:32-v128:32:128-v64:32:64-n32:64"),
+  : Subtarget(TT, FS),
+    // FIXME: This feels like a dirty hack, but Subtarget does not appear to be
+    //        initialized at this point, and we need to finish initialization of
+    //        DataLayout.
+    DataLayout((FS.find("64bit") != FS.npos) ? DataLayout64 : DataLayout32),
+    LLVMTargetMachine(T, TT),
     FrameLowering(Subtarget),
-    InstrInfo(*this),
     TLInfo(*this),
-    Subtarget(TT, FS) {
+    InstrInfo(*this) {
 }
 
 bool PTXTargetMachine::addInstSelector(PassManagerBase &PM,

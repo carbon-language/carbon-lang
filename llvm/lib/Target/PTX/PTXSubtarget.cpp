@@ -18,7 +18,9 @@ using namespace llvm;
 
 PTXSubtarget::PTXSubtarget(const std::string &TT, const std::string &FS)
   : PTXShaderModel(PTX_SM_1_0),
-    PTXVersion(PTX_VERSION_1_4) {
+    PTXVersion(PTX_VERSION_1_4),
+    SupportsDouble(false),
+    Use64BitAddresses(false) {
   std::string TARGET = "generic";
   ParseSubtargetFeatures(FS, TARGET);
 }

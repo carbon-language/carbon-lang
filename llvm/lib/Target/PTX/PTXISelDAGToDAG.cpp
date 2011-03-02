@@ -45,6 +45,8 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
 
     bool isImm(const SDValue &operand);
     bool SelectImm(const SDValue &operand, SDValue &imm);
+
+    const PTXSubtarget& getSubtarget() const;
 }; // class PTXDAGToDAGISel
 } // namespace
 
@@ -170,3 +172,9 @@ bool PTXDAGToDAGISel::SelectImm(const SDValue &operand, SDValue &imm) {
   imm = CurDAG->getTargetConstant(*CN->getConstantIntValue(), MVT::i32);
   return true;
 }
+
+const PTXSubtarget& PTXDAGToDAGISel::getSubtarget() const
+{
+  return TM.getSubtarget<PTXSubtarget>();
+}
+

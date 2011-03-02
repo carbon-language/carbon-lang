@@ -18,6 +18,13 @@
 include "PTXInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
+// Code Generation Predicates
+//===----------------------------------------------------------------------===//
+
+def Use32BitAddresses : Predicate<"!getSubtarget().use64BitAddresses()">;
+def Use64BitAddresses : Predicate<"getSubtarget().use64BitAddresses()">;
+
+//===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff
 //===----------------------------------------------------------------------===//
 
@@ -107,23 +114,38 @@ def store_shared
 }]>;
 
 // Addressing modes.
-def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
-def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [], []>;
-def ADDRii : ComplexPattern<i32, 2, "SelectADDRii", [], []>;
+def ADDRrr32 : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
+def ADDRrr64 : ComplexPattern<i64, 2, "SelectADDRrr", [], []>;
+def ADDRri32 : ComplexPattern<i32, 2, "SelectADDRri", [], []>;
+def ADDRri64 : ComplexPattern<i64, 2, "SelectADDRri", [], []>;
+def ADDRii32 : ComplexPattern<i32, 2, "SelectADDRii", [], []>;
+def ADDRii64 : ComplexPattern<i64, 2, "SelectADDRii", [], []>;
+
 
 // Address operands
-def MEMri : Operand<i32> {
+def MEMri32 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops RRegu32, i32imm);
 }
-def MEMii : Operand<i32> {
+def MEMri64 : Operand<i64> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops RRegu64, i64imm);
+}
+def MEMii32 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops i32imm, i32imm);
 }
+def MEMii64 : Operand<i64> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops i64imm, i64imm);
+}
+// The operand here does not correspond to an actual address, so we
+// can use i32 in 64-bit address modes.
 def MEMpi : Operand<i32> {
   let PrintMethod = "printParamOperand";
   let MIOperandInfo = (ops i32imm);
 }
+
 
 //===----------------------------------------------------------------------===//
 // PTX Specific Node Definitions
@@ -207,18 +229,30 @@ multiclass INT3ntnc<string opcstr, SDNode opnode> {
 }
 
 multiclass PTX_LD<string opstr, string typestr, RegisterClass RC, PatFrag pat_load> {
-  def rr : InstPTX<(outs RC:$d),
-                   (ins MEMri:$a),
-                   !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
-                   [(set RC:$d, (pat_load ADDRrr:$a))]>;
-  def ri : InstPTX<(outs RC:$d),
-                   (ins MEMri:$a),
-                   !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
-                   [(set RC:$d, (pat_load ADDRri:$a))]>;
-  def ii : InstPTX<(outs RC:$d),
-                   (ins MEMii:$a),
-                   !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
-                   [(set RC:$d, (pat_load ADDRii:$a))]>;
+  def rr32 : InstPTX<(outs RC:$d),
+                     (ins MEMri32:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
+                     [(set RC:$d, (pat_load ADDRrr32:$a))]>, Requires<[Use32BitAddresses]>;
+  def rr64 : InstPTX<(outs RC:$d),
+                     (ins MEMri64:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
+                     [(set RC:$d, (pat_load ADDRrr64:$a))]>, Requires<[Use64BitAddresses]>;
+  def ri32 : InstPTX<(outs RC:$d),
+                     (ins MEMri32:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
+                     [(set RC:$d, (pat_load ADDRri32:$a))]>, Requires<[Use32BitAddresses]>;
+  def ri64 : InstPTX<(outs RC:$d),
+                     (ins MEMri64:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
+                     [(set RC:$d, (pat_load ADDRri64:$a))]>, Requires<[Use64BitAddresses]>;
+  def ii32 : InstPTX<(outs RC:$d),
+                     (ins MEMii32:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
+                     [(set RC:$d, (pat_load ADDRii32:$a))]>, Requires<[Use32BitAddresses]>;
+  def ii64 : InstPTX<(outs RC:$d),
+                     (ins MEMii64:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
+                     [(set RC:$d, (pat_load ADDRii64:$a))]>, Requires<[Use64BitAddresses]>;
 }
 
 multiclass PTX_LD_ALL<string opstr, PatFrag pat_load> {
@@ -230,18 +264,30 @@ multiclass PTX_LD_ALL<string opstr, PatFrag pat_load> {
 }
 
 multiclass PTX_ST<string opstr, string typestr, RegisterClass RC, PatFrag pat_store> {
-  def rr : InstPTX<(outs),
-                   (ins RC:$d, MEMri:$a),
+  def rr32 : InstPTX<(outs),
+                     (ins RC:$d, MEMri32:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
+                     [(pat_store RC:$d, ADDRrr32:$a)]>, Requires<[Use32BitAddresses]>;
+  def rr64 : InstPTX<(outs),
+                     (ins RC:$d, MEMri64:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
+                     [(pat_store RC:$d, ADDRrr64:$a)]>, Requires<[Use64BitAddresses]>;
+  def ri32 : InstPTX<(outs),
+                   (ins RC:$d, MEMri32:$a),
                    !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
-                   [(pat_store RC:$d, ADDRrr:$a)]>;
-  def ri : InstPTX<(outs),
-                   (ins RC:$d, MEMri:$a),
+                   [(pat_store RC:$d, ADDRri32:$a)]>, Requires<[Use32BitAddresses]>;
+  def ri64 : InstPTX<(outs),
+                   (ins RC:$d, MEMri64:$a),
                    !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
-                   [(pat_store RC:$d, ADDRri:$a)]>;
-  def ii : InstPTX<(outs),
-                   (ins RC:$d, MEMii:$a),
+                   [(pat_store RC:$d, ADDRri64:$a)]>, Requires<[Use64BitAddresses]>;
+  def ii32 : InstPTX<(outs),
+                   (ins RC:$d, MEMii32:$a),
                    !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
-                   [(pat_store RC:$d, ADDRii:$a)]>;
+                   [(pat_store RC:$d, ADDRii32:$a)]>, Requires<[Use32BitAddresses]>;
+  def ii64 : InstPTX<(outs),
+                   (ins RC:$d, MEMii64:$a),
+                   !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
+                   [(pat_store RC:$d, ADDRii64:$a)]>, Requires<[Use64BitAddresses]>;
 }
 
 multiclass PTX_ST_ALL<string opstr, PatFrag pat_store> {

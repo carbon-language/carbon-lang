@@ -40,6 +40,9 @@ namespace llvm {
       // The native .f64 type is supported on the hardware.
       bool SupportsDouble;
 
+      // Use .u64 instead of .u32 for addresses.
+      bool Use64BitAddresses;
+
     public:
       PTXSubtarget(const std::string &TT, const std::string &FS);
 
@@ -48,6 +51,8 @@ namespace llvm {
       std::string getPTXVersionString() const;
 
       bool supportsDouble() const { return SupportsDouble; }
+
+      bool use64BitAddresses() const { return Use64BitAddresses; }
 
       std::string ParseSubtargetFeatures(const std::string &FS,
                                          const std::string &CPU);

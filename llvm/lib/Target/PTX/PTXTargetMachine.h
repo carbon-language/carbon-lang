@@ -25,11 +25,11 @@
 namespace llvm {
 class PTXTargetMachine : public LLVMTargetMachine {
   private:
-    const TargetData DataLayout;
-    PTXFrameLowering FrameLowering;
-    PTXInstrInfo InstrInfo;
+    const TargetData  DataLayout;
+    PTXFrameLowering  FrameLowering;
+    PTXInstrInfo      InstrInfo;
     PTXTargetLowering TLInfo;
-    PTXSubtarget Subtarget;
+    PTXSubtarget      Subtarget;
 
   public:
     PTXTargetMachine(const Target &T, const std::string &TT,

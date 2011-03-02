@@ -24,6 +24,9 @@ include "llvm/Target/Target.td"
 def FeatureDouble : SubtargetFeature<"double", "SupportsDouble", "true",
                                      "Do not demote .f64 to .f32">;
 
+def Feature64Bit : SubtargetFeature<"64bit", "Use64BitAddresses", "true",
+                                    "Use 64-bit integer types for addresses.">;
+
 //===- PTX Version --------------------------------------------------------===//
 
 def FeaturePTX14 : SubtargetFeature<"ptx14", "PTXVersion", "PTX_VERSION_1_4",

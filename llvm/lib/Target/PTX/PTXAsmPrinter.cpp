@@ -360,20 +360,21 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
     if (isKernel) {
       unsigned cnt = 0;
       //for (int i = 0, e = MFI->getNumArg(); i != e; ++i) {
-      for(PTXMachineFunctionInfo::reg_iterator
-          i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i; i != e; ++i) {
+      for(PTXMachineFunctionInfo::reg_reverse_iterator
+          i = MFI->argRegReverseBegin(), e = MFI->argRegReverseEnd(), b = i; i != e; ++i) {
         reg = *i;
         assert(reg != PTX::NoRegister && "Not a valid register!");
         if (i != b)
           decl += ", ";
-        decl += ".param .u32";  // TODO: Parse type from register map
+        decl += ".param .";
+        decl += getRegisterTypeName(reg);
         decl += " ";
         decl += PARAM_PREFIX;
         decl += utostr(++cnt);
       }
     } else {
-      for (PTXMachineFunctionInfo::reg_iterator
-           i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i; i != e; ++i) {
+      for (PTXMachineFunctionInfo::reg_reverse_iterator
+           i = MFI->argRegReverseBegin(), e = MFI->argRegReverseEnd(), b = i; i != e; ++i) {
         reg = *i;
         assert(reg != PTX::NoRegister && "Not a valid register!");
         if (i != b)
