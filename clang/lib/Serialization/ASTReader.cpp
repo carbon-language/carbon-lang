@@ -3678,16 +3678,18 @@ ASTReader::GetTemplateArgumentLocInfo(PerFileData &F,
   case TemplateArgument::Type:
     return GetTypeSourceInfo(F, Record, Index);
   case TemplateArgument::Template: {
-    SourceRange QualifierRange = ReadSourceRange(F, Record, Index);
+    NestedNameSpecifierLoc QualifierLoc = ReadNestedNameSpecifierLoc(F, Record, 
+                                                                     Index);
     SourceLocation TemplateNameLoc = ReadSourceLocation(F, Record, Index);
-    return TemplateArgumentLocInfo(QualifierRange, TemplateNameLoc,
+    return TemplateArgumentLocInfo(QualifierLoc, TemplateNameLoc,
                                    SourceLocation());
   }
   case TemplateArgument::TemplateExpansion: {
-    SourceRange QualifierRange = ReadSourceRange(F, Record, Index);
+    NestedNameSpecifierLoc QualifierLoc = ReadNestedNameSpecifierLoc(F, Record, 
+                                                                     Index);
     SourceLocation TemplateNameLoc = ReadSourceLocation(F, Record, Index);
     SourceLocation EllipsisLoc = ReadSourceLocation(F, Record, Index);
-    return TemplateArgumentLocInfo(QualifierRange, TemplateNameLoc, 
+    return TemplateArgumentLocInfo(QualifierLoc, TemplateNameLoc, 
                                    EllipsisLoc);
   }
   case TemplateArgument::Null:

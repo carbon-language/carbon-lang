@@ -362,7 +362,10 @@ private:
     Expr *Expression;
     TypeSourceInfo *Declarator;
     struct {
-      unsigned QualifierRange[2];
+      // FIXME: We'd like to just use the qualifier in the TemplateName,
+      // but template arguments get canonicalized too quickly.
+      NestedNameSpecifier *Qualifier;
+      void *QualifierLocData;
       unsigned TemplateNameLoc;
       unsigned EllipsisLoc;
     } Template;
@@ -375,12 +378,12 @@ public:
   
   TemplateArgumentLocInfo(Expr *E) : Expression(E) {}
   
-  TemplateArgumentLocInfo(SourceRange QualifierRange, 
+  TemplateArgumentLocInfo(NestedNameSpecifierLoc QualifierLoc,
                           SourceLocation TemplateNameLoc,
                           SourceLocation EllipsisLoc)
   {
-    Template.QualifierRange[0] = QualifierRange.getBegin().getRawEncoding();
-    Template.QualifierRange[1] = QualifierRange.getEnd().getRawEncoding();
+    Template.Qualifier = QualifierLoc.getNestedNameSpecifier();
+    Template.QualifierLocData = QualifierLoc.getOpaqueData();
     Template.TemplateNameLoc = TemplateNameLoc.getRawEncoding();
     Template.EllipsisLoc = EllipsisLoc.getRawEncoding();
   }
@@ -393,10 +396,9 @@ public:
     return Expression;
   }
 
-  SourceRange getTemplateQualifierRange() const {
-    return SourceRange(
-                SourceLocation::getFromRawEncoding(Template.QualifierRange[0]),
-                SourceLocation::getFromRawEncoding(Template.QualifierRange[1]));
+  NestedNameSpecifierLoc getTemplateQualifierLoc() const {
+    return NestedNameSpecifierLoc(Template.Qualifier, 
+                                  Template.QualifierLocData);
   }
   
   SourceLocation getTemplateNameLoc() const {
@@ -433,11 +435,10 @@ public:
   }
 
   TemplateArgumentLoc(const TemplateArgument &Argument, 
-                      SourceRange QualifierRange,
+                      NestedNameSpecifierLoc QualifierLoc,
                       SourceLocation TemplateNameLoc,
                       SourceLocation EllipsisLoc = SourceLocation())
-    : Argument(Argument), 
-      LocInfo(QualifierRange, TemplateNameLoc, EllipsisLoc) {
+    : Argument(Argument), LocInfo(QualifierLoc, TemplateNameLoc, EllipsisLoc) {
     assert(Argument.getKind() == TemplateArgument::Template ||
            Argument.getKind() == TemplateArgument::TemplateExpansion);
   }
@@ -477,10 +478,10 @@ public:
     return LocInfo.getAsExpr();
   }
   
-  SourceRange getTemplateQualifierRange() const {
+  NestedNameSpecifierLoc getTemplateQualifierLoc() const {
     assert(Argument.getKind() == TemplateArgument::Template ||
            Argument.getKind() == TemplateArgument::TemplateExpansion);
-    return LocInfo.getTemplateQualifierRange();
+    return LocInfo.getTemplateQualifierLoc();
   }
   
   SourceLocation getTemplateNameLoc() const {

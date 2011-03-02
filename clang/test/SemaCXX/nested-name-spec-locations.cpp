@@ -128,3 +128,21 @@ struct DependentTemplateSpecializationTypeTester4 {
 };
 
 DependentTemplateSpecializationTypeTester4<HasApply, int> DTSTCheck4; // expected-note{{in instantiation of template class}}
+
+template<template<class T> class TTP>
+struct AcceptedTemplateTemplateParameter {
+};
+
+template<typename T, typename U>
+struct DependentTemplateTemplateArgumentTester {
+  typedef AcceptedTemplateTemplateParameter<
+            T::
+            template apply<
+              typename add_reference<U>::type
+              * // expected-error{{declared as a pointer to a reference of type}}
+            >::
+            template X>
+    type;
+};
+
+DependentTemplateTemplateArgumentTester<HasApply, int> DTTACheck; // expected-note{{in instantiation of template class}}

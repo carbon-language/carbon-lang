@@ -2285,7 +2285,7 @@ public:
       return TemplateArgumentLoc(TemplateArgument(
                                           Pattern.getArgument().getAsTemplate(),
                                                   NumExpansions),
-                                 Pattern.getTemplateQualifierRange(),
+                                 Pattern.getTemplateQualifierLoc(),
                                  Pattern.getTemplateNameLoc(),
                                  EllipsisLoc);
         
@@ -2841,12 +2841,25 @@ void TreeTransform<Derived>::InventTemplateArgumentLoc(
     break;
 
   case TemplateArgument::Template:
-    Output = TemplateArgumentLoc(Arg, SourceRange(), Loc);
+  case TemplateArgument::TemplateExpansion: {
+    NestedNameSpecifierLocBuilder Builder;
+    TemplateName Template = Arg.getAsTemplate();
+    if (DependentTemplateName *DTN = Template.getAsDependentTemplateName())
+      Builder.MakeTrivial(SemaRef.Context, DTN->getQualifier(), Loc);
+    else if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
+      Builder.MakeTrivial(SemaRef.Context, QTN->getQualifier(), Loc);
+        
+    if (Arg.getKind() == TemplateArgument::Template)
+      Output = TemplateArgumentLoc(Arg, 
+                                   Builder.getWithLocInContext(SemaRef.Context),
+                                   Loc);
+    else
+      Output = TemplateArgumentLoc(Arg, 
+                                   Builder.getWithLocInContext(SemaRef.Context),
+                                   Loc, Loc);
+    
     break;
-
-  case TemplateArgument::TemplateExpansion:
-    Output = TemplateArgumentLoc(Arg, SourceRange(), Loc, Loc);
-    break;
+  }
 
   case TemplateArgument::Expression:
     Output = TemplateArgumentLoc(Arg, Arg.getAsExpr());
@@ -2905,14 +2918,20 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
   }
 
   case TemplateArgument::Template: {
+    NestedNameSpecifierLoc QualifierLoc = Input.getTemplateQualifierLoc();
+    if (QualifierLoc) {
+      QualifierLoc = getDerived().TransformNestedNameSpecifierLoc(QualifierLoc);
+      if (!QualifierLoc)
+        return true;
+    }
+    
     TemporaryBase Rebase(*this, Input.getLocation(), DeclarationName());    
     TemplateName Template
       = getDerived().TransformTemplateName(Arg.getAsTemplate());
     if (Template.isNull())
       return true;
     
-    Output = TemplateArgumentLoc(TemplateArgument(Template),
-                                 Input.getTemplateQualifierRange(),
+    Output = TemplateArgumentLoc(TemplateArgument(Template), QualifierLoc,
                                  Input.getTemplateNameLoc());
     return false;
   }

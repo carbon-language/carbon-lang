@@ -3246,11 +3246,11 @@ void ASTWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
     AddTypeSourceInfo(Arg.getAsTypeSourceInfo(), Record);
     break;
   case TemplateArgument::Template:
-    AddSourceRange(Arg.getTemplateQualifierRange(), Record);
+    AddNestedNameSpecifierLoc(Arg.getTemplateQualifierLoc(), Record);
     AddSourceLocation(Arg.getTemplateNameLoc(), Record);
     break;
   case TemplateArgument::TemplateExpansion:
-    AddSourceRange(Arg.getTemplateQualifierRange(), Record);
+    AddNestedNameSpecifierLoc(Arg.getTemplateQualifierLoc(), Record);
     AddSourceLocation(Arg.getTemplateNameLoc(), Record);
     AddSourceLocation(Arg.getTemplateEllipsisLoc(), Record);
     break;

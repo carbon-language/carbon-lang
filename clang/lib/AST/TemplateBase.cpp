@@ -356,14 +356,14 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
       return SourceRange();
 
   case TemplateArgument::Template:
-    if (getTemplateQualifierRange().isValid())
-      return SourceRange(getTemplateQualifierRange().getBegin(), 
+    if (getTemplateQualifierLoc())
+      return SourceRange(getTemplateQualifierLoc().getBeginLoc(), 
                          getTemplateNameLoc());
     return SourceRange(getTemplateNameLoc());
 
   case TemplateArgument::TemplateExpansion:
-    if (getTemplateQualifierRange().isValid())
-      return SourceRange(getTemplateQualifierRange().getBegin(), 
+    if (getTemplateQualifierLoc())
+      return SourceRange(getTemplateQualifierLoc().getBeginLoc(), 
                          getTemplateEllipsisLoc());
     return SourceRange(getTemplateNameLoc(), getTemplateEllipsisLoc());
 
@@ -425,7 +425,7 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
     Ellipsis = getTemplateEllipsisLoc();
     NumExpansions = Argument.getNumTemplateExpansions();
     return TemplateArgumentLoc(Argument.getPackExpansionPattern(),
-                               getTemplateQualifierRange(),
+                               getTemplateQualifierLoc(),
                                getTemplateNameLoc());
     
   case TemplateArgument::Declaration:

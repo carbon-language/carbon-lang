@@ -1728,11 +1728,24 @@ getTrivialTemplateArgumentLoc(Sema &S,
     return TemplateArgumentLoc(TemplateArgument(E), E);
   }
 
-  case TemplateArgument::Template:
-    return TemplateArgumentLoc(Arg, SourceRange(), Loc);
-
-  case TemplateArgument::TemplateExpansion:
-    return TemplateArgumentLoc(Arg, SourceRange(), Loc, Loc);
+    case TemplateArgument::Template:
+    case TemplateArgument::TemplateExpansion: {
+      NestedNameSpecifierLocBuilder Builder;
+      TemplateName Template = Arg.getAsTemplate();
+      if (DependentTemplateName *DTN = Template.getAsDependentTemplateName())
+        Builder.MakeTrivial(S.Context, DTN->getQualifier(), Loc);
+      else if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
+        Builder.MakeTrivial(S.Context, QTN->getQualifier(), Loc);
+      
+      if (Arg.getKind() == TemplateArgument::Template)
+        return TemplateArgumentLoc(Arg, 
+                                   Builder.getWithLocInContext(S.Context),
+                                   Loc);
+      
+      
+      return TemplateArgumentLoc(Arg, Builder.getWithLocInContext(S.Context),
+                                 Loc, Loc);
+    }
 
   case TemplateArgument::Expression:
     return TemplateArgumentLoc(Arg, Arg.getAsExpr());

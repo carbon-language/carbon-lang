@@ -291,13 +291,22 @@ void TemplateSpecializationTypeLoc::initializeArgLocs(ASTContext &Context,
       break;
         
     case TemplateArgument::Template:
-      ArgInfos[i] = TemplateArgumentLocInfo(SourceRange(Loc), Loc, 
-                                            SourceLocation());
-      break;
+    case TemplateArgument::TemplateExpansion: {
+      NestedNameSpecifierLocBuilder Builder;
+      TemplateName Template = Args[i].getAsTemplate();
+      if (DependentTemplateName *DTN = Template.getAsDependentTemplateName())
+        Builder.MakeTrivial(Context, DTN->getQualifier(), Loc);
+      else if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
+        Builder.MakeTrivial(Context, QTN->getQualifier(), Loc);
       
-    case TemplateArgument::TemplateExpansion:
-      ArgInfos[i] = TemplateArgumentLocInfo(SourceRange(Loc), Loc, Loc);
+      ArgInfos[i] = TemplateArgumentLocInfo(
+                                           Builder.getWithLocInContext(Context),
+                                            Loc, 
+                                Args[i].getKind() == TemplateArgument::Template
+                                            ? SourceLocation()
+                                            : Loc);
       break;
+    }        
     }
   }
 }
