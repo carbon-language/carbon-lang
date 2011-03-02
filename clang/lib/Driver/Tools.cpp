@@ -424,6 +424,12 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   const Driver &D = getToolChain().getDriver();
   llvm::Triple Triple = getToolChain().getTriple();
 
+  // Disable movt generation, if requested.
+#ifdef DISABLE_ARM_DARWIN_USE_MOVT
+  CmdArgs.push_back("-mllvm");
+  CmdArgs.push_back("-arm-darwin-use-movt=0");
+#endif
+
   // Select the ABI to use.
   //
   // FIXME: Support -meabi.
