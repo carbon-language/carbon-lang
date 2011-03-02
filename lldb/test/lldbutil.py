@@ -13,9 +13,8 @@ import StringIO
 def int_to_bytearray(val, bytesize):
     """Utility function to convert an integer into a bytearray.
 
-    It returns the bytearray in the little endian format.
-    It is easy to get the big endian representation, just do
-    ba.reverse() on the returned bytearray object.
+    It returns the bytearray in the little endian format.  It is easy to get the
+    big endian format, just do ba.reverse() on the returned object.
     """
     from struct import *
 
@@ -39,9 +38,8 @@ def int_to_bytearray(val, bytesize):
 def bytearray_to_int(bytes, bytesize):
     """Utility function to convert a bytearray into an integer.
 
-    It interprets the bytearray in the little endian format.
-    It is easy to get the big endian representation, just do
-    ba.reverse() on the bytearray object before passing it in.
+    It interprets the bytearray in the little endian format. For a big endian
+    bytearray, just do ba.reverse() on the object before passing it in.
     """
     from struct import *
 
