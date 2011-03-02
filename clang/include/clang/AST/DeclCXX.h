@@ -2045,12 +2045,6 @@ public:
     return QualifierLoc.getNestedNameSpecifier(); 
   }
 
-  /// \brief Retrieve the source range of the nested-name-specifier
-  /// that qualifies the name.
-  SourceRange getQualifierRange() const { 
-    return QualifierLoc.getSourceRange();
-  }
-
   DeclarationNameInfo getNameInfo() const {
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
@@ -2176,12 +2170,6 @@ public:
     return QualifierLoc.getNestedNameSpecifier(); 
   }
   
-  /// \brief Retrieve the source range of the nested-name-specifier
-  /// that qualifies the name.
-  SourceRange getQualifierRange() const { 
-    return QualifierLoc.getSourceRange();
-  }
-
   DeclarationNameInfo getNameInfo() const {
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
@@ -2249,13 +2237,6 @@ public:
     return QualifierLoc.getNestedNameSpecifier(); 
   }
 
-  /// \brief Retrieve the source range of the nested-name-specifier
-  /// that qualifies the name.
-  SourceRange getQualifierRange() const { 
-    return QualifierLoc.getSourceRange();
-  }
-
-  // FIXME: DeclarationNameInfo
   static UnresolvedUsingTypenameDecl *
     Create(ASTContext &C, DeclContext *DC, SourceLocation UsingLoc,
            SourceLocation TypenameLoc, NestedNameSpecifierLoc QualifierLoc,

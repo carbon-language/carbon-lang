@@ -2185,7 +2185,7 @@ class CXXDependentScopeMemberExpr : public Expr {
   /// member stores the resolves of name lookup in the context of the member
   /// access expression, to be used at instantiation time.
   ///
-  /// FIXME: This member, along with the Qualifier and QualifierRange, could
+  /// FIXME: This member, along with the QualifierLoc, could
   /// be stuck into a structure that is optionally allocated at the end of
   /// the CXXDependentScopeMemberExpr, to save space in the common case.
   NamedDecl *FirstQualifierFoundInScope;
