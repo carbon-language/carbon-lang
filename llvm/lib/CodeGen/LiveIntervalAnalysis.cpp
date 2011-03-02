@@ -794,6 +794,7 @@ void LiveIntervals::shrinkToUses(LiveInterval *li) {
 
     // Extend the live range for VNI to be live at Idx.
     if (VNInfo *ExtVNI = NewLI.extendInBlock(BlockStart, Idx)) {
+      (void)ExtVNI;
       assert(ExtVNI == VNI && "Unexpected existing value number");
       // Is this a PHIDef we haven't seen before?
       if (!VNI->isPHIDef() || !UsedPHIs.insert(VNI))
