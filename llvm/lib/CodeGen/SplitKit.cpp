@@ -214,24 +214,17 @@ void LiveIntervalMap::reset(LiveInterval *li) {
 }
 
 
-// mapValue - Find the mapped value for ParentVNI at Idx.
+// extendRange - Extend the live range to reach Idx.
 // Potentially create phi-def values.
-VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
-                                  bool *simple) {
+void LiveIntervalMap::extendRange(SlotIndex Idx) {
   assert(LI && "call reset first");
-  assert(ParentVNI && "Mapping  NULL value");
   assert(Idx.isValid() && "Invalid SlotIndex");
-  assert(ParentLI.getVNInfoAt(Idx) == ParentVNI && "Bad ParentVNI");
-
-  // This is a complex mapped value. There may be multiple defs, and we may need
-  // to create phi-defs.
-  if (simple) *simple = false;
   MachineBasicBlock *IdxMBB = LIS.getMBBFromIndex(Idx);
   assert(IdxMBB && "No MBB at Idx");
 
   // Is there a def in the same MBB we can extend?
-  if (VNInfo *VNI = LI->extendInBlock(LIS.getMBBStartIdx(IdxMBB), Idx))
-    return VNI;
+  if (LI->extendInBlock(LIS.getMBBStartIdx(IdxMBB), Idx))
+    return;
 
   // Now for the fun part. We know that ParentVNI potentially has multiple defs,
   // and we may need to create even more phi-defs to preserve VNInfo SSA form.
@@ -395,7 +388,6 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
   // Since we went through the trouble of a full BFS visiting all reaching defs,
   // the values in LiveIn are now accurate. No more phi-defs are needed
   // for these blocks, so we can color the live ranges.
-  // This makes the next mapValue call much faster.
   for (unsigned i = 0, e = LiveIn.size(); i != e; ++i) {
     MachineBasicBlock *MBB = LiveIn[i]->getBlock();
     SlotIndex Start = LIS.getMBBStartIdx(MBB);
@@ -408,8 +400,6 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
     else
       LI->addRange(LiveRange(Start, LIS.getMBBEndIdx(MBB), VNI));
   }
-
-  return IdxVNI;
 }
 
 #ifndef NDEBUG
@@ -681,8 +671,8 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
   assert(LIS.getMBBFromIndex(Start) == LIS.getMBBFromIndex(End) &&
          "Range cannot span basic blocks");
 
-  // Treat this as useIntv() for now. The complement interval will be extended
-  // as needed by mapValue().
+  // Treat this as useIntv() for now.
+  // The complement interval will be extended as needed by extendRange().
   DEBUG(dbgs() << "    overlapIntv [" << Start << ';' << End << "):");
   RegAssign.insert(Start, End, OpenIdx);
   DEBUG(dump());
@@ -726,8 +716,7 @@ void SplitEditor::rewriteAssigned() {
                  << Idx << ':' << RegIdx << '\t' << *MI);
 
     // Extend liveness to Idx.
-    const VNInfo *ParentVNI = Edit.getParent().getVNInfoAt(Idx);
-    LIMappers[RegIdx].mapValue(ParentVNI, Idx);
+    LIMappers[RegIdx].extendRange(Idx);
   }
 }
 
@@ -780,7 +769,7 @@ void SplitEditor::finish() {
 
   // FIXME: Don't recompute the liveness of all values, infer it from the
   // overlaps between the parent live interval and RegAssign.
-  // The mapValue algorithm is only necessary when:
+  // The extendRange algorithm is only necessary when:
   // - The parent value maps to multiple defs, and new phis are needed, or
   // - The value has been rematerialized before some uses, and we want to
   //   minimize the live range so it only reaches the remaining uses.
@@ -808,7 +797,7 @@ void SplitEditor::finish() {
         DEBUG(dbgs() << " has parent valno #" << VNI->id << " live out\n");
         assert(RegAssign.lookup(End) == RegIdx &&
                "Different register assignment in phi predecessor");
-        LIM.mapValue(VNI, End);
+        LIM.extendRange(End);
       }
       else
         DEBUG(dbgs() << " is not live-out\n");

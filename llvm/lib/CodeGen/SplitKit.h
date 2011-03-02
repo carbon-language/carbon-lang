@@ -195,16 +195,9 @@ public:
   /// getLI - return the current live interval.
   LiveInterval *getLI() const { return LI; }
 
-  /// mapValue - map ParentVNI to the corresponding LI value at Idx. It is
-  /// assumed that ParentVNI is live at Idx.
-  /// If ParentVNI has not been defined by defValue, it is assumed that
-  /// ParentVNI->def dominates Idx.
-  /// If ParentVNI has been defined by defValue one or more times, a value that
-  /// dominates Idx will be returned. This may require creating extra phi-def
-  /// values and adding live ranges to LI.
-  /// If simple is not NULL, *simple will indicate if ParentVNI is a simply
-  /// mapped value.
-  VNInfo *mapValue(const VNInfo *ParentVNI, SlotIndex Idx, bool *simple = 0);
+  /// extendRange - Extend the live range of LI so it reaches Idx.
+  /// Insert PHIDefs as needed to preserve SSA form.
+  void extendRange(SlotIndex Idx);
 };
 
 
