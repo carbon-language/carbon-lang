@@ -144,63 +144,6 @@ public:
 };
 
 
-/// LiveIntervalMap - Map values from a large LiveInterval into a small
-/// interval that is a subset. Insert phi-def values as needed. This class is
-/// used by SplitEditor to create new smaller LiveIntervals.
-///
-/// ParentLI is the larger interval, LI is the subset interval. Every value
-/// in LI corresponds to exactly one value in ParentLI, and the live range
-/// of the value is contained within the live range of the ParentLI value.
-/// Values in ParentLI may map to any number of OpenLI values, including 0.
-class LiveIntervalMap {
-  LiveIntervals &LIS;
-  MachineDominatorTree &MDT;
-
-  // The parent interval is never changed.
-  const LiveInterval &ParentLI;
-
-  // The child interval's values are fully contained inside ParentLI values.
-  LiveInterval *LI;
-
-  typedef std::pair<VNInfo*, MachineDomTreeNode*> LiveOutPair;
-  typedef DenseMap<MachineBasicBlock*,LiveOutPair> LiveOutMap;
-
-  // LiveOutCache - Map each basic block where LI is live out to the live-out
-  // value and its defining block. One of these conditions shall be true:
-  //
-  //  1. !LiveOutCache.count(MBB)
-  //  2. LiveOutCache[MBB].second.getNode() == MBB
-  //  3. forall P in preds(MBB): LiveOutCache[P] == LiveOutCache[MBB]
-  //
-  // This is only a cache, the values can be computed as:
-  //
-  //  VNI = LI->getVNInfoAt(LIS.getMBBEndIdx(MBB))
-  //  Node = mbt_[LIS.getMBBFromIndex(VNI->def)]
-  //
-  // The cache is also used as a visiteed set by mapValue().
-  LiveOutMap LiveOutCache;
-
-  // Dump the live-out cache to dbgs().
-  void dumpCache();
-
-public:
-  LiveIntervalMap(LiveIntervals &lis,
-                  MachineDominatorTree &mdt,
-                  const LiveInterval &parentli)
-    : LIS(lis), MDT(mdt), ParentLI(parentli), LI(0) {}
-
-  /// reset - clear all data structures and start a new live interval.
-  void reset(LiveInterval *);
-
-  /// getLI - return the current live interval.
-  LiveInterval *getLI() const { return LI; }
-
-  /// extendRange - Extend the live range of LI so it reaches Idx.
-  /// Insert PHIDefs as needed to preserve SSA form.
-  void extendRange(SlotIndex Idx);
-};
-
-
 /// SplitEditor - Edit machine code and LiveIntervals for live range
 /// splitting.
 ///
@@ -240,9 +183,6 @@ class SplitEditor {
   /// Idx.
   RegAssignMap RegAssign;
 
-  /// LIMappers - One LiveIntervalMap or each interval in Edit.
-  SmallVector<LiveIntervalMap, 4> LIMappers;
-
   typedef DenseMap<std::pair<unsigned, unsigned>, VNInfo*> ValueMap;
 
   /// Values - keep track of the mapping from parent values to values in the new
@@ -254,6 +194,26 @@ class SplitEditor {
   /// 3. A non-null VNInfo - the value is mapped to a single new value.
   ///    The new value has no live ranges anywhere.
   ValueMap Values;
+
+  typedef std::pair<VNInfo*, MachineDomTreeNode*> LiveOutPair;
+  typedef DenseMap<MachineBasicBlock*,LiveOutPair> LiveOutMap;
+
+  // LiveOutCache - Map each basic block where a new register is live out to the
+  // live-out value and its defining block.
+  // One of these conditions shall be true:
+  //
+  //  1. !LiveOutCache.count(MBB)
+  //  2. LiveOutCache[MBB].second.getNode() == MBB
+  //  3. forall P in preds(MBB): LiveOutCache[P] == LiveOutCache[MBB]
+  //
+  // This is only a cache, the values can be computed as:
+  //
+  //  VNI = Edit.get(RegIdx)->getVNInfoAt(LIS.getMBBEndIdx(MBB))
+  //  Node = mbt_[LIS.getMBBFromIndex(VNI->def)]
+  //
+  // The cache is also used as a visited set by extendRange(). It can be shared
+  // by all the new registers because at most one is live out of each block.
+  LiveOutMap LiveOutCache;
 
   /// defValue - define a value in RegIdx from ParentVNI at Idx.
   /// Idx does not have to be ParentVNI->def, but it must be contained within
@@ -273,6 +233,18 @@ class SplitEditor {
                         SlotIndex UseIdx,
                         MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator I);
+
+  /// extendRange - Extend the live range of Edit.get(RegIdx) so it reaches Idx.
+  /// Insert PHIDefs as needed to preserve SSA form.
+  void extendRange(unsigned RegIdx, SlotIndex Idx);
+
+  /// updateSSA - Insert PHIDefs as necessary and update LiveOutCache such that
+  /// Edit.get(RegIdx) is live-in to all the blocks in LiveIn.
+  /// Return the value that is eventually live-in to IdxMBB.
+  VNInfo *updateSSA(unsigned RegIdx,
+                    SmallVectorImpl<MachineDomTreeNode*> &LiveIn,
+                    SlotIndex Idx,
+                    const MachineBasicBlock *IdxMBB);
 
   /// rewriteAssigned - Rewrite all uses of Edit.getReg() to assigned registers.
   void rewriteAssigned();
