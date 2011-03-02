@@ -741,6 +741,11 @@ public:
     SelectorOrMethod = reinterpret_cast<uintptr_t>(MD);
   }
 
+  ObjCMethodFamily getMethodFamily() const {
+    if (HasMethod) return getMethodDecl()->getMethodFamily();
+    return getSelector().getMethodFamily();
+  }
+
   /// \brief Return the number of actual arguments in this message,
   /// not counting the receiver.
   unsigned getNumArgs() const { return NumArgs; }

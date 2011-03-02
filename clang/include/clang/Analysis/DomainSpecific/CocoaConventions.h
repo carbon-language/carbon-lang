@@ -22,7 +22,7 @@ namespace cocoa {
  
   enum NamingConvention { NoConvention, CreateRule, InitRule };
 
-  NamingConvention deriveNamingConvention(Selector S, bool ignorePrefix = true);
+  NamingConvention deriveNamingConvention(Selector S);
 
   static inline bool followsFundamentalRule(Selector S) {
     return deriveNamingConvention(S) == CreateRule;

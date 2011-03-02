@@ -398,6 +398,48 @@ ObjCMethodDecl *ObjCMethodDecl::getCanonicalDecl() {
   return this;
 }
 
+ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
+  ObjCMethodFamily family = static_cast<ObjCMethodFamily>(Family);
+  if (family != InvalidObjCMethodFamily)
+    return family;
+
+  family = getSelector().getMethodFamily();
+  switch (family) {
+  case OMF_None: break;
+
+  // init only has a conventional meaning for an instance method, and
+  // it has to return an object.
+  case OMF_init:
+    if (!isInstanceMethod() || !getResultType()->isObjCObjectPointerType())
+      family = OMF_None;
+    break;
+
+  // alloc/copy/new have a conventional meaning for both class and
+  // instance methods, but they require an object return.
+  case OMF_alloc:
+  case OMF_copy:
+  case OMF_mutableCopy:
+  case OMF_new:
+    if (!getResultType()->isObjCObjectPointerType())
+      family = OMF_None;
+    break;
+
+  // These selectors have a conventional meaning only for instance methods.
+  case OMF_dealloc:
+  case OMF_retain:
+  case OMF_release:
+  case OMF_autorelease:
+  case OMF_retainCount:
+    if (!isInstanceMethod())
+      family = OMF_None;
+    break;
+  }
+
+  // Cache the result.
+  Family = static_cast<unsigned>(family);
+  return family;
+}
+
 void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
                                           const ObjCInterfaceDecl *OID) {
   QualType selfTy;

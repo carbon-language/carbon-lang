@@ -443,6 +443,52 @@ public:
   void AddKeywords(const LangOptions &LangOpts);
 };
 
+/// ObjCMethodFamily - A family of Objective-C methods.  These
+/// families have no inherent meaning in the language, but are
+/// nonetheless central enough in the existing implementations to
+/// merit direct AST support.  While, in theory, arbitrary methods can
+/// be considered to form families, we focus here on the methods
+/// involving allocation and retain-count management, as these are the
+/// most "core" and the most likely to be useful to diverse clients
+/// without extra information.
+///
+/// Both selectors and actual method declarations may be classified
+/// into families.  Method families may impose additional restrictions
+/// beyond their selector name; for example, a method called '_init'
+/// that returns void is not considered to be in the 'init' family
+/// (but would be if it returned 'id').  It is also possible to
+/// explicitly change or remove a method's family.  Therefore the
+/// method's family should be considered the single source of truth.
+enum ObjCMethodFamily {
+  /// \brief No particular method family.
+  OMF_None,
+
+  // Selectors in these families may have arbitrary arity, may be
+  // written with arbitrary leading underscores, and may have
+  // additional CamelCase "words" in their first selector chunk
+  // following the family name.
+  OMF_alloc,
+  OMF_copy,
+  OMF_init,
+  OMF_mutableCopy,
+  OMF_new,
+
+  // These families are singletons consisting only of the nullary
+  // selector with the given name.
+  OMF_autorelease,
+  OMF_dealloc,
+  OMF_release,
+  OMF_retain,
+  OMF_retainCount
+};
+
+/// Enough bits to store any enumerator in ObjCMethodFamily or
+/// InvalidObjCMethodFamily.
+enum { ObjCMethodFamilyBitWidth = 4 };
+
+/// An invalid value of ObjCMethodFamily.
+enum { InvalidObjCMethodFamily = (1 << ObjCMethodFamilyBitWidth) - 1 };
+
 /// Selector - This smart pointer class efficiently represents Objective-C
 /// method names. This class will either point to an IdentifierInfo or a
 /// MultiKeywordSelector (which is private). This enables us to optimize
@@ -478,6 +524,8 @@ class Selector {
   unsigned getIdentifierInfoFlag() const {
     return InfoPtr & ArgFlags;
   }
+
+  static ObjCMethodFamily getMethodFamilyImpl(Selector sel);
 
 public:
   friend class SelectorTable; // only the SelectorTable can create these
@@ -540,6 +588,11 @@ public:
   /// getAsString - Derive the full selector name (e.g. "foo:bar:") and return
   /// it as an std::string.
   std::string getAsString() const;
+
+  /// getMethodFamily - Derive the conventional family of this method.
+  ObjCMethodFamily getMethodFamily() const {
+    return getMethodFamilyImpl(*this);
+  }
 
   static Selector getEmptyMarker() {
     return Selector(uintptr_t(-1));

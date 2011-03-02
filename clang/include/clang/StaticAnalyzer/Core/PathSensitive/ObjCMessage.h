@@ -72,6 +72,8 @@ public:
     return getType(ctx);
   }
 
+  ObjCMethodFamily getMethodFamily() const;
+
   Selector getSelector() const;
 
   const Expr *getInstanceReceiver() const {

@@ -16,6 +16,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
 using namespace ento;
@@ -35,84 +36,27 @@ using llvm::StringRef;
 //  not release it."
 //
 
-static bool isWordEnd(char ch, char prev, char next) {
-  return ch == '\0'
-      || (islower(prev) && isupper(ch)) // xxxC
-      || (isupper(prev) && isupper(ch) && islower(next)) // XXCreate
-      || !isalpha(ch);
-}
-
-static const char* parseWord(const char* s) {
-  char ch = *s, prev = '\0';
-  assert(ch != '\0');
-  char next = *(s+1);
-  while (!isWordEnd(ch, prev, next)) {
-    prev = ch;
-    ch = next;
-    next = *((++s)+1);
-  }
-  return s;
-}
-
-cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S,
-                                                      bool ignorePrefix) {
-  IdentifierInfo *II = S.getIdentifierInfoForSlot(0);
-
-  if (!II)
+cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
+  switch (S.getMethodFamily()) {
+  case OMF_None:
+  case OMF_autorelease:
+  case OMF_dealloc:
+  case OMF_release:
+  case OMF_retain:
+  case OMF_retainCount:
     return NoConvention;
 
-  const char *s = II->getNameStart();
+  case OMF_init:
+    return InitRule;
 
-  const char *orig = s;
-  // A method/function name may contain a prefix.  We don't know it is there,
-  // however, until we encounter the first '_'.
-  while (*s != '\0') {
-    // Skip '_', numbers, ':', etc.
-    if (*s == '_' || !isalpha(*s)) {      
-      ++s;
-      continue;
-    }
-    break;
+  case OMF_alloc:
+  case OMF_copy:
+  case OMF_mutableCopy:
+  case OMF_new:
+    return CreateRule;
   }
-
-  if (!ignorePrefix && s != orig)
-    return NoConvention;
-
-  // Parse the first word, and look for specific keywords.
-  const char *wordEnd = parseWord(s);
-  assert(wordEnd > s);
-  unsigned len = wordEnd - s;
-
-  switch (len) {
-    default:
-      return NoConvention;
-    case 3:
-      // Methods starting with 'new' follow the create rule.
-      return (memcmp(s, "new", 3) == 0) ? CreateRule : NoConvention;
-    case 4:
-      // Methods starting with 'copy' follow the create rule.
-      if (memcmp(s, "copy", 4) == 0)
-        return CreateRule;
-      // Methods starting with 'init' follow the init rule.
-      if (memcmp(s, "init", 4) == 0)
-        return InitRule;
-      return NoConvention;
-    case 5:
-      return (memcmp(s, "alloc", 5) == 0) ? CreateRule : NoConvention;
-    case 7:
-      // Methods starting with 'mutableCopy' follow the create rule.
-      if (memcmp(s, "mutable", 7) == 0) {
-        // Look at the next word to see if it is "Copy".
-        s = wordEnd;
-        if (*s != '\0') {
-          wordEnd = parseWord(s);
-          len = wordEnd - s;
-          if (len == 4 && memcmp(s, "Copy", 4) == 0)
-            return CreateRule;
-        }
-      }
-      return NoConvention;
-  }
+  llvm_unreachable("unexpected naming convention");
+  return NoConvention;
 }
 
 bool cocoa::isRefType(QualType RetTy, llvm::StringRef Prefix,

@@ -112,17 +112,20 @@ class ObjCMethodDecl : public NamedDecl, public DeclContext {
 public:
   enum ImplementationControl { None, Required, Optional };
 private:
-  /// Bitfields must be first fields in this class so they pack with those
-  /// declared in class Decl.
+  // The conventional meaning of this method; an ObjCMethodFamily.
+  // This is not serialized; instead, it is computed on demand and
+  // cached.
+  mutable unsigned Family : ObjCMethodFamilyBitWidth;
+
   /// instance (true) or class (false) method.
-  bool IsInstance : 1;
-  bool IsVariadic : 1;
+  unsigned IsInstance : 1;
+  unsigned IsVariadic : 1;
 
   // Synthesized declaration method for a property setter/getter
-  bool IsSynthesized : 1;
+  unsigned IsSynthesized : 1;
   
   // Method has a definition.
-  bool IsDefined : 1;
+  unsigned IsDefined : 1;
 
   // NOTE: VC++ treats enums as signed, avoid using ImplementationControl enum
   /// @required/@optional
@@ -170,7 +173,7 @@ private:
                  ImplementationControl impControl = None,
                  unsigned numSelectorArgs = 0)
   : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
-    DeclContext(ObjCMethod),
+    DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
     IsDefined(isDefined),
@@ -278,6 +281,9 @@ public:
   void setSelfDecl(ImplicitParamDecl *SD) { SelfDecl = SD; }
   ImplicitParamDecl * getCmdDecl() const { return CmdDecl; }
   void setCmdDecl(ImplicitParamDecl *CD) { CmdDecl = CD; }
+
+  /// Determines the family of this method.
+  ObjCMethodFamily getMethodFamily() const;
 
   bool isInstanceMethod() const { return IsInstance; }
   void setInstanceMethod(bool isInst) { IsInstance = isInst; }
