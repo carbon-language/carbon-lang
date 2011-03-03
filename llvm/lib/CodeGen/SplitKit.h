@@ -268,10 +268,10 @@ public:
   /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
   /// Newly created intervals will be appended to newIntervals.
   SplitEditor(SplitAnalysis &SA, LiveIntervals&, VirtRegMap&,
-              MachineDominatorTree&, LiveRangeEdit&);
+              MachineDominatorTree&);
 
-  /// getAnalysis - Get the corresponding analysis.
-  SplitAnalysis &getAnalysis() { return SA; }
+  /// reset - Prepare for a new split.
+  void reset(LiveRangeEdit&);
 
   /// Create a new virtual register and live interval.
   void openIntv();

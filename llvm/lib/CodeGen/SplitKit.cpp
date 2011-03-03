@@ -209,17 +209,24 @@ void SplitAnalysis::analyze(const LiveInterval *li) {
 SplitEditor::SplitEditor(SplitAnalysis &sa,
                          LiveIntervals &lis,
                          VirtRegMap &vrm,
-                         MachineDominatorTree &mdt,
-                         LiveRangeEdit &edit)
+                         MachineDominatorTree &mdt)
   : SA(sa), LIS(lis), VRM(vrm),
     MRI(vrm.getMachineFunction().getRegInfo()),
     MDT(mdt),
     TII(*vrm.getMachineFunction().getTarget().getInstrInfo()),
     TRI(*vrm.getMachineFunction().getTarget().getRegisterInfo()),
-    Edit(&edit),
+    Edit(0),
     OpenIdx(0),
     RegAssign(Allocator)
-{
+{}
+
+void SplitEditor::reset(LiveRangeEdit &lre) {
+  Edit = &lre;
+  OpenIdx = 0;
+  RegAssign.clear();
+  Values.clear();
+  LiveOutCache.clear();
+
   // We don't need an AliasAnalysis since we will only be performing
   // cheap-as-a-copy remats anyway.
   Edit->anyRematerializable(LIS, TII, 0);
