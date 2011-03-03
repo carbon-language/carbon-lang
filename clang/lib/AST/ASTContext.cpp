@@ -2230,6 +2230,9 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           QualType Canon) const {
   assert(!Template.getAsDependentTemplateName() && 
          "No dependent template names here!");
+  // Look through qualified template names.
+  if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
+    Template = TemplateName(QTN->getTemplateDecl());
   
   if (!Canon.isNull())
     Canon = getCanonicalType(Canon);
@@ -2257,6 +2260,9 @@ ASTContext::getCanonicalTemplateSpecializationType(TemplateName Template,
                                                    unsigned NumArgs) const {
   assert(!Template.getAsDependentTemplateName() && 
          "No dependent template names here!");
+  // Look through qualified template names.
+  if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
+    Template = TemplateName(QTN->getTemplateDecl());
   
   // Build the canonical template specialization type.
   TemplateName CanonTemplate = getCanonicalTemplateName(Template);
@@ -4387,6 +4393,8 @@ TemplateName
 ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS,
                                      bool TemplateKeyword,
                                      TemplateDecl *Template) const {
+  assert(NNS && "Missing nested-name-specifier in qualified template name");
+  
   // FIXME: Canonicalization?
   llvm::FoldingSetNodeID ID;
   QualifiedTemplateName::Profile(ID, NNS, TemplateKeyword, Template);

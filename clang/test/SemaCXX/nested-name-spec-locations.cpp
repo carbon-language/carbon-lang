@@ -146,3 +146,17 @@ struct DependentTemplateTemplateArgumentTester {
 };
 
 DependentTemplateTemplateArgumentTester<HasApply, int> DTTACheck; // expected-note{{in instantiation of template class}}
+
+namespace PR9388 {
+  namespace std {
+    template<typename T>     class vector     {
+    };
+  }
+  template<typename T> static void foo(std::vector<T*> &V) {
+    __PRETTY_FUNCTION__; // expected-warning{{expression result unused}}
+  }
+  void bar(std::vector<int*> &Blocks) {
+    foo(Blocks); // expected-note{{in instantiation of}}
+  }
+
+}
