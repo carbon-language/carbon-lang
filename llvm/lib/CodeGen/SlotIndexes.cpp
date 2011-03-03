@@ -129,26 +129,12 @@ void SlotIndexes::renumberIndexes() {
   // had been present.
   DEBUG(dbgs() << "\n*** Renumbering SlotIndexes ***\n");
 
-  functionSize = 0;
   unsigned index = 0;
 
   for (IndexListEntry *curEntry = front(); curEntry != getTail();
        curEntry = curEntry->getNext()) {
-
     curEntry->setIndex(index);
-
-    if (curEntry->getInstr() == 0) {
-      // MBB start entry. Just step index by 1.
-      index += SlotIndex::NUM;
-    }
-    else {
-      ++functionSize;
-      unsigned Slots = curEntry->getInstr()->getDesc().getNumDefs();
-      if (Slots == 0)
-        Slots = 1;
-
-      index += (Slots + 1) * SlotIndex::NUM;
-    }
+    index += 4*SlotIndex::NUM;
   }
 }
 
