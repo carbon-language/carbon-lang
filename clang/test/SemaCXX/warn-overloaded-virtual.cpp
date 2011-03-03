@@ -52,3 +52,15 @@ struct Derived : public Base {
   void foo(int, int);   
 };
 }
+
+namespace PR9396 {
+class A {
+public:
+  virtual void f(int) {}
+};
+
+class B : public A {
+public:
+  static void f() {}
+};
+}

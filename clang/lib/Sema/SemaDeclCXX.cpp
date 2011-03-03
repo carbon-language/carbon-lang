@@ -2838,7 +2838,8 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     for (CXXRecordDecl::method_iterator M = Record->method_begin(),
                                      MEnd = Record->method_end();
          M != MEnd; ++M) {
-      DiagnoseHiddenVirtualMethods(Record, *M);
+      if (!(*M)->isStatic())
+        DiagnoseHiddenVirtualMethods(Record, *M);
     }
   }
 
