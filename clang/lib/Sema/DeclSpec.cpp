@@ -126,7 +126,7 @@ void CXXScopeSpec::Adopt(NestedNameSpecifierLoc Other) {
 
 NestedNameSpecifierLoc 
 CXXScopeSpec::getWithLocInContext(ASTContext &Context) const {
-  if (isEmpty() || isInvalid())
+  if (!Builder.getRepresentation())
     return NestedNameSpecifierLoc();
   
   return Builder.getWithLocInContext(Context);

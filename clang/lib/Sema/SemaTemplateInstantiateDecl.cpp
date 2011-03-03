@@ -2917,7 +2917,7 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
 
       // FIXME: Can we use the CurrentInstantiationScope to avoid this
       // extra instantiation in the common case?
-      T = SubstType(T, TemplateArgs, SourceLocation(), DeclarationName());
+      T = SubstType(T, TemplateArgs, Loc, DeclarationName());
       assert(!T.isNull() && "Instantiation of injected-class-name cannot fail.");
     
       if (!T->isDependentType()) {
