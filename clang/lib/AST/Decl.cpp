@@ -2200,8 +2200,9 @@ TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
 }
 
 LabelDecl *LabelDecl::Create(ASTContext &C, DeclContext *DC,
-                             SourceLocation L, IdentifierInfo *II) {
-  return new (C) LabelDecl(DC, L, II, 0);
+                             SourceLocation L, IdentifierInfo *II,
+                             bool isGnuLocal) {
+  return new (C) LabelDecl(DC, L, II, 0, isGnuLocal);
 }
 
 

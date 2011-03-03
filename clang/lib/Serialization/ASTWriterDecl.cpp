@@ -653,6 +653,7 @@ void ASTDeclWriter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
 
 void ASTDeclWriter::VisitLabelDecl(LabelDecl *D) {
   VisitNamedDecl(D);
+  Record.push_back(D->isGnuLocal());
   Code = serialization::DECL_LABEL;
 }
 

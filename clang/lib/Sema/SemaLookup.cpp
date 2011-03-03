@@ -2784,7 +2784,7 @@ LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc,
   
   if (Res == 0) {
     // If not forward referenced or defined already, create the backing decl.
-    Res = LabelDecl::Create(Context, CurContext, Loc, II);
+    Res = LabelDecl::Create(Context, CurContext, Loc, II, isLocalLabel);
     Scope *S = isLocalLabel ? CurScope : CurScope->getFnParent();
     assert(S && "Not in a function?");
     PushOnScopeChains(Res, S, true);

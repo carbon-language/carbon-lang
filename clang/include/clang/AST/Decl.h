@@ -309,17 +309,22 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 /// location of the statement.  For GNU local labels (__label__), the decl
 /// location is where the __label__ is.
 class LabelDecl : public NamedDecl {
-  LabelStmt *TheStmt;
-  LabelDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *II, LabelStmt *S)
-    : NamedDecl(Label, DC, L, II), TheStmt(S) {}
+  llvm::PointerIntPair<LabelStmt *, 1, bool> StmtAndGnuLocal;
+  LabelDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *II,
+            LabelStmt *S, bool isGnuLocal)
+    : NamedDecl(Label, DC, L, II), StmtAndGnuLocal(S, isGnuLocal) {}
   
 public:
   static LabelDecl *Create(ASTContext &C, DeclContext *DC,
-                           SourceLocation L, IdentifierInfo *II);
+                           SourceLocation L, IdentifierInfo *II,
+                           bool isGnuLocal = false);
 
-  LabelStmt *getStmt() const { return TheStmt; }
-  void setStmt(LabelStmt *T) { TheStmt = T; }
+  LabelStmt *getStmt() const { return StmtAndGnuLocal.getPointer(); }
+  void setStmt(LabelStmt *T) { StmtAndGnuLocal.setPointer(T); }
   
+  bool isGnuLocal() const { return StmtAndGnuLocal.getInt(); }
+  void setGnuLocal(bool V = true) { StmtAndGnuLocal.setInt(V); }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const LabelDecl *D) { return true; }

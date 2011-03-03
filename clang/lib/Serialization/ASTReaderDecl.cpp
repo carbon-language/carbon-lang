@@ -726,6 +726,8 @@ void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
 
 void ASTDeclReader::VisitLabelDecl(LabelDecl *D) {
   VisitNamedDecl(D);
+  bool IsGnuLocal = Record[Idx++];
+  D->setGnuLocal(IsGnuLocal);
 }
 
 
