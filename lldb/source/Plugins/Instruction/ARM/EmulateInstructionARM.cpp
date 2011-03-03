@@ -6325,7 +6325,7 @@ EmulateInstructionARM::EmulateLDRHLiteral (ARMEncoding encoding)
                   
                 // t == UInt(Rt); imm32 = ZeroExtend(imm4H:imm4L, 32); add = (U == ’1’);
                 t = Bits32 (opcode, 15, 12);
-                imm32 = (imm4H << 4) & imm4L;
+                imm32 = (imm4H << 4) | imm4L;
                 add = BitIsSet (opcode, 23);
                   
                 // if t == 15 then UNPREDICTABLE;                  
@@ -6645,7 +6645,7 @@ EmulateInstructionARM::EmulateLDRSBImmediate (ARMEncoding encoding)
             
                 uint32_t imm4H = Bits32 (opcode, 11, 8);
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
-                imm32 = (imm4H << 4) & imm4L;
+                imm32 = (imm4H << 4) | imm4L;
                   
                 // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
                 index = BitIsSet (opcode, 24);
@@ -6757,7 +6757,7 @@ EmulateInstructionARM::EmulateLDRSBLiteral (ARMEncoding encoding)
                 t = Bits32 (opcode, 15, 12);
                 uint32_t imm4H = Bits32 (opcode, 11, 8);
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
-                imm32 = (imm4H << 4) & imm4L;
+                imm32 = (imm4H << 4) | imm4L;
                 add = BitIsSet (opcode, 23);
                   
                 // if t == 15 then UNPREDICTABLE;
@@ -7051,7 +7051,7 @@ EmulateInstructionARM::EmulateLDRSHImmediate (ARMEncoding encoding)
                 n = Bits32 (opcode, 19, 16);
                 uint32_t imm4H = Bits32 (opcode, 11,8);
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
-                imm32 = (imm4H << 4) & imm4L;
+                imm32 = (imm4H << 4) | imm4L;
                   
                 // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
                 index = BitIsSet (opcode, 24);
@@ -7177,7 +7177,7 @@ EmulateInstructionARM::EmulateLDRSHLiteral (ARMEncoding encoding)
                 t = Bits32 (opcode, 15, 12);
                 uint32_t imm4H = Bits32 (opcode, 11, 8);
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
-                imm32 = (imm4H << 4) & imm4L;
+                imm32 = (imm4H << 4) | imm4L;
                 add = BitIsSet (opcode, 23);
                   
                 // if t == 15 then UNPREDICTABLE;
