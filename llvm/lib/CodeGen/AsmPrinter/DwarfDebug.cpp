@@ -2330,8 +2330,11 @@ bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
   if (ArgNo == 0) 
     return false;
 
-  if (CurrentFnArguments.size() == 0)
+  size_t Size = CurrentFnArguments.size();
+  if (Size == 0)
     CurrentFnArguments.resize(MF->getFunction()->arg_size());
+  else if (ArgNo > Size)
+    CurrentFnArguments.resize(ArgNo * 2);
   CurrentFnArguments[ArgNo - 1] = Var;
   return true;
 }
