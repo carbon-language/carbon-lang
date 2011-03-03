@@ -513,14 +513,16 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
   case tok::kw_asm: {
     ProhibitAttributes(attrs);
 
-    ExprResult Result(ParseSimpleAsm());
+    SourceLocation StartLoc = Tok.getLocation();
+    SourceLocation EndLoc;
+    ExprResult Result(ParseSimpleAsm(&EndLoc));
 
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                      "top-level asm block");
 
     if (Result.isInvalid())
       return DeclGroupPtrTy();
-    SingleDecl = Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), Result.get());
+    SingleDecl = Actions.ActOnFileScopeAsmDecl(Result.get(), StartLoc, EndLoc);
     break;
   }
   case tok::at:

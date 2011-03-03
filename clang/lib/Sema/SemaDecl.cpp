@@ -8024,11 +8024,14 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                            NumPositiveBits, NumNegativeBits);
 }
 
-Decl *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc, Expr *expr) {
+Decl *Sema::ActOnFileScopeAsmDecl(Expr *expr,
+                                  SourceLocation StartLoc,
+                                  SourceLocation EndLoc) {
   StringLiteral *AsmString = cast<StringLiteral>(expr);
 
   FileScopeAsmDecl *New = FileScopeAsmDecl::Create(Context, CurContext,
-                                                   Loc, AsmString);
+                                                   AsmString, StartLoc,
+                                                   EndLoc);
   CurContext->addDecl(New);
   return New;
 }

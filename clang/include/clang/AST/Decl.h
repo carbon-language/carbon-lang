@@ -2519,11 +2519,21 @@ private:
 
 class FileScopeAsmDecl : public Decl {
   StringLiteral *AsmString;
-  FileScopeAsmDecl(DeclContext *DC, SourceLocation L, StringLiteral *asmstring)
-    : Decl(FileScopeAsm, DC, L), AsmString(asmstring) {}
+  SourceLocation RParenLoc;
+  FileScopeAsmDecl(DeclContext *DC, StringLiteral *asmstring,
+                   SourceLocation StartL, SourceLocation EndL)
+    : Decl(FileScopeAsm, DC, StartL), AsmString(asmstring), RParenLoc(EndL) {}
 public:
   static FileScopeAsmDecl *Create(ASTContext &C, DeclContext *DC,
-                                  SourceLocation L, StringLiteral *Str);
+                                  StringLiteral *Str, SourceLocation AsmLoc,
+                                  SourceLocation RParenLoc);
+
+  SourceLocation getAsmLoc() const { return getLocation(); }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+  SourceRange getSourceRange() const {
+    return SourceRange(getAsmLoc(), getRParenLoc());
+  }
 
   const StringLiteral *getAsmString() const { return AsmString; }
   StringLiteral *getAsmString() { return AsmString; }

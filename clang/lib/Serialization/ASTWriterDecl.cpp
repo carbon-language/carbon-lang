@@ -613,6 +613,7 @@ void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
 void ASTDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
   VisitDecl(D);
   Writer.AddStmt(D->getAsmString());
+  Writer.AddSourceLocation(D->getRParenLoc(), Record);
   Code = serialization::DECL_FILE_SCOPE_ASM;
 }
 

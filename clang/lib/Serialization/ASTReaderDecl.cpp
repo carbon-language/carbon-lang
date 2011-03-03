@@ -687,6 +687,7 @@ void ASTDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
 void ASTDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
   VisitDecl(AD);
   AD->setAsmString(cast<StringLiteral>(Reader.ReadExpr(F)));
+  AD->setRParenLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
@@ -1585,7 +1586,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
                             SC_None, SC_None, 0);
     break;
   case DECL_FILE_SCOPE_ASM:
-    D = FileScopeAsmDecl::Create(*Context, 0, SourceLocation(), 0);
+    D = FileScopeAsmDecl::Create(*Context, 0, 0, SourceLocation(),
+                                 SourceLocation());
     break;
   case DECL_BLOCK:
     D = BlockDecl::Create(*Context, 0, SourceLocation());

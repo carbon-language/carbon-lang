@@ -891,7 +891,9 @@ public:
                                               NamedDecl *D);
 
   void DiagnoseInvalidJumps(Stmt *Body);
-  Decl *ActOnFileScopeAsmDecl(SourceLocation Loc, Expr *expr);
+  Decl *ActOnFileScopeAsmDecl(Expr *expr,
+                              SourceLocation AsmLoc,
+                              SourceLocation RParenLoc);
 
   /// Scope actions.
   void ActOnPopScope(SourceLocation Loc, Scope *S);

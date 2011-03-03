@@ -2266,7 +2266,8 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
-                                           SourceLocation L,
-                                           StringLiteral *Str) {
-  return new (C) FileScopeAsmDecl(DC, L, Str);
+                                           StringLiteral *Str,
+                                           SourceLocation AsmLoc,
+                                           SourceLocation RParenLoc) {
+  return new (C) FileScopeAsmDecl(DC, Str, AsmLoc, RParenLoc);
 }
