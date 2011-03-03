@@ -317,6 +317,13 @@ namespace {
                                           MCDataFragment *F,
                                           const MCSectionData *SD);
 
+    virtual bool
+    IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+                                           const MCSymbolData &DataA,
+                                           const MCFragment &FB,
+                                           bool InSet,
+                                           bool IsPCRel) const;
+
     virtual void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
     virtual void WriteSection(MCAssembler &Asm,
                       const SectionIndexMapTy &SectionIndexMap,
@@ -1436,6 +1443,18 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                  SectionOffsetMap[&Section], Size,
                  SD.getAlignment(), Section);
   }
+}
+
+bool
+ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+                                                      const MCSymbolData &DataA,
+                                                      const MCFragment &FB,
+                                                      bool InSet,
+                                                      bool IsPCRel) const {
+  if (DataA.getFlags() & ELF_STB_Weak)
+    return false;
+  return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
+                                                 Asm, DataA, FB,InSet, IsPCRel);
 }
 
 MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
