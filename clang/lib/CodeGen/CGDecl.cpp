@@ -1000,7 +1000,8 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
 
 /// Emit an alloca (or GlobalValue depending on target)
 /// for the specified parameter and set up LocalDeclMap.
-void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
+void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
+                                   unsigned ArgNo) {
   // FIXME: Why isn't ImplicitParamDecl a ParmVarDecl?
   assert((isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)) &&
          "Invalid argument to EmitParmDecl");
@@ -1046,6 +1047,6 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   // Emit debug info for param declaration.
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(D.getLocation());
-    DI->EmitDeclareOfArgVariable(&D, DeclPtr, Builder);
+    DI->EmitDeclareOfArgVariable(&D, DeclPtr, ArgNo, Builder);
   }
 }
