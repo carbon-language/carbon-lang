@@ -647,7 +647,6 @@ void ASTDeclWriter::VisitBlockDecl(BlockDecl *D) {
 void ASTDeclWriter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   VisitDecl(D);
   Record.push_back(D->getLanguage());
-  Writer.AddSourceLocation(D->getLBraceLoc(), Record);
   Writer.AddSourceLocation(D->getRBraceLoc(), Record);
   Code = serialization::DECL_LINKAGE_SPEC;
 }

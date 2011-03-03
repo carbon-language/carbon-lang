@@ -721,7 +721,6 @@ void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
 void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   VisitDecl(D);
   D->setLanguage((LinkageSpecDecl::LanguageIDs)Record[Idx++]);
-  D->setLBraceLoc(ReadSourceLocation(Record, Idx));
   D->setRBraceLoc(ReadSourceLocation(Record, Idx));
 }
 
@@ -1419,7 +1418,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   case DECL_LINKAGE_SPEC:
     D = LinkageSpecDecl::Create(*Context, 0, SourceLocation(),
                                 (LinkageSpecDecl::LanguageIDs)0,
-                                SourceLocation(), SourceLocation());
+                                SourceLocation());
     break;
   case DECL_LABEL:
     D = LabelDecl::Create(*Context, 0, SourceLocation(), 0);

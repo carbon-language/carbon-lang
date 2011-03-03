@@ -1271,9 +1271,8 @@ LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC,
                                          SourceLocation L,
                                          LanguageIDs Lang,
-                                         SourceLocation LBraceLoc,
                                          SourceLocation RBraceLoc) {
-  return new (C) LinkageSpecDecl(DC, L, Lang, LBraceLoc, RBraceLoc);
+  return new (C) LinkageSpecDecl(DC, L, Lang, RBraceLoc);
 }
 
 UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,

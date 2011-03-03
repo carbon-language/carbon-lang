@@ -1711,20 +1711,17 @@ private:
   /// Language - The language for this linkage specification.
   LanguageIDs Language;
 
-  /// LBraceLoc - The source location for the left brace (if valid).
-  SourceLocation LBraceLoc;
   /// RBraceLoc - The source location for the right brace (if valid).
   SourceLocation RBraceLoc;
 
   LinkageSpecDecl(DeclContext *DC, SourceLocation L, LanguageIDs lang,
-                  SourceLocation LBLoc, SourceLocation RBLoc)
+                  SourceLocation RBLoc)
     : Decl(LinkageSpec, DC, L), DeclContext(LinkageSpec),
-      Language(lang), LBraceLoc(LBLoc), RBraceLoc(RBLoc) { }
+      Language(lang), RBraceLoc(RBLoc) { }
 
 public:
   static LinkageSpecDecl *Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, LanguageIDs Lang,
-                                 SourceLocation LBraceLoc,
                                  SourceLocation RBraceLoc = SourceLocation());
 
   /// \brief Return the language specified by this linkage specification.
@@ -1736,9 +1733,7 @@ public:
   /// \brief Determines whether this linkage specification had braces in
   /// its syntactic form.
   bool hasBraces() const { return RBraceLoc.isValid(); }
-  SourceLocation getLBraceLoc() const { return LBraceLoc; }
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
-  void setLBraceLoc(SourceLocation L) { LBraceLoc = L; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
 
   SourceLocation getLocEnd() const {
