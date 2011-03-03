@@ -60,33 +60,33 @@ entry:
 }
 
 @G1 = global i32 4712
-; CHECK: .section .dp.data,"awd",@progbits
+; CHECK: .section ".dp.data","awd",@progbits
 ; CHECK: G1:
 
 @G2 = global i32 0
-; CHECK: .section .dp.bss,"awd",@nobits
+; CHECK: .section ".dp.bss","awd",@nobits
 ; CHECK: G2:
 
 @G3 = unnamed_addr constant i32 9401
-; CHECK: .section .cp.rodata.cst4,"aMc",@progbits,4
+; CHECK: .section ".cp.rodata.cst4","aMc",@progbits,4
 ; CHECK: G3:
 
 @G4 = global i32* @G1
-; CHECK: .section .dp.data,"awd",@progbits
+; CHECK: .section ".dp.data","awd",@progbits
 ; CHECK: G4:
 
 @G5 = unnamed_addr constant i32* @G1
-; CHECK: .section .cp.rodata,"ac",@progbits
+; CHECK: .section ".cp.rodata","ac",@progbits
 ; CHECK: G5:
 
 @G6 = global i32* @G8
-; CHECK: .section .dp.data,"awd",@progbits
+; CHECK: .section ".dp.data","awd",@progbits
 ; CHECK: G6:
 
 @G7 = unnamed_addr constant i32* @G8
-; CHECK: .section .cp.rodata,"ac",@progbits
+; CHECK: .section ".cp.rodata","ac",@progbits
 ; CHECK: G7:
 
 @G8 = internal global i32 9312
-; CHECK: .section .dp.data,"awd",@progbits
+; CHECK: .section ".dp.data","awd",@progbits
 ; CHECK: G8:

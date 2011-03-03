@@ -39,8 +39,22 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
     return;
   }
 
-  OS << "\t.section\t" << getSectionName();
-  
+  StringRef name = getSectionName();
+  OS << "\t.section\t\"";
+  for (const char *b = name.begin(), *e = name.end(); b < e; ++b) {
+    if (*b == '"') // Unquoted "
+      OS << "\\\"";
+    else if (*b != '\\') // Neither " or backslash
+      OS << *b;
+    else if (b + 1 == e) // Trailing backslash
+      OS << "\\\\";
+    else {
+      OS << b[0] << b[1]; // Quoted character
+      ++b;
+    }
+  }
+  OS << '"';
+
   // Handle the weird solaris syntax if desired.
   if (MAI.usesSunStyleELFSectionSwitchSyntax() && 
       !(Flags & ELF::SHF_MERGE)) {

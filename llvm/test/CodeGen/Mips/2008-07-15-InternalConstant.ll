@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=mips -o %t
-; RUN: grep {rodata.str1.4,"aMS",@progbits}  %t | count 1
-; RUN: grep {r.data,}  %t | count 1
+; RUN: grep {rodata.str1.4","aMS",@progbits}  %t | count 1
+; RUN: grep {r.data",}  %t | count 1
 ; RUN: grep {\%hi} %t | count 2
 ; RUN: grep {\%lo} %t | count 2
 ; RUN: not grep {gp_rel} %t

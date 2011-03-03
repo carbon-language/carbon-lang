@@ -8,7 +8,7 @@ entry:
 }
 
 @G = thread_local global i32 15
-; CHECK: .section .dp.data,"awd",@progbits
+; CHECK: .section ".dp.data","awd",@progbits
 ; CHECK: G:
 ; CHECK: .long 15
 ; CHECK: .long 15

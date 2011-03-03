@@ -33,10 +33,10 @@
 ; DARWIN: _G3:
 ; DARWIN:     .long _G1
 
-; LINUX:   .section        .rodata,"a",@progbits
+; LINUX:   .section        ".rodata","a",@progbits
 ; LINUX:   .globl  G3
 
-; LINUX-SECTIONS: .section        .rodata.G3,"a",@progbits
+; LINUX-SECTIONS: .section        ".rodata.G3","a",@progbits
 ; LINUX-SECTIONS: .globl  G3
 
 
@@ -66,7 +66,7 @@
 @"foo bar" = linkonce global i32 42
 
 ; LINUX: .type	foo_20_bar,@object
-; LINUX: .section .data.foo_20_bar,"aGw",@progbits,foo_20_bar,comdat
+; LINUX: .section ".data.foo_20_bar","aGw",@progbits,foo_20_bar,comdat
 ; LINUX: .weak	foo_20_bar
 ; LINUX: foo_20_bar:
 
@@ -79,7 +79,7 @@
 @G6 = weak_odr unnamed_addr constant [1 x i8] c"\01"
 
 ; LINUX:   .type	G6,@object
-; LINUX:   .section	.rodata.G6,"aG",@progbits,G6,comdat
+; LINUX:   .section	".rodata.G6","aG",@progbits,G6,comdat
 ; LINUX:   .weak	G6
 ; LINUX: G6:
 ; LINUX:   .byte	1
@@ -99,12 +99,12 @@
 ; DARWIN: _G7:
 ; DARWIN:	.asciz	"abcdefghi"
 
-; LINUX:	.section		.rodata.str1.1,"aMS",@progbits,1
+; LINUX:	.section	".rodata.str1.1","aMS",@progbits,1
 ; LINUX:	.globl G7
 ; LINUX: G7:
 ; LINUX:	.asciz	"abcdefghi"
 
-; LINUX-SECTIONS: .section        .rodata.G7,"aMS",@progbits,1
+; LINUX-SECTIONS: .section        ".rodata.G7","aMS",@progbits,1
 ; LINUX-SECTIONS:	.globl G7
 
 
@@ -114,7 +114,7 @@
 ; DARWIN:	.globl _G8
 ; DARWIN: _G8:
 
-; LINUX:	.section		.rodata.str2.2,"aMS",@progbits,2
+; LINUX:	.section	".rodata.str2.2","aMS",@progbits,2
 ; LINUX:	.globl G8
 ; LINUX:G8:
 
@@ -123,7 +123,7 @@
 ; DARWIN:	.globl _G9
 ; DARWIN: _G9:
 
-; LINUX:	.section		.rodata.str4.4,"aMS",@progbits,4
+; LINUX:	.section	".rodata.str4.4","aMS",@progbits,4
 ; LINUX:	.globl G9
 ; LINUX:G9
 
