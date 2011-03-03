@@ -1251,7 +1251,7 @@ struct SPrintFOpt : public LibCallOptimization {
       return V;
     }
 
-    // sprintf(str, format, ...) -> iprintf(str, format, ...) if no floating
+    // sprintf(str, format, ...) -> siprintf(str, format, ...) if no floating
     // point arguments.
     if (TLI->has(LibFunc::siprintf) && !CallHasFloatingPointArgument(CI)) {
       Module *M = B.GetInsertBlock()->getParent()->getParent();
