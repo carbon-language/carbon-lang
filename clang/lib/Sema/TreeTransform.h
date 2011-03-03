@@ -713,7 +713,7 @@ public:
   /// different behavior.
   QualType RebuildTemplateSpecializationType(TemplateName Template,
                                              SourceLocation TemplateLoc,
-                                       const TemplateArgumentListInfo &Args);
+                                             TemplateArgumentListInfo &Args);
 
   /// \brief Build a new parenthesized type.
   ///
@@ -747,7 +747,7 @@ public:
                                           NestedNameSpecifierLoc QualifierLoc,
                                           const IdentifierInfo *Name,
                                           SourceLocation NameLoc,
-                                        const TemplateArgumentListInfo &Args) {
+                                          TemplateArgumentListInfo &Args) {
     // Rebuild the template name.
     // TODO: avoid TemplateName abstraction
     CXXScopeSpec SS;
@@ -7644,7 +7644,7 @@ template<typename Derived>
 QualType TreeTransform<Derived>::RebuildTemplateSpecializationType(
                                                       TemplateName Template,
                                              SourceLocation TemplateNameLoc,
-                               const TemplateArgumentListInfo &TemplateArgs) {
+                                     TemplateArgumentListInfo &TemplateArgs) {
   return SemaRef.CheckTemplateIdType(Template, TemplateNameLoc, TemplateArgs);
 }
 

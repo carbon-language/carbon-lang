@@ -2009,7 +2009,7 @@ static bool isSimpleTemplateIdType(QualType T) {
 Sema::TemplateDeductionResult
 Sema::SubstituteExplicitTemplateArguments(
                                       FunctionTemplateDecl *FunctionTemplate,
-                        const TemplateArgumentListInfo &ExplicitTemplateArgs,
+                               TemplateArgumentListInfo &ExplicitTemplateArgs,
                        llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                  llvm::SmallVectorImpl<QualType> &ParamTypes,
                                           QualType *FunctionType,
@@ -2576,7 +2576,7 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
 /// \returns the result of template argument deduction.
 Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                              TemplateArgumentListInfo *ExplicitTemplateArgs,
                               Expr **Args, unsigned NumArgs,
                               FunctionDecl *&Specialization,
                               TemplateDeductionInfo &Info) {
@@ -2774,7 +2774,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 /// \returns the result of template argument deduction.
 Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                              TemplateArgumentListInfo *ExplicitTemplateArgs,
                               QualType ArgFunctionType,
                               FunctionDecl *&Specialization,
                               TemplateDeductionInfo &Info) {
@@ -2954,7 +2954,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 /// \returns the result of template argument deduction.
 Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                           const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                              TemplateArgumentListInfo *ExplicitTemplateArgs,
                               FunctionDecl *&Specialization,
                               TemplateDeductionInfo &Info) {
   return DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,

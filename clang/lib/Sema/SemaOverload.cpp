@@ -4061,7 +4061,7 @@ void
 Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                                  DeclAccessPair FoundDecl,
                                  CXXRecordDecl *ActingContext,
-                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                  QualType ObjectType,
                                  Expr::Classification ObjectClassification,
                                  Expr **Args, unsigned NumArgs,
@@ -4114,7 +4114,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
 void
 Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                    DeclAccessPair FoundDecl,
-                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                    Expr **Args, unsigned NumArgs,
                                    OverloadCandidateSet& CandidateSet,
                                    bool SuppressUserConversions) {
@@ -6090,7 +6090,7 @@ void
 Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                                            bool Operator,
                                            Expr **Args, unsigned NumArgs,
-                       const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            OverloadCandidateSet& CandidateSet,
                                            bool PartialOverloading) {
   ADLResult Fns;
@@ -7493,7 +7493,7 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From,
 /// \brief Add a single candidate to the overload set.
 static void AddOverloadedCallCandidate(Sema &S,
                                        DeclAccessPair FoundDecl,
-                       const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                        Expr **Args, unsigned NumArgs,
                                        OverloadCandidateSet &CandidateSet,
                                        bool PartialOverloading) {
@@ -7559,7 +7559,7 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
 
   // It would be nice to avoid this copy.
   TemplateArgumentListInfo TABuffer;
-  const TemplateArgumentListInfo *ExplicitTemplateArgs = 0;
+  TemplateArgumentListInfo *ExplicitTemplateArgs = 0;
   if (ULE->hasExplicitTemplateArgs()) {
     ULE->copyTemplateArgumentsInto(TABuffer);
     ExplicitTemplateArgs = &TABuffer;

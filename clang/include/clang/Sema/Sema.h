@@ -1210,7 +1210,7 @@ public:
   void AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                                   DeclAccessPair FoundDecl,
                                   CXXRecordDecl *ActingContext,
-                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                   QualType ObjectType,
                                   Expr::Classification ObjectClassification,
                                   Expr **Args, unsigned NumArgs,
@@ -1218,7 +1218,7 @@ public:
                                   bool SuppressUserConversions = false);
   void AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                     DeclAccessPair FoundDecl,
-                      const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                     Expr **Args, unsigned NumArgs,
                                     OverloadCandidateSet& CandidateSet,
                                     bool SuppressUserConversions = false);
@@ -1255,7 +1255,7 @@ public:
   void AddArgumentDependentLookupCandidates(DeclarationName Name,
                                             bool Operator,
                                             Expr **Args, unsigned NumArgs,
-                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                TemplateArgumentListInfo *ExplicitTemplateArgs,
                                             OverloadCandidateSet& CandidateSet,
                                             bool PartialOverloading = false);
 
@@ -3180,7 +3180,7 @@ public:
 
   QualType CheckTemplateIdType(TemplateName Template,
                                SourceLocation TemplateLoc,
-                               const TemplateArgumentListInfo &TemplateArgs);
+                              TemplateArgumentListInfo &TemplateArgs);
 
   TypeResult
   ActOnTemplateIdType(CXXScopeSpec &SS,
@@ -3253,7 +3253,7 @@ public:
                                                     LookupResult &Previous);
 
   bool CheckFunctionTemplateSpecialization(FunctionDecl *FD,
-                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                         TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            LookupResult &Previous);
   bool CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous);
 
@@ -3319,9 +3319,30 @@ public:
                            llvm::SmallVectorImpl<TemplateArgument> &Converted,
                              CheckTemplateArgumentKind CTAK = CTAK_Specified);
 
+  /// \brief Check that the given template arguments can be be provided to
+  /// the given template, converting the arguments along the way.
+  ///
+  /// \param Template The template to which the template arguments are being
+  /// provided.
+  ///
+  /// \param TemplateLoc The location of the template name in the source.
+  ///
+  /// \param TemplateArgs The list of template arguments. If the template is
+  /// a template template parameter, this function may extend the set of
+  /// template arguments to also include substituted, defaulted template
+  /// arguments.
+  ///
+  /// \param PartialTemplateArgs True if the list of template arguments is
+  /// intentionally partial, e.g., because we're checking just the initial
+  /// set of template arguments.
+  ///
+  /// \param Converted Will receive the converted, canonicalized template
+  /// arguments.
+  ///
+  /// \returns True if an error occurred, false otherwise.
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
-                                 const TemplateArgumentListInfo &TemplateArgs,
+                                 TemplateArgumentListInfo &TemplateArgs,
                                  bool PartialTemplateArgs,
                            llvm::SmallVectorImpl<TemplateArgument> &Converted);
 
@@ -3787,7 +3808,7 @@ public:
 
   TemplateDeductionResult
   SubstituteExplicitTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                        const TemplateArgumentListInfo &ExplicitTemplateArgs,
+                              TemplateArgumentListInfo &ExplicitTemplateArgs,
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                  llvm::SmallVectorImpl<QualType> &ParamTypes,
                                       QualType *FunctionType,
@@ -3802,14 +3823,14 @@ public:
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                          TemplateArgumentListInfo *ExplicitTemplateArgs,
                           Expr **Args, unsigned NumArgs,
                           FunctionDecl *&Specialization,
                           sema::TemplateDeductionInfo &Info);
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                          TemplateArgumentListInfo *ExplicitTemplateArgs,
                           QualType ArgFunctionType,
                           FunctionDecl *&Specialization,
                           sema::TemplateDeductionInfo &Info);
@@ -3822,7 +3843,7 @@ public:
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                          TemplateArgumentListInfo *ExplicitTemplateArgs,
                           FunctionDecl *&Specialization,
                           sema::TemplateDeductionInfo &Info);
 

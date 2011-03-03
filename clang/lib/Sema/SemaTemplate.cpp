@@ -1631,7 +1631,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
 
 QualType Sema::CheckTemplateIdType(TemplateName Name,
                                    SourceLocation TemplateLoc,
-                              const TemplateArgumentListInfo &TemplateArgs) {
+                                   TemplateArgumentListInfo &TemplateArgs) {
   TemplateDecl *Template = Name.getAsTemplateDecl();
   if (!Template) {
     // The template name does not resolve to a template, so we just
@@ -2535,7 +2535,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
 /// for specializing the given template.
 bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                      SourceLocation TemplateLoc,
-                                const TemplateArgumentListInfo &TemplateArgs,
+                                     TemplateArgumentListInfo &TemplateArgs,
                                      bool PartialTemplateArgs,
                           llvm::SmallVectorImpl<TemplateArgument> &Converted) {
   TemplateParameterList *Params = Template->getTemplateParameters();
@@ -2573,6 +2573,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   //   a template-id shall match the type and form specified for the
   //   corresponding parameter declared by the template in its
   //   template-parameter-list.
+  bool isTemplateTemplateParameter = isa<TemplateTemplateParmDecl>(Template);
   llvm::SmallVector<TemplateArgument, 2> ArgumentPack;
   TemplateParameterList::iterator Param = Params->begin(),
                                ParamEnd = Params->end();
@@ -2703,6 +2704,12 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                               RAngleLoc, 0, Converted))
       return true;
 
+    // Core issue 150 (assumed resolution): if this is a template template 
+    // parameter, keep track of the default template arguments from the 
+    // template definition.
+    if (isTemplateTemplateParameter)
+      TemplateArgs.addArgument(Arg);
+    
     // Move to the next template parameter and argument.
     ++Param;
     ++ArgIdx;
@@ -5002,7 +5009,7 @@ Sema::CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
 /// this function specialization.
 bool
 Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
-                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                           LookupResult &Previous) {
   // The set of function template specializations that could match this
   // explicit function template specialization.
