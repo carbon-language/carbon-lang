@@ -43,7 +43,7 @@ void PTXInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     if (map[i].cls->contains(DstReg, SrcReg)) {
       BuildMI(MBB, I, DL,
               get(map[i].opcode), DstReg).addReg(SrcReg,
-                                                 Getkillregstate(KillSrc));
+                                                 getKillRegState(KillSrc));
       return;
     }
   }
