@@ -2333,7 +2333,7 @@ bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
   size_t Size = CurrentFnArguments.size();
   if (Size == 0)
     CurrentFnArguments.resize(MF->getFunction()->arg_size());
-  // llvm::Function arugment size is not good indicator of how many
+  // llvm::Function argument size is not good indicator of how many
   // arguments does the function have at source level.
   if (ArgNo > Size)
     CurrentFnArguments.resize(ArgNo * 2);
