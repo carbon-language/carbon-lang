@@ -451,6 +451,8 @@ void Sema::ActOnEndOfTranslationUnit() {
         const FunctionDecl *DiagD;
         if (!FD->hasBody(DiagD))
           DiagD = FD;
+        if (DiagD->isDeleted())
+          continue; // Deleted functions are supposed to be unused.
         Diag(DiagD->getLocation(),
              isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_member_function
                                        : diag::warn_unused_function)
