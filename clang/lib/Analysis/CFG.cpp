@@ -2774,7 +2774,6 @@ CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
 
 const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
   switch (getKind()) {
-    default: assert(0 && "Unknown CFGElement");
     case CFGElement::Invalid:
     case CFGElement::Statement:
     case CFGElement::Initializer:
@@ -2800,6 +2799,8 @@ const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
       // Not yet supported.
       return 0;
   }
+  assert(0 && "getKind() returned bogus value");
+  return 0;
 }
 
 bool CFGImplicitDtor::isNoReturn() const {
