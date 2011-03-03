@@ -52,5 +52,6 @@ install(TARGETS cxx
 install(DIRECTORY ../include/
   DESTINATION include/c++/v1
   FILES_MATCHING
+  PATTERN "*"
   PATTERN ".svn" EXCLUDE
   )
