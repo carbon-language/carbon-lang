@@ -130,6 +130,7 @@ uint32_t ITSession::GetCond()
 #define ARMV4T_ABOVE  (ARMv4T|ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
 #define ARMV5_ABOVE   (ARMv5T|ARMv5TE|ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
 #define ARMV5J_ABOVE  (ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
+#define ARMV6_ABOVE   (ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8) 
 #define ARMV6T2_ABOVE (ARMv6T2|ARMv7|ARMv8)
 
 //----------------------------------------------------------------------
@@ -7412,6 +7413,91 @@ EmulateInstructionARM::EmulateLDRSHRegister (ARMEncoding encoding)
     }
     return true;
 }
+         
+// SXTB extracts an 8-bit value from a register, sign-extends it to 32 bits, and writes the result to the destination 
+// register.  You can specifiy a rotation by 0, 8, 16, or 24 bits before extracting the 8-bit value.
+bool 
+EmulateInstructionARM::EmulateSXTB (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations();
+        rotated = ROR(R[m], rotation); 
+        R[d] = SignExtend(rotated<7:0>, 32);
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed())
+    {
+        uint32_t d;
+        uint32_t m;
+        uint32_t rotation;
+                  
+        // EncodingSpecificOperations();
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // d = UInt(Rd); m = UInt(Rm); rotation = 0;
+                d = Bits32 (opcode, 2, 0);
+                m = Bits32 (opcode, 5, 3);
+                rotation = 0;
+                  
+                break;
+                  
+            case eEncodingT2:
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                d = Bits32 (opcode, 11, 8);
+                m = Bits32 (opcode, 3, 0);
+                rotation = Bits32 (opcode, 5, 4) << 3;
+                              
+                // if BadReg(d) || BadReg(m) then UNPREDICTABLE;
+                if (BadReg (d) || BadReg (m))
+                    return false;
+                  
+                break;
+                  
+            case eEncodingA1:
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                d = Bits32 (opcode, 15, 12);
+                m = Bits32 (opcode, 3, 0);
+                rotation = Bits32 (opcode, 11, 10) << 3;
+                  
+                // if d == 15 || m == 15 then UNPREDICTABLE;
+                if ((d == 15) || (m == 15))
+                    return false;
+                  
+                break;
+                  
+            default:
+                return false;
+        }
+                  
+                  uint64_t Rm = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + m, 0, &success);
+                  if (!success)
+                  return false;
+                  
+        // rotated = ROR(R[m], rotation); 
+        uint64_t rotated = ROR (Rm, rotation);
+                  
+        // R[d] = SignExtend(rotated<7:0>, 32);
+        uint64_t data = llvm::SignExtend64<8>(rotated);
+                  
+        Register source_reg;
+        source_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + m);
+                  
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterLoad;
+        context.SetRegister (source_reg);
+                  
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, data))
+            return false;
+    }
+    return true;
+}
                   
 // Bitwise Exclusive OR (immediate) performs a bitwise exclusive OR of a register value and an immediate value,
 // and writes the result to the destination register.  It can optionally update the condition flags based on
@@ -8803,9 +8889,13 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fd00000, 0x08000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDA, "stmda<c> <Rn>{!} <registers>" },
         { 0x0fd00000, 0x09000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" },
         { 0x0fd00000, 0x09800000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMIB, "stmib<c> <Rn>{!} <registers>" },
-        { 0x0e500010, 0x06000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c> <Rt> [<Rn> +/-<Rm> {<shift>}]{!}" }
+        { 0x0e500010, 0x06000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c> <Rt> [<Rn> +/-<Rm> {<shift>}]{!}" },
                   
-        
+        //----------------------------------------------------------------------
+        // Other instructions
+        //----------------------------------------------------------------------
+        { 0x0fff00f0, 0x06af00f0, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>{,<rotation>}" }
+                  
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
                   
@@ -9024,7 +9114,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffffc0, 0x00004340, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMUL, "muls <Rdm>,<Rn>,<Rdm>" },
         // mul
         { 0xfff0f0f0, 0xfb00f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMUL, "mul<c> <Rd>,<Rn>,<Rm>" },
-
+ 
         //----------------------------------------------------------------------
         // Load instructions
         //----------------------------------------------------------------------
@@ -9073,7 +9163,14 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfff00fc0, 0xf8400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c>.w <Rt>, [<Rn>, <Rm> {lsl #imm2>}]" },
         { 0xfffff800, 0x00007000, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt>, [<Rn>, #<imm5>]" },
         { 0xfff00000, 0xf8800000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c>.w <Rt>, [<Rn>, #<imm12>]" },
-        { 0xfff00800, 0xf8000800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt> ,[<Rn>, #+/-<imm8>]{!}" }
+        { 0xfff00800, 0xf8000800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt> ,[<Rn>, #+/-<imm8>]{!}" },
+                  
+        //----------------------------------------------------------------------
+        // Other instructions
+        //----------------------------------------------------------------------
+        { 0xffffffc0, 0x0000b240, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>" },
+        { 0xfffff080, 0xfa4ff080, ARMV6_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c>.w <Rd>,<Rm>{,<rotation>}" }
+                  
     };
 
     const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);
