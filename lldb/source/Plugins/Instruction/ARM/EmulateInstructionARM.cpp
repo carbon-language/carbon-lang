@@ -7476,9 +7476,9 @@ EmulateInstructionARM::EmulateSXTB (ARMEncoding encoding)
                 return false;
         }
                   
-                  uint64_t Rm = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + m, 0, &success);
-                  if (!success)
-                  return false;
+        uint64_t Rm = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + m, 0, &success);
+        if (!success)
+            return false;
                   
         // rotated = ROR(R[m], rotation); 
         uint64_t rotated = ROR (Rm, rotation);
@@ -7496,6 +7496,91 @@ EmulateInstructionARM::EmulateSXTB (ARMEncoding encoding)
         if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, data))
             return false;
     }
+    return true;
+}
+                  
+// SXTH extracts a 16-bit value from a register, sign-extends it to 32 bits, and writes the result to the destination
+// register.  You can specify a rotation by 0, 8, 16, or 24 bits before extracting the 16-bit value.
+bool
+EmulateInstructionARM::EmulateSXTH (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); 
+        rotated = ROR(R[m], rotation); 
+        R[d] = SignExtend(rotated<15:0>, 32);
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed())
+    {
+        uint32_t d;
+        uint32_t m;
+        uint32_t rotation;
+                  
+        // EncodingSpecificOperations(); 
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // d = UInt(Rd); m = UInt(Rm); rotation = 0;
+                d = Bits32 (opcode, 2, 0);
+                m = Bits32 (opcode, 5, 3);
+                rotation = 0;
+                  
+                break;
+                  
+            case eEncodingT2:
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                d = Bits32 (opcode, 11, 8);
+                m = Bits32 (opcode, 3, 0);
+                rotation = Bits32 (opcode, 5, 4) << 3;
+                  
+                // if BadReg(d) || BadReg(m) then UNPREDICTABLE;
+                if (BadReg (d) || BadReg (m))
+                    return false;
+                  
+                break;
+                  
+            case eEncodingA1:
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                d = Bits32 (opcode, 15, 12);
+                m = Bits32 (opcode, 3, 0);
+                rotation = Bits32 (opcode, 11, 10) << 3;
+                  
+                // if d == 15 || m == 15 then UNPREDICTABLE;
+                if ((d == 15) || (m == 15))
+                    return false;
+                  
+                break;
+                
+            default:
+                return false;
+        }
+                  
+        uint64_t Rm = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + m, 0, &success);
+        if (!success)
+            return false;
+                  
+        // rotated = ROR(R[m], rotation); 
+        uint64_t rotated = ROR (Rm, rotation);
+                  
+        // R[d] = SignExtend(rotated<15:0>, 32);
+        Register source_reg;
+        source_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + m);
+                  
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterLoad;
+        context.SetRegister (source_reg);
+                  
+        uint64_t data = llvm::SignExtend64<16> (rotated);
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, data))
+            return false;
+    }
+                  
     return true;
 }
                   
@@ -8894,7 +8979,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // Other instructions
         //----------------------------------------------------------------------
-        { 0x0fff00f0, 0x06af00f0, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>{,<rotation>}" }
+        { 0x0fff00f0, 0x06af00f0, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>{,<rotation>}" },
+        { 0x0fff00f0, 0x06bf0070, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSXTH, "sxth<c> <Rd>,<Rm>{,<rotation>}" }
                   
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
@@ -9169,7 +9255,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // Other instructions
         //----------------------------------------------------------------------
         { 0xffffffc0, 0x0000b240, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>" },
-        { 0xfffff080, 0xfa4ff080, ARMV6_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c>.w <Rd>,<Rm>{,<rotation>}" }
+        { 0xfffff080, 0xfa4ff080, ARMV6_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c>.w <Rd>,<Rm>{,<rotation>}" },
+        { 0xffffffc0, 0x0000b200, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSXTH, "sxth<c> <Rd>,<Rm>" },
+        { 0xfffff080, 0xfa0ff080, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSXTH, "sxth<c>.w <Rd>,<Rm>{,<rotation>}" }
                   
     };
 
