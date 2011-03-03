@@ -7748,6 +7748,156 @@ EmulateInstructionARM::EmulateUXTH (ARMEncoding encoding)
     }
     return true;
 }
+                 
+// RFE (Return From Exception) loads the PC and the CPSR from the word at the specified address and the following 
+// word respectively.  
+bool
+EmulateInstructionARM::EmulateRFE (ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then 
+        EncodingSpecificOperations(); 
+        if !CurrentModeIsPrivileged() || CurrentInstrSet() == InstrSet_ThumbEE then
+            UNPREDICTABLE; 
+        else
+            address = if increment then R[n] else R[n]-8; 
+            if wordhigher then address = address+4; 
+            CPSRWriteByInstr(MemA[address+4,4], ’1111’, TRUE); 
+            BranchWritePC(MemA[address,4]);
+            if wback then R[n] = if increment then R[n]+8 else R[n]-8;
+#endif
+                  
+    bool success = false;
+    const uint32_t opcode = OpcodeAsUnsigned (&success);
+    if (!success)
+        return false;
+                  
+    if (ConditionPassed())
+    {
+        uint32_t n;
+        bool wback;
+        bool increment;
+        bool wordhigher;
+                  
+        // EncodingSpecificOperations(); 
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // n = UInt(Rn); wback = (W == ’1’); increment = FALSE; wordhigher = FALSE; 
+                n = Bits32 (opcode, 19, 16);
+                wback = BitIsSet (opcode, 21);
+                increment = false;
+                wordhigher = false;
+                  
+                // if n == 15 then UNPREDICTABLE; 
+                if (n == 15)
+                    return false;
+                  
+                // if InITBlock() && !LastInITBlock() then UNPREDICTABLE;
+                if (InITBlock() && !LastInITBlock())
+                    return false;
+                  
+                break;
+                  
+            case eEncodingT2:
+                // n = UInt(Rn); wback = (W == ’1’); increment = TRUE; wordhigher = FALSE; 
+                n = Bits32 (opcode, 19, 16);
+                wback = BitIsSet (opcode, 21);
+                increment = true;
+                wordhigher = false;
+                  
+                // if n == 15 then UNPREDICTABLE; 
+                if (n == 15)
+                    return false;
+                  
+                // if InITBlock() && !LastInITBlock() then UNPREDICTABLE;
+                if (InITBlock() && !LastInITBlock())
+                    return false;
+                  
+                break;
+                  
+            case eEncodingA1:
+                // n = UInt(Rn); 
+                n = Bits32 (opcode, 19, 16);
+                  
+                // wback = (W == ’1’); inc = (U == ’1’); wordhigher = (P == U); 
+                wback = BitIsSet (opcode, 21);
+                increment = BitIsSet (opcode, 23);
+                wordhigher = (Bit32 (opcode, 24) == Bit32 (opcode, 23));
+                  
+                // if n == 15 then UNPREDICTABLE;
+                if (n == 15)
+                    return false;
+                  
+                break;
+                  
+            default:
+                return false;
+        }
+                                    
+        // if !CurrentModeIsPrivileged() || CurrentInstrSet() == InstrSet_ThumbEE then
+        if (!CurrentModeIsPrivileged ())
+            // UNPREDICTABLE; 
+            return false;
+        else
+        {
+            uint64_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+            if (!success)
+                return false;
+                  
+            addr_t address;
+            // address = if increment then R[n] else R[n]-8; 
+            if (increment)
+                address = Rn;
+            else
+                address = Rn - 8;
+                  
+            // if wordhigher then address = address+4; 
+            if (wordhigher)
+                address = address + 4;
+                  
+            // CPSRWriteByInstr(MemA[address+4,4], ’1111’, TRUE);
+            Register base_reg;
+            base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+                  
+            EmulateInstruction::Context context;
+            context.type = eContextReturnFromException;
+            context.SetRegisterPlusOffset (base_reg, address - Rn);
+                  
+            uint64_t data = MemARead (context, address + 4, 4, 0, &success);
+            if (!success)
+                return false;
+                  
+            CPSRWriteByInstr (data, 15, true);
+                  
+            // BranchWritePC(MemA[address,4]);
+            uint64_t data2 = MemARead (context, address, 4, 0, &success);
+            if (!success)
+                return false;
+                  
+            BranchWritePC (context, data2);
+                  
+            // if wback then R[n] = if increment then R[n]+8 else R[n]-8;
+            if (wback)
+            {
+                context.type = eContextAdjustBaseRegister;
+                if (increment)
+                {
+                    context.SetOffset (8);
+                    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, Rn + 8))
+                        return false;
+                }
+                else
+                {
+                    context.SetOffset (-8);
+                    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, Rn - 8))
+                        return false;
+                }
+            } // if wback
+        }
+    } // if ConditionPassed()
+    return true;
+}
                   
 // Bitwise Exclusive OR (immediate) performs a bitwise exclusive OR of a register value and an immediate value,
 // and writes the result to the destination register.  It can optionally update the condition flags based on
@@ -9147,7 +9297,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fff00f0, 0x06af00f0, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>{,<rotation>}" },
         { 0x0fff00f0, 0x06bf0070, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSXTH, "sxth<c> <Rd>,<Rm>{,<rotation>}" },
         { 0x0fff00f0, 0x06ef0070, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateUXTB, "uxtb<c> <Rd>,<Rm>{,<rotation>}" },
-        { 0x0fff00f0, 0x06ff0070, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c> <Rd>,<Rm>{,<rotation>}" }
+        { 0x0fff00f0, 0x06ff0070, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c> <Rd>,<Rm>{,<rotation>}" },
+        { 0xfe500000, 0xf8100000, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRFE, "rfe{<amode>} <Rn>{!}" }
                   
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
@@ -9428,7 +9579,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffffc0, 0x0000b2c0, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateUXTB, "uxtb<c> <Rd>,<Rm>" },
         { 0xfffff080, 0xfa5ff080, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateUXTB, "uxtb<c>.w <Rd>,<Rm>{,<rotation>}" },
         { 0xffffffc0, 0x0000b280, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateUXTH, "uxth<c> <Rd>,<Rm>" },
-        { 0xfffff080, 0xfa1ff080, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c>.w <Rd>,<Rm>{,<rotation>}" }
+        { 0xfffff080, 0xfa1ff080, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c>.w <Rd>,<Rm>{,<rotation>}" },
+        { 0xffd00000, 0xe8100000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateRFE, "rfedb<c> <Rn>{!}" },
+        { 0xffd00000, 0xe9900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateRFE, "rfe{ia}<c> <Rn>{!}" }
                   
     };
 
@@ -9608,6 +9761,83 @@ EmulateInstructionARM::LastInITBlock()
     return CurrentInstrSet() == eModeThumb && m_it_session.LastInITBlock();
 }
 
+bool 
+EmulateInstructionARM::BadMode (uint32_t mode)
+{
+                  
+    switch (mode)
+    {
+        case 16: return false; // '10000'
+        case 17: return false; // '10001'
+        case 18: return false; // '10010'
+        case 19: return false; // '10011'
+        case 22: return false; // '10110'
+        case 23: return false; // '10111'
+        case 27: return false; // '11011'
+        case 31: return false; // '11111'
+        default: return true;
+    }
+    return true;
+}
+                
+bool
+EmulateInstructionARM::CurrentModeIsPrivileged ()
+{
+    uint32_t mode = Bits32 (m_inst_cpsr, 4, 0);
+                  
+    if (BadMode (mode))
+        return false;
+                  
+    if (mode == 16)
+                  return false;
+                
+    return true;
+}
+
+void
+EmulateInstructionARM::CPSRWriteByInstr (uint32_t value, uint32_t bytemask, bool affect_execstate)
+{
+    bool privileged = CurrentModeIsPrivileged();
+
+    uint32_t tmp_cpsr = 0;
+        
+    tmp_cpsr = tmp_cpsr | (Bits32 (m_inst_cpsr, 23, 20) << 20);
+                  
+    if (BitIsSet (bytemask, 3))
+    {
+        tmp_cpsr = tmp_cpsr | (Bits32 (value, 31, 27) << 27);
+        if (affect_execstate)
+            tmp_cpsr = tmp_cpsr | (Bits32 (value, 26, 24) << 24);
+    }
+                  
+    if (BitIsSet (bytemask, 2))
+    {
+        tmp_cpsr = tmp_cpsr | (Bits32 (value, 19, 16) << 16);
+    }
+                  
+    if (BitIsSet (bytemask, 1))
+    {
+        if (affect_execstate)
+            tmp_cpsr = tmp_cpsr | (Bits32 (value, 15, 10) << 10);
+        tmp_cpsr = tmp_cpsr | (Bit32 (value, 9) << 9);
+        if (privileged)
+            tmp_cpsr = tmp_cpsr | (Bit32 (value, 8) << 8);
+    }
+                
+    if (BitIsSet (bytemask, 0))
+    {
+        if (privileged)
+            tmp_cpsr = tmp_cpsr | (Bits32 (value, 7, 6) << 6);
+        if (affect_execstate)
+            tmp_cpsr = tmp_cpsr | (Bit32 (value, 5) << 5);
+        if (privileged)
+            tmp_cpsr = tmp_cpsr | Bits32 (value, 4, 0);
+    }
+                  
+    m_inst_cpsr = tmp_cpsr;
+}
+
+                  
 bool
 EmulateInstructionARM::BranchWritePC (const Context &context, uint32_t addr)
 {

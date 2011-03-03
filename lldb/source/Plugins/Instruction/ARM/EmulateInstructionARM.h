@@ -155,6 +155,15 @@ public:
     // LastInITBlock - Returns true if we're in Thumb mode and the last instruction inside an IT Block.
     bool LastInITBlock();
 
+    bool 
+    BadMode (uint32_t mode);
+    
+    bool
+    CurrentModeIsPrivileged ();
+    
+    void
+    CPSRWriteByInstr (uint32_t value, uint32_t bytemask, bool affect_execstate);
+    
     bool
     BranchWritePC(const Context &context, uint32_t addr);
 

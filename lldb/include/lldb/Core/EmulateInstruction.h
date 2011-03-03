@@ -171,7 +171,8 @@ public:
         eContextWriteMemoryRandomBits,
         
         eContextMultiplication,
-        eContextAddition
+        eContextAddition,
+        eContextReturnFromException
     };
     
     enum InfoType {
