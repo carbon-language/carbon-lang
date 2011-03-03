@@ -559,7 +559,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Make sure the special register scavenging spill slot is closest to the
   // frame pointer if a frame pointer is required.
   const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
-  if (RS && TFI.hasFP(Fn) && !RegInfo->needsStackRealignment(Fn)) {
+  if (RS && TFI.hasFP(Fn) && RegInfo->useFPForScavengingIndex(Fn) &&
+      !RegInfo->needsStackRealignment(Fn)) {
     int SFI = RS->getScavengingFrameIndex();
     if (SFI >= 0)
       AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
@@ -641,7 +642,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Make sure the special register scavenging spill slot is closest to the
   // stack pointer.
-  if (RS && (!TFI.hasFP(Fn) || RegInfo->needsStackRealignment(Fn))) {
+  if (RS && (!TFI.hasFP(Fn) || RegInfo->needsStackRealignment(Fn) ||
+             !RegInfo->useFPForScavengingIndex(Fn))) {
     int SFI = RS->getScavengingFrameIndex();
     if (SFI >= 0)
       AdjustStackOffset(MFI, SFI, StackGrowsDown, Offset, MaxAlign);
@@ -811,7 +813,6 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
     // directly.
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       MachineInstr *MI = I;
-      bool DoIncr = true;
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         if (MI->getOperand(i).isReg()) {
           MachineOperand &MO = MI->getOperand(i);
@@ -842,10 +843,8 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
 
         }
       }
-      if (DoIncr) {
-        RS->forward(I);
-        ++I;
-      }
+      RS->forward(I);
+      ++I;
     }
   }
 }

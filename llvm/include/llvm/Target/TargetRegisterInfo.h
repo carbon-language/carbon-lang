@@ -631,6 +631,13 @@ public:
     return false;
   }
 
+  /// useFPForScavengingIndex - returns true if the target wants to use
+  /// frame pointer based accesses to spill to the scavenger emergency spill
+  /// slot.
+  virtual bool useFPForScavengingIndex(const MachineFunction &MF) const {
+    return true;
+  }
+
   /// requiresFrameIndexScavenging - returns true if the target requires post
   /// PEI scavenging of registers for materializing frame index constants.
   virtual bool requiresFrameIndexScavenging(const MachineFunction &MF) const {
