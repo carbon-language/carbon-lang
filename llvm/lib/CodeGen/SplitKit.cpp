@@ -105,8 +105,7 @@ void SplitAnalysis::calcLiveBlockInfo() {
   for (;;) {
     BlockInfo BI;
     BI.MBB = MFI;
-    SlotIndex Start, Stop;
-    tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
+    tie(BI.Start, BI.Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
     // The last split point is the latest possible insertion point that dominates
     // all successor blocks. If interference reaches LastSplitPoint, it is not
@@ -114,12 +113,12 @@ void SplitAnalysis::calcLiveBlockInfo() {
     // outgoing bundle.
     MachineBasicBlock::iterator LSP = LIS.getLastSplitPoint(*CurLI, BI.MBB);
     if (LSP == BI.MBB->end())
-      BI.LastSplitPoint = Stop;
+      BI.LastSplitPoint = BI.Stop;
     else
       BI.LastSplitPoint = LIS.getInstructionIndex(LSP);
 
     // LVI is the first live segment overlapping MBB.
-    BI.LiveIn = LVI->start <= Start;
+    BI.LiveIn = LVI->start <= BI.Start;
     if (!BI.LiveIn)
       BI.Def = LVI->start;
 
@@ -127,19 +126,19 @@ void SplitAnalysis::calcLiveBlockInfo() {
     BI.Uses = hasUses(MFI);
     if (BI.Uses && UseI != UseE) {
       BI.FirstUse = *UseI;
-      assert(BI.FirstUse >= Start);
+      assert(BI.FirstUse >= BI.Start);
       do ++UseI;
-      while (UseI != UseE && *UseI < Stop);
+      while (UseI != UseE && *UseI < BI.Stop);
       BI.LastUse = UseI[-1];
-      assert(BI.LastUse < Stop);
+      assert(BI.LastUse < BI.Stop);
     }
 
     // Look for gaps in the live range.
     bool hasGap = false;
     BI.LiveOut = true;
-    while (LVI->end < Stop) {
+    while (LVI->end < BI.Stop) {
       SlotIndex LastStop = LVI->end;
-      if (++LVI == LVE || LVI->start >= Stop) {
+      if (++LVI == LVE || LVI->start >= BI.Stop) {
         BI.Kill = LastStop;
         BI.LiveOut = false;
         break;
@@ -160,11 +159,11 @@ void SplitAnalysis::calcLiveBlockInfo() {
       break;
 
     // Live segment ends exactly at Stop. Move to the next segment.
-    if (LVI->end == Stop && ++LVI == LVE)
+    if (LVI->end == BI.Stop && ++LVI == LVE)
       break;
 
     // Pick the next basic block.
-    if (LVI->start < Stop)
+    if (LVI->start < BI.Stop)
       ++MFI;
     else
       MFI = LIS.getMBBFromIndex(LVI->start);
