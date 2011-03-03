@@ -2782,9 +2782,10 @@ const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
     case CFGElement::AutomaticObjectDtor: {
       const VarDecl *var = cast<CFGAutomaticObjDtor>(this)->getVarDecl();
       QualType ty = var->getType();
+      ty = ty.getNonReferenceType();
       const RecordType *recordType = ty->getAs<RecordType>();
       const CXXRecordDecl *classDecl =
-        cast<CXXRecordDecl>(recordType->getDecl());
+      cast<CXXRecordDecl>(recordType->getDecl());
       return classDecl->getDestructor();      
     }
     case CFGElement::TemporaryDtor: {
@@ -2799,7 +2800,7 @@ const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
       // Not yet supported.
       return 0;
   }
-  assert(0 && "getKind() returned bogus value");
+  llvm_unreachable("getKind() returned bogus value");
   return 0;
 }
 

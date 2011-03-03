@@ -27,3 +27,15 @@ int pr6884_h(int x) {
     }
   }
 }
+
+// PR9380
+struct PR9380 {
+  ~PR9380();
+};
+struct PR9380_B : public PR9380 {
+  PR9380_B( const PR9380& str );
+};
+void test_PR9380(const PR9380& aKey) {
+  const PR9380& flatKey = PR9380_B(aKey);
+}
+
