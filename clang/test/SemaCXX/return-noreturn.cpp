@@ -43,3 +43,12 @@ void test_PR9380(const PR9380& aKey) {
 void test_array() {
   PR9380 a[2];
 }
+
+// Test classes wrapped in typedefs.  This is purely a coverage test case
+// for CFGImplictDtor::getDestructorDecl().
+void test_typedefs() {
+  typedef PR9380 PR9380_Ty;
+  PR9380_Ty test;
+  PR9380_Ty test2[20];
+}
+
