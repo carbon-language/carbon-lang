@@ -129,8 +129,8 @@ protected:
   }
 
 public:
-  const CXXDestructorDecl *getDestructorDecl() const;
-  bool isNoReturn() const;
+  const CXXDestructorDecl *getDestructorDecl(ASTContext &astContext) const;
+  bool isNoReturn(ASTContext &astContext) const;
 
   static bool classof(const CFGElement *E) {
     Kind kind = E->getKind();

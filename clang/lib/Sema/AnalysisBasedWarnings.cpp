@@ -137,7 +137,7 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
       // FIXME: The right solution is to just sever the edges in the
       // CFG itself.
       if (const CFGImplicitDtor *iDtor = ri->getAs<CFGImplicitDtor>())
-        if (iDtor->isNoReturn()) {
+        if (iDtor->isNoReturn(AC.getASTContext())) {
           hasNoReturnDtor = true;
           HasFakeEdge = true;
           break;

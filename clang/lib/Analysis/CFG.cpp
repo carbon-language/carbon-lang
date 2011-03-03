@@ -2772,7 +2772,8 @@ CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
   return Builder.buildCFG(D, Statement, C, BO);
 }
 
-const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
+const CXXDestructorDecl *
+CFGImplicitDtor::getDestructorDecl(ASTContext &astContext) const {
   switch (getKind()) {
     case CFGElement::Invalid:
     case CFGElement::Statement:
@@ -2783,6 +2784,9 @@ const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
       const VarDecl *var = cast<CFGAutomaticObjDtor>(this)->getVarDecl();
       QualType ty = var->getType();
       ty = ty.getNonReferenceType();
+      if (const ArrayType *arrayType = astContext.getAsArrayType(ty)) {
+        ty = arrayType->getElementType();
+      }
       const RecordType *recordType = ty->getAs<RecordType>();
       const CXXRecordDecl *classDecl =
       cast<CXXRecordDecl>(recordType->getDecl());
@@ -2804,8 +2808,8 @@ const CXXDestructorDecl *CFGImplicitDtor::getDestructorDecl() const {
   return 0;
 }
 
-bool CFGImplicitDtor::isNoReturn() const {
-  if (const CXXDestructorDecl *cdecl = getDestructorDecl()) {
+bool CFGImplicitDtor::isNoReturn(ASTContext &astContext) const {
+  if (const CXXDestructorDecl *cdecl = getDestructorDecl(astContext)) {
     QualType ty = cdecl->getType();
     return cast<FunctionType>(ty)->getNoReturnAttr();
   }
