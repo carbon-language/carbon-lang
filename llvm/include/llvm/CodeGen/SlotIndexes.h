@@ -187,11 +187,11 @@ namespace llvm {
 
     /// Compare two SlotIndex objects for equality.
     bool operator==(SlotIndex other) const {
-      return getIndex() == other.getIndex();
+      return lie == other.lie;
     }
     /// Compare two SlotIndex objects for inequality.
     bool operator!=(SlotIndex other) const {
-      return getIndex() != other.getIndex(); 
+      return lie != other.lie;
     }
    
     /// Compare two SlotIndex objects. Return true if the first index
