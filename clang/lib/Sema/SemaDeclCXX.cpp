@@ -6576,7 +6576,7 @@ Decl *Sema::ActOnStartLinkageSpecification(Scope *S, SourceLocation ExternLoc,
 
   LinkageSpecDecl *D = LinkageSpecDecl::Create(Context, CurContext,
                                                LangLoc, Language,
-                                               LBraceLoc.isValid());
+                                               LBraceLoc);
   CurContext->addDecl(D);
   PushDeclContext(S, D);
   return D;
@@ -6587,10 +6587,15 @@ Decl *Sema::ActOnStartLinkageSpecification(Scope *S, SourceLocation ExternLoc,
 /// valid, it's the position of the closing '}' brace in a linkage
 /// specification that uses braces.
 Decl *Sema::ActOnFinishLinkageSpecification(Scope *S,
-                                                      Decl *LinkageSpec,
-                                                      SourceLocation RBraceLoc) {
-  if (LinkageSpec)
+                                            Decl *LinkageSpec,
+                                            SourceLocation RBraceLoc) {
+  if (LinkageSpec) {
+    if (RBraceLoc.isValid()) {
+      LinkageSpecDecl* LSDecl = cast<LinkageSpecDecl>(LinkageSpec);
+      LSDecl->setRBraceLoc(RBraceLoc);
+    }
     PopDeclContext();
+  }
   return LinkageSpec;
 }
 

@@ -1270,8 +1270,10 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC,
                                          SourceLocation L,
-                                         LanguageIDs Lang, bool Braces) {
-  return new (C) LinkageSpecDecl(DC, L, Lang, Braces);
+                                         LanguageIDs Lang,
+                                         SourceLocation LBraceLoc,
+                                         SourceLocation RBraceLoc) {
+  return new (C) LinkageSpecDecl(DC, L, Lang, LBraceLoc, RBraceLoc);
 }
 
 UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,

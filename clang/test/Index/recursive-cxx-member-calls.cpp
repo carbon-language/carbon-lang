@@ -1532,7 +1532,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 4:20: TemplateTypeParameter=_T1:4:20 (Definition) Extent=[4:20 - 4:23]
 // CHECK: 4:31: TemplateTypeParameter=_T2:4:31 (Definition) Extent=[4:31 - 4:34]
 // CHECK: 4:55: FieldDecl=second:4:55 (Definition) Extent=[4:55 - 4:61]
-// CHECK: 6:8: UnexposedDecl=:6:8 (Definition) Extent=[6:8 - 6:11]
+// CHECK: 6:8: UnexposedDecl=:6:8 (Definition) Extent=[6:8 - 9:2]
 // CHECK: 7:7: FunctionDecl=memcmp:7:7 Extent=[7:7 - 7:49]
 // CHECK: 7:26: ParmDecl=:7:26 (Definition) Extent=[7:20 - 7:27]
 // CHECK: 7:40: ParmDecl=:7:40 (Definition) Extent=[7:34 - 7:41]

@@ -646,10 +646,9 @@ void ASTDeclWriter::VisitBlockDecl(BlockDecl *D) {
 
 void ASTDeclWriter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   VisitDecl(D);
-  // FIXME: It might be nice to serialize the brace locations for this
-  // declaration, which don't seem to be readily available in the AST.
   Record.push_back(D->getLanguage());
-  Record.push_back(D->hasBraces());
+  Writer.AddSourceLocation(D->getLBraceLoc(), Record);
+  Writer.AddSourceLocation(D->getRBraceLoc(), Record);
   Code = serialization::DECL_LINKAGE_SPEC;
 }
 
