@@ -1,4 +1,5 @@
-// RUN: %llvmgcc -S -w -m64 -mmacosx-version-min=10.5 %s -o - | FileCheck %s
+// RUN: %llvmgcc -S -w -m64 -mmacosx-version-min=10.5 %s -o - | \
+// RUN:     llc --disable-fp-elim -o - | FileCheck %s
 // XFAIL: *
 // XTARGET: darwin
 
