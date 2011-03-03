@@ -35,6 +35,7 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T) {
   if (T.getArch() != Triple::xcore) {
     TLI.setUnavailable(LibFunc::iprintf);
     TLI.setUnavailable(LibFunc::siprintf);
+    TLI.setUnavailable(LibFunc::fiprintf);
   }
 }
 

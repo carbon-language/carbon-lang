@@ -32,6 +32,9 @@ namespace llvm {
       /// int siprintf(char *str, const char *format, ...);
       siprintf,
       
+      /// int fiprintf(FILE *stream, const char *format, ...);
+      fiprintf,
+      
       NumLibFuncs
     };
   }

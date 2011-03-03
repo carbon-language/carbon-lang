@@ -1330,14 +1330,8 @@ struct FPutsOpt : public LibCallOptimization {
 // 'fprintf' Optimizations
 
 struct FPrintFOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Require two fixed paramters as pointers and integer result.
-    const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy() ||
-        !FT->getReturnType()->isIntegerTy())
-      return 0;
-
+  Value *OptimizeFixedFormatString(Function *Callee, CallInst *CI,
+                                   IRBuilder<> &B) {
     // All the optimizations depend on the format string.
     std::string FormatStr;
     if (!GetConstantStringInfo(CI->getArgOperand(1), FormatStr))
@@ -1379,6 +1373,32 @@ struct FPrintFOpt : public LibCallOptimization {
         return 0;
       EmitFPutS(CI->getArgOperand(2), CI->getArgOperand(0), B, TD);
       return CI;
+    }
+    return 0;
+  }
+
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Require two fixed paramters as pointers and integer result.
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    if (Value *V = OptimizeFixedFormatString(Callee, CI, B)) {
+      return V;
+    }
+
+    // fprintf(stream, format, ...) -> fiprintf(stream, format, ...) if no
+    // floating point arguments.
+    if (TLI->has(LibFunc::fiprintf) && !CallHasFloatingPointArgument(CI)) {
+      Module *M = B.GetInsertBlock()->getParent()->getParent();
+      Constant *FIPrintFFn =
+        M->getOrInsertFunction("fiprintf", FT, Callee->getAttributes());
+      CallInst *New = cast<CallInst>(CI->clone());
+      New->setCalledFunction(FIPrintFFn);
+      B.Insert(New);
+      return New;
     }
     return 0;
   }
