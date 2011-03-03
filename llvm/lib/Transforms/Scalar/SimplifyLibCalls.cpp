@@ -49,6 +49,7 @@ class LibCallOptimization {
 protected:
   Function *Caller;
   const TargetData *TD;
+  const TargetLibraryInfo *TLI;
   LLVMContext* Context;
 public:
   LibCallOptimization() { }
@@ -62,9 +63,11 @@ public:
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B)
     =0;
 
-  Value *OptimizeCall(CallInst *CI, const TargetData *TD, IRBuilder<> &B) {
+  Value *OptimizeCall(CallInst *CI, const TargetData *TD,
+                      const TargetLibraryInfo *TLI, IRBuilder<> &B) {
     Caller = CI->getParent()->getParent();
     this->TD = TD;
+    this->TLI = TLI;
     if (CI->getCalledFunction())
       Context = &CI->getCalledFunction()->getContext();
 
@@ -96,6 +99,15 @@ static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
     return false;
   }
   return true;
+}
+ 
+static bool CallHasFloatingPointArgument(const CallInst *CI) {
+  for (CallInst::const_op_iterator it = CI->op_begin(), e = CI->op_end();
+       it != e; ++it) {
+    if ((*it)->getType()->isFloatingPointTy())
+      return true;
+  }
+  return false;
 }
 
 /// IsOnlyUsedInEqualityComparison - Return true if it is only used in equality
@@ -1075,14 +1087,8 @@ struct ToAsciiOpt : public LibCallOptimization {
 // 'printf' Optimizations
 
 struct PrintFOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Require one fixed pointer argument and an integer/void result.
-    const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||
-        !(FT->getReturnType()->isIntegerTy() ||
-          FT->getReturnType()->isVoidTy()))
-      return 0;
-
+  Value *OptimizeFixedFormatString(Function *Callee, CallInst *CI,
+                                   IRBuilder<> &B) {
     // Check for a fixed format string.
     std::string FormatStr;
     if (!GetConstantStringInfo(CI->getArgOperand(0), FormatStr))
@@ -1135,6 +1141,32 @@ struct PrintFOpt : public LibCallOptimization {
         CI->getArgOperand(1)->getType()->isPointerTy()) {
       EmitPutS(CI->getArgOperand(1), B, TD);
       return CI;
+    }
+    return 0;
+  }
+
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Require one fixed pointer argument and an integer/void result.
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||
+        !(FT->getReturnType()->isIntegerTy() ||
+          FT->getReturnType()->isVoidTy()))
+      return 0;
+
+    if (Value *V = OptimizeFixedFormatString(Callee, CI, B)) {
+      return V;
+    }
+
+    // printf(format, ...) -> iprintf(format, ...) if no floating point
+    // arguments.
+    if (TLI->has(LibFunc::iprintf) && !CallHasFloatingPointArgument(CI)) {
+      Module *M = B.GetInsertBlock()->getParent()->getParent();
+      Constant *IPrintFFn =
+        M->getOrInsertFunction("iprintf", FT, Callee->getAttributes());
+      CallInst *New = cast<CallInst>(CI->clone());
+      New->setCalledFunction(IPrintFFn);
+      B.Insert(New);
+      return New;
     }
     return 0;
   }
@@ -1545,7 +1577,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
       Builder.SetInsertPoint(BB, I);
 
       // Try to optimize this call.
-      Value *Result = LCO->OptimizeCall(CI, TD, Builder);
+      Value *Result = LCO->OptimizeCall(CI, TD, TLI, Builder);
       if (Result == 0) continue;
 
       DEBUG(dbgs() << "SimplifyLibCalls simplified: " << *CI;
