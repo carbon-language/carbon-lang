@@ -1340,7 +1340,16 @@ let isCall = 1,
             Requires<[IsARM, HasV5T, IsNotDarwin]> {
     bits<4> func;
     let Inst{31-4} = 0b1110000100101111111111110011;
-    let Inst{3-0}   = func;
+    let Inst{3-0}  = func;
+  }
+
+  def BLX_pred : AI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
+                    IIC_Br, "blx", "\t$func",
+                    [(ARMcall_pred GPR:$func)]>,
+                 Requires<[IsARM, HasV5T, IsNotDarwin]> {
+    bits<4> func;
+    let Inst{27-4} = 0b000100101111111111110011;
+    let Inst{3-0}  = func;
   }
 
   // ARMv4T
@@ -1386,6 +1395,15 @@ let isCall = 1,
                 [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T, IsDarwin]> {
     bits<4> func;
     let Inst{31-4} = 0b1110000100101111111111110011;
+    let Inst{3-0}   = func;
+  }
+
+  def BLXr9_pred : AI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
+                      IIC_Br, "blx", "\t$func",
+                      [(ARMcall_pred GPR:$func)]>,
+                   Requires<[IsARM, HasV5T, IsDarwin]> {
+    bits<4> func;
+    let Inst{27-4} = 0b000100101111111111110011;
     let Inst{3-0}   = func;
   }
 

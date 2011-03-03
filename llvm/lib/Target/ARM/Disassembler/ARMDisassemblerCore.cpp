@@ -809,8 +809,10 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (Opcode == ARM::BX_RET || Opcode == ARM::MOVPCLR)
     return true;
 
-  // BLXr9 and BX take one GPR reg.
-  if (Opcode == ARM::BLXr9 || Opcode == ARM::BX) {
+  // BLX and BX take one GPR reg.
+  if (Opcode == ARM::BLXr9 || Opcode == ARM::BLXr9_pred ||
+      Opcode == ARM::BLX || Opcode == ARM::BLX_pred ||
+      Opcode == ARM::BX) {
     assert(NumOps >= 1 && OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
            "Reg operand expected");
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,

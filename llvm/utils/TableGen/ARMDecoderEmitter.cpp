@@ -1632,7 +1632,7 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
 
     // Ignore the non-Darwin BL instructions and the TPsoft (TLS) instruction.
     if (Name == "BL" || Name == "BL_pred" || Name == "BLX" || Name == "BX" ||
-        Name == "TPsoft")
+        Name == "BLX_pred" || Name == "TPsoft")
       return false;
 
     // Ignore VDUPf[d|q] instructions known to conflict with VDUP32[d-q] for
