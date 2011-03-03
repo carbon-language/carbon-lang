@@ -34,77 +34,35 @@ namespace llvm {
   /// SlotIndex & SlotIndexes classes for the public interface to this
   /// information.
   class IndexListEntry {
-    static const unsigned EMPTY_KEY_INDEX = ~0U & ~3U,
-                          TOMBSTONE_KEY_INDEX = ~0U & ~7U;
-
     IndexListEntry *next, *prev;
     MachineInstr *mi;
     unsigned index;
 
-  protected:
-
-    typedef enum { EMPTY_KEY, TOMBSTONE_KEY } ReservedEntryType;
-
-    // This constructor is only to be used by getEmptyKeyEntry
-    // & getTombstoneKeyEntry. It sets index to the given
-    // value and mi to zero.
-    IndexListEntry(ReservedEntryType r) : mi(0) {
-      switch(r) {
-        case EMPTY_KEY: index = EMPTY_KEY_INDEX; break;
-        case TOMBSTONE_KEY: index = TOMBSTONE_KEY_INDEX; break;
-        default: assert(false && "Invalid value for constructor."); 
-      }
-      next = this;
-      prev = this;
-    }
-
   public:
 
-    IndexListEntry(MachineInstr *mi, unsigned index) : mi(mi), index(index) {
-      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
-             "Attempt to create invalid index. "
-             "Available indexes may have been exhausted?.");
-    }
-
-    bool isValid() const {
-      return (index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX);
-    }
+    IndexListEntry(MachineInstr *mi, unsigned index) : mi(mi), index(index) {}
 
     MachineInstr* getInstr() const { return mi; }
     void setInstr(MachineInstr *mi) {
-      assert(isValid() && "Attempt to modify reserved index.");
       this->mi = mi;
     }
 
     unsigned getIndex() const { return index; }
     void setIndex(unsigned index) {
-      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
-             "Attempt to set index to invalid value.");
-      assert(isValid() && "Attempt to reset reserved index value.");
       this->index = index;
     }
     
     IndexListEntry* getNext() { return next; }
     const IndexListEntry* getNext() const { return next; }
     void setNext(IndexListEntry *next) {
-      assert(isValid() && "Attempt to modify reserved index.");
       this->next = next;
     }
 
     IndexListEntry* getPrev() { return prev; }
     const IndexListEntry* getPrev() const { return prev; }
     void setPrev(IndexListEntry *prev) {
-      assert(isValid() && "Attempt to modify reserved index.");
       this->prev = prev;
     }
-
-    // This function returns the index list entry that is to be used for empty
-    // SlotIndex keys.
-    static IndexListEntry* getEmptyKeyEntry();
-
-    // This function returns the index list entry that is to be used for
-    // tombstone SlotIndex keys.
-    static IndexListEntry* getTombstoneKeyEntry();
   };
 
   // Specialize PointerLikeTypeTraits for IndexListEntry.
@@ -130,9 +88,7 @@ namespace llvm {
     PointerIntPair<IndexListEntry*, 2, unsigned> lie;
 
     SlotIndex(IndexListEntry *entry, unsigned slot)
-      : lie(entry, slot) {
-      assert(entry != 0 && "Attempt to construct index with 0 pointer.");
-    }
+      : lie(entry, slot) {}
 
     IndexListEntry& entry() const {
       assert(isValid() && "Attempt to compare reserved index.");
@@ -149,22 +105,21 @@ namespace llvm {
     }
 
     static inline unsigned getHashValue(const SlotIndex &v) {
-      IndexListEntry *ptrVal = &v.entry();
-      return (unsigned((intptr_t)ptrVal) >> 4) ^
-             (unsigned((intptr_t)ptrVal) >> 9);
+      void *ptrVal = v.lie.getOpaqueValue();
+      return (unsigned((intptr_t)ptrVal)) ^ (unsigned((intptr_t)ptrVal) >> 9);
     }
 
   public:
     static inline SlotIndex getEmptyKey() {
-      return SlotIndex(IndexListEntry::getEmptyKeyEntry(), 0);
+      return SlotIndex(0, 1);
     }
 
     static inline SlotIndex getTombstoneKey() {
-      return SlotIndex(IndexListEntry::getTombstoneKeyEntry(), 0);
+      return SlotIndex(0, 2);
     }
 
     /// Construct an invalid index.
-    SlotIndex() : lie(IndexListEntry::getEmptyKeyEntry(), 0) {}
+    SlotIndex() : lie(0, 0) {}
 
     // Construct a new slot index from the given one, and set the slot.
     SlotIndex(const SlotIndex &li, Slot s)
@@ -176,8 +131,7 @@ namespace llvm {
     /// Returns true if this is a valid index. Invalid indicies do
     /// not point into an index table, and cannot be compared.
     bool isValid() const {
-      IndexListEntry *entry = lie.getPointer();
-      return ((entry!= 0) && (entry->isValid()));
+      return lie.getPointer();
     }
 
     /// Print this index to the given raw_ostream.
