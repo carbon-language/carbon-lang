@@ -110,9 +110,12 @@ class BreakpointIgnoreCountTestCase(TestBase):
         # Frame#0 should be on main.c:37, frame#1 should be on main.c:25, and
         # frame#2 should be on main.c:48.
         #lldbutil.PrintStackTraces(self.process)
-        frame0 = self.process.GetThreadAtIndex(0).GetFrameAtIndex(0)
-        frame1 = self.process.GetThreadAtIndex(0).GetFrameAtIndex(1)
-        frame2 = self.process.GetThreadAtIndex(0).GetFrameAtIndex(2)
+        from lldbutil import get_stopped_thread
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        frame0 = thread.GetFrameAtIndex(0)
+        frame1 = thread.GetFrameAtIndex(1)
+        frame2 = thread.GetFrameAtIndex(2)
         self.assertTrue(frame0.GetLineEntry().GetLine() == self.line1 and
                         frame1.GetLineEntry().GetLine() == self.line3 and
                         frame2.GetLineEntry().GetLine() == self.line4,

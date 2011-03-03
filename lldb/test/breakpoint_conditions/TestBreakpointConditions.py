@@ -146,7 +146,10 @@ class BreakpointConditionsTestCase(TestBase):
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1 and the break condition should hold.
-        frame0 = self.process.GetThreadAtIndex(0).GetFrameAtIndex(0)
+        from lldbutil import get_stopped_thread
+        thread = get_stopped_thread(self.process, lldb.eStopReasonPlanComplete)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        frame0 = thread.GetFrameAtIndex(0)
         var = frame0.FindValue('val', lldb.eValueTypeVariableArgument)
         self.assertTrue(frame0.GetLineEntry().GetLine() == self.line1 and
                         var.GetValue(frame0) == '3')

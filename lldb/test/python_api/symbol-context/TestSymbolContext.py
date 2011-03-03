@@ -54,7 +54,10 @@ class SymbolContextAPITestCase(TestBase):
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line.
-        frame0 = self.process.GetThreadAtIndex(0).GetFrameAtIndex(0)
+        from lldbutil import get_stopped_thread
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        frame0 = thread.GetFrameAtIndex(0)
         self.assertTrue(frame0.GetLineEntry().GetLine() == self.line)
 
         # Now get the SBSymbolContext from this frame.  We want everything. :-)
@@ -81,6 +84,7 @@ class SymbolContextAPITestCase(TestBase):
         #print "block:", block
 
         lineEntry = context.GetLineEntry()
+        #print "line entry:", lineEntry
         self.expect(lineEntry.GetFileSpec().GetDirectory(), "The line entry should have the correct directory",
                     exe=False,
             substrs = [self.mydir])

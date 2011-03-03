@@ -5,6 +5,7 @@ Test SBProcess APIs, including ReadMemory(), WriteMemory(), and others.
 import os, time
 import unittest2
 import lldb
+from lldbutil import get_stopped_thread
 from lldbtest import *
 
 class ProcessAPITestCase(TestBase):
@@ -71,8 +72,9 @@ class ProcessAPITestCase(TestBase):
         error = lldb.SBError()
         self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        thread = self.process.GetThreadAtIndex(0);
-        frame = thread.GetFrameAtIndex(0);
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        frame = thread.GetFrameAtIndex(0)
 
         # Get the SBValue for the global variable 'my_char'.
         val = frame.FindValue("my_char", lldb.eValueTypeVariableGlobal)
@@ -111,8 +113,9 @@ class ProcessAPITestCase(TestBase):
         error = lldb.SBError()
         self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        thread = self.process.GetThreadAtIndex(0);
-        frame = thread.GetFrameAtIndex(0);
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        frame = thread.GetFrameAtIndex(0)
 
         # Get the SBValue for the global variable 'my_char'.
         val = frame.FindValue("my_char", lldb.eValueTypeVariableGlobal)
@@ -160,8 +163,9 @@ class ProcessAPITestCase(TestBase):
         error = lldb.SBError()
         self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        thread = self.process.GetThreadAtIndex(0);
-        frame = thread.GetFrameAtIndex(0);
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        frame = thread.GetFrameAtIndex(0)
 
         # Get the SBValue for the global variable 'my_int'.
         val = frame.FindValue("my_int", lldb.eValueTypeVariableGlobal)

@@ -6,6 +6,41 @@ import lldb
 import sys
 import StringIO
 
+# ===========================================
+# Iterator for lldb aggregate data structures
+# ===========================================
+
+def lldb_iter(obj, getsize, getelem):
+    """A generator adaptor for lldb aggregate data structures.
+
+    API clients pass in an aggregate object or a container of it, the name of
+    the method to get the size of the aggregate, and the name of the method to
+    get the element by index.
+
+    Example usages:
+
+    1. Pass an aggregate as the first argument:
+
+    def disassemble_instructions (insts):
+        from lldbutil import lldb_iter
+        for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
+            print i
+
+    2. Pass a container of aggregate which provides APIs to get to the size and
+       the element of the aggregate:
+
+    # Module is a container of symbol table 
+    module = target.FindModule(filespec)
+    for symbol in lldb_iter(module, 'GetNumSymbols', 'GetSymbolAtIndex'):
+        name = symbol.GetName()
+        ...
+    """
+    size = getattr(obj, getsize)
+    elem = getattr(obj, getelem)
+    for i in range(size()):
+        yield elem(i)
+
+
 # ==========================================================
 # Integer (byte size 1, 2, 4, and 8) to bytearray conversion
 # ==========================================================
@@ -61,40 +96,45 @@ def bytearray_to_int(bytes, bytesize):
     return unpacked[0]
 
 
-# ===========================================
-# Iterator for lldb aggregate data structures
-# ===========================================
+# ===========================================================
+# Returns the list of stopped thread(s) given an lldb process
+# ===========================================================
 
-def lldb_iter(obj, getsize, getelem):
-    """A generator adaptor for lldb aggregate data structures.
+def get_stopped_threads(process, reason):
+    """Returns the thread(s) with the specified stop reason in a list."""
+    threads = []
+    for t in lldb_iter(process, 'GetNumThreads', 'GetThreadAtIndex'):
+        if t.GetStopReason() == reason:
+            threads.append(t)
+    return threads
 
-    API clients pass in an aggregate object or a container of it, the name of
-    the method to get the size of the aggregate, and the name of the method to
-    get the element by index.
+def get_stopped_thread(process, reason):
+    """A convenience function which returns the first thread with the given stop
+    reason or None.
 
     Example usages:
 
-    1. Pass an aggregate as the first argument:
+    1. Get the stopped thread due to a breakpoint condition
 
-    def disassemble_instructions (insts):
-        from lldbutil import lldb_iter
-        for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
-            print i
+    ...
+        from lldbutil import get_stopped_thread
+        thread = get_stopped_thread(self.process, lldb.eStopReasonPlanComplete)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+    ...
 
-    2. Pass a container of aggregate which provides APIs to get to the size and
-       the element of the aggregate:
+    2. Get the thread stopped due to a breakpoint
 
-    # Module is a container of symbol table 
-    module = target.FindModule(filespec)
-    for symbol in lldb_iter(module, 'GetNumSymbols', 'GetSymbolAtIndex'):
-        name = symbol.GetName()
-        ...
+    ...
+        from lldbutil import get_stopped_thread
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+    ...
+
     """
-    size = getattr(obj, getsize)
-    elem = getattr(obj, getelem)
-    for i in range(size()):
-        yield elem(i)
-
+    threads = get_stopped_threads(process, reason)
+    if len(threads) == 0:
+        return None
+    return threads[0]
 
 # =================================================
 # Convert some enum value to its string counterpart
