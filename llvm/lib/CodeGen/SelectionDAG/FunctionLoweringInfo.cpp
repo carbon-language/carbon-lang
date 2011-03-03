@@ -448,16 +448,30 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
   }
 }
 
-void llvm::CopyCatchInfo(const BasicBlock *SrcBB, const BasicBlock *DestBB,
+void llvm::CopyCatchInfo(const BasicBlock *SuccBB, const BasicBlock *LPad,
                          MachineModuleInfo *MMI, FunctionLoweringInfo &FLI) {
-  for (BasicBlock::const_iterator I = SrcBB->begin(), E = --SrcBB->end();
-       I != E; ++I)
-    if (const EHSelectorInst *EHSel = dyn_cast<EHSelectorInst>(I)) {
-      // Apply the catch info to DestBB.
-      AddCatchInfo(*EHSel, MMI, FLI.MBBMap[DestBB]);
+  SmallPtrSet<const BasicBlock*, 4> Visited;
+
+  // The 'eh.selector' call may not be in the direct successor of a basic block,
+  // but could be several successors deeper. If we don't find it, try going one
+  // level further. <rdar://problem/8824861>
+  while (Visited.insert(SuccBB)) {
+    for (BasicBlock::const_iterator I = SuccBB->begin(), E = --SuccBB->end();
+         I != E; ++I)
+      if (const EHSelectorInst *EHSel = dyn_cast<EHSelectorInst>(I)) {
+        // Apply the catch info to LPad.
+        AddCatchInfo(*EHSel, MMI, FLI.MBBMap[LPad]);
 #ifndef NDEBUG
-      if (!FLI.MBBMap[SrcBB]->isLandingPad())
-        FLI.CatchInfoFound.insert(EHSel);
+        if (!FLI.MBBMap[SuccBB]->isLandingPad())
+          FLI.CatchInfoFound.insert(EHSel);
 #endif
-    }
+        return;
+      }
+
+    const BranchInst *Br = dyn_cast<BranchInst>(SuccBB->getTerminator());
+    if (Br && Br->isUnconditional())
+      SuccBB = Br->getSuccessor(0);
+    else
+      break;
+  }
 }

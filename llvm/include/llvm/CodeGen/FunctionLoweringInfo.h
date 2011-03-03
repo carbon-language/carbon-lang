@@ -214,8 +214,9 @@ private:
 void AddCatchInfo(const CallInst &I,
                   MachineModuleInfo *MMI, MachineBasicBlock *MBB);
 
-/// CopyCatchInfo - Copy catch information from DestBB to SrcBB.
-void CopyCatchInfo(const BasicBlock *SrcBB, const BasicBlock *DestBB,
+/// CopyCatchInfo - Copy catch information from SuccBB (or one of its
+/// successors) to LPad.
+void CopyCatchInfo(const BasicBlock *SuccBB, const BasicBlock *LPad,
                    MachineModuleInfo *MMI, FunctionLoweringInfo &FLI);
 
 } // end namespace llvm
