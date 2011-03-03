@@ -1586,7 +1586,6 @@ void AssemblyWriter::printFunction(const Function *F) {
   case CallingConv::MSP430_INTR:  Out << "msp430_intrcc "; break;
   case CallingConv::PTX_Kernel:   Out << "ptx_kernel"; break;
   case CallingConv::PTX_Device:   Out << "ptx_device"; break;
-  case CallingConv::Win64_ThisCall:Out << "win64_thiscallcc "; break;
   default: Out << "cc" << F->getCallingConv() << " "; break;
   }
 
@@ -1859,7 +1858,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::MSP430_INTR:  Out << " msp430_intrcc "; break;
     case CallingConv::PTX_Kernel:   Out << " ptx_kernel"; break;
     case CallingConv::PTX_Device:   Out << " ptx_device"; break;
-    case CallingConv::Win64_ThisCall:Out << " win64_thiscallcc "; break;
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
@@ -1916,7 +1914,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::MSP430_INTR:  Out << " msp430_intrcc "; break;
     case CallingConv::PTX_Kernel:   Out << " ptx_kernel"; break;
     case CallingConv::PTX_Device:   Out << " ptx_device"; break;
-    case CallingConv::Win64_ThisCall:Out << " win64_thiscallcc "; break;
     default: Out << " cc" << II->getCallingConv(); break;
     }
 

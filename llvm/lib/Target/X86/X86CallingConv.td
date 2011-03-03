@@ -218,7 +218,7 @@ def CC_X86_Win64_C : CallingConv<[
   
   // Do not pass the sret argument in RCX, the Win64 thiscall calling
   // convention requires "this" to be passed in RCX.                                        
-  CCIfCC<"CallingConv::Win64_ThisCall", 
+  CCIfCC<"CallingConv::X86_ThisCall", 
     CCIfSRet<CCIfType<[i64], CCAssignToRegWithShadow<[RDX , R8  , R9  ],
                                                      [XMM1, XMM2, XMM3]>>>>,
 

@@ -549,7 +549,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(msp430_intrcc);
   KEYWORD(ptx_kernel);
   KEYWORD(ptx_device);
-  KEYWORD(win64_thiscallcc);
 
   KEYWORD(cc);
   KEYWORD(c);
