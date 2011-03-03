@@ -2176,6 +2176,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
       Diags.Report(DiagID);
       return;
     }
+    break;
   }
   }
 }
