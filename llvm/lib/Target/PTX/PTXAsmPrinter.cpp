@@ -170,7 +170,8 @@ void PTXAsmPrinter::EmitStartOfAsmFile(Module &M)
 
   OutStreamer.EmitRawText(Twine("\t.version " + ST.getPTXVersionString()));
   OutStreamer.EmitRawText(Twine("\t.target " + ST.getTargetString() +
-                                (ST.supportsDouble() ? "" : ", map_f64_to_f32")));
+                                (ST.supportsDouble() ? ""
+                                                     : ", map_f64_to_f32")));
   OutStreamer.AddBlankLine();
 
   // declare global variables

@@ -423,7 +423,8 @@ void PTXMCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
   MCStreamer::EmitFill(NumBytes, FillValue, AddrSpace);
 }
 
-void PTXMCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
+void PTXMCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment,
+                                            int64_t Value,
                                             unsigned ValueSize,
                                             unsigned MaxBytesToEmit) {
   // Some assemblers don't support non-power of two alignments, so we always

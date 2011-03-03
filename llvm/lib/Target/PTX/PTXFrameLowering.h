@@ -27,7 +27,8 @@ protected:
 
 public:
   explicit PTXFrameLowering(const PTXSubtarget &sti)
-    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 2, -2), STI(sti) {
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 2, -2),
+      STI(sti) {
   }
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
