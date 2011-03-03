@@ -458,7 +458,7 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
   const LiveRange &range = cur.ranges.front();
 
   VNInfo *vni = range.valno;
-  if (vni->isUnused())
+  if (vni->isUnused() || !vni->def.isValid())
     return Reg;
 
   unsigned CandReg;
@@ -993,7 +993,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   // one, e.g. X86::mov32to32_. These move instructions are not coalescable.
   if (!vrm_->getRegAllocPref(cur->reg) && cur->hasAtLeastOneValue()) {
     VNInfo *vni = cur->begin()->valno;
-    if (!vni->isUnused()) {
+    if (!vni->isUnused() && vni->def.isValid()) {
       MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
       if (CopyMI && CopyMI->isCopy()) {
         unsigned DstSubReg = CopyMI->getOperand(0).getSubReg();

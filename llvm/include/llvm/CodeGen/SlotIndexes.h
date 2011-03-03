@@ -135,6 +135,7 @@ namespace llvm {
     }
 
     IndexListEntry& entry() const {
+      assert(isValid() && "Attempt to compare reserved index.");
       return *lie.getPointer();
     }
 
@@ -530,7 +531,7 @@ namespace llvm {
     /// Returns the instruction for the given index, or null if the given
     /// index has no instruction associated with it.
     MachineInstr* getInstructionFromIndex(SlotIndex index) const {
-      return index.entry().getInstr();
+      return index.isValid() ? index.entry().getInstr() : 0;
     }
 
     /// Returns the next non-null index.

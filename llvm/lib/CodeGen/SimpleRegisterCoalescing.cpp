@@ -1568,9 +1568,7 @@ SimpleRegisterCoalescing::lastRegisterUse(SlotIndex Start,
       if (UseMI->isIdentityCopy())
         continue;
       SlotIndex Idx = li_->getInstructionIndex(UseMI);
-      // FIXME: Should this be Idx != UseIdx? SlotIndex() will return something
-      // that compares higher than any other interval.
-      if (Idx >= Start && Idx < End && Idx >= UseIdx) {
+      if (Idx >= Start && Idx < End && (!UseIdx.isValid() || Idx >= UseIdx)) {
         LastUse = &Use;
         UseIdx = Idx.getUseIndex();
       }
