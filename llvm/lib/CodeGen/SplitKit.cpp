@@ -313,6 +313,10 @@ void SplitEditor::extendRange(unsigned RegIdx, SlotIndex Idx) {
   SmallVector<MachineDomTreeNode*, 16> LiveIn;
   LiveIn.push_back(MDT[IdxMBB]);
 
+  // Remember if we have seen more than one value.
+  bool UniqueVNI = true;
+  VNInfo *IdxVNI = 0;
+
   // Using LiveOutCache as a visited set, perform a BFS for all reaching defs.
   for (unsigned i = 0; i != LiveIn.size(); ++i) {
     MachineBasicBlock *MBB = LiveIn[i]->getBlock();
@@ -323,9 +327,14 @@ void SplitEditor::extendRange(unsigned RegIdx, SlotIndex Idx) {
        std::pair<LiveOutMap::iterator,bool> LOIP =
          LiveOutCache.insert(std::make_pair(Pred, LiveOutPair()));
        // Yes, we have been here before.
-       if (!LOIP.second)
+       if (!LOIP.second) {
+         if (VNInfo *VNI = LOIP.first->second.first) {
+           if (IdxVNI && IdxVNI != VNI)
+             UniqueVNI = false;
+           IdxVNI = VNI;
+         }
          continue;
-
+       }
        // Does Pred provide a live-out value?
        SlotIndex Start, Last;
        tie(Start, Last) = LIS.getSlotIndexes()->getMBBRange(Pred);
@@ -335,16 +344,27 @@ void SplitEditor::extendRange(unsigned RegIdx, SlotIndex Idx) {
          LiveOutPair &LOP = LOIP.first->second;
          LOP.first = VNI;
          LOP.second = MDT[DefMBB];
+         if (IdxVNI && IdxVNI != VNI)
+           UniqueVNI = false;
+         IdxVNI = VNI;
          continue;
        }
        // No, we need a live-in value for Pred as well
        if (Pred != IdxMBB)
          LiveIn.push_back(MDT[Pred]);
+       else
+         UniqueVNI = false; // Loopback to IdxMBB, ask updateSSA() for help.
     }
   }
 
   // We may need to add phi-def values to preserve the SSA form.
-  VNInfo *IdxVNI = updateSSA(RegIdx, LiveIn, Idx, IdxMBB);
+  if (UniqueVNI) {
+    LiveOutPair LOP(IdxVNI, MDT[LIS.getMBBFromIndex(IdxVNI->def)]);
+    // Update LiveOutCache, but skip IdxMBB at LiveIn[0].
+    for (unsigned i = 1, e = LiveIn.size(); i != e; ++i)
+      LiveOutCache[LiveIn[i]->getBlock()] = LOP;
+  } else
+    IdxVNI = updateSSA(RegIdx, LiveIn, Idx, IdxMBB);
 
 #ifndef NDEBUG
   // Check the LiveOutCache invariants.
