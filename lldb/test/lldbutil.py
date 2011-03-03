@@ -41,6 +41,22 @@ def lldb_iter(obj, getsize, getelem):
         yield elem(i)
 
 
+# ===================================================
+# Disassembly for an SBFunction or an SBSymbol object
+# ===================================================
+
+def disassemble(target, function_or_symbol):
+    """Disassemble the function or symbol given a target.
+
+    It returns the disassembly content in a string object.
+    """
+    buf = StringIO.StringIO()
+    insts = function_or_symbol.GetInstructions(target)
+    for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
+        print >> buf, i
+    return buf.getvalue()
+
+
 # ==========================================================
 # Integer (byte size 1, 2, 4, and 8) to bytearray conversion
 # ==========================================================
