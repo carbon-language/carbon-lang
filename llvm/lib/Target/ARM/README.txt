@@ -657,3 +657,27 @@ Note that both "tst" and "moveq" are redundant.
 
 //===---------------------------------------------------------------------===//
 
+When loading immediate constants with movt/movw, if there are multiple
+constants needed with the same low 16 bits, and those values are not live at
+the same time, it would be possible to use a single movw instruction, followed
+by multiple movt instructions to rewrite the high bits to different values.
+For example:
+
+  volatile store i32 -1, i32* inttoptr (i32 1342210076 to i32*), align 4,
+  !tbaa
+!0
+  volatile store i32 -1, i32* inttoptr (i32 1342341148 to i32*), align 4,
+  !tbaa
+!0
+
+is compiled and optimized to:
+
+    movw    r0, #32796
+    mov.w    r1, #-1
+    movt    r0, #20480
+    str    r1, [r0]
+    movw    r0, #32796    @ <= this MOVW is not needed, value is there already
+    movt    r0, #20482
+    str    r1, [r0]
+
+//===---------------------------------------------------------------------===//
