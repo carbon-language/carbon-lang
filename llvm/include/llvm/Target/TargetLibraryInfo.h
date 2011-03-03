@@ -29,6 +29,9 @@ namespace llvm {
       /// int iprintf(const char *format, ...);
       iprintf,
       
+      /// int siprintf(char *str, const char *format, ...);
+      siprintf,
+      
       NumLibFuncs
     };
   }

@@ -31,9 +31,11 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T) {
   if (T.getOS() != Triple::Darwin || T.getDarwinMajorNumber() < 9)
     TLI.setUnavailable(LibFunc::memset_pattern16);
 
-  // iprintf is only available on XCore.
-  if (T.getArch() != Triple::xcore)
+  // iprintf and friends are only available on XCore.
+  if (T.getArch() != Triple::xcore) {
     TLI.setUnavailable(LibFunc::iprintf);
+    TLI.setUnavailable(LibFunc::siprintf);
+  }
 }
 
 

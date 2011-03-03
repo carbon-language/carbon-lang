@@ -1176,14 +1176,8 @@ struct PrintFOpt : public LibCallOptimization {
 // 'sprintf' Optimizations
 
 struct SPrintFOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // Require two fixed pointer arguments and an integer result.
-    const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy() ||
-        !FT->getReturnType()->isIntegerTy())
-      return 0;
-
+  Value *OptimizeFixedFormatString(Function *Callee, CallInst *CI,
+                                   IRBuilder<> &B) {
     // Check for a fixed format string.
     std::string FormatStr;
     if (!GetConstantStringInfo(CI->getArgOperand(1), FormatStr))
@@ -1241,6 +1235,32 @@ struct SPrintFOpt : public LibCallOptimization {
 
       // The sprintf result is the unincremented number of bytes in the string.
       return B.CreateIntCast(Len, CI->getType(), false);
+    }
+    return 0;
+  }
+
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Require two fixed pointer arguments and an integer result.
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy())
+      return 0;
+
+    if (Value *V = OptimizeFixedFormatString(Callee, CI, B)) {
+      return V;
+    }
+
+    // sprintf(str, format, ...) -> iprintf(str, format, ...) if no floating
+    // point arguments.
+    if (TLI->has(LibFunc::siprintf) && !CallHasFloatingPointArgument(CI)) {
+      Module *M = B.GetInsertBlock()->getParent()->getParent();
+      Constant *SIPrintFFn =
+        M->getOrInsertFunction("siprintf", FT, Callee->getAttributes());
+      CallInst *New = cast<CallInst>(CI->clone());
+      New->setCalledFunction(SIPrintFFn);
+      B.Insert(New);
+      return New;
     }
     return 0;
   }
