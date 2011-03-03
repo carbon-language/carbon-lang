@@ -797,7 +797,7 @@ void LiveIntervals::shrinkToUses(LiveInterval *li) {
       (void)ExtVNI;
       assert(ExtVNI == VNI && "Unexpected existing value number");
       // Is this a PHIDef we haven't seen before?
-      if (!VNI->isPHIDef() || !UsedPHIs.insert(VNI))
+      if (!VNI->isPHIDef() || VNI->def != BlockStart || !UsedPHIs.insert(VNI))
         continue;
       // The PHI is live, make sure the predecessors are live-out.
       for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
