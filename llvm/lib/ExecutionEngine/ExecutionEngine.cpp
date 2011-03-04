@@ -79,9 +79,10 @@ ExecutionEngine::~ExecutionEngine() {
 
 void ExecutionEngine::DeregisterAllTables() {
   if (ExceptionTableDeregister) {
-    for (std::vector<void*>::iterator it = AllExceptionTables.begin(),
-           ie = AllExceptionTables.end(); it != ie; ++it)
-      ExceptionTableDeregister(*it);
+    DenseMap<const Function*, void*>::iterator it = AllExceptionTables.begin();
+    DenseMap<const Function*, void*>::iterator ite = AllExceptionTables.end();
+    for (; it != ite; ++it)
+      ExceptionTableDeregister(it->second);
     AllExceptionTables.clear();
   }
 }

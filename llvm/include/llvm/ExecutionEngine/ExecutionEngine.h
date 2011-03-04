@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ValueMap.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Target/TargetMachine.h"
@@ -161,7 +162,9 @@ protected:
   typedef void (*EERegisterFn)(void*);
   EERegisterFn ExceptionTableRegister;
   EERegisterFn ExceptionTableDeregister;
-  std::vector<void*> AllExceptionTables;
+  /// This maps functions to their exception tables frames.
+  DenseMap<const Function*, void*> AllExceptionTables;
+
 
 public:
   /// lock - This lock protects the ExecutionEngine, JIT, JITResolver and
@@ -410,10 +413,21 @@ public:
   
   /// RegisterTable - Registers the given pointer as an exception table.  It
   /// uses the ExceptionTableRegister function.
-  void RegisterTable(void* res) {
+  void RegisterTable(const Function *fn, void* res) {
     if (ExceptionTableRegister) {
       ExceptionTableRegister(res);
-      AllExceptionTables.push_back(res);
+      AllExceptionTables[fn] = res;
+    }
+  }
+
+  /// DeregisterTable - Deregisters the exception frame previously registered for the given function.
+  void DeregisterTable(const Function *Fn) {
+    if (ExceptionTableDeregister) {
+      DenseMap<const Function*, void*>::iterator frame = AllExceptionTables.find(Fn);
+      if(frame != AllExceptionTables.end()) {
+        ExceptionTableDeregister(frame->second);
+        AllExceptionTables.erase(frame);
+      }
     }
   }
 

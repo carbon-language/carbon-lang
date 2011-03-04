@@ -985,7 +985,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     CurBufferPtr = SavedCurBufferPtr;
 
     if (JITExceptionHandling) {
-      TheJIT->RegisterTable(FrameRegister);
+      TheJIT->RegisterTable(F.getFunction(), FrameRegister);
     }
 
     if (JITEmitDebugInfo) {
@@ -1033,8 +1033,9 @@ void JITEmitter::deallocateMemForFunction(const Function *F) {
     EmittedFunctions.erase(Emitted);
   }
 
-  // TODO: Do we need to unregister exception handling information from libgcc
-  // here?
+  if(JITExceptionHandling) {
+    TheJIT->DeregisterTable(F);
+  }
 
   if (JITEmitDebugInfo) {
     DR->UnregisterFunction(F);
