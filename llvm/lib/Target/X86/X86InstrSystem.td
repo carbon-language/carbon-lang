@@ -207,10 +207,15 @@ def LSL64rr : RI<0x03, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
 
 def INVLPG : I<0x01, MRM7m, (outs), (ins i8mem:$addr), "invlpg\t$addr", []>, TB;
 
-def STRr : I<0x00, MRM1r, (outs GR16:$dst), (ins),
-             "str{w}\t{$dst}", []>, TB;
-def STRm : I<0x00, MRM1m, (outs i16mem:$dst), (ins),
-             "str{w}\t{$dst}", []>, TB;
+def STR16r : I<0x00, MRM1r, (outs GR16:$dst), (ins),
+               "str{w}\t{$dst}", []>, TB, OpSize;
+def STR32r : I<0x00, MRM1r, (outs GR32:$dst), (ins),
+               "str{l}\t{$dst}", []>, TB;
+def STR64r : RI<0x00, MRM1r, (outs GR64:$dst), (ins),
+                "str{q}\t{$dst}", []>, TB;
+def STRm   : I<0x00, MRM1m, (outs i16mem:$dst), (ins),
+               "str{w}\t{$dst}", []>, TB;
+
 def LTRr : I<0x00, MRM3r, (outs), (ins GR16:$src),
              "ltr{w}\t{$src}", []>, TB;
 def LTRm : I<0x00, MRM3m, (outs), (ins i16mem:$src),

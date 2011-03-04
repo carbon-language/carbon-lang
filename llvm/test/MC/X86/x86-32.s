@@ -816,3 +816,11 @@ pshufw $90, %mm4, %mm0
 // CHECK: loopne 0
 // CHECK: encoding: [0xe0,A]
 	loopnz 0
+
+// CHECK: strw
+// CHECK: encoding: [0x66,0x0f,0x00,0xc8]
+	str %ax
+
+// CHECK: strl
+// CHECK: encoding: [0x0f,0x00,0xc8]
+	str %eax
