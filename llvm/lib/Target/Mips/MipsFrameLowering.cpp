@@ -338,7 +338,7 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
 
   unsigned NewReg = 0;
   int NewImm = 0;
-  bool ATUsed;
+  bool ATUsed = false;
 
   // if framepointer enabled, restore it and restore the
   // stack pointer
