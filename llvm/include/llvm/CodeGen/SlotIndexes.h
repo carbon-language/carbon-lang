@@ -110,6 +110,12 @@ namespace llvm {
     }
 
   public:
+    enum {
+      /// The default distance between instructions as returned by distance().
+      /// This may vary as instructions are inserted and removed.
+      InstrDist = 2*NUM
+    };
+
     static inline SlotIndex getEmptyKey() {
       return SlotIndex(0, 1);
     }

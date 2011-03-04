@@ -11,7 +11,7 @@
 #ifndef LLVM_CODEGEN_CALCSPILLWEIGHTS_H
 #define LLVM_CODEGEN_CALCSPILLWEIGHTS_H
 
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
@@ -29,15 +29,12 @@ namespace llvm {
   /// @param Size       Size of live interval as returnexd by getSize()
   ///
   static inline float normalizeSpillWeight(float UseDefFreq, unsigned Size) {
-    // The magic constant 200 corresponds to approx. 25 instructions since
-    // SlotIndexes allocate 8 slots per instruction.
-    //
-    // The constant is added to avoid depending too much on accidental SlotIndex
-    // gaps for small intervals. The effect is that small intervals have a spill
-    // weight that is mostly proportional to the number of uses, while large
-    // intervals get a spill weight that is closer to a use density.
-    //
-    return UseDefFreq / (Size + 200);
+    // The constant 25 instructions is added to avoid depending too much on
+    // accidental SlotIndex gaps for small intervals. The effect is that small
+    // intervals have a spill weight that is mostly proportional to the number
+    // of uses, while large intervals get a spill weight that is closer to a use
+    // density.
+    return UseDefFreq / (Size + 25*SlotIndex::InstrDist);
   }
 
   /// VirtRegAuxInfo - Calculate auxiliary information for a virtual
