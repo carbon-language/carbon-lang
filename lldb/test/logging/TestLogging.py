@@ -25,7 +25,9 @@ class LogTestCase(TestBase):
         self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out" ])
 
-        log_file = os.path.join (os.getcwd(), "lldb-commands-log-%s.txt" % type)
+        log_file = os.path.join (os.getcwd(), "lldb-commands-log-%s-%s-%s.txt" % (type,
+                                                                                  self.getCompiler(),
+                                                                                  self.getArchitecture()))
 
         if (os.path.exists (log_file)):
             os.remove (log_file)

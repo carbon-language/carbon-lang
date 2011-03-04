@@ -69,6 +69,13 @@ count = 1
 # The dictionary as a result of sourcing configFile.
 config = {}
 
+# The 'archs' and 'compilers' can be specified via either command line or configFile,
+# with the command line overriding the configFile.  When specified, they should be
+# of the list type.  For example, "-A x86_64^i386" => archs=['x86_64', 'i386'] and
+# "-C gcc^clang" => compilers=['gcc', 'clang'].
+archs = None
+compilers = None
+
 # Delay startup in order for the debugger to attach.
 delay = False
 
@@ -124,8 +131,12 @@ def usage():
 Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
--A   : specify the architecture to launch for the inferior process
--C   : specify the compiler used to build the inferior executable
+-A   : specify the architecture(s) to launch for the inferior process
+       -A i386 => launch inferior with i386 architecture
+       -A x86_64^i386 => launch inferior with x86_64 and i386 architectures
+-C   : specify the compiler(s) used to build the inferior executable
+       -C clang => build debuggee using clang compiler
+       -C clang^gcc => build debuggee using clang and gcc compilers
 -D   : dump the Python sys.path variable
 -a   : don't do lldb Python API tests
        use @python_api_test to decorate a test case as lldb Python API test
@@ -133,6 +144,8 @@ where options:
        do not specify both '-a' and '+a' at the same time
 -b   : read a blacklist file specified after this option
 -c   : read a config file specified after this option
+       the architectures and compilers (note the plurals) specified via '-A' and '-C'
+       will override those specified via a config file
        (see also lldb-trunk/example/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
 -F   : failfast, stop the test suite on the first error/failure
@@ -254,6 +267,8 @@ def parseOptionsAndInitTestdirs():
     global blacklist
     global blacklistConfig
     global configFile
+    global archs
+    global compilers
     global count
     global delay
     global dumpSysPath
@@ -288,14 +303,22 @@ def parseOptionsAndInitTestdirs():
             index += 1
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
                 usage()
-            os.environ["ARCH"] = sys.argv[index]
+            archSpec = sys.argv[index]
+            if archSpec.find('^') != -1:
+                archs = archSpec.split('^')
+            else:
+                os.environ["ARCH"] = archSpec
             index += 1
         elif sys.argv[index].startswith('-C'):
             # Increment by 1 to fetch the CC spec.
             index += 1
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
                 usage()
-            os.environ["CC"] = sys.argv[index]
+            ccSpec = sys.argv[index]
+            if ccSpec.find('^') != -1:
+                compilers = ccSpec.split('^')
+            else:
+                os.environ["CC"] = ccSpec
             index += 1
         elif sys.argv[index].startswith('-D'):
             dumpSysPath = True
@@ -737,20 +760,24 @@ sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
 iterArchs = False
 iterCompilers = False
 
-from types import *
-if "archs" in config:
+if not archs and "archs" in config:
     archs = config["archs"]
-    if type(archs) is ListType and len(archs) >= 1:
-        iterArchs = True
-if "compilers" in config:
+
+if isinstance(archs, list) and len(archs) >= 1:
+    iterArchs = True
+
+if not compilers and "compilers" in config:
     compilers = config["compilers"]
-    if type(compilers) is ListType and len(compilers) >= 1:
-        iterCompilers = True
+
+if isinstance(compilers, list) and len(compilers) >= 1:
+    iterCompilers = True
 
 # Make a shallow copy of sys.path, we need to manipulate the search paths later.
 # This is only necessary if we are relocated and with different configurations.
-if rdir and (iterArchs or iterCompilers):
+if rdir:
     old_sys_path = sys.path[:]
+# If we iterate on archs or compilers, there is a chance we want to split stderr/stdout.
+if iterArchs or iterCompilers:
     old_stderr = sys.stderr
     old_stdout = sys.stdout
     new_stderr = None
@@ -770,37 +797,38 @@ for ia in range(len(archs) if iterArchs else 1):
             configString = archConfig
 
         if iterArchs or iterCompilers:
+            # Translate ' ' to '-' for pathname component.
+            from string import maketrans
+            tbl = maketrans(' ', '-')
+            configPostfix = configString.translate(tbl)
+
+            # Check whether we need to split stderr/stdout into configuration
+            # specific files.
+            if old_stderr.name != '<stderr>' and config.get('split_stderr'):
+                if new_stderr:
+                    new_stderr.close()
+                new_stderr = open("%s.%s" % (old_stderr.name, configPostfix), "w")
+                sys.stderr = new_stderr
+            if old_stdout.name != '<stdout>' and config.get('split_stdout'):
+                if new_stdout:
+                    new_stdout.close()
+                new_stdout = open("%s.%s" % (old_stdout.name, configPostfix), "w")
+                sys.stdout = new_stdout
+ 
             # If we specified a relocated directory to run the test suite, do
             # the extra housekeeping to copy the testdirs to a configStringified
             # directory and to update sys.path before invoking the test runner.
             # The purpose is to separate the configuration-specific directories
             # from each other.
             if rdir:
-                from string import maketrans
                 from shutil import copytree, ignore_patterns
 
-                # Translate ' ' to '-' for dir name.
-                tbl = maketrans(' ', '-')
-                configPostfix = configString.translate(tbl)
                 newrdir = "%s.%s" % (rdir, configPostfix)
 
                 # Copy the tree to a new directory with postfix name configPostfix.
                 copytree(rdir, newrdir, ignore=ignore_patterns('*.pyc', '*.o', '*.d'))
 
-                # Check whether we need to split stderr/stdout into configuration
-                # specific files.
-                if old_stderr.name != '<stderr>' and config.get('split_stderr'):
-                    if new_stderr:
-                        new_stderr.close()
-                    new_stderr = open("%s.%s" % (old_stderr.name, configPostfix), "w")
-                    sys.stderr = new_stderr
-                if old_stdout.name != '<stdout>' and config.get('split_stdout'):
-                    if new_stdout:
-                        new_stdout.close()
-                    new_stdout = open("%s.%s" % (old_stdout.name, configPostfix), "w")
-                    sys.stdout = new_stdout
-
-                # Update the LLDB_TEST environment variable to reflect new top
+               # Update the LLDB_TEST environment variable to reflect new top
                 # level test directory.
                 #
                 # See also lldbtest.TestBase.setUpClass(cls).

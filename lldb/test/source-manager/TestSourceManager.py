@@ -103,15 +103,24 @@ class SourceManagerTestCase(TestBase):
 
         # This is the function to restore the original content.
         def restore_file():
+            #print "os.path.getmtime() before restore:", os.path.getmtime('main.c')
+            time.sleep(1)
             with open('main.c', 'w') as f:
                 f.write(original_content)
             with open('main.c', 'r') as f:
                 print "content restored to:", f.read()
+            # Touch the file just to be sure.
+            os.utime('main.c', None)
+            print "os.path.getmtime() after restore:", os.path.getmtime('main.c')
+
+
 
         # Modify the source code file.
         with open('main.c', 'w') as f:
+            time.sleep(1)
             f.write(new_content)
             print "new content:", new_content
+            print "os.path.getmtime() after writing new content:", os.path.getmtime('main.c')
             # Add teardown hook to restore the file to the original content.
             self.addTearDownHook(restore_file)
 
