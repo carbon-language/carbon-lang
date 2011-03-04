@@ -527,6 +527,7 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
     = TemplateTypeParmDecl::Create(Context, Context.getTranslationUnitDecl(),
                                    Loc, Depth, Position, ParamName, Typename,
                                    Ellipsis);
+  Param->setAccess(AS_public);
   if (Invalid)
     Param->setInvalidDecl();
 
@@ -652,6 +653,8 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                       D.getIdentifierLoc(),
                                       Depth, Position, ParamName, T,
                                       IsParameterPack, TInfo);
+  Param->setAccess(AS_public);
+  
   if (Invalid)
     Param->setInvalidDecl();
 
@@ -705,13 +708,13 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
 
   // Construct the parameter object.
   bool IsParameterPack = EllipsisLoc.isValid();
-  // FIXME: Pack-ness is dropped
   TemplateTemplateParmDecl *Param =
     TemplateTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
                                      NameLoc.isInvalid()? TmpLoc : NameLoc,
                                      Depth, Position, IsParameterPack,
                                      Name, Params);
-
+  Param->setAccess(AS_public);
+  
   // If the template template parameter has a name, then link the identifier
   // into the scope and lookup mechanisms.
   if (Name) {

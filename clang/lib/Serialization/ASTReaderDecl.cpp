@@ -1485,19 +1485,17 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     D = FriendTemplateDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_CLASS_TEMPLATE:
-    D = ClassTemplateDecl::Create(*Context, 0, SourceLocation(),
-                                  DeclarationName(), 0, 0, 0);
+    D = ClassTemplateDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_CLASS_TEMPLATE_SPECIALIZATION:
     D = ClassTemplateSpecializationDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION:
     D = ClassTemplatePartialSpecializationDecl::Create(*Context,
-                                                            Decl::EmptyShell());
+                                                       Decl::EmptyShell());
     break;
   case DECL_FUNCTION_TEMPLATE:
-    D = FunctionTemplateDecl::Create(*Context, 0, SourceLocation(),
-                                     DeclarationName(), 0, 0);
+      D = FunctionTemplateDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_TEMPLATE_TYPE_PARM:
     D = TemplateTypeParmDecl::Create(*Context, Decl::EmptyShell());

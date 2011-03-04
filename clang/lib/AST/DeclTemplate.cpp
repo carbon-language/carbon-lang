@@ -165,7 +165,18 @@ FunctionTemplateDecl *FunctionTemplateDecl::Create(ASTContext &C,
                                                    DeclarationName Name,
                                                TemplateParameterList *Params,
                                                    NamedDecl *Decl) {
+  // Take ownership of the template parameters.
+  for (TemplateParameterList::iterator P = Params->begin(), 
+                                    PEnd = Params->end();
+       P != PEnd; ++P)
+    (*P)->setDeclContext(cast<DeclContext>(Decl));
+
   return new (C) FunctionTemplateDecl(DC, L, Name, Params, Decl);
+}
+
+FunctionTemplateDecl *FunctionTemplateDecl::Create(ASTContext &C, EmptyShell) {
+  return new (C) FunctionTemplateDecl(0, SourceLocation(), DeclarationName(),
+                                      0, 0);
 }
 
 RedeclarableTemplateDecl::CommonBase *
@@ -196,9 +207,19 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              TemplateParameterList *Params,
                                              NamedDecl *Decl,
                                              ClassTemplateDecl *PrevDecl) {
+  // Take ownership of the template parameters.
+  for (TemplateParameterList::iterator P = Params->begin(), 
+                                    PEnd = Params->end();
+       P != PEnd; ++P)
+    (*P)->setDeclContext(cast<DeclContext>(Decl));
+  
   ClassTemplateDecl *New = new (C) ClassTemplateDecl(DC, L, Name, Params, Decl);
   New->setPreviousDeclaration(PrevDecl);
   return New;
+}
+
+ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) ClassTemplateDecl(Empty);
 }
 
 void ClassTemplateDecl::LoadLazySpecializations() {
@@ -593,6 +614,32 @@ ClassTemplateSpecializationDecl::getSourceRange() const {
 //===----------------------------------------------------------------------===//
 // ClassTemplatePartialSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//
+ClassTemplatePartialSpecializationDecl::
+ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
+                                       DeclContext *DC, SourceLocation L,
+                                       TemplateParameterList *Params,
+                                       ClassTemplateDecl *SpecializedTemplate,
+                                       const TemplateArgument *Args,
+                                       unsigned NumArgs,
+                                       TemplateArgumentLoc *ArgInfos,
+                                       unsigned NumArgInfos,
+                               ClassTemplatePartialSpecializationDecl *PrevDecl,
+                                       unsigned SequenceNumber)
+  : ClassTemplateSpecializationDecl(Context,
+                                    ClassTemplatePartialSpecialization,
+                                    TK, DC, L, SpecializedTemplate, 
+                                    Args, NumArgs, PrevDecl),
+    TemplateParams(Params), ArgsAsWritten(ArgInfos),
+    NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
+    InstantiatedFromMember(0, false)
+{ 
+  // Take ownership of the template parameters.
+  for (TemplateParameterList::iterator P = Params->begin(), 
+                                    PEnd = Params->end();
+       P != PEnd; ++P)
+    (*P)->setDeclContext(this);
+}
+
 ClassTemplatePartialSpecializationDecl *
 ClassTemplatePartialSpecializationDecl::
 Create(ASTContext &Context, TagKind TK,DeclContext *DC, SourceLocation L,

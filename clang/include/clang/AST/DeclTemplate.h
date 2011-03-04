@@ -844,12 +844,15 @@ public:
     return makeSpecIterator(getSpecializations(), true);
   }
 
-  /// Create a template function node.
+  /// \brief Create a function template node.
   static FunctionTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                       SourceLocation L,
                                       DeclarationName Name,
                                       TemplateParameterList *Params,
                                       NamedDecl *Decl);
+
+  /// \brief Create an empty function template node.
+  static FunctionTemplateDecl *Create(ASTContext &C, EmptyShell);
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -1556,14 +1559,7 @@ class ClassTemplatePartialSpecializationDecl
                                          TemplateArgumentLoc *ArgInfos,
                                          unsigned NumArgInfos,
                                ClassTemplatePartialSpecializationDecl *PrevDecl,
-                                         unsigned SequenceNumber)
-    : ClassTemplateSpecializationDecl(Context,
-                                      ClassTemplatePartialSpecialization,
-                                      TK, DC, L, SpecializedTemplate, 
-                                      Args, NumArgs, PrevDecl),
-      TemplateParams(Params), ArgsAsWritten(ArgInfos),
-      NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
-      InstantiatedFromMember(0, false) { }
+                                         unsigned SequenceNumber);
   
   ClassTemplatePartialSpecializationDecl()
     : ClassTemplateSpecializationDecl(ClassTemplatePartialSpecialization),
@@ -1746,6 +1742,10 @@ protected:
                     TemplateParameterList *Params, NamedDecl *Decl)
     : RedeclarableTemplateDecl(ClassTemplate, DC, L, Name, Params, Decl) { }
 
+  ClassTemplateDecl(EmptyShell Empty)
+    : RedeclarableTemplateDecl(ClassTemplate, 0, SourceLocation(),
+                               DeclarationName(), 0, 0) { }
+
   CommonBase *newCommon(ASTContext &C);
 
   Common *getCommonPtr() {
@@ -1771,6 +1771,9 @@ public:
                                    TemplateParameterList *Params,
                                    NamedDecl *Decl,
                                    ClassTemplateDecl *PrevDecl);
+
+  /// Create an empty class template node.
+  static ClassTemplateDecl *Create(ASTContext &C, EmptyShell);
 
   /// \brief Return the specialization with the provided arguments if it exists,
   /// otherwise return the insertion point.

@@ -1447,7 +1447,8 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
                                  TTPT->getIndex(), D->getIdentifier(),
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
-
+  Inst->setAccess(AS_public);
+  
   if (D->hasDefaultArgument())
     Inst->setDefaultArgument(D->getDefaultArgumentInfo(), false);  
 
@@ -1595,6 +1596,7 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
                                             D->getIdentifier(), T, 
                                             D->isParameterPack(), DI);
   
+  Param->setAccess(AS_public);
   if (Invalid)
     Param->setInvalidDecl();
   
@@ -1628,6 +1630,7 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
                                        D->getPosition(), D->isParameterPack(), 
                                        D->getIdentifier(), InstParams);
   Param->setDefaultArgument(D->getDefaultArgument(), false);
+  Param->setAccess(AS_public);
   
   // Introduce this template parameter's instantiation into the instantiation 
   // scope.
