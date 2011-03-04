@@ -10,6 +10,7 @@
 #define DEBUG_TYPE "slotindexes"
 
 #include "llvm/CodeGen/SlotIndexes.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -20,6 +21,8 @@ using namespace llvm;
 char SlotIndexes::ID = 0;
 INITIALIZE_PASS(SlotIndexes, "slotindexes",
                 "Slot index numbering", false, false)
+
+STATISTIC(NumRenumPasses, "Number of slot index renumber passes");
 
 void SlotIndexes::getAnalysisUsage(AnalysisUsage &au) const {
   au.setPreservesAll();
@@ -128,6 +131,7 @@ void SlotIndexes::renumberIndexes() {
   // pass during the initial numbering of the function if the new instructions
   // had been present.
   DEBUG(dbgs() << "\n*** Renumbering SlotIndexes ***\n");
+  ++NumRenumPasses;
 
   unsigned index = 0;
 
