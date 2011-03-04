@@ -366,6 +366,41 @@ SBTarget::AttachToProcessWithName
 
 }
 
+lldb::SBProcess
+SBTarget::ConnectRemote
+(
+    SBListener &listener,
+    const char *url,
+    const char *plugin_name,
+    SBError& error
+)
+{
+    SBProcess sb_process;
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        if (listener.IsValid())
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref(), plugin_name));
+        else
+            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener(), plugin_name));
+        
+        
+        if (sb_process.IsValid())
+        {
+            error.SetError (sb_process->ConnectRemote (url));
+        }
+        else
+        {
+            error.SetErrorString ("unable to create lldb_private::Process");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("SBTarget is invalid");
+    }
+    return sb_process;
+}
+
 SBFileSpec
 SBTarget::GetExecutable ()
 {

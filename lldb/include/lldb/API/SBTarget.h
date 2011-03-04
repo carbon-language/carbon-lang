@@ -179,6 +179,12 @@ public:
                              bool wait_for,     // if true wait for a new instance of "name" to be launched
                              lldb::SBError& error);   // An error explaining what went wrong if attach fails
 
+    lldb::SBProcess
+    ConnectRemote (SBListener &listener,
+                   const char *url,
+                   const char *plugin_name, // Can be NULL
+                   SBError& error);
+    
     lldb::SBFileSpec
     GetExecutable ();
 

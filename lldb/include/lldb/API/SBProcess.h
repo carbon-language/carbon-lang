@@ -72,6 +72,27 @@ public:
     AppendEventStateReport (const lldb::SBEvent &event, lldb::SBCommandReturnObject &result);
 
     //------------------------------------------------------------------
+    // Remote connection related functions. These will fail if the
+    // process is not in eStateConnected. They are intended for use
+    // when connecting to an externally managed debugserver instance.
+    //------------------------------------------------------------------
+    bool
+    RemoteAttachToProcessWithID (lldb::pid_t pid,
+                                 lldb::SBError& error);
+    
+    // See SBTarget.Launch for argument description and usage.
+    bool
+    RemoteLaunch (char const **argv,
+                  char const **envp,
+                  const char *stdin_path,
+                  const char *stdout_path,
+                  const char *stderr_path,
+                  const char *working_directory,
+                  uint32_t launch_flags,
+                  bool stop_at_entry,
+                  lldb::SBError& error);
+    
+    //------------------------------------------------------------------
     // Thread related functions
     //------------------------------------------------------------------
     uint32_t

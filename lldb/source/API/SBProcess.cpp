@@ -95,6 +95,88 @@ SBProcess::IsValid() const
     return m_opaque_sp.get() != NULL;
 }
 
+bool
+SBProcess::RemoteLaunch (char const **argv,
+                         char const **envp,
+                         const char *stdin_path,
+                         const char *stdout_path,
+                         const char *stderr_path,
+                         const char *working_directory,
+                         uint32_t launch_flags,
+                         bool stop_at_entry,
+                         lldb::SBError& error)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log) {
+        log->Printf ("SBProcess(%p)::RemoteLaunch (argv=%p, envp=%p, stdin=%s, stdout=%s, stderr=%s, working-dir=%s, launch_flags=0x%x, stop_at_entry=%i, &error (%p))...",
+                     m_opaque_sp.get(), 
+                     argv, 
+                     envp, 
+                     stdin_path ? stdin_path : "NULL", 
+                     stdout_path ? stdout_path : "NULL", 
+                     stderr_path ? stderr_path : "NULL", 
+                     working_directory ? working_directory : "NULL",
+                     launch_flags, 
+                     stop_at_entry, 
+                     error.get());
+    }
+    
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        if (m_opaque_sp->GetState() == eStateConnected)
+        {
+            error.SetError (m_opaque_sp->Launch (argv, envp, launch_flags, stdin_path, stdout_path, stderr_path, working_directory));            
+        }
+        else
+        {
+            error.SetErrorString ("must be in eStateConnected to call RemoteLaunch");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("unable to attach pid");
+    }
+    
+    if (log) {
+        SBStream sstr;
+        error.GetDescription (sstr);
+        log->Printf ("SBProcess(%p)::RemoteLaunch (...) => SBError (%p): %s", error.get(), sstr.GetData());
+    }
+    
+    return error.Success();
+}
+
+bool
+SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        if (m_opaque_sp->GetState() == eStateConnected)
+        {
+            error.SetError (m_opaque_sp->Attach (pid));            
+        }
+        else
+        {
+            error.SetErrorString ("must be in eStateConnected to call RemoteAttachToProcessWithID");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("unable to attach pid");
+    }
+
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log) {
+        SBStream sstr;
+        error.GetDescription (sstr);
+        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%d) => SBError (%p): %s", error.get(), sstr.GetData());
+    }
+
+    return error.Success();
+}
+
 
 uint32_t
 SBProcess::GetNumThreads ()
