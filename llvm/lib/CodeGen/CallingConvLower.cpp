@@ -157,7 +157,7 @@ void CCState::AnalyzeCallResult(const SmallVectorImpl<ISD::InputArg> &Ins,
     if (Fn(i, VT, VT, CCValAssign::Full, Flags, *this)) {
 #ifndef NDEBUG
       dbgs() << "Call result #" << i << " has unhandled type "
-             << EVT(VT).getEVTString();
+             << EVT(VT).getEVTString() << "\n";
 #endif
       llvm_unreachable(0);
     }
