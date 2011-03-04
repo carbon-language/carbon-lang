@@ -314,8 +314,6 @@ void SplitEditor::extendRange(unsigned RegIdx, SlotIndex Idx) {
   // and we may need to create even more phi-defs to preserve VNInfo SSA form.
   // Perform a search for all predecessor blocks where we know the dominating
   // VNInfo. Insert phi-def VNInfos along the path back to IdxMBB.
-  DEBUG(dbgs() << "\n  Reaching defs for BB#" << IdxMBB->getNumber()
-               << " at " << Idx << " in " << *LI << '\n');
 
   // Initialize the live-out cache the first time it is needed.
   if (LiveOutSeen.empty()) {
@@ -413,7 +411,6 @@ VNInfo *SplitEditor::updateSSA(unsigned RegIdx,
   unsigned Changes;
   do {
     Changes = 0;
-    DEBUG(dbgs() << "  Iterating over " << LiveIn.size() << " blocks.\n");
     // Propagate live-out values down the dominator tree, inserting phi-defs
     // when necessary. Since LiveIn was created by a BFS, going backwards makes
     // it more likely for us to visit immediate dominators before their
@@ -454,8 +451,6 @@ VNInfo *SplitEditor::updateSSA(unsigned RegIdx,
         SlotIndex Start = LIS.getMBBStartIdx(MBB);
         VNInfo *VNI = LI->getNextValue(Start, 0, LIS.getVNInfoAllocator());
         VNI->setIsPHIDef(true);
-        DEBUG(dbgs() << "    - BB#" << MBB->getNumber()
-                     << " phi-def #" << VNI->id << " at " << Start << '\n');
         // We no longer need LI to be live-in.
         LiveIn.erase(LiveIn.begin()+(i-1));
         // Blocks in LiveIn are either IdxMBB, or have a value live-through.
@@ -487,13 +482,9 @@ VNInfo *SplitEditor::updateSSA(unsigned RegIdx,
         if (LOP.second != Node && LOP.first != IDomValue.first) {
           ++Changes;
           LOP = IDomValue;
-          DEBUG(dbgs() << "    - BB#" << MBB->getNumber()
-                       << " idom valno #" << IDomValue.first->id
-                       << " from BB#" << IDom->getBlock()->getNumber() << '\n');
         }
       }
     }
-    DEBUG(dbgs() << "  - made " << Changes << " changes.\n");
   } while (Changes);
 
   assert(IdxVNI && "Didn't find value for Idx");

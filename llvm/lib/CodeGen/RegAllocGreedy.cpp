@@ -627,7 +627,12 @@ float RAGreedy::calcGlobalSplitCost(const BitVector &LiveBundles) {
     if (Inserts)
       GlobalCost += Inserts * SpillPlacer->getBlockFrequency(BC.Number);
   }
-  DEBUG(dbgs() << "Global cost = " << GlobalCost << '\n');
+  DEBUG({
+    dbgs() << "Global cost = " << GlobalCost << " with bundles";
+    for (int i = LiveBundles.find_first(); i>=0; i = LiveBundles.find_next(i))
+      dbgs() << " EB#" << i;
+    dbgs() << ".\n";
+  });
   return GlobalCost;
 }
 
