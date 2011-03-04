@@ -577,8 +577,7 @@ namespace llvm {
 
     /// Insert the given machine instruction into the mapping. Returns the
     /// assigned index.
-    SlotIndex insertMachineInstrInMaps(MachineInstr *mi,
-                                        bool *deferredRenumber = 0) {
+    SlotIndex insertMachineInstrInMaps(MachineInstr *mi) {
       assert(mi2iMap.find(mi) == mi2iMap.end() && "Instr already indexed.");
       // Numbering DBG_VALUE instructions could cause code generation to be
       // affected by debug information.
@@ -639,32 +638,11 @@ namespace llvm {
       }
 
       // Renumber if we need to.
-      if (needRenumber) {
-        if (deferredRenumber == 0)
-          renumberIndexes();
-        else
-          *deferredRenumber = true;
-      }
+      if (needRenumber)
+        renumberIndexes();
 
       return newIndex;
     }
-
-    /// Add all instructions in the vector to the index list. This method will
-    /// defer renumbering until all instrs have been added, and should be 
-    /// preferred when adding multiple instrs.
-    void insertMachineInstrsInMaps(SmallVectorImpl<MachineInstr*> &mis) {
-      bool renumber = false;
-
-      for (SmallVectorImpl<MachineInstr*>::iterator
-           miItr = mis.begin(), miEnd = mis.end();
-           miItr != miEnd; ++miItr) {
-        insertMachineInstrInMaps(*miItr, &renumber);
-      }
-
-      if (renumber)
-        renumberIndexes();
-    }
-
 
     /// Remove the given machine instruction from the mapping.
     void removeMachineInstrFromMaps(MachineInstr *mi) {
