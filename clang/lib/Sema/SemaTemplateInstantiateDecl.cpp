@@ -3031,9 +3031,11 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
     }
 
     // UsingShadowDecls can instantiate to nothing because of using hiding.
-    assert((Result || isa<UsingShadowDecl>(D) || D->isInvalidDecl() ||
-            cast<Decl>(ParentDC)->isInvalidDecl())
-           && "Unable to find instantiation of declaration!");
+    // Note: this assertion end up firing in invalid code even when none of the 
+    // AST invariants have been broken, so we explicitly check whether any
+    // errors have been emitted
+    assert((Result || isa<UsingShadowDecl>(D) || Diags.hasErrorOccurred()) &&
+           "Unable to find instantiation of declaration!");
 
     D = Result;
   }
