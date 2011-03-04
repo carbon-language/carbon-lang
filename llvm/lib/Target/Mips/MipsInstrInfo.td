@@ -533,7 +533,7 @@ def : Pat<(subc CPURegs:$lhs, CPURegs:$rhs),
           (SUBu CPURegs:$lhs, CPURegs:$rhs)>;
 def : Pat<(addc CPURegs:$lhs, CPURegs:$rhs),
           (ADDu CPURegs:$lhs, CPURegs:$rhs)>;
-def : Pat<(addc  CPURegs:$src, imm:$imm),
+def : Pat<(addc  CPURegs:$src, immSExt16:$imm),
           (ADDiu CPURegs:$src, imm:$imm)>;
 
 // Call
