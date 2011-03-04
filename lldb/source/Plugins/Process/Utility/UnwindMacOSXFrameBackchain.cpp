@@ -35,11 +35,11 @@ UnwindMacOSXFrameBackchain::GetFrameCount()
         const ArchSpec& target_arch = m_thread.GetProcess().GetTarget().GetArchitecture ();
         // Frame zero should always be supplied by the thread...
         StackFrameSP frame_sp (m_thread.GetStackFrameAtIndex (0));
-        if (target_arch.GetMachine() == llvm::Triple::x86_64)
+        
+        if (target_arch.GetAddressByteSize() == 8)
             GetStackFrameData_x86_64 (frame_sp.get());
-        else if (target_arch.GetMachine() == llvm::Triple::x86)
+        else
             GetStackFrameData_i386 (frame_sp.get());
-
     }
     return m_cursors.size();
 }
