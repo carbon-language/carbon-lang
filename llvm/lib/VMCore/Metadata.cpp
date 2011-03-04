@@ -232,6 +232,9 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
   return N;
 }
 
+MDNode *MDNode::get(LLVMContext &Context, ArrayRef<Value*> Vals) {
+  return getMDNode(Context, Vals.data(), Vals.size(), FL_Unknown);
+}
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   return getMDNode(Context, Vals, NumVals, FL_Unknown);
 }

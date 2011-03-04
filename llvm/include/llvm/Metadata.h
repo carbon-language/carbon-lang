@@ -17,6 +17,7 @@
 #define LLVM_METADATA_H
 
 #include "llvm/Value.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ilist_node.h"
 
@@ -117,6 +118,8 @@ class MDNode : public Value, public FoldingSetNode {
                            FunctionLocalness FL, bool Insert = true);
 public:
   // Constructors and destructors.
+  static MDNode *get(LLVMContext &Context, ArrayRef<Value*> V);
+  // FIXME: Eliminate this constructor form.
   static MDNode *get(LLVMContext &Context, Value *const *Vals,
                      unsigned NumVals);
   // getWhenValsUnresolved - Construct MDNode determining function-localness
