@@ -807,8 +807,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "," [83:22 - 83:23] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Keyword: "typename" [83:24 - 83:32] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Identifier: "R" [83:33 - 83:34] TemplateTypeParameter=R:83:33 (Definition)
-// CHECK-tokens: Punctuation: "=" [83:35 - 83:36] ClassTemplate=StringSwitch:83:47 (Definition)
-// CHECK-tokens: Identifier: "T" [83:37 - 83:38] ClassTemplate=StringSwitch:83:47 (Definition)
+// CHECK-tokens: Punctuation: "=" [83:35 - 83:36] TemplateTypeParameter=R:83:33 (Definition)
+// CHECK-tokens: Identifier: "T" [83:37 - 83:38] TemplateTypeParameter=R:83:33 (Definition)
 // CHECK-tokens: Punctuation: ">" [83:39 - 83:40] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Keyword: "class" [83:41 - 83:46] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Identifier: "StringSwitch" [83:47 - 83:59] ClassTemplate=StringSwitch:83:47 (Definition)
@@ -1834,7 +1834,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 82:11: Namespace=llvm:82:11 (Definition) Extent=[82:11 - 96:2]
 // CHECK: 83:47: ClassTemplate=StringSwitch:83:47 (Definition) Extent=[83:1 - 95:2]
 // CHECK: 83:21: TemplateTypeParameter=T:83:21 (Definition) Extent=[83:21 - 83:22]
-// CHECK: 83:33: TemplateTypeParameter=R:83:33 (Definition) Extent=[83:33 - 83:34]
+// CHECK: 83:33: TemplateTypeParameter=R:83:33 (Definition) Extent=[83:33 - 83:38]
 // CHECK: 84:13: FieldDecl=Str:84:13 (Definition) Extent=[84:13 - 84:16]
 // CHECK: 84:3: TypeRef=class llvm::StringRef:38:7 Extent=[84:3 - 84:12]
 // CHECK: 85:12: FieldDecl=Result:85:12 (Definition) Extent=[85:12 - 85:18]

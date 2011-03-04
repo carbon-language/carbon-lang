@@ -990,6 +990,8 @@ public:
   /// \brief Returns whether this is a parameter pack.
   bool isParameterPack() const { return ParameterPack; }
 
+  SourceRange getSourceRange() const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TemplateTypeParmDecl *D) { return true; }
