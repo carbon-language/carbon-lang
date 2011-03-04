@@ -548,6 +548,8 @@ def : Pat<(MipsJmpLink (i32 texternalsym:$dst)),
 def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
+def : Pat<(add CPURegs:$hi, (MipsLo tblockaddress:$lo)),
+          (ADDiu CPURegs:$hi, tblockaddress:$lo)>;
 
 def : Pat<(MipsHi tjumptable:$in), (LUi tjumptable:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),

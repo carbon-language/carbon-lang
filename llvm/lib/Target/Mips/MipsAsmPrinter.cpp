@@ -308,6 +308,12 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       O << *Mang->getSymbol(MO.getGlobal());
       break;
 
+    case MachineOperand::MO_BlockAddress: {
+      MCSymbol* BA = GetBlockAddressSymbol(MO.getBlockAddress());
+      O << BA->getName();
+      break;
+    }
+
     case MachineOperand::MO_ExternalSymbol:
       O << *GetExternalSymbolSymbol(MO.getSymbolName());
       break;

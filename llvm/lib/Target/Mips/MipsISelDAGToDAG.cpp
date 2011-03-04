@@ -121,7 +121,8 @@ SelectAddr(SDValue Addr, SDValue &Offset, SDValue &Base) {
   if (TM.getRelocationModel() == Reloc::PIC_) {
     if ((Addr.getOpcode() == ISD::TargetGlobalAddress) ||
         (Addr.getOpcode() == ISD::TargetConstantPool) ||
-        (Addr.getOpcode() == ISD::TargetJumpTable)){
+        (Addr.getOpcode() == ISD::TargetJumpTable) ||
+        (Addr.getOpcode() == ISD::TargetBlockAddress)) {
       Base   = CurDAG->getRegister(Mips::GP, MVT::i32);
       Offset = Addr;
       return true;
@@ -168,6 +169,11 @@ SelectAddr(SDValue Addr, SDValue &Offset, SDValue &Base) {
         return true;
       }
     }
+  }
+
+  if (isa<BlockAddressSDNode>(Addr.getOperand(1))) {
+    Base = Addr.getOperand(0);
+    Offset = Addr.getOperand(1);
   }
 
   Base   = Addr;
