@@ -1632,14 +1632,42 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
   return ParamLists[NumParamLists - 1];
 }
 
+void Sema::NoteAllFoundTemplates(TemplateName Name) {
+  if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
+    Diag(Template->getLocation(), diag::note_template_declared_here)
+      << (isa<FunctionTemplateDecl>(Template)? 0
+          : isa<ClassTemplateDecl>(Template)? 1
+          : 2)
+      << Template->getDeclName();
+    return;
+  }
+  
+  if (OverloadedTemplateStorage *OST = Name.getAsOverloadedTemplate()) {
+    for (OverloadedTemplateStorage::iterator I = OST->begin(), 
+                                          IEnd = OST->end();
+         I != IEnd; ++I)
+      Diag((*I)->getLocation(), diag::note_template_declared_here)
+        << 0 << (*I)->getDeclName();
+    
+    return;
+  }
+}
+
+
 QualType Sema::CheckTemplateIdType(TemplateName Name,
                                    SourceLocation TemplateLoc,
                                    TemplateArgumentListInfo &TemplateArgs) {
   TemplateDecl *Template = Name.getAsTemplateDecl();
-  if (!Template) {
-    // The template name does not resolve to a template, so we just
-    // build a dependent template-id type.
-    return Context.getTemplateSpecializationType(Name, TemplateArgs);
+  if (!Template || isa<FunctionTemplateDecl>(Template)) {
+    // We might have a substituted template template parameter pack. If so,
+    // build a template specialization type for it.
+    if (Name.getAsSubstTemplateTemplateParmPack())
+      return Context.getTemplateSpecializationType(Name, TemplateArgs);
+    
+    Diag(TemplateLoc, diag::err_template_id_not_a_type)
+      << Name;
+    NoteAllFoundTemplates(Name);
+    return QualType();
   }
 
   // Check that the template argument list is well-formed for this

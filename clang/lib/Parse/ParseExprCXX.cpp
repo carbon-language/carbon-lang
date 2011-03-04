@@ -197,42 +197,37 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         return false;
       }
 
-      if (TemplateId->Kind == TNK_Type_template ||
-          TemplateId->Kind == TNK_Dependent_template_name) {
-        // Consume the template-id token.
-        ConsumeToken();
-        
-        assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
-        SourceLocation CCLoc = ConsumeToken();
+      // Consume the template-id token.
+      ConsumeToken();
+      
+      assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
+      SourceLocation CCLoc = ConsumeToken();
 
-        if (!HasScopeSpecifier)
-          HasScopeSpecifier = true;
-        
-        ASTTemplateArgsPtr TemplateArgsPtr(Actions,
-                                           TemplateId->getTemplateArgs(),
-                                           TemplateId->NumArgs);
-        
-        if (Actions.ActOnCXXNestedNameSpecifier(getCurScope(),
-                                                /*FIXME:*/SourceLocation(),
-                                                SS, 
-                                                TemplateId->Template,
-                                                TemplateId->TemplateNameLoc,
-                                                TemplateId->LAngleLoc,
-                                                TemplateArgsPtr,
-                                                TemplateId->RAngleLoc,
-                                                CCLoc,
-                                                EnteringContext)) {
-          SourceLocation StartLoc 
-            = SS.getBeginLoc().isValid()? SS.getBeginLoc()
-                                        : TemplateId->TemplateNameLoc;
-          SS.SetInvalid(SourceRange(StartLoc, CCLoc));
-        }
-        
-        TemplateId->Destroy();
-        continue;
+      if (!HasScopeSpecifier)
+        HasScopeSpecifier = true;
+      
+      ASTTemplateArgsPtr TemplateArgsPtr(Actions,
+                                         TemplateId->getTemplateArgs(),
+                                         TemplateId->NumArgs);
+      
+      if (Actions.ActOnCXXNestedNameSpecifier(getCurScope(),
+                                              /*FIXME:*/SourceLocation(),
+                                              SS, 
+                                              TemplateId->Template,
+                                              TemplateId->TemplateNameLoc,
+                                              TemplateId->LAngleLoc,
+                                              TemplateArgsPtr,
+                                              TemplateId->RAngleLoc,
+                                              CCLoc,
+                                              EnteringContext)) {
+        SourceLocation StartLoc 
+          = SS.getBeginLoc().isValid()? SS.getBeginLoc()
+                                      : TemplateId->TemplateNameLoc;
+        SS.SetInvalid(SourceRange(StartLoc, CCLoc));
       }
-
-      assert(false && "FIXME: Only type template names supported here");
+      
+      TemplateId->Destroy();
+      continue;
     }
 
 

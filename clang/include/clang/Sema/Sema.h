@@ -3180,6 +3180,8 @@ public:
   void translateTemplateArguments(const ASTTemplateArgsPtr &In,
                                   TemplateArgumentListInfo &Out);
 
+  void NoteAllFoundTemplates(TemplateName Name);
+  
   QualType CheckTemplateIdType(TemplateName Template,
                                SourceLocation TemplateLoc,
                               TemplateArgumentListInfo &TemplateArgs);

@@ -99,3 +99,31 @@ namespace PR7725 {
     }
   };
 }
+
+namespace PR9226 {
+  template<typename a>
+  void nt() // expected-note{{function template 'nt' declared here}}
+  { nt<>:: } // expected-error{{qualified name refers into a specialization of function template 'nt'}} \
+  // expected-error{{expected unqualified-id}}
+
+  template<typename T>
+  void f(T*); // expected-note{{function template 'f' declared here}}
+
+  template<typename T>
+  void f(T*, T*); // expected-note{{function template 'f' declared here}}
+
+  void g() {
+    f<int>:: // expected-error{{qualified name refers into a specialization of function template 'f'}}
+  } // expected-error{{expected unqualified-id}}
+
+  struct X {
+    template<typename T> void f(); // expected-note{{function template 'f' declared here}}
+  };
+
+  template<typename T, typename U>
+  struct Y {
+    typedef typename T::template f<U> type; // expected-error{{template name refers to non-type template 'X::f'}}
+  };
+
+  Y<X, int> yxi; // expected-note{{in instantiation of template class 'PR9226::Y<PR9226::X, int>' requested here}}
+}

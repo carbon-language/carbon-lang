@@ -118,6 +118,10 @@ TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
   } else if (SubstTemplateTemplateParmPackStorage *SubstPack
                                         = getAsSubstTemplateTemplateParmPack())
     OS << SubstPack->getParameterPack()->getNameAsString();
+  else {
+    OverloadedTemplateStorage *OTS = getAsOverloadedTemplate();
+    (*OTS->begin())->printName(OS);
+  }
 }
 
 const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
