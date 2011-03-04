@@ -177,3 +177,16 @@ namespace PR9238 {
   class B { public: ~B(); };
   class C : virtual B { public: ~C() { } };
 }
+
+namespace PR7900 {
+  struct A { // expected-note 2{{type 'PR7900::A' is declared here}}
+  };
+  struct B : public A {
+  };
+  void foo() {
+    B b;
+    b.~B();
+    b.~A(); // expected-error{{destructor type 'PR7900::A' in object destruction expression does not match the type 'PR7900::B' of the object being destroyed}}
+    (&b)->~A(); // expected-error{{destructor type 'PR7900::A' in object destruction expression does not match the type 'PR7900::B' of the object being destroyed}}
+  }
+}

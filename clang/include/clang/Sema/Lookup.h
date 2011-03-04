@@ -439,6 +439,7 @@ public:
     Decls.clear();
     if (Paths) deletePaths(Paths);
     Paths = NULL;
+    NamingClass = 0;
   }
 
   /// \brief Clears out any current state and re-initializes for a

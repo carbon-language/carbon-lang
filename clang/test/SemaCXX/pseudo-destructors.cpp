@@ -2,7 +2,7 @@
 struct A {};
 
 enum Foo { F };
-typedef Foo Bar;
+typedef Foo Bar; // expected-note{{type 'Bar' (aka 'Foo') is declared here}}
 
 typedef int Integer;
 typedef double Double;
@@ -23,10 +23,9 @@ void f(A* a, Foo *f, int *i, double *d) {
   a->~A();
   a->A::~A();
   
-  a->~foo(); // expected-error{{identifier 'foo' in pseudo-destructor expression does not name a type}}
+  a->~foo(); // expected-error{{identifier 'foo' in object destruction expression does not name a type}}
   
-  // FIXME: the diagnostic below isn't wonderful
-  a->~Bar(); // expected-error{{does not name a type}}
+  a->~Bar(); // expected-error{{destructor type 'Bar' (aka 'Foo') in object destruction expression does not match the type 'A' of the object being destroyed}}
   
   f->~Bar();
   f->~Foo();

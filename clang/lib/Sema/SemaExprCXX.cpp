@@ -138,10 +138,11 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
     LookInScope = true;
   }
 
+  TypeDecl *NonMatchingTypeDecl = 0;
   LookupResult Found(*this, &II, NameLoc, LookupOrdinaryName);
   for (unsigned Step = 0; Step != 2; ++Step) {
     // Look for the name first in the computed lookup context (if we
-    // have one) and, if that fails to find a match, in the sope (if
+    // have one) and, if that fails to find a match, in the scope (if
     // we're allowed to look there).
     Found.clear();
     if (Step == 0 && LookupCtx)
@@ -164,6 +165,9 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
 
         return ParsedType::make(T);
       }
+      
+      if (!SearchType.isNull())
+        NonMatchingTypeDecl = Type;
     }
 
     // If the name that we found is a class template name, and it is
@@ -244,8 +248,14 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
     return ParsedType::make(T);
   }
 
-  if (ObjectTypePtr)
-    Diag(NameLoc, diag::err_ident_in_pseudo_dtor_not_a_type)
+  if (NonMatchingTypeDecl) {
+    QualType T = Context.getTypeDeclType(NonMatchingTypeDecl);
+    Diag(NameLoc, diag::err_destructor_expr_type_mismatch)
+      << T << SearchType;
+    Diag(NonMatchingTypeDecl->getLocation(), diag::note_destructor_type_here)
+      << T;
+  } else if (ObjectTypePtr)
+    Diag(NameLoc, diag::err_ident_in_dtor_not_a_type)
       << &II;
   else
     Diag(NameLoc, diag::err_destructor_class_name);

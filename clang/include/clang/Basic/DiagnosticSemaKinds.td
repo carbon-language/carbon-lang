@@ -791,8 +791,13 @@ def err_destructor_name : Error<
   "expected the class name after '~' to name the enclosing class">;
 def err_destructor_class_name : Error<
   "expected the class name after '~' to name a destructor">;
-def err_ident_in_pseudo_dtor_not_a_type : Error<
-  "identifier %0 in pseudo-destructor expression does not name a type">;
+def err_ident_in_dtor_not_a_type : Error<
+  "identifier %0 in object destruction expression does not name a type">;
+def err_destructor_expr_type_mismatch : Error<
+  "destructor type %0 in object destruction expression does not match the "
+  "type %1 of the object being destroyed">;
+def note_destructor_type_here : Note<
+  "type %0 is declared here">;
 
 // C++ initialization
 def err_init_conversion_failed : Error<
