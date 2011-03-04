@@ -98,6 +98,17 @@ public:
     return FriendLoc;
   }
 
+  /// Retrieves the source range for the friend declaration.
+  SourceRange getSourceRange() const {
+    /* FIXME: consider the case of templates wrt start of range. */
+    if (NamedDecl *ND = getFriendDecl())
+      return SourceRange(getFriendLoc(), ND->getLocEnd());
+    else if (TypeSourceInfo *TInfo = getFriendType())
+      return SourceRange(getFriendLoc(), TInfo->getTypeLoc().getEndLoc());
+    else
+      return SourceRange(getFriendLoc(), getLocation());
+  }
+
   /// Determines if this friend kind is unsupported.
   bool isUnsupportedFriend() const {
     return UnsupportedFriend;
