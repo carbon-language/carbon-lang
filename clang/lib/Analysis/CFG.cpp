@@ -279,14 +279,14 @@ class CFGBuilder {
   
   // State to track for building switch statements.
   bool switchExclusivelyCovered;
-  Expr::EvalResult switchCond;
+  Expr::EvalResult *switchCond;
 
 public:
   explicit CFGBuilder() : cfg(new CFG()), // crew a new CFG
                           Block(NULL), Succ(NULL),
                           SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
                           TryTerminatedBlock(NULL), badCFG(false),
-                          switchExclusivelyCovered(false) {}
+                          switchExclusivelyCovered(false), switchCond(0) {}
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C,
@@ -2197,13 +2197,13 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   // for tracking the condition value.
   SaveAndRestore<bool> save_switchExclusivelyCovered(switchExclusivelyCovered,
                                                      false);
-  SaveAndRestore<Expr::EvalResult> save_switchCond(switchCond);
-  
-  
+
   // Determine if the switch condition can be explicitly evaluated.
   assert(Terminator->getCond() && "switch condition must be non-NULL");
-  tryEvaluate(Terminator->getCond(), switchCond);
-  
+  Expr::EvalResult result;
+  tryEvaluate(Terminator->getCond(), result);
+  SaveAndRestore<Expr::EvalResult*> save_switchCond(switchCond, &result);
+
   // If body is not a compound statement create implicit scope
   // and add destructors.
   if (!isa<CompoundStmt>(Terminator->getBody()))
@@ -2243,7 +2243,7 @@ static bool shouldAddCase(bool &switchExclusivelyCovered,
                           const CaseStmt *CS,
                           ASTContext &Ctx) {
   bool addCase = false;
-  
+
   if (!switchExclusivelyCovered) {
     if (switchCond.Val.isInt()) {
       // Evaluate the LHS of the case value.
@@ -2280,7 +2280,8 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
   // CaseStmts are essentially labels, so they are the first statement in a
   // block.
   CFGBlock *TopBlock = 0, *LastBlock = 0;
-  
+  assert(switchCond);
+
   if (Stmt *Sub = CS->getSubStmt()) {
     // For deeply nested chains of CaseStmts, instead of doing a recursion
     // (which can blow out the stack), manually unroll and create blocks
@@ -2295,7 +2296,7 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
         TopBlock = currentBlock;
 
       addSuccessor(SwitchTerminatedBlock,
-                   shouldAddCase(switchExclusivelyCovered, switchCond,
+                   shouldAddCase(switchExclusivelyCovered, *switchCond,
                                  CS, *Context)
                    ? currentBlock : 0);
 
@@ -2322,7 +2323,7 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
   // statement.
   assert(SwitchTerminatedBlock);
   addSuccessor(SwitchTerminatedBlock,
-               shouldAddCase(switchExclusivelyCovered, switchCond,
+               shouldAddCase(switchExclusivelyCovered, *switchCond,
                              CS, *Context)
                ? CaseBlock : 0);
 

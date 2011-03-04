@@ -147,3 +147,16 @@ void test_switch() {
   }
 }
 
+// Test nested switch statements.
+enum enumA { enumA_A, enumA_B, enumA_C, enumA_D, enumA_E };
+enum enumB { enumB_X, enumB_Y, enumB_Z };
+static enum enumB myVal = enumB_X;
+void test_nested_switch()
+{
+  switch (enumA_E) { // expected-warning {{no case matching constant}}
+    switch (myVal) { // expected-warning {{enumeration values 'enumB_X' and 'enumB_Z' not handled in switch}}
+      case enumB_Y: ;
+    }
+  }
+}
+
