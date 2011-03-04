@@ -64,11 +64,11 @@ namespace test4 {
 }
 
 namespace rdar8529993 {
-struct A { ~A(); }; // expected-note {{nearly matches}}
+struct A { ~A(); };
 
 struct B : A
 {
-  template<int> friend A::~A(); // expected-error {{does not match}}
+  template<int> friend A::~A(); // expected-error {{destructor cannot be declared as a template}}
 };
 }
 

@@ -50,3 +50,10 @@ namespace PR7239 {
     }
   };
 }
+
+namespace PR7904 {
+  struct Foo {
+    template <int i> ~Foo() {} // expected-error{{destructor cannot be declared as a template}}
+  };
+  Foo f;
+}

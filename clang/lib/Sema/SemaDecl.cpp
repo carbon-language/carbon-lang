@@ -3755,7 +3755,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // determine whether we have a template or a template specialization.
     bool Invalid = false;
     if (TemplateParameterList *TemplateParams
-        = MatchTemplateParametersToScopeSpecifier(
+          = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
                                   D.getCXXScopeSpec(),
                                   TemplateParamLists.get(),
@@ -3773,6 +3773,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
             if (CheckTemplateDeclScope(S, TemplateParams))
               return 0;
 
+            // A destructor cannot be a template.
+            if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
+              Diag(NewFD->getLocation(), diag::err_destructor_template);
+              return 0;
+            }
+            
+            
             FunctionTemplate = FunctionTemplateDecl::Create(Context, DC,
                                                       NewFD->getLocation(),
                                                       Name, TemplateParams,
