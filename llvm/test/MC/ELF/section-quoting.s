@@ -6,5 +6,5 @@
 .section "foo bar"
 
 // CHECK: .section "bar-\"foo\""
-// CHECK: .section "foo"
+// CHECK: .section foo
 // CHECK: .section "foo bar"

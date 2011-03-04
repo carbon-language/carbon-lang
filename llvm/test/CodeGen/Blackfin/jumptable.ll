@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=bfin -verify-machineinstrs | FileCheck %s
 
-; CHECK: .section ".rodata"
+; CHECK: .section .rodata
 ; CHECK: JTI0_0:
 ; CHECK: .long .BB0_1
 

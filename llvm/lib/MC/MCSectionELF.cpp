@@ -40,20 +40,26 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
   }
 
   StringRef name = getSectionName();
-  OS << "\t.section\t\"";
-  for (const char *b = name.begin(), *e = name.end(); b < e; ++b) {
-    if (*b == '"') // Unquoted "
-      OS << "\\\"";
-    else if (*b != '\\') // Neither " or backslash
-      OS << *b;
-    else if (b + 1 == e) // Trailing backslash
-      OS << "\\\\";
-    else {
-      OS << b[0] << b[1]; // Quoted character
-      ++b;
+  if (name.find_first_not_of("0123456789_."
+                             "abcdefghijklmnopqrstuvwxyz"
+                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ") == name.npos) {
+    OS << "\t.section\t" << name;
+  } else {
+    OS << "\t.section\t\"";
+    for (const char *b = name.begin(), *e = name.end(); b < e; ++b) {
+      if (*b == '"') // Unquoted "
+        OS << "\\\"";
+      else if (*b != '\\') // Neither " or backslash
+        OS << *b;
+      else if (b + 1 == e) // Trailing backslash
+        OS << "\\\\";
+      else {
+        OS << b[0] << b[1]; // Quoted character
+        ++b;
+      }
     }
+    OS << '"';
   }
-  OS << '"';
 
   // Handle the weird solaris syntax if desired.
   if (MAI.usesSunStyleELFSectionSwitchSyntax() && 

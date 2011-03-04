@@ -2,7 +2,7 @@
 
 ; PR4639
 @G1 = internal thread_local global i32 0		; <i32*> [#uses=1]
-; LINUX: .section	".tbss","awT",@nobits
+; LINUX: .section	.tbss,"awT",@nobits
 ; LINUX: G1:
 
 

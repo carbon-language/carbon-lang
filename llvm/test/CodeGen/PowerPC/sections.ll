@@ -3,6 +3,6 @@
 
 @A = global i32 0
 
-; CHECK:  .section  ".bss","aw",@nobits
+; CHECK:  .section  .bss,"aw",@nobits
 ; CHECK:  .globl A
 
