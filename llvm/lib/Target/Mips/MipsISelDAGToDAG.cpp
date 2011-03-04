@@ -362,20 +362,18 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
     /// Mul/Div with two results
     case ISD::SDIVREM:
     case ISD::UDIVREM:
+      break;
     case ISD::SMUL_LOHI:
     case ISD::UMUL_LOHI: {
       SDValue Op1 = Node->getOperand(0);
       SDValue Op2 = Node->getOperand(1);
 
       unsigned Op;
-      if (Opcode == ISD::UMUL_LOHI || Opcode == ISD::SMUL_LOHI)
-        Op = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
-      else
-        Op = (Opcode == ISD::UDIVREM ? Mips::DIVu : Mips::DIV);
+      Op = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
 
-      SDNode *MulDiv = CurDAG->getMachineNode(Op, dl, MVT::Glue, Op1, Op2);
+      SDNode *Mul = CurDAG->getMachineNode(Op, dl, MVT::Glue, Op1, Op2);
 
-      SDValue InFlag = SDValue(MulDiv, 0);
+      SDValue InFlag = SDValue(Mul, 0);
       SDNode *Lo = CurDAG->getMachineNode(Mips::MFLO, dl, MVT::i32,
                                           MVT::Glue, InFlag);
       InFlag = SDValue(Lo,1);
@@ -415,23 +413,8 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
     case ISD::SREM:
     case ISD::UREM:
     case ISD::SDIV:
-    case ISD::UDIV: {
-      SDValue Op1 = Node->getOperand(0);
-      SDValue Op2 = Node->getOperand(1);
-
-      unsigned Op, MOp;
-      if (Opcode == ISD::SDIV || Opcode == ISD::UDIV) {
-        Op  = (Opcode == ISD::SDIV ? Mips::DIV : Mips::DIVu);
-        MOp = Mips::MFLO;
-      } else {
-        Op  = (Opcode == ISD::SREM ? Mips::DIV : Mips::DIVu);
-        MOp = Mips::MFHI;
-      }
-      SDNode *Node = CurDAG->getMachineNode(Op, dl, MVT::Glue, Op1, Op2);
-
-      SDValue InFlag = SDValue(Node, 0);
-      return CurDAG->getMachineNode(MOp, dl, MVT::i32, InFlag);
-    }
+    case ISD::UDIV:
+      break;
 
     // Get target GOT address.
     case ISD::GLOBAL_OFFSET_TABLE:

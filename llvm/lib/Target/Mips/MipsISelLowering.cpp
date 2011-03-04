@@ -50,6 +50,8 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
     case MipsISD::MAddu      : return "MipsISD::MAddu";
     case MipsISD::MSub       : return "MipsISD::MSub";
     case MipsISD::MSubu      : return "MipsISD::MSubu";
+    case MipsISD::DivRem     : return "MipsISD::DivRem";
+    case MipsISD::DivRemU    : return "MipsISD::DivRemU";
     default                  : return NULL;
   }
 }
@@ -110,6 +112,11 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::AND,              MVT::i32,   Custom);
   setOperationAction(ISD::OR,               MVT::i32,   Custom);
 
+  setOperationAction(ISD::SDIV, MVT::i32, Expand);
+  setOperationAction(ISD::SREM, MVT::i32, Expand);
+  setOperationAction(ISD::UDIV, MVT::i32, Expand);
+  setOperationAction(ISD::UREM, MVT::i32, Expand);
+
   // Operations not directly supported by Mips.
   setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,             MVT::Other, Expand);
@@ -163,6 +170,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   setTargetDAGCombine(ISD::ADDE);
   setTargetDAGCombine(ISD::SUBE);
+  setTargetDAGCombine(ISD::SDIVREM);
+  setTargetDAGCombine(ISD::UDIVREM);
 
   setStackPointerRegisterToSaveRestore(Mips::SP);
   computeRegisterProperties();
@@ -349,6 +358,40 @@ static SDValue PerformSUBECombine(SDNode *N, SelectionDAG& DAG,
   return SDValue();
 }
 
+static SDValue PerformDivRemCombine(SDNode *N, SelectionDAG& DAG,
+                                    TargetLowering::DAGCombinerInfo &DCI,
+                                    const MipsSubtarget* Subtarget) {
+  if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  unsigned opc = N->getOpcode() == ISD::SDIVREM ? MipsISD::DivRem :
+                                                  MipsISD::DivRemU;
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue DivRem = DAG.getNode(opc, dl, MVT::Glue,
+                               N->getOperand(0), N->getOperand(1));
+  SDValue InChain = DAG.getEntryNode();
+  SDValue InGlue = DivRem;
+
+  // insert MFLO
+  if (N->hasAnyUseOfValue(0)) {
+    SDValue CopyFromLo = DAG.getCopyFromReg(InChain, dl, Mips::LO, MVT::i32,
+                                            InGlue);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), CopyFromLo);
+    InChain = CopyFromLo.getValue(1);
+    InGlue = CopyFromLo.getValue(2);
+  }
+
+  // insert MFHI
+  if (N->hasAnyUseOfValue(1)) {
+    SDValue CopyFromHi = DAG.getCopyFromReg(InChain, dl,
+                                               Mips::HI, MVT::i32, InGlue);
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), CopyFromHi);
+  }
+
+  return SDValue();
+}
+
 SDValue  MipsTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI)
   const {
   SelectionDAG &DAG = DCI.DAG;
@@ -360,6 +403,9 @@ SDValue  MipsTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI)
     return PerformADDECombine(N, DAG, DCI, Subtarget);
   case ISD::SUBE:
     return PerformSUBECombine(N, DAG, DCI, Subtarget);
+  case ISD::SDIVREM:
+  case ISD::UDIVREM:
+    return PerformDivRemCombine(N, DAG, DCI, Subtarget);
   }
 
   return SDValue();

@@ -62,7 +62,11 @@ namespace llvm {
       MAdd,
       MAddu,
       MSub,
-      MSubu
+      MSubu,
+
+      // DivRem(u)
+      DivRem,
+      DivRemU
     };
   }
 

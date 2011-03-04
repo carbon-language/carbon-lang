@@ -30,7 +30,9 @@ def SDT_MipsMAddMSub     : SDTypeProfile<0, 4,
                                          [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>,
                                           SDTCisSameAs<1, 2>,
                                           SDTCisSameAs<2, 3>]>;
-
+def SDT_MipsDivRem       : SDTypeProfile<0, 2,
+                                         [SDTCisVT<0, i32>,
+                                          SDTCisSameAs<0, 1>]>;
 
 // Call
 def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
@@ -66,6 +68,12 @@ def MipsMSub      : SDNode<"MipsISD::MSub", SDT_MipsMAddMSub,
                            [SDNPOptInGlue, SDNPOutGlue]>;
 def MipsMSubu     : SDNode<"MipsISD::MSubu", SDT_MipsMAddMSub,
                            [SDNPOptInGlue, SDNPOutGlue]>;
+
+// DivRem(u) nodes
+def MipsDivRem    : SDNode<"MipsISD::DivRem", SDT_MipsDivRem,
+                           [SDNPOutGlue]>;
+def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
+                           [SDNPOutGlue]>;
 
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
@@ -283,9 +291,16 @@ let isCall=1, hasDelaySlot=1,
 }
 
 // Mul, Div
-class MulDiv<bits<6> func, string instr_asm, InstrItinClass itin>:
-  FR<0x00, func, (outs), (ins CPURegs:$a, CPURegs:$b),
-     !strconcat(instr_asm, "\t$a, $b"), [], itin>;
+let Defs = [HI, LO] in {
+  class Mul<bits<6> func, string instr_asm, InstrItinClass itin>:
+    FR<0x00, func, (outs), (ins CPURegs:$a, CPURegs:$b),
+       !strconcat(instr_asm, "\t$a, $b"), [], itin>;
+
+  class Div<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
+            FR<0x00, func, (outs), (ins CPURegs:$a, CPURegs:$b),
+            !strconcat(instr_asm, "\t$$zero, $a, $b"),
+            [(op CPURegs:$a, CPURegs:$b)], itin>;
+}
 
 // Move from Hi/Lo
 class MoveFromLOHI<bits<6> func, string instr_asm>:
@@ -452,12 +467,10 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1,
                 "jr\t$target", [(MipsRet CPURegs:$target)], IIBranch>;
 
 /// Multiply and Divide Instructions.
-let Defs = [HI, LO] in {
-  def MULT    : MulDiv<0x18, "mult", IIImul>;
-  def MULTu   : MulDiv<0x19, "multu", IIImul>;
-  def DIV     : MulDiv<0x1a, "div", IIIdiv>;
-  def DIVu    : MulDiv<0x1b, "divu", IIIdiv>;
-}
+def MULT    : Mul<0x18, "mult", IIImul>;
+def MULTu   : Mul<0x19, "multu", IIImul>;
+def SDIV    : Div<MipsDivRem, 0x1a, "div", IIIdiv>;
+def UDIV    : Div<MipsDivRemU, 0x1b, "divu", IIIdiv>;
 
 let Defs = [HI] in
   def MTHI  : MoveToLOHI<0x11, "mthi">;
