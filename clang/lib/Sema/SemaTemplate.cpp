@@ -5065,7 +5065,17 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
 
   // Ignore access information;  it doesn't figure into redeclaration checking.
   FunctionDecl *Specialization = cast<FunctionDecl>(*Result);
-  Specialization->setLocation(FD->getLocation());
+
+  FunctionTemplateSpecializationInfo *SpecInfo
+    = Specialization->getTemplateSpecializationInfo();
+  assert(SpecInfo && "Function template specialization info missing?");
+  {
+    // Note: do not overwrite location info if previous template
+    // specialization kind was explicit.
+    TemplateSpecializationKind TSK = SpecInfo->getTemplateSpecializationKind();
+    if (TSK == TSK_Undeclared || TSK == TSK_ImplicitInstantiation)
+      Specialization->setLocation(FD->getLocation());
+  }
 
   // FIXME: Check if the prior specialization has a point of instantiation.
   // If so, we have run afoul of .
@@ -5088,10 +5098,6 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   //   before the first use of that specialization that would cause an implicit
   //   instantiation to take place, in every translation unit in which such a
   //   use occurs; no diagnostic is required.
-  FunctionTemplateSpecializationInfo *SpecInfo
-    = Specialization->getTemplateSpecializationInfo();
-  assert(SpecInfo && "Function template specialization info missing?");
-
   bool HasNoEffect = false;
   if (!isFriend &&
       CheckSpecializationInstantiationRedecl(FD->getLocation(),
