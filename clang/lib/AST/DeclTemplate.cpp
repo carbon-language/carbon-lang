@@ -455,7 +455,10 @@ SourceLocation NonTypeTemplateParmDecl::getInnerLocStart() const {
 }
 
 SourceRange NonTypeTemplateParmDecl::getSourceRange() const {
-  return SourceRange(getOuterLocStart(), getLocation());
+  SourceLocation End = getLocation();
+  if (hasDefaultArgument() && !defaultArgumentWasInherited())
+    End = getDefaultArgument()->getSourceRange().getEnd();
+  return SourceRange(getOuterLocStart(), End);
 }
 
 SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {

@@ -138,7 +138,7 @@ struct SuperPair : Pair<int, int>, Pair<T, U> { };
 // CHECK-LOAD: index-templates.cpp:35:31: UnexposedExpr= Extent=[35:31 - 35:32]
 // CHECK-LOAD: index-templates.cpp:37:8: ClassTemplate=array:37:8 (Definition) Extent=[36:1 - 37:17]
 // CHECK-LOAD: index-templates.cpp:36:19: TemplateTypeParameter=T:36:19 (Definition) Extent=[36:19 - 36:20]
-// CHECK-LOAD: index-templates.cpp:36:31: NonTypeTemplateParameter=Dimensions:36:31 (Definition) Extent=[36:22 - 36:41]
+// CHECK-LOAD: index-templates.cpp:36:31: NonTypeTemplateParameter=Dimensions:36:31 (Definition) Extent=[36:22 - 36:56]
 // CHECK-LOAD: index-templates.cpp:36:44: DeclRefExpr=OneDimension:35:16 Extent=[36:44 - 36:56]
 // CHECK-LOAD: index-templates.cpp:40:8: ClassTemplate=storage:40:8 (Definition) Extent=[39:1 - 40:19]
 // CHECK-LOAD: index-templates.cpp:39:45: TemplateTemplateParameter=DataStructure:39:45 (Definition) Extent=[39:10 - 39:66]
