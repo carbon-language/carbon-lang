@@ -236,12 +236,30 @@ define i1 @urem4(i32 %X) {
 ; CHECK: ret i1 %B
 }
 
+define i1 @urem5(i16 %X, i32 %Y) {
+; CHECK: @urem5
+  %A = zext i16 %X to i32
+  %B = urem i32 %A, %Y
+  %C = icmp slt i32 %B, %Y
+  ret i1 %C
+; CHECK: ret i1 true
+}
+
 define i1 @srem1(i32 %X) {
 ; CHECK: @srem1
   %A = srem i32 %X, -5
   %B = icmp sgt i32 %A, 5
   ret i1 %B
 ; CHECK: ret i1 false
+}
+
+define i1 @srem2(i32 %X, i32 %Y) {
+; CHECK: @srem2
+  %neg = sub i32 %Y, 0
+  %A = srem i32 %X, %Y
+  %B = icmp slt i32 %A, %neg
+  ret i1 %B
+; CHECK: ret i1 true
 }
 
 define i1 @udiv1(i32 %X) {

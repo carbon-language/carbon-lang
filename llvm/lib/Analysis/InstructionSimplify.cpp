@@ -1671,17 +1671,46 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
-  if (LBO && match(LBO, m_URem(m_Value(), m_Specific(RHS)))) {
+  Value *V;
+  if (LBO && match(LBO, m_URem(m_Value(V), m_Specific(RHS)))) {
+    bool KnownNonNegative, KnownNegative;
     switch (Pred) {
     default:
       break;
+    case ICmpInst::ICMP_SGT:
+    case ICmpInst::ICMP_SGE:
+      ComputeSignBit(LHS, KnownNonNegative, KnownNegative, TD);
+      if (!KnownNonNegative)
+        break;
+      // fall-through
     case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_UGT:
     case ICmpInst::ICMP_UGE:
       return ConstantInt::getFalse(RHS->getContext());
+    case ICmpInst::ICMP_SLT:
+    case ICmpInst::ICMP_SLE:
+      ComputeSignBit(LHS, KnownNonNegative, KnownNegative, TD);
+      if (!KnownNonNegative)
+        break;
+      // fall-through
     case ICmpInst::ICMP_NE:
     case ICmpInst::ICMP_ULT:
     case ICmpInst::ICMP_ULE:
+      return ConstantInt::getTrue(RHS->getContext());
+    }
+  }
+
+  if (LBO && match(LBO, m_SRem(m_Value(), m_Specific(RHS)))) {
+    switch (Pred) {
+    default:
+      break;
+    case ICmpInst::ICMP_EQ:
+    case ICmpInst::ICMP_SGT:
+    case ICmpInst::ICMP_SGE:
+      return ConstantInt::getFalse(RHS->getContext());
+    case ICmpInst::ICMP_NE:
+    case ICmpInst::ICMP_SLT:
+    case ICmpInst::ICMP_SLE:
       return ConstantInt::getTrue(RHS->getContext());
     }
   }

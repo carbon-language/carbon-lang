@@ -379,7 +379,7 @@ define i1 @test38(i32 %x, i32 %y, i32 %z) {
 }
 
 ; PR9343 #1
-; CHECK: test39
+; CHECK: @test39
 ; CHECK %B = icmp eq i32 %X, 0
 define i1 @test39(i32 %X, i32 %Y) {
   %A = ashr exact i32 %X, %Y
@@ -387,10 +387,19 @@ define i1 @test39(i32 %X, i32 %Y) {
   ret i1 %B
 }
 
-; CHECK: test40
+; CHECK: @test40
 ; CHECK: %B = icmp ne i32 %X, 0
 define i1 @test40(i32 %X, i32 %Y) {
   %A = lshr exact i32 %X, %Y
   %B = icmp ne i32 %A, 0
+  ret i1 %B
+}
+
+; PR9343 #3
+; CHECK: @test41
+; CHECK: ret i1 true
+define i1 @test41(i32 %X, i32 %Y) {
+  %A = urem i32 %X, %Y
+  %B = icmp ugt i32 %Y, %A
   ret i1 %B
 }
