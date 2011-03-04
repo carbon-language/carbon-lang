@@ -498,7 +498,8 @@ public:
   QualType 
   TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
                                       DependentTemplateSpecializationTypeLoc TL,
-                                               TemplateName Template);
+                                               TemplateName Template,
+                                               CXXScopeSpec &SS);
 
   QualType 
   TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
@@ -3103,7 +3104,8 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
     
     Result = getDerived().TransformDependentTemplateSpecializationType(TLB, 
                                                                        SpecTL,
-                                                                     Template);
+                                                                     Template,
+                                                                       SS);
   } else {
     // Nothing special needs to be done for these.
     Result = getDerived().TransformType(TLB, TL);
@@ -3159,7 +3161,8 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeSourceInfo *TSInfo,
     
     Result = getDerived().TransformDependentTemplateSpecializationType(TLB, 
                                                                        SpecTL,
-                                                                       Template);
+                                                                       Template,
+                                                                       SS);
   } else {
     // Nothing special needs to be done for these.
     Result = getDerived().TransformType(TLB, TL);
@@ -4245,7 +4248,8 @@ template <typename Derived>
 QualType TreeTransform<Derived>::TransformDependentTemplateSpecializationType(
                                      TypeLocBuilder &TLB,
                                      DependentTemplateSpecializationTypeLoc TL,
-                                     TemplateName Template) {
+                                     TemplateName Template,
+                                     CXXScopeSpec &SS) {
   TemplateArgumentListInfo NewTemplateArgs;
   NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
   NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
@@ -4270,8 +4274,6 @@ QualType TreeTransform<Derived>::TransformDependentTemplateSpecializationType(
       = TLB.push<DependentTemplateSpecializationTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
     
-    CXXScopeSpec SS;
-    SS.Adopt(TL.getQualifierLoc());
     NewTL.setQualifierLoc(SS.getWithLocInContext(SemaRef.Context));
     NewTL.setNameLoc(TL.getNameLoc());
     NewTL.setLAngleLoc(TL.getLAngleLoc());
