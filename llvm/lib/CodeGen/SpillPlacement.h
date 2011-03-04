@@ -27,6 +27,7 @@
 #ifndef LLVM_CODEGEN_SPILLPLACEMENT_H
 #define LLVM_CODEGEN_SPILLPLACEMENT_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
 namespace llvm {
@@ -35,7 +36,6 @@ class BitVector;
 class EdgeBundles;
 class MachineBasicBlock;
 class MachineLoopInfo;
-template <typename> class SmallVectorImpl;
 
 class SpillPlacement  : public MachineFunctionPass {
   struct Node;
@@ -47,6 +47,9 @@ class SpillPlacement  : public MachineFunctionPass {
   // Nodes that are active in the current computation. Owned by the placeSpills
   // caller.
   BitVector *ActiveNodes;
+
+  // Block frequencies are computed once. Indexed by block number.
+  SmallVector<float, 4> BlockFrequency;
 
 public:
   static char ID; // Pass identification, replacement for typeid.
@@ -91,7 +94,9 @@ public:
 
   /// getBlockFrequency - Return the estimated block execution frequency per
   /// function invocation.
-  float getBlockFrequency(const MachineBasicBlock*);
+  float getBlockFrequency(unsigned Number) const {
+    return BlockFrequency[Number];
+  }
 
 private:
   virtual bool runOnMachineFunction(MachineFunction&);

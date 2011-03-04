@@ -602,7 +602,7 @@ float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
     // The local cost of spill code in this block is the block frequency times
     // the number of spill instructions inserted.
     if (Inserts)
-      LocalCost += Inserts * SpillPlacer->getBlockFrequency(BI.MBB);
+      LocalCost += Inserts * SpillPlacer->getBlockFrequency(BC.Number);
   }
   DEBUG(dbgs() << "Local cost of " << PrintReg(PhysReg, TRI) << " = "
                << LocalCost << '\n');
@@ -625,8 +625,7 @@ float RAGreedy::calcGlobalSplitCost(const BitVector &LiveBundles) {
     Inserts += LiveBundles[Bundles->getBundle(BC.Number, 1)] !=
                  (BC.Exit == SpillPlacement::PrefReg);
     if (Inserts)
-      GlobalCost +=
-        Inserts * SpillPlacer->getBlockFrequency(SA->LiveBlocks[i].MBB);
+      GlobalCost += Inserts * SpillPlacer->getBlockFrequency(BC.Number);
   }
   DEBUG(dbgs() << "Global cost = " << GlobalCost << '\n');
   return GlobalCost;
@@ -1089,7 +1088,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   unsigned BestAfter = 0;
   float BestDiff = 0;
 
-  const float blockFreq = SpillPlacer->getBlockFrequency(BI.MBB);
+  const float blockFreq = SpillPlacer->getBlockFrequency(BI.MBB->getNumber());
   SmallVector<float, 8> GapWeight;
 
   Order.rewind();

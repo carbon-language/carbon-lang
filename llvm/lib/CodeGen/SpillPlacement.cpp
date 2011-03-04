@@ -175,9 +175,12 @@ bool SpillPlacement::runOnMachineFunction(MachineFunction &mf) {
   nodes = new Node[bundles->getNumBundles()];
 
   // Compute total ingoing and outgoing block frequencies for all bundles.
+  BlockFrequency.resize(mf.getNumBlockIDs());
   for (MachineFunction::iterator I = mf.begin(), E = mf.end(); I != E; ++I) {
-    float Freq = getBlockFrequency(I);
+    float Freq = LiveIntervals::getSpillWeight(true, false,
+                                               loops->getLoopDepth(I));
     unsigned Num = I->getNumber();
+    BlockFrequency[Num] = Freq;
     nodes[bundles->getBundle(Num, 1)].Frequency[0] += Freq;
     nodes[bundles->getBundle(Num, 0)].Frequency[1] += Freq;
   }
@@ -206,8 +209,7 @@ void SpillPlacement::
 prepareNodes(const SmallVectorImpl<BlockConstraint> &LiveBlocks) {
   for (SmallVectorImpl<BlockConstraint>::const_iterator I = LiveBlocks.begin(),
        E = LiveBlocks.end(); I != E; ++I) {
-    MachineBasicBlock *MBB = MF->getBlockNumbered(I->Number);
-    float Freq = getBlockFrequency(MBB);
+    float Freq = getBlockFrequency(I->Number);
 
     // Is this a transparent block? Link ingoing and outgoing bundles.
     if (I->Entry == DontCare && I->Exit == DontCare) {
@@ -320,11 +322,3 @@ SpillPlacement::placeSpills(const SmallVectorImpl<BlockConstraint> &LiveBlocks,
     }
   return Perfect;
 }
-
-/// getBlockFrequency - Return our best estimate of the block frequency which is
-/// the expected number of block executions per function invocation.
-float SpillPlacement::getBlockFrequency(const MachineBasicBlock *MBB) {
-  // Use the unnormalized spill weight for real block frequencies.
-  return LiveIntervals::getSpillWeight(true, false, loops->getLoopDepth(MBB));
-}
-
