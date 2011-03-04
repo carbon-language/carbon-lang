@@ -23,6 +23,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Target/TargetData.h"
@@ -1399,44 +1400,67 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
   // See if we are doing a comparison with a constant integer.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
-    switch (Pred) {
-    default: break;
-    case ICmpInst::ICMP_UGT:
-      if (CI->isMaxValue(false))                 // A >u MAX -> FALSE
-        return ConstantInt::getFalse(CI->getContext());
-      break;
-    case ICmpInst::ICMP_UGE:
-      if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
-        return ConstantInt::getTrue(CI->getContext());
-      break;
-    case ICmpInst::ICMP_ULT:
-      if (CI->isMinValue(false))                 // A <u MIN -> FALSE
-        return ConstantInt::getFalse(CI->getContext());
-      break;
-    case ICmpInst::ICMP_ULE:
-      if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
-        return ConstantInt::getTrue(CI->getContext());
-      break;
-    case ICmpInst::ICMP_SGT:
-      if (CI->isMaxValue(true))                  // A >s MAX -> FALSE
-        return ConstantInt::getFalse(CI->getContext());
-      break;
-    case ICmpInst::ICMP_SGE:
-      if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
-        return ConstantInt::getTrue(CI->getContext());
-      break;
-    case ICmpInst::ICMP_SLT:
-      if (CI->isMinValue(true))                  // A <s MIN -> FALSE
-        return ConstantInt::getFalse(CI->getContext());
-      break;
-    case ICmpInst::ICMP_SLE:
-      if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
-        return ConstantInt::getTrue(CI->getContext());
-      break;
-    }
+    // Rule out tautological comparisons (eg., ult 0 or uge 0).
+    ConstantRange RHS_CR = ICmpInst::makeConstantRange(Pred, CI->getValue());
+    if (RHS_CR.isEmptySet())
+      return ConstantInt::getFalse(CI->getContext());
+    if (RHS_CR.isFullSet())
+      return ConstantInt::getTrue(CI->getContext());
 
-    // TODO: integer div and rem with constant RHS all produce values in a
-    // constant range. We should check whether the comparison is a tautology.
+    // Many binary operators with constant RHS have easy to compute constant
+    // range.  Use them to check whether the comparison is a tautology.
+    uint32_t Width = CI->getBitWidth();
+    APInt Lower = APInt(Width, 0);
+    APInt Upper = APInt(Width, 0);
+    ConstantInt *CI2;
+    if (match(LHS, m_URem(m_Value(), m_ConstantInt(CI2)))) {
+      // 'urem x, CI2' produces [0, CI2).
+      Upper = CI2->getValue();
+    } else if (match(LHS, m_SRem(m_Value(), m_ConstantInt(CI2)))) {
+      // 'srem x, CI2' produces (-|CI2|, |CI2|).
+      Upper = CI2->getValue().abs();
+      Lower = (-Upper) + 1;
+    } else if (match(LHS, m_UDiv(m_Value(), m_ConstantInt(CI2)))) {
+      // 'udiv x, CI2' produces [0, UINT_MAX / CI2].
+      APInt NegOne = APInt::getAllOnesValue(Width);
+      if (!CI2->isZero())
+        Upper = NegOne.udiv(CI2->getValue()) + 1;
+    } else if (match(LHS, m_SDiv(m_Value(), m_ConstantInt(CI2)))) {
+      // 'sdiv x, CI2' produces [INT_MIN / CI2, INT_MAX / CI2].
+      APInt IntMin = APInt::getSignedMinValue(Width);
+      APInt IntMax = APInt::getSignedMaxValue(Width);
+      APInt Val = CI2->getValue().abs();
+      if (!Val.isMinValue()) {
+        Lower = IntMin.sdiv(Val);
+        Upper = IntMax.sdiv(Val) + 1;
+      }
+    } else if (match(LHS, m_LShr(m_Value(), m_ConstantInt(CI2)))) {
+      // 'lshr x, CI2' produces [0, UINT_MAX >> CI2].
+      APInt NegOne = APInt::getAllOnesValue(Width);
+      if (CI2->getValue().ult(Width))
+        Upper = NegOne.lshr(CI2->getValue()) + 1;
+    } else if (match(LHS, m_AShr(m_Value(), m_ConstantInt(CI2)))) {
+      // 'ashr x, CI2' produces [INT_MIN >> CI2, INT_MAX >> CI2].
+      APInt IntMin = APInt::getSignedMinValue(Width);
+      APInt IntMax = APInt::getSignedMaxValue(Width);
+      if (CI2->getValue().ult(Width)) {
+        Lower = IntMin.ashr(CI2->getValue());
+        Upper = IntMax.ashr(CI2->getValue()) + 1;
+      }
+    } else if (match(LHS, m_Or(m_Value(), m_ConstantInt(CI2)))) {
+      // 'or x, CI2' produces [CI2, UINT_MAX].
+      Lower = CI2->getValue();
+    } else if (match(LHS, m_And(m_Value(), m_ConstantInt(CI2)))) {
+      // 'and x, CI2' produces [0, CI2].
+      Upper = CI2->getValue() + 1;
+    }
+    if (Lower != Upper) {
+      ConstantRange LHS_CR = ConstantRange(Lower, Upper);
+      if (RHS_CR.contains(LHS_CR))
+        return ConstantInt::getTrue(RHS->getContext());
+      if (RHS_CR.inverse().contains(LHS_CR))
+        return ConstantInt::getFalse(RHS->getContext());
+    }
   }
 
   // Compare of cast, for example (zext X) != 0 -> X != 0
