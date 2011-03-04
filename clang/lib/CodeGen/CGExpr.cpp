@@ -15,6 +15,7 @@
 #include "CodeGenModule.h"
 #include "CGCall.h"
 #include "CGCXXABI.h"
+#include "CGDebugInfo.h"
 #include "CGRecordLayout.h"
 #include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
@@ -1936,6 +1937,12 @@ LValue CodeGenFunction::EmitOpaqueValueLValue(const OpaqueValueExpr *e) {
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E, 
                                      ReturnValueSlot ReturnValue) {
+  if (CGDebugInfo *DI = getDebugInfo()) {
+    DI->setLocation(E->getLocStart());
+    DI->UpdateLineDirectiveRegion(Builder);
+    DI->EmitStopPoint(Builder);
+  }
+
   // Builtins never have block type.
   if (E->getCallee()->getType()->isBlockPointerType())
     return EmitBlockCallExpr(E, ReturnValue);
