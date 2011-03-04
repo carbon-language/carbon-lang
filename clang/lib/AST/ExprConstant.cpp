@@ -42,25 +42,25 @@ using llvm::APFloat;
 /// rules.  For example, the RHS of (0 && foo()) is not evaluated.  We can
 /// evaluate the expression regardless of what the RHS is, but C only allows
 /// certain things in certain situations.
-struct EvalInfo {
-  const ASTContext &Ctx;
-
-  /// EvalResult - Contains information about the evaluation.
-  Expr::EvalResult &EvalResult;
-
-  llvm::DenseMap<const OpaqueValueExpr*, APValue> OpaqueValues;
-  const APValue *getOpaqueValue(const OpaqueValueExpr *e) {
-    llvm::DenseMap<const OpaqueValueExpr*, APValue>::iterator
-      i = OpaqueValues.find(e);
-    if (i == OpaqueValues.end()) return 0;
-    return &i->second;
-  }
-
-  EvalInfo(const ASTContext &ctx, Expr::EvalResult& evalresult)
-    : Ctx(ctx), EvalResult(evalresult) {}
-};
-
 namespace {
+  struct EvalInfo {
+    const ASTContext &Ctx;
+
+    /// EvalResult - Contains information about the evaluation.
+    Expr::EvalResult &EvalResult;
+
+    typedef llvm::DenseMap<const OpaqueValueExpr*, APValue> MapTy;
+    MapTy OpaqueValues;
+    const APValue *getOpaqueValue(const OpaqueValueExpr *e) const {
+      MapTy::const_iterator i = OpaqueValues.find(e);
+      if (i == OpaqueValues.end()) return 0;
+      return &i->second;
+    }
+
+    EvalInfo(const ASTContext &ctx, Expr::EvalResult &evalresult)
+      : Ctx(ctx), EvalResult(evalresult) {}
+  };
+
   struct ComplexValue {
   private:
     bool IsInt;

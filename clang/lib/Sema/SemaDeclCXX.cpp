@@ -2854,12 +2854,14 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
 }
 
 /// \brief Data used with FindHiddenVirtualMethod
-struct FindHiddenVirtualMethodData {
-  Sema *S;
-  CXXMethodDecl *Method;
-  llvm::SmallPtrSet<const CXXMethodDecl *, 8> OverridenAndUsingBaseMethods;
-  llvm::SmallVector<CXXMethodDecl *, 8> OverloadedMethods;
-};
+namespace {
+  struct FindHiddenVirtualMethodData {
+    Sema *S;
+    CXXMethodDecl *Method;
+    llvm::SmallPtrSet<const CXXMethodDecl *, 8> OverridenAndUsingBaseMethods;
+    llvm::SmallVector<CXXMethodDecl *, 8> OverloadedMethods;
+  };
+}
 
 /// \brief Member lookup function that determines whether a given C++
 /// method overloads virtual methods in a base class without overriding any,
