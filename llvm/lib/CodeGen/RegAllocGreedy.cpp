@@ -116,6 +116,8 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
   /// All basic blocks where the current register is live.
   SmallVector<SpillPlacement::BlockConstraint, 8> SpillConstraints;
 
+  typedef std::pair<SlotIndex, SlotIndex> IndexPair;
+
   /// For every instruction in SA->UseSlots, store the previous non-copy
   /// instruction.
   SmallVector<SlotIndex, 8> PrevSlot;
@@ -146,6 +148,7 @@ private:
   bool checkUncachedInterference(LiveInterval&, unsigned);
   LiveInterval *getSingleInterference(LiveInterval&, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
+  void mapGlobalInterference(unsigned, SmallVectorImpl<IndexPair>&);
   float calcInterferenceInfo(LiveInterval&, unsigned);
   float calcGlobalSplitCost(const BitVector&);
   void splitAroundRegion(LiveInterval&, unsigned, const BitVector&,
@@ -434,6 +437,54 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
 //                              Region Splitting
 //===----------------------------------------------------------------------===//
 
+/// mapGlobalInterference - Compute a map of the interference from PhysReg and
+/// its aliases in each block in SA->LiveBlocks.
+/// If LiveBlocks[i] is live-in, Ranges[i].first is the first interference.
+/// If LiveBlocks[i] is live-out, Ranges[i].second is the last interference.
+void RAGreedy::mapGlobalInterference(unsigned PhysReg,
+                                     SmallVectorImpl<IndexPair> &Ranges) {
+  Ranges.assign(SA->LiveBlocks.size(), IndexPair());
+  LiveInterval &VirtReg = const_cast<LiveInterval&>(SA->getParent());
+  for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
+    if (!query(VirtReg, *AI).checkInterference())
+      continue;
+    LiveIntervalUnion::SegmentIter IntI =
+      PhysReg2LiveUnion[*AI].find(VirtReg.beginIndex());
+    if (!IntI.valid())
+      continue;
+    for (unsigned i = 0, e = SA->LiveBlocks.size(); i != e; ++i) {
+      const SplitAnalysis::BlockInfo &BI = SA->LiveBlocks[i];
+      IndexPair &IP = Ranges[i];
+
+      // Skip interference-free blocks.
+      if (IntI.start() >= BI.Stop)
+        continue;
+
+      // First interference in block.
+      if (BI.LiveIn) {
+        IntI.advanceTo(BI.Start);
+        if (!IntI.valid())
+          break;
+        if (IntI.start() >= BI.Stop)
+          continue;
+        if (!IP.first.isValid() || IntI.start() < IP.first)
+          IP.first = IntI.start();
+      }
+
+      // Last interference in block.
+      if (BI.LiveOut) {
+        IntI.advanceTo(BI.Stop);
+        if (!IntI.valid() || IntI.start() >= BI.Stop)
+          --IntI;
+        if (IntI.stop() <= BI.Start)
+          continue;
+        if (!IP.second.isValid() || IntI.stop() > IP.second)
+          IP.second = IntI.stop();
+      }
+    }
+  }
+}
+
 /// calcInterferenceInfo - Compute per-block outgoing and ingoing constraints
 /// when considering interference from PhysReg. Also compute an optimistic local
 /// cost of this interference pattern.
@@ -651,47 +702,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   });
 
   // First compute interference ranges in the live blocks.
-  typedef std::pair<SlotIndex, SlotIndex> IndexPair;
   SmallVector<IndexPair, 8> InterferenceRanges;
-  InterferenceRanges.resize(SA->LiveBlocks.size());
-  for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
-    if (!query(VirtReg, *AI).checkInterference())
-      continue;
-    LiveIntervalUnion::SegmentIter IntI =
-      PhysReg2LiveUnion[*AI].find(VirtReg.beginIndex());
-    if (!IntI.valid())
-      continue;
-    for (unsigned i = 0, e = SA->LiveBlocks.size(); i != e; ++i) {
-      const SplitAnalysis::BlockInfo &BI = SA->LiveBlocks[i];
-      IndexPair &IP = InterferenceRanges[i];
-
-      // Skip interference-free blocks.
-      if (IntI.start() >= BI.Stop)
-        continue;
-
-      // First interference in block.
-      if (BI.LiveIn) {
-        IntI.advanceTo(BI.Start);
-        if (!IntI.valid())
-          break;
-        if (IntI.start() >= BI.Stop)
-          continue;
-        if (!IP.first.isValid() || IntI.start() < IP.first)
-          IP.first = IntI.start();
-      }
-
-      // Last interference in block.
-      if (BI.LiveOut) {
-        IntI.advanceTo(BI.Stop);
-        if (!IntI.valid() || IntI.start() >= BI.Stop)
-          --IntI;
-        if (IntI.stop() <= BI.Start)
-          continue;
-        if (!IP.second.isValid() || IntI.stop() > IP.second)
-          IP.second = IntI.stop();
-      }
-    }
-  }
+  mapGlobalInterference(PhysReg, InterferenceRanges);
 
   SmallVector<LiveInterval*, 4> SpillRegs;
   LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
