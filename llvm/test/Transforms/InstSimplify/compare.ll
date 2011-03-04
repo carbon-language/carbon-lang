@@ -253,15 +253,6 @@ define i1 @srem1(i32 %X) {
 ; CHECK: ret i1 false
 }
 
-define i1 @srem2(i32 %X, i32 %Y) {
-; CHECK: @srem2
-  %neg = sub i32 %Y, 0
-  %A = srem i32 %X, %Y
-  %B = icmp slt i32 %A, %neg
-  ret i1 %B
-; CHECK: ret i1 true
-}
-
 define i1 @udiv1(i32 %X) {
 ; CHECK: @udiv1
   %A = udiv i32 %X, 1000000

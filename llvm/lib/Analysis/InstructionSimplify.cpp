@@ -1700,21 +1700,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
-  if (LBO && match(LBO, m_SRem(m_Value(), m_Specific(RHS)))) {
-    switch (Pred) {
-    default:
-      break;
-    case ICmpInst::ICMP_EQ:
-    case ICmpInst::ICMP_SGT:
-    case ICmpInst::ICMP_SGE:
-      return ConstantInt::getFalse(RHS->getContext());
-    case ICmpInst::ICMP_NE:
-    case ICmpInst::ICMP_SLT:
-    case ICmpInst::ICMP_SLE:
-      return ConstantInt::getTrue(RHS->getContext());
-    }
-  }
-
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
   if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
