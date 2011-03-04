@@ -26,9 +26,9 @@ def SDT_MipsCMov         : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>,
                                          SDTCisInt<4>]>;
 def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
-def SDT_MipsMAddMSub     : SDTypeProfile<0, 4, 
+def SDT_MipsMAddMSub     : SDTypeProfile<0, 4,
                                          [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>,
-                                          SDTCisSameAs<1, 2>, 
+                                          SDTCisSameAs<1, 2>,
                                           SDTCisSameAs<2, 3>]>;
 
 
@@ -165,7 +165,7 @@ class ArithOverflowI<bits<6> op, string instr_asm, SDNode OpNode,
 let rd = 0, shamt = 0, Defs = [HI, LO], Uses = [HI, LO] in
 class MArithR<bits<6> func, string instr_asm, SDNode op> :
   FR<0x1c, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
-     !strconcat(instr_asm, "\t$rs, $rt"), 
+     !strconcat(instr_asm, "\t$rs, $rt"),
      [(op CPURegs:$rs, CPURegs:$rt, LO, HI)], IIImul>;
 
 //  Logical
@@ -185,7 +185,7 @@ class LogicNOR<bits<6> op, bits<6> func, string instr_asm>:
      [(set CPURegs:$dst, (not (or CPURegs:$b, CPURegs:$c)))], IIAlu>;
 
 // Shifts
-class LogicR_shift_rotate_imm<bits<6> func, bits<5> _rs, string instr_asm, 
+class LogicR_shift_rotate_imm<bits<6> func, bits<5> _rs, string instr_asm,
                               SDNode OpNode>:
   FR<0x00, func, (outs CPURegs:$dst), (ins CPURegs:$b, shamt:$c),
      !strconcat(instr_asm, "\t$dst, $b, $c"),
@@ -193,7 +193,7 @@ class LogicR_shift_rotate_imm<bits<6> func, bits<5> _rs, string instr_asm,
   let rs = _rs;
 }
 
-class LogicR_shift_rotate_reg<bits<6> func, bits<5> _shamt, string instr_asm, 
+class LogicR_shift_rotate_reg<bits<6> func, bits<5> _shamt, string instr_asm,
                               SDNode OpNode>:
   FR<0x00, func, (outs CPURegs:$dst), (ins CPURegs:$c, CPURegs:$b),
      !strconcat(instr_asm, "\t$dst, $b, $c"),

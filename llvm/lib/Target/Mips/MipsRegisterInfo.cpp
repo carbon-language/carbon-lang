@@ -38,7 +38,7 @@
 
 using namespace llvm;
 
-MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST, 
+MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST,
                                    const TargetInstrInfo &tii)
   : MipsGenRegisterInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     Subtarget(ST), TII(tii) {}
@@ -46,7 +46,7 @@ MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST,
 /// getRegisterNumbering - Given the enum value for some register, e.g.
 /// Mips::RA, return the number that it corresponds to (e.g. 31).
 unsigned MipsRegisterInfo::
-getRegisterNumbering(unsigned RegEnum) 
+getRegisterNumbering(unsigned RegEnum)
 {
   switch (RegEnum) {
     case Mips::ZERO : case Mips::F0 : case Mips::D0 : return 0;
@@ -82,30 +82,30 @@ getRegisterNumbering(unsigned RegEnum)
     case Mips::FP   : case Mips::F30: case Mips::D15: return 30;
     case Mips::RA   : case Mips::F31: return 31;
     default: llvm_unreachable("Unknown register number!");
-  }    
+  }
   return 0; // Not reached
 }
 
 unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 
 //===----------------------------------------------------------------------===//
-// Callee Saved Registers methods 
+// Callee Saved Registers methods
 //===----------------------------------------------------------------------===//
 
 /// Mips Callee Saved Registers
 const unsigned* MipsRegisterInfo::
-getCalleeSavedRegs(const MachineFunction *MF) const 
+getCalleeSavedRegs(const MachineFunction *MF) const
 {
   // Mips callee-save register range is $16-$23, $f20-$f30
   static const unsigned SingleFloatOnlyCalleeSavedRegs[] = {
-    Mips::S0, Mips::S1, Mips::S2, Mips::S3, 
+    Mips::S0, Mips::S1, Mips::S2, Mips::S3,
     Mips::S4, Mips::S5, Mips::S6, Mips::S7,
-    Mips::F20, Mips::F21, Mips::F22, Mips::F23, Mips::F24, Mips::F25, 
+    Mips::F20, Mips::F21, Mips::F22, Mips::F23, Mips::F24, Mips::F25,
     Mips::F26, Mips::F27, Mips::F28, Mips::F29, Mips::F30, 0
   };
 
   static const unsigned BitMode32CalleeSavedRegs[] = {
-    Mips::S0, Mips::S1, Mips::S2, Mips::S3, 
+    Mips::S0, Mips::S1, Mips::S2, Mips::S3,
     Mips::S4, Mips::S5, Mips::S6, Mips::S7,
     Mips::F20, Mips::F22, Mips::F24, Mips::F26, Mips::F28, Mips::F30, 0
   };
@@ -132,11 +132,11 @@ getReservedRegs(const MachineFunction &MF) const {
   if (!Subtarget.isSingleFloat())
     for (unsigned FReg=(Mips::F0)+1; FReg < Mips::F30; FReg+=2)
       Reserved.set(FReg);
-  
+
   return Reserved;
 }
 
-// This function eliminate ADJCALLSTACKDOWN, 
+// This function eliminate ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
 void MipsRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
@@ -157,7 +157,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   unsigned i = 0;
   while (!MI.getOperand(i).isFI()) {
     ++i;
-    assert(i < MI.getNumOperands() && 
+    assert(i < MI.getNumOperands() &&
            "Instr doesn't have FrameIndex operand!");
   }
 

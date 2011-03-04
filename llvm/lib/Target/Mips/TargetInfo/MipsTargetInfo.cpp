@@ -14,7 +14,7 @@ using namespace llvm;
 
 Target llvm::TheMipsTarget, llvm::TheMipselTarget;
 
-extern "C" void LLVMInitializeMipsTargetInfo() { 
+extern "C" void LLVMInitializeMipsTargetInfo() {
   RegisterTarget<Triple::mips> X(TheMipsTarget, "mips", "Mips");
 
   RegisterTarget<Triple::mipsel> Y(TheMipselTarget, "mipsel", "Mipsel");

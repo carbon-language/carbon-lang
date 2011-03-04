@@ -1,23 +1,23 @@
 //===- MipsCallingConv.td - Calling Conventions for Mips ---*- tablegen -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 // This describes the calling conventions for Mips architecture.
 //===----------------------------------------------------------------------===//
 
 /// CCIfSubtarget - Match if the current subtarget has a feature F.
-class CCIfSubtarget<string F, CCAction A>: 
+class CCIfSubtarget<string F, CCAction A>:
   CCIf<!strconcat("State.getTarget().getSubtarget<MipsSubtarget>().", F), A>;
 
 //===----------------------------------------------------------------------===//
 // Mips O32 Calling Convention
 //===----------------------------------------------------------------------===//
 
-// Only the return rules are defined here for O32. The rules for argument 
+// Only the return rules are defined here for O32. The rules for argument
 // passing are defined in MipsISelLowering.cpp.
 def RetCC_MipsO32 : CallingConv<[
   // i32 are returned in registers V0, V1
@@ -41,15 +41,15 @@ def CC_MipsEABI : CallingConv<[
   // Integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[A0, A1, A2, A3, T0, T1, T2, T3]>>,
 
-  // Single fp arguments are passed in pairs within 32-bit mode 
-  CCIfType<[f32], CCIfSubtarget<"isSingleFloat()", 
+  // Single fp arguments are passed in pairs within 32-bit mode
+  CCIfType<[f32], CCIfSubtarget<"isSingleFloat()",
                   CCAssignToReg<[F12, F13, F14, F15, F16, F17, F18, F19]>>>,
 
-  CCIfType<[f32], CCIfSubtarget<"isNotSingleFloat()", 
+  CCIfType<[f32], CCIfSubtarget<"isNotSingleFloat()",
                   CCAssignToReg<[F12, F14, F16, F18]>>>,
 
   // The first 4 doubl fp arguments are passed in single fp registers.
-  CCIfType<[f64], CCIfSubtarget<"isNotSingleFloat()", 
+  CCIfType<[f64], CCIfSubtarget<"isNotSingleFloat()",
                   CCAssignToReg<[D6, D7, D8, D9]>>>,
 
   // Integer values get stored in stack slots that are 4 bytes in

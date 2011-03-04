@@ -14,7 +14,7 @@ def ALU     : FuncUnit;
 def IMULDIV : FuncUnit;
 
 //===----------------------------------------------------------------------===//
-// Instruction Itinerary classes used for Mips 
+// Instruction Itinerary classes used for Mips
 //===----------------------------------------------------------------------===//
 def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;

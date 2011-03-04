@@ -22,8 +22,8 @@
 //===----------------------------------------------------------------------===//
 
 // Generic Mips Format
-class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern, 
-               InstrItinClass itin>: Instruction 
+class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
+               InstrItinClass itin>: Instruction
 {
   field bits<32> Inst;
 
@@ -32,8 +32,8 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
   bits<6> opcode;
 
   // Top 5 bits are the 'opcode' field
-  let Inst{31-26} = opcode;   
-  
+  let Inst{31-26} = opcode;
+
   dag OutOperandList = outs;
   dag InOperandList  = ins;
 
@@ -52,7 +52,7 @@ class MipsPseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
 
 class FR<bits<6> op, bits<6> _funct, dag outs, dag ins, string asmstr,
          list<dag> pattern, InstrItinClass itin>:
-      MipsInst<outs, ins, asmstr, pattern, itin> 
+      MipsInst<outs, ins, asmstr, pattern, itin>
 {
   bits<5>  rd;
   bits<5>  rs;
@@ -64,7 +64,7 @@ class FR<bits<6> op, bits<6> _funct, dag outs, dag ins, string asmstr,
   let funct  = _funct;
 
   let Inst{25-21} = rs;
-  let Inst{20-16} = rt; 
+  let Inst{20-16} = rt;
   let Inst{15-11} = rd;
   let Inst{10-6}  = shamt;
   let Inst{5-0}   = funct;
@@ -75,7 +75,7 @@ class FR<bits<6> op, bits<6> _funct, dag outs, dag ins, string asmstr,
 //===----------------------------------------------------------------------===//
 
 class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin>: MipsInst<outs, ins, asmstr, pattern, itin> 
+         InstrItinClass itin>: MipsInst<outs, ins, asmstr, pattern, itin>
 {
   bits<5>  rt;
   bits<5>  rs;
@@ -84,7 +84,7 @@ class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   let opcode = op;
 
   let Inst{25-21} = rs;
-  let Inst{20-16} = rt; 
+  let Inst{20-16} = rt;
   let Inst{15-0}  = imm16;
 }
 
@@ -93,12 +93,12 @@ class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 //===----------------------------------------------------------------------===//
 
 class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin>: MipsInst<outs, ins, asmstr, pattern, itin> 
+         InstrItinClass itin>: MipsInst<outs, ins, asmstr, pattern, itin>
 {
   bits<26> addr;
 
   let opcode = op;
-  
+
   let Inst{25-0} = addr;
 }
 
@@ -119,9 +119,9 @@ class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 // Format FR instruction class in Mips : <|opcode|fmt|ft|fs|fd|funct|>
 //===----------------------------------------------------------------------===//
 
-class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins, 
-          string asmstr, list<dag> pattern> : 
-          MipsInst<outs, ins, asmstr, pattern, NoItinerary> 
+class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins,
+          string asmstr, list<dag> pattern> :
+          MipsInst<outs, ins, asmstr, pattern, NoItinerary>
 {
   bits<5>  fd;
   bits<5>  fs;
@@ -134,7 +134,7 @@ class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins,
   let fmt    = _fmt;
 
   let Inst{25-21} = fmt;
-  let Inst{20-16} = ft; 
+  let Inst{20-16} = ft;
   let Inst{15-11} = fs;
   let Inst{10-6}  = fd;
   let Inst{5-0}   = funct;
@@ -144,8 +144,8 @@ class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins,
 // Format FI instruction class in Mips : <|opcode|base|ft|immediate|>
 //===----------------------------------------------------------------------===//
 
-class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>: 
-          MipsInst<outs, ins, asmstr, pattern, NoItinerary> 
+class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>:
+          MipsInst<outs, ins, asmstr, pattern, NoItinerary>
 {
   bits<5>  ft;
   bits<5>  base;
@@ -154,7 +154,7 @@ class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>:
   let opcode = op;
 
   let Inst{25-21} = base;
-  let Inst{20-16} = ft; 
+  let Inst{20-16} = ft;
   let Inst{15-0}  = imm16;
 }
 
@@ -162,8 +162,8 @@ class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>:
 // Compare instruction class in Mips : <|010001|fmt|ft|fs|0000011|condcode|>
 //===----------------------------------------------------------------------===//
 
-class FCC<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern> : 
-          MipsInst<outs, ins, asmstr, pattern, NoItinerary> 
+class FCC<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern> :
+          MipsInst<outs, ins, asmstr, pattern, NoItinerary>
 {
   bits<5>  fs;
   bits<5>  ft;
@@ -174,7 +174,7 @@ class FCC<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern> :
   let fmt    = _fmt;
 
   let Inst{25-21} = fmt;
-  let Inst{20-16} = ft; 
+  let Inst{20-16} = ft;
   let Inst{15-11} = fs;
   let Inst{10-6}  = 0;
   let Inst{5-4}   = 0b11;

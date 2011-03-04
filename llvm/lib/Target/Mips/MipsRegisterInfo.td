@@ -17,7 +17,7 @@ class MipsReg<string n> : Register<n> {
   let Namespace = "Mips";
 }
 
-class MipsRegWithSubRegs<string n, list<Register> subregs> 
+class MipsRegWithSubRegs<string n, list<Register> subregs>
   : RegisterWithSubRegs<n, subregs> {
   field bits<5> Num;
   let Namespace = "Mips";
@@ -83,7 +83,7 @@ let Namespace = "Mips" in {
   def SP   : MipsGPRReg< 29, "SP">,  DwarfRegNum<[29]>;
   def FP   : MipsGPRReg< 30, "FP">,  DwarfRegNum<[30]>;
   def RA   : MipsGPRReg< 31, "RA">,  DwarfRegNum<[31]>;
-  
+
   /// Mips Single point precision FPU Registers
   def F0  : FPR< 0,  "F0">, DwarfRegNum<[32]>;
   def F1  : FPR< 1,  "F1">, DwarfRegNum<[33]>;
@@ -117,7 +117,7 @@ let Namespace = "Mips" in {
   def F29 : FPR<29, "F29">, DwarfRegNum<[61]>;
   def F30 : FPR<30, "F30">, DwarfRegNum<[62]>;
   def F31 : FPR<31, "F31">, DwarfRegNum<[63]>;
-  
+
   /// Mips Double point precision FPU Registers (aliased
   /// with the single precision to hold 64 bit values)
   def D0  : AFPR< 0,  "F0", [F0,   F1]>, DwarfRegNum<[32]>;
@@ -149,11 +149,11 @@ let Namespace = "Mips" in {
 // Register Classes
 //===----------------------------------------------------------------------===//
 
-def CPURegs : RegisterClass<"Mips", [i32], 32, 
+def CPURegs : RegisterClass<"Mips", [i32], 32,
   // Return Values and Arguments
   [V0, V1, A0, A1, A2, A3,
   // Not preserved across procedure calls
-  T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, 
+  T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,
   // Callee save
   S0, S1, S2, S3, S4, S5, S6, S7,
   // Reserved
@@ -173,16 +173,16 @@ def CPURegs : RegisterClass<"Mips", [i32], 32,
 
 // 64bit fp:
 // * FGR64  - 32 64-bit registers
-// * AFGR64 - 16 32-bit even registers (32-bit FP Mode) 
+// * AFGR64 - 16 32-bit even registers (32-bit FP Mode)
 //
 // 32bit fp:
 // * FGR32 - 16 32-bit even registers
 // * FGR32 - 32 32-bit registers (single float only mode)
-def FGR32 : RegisterClass<"Mips", [f32], 32, 
+def FGR32 : RegisterClass<"Mips", [f32], 32,
   // Return Values and Arguments
   [F0, F1, F2, F3, F12, F13, F14, F15,
   // Not preserved across procedure calls
-  F4, F5, F6, F7, F8, F9, F10, F11, F16, F17, F18, F19, 
+  F4, F5, F6, F7, F8, F9, F10, F11, F16, F17, F18, F19,
   // Callee save
   F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
   // Reserved
@@ -195,17 +195,17 @@ def FGR32 : RegisterClass<"Mips", [f32], 32,
   let MethodBodies = [{
 
     static const unsigned MIPS_FGR32[] = {
-      Mips::F0,  Mips::F1,  Mips::F2,  Mips::F3,  Mips::F12,  Mips::F13, 
-      Mips::F14, Mips::F15, Mips::F4,  Mips::F5,  Mips::F6,   Mips::F7, 
-      Mips::F8,  Mips::F9,  Mips::F10, Mips::F11, Mips::F16,  Mips::F17, 
-      Mips::F18, Mips::F19, Mips::F20, Mips::F21, Mips::F22,  Mips::F23, 
-      Mips::F24, Mips::F25, Mips::F26, Mips::F27, Mips::F28,  Mips::F29, 
+      Mips::F0,  Mips::F1,  Mips::F2,  Mips::F3,  Mips::F12,  Mips::F13,
+      Mips::F14, Mips::F15, Mips::F4,  Mips::F5,  Mips::F6,   Mips::F7,
+      Mips::F8,  Mips::F9,  Mips::F10, Mips::F11, Mips::F16,  Mips::F17,
+      Mips::F18, Mips::F19, Mips::F20, Mips::F21, Mips::F22,  Mips::F23,
+      Mips::F24, Mips::F25, Mips::F26, Mips::F27, Mips::F28,  Mips::F29,
       Mips::F30
     };
 
     static const unsigned MIPS_SVR4_FGR32[] = {
-      Mips::F0,  Mips::F2,  Mips::F12, Mips::F14, Mips::F4, 
-      Mips::F6,  Mips::F8,  Mips::F10, Mips::F16, Mips::F18, 
+      Mips::F0,  Mips::F2,  Mips::F12, Mips::F14, Mips::F4,
+      Mips::F6,  Mips::F8,  Mips::F10, Mips::F16, Mips::F18,
       Mips::F20, Mips::F22, Mips::F24, Mips::F26, Mips::F28, Mips::F30,
     };
 
@@ -217,7 +217,7 @@ def FGR32 : RegisterClass<"Mips", [f32], 32,
       if (Subtarget.isSingleFloat())
         return MIPS_FGR32;
       else
-        return MIPS_SVR4_FGR32; 
+        return MIPS_SVR4_FGR32;
     }
 
     FGR32Class::iterator
@@ -233,11 +233,11 @@ def FGR32 : RegisterClass<"Mips", [f32], 32,
   }];
 }
 
-def AFGR64 : RegisterClass<"Mips", [f64], 64, 
+def AFGR64 : RegisterClass<"Mips", [f64], 64,
   // Return Values and Arguments
   [D0, D1, D6, D7,
   // Not preserved across procedure calls
-  D2, D3, D4, D5, D8, D9, 
+  D2, D3, D4, D5, D8, D9,
   // Callee save
   D10, D11, D12, D13, D14,
   // Reserved

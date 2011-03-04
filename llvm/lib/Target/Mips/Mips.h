@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the entry points for global functions defined in 
+// This file contains the entry points for global functions defined in
 // the LLVM Mips back-end.
 //
 //===----------------------------------------------------------------------===//

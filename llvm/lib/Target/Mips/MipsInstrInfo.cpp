@@ -36,7 +36,7 @@ static bool isZeroImm(const MachineOperand &op) {
 /// not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than loading from the stack slot.
 unsigned MipsInstrInfo::
-isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const 
+isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const
 {
   if ((MI->getOpcode() == Mips::LW) || (MI->getOpcode() == Mips::LWC1) ||
       (MI->getOpcode() == Mips::LDC1)) {
@@ -57,7 +57,7 @@ isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const
 /// not, return 0.  This predicate must return 0 if the instruction has
 /// any side effects other than storing to the stack slot.
 unsigned MipsInstrInfo::
-isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const 
+isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const
 {
   if ((MI->getOpcode() == Mips::SW) || (MI->getOpcode() == Mips::SWC1) ||
       (MI->getOpcode() == Mips::SDC1)) {
@@ -74,7 +74,7 @@ isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const
 /// insertNoop - If data hazard condition is found insert the target nop
 /// instruction.
 void MipsInstrInfo::
-insertNoop(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const 
+insertNoop(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI) const
 {
   DebugLoc DL;
   BuildMI(MBB, MI, DL, get(Mips::NOP));
@@ -136,7 +136,7 @@ copyPhysReg(MachineBasicBlock &MBB,
       .addReg(SrcReg, getKillRegState(KillSrc));
     return;
   }
-  
+
   if (Mips::AFGR64RegClass.contains(DestReg, SrcReg)) {
     BuildMI(MBB, I, DL, get(Mips::FMOV_D32), DestReg)
       .addReg(SrcReg, getKillRegState(KillSrc));
@@ -153,13 +153,13 @@ copyPhysReg(MachineBasicBlock &MBB,
 
 void MipsInstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                    unsigned SrcReg, bool isKill, int FI, 
+                    unsigned SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC,
                     const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
-  if (RC == Mips::CPURegsRegisterClass) 
+  if (RC == Mips::CPURegsRegisterClass)
     BuildMI(MBB, I, DL, get(Mips::SW)).addReg(SrcReg, getKillRegState(isKill))
           .addImm(0).addFrameIndex(FI);
   else if (RC == Mips::FGR32RegisterClass)
@@ -171,7 +171,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
         .addReg(SrcReg, getKillRegState(isKill))
         .addImm(0).addFrameIndex(FI);
     } else {
-      const TargetRegisterInfo *TRI = 
+      const TargetRegisterInfo *TRI =
         MBB.getParent()->getTarget().getRegisterInfo();
       const unsigned *SubSet = TRI->getSubRegisters(SrcReg);
       BuildMI(MBB, I, DL, get(Mips::SWC1))
@@ -189,12 +189,12 @@ void MipsInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC,
-                     const TargetRegisterInfo *TRI) const 
+                     const TargetRegisterInfo *TRI) const
 {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
-  if (RC == Mips::CPURegsRegisterClass) 
+  if (RC == Mips::CPURegsRegisterClass)
     BuildMI(MBB, I, DL, get(Mips::LW), DestReg).addImm(0).addFrameIndex(FI);
   else if (RC == Mips::FGR32RegisterClass)
     BuildMI(MBB, I, DL, get(Mips::LWC1), DestReg).addImm(0).addFrameIndex(FI);
@@ -202,7 +202,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     if (!TM.getSubtarget<MipsSubtarget>().isMips1()) {
       BuildMI(MBB, I, DL, get(Mips::LDC1), DestReg).addImm(0).addFrameIndex(FI);
     } else {
-      const TargetRegisterInfo *TRI = 
+      const TargetRegisterInfo *TRI =
         MBB.getParent()->getTarget().getRegisterInfo();
       const unsigned *SubSet = TRI->getSubRegisters(DestReg);
       BuildMI(MBB, I, DL, get(Mips::LWC1), SubSet[0])
@@ -218,9 +218,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 // Branch Analysis
 //===----------------------------------------------------------------------===//
 
-/// GetCondFromBranchOpc - Return the Mips CC that matches 
+/// GetCondFromBranchOpc - Return the Mips CC that matches
 /// the correspondent Branch instruction opcode.
-static Mips::CondCode GetCondFromBranchOpc(unsigned BrOpc) 
+static Mips::CondCode GetCondFromBranchOpc(unsigned BrOpc)
 {
   switch (BrOpc) {
   default: return Mips::COND_INVALID;
@@ -231,15 +231,15 @@ static Mips::CondCode GetCondFromBranchOpc(unsigned BrOpc)
   case Mips::BLTZ : return Mips::COND_LZ;
   case Mips::BLEZ : return Mips::COND_LEZ;
 
-  // We dont do fp branch analysis yet!  
-  case Mips::BC1T : 
+  // We dont do fp branch analysis yet!
+  case Mips::BC1T :
   case Mips::BC1F : return Mips::COND_INVALID;
   }
 }
 
 /// GetCondBranchFromCond - Return the Branch instruction
 /// opcode that matches the cc.
-unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC) 
+unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC)
 {
   switch (CC) {
   default: llvm_unreachable("Illegal condition code!");
@@ -286,9 +286,9 @@ unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC)
   }
 }
 
-/// GetOppositeBranchCondition - Return the inverse of the specified 
+/// GetOppositeBranchCondition - Return the inverse of the specified
 /// condition, e.g. turning COND_E to COND_NE.
-Mips::CondCode Mips::GetOppositeBranchCondition(Mips::CondCode CC) 
+Mips::CondCode Mips::GetOppositeBranchCondition(Mips::CondCode CC)
 {
   switch (CC) {
   default: llvm_unreachable("Illegal condition code!");
@@ -317,11 +317,11 @@ Mips::CondCode Mips::GetOppositeBranchCondition(Mips::CondCode CC)
   }
 }
 
-bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, 
+bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                   MachineBasicBlock *&TBB,
                                   MachineBasicBlock *&FBB,
                                   SmallVectorImpl<MachineOperand> &Cond,
-                                  bool AllowModify) const 
+                                  bool AllowModify) const
 {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
@@ -335,10 +335,10 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   }
   if (!isUnpredicatedTerminator(I))
     return false;
-  
+
   // Get the last instruction in the block.
   MachineInstr *LastInst = I;
-  
+
   // If there is only one terminator instruction, process it.
   unsigned LastOpc = LastInst->getOpcode();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
@@ -370,10 +370,10 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       return false;
     }
   }
-  
+
   // Get the instruction before it if it is a terminator.
   MachineInstr *SecondLastInst = I;
-  
+
   // If there are three terminators, we don't know what sort of block this is.
   if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
     return true;
@@ -395,8 +395,8 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
-  
-  // If the block ends with two unconditional branches, handle it. The last 
+
+  // If the block ends with two unconditional branches, handle it. The last
   // one is not executed, so remove it.
   if ((SecondLastOpc == Mips::J) && (LastOpc == Mips::J)) {
     TBB = SecondLastInst->getOperand(0).getMBB();
@@ -411,7 +411,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 }
 
 unsigned MipsInstrInfo::
-InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB, 
+InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
              MachineBasicBlock *FBB,
              const SmallVectorImpl<MachineOperand> &Cond,
              DebugLoc DL) const {
@@ -437,10 +437,10 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
         BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg())
                           .addMBB(TBB);
 
-    }                             
+    }
     return 1;
   }
-  
+
   // Two-way Conditional branch.
   unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
   const TargetInstrDesc &TID = get(Opc);
@@ -456,7 +456,7 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 }
 
 unsigned MipsInstrInfo::
-RemoveBranch(MachineBasicBlock &MBB) const 
+RemoveBranch(MachineBasicBlock &MBB) const
 {
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin()) return 0;
@@ -466,31 +466,31 @@ RemoveBranch(MachineBasicBlock &MBB) const
       return 0;
     --I;
   }
-  if (I->getOpcode() != Mips::J && 
+  if (I->getOpcode() != Mips::J &&
       GetCondFromBranchOpc(I->getOpcode()) == Mips::COND_INVALID)
     return 0;
-  
+
   // Remove the branch.
   I->eraseFromParent();
-  
+
   I = MBB.end();
-  
+
   if (I == MBB.begin()) return 1;
   --I;
   if (GetCondFromBranchOpc(I->getOpcode()) == Mips::COND_INVALID)
     return 1;
-  
+
   // Remove the branch.
   I->eraseFromParent();
   return 2;
 }
 
-/// ReverseBranchCondition - Return the inverse opcode of the 
+/// ReverseBranchCondition - Return the inverse opcode of the
 /// specified Branch instruction.
 bool MipsInstrInfo::
-ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const 
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
 {
-  assert( (Cond.size() == 3 || Cond.size() == 2) && 
+  assert( (Cond.size() == 3 || Cond.size() == 2) &&
           "Invalid Mips branch condition!");
   Cond[0].setImm(GetOppositeBranchCondition((Mips::CondCode)Cond[0].getImm()));
   return false;

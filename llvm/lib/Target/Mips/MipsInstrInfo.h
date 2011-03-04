@@ -81,7 +81,7 @@ namespace Mips {
     COND_NE,
     COND_INVALID
   };
-  
+
   // Turn condition code into conditional branch opcode.
   unsigned GetCondBranchFromCond(CondCode CC);
 
@@ -90,7 +90,7 @@ namespace Mips {
   CondCode GetOppositeBranchCondition(Mips::CondCode CC);
 
   /// MipsCCToString - Map each FP condition code to its string
-  inline static const char *MipsFCCToString(Mips::CondCode CC) 
+  inline static const char *MipsFCCToString(Mips::CondCode CC)
   {
     switch (CC) {
       default: llvm_unreachable("Unknown condition code");
@@ -98,7 +98,7 @@ namespace Mips {
       case FCOND_T:   return "f";
       case FCOND_UN:
       case FCOND_OR:  return "un";
-      case FCOND_EQ: 
+      case FCOND_EQ:
       case FCOND_NEQ: return "eq";
       case FCOND_UEQ:
       case FCOND_OGL: return "ueq";
@@ -138,25 +138,25 @@ namespace MipsII {
   enum TOF {
     //===------------------------------------------------------------------===//
     // Mips Specific MachineOperand flags.
- 
+
     MO_NO_FLAG,
 
     /// MO_GOT - Represents the offset into the global offset table at which
     /// the address the relocation entry symbol resides during execution.
     MO_GOT,
 
-    /// MO_GOT_CALL - Represents the offset into the global offset table at 
-    /// which the address of a call site relocation entry symbol resides 
+    /// MO_GOT_CALL - Represents the offset into the global offset table at
+    /// which the address of a call site relocation entry symbol resides
     /// during execution. This is different from the above since this flag
     /// can only be present in call instructions.
     MO_GOT_CALL,
 
-    /// MO_GPREL - Represents the offset from the current gp value to be used 
+    /// MO_GPREL - Represents the offset from the current gp value to be used
     /// for the relocatable object file being produced.
     MO_GPREL,
 
     /// MO_ABS_HILO - Represents the hi or low part of an absolute symbol
-    /// address. 
+    /// address.
     MO_ABS_HILO
 
   };
@@ -181,7 +181,7 @@ public:
   /// any side effects other than loading from the stack slot.
   virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
                                        int &FrameIndex) const;
-  
+
   /// isStoreToStackSlot - If the specified machine instruction is a direct
   /// store to a stack slot, return the virtual or physical register number of
   /// the source reg along with the FrameIndex of the loaded stack slot.  If
@@ -189,7 +189,7 @@ public:
   /// any side effects other than storing to the stack slot.
   virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
                                       int &FrameIndex) const;
- 
+
   /// Branch Analysis
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
@@ -220,7 +220,7 @@ public:
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 
   /// Insert nop instruction when hazard condition is found
-  virtual void insertNoop(MachineBasicBlock &MBB, 
+  virtual void insertNoop(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MI) const;
 
   /// getGlobalBaseReg - Return a virtual register initialized with the

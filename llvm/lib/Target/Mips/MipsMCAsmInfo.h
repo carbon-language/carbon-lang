@@ -19,7 +19,7 @@
 
 namespace llvm {
   class Target;
-  
+
   class MipsMCAsmInfo : public MCAsmInfo {
   public:
     explicit MipsMCAsmInfo(const Target &T, StringRef TT);

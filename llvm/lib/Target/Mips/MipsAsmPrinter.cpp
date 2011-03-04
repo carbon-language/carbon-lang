@@ -30,7 +30,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetLoweringObjectFile.h" 
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -53,14 +53,14 @@ namespace {
       return "Mips Assembly Printer";
     }
 
-    bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
+    bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode,
                          raw_ostream &O);
     void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
     void printUnsignedImm(const MachineInstr *MI, int opNum, raw_ostream &O);
-    void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O, 
+    void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                          const char *Modifier = 0);
-    void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O, 
+    void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                          const char *Modifier = 0);
     void printSavedRegsBitmask(raw_ostream &O);
     void printHex32(unsigned int Value, raw_ostream &O);
@@ -94,12 +94,12 @@ namespace {
 //  -- Frame directive "frame Stackpointer, Stacksize, RARegister"
 //  Describe the stack frame.
 //
-//  -- Mask directives "(f)mask  bitmask, offset" 
+//  -- Mask directives "(f)mask  bitmask, offset"
 //  Tells the assembler which registers are saved and where.
-//  bitmask - contain a little endian bitset indicating which registers are 
-//            saved on function prologue (e.g. with a 0x80000000 mask, the 
+//  bitmask - contain a little endian bitset indicating which registers are
+//            saved on function prologue (e.g. with a 0x80000000 mask, the
 //            assembler knows the register 31 (RA) is saved at prologue.
-//  offset  - the position before stack pointer subtraction indicating where 
+//  offset  - the position before stack pointer subtraction indicating where
 //            the first saved register on prologue is located. (e.g. with a
 //
 //  Consider the following function prologue:
@@ -110,9 +110,9 @@ namespace {
 //       sw $ra, 40($sp)
 //       sw $fp, 36($sp)
 //
-//    With a 0xc0000000 mask, the assembler knows the register 31 (RA) and 
-//    30 (FP) are saved at prologue. As the save order on prologue is from 
-//    left to right, RA is saved first. A -8 offset means that after the 
+//    With a 0xc0000000 mask, the assembler knows the register 31 (RA) and
+//    30 (FP) are saved at prologue. As the save order on prologue is from
+//    left to right, RA is saved first. A -8 offset means that after the
 //    stack pointer subtration, the first register in the mask (RA) will be
 //    saved at address 48-8=40.
 //
@@ -122,7 +122,7 @@ namespace {
 // Mask directives
 //===----------------------------------------------------------------------===//
 
-// Create a bitmask with all callee saved registers for CPU or Floating Point 
+// Create a bitmask with all callee saved registers for CPU or Floating Point
 // registers. For CPU registers consider RA, GP and FP for saving if necessary.
 void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   const TargetFrameLowering *TFI = TM.getFrameLowering();
@@ -168,7 +168,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
 // Print a 32 bit hex number with all numbers.
 void MipsAsmPrinter::printHex32(unsigned Value, raw_ostream &O) {
   O << "0x";
-  for (int i = 7; i >= 0; i--) 
+  for (int i = 7; i >= 0; i--)
     O << utohexstr((Value & (0xF << (i*4))) >> (i*4));
 }
 
@@ -191,9 +191,9 @@ void MipsAsmPrinter::emitFrameDirective() {
 }
 
 /// Emit Set directives.
-const char *MipsAsmPrinter::getCurrentABIString() const { 
+const char *MipsAsmPrinter::getCurrentABIString() const {
   switch (Subtarget->getTargetABI()) {
-  case MipsSubtarget::O32:  return "abi32";  
+  case MipsSubtarget::O32:  return "abi32";
   case MipsSubtarget::O64:  return "abiO64";
   case MipsSubtarget::N32:  return "abiN32";
   case MipsSubtarget::N64:  return "abi64";
@@ -203,7 +203,7 @@ const char *MipsAsmPrinter::getCurrentABIString() const {
 
   llvm_unreachable("Unknown Mips ABI");
   return NULL;
-}  
+}
 
 void MipsAsmPrinter::EmitFunctionEntryLabel() {
   OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
@@ -214,7 +214,7 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
 /// the first basic block in the function.
 void MipsAsmPrinter::EmitFunctionBodyStart() {
   emitFrameDirective();
-  
+
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
   printSavedRegsBitmask(OS);
@@ -226,7 +226,7 @@ void MipsAsmPrinter::EmitFunctionBodyStart() {
 void MipsAsmPrinter::EmitFunctionBodyEnd() {
   // There are instruction for this macros, but they must
   // always be at the function end, and we can't emit and
-  // break with BB logic. 
+  // break with BB logic.
   OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
   OutStreamer.EmitRawText(StringRef("\t.set\treorder"));
   OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
@@ -236,7 +236,7 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
 /// isBlockOnlyReachableByFallthough - Return true if the basic block has
 /// exactly one predecessor and the control transfer mechanism between
 /// the predecessor and this block is a fall-through.
-bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) 
+bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB)
     const {
   // The predecessor has to be immediately before this block.
   const MachineBasicBlock *Pred = *MBB->pred_begin();
@@ -246,16 +246,16 @@ bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *
   if (const BasicBlock *bb = Pred->getBasicBlock())
     if (isa<SwitchInst>(bb->getTerminator()))
       return false;
-  
+
   return AsmPrinter::isBlockOnlyReachableByFallthrough(MBB);
 }
 
 // Print out an operand for an inline asm expression.
-bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
+bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                      unsigned AsmVariant,const char *ExtraCode,
                                      raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
-  if (ExtraCode && ExtraCode[0]) 
+  if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
 
   printOperand(MI, OpNo, O);
@@ -287,7 +287,7 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     if (MI->getOpcode() == Mips::LUi)
       O << "%hi(";
     else
-      O << "%lo(";     
+      O << "%lo(";
     break;
   }
 
@@ -323,7 +323,7 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       if (MO.getOffset())
         O << "+" << MO.getOffset();
       break;
-  
+
     default:
       llvm_unreachable("<unknown operand type>");
   }
@@ -336,7 +336,7 @@ void MipsAsmPrinter::printUnsignedImm(const MachineInstr *MI, int opNum,
   const MachineOperand &MO = MI->getOperand(opNum);
   if (MO.isImm())
     O << (unsigned short int)MO.getImm();
-  else 
+  else
     printOperand(MI, opNum, O);
 }
 
@@ -352,8 +352,8 @@ printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
     return;
   }
 
-  // Load/Store memory operands -- imm($reg) 
-  // If PIC target the target is loaded as the 
+  // Load/Store memory operands -- imm($reg)
+  // If PIC target the target is loaded as the
   // pattern lw $25,%call16($28)
   printOperand(MI, opNum, O);
   O << "(";
@@ -365,12 +365,12 @@ void MipsAsmPrinter::
 printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                 const char *Modifier) {
   const MachineOperand& MO = MI->getOperand(opNum);
-  O << Mips::MipsFCCToString((Mips::CondCode)MO.getImm()); 
+  O << Mips::MipsFCCToString((Mips::CondCode)MO.getImm());
 }
 
 void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // FIXME: Use SwitchSection.
-  
+
   // Tell the assembler which ABI we are using
   OutStreamer.EmitRawText("\t.section .mdebug." + Twine(getCurrentABIString()));
 
@@ -383,11 +383,11 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   }
 
   // return to previous section
-  OutStreamer.EmitRawText(StringRef("\t.previous")); 
+  OutStreamer.EmitRawText(StringRef("\t.previous"));
 }
 
 // Force static initialization.
-extern "C" void LLVMInitializeMipsAsmPrinter() { 
+extern "C" void LLVMInitializeMipsAsmPrinter() {
   RegisterAsmPrinter<MipsAsmPrinter> X(TheMipsTarget);
   RegisterAsmPrinter<MipsAsmPrinter> Y(TheMipselTarget);
 }

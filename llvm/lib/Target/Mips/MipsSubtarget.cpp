@@ -17,7 +17,7 @@
 using namespace llvm;
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &FS,
-                             bool little) : 
+                             bool little) :
   MipsArchVersion(Mips1), MipsABI(O32), IsLittle(little), IsSingleFloat(false),
   IsFP64bit(false), IsGP64bit(false), HasVFPU(false), IsLinux(true),
   HasSEInReg(false), HasCondMov(false), HasMulDivAdd(false), HasMinMax(false),
@@ -33,7 +33,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &FS,
   if (TT.find("linux") == std::string::npos)
     IsLinux = false;
 
-  // When only the target triple is specified and is 
+  // When only the target triple is specified and is
   // a allegrex target, set the features. We also match
   // big and little endian allegrex cores (dont really
   // know if a big one exists)

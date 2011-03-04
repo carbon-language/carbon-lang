@@ -26,7 +26,7 @@ class Type;
 struct MipsRegisterInfo : public MipsGenRegisterInfo {
   const MipsSubtarget &Subtarget;
   const TargetInstrInfo &TII;
-  
+
   MipsRegisterInfo(const MipsSubtarget &Subtarget, const TargetInstrInfo &tii);
 
   /// getRegisterNumbering - Given the enum value for some register, e.g.
