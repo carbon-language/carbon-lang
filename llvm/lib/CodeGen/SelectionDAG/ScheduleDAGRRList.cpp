@@ -295,7 +295,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
     if (Height < MinAvailableCycle)
       MinAvailableCycle = Height;
 
-    if (isReady(SU)) {
+    if (isReady(PredSU)) {
       AvailableQueue->push(PredSU);
     }
     // CapturePred and others may have left the node in the pending queue, avoid
@@ -502,6 +502,12 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
 
   AvailableQueue->ScheduledNode(SU);
 
+  // If HazardRec is disabled, count each inst as one cycle.
+  // Advance CurCycle before ReleasePredecessors to avoid useles pushed to
+  // PendingQueue for schedulers that implement HasReadyFilter.
+  if (!HazardRec->isEnabled())
+    AdvanceToCycle(CurCycle + 1);
+
   // Update liveness of predecessors before successors to avoid treating a
   // two-address node as a live range def.
   ReleasePredecessors(SU);
@@ -524,8 +530,10 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
   // (1) No available instructions
   // (2) All pipelines full, so available instructions must have hazards.
   //
-  // If HazardRec is disabled, count each inst as one cycle.
-  if (!HazardRec->isEnabled() || HazardRec->atIssueLimit()
+  // If HazardRec is disabled, the cycle was advanced earlier.
+  //
+  // Check AvailableQueue after ReleasePredecessors in case of zero latency.
+  if ((HazardRec->isEnabled() && HazardRec->atIssueLimit())
       || AvailableQueue->empty())
     AdvanceToCycle(CurCycle + 1);
 }
@@ -1318,7 +1326,7 @@ struct src_ls_rr_sort : public queue_sort {
 struct hybrid_ls_rr_sort : public queue_sort {
   enum {
     IsBottomUp = true,
-    HasReadyFilter = true
+    HasReadyFilter = false
   };
 
   RegReductionPQBase *SPQ;
@@ -1337,7 +1345,7 @@ struct hybrid_ls_rr_sort : public queue_sort {
 struct ilp_ls_rr_sort : public queue_sort {
   enum {
     IsBottomUp = true,
-    HasReadyFilter = true
+    HasReadyFilter = false
   };
 
   RegReductionPQBase *SPQ;
@@ -2112,7 +2120,7 @@ bool ilp_ls_rr_sort::isReady(SUnit *SU, unsigned CurCycle) const {
       != ScheduleHazardRecognizer::NoHazard)
     return false;
 
-  return SU->getHeight() <= CurCycle;
+  return true;
 }
 
 bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
@@ -2134,7 +2142,7 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
     if (left->NumPreds > right->NumPreds)
       return false;
     else if (left->NumPreds < right->NumPreds)
-      return false;
+      return true;
   }
 
   return BURRSort(left, right, SPQ);
