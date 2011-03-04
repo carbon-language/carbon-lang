@@ -12,7 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/SlotIndexes.h"
@@ -198,7 +200,7 @@ class SplitEditor {
   ValueMap Values;
 
   typedef std::pair<VNInfo*, MachineDomTreeNode*> LiveOutPair;
-  typedef DenseMap<MachineBasicBlock*,LiveOutPair> LiveOutMap;
+  typedef IndexedMap<LiveOutPair, MBB2NumberFunctor> LiveOutMap;
 
   // LiveOutCache - Map each basic block where a new register is live out to the
   // live-out value and its defining block.
@@ -216,6 +218,10 @@ class SplitEditor {
   // The cache is also used as a visited set by extendRange(). It can be shared
   // by all the new registers because at most one is live out of each block.
   LiveOutMap LiveOutCache;
+
+  // LiveOutSeen - Indexed by MBB->getNumber(), a bit is set for each valid
+  // entry in LiveOutCache.
+  BitVector LiveOutSeen;
 
   /// defValue - define a value in RegIdx from ParentVNI at Idx.
   /// Idx does not have to be ParentVNI->def, but it must be contained within
