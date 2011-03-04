@@ -226,7 +226,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BSWAP(SDNode *N) {
 
   unsigned DiffBits = NVT.getSizeInBits() - OVT.getSizeInBits();
   return DAG.getNode(ISD::SRL, dl, NVT, DAG.getNode(ISD::BSWAP, dl, NVT, Op),
-                     DAG.getConstant(DiffBits, TLI.getShiftAmountTy(NVT)));
+                     DAG.getConstant(DiffBits, TLI.getPointerTy()));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_PAIR(SDNode *N) {
