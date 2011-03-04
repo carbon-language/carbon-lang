@@ -1364,6 +1364,7 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
       break;
     case Type::Attributed:
       T = cast<AttributedType>(T)->getEquivalentType();
+      break;
     case Type::Elaborated:
       T = cast<ElaboratedType>(T)->getNamedType();
       break;

@@ -760,10 +760,14 @@ void TypePrinter::printPackExpansion(const PackExpansionType *T,
 
 void TypePrinter::printAttributed(const AttributedType *T,
                                   std::string &S) {
+  // Prefer the macro forms of the GC qualifiers.
+  if (T->getAttrKind() == AttributedType::attr_objc_gc)
+    return print(T->getEquivalentType(), S);
+
   print(T->getModifiedType(), S);
 
   // TODO: not all attributes are GCC-style attributes.
-  S += "__attribute__((";
+  S += " __attribute__((";
   switch (T->getAttrKind()) {
   case AttributedType::attr_address_space:
     S += "address_space(";
@@ -1032,20 +1036,18 @@ std::string Qualifiers::getAsString() const {
 void Qualifiers::getAsStringInternal(std::string &S,
                                      const PrintingPolicy&) const {
   AppendTypeQualList(S, getCVRQualifiers());
-  if (unsigned AddressSpace = getAddressSpace()) {
+  if (unsigned addrspace = getAddressSpace()) {
     if (!S.empty()) S += ' ';
     S += "__attribute__((address_space(";
-    S += llvm::utostr_32(AddressSpace);
+    S += llvm::utostr_32(addrspace);
     S += ")))";
   }
-  if (Qualifiers::GC GCAttrType = getObjCGCAttr()) {
+  if (Qualifiers::GC gc = getObjCGCAttr()) {
     if (!S.empty()) S += ' ';
-    S += "__attribute__((objc_gc(";
-    if (GCAttrType == Qualifiers::Weak)
-      S += "weak";
+    if (gc == Qualifiers::Weak)
+      S += "__weak";
     else
-      S += "strong";
-    S += ")))";
+      S += "__strong";
   }
 }
 

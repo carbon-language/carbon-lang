@@ -43,6 +43,11 @@ static QualType Desugar(ASTContext &Context, QualType QT, bool &ShouldAKA) {
       QT = ST->desugar();
       continue;
     }
+    // ...or an attributed type...
+    if (const AttributedType *AT = dyn_cast<AttributedType>(Ty)) {
+      QT = AT->desugar();
+      continue;
+    }
     // ... or an auto type.
     if (const AutoType *AT = dyn_cast<AutoType>(Ty)) {
       if (!AT->isSugared())
