@@ -632,6 +632,8 @@ bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
       Hash ^= reinterpret_cast<uintptr_t>(static_cast<Value *>(*I));
       Hash = (Hash << 7) | (Hash >> (sizeof(uintptr_t) * CHAR_BIT - 7));
     }
+    // Avoid colliding with the DenseMap sentinels ~0 and ~0-1.
+    Hash >>= 1;
     // If we've never seen this hash value before, it's a unique PHI.
     std::pair<DenseMap<uintptr_t, PHINode *>::iterator, bool> Pair =
       HashMap.insert(std::make_pair(Hash, PN));
