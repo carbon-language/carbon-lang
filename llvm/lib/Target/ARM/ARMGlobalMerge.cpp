@@ -53,6 +53,7 @@
 
 #define DEBUG_TYPE "arm-global-merge"
 #include "ARM.h"
+#include "ARMTargetMachine.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Attributes.h"
 #include "llvm/Constants.h"
@@ -166,6 +167,11 @@ bool ARMGlobalMerge::doInitialization(Module &M) {
   const TargetData *TD = TLI->getTargetData();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
   bool Changed = false;
+
+  // Disable this pass on darwin. The debugger is not yet ready to extract
+  // variable's  info from a merged global.
+  if (TLI->getTargetMachine().getSubtarget<ARMSubtarget>().isTargetDarwin())
+    return false;
 
   // Grab all non-const globals.
   for (Module::global_iterator I = M.global_begin(),
