@@ -203,6 +203,43 @@ void MipsFrameLowering::adjustMipsStackFrame(MachineFunction &MF) const {
     MipsFI->setFPUTopSavedRegOff(TopFPUSavedRegOff-StackOffset);
 }
 
+
+// expand pair of register and immediate if the immediate doesn't fit in the 16-bit
+// offset field.
+// e.g.
+//  if OrigImm = 0x10000, OrigReg = $sp:
+//    generate the following sequence of instrs:
+//      lui  $at, hi(0x10000)
+//      addu $at, $sp, $at
+//
+//    (NewReg, NewImm) = ($at, lo(Ox10000))
+//    return true
+static bool expandRegLargeImmPair(unsigned OrigReg, int OrigImm,
+                                  unsigned& NewReg, int& NewImm,
+                                  MachineBasicBlock& MBB, MachineBasicBlock::iterator I) {
+  // OrigImm fits in the 16-bit field
+  if (OrigImm < 0x8000 && OrigImm >= -0x8000) {
+    NewReg = OrigReg;
+    NewImm = OrigImm;
+    return false;
+  }
+
+  MachineFunction* MF = MBB.getParent();
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+  DebugLoc DL = I->getDebugLoc();
+  int ImmLo = OrigImm & 0xffff;
+  int ImmHi = (((unsigned)OrigImm & 0xffff0000) >> 16) + ((OrigImm & 0x8000) != 0);
+
+  // FIXME: change this when mips goes MC".
+  BuildMI(MBB, I, DL, TII->get(Mips::NOAT));
+  BuildMI(MBB, I, DL, TII->get(Mips::LUi), Mips::AT).addImm(ImmHi);
+  BuildMI(MBB, I, DL, TII->get(Mips::ADDu), Mips::AT).addReg(OrigReg).addReg(Mips::AT);
+  NewReg = Mips::AT;
+  NewImm = ImmLo;
+
+  return true;
+}
+
 void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB   = MF.front();
   MachineFrameInfo *MFI    = MF.getFrameInfo();
@@ -214,6 +251,9 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   bool isPIC = (MF.getTarget().getRelocationModel() == Reloc::PIC_);
+  unsigned NewReg = 0;
+  int NewImm = 0;
+  bool ATUsed;
 
   // Get the right frame order for Mips.
   adjustMipsStackFrame(MF);
@@ -236,22 +276,38 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
 
   // Adjust stack : addi sp, sp, (-imm)
+  ATUsed = expandRegLargeImmPair(Mips::SP, -StackSize, NewReg, NewImm, MBB,
+                                              MBBI);
   BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDiu), Mips::SP)
-      .addReg(Mips::SP).addImm(-StackSize);
+    .addReg(NewReg).addImm(NewImm);
+
+  // FIXME: change this when mips goes MC".
+  if (ATUsed)
+    BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
 
   // Save the return address only if the function isnt a leaf one.
   // sw  $ra, stack_loc($sp)
   if (MFI->adjustsStack()) {
+    expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB, MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::SW))
-        .addReg(Mips::RA).addImm(RAOffset).addReg(Mips::SP);
+      .addReg(Mips::RA).addImm(NewImm).addReg(NewReg);
+
+    // FIXME: change this when mips goes MC".
+    if (ATUsed)
+      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
   }
 
   // if framepointer enabled, save it and set it
   // to point to the stack pointer
   if (hasFP(MF)) {
     // sw  $fp,stack_loc($sp)
+    expandRegLargeImmPair(Mips::SP, FPOffset, NewReg, NewImm, MBB, MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::SW))
-      .addReg(Mips::FP).addImm(FPOffset).addReg(Mips::SP);
+      .addReg(Mips::FP).addImm(NewImm).addReg(NewReg);
+
+    // FIXME: change this when mips goes MC".
+    if (ATUsed)
+      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
 
     // move $fp, $sp
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::FP)
@@ -280,6 +336,10 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
   int FPOffset = MipsFI->getFPStackOffset();
   int RAOffset = MipsFI->getRAStackOffset();
 
+  unsigned NewReg = 0;
+  int NewImm = 0;
+  bool ATUsed;
+
   // if framepointer enabled, restore it and restore the
   // stack pointer
   if (hasFP(MF)) {
@@ -288,21 +348,37 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
       .addReg(Mips::FP).addReg(Mips::ZERO);
 
     // lw  $fp,stack_loc($sp)
+    ATUsed = expandRegLargeImmPair(Mips::SP, FPOffset, NewReg, NewImm, MBB,
+                                                MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::FP)
-      .addImm(FPOffset).addReg(Mips::SP);
+      .addImm(NewImm).addReg(NewReg);
+
+    // FIXME: change this when mips goes MC".
+    if (ATUsed)
+      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
   }
 
   // Restore the return address only if the function isnt a leaf one.
   // lw  $ra, stack_loc($sp)
   if (MFI->adjustsStack()) {
+    expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB, MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::RA)
-      .addImm(RAOffset).addReg(Mips::SP);
+      .addImm(NewImm).addReg(NewReg);
+
+    // FIXME: change this when mips goes MC".
+    if (ATUsed)
+      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
   }
 
   // adjust stack  : insert addi sp, sp, (imm)
   if (NumBytes) {
+    expandRegLargeImmPair(Mips::SP, NumBytes, NewReg, NewImm, MBB, MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDiu), Mips::SP)
-      .addReg(Mips::SP).addImm(NumBytes);
+      .addReg(NewReg).addImm(NewImm);
+
+    // FIXME: change this when mips goes MC".
+    if (ATUsed)
+      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
   }
 }
 

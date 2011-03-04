@@ -348,6 +348,11 @@ def REORDER   : MipsPseudo<(outs), (ins), ".set\treorder",   []>;
 def NOMACRO   : MipsPseudo<(outs), (ins), ".set\tnomacro",   []>;
 def NOREORDER : MipsPseudo<(outs), (ins), ".set\tnoreorder", []>;
 
+// These macros are inserted to prevent GAS from complaining 
+// when using the AT register.
+def NOAT      : MipsPseudo<(outs), (ins), ".set\tnoat", []>;
+def ATMACRO   : MipsPseudo<(outs), (ins), ".set\tat", []>;
+
 // When handling PIC code the assembler needs .cpload and .cprestore
 // directives. If the real instructions corresponding these directives
 // are used, we have the same behavior, but get also a bunch of warnings

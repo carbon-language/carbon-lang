@@ -179,8 +179,41 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
-  MI.getOperand(i-1).ChangeToImmediate(Offset);
-  MI.getOperand(i).ChangeToRegister(getFrameRegister(MF), false);
+  unsigned NewReg = 0;
+  int NewImm = 0;
+  MachineBasicBlock &MBB = *MI.getParent();
+  bool ATUsed;
+  unsigned OrigReg = getFrameRegister(MF);
+  int OrigImm = Offset;
+
+// OrigImm fits in the 16-bit field
+  if (OrigImm < 0x8000 && OrigImm >= -0x8000) {
+    NewReg = OrigReg;
+    NewImm = OrigImm;
+    ATUsed = false;
+  }
+  else {
+    const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
+    DebugLoc DL = II->getDebugLoc();
+    int ImmLo = OrigImm & 0xffff;
+    int ImmHi = (((unsigned)OrigImm & 0xffff0000) >> 16) + ((OrigImm & 0x8000) != 0);
+
+    // FIXME: change this when mips goes MC".
+    BuildMI(MBB, II, DL, TII->get(Mips::NOAT));
+    BuildMI(MBB, II, DL, TII->get(Mips::LUi), Mips::AT).addImm(ImmHi);
+    BuildMI(MBB, II, DL, TII->get(Mips::ADDu), Mips::AT).addReg(OrigReg).addReg(Mips::AT);
+    NewReg = Mips::AT;
+    NewImm = ImmLo;
+    
+    ATUsed = true;
+  }
+
+  // FIXME: change this when mips goes MC".
+  if (ATUsed)
+    BuildMI(MBB, ++II, MI.getDebugLoc(), TII.get(Mips::ATMACRO));
+
+  MI.getOperand(i).ChangeToRegister(NewReg, false);
+  MI.getOperand(i-1).ChangeToImmediate(NewImm);
 }
 
 void MipsRegisterInfo::
