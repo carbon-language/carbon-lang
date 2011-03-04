@@ -963,46 +963,28 @@ static bool CC_MipsO32_VarArgs(unsigned ValNo, MVT ValVT,
       LocInfo = CCValAssign::AExt;
   }
 
+  unsigned Reg;
+
   if (ValVT == MVT::i32 || ValVT == MVT::f32) {
-    if (unsigned Reg = State.AllocateReg(IntRegs, IntRegsSize)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, MVT::i32, LocInfo));
-      return false;
-    }
-    unsigned Off = State.AllocateStack(4, 4);
-    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Off, LocVT, LocInfo));
-    return false;
-  }
+    Reg = State.AllocateReg(IntRegs, IntRegsSize);
+    LocVT = MVT::i32;
+  } else if (ValVT == MVT::f64) {
+    Reg = State.AllocateReg(IntRegs, IntRegsSize);
+    if (Reg == Mips::A1 || Reg == Mips::A3)
+      Reg = State.AllocateReg(IntRegs, IntRegsSize);
+    State.AllocateReg(IntRegs, IntRegsSize);
+    LocVT = MVT::i32;
+  } else
+    llvm_unreachable("Cannot handle this ValVT.");
 
-  unsigned UnallocIntReg = State.getFirstUnallocated(IntRegs, IntRegsSize);
-  if (ValVT == MVT::f64) {
-    if (IntRegs[UnallocIntReg] == (unsigned (Mips::A1))) {
-      // A1 can't be used anymore, because 64 bit arguments
-      // must be aligned when copied back to the caller stack
-      State.AllocateReg(IntRegs, IntRegsSize);
-      UnallocIntReg++;
-    }
+  if (!Reg) {
+    unsigned SizeInBytes = ValVT.getSizeInBits() >> 3;
+    unsigned Offset = State.AllocateStack(SizeInBytes, SizeInBytes);
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+  } else
+    State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
 
-    if (IntRegs[UnallocIntReg] == (unsigned (Mips::A0)) ||
-        IntRegs[UnallocIntReg] == (unsigned (Mips::A2))) {
-      unsigned Reg = State.AllocateReg(IntRegs, IntRegsSize);
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, MVT::i32, LocInfo));
-      // Shadow the next register so it can be used
-      // later to get the other 32bit part.
-      State.AllocateReg(IntRegs, IntRegsSize);
-      return false;
-    }
-
-    // Register is shadowed to preserve alignment, and the
-    // argument goes to a stack location.
-    if (UnallocIntReg != IntRegsSize)
-      State.AllocateReg(IntRegs, IntRegsSize);
-
-    unsigned Off = State.AllocateStack(8, 8);
-    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Off, LocVT, LocInfo));
-    return false;
-  }
-
-  return true; // CC didn't match
+  return false; // CC must always match
 }
 
 //===----------------------------------------------------------------------===//
