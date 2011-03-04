@@ -859,7 +859,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
         // to be.
         do {
           if (IncV->getNumOperands() == 0 || isa<PHINode>(IncV) ||
-              isa<CastInst>(IncV)) {
+              (isa<CastInst>(IncV) && !isa<BitCastInst>(IncV))) {
             IncV = 0;
             break;
           }
