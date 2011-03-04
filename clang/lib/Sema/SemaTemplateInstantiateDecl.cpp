@@ -164,6 +164,9 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   if (TypedefDecl *Prev = D->getPreviousDeclaration()) {
     NamedDecl *InstPrev = SemaRef.FindInstantiatedDecl(D->getLocation(), Prev,
                                                        TemplateArgs);
+    if (!InstPrev)
+      return 0;
+    
     Typedef->setPreviousDeclaration(cast<TypedefDecl>(InstPrev));
   }
 
@@ -448,9 +451,14 @@ Decl *TemplateDeclInstantiator::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
   int i = 0;
   for (IndirectFieldDecl::chain_iterator PI =
        D->chain_begin(), PE = D->chain_end();
-       PI != PE; ++PI)
-    NamedChain[i++] = (SemaRef.FindInstantiatedDecl(D->getLocation(),
-                                            *PI, TemplateArgs));
+       PI != PE; ++PI) {
+    NamedDecl *Next = SemaRef.FindInstantiatedDecl(D->getLocation(), *PI, 
+                                              TemplateArgs);
+    if (!Next)
+      return 0;
+    
+    NamedChain[i++] = Next;
+  }
 
   QualType T = cast<FieldDecl>(NamedChain[i-1])->getType();
   IndirectFieldDecl* IndirectField
@@ -1722,9 +1730,12 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
          I != E; ++I) {
     UsingShadowDecl *Shadow = *I;
     NamedDecl *InstTarget =
-      cast<NamedDecl>(SemaRef.FindInstantiatedDecl(Shadow->getLocation(),
-                                                   Shadow->getTargetDecl(),
-                                                   TemplateArgs));
+      cast_or_null<NamedDecl>(SemaRef.FindInstantiatedDecl(
+                                                          Shadow->getLocation(),
+                                                        Shadow->getTargetDecl(),
+                                                           TemplateArgs));
+    if (!InstTarget)
+      return 0;
 
     if (CheckRedeclaration &&
         SemaRef.CheckUsingShadowDecl(NewUD, InstTarget, Prev))
@@ -2576,10 +2587,15 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                                      New->getParent(),
                                      EllipsisLoc);
     } else if (Init->isMemberInitializer()) {
-      FieldDecl *Member = cast<FieldDecl>(FindInstantiatedDecl(
+      FieldDecl *Member = cast_or_null<FieldDecl>(FindInstantiatedDecl(
                                                      Init->getMemberLocation(),
                                                      Init->getMember(),
                                                      TemplateArgs));
+      if (!Member) {
+        AnyErrors = true;
+        New->setInvalidDecl();
+        continue;
+      }
 
       NewInit = BuildMemberInitializer(Member, (Expr **)NewArgs.data(),
                                        NewArgs.size(),
@@ -2588,10 +2604,16 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                                        Init->getRParenLoc());
     } else if (Init->isIndirectMemberInitializer()) {
       IndirectFieldDecl *IndirectMember =
-         cast<IndirectFieldDecl>(FindInstantiatedDecl(
+         cast_or_null<IndirectFieldDecl>(FindInstantiatedDecl(
                                  Init->getMemberLocation(),
                                  Init->getIndirectMember(), TemplateArgs));
 
+      if (!IndirectMember) {
+        AnyErrors = true;
+        New->setInvalidDecl();
+        continue;        
+      }
+      
       NewInit = BuildMemberInitializer(IndirectMember, (Expr **)NewArgs.data(),
                                        NewArgs.size(),
                                        Init->getSourceLocation(),
