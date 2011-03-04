@@ -14,16 +14,16 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_with_dsym(self):
-        """Exercise SBTaget APIs."""
+    def test_resolve_symbol_context_with_address_with_dsym(self):
+        """Exercise SBTaget.ResolveSymbolContextForAddress() API."""
         self.buildDsym()
-        self.target_api()
+        self.resolve_symbol_context_with_address()
 
     @python_api_test
-    def test_with_dwarf(self):
-        """Exercise SBTarget APIs."""
+    def test_resolve_symbol_context_with_address_with_dwarf(self):
+        """Exercise SBTarget.ResolveSymbolContextForAddress() API."""
         self.buildDwarf()
-        self.target_api()
+        self.resolve_symbol_context_with_address()
 
     def setUp(self):
         # Call super's setUp().
@@ -32,8 +32,8 @@ class TargetAPITestCase(TestBase):
         self.line1 = line_number('main.c', '// Find the line number for breakpoint 1 here.')
         self.line2 = line_number('main.c', '// Find the line number for breakpoint 2 here.')
 
-    def target_api(self):
-        """Exercise SBTarget APIs."""
+    def resolve_symbol_context_with_address(self):
+        """Exercise SBTaget.ResolveSymbolContextForAddress() API."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
