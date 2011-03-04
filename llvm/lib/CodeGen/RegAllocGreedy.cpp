@@ -154,7 +154,7 @@ private:
   SlotIndex getPrevMappedIndex(const MachineInstr*);
   void calcPrevSlots();
   unsigned nextSplitPoint(unsigned);
-  bool canEvictInterference(LiveInterval&, unsigned, unsigned, float&);
+  bool canEvictInterference(LiveInterval&, unsigned, float&);
 
   unsigned tryReassign(LiveInterval&, AllocationOrder&,
                               SmallVectorImpl<LiveInterval*>&);
@@ -357,7 +357,7 @@ unsigned RAGreedy::tryReassign(LiveInterval &VirtReg, AllocationOrder &Order,
 /// canEvict - Return true if all interferences between VirtReg and PhysReg can
 /// be evicted. Set maxWeight to the maximal spill weight of an interference.
 bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
-                                    unsigned Size, float &MaxWeight) {
+                                    float &MaxWeight) {
   float Weight = 0;
   for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
@@ -365,12 +365,12 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
     if (Q.collectInterferingVRegs(10) >= 10)
       return false;
 
-    // CHeck if any interfering live range is shorter than VirtReg.
+    // Check if any interfering live range is heavier than VirtReg.
     for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
       LiveInterval *Intf = Q.interferingVRegs()[i];
       if (TargetRegisterInfo::isPhysicalRegister(Intf->reg))
         return false;
-      if (Intf->getSize() <= Size)
+      if (Intf->weight >= VirtReg.weight)
         return false;
       Weight = std::max(Weight, Intf->weight);
     }
@@ -388,10 +388,6 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
                             SmallVectorImpl<LiveInterval*> &NewVRegs){
   NamedRegionTimer T("Evict", TimerGroupName, TimePassesIsEnabled);
 
-  // We can only evict interference if all interfering registers are virtual and
-  // longer than VirtReg.
-  const unsigned Size = VirtReg.getSize();
-
   // Keep track of the lightest single interference seen so far.
   float BestWeight = 0;
   unsigned BestPhys = 0;
@@ -399,7 +395,7 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
     float Weight = 0;
-    if (!canEvictInterference(VirtReg, PhysReg, Size, Weight))
+    if (!canEvictInterference(VirtReg, PhysReg, Weight))
       continue;
 
     // This is an eviction candidate.
