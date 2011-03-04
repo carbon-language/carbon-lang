@@ -24,10 +24,9 @@
     [super dealloc];
 }
 
+// Set a breakpoint on '-[MyClass description]' and test expressions: expr member
 - (NSString *)description
 {
-    // Set a breakpoint on '-[MyClass description]' and test expressions: expr member
-
     return [NSString stringWithFormat:@"%d", member];
 }
 @end
