@@ -50,3 +50,10 @@ define i32 @load_misaligned( i32* %ptr ){
   %rv = load i32* %ptr, align 2
   ret i32 %rv
 }
+
+define <4 x i32> @load_null_vec( ) {
+;CHECK: lqa
+;CHECK: bi $lr
+	%rv = load <4 x i32>* null
+	ret <4 x i32> %rv
+}

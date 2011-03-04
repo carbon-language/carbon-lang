@@ -321,12 +321,17 @@ SPUDAGToDAGISel::SelectAFormAddr(SDNode *Op, SDValue N, SDValue &Base,
   // These match the addr256k operand type:
   EVT OffsVT = MVT::i16;
   SDValue Zero = CurDAG->getTargetConstant(0, OffsVT);
+  int64_t val;
 
   switch (N.getOpcode()) {
   case ISD::Constant:
+    val = dyn_cast<ConstantSDNode>(N.getNode())->getSExtValue();
+    Base = CurDAG->getTargetConstant( val , MVT::i32);
+    Index = Zero;
+    return true; break;
   case ISD::ConstantPool:
   case ISD::GlobalAddress:
-    report_fatal_error("SPU SelectAFormAddr: Constant/Pool/Global not lowered.");
+    report_fatal_error("SPU SelectAFormAddr: Pool/Global not lowered.");
     /*NOTREACHED*/
 
   case ISD::TargetConstant:

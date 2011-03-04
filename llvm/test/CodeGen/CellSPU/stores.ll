@@ -171,3 +171,11 @@ define void @store_v8( <8 x float> %val, <8 x float>* %ptr )
 	store <8 x float> %val, <8 x float>* %ptr
 	ret void
 }
+
+define void @store_null_vec( <4 x i32> %val ) {
+; FIXME - this is for some reason compiled into a il+stqd, not a sta. 
+;CHECK: stqd
+;CHECK: bi $lr
+	store <4 x i32> %val, <4 x i32>* null
+	ret void
+}
