@@ -484,7 +484,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
     if (CondBOp->getOpcode() == BO_LAnd) {
       // If we have "1 && X", simplify the code.  "0 && X" would have constant
       // folded if the case was simple enough.
-      bool ConstantBool;
+      bool ConstantBool = false;
       if (ConstantFoldsToSimpleInteger(CondBOp->getLHS(), ConstantBool) &&
           ConstantBool) {
         // br(1 && X) -> br(X).
@@ -518,7 +518,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
     if (CondBOp->getOpcode() == BO_LOr) {
       // If we have "0 || X", simplify the code.  "1 || X" would have constant
       // folded if the case was simple enough.
-      bool ConstantBool;
+      bool ConstantBool = false;
       if (ConstantFoldsToSimpleInteger(CondBOp->getLHS(), ConstantBool) &&
           !ConstantBool) {
         // br(0 || X) -> br(X).
