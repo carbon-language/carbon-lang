@@ -129,7 +129,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::FCOPYSIGN,         MVT::f32,   Expand);
   setOperationAction(ISD::FCOPYSIGN,         MVT::f64,   Expand);
   setOperationAction(ISD::FSIN,              MVT::f32,   Expand);
+  setOperationAction(ISD::FSIN,              MVT::f64,   Expand);
   setOperationAction(ISD::FCOS,              MVT::f32,   Expand);
+  setOperationAction(ISD::FCOS,              MVT::f64,   Expand);
   setOperationAction(ISD::FPOWI,             MVT::f32,   Expand);
   setOperationAction(ISD::FPOW,              MVT::f32,   Expand);
   setOperationAction(ISD::FLOG,              MVT::f32,   Expand);
