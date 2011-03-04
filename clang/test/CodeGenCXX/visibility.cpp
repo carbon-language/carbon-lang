@@ -411,3 +411,14 @@ namespace Test20 {
     B<A<2> >::test5();
   }
 }
+
+// PR9371
+namespace test21 {
+  enum En { en };
+  template<En> struct A {
+    __attribute__((visibility("default"))) void foo() {}
+  };
+
+  // CHECK: define weak_odr void @_ZN6test211AILNS_2EnE0EE3fooEv(
+  template void A<en>::foo();
+}

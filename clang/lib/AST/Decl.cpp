@@ -100,9 +100,11 @@ namespace {
 struct LVFlags {
   bool ConsiderGlobalVisibility;
   bool ConsiderVisibilityAttributes;
+  bool ConsiderTemplateParameterTypes;
 
   LVFlags() : ConsiderGlobalVisibility(true), 
-              ConsiderVisibilityAttributes(true) {
+              ConsiderVisibilityAttributes(true),
+              ConsiderTemplateParameterTypes(true) {
   }
 
   /// \brief Returns a set of flags that is only useful for computing the 
@@ -111,6 +113,7 @@ struct LVFlags {
     LVFlags F;
     F.ConsiderGlobalVisibility = false;
     F.ConsiderVisibilityAttributes = false;
+    F.ConsiderTemplateParameterTypes = false;
     return F;
   }
   
@@ -120,6 +123,7 @@ struct LVFlags {
     LVFlags F = *this;
     F.ConsiderGlobalVisibility = false;
     F.ConsiderVisibilityAttributes = false;
+    F.ConsiderTemplateParameterTypes = false;
     return F;
   }
 }; 
@@ -451,8 +455,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
 
   //     - a template, unless it is a function template that has
   //       internal linkage (Clause 14);
-  } else if (const TemplateDecl *Template = dyn_cast<TemplateDecl>(D)) {
-    LV.merge(getLVForTemplateParameterList(Template->getTemplateParameters()));
+  } else if (const TemplateDecl *temp = dyn_cast<TemplateDecl>(D)) {
+    if (F.ConsiderTemplateParameterTypes)
+      LV.merge(getLVForTemplateParameterList(temp->getTemplateParameters()));
 
   //     - a namespace (7.3), unless it is declared within an unnamed
   //       namespace.
@@ -536,7 +541,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     if (FunctionTemplateSpecializationInfo *Spec
            = MD->getTemplateSpecializationInfo()) {
       LV.merge(getLVForTemplateArgumentList(*Spec->TemplateArguments, F));
-      LV.merge(getLVForTemplateParameterList(
+      if (F.ConsiderTemplateParameterTypes)
+        LV.merge(getLVForTemplateParameterList(
                               Spec->getTemplate()->getTemplateParameters()));
 
       TSK = Spec->getTemplateSpecializationKind();
@@ -571,7 +577,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
       // Merge template argument/parameter information for member
       // class template specializations.
       LV.merge(getLVForTemplateArgumentList(Spec->getTemplateArgs(), F));
-      LV.merge(getLVForTemplateParameterList(
+      if (F.ConsiderTemplateParameterTypes)
+        LV.merge(getLVForTemplateParameterList(
                     Spec->getSpecializedTemplate()->getTemplateParameters()));
     }
 
