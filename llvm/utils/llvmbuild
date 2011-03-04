@@ -650,7 +650,8 @@ class Builder(threading.Thread):
 
 
     def configure(self, component, srcdir, builddir, flags, env):
-        self.logger.debug("Configure " + str(flags))
+        self.logger.debug("Configure " + str(flags) + " " + str(srcdir) + " -> "
+                          + str(builddir))
 
         configure_files = dict(
             llvm=[(srcdir + "/configure", builddir + "/Makefile")],
@@ -721,8 +722,16 @@ branch_abbrev = get_path_abbrevs(set(options.branch))
 
 work_queue = queue.Queue()
 
-for t in range(options.threads):
-    jobs = options.jobs // options.threads
+jobs = options.jobs // options.threads
+if jobs == 0:
+    jobs = 1
+
+numthreads = options.threads
+if jobs < numthreads:
+    numthreads = jobs
+    jobs = 1
+
+for t in range(numthreads):
     builder = Builder(work_queue, jobs,
                       build_abbrev, source_abbrev, branch_abbrev,
                       options)
