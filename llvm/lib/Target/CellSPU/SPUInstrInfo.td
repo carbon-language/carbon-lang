@@ -2015,9 +2015,9 @@ class SHLHInst<dag OOL, dag IOL, list<dag> pattern>:
            RotShiftVec, pattern>;
 
 class SHLHVecInst<ValueType vectype>:
-    SHLHInst<(outs VECREG:$rT), (ins VECREG:$rA, R16C:$rB),
+    SHLHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
              [(set (vectype VECREG:$rT),
-                   (SPUvec_shl (vectype VECREG:$rA), R16C:$rB))]>;
+                   (SPUvec_shl (vectype VECREG:$rA), (vectype VECREG:$rB)))]>;
 
 multiclass ShiftLeftHalfword
 {
@@ -2065,9 +2065,9 @@ class SHLInst<dag OOL, dag IOL, list<dag> pattern>:
 multiclass ShiftLeftWord
 {
   def v4i32:
-      SHLInst<(outs VECREG:$rT), (ins VECREG:$rA, R16C:$rB),
+      SHLInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
               [(set (v4i32 VECREG:$rT),
-                    (SPUvec_shl (v4i32 VECREG:$rA), R16C:$rB))]>;
+                    (SPUvec_shl (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
   def r32:
       SHLInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
               [(set R32C:$rT, (shl R32C:$rA, R32C:$rB))]>;
@@ -2513,19 +2513,11 @@ class ROTHMInst<dag OOL, dag IOL, list<dag> pattern>:
            RotShiftVec, pattern>;
 
 def ROTHMv8i16:
-    ROTHMInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+    ROTHMInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
               [/* see patterns below - $rB must be negated */]>;
 
-def : Pat<(SPUvec_srl (v8i16 VECREG:$rA), R32C:$rB),
-          (ROTHMv8i16 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-
-def : Pat<(SPUvec_srl (v8i16 VECREG:$rA), R16C:$rB),
-          (ROTHMv8i16 VECREG:$rA,
-                      (SFIr32 (XSHWr16 R16C:$rB), 0))>;
-
-def : Pat<(SPUvec_srl (v8i16 VECREG:$rA), R8C:$rB),
-          (ROTHMv8i16 VECREG:$rA,
-                      (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB) ), 0))>;
+def : Pat<(SPUvec_srl (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)),
+          (ROTHMv8i16 VECREG:$rA, (SFHIvec VECREG:$rB, 0))>;
 
 // ROTHM r16 form: Rotate 16-bit quantity to right, zero fill at the left
 // Note: This instruction doesn't match a pattern because rB must be negated
@@ -2586,19 +2578,11 @@ class ROTMInst<dag OOL, dag IOL, list<dag> pattern>:
            RotShiftVec, pattern>;
 
 def ROTMv4i32:
-    ROTMInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+    ROTMInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
              [/* see patterns below - $rB must be negated */]>;
 
-def : Pat<(SPUvec_srl (v4i32 VECREG:$rA), R32C:$rB),
-          (ROTMv4i32 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-
-def : Pat<(SPUvec_srl (v4i32 VECREG:$rA), R16C:$rB),
-          (ROTMv4i32 VECREG:$rA,
-                     (SFIr32 (XSHWr16 R16C:$rB), 0))>;
-
-def : Pat<(SPUvec_srl (v4i32 VECREG:$rA), R8C:$rB),
-          (ROTMv4i32 VECREG:$rA,
-                     (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
+def : Pat<(SPUvec_srl (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)),
+          (ROTMv4i32 VECREG:$rA, (SFIvec VECREG:$rB, 0))>;
 
 def ROTMr32:
     ROTMInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
@@ -2804,20 +2788,12 @@ defm ROTQMBII: RotateMaskQuadByBitsImm;
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 def ROTMAHv8i16:
-    RRForm<0b01111010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+    RRForm<0b01111010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
       "rotmah\t$rT, $rA, $rB", RotShiftVec,
       [/* see patterns below - $rB must be negated */]>;
 
-def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), R32C:$rB),
-          (ROTMAHv8i16 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-
-def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), R16C:$rB),
-          (ROTMAHv8i16 VECREG:$rA,
-                       (SFIr32 (XSHWr16 R16C:$rB), 0))>;
-
-def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), R8C:$rB),
-          (ROTMAHv8i16 VECREG:$rA,
-                       (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
+def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)),
+          (ROTMAHv8i16 VECREG:$rA, (SFHIvec VECREG:$rB, 0))>;
 
 def ROTMAHr16:
     RRForm<0b01111010000, (outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
@@ -2859,20 +2835,12 @@ def : Pat<(sra R16C:$rA, (i8 imm:$val)),
           (ROTMAHIr16 R16C:$rA, (TO_IMM32 uimm7:$val))>;
 
 def ROTMAv4i32:
-    RRForm<0b01011010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+    RRForm<0b01011010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
       "rotma\t$rT, $rA, $rB", RotShiftVec,
       [/* see patterns below - $rB must be negated */]>;
 
-def : Pat<(SPUvec_sra (v4i32 VECREG:$rA), R32C:$rB),
-          (ROTMAv4i32 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
-
-def : Pat<(SPUvec_sra (v4i32 VECREG:$rA), R16C:$rB),
-          (ROTMAv4i32 VECREG:$rA,
-                      (SFIr32 (XSHWr16 R16C:$rB), 0))>;
-
-def : Pat<(SPUvec_sra (v4i32 VECREG:$rA), R8C:$rB),
-          (ROTMAv4i32 VECREG:$rA,
-                      (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
+def : Pat<(SPUvec_sra (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)),
+          (ROTMAv4i32 VECREG:$rA, (SFIvec (v4i32 VECREG:$rB), 0))>;
 
 def ROTMAr32:
     RRForm<0b01011010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),

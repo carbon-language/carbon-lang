@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=cellspu > %t1.s
-; RUN: grep {shlh	}  %t1.s | count 9
+; RUN: grep {shlh	}  %t1.s | count 10
 ; RUN: grep {shlhi	}  %t1.s | count 3
-; RUN: grep {shl	}  %t1.s | count 9
+; RUN: grep {shl	}  %t1.s | count 11
 ; RUN: grep {shli	}  %t1.s | count 3
 ; RUN: grep {xshw	}  %t1.s | count 5
 ; RUN: grep {and	}  %t1.s | count 14
@@ -14,14 +14,11 @@
 ; RUN: grep {rotqbyi	}  %t1.s | count 1
 ; RUN: grep {rotqbii	}  %t1.s | count 2
 ; RUN: grep {rotqbybi	}  %t1.s | count 1
-; RUN: grep {sfi	}  %t1.s | count 4
+; RUN: grep {sfi	}  %t1.s | count 6
 ; RUN: cat %t1.s | FileCheck %s
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
-
-; Vector shifts are not currently supported in gcc or llvm assembly. These are
-; not tested.
 
 ; Shift left i16 via register, note that the second operand to shl is promoted
 ; to a 32-bit type:
@@ -292,4 +289,56 @@ define i128 @test_lshr_i128( i128 %val ) {
 	;CHECK: bi $lr
 	%rv = lshr i128 %val, 64
 	ret i128 %rv
+}
+
+;Vector shifts
+define <2 x i32> @shl_v2i32(<2 x i32> %val, <2 x i32> %sh) {
+;CHECK: shl
+;CHECK: bi $lr
+	%rv = shl <2 x i32> %val, %sh
+	ret <2 x i32> %rv
+}
+
+define <4 x i32> @shl_v4i32(<4 x i32> %val, <4 x i32> %sh) {
+;CHECK: shl
+;CHECK: bi $lr
+	%rv = shl <4 x i32> %val, %sh
+	ret <4 x i32> %rv
+}
+
+define <8 x i16> @shl_v8i16(<8 x i16> %val, <8 x i16> %sh) {
+;CHECK: shlh
+;CHECK: bi $lr
+	%rv = shl <8 x i16> %val, %sh
+	ret <8 x i16> %rv
+}
+
+define <4 x i32> @lshr_v4i32(<4 x i32> %val, <4 x i32> %sh) {
+;CHECK: rotm
+;CHECK: bi $lr
+	%rv = lshr <4 x i32> %val, %sh
+	ret <4 x i32> %rv
+}
+
+define <8 x i16> @lshr_v8i16(<8 x i16> %val, <8 x i16> %sh) {
+;CHECK: sfhi
+;CHECK: rothm
+;CHECK: bi $lr
+	%rv = lshr <8 x i16> %val, %sh
+	ret <8 x i16> %rv
+}
+
+define <4 x i32> @ashr_v4i32(<4 x i32> %val, <4 x i32> %sh) {
+;CHECK: rotma
+;CHECK: bi $lr
+	%rv = ashr <4 x i32> %val, %sh
+	ret <4 x i32> %rv
+}
+
+define <8 x i16> @ashr_v8i16(<8 x i16> %val, <8 x i16> %sh) {
+;CHECK: sfhi
+;CHECK: rotmah
+;CHECK: bi $lr
+	%rv = ashr <8 x i16> %val, %sh
+	ret <8 x i16> %rv
 }
