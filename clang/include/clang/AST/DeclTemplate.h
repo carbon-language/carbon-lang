@@ -1492,6 +1492,8 @@ public:
 
   SourceLocation getInnerLocStart() const { return getTemplateKeywordLoc(); }
 
+  SourceRange getSourceRange() const;
+
   void Profile(llvm::FoldingSetNodeID &ID) const {
     Profile(ID, TemplateArgs->data(), TemplateArgs->size(), getASTContext());
   }

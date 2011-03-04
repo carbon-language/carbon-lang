@@ -577,6 +577,19 @@ ClassTemplateSpecializationDecl::getSpecializedTemplate() const {
   return SpecializedTemplate.get<ClassTemplateDecl*>();
 }
 
+SourceRange
+ClassTemplateSpecializationDecl::getSourceRange() const {
+  if (!ExplicitInfo)
+    return SourceRange();
+  SourceLocation Begin = getExternLoc();
+  if (Begin.isInvalid())
+    Begin = getTemplateKeywordLoc();
+  SourceLocation End = getRBraceLoc();
+  if (End.isInvalid())
+    End = getTypeAsWritten()->getTypeLoc().getEndLoc();
+  return SourceRange(Begin, End);
+}
+
 //===----------------------------------------------------------------------===//
 // ClassTemplatePartialSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//
