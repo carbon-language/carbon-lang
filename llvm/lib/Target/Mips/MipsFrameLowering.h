@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ALPHA_FRAMEINFO_H
-#define ALPHA_FRAMEINFO_H
+#ifndef MIPS_FRAMEINFO_H
+#define MIPS_FRAMEINFO_H
 
 #include "Mips.h"
 #include "MipsSubtarget.h"
