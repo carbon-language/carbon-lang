@@ -113,7 +113,7 @@ namespace llvm {
     enum {
       /// The default distance between instructions as returned by distance().
       /// This may vary as instructions are inserted and removed.
-      InstrDist = 2*NUM
+      InstrDist = 4*NUM
     };
 
     static inline SlotIndex getEmptyKey() {
@@ -427,6 +427,9 @@ namespace llvm {
       insert(getTail(), val);
     }
 
+    /// Renumber locally after inserting newEntry.
+    void renumberIndexes(IndexListEntry *newEntry);
+
   public:
     static char ID;
 
@@ -599,7 +602,6 @@ namespace llvm {
              "Instruction's parent MBB has not been added to SlotIndexes.");
 
       MachineBasicBlock::iterator miItr(mi);
-      bool needRenumber = false;
       IndexListEntry *newEntry;
       // Get previous index, considering that not all instructions are indexed.
       IndexListEntry *prevEntry;
@@ -622,31 +624,19 @@ namespace llvm {
 
       // Get a number for the new instr, or 0 if there's no room currently.
       // In the latter case we'll force a renumber later.
-      unsigned dist = nextEntry->getIndex() - prevEntry->getIndex();
-      unsigned newNumber = dist > SlotIndex::NUM ?
-        prevEntry->getIndex() + ((dist >> 1) & ~3U) : 0;
-
-      if (newNumber == 0) {
-        needRenumber = true;
-      }
+      unsigned dist = ((nextEntry->getIndex() - prevEntry->getIndex())/2) & ~3u;
+      unsigned newNumber = prevEntry->getIndex() + dist;
 
       // Insert a new list entry for mi.
       newEntry = createEntry(mi, newNumber);
       insert(nextEntry, newEntry);
-  
+
+      // Renumber locally if we need to.
+      if (dist == 0)
+        renumberIndexes(newEntry);
+
       SlotIndex newIndex(newEntry, SlotIndex::LOAD);
       mi2iMap.insert(std::make_pair(mi, newIndex));
-
-      if (miItr == mbb->end()) {
-        // If this is the last instr in the MBB then we need to fix up the bb
-        // range:
-        mbbRangeItr->second.second = SlotIndex(newEntry, SlotIndex::STORE);
-      }
-
-      // Renumber if we need to.
-      if (needRenumber)
-        renumberIndexes();
-
       return newIndex;
     }
 

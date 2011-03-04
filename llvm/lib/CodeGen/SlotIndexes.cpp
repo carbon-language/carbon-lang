@@ -22,7 +22,8 @@ char SlotIndexes::ID = 0;
 INITIALIZE_PASS(SlotIndexes, "slotindexes",
                 "Slot index numbering", false, false)
 
-STATISTIC(NumRenumPasses, "Number of slot index renumber passes");
+STATISTIC(NumLocalRenum,  "Number of local renumberings");
+STATISTIC(NumGlobalRenum, "Number of global renumberings");
 
 void SlotIndexes::getAnalysisUsage(AnalysisUsage &au) const {
   au.setPreservesAll();
@@ -112,7 +113,7 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
 void SlotIndexes::renumberIndexes() {
   // Renumber updates the index of every element of the index list.
   DEBUG(dbgs() << "\n*** Renumbering SlotIndexes ***\n");
-  ++NumRenumPasses;
+  ++NumGlobalRenum;
 
   unsigned index = 0;
 
@@ -122,6 +123,28 @@ void SlotIndexes::renumberIndexes() {
     index += SlotIndex::InstrDist;
   }
 }
+
+// Renumber indexes locally after curEntry was inserted, but failed to get a new
+// index.
+void SlotIndexes::renumberIndexes(IndexListEntry *curEntry) {
+  // Number indexes with half the default spacing so we can catch up quickly.
+  const unsigned Space = SlotIndex::InstrDist/2;
+  assert((Space & 3) == 0 && "InstrDist must be a multiple of 2*NUM");
+
+  IndexListEntry *start = curEntry->getPrev();
+  unsigned index = start->getIndex();
+  IndexListEntry *tail = getTail();
+  do {
+    curEntry->setIndex(index += Space);
+    curEntry = curEntry->getNext();
+    // If the next index is bigger, we have caught up.
+  } while (curEntry != tail && curEntry->getIndex() <= index);
+
+  DEBUG(dbgs() << "\n*** Renumbered SlotIndexes " << start->getIndex() << '-'
+               << index << " ***\n");
+  ++NumLocalRenum;
+}
+
 
 void SlotIndexes::dump() const {
   for (const IndexListEntry *itr = front(); itr != getTail();
