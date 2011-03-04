@@ -95,6 +95,18 @@ unsigned TemplateParameterList::getDepth() const {
     return cast<TemplateTemplateParmDecl>(FirstParm)->getDepth();
 }
 
+static void AdoptTemplateParameterList(TemplateParameterList *Params,
+                                       DeclContext *Owner) {
+  for (TemplateParameterList::iterator P = Params->begin(), 
+                                    PEnd = Params->end();
+       P != PEnd; ++P) {
+    (*P)->setDeclContext(Owner);
+    
+    if (TemplateTemplateParmDecl *TTP = dyn_cast<TemplateTemplateParmDecl>(*P))
+      AdoptTemplateParameterList(TTP->getTemplateParameters(), Owner);
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // RedeclarableTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
@@ -165,12 +177,7 @@ FunctionTemplateDecl *FunctionTemplateDecl::Create(ASTContext &C,
                                                    DeclarationName Name,
                                                TemplateParameterList *Params,
                                                    NamedDecl *Decl) {
-  // Take ownership of the template parameters.
-  for (TemplateParameterList::iterator P = Params->begin(), 
-                                    PEnd = Params->end();
-       P != PEnd; ++P)
-    (*P)->setDeclContext(cast<DeclContext>(Decl));
-
+  AdoptTemplateParameterList(Params, cast<DeclContext>(Decl));
   return new (C) FunctionTemplateDecl(DC, L, Name, Params, Decl);
 }
 
@@ -207,12 +214,7 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              TemplateParameterList *Params,
                                              NamedDecl *Decl,
                                              ClassTemplateDecl *PrevDecl) {
-  // Take ownership of the template parameters.
-  for (TemplateParameterList::iterator P = Params->begin(), 
-                                    PEnd = Params->end();
-       P != PEnd; ++P)
-    (*P)->setDeclContext(cast<DeclContext>(Decl));
-  
+  AdoptTemplateParameterList(Params, cast<DeclContext>(Decl));
   ClassTemplateDecl *New = new (C) ClassTemplateDecl(DC, L, Name, Params, Decl);
   New->setPreviousDeclaration(PrevDecl);
   return New;
@@ -633,11 +635,7 @@ ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
     NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
     InstantiatedFromMember(0, false)
 { 
-  // Take ownership of the template parameters.
-  for (TemplateParameterList::iterator P = Params->begin(), 
-                                    PEnd = Params->end();
-       P != PEnd; ++P)
-    (*P)->setDeclContext(this);
+  AdoptTemplateParameterList(Params, this);
 }
 
 ClassTemplatePartialSpecializationDecl *
