@@ -412,6 +412,9 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   // Transfer memoperands.
   (*MIB).setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
 
+  // Transfer MI flags.
+  MIB.setMIFlags(MI->getFlags());
+
   DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
   MBB.erase(MI);
@@ -563,6 +566,9 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
     MIB.addOperand(MI->getOperand(i));
   }
 
+  // Transfer MI flags.
+  MIB.setMIFlags(MI->getFlags());
+
   DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
   MBB.erase(MI);
@@ -662,6 +668,9 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   }
   if (!TID.isPredicable() && NewTID.isPredicable())
     AddDefaultPred(MIB);
+
+  // Transfer MI flags.
+  MIB.setMIFlags(MI->getFlags());
 
   DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 
