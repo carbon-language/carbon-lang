@@ -103,7 +103,7 @@ private:
   void analyzeUses();
 
   /// calcLiveBlockInfo - Compute per-block information about CurLI.
-  void calcLiveBlockInfo();
+  bool calcLiveBlockInfo();
 
   /// canAnalyzeBranch - Return true if MBB ends in a branch that can be
   /// analyzed.
