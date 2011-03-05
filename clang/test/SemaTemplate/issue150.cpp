@@ -91,7 +91,17 @@ namespace PR9016 {
     IntervalSet<T> IntervalSetT;
   };
   
+  template <class T, 
+            template<class _T, template<class> class Compare = less,
+                     class = typename interval_type_default<_T,Compare>::type,
+                     template<class> class = allocator> class IntervalSet>
+  void int40()
+  {
+    IntervalSet<T> IntervalSetT;
+  }
+
   void test() {
     ZZZ<int, interval_set> zzz;
+    int40<int, interval_set>();
   }
 }

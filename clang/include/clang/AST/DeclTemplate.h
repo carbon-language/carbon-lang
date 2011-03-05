@@ -771,9 +771,20 @@ protected:
   /// \brief Data that is common to all of the declarations of a given
   /// function template.
   struct Common : CommonBase {
+    Common() : InjectedArgs(0) { }
+    
     /// \brief The function template specializations for this function
     /// template, including explicit specializations and instantiations.
     llvm::FoldingSet<FunctionTemplateSpecializationInfo> Specializations;
+    
+    /// \brief The set of "injected" template arguments used within this
+    /// function template.
+    ///
+    /// This pointer refers to the template arguments (there are as
+    /// many template arguments as template parameaters) for the function
+    /// template, and is allocated lazily, since most function templates do not
+    /// require the use of this information.
+    TemplateArgument *InjectedArgs;
   };
 
   FunctionTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
@@ -844,6 +855,15 @@ public:
     return makeSpecIterator(getSpecializations(), true);
   }
 
+  /// \brief Retrieve the "injected" template arguments that correspond to the
+  /// template parameters of this function template.
+  ///                               
+  /// Although the C++ standard has no notion of the "injected" template
+  /// arguments for a function template, the notion is convenient when
+  /// we need to perform substitutions inside the definition of a function
+  /// template.     
+  std::pair<const TemplateArgument *, unsigned> getInjectedTemplateArgs();
+                               
   /// \brief Create a function template node.
   static FunctionTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                       SourceLocation L,

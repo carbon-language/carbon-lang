@@ -95,6 +95,12 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
         assert(Function->getPrimaryTemplate() && "No function template?");
         if (Function->getPrimaryTemplate()->isMemberSpecialization())
           break;
+      } else if (FunctionTemplateDecl *FunTmpl
+                                   = Function->getDescribedFunctionTemplate()) {
+        // Add the "injected" template arguments.
+        std::pair<const TemplateArgument *, unsigned>
+          Injected = FunTmpl->getInjectedTemplateArgs();
+        Result.addOuterTemplateArguments(Injected.first, Injected.second);
       }
       
       // If this is a friend declaration and it declares an entity at
