@@ -261,6 +261,15 @@ define i1 @udiv1(i32 %X) {
 ; CHECK: ret i1 true
 }
 
+define i1 @udiv2(i32 %X, i32 %Y, i32 %Z) {
+; CHECK: @udiv2
+  %A = udiv exact i32 10, %Z
+  %B = udiv exact i32 20, %Z
+  %C = icmp ult i32 %A, %B
+  ret i1 %C
+; CHECK: ret i1 true
+}
+
 define i1 @sdiv1(i32 %X) {
 ; CHECK: @sdiv1
   %A = sdiv i32 %X, 1000000

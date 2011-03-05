@@ -1344,7 +1344,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   // the compare, and if only one of them is then we moved it to RHS already.
   if (isa<AllocaInst>(LHS) && (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) ||
                                isa<ConstantPointerNull>(RHS)))
-    // We already know that LHS != LHS.
+    // We already know that LHS != RHS.
     return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
 
   // If we are comparing with zero then try hard since this is a common case.
@@ -1697,6 +1697,38 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_ULT:
     case ICmpInst::ICMP_ULE:
       return ConstantInt::getTrue(RHS->getContext());
+    }
+  }
+
+  if (MaxRecurse && LBO && RBO && LBO->getOpcode() == RBO->getOpcode() &&
+      LBO->getOperand(1) == RBO->getOperand(1)) {
+    switch (LBO->getOpcode()) {
+    default: break;
+    case Instruction::UDiv:
+    case Instruction::LShr:
+      if (ICmpInst::isSigned(Pred))
+        break;
+      // fall-through
+    case Instruction::SDiv:
+    case Instruction::AShr:
+      if (!LBO->isExact() && !RBO->isExact())
+        break;
+      if (Value *V = SimplifyICmpInst(Pred, LBO->getOperand(0),
+                                      RBO->getOperand(0), TD, DT, MaxRecurse-1))
+        return V;
+      break;
+    case Instruction::Shl: {
+      bool NUW = LBO->hasNoUnsignedWrap() && LBO->hasNoUnsignedWrap();
+      bool NSW = LBO->hasNoSignedWrap() && RBO->hasNoSignedWrap();
+      if (!NUW && !NSW)
+        break;
+      if (!NSW && ICmpInst::isSigned(Pred))
+        break;
+      if (Value *V = SimplifyICmpInst(Pred, LBO->getOperand(0),
+                                      RBO->getOperand(0), TD, DT, MaxRecurse-1))
+        return V;
+      break;
+    }
     }
   }
 

@@ -2393,6 +2393,27 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           }
         }
         break;
+      case Instruction::UDiv:
+      case Instruction::LShr:
+        if (I.isSigned())
+          break;
+        // fall-through
+      case Instruction::SDiv:
+      case Instruction::AShr:
+        if (!BO0->isExact() && !BO1->isExact())
+          break;
+        return new ICmpInst(I.getPredicate(), BO0->getOperand(0),
+                            BO1->getOperand(0));
+      case Instruction::Shl: {
+        bool NUW = BO0->hasNoUnsignedWrap() && BO1->hasNoUnsignedWrap();
+        bool NSW = BO0->hasNoSignedWrap() && BO1->hasNoSignedWrap();
+        if (!NUW && !NSW)
+          break;
+        if (!NSW && I.isSigned())
+          break;
+        return new ICmpInst(I.getPredicate(), BO0->getOperand(0),
+                            BO1->getOperand(0));
+      }
       }
     }
   }
