@@ -93,8 +93,6 @@ def ARMretflag       : SDNode<"ARMISD::RET_FLAG", SDTNone,
 
 def ARMcmov          : SDNode<"ARMISD::CMOV", SDT_ARMCMov,
                               [SDNPInGlue]>;
-def ARMcneg          : SDNode<"ARMISD::CNEG", SDT_ARMCMov,
-                              [SDNPInGlue]>;
 
 def ARMbrcond        : SDNode<"ARMISD::BRCOND", SDT_ARMBrcond,
                               [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
