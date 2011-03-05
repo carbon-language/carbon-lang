@@ -3197,13 +3197,12 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                DS.getTypeQualifiers(),
                                                RefQualifierIsLValueRef,
                                                RefQualifierLoc,
-                                               ESpecType == EST_Dynamic ||
-                                                 ESpecType == EST_DynamicAny,
-                                               ESpecRange.getBegin(),
-                                               ESpecType == EST_DynamicAny,
+                                               ESpecType, ESpecRange.getBegin(),
                                                DynamicExceptions.data(),
                                                DynamicExceptionRanges.data(),
                                                DynamicExceptions.size(),
+                                               NoexceptExpr.isUsable() ?
+                                                 NoexceptExpr.get() : 0,
                                                LParenLoc, RParenLoc, D,
                                                TrailingReturnType),
                   EndLoc);
@@ -3453,13 +3452,12 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                              DS.getTypeQualifiers(),
                                              RefQualifierIsLValueRef,
                                              RefQualifierLoc,
-                                             ESpecType == EST_Dynamic ||
-                                               ESpecType == EST_DynamicAny,
-                                             ESpecRange.getBegin(),
-                                             ESpecType == EST_DynamicAny,
+                                             ESpecType, ESpecRange.getBegin(),
                                              DynamicExceptions.data(),
                                              DynamicExceptionRanges.data(),
                                              DynamicExceptions.size(),
+                                             NoexceptExpr.isUsable() ?
+                                               NoexceptExpr.get() : 0,
                                              LParenLoc, RParenLoc, D,
                                              TrailingReturnType),
                 EndLoc);
@@ -3537,9 +3535,8 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
                                              &ParamInfo[0], ParamInfo.size(),
                                              /*TypeQuals*/0,
                                              true, SourceLocation(),
-                                             /*exception*/false,
-                                             SourceLocation(), false, 0, 0, 0,
-                                             LParenLoc, RLoc, D),
+                                             EST_None, SourceLocation(), 0, 0,
+                                             0, 0, LParenLoc, RLoc, D),
                 RLoc);
 }
 

@@ -511,7 +511,7 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
                              /*args*/ 0, 0,
                              /*type quals*/ 0,
                              /*ref-qualifier*/true, SourceLocation(),
-                             /*EH*/ false, SourceLocation(), false, 0, 0, 0,
+                             /*EH*/ EST_None, SourceLocation(), 0, 0, 0, 0,
                              /*parens*/ loc, loc,
                              declarator));
 
@@ -1764,9 +1764,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
       // Exception specs are not allowed in typedefs. Complain, but add it
       // anyway.
-      if (FTI.hasExceptionSpec &&
+      if (FTI.getExceptionSpecType() != EST_None &&
           D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
-        Diag(FTI.getThrowLoc(), diag::err_exception_spec_in_typedef);
+        Diag(FTI.getExceptionSpecLoc(), diag::err_exception_spec_in_typedef);
 
       if (!FTI.NumArgs && !FTI.isVariadic && !getLangOptions().CPlusPlus) {
         // Simple void foo(), where the incoming T is the result type.
@@ -1855,9 +1855,11 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         }
 
         llvm::SmallVector<QualType, 4> Exceptions;
-        if (FTI.hasExceptionSpec) {
-          EPI.HasExceptionSpec = FTI.hasExceptionSpec;
-          EPI.HasAnyExceptionSpec = FTI.hasAnyExceptionSpec;
+        if (FTI.getExceptionSpecType() == EST_Dynamic ||
+            FTI.getExceptionSpecType() == EST_DynamicAny) {
+          EPI.HasExceptionSpec = true;
+          EPI.HasAnyExceptionSpec =
+              FTI.getExceptionSpecType() == EST_DynamicAny;
           Exceptions.reserve(FTI.NumExceptions);
           for (unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
             // FIXME: Preserve type source info.

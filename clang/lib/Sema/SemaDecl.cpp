@@ -5758,8 +5758,8 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   D.AddTypeInfo(DeclaratorChunk::getFunction(ParsedAttributes(),
                                              false, false, SourceLocation(), 0,
                                              0, 0, true, SourceLocation(),
-                                             false, SourceLocation(),
-                                             false, 0,0,0, Loc, Loc, D),
+                                             EST_None, SourceLocation(),
+                                             0, 0, 0, 0, Loc, Loc, D),
                 SourceLocation());
   D.SetIdentifier(&II, Loc);
 
