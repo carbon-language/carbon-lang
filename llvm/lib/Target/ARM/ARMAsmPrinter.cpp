@@ -916,10 +916,11 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       }
 
       if (DstReg == FramePtr && FramePtr != ARM::SP)
-        // Set-up of the frame pointer.
-        OutStreamer.EmitSetFP(FramePtr, ARM::SP, Offset);
+        // Set-up of the frame pointer. Positive values correspond to "add"
+        // instruction.
+        OutStreamer.EmitSetFP(FramePtr, ARM::SP, -Offset);
       else if (DstReg == ARM::SP) {
-        // Change of SP by an offset. Positive values corresponds to "sub"
+        // Change of SP by an offset. Positive values correspond to "sub"
         // instruction.
         OutStreamer.EmitPad(Offset);
       } else {
