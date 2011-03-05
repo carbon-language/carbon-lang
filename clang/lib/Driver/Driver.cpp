@@ -1323,7 +1323,7 @@ std::string Driver::GetTemporaryPath(const char *Suffix) const {
 
 const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
   llvm::PrettyStackTraceString CrashInfo("Constructing host");
-  llvm::Triple Triple(TripleStr);
+  llvm::Triple Triple(llvm::Triple::normalize(TripleStr).c_str());
 
   // TCE is an osless target
   if (Triple.getArchName() == "tce")
