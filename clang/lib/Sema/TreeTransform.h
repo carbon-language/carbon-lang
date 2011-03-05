@@ -4126,7 +4126,28 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformSubstTemplateTypeParmType(
                                          TypeLocBuilder &TLB,
                                          SubstTemplateTypeParmTypeLoc TL) {
-  return TransformTypeSpecType(TLB, TL);
+  const SubstTemplateTypeParmType *T = TL.getTypePtr();
+  
+  // Substitute into the replacement type, which itself might involve something
+  // that needs to be transformed. This only tends to occur with default
+  // template arguments of template template parameters.
+  TemporaryBase Rebase(*this, TL.getNameLoc(), DeclarationName());
+  QualType Replacement = getDerived().TransformType(T->getReplacementType());
+  if (Replacement.isNull())
+    return QualType();
+  
+  // Always canonicalize the replacement type.
+  Replacement = SemaRef.Context.getCanonicalType(Replacement);
+  QualType Result
+    = SemaRef.Context.getSubstTemplateTypeParmType(T->getReplacedParameter(), 
+                                                   Replacement);
+  
+  // Propagate type-source information.
+  SubstTemplateTypeParmTypeLoc NewTL
+    = TLB.push<SubstTemplateTypeParmTypeLoc>(Result);
+  NewTL.setNameLoc(TL.getNameLoc());
+  return Result;
+
 }
 
 template<typename Derived>

@@ -69,3 +69,29 @@ namespace MultiReplacePartial {
 
   int check0[is_same<X<int, int, Y>::type, Y<int, int*, int* const> >::value? 1 : -1];
 }
+
+namespace PR9016 {
+  template<typename > struct allocator ;
+  template<typename > struct less ;
+
+  template<class T, template<class> class Compare, class Default,
+           template<class> class Alloc>
+  struct interval_set { };
+
+  template <class X, template<class> class = less> struct interval_type_default {
+    typedef X type;
+  };
+
+  template <class T,
+            template<class _T, template<class> class Compare = less,
+                     class = typename interval_type_default<_T,Compare>::type,
+                     template<class> class = allocator> class IntervalSet>
+  struct ZZZ
+  {
+    IntervalSet<T> IntervalSetT;
+  };
+  
+  void test() {
+    ZZZ<int, interval_set> zzz;
+  }
+}
