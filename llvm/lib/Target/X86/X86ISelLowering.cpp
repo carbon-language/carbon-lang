@@ -1284,7 +1284,7 @@ X86TargetLowering::getRegPressureLimit(const TargetRegisterClass *RC,
   case X86::GR32RegClassID:
     return 4 - FPDiff;
   case X86::GR64RegClassID:
-    return 8 - FPDiff;
+    return 12 - FPDiff;
   case X86::VR128RegClassID:
     return Subtarget->is64Bit() ? 10 : 4;
   case X86::VR64RegClassID:

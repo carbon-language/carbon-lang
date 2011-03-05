@@ -858,6 +858,8 @@ public:
                                       const SmallVectorImpl<MachineOperand> &MOs,
                                       unsigned Size, unsigned Alignment) const;
 
+  bool isHighLatencyDef(int opc) const;
+
   bool hasHighOperandLatency(const InstrItineraryData *ItinData,
                              const MachineRegisterInfo *MRI,
                              const MachineInstr *DefMI, unsigned DefIdx,

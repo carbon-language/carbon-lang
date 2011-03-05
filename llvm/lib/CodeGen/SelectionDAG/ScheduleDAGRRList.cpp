@@ -70,6 +70,43 @@ static cl::opt<bool> DisableSchedCycles(
   "disable-sched-cycles", cl::Hidden, cl::init(false),
   cl::desc("Disable cycle-level precision during preRA scheduling"));
 
+// Temporary sched=list-ilp flags until the heuristics are robust.
+static cl::opt<bool> DisableSchedRegPressure(
+  "disable-sched-reg-pressure", cl::Hidden, cl::init(false),
+  cl::desc("Disable regpressure priority in sched=list-ilp"));
+static cl::opt<bool> DisableSchedLiveUses(
+  "disable-sched-live-uses", cl::Hidden, cl::init(false),
+  cl::desc("Disable live use priority in sched=list-ilp"));
+static cl::opt<bool> DisableSchedStalls(
+  "disable-sched-stalls", cl::Hidden, cl::init(false),
+  cl::desc("Disable no-stall priority in sched=list-ilp"));
+static cl::opt<bool> DisableSchedCriticalPath(
+  "disable-sched-critical-path", cl::Hidden, cl::init(false),
+  cl::desc("Disable critical path priority in sched=list-ilp"));
+static cl::opt<bool> DisableSchedHeight(
+  "disable-sched-height", cl::Hidden, cl::init(false),
+  cl::desc("Disable scheduled-height priority in sched=list-ilp"));
+
+static cl::opt<int> MaxReorderWindow(
+  "max-sched-reorder", cl::Hidden, cl::init(6),
+  cl::desc("Number of instructions to allow ahead of the critical path "
+           "in sched=list-ilp"));
+
+static cl::opt<unsigned> AvgIPC(
+  "sched-avg-ipc", cl::Hidden, cl::init(1),
+  cl::desc("Average inst/cycle whan no target itinerary exists."));
+
+#ifndef NDEBUG
+namespace {
+  // For sched=list-ilp, Count the number of times each factor comes into play.
+  enum { FactPressureDiff, FactRegUses, FactHeight, FactDepth, FactUllman,
+         NumFactors };
+}
+static const char *FactorName[NumFactors] =
+{"PressureDiff", "RegUses", "Height", "Depth","Ullman"};
+static int FactorCount[NumFactors];
+#endif //!NDEBUG
+
 namespace {
 //===----------------------------------------------------------------------===//
 /// ScheduleDAGRRList - The actual register reduction list scheduler
@@ -102,6 +139,10 @@ private:
 
   /// MinAvailableCycle - Cycle of the soonest available instruction.
   unsigned MinAvailableCycle;
+
+  /// IssueCount - Count instructions issued in this cycle
+  /// Currently valid only for bottom-up scheduling.
+  unsigned IssueCount;
 
   /// LiveRegDefs - A set of physical registers and their definition
   /// that are "live". These nodes must be scheduled before any other nodes that
@@ -234,8 +275,14 @@ void ScheduleDAGRRList::Schedule() {
   DEBUG(dbgs()
         << "********** List Scheduling BB#" << BB->getNumber()
         << " '" << BB->getName() << "' **********\n");
+#ifndef NDEBUG
+  for (int i = 0; i < NumFactors; ++i) {
+    FactorCount[i] = 0;
+  }
+#endif //!NDEBUG
 
   CurCycle = 0;
+  IssueCount = 0;
   MinAvailableCycle = DisableSchedCycles ? 0 : UINT_MAX;
   NumLiveRegs = 0;
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);
@@ -258,6 +305,11 @@ void ScheduleDAGRRList::Schedule() {
   else
     ListScheduleTopDown();
 
+#ifndef NDEBUG
+  for (int i = 0; i < NumFactors; ++i) {
+    DEBUG(dbgs() << FactorName[i] << "\t" << FactorCount[i] << "\n");
+  }
+#endif // !NDEBUG
   AvailableQueue->releaseState();
 }
 
@@ -383,6 +435,7 @@ void ScheduleDAGRRList::AdvanceToCycle(unsigned NextCycle) {
   if (NextCycle <= CurCycle)
     return;
 
+  IssueCount = 0;
   AvailableQueue->setCurCycle(NextCycle);
   if (!HazardRec->isEnabled()) {
     // Bypass lots of virtual calls in case of long latency.
@@ -502,10 +555,10 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
 
   AvailableQueue->ScheduledNode(SU);
 
-  // If HazardRec is disabled, count each inst as one cycle.
-  // Advance CurCycle before ReleasePredecessors to avoid useles pushed to
+  // If HazardRec is disabled, and each inst counts as one cycle, then
+  // advance CurCycle before ReleasePredecessors to avoid useles pushed to
   // PendingQueue for schedulers that implement HasReadyFilter.
-  if (!HazardRec->isEnabled())
+  if (!HazardRec->isEnabled() && AvgIPC < 2)
     AdvanceToCycle(CurCycle + 1);
 
   // Update liveness of predecessors before successors to avoid treating a
@@ -533,7 +586,9 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
   // If HazardRec is disabled, the cycle was advanced earlier.
   //
   // Check AvailableQueue after ReleasePredecessors in case of zero latency.
+  ++IssueCount;
   if ((HazardRec->isEnabled() && HazardRec->atIssueLimit())
+      || (!HazardRec->isEnabled() && AvgIPC > 1 && IssueCount == AvgIPC)
       || AvailableQueue->empty())
     AdvanceToCycle(CurCycle + 1);
 }
@@ -1458,7 +1513,9 @@ public:
 
   bool HighRegPressure(const SUnit *SU) const;
 
-  bool MayReduceRegPressure(SUnit *SU);
+  bool MayReduceRegPressure(SUnit *SU) const;
+
+  int RegPressureDiff(SUnit *SU, unsigned &LiveUses) const;
 
   void ScheduledNode(SUnit *SU);
 
@@ -1678,7 +1735,7 @@ bool RegReductionPQBase::HighRegPressure(const SUnit *SU) const {
   return false;
 }
 
-bool RegReductionPQBase::MayReduceRegPressure(SUnit *SU) {
+bool RegReductionPQBase::MayReduceRegPressure(SUnit *SU) const {
   const SDNode *N = SU->getNode();
 
   if (!N->isMachineOpcode() || !SU->NumSuccs)
@@ -1694,6 +1751,53 @@ bool RegReductionPQBase::MayReduceRegPressure(SUnit *SU) {
       return true;
   }
   return false;
+}
+
+// Compute the register pressure contribution by this instruction by count up
+// for uses that are not live and down for defs. Only count register classes
+// that are already under high pressure. As a side effect, compute the number of
+// uses of registers that are already live.
+//
+// FIXME: This encompasses the logic in HighRegPressure and MayReduceRegPressure
+// so could probably be factored.
+int RegReductionPQBase::RegPressureDiff(SUnit *SU, unsigned &LiveUses) const {
+  LiveUses = 0;
+  int PDiff = 0;
+  for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
+       I != E; ++I) {
+    if (I->isCtrl())
+      continue;
+    SUnit *PredSU = I->getSUnit();
+    // NumRegDefsLeft is zero when enough uses of this node have been scheduled
+    // to cover the number of registers defined (they are all live).
+    if (PredSU->NumRegDefsLeft == 0) {
+      if (PredSU->getNode()->isMachineOpcode())
+        ++LiveUses;
+      continue;
+    }
+    for (ScheduleDAGSDNodes::RegDefIter RegDefPos(PredSU, scheduleDAG);
+         RegDefPos.IsValid(); RegDefPos.Advance()) {
+      EVT VT = RegDefPos.GetValue();
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      if (RegPressure[RCId] >= RegLimit[RCId])
+        ++PDiff;
+    }
+  }
+  const SDNode *N = SU->getNode();
+
+  if (!N->isMachineOpcode() || !SU->NumSuccs)
+    return PDiff;
+
+  unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
+  for (unsigned i = 0; i != NumDefs; ++i) {
+    EVT VT = N->getValueType(i);
+    if (!N->hasAnyUseOfValue(i))
+      continue;
+    unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+    if (RegPressure[RCId] >= RegLimit[RCId])
+      --PDiff;
+  }
+  return PDiff;
 }
 
 void RegReductionPQBase::ScheduledNode(SUnit *SU) {
@@ -1998,9 +2102,10 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
 static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
-  if (LPriority != RPriority)
+  if (LPriority != RPriority) {
+    DEBUG(++FactorCount[FactUllman]);
     return LPriority > RPriority;
-
+  }
   // Try schedule def + use closer when Sethi-Ullman numbers are the same.
   // e.g.
   // t1 = op t2, c1
@@ -2128,21 +2233,37 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
     // No way to compute latency of calls.
     return BURRSort(left, right, SPQ);
 
-  bool LHigh = SPQ->HighRegPressure(left);
-  bool RHigh = SPQ->HighRegPressure(right);
-  // Avoid causing spills. If register pressure is high, schedule for
-  // register pressure reduction.
-  if (LHigh && !RHigh)
-    return true;
-  else if (!LHigh && RHigh)
-    return false;
-  else if (!LHigh && !RHigh) {
-    // Low register pressure situation, schedule to maximize instruction level
-    // parallelism.
-    if (left->NumPreds > right->NumPreds)
-      return false;
-    else if (left->NumPreds < right->NumPreds)
-      return true;
+  unsigned LLiveUses, RLiveUses;
+  int LPDiff = SPQ->RegPressureDiff(left, LLiveUses);
+  int RPDiff = SPQ->RegPressureDiff(right, RLiveUses);
+  if (!DisableSchedRegPressure && LPDiff != RPDiff) {
+    DEBUG(++FactorCount[FactPressureDiff]);
+    return LPDiff > RPDiff;
+  }
+
+  if (!DisableSchedLiveUses && LLiveUses != RLiveUses) {
+    DEBUG(dbgs() << "Live uses " << left->NodeNum << " = " << LLiveUses
+          << " != " << right->NodeNum << " = " << RLiveUses << "\n");
+    DEBUG(++FactorCount[FactRegUses]);
+    return LLiveUses < RLiveUses;
+  }
+
+  bool LStall = BUHasStall(left, left->getHeight(), SPQ);
+  bool RStall = BUHasStall(right, right->getHeight(), SPQ);
+  if (!DisableSchedStalls && LStall != RStall) {
+    DEBUG(++FactorCount[FactHeight]);
+    return left->getHeight() > right->getHeight();
+  }
+
+  if (!DisableSchedCriticalPath
+      && abs((long)left->getDepth() - right->getDepth()) > MaxReorderWindow) {
+    DEBUG(++FactorCount[FactDepth]);
+    return left->getDepth() < right->getDepth();
+  }
+
+  if (!DisableSchedHeight && left->getHeight() != right->getHeight()) {
+    DEBUG(++FactorCount[FactHeight]);
+    return left->getHeight() > right->getHeight();
   }
 
   return BURRSort(left, right, SPQ);

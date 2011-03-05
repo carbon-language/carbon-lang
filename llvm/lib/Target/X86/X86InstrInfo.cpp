@@ -3085,12 +3085,8 @@ void X86InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.setOpcode(X86::NOOP);
 }
 
-bool X86InstrInfo::
-hasHighOperandLatency(const InstrItineraryData *ItinData,
-                      const MachineRegisterInfo *MRI,
-                      const MachineInstr *DefMI, unsigned DefIdx,
-                      const MachineInstr *UseMI, unsigned UseIdx) const {
-  switch (DefMI->getOpcode()) {
+bool X86InstrInfo::isHighLatencyDef(int opc) const {
+  switch (opc) {
   default: return false;
   case X86::DIVSDrm:
   case X86::DIVSDrm_Int:
@@ -3118,6 +3114,14 @@ hasHighOperandLatency(const InstrItineraryData *ItinData,
   case X86::SQRTSSr_Int:
     return true;
   }
+}
+
+bool X86InstrInfo::
+hasHighOperandLatency(const InstrItineraryData *ItinData,
+                      const MachineRegisterInfo *MRI,
+                      const MachineInstr *DefMI, unsigned DefIdx,
+                      const MachineInstr *UseMI, unsigned UseIdx) const {
+  return isHighLatencyDef(DefMI->getOpcode());
 }
 
 namespace {

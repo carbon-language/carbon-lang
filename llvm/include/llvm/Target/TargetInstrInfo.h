@@ -641,6 +641,10 @@ public:
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const;
 
+  /// isHighLatencyDef - Return true if this opcode has high latency to its
+  /// result.
+  bool isHighLatencyDef(int opc) const { return false; }
+
   /// hasHighOperandLatency - Compute operand latency between a def of 'Reg'
   /// and an use in the current loop, return true if the target considered
   /// it 'high'. This is used by optimization passes such as machine LICM to
