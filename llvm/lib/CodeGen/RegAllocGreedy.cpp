@@ -114,9 +114,21 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
   std::auto_ptr<SplitEditor> SE;
 
   /// All basic blocks where the current register is live.
-  SmallVector<SpillPlacement::BlockConstraint, 8> SpillConstraints;
+  SmallVector<SpillPlacement::BlockConstraint, 8> SplitConstraints;
 
   typedef std::pair<SlotIndex, SlotIndex> IndexPair;
+
+  /// Global live range splitting candidate info.
+  struct GlobalSplitCandidate {
+    unsigned PhysReg;
+    SmallVector<IndexPair, 8> Interference;
+    BitVector LiveBundles;
+  };
+
+  /// Candidate info for for each PhysReg in AllocationOrder.
+  /// This vector never shrinks, but grows to the size of the largest register
+  /// class.
+  SmallVector<GlobalSplitCandidate, 32> GlobalCand;
 
   /// For every instruction in SA->UseSlots, store the previous non-copy
   /// instruction.
@@ -148,8 +160,10 @@ private:
   bool checkUncachedInterference(LiveInterval&, unsigned);
   LiveInterval *getSingleInterference(LiveInterval&, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
+
   void mapGlobalInterference(unsigned, SmallVectorImpl<IndexPair>&);
-  float calcInterferenceInfo(LiveInterval&, unsigned);
+  float calcSplitConstraints(const SmallVectorImpl<IndexPair>&);
+
   float calcGlobalSplitCost(const BitVector&);
   void splitAroundRegion(LiveInterval&, unsigned, const BitVector&,
                          SmallVectorImpl<LiveInterval*>&);
@@ -485,185 +499,67 @@ void RAGreedy::mapGlobalInterference(unsigned PhysReg,
   }
 }
 
-/// calcInterferenceInfo - Compute per-block outgoing and ingoing constraints
-/// when considering interference from PhysReg. Also compute an optimistic local
-/// cost of this interference pattern.
-///
-/// The final cost of a split is the local cost + global cost of preferences
-/// broken by SpillPlacement.
-///
-float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
+/// calcSplitConstraints - Fill out the SplitConstraints vector based on the
+/// interference pattern in Intf. Return the static cost of this split,
+/// assuming that all preferences in SplitConstraints are met.
+float RAGreedy::calcSplitConstraints(const SmallVectorImpl<IndexPair> &Intf) {
   // Reset interference dependent info.
-  SpillConstraints.resize(SA->LiveBlocks.size());
+  SplitConstraints.resize(SA->LiveBlocks.size());
+  float StaticCost = 0;
   for (unsigned i = 0, e = SA->LiveBlocks.size(); i != e; ++i) {
     SplitAnalysis::BlockInfo &BI = SA->LiveBlocks[i];
-    SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
+    SpillPlacement::BlockConstraint &BC = SplitConstraints[i];
+    IndexPair IP = Intf[i];
+
     BC.Number = BI.MBB->getNumber();
     BC.Entry = (BI.Uses && BI.LiveIn) ?
       SpillPlacement::PrefReg : SpillPlacement::DontCare;
     BC.Exit = (BI.Uses && BI.LiveOut) ?
       SpillPlacement::PrefReg : SpillPlacement::DontCare;
-    BI.OverlapEntry = BI.OverlapExit = false;
-  }
 
-  // Add interference info from each PhysReg alias.
-  for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
-    if (!query(VirtReg, *AI).checkInterference())
-      continue;
-    LiveIntervalUnion::SegmentIter IntI =
-      PhysReg2LiveUnion[*AI].find(VirtReg.beginIndex());
-    if (!IntI.valid())
-      continue;
+    // Number of spill code instructions to insert.
+    unsigned Ins = 0;
 
-    // Determine which blocks have interference live in or after the last split
-    // point.
-    for (unsigned i = 0, e = SA->LiveBlocks.size(); i != e; ++i) {
-      SplitAnalysis::BlockInfo &BI = SA->LiveBlocks[i];
-      SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
-
-      // Skip interference-free blocks.
-      if (IntI.start() >= BI.Stop)
-        continue;
-
-      // Is the interference live-in?
-      if (BI.LiveIn) {
-        IntI.advanceTo(BI.Start);
-        if (!IntI.valid())
-          break;
-        if (IntI.start() <= BI.Start)
-          BC.Entry = SpillPlacement::MustSpill;
-      }
-
-      // Is the interference overlapping the last split point?
-      if (BI.LiveOut) {
-        if (IntI.stop() < BI.LastSplitPoint)
-          IntI.advanceTo(BI.LastSplitPoint.getPrevSlot());
-        if (!IntI.valid())
-          break;
-        if (IntI.start() < BI.Stop)
-          BC.Exit = SpillPlacement::MustSpill;
-      }
+    // Interference for the live-in value.
+    if (IP.first.isValid()) {
+      if (IP.first <= BI.Start)
+        BC.Entry = SpillPlacement::MustSpill, Ins += BI.Uses;
+      else if (!BI.Uses)
+        BC.Entry = SpillPlacement::PrefSpill;
+      else if (IP.first < BI.FirstUse)
+        BC.Entry = SpillPlacement::PrefSpill, ++Ins;
+      else if (IP.first < (BI.LiveThrough ? BI.LastUse : BI.Kill))
+        ++Ins;
     }
 
-    // Rewind iterator and check other interferences.
-    IntI.find(VirtReg.beginIndex());
-    for (unsigned i = 0, e = SA->LiveBlocks.size(); i != e; ++i) {
-      SplitAnalysis::BlockInfo &BI = SA->LiveBlocks[i];
-      SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
-
-      // Skip interference-free blocks.
-      if (IntI.start() >= BI.Stop)
-        continue;
-
-      // Handle transparent blocks with interference separately.
-      // Transparent blocks never incur any fixed cost.
-      if (BI.LiveThrough && !BI.Uses) {
-        IntI.advanceTo(BI.Start);
-        if (!IntI.valid())
-          break;
-        if (IntI.start() >= BI.Stop)
-          continue;
-
-        if (BC.Entry != SpillPlacement::MustSpill)
-          BC.Entry = SpillPlacement::PrefSpill;
-        if (BC.Exit != SpillPlacement::MustSpill)
-          BC.Exit = SpillPlacement::PrefSpill;
-        continue;
-      }
-
-      // Now we only have blocks with uses left.
-      // Check if the interference overlaps the uses.
-      assert(BI.Uses && "Non-transparent block without any uses");
-
-      // Check interference on entry.
-      if (BI.LiveIn && BC.Entry != SpillPlacement::MustSpill) {
-        IntI.advanceTo(BI.Start);
-        if (!IntI.valid())
-          break;
-        // Not live in, but before the first use.
-        if (IntI.start() < BI.FirstUse) {
-          BC.Entry = SpillPlacement::PrefSpill;
-          // If the block contains a kill from an earlier split, never split
-          // again in the same block.
-          if (!BI.LiveThrough && !SA->isOriginalEndpoint(BI.Kill))
-            BC.Entry = SpillPlacement::MustSpill;
-        }
-      }
-
-      // Does interference overlap the uses in the entry segment
-      // [FirstUse;Kill)?
-      if (BI.LiveIn && !BI.OverlapEntry) {
-        IntI.advanceTo(BI.FirstUse);
-        if (!IntI.valid())
-          break;
-        // A live-through interval has no kill.
-        // Check [FirstUse;LastUse) instead.
-        if (IntI.start() < (BI.LiveThrough ? BI.LastUse : BI.Kill))
-          BI.OverlapEntry = true;
-      }
-
-      // Does interference overlap the uses in the exit segment [Def;LastUse)?
-      if (BI.LiveOut && !BI.LiveThrough && !BI.OverlapExit) {
-        IntI.advanceTo(BI.Def);
-        if (!IntI.valid())
-          break;
-        if (IntI.start() < BI.LastUse)
-          BI.OverlapExit = true;
-      }
-
-      // Check interference on exit.
-      if (BI.LiveOut && BC.Exit != SpillPlacement::MustSpill) {
-        // Check interference between LastUse and Stop.
-        if (BC.Exit != SpillPlacement::PrefSpill) {
-          IntI.advanceTo(BI.LastUse);
-          if (!IntI.valid())
-            break;
-          if (IntI.start() < BI.Stop) {
-            BC.Exit = SpillPlacement::PrefSpill;
-            // Avoid splitting twice in the same block.
-            if (!BI.LiveThrough && !SA->isOriginalEndpoint(BI.Def))
-              BC.Exit = SpillPlacement::MustSpill;
-          }
-        }
-      }
+    // Interference for the live-out value.
+    if (IP.second.isValid()) {
+      if (IP.second >= BI.LastSplitPoint)
+        BC.Exit = SpillPlacement::MustSpill, Ins += BI.Uses;
+      else if (!BI.Uses)
+        BC.Exit = SpillPlacement::PrefSpill;
+      else if (IP.second > BI.LastUse)
+        BC.Exit = SpillPlacement::PrefSpill, ++Ins;
+      else if (IP.second > (BI.LiveThrough ? BI.FirstUse : BI.Def))
+        ++Ins;
     }
+
+    // Accumulate the total frequency of inserted spill code.
+    if (Ins)
+      StaticCost += Ins * SpillPlacer->getBlockFrequency(BC.Number);
   }
-
-  // Accumulate a local cost of this interference pattern.
-  float LocalCost = 0;
-  for (unsigned i = 0, e = SA->LiveBlocks.size(); i != e; ++i) {
-    SplitAnalysis::BlockInfo &BI = SA->LiveBlocks[i];
-    if (!BI.Uses)
-      continue;
-    SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
-    unsigned Inserts = 0;
-
-    // Do we need spill code for the entry segment?
-    if (BI.LiveIn)
-      Inserts += BI.OverlapEntry || BC.Entry != SpillPlacement::PrefReg;
-
-    // For the exit segment?
-    if (BI.LiveOut)
-      Inserts += BI.OverlapExit || BC.Exit != SpillPlacement::PrefReg;
-
-    // The local cost of spill code in this block is the block frequency times
-    // the number of spill instructions inserted.
-    if (Inserts)
-      LocalCost += Inserts * SpillPlacer->getBlockFrequency(BC.Number);
-  }
-  DEBUG(dbgs() << "Local cost of " << PrintReg(PhysReg, TRI) << " = "
-               << LocalCost << '\n');
-  return LocalCost;
+  return StaticCost;
 }
+
 
 /// calcGlobalSplitCost - Return the global split cost of following the split
 /// pattern in LiveBundles. This cost should be added to the local cost of the
-/// interference pattern in SpillConstraints.
+/// interference pattern in SplitConstraints.
 ///
 float RAGreedy::calcGlobalSplitCost(const BitVector &LiveBundles) {
   float GlobalCost = 0;
-  for (unsigned i = 0, e = SpillConstraints.size(); i != e; ++i) {
-    SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
+  for (unsigned i = 0, e = SplitConstraints.size(); i != e; ++i) {
+    SpillPlacement::BlockConstraint &BC = SplitConstraints[i];
     unsigned Inserts = 0;
     // Broken entry preference?
     Inserts += LiveBundles[Bundles->getBundle(BC.Number, 0)] !=
@@ -938,13 +834,21 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   BitVector LiveBundles, BestBundles;
   float BestCost = 0;
   unsigned BestReg = 0;
+
   Order.rewind();
-  while (unsigned PhysReg = Order.next()) {
-    float Cost = calcInterferenceInfo(VirtReg, PhysReg);
+  for (unsigned Cand = 0; unsigned PhysReg = Order.next(); ++Cand) {
+    if (GlobalCand.size() <= Cand)
+      GlobalCand.resize(Cand+1);
+    GlobalCand[Cand].PhysReg = PhysReg;
+
+    mapGlobalInterference(PhysReg, GlobalCand[Cand].Interference);
+    float Cost = calcSplitConstraints(GlobalCand[Cand].Interference);
+    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " static split cost = " << Cost
+                 << '\n');
     if (BestReg && Cost >= BestCost)
       continue;
 
-    SpillPlacer->placeSpills(SpillConstraints, LiveBundles);
+    SpillPlacer->placeSpills(SplitConstraints, LiveBundles);
     // No live bundles, defer to splitSingleBlocks().
     if (!LiveBundles.any())
       continue;
