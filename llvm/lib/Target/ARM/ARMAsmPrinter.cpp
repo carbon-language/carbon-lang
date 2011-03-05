@@ -819,9 +819,16 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
 
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
-  unsigned SrcReg =  MI->getOperand(1).getReg();
-  unsigned DstReg = MI->getOperand(0).getReg();
   unsigned Opc = MI->getOpcode();
+  unsigned SrcReg, DstReg;
+
+  // Special case: tPUSH does not have src/dst regs.
+  if (Opc == ARM::tPUSH) {
+    SrcReg = DstReg = ARM::SP;
+  } else {
+    SrcReg =  MI->getOperand(1).getReg();
+    DstReg = MI->getOperand(0).getReg();
+  }
 
   // Try to figure out the unwinding opcode out of src / dst regs.
   if (MI->getDesc().mayStore()) {
@@ -830,15 +837,25 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
            "Only stack pointer as a destination reg is supported");
 
     SmallVector<unsigned, 4> RegList;
+    // Skip src & dst reg, and pred ops.
+    unsigned StartOp = 2 + 2;
+    // Use all the operands.
+    unsigned NumOffset = 0;
+
     switch (Opc) {
     default:
       MI->dump();
       assert(0 && "Unsupported opcode for unwinding information");
+    case ARM::tPUSH:
+      // Special case here: no src & dst reg, but two extra imp ops.
+      StartOp = 2; NumOffset = 2;
     case ARM::STMDB_UPD:
+    case ARM::t2STMDB_UPD:
     case ARM::VSTMDDB_UPD:
       assert(SrcReg == ARM::SP &&
              "Only stack pointer as a source reg is supported");
-      for (unsigned i = 4, NumOps = MI->getNumOperands(); i != NumOps; ++i)
+      for (unsigned i = StartOp, NumOps = MI->getNumOperands() - NumOffset;
+           i != NumOps; ++i)
         RegList.push_back(MI->getOperand(i).getReg());
       break;
     case ARM::STR_PRE:
@@ -857,13 +874,22 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
         MI->dump();
         assert(0 && "Unsupported opcode for unwinding information");
       case ARM::MOVr:
+      case ARM::tMOVgpr2gpr:
         Offset = 0;
         break;
       case ARM::ADDri:
         Offset = -MI->getOperand(2).getImm();
         break;
       case ARM::SUBri:
+      case ARM::t2SUBrSPi:
         Offset =  MI->getOperand(2).getImm();
+        break;
+      case ARM::tSUBspi:
+        Offset =  MI->getOperand(2).getImm()*4;
+        break;
+      case ARM::tADDspi:
+      case ARM::tADDrSPi:
+        Offset = -MI->getOperand(2).getImm()*4;
         break;
       }
 
