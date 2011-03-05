@@ -601,6 +601,7 @@ struct OperandTraits<BlockAddress> :
 
 DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(BlockAddress, Value)
   
+
 //===----------------------------------------------------------------------===//
 /// ConstantExpr - a constant value that is initialized with an expression using
 /// other constant values.
