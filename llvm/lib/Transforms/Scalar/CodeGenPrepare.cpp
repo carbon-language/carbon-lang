@@ -569,6 +569,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   // are equivalent.
   Value *Consensus = 0;
   unsigned NumUsesConsensus = 0;
+  bool IsNumUsesConsensusValid = false;
   SmallVector<Instruction*, 16> AddrModeInsts;
   ExtAddrMode AddrMode;
   while (!worklist.empty()) {
@@ -595,17 +596,31 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     ExtAddrMode NewAddrMode =
       AddressingModeMatcher::Match(V, AccessTy,MemoryInst,
                                    NewAddrModeInsts, *TLI);
-    
-    // Ensure that the obtained addressing mode is equivalent to that obtained
-    // for all other roots of the PHI traversal.  Also, when choosing one
-    // such root as representative, select the one with the most uses in order
-    // to keep the cost modeling heuristics in AddressingModeMatcher applicable.
-    if (!Consensus || NewAddrMode == AddrMode) {
+
+    // This check is broken into two cases with very similar code to avoid using
+    // getNumUses() as much as possible. Some values have a lot of uses, so
+    // calling getNumUses() unconditionally caused a significant compile-time
+    // regression.
+    if (!Consensus) {
+      Consensus = V;
+      AddrMode = NewAddrMode;
+      AddrModeInsts = NewAddrModeInsts;
+      continue;
+    } else if (NewAddrMode == AddrMode) {
+      if (!IsNumUsesConsensusValid) {
+        NumUsesConsensus = Consensus->getNumUses();
+        IsNumUsesConsensusValid = true;
+      }
+
+      // Ensure that the obtained addressing mode is equivalent to that obtained
+      // for all other roots of the PHI traversal.  Also, when choosing one
+      // such root as representative, select the one with the most uses in order
+      // to keep the cost modeling heuristics in AddressingModeMatcher
+      // applicable.
       unsigned NumUses = V->getNumUses();
       if (NumUses > NumUsesConsensus) {
         Consensus = V;
         NumUsesConsensus = NumUses;
-        AddrMode = NewAddrMode;
         AddrModeInsts = NewAddrModeInsts;
       }
       continue;
