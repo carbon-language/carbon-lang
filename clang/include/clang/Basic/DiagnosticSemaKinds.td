@@ -3300,7 +3300,7 @@ def err_in_class_initializer_bad_type : Error<
   "static data member of type %0 must be initialized out of line">;
 def ext_in_class_initializer_float_type : ExtWarn<
   "in-class initializer for static data member of type %0 "
-  "is a C++0x extension">, InGroup<CXX0x>;
+  "is a C++0x extension">, InGroup<CXX0xStaticNonIntegralInitializer>;
 def err_in_class_initializer_non_constant : Error<
   "in-class initializer is not a constant expression">;
 
