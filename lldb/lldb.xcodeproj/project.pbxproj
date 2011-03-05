@@ -78,6 +78,8 @@
 		266A42D6128E3FFB0090CF7C /* ClangNamespaceDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */; };
 		266A42D8128E40040090CF7C /* ClangNamespaceDecl.h in Headers */ = {isa = PBXBuildFile; fileRef = 266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */; };
 		266F5CBC12FC846200DFCE33 /* Config.h in Headers */ = {isa = PBXBuildFile; fileRef = 266F5CBB12FC846200DFCE33 /* Config.h */; };
+		268A683F1321B53B000E3FB8 /* DynamicLoaderStatic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */; };
+		268A68401321B53B000E3FB8 /* DynamicLoaderStatic.h in Headers */ = {isa = PBXBuildFile; fileRef = 268A683E1321B53B000E3FB8 /* DynamicLoaderStatic.h */; };
 		268DA872130095D000C9483A /* Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 268DA871130095D000C9483A /* Terminal.h */; };
 		268DA874130095ED00C9483A /* Terminal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268DA873130095ED00C9483A /* Terminal.cpp */; };
 		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -611,6 +613,8 @@
 		2682F286115EF3BD00CCFF99 /* SBError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBError.h; path = include/lldb/API/SBError.h; sourceTree = "<group>"; };
 		2689B0A4113EE3CD00A4AEDB /* Symbols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Symbols.h; path = include/lldb/Host/Symbols.h; sourceTree = "<group>"; };
 		2689B0B5113EE47E00A4AEDB /* Symbols.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Symbols.cpp; path = source/Host/macosx/Symbols.cpp; sourceTree = "<group>"; };
+		268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderStatic.cpp; sourceTree = "<group>"; };
+		268A683E1321B53B000E3FB8 /* DynamicLoaderStatic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderStatic.h; sourceTree = "<group>"; };
 		268A813F115B19D000F645B0 /* UniqueCStringMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UniqueCStringMap.h; path = include/lldb/Core/UniqueCStringMap.h; sourceTree = "<group>"; };
 		268DA871130095D000C9483A /* Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Terminal.h; path = include/lldb/Host/Terminal.h; sourceTree = "<group>"; };
 		268DA873130095ED00C9483A /* Terminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Terminal.cpp; sourceTree = "<group>"; };
@@ -1249,6 +1253,7 @@
 			isa = PBXGroup;
 			children = (
 				260C897910F57C5600BB2B04 /* MacOSX-DYLD */,
+				268A683C1321B505000E3FB8 /* Static */,
 			);
 			path = DynamicLoader;
 			sourceTree = "<group>";
@@ -1623,6 +1628,15 @@
 				2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */,
 			);
 			name = Utility;
+			sourceTree = "<group>";
+		};
+		268A683C1321B505000E3FB8 /* Static */ = {
+			isa = PBXGroup;
+			children = (
+				268A683E1321B53B000E3FB8 /* DynamicLoaderStatic.h */,
+				268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */,
+			);
+			path = Static;
 			sourceTree = "<group>";
 		};
 		26A3B4AB1181454800381BC2 /* BSD-Archive */ = {
@@ -2370,6 +2384,7 @@
 				2618EE6A1315B29C001D6D71 /* ProcessGDBRemote.h in Headers */,
 				2618EE6C1315B29C001D6D71 /* ProcessGDBRemoteLog.h in Headers */,
 				2618EE6E1315B29C001D6D71 /* ThreadGDBRemote.h in Headers */,
+				268A68401321B53B000E3FB8 /* DynamicLoaderStatic.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2876,6 +2891,7 @@
 				2618EE691315B29C001D6D71 /* ProcessGDBRemote.cpp in Sources */,
 				2618EE6B1315B29C001D6D71 /* ProcessGDBRemoteLog.cpp in Sources */,
 				2618EE6D1315B29C001D6D71 /* ThreadGDBRemote.cpp in Sources */,
+				268A683F1321B53B000E3FB8 /* DynamicLoaderStatic.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

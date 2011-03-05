@@ -48,6 +48,8 @@
 #include "Plugins/DynamicLoader/Linux-DYLD/DynamicLoaderLinuxDYLD.h"
 #endif
 
+#include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -99,6 +101,7 @@ lldb_private::Initialize ()
         ProcessLinux::Initialize();
         DynamicLoaderLinuxDYLD::Initialize();
 #endif
+        DynamicLoaderStatic::Initialize();
         // Scan for any system or user LLDB plug-ins
         PluginManager::Initialize();
 
@@ -154,6 +157,8 @@ lldb_private::Terminate ()
     ProcessLinux::Terminate();
     DynamicLoaderLinuxDYLD::Terminate();
 #endif
+    
+    DynamicLoaderStatic::Terminate();
 
     Log::Terminate();
 }
