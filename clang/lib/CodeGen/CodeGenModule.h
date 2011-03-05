@@ -437,7 +437,7 @@ public:
   ///
   /// \param GlobalName If provided, the name to use for the global
   /// (if one is created).
-  llvm::Constant *GetAddrOfConstantString(const std::string& str,
+  llvm::Constant *GetAddrOfConstantString(llvm::StringRef Str,
                                           const char *GlobalName=0);
 
   /// GetAddrOfConstantCString - Returns a pointer to a character array

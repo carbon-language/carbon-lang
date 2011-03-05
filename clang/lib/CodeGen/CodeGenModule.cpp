@@ -1835,7 +1835,7 @@ CodeGenModule::GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *E) {
 
 
 /// GenerateWritableString -- Creates storage for a string literal.
-static llvm::Constant *GenerateStringLiteral(const std::string &str,
+static llvm::Constant *GenerateStringLiteral(llvm::StringRef str,
                                              bool constant,
                                              CodeGenModule &CGM,
                                              const char *GlobalName) {
@@ -1860,7 +1860,7 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
 /// Feature.WriteableStrings.
 ///
 /// The result has pointer to array type.
-llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str,
+llvm::Constant *CodeGenModule::GetAddrOfConstantString(llvm::StringRef Str,
                                                        const char *GlobalName) {
   bool IsConstant = !Features.WritableStrings;
 
@@ -1870,26 +1870,27 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str,
 
   // Don't share any string literals if strings aren't constant.
   if (!IsConstant)
-    return GenerateStringLiteral(str, false, *this, GlobalName);
+    return GenerateStringLiteral(Str, false, *this, GlobalName);
 
   llvm::StringMapEntry<llvm::Constant *> &Entry =
-    ConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
+    ConstantStringMap.GetOrCreateValue(Str);
 
   if (Entry.getValue())
     return Entry.getValue();
 
   // Create a global variable for this.
-  llvm::Constant *C = GenerateStringLiteral(str, true, *this, GlobalName);
+  llvm::Constant *C = GenerateStringLiteral(Str, true, *this, GlobalName);
   Entry.setValue(C);
   return C;
 }
 
 /// GetAddrOfConstantCString - Returns a pointer to a character
-/// array containing the literal and a terminating '\-'
+/// array containing the literal and a terminating '\0'
 /// character. The result has pointer to array type.
-llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str,
+llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &Str,
                                                         const char *GlobalName){
-  return GetAddrOfConstantString(str + '\0', GlobalName);
+  llvm::StringRef StrWithNull(Str.c_str(), Str.size() + 1);
+  return GetAddrOfConstantString(StrWithNull, GlobalName);
 }
 
 /// EmitObjCPropertyImplementations - Emit information for synthesized
