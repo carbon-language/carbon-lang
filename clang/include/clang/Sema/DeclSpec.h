@@ -24,6 +24,7 @@
 #include "clang/Sema/Ownership.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/Lex/Token.h"
+#include "clang/Basic/ExceptionSpecificationType.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/SmallVector.h"
@@ -906,15 +907,6 @@ public:
 /// CachedTokens - A set of tokens that has been cached for later
 /// parsing.
 typedef llvm::SmallVector<Token, 4> CachedTokens;
-
-/// \brief The various types of exception specifications that exist in C++0x.
-enum ExceptionSpecificationType {
-  EST_None,            ///< no exception specification
-  EST_Dynamic,         ///< throw() or throw(T1, T2)
-  EST_DynamicAny,      ///< Microsoft throw(...) extension
-  EST_BasicNoexcept,   ///< noexcept
-  EST_ComputedNoexcept ///< noexcept(expression)
-};
 
 /// DeclaratorChunk - One instance of this struct is used for each type in a
 /// declarator that is parsed.

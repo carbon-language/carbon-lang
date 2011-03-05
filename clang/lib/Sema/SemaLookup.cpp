@@ -686,8 +686,7 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
     // FIXME: Calling convention!
     FunctionProtoType::ExtProtoInfo EPI = ConvProto->getExtProtoInfo();
     EPI.ExtInfo = EPI.ExtInfo.withCallingConv(CC_Default);
-    EPI.HasExceptionSpec = false;
-    EPI.HasAnyExceptionSpec = false;
+    EPI.ExceptionSpecType = EST_None;
     EPI.NumExceptions = 0;
     QualType ExpectedType
       = R.getSema().Context.getFunctionType(R.getLookupName().getCXXNameType(),
