@@ -418,6 +418,7 @@ void TypeLocWriter::VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL) {
 }
 void TypeLocWriter::VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL) {
   Writer.AddSourceLocation(TL.getStarLoc(), Record);
+  Writer.AddTypeSourceInfo(TL.getClassTInfo(), Record);
 }
 void TypeLocWriter::VisitArrayTypeLoc(ArrayTypeLoc TL) {
   Writer.AddSourceLocation(TL.getLBracketLoc(), Record);

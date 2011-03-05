@@ -2345,10 +2345,12 @@ namespace {
   };
 
   class DeclaratorLocFiller : public TypeLocVisitor<DeclaratorLocFiller> {
+    ASTContext &Context;
     const DeclaratorChunk &Chunk;
 
   public:
-    DeclaratorLocFiller(const DeclaratorChunk &Chunk) : Chunk(Chunk) {}
+    DeclaratorLocFiller(ASTContext &Context, const DeclaratorChunk &Chunk)
+      : Context(Context), Chunk(Chunk) {}
 
     void VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
       llvm_unreachable("qualified type locs not expected here!");
@@ -2368,8 +2370,48 @@ namespace {
     }
     void VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL) {
       assert(Chunk.Kind == DeclaratorChunk::MemberPointer);
+      const CXXScopeSpec& SS = Chunk.Mem.Scope();
+      NestedNameSpecifierLoc NNSLoc = SS.getWithLocInContext(Context);
+
+      const Type* ClsTy = TL.getClass();
+      QualType ClsQT = QualType(ClsTy, 0);
+      TypeSourceInfo *ClsTInfo = Context.CreateTypeSourceInfo(ClsQT, 0);
+      // Now copy source location info into the type loc component.
+      TypeLoc ClsTL = ClsTInfo->getTypeLoc();
+      switch (NNSLoc.getNestedNameSpecifier()->getKind()) {
+      case NestedNameSpecifier::Identifier:
+        assert(isa<DependentNameType>(ClsTy) && "Unexpected TypeLoc");
+        {
+          DependentNameTypeLoc DNTLoc = *cast<DependentNameTypeLoc>(&ClsTL);
+          DNTLoc.setKeywordLoc(SourceLocation());
+          DNTLoc.setQualifierLoc(NNSLoc.getPrefix());
+          DNTLoc.setNameLoc(NNSLoc.getLocalBeginLoc());
+        }
+        break;
+
+      case NestedNameSpecifier::TypeSpec:
+      case NestedNameSpecifier::TypeSpecWithTemplate:
+        if (isa<ElaboratedType>(ClsTy)) {
+          ElaboratedTypeLoc ETLoc = *cast<ElaboratedTypeLoc>(&ClsTL);
+          ETLoc.setKeywordLoc(SourceLocation());
+          ETLoc.setQualifierLoc(NNSLoc.getPrefix());
+          TypeLoc NamedTL = ETLoc.getNamedTypeLoc();
+          NamedTL.initializeFullCopy(NNSLoc.getTypeLoc());
+        } else {
+          ClsTL.initializeFullCopy(NNSLoc.getTypeLoc());
+        }
+        break;
+
+      case NestedNameSpecifier::Namespace:
+      case NestedNameSpecifier::NamespaceAlias:
+      case NestedNameSpecifier::Global:
+        llvm_unreachable("Nested-name-specifier must name a type");
+        break;
+      }
+
+      // Finally fill in MemberPointerLocInfo fields.
       TL.setStarLoc(Chunk.Loc);
-      // FIXME: nested name specifier
+      TL.setClassTInfo(ClsTInfo);
     }
     void VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL) {
       assert(Chunk.Kind == DeclaratorChunk::Reference);
@@ -2440,7 +2482,7 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
       CurrTL = TL.getNextTypeLoc().getUnqualifiedLoc();
     }
 
-    DeclaratorLocFiller(D.getTypeObject(i)).Visit(CurrTL);
+    DeclaratorLocFiller(Context, D.getTypeObject(i)).Visit(CurrTL);
     CurrTL = CurrTL.getNextTypeLoc().getUnqualifiedLoc();
   }
   

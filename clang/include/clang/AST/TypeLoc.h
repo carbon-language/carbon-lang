@@ -943,16 +943,42 @@ public:
   }
 };
 
+struct MemberPointerLocInfo : public PointerLikeLocInfo {
+  TypeSourceInfo *ClassTInfo;
+};
 
 /// \brief Wrapper for source info for member pointers.
 class MemberPointerTypeLoc : public PointerLikeTypeLoc<MemberPointerTypeLoc,
-                                                       MemberPointerType> {
+                                                       MemberPointerType,
+                                                       MemberPointerLocInfo> {
 public:
   SourceLocation getStarLoc() const {
     return getSigilLoc();
   }
   void setStarLoc(SourceLocation Loc) {
     setSigilLoc(Loc);
+  }
+
+  const Type *getClass() const {
+    return getTypePtr()->getClass();
+  }
+  TypeSourceInfo *getClassTInfo() const {
+    return getLocalData()->ClassTInfo;
+  }
+  void setClassTInfo(TypeSourceInfo* TI) {
+    getLocalData()->ClassTInfo = TI;
+  }
+
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
+    setSigilLoc(Loc);
+    setClassTInfo(0);
+  }
+
+  SourceRange getLocalSourceRange() const {
+    if (TypeSourceInfo *TI = getClassTInfo())
+      return SourceRange(TI->getTypeLoc().getBeginLoc(), getStarLoc());
+    else
+      return SourceRange(getStarLoc());
   }
 };
 
