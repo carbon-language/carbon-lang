@@ -558,24 +558,24 @@ float RAGreedy::calcSplitConstraints(const SmallVectorImpl<IndexPair> &Intf) {
 ///
 float RAGreedy::calcGlobalSplitCost(const BitVector &LiveBundles) {
   float GlobalCost = 0;
-  for (unsigned i = 0, e = SplitConstraints.size(); i != e; ++i) {
+  for (unsigned i = 0, e = SA->LiveBlocks.size(); i != e; ++i) {
+    SplitAnalysis::BlockInfo &BI = SA->LiveBlocks[i];
     SpillPlacement::BlockConstraint &BC = SplitConstraints[i];
-    unsigned Inserts = 0;
-    // Broken entry preference?
-    Inserts += LiveBundles[Bundles->getBundle(BC.Number, 0)] !=
-                 (BC.Entry == SpillPlacement::PrefReg);
-    // Broken exit preference?
-    Inserts += LiveBundles[Bundles->getBundle(BC.Number, 1)] !=
-                 (BC.Exit == SpillPlacement::PrefReg);
-    if (Inserts)
-      GlobalCost += Inserts * SpillPlacer->getBlockFrequency(BC.Number);
+    bool RegIn  = LiveBundles[Bundles->getBundle(BC.Number, 0)];
+    bool RegOut = LiveBundles[Bundles->getBundle(BC.Number, 1)];
+    unsigned Ins = 0;
+
+    if (!BI.Uses)
+      Ins += RegIn != RegOut;
+    else {
+      if (BI.LiveIn)
+        Ins += RegIn != (BC.Entry == SpillPlacement::PrefReg);
+      if (BI.LiveOut)
+        Ins += RegOut != (BC.Exit == SpillPlacement::PrefReg);
+    }
+    if (Ins)
+      GlobalCost += Ins * SpillPlacer->getBlockFrequency(BC.Number);
   }
-  DEBUG({
-    dbgs() << "Global cost = " << GlobalCost << " with bundles";
-    for (int i = LiveBundles.find_first(); i>=0; i = LiveBundles.find_next(i))
-      dbgs() << " EB#" << i;
-    dbgs() << ".\n";
-  });
   return GlobalCost;
 }
 
@@ -843,20 +843,29 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
     mapGlobalInterference(PhysReg, GlobalCand[Cand].Interference);
     float Cost = calcSplitConstraints(GlobalCand[Cand].Interference);
-    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " static split cost = " << Cost
-                 << '\n');
-    if (BestReg && Cost >= BestCost)
+    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tstatic = " << Cost);
+    if (BestReg && Cost >= BestCost) {
+      DEBUG(dbgs() << " higher.\n");
       continue;
+    }
 
     SpillPlacer->placeSpills(SplitConstraints, LiveBundles);
     // No live bundles, defer to splitSingleBlocks().
-    if (!LiveBundles.any())
+    if (!LiveBundles.any()) {
+      DEBUG(dbgs() << " no bundles.\n");
       continue;
+    }
 
     Cost += calcGlobalSplitCost(LiveBundles);
+    DEBUG({
+      dbgs() << ", total = " << Cost << " with bundles";
+      for (int i = LiveBundles.find_first(); i>=0; i = LiveBundles.find_next(i))
+        dbgs() << " EB#" << i;
+      dbgs() << ".\n";
+    });
     if (!BestReg || Cost < BestCost) {
       BestReg = PhysReg;
-      BestCost = Cost;
+      BestCost = 0.98f * Cost; // Prevent rounding effects.
       BestBundles.swap(LiveBundles);
     }
   }
