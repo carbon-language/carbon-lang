@@ -192,6 +192,12 @@ public:
   virtual bool EmitCFIPersonality(const MCSymbol *Sym, unsigned Encoding);
   virtual bool EmitCFILsda(const MCSymbol *Sym, unsigned Encoding);
 
+  virtual void EmitFnStart();
+  virtual void EmitFnEnd();
+  virtual void EmitCantUnwind();
+  virtual void EmitPersonality(const MCSymbol *Personality);
+  virtual void EmitHandlerData();
+
   virtual void EmitInstruction(const MCInst &Inst);
 
   /// EmitRawText - If this file is backed by an assembly streamer, this dumps
@@ -857,6 +863,31 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
     OS << "  fixup " << char('A' + i) << " - " << "offset: " << F.getOffset()
        << ", value: " << *F.getValue() << ", kind: " << Info.Name << "\n";
   }
+}
+
+void MCAsmStreamer::EmitFnStart() {
+  OS << "\t.fnstart";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitFnEnd() {
+  OS << "\t.fnend";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCantUnwind() {
+  OS << "\t.cantunwind";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitHandlerData() {
+  OS << "\t.handlerdata";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitPersonality(const MCSymbol *Personality) {
+  OS << "\t.personality " << Personality->getName();
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {

@@ -36,8 +36,9 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
                                  ELF::SHF_WRITE |
                                  ELF::SHF_ALLOC,
                                  SectionKind::getDataRel());
+    LSDASection = NULL;
   }
-  
+
   AttributesSection =
     getContext().getELFSection(".ARM.attributes",
                                ELF::SHT_ARM_ATTRIBUTES,

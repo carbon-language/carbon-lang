@@ -196,6 +196,9 @@ bool AsmPrinter::doInitialization(Module &M) {
     case ExceptionHandling::DwarfCFI:
       DE = new DwarfCFIException(this);
       break;
+    case ExceptionHandling::ARM:
+      DE = new ARMException(this);
+      break;
     }
 
   return false;

@@ -457,6 +457,15 @@ namespace llvm {
     virtual void EmitRawText(StringRef String);
     void EmitRawText(const Twine &String);
 
+    /// ARM-related methods.
+    /// FIXME: Eventually we should have some "target MC streamer" and move
+    /// these methods there.
+    virtual void EmitFnStart();
+    virtual void EmitFnEnd();
+    virtual void EmitCantUnwind();
+    virtual void EmitPersonality(const MCSymbol *Personality);
+    virtual void EmitHandlerData();
+
     /// Finish - Finish emission of machine code.
     virtual void Finish() = 0;
   };
