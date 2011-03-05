@@ -3127,6 +3127,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 /// For C++, after the parameter-list, it also parses "cv-qualifier-seq[opt]",
 /// C++0x "ref-qualifier[opt]" and "exception-specification[opt]".
 ///
+/// [C++0x] exception-specification:
+///           dynamic-exception-specification
+///           noexcept-specification
+///
 void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                      ParsedAttributes &attrs,
                                      bool RequiresArg) {
@@ -3147,11 +3151,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     DeclSpec DS;
     SourceLocation RefQualifierLoc;
     bool RefQualifierIsLValueRef = true;
-    bool hasExceptionSpec = false;
-    SourceLocation ThrowLoc;
-    bool hasAnyExceptionSpec = false;
-    llvm::SmallVector<ParsedType, 2> Exceptions;
-    llvm::SmallVector<SourceRange, 2> ExceptionRanges;
+    ExceptionSpecificationType ESpecType = EST_None;
+    SourceRange ESpecRange;
+    llvm::SmallVector<ParsedType, 2> DynamicExceptions;
+    llvm::SmallVector<SourceRange, 2> DynamicExceptionRanges;
+    ExprResult NoexceptExpr;
     if (getLang().CPlusPlus) {
       MaybeParseCXX0XAttributes(attrs);
 
@@ -3168,16 +3172,14 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
         RefQualifierLoc = ConsumeToken();
         EndLoc = RefQualifierLoc;
       }
-      
+
       // Parse exception-specification[opt].
-      if (Tok.is(tok::kw_throw)) {
-        hasExceptionSpec = true;
-        ThrowLoc = Tok.getLocation();
-        ParseExceptionSpecification(EndLoc, Exceptions, ExceptionRanges,
-                                    hasAnyExceptionSpec);
-        assert(Exceptions.size() == ExceptionRanges.size() &&
-               "Produced different number of exception types and ranges.");
-      }
+      ESpecType = MaybeParseExceptionSpecification(ESpecRange,
+                                                   DynamicExceptions,
+                                                   DynamicExceptionRanges,
+                                                   NoexceptExpr);
+      if (ESpecType != EST_None)
+        EndLoc = ESpecRange.getEnd();
 
       // Parse trailing-return-type.
       if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
@@ -3195,11 +3197,13 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                                DS.getTypeQualifiers(),
                                                RefQualifierIsLValueRef,
                                                RefQualifierLoc,
-                                               hasExceptionSpec, ThrowLoc,
-                                               hasAnyExceptionSpec,
-                                               Exceptions.data(),
-                                               ExceptionRanges.data(),
-                                               Exceptions.size(),
+                                               ESpecType == EST_Dynamic ||
+                                                 ESpecType == EST_DynamicAny,
+                                               ESpecRange.getBegin(),
+                                               ESpecType == EST_DynamicAny,
+                                               DynamicExceptions.data(),
+                                               DynamicExceptionRanges.data(),
+                                               DynamicExceptions.size(),
                                                LParenLoc, RParenLoc, D,
                                                TrailingReturnType),
                   EndLoc);
@@ -3396,11 +3400,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   DeclSpec DS;
   SourceLocation RefQualifierLoc;
   bool RefQualifierIsLValueRef = true;
-  bool hasExceptionSpec = false;
-  SourceLocation ThrowLoc;
-  bool hasAnyExceptionSpec = false;
-  llvm::SmallVector<ParsedType, 2> Exceptions;
-  llvm::SmallVector<SourceRange, 2> ExceptionRanges;
+  ExceptionSpecificationType ESpecType = EST_None;
+  SourceRange ESpecRange;
+  llvm::SmallVector<ParsedType, 2> DynamicExceptions;
+  llvm::SmallVector<SourceRange, 2> DynamicExceptionRanges;
+  ExprResult NoexceptExpr;
   
   if (getLang().CPlusPlus) {
     MaybeParseCXX0XAttributes(attrs);
@@ -3420,24 +3424,23 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       EndLoc = RefQualifierLoc;
     }
 
+    // FIXME: We should leave the prototype scope before parsing the exception
+    // specification, and then reenter it when parsing the trailing return type.
+    // FIXMEFIXME: Why? That wouldn't be right for the noexcept clause.
+
     // Parse exception-specification[opt].
-    if (Tok.is(tok::kw_throw)) {
-      hasExceptionSpec = true;
-      ThrowLoc = Tok.getLocation();
-      ParseExceptionSpecification(EndLoc, Exceptions, ExceptionRanges,
-                                  hasAnyExceptionSpec);
-      assert(Exceptions.size() == ExceptionRanges.size() &&
-             "Produced different number of exception types and ranges.");
-    }
+    ESpecType = MaybeParseExceptionSpecification(ESpecRange,
+                                                 DynamicExceptions,
+                                                 DynamicExceptionRanges,
+                                                 NoexceptExpr);
+    if (ESpecType != EST_None)
+      EndLoc = ESpecRange.getEnd();
 
     // Parse trailing-return-type.
     if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
       TrailingReturnType = ParseTrailingReturnType().get();
     }
   }
-
-  // FIXME: We should leave the prototype scope before parsing the exception
-  // specification, and then reenter it when parsing the trailing return type.
 
   // Leave prototype scope.
   PrototypeScope.Exit();
@@ -3450,11 +3453,13 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                              DS.getTypeQualifiers(),
                                              RefQualifierIsLValueRef,
                                              RefQualifierLoc,
-                                             hasExceptionSpec, ThrowLoc,
-                                             hasAnyExceptionSpec,
-                                             Exceptions.data(),
-                                             ExceptionRanges.data(),
-                                             Exceptions.size(),
+                                             ESpecType == EST_Dynamic ||
+                                               ESpecType == EST_DynamicAny,
+                                             ESpecRange.getBegin(),
+                                             ESpecType == EST_DynamicAny,
+                                             DynamicExceptions.data(),
+                                             DynamicExceptionRanges.data(),
+                                             DynamicExceptions.size(),
                                              LParenLoc, RParenLoc, D,
                                              TrailingReturnType),
                 EndLoc);
