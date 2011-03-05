@@ -176,7 +176,8 @@ public:
                                  unsigned DestReg, unsigned SubIdx,
                                  int Val,
                                  ARMCC::CondCodes Pred = ARMCC::AL,
-                                 unsigned PredReg = 0) const;
+                                 unsigned PredReg = 0,
+                                 unsigned MIFlags = MachineInstr::NoFlags)const;
 
   /// Code Generation virtual methods...
   virtual bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;

@@ -806,7 +806,7 @@ emitLoadConstPool(MachineBasicBlock &MBB,
                   DebugLoc dl,
                   unsigned DestReg, unsigned SubIdx, int Val,
                   ARMCC::CondCodes Pred,
-                  unsigned PredReg) const {
+                  unsigned PredReg, unsigned MIFlags) const {
   MachineFunction &MF = *MBB.getParent();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   const Constant *C =
@@ -816,7 +816,8 @@ emitLoadConstPool(MachineBasicBlock &MBB,
   BuildMI(MBB, MBBI, dl, TII.get(ARM::LDRcp))
     .addReg(DestReg, getDefRegState(true), SubIdx)
     .addConstantPoolIndex(Idx)
-    .addImm(0).addImm(Pred).addReg(PredReg);
+    .addImm(0).addImm(Pred).addReg(PredReg)
+    .setMIFlags(MIFlags);
 }
 
 bool ARMBaseRegisterInfo::

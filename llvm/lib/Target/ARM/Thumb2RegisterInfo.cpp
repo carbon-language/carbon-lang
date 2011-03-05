@@ -42,13 +42,14 @@ Thumb2RegisterInfo::Thumb2RegisterInfo(const ARMBaseInstrInfo &tii,
 
 /// emitLoadConstPool - Emits a load from constpool to materialize the
 /// specified immediate.
-void Thumb2RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator &MBBI,
-                                           DebugLoc dl,
-                                           unsigned DestReg, unsigned SubIdx,
-                                           int Val,
-                                           ARMCC::CondCodes Pred,
-                                           unsigned PredReg) const {
+void
+Thumb2RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator &MBBI,
+                                      DebugLoc dl,
+                                      unsigned DestReg, unsigned SubIdx,
+                                      int Val,
+                                      ARMCC::CondCodes Pred, unsigned PredReg,
+                                      unsigned MIFlags) const {
   MachineFunction &MF = *MBB.getParent();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   const Constant *C = ConstantInt::get(
@@ -57,5 +58,6 @@ void Thumb2RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
 
   BuildMI(MBB, MBBI, dl, TII.get(ARM::t2LDRpci))
     .addReg(DestReg, getDefRegState(true), SubIdx)
-    .addConstantPoolIndex(Idx).addImm((int64_t)ARMCC::AL).addReg(0);
+    .addConstantPoolIndex(Idx).addImm((int64_t)ARMCC::AL).addReg(0)
+    .setMIFlags(MIFlags);
 }

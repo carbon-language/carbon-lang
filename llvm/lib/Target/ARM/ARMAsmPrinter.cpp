@@ -822,11 +822,15 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
   unsigned Opc = MI->getOpcode();
   unsigned SrcReg, DstReg;
 
-  // Special case: tPUSH does not have src/dst regs.
-  if (Opc == ARM::tPUSH) {
+  if (Opc == ARM::tPUSH || Opc == ARM::tLDRpci) {
+    // Two special cases:
+    // 1) tPUSH does not have src/dst regs.
+    // 2) for Thumb1 code we sometimes materialize the constant via constpool
+    // load. Yes, this is pretty fragile, but for now I don't see better
+    // way... :(
     SrcReg = DstReg = ARM::SP;
   } else {
-    SrcReg =  MI->getOperand(1).getReg();
+    SrcReg = MI->getOperand(1).getReg();
     DstReg = MI->getOperand(0).getReg();
   }
 
@@ -875,6 +879,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
         assert(0 && "Unsupported opcode for unwinding information");
       case ARM::MOVr:
       case ARM::tMOVgpr2gpr:
+      case ARM::tMOVgpr2tgpr:
         Offset = 0;
         break;
       case ARM::ADDri:
@@ -890,6 +895,9 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       case ARM::tADDspi:
       case ARM::tADDrSPi:
         Offset = -MI->getOperand(2).getImm()*4;
+        break;
+      case ARM::tLDRpci:
+        assert(0 && "Not implemented yet!");
         break;
       }
 

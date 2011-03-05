@@ -34,13 +34,14 @@ bool Thumb1FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const 
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-static void emitSPUpdate(MachineBasicBlock &MBB,
-                         MachineBasicBlock::iterator &MBBI,
-                         const TargetInstrInfo &TII, DebugLoc dl,
-                         const Thumb1RegisterInfo &MRI,
-                         int NumBytes) {
+static void
+emitSPUpdate(MachineBasicBlock &MBB,
+             MachineBasicBlock::iterator &MBBI,
+             const TargetInstrInfo &TII, DebugLoc dl,
+             const Thumb1RegisterInfo &MRI,
+             int NumBytes, unsigned MIFlags = MachineInstr::NoFlags)  {
   emitThumbRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes, TII,
-                            MRI);
+                            MRI, MIFlags);
 }
 
 void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
@@ -70,11 +71,13 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   int FramePtrSpillFI = 0;
 
   if (VARegSaveSize)
-    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -VARegSaveSize);
+    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -VARegSaveSize,
+                 MachineInstr::FrameSetup);
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
-      emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes);
+      emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes,
+                   MachineInstr::FrameSetup);
     return;
   }
 
@@ -131,7 +134,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   // Adjust FP so it point to the stack slot that contains the previous FP.
   if (hasFP(MF)) {
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
-      .addFrameIndex(FramePtrSpillFI).addImm(0);
+      .addFrameIndex(FramePtrSpillFI).addImm(0)
+      .setMIFlags(MachineInstr::FrameSetup);
     if (NumBytes > 7)
       // If offset is > 7 then sp cannot be adjusted in a single instruction,
       // try restoring from fp instead.
@@ -140,7 +144,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
 
   if (NumBytes)
     // Insert it after all the callee-save spills.
-    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes);
+    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes,
+                 MachineInstr::FrameSetup);
 
   if (STI.isTargetELF() && hasFP(MF))
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
@@ -156,7 +161,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   // to reference locals.
   if (RegInfo->hasBasePointer(MF))
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), BasePtr).addReg(ARM::SP);
-    
+
   // If the frame has variable sized objects then the epilogue must restore
   // the sp from fp. We can assume there's an FP here since hasFP already
   // checks for hasVarSizedObjects.
@@ -307,6 +312,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
     MIB.addReg(Reg, getKillRegState(isKill));
   }
+  MIB.setMIFlags(MachineInstr::FrameSetup);
   return true;
 }
 
