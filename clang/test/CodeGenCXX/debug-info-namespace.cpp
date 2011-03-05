@@ -1,3 +1,4 @@
+// XFAIL: cygwin,mingw
 // RUN: %clang  -g -S %s -o - | FileCheck %s
 
 // CHECK: TAG_namespace
