@@ -135,4 +135,9 @@ namespace PR9025 {
   int g3() {
     return fun3.x; // expected-error{{base of member reference is an overloaded function; perhaps you meant to call it with no arguments?}}
   }
+
+  template <typename T> S fun4();
+  int g4() {
+    return fun4.x; // expected-error{{base of member reference is a function; perhaps you meant to call it?}}
+  }
 }

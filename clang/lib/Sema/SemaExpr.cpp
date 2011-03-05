@@ -4017,21 +4017,24 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     bool HasViableZeroArgOverload = false;
     for (OverloadExpr::decls_iterator it = AllOverloads.begin(),
          DeclsEnd = AllOverloads.end(); it != DeclsEnd; ++it) {
-      const FunctionDecl *OverloadDecl = cast<FunctionDecl>(*it);
-      QualType ResultTy = OverloadDecl->getResultType();
-      if ((!IsArrow && ResultTy->isRecordType()) ||
-          (IsArrow && ResultTy->isPointerType() &&
-           ResultTy->getPointeeType()->isRecordType())) {
-        ViableOverloads.addDecl(*it);
-        if (OverloadDecl->getMinRequiredArguments() == 0) {
-          HasViableZeroArgOverload = true;
+      // Our overload set may include TemplateDecls, which we'll ignore for the
+      // purposes of determining whether we can issue a '()' fixit.
+      if (const FunctionDecl *OverloadDecl = dyn_cast<FunctionDecl>(*it)) {
+        QualType ResultTy = OverloadDecl->getResultType();
+        if ((!IsArrow && ResultTy->isRecordType()) ||
+            (IsArrow && ResultTy->isPointerType() &&
+             ResultTy->getPointeeType()->isRecordType())) {
+          ViableOverloads.addDecl(*it);
+          if (OverloadDecl->getMinRequiredArguments() == 0) {
+            HasViableZeroArgOverload = true;
+          }
         }
       }
     }
 
     if (!HasViableZeroArgOverload || ViableOverloads.size() != 1) {
       Diag(BaseExpr->getExprLoc(), diag::err_member_reference_needs_call)
-          << 1 << 0
+          << (AllOverloads.size() > 1) << 0
           << BaseExpr->getSourceRange();
       int ViableOverloadCount = ViableOverloads.size();
       int I;
