@@ -2314,6 +2314,35 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         BO0->hasOneUse() && BO1->hasOneUse())
       return new ICmpInst(Pred, D, B);
 
+    BinaryOperator *SRem = NULL;
+    // icmp Y, (srem X, Y)
+    if (BO0 && BO0->getOpcode() == Instruction::SRem &&
+        Op1 == BO0->getOperand(1))
+      SRem = BO0;
+    // icmp (srem X, Y), Y
+    else if (BO1 && BO1->getOpcode() == Instruction::SRem &&
+             Op0 == BO1->getOperand(1))
+      SRem = BO1;
+    if (SRem) {
+      // We don't check hasOneUse to avoid increasing register pressure because
+      // the value we use is the same value this instruction was already using.
+      switch (SRem == BO0 ? ICmpInst::getSwappedPredicate(Pred) : Pred) {
+        default: break;
+        case ICmpInst::ICMP_EQ:
+          return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
+        case ICmpInst::ICMP_NE:
+          return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
+        case ICmpInst::ICMP_SGT:
+        case ICmpInst::ICMP_SGE:
+          return new ICmpInst(ICmpInst::ICMP_SGT, SRem->getOperand(1),
+                              Constant::getAllOnesValue(SRem->getType()));
+        case ICmpInst::ICMP_SLT:
+        case ICmpInst::ICMP_SLE:
+          return new ICmpInst(ICmpInst::ICMP_SLT, SRem->getOperand(1),
+                              Constant::getNullValue(SRem->getType()));
+      }
+    }
+
     if (BO0 && BO1 && BO0->getOpcode() == BO1->getOpcode() &&
         BO0->hasOneUse() && BO1->hasOneUse() &&
         BO0->getOperand(1) == BO1->getOperand(1)) {

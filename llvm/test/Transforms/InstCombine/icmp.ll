@@ -403,3 +403,19 @@ define i1 @test41(i32 %X, i32 %Y) {
   %B = icmp ugt i32 %Y, %A
   ret i1 %B
 }
+
+; CHECK: @test42
+; CHECK: %B = icmp sgt i32 %Y, -1
+define i1 @test42(i32 %X, i32 %Y) {
+  %A = srem i32 %X, %Y
+  %B = icmp slt i32 %A, %Y
+  ret i1 %B
+}
+
+; CHECK: @test43
+; CHECK: %B = icmp slt i32 %Y, 0
+define i1 @test43(i32 %X, i32 %Y) {
+  %A = srem i32 %X, %Y
+  %B = icmp slt i32 %Y, %A
+  ret i1 %B
+}
