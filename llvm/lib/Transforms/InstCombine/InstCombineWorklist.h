@@ -53,6 +53,7 @@ public:
   void AddInitialGroup(Instruction *const *List, unsigned NumEntries) {
     assert(Worklist.empty() && "Worklist must be empty to add initial group");
     Worklist.reserve(NumEntries+16);
+    WorklistMap.resize(NumEntries);
     DEBUG(errs() << "IC: ADDING: " << NumEntries << " instrs to worklist\n");
     for (; NumEntries; --NumEntries) {
       Instruction *I = List[NumEntries-1];
