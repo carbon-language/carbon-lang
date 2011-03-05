@@ -535,9 +535,11 @@ public:
   /// that might still be used as a precompiled header or preamble.
   bool isCompleteTranslationUnit() const { return CompleteTranslationUnit; }
 
+  typedef llvm::PointerUnion<const char *, const llvm::MemoryBuffer *>
+      FilenameOrMemBuf;
   /// \brief A mapping from a file name to the memory buffer that stores the
   /// remapped contents of that file.
-  typedef std::pair<std::string, const llvm::MemoryBuffer *> RemappedFile;
+  typedef std::pair<std::string, FilenameOrMemBuf> RemappedFile;
   
   /// \brief Create a ASTUnit from an AST file.
   ///

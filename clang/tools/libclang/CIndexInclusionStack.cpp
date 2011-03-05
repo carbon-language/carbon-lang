@@ -47,7 +47,7 @@ void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
       continue;
 
     const SrcMgr::FileInfo &FI = SL.getFile();
-    if (!FI.getContentCache()->Entry)
+    if (!FI.getContentCache()->OrigEntry)
       continue;
     
     // Build the inclusion stack.
@@ -61,7 +61,7 @@ void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
             
     // Callback to the client.
     // FIXME: We should have a function to construct CXFiles.
-    CB((CXFile) FI.getContentCache()->Entry, 
+    CB((CXFile) FI.getContentCache()->OrigEntry, 
        InclusionStack.data(), InclusionStack.size(), clientData);
   }    
 }

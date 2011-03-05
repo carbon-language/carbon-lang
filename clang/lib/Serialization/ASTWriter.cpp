@@ -1428,7 +1428,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     // Figure out which record code to use.
     unsigned Code;
     if (SLoc->isFile()) {
-      if (SLoc->getFile().getContentCache()->Entry)
+      if (SLoc->getFile().getContentCache()->OrigEntry)
         Code = SM_SLOC_FILE_ENTRY;
       else
         Code = SM_SLOC_BUFFER_ENTRY;
@@ -1445,16 +1445,19 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       Record.push_back(File.hasLineDirectives());
 
       const SrcMgr::ContentCache *Content = File.getContentCache();
-      if (Content->Entry) {
+      if (Content->OrigEntry) {
+        assert(Content->OrigEntry == Content->ContentsEntry &&
+               "Writing to AST an overriden file is not supported");
+
         // The source location entry is a file. The blob associated
         // with this entry is the file name.
 
         // Emit size/modification time for this file.
-        Record.push_back(Content->Entry->getSize());
-        Record.push_back(Content->Entry->getModificationTime());
+        Record.push_back(Content->OrigEntry->getSize());
+        Record.push_back(Content->OrigEntry->getModificationTime());
 
         // Turn the file name into an absolute path, if it isn't already.
-        const char *Filename = Content->Entry->getName();
+        const char *Filename = Content->OrigEntry->getName();
         llvm::SmallString<128> FilePath(Filename);
         llvm::sys::fs::make_absolute(FilePath);
         Filename = FilePath.c_str();

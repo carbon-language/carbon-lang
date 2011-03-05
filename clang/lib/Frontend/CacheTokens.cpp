@@ -473,7 +473,7 @@ void PTHWriter::GeneratePTH(const std::string &MainFile) {
   for (SourceManager::fileinfo_iterator I = SM.fileinfo_begin(),
        E = SM.fileinfo_end(); I != E; ++I) {
     const SrcMgr::ContentCache &C = *I->second;
-    const FileEntry *FE = C.Entry;
+    const FileEntry *FE = C.OrigEntry;
 
     // FIXME: Handle files with non-absolute paths.
     if (llvm::sys::path::is_relative(FE->getName()))

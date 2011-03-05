@@ -66,10 +66,16 @@ namespace SrcMgr {
     mutable llvm::PointerIntPair<const llvm::MemoryBuffer *, 2> Buffer;
 
   public:
-    /// Reference to the file entry.  This reference does not own
-    /// the FileEntry object.  It is possible for this to be NULL if
+    /// Reference to the file entry representing this ContentCache.
+    /// This reference does not own the FileEntry object.
+    /// It is possible for this to be NULL if
     /// the ContentCache encapsulates an imaginary text buffer.
-    const FileEntry *Entry;
+    const FileEntry *OrigEntry;
+
+    /// \brief References the file which the contents were actually loaded from.
+    /// Can be different from 'Entry' if we overridden the contents of one file
+    /// with the contents of another file.
+    const FileEntry *ContentsEntry;
 
     /// SourceLineCache - A bump pointer allocated array of offsets for each
     /// source line.  This is lazily computed.  This is owned by the
@@ -132,7 +138,12 @@ namespace SrcMgr {
     }
     
     ContentCache(const FileEntry *Ent = 0)
-      : Buffer(0, false), Entry(Ent), SourceLineCache(0), NumLines(0) {}
+      : Buffer(0, false), OrigEntry(Ent), ContentsEntry(Ent),
+        SourceLineCache(0), NumLines(0) {}
+
+    ContentCache(const FileEntry *Ent, const FileEntry *contentEnt)
+      : Buffer(0, false), OrigEntry(Ent), ContentsEntry(contentEnt),
+        SourceLineCache(0), NumLines(0) {}
 
     ~ContentCache();
 
@@ -142,7 +153,8 @@ namespace SrcMgr {
     ContentCache(const ContentCache &RHS) 
       : Buffer(0, false), SourceLineCache(0) 
     {
-      Entry = RHS.Entry;
+      OrigEntry = RHS.OrigEntry;
+      ContentsEntry = RHS.ContentsEntry;
 
       assert (RHS.Buffer.getPointer() == 0 && RHS.SourceLineCache == 0
               && "Passed ContentCache object cannot own a buffer.");
@@ -380,6 +392,9 @@ class SourceManager {
   /// non-null, FileEntry pointers.
   llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*> FileInfos;
 
+  /// \brief Files that have been overriden with the contents from another file.
+  llvm::DenseMap<const FileEntry *, const FileEntry *> OverriddenFiles;
+
   /// MemBufferInfos - Information about various memory buffers that we have
   /// read in.  All FileEntry* within the stored ContentCache objects are NULL,
   /// as they do not refer to a file.
@@ -527,6 +542,15 @@ public:
                             const llvm::MemoryBuffer *Buffer,
                             bool DoNotFree = false);
 
+  /// \brief Override the the given source file with another one.
+  ///
+  /// \param SourceFile the source file which will be overriden.
+  ///
+  /// \param NewFile the file whose contents will be used as the
+  /// data instead of the contents of the given source file.
+  void overrideFileContents(const FileEntry *SourceFile,
+                            const FileEntry *NewFile);
+
   //===--------------------------------------------------------------------===//
   // FileID manipulation methods.
   //===--------------------------------------------------------------------===//
@@ -547,7 +571,7 @@ public:
   
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
   const FileEntry *getFileEntryForID(FileID FID) const {
-    return getSLocEntry(FID).getFile().getContentCache()->Entry;
+    return getSLocEntry(FID).getFile().getContentCache()->OrigEntry;
   }
 
   /// getBufferData - Return a StringRef to the source buffer data for the

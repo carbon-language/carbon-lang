@@ -52,7 +52,7 @@ unsigned ContentCache::getSizeBytesMapped() const {
 ///  file is not lazily brought in from disk to satisfy this query.
 unsigned ContentCache::getSize() const {
   return Buffer.getPointer() ? (unsigned) Buffer.getPointer()->getBufferSize()
-                             : (unsigned) Entry->getSize();
+                             : (unsigned) ContentsEntry->getSize();
 }
 
 void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B,
@@ -71,7 +71,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
                                                   bool *Invalid) const {
   // Lazily create the Buffer for ContentCaches that wrap files.  If we already
   // computed it, jsut return what we have.
-  if (Buffer.getPointer() || Entry == 0) {
+  if (Buffer.getPointer() || ContentsEntry == 0) {
     if (Invalid)
       *Invalid = isBufferInvalid();
     
@@ -79,7 +79,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   }    
 
   std::string ErrorStr;
-  Buffer.setPointer(SM.getFileManager().getBufferForFile(Entry, &ErrorStr));
+  Buffer.setPointer(SM.getFileManager().getBufferForFile(ContentsEntry, &ErrorStr));
 
   // If we were unable to open the file, then we are in an inconsistent
   // situation where the content cache referenced a file which no longer
@@ -93,18 +93,18 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   // possible.
   if (!Buffer.getPointer()) {
     const llvm::StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
-    Buffer.setPointer(MemoryBuffer::getNewMemBuffer(Entry->getSize(), 
+    Buffer.setPointer(MemoryBuffer::getNewMemBuffer(ContentsEntry->getSize(), 
                                                     "<invalid>"));
     char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());
-    for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
+    for (unsigned i = 0, e = ContentsEntry->getSize(); i != e; ++i)
       Ptr[i] = FillStr[i % FillStr.size()];
 
     if (Diag.isDiagnosticInFlight())
       Diag.SetDelayedDiagnostic(diag::err_cannot_open_file, 
-                                Entry->getName(), ErrorStr);
+                                ContentsEntry->getName(), ErrorStr);
     else 
       Diag.Report(Loc, diag::err_cannot_open_file)
-        << Entry->getName() << ErrorStr;
+        << ContentsEntry->getName() << ErrorStr;
 
     Buffer.setInt(Buffer.getInt() | InvalidFlag);
     
@@ -114,13 +114,13 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   
   // Check that the file's size is the same as in the file entry (which may
   // have come from a stat cache).
-  if (getRawBuffer()->getBufferSize() != (size_t)Entry->getSize()) {
+  if (getRawBuffer()->getBufferSize() != (size_t)ContentsEntry->getSize()) {
     if (Diag.isDiagnosticInFlight())
       Diag.SetDelayedDiagnostic(diag::err_file_modified,
-                                Entry->getName());
+                                ContentsEntry->getName());
     else
       Diag.Report(Loc, diag::err_file_modified)
-        << Entry->getName();
+        << ContentsEntry->getName();
 
     Buffer.setInt(Buffer.getInt() | InvalidFlag);
     if (Invalid) *Invalid = true;
@@ -147,7 +147,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
 
   if (BOM) {
     Diag.Report(Loc, diag::err_unsupported_bom)
-      << BOM << Entry->getName();
+      << BOM << ContentsEntry->getName();
     Buffer.setInt(Buffer.getInt() | InvalidFlag);
   }
   
@@ -395,7 +395,16 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt) {
   unsigned EntryAlign = llvm::AlignOf<ContentCache>::Alignment;
   EntryAlign = std::max(8U, EntryAlign);
   Entry = ContentCacheAlloc.Allocate<ContentCache>(1, EntryAlign);
-  new (Entry) ContentCache(FileEnt);
+
+  // If the file contents are overridden with contents from another file,
+  // pass that file to ContentCache.
+  llvm::DenseMap<const FileEntry *, const FileEntry *>::iterator
+      overI = OverriddenFiles.find(FileEnt);
+  if (overI == OverriddenFiles.end())
+    new (Entry) ContentCache(FileEnt);
+  else
+    new (Entry) ContentCache(FileEnt, overI->second);
+
   return Entry;
 }
 
@@ -529,6 +538,17 @@ void SourceManager::overrideFileContents(const FileEntry *SourceFile,
   assert(IR && "getOrCreateContentCache() cannot return NULL");
 
   const_cast<SrcMgr::ContentCache *>(IR)->replaceBuffer(Buffer, DoNotFree);
+}
+
+void SourceManager::overrideFileContents(const FileEntry *SourceFile,
+                                         const FileEntry *NewFile) {
+  assert(SourceFile->getSize() == NewFile->getSize() &&
+         "Different sizes, use the FileManager to create a virtual file with "
+         "the correct size");
+  assert(FileInfos.count(SourceFile) == 0 &&
+         "This function should be called at the initialization stage, before "
+         "any parsing occurs.");
+  OverriddenFiles[SourceFile] = NewFile;
 }
 
 llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
@@ -1071,8 +1091,8 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   // before the MemBuffer as this will avoid unnecessarily paging in the
   // MemBuffer.
   const char *Filename;
-  if (C->Entry)
-    Filename = C->Entry->getName();
+  if (C->OrigEntry)
+    Filename = C->OrigEntry->getName();
   else
     Filename = C->getBuffer(Diag, *this)->getBufferIdentifier();
   bool Invalid = false;
@@ -1158,12 +1178,12 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
         = MainSLoc.getFile().getContentCache();
       if (!MainContentCache) {
         // Can't do anything
-      } else if (MainContentCache->Entry == SourceFile) {
+      } else if (MainContentCache->OrigEntry == SourceFile) {
         FirstFID = MainFileID;
       } else {
         // Fall back: check whether we have the same base name and inode
         // as the main file.
-        const FileEntry *MainFile = MainContentCache->Entry;
+        const FileEntry *MainFile = MainContentCache->OrigEntry;
         SourceFileName = llvm::sys::path::filename(SourceFile->getName());
         if (*SourceFileName == llvm::sys::path::filename(MainFile->getName())) {
           SourceFileInode = getActualFileInode(SourceFile);
@@ -1188,7 +1208,7 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
       const SLocEntry &SLoc = getSLocEntry(I);
       if (SLoc.isFile() && 
           SLoc.getFile().getContentCache() &&
-          SLoc.getFile().getContentCache()->Entry == SourceFile) {
+          SLoc.getFile().getContentCache()->OrigEntry == SourceFile) {
         FirstFID = FileID::get(I);
         break;
       }
@@ -1208,7 +1228,7 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
       if (SLoc.isFile()) { 
         const ContentCache *FileContentCache 
           = SLoc.getFile().getContentCache();
-        const FileEntry *Entry =FileContentCache? FileContentCache->Entry : 0;
+      const FileEntry *Entry =FileContentCache? FileContentCache->OrigEntry : 0;
         if (Entry && 
             *SourceFileName == llvm::sys::path::filename(Entry->getName())) {
           if (llvm::Optional<ino_t> EntryInode = getActualFileInode(Entry)) {

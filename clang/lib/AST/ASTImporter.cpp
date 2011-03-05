@@ -4156,12 +4156,12 @@ FileID ASTImporter::Import(FileID FromID) {
   // Map the FileID for to the "to" source manager.
   FileID ToID;
   const SrcMgr::ContentCache *Cache = FromSLoc.getFile().getContentCache();
-  if (Cache->Entry) {
+  if (Cache->OrigEntry) {
     // FIXME: We probably want to use getVirtualFile(), so we don't hit the
     // disk again
     // FIXME: We definitely want to re-use the existing MemoryBuffer, rather
     // than mmap the files several times.
-    const FileEntry *Entry = ToFileManager.getFile(Cache->Entry->getName());
+    const FileEntry *Entry = ToFileManager.getFile(Cache->OrigEntry->getName());
     ToID = ToSM.createFileID(Entry, ToIncludeLoc, 
                              FromSLoc.getFile().getFileCharacteristic());
   } else {
