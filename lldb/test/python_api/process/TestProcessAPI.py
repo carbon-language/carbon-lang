@@ -5,7 +5,7 @@ Test SBProcess APIs, including ReadMemory(), WriteMemory(), and others.
 import os, time
 import unittest2
 import lldb
-from lldbutil import get_stopped_thread
+from lldbutil import get_stopped_thread, StateTypeString
 from lldbtest import *
 
 class ProcessAPITestCase(TestBase):
@@ -50,6 +50,12 @@ class ProcessAPITestCase(TestBase):
         """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
         self.buildDwarf()
         self.access_my_int()
+
+    @python_api_test
+    def test_remote_launch(self):
+        """Test SBProcess.RemoteLaunch() API with a process not in eStateConnected, and it should fail."""
+        self.buildDefault()
+        self.remote_launch_should_fail()
 
     def setUp(self):
         # Call super's setUp().
@@ -229,6 +235,24 @@ class ProcessAPITestCase(TestBase):
         # Dump the memory content....
         for i in new_bytes:
             print "byte:", i
+
+    def remote_launch_should_fail(self):
+        """Test SBProcess.RemoteLaunch() API with a process not in eStateConnected, and it should fail."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        # Launch the process, and do not stop at the entry point.
+        error = lldb.SBError()
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+
+        print "process state:", StateTypeString(process.GetState())
+        self.assertTrue(process.GetState() != lldb.eStateConnected)
+
+        success = process.RemoteLaunch(None, None, None, None, None, None, 0, False, error)
+        self.assertTrue(not success, "RemoteLaunch() should fail for process state != eStateConnected")
 
 
 if __name__ == '__main__':

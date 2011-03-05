@@ -141,7 +141,7 @@ SBProcess::RemoteLaunch (char const **argv,
     if (log) {
         SBStream sstr;
         error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::RemoteLaunch (...) => SBError (%p): %s", error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::RemoteLaunch (...) => SBError (%p): %s", m_opaque_sp.get(), error.get(), sstr.GetData());
     }
     
     return error.Success();
@@ -171,7 +171,7 @@ SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
     if (log) {
         SBStream sstr;
         error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%d) => SBError (%p): %s", error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%d) => SBError (%p): %s", m_opaque_sp.get(), pid, error.get(), sstr.GetData());
     }
 
     return error.Success();

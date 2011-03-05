@@ -162,6 +162,8 @@ def StateTypeString(enum):
         return "invalid"
     elif enum == lldb.eStateUnloaded:
         return "unloaded"
+    elif enum == lldb.eStateConnected:
+        return "connected"
     elif enum == lldb.eStateAttaching:
         return "attaching"
     elif enum == lldb.eStateLaunching:
@@ -181,7 +183,7 @@ def StateTypeString(enum):
     elif enum == lldb.eStateSuspended:
         return "suspended"
     else:
-        raise Exception("Unknown stopReason enum")
+        raise Exception("Unknown StateType enum")
 
 def StopReasonString(enum):
     """Returns the stopReason string given an enum."""
@@ -202,7 +204,7 @@ def StopReasonString(enum):
     elif enum == lldb.eStopReasonPlanComplete:
         return "plancomplete"
     else:
-        raise Exception("Unknown stopReason enum")
+        raise Exception("Unknown StopReason enum")
 
 def ValueTypeString(enum):
     """Returns the valueType string given an enum."""
@@ -223,7 +225,7 @@ def ValueTypeString(enum):
     elif enum == lldb.eValueTypeConstResult:
         return "constant_result"
     else:
-        raise Exception("Unknown valueType enum")
+        raise Exception("Unknown ValueType enum")
 
 
 # ==================================================
