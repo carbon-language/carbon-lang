@@ -2257,10 +2257,12 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
     return left->getHeight() > right->getHeight();
   }
 
-  if (!DisableSchedCriticalPath
-      && abs((long)left->getDepth() - right->getDepth()) > MaxReorderWindow) {
-    DEBUG(++FactorCount[FactDepth]);
-    return left->getDepth() < right->getDepth();
+  if (!DisableSchedCriticalPath) {
+    int spread = (int)left->getDepth() - (int)right->getDepth();
+    if (std::abs(spread) > MaxReorderWindow) {
+      DEBUG(++FactorCount[FactDepth]);
+      return left->getDepth() < right->getDepth();
+    }
   }
 
   if (!DisableSchedHeight && left->getHeight() != right->getHeight()) {
