@@ -337,23 +337,28 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
     return out, err, exitCode
 
 def executeScript(test, litConfig, tmpBase, commands, cwd):
+    bashPath = litConfig.getBashPath();
+    isWin32CMDEXE = (litConfig.isWindows and not bashPath)
     script = tmpBase + '.script'
-    if litConfig.isWindows:
+    if isWin32CMDEXE:
         script += '.bat'
 
     # Write script file
     f = open(script,'w')
-    if litConfig.isWindows:
+    if isWin32CMDEXE:
         f.write('\nif %ERRORLEVEL% NEQ 0 EXIT\n'.join(commands))
     else:
         f.write(' &&\n'.join(commands))
     f.write('\n')
     f.close()
 
-    if litConfig.isWindows:
+    if isWin32CMDEXE:
         command = ['cmd','/c', script]
     else:
-        command = ['/bin/sh', script]
+        if bashPath:
+            command = [bashPath, script]
+        else:
+            command = ['/bin/sh', script]
         if litConfig.useValgrind:
             # FIXME: Running valgrind on sh is overkill. We probably could just
             # run on clang with no real loss.
@@ -553,7 +558,7 @@ def executeShTest(test, litConfig, useExternalSh):
     if test.config.unsupported:
         return (Test.UNSUPPORTED, 'Test is unsupported')
 
-    res = parseIntegratedTestScript(test)
+    res = parseIntegratedTestScript(test, useExternalSh)
     if len(res) == 2:
         return res
 
