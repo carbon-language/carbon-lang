@@ -390,3 +390,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def EXIT : InstPTX<(outs), (ins), "exit", [(PTXexit)]>;
   def RET  : InstPTX<(outs), (ins), "ret",  [(PTXret)]>;
 }
+
+///===- Intrinsic Instructions --------------------------------------------===//
+
+include "PTXIntrinsicInstrInfo.td"
