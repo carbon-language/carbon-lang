@@ -255,19 +255,25 @@ private:
 #endif
       operator delete(Buckets);
     }
-    Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT) *
-                                                 other.NumBuckets));
+
+    NumBuckets = other.NumBuckets;
+
+    if (NumBuckets == 0) {
+      Buckets = 0;
+      return;
+    }
+
+    Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT) * NumBuckets));
 
     if (isPodLike<KeyInfoT>::value && isPodLike<ValueInfoT>::value)
-      memcpy(Buckets, other.Buckets, other.NumBuckets * sizeof(BucketT));
+      memcpy(Buckets, other.Buckets, NumBuckets * sizeof(BucketT));
     else
-      for (size_t i = 0; i < other.NumBuckets; ++i) {
+      for (size_t i = 0; i < NumBuckets; ++i) {
         new (&Buckets[i].first) KeyT(other.Buckets[i].first);
         if (!KeyInfoT::isEqual(Buckets[i].first, getEmptyKey()) &&
             !KeyInfoT::isEqual(Buckets[i].first, getTombstoneKey()))
           new (&Buckets[i].second) ValueT(other.Buckets[i].second);
       }
-    NumBuckets = other.NumBuckets;
   }
 
   BucketT *InsertIntoBucket(const KeyT &Key, const ValueT &Value,
