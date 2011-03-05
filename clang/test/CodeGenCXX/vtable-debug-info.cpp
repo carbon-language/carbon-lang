@@ -1,6 +1,6 @@
 // RUN: %clang -c -g %s -o /dev/null
 // Radar 8730409
-// XFAIL: win32
+// XFAIL: win32,mingw
 
 // FIXME: This test crashes on Windows.
 #ifdef _WIN32
