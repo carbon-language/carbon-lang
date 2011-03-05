@@ -106,14 +106,13 @@ static void
 emitSPUpdate(bool isARM,
              MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
              DebugLoc dl, const ARMBaseInstrInfo &TII,
-             int NumBytes,
-             ARMCC::CondCodes Pred = ARMCC::AL, unsigned PredReg = 0) {
+             int NumBytes, unsigned MIFlags = MachineInstr::NoFlags) {
   if (isARM)
     emitARMRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes,
-                            Pred, PredReg, TII);
+                            ARMCC::AL, 0, TII, MIFlags);
   else
     emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes,
-                           Pred, PredReg, TII);
+                           ARMCC::AL, 0, TII, MIFlags);
 }
 
 void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
@@ -141,11 +140,13 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Allocate the vararg register save area. This is not counted in NumBytes.
   if (VARegSaveSize)
-    emitSPUpdate(isARM, MBB, MBBI, dl, TII, -VARegSaveSize);
+    emitSPUpdate(isARM, MBB, MBBI, dl, TII, -VARegSaveSize,
+                 MachineInstr::FrameSetup);
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
-      emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes);
+      emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes,
+                   MachineInstr::FrameSetup);
     return;
   }
 
@@ -196,7 +197,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri : ARM::t2ADDri;
     MachineInstrBuilder MIB =
       BuildMI(MBB, MBBI, dl, TII.get(ADDriOpc), FramePtr)
-      .addFrameIndex(FramePtrSpillFI).addImm(0);
+      .addFrameIndex(FramePtrSpillFI).addImm(0)
+      .setMIFlag(MachineInstr::FrameSetup);
     AddDefaultCC(AddDefaultPred(MIB));
   }
 
@@ -226,7 +228,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   NumBytes = DPRCSOffset;
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
-    emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes);
+    emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes,
+                 MachineInstr::FrameSetup);
     if (HasFP && isARM)
       // Restore from fp only in ARM mode: e.g. sub sp, r7, #24
       // Note it's not safe to do this in Thumb2 mode because it would have
@@ -282,6 +285,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   // of the stack pointer is at this point. Any variable size objects
   // will be allocated after this, so we can still use the base pointer
   // to reference locals.
+  // FIXME: Clarify FrameSetup flags here.
   if (RegInfo->hasBasePointer(MF)) {
     if (isARM)
       BuildMI(MBB, MBBI, dl,
@@ -524,7 +528,8 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
                                     const std::vector<CalleeSavedInfo> &CSI,
                                     unsigned StmOpc, unsigned StrOpc,
                                     bool NoGap,
-                                    bool(*Func)(unsigned, bool)) const {
+                                    bool(*Func)(unsigned, bool),
+                                    unsigned MIFlags) const {
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
 
@@ -567,14 +572,14 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
     if (Regs.size() > 1 || StrOpc== 0) {
       MachineInstrBuilder MIB =
         AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(StmOpc), ARM::SP)
-                       .addReg(ARM::SP));
+                       .addReg(ARM::SP).setMIFlags(MIFlags));
       for (unsigned i = 0, e = Regs.size(); i < e; ++i)
         MIB.addReg(Regs[i].first, getKillRegState(Regs[i].second));
     } else if (Regs.size() == 1) {
       MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(StrOpc),
                                         ARM::SP)
         .addReg(Regs[0].first, getKillRegState(Regs[0].second))
-        .addReg(ARM::SP);
+        .addReg(ARM::SP).setMIFlags(MIFlags);
       // ARM mode needs an extra reg0 here due to addrmode2. Will go away once
       // that refactoring is complete (eventually).
       if (StrOpc == ARM::STR_PRE) {
@@ -676,9 +681,12 @@ bool ARMFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   unsigned PushOpc = AFI->isThumbFunction() ? ARM::t2STMDB_UPD : ARM::STMDB_UPD;
   unsigned PushOneOpc = AFI->isThumbFunction() ? ARM::t2STR_PRE : ARM::STR_PRE;
   unsigned FltOpc = ARM::VSTMDDB_UPD;
-  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea1Register);
-  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea2Register);
-  emitPushInst(MBB, MI, CSI, FltOpc, 0, true, &isARMArea3Register);
+  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea1Register,
+               MachineInstr::FrameSetup);
+  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea2Register,
+               MachineInstr::FrameSetup);
+  emitPushInst(MBB, MI, CSI, FltOpc, 0, true, &isARMArea3Register,
+               MachineInstr::FrameSetup);
 
   return true;
 }

@@ -1328,7 +1328,7 @@ void llvm::emitARMRegPlusImmediate(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator &MBBI, DebugLoc dl,
                                unsigned DestReg, unsigned BaseReg, int NumBytes,
                                ARMCC::CondCodes Pred, unsigned PredReg,
-                               const ARMBaseInstrInfo &TII) {
+                               const ARMBaseInstrInfo &TII, unsigned MIFlags) {
   bool isSub = NumBytes < 0;
   if (isSub) NumBytes = -NumBytes;
 
@@ -1346,7 +1346,8 @@ void llvm::emitARMRegPlusImmediate(MachineBasicBlock &MBB,
     unsigned Opc = isSub ? ARM::SUBri : ARM::ADDri;
     BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
       .addReg(BaseReg, RegState::Kill).addImm(ThisVal)
-      .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
+      .addImm((unsigned)Pred).addReg(PredReg).addReg(0)
+      .setMIFlags(MIFlags);
     BaseReg = DestReg;
   }
 }

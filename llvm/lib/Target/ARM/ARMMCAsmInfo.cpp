@@ -16,7 +16,7 @@
 
 using namespace llvm;
 
-static cl::opt<bool>
+cl::opt<bool>
 EnableARMEHABI("arm-enable-ehabi", cl::Hidden,
   cl::desc("Generate ARM EHABI tables"),
   cl::init(false));

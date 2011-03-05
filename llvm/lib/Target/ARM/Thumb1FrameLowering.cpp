@@ -39,8 +39,8 @@ static void emitSPUpdate(MachineBasicBlock &MBB,
                          const TargetInstrInfo &TII, DebugLoc dl,
                          const Thumb1RegisterInfo &MRI,
                          int NumBytes) {
-  emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, ARM::SP, NumBytes, TII,
-                            MRI, dl);
+  emitThumbRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes, TII,
+                            MRI);
 }
 
 void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
@@ -232,8 +232,8 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
       if (NumBytes) {
         assert(MF.getRegInfo().isPhysRegUsed(ARM::R4) &&
                "No scratch register to restore SP from FP!");
-        emitThumbRegPlusImmediate(MBB, MBBI, ARM::R4, FramePtr, -NumBytes,
-                                  TII, *RegInfo, dl);
+        emitThumbRegPlusImmediate(MBB, MBBI, dl, ARM::R4, FramePtr, -NumBytes,
+                                  TII, *RegInfo);
         BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::SP)
           .addReg(ARM::R4);
       } else

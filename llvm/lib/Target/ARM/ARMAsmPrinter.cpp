@@ -811,6 +811,87 @@ void ARMAsmPrinter::EmitPatchedInstruction(const MachineInstr *MI,
   OutStreamer.EmitInstruction(TmpInst);
 }
 
+void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
+  assert(MI->getFlag(MachineInstr::FrameSetup) &&
+      "Only instruction which are involved into frame setup code are allowed");
+
+  const MachineFunction &MF = *MI->getParent()->getParent();
+  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
+
+  unsigned FramePtr = RegInfo->getFrameRegister(MF);
+  unsigned SrcReg =  MI->getOperand(1).getReg();
+  unsigned DstReg = MI->getOperand(0).getReg();
+  unsigned Opc = MI->getOpcode();
+
+  // Try to figure out the unwinding opcode out of src / dst regs.
+  if (MI->getDesc().mayStore()) {
+    // Register saves.
+    assert(DstReg == ARM::SP &&
+           "Only stack pointer as a destination reg is supported");
+
+    SmallVector<unsigned, 4> RegList;
+    switch (Opc) {
+    default:
+      MI->dump();
+      assert(0 && "Unsupported opcode for unwinding information");
+    case ARM::STMDB_UPD:
+    case ARM::VSTMDDB_UPD:
+      assert(SrcReg == ARM::SP &&
+             "Only stack pointer as a source reg is supported");
+      for (unsigned i = 4, NumOps = MI->getNumOperands(); i != NumOps; ++i)
+        RegList.push_back(MI->getOperand(i).getReg());
+      break;
+    case ARM::STR_PRE:
+      assert(MI->getOperand(2).getReg() == ARM::SP &&
+             "Only stack pointer as a source reg is supported");
+      RegList.push_back(SrcReg);
+      break;
+    }
+    OutStreamer.EmitRegSave(RegList, Opc == ARM::VSTMDDB_UPD);
+  } else {
+    // Changes of stack / frame pointer.
+    if (SrcReg == ARM::SP) {
+      int64_t Offset = 0;
+      switch (Opc) {
+      default:
+        MI->dump();
+        assert(0 && "Unsupported opcode for unwinding information");
+      case ARM::MOVr:
+        Offset = 0;
+        break;
+      case ARM::ADDri:
+        Offset = -MI->getOperand(2).getImm();
+        break;
+      case ARM::SUBri:
+        Offset =  MI->getOperand(2).getImm();
+        break;
+      }
+
+      if (DstReg == FramePtr && FramePtr != ARM::SP)
+        // Set-up of the frame pointer.
+        OutStreamer.EmitSetFP(FramePtr, ARM::SP, Offset);
+      else if (DstReg == ARM::SP) {
+        // Change of SP by an offset. Positive values corresponds to "sub"
+        // instruction.
+        OutStreamer.EmitPad(Offset);
+      } else {
+        MI->dump();
+        assert(0 && "Unsupported opcode for unwinding information");
+      }
+    } else if (DstReg == ARM::SP) {
+      // FIXME: .movsp goes here
+      MI->dump();
+      assert(0 && "Unsupported opcode for unwinding information");
+    }
+    else {
+      MI->dump();
+      assert(0 && "Unsupported opcode for unwinding information");
+    }
+  }
+}
+
+extern cl::opt<bool> EnableARMEHABI;
+
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
@@ -1564,6 +1645,11 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   MCInst TmpInst;
   LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
+
+  // Emit unwinding stuff for frame-related instructions
+  if (EnableARMEHABI && MI->getFlag(MachineInstr::FrameSetup))
+    EmitUnwindingInstruction(MI);
+
   OutStreamer.EmitInstruction(TmpInst);
 }
 

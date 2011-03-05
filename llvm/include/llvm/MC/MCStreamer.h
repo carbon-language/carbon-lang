@@ -465,6 +465,10 @@ namespace llvm {
     virtual void EmitCantUnwind();
     virtual void EmitPersonality(const MCSymbol *Personality);
     virtual void EmitHandlerData();
+    virtual void EmitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0);
+    virtual void EmitPad(int64_t Offset);
+    virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
+                             bool isVector);
 
     /// Finish - Finish emission of machine code.
     virtual void Finish() = 0;

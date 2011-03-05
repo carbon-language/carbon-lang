@@ -726,9 +726,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
           llvm::emitT2RegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
                                        FramePtr, -NumBytes, ARMCC::AL, 0, *TII);
         } else if (AFI->isThumbFunction()) {
-          llvm::emitThumbRegPlusImmediate(MBB, MBBI, ARM::R6,
-                                          FramePtr, -NumBytes,
-                                          *TII, RI, MI.getDebugLoc());
+          llvm::emitThumbRegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
+                                          FramePtr, -NumBytes, *TII, RI);
         } else {
           llvm::emitARMRegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
                                         FramePtr, -NumBytes, ARMCC::AL, 0,

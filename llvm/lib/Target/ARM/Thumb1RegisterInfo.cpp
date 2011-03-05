@@ -151,10 +151,10 @@ static unsigned calcNumMI(int Opc, int ExtraOpc, unsigned Bytes,
 /// a destreg = basereg + immediate in Thumb code.
 void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator &MBBI,
+                                     DebugLoc dl,
                                      unsigned DestReg, unsigned BaseReg,
                                      int NumBytes, const TargetInstrInfo &TII,
-                                     const ARMBaseRegisterInfo& MRI,
-                                     DebugLoc dl) {
+                                     const ARMBaseRegisterInfo& MRI, unsigned) {
   bool isSub = NumBytes < 0;
   unsigned Bytes = (unsigned)NumBytes;
   if (isSub) Bytes = -NumBytes;
@@ -283,8 +283,8 @@ static void emitSPUpdate(MachineBasicBlock &MBB,
                          const TargetInstrInfo &TII, DebugLoc dl,
                          const Thumb1RegisterInfo &MRI,
                          int NumBytes) {
-  emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, ARM::SP, NumBytes, TII,
-                            MRI, dl);
+  emitThumbRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes, TII,
+                            MRI);
 }
 
 void Thumb1RegisterInfo::
@@ -337,7 +337,7 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
                                         DestReg))
                  .addImm(ThisVal));
   if (Imm > 0)
-    emitThumbRegPlusImmediate(MBB, MBBI, DestReg, DestReg, Imm, TII, MRI, dl);
+    emitThumbRegPlusImmediate(MBB, MBBI, dl, DestReg, DestReg, Imm, TII, MRI);
   if (isSub) {
     const TargetInstrDesc &TID = TII.get(ARM::tRSB);
     AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TID, DestReg))
@@ -430,8 +430,8 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
     // MI would expand into a large number of instructions. Don't try to
     // simplify the immediate.
     if (NumMIs > 2) {
-      emitThumbRegPlusImmediate(MBB, II, DestReg, FrameReg, Offset, TII,
-                                *this, dl);
+      emitThumbRegPlusImmediate(MBB, II, dl, DestReg, FrameReg, Offset, TII,
+                                *this);
       MBB.erase(II);
       return true;
     }
@@ -450,8 +450,8 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
       }
       Offset = (Offset - Mask * Scale);
       MachineBasicBlock::iterator NII = llvm::next(II);
-      emitThumbRegPlusImmediate(MBB, NII, DestReg, DestReg, Offset, TII,
-                                *this, dl);
+      emitThumbRegPlusImmediate(MBB, NII, dl, DestReg, DestReg, Offset, TII,
+                                *this);
     } else {
       // Translate r0 = add sp, -imm to
       // r0 = -imm (this is then translated into a series of instructons)
@@ -652,8 +652,8 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         UseRR = true;
       }
     } else {
-      emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII,
-                                *this, dl);
+      emitThumbRegPlusImmediate(MBB, II, dl, TmpReg, FrameReg, Offset, TII,
+                                *this);
     }
 
     MI.setDesc(TII.get(UseRR ? ARM::tLDRr : ARM::tLDRi));
@@ -675,8 +675,8 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
           UseRR = true;
         }
       } else
-        emitThumbRegPlusImmediate(MBB, II, VReg, FrameReg, Offset, TII,
-                                  *this, dl);
+        emitThumbRegPlusImmediate(MBB, II, dl, VReg, FrameReg, Offset, TII,
+                                  *this);
       MI.setDesc(TII.get(UseRR ? ARM::tSTRr : ARM::tSTRi));
       MI.getOperand(i).ChangeToRegister(VReg, false, false, true);
       if (UseRR)

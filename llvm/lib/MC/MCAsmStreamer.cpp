@@ -197,6 +197,10 @@ public:
   virtual void EmitCantUnwind();
   virtual void EmitPersonality(const MCSymbol *Personality);
   virtual void EmitHandlerData();
+  virtual void EmitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0);
+  virtual void EmitPad(int64_t Offset);
+  virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList, bool);
+
 
   virtual void EmitInstruction(const MCInst &Inst);
 
@@ -887,6 +891,36 @@ void MCAsmStreamer::EmitHandlerData() {
 
 void MCAsmStreamer::EmitPersonality(const MCSymbol *Personality) {
   OS << "\t.personality " << Personality->getName();
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset) {
+  OS << "\t.setfp\t" << InstPrinter->getRegName(FpReg)
+     << ", "        << InstPrinter->getRegName(SpReg);
+  if (Offset)
+    OS << ", #" << Offset;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitPad(int64_t Offset) {
+  OS << "\t.pad\t#" << Offset;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
+                                bool isVector) {
+  assert(RegList.size() && "RegList should not be empty");
+  if (isVector)
+    OS << "\t.vsave\t{";
+  else
+    OS << "\t.save\t{";
+
+  OS << InstPrinter->getRegName(RegList[0]);
+
+  for (unsigned i = 1, e = RegList.size(); i != e; ++i)
+    OS << ", " << InstPrinter->getRegName(RegList[i]);
+
+  OS << "}";
   EmitEOL();
 }
 

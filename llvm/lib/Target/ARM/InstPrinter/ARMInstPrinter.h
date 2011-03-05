@@ -25,6 +25,7 @@ public:
 
   virtual void printInst(const MCInst *MI, raw_ostream &O);
   virtual StringRef getOpcodeName(unsigned Opcode) const;
+  virtual StringRef getRegName(unsigned RegNo) const;
 
   static const char *getInstructionName(unsigned Opcode);
 

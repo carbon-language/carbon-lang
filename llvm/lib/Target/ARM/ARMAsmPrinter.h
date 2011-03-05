@@ -82,6 +82,8 @@ private:
   // Generic helper used to emit e.g. ARMv5 mul pseudos
   void EmitPatchedInstruction(const MachineInstr *MI, unsigned TargetOpc);
 
+  void EmitUnwindingInstruction(const MachineInstr *MI);
+
 public:
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 

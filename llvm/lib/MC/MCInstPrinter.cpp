@@ -19,3 +19,8 @@ MCInstPrinter::~MCInstPrinter() {
 StringRef MCInstPrinter::getOpcodeName(unsigned Opcode) const {
   return "";
 }
+
+StringRef MCInstPrinter::getRegName(unsigned RegNo) const {
+  assert(0 && "Target should implement this");
+  return "";
+}

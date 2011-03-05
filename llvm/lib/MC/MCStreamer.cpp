@@ -284,6 +284,21 @@ void MCStreamer::EmitPersonality(const MCSymbol *Personality) {
   abort();
 }
 
+void MCStreamer::EmitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset) {
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
+void MCStreamer::EmitPad(int64_t Offset) {
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
+void MCStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList, bool) {
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
 /// EmitRawText - If this file is backed by an assembly streamer, this dumps
 /// the specified string in the output .s file.  This capability is
 /// indicated by the hasRawTextSupport() predicate.

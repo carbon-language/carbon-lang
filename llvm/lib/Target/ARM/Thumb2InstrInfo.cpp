@@ -184,7 +184,7 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator &MBBI, DebugLoc dl,
                                unsigned DestReg, unsigned BaseReg, int NumBytes,
                                ARMCC::CondCodes Pred, unsigned PredReg,
-                               const ARMBaseInstrInfo &TII) {
+                               const ARMBaseInstrInfo &TII, unsigned MIFlags) {
   bool isSub = NumBytes < 0;
   if (isSub) NumBytes = -NumBytes;
 
@@ -198,14 +198,14 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
       // Use a movw to materialize the 16-bit constant.
       BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi16), DestReg)
         .addImm(NumBytes)
-        .addImm((unsigned)Pred).addReg(PredReg);
+        .addImm((unsigned)Pred).addReg(PredReg).setMIFlags(MIFlags);
       Fits = true;
     } else if ((NumBytes & 0xffff) == 0) {
       // Use a movt to materialize the 32-bit constant.
       BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVTi16), DestReg)
         .addReg(DestReg)
         .addImm(NumBytes >> 16)
-        .addImm((unsigned)Pred).addReg(PredReg);
+        .addImm((unsigned)Pred).addReg(PredReg).setMIFlags(MIFlags);
       Fits = true;
     }
 
@@ -214,12 +214,14 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
         BuildMI(MBB, MBBI, dl, TII.get(ARM::t2SUBrr), DestReg)
           .addReg(BaseReg, RegState::Kill)
           .addReg(DestReg, RegState::Kill)
-          .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
+          .addImm((unsigned)Pred).addReg(PredReg).addReg(0)
+          .setMIFlags(MIFlags);
       } else {
         BuildMI(MBB, MBBI, dl, TII.get(ARM::t2ADDrr), DestReg)
           .addReg(DestReg, RegState::Kill)
           .addReg(BaseReg, RegState::Kill)
-        .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
+          .addImm((unsigned)Pred).addReg(PredReg).addReg(0)
+          .setMIFlags(MIFlags);
       }
       return;
     }
@@ -230,7 +232,8 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
     unsigned Opc = 0;
     if (DestReg == ARM::SP && BaseReg != ARM::SP) {
       // mov sp, rn. Note t2MOVr cannot be used.
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),DestReg).addReg(BaseReg);
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),DestReg)
+        .addReg(BaseReg).setMIFlags(MIFlags);
       BaseReg = ARM::SP;
       continue;
     }
@@ -243,7 +246,7 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
         Opc = isSub ? ARM::tSUBspi : ARM::tADDspi;
         // FIXME: Fix Thumb1 immediate encoding.
         BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
-          .addReg(BaseReg).addImm(ThisVal/4);
+          .addReg(BaseReg).addImm(ThisVal/4).setMIFlags(MIFlags);
         NumBytes = 0;
         continue;
       }
@@ -283,7 +286,7 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
     MachineInstrBuilder MIB =
       AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
                      .addReg(BaseReg, RegState::Kill)
-                     .addImm(ThisVal));
+                     .addImm(ThisVal)).setMIFlags(MIFlags);
     if (HasCCOut)
       AddDefaultCC(MIB);
 
