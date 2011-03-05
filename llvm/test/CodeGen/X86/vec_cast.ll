@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86-64 -mcpu=core2
-
+; RUN: llc < %s -mtriple=x86_64-linux -mcpu=core2
+; RUN: llc < %s -mtriple=x86_64-win32 -mcpu=core2
 
 define <8 x i32> @a(<8 x i16> %a) nounwind {
   %c = sext <8 x i16> %a to <8 x i32>
