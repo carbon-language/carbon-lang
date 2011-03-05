@@ -173,9 +173,6 @@ void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
 Decl::~Decl() { }
 
 void Decl::setDeclContext(DeclContext *DC) {
-  if (isOutOfSemaDC())
-    delete getMultipleDC();
-
   DeclCtx = DC;
 }
 

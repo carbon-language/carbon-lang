@@ -193,3 +193,15 @@ namespace ZeroLengthExplicitTemplateArgs {
     template<typename T> void g2(T);
   };
 }
+
+namespace NonTypeTemplateParmContext {
+  template<typename T, int inlineCapacity = 0> class Vector { };
+
+  struct String {
+    template<int inlineCapacity>
+    static String adopt(Vector<char, inlineCapacity>&);
+  };
+
+  template<int inlineCapacity>
+    inline bool equalIgnoringNullity(const Vector<char, inlineCapacity>& a, const String& b) { return false; }
+}

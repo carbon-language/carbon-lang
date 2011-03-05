@@ -38,6 +38,9 @@ namespace clang {
     const RecordData &Record;
     unsigned &Idx;
     TypeID TypeIDForTypeDecl;
+    
+    DeclID DeclContextIDForTemplateParmDecl;
+    DeclID LexicalDeclContextIDForTemplateParmDecl;
 
     uint64_t GetCurrentCursorOffset();
     SourceLocation ReadSourceLocation(const RecordData &R, unsigned &I) {
@@ -175,13 +178,32 @@ void ASTDeclReader::Visit(Decl *D) {
     // FunctionDecl's body was written last after all other Stmts/Exprs.
     if (Record[Idx++])
       FD->setLazyBody(GetCurrentCursorOffset());
+  } else if (D->isTemplateParameter()) {
+    // If we have a fully initialized template parameter, we can now
+    // set its DeclContext.
+    D->setDeclContext(
+          cast_or_null<DeclContext>(
+                            Reader.GetDecl(DeclContextIDForTemplateParmDecl)));
+    D->setLexicalDeclContext(
+          cast_or_null<DeclContext>(
+                      Reader.GetDecl(LexicalDeclContextIDForTemplateParmDecl)));
   }
 }
 
 void ASTDeclReader::VisitDecl(Decl *D) {
-  D->setDeclContext(cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++])));
-  D->setLexicalDeclContext(
+  if (D->isTemplateParameter()) {
+    // We don't want to deserialize the DeclContext of a template
+    // parameter immediately, because the template parameter might be
+    // used in the formulation of its DeclContext. Use the translation
+    // unit DeclContext as a placeholder.
+    DeclContextIDForTemplateParmDecl = Record[Idx++];
+    LexicalDeclContextIDForTemplateParmDecl = Record[Idx++];
+    D->setDeclContext(Reader.getContext()->getTranslationUnitDecl()); 
+  } else {
+    D->setDeclContext(cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++])));
+    D->setLexicalDeclContext(
                      cast_or_null<DeclContext>(Reader.GetDecl(Record[Idx++])));
+  }
   D->setLocation(ReadSourceLocation(Record, Idx));
   D->setInvalidDecl(Record[Idx++]);
   if (Record[Idx++]) { // hasAttrs
