@@ -515,7 +515,9 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
   }
 
   if (!InstrItins || InstrItins->isEmpty()) {
-    if (SU->getNode() && TII->isHighLatencyDef(SU->getNode()->getOpcode()))
+    SDNode *N = SU->getNode();
+    if (N && N->isMachineOpcode() &&
+        TII->isHighLatencyDef(N->getMachineOpcode()))
       SU->Latency = HighLatencyCycles;
     else
       SU->Latency = 1;
