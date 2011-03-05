@@ -145,6 +145,16 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &setMIFlags(unsigned Flags) const {
+    MI->setFlags(Flags);
+    return *this;
+  }
+
+  const MachineInstrBuilder &setMIFlag(MachineInstr::MIFlag Flag) const {
+    MI->setFlag(Flag);
+    return *this;
+  }
+
   // Add a displacement from an existing MachineOperand with an added offset.
   const MachineInstrBuilder &addDisp(const MachineOperand &Disp,
                                      int64_t off) const {
