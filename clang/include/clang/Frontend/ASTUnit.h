@@ -115,6 +115,9 @@ private:
 
   /// \brief Whether we should time each operation.
   bool WantTiming;
+
+  /// \brief Whether the ASTUnit should delete the remapped buffers.
+  bool OwnsRemappedFileBuffers;
   
   /// Track the top-level decls which appeared in an ASTUnit which was loaded
   /// from a source file.
@@ -421,6 +424,9 @@ public:
   }
                         
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
+
+  bool getOwnsRemappedFileBuffers() const { return OwnsRemappedFileBuffers; }
+  void setOwnsRemappedFileBuffers(bool val) { OwnsRemappedFileBuffers = val; }
 
   /// \brief Retrieve the maximum PCH level of declarations that a
   /// traversal of the translation unit should consider.
