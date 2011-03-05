@@ -53,10 +53,10 @@ public:
   
 private:
   const TargetInstrDesc *TID;           // Instruction descriptor.
-  unsigned short NumImplicitOps;        // Number of implicit operands (which
+  uint16_t NumImplicitOps;              // Number of implicit operands (which
                                         // are determined at construction time).
 
-  unsigned short AsmPrinterFlags;       // Various bits of information used by
+  uint8_t AsmPrinterFlags;              // Various bits of information used by
                                         // the AsmPrinter to emit helpful
                                         // comments.  This is *not* semantic
                                         // information.  Do not use this for
@@ -125,7 +125,7 @@ public:
 
   /// getAsmPrinterFlags - Return the asm printer flags bitvector.
   ///
-  unsigned short getAsmPrinterFlags() const { return AsmPrinterFlags; }
+  uint8_t getAsmPrinterFlags() const { return AsmPrinterFlags; }
 
   /// clearAsmPrinterFlags - clear the AsmPrinter bitvector
   ///
