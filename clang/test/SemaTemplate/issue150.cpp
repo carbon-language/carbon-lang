@@ -83,7 +83,7 @@ namespace PR9016 {
   };
 
   template <class T,
-            template<class _T, template<class> class Compare = less,
+            template<class _T, template<class> class Compare = PR9016::less,
                      class = typename interval_type_default<_T,Compare>::type,
                      template<class> class = allocator> class IntervalSet>
   struct ZZZ
@@ -92,7 +92,7 @@ namespace PR9016 {
   };
   
   template <class T, 
-            template<class _T, template<class> class Compare = less,
+            template<class _T, template<class> class Compare = PR9016::less,
                      class = typename interval_type_default<_T,Compare>::type,
                      template<class> class = allocator> class IntervalSet>
   void int40()

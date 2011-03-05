@@ -967,6 +967,13 @@ TemplateName TemplateInstantiator::TransformTemplateName(CXXScopeSpec &SS,
       TemplateName Template = Arg.getAsTemplate();
       assert(!Template.isNull() && Template.getAsTemplateDecl() &&
              "Wrong kind of template template argument");
+      
+      // We don't ever want to substitute for a qualified template name, since
+      // the qualifier is handled separately. So, look through the qualified
+      // template name to its underlying declaration.
+      if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
+        Template = TemplateName(QTN->getTemplateDecl());
+          
       return Template;
     }
   }
