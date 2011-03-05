@@ -2228,6 +2228,8 @@ bool ilp_ls_rr_sort::isReady(SUnit *SU, unsigned CurCycle) const {
   return true;
 }
 
+// list-ilp is currently an experimental scheduler that allows various
+// heuristics to be enabled prior to the normal register reduction logic.
 bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   if (left->isCall || right->isCall)
     // No way to compute latency of calls.
