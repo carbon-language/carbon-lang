@@ -100,7 +100,7 @@ public:
 
   /// getRegsAvailable - Return all available registers in the register class
   /// in Mask.
-  void getRegsAvailable(const TargetRegisterClass *RC, BitVector &Mask);
+  BitVector getRegsAvailable(const TargetRegisterClass *RC);
 
   /// FindUnusedReg - Find a unused register of the specified register class.
   /// Return 0 if none is found.
