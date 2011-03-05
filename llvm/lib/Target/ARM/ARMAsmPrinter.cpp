@@ -817,6 +817,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
 
   const MachineFunction &MF = *MI->getParent()->getParent();
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
+  const ARMFunctionInfo &AFI = *MF.getInfo<ARMFunctionInfo>();
 
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned Opc = MI->getOpcode();
@@ -896,9 +897,22 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       case ARM::tADDrSPi:
         Offset = -MI->getOperand(2).getImm()*4;
         break;
-      case ARM::tLDRpci:
-        assert(0 && "Not implemented yet!");
+      case ARM::tLDRpci: {
+        // Grab the constpool index and check, whether it corresponds to
+        // original or cloned constpool entry.
+        unsigned CPI = MI->getOperand(1).getIndex();
+        const MachineConstantPool *MCP = MF.getConstantPool();
+        if (CPI >= MCP->getConstants().size())
+          CPI = AFI.getOriginalCPIdx(CPI);
+        assert(CPI != -1U && "Invalid constpool index");
+
+        // Derive the actual offset.
+        const MachineConstantPoolEntry &CPE = MCP->getConstants()[CPI];
+        assert(!CPE.isMachineConstantPoolEntry() && "Invalid constpool entry");
+        // FIXME: Check for user, it should be "add" instruction!
+        Offset = -cast<ConstantInt>(CPE.Val.ConstVal)->getSExtValue();
         break;
+      }
       }
 
       if (DstReg == FramePtr && FramePtr != ARM::SP)
