@@ -309,21 +309,32 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 /// location of the statement.  For GNU local labels (__label__), the decl
 /// location is where the __label__ is.
 class LabelDecl : public NamedDecl {
-  llvm::PointerIntPair<LabelStmt *, 1, bool> StmtAndGnuLocal;
-  LabelDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *II,
-            LabelStmt *S, bool isGnuLocal)
-    : NamedDecl(Label, DC, L, II), StmtAndGnuLocal(S, isGnuLocal) {}
-  
+  LabelStmt *TheStmt;
+  /// LocStart - For normal labels, this is the same as the main declaration
+  /// label, i.e., the location of the identifier; for GNU local labels,
+  /// this is the location of the __label__ keyword.
+  SourceLocation LocStart;
+
+  LabelDecl(DeclContext *DC, SourceLocation IdentL, IdentifierInfo *II,
+            LabelStmt *S, SourceLocation StartL)
+    : NamedDecl(Label, DC, IdentL, II), TheStmt(S), LocStart(StartL) {}
+
 public:
   static LabelDecl *Create(ASTContext &C, DeclContext *DC,
-                           SourceLocation L, IdentifierInfo *II,
-                           bool isGnuLocal = false);
+                           SourceLocation IdentL, IdentifierInfo *II);
+  static LabelDecl *Create(ASTContext &C, DeclContext *DC,
+                           SourceLocation IdentL, IdentifierInfo *II,
+                           SourceLocation GnuLabelL);
 
-  LabelStmt *getStmt() const { return StmtAndGnuLocal.getPointer(); }
-  void setStmt(LabelStmt *T) { StmtAndGnuLocal.setPointer(T); }
-  
-  bool isGnuLocal() const { return StmtAndGnuLocal.getInt(); }
-  void setGnuLocal(bool V = true) { StmtAndGnuLocal.setInt(V); }
+  LabelStmt *getStmt() const { return TheStmt; }
+  void setStmt(LabelStmt *T) { TheStmt = T; }
+
+  bool isGnuLocal() const { return LocStart != getLocation(); }
+  void setLocStart(SourceLocation L) { LocStart = L; }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(LocStart, getLocation());
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

@@ -2207,9 +2207,15 @@ TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
 }
 
 LabelDecl *LabelDecl::Create(ASTContext &C, DeclContext *DC,
-                             SourceLocation L, IdentifierInfo *II,
-                             bool isGnuLocal) {
-  return new (C) LabelDecl(DC, L, II, 0, isGnuLocal);
+                             SourceLocation IdentL, IdentifierInfo *II) {
+  return new (C) LabelDecl(DC, IdentL, II, 0, IdentL);
+}
+
+LabelDecl *LabelDecl::Create(ASTContext &C, DeclContext *DC,
+                             SourceLocation IdentL, IdentifierInfo *II,
+                             SourceLocation GnuLabelL) {
+  assert(GnuLabelL != IdentL && "Use this only for GNU local labels");
+  return new (C) LabelDecl(DC, IdentL, II, 0, GnuLabelL);
 }
 
 

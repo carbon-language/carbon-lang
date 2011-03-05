@@ -493,7 +493,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       
       IdentifierInfo *II = Tok.getIdentifierInfo();
       SourceLocation IdLoc = ConsumeToken();
-      DeclsInGroup.push_back(Actions.LookupOrCreateLabel(II, IdLoc, true));
+      DeclsInGroup.push_back(Actions.LookupOrCreateLabel(II, IdLoc, LabelLoc));
       
       if (!Tok.is(tok::comma))
         break;

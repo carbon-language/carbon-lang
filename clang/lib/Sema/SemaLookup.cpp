@@ -2766,30 +2766,35 @@ void Sema::LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
 }
 
 /// LookupOrCreateLabel - Do a name lookup of a label with the specified name.
-/// If isLocalLabel is true, then this is a definition of an __label__ label
-/// name, otherwise it is a normal label definition or use.
+/// If GnuLabelLoc is a valid source location, then this is a definition
+/// of an __label__ label name, otherwise it is a normal label definition
+/// or use.
 LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc,
-                                     bool isLocalLabel) {
+                                     SourceLocation GnuLabelLoc) {
   // Do a lookup to see if we have a label with this name already.
   NamedDecl *Res = 0;
-  
-  // Local label definitions always shadow existing labels.
-  if (!isLocalLabel)
-    Res = LookupSingleName(CurScope, II, Loc, LookupLabel, NotForRedeclaration);
-  
-  // If we found a label, check to see if it is in the same context as us.  When
-  // in a Block, we don't want to reuse a label in an enclosing function.
+
+  if (GnuLabelLoc.isValid()) {
+    // Local label definitions always shadow existing labels.
+    Res = LabelDecl::Create(Context, CurContext, Loc, II, GnuLabelLoc);
+    Scope *S = CurScope;
+    PushOnScopeChains(Res, S, true);
+    return cast<LabelDecl>(Res);
+  }
+
+  // Not a GNU local label.
+  Res = LookupSingleName(CurScope, II, Loc, LookupLabel, NotForRedeclaration);
+  // If we found a label, check to see if it is in the same context as us.
+  // When in a Block, we don't want to reuse a label in an enclosing function.
   if (Res && Res->getDeclContext() != CurContext)
     Res = 0;
-  
   if (Res == 0) {
     // If not forward referenced or defined already, create the backing decl.
-    Res = LabelDecl::Create(Context, CurContext, Loc, II, isLocalLabel);
-    Scope *S = isLocalLabel ? CurScope : CurScope->getFnParent();
+    Res = LabelDecl::Create(Context, CurContext, Loc, II);
+    Scope *S = CurScope->getFnParent();
     assert(S && "Not in a function?");
     PushOnScopeChains(Res, S, true);
   }
-  
   return cast<LabelDecl>(Res);
 }
 

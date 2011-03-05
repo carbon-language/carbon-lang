@@ -1448,9 +1448,9 @@ public:
                                     QualType T1, QualType T2,
                                     UnresolvedSetImpl &Functions);
 
-  LabelDecl *LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc,
-                                 bool isLocalLabel = false);
-  
+  LabelDecl *LookupOrCreateLabel(IdentifierInfo *II, SourceLocation IdentLoc,
+                                 SourceLocation GnuLabelLoc = SourceLocation());
+
   DeclContextLookupResult LookupConstructors(CXXRecordDecl *Class);
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
