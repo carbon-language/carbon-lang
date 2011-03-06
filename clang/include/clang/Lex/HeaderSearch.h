@@ -261,6 +261,17 @@ public:
   // Used by ASTReader.
   void setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID);
 
+  // Used by external tools
+  typedef std::vector<DirectoryLookup>::const_iterator search_dir_iterator;
+  search_dir_iterator search_dir_begin() const { return SearchDirs.begin(); }
+  search_dir_iterator search_dir_end() const { return SearchDirs.end(); }
+  unsigned search_dir_size() const { return SearchDirs.size(); }
+
+  search_dir_iterator system_dir_begin() const {
+    return SearchDirs.begin() + SystemDirIdx;
+  }
+  search_dir_iterator system_dir_end() const { return SearchDirs.end(); }
+
   void PrintStats();
 private:
 
