@@ -57,6 +57,8 @@ protected:
 public:
   static ConstantInt *getTrue(LLVMContext &Context);
   static ConstantInt *getFalse(LLVMContext &Context);
+  static Constant *getTrue(const Type *Ty);
+  static Constant *getFalse(const Type *Ty);
   
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.

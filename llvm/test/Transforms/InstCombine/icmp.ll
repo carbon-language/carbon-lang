@@ -465,3 +465,13 @@ define i1 @test48(i32 %X, i32 %Y, i32 %Z) {
   %C = icmp eq i32 %A, %B
   ret i1 %C
 }
+
+; PR8469
+; CHECK: @test49
+; CHECK: ret <2 x i1> <i1 true, i1 true>
+define <2 x i1> @test49(<2 x i32> %tmp3) {
+entry:
+  %tmp11 = and <2 x i32> %tmp3, <i32 3, i32 3>
+  %cmp = icmp ult <2 x i32> %tmp11, <i32 4, i32 4>
+  ret <2 x i1> %cmp  
+}
