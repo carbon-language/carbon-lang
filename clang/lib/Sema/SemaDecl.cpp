@@ -6649,7 +6649,7 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
     = CXXRecordDecl::Create(Context, Record->getTagKind(),
                             CurContext, Record->getLocation(),
                             Record->getIdentifier(),
-                            Record->getTagKeywordLoc(),
+                            Record->getLocStart(),
                             /*PrevDecl=*/0,
                             /*DelayTypeCreation=*/true);
   Context.getTypeDeclType(InjectedClassName, Record);

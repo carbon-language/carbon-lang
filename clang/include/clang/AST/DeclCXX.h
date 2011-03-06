@@ -451,7 +451,7 @@ protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id,
                 CXXRecordDecl *PrevDecl,
-                SourceLocation TKL = SourceLocation());
+                SourceLocation StartL = SourceLocation());
 
 public:
   /// base_class_iterator - Iterator that traverses the base classes
@@ -495,7 +495,7 @@ public:
 
   static CXXRecordDecl *Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
-                               SourceLocation TKL = SourceLocation(),
+                               SourceLocation StartL = SourceLocation(),
                                CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
   static CXXRecordDecl *Create(const ASTContext &C, EmptyShell Empty);
@@ -2225,15 +2225,15 @@ class UnresolvedUsingTypenameDecl : public TypeDecl {
                               NestedNameSpecifierLoc QualifierLoc,
                               SourceLocation TargetNameLoc, 
                               IdentifierInfo *TargetName)
-  : TypeDecl(UnresolvedUsingTypename, DC, TargetNameLoc, TargetName),
-    UsingLocation(UsingLoc), TypenameLocation(TypenameLoc), 
-    QualifierLoc(QualifierLoc) { }
+    : TypeDecl(UnresolvedUsingTypename, DC, TargetNameLoc, TargetName,
+               UsingLoc),
+      TypenameLocation(TypenameLoc), QualifierLoc(QualifierLoc) { }
 
   friend class ASTDeclReader;
   
 public:
   /// \brief Returns the source location of the 'using' keyword.
-  SourceLocation getUsingLoc() const { return UsingLocation; }
+  SourceLocation getUsingLoc() const { return getLocStart(); }
 
   /// \brief Returns the source location of the 'typename' keyword.
   SourceLocation getTypenameLoc() const { return TypenameLocation; }
@@ -2252,10 +2252,6 @@ public:
            SourceLocation TypenameLoc, NestedNameSpecifierLoc QualifierLoc,
            SourceLocation TargetNameLoc, DeclarationName TargetName);
 
-  SourceRange getSourceRange() const {
-    return SourceRange(UsingLocation, getLocation());
-  }
-  
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingTypenameDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UnresolvedUsingTypename; }

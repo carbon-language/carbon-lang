@@ -2038,7 +2038,6 @@ protected:
   bool IsFixed : 1;
 
 private:
-  SourceLocation TagKeywordLoc;
   SourceLocation RBraceLoc;
 
   // A struct representing syntactic qualifier info,
@@ -2061,8 +2060,8 @@ private:
 protected:
   TagDecl(Kind DK, TagKind TK, DeclContext *DC,
           SourceLocation L, IdentifierInfo *Id,
-          TagDecl *PrevDecl, SourceLocation TKL = SourceLocation())
-    : TypeDecl(DK, DC, L, Id), DeclContext(DK), TagKeywordLoc(TKL),
+          TagDecl *PrevDecl, SourceLocation StartL)
+    : TypeDecl(DK, DC, L, Id, StartL), DeclContext(DK),
       TypedefDeclOrQualifier((TypedefDecl*) 0) {
     assert((DK != Enum || TK == TTK_Enum) &&
            "EnumDecl not matched with TTK_Enum");
@@ -2093,12 +2092,9 @@ public:
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
 
-  SourceLocation getTagKeywordLoc() const { return TagKeywordLoc; }
-  void setTagKeywordLoc(SourceLocation TKL) { TagKeywordLoc = TKL; }
-
   /// getInnerLocStart - Return SourceLocation representing start of source
   /// range ignoring outer template declarations.
-  virtual SourceLocation getInnerLocStart() const { return TagKeywordLoc; }
+  virtual SourceLocation getInnerLocStart() const { return getLocStart(); }
 
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
@@ -2261,17 +2257,18 @@ class EnumDecl : public TagDecl {
   };
 
   EnumDecl(DeclContext *DC, SourceLocation L,
-           IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation TKL,
+           IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation StartL,
            bool Scoped, bool ScopedUsingClassTag, bool Fixed)
-    : TagDecl(Enum, TTK_Enum, DC, L, Id, PrevDecl, TKL), InstantiatedFrom(0) {
-      assert(Scoped || !ScopedUsingClassTag);
-      IntegerType = (const Type*)0;
-      NumNegativeBits = 0;
-      NumPositiveBits = 0;
-      IsScoped = Scoped;
-      IsScopedUsingClassTag = ScopedUsingClassTag;
-      IsFixed = Fixed;
-    }
+    : TagDecl(Enum, TTK_Enum, DC, L, Id, PrevDecl, StartL),
+      InstantiatedFrom(0) {
+    assert(Scoped || !ScopedUsingClassTag);
+    IntegerType = (const Type*)0;
+    NumNegativeBits = 0;
+    NumPositiveBits = 0;
+    IsScoped = Scoped;
+    IsScopedUsingClassTag = ScopedUsingClassTag;
+    IsFixed = Fixed;
+  }
 public:
   EnumDecl *getCanonicalDecl() {
     return cast<EnumDecl>(TagDecl::getCanonicalDecl());
@@ -2289,7 +2286,7 @@ public:
 
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
-                          SourceLocation TKL, EnumDecl *PrevDecl,
+                          SourceLocation StartL, EnumDecl *PrevDecl,
                           bool IsScoped, bool IsScopedUsingClassTag,
                           bool IsFixed);
   static EnumDecl *Create(ASTContext &C, EmptyShell Empty);
@@ -2445,12 +2442,12 @@ class RecordDecl : public TagDecl {
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
              SourceLocation L, IdentifierInfo *Id,
-             RecordDecl *PrevDecl, SourceLocation TKL);
+             RecordDecl *PrevDecl, SourceLocation StartL);
 
 public:
   static RecordDecl *Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation L, IdentifierInfo *Id,
-                            SourceLocation TKL = SourceLocation(),
+                            SourceLocation StartL = SourceLocation(),
                             RecordDecl* PrevDecl = 0);
   static RecordDecl *Create(const ASTContext &C, EmptyShell Empty);
 

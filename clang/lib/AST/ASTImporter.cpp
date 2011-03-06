@@ -2095,7 +2095,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
   // Create the enum declaration.
   EnumDecl *D2 = EnumDecl::Create(Importer.getToContext(), DC, Loc,
                                   Name.getAsIdentifierInfo(),
-                                  Importer.Import(D->getTagKeywordLoc()), 0,
+                                  Importer.Import(D->getLocStart()), 0,
                                   D->isScoped(), D->isScopedUsingClassTag(),
                                   D->isFixed());
   // Import the qualifier, if any.
@@ -2214,14 +2214,14 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
                                                    D->getTagKind(),
                                                    DC, Loc,
                                                    Name.getAsIdentifierInfo(), 
-                                        Importer.Import(D->getTagKeywordLoc()));
+                                           Importer.Import(D->getLocStart()));
       D2 = D2CXX;
       D2->setAccess(D->getAccess());
     } else {
       D2 = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
                                     DC, Loc,
                                     Name.getAsIdentifierInfo(), 
-                                    Importer.Import(D->getTagKeywordLoc()));
+                                    Importer.Import(D->getLocStart()));
     }
     
     D2->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
@@ -3575,7 +3575,7 @@ Decl *ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
                                                      DC, 
                                      Importer.Import(DTemplated->getLocation()),
                                                      Name.getAsIdentifierInfo(),                                                       
-                               Importer.Import(DTemplated->getTagKeywordLoc()));
+                               Importer.Import(DTemplated->getLocStart()));
   D2Templated->setAccess(DTemplated->getAccess());
   D2Templated->setQualifierInfo(Importer.Import(DTemplated->getQualifierLoc()));
   D2Templated->setLexicalDeclContext(LexicalDC);
