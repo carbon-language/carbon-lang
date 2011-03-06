@@ -342,6 +342,11 @@ int main(int argc_, const char **argv_) {
     TheDriver.CCCIsCXX = true;
   }
 
+  if (llvm::StringRef(ProgName).endswith("cpp") ||
+      llvm::StringRef(ProgName).rsplit('-').first.endswith("cpp")) {
+    TheDriver.CCCIsCPP = true;
+  }
+
   // Handle CC_PRINT_OPTIONS and CC_PRINT_OPTIONS_FILE.
   TheDriver.CCPrintOptions = !!::getenv("CC_PRINT_OPTIONS");
   if (TheDriver.CCPrintOptions)

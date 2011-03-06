@@ -41,7 +41,7 @@ using namespace clang::driver::tools;
 /// arguments that is shared with gcc.
 static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
   if (Arg *A = Args.getLastArg(options::OPT_C, options::OPT_CC))
-    if (!Args.hasArg(options::OPT_E))
+    if (!Args.hasArg(options::OPT_E) && !D.CCCIsCPP)
       D.Diag(clang::diag::err_drv_argument_only_allowed_with)
         << A->getAsString(Args) << "-E";
 }
@@ -2403,7 +2403,7 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
   OutputArgs.push_back("-o");
   OutputArgs.push_back(Output.getFilename());
 
-  if (Args.hasArg(options::OPT_E)) {
+  if (Args.hasArg(options::OPT_E) || getToolChain().getDriver().CCCIsCPP) {
     AddCPPOptionsArgs(Args, CmdArgs, Inputs, OutputArgs);
   } else {
     AddCPPOptionsArgs(Args, CmdArgs, Inputs, ArgStringList());

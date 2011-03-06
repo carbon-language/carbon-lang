@@ -102,6 +102,9 @@ public:
   /// Whether the driver should follow g++ like behavior.
   unsigned CCCIsCXX : 1;
 
+  /// Whether the driver is just the preprocessor
+  unsigned CCCIsCPP : 1;
+
   /// Echo commands while executing (in -v style).
   unsigned CCCEcho : 1;
 
@@ -221,7 +224,7 @@ public:
   /// \param TC - The default host tool chain.
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildActions(const ToolChain &TC, const ArgList &Args,
+  void BuildActions(const ToolChain &TC, const InputArgList &Args,
                     ActionList &Actions) const;
 
   /// BuildUniversalActions - Construct the list of actions to perform
@@ -230,7 +233,7 @@ public:
   /// \param TC - The default host tool chain.
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildUniversalActions(const ToolChain &TC, const ArgList &Args,
+  void BuildUniversalActions(const ToolChain &TC, const InputArgList &Args,
                              ActionList &Actions) const;
 
   /// BuildJobs - Bind actions to concrete tools and translate
