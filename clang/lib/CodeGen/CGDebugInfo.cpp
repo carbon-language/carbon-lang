@@ -1374,6 +1374,9 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     case Type::SubstTemplateTypeParm:
       T = cast<SubstTemplateTypeParmType>(T)->getReplacementType();
       break;
+    case Type::Auto:
+      T = cast<AutoType>(T)->getDeducedType();
+      break;
     }
     
     assert(T != LastT && "Type unwrapping failed to unwrap!");
