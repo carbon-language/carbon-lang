@@ -380,12 +380,14 @@ bool DeclSpec::SetStorageClassSpecThread(SourceLocation Loc,
 bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
                                 const char *&PrevSpec,
                                 unsigned &DiagID) {
-  if (TypeSpecWidth != TSW_unspecified &&
-      // Allow turning long -> long long.
-      (W != TSW_longlong || TypeSpecWidth != TSW_long))
+  // Overwrite TSWLoc only if TypeSpecWidth was unspecified, so that
+  // for 'long long' we will keep the source location of the first 'long'.
+  if (TypeSpecWidth == TSW_unspecified)
+    TSWLoc = Loc;
+  // Allow turning long -> long long.
+  else if (W != TSW_longlong || TypeSpecWidth != TSW_long)
     return BadSpecifier(W, (TSW)TypeSpecWidth, PrevSpec, DiagID);
   TypeSpecWidth = W;
-  TSWLoc = Loc;
   if (TypeAltiVecVector && !TypeAltiVecBool &&
       ((TypeSpecWidth == TSW_long) || (TypeSpecWidth == TSW_longlong))) {
     PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
