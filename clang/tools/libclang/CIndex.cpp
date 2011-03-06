@@ -4916,7 +4916,7 @@ CXType clang_getIBOutletCollectionType(CXCursor C) {
   IBOutletCollectionAttr *A =
     cast<IBOutletCollectionAttr>(cxcursor::getCursorAttr(C));
   
-  return cxtype::MakeCXType(A->getInterface(), cxcursor::getCursorTU(C));  
+  return cxtype::MakeCXType(A->getInterFace(), cxcursor::getCursorTU(C));  
 }
 } // end: extern "C"
 

@@ -266,7 +266,7 @@ def IBOutlet : InheritableAttr {
 
 def IBOutletCollection : InheritableAttr {
   let Spellings = ["iboutletcollection"];
-  let Args = [TypeArgument<"Interface">];
+  let Args = [TypeArgument<"InterFace">];
 }
 
 def Malloc : InheritableAttr {
