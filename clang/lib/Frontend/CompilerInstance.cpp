@@ -362,19 +362,22 @@ void CompilerInstance::clearOutputFiles(bool EraseFiles) {
          it = OutputFiles.begin(), ie = OutputFiles.end(); it != ie; ++it) {
     delete it->OS;
     if (!it->TempFilename.empty()) {
-      llvm::sys::Path TempPath(it->TempFilename);
-      if (EraseFiles)
-        TempPath.eraseFromDisk();
-      else {
-        std::string Error;
-        llvm::sys::Path NewOutFile(it->Filename);
+      if (EraseFiles) {
+        bool existed;
+        llvm::sys::fs::remove(it->TempFilename, existed);
+      } else {
+        llvm::SmallString<128> NewOutFile(it->Filename);
+
         // If '-working-directory' was passed, the output filename should be
         // relative to that.
         FileManager::FixupRelativePath(NewOutFile, getFileSystemOpts());
-        if (TempPath.renamePathOnDisk(NewOutFile, &Error)) {
+        if (llvm::error_code ec = llvm::sys::fs::rename(it->TempFilename,
+                                                        NewOutFile.str())) {
           getDiagnostics().Report(diag::err_fe_unable_to_rename_temp)
-            << it->TempFilename << it->Filename << Error;
-          TempPath.eraseFromDisk();
+            << it->TempFilename << it->Filename << ec.message();
+
+          bool existed;
+          llvm::sys::fs::remove(it->TempFilename, existed);
         }
       }
     } else if (!it->Filename.empty() && EraseFiles)

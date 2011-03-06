@@ -197,10 +197,9 @@ public:
   /// \brief If path is not absolute and FileSystemOptions set the working
   /// directory, the path is modified to be relative to the given
   /// working directory.
-  static void FixupRelativePath(llvm::sys::Path &path,
+  static void FixupRelativePath(llvm::SmallVectorImpl<char> &path,
                                 const FileSystemOptions &FSOpts);
 
-  
   /// \brief Produce an array mapping from the unique IDs assigned to each
   /// file to the corresponding FileEntry pointer.
   void GetUniqueIDMapping(
