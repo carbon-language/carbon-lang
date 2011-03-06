@@ -534,6 +534,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     AddPath("/usr/include/w32api", System, true, false, false);
     break;
   case llvm::Triple::MinGW32:
+    AddPath("/mingw/include", System, true, false, false);
     AddPath("c:/mingw/include", System, true, false, false);
     break;
   default:
@@ -582,6 +583,8 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
             false, false);
     AddPath("c:/MinGW/include/c++/4.5.2/backward", CXXSystem, true, false,
             false);
+    // Try gcc 4.5.2 (MSYS)
+    AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32", "4.5.2");
     // Try gcc 4.5.0
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
     // Try gcc 4.4.0
