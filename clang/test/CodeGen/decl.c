@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -w -emit-llvm < %s | FileCheck %s
 
-// CHECK: @test1.x = private constant [12 x i32] [i32 1
+// CHECK: @test1.x = internal constant [12 x i32] [i32 1
 // CHECK: @test2.x = internal constant [13 x i32] [i32 1,
 // CHECK: @test5w = global %0 { i32 2, [4 x i8] undef }
 // CHECK: @test5y = global %union.test5u { double 7.300000e+0{{[0]*}}1 }

@@ -642,7 +642,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
         // candidate nor a __block variable, emit it as a global instead.
         if (CGM.getCodeGenOpts().MergeAllConstants && Ty.isConstQualified() &&
             !NRVO && !isByRef) {
-          EmitStaticVarDecl(D, llvm::GlobalValue::PrivateLinkage);
+          EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
 
           emission.Address = 0; // signal this condition to later callbacks
           assert(emission.wasEmittedAsGlobal());
