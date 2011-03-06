@@ -43,3 +43,22 @@ S7<int[5]> s7_5;
 namespace ZeroLengthExplicitTemplateArgs {
   template void f<X>(X*);
 }
+
+// This used to overwrite memory and crash.
+namespace Test1 {
+  struct StringHasher {
+    template<typename T, char Converter(T)> static inline unsigned createHash(const T*, unsigned) {
+      return 0;
+    }
+  };
+
+  struct CaseFoldingHash {
+    static inline char foldCase(char) {
+      return 0;
+    }
+
+    static unsigned hash(const char* data, unsigned length) {
+      return StringHasher::createHash<char, foldCase>(data, length);
+    }
+  };
+}
