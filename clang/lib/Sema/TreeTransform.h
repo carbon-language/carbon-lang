@@ -6302,7 +6302,7 @@ TreeTransform<Derived>::TransformCXXUuidofExpr(CXXUuidofExpr *E) {
         TInfo == E->getTypeOperandSourceInfo())
       return SemaRef.Owned(E);
 
-    return getDerived().RebuildCXXTypeidExpr(E->getType(),
+    return getDerived().RebuildCXXUuidofExpr(E->getType(),
                                              E->getLocStart(),
                                              TInfo,
                                              E->getLocEnd());
