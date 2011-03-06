@@ -1814,6 +1814,30 @@ void ASTWriter::WritePragmaDiagnosticMappings(const Diagnostic &Diag) {
     Stream.EmitRecord(DIAG_PRAGMA_MAPPINGS, Record);
 }
 
+void ASTWriter::WriteCXXBaseSpecifiersOffsets() {
+  if (CXXBaseSpecifiersOffsets.empty())
+    return;
+
+  RecordData Record;
+
+  // Create a blob abbreviation for the C++ base specifiers offsets.
+  using namespace llvm;
+    
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(CXX_BASE_SPECIFIER_OFFSETS));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // size
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned BaseSpecifierOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+  
+  // Write the selector offsets table.
+  Record.clear();
+  Record.push_back(CXX_BASE_SPECIFIER_OFFSETS);
+  Record.push_back(CXXBaseSpecifiersOffsets.size());
+  Stream.EmitRecordWithBlob(BaseSpecifierOffsetAbbrev, Record,
+                            (const char *)CXXBaseSpecifiersOffsets.data(),
+                            CXXBaseSpecifiersOffsets.size() * sizeof(uint32_t));
+}
+
 //===----------------------------------------------------------------------===//
 // Type Serialization
 //===----------------------------------------------------------------------===//
@@ -2802,25 +2826,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteTypeDeclOffsets();
   WritePragmaDiagnosticMappings(Context.getDiagnostics());
 
-  // Write the C++ base-specifier set offsets.
-  if (!CXXBaseSpecifiersOffsets.empty()) {
-    // Create a blob abbreviation for the C++ base specifiers offsets.
-    using namespace llvm;
-    
-    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(CXX_BASE_SPECIFIER_OFFSETS));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // size
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-    unsigned BaseSpecifierOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
-    
-    // Write the selector offsets table.
-    Record.clear();
-    Record.push_back(CXX_BASE_SPECIFIER_OFFSETS);
-    Record.push_back(CXXBaseSpecifiersOffsets.size());
-    Stream.EmitRecordWithBlob(BaseSpecifierOffsetAbbrev, Record,
-                              (const char *)CXXBaseSpecifiersOffsets.data(),
-                            CXXBaseSpecifiersOffsets.size() * sizeof(uint32_t));
-  }
+  WriteCXXBaseSpecifiersOffsets();
   
   // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())
@@ -3044,6 +3050,8 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // FIXME: For chained PCH only write the new mappings (we currently
   // write all of them again).
   WritePragmaDiagnosticMappings(Context.getDiagnostics());
+
+  WriteCXXBaseSpecifiersOffsets();
 
   /// Build a record containing first declarations from a chained PCH and the
   /// most recent declarations in this AST that they point to.
