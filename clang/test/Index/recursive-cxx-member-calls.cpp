@@ -201,10 +201,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "{" [3:15 - 3:16] Namespace=std:3:11 (Definition)
 // CHECK-tokens: Keyword: "template" [4:3 - 4:11] ClassTemplate=pair:4:44 (Definition)
 // CHECK-tokens: Punctuation: "<" [4:12 - 4:13] ClassTemplate=pair:4:44 (Definition)
-// CHECK-tokens: Keyword: "class" [4:14 - 4:19] ClassTemplate=pair:4:44 (Definition)
+// CHECK-tokens: Keyword: "class" [4:14 - 4:19] TemplateTypeParameter=_T1:4:20 (Definition)
 // CHECK-tokens: Identifier: "_T1" [4:20 - 4:23] TemplateTypeParameter=_T1:4:20 (Definition)
 // CHECK-tokens: Punctuation: "," [4:23 - 4:24] ClassTemplate=pair:4:44 (Definition)
-// CHECK-tokens: Keyword: "class" [4:25 - 4:30] ClassTemplate=pair:4:44 (Definition)
+// CHECK-tokens: Keyword: "class" [4:25 - 4:30] TemplateTypeParameter=_T2:4:31 (Definition)
 // CHECK-tokens: Identifier: "_T2" [4:31 - 4:34] TemplateTypeParameter=_T2:4:31 (Definition)
 // CHECK-tokens: Punctuation: ">" [4:35 - 4:36] ClassTemplate=pair:4:44 (Definition)
 // CHECK-tokens: Keyword: "struct" [4:37 - 4:43] ClassTemplate=pair:4:44 (Definition)
@@ -802,10 +802,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "{" [82:16 - 82:17] Namespace=llvm:82:11 (Definition)
 // CHECK-tokens: Keyword: "template" [83:1 - 83:9] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Punctuation: "<" [83:10 - 83:11] ClassTemplate=StringSwitch:83:47 (Definition)
-// CHECK-tokens: Keyword: "typename" [83:12 - 83:20] ClassTemplate=StringSwitch:83:47 (Definition)
+// CHECK-tokens: Keyword: "typename" [83:12 - 83:20] TemplateTypeParameter=T:83:21 (Definition)
 // CHECK-tokens: Identifier: "T" [83:21 - 83:22] TemplateTypeParameter=T:83:21 (Definition)
 // CHECK-tokens: Punctuation: "," [83:22 - 83:23] ClassTemplate=StringSwitch:83:47 (Definition)
-// CHECK-tokens: Keyword: "typename" [83:24 - 83:32] ClassTemplate=StringSwitch:83:47 (Definition)
+// CHECK-tokens: Keyword: "typename" [83:24 - 83:32] TemplateTypeParameter=R:83:33 (Definition)
 // CHECK-tokens: Identifier: "R" [83:33 - 83:34] TemplateTypeParameter=R:83:33 (Definition)
 // CHECK-tokens: Punctuation: "=" [83:35 - 83:36] TemplateTypeParameter=R:83:33 (Definition)
 // CHECK-tokens: Identifier: "T" [83:37 - 83:38] TemplateTypeParameter=R:83:33 (Definition)
@@ -1524,13 +1524,13 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "}" [186:1 - 186:2] UnexposedStmt=
 
 // RUN: c-index-test -test-load-source all %s 2>&1 | FileCheck %s
-// CHECK: 1:27: TypedefDecl=__darwin_size_t:1:27 (Definition) Extent=[1:27 - 1:42]
-// CHECK: 2:25: TypedefDecl=size_t:2:25 (Definition) Extent=[2:25 - 2:31]
+// CHECK: 1:27: TypedefDecl=__darwin_size_t:1:27 (Definition) Extent=[1:1 - 1:42]
+// CHECK: 2:25: TypedefDecl=size_t:2:25 (Definition) Extent=[2:1 - 2:31]
 // CHECK: 2:9: TypeRef=__darwin_size_t:1:27 Extent=[2:9 - 2:24]
 // CHECK: 3:11: Namespace=std:3:11 (Definition) Extent=[3:11 - 5:2]
 // CHECK: 4:44: ClassTemplate=pair:4:44 (Definition) Extent=[4:3 - 4:64]
-// CHECK: 4:20: TemplateTypeParameter=_T1:4:20 (Definition) Extent=[4:20 - 4:23]
-// CHECK: 4:31: TemplateTypeParameter=_T2:4:31 (Definition) Extent=[4:31 - 4:34]
+// CHECK: 4:20: TemplateTypeParameter=_T1:4:20 (Definition) Extent=[4:14 - 4:23]
+// CHECK: 4:31: TemplateTypeParameter=_T2:4:31 (Definition) Extent=[4:25 - 4:34]
 // CHECK: 4:55: FieldDecl=second:4:55 (Definition) Extent=[4:55 - 4:61]
 // CHECK: 6:8: UnexposedDecl=:6:8 (Definition) Extent=[6:8 - 9:2]
 // CHECK: 7:7: FunctionDecl=memcmp:7:7 Extent=[7:7 - 7:49]
@@ -1626,7 +1626,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 37:11: Namespace=llvm:37:11 (Definition) Extent=[37:11 - 64:2]
 // CHECK: 38:7: ClassDecl=StringRef:38:7 (Definition) Extent=[38:1 - 63:2]
 // CHECK: 39:1: UnexposedDecl=:39:1 (Definition) Extent=[39:1 - 39:8]
-// CHECK: 40:23: TypedefDecl=iterator:40:23 (Definition) Extent=[40:23 - 40:31]
+// CHECK: 40:23: TypedefDecl=iterator:40:23 (Definition) Extent=[40:3 - 40:31]
 // CHECK: 41:23: VarDecl=npos:41:23 Extent=[41:16 - 41:40]
 // CHECK: 41:16: TypeRef=size_t:2:25 Extent=[41:16 - 41:22]
 // CHECK: 41:30: UnexposedExpr= Extent=[41:30 - 41:40]
@@ -1772,7 +1772,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 68:15: CXXMethod=getNameStart:68:15 (Definition) Extent=[68:15 - 71:4]
 // CHECK: 68:36: UnexposedStmt= Extent=[68:36 - 71:4]
 // CHECK: 69:5: UnexposedStmt= Extent=[69:5 - 69:65]
-// CHECK: 69:54: TypedefDecl=actualtype:69:54 (Definition) Extent=[69:54 - 69:64]
+// CHECK: 69:54: TypedefDecl=actualtype:69:54 (Definition) Extent=[69:5 - 69:64]
 // CHECK: 69:18: TemplateRef=pair:4:44 Extent=[69:18 - 69:22]
 // CHECK: 69:25: TypeRef=class clang::IdentifierInfo:66:7 Extent=[69:25 - 69:39]
 // CHECK: 70:5: UnexposedStmt= Extent=[70:5 - 70:47]
@@ -1784,7 +1784,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 72:12: CXXMethod=getLength:72:12 (Definition) Extent=[72:12 - 76:4]
 // CHECK: 72:30: UnexposedStmt= Extent=[72:30 - 76:4]
 // CHECK: 73:5: UnexposedStmt= Extent=[73:5 - 73:65]
-// CHECK: 73:54: TypedefDecl=actualtype:73:54 (Definition) Extent=[73:54 - 73:64]
+// CHECK: 73:54: TypedefDecl=actualtype:73:54 (Definition) Extent=[73:5 - 73:64]
 // CHECK: 73:18: TemplateRef=pair:4:44 Extent=[73:18 - 73:22]
 // CHECK: 73:25: TypeRef=class clang::IdentifierInfo:66:7 Extent=[73:25 - 73:39]
 // CHECK: 74:5: UnexposedStmt= Extent=[74:5 - 74:61]
@@ -1833,8 +1833,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 78:44: MemberRefExpr=getLength:72:12 Extent=[78:44 - 78:53]
 // CHECK: 82:11: Namespace=llvm:82:11 (Definition) Extent=[82:11 - 96:2]
 // CHECK: 83:47: ClassTemplate=StringSwitch:83:47 (Definition) Extent=[83:1 - 95:2]
-// CHECK: 83:21: TemplateTypeParameter=T:83:21 (Definition) Extent=[83:21 - 83:22]
-// CHECK: 83:33: TemplateTypeParameter=R:83:33 (Definition) Extent=[83:33 - 83:38]
+// CHECK: 83:21: TemplateTypeParameter=T:83:21 (Definition) Extent=[83:12 - 83:22]
+// CHECK: 83:33: TemplateTypeParameter=R:83:33 (Definition) Extent=[83:24 - 83:38]
 // CHECK: 84:13: FieldDecl=Str:84:13 (Definition) Extent=[84:13 - 84:16]
 // CHECK: 84:3: TypeRef=class llvm::StringRef:38:7 Extent=[84:3 - 84:12]
 // CHECK: 85:12: FieldDecl=Result:85:12 (Definition) Extent=[85:12 - 85:18]

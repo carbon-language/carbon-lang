@@ -415,17 +415,18 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
 
 TemplateTypeParmDecl *
 TemplateTypeParmDecl::Create(const ASTContext &C, DeclContext *DC,
-                             SourceLocation L, unsigned D, unsigned P,
-                             IdentifierInfo *Id, bool Typename,
-                             bool ParameterPack) {
+                             SourceLocation KeyLoc, SourceLocation NameLoc,
+                             unsigned D, unsigned P, IdentifierInfo *Id,
+                             bool Typename, bool ParameterPack) {
   QualType Type = C.getTemplateTypeParmType(D, P, ParameterPack, Id);
-  return new (C) TemplateTypeParmDecl(DC, L, Id, Typename, Type, ParameterPack);
+  return new (C) TemplateTypeParmDecl(DC, KeyLoc, NameLoc, Id, Typename,
+                                      Type, ParameterPack);
 }
 
 TemplateTypeParmDecl *
 TemplateTypeParmDecl::Create(const ASTContext &C, EmptyShell Empty) {
-  return new (C) TemplateTypeParmDecl(0, SourceLocation(), 0, false,
-                                      QualType(), false);
+  return new (C) TemplateTypeParmDecl(0, SourceLocation(), SourceLocation(),
+                                      0, false, QualType(), false);
 }
 
 SourceLocation TemplateTypeParmDecl::getDefaultArgumentLoc() const {
@@ -436,10 +437,10 @@ SourceLocation TemplateTypeParmDecl::getDefaultArgumentLoc() const {
 
 SourceRange TemplateTypeParmDecl::getSourceRange() const {
   if (hasDefaultArgument() && !defaultArgumentWasInherited())
-    return SourceRange(getLocation(),
+    return SourceRange(getLocStart(),
                        DefaultArgument->getTypeLoc().getEndLoc());
   else
-    return SourceRange(getLocation());
+    return TypeDecl::getSourceRange();
 }
 
 unsigned TemplateTypeParmDecl::getDepth() const {

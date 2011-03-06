@@ -3149,7 +3149,7 @@ QualType RewriteObjC::getProtocolType() {
     TypeSourceInfo *TInfo
       = Context->getTrivialTypeSourceInfo(Context->getObjCIdType());
     ProtocolTypeDecl = TypedefDecl::Create(*Context, TUDecl,
-                                           SourceLocation(),
+                                           SourceLocation(), SourceLocation(),
                                            &Context->Idents.get("Protocol"),
                                            TInfo);
   }

@@ -2032,8 +2032,10 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
   
   // Create the new typedef node.
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+  SourceLocation StartL = Importer.Import(D->getLocStart());
   TypedefDecl *ToTypedef = TypedefDecl::Create(Importer.getToContext(), DC,
-                                               Loc, Name.getAsIdentifierInfo(),
+                                               StartL, Loc,
+                                               Name.getAsIdentifierInfo(),
                                                TInfo);
   ToTypedef->setAccess(D->getAccess());
   ToTypedef->setLexicalDeclContext(LexicalDC);
@@ -3444,6 +3446,7 @@ Decl *ASTNodeImporter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
   // FIXME: Import default argument.
   return TemplateTypeParmDecl::Create(Importer.getToContext(),
                               Importer.getToContext().getTranslationUnitDecl(),
+                                      Importer.Import(D->getLocStart()),
                                       Importer.Import(D->getLocation()),
                                       D->getDepth(),
                                       D->getIndex(), 

@@ -67,11 +67,13 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
     TInfo = Context.getTrivialTypeSourceInfo(Context.Int128Ty);
     PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
                                           SourceLocation(),
+                                          SourceLocation(),
                                           &Context.Idents.get("__int128_t"),
                                           TInfo), TUScope);
 
     TInfo = Context.getTrivialTypeSourceInfo(Context.UnsignedInt128Ty);
     PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
+                                          SourceLocation(),
                                           SourceLocation(),
                                           &Context.Idents.get("__uint128_t"),
                                           TInfo), TUScope);
@@ -87,7 +89,8 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
     QualType SelT = Context.getPointerType(Context.ObjCBuiltinSelTy);
     TypeSourceInfo *SelInfo = Context.getTrivialTypeSourceInfo(SelT);
     TypedefDecl *SelTypedef
-      = TypedefDecl::Create(Context, CurContext, SourceLocation(),
+      = TypedefDecl::Create(Context, CurContext,
+                            SourceLocation(), SourceLocation(),
                             &Context.Idents.get("SEL"), SelInfo);
     PushOnScopeChains(SelTypedef, TUScope);
     Context.setObjCSelType(Context.getTypeDeclType(SelTypedef));
@@ -109,7 +112,8 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
     T = Context.getObjCObjectPointerType(T);
     TypeSourceInfo *IdInfo = Context.getTrivialTypeSourceInfo(T);
     TypedefDecl *IdTypedef
-      = TypedefDecl::Create(Context, CurContext, SourceLocation(),
+      = TypedefDecl::Create(Context, CurContext,
+                            SourceLocation(), SourceLocation(),
                             &Context.Idents.get("id"), IdInfo);
     PushOnScopeChains(IdTypedef, TUScope);
     Context.setObjCIdType(Context.getTypeDeclType(IdTypedef));
@@ -121,7 +125,8 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
     T = Context.getObjCObjectPointerType(T);
     TypeSourceInfo *ClassInfo = Context.getTrivialTypeSourceInfo(T);
     TypedefDecl *ClassTypedef
-      = TypedefDecl::Create(Context, CurContext, SourceLocation(),
+      = TypedefDecl::Create(Context, CurContext,
+                            SourceLocation(), SourceLocation(),
                             &Context.Idents.get("Class"), ClassInfo);
     PushOnScopeChains(ClassTypedef, TUScope);
     Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));

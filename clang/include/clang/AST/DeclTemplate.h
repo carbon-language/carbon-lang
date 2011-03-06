@@ -944,9 +944,10 @@ class TemplateTypeParmDecl : public TypeDecl {
   /// \brief The default template argument, if any.
   TypeSourceInfo *DefaultArgument;
 
-  TemplateTypeParmDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
+  TemplateTypeParmDecl(DeclContext *DC, SourceLocation KeyLoc,
+                       SourceLocation IdLoc, IdentifierInfo *Id,
                        bool Typename, QualType Type, bool ParameterPack)
-    : TypeDecl(TemplateTypeParm, DC, L, Id), Typename(Typename),
+    : TypeDecl(TemplateTypeParm, DC, IdLoc, Id, KeyLoc), Typename(Typename),
       InheritedDefault(false), ParameterPack(ParameterPack), DefaultArgument() {
     TypeForDecl = Type.getTypePtrOrNull();
   }
@@ -956,7 +957,9 @@ class TemplateTypeParmDecl : public TypeDecl {
 
 public:
   static TemplateTypeParmDecl *Create(const ASTContext &C, DeclContext *DC,
-                                      SourceLocation L, unsigned D, unsigned P,
+                                      SourceLocation KeyLoc,
+                                      SourceLocation NameLoc,
+                                      unsigned D, unsigned P,
                                       IdentifierInfo *Id, bool Typename,
                                       bool ParameterPack);
   static TemplateTypeParmDecl *Create(const ASTContext &C, EmptyShell Empty);

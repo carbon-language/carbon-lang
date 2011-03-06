@@ -1911,6 +1911,8 @@ class TypeDecl : public NamedDecl {
   /// ASTContext::getTypedefType, ASTContext::getTagDeclType, and
   /// ASTContext::getTemplateTypeParmType, and TemplateTypeParmDecl.
   mutable const Type *TypeForDecl;
+  /// LocStart - The start of the source range for this declaration.
+  SourceLocation LocStart;
   friend class ASTContext;
   friend class DeclContext;
   friend class TagDecl;
@@ -1918,14 +1920,23 @@ class TypeDecl : public NamedDecl {
   friend class TagType;
 
 protected:
-  TypeDecl(Kind DK, DeclContext *DC, SourceLocation L,
-           IdentifierInfo *Id)
-    : NamedDecl(DK, DC, L, Id), TypeForDecl(0) {}
+  TypeDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
+           SourceLocation StartL = SourceLocation())
+    : NamedDecl(DK, DC, L, Id), TypeForDecl(0), LocStart(StartL) {}
 
 public:
   // Low-level accessor
   const Type *getTypeForDecl() const { return TypeForDecl; }
   void setTypeForDecl(const Type *TD) { TypeForDecl = TD; }
+
+  SourceLocation getLocStart() const { return LocStart; }
+  void setLocStart(SourceLocation L) { LocStart = L; }
+  SourceRange getSourceRange() const {
+    if (LocStart.isValid())
+      return SourceRange(LocStart, getLocation());
+    else
+      return SourceRange(getLocation());
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -1938,9 +1949,9 @@ class TypedefDecl : public TypeDecl, public Redeclarable<TypedefDecl> {
   /// UnderlyingType - This is the type the typedef is set to.
   TypeSourceInfo *TInfo;
 
-  TypedefDecl(DeclContext *DC, SourceLocation L,
+  TypedefDecl(DeclContext *DC, SourceLocation StartLoc, SourceLocation IdLoc,
               IdentifierInfo *Id, TypeSourceInfo *TInfo)
-    : TypeDecl(Typedef, DC, L, Id), TInfo(TInfo) {}
+    : TypeDecl(Typedef, DC, IdLoc, Id, StartLoc), TInfo(TInfo) {}
 
 protected:
   typedef Redeclarable<TypedefDecl> redeclarable_base;
@@ -1956,8 +1967,8 @@ public:
   }
 
   static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
-                             SourceLocation L, IdentifierInfo *Id,
-                             TypeSourceInfo *TInfo);
+                             SourceLocation StartLoc, SourceLocation IdLoc,
+                             IdentifierInfo *Id, TypeSourceInfo *TInfo);
 
   TypeSourceInfo *getTypeSourceInfo() const {
     return TInfo;
@@ -1983,8 +1994,6 @@ public:
   static bool classof(const TypedefDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Typedef; }
 };
-
-class TypedefDecl;
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
 class TagDecl

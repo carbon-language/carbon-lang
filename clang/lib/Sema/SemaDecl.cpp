@@ -5867,6 +5867,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
 
   // Scope manipulation handled by caller.
   TypedefDecl *NewTD = TypedefDecl::Create(Context, CurContext,
+                                           D.getSourceRange().getBegin(),
                                            D.getIdentifierLoc(),
                                            D.getIdentifier(),
                                            TInfo);

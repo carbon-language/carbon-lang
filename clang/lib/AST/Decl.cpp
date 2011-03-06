@@ -2274,9 +2274,9 @@ SourceRange EnumConstantDecl::getSourceRange() const {
 }
 
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
-                                 SourceLocation L, IdentifierInfo *Id,
-                                 TypeSourceInfo *TInfo) {
-  return new (C) TypedefDecl(DC, L, Id, TInfo);
+                                 SourceLocation StartLoc, SourceLocation IdLoc,
+                                 IdentifierInfo *Id, TypeSourceInfo *TInfo) {
+  return new (C) TypedefDecl(DC, StartLoc, IdLoc, Id, TInfo);
 }
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,

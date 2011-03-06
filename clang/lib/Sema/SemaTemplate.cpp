@@ -525,8 +525,8 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
 
   TemplateTypeParmDecl *Param
     = TemplateTypeParmDecl::Create(Context, Context.getTranslationUnitDecl(),
-                                   Loc, Depth, Position, ParamName, Typename,
-                                   Ellipsis);
+                                   KeyLoc, Loc, Depth, Position, ParamName,
+                                   Typename, Ellipsis);
   Param->setAccess(AS_public);
   if (Invalid)
     Param->setInvalidDecl();

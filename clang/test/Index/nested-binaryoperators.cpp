@@ -161,7 +161,7 @@ int foo(uint c) {
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
-// CHECK: 1:22: TypedefDecl=uint:1:22 (Definition) Extent=[1:22 - 1:26]
+// CHECK: 1:22: TypedefDecl=uint:1:22 (Definition) Extent=[1:1 - 1:26]
 // CHECK: 2:5: FunctionDecl=foo:2:5 (Definition) Extent=[2:5 - 161:2]
 // CHECK: 2:14: ParmDecl=c:2:14 (Definition) Extent=[2:9 - 2:15]
 // CHECK: 2:9: TypeRef=uint:1:22 Extent=[2:9 - 2:13]

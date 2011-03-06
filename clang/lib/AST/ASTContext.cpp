@@ -107,7 +107,9 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*P))
       CanonParams.push_back(
                   TemplateTypeParmDecl::Create(*this, getTranslationUnitDecl(), 
-                                               SourceLocation(), TTP->getDepth(),
+                                               SourceLocation(),
+                                               SourceLocation(),
+                                               TTP->getDepth(),
                                                TTP->getIndex(), 0, false,
                                                TTP->isParameterPack()));
     else if (NonTypeTemplateParmDecl *NTTP

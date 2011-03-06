@@ -6,5 +6,5 @@
 A a;
 B b;
 
-// CHECK: a.h:3:13: TypedefDecl=A:3:13 (Definition) Extent=[3:13 - 3:14]
-// CHECK: b.h:1:15: TypedefDecl=B:1:15 (Definition) Extent=[1:15 - 1:16]
+// CHECK: a.h:3:13: TypedefDecl=A:3:13 (Definition) Extent=[3:1 - 3:14]
+// CHECK: b.h:1:15: TypedefDecl=B:1:15 (Definition) Extent=[1:1 - 1:16]
