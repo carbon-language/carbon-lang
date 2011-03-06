@@ -2383,7 +2383,7 @@ namespace {
       case NestedNameSpecifier::Identifier:
         assert(isa<DependentNameType>(ClsTy) && "Unexpected TypeLoc");
         {
-          DependentNameTypeLoc DNTLoc = *cast<DependentNameTypeLoc>(&ClsTL);
+          DependentNameTypeLoc DNTLoc = cast<DependentNameTypeLoc>(ClsTL);
           DNTLoc.setKeywordLoc(SourceLocation());
           DNTLoc.setQualifierLoc(NNSLoc.getPrefix());
           DNTLoc.setNameLoc(NNSLoc.getLocalBeginLoc());
