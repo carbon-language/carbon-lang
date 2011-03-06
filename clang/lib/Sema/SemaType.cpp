@@ -1855,8 +1855,11 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         }
 
         llvm::SmallVector<QualType, 4> Exceptions;
-        EPI.ExceptionSpecType = FTI.getExceptionSpecType();
-        if (FTI.getExceptionSpecType() == EST_Dynamic) {
+        if (FTI.getExceptionSpecType() == EST_Dynamic ||
+            FTI.getExceptionSpecType() == EST_DynamicAny) {
+          EPI.HasExceptionSpec = true;
+          EPI.HasAnyExceptionSpec =
+              FTI.getExceptionSpecType() == EST_DynamicAny;
           Exceptions.reserve(FTI.NumExceptions);
           for (unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
             // FIXME: Preserve type source info.
@@ -1868,8 +1871,6 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           }
           EPI.NumExceptions = Exceptions.size();
           EPI.Exceptions = Exceptions.data();
-        } else if (FTI.getExceptionSpecType() == EST_ComputedNoexcept) {
-          EPI.NoexceptExpr = FTI.NoexceptExpr;
         }
 
         T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(), EPI);
