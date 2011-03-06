@@ -2082,7 +2082,7 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
     }
     else {
       // If neither instruction stalls (!LStall && !RStall) then
-      // it's height is already covered so only its depth matters. We also reach
+      // its height is already covered so only its depth matters. We also reach
       // this if both stall but have the same height.
       unsigned LDepth = left->getDepth();
       unsigned RDepth = right->getDepth();
