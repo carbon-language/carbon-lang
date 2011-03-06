@@ -1913,7 +1913,7 @@ ASTContext::getFunctionType(QualType ResultTy,
     return QualType(FTP, 0);
 
   // Determine whether the type being created is already canonical or not.
-  bool isCanonical = !EPI.HasExceptionSpec && ResultTy.isCanonical();
+  bool isCanonical= EPI.ExceptionSpecType == EST_None && ResultTy.isCanonical();
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
     if (!ArgArray[i].isCanonicalAsParam())
       isCanonical = false;
@@ -1932,11 +1932,8 @@ ASTContext::getFunctionType(QualType ResultTy,
       CanonicalArgs.push_back(getCanonicalParamType(ArgArray[i]));
 
     FunctionProtoType::ExtProtoInfo CanonicalEPI = EPI;
-    if (CanonicalEPI.HasExceptionSpec) {
-      CanonicalEPI.HasExceptionSpec = false;
-      CanonicalEPI.HasAnyExceptionSpec = false;
-      CanonicalEPI.NumExceptions = 0;
-    }
+    CanonicalEPI.ExceptionSpecType = EST_None;
+    CanonicalEPI.NumExceptions = 0;
     CanonicalEPI.ExtInfo
       = CanonicalEPI.ExtInfo.withCallingConv(getCanonicalCallConv(CallConv));
 

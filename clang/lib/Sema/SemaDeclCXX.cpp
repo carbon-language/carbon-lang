@@ -4712,11 +4712,12 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   }
 
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.HasExceptionSpec = ExceptSpec.hasExceptionSpecification();
-  EPI.HasAnyExceptionSpec = ExceptSpec.hasAnyExceptionSpecification();
+  EPI.ExceptionSpecType = ExceptSpec.hasExceptionSpecification() ?
+    (ExceptSpec.hasAnyExceptionSpecification() ? EST_DynamicAny : EST_Dynamic) :
+    EST_None;
   EPI.NumExceptions = ExceptSpec.size();
   EPI.Exceptions = ExceptSpec.data();
-  
+
   // Create the actual constructor declaration.
   CanQualType ClassType
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
@@ -4989,8 +4990,9 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   
   // Create the actual destructor declaration.
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.HasExceptionSpec = ExceptSpec.hasExceptionSpecification();
-  EPI.HasAnyExceptionSpec = ExceptSpec.hasAnyExceptionSpecification();
+  EPI.ExceptionSpecType = ExceptSpec.hasExceptionSpecification() ?
+    (ExceptSpec.hasAnyExceptionSpecification() ? EST_DynamicAny : EST_Dynamic) :
+    EST_None;
   EPI.NumExceptions = ExceptSpec.size();
   EPI.Exceptions = ExceptSpec.data();
   QualType Ty = Context.getFunctionType(Context.VoidTy, 0, 0, EPI);
@@ -5387,8 +5389,9 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   //   An implicitly-declared copy assignment operator is an inline public
   //   member of its class.
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.HasExceptionSpec = ExceptSpec.hasExceptionSpecification();
-  EPI.HasAnyExceptionSpec = ExceptSpec.hasAnyExceptionSpecification();
+  EPI.ExceptionSpecType = ExceptSpec.hasExceptionSpecification() ?
+    (ExceptSpec.hasAnyExceptionSpecification() ? EST_DynamicAny : EST_Dynamic) :
+    EST_None;
   EPI.NumExceptions = ExceptSpec.size();
   EPI.Exceptions = ExceptSpec.data();
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
@@ -5849,8 +5852,9 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   //   An implicitly-declared copy constructor is an inline public
   //   member of its class.
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.HasExceptionSpec = ExceptSpec.hasExceptionSpecification();
-  EPI.HasAnyExceptionSpec = ExceptSpec.hasAnyExceptionSpecification();
+  EPI.ExceptionSpecType = ExceptSpec.hasExceptionSpecification() ?
+    (ExceptSpec.hasAnyExceptionSpecification() ? EST_DynamicAny : EST_Dynamic) :
+    EST_None;
   EPI.NumExceptions = ExceptSpec.size();
   EPI.Exceptions = ExceptSpec.data();
   DeclarationName Name
