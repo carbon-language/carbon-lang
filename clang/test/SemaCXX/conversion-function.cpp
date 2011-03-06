@@ -353,3 +353,28 @@ namespace PR8034 {
   };
   int x = C().operator int();
 }
+
+namespace PR9336 {
+  template<class T>
+  struct generic_list
+  {
+    template<class Container>
+    operator Container()
+    { 
+      Container ar;
+      T* i;
+      ar[0]=*i;
+      return ar;
+    }
+  };
+
+  template<class T>
+  struct array
+  {
+    T& operator[](int);
+    const T& operator[](int)const;
+  };
+
+  generic_list<generic_list<int> > l;
+  array<array<int> > a = l;
+}

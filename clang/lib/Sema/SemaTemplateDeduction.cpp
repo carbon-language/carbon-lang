@@ -2845,18 +2845,18 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   QualType P = Context.getCanonicalType(FromType);
   QualType A = Context.getCanonicalType(ToType);
 
-  // C++0x [temp.deduct.conv]p3:
+  // C++0x [temp.deduct.conv]p2:
   //   If P is a reference type, the type referred to by P is used for
   //   type deduction.
   if (const ReferenceType *PRef = P->getAs<ReferenceType>())
     P = PRef->getPointeeType();
 
-  // C++0x [temp.deduct.conv]p3:
-  //   If A is a reference type, the type referred to by A is used
+  // C++0x [temp.deduct.conv]p4:
+  //   [...] If A is a reference type, the type referred to by A is used
   //   for type deduction.
   if (const ReferenceType *ARef = A->getAs<ReferenceType>())
-    A = ARef->getPointeeType();
-  // C++ [temp.deduct.conv]p2:
+    A = ARef->getPointeeType().getUnqualifiedType();
+  // C++ [temp.deduct.conv]p3:
   //
   //   If A is not a reference type:
   else {
@@ -2877,9 +2877,10 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     else
       P = P.getUnqualifiedType();
 
-    // C++0x [temp.deduct.conv]p3:
+    // C++0x [temp.deduct.conv]p4:
     //   If A is a cv-qualified type, the top level cv-qualifiers of A's
-    //   type are ignored for type deduction.
+    //   type are ignored for type deduction. If A is a reference type, the type 
+    //   referred to by A is used for type deduction.
     A = A.getUnqualifiedType();
   }
 
