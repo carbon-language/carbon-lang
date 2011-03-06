@@ -1,5 +1,28 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
+namespace PR8965 {
+  template<typename T>
+  struct X {
+    typedef int type;
+
+    T field; // expected-note{{in instantiation of member class}}
+  };
+
+  template<typename T>
+  struct Y {
+    struct Inner;
+
+    typedef typename X<Inner>::type // expected-note{{in instantiation of template class}}
+      type; // expected-note{{not-yet-instantiated member is declared here}}
+
+    struct Inner {
+      typedef type field; // expected-error{{no member 'type' in 'PR8965::Y<int>'; it has not yet been instantiated}}
+    };
+  };
+
+  Y<int> y; // expected-note{{in instantiation of template class}}
+}
+
 template<typename T>
 class X {
 public:
