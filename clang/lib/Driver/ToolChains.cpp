@@ -114,7 +114,8 @@ llvm::StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
   switch (getTriple().getArch()) {
   default:
     return getArchName();
-
+  
+  case llvm::Triple::thumb:
   case llvm::Triple::arm: {
     if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
       if (const char *Arch = GetArmArchForMArch(A->getValue(Args)))
@@ -1401,7 +1402,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     Lib64 = "lib64";
 
   std::string GccTriple = "";
-  if (Arch == llvm::Triple::arm) {
+  if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb) {
     if (!llvm::sys::fs::exists("/usr/lib/gcc/arm-linux-gnueabi", Exists) &&
         Exists)
       GccTriple = "arm-linux-gnueabi";
@@ -1486,7 +1487,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     ExtraOpts.push_back("relro");
   }
 
-  if (Arch == llvm::Triple::arm)
+  if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
     ExtraOpts.push_back("-X");
 
   if (IsFedora(Distro) || Distro == UbuntuMaverick)
