@@ -75,10 +75,10 @@ static cl::opt<bool> DisableSchedRegPressure(
   "disable-sched-reg-pressure", cl::Hidden, cl::init(false),
   cl::desc("Disable regpressure priority in sched=list-ilp"));
 static cl::opt<bool> DisableSchedLiveUses(
-  "disable-sched-live-uses", cl::Hidden, cl::init(false),
+  "disable-sched-live-uses", cl::Hidden, cl::init(true),
   cl::desc("Disable live use priority in sched=list-ilp"));
 static cl::opt<bool> DisableSchedStalls(
-  "disable-sched-stalls", cl::Hidden, cl::init(false),
+  "disable-sched-stalls", cl::Hidden, cl::init(true),
   cl::desc("Disable no-stall priority in sched=list-ilp"));
 static cl::opt<bool> DisableSchedCriticalPath(
   "disable-sched-critical-path", cl::Hidden, cl::init(false),
