@@ -1,8 +1,9 @@
 // Test reading of PCH with changed location of original input files,
 // i.e. invoking header search.
-// XFAIL: cygwin,mingw,win32
+// REQUIRES: shell
 
 // Generate the original files:
+// RUN: rm -rf %t_orig %t_moved
 // RUN: mkdir -p %t_orig/sub %t_orig/sub2
 // RUN: echo 'struct orig_sub{char c; int i; };' > %t_orig/sub/orig_sub.h
 // RUN: echo 'void orig_sub2_1();' > %t_orig/sub2/orig_sub2_1.h
@@ -16,8 +17,7 @@
 
 // Generate the PCH:
 // RUN: cd %t_orig && %clang_cc1 -x c++ -emit-pch -o all.h.pch -Isub2 all.h
-// RUN: rm -rf %t_moved
-// RUN: mv %t_orig %t_moved
+// RUN: cp -pR %t_orig %t_moved
 
 // Check diagnostic with location in original source:
 // RUN: %clang_cc1 -include-pch all.h.pch -I%t_moved -I%t_moved/sub2 -Wpadded -emit-obj -o %t.o %s 2> %t.stderr
