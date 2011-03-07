@@ -649,7 +649,7 @@ error_code get_magic(const Twine &path, uint32_t len,
   ::CloseHandle(file);
   if (!read_success || (bytes_read != len)) {
     // Set result size to the number of bytes read if it's valid.
-    if (bytes_read >= 0 && bytes_read <= len)
+    if (bytes_read <= len)
       result.set_size(bytes_read);
     // ERROR_HANDLE_EOF is mapped to errc::value_too_large.
     return ec;
