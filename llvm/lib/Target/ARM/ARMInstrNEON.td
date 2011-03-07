@@ -3154,17 +3154,17 @@ multiclass N2VNSh_HSD<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6,
                       SDNode OpNode> {
   def v8i8 : N2VNSh<op24, op23, op11_8, op7, op6, op4, itin,
                     OpcodeStr, !strconcat(Dt, "16"),
-                    v8i8, v8i16, nsr16_imm, OpNode> {
+                    v8i8, v8i16, shr_imm8, OpNode> {
     let Inst{21-19} = 0b001; // imm6 = 001xxx
   }
   def v4i16 : N2VNSh<op24, op23, op11_8, op7, op6, op4, itin,
                      OpcodeStr, !strconcat(Dt, "32"),
-                     v4i16, v4i32, nsr32_imm, OpNode> {
+                     v4i16, v4i32, shr_imm16, OpNode> {
     let Inst{21-20} = 0b01;  // imm6 = 01xxxx
   }
   def v2i32 : N2VNSh<op24, op23, op11_8, op7, op6, op4, itin,
                      OpcodeStr, !strconcat(Dt, "64"),
-                     v2i32, v2i64, nsr64_imm, OpNode> {
+                     v2i32, v2i64, shr_imm32, OpNode> {
     let Inst{21} = 0b1;      // imm6 = 1xxxxx
   }
 }

@@ -221,20 +221,25 @@ def neg_zero : Operand<i32> {
   let PrintMethod = "printNegZeroOperand";
 }
 
-// Narrow Shift Right Immediate - A narrow shift right immediate is encoded
-// differently from other shift immediates. The imm6 field is encoded like so:
+// Shift Right Immediate - A shift right immediate is encoded differently from
+// other shift immediates. The imm6 field is encoded like so:
 //
-//   16-bit: imm6<5:3> = '001', 8 - <imm> is encded in imm6<2:0>
-//   32-bit: imm6<5:4> = '01',16 - <imm> is encded in imm6<3:0>
-//   64-bit: imm6<5> = '1', 32 - <imm> is encded in imm6<4:0>
-def nsr16_imm : Operand<i32> {
-  let EncoderMethod = "getNarrowShiftRight16Imm";
+//    Offset    Encoding
+//     8        imm6<5:3> = '001', 8 - <imm> is encoded in imm6<2:0>
+//     16       imm6<5:4> = '01', 16 - <imm> is encoded in imm6<3:0>
+//     32       imm6<5> = '1', 32 - <imm> is encoded in imm6<4:0>
+//     64       64 - <imm> is encoded in imm6<5:0>
+def shr_imm8  : Operand<i32> {
+  let EncoderMethod = "getShiftRight8Imm";
 }
-def nsr32_imm : Operand<i32> {
-  let EncoderMethod = "getNarrowShiftRight32Imm";
+def shr_imm16 : Operand<i32> {
+  let EncoderMethod = "getShiftRight16Imm";
 }
-def nsr64_imm : Operand<i32> {
-  let EncoderMethod = "getNarrowShiftRight64Imm";
+def shr_imm32 : Operand<i32> {
+  let EncoderMethod = "getShiftRight32Imm";
+}
+def shr_imm64 : Operand<i32> {
+  let EncoderMethod = "getShiftRight64Imm";
 }
 
 //===----------------------------------------------------------------------===//

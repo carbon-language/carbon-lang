@@ -278,12 +278,14 @@ public:
   unsigned getAddrMode6OffsetOpValue(const MCInst &MI, unsigned Op,
                                      SmallVectorImpl<MCFixup> &Fixups) const;
 
-  unsigned getNarrowShiftRight16Imm(const MCInst &MI, unsigned Op,
-                                    SmallVectorImpl<MCFixup> &Fixups) const;
-  unsigned getNarrowShiftRight32Imm(const MCInst &MI, unsigned Op,
-                                    SmallVectorImpl<MCFixup> &Fixups) const;
-  unsigned getNarrowShiftRight64Imm(const MCInst &MI, unsigned Op,
-                                    SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getShiftRight8Imm(const MCInst &MI, unsigned Op,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getShiftRight16Imm(const MCInst &MI, unsigned Op,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getShiftRight32Imm(const MCInst &MI, unsigned Op,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getShiftRight64Imm(const MCInst &MI, unsigned Op,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
 
   unsigned NEONThumb2DataIPostEncoder(const MCInst &MI,
                                       unsigned EncodedValue) const;
@@ -1209,21 +1211,27 @@ getAddrMode6OffsetOpValue(const MCInst &MI, unsigned Op,
 }
 
 unsigned ARMMCCodeEmitter::
-getNarrowShiftRight16Imm(const MCInst &MI, unsigned Op,
-                         SmallVectorImpl<MCFixup> &Fixups) const {
+getShiftRight8Imm(const MCInst &MI, unsigned Op,
+                  SmallVectorImpl<MCFixup> &Fixups) const {
   return 8 - MI.getOperand(Op).getImm();
 }
 
 unsigned ARMMCCodeEmitter::
-getNarrowShiftRight32Imm(const MCInst &MI, unsigned Op,
-                         SmallVectorImpl<MCFixup> &Fixups) const {
+getShiftRight16Imm(const MCInst &MI, unsigned Op,
+                   SmallVectorImpl<MCFixup> &Fixups) const {
   return 16 - MI.getOperand(Op).getImm();
 }
 
 unsigned ARMMCCodeEmitter::
-getNarrowShiftRight64Imm(const MCInst &MI, unsigned Op,
-                         SmallVectorImpl<MCFixup> &Fixups) const {
+getShiftRight32Imm(const MCInst &MI, unsigned Op,
+                   SmallVectorImpl<MCFixup> &Fixups) const {
   return 32 - MI.getOperand(Op).getImm();
+}
+
+unsigned ARMMCCodeEmitter::
+getShiftRight64Imm(const MCInst &MI, unsigned Op,
+                   SmallVectorImpl<MCFixup> &Fixups) const {
+  return 64 - MI.getOperand(Op).getImm();
 }
 
 void ARMMCCodeEmitter::
