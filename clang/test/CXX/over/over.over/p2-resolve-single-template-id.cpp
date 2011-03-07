@@ -22,6 +22,36 @@ namespace DontResolveTooEarly_WaitForOverloadResolution
 
 } // End namespace
 
+namespace DontAllowUnresolvedOverloadedExpressionInAnUnusedExpression
+{
+  void one() { }
+  template<class T> void oneT() { }
+
+  void two() { } //expected-note 2{{candidate}}
+  void two(int) { } //expected-note 2{{candidate}}
+  template<class T> void twoT() { } //expected-note 2{{candidate}}
+  template<class T> void twoT(T) { } //expected-note 2{{candidate}}
+
+  void check()
+  {
+    one; // expected-warning {{expression result unused}}
+    two; // expected-error{{address of overloaded function}}
+    oneT<int>; // expected-warning {{expression result unused}}
+    twoT<int>; // expected-error {{address of overloaded function}}
+  }
+
+  // check the template function case
+  template<class T> void check()
+  {
+    one; // expected-warning {{expression result unused}}
+    two; // expected-error{{address of overloaded function}}
+    oneT<int>; // expected-warning {{expression result unused}}
+    twoT<int>; // expected-error {{address of overloaded function}}
+ 
+  }
+
+}
+
   template<typename T>
     void twoT() { }
   template<typename T, typename U>
@@ -45,6 +75,7 @@ namespace DontResolveTooEarly_WaitForOverloadResolution
 
 int main()
 {
+  
   { static_cast<void>(one); }
   { (void)(one); }
   { static_cast<void>(oneT<int>); }
