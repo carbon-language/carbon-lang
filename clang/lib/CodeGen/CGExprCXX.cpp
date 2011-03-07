@@ -920,150 +920,153 @@ static void EnterNewDeleteCleanup(CodeGenFunction &CGF,
 }
 
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
-  QualType AllocType = E->getAllocatedType();
-  if (AllocType->isArrayType())
-    while (const ArrayType *AType = getContext().getAsArrayType(AllocType))
-      AllocType = AType->getElementType();
+  // The element type being allocated.
+  QualType allocType = getContext().getBaseElementType(E->getAllocatedType());
 
-  FunctionDecl *NewFD = E->getOperatorNew();
-  const FunctionProtoType *NewFTy = NewFD->getType()->getAs<FunctionProtoType>();
+  // 1. Build a call to the allocation function.
+  FunctionDecl *allocator = E->getOperatorNew();
+  const FunctionProtoType *allocatorType =
+    allocator->getType()->castAs<FunctionProtoType>();
 
-  CallArgList NewArgs;
+  CallArgList allocatorArgs;
 
   // The allocation size is the first argument.
-  QualType SizeTy = getContext().getSizeType();
+  QualType sizeType = getContext().getSizeType();
 
-  llvm::Value *NumElements = 0;
-  llvm::Value *AllocSizeWithoutCookie = 0;
-  llvm::Value *AllocSize = EmitCXXNewAllocSize(getContext(),
-                                               *this, E, NumElements,
-                                               AllocSizeWithoutCookie);
+  llvm::Value *numElements = 0;
+  llvm::Value *allocSizeWithoutCookie = 0;
+  llvm::Value *allocSize =
+    EmitCXXNewAllocSize(getContext(), *this, E, numElements,
+                        allocSizeWithoutCookie);
   
-  NewArgs.push_back(std::make_pair(RValue::get(AllocSize), SizeTy));
+  allocatorArgs.push_back(std::make_pair(RValue::get(allocSize), sizeType));
 
   // Emit the rest of the arguments.
   // FIXME: Ideally, this should just use EmitCallArgs.
-  CXXNewExpr::const_arg_iterator NewArg = E->placement_arg_begin();
+  CXXNewExpr::const_arg_iterator placementArg = E->placement_arg_begin();
 
   // First, use the types from the function type.
   // We start at 1 here because the first argument (the allocation size)
   // has already been emitted.
-  for (unsigned i = 1, e = NewFTy->getNumArgs(); i != e; ++i, ++NewArg) {
-    QualType ArgType = NewFTy->getArgType(i);
+  for (unsigned i = 1, e = allocatorType->getNumArgs(); i != e;
+       ++i, ++placementArg) {
+    QualType argType = allocatorType->getArgType(i);
 
-    assert(getContext().getCanonicalType(ArgType.getNonReferenceType()).
-           getTypePtr() ==
-           getContext().getCanonicalType(NewArg->getType()).getTypePtr() &&
+    assert(getContext().hasSameUnqualifiedType(argType.getNonReferenceType(),
+                                               placementArg->getType()) &&
            "type mismatch in call argument!");
 
-    NewArgs.push_back(std::make_pair(EmitCallArg(*NewArg, ArgType),
-                                     ArgType));
+    allocatorArgs.push_back(std::make_pair(EmitCallArg(*placementArg, argType),
+                                           argType));
 
   }
 
   // Either we've emitted all the call args, or we have a call to a
   // variadic function.
-  assert((NewArg == E->placement_arg_end() || NewFTy->isVariadic()) &&
-         "Extra arguments in non-variadic function!");
+  assert((placementArg == E->placement_arg_end() ||
+          allocatorType->isVariadic()) &&
+         "Extra arguments to non-variadic function!");
 
   // If we still have any arguments, emit them using the type of the argument.
-  for (CXXNewExpr::const_arg_iterator NewArgEnd = E->placement_arg_end();
-       NewArg != NewArgEnd; ++NewArg) {
-    QualType ArgType = NewArg->getType();
-    NewArgs.push_back(std::make_pair(EmitCallArg(*NewArg, ArgType),
-                                     ArgType));
+  for (CXXNewExpr::const_arg_iterator placementArgsEnd = E->placement_arg_end();
+       placementArg != placementArgsEnd; ++placementArg) {
+    QualType argType = placementArg->getType();
+    allocatorArgs.push_back(std::make_pair(EmitCallArg(*placementArg, argType),
+                                           argType));
   }
 
-  // Emit the call to new.
+  // Emit the allocation call.
   RValue RV =
-    EmitCall(CGM.getTypes().getFunctionInfo(NewArgs, NewFTy),
-             CGM.GetAddrOfFunction(NewFD), ReturnValueSlot(), NewArgs, NewFD);
+    EmitCall(CGM.getTypes().getFunctionInfo(allocatorArgs, allocatorType),
+             CGM.GetAddrOfFunction(allocator), ReturnValueSlot(),
+             allocatorArgs, allocator);
 
-  // If an allocation function is declared with an empty exception specification
-  // it returns null to indicate failure to allocate storage. [expr.new]p13.
-  // (We don't need to check for null when there's no new initializer and
-  // we're allocating a POD type).
-  bool NullCheckResult = NewFTy->hasEmptyExceptionSpec() &&
-    !(AllocType->isPODType() && !E->hasInitializer());
+  // Emit a null check on the allocation result if the allocation
+  // function is allowed to return null (because it has a non-throwing
+  // exception spec; for this part, we inline
+  // CXXNewExpr::shouldNullCheckAllocation()) and we have an
+  // interesting initializer.
+  bool nullCheck = allocatorType->hasNonThrowingExceptionSpec() &&
+    !(allocType->isPODType() && !E->hasInitializer());
 
-  llvm::BasicBlock *NullCheckSource = 0;
-  llvm::BasicBlock *NewNotNull = 0;
-  llvm::BasicBlock *NewEnd = 0;
+  llvm::BasicBlock *nullCheckBB = 0;
+  llvm::BasicBlock *contBB = 0;
 
-  llvm::Value *NewPtr = RV.getScalarVal();
-  unsigned AS = cast<llvm::PointerType>(NewPtr->getType())->getAddressSpace();
+  llvm::Value *allocation = RV.getScalarVal();
+  unsigned AS =
+    cast<llvm::PointerType>(allocation->getType())->getAddressSpace();
 
   // The null-check means that the initializer is conditionally
   // evaluated.
   ConditionalEvaluation conditional(*this);
 
-  if (NullCheckResult) {
-    NullCheckSource = Builder.GetInsertBlock();
-    NewNotNull = createBasicBlock("new.notnull");
-    NewEnd = createBasicBlock("new.end");
-
-    llvm::Value *IsNull = Builder.CreateIsNull(NewPtr, "new.isnull");
-    Builder.CreateCondBr(IsNull, NewEnd, NewNotNull);
-    EmitBlock(NewNotNull);
-
+  if (nullCheck) {
     conditional.begin(*this);
+
+    nullCheckBB = Builder.GetInsertBlock();
+    llvm::BasicBlock *notNullBB = createBasicBlock("new.notnull");
+    contBB = createBasicBlock("new.cont");
+
+    llvm::Value *isNull = Builder.CreateIsNull(allocation, "new.isnull");
+    Builder.CreateCondBr(isNull, contBB, notNullBB);
+    EmitBlock(notNullBB);
   }
   
-  assert((AllocSize == AllocSizeWithoutCookie) ==
+  assert((allocSize == allocSizeWithoutCookie) ==
          CalculateCookiePadding(*this, E).isZero());
-  if (AllocSize != AllocSizeWithoutCookie) {
+  if (allocSize != allocSizeWithoutCookie) {
     assert(E->isArray());
-    NewPtr = CGM.getCXXABI().InitializeArrayCookie(*this, NewPtr, NumElements,
-                                                   E, AllocType);
+    allocation = CGM.getCXXABI().InitializeArrayCookie(*this, allocation,
+                                                       numElements,
+                                                       E, allocType);
   }
 
   // If there's an operator delete, enter a cleanup to call it if an
   // exception is thrown.
-  EHScopeStack::stable_iterator CallOperatorDelete;
+  EHScopeStack::stable_iterator operatorDeleteCleanup;
   if (E->getOperatorDelete()) {
-    EnterNewDeleteCleanup(*this, E, NewPtr, AllocSize, NewArgs);
-    CallOperatorDelete = EHStack.stable_begin();
+    EnterNewDeleteCleanup(*this, E, allocation, allocSize, allocatorArgs);
+    operatorDeleteCleanup = EHStack.stable_begin();
   }
 
-  const llvm::Type *ElementPtrTy
-    = ConvertTypeForMem(AllocType)->getPointerTo(AS);
-  NewPtr = Builder.CreateBitCast(NewPtr, ElementPtrTy);
+  const llvm::Type *elementPtrTy
+    = ConvertTypeForMem(allocType)->getPointerTo(AS);
+  llvm::Value *result = Builder.CreateBitCast(allocation, elementPtrTy);
 
   if (E->isArray()) {
-    EmitNewInitializer(*this, E, NewPtr, NumElements, AllocSizeWithoutCookie);
+    EmitNewInitializer(*this, E, result, numElements, allocSizeWithoutCookie);
 
     // NewPtr is a pointer to the base element type.  If we're
     // allocating an array of arrays, we'll need to cast back to the
     // array pointer type.
-    const llvm::Type *ResultTy = ConvertTypeForMem(E->getType());
-    if (NewPtr->getType() != ResultTy)
-      NewPtr = Builder.CreateBitCast(NewPtr, ResultTy);
+    const llvm::Type *resultType = ConvertTypeForMem(E->getType());
+    if (result->getType() != resultType)
+      result = Builder.CreateBitCast(result, resultType);
   } else {
-    EmitNewInitializer(*this, E, NewPtr, NumElements, AllocSizeWithoutCookie);
+    EmitNewInitializer(*this, E, result, numElements, allocSizeWithoutCookie);
   }
 
   // Deactivate the 'operator delete' cleanup if we finished
   // initialization.
-  if (CallOperatorDelete.isValid())
-    DeactivateCleanupBlock(CallOperatorDelete);
+  if (operatorDeleteCleanup.isValid())
+    DeactivateCleanupBlock(operatorDeleteCleanup);
   
-  if (NullCheckResult) {
+  if (nullCheck) {
     conditional.end(*this);
 
-    Builder.CreateBr(NewEnd);
-    llvm::BasicBlock *NotNullSource = Builder.GetInsertBlock();
-    EmitBlock(NewEnd);
+    llvm::BasicBlock *notNullBB = Builder.GetInsertBlock();
+    EmitBlock(contBB);
 
-    llvm::PHINode *PHI = Builder.CreatePHI(NewPtr->getType());
+    llvm::PHINode *PHI = Builder.CreatePHI(result->getType());
     PHI->reserveOperandSpace(2);
-    PHI->addIncoming(NewPtr, NotNullSource);
-    PHI->addIncoming(llvm::Constant::getNullValue(NewPtr->getType()),
-                     NullCheckSource);
+    PHI->addIncoming(result, notNullBB);
+    PHI->addIncoming(llvm::Constant::getNullValue(result->getType()),
+                     nullCheckBB);
 
-    NewPtr = PHI;
+    result = PHI;
   }
   
-  return NewPtr;
+  return result;
 }
 
 void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,

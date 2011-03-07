@@ -1080,6 +1080,17 @@ public:
   TypeSourceInfo *getAllocatedTypeSourceInfo() const {
     return AllocatedTypeInfo;
   }
+
+  /// \brief True if the allocation result needs to be null-checked.
+  /// C++0x [expr.new]p13:
+  ///   If the allocation function returns null, initialization shall
+  ///   not be done, the deallocation function shall not be called,
+  ///   and the value of the new-expression shall be null.
+  /// An allocation function is not allowed to return null unless it
+  /// has a non-throwing exception-specification.  The '03 rule is
+  /// identical except that the definition of a non-throwing
+  /// exception specification is just "is it throw()?".
+  bool shouldNullCheckAllocation() const;
   
   FunctionDecl *getOperatorNew() const { return OperatorNew; }
   void setOperatorNew(FunctionDecl *D) { OperatorNew = D; }

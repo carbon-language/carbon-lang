@@ -2484,6 +2484,13 @@ public:
       getNumExceptions() == 0;
   }
 
+  /// \brief Returns true if this function type has a non-throwing
+  /// exception-specification.
+  bool hasNonThrowingExceptionSpec() const {
+    // FIXME: this needs to be updated for C++0x.
+    return hasEmptyExceptionSpec();
+  }
+
   using FunctionType::isVariadic;
   
   /// \brief Determines whether this function prototype contains a

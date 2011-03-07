@@ -318,8 +318,75 @@ namespace test7 {
     ~B();
   };
 
-  // Just make sure the result passes verification.
   B *test() {
+    // CHECK: define [[B:%.*]]* @_ZN5test74testEv()
+    // CHECK:      [[OUTER_NEW:%.*]] = alloca i1
+    // CHECK-NEXT: alloca [[A:%.*]],
+    // CHECK-NEXT: alloca i8*
+    // CHECK-NEXT: alloca i32
+    // CHECK-NEXT: [[OUTER_A:%.*]] = alloca i1
+    // CHECK-NEXT: alloca i8*
+    // CHECK-NEXT: [[INNER_NEW:%.*]] = alloca i1
+    // CHECK-NEXT: alloca [[A]]
+    // CHECK-NEXT: [[INNER_A:%.*]] = alloca i1
+
+    // These entry-block stores are to deactivate the delete cleanups.
+    // CHECK-NEXT: store i1 false, i1* [[INNER_NEW]]
+    // CHECK-NEXT: store i1 false, i1* [[OUTER_NEW]]
+
+    // Allocate the outer object.
+    // CHECK-NEXT: [[NEW:%.*]] = call i8* @_ZN5test71BnwEm(
+    // CHECK-NEXT: icmp eq i8* [[NEW]], null
+
+    // These stores, emitted before the outermost conditional branch,
+    // deactivate the temporary cleanups.
+    // CHECK-NEXT: store i1 false, i1* [[OUTER_A]]
+    // CHECK-NEXT: store i1 false, i1* [[INNER_A]]
+    // CHECK-NEXT: br i1
+
+    // We passed the first null check; activate that cleanup and continue.
+    // CHECK:      store i1 true, i1* [[OUTER_NEW]]
+    // CHECK-NEXT: bitcast
+
+    // Create the first A temporary and activate that cleanup.
+    // CHECK-NEXT: invoke void @_ZN5test71AC1Ev(
+    // CHECK:      store i1 true, i1* [[OUTER_A]]
+
+    // Allocate the inner object.
+    // CHECK-NEXT: [[NEW:%.*]] = call i8* @_ZN5test71BnwEm(
+    // CHECK-NEXT: icmp eq i8* [[NEW]], null
+    // CHECK-NEXT: br i1
+
+    // We passed the second null check; save that pointer, activate
+    // that cleanup, and continue.
+    // CHECK:      store i8* [[NEW]]
+    // CHECK-NEXT: store i1 true, i1* [[INNER_NEW]]
+    // CHECK-NEXT: bitcast
+
+    // Build the second A temporary and activate that cleanup.
+    // CHECK-NEXT: invoke void @_ZN5test71AC1Ev(
+    // CHECK:      store i1 true, i1* [[INNER_A]]
+
+    // Build the inner B object and deactivate the inner delete cleanup.
+    // CHECK-NEXT: invoke void @_ZN5test71BC1ERKNS_1AEPS0_(
+    // CHECK:      store i1 false, i1* [[INNER_NEW]]
+    // CHECK:      phi
+
+    // Build the outer B object and deactivate the outer delete cleanup.
+    // CHECK-NEXT: invoke void @_ZN5test71BC1ERKNS_1AEPS0_(
+    // CHECK:      store i1 false, i1* [[OUTER_NEW]]
+    // CHECK:      phi
+
+    // Destroy the inner A object.
+    // CHECK-NEXT: load i1* [[INNER_A]]
+    // CHECK-NEXT: br i1
+    // CHECK:      invoke void @_ZN5test71AD1Ev(
+
+    // Destroy the outer A object.
+    // CHECK:      load i1* [[OUTER_A]]
+    // CHECK-NEXT: br i1
+    // CHECK:      invoke void @_ZN5test71AD1Ev(
+
     return new B(A(), new B(A(), 0));
   }
 }
