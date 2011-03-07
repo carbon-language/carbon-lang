@@ -111,7 +111,7 @@ def err_expected_semi_declaration : Error<
   "expected ';' at end of declaration">;
 def err_expected_semi_decl_list : Error<
   "expected ';' at end of declaration list">;
-def ext_expected_semi_decl_list : Extension<
+def ext_expected_semi_decl_list : ExtWarn<
   "expected ';' at end of declaration list">;
 def err_expected_member_name_or_semi : Error<
   "expected member name or ';' after declaration specifiers">;
