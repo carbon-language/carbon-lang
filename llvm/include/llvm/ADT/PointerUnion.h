@@ -19,29 +19,6 @@
 
 namespace llvm {
 
-  /// \brief Statically get an integer for a type. For:
-  /// @code
-  /// PointerUnionTypeNum<PT1, PT2>::template NumFor<T>::Result
-  /// @endcode
-  /// Result will be 0 if T is PT1, 1 if it is PT2, and -1 otherwise.
-  template <typename PT1, typename PT2>
-  struct PointerUnionTypeNum {
-  private:
-    struct IsNeither { char x; };
-    struct IsPT1 { char x[2]; };
-    struct IsPT2 { char x[3]; };
-
-    static IsPT1 determine(PT1 *P);
-    static IsPT2 determine(PT2 *P);
-    static IsNeither determine(...);
-
-  public:
-    template <typename T>
-    struct NumFor {
-      static const int Result = (int)sizeof(determine((T*)0)) - 2;
-    };
-  };
-
   template <typename T>
   struct PointerUnionTypeSelectorReturn {
     typedef T Return;
@@ -105,6 +82,16 @@ namespace llvm {
                            PointerUnionUIntTraits<PT1,PT2> > ValTy;
   private:
     ValTy Val;
+
+    struct IsPT1 {
+      static const int Num = 0;
+    };
+    struct IsPT2 {
+      static const int Num = 1;
+    };
+    template <typename T>
+    struct UNION_DOESNT_CONTAIN_TYPE { };
+
   public:
     PointerUnion() {}
     
@@ -127,10 +114,11 @@ namespace llvm {
     /// is<T>() return true if the Union currently holds the type matching T.
     template<typename T>
     int is() const {
-      static const int TyNo =
-              ::llvm::PointerUnionTypeNum<PT1, PT2>::template NumFor<T>::Result;
-      char TYPE_IS_NOT_IN_UNION[TyNo*2+1]; // statically check the type.
-      (void)TYPE_IS_NOT_IN_UNION;
+      typedef typename
+        ::llvm::PointerUnionTypeSelector<PT1, T, IsPT1,
+          ::llvm::PointerUnionTypeSelector<PT2, T, IsPT2,
+                                    UNION_DOESNT_CONTAIN_TYPE<T> > >::Return Ty;
+      int TyNo = Ty::Num;
       return static_cast<int>(Val.getInt()) == TyNo;
     }
     
