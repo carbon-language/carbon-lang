@@ -72,7 +72,8 @@ public:
       P->first.~KeyT();
     }
 #ifndef NDEBUG
-    memset(Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
+    if (NumBuckets)
+      memset(Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
 #endif
     operator delete(Buckets);
   }
