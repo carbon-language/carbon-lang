@@ -215,3 +215,47 @@ namespace PR8489 {
     c.F(); // expected-error{{no matching member function}}
   }
 }
+
+namespace rdar8986308 {
+  template <bool> struct __static_assert_test;
+  template <> struct __static_assert_test<true> {};
+  template <unsigned> struct __static_assert_check {};
+
+  namespace std {
+
+    template <class _Tp, class _Up>
+    struct __has_rebind
+    {
+    private:
+      struct __two {char _; char __;};
+      template <class _Xp> static __two __test(...);
+      template <class _Xp> static char __test(typename _Xp::template rebind<_Up>* = 0);
+    public:
+      static const bool value = sizeof(__test<_Tp>(0)) == 1;
+    };
+
+  }
+
+  template <class T> struct B1 {};
+
+  template <class T>
+  struct B
+  {
+    template <class U> struct rebind {typedef B1<U> other;};
+  };
+
+  template <class T, class U> struct D1 {};
+
+  template <class T, class U>
+  struct D
+  {
+    template <class V> struct rebind {typedef D1<V, U> other;};
+  };
+
+  int main()
+  {
+    typedef __static_assert_check<sizeof(__static_assert_test<((std::__has_rebind<B<int>, double>::value))>)> __t64;
+    typedef __static_assert_check<sizeof(__static_assert_test<((std::__has_rebind<D<char, int>, double>::value))>)> __t64;
+  }
+
+}

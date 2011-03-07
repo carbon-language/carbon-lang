@@ -4513,19 +4513,32 @@ TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
     
     // Copy information relevant to the template specialization.
     TemplateSpecializationTypeLoc NamedTL
-    = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
+      = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
     NamedTL.setLAngleLoc(TL.getLAngleLoc());
     NamedTL.setRAngleLoc(TL.getRAngleLoc());
-    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
-      NamedTL.setArgLocInfo(I, TL.getArgLocInfo(I));
+    for (unsigned I = 0, E = NamedTL.getNumArgs(); I != E; ++I)
+      NamedTL.setArgLocInfo(I, NewTemplateArgs[I].getLocInfo());
     
     // Copy information relevant to the elaborated type.
     ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
     NewTL.setKeywordLoc(TL.getKeywordLoc());
     NewTL.setQualifierLoc(QualifierLoc);
+  } else if (isa<DependentTemplateSpecializationType>(Result)) {
+    DependentTemplateSpecializationTypeLoc SpecTL
+      = TLB.push<DependentTemplateSpecializationTypeLoc>(Result);
+    SpecTL.setQualifierLoc(QualifierLoc);
+    SpecTL.setLAngleLoc(TL.getLAngleLoc());
+    SpecTL.setRAngleLoc(TL.getRAngleLoc());
+    SpecTL.setNameLoc(TL.getNameLoc());
+    for (unsigned I = 0, E = SpecTL.getNumArgs(); I != E; ++I)
+      SpecTL.setArgLocInfo(I, NewTemplateArgs[I].getLocInfo());
   } else {
-    TypeLoc NewTL(Result, TL.getOpaqueData());
-    TLB.pushFullCopy(NewTL);
+    TemplateSpecializationTypeLoc SpecTL
+      = TLB.push<TemplateSpecializationTypeLoc>(Result);
+    SpecTL.setLAngleLoc(TL.getLAngleLoc());
+    SpecTL.setRAngleLoc(TL.getRAngleLoc());
+    for (unsigned I = 0, E = SpecTL.getNumArgs(); I != E; ++I)
+      SpecTL.setArgLocInfo(I, NewTemplateArgs[I].getLocInfo());
   }
   return Result;
 }
