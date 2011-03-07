@@ -475,3 +475,22 @@ entry:
   %cmp = icmp ult <2 x i32> %tmp11, <i32 4, i32 4>
   ret <2 x i1> %cmp  
 }
+
+; PR9343 #7
+; CHECK: @test50
+; CHECK: ret i1 true
+define i1 @test50(i16 %X, i32 %Y) {
+  %A = zext i16 %X to i32
+  %B = srem i32 %A, %Y
+  %C = icmp sgt i32 %B, -1
+  ret i1 %C
+}
+
+; CHECK: @test51
+; CHECK: ret i1 %C
+define i1 @test51(i16 %X, i32 %Y) {
+  %A = sext i16 %X to i32
+  %B = srem i32 %A, %Y
+  %C = icmp sgt i32 %B, -1
+  ret i1 %C
+}
