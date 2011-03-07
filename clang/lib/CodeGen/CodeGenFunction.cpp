@@ -33,7 +33,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     Target(CGM.getContext().Target), Builder(cgm.getModule().getContext()),
     BlockInfo(0), BlockPointer(0),
     NormalCleanupDest(0), EHCleanupDest(0), NextCleanupDestIndex(1),
-    ExceptionSlot(0), DebugInfo(0), IndirectBranch(0),
+    ExceptionSlot(0), DebugInfo(0), DisableDebugInfo(false), IndirectBranch(0),
     SwitchInsn(0), CaseRangeBlock(0),
     DidCallStackSave(false), UnreachableBlock(0),
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
@@ -336,8 +336,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
   const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
   
   // Check if we should generate debug info for this function.
-  if (CGM.getDebugInfo() && !FD->hasAttr<NoDebugAttr>())
-    DebugInfo = CGM.getDebugInfo();
+  if (CGM.getModuleDebugInfo() && !FD->hasAttr<NoDebugAttr>())
+    DebugInfo = CGM.getModuleDebugInfo();
 
   FunctionArgList Args;
   QualType ResTy = FD->getResultType();

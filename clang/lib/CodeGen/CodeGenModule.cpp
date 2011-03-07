@@ -64,7 +64,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     ABI(createCXXABI(*this)), 
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI),
     TBAA(0),
-    VTables(*this), Runtime(0), DisableDebugInfo(false),
+    VTables(*this), Runtime(0),
     CFConstantStringClassRef(0), ConstantStringClassRef(0),
     VMContext(M.getContext()),
     NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
@@ -1281,7 +1281,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     EmitCXXGlobalVarDeclInitFunc(D, GV);
 
   // Emit global variable debug information.
-  if (CGDebugInfo *DI = getDebugInfo()) {
+  if (CGDebugInfo *DI = getModuleDebugInfo()) {
     DI->setLocation(D->getLocation());
     DI->EmitGlobalVariable(GV, D);
   }

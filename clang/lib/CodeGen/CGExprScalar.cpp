@@ -2568,11 +2568,11 @@ Value *CodeGenFunction::EmitScalarExpr(const Expr *E, bool IgnoreResultAssign) {
          "Invalid scalar expression to emit");
 
   if (isa<CXXDefaultArgExpr>(E))
-    CGM.disableDebugInfo();
+    disableDebugInfo();
   Value *V = ScalarExprEmitter(*this, IgnoreResultAssign)
     .Visit(const_cast<Expr*>(E));
   if (isa<CXXDefaultArgExpr>(E))
-    CGM.enableDebugInfo();
+    enableDebugInfo();
   return V;
 }
 

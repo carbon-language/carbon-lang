@@ -873,7 +873,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
                                        const DeclMapTy &ldm) {
   const BlockDecl *blockDecl = blockInfo.getBlockDecl();
 
-  DebugInfo = CGM.getDebugInfo();
+  DebugInfo = getDebugInfo();
   BlockInfo = &blockInfo;
 
   // Arrange for local static and local extern declarations to appear

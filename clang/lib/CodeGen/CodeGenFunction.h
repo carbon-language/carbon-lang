@@ -944,6 +944,7 @@ public:
                                       const VarDecl *V);
 private:
   CGDebugInfo *DebugInfo;
+  bool DisableDebugInfo;
 
   /// IndirectBranch - The first time an indirect goto is seen we create a block
   /// with an indirect branch.  Every time we see the address of a label taken,
@@ -1030,7 +1031,14 @@ public:
 
   CodeGenTypes &getTypes() const { return CGM.getTypes(); }
   ASTContext &getContext() const;
-  CGDebugInfo *getDebugInfo() { return DebugInfo; }
+  CGDebugInfo *getDebugInfo() { 
+    if (DisableDebugInfo) 
+      return NULL;
+    return DebugInfo; 
+  }
+  void disableDebugInfo() { DisableDebugInfo = true; }
+  void enableDebugInfo() { DisableDebugInfo = false; }
+
 
   const LangOptions &getLangOptions() const { return CGM.getLangOptions(); }
 
