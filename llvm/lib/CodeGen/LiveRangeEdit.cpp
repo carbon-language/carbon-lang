@@ -75,9 +75,10 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
     if (MO.isDef())
       return false;
     // We cannot depend on virtual registers in uselessRegs_.
-    for (unsigned ui = 0, ue = uselessRegs_.size(); ui != ue; ++ui)
-      if (uselessRegs_[ui]->reg == MO.getReg())
-        return false;
+    if (uselessRegs_)
+      for (unsigned ui = 0, ue = uselessRegs_->size(); ui != ue; ++ui)
+        if ((*uselessRegs_)[ui]->reg == MO.getReg())
+          return false;
 
     LiveInterval &li = lis.getInterval(MO.getReg());
     const VNInfo *OVNI = li.getVNInfoAt(OrigIdx);

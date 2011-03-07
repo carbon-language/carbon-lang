@@ -601,8 +601,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   SmallVector<IndexPair, 8> InterferenceRanges;
   mapGlobalInterference(PhysReg, InterferenceRanges);
 
-  SmallVector<LiveInterval*, 4> SpillRegs;
-  LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
+  LiveRangeEdit LREdit(VirtReg, NewVRegs);
   SE->reset(LREdit);
 
   // Create the main cross-block interval.
@@ -1130,8 +1129,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                << '-' << Uses[BestAfter] << ", " << BestDiff
                << ", " << (BestAfter - BestBefore + 1) << " instrs\n");
 
-  SmallVector<LiveInterval*, 4> SpillRegs;
-  LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
+  LiveRangeEdit LREdit(VirtReg, NewVRegs);
   SE->reset(LREdit);
 
   SE->openIntv();
@@ -1183,8 +1181,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   if (Stage < RS_Block) {
     SplitAnalysis::BlockPtrSet Blocks;
     if (SA->getMultiUseBlocks(Blocks)) {
-      SmallVector<LiveInterval*, 4> SpillRegs;
-      LiveRangeEdit LREdit(VirtReg, NewVRegs, SpillRegs);
+      LiveRangeEdit LREdit(VirtReg, NewVRegs);
       SE->reset(LREdit);
       SE->splitSingleBlocks(Blocks);
       setStage(NewVRegs.begin(), NewVRegs.end(), RS_Block);

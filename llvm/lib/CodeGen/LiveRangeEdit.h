@@ -31,7 +31,7 @@ class VirtRegMap;
 class LiveRangeEdit {
   LiveInterval &parent_;
   SmallVectorImpl<LiveInterval*> &newRegs_;
-  const SmallVectorImpl<LiveInterval*> &uselessRegs_;
+  const SmallVectorImpl<LiveInterval*> *uselessRegs_;
 
   /// firstNew_ - Index of the first register added to newRegs_.
   const unsigned firstNew_;
@@ -66,7 +66,7 @@ public:
   ///        rematerializing values because they are about to be removed.
   LiveRangeEdit(LiveInterval &parent,
                 SmallVectorImpl<LiveInterval*> &newRegs,
-                const SmallVectorImpl<LiveInterval*> &uselessRegs)
+                const SmallVectorImpl<LiveInterval*> *uselessRegs = 0)
     : parent_(parent), newRegs_(newRegs), uselessRegs_(uselessRegs),
       firstNew_(newRegs.size()), scannedRemattable_(false) {}
 
@@ -87,7 +87,7 @@ public:
 
   /// anyRematerializable - Return true if any parent values may be
   /// rematerializable.
-  /// This function must be called before ny rematerialization is attempted.
+  /// This function must be called before any rematerialization is attempted.
   bool anyRematerializable(LiveIntervals&, const TargetInstrInfo&,
                            AliasAnalysis*);
 
