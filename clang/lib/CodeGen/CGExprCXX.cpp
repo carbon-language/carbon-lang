@@ -993,6 +993,10 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   llvm::Value *NewPtr = RV.getScalarVal();
   unsigned AS = cast<llvm::PointerType>(NewPtr->getType())->getAddressSpace();
 
+  // The null-check means that the initializer is conditionally
+  // evaluated.
+  ConditionalEvaluation conditional(*this);
+
   if (NullCheckResult) {
     NullCheckSource = Builder.GetInsertBlock();
     NewNotNull = createBasicBlock("new.notnull");
@@ -1001,6 +1005,8 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     llvm::Value *IsNull = Builder.CreateIsNull(NewPtr, "new.isnull");
     Builder.CreateCondBr(IsNull, NewEnd, NewNotNull);
     EmitBlock(NewNotNull);
+
+    conditional.begin(*this);
   }
   
   assert((AllocSize == AllocSizeWithoutCookie) ==
@@ -1042,6 +1048,8 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     DeactivateCleanupBlock(CallOperatorDelete);
   
   if (NullCheckResult) {
+    conditional.end(*this);
+
     Builder.CreateBr(NewEnd);
     llvm::BasicBlock *NotNullSource = Builder.GetInsertBlock();
     EmitBlock(NewEnd);

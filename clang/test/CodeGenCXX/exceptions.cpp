@@ -305,3 +305,21 @@ namespace test6 {
     }
   }
 }
+
+// PR9298
+namespace test7 {
+  struct A { A(); ~A(); };
+  struct B {
+    // The throw() operator means that a bad allocation is signalled
+    // with a null return, which means that the initializer is
+    // evaluated conditionally.
+    static void *operator new(size_t size) throw();
+    B(const A&, B*);
+    ~B();
+  };
+
+  // Just make sure the result passes verification.
+  B *test() {
+    return new B(A(), new B(A(), 0));
+  }
+}
