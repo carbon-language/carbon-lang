@@ -1384,9 +1384,15 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
 	    // The following call drops into the embedded interpreter loop and stays there until the
 	    // user chooses to exit from the Python interpreter.
 
+        Py_BEGIN_ALLOW_THREADS
+        PyGILState_STATE gstate = PyGILState_Ensure();
+        
         run_string.Printf ("run_python_interpreter (%s)", script_interpreter->m_dictionary_name.c_str());
         PyRun_SimpleString (run_string.GetData());
         run_string.Clear ();
+        
+        PyGILState_Release (gstate);
+        Py_END_ALLOW_THREADS
         
         run_string.Printf ("run_one_line (%s, 'sys.stdin = save_stdin')", script_interpreter->m_dictionary_name.c_str());
         PyRun_SimpleString (run_string.GetData());
@@ -1474,6 +1480,7 @@ ScriptInterpreterPython::Initialize ()
         ::setenv ("PYTHONPATH", pathon_path_env_cstr, 1);
     }
 
+    PyEval_InitThreads ();
     Py_Initialize ();
 
     PyObject *compiled_module = Py_CompileString (embedded_interpreter_string, 
