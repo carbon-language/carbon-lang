@@ -200,6 +200,8 @@ public:
   static void FixupRelativePath(llvm::SmallVectorImpl<char> &path,
                                 const FileSystemOptions &FSOpts);
 
+  void FixupRelativePath(llvm::SmallVectorImpl<char> &path) const;
+
   /// \brief Produce an array mapping from the unique IDs assigned to each
   /// file to the corresponding FileEntry pointer.
   void GetUniqueIDMapping(
