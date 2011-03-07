@@ -63,8 +63,8 @@ Driver::Driver(llvm::StringRef _ClangExecutable,
     DriverTitle("clang \"gcc-compatible\" driver"),
     Host(0),
     CCPrintOptionsFilename(0), CCPrintHeadersFilename(0), CCCIsCXX(false),
-    CCCEcho(false), CCCPrintBindings(false), CCPrintOptions(false),
-    CCPrintHeaders(false), CCCGenericGCCName("gcc"),
+    CCCIsCPP(false),CCCEcho(false), CCCPrintBindings(false),
+    CCPrintOptions(false), CCPrintHeaders(false), CCCGenericGCCName("gcc"),
     CheckInputsExist(true), CCCUseClang(true), CCCUseClangCXX(true),
     CCCUseClangCPP(true), CCCUsePCH(true), SuppressMissingInputWarning(false) {
   if (IsProduction) {
