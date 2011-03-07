@@ -159,7 +159,9 @@ namespace llvm {
     /// range to just the remaining uses. This method does not compute reaching
     /// defs for new uses, and it doesn't remove dead defs.
     /// Dead PHIDef values are marked as unused.
-    void shrinkToUses(LiveInterval *li);
+    /// New dead machine instructions are added to the dead vector.
+    void shrinkToUses(LiveInterval *li,
+                      SmallVectorImpl<MachineInstr*> *dead = 0);
 
     // Interval removal
 
