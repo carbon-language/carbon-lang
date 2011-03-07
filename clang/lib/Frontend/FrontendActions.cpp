@@ -47,13 +47,6 @@ ASTConsumer *ASTPrintAction::CreateASTConsumer(CompilerInstance &CI,
   return 0;
 }
 
-ASTConsumer *ASTPrintXMLAction::CreateASTConsumer(CompilerInstance &CI,
-                                                  llvm::StringRef InFile) {
-  if (llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, InFile, "xml"))
-    return CreateASTPrinterXML(OS);
-  return 0;
-}
-
 ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
                                               llvm::StringRef InFile) {
   return CreateASTDumper();

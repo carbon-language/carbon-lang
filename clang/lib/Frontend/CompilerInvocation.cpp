@@ -322,7 +322,6 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::ASTDump:                return "-ast-dump";
   case frontend::ASTDumpXML:             return "-ast-dump-xml";
   case frontend::ASTPrint:               return "-ast-print";
-  case frontend::ASTPrintXML:            return "-ast-print-xml";
   case frontend::ASTView:                return "-ast-view";
   case frontend::BoostCon:               return "-boostcon";
   case frontend::CreateModule:           return "-create-module";
@@ -1039,8 +1038,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::ASTDumpXML; break;
     case OPT_ast_print:
       Opts.ProgramAction = frontend::ASTPrint; break;
-    case OPT_ast_print_xml:
-      Opts.ProgramAction = frontend::ASTPrintXML; break;
     case OPT_ast_view:
       Opts.ProgramAction = frontend::ASTView; break;
     case OPT_boostcon:

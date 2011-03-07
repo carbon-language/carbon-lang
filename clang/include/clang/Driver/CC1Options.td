@@ -318,8 +318,6 @@ def emit_html : Flag<"-emit-html">,
   HelpText<"Output input source as HTML">;
 def ast_print : Flag<"-ast-print">,
   HelpText<"Build ASTs and then pretty-print them">;
-def ast_print_xml : Flag<"-ast-print-xml">,
-  HelpText<"Build ASTs and then print them in XML format">;
 def ast_dump : Flag<"-ast-dump">,
   HelpText<"Build ASTs and then debug dump them">;
 def ast_dump_xml : Flag<"-ast-dump-xml">,

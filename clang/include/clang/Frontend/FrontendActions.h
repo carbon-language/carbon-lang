@@ -42,12 +42,6 @@ protected:
                                          llvm::StringRef InFile);
 };
 
-class ASTPrintXMLAction : public ASTFrontendAction {
-protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         llvm::StringRef InFile);
-};
-
 class ASTDumpAction : public ASTFrontendAction {
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
