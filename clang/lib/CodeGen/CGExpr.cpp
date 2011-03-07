@@ -1937,7 +1937,7 @@ LValue CodeGenFunction::EmitOpaqueValueLValue(const OpaqueValueExpr *e) {
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E, 
                                      ReturnValueSlot ReturnValue) {
-  if (CGDebugInfo *DI = getDebugInfo()) {
+  if (CGDebugInfo *DI = CGM.getDebugInfo()) {
     DI->setLocation(E->getLocStart());
     DI->UpdateLineDirectiveRegion(Builder);
     DI->EmitStopPoint(Builder);

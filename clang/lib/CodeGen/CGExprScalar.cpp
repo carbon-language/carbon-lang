@@ -2567,8 +2567,13 @@ Value *CodeGenFunction::EmitScalarExpr(const Expr *E, bool IgnoreResultAssign) {
   assert(E && !hasAggregateLLVMType(E->getType()) &&
          "Invalid scalar expression to emit");
 
-  return ScalarExprEmitter(*this, IgnoreResultAssign)
+  if (isa<CXXDefaultArgExpr>(E))
+    CGM.disableDebugInfo();
+  Value *V = ScalarExprEmitter(*this, IgnoreResultAssign)
     .Visit(const_cast<Expr*>(E));
+  if (isa<CXXDefaultArgExpr>(E))
+    CGM.enableDebugInfo();
+  return V;
 }
 
 /// EmitScalarConversion - Emit a conversion from the specified type to the

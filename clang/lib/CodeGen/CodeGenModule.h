@@ -152,6 +152,7 @@ class CodeGenModule : public CodeGenTypeCache {
 
   CGObjCRuntime* Runtime;
   CGDebugInfo* DebugInfo;
+  bool DisableDebugInfo;
 
   // WeakRefReferences - A set of references that have only been seen via
   // a weakref so far. This is used to remove the weak of the reference if we ever
@@ -281,7 +282,14 @@ public:
     StaticLocalDeclMap[D] = GV;
   }
 
-  CGDebugInfo *getDebugInfo() { return DebugInfo; }
+  CGDebugInfo *getDebugInfo() { 
+    if (DisableDebugInfo) 
+      return NULL;
+    return DebugInfo; 
+  }
+  void disableDebugInfo() { DisableDebugInfo = true; }
+  void enableDebugInfo() { DisableDebugInfo = false; }
+
   ASTContext &getContext() const { return Context; }
   const CodeGenOptions &getCodeGenOpts() const { return CodeGenOpts; }
   const LangOptions &getLangOptions() const { return Features; }
