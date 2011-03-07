@@ -15,7 +15,6 @@
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
 #include "llvm/ADT/SmallVector.h"
-//#include "llvm/ADT/IndexedMap.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <vector>
