@@ -329,9 +329,6 @@ namespace llvm {
 
     Sched::Preference getSchedulingPreference(SDNode *N) const;
 
-    unsigned getRegPressureLimit(const TargetRegisterClass *RC,
-                                 MachineFunction &MF) const;
-
     bool isShuffleMaskLegal(const SmallVectorImpl<int> &M, EVT VT) const;
     bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 

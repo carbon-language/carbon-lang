@@ -101,6 +101,9 @@ public:
   const TargetRegisterClass *
   getCrossCopyRegClass(const TargetRegisterClass *RC) const;
 
+  unsigned getRegPressureLimit(const TargetRegisterClass *RC,
+                               MachineFunction &MF) const;
+
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;

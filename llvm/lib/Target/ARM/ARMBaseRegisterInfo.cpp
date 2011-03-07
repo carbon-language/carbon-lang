@@ -348,6 +348,26 @@ ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {
   return ARM::GPRRegisterClass;
 }
 
+unsigned
+ARMBaseRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
+                                         MachineFunction &MF) const {
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+
+  switch (RC->getID()) {
+  default:
+    return 0;
+  case ARM::tGPRRegClassID:
+    return TFI->hasFP(MF) ? 4 : 5;
+  case ARM::GPRRegClassID: {
+    unsigned FP = TFI->hasFP(MF) ? 1 : 0;
+    return 10 - FP - (STI.isR9Reserved() ? 1 : 0);
+  }
+  case ARM::SPRRegClassID:  // Currently not used as 'rep' register class.
+  case ARM::DPRRegClassID:
+    return 32 - 10;
+  }
+}
+
 /// getAllocationOrder - Returns the register allocation order for a specified
 /// register class in the form of a pair of TargetRegisterClass iterators.
 std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>

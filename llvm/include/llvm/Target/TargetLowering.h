@@ -190,14 +190,6 @@ public:
     return RepRegClassCostForVT[VT.getSimpleVT().SimpleTy];
   }
 
-  /// getRegPressureLimit - Return the register pressure "high water mark" for
-  /// the specific register class. The scheduler is in high register pressure
-  /// mode (for the specific register class) if it goes over the limit.
-  virtual unsigned getRegPressureLimit(const TargetRegisterClass *RC,
-                                       MachineFunction &MF) const {
-    return 0;
-  }
-
   /// isTypeLegal - Return true if the target has native support for the
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.

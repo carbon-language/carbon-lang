@@ -128,6 +128,9 @@ public:
 
   const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
 
+  unsigned getRegPressureLimit(const TargetRegisterClass *RC,
+                               MachineFunction &MF) const;
+
   std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
   getAllocationOrder(const TargetRegisterClass *RC,
                      unsigned HintType, unsigned HintReg,

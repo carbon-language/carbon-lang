@@ -677,9 +677,6 @@ namespace llvm {
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
-    unsigned getRegPressureLimit(const TargetRegisterClass *RC,
-                                 MachineFunction &MF) const;
-
     /// getStackCookieLocation - Return true if the target stores stack
     /// protector cookies at a fixed offset in some non-standard address
     /// space, and populates the address space and offset as

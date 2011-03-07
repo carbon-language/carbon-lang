@@ -294,7 +294,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     RegLimit.resize(NumRC);
     for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
            E = TRI->regclass_end(); I != E; ++I)
-      RegLimit[(*I)->getID()] = TLI->getRegPressureLimit(*I, MF);
+      RegLimit[(*I)->getID()] = TRI->getRegPressureLimit(*I, MF);
   }
 
   // Get our Loop information...

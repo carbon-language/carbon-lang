@@ -1458,7 +1458,7 @@ public:
       std::fill(RegPressure.begin(), RegPressure.end(), 0);
       for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
              E = TRI->regclass_end(); I != E; ++I)
-        RegLimit[(*I)->getID()] = tli->getRegPressureLimit(*I, MF);
+        RegLimit[(*I)->getID()] = tri->getRegPressureLimit(*I, MF);
     }
   }
 
