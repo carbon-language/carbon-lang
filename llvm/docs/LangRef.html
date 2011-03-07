@@ -3611,9 +3611,10 @@ Instruction</a> </div>
 
 <h5>Semantics:</h5>
 <p>This instruction returns the <i>remainder</i> of a division (where the result
-   has the same sign as the dividend, <tt>op1</tt>), not the <i>modulo</i>
-   operator (where the result has the same sign as the divisor, <tt>op2</tt>) of
-   a value.  For more information about the difference,
+   is either zero or has the same sign as the dividend, <tt>op1</tt>), not the
+   <i>modulo</i> operator (where the result is either zero or has the same sign
+   as the divisor, <tt>op2</tt>) of a value.
+   For more information about the difference,
    see <a href="http://mathforum.org/dr.math/problems/anne.4.28.99.html">The
    Math Forum</a>. For a table of how this is implemented in various languages,
    please see <a href="http://en.wikipedia.org/wiki/Modulo_operation">
