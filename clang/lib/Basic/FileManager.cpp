@@ -462,6 +462,10 @@ void FileManager::FixupRelativePath(llvm::SmallVectorImpl<char> &path,
   path = NewPath;
 }
 
+void FileManager::FixupRelativePath(llvm::SmallVectorImpl<char> &path) const {
+  FixupRelativePath(path, FileSystemOpts);
+}
+
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
   llvm::OwningPtr<llvm::MemoryBuffer> Result;
@@ -488,7 +492,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
   }
 
   llvm::SmallString<128> FilePath(Entry->getName());
-  FixupRelativePath(FilePath, FileSystemOpts);
+  FixupRelativePath(FilePath);
   ec = llvm::MemoryBuffer::getFile(FilePath.str(), Result, Entry->getSize());
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
@@ -507,7 +511,7 @@ getBufferForFile(llvm::StringRef Filename, std::string *ErrorStr) {
   }
 
   llvm::SmallString<128> FilePath(Filename);
-  FixupRelativePath(FilePath, FileSystemOpts);
+  FixupRelativePath(FilePath);
   ec = llvm::MemoryBuffer::getFile(FilePath.c_str(), Result);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
@@ -528,7 +532,7 @@ bool FileManager::getStatValue(const char *Path, struct stat &StatBuf,
                                     StatCache.get());
 
   llvm::SmallString<128> FilePath(Path);
-  FixupRelativePath(FilePath, FileSystemOpts);
+  FixupRelativePath(FilePath);
 
   return FileSystemStatCache::get(FilePath.c_str(), StatBuf, FileDescriptor,
                                   StatCache.get());
