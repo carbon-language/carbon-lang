@@ -52,3 +52,18 @@ void test_typedefs() {
   PR9380_Ty test2[20];
 }
 
+// PR9412 - Handle CFG traversal with null successors.
+enum PR9412_MatchType { PR9412_Exact };
+
+template <PR9412_MatchType type> int PR9412_t() {
+  switch (type) {
+    case PR9412_Exact:
+    default:
+        break;
+  }
+} // expected-warning {{control reaches end of non-void function}}
+
+void PR9412_f() {
+    PR9412_t<PR9412_Exact>(); // expected-note {{in instantiation of function template specialization 'PR9412_t<0>' requested here}}
+}
+
