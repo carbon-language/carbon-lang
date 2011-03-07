@@ -779,6 +779,13 @@ void LiveIntervals::shrinkToUses(LiveInterval *li) {
     if (VNI->isUnused())
       continue;
     NewLI.addRange(LiveRange(VNI->def, VNI->def.getNextSlot(), VNI));
+
+    // A use tied to an early-clobber def ends at the load slot and isn't caught
+    // above. Catch it here instead. This probably only ever happens for inline
+    // assembly.
+    if (VNI->def.isUse())
+      if (VNInfo *UVNI = li->getVNInfoAt(VNI->def.getLoadIndex()))
+        WorkList.push_back(std::make_pair(VNI->def.getLoadIndex(), UVNI));
   }
 
   // Keep track of the PHIs that are in use.
