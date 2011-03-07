@@ -115,6 +115,9 @@ public:
 
     virtual lldb_private::Address
     GetImageInfoAddress();
+    
+    virtual lldb_private::Address
+    GetEntryPointAddress ();
 
 private:
     ObjectFileELF(lldb_private::Module* module,
@@ -156,6 +159,9 @@ private:
     /// Data extractor holding the string table used to resolve section names.
     lldb_private::DataExtractor m_shstr_data;
 
+    /// Cached value of the entry point for this module.
+    lldb_private::Address  m_entry_point_address;
+    
     /// Returns a 1 based index of the given section header.
     unsigned
     SectionIndex(const SectionHeaderCollIter &I);

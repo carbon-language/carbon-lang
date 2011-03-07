@@ -12,6 +12,7 @@
 
 #include "llvm/Support/MachO.h"
 
+#include "lldb/Core/Address.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -112,7 +113,8 @@ public:
     virtual lldb_private::Log *
     EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
 
-
+    virtual lldb_private::Address
+    GetEntryPointAddress ();
 
 protected:
     mutable lldb_private::Mutex m_mutex;
@@ -123,6 +125,7 @@ protected:
     llvm::MachO::dysymtab_command m_dysymtab;
     std::vector<llvm::MachO::segment_command_64> m_mach_segments;
     std::vector<llvm::MachO::section_64> m_mach_sections;
+    lldb_private::Address  m_entry_point_address;
 
     size_t
     ParseSections ();

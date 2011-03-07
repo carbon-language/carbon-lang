@@ -66,19 +66,33 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     
     lldb::addr_t spBelowRedZone = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
     
-    SymbolContextList contexts;
-    SymbolContext context;
     ModuleSP executableModuleSP (target.GetExecutableModule());
 
-    if (!executableModuleSP ||
-        !executableModuleSP->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
+    if (!executableModuleSP)
+    {
+        log->Printf ("Can't execute code without an executable module.");
         return;
+    }
+    else
+    {
+        ObjectFile *objectFile = executableModuleSP->GetObjectFile();
+        if (!objectFile)
+        {
+            log->Printf ("Could not find object file for module \"%s\".", 
+                         executableModuleSP->GetFileSpec().GetFilename().AsCString());
+            return;
+        }
+        m_start_addr = objectFile->GetEntryPointAddress();
+        if (!m_start_addr.IsValid())
+        {
+            log->Printf ("Could not find entry point address for executable module \"%s\".", 
+                         executableModuleSP->GetFileSpec().GetFilename().AsCString());
+            return;
+        }
+    }
     
-    contexts.GetContextAtIndex(0, context);
-    
-    m_start_addr = context.symbol->GetValue();
     lldb::addr_t StartLoadAddr = m_start_addr.GetLoadAddress(&target);
-
+    
     // Checkpoint the thread state so we can restore it later.
     if (log && log->GetVerbose())
         ReportRegisterState ("About to checkpoint thread before function call.  Original register state was:");

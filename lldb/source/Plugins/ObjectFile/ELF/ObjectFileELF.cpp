@@ -16,9 +16,11 @@
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/FileSpecList.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Host/Host.h"
 
 #define CASE_AND_STREAM(s, def, width)                  \
@@ -274,6 +276,32 @@ ObjectFileELF::GetImageInfoAddress()
     }
 
     return Address();
+}
+
+lldb_private::Address
+ObjectFileELF::GetEntryPointAddress () 
+{
+    // If the object file is not an executable it can't hold the entry point.  m_entry_point_address
+    // is initialized to an invalid address, so we can just return that.
+    // If m_entry_point_address is valid it means we've found it already, so return the cached value.
+    
+    if (!IsExecutable() || m_entry_point_address.IsValid())
+        return m_entry_point_address;
+    
+    // FIXME: This is just looking for the "start" symbol, but that will fail if "start" is stripped.
+    // There's probably a better way in ELF to find the start address of an executable module.
+    
+    SymbolContextList contexts;
+    SymbolContext context;
+    if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), lldb::eSymbolTypeCode, contexts))
+        return m_entry_point_address;
+    
+    contexts.GetContextAtIndex(0, context);
+    
+    m_entry_point_address = context.symbol->GetValue();
+    
+    return m_entry_point_address;
+
 }
 
 //----------------------------------------------------------------------

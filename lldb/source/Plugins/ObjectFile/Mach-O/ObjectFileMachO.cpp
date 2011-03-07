@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/MachO.h"
+
 #include "ObjectFileMachO.h"
 
 #include "lldb/Core/ArchSpec.h"
@@ -105,7 +107,8 @@ ObjectFileMachO::ObjectFileMachO(Module* module, DataBufferSP& dataSP, const Fil
     m_mutex (Mutex::eMutexTypeRecursive),
     m_header(),
     m_sections_ap(),
-    m_symtab_ap()
+    m_symtab_ap(),
+    m_entry_point_address ()
 {
     ::memset (&m_header, 0, sizeof(m_header));
     ::memset (&m_dysymtab, 0, sizeof(m_dysymtab));
@@ -1433,6 +1436,136 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
         offset = cmd_offset + load_cmd.cmdsize;
     }
     return count;
+}
+
+lldb_private::Address
+ObjectFileMachO::GetEntryPointAddress () 
+{
+    // If the object file is not an executable it can't hold the entry point.  m_entry_point_address
+    // is initialized to an invalid address, so we can just return that.
+    // If m_entry_point_address is valid it means we've found it already, so return the cached value.
+    
+    if (!IsExecutable() || m_entry_point_address.IsValid())
+        return m_entry_point_address;
+    
+    // Otherwise, look for the UnixThread or Thread command.  The data for the Thread command is given in 
+    // /usr/include/mach-o.h, but it is basically:
+    //
+    //  uint32_t flavor  - this is the flavor argument you would pass to thread_get_state
+    //  uint32_t count   - this is the count of longs in the thread state data
+    //  struct XXX_thread_state state - this is the structure from <machine/thread_status.h> corresponding to the flavor.
+    //  <repeat this trio>
+    // 
+    // So we just keep reading the various register flavors till we find the GPR one, then read the PC out of there.
+    // FIXME: We will need to have a "RegisterContext data provider" class at some point that can get all the registers
+    // out of data in this form & attach them to a given thread.  That should underlie the MacOS X User process plugin,
+    // and we'll also need it for the MacOS X Core File process plugin.  When we have that we can also use it here.
+    //
+    // For now we hard-code the offsets and flavors we need:
+    //
+    //
+
+    lldb_private::Mutex::Locker locker(m_mutex);
+    struct load_command load_cmd;
+    uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+    uint32_t i;
+    lldb::addr_t start_address = LLDB_INVALID_ADDRESS;
+    bool done = false;
+    
+    for (i=0; i<m_header.ncmds; ++i)
+    {
+        const uint32_t cmd_offset = offset;
+        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+            break;
+
+        switch (load_cmd.cmd)
+        {
+        case LoadCommandUnixThread:
+        case LoadCommandThread:
+            {
+                while (offset < cmd_offset + load_cmd.cmdsize)
+                {
+                    uint32_t flavor = m_data.GetU32(&offset);
+                    uint32_t count = m_data.GetU32(&offset);
+                    if (count == 0)
+                    {
+                        // We've gotten off somehow, log and exit;
+                        return m_entry_point_address;
+                    }
+                    
+                    switch (m_header.cputype)
+                    {
+                    case llvm::MachO::CPUTypeARM:
+                       if (flavor == 1) // ARM_THREAD_STATE from mach/arm/thread_status.h
+                       {
+                           offset += 60;  // This is the offset of pc in the GPR thread state data structure.
+                           start_address = m_data.GetU32(&offset);
+                           done = true;
+                        }
+                    break;
+                    case llvm::MachO::CPUTypeI386:
+                       if (flavor == 1) // x86_THREAD_STATE32 from mach/i386/thread_status.h
+                       {
+                           offset += 40;  // This is the offset of eip in the GPR thread state data structure.
+                           start_address = m_data.GetU32(&offset);
+                           done = true;
+                        }
+                    break;
+                    case llvm::MachO::CPUTypeX86_64:
+                       if (flavor == 4) // x86_THREAD_STATE64 from mach/i386/thread_status.h
+                       {
+                           offset += 16 * 8;  // This is the offset of rip in the GPR thread state data structure.
+                           start_address = m_data.GetU64(&offset);
+                           done = true;
+                        }
+                    break;
+                    default:
+                        return m_entry_point_address;
+                    }
+                    // Haven't found the GPR flavor yet, skip over the data for this flavor:
+                    if (done)
+                        break;
+                    offset += count * 4;
+                }
+            }
+            break;
+
+        default:
+            break;
+        }
+        if (done)
+            break;
+
+        // Go to the next load command:
+        offset = cmd_offset + load_cmd.cmdsize;
+    }
+    
+    if (start_address != LLDB_INVALID_ADDRESS)
+    {
+        // We got the start address from the load commands, so now resolve that address in the sections 
+        // of this ObjectFile:
+        if (!m_entry_point_address.ResolveAddressUsingFileSections (start_address, GetSectionList()))
+        {
+            m_entry_point_address.Clear();
+        }
+    }
+    else
+    {
+        // We couldn't read the UnixThread load command - maybe it wasn't there.  As a fallback look for the
+        // "start" symbol in the main executable.
+        
+        SymbolContextList contexts;
+        SymbolContext context;
+        if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), lldb::eSymbolTypeCode, contexts))
+            return m_entry_point_address;
+        
+        contexts.GetContextAtIndex(0, context);
+        
+        m_entry_point_address = context.symbol->GetValue();
+    }
+    
+    return m_entry_point_address;
+
 }
 
 bool

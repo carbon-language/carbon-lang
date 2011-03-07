@@ -338,6 +338,17 @@ public:
     ///     object file format does not support or contain such information.
     virtual lldb_private::Address
     GetImageInfoAddress () { return Address(); }
+    
+    //------------------------------------------------------------------
+    /// Returns the address of the Entry Point in this object file - if
+    /// the object file doesn't have an entry point (because it is not an
+    /// executable file) then an invalid address is returned.
+    ///
+    /// @return
+    ///     Returns the entry address for this module.
+    //------------------------------------------------------------------
+    virtual lldb_private::Address
+    GetEntryPointAddress () { return Address();}
 
 protected:
     //------------------------------------------------------------------
