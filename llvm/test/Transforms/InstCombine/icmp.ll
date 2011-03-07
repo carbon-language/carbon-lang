@@ -488,8 +488,8 @@ define i1 @test50(i16 %X, i32 %Y) {
 
 ; CHECK: @test51
 ; CHECK: ret i1 %C
-define i1 @test51(i16 %X, i32 %Y) {
-  %A = sext i16 %X to i32
+define i1 @test51(i32 %X, i32 %Y) {
+  %A = and i32 %X, 2147483648
   %B = srem i32 %A, %Y
   %C = icmp sgt i32 %B, -1
   ret i1 %C
