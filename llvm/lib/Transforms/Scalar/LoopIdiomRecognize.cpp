@@ -493,7 +493,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
   Value *NumBytes = 
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
   
-  Value *NewCall;
+  CallInst *NewCall;
   if (SplatValue)
     NewCall = Builder.CreateMemSet(BasePtr, SplatValue,NumBytes,StoreAlignment);
   else {
@@ -517,7 +517,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
   
   DEBUG(dbgs() << "  Formed memset: " << *NewCall << "\n"
                << "    from store to: " << *Ev << " at: " << *TheStore << "\n");
-  (void)NewCall;
+  NewCall->setDebugLoc(TheStore->getDebugLoc());
   
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
