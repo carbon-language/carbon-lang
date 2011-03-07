@@ -496,8 +496,10 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   IdResolver.AddDecl(D);
 }
 
-bool Sema::isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S) {
-  return IdResolver.isDeclInScope(D, Ctx, Context, S);
+bool Sema::isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S,
+                         bool ExplicitInstantiationOrSpecialization) {
+  return IdResolver.isDeclInScope(D, Ctx, Context, S,
+                                  ExplicitInstantiationOrSpecialization);
 }
 
 Scope *Sema::getScopeForDeclContext(Scope *S, DeclContext *DC) {
@@ -519,12 +521,13 @@ static bool isOutOfScopePreviousDeclaration(NamedDecl *,
 /// as determined by isDeclInScope.
 static void FilterLookupForScope(Sema &SemaRef, LookupResult &R,
                                  DeclContext *Ctx, Scope *S,
-                                 bool ConsiderLinkage) {
+                                 bool ConsiderLinkage,
+                                 bool ExplicitInstantiationOrSpecialization) {
   LookupResult::Filter F = R.makeFilter();
   while (F.hasNext()) {
     NamedDecl *D = F.next();
 
-    if (SemaRef.isDeclInScope(D, Ctx, S))
+    if (SemaRef.isDeclInScope(D, Ctx, S, ExplicitInstantiationOrSpecialization))
       continue;
 
     if (ConsiderLinkage &&
@@ -2886,7 +2889,8 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   // Merge the decl with the existing one if appropriate. If the decl is
   // in an outer scope, it isn't the same thing.
-  FilterLookupForScope(*this, Previous, DC, S, /*ConsiderLinkage*/ false);
+  FilterLookupForScope(*this, Previous, DC, S, /*ConsiderLinkage*/ false,
+                       /*ExplicitInstantiationOrSpecialization=*/false);
   if (!Previous.empty()) {
     Redeclaration = true;
     MergeTypeDefDecl(NewTD, Previous);
@@ -3167,7 +3171,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // Don't consider existing declarations that are in a different
   // scope and are out-of-semantic-context declarations (if the new
   // declaration has linkage).
-  FilterLookupForScope(*this, Previous, DC, S, NewVD->hasLinkage());
+  FilterLookupForScope(*this, Previous, DC, S, NewVD->hasLinkage(),
+                       isExplicitSpecialization);
   
   if (!getLangOptions().CPlusPlus)
     CheckVariableDeclaration(NewVD, Previous, Redeclaration);
@@ -3624,7 +3629,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // Set the lexical context.
     NewFD->setLexicalDeclContext(CurContext);
     // Filter out previous declarations that don't match the scope.
-    FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage());
+    FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage(),
+                         /*ExplicitInstantiationOrSpecialization=*/false);
   } else {
     isFriend = D.getDeclSpec().isFriendSpecified();
     bool isVirtual = D.getDeclSpec().isVirtualSpecified();
@@ -3884,7 +3890,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
 
     // Filter out previous declarations that don't match the scope.
-    FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage());
+    FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage(),
+                         isExplicitSpecialization || 
+                         isFunctionTemplateSpecialization);
 
     if (isFriend) {
       // For now, claim that the objects have no previous declaration.
@@ -6268,7 +6276,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
       if (TUK == TUK_Reference || TUK == TUK_Friend ||
-          isDeclInScope(PrevDecl, SearchDC, S)) {
+          isDeclInScope(PrevDecl, SearchDC, S, isExplicitSpecialization)) {
         // Make sure that this wasn't declared as an enum and now used as a
         // struct or something similar.
         if (!isAcceptableTagRedeclaration(PrevTagDecl, Kind, KWLoc, *Name)) {
@@ -6412,7 +6420,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         Invalid = true;
 
       // Otherwise, only diagnose if the declaration is in scope.
-      } else if (!isDeclInScope(PrevDecl, SearchDC, S)) {
+      } else if (!isDeclInScope(PrevDecl, SearchDC, S, 
+                                isExplicitSpecialization)) {
         // do nothing
 
       // Diagnose implicit declarations introduced by elaborated types.

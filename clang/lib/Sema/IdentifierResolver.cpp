@@ -104,7 +104,8 @@ IdentifierResolver::~IdentifierResolver() {
 /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
 /// true if 'D' belongs to the given declaration context.
 bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
-                                       ASTContext &Context, Scope *S) const {
+                                       ASTContext &Context, Scope *S,
+                             bool ExplicitInstantiationOrSpecialization) const {
   Ctx = Ctx->getRedeclContext();
 
   if (Ctx->isFunctionOrMethod()) {
@@ -135,7 +136,10 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
     return false;
   }
 
-  return D->getDeclContext()->getRedeclContext()->Equals(Ctx);
+  DeclContext *DCtx = D->getDeclContext()->getRedeclContext();
+  return ExplicitInstantiationOrSpecialization
+           ? Ctx->InEnclosingNamespaceSetOf(DCtx)
+           : Ctx->Equals(DCtx);
 }
 
 /// AddDecl - Link the decl to its shadowed decl chain.

@@ -146,8 +146,13 @@ public:
   /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
+  ///
+  /// \param ExplicitInstantiationOrSpecialization When true, we are checking
+  /// whether the declaration is in scope for the purposes of explicit template
+  /// instantiation or specialization. The default is false.
   bool isDeclInScope(Decl *D, DeclContext *Ctx, ASTContext &Context,
-                     Scope *S = 0) const;
+                     Scope *S = 0,
+                     bool ExplicitInstantiationOrSpecialization = false) const;
 
   /// AddDecl - Link the decl to its shadowed decl chain.
   void AddDecl(NamedDecl *D);

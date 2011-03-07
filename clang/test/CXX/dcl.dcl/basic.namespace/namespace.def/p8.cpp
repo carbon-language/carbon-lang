@@ -95,3 +95,24 @@ namespace redecl { inline namespace n1 {
   };
 
 } }
+
+// Normal redeclarations (not for explicit instantiations or
+// specializations) are distinct in an inline namespace vs. not in an
+// inline namespace.
+namespace redecl2 { 
+  inline namespace n1 {
+    void f(int) { }
+    struct X1 { };
+    template<typename T> void f(T) { }
+    template<typename T> struct X2 { };
+    int i = 71;
+    enum E { e };
+  }
+
+  void f(int) { }
+  struct X1 { };
+  template<typename T> void f(T) { }
+  template<typename T> struct X2 { };
+  int i = 71;
+  enum E { e };
+}

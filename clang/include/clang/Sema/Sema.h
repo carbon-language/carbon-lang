@@ -1058,7 +1058,12 @@ public:
   /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
-  bool isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S = 0);
+  ///
+  /// \param ExplicitInstantiationOrSpecialization When true, we are checking
+  /// whether the declaration is in scope for the purposes of explicit template
+  /// instantiation or specialization. The default is false.
+  bool isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S = 0,
+                     bool ExplicitInstantiationOrSpecialization = false);
 
   /// Finds the scope corresponding to the given decl context, if it
   /// happens to be an enclosing scope.  Otherwise return NULL.
