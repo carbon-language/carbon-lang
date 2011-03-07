@@ -53,9 +53,34 @@
   }
 }
 
+/* Typemap definitions to allow SWIG to properly handle char buffer. */
+
+// typemap for a char buffer
+// See also SBThread::GetStopDescription.
+%typemap(in) (char *dst, size_t dst_len) {
+   if (!PyInt_Check($input)) {
+       PyErr_SetString(PyExc_ValueError, "Expecting an integer");
+       return NULL;
+   }
+   $2 = PyInt_AsLong($input);
+   if ($2 < 0) {
+       PyErr_SetString(PyExc_ValueError, "Positive integer expected");
+       return NULL;
+   }
+   $1 = (char *) malloc($2);
+}
+
+// Return the char buffer.  Discarding any previous return result
+// See also SBThread::GetStopDescription.
+%typemap(argout) (char *dst, size_t dst_len) {
+   Py_XDECREF($result);   /* Blow away any previous result */
+   $result = PyString_FromStringAndSize(($1),result);
+   free($1);
+}
 
 
 // typemap for an outgoing buffer
+// See also SBProcess::WriteMemory.
 %typemap(in) (const void *buf, size_t size) {
    if (!PyString_Check($input)) {
        PyErr_SetString(PyExc_ValueError, "Expecting a string");
@@ -66,6 +91,7 @@
 }
 
 // typemap for an incoming buffer
+// See also SBProcess::ReadMemory.
 %typemap(in) (void *buf, size_t size) {
    if (!PyInt_Check($input)) {
        PyErr_SetString(PyExc_ValueError, "Expecting an integer");
@@ -80,6 +106,7 @@
 }
 
 // Return the buffer.  Discarding any previous return result
+// See also SBProcess::ReadMemory.
 %typemap(argout) (void *buf, size_t size) {
    Py_XDECREF($result);   /* Blow away any previous result */
    if (result < 0) {      /* Check for I/O error */
