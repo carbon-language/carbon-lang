@@ -53,11 +53,18 @@ class TargetAPITestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
+        # Add an extra twist of stopping the inferior in a breakpoint, and then continue till it's done.
+        # We should still see the entire stdout redirected once the process is finished.
+        line = line_number('main.c', '// a(3) -> c(3)')
+        breakpoint = target.BreakpointCreateByLocation('main.c', line)
+
         # Now launch the process, do not stop at entry point, and redirect stdout to "stdout.txt" file.
-        # The inferior should run to completion, so there's no need to assign to self.process to
-        # have the inferior kiiled during test teardown.
+        # The inferior should run to completion after "process.Continue()" call, so there's no need
+        # to assign to self.process to have the inferior kiiled during test teardown.
         error = lldb.SBError()
         process = target.Launch (self.dbg.GetListener(), None, None, None, "stdout.txt", None, None, 0, False, error)
+        process.Continue()
+        #self.runCmd("process status")
 
         # The 'stdout.txt' file should now exist.
         self.assertTrue(os.path.isfile("stdout.txt"),
@@ -66,6 +73,13 @@ class TargetAPITestCase(TestBase):
         # Read the output file produced by running the program.
         with open('stdout.txt', 'r') as f:
             output = f.read()
+
+        # Let's delete the 'stdout.txt' file as a cleanup step.
+        try:
+            os.remove("stdout.txt")
+            pass
+        except OSError:
+            pass
 
         self.expect(output, exe=False,
             substrs = ["a(1)", "b(2)", "a(3)"])
