@@ -12,7 +12,8 @@
 #
 #===------------------------------------------------------------------------===#
 
-set -e
+set -e                          # Exit if any command fails
+set -x                          # Show commands as they are executed
 
 Release=""
 Release_no_dot=""
@@ -33,9 +34,9 @@ function usage() {
     echo " -build-dir DIR    Directory to perform testing in. [default: pwd]"
     echo " -no-checkout      Don't checkout the sources from SVN."
     echo " -no-64bit         Don't test the 64-bit version. [default: yes]"
-    echo " -ada              Build Ada. [default: no]"
-    echo " -disable-objc     Disable ObjC build. [default: build]"
-    echo " -disable-fortran  Disable Fortran build. [default: build]"
+    echo " -enable-ada       Build Ada. [default: disable]"
+    echo " -disable-objc     Disable ObjC build. [default: enable]"
+    echo " -disable-fortran  Disable Fortran build. [default: enable]"
 }
 
 while [ $# -gt 0 ]; do
@@ -66,7 +67,7 @@ while [ $# -gt 0 ]; do
         -no-64bit | --no-64bit )
             do_64bit="no"
             ;;
-        -ada | --ada )
+        -enable-ada | --enable-ada )
             do_ada="yes"
             ;;
         -disable-objc | --disable-objc )
@@ -117,11 +118,6 @@ fi
 # Location of sources.
 llvmCore_srcdir=$BuildDir/llvmCore-$Release-rc$RC.src
 llvmgcc42_srcdir=$BuildDir/llvmgcc42-$Release-rc$RC.src
-
-# Location of log files.
-LogDirName="$Release-rc$RC.logs"
-LogDir=$BuildDir/$LogDirName
-mkdir -p $LogDir
 
 # SVN URLs for the sources.
 Base_url="http://llvm.org/svn/llvm-project"
@@ -201,8 +197,7 @@ function configure_llvmCore() {
     $llvmCore_srcdir/configure --prefix=$InstallDir \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions \
-        --with-llvmgccdir=$llvmgccDir \
-        > $LogDir/llvm.configure.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+        --with-llvmgccdir=$llvmgccDir
     cd -
 }
 
@@ -223,13 +218,11 @@ function build_llvmCore() {
     cd $ObjDir
     echo "# Compiling llvm $Release-rc$RC $Flavor"
     echo "# make -j $NumJobs VERBOSE=1 $ExtraOpts"
-    make -j $NumJobs VERBOSE=1 $ExtraOpts $CompilerFlags \
-        > $LogDir/llvm.make.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+    make -j $NumJobs VERBOSE=1 $ExtraOpts $CompilerFlags
 
     echo "# Installing llvm $Release-rc$RC $Flavor"
     echo "# make install"
-    make install \
-        > $LogDir/llvm.install.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+    make install
     cd -
 }
 
@@ -239,12 +232,9 @@ function test_llvmCore() {
     ObjDir="$3"
 
     cd $ObjDir
-    make check \
-        > $LogDir/llvm.check.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
-    make -C tools/clang test \
-        > $LogDir/clang.check.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
-    make unittests \
-        > $LogDir/llvm.unittests.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+    make check
+    make -C tools/clang test
+    make unittests
     cd -
 }
 
@@ -273,8 +263,7 @@ function configure_llvm_gcc() {
         --enable-languages=$languages"
     $llvmgcc42_srcdir/configure --prefix=$InstallDir \
         --program-prefix=llvm- --enable-llvm=$llvmObjDir \
-        --enable-languages=$languages \
-        > $LogDir/llvm-gcc.configure.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+        --enable-languages=$languages
     cd -
 }
 
@@ -292,13 +281,11 @@ function build_llvm_gcc() {
     cd $ObjDir
     echo "# Compiling llvm-gcc $Release-rc$RC $Flavor"
     echo "# make -j $NumJobs bootstrap LLVM_VERSION_INFO=$Release"
-    make -j $NumJobs bootstrap LLVM_VERSION_INFO=$Release $CompilerFlags \
-        > $LogDir/llvm-gcc.make.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+    make -j $NumJobs bootstrap LLVM_VERSION_INFO=$Release $CompilerFlags
 
     echo "# Installing llvm-gcc $Release-rc$RC $Flavor"
     echo "# make install"
-    make install \
-        > $LogDir/llvm-gcc.install.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+    make install
     cd -
 }
 
@@ -306,7 +293,6 @@ if [ "$do_checkout" = "yes" ]; then
     export_sources
 fi
 
-(
 Flavors="Debug Release Release+Asserts"
 if [ "$do_64bit" = "yes" ]; then
     Flavors="$Flavors Release-64"
@@ -390,9 +376,7 @@ for Flavor in $Flavors ; do
     echo "# Testing - built with llvmgcc42"
     test_llvmCore 2 $Flavor $llvmCore_phase2_objdir
 done
-) 2>&1 | tee $LogDir/testing.$Release-rc$RC.log
 
 # Woo hoo!
 echo "### Testing Finished ###"
-echo "### Logs: $LogDir"
 exit 0
