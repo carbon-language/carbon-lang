@@ -224,7 +224,7 @@ public:
   /// \param TC - The default host tool chain.
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildActions(const ToolChain &TC, const InputArgList &Args,
+  void BuildActions(const ToolChain &TC, const DerivedArgList &Args,
                     ActionList &Actions) const;
 
   /// BuildUniversalActions - Construct the list of actions to perform
@@ -233,7 +233,7 @@ public:
   /// \param TC - The default host tool chain.
   /// \param Args - The input arguments.
   /// \param Actions - The list to store the resulting actions onto.
-  void BuildUniversalActions(const ToolChain &TC, const InputArgList &Args,
+  void BuildUniversalActions(const ToolChain &TC, const DerivedArgList &Args,
                              ActionList &Actions) const;
 
   /// BuildJobs - Bind actions to concrete tools and translate

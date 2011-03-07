@@ -308,10 +308,10 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   // Construct the list of abstract actions to perform for this compilation.
   if (Host->useDriverDriver())
-    BuildUniversalActions(C->getDefaultToolChain(), C->getInputArgs(),
+    BuildUniversalActions(C->getDefaultToolChain(), C->getArgs(),
                           C->getActions());
   else
-    BuildActions(C->getDefaultToolChain(), C->getInputArgs(), C->getActions());
+    BuildActions(C->getDefaultToolChain(), C->getArgs(), C->getActions());
 
   if (CCCPrintActions) {
     PrintActions(*C);
@@ -593,7 +593,7 @@ static bool ContainsCompileAction(const Action *A) {
 }
 
 void Driver::BuildUniversalActions(const ToolChain &TC,
-                                   const InputArgList &Args,
+                                   const DerivedArgList &Args,
                                    ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building universal build actions");
   // Collect the list of architectures. Duplicates are allowed, but should only
@@ -688,7 +688,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
   }
 }
 
-void Driver::BuildActions(const ToolChain &TC, const InputArgList &Args,
+void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
                           ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation actions");
   // Start by constructing the list of inputs and their types.
@@ -802,7 +802,7 @@ void Driver::BuildActions(const ToolChain &TC, const InputArgList &Args,
   if (CCCIsCPP && Inputs.empty()) {
     // If called as standalone preprocessor, stdin is processed
     // if no other input is present.
-    unsigned Index = Args.MakeIndex("-");
+    unsigned Index = Args.getBaseArgs().MakeIndex("-");
     Arg *A = Opts->ParseOneArg(Args, Index);
     A->claim();
     Inputs.push_back(std::make_pair(types::TY_C, A));
