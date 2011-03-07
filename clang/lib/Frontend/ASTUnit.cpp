@@ -20,6 +20,8 @@
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/Job.h"
+#include "clang/Driver/ArgList.h"
+#include "clang/Driver/Options.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
@@ -1612,6 +1614,12 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
 
     llvm::OwningPtr<driver::Compilation> C(
       TheDriver.BuildCompilation(Args.size(), Args.data()));
+
+    // Just print the cc1 options if -### was present.
+    if (C->getArgs().hasArg(driver::options::OPT__HASH_HASH_HASH)) {
+      C->PrintJob(llvm::errs(), C->getJobs(), "\n", true);
+      return 0;
+    }
 
     // We expect to get back exactly one command job, if we didn't something
     // failed.
