@@ -94,7 +94,7 @@ struct {}; // expected-warning{{declaration does not declare anything}}
 struct s2 {
   union {
     int a;
-  }
+  } // expected-warning{{expected ';' at end of declaration list}}
 }; // expected-error{{expected member name or ';' after declaration specifiers}}
 
 // Make sure we don't a.k.a. anonymous structs.

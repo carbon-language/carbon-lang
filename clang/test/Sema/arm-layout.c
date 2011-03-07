@@ -42,7 +42,7 @@ check(s3_offset_0, __builtin_offsetof(struct s3, field0) == 0);
 check(s3_offset_1, __builtin_offsetof(struct s3, field2) == 7);
 
 struct s4 {
-  int field0 : 4
+  int field0 : 4;
 };
 #ifdef __ARM_EABI__
 check(s4_size, sizeof(struct s4) == 4);

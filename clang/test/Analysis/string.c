@@ -68,7 +68,7 @@ label:
 }
 
 void strlen_subregion() {
-  struct two_strings { char a[2], b[2] };
+  struct two_strings { char a[2], b[2]; };
   extern void use_two_strings(struct two_strings *);
 
   struct two_strings z;
@@ -200,7 +200,7 @@ label:
 }
 
 void strnlen_subregion() {
-  struct two_stringsn { char a[2], b[2] };
+  struct two_stringsn { char a[2], b[2]; };
   extern void use_two_stringsn(struct two_stringsn *);
 
   struct two_stringsn z;

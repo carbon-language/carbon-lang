@@ -46,7 +46,7 @@ struct Three data[] = {
   { { .two = { 1.0f, 2.0f } } } // expected-warning {{missing field 'e' initializer}}
 };
 
-struct { int:5; int a; int:5; int b; int:5 } noNamedImplicit[] = {
+struct { int:5; int a; int:5; int b; int:5; } noNamedImplicit[] = {
   { 1, 2 },
   { 1 } // expected-warning {{missing field 'b' initializer}}
 };
