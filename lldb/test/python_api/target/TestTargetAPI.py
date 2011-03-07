@@ -14,6 +14,19 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    def test_launch_new_process_and_redirect_stdout_with_dsym(self):
+        """Exercise SBTaget.Launch() API."""
+        self.buildDsym()
+        self.launch_new_process_and_redirect_stdout()
+
+    @python_api_test
+    def test_launch_new_process_and_redirect_stdout_with_dwarf(self):
+        """Exercise SBTarget.Launch() API."""
+        self.buildDwarf()
+        self.launch_new_process_and_redirect_stdout()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_resolve_symbol_context_with_address_with_dsym(self):
         """Exercise SBTaget.ResolveSymbolContextForAddress() API."""
         self.buildDsym()
@@ -31,6 +44,32 @@ class TargetAPITestCase(TestBase):
         # Find the line number to of function 'c'.
         self.line1 = line_number('main.c', '// Find the line number for breakpoint 1 here.')
         self.line2 = line_number('main.c', '// Find the line number for breakpoint 2 here.')
+
+    def launch_new_process_and_redirect_stdout(self):
+        """Exercise SBTaget.Launch() API with redirected stdout."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        # Now launch the process, do not stop at entry point, and redirect stdout to "stdout.txt" file.
+        # The inferior should run to completion, so there's no need to assign to self.process to
+        # have the inferior kiiled during test teardown.
+        error = lldb.SBError()
+        process = target.Launch (self.dbg.GetListener(), None, None, None, "stdout.txt", None, None, 0, False, error)
+
+        # The 'stdout.txt' file should now exist.
+        self.assertTrue(os.path.isfile("stdout.txt"),
+                        "'stdout.txt' exists due to redirected stdout via SBTarget.Launch() API.")
+
+        # Read the output file produced by running the program.
+        with open('stdout.txt', 'r') as f:
+            output = f.read()
+
+        self.expect(output, exe=False,
+            substrs = ["a(1)", "b(2)", "a(3)"])
+
 
     def resolve_symbol_context_with_address(self):
         """Exercise SBTaget.ResolveSymbolContextForAddress() API."""
