@@ -19,16 +19,56 @@
 
 namespace llvm {
 
-  /// getPointerUnionTypeNum - If the argument has type PT1* or PT2* return
-  /// false or true respectively.
+  /// \brief Statically get an integer for a type. For:
+  /// @code
+  /// PointerUnionTypeNum<PT1, PT2>::template NumFor<T>::Result
+  /// @endcode
+  /// Result will be 0 if T is PT1, 1 if it is PT2, and -1 otherwise.
   template <typename PT1, typename PT2>
-  static inline int getPointerUnionTypeNum(PT1 *P) { return 0; }
-  template <typename PT1, typename PT2>
-  static inline int getPointerUnionTypeNum(PT2 *P) { return 1; }
-  template <typename PT1, typename PT2>
-  static inline int getPointerUnionTypeNum(...) { return -1; }
-  
-  
+  struct PointerUnionTypeNum {
+  private:
+    struct IsNeither { char x; };
+    struct IsPT1 { char x[2]; };
+    struct IsPT2 { char x[3]; };
+
+    static IsPT1 determine(PT1 *P);
+    static IsPT2 determine(PT2 *P);
+    static IsNeither determine(...);
+
+  public:
+    template <typename T>
+    struct NumFor {
+      static const int Result = (int)sizeof(determine((T*)0)) - 2;
+    };
+  };
+
+  template <typename T>
+  struct PointerUnionTypeSelectorReturn {
+    typedef T Return;
+  };
+
+  /// \brief Get a type based on whether two types are the same or not. For:
+  /// @code
+  /// typedef typename PointerUnionTypeSelector<T1, T2, EQ, NE>::Return Ret;
+  /// @endcode
+  /// Ret will be EQ type if T1 is same as T2 or NE type otherwise.
+  template <typename T1, typename T2, typename RET_EQ, typename RET_NE>
+  struct PointerUnionTypeSelector {
+    typedef typename PointerUnionTypeSelectorReturn<RET_NE>::Return Return;
+  };
+
+  template <typename T, typename RET_EQ, typename RET_NE>
+  struct PointerUnionTypeSelector<T, T, RET_EQ, RET_NE> {
+    typedef typename PointerUnionTypeSelectorReturn<RET_EQ>::Return Return;
+  };
+
+  template <typename T1, typename T2, typename RET_EQ, typename RET_NE>
+  struct PointerUnionTypeSelectorReturn<
+                            PointerUnionTypeSelector<T1, T2, RET_EQ, RET_NE> > {
+    typedef typename PointerUnionTypeSelector<T1, T2, RET_EQ, RET_NE>::Return
+        Return;
+  };
+
   /// Provide PointerLikeTypeTraits for void* that is used by PointerUnion
   /// for the two template arguments.
   template <typename PT1, typename PT2>
@@ -87,8 +127,10 @@ namespace llvm {
     /// is<T>() return true if the Union currently holds the type matching T.
     template<typename T>
     int is() const {
-      int TyNo = ::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0);
-      assert(TyNo != -1 && "Type query could never succeed on PointerUnion!");
+      static const int TyNo =
+              ::llvm::PointerUnionTypeNum<PT1, PT2>::template NumFor<T>::Result;
+      char TYPE_IS_NOT_IN_UNION[TyNo*2+1]; // statically check the type.
+      (void)TYPE_IS_NOT_IN_UNION;
       return static_cast<int>(Val.getInt()) == TyNo;
     }
     
@@ -175,6 +217,34 @@ namespace llvm {
     typedef PointerUnion<InnerUnion, PT3> ValTy;
   private:
     ValTy Val;
+
+    struct IsInnerUnion {
+      ValTy Val;
+      IsInnerUnion(ValTy val) : Val(val) { }
+      template<typename T>
+      int is() const {
+        return Val.template is<InnerUnion>() && 
+               Val.template get<InnerUnion>().template is<T>();
+      }
+      template<typename T>
+      T get() const {
+        return Val.template get<InnerUnion>().template get<T>();
+      }
+    };
+
+    struct IsPT3 {
+      ValTy Val;
+      IsPT3(ValTy val) : Val(val) { }
+      template<typename T>
+      int is() const {
+        return Val.template is<T>();
+      }
+      template<typename T>
+      T get() const {
+        return Val.template get<T>();
+      }
+    };
+
   public:
     PointerUnion3() {}
     
@@ -196,11 +266,12 @@ namespace llvm {
     /// is<T>() return true if the Union currently holds the type matching T.
     template<typename T>
     int is() const {
-      // Is it PT1/PT2?
-      if (::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0) != -1)
-        return Val.template is<InnerUnion>() && 
-               Val.template get<InnerUnion>().template is<T>();
-      return Val.template is<T>();
+      // If T is PT1/PT2 choose IsInnerUnion otherwise choose IsPT3.
+      typedef typename
+        ::llvm::PointerUnionTypeSelector<PT1, T, IsInnerUnion,
+          ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3 >
+                                                                   >::Return Ty;
+      return Ty(Val).is<T>();
     }
     
     /// get<T>() - Return the value of the specified pointer type. If the
@@ -208,11 +279,12 @@ namespace llvm {
     template<typename T>
     T get() const {
       assert(is<T>() && "Invalid accessor called");
-      // Is it PT1/PT2?
-      if (::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0) != -1)
-        return Val.template get<InnerUnion>().template get<T>();
-      
-      return Val.template get<T>();
+      // If T is PT1/PT2 choose IsInnerUnion otherwise choose IsPT3.
+      typedef typename
+        ::llvm::PointerUnionTypeSelector<PT1, T, IsInnerUnion,
+          ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3 >
+                                                                   >::Return Ty;
+      return Ty(Val).get<T>();
     }
     
     /// dyn_cast<T>() - If the current value is of the specified pointer type,
@@ -302,12 +374,13 @@ namespace llvm {
     /// is<T>() return true if the Union currently holds the type matching T.
     template<typename T>
     int is() const {
-      // Is it PT1/PT2?
-      if (::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0) != -1)
-        return Val.template is<InnerUnion1>() && 
-               Val.template get<InnerUnion1>().template is<T>();
-      return Val.template is<InnerUnion2>() && 
-             Val.template get<InnerUnion2>().template is<T>();
+      // If T is PT1/PT2 choose InnerUnion1 otherwise choose InnerUnion2.
+      typedef typename
+        ::llvm::PointerUnionTypeSelector<PT1, T, InnerUnion1,
+          ::llvm::PointerUnionTypeSelector<PT2, T, InnerUnion1, InnerUnion2 >
+                                                                   >::Return Ty;
+      return Val.template is<Ty>() && 
+             Val.template get<Ty>().template is<T>();
     }
     
     /// get<T>() - Return the value of the specified pointer type. If the
@@ -315,11 +388,12 @@ namespace llvm {
     template<typename T>
     T get() const {
       assert(is<T>() && "Invalid accessor called");
-      // Is it PT1/PT2?
-      if (::llvm::getPointerUnionTypeNum<PT1, PT2>((T*)0) != -1)
-        return Val.template get<InnerUnion1>().template get<T>();
-      
-      return Val.template get<InnerUnion2>().template get<T>();
+      // If T is PT1/PT2 choose InnerUnion1 otherwise choose InnerUnion2.
+      typedef typename
+        ::llvm::PointerUnionTypeSelector<PT1, T, InnerUnion1,
+          ::llvm::PointerUnionTypeSelector<PT2, T, InnerUnion1, InnerUnion2 >
+                                                                   >::Return Ty;
+      return Val.template get<Ty>().template get<T>();
     }
     
     /// dyn_cast<T>() - If the current value is of the specified pointer type,
