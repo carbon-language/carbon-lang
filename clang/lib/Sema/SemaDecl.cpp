@@ -7374,20 +7374,27 @@ void Sema::ActOnFields(Scope* S,
       continue;
     } else if (FDTy->isIncompleteArrayType() && Record && 
                ((i == NumFields - 1 && !Record->isUnion()) ||
-                (getLangOptions().Microsoft &&
+                ((getLangOptions().Microsoft || getLangOptions().CPlusPlus) &&
                  (i == NumFields - 1 || Record->isUnion())))) {
       // Flexible array member.
-      // Microsoft is more permissive regarding flexible array.
+      // Microsoft and g++ is more permissive regarding flexible array.
       // It will accept flexible array in union and also
       // as the sole element of a struct/class.
       if (getLangOptions().Microsoft) {
         if (Record->isUnion()) 
-          Diag(FD->getLocation(), diag::ext_flexible_array_union)
+          Diag(FD->getLocation(), diag::ext_flexible_array_union_ms)
             << FD->getDeclName();
         else if (NumFields == 1) 
-          Diag(FD->getLocation(), diag::ext_flexible_array_empty_aggregate)
+          Diag(FD->getLocation(), diag::ext_flexible_array_empty_aggregate_ms)
             << FD->getDeclName() << Record->getTagKind();
-      } else  if (NumNamedMembers < 1) {
+      } else if (getLangOptions().CPlusPlus) {
+        if (Record->isUnion()) 
+          Diag(FD->getLocation(), diag::ext_flexible_array_union_gnu)
+            << FD->getDeclName();
+        else if (NumFields == 1) 
+          Diag(FD->getLocation(), diag::ext_flexible_array_empty_aggregate_gnu)
+            << FD->getDeclName() << Record->getTagKind();
+      } else if (NumNamedMembers < 1) {
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct)
           << FD->getDeclName();
         FD->setInvalidDecl();

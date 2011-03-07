@@ -51,5 +51,19 @@ class A {
 
 union B {
   int s;
-  char c[]; // expected-error {{field has incomplete type 'char []'}}
+  char c[];
 };
+
+namespace rdar9065507 {
+
+struct StorageBase {
+  long ref_count;
+  unsigned size;
+  unsigned capacity;
+};
+
+struct Storage : StorageBase {
+  int data[];
+};
+
+}
