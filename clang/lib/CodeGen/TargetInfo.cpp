@@ -358,7 +358,7 @@ bool UseX86_MMXType(const llvm::Type *IRType) {
 static const llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
                                                 llvm::StringRef Constraint,
                                                 const llvm::Type* Ty) {
-  if (Constraint=="y" && Ty->isVectorTy())
+  if ((Constraint == "y" || Constraint == "&y") && Ty->isVectorTy())
     return llvm::Type::getX86_MMXTy(CGF.getLLVMContext());
   return Ty;
 }
