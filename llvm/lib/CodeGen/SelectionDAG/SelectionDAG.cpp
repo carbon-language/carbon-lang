@@ -1418,9 +1418,9 @@ SDValue SelectionDAG::getMDNode(const MDNode *MD) {
 
 /// getShiftAmountOperand - Return the specified value casted to
 /// the target's desired shift amount type.
-SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
+SDValue SelectionDAG::getShiftAmountOperand(EVT LHSTy, SDValue Op) {
   EVT OpTy = Op.getValueType();
-  MVT ShTy = TLI.getShiftAmountTy(OpTy);
+  MVT ShTy = TLI.getShiftAmountTy(LHSTy);
   if (OpTy == ShTy || OpTy.isVector()) return Op;
 
   ISD::NodeType Opcode = OpTy.bitsGT(ShTy) ?  ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -6314,7 +6314,8 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
     case ISD::ROTL:
     case ISD::ROTR:
       Scalars.push_back(getNode(N->getOpcode(), dl, EltVT, Operands[0],
-                                getShiftAmountOperand(Operands[1])));
+                                getShiftAmountOperand(Operands[0].getValueType(),
+                                                      Operands[1])));
       break;
     case ISD::SIGN_EXTEND_INREG:
     case ISD::FP_ROUND_INREG: {

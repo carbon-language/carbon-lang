@@ -438,12 +438,12 @@ public:
   SDValue getConvertRndSat(EVT VT, DebugLoc dl, SDValue Val, SDValue DTy,
                            SDValue STy,
                            SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
-  
+
   /// getVectorShuffle - Return an ISD::VECTOR_SHUFFLE node.  The number of
   /// elements in VT, which must be a vector type, must match the number of
   /// mask elements NumElts.  A integer mask element equal to -1 is treated as
   /// undefined.
-  SDValue getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1, SDValue N2, 
+  SDValue getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1, SDValue N2,
                            const int *MaskElts);
 
   /// getSExtOrTrunc - Convert Op, which must be of integer type, to the
@@ -671,10 +671,10 @@ public:
 
   /// getMDNode - Return an MDNodeSDNode which holds an MDNode.
   SDValue getMDNode(const MDNode *MD);
-  
+
   /// getShiftAmountOperand - Return the specified value casted to
   /// the target's desired shift amount type.
-  SDValue getShiftAmountOperand(SDValue Op);
+  SDValue getShiftAmountOperand(EVT LHSTy, SDValue Op);
 
   /// UpdateNodeOperands - *Mutate* the specified node in-place to have the
   /// specified operands.  If the resultant node already exists in the DAG,
@@ -901,7 +901,7 @@ public:
   SmallVector<SDDbgValue*,2> &GetDbgValues(const SDNode* SD) {
     return DbgInfo->getSDDbgValues(SD);
   }
-  
+
   /// TransferDbgValues - Transfer SDDbgValues.
   void TransferDbgValues(SDValue From, SDValue To);
 
@@ -911,11 +911,11 @@ public:
 
   SDDbgInfo::DbgIterator DbgBegin() { return DbgInfo->DbgBegin(); }
   SDDbgInfo::DbgIterator DbgEnd()   { return DbgInfo->DbgEnd(); }
-  SDDbgInfo::DbgIterator ByvalParmDbgBegin() { 
-    return DbgInfo->ByvalParmDbgBegin(); 
+  SDDbgInfo::DbgIterator ByvalParmDbgBegin() {
+    return DbgInfo->ByvalParmDbgBegin();
   }
-  SDDbgInfo::DbgIterator ByvalParmDbgEnd()   { 
-    return DbgInfo->ByvalParmDbgEnd(); 
+  SDDbgInfo::DbgIterator ByvalParmDbgEnd()   {
+    return DbgInfo->ByvalParmDbgEnd();
   }
 
   void dump() const;
@@ -972,7 +972,7 @@ public:
   /// semantics as an ADD.  This handles the equivalence:
   ///     X|Cst == X+Cst iff X&Cst = 0.
   bool isBaseWithConstantOffset(SDValue Op) const;
-  
+
   /// isKnownNeverNan - Test whether the given SDValue is known to never be NaN.
   bool isKnownNeverNaN(SDValue Op) const;
 
@@ -997,8 +997,8 @@ public:
   /// vector op and fill the end of the resulting vector with UNDEFS.
   SDValue UnrollVectorOp(SDNode *N, unsigned ResNE = 0);
 
-  /// isConsecutiveLoad - Return true if LD is loading 'Bytes' bytes from a 
-  /// location that is 'Dist' units away from the location that the 'Base' load 
+  /// isConsecutiveLoad - Return true if LD is loading 'Bytes' bytes from a
+  /// location that is 'Dist' units away from the location that the 'Base' load
   /// is loading from.
   bool isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base,
                          unsigned Bytes, int Dist) const;
@@ -1032,7 +1032,7 @@ private:
   std::vector<SDNode*> ValueTypeNodes;
   std::map<EVT, SDNode*, EVT::compareRawBits> ExtendedValueTypeNodes;
   StringMap<SDNode*> ExternalSymbols;
-  
+
   std::map<std::pair<std::string, unsigned char>,SDNode*> TargetExternalSymbols;
 };
 
