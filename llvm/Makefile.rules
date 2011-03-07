@@ -655,8 +655,8 @@ ifeq ($(BUILD_COMPONENT), 1)
   Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(CPPFLAGS) $(TargetCommonOpts) \
                   $(CompileCommonOpts) $(CXX.Flags) -E
   Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
-		  $(LDFLAGS) \
-                  $(TargetCommonOpts) $(CompileCommonOpts) $(LD.Flags) $(Strip)
+		  $(LD.Flags) $(LDFLAGS) \
+                  $(TargetCommonOpts) $(CompileCommonOpts) $(Strip)
 else
   Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
@@ -664,8 +664,8 @@ else
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
   Preprocess.CXX= $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
                   $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(LDFLAGS) \
-                  $(TargetCommonOpts)  $(CompileCommonOpts) $(LD.Flags) $(Strip)
+  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(LD.Flags) \
+                  $(LDFLAGS) $(TargetCommonOpts)  $(CompileCommonOpts) $(Strip)
 endif
 
 BCCompile.C   = $(LLVMCC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
