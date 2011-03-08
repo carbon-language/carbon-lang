@@ -445,7 +445,8 @@ void LICM::sink(Instruction &I) {
   // enough that we handle it as a special (more efficient) case.  It is more
   // efficient to handle because there are no PHI nodes that need to be placed.
   if (ExitBlocks.size() == 1) {
-    if (!DT->dominates(I.getParent(), ExitBlocks[0])) {
+    if (!isa<DbgInfoIntrinsic>(I) && 
+        !DT->dominates(I.getParent(), ExitBlocks[0])) {
       // Instruction is not used, just delete it.
       CurAST->deleteValue(&I);
       // If I has users in unreachable blocks, eliminate.
