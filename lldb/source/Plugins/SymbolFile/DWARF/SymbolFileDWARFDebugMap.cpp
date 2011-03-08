@@ -165,7 +165,7 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
         if (oso_symbol)
         {
             FileSpec oso_file_spec(oso_symbol->GetMangled().GetName().AsCString(), true);
-//#define SYMBOL_FILE_DWARF_DEBUG_MODULES 1
+#define SYMBOL_FILE_DWARF_DEBUG_MODULES 1
 #if defined (SYMBOL_FILE_DWARF_DEBUG_MODULES)
             // Normally we don't want the .o files we open added to the shared
             // module list. This is because we will add our own section 
