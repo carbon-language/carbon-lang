@@ -95,12 +95,10 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
 
   // The GC attributes are usually written with macros;  special-case them.
   if (useInstantiationLoc && loc.isMacroID() && attr.getParameterName()) {
-    SourceLocation instLoc = S.getSourceManager().getInstantiationLoc(loc);
-    llvm::StringRef macro = S.getPreprocessor().getSpelling(instLoc);
-    if ((macro == "__strong" && attr.getParameterName()->isStr("strong")) ||
-        (macro == "__weak" && attr.getParameterName()->isStr("weak"))) {
-      loc = instLoc;
-      name = macro;
+    if (attr.getParameterName()->isStr("strong")) {
+      if (S.findMacroSpelling(loc, "__strong")) name = "__strong";
+    } else if (attr.getParameterName()->isStr("weak")) {
+      if (S.findMacroSpelling(loc, "__weak")) name = "__weak";
     }
   }
 

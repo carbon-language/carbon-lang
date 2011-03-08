@@ -592,6 +592,27 @@ Sema::Diag(SourceLocation Loc, const PartialDiagnostic& PD) {
   return Builder;
 }
 
+/// \brief Looks through the macro-instantiation chain for the given
+/// location, looking for a macro instantiation with the given name.
+/// If one is found, returns true and sets the location to that
+/// instantiation loc.
+bool Sema::findMacroSpelling(SourceLocation &locref, llvm::StringRef name) {
+  SourceLocation loc = locref;
+  if (!loc.isMacroID()) return false;
+
+  // There's no good way right now to look at the intermediate
+  // instantiations, so just jump to the instantiation location.
+  loc = getSourceManager().getInstantiationLoc(loc);
+
+  // If that's written with the name, stop here.
+  llvm::SmallVector<char, 16> buffer;
+  if (getPreprocessor().getSpelling(loc, buffer) == name) {
+    locref = loc;
+    return true;
+  }
+  return false;
+}
+
 /// \brief Determines the active Scope associated with the given declaration
 /// context.
 ///

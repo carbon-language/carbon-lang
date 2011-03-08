@@ -278,17 +278,6 @@ void Preprocessor::CodeCompleteNaturalLanguage() {
     CodeComplete->CodeCompleteNaturalLanguage();
 }
 
-llvm::StringRef Preprocessor::getSpelling(SourceLocation loc,
-                                          bool *invalid) const {
-  bool invalidTemp = false;
-  if (!invalid) invalid = &invalidTemp;
-  const char *begin = SourceMgr.getCharacterData(loc, invalid);
-  if (*invalid) return llvm::StringRef();
-
-  unsigned length = Lexer::MeasureTokenLength(loc, SourceMgr, Features);
-  return llvm::StringRef(begin, length);
-}
-
 /// getSpelling - This method is used to get the spelling of a token into a
 /// SmallVector. Note that the returned StringRef may not point to the
 /// supplied buffer if a copy can be avoided.

@@ -221,6 +221,54 @@ void Lexer::Stringify(llvm::SmallVectorImpl<char> &Str) {
 /// after trigraph expansion and escaped-newline folding.  In particular, this
 /// wants to get the true, uncanonicalized, spelling of things like digraphs
 /// UCNs, etc.
+llvm::StringRef Lexer::getSpelling(SourceLocation loc,
+                                   llvm::SmallVectorImpl<char> &buffer,
+                                   const SourceManager &SM,
+                                   const LangOptions &options,
+                                   bool *invalid) {
+  // Break down the source location.
+  std::pair<FileID, unsigned> locInfo = SM.getDecomposedLoc(loc);
+
+  // Try to the load the file buffer.
+  bool invalidTemp = false;
+  llvm::StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+  if (invalidTemp) {
+    if (invalid) *invalid = true;
+    return llvm::StringRef();
+  }
+
+  const char *tokenBegin = file.data() + locInfo.second;
+
+  // Lex from the start of the given location.
+  Lexer lexer(SM.getLocForStartOfFile(locInfo.first), options,
+              file.begin(), tokenBegin, file.end());
+  Token token;
+  lexer.LexFromRawLexer(token);
+
+  unsigned length = token.getLength();
+
+  // Common case:  no need for cleaning.
+  if (!token.needsCleaning())
+    return llvm::StringRef(tokenBegin, length);
+  
+  // Hard case, we need to relex the characters into the string.
+  buffer.clear();
+  buffer.reserve(length);
+  
+  for (const char *ti = tokenBegin, *te = ti + length; ti != te; ) {
+    unsigned charSize;
+    buffer.push_back(Lexer::getCharAndSizeNoWarn(ti, charSize, options));
+    ti += charSize;
+  }
+
+  return llvm::StringRef(buffer.data(), buffer.size());
+}
+
+/// getSpelling() - Return the 'spelling' of this token.  The spelling of a
+/// token are the characters used to represent the token in the source file
+/// after trigraph expansion and escaped-newline folding.  In particular, this
+/// wants to get the true, uncanonicalized, spelling of things like digraphs
+/// UCNs, etc.
 std::string Lexer::getSpelling(const Token &Tok, const SourceManager &SourceMgr,
                                const LangOptions &Features, bool *Invalid) {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");

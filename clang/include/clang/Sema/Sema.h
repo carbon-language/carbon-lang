@@ -678,6 +678,8 @@ public:
   /// \brief Build a partial diagnostic.
   PartialDiagnostic PDiag(unsigned DiagID = 0); // in SemaInternal.h
 
+  bool findMacroSpelling(SourceLocation &loc, llvm::StringRef name);
+
   ExprResult Owned(Expr* E) { return E; }
   ExprResult Owned(ExprResult R) { return R; }
   StmtResult Owned(Stmt* S) { return S; }
@@ -1704,6 +1706,7 @@ public:
   /// initialization.
   void CollectIvarsToConstructOrDestruct(ObjCInterfaceDecl *OI,
                                   llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
+
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:

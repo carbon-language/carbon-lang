@@ -236,6 +236,20 @@ public:
                                  const SourceManager &SourceMgr,
                                  const LangOptions &Features, 
                                  bool *Invalid = 0);
+
+  /// getSpelling - This method is used to get the spelling of the
+  /// token at the given source location.  If, as is usually true, it
+  /// is not necessary to copy any data, then the returned string may
+  /// not point into the provided buffer.
+  ///
+  /// This method lexes at the instantiation depth of the given
+  /// location and does not jump to the instantiation or spelling
+  /// location.
+  static llvm::StringRef getSpelling(SourceLocation loc,
+                                     llvm::SmallVectorImpl<char> &buffer,
+                                     const SourceManager &SourceMgr,
+                                     const LangOptions &Features,
+                                     bool *invalid = 0);
   
   /// MeasureTokenLength - Relex the token at the specified location and return
   /// its length in bytes in the input file.  If the token needs cleaning (e.g.

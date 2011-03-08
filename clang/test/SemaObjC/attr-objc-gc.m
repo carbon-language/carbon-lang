@@ -10,3 +10,10 @@ static id __attribute((objc_gc(hello))) f; // expected-warning{{'objc_gc' attrib
 static int __attribute__((objc_gc(weak))) g; // expected-warning {{'objc_gc' only applies to pointer types; type here is 'int'}}
 
 static __weak int h; // expected-warning {{'__weak' only applies to pointer types; type here is 'int'}}
+
+// TODO: it would be great if this reported as __weak
+#define WEAK __weak
+static WEAK int h; // expected-warning {{'objc_gc' only applies to pointer types; type here is 'int'}}
+
+/* expected-warning {{'__weak' only applies to pointer types; type here is 'int'}}*/ static __we\
+ak int i;

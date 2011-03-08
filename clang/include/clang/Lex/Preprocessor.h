@@ -644,10 +644,18 @@ public:
     return Diags->Report(Tok.getLocation(), DiagID);
   }
 
-  /// getSpelling() - Return the 'spelling' of the token at the given location.
+  /// getSpelling() - Return the 'spelling' of the token at the given
+  /// location; does not go up to the spelling location or down to the
+  /// instantiation location.
   ///
+  /// \param buffer A buffer which will be used only if the token requires
+  ///   "cleaning", e.g. if it contains trigraphs or escaped newlines
   /// \param invalid If non-null, will be set \c true if an error occurs.
-  llvm::StringRef getSpelling(SourceLocation loc, bool *invalid = 0) const;
+  llvm::StringRef getSpelling(SourceLocation loc,
+                              llvm::SmallVectorImpl<char> &buffer,
+                              bool *invalid = 0) const {
+    return Lexer::getSpelling(loc, buffer, SourceMgr, Features, invalid);
+  }
 
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
   /// token is the characters used to represent the token in the source file

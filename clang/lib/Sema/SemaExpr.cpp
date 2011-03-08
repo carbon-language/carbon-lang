@@ -5261,9 +5261,8 @@ bool Sema::DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
     // In this case, check to make sure that we got here from a "NULL"
     // string in the source code.
     NullExpr = NullExpr->IgnoreParenImpCasts();
-    SourceLocation Loc =
-      getSourceManager().getInstantiationLoc(NullExpr->getExprLoc());
-    if (getPreprocessor().getSpelling(Loc) != "NULL")
+    SourceLocation loc = NullExpr->getExprLoc();
+    if (!findMacroSpelling(loc, "NULL"))
       return false;
   }
 
