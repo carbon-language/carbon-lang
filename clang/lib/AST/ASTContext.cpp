@@ -127,7 +127,8 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
         }
         
         Param = NonTypeTemplateParmDecl::Create(*this, getTranslationUnitDecl(),
-                                                SourceLocation(), 
+                                                SourceLocation(),
+                                                SourceLocation(),
                                                 NTTP->getDepth(),
                                                 NTTP->getPosition(), 0, 
                                                 T,
@@ -137,7 +138,8 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                                                 ExpandedTInfos.data());
       } else {
         Param = NonTypeTemplateParmDecl::Create(*this, getTranslationUnitDecl(),
-                                                SourceLocation(), 
+                                                SourceLocation(),
+                                                SourceLocation(),
                                                 NTTP->getDepth(),
                                                 NTTP->getPosition(), 0, 
                                                 T,
@@ -3389,6 +3391,7 @@ QualType ASTContext::getCFConstantStringType() const {
     // Create fields
     for (unsigned i = 0; i < 4; ++i) {
       FieldDecl *Field = FieldDecl::Create(*this, CFConstantStringTypeDecl,
+                                           SourceLocation(),
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
@@ -3429,6 +3432,7 @@ QualType ASTContext::getNSConstantStringType() const {
     // Create fields
     for (unsigned i = 0; i < 3; ++i) {
       FieldDecl *Field = FieldDecl::Create(*this, NSConstantStringTypeDecl,
+                                           SourceLocation(),
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
@@ -3467,6 +3471,7 @@ QualType ASTContext::getObjCFastEnumerationStateType() const {
     for (size_t i = 0; i < 4; ++i) {
       FieldDecl *Field = FieldDecl::Create(*this,
                                            ObjCFastEnumerationStateTypeDecl,
+                                           SourceLocation(),
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
@@ -3502,8 +3507,7 @@ QualType ASTContext::getBlockDescriptorType() const {
   };
 
   for (size_t i = 0; i < 2; ++i) {
-    FieldDecl *Field = FieldDecl::Create(*this,
-                                         T,
+    FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
                                          SourceLocation(),
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*TInfo=*/0,
@@ -3551,8 +3555,7 @@ QualType ASTContext::getBlockDescriptorExtendedType() const {
   };
 
   for (size_t i = 0; i < 4; ++i) {
-    FieldDecl *Field = FieldDecl::Create(*this,
-                                         T,
+    FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
                                          SourceLocation(),
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*TInfo=*/0,
@@ -3640,6 +3643,7 @@ ASTContext::BuildByRefType(llvm::StringRef DeclName, QualType Ty) const {
     if (!HasCopyAndDispose && i >=4 && i <= 5)
       continue;
     FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
+                                         SourceLocation(),
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0, /*Mutable=*/false);

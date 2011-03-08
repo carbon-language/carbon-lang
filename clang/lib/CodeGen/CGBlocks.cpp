@@ -1076,6 +1076,7 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
 
   FunctionDecl *FD = FunctionDecl::Create(C,
                                           C.getTranslationUnitDecl(),
+                                          SourceLocation(),
                                           SourceLocation(), II, C.VoidTy, 0,
                                           SC_Static,
                                           SC_None,
@@ -1166,6 +1167,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
     = &CGM.getContext().Idents.get("__destroy_helper_block_");
 
   FunctionDecl *FD = FunctionDecl::Create(C, C.getTranslationUnitDecl(),
+                                          SourceLocation(),
                                           SourceLocation(), II, C.VoidTy, 0,
                                           SC_Static,
                                           SC_None,
@@ -1269,6 +1271,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, BlockFieldFlags flags,
 
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
+                                          SourceLocation(),
                                           SourceLocation(), II, R, 0,
                                           SC_Static,
                                           SC_None,
@@ -1339,6 +1342,7 @@ CodeGenFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
 
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
+                                          SourceLocation(),
                                           SourceLocation(), II, R, 0,
                                           SC_Static,
                                           SC_None,

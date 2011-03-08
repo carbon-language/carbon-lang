@@ -2369,6 +2369,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   if (CXXConstructorDecl *FromConstructor = dyn_cast<CXXConstructorDecl>(D)) {
     ToFunction = CXXConstructorDecl::Create(Importer.getToContext(),
                                             cast<CXXRecordDecl>(DC),
+                                            D->getInnerLocStart(),
                                             NameInfo, T, TInfo, 
                                             FromConstructor->isExplicit(),
                                             D->isInlineSpecified(), 
@@ -2376,6 +2377,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   } else if (isa<CXXDestructorDecl>(D)) {
     ToFunction = CXXDestructorDecl::Create(Importer.getToContext(),
                                            cast<CXXRecordDecl>(DC),
+                                           D->getInnerLocStart(),
                                            NameInfo, T, TInfo,
                                            D->isInlineSpecified(),
                                            D->isImplicit());
@@ -2383,18 +2385,21 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                                            = dyn_cast<CXXConversionDecl>(D)) {
     ToFunction = CXXConversionDecl::Create(Importer.getToContext(), 
                                            cast<CXXRecordDecl>(DC),
+                                           D->getInnerLocStart(),
                                            NameInfo, T, TInfo,
                                            D->isInlineSpecified(),
                                            FromConversion->isExplicit());
   } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
     ToFunction = CXXMethodDecl::Create(Importer.getToContext(), 
                                        cast<CXXRecordDecl>(DC),
+                                       D->getInnerLocStart(),
                                        NameInfo, T, TInfo,
                                        Method->isStatic(),
                                        Method->getStorageClassAsWritten(),
                                        Method->isInlineSpecified());
   } else {
     ToFunction = FunctionDecl::Create(Importer.getToContext(), DC,
+                                      D->getInnerLocStart(),
                                       NameInfo, T, TInfo, D->getStorageClass(),
                                       D->getStorageClassAsWritten(),
                                       D->isInlineSpecified(),
@@ -2459,7 +2464,8 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   if (!BitWidth && D->getBitWidth())
     return 0;
   
-  FieldDecl *ToField = FieldDecl::Create(Importer.getToContext(), DC, 
+  FieldDecl *ToField = FieldDecl::Create(Importer.getToContext(), DC,
+                                         Importer.Import(D->getInnerLocStart()),
                                          Loc, Name.getAsIdentifierInfo(),
                                          T, TInfo, BitWidth, D->isMutable());
   ToField->setAccess(D->getAccess());
@@ -2544,6 +2550,7 @@ Decl *ASTNodeImporter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
   
   ObjCIvarDecl *ToIvar = ObjCIvarDecl::Create(Importer.getToContext(),
                                               cast<ObjCContainerDecl>(DC),
+                                       Importer.Import(D->getInnerLocStart()),
                                               Loc, Name.getAsIdentifierInfo(),
                                               T, TInfo, D->getAccessControl(),
                                               BitWidth, D->getSynthesize());
@@ -2652,8 +2659,10 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   
   // Create the imported variable.
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
-  VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC, Loc, 
-                                   Name.getAsIdentifierInfo(), T, TInfo,
+  VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC,
+                                   Importer.Import(D->getInnerLocStart()),
+                                   Loc, Name.getAsIdentifierInfo(),
+                                   T, TInfo,
                                    D->getStorageClass(),
                                    D->getStorageClassAsWritten());
   ToVar->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
@@ -2720,6 +2729,7 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
   // Create the imported parameter.
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
   ParmVarDecl *ToParm = ParmVarDecl::Create(Importer.getToContext(), DC,
+                                     Importer.Import(D->getInnerLocStart()),
                                             Loc, Name.getAsIdentifierInfo(),
                                             T, TInfo, D->getStorageClass(),
                                              D->getStorageClassAsWritten(),
@@ -3479,6 +3489,7 @@ ASTNodeImporter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   
   return NonTypeTemplateParmDecl::Create(Importer.getToContext(),
                                Importer.getToContext().getTranslationUnitDecl(),
+                                         Importer.Import(D->getInnerLocStart()),
                                          Loc, D->getDepth(), D->getPosition(),
                                          Name.getAsIdentifierInfo(),
                                          T, D->isParameterPack(), TInfo);

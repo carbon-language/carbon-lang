@@ -27,7 +27,7 @@
 @end
 
 // CHECK: local-symbols.m:6:12: ObjCInterfaceDecl=Foo:6:12 Extent=[6:1 - 10:5]
-// CHECK: local-symbols.m:7:6: ObjCIvarDecl=x:7:6 (Definition) Extent=[7:6 - 7:7]
+// CHECK: local-symbols.m:7:6: ObjCIvarDecl=x:7:6 (Definition) Extent=[7:3 - 7:7]
 // CHECK: local-symbols.m:7:3: TypeRef=id:0:0 Extent=[7:3 - 7:5]
 // CHECK: local-symbols.m:9:1: ObjCInstanceMethodDecl=bar:9:1 Extent=[9:1 - 9:12]
 // CHECK: local-symbols.m:9:4: TypeRef=id:0:0 Extent=[9:4 - 9:6]

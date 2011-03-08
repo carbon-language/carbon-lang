@@ -1509,7 +1509,8 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 
   QualType FnType = Context.getFunctionType(Return, &Argument, 1, EPI);
   FunctionDecl *Alloc =
-    FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
+    FunctionDecl::Create(Context, GlobalCtx, SourceLocation(),
+                         SourceLocation(), Name,
                          FnType, /*TInfo=*/0, SC_None,
                          SC_None, false, true);
   Alloc->setImplicit();
@@ -1518,9 +1519,9 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     Alloc->addAttr(::new (Context) MallocAttr(SourceLocation(), Context));
 
   ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
-                                           0, Argument, /*TInfo=*/0,
-                                           SC_None,
-                                           SC_None, 0);
+                                           SourceLocation(), 0,
+                                           Argument, /*TInfo=*/0,
+                                           SC_None, SC_None, 0);
   Alloc->setParams(&Param, 1);
 
   // FIXME: Also add this declaration to the IdentifierResolver, but

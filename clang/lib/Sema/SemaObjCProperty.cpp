@@ -408,8 +408,9 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     ObjCInterfaceDecl *ClassDeclared;
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
     if (!Ivar) {
-      Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl, PropertyLoc,
-                                  PropertyIvar, PropType, /*Dinfo=*/0,
+      Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl,
+                                  PropertyLoc, PropertyLoc, PropertyIvar,
+                                  PropType, /*Dinfo=*/0,
                                   ObjCIvarDecl::Private,
                                   (Expr *)0, true);
       ClassImpDecl->addDecl(Ivar);
@@ -1235,7 +1236,8 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 
       // Invent the arguments for the setter. We don't bother making a
       // nice name for the argument.
-      ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterMethod, Loc,
+      ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterMethod,
+                                                  Loc, Loc,
                                                   property->getIdentifier(),
                                                   property->getType(),
                                                   /*TInfo=*/0,

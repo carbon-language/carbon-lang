@@ -1017,10 +1017,11 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
   return 0;
 }
 
-VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
+                         SourceLocation StartL, SourceLocation IdL,
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
                          StorageClass S, StorageClass SCAsWritten) {
-  return new (C) VarDecl(Var, DC, L, Id, T, TInfo, S, SCAsWritten);
+  return new (C) VarDecl(Var, DC, StartL, IdL, Id, T, TInfo, S, SCAsWritten);
 }
 
 void VarDecl::setStorageClass(StorageClass SC) {
@@ -1029,13 +1030,6 @@ void VarDecl::setStorageClass(StorageClass SC) {
     ClearLinkageCache();
   
   SClass = SC;
-}
-
-SourceLocation VarDecl::getInnerLocStart() const {
-  SourceLocation Start = getTypeSpecStartLoc();
-  if (Start.isInvalid())
-    Start = getLocation();
-  return Start;
 }
 
 SourceRange VarDecl::getSourceRange() const {
@@ -1257,11 +1251,12 @@ void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
 //===----------------------------------------------------------------------===//
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
-                                 SourceLocation L, IdentifierInfo *Id,
+                                 SourceLocation StartLoc,
+                                 SourceLocation IdLoc, IdentifierInfo *Id,
                                  QualType T, TypeSourceInfo *TInfo,
                                  StorageClass S, StorageClass SCAsWritten,
                                  Expr *DefArg) {
-  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, TInfo,
+  return new (C) ParmVarDecl(ParmVar, DC, StartLoc, IdLoc, Id, T, TInfo,
                              S, SCAsWritten, DefArg);
 }
 
@@ -1937,9 +1932,11 @@ bool FunctionDecl::isOutOfLine() const {
 //===----------------------------------------------------------------------===//
 
 FieldDecl *FieldDecl::Create(const ASTContext &C, DeclContext *DC,
-                             SourceLocation L, IdentifierInfo *Id, QualType T,
+                             SourceLocation StartLoc, SourceLocation IdLoc,
+                             IdentifierInfo *Id, QualType T,
                              TypeSourceInfo *TInfo, Expr *BW, bool Mutable) {
-  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, TInfo, BW, Mutable);
+  return new (C) FieldDecl(Decl::Field, DC, StartLoc, IdLoc, Id, T, TInfo,
+                           BW, Mutable);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {
@@ -2230,20 +2227,22 @@ NamespaceDecl *NamespaceDecl::getNextNamespace() {
 }
 
 ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
-                                             SourceLocation loc,
-                                             IdentifierInfo *name,
-                                             QualType type) {
-  return new (C) ImplicitParamDecl(DC, loc, name, type);
+                                             SourceLocation IdLoc,
+                                             IdentifierInfo *Id,
+                                             QualType Type) {
+  return new (C) ImplicitParamDecl(DC, IdLoc, Id, Type);
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
+                                   SourceLocation StartLoc,
                                    const DeclarationNameInfo &NameInfo,
                                    QualType T, TypeSourceInfo *TInfo,
-                                   StorageClass S, StorageClass SCAsWritten,
+                                   StorageClass SC, StorageClass SCAsWritten,
                                    bool isInlineSpecified, 
                                    bool hasWrittenPrototype) {
-  FunctionDecl *New = new (C) FunctionDecl(Function, DC, NameInfo, T, TInfo,
-                                           S, SCAsWritten, isInlineSpecified);
+  FunctionDecl *New = new (C) FunctionDecl(Function, DC, StartLoc, NameInfo,
+                                           T, TInfo, SC, SCAsWritten,
+                                           isInlineSpecified);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
 }

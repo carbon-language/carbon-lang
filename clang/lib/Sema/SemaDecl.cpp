@@ -865,7 +865,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 
   FunctionDecl *New = FunctionDecl::Create(Context,
                                            Context.getTranslationUnitDecl(),
-                                           Loc, II, R, /*TInfo=*/0,
+                                           Loc, Loc, II, R, /*TInfo=*/0,
                                            SC_Extern,
                                            SC_None, false,
                                            /*hasPrototype=*/true);
@@ -876,7 +876,8 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(R)) {
     llvm::SmallVector<ParmVarDecl*, 16> Params;
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
-      Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
+      Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(),
+                                           SourceLocation(), 0,
                                            FT->getArgType(i), /*TInfo=*/0,
                                            SC_None, SC_None, 0));
     New->setParams(Params.data(), Params.size());
@@ -1394,6 +1395,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
              ParamEnd = OldProto->arg_type_end();
            ParamType != ParamEnd; ++ParamType) {
         ParmVarDecl *Param = ParmVarDecl::Create(Context, New,
+                                                 SourceLocation(),
                                                  SourceLocation(), 0,
                                                  *ParamType, /*TInfo=*/0,
                                                  SC_None, SC_None,
@@ -2140,7 +2142,9 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   // Create a declaration for this anonymous struct/union.
   NamedDecl *Anon = 0;
   if (RecordDecl *OwningClass = dyn_cast<RecordDecl>(Owner)) {
-    Anon = FieldDecl::Create(Context, OwningClass, Record->getLocation(),
+    Anon = FieldDecl::Create(Context, OwningClass,
+                             DS.getSourceRange().getBegin(),
+                             Record->getLocation(),
                              /*IdentifierInfo=*/0,
                              Context.getTypeDeclType(Record),
                              TInfo,
@@ -2164,8 +2168,9 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     VarDecl::StorageClass SCAsWritten
       = StorageClassSpecToVarDeclStorageClass(SCSpec);
 
-    Anon = VarDecl::Create(Context, Owner, Record->getLocation(),
-                           /*IdentifierInfo=*/0,
+    Anon = VarDecl::Create(Context, Owner,
+                           DS.getSourceRange().getBegin(),
+                           Record->getLocation(), /*IdentifierInfo=*/0,
                            Context.getTypeDeclType(Record),
                            TInfo, SC, SCAsWritten);
   }
@@ -2228,6 +2233,7 @@ Decl *Sema::BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
   // Create a declaration for this anonymous struct.
   NamedDecl* Anon = FieldDecl::Create(Context,
                              cast<RecordDecl>(CurContext),
+                             DS.getSourceRange().getBegin(),
                              DS.getSourceRange().getBegin(),
                              /*IdentifierInfo=*/0,
                              Context.getTypeDeclType(Record),
@@ -3031,8 +3037,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   bool isExplicitSpecialization = false;
   VarDecl *NewVD;
   if (!getLangOptions().CPlusPlus) {
-      NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(),
-                              II, R, TInfo, SC, SCAsWritten);
+    NewVD = VarDecl::Create(Context, DC, D.getSourceRange().getBegin(),
+                            D.getIdentifierLoc(), II,
+                            R, TInfo, SC, SCAsWritten);
   
     if (D.isInvalidType())
       NewVD->setInvalidDecl();
@@ -3101,8 +3108,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       }
     }
 
-    NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(),
-                            II, R, TInfo, SC, SCAsWritten);
+    NewVD = VarDecl::Create(Context, DC, D.getSourceRange().getBegin(),
+                            D.getIdentifierLoc(), II,
+                            R, TInfo, SC, SCAsWritten);
 
     // If this decl has an auto type in need of deduction, make a note of the
     // Decl so we can diagnose uses of it in its own initializer.
@@ -3620,7 +3628,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     (D.isFunctionDeclarator() && D.getFunctionTypeInfo().hasPrototype) ||
     (!isa<FunctionType>(R.getTypePtr()) && R->isFunctionProtoType());
   
-    NewFD = FunctionDecl::Create(Context, DC,
+    NewFD = FunctionDecl::Create(Context, DC, D.getSourceRange().getBegin(),
                                  NameInfo, R, TInfo, SC, SCAsWritten, isInline,
                                  HasPrototype);
     if (D.isInvalidType())
@@ -3665,6 +3673,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // Create the new declaration
       NewFD = CXXConstructorDecl::Create(Context,
                                          cast<CXXRecordDecl>(DC),
+                                         D.getSourceRange().getBegin(),
                                          NameInfo, R, TInfo,
                                          isExplicit, isInline,
                                          /*isImplicitlyDeclared=*/false);
@@ -3675,6 +3684,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
         NewFD = CXXDestructorDecl::Create(Context,
                                           cast<CXXRecordDecl>(DC),
+                                          D.getSourceRange().getBegin(),
                                           NameInfo, R, TInfo,
                                           isInline,
                                           /*isImplicitlyDeclared=*/false);
@@ -3684,8 +3694,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
         // Create a FunctionDecl to satisfy the function definition parsing
         // code path.
-        NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
-                                     Name, R, TInfo, SC, SCAsWritten, isInline,
+        NewFD = FunctionDecl::Create(Context, DC, D.getSourceRange().getBegin(),
+                                     D.getIdentifierLoc(), Name, R, TInfo,
+                                     SC, SCAsWritten, isInline,
                                      /*hasPrototype=*/true);
         D.setInvalidType();
       }
@@ -3698,6 +3709,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       CheckConversionDeclarator(D, R, SC);
       NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
+                                        D.getSourceRange().getBegin(),
                                         NameInfo, R, TInfo,
                                         isInline, isExplicit);
 
@@ -3733,6 +3745,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     
       // This is a C++ method declaration.
       NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
+                                    D.getSourceRange().getBegin(),
                                     NameInfo, R, TInfo,
                                     isStatic, SCAsWritten, isInline);
 
@@ -3741,7 +3754,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // Determine whether the function was written with a
       // prototype. This true when:
       //   - we're in C++ (where every function has a prototype),
-      NewFD = FunctionDecl::Create(Context, DC,
+      NewFD = FunctionDecl::Create(Context, DC, D.getSourceRange().getBegin(),
                                    NameInfo, R, TInfo, SC, SCAsWritten, isInline,
                                    true/*HasPrototype*/);
     }
@@ -5290,8 +5303,9 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // the enclosing context.  This prevents them from accidentally
   // looking like class members in C++.
   ParmVarDecl *New = CheckParameter(Context.getTranslationUnitDecl(),
-                                    TInfo, parmDeclType, II, 
-                                    D.getIdentifierLoc(),
+                                    D.getSourceRange().getBegin(),
+                                    D.getIdentifierLoc(), II,
+                                    parmDeclType, TInfo,
                                     StorageClass, StorageClassAsWritten);
 
   if (D.isInvalidType())
@@ -5315,7 +5329,10 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 ParmVarDecl *Sema::BuildParmVarDeclForTypedef(DeclContext *DC,
                                               SourceLocation Loc,
                                               QualType T) {
-  ParmVarDecl *Param = ParmVarDecl::Create(Context, DC, Loc, 0,
+  /* FIXME: setting StartLoc == Loc.
+     Would it be worth to modify callers so as to provide proper source
+     location for the unnamed parameters, embedding the parameter's type? */
+  ParmVarDecl *Param = ParmVarDecl::Create(Context, DC, Loc, Loc, 0,
                                 T, Context.getTrivialTypeSourceInfo(T, Loc),
                                            SC_None, SC_None, 0);
   Param->setImplicit();
@@ -5367,14 +5384,13 @@ void Sema::DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Param,
   }
 }
 
-ParmVarDecl *Sema::CheckParameter(DeclContext *DC, 
-                                  TypeSourceInfo *TSInfo, QualType T,
-                                  IdentifierInfo *Name,
-                                  SourceLocation NameLoc,
+ParmVarDecl *Sema::CheckParameter(DeclContext *DC, SourceLocation StartLoc,
+                                  SourceLocation NameLoc, IdentifierInfo *Name,
+                                  QualType T, TypeSourceInfo *TSInfo,
                                   VarDecl::StorageClass StorageClass,
                                   VarDecl::StorageClass StorageClassAsWritten) {
-  ParmVarDecl *New = ParmVarDecl::Create(Context, DC, NameLoc, Name,
-                                         adjustParameterType(T), TSInfo, 
+  ParmVarDecl *New = ParmVarDecl::Create(Context, DC, StartLoc, NameLoc, Name,
+                                         adjustParameterType(T), TSInfo,
                                          StorageClass, StorageClassAsWritten,
                                          0);
 
@@ -6950,7 +6966,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
     }
   }
 
-  FieldDecl *NewFD = FieldDecl::Create(Context, Record, Loc, II, T, TInfo,
+  FieldDecl *NewFD = FieldDecl::Create(Context, Record, TSSL, Loc, II, T, TInfo,
                                        BitWidth, Mutable);
   if (InvalidDecl)
     NewFD->setInvalidDecl();
@@ -7250,8 +7266,8 @@ Decl *Sema::ActOnIvar(Scope *S,
   }
 
   // Construct the decl.
-  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context,
-                                             EnclosingContext, Loc, II, T,
+  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, EnclosingContext,
+                                             DeclStart, Loc, II, T,
                                              TInfo, ac, (Expr *)BitfieldWidth);
 
   if (II) {
@@ -7314,7 +7330,7 @@ void Sema::ActOnLastBitfield(SourceLocation DeclLoc, Decl *EnclosingDecl,
   Expr * BW = IntegerLiteral::Create(Context, Zero, Context.CharTy, DeclLoc);
 
   Ivar = ObjCIvarDecl::Create(Context, cast<ObjCContainerDecl>(EnclosingDecl),
-                              DeclLoc, 0,
+                              DeclLoc, DeclLoc, 0,
                               Context.CharTy, 
                               Context.CreateTypeSourceInfo(Context.CharTy),
                               ObjCIvarDecl::Private, BW,

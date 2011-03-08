@@ -108,8 +108,8 @@ void f() {
 // CHECK: [42:2 - 44:1] Invalid Cursor => NoDeclFound
 // CHECK: [44:1 - 44:11] FunctionDecl=main:44:5 (Definition)
 // CHECK: [44:11 - 44:19] ParmDecl=argc:44:15 (Definition)
-// CHECK: [44:19 - 44:27] FunctionDecl=main:44:5 (Definition)
-// CHECK: [44:27 - 44:38] ParmDecl=argv:44:34 (Definition)
+// CHECK: [44:19 - 44:21] FunctionDecl=main:44:5 (Definition)
+// CHECK: [44:21 - 44:38] ParmDecl=argv:44:34 (Definition)
 // CHECK: [44:38 - 44:42] FunctionDecl=main:44:5 (Definition)
 // CHECK: [44:42 - 45:2] UnexposedStmt=
 // CHECK: [45:2 - 45:5] ObjCClassRef=Baz:31:12

@@ -16,5 +16,5 @@ struct D : C {
 };
 
 // RUN: c-index-test -test-load-source local %s | FileCheck %s
-// CHECK: overrides.cpp:11:16: CXXMethod=g:11:16 [Overrides @7:16] Extent=[11:16 - 11:19]
-// CHECK: overrides.cpp:15:16: CXXMethod=f:15:16 [Overrides @2:16, @6:16] Extent=[15:16 - 15:22]
+// CHECK: overrides.cpp:11:16: CXXMethod=g:11:16 [Overrides @7:16] Extent=[11:3 - 11:19]
+// CHECK: overrides.cpp:15:16: CXXMethod=f:15:16 [Overrides @2:16, @6:16] Extent=[15:3 - 15:22]

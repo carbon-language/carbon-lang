@@ -456,14 +456,16 @@ unsigned TemplateTypeParmDecl::getIndex() const {
 //===----------------------------------------------------------------------===//
 
 NonTypeTemplateParmDecl::NonTypeTemplateParmDecl(DeclContext *DC, 
-                                                 SourceLocation L, unsigned D,
-                                                 unsigned P, IdentifierInfo *Id, 
+                                                 SourceLocation StartLoc,
+                                                 SourceLocation IdLoc,
+                                                 unsigned D, unsigned P,
+                                                 IdentifierInfo *Id, 
                                                  QualType T, 
                                                  TypeSourceInfo *TInfo,
                                                  const QualType *ExpandedTypes,
                                                  unsigned NumExpandedTypes,
                                                 TypeSourceInfo **ExpandedTInfos)
-  : DeclaratorDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo),
+  : DeclaratorDecl(NonTypeTemplateParm, DC, IdLoc, Id, T, TInfo, StartLoc),
     TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false),
     ParameterPack(true), ExpandedParameterPack(true),
     NumExpandedTypes(NumExpandedTypes)
@@ -479,16 +481,18 @@ NonTypeTemplateParmDecl::NonTypeTemplateParmDecl(DeclContext *DC,
 
 NonTypeTemplateParmDecl *
 NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
-                                SourceLocation L, unsigned D, unsigned P,
-                                IdentifierInfo *Id, QualType T,
-                                bool ParameterPack, TypeSourceInfo *TInfo) {
-  return new (C) NonTypeTemplateParmDecl(DC, L, D, P, Id, T, ParameterPack,
-                                         TInfo);
+                                SourceLocation StartLoc, SourceLocation IdLoc,
+                                unsigned D, unsigned P, IdentifierInfo *Id,
+                                QualType T, bool ParameterPack,
+                                TypeSourceInfo *TInfo) {
+  return new (C) NonTypeTemplateParmDecl(DC, StartLoc, IdLoc, D, P, Id,
+                                         T, ParameterPack, TInfo);
 }
 
 NonTypeTemplateParmDecl *
 NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC, 
-                                SourceLocation L, unsigned D, unsigned P, 
+                                SourceLocation StartLoc, SourceLocation IdLoc,
+                                unsigned D, unsigned P, 
                                 IdentifierInfo *Id, QualType T, 
                                 TypeSourceInfo *TInfo,
                                 const QualType *ExpandedTypes, 
@@ -497,16 +501,10 @@ NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
   unsigned Size = sizeof(NonTypeTemplateParmDecl) 
                 + NumExpandedTypes * 2 * sizeof(void*);
   void *Mem = C.Allocate(Size);
-  return new (Mem) NonTypeTemplateParmDecl(DC, L, D, P, Id, T, TInfo, 
+  return new (Mem) NonTypeTemplateParmDecl(DC, StartLoc, IdLoc,
+                                           D, P, Id, T, TInfo,
                                            ExpandedTypes, NumExpandedTypes, 
                                            ExpandedTInfos);
-}
-
-SourceLocation NonTypeTemplateParmDecl::getInnerLocStart() const {
-  SourceLocation Start = getTypeSpecStartLoc();
-  if (Start.isInvalid())
-    Start = getLocation();
-  return Start;
 }
 
 SourceRange NonTypeTemplateParmDecl::getSourceRange() const {

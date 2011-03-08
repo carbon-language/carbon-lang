@@ -294,6 +294,7 @@ void ASTDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
 
 void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
   VisitValueDecl(DD);
+  DD->setInnerLocStart(ReadSourceLocation(Record, Idx));
   if (Record[Idx++]) { // hasExtInfo
     DeclaratorDecl::ExtInfo *Info
         = new (*Reader.getContext()) DeclaratorDecl::ExtInfo();
@@ -1435,8 +1436,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
                                  0, llvm::APSInt());
     break;
   case DECL_FUNCTION:
-    D = FunctionDecl::Create(*Context, 0, SourceLocation(), DeclarationName(),
-                             QualType(), 0);
+    D = FunctionDecl::Create(*Context, 0, SourceLocation(), SourceLocation(),
+                             DeclarationName(), QualType(), 0);
     break;
   case DECL_LINKAGE_SPEC:
     D = LinkageSpecDecl::Create(*Context, 0, SourceLocation(),
@@ -1484,8 +1485,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     D = CXXRecordDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_CXX_METHOD:
-    D = CXXMethodDecl::Create(*Context, 0, DeclarationNameInfo(),
-                              QualType(), 0);
+    D = CXXMethodDecl::Create(*Context, 0, SourceLocation(),
+                              DeclarationNameInfo(), QualType(), 0);
     break;
   case DECL_CXX_CONSTRUCTOR:
     D = CXXConstructorDecl::Create(*Context, Decl::EmptyShell());
@@ -1522,13 +1523,14 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     D = TemplateTypeParmDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_NON_TYPE_TEMPLATE_PARM:
-    D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,
-                                        QualType(), false, 0);
+    D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(),
+                                        SourceLocation(), 0, 0, 0, QualType(),
+                                        false, 0);
     break;
   case DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK:
-    D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0, 0,
-                                        0, QualType(), 0, 0, Record[Idx++],
-                                        0);
+    D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(),
+                                        SourceLocation(), 0, 0, 0, QualType(),
+                                        0, 0, Record[Idx++], 0);
     break;
   case DECL_TEMPLATE_TEMPLATE_PARM:
     D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0, 0,
@@ -1546,15 +1548,15 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     D = ObjCInterfaceDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case DECL_OBJC_IVAR:
-    D = ObjCIvarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
-                             ObjCIvarDecl::None);
+    D = ObjCIvarDecl::Create(*Context, 0, SourceLocation(), SourceLocation(),
+                             0, QualType(), 0, ObjCIvarDecl::None);
     break;
   case DECL_OBJC_PROTOCOL:
     D = ObjCProtocolDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case DECL_OBJC_AT_DEFS_FIELD:
-    D = ObjCAtDefsFieldDecl::Create(*Context, 0, SourceLocation(), 0,
-                                    QualType(), 0);
+    D = ObjCAtDefsFieldDecl::Create(*Context, 0, SourceLocation(),
+                                    SourceLocation(), 0, QualType(), 0);
     break;
   case DECL_OBJC_CLASS:
     D = ObjCClassDecl::Create(*Context, 0, SourceLocation());
@@ -1586,16 +1588,16 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
                                      SourceLocation());
     break;
   case DECL_FIELD:
-    D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 0,
-                          false);
+    D = FieldDecl::Create(*Context, 0, SourceLocation(), SourceLocation(), 0,
+                          QualType(), 0, 0, false);
     break;
   case DECL_INDIRECTFIELD:
     D = IndirectFieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),
                                   0, 0);
     break;
   case DECL_VAR:
-    D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
-                        SC_None, SC_None);
+    D = VarDecl::Create(*Context, 0, SourceLocation(), SourceLocation(), 0,
+                        QualType(), 0, SC_None, SC_None);
     break;
 
   case DECL_IMPLICIT_PARAM:
@@ -1603,8 +1605,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     break;
 
   case DECL_PARM_VAR:
-    D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
-                            SC_None, SC_None, 0);
+    D = ParmVarDecl::Create(*Context, 0, SourceLocation(), SourceLocation(), 0,
+                            QualType(), 0, SC_None, SC_None, 0);
     break;
   case DECL_FILE_SCOPE_ASM:
     D = FileScopeAsmDecl::Create(*Context, 0, 0, SourceLocation(),

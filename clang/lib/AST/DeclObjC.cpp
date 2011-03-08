@@ -672,7 +672,8 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
 //===----------------------------------------------------------------------===//
 
 ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
-                                   SourceLocation L, IdentifierInfo *Id,
+                                   SourceLocation StartLoc,
+                                   SourceLocation IdLoc, IdentifierInfo *Id,
                                    QualType T, TypeSourceInfo *TInfo,
                                    AccessControl ac, Expr *BW,
                                    bool synthesized) {
@@ -709,7 +710,8 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
     ID->setIvarList(0);
   }
 
-  return new (C) ObjCIvarDecl(DC, L, Id, T, TInfo, ac, BW, synthesized);
+  return new (C) ObjCIvarDecl(DC, StartLoc, IdLoc, Id, T, TInfo,
+                              ac, BW, synthesized);
 }
 
 const ObjCInterfaceDecl *ObjCIvarDecl::getContainingInterface() const {
@@ -742,9 +744,10 @@ const ObjCInterfaceDecl *ObjCIvarDecl::getContainingInterface() const {
 //===----------------------------------------------------------------------===//
 
 ObjCAtDefsFieldDecl
-*ObjCAtDefsFieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+*ObjCAtDefsFieldDecl::Create(ASTContext &C, DeclContext *DC,
+                             SourceLocation StartLoc,  SourceLocation IdLoc,
                              IdentifierInfo *Id, QualType T, Expr *BW) {
-  return new (C) ObjCAtDefsFieldDecl(DC, L, Id, T, BW);
+  return new (C) ObjCAtDefsFieldDecl(DC, StartLoc, IdLoc, Id, T, BW);
 }
 
 //===----------------------------------------------------------------------===//

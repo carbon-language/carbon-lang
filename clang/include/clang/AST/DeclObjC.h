@@ -707,15 +707,18 @@ public:
   };
 
 private:
-  ObjCIvarDecl(ObjCContainerDecl *DC, SourceLocation L, IdentifierInfo *Id,
+  ObjCIvarDecl(ObjCContainerDecl *DC, SourceLocation StartLoc,
+               SourceLocation IdLoc, IdentifierInfo *Id,
                QualType T, TypeSourceInfo *TInfo, AccessControl ac, Expr *BW,
                bool synthesized)
-    : FieldDecl(ObjCIvar, DC, L, Id, T, TInfo, BW, /*Mutable=*/false),
-      NextIvar(0), DeclAccess(ac),  Synthesized(synthesized) {}
+    : FieldDecl(ObjCIvar, DC, StartLoc, IdLoc, Id, T, TInfo, BW,
+                /*Mutable=*/false),
+      NextIvar(0), DeclAccess(ac), Synthesized(synthesized) {}
 
 public:
   static ObjCIvarDecl *Create(ASTContext &C, ObjCContainerDecl *DC,
-                              SourceLocation L, IdentifierInfo *Id, QualType T,
+                              SourceLocation StartLoc, SourceLocation IdLoc,
+                              IdentifierInfo *Id, QualType T,
                               TypeSourceInfo *TInfo,
                               AccessControl ac, Expr *BW = NULL,
                               bool synthesized=false);
@@ -759,17 +762,18 @@ private:
 ///  @defs(...).
 class ObjCAtDefsFieldDecl : public FieldDecl {
 private:
-  ObjCAtDefsFieldDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
+  ObjCAtDefsFieldDecl(DeclContext *DC, SourceLocation StartLoc,
+                      SourceLocation IdLoc, IdentifierInfo *Id,
                       QualType T, Expr *BW)
-    : FieldDecl(ObjCAtDefsField, DC, L, Id, T,
+    : FieldDecl(ObjCAtDefsField, DC, StartLoc, IdLoc, Id, T,
                 /*TInfo=*/0, // FIXME: Do ObjCAtDefs have declarators ?
                 BW, /*Mutable=*/false) {}
 
 public:
   static ObjCAtDefsFieldDecl *Create(ASTContext &C, DeclContext *DC,
-                                     SourceLocation L,
-                                     IdentifierInfo *Id, QualType T,
-                                     Expr *BW);
+                                     SourceLocation StartLoc,
+                                     SourceLocation IdLoc, IdentifierInfo *Id,
+                                     QualType T, Expr *BW);
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

@@ -28,6 +28,6 @@ void function(Foo * arg)
 // CHECK-scan: [14:1 - 16:2] UnexposedStmt=
 
 // CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:12 Extent=[10:1 - 11:5]
-// CHECK-load: TestClassDecl.m:13:6: FunctionDecl=function:13:6 (Definition) Extent=[13:6 - 16:2]
+// CHECK-load: TestClassDecl.m:13:6: FunctionDecl=function:13:6 (Definition) Extent=[13:1 - 16:2]
 // CHECK-load: TestClassDecl.m:13:21: ParmDecl=arg:13:21 (Definition) Extent=[13:15 - 13:24]
 

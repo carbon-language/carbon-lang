@@ -9,17 +9,17 @@ void test() {
   ^ int_t(struct foo *foo) { return (int_t) foo->x + i; }(&_foo);
 }
 
-// CHECK: blocks.c:6:6: FunctionDecl=test:6:6 (Definition) Extent=[6:6 - 10:2]
+// CHECK: blocks.c:6:6: FunctionDecl=test:6:6 (Definition) Extent=[6:1 - 10:2]
 // CHECK: blocks.c:6:13: UnexposedStmt= Extent=[6:13 - 10:2]
 // CHECK: blocks.c:7:3: UnexposedStmt= Extent=[7:3 - 7:26]
-// CHECK: blocks.c:7:21: VarDecl=_foo:7:21 (Definition) Extent=[7:17 - 7:25]
+// CHECK: blocks.c:7:21: VarDecl=_foo:7:21 (Definition) Extent=[7:3 - 7:25]
 // CHECK: blocks.c:7:17: TypeRef=struct foo:4:8 Extent=[7:17 - 7:20]
-// CHECK: blocks.c:8:11: VarDecl=i:8:11 (Definition) Extent=[8:11 - 8:16]
+// CHECK: blocks.c:8:11: VarDecl=i:8:11 (Definition) Extent=[8:3 - 8:16]
 // CHECK: blocks.c:8:15: UnexposedExpr= Extent=[8:15 - 8:16]
 // CHECK: blocks.c:9:3: CallExpr= Extent=[9:3 - 9:65]
 // CHECK: blocks.c:9:3: UnexposedExpr= Extent=[9:3 - 9:58]
 // CHECK: blocks.c:9:5: TypeRef=int_t:3:13 Extent=[9:5 - 9:10]
-// CHECK: blocks.c:9:23: ParmDecl=foo:9:23 (Definition) Extent=[9:18 - 9:26]
+// CHECK: blocks.c:9:23: ParmDecl=foo:9:23 (Definition) Extent=[9:11 - 9:26]
 // CHECK: blocks.c:9:18: TypeRef=struct foo:4:8 Extent=[9:18 - 9:21]
 // CHECK: blocks.c:9:28: UnexposedStmt= Extent=[9:28 - 9:58]
 // CHECK: blocks.c:9:30: UnexposedStmt= Extent=[9:30 - 9:55]

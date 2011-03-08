@@ -2361,6 +2361,7 @@ void RewriteObjC::SynthSelGetUidFunctionDecl() {
     getSimpleFunctionType(Context->getObjCSelType(), &ArgTys[0], ArgTys.size());
   SelGetUidFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                            SourceLocation(),
+                                           SourceLocation(),
                                            SelGetUidIdent, getFuncType, 0,
                                            SC_Extern,
                                            SC_None, false);
@@ -2457,6 +2458,7 @@ void RewriteObjC::SynthSuperContructorFunctionDecl() {
                                                &ArgTys[0], ArgTys.size());
   SuperContructorFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                          SourceLocation(),
+                                         SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
                                          SC_Extern,
                                          SC_None, false);
@@ -2476,6 +2478,7 @@ void RewriteObjC::SynthMsgSendFunctionDecl() {
                                                &ArgTys[0], ArgTys.size(),
                                                true /*isVariadic*/);
   MsgSendFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
+                                         SourceLocation(),
                                          SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
                                          SC_Extern,
@@ -2500,6 +2503,7 @@ void RewriteObjC::SynthMsgSendSuperFunctionDecl() {
                                                true /*isVariadic*/);
   MsgSendSuperFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
+                                              SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
                                               SC_Extern,
                                               SC_None, false);
@@ -2519,6 +2523,7 @@ void RewriteObjC::SynthMsgSendStretFunctionDecl() {
                                                &ArgTys[0], ArgTys.size(),
                                                true /*isVariadic*/);
   MsgSendStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
+                                         SourceLocation(),
                                          SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
                                          SC_Extern,
@@ -2545,6 +2550,7 @@ void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
                                                true /*isVariadic*/);
   MsgSendSuperStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                                        SourceLocation(),
+                                                       SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
                                               SC_Extern,
                                               SC_None, false);
@@ -2565,6 +2571,7 @@ void RewriteObjC::SynthMsgSendFpretFunctionDecl() {
                                                true /*isVariadic*/);
   MsgSendFpretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
+                                              SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
                                               SC_Extern,
                                               SC_None, false);
@@ -2578,6 +2585,7 @@ void RewriteObjC::SynthGetClassFunctionDecl() {
   QualType getClassType = getSimpleFunctionType(Context->getObjCIdType(),
                                                 &ArgTys[0], ArgTys.size());
   GetClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
+                                          SourceLocation(),
                                           SourceLocation(),
                                           getClassIdent, getClassType, 0,
                                           SC_Extern,
@@ -2594,6 +2602,7 @@ void RewriteObjC::SynthGetSuperClassFunctionDecl() {
                                                 &ArgTys[0], ArgTys.size());
   GetSuperClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                                    SourceLocation(),
+                                                   SourceLocation(),
                                                    getSuperClassIdent,
                                                    getClassType, 0,
                                                    SC_Extern,
@@ -2609,6 +2618,7 @@ void RewriteObjC::SynthGetMetaClassFunctionDecl() {
   QualType getClassType = getSimpleFunctionType(Context->getObjCIdType(),
                                                 &ArgTys[0], ArgTys.size());
   GetMetaClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
+                                              SourceLocation(),
                                               SourceLocation(),
                                               getClassIdent, getClassType, 0,
                                               SC_Extern,
@@ -2645,8 +2655,8 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   Preamble += utostr(Exp->getString()->getByteLength()) + "};\n";
 
   VarDecl *NewVD = VarDecl::Create(*Context, TUDecl, SourceLocation(),
-                                    &Context->Idents.get(S), strType, 0,
-                                    SC_Static, SC_None);
+                                   SourceLocation(), &Context->Idents.get(S),
+                                   strType, 0, SC_Static, SC_None);
   DeclRefExpr *DRE = new (Context) DeclRefExpr(NewVD, strType, VK_LValue,
                                                SourceLocation());
   Expr *Unop = new (Context) UnaryOperator(DRE, UO_AddrOf,
@@ -2677,6 +2687,7 @@ QualType RewriteObjC::getSuperStructType() {
     // Create fields
     for (unsigned i = 0; i < 2; ++i) {
       SuperStructDecl->addDecl(FieldDecl::Create(*Context, SuperStructDecl,
+                                                 SourceLocation(),
                                                  SourceLocation(), 0,
                                                  FieldTypes[i], 0,
                                                  /*BitWidth=*/0,
@@ -2708,6 +2719,7 @@ QualType RewriteObjC::getConstantStringStructType() {
     for (unsigned i = 0; i < 4; ++i) {
       ConstantStringDecl->addDecl(FieldDecl::Create(*Context,
                                                     ConstantStringDecl,
+                                                    SourceLocation(),
                                                     SourceLocation(), 0,
                                                     FieldTypes[i], 0,
                                                     /*BitWidth=*/0,
@@ -3164,7 +3176,7 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   std::string Name = "_OBJC_PROTOCOL_" + Exp->getProtocol()->getNameAsString();
   IdentifierInfo *ID = &Context->Idents.get(Name);
   VarDecl *VD = VarDecl::Create(*Context, TUDecl, SourceLocation(),
-                                ID, getProtocolType(), 0,
+                                SourceLocation(), ID, getProtocolType(), 0,
                                 SC_Extern, SC_None);
   DeclRefExpr *DRE = new (Context) DeclRefExpr(VD, getProtocolType(), VK_LValue,
                                                SourceLocation());
@@ -4706,7 +4718,9 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
   //PE->dump();
 
   FieldDecl *FD = FieldDecl::Create(*Context, 0, SourceLocation(),
-                     &Context->Idents.get("FuncPtr"), Context->VoidPtrTy, 0,
+                                    SourceLocation(),
+                                    &Context->Idents.get("FuncPtr"),
+                                    Context->VoidPtrTy, 0,
                                     /*BitWidth=*/0, /*Mutable=*/true);
   MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
                                             FD->getType(), VK_LValue,
@@ -4758,6 +4772,7 @@ Stmt *RewriteObjC::RewriteBlockDeclRefExpr(Expr *DeclRefExp) {
   }
   
   FieldDecl *FD = FieldDecl::Create(*Context, 0, SourceLocation(),
+                                    SourceLocation(),
                                     &Context->Idents.get("__forwarding"), 
                                     Context->VoidPtrTy, 0,
                                     /*BitWidth=*/0, /*Mutable=*/true);
@@ -4767,7 +4782,7 @@ Stmt *RewriteObjC::RewriteBlockDeclRefExpr(Expr *DeclRefExp) {
                                             OK_Ordinary);
 
   llvm::StringRef Name = VD->getName();
-  FD = FieldDecl::Create(*Context, 0, SourceLocation(),
+  FD = FieldDecl::Create(*Context, 0, SourceLocation(), SourceLocation(),
                          &Context->Idents.get(Name), 
                          Context->VoidPtrTy, 0,
                          /*BitWidth=*/0, /*Mutable=*/true);
@@ -5263,8 +5278,8 @@ void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
 FunctionDecl *RewriteObjC::SynthBlockInitFunctionDecl(llvm::StringRef name) {
   IdentifierInfo *ID = &Context->Idents.get(name);
   QualType FType = Context->getFunctionNoProtoType(Context->VoidPtrTy);
-  return FunctionDecl::Create(*Context, TUDecl,SourceLocation(),
-                              ID, FType, 0, SC_Extern,
+  return FunctionDecl::Create(*Context, TUDecl, SourceLocation(),
+                              SourceLocation(), ID, FType, 0, SC_Extern,
                               SC_None, false, false);
 }
 
@@ -5345,10 +5360,11 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
   // Initialize the block descriptor.
   std::string DescData = "__" + FuncName + "_block_desc_" + BlockNumber + "_DATA";
 
-  VarDecl *NewVD = VarDecl::Create(*Context, TUDecl, SourceLocation(), 
-                                    &Context->Idents.get(DescData.c_str()), 
-                                    Context->VoidPtrTy, 0,
-                                    SC_Static, SC_None);
+  VarDecl *NewVD = VarDecl::Create(*Context, TUDecl,
+                                   SourceLocation(), SourceLocation(),
+                                   &Context->Idents.get(DescData.c_str()),
+                                   Context->VoidPtrTy, 0,
+                                   SC_Static, SC_None);
   UnaryOperator *DescRefExpr =
     new (Context) UnaryOperator(new (Context) DeclRefExpr(NewVD,
                                                           Context->VoidPtrTy,

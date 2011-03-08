@@ -1519,7 +1519,7 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
   if (!DynamicImplSeen) {
     QualType PropType = SemaRef.Context.getCanonicalType(property->getType());
     ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(SemaRef.Context, ClassImpDecl, 
-                                              NameLoc,
+                                              NameLoc, NameLoc,
                                               II, PropType, /*Dinfo=*/0,
                                               ObjCIvarDecl::Private,
                                               (Expr *)0, true);

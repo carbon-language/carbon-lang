@@ -264,6 +264,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   
   // Build the instantiated declaration
   VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner,
+                                 D->getInnerLocStart(),
                                  D->getLocation(), D->getIdentifier(),
                                  DI->getType(), DI,
                                  D->getStorageClass(),
@@ -999,8 +1000,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   }
 
   FunctionDecl *Function =
-      FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
-                           D->getDeclName(), T, TInfo,
+      FunctionDecl::Create(SemaRef.Context, DC, D->getInnerLocStart(),
+                           D->getLocation(), D->getDeclName(), T, TInfo,
                            D->getStorageClass(), D->getStorageClassAsWritten(),
                            D->isInlineSpecified(), D->hasWrittenPrototype());
 
@@ -1296,27 +1297,28 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
   CXXMethodDecl *Method = 0;
 
+  SourceLocation StartLoc = D->getInnerLocStart();
   DeclarationNameInfo NameInfo
     = SemaRef.SubstDeclarationNameInfo(D->getNameInfo(), TemplateArgs);
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
     Method = CXXConstructorDecl::Create(SemaRef.Context, Record,
-                                        NameInfo, T, TInfo,
+                                        StartLoc, NameInfo, T, TInfo,
                                         Constructor->isExplicit(),
                                         Constructor->isInlineSpecified(),
                                         false);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
-                                       NameInfo, T, TInfo,
+                                       StartLoc, NameInfo, T, TInfo,
                                        Destructor->isInlineSpecified(),
                                        false);
   } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
     Method = CXXConversionDecl::Create(SemaRef.Context, Record,
-                                       NameInfo, T, TInfo,
+                                       StartLoc, NameInfo, T, TInfo,
                                        Conversion->isInlineSpecified(),
                                        Conversion->isExplicit());
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record,
-                                   NameInfo, T, TInfo,
+                                   StartLoc, NameInfo, T, TInfo,
                                    D->isStatic(),
                                    D->getStorageClassAsWritten(),
                                    D->isInlineSpecified());
@@ -1589,7 +1591,8 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
   NonTypeTemplateParmDecl *Param;
   if (IsExpandedParameterPack)
     Param = NonTypeTemplateParmDecl::Create(SemaRef.Context, Owner, 
-                                            D->getLocation(), 
+                                            D->getInnerLocStart(),
+                                            D->getLocation(),
                                     D->getDepth() - TemplateArgs.getNumLevels(), 
                                             D->getPosition(), 
                                             D->getIdentifier(), T,
@@ -1599,6 +1602,7 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
                                     ExpandedParameterPackTypesAsWritten.data());
   else
     Param = NonTypeTemplateParmDecl::Create(SemaRef.Context, Owner, 
+                                            D->getInnerLocStart(),
                                             D->getLocation(),
                                     D->getDepth() - TemplateArgs.getNumLevels(), 
                                             D->getPosition(), 

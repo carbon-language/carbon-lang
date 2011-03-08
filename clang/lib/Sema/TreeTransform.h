@@ -1130,9 +1130,10 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   VarDecl *RebuildObjCExceptionDecl(VarDecl *ExceptionDecl,
                                     TypeSourceInfo *TInfo, QualType T) {
-    return getSema().BuildObjCExceptionDecl(TInfo, T, 
-                                            ExceptionDecl->getIdentifier(), 
-                                            ExceptionDecl->getLocation());
+    return getSema().BuildObjCExceptionDecl(TInfo, T,
+                                            ExceptionDecl->getInnerLocStart(),
+                                            ExceptionDecl->getLocation(),
+                                            ExceptionDecl->getIdentifier());
   }
   
   /// \brief Build a new Objective-C @catch statement.
@@ -1197,11 +1198,13 @@ public:
   ///
   /// By default, performs semantic analysis to build the new decaration.
   /// Subclasses may override this routine to provide different behavior.
-  VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, 
+  VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl,
                                 TypeSourceInfo *Declarator,
-                                IdentifierInfo *Name,
-                                SourceLocation Loc) {
-    return getSema().BuildExceptionDeclaration(0, Declarator, Name, Loc);
+                                SourceLocation StartLoc,
+                                SourceLocation IdLoc,
+                                IdentifierInfo *Id) {
+    return getSema().BuildExceptionDeclaration(0, Declarator,
+                                               StartLoc, IdLoc, Id);
   }
 
   /// \brief Build a new C++ catch statement.
@@ -3628,6 +3631,7 @@ TreeTransform<Derived>::TransformFunctionTypeParam(ParmVarDecl *OldParm,
   else
     return ParmVarDecl::Create(SemaRef.Context,
                                OldParm->getDeclContext(),
+                               OldParm->getInnerLocStart(),
                                OldParm->getLocation(),
                                OldParm->getIdentifier(),
                                NewDI->getType(),
@@ -5288,8 +5292,9 @@ TreeTransform<Derived>::TransformCXXCatchStmt(CXXCatchStmt *S) {
       return StmtError();
 
     Var = getDerived().RebuildExceptionDecl(ExceptionDecl, T,
-                                            ExceptionDecl->getIdentifier(),
-                                            ExceptionDecl->getLocation());
+                                            ExceptionDecl->getInnerLocStart(),
+                                            ExceptionDecl->getLocation(),
+                                            ExceptionDecl->getIdentifier());
     if (!Var || Var->isInvalidDecl())
       return StmtError();
   }

@@ -125,11 +125,11 @@ int test_rdar8650865(struct rdar8650865 *s) {
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: 1:8: StructDecl=rdar8650865:1:8 (Definition) Extent=[1:1 - 4:2]
-// CHECK: 2:23: FieldDecl=first:2:23 (Definition) Extent=[2:23 - 2:28]
+// CHECK: 2:23: FieldDecl=first:2:23 (Definition) Extent=[2:3 - 2:28]
 // CHECK: 2:10: TypeRef=struct rdar8650865:1:8 Extent=[2:10 - 2:21]
-// CHECK: 3:7: FieldDecl=x:3:7 (Definition) Extent=[3:7 - 3:8]
-// CHECK: 6:5: FunctionDecl=test_rdar8650865:6:5 (Definition) Extent=[6:5 - 124:2]
-// CHECK: 6:42: ParmDecl=s:6:42 (Definition) Extent=[6:29 - 6:43]
+// CHECK: 3:7: FieldDecl=x:3:7 (Definition) Extent=[3:3 - 3:8]
+// CHECK: 6:5: FunctionDecl=test_rdar8650865:6:5 (Definition) Extent=[6:1 - 124:2]
+// CHECK: 6:42: ParmDecl=s:6:42 (Definition) Extent=[6:22 - 6:43]
 // CHECK: 6:29: TypeRef=struct rdar8650865:1:8 Extent=[6:29 - 6:40]
 // CHECK: 6:45: UnexposedStmt= Extent=[6:45 - 124:2]
 // CHECK: 7:3: UnexposedStmt= Extent=[7:3 - 123:8]
