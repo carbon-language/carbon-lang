@@ -7,8 +7,7 @@
 
 // CHECK: type { x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx }
 
-void foo(int64_t fill) {
-  __m64 vfill = _mm_cvtsi64_m64(fill);
+void foo(__m64 vfill) {
   __m64 v1, v2, v3, v4, v5, v6, v7;
 
   __asm__ __volatile__ (
