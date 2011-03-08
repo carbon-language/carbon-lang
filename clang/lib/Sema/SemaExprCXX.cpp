@@ -165,7 +165,7 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
 
         return ParsedType::make(T);
       }
-      
+
       if (!SearchType.isNull())
         NonMatchingTypeDecl = Type;
     }
