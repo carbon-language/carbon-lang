@@ -1460,6 +1460,13 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         // Turn the file name into an absolute path, if it isn't already.
         const char *Filename = Content->OrigEntry->getName();
         llvm::SmallString<128> FilePath(Filename);
+
+        // Ask the file manager to fixup the relative path for us. This will 
+        // honor the working directory.
+        SourceMgr.getFileManager().FixupRelativePath(FilePath);
+
+        // FIXME: This call to make_absolute shouldn't be necessary, the
+        // call to FixupRelativePath should always return an absolute path.
         llvm::sys::fs::make_absolute(FilePath);
         Filename = FilePath.c_str();
 
