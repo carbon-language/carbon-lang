@@ -1968,6 +1968,11 @@ unsigned FieldDecl::getFieldIndex() const {
   return index;
 }
 
+SourceRange FieldDecl::getSourceRange() const {
+  return SourceRange(getInnerLocStart(),
+                     isBitField() ? BitWidth->getLocEnd() : getLocation());
+}
+
 //===----------------------------------------------------------------------===//
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
