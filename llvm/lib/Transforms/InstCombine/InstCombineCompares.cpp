@@ -2315,11 +2315,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(Pred, D, B);
 
     BinaryOperator *SRem = NULL;
-    // icmp Y, (srem X, Y)
+    // icmp (srem X, Y), Y
     if (BO0 && BO0->getOpcode() == Instruction::SRem &&
         Op1 == BO0->getOperand(1))
       SRem = BO0;
-    // icmp (srem X, Y), Y
+    // icmp Y, (srem X, Y)
     else if (BO1 && BO1->getOpcode() == Instruction::SRem &&
              Op0 == BO1->getOperand(1))
       SRem = BO1;
