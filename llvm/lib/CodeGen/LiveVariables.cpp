@@ -107,9 +107,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo& VRInfo,
   // Mark the variable known alive in this bb
   VRInfo.AliveBlocks.set(BBNum);
 
-  for (MachineBasicBlock::const_pred_reverse_iterator PI = MBB->pred_rbegin(),
-         E = MBB->pred_rend(); PI != E; ++PI)
-    WorkList.push_back(*PI);
+  WorkList.insert(WorkList.end(), MBB->pred_rbegin(), MBB->pred_rend());
 }
 
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
@@ -707,7 +705,7 @@ bool LiveVariables::isLiveOut(unsigned Reg, const MachineBasicBlock &MBB) {
 
   // Loop over all of the successors of the basic block, checking to see if
   // the value is either live in the block, or if it is killed in the block.
-  std::vector<MachineBasicBlock*> OpSuccBlocks;
+  SmallVector<MachineBasicBlock*, 8> OpSuccBlocks;
   for (MachineBasicBlock::const_succ_iterator SI = MBB.succ_begin(),
          E = MBB.succ_end(); SI != E; ++SI) {
     MachineBasicBlock *SuccMBB = *SI;
