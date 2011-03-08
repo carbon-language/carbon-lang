@@ -610,6 +610,10 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // Otherwise take the unions of the known bit sets of the operands,
     // taking conservative care to avoid excessive recursion.
     if (Depth < MaxDepth - 1 && !KnownZero && !KnownOne) {
+      // Skip if every incoming value references to ourself.
+      if (P->hasConstantValue() == P)
+        break;
+
       KnownZero = APInt::getAllOnesValue(BitWidth);
       KnownOne = APInt::getAllOnesValue(BitWidth);
       for (unsigned i = 0, e = P->getNumIncomingValues(); i != e; ++i) {
