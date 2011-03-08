@@ -8834,8 +8834,8 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SADDO:
     // A subtract of one will be selected as a INC. Note that INC doesn't
     // set CF, so we can't do this for UADDO.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op))
-      if (C->getAPIntValue() == 1) {
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(RHS))
+      if (C->isOne()) {
         BaseOp = X86ISD::INC;
         Cond = X86::COND_O;
         break;
@@ -8850,8 +8850,8 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SSUBO:
     // A subtract of one will be selected as a DEC. Note that DEC doesn't
     // set CF, so we can't do this for USUBO.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op))
-      if (C->getAPIntValue() == 1) {
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(RHS))
+      if (C->isOne()) {
         BaseOp = X86ISD::DEC;
         Cond = X86::COND_O;
         break;

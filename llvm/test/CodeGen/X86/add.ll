@@ -133,3 +133,18 @@ define i32 @test9(i32 %x, i32 %y) nounwind readnone {
 ; X64: subl
 ; X64: ret
 }
+
+define i1 @test10(i32 %x) nounwind {
+entry:
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %x, i32 1)
+  %obit = extractvalue {i32, i1} %t, 1
+  ret i1 %obit
+
+; X32: test10:
+; X32: incl
+; X32-NEXT: seto
+
+; X64: test10:
+; X64: incl
+; X64-NEXT: seto
+}
