@@ -102,7 +102,7 @@ struct X0  {};
 // CHECK: c-index-api-loadTU-test.m:43:3: EnumConstantDecl=someEnum:43:3 (Definition) Extent=[43:3 - 43:11]
 // CHECK: c-index-api-loadTU-test.m:46:5: FunctionDecl=main:46:5 (Definition) Extent=[46:1 - 55:2]
 // CHECK: c-index-api-loadTU-test.m:46:15: ParmDecl=argc:46:15 (Definition) Extent=[46:11 - 46:19]
-// CHECK: c-index-api-loadTU-test.m:46:34: ParmDecl=argv:46:34 (Definition) Extent=[46:21 - 46:38]
+// CHECK: c-index-api-loadTU-test.m:46:34: ParmDecl=argv:46:34 (Definition) Extent=[46:21 - 46:40]
 // CHECK: c-index-api-loadTU-test.m:47:8: VarDecl=bee:47:8 (Definition) Extent=[47:2 - 47:11]
 // CHECK: c-index-api-loadTU-test.m:47:2: ObjCClassRef=Baz:33:12 Extent=[47:2 - 47:5]
 // CHECK: c-index-api-loadTU-test.m:48:5: VarDecl=a:48:5 (Definition) Extent=[48:2 - 48:18]

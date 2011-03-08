@@ -975,6 +975,55 @@ SourceLocation DeclaratorDecl::getOuterLocStart() const {
   return getTemplateOrInnerLocStart(this);
 }
 
+namespace {
+
+// Helper function: returns true if QT is or contains a type
+// having a postfix component.
+bool typeIsPostfix(clang::QualType QT) {
+  while (true) {
+    const Type* T = QT.getTypePtr();
+    switch (T->getTypeClass()) {
+    default:
+      return false;
+    case Type::Pointer:
+      QT = cast<PointerType>(T)->getPointeeType();
+      break;
+    case Type::BlockPointer:
+      QT = cast<BlockPointerType>(T)->getPointeeType();
+      break;
+    case Type::MemberPointer:
+      QT = cast<MemberPointerType>(T)->getPointeeType();
+      break;
+    case Type::LValueReference:
+    case Type::RValueReference:
+      QT = cast<ReferenceType>(T)->getPointeeType();
+      break;
+    case Type::PackExpansion:
+      QT = cast<PackExpansionType>(T)->getPattern();
+      break;
+    case Type::Paren:
+    case Type::ConstantArray:
+    case Type::DependentSizedArray:
+    case Type::IncompleteArray:
+    case Type::VariableArray:
+    case Type::FunctionProto:
+    case Type::FunctionNoProto:
+      return true;
+    }
+  }
+}
+
+} // namespace
+
+SourceRange DeclaratorDecl::getSourceRange() const {
+  SourceLocation RangeEnd = getLocation();
+  if (TypeSourceInfo *TInfo = getTypeSourceInfo()) {
+    if (typeIsPostfix(TInfo->getType()))
+      RangeEnd = TInfo->getTypeLoc().getSourceRange().getEnd();
+  }
+  return SourceRange(getOuterLocStart(), RangeEnd);
+}
+
 void
 QualifierInfo::setTemplateParameterListsInfo(ASTContext &Context,
                                              unsigned NumTPLists,
@@ -1035,7 +1084,7 @@ void VarDecl::setStorageClass(StorageClass SC) {
 SourceRange VarDecl::getSourceRange() const {
   if (getInit())
     return SourceRange(getOuterLocStart(), getInit()->getLocEnd());
-  return SourceRange(getOuterLocStart(), getLocation());
+  return DeclaratorDecl::getSourceRange();
 }
 
 bool VarDecl::isExternC() const {
@@ -1927,6 +1976,10 @@ bool FunctionDecl::isOutOfLine() const {
   return false;
 }
 
+SourceRange FunctionDecl::getSourceRange() const {
+  return SourceRange(getOuterLocStart(), EndRangeLoc);
+}
+
 //===----------------------------------------------------------------------===//
 // FieldDecl Implementation
 //===----------------------------------------------------------------------===//
@@ -1969,8 +2022,9 @@ unsigned FieldDecl::getFieldIndex() const {
 }
 
 SourceRange FieldDecl::getSourceRange() const {
-  return SourceRange(getInnerLocStart(),
-                     isBitField() ? BitWidth->getLocEnd() : getLocation());
+  if (isBitField())
+    return SourceRange(getInnerLocStart(), BitWidth->getLocEnd());
+  return DeclaratorDecl::getSourceRange();
 }
 
 //===----------------------------------------------------------------------===//
@@ -2282,6 +2336,15 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation StartLoc, SourceLocation IdLoc,
                                  IdentifierInfo *Id, TypeSourceInfo *TInfo) {
   return new (C) TypedefDecl(DC, StartLoc, IdLoc, Id, TInfo);
+}
+
+SourceRange TypedefDecl::getSourceRange() const {
+  SourceLocation RangeEnd = getLocation();
+  if (TypeSourceInfo *TInfo = getTypeSourceInfo()) {
+    if (typeIsPostfix(TInfo->getType()))
+      RangeEnd = TInfo->getTypeLoc().getSourceRange().getEnd();
+  }
+  return SourceRange(getLocStart(), RangeEnd);
 }
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,

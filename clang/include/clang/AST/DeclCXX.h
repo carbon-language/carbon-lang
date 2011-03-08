@@ -1718,30 +1718,35 @@ public:
 private:
   /// Language - The language for this linkage specification.
   LanguageIDs Language;
-
+  /// ExternLoc - The source location for the extern keyword.
+  SourceLocation ExternLoc;
   /// RBraceLoc - The source location for the right brace (if valid).
   SourceLocation RBraceLoc;
 
-  LinkageSpecDecl(DeclContext *DC, SourceLocation L, LanguageIDs lang,
+  LinkageSpecDecl(DeclContext *DC, SourceLocation ExternLoc,
+                  SourceLocation LangLoc, LanguageIDs lang,
                   SourceLocation RBLoc)
-    : Decl(LinkageSpec, DC, L), DeclContext(LinkageSpec),
-      Language(lang), RBraceLoc(RBLoc) { }
+    : Decl(LinkageSpec, DC, LangLoc), DeclContext(LinkageSpec),
+      Language(lang), ExternLoc(ExternLoc), RBraceLoc(RBLoc) { }
 
 public:
   static LinkageSpecDecl *Create(ASTContext &C, DeclContext *DC,
-                                 SourceLocation L, LanguageIDs Lang,
+                                 SourceLocation ExternLoc,
+                                 SourceLocation LangLoc, LanguageIDs Lang,
                                  SourceLocation RBraceLoc = SourceLocation());
 
   /// \brief Return the language specified by this linkage specification.
   LanguageIDs getLanguage() const { return Language; }
-
   /// \brief Set the language specified by this linkage specification.
   void setLanguage(LanguageIDs L) { Language = L; }
 
   /// \brief Determines whether this linkage specification had braces in
   /// its syntactic form.
   bool hasBraces() const { return RBraceLoc.isValid(); }
+
+  SourceLocation getExternLoc() const { return ExternLoc; }
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
+  void setExternLoc(SourceLocation L) { ExternLoc = L; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
 
   SourceLocation getLocEnd() const {
@@ -1753,7 +1758,7 @@ public:
   }
 
   SourceRange getSourceRange() const {
-    return SourceRange(getLocation(), getLocEnd());
+    return SourceRange(ExternLoc, getLocEnd());
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2269,21 +2274,32 @@ public:
 class StaticAssertDecl : public Decl {
   Expr *AssertExpr;
   StringLiteral *Message;
+  SourceLocation RParenLoc;
 
-  StaticAssertDecl(DeclContext *DC, SourceLocation L,
-                   Expr *assertexpr, StringLiteral *message)
-  : Decl(StaticAssert, DC, L), AssertExpr(assertexpr), Message(message) { }
+  StaticAssertDecl(DeclContext *DC, SourceLocation StaticAssertLoc,
+                   Expr *assertexpr, StringLiteral *message,
+                   SourceLocation RParenLoc)
+  : Decl(StaticAssert, DC, StaticAssertLoc), AssertExpr(assertexpr),
+    Message(message), RParenLoc(RParenLoc) { }
 
 public:
   static StaticAssertDecl *Create(ASTContext &C, DeclContext *DC,
-                                  SourceLocation L, Expr *AssertExpr,
-                                  StringLiteral *Message);
+                                  SourceLocation StaticAssertLoc,
+                                  Expr *AssertExpr, StringLiteral *Message,
+                                  SourceLocation RParenLoc);
 
   Expr *getAssertExpr() { return AssertExpr; }
   const Expr *getAssertExpr() const { return AssertExpr; }
 
   StringLiteral *getMessage() { return Message; }
   const StringLiteral *getMessage() const { return Message; }
+
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(getLocation(), getRParenLoc());
+  }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(StaticAssertDecl *D) { return true; }

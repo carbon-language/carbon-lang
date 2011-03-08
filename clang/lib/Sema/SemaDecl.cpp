@@ -4254,7 +4254,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     RegisterLocallyScopedExternCDecl(NewFD, Previous, S);
 
   // Set this FunctionDecl's range up to the right paren.
-  NewFD->setLocEnd(D.getSourceRange().getEnd());
+  NewFD->setRangeEnd(D.getSourceRange().getEnd());
 
   if (getLangOptions().CPlusPlus) {
     if (FunctionTemplate) {

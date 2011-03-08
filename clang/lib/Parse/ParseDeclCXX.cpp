@@ -194,9 +194,9 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
   ParseScope LinkageScope(this, Scope::DeclScope);
   Decl *LinkageSpec
     = Actions.ActOnStartLinkageSpecification(getCurScope(),
-                                             /*FIXME: */SourceLocation(),
+                                             DS.getSourceRange().getBegin(),
                                              Loc, Lang,
-                                       Tok.is(tok::l_brace)? Tok.getLocation()
+                                      Tok.is(tok::l_brace) ? Tok.getLocation()
                                                            : SourceLocation());
 
   ParsedAttributesWithRange attrs;
@@ -441,14 +441,15 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   if (AssertMessage.isInvalid())
     return 0;
 
-  MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
   DeclEnd = Tok.getLocation();
   ExpectAndConsumeSemi(diag::err_expected_semi_after_static_assert);
 
   return Actions.ActOnStaticAssertDeclaration(StaticAssertLoc,
                                               AssertExpr.take(),
-                                              AssertMessage.take());
+                                              AssertMessage.take(),
+                                              RParenLoc);
 }
 
 /// ParseDecltypeSpecifier - Parse a C++0x decltype specifier.

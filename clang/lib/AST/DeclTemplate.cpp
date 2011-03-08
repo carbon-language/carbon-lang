@@ -508,10 +508,10 @@ NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
 }
 
 SourceRange NonTypeTemplateParmDecl::getSourceRange() const {
-  SourceLocation End = getLocation();
   if (hasDefaultArgument() && !defaultArgumentWasInherited())
-    End = getDefaultArgument()->getSourceRange().getEnd();
-  return SourceRange(getOuterLocStart(), End);
+    return SourceRange(getOuterLocStart(),
+                       getDefaultArgument()->getSourceRange().getEnd());
+  return DeclaratorDecl::getSourceRange();
 }
 
 SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {

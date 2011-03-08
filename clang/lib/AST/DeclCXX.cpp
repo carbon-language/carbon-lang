@@ -1273,10 +1273,11 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC,
-                                         SourceLocation L,
+                                         SourceLocation ExternLoc,
+                                         SourceLocation LangLoc,
                                          LanguageIDs Lang,
                                          SourceLocation RBraceLoc) {
-  return new (C) LinkageSpecDecl(DC, L, Lang, RBraceLoc);
+  return new (C) LinkageSpecDecl(DC, ExternLoc, LangLoc, Lang, RBraceLoc);
 }
 
 UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
@@ -1379,9 +1380,12 @@ UnresolvedUsingTypenameDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
-                                           SourceLocation L, Expr *AssertExpr,
-                                           StringLiteral *Message) {
-  return new (C) StaticAssertDecl(DC, L, AssertExpr, Message);
+                                           SourceLocation StaticAssertLoc,
+                                           Expr *AssertExpr,
+                                           StringLiteral *Message,
+                                           SourceLocation RParenLoc) {
+  return new (C) StaticAssertDecl(DC, StaticAssertLoc, AssertExpr, Message,
+                                  RParenLoc);
 }
 
 static const char *getAccessName(AccessSpecifier AS) {

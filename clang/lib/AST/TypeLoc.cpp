@@ -118,18 +118,37 @@ SourceLocation TypeLoc::getBeginLoc() const {
 
 SourceLocation TypeLoc::getEndLoc() const {
   TypeLoc Cur = *this;
+  TypeLoc Last;
   while (true) {
     switch (Cur.getTypeLocClass()) {
     default:
+      if (!Last)
+	Last = Cur;
+      return Last.getLocalSourceRange().getEnd();
+    case Paren:
+    case ConstantArray:
+    case DependentSizedArray:
+    case IncompleteArray:
+    case VariableArray:
+    case FunctionProto:
+    case FunctionNoProto:
+      Last = Cur;
+      break;
+    case Pointer:
+    case BlockPointer:
+    case MemberPointer:
+    case LValueReference:
+    case RValueReference:
+    case PackExpansion:
+      if (!Last)
+	Last = Cur;
       break;
     case Qualified:
     case Elaborated:
-      Cur = Cur.getNextTypeLoc();
-      continue;
+      break;
     }
-    break;
+    Cur = Cur.getNextTypeLoc();
   }
-  return Cur.getLocalSourceRange().getEnd();
 }
 
 

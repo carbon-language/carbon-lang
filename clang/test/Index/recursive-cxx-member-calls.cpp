@@ -858,7 +858,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ")" [88:61 - 88:62] ParmDecl=S:88:60 (Definition)
 // CHECK-tokens: Punctuation: "[" [88:62 - 88:63] ParmDecl=S:88:60 (Definition)
 // CHECK-tokens: Identifier: "N" [88:63 - 88:64] DeclRefExpr=N:88:23
-// CHECK-tokens: Punctuation: "]" [88:64 - 88:65] FunctionTemplate=Case:88:42 (Definition)
+// CHECK-tokens: Punctuation: "]" [88:64 - 88:65] ParmDecl=S:88:60 (Definition)
 // CHECK-tokens: Punctuation: "," [88:65 - 88:66] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Keyword: "const" [89:47 - 89:52] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Identifier: "T" [89:53 - 89:54] ParmDecl=Value:89:57 (Definition)
@@ -1532,7 +1532,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 4:20: TemplateTypeParameter=_T1:4:20 (Definition) Extent=[4:14 - 4:23]
 // CHECK: 4:31: TemplateTypeParameter=_T2:4:31 (Definition) Extent=[4:25 - 4:34]
 // CHECK: 4:55: FieldDecl=second:4:55 (Definition) Extent=[4:51 - 4:61]
-// CHECK: 6:8: UnexposedDecl=:6:8 (Definition) Extent=[6:8 - 9:2]
+// CHECK: 6:8: UnexposedDecl=:6:8 (Definition) Extent=[6:1 - 9:2]
 // CHECK: 7:7: FunctionDecl=memcmp:7:7 Extent=[7:3 - 7:49]
 // CHECK: 7:26: ParmDecl=:7:26 (Definition) Extent=[7:14 - 7:27]
 // CHECK: 7:40: ParmDecl=:7:40 (Definition) Extent=[7:28 - 7:41]
@@ -1851,7 +1851,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 87:62: UnexposedStmt= Extent=[87:62 - 87:64]
 // CHECK: 88:42: FunctionTemplate=Case:88:42 (Definition) Extent=[88:3 - 91:4]
 // CHECK: 88:23: NonTypeTemplateParameter=N:88:23 (Definition) Extent=[88:14 - 88:24]
-// CHECK: 88:60: ParmDecl=S:88:60 (Definition) Extent=[88:47 - 88:61]
+// CHECK: 88:60: ParmDecl=S:88:60 (Definition) Extent=[88:47 - 88:65]
 // CHECK: 88:63: DeclRefExpr=N:88:23 Extent=[88:63 - 88:64]
 // CHECK: 89:57: ParmDecl=Value:89:57 (Definition) Extent=[89:47 - 89:62]
 // CHECK: 89:64: UnexposedStmt= Extent=[89:64 - 91:4]

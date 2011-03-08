@@ -744,6 +744,7 @@ void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
 void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
   VisitDecl(D);
   D->setLanguage((LinkageSpecDecl::LanguageIDs)Record[Idx++]);
+  D->setExternLoc(ReadSourceLocation(Record, Idx));
   D->setRBraceLoc(ReadSourceLocation(Record, Idx));
 }
 
@@ -1241,6 +1242,7 @@ void ASTDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
   VisitDecl(D);
   D->AssertExpr = Reader.ReadExpr(F);
   D->Message = cast<StringLiteral>(Reader.ReadExpr(F));
+  D->RParenLoc = ReadSourceLocation(Record, Idx);
 }
 
 std::pair<uint64_t, uint64_t>
@@ -1440,7 +1442,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
                              DeclarationName(), QualType(), 0);
     break;
   case DECL_LINKAGE_SPEC:
-    D = LinkageSpecDecl::Create(*Context, 0, SourceLocation(),
+    D = LinkageSpecDecl::Create(*Context, 0, SourceLocation(), SourceLocation(),
                                 (LinkageSpecDecl::LanguageIDs)0,
                                 SourceLocation());
     break;
@@ -1538,7 +1540,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
                                          false, 0, 0);
     break;
   case DECL_STATIC_ASSERT:
-    D = StaticAssertDecl::Create(*Context, 0, SourceLocation(), 0, 0);
+    D = StaticAssertDecl::Create(*Context, 0, SourceLocation(), 0, 0,
+                                 SourceLocation());
     break;
 
   case DECL_OBJC_METHOD:
