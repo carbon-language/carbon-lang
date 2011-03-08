@@ -1967,8 +1967,9 @@ Decl *ASTNodeImporter::VisitNamespaceDecl(NamespaceDecl *D) {
   // Create the "to" namespace, if needed.
   NamespaceDecl *ToNamespace = MergeWithNamespace;
   if (!ToNamespace) {
-    ToNamespace = NamespaceDecl::Create(Importer.getToContext(), DC, Loc,
-                                        Name.getAsIdentifierInfo());
+    ToNamespace = NamespaceDecl::Create(Importer.getToContext(), DC,
+                                        Importer.Import(D->getLocStart()),
+                                        Loc, Name.getAsIdentifierInfo());
     ToNamespace->setLexicalDeclContext(LexicalDC);
     LexicalDC->addDecl(ToNamespace);
     

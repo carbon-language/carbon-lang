@@ -346,7 +346,11 @@ public:
 class NamespaceDecl : public NamedDecl, public DeclContext {
   bool IsInline : 1;
 
-  SourceLocation LBracLoc, RBracLoc;
+  /// LocStart - The starting location of the source range, pointing
+  /// to either the namespace or the inline keyword.
+  SourceLocation LocStart;
+  /// RBraceLoc - The ending location of the source range.
+  SourceLocation RBraceLoc;
 
   // For extended namespace definitions:
   //
@@ -373,13 +377,16 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
   /// namespace declaration (which the boolean indicates).
   llvm::PointerIntPair<NamespaceDecl *, 1, bool> OrigOrAnonNamespace;
 
-  NamespaceDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
-    : NamedDecl(Namespace, DC, L, Id), DeclContext(Namespace),
-      IsInline(false), NextNamespace(), OrigOrAnonNamespace(0, true) { }
+  NamespaceDecl(DeclContext *DC, SourceLocation StartLoc,
+                SourceLocation IdLoc, IdentifierInfo *Id)
+    : NamedDecl(Namespace, DC, IdLoc, Id), DeclContext(Namespace),
+      IsInline(false), LocStart(StartLoc), RBraceLoc(),
+      NextNamespace(), OrigOrAnonNamespace(0, true) { }
 
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
-                               SourceLocation L, IdentifierInfo *Id);
+                               SourceLocation StartLoc,
+                               SourceLocation IdLoc, IdentifierInfo *Id);
 
   /// \brief Returns true if this is an anonymous namespace declaration.
   ///
@@ -453,14 +460,14 @@ public:
   }
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getLocation(), RBracLoc);
+    return SourceRange(LocStart, RBraceLoc);
   }
 
-  SourceLocation getLBracLoc() const { return LBracLoc; }
-  SourceLocation getRBracLoc() const { return RBracLoc; }
-  void setLBracLoc(SourceLocation L) { LBracLoc = L; }
-  void setRBracLoc(SourceLocation R) { RBracLoc = R; }
-  
+  SourceLocation getLocStart() const { return LocStart; }
+  SourceLocation getRBraceLoc() const { return RBraceLoc; }
+  void setLocStart(SourceLocation L) { LocStart = L; }
+  void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NamespaceDecl *D) { return true; }

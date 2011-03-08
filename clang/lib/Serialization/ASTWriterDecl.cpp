@@ -662,8 +662,8 @@ void ASTDeclWriter::VisitLabelDecl(LabelDecl *D) {
 void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitNamedDecl(D);
   Record.push_back(D->isInline());
-  Writer.AddSourceLocation(D->getLBracLoc(), Record);
-  Writer.AddSourceLocation(D->getRBracLoc(), Record);
+  Writer.AddSourceLocation(D->getLocStart(), Record);
+  Writer.AddSourceLocation(D->getRBraceLoc(), Record);
   Writer.AddDeclRef(D->getNextNamespace(), Record);
 
   // Only write one reference--original or anonymous

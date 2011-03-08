@@ -756,8 +756,8 @@ void ASTDeclReader::VisitLabelDecl(LabelDecl *D) {
 void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitNamedDecl(D);
   D->IsInline = Record[Idx++];
-  D->LBracLoc = ReadSourceLocation(Record, Idx);
-  D->RBracLoc = ReadSourceLocation(Record, Idx);
+  D->LocStart = ReadSourceLocation(Record, Idx);
+  D->RBraceLoc = ReadSourceLocation(Record, Idx);
   D->NextNamespace = Record[Idx++];
 
   bool IsOriginal = Record[Idx++];
@@ -1448,7 +1448,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     D = LabelDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case DECL_NAMESPACE:
-    D = NamespaceDecl::Create(*Context, 0, SourceLocation(), 0);
+    D = NamespaceDecl::Create(*Context, 0, SourceLocation(),
+                              SourceLocation(), 0);
     break;
   case DECL_NAMESPACE_ALIAS:
     D = NamespaceAliasDecl::Create(*Context, 0, SourceLocation(),

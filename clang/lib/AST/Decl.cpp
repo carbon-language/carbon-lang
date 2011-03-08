@@ -2222,8 +2222,9 @@ LabelDecl *LabelDecl::Create(ASTContext &C, DeclContext *DC,
 
 
 NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
-                                     SourceLocation L, IdentifierInfo *Id) {
-  return new (C) NamespaceDecl(DC, L, Id);
+                                     SourceLocation StartLoc,
+                                     SourceLocation IdLoc, IdentifierInfo *Id) {
+  return new (C) NamespaceDecl(DC, StartLoc, IdLoc, Id);
 }
 
 NamespaceDecl *NamespaceDecl::getNextNamespace() {
