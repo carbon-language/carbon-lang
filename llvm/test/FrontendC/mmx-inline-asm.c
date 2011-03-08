@@ -3,10 +3,11 @@
 // XTARGET: x86,i386,i686
 // <rdar://problem/9091220>
 #include <mmintrin.h>
+#include <stdint.h>
 
 // CHECK: type { x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx }
 
-void foo(long long fill) {
+void foo(int64_t fill) {
   __m64 vfill = _mm_cvtsi64_m64(fill);
   __m64 v1, v2, v3, v4, v5, v6, v7;
 
