@@ -158,15 +158,6 @@ ObjectFileELF::IsExecutable() const
     return m_header.e_entry != 0;
 }
 
-Address
-ObjectFileELF::GetEntryPoint() const
-{
-    if (m_header.e_entry)
-        return Address(NULL, m_header.e_entry);
-    else
-        return Address();
-}
-
 ByteOrder
 ObjectFileELF::GetByteOrder() const
 {

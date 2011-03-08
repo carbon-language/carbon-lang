@@ -89,9 +89,6 @@ public:
     virtual bool
     IsExecutable () const;
 
-    virtual lldb_private::Address
-    GetEntryPoint() const;
-
     virtual size_t
     GetAddressByteSize() const;
 

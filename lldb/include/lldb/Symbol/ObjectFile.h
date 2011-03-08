@@ -176,17 +176,6 @@ public:
     IsExecutable () const = 0;
 
     //------------------------------------------------------------------
-    /// Returns the virtual address of the entry point for this object 
-    /// file.
-    ///
-    /// @return
-    ///     The virtual address of the entry point or an invalid address
-    ///     if an entry point is not defined.
-    //------------------------------------------------------------------
-    virtual lldb_private::Address
-    GetEntryPoint () const { return Address(); }
-    
-    //------------------------------------------------------------------
     /// Returns the offset into a file at which this object resides.
     ///
     /// Some files contain many object files, and this function allows
