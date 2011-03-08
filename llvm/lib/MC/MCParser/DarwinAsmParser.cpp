@@ -100,6 +100,8 @@ public:
     AddDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveText>(".text");
     AddDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveThreadInitFunc>(".thread_init_func");
     AddDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveTLV>(".tlv");
+
+    AddDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveIdent>(".ident");
   }
 
   bool ParseDirectiveDesc(StringRef, SMLoc);
@@ -276,6 +278,11 @@ public:
   bool ParseSectionDirectiveTLV(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__thread_vars",
                               MCSectionMachO::S_THREAD_LOCAL_VARIABLES);
+  }
+  bool ParseSectionDirectiveIdent(StringRef, SMLoc) {
+    // Darwin silently ignores the .ident directive.
+    getParser().EatToEndOfStatement();
+    return false;
   }
   bool ParseSectionDirectiveThreadInitFunc(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__thread_init",
