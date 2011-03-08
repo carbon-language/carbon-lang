@@ -165,3 +165,10 @@
         vqrshrn.s32	d16, q8, #13
 @ CHECK: vqrshrn.s64	d16, q8, #13    @ encoding: [0x70,0x09,0xf3,0xf2]
         vqrshrn.s64	d16, q8, #13
+
+@ CHECK: vqrshrn.u16	d16, q8, #4     @ encoding: [0x70,0x09,0xcc,0xf3]
+        vqrshrn.u16	d16, q8, #4
+@ CHECK: vqrshrn.u32	d16, q8, #13    @ encoding: [0x70,0x09,0xd3,0xf3]
+        vqrshrn.u32	d16, q8, #13
+@ CHECK: vqrshrn.u64	d16, q8, #13    @ encoding: [0x70,0x09,0xf3,0xf3]
+        vqrshrn.u64	d16, q8, #13
