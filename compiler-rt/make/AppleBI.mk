@@ -21,7 +21,7 @@ else
 	CFLAGS.Release.armv7 := $(CFLAGS) -isysroot $(SDKROOT)
 	CFLAGS.Static.armv6  := $(CFLAGS) -isysroot $(SDKROOT)
 	CFLAGS.Static.armv7  := $(CFLAGS) -isysroot $(SDKROOT)
-    LD_OTHER_FLAGS = -Wl,-alias_list,$(SRCROOT)/lib/arm/softfloat-alias.list
+    LD_OTHER_FLAGS = -Wl,-alias_list,$(SRCROOT)/lib/arm/softfloat-alias.list -isysroot $(SDKROOT)
 endif
 
 
