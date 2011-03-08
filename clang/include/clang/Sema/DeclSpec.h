@@ -1649,10 +1649,13 @@ public:
 
   static const char *getSpecifierName(Specifier VS);
 
+  SourceLocation getLastLocation() const { return LastLocation; }
+  
 private:
   unsigned Specifiers;
 
   SourceLocation VS_overrideLoc, VS_finalLoc, VS_newLoc;
+  SourceLocation LastLocation;
 };
 
 /// ClassVirtSpecifiers - Represents a C++0x class-virt-specifier-seq.

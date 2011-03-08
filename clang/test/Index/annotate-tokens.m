@@ -30,12 +30,12 @@ typedef int * barType;
 // Since there are no source ranges for attributes, we currently don't
 // annotate them.
 @interface IBActionTests
-- (IBAction) actionMethod:(id)arg;
+- (IBAction) actionMethod:(in id)arg;
 - (void)foo:(int)x;
 @end
 extern int ibaction_test(void);
 @implementation IBActionTests
-- (IBAction) actionMethod:(id)arg
+- (IBAction) actionMethod:(in id)arg
 {
     ibaction_test();
     [self foo:0];
@@ -231,10 +231,11 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Identifier: "actionMethod" [33:14 - 33:26] ObjCInstanceMethodDecl=actionMethod::33:1
 // CHECK: Punctuation: ":" [33:26 - 33:27] ObjCInstanceMethodDecl=actionMethod::33:1
 // CHECK: Punctuation: "(" [33:27 - 33:28] ObjCInstanceMethodDecl=actionMethod::33:1
-// CHECK: Identifier: "id" [33:28 - 33:30] TypeRef=id:0:0
-// CHECK: Punctuation: ")" [33:30 - 33:31] ParmDecl=arg:33:31 (Definition)
-// CHECK: Identifier: "arg" [33:31 - 33:34] ParmDecl=arg:33:31 (Definition)
-// CHECK: Punctuation: ";" [33:34 - 33:35] ObjCInstanceMethodDecl=actionMethod::33:1
+// CHECK: Keyword: "in" [33:28 - 33:30] ObjCInstanceMethodDecl=actionMethod::33:1
+// CHECK: Identifier: "id" [33:31 - 33:33] TypeRef=id:0:0
+// CHECK: Punctuation: ")" [33:33 - 33:34] ParmDecl=arg:33:34 (Definition)
+// CHECK: Identifier: "arg" [33:34 - 33:37] ParmDecl=arg:33:34 (Definition)
+// CHECK: Punctuation: ";" [33:37 - 33:38] ObjCInstanceMethodDecl=actionMethod::33:1
 // CHECK: Punctuation: "-" [34:1 - 34:2] ObjCInstanceMethodDecl=foo::34:1
 // CHECK: Punctuation: "(" [34:3 - 34:4] ObjCInstanceMethodDecl=foo::34:1
 // CHECK: Keyword: "void" [34:4 - 34:8] ObjCInstanceMethodDecl=foo::34:1
@@ -264,10 +265,10 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: ")" [38:12 - 38:13] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
 // CHECK: Identifier: "actionMethod" [38:14 - 38:26] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
 // CHECK: Punctuation: ":" [38:26 - 38:27] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Punctuation: "(" [38:27 - 38:28] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition)
-// CHECK: Identifier: "id" [38:28 - 38:30] TypeRef=id:0:0
-// CHECK: Punctuation: ")" [38:30 - 38:31] ParmDecl=arg:38:31 (Definition)
-// CHECK: Identifier: "arg" [38:31 - 38:34] ParmDecl=arg:38:31 (Definition)
+// CHECK: Keyword: "in" [38:28 - 38:30] ObjCInstanceMethodDecl=actionMethod::38:1 (Definition) [Overrides @33:1]
+// CHECK: Identifier: "id" [38:31 - 38:33] TypeRef=id:0:0
+// CHECK: Punctuation: ")" [38:33 - 38:34] ParmDecl=arg:38:34 (Definition)
+// CHECK: Identifier: "arg" [38:34 - 38:37] ParmDecl=arg:38:34 (Definition)
 // CHECK: Punctuation: "{" [39:1 - 39:2] UnexposedStmt=
 // CHECK: Identifier: "ibaction_test" [40:5 - 40:18] DeclRefExpr=ibaction_test:36:12
 // CHECK: Punctuation: "(" [40:18 - 40:19] CallExpr=ibaction_test:36:12
@@ -484,16 +485,16 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: "@" [110:1 - 110:2] ObjCPropertyDecl=foo:110:33
 // CHECK: Keyword: "property" [110:2 - 110:10] ObjCPropertyDecl=foo:110:33
 // CHECK: Punctuation: "(" [110:11 - 110:12] ObjCPropertyDecl=foo:110:33
-// CHECK: Identifier: "readonly" [110:12 - 110:20] ObjCPropertyDecl=foo:110:33
+// CHECK: Keyword: "readonly" [110:12 - 110:20] ObjCPropertyDecl=foo:110:33
 // CHECK: Punctuation: "," [110:20 - 110:21] ObjCPropertyDecl=foo:110:33
-// CHECK: Identifier: "copy" [110:22 - 110:26] ObjCPropertyDecl=foo:110:33
+// CHECK: Keyword: "copy" [110:22 - 110:26] ObjCPropertyDecl=foo:110:33
 // CHECK: Punctuation: ")" [110:26 - 110:27] ObjCPropertyDecl=foo:110:33
 // CHECK: Identifier: "Foo" [110:28 - 110:31] ObjCClassRef=Foo:1:12
 // CHECK: Punctuation: "*" [110:32 - 110:33] ObjCPropertyDecl=foo:110:33
 // CHECK: Identifier: "foo" [110:33 - 110:36] ObjCPropertyDecl=foo:110:33
 // CHECK: Keyword: "property" [111:2 - 111:10] ObjCPropertyDecl=foo2:111:27
 // CHECK: Punctuation: "(" [111:11 - 111:12] ObjCPropertyDecl=foo2:111:27
-// CHECK: Identifier: "readonly" [111:12 - 111:20] ObjCPropertyDecl=foo2:111:27
+// CHECK: Keyword: "readonly" [111:12 - 111:20] ObjCPropertyDecl=foo2:111:27
 // CHECK: Punctuation: ")" [111:20 - 111:21] ObjCPropertyDecl=foo2:111:27
 // CHECK: Identifier: "Foo" [111:22 - 111:25] ObjCClassRef=Foo:1:12
 // CHECK: Punctuation: "*" [111:26 - 111:27] ObjCPropertyDecl=foo2:111:27
@@ -539,9 +540,9 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK-PROP-AFTER-METHOD: Punctuation: "@" [136:1 - 136:2] ObjCPropertyDecl=blah:136:38
 // CHECK-PROP-AFTER-METHOD: Keyword: "property" [136:2 - 136:10] ObjCPropertyDecl=blah:136:38
 // CHECK-PROP-AFTER-METHOD: Punctuation: "(" [136:11 - 136:12] ObjCPropertyDecl=blah:136:38
-// CHECK-PROP-AFTER-METHOD: Identifier: "readonly" [136:12 - 136:20] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Keyword: "readonly" [136:12 - 136:20] ObjCPropertyDecl=blah:136:38
 // CHECK-PROP-AFTER-METHOD: Punctuation: "," [136:20 - 136:21] ObjCPropertyDecl=blah:136:38
-// CHECK-PROP-AFTER-METHOD: Identifier: "nonatomic" [136:22 - 136:31] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Keyword: "nonatomic" [136:22 - 136:31] ObjCPropertyDecl=blah:136:38
 // CHECK-PROP-AFTER-METHOD: Punctuation: ")" [136:31 - 136:32] ObjCPropertyDecl=blah:136:38
 // CHECK-PROP-AFTER-METHOD: Identifier: "Foo" [136:33 - 136:36] ObjCClassRef=Foo:1:12
 // CHECK-PROP-AFTER-METHOD: Punctuation: "*" [136:37 - 136:38] ObjCPropertyDecl=blah:136:38

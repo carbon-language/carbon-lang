@@ -34,6 +34,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -4261,7 +4262,8 @@ class AnnotateTokensWorker {
   unsigned PreprocessingTokIdx;
   CursorVisitor AnnotateVis;
   SourceManager &SrcMgr;
-
+  bool HasContextSensitiveKeywords;
+  
   bool MoreTokens() const { return TokIdx < NumTokens; }
   unsigned NextToken() const { return TokIdx; }
   void AdvanceToken() { ++TokIdx; }
@@ -4278,13 +4280,20 @@ public:
       AnnotateVis(tu,
                   AnnotateTokensVisitor, this,
                   Decl::MaxPCHLevel, RegionOfInterest),
-      SrcMgr(static_cast<ASTUnit*>(tu->TUData)->getSourceManager()) {}
+      SrcMgr(static_cast<ASTUnit*>(tu->TUData)->getSourceManager()),
+      HasContextSensitiveKeywords(false) { }
 
   void VisitChildren(CXCursor C) { AnnotateVis.VisitChildren(C); }
   enum CXChildVisitResult Visit(CXCursor cursor, CXCursor parent);
   void AnnotateTokens(CXCursor parent);
   void AnnotateTokens() {
     AnnotateTokens(clang_getTranslationUnitCursor(AnnotateVis.getTU()));
+  }
+  
+  /// \brief Determine whether the annotator saw any cursors that have 
+  /// context-sensitive keywords.
+  bool hasContextSensitiveKeywords() const {
+    return HasContextSensitiveKeywords;
   }
 };
 }
@@ -4319,7 +4328,52 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   SourceRange cursorRange = getRawCursorExtent(cursor);
   if (cursorRange.isInvalid())
     return CXChildVisit_Recurse;
-        
+      
+  if (!HasContextSensitiveKeywords) {
+    // Objective-C properties can have context-sensitive keywords.
+    if (cursor.kind == CXCursor_ObjCPropertyDecl) {
+      if (ObjCPropertyDecl *Property 
+                  = dyn_cast_or_null<ObjCPropertyDecl>(getCursorDecl(cursor)))
+        HasContextSensitiveKeywords = Property->getPropertyAttributesAsWritten() != 0;
+    }
+    // Objective-C methods can have context-sensitive keywords.
+    else if (cursor.kind == CXCursor_ObjCInstanceMethodDecl ||
+             cursor.kind == CXCursor_ObjCClassMethodDecl) {
+      if (ObjCMethodDecl *Method
+            = dyn_cast_or_null<ObjCMethodDecl>(getCursorDecl(cursor))) {
+        if (Method->getObjCDeclQualifier())
+          HasContextSensitiveKeywords = true;
+        else {
+          for (ObjCMethodDecl::param_iterator P = Method->param_begin(),
+                                           PEnd = Method->param_end();
+               P != PEnd; ++P) {
+            if ((*P)->getObjCDeclQualifier()) {
+              HasContextSensitiveKeywords = true;
+              break;
+            }
+          }
+        }
+      }
+    }    
+    // C++ methods can have context-sensitive keywords.
+    else if (cursor.kind == CXCursor_CXXMethod) {
+      if (CXXMethodDecl *Method
+                  = dyn_cast_or_null<CXXMethodDecl>(getCursorDecl(cursor))) {
+        if (Method->hasAttr<FinalAttr>() || Method->hasAttr<OverrideAttr>())
+          HasContextSensitiveKeywords = true;
+      }
+    }
+    // C++ classes can have context-sensitive keywords.
+    else if (cursor.kind == CXCursor_StructDecl ||
+             cursor.kind == CXCursor_ClassDecl ||
+             cursor.kind == CXCursor_ClassTemplate ||
+             cursor.kind == CXCursor_ClassTemplatePartialSpecialization) {
+      if (Decl *D = getCursorDecl(cursor))
+        if (D->hasAttr<FinalAttr>())
+          HasContextSensitiveKeywords = true;
+    }
+  }
+  
   if (clang_isPreprocessing(cursor.kind)) {    
     // For macro instantiations, just note where the beginning of the macro
     // instantiation occurs.
@@ -4606,6 +4660,91 @@ void clang_annotateTokens(CXTranslationUnit TU,
   if (!RunSafely(CRC, runAnnotateTokensWorker, &W,
                  GetSafetyThreadStackSize() * 2)) {
     fprintf(stderr, "libclang: crash detected while annotating tokens\n");
+  }
+  
+  // If we ran into any entities that involve context-sensitive keywords,
+  // take another pass through the tokens to mark them as such.
+  if (W.hasContextSensitiveKeywords()) {
+    for (unsigned I = 0; I != NumTokens; ++I) {
+      if (clang_getTokenKind(Tokens[I]) != CXToken_Identifier)
+        continue;
+      
+      if (Cursors[I].kind == CXCursor_ObjCPropertyDecl) {
+        IdentifierInfo *II = static_cast<IdentifierInfo *>(Tokens[I].ptr_data);
+        if (ObjCPropertyDecl *Property
+              = dyn_cast_or_null<ObjCPropertyDecl>(getCursorDecl(Cursors[I]))) {
+          if (Property->getPropertyAttributesAsWritten() != 0 &&
+              llvm::StringSwitch<bool>(II->getName())
+                .Case("readonly", true)
+                .Case("assign", true)
+                .Case("readwrite", true)
+                .Case("retain", true)
+                .Case("copy", true)
+                .Case("nonatomic", true)
+                .Case("atomic", true)
+                .Case("getter", true)
+                .Case("setter", true)
+                .Default(false))
+            Tokens[I].int_data[0] = CXToken_Keyword;
+        }
+        continue;
+      }
+      
+      if (Cursors[I].kind == CXCursor_ObjCInstanceMethodDecl ||
+          Cursors[I].kind == CXCursor_ObjCClassMethodDecl) {
+        IdentifierInfo *II = static_cast<IdentifierInfo *>(Tokens[I].ptr_data);
+        if (llvm::StringSwitch<bool>(II->getName())
+              .Case("in", true)
+              .Case("out", true)
+              .Case("inout", true)
+              .Case("oneway", true)
+              .Case("bycopy", true)
+              .Case("byref", true)
+              .Default(false))
+          Tokens[I].int_data[0] = CXToken_Keyword;
+        continue;
+      }
+      
+      if (Cursors[I].kind == CXCursor_CXXMethod) {
+        IdentifierInfo *II = static_cast<IdentifierInfo *>(Tokens[I].ptr_data);
+        if (CXXMethodDecl *Method
+                 = dyn_cast_or_null<CXXMethodDecl>(getCursorDecl(Cursors[I]))) {
+          if ((Method->hasAttr<FinalAttr>() || 
+               Method->hasAttr<OverrideAttr>()) &&
+              Method->getLocation().getRawEncoding() != Tokens[I].int_data[1] &&
+              llvm::StringSwitch<bool>(II->getName())
+                .Case("final", true)
+                .Case("override", true)
+                .Default(false))
+            Tokens[I].int_data[0] = CXToken_Keyword;
+        }
+        continue;
+      }
+      
+      if (Cursors[I].kind == CXCursor_ClassDecl ||
+          Cursors[I].kind == CXCursor_StructDecl ||
+          Cursors[I].kind == CXCursor_ClassTemplate) {
+        IdentifierInfo *II = static_cast<IdentifierInfo *>(Tokens[I].ptr_data);
+        if (II->getName() == "final") {
+          // We have to be careful with 'final', since it could be the name
+          // of a member class rather than the context-sensitive keyword.
+          // So, check whether the cursor associated with this
+          Decl *D = getCursorDecl(Cursors[I]);
+          if (CXXRecordDecl *Record = dyn_cast_or_null<CXXRecordDecl>(D)) {
+            if ((Record->hasAttr<FinalAttr>()) &&
+                Record->getIdentifier() != II)
+              Tokens[I].int_data[0] = CXToken_Keyword;
+          } else if (ClassTemplateDecl *ClassTemplate
+                       = dyn_cast_or_null<ClassTemplateDecl>(D)) {
+            CXXRecordDecl *Record = ClassTemplate->getTemplatedDecl();
+            if ((Record->hasAttr<FinalAttr>()) &&
+                Record->getIdentifier() != II)
+              Tokens[I].int_data[0] = CXToken_Keyword;            
+          }
+        }
+        continue;        
+      }
+    }
   }
 }
 } // end: extern "C"

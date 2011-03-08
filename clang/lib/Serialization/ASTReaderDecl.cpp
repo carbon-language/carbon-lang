@@ -1489,7 +1489,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     break;
   case DECL_CXX_METHOD:
     D = CXXMethodDecl::Create(*Context, 0, SourceLocation(),
-                              DeclarationNameInfo(), QualType(), 0);
+                              DeclarationNameInfo(), QualType(), 0,
+                              false, SC_None, false, SourceLocation());
     break;
   case DECL_CXX_CONSTRUCTOR:
     D = CXXConstructorDecl::Create(*Context, Decl::EmptyShell());

@@ -1316,13 +1316,15 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     Method = CXXConversionDecl::Create(SemaRef.Context, Record,
                                        StartLoc, NameInfo, T, TInfo,
                                        Conversion->isInlineSpecified(),
-                                       Conversion->isExplicit());
+                                       Conversion->isExplicit(),
+                                       Conversion->getLocEnd());
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record,
                                    StartLoc, NameInfo, T, TInfo,
                                    D->isStatic(),
                                    D->getStorageClassAsWritten(),
-                                   D->isInlineSpecified());
+                                   D->isInlineSpecified(),
+                                   D->getLocEnd());
   }
 
   if (QualifierLoc)

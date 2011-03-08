@@ -887,9 +887,10 @@ CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation StartLoc,
                       const DeclarationNameInfo &NameInfo,
                       QualType T, TypeSourceInfo *TInfo,
-                      bool isStatic, StorageClass SCAsWritten, bool isInline) {
+                      bool isStatic, StorageClass SCAsWritten, bool isInline,
+                      SourceLocation EndLocation) {
   return new (C) CXXMethodDecl(CXXMethod, RD, StartLoc, NameInfo, T, TInfo,
-                               isStatic, SCAsWritten, isInline);
+                               isStatic, SCAsWritten, isInline, EndLocation);
 }
 
 bool CXXMethodDecl::isUsualDeallocationFunction() const {
@@ -1255,7 +1256,8 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) CXXConversionDecl(0, SourceLocation(), DeclarationNameInfo(),
-                                   QualType(), 0, false, false);
+                                   QualType(), 0, false, false,
+                                   SourceLocation());
 }
 
 CXXConversionDecl *
@@ -1263,12 +1265,13 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           SourceLocation StartLoc,
                           const DeclarationNameInfo &NameInfo,
                           QualType T, TypeSourceInfo *TInfo,
-                          bool isInline, bool isExplicit) {
+                          bool isInline, bool isExplicit,
+                          SourceLocation EndLocation) {
   assert(NameInfo.getName().getNameKind()
          == DeclarationName::CXXConversionFunctionName &&
          "Name must refer to a conversion function");
   return new (C) CXXConversionDecl(RD, StartLoc, NameInfo, T, TInfo,
-                                   isInline, isExplicit);
+                                   isInline, isExplicit, EndLocation);
 }
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,

@@ -796,6 +796,8 @@ void UnqualifiedId::setOperatorFunctionId(SourceLocation OperatorLoc,
 
 bool VirtSpecifiers::SetSpecifier(Specifier VS, SourceLocation Loc,
                                   const char *&PrevSpec) {
+  LastLocation = Loc;
+  
   if (Specifiers & VS) {
     PrevSpec = getSpecifierName(VS);
     return true;

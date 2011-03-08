@@ -1037,19 +1037,24 @@ protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation StartLoc,
                 const DeclarationNameInfo &NameInfo,
                 QualType T, TypeSourceInfo *TInfo,
-                bool isStatic, StorageClass SCAsWritten, bool isInline)
+                bool isStatic, StorageClass SCAsWritten, bool isInline,
+                SourceLocation EndLocation)
     : FunctionDecl(DK, RD, StartLoc, NameInfo, T, TInfo,
                    (isStatic ? SC_Static : SC_None),
-                   SCAsWritten, isInline) {}
+                   SCAsWritten, isInline) {
+      if (EndLocation.isValid())
+        setRangeEnd(EndLocation);
+    }
 
 public:
   static CXXMethodDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                SourceLocation StartLoc,
                                const DeclarationNameInfo &NameInfo,
                                QualType T, TypeSourceInfo *TInfo,
-                               bool isStatic = false,
-                               StorageClass SCAsWritten = SC_None,
-                               bool isInline = false);
+                               bool isStatic,
+                               StorageClass SCAsWritten,
+                               bool isInline,
+                               SourceLocation EndLocation);
 
   bool isStatic() const { return getStorageClass() == SC_Static; }
   bool isInstance() const { return !isStatic(); }
@@ -1403,7 +1408,7 @@ class CXXConstructorDecl : public CXXMethodDecl {
                      bool isExplicitSpecified, bool isInline, 
                      bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXConstructor, RD, StartLoc, NameInfo, T, TInfo, false,
-                    SC_None, isInline),
+                    SC_None, isInline, SourceLocation()),
       IsExplicitSpecified(isExplicitSpecified), ImplicitlyDefined(false),
       CtorInitializers(0), NumCtorInitializers(0) {
     setImplicit(isImplicitlyDeclared);
@@ -1598,7 +1603,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
                     QualType T, TypeSourceInfo *TInfo,
                     bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXDestructor, RD, StartLoc, NameInfo, T, TInfo, false,
-                    SC_None, isInline),
+                    SC_None, isInline, SourceLocation()),
       ImplicitlyDefined(false), OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
   }
@@ -1660,9 +1665,10 @@ class CXXConversionDecl : public CXXMethodDecl {
   CXXConversionDecl(CXXRecordDecl *RD, SourceLocation StartLoc,
                     const DeclarationNameInfo &NameInfo,
                     QualType T, TypeSourceInfo *TInfo,
-                    bool isInline, bool isExplicitSpecified)
+                    bool isInline, bool isExplicitSpecified,
+                    SourceLocation EndLocation)
     : CXXMethodDecl(CXXConversion, RD, StartLoc, NameInfo, T, TInfo, false,
-                    SC_None, isInline),
+                    SC_None, isInline, EndLocation),
       IsExplicitSpecified(isExplicitSpecified) { }
 
 public:
@@ -1671,7 +1677,8 @@ public:
                                    SourceLocation StartLoc,
                                    const DeclarationNameInfo &NameInfo,
                                    QualType T, TypeSourceInfo *TInfo,
-                                   bool isInline, bool isExplicit);
+                                   bool isInline, bool isExplicit,
+                                   SourceLocation EndLocation);
 
   /// IsExplicitSpecified - Whether this conversion function declaration is 
   /// marked "explicit", meaning that it can only be applied when the user

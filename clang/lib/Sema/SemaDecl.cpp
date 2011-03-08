@@ -3711,7 +3711,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                         D.getSourceRange().getBegin(),
                                         NameInfo, R, TInfo,
-                                        isInline, isExplicit);
+                                        isInline, isExplicit,
+                                        SourceLocation());
 
       isVirtualOkay = true;
     } else if (DC->isRecord()) {
@@ -3747,7 +3748,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                     D.getSourceRange().getBegin(),
                                     NameInfo, R, TInfo,
-                                    isStatic, SCAsWritten, isInline);
+                                    isStatic, SCAsWritten, isInline,
+                                    SourceLocation());
 
       isVirtualOkay = !isStatic;
     } else {

@@ -2389,7 +2389,8 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                                            D->getInnerLocStart(),
                                            NameInfo, T, TInfo,
                                            D->isInlineSpecified(),
-                                           FromConversion->isExplicit());
+                                           FromConversion->isExplicit(),
+                                           Importer.Import(D->getLocEnd()));
   } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
     ToFunction = CXXMethodDecl::Create(Importer.getToContext(), 
                                        cast<CXXRecordDecl>(DC),
@@ -2397,7 +2398,8 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                                        NameInfo, T, TInfo,
                                        Method->isStatic(),
                                        Method->getStorageClassAsWritten(),
-                                       Method->isInlineSpecified());
+                                       Method->isInlineSpecified(),
+                                       Importer.Import(D->getLocEnd()));
   } else {
     ToFunction = FunctionDecl::Create(Importer.getToContext(), DC,
                                       D->getInnerLocStart(),
