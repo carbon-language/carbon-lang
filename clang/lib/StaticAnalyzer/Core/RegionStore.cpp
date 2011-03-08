@@ -1250,12 +1250,12 @@ SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
 SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
   QualType T = R->getValueType();
   assert(T->isStructureOrClassType());
-  return svalBuilder.makeLazyCompoundVal(store, R);
+  return svalBuilder.makeLazyCompoundVal(StoreRef(store, *this), R);
 }
 
 SVal RegionStoreManager::RetrieveArray(Store store, const TypedRegion * R) {
   assert(Ctx.getAsConstantArrayType(R->getValueType()));
-  return svalBuilder.makeLazyCompoundVal(store, R);
+  return svalBuilder.makeLazyCompoundVal(StoreRef(store, *this), R);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1378,7 +1378,8 @@ StoreRef RegionStoreManager::BindArray(Store store, const TypedRegion* R,
 
     // Treat the string as a lazy compound value.
     nonloc::LazyCompoundVal LCV =
-      cast<nonloc::LazyCompoundVal>(svalBuilder.makeLazyCompoundVal(store, S));
+      cast<nonloc::LazyCompoundVal>(svalBuilder.
+                                makeLazyCompoundVal(StoreRef(store, *this), S));
     return CopyLazyBindings(LCV, store, R);
   }
 

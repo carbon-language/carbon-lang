@@ -154,7 +154,7 @@ public:
     return nonloc::CompoundVal(BasicVals.getCompoundValData(type, vals));
   }
 
-  NonLoc makeLazyCompoundVal(const void *store, const TypedRegion *region) {
+  NonLoc makeLazyCompoundVal(const StoreRef &store, const TypedRegion *region) {
     return nonloc::LazyCompoundVal(
         BasicVals.getLazyCompoundValData(store, region));
   }

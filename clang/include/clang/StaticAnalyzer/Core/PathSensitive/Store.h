@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_GR_STORE_H
 #define LLVM_CLANG_GR_STORE_H
 
+#include "clang/StaticAnalyzer/Core/PathSensitive/StoreRef.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
 #include "llvm/ADT/DenseSet.h"
@@ -28,36 +29,10 @@ class StackFrameContext;
 
 namespace ento {
 
-/// Store - This opaque type encapsulates an immutable mapping from
-///  locations to values.  At a high-level, it represents the symbolic
-///  memory model.  Different subclasses of StoreManager may choose
-///  different types to represent the locations and values.
-typedef const void* Store;
-
 class GRState;
 class GRStateManager;
 class SubRegionMap;
-class StoreManager;
-  
-class StoreRef {
-  Store store;
-  StoreManager &mgr;
-public:
-  StoreRef(Store, StoreManager &);
-  StoreRef(const StoreRef &);
-  StoreRef &operator=(StoreRef const &);
-  
-  bool operator==(const StoreRef &x) const {
-    assert(&mgr == &x.mgr);
-    return x.store == store;
-  }
-  bool operator!=(const StoreRef &x) const { return !operator==(x); }
 
-  ~StoreRef();
-  
-  Store getStore() const { return store; }
-};
-  
 class StoreManager {
 protected:
   SValBuilder &svalBuilder;

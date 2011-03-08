@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_GR_BASICVALUEFACTORY_H
 #define LLVM_CLANG_GR_BASICVALUEFACTORY_H
 
+#include "clang/StaticAnalyzer/Core/PathSensitive/StoreRef.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -47,16 +48,17 @@ public:
 };
 
 class LazyCompoundValData : public llvm::FoldingSetNode {
-  const void *store;
+  StoreRef store;
   const TypedRegion *region;
 public:
-  LazyCompoundValData(const void *st, const TypedRegion *r)
+  LazyCompoundValData(const StoreRef &st, const TypedRegion *r)
     : store(st), region(r) {}
 
-  const void *getStore() const { return store; }
+  const void *getStore() const { return store.getStore(); }
   const TypedRegion *getRegion() const { return region; }
 
-  static void Profile(llvm::FoldingSetNodeID& ID, const void *store,
+  static void Profile(llvm::FoldingSetNodeID& ID,
+                      const StoreRef &store,
                       const TypedRegion *region);
 
   void Profile(llvm::FoldingSetNodeID& ID) { Profile(ID, store, region); }
@@ -170,7 +172,7 @@ public:
   const CompoundValData *getCompoundValData(QualType T,
                                             llvm::ImmutableList<SVal> Vals);
 
-  const LazyCompoundValData *getLazyCompoundValData(const void *store,
+  const LazyCompoundValData *getLazyCompoundValData(const StoreRef &store,
                                                     const TypedRegion *region);
 
   llvm::ImmutableList<SVal> getEmptySValList() {
