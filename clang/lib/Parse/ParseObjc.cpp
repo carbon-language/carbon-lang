@@ -720,10 +720,12 @@ bool Parser::isTokIdentifier_in() const {
 ///     objc-type-qualifier
 ///     objc-type-qualifiers objc-type-qualifier
 ///
-void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS, bool IsParameter) {
+void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS,
+                                        ObjCTypeNameContext Context) {
   while (1) {
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteObjCPassingType(getCurScope(), DS, IsParameter);
+      Actions.CodeCompleteObjCPassingType(getCurScope(), DS, 
+                                          Context == OTN_ParameterType);
       ConsumeCodeCompletionToken();
     }
     
@@ -760,14 +762,15 @@ void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS, bool IsParameter) {
 ///     '(' objc-type-qualifiers[opt] type-name ')'
 ///     '(' objc-type-qualifiers[opt] ')'
 ///
-ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter) {
+ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS, 
+                                     ObjCTypeNameContext Context) {
   assert(Tok.is(tok::l_paren) && "expected (");
 
   SourceLocation LParenLoc = ConsumeParen();
   SourceLocation TypeStartLoc = Tok.getLocation();
 
   // Parse type qualifiers, in, inout, etc.
-  ParseObjCTypeQualifierList(DS, IsParameter);
+  ParseObjCTypeQualifierList(DS, Context);
 
   ParsedType Ty;
   if (isTypeSpecifierQualifier()) {
@@ -834,7 +837,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   ParsedType ReturnType;
   ObjCDeclSpec DSRet;
   if (Tok.is(tok::l_paren))
-    ReturnType = ParseObjCTypeName(DSRet, false);
+    ReturnType = ParseObjCTypeName(DSRet, OTN_ResultType);
 
   // If attributes exist before the method, parse them.
   ParsedAttributes attrs;
@@ -894,7 +897,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
     ArgInfo.Type = ParsedType();
     if (Tok.is(tok::l_paren)) // Parse the argument type if present.
-      ArgInfo.Type = ParseObjCTypeName(ArgInfo.DeclSpec, true);
+      ArgInfo.Type = ParseObjCTypeName(ArgInfo.DeclSpec, OTN_ParameterType);
 
     // If attributes exist before the argument name, parse them.
     ArgInfo.ArgAttrs = 0;

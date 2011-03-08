@@ -992,7 +992,13 @@ private:
 
   bool isTokIdentifier_in() const;
 
-  ParsedType ParseObjCTypeName(ObjCDeclSpec &DS, bool IsParameter);
+  /// \brief The context in which we are parsing an Objective-C type name.
+  enum ObjCTypeNameContext {
+    OTN_ResultType,
+    OTN_ParameterType
+  };
+  
+  ParsedType ParseObjCTypeName(ObjCDeclSpec &DS, ObjCTypeNameContext Context);
   void ParseObjCMethodRequirement();
   Decl *ParseObjCMethodPrototype(Decl *classOrCat,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
@@ -1303,7 +1309,8 @@ private:
 
   void ParseSpecifierQualifierList(DeclSpec &DS);
 
-  void ParseObjCTypeQualifierList(ObjCDeclSpec &DS, bool IsParameter);
+  void ParseObjCTypeQualifierList(ObjCDeclSpec &DS, 
+                                  ObjCTypeNameContext Context);
 
   void ParseEnumSpecifier(SourceLocation TagLoc, DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
