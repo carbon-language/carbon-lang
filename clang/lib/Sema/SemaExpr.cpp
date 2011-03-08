@@ -5261,11 +5261,9 @@ bool Sema::DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
     // In this case, check to make sure that we got here from a "NULL"
     // string in the source code.
     NullExpr = NullExpr->IgnoreParenImpCasts();
-    SourceManager& SM = Context.getSourceManager();
-    SourceLocation Loc = SM.getInstantiationLoc(NullExpr->getExprLoc());
-    unsigned Len =
-        Lexer::MeasureTokenLength(Loc, SM, Context.getLangOptions());
-    if (Len != 4 || memcmp(SM.getCharacterData(Loc), "NULL", 4))
+    SourceLocation Loc =
+      getSourceManager().getInstantiationLoc(NullExpr->getExprLoc());
+    if (getPreprocessor().getSpelling(Loc) != "NULL")
       return false;
   }
 
