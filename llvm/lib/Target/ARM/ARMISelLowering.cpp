@@ -2691,8 +2691,8 @@ ARMTargetLowering::OptimizeVFPBrcond(SDValue Op, SelectionDAG &DAG) const {
       // If one of the operand is zero, it's safe to ignore the NaN case since
       // we only care about equality comparisons.
       (SeenZero || (DAG.isKnownNeverNaN(LHS) && DAG.isKnownNeverNaN(RHS)))) {
-    // If unsafe fp math optimization is enabled and there are no othter uses of
-    // the CMP operands, and the condition code is EQ oe NE, we can optimize it
+    // If unsafe fp math optimization is enabled and there are no other uses of
+    // the CMP operands, and the condition code is EQ or NE, we can optimize it
     // to an integer comparison.
     if (CC == ISD::SETOEQ)
       CC = ISD::SETEQ;
