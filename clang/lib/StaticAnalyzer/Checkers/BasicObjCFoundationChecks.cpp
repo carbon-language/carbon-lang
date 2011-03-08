@@ -41,20 +41,21 @@ public:
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-static const ObjCInterfaceType* GetReceiverType(const ObjCMessage &msg) {
-  if (const ObjCInterfaceDecl *ID = msg.getReceiverInterface())
-    return ID->getTypeForDecl()->getAs<ObjCInterfaceType>();
-  return NULL;
-}
-
 static const char* GetReceiverNameType(const ObjCMessage &msg) {
-  if (const ObjCInterfaceType *ReceiverType = GetReceiverType(msg))
-    return ReceiverType->getDecl()->getIdentifier()->getNameStart();
-  return NULL;
+  if (const ObjCInterfaceDecl *ID = msg.getReceiverInterface())
+    return ID->getIdentifier()->getNameStart();
+  return 0;
 }
 
-static bool isNSString(llvm::StringRef ClassName) {
-  return ClassName == "NSString" || ClassName == "NSMutableString";
+static bool isReceiverClassOrSuperclass(const ObjCInterfaceDecl *ID,
+                                        llvm::StringRef ClassName) {
+  if (ID->getIdentifier()->getName() == ClassName)
+    return true;
+
+  if (const ObjCInterfaceDecl *Super = ID->getSuperClass())
+    return isReceiverClassOrSuperclass(Super, ClassName);
+
+  return false;
 }
 
 static inline bool isNil(SVal X) {
@@ -98,11 +99,11 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
 
 void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
                                         CheckerContext &C) const {
-  const ObjCInterfaceType *ReceiverType = GetReceiverType(msg);
-  if (!ReceiverType)
+  const ObjCInterfaceDecl *ID = msg.getReceiverInterface();
+  if (!ID)
     return;
   
-  if (isNSString(ReceiverType->getDecl()->getIdentifier()->getName())) {
+  if (isReceiverClassOrSuperclass(ID, "NSString")) {
     Selector S = msg.getSelector();
     
     if (S.isUnarySelector())

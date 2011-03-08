@@ -190,6 +190,13 @@ void f13(void) {
   CFRelease(ref); // expected-warning{{Reference-counted object is used after it is released}}
 }
 
+@interface MyString : NSString
+@end
+
+void f14(MyString *s) {
+  [s compare:0]; // expected-warning {{Argument to 'MyString' method 'compare:' cannot be nil.}}
+}
+
 // Test regular use of -autorelease
 @interface TestAutorelease
 -(NSString*) getString;
