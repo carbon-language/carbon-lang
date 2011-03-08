@@ -99,11 +99,11 @@ static cl::opt<unsigned> AvgIPC(
 #ifndef NDEBUG
 namespace {
   // For sched=list-ilp, Count the number of times each factor comes into play.
-  enum { FactPressureDiff, FactRegUses, FactHeight, FactDepth, FactUllman,
-         NumFactors };
+  enum { FactPressureDiff, FactRegUses, FactHeight, FactDepth, FactStatic,
+         FactOther, NumFactors };
 }
 static const char *FactorName[NumFactors] =
-{"PressureDiff", "RegUses", "Height", "Depth","Ullman"};
+{"PressureDiff", "RegUses", "Height", "Depth","Static", "Other"};
 static int FactorCount[NumFactors];
 #endif //!NDEBUG
 
@@ -2103,9 +2103,11 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
   if (LPriority != RPriority) {
-    DEBUG(++FactorCount[FactUllman]);
+    DEBUG(++FactorCount[FactStatic]);
     return LPriority > RPriority;
   }
+  DEBUG(++FactorCount[FactOther]);
+
   // Try schedule def + use closer when Sethi-Ullman numbers are the same.
   // e.g.
   // t1 = op t2, c1
@@ -2228,6 +2230,28 @@ bool ilp_ls_rr_sort::isReady(SUnit *SU, unsigned CurCycle) const {
   return true;
 }
 
+bool canEnableCoaelscing(SUnit *SU) {
+  unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
+  if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
+    // CopyToReg should be close to its uses to facilitate coalescing and
+    // avoid spilling.
+    return true;
+
+  if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+      Opc == TargetOpcode::SUBREG_TO_REG ||
+      Opc == TargetOpcode::INSERT_SUBREG)
+    // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
+    // close to their uses to facilitate coalescing.
+    return true;
+
+  if (SU->NumPreds == 0 && SU->NumSuccs != 0)
+    // If SU does not have a register def, schedule it close to its uses
+    // because it does not lengthen any live ranges.
+    return true;
+
+  return false;
+}
+
 // list-ilp is currently an experimental scheduler that allows various
 // heuristics to be enabled prior to the normal register reduction logic.
 bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
@@ -2235,39 +2259,60 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
     // No way to compute latency of calls.
     return BURRSort(left, right, SPQ);
 
-  unsigned LLiveUses, RLiveUses;
-  int LPDiff = SPQ->RegPressureDiff(left, LLiveUses);
-  int RPDiff = SPQ->RegPressureDiff(right, RLiveUses);
+  unsigned LLiveUses = 0, RLiveUses = 0;
+  int LPDiff = 0, RPDiff = 0;
+  if (!DisableSchedRegPressure || !DisableSchedLiveUses) {
+    LPDiff = SPQ->RegPressureDiff(left, LLiveUses);
+    RPDiff = SPQ->RegPressureDiff(right, RLiveUses);
+  }
   if (!DisableSchedRegPressure && LPDiff != RPDiff) {
     DEBUG(++FactorCount[FactPressureDiff]);
+    DEBUG(dbgs() << "RegPressureDiff SU(" << left->NodeNum << "): " << LPDiff
+          << " != SU(" << right->NodeNum << "): " << RPDiff << "\n");
     return LPDiff > RPDiff;
   }
 
-  if (!DisableSchedLiveUses && LLiveUses != RLiveUses) {
-    DEBUG(dbgs() << "Live uses " << left->NodeNum << " = " << LLiveUses
-          << " != " << right->NodeNum << " = " << RLiveUses << "\n");
+  if (!DisableSchedRegPressure && (LPDiff > 0 || RPDiff > 0)) {
+    bool LReduce = canEnableCoaelscing(left);
+    bool RReduce = canEnableCoaelscing(right);
+    DEBUG(if (LReduce != RReduce) ++FactorCount[FactPressureDiff]);
+    if (LReduce && !RReduce) return false;
+    if (RReduce && !LReduce) return true;
+  }
+
+  if (!DisableSchedLiveUses && (LLiveUses != RLiveUses)) {
+    DEBUG(dbgs() << "Live uses SU(" << left->NodeNum << "): " << LLiveUses
+          << " != SU(" << right->NodeNum << "): " << RLiveUses << "\n");
     DEBUG(++FactorCount[FactRegUses]);
     return LLiveUses < RLiveUses;
   }
 
-  bool LStall = BUHasStall(left, left->getHeight(), SPQ);
-  bool RStall = BUHasStall(right, right->getHeight(), SPQ);
-  if (!DisableSchedStalls && LStall != RStall) {
-    DEBUG(++FactorCount[FactHeight]);
-    return left->getHeight() > right->getHeight();
+  if (!DisableSchedStalls) {
+    bool LStall = BUHasStall(left, left->getHeight(), SPQ);
+    bool RStall = BUHasStall(right, right->getHeight(), SPQ);
+    if (LStall != RStall) {
+      DEBUG(++FactorCount[FactHeight]);
+      return left->getHeight() > right->getHeight();
+    }
   }
 
   if (!DisableSchedCriticalPath) {
     int spread = (int)left->getDepth() - (int)right->getDepth();
     if (std::abs(spread) > MaxReorderWindow) {
+      DEBUG(dbgs() << "Depth of SU(" << left->NodeNum << "): "
+            << left->getDepth() << " != SU(" << right->NodeNum << "): "
+            << right->getDepth() << "\n");
       DEBUG(++FactorCount[FactDepth]);
       return left->getDepth() < right->getDepth();
     }
   }
 
   if (!DisableSchedHeight && left->getHeight() != right->getHeight()) {
-    DEBUG(++FactorCount[FactHeight]);
-    return left->getHeight() > right->getHeight();
+    int spread = (int)left->getHeight() - (int)right->getHeight();
+    if (std::abs(spread) > MaxReorderWindow) {
+      DEBUG(++FactorCount[FactHeight]);
+      return left->getHeight() > right->getHeight();
+    }
   }
 
   return BURRSort(left, right, SPQ);
