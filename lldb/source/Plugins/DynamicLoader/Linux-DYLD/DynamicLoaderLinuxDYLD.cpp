@@ -353,7 +353,7 @@ DynamicLoaderLinuxDYLD::ComputeLoadOffset()
 
     ModuleSP module = m_process->GetTarget().GetExecutableModule();
     ObjectFile *exe = module->GetObjectFile();
-    Address file_entry = exe->GetEntryPoint();
+    Address file_entry = exe->GetEntryPointAddress();
 
     if (!file_entry.IsValid())
         return LLDB_INVALID_ADDRESS;
