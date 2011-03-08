@@ -1629,6 +1629,7 @@ public:
     WindowsX86_64TargetInfo::getTargetDefines(Opts, Builder);
     DefineStd(Builder, "WIN64", Opts);
     Builder.defineMacro("__MSVCRT__");
+    Builder.defineMacro("__MINGW32__");
     Builder.defineMacro("__MINGW64__");
     Builder.defineMacro("__declspec", "__declspec");
   }
