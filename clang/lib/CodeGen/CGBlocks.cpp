@@ -630,7 +630,9 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
 
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
                            declRef, VK_RValue);
-      EmitAnyExprToMem(&l2r, blockField, /*volatile*/ false, /*init*/ true);
+      EmitExprAsInit(&l2r, variable, blockField,
+                     getContext().getDeclAlign(variable),
+                     /*captured by init*/ false);
     }
 
     // Push a destructor if necessary.  The semantics for when this
