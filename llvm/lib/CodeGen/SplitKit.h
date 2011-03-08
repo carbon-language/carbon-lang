@@ -272,6 +272,9 @@ class SplitEditor {
   void rewriteComponents(const SmallVectorImpl<LiveInterval*> &Intvs,
                          const ConnectedVNInfoEqClasses &ConEq);
 
+  /// deleteRematVictims - Delete defs that are dead after rematerializing.
+  void deleteRematVictims();
+
 public:
   /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
   /// Newly created intervals will be appended to newIntervals.

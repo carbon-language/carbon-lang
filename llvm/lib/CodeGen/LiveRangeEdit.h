@@ -128,6 +128,14 @@ public:
   bool didRematerialize(const VNInfo *ParentVNI) const {
     return rematted_.count(ParentVNI);
   }
+
+  /// eliminateDeadDefs - Try to delete machine instructions that are now dead
+  /// (allDefsAreDead returns true). This may cause live intervals to be trimmed
+  /// and further dead efs to be eliminated.
+  void eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
+                         LiveIntervals&,
+                         const TargetInstrInfo&);
+
 };
 
 }

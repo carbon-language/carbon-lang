@@ -797,6 +797,40 @@ void SplitEditor::rewriteComponents(const SmallVectorImpl<LiveInterval*> &Intvs,
   }
 }
 
+void SplitEditor::deleteRematVictims() {
+  SmallVector<MachineInstr*, 8> Dead;
+  for (LiveInterval::const_vni_iterator I = Edit->getParent().vni_begin(),
+         E = Edit->getParent().vni_end(); I != E; ++I) {
+    const VNInfo *VNI = *I;
+    // Was VNI rematted anywhere?
+    if (VNI->isUnused() || VNI->isPHIDef() || !Edit->didRematerialize(VNI))
+      continue;
+    unsigned RegIdx = RegAssign.lookup(VNI->def);
+    LiveInterval *LI = Edit->get(RegIdx);
+    LiveInterval::const_iterator LII = LI->FindLiveRangeContaining(VNI->def);
+    assert(LII != LI->end() && "Missing live range for rematted def");
+
+    // Is this a dead def?
+    if (LII->end != VNI->def.getNextSlot())
+      continue;
+
+    MachineInstr *MI = LIS.getInstructionFromIndex(VNI->def);
+    assert(MI && "Missing instruction for dead def");
+    MI->addRegisterDead(LI->reg, &TRI);
+
+    if (!MI->allDefsAreDead())
+      continue;
+
+    DEBUG(dbgs() << "All defs dead: " << *MI);
+    Dead.push_back(MI);
+  }
+
+  if (Dead.empty())
+    return;
+
+  Edit->eliminateDeadDefs(Dead, LIS, TII);
+}
+
 void SplitEditor::finish() {
   assert(OpenIdx == 0 && "Previous LI not closed before rewrite");
   ++NumFinished;
@@ -835,7 +869,9 @@ void SplitEditor::finish() {
   // Rewrite virtual registers, possibly extending ranges.
   rewriteAssigned(Complex);
 
-  // FIXME: Delete defs that were rematted everywhere.
+  // Delete defs that were rematted everywhere.
+  if (Complex)
+    deleteRematVictims();
 
   // Get rid of unused values and set phi-kill flags.
   for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I)
