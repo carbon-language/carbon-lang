@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=x86-64 -post-RA-scheduler -break-anti-dependencies=none > %t
+; Without list-burr scheduling we may not see the difference in codegen here.
+; RUN: llc < %s -march=x86-64 -post-RA-scheduler -pre-RA-sched=list-burr -break-anti-dependencies=none > %t
 ; RUN:   grep {%xmm0} %t | count 14
 ; RUN:   not grep {%xmm1} %t
 ; RUN: llc < %s -march=x86-64 -post-RA-scheduler -break-anti-dependencies=critical > %t

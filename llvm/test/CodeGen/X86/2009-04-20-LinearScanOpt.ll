@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats |& grep asm-printer | grep 82
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats |& grep asm-printer | grep 79
 ; rdar://6802189
 
 ; Test if linearscan is unfavoring registers for allocation to allow more reuse

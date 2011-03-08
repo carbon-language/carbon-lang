@@ -38,11 +38,10 @@ define i32 @t2(i32 %X, i32 %Y) nounwind {
 define %0 @t3(i32 %lb, i8 zeroext %has_lb, i8 zeroext %lb_inclusive, i32 %ub, i8 zeroext %has_ub, i8 zeroext %ub_inclusive) nounwind {
 entry:
 ; DARWIN: t3:
+; DARWIN: shll $16
 ; DARWIN: shlq $32, %rcx
 ; DARWIN-NOT: leaq
 ; DARWIN: orq %rcx, %rax
-; DARWIN-NOT: mov
-; DARWIN: shll $16
   %tmp21 = zext i32 %lb to i64
   %tmp23 = zext i32 %ub to i64
   %tmp24 = shl i64 %tmp23, 32

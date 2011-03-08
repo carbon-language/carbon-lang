@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
 ; <rdar://problem/8006248>
 

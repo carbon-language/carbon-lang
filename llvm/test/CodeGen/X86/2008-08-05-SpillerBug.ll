@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah -disable-fp-elim -stats |& grep asm-printer | grep 55
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah -pre-RA-sched=list-burr -disable-fp-elim -stats |& grep asm-printer | grep 55
 ; PR2568
 
 @g_3 = external global i16		; <i16*> [#uses=1]

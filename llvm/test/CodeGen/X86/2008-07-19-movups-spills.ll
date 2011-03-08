@@ -1,7 +1,9 @@
-; RUN: llc < %s -mtriple=i686-pc-linux -realign-stack=1 -mattr=sse2 | grep movaps | count 75
-; RUN: llc < %s -mtriple=i686-pc-linux -realign-stack=0 -mattr=sse2 | grep movaps | count 75
+; RUN: llc < %s -mtriple=i686-pc-linux -realign-stack=1 -mattr=sse2 | grep movups | count 33
+; RUN: llc < %s -mtriple=i686-pc-linux -realign-stack=0 -mattr=sse2 | grep movups | count 33
 ; PR2539
 ; PR8969 - make 32-bit linux have a 16-byte aligned stack
+; Verify that movups is still generated with an aligned stack for the globals
+; that must be accessed unaligned
 
 external global <4 x float>, align 1		; <<4 x float>*>:0 [#uses=2]
 external global <4 x float>, align 1		; <<4 x float>*>:1 [#uses=1]
