@@ -611,6 +611,7 @@ public:
                                       bool CaptureDiagnostics = false,
                                       RemappedFile *RemappedFiles = 0,
                                       unsigned NumRemappedFiles = 0,
+                                      bool RemappedFilesKeepOriginalName = true,
                                       bool PrecompilePreamble = false,
                                       bool CompleteTranslationUnit = true,
                                       bool CacheCodeCompletionResults = false,

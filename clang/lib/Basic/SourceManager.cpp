@@ -340,7 +340,7 @@ LineTableInfo &SourceManager::getLineTable() {
 //===----------------------------------------------------------------------===//
 
 SourceManager::SourceManager(Diagnostic &Diag, FileManager &FileMgr)
-  : Diag(Diag), FileMgr(FileMgr),
+  : Diag(Diag), FileMgr(FileMgr), OverridenFilesKeepOriginalName(true),
     ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
     NumBinaryProbes(0) {
   clearIDTables();
@@ -403,7 +403,9 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt) {
   if (overI == OverriddenFiles.end())
     new (Entry) ContentCache(FileEnt);
   else
-    new (Entry) ContentCache(FileEnt, overI->second);
+    new (Entry) ContentCache(OverridenFilesKeepOriginalName ? FileEnt
+                                                            : overI->second,
+                             overI->second);
 
   return Entry;
 }

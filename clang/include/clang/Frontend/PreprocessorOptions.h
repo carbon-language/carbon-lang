@@ -73,6 +73,10 @@ public:
   /// If given, a PTH cache file to use for speeding up header parsing.
   std::string TokenCache;
 
+  /// \brief True if the SourceManager should report the original file name for
+  /// contents of files that were remapped to other files. Defaults to true.
+  bool RemappedFilesKeepOriginalName;
+
   /// \brief The set of file remappings, which take existing files on
   /// the system (the first part of each pair) and gives them the
   /// contents of other files on the system (the second part of each
@@ -132,6 +136,7 @@ public:
                           DisablePCHValidation(false), DisableStatCache(false),
                           DumpDeserializedPCHDecls(false),
                           PrecompiledPreambleBytes(0, true),
+                          RemappedFilesKeepOriginalName(true),
                           RetainRemappedFileBuffers(false) { }
 
   void addMacroDef(llvm::StringRef Name) {

@@ -2424,6 +2424,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  /*CaptureDiagnostics=*/true,
                                  RemappedFiles.data(),
                                  RemappedFiles.size(),
+                                 /*RemappedFilesKeepOriginalName=*/true,
                                  PrecompilePreamble,
                                  CompleteTranslationUnit,
                                  CacheCodeCompetionResults,

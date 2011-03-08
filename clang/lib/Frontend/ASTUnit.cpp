@@ -1576,6 +1576,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool CaptureDiagnostics,
                                       RemappedFile *RemappedFiles,
                                       unsigned NumRemappedFiles,
+                                      bool RemappedFilesKeepOriginalName,
                                       bool PrecompilePreamble,
                                       bool CompleteTranslationUnit,
                                       bool CacheCodeCompletionResults,
@@ -1658,6 +1659,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
       CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first, fname);
     }
   }
+  CI->getPreprocessorOpts().RemappedFilesKeepOriginalName =
+                                                  RemappedFilesKeepOriginalName;
   
   // Override the resources path.
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;

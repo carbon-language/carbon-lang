@@ -531,20 +531,13 @@ static void InitializeFileRemapping(Diagnostic &Diags,
       continue;
     }
     
-    // Load the contents of the file we're mapping to.
-    std::string ErrorStr;
-    const llvm::MemoryBuffer *Buffer
-      = FileMgr.getBufferForFile(ToFile->getName(), &ErrorStr);
-    if (!Buffer) {
-      Diags.Report(diag::err_fe_error_opening)
-        << Remap->second << ErrorStr;
-      continue;
-    }
-    
     // Override the contents of the "from" file with the contents of
     // the "to" file.
-    SourceMgr.overrideFileContents(FromFile, Buffer);
+    SourceMgr.overrideFileContents(FromFile, ToFile);
   }
+
+  SourceMgr.setOverridenFilesKeepOriginalName(
+                                        InitOpts.RemappedFilesKeepOriginalName);
 }
 
 /// InitializePreprocessor - Initialize the preprocessor getting it and the

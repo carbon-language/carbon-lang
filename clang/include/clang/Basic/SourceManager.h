@@ -392,6 +392,10 @@ class SourceManager {
   /// non-null, FileEntry pointers.
   llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*> FileInfos;
 
+  /// \brief True if the ContentCache for files that are overriden by other
+  /// files, should report the original file name. Defaults to true.
+  bool OverridenFilesKeepOriginalName;
+
   /// \brief Files that have been overriden with the contents from another file.
   llvm::DenseMap<const FileEntry *, const FileEntry *> OverriddenFiles;
 
@@ -452,6 +456,12 @@ public:
   Diagnostic &getDiagnostics() const { return Diag; }
 
   FileManager &getFileManager() const { return FileMgr; }
+
+  /// \brief Set true if the SourceManager should report the original file name
+  /// for contents of files that were overriden by other files.Defaults to true.
+  void setOverridenFilesKeepOriginalName(bool value) {
+    OverridenFilesKeepOriginalName = value;
+  }
 
   //===--------------------------------------------------------------------===//
   // MainFileID creation and querying methods.
