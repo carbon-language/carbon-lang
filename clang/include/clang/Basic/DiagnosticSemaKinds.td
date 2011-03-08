@@ -1115,7 +1115,9 @@ def err_attribute_wrong_decl_type : Error<
   "classes and virtual methods|functions, methods, and parameters|"
   "classes|virtual methods|class members|variables|methods}1">;
 def warn_function_attribute_wrong_type : Warning<
-  "%0 only applies to function types; type here is %1">;
+  "'%0' only applies to function types; type here is %1">;
+def warn_pointer_attribute_wrong_type : Warning<
+  "'%0' only applies to pointer types; type here is %1">;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;

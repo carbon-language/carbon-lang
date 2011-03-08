@@ -22,6 +22,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -68,6 +69,42 @@ static bool isOmittedBlockReturnType(const Declarator &D) {
     return true;   // ^(int X, float Y) { ... }
   
   return false;
+}
+
+/// diagnoseBadTypeAttribute - Diagnoses a type attribute which
+/// doesn't apply to the given type.
+static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
+                                     QualType type) {
+  bool useInstantiationLoc = false;
+
+  unsigned diagID = 0;
+  switch (attr.getKind()) {
+  case AttributeList::AT_objc_gc:
+    diagID = diag::warn_pointer_attribute_wrong_type;
+    useInstantiationLoc = true;
+    break;
+
+  default:
+    // Assume everything else was a function attribute.
+    diagID = diag::warn_function_attribute_wrong_type;
+    break;
+  }
+
+  SourceLocation loc = attr.getLoc();
+  llvm::StringRef name = attr.getName()->getName();
+
+  // The GC attributes are usually written with macros;  special-case them.
+  if (useInstantiationLoc && loc.isMacroID() && attr.getParameterName()) {
+    SourceLocation instLoc = S.getSourceManager().getInstantiationLoc(loc);
+    llvm::StringRef macro = S.getPreprocessor().getSpelling(instLoc);
+    if ((macro == "__strong" && attr.getParameterName()->isStr("strong")) ||
+        (macro == "__weak" && attr.getParameterName()->isStr("weak"))) {
+      loc = instLoc;
+      name = macro;
+    }
+  }
+
+  S.Diag(loc, diagID) << name << type;
 }
 
 // objc_gc applies to Objective-C pointers or, otherwise, to the
@@ -162,11 +199,8 @@ namespace {
     void diagnoseIgnoredTypeAttrs(QualType type) const {
       for (llvm::SmallVectorImpl<AttributeList*>::const_iterator
              i = ignoredTypeAttrs.begin(), e = ignoredTypeAttrs.end();
-           i != e; ++i) {
-        AttributeList &attr = **i;
-        getSema().Diag(attr.getLoc(), diag::warn_function_attribute_wrong_type)
-          << attr.getName() << type;
-      }
+           i != e; ++i)
+        diagnoseBadTypeAttribute(getSema(), **i, type);
     }
 
     ~TypeProcessingState() {
@@ -287,9 +321,8 @@ static void distributeObjCPointerTypeAttr(TypeProcessingState &state,
     }
   }
  error:
-  
-  state.getSema().Diag(attr.getLoc(), diag::warn_function_attribute_wrong_type)
-    << attr.getName() << type;
+
+  diagnoseBadTypeAttribute(state.getSema(), attr, type);
 }
 
 /// Distribute an objc_gc type attribute that was written on the
@@ -374,8 +407,7 @@ static void distributeFunctionTypeAttr(TypeProcessingState &state,
     }
   }
   
-  state.getSema().Diag(attr.getLoc(), diag::warn_function_attribute_wrong_type)
-    << attr.getName() << type;
+  diagnoseBadTypeAttribute(state.getSema(), attr, type);
 }
 
 /// Try to distribute a function type attribute to the innermost
