@@ -109,11 +109,6 @@
 // See also SBProcess::ReadMemory.
 %typemap(argout) (void *buf, size_t size) {
    Py_XDECREF($result);   /* Blow away any previous result */
-   if (result < 0) {      /* Check for I/O error */
-       free($1);
-       PyErr_SetFromErrno(PyExc_IOError);
-       return NULL;
-   }
    $result = PyString_FromStringAndSize(static_cast<const char*>($1),result);
    free($1);
 }
