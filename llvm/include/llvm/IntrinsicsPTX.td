@@ -25,8 +25,14 @@ let TargetPrefix = "ptx" in {
   }
 }
 
-defm int_ptx_read_tid : PTXReadSpecialRegisterIntrinsic;
-defm int_ptx_read_tid : PTXReadSpecialSubRegisterIntrinsic;
+defm int_ptx_read_tid    : PTXReadSpecialRegisterIntrinsic;
+defm int_ptx_read_tid    : PTXReadSpecialSubRegisterIntrinsic;
+defm int_ptx_read_ntid   : PTXReadSpecialRegisterIntrinsic;
+defm int_ptx_read_ntid   : PTXReadSpecialSubRegisterIntrinsic;
+defm int_ptx_read_ctaid  : PTXReadSpecialRegisterIntrinsic;
+defm int_ptx_read_ctaid  : PTXReadSpecialSubRegisterIntrinsic;
+defm int_ptx_read_nctaid : PTXReadSpecialRegisterIntrinsic;
+defm int_ptx_read_nctaid : PTXReadSpecialSubRegisterIntrinsic;
 
 let TargetPrefix = "ptx" in
   def int_ptx_bar_sync : Intrinsic<[], [llvm_i32_ty], []>;
