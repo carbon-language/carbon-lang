@@ -90,3 +90,26 @@ define arm_apcscc float @f8(i32 %a) nounwind {
   %tmp1 = select i1 %tmp, float 0x3FF3BE76C0000000, float 0x40030E9A20000000
   ret float %tmp1
 }
+
+; <rdar://problem/9049552>
+; Glue values can only have a single use, but the following test exposed a
+; case where a SELECT was lowered with 2 uses of a comparison, causing the
+; scheduler to assert.
+; CHECK-VFP: f9:
+
+declare i8* @objc_msgSend(i8*, i8*, ...)
+define void @f9() optsize {
+entry:
+  %cmp = icmp eq i8* undef, inttoptr (i32 4 to i8*)
+  %conv191 = select i1 %cmp, float -3.000000e+00, float 0.000000e+00
+  %conv195 = select i1 %cmp, double -1.000000e+00, double 0.000000e+00
+  %add = fadd double %conv195, 1.100000e+01
+  %conv196 = fptrunc double %add to float
+  %add201 = fadd float undef, %conv191
+  %tmp484 = bitcast float %conv196 to i32
+  %tmp478 = bitcast float %add201 to i32
+  %tmp490 = insertvalue [2 x i32] undef, i32 %tmp484, 0
+  %tmp493 = insertvalue [2 x i32] %tmp490, i32 %tmp478, 1
+  call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, [2 x i32], i32, float)*)(i8* undef, i8* undef, [2 x i32] %tmp493, i32 0, float 1.000000e+00) optsize
+  ret void
+}

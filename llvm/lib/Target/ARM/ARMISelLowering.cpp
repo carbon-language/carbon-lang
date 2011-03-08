@@ -2527,6 +2527,27 @@ ARMTargetLowering::getVFPCmp(SDValue LHS, SDValue RHS, SelectionDAG &DAG,
   return DAG.getNode(ARMISD::FMSTAT, dl, MVT::Glue, Cmp);
 }
 
+/// duplicateCmp - Glue values can have only one use, so this function
+/// duplicates a comparison node.
+SDValue
+ARMTargetLowering::duplicateCmp(SDValue Cmp, SelectionDAG &DAG) const {
+  unsigned Opc = Cmp.getOpcode();
+  DebugLoc DL = Cmp.getDebugLoc();
+  if (Opc == ARMISD::CMP || Opc == ARMISD::CMPZ)
+    return DAG.getNode(Opc, DL, MVT::Glue, Cmp.getOperand(0),Cmp.getOperand(1));
+
+  assert(Opc == ARMISD::FMSTAT && "unexpected comparison operation");
+  Cmp = Cmp.getOperand(0);
+  Opc = Cmp.getOpcode();
+  if (Opc == ARMISD::CMPFP)
+    Cmp = DAG.getNode(Opc, DL, MVT::Glue, Cmp.getOperand(0),Cmp.getOperand(1));
+  else {
+    assert(Opc == ARMISD::CMPFPw0 && "unexpected operand of FMSTAT");
+    Cmp = DAG.getNode(Opc, DL, MVT::Glue, Cmp.getOperand(0));
+  }
+  return DAG.getNode(ARMISD::FMSTAT, DL, MVT::Glue, Cmp);
+}
+
 SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cond = Op.getOperand(0);
   SDValue SelectTrue = Op.getOperand(1);
@@ -2562,7 +2583,7 @@ SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
         EVT VT = Cond.getValueType();
         SDValue ARMcc = Cond.getOperand(2);
         SDValue CCR = Cond.getOperand(3);
-        SDValue Cmp = Cond.getOperand(4);
+        SDValue Cmp = duplicateCmp(Cond.getOperand(4), DAG);
         return DAG.getNode(ARMISD::CMOV, dl, VT, True, False, ARMcc, CCR, Cmp);
       }
     }
