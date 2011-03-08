@@ -31,6 +31,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginABIMacOSX_i386.a \
 	lldbPluginABISysV_x86_64.a \
 	lldbPluginDisassemblerLLVM.a \
+	lldbPluginDynamicLoaderStatic.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectFileELF.a \
 	lldbPluginSymbolFileDWARF.a \
