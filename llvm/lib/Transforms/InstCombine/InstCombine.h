@@ -218,7 +218,6 @@ private:
   Instruction *transformZExtICmp(ICmpInst *ICI, Instruction &CI,
                                  bool DoXform = true);
   bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS);
-  DbgDeclareInst *hasOneUsePlusDeclare(Value *V);
   Value *EmitGEPOffset(User *GEP);
 
 public:
