@@ -248,24 +248,4 @@ ObjectContainerUniversalMachO::GetPluginVersion()
     return 1;
 }
 
-void
-ObjectContainerUniversalMachO::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-ObjectContainerUniversalMachO::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ObjectContainerUniversalMachO::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-
 

@@ -456,36 +456,6 @@ ArchSpec::SetTriple (const char *triple_cstr)
     return IsValid();
 }
 
-//bool
-//ArchSpec::SetArchitecture (const char *arch_name)
-//{
-//    return SetArchitecture(llvm::StringRef (arch_name));
-//}
-//
-//bool
-//ArchSpec::SetArchitecture (const llvm::StringRef& arch_name)
-//{
-//    // All default architecture names start with LLDB_ARCH_DEFAULT.
-//    if (arch_name.startswith (LLDB_ARCH_DEFAULT))
-//    {
-//        // Special case for the current host default architectures...
-//        if (arch_name.equals (LLDB_ARCH_DEFAULT_32BIT))
-//            *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
-//        else if (arch_name.equals (LLDB_ARCH_DEFAULT_64BIT))
-//            *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture64);
-//        else
-//            *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
-//    }
-//    else
-//    {
-//        const CoreDefinition *core_def = FindCoreDefinition (arch_name);
-//        if (core_def)
-//            m_core = core_def->core;
-//        CoreUpdated(true);
-//    }
-//    return IsValid();
-//}
-//
 bool
 ArchSpec::SetArchitecture (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t sub)
 {

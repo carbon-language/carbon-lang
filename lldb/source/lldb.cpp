@@ -12,12 +12,15 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
+
+#include "llvm/ADT/StringRef.h"
 
 #include "Plugins/Disassembler/llvm/DisassemblerLLVM.h"
 #include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
@@ -30,7 +33,7 @@
 #include "Plugins/Process/Utility/ArchDefaultUnwindPlan-x86.h"
 #include "Plugins/Process/Utility/ArchVolatileRegs-x86.h"
 
-#ifdef __APPLE__
+#if defined (__APPLE__)
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
@@ -41,11 +44,13 @@
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
 #include "Plugins/Process/MacOSX-User/source/ProcessMacOSX.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
+#include "Plugins/Platform/MacOSX/PlatformMacOSX.h"
 #endif
 
-#ifdef __linux__
-#include "Plugins/Process/Linux/ProcessLinux.h"
+#if defined (__linux__)
 #include "Plugins/DynamicLoader/Linux-DYLD/DynamicLoaderLinuxDYLD.h"
+#include "Plugins/Platform/Linux/PlatformLinux.h"
+#include "Plugins/Process/Linux/ProcessLinux.h"
 #endif
 
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
@@ -83,7 +88,7 @@ lldb_private::Initialize ()
         ArchVolatileRegs_x86::Initialize();
         ScriptInterpreter::Initialize ();
 
-#ifdef __APPLE__
+#if defined (__APPLE__)
         ABIMacOSX_i386::Initialize();
         ABISysV_x86_64::Initialize();
         DynamicLoaderMacOSXDYLD::Initialize();
@@ -96,8 +101,10 @@ lldb_private::Initialize ()
         ProcessGDBRemote::Initialize();
         //ProcessMacOSX::Initialize();
         SymbolVendorMacOSX::Initialize();
+        PlatformMacOSX::Initialize();
 #endif
-#ifdef __linux__
+#if defined (__linux__)
+        ProcessLinux::Initialize();
         ProcessLinux::Initialize();
         DynamicLoaderLinuxDYLD::Initialize();
 #endif
@@ -136,7 +143,7 @@ lldb_private::Terminate ()
     ArchVolatileRegs_x86::Terminate();
     ScriptInterpreter::Terminate ();
 
-#ifdef __APPLE__
+#if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
     ItaniumABILanguageRuntime::Terminate();
@@ -147,13 +154,15 @@ lldb_private::Terminate ()
     ProcessGDBRemote::Terminate();
     //ProcessMacOSX::Terminate();
     SymbolVendorMacOSX::Terminate();
+    PlatformMacOSX::Terminate();
 #endif
 
     Thread::Terminate ();
     Process::Terminate ();
     Target::Terminate ();
 
-#ifdef __linux__
+#if defined (__linux__)
+    PlatformLinux::Terminate();
     ProcessLinux::Terminate();
     DynamicLoaderLinuxDYLD::Terminate();
 #endif
@@ -227,3 +236,39 @@ lldb_private::GetSectionTypeAsCString (lldb::SectionType sect_type)
 
 }
 
+bool
+lldb_private::NameMatches (const char *name, 
+                           lldb::NameMatchType match_type, 
+                           const char *match)
+{
+    if (match_type == eNameMatchIgnore)
+        return true;
+
+    if (name == match)
+        return true;
+
+    if (name && match)
+    {
+        llvm::StringRef name_sref(name);
+        llvm::StringRef match_sref(match);
+        switch (match_type)
+        {
+        case eNameMatchIgnore:
+            return true;
+        case eNameMatchEquals:      return name_sref == match_sref;
+        case eNameMatchContains:    return name_sref.find (match_sref) != llvm::StringRef::npos;
+        case eNameMatchStartsWith:  return name_sref.startswith (match_sref);
+        case eNameMatchEndsWith:    return name_sref.endswith (match_sref);
+        case eNameMatchRegularExpression:
+            {
+                RegularExpression regex (match);
+                return regex.Execute (name);
+            }
+            break;
+        default:
+            assert (!"unhandled NameMatchType in lldb_private::NameMatches()");
+            break;
+        }
+    }
+    return false;
+}

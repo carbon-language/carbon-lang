@@ -412,21 +412,26 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
             m_arch_spec = exe_arch;
         
         FileSpecList dependent_files;
-        ObjectFile * executable_objfile = executable_sp->GetObjectFile();
-        if (executable_objfile == NULL)
-        {
-
-            FileSpec bundle_executable(executable_sp->GetFileSpec());
-            if (Host::ResolveExecutableInBundle (bundle_executable))
-            {
-                ModuleSP bundle_exe_module_sp(GetSharedModule(bundle_executable,
-                                                              exe_arch));
-                SetExecutableModule (bundle_exe_module_sp, get_dependent_files);
-                if (bundle_exe_module_sp->GetObjectFile() != NULL)
-                    executable_sp = bundle_exe_module_sp;
-                return;
-            }
-        }
+        ObjectFile *executable_objfile = executable_sp->GetObjectFile();
+        assert (executable_objfile);
+        // TODO: remote assertion above after verifying that it doesn't fire off
+        // after the platform changes. The platform is what should be selecting
+        // the right slice of an executable file, and it also should be the one
+        // to resolve any executables in their bundles.
+//        if (executable_objfile == NULL)
+//        {
+//
+//            FileSpec bundle_executable(executable_sp->GetFileSpec());
+//            if (Host::ResolveExecutableInBundle (bundle_executable))
+//            {
+//                ModuleSP bundle_exe_module_sp(GetSharedModule(bundle_executable,
+//                                                              exe_arch));
+//                SetExecutableModule (bundle_exe_module_sp, get_dependent_files);
+//                if (bundle_exe_module_sp->GetObjectFile() != NULL)
+//                    executable_sp = bundle_exe_module_sp;
+//                return;
+//            }
+//        }
 
         if (executable_objfile)
         {

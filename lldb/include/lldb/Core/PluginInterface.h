@@ -33,14 +33,6 @@ public:
     virtual uint32_t
     GetPluginVersion() = 0;
 
-    virtual void
-    GetPluginCommandHelp (const char *command, Stream *strm) = 0;
-
-    virtual Error
-    ExecutePluginCommand (Args &command, Stream *strm) = 0;
-
-    virtual Log *
-    EnablePluginLogging (Stream *strm, Args &command) = 0;
 };
 
 } // namespace lldb_private

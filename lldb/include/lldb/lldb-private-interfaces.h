@@ -24,6 +24,7 @@ namespace lldb_private
     typedef LogChannel* (*LogChannelCreateInstance) ();
     typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch);
     typedef LanguageRuntime *(*LanguageRuntimeCreateInstance) (Process *process, lldb::LanguageType language);
+    typedef Platform* (*PlatformCreateInstance) ();
     typedef Process* (*ProcessCreateInstance) (Target &target, Listener &listener);
     typedef SymbolFile* (*SymbolFileCreateInstance) (ObjectFile* obj_file);
     typedef SymbolVendor* (*SymbolVendorCreateInstance) (Module *module);   // Module can be NULL for default system symbol vendor

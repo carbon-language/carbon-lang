@@ -880,25 +880,6 @@ UnwindAssemblyProfiler_x86::GetPluginVersion()
 }
 
 void
-UnwindAssemblyProfiler_x86::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-UnwindAssemblyProfiler_x86::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-UnwindAssemblyProfiler_x86::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-void
 UnwindAssemblyProfiler_x86::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),

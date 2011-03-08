@@ -68,8 +68,8 @@ public:
     virtual bool
     CanDebug (lldb_private::Target &target);
 
-    virtual uint32_t
-    ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids);
+//    virtual uint32_t
+//    ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids);
 
     //------------------------------------------------------------------
     // Creating a new process, or attaching to an existing one
@@ -122,15 +122,6 @@ public:
 
     virtual uint32_t
     GetPluginVersion();
-
-    virtual void
-    GetPluginCommandHelp (const char *command, lldb_private::Stream *strm);
-
-    virtual lldb_private::Error
-    ExecutePluginCommand (lldb_private::Args &command, lldb_private::Stream *strm);
-
-    virtual lldb_private::Log *
-    EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
 
     //------------------------------------------------------------------
     // Process Control

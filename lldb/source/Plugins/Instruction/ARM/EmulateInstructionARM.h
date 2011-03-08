@@ -85,25 +85,6 @@ public:
         return 1;
     }
 
-    virtual void
-    GetPluginCommandHelp (const char *command, Stream *strm)
-    {
-    }
-
-    virtual lldb_private::Error
-    ExecutePluginCommand (Args &command, Stream *strm)
-    {
-        Error error;
-        error.SetErrorString("no plug-in commands are supported");
-        return error;
-    }
-
-    virtual Log *
-    EnablePluginLogging (Stream *strm, Args &command)
-    {
-        return NULL;
-    }
-
     enum Mode
     {
         eModeInvalid,

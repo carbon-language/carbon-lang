@@ -13,6 +13,7 @@
 // Project includes
 
 #include "lldb/Core/AddressResolver.h"
+#include "lldb/Core/RegularExpression.h"
 
 namespace lldb_private {
 

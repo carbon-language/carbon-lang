@@ -1298,23 +1298,3 @@ DynamicLoaderMacOSXDYLD::GetPluginVersion()
     return 1;
 }
 
-void
-DynamicLoaderMacOSXDYLD::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-DynamicLoaderMacOSXDYLD::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-DynamicLoaderMacOSXDYLD::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-

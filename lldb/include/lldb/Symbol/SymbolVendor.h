@@ -171,15 +171,6 @@ public:
     virtual uint32_t
     GetPluginVersion();
 
-    virtual void
-    GetPluginCommandHelp (const char *command, Stream *strm);
-
-    virtual Error
-    ExecutePluginCommand (Args &command, Stream *strm);
-
-    virtual Log *
-    EnablePluginLogging (Stream *strm, Args &command);
-
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from SymbolVendor can see and modify these

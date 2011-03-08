@@ -170,25 +170,48 @@ public:
     GetLogChannelCreateNameAtIndex (uint32_t idx);
 
     //------------------------------------------------------------------
+    // Platform
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const char *name,
+                    const char *description,
+                    PlatformCreateInstance create_callback);
+
+    static bool
+    UnregisterPlugin (PlatformCreateInstance create_callback);
+
+    static PlatformCreateInstance
+    GetPlatformCreateCallbackAtIndex (uint32_t idx);
+
+    static PlatformCreateInstance
+    GetPlatformCreateCallbackForPluginName (const char *name);
+    
+    static const char *
+    GetPlatformPluginNameAtIndex (uint32_t idx);
+
+    static const char *
+    GetPlatformPluginDescriptionAtIndex (uint32_t idx);
+
+    //------------------------------------------------------------------
     // Process
     //------------------------------------------------------------------
     static bool
     RegisterPlugin (const char *name,
                     const char *description,
                     ProcessCreateInstance create_callback);
-
+    
     static bool
     UnregisterPlugin (ProcessCreateInstance create_callback);
-
+    
     static ProcessCreateInstance
     GetProcessCreateCallbackAtIndex (uint32_t idx);
-
+    
     static ProcessCreateInstance
     GetProcessCreateCallbackForPluginName (const char *name);
     
     static const char *
     GetProcessPluginNameAtIndex (uint32_t idx);
-
+    
     static const char *
     GetProcessPluginDescriptionAtIndex (uint32_t idx);
 

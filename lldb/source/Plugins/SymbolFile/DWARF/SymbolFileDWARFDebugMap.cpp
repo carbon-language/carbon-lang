@@ -1087,26 +1087,6 @@ SymbolFileDWARFDebugMap::GetPluginVersion()
 }
 
 void
-SymbolFileDWARFDebugMap::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-SymbolFileDWARFDebugMap::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-SymbolFileDWARFDebugMap::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-
-void
 SymbolFileDWARFDebugMap::SetCompileUnit (SymbolFileDWARF *oso_dwarf, const CompUnitSP &cu_sp)
 {
     const uint32_t cu_count = GetNumCompileUnits();

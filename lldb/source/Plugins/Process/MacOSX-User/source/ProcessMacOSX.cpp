@@ -269,40 +269,6 @@ ProcessMacOSX::GetPluginVersion()
     return 1;
 }
 
-void
-ProcessMacOSX::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-    strm->Printf("The following arguments can be supplied to the 'log %s' command:\n", GetShortPluginName());
-    strm->PutCString("\tverbose - enable verbose logging\n");
-    strm->PutCString("\tprocess - enable process logging\n");
-    strm->PutCString("\tthread - enable thread logging\n");
-    strm->PutCString("\texceptions - enable exception logging\n");
-    strm->PutCString("\tdynamic - enable DynamicLoader logging\n");
-    strm->PutCString("\tmemory-calls - enable memory read and write call logging\n");
-    strm->PutCString("\tmemory-data-short - log short memory read and write byte data\n");
-    strm->PutCString("\tmemory-data-long - log all memory read and write byte data\n");
-    strm->PutCString("\tmemory-protections - log memory protection calls\n");
-    strm->PutCString("\tbreakpoints - log breakpoint calls\n");
-    strm->PutCString("\twatchpoints - log watchpoint calls\n");
-    strm->PutCString("\tevents - log event and event queue status\n");
-    strm->PutCString("\tstep - log step related activity\n");
-    strm->PutCString("\ttask - log task functions\n");
-}
-
-Error
-ProcessMacOSX::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ProcessMacOSX::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
 //----------------------------------------------------------------------
 // Process Control
 //----------------------------------------------------------------------
@@ -2178,10 +2144,10 @@ ProcessMacOSX::Initialize()
     }
 }
 
-uint32_t
-ProcessMacOSX::ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids)
-{
-    return Host::ListProcessesMatchingName (name, matches, pids);
-}
+//uint32_t
+//ProcessMacOSX::ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids)
+//{
+//    return Host::ListProcessesMatchingName (name, matches, pids);
+//}
 
 

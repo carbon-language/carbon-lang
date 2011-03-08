@@ -164,26 +164,6 @@ ProcessGDBRemote::GetPluginVersion()
 }
 
 void
-ProcessGDBRemote::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-    strm->Printf("TODO: fill this in\n");
-}
-
-Error
-ProcessGDBRemote::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in commands are currently supported.");
-    return error;
-}
-
-Log *
-ProcessGDBRemote::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-void
 ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
 {
     if (!force && m_register_info.GetNumRegisters() > 0)
@@ -2456,23 +2436,23 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
     return dispatch_queue_name.c_str();
 }
 
-uint32_t
-ProcessGDBRemote::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
-{
-    // If we are planning to launch the debugserver remotely, then we need to fire up a debugserver
-    // process and ask it for the list of processes. But if we are local, we can let the Host do it.
-    if (m_local_debugserver)
-    {
-        return Host::ListProcessesMatchingName (name, matches, pids);
-    }
-    else 
-    {
-        // FIXME: Implement talking to the remote debugserver.
-        return 0;
-    }
-
-}
-
+//uint32_t
+//ProcessGDBRemote::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
+//{
+//    // If we are planning to launch the debugserver remotely, then we need to fire up a debugserver
+//    // process and ask it for the list of processes. But if we are local, we can let the Host do it.
+//    if (m_local_debugserver)
+//    {
+//        return Host::ListProcessesMatchingName (name, matches, pids);
+//    }
+//    else 
+//    {
+//        // FIXME: Implement talking to the remote debugserver.
+//        return 0;
+//    }
+//
+//}
+//
 bool
 ProcessGDBRemote::NewThreadNotifyBreakpointHit (void *baton,
                              lldb_private::StoppointCallbackContext *context,

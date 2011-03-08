@@ -425,7 +425,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
         FileSpec file_spec (filename, true);
         arch.SetTriple (target_triple);
         TargetSP target_sp;
-        Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file_spec, arch, NULL, true, target_sp));
+        Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file_spec, arch, true, target_sp));
         target.reset (target_sp);
     }
     
@@ -454,23 +454,8 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *arch_
 
         if (arch_cstr)
             arch.SetTriple (arch_cstr);
-        else
-            arch = lldb_private::Target::GetDefaultArchitecture ();
 
-        if (!arch.IsValid())
-            arch.SetTriple (LLDB_ARCH_DEFAULT);
-
-        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
-
-        if (error.Fail())
-        {
-            if (strcmp (LLDB_ARCH_DEFAULT, LLDB_ARCH_DEFAULT_32BIT) == 0)
-                arch.SetTriple (LLDB_ARCH_DEFAULT_64BIT);
-            else
-                arch.SetTriple (LLDB_ARCH_DEFAULT_32BIT);
-
-            error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
-        }
+        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, true, target_sp);
 
         if (error.Success())
         {
@@ -499,20 +484,7 @@ SBDebugger::CreateTarget (const char *filename)
         TargetSP target_sp;
         Error error;
 
-        if (!arch.IsValid())
-            arch.SetTriple (LLDB_ARCH_DEFAULT);
-
-        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
-
-        if (error.Fail())
-        {
-            if (strcmp (LLDB_ARCH_DEFAULT, LLDB_ARCH_DEFAULT_32BIT) == 0)
-                arch.SetTriple (LLDB_ARCH_DEFAULT_64BIT);
-            else
-                arch.SetTriple (LLDB_ARCH_DEFAULT_32BIT);
-
-            error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, NULL, true, target_sp);
-        }
+        error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, true, target_sp);
 
         if (error.Success())
         {

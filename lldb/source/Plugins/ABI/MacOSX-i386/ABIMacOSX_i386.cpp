@@ -595,21 +595,3 @@ ABIMacOSX_i386::GetPluginVersion()
     return 1;
 }
 
-void
-ABIMacOSX_i386::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-ABIMacOSX_i386::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ABIMacOSX_i386::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}

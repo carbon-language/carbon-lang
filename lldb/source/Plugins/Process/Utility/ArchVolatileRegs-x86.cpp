@@ -121,25 +121,6 @@ ArchVolatileRegs_x86::GetPluginVersion()
 }
 
 void
-ArchVolatileRegs_x86::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-ArchVolatileRegs_x86::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ArchVolatileRegs_x86::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-void
 ArchVolatileRegs_x86::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),

@@ -1194,17 +1194,153 @@ PluginManager::GetLogChannelCreateCallbackForPluginName (const char *name)
     return NULL;
 }
 
-#pragma mark Process
+#pragma mark Platform
 
-struct ProcessInstance
+struct PlatformInstance
 {
-    ProcessInstance() :
+    PlatformInstance() :
         name(),
         description(),
         create_callback(NULL)
     {
     }
+    
+    std::string name;
+    std::string description;
+    PlatformCreateInstance create_callback;
+};
 
+typedef std::vector<PlatformInstance> PlatformInstances;
+
+static bool
+AccessPlatformInstances (PluginAction action, PlatformInstance &instance, uint32_t index)
+{
+    static PlatformInstances g_plugin_instances;
+    
+    switch (action)
+    {
+        case ePluginRegisterInstance:
+            if (instance.create_callback)
+            {
+                g_plugin_instances.push_back (instance);
+                return true;
+            }
+            break;
+            
+        case ePluginUnregisterInstance:
+            if (instance.create_callback)
+            {
+                PlatformInstances::iterator pos, end = g_plugin_instances.end();
+                for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
+                {
+                    if (pos->create_callback == instance.create_callback)
+                    {
+                        g_plugin_instances.erase(pos);
+                        return true;
+                    }
+                }
+            }
+            break;
+            
+        case ePluginGetInstanceAtIndex:
+            if (index < g_plugin_instances.size())
+            {
+                instance = g_plugin_instances[index];
+                return true;
+            }
+            break;
+            
+        default:
+            break;
+    }
+    return false;
+}
+
+
+bool
+PluginManager::RegisterPlugin (const char *name,
+                               const char *description,
+                               PlatformCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        PlatformInstance instance;
+        assert (name && name[0]);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        return AccessPlatformInstances (ePluginRegisterInstance, instance, 0);
+    }
+    return false;
+}
+
+const char *
+PluginManager::GetPlatformPluginNameAtIndex (uint32_t idx)
+{
+    PlatformInstance instance;
+    if (AccessPlatformInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.name.c_str();
+    return NULL;
+}
+
+const char *
+PluginManager::GetPlatformPluginDescriptionAtIndex (uint32_t idx)
+{
+    PlatformInstance instance;
+    if (AccessPlatformInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.description.c_str();
+    return NULL;
+}
+
+bool
+PluginManager::UnregisterPlugin (PlatformCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        PlatformInstance instance;
+        instance.create_callback = create_callback;
+        return AccessPlatformInstances (ePluginUnregisterInstance, instance, 0);
+    }
+    return false;
+}
+
+PlatformCreateInstance
+PluginManager::GetPlatformCreateCallbackAtIndex (uint32_t idx)
+{
+    PlatformInstance instance;
+    if (AccessPlatformInstances (ePluginGetInstanceAtIndex, instance, idx))
+        return instance.create_callback;
+    return NULL;
+}
+
+PlatformCreateInstance
+PluginManager::GetPlatformCreateCallbackForPluginName (const char *name)
+{
+    if (name && name[0])
+    {
+        PlatformInstance instance;
+        std::string ss_name(name);
+        for (uint32_t idx = 0; AccessPlatformInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        {
+            if (instance.name == ss_name)
+                return instance.create_callback;
+        }
+    }
+    return NULL;
+}
+
+#pragma mark Process
+
+struct ProcessInstance
+{
+    ProcessInstance() :
+    name(),
+    description(),
+    create_callback(NULL)
+    {
+    }
+    
     std::string name;
     std::string description;
     ProcessCreateInstance create_callback;
@@ -1216,42 +1352,42 @@ static bool
 AccessProcessInstances (PluginAction action, ProcessInstance &instance, uint32_t index)
 {
     static ProcessInstances g_plugin_instances;
-
+    
     switch (action)
     {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            ProcessInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
+        case ePluginRegisterInstance:
+            if (instance.create_callback)
             {
-                if (pos->create_callback == instance.create_callback)
+                g_plugin_instances.push_back (instance);
+                return true;
+            }
+            break;
+            
+        case ePluginUnregisterInstance:
+            if (instance.create_callback)
+            {
+                ProcessInstances::iterator pos, end = g_plugin_instances.end();
+                for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
                 {
-                    g_plugin_instances.erase(pos);
-                    return true;
+                    if (pos->create_callback == instance.create_callback)
+                    {
+                        g_plugin_instances.erase(pos);
+                        return true;
+                    }
                 }
             }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
+            break;
+            
+        case ePluginGetInstanceAtIndex:
+            if (index < g_plugin_instances.size())
+            {
+                instance = g_plugin_instances[index];
+                return true;
+            }
+            break;
+            
+        default:
+            break;
     }
     return false;
 }
@@ -1260,10 +1396,10 @@ AccessProcessInstances (PluginAction action, ProcessInstance &instance, uint32_t
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
-    const char *description,
-    ProcessCreateInstance create_callback
-)
+ const char *name,
+ const char *description,
+ ProcessCreateInstance create_callback
+ )
 {
     if (create_callback)
     {

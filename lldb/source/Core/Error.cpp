@@ -100,7 +100,7 @@ Error::AsCString(const char *default_error_str) const
         switch (m_type)
         {
         case eErrorTypeMachKernel:
-#ifdef __APPLE__
+#if defined (__APPLE__)
             s = ::mach_error_string (m_code);
 #endif
             break;

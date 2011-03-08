@@ -107,26 +107,6 @@ ObjectFileELF::GetPluginVersion()
 {
     return m_plugin_version;
 }
-
-void
-ObjectFileELF::GetPluginCommandHelp(const char *command, Stream *strm)
-{
-}
-
-Error
-ObjectFileELF::ExecutePluginCommand(Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in commands are currently supported.");
-    return error;
-}
-
-Log *
-ObjectFileELF::EnablePluginLogging(Stream *strm, Args &command)
-{
-    return NULL;
-}
-
 //------------------------------------------------------------------
 // ObjectFile protocol
 //------------------------------------------------------------------

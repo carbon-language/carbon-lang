@@ -654,22 +654,37 @@ typedef enum ExecutionOSType
 {
     // Automatically detect the execution operating system
     eExecutionOSTypeAuto,   
-
+    
     // There is no operating system (no processes or threads).
     eExecutionOSTypeNone,   
-
+    
     // There is an OS, but when we execution stops, the entire OS is halted 
     // (common when debugging in eExecutionLevelKernel modes). Processes and 
     // threads can be queried, selected and switched between using memory 
     // reads/writes using a ProcessHelper plug-in (which has yet to be 
     // designed).
     eExecutionOSTypeHalted, 
-
+    
     // There is live OS with debug services that we can talk to for process, 
     // thread, and other OS queries.
     eExecutionOSTypeLive 
-
+    
 } ExecutionOSType;
+
+
+//------------------------------------------------------------------
+/// Name matching
+//------------------------------------------------------------------
+typedef enum NameMatchType
+{
+    eNameMatchIgnore,
+    eNameMatchEquals,
+    eNameMatchContains,
+    eNameMatchStartsWith,
+    eNameMatchEndsWith,
+    eNameMatchRegularExpression
+    
+} NameMatchType;
 
 
 } // namespace lldb

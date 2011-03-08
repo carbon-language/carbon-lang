@@ -69,6 +69,9 @@ GetVoteAsCString (lldb::Vote vote);
 
 const char *
 GetSectionTypeAsCString (lldb::SectionType sect_type);
+    
+bool
+NameMatches (const char *name, lldb::NameMatchType match_type, const char *match);
 
 } // namespace lldb_private
 

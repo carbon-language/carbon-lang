@@ -469,22 +469,3 @@ DisassemblerLLVM::GetPluginVersion()
     return 1;
 }
 
-void
-DisassemblerLLVM::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-DisassemblerLLVM::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-DisassemblerLLVM::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-

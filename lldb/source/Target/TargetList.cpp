@@ -16,6 +16,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
 
@@ -49,44 +50,28 @@ TargetList::CreateTarget
     Debugger &debugger,
     const FileSpec& file,
     const ArchSpec& arch,
-    const lldb_private::UUID *uuid_ptr,
     bool get_dependent_files,
     TargetSP &target_sp
 )
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "TargetList::CreateTarget (file = '%s/%s', arch = '%s', uuid = %p)",
+                        "TargetList::CreateTarget (file = '%s/%s', arch = '%s')",
                         file.GetDirectory().AsCString(),
                         file.GetFilename().AsCString(),
-                        arch.GetArchitectureName(),
-                        uuid_ptr);
+                        arch.GetArchitectureName());
     Error error;
     
-    if (!file)
-    {
-        target_sp.reset(new Target(debugger));
-        target_sp->SetArchitecture(arch);
-    }
-    else
+    if (file)
     {
         ModuleSP exe_module_sp;
         FileSpec resolved_file(file);
+        ArchSpec platform_arch;
         
-        if (!resolved_file.Exists())
-            resolved_file.ResolveExecutableLocation ();
-            
-        if (!Host::ResolveExecutableInBundle (resolved_file))
-            resolved_file = file;
+        PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+        if (platform_sp)
+            error = platform_sp->ResolveExecutable (file, arch, exe_module_sp);
 
-        error = ModuleList::GetSharedModule (resolved_file, 
-                                             arch, 
-                                             uuid_ptr, 
-                                             NULL, 
-                                             0, 
-                                             exe_module_sp, 
-                                             NULL, 
-                                             NULL);
-        if (exe_module_sp)
+        if (error.Success() && exe_module_sp)
         {
             if (exe_module_sp->GetObjectFile() == NULL)
             {
@@ -111,42 +96,22 @@ TargetList::CreateTarget
             target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
         }
     }
-
-    if (target_sp.get())
-        target_sp->UpdateInstanceName();
-    
-    if (target_sp.get())
+    else
     {
+        // No file was specified, just create an empty target with any arch
+        // if a valid arch was specified
+        target_sp.reset(new Target(debugger));
+        if (arch.IsValid())
+            target_sp->SetArchitecture(arch);
+    }
+
+    if (target_sp)
+    {
+        target_sp->UpdateInstanceName();        
+
         Mutex::Locker locker(m_target_list_mutex);
         m_selected_target_idx = m_target_list.size();
         m_target_list.push_back(target_sp);
-    }
-
-//        target_sp.reset(new Target);
-//        // Let the target resolve any funky bundle paths before we try and get
-//        // the object file...
-//        target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
-//        if (exe_module_sp->GetObjectFile() == NULL)
-//        {
-//            error.SetErrorStringWithFormat("%s%s%s: doesn't contain architecture %s",
-//                                           file.GetDirectory().AsCString(),
-//                                           file.GetDirectory() ? "/" : "",
-//                                           file.GetFilename().AsCString(),
-//                                           arch.AsCString());
-//        }
-//        else
-//        {
-//            if (target_sp.get())
-//            {
-//                error.Clear();
-//                Mutex::Locker locker(m_target_list_mutex);
-//                m_selected_target_idx = m_target_list.size();
-//                m_target_list.push_back(target_sp);
-//            }
-//        }
-    else
-    {
-        target_sp.reset();
     }
 
     return error;

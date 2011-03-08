@@ -138,9 +138,8 @@ CommandObjectFile::Execute
 
         TargetSP target_sp;
 
-        ArchSpec arch = m_options.m_arch;
         Debugger &debugger = m_interpreter.GetDebugger();
-        Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, m_options.m_arch, NULL, true, target_sp);
+        Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, m_options.m_arch, true, target_sp);
 
         if (target_sp)
         {

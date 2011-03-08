@@ -323,13 +323,12 @@ public:
     SetCrashDescription (const char *description);
 
     static uint32_t
-    ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
+    FindProcessesByName (const char *name, 
+                         lldb::NameMatchType name_match_type,
+                         ProcessInfoList &proc_infos);
     
-    static ArchSpec
-    GetArchSpecForExistingProcess (lldb::pid_t pid);
-    
-    static ArchSpec
-    GetArchSpecForExistingProcess (const char *process_name);
+    static bool
+    GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);
     
     static lldb::pid_t
     LaunchApplication (const FileSpec &app_file_spec);

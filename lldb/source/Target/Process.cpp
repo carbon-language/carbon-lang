@@ -27,6 +27,7 @@
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
@@ -1659,11 +1660,16 @@ Process::Attach (lldb::pid_t attach_pid)
     // Find the process and its architecture.  Make sure it matches the architecture
     // of the current Target, and if not adjust it.
     
-    ArchSpec attach_spec = GetArchSpecForExistingProcess (attach_pid);
-    if (attach_spec != GetTarget().GetArchitecture())
+    ProcessInfo process_info;
+    PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+    if (platform_sp)
     {
-        // Set the architecture on the target.
-        GetTarget().SetArchitecture(attach_spec);
+        if (platform_sp->GetProcessInfo (attach_pid, process_info))
+        {
+            const ArchSpec &process_arch = process_info.GetArchitecture();
+            if (process_arch.IsValid())
+                GetTarget().SetArchitecture(process_arch);
+        }
     }
 
     m_dyld_ap.reset();
@@ -1703,40 +1709,69 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     
     // Find the process and its architecture.  Make sure it matches the architecture
     // of the current Target, and if not adjust it.
+    Error error;
     
     if (!wait_for_launch)
     {
-        ArchSpec attach_spec = GetArchSpecForExistingProcess (process_name);
-        if (attach_spec.IsValid() && attach_spec != GetTarget().GetArchitecture())
+        ProcessInfoList process_infos;
+        PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+        if (platform_sp)
         {
-            // Set the architecture on the target.
-            GetTarget().SetArchitecture(attach_spec);
-        }
-    }
-
-    m_dyld_ap.reset();
-    
-    Error error (WillAttachToProcessWithName(process_name, wait_for_launch));
-    if (error.Success())
-    {
-        SetPublicState (eStateAttaching);
-        error = DoAttachToProcessWithName (process_name, wait_for_launch);
-        if (error.Fail())
-        {
-            if (GetID() != LLDB_INVALID_PROCESS_ID)
+            platform_sp->FindProcessesByName (process_name, eNameMatchEquals, process_infos);
+            if (process_infos.GetSize() > 1)
             {
-                SetID (LLDB_INVALID_PROCESS_ID);
-                const char *error_string = error.AsCString();
-                if (error_string == NULL)
-                    error_string = "attach failed";
-
-                SetExitStatus(-1, error_string);
+                error.SetErrorStringWithFormat ("More than one process named %s\n", process_name);
+            }
+            else if (process_infos.GetSize() == 0)
+            {
+                error.SetErrorStringWithFormat ("Could not find a process named %s\n", process_name);
+            }
+            else 
+            {
+                ProcessInfo process_info;
+                if (process_infos.GetInfoAtIndex (0, process_info))
+                {
+                    const ArchSpec &process_arch = process_info.GetArchitecture();
+                    if (process_arch.IsValid() && process_arch != GetTarget().GetArchitecture())
+                    {
+                        // Set the architecture on the target.
+                        GetTarget().SetArchitecture (process_arch);
+                    }
+                }
             }
         }
         else
+        {        
+            error.SetErrorString ("Invalid platform");
+        }
+    }
+
+    if (error.Success())
+    {
+        m_dyld_ap.reset();
+        
+        error = WillAttachToProcessWithName(process_name, wait_for_launch);
+        if (error.Success())
         {
-            SetNextEventAction(new Process::AttachCompletionHandler(this));
-            StartPrivateStateThread();
+            SetPublicState (eStateAttaching);
+            error = DoAttachToProcessWithName (process_name, wait_for_launch);
+            if (error.Fail())
+            {
+                if (GetID() != LLDB_INVALID_PROCESS_ID)
+                {
+                    SetID (LLDB_INVALID_PROCESS_ID);
+                    const char *error_string = error.AsCString();
+                    if (error_string == NULL)
+                        error_string = "attach failed";
+
+                    SetExitStatus(-1, error_string);
+                }
+            }
+            else
+            {
+                SetNextEventAction(new Process::AttachCompletionHandler(this));
+                StartPrivateStateThread();
+            }
         }
     }
     return error;
@@ -2503,24 +2538,24 @@ Process::GetSP ()
     return GetTarget().GetProcessSP();
 }
 
-uint32_t
-Process::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
-{
-    return 0;
-}
-    
-ArchSpec
-Process::GetArchSpecForExistingProcess (lldb::pid_t pid)
-{
-    return Host::GetArchSpecForExistingProcess (pid);
-}
-
-ArchSpec
-Process::GetArchSpecForExistingProcess (const char *process_name)
-{
-    return Host::GetArchSpecForExistingProcess (process_name);
-}
-
+//uint32_t
+//Process::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
+//{
+//    return 0;
+//}
+//    
+//ArchSpec
+//Process::GetArchSpecForExistingProcess (lldb::pid_t pid)
+//{
+//    return Host::GetArchSpecForExistingProcess (pid);
+//}
+//
+//ArchSpec
+//Process::GetArchSpecForExistingProcess (const char *process_name)
+//{
+//    return Host::GetArchSpecForExistingProcess (process_name);
+//}
+//
 void
 Process::AppendSTDOUT (const char * s, size_t len)
 {
@@ -3281,7 +3316,6 @@ ProcessInstanceSettings::ProcessInstanceSettings
     m_input_path (),
     m_output_path (),
     m_error_path (),
-    m_plugin (),
     m_disable_aslr (true),
     m_disable_stdio (false),
     m_inherit_host_env (true),
@@ -3313,7 +3347,6 @@ ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings 
     m_input_path (rhs.m_input_path),
     m_output_path (rhs.m_output_path),
     m_error_path (rhs.m_error_path),
-    m_plugin (rhs.m_plugin),
     m_disable_aslr (rhs.m_disable_aslr),
     m_disable_stdio (rhs.m_disable_stdio)
 {
@@ -3339,7 +3372,6 @@ ProcessInstanceSettings::operator= (const ProcessInstanceSettings &rhs)
         m_input_path = rhs.m_input_path;
         m_output_path = rhs.m_output_path;
         m_error_path = rhs.m_error_path;
-        m_plugin = rhs.m_plugin;
         m_disable_aslr = rhs.m_disable_aslr;
         m_disable_stdio = rhs.m_disable_stdio;
         m_inherit_host_env = rhs.m_inherit_host_env;
@@ -3372,10 +3404,6 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
         UserSettingsController::UpdateStringVariable (op, m_output_path, value, err);
     else if (var_name == ErrorPathVarName())
         UserSettingsController::UpdateStringVariable (op, m_error_path, value, err);
-    else if (var_name == PluginVarName())
-        UserSettingsController::UpdateEnumVariable (entry.enum_values, (int *) &m_plugin, value, err);
-    else if (var_name == InheritHostEnvVarName())
-        UserSettingsController::UpdateBooleanVariable (op, m_inherit_host_env, value, err);
     else if (var_name == DisableASLRVarName())
         UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, err);
     else if (var_name == DisableSTDIOVarName ())
@@ -3396,7 +3424,6 @@ ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &n
     m_input_path = new_process_settings->m_input_path;
     m_output_path = new_process_settings->m_output_path;
     m_error_path = new_process_settings->m_error_path;
-    m_plugin = new_process_settings->m_plugin;
     m_disable_aslr = new_process_settings->m_disable_aslr;
     m_disable_stdio = new_process_settings->m_disable_stdio;
 }
@@ -3441,10 +3468,6 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     else if (var_name == ErrorPathVarName())
     {
         value.AppendString (m_error_path.c_str());
-    }
-    else if (var_name == PluginVarName())
-    {
-        value.AppendString (UserSettingsController::EnumToString (entry.enum_values, (int) m_plugin));
     }
     else if (var_name == InheritHostEnvVarName())
     {
@@ -3536,15 +3559,6 @@ ProcessInstanceSettings::ErrorPathVarName ()
 
     return error_path_var_name;
 }
-
-const ConstString &
-ProcessInstanceSettings::PluginVarName ()
-{
-    static ConstString plugin_var_name ("plugin");
-
-    return plugin_var_name;
-}
-
 
 const ConstString &
 ProcessInstanceSettings::DisableASLRVarName ()

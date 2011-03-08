@@ -101,25 +101,6 @@ ItaniumABILanguageRuntime::GetPluginVersion()
 }
 
 void
-ItaniumABILanguageRuntime::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-ItaniumABILanguageRuntime::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ItaniumABILanguageRuntime::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-void
 ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
 {
     if (!m_process)

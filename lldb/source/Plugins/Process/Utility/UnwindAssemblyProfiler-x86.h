@@ -60,15 +60,6 @@ public:
     virtual uint32_t
     GetPluginVersion();
     
-    virtual void
-    GetPluginCommandHelp (const char *command, lldb_private::Stream *strm);
-    
-    virtual lldb_private::Error
-    ExecutePluginCommand (lldb_private::Args &command, lldb_private::Stream *strm);
-    
-    virtual lldb_private::Log *
-    EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
-
 private:
     UnwindAssemblyProfiler_x86(int cpu) : 
           lldb_private::UnwindAssemblyProfiler(), m_cpu(cpu) { } // Call CreateInstance instead.

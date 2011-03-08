@@ -4271,25 +4271,6 @@ SymbolFileDWARF::GetPluginVersion()
 }
 
 void
-SymbolFileDWARF::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-SymbolFileDWARF::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-SymbolFileDWARF::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-void
 SymbolFileDWARF::CompleteTagDecl (void *baton, clang::TagDecl *decl)
 {
     SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;

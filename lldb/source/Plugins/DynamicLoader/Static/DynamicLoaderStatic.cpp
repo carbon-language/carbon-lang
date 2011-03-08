@@ -194,23 +194,3 @@ DynamicLoaderStatic::GetPluginVersion()
     return 1;
 }
 
-void
-DynamicLoaderStatic::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-DynamicLoaderStatic::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-DynamicLoaderStatic::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-

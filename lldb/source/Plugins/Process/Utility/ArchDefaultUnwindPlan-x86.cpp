@@ -68,26 +68,6 @@ ArchDefaultUnwindPlan_x86_64::GetPluginVersion()
 {
     return 1;
 }
-
-void
-ArchDefaultUnwindPlan_x86_64::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-ArchDefaultUnwindPlan_x86_64::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ArchDefaultUnwindPlan_x86_64::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
 void
 ArchDefaultUnwindPlan_x86_64::Initialize()
 {
@@ -175,25 +155,6 @@ uint32_t
 ArchDefaultUnwindPlan_i386::GetPluginVersion()
 {
     return 1;
-}
-
-void
-ArchDefaultUnwindPlan_i386::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-ArchDefaultUnwindPlan_i386::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ArchDefaultUnwindPlan_i386::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
 }
 
 void

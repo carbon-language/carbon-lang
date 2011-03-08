@@ -17,8 +17,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
-#include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/Options.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Error.h"
@@ -30,18 +29,13 @@
 #include "lldb/Breakpoint/BreakpointSiteList.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/IRDynamicChecks.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/UnixSignals.h"
 
 namespace lldb_private {
-
-
-typedef enum ProcessPlugins
-{
-    eMacosx,
-    eRemoteDebugger
-} ProcessPlugins;
 
 
 class ProcessInstanceSettings : public InstanceSettings
@@ -209,9 +203,6 @@ protected:
     ErrorPathVarName ();
 
     static const ConstString &
-    PluginVarName ();
-
-    static const ConstString &
     DisableASLRVarName();
 
     static const ConstString &
@@ -225,11 +216,155 @@ private:
     std::string m_input_path;
     std::string m_output_path;
     std::string m_error_path;
-    ProcessPlugins m_plugin;
     bool m_disable_aslr;
     bool m_disable_stdio;
     bool m_inherit_host_env;
     bool m_got_host_env;
+};
+
+    
+class ProcessInfo
+{
+public:
+    ProcessInfo () :
+        m_name (),
+        m_arch(),
+        m_pid (LLDB_INVALID_PROCESS_ID)
+    {
+    }
+
+    ProcessInfo (const char *name,
+                 const ArchSpec &arch,
+                 lldb::pid_t pid) :
+        m_name (name),
+        m_arch (arch),
+        m_pid (pid)
+    {
+    }
+    
+    void
+    Clear ()
+    {
+        m_name.clear();
+        m_arch.Clear();
+        m_pid = LLDB_INVALID_PROCESS_ID;
+    }
+    
+    const char *
+    GetName() const
+    {
+        return m_name.c_str();
+    }
+
+    size_t
+    GetNameLength() const
+    {
+        return m_name.size();
+    }
+    
+    void
+    SetName (const char *name)
+    {
+        if (name)
+            m_name.assign (name);
+        else
+            m_name.clear();
+    }
+
+    ArchSpec &
+    GetArchitecture ()
+    {
+        return m_arch;
+    }
+
+    const ArchSpec &
+    GetArchitecture () const
+    {
+        return m_arch;
+    }
+
+    lldb::pid_t
+    GetProcessID () const
+    {
+        return m_pid;
+    }
+    
+    void
+    SetProcessID (lldb::pid_t pid)
+    {
+        m_pid = pid;
+    }
+    
+protected:
+    std::string m_name;
+    ArchSpec m_arch;
+    pid_t m_pid;
+};
+
+class ProcessInfoList
+{
+public:
+    ProcessInfoList () :
+        m_infos()
+    {
+    }
+    
+    void
+    Clear()
+    {
+        m_infos.clear();
+    }
+    
+    uint32_t
+    GetSize()
+    {
+        return m_infos.size();
+    }
+    
+    void
+    Append (const ProcessInfo &info)
+    {
+        m_infos.push_back (info);
+    }
+
+    const char *
+    GetProcessNameAtIndex (uint32_t idx)
+    {
+        if (idx < m_infos.size())
+            return m_infos[idx].GetName();
+        return NULL;
+    }
+
+    size_t
+    GetProcessNameLengthAtIndex (uint32_t idx)
+    {
+        if (idx < m_infos.size())
+            return m_infos[idx].GetNameLength();
+        return 0;
+    }
+
+    lldb::pid_t
+    GetProcessIDAtIndex (uint32_t idx)
+    {
+        if (idx < m_infos.size())
+            return m_infos[idx].GetProcessID();
+        return NULL;        
+    }
+
+    bool
+    GetInfoAtIndex (uint32_t idx, ProcessInfo &info)
+    {
+        if (idx < m_infos.size())
+        {
+            info = m_infos[idx];
+            return true;
+        }
+        return false;
+    }
+    
+protected:
+    typedef std::vector<ProcessInfo> collection;
+    collection m_infos;
 };
 
 
@@ -626,8 +761,8 @@ public:
     ///     Returns the number of matching processes.
     //------------------------------------------------------------------
 
-    virtual uint32_t
-    ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
+//    virtual uint32_t
+//    ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
     
     //------------------------------------------------------------------
     /// Find the architecture of a process by pid.
@@ -640,8 +775,8 @@ public:
     /// @return
     ///     Returns the architecture of the process or an invalid architecture if the process can't be found.
     //------------------------------------------------------------------
-    virtual ArchSpec
-    GetArchSpecForExistingProcess (lldb::pid_t pid);
+//    virtual ArchSpec
+//    GetArchSpecForExistingProcess (lldb::pid_t pid);
     
     //------------------------------------------------------------------
     /// Find the architecture of a process by name.
@@ -654,8 +789,8 @@ public:
     /// @return
     ///     Returns the architecture of the process or an invalid architecture if the process can't be found.
     //------------------------------------------------------------------
-    virtual ArchSpec
-    GetArchSpecForExistingProcess (const char *process_name);
+//    virtual ArchSpec
+//    GetArchSpecForExistingProcess (const char *process_name);
 
     //------------------------------------------------------------------
     /// Get the image information address for the current process.

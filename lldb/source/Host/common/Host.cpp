@@ -11,14 +11,16 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Config.h"
 #include "lldb/Host/Endian.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Target/Process.h"
 
 #include "llvm/Support/Host.h"
+#include "llvm/Support/MachO.h"
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -1027,11 +1029,66 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
     return false;
 }
 
-uint32_t
-Host::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
-{
-    uint32_t num_matches = 0;
+#if defined (__APPLE__)
 
+static bool
+GetMacOSXProcessName (lldb::pid_t pid, 
+                      NameMatchType name_match_type,
+                      const char *name_match, 
+                      ProcessInfo &proc_info)
+{
+    char process_name[MAXCOMLEN * 2 + 1];
+    int name_len = ::proc_name(pid, process_name, MAXCOMLEN * 2);
+    if (name_len == 0)
+        return false;
+    
+    if (NameMatches(process_name, name_match_type, name_match))
+    {
+        proc_info.SetName (process_name);
+        return true;
+    }
+    else
+    {
+        proc_info.SetName (NULL);
+        return false;
+    }
+}
+
+
+static bool
+GetMacOSXProcessCPUType (lldb::pid_t pid, ProcessInfo &proc_info)
+{
+        // Make a new mib to stay thread safe
+    int mib[CTL_MAXNAME]={0,};
+    size_t mib_len = CTL_MAXNAME;
+    if (::sysctlnametomib("sysctl.proc_cputype", mib, &mib_len)) 
+        return false;
+    
+    mib[mib_len] = pid;
+    mib_len++;
+    
+    cpu_type_t cpu, sub;
+    size_t cpu_len = sizeof(cpu);
+    if (::sysctl (mib, mib_len, &cpu, &cpu_len, 0, 0) == 0)
+    {
+        switch (cpu)
+        {
+            case llvm::MachO::CPUTypeI386:      sub = llvm::MachO::CPUSubType_I386_ALL;     break;
+            case llvm::MachO::CPUTypeX86_64:    sub = llvm::MachO::CPUSubType_X86_64_ALL;   break;
+            default: break;
+        }
+        proc_info.GetArchitecture ().SetArchitecture (lldb::eArchTypeMachO, cpu, sub);
+        return true;
+    }
+    return false;
+}
+
+#endif
+
+uint32_t
+Host::FindProcessesByName (const char *name, NameMatchType name_match_type, ProcessInfoList &process_infos)
+{
+    process_infos.Clear();
 #if defined (__APPLE__)
     int num_pids;
     int size_of_pids;
@@ -1064,56 +1121,35 @@ Host::ListProcessesMatchingName (const char *name, StringList &matches, std::vec
              || (bsd_info.pbi_status == SZOMB)
              || (bsd_info.pbi_pid == our_pid))
              continue;
-        char pid_name[MAXCOMLEN * 2 + 1];
-        int name_len;
-        name_len = proc_name(bsd_info.pbi_pid, pid_name, MAXCOMLEN * 2);
-        if (name_len == 0)
-            continue;
         
-        if (strstr(pid_name, name) != pid_name)
-            continue;
-        matches.AppendString (pid_name);
-        pids.push_back (bsd_info.pbi_pid);
-        num_matches++;        
+        ProcessInfo process_info;
+        if (GetMacOSXProcessName (bsd_info.pbi_pid, name_match_type, name, process_info))
+        {
+            process_info.SetProcessID (bsd_info.pbi_pid);
+            GetMacOSXProcessCPUType (bsd_info.pbi_pid, process_info);
+            process_infos.Append (process_info);
+        }
     }
 #endif
     
-    return num_matches;
+    return process_infos.GetSize();
 }
 
-ArchSpec
-Host::GetArchSpecForExistingProcess (lldb::pid_t pid)
+bool
+Host::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
 {
-    ArchSpec return_spec;
-
 #if defined (__APPLE__)
-    struct proc_bsdinfo bsd_info;
-    int error = proc_pidinfo (pid, PROC_PIDTBSDINFO, (uint64_t) 0, &bsd_info, PROC_PIDTBSDINFO_SIZE);
-    if (error == 0)
-        return return_spec;
-    if (bsd_info.pbi_flags & PROC_FLAG_LP64)
-        return_spec.SetTriple (LLDB_ARCH_DEFAULT_64BIT);
-    else 
-        return_spec.SetTriple (LLDB_ARCH_DEFAULT_32BIT);
-#endif
-        
-    return return_spec;
-}
 
-ArchSpec
-Host::GetArchSpecForExistingProcess (const char *process_name)
-{
-    ArchSpec returnSpec;
-    StringList matches;
-    std::vector<lldb::pid_t> pids;
-    if (ListProcessesMatchingName(process_name, matches, pids))
+    if (GetMacOSXProcessName (pid, eNameMatchIgnore, NULL, process_info))
     {
-        if (matches.GetSize() == 1)
-        {
-            return GetArchSpecForExistingProcess(pids[0]);
-        }
-    }
-    return returnSpec;
+        process_info.SetProcessID (pid);
+        if (GetMacOSXProcessCPUType (pid, process_info) == false)
+            process_info.GetArchitecture().Clear();
+        return true;
+    }    
+#endif
+    process_info.Clear();
+    return false;
 }
 
 #if !defined (__APPLE__) // see macosx/Host.mm

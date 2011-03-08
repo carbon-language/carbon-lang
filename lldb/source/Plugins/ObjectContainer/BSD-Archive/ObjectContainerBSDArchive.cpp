@@ -405,24 +405,3 @@ ObjectContainerBSDArchive::GetPluginVersion()
     return 1;
 }
 
-void
-ObjectContainerBSDArchive::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-ObjectContainerBSDArchive::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-ObjectContainerBSDArchive::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-
-

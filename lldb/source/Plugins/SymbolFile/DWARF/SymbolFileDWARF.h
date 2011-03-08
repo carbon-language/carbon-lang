@@ -140,15 +140,6 @@ public:
     virtual uint32_t
     GetPluginVersion();
 
-    virtual void
-    GetPluginCommandHelp (const char *command, lldb_private::Stream *strm);
-
-    virtual lldb_private::Error
-    ExecutePluginCommand (lldb_private::Args &command, lldb_private::Stream *strm);
-
-    virtual lldb_private::Log *
-    EnablePluginLogging (lldb_private::Stream *strm, lldb_private::Args &command);
-
     // Approach 2 - count + accessor
     // Index compile units would scan the initial compile units and register
     // them with the module. This would only be done on demand if and only if

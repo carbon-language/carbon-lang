@@ -274,28 +274,6 @@ AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
     return lldb::eObjC_VersionUnknown;
 }
 
-//------------------------------------------------------------------
-// PluginInterface protocol
-//------------------------------------------------------------------
-void
-AppleObjCRuntime::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-Error
-AppleObjCRuntime::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorString("No plug-in command are currently supported.");
-    return error;
-}
-
-Log *
-AppleObjCRuntime::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
 void
 AppleObjCRuntime::ClearExceptionBreakpoints ()
 {

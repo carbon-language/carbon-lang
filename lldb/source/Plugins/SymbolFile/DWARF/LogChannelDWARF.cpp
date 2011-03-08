@@ -90,28 +90,6 @@ LogChannelDWARF::GetPluginVersion()
 
 
 void
-LogChannelDWARF::GetPluginCommandHelp (const char *command, Stream *strm)
-{
-}
-
-
-Error
-LogChannelDWARF::ExecutePluginCommand (Args &command, Stream *strm)
-{
-    Error error;
-    error.SetErrorStringWithFormat("No commands are supported.\n");
-    return error;
-}
-
-
-Log *
-LogChannelDWARF::EnablePluginLogging (Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-
-void
 LogChannelDWARF::Delete ()
 {
     g_log_channel = NULL;

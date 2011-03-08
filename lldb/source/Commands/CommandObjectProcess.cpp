@@ -18,8 +18,9 @@
 #include "lldb/Core/State.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "./CommandObjectThread.h"
+#include "CommandObjectThread.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
@@ -518,38 +519,24 @@ public:
                 
                 // Look to see if there is a -P argument provided, and if so use that plugin, otherwise
                 // use the default plugin.
-                Process *process = interpeter.GetDebugger().GetExecutionContext().process;
-                bool need_to_delete_process = false;
                 
                 const char *partial_name = NULL;
                 partial_name = input.GetArgumentAtIndex(opt_arg_pos);
-                
-                if (process && process->IsAlive())
-                    return true;
-                    
-                Target *target = interpeter.GetDebugger().GetSelectedTarget().get();
-                if (target == NULL)
+
+                PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+                if (platform_sp)
                 {
-                    // No target has been set yet, for now do host completion.  Otherwise I don't know how we would
-                    // figure out what the right target to use is...
-                    std::vector<lldb::pid_t> pids;
-                    Host::ListProcessesMatchingName (partial_name, matches, pids);
-                    return true;
-                }
-                if (!process)
-                {
-                    process = target->CreateProcess (interpeter.GetDebugger().GetListener(), partial_name).get();
-                    need_to_delete_process = true;
-                }
-                
-                if (process)
-                {
-                    matches.Clear();
-                    std::vector<lldb::pid_t> pids;
-                    process->ListProcessesMatchingName (NULL, matches, pids);
-                    if (need_to_delete_process)
-                        target->DeleteCurrentProcess();
-                    return true;
+                    ProcessInfoList process_infos;
+                    platform_sp->FindProcessesByName (partial_name, partial_name ? lldb::eNameMatchStartsWith : lldb::eNameMatchIgnore, process_infos);
+                    const uint32_t num_matches = process_infos.GetSize();
+                    if (num_matches > 0)
+                    {
+                        for (uint32_t i=0; i<num_matches; ++i)
+                        {
+                            matches.AppendString (process_infos.GetProcessNameAtIndex(i), 
+                                                  process_infos.GetProcessNameLengthAtIndex(i));
+                        }
+                    }
                 }
             }
             
@@ -612,7 +599,6 @@ public:
             error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
                                                                               emptyFileSpec,
                                                                               emptyArchSpec, 
-                                                                              NULL, 
                                                                               false,
                                                                               new_target_sp);
             target = new_target_sp.get();
@@ -716,17 +702,19 @@ public:
                     
                     if (attach_pid == LLDB_INVALID_PROCESS_ID && wait_name != NULL)
                     {
-                        std::vector<lldb::pid_t> pids;
-                        StringList matches;
-                        
-                        process->ListProcessesMatchingName(wait_name, matches, pids);
-                        if (matches.GetSize() > 1)
+                        ProcessInfoList process_infos;
+                        PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+                        if (platform_sp)
+                        {
+                            platform_sp->FindProcessesByName (wait_name, eNameMatchEquals, process_infos);
+                        }
+                        if (process_infos.GetSize() > 1)
                         {
                             result.AppendErrorWithFormat("More than one process named %s\n", wait_name);
                             result.SetStatus (eReturnStatusFailed);
                             return false;
                         }
-                        else if (matches.GetSize() == 0)
+                        else if (process_infos.GetSize() == 0)
                         {
                             result.AppendErrorWithFormat("Could not find a process named %s\n", wait_name);
                             result.SetStatus (eReturnStatusFailed);
@@ -734,9 +722,8 @@ public:
                         }
                         else 
                         {
-                            attach_pid = pids[0];
+                            attach_pid = process_infos.GetProcessIDAtIndex (0);
                         }
-
                     }
 
                     if (attach_pid != LLDB_INVALID_PROCESS_ID)
@@ -1085,7 +1072,6 @@ public:
             error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
                                                                               emptyFileSpec,
                                                                               emptyArchSpec, 
-                                                                              NULL, 
                                                                               false,
                                                                               target_sp);
             if (!target_sp || error.Fail())

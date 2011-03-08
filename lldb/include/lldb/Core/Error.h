@@ -11,7 +11,7 @@
 #define __DCError_h__
 #if defined(__cplusplus)
 
-#ifdef __APPLE__
+#if defined (__APPLE__)
 #include <mach/mach.h>
 #endif
 #include <stdint.h>
