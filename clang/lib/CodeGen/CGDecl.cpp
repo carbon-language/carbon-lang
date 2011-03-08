@@ -877,67 +877,91 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   llvm::Value *Loc =
     capturedByInit ? emission.Address : emission.getObjectAddress(*this);
 
-  bool isVolatile = type.isVolatileQualified();
-    
+  if (!emission.IsConstantAggregate)
+    return EmitExprAsInit(Init, &D, Loc, alignment, capturedByInit);
+
   // If this is a simple aggregate initialization, we can optimize it
   // in various ways.
-  if (emission.IsConstantAggregate) {
-    assert(!capturedByInit && "constant init contains a capturing block?");
+  assert(!capturedByInit && "constant init contains a capturing block?");
 
-    llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), type, this);
-    assert(Init != 0 && "Wasn't a simple constant init?");
+  bool isVolatile = type.isVolatileQualified();
 
-    llvm::Value *SizeVal =
-      llvm::ConstantInt::get(IntPtrTy, 
-                             getContext().getTypeSizeInChars(type).getQuantity());
+  llvm::Constant *constant = CGM.EmitConstantExpr(D.getInit(), type, this);
+  assert(constant != 0 && "Wasn't a simple constant init?");
 
-    const llvm::Type *BP = Int8PtrTy;
-    if (Loc->getType() != BP)
-      Loc = Builder.CreateBitCast(Loc, BP, "tmp");
+  llvm::Value *SizeVal =
+    llvm::ConstantInt::get(IntPtrTy, 
+                           getContext().getTypeSizeInChars(type).getQuantity());
 
-    // If the initializer is all or mostly zeros, codegen with memset then do
-    // a few stores afterward.
-    if (shouldUseMemSetPlusStoresToInitialize(Init, 
-                      CGM.getTargetData().getTypeAllocSize(Init->getType()))) {
-      Builder.CreateMemSet(Loc, llvm::ConstantInt::get(Int8Ty, 0), SizeVal,
-                           alignment.getQuantity(), isVolatile);
-      if (!Init->isNullValue()) {
-        Loc = Builder.CreateBitCast(Loc, Init->getType()->getPointerTo());
-        emitStoresForInitAfterMemset(Init, Loc, isVolatile, Builder);
-      }
-    } else {
-      // Otherwise, create a temporary global with the initializer then 
-      // memcpy from the global to the alloca.
-      std::string Name = GetStaticDeclName(*this, D, ".");
-      llvm::GlobalVariable *GV =
-        new llvm::GlobalVariable(CGM.getModule(), Init->getType(), true,
-                                 llvm::GlobalValue::InternalLinkage,
-                                 Init, Name, 0, false, 0);
-      GV->setAlignment(alignment.getQuantity());
-        
-      llvm::Value *SrcPtr = GV;
-      if (SrcPtr->getType() != BP)
-        SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
+  const llvm::Type *BP = Int8PtrTy;
+  if (Loc->getType() != BP)
+    Loc = Builder.CreateBitCast(Loc, BP, "tmp");
 
-      Builder.CreateMemCpy(Loc, SrcPtr, SizeVal, alignment.getQuantity(),
-                           isVolatile);
+  // If the initializer is all or mostly zeros, codegen with memset then do
+  // a few stores afterward.
+  if (shouldUseMemSetPlusStoresToInitialize(constant, 
+                CGM.getTargetData().getTypeAllocSize(constant->getType()))) {
+    Builder.CreateMemSet(Loc, llvm::ConstantInt::get(Int8Ty, 0), SizeVal,
+                         alignment.getQuantity(), isVolatile);
+    if (!constant->isNullValue()) {
+      Loc = Builder.CreateBitCast(Loc, constant->getType()->getPointerTo());
+      emitStoresForInitAfterMemset(constant, Loc, isVolatile, Builder);
     }
-  } else if (type->isReferenceType()) {
-    RValue RV = EmitReferenceBindingToExpr(Init, &D);
-    if (capturedByInit) Loc = BuildBlockByrefAddress(Loc, &D);
-    EmitStoreOfScalar(RV.getScalarVal(), Loc, false, alignment.getQuantity(),
-                      type);
+  } else {
+    // Otherwise, create a temporary global with the initializer then 
+    // memcpy from the global to the alloca.
+    std::string Name = GetStaticDeclName(*this, D, ".");
+    llvm::GlobalVariable *GV =
+      new llvm::GlobalVariable(CGM.getModule(), constant->getType(), true,
+                               llvm::GlobalValue::InternalLinkage,
+                               constant, Name, 0, false, 0);
+    GV->setAlignment(alignment.getQuantity());
+        
+    llvm::Value *SrcPtr = GV;
+    if (SrcPtr->getType() != BP)
+      SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
+
+    Builder.CreateMemCpy(Loc, SrcPtr, SizeVal, alignment.getQuantity(),
+                         isVolatile);
+  }
+}
+
+/// Emit an expression as an initializer for a variable at the given
+/// location.  The expression is not necessarily the normal
+/// initializer for the variable, and the address is not necessarily
+/// its normal location.
+///
+/// \param init the initializing expression
+/// \param var the variable to act as if we're initializing
+/// \param loc the address to initialize; its type is a pointer
+///   to the LLVM mapping of the variable's type
+/// \param alignment the alignment of the address
+/// \param capturedByInit true if the variable is a __block variable
+///   whose address is potentially changed by the initializer
+void CodeGenFunction::EmitExprAsInit(const Expr *init,
+                                     const VarDecl *var,
+                                     llvm::Value *loc,
+                                     CharUnits alignment,
+                                     bool capturedByInit) {
+  QualType type = var->getType();
+  bool isVolatile = type.isVolatileQualified();
+
+  if (type->isReferenceType()) {
+    RValue RV = EmitReferenceBindingToExpr(init, var);
+    if (capturedByInit) loc = BuildBlockByrefAddress(loc, var);
+    EmitStoreOfScalar(RV.getScalarVal(), loc, false,
+                      alignment.getQuantity(), type);
   } else if (!hasAggregateLLVMType(type)) {
-    llvm::Value *V = EmitScalarExpr(Init);
-    if (capturedByInit) Loc = BuildBlockByrefAddress(Loc, &D);
-    EmitStoreOfScalar(V, Loc, isVolatile, alignment.getQuantity(), type);
+    llvm::Value *V = EmitScalarExpr(init);
+    if (capturedByInit) loc = BuildBlockByrefAddress(loc, var);
+    EmitStoreOfScalar(V, loc, isVolatile, alignment.getQuantity(), type);
   } else if (type->isAnyComplexType()) {
-    ComplexPairTy complex = EmitComplexExpr(Init);
-    if (capturedByInit) Loc = BuildBlockByrefAddress(Loc, &D);
-    StoreComplexToAddr(complex, Loc, isVolatile);
+    ComplexPairTy complex = EmitComplexExpr(init);
+    if (capturedByInit) loc = BuildBlockByrefAddress(loc, var);
+    StoreComplexToAddr(complex, loc, isVolatile);
   } else {
     // TODO: how can we delay here if D is captured by its initializer?
-    EmitAggExpr(Init, AggValueSlot::forAddr(Loc, isVolatile, true, false));
+    EmitAggExpr(init, AggValueSlot::forAddr(loc, isVolatile, true, false));
   }
 }
 

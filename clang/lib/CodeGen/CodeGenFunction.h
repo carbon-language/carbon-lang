@@ -1361,11 +1361,17 @@ public:
   /// always be accessible even if no aggregate location is provided.
   RValue EmitAnyExprToTemp(const Expr *E);
 
-  /// EmitsAnyExprToMem - Emits the code necessary to evaluate an
+  /// EmitAnyExprToMem - Emits the code necessary to evaluate an
   /// arbitrary expression into the given memory location.
   void EmitAnyExprToMem(const Expr *E, llvm::Value *Location,
                         bool IsLocationVolatile,
                         bool IsInitializer);
+
+  /// EmitExprAsInit - Emits the code necessary to initialize a
+  /// location in memory with the given initializer.
+  void EmitExprAsInit(const Expr *init, const VarDecl *var,
+                      llvm::Value *loc, CharUnits alignment,
+                      bool capturedByInit);
 
   /// EmitAggregateCopy - Emit an aggrate copy.
   ///
