@@ -46,7 +46,7 @@ public:
                                        uint64_t address,
                                        raw_ostream &vStream) const = 0;
 
-  /// getEDInfo - Returns the enhanced insturction information corresponding to
+  /// getEDInfo - Returns the enhanced instruction information corresponding to
   ///   the disassembler.
   ///
   /// @return         - An array of instruction information, with one entry for
