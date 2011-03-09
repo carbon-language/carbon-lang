@@ -203,7 +203,7 @@ void SCEV::print(raw_ostream &OS) const {
       OS << "alignof(" << *AllocTy << ")";
       return;
     }
-  
+
     const Type *CTy;
     Constant *FieldNo;
     if (U->isOffsetOf(CTy, FieldNo)) {
@@ -212,7 +212,7 @@ void SCEV::print(raw_ostream &OS) const {
       OS << ")";
       return;
     }
-  
+
     // Otherwise just print it normally.
     WriteAsOperand(OS, U->getValue(), false);
     return;
@@ -2783,7 +2783,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                   HasNUW = true;
                 if (OBO->hasNoSignedWrap())
                   HasNSW = true;
-              } else if (const GEPOperator *GEP = 
+              } else if (const GEPOperator *GEP =
                             dyn_cast<GEPOperator>(BEValueV)) {
                 // If the increment is a GEP, then we know it won't perform a
                 // signed overflow, because the address space cannot be
@@ -2798,7 +2798,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                 //
                 // This is a highly theoretical concern though, and this is good
                 // enough for all cases we know of at this point. :)
-                //                
+                //
                 HasNSW |= GEP->isInBounds();
               }
 
@@ -3349,7 +3349,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     SmallVector<const SCEV *, 4> MulOps;
     MulOps.push_back(getSCEV(U->getOperand(1)));
     for (Value *Op = U->getOperand(0);
-         Op->getValueID() == Instruction::Mul + Value::InstructionVal; 
+         Op->getValueID() == Instruction::Mul + Value::InstructionVal;
          Op = U->getOperand(0)) {
       U = cast<Operator>(Op);
       MulOps.push_back(getSCEV(U->getOperand(1)));
@@ -4025,11 +4025,11 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
 static const SCEVAddRecExpr *
 isSimpleUnwrappingAddRec(const SCEV *S, const Loop *L) {
   const SCEVAddRecExpr *SA = dyn_cast<SCEVAddRecExpr>(S);
-  
+
   // The SCEV must be an addrec of this loop.
   if (!SA || SA->getLoop() != L || !SA->isAffine())
     return 0;
-  
+
   // The SCEV must be known to not wrap in some way to be interesting.
   if (!SA->hasNoUnsignedWrap() && !SA->hasNoSignedWrap())
     return 0;
@@ -4064,24 +4064,24 @@ static const SCEV *getMinusSCEVForExitTest(const SCEV *LHS, const SCEV *RHS,
   // See if LHS and RHS are addrec's we can handle.
   const SCEVAddRecExpr *LHSA = isSimpleUnwrappingAddRec(LHS, L);
   const SCEVAddRecExpr *RHSA = isSimpleUnwrappingAddRec(RHS, L);
-  
+
   // If neither addrec is interesting, just return a minus.
   if (RHSA == 0 && LHSA == 0)
     return SE.getMinusSCEV(LHS, RHS);
-  
+
   // If only one of LHS and RHS are an AddRec of this loop, make sure it is LHS.
   if (RHSA && LHSA == 0) {
     // Safe because a-b === b-a for comparisons against zero.
     std::swap(LHS, RHS);
     std::swap(LHSA, RHSA);
   }
-  
+
   // Handle the case when only one is advancing in a non-overflowing way.
   if (RHSA == 0) {
     // If RHS is loop varying, then we can't predict when LHS will cross it.
     if (!SE.isLoopInvariant(RHS, L))
       return SE.getMinusSCEV(LHS, RHS);
-    
+
     // If LHS has a positive stride, then we compute RHS-LHS, because the loop
     // is counting up until it crosses RHS (which must be larger than LHS).  If
     // it is negative, we compute LHS-RHS because we're counting down to RHS.
@@ -4092,19 +4092,19 @@ static const SCEV *getMinusSCEVForExitTest(const SCEV *LHS, const SCEV *RHS,
 
     return SE.getMinusSCEV(RHS, LHS, true /*HasNUW*/);
   }
-  
+
   // If both LHS and RHS are interesting, we have something like:
   //  a+i*4 != b+i*8.
   const ConstantInt *LHSStride =
     cast<SCEVConstant>(LHSA->getOperand(1))->getValue();
   const ConstantInt *RHSStride =
     cast<SCEVConstant>(RHSA->getOperand(1))->getValue();
-  
+
   // If the strides are equal, then this is just a (complex) loop invariant
   // comparison of a and b.
   if (LHSStride == RHSStride)
     return SE.getMinusSCEV(LHSA->getStart(), RHSA->getStart());
-  
+
   // If the signs of the strides differ, then the negative stride is counting
   // down to the positive stride.
   if (LHSStride->getValue().isNegative() != RHSStride->getValue().isNegative()){
@@ -4117,7 +4117,7 @@ static const SCEV *getMinusSCEVForExitTest(const SCEV *LHS, const SCEV *RHS,
     if (RHSStride->getValue().slt(LHSStride->getValue()))
       std::swap(LHS, RHS);
   }
-    
+
   return SE.getMinusSCEV(LHS, RHS, true /*HasNUW*/);
 }
 
@@ -4903,7 +4903,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
                                                       R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
-        
+
         // We can only use this value if the chrec ends up with an exact zero
         // value at this index.  When solving for "X*X != 5", for example, we
         // should not accept a root of 2.
@@ -4942,7 +4942,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   if (AddRec->hasNoUnsignedWrap())
     // FIXME: We really want an "isexact" bit for udiv.
     return getUDivExpr(Start, getNegativeSCEV(Step));
-  
+
   // For now we handle only constant steps.
   const SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step);
   if (StepC == 0)
@@ -4951,7 +4951,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // First, handle unitary steps.
   if (StepC->getValue()->equalsInt(1))      // 1*N = -Start (mod 2^BW), so:
     return getNegativeSCEV(Start);          //   N = -Start (as unsigned)
-  
+
   if (StepC->getValue()->isAllOnesValue())  // -1*N = -Start (mod 2^BW), so:
     return Start;                           //    N = Start (as unsigned)
 
