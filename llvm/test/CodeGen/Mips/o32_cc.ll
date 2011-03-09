@@ -1,8 +1,5 @@
 ; RUN: llc -march=mips -mcpu=4ke < %s | FileCheck %s
 
-; FIXME: Disabled because it unpredictably fails on certain platforms.
-; REQUIRES: disabled
-
 ; $f12, $f14
 ; CHECK: ldc1 $f12, %lo
 ; CHECK: ldc1 $f14, %lo
