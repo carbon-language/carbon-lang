@@ -2325,16 +2325,18 @@ class N2VNSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 // Shift right by immediate and accumulate,
 // both double- and quad-register.
 class N2VDShAdd<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
-                string OpcodeStr, string Dt, ValueType Ty, SDNode ShOp>
+                Operand ImmTy, string OpcodeStr, string Dt,
+                ValueType Ty, SDNode ShOp>
   : N2VImm<op24, op23, op11_8, op7, 0, op4, (outs DPR:$Vd),
-           (ins DPR:$src1, DPR:$Vm, i32imm:$SIMM), N2RegVShRFrm, IIC_VPALiD,
+           (ins DPR:$src1, DPR:$Vm, ImmTy:$SIMM), N2RegVShRFrm, IIC_VPALiD,
            OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "$src1 = $Vd",
            [(set DPR:$Vd, (Ty (add DPR:$src1,
                                 (Ty (ShOp DPR:$Vm, (i32 imm:$SIMM))))))]>;
 class N2VQShAdd<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
-                string OpcodeStr, string Dt, ValueType Ty, SDNode ShOp>
+                Operand ImmTy, string OpcodeStr, string Dt,
+                ValueType Ty, SDNode ShOp>
   : N2VImm<op24, op23, op11_8, op7, 1, op4, (outs QPR:$Vd),
-           (ins QPR:$src1, QPR:$Vm, i32imm:$SIMM), N2RegVShRFrm, IIC_VPALiD,
+           (ins QPR:$src1, QPR:$Vm, ImmTy:$SIMM), N2RegVShRFrm, IIC_VPALiD,
            OpcodeStr, Dt, "$Vd, $Vm, $SIMM", "$src1 = $Vd",
            [(set QPR:$Vd, (Ty (add QPR:$src1,
                                 (Ty (ShOp QPR:$Vm, (i32 imm:$SIMM))))))]>;
@@ -3090,40 +3092,39 @@ multiclass N2VShR_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
 multiclass N2VShAdd_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
                          string OpcodeStr, string Dt, SDNode ShOp> {
   // 64-bit vector types.
-  def v8i8  : N2VDShAdd<op24, op23, op11_8, 0, op4,
+  def v8i8  : N2VDShAdd<op24, op23, op11_8, 0, op4, shr_imm8,
                         OpcodeStr, !strconcat(Dt, "8"), v8i8, ShOp> {
     let Inst{21-19} = 0b001; // imm6 = 001xxx
   }
-  def v4i16 : N2VDShAdd<op24, op23, op11_8, 0, op4,
+  def v4i16 : N2VDShAdd<op24, op23, op11_8, 0, op4, shr_imm16,
                         OpcodeStr, !strconcat(Dt, "16"), v4i16, ShOp> {
     let Inst{21-20} = 0b01;  // imm6 = 01xxxx
   }
-  def v2i32 : N2VDShAdd<op24, op23, op11_8, 0, op4,
+  def v2i32 : N2VDShAdd<op24, op23, op11_8, 0, op4, shr_imm32,
                         OpcodeStr, !strconcat(Dt, "32"), v2i32, ShOp> {
     let Inst{21} = 0b1;      // imm6 = 1xxxxx
   }
-  def v1i64 : N2VDShAdd<op24, op23, op11_8, 1, op4,
+  def v1i64 : N2VDShAdd<op24, op23, op11_8, 1, op4, shr_imm64,
                         OpcodeStr, !strconcat(Dt, "64"), v1i64, ShOp>;
                              // imm6 = xxxxxx
 
   // 128-bit vector types.
-  def v16i8 : N2VQShAdd<op24, op23, op11_8, 0, op4,
+  def v16i8 : N2VQShAdd<op24, op23, op11_8, 0, op4, shr_imm8,
                         OpcodeStr, !strconcat(Dt, "8"), v16i8, ShOp> {
     let Inst{21-19} = 0b001; // imm6 = 001xxx
   }
-  def v8i16 : N2VQShAdd<op24, op23, op11_8, 0, op4,
+  def v8i16 : N2VQShAdd<op24, op23, op11_8, 0, op4, shr_imm16,
                         OpcodeStr, !strconcat(Dt, "16"), v8i16, ShOp> {
     let Inst{21-20} = 0b01;  // imm6 = 01xxxx
   }
-  def v4i32 : N2VQShAdd<op24, op23, op11_8, 0, op4,
+  def v4i32 : N2VQShAdd<op24, op23, op11_8, 0, op4, shr_imm32,
                         OpcodeStr, !strconcat(Dt, "32"), v4i32, ShOp> {
     let Inst{21} = 0b1;      // imm6 = 1xxxxx
   }
-  def v2i64 : N2VQShAdd<op24, op23, op11_8, 1, op4,
+  def v2i64 : N2VQShAdd<op24, op23, op11_8, 1, op4, shr_imm64,
                         OpcodeStr, !strconcat(Dt, "64"), v2i64, ShOp>;
                              // imm6 = xxxxxx
 }
-
 
 // Neon Shift-Insert vector operations,
 //   with f of either N2RegVShLFrm or N2RegVShRFrm
