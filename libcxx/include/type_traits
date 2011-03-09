@@ -395,6 +395,9 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_fundamental
     : public integral_constant<bool, is_void<_Tp>::value      ||
                                      is_arithmetic<_Tp>::value> {};
 
+template <> struct _LIBCPP_VISIBLE is_fundamental<nullptr_t>
+    : public true_type {};
+
 // is_scalar
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_scalar
@@ -402,6 +405,8 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_scalar
                                      is_member_pointer<_Tp>::value ||
                                      is_pointer<_Tp>::value        ||
                                      is_enum<_Tp>::value           > {};
+
+template <> struct _LIBCPP_VISIBLE is_scalar<nullptr_t> : public true_type {};
 
 // is_object
 
