@@ -41,4 +41,19 @@ int main()
     assert(!(nullptr != nullptr));
     assert(!(nullptr < nullptr));
     assert(!(nullptr > nullptr));
+    A* a = nullptr;
+    assert(a == nullptr);
+    assert(a <= nullptr);
+    assert(a >= nullptr);
+    assert(!(a != nullptr));
+    assert(!(a < nullptr));
+    assert(!(a > nullptr));
+    assert(nullptr == a);
+    assert(nullptr <= a);
+    assert(nullptr >= a);
+    assert(!(nullptr != a));
+    assert(!(nullptr < a));
+    assert(!(nullptr > a));
+    std::ptrdiff_t i = reinterpret_cast<std::ptrdiff_t>(nullptr);
+    assert(i == 0);
 }
