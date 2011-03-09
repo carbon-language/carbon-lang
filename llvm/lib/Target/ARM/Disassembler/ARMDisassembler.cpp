@@ -94,6 +94,9 @@ static unsigned decodeARMInstruction(uint32_t &insn) {
   // As a result, the decoder fails to deocode USAT properly.
   if (slice(insn, 27, 21) == 0x37 && slice(insn, 5, 4) == 1)
     return ARM::USAT;
+  // As a result, the decoder fails to deocode UQADD16 properly.
+  if (slice(insn, 27, 20) == 0x66 && slice(insn, 7, 4) == 1)
+    return ARM::UQADD16;
 
   // Ditto for ADDSrs, which is a super-instruction for A8.6.7 & A8.6.8.
   // As a result, the decoder fails to decode UMULL properly.
