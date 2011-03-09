@@ -68,16 +68,6 @@ namespace llvm {
       initializeSimpleRegisterCoalescingPass(*PassRegistry::getPassRegistry());
     }
 
-    struct InstrSlots {
-      enum {
-        LOAD  = 0,
-        USE   = 1,
-        DEF   = 2,
-        STORE = 3,
-        NUM   = 4
-      };
-    };
-    
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual void releaseMemory();
 
