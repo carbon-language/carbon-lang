@@ -63,11 +63,13 @@ PassOptionList;
 // Print IR out before/after specified passes.
 static PassOptionList
 PrintBefore("print-before",
-            llvm::cl::desc("Print IR before specified passes"));
+            llvm::cl::desc("Print IR before specified passes"),
+            cl::Hidden);
 
 static PassOptionList
 PrintAfter("print-after",
-           llvm::cl::desc("Print IR after specified passes"));
+           llvm::cl::desc("Print IR after specified passes"),
+           cl::Hidden);
 
 static cl::opt<bool>
 PrintBeforeAll("print-before-all",
