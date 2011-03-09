@@ -1616,6 +1616,9 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
       // Set the builder to the instruction after the call.
       Builder.SetInsertPoint(BB, I);
 
+      // Use debug location of CI for all new instructions.
+      Builder.SetCurrentDebugLocation(CI->getDebugLoc());
+
       // Try to optimize this call.
       Value *Result = LCO->OptimizeCall(CI, TD, TLI, Builder);
       if (Result == 0) continue;
