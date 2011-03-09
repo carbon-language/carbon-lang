@@ -3730,11 +3730,13 @@ ASTReader::GetCXXBaseSpecifiersOffset(serialization::CXXBaseSpecifiersID ID) {
   --ID;
   uint64_t Offset = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (ID < Chain[I]->LocalNumCXXBaseSpecifiers)
-      return Offset + Chain[I]->CXXBaseSpecifiersOffsets[ID];
+    PerFileData &F = *Chain[N - I - 1];
+
+    if (ID < F.LocalNumCXXBaseSpecifiers)
+      return Offset + F.CXXBaseSpecifiersOffsets[ID];
     
-    ID -= Chain[I]->LocalNumCXXBaseSpecifiers;
-    Offset += Chain[I]->SizeInBits;
+    ID -= F.LocalNumCXXBaseSpecifiers;
+    Offset += F.SizeInBits;
   }
   
   assert(false && "CXXBaseSpecifiers not found");
@@ -3745,14 +3747,14 @@ CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   // Figure out which AST file contains this offset.
   PerFileData *F = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (Offset < Chain[I]->SizeInBits) {
-      F = Chain[I];
+    if (Offset < Chain[N - I - 1]->SizeInBits) {
+      F = Chain[N - I - 1];
       break;
     }
     
-    Offset -= Chain[I]->SizeInBits;
+    Offset -= Chain[N - I - 1]->SizeInBits;
   }
-  
+
   if (!F) {
     Error("Malformed AST file: C++ base specifiers at impossible offset");
     return 0;

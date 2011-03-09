@@ -34,6 +34,9 @@ struct S<T *> { typedef int H; };
 template <typename T> struct TS2;
 typedef TS2<int> TS2int;
 
+template <typename T> struct TestBaseSpecifiers { };
+template<typename T> struct TestBaseSpecifiers2 : TestBaseSpecifiers<T> { };
+
 //===----------------------------------------------------------------------===//
 #elif not defined(HEADER2)
 #define HEADER2
@@ -72,6 +75,9 @@ template <>
 struct S<int &> { typedef int L; };
 
 template <typename T> struct TS2 { };
+
+struct TestBaseSpecifiers3 { };
+struct TestBaseSpecifiers4 : TestBaseSpecifiers3 { };
 
 struct A { };
 struct B : A { };
