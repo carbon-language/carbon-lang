@@ -174,6 +174,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
           ToShrink.insert(&LI);
       }
 
+      if (delegate_)
+        delegate_->LRE_WillEraseInstruction(MI);
       LIS.RemoveMachineInstrFromMaps(MI);
       MI->eraseFromParent();
     }

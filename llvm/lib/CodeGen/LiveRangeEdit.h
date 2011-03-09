@@ -29,8 +29,17 @@ class MachineRegisterInfo;
 class VirtRegMap;
 
 class LiveRangeEdit {
+public:
+  /// Callback methods for LiveRangeEdit owners.
+  struct Delegate {
+    /// Called immediately before erasing a dead machine instruction.
+    virtual void LRE_WillEraseInstruction(MachineInstr *MI) {}
+  };
+
+private:
   LiveInterval &parent_;
   SmallVectorImpl<LiveInterval*> &newRegs_;
+  Delegate *const delegate_;
   const SmallVectorImpl<LiveInterval*> *uselessRegs_;
 
   /// firstNew_ - Index of the first register added to newRegs_.
@@ -66,9 +75,13 @@ public:
   ///        rematerializing values because they are about to be removed.
   LiveRangeEdit(LiveInterval &parent,
                 SmallVectorImpl<LiveInterval*> &newRegs,
+                Delegate *delegate,
                 const SmallVectorImpl<LiveInterval*> *uselessRegs = 0)
-    : parent_(parent), newRegs_(newRegs), uselessRegs_(uselessRegs),
-      firstNew_(newRegs.size()), scannedRemattable_(false) {}
+    : parent_(parent), newRegs_(newRegs),
+      delegate_(delegate),
+      uselessRegs_(uselessRegs),
+      firstNew_(newRegs.size()),
+      scannedRemattable_(false) {}
 
   LiveInterval &getParent() const { return parent_; }
   unsigned getReg() const { return parent_.reg; }

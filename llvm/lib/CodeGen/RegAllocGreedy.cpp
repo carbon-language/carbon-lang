@@ -56,7 +56,10 @@ static RegisterRegAlloc greedyRegAlloc("greedy", "greedy register allocator",
                                        createGreedyRegisterAllocator);
 
 namespace {
-class RAGreedy : public MachineFunctionPass, public RegAllocBase {
+class RAGreedy : public MachineFunctionPass,
+                 public RegAllocBase,
+                 private LiveRangeEdit::Delegate {
+
   // context
   MachineFunction *MF;
   BitVector ReservedRegs;
@@ -157,6 +160,8 @@ public:
   static char ID;
 
 private:
+  void LRE_WillEraseInstruction(MachineInstr*);
+
   bool checkUncachedInterference(LiveInterval&, unsigned);
   LiveInterval *getSingleInterference(LiveInterval&, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
@@ -233,6 +238,17 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<SpillPlacement>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
+
+
+//===----------------------------------------------------------------------===//
+//                     LiveRangeEdit delegate methods
+//===----------------------------------------------------------------------===//
+
+void RAGreedy::LRE_WillEraseInstruction(MachineInstr *MI) {
+  // LRE itself will remove from SlotIndexes and parent basic block.
+  VRM->RemoveMachineInstrFromMaps(MI);
+}
+
 
 void RAGreedy::releaseMemory() {
   SpillerInstance.reset(0);
@@ -601,7 +617,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   SmallVector<IndexPair, 8> InterferenceRanges;
   mapGlobalInterference(PhysReg, InterferenceRanges);
 
-  LiveRangeEdit LREdit(VirtReg, NewVRegs);
+  LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
   SE->reset(LREdit);
 
   // Create the main cross-block interval.
@@ -1129,7 +1145,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                << '-' << Uses[BestAfter] << ", " << BestDiff
                << ", " << (BestAfter - BestBefore + 1) << " instrs\n");
 
-  LiveRangeEdit LREdit(VirtReg, NewVRegs);
+  LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
   SE->reset(LREdit);
 
   SE->openIntv();
@@ -1181,7 +1197,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   if (Stage < RS_Block) {
     SplitAnalysis::BlockPtrSet Blocks;
     if (SA->getMultiUseBlocks(Blocks)) {
-      LiveRangeEdit LREdit(VirtReg, NewVRegs);
+      LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
       SE->reset(LREdit);
       SE->splitSingleBlocks(Blocks);
       setStage(NewVRegs.begin(), NewVRegs.end(), RS_Block);
