@@ -61,8 +61,8 @@ entry:
 declare void @f4(i32, i32, i32, i32)
 
 ; $f12, $6, stack
-; CHECK: sw  $2, 16($sp)
-; CHECK: sw  $zero, 20($sp)
+; CHECK: sw
+; CHECK: sw
 ; CHECK: ldc1 $f12, %lo
 ; CHECK: addiu $6, $zero, 23
 define void @testlowercall5() nounwind {
@@ -98,8 +98,8 @@ entry:
 declare void @f7(float, i32, i32)
 
 ; $4, $5, $6, stack
-; CHECK: sw  $2, 16($sp)
-; CHECK: sw  $zero, 20($sp)
+; CHECK: sw
+; CHECK: sw
 ; CHECK: addiu $4, $zero, 22
 ; CHECK: addiu $5, $zero, 53
 ; CHECK: addiu $6, $zero, 44
@@ -115,7 +115,7 @@ declare void @f8(i32, i32, i32, double)
 ; CHECK: addiu $4, $zero, 32
 ; CHECK: addiu $5, $zero, 63
 ; CHECK: addiu $6, $zero, 54
-; CHECK: ori $7, $2, 0
+; CHECK: ori $7
 define void @testlowercall9() nounwind {
 entry:
   tail call void @f9(i32 32, i32 63, i32 54, float 1.100000e+01) nounwind
@@ -128,7 +128,7 @@ declare void @f9(i32, i32, i32, float)
 ; CHECK: addiu $4, $zero, 42
 ; CHECK: addiu $5, $zero, 73
 ; CHECK: addiu $6, $zero, 0
-; CHECK: ori $7, $2, 0
+; CHECK: ori $7
 define void @testlowercall10() nounwind {
 entry:
   tail call void @f10(i32 42, i32 73, double 2.700000e+01) nounwind
@@ -140,7 +140,7 @@ declare void @f10(i32, i32, double)
 ; $4, ($6, $7)
 ; CHECK: addiu $4, $zero, 52
 ; CHECK: addiu $6, $zero, 0
-; CHECK: ori $7, $2, 0
+; CHECK: ori $7
 define void @testlowercall11() nounwind {
 entry:
   tail call void @f11(i32 52, double 1.600000e+01) nounwind
@@ -152,8 +152,8 @@ declare void @f11(i32, double)
 ; $f12, $f14, $6, $7
 ; CHECK: lwc1 $f12, %lo
 ; CHECK: lwc1 $f14, %lo
-; CHECK: ori $6, $4, 0
-; CHECK: ori $7, $5, 0
+; CHECK: ori $6
+; CHECK: ori $7
 define void @testlowercall12() nounwind {
 entry:
   tail call void @f12(float 2.800000e+01, float 1.900000e+01, float 1.000000e+01, float 2.100000e+01) nounwind
@@ -165,7 +165,7 @@ declare void @f12(float, float, float, float)
 ; $f12, $5, $6, $7
 ; CHECK: lwc1 $f12, %lo
 ; CHECK: addiu $5, $zero, 83
-; CHECK: ori $6, $3, 0
+; CHECK: ori $6
 ; CHECK: addiu $7, $zero, 25
 define void @testlowercall13() nounwind {
 entry:
@@ -179,7 +179,7 @@ declare void @f13(float, i32, float, i32)
 ; $f12, $f14, $7
 ; CHECK: ldc1 $f12, %lo
 ; CHECK: lwc1 $f14, %lo
-; CHECK: ori $7, $4, 0
+; CHECK: ori $7
 define void @testlowercall14() nounwind {
 entry:
   tail call void @f14(double 3.500000e+01, float 2.900000e+01, float 3.000000e+01) nounwind
@@ -192,7 +192,7 @@ declare void @f14(double, float, float)
 ; CHECK: lwc1 $f12, %lo
 ; CHECK: lwc1 $f14, %lo
 ; CHECK: addiu $6, $zero, 0
-; CHECK: ori $7, $4, 32768
+; CHECK: ori $7
 define void @testlowercall15() nounwind {
 entry:
   tail call void @f15(float 4.800000e+01, float 3.900000e+01, double 3.700000e+01) nounwind
@@ -203,9 +203,9 @@ declare void @f15(float, float, double)
 
 ; $4, $5, $6, $7
 ; CHECK: addiu $4, $zero, 62
-; CHECK: ori $5, $2, 0
+; CHECK: ori $5
 ; CHECK: addiu $6, $zero, 64
-; CHECK: ori $7, $3, 0
+; CHECK: ori $7
 define void @testlowercall16() nounwind {
 entry:
   tail call void @f16(i32 62, float 4.900000e+01, i32 64, float 3.100000e+01) nounwind
@@ -216,7 +216,7 @@ declare void @f16(i32, float, i32, float)
 
 ; $4, $5, $6, $7
 ; CHECK: addiu $4, $zero, 72
-; CHECK: ori $5, $2, 0
+; CHECK: ori $5
 ; CHECK: addiu $6, $zero, 74
 ; CHECK: addiu $7, $zero, 35
 define void @testlowercall17() nounwind {
@@ -230,7 +230,7 @@ declare void @f17(i32, float, i32, i32)
 ; $4, $5, $6, $7
 ; CHECK: addiu $4, $zero, 82
 ; CHECK: addiu $5, $zero, 93
-; CHECK: ori $6, $2, 0
+; CHECK: ori $6
 ; CHECK: addiu $7, $zero, 45
 define void @testlowercall18() nounwind {
 entry:
@@ -242,11 +242,11 @@ declare void @f18(i32, i32, float, i32)
 
 
 ; $4, ($6, $7), stack
-; CHECK: sw  $2, 16($sp)
-; CHECK: sw  $zero, 20($sp)
+; CHECK: sw
+; CHECK: sw
 ; CHECK: addiu $4, $zero, 92
 ; CHECK: addiu $6, $zero, 0
-; CHECK: ori $7, $3, 0
+; CHECK: ori $7
 define void @testlowercall20() nounwind {
 entry:
   tail call void @f20(i32 92, double 2.600000e+01, double 4.700000e+01) nounwind
@@ -270,7 +270,7 @@ declare void @f21(float, i32)
 ; CHECK: lwc1 $f12, %lo
 ; CHECK: addiu $5, $zero, 113
 ; CHECK: addiu $6, $zero, 0
-; CHECK: ori $7, $3, 32768
+; CHECK: ori $7
 define void @testlowercall22() nounwind {
 entry:
   tail call void @f22(float 6.800000e+01, i32 113, double 5.700000e+01) nounwind
@@ -291,8 +291,8 @@ entry:
 declare void @f23(double, i32)
 
 ; $f12,$6, stack
-; CHECK: sw  $2, 16($sp)
-; CHECK: sw  $zero, 20($sp)
+; CHECK: sw
+; CHECK: sw
 ; CHECK: ldc1 $f12, %lo
 ; CHECK: addiu $6, $zero, 133
 define void @testlowercall24() nounwind {
@@ -306,15 +306,15 @@ declare void @f24(double, i32, double)
 ; CHECK: lwc1 $f12, %lo
 ; lwc1 $f12, %lo
 ; CHECK: lwc1 $f14, %lo
-; CHECK: ori $6, $4, 0
-; CHECK: ori $7, $5, 0
+; CHECK: ori $6
+; CHECK: ori $7
 ; CHECK: lwc1 $f12, %lo
 ; CHECK: addiu $5, $zero, 83
-; CHECK: ori $6, $3, 0
+; CHECK: ori $6
 ; CHECK: addiu $7, $zero, 25
 ; CHECK: addiu $4, $zero, 82
 ; CHECK: addiu $5, $zero, 93
-; CHECK: ori $6, $2, 0
+; CHECK: ori $6
 ; CHECK: addiu $7, $zero, 45
 define void @testlowercall25() nounwind {
 entry:
