@@ -97,6 +97,38 @@ _foo:
 	vsra.s32  q8, q8, #31
 @ CHECK: vsra.s64 q8, q8, #63    @ encoding: [0xf0,0x01,0xc1,0xf2]
 	vsra.s64  q8, q8, #63
+@ CHECK: vsri.8   d16, d16, #7  @ encoding: [0x30,0x04,0xc9,0xf3]
+	vsri.8   d16, d16, #7
+@ CHECK: vsri.16  d16, d16, #15 @ encoding: [0x30,0x04,0xd1,0xf3]
+	vsri.16  d16, d16, #15
+@ CHECK: vsri.32  d16, d16, #31 @ encoding: [0x30,0x04,0xe1,0xf3]
+	vsri.32  d16, d16, #31
+@ CHECK: vsri.64  d16, d16, #63 @ encoding: [0xb0,0x04,0xc1,0xf3]
+	vsri.64  d16, d16, #63
+@ CHECK: vsri.8   q8, q8, #7    @ encoding: [0x70,0x04,0xc9,0xf3]
+	vsri.8   q8, q8, #7
+@ CHECK: vsri.16  q8, q8, #15   @ encoding: [0x70,0x04,0xd1,0xf3]
+	vsri.16  q8, q8, #15
+@ CHECK: vsri.32  q8, q8, #31   @ encoding: [0x70,0x04,0xe1,0xf3]
+	vsri.32  q8, q8, #31
+@ CHECK: vsri.64  q8, q8, #63   @ encoding: [0xf0,0x04,0xc1,0xf3]
+	vsri.64  q8, q8, #63
+@ CHECK: vsli.8   d16, d16, #7  @ encoding: [0x30,0x05,0xcf,0xf3]
+	vsli.8   d16, d16, #7
+@ CHECK: vsli.16  d16, d16, #15 @ encoding: [0x30,0x05,0xdf,0xf3]
+	vsli.16  d16, d16, #15
+@ CHECK: vsli.32  d16, d16, #31 @ encoding: [0x30,0x05,0xff,0xf3]
+	vsli.32  d16, d16, #31
+@ CHECK: vsli.64  d16, d16, #63 @ encoding: [0xb0,0x05,0xff,0xf3]
+	vsli.64  d16, d16, #63
+@ CHECK: vsli.8   q8, q8, #7    @ encoding: [0x70,0x05,0xcf,0xf3]
+	vsli.8   q8, q8, #7
+@ CHECK: vsli.16  q8, q8, #15   @ encoding: [0x70,0x05,0xdf,0xf3]
+	vsli.16  q8, q8, #15
+@ CHECK: vsli.32  q8, q8, #31   @ encoding: [0x70,0x05,0xff,0xf3]
+	vsli.32  q8, q8, #31
+@ CHECK: vsli.64  q8, q8, #63   @ encoding: [0xf0,0x05,0xff,0xf3]
+	vsli.64  q8, q8, #63
 @ CHECK: vshll.s8	q8, d16, #7  @ encoding: [0x30,0x0a,0xcf,0xf2]
 	vshll.s8	q8, d16, #7
 @ CHECK: vshll.s16	q8, d16, #15  @ encoding: [0x30,0x0a,0xdf,0xf2]
