@@ -114,10 +114,10 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     } else {
       assert(!serialBufs.empty());
       llvm::SmallVector<llvm::MemoryBuffer *, 4> bufs;
-      for (unsigned i = 0, e = serialBufs.size(); i != e; ++i) {
+      for (unsigned si = 0, se = serialBufs.size(); si != se; ++si) {
         bufs.push_back(llvm::MemoryBuffer::getMemBufferCopy(
-                              llvm::StringRef(serialBufs[i]->getBufferStart(),
-                                              serialBufs[i]->getBufferSize())));
+                             llvm::StringRef(serialBufs[si]->getBufferStart(),
+                                             serialBufs[si]->getBufferSize())));
       }
       std::string pchName = includes[i-1];
       llvm::raw_string_ostream os(pchName);
