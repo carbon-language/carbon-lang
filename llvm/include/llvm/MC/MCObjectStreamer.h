@@ -38,6 +38,9 @@ class MCObjectStreamer : public MCStreamer {
 protected:
   MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
                    raw_ostream &_OS, MCCodeEmitter *_Emitter);
+  MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
+                   raw_ostream &_OS, MCCodeEmitter *_Emitter,
+                   MCAssembler *_Assembler);
   ~MCObjectStreamer();
 
   MCSectionData *getCurrentSectionData() const {

@@ -29,6 +29,12 @@ public:
                   raw_ostream &OS, MCCodeEmitter *Emitter)
     : MCObjectStreamer(Context, TAB, OS, Emitter) {}
 
+  MCELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
+                raw_ostream &OS, MCCodeEmitter *Emitter,
+                MCAssembler *Assembler)
+    : MCObjectStreamer(Context, TAB, OS, Emitter, Assembler) {}
+
+
   ~MCELFStreamer() {}
 
   /// @name MCStreamer Interface

@@ -31,6 +31,13 @@ MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
 {
 }
 
+MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
+                                   raw_ostream &OS, MCCodeEmitter *Emitter_,
+                                   MCAssembler *_Assembler)
+  : MCStreamer(Context), Assembler(_Assembler), CurSectionData(0)
+{
+}
+
 MCObjectStreamer::~MCObjectStreamer() {
   delete &Assembler->getBackend();
   delete &Assembler->getEmitter();
