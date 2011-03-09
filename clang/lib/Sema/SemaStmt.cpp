@@ -991,7 +991,8 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       Selector CSelector = Context.Selectors.getSelector(3, &KeyIdents[0]);
       if (ObjCInterfaceDecl *IDecl = OPT->getInterfaceDecl()) {
         if (!IDecl->isForwardDecl() &&
-            !IDecl->lookupInstanceMethod(CSelector)) {
+            !IDecl->lookupInstanceMethod(CSelector) &&
+            !LookupMethodInQualifiedType(CSelector, OPT, true)) {
           // Must further look into private implementation methods.
           if (!LookupPrivateInstanceMethod(CSelector, IDecl))
             Diag(ForLoc, diag::warn_collection_expr_type)

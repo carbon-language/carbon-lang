@@ -381,6 +381,23 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
   return Method;
 }
 
+/// LookupMethodInQualifiedType - Lookups up a method in protocol qualifier 
+/// list of a qualified objective pointer type.
+ObjCMethodDecl *Sema::LookupMethodInQualifiedType(Selector Sel,
+                                              const ObjCObjectPointerType *OPT,
+                                              bool Instance)
+{
+  ObjCMethodDecl *MD = 0;
+  for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
+       E = OPT->qual_end(); I != E; ++I) {
+    ObjCProtocolDecl *PROTO = (*I);
+    if ((MD = PROTO->lookupMethod(Sel, Instance))) {
+      return MD;
+    }
+  }
+  return 0;
+}
+
 /// HandleExprPropertyRefExpr - Handle foo.bar where foo is a pointer to an
 /// objective C interface.  This is a property reference expression.
 ExprResult Sema::

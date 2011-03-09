@@ -16,3 +16,33 @@ void f(NSArray *a) {
   for (id thisKey in keys);
   for (id thisKey in keys);
 }
+
+/* // rdar://9072298 */
+@protocol NSObject @end
+
+@interface NSObject <NSObject> {
+    Class isa;
+}
+@end
+
+typedef struct {
+    unsigned long state;
+    id *itemsPtr;
+    unsigned long *mutationsPtr;
+    unsigned long extra[5];
+} NSFastEnumerationState;
+
+@protocol NSFastEnumeration
+
+- (unsigned long)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(unsigned long)len;
+
+@end
+
+int main ()
+{
+ NSObject<NSFastEnumeration>* collection = ((void*)0);
+ for (id thing in collection) { }
+
+ return 0;
+}
+

@@ -4551,6 +4551,9 @@ public:
                                            ObjCInterfaceDecl *CDecl);
   ObjCMethodDecl *LookupPrivateInstanceMethod(Selector Sel,
                                               ObjCInterfaceDecl *ClassDecl);
+  ObjCMethodDecl *LookupMethodInQualifiedType(Selector Sel,
+                                              const ObjCObjectPointerType *OPT,
+                                              bool IsInstance);
 
   ExprResult
   HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
