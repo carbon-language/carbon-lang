@@ -684,6 +684,10 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     break;
   case Instruction::SRem:
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      // X % -1 demands all the bits because we don't want to introduce
+      // INT_MIN % -1 (== undef) by accident.
+      if (Rem->isAllOnesValue())
+        break;
       APInt RA = Rem->getValue().abs();
       if (RA.isPowerOf2()) {
         if (DemandedMask.ult(RA))    // srem won't affect demanded bits
