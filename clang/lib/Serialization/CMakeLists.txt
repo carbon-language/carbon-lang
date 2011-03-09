@@ -2,7 +2,6 @@
 #set(LLVM_USED_LIBS ???)
 
 add_clang_library(clangSerialization
-  GeneratePCH.cpp
   ASTCommon.cpp
   ASTReader.cpp
   ASTReaderDecl.cpp
@@ -10,6 +9,8 @@ add_clang_library(clangSerialization
   ASTWriter.cpp
   ASTWriterDecl.cpp
   ASTWriterStmt.cpp
+  ChainedIncludesSource.cpp
+  GeneratePCH.cpp
   )
 
 add_dependencies(clangSerialization
