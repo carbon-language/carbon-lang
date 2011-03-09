@@ -92,7 +92,8 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 static llvm::sys::cas_flag ActiveASTUnitObjects;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
-  : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
+  : OnlyLocalDecls(false), CaptureDiagnostics(false),
+    MainFileIsAST(_MainFileIsAST), 
     CompleteTranslationUnit(true), WantTiming(getenv("LIBCLANG_TIMING")),
     OwnsRemappedFileBuffers(true),
     NumStoredDiagnosticsFromDriver(0),
@@ -1522,6 +1523,19 @@ llvm::StringRef ASTUnit::getMainFileName() const {
   return Invocation->getFrontendOpts().Inputs[0].second;
 }
 
+ASTUnit *ASTUnit::create(CompilerInvocation *CI,
+                         llvm::IntrusiveRefCntPtr<Diagnostic> Diags) {
+  llvm::OwningPtr<ASTUnit> AST;
+  AST.reset(new ASTUnit(false));
+  ConfigureDiags(Diags, 0, 0, *AST, /*CaptureDiagnostics=*/false);
+  AST->Diagnostics = Diags;
+  AST->Invocation.reset(CI);
+  AST->FileMgr.reset(new FileManager(CI->getFileSystemOpts()));
+  AST->SourceMgr.reset(new SourceManager(*Diags, *AST->FileMgr));
+
+  return AST.take();
+}
+
 bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   if (!Invocation)
     return true;
@@ -2148,7 +2162,16 @@ bool ASTUnit::Save(llvm::StringRef File) {
                            llvm::raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty() || Out.has_error())
     return true;
-  
+
+  serialize(Out);
+  Out.close();
+  return Out.has_error();
+}
+
+bool ASTUnit::serialize(llvm::raw_ostream &OS) {
+  if (getDiagnostics().hasErrorOccurred())
+    return true;
+
   std::vector<unsigned char> Buffer;
   llvm::BitstreamWriter Stream(Buffer);
   ASTWriter Writer(Stream);
@@ -2156,7 +2179,7 @@ bool ASTUnit::Save(llvm::StringRef File) {
   
   // Write the generated bitstream to "Out".
   if (!Buffer.empty())
-    Out.write((char *)&Buffer.front(), Buffer.size());  
-  Out.close();
-  return Out.has_error();
+    OS.write((char *)&Buffer.front(), Buffer.size());
+
+  return false;
 }

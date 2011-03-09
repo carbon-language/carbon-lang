@@ -4,9 +4,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -include %s -include %s %s
 
 // With PCH
-// RUN: %clang_cc1 -x c++-header -emit-pch -o %t1 %s
-// RUN: %clang_cc1 -x c++-header -emit-pch -o %t2 %s -include-pch %t1 -chained-pch
-// RUN: %clang_cc1 -fsyntax-only -verify -include-pch %t2 %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s -chain-include %s -chain-include %s
 
 #ifndef HEADER1
 #define HEADER1

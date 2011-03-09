@@ -560,6 +560,8 @@ def include_pch : Separate<"-include-pch">, MetaVarName<"<file>">,
   HelpText<"Include precompiled header file">;
 def include_pth : Separate<"-include-pth">, MetaVarName<"<file>">,
   HelpText<"Include file before parsing">;
+def chain_include : Separate<"-chain-include">, MetaVarName<"<file>">,
+  HelpText<"Include and chain a header file after turning it into PCH">;
 def preamble_bytes_EQ : Joined<"-preamble-bytes=">,
   HelpText<"Assume that the precompiled header is a precompiled preamble "
            "covering the first N bytes of the main file">;

@@ -20,6 +20,7 @@
 #include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Parse/ParseAST.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
+#include "clang/Serialization/ChainedIncludesSource.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -209,8 +210,16 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     CI.getASTContext().setASTMutationListener(Consumer->GetASTMutationListener());
 
-    /// Use PCH?
-    if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
+    if (!CI.getPreprocessorOpts().ChainedIncludes.empty()) {
+      // Convert headers to PCH and chain them.
+      llvm::OwningPtr<ExternalASTSource> source;
+      source.reset(ChainedIncludesSource::create(CI));
+      if (!source)
+        goto failure;
+      CI.getASTContext().setExternalSource(source);
+
+    } else if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
+      // Use PCH.
       assert(hasPCHSupport() && "This action does not have PCH support!");
       ASTDeserializationListener *DeserialListener
           = CI.getInvocation().getFrontendOpts().ChainedPCH ?

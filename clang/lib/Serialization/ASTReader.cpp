@@ -2461,20 +2461,26 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
     if (CurrentDir.empty()) CurrentDir = ".";
   }
 
-  // Open the AST file.
-  //
-  // FIXME: This shouldn't be here, we should just take a raw_ostream.
-  std::string ErrStr;
-  llvm::error_code ec;
-  if (FileName == "-") {
-    ec = llvm::MemoryBuffer::getSTDIN(F.Buffer);
-    if (ec)
-      ErrStr = ec.message();
-  } else
-    F.Buffer.reset(FileMgr.getBufferForFile(FileName, &ErrStr));
-  if (!F.Buffer) {
-    Error(ErrStr.c_str());
-    return IgnorePCH;
+  if (!ASTBuffers.empty()) {
+    F.Buffer.reset(ASTBuffers.front());
+    ASTBuffers.pop_front();
+    assert(F.Buffer && "Passed null buffer");
+  } else {
+    // Open the AST file.
+    //
+    // FIXME: This shouldn't be here, we should just take a raw_ostream.
+    std::string ErrStr;
+    llvm::error_code ec;
+    if (FileName == "-") {
+      ec = llvm::MemoryBuffer::getSTDIN(F.Buffer);
+      if (ec)
+        ErrStr = ec.message();
+    } else
+      F.Buffer.reset(FileMgr.getBufferForFile(FileName, &ErrStr));
+    if (!F.Buffer) {
+      Error(ErrStr.c_str());
+      return IgnorePCH;
+    }
   }
 
   // Initialize the stream

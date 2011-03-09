@@ -540,7 +540,11 @@ public:
   /// \brief A mapping from a file name to the memory buffer that stores the
   /// remapped contents of that file.
   typedef std::pair<std::string, FilenameOrMemBuf> RemappedFile;
-  
+
+  /// \brief Create a ASTUnit. Gets ownership of the passed CompilerInvocation. 
+  static ASTUnit *create(CompilerInvocation *CI,
+                         llvm::IntrusiveRefCntPtr<Diagnostic> Diags);
+
   /// \brief Create a ASTUnit from an AST file.
   ///
   /// \param Filename - The AST file to load.
@@ -656,6 +660,11 @@ public:
   ///
   /// \returns True if an error occurred, false otherwise.
   bool Save(llvm::StringRef File);
+
+  /// \brief Serialize this translation unit with the given output stream.
+  ///
+  /// \returns True if an error occurred, false otherwise.
+  bool serialize(llvm::raw_ostream &OS);
 };
 
 } // namespace clang

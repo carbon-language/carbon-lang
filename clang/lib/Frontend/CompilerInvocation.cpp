@@ -704,6 +704,10 @@ static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
       assert(Opts.ImplicitPTHInclude == Opts.TokenCache &&
              "Unsupported option combination!");
   }
+  for (unsigned i = 0, e = Opts.ChainedIncludes.size(); i != e; ++i) {
+    Res.push_back("-chain-include");
+    Res.push_back(Opts.ChainedIncludes[i]);
+  }
   for (unsigned i = 0, e = Opts.RemappedFiles.size(); i != e; ++i) {
     Res.push_back("-remap-file");
     Res.push_back(Opts.RemappedFiles[i].first + ";" +
@@ -1560,6 +1564,12 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
       Opts.Includes.push_back(OriginalFile);
     } else
       Opts.Includes.push_back(A->getValue(Args));
+  }
+
+  for (arg_iterator it = Args.filtered_begin(OPT_chain_include),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
+    Opts.ChainedIncludes.push_back(A->getValue(Args));
   }
 
   // Include 'altivec.h' if -faltivec option present

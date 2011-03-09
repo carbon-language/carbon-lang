@@ -44,6 +44,9 @@ public:
   /// The implicit PCH included at the start of the translation unit, or empty.
   std::string ImplicitPCHInclude;
 
+  /// \brief Headers that will be converted to chained PCHs in memory.
+  std::vector<std::string> ChainedIncludes;
+
   /// \brief When true, disables most of the normal validation performed on
   /// precompiled headers.
   bool DisablePCHValidation;

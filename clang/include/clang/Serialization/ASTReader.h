@@ -213,6 +213,10 @@ private:
   /// \brief The AST consumer.
   ASTConsumer *Consumer;
 
+  /// \brief AST buffers for chained PCHs created and stored in memory.
+  /// First (not depending on another) PCH in chain is in front.
+  std::deque<llvm::MemoryBuffer *> ASTBuffers;
+
   /// \brief Information that is needed for every module.
   struct PerFileData {
     PerFileData(ASTFileType Ty);
@@ -885,6 +889,13 @@ public:
 
   /// \brief Sets and initializes the given Context.
   void InitializeContext(ASTContext &Context);
+
+  /// \brief Set AST buffers for chained PCHs created and stored in memory.
+  /// First (not depending on another) PCH in chain is first in array.
+  void setASTMemoryBuffers(llvm::MemoryBuffer **bufs, unsigned numBufs) {
+    ASTBuffers.clear();
+    ASTBuffers.insert(ASTBuffers.begin(), bufs, bufs + numBufs);
+  }
 
   /// \brief Retrieve the name of the named (primary) AST file
   const std::string &getFileName() const { return Chain[0]->FileName; }
