@@ -149,6 +149,10 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   setOperationAction(ISD::EH_LABEL,          MVT::Other, Expand);
 
+  setOperationAction(ISD::VAARG,             MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY,            MVT::Other, Expand);
+  setOperationAction(ISD::VAEND,             MVT::Other, Expand);
+
   // Use the default for now
   setOperationAction(ISD::STACKSAVE,         MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,      MVT::Other, Expand);
@@ -1283,7 +1287,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
-  unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
   MipsFI->setVarArgsFrameIndex(0);
 
   // Used with vargs to acumulate store chains.
@@ -1303,9 +1306,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   else
     CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
 
-  SDValue StackPtr;
-
   unsigned FirstStackArgLoc = (Subtarget->isABI_EABI() ? 0 : 16);
+  unsigned LastStackArgEndOffset;
+  EVT LastRegArgValVT;
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
@@ -1314,6 +1317,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
       ArgRegEnd = VA.getLocReg();
+      LastRegArgValVT = VA.getValVT();
       TargetRegisterClass *RC = 0;
 
       if (RegVT == MVT::i32)
@@ -1354,7 +1358,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
           unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(),
                                     VA.getLocReg()+1, RC);
           SDValue ArgValue2 = DAG.getCopyFromReg(Chain, dl, Reg2, RegVT);
-          SDValue Pair = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, ArgValue2, ArgValue);
+          SDValue Pair = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, ArgValue, 
+                                       ArgValue2);
           ArgValue = DAG.getNode(ISD::BITCAST, dl, MVT::f64, Pair);
         }
       }
@@ -1375,10 +1380,10 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       // used instead of a direct negative address (which is recorded to
       // be used on emitPrologue) to avoid mis-calc of the first stack
       // offset on PEI::calculateFrameObjectOffsets.
-      // Arguments are always 32-bit.
-      unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
+      unsigned ArgSize = VA.getValVT().getSizeInBits()/8;
+      LastStackArgEndOffset = FirstStackArgLoc + VA.getLocMemOffset() + ArgSize;
       int FI = MFI->CreateFixedObject(ArgSize, 0, true);
-      MipsFI->recordLoadArgsFI(FI, -(ArgSize+
+      MipsFI->recordLoadArgsFI(FI, -(4 +
         (FirstStackArgLoc + VA.getLocMemOffset())));
 
       // Create load nodes to retrieve arguments from the stack
@@ -1405,29 +1410,52 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   // To meet ABI, when VARARGS are passed on registers, the registers
   // must have their values written to the caller stack frame. If the last
   // argument was placed in the stack, there's no need to save any register.
-  if ((isVarArg) && (Subtarget->isABI_O32() && ArgRegEnd)) {
-    if (StackPtr.getNode() == 0)
-      StackPtr = DAG.getRegister(StackReg, getPointerTy());
+  if (isVarArg && Subtarget->isABI_O32()) {
+    if (ArgRegEnd) {
+      // Last named formal argument is passed in register.
 
-    // The last register argument that must be saved is Mips::A3
-    TargetRegisterClass *RC = Mips::CPURegsRegisterClass;
-    unsigned StackLoc = ArgLocs.size()-1;
+      // The last register argument that must be saved is Mips::A3
+      TargetRegisterClass *RC = Mips::CPURegsRegisterClass;
+      if (LastRegArgValVT == MVT::f64)
+        ArgRegEnd++;
 
-    for (++ArgRegEnd; ArgRegEnd <= Mips::A3; ++ArgRegEnd, ++StackLoc) {
-      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegEnd, RC);
-      SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, MVT::i32);
+      if (ArgRegEnd < Mips::A3) {
+        // Both the last named formal argument and the first variable
+        // argument are passed in registers.
+        for (++ArgRegEnd; ArgRegEnd <= Mips::A3; ++ArgRegEnd) {
+          unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegEnd, RC);
+          SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, MVT::i32);
 
-      int FI = MFI->CreateFixedObject(4, 0, true);
-      MipsFI->recordStoreVarArgsFI(FI, -(4+(StackLoc*4)));
-      SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
-      OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff,
-                                       MachinePointerInfo(),
-                                       false, false, 0));
+          int FI = MFI->CreateFixedObject(4, 0, true);
+          MipsFI->recordStoreVarArgsFI(FI, -(4+(ArgRegEnd-Mips::A0)*4));
+          SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
+          OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff,
+                                           MachinePointerInfo(),
+                                           false, false, 0));
 
-      // Record the frame index of the first variable argument
-      // which is a value necessary to VASTART.
-      if (!MipsFI->getVarArgsFrameIndex())
+          // Record the frame index of the first variable argument
+          // which is a value necessary to VASTART.
+          if (!MipsFI->getVarArgsFrameIndex()) {
+            MFI->setObjectAlignment(FI, 4);
+            MipsFI->setVarArgsFrameIndex(FI);
+          }
+        }
+      } else {
+        // Last named formal argument is in register Mips::A3, and the first
+        // variable argument is on stack. Record the frame index of the first
+        // variable argument.
+        int FI = MFI->CreateFixedObject(4, 0, true);
+        MFI->setObjectAlignment(FI, 4);
+        MipsFI->recordStoreVarArgsFI(FI, -20);
         MipsFI->setVarArgsFrameIndex(FI);
+      }
+    } else {
+      // Last named formal argument and all the variable arguments are passed
+      // on stack. Record the frame index of the first variable argument.
+      int FI = MFI->CreateFixedObject(4, 0, true);
+      MFI->setObjectAlignment(FI, 4);
+      MipsFI->recordStoreVarArgsFI(FI, -(4+LastStackArgEndOffset));
+      MipsFI->setVarArgsFrameIndex(FI);
     }
   }
 
