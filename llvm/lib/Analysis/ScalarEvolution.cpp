@@ -5646,6 +5646,13 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
          "This code doesn't handle negative strides yet!");
 
   const Type *Ty = Start->getType();
+
+  // When Start == End, we have an exact BECount == 0. Short-circuit this case
+  // here because SCEV may not be able to determine that the unsigned division
+  // after rounding is zero.
+  if (Start == End)
+    return getConstant(Ty, 0);
+
   const SCEV *NegOne = getConstant(Ty, (uint64_t)-1);
   const SCEV *Diff = getMinusSCEV(End, Start);
   const SCEV *RoundUp = getAddExpr(Step, NegOne);
@@ -5768,7 +5775,16 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 
     // The maximum backedge count is similar, except using the minimum start
     // value and the maximum end value.
-    const SCEV *MaxBECount = getBECount(MinStart, MaxEnd, Step, NoWrap);
+    // If we already have an exact constant BECount, use it instead.
+    const SCEV *MaxBECount = isa<SCEVConstant>(BECount) ? BECount
+      : getBECount(MinStart, MaxEnd, Step, NoWrap);
+
+    // If the stride is nonconstant, and NoWrap == true, then
+    // getBECount(MinStart, MaxEnd) may not compute. This would result in an
+    // exact BECount and invalid MaxBECount, which should be avoided to catch
+    // more optimization opportunities.
+    if (isa<SCEVCouldNotCompute>(MaxBECount))
+      MaxBECount = BECount;
 
     return BackedgeTakenInfo(BECount, MaxBECount);
   }
