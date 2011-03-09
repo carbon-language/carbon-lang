@@ -70,7 +70,6 @@ namespace llvm {
 
   public:
     DIEAbbrev(unsigned T, unsigned C) : Tag(T), ChildrenFlag(C), Data() {}
-    virtual ~DIEAbbrev() {}
 
     // Accessors.
     unsigned getTag() const { return Tag; }
