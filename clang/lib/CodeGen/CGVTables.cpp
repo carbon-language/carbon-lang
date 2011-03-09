@@ -2559,6 +2559,16 @@ static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
   Fn->setVisibility(llvm::GlobalValue::HiddenVisibility);
 }
 
+#ifndef NDEBUG
+static bool similar(const ABIArgInfo &infoL, CanQualType typeL,
+                    const ABIArgInfo &infoR, CanQualType typeR) {
+  return (infoL.getKind() == infoR.getKind() &&
+          (typeL == typeR ||
+           (isa<PointerType>(typeL) && isa<PointerType>(typeR)) ||
+           (isa<ReferenceType>(typeL) && isa<ReferenceType>(typeR))));
+}
+#endif
+
 void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                                     const CGFunctionInfo &FnInfo,
                                     GlobalDecl GD, const ThunkInfo &Thunk) {
@@ -2619,7 +2629,16 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
 #ifndef NDEBUG
   const CGFunctionInfo &CallFnInfo = 
     CGM.getTypes().getFunctionInfo(ResultType, CallArgs, FPT->getExtInfo());
-  assert(&CallFnInfo == &FnInfo && "thunk has different CC from callee?");
+  assert(CallFnInfo.getRegParm() == FnInfo.getRegParm() &&
+         CallFnInfo.isNoReturn() == FnInfo.isNoReturn() &&
+         CallFnInfo.getCallingConvention() == FnInfo.getCallingConvention());
+  assert(similar(CallFnInfo.getReturnInfo(), CallFnInfo.getReturnType(),
+                 FnInfo.getReturnInfo(), FnInfo.getReturnType()));
+  assert(CallFnInfo.arg_size() == FnInfo.arg_size());
+  for (unsigned i = 0, e = FnInfo.arg_size(); i != e; ++i)
+    assert(similar(CallFnInfo.arg_begin()[i].info,
+                   CallFnInfo.arg_begin()[i].type,
+                   FnInfo.arg_begin()[i].info, FnInfo.arg_begin()[i].type));
 #endif
   
   // Determine whether we have a return value slot to use.
