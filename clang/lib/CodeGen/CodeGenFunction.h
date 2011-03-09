@@ -25,7 +25,6 @@
 #include "llvm/Support/ValueHandle.h"
 #include "CodeGenModule.h"
 #include "CGBuilder.h"
-#include "CGCall.h"
 #include "CGValue.h"
 
 namespace llvm {
@@ -1130,9 +1129,11 @@ public:
   llvm::Value *GetAddrOfBlockDecl(const VarDecl *var, bool ByRef);
   const llvm::Type *BuildByRefType(const VarDecl *var);
 
-  void GenerateCode(GlobalDecl GD, llvm::Function *Fn);
+  void GenerateCode(GlobalDecl GD, llvm::Function *Fn,
+                    const CGFunctionInfo &FnInfo);
   void StartFunction(GlobalDecl GD, QualType RetTy,
                      llvm::Function *Fn,
+                     const CGFunctionInfo &FnInfo,
                      const FunctionArgList &Args,
                      SourceLocation StartLoc);
 
@@ -1149,7 +1150,8 @@ public:
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
   /// GenerateThunk - Generate a thunk for the given method.
-  void GenerateThunk(llvm::Function *Fn, GlobalDecl GD, const ThunkInfo &Thunk);
+  void GenerateThunk(llvm::Function *Fn, const CGFunctionInfo &FnInfo,
+                     GlobalDecl GD, const ThunkInfo &Thunk);
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD, CXXCtorType Type,
                         FunctionArgList &Args);
@@ -2036,7 +2038,8 @@ public:
                                  const std::vector<std::pair<llvm::WeakVH,
                                    llvm::Constant*> > &DtorsAndObjects);
 
-  void GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn, const VarDecl *D,
+  void GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
+                                        const VarDecl *D,
                                         llvm::GlobalVariable *Addr);
 
   void EmitCXXConstructExpr(const CXXConstructExpr *E, AggValueSlot Dest);

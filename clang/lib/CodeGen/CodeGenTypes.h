@@ -149,6 +149,10 @@ public:
   /// replace the 'opaque' type we previously made for it if applicable.
   void UpdateCompletedType(const TagDecl *TD);
 
+  /// getNullaryFunctionInfo - Get the function info for a void()
+  /// function with standard CC.
+  const CGFunctionInfo &getNullaryFunctionInfo();
+
   /// getFunctionInfo - Get the function info for the specified function decl.
   const CGFunctionInfo &getFunctionInfo(GlobalDecl GD);
 

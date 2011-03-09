@@ -204,10 +204,13 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
                                 GlobalDecl(D, Ctor_Base)))
     return;
 
+  const CGFunctionInfo &FnInfo = getTypes().getFunctionInfo(D, Type);
+
+  // FIXME: re-use FnInfo in this computation!
   llvm::Function *Fn = cast<llvm::Function>(GetAddrOfCXXConstructor(D, Type));
   setFunctionLinkage(D, Fn);
 
-  CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn);
+  CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn, FnInfo);
 
   SetFunctionDefinitionAttributes(D, Fn);
   SetLLVMFunctionAttributesForDefinition(D, Fn);
@@ -263,10 +266,13 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
   if (Type == Dtor_Base && !TryEmitBaseDestructorAsAlias(D))
     return;
 
+  const CGFunctionInfo &FnInfo = getTypes().getFunctionInfo(D, Type);
+
+  // FIXME: re-use FnInfo in this computation!
   llvm::Function *Fn = cast<llvm::Function>(GetAddrOfCXXDestructor(D, Type));
   setFunctionLinkage(D, Fn);
 
-  CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn);
+  CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn, FnInfo);
 
   SetFunctionDefinitionAttributes(D, Fn);
   SetLLVMFunctionAttributesForDefinition(D, Fn);

@@ -589,8 +589,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
         // we know we're in a copy constructor.
         unsigned SrcArgIndex = Args.size() - 1;
         llvm::Value *SrcPtr
-          = CGF.Builder.CreateLoad(
-                               CGF.GetAddrOfLocalVar(Args[SrcArgIndex].first));
+          = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(Args[SrcArgIndex]));
         LValue Src = CGF.EmitLValueForFieldInitialization(SrcPtr, Field, 0);
         
         // Copy the aggregate.
@@ -1244,7 +1243,7 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
 
   // this
   DelegateArgs.push_back(std::make_pair(RValue::get(LoadCXXThis()),
-                                        I->second));
+                                        (*I)->getType()));
   ++I;
 
   // vtt
@@ -1255,14 +1254,14 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
 
     if (CodeGenVTables::needsVTTParameter(CurGD)) {
       assert(I != E && "cannot skip vtt parameter, already done with args");
-      assert(I->second == VoidPP && "skipping parameter not of vtt type");
+      assert((*I)->getType() == VoidPP && "skipping parameter not of vtt type");
       ++I;
     }
   }
 
   // Explicit arguments.
   for (; I != E; ++I) {
-    const VarDecl *Param = I->first;
+    const VarDecl *Param = *I;
     QualType ArgType = Param->getType(); // because we're passing it to itself
     RValue Arg = EmitDelegateCallArg(Param);
 

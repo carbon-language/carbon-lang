@@ -260,8 +260,9 @@ void CodeGenModule::EmitCXXGlobalDtorFunc() {
 void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                                                        const VarDecl *D,
                                                  llvm::GlobalVariable *Addr) {
-  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
-                SourceLocation());
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
+                getTypes().getNullaryFunctionInfo(),
+                FunctionArgList(), SourceLocation());
 
   // Use guarded initialization if the global variable is weak due to
   // being a class template's static data member.
@@ -277,8 +278,9 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
 void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                                 llvm::Constant **Decls,
                                                 unsigned NumDecls) {
-  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
-                SourceLocation());
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
+                getTypes().getNullaryFunctionInfo(),
+                FunctionArgList(), SourceLocation());
 
   for (unsigned i = 0; i != NumDecls; ++i)
     if (Decls[i])
@@ -290,8 +292,9 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
 void CodeGenFunction::GenerateCXXGlobalDtorFunc(llvm::Function *Fn,
                   const std::vector<std::pair<llvm::WeakVH, llvm::Constant*> >
                                                 &DtorsAndObjects) {
-  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
-                SourceLocation());
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
+                getTypes().getNullaryFunctionInfo(),
+                FunctionArgList(), SourceLocation());
 
   // Emit the dtors, in reverse order from construction.
   for (unsigned i = 0, e = DtorsAndObjects.size(); i != e; ++i) {
@@ -313,21 +316,19 @@ llvm::Function *
 CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
                                                  const ArrayType *Array,
                                                  llvm::Value *This) {
-  FunctionArgList Args;
-  ImplicitParamDecl *Dst =
-    ImplicitParamDecl::Create(getContext(), 0,
-                              SourceLocation(), 0,
-                              getContext().getPointerType(getContext().VoidTy));
-  Args.push_back(std::make_pair(Dst, Dst->getType()));
+  FunctionArgList args;
+  ImplicitParamDecl dst(0, SourceLocation(), 0, getContext().VoidPtrTy);
+  args.push_back(&dst);
   
   const CGFunctionInfo &FI = 
-    CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args, 
+    CGM.getTypes().getFunctionInfo(getContext().VoidTy, args, 
                                    FunctionType::ExtInfo());
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
   llvm::Function *Fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
 
-  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, Args, SourceLocation());
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FI, args,
+                SourceLocation());
 
   QualType BaseElementTy = getContext().getBaseElementType(Array);
   const llvm::Type *BasePtr = ConvertType(BaseElementTy)->getPointerTo();

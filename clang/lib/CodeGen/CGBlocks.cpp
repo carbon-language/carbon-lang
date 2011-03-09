@@ -902,12 +902,12 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
   ImplicitParamDecl selfDecl(const_cast<BlockDecl*>(blockDecl),
                              SourceLocation(), II, selfTy);
-  args.push_back(std::make_pair(&selfDecl, selfTy));
+  args.push_back(&selfDecl);
 
   // Now add the rest of the parameters.
   for (BlockDecl::param_const_iterator i = blockDecl->param_begin(),
        e = blockDecl->param_end(); i != e; ++i)
-    args.push_back(std::make_pair(*i, (*i)->getType()));
+    args.push_back(*i);
 
   // Create the function declaration.
   const FunctionProtoType *fnType =
@@ -926,7 +926,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   CGM.SetInternalFunctionAttributes(blockDecl, fn, fnInfo);
 
   // Begin generating the function.
-  StartFunction(blockDecl, fnType->getResultType(), fn, args,
+  StartFunction(blockDecl, fnType->getResultType(), fn, fnInfo, args,
                 blockInfo.getBlockExpr()->getBody()->getLocEnd());
   CurFuncDecl = outerFnDecl; // StartFunction sets this to blockDecl
 
@@ -1054,13 +1054,10 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
   ASTContext &C = getContext();
 
   FunctionArgList args;
-  // FIXME: This leaks
-  ImplicitParamDecl *dstDecl =
-    ImplicitParamDecl::Create(C, 0, SourceLocation(), 0, C.VoidPtrTy);
-  args.push_back(std::make_pair(dstDecl, dstDecl->getType()));
-  ImplicitParamDecl *srcDecl =
-    ImplicitParamDecl::Create(C, 0, SourceLocation(), 0, C.VoidPtrTy);
-  args.push_back(std::make_pair(srcDecl, srcDecl->getType()));
+  ImplicitParamDecl dstDecl(0, SourceLocation(), 0, C.VoidPtrTy);
+  args.push_back(&dstDecl);
+  ImplicitParamDecl srcDecl(0, SourceLocation(), 0, C.VoidPtrTy);
+  args.push_back(&srcDecl);
 
   const CGFunctionInfo &FI =
       CGM.getTypes().getFunctionInfo(C.VoidTy, args, FunctionType::ExtInfo());
@@ -1084,15 +1081,15 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SC_None,
                                           false,
                                           true);
-  StartFunction(FD, C.VoidTy, Fn, args, SourceLocation());
+  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
 
   const llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
 
-  llvm::Value *src = GetAddrOfLocalVar(srcDecl);
+  llvm::Value *src = GetAddrOfLocalVar(&srcDecl);
   src = Builder.CreateLoad(src);
   src = Builder.CreateBitCast(src, structPtrTy, "block.source");
 
-  llvm::Value *dst = GetAddrOfLocalVar(dstDecl);
+  llvm::Value *dst = GetAddrOfLocalVar(&dstDecl);
   dst = Builder.CreateLoad(dst);
   dst = Builder.CreateBitCast(dst, structPtrTy, "block.dest");
 
@@ -1149,10 +1146,8 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
   ASTContext &C = getContext();
 
   FunctionArgList args;
-  // FIXME: This leaks
-  ImplicitParamDecl *srcDecl =
-    ImplicitParamDecl::Create(C, 0, SourceLocation(), 0, C.VoidPtrTy);
-  args.push_back(std::make_pair(srcDecl, srcDecl->getType()));
+  ImplicitParamDecl srcDecl(0, SourceLocation(), 0, C.VoidPtrTy);
+  args.push_back(&srcDecl);
 
   const CGFunctionInfo &FI =
       CGM.getTypes().getFunctionInfo(C.VoidTy, args, FunctionType::ExtInfo());
@@ -1174,11 +1169,11 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SC_Static,
                                           SC_None,
                                           false, true);
-  StartFunction(FD, C.VoidTy, Fn, args, SourceLocation());
+  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
 
   const llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
 
-  llvm::Value *src = GetAddrOfLocalVar(srcDecl);
+  llvm::Value *src = GetAddrOfLocalVar(&srcDecl);
   src = Builder.CreateLoad(src);
   src = Builder.CreateBitCast(src, structPtrTy, "block");
 
@@ -1241,23 +1236,15 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, BlockFieldFlags flags,
                                 const VarDecl *variable) {
   QualType R = getContext().VoidTy;
 
-  FunctionArgList Args;
-  // FIXME: This leaks
-  ImplicitParamDecl *Dst =
-    ImplicitParamDecl::Create(getContext(), 0,
-                              SourceLocation(), 0,
-                              getContext().getPointerType(getContext().VoidTy));
-  Args.push_back(std::make_pair(Dst, Dst->getType()));
+  FunctionArgList args;
+  ImplicitParamDecl dst(0, SourceLocation(), 0, getContext().VoidPtrTy);
+  args.push_back(&dst);
 
-  // FIXME: This leaks
-  ImplicitParamDecl *Src =
-    ImplicitParamDecl::Create(getContext(), 0,
-                              SourceLocation(), 0,
-                              getContext().getPointerType(getContext().VoidTy));
-  Args.push_back(std::make_pair(Src, Src->getType()));
+  ImplicitParamDecl src(0, SourceLocation(), 0, getContext().VoidPtrTy);
+  args.push_back(&src);
 
   const CGFunctionInfo &FI =
-      CGM.getTypes().getFunctionInfo(R, Args, FunctionType::ExtInfo());
+      CGM.getTypes().getFunctionInfo(R, args, FunctionType::ExtInfo());
 
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
@@ -1278,17 +1265,17 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, BlockFieldFlags flags,
                                           SC_Static,
                                           SC_None,
                                           false, true);
-  StartFunction(FD, R, Fn, Args, SourceLocation());
+  StartFunction(FD, R, Fn, FI, args, SourceLocation());
 
   // dst->x
-  llvm::Value *V = GetAddrOfLocalVar(Dst);
+  llvm::Value *V = GetAddrOfLocalVar(&dst);
   V = Builder.CreateBitCast(V, llvm::PointerType::get(T, 0));
   V = Builder.CreateLoad(V);
   V = Builder.CreateStructGEP(V, 6, "x");
   llvm::Value *DstObj = V;
 
   // src->x
-  V = GetAddrOfLocalVar(Src);
+  V = GetAddrOfLocalVar(&src);
   V = Builder.CreateLoad(V);
   V = Builder.CreateBitCast(V, T);
   V = Builder.CreateStructGEP(V, 6, "x");
@@ -1317,17 +1304,12 @@ CodeGenFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
                                                     const VarDecl *variable) {
   QualType R = getContext().VoidTy;
 
-  FunctionArgList Args;
-  // FIXME: This leaks
-  ImplicitParamDecl *Src =
-    ImplicitParamDecl::Create(getContext(), 0,
-                              SourceLocation(), 0,
-                              getContext().getPointerType(getContext().VoidTy));
-
-  Args.push_back(std::make_pair(Src, Src->getType()));
+  FunctionArgList args;
+  ImplicitParamDecl src(0, SourceLocation(), 0, getContext().VoidPtrTy);
+  args.push_back(&src);
 
   const CGFunctionInfo &FI =
-      CGM.getTypes().getFunctionInfo(R, Args, FunctionType::ExtInfo());
+      CGM.getTypes().getFunctionInfo(R, args, FunctionType::ExtInfo());
 
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
@@ -1349,9 +1331,9 @@ CodeGenFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
                                           SC_Static,
                                           SC_None,
                                           false, true);
-  StartFunction(FD, R, Fn, Args, SourceLocation());
+  StartFunction(FD, R, Fn, FI, args, SourceLocation());
 
-  llvm::Value *V = GetAddrOfLocalVar(Src);
+  llvm::Value *V = GetAddrOfLocalVar(&src);
   V = Builder.CreateBitCast(V, llvm::PointerType::get(T, 0));
   V = Builder.CreateLoad(V);
   V = Builder.CreateStructGEP(V, 6, "x");

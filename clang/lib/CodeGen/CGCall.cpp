@@ -223,8 +223,13 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   llvm::SmallVector<CanQualType, 16> ArgTys;
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
-    ArgTys.push_back(Context.getCanonicalParamType(i->second));
+    ArgTys.push_back(Context.getCanonicalParamType((*i)->getType()));
   return getFunctionInfo(GetReturnType(ResTy), ArgTys, Info);
+}
+
+const CGFunctionInfo &CodeGenTypes::getNullaryFunctionInfo() {
+  llvm::SmallVector<CanQualType, 1> args;
+  return getFunctionInfo(getContext().VoidTy, args, FunctionType::ExtInfo());
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
@@ -826,6 +831,26 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     PAL.push_back(llvm::AttributeWithIndex::get(~0, FuncAttrs));
 }
 
+/// An argument came in as a promoted argument; demote it back to its
+/// declared type.
+static llvm::Value *emitArgumentDemotion(CodeGenFunction &CGF,
+                                         const VarDecl *var,
+                                         llvm::Value *value) {
+  const llvm::Type *varType = CGF.ConvertType(var->getType());
+
+  // This can happen with promotions that actually don't change the
+  // underlying type, like the enum promotions.
+  if (value->getType() == varType) return value;
+
+  assert((varType->isIntegerTy() || varType->isFloatingPointTy())
+         && "unexpected promotion type");
+
+  if (isa<llvm::IntegerType>(varType))
+    return CGF.Builder.CreateTrunc(value, varType, "arg.unpromote");
+
+  return CGF.Builder.CreateFPCast(value, varType, "arg.unpromote");
+}
+
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                          llvm::Function *Fn,
                                          const FunctionArgList &Args) {
@@ -860,9 +885,12 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   CGFunctionInfo::const_arg_iterator info_it = FI.arg_begin();
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end(); 
        i != e; ++i, ++info_it, ++ArgNo) {
-    const VarDecl *Arg = i->first;
+    const VarDecl *Arg = *i;
     QualType Ty = info_it->type;
     const ABIArgInfo &ArgI = info_it->info;
+
+    bool isPromoted =
+      isa<ParmVarDecl>(Arg) && cast<ParmVarDecl>(Arg)->isKNRPromoted();
 
     switch (ArgI.getKind()) {
     case ABIArgInfo::Indirect: {
@@ -893,11 +921,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         // Load scalar value from indirect argument.
         CharUnits Alignment = getContext().getTypeAlignInChars(Ty);
         V = EmitLoadOfScalar(V, false, Alignment.getQuantity(), Ty);
-        if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
-          // This must be a promotion, for something like
-          // "void a(x) short x; {..."
-          V = EmitScalarConversion(V, Ty, Arg->getType());
-        }
+
+        if (isPromoted)
+          V = emitArgumentDemotion(*this, Arg, V);
       }
       EmitParmDecl(*Arg, V, ArgNo);
       break;
@@ -915,11 +941,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         if (Arg->getType().isRestrictQualified())
           AI->addAttr(llvm::Attribute::NoAlias);
 
-        if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
-          // This must be a promotion, for something like
-          // "void a(x) short x; {..."
-          V = EmitScalarConversion(V, Ty, Arg->getType());
-        }
+        if (isPromoted)
+          V = emitArgumentDemotion(*this, Arg, V);
+
         EmitParmDecl(*Arg, V, ArgNo);
         break;
       }
@@ -969,11 +993,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // Match to what EmitParmDecl is expecting for this type.
       if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
         V = EmitLoadOfScalar(V, false, AlignmentToUse, Ty);
-        if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
-          // This must be a promotion, for something like
-          // "void a(x) short x; {..."
-          V = EmitScalarConversion(V, Ty, Arg->getType());
-        }
+        if (isPromoted)
+          V = emitArgumentDemotion(*this, Arg, V);
       }
       EmitParmDecl(*Arg, V, ArgNo);
       continue;  // Skip ++AI increment, already done.

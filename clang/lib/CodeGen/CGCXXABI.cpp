@@ -115,7 +115,7 @@ bool CGCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
   return true;
 }
 
-void CGCXXABI::BuildThisParam(CodeGenFunction &CGF, FunctionArgList &Params) {
+void CGCXXABI::BuildThisParam(CodeGenFunction &CGF, FunctionArgList &params) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(CGF.CurGD.getDecl());
 
   // FIXME: I'm not entirely sure I like using a fake decl just for code
@@ -124,7 +124,7 @@ void CGCXXABI::BuildThisParam(CodeGenFunction &CGF, FunctionArgList &Params) {
     = ImplicitParamDecl::Create(CGM.getContext(), 0, MD->getLocation(),
                                 &CGM.getContext().Idents.get("this"),
                                 MD->getThisType(CGM.getContext()));
-  Params.push_back(std::make_pair(ThisDecl, ThisDecl->getType()));
+  params.push_back(ThisDecl);
   getThisDecl(CGF) = ThisDecl;
 }
 

@@ -745,7 +745,7 @@ void ItaniumCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
     ImplicitParamDecl *VTTDecl
       = ImplicitParamDecl::Create(Context, 0, MD->getLocation(),
                                   &Context.Idents.get("vtt"), T);
-    Params.push_back(std::make_pair(VTTDecl, VTTDecl->getType()));
+    Params.push_back(VTTDecl);
     getVTTDecl(CGF) = VTTDecl;
   }
 }
@@ -757,7 +757,7 @@ void ARMCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
 
   // Return 'this' from certain constructors and destructors.
   if (HasThisReturn(CGF.CurGD))
-    ResTy = Params[0].second;
+    ResTy = Params[0]->getType();
 }
 
 void ItaniumCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {

@@ -20,7 +20,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Mangle.h"
-#include "CGCall.h"
 #include "CGVTables.h"
 #include "CodeGenTypes.h"
 #include "GlobalDecl.h"
@@ -69,12 +68,14 @@ namespace clang {
 
 namespace CodeGen {
 
+  class CallArgList;
   class CodeGenFunction;
   class CodeGenTBAA;
   class CGCXXABI;
   class CGDebugInfo;
   class CGObjCRuntime;
   class BlockFieldFlags;
+  class FunctionArgList;
   
   struct OrderGlobalInits {
     unsigned int priority;

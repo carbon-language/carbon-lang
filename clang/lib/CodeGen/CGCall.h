@@ -46,13 +46,15 @@ namespace CodeGen {
 
   /// CallArgList - Type for representing both the value and type of
   /// arguments in a call.
-  typedef llvm::SmallVector<std::pair<RValue, QualType>, 16> CallArgList;
+  class CallArgList :
+    public llvm::SmallVector<std::pair<RValue, QualType>, 16> {
+  };
 
   /// FunctionArgList - Type for representing both the decl and type
   /// of parameters to a function. The decl must be either a
   /// ParmVarDecl or ImplicitParamDecl.
-  typedef llvm::SmallVector<std::pair<const VarDecl*, QualType>,
-                            16> FunctionArgList;
+  class FunctionArgList : public llvm::SmallVector<const VarDecl*, 16> {
+  };
 
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.

@@ -1391,7 +1391,12 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 
 void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
+
+  const CGFunctionInfo &FI = getTypes().getFunctionInfo(GD);
+
+  // FIXME: re-use FI in this computation!
   const llvm::FunctionType *Ty = getTypes().GetFunctionType(GD);
+
   // Get or create the prototype for the function.
   llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);
 
@@ -1451,7 +1456,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   // FIXME: this is redundant with part of SetFunctionDefinitionAttributes
   setGlobalVisibility(Fn, D);
 
-  CodeGenFunction(*this).GenerateCode(D, Fn);
+  CodeGenFunction(*this).GenerateCode(D, Fn, FI);
 
   SetFunctionDefinitionAttributes(D, Fn);
   SetLLVMFunctionAttributesForDefinition(D, Fn);
