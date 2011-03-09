@@ -34,6 +34,7 @@ public:
   struct Delegate {
     /// Called immediately before erasing a dead machine instruction.
     virtual void LRE_WillEraseInstruction(MachineInstr *MI) {}
+    virtual ~Delegate() {}
   };
 
 private:
