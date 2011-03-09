@@ -681,25 +681,28 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(FromVal->getType())) {
     if (ToType->isVectorTy()) {
-      if (isPowerOf2_64(AllocaSize / TD.getTypeAllocSize(ToType))) {
-        assert(Offset == 0 && "Can't extract a value of a smaller vector type "
-                              "from a nonzero offset.");
+      unsigned ToTypeSize = TD.getTypeAllocSize(ToType);
+      if (ToTypeSize == AllocaSize)
+        return Builder.CreateBitCast(FromVal, ToType, "tmp");
 
-        const Type *ToElementTy = cast<VectorType>(ToType)->getElementType();
-        unsigned Scale = AllocaSize / TD.getTypeAllocSize(ToType);
-        const Type *CastElementTy = getScaledElementType(ToElementTy, Scale);
-        unsigned NumCastVectorElements = VTy->getNumElements() / Scale;
+      assert(isPowerOf2_64(AllocaSize / ToTypeSize) &&
+             "Partial vector access of an alloca must have a power-of-2 size "
+             "ratio.");
+      assert(Offset == 0 && "Can't extract a value of a smaller vector type "
+                            "from a nonzero offset.");
 
-        LLVMContext &Context = FromVal->getContext();
-        const Type *CastTy = VectorType::get(CastElementTy,
-                                             NumCastVectorElements);
-        Value *Cast = Builder.CreateBitCast(FromVal, CastTy, "tmp");
-        Value *Extract = Builder.CreateExtractElement(Cast, ConstantInt::get(
-                                          Type::getInt32Ty(Context), 0), "tmp");
-        return Builder.CreateBitCast(Extract, ToType, "tmp");
-      }
+      const Type *ToElementTy = cast<VectorType>(ToType)->getElementType();
+      unsigned Scale = AllocaSize / ToTypeSize;
+      const Type *CastElementTy = getScaledElementType(ToElementTy, Scale);
+      unsigned NumCastVectorElements = VTy->getNumElements() / Scale;
 
-      return Builder.CreateBitCast(FromVal, ToType, "tmp");
+      LLVMContext &Context = FromVal->getContext();
+      const Type *CastTy = VectorType::get(CastElementTy,
+                                           NumCastVectorElements);
+      Value *Cast = Builder.CreateBitCast(FromVal, CastTy, "tmp");
+      Value *Extract = Builder.CreateExtractElement(Cast, ConstantInt::get(
+                                        Type::getInt32Ty(Context), 0), "tmp");
+      return Builder.CreateBitCast(Extract, ToType, "tmp");
     }
 
     // Otherwise it must be an element access.
