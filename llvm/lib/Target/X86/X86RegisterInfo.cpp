@@ -337,7 +337,7 @@ X86RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
     else
       return &X86::GR32RegClass;
   }
-  return RC;
+  return NULL;
 }
 
 unsigned

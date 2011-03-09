@@ -588,13 +588,11 @@ public:
   }
 
   /// getCrossCopyRegClass - Returns a legal register class to copy a register
-  /// in the specified class to or from. If it is possible to copy the register
-  /// directly without using a cross register class copy, return the specified
-  /// RC. Returns NULL if it is not possible to copy between a two registers of
-  /// the specified class.
+  /// in the specified class to or from. Returns NULL if it is possible to copy
+  /// between a two registers of the specified class.
   virtual const TargetRegisterClass *
   getCrossCopyRegClass(const TargetRegisterClass *RC) const {
-    return RC;
+    return NULL;
   }
 
   /// getRegPressureLimit - Return the register pressure "high water mark" for
