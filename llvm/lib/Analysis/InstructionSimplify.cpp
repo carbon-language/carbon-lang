@@ -1709,7 +1709,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       if (!KnownNonNegative)
         break;
       // fall-through
-    case ICmpInst::ICMP_EQ:
+    case ICmpInst::ICMP_NE:
     case ICmpInst::ICMP_UGT:
     case ICmpInst::ICMP_UGE:
       return ConstantInt::getTrue(RHS->getContext());
@@ -1719,7 +1719,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       if (!KnownNonNegative)
         break;
       // fall-through
-    case ICmpInst::ICMP_NE:
+    case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_ULT:
     case ICmpInst::ICMP_ULE:
       return ConstantInt::getFalse(RHS->getContext());
