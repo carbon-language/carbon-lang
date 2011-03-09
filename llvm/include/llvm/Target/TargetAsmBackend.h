@@ -16,6 +16,7 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+class MCELFObjectTargetWriter;
 class MCFixup;
 class MCInst;
 class MCObjectWriter;
@@ -39,6 +40,13 @@ public:
   /// createObjectWriter - Create a new MCObjectWriter instance for use by the
   /// assembler backend to emit the final object file.
   virtual MCObjectWriter *createObjectWriter(raw_ostream &OS) const = 0;
+
+  /// createELFObjectTargetWriter - Create a new ELFObjectTargetWriter to enable
+  /// non-standard ELFObjectWriters.
+  virtual  MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
+    assert(0 && "createELFObjectTargetWriter is not supported by asm backend");
+    return 0;
+  }
 
   /// hasReliableSymbolDifference - Check whether this target implements
   /// accurate relocations for differences between symbols. If not, differences

@@ -307,9 +307,12 @@ public:
     : ELFX86AsmBackend(T, OSType) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(new X86ELFObjectWriter(false, OSType,
-                                                        ELF::EM_386, false),
+    return createELFObjectWriter(createELFObjectTargetWriter(),
                                  OS, /*IsLittleEndian*/ true);
+  }
+
+  MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
+    return new X86ELFObjectWriter(false, OSType, ELF::EM_386, false);
   }
 };
 
@@ -319,9 +322,12 @@ public:
     : ELFX86AsmBackend(T, OSType) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(new X86ELFObjectWriter(true, OSType,
-                                                        ELF::EM_X86_64, true),
+    return createELFObjectWriter(createELFObjectTargetWriter(),
                                  OS, /*IsLittleEndian*/ true);
+  }
+
+  MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
+    return new X86ELFObjectWriter(true, OSType, ELF::EM_386, true);
   }
 };
 
