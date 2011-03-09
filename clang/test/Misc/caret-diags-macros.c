@@ -1,27 +1,24 @@
-// RUN: %clang_cc1 -fsyntax-only %s > %t 2>&1
+// RUN: %clang_cc1 -fsyntax-only %s 2>&1 | FileCheck %s
 
 #define M1(x) x
-
-// RUN: grep ":6:12: note: instantiated from:" %t
 #define M2 1;
-
 void foo() {
- // RUN: grep ":10:2: warning: expression result unused" %t
- M1(
- // RUN: grep ":12:5: note: instantiated from:" %t
-    M2)
+  M1(
+    M2);
+  // CHECK: {{.*}}:6:{{[0-9]+}}: warning: expression result unused
+  // CHECK: {{.*}}:7:{{[0-9]+}}: note: instantiated from:
+  // CHECK: {{.*}}:4:{{[0-9]+}}: note: instantiated from:
 }
 
-// RUN: grep ":16:11: note: instantiated from:" %t
 #define A 1
-// RUN: grep ":18:11: note: instantiated from:" %t
 #define B A
-// RUN: grep ":20:11: note: instantiated from:" %t
 #define C B
-
 void bar() {
-  // RUN: grep  ":24:3: warning: expression result unused" %t
   C;
+  // CHECK: {{.*}}:17:{{[0-9]+}}: warning: expression result unused
+  // CHECK: {{.*}}:15:{{[0-9]+}}: note: instantiated from:
+  // CHECK: {{.*}}:14:{{[0-9]+}}: note: instantiated from:
+  // CHECK: {{.*}}:13:{{[0-9]+}}: note: instantiated from:
 }
 
 
