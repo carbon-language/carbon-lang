@@ -3,9 +3,9 @@
 ; RUN: grep roth         %t1.s | count 8
 ; RUN: grep roti.*5      %t1.s | count 1
 ; RUN: grep roti.*27     %t1.s | count 1
-; RUN grep rothi.*5      %t1.s | count 2
-; RUN grep rothi.*11     %t1.s | count 1
-; RUN grep rothi.*,.3    %t1.s | count 1
+; RUN: grep rothi.*5      %t1.s | count 2
+; RUN: grep rothi.*11     %t1.s | count 1
+; RUN: grep rothi.*,.3    %t1.s | count 1
 ; RUN: grep andhi        %t1.s | count 4
 ; RUN: grep shlhi        %t1.s | count 4
 ; RUN: cat %t1.s | FileCheck %s

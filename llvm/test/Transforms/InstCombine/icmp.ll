@@ -380,7 +380,7 @@ define i1 @test38(i32 %x, i32 %y, i32 %z) {
 
 ; PR9343 #1
 ; CHECK: @test39
-; CHECK %B = icmp eq i32 %X, 0
+; CHECK: %B = icmp eq i32 %X, 0
 define i1 @test39(i32 %X, i32 %Y) {
   %A = ashr exact i32 %X, %Y
   %B = icmp eq i32 %A, 0

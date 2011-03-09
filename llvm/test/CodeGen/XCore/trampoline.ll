@@ -5,8 +5,8 @@
 define void @f() nounwind {
 entry:
 ; CHECK: f:
-; CHECK ldap r11, g.1101
-; CHECK stw r11, sp[7]
+; CHECK: ldap r11, g.1101
+; CHECK: stw r11, sp[7]
   %TRAMP.23 = alloca [20 x i8], align 2
   %FRAME.0 = alloca %struct.FRAME.f, align 4
   %TRAMP.23.sub = getelementptr inbounds [20 x i8]* %TRAMP.23, i32 0, i32 0

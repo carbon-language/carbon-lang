@@ -217,7 +217,7 @@ define i1 @urem2(i32 %X, i32 %Y) {
   %A = urem i32 %X, %Y
   %B = icmp eq i32 %A, %Y
   ret i1 %B
-; CHECK ret i1 false
+; CHECK: ret i1 false
 }
 
 define i1 @urem3(i32 %X) {

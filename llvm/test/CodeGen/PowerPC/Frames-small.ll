@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -o %t1
-; RUN  not grep {stw r31, -4(r1)} %t1
+; RUN: not grep {stw r31, -4(r1)} %t1
 ; RUN: grep {stwu r1, -16448(r1)} %t1
 ; RUN: grep {addi r1, r1, 16448} %t1
 ; RUN: llc < %s -march=ppc32 | \
