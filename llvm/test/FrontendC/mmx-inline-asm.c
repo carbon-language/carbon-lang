@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S -o - %s | FileCheck %s
+// RUN: %llvmgcc -mmmx -S -o - %s | FileCheck %s
 // XFAIL: *
 // XTARGET: x86,i386,i686
 // <rdar://problem/9091220>
