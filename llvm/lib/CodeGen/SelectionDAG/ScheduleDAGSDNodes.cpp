@@ -419,11 +419,15 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
           ST.adjustSchedDependency(OpSU, SU, const_cast<SDep &>(dep));
         }
 
-        if (!SU->addPred(dep) && !dep.isCtrl() && OpSU->NumRegDefsLeft > 0) {
+        if (!SU->addPred(dep) && !dep.isCtrl() && OpSU->NumRegDefsLeft > 1) {
           // Multiple register uses are combined in the same SUnit. For example,
           // we could have a set of glued nodes with all their defs consumed by
           // another set of glued nodes. Register pressure tracking sees this as
           // a single use, so to keep pressure balanced we reduce the defs.
+          //
+          // We can't tell (without more book-keeping) if this results from
+          // glued nodes or duplicate operands. As long as we don't reduce
+          // NumRegDefsLeft to zero, we handle the common cases well.
           --OpSU->NumRegDefsLeft;
         }
       }
