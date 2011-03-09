@@ -350,7 +350,8 @@ SyntaxForArchSpec (const ArchSpec &arch)
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
         return kEDAssemblySyntaxX86ATT;
-
+    case llvm::Triple::arm:
+        return kEDAssemblySyntaxARMUAL;
     default:
         break;
     }
