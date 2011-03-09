@@ -594,7 +594,7 @@ public:
   /// the specified class.
   virtual const TargetRegisterClass *
   getCrossCopyRegClass(const TargetRegisterClass *RC) const {
-    return NULL;
+    return RC;
   }
 
   /// getRegPressureLimit - Return the register pressure "high water mark" for
