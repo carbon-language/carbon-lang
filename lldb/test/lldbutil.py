@@ -232,6 +232,20 @@ def ValueTypeString(enum):
 # Utility functions related to Threads and Processes
 # ==================================================
 
+def get_caller_symbol(thread):
+    """
+    Returns the symbol name for the call site of the leaf function.
+    """
+    depth = thread.GetNumFrames()
+    if depth <= 1:
+        return None
+    caller = thread.GetFrameAtIndex(1).GetSymbol()
+    if caller:
+        return caller.GetName()
+    else:
+        return None
+
+
 def GetFunctionNames(thread):
     """
     Returns a sequence of function names from the stack frames of this thread.

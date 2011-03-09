@@ -5,7 +5,7 @@ Test SBThread APIs.
 import os, time
 import unittest2
 import lldb
-from lldbutil import get_stopped_thread
+from lldbutil import get_stopped_thread, get_caller_symbol
 from lldbtest import *
 
 class ThreadAPITestCase(TestBase):
@@ -25,11 +25,32 @@ class ThreadAPITestCase(TestBase):
         self.buildDwarf()
         self.get_stop_description()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
+    def test_step_out_of_malloc_into_function_b_with_dsym(self):
+        """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
+        # We build a different executable than the default buildDsym() does.
+        d = {'CXX_SOURCES': 'main2.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.step_out_of_malloc_into_function_b()
+
+    @python_api_test
+    def test_step_out_of_malloc_into_function_b_with_dwarf(self):
+        """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
+        # We build a different executable than the default buildDwarf() does.
+        d = {'CXX_SOURCES': 'main2.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.step_out_of_malloc_into_function_b()
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number("main.cpp", "// Set break point at this line and check variable 'my_char'.")
+        # Find the line number within main2.cpp for step_out_of_malloc_into_function_b().
+        self.line2 = line_number("main2.cpp", "// thread step-out of malloc into function b.")
 
     def get_stop_description(self):
         """Test Python SBProcess.ReadMemory() API."""
@@ -58,6 +79,40 @@ class ThreadAPITestCase(TestBase):
         self.expect(stop_description, exe=False,
             startstr = 'breakpoint')
 
+    def step_out_of_malloc_into_function_b(self):
+        """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        breakpoint = target.BreakpointCreateByName('malloc')
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.runCmd("breakpoint list")
+
+        # Launch the process, and do not stop at the entry point.
+        error = lldb.SBError()
+        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        self.runCmd("process status")
+        symbol = get_caller_symbol(thread)
+        caller = symbol.split('(')[0]
+
+        while caller != "b":
+            #self.runCmd("thread backtrace")
+            #self.runCmd("process status")           
+            self.process.Continue()
+            thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+            symbol = get_caller_symbol(thread)
+            caller = symbol.split('(')[0]
+            self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+
+        thread.StepOut()
+        self.assertTrue(thread.GetFrameAtIndex(0).GetLineEntry().GetLine() == self.line2,
+                        "step out of malloc into function b is successful")
 
 if __name__ == '__main__':
     import atexit
