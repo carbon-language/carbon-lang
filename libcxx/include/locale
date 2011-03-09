@@ -522,6 +522,12 @@ __num_get<_CharT>::__stage2_int_loop(_CharT __ct, int __base, char* __a, char*& 
                   unsigned& __dc, _CharT __thousands_sep, const string& __grouping,
                   unsigned* __g, unsigned*& __g_end, _CharT* __atoms)
 {
+    if (__a_end == __a && (__ct == __atoms[24] || __ct == __atoms[25]))
+    {
+        *__a_end++ = __ct == __atoms[24] ? '+' : '-';
+        __dc = 0;
+        return 0;
+    }
     if (__ct == __thousands_sep && __grouping.size() != 0)
     {
         if (__g_end-__g < __num_get_buf_sz)
@@ -532,22 +538,28 @@ __num_get<_CharT>::__stage2_int_loop(_CharT __ct, int __base, char* __a, char*& 
         return 0;
     }
     ptrdiff_t __f = find(__atoms, __atoms + 26, __ct) - __atoms;
-    if (__f >= 26)
+    if (__f >= 24)
         return -1;
-    if (__a_end-__a < __num_get_buf_sz - 1)
-        *__a_end++ = __src[__f];
     switch (__base)
     {
     case 8:
     case 10:
         if (__f >= __base)
-            return 0;
+            return -1;
         break;
-    default:
-        if (__f >= 22)
+    case 16:
+        if (__f < 22)
+            break;
+        if (__a_end != __a && __a_end - __a <= 2 && __a_end[-1] == '0')
+        {
+            __dc = 0;
+            *__a_end++ = __src[__f];
             return 0;
-        break;
+        }
+        return -1;
     }
+    if (__a_end-__a < __num_get_buf_sz - 1)
+        *__a_end++ = __src[__f];
     ++__dc;
     return 0;
 }
