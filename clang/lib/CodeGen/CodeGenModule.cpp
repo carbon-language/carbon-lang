@@ -1392,10 +1392,12 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
 
+  // Compute the function info and LLVM type.
   const CGFunctionInfo &FI = getTypes().getFunctionInfo(GD);
-
-  // FIXME: re-use FI in this computation!
-  const llvm::FunctionType *Ty = getTypes().GetFunctionType(GD);
+  bool variadic = false;
+  if (const FunctionProtoType *fpt = D->getType()->getAs<FunctionProtoType>())
+    variadic = fpt->isVariadic();
+  const llvm::FunctionType *Ty = getTypes().GetFunctionType(FI, variadic, false);
 
   // Get or create the prototype for the function.
   llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);

@@ -453,13 +453,15 @@ public:
 
   /// GetAddrOfCXXConstructor - Return the address of the constructor of the
   /// given type.
-  llvm::GlobalValue *GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
-                                             CXXCtorType Type);
+  llvm::GlobalValue *GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor,
+                                             CXXCtorType ctorType,
+                                             const CGFunctionInfo *fnInfo = 0);
 
   /// GetAddrOfCXXDestructor - Return the address of the constructor of the
   /// given type.
-  llvm::GlobalValue *GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
-                                            CXXDtorType Type);
+  llvm::GlobalValue *GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
+                                            CXXDtorType dtorType,
+                                            const CGFunctionInfo *fnInfo = 0);
 
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
