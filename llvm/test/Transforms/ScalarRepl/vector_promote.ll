@@ -98,3 +98,62 @@ define i64 @test6(<2 x float> %X) {
 ; CHECK: ret i64
 }
 
+define float @test7(<4 x float> %x) {
+	%a = alloca <4 x float>
+	store <4 x float> %x, <4 x float>* %a
+	%p = bitcast <4 x float>* %a to <2 x float>*
+	%b = load <2 x float>* %p
+	%q = getelementptr <4 x float>* %a, i32 0, i32 2
+	%c = load float* %q
+	ret float %c
+; CHECK: @test7
+; CHECK-NOT: alloca
+; CHECK: bitcast <4 x float> %x to <2 x double>
+; CHECK-NEXT: extractelement <2 x double>
+; CHECK-NEXT: bitcast double %tmp4 to <2 x float>
+; CHECK-NEXT: extractelement <4 x float>
+}
+
+define void @test8(<4 x float> %x, <2 x float> %y) {
+	%a = alloca <4 x float>
+	store <4 x float> %x, <4 x float>* %a
+	%p = bitcast <4 x float>* %a to <2 x float>*
+	store <2 x float> %y, <2 x float>* %p
+	ret void
+; CHECK: @test8
+; CHECK-NOT: alloca
+; CHECK: bitcast <4 x float> %x to <2 x double>
+; CHECK-NEXT: bitcast <2 x float> %y to double
+; CHECK-NEXT: insertelement <2 x double>
+; CHECK-NEXT: bitcast <2 x double> %tmp2 to <4 x float>
+}
+
+define i256 @test9(<4 x i256> %x) {
+	%a = alloca <4 x i256>
+	store <4 x i256> %x, <4 x i256>* %a
+	%p = bitcast <4 x i256>* %a to <2 x i256>*
+	%b = load <2 x i256>* %p
+	%q = getelementptr <4 x i256>* %a, i32 0, i32 2
+	%c = load i256* %q
+	ret i256 %c
+; CHECK: @test9
+; CHECK-NOT: alloca
+; CHECK: bitcast <4 x i256> %x to <2 x i512>
+; CHECK-NEXT: extractelement <2 x i512>
+; CHECK-NEXT: bitcast i512 %tmp4 to <2 x i256>
+; CHECK-NEXT: extractelement <4 x i256>
+}
+
+define void @test10(<4 x i256> %x, <2 x i256> %y) {
+	%a = alloca <4 x i256>
+	store <4 x i256> %x, <4 x i256>* %a
+	%p = bitcast <4 x i256>* %a to <2 x i256>*
+	store <2 x i256> %y, <2 x i256>* %p
+	ret void
+; CHECK: @test10
+; CHECK-NOT: alloca
+; CHECK: bitcast <4 x i256> %x to <2 x i512>
+; CHECK-NEXT: bitcast <2 x i256> %y to i512
+; CHECK-NEXT: insertelement <2 x i512>
+; CHECK-NEXT: bitcast <2 x i512> %tmp2 to <4 x i256>
+}

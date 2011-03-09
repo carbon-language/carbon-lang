@@ -295,12 +295,16 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
 /// MergeInType - Add the 'In' type to the accumulated vector type (VectorTy)
 /// so far at the offset specified by Offset (which is specified in bytes).
 ///
-/// There are two cases we handle here:
+/// There are three cases we handle here:
 ///   1) A union of vector types of the same size and potentially its elements.
 ///      Here we turn element accesses into insert/extract element operations.
 ///      This promotes a <4 x float> with a store of float to the third element
 ///      into a <4 x float> that uses insert element.
-///   2) A fully general blob of memory, which we turn into some (potentially
+///   2) A union of vector types with power-of-2 size differences, e.g. a float,
+///      <2 x float> and <4 x float>.  Here we turn element accesses into insert
+///      and extract element operations, and <2 x float> accesses into a cast to
+///      <2 x double>, an extract, and a cast back to <2 x float>.
+///   3) A fully general blob of memory, which we turn into some (potentially
 ///      large) integer type with extract and insert operations where the loads
 ///      and stores would mutate the memory.  We mark this by setting VectorTy
 ///      to VoidTy.
@@ -346,18 +350,68 @@ bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
   // Remember if we saw a vector type.
   HadAVector = true;
 
-  if (VInTy->getBitWidth()/8 == AllocaSize && Offset == 0) {
-    // If we're storing/loading a vector of the right size, allow it as a
-    // vector.  If this the first vector we see, remember the type so that
-    // we know the element size.  If this is a subsequent access, ignore it
-    // even if it is a differing type but the same size.  Worst case we can
-    // bitcast the resultant vectors.
-    if (VectorTy == 0)
-      VectorTy = VInTy;
+  // TODO: Support nonzero offsets?
+  if (Offset != 0)
+    return false;
+
+  // Only allow vectors that are a power-of-2 away from the size of the alloca.
+  if (!isPowerOf2_64(AllocaSize / (VInTy->getBitWidth() / 8)))
+    return false;
+
+  // If this the first vector we see, remember the type so that we know the
+  // element size.
+  if (!VectorTy) {
+    VectorTy = VInTy;
     return true;
   }
 
-  return false;
+  unsigned BitWidth = cast<VectorType>(VectorTy)->getBitWidth();
+  unsigned InBitWidth = VInTy->getBitWidth();
+
+  // Vectors of the same size can be converted using a simple bitcast.
+  if (InBitWidth == BitWidth && AllocaSize == (InBitWidth / 8))
+    return true;
+
+  const Type *ElementTy = cast<VectorType>(VectorTy)->getElementType();
+  const Type *InElementTy = cast<VectorType>(VectorTy)->getElementType();
+
+  // Do not allow mixed integer and floating-point accesses from vectors of
+  // different sizes.
+  if (ElementTy->isFloatingPointTy() != InElementTy->isFloatingPointTy())
+    return false;
+
+  if (ElementTy->isFloatingPointTy()) {
+    // Only allow floating-point vectors of different sizes if they have the
+    // same element type.
+    // TODO: This could be loosened a bit, but would anything benefit?
+    if (ElementTy != InElementTy)
+      return false;
+
+    // There are no arbitrary-precision floating-point types, which limits the
+    // number of legal vector types with larger element types that we can form
+    // to bitcast and extract a subvector.
+    // TODO: We could support some more cases with mixed fp128 and double here.
+    if (!(BitWidth == 64 || BitWidth == 128) ||
+        !(InBitWidth == 64 || InBitWidth == 128))
+      return false;
+  } else {
+    assert(ElementTy->isIntegerTy() && "Vector elements must be either integer "
+                                       "or floating-point.");
+    unsigned BitWidth = ElementTy->getPrimitiveSizeInBits();
+    unsigned InBitWidth = InElementTy->getPrimitiveSizeInBits();
+
+    // Do not allow integer types smaller than a byte or types whose widths are
+    // not a multiple of a byte.
+    if (BitWidth < 8 || InBitWidth < 8 ||
+        BitWidth % 8 != 0 || InBitWidth % 8 != 0)
+      return false;
+  }
+
+  // Pick the largest of the two vector types.
+  if (InBitWidth > BitWidth)
+    VectorTy = VInTy;
+
+  return true;
 }
 
 /// CanConvertToScalar - V is a pointer.  If we can convert the pointee and all
@@ -586,6 +640,26 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
   }
 }
 
+/// getScaledElementType - Gets a scaled element type for a partial vector
+/// access of an alloca. The input type must be an integer or float, and
+/// the resulting type must be an integer, float or double.
+static const Type *getScaledElementType(const Type *OldTy, unsigned Scale) {
+  assert((OldTy->isIntegerTy() || OldTy->isFloatTy()) && "Partial vector "
+         "accesses must be scaled from integer or float elements.");
+
+  LLVMContext &Context = OldTy->getContext();
+  unsigned Size = OldTy->getPrimitiveSizeInBits() * Scale;
+
+  if (OldTy->isIntegerTy())
+    return Type::getIntNTy(Context, Size);
+  if (Size == 32)
+    return Type::getFloatTy(Context);
+  if (Size == 64)
+    return Type::getDoubleTy(Context);
+
+  llvm_unreachable("Invalid type for a partial vector access of an alloca!");
+}
+
 /// ConvertScalar_ExtractValue - Extract a value of type ToType from an integer
 /// or vector value FromVal, extracting the bits from the offset specified by
 /// Offset.  This returns the value, which is of type ToType.
@@ -606,8 +680,27 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // If the result alloca is a vector type, this is either an element
   // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(FromVal->getType())) {
-    if (ToType->isVectorTy())
+    if (ToType->isVectorTy()) {
+      if (isPowerOf2_64(AllocaSize / TD.getTypeAllocSize(ToType))) {
+        assert(Offset == 0 && "Can't extract a value of a smaller vector type "
+                              "from a nonzero offset.");
+
+        const Type *ToElementTy = cast<VectorType>(ToType)->getElementType();
+        unsigned Scale = AllocaSize / TD.getTypeAllocSize(ToType);
+        const Type *CastElementTy = getScaledElementType(ToElementTy, Scale);
+        unsigned NumCastVectorElements = VTy->getNumElements() / Scale;
+
+        LLVMContext &Context = FromVal->getContext();
+        const Type *CastTy = VectorType::get(CastElementTy,
+                                             NumCastVectorElements);
+        Value *Cast = Builder.CreateBitCast(FromVal, CastTy, "tmp");
+        Value *Extract = Builder.CreateExtractElement(Cast, ConstantInt::get(
+                                          Type::getInt32Ty(Context), 0), "tmp");
+        return Builder.CreateBitCast(Extract, ToType, "tmp");
+      }
+
       return Builder.CreateBitCast(FromVal, ToType, "tmp");
+    }
 
     // Otherwise it must be an element access.
     unsigned Elt = 0;
@@ -727,6 +820,28 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
     // vector type?
     if (ValSize == VecSize)
       return Builder.CreateBitCast(SV, AllocaType, "tmp");
+
+    if (SV->getType()->isVectorTy() && isPowerOf2_64(VecSize / ValSize)) {
+      assert(Offset == 0 && "Can't insert a value of a smaller vector type at "
+                            "a nonzero offset.");
+
+      const Type *ToElementTy =
+        cast<VectorType>(SV->getType())->getElementType();
+      unsigned Scale = VecSize / ValSize;
+      const Type *CastElementTy = getScaledElementType(ToElementTy, Scale);
+      unsigned NumCastVectorElements = VTy->getNumElements() / Scale;
+
+      LLVMContext &Context = SV->getContext();
+      const Type *OldCastTy = VectorType::get(CastElementTy,
+                                              NumCastVectorElements);
+      Value *OldCast = Builder.CreateBitCast(Old, OldCastTy, "tmp");
+
+      Value *SVCast = Builder.CreateBitCast(SV, CastElementTy, "tmp");
+      Value *Insert =
+        Builder.CreateInsertElement(OldCast, SVCast, ConstantInt::get(
+                                    Type::getInt32Ty(Context), 0), "tmp");
+      return Builder.CreateBitCast(Insert, AllocaType, "tmp");
+    }
 
     uint64_t EltSize = TD.getTypeAllocSizeInBits(VTy->getElementType());
 
