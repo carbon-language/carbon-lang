@@ -555,12 +555,13 @@ TemplateArgumentList::CreateCopy(ASTContext &Context,
 //===----------------------------------------------------------------------===//
 ClassTemplateSpecializationDecl::
 ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK, TagKind TK,
-                                DeclContext *DC, SourceLocation L,
+                                DeclContext *DC, SourceLocation StartLoc,
+                                SourceLocation IdLoc,
                                 ClassTemplateDecl *SpecializedTemplate,
                                 const TemplateArgument *Args,
                                 unsigned NumArgs,
                                 ClassTemplateSpecializationDecl *PrevDecl)
-  : CXXRecordDecl(DK, TK, DC, L,
+  : CXXRecordDecl(DK, TK, DC, StartLoc, IdLoc,
                   SpecializedTemplate->getIdentifier(),
                   PrevDecl),
     SpecializedTemplate(SpecializedTemplate),
@@ -570,14 +571,16 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK, TagKind TK,
 }
 
 ClassTemplateSpecializationDecl::ClassTemplateSpecializationDecl(Kind DK)
-  : CXXRecordDecl(DK, TTK_Struct, 0, SourceLocation(), 0, 0),
+  : CXXRecordDecl(DK, TTK_Struct, 0, SourceLocation(), SourceLocation(), 0, 0),
     ExplicitInfo(0),
     SpecializationKind(TSK_Undeclared) {
 }
 
 ClassTemplateSpecializationDecl *
 ClassTemplateSpecializationDecl::Create(ASTContext &Context, TagKind TK,
-                                        DeclContext *DC, SourceLocation L,
+                                        DeclContext *DC,
+                                        SourceLocation StartLoc,
+                                        SourceLocation IdLoc,
                                         ClassTemplateDecl *SpecializedTemplate,
                                         const TemplateArgument *Args,
                                         unsigned NumArgs,
@@ -585,7 +588,7 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context, TagKind TK,
   ClassTemplateSpecializationDecl *Result
     = new (Context)ClassTemplateSpecializationDecl(Context,
                                                    ClassTemplateSpecialization,
-                                                   TK, DC, L,
+                                                   TK, DC, StartLoc, IdLoc,
                                                    SpecializedTemplate,
                                                    Args, NumArgs,
                                                    PrevDecl);
@@ -638,7 +641,9 @@ ClassTemplateSpecializationDecl::getSourceRange() const {
 //===----------------------------------------------------------------------===//
 ClassTemplatePartialSpecializationDecl::
 ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
-                                       DeclContext *DC, SourceLocation L,
+                                       DeclContext *DC,
+                                       SourceLocation StartLoc,
+                                       SourceLocation IdLoc,
                                        TemplateParameterList *Params,
                                        ClassTemplateDecl *SpecializedTemplate,
                                        const TemplateArgument *Args,
@@ -649,7 +654,8 @@ ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
                                        unsigned SequenceNumber)
   : ClassTemplateSpecializationDecl(Context,
                                     ClassTemplatePartialSpecialization,
-                                    TK, DC, L, SpecializedTemplate, 
+                                    TK, DC, StartLoc, IdLoc,
+                                    SpecializedTemplate,
                                     Args, NumArgs, PrevDecl),
     TemplateParams(Params), ArgsAsWritten(ArgInfos),
     NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
@@ -660,7 +666,8 @@ ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
 
 ClassTemplatePartialSpecializationDecl *
 ClassTemplatePartialSpecializationDecl::
-Create(ASTContext &Context, TagKind TK,DeclContext *DC, SourceLocation L,
+Create(ASTContext &Context, TagKind TK,DeclContext *DC,
+       SourceLocation StartLoc, SourceLocation IdLoc,
        TemplateParameterList *Params,
        ClassTemplateDecl *SpecializedTemplate,
        const TemplateArgument *Args,
@@ -675,8 +682,9 @@ Create(ASTContext &Context, TagKind TK,DeclContext *DC, SourceLocation L,
     ClonedArgs[I] = ArgInfos[I];
 
   ClassTemplatePartialSpecializationDecl *Result
-    = new (Context)ClassTemplatePartialSpecializationDecl(Context, TK,
-                                                          DC, L, Params,
+    = new (Context)ClassTemplatePartialSpecializationDecl(Context, TK, DC,
+                                                          StartLoc, IdLoc,
+                                                          Params,
                                                           SpecializedTemplate,
                                                           Args, NumArgs,
                                                           ClonedArgs, N,

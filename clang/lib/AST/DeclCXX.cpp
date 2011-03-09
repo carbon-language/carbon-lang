@@ -41,20 +41,19 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
 }
 
 CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
-                             SourceLocation L, IdentifierInfo *Id,
-                             CXXRecordDecl *PrevDecl,
-                             SourceLocation TKL)
-  : RecordDecl(K, TK, DC, L, Id, PrevDecl, TKL),
+                             SourceLocation StartLoc, SourceLocation IdLoc,
+                             IdentifierInfo *Id, CXXRecordDecl *PrevDecl)
+  : RecordDecl(K, TK, DC, StartLoc, IdLoc, Id, PrevDecl),
     DefinitionData(PrevDecl ? PrevDecl->DefinitionData : 0),
     TemplateOrInstantiation() { }
 
 CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, TagKind TK,
-                                     DeclContext *DC, SourceLocation L,
-                                     IdentifierInfo *Id, SourceLocation TKL,
+                                     DeclContext *DC, SourceLocation StartLoc,
+                                     SourceLocation IdLoc, IdentifierInfo *Id,
                                      CXXRecordDecl* PrevDecl,
                                      bool DelayTypeCreation) {
-  CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TK, DC, L, Id,
-                                           PrevDecl, TKL);
+  CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TK, DC, StartLoc, IdLoc,
+                                           Id, PrevDecl);
 
   // FIXME: DelayTypeCreation seems like such a hack
   if (!DelayTypeCreation)
@@ -63,8 +62,8 @@ CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, TagKind TK,
 }
 
 CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, EmptyShell Empty) {
-  return new (C) CXXRecordDecl(CXXRecord, TTK_Struct, 0, SourceLocation(), 0, 0,
-                               SourceLocation());
+  return new (C) CXXRecordDecl(CXXRecord, TTK_Struct, 0, SourceLocation(),
+                               SourceLocation(), 0, 0);
 }
 
 void

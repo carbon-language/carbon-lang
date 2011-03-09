@@ -1437,9 +1437,9 @@ void Sema::DeclareGlobalNewDelete() {
     // implicitly.
     StdBadAlloc = CXXRecordDecl::Create(Context, TTK_Class,
                                         getOrCreateStdNamespace(),
-                                        SourceLocation(),
+                                        SourceLocation(), SourceLocation(),
                                       &PP.getIdentifierTable().get("bad_alloc"),
-                                        SourceLocation(), 0);
+                                        0);
     getStdBadAlloc()->setImplicit(true);
   }
 

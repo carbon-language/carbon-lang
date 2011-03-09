@@ -449,9 +449,8 @@ class CXXRecordDecl : public RecordDecl {
   
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
-                SourceLocation L, IdentifierInfo *Id,
-                CXXRecordDecl *PrevDecl,
-                SourceLocation StartL = SourceLocation());
+                SourceLocation StartLoc, SourceLocation IdLoc,
+                IdentifierInfo *Id, CXXRecordDecl *PrevDecl);
 
 public:
   /// base_class_iterator - Iterator that traverses the base classes
@@ -494,9 +493,8 @@ public:
   bool hasDefinition() const { return DefinitionData != 0; }
 
   static CXXRecordDecl *Create(const ASTContext &C, TagKind TK, DeclContext *DC,
-                               SourceLocation L, IdentifierInfo *Id,
-                               SourceLocation StartL = SourceLocation(),
-                               CXXRecordDecl* PrevDecl=0,
+                               SourceLocation StartLoc, SourceLocation IdLoc,
+                               IdentifierInfo *Id, CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
   static CXXRecordDecl *Create(const ASTContext &C, EmptyShell Empty);
 

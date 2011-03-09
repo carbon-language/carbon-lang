@@ -533,9 +533,8 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
-  EnumDecl *Enum = EnumDecl::Create(SemaRef.Context, Owner,
+  EnumDecl *Enum = EnumDecl::Create(SemaRef.Context, Owner, D->getLocStart(),
                                     D->getLocation(), D->getIdentifier(),
-                                    D->getLocStart(),
                                     /*PrevDecl=*/0, D->isScoped(),
                                     D->isScopedUsingClassTag(), D->isFixed());
   if (D->isFixed()) {
@@ -760,8 +759,8 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   CXXRecordDecl *RecordInst
     = CXXRecordDecl::Create(SemaRef.Context, Pattern->getTagKind(), DC,
-                            Pattern->getLocation(), Pattern->getIdentifier(),
-                            Pattern->getLocStart(), PrevDecl,
+                            Pattern->getLocStart(), Pattern->getLocation(),
+                            Pattern->getIdentifier(), PrevDecl,
                             /*DelayTypeCreation=*/true);
 
   if (QualifierLoc)
@@ -902,8 +901,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   CXXRecordDecl *Record
     = CXXRecordDecl::Create(SemaRef.Context, D->getTagKind(), Owner,
-                            D->getLocation(), D->getIdentifier(),
-                            D->getLocStart(), PrevDecl);
+                            D->getLocStart(), D->getLocation(),
+                            D->getIdentifier(), PrevDecl);
 
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(D, Record))
@@ -1958,7 +1957,8 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
     = ClassTemplatePartialSpecializationDecl::Create(SemaRef.Context, 
                                                      PartialSpec->getTagKind(),
                                                      Owner, 
-                                                     PartialSpec->getLocation(), 
+                                                     PartialSpec->getLocStart(),
+                                                     PartialSpec->getLocation(),
                                                      InstParams,
                                                      ClassTemplate, 
                                                      Converted.data(),

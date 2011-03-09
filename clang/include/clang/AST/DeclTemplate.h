@@ -1346,7 +1346,8 @@ class ClassTemplateSpecializationDecl
 
 protected:
   ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK, TagKind TK,
-                                  DeclContext *DC, SourceLocation L,
+                                  DeclContext *DC, SourceLocation StartLoc,
+                                  SourceLocation IdLoc,
                                   ClassTemplateDecl *SpecializedTemplate,
                                   const TemplateArgument *Args,
                                   unsigned NumArgs,
@@ -1356,7 +1357,8 @@ protected:
 
 public:
   static ClassTemplateSpecializationDecl *
-  Create(ASTContext &Context, TagKind TK, DeclContext *DC, SourceLocation L,
+  Create(ASTContext &Context, TagKind TK, DeclContext *DC,
+         SourceLocation StartLoc, SourceLocation IdLoc,
          ClassTemplateDecl *SpecializedTemplate,
          const TemplateArgument *Args,
          unsigned NumArgs,
@@ -1518,8 +1520,6 @@ public:
     return ExplicitInfo ? ExplicitInfo->TemplateKeywordLoc : SourceLocation();
   }
 
-  SourceLocation getInnerLocStart() const { return getTemplateKeywordLoc(); }
-
   SourceRange getSourceRange() const;
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
@@ -1576,7 +1576,9 @@ class ClassTemplatePartialSpecializationDecl
       InstantiatedFromMember;
     
   ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
-                                         DeclContext *DC, SourceLocation L,
+                                         DeclContext *DC,
+                                         SourceLocation StartLoc,
+                                         SourceLocation IdLoc,
                                          TemplateParameterList *Params,
                                          ClassTemplateDecl *SpecializedTemplate,
                                          const TemplateArgument *Args,
@@ -1594,7 +1596,8 @@ class ClassTemplatePartialSpecializationDecl
 
 public:
   static ClassTemplatePartialSpecializationDecl *
-  Create(ASTContext &Context, TagKind TK,DeclContext *DC, SourceLocation L,
+  Create(ASTContext &Context, TagKind TK,DeclContext *DC,
+         SourceLocation StartLoc, SourceLocation IdLoc,
          TemplateParameterList *Params,
          ClassTemplateDecl *SpecializedTemplate,
          const TemplateArgument *Args,

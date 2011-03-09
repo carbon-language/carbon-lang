@@ -2094,9 +2094,9 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
   }
   
   // Create the enum declaration.
-  EnumDecl *D2 = EnumDecl::Create(Importer.getToContext(), DC, Loc,
-                                  Name.getAsIdentifierInfo(),
-                                  Importer.Import(D->getLocStart()), 0,
+  EnumDecl *D2 = EnumDecl::Create(Importer.getToContext(), DC,
+                                  Importer.Import(D->getLocStart()),
+                                  Loc, Name.getAsIdentifierInfo(), 0,
                                   D->isScoped(), D->isScopedUsingClassTag(),
                                   D->isFixed());
   // Import the qualifier, if any.
@@ -2209,20 +2209,18 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   
   // Create the record declaration.
   RecordDecl *D2 = AdoptDecl;
+  SourceLocation StartLoc = Importer.Import(D->getLocStart());
   if (!D2) {
     if (isa<CXXRecordDecl>(D)) {
       CXXRecordDecl *D2CXX = CXXRecordDecl::Create(Importer.getToContext(), 
                                                    D->getTagKind(),
-                                                   DC, Loc,
-                                                   Name.getAsIdentifierInfo(), 
-                                           Importer.Import(D->getLocStart()));
+                                                   DC, StartLoc, Loc,
+                                                   Name.getAsIdentifierInfo());
       D2 = D2CXX;
       D2->setAccess(D->getAccess());
     } else {
       D2 = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
-                                    DC, Loc,
-                                    Name.getAsIdentifierInfo(), 
-                                    Importer.Import(D->getLocStart()));
+                              DC, StartLoc, Loc, Name.getAsIdentifierInfo());
     }
     
     D2->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
@@ -3584,12 +3582,12 @@ Decl *ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   CXXRecordDecl *DTemplated = D->getTemplatedDecl();
   
   // Create the declaration that is being templated.
+  SourceLocation StartLoc = Importer.Import(DTemplated->getLocStart());
+  SourceLocation IdLoc = Importer.Import(DTemplated->getLocation());
   CXXRecordDecl *D2Templated = CXXRecordDecl::Create(Importer.getToContext(),
                                                      DTemplated->getTagKind(),
-                                                     DC, 
-                                     Importer.Import(DTemplated->getLocation()),
-                                                     Name.getAsIdentifierInfo(),                                                       
-                               Importer.Import(DTemplated->getLocStart()));
+                                                     DC, StartLoc, IdLoc,
+                                                   Name.getAsIdentifierInfo());
   D2Templated->setAccess(DTemplated->getAccess());
   D2Templated->setQualifierInfo(Importer.Import(DTemplated->getQualifierLoc()));
   D2Templated->setLexicalDeclContext(LexicalDC);
@@ -3654,7 +3652,8 @@ Decl *ASTNodeImporter::VisitClassTemplateSpecializationDecl(
   }
   
   // Import the location of this declaration.
-  SourceLocation Loc = Importer.Import(D->getLocation());
+  SourceLocation StartLoc = Importer.Import(D->getLocStart());
+  SourceLocation IdLoc = Importer.Import(D->getLocation());
 
   // Import template arguments.
   llvm::SmallVector<TemplateArgument, 2> TemplateArgs;
@@ -3686,7 +3685,8 @@ Decl *ASTNodeImporter::VisitClassTemplateSpecializationDecl(
     // Create a new specialization.
     D2 = ClassTemplateSpecializationDecl::Create(Importer.getToContext(), 
                                                  D->getTagKind(), DC, 
-                                                 Loc, ClassTemplate,
+                                                 StartLoc, IdLoc,
+                                                 ClassTemplate,
                                                  TemplateArgs.data(), 
                                                  TemplateArgs.size(), 
                                                  /*PrevDecl=*/0);

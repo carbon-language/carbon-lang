@@ -569,7 +569,7 @@ public:
 
   /// getInnerLocStart - Return SourceLocation representing start of source
   /// range ignoring outer template declarations.
-  virtual SourceLocation getInnerLocStart() const { return InnerLocStart; }
+  SourceLocation getInnerLocStart() const { return InnerLocStart; }
   void setInnerLocStart(SourceLocation L) { InnerLocStart = L; }
 
   /// getOuterLocStart - Return SourceLocation representing start of source
@@ -2134,7 +2134,7 @@ public:
 
   /// getInnerLocStart - Return SourceLocation representing start of source
   /// range ignoring outer template declarations.
-  virtual SourceLocation getInnerLocStart() const { return getLocStart(); }
+  SourceLocation getInnerLocStart() const { return getLocStart(); }
 
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
@@ -2296,10 +2296,10 @@ class EnumDecl : public TagDecl {
     NumBitsMask = (1 << NumBitsWidth) - 1
   };
 
-  EnumDecl(DeclContext *DC, SourceLocation L,
-           IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation StartL,
+  EnumDecl(DeclContext *DC, SourceLocation StartLoc, SourceLocation IdLoc,
+           IdentifierInfo *Id, EnumDecl *PrevDecl,
            bool Scoped, bool ScopedUsingClassTag, bool Fixed)
-    : TagDecl(Enum, TTK_Enum, DC, L, Id, PrevDecl, StartL),
+    : TagDecl(Enum, TTK_Enum, DC, IdLoc, Id, PrevDecl, StartLoc),
       InstantiatedFrom(0) {
     assert(Scoped || !ScopedUsingClassTag);
     IntegerType = (const Type*)0;
@@ -2325,8 +2325,8 @@ public:
   }
 
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
-                          SourceLocation L, IdentifierInfo *Id,
-                          SourceLocation StartL, EnumDecl *PrevDecl,
+                          SourceLocation StartLoc, SourceLocation IdLoc,
+                          IdentifierInfo *Id, EnumDecl *PrevDecl,
                           bool IsScoped, bool IsScopedUsingClassTag,
                           bool IsFixed);
   static EnumDecl *Create(ASTContext &C, EmptyShell Empty);
@@ -2481,14 +2481,13 @@ class RecordDecl : public TagDecl {
 
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
-             SourceLocation L, IdentifierInfo *Id,
-             RecordDecl *PrevDecl, SourceLocation StartL);
+             SourceLocation StartLoc, SourceLocation IdLoc,
+             IdentifierInfo *Id, RecordDecl *PrevDecl);
 
 public:
   static RecordDecl *Create(const ASTContext &C, TagKind TK, DeclContext *DC,
-                            SourceLocation L, IdentifierInfo *Id,
-                            SourceLocation StartL = SourceLocation(),
-                            RecordDecl* PrevDecl = 0);
+                            SourceLocation StartLoc, SourceLocation IdLoc,
+                            IdentifierInfo *Id, RecordDecl* PrevDecl = 0);
   static RecordDecl *Create(const ASTContext &C, EmptyShell Empty);
 
   const RecordDecl *getPreviousDeclaration() const {

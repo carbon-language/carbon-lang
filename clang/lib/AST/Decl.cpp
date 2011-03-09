@@ -2110,18 +2110,19 @@ void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
 // EnumDecl Implementation
 //===----------------------------------------------------------------------===//
 
-EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                           IdentifierInfo *Id, SourceLocation TKL,
+EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC,
+                           SourceLocation StartLoc, SourceLocation IdLoc,
+                           IdentifierInfo *Id,
                            EnumDecl *PrevDecl, bool IsScoped,
                            bool IsScopedUsingClassTag, bool IsFixed) {
-  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, PrevDecl, TKL,
+  EnumDecl *Enum = new (C) EnumDecl(DC, StartLoc, IdLoc, Id, PrevDecl,
                                     IsScoped, IsScopedUsingClassTag, IsFixed);
   C.getTypeDeclType(Enum, PrevDecl);
   return Enum;
 }
 
 EnumDecl *EnumDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) EnumDecl(0, SourceLocation(), 0, 0, SourceLocation(),
+  return new (C) EnumDecl(0, SourceLocation(), SourceLocation(), 0, 0,
                           false, false, false);
 }
 
@@ -2142,10 +2143,10 @@ void EnumDecl::completeDefinition(QualType NewType,
 // RecordDecl Implementation
 //===----------------------------------------------------------------------===//
 
-RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
-                       IdentifierInfo *Id, RecordDecl *PrevDecl,
-                       SourceLocation TKL)
-  : TagDecl(DK, TK, DC, L, Id, PrevDecl, TKL) {
+RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
+                       SourceLocation StartLoc, SourceLocation IdLoc,
+                       IdentifierInfo *Id, RecordDecl *PrevDecl)
+  : TagDecl(DK, TK, DC, IdLoc, Id, PrevDecl, StartLoc) {
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   HasObjectMember = false;
@@ -2154,17 +2155,17 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
 }
 
 RecordDecl *RecordDecl::Create(const ASTContext &C, TagKind TK, DeclContext *DC,
-                               SourceLocation L, IdentifierInfo *Id,
-                               SourceLocation TKL, RecordDecl* PrevDecl) {
-
-  RecordDecl* R = new (C) RecordDecl(Record, TK, DC, L, Id, PrevDecl, TKL);
+                               SourceLocation StartLoc, SourceLocation IdLoc,
+                               IdentifierInfo *Id, RecordDecl* PrevDecl) {
+  RecordDecl* R = new (C) RecordDecl(Record, TK, DC, StartLoc, IdLoc, Id,
+                                     PrevDecl);
   C.getTypeDeclType(R, PrevDecl);
   return R;
 }
 
 RecordDecl *RecordDecl::Create(const ASTContext &C, EmptyShell Empty) {
-  return new (C) RecordDecl(Record, TTK_Struct, 0, SourceLocation(), 0, 0,
-                            SourceLocation());
+  return new (C) RecordDecl(Record, TTK_Struct, 0, SourceLocation(),
+                            SourceLocation(), 0, 0);
 }
 
 bool RecordDecl::isInjectedClassName() const {
