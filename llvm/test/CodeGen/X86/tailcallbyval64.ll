@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64  -tailcallopt  | grep TAILCALL
 ; Expect 2 rep;movs because of tail call byval lowering.
-; RUN: llc < %s -march=x86-64  -tailcallopt  | grep rep | wc -l | grep 2
+; RUN: llc < %s -march=x86-64  -tailcallopt  | egrep {rep|memcpy} | wc -l | grep 2
 ; A sequence of copyto/copyfrom virtual registers is used to deal with byval
 ; lowering appearing after moving arguments to registers. The following two
 ; checks verify that the register allocator changes those sequences to direct

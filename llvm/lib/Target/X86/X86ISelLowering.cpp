@@ -1564,7 +1564,7 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
   SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i32);
 
   return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
-                       /*isVolatile*/false, /*AlwaysInline=*/true,
+                       /*isVolatile*/false, /*AlwaysInline=*/false,
                        MachinePointerInfo(), MachinePointerInfo());
 }
 
