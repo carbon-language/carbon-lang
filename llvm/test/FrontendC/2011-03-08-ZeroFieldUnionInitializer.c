@@ -1,3 +1,4 @@
+// RUN: %llvmgcc -S %s
 typedef struct {
   union {
     struct { } __attribute((packed));
