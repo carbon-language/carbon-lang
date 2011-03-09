@@ -251,6 +251,7 @@ public:
 private:
   bool CanConvertToScalar(Value *V, uint64_t Offset);
   void MergeInType(const Type *In, uint64_t Offset);
+  bool MergeInVectorType(const VectorType *VInTy, uint64_t Offset);
   void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
 
   Value *ConvertScalar_ExtractValue(Value *NV, const Type *ToType,
@@ -314,19 +315,8 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   // If the In type is a vector that is the same size as the alloca, see if it
   // matches the existing VecTy.
   if (const VectorType *VInTy = dyn_cast<VectorType>(In)) {
-    // Remember if we saw a vector type.
-    HadAVector = true;
-
-    if (VInTy->getBitWidth()/8 == AllocaSize && Offset == 0) {
-      // If we're storing/loading a vector of the right size, allow it as a
-      // vector.  If this the first vector we see, remember the type so that
-      // we know the element size.  If this is a subsequent access, ignore it
-      // even if it is a differing type but the same size.  Worst case we can
-      // bitcast the resultant vectors.
-      if (VectorTy == 0)
-        VectorTy = VInTy;
+    if (MergeInVectorType(VInTy, Offset))
       return;
-    }
   } else if (In->isFloatTy() || In->isDoubleTy() ||
              (In->isIntegerTy() && In->getPrimitiveSizeInBits() >= 8 &&
               isPowerOf2_32(In->getPrimitiveSizeInBits()))) {
@@ -347,6 +337,27 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   // Otherwise, we have a case that we can't handle with an optimized vector
   // form.  We can still turn this into a large integer.
   VectorTy = Type::getVoidTy(In->getContext());
+}
+
+/// MergeInVectorType - Handles the vector case of MergeInType, returning true
+/// if the type was successfully merged and false otherwise.
+bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
+                                            uint64_t Offset) {
+  // Remember if we saw a vector type.
+  HadAVector = true;
+
+  if (VInTy->getBitWidth()/8 == AllocaSize && Offset == 0) {
+    // If we're storing/loading a vector of the right size, allow it as a
+    // vector.  If this the first vector we see, remember the type so that
+    // we know the element size.  If this is a subsequent access, ignore it
+    // even if it is a differing type but the same size.  Worst case we can
+    // bitcast the resultant vectors.
+    if (VectorTy == 0)
+      VectorTy = VInTy;
+    return true;
+  }
+
+  return false;
 }
 
 /// CanConvertToScalar - V is a pointer.  If we can convert the pointee and all
