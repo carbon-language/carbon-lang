@@ -702,6 +702,7 @@ void ASTDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
 void ASTDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   VisitVarDecl(PD);
   PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
+  PD->setKNRPromoted(Record[Idx++]);
   PD->setHasInheritedDefaultArg(Record[Idx++]);
   if (Record[Idx++]) // hasUninstantiatedDefaultArg.
     PD->setUninstantiatedDefaultArg(Reader.ReadExpr(F));

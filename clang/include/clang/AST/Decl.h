@@ -1099,7 +1099,13 @@ class ParmVarDecl : public VarDecl {
   /// FIXME: Also can be paced into the bitfields in Decl.
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
-  bool HasInheritedDefaultArg : 1;
+
+  /// Whether this parameter inherits a default argument from a prior
+  /// declaration.
+  unsigned HasInheritedDefaultArg : 1;
+
+  /// Whether this parameter undergoes K&R argument promotion.
+  unsigned IsKNRPromoted : 1;
 
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
@@ -1107,7 +1113,8 @@ protected:
               QualType T, TypeSourceInfo *TInfo,
               StorageClass S, StorageClass SCAsWritten, Expr *DefArg)
     : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S, SCAsWritten),
-      objcDeclQualifier(OBJC_TQ_None), HasInheritedDefaultArg(false) {
+      objcDeclQualifier(OBJC_TQ_None), HasInheritedDefaultArg(false),
+      IsKNRPromoted(false) {
     setDefaultArg(DefArg);
   }
 
@@ -1125,6 +1132,17 @@ public:
   void setObjCDeclQualifier(ObjCDeclQualifier QTVal) {
     objcDeclQualifier = QTVal;
   }
+
+  /// True if the value passed to this parameter must undergo
+  /// K&R-style default argument promotion:
+  ///
+  /// C99 6.5.2.2.
+  ///   If the expression that denotes the called function has a type
+  ///   that does not include a prototype, the integer promotions are
+  ///   performed on each argument, and arguments that have type float
+  ///   are promoted to double.
+  bool isKNRPromoted() const { return IsKNRPromoted; }
+  void setKNRPromoted(bool promoted) { IsKNRPromoted = promoted; }
 
   Expr *getDefaultArg();
   const Expr *getDefaultArg() const {

@@ -1873,9 +1873,12 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           } else if (!FTI.hasPrototype) {
             if (ArgTy->isPromotableIntegerType()) {
               ArgTy = Context.getPromotedIntegerType(ArgTy);
+              Param->setKNRPromoted(true);
             } else if (const BuiltinType* BTy = ArgTy->getAs<BuiltinType>()) {
-              if (BTy->getKind() == BuiltinType::Float)
+              if (BTy->getKind() == BuiltinType::Float) {
                 ArgTy = Context.DoubleTy;
+                Param->setKNRPromoted(true);
+              }
             }
           }
 
