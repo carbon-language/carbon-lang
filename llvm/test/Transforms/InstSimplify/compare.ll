@@ -245,6 +245,14 @@ define i1 @urem5(i16 %X, i32 %Y) {
 ; CHECK: ret i1 true
 }
 
+define i1 @urem6(i32 %X, i32 %Y) {
+; CHECK: @urem6
+  %A = urem i32 %X, %Y
+  %B = icmp ugt i32 %Y, %A
+  ret i1 %B
+; CHECK: ret i1 true
+}
+
 define i1 @srem1(i32 %X) {
 ; CHECK: @srem1
   %A = srem i32 %X, -5
