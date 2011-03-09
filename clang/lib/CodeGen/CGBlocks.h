@@ -173,6 +173,10 @@ public:
   /// need to be run even in GC mode.
   bool HasCXXObject : 1;
 
+  /// UsesStret : True if the block uses an stret return.  Mutable
+  /// because it gets set later in the block-creation process.
+  mutable bool UsesStret : 1;
+
   const llvm::StructType *StructureType;
   const BlockExpr *Block;
   CharUnits BlockSize;

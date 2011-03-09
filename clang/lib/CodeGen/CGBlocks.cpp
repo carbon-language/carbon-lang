@@ -27,7 +27,7 @@ using namespace CodeGen;
 
 CGBlockInfo::CGBlockInfo(const BlockExpr *blockExpr, const char *N)
   : Name(N), CXXThisIndex(0), CanBeGlobal(false), NeedsCopyDispose(false),
-    HasCXXObject(false), StructureType(0), Block(blockExpr) {
+    HasCXXObject(false), UsesStret(false), StructureType(0), Block(blockExpr) {
     
   // Skip asm prefix, if any.
   if (Name && Name[0] == '\01')
@@ -102,23 +102,6 @@ static llvm::Constant *buildBlockDescriptor(CodeGenModule &CGM,
                              init, "__block_descriptor_tmp");
 
   return llvm::ConstantExpr::getBitCast(global, CGM.getBlockDescriptorType());
-}
-
-static BlockFlags computeBlockFlag(CodeGenModule &CGM,
-                                   const BlockExpr *BE,
-                                   BlockFlags flags) {
-  const FunctionType *ftype = BE->getFunctionType();
-  
-  // This is a bit overboard.
-  CallArgList args;
-  const CGFunctionInfo &fnInfo =
-    CGM.getTypes().getFunctionInfo(ftype->getResultType(), args,
-                                   ftype->getExtInfo());
-
-  if (CGM.ReturnTypeUsesSRet(fnInfo))
-    flags |= BLOCK_USE_STRET;
-
-  return flags;
 }
 
 /*
@@ -536,7 +519,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
   BlockFlags flags = BLOCK_HAS_SIGNATURE;
   if (blockInfo.NeedsCopyDispose) flags |= BLOCK_HAS_COPY_DISPOSE;
   if (blockInfo.HasCXXObject) flags |= BLOCK_HAS_CXX_OBJ;
-  flags = computeBlockFlag(CGM, blockInfo.getBlockExpr(), flags);
+  if (blockInfo.UsesStret) flags |= BLOCK_USE_STRET;
 
   // Initialize the block literal.
   Builder.CreateStore(isa, Builder.CreateStructGEP(blockAddr, 0, "block.isa"));
@@ -747,7 +730,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
   // Load the function.
   llvm::Value *Func = Builder.CreateLoad(FuncPtr, "tmp");
 
-  const FunctionType *FuncTy = FnType->getAs<FunctionType>();
+  const FunctionType *FuncTy = FnType->castAs<FunctionType>();
   QualType ResultType = FuncTy->getResultType();
 
   const CGFunctionInfo &FnInfo =
@@ -836,8 +819,9 @@ static llvm::Constant *buildGlobalBlock(CodeGenModule &CGM,
   fields[0] = CGM.getNSConcreteGlobalBlock();
 
   // __flags
-  BlockFlags flags = computeBlockFlag(CGM, blockInfo.getBlockExpr(),
-                                      BLOCK_IS_GLOBAL | BLOCK_HAS_SIGNATURE);
+  BlockFlags flags = BLOCK_IS_GLOBAL | BLOCK_HAS_SIGNATURE;
+  if (blockInfo.UsesStret) flags |= BLOCK_USE_STRET;
+                                      
   fields[1] = llvm::ConstantInt::get(CGM.IntTy, flags.getBitMask());
 
   // Reserved
@@ -915,6 +899,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   const CGFunctionInfo &fnInfo =
     CGM.getTypes().getFunctionInfo(fnType->getResultType(), args,
                                    fnType->getExtInfo());
+  if (CGM.ReturnTypeUsesSRet(fnInfo))
+    blockInfo.UsesStret = true;
+
   const llvm::FunctionType *fnLLVMType =
     CGM.getTypes().GetFunctionType(fnInfo, fnType->isVariadic());
 
