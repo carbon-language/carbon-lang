@@ -157,3 +157,17 @@ define void @test10(<4 x i256> %x, <2 x i256> %y) {
 ; CHECK-NEXT: insertelement <2 x i512>
 ; CHECK-NEXT: bitcast <2 x i512> %tmp2 to <4 x i256>
 }
+
+%union.v = type { <2 x i64> }
+
+define void @test11(<2 x i64> %x) {
+  %a = alloca %union.v
+  %p = getelementptr inbounds %union.v* %a, i32 0, i32 0
+  store <2 x i64> %x, <2 x i64>* %p, align 16
+  %q = getelementptr inbounds %union.v* %a, i32 0, i32 0
+  %r = bitcast <2 x i64>* %q to <4 x float>*
+  %b = load <4 x float>* %r, align 16
+  ret void
+; CHECK: @test11
+; CHECK-NOT: alloca
+}
