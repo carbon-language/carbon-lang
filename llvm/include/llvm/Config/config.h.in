@@ -567,6 +567,9 @@
 /* LLVM architecture name for the native architecture, if available */
 #undef LLVM_NATIVE_ARCH
 
+/* LLVM name for the native AsmParser init function, if available */
+#undef LLVM_NATIVE_ASMPARSER
+
 /* LLVM name for the native AsmPrinter init function, if available */
 #undef LLVM_NATIVE_ASMPRINTER
 

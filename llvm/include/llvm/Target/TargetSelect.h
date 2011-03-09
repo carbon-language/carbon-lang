@@ -120,6 +120,19 @@ namespace llvm {
     return true;
 #endif
   }  
+
+  /// InitializeNativeTargetAsmParser - The main program should call
+  /// this function to initialize the native target asm parser.
+  inline bool InitializeNativeTargetAsmParser() {
+  // If we have a native target, initialize the corresponding asm parser.
+#ifdef LLVM_NATIVE_ASMPARSER
+    LLVM_NATIVE_ASMPARSER();
+    return false;
+#else
+    return true;
+#endif
+  }  
+
 }
 
 #endif
