@@ -327,7 +327,7 @@ public:
   }
 
   MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
-    return new X86ELFObjectWriter(true, OSType, ELF::EM_386, true);
+    return new X86ELFObjectWriter(true, OSType, ELF::EM_X86_64, true);
   }
 };
 
