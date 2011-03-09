@@ -465,6 +465,10 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
 
   Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
   ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
+  
+  // May be founf in property's qualified list.
+  if (!Getter)
+    Getter = LookupMethodInQualifiedType(Sel, OPT, true);
 
   // If this reference is in an @implementation, check for 'private' methods.
   if (!Getter)
@@ -484,6 +488,11 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     SelectorTable::constructSetterName(PP.getIdentifierTable(),
                                        PP.getSelectorTable(), Member);
   ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
+  
+  // May be founf in property's qualified list.
+  if (!Setter)
+    Setter = LookupMethodInQualifiedType(SetterSel, OPT, true);
+  
   if (!Setter) {
     // If this reference is in an @implementation, also check for 'private'
     // methods.
@@ -492,7 +501,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   // Look through local category implementations associated with the class.
   if (!Setter)
     Setter = IFace->getCategoryInstanceMethod(SetterSel);
-
+    
   if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
     return ExprError();
 
@@ -1087,15 +1096,9 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       if (const ObjCObjectPointerType *QIdTy 
                                    = ReceiverType->getAsObjCQualifiedIdType()) {
         // Search protocols for instance methods.
-        for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
-               E = QIdTy->qual_end(); I != E; ++I) {
-          ObjCProtocolDecl *PDecl = *I;
-          if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
-            break;
-          // Since we aren't supporting "Class<foo>", look for a class method.
-          if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
-            break;
-        }
+        Method = LookupMethodInQualifiedType(Sel, QIdTy, true);
+        if (!Method)
+          Method = LookupMethodInQualifiedType(Sel, QIdTy, false);
       } else if (const ObjCObjectPointerType *OCIType
                    = ReceiverType->getAsObjCInterfacePointerType()) {
         // We allow sending a message to a pointer to an interface (an object).
@@ -1105,14 +1108,10 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         // The idea is to add class info to MethodPool.
         Method = ClassDecl->lookupInstanceMethod(Sel);
 
-        if (!Method) {
+        if (!Method)
           // Search protocol qualifiers.
-          for (ObjCObjectPointerType::qual_iterator QI = OCIType->qual_begin(),
-                 E = OCIType->qual_end(); QI != E; ++QI) {
-            if ((Method = (*QI)->lookupInstanceMethod(Sel)))
-              break;
-          }
-        }
+          Method = LookupMethodInQualifiedType(Sel, OCIType, true);
+        
         bool forwardClass = false;
         if (!Method) {
           // If we have implementations in scope, check "private" methods.
