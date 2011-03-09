@@ -2235,7 +2235,7 @@ bool ilp_ls_rr_sort::isReady(SUnit *SU, unsigned CurCycle) const {
   return true;
 }
 
-bool canEnableCoaelscing(SUnit *SU) {
+static bool canEnableCoalescing(SUnit *SU) {
   unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
   if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
     // CopyToReg should be close to its uses to facilitate coalescing and
@@ -2278,8 +2278,8 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   }
 
   if (!DisableSchedRegPressure && (LPDiff > 0 || RPDiff > 0)) {
-    bool LReduce = canEnableCoaelscing(left);
-    bool RReduce = canEnableCoaelscing(right);
+    bool LReduce = canEnableCoalescing(left);
+    bool RReduce = canEnableCoalescing(right);
     DEBUG(if (LReduce != RReduce) ++FactorCount[FactPressureDiff]);
     if (LReduce && !RReduce) return false;
     if (RReduce && !LReduce) return true;
