@@ -46,8 +46,10 @@ MemoryBuffer::~MemoryBuffer() { }
 
 /// init - Initialize this MemoryBuffer as a reference to externally allocated
 /// memory, memory that we know is already null terminated.
-void MemoryBuffer::init(const char *BufStart, const char *BufEnd) {
-  assert(BufEnd[0] == 0 && "Buffer is not null terminated!");
+void MemoryBuffer::init(const char *BufStart, const char *BufEnd,
+                        bool RequiresNullTerminator) {
+  assert((BufEnd[0] == 0 || !RequiresNullTerminator) &&
+         "Buffer is not null terminated!");
   BufferStart = BufStart;
   BufferEnd = BufEnd;
 }
@@ -65,18 +67,19 @@ static void CopyStringRef(char *Memory, StringRef Data) {
 
 /// GetNamedBuffer - Allocates a new MemoryBuffer with Name copied after it.
 template <typename T>
-static T* GetNamedBuffer(StringRef Buffer, StringRef Name) {
+static T* GetNamedBuffer(StringRef Buffer, StringRef Name,
+                         bool RequiresNullTerminator) {
   char *Mem = static_cast<char*>(operator new(sizeof(T) + Name.size() + 1));
   CopyStringRef(Mem + sizeof(T), Name);
-  return new (Mem) T(Buffer);
+  return new (Mem) T(Buffer, RequiresNullTerminator);
 }
 
 namespace {
 /// MemoryBufferMem - Named MemoryBuffer pointing to a block of memory.
 class MemoryBufferMem : public MemoryBuffer {
 public:
-  MemoryBufferMem(StringRef InputData) {
-    init(InputData.begin(), InputData.end());
+  MemoryBufferMem(StringRef InputData, bool RequiresNullTerminator) {
+    init(InputData.begin(), InputData.end(), RequiresNullTerminator);
   }
 
   virtual const char *getBufferIdentifier() const {
@@ -90,7 +93,7 @@ public:
 /// that EndPtr[0] must be a null byte and be accessible!
 MemoryBuffer *MemoryBuffer::getMemBuffer(StringRef InputData,
                                          StringRef BufferName) {
-  return GetNamedBuffer<MemoryBufferMem>(InputData, BufferName);
+  return GetNamedBuffer<MemoryBufferMem>(InputData, BufferName, true);
 }
 
 /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
@@ -127,7 +130,7 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
   char *Buf = Mem + AlignedStringLen;
   Buf[Size] = 0; // Null terminate buffer.
 
-  return new (Mem) MemoryBufferMem(StringRef(Buf, Size));
+  return new (Mem) MemoryBufferMem(StringRef(Buf, Size), true);
 }
 
 /// getNewMemBuffer - Allocate a new MemoryBuffer of the specified size that
@@ -172,11 +175,19 @@ namespace {
 /// sys::Path::UnMapFilePages method.
 class MemoryBufferMMapFile : public MemoryBufferMem {
 public:
-  MemoryBufferMMapFile(StringRef Buffer)
-    : MemoryBufferMem(Buffer) { }
+  MemoryBufferMMapFile(StringRef Buffer, bool RequiresNullTerminator)
+    : MemoryBufferMem(Buffer, RequiresNullTerminator) { }
 
   ~MemoryBufferMMapFile() {
-    sys::Path::UnMapFilePages(getBufferStart(), getBufferSize());
+    static int PageSize = sys::Process::GetPageSize();
+
+    uintptr_t Start = reinterpret_cast<uintptr_t>(getBufferStart());
+    size_t Size = getBufferSize();
+    uintptr_t RealStart = Start & ~(PageSize - 1);
+    size_t RealSize = Size + (Start - RealStart);
+
+    sys::Path::UnMapFilePages(reinterpret_cast<const char*>(RealStart),
+                              RealSize);
   }
 };
 }
@@ -205,12 +216,44 @@ error_code MemoryBuffer::getFile(const char *Filename,
   return ret;
 }
 
+static bool shouldUseMmap(size_t FileSize,
+                          size_t MapSize,
+                          off_t Offset,
+                          bool RequiresNullTerminator,
+                          int PageSize) {
+  // We don't use mmap for small files because this can severely fragment our
+  // address space.
+  if (MapSize < 4096*4)
+    return false;
+
+  if (!RequiresNullTerminator)
+    return true;
+
+  // If we need a null terminator and the end of the map is inside the file,
+  // we cannot use mmap.
+  size_t End = Offset + MapSize;
+  assert(End <= FileSize);
+  if (End != FileSize)
+    return false;
+
+  // Don't try to map files that are exactly a multiple of the system page size
+  // if we need a null terminator.
+  if ((FileSize & (PageSize -1)) == 0)
+    return false;
+
+  return true;
+}
+
 error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                      OwningPtr<MemoryBuffer> &result,
-                                     int64_t FileSize) {
+                                     size_t FileSize, size_t MapSize,
+                                     off_t Offset,
+                                     bool RequiresNullTerminator) {
+  static int PageSize = sys::Process::GetPageSize();
+
   // If we don't know the file size, use fstat to find out.  fstat on an open
   // file descriptor is cheaper than stat on a random path.
-  if (FileSize == -1) {
+  if (FileSize == size_t(-1)) {
     struct stat FileInfo;
     // TODO: This should use fstat64 when available.
     if (fstat(FD, &FileInfo) == -1) {
@@ -219,23 +262,26 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
     FileSize = FileInfo.st_size;
   }
 
+  // Default is to map the full file.
+  if (MapSize == size_t(-1))
+    MapSize = FileSize;
 
-  // If the file is large, try to use mmap to read it in.  We don't use mmap
-  // for small files, because this can severely fragment our address space. Also
-  // don't try to map files that are exactly a multiple of the system page size,
-  // as the file would not have the required null terminator.
-  //
-  // FIXME: Can we just mmap an extra page in the latter case?
-  if (FileSize >= 4096*4 &&
-      (FileSize & (sys::Process::GetPageSize()-1)) != 0) {
-    if (const char *Pages = sys::Path::MapInFilePages(FD, FileSize)) {
+  if (shouldUseMmap(FileSize, MapSize, Offset, RequiresNullTerminator,
+                    PageSize)) {
+    off_t RealMapOffset = Offset & ~(PageSize - 1);
+    off_t Delta = Offset - RealMapOffset;
+    size_t RealMapSize = MapSize + Delta;
+
+    if (const char *Pages = sys::Path::MapInFilePages(FD,
+                                                      RealMapSize,
+                                                      RealMapOffset)) {
       result.reset(GetNamedBuffer<MemoryBufferMMapFile>(
-        StringRef(Pages, FileSize), Filename));
+          StringRef(Pages + Delta, MapSize), Filename, RequiresNullTerminator));
       return success;
     }
   }
 
-  MemoryBuffer *Buf = MemoryBuffer::getNewUninitMemBuffer(FileSize, Filename);
+  MemoryBuffer *Buf = MemoryBuffer::getNewUninitMemBuffer(MapSize, Filename);
   if (!Buf) {
     // Failed to create a buffer. The only way it can fail is if
     // new(std::nothrow) returns 0.
@@ -245,7 +291,10 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
   OwningPtr<MemoryBuffer> SB(Buf);
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
 
-  size_t BytesLeft = FileSize;
+  size_t BytesLeft = MapSize;
+  if (lseek(FD, Offset, SEEK_SET) == -1)
+    return error_code(errno, posix_category());
+
   while (BytesLeft) {
     ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
     if (NumRead == -1) {
