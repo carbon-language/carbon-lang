@@ -9,6 +9,7 @@ add_llvm_library(LLVMCore
   Constants.cpp
   Core.cpp
   DebugLoc.cpp
+  DebugInfoProbe.cpp
   Dominators.cpp
   Function.cpp
   GVMaterializer.cpp
