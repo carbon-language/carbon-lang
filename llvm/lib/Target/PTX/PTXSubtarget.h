@@ -54,6 +54,14 @@ namespace llvm {
 
       bool use64BitAddresses() const { return Use64BitAddresses; }
 
+      bool supportsSM13() const { return PTXShaderModel >= PTX_SM_1_3; }
+
+      bool supportsSM20() const { return PTXShaderModel >= PTX_SM_2_0; }
+
+      bool supportsPTX20() const { return PTXVersion >= PTX_VERSION_2_0; }
+
+      bool supportsPTX21() const { return PTXVersion >= PTX_VERSION_2_1; }
+
       std::string ParseSubtargetFeatures(const std::string &FS,
                                          const std::string &CPU);
   }; // class PTXSubtarget

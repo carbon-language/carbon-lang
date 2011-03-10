@@ -21,8 +21,21 @@ include "PTXInstrFormats.td"
 // Code Generation Predicates
 //===----------------------------------------------------------------------===//
 
+// Addressing
 def Use32BitAddresses : Predicate<"!getSubtarget().use64BitAddresses()">;
 def Use64BitAddresses : Predicate<"getSubtarget().use64BitAddresses()">;
+
+// Shader Model Support
+def SupportsSM13       : Predicate<"getSubtarget().supportsSM13()">;
+def DoesNotSupportSM13 : Predicate<"!getSubtarget().supportsSM13()">;
+def SupportsSM20       : Predicate<"getSubtarget().supportsSM20()">;
+def DoesNotSupportSM20 : Predicate<"!getSubtarget().supportsSM20()">;
+
+// PTX Version Support
+def SupportsPTX20       : Predicate<"getSubtarget().supportsPTX20()">;
+def DoesNotSupportPTX20 : Predicate<"!getSubtarget().supportsPTX20()">;
+def SupportsPTX21       : Predicate<"getSubtarget().supportsPTX21()">;
+def DoesNotSupportPTX21 : Predicate<"!getSubtarget().supportsPTX21()">;
 
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff
@@ -165,8 +178,8 @@ def PTXret
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
-// Three-operand floating-point instruction template
-multiclass FLOAT3<string opcstr, SDNode opnode> {
+//===- Floating-Point Instructions - 3 Operand Form -----------------------===//
+multiclass PTX_FLOAT_3OP<string opcstr, SDNode opnode> {
   def rr32 : InstPTX<(outs RRegf32:$d),
                      (ins RRegf32:$a, RRegf32:$b),
                      !strconcat(opcstr, ".f32\t$d, $a, $b"),
@@ -183,6 +196,34 @@ multiclass FLOAT3<string opcstr, SDNode opnode> {
                      (ins RRegf64:$a, f64imm:$b),
                      !strconcat(opcstr, ".f64\t$d, $a, $b"),
                      [(set RRegf64:$d, (opnode RRegf64:$a, fpimm:$b))]>;
+}
+
+//===- Floating-Point Instructions - 4 Operand Form -----------------------===//
+multiclass PTX_FLOAT_4OP<string opcstr, SDNode opnode1, SDNode opnode2> {
+  def rrr32 : InstPTX<(outs RRegf32:$d),
+                      (ins RRegf32:$a, RRegf32:$b, RRegf32:$c),
+                      !strconcat(opcstr, ".f32\t$d, $a, $b, $c"),
+                      [(set RRegf32:$d, (opnode2 (opnode1 RRegf32:$a,
+                                                          RRegf32:$b),
+                                                 RRegf32:$c))]>;
+  def rri32 : InstPTX<(outs RRegf32:$d),
+                      (ins RRegf32:$a, RRegf32:$b, f32imm:$c),
+                      !strconcat(opcstr, ".f32\t$d, $a, $b, $c"),
+                      [(set RRegf32:$d, (opnode2 (opnode1 RRegf32:$a,
+                                                          RRegf32:$b),
+                                                 fpimm:$c))]>;
+  def rrr64 : InstPTX<(outs RRegf64:$d),
+                      (ins RRegf64:$a, RRegf64:$b, RRegf64:$c),
+                      !strconcat(opcstr, ".f64\t$d, $a, $b, $c"),
+                      [(set RRegf64:$d, (opnode2 (opnode1 RRegf64:$a,
+                                                          RRegf64:$b),
+                                                 RRegf64:$c))]>;
+  def rri64 : InstPTX<(outs RRegf64:$d),
+                      (ins RRegf64:$a, RRegf64:$b, f64imm:$c),
+                      !strconcat(opcstr, ".f64\t$d, $a, $b, $c"),
+                      [(set RRegf64:$d, (opnode2 (opnode1 RRegf64:$a,
+                                                          RRegf64:$b),
+                                                 fpimm:$c))]>;
 }
 
 multiclass INT3<string opcstr, SDNode opnode> {
@@ -304,9 +345,59 @@ multiclass PTX_ST_ALL<string opstr, PatFrag pat_store> {
 
 ///===- Floating-Point Arithmetic Instructions ----------------------------===//
 
-defm FADD : FLOAT3<"add", fadd>;
-defm FSUB : FLOAT3<"sub", fsub>;
-defm FMUL : FLOAT3<"mul", fmul>;
+// Standard Binary Operations
+defm FADD : PTX_FLOAT_3OP<"add", fadd>;
+defm FSUB : PTX_FLOAT_3OP<"sub", fsub>;
+defm FMUL : PTX_FLOAT_3OP<"mul", fmul>;
+
+// TODO: Allow user selection of rounding modes for fdiv.
+// For division, we need to have f32 and f64 differently.
+// For f32, we just always use .approx since it is supported on all hardware
+// for PTX 1.4+, which is our minimum target.
+def FDIVrr32 : InstPTX<(outs RRegf32:$d),
+                       (ins RRegf32:$a, RRegf32:$b),
+                       "div.approx.f32\t$d, $a, $b",
+                       [(set RRegf32:$d, (fdiv RRegf32:$a, RRegf32:$b))]>;
+def FDIVri32 : InstPTX<(outs RRegf32:$d),
+                       (ins RRegf32:$a, f32imm:$b),
+                       "div.approx.f32\t$d, $a, $b",
+                       [(set RRegf32:$d, (fdiv RRegf32:$a, fpimm:$b))]>;
+
+// For f64, we must specify a rounding for sm 1.3+ but *not* for sm 1.0.
+def FDIVrr64SM13 : InstPTX<(outs RRegf64:$d),
+                           (ins RRegf64:$a, RRegf64:$b),
+                           "div.rn.f64\t$d, $a, $b",
+                           [(set RRegf64:$d, (fdiv RRegf64:$a, RRegf64:$b))]>,
+                   Requires<[SupportsSM13]>;
+def FDIVri64SM13 : InstPTX<(outs RRegf64:$d),
+                           (ins RRegf64:$a, f64imm:$b),
+                           "div.rn.f64\t$d, $a, $b",
+                           [(set RRegf64:$d, (fdiv RRegf64:$a, fpimm:$b))]>,
+                   Requires<[SupportsSM13]>;
+def FDIVrr64SM10 : InstPTX<(outs RRegf64:$d),
+                           (ins RRegf64:$a, RRegf64:$b),
+                           "div.f64\t$d, $a, $b",
+                           [(set RRegf64:$d, (fdiv RRegf64:$a, RRegf64:$b))]>,
+                   Requires<[DoesNotSupportSM13]>;
+def FDIVri64SM10 : InstPTX<(outs RRegf64:$d),
+                           (ins RRegf64:$a, f64imm:$b),
+                           "div.f64\t$d, $a, $b",
+                           [(set RRegf64:$d, (fdiv RRegf64:$a, fpimm:$b))]>,
+                   Requires<[DoesNotSupportSM13]>;
+
+
+
+// Multi-operation hybrid instructions
+
+// The selection of mad/fma is tricky.  In some cases, they are the *same*
+// instruction, but in other cases we may prefer one or the other.  Also,
+// different PTX versions differ on whether rounding mode flags are required.
+// In the short term, mad is supported on all PTX versions and we use a
+// default rounding mode no matter what shader model or PTX version.
+// TODO: Allow the rounding mode to be selectable through llc.
+defm FMAD : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>;
+
+
 
 ///===- Integer Arithmetic Instructions -----------------------------------===//
 
