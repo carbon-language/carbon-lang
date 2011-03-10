@@ -534,10 +534,9 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
       vregsToAlloc.erase(vreg);
       const LiveInterval* spillInterval = &lis->getInterval(vreg);
       double oldWeight = spillInterval->weight;
-      SmallVector<LiveInterval*, 8> spillIs;
       rmf->rememberUseDefs(spillInterval);
       std::vector<LiveInterval*> newSpills =
-        lis->addIntervalsForSpills(*spillInterval, spillIs, loopInfo, *vrm);
+        lis->addIntervalsForSpills(*spillInterval, 0, loopInfo, *vrm);
       addStackInterval(spillInterval, mri);
       rmf->rememberSpills(spillInterval, newSpills);
 

@@ -956,7 +956,7 @@ bool LiveIntervals::isValNoAvailableAt(const LiveInterval &li, MachineInstr *MI,
 bool
 LiveIntervals::isReMaterializable(const LiveInterval &li,
                                   const VNInfo *ValNo, MachineInstr *MI,
-                                  const SmallVectorImpl<LiveInterval*> &SpillIs,
+                                  const SmallVectorImpl<LiveInterval*> *SpillIs,
                                   bool &isLoad) {
   if (DisableReMat)
     return false;
@@ -983,9 +983,10 @@ LiveIntervals::isReMaterializable(const LiveInterval &li,
 
     // If a register operand of the re-materialized instruction is going to
     // be spilled next, then it's not legal to re-materialize this instruction.
-    for (unsigned i = 0, e = SpillIs.size(); i != e; ++i)
-      if (ImpUse == SpillIs[i]->reg)
-        return false;
+    if (SpillIs)
+      for (unsigned i = 0, e = SpillIs->size(); i != e; ++i)
+        if (ImpUse == (*SpillIs)[i]->reg)
+          return false;
   }
   return true;
 }
@@ -994,16 +995,15 @@ LiveIntervals::isReMaterializable(const LiveInterval &li,
 /// val# of the specified interval is re-materializable.
 bool LiveIntervals::isReMaterializable(const LiveInterval &li,
                                        const VNInfo *ValNo, MachineInstr *MI) {
-  SmallVector<LiveInterval*, 4> Dummy1;
   bool Dummy2;
-  return isReMaterializable(li, ValNo, MI, Dummy1, Dummy2);
+  return isReMaterializable(li, ValNo, MI, 0, Dummy2);
 }
 
 /// isReMaterializable - Returns true if every definition of MI of every
 /// val# of the specified interval is re-materializable.
 bool
 LiveIntervals::isReMaterializable(const LiveInterval &li,
-                                  const SmallVectorImpl<LiveInterval*> &SpillIs,
+                                  const SmallVectorImpl<LiveInterval*> *SpillIs,
                                   bool &isLoad) {
   isLoad = false;
   for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
@@ -1716,7 +1716,7 @@ static void normalizeSpillWeights(std::vector<LiveInterval*> &NewLIs) {
 
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
-                      const SmallVectorImpl<LiveInterval*> &SpillIs,
+                      const SmallVectorImpl<LiveInterval*> *SpillIs,
                       const MachineLoopInfo *loopInfo, VirtRegMap &vrm) {
   assert(li.isSpillable() && "attempt to spill already spilled interval!");
 

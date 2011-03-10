@@ -1253,8 +1253,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
 
   // Finally spill VirtReg itself.
   NamedRegionTimer T("Spiller", TimerGroupName, TimePassesIsEnabled);
-  SmallVector<LiveInterval*, 1> pendingSpills;
-  spiller().spill(&VirtReg, NewVRegs, pendingSpills);
+  spiller().spill(&VirtReg, NewVRegs, 0);
 
   // The live virtual register requesting allocation was spilled, so tell
   // the caller not to allocate anything during this round.

@@ -344,7 +344,7 @@ void RegAllocBase::spillReg(LiveInterval& VirtReg, unsigned PhysReg,
     unassign(SpilledVReg, PhysReg);
 
     // Spill the extracted interval.
-    spiller().spill(&SpilledVReg, SplitVRegs, PendingSpills);
+    spiller().spill(&SpilledVReg, SplitVRegs, &PendingSpills);
   }
   // After extracting segments, the query's results are invalid. But keep the
   // contents valid until we're done accessing pendingSpills.
@@ -469,9 +469,7 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
   }
   // No other spill candidates were found, so spill the current VirtReg.
   DEBUG(dbgs() << "spilling: " << VirtReg << '\n');
-  SmallVector<LiveInterval*, 1> pendingSpills;
-
-  spiller().spill(&VirtReg, SplitVRegs, pendingSpills);
+  spiller().spill(&VirtReg, SplitVRegs, 0);
 
   // The live virtual register requesting allocation was spilled, so tell
   // the caller not to allocate anything during this round.

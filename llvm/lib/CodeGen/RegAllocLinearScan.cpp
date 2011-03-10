@@ -1229,8 +1229,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   // linearscan.
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DEBUG(dbgs() << "\t\t\tspilling(c): " << *cur << '\n');
-    SmallVector<LiveInterval*, 8> spillIs, added;
-    spiller_->spill(cur, added, spillIs);
+    SmallVector<LiveInterval*, 8> added;
+    spiller_->spill(cur, added, 0);
 
     std::sort(added.begin(), added.end(), LISorter());
     if (added.empty())
@@ -1306,7 +1306,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     DEBUG(dbgs() << "\t\t\tspilling(a): " << *sli << '\n');
     if (sli->beginIndex() < earliestStart)
       earliestStart = sli->beginIndex();
-    spiller_->spill(sli, added, spillIs);
+    spiller_->spill(sli, added, &spillIs);
     spilled.insert(sli->reg);
   }
 

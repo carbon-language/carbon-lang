@@ -75,7 +75,7 @@ public:
 
   void spill(LiveInterval *li,
              SmallVectorImpl<LiveInterval*> &newIntervals,
-             const SmallVectorImpl<LiveInterval*> &spillIs);
+             const SmallVectorImpl<LiveInterval*> *spillIs);
 
   void spill(LiveRangeEdit &);
 
@@ -332,8 +332,8 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI,
 
 void InlineSpiller::spill(LiveInterval *li,
                           SmallVectorImpl<LiveInterval*> &newIntervals,
-                          const SmallVectorImpl<LiveInterval*> &spillIs) {
-  LiveRangeEdit edit(*li, newIntervals, 0, &spillIs);
+                          const SmallVectorImpl<LiveInterval*> *spillIs) {
+  LiveRangeEdit edit(*li, newIntervals, 0, spillIs);
   spill(edit);
   if (VerifySpills)
     mf_.verify(&pass_, "After inline spill");
