@@ -1097,9 +1097,8 @@ bool Reassociate::runOnFunction(Function &F) {
 
   // Now that we're done, delete any instructions which are no longer used.
   while (!DeadInsts.empty())
-    if (Instruction *Inst =
-          cast_or_null<Instruction>((Value *)DeadInsts.pop_back_val()))
-      RecursivelyDeleteTriviallyDeadInstructions(Inst);
+    if (Value *V = DeadInsts.pop_back_val())
+      RecursivelyDeleteTriviallyDeadInstructions(V);
 
   // We are done with the rank map.
   RankMap.clear();
