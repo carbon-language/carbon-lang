@@ -36,6 +36,8 @@ static SourceLocation GetEndLoc(Decl* D) {
   return D->getLocation();
 }
 
+class CFGBuilder;
+  
 /// The CFG builder uses a recursive algorithm to build the CFG.  When
 ///  we process an expression, sometimes we know that we must add the
 ///  subexpressions as block-level expressions.  For example:
@@ -55,13 +57,13 @@ public:
 
   AddStmtChoice(Kind a_kind = NotAlwaysAdd) : kind(a_kind) {}
 
-  bool alwaysAdd() const { return kind & AlwaysAdd; }
+  bool alwaysAdd(CFGBuilder &builder,
+                 const Stmt *stmt) const;
 
   /// Return a copy of this object, except with the 'always-add' bit
   ///  set as specified.
   AddStmtChoice withAlwaysAdd(bool alwaysAdd) const {
-    return AddStmtChoice(alwaysAdd ? Kind(kind | AlwaysAdd) :
-                                     Kind(kind & ~AlwaysAdd));
+    return AddStmtChoice(alwaysAdd ? AlwaysAdd : NotAlwaysAdd);
   }
 
 private:
@@ -441,6 +443,11 @@ private:
   
 };
 
+bool AddStmtChoice::alwaysAdd(CFGBuilder &builder,
+                              const Stmt *stmt) const {
+  return kind == AlwaysAdd;
+}
+  
 // FIXME: Add support for dependent-sized array types in C++?
 // Does it even make sense to build a CFG for an uninstantiated template?
 static const VariableArrayType *FindVA(const Type *t) {
@@ -934,7 +941,7 @@ tryAgain:
 }
 
 CFGBlock *CFGBuilder::VisitStmt(Stmt *S, AddStmtChoice asc) {
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, S)) {
     autoCreateBlock();
     appendStmt(Block, S);
   }
@@ -957,7 +964,7 @@ CFGBlock *CFGBuilder::VisitAddrLabelExpr(AddrLabelExpr *A,
                                          AddStmtChoice asc) {
   AddressTakenLabels.insert(A->getLabel());
 
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, A)) {
     autoCreateBlock();
     appendStmt(Block, A);
   }
@@ -967,7 +974,7 @@ CFGBlock *CFGBuilder::VisitAddrLabelExpr(AddrLabelExpr *A,
 
 CFGBlock *CFGBuilder::VisitUnaryOperator(UnaryOperator *U,
            AddStmtChoice asc) {
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, U)) {
     autoCreateBlock();
     appendStmt(Block, U);
   }
@@ -1030,7 +1037,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
   }
 
   if (B->isAssignmentOp()) {
-    if (asc.alwaysAdd()) {
+    if (asc.alwaysAdd(*this, B)) {
       autoCreateBlock();
       appendStmt(Block, B);
     }
@@ -1038,7 +1045,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
     return Visit(B->getRHS());
   }
 
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, B)) {
     autoCreateBlock();
     appendStmt(Block, B);
   }
@@ -1052,7 +1059,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
 }
 
 CFGBlock *CFGBuilder::VisitBlockExpr(BlockExpr *E, AddStmtChoice asc) {
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, E)) {
     autoCreateBlock();
     appendStmt(Block, E);
   }
@@ -1680,7 +1687,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 }
 
 CFGBlock *CFGBuilder::VisitMemberExpr(MemberExpr *M, AddStmtChoice asc) {
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, M)) {
     autoCreateBlock();
     appendStmt(Block, M);
   }
@@ -2116,7 +2123,7 @@ CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
 CFGBlock *CFGBuilder::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
                                              AddStmtChoice asc) {
 
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, E)) {
     autoCreateBlock();
     appendStmt(Block, E);
   }
@@ -2134,7 +2141,7 @@ CFGBlock *CFGBuilder::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
 /// VisitStmtExpr - Utility method to handle (nested) statement
 ///  expressions (a GCC extension).
 CFGBlock* CFGBuilder::VisitStmtExpr(StmtExpr *SE, AddStmtChoice asc) {
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, SE)) {
     autoCreateBlock();
     appendStmt(Block, SE);
   }
@@ -2471,7 +2478,7 @@ CFGBlock *CFGBuilder::VisitExprWithCleanups(ExprWithCleanups *E,
 
 CFGBlock *CFGBuilder::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E,
                                                 AddStmtChoice asc) {
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, E)) {
     autoCreateBlock();
     appendStmt(Block, E);
 
@@ -2492,7 +2499,7 @@ CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
 
 CFGBlock *CFGBuilder::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E,
                                                  AddStmtChoice asc) {
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, E)) {
     autoCreateBlock();
     appendStmt(Block, E);
     // We do not want to propagate the AlwaysAdd property.
@@ -2517,7 +2524,7 @@ CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C,
 
 CFGBlock *CFGBuilder::VisitImplicitCastExpr(ImplicitCastExpr *E,
                                             AddStmtChoice asc) {
-  if (asc.alwaysAdd()) {
+  if (asc.alwaysAdd(*this, E)) {
     autoCreateBlock();
     appendStmt(Block, E);
   }
