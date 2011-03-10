@@ -708,6 +708,33 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
   switch (Opcode) {
     default:
       return false;
+    case ARM::MOVCCr: {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVr),
+              MI.getOperand(1).getReg())
+        .addReg(MI.getOperand(2).getReg(),
+                getKillRegState(MI.getOperand(2).isKill()))
+        .addImm(MI.getOperand(3).getImm()) // 'pred'
+        .addReg(MI.getOperand(4).getReg())
+        .addReg(0); // 's' bit
+
+      MI.eraseFromParent();
+      return true;
+    }
+    case ARM::MOVCCs: {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
+              (MI.getOperand(1).getReg()))
+        .addReg(MI.getOperand(2).getReg(),
+                getKillRegState(MI.getOperand(2).isKill()))
+        .addReg(MI.getOperand(3).getReg(),
+                getKillRegState(MI.getOperand(3).isKill()))
+        .addImm(MI.getOperand(4).getImm())
+        .addImm(MI.getOperand(5).getImm()) // 'pred'
+        .addReg(MI.getOperand(6).getReg())
+        .addReg(0); // 's' bit
+
+      MI.eraseFromParent();
+      return true;
+    }
     case ARM::Int_eh_sjlj_dispatchsetup: {
       MachineFunction &MF = *MI.getParent()->getParent();
       const ARMBaseInstrInfo *AII =

@@ -3152,32 +3152,15 @@ def BCCZi64 : PseudoInst<(outs),
 //        the normal MOV instructions. That would fix the dependency on
 //        special casing them in tblgen.
 let neverHasSideEffects = 1 in {
-def MOVCCr : AI1<0b1101, (outs GPR:$Rd), (ins GPR:$false, GPR:$Rm), DPFrm,
-                IIC_iCMOVr, "mov", "\t$Rd, $Rm",
-      [/*(set GPR:$Rd, (ARMcmov GPR:$false, GPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $Rd">, UnaryDP {
-  bits<4> Rd;
-  bits<4> Rm;
-  let Inst{25} = 0;
-  let Inst{20} = 0;
-  let Inst{15-12} = Rd;
-  let Inst{11-4} = 0b00000000;
-  let Inst{3-0} = Rm;
-}
-
-def MOVCCs : AI1<0b1101, (outs GPR:$Rd),
-                 (ins GPR:$false, so_reg:$shift), DPSoRegFrm, IIC_iCMOVsr,
-                "mov", "\t$Rd, $shift",
-   [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg:$shift, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $Rd">, UnaryDP {
-  bits<4> Rd;
-  bits<12> shift;
-  let Inst{25} = 0;
-  let Inst{20} = 0;
-  let Inst{19-16} = 0;
-  let Inst{15-12} = Rd;
-  let Inst{11-0} = shift;
-}
+def MOVCCr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$false, GPR:$Rm, pred:$p),
+                           Size4Bytes, IIC_iCMOVr,
+  [/*(set GPR:$Rd, (ARMcmov GPR:$false, GPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
+      RegConstraint<"$false = $Rd">;
+def MOVCCs : ARMPseudoInst<(outs GPR:$Rd),
+                           (ins GPR:$false, so_reg:$shift, pred:$p),
+                           Size4Bytes, IIC_iCMOVsr,
+  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg:$shift, imm:$cc, CCR:$ccr))*/]>,
+      RegConstraint<"$false = $Rd">;
 
 let isMoveImm = 1 in
 def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm_hilo16:$imm),
