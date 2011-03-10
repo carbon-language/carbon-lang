@@ -908,12 +908,12 @@ Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
 }
 
 /// MapInFilePages - Not yet implemented on win32.
-const char *Path::MapInFilePages(int FD, uint64_t FileSize) {
+const char *Path::MapInFilePages(int FD, size_t FileSize, off_t Offset) {
   return 0;
 }
 
 /// MapInFilePages - Not yet implemented on win32.
-void Path::UnMapFilePages(const char *Base, uint64_t FileSize) {
+void Path::UnMapFilePages(const char *Base, size_t FileSize) {
   assert(0 && "NOT IMPLEMENTED");
 }
 
