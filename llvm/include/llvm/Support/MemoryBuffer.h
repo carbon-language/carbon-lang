@@ -40,8 +40,7 @@ class MemoryBuffer {
   MemoryBuffer &operator=(const MemoryBuffer &); // DO NOT IMPLEMENT
 protected:
   MemoryBuffer() {}
-  void init(const char *BufStart, const char *BufEnd,
-            bool RequiresNullTerminator);
+  void init(const char *BufStart, const char *BufEnd);
 public:
   virtual ~MemoryBuffer();
 
@@ -73,10 +72,7 @@ public:
   /// return a MemoryBuffer.
   static error_code getOpenFile(int FD, const char *Filename,
                                 OwningPtr<MemoryBuffer> &result,
-                                size_t FileSize = -1,
-                                size_t MapSize = -1,
-                                off_t Offset = 0,
-                                bool RequiresNullTerminator = true);
+                                int64_t FileSize = -1);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that InputData must be null terminated.

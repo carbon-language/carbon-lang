@@ -608,15 +608,14 @@ namespace sys {
       ///
       /// This API is not intended for general use, clients should use
       /// MemoryBuffer::getFile instead.
-      static const char *MapInFilePages(int FD, size_t FileSize,
-                                        off_t Offset);
+      static const char *MapInFilePages(int FD, uint64_t FileSize);
 
       /// UnMapFilePages - Free pages mapped into the current process by
       /// MapInFilePages.
       ///
       /// This API is not intended for general use, clients should use
       /// MemoryBuffer::getFile instead.
-      static void UnMapFilePages(const char *Base, size_t FileSize);
+      static void UnMapFilePages(const char *Base, uint64_t FileSize);
 
     /// @}
     /// @name Data

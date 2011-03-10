@@ -869,18 +869,18 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   return false;
 }
 
-const char *Path::MapInFilePages(int FD, size_t FileSize, off_t Offset) {
+const char *Path::MapInFilePages(int FD, uint64_t FileSize) {
   int Flags = MAP_PRIVATE;
 #ifdef MAP_FILE
   Flags |= MAP_FILE;
 #endif
-  void *BasePtr = ::mmap(0, FileSize, PROT_READ, Flags, FD, Offset);
+  void *BasePtr = ::mmap(0, FileSize, PROT_READ, Flags, FD, 0);
   if (BasePtr == MAP_FAILED)
     return 0;
   return (const char*)BasePtr;
 }
 
-void Path::UnMapFilePages(const char *BasePtr, size_t FileSize) {
+void Path::UnMapFilePages(const char *BasePtr, uint64_t FileSize) {
   ::munmap((void*)BasePtr, FileSize);
 }
 
