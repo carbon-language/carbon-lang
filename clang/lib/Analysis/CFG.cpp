@@ -275,22 +275,23 @@ class CFGBuilder {
   LabelSetTy AddressTakenLabels;
 
   bool badCFG;
-  CFG::BuildOptions BuildOpts;
+  const CFG::BuildOptions &BuildOpts;
   
   // State to track for building switch statements.
   bool switchExclusivelyCovered;
   Expr::EvalResult *switchCond;
 
 public:
-  explicit CFGBuilder() : cfg(new CFG()), // crew a new CFG
-                          Block(NULL), Succ(NULL),
-                          SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
-                          TryTerminatedBlock(NULL), badCFG(false),
-                          switchExclusivelyCovered(false), switchCond(0) {}
+  explicit CFGBuilder(ASTContext *astContext,
+                      const CFG::BuildOptions &buildOpts) 
+    : Context(astContext), cfg(new CFG()), // crew a new CFG
+      Block(NULL), Succ(NULL),
+      SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
+      TryTerminatedBlock(NULL), badCFG(false), BuildOpts(buildOpts), 
+      switchExclusivelyCovered(false), switchCond(0) {}
 
   // buildCFG - Used by external clients to construct the CFG.
-  CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C,
-      CFG::BuildOptions BO);
+  CFG* buildCFG(const Decl *D, Stmt *Statement);
 
 private:
   // Visitors to walk an AST and construct the CFG.
@@ -460,15 +461,10 @@ static const VariableArrayType *FindVA(const Type *t) {
 ///  body (compound statement).  The ownership of the returned CFG is
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
-CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
-    CFG::BuildOptions BO) {
-
-  Context = C;
+CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement) {
   assert(cfg.get());
   if (!Statement)
     return NULL;
-
-  BuildOpts = BO;
 
   // Create an empty block that will serve as the exit block for the CFG.  Since
   // this is the first block added to the CFG, it will be implicitly registered
@@ -2768,9 +2764,9 @@ CFGBlock* CFG::createBlock() {
 /// buildCFG - Constructs a CFG from an AST.  Ownership of the returned
 ///  CFG is returned to the caller.
 CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
-    BuildOptions BO) {
-  CFGBuilder Builder;
-  return Builder.buildCFG(D, Statement, C, BO);
+    const BuildOptions &BO) {
+  CFGBuilder Builder(C, BO);
+  return Builder.buildCFG(D, Statement);
 }
 
 const CXXDestructorDecl *

@@ -19,6 +19,8 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/DenseMap.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/Basic/SourceLocation.h"
 #include <cassert>
@@ -532,13 +534,16 @@ public:
 
   class BuildOptions {
   public:
+    typedef llvm::DenseMap<const Stmt *, const CFGBlock> ForcedBlkExprs;
+    ForcedBlkExprs **forcedBlkExprs;    
+
     bool PruneTriviallyFalseEdges:1;
     bool AddEHEdges:1;
     bool AddInitializers:1;
     bool AddImplicitDtors:1;
 
     BuildOptions()
-        : PruneTriviallyFalseEdges(true)
+        : forcedBlkExprs(0), PruneTriviallyFalseEdges(true)
         , AddEHEdges(false)
         , AddInitializers(false)
         , AddImplicitDtors(false) {}
@@ -547,7 +552,7 @@ public:
   /// buildCFG - Builds a CFG from an AST.  The responsibility to free the
   ///   constructed CFG belongs to the caller.
   static CFG* buildCFG(const Decl *D, Stmt* AST, ASTContext *C,
-      BuildOptions BO = BuildOptions());
+                       const BuildOptions &BO);
 
   /// createBlock - Create a new block in the CFG.  The CFG owns the block;
   ///  the caller should not directly free it.

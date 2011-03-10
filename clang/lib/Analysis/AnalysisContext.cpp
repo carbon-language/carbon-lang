@@ -29,6 +29,24 @@
 
 using namespace clang;
 
+AnalysisContext::AnalysisContext(const Decl *d,
+                                 idx::TranslationUnit *tu,
+                                 bool useUnoptimizedCFG,
+                                 bool addehedges,
+                                 bool addImplicitDtors,
+                                 bool addInitializers)
+  : D(d), TU(tu),
+    forcedBlkExprs(0),
+    builtCFG(false), builtCompleteCFG(false),
+    useUnoptimizedCFG(useUnoptimizedCFG),
+    ReferencedBlockVars(0)
+{
+  cfgBuildOptions.forcedBlkExprs = &forcedBlkExprs;
+  cfgBuildOptions.AddEHEdges = addehedges;
+  cfgBuildOptions.AddImplicitDtors = addImplicitDtors;
+  cfgBuildOptions.AddInitializers = addInitializers;
+}
+
 void AnalysisContextManager::clear() {
   for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
     delete I->second;
@@ -57,44 +75,38 @@ const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
 }
 
 CFG *AnalysisContext::getCFG() {
-  if (UseUnoptimizedCFG)
+  if (useUnoptimizedCFG)
     return getUnoptimizedCFG();
 
   if (!builtCFG) {
-    CFG::BuildOptions B;
-    B.AddEHEdges = AddEHEdges;
-    B.AddImplicitDtors = AddImplicitDtors;
-    B.AddInitializers = AddInitializers;
-    cfg = CFG::buildCFG(D, getBody(), &D->getASTContext(), B);
+    cfg.reset(CFG::buildCFG(D, getBody(),
+                            &D->getASTContext(), cfgBuildOptions));
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
     builtCFG = true;
   }
-  return cfg;
+  return cfg.get();
 }
 
 CFG *AnalysisContext::getUnoptimizedCFG() {
   if (!builtCompleteCFG) {
-    CFG::BuildOptions B;
+    CFG::BuildOptions B = cfgBuildOptions;
     B.PruneTriviallyFalseEdges = false;
-    B.AddEHEdges = AddEHEdges;
-    B.AddImplicitDtors = AddImplicitDtors;
-    B.AddInitializers = AddInitializers;
-    completeCFG = CFG::buildCFG(D, getBody(), &D->getASTContext(), B);
+    completeCFG.reset(CFG::buildCFG(D, getBody(), &D->getASTContext(), B));
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
     builtCompleteCFG = true;
   }
-  return completeCFG;
+  return completeCFG.get();
 }
 
 CFGStmtMap *AnalysisContext::getCFGStmtMap() {
   if (cfgStmtMap)
-    return cfgStmtMap;
+    return cfgStmtMap.get();
   
   if (CFG *c = getCFG()) {
-    cfgStmtMap = CFGStmtMap::Build(c, &getParentMap());
-    return cfgStmtMap;
+    cfgStmtMap.reset(CFGStmtMap::Build(c, &getParentMap()));
+    return cfgStmtMap.get();
   }
     
   return 0;
@@ -102,11 +114,11 @@ CFGStmtMap *AnalysisContext::getCFGStmtMap() {
 
 CFGReachabilityAnalysis *AnalysisContext::getCFGReachablityAnalysis() {
   if (CFA)
-    return CFA;
+    return CFA.get();
   
   if (CFG *c = getCFG()) {
-    CFA = new CFGReachabilityAnalysis(*c);
-    return CFA;
+    CFA.reset(new CFGReachabilityAnalysis(*c));
+    return CFA.get();
   }
   
   return 0;
@@ -118,42 +130,37 @@ void AnalysisContext::dumpCFG() {
 
 ParentMap &AnalysisContext::getParentMap() {
   if (!PM)
-    PM = new ParentMap(getBody());
+    PM.reset(new ParentMap(getBody()));
   return *PM;
 }
 
 PseudoConstantAnalysis *AnalysisContext::getPseudoConstantAnalysis() {
   if (!PCA)
-    PCA = new PseudoConstantAnalysis(getBody());
-  return PCA;
+    PCA.reset(new PseudoConstantAnalysis(getBody()));
+  return PCA.get();
 }
 
 LiveVariables *AnalysisContext::getLiveVariables() {
   if (!liveness) {
-    CFG *c = getCFG();
-    if (!c)
-      return 0;
-
-    liveness = new LiveVariables(*this);
-    liveness->runOnCFG(*c);
-    liveness->runOnAllBlocks(*c, 0, true);
+    if (CFG *c = getCFG()) {
+      liveness.reset(new LiveVariables(*this));
+      liveness->runOnCFG(*c);
+      liveness->runOnAllBlocks(*c, 0, true);
+    }
   }
 
-  return liveness;
+  return liveness.get();
 }
 
 LiveVariables *AnalysisContext::getRelaxedLiveVariables() {
-  if (!relaxedLiveness) {
-    CFG *c = getCFG();
-    if (!c)
-      return 0;
+  if (!relaxedLiveness)
+    if (CFG *c = getCFG()) {
+      relaxedLiveness.reset(new LiveVariables(*this, false));
+      relaxedLiveness->runOnCFG(*c);
+      relaxedLiveness->runOnAllBlocks(*c, 0, true);
+    }
 
-    relaxedLiveness = new LiveVariables(*this, false);
-    relaxedLiveness->runOnCFG(*c);
-    relaxedLiveness->runOnAllBlocks(*c, 0, true);
-  }
-
-  return relaxedLiveness;
+  return relaxedLiveness.get();
 }
 
 AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
@@ -370,14 +377,7 @@ AnalysisContext::getReferencedBlockVars(const BlockDecl *BD) {
 //===----------------------------------------------------------------------===//
 
 AnalysisContext::~AnalysisContext() {
-  delete cfg;
-  delete completeCFG;
-  delete cfgStmtMap;
-  delete liveness;
-  delete relaxedLiveness;
-  delete PM;
-  delete PCA;
-  delete CFA;
+  delete forcedBlkExprs;
   delete ReferencedBlockVars;
 }
 
