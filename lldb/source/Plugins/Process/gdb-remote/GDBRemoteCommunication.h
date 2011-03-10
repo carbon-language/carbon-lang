@@ -56,14 +56,12 @@ public:
     size_t
     SendPacketAndWaitForResponse (const char *send_payload,
                                   StringExtractorGDBRemote &response,
-                                  uint32_t timeout_seconds,
                                   bool send_async);
 
     size_t
     SendPacketAndWaitForResponse (const char *send_payload,
                                   size_t send_length,
                                   StringExtractorGDBRemote &response,
-                                  uint32_t timeout_seconds,
                                   bool send_async);
 
     lldb::StateType
@@ -75,7 +73,7 @@ public:
     // Wait for a packet within 'nsec' seconds
     size_t
     WaitForPacket (StringExtractorGDBRemote &response,
-                   uint32_t nsec);
+                   uint32_t sec);
 
     // Wait for a packet with an absolute timeout time. If 'timeout' is NULL
     // wait indefinitely.
@@ -84,7 +82,7 @@ public:
                    const lldb_private::TimeValue* timeout);
 
     char
-    GetAck (uint32_t timeout_seconds);
+    GetAck ();
 
     size_t
     SendAck ();
@@ -120,10 +118,10 @@ public:
 
 
     lldb::pid_t
-    GetCurrentProcessID (uint32_t timeout_seconds);
+    GetCurrentProcessID ();
 
     bool
-    GetLaunchSuccess (uint32_t timeout_seconds, std::string &error_str);
+    GetLaunchSuccess (std::string &error_str);
 
     //------------------------------------------------------------------
     /// Sends a GDB remote protocol 'A' packet that delivers program
@@ -133,10 +131,6 @@ public:
     ///     A NULL terminated array of const C strings to use as the
     ///     arguments.
     ///
-    /// @param[in] timeout_seconds
-    ///     The number of seconds to wait for a response from the remote
-    ///     server.
-    ///
     /// @return
     ///     Zero if the response was "OK", a positive value if the
     ///     the response was "Exx" where xx are two hex digits, or
@@ -144,7 +138,7 @@ public:
     ///     response was received.
     //------------------------------------------------------------------
     int
-    SendArgumentsPacket (char const *argv[], uint32_t timeout_seconds);
+    SendArgumentsPacket (char const *argv[]);
 
     //------------------------------------------------------------------
     /// Sends a "QEnvironment:NAME=VALUE" packet that will build up the
@@ -157,10 +151,6 @@ public:
     ///     A NULL terminated C string that contains a single environment
     ///     in the format "NAME=VALUE".
     ///
-    /// @param[in] timeout_seconds
-    ///     The number of seconds to wait for a response from the remote
-    ///     server.
-    ///
     /// @return
     ///     Zero if the response was "OK", a positive value if the
     ///     the response was "Exx" where xx are two hex digits, or
@@ -168,18 +158,13 @@ public:
     ///     response was received.
     //------------------------------------------------------------------
     int
-    SendEnvironmentPacket (char const *name_equal_value,
-                           uint32_t timeout_seconds);
+    SendEnvironmentPacket (char const *name_equal_value);
 
     //------------------------------------------------------------------
     /// Sends a "vAttach:PID" where PID is in hex. 
     ///
     /// @param[in] pid
     ///     A process ID for the remote gdb server to attach to.
-    ///
-    /// @param[in] timeout_seconds
-    ///     The number of seconds to wait for a response from the remote
-    ///     server.
     ///
     /// @param[out] response
     ///     The response received from the gdb server. If the return
@@ -192,7 +177,6 @@ public:
     //------------------------------------------------------------------
     int
     SendAttach (lldb::pid_t pid, 
-                uint32_t timeout_seconds, 
                 StringExtractorGDBRemote& response);
 
 
@@ -240,22 +224,16 @@ public:
     SetWorkingDir (char const *path);
 
     lldb::addr_t
-    AllocateMemory (size_t size, uint32_t permissions, uint32_t timeout_seconds);
+    AllocateMemory (size_t size, uint32_t permissions);
 
     bool
-    DeallocateMemory (lldb::addr_t addr, uint32_t timeout_seconds);
+    DeallocateMemory (lldb::addr_t addr);
 
     bool
     IsRunning() const
     {
         return m_public_is_running.GetValue();
     }
-
-    bool
-    WaitForNotRunning (const lldb_private::TimeValue *timeout_ptr);
-
-    bool
-    GetHostInfo (uint32_t timeout_seconds);
 
     const lldb_private::ArchSpec &
     GetHostArchitecture ();
@@ -298,6 +276,14 @@ public:
     {
         return GetVContSupported ('a');
     }
+    
+    uint32_t 
+    SetPacketTimeout (uint32_t packet_timeout)
+    {
+        const uint32_t old_packet_timeout = m_packet_timeout;
+        m_packet_timeout = packet_timeout;
+        return old_packet_timeout;
+    }
 
 protected:
     typedef std::list<std::string> packet_collection;
@@ -322,6 +308,7 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunication can see and modify these
     //------------------------------------------------------------------
+    uint32_t m_packet_timeout;
     lldb::LazyBool m_supports_not_sending_acks;
     lldb::LazyBool m_supports_thread_suffix;
     lldb::LazyBool m_supports_qHostInfo;
@@ -342,7 +329,6 @@ protected:
     lldb_private::Predicate<bool> m_async_packet_predicate;
     std::string m_async_packet;
     StringExtractorGDBRemote m_async_response;
-    uint32_t m_async_timeout;
     int m_async_signal; // We were asked to deliver a signal to the inferior process.
     
     lldb_private::ArchSpec m_arch;      // Results from the qHostInfo call

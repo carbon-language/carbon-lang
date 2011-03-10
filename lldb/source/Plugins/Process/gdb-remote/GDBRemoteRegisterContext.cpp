@@ -233,7 +233,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
                     else
                         packet_len = ::snprintf (packet, sizeof(packet), "g");
                     assert (packet_len < (sizeof(packet) - 1));
-                    if (gdb_comm.SendPacketAndWaitForResponse(packet, response, 1, false))
+                    if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
                     {
                         if (response.IsNormalPacket())
                             if (response.GetHexBytes ((void *)m_reg_data.GetDataStart(), m_reg_data.GetByteSize(), '\xcc') == m_reg_data.GetByteSize())
@@ -248,7 +248,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
                     else
                         packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
                     assert (packet_len < (sizeof(packet) - 1));
-                    if (gdb_comm.SendPacketAndWaitForResponse(packet, response, 1, false))
+                    if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
                         PrivateSetRegisterValue (reg, response);
                 }
             }
@@ -355,7 +355,6 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
                     if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
                                                               packet.GetString().size(),
                                                               response,
-                                                              1,
                                                               false))
                     {
                         SetAllRegisterValid (false);
@@ -382,7 +381,6 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
                     if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
                                                               packet.GetString().size(),
                                                               response,
-                                                              1,
                                                               false))
                     {
                         if (response.IsOKPacket())
@@ -418,7 +416,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
                 packet_len = ::snprintf (packet, sizeof(packet), "g");
             assert (packet_len < (sizeof(packet) - 1));
 
-            if (gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 1, false))
+            if (gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
             {
                 if (response.IsErrorPacket())
                     return false;
@@ -456,7 +454,6 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
             if (gdb_comm.SendPacketAndWaitForResponse((const char *)data_sp->GetBytes(), 
                                                       data_sp->GetByteSize(), 
                                                       response, 
-                                                      1, 
                                                       false))
             {
                 if (response.IsOKPacket())

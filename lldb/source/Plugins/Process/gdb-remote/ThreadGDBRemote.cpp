@@ -264,7 +264,7 @@ ThreadGDBRemote::GetPrivateStopReason ()
         char packet[256];
         ::snprintf(packet, sizeof(packet), "qThreadStopInfo%x", GetID());
         StringExtractorGDBRemote stop_packet;
-        if (GetGDBProcess().GetGDBRemote().SendPacketAndWaitForResponse(packet, stop_packet, 1, false))
+        if (GetGDBProcess().GetGDBRemote().SendPacketAndWaitForResponse(packet, stop_packet, false))
         {
             GetGDBProcess().SetThreadStopInfo (stop_packet);
         }

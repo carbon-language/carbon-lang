@@ -331,7 +331,6 @@ protected:
     tid_collection m_continue_s_tids;                  // 's' for step
     tid_sig_collection m_continue_S_tids; // 'S' for step with signal
     lldb::addr_t m_dispatch_queue_offsets_addr;
-    uint32_t m_packet_timeout;
     size_t m_max_memory_size;       // The maximum number of bytes to read/write when reading and writing memory
     bool m_waiting_for_attach;
     bool m_local_debugserver;  // Is the debugserver process we are talking to local or on another machine.

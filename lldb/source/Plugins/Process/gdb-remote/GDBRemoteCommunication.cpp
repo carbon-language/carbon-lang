@@ -35,6 +35,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 GDBRemoteCommunication::GDBRemoteCommunication() :
     Communication("gdb-remote.packets"),
+    m_packet_timeout (1),
     m_supports_not_sending_acks (eLazyBoolCalculate),
     m_supports_thread_suffix (eLazyBoolCalculate),
     m_supports_qHostInfo (eLazyBoolCalculate),
@@ -52,7 +53,6 @@ GDBRemoteCommunication::GDBRemoteCommunication() :
     m_async_packet_predicate (false),
     m_async_packet (),
     m_async_response (),
-    m_async_timeout (UINT32_MAX),
     m_async_signal (-1),
     m_arch(),
     m_os(),
@@ -124,7 +124,7 @@ GDBRemoteCommunication::GetSendAcks ()
     {
         StringExtractorGDBRemote response;
         m_supports_not_sending_acks = eLazyBoolNo;
-        if (SendPacketAndWaitForResponse("QStartNoAckMode", response, 1, false))
+        if (SendPacketAndWaitForResponse("QStartNoAckMode", response, false))
         {
             if (response.IsOKPacket())
                 m_supports_not_sending_acks = eLazyBoolYes;
@@ -158,7 +158,7 @@ GDBRemoteCommunication::GetThreadSuffixSupported ()
     {
         StringExtractorGDBRemote response;
         m_supports_thread_suffix = eLazyBoolNo;
-        if (SendPacketAndWaitForResponse("QThreadSuffixSupported", response, 1, false))
+        if (SendPacketAndWaitForResponse("QThreadSuffixSupported", response, false))
         {
             if (response.IsOKPacket())
                 m_supports_thread_suffix = eLazyBoolYes;
@@ -178,7 +178,7 @@ GDBRemoteCommunication::GetVContSupported (char flavor)
         m_supports_vCont_C = eLazyBoolNo;
         m_supports_vCont_s = eLazyBoolNo;
         m_supports_vCont_S = eLazyBoolNo;
-        if (SendPacketAndWaitForResponse("vCont?", response, 1, false))
+        if (SendPacketAndWaitForResponse("vCont?", response, false))
         {
             const char *response_cstr = response.GetStringRef().c_str();
             if (::strstr (response_cstr, ";c"))
@@ -230,14 +230,12 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
 (
     const char *payload,
     StringExtractorGDBRemote &response,
-    uint32_t timeout_seconds,
     bool send_async
 )
 {
     return SendPacketAndWaitForResponse (payload, 
                                          ::strlen (payload),
                                          response,
-                                         timeout_seconds,
                                          send_async);
 }
 
@@ -247,14 +245,13 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
     const char *payload,
     size_t payload_length,
     StringExtractorGDBRemote &response,
-    uint32_t timeout_seconds,
     bool send_async
 )
 {
     Mutex::Locker locker;
     TimeValue timeout_time;
     timeout_time = TimeValue::Now();
-    timeout_time.OffsetWithSeconds (timeout_seconds);
+    timeout_time.OffsetWithSeconds (m_packet_timeout);
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
     if (GetSequenceMutex (locker))
@@ -268,7 +265,6 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
         {
             Mutex::Locker async_locker (m_async_mutex);
             m_async_packet.assign(payload, payload_length);
-            m_async_timeout = timeout_seconds;
             m_async_packet_predicate.SetValue (true, eBroadcastNever);
             
             if (log) 
@@ -398,7 +394,7 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                     {
                         if (process->GetID() == LLDB_INVALID_PROCESS_ID)
                         {
-                            lldb::pid_t pid = GetCurrentProcessID (1);
+                            lldb::pid_t pid = GetCurrentProcessID ();
                             if (pid != LLDB_INVALID_PROCESS_ID)
                                 process->SetID (pid);
                         }
@@ -473,7 +469,6 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                             SendPacketAndWaitForResponse (&m_async_packet[0], 
                                                           m_async_packet.size(),
                                                           m_async_response,
-                                                          m_async_timeout,
                                                           false);
                         }
                         // Let the other thread that was trying to send the async
@@ -570,7 +565,7 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
         {
             if (GetSendAcks ())
             {
-                if (GetAck (1) != '+')
+                if (GetAck () != '+')
                     return 0;
             }
         }
@@ -586,10 +581,10 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
 }
 
 char
-GDBRemoteCommunication::GetAck (uint32_t timeout_seconds)
+GDBRemoteCommunication::GetAck ()
 {
     StringExtractorGDBRemote response;
-    if (WaitForPacket (response, timeout_seconds) == 1)
+    if (WaitForPacket (response, m_packet_timeout) == 1)
         return response.GetChar();
     return 0;
 }
@@ -691,12 +686,6 @@ GDBRemoteCommunication::SendInterrupt
         }
     }
     return true;
-}
-
-bool
-GDBRemoteCommunication::WaitForNotRunning (const TimeValue *timeout_ptr)
-{
-    return m_public_is_running.WaitForValueEqualTo (false, timeout_ptr, NULL);
 }
 
 bool
@@ -857,10 +846,10 @@ GDBRemoteCommunication::AppendBytesToCache (const uint8_t *src, size_t src_len, 
 }
 
 lldb::pid_t
-GDBRemoteCommunication::GetCurrentProcessID (uint32_t timeout_seconds)
+GDBRemoteCommunication::GetCurrentProcessID ()
 {
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse("qC", strlen("qC"), response, timeout_seconds, false))
+    if (SendPacketAndWaitForResponse("qC", strlen("qC"), response, false))
     {
         if (response.GetChar() == 'Q')
             if (response.GetChar() == 'C')
@@ -870,11 +859,11 @@ GDBRemoteCommunication::GetCurrentProcessID (uint32_t timeout_seconds)
 }
 
 bool
-GDBRemoteCommunication::GetLaunchSuccess (uint32_t timeout_seconds, std::string &error_str)
+GDBRemoteCommunication::GetLaunchSuccess (std::string &error_str)
 {
     error_str.clear();
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse("qLaunchSuccess", strlen("qLaunchSuccess"), response, timeout_seconds, false))
+    if (SendPacketAndWaitForResponse("qLaunchSuccess", strlen("qLaunchSuccess"), response, false))
     {
         if (response.IsOKPacket())
             return true;
@@ -896,7 +885,7 @@ GDBRemoteCommunication::GetLaunchSuccess (uint32_t timeout_seconds, std::string 
 }
 
 int
-GDBRemoteCommunication::SendArgumentsPacket (char const *argv[], uint32_t timeout_seconds)
+GDBRemoteCommunication::SendArgumentsPacket (char const *argv[])
 {
     if (argv && argv[0])
     {
@@ -913,7 +902,7 @@ GDBRemoteCommunication::SendArgumentsPacket (char const *argv[], uint32_t timeou
         }
 
         StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, timeout_seconds, false))
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
         {
             if (response.IsOKPacket())
                 return 0;
@@ -926,14 +915,14 @@ GDBRemoteCommunication::SendArgumentsPacket (char const *argv[], uint32_t timeou
 }
 
 int
-GDBRemoteCommunication::SendEnvironmentPacket (char const *name_equal_value, uint32_t timeout_seconds)
+GDBRemoteCommunication::SendEnvironmentPacket (char const *name_equal_value)
 {
     if (name_equal_value && name_equal_value[0])
     {
         StreamString packet;
         packet.Printf("QEnvironment:%s", name_equal_value);
         StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, timeout_seconds, false))
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
         {
             if (response.IsOKPacket())
                 return 0;
@@ -953,7 +942,7 @@ GDBRemoteCommunication::GetHostInfo ()
         m_supports_qHostInfo = eLazyBoolNo;
 
         StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse ("qHostInfo", response, 1, false))
+        if (SendPacketAndWaitForResponse ("qHostInfo", response, false))
         {
             if (response.IsUnsupportedPacket())
                 return false;
@@ -1012,7 +1001,6 @@ int
 GDBRemoteCommunication::SendAttach 
 (
     lldb::pid_t pid, 
-    uint32_t timeout_seconds, 
     StringExtractorGDBRemote& response
 )
 {
@@ -1021,7 +1009,7 @@ GDBRemoteCommunication::SendAttach
         StreamString packet;
         packet.Printf("vAttach;%x", pid);
         
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, timeout_seconds, false))
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
         {
             if (response.IsErrorPacket())
                 return response.GetError();
@@ -1072,7 +1060,7 @@ GDBRemoteCommunication::GetAddressByteSize ()
 }
 
 addr_t
-GDBRemoteCommunication::AllocateMemory (size_t size, uint32_t permissions, uint32_t timeout_seconds)
+GDBRemoteCommunication::AllocateMemory (size_t size, uint32_t permissions)
 {
     char packet[64];
     ::snprintf (packet, sizeof(packet), "_M%zx,%s%s%s", size,
@@ -1080,7 +1068,7 @@ GDBRemoteCommunication::AllocateMemory (size_t size, uint32_t permissions, uint3
                 permissions & lldb::ePermissionsWritable ? "w" : "",
                 permissions & lldb::ePermissionsExecutable ? "x" : "");
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet, response, timeout_seconds, false))
+    if (SendPacketAndWaitForResponse (packet, response, false))
     {
         if (!response.IsErrorPacket())
             return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
@@ -1089,12 +1077,12 @@ GDBRemoteCommunication::AllocateMemory (size_t size, uint32_t permissions, uint3
 }
 
 bool
-GDBRemoteCommunication::DeallocateMemory (addr_t addr, uint32_t timeout_seconds)
+GDBRemoteCommunication::DeallocateMemory (addr_t addr)
 {
     char packet[64];
     snprintf(packet, sizeof(packet), "_m%llx", (uint64_t)addr);
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet, response, timeout_seconds, false))
+    if (SendPacketAndWaitForResponse (packet, response, false))
     {
         if (response.IsOKPacket())
             return true;
@@ -1112,7 +1100,7 @@ GDBRemoteCommunication::SetSTDIN (char const *path)
         packet.PutBytesAsRawHex8(path, strlen(path));
 
         StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
         {
             if (response.IsOKPacket())
                 return 0;
@@ -1134,7 +1122,7 @@ GDBRemoteCommunication::SetSTDOUT (char const *path)
         packet.PutBytesAsRawHex8(path, strlen(path));
         
         StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
         {
             if (response.IsOKPacket())
                 return 0;
@@ -1156,7 +1144,7 @@ GDBRemoteCommunication::SetSTDERR (char const *path)
         packet.PutBytesAsRawHex8(path, strlen(path));
         
         StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
         {
             if (response.IsOKPacket())
                 return 0;
@@ -1178,7 +1166,7 @@ GDBRemoteCommunication::SetWorkingDir (char const *path)
         packet.PutBytesAsRawHex8(path, strlen(path));
         
         StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
         {
             if (response.IsOKPacket())
                 return 0;
@@ -1197,7 +1185,7 @@ GDBRemoteCommunication::SetDisableASLR (bool enable)
     packet.Printf("QSetDisableASLR:%i", enable ? 1 : 0);
        
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, 1, false))
+    if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
     {
         if (response.IsOKPacket())
             return 0;

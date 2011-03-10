@@ -118,7 +118,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_continue_s_tids (),
     m_continue_S_tids (),
     m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
-    m_packet_timeout (1),
     m_max_memory_size (512),
     m_waiting_for_attach (false),
     m_local_debugserver (true),
@@ -179,7 +178,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         const int packet_len = ::snprintf (packet, sizeof(packet), "qRegisterInfo%x", reg_num);
         assert (packet_len < sizeof(packet));
         StringExtractorGDBRemote response;
-        if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, false))
+        if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
         {
             packet_type = response.GetType();
             if (packet_type == StringExtractorGDBRemote::eResponse)
@@ -353,7 +352,7 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
         return error;
     StartAsyncThread ();
 
-    lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID (m_packet_timeout);
+    lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID ();
     if (pid == LLDB_INVALID_PROCESS_ID)
     {
         // We don't have a valid process ID, so note that we are connected
@@ -366,7 +365,7 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
         // We have a valid process
         SetID (pid);
         StringExtractorGDBRemote response;
-        if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, m_packet_timeout, false))
+        if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, false))
         {
             const StateType state = SetThreadStopInfo (response);
             if (state == eStateStopped)
@@ -499,19 +498,20 @@ ProcessGDBRemote::DoLaunch
                 const char *env_entry;
                 for (int i=0; (env_entry = envp[i]); ++i)
                 {
-                    if (m_gdb_comm.SendEnvironmentPacket(env_entry, m_packet_timeout) != 0)
+                    if (m_gdb_comm.SendEnvironmentPacket(env_entry) != 0)
                         break;
                 }
             }
 
-            const uint32_t arg_timeout_seconds = 10;
-            int arg_packet_err = m_gdb_comm.SendArgumentsPacket (argv, arg_timeout_seconds);
+            const uint32_t old_packet_timeout = m_gdb_comm.SetPacketTimeout (10);
+            int arg_packet_err = m_gdb_comm.SendArgumentsPacket (argv);
+            m_gdb_comm.SetPacketTimeout (old_packet_timeout);
             if (arg_packet_err == 0)
             {
                 std::string error_str;
-                if (m_gdb_comm.GetLaunchSuccess (m_packet_timeout, error_str))
+                if (m_gdb_comm.GetLaunchSuccess (error_str))
                 {
-                    SetID (m_gdb_comm.GetCurrentProcessID (m_packet_timeout));
+                    SetID (m_gdb_comm.GetCurrentProcessID ());
                 }
                 else
                 {
@@ -530,7 +530,7 @@ ProcessGDBRemote::DoLaunch
             }
 
             StringExtractorGDBRemote response;
-            if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, m_packet_timeout, false))
+            if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, false))
             {
                 SetPrivateState (SetThreadStopInfo (response));
                 
@@ -1090,9 +1090,9 @@ ProcessGDBRemote::UpdateThreadListIfNeeded ()
 
         Error err;
         StringExtractorGDBRemote response;
-        for (m_gdb_comm.SendPacketAndWaitForResponse("qfThreadInfo", response, 1, false);
+        for (m_gdb_comm.SendPacketAndWaitForResponse("qfThreadInfo", response, false);
              response.IsNormalPacket();
-             m_gdb_comm.SendPacketAndWaitForResponse("qsThreadInfo", response, 1, false))
+             m_gdb_comm.SendPacketAndWaitForResponse("qsThreadInfo", response, false))
         {
             char ch = response.GetChar();
             if (ch == 'l')
@@ -1139,7 +1139,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 // sure we know about our registers
                 if (GetID() == LLDB_INVALID_PROCESS_ID)
                 {
-                    lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID (1);
+                    lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID ();
                     if (pid != LLDB_INVALID_PROCESS_ID)
                         SetID (pid);
                 }
@@ -1465,7 +1465,7 @@ ProcessGDBRemote::DoDestroy ()
 
             StringExtractorGDBRemote response;
             bool send_async = true;
-            if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, 2, send_async))
+            if (m_gdb_comm.SendPacketAndWaitForResponse("k", 1, response, send_async))
             {
                 char packet_cmd = response.GetChar(0);
 
@@ -1505,7 +1505,7 @@ ProcessGDBRemote::GetImageInfoAddress()
     if (!m_gdb_comm.IsRunning())
     {
         StringExtractorGDBRemote response;
-        if (m_gdb_comm.SendPacketAndWaitForResponse("qShlibInfoAddr", ::strlen ("qShlibInfoAddr"), response, 2, false))
+        if (m_gdb_comm.SendPacketAndWaitForResponse("qShlibInfoAddr", ::strlen ("qShlibInfoAddr"), response, false))
         {
             if (response.IsNormalPacket())
                 return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
@@ -1532,7 +1532,7 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
     const int packet_len = ::snprintf (packet, sizeof(packet), "m%llx,%zx", (uint64_t)addr, size);
     assert (packet_len + 1 < sizeof(packet));
     StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, true))
+    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
     {
         if (response.IsNormalPacket())
         {
@@ -1560,7 +1560,7 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
     packet.Printf("M%llx,%zx:", addr, size);
     packet.PutBytesAsRawHex8(buf, size, lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
     StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetData(), packet.GetSize(), response, 2, true))
+    if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetData(), packet.GetSize(), response, true))
     {
         if (response.IsOKPacket())
         {
@@ -1584,7 +1584,7 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
 lldb::addr_t
 ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &error)
 {
-    addr_t allocated_addr = m_gdb_comm.AllocateMemory (size, permissions, m_packet_timeout);
+    addr_t allocated_addr = m_gdb_comm.AllocateMemory (size, permissions);
     if (allocated_addr == LLDB_INVALID_ADDRESS)
         error.SetErrorStringWithFormat("unable to allocate %zu bytes of memory with permissions %u", size, permissions);
     else
@@ -1596,7 +1596,7 @@ Error
 ProcessGDBRemote::DoDeallocateMemory (lldb::addr_t addr)
 {
     Error error; 
-    if (!m_gdb_comm.DeallocateMemory (addr, m_packet_timeout))
+    if (!m_gdb_comm.DeallocateMemory (addr))
         error.SetErrorStringWithFormat("unable to deallocate memory at 0x%llx", addr);
     return error;
 }
@@ -1685,7 +1685,7 @@ ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
             const int packet_len = ::snprintf (packet, sizeof(packet), "Z0,%llx,%zx", addr, bp_op_size);
             assert (packet_len + 1 < sizeof(packet));
             StringExtractorGDBRemote response;
-            if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, true))
+            if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
             {
                 if (response.IsUnsupportedPacket())
                 {
@@ -1753,7 +1753,7 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
                 const int packet_len = ::snprintf (packet, sizeof(packet), "z0,%llx,%zx", addr, bp_op_size);
                 assert (packet_len + 1 < sizeof(packet));
                 StringExtractorGDBRemote response;
-                if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, true))
+                if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
                 {
                     if (response.IsUnsupportedPacket())
                     {
@@ -2166,7 +2166,7 @@ ProcessGDBRemote::SetCurrentGDBRemoteThread (int tid)
         packet_len = ::snprintf (packet, sizeof(packet), "Hg%x", tid);
     assert (packet_len + 1 < sizeof(packet));
     StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, false))
+    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
     {
         if (response.IsOKPacket())
         {
@@ -2192,7 +2192,7 @@ ProcessGDBRemote::SetCurrentGDBRemoteThreadForRun (int tid)
 
     assert (packet_len + 1 < sizeof(packet));
     StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, false))
+    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
     {
         if (response.IsOKPacket())
         {
