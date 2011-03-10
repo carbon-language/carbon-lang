@@ -76,7 +76,7 @@ public:
   ///        rematerializing values because they are about to be removed.
   LiveRangeEdit(LiveInterval &parent,
                 SmallVectorImpl<LiveInterval*> &newRegs,
-                Delegate *delegate,
+                Delegate *delegate = 0,
                 const SmallVectorImpl<LiveInterval*> *uselessRegs = 0)
     : parent_(parent), newRegs_(newRegs),
       delegate_(delegate),
@@ -94,6 +94,13 @@ public:
   unsigned size() const { return newRegs_.size()-firstNew_; }
   bool empty() const { return size() == 0; }
   LiveInterval *get(unsigned idx) const { return newRegs_[idx+firstNew_]; }
+
+  /// FIXME: Temporary accessors until we can get rid of
+  /// LiveIntervals::AddIntervalsForSpills
+  SmallVectorImpl<LiveInterval*> *getNewVRegs() { return &newRegs_; }
+  const SmallVectorImpl<LiveInterval*> *getUselessVRegs() {
+    return uselessRegs_;
+  }
 
   /// create - Create a new register with the same class and stack slot as
   /// parent.

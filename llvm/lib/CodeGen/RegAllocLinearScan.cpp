@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "LiveDebugVariables.h"
+#include "LiveRangeEdit.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
 #include "Spiller.h"
@@ -1230,7 +1231,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DEBUG(dbgs() << "\t\t\tspilling(c): " << *cur << '\n');
     SmallVector<LiveInterval*, 8> added;
-    spiller_->spill(cur, added, 0);
+    LiveRangeEdit LRE(*cur, added);
+    spiller_->spill(LRE);
 
     std::sort(added.begin(), added.end(), LISorter());
     if (added.empty())
@@ -1306,7 +1308,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     DEBUG(dbgs() << "\t\t\tspilling(a): " << *sli << '\n');
     if (sli->beginIndex() < earliestStart)
       earliestStart = sli->beginIndex();
-    spiller_->spill(sli, added, &spillIs);
+    LiveRangeEdit LRE(*sli, added, 0, &spillIs);
+    spiller_->spill(LRE);
     spilled.insert(sli->reg);
   }
 

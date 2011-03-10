@@ -24,14 +24,10 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
-
-static cl::opt<bool>
-VerifySpills("verify-spills", cl::desc("Verify after each spill/split"));
 
 namespace {
 class InlineSpiller : public Spiller {
@@ -73,10 +69,6 @@ public:
       tri_(*mf.getTarget().getRegisterInfo()),
       reserved_(tri_.getReservedRegs(mf_)) {}
 
-  void spill(LiveInterval *li,
-             SmallVectorImpl<LiveInterval*> &newIntervals,
-             const SmallVectorImpl<LiveInterval*> *spillIs);
-
   void spill(LiveRangeEdit &);
 
 private:
@@ -96,8 +88,6 @@ namespace llvm {
 Spiller *createInlineSpiller(MachineFunctionPass &pass,
                              MachineFunction &mf,
                              VirtRegMap &vrm) {
-  if (VerifySpills)
-    mf.verify(&pass, "When creating inline spiller");
   return new InlineSpiller(pass, mf, vrm);
 }
 }
@@ -328,15 +318,6 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI,
   DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MI);
   VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, lis_.getVNInfoAllocator());
   NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
-}
-
-void InlineSpiller::spill(LiveInterval *li,
-                          SmallVectorImpl<LiveInterval*> &newIntervals,
-                          const SmallVectorImpl<LiveInterval*> *spillIs) {
-  LiveRangeEdit edit(*li, newIntervals, 0, spillIs);
-  spill(edit);
-  if (VerifySpills)
-    mf_.verify(&pass_, "After inline spill");
 }
 
 void InlineSpiller::spill(LiveRangeEdit &edit) {

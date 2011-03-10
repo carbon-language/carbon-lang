@@ -11,6 +11,7 @@
 
 #include "Spiller.h"
 #include "VirtRegMap.h"
+#include "LiveRangeEdit.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -180,11 +181,9 @@ public:
                  VirtRegMap &vrm)
     : SpillerBase(pass, mf, vrm) {}
 
-  void spill(LiveInterval *li,
-             SmallVectorImpl<LiveInterval*> &newIntervals,
-             const SmallVectorImpl<LiveInterval*>*) {
+  void spill(LiveRangeEdit &LRE) {
     // Ignore spillIs - we don't use it.
-    trivialSpillEverywhere(li, newIntervals);
+    trivialSpillEverywhere(&LRE.getParent(), *LRE.getNewVRegs());
   }
 };
 
@@ -210,22 +209,22 @@ public:
       vrm(&vrm) {}
 
   /// Falls back on LiveIntervals::addIntervalsForSpills.
-  void spill(LiveInterval *li,
-             SmallVectorImpl<LiveInterval*> &newIntervals,
-             const SmallVectorImpl<LiveInterval*> *spillIs) {
+  void spill(LiveRangeEdit &LRE) {
     std::vector<LiveInterval*> added =
-      lis->addIntervalsForSpills(*li, spillIs, loopInfo, *vrm);
-    newIntervals.insert(newIntervals.end(), added.begin(), added.end());
+      lis->addIntervalsForSpills(LRE.getParent(), LRE.getUselessVRegs(),
+                                 loopInfo, *vrm);
+    LRE.getNewVRegs()->insert(LRE.getNewVRegs()->end(),
+                              added.begin(), added.end());
 
     // Update LiveStacks.
-    int SS = vrm->getStackSlot(li->reg);
+    int SS = vrm->getStackSlot(LRE.getReg());
     if (SS == VirtRegMap::NO_STACK_SLOT)
       return;
-    const TargetRegisterClass *RC = mf->getRegInfo().getRegClass(li->reg);
+    const TargetRegisterClass *RC = mf->getRegInfo().getRegClass(LRE.getReg());
     LiveInterval &SI = lss->getOrCreateInterval(SS, RC);
     if (!SI.hasAtLeastOneValue())
       SI.getNextValue(SlotIndex(), 0, lss->getVNInfoAllocator());
-    SI.MergeRangesInAsValue(*li, SI.getValNumInfo(0));
+    SI.MergeRangesInAsValue(LRE.getParent(), SI.getValNumInfo(0));
   }
 };
 

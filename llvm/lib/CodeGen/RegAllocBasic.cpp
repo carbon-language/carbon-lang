@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "LiveIntervalUnion.h"
+#include "LiveRangeEdit.h"
 #include "RegAllocBase.h"
 #include "RenderMachineFunction.h"
 #include "Spiller.h"
@@ -344,7 +345,8 @@ void RegAllocBase::spillReg(LiveInterval& VirtReg, unsigned PhysReg,
     unassign(SpilledVReg, PhysReg);
 
     // Spill the extracted interval.
-    spiller().spill(&SpilledVReg, SplitVRegs, &PendingSpills);
+    LiveRangeEdit LRE(SpilledVReg, SplitVRegs, 0, &PendingSpills);
+    spiller().spill(LRE);
   }
   // After extracting segments, the query's results are invalid. But keep the
   // contents valid until we're done accessing pendingSpills.
@@ -469,7 +471,8 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
   }
   // No other spill candidates were found, so spill the current VirtReg.
   DEBUG(dbgs() << "spilling: " << VirtReg << '\n');
-  spiller().spill(&VirtReg, SplitVRegs, 0);
+  LiveRangeEdit LRE(VirtReg, SplitVRegs);
+  spiller().spill(LRE);
 
   // The live virtual register requesting allocation was spilled, so tell
   // the caller not to allocate anything during this round.
