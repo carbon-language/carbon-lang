@@ -300,6 +300,7 @@ class PseudoInst<dag oops, dag iops, InstrItinClass itin, list<dag> pattern>
   let OutOperandList = oops;
   let InOperandList = iops;
   let Pattern = pattern;
+  let isCodeGenOnly = 1;
 }
 
 // PseudoInst that's ARM-mode only.
