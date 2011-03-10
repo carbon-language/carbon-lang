@@ -1301,7 +1301,8 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
 
     uint64_t NewSizeInBits = FieldOffset + FieldSize;
 
-    setDataSize(llvm::RoundUpToAlignment(NewSizeInBits, 8));
+    setDataSize(llvm::RoundUpToAlignment(NewSizeInBits, 
+                                         Context.Target.getCharAlign()));
     UnfilledBitsInLastByte = getDataSizeInBits() - NewSizeInBits;
   }
 
@@ -1378,7 +1379,8 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   } else {
     uint64_t NewSizeInBits = FieldOffset + FieldSize;
 
-    setDataSize(llvm::RoundUpToAlignment(NewSizeInBits, 8));
+    setDataSize(llvm::RoundUpToAlignment(NewSizeInBits, 
+                                         Context.Target.getCharAlign()));
     UnfilledBitsInLastByte = getDataSizeInBits() - NewSizeInBits;
   }
 
