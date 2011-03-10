@@ -216,7 +216,8 @@ error_code MemoryBuffer::getFile(const char *Filename,
   return ret;
 }
 
-static bool shouldUseMmap(size_t FileSize,
+static bool shouldUseMmap(int FD,
+                          size_t FileSize,
                           size_t MapSize,
                           off_t Offset,
                           bool RequiresNullTerminator,
@@ -228,6 +229,20 @@ static bool shouldUseMmap(size_t FileSize,
 
   if (!RequiresNullTerminator)
     return true;
+
+
+  // If we don't know the file size, use fstat to find out.  fstat on an open
+  // file descriptor is cheaper than stat on a random path.
+  // FIXME: this chunk of code is duplicated, but it avoids a fstat when
+  // RequiresNullTerminator = false and MapSize != -1.
+  if (FileSize == size_t(-1)) {
+    struct stat FileInfo;
+    // TODO: This should use fstat64 when available.
+    if (fstat(FD, &FileInfo) == -1) {
+      return error_code(errno, posix_category());
+    }
+    FileSize = FileInfo.st_size;
+  }
 
   // If we need a null terminator and the end of the map is inside the file,
   // we cannot use mmap.
@@ -251,22 +266,22 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                      bool RequiresNullTerminator) {
   static int PageSize = sys::Process::GetPageSize();
 
-  // If we don't know the file size, use fstat to find out.  fstat on an open
-  // file descriptor is cheaper than stat on a random path.
-  if (FileSize == size_t(-1)) {
-    struct stat FileInfo;
-    // TODO: This should use fstat64 when available.
-    if (fstat(FD, &FileInfo) == -1) {
-      return error_code(errno, posix_category());
+  // Default is to map the full file.
+  if (MapSize == size_t(-1)) {
+    // If we don't know the file size, use fstat to find out.  fstat on an open
+    // file descriptor is cheaper than stat on a random path.
+    if (FileSize == size_t(-1)) {
+      struct stat FileInfo;
+      // TODO: This should use fstat64 when available.
+      if (fstat(FD, &FileInfo) == -1) {
+        return error_code(errno, posix_category());
+      }
+      FileSize = FileInfo.st_size;
     }
-    FileSize = FileInfo.st_size;
+    MapSize = FileSize;
   }
 
-  // Default is to map the full file.
-  if (MapSize == size_t(-1))
-    MapSize = FileSize;
-
-  if (shouldUseMmap(FileSize, MapSize, Offset, RequiresNullTerminator,
+  if (shouldUseMmap(FD, FileSize, MapSize, Offset, RequiresNullTerminator,
                     PageSize)) {
     off_t RealMapOffset = Offset & ~(PageSize - 1);
     off_t Delta = Offset - RealMapOffset;
