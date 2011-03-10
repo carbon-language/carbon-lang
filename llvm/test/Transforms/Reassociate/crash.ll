@@ -42,3 +42,28 @@ define i32 @test3(i32 %Arg, i32 %x1, i32 %x2, i32 %x3) {
  %E = add i32 %D, %C
   ret i32 %E
 }
+
+
+; rdar://9096268
+define void @x66303361ae3f602889d1b7d0f86e5455(i8* %arg) nounwind {
+_:
+  br label %_33
+
+_33:                                              ; preds = %_33, %_
+  %tmp348 = load i8* %arg, align 1
+  %tmp349 = lshr i8 %tmp348, 7
+  %tmp350 = or i8 %tmp349, 42
+  %tmp351 = add i8 %tmp350, -42
+  %tmp352 = zext i8 %tmp351 to i32
+  %tmp358 = add i32 %tmp352, -501049439
+  %tmp359 = mul i32 %tmp358, %tmp358
+  %tmp360 = mul i32 %tmp352, %tmp352
+  %tmp361 = sub i32 %tmp359, %tmp360
+  %tmp362 = mul i32 %tmp361, -920056735
+  %tmp363 = add i32 %tmp362, 501049439
+  %tmp364 = add i32 %tmp362, -2000262972
+  %tmp365 = sub i32 %tmp363, %tmp364
+  %tmp366 = sub i32 -501049439, %tmp362
+  %tmp367 = add i32 %tmp365, %tmp366
+  br label %_33
+}

@@ -22,6 +22,7 @@
 
 #define DEBUG_TYPE "reassociate"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -74,6 +75,7 @@ namespace {
   class Reassociate : public FunctionPass {
     DenseMap<BasicBlock*, unsigned> RankMap;
     DenseMap<AssertingVH<>, unsigned> ValueRankMap;
+    SmallVector<WeakVH, 8> DeadInsts;
     bool MadeChange;
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -113,13 +115,13 @@ FunctionPass *llvm::createReassociatePass() { return new Reassociate(); }
 
 void Reassociate::RemoveDeadBinaryOp(Value *V) {
   Instruction *Op = dyn_cast<Instruction>(V);
-  if (!Op || !isa<BinaryOperator>(Op) || !Op->use_empty())
+  if (!Op || !isa<BinaryOperator>(Op))
     return;
   
   Value *LHS = Op->getOperand(0), *RHS = Op->getOperand(1);
   
   ValueRankMap.erase(Op);
-  Op->eraseFromParent();
+  DeadInsts.push_back(Op);
   RemoveDeadBinaryOp(LHS);
   RemoveDeadBinaryOp(RHS);
 }
@@ -603,7 +605,7 @@ Value *Reassociate::RemoveFactorFromExpression(Value *V, Value *Factor) {
   // remaining operand.
   if (Factors.size() == 1) {
     ValueRankMap.erase(BO);
-    BO->eraseFromParent();
+    DeadInsts.push_back(BO);
     V = Factors[0].Op;
   } else {
     RewriteExprTree(BO, Factors);
@@ -1092,6 +1094,12 @@ bool Reassociate::runOnFunction(Function &F) {
   MadeChange = false;
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
     ReassociateBB(FI);
+
+  // Now that we're done, delete any instructions which are no longer used.
+  while (!DeadInsts.empty())
+    if (Instruction *Inst =
+          cast_or_null<Instruction>((Value *)DeadInsts.pop_back_val()))
+      RecursivelyDeleteTriviallyDeadInstructions(Inst);
 
   // We are done with the rank map.
   RankMap.clear();
