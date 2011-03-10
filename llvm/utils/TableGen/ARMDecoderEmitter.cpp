@@ -1570,9 +1570,7 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     return false;
 
   if (TN == TARGET_ARM) {
-    // FIXME: what about Int_MemBarrierV6 and Int_SyncBarrierV6?
-    if ((Name != "Int_MemBarrierV7" && Name != "Int_SyncBarrierV7") &&
-        Form == ARM_FORMAT_PSEUDO)
+    if (Form == ARM_FORMAT_PSEUDO)
       return false;
     if (thumbInstruction(Form))
       return false;
