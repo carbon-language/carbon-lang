@@ -1,118 +1,237 @@
-; RUN: llc < %s -march=ptx | FileCheck %s
+; RUN: llc < %s -march=ptx -mattr=+ptx20,+sm20 | FileCheck %s
 
-define ptx_device i16 @tid_x() {
-; CHECK: mov.u16 rh0, tid.x;
+define ptx_device i16 @test_tid_x() {
+; CHECK: mov.u16 rh0, %tid.x;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.tid.x()
 	ret i16 %x
 }
 
-define ptx_device i16 @tid_y() {
-; CHECK: mov.u16 rh0, tid.y;
+define ptx_device i16 @test_tid_y() {
+; CHECK: mov.u16 rh0, %tid.y;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.tid.y()
 	ret i16 %x
 }
 
-define ptx_device i16 @tid_z() {
-; CHECK: mov.u16 rh0, tid.z;
+define ptx_device i16 @test_tid_z() {
+; CHECK: mov.u16 rh0, %tid.z;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.tid.z()
 	ret i16 %x
 }
 
-define ptx_device i16 @tid_w() {
-; CHECK: mov.u16 rh0, tid.w;
+define ptx_device i16 @test_tid_w() {
+; CHECK: mov.u16 rh0, %tid.w;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.tid.w()
 	ret i16 %x
 }
 
-define ptx_device i16 @ntid_x() {
-; CHECK: mov.u16 rh0, ntid.x;
+define ptx_device i16 @test_ntid_x() {
+; CHECK: mov.u16 rh0, %ntid.x;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.ntid.x()
 	ret i16 %x
 }
 
-define ptx_device i16 @ntid_y() {
-; CHECK: mov.u16 rh0, ntid.y;
+define ptx_device i16 @test_ntid_y() {
+; CHECK: mov.u16 rh0, %ntid.y;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.ntid.y()
 	ret i16 %x
 }
 
-define ptx_device i16 @ntid_z() {
-; CHECK: mov.u16 rh0, ntid.z;
+define ptx_device i16 @test_ntid_z() {
+; CHECK: mov.u16 rh0, %ntid.z;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.ntid.z()
 	ret i16 %x
 }
 
-define ptx_device i16 @ntid_w() {
-; CHECK: mov.u16 rh0, ntid.w;
+define ptx_device i16 @test_ntid_w() {
+; CHECK: mov.u16 rh0, %ntid.w;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.ntid.w()
 	ret i16 %x
 }
 
-define ptx_device i16 @ctaid_x() {
-; CHECK: mov.u16 rh0, ctaid.x;
+define ptx_device i32 @test_laneid() {
+; CHECK: mov.u32 r0, %laneid;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.laneid()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_warpid() {
+; CHECK: mov.u32 r0, %warpid;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.warpid()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_nwarpid() {
+; CHECK: mov.u32 r0, %nwarpid;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.nwarpid()
+	ret i32 %x
+}
+
+define ptx_device i16 @test_ctaid_x() {
+; CHECK: mov.u16 rh0, %ctaid.x;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.ctaid.x()
 	ret i16 %x
 }
 
-define ptx_device i16 @ctaid_y() {
-; CHECK: mov.u16 rh0, ctaid.y;
+define ptx_device i16 @test_ctaid_y() {
+; CHECK: mov.u16 rh0, %ctaid.y;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.ctaid.y()
 	ret i16 %x
 }
 
-define ptx_device i16 @ctaid_z() {
-; CHECK: mov.u16 rh0, ctaid.z;
+define ptx_device i16 @test_ctaid_z() {
+; CHECK: mov.u16 rh0, %ctaid.z;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.ctaid.z()
 	ret i16 %x
 }
 
-define ptx_device i16 @ctaid_w() {
-; CHECK: mov.u16 rh0, ctaid.w;
+define ptx_device i16 @test_ctaid_w() {
+; CHECK: mov.u16 rh0, %ctaid.w;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.ctaid.w()
 	ret i16 %x
 }
 
-define ptx_device i16 @nctaid_x() {
-; CHECK: mov.u16 rh0, nctaid.x;
+define ptx_device i16 @test_nctaid_x() {
+; CHECK: mov.u16 rh0, %nctaid.x;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.nctaid.x()
 	ret i16 %x
 }
 
-define ptx_device i16 @nctaid_y() {
-; CHECK: mov.u16 rh0, nctaid.y;
+define ptx_device i16 @test_nctaid_y() {
+; CHECK: mov.u16 rh0, %nctaid.y;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.nctaid.y()
 	ret i16 %x
 }
 
-define ptx_device i16 @nctaid_z() {
-; CHECK: mov.u16 rh0, nctaid.z;
+define ptx_device i16 @test_nctaid_z() {
+; CHECK: mov.u16 rh0, %nctaid.z;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.nctaid.z()
 	ret i16 %x
 }
 
-define ptx_device i16 @nctaid_w() {
-; CHECK: mov.u16 rh0, nctaid.w;
+define ptx_device i16 @test_nctaid_w() {
+; CHECK: mov.u16 rh0, %nctaid.w;
 ; CHECK-NEXT: ret;
 	%x = call i16 @llvm.ptx.read.nctaid.w()
 	ret i16 %x
 }
 
-define ptx_device void @bar_sync() {
+define ptx_device i32 @test_smid() {
+; CHECK: mov.u32 r0, %smid;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.smid()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_nsmid() {
+; CHECK: mov.u32 r0, %nsmid;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.nsmid()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_gridid() {
+; CHECK: mov.u32 r0, %gridid;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.gridid()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_lanemask_eq() {
+; CHECK: mov.u32 r0, %lanemask_eq;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.lanemask.eq()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_lanemask_le() {
+; CHECK: mov.u32 r0, %lanemask_le;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.lanemask.le()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_lanemask_lt() {
+; CHECK: mov.u32 r0, %lanemask_lt;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.lanemask.lt()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_lanemask_ge() {
+; CHECK: mov.u32 r0, %lanemask_ge;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.lanemask.ge()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_lanemask_gt() {
+; CHECK: mov.u32 r0, %lanemask_gt;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.lanemask.gt()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_clock() {
+; CHECK: mov.u32 r0, %clock;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.clock()
+	ret i32 %x
+}
+
+define ptx_device i64 @test_clock64() {
+; CHECK: mov.u64 rd0, %clock64;
+; CHECK-NEXT: ret;
+	%x = call i64 @llvm.ptx.read.clock64()
+	ret i64 %x
+}
+
+define ptx_device i32 @test_pm0() {
+; CHECK: mov.u32 r0, %pm0;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.pm0()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_pm1() {
+; CHECK: mov.u32 r0, %pm1;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.pm1()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_pm2() {
+; CHECK: mov.u32 r0, %pm2;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.pm2()
+	ret i32 %x
+}
+
+define ptx_device i32 @test_pm3() {
+; CHECK: mov.u32 r0, %pm3;
+; CHECK-NEXT: ret;
+	%x = call i32 @llvm.ptx.read.pm3()
+	ret i32 %x
+}
+
+define ptx_device void @test_bar_sync() {
 ; CHECK: bar.sync 0
 ; CHECK-NEXT: ret;
 	call void @llvm.ptx.bar.sync(i32 0)
@@ -127,6 +246,11 @@ declare i16 @llvm.ptx.read.ntid.x()
 declare i16 @llvm.ptx.read.ntid.y()
 declare i16 @llvm.ptx.read.ntid.z()
 declare i16 @llvm.ptx.read.ntid.w()
+
+declare i32 @llvm.ptx.read.laneid()
+declare i32 @llvm.ptx.read.warpid()
+declare i32 @llvm.ptx.read.nwarpid()
+
 declare i16 @llvm.ptx.read.ctaid.x()
 declare i16 @llvm.ptx.read.ctaid.y()
 declare i16 @llvm.ptx.read.ctaid.z()
@@ -135,5 +259,23 @@ declare i16 @llvm.ptx.read.nctaid.x()
 declare i16 @llvm.ptx.read.nctaid.y()
 declare i16 @llvm.ptx.read.nctaid.z()
 declare i16 @llvm.ptx.read.nctaid.w()
+
+declare i32 @llvm.ptx.read.smid()
+declare i32 @llvm.ptx.read.nsmid()
+declare i32 @llvm.ptx.read.gridid()
+
+declare i32 @llvm.ptx.read.lanemask.eq()
+declare i32 @llvm.ptx.read.lanemask.le()
+declare i32 @llvm.ptx.read.lanemask.lt()
+declare i32 @llvm.ptx.read.lanemask.ge()
+declare i32 @llvm.ptx.read.lanemask.gt()
+
+declare i32 @llvm.ptx.read.clock()
+declare i64 @llvm.ptx.read.clock64()
+
+declare i32 @llvm.ptx.read.pm0()
+declare i32 @llvm.ptx.read.pm1()
+declare i32 @llvm.ptx.read.pm2()
+declare i32 @llvm.ptx.read.pm3()
 
 declare void @llvm.ptx.bar.sync(i32 %i)

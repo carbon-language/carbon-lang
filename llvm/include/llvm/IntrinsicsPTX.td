@@ -12,27 +12,50 @@
 //===----------------------------------------------------------------------===//
 
 let TargetPrefix = "ptx" in {
-  multiclass PTXReadSpecialRegisterIntrinsic {
+  // FIXME Since PTX 2.0, special registers are redefined as v4i32 type
+  multiclass PTXReadSpecialRegisterIntrinsic_v4i16 {
     def _r64   : Intrinsic<[llvm_i64_ty],   [], [IntrNoMem]>;
     def _v4i16 : Intrinsic<[llvm_v4i16_ty], [], [IntrNoMem]>;
+    def _x     : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
+    def _y     : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
+    def _z     : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
+    def _w     : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
   }
 
-  multiclass PTXReadSpecialSubRegisterIntrinsic {
-    def _x : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
-    def _y : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
-    def _z : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
-    def _w : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
-  }
+  class PTXReadSpecialRegisterIntrinsic_r32
+    : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+
+  class PTXReadSpecialRegisterIntrinsic_r64
+    : Intrinsic<[llvm_i64_ty], [], [IntrNoMem]>;
 }
 
-defm int_ptx_read_tid    : PTXReadSpecialRegisterIntrinsic;
-defm int_ptx_read_tid    : PTXReadSpecialSubRegisterIntrinsic;
-defm int_ptx_read_ntid   : PTXReadSpecialRegisterIntrinsic;
-defm int_ptx_read_ntid   : PTXReadSpecialSubRegisterIntrinsic;
-defm int_ptx_read_ctaid  : PTXReadSpecialRegisterIntrinsic;
-defm int_ptx_read_ctaid  : PTXReadSpecialSubRegisterIntrinsic;
-defm int_ptx_read_nctaid : PTXReadSpecialRegisterIntrinsic;
-defm int_ptx_read_nctaid : PTXReadSpecialSubRegisterIntrinsic;
+defm int_ptx_read_tid        : PTXReadSpecialRegisterIntrinsic_v4i16;
+defm int_ptx_read_ntid       : PTXReadSpecialRegisterIntrinsic_v4i16;
+
+def int_ptx_read_laneid      : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_warpid      : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_nwarpid     : PTXReadSpecialRegisterIntrinsic_r32;
+
+defm int_ptx_read_ctaid      : PTXReadSpecialRegisterIntrinsic_v4i16;
+defm int_ptx_read_nctaid     : PTXReadSpecialRegisterIntrinsic_v4i16;
+
+def int_ptx_read_smid        : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_nsmid       : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_gridid      : PTXReadSpecialRegisterIntrinsic_r32;
+
+def int_ptx_read_lanemask_eq : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_lanemask_le : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_lanemask_lt : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_lanemask_ge : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_lanemask_gt : PTXReadSpecialRegisterIntrinsic_r32;
+
+def int_ptx_read_clock       : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_clock64     : PTXReadSpecialRegisterIntrinsic_r64;
+
+def int_ptx_read_pm0         : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_pm1         : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_pm2         : PTXReadSpecialRegisterIntrinsic_r32;
+def int_ptx_read_pm3         : PTXReadSpecialRegisterIntrinsic_r32;
 
 let TargetPrefix = "ptx" in
   def int_ptx_bar_sync : Intrinsic<[], [llvm_i32_ty], []>;
