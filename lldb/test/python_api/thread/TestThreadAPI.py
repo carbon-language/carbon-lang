@@ -95,22 +95,22 @@ class ThreadAPITestCase(TestBase):
         error = lldb.SBError()
         self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
-        self.runCmd("process status")
-        symbol = get_caller_symbol(thread)
-        caller = symbol.split('(')[0]
-
-        while caller != "b":
+        while True:
+            thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+            self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+            caller_symbol = get_caller_symbol(thread)
+            #print "caller symbol of malloc:", caller_symbol
+            if not caller_symbol:
+                self.fail("Test failed: could not locate the caller symbol of malloc")
+            if caller_symbol == "b(int)":
+                break
             #self.runCmd("thread backtrace")
             #self.runCmd("process status")           
             self.process.Continue()
-            thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
-            symbol = get_caller_symbol(thread)
-            caller = symbol.split('(')[0]
-            self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
 
         thread.StepOut()
+        self.runCmd("thread backtrace")
+        #self.runCmd("process status")           
         self.assertTrue(thread.GetFrameAtIndex(0).GetLineEntry().GetLine() == self.line2,
                         "step out of malloc into function b is successful")
 
