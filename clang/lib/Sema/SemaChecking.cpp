@@ -2762,6 +2762,11 @@ std::string PrettyPrintInRange(const llvm::APSInt &Value, IntRange Range) {
   return ValueInRange.toString(10);
 }
 
+static bool isFromSystemMacro(Sema &S, SourceLocation loc) {
+  SourceManager &smgr = S.Context.getSourceManager();
+  return loc.isMacroID() && smgr.isInSystemHeader(smgr.getSpellingLoc(loc));
+}
+  
 void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
                              SourceLocation CC, bool *ICContext = 0) {
   if (E->isTypeDependent() || E->isValueDependent()) return;
@@ -2771,11 +2776,12 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   if (Source == Target) return;
   if (Target->isDependentType()) return;
 
-  // If the conversion context location is invalid or instantiated
-  // from a system macro, don't complain.
-  if (CC.isInvalid() ||
-      (CC.isMacroID() && S.Context.getSourceManager().isInSystemHeader(
-                           S.Context.getSourceManager().getSpellingLoc(CC))))
+  // If the conversion context location is invalid don't complain.
+  // We also don't want to emit a warning if the issue occurs from the
+  // instantiation of a system macro.  The problem is that 'getSpellingLoc()'
+  // is slow, so we delay this check as long as possible.  Once we detect
+  // we are in that scenario, we just return.
+  if (CC.isInvalid())
     return;
 
   // Never diagnose implicit casts to bool.
@@ -2784,8 +2790,11 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
 
   // Strip vector types.
   if (isa<VectorType>(Source)) {
-    if (!isa<VectorType>(Target))
+    if (!isa<VectorType>(Target)) {
+      if (isFromSystemMacro(S, CC))
+        return;
       return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_vector_scalar);
+    }
 
     Source = cast<VectorType>(Source)->getElementType().getTypePtr();
     Target = cast<VectorType>(Target)->getElementType().getTypePtr();
@@ -2793,8 +2802,12 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
 
   // Strip complex types.
   if (isa<ComplexType>(Source)) {
-    if (!isa<ComplexType>(Target))
+    if (!isa<ComplexType>(Target)) {
+      if (isFromSystemMacro(S, CC))
+        return;
+
       return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_complex_scalar);
+    }
 
     Source = cast<ComplexType>(Source)->getElementType().getTypePtr();
     Target = cast<ComplexType>(Target)->getElementType().getTypePtr();
@@ -2822,13 +2835,19 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
             return;
         }
 
+        if (isFromSystemMacro(S, CC))
+          return;
+
         DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_float_precision);
       }
       return;
     }
 
-    // If the target is integral, always warn.
+    // If the target is integral, always warn.    
     if ((TargetBT && TargetBT->isInteger())) {
+      if (isFromSystemMacro(S, CC))
+        return;
+      
       Expr *InnerE = E->IgnoreParenImpCasts();
       if (FloatingLiteral *LiteralExpr = dyn_cast<FloatingLiteral>(InnerE)) {
         DiagnoseImpCast(S, LiteralExpr, T, CC,
@@ -2852,6 +2871,9 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     // TODO: this should happen for bitfield stores, too.
     llvm::APSInt Value(32);
     if (E->isIntegerConstantExpr(Value, S.Context)) {
+      if (isFromSystemMacro(S, CC))
+        return;
+
       std::string PrettySourceValue = Value.toString(10);
       std::string PrettyTargetValue = PrettyPrintInRange(Value, TargetRange);
 
@@ -2863,6 +2885,10 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
 
     // People want to build with -Wshorten-64-to-32 and not -Wconversion
     // and by god we'll let them.
+    
+    if (isFromSystemMacro(S, CC))
+      return;
+    
     if (SourceRange.Width == 64 && TargetRange.Width == 32)
       return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_integer_64_32);
     return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_integer_precision);
@@ -2871,6 +2897,10 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   if ((TargetRange.NonNegative && !SourceRange.NonNegative) ||
       (!TargetRange.NonNegative && SourceRange.NonNegative &&
        SourceRange.Width == TargetRange.Width)) {
+        
+    if (isFromSystemMacro(S, CC))
+      return;
+
     unsigned DiagID = diag::warn_impcast_integer_sign;
 
     // Traditionally, gcc has warned about this under -Wsign-compare.
@@ -2893,9 +2923,13 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
            SourceEnum->getDecl()->getTypedefForAnonDecl()) &&
           (TargetEnum->getDecl()->getIdentifier() ||
            TargetEnum->getDecl()->getTypedefForAnonDecl()) &&
-          SourceEnum != TargetEnum)
+          SourceEnum != TargetEnum) {
+        if (isFromSystemMacro(S, CC))
+          return;
+
         return DiagnoseImpCast(S, E, T, CC, 
                                diag::warn_impcast_different_enum_types);
+      }
   
   return;
 }
