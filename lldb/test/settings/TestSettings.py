@@ -229,6 +229,33 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd ("settings set -r target.process.env-vars")
 
 
+    def test_all_settings_exist (self):
+        self.expect ("settings show",
+                     substrs = [ "frame-format (string) = ",
+                                 "prompt (string) = ",
+                                 "script-lang (string) = ",
+                                 "term-width (int) = ",
+                                 "thread-format (string) = ",
+                                 "use-external-editor (boolean) = ",
+                                 "auto-confirm (boolean) = ",
+                                 "target.default-arch (string):",
+                                 "target.expr-prefix (string) = ",
+                                 "target.execution-level (enum) = ",
+                                 "target.execution-mode (enum) = ",
+                                 "target.execution-os-type (enum) = ", 
+                                 "target.process.run-args (array):",
+                                 "target.process.env-vars (dictionary):",
+                                 "target.process.inherit-env (boolean) = ",
+                                 "target.process.input-path (string) = ",
+                                 "target.process.output-path (string) = ",
+                                 "target.process.error-path (string) = ",
+                                 "target.process.plugin (enum):",
+                                 "target.process.disable-aslr (boolean) = ",
+                                 "target.process.disable-stdio (boolean) = ",
+                                 "target.process.thread.step-avoid-regexp (string):",
+                                 "target.process.thread.trace-thread (boolean) =" ])
+        
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()
