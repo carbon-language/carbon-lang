@@ -282,6 +282,8 @@ class CFGBuilder {
   // State to track for building switch statements.
   bool switchExclusivelyCovered;
   Expr::EvalResult *switchCond;
+  
+  CFG::BuildOptions::ForcedBlkExprs::value_type *cachedEntry;
 
 public:
   explicit CFGBuilder(ASTContext *astContext,
@@ -290,11 +292,14 @@ public:
       Block(NULL), Succ(NULL),
       SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
       TryTerminatedBlock(NULL), badCFG(false), BuildOpts(buildOpts), 
-      switchExclusivelyCovered(false), switchCond(0) {}
+      switchExclusivelyCovered(false), switchCond(0),
+      cachedEntry(0) {}
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(const Decl *D, Stmt *Statement);
 
+  bool alwaysAdd(const Stmt *stmt);
+  
 private:
   // Visitors to walk an AST and construct the CFG.
   CFGBlock *VisitAddrLabelExpr(AddrLabelExpr *A, AddStmtChoice asc);
@@ -387,6 +392,12 @@ private:
 
   // Interface to CFGBlock - adding CFGElements.
   void appendStmt(CFGBlock *B, Stmt *S) {
+    if (cachedEntry) {
+      assert(cachedEntry->first == S);
+      cachedEntry->second = B;
+      cachedEntry = 0;
+    }    
+
     B->appendStmt(S, cfg->getBumpVectorContext());
   }
   void appendInitializer(CFGBlock *B, CXXCtorInitializer *I) {
@@ -443,9 +454,26 @@ private:
   
 };
 
-bool AddStmtChoice::alwaysAdd(CFGBuilder &builder,
-                              const Stmt *stmt) const {
-  return kind == AlwaysAdd;
+inline bool AddStmtChoice::alwaysAdd(CFGBuilder &builder,
+                                     const Stmt *stmt) const {
+  return builder.alwaysAdd(stmt) || kind == AlwaysAdd;
+}
+  
+bool CFGBuilder::alwaysAdd(const Stmt *stmt) {
+  if (!BuildOpts.forcedBlkExprs)
+    return false;
+  
+  CFG::BuildOptions::ForcedBlkExprs *fb = *BuildOpts.forcedBlkExprs;
+
+  if (!fb)
+    return false;
+
+  CFG::BuildOptions::ForcedBlkExprs::iterator itr = fb->find(stmt);
+  if (itr == fb->end())
+    return false;
+  
+  cachedEntry = &*itr;
+  return true;
 }
   
 // FIXME: Add support for dependent-sized array types in C++?

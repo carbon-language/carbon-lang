@@ -546,25 +546,41 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // Emit delayed diagnostics.
   if (!fscope->PossiblyUnreachableDiags.empty()) {
     bool analyzed = false;
-    if (CFGReachabilityAnalysis *cra = AC.getCFGReachablityAnalysis())
-      if (CFGStmtMap *csm = AC.getCFGStmtMap()) {
-        analyzed = true;
-        for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
-             i = fscope->PossiblyUnreachableDiags.begin(),
-             e = fscope->PossiblyUnreachableDiags.end();
-             i != e; ++i) {
-          const sema::PossiblyUnreachableDiag &D = *i;
-          if (const CFGBlock *blk = csm->getBlock(D.stmt)) {
+
+    // Register the expressions with the CFGBuilder.
+    for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
+         i = fscope->PossiblyUnreachableDiags.begin(),
+         e = fscope->PossiblyUnreachableDiags.end();
+         i != e; ++i) {
+      if (const Stmt *stmt = i->stmt)
+        AC.registerForcedBlockExpression(stmt);
+    }
+
+    if (AC.getCFG()) {
+      analyzed = true;
+      for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
+            i = fscope->PossiblyUnreachableDiags.begin(),
+            e = fscope->PossiblyUnreachableDiags.end();
+            i != e; ++i)
+      {
+        const sema::PossiblyUnreachableDiag &D = *i;
+        bool processed = false;
+        if (const Stmt *stmt = i->stmt) {
+          const CFGBlock *block = AC.getBlockForRegisteredExpression(stmt);
+          assert(block);
+          if (CFGReachabilityAnalysis *cra = AC.getCFGReachablityAnalysis()) {
             // Can this block be reached from the entrance?
-            if (cra->isReachable(&AC.getCFG()->getEntry(), blk))
+            if (cra->isReachable(&AC.getCFG()->getEntry(), block))
               S.Diag(D.Loc, D.PD);
-          }
-          else {
-            // Emit the warning anyway if we cannot map to a basic block.
-            S.Diag(D.Loc, D.PD);
+            processed = true;
           }
         }
+        if (!processed) {
+          // Emit the warning anyway if we cannot map to a basic block.
+          S.Diag(D.Loc, D.PD);
+        }
       }
+    }
 
     if (!analyzed)
       flushDiagnostics(S, fscope);

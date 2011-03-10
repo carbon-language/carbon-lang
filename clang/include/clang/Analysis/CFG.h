@@ -534,7 +534,7 @@ public:
 
   class BuildOptions {
   public:
-    typedef llvm::DenseMap<const Stmt *, const CFGBlock> ForcedBlkExprs;
+    typedef llvm::DenseMap<const Stmt *, const CFGBlock*> ForcedBlkExprs;
     ForcedBlkExprs **forcedBlkExprs;    
 
     bool PruneTriviallyFalseEdges:1;

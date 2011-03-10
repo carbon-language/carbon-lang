@@ -74,6 +74,26 @@ const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
   return NULL;
 }
 
+void AnalysisContext::registerForcedBlockExpression(const Stmt *stmt) {
+  if (!forcedBlkExprs)
+    forcedBlkExprs = new CFG::BuildOptions::ForcedBlkExprs();
+  // Default construct an entry for 'stmt'.
+  if (const ParenExpr *pe = dyn_cast<ParenExpr>(stmt))
+    stmt = pe->IgnoreParens();
+  (void) (*forcedBlkExprs)[stmt];
+}
+
+const CFGBlock *
+AnalysisContext::getBlockForRegisteredExpression(const Stmt *stmt) {
+  assert(forcedBlkExprs);
+  if (const ParenExpr *pe = dyn_cast<ParenExpr>(stmt))
+    stmt = pe->IgnoreParens();
+  CFG::BuildOptions::ForcedBlkExprs::const_iterator itr = 
+    forcedBlkExprs->find(stmt);
+  assert(itr != forcedBlkExprs->end());
+  return itr->second;
+}
+
 CFG *AnalysisContext::getCFG() {
   if (useUnoptimizedCFG)
     return getUnoptimizedCFG();

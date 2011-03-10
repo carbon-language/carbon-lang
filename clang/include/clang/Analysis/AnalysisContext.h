@@ -92,6 +92,9 @@ public:
   bool getAddImplicitDtors() const { return cfgBuildOptions.AddImplicitDtors; }
   bool getAddInitializers() const { return cfgBuildOptions.AddInitializers; }
 
+  void registerForcedBlockExpression(const Stmt *stmt);
+  const CFGBlock *getBlockForRegisteredExpression(const Stmt *stmt);
+  
   Stmt *getBody();
   CFG *getCFG();
   
