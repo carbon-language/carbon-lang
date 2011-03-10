@@ -1006,18 +1006,26 @@ Thread::GetSP ()
 
 
 void
-Thread::Initialize ()
+Thread::SettingsInitialize ()
 {
     UserSettingsControllerSP &usc = GetSettingsController();
     usc.reset (new SettingsController);
     UserSettingsController::InitializeSettingsController (usc,
                                                           SettingsController::global_settings_table,
                                                           SettingsController::instance_settings_table);
+                                                          
+    // Now call SettingsInitialize() on each 'child' setting of Thread.
+    // Currently there are none.
 }
 
 void
-Thread::Terminate ()
+Thread::SettingsTerminate ()
 {
+    // Must call SettingsTerminate() on each 'child' setting of Thread before terminating Thread settings.
+    // Currently there are none.
+    
+    // Now terminate Thread Settings.
+    
     UserSettingsControllerSP &usc = GetSettingsController();
     UserSettingsController::FinalizeSettingsController (usc);
     usc.reset();

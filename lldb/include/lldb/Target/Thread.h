@@ -194,10 +194,10 @@ public:
     UpdateInstanceName ();
 
     static void
-    Initialize ();
+    SettingsInitialize ();
 
     static void
-    Terminate ();
+    SettingsTerminate ();
 
     static lldb::UserSettingsControllerSP &
     GetSettingsController ();

@@ -779,18 +779,28 @@ Target::GetScratchClangASTContext()
 }
 
 void
-Target::Initialize ()
+Target::SettingsInitialize ()
 {
     UserSettingsControllerSP &usc = GetSettingsController();
     usc.reset (new SettingsController);
     UserSettingsController::InitializeSettingsController (usc,
                                                           SettingsController::global_settings_table,
                                                           SettingsController::instance_settings_table);
+                                                          
+    // Now call SettingsInitialize() on each 'child' setting of Target
+    Process::SettingsInitialize ();
 }
 
 void
-Target::Terminate ()
+Target::SettingsTerminate ()
 {
+
+    // Must call SettingsTerminate() on each settings 'child' of Target, before terminating Target's Settings.
+    
+    Process::SettingsTerminate ();
+    
+    // Now terminate Target Settings.
+    
     UserSettingsControllerSP &usc = GetSettingsController();
     UserSettingsController::FinalizeSettingsController (usc);
     usc.reset();

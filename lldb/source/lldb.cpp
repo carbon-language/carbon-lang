@@ -74,9 +74,6 @@ lldb_private::Initialize ()
         Timer::Initialize ();
         Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
         
-        Target::Initialize ();
-        Process::Initialize ();
-        Thread::Initialize ();
         DisassemblerLLVM::Initialize();
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
@@ -112,9 +109,10 @@ lldb_private::Initialize ()
         // Scan for any system or user LLDB plug-ins
         PluginManager::Initialize();
 
-        // The process needs to know about installed plug-ins
-        Process::DidInitialize ();
-
+        // The process settings need to know about installed plug-ins, so the Settings must be initialized
+        // AFTER PluginManager::Initialize is called.
+        
+        Debugger::SettingsInitialize();
     }
 }
 
@@ -157,9 +155,7 @@ lldb_private::Terminate ()
     PlatformMacOSX::Terminate();
 #endif
 
-    Thread::Terminate ();
-    Process::Terminate ();
-    Target::Terminate ();
+    Debugger::SettingsTerminate ();
 
 #if defined (__linux__)
     PlatformLinux::Terminate();

@@ -71,11 +71,6 @@ Debugger::Initialize ()
 {
     if (g_shared_debugger_refcount == 0)
     {
-        UserSettingsControllerSP &usc = GetSettingsController();
-        usc.reset (new SettingsController);
-        UserSettingsController::InitializeSettingsController (usc,
-                                                              SettingsController::global_settings_table,
-                                                              SettingsController::instance_settings_table);
         lldb_private::Initialize();
     }
     g_shared_debugger_refcount++;
@@ -92,15 +87,46 @@ Debugger::Terminate ()
         {
             lldb_private::WillTerminate();
             lldb_private::Terminate();
-            UserSettingsControllerSP &usc = GetSettingsController();
-            UserSettingsController::FinalizeSettingsController (usc);
-            usc.reset();
 
             // Clear our master list of debugger objects
             Mutex::Locker locker (GetDebuggerListMutex ());
             GetDebuggerList().clear();
         }
     }
+}
+
+void
+Debugger::SettingsInitialize ()
+{
+    static bool g_initialized = false;
+    
+    if (!g_initialized)
+    {
+        g_initialized = true;
+        UserSettingsControllerSP &usc = GetSettingsController();
+        usc.reset (new SettingsController);
+        UserSettingsController::InitializeSettingsController (usc,
+                                                              SettingsController::global_settings_table,
+                                                              SettingsController::instance_settings_table);
+        // Now call SettingsInitialize for each settings 'child' of Debugger
+        Target::SettingsInitialize ();
+    }
+}
+
+void
+Debugger::SettingsTerminate ()
+{
+
+    // Must call SettingsTerminate() for each settings 'child' of Debugger, before terminating the Debugger's 
+    // Settings.
+
+    Target::SettingsTerminate ();
+
+    // Now terminate the Debugger Settings.
+
+    UserSettingsControllerSP &usc = GetSettingsController();
+    UserSettingsController::FinalizeSettingsController (usc);
+    usc.reset();
 }
 
 DebuggerSP

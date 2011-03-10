@@ -261,6 +261,12 @@ public:
     Terminate ();
     
     static void
+    SettingsInitialize ();
+    
+    static void
+    SettingsTerminate ();
+    
+    static void
     Destroy (lldb::DebuggerSP &debugger_sp);
 
     ~Debugger ();

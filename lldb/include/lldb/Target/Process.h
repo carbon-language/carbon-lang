@@ -539,13 +539,10 @@ public:
 #endif
 
     static void
-    Initialize ();
+    SettingsInitialize ();
 
     static void
-    DidInitialize ();
-
-    static void
-    Terminate ();
+    SettingsTerminate ();
 
     static lldb::UserSettingsControllerSP &
     GetSettingsController ();

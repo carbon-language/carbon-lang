@@ -2671,7 +2671,7 @@ Process::PopProcessInputReader ()
 
 // The process needs to know about installed plug-ins
 void
-Process::DidInitialize ()
+Process::SettingsInitialize ()
 {
     static std::vector<lldb::OptionEnumValueElement> g_plugins;
     
@@ -2707,16 +2707,20 @@ Process::DidInitialize ()
     UserSettingsController::InitializeSettingsController (usc,
                                                           SettingsController::global_settings_table,
                                                           SettingsController::instance_settings_table);
+                                                          
+    // Now call SettingsInitialize() for each 'child' of Process settings
+    Thread::SettingsInitialize ();
 }
 
 void
-Process::Initialize ()
+Process::SettingsTerminate ()
 {
-}
-
-void
-Process::Terminate ()
-{
+    // Must call SettingsTerminate() on each 'child' of Process settings before terminating Process settings.
+    
+    Thread::SettingsTerminate ();
+    
+    // Now terminate Process Settings.
+    
     UserSettingsControllerSP &usc = GetSettingsController();
     UserSettingsController::FinalizeSettingsController (usc);
     usc.reset();
