@@ -14,7 +14,8 @@ include $(LLDB_LEVEL)/../../Makefile.config
 
 DIRS := ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm  \
 	ObjectContainer/BSD-Archive ObjectFile/ELF SymbolFile/DWARF \
-	SymbolFile/Symtab Process/Utility DynamicLoader/Static
+	SymbolFile/Symtab Process/Utility DynamicLoader/Static \
+	Platform
 
 ifeq ($(HOST_OS),Darwin)
 DIRS += DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O \

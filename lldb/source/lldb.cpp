@@ -104,7 +104,7 @@ lldb_private::Initialize ()
         PlatformMacOSX::Initialize();
 #endif
 #if defined (__linux__)
-        ProcessLinux::Initialize();
+        PlatformLinux::Initialize();
         ProcessLinux::Initialize();
         DynamicLoaderLinuxDYLD::Initialize();
 #endif

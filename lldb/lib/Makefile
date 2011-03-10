@@ -65,12 +65,14 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginObjectContainerUniversalMachO.a \
               lldbPluginObjectFileMachO.a \
               lldbPluginProcessGDBRemote.a \
-              lldbPluginSymbolVendorMacOSX.a
+              lldbPluginSymbolVendorMacOSX.a \
+              lldbPluginPlatformMacOSX.a
 endif
 
 ifeq ($(HOST_OS),Linux)
   USEDLIBS += lldbPluginProcessLinux.a \
-              lldbPluginDynamicLoaderLinux.a
+              lldbPluginDynamicLoaderLinux.a \
+              lldbPluginPlatformLinux.a
 endif
 
 include $(LEVEL)/Makefile.common
