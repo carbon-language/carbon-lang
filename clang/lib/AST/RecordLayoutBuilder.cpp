@@ -1183,8 +1183,9 @@ void RecordLayoutBuilder::Layout(const CXXRecordDecl *RD) {
 
   LayoutFields(RD);
 
-  // FIXME: Size isn't always an exact multiple of the char width. Round up?
-  NonVirtualSize = Context.toCharUnitsFromBits(getSizeInBits());
+  NonVirtualSize = Context.toCharUnitsFromBits(
+        llvm::RoundUpToAlignment(getSizeInBits(), 
+                                 Context.Target.getCharAlign()));
   NonVirtualAlignment = Alignment;
 
   // Lay out the virtual bases and add the primary virtual base offsets.
