@@ -3250,13 +3250,6 @@ def DMB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
   let Inst{31-4} = 0xf57ff05;
   let Inst{3-0} = opt;
 }
-
-def DMB_MCR : AInoP<(outs), (ins GPR:$zero), MiscFrm, NoItinerary,
-                       "mcr", "\tp15, 0, $zero, c7, c10, 5",
-                       [(ARMMemBarrierMCR GPR:$zero)]>,
-                       Requires<[IsARM, HasV6]> {
-  // FIXME: add encoding
-}
 }
 
 def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
@@ -3914,6 +3907,12 @@ def : ARMV5TEPat<(add GPR:$acc,
 def : ARMV5TEPat<(add GPR:$acc,
                       (sra (mul GPR:$a, sext_16_node:$b), (i32 16))),
                  (SMLAWB GPR:$a, GPR:$b, GPR:$acc)>;
+
+
+// Pre-v7 uses MCR for synchronization barriers.
+def : ARMPat<(ARMMemBarrierMCR GPR:$zero), (MCR 15, 0, GPR:$zero, 7, 10, 5)>,
+         Requires<[IsARM, HasV6]>;
+
 
 //===----------------------------------------------------------------------===//
 // Thumb Support
