@@ -910,13 +910,12 @@ public:
         iterator __insert_multi(_V&& __v);
     template <class _V>
         iterator __insert_multi(const_iterator __p, _V&& __v);
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     pair<iterator, bool> __insert_unique(const value_type& __v);
     iterator __insert_unique(const_iterator __p, const value_type& __v);
     iterator __insert_multi(const value_type& __v);
     iterator __insert_multi(const_iterator __p, const value_type& __v);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     pair<iterator, bool> __node_insert_unique(__node_pointer __nd);
     iterator             __node_insert_unique(const_iterator __p,
@@ -1728,18 +1727,11 @@ template <class _V>
 pair<typename __tree<_Tp, _Compare, _Allocator>::iterator, bool>
 __tree<_Tp, _Compare, _Allocator>::__insert_unique(_V&& __v)
 {
-    __node_base_pointer __parent;
-    __node_base_pointer& __child = __find_equal(__parent, __v);
-    __node_pointer __r = static_cast<__node_pointer>(__child);
-    bool __inserted = false;
-    if (__child == nullptr)
-    {
-        __node_holder __h = __construct_node(_STD::forward<_V>(__v));
-        __insert_node_at(__parent, __child, __h.get());
-        __r = __h.release();
-        __inserted = true;
-    }
-    return pair<iterator, bool>(iterator(__r), __inserted);
+    __node_holder __h = __construct_node(_STD::forward<_V>(__v));
+    pair<iterator, bool> __r = __node_insert_unique(__h.get());
+    if (__r.second)
+        __h.release();
+    return __r;
 }
 
 template <class _Tp, class _Compare, class _Allocator>
@@ -1747,16 +1739,11 @@ template <class _V>
 typename __tree<_Tp, _Compare, _Allocator>::iterator
 __tree<_Tp, _Compare, _Allocator>::__insert_unique(const_iterator __p, _V&& __v)
 {
-    __node_base_pointer __parent;
-    __node_base_pointer& __child = __find_equal(__p, __parent, __v);
-    __node_pointer __r = static_cast<__node_pointer>(__child);
-    if (__child == nullptr)
-    {
-        __node_holder __h = __construct_node(_STD::forward<_V>(__v));
-        __insert_node_at(__parent, __child, __h.get());
-        __r = __h.release();
-    }
-    return iterator(__r);
+    __node_holder __h = __construct_node(_STD::forward<_V>(__v));
+    iterator __r = __node_insert_unique(__p, __h.get());
+    if (__r.__ptr_ == __h.get())
+        __h.release();
+    return __r;
 }
 
 template <class _Tp, class _Compare, class _Allocator>
@@ -1795,6 +1782,8 @@ __tree<_Tp, _Compare, _Allocator>::__construct_node(const value_type& __v)
     __h.get_deleter().__value_constructed = true;
     return _STD::move(__h);
 }
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Compare, class _Allocator>
 pair<typename __tree<_Tp, _Compare, _Allocator>::iterator, bool>
@@ -1851,8 +1840,6 @@ __tree<_Tp, _Compare, _Allocator>::__insert_multi(const_iterator __p, const valu
     __insert_node_at(__parent, __child, __h.get());
     return iterator(__h.release());
 }
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Compare, class _Allocator>
 pair<typename __tree<_Tp, _Compare, _Allocator>::iterator, bool>
