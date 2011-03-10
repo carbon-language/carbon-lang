@@ -1935,11 +1935,12 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         case NestedNameSpecifier::TypeSpec:
         case NestedNameSpecifier::TypeSpecWithTemplate:
           ClsType = QualType(NNS->getAsType(), 0);
-          // Note: if NNS is dependent, then its prefix (if any) is already
-          // included in ClsType; this does not hold if the NNS is
-          // nondependent: in this case (if there is indeed a prefix)
-          // ClsType needs to be wrapped into an elaborated type.
-          if (NNSPrefix && !NNS->isDependent())
+          // Note: if the NNS has a prefix and ClsType is a nondependent
+          // TemplateSpecializationType, then the NNS prefix is NOT included
+          // in ClsType; hence we wrap ClsType into an ElaboratedType.
+          // NOTE: in particular, no wrap occurs if ClsType already is an
+          // Elaborated, DependentName, or DependentTemplateSpecialization.
+          if (NNSPrefix && isa<TemplateSpecializationType>(NNS->getAsType()))
             ClsType = Context.getElaboratedType(ETK_None, NNSPrefix, ClsType);
           break;
         }
