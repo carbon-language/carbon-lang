@@ -475,7 +475,35 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       }
     }
     break;
-  case Intrinsic::umul_with_overflow:
+  case Intrinsic::umul_with_overflow: {
+    Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
+    unsigned BitWidth = cast<IntegerType>(LHS->getType())->getBitWidth();
+    APInt Mask = APInt::getAllOnesValue(BitWidth);
+
+    APInt LHSKnownZero(BitWidth, 0);
+    APInt LHSKnownOne(BitWidth, 0);
+    ComputeMaskedBits(LHS, Mask, LHSKnownZero, LHSKnownOne);
+    APInt RHSKnownZero(BitWidth, 0);
+    APInt RHSKnownOne(BitWidth, 0);
+    ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
+
+    // Get the largest possible values for each operand, extended to be large
+    // enough so that every possible product of two BitWidth-sized ints fits.
+    APInt LHSMax = (~LHSKnownZero).zext(BitWidth*2);
+    APInt RHSMax = (~RHSKnownZero).zext(BitWidth*2);
+
+    // If multiplying the maximum values does not overflow then we can turn
+    // this into a plain NUW mul.
+    if ((LHSMax * RHSMax).getActiveBits() <= BitWidth) {
+      Value *Mul = Builder->CreateNUWMul(LHS, RHS, "umul_with_overflow");
+      Constant *V[] = {
+        UndefValue::get(LHS->getType()),
+        Builder->getFalse()
+      };
+      Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
+      return InsertValueInst::Create(Struct, Mul, 0);
+    }
+  } // FALL THROUGH
   case Intrinsic::smul_with_overflow:
     // Canonicalize constants into the RHS.
     if (isa<Constant>(II->getArgOperand(0)) &&
