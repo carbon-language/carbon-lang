@@ -6031,13 +6031,13 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // be a member of another template).
         if (Invalid)
           return 0;
-        
+
         OwnedDecl = false;
         DeclResult Result = CheckClassTemplate(S, TagSpec, TUK, KWLoc,
                                                SS, Name, NameLoc, Attr,
-                                               TemplateParams,
-                                               AS);
-        TemplateParameterLists.release();
+                                               TemplateParams, AS,
+                                               NumMatchedTemplateParamLists,
+                 (TemplateParameterList**) TemplateParameterLists.release());
         return Result.get();
       } else {
         // The "template<>" header is extraneous.
