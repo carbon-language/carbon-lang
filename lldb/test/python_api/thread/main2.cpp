@@ -31,7 +31,7 @@ int b(int val)
         return -1;
     else
         printf("ptr=%p\n", ptr);
-    return rc;
+    return rc;                // we should reach here after 3 step-over's.
 }
 
 int c(int val)
