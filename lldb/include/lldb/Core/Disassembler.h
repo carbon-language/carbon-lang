@@ -113,6 +113,7 @@ public:
                  const AddressRange &range,
                  uint32_t num_mixed_context_lines,
                  bool show_bytes,
+                 bool raw,
                  Stream &strm);
 
     static size_t
@@ -122,6 +123,7 @@ public:
                  SymbolContextList &sc_list,
                  uint32_t num_mixed_context_lines,
                  bool show_bytes,
+                 bool raw,
                  Stream &strm);
     
     static bool
@@ -132,6 +134,7 @@ public:
                  Module *module,
                  uint32_t num_mixed_context_lines,
                  bool show_bytes,
+                 bool raw,
                  Stream &strm);
 
     static bool
@@ -140,6 +143,7 @@ public:
                  const ExecutionContext &exe_ctx,
                  uint32_t num_mixed_context_lines,
                  bool show_bytes,
+                 bool raw,
                  Stream &strm);
 
     //------------------------------------------------------------------

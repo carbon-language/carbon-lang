@@ -218,6 +218,7 @@ CommandObjectDisassemble::Execute
                                        NULL,    // Module *
                                        m_options.show_mixed ? m_options.num_lines_context : 0,
                                        m_options.show_bytes,
+                                       m_options.raw,
                                        result.GetOutputStream()))
         {
             result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -276,6 +277,7 @@ CommandObjectDisassemble::Execute
                                        range,
                                        m_options.show_mixed ? m_options.num_lines_context : 0,
                                        m_options.show_bytes,
+                                       m_options.raw,
                                        result.GetOutputStream()))
         {
             result.SetStatus (eReturnStatusSuccessFinishResult);

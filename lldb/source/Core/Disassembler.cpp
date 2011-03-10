@@ -63,6 +63,7 @@ Disassembler::Disassemble
     SymbolContextList &sc_list,
     uint32_t num_mixed_context_lines,
     bool show_bytes,
+    bool raw,
     Stream &strm
 )
 {
@@ -76,7 +77,7 @@ Disassembler::Disassemble
             break;
         if (sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range))
         {
-            if (Disassemble (debugger, arch, exe_ctx, range, num_mixed_context_lines, show_bytes, strm))
+            if (Disassemble (debugger, arch, exe_ctx, range, num_mixed_context_lines, show_bytes, raw, strm))
             {
                 ++success_count;
                 strm.EOL();
@@ -96,6 +97,7 @@ Disassembler::Disassemble
     Module *module,
     uint32_t num_mixed_context_lines,
     bool show_bytes,
+    bool raw,
     Stream &strm
 )
 {
@@ -134,7 +136,8 @@ Disassembler::Disassemble
                             exe_ctx, 
                             sc_list, 
                             num_mixed_context_lines, 
-                            show_bytes, 
+                            show_bytes,
+                            raw,
                             strm);
     }
     return false;
@@ -175,6 +178,7 @@ Disassembler::Disassemble
     const AddressRange &disasm_range,
     uint32_t num_mixed_context_lines,
     bool show_bytes,
+    bool raw,
     Stream &strm
 )
 {
@@ -301,7 +305,7 @@ Disassembler::Disassemble
                             strm.IndentMore ();
                         strm.Indent();
                         size_t inst_byte_size = inst->GetByteSize();
-                        inst->Dump(&strm, true, show_bytes ? &data : NULL, offset, &exe_ctx, show_bytes);
+                        inst->Dump(&strm, true, show_bytes ? &data : NULL, offset, &exe_ctx, raw);
                         strm.EOL();
                         offset += inst_byte_size;
                         
@@ -334,6 +338,7 @@ Disassembler::Disassemble
     const ExecutionContext &exe_ctx,
     uint32_t num_mixed_context_lines,
     bool show_bytes,
+    bool raw,
     Stream &strm
 )
 {
@@ -358,7 +363,7 @@ Disassembler::Disassemble
             range.SetByteSize (DEFAULT_DISASM_BYTE_SIZE);
     }
 
-    return Disassemble(debugger, arch, exe_ctx, range, num_mixed_context_lines, show_bytes, strm);
+    return Disassemble(debugger, arch, exe_ctx, range, num_mixed_context_lines, show_bytes, raw, strm);
 }
 
 Instruction::Instruction(const Address &addr) :
