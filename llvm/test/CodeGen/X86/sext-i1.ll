@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86    | FileCheck %s -check-prefix=32
-; RUN: llc < %s -march=x86-64 | FileCheck %s -check-prefix=64
+; RUN: llc < %s -march=x86 -disable-cgp-branch-opts    | FileCheck %s -check-prefix=32
+; RUN: llc < %s -march=x86-64 -disable-cgp-branch-opts | FileCheck %s -check-prefix=64
 ; rdar://7573216
 ; PR6146
 

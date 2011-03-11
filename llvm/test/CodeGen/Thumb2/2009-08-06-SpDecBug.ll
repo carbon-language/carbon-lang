@@ -8,7 +8,7 @@ entry:
 ; CHECK: sub sp, #8
 ; CHECK: push
 ; CHECK: add r7, sp, #4
-; CHECK: subs r4, r7, #4
+; CHECK: sub.w r4, r7, #4
 ; CHECK: mov sp, r4
 ; CHECK-NOT: mov sp, r7
 ; CHECK: add sp, #8

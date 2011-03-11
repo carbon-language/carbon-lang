@@ -6,8 +6,6 @@ entry:
   br label %bb5
 
 bb5:                                              ; preds = %bb5, %entry
-; CHECK: %bb5
-; CHECK: bne
   br i1 undef, label %bb5, label %bb.nph
 
 bb.nph:                                           ; preds = %bb5

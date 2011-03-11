@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc < %s -march=arm -disable-cgp-branch-opts | FileCheck %s
 
 define i32 @f1() {
 ; CHECK: f1
