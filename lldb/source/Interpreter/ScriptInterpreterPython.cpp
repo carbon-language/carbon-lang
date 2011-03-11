@@ -1381,11 +1381,11 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
         PyRun_SimpleString (run_string.GetData());
         run_string.Clear ();
 
-	    // The following call drops into the embedded interpreter loop and stays there until the
-	    // user chooses to exit from the Python interpreter.
+        // The following call drops into the embedded interpreter loop and stays there until the
+        // user chooses to exit from the Python interpreter.
 
         // When in the embedded interpreter, the user can call arbitrary system and Python stuff, which may require
-        // the ability to run multi-threaded stuff, so we need to surround the call the the embedded interpreter with
+        // the ability to run multi-threaded stuff, so we need to surround the call to the embedded interpreter with
         // calls to Py_BEGIN_ALLOW_THREADS and Py_END_ALLOW_THREADS.
 
         // We ALSO need to surround the call to the embedded interpreter with calls to PyGILState_Ensure and 
@@ -1436,7 +1436,7 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
         log->Printf ("%p ScriptInterpreterPython::RunEmbeddedPythonInterpreter () thread exiting...", baton);
     
 
-	// Clean up the input reader and make the debugger pop it off the stack.
+    // Clean up the input reader and make the debugger pop it off the stack.
     Debugger &debugger = script_interpreter->GetCommandInterpreter().GetDebugger();
     const InputReaderSP reader_sp = script_interpreter->m_embedded_thread_input_reader_sp;
     script_interpreter->m_embedded_thread_input_reader_sp.reset();
