@@ -24,7 +24,7 @@ bb1:		; preds = %bb, %entry
 
 bb18:		; preds = %bb1
 ; CHECK-NOT: bx
-; CHECK: ldmia sp!
+; CHECK: pop
 	ret void
 }
 

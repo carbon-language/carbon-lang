@@ -72,7 +72,7 @@ bb2.preheader:                                    ; preds = %bb3, %bb.nph15
   br i1 %4, label %bb1, label %bb3
 
 ; CHECK: LBB1_[[RET]]: @ %bb5
-; CHECK: ldmia sp!
+; CHECK: pop
 bb5:                                              ; preds = %bb3, %entry
   %sum.1.lcssa = phi i32 [ 0, %entry ], [ %sum.0.lcssa, %bb3 ] ; <i32> [#uses=1]
   ret i32 %sum.1.lcssa

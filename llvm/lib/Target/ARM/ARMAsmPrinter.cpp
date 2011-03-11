@@ -945,6 +945,16 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
   default: break;
+  case ARM::LDMIA_RET: {
+    // LDMIA_RET is just a normal LDMIA_UPD instruction that targets PC and as
+    // such has additional code-gen properties and scheduling information.
+    // To emit it, we just construct as normal and set the opcode to LDMIA_UPD.
+    MCInst TmpInst;
+    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
+    TmpInst.setOpcode(ARM::LDMIA_UPD);
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
   case ARM::t2ADDrSPi:
   case ARM::t2ADDrSPi12:
   case ARM::t2SUBrSPi:

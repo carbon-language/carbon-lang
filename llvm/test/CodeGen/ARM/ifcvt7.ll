@@ -6,7 +6,7 @@
 define fastcc i32 @CountTree(%struct.quad_struct* %tree) {
 ; CHECK: cmpeq
 ; CHECK: moveq
-; CHECK: ldmiaeq sp!
+; CHECK: popeq
 entry:
 	br label %tailrecurse
 

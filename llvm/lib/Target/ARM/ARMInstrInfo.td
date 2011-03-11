@@ -1928,16 +1928,10 @@ def : MnemonicAlias<"stm", "stmia">;
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-// FIXME: Should be a pseudo-instruction.
-def LDMIA_RET : AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
-                                      reglist:$regs, variable_ops),
-                     IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
-                     "ldmia${p}\t$Rn!, $regs",
-                     "$Rn = $wb", []> {
-  let Inst{24-23} = 0b01;       // Increment After
-  let Inst{21}    = 1;          // Writeback
-  let Inst{20}    = 1;          // Load
-}
+def LDMIA_RET : ARMPseudoInst<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
+                                               reglist:$regs, variable_ops),
+                     Size4Bytes, IIC_iLoad_mBr, []>,
+      RegConstraint<"$Rn = $wb">;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.

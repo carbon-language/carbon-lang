@@ -10,7 +10,7 @@ entry:
 ; ARM: bl _foo
 ; ARM: bl _foo
 ; ARM: bl _foo
-; ARM: ldmia sp!, {r7, pc}
+; ARM: pop {r7, pc}
 
 ; THUMB2: t:
 ; THUMB2: push

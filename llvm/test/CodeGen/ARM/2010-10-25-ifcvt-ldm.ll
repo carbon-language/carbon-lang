@@ -4,9 +4,9 @@
 ; was being treated as an instruction count.
 
 ; CHECK: push
-; CHECK: ldmia
-; CHECK: ldmia
-; CHECK: ldmia
+; CHECK: pop
+; CHECK: pop
+; CHECK: pop
 
 define i32 @test(i32 %x) {
 entry:

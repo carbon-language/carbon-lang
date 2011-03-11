@@ -11,7 +11,7 @@ entry:
 
 define i32 @t1(i32 %a, i32 %b) {
 ; CHECK: t1:
-; CHECK: ldmialt sp!, {r7, pc}
+; CHECK: poplt {r7, pc}
 entry:
 	%tmp1 = icmp sgt i32 %a, 10		; <i1> [#uses=1]
 	br i1 %tmp1, label %cond_true, label %UnifiedReturnBlock
