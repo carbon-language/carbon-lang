@@ -19,7 +19,9 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
@@ -50,6 +52,16 @@ ShowAnnotations("show-annotations",
 
 namespace {
 
+static void printDebugLoc(const DebugLoc &DL, formatted_raw_ostream &OS) {
+  OS << DL.getLine() << ":" << DL.getCol();
+  if (MDNode *N = DL.getInlinedAt(getGlobalContext())) {
+    DebugLoc IDL = DebugLoc::getFromDILocation(N);
+    if (!IDL.isUnknown()) {
+      OS << "@";
+      printDebugLoc(IDL,OS);
+    }
+  }
+}
 class CommentWriter : public AssemblyAnnotationWriter {
 public:
   void emitFunctionAnnot(const Function *F,
@@ -58,10 +70,43 @@ public:
     OS << '\n';
   }
   void printInfoComment(const Value &V, formatted_raw_ostream &OS) {
-    if (V.getType()->isVoidTy()) return;
-
-    OS.PadToColumn(50);
-    OS << "; [#uses=" << V.getNumUses() << ']';  // Output # uses
+    bool Padded = false;
+    if (!V.getType()->isVoidTy()) {
+      OS.PadToColumn(50);
+      Padded = true;
+      OS << "; [#uses=" << V.getNumUses() << ']';  // Output # uses
+    }
+    if (const Instruction *I = dyn_cast<Instruction>(&V)) {
+      const DebugLoc &DL = I->getDebugLoc();
+      if (!DL.isUnknown()) {
+        if (!Padded) {
+          OS.PadToColumn(50);
+          Padded = true;
+          OS << ";";
+        }
+        OS << " [debug line = ";
+        printDebugLoc(DL,OS);
+        OS << "]";
+      }
+      if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I)) {
+        DIVariable Var(DDI->getVariable());
+        if (!Padded) {
+          OS.PadToColumn(50);
+          Padded = true;
+          OS << ";";
+        }
+        OS << " [debug variable = " << Var.getName() << "]";
+      }
+      else if (const DbgValueInst *DVI = dyn_cast<DbgValueInst>(I)) {
+        DIVariable Var(DVI->getVariable());
+        if (!Padded) {
+          OS.PadToColumn(50);
+          Padded = true;
+          OS << ";";
+        }
+        OS << " [debug variable = " << Var.getName() << "]";
+      }
+    }
   }
 };
 

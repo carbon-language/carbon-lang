@@ -9,7 +9,7 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-dis
-LINK_COMPONENTS := bitreader
+LINK_COMPONENTS := bitreader analysis
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
