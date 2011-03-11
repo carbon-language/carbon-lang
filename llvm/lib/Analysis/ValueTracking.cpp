@@ -431,7 +431,8 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     }
 
     // Are we still trying to solve for the sign bit?
-    if (Mask.isNegative() && !KnownZero.isNegative() && !KnownOne.isNegative()){
+    if (I->getOpcode() == Instruction::Add &&
+        Mask.isNegative() && !KnownZero.isNegative() && !KnownOne.isNegative()){
       OverflowingBinaryOperator *OBO = cast<OverflowingBinaryOperator>(I);
       if (OBO->hasNoSignedWrap()) {
         // Adding two positive numbers can't wrap into negative ...

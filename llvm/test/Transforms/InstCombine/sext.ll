@@ -126,3 +126,13 @@ define void @test11(<2 x i16> %srcA, <2 x i16> %srcB, <2 x i16>* %dst) {
 ; CHECK-NEXT: store <2 x i16>
 ; CHECK-NEXT: ret
 }                                                                                                                               
+
+define i64 @test12(i32 %x) nounwind {
+  %shr = lshr i32 %x, 1
+  %sub = sub nsw i32 0, %shr
+  %conv = sext i32 %sub to i64
+  ret i64 %conv
+; CHECK: @test12
+; CHECK: sext
+; CHECK: ret
+}
