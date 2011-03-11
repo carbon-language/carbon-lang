@@ -120,7 +120,7 @@ public:
     ///    and failed with some explanation if we aborted executing the commands at some point.
     //------------------------------------------------------------------
     void
-    HandleCommands (StringList &commands, 
+    HandleCommands (const StringList &commands, 
                     ExecutionContext *context, 
                     bool stop_on_continue, 
                     bool stop_on_error, 

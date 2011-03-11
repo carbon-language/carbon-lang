@@ -1508,7 +1508,7 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
 }
 
 void
-CommandInterpreter::HandleCommands (StringList &commands, 
+CommandInterpreter::HandleCommands (const StringList &commands, 
                                     ExecutionContext *override_context, 
                                     bool stop_on_continue,
                                     bool stop_on_error,
@@ -1548,8 +1548,6 @@ CommandInterpreter::HandleCommands (StringList &commands,
         }
 
         CommandReturnObject tmp_result;
-        tmp_result.SetImmediateOutputStream (result.GetImmediateOutputStream ());
-        tmp_result.SetImmediateErrorStream (result.GetImmediateErrorStream ());
         bool success = HandleCommand(cmd, false, tmp_result, NULL);
         
         if (print_results)
