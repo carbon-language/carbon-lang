@@ -45,10 +45,10 @@ public:
     ReadFileLines (FileSpec &input_file);
     
     uint32_t
-    GetSize ();
+    GetSize () const;
 
     const char *
-    GetStringAtIndex (size_t idx);
+    GetStringAtIndex (size_t idx) const;
 
     void
     Clear ();

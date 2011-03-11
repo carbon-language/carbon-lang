@@ -80,13 +80,13 @@ StringList::ReadFileLines (FileSpec &input_file)
 }
 
 uint32_t
-StringList::GetSize ()
+StringList::GetSize () const
 {
     return m_strings.size();
 }
 
 const char *
-StringList::GetStringAtIndex (size_t idx)
+StringList::GetStringAtIndex (size_t idx) const
 {
     if (idx < m_strings.size())
         return m_strings[idx].c_str();
