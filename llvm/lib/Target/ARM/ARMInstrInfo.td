@@ -3178,9 +3178,9 @@ def MOVCCi : ARMPseudoInst<(outs GPR:$Rd),
 
 // Two instruction predicate mov immediate.
 let isMoveImm = 1 in
-def MOVCCi32imm : PseudoInst<(outs GPR:$Rd),
-                             (ins GPR:$false, i32imm:$src, pred:$p),
-                  IIC_iCMOVix2, []>, RegConstraint<"$false = $Rd">;
+def MOVCCi32imm : ARMPseudoInst<(outs GPR:$Rd),
+                                (ins GPR:$false, i32imm:$src, pred:$p),
+                  Size8Bytes, IIC_iCMOVix2, []>, RegConstraint<"$false = $Rd">;
 
 let isMoveImm = 1 in
 def MVNCCi : AI1<0b1111, (outs GPR:$Rd),
