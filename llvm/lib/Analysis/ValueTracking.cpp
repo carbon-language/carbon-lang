@@ -429,6 +429,20 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
       KnownZero |= LHSKnownZero & Mask;
       KnownOne  |= LHSKnownOne & Mask;
     }
+
+    // Are we still trying to solve for the sign bit?
+    if (Mask.isNegative() && !KnownZero.isNegative() && !KnownOne.isNegative()){
+      OverflowingBinaryOperator *OBO = cast<OverflowingBinaryOperator>(I);
+      if (OBO->hasNoSignedWrap()) {
+        // Adding two positive numbers can't wrap into negative ...
+        if (LHSKnownZero.isNegative() && KnownZero2.isNegative())
+          KnownZero |= APInt::getSignBit(BitWidth);
+        // and adding two negative numbers can't wrap into positive.
+        else if (LHSKnownOne.isNegative() && KnownOne2.isNegative())
+          KnownOne |= APInt::getSignBit(BitWidth);
+      }
+    }
+
     return;
   }
   case Instruction::SRem:
