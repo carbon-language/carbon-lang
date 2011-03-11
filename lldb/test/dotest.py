@@ -496,7 +496,10 @@ def parseOptionsAndInitTestdirs():
 
 
 def setupSysPath():
-    """Add LLDB.framework/Resources/Python to the search paths for modules."""
+    """
+    Add LLDB.framework/Resources/Python to the search paths for modules.
+    As a side effect, we also discover the 'lldb' executable and export it here.
+    """
 
     global rdir
     global testdirs
@@ -523,10 +526,12 @@ def setupSysPath():
     else:
         os.environ["LLDB_TEST"] = scriptPath
     pluginPath = os.path.join(scriptPath, 'plugins')
+    pexpectPath = os.path.join(scriptPath, 'pexpect-2.4')
 
-    # Append script dir and plugin dir to the sys.path.
+    # Append script dir, plugin dir, and pexpect dir to the sys.path.
     sys.path.append(scriptPath)
     sys.path.append(pluginPath)
+    sys.path.append(pexpectPath)
     
     # This is our base name component.
     base = os.path.abspath(os.path.join(scriptPath, os.pardir))
