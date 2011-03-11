@@ -66,12 +66,6 @@ public:
   virtual bool UseCodeAlign() const;
   virtual bool isVirtualSection() const;
 
-  /// isBaseAddressKnownZero - We know that non-allocatable sections (like
-  /// debug info) have a base of zero.
-  virtual bool isBaseAddressKnownZero() const {
-    return (getFlags() & ELF::SHF_ALLOC) == 0;
-  }
-
   static bool classof(const MCSection *S) {
     return S->getVariant() == SV_ELF;
   }

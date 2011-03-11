@@ -191,13 +191,6 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
   assert((!Label->isInSection() || &Label->getSection() == &Section) &&
          "Section offset using wrong section base for label");
   
-  // If the section in question will end up with an address of 0 anyway, we can
-  // just emit an absolute reference to save a relocation.
-  if (Section.isBaseAddressKnownZero()) {
-    OutStreamer.EmitSymbolValue(Label, 4, 0/*AddrSpace*/);
-    return;
-  }
-  
   // Otherwise, emit it as a label difference from the start of the section.
   EmitLabelDifference(Label, SectionLabel, 4);
 }
