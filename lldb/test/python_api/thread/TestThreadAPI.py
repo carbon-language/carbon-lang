@@ -14,6 +14,19 @@ class ThreadAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    def test_get_process_with_dsym(self):
+        """Test Python SBThread.GetProcess() API."""
+        self.buildDsym()
+        self.get_process()
+
+    @python_api_test
+    def test_get_process_with_dwarf(self):
+        """Test Python SBThread.GetProcess() API."""
+        self.buildDwarf()
+        self.get_process()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_get_stop_description_with_dsym(self):
         """Test Python SBThread.GetStopDescription() API."""
         self.buildDsym()
@@ -24,6 +37,25 @@ class ThreadAPITestCase(TestBase):
         """Test Python SBThread.GetStopDescription() API."""
         self.buildDwarf()
         self.get_stop_description()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
+    def test_run_to_address_with_dsym(self):
+        """Test Python SBThread.RunToAddress() API."""
+        # We build a different executable than the default buildDwarf() does.
+        d = {'CXX_SOURCES': 'main2.cpp'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.run_to_address()
+
+    @python_api_test
+    def test_run_to_address_with_dwarf(self):
+        """Test Python SBThread.RunToAddress() API."""
+        # We build a different executable than the default buildDwarf() does.
+        d = {'CXX_SOURCES': 'main2.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.run_to_address()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
@@ -72,8 +104,32 @@ class ThreadAPITestCase(TestBase):
         self.line2 = line_number("main2.cpp", "// thread step-out of malloc into function b.")
         self.line3 = line_number("main2.cpp", "// we should reach here after 3 step-over's.")
 
+    def get_process(self):
+        """Test Python SBThread.GetProcess() API."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.runCmd("breakpoint list")
+
+        # Launch the process, and do not stop at the entry point.
+        error = lldb.SBError()
+        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+        self.runCmd("process status")
+
+        proc_of_thread = thread.GetProcess()
+        #print "proc_of_thread:", proc_of_thread
+        self.assertTrue(proc_of_thread.GetProcessID() == self.process.GetProcessID())
+
     def get_stop_description(self):
-        """Test Python SBProcess.ReadMemory() API."""
+        """Test Python SBThread.GetStopDescription() API."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -172,7 +228,7 @@ class ThreadAPITestCase(TestBase):
         self.assertTrue(thread.GetStopReason() == lldb.eStopReasonPlanComplete)
         self.assertTrue(lineEntry.GetLine() == self.line3)
 
-    def test_run_to_address(self):
+    def run_to_address(self):
         """Test Python SBThread.RunToAddress() API."""
         # We build a different executable than the default buildDwarf() does.
         d = {'CXX_SOURCES': 'main2.cpp'}
