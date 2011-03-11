@@ -1026,7 +1026,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned SrcReg = MI.getOperand(1).getReg();
       unsigned Lane = getARMRegisterNumbering(SrcReg) & 1;
       unsigned DReg = TRI->getMatchingSuperReg(SrcReg,
-                                               Lane & 1 ? ARM::ssub_1 : ARM::ssub_0, &ARM::DPR_VFP2RegClass);
+                            Lane & 1 ? ARM::ssub_1 : ARM::ssub_0,
+                            &ARM::DPR_VFP2RegClass);
       // The lane is [0,1] for the containing DReg superregister.
       // Copy the dst/src register operands.
       MIB.addOperand(MI.getOperand(OpIdx++));
