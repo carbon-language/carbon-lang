@@ -953,6 +953,11 @@ public:
     return true;
   }
 
+  bool Success(CharUnits Size, const Expr *E) {
+    return Success(Size.getQuantity(), E);
+  }
+
+
   bool Error(SourceLocation L, diag::kind D, const Expr *E) {
     // Take the first error.
     if (Info.EvalResult.Diag == 0) {
@@ -1213,7 +1218,7 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(CallExpr *E) {
     Size -= Offset;
   else
     Size = CharUnits::Zero();
-  return Success(Size.getQuantity(), E);
+  return Success(Size, E);
 }
 
 bool IntExprEvaluator::VisitCallExpr(CallExpr *E) {
@@ -1602,9 +1607,9 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   // Handle alignof separately.
   if (!E->isSizeOf()) {
     if (E->isArgumentType())
-      return Success(GetAlignOfType(E->getArgumentType()).getQuantity(), E);
+      return Success(GetAlignOfType(E->getArgumentType()), E);
     else
-      return Success(GetAlignOfExpr(E->getArgumentExpr()).getQuantity(), E);
+      return Success(GetAlignOfExpr(E->getArgumentExpr()), E);
   }
 
   QualType SrcTy = E->getTypeOfArgument();
@@ -1625,7 +1630,7 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
     return false;
 
   // Get information about the size.
-  return Success(Info.Ctx.getTypeSizeInChars(SrcTy).getQuantity(), E);
+  return Success(Info.Ctx.getTypeSizeInChars(SrcTy), E);
 }
 
 bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
@@ -1694,7 +1699,7 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
     }
     }
   }
-  return Success(Result.getQuantity(), E);
+  return Success(Result, E);
 }
 
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
