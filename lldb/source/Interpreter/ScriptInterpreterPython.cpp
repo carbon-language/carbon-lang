@@ -1384,6 +1384,17 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
 	    // The following call drops into the embedded interpreter loop and stays there until the
 	    // user chooses to exit from the Python interpreter.
 
+        // When in the embedded interpreter, the user can call arbitrary system and Python stuff, which may require
+        // the ability to run multi-threaded stuff, so we need to surround the call the the embedded interpreter with
+        // calls to Py_BEGIN_ALLOW_THREADS and Py_END_ALLOW_THREADS.
+
+        // We ALSO need to surround the call to the embedded interpreter with calls to PyGILState_Ensure and 
+        // PyGILState_Release.  This is because this embedded interpreter is being run on a DIFFERENT THREAD than
+        // the thread on which the call to Py_Initialize (and PyEval_InitThreads) was called.  Those initializations 
+        // called PyGILState_Ensure on *that* thread, but it also needs to be called on *this* thread.  Otherwise,
+        // if the user calls Python code that does threading stuff, the interpreter state will be off, and things could
+        // hang (it's happened before).
+
         Py_BEGIN_ALLOW_THREADS
         PyGILState_STATE gstate = PyGILState_Ensure();
         
