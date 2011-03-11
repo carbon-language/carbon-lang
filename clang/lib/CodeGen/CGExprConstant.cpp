@@ -58,7 +58,7 @@ private:
 
   void AppendPadding(uint64_t NumBytes);
 
-  void AppendTailPadding(uint64_t RecordSize);
+  void AppendTailPadding(CharUnits RecordSize);
 
   void ConvertStructToPacked();
                               
@@ -280,13 +280,11 @@ void ConstStructBuilder::AppendPadding(uint64_t NumBytes) {
   NextFieldOffsetInBytes += getSizeInBytes(C);
 }
 
-void ConstStructBuilder::AppendTailPadding(uint64_t RecordSize) {
-  assert(RecordSize % 8 == 0 && "Invalid record size!");
+void ConstStructBuilder::AppendTailPadding(CharUnits RecordSize) {
+  assert(NextFieldOffsetInBytes <= RecordSize.getQuantity() && 
+         "Size mismatch!");
 
-  uint64_t RecordSizeInBytes = RecordSize / 8;
-  assert(NextFieldOffsetInBytes <= RecordSizeInBytes && "Size mismatch!");
-
-  unsigned NumPadBytes = RecordSizeInBytes - NextFieldOffsetInBytes;
+  unsigned NumPadBytes = RecordSize.getQuantity() - NextFieldOffsetInBytes;
   AppendPadding(NumPadBytes);
 }
 
@@ -394,7 +392,7 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
   }
 
   // Append tail padding if necessary.
-  AppendTailPadding(CGM.getContext().toBits(Layout.getSize()));
+  AppendTailPadding(Layout.getSize());
 
   assert(Layout.getSize().getQuantity() == NextFieldOffsetInBytes &&
          "Tail padding mismatch!");
