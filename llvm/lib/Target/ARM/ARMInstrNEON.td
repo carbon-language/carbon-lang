@@ -4436,14 +4436,8 @@ def  VDUP8q   : VDUPQ<0b11101110, 0b00, "8", v16i8>;
 def  VDUP16q  : VDUPQ<0b11101010, 0b01, "16", v8i16>;
 def  VDUP32q  : VDUPQ<0b11101010, 0b00, "32", v4i32>;
 
-def  VDUPfd   : NVDup<0b11101000, 0b1011, 0b00, (outs DPR:$V), (ins GPR:$R),
-                      IIC_VMOVIS, "vdup", "32", "$V, $R",
-                      [(set DPR:$V, (v2f32 (NEONvdup
-                                              (f32 (bitconvert GPR:$R)))))]>;
-def  VDUPfq   : NVDup<0b11101010, 0b1011, 0b00, (outs QPR:$V), (ins GPR:$R),
-                      IIC_VMOVIS, "vdup", "32", "$V, $R",
-                      [(set QPR:$V, (v4f32 (NEONvdup
-                                              (f32 (bitconvert GPR:$R)))))]>;
+def : Pat<(v2f32 (NEONvdup (f32 (bitconvert GPR:$R)))), (VDUP32d GPR:$R)>;
+def : Pat<(v4f32 (NEONvdup (f32 (bitconvert GPR:$R)))), (VDUP32q GPR:$R)>;
 
 //   VDUP     : Vector Duplicate Lane (from scalar to all elements)
 

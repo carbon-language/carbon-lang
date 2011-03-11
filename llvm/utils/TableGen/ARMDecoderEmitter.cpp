@@ -1632,12 +1632,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
         Name == "BLX_pred" || Name == "TPsoft")
       return false;
 
-    // Ignore VDUPf[d|q] instructions known to conflict with VDUP32[d-q] for
-    // decoding.  The instruction duplicates an element from an ARM core
-    // register into every element of the destination vector.  There is no
-    // distinction between data types.
-    if (Name == "VDUPfd" || Name == "VDUPfq") return false;
-
     // A8-598: VEXT
     // Vector Extract extracts elements from the bottom end of the second
     // operand vector and the top end of the first, concatenates them and
