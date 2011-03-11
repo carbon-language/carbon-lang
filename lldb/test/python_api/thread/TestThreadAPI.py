@@ -172,6 +172,59 @@ class ThreadAPITestCase(TestBase):
         self.assertTrue(thread.GetStopReason() == lldb.eStopReasonPlanComplete)
         self.assertTrue(lineEntry.GetLine() == self.line3)
 
+    def test_run_to_address(self):
+        """Test Python SBThread.RunToAddress() API."""
+        # We build a different executable than the default buildDwarf() does.
+        d = {'CXX_SOURCES': 'main2.cpp'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        breakpoint = target.BreakpointCreateByLocation('main2.cpp', self.line2)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.runCmd("breakpoint list")
+
+        # Launch the process, and do not stop at the entry point.
+        error = lldb.SBError()
+        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+
+        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+
+        # Frame #0 should be on self.line2.
+        self.assertTrue(self.process.GetState() == lldb.eStateStopped)
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        self.runCmd("thread backtrace")
+        frame0 = thread.GetFrameAtIndex(0)
+        lineEntry = frame0.GetLineEntry()
+        self.assertTrue(lineEntry.GetLine() == self.line2)
+
+        # Get the start/end addresses for this line entry.
+        start_addr = lineEntry.GetStartAddress().GetLoadAddress(target)
+        print "start addr:", hex(start_addr)
+        end_addr = lineEntry.GetEndAddress().GetLoadAddress(target)
+        print "end addr:", hex(end_addr)
+
+        # Disable the breakpoint.
+        self.assertTrue(target.DisableAllBreakpoints())
+        self.runCmd("breakpoint list")
+        
+        thread.StepOver()
+        thread.StepOver()
+        thread.StepOver()
+        self.runCmd("thread backtrace")
+
+        # Now ask SBThread to run to the address 'start_addr' we got earlier, which
+        # corresponds to self.line2 line entry's start address.
+        thread.RunToAddress(start_addr)
+        self.runCmd("process status")
+        #self.runCmd("thread backtrace")
+
 
 if __name__ == '__main__':
     import atexit
