@@ -199,7 +199,7 @@ const CodeGenRegister *CodeGenTarget::getRegisterByName(StringRef Name) const {
     if (Reg.TheDef->getValueAsString("AsmName") == Name)
       return &Reg;
   }
-  
+
   return 0;
 }
 
@@ -216,7 +216,7 @@ getRegisterVTs(Record *R) const {
       }
     }
   }
-  
+
   // Remove duplicates.
   array_pod_sort(Result.begin(), Result.end());
   Result.erase(std::unique(Result.begin(), Result.end()), Result.end());
@@ -229,8 +229,8 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   if (R->getName().size() > 9 && R->getName()[9] == '.') {
     static unsigned AnonCounter = 0;
     R->setName("AnonRegClass_"+utostr(AnonCounter++));
-  } 
-  
+  }
+
   std::vector<Record*> TypeList = R->getValueAsListOfDefs("RegTypes");
   for (unsigned i = 0, e = TypeList.size(); i != e; ++i) {
     Record *Type = TypeList[i];
@@ -240,7 +240,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
     VTs.push_back(getValueType(Type));
   }
   assert(!VTs.empty() && "RegisterClass must contain at least one ValueType!");
-  
+
   std::vector<Record*> RegList = R->getValueAsListOfDefs("MemberList");
   for (unsigned i = 0, e = RegList.size(); i != e; ++i) {
     Record *Reg = RegList[i];
@@ -293,7 +293,7 @@ void CodeGenTarget::ReadLegalValueTypes() const {
   for (unsigned i = 0, e = RCs.size(); i != e; ++i)
     for (unsigned ri = 0, re = RCs[i].VTs.size(); ri != re; ++ri)
       LegalValueTypes.push_back(RCs[i].VTs[ri]);
-  
+
   // Remove duplicates.
   std::sort(LegalValueTypes.begin(), LegalValueTypes.end());
   LegalValueTypes.erase(std::unique(LegalValueTypes.begin(),
@@ -314,10 +314,10 @@ void CodeGenTarget::ReadInstructions() const {
 
 static const CodeGenInstruction *
 GetInstByName(const char *Name,
-              const DenseMap<const Record*, CodeGenInstruction*> &Insts, 
+              const DenseMap<const Record*, CodeGenInstruction*> &Insts,
               RecordKeeper &Records) {
   const Record *Rec = Records.getDef(Name);
-  
+
   DenseMap<const Record*, CodeGenInstruction*>::const_iterator
     I = Insts.find(Rec);
   if (Rec == 0 || I == Insts.end())
@@ -434,7 +434,7 @@ ComplexPattern::ComplexPattern(Record *R) {
 std::vector<CodeGenIntrinsic> llvm::LoadIntrinsics(const RecordKeeper &RC,
                                                    bool TargetOnly) {
   std::vector<Record*> I = RC.getAllDerivedDefinitions("Intrinsic");
-  
+
   std::vector<CodeGenIntrinsic> Result;
 
   for (unsigned i = 0, e = I.size(); i != e; ++i) {
@@ -451,8 +451,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   ModRef = ReadWriteMem;
   isOverloaded = false;
   isCommutative = false;
-  
-  if (DefName.size() <= 4 || 
+
+  if (DefName.size() <= 4 ||
       std::string(DefName.begin(), DefName.begin() + 4) != "int_")
     throw "Intrinsic '" + DefName + "' does not start with 'int_'!";
 
@@ -472,11 +472,11 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       Name += (EnumName[i] == '_') ? '.' : EnumName[i];
   } else {
     // Verify it starts with "llvm.".
-    if (Name.size() <= 5 || 
+    if (Name.size() <= 5 ||
         std::string(Name.begin(), Name.begin() + 5) != "llvm.")
       throw "Intrinsic '" + DefName + "'s name does not start with 'llvm.'!";
   }
-  
+
   // If TargetPrefix is specified, make sure that Name starts with
   // "llvm.<targetprefix>.".
   if (!TargetPrefix.empty()) {
@@ -486,7 +486,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       throw "Intrinsic '" + DefName + "' does not start with 'llvm." +
         TargetPrefix + ".'!";
   }
-  
+
   // Parse the list of return types.
   std::vector<MVT::SimpleValueType> OverloadedVTs;
   ListInit *TypeList = R->getValueAsListInit("RetTypes");
@@ -517,11 +517,11 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     // Reject invalid types.
     if (VT == MVT::isVoid)
       throw "Intrinsic '" + DefName + " has void in result type list!";
-    
+
     IS.RetVTs.push_back(VT);
     IS.RetTypeDefs.push_back(TyEl);
   }
-  
+
   // Parse the list of parameter types.
   TypeList = R->getValueAsListInit("ParamTypes");
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
@@ -542,16 +542,16 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
              "Expected iAny or vAny type");
     } else
       VT = getValueType(TyEl->getValueAsDef("VT"));
-    
+
     if (EVT(VT).isOverloaded()) {
       OverloadedVTs.push_back(VT);
       isOverloaded = true;
     }
-    
+
     // Reject invalid types.
     if (VT == MVT::isVoid && i != e-1 /*void at end means varargs*/)
       throw "Intrinsic '" + DefName + " has void in result type list!";
-    
+
     IS.ParamVTs.push_back(VT);
     IS.ParamTypeDefs.push_back(TyEl);
   }
@@ -562,7 +562,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     Record *Property = PropList->getElementAsRecord(i);
     assert(Property->isSubClassOf("IntrinsicProperty") &&
            "Expected a property!");
-    
+
     if (Property->getName() == "IntrNoMem")
       ModRef = NoMem;
     else if (Property->getName() == "IntrReadArgMem")

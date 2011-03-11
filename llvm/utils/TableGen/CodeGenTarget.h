@@ -32,8 +32,8 @@ class CodeGenTarget;
 //  SDNPMemOperand: indicates that a node touches memory and therefore must
 //                  have an associated memory operand that describes the access.
 enum SDNP {
-  SDNPCommutative, 
-  SDNPAssociative, 
+  SDNPCommutative,
+  SDNPAssociative,
   SDNPHasChain,
   SDNPOutGlue,
   SDNPInGlue,
@@ -57,7 +57,7 @@ std::string getEnumName(MVT::SimpleValueType T);
 /// getQualifiedName - Return the name of the specified record, with a
 /// namespace qualifier if the record contains one.
 std::string getQualifiedName(const Record *R);
-  
+
 /// CodeGenTarget - This class corresponds to the Target class in the .td files.
 ///
 class CodeGenTarget {
@@ -74,7 +74,7 @@ class CodeGenTarget {
   void ReadRegisterClasses() const;
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
-  
+
   mutable std::vector<const CodeGenInstruction*> InstrsByEnum;
 public:
   CodeGenTarget(RecordKeeper &Records);
@@ -102,7 +102,7 @@ public:
     if (Registers.empty()) ReadRegisters();
     return Registers;
   }
-  
+
   /// getRegisterByName - If there is a register with the specific AsmName,
   /// return it.
   const CodeGenRegister *getRegisterByName(StringRef Name) const;
@@ -134,7 +134,7 @@ public:
     assert(0 && "Didn't find the register class");
     abort();
   }
-  
+
   /// getRegisterClassForRegister - Find the register class that contains the
   /// specified physical register.  If the register is not in a register
   /// class, return null. If the register is in multiple classes, and the
@@ -192,19 +192,19 @@ public:
   /// getRegisterVTs - Find the union of all possible SimpleValueTypes for the
   /// specified physical register.
   std::vector<MVT::SimpleValueType> getRegisterVTs(Record *R) const;
-  
+
   const std::vector<MVT::SimpleValueType> &getLegalValueTypes() const {
     if (LegalValueTypes.empty()) ReadLegalValueTypes();
     return LegalValueTypes;
   }
-  
+
   /// isLegalValueType - Return true if the specified value type is natively
   /// supported by the target (i.e. there are registers that directly hold it).
   bool isLegalValueType(MVT::SimpleValueType VT) const {
     const std::vector<MVT::SimpleValueType> &LegalVTs = getLegalValueTypes();
     for (unsigned i = 0, e = LegalVTs.size(); i != e; ++i)
       if (LegalVTs[i] == VT) return true;
-    return false;    
+    return false;
   }
 
 private:
@@ -213,7 +213,7 @@ private:
     return Instructions;
   }
 public:
-  
+
   CodeGenInstruction &getInstruction(const Record *InstRec) const {
     if (Instructions.empty()) ReadInstructions();
     DenseMap<const Record*, CodeGenInstruction*>::iterator I =
@@ -233,12 +233,12 @@ public:
   typedef std::vector<const CodeGenInstruction*>::const_iterator inst_iterator;
   inst_iterator inst_begin() const{return getInstructionsByEnumValue().begin();}
   inst_iterator inst_end() const { return getInstructionsByEnumValue().end(); }
-  
-  
+
+
   /// isLittleEndianEncoding - are instruction bit patterns defined as  [0..n]?
   ///
   bool isLittleEndianEncoding() const;
-  
+
 private:
   void ComputeInstrsByEnum() const;
 };
