@@ -1600,9 +1600,8 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
         Name == "FNEGDcc")
       return false;
 
-    // Ditto for VMOVDcc, VMOVScc, VNEGDcc, and VNEGScc.
-    if (Name == "VMOVDcc" || Name == "VMOVScc" || Name == "VNEGDcc" ||
-        Name == "VNEGScc")
+    // Ditto for VNEGDcc and VNEGScc.
+    if (Name == "VNEGDcc" || Name == "VNEGScc")
       return false;
 
     // LDMIA_RET is a special case of LDM (Load Multiple) where the registers

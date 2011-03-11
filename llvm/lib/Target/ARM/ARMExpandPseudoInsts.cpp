@@ -708,6 +708,19 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
   switch (Opcode) {
     default:
       return false;
+    case ARM::VMOVScc:
+    case ARM::VMOVDcc: {
+      unsigned newOpc = Opcode == ARM::VMOVScc ? ARM::VMOVS : ARM::VMOVD;
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(newOpc),
+              MI.getOperand(1).getReg())
+        .addReg(MI.getOperand(2).getReg(),
+                getKillRegState(MI.getOperand(2).isKill()))
+        .addImm(MI.getOperand(3).getImm()) // 'pred'
+        .addReg(MI.getOperand(4).getReg());
+
+      MI.eraseFromParent();
+      return true;
+    }
     case ARM::MOVCCr: {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVr),
               MI.getOperand(1).getReg())

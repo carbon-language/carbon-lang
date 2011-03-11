@@ -972,15 +972,13 @@ def : Pat<(fsub_mlx (fmul_su SPR:$a, SPR:$b), SPR:$dstin),
 //
 
 let neverHasSideEffects = 1 in {
-def VMOVDcc  : ADuI<0b11101, 0b11, 0b0000, 0b01, 0,
-                    (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
-                    IIC_fpUNA64, "vmov", ".f64\t$Dd, $Dm",
+def VMOVDcc  : ARMPseudoInst<(outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm, pred:$p),
+                    Size4Bytes, IIC_fpUNA64,
                     [/*(set DPR:$Dd, (ARMcmov DPR:$Dn, DPR:$Dm, imm:$cc))*/]>,
                  RegConstraint<"$Dn = $Dd">;
 
-def VMOVScc  : ASuI<0b11101, 0b11, 0b0000, 0b01, 0,
-                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
-                    IIC_fpUNA32, "vmov", ".f32\t$Sd, $Sm",
+def VMOVScc  : ARMPseudoInst<(outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm, pred:$p),
+                    Size4Bytes, IIC_fpUNA32,
                     [/*(set SPR:$Sd, (ARMcmov SPR:$Sn, SPR:$Sm, imm:$cc))*/]>,
                  RegConstraint<"$Sn = $Sd">;
 } // neverHasSideEffects
