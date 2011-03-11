@@ -23,6 +23,22 @@ for available options.
 import os, signal, sys, time
 import unittest2
 
+def is_exe(fpath):
+    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+# Find the full path to a program, or return None.
+def which(program):
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
+
 class _WritelnDecorator(object):
     """Used to decorate file-like objects with a handy 'writeln' method"""
     def __init__(self,stream):
@@ -512,20 +528,57 @@ def setupSysPath():
     sys.path.append(scriptPath)
     sys.path.append(pluginPath)
     
-    global ignore
-
-    # The '-i' option is used to skip looking for lldb.py in the build tree.
-    if ignore:
-        return
-        
+    # This is our base name component.
     base = os.path.abspath(os.path.join(scriptPath, os.pardir))
 
+    # These are for xcode build directories.
     xcode3_build_dir = ['build']
     xcode4_build_dir = ['build', 'lldb', 'Build', 'Products']
     dbg = ['Debug']
     rel = ['Release']
     bai = ['BuildAndIntegration']
     python_resource_dir = ['LLDB.framework', 'Resources', 'Python']
+
+    # Some of the tests can invoke the 'lldb' command directly.
+    # We'll try to locate the appropriate executable right here.
+
+    executable = ['lldb']
+    dbgExec  = os.path.join(base, *(xcode3_build_dir + dbg + executable))
+    dbgExec2 = os.path.join(base, *(xcode4_build_dir + dbg + executable))
+    relExec  = os.path.join(base, *(xcode3_build_dir + rel + executable))
+    relExec2 = os.path.join(base, *(xcode4_build_dir + rel + executable))
+    baiExec  = os.path.join(base, *(xcode3_build_dir + bai + executable))
+    baiExec2 = os.path.join(base, *(xcode4_build_dir + bai + executable))
+
+    lldbExec = None
+    if is_exe(dbgExec):
+        lldbExec = dbgExec
+    elif is_exe(dbgExec2):
+        lldbExec = dbgExec2
+    elif is_exe(relExec):
+        lldbExec = relExec
+    elif is_exe(relExec2):
+        lldbExec = relExec2
+    elif is_exe(baiExec):
+        lldbExec = baiExec
+    elif is_exe(baiExec2):
+        lldbExec = baiExec2
+
+    if not lldbExec:
+        lldbExec = which('lldb')
+
+    if not lldbExec:
+        print "The 'lldb' executable cannot be located.  Some of the tests may not be run as a result."
+    else:
+        os.environ["LLDB_EXEC"] = lldbExec
+        print "The 'lldb' executable path is", lldbExec
+
+    global ignore
+
+    # The '-i' option is used to skip looking for lldb.py in the build tree.
+    if ignore:
+        return
+        
     dbgPath  = os.path.join(base, *(xcode3_build_dir + dbg + python_resource_dir))
     dbgPath2 = os.path.join(base, *(xcode4_build_dir + dbg + python_resource_dir))
     relPath  = os.path.join(base, *(xcode3_build_dir + rel + python_resource_dir))
