@@ -1,4 +1,4 @@
-;RUN: llc --march=cellspu %s -o - | FileCheck %s
+;RUN: llc --march=cellspu -disable-cgp-branch-opts %s -o - | FileCheck %s
 ; This is to check that emitting jumptables doesn't crash llc
 define i32 @test(i32 %param) {
 entry:

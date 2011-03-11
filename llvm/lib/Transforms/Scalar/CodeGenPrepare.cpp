@@ -58,6 +58,10 @@ STATISTIC(NumMemoryInsts, "Number of memory instructions whose address "
 STATISTIC(NumExtsMoved, "Number of [s|z]ext instructions combined with loads");
 STATISTIC(NumExtUses, "Number of uses of [s|z]ext instructions optimized");
 
+static cl::opt<bool> DisableBranchOpts(
+  "disable-cgp-branch-opts", cl::Hidden, cl::init(false),
+  cl::desc("Disable branch optimizations in CodeGenPrepare"));
+
 namespace {
   class CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
@@ -129,6 +133,16 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   }
 
   SunkAddrs.clear();
+
+  if (!DisableBranchOpts) {
+    MadeChange = false;
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+      MadeChange |= ConstantFoldTerminator(BB);
+
+    if (MadeChange && DT)
+      DT->DT->recalculate(F);
+    EverMadeChange |= MadeChange;
+  }
 
   return EverMadeChange;
 }

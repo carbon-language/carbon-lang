@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-appel-darwin -stats |& grep {machine-sink}
+; RUN: llc < %s -mtriple=x86_64-appel-darwin -disable-cgp-branch-opts -stats |& grep {machine-sink}
 
 define fastcc void @t() nounwind ssp {
 entry:
