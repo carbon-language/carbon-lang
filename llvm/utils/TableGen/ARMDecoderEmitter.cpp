@@ -1600,15 +1600,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
         Name == "FNEGDcc")
       return false;
 
-    // Ditto for VNEGDcc and VNEGScc.
-    if (Name == "VNEGDcc" || Name == "VNEGScc")
-      return false;
-
-    // LDMIA_RET is a special case of LDM (Load Multiple) where the registers
-    // loaded include the PC, causing a branch to a loaded address.  Ignore
-    // the LDMIA_RET instruction when decoding.
-    if (Name == "LDMIA_RET") return false;
-
     // Bcc is in a more generic form than B.  Ignore B when decoding.
     if (Name == "B") return false;
 
