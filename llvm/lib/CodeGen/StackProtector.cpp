@@ -219,8 +219,8 @@ bool StackProtector::InsertStackProtectors() {
 
     // Split the basic block before the return instruction.
     BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
-    if (DT) {
-      DT->addNewBlock(NewBB, DT->isReachableFromEntry(BB) ? BB : 0);
+    if (DT && DT->isReachableFromEntry(BB)) {
+      DT->addNewBlock(NewBB, BB);
       FailBBDom = DT->findNearestCommonDominator(FailBBDom, BB);
     }
 
@@ -242,7 +242,7 @@ bool StackProtector::InsertStackProtectors() {
   // statements in the function.
   if (!FailBB) return false;
 
-  if (DT)
+  if (DT && FailBBDom)
     DT->addNewBlock(FailBB, FailBBDom);
 
   return true;
