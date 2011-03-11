@@ -48,6 +48,10 @@ namespace CodeGen {
   /// arguments in a call.
   class CallArgList :
     public llvm::SmallVector<std::pair<RValue, QualType>, 16> {
+  public:
+    void add(RValue rvalue, QualType type) {
+      push_back(std::pair<RValue,QualType>(rvalue,type));
+    }
   };
 
   /// FunctionArgList - Type for representing both the decl and type

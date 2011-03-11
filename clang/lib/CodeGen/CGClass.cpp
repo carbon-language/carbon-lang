@@ -1211,9 +1211,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
   for (FunctionProtoType::arg_type_iterator I = FPT->arg_type_begin()+1,
        E = FPT->arg_type_end(); I != E; ++I, ++Arg) {
     assert(Arg != ArgEnd && "Running over edge of argument list!");
-    QualType ArgType = *I;
-    Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
-                                  ArgType));
+    EmitCallArg(Args, *Arg, *I);
   }
   // Either we've emitted all the call args, or we have a call to a
   // variadic function.
@@ -1222,8 +1220,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
   // If we still have any arguments, emit them using the type of the argument.
   for (; Arg != ArgEnd; ++Arg) {
     QualType ArgType = Arg->getType();
-    Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
-                                  ArgType));
+    EmitCallArg(Args, *Arg, ArgType);
   }
   
   QualType ResultType = FPT->getResultType();
@@ -1261,11 +1258,8 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
 
   // Explicit arguments.
   for (; I != E; ++I) {
-    const VarDecl *Param = *I;
-    QualType ArgType = Param->getType(); // because we're passing it to itself
-    RValue Arg = EmitDelegateCallArg(Param);
-
-    DelegateArgs.push_back(std::make_pair(Arg, ArgType));
+    const VarDecl *param = *I;
+    EmitDelegateCallArg(DelegateArgs, param);
   }
 
   EmitCall(CGM.getTypes().getFunctionInfo(Ctor, CtorType),

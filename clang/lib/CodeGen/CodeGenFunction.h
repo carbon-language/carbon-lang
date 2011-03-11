@@ -2087,12 +2087,12 @@ public:
   llvm::BasicBlock *getTrapBB();
 
   /// EmitCallArg - Emit a single call argument.
-  RValue EmitCallArg(const Expr *E, QualType ArgType);
+  void EmitCallArg(CallArgList &args, const Expr *E, QualType ArgType);
 
   /// EmitDelegateCallArg - We are performing a delegate call; that
   /// is, the current function is delegating to another one.  Produce
   /// a r-value suitable for passing the given parameter.
-  RValue EmitDelegateCallArg(const VarDecl *Param);
+  void EmitDelegateCallArg(CallArgList &args, const VarDecl *param);
 
 private:
   void EmitReturnOfRValue(RValue RV, QualType Ty);
@@ -2157,8 +2157,7 @@ private:
                getContext().getCanonicalType(ActualArgType).getTypePtr() &&
                "type mismatch in call argument!");
 #endif
-        Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
-                                      ArgType));
+        EmitCallArg(Args, *Arg, ArgType);
       }
 
       // Either we've emitted all the call args, or we have a call to a
@@ -2169,11 +2168,8 @@ private:
     }
 
     // If we still have any arguments, emit them using the type of the argument.
-    for (; Arg != ArgEnd; ++Arg) {
-      QualType ArgType = Arg->getType();
-      Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
-                                    ArgType));
-    }
+    for (; Arg != ArgEnd; ++Arg)
+      EmitCallArg(Args, *Arg, Arg->getType());
   }
 
   const TargetCodeGenInfo &getTargetHooks() const {

@@ -1116,42 +1116,48 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI) {
     Ret->setDebugLoc(RetDbgLoc);
 }
 
-RValue CodeGenFunction::EmitDelegateCallArg(const VarDecl *Param) {
+void CodeGenFunction::EmitDelegateCallArg(CallArgList &args,
+                                          const VarDecl *param) {
   // StartFunction converted the ABI-lowered parameter(s) into a
   // local alloca.  We need to turn that into an r-value suitable
   // for EmitCall.
-  llvm::Value *Local = GetAddrOfLocalVar(Param);
+  llvm::Value *local = GetAddrOfLocalVar(param);
 
-  QualType ArgType = Param->getType();
+  QualType type = param->getType();
 
   // For the most part, we just need to load the alloca, except:
   // 1) aggregate r-values are actually pointers to temporaries, and
   // 2) references to aggregates are pointers directly to the aggregate.
   // I don't know why references to non-aggregates are different here.
-  if (const ReferenceType *RefType = ArgType->getAs<ReferenceType>()) {
-    if (hasAggregateLLVMType(RefType->getPointeeType()))
-      return RValue::getAggregate(Local);
+  if (const ReferenceType *ref = type->getAs<ReferenceType>()) {
+    if (hasAggregateLLVMType(ref->getPointeeType()))
+      return args.add(RValue::getAggregate(local), type);
 
     // Locals which are references to scalars are represented
     // with allocas holding the pointer.
-    return RValue::get(Builder.CreateLoad(Local));
+    return args.add(RValue::get(Builder.CreateLoad(local)), type);
   }
 
-  if (ArgType->isAnyComplexType())
-    return RValue::getComplex(LoadComplexFromAddr(Local, /*volatile*/ false));
+  if (type->isAnyComplexType()) {
+    ComplexPairTy complex = LoadComplexFromAddr(local, /*volatile*/ false);
+    return args.add(RValue::getComplex(complex), type);
+  }
 
-  if (hasAggregateLLVMType(ArgType))
-    return RValue::getAggregate(Local);
+  if (hasAggregateLLVMType(type))
+    return args.add(RValue::getAggregate(local), type);
 
-  unsigned Alignment = getContext().getDeclAlign(Param).getQuantity();
-  return RValue::get(EmitLoadOfScalar(Local, false, Alignment, ArgType));
+  unsigned alignment = getContext().getDeclAlign(param).getQuantity();
+  llvm::Value *value = EmitLoadOfScalar(local, false, alignment, type);
+  return args.add(RValue::get(value), type);
 }
 
-RValue CodeGenFunction::EmitCallArg(const Expr *E, QualType ArgType) {
-  if (ArgType->isReferenceType())
-    return EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
+void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
+                                  QualType type) {
+  if (type->isReferenceType())
+    return args.add(EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0),
+                    type);
 
-  return EmitAnyExprToTemp(E);
+  args.add(EmitAnyExprToTemp(E), type);
 }
 
 /// Emits a call or invoke instruction to the given function, depending

@@ -2613,11 +2613,8 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   // Add the rest of the parameters.
   for (FunctionDecl::param_const_iterator I = MD->param_begin(),
        E = MD->param_end(); I != E; ++I) {
-    ParmVarDecl *Param = *I;
-    QualType ArgType = Param->getType();
-    RValue Arg = EmitDelegateCallArg(Param);
-    
-    CallArgs.push_back(std::make_pair(Arg, ArgType));
+    ParmVarDecl *param = *I;
+    EmitDelegateCallArg(CallArgs, param);
   }
 
   // Get our callee.

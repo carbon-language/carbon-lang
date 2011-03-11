@@ -956,9 +956,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
                                                placementArg->getType()) &&
            "type mismatch in call argument!");
 
-    allocatorArgs.push_back(std::make_pair(EmitCallArg(*placementArg, argType),
-                                           argType));
-
+    EmitCallArg(allocatorArgs, *placementArg, argType);
   }
 
   // Either we've emitted all the call args, or we have a call to a
@@ -970,9 +968,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // If we still have any arguments, emit them using the type of the argument.
   for (CXXNewExpr::const_arg_iterator placementArgsEnd = E->placement_arg_end();
        placementArg != placementArgsEnd; ++placementArg) {
-    QualType argType = placementArg->getType();
-    allocatorArgs.push_back(std::make_pair(EmitCallArg(*placementArg, argType),
-                                           argType));
+    EmitCallArg(allocatorArgs, *placementArg, placementArg->getType());
   }
 
   // Emit the allocation call.
