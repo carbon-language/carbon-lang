@@ -1588,20 +1588,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     // The following special cases are for conflict resolutions.
     //
 
-    // NEON NLdStFrm conflict resolutions:
-    //
-    // 1. Ignore suffix "odd" and "odd_UPD", prefer the "even" register-
-    //    numbered ones which have the same Asm format string.
-    // 2. Ignore VST2d64_UPD, which conflicts with VST1q64_UPD.
-    // 3. Ignore VLD2d64_UPD, which conflicts with VLD1q64_UPD.
-    // 4. Ignore VLD1q[_UPD], which conflicts with VLD1q64[_UPD].
-    // 5. Ignore VST1q[_UPD], which conflicts with VST1q64[_UPD].
-    if (Name.endswith("odd") || Name.endswith("odd_UPD") ||
-        Name == "VST2d64_UPD" || Name == "VLD2d64_UPD" ||
-        Name == "VLD1q" || Name == "VLD1q_UPD" ||
-        Name == "VST1q" || Name == "VST1q_UPD")
-      return false;
-
     // RSCSri and RSCSrs set the 's' bit, but are not predicated.  We are
     // better off using the generic RSCri and RSCrs instructions.
     if (Name == "RSCSri" || Name == "RSCSrs") return false;
