@@ -3148,9 +3148,6 @@ def BCCZi64 : PseudoInst<(outs),
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
-// FIXME: These should all be pseudo-instructions that get expanded to
-//        the normal MOV instructions. That would fix the dependency on
-//        special casing them in tblgen.
 let neverHasSideEffects = 1 in {
 def MOVCCr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$false, GPR:$Rm, pred:$p),
                            Size4Bytes, IIC_iCMOVr,
