@@ -30,6 +30,8 @@ def warn_float_overflow : Warning<
 def warn_float_underflow : Warning<
   "magnitude of floating-point constant too small for type %0; minimum is %1">,
   InGroup<LiteralRange>;
+def warn_double_const_requires_fp64 : Warning<
+  "double precision constant requires cl_khr_fp64, casting to single precision">;
 
 // C99 variable-length arrays
 def ext_vla : Extension<
