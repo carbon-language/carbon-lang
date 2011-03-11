@@ -1488,6 +1488,8 @@ let isBranch = 1, isTerminator = 1 in {
   // B is "predicable" since it's just a Bcc with an 'always' condition.
   let isBarrier = 1 in {
     let isPredicable = 1 in
+    // FIXME: We shouldn't need this pseudo at all. Just using Bcc directly
+    // should be sufficient.
     def B : ARMPseudoInst<(outs), (ins brtarget:$target), Size4Bytes, IIC_Br,
                 [(br bb:$target)]>;
 
