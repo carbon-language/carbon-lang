@@ -84,9 +84,7 @@ LimitFPPrecision("limit-float-precision",
 // %buffer = alloca [4096 x i8]
 // %data = load [4096 x i8]* %argPtr
 // store [4096 x i8] %data, [4096 x i8]* %buffer
-static cl::opt<unsigned>
-MaxParallelChains("dag-chain-limit", cl::desc("Max parallel isel dag chains"),
-                  cl::init(64), cl::Hidden);
+static const unsigned MaxParallelChains = 64;
 
 static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
                                       const SDValue *Parts, unsigned NumParts,
