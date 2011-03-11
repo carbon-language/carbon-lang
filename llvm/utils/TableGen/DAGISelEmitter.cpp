@@ -148,12 +148,8 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   Matcher *TheMatcher = new ScopeMatcher(&PatternMatchers[0],
                                          PatternMatchers.size());
 
-  CodeGenTarget Target(Records);
-  const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
-  bool useEmitRegister2 = Registers.size() > 255;
-
   TheMatcher = OptimizeMatcher(TheMatcher, CGP);
   //Matcher->dump();
-  EmitMatcherTable(TheMatcher, CGP, useEmitRegister2, OS);
+  EmitMatcherTable(TheMatcher, CGP, OS);
   delete TheMatcher;
 }

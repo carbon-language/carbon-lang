@@ -43,11 +43,9 @@ class MatcherTableEmitter {
   DenseMap<Record*, unsigned> NodeXFormMap;
   std::vector<Record*> NodeXForms;
 
-  bool useEmitRegister2;
-
 public:
-  MatcherTableEmitter(const CodeGenDAGPatterns &cgp, bool _useEmitRegister2)
-    : CGP(cgp), useEmitRegister2(_useEmitRegister2) {}
+  MatcherTableEmitter(const CodeGenDAGPatterns &cgp)
+    : CGP(cgp) {}
 
   unsigned EmitMatcherList(const Matcher *N, unsigned Indent,
                            unsigned StartIdx, formatted_raw_ostream &OS);
@@ -431,25 +429,20 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     return 3;
   }
 
-  case Matcher::EmitRegister:
-    if (useEmitRegister2) {
-      OS << "OPC_EmitRegister2, "
-        << getEnumName(cast<EmitRegisterMatcher>(N)->getVT()) << ", ";
-      if (Record *R = cast<EmitRegisterMatcher>(N)->getReg())
-        OS << "TARGET_VAL(" << getQualifiedName(R) << "),\n";
-      else {
-        OS << "TARGET_VAL(0) ";
-        if (!OmitComments)
-          OS << "/*zero_reg*/";
-        OS << ",\n";
-      }
+  case Matcher::EmitRegister: {
+    const EmitRegisterMatcher *Matcher = cast<EmitRegisterMatcher>(N);
+    const CodeGenRegister *Reg = Matcher->getReg();
+    // If the enum value of the register is larger than one byte can handle,
+    // use EmitRegister2.
+    if (Reg && Reg->EnumValue > 255) {
+      OS << "OPC_EmitRegister2, " << getEnumName(Matcher->getVT()) << ", ";
+      OS << "TARGET_VAL(" << getQualifiedName(Reg->TheDef) << "),\n";
       return 4;
     } else {
-      OS << "OPC_EmitRegister, "
-        << getEnumName(cast<EmitRegisterMatcher>(N)->getVT()) << ", ";
-      if (Record *R = cast<EmitRegisterMatcher>(N)->getReg())
-        OS << getQualifiedName(R) << ",\n";
-      else {
+      OS << "OPC_EmitRegister, " << getEnumName(Matcher->getVT()) << ", ";
+      if (Reg) {
+        OS << getQualifiedName(Reg->TheDef) << ",\n";
+      } else {
         OS << "0 ";
         if (!OmitComments)
           OS << "/*zero_reg*/";
@@ -457,6 +450,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       }
       return 3;
     }
+  }
 
   case Matcher::EmitConvertToTarget:
     OS << "OPC_EmitConvertToTarget, "
@@ -800,14 +794,13 @@ void MatcherTableEmitter::EmitHistogram(const Matcher *M,
 
 void llvm::EmitMatcherTable(const Matcher *TheMatcher,
                             const CodeGenDAGPatterns &CGP,
-                            bool useEmitRegister2,
                             raw_ostream &O) {
   formatted_raw_ostream OS(O);
 
   OS << "// The main instruction selector code.\n";
   OS << "SDNode *SelectCode(SDNode *N) {\n";
 
-  MatcherTableEmitter MatcherEmitter(CGP, useEmitRegister2);
+  MatcherTableEmitter MatcherEmitter(CGP);
 
   OS << "  // Some target values are emitted as 2 bytes, TARGET_VAL handles\n";
   OS << "  // this.\n";

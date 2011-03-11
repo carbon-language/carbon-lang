@@ -9,7 +9,9 @@
 
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
+#include "CodeGenRegisters.h"
 #include "Record.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include <utility>
@@ -91,6 +93,10 @@ namespace {
     /// CurPredicate - As we emit matcher nodes, this points to the latest check
     /// which should have future checks stuck into its Next position.
     Matcher *CurPredicate;
+
+    /// RegisterDefMap - A map of register record definitions to the
+    /// corresponding target CodeGenRegister entry.
+    DenseMap<const Record *, const CodeGenRegister *> RegisterDefMap;
   public:
     MatcherGen(const PatternToMatch &pattern, const CodeGenDAGPatterns &cgp);
 
@@ -159,6 +165,12 @@ MatcherGen::MatcherGen(const PatternToMatch &pattern,
 
   // If there are types that are manifestly known, infer them.
   InferPossibleTypes();
+
+  // Populate the map from records to CodeGenRegister entries.
+  const CodeGenTarget &CGT = CGP.getTargetInfo();
+  const std::vector<CodeGenRegister> &Registers = CGT.getRegisters();
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
+    RegisterDefMap[Registers[i].TheDef] = &Registers[i];
 }
 
 /// InferPossibleTypes - As we emit the pattern, we end up generating type
@@ -578,7 +590,8 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
   // If this is an explicit register reference, handle it.
   if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
     if (DI->getDef()->isSubClassOf("Register")) {
-      AddMatcher(new EmitRegisterMatcher(DI->getDef(), N->getType(0)));
+      AddMatcher(new EmitRegisterMatcher(RegisterDefMap[DI->getDef()],
+                                         N->getType(0)));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }

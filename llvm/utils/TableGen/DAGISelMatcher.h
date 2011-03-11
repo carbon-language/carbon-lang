@@ -17,6 +17,7 @@
 #include "llvm/Support/Casting.h"
 
 namespace llvm {
+  struct CodeGenRegister;
   class CodeGenDAGPatterns;
   class Matcher;
   class PatternToMatch;
@@ -29,7 +30,7 @@ Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,unsigned Variant,
                                  const CodeGenDAGPatterns &CGP);
 Matcher *OptimizeMatcher(Matcher *Matcher, const CodeGenDAGPatterns &CGP);
 void EmitMatcherTable(const Matcher *Matcher, const CodeGenDAGPatterns &CGP,
-                      bool useEmitRegister2, raw_ostream &OS);
+                      raw_ostream &OS);
 
 
 /// Matcher - Base class for all the the DAG ISel Matcher representation
@@ -816,13 +817,13 @@ private:
 class EmitRegisterMatcher : public Matcher {
   /// Reg - The def for the register that we're emitting.  If this is null, then
   /// this is a reference to zero_reg.
-  Record *Reg;
+  const CodeGenRegister *Reg;
   MVT::SimpleValueType VT;
 public:
-  EmitRegisterMatcher(Record *reg, MVT::SimpleValueType vt)
+  EmitRegisterMatcher(const CodeGenRegister *reg, MVT::SimpleValueType vt)
     : Matcher(EmitRegister), Reg(reg), VT(vt) {}
 
-  Record *getReg() const { return Reg; }
+  const CodeGenRegister *getReg() const { return Reg; }
   MVT::SimpleValueType getVT() const { return VT; }
 
   static inline bool classof(const Matcher *N) {
