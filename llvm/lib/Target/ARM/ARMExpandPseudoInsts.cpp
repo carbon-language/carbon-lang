@@ -735,6 +735,27 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
+    case ARM::MOVCCi16: {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi16),
+              MI.getOperand(1).getReg())
+        .addImm(MI.getOperand(2).getImm())
+        .addImm(MI.getOperand(3).getImm()) // 'pred'
+        .addReg(MI.getOperand(4).getReg());
+
+      MI.eraseFromParent();
+      return true;
+    }
+    case ARM::MOVCCi: {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi),
+              MI.getOperand(1).getReg())
+        .addImm(MI.getOperand(2).getImm())
+        .addImm(MI.getOperand(3).getImm()) // 'pred'
+        .addReg(MI.getOperand(4).getReg())
+        .addReg(0); // 's' bit
+
+      MI.eraseFromParent();
+      return true;
+    }
     case ARM::Int_eh_sjlj_dispatchsetup: {
       MachineFunction &MF = *MI.getParent()->getParent();
       const ARMBaseInstrInfo *AII =

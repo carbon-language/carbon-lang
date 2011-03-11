@@ -3163,35 +3163,18 @@ def MOVCCs : ARMPseudoInst<(outs GPR:$Rd),
       RegConstraint<"$false = $Rd">;
 
 let isMoveImm = 1 in
-def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm_hilo16:$imm),
-                 DPFrm, IIC_iMOVi,
-                 "movw", "\t$Rd, $imm",
-                 []>,
-                 RegConstraint<"$false = $Rd">, Requires<[IsARM, HasV6T2]>,
-                 UnaryDP {
-  bits<4> Rd;
-  bits<16> imm;
-  let Inst{25} = 1;
-  let Inst{20} = 0;
-  let Inst{19-16} = imm{15-12};
-  let Inst{15-12} = Rd;
-  let Inst{11-0}  = imm{11-0};
-}
+def MOVCCi16 : ARMPseudoInst<(outs GPR:$Rd),
+                             (ins GPR:$false, i32imm_hilo16:$imm, pred:$p),
+                             Size4Bytes, IIC_iMOVi,
+                             []>,
+      RegConstraint<"$false = $Rd">, Requires<[IsARM, HasV6T2]>;
 
 let isMoveImm = 1 in
-def MOVCCi : AI1<0b1101, (outs GPR:$Rd),
-                         (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
-                "mov", "\t$Rd, $imm",
+def MOVCCi : ARMPseudoInst<(outs GPR:$Rd),
+                           (ins GPR:$false, so_imm:$imm, pred:$p),
+                           Size4Bytes, IIC_iCMOVi,
    [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm:$imm, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $Rd">, UnaryDP {
-  bits<4> Rd;
-  bits<12> imm;
-  let Inst{25} = 1;
-  let Inst{20} = 0;
-  let Inst{19-16} = 0b0000;
-  let Inst{15-12} = Rd;
-  let Inst{11-0} = imm;
-}
+      RegConstraint<"$false = $Rd">;
 
 // Two instruction predicate mov immediate.
 let isMoveImm = 1 in
