@@ -1606,12 +1606,12 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     // better off using the generic RSCri and RSCrs instructions.
     if (Name == "RSCSri" || Name == "RSCSrs") return false;
 
-    // MOVCCi, MOVCCi16, FCYPScc, FCYPDcc, FNEGScc, and
-    // FNEGDcc are used in the compiler to implement conditional moves.
-    // We can ignore them in favor of their more generic versions of
-    // instructions. See also SDNode *ARMDAGToDAGISel::Select(SDValue Op).
-    if (Name == "MOVCCi"  || Name == "MOVCCi16" || Name == "FCPYScc" ||
-        Name == "FCPYDcc" || Name == "FNEGScc"  || Name == "FNEGDcc")
+    // FCYPScc, FCYPDcc, FNEGScc, and FNEGDcc are used in the compiler
+    // to implement conditional moves. We can ignore them in favor of
+    // their more generic versions of instructions. See also
+    // SDNode *ARMDAGToDAGISel::Select(SDValue Op).
+    if (Name == "FCPYScc" || Name == "FCPYDcc" || Name == "FNEGScc" ||
+        Name == "FNEGDcc")
       return false;
 
     // Ditto for VMOVDcc, VMOVScc, VNEGDcc, and VNEGScc.
