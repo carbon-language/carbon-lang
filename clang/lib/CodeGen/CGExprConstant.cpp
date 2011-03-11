@@ -56,7 +56,7 @@ private:
   void AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
                       llvm::ConstantInt *InitExpr);
 
-  void AppendPadding(uint64_t NumBytes);
+  void AppendPadding(CharUnits PadSize);
 
   void AppendTailPadding(CharUnits RecordSize);
 
@@ -99,7 +99,8 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset,
 
   if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
     // We need to append padding.
-    AppendPadding(FieldOffsetInBytes - NextFieldOffsetInBytes);
+    AppendPadding(
+        CharUnits::fromQuantity(FieldOffsetInBytes - NextFieldOffsetInBytes));
 
     assert(NextFieldOffsetInBytes == FieldOffsetInBytes &&
            "Did not add enough padding!");
@@ -129,7 +130,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
       llvm::RoundUpToAlignment(FieldOffset -
                                NextFieldOffsetInBytes * 8, 8) / 8;
 
-    AppendPadding(NumBytes);
+    AppendPadding(CharUnits::fromQuantity(NumBytes));
   }
 
   uint64_t FieldSize =
@@ -212,8 +213,8 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
         Elements.pop_back();
         
         // Add the padding back in two chunks.
-        AppendPadding(AT->getNumElements()-1);
-        AppendPadding(1);
+        AppendPadding(CharUnits::fromQuantity(AT->getNumElements()-1));
+        AppendPadding(CharUnits::One());
         assert(isa<llvm::UndefValue>(Elements.back()) &&
                Elements.back()->getType()->isIntegerTy(8) &&
                "Padding addition didn't work right");
@@ -265,13 +266,13 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
   NextFieldOffsetInBytes++;
 }
 
-void ConstStructBuilder::AppendPadding(uint64_t NumBytes) {
-  if (!NumBytes)
+void ConstStructBuilder::AppendPadding(CharUnits PadSize) {
+  if (PadSize.isZero())
     return;
 
   const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
-  if (NumBytes > 1)
-    Ty = llvm::ArrayType::get(Ty, NumBytes);
+  if (PadSize > CharUnits::One())
+    Ty = llvm::ArrayType::get(Ty, PadSize.getQuantity());
 
   llvm::Constant *C = llvm::UndefValue::get(Ty);
   Elements.push_back(C);
@@ -284,8 +285,7 @@ void ConstStructBuilder::AppendTailPadding(CharUnits RecordSize) {
   assert(NextFieldOffsetInBytes <= RecordSize.getQuantity() && 
          "Size mismatch!");
 
-  unsigned NumPadBytes = RecordSize.getQuantity() - NextFieldOffsetInBytes;
-  AppendPadding(NumPadBytes);
+  AppendPadding(RecordSize - CharUnits::fromQuantity(NextFieldOffsetInBytes));
 }
 
 void ConstStructBuilder::ConvertStructToPacked() {
