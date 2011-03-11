@@ -1654,13 +1654,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
         Name == "VEXTq16" || Name == "VEXTq32" || Name == "VEXTqf")
       return false;
 
-    // Vector Reverse is similar to Vector Extract.  There is no distinction
-    // between data types, other than size.
-    //
-    // VREV64df is equivalent to VREV64d32.
-    // VREV64qf is equivalent to VREV64q32.
-    if (Name == "VREV64df" || Name == "VREV64qf") return false;
-
     // VDUPLNfd is equivalent to VDUPLN32d.
     // VDUPLNfq is equivalent to VDUPLN32q.
     // VLD1df is equivalent to VLD1d32.
