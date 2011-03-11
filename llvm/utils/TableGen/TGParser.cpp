@@ -1153,6 +1153,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
         s << "Type mismatch for list, expected list type, got "
           << ItemType->getAsString();
         TokError(s.str());
+        return 0;
       }
       GivenListTy = ListType;
     }
