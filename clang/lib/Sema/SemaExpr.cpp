@@ -6965,8 +6965,12 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
-    if (LCanPointeeTy != RCanPointeeTy)
-      ImpCastExprToType(rex, lType, CK_BitCast);
+    if (LCanPointeeTy != RCanPointeeTy) {
+      if (LHSIsNull && !RHSIsNull)
+        ImpCastExprToType(lex, rType, CK_BitCast);
+      else
+        ImpCastExprToType(rex, lType, CK_BitCast);
+    }
     return ResultTy;
   }
 
@@ -7053,39 +7057,46 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       && ((lType->isBlockPointerType() && rType->isPointerType())
           || (lType->isPointerType() && rType->isBlockPointerType()))) {
     if (!LHSIsNull && !RHSIsNull) {
-      if (!((rType->isPointerType() && rType->getAs<PointerType>()
+      if (!((rType->isPointerType() && rType->castAs<PointerType>()
              ->getPointeeType()->isVoidType())
-            || (lType->isPointerType() && lType->getAs<PointerType>()
+            || (lType->isPointerType() && lType->castAs<PointerType>()
                 ->getPointeeType()->isVoidType())))
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
-    ImpCastExprToType(rex, lType, CK_BitCast);
+    if (LHSIsNull && !RHSIsNull)
+      ImpCastExprToType(lex, rType, CK_BitCast);
+    else
+      ImpCastExprToType(rex, lType, CK_BitCast);
     return ResultTy;
   }
 
-  if ((lType->isObjCObjectPointerType() || rType->isObjCObjectPointerType())) {
-    if (lType->isPointerType() || rType->isPointerType()) {
-      const PointerType *LPT = lType->getAs<PointerType>();
-      const PointerType *RPT = rType->getAs<PointerType>();
-      bool LPtrToVoid = LPT ?
-        Context.getCanonicalType(LPT->getPointeeType())->isVoidType() : false;
-      bool RPtrToVoid = RPT ?
-        Context.getCanonicalType(RPT->getPointeeType())->isVoidType() : false;
+  if (lType->isObjCObjectPointerType() || rType->isObjCObjectPointerType()) {
+    const PointerType *LPT = lType->getAs<PointerType>();
+    const PointerType *RPT = rType->getAs<PointerType>();
+    if (LPT || RPT) {
+      bool LPtrToVoid = LPT ? LPT->getPointeeType()->isVoidType() : false;
+      bool RPtrToVoid = RPT ? RPT->getPointeeType()->isVoidType() : false;
 
       if (!LPtrToVoid && !RPtrToVoid &&
           !Context.typesAreCompatible(lType, rType)) {
         Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
       }
-      ImpCastExprToType(rex, lType, CK_BitCast);
+      if (LHSIsNull && !RHSIsNull)
+        ImpCastExprToType(lex, rType, CK_BitCast);
+      else
+        ImpCastExprToType(rex, lType, CK_BitCast);
       return ResultTy;
     }
     if (lType->isObjCObjectPointerType() && rType->isObjCObjectPointerType()) {
       if (!Context.areComparableObjCPointerTypes(lType, rType))
         Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-      ImpCastExprToType(rex, lType, CK_BitCast);
+      if (LHSIsNull && !RHSIsNull)
+        ImpCastExprToType(lex, rType, CK_BitCast);
+      else
+        ImpCastExprToType(rex, lType, CK_BitCast);
       return ResultTy;
     }
   }
