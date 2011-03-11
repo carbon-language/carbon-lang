@@ -4471,9 +4471,6 @@ def VDUPLN16d : VDUPLND<{?,?,1,0}, "vdup", "16", v4i16> {
 def VDUPLN32d : VDUPLND<{?,1,0,0}, "vdup", "32", v2i32> {
   let Inst{19} = lane{0};
 }
-def VDUPLNfd  : VDUPLND<{?,1,0,0}, "vdup", "32", v2f32> {
-  let Inst{19} = lane{0};
-}
 def VDUPLN8q  : VDUPLNQ<{?,?,?,1}, "vdup", "8", v16i8, v8i8> {
   let Inst{19-17} = lane{2-0};
 }
@@ -4483,9 +4480,12 @@ def VDUPLN16q : VDUPLNQ<{?,?,1,0}, "vdup", "16", v8i16, v4i16> {
 def VDUPLN32q : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4i32, v2i32> {
   let Inst{19} = lane{0};
 }
-def VDUPLNfq  : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4f32, v2f32> {
-  let Inst{19} = lane{0};
-}
+
+def : Pat<(v2f32 (NEONvduplane (v2f32 DPR:$Vm), imm:$lane)),
+          (VDUPLN32d DPR:$Vm, imm:$lane)>;
+
+def : Pat<(v4f32 (NEONvduplane (v2f32 DPR:$Vm), imm:$lane)),
+          (VDUPLN32q DPR:$Vm, imm:$lane)>;
 
 def : Pat<(v16i8 (NEONvduplane (v16i8 QPR:$src), imm:$lane)),
           (v16i8 (VDUPLN8q (v8i8 (EXTRACT_SUBREG QPR:$src,
@@ -4500,7 +4500,7 @@ def : Pat<(v4i32 (NEONvduplane (v4i32 QPR:$src), imm:$lane)),
                                     (DSubReg_i32_reg imm:$lane))),
                             (SubReg_i32_lane imm:$lane)))>;
 def : Pat<(v4f32 (NEONvduplane (v4f32 QPR:$src), imm:$lane)),
-          (v4f32 (VDUPLNfq (v2f32 (EXTRACT_SUBREG QPR:$src,
+          (v4f32 (VDUPLN32q (v2f32 (EXTRACT_SUBREG QPR:$src,
                                    (DSubReg_i32_reg imm:$lane))),
                            (SubReg_i32_lane imm:$lane)))>;
 

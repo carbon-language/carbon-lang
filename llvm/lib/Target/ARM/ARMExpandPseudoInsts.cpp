@@ -1018,7 +1018,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     }
     case ARM::VDUPfqf:
     case ARM::VDUPfdf:{
-      unsigned NewOpc = Opcode == ARM::VDUPfqf ? ARM::VDUPLNfq : ARM::VDUPLNfd;
+      unsigned NewOpc = Opcode == ARM::VDUPfqf ? ARM::VDUPLN32q :
+        ARM::VDUPLN32d;
       MachineInstrBuilder MIB =
         BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc));
       unsigned OpIdx = 0;
