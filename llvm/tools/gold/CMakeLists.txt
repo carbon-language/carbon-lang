@@ -32,6 +32,12 @@ else()
   set_property(DIRECTORY APPEND
     PROPERTY ADDITIONAL_MAKE_CLEAN_FILES exportsfile)
 
+  # Force re-linking when the exports file changes. Actually, it
+  # forces recompilation of gold-plugin.cpp. The LINK_DEPENDS target
+  # property only works for makefile-based generators.
+  set_property(SOURCE gold-plugin.cpp APPEND PROPERTY
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/exportsfile)
+
   target_link_libraries(LLVMgold LTO -Wl,--version-script,exportsfile)
   add_dependencies(LLVMgold gold_exports)
 endif()
