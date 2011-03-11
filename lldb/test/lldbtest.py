@@ -477,6 +477,9 @@ class TestBase(unittest2.TestCase):
         #import traceback
         #traceback.print_stack()
 
+        if "LLDB_EXEC" in os.environ:
+            self.lldbExec = os.environ["LLDB_EXEC"]
+
         if lldb.blacklist:
             className = self.__class__.__name__
             classAndMethodName = "%s.%s" % (className, self._testMethodName)
