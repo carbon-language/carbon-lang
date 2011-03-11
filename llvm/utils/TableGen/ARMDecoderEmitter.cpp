@@ -1653,16 +1653,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     if (Name == "VEXTd16" || Name == "VEXTd32" || Name == "VEXTdf" ||
         Name == "VEXTq16" || Name == "VEXTq32" || Name == "VEXTqf")
       return false;
-
-    // VLD1df is equivalent to VLD1d32.
-    // VLD1qf is equivalent to VLD1q32.
-    // VLD2d64 is equivalent to VLD1q64.
-    // VST1df is equivalent to VST1d32.
-    // VST1qf is equivalent to VST1q32.
-    // VST2d64 is equivalent to VST1q64.
-    if (Name == "VLD1df"   || Name == "VLD1qf"   || Name == "VLD2d64" ||
-        Name == "VST1df"   || Name == "VST1qf"   || Name == "VST2d64")
-      return false;
   } else if (TN == TARGET_THUMB) {
     if (!thumbInstruction(Form))
       return false;
