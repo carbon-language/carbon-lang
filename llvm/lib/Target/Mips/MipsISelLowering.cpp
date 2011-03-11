@@ -1307,7 +1307,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
 
   unsigned FirstStackArgLoc = (Subtarget->isABI_EABI() ? 0 : 16);
-  unsigned LastStackArgEndOffset;
+  unsigned LastStackArgEndOffset = 0;
   EVT LastRegArgValVT;
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
