@@ -1592,9 +1592,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     // better off using the generic RSCri and RSCrs instructions.
     if (Name == "RSCSri" || Name == "RSCSrs") return false;
 
-    // Bcc is in a more generic form than B.  Ignore B when decoding.
-    if (Name == "B") return false;
-
     // Ignore the non-Darwin BL instructions and the TPsoft (TLS) instruction.
     if (Name == "BL" || Name == "BL_pred" || Name == "BLX" ||
         Name == "BLX_pred" || Name == "TPsoft")

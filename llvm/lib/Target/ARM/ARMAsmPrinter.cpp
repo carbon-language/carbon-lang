@@ -945,6 +945,17 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
   default: break;
+  case ARM::B: {
+    // B is just a Bcc with an 'always' predicate.
+    MCInst TmpInst;
+    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
+    TmpInst.setOpcode(ARM::Bcc);
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
   case ARM::LDMIA_RET: {
     // LDMIA_RET is just a normal LDMIA_UPD instruction that targets PC and as
     // such has additional code-gen properties and scheduling information.

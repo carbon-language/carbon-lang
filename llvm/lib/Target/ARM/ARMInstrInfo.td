@@ -1485,15 +1485,11 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1 in {
-  // B is "predicable" since it can be xformed into a Bcc.
+  // B is "predicable" since it's just a Bcc with an 'always' condition.
   let isBarrier = 1 in {
     let isPredicable = 1 in
-    def B : ABXI<0b1010, (outs), (ins brtarget:$target), IIC_Br,
-                "b\t$target", [(br bb:$target)]> {
-      bits<24> target;
-      let Inst{31-28} = 0b1110;
-      let Inst{23-0} = target;
-    }
+    def B : ARMPseudoInst<(outs), (ins brtarget:$target), Size4Bytes, IIC_Br,
+                [(br bb:$target)]>;
 
     let isNotDuplicable = 1, isIndirectBranch = 1 in {
     def BR_JTr : ARMPseudoInst<(outs),
