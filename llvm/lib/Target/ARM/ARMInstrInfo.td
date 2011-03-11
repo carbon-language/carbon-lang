@@ -3183,19 +3183,11 @@ def MOVCCi32imm : ARMPseudoInst<(outs GPR:$Rd),
                   Size8Bytes, IIC_iCMOVix2, []>, RegConstraint<"$false = $Rd">;
 
 let isMoveImm = 1 in
-def MVNCCi : AI1<0b1111, (outs GPR:$Rd),
-                         (ins GPR:$false, so_imm:$imm), DPFrm, IIC_iCMOVi,
-                "mvn", "\t$Rd, $imm",
+def MVNCCi : ARMPseudoInst<(outs GPR:$Rd),
+                           (ins GPR:$false, so_imm:$imm, pred:$p),
+                           Size4Bytes, IIC_iCMOVi,
  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm_not:$imm, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $Rd">, UnaryDP {
-  bits<4> Rd;
-  bits<12> imm;
-  let Inst{25} = 1;
-  let Inst{20} = 0;
-  let Inst{19-16} = 0b0000;
-  let Inst{15-12} = Rd;
-  let Inst{11-0} = imm;
-}
+                RegConstraint<"$false = $Rd">;
 } // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
