@@ -49,23 +49,23 @@ namespace llvm {
     const std::string &getName() const;
     const std::vector<MVT::SimpleValueType> &getValueTypes() const {return VTs;}
     unsigned getNumValueTypes() const { return VTs.size(); }
-    
+
     MVT::SimpleValueType getValueTypeNum(unsigned VTNum) const {
       if (VTNum < VTs.size())
         return VTs[VTNum];
       assert(0 && "VTNum greater than number of ValueTypes in RegClass!");
       abort();
     }
-    
+
     bool containsRegister(Record *R) const {
       for (unsigned i = 0, e = Elements.size(); i != e; ++i)
         if (Elements[i] == R) return true;
       return false;
     }
-    
+
     // Returns true if RC is a strict subclass.
     // RC is a sub-class of this class if it is a valid replacement for any
-    // instruction operand where a register of this classis required. It must 
+    // instruction operand where a register of this classis required. It must
     // satisfy these conditions:
     //
     // 1. All RC registers are also in this.

@@ -91,7 +91,7 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
   if (!RegisterClasses.empty()) {
     OS << "namespace " << RegisterClasses[0].Namespace
        << " { // Register classes\n";
-       
+
     OS << "  enum {\n";
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       if (i) OS << ",\n";
@@ -358,7 +358,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
 
     // Give the register class a legal C name if it's anonymous.
     std::string Name = RC.TheDef->getName();
-  
+
     // Emit the register list now.
     OS << "  // " << Name << " Register Class...\n"
        << "  static const unsigned " << Name
@@ -376,12 +376,12 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // Emit the ValueType arrays for each RegisterClass
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
-    
+
     // Give the register class a legal C name if it's anonymous.
     std::string Name = RC.TheDef->getName() + "VTs";
-    
+
     // Emit the register list now.
-    OS << "  // " << Name 
+    OS << "  // " << Name
        << " Register Class Value Types...\n"
        << "  static const EVT " << Name
        << "[] = {\n    ";
@@ -390,7 +390,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     OS << "MVT::Other\n  };\n\n";
   }
   OS << "}  // end anonymous namespace\n\n";
-  
+
   // Now that all of the structs have been emitted, emit the instances.
   if (!RegisterClasses.empty()) {
     OS << "namespace " << RegisterClasses[0].Namespace
@@ -398,7 +398,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i)
       OS << "  " << RegisterClasses[i].getName()  << "Class\t"
          << RegisterClasses[i].getName() << "RegClass;\n";
-         
+
     std::map<unsigned, std::set<unsigned> > SuperClassMap;
     std::map<unsigned, std::set<unsigned> > SuperRegClassMap;
     OS << "\n";
@@ -488,7 +488,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       // Give the register class a legal C name if it's anonymous.
       std::string Name = RC.TheDef->getName();
 
-      OS << "  // " << Name 
+      OS << "  // " << Name
          << " Register Class sub-classes...\n"
          << "  static const TargetRegisterClass* const "
          << Name << "Subclasses[] = {\n    ";
@@ -500,7 +500,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
         // Sub-classes are used to determine if a virtual register can be used
         // as an instruction operand, or if it must be copied first.
         if (rc == rc2 || !RC.hasSubClass(&RC2)) continue;
-      
+
         if (!Empty) OS << ", ";
         OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
         Empty = false;
@@ -524,7 +524,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       // Give the register class a legal C name if it's anonymous.
       std::string Name = RC.TheDef->getName();
 
-      OS << "  // " << Name 
+      OS << "  // " << Name
          << " Register Class super-classes...\n"
          << "  static const TargetRegisterClass* const "
          << Name << "Superclasses[] = {\n    ";
@@ -538,7 +538,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
           const CodeGenRegisterClass &RC2 = RegisterClasses[*II];
           if (!Empty) OS << ", ";
           OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
-          Empty = false;        
+          Empty = false;
         }
       }
 
@@ -550,7 +550,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
       OS << RC.MethodBodies << "\n";
-      OS << RC.getName() << "Class::" << RC.getName() 
+      OS << RC.getName() << "Class::" << RC.getName()
          << "Class()  : TargetRegisterClass("
          << RC.getName() + "RegClassID" << ", "
          << '\"' << RC.getName() << "\", "
@@ -567,7 +567,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
          << RC.getName() << ", " << RC.getName() << " + " << RC.Elements.size()
          << ") {}\n";
     }
-  
+
     OS << "}\n";
   }
 
@@ -584,7 +584,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   std::map<Record*, std::set<Record*>, LessRecord> RegisterAliases;
   typedef std::map<Record*, std::vector<int64_t>, LessRecord> DwarfRegNumsMapTy;
   DwarfRegNumsMapTy DwarfRegNums;
-  
+
   const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
 
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
@@ -623,7 +623,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
                      RegisterAliases);
     }
   }
-  
+
   // Print the SubregHashTable, a simple quadratically probed
   // hash table for determining if a register is a subregister
   // of another register.
@@ -633,13 +633,13 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     RegNo[Regs[i].TheDef] = i;
     NumSubRegs += RegisterSubRegs[Regs[i].TheDef].size();
   }
-  
+
   unsigned SubregHashTableSize = 2 * NextPowerOf2(2 * NumSubRegs);
   unsigned* SubregHashTable = new unsigned[2 * SubregHashTableSize];
   std::fill(SubregHashTable, SubregHashTable + 2 * SubregHashTableSize, ~0U);
-  
+
   unsigned hashMisses = 0;
-  
+
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     Record* R = Regs[i].TheDef;
     for (std::set<Record*>::iterator I = RegisterSubRegs[R].begin(),
@@ -654,26 +654,26 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
              SubregHashTable[index*2+1] != ~0U) {
         index = (index + ProbeAmt) & (SubregHashTableSize-1);
         ProbeAmt += 2;
-        
+
         hashMisses++;
       }
-      
+
       SubregHashTable[index*2] = i;
       SubregHashTable[index*2+1] = RegNo[RJ];
     }
   }
-  
+
   OS << "\n\n  // Number of hash collisions: " << hashMisses << "\n";
-  
+
   if (SubregHashTableSize) {
     std::string Namespace = Regs[0].TheDef->getValueAsString("Namespace");
-    
+
     OS << "  const unsigned SubregHashTable[] = { ";
     for (unsigned i = 0; i < SubregHashTableSize - 1; ++i) {
       if (i != 0)
         // Insert spaces for nice formatting.
         OS << "                                       ";
-      
+
       if (SubregHashTable[2*i] != ~0U) {
         OS << getQualifiedName(Regs[SubregHashTable[2*i]].TheDef) << ", "
            << getQualifiedName(Regs[SubregHashTable[2*i+1]].TheDef) << ", \n";
@@ -681,7 +681,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
         OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister, \n";
       }
     }
-    
+
     unsigned Idx = SubregHashTableSize*2-2;
     if (SubregHashTable[Idx] != ~0U) {
       OS << "                                       "
@@ -690,14 +690,14 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     } else {
       OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister };\n";
     }
-    
+
     OS << "  const unsigned SubregHashTableSize = "
        << SubregHashTableSize << ";\n";
   } else {
     OS << "  const unsigned SubregHashTable[] = { ~0U, ~0U };\n"
        << "  const unsigned SubregHashTableSize = 1;\n";
   }
-  
+
   delete [] SubregHashTable;
 
 
@@ -709,13 +709,13 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     RegNo[Regs[i].TheDef] = i;
     NumAliases += RegisterAliases[Regs[i].TheDef].size();
   }
-  
+
   unsigned AliasesHashTableSize = 2 * NextPowerOf2(2 * NumAliases);
   unsigned* AliasesHashTable = new unsigned[2 * AliasesHashTableSize];
   std::fill(AliasesHashTable, AliasesHashTable + 2 * AliasesHashTableSize, ~0U);
-  
+
   hashMisses = 0;
-  
+
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     Record* R = Regs[i].TheDef;
     for (std::set<Record*>::iterator I = RegisterAliases[R].begin(),
@@ -730,26 +730,26 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
              AliasesHashTable[index*2+1] != ~0U) {
         index = (index + ProbeAmt) & (AliasesHashTableSize-1);
         ProbeAmt += 2;
-        
+
         hashMisses++;
       }
-      
+
       AliasesHashTable[index*2] = i;
       AliasesHashTable[index*2+1] = RegNo[RJ];
     }
   }
-  
+
   OS << "\n\n  // Number of hash collisions: " << hashMisses << "\n";
-  
+
   if (AliasesHashTableSize) {
     std::string Namespace = Regs[0].TheDef->getValueAsString("Namespace");
-    
+
     OS << "  const unsigned AliasesHashTable[] = { ";
     for (unsigned i = 0; i < AliasesHashTableSize - 1; ++i) {
       if (i != 0)
         // Insert spaces for nice formatting.
         OS << "                                       ";
-      
+
       if (AliasesHashTable[2*i] != ~0U) {
         OS << getQualifiedName(Regs[AliasesHashTable[2*i]].TheDef) << ", "
            << getQualifiedName(Regs[AliasesHashTable[2*i+1]].TheDef) << ", \n";
@@ -757,7 +757,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
         OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister, \n";
       }
     }
-    
+
     unsigned Idx = AliasesHashTableSize*2-2;
     if (AliasesHashTable[Idx] != ~0U) {
       OS << "                                       "
@@ -766,14 +766,14 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     } else {
       OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister };\n";
     }
-    
+
     OS << "  const unsigned AliasesHashTableSize = "
        << AliasesHashTableSize << ";\n";
   } else {
     OS << "  const unsigned AliasesHashTable[] = { ~0U, ~0U };\n"
        << "  const unsigned AliasesHashTableSize = 1;\n";
   }
-  
+
   delete [] AliasesHashTable;
 
   if (!RegisterAliases.empty())
@@ -966,7 +966,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   }
 
   // Now we know maximal length of number list. Append -1's, where needed
-  for (DwarfRegNumsMapTy::iterator 
+  for (DwarfRegNumsMapTy::iterator
        I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I)
     for (unsigned i = I->second.size(), e = maxLength; i != e; ++i)
       I->second.push_back(-1);
@@ -978,18 +978,18 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
      << "  default:\n"
      << "    assert(0 && \"Unknown DWARF flavour\");\n"
      << "    return -1;\n";
-  
+
   for (unsigned i = 0, e = maxLength; i != e; ++i) {
     OS << "  case " << i << ":\n"
        << "    switch (RegNum) {\n"
        << "    default:\n"
        << "      assert(0 && \"Invalid RegNum\");\n"
        << "      return -1;\n";
-    
-    // Sort by name to get a stable order.
-    
 
-    for (DwarfRegNumsMapTy::iterator 
+    // Sort by name to get a stable order.
+
+
+    for (DwarfRegNumsMapTy::iterator
            I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
       int RegNo = I->second[i];
       if (RegNo != -2)
@@ -1002,7 +1002,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     }
     OS << "    };\n";
   }
-    
+
   OS << "  };\n}\n\n";
 
   OS << "} // End llvm namespace \n";
