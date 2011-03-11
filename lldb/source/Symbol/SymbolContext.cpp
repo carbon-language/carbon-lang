@@ -433,25 +433,298 @@ SymbolContext::FindTypeByName (const ConstString &name) const
     return return_value;
 }
 
-//SymbolContext
-//SymbolContext::CreateSymbolContextFromDescription (lldb::TargetSP &target_sp,
-//                                    const char *module,
-//                                    const char *comp_unit,
-//                                    const char *function,
-//                                    const char *block_spec
-//                                    const char *line_number,
-//                                    const char *symbol)
-//{
-//    SymbolContext sc;
-//    sc.target = target_sp;
-//    
-//    if (module != NULL && module[0] != '0')
-//    {
-//    
-//    }
-//    
-//    return sc;
-//}
+//----------------------------------------------------------------------
+//
+//  SymbolContextSpecifier
+//
+//----------------------------------------------------------------------
+
+bool
+SymbolContextSpecifier::AddLineSpecification (uint32_t line_no, SpecificationType type)
+{
+    bool return_value = true;
+    switch (type)
+    {
+    case eNothingSpecified:
+        Clear();
+        break;
+    case eLineStartSpecified:
+        m_start_line = line_no;
+        m_type |= eLineStartSpecified;
+        break;
+    case eLineEndSpecified:
+        m_end_line = line_no;
+        m_type |= eLineEndSpecified;
+        break;
+    default:
+        return_value = false;
+        break;
+    }
+    return return_value;
+}
+
+bool
+SymbolContextSpecifier::AddSpecification (const char *spec_string, SpecificationType type)
+{
+    bool return_value = true;
+    switch (type)
+    {
+    case eNothingSpecified:
+        Clear();
+        break;
+    case eModuleSpecified:
+        {
+        // See if we can find the Module, if so stick it in the SymbolContext.
+            FileSpec module_spec(spec_string, true);
+            lldb::ModuleSP module_sp = m_target_sp->GetImages().FindFirstModuleForFileSpec (module_spec);
+            m_type |= eModuleSpecified;
+            if (module_sp)
+                m_module_sp = module_sp;
+            else
+                m_module_spec.assign (spec_string);
+        }
+        break;
+    case eFileSpecified:
+        // CompUnits can't necessarily be resolved here, since an inlined function might show up in 
+        // a number of CompUnits.  Instead we just convert to a FileSpec and store it away.
+        m_file_spec_ap.reset (new FileSpec (spec_string, true));
+        m_type |= eFileSpecified;
+        break;
+    case eLineStartSpecified:
+        m_start_line = Args::StringToSInt32(spec_string, 0, 0, &return_value);
+        if (return_value)
+            m_type |= eLineStartSpecified;
+        break;
+    case eLineEndSpecified:
+        m_end_line = Args::StringToSInt32(spec_string, 0, 0, &return_value);
+        if (return_value)
+            m_type |= eLineEndSpecified;
+        break;
+    case eFunctionSpecified:
+        m_function_spec.assign(spec_string);
+        m_type |= eFunctionSpecified;
+        break;
+    case eClassOrNamespaceSpecified:
+        Clear();
+        m_class_name.assign (spec_string);
+        m_type = eClassOrNamespaceSpecified;
+        break;
+    case eAddressRangeSpecified:
+        // Not specified yet...
+        break;
+    }
+    
+    return return_value;
+}
+
+void
+SymbolContextSpecifier::Clear()
+{
+    m_module_spec.clear();
+    m_file_spec_ap.reset();
+    m_function_spec.clear();
+    m_class_name.clear();
+    m_start_line = 0;
+    m_end_line = 0;
+    m_address_range_ap.reset();
+    
+    m_type = eNothingSpecified;
+}
+
+bool
+SymbolContextSpecifier::SymbolContextMatches(SymbolContext &sc)
+{
+    if (m_type == eNothingSpecified)
+        return true;
+        
+    if (m_target_sp.get() != sc.target_sp.get())
+        return false;
+        
+    if (m_type & eModuleSpecified)
+    {
+        if (sc.module_sp)
+        {
+            if (m_module_sp.get() != NULL)
+            { 
+                if (m_module_sp.get() != sc.module_sp.get())
+                    return false;
+            }
+            else
+            {
+                FileSpec module_file_spec (m_module_spec.c_str(), false);
+                if (!FileSpec::Equal (module_file_spec, sc.module_sp->GetFileSpec(), false))
+                    return false;
+            }
+        }
+    }
+    if (m_type & eFileSpecified)
+    {
+        if (m_file_spec_ap.get())
+        {
+            // If we don't have a block or a comp_unit, then we aren't going to match a source file.
+            if (sc.block == NULL && sc.comp_unit == NULL)
+                return false;
+                
+            // Check if the block is present, and if so is it inlined:
+            bool was_inlined = false;
+            if (sc.block != NULL)
+            {
+                const InlineFunctionInfo *inline_info = sc.block->GetInlinedFunctionInfo();
+                if (inline_info != NULL)
+                {
+                    was_inlined = true;
+                    if (!FileSpec::Equal (inline_info->GetDeclaration().GetFile(), *(m_file_spec_ap.get()), false))
+                        return false;
+                }
+            }
+            
+            // Next check the comp unit, but only if the SymbolContext was not inlined.
+            if (!was_inlined && sc.comp_unit != NULL)
+            {
+                if (!FileSpec::Equal (*(sc.comp_unit), *(m_file_spec_ap.get()), false))
+                    return false;
+            }
+        }
+    }
+    if (m_type & eLineStartSpecified 
+        || m_type & eLineEndSpecified)
+    {
+        if (sc.line_entry.line < m_start_line || sc.line_entry.line > m_end_line)
+            return false;
+    }
+    
+    if (m_type & eFunctionSpecified)
+    {
+        // First check the current block, and if it is inlined, get the inlined function name:
+        bool was_inlined = false;
+        ConstString func_name(m_function_spec.c_str());
+        
+        if (sc.block != NULL)
+        {
+            const InlineFunctionInfo *inline_info = sc.block->GetInlinedFunctionInfo();
+            if (inline_info != NULL)
+            {
+                was_inlined = true;
+                const Mangled &name = inline_info->GetMangled();
+                if (!name.NameMatches (func_name))
+                    return false;
+            }
+        }
+        //  If it wasn't inlined, check the name in the function or symbol:
+        if (!was_inlined)
+        {
+            if (sc.function != NULL)
+            {
+                if (!sc.function->GetMangled().NameMatches(func_name))
+                    return false;
+            }
+            else if (sc.symbol != NULL)
+            {
+                if (!sc.symbol->GetMangled().NameMatches(func_name))
+                    return false;
+            }
+        }
+        
+            
+    }
+    
+    return true;
+}
+
+bool
+SymbolContextSpecifier::AddressMatches(lldb::addr_t addr)
+{
+    if (m_type & eAddressRangeSpecified)
+    {
+    
+    }
+    else
+    {
+        Address match_address (addr, NULL);
+        SymbolContext sc;
+        m_target_sp->GetImages().ResolveSymbolContextForAddress(match_address, eSymbolContextEverything, sc);
+        return SymbolContextMatches(sc);
+    }
+    return true;
+}
+
+void
+SymbolContextSpecifier::GetDescription (Stream *s, lldb::DescriptionLevel level) const
+{
+    char path_str[PATH_MAX + 1];
+
+    if (m_type == eNothingSpecified)
+    {
+        s->Printf ("Nothing specified.\n");
+    }
+    
+    if (m_type == eModuleSpecified)
+    {
+        s->Indent();
+        if (m_module_sp)
+        {
+            m_module_sp->GetFileSpec().GetPath (path_str, PATH_MAX);
+            s->Printf ("Module: %s\n", path_str);
+        }
+        else
+            s->Printf ("Module: %s\n", m_module_spec.c_str());
+    }
+    
+    if (m_type == eFileSpecified  && m_file_spec_ap.get() != NULL)
+    {
+        m_file_spec_ap->GetPath (path_str, PATH_MAX);
+        s->Indent();
+        s->Printf ("File: %s", path_str);
+        if (m_type == eLineStartSpecified)
+        {
+            s->Printf (" from line %d", m_start_line);
+            if (m_type == eLineEndSpecified)
+                s->Printf ("to line %d", m_end_line);
+            else
+                s->Printf ("to end", m_end_line);
+        }
+        else if (m_type == eLineEndSpecified)
+        {
+            s->Printf (" from start to line %d", m_end_line);
+        }
+        s->Printf (".\n");
+    }
+    
+    if (m_type == eLineStartSpecified)
+    {
+        s->Indent();
+        s->Printf ("From line %d", m_start_line);
+        if (m_type == eLineEndSpecified)
+            s->Printf ("to line %d", m_end_line);
+        else
+            s->Printf ("to end", m_end_line);
+        s->Printf (".\n");
+    }
+    else if (m_type == eLineEndSpecified)
+    {
+        s->Printf ("From start to line %d.\n", m_end_line);
+    }
+    
+    if (m_type == eFunctionSpecified)
+    {
+        s->Indent();
+        s->Printf ("Function: %s.\n", m_function_spec.c_str());
+    }
+    
+    if (m_type == eClassOrNamespaceSpecified)
+    {
+        s->Indent();
+        s->Printf ("Class name: %s.\n", m_class_name.c_str());
+    }
+    
+    if (m_type == eAddressRangeSpecified && m_address_range_ap.get() != NULL)
+    {
+        s->Indent();
+        s->PutCString ("Address range: ");
+        m_address_range_ap->Dump (s, m_target_sp.get(), Address::DumpStyleLoadAddress, Address::DumpStyleFileAddress);
+        s->PutCString ("\n");
+    }
+}
 
 //----------------------------------------------------------------------
 //

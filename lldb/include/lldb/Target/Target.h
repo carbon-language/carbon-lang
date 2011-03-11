@@ -506,7 +506,141 @@ public:
         return m_persistent_variables;
     }
 
-
+    //------------------------------------------------------------------
+    // Target Stop Hooks
+    //------------------------------------------------------------------
+    class StopHook : public UserID
+    {
+    public:
+        ~StopHook ();
+        
+        StopHook (const StopHook &rhs);
+                
+        StringList *
+        GetCommandPointer ()
+        {
+            return &m_commands;
+        }
+        
+        const StringList &
+        GetCommands()
+        {
+            return m_commands;
+        }
+        
+        lldb::TargetSP &
+        GetTarget()
+        {
+            return m_target_sp;
+        }
+        
+        void
+        SetCommands (StringList &in_commands)
+        {
+            m_commands = in_commands;
+        }
+        
+        // Set the specifier.  The stop hook will own the specifier, and is responsible for deleting it when we're done.
+        void
+        SetSpecifier (SymbolContextSpecifier *specifier)
+        {
+            m_specifier_sp.reset (specifier);
+        }
+        
+        SymbolContextSpecifier *
+        GetSpecifier ()
+        {
+            return m_specifier_sp.get();
+        }
+        
+        // Set the Thread Specifier.  The stop hook will own the thread specifier, and is responsible for deleting it when we're done.
+        void
+        SetThreadSpecifier (ThreadSpec *specifier);
+        
+        ThreadSpec *
+        GetThreadSpecifier()
+        {
+            return m_thread_spec_ap.get();
+        }
+        
+        bool
+        IsActive()
+        {
+            return m_active;
+        }
+        
+        void
+        SetIsActive (bool is_active)
+        {
+            m_active = is_active;
+        }
+        
+        void
+        GetDescription (Stream *s, lldb::DescriptionLevel level) const;
+        
+    private:
+        lldb::TargetSP m_target_sp;
+        StringList   m_commands;
+        lldb::SymbolContextSpecifierSP m_specifier_sp;
+        std::auto_ptr<ThreadSpec> m_thread_spec_ap;
+        bool m_active;
+        
+        // Use AddStopHook to make a new empty stop hook.  The GetCommandPointer and fill it with commands,
+        // and SetSpecifier to set the specifier shared pointer (can be null, that will match anything.)
+        StopHook (lldb::TargetSP target_sp, lldb::user_id_t uid);
+        friend class Target;
+    };
+    typedef lldb::SharedPtr<StopHook>::Type StopHookSP;
+    
+    // Add an empty stop hook to the Target's stop hook list, and returns a shared pointer to it in new_hook.  
+    // Returns the id of the new hook.        
+    lldb::user_id_t
+    AddStopHook (StopHookSP &new_hook);
+    
+    void
+    RunStopHooks ();
+    
+    size_t
+    GetStopHookSize();
+    
+//    StopHookSP &
+//    GetStopHookByIndex (size_t index);
+//    
+    bool
+    RemoveStopHookByID (lldb::user_id_t uid);
+    
+    void
+    RemoveAllStopHooks ();
+    
+    StopHookSP
+    GetStopHookByID (lldb::user_id_t uid);
+    
+    bool
+    SetStopHookActiveStateByID (lldb::user_id_t uid, bool active_state);
+    
+    void
+    SetAllStopHooksActiveState (bool active_state);
+    
+    size_t GetNumStopHooks () const
+    {
+        return m_stop_hooks.size();
+    }
+    
+    StopHookSP
+    GetStopHookAtIndex (size_t index)
+    {
+        if (index >= GetNumStopHooks())
+            return StopHookSP();
+        StopHookCollection::iterator pos = m_stop_hooks.begin();
+        
+        while (index > 0)
+        {
+            pos++;
+            index--;
+        }
+        return (*pos).second;
+    }
+    
     //------------------------------------------------------------------
     // Target::SettingsController
     //------------------------------------------------------------------
@@ -555,7 +689,7 @@ public:
 
 protected:
     friend class lldb::SBTarget;
-
+    
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
@@ -576,6 +710,11 @@ protected:
     std::auto_ptr<ClangASTContext> m_scratch_ast_context_ap;
     ClangPersistentVariables m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 
+
+    typedef std::map<lldb::user_id_t, StopHookSP> StopHookCollection;
+    StopHookCollection      m_stop_hooks;
+    lldb::user_id_t         m_stop_hook_next_id;
+    
     //------------------------------------------------------------------
     // Methods.
     //------------------------------------------------------------------

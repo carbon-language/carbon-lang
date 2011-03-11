@@ -61,6 +61,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::StoppointLocation>::Type StoppointLocationSP;
     typedef SharedPtr<lldb_private::Stream>::Type StreamSP;
     typedef SharedPtr<lldb_private::SymbolFile>::Type SymbolFileSP;
+    typedef SharedPtr<lldb_private::SymbolContextSpecifier>::Type SymbolContextSpecifierSP;
     typedef SharedPtr<lldb_private::Target>::Type TargetSP;
     typedef SharedPtr<lldb_private::Thread>::Type ThreadSP;
     typedef SharedPtr<lldb_private::ThreadPlan>::Type ThreadPlanSP;

@@ -494,6 +494,7 @@ typedef enum CommandArgumentType
     eArgTypeBreakpointID,
     eArgTypeBreakpointIDRange,
     eArgTypeByteSize,
+    eArgTypeClassName,
     eArgTypeCommandName,
     eArgTypeCount,
     eArgTypeEndAddress,

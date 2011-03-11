@@ -2256,11 +2256,12 @@ Process::HandlePrivateEvent (EventSP &event_sp)
                          StateAsCString (GetState ()),
                          IsHijackedForEvent(eBroadcastBitStateChanged) ? "hijacked" : "public");
         }
+        Process::ProcessEventData::SetUpdateStateOnRemoval(event_sp.get());
         if (StateIsRunningState (new_state))
             PushProcessInputReader ();
         else 
             PopProcessInputReader ();
-        Process::ProcessEventData::SetUpdateStateOnRemoval(event_sp.get());
+
         BroadcastEvent (event_sp);
     }
     else
@@ -2431,6 +2432,15 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
 
         if (m_process_sp->GetPrivateState() == eStateRunning)
             SetRestarted(true);
+        else
+        {
+            // Finally, if we didn't restart, run the Stop Hooks here:
+            // They might also restart the target, so watch for that.
+            m_process_sp->GetTarget().RunStopHooks();
+            if (m_process_sp->GetPrivateState() == eStateRunning)
+                SetRestarted(true);
+        }
+        
     }
 }
 

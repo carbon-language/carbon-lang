@@ -130,6 +130,7 @@ class   Symbol;
 class   SymbolContext;
 class   SymbolContextList;
 class   SymbolContextScope;
+class   SymbolContextSpecifier;
 class   SymbolFile;
 class   SymbolVendor;
 class   Symtab;

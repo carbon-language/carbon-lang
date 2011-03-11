@@ -255,6 +255,63 @@ public:
     Symbol *        symbol;     ///< The Symbol for a given query
 };
 
+
+class SymbolContextSpecifier
+{
+public:
+    typedef enum SpecificationType
+    {
+        eNothingSpecified          = 0,
+        eModuleSpecified           = 1 << 0,
+        eFileSpecified             = 1 << 1,
+        eLineStartSpecified        = 1 << 2,
+        eLineEndSpecified          = 1 << 3,
+        eFunctionSpecified         = 1 << 4,
+        eClassOrNamespaceSpecified = 1 << 5,
+        eAddressRangeSpecified     = 1 << 6
+    } SpecificationType;
+    
+    // This one produces a specifier that matches everything...
+    SymbolContextSpecifier (lldb::TargetSP target_sp) :
+        m_start_line(0),
+        m_end_line(0)
+    {
+        m_target_sp = target_sp;
+        m_type = eNothingSpecified;
+    }   
+    
+    bool
+    AddSpecification (const char *spec_string, SpecificationType type);
+    
+    bool
+    AddLineSpecification (uint32_t line_no, SpecificationType type);
+    
+    void
+    Clear();
+    
+    bool
+    SymbolContextMatches(SymbolContext &sc);
+    
+    bool
+    AddressMatches(lldb::addr_t addr);
+    
+    void
+    GetDescription (Stream *s, lldb::DescriptionLevel level) const;
+
+private:
+    lldb::TargetSP                 m_target_sp;
+    std::string                    m_module_spec;
+    lldb::ModuleSP                 m_module_sp;
+    std::auto_ptr<FileSpec>        m_file_spec_ap;
+    size_t                         m_start_line;
+    size_t                         m_end_line;
+    std::string                    m_function_spec;
+    std::string                    m_class_name;
+    std::auto_ptr<AddressRange>    m_address_range_ap;
+    uint32_t                       m_type; // Or'ed bits from SpecificationType
+
+};
+
 //----------------------------------------------------------------------
 /// @class SymbolContextList SymbolContext.h "lldb/Symbol/SymbolContext.h"
 /// @brief Defines a list of symbol context objects.

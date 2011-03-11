@@ -24,10 +24,14 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadSpec.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -48,7 +52,8 @@ Target::Target(Debugger &debugger) :
     m_search_filter_sp(),
     m_image_search_paths (ImageSearchPathsChanged, this),
     m_scratch_ast_context_ap (NULL),
-    m_persistent_variables ()
+    m_persistent_variables (),
+    m_stop_hook_next_id(0)
 {
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
@@ -978,6 +983,257 @@ Target::EvaluateExpression
     }
     return execution_results;
 }
+
+lldb::user_id_t
+Target::AddStopHook (Target::StopHookSP &new_hook_sp)
+{
+    lldb::user_id_t new_uid = ++m_stop_hook_next_id;
+    new_hook_sp.reset (new StopHook(GetSP(), new_uid));
+    m_stop_hooks[new_uid] = new_hook_sp;
+    return new_uid;
+}
+
+bool
+Target::RemoveStopHookByID (lldb::user_id_t user_id)
+{
+    size_t num_removed;
+    num_removed = m_stop_hooks.erase (user_id);
+    if (num_removed == 0)
+        return false;
+    else
+        return true;
+}
+
+void
+Target::RemoveAllStopHooks ()
+{
+    m_stop_hooks.clear();
+}
+
+Target::StopHookSP
+Target::GetStopHookByID (lldb::user_id_t user_id)
+{
+    StopHookSP found_hook;
+    
+    StopHookCollection::iterator specified_hook_iter;
+    specified_hook_iter = m_stop_hooks.find (user_id);
+    if (specified_hook_iter != m_stop_hooks.end())
+        found_hook = (*specified_hook_iter).second;
+    return found_hook;
+}
+
+bool
+Target::SetStopHookActiveStateByID (lldb::user_id_t user_id, bool active_state)
+{
+    StopHookCollection::iterator specified_hook_iter;
+    specified_hook_iter = m_stop_hooks.find (user_id);
+    if (specified_hook_iter == m_stop_hooks.end())
+        return false;
+        
+    (*specified_hook_iter).second->SetIsActive (active_state);
+    return true;
+}
+
+void
+Target::SetAllStopHooksActiveState (bool active_state)
+{
+    StopHookCollection::iterator pos, end = m_stop_hooks.end();
+    for (pos = m_stop_hooks.begin(); pos != end; pos++)
+    {
+        (*pos).second->SetIsActive (active_state);
+    }
+}
+
+void
+Target::RunStopHooks ()
+{
+    if (!m_process_sp)
+        return;
+        
+    if (m_stop_hooks.empty())
+        return;
+        
+    StopHookCollection::iterator pos, end = m_stop_hooks.end();
+        
+    // If there aren't any active stop hooks, don't bother either:
+    bool any_active_hooks = false;
+    for (pos = m_stop_hooks.begin(); pos != end; pos++)
+    {
+        if ((*pos).second->IsActive())
+        {
+            any_active_hooks = true;
+            break;
+        }
+    }
+    if (!any_active_hooks)
+        return;
+    
+    CommandReturnObject result;
+    
+    std::vector<ExecutionContext> exc_ctx_with_reasons;
+    std::vector<SymbolContext> sym_ctx_with_reasons;
+    
+    ThreadList &cur_threadlist = m_process_sp->GetThreadList();
+    size_t num_threads = cur_threadlist.GetSize();
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        lldb::ThreadSP cur_thread_sp = cur_threadlist.GetThreadAtIndex (i);
+        if (cur_thread_sp->ThreadStoppedForAReason())
+        {
+            lldb::StackFrameSP cur_frame_sp = cur_thread_sp->GetStackFrameAtIndex(0);
+            exc_ctx_with_reasons.push_back(ExecutionContext(m_process_sp.get(), cur_thread_sp.get(), cur_frame_sp.get()));
+            sym_ctx_with_reasons.push_back(cur_frame_sp->GetSymbolContext(eSymbolContextEverything));
+        }
+    }
+    
+    // If no threads stopped for a reason, don't run the stop-hooks.
+    size_t num_exe_ctx = exc_ctx_with_reasons.size();
+    if (num_exe_ctx == 0)
+        return;
+    
+    result.SetImmediateOutputFile (m_debugger.GetOutputFile().GetStream());
+    result.SetImmediateErrorFile (m_debugger.GetErrorFile().GetStream());
+    
+    bool keep_going = true;
+    bool hooks_ran = false;
+    for (pos = m_stop_hooks.begin(); keep_going && pos != end; pos++)
+    {
+        // result.Clear();
+        StopHookSP cur_hook_sp = (*pos).second;
+        if (!cur_hook_sp->IsActive())
+            continue;
+        
+        bool any_thread_matched = false;
+        for (size_t i = 0; keep_going && i < num_exe_ctx; i++)
+        {
+            if ((cur_hook_sp->GetSpecifier () == NULL 
+                  || cur_hook_sp->GetSpecifier()->SymbolContextMatches(sym_ctx_with_reasons[i]))
+                && (cur_hook_sp->GetThreadSpecifier() == NULL
+                    || cur_hook_sp->GetThreadSpecifier()->ThreadPassesBasicTests(exc_ctx_with_reasons[i].thread)))
+            {
+                if (!hooks_ran)
+                {
+                    result.AppendMessage("\n** Stop Hooks **\n");
+                    hooks_ran = true;
+                }
+                if (!any_thread_matched)
+                {
+                    result.AppendMessageWithFormat("\n- Hook %d\n", cur_hook_sp->GetID());
+                    any_thread_matched = true;
+                }
+                
+                result.AppendMessageWithFormat("-- Thread %d\n", exc_ctx_with_reasons[i].thread->GetIndexID());
+                
+                bool stop_on_continue = true; 
+                bool stop_on_error = true; 
+                bool echo_commands = false;
+                bool print_results = true; 
+                GetDebugger().GetCommandInterpreter().HandleCommands (cur_hook_sp->GetCommands(), 
+                                                                          &exc_ctx_with_reasons[i], 
+                                                                          stop_on_continue, 
+                                                                          stop_on_error, 
+                                                                          echo_commands,
+                                                                          print_results, 
+                                                                          result);
+
+                // If the command started the target going again, we should bag out of
+                // running the stop hooks.
+                if ((result.GetStatus() == eReturnStatusSuccessContinuingNoResult)
+                        || (result.GetStatus() == eReturnStatusSuccessContinuingResult))
+                {
+                    result.AppendMessageWithFormat ("Aborting stop hooks, hook %d set the program running.", cur_hook_sp->GetID());
+                    keep_going = false;
+                }
+            }
+        }
+    }
+    if (hooks_ran)
+        result.AppendMessage ("\n** End Stop Hooks **\n");
+}
+
+//--------------------------------------------------------------
+// class Target::StopHook
+//--------------------------------------------------------------
+
+
+Target::StopHook::StopHook (lldb::TargetSP target_sp, lldb::user_id_t uid) :
+        UserID (uid),
+        m_target_sp (target_sp),
+        m_active (true),
+        m_commands (),
+        m_specifier_sp (),
+        m_thread_spec_ap(NULL)
+{
+}
+
+Target::StopHook::StopHook (const StopHook &rhs) :
+        UserID (rhs.GetID()),
+        m_target_sp (rhs.m_target_sp),
+        m_commands (rhs.m_commands),
+        m_specifier_sp (rhs.m_specifier_sp),
+        m_active (rhs.m_active),
+        m_thread_spec_ap (NULL)
+{
+    if (rhs.m_thread_spec_ap.get() != NULL)
+        m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));
+}
+        
+
+Target::StopHook::~StopHook ()
+{
+}
+
+void
+Target::StopHook::SetThreadSpecifier (ThreadSpec *specifier)
+{
+    m_thread_spec_ap.reset (specifier);
+}
+        
+
+void
+Target::StopHook::GetDescription (Stream *s, lldb::DescriptionLevel level) const
+{
+    int indent_level = s->GetIndentLevel();
+
+    s->SetIndentLevel(indent_level + 2);
+
+    s->Printf ("Hook: %d\n", GetID());
+    if (m_active)
+        s->Indent ("State: enabled\n");
+    else
+        s->Indent ("State: disabled\n");    
+    
+    if (m_specifier_sp)
+    {
+        s->Indent();
+        s->PutCString ("Specifier:\n");
+        s->SetIndentLevel (indent_level + 4);
+        m_specifier_sp->GetDescription (s, level);
+        s->SetIndentLevel (indent_level + 2);
+    }
+
+    if (m_thread_spec_ap.get() != NULL)
+    {
+        StreamString tmp;
+        s->Indent("Thread:\n");
+        m_thread_spec_ap->GetDescription (&tmp, level);
+        s->SetIndentLevel (indent_level + 4);
+        s->Indent (tmp.GetData());
+        s->PutCString ("\n");
+        s->SetIndentLevel (indent_level + 2);
+    }
+
+    s->Indent ("Commands: \n");
+    s->SetIndentLevel (indent_level + 4);
+    uint32_t num_commands = m_commands.GetSize();
+    for (uint32_t i = 0; i < num_commands; i++)
+    {
+        s->Indent(m_commands.GetStringAtIndex(i));
+        s->PutCString ("\n");
+    }
+    s->SetIndentLevel (indent_level);
+}
+
 
 //--------------------------------------------------------------
 // class Target::SettingsController
