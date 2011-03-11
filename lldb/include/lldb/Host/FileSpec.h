@@ -345,7 +345,7 @@ public:
     ///     The buffer in which to place the extracted full path.
     ///
     /// @param[in] max_path_length
-    ///     The maximum length or \a path.
+    ///     The maximum length of \a path.
     ///
     /// @return
     ///     Returns the number of characters that would be needed to 
