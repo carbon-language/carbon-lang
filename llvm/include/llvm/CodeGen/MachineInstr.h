@@ -114,13 +114,13 @@ private:
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
   /// implicit operands.  It reserves space for number of operands specified by
   /// TargetInstrDesc.  An explicit DebugLoc is supplied.
-  explicit MachineInstr(const TargetInstrDesc &TID, const DebugLoc dl, 
+  explicit MachineInstr(const TargetInstrDesc &TID, const DebugLoc dl,
                         bool NoImp = false);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.
-  MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl, 
+  MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
                const TargetInstrDesc &TID);
 
   ~MachineInstr();
@@ -139,7 +139,7 @@ public:
   /// clearAsmPrinterFlags - clear the AsmPrinter bitvector
   ///
   void clearAsmPrinterFlags() { AsmPrinterFlags = 0; }
-  
+
   /// getAsmPrinterFlag - Return whether an AsmPrinter flag is set.
   ///
   bool getAsmPrinterFlag(CommentFlag Flag) const {
@@ -170,7 +170,7 @@ public:
   void setFlags(unsigned flags) {
     Flags = flags;
   }
-  
+
   /// clearAsmPrinterFlag - clear specific AsmPrinter flags
   ///
   void clearAsmPrinterFlag(CommentFlag Flag) {
@@ -241,7 +241,7 @@ public:
   /// removeFromParent - This method unlinks 'this' from the containing basic
   /// block, and returns it, but does not delete it.
   MachineInstr *removeFromParent();
-  
+
   /// eraseFromParent - This method unlinks 'this' from the containing basic
   /// block and deletes it.
   void eraseFromParent();
@@ -253,14 +253,14 @@ public:
            getOpcode() == TargetOpcode::EH_LABEL ||
            getOpcode() == TargetOpcode::GC_LABEL;
   }
-  
+
   bool isPrologLabel() const {
     return getOpcode() == TargetOpcode::PROLOG_LABEL;
   }
   bool isEHLabel() const { return getOpcode() == TargetOpcode::EH_LABEL; }
   bool isGCLabel() const { return getOpcode() == TargetOpcode::GC_LABEL; }
   bool isDebugValue() const { return getOpcode() == TargetOpcode::DBG_VALUE; }
-  
+
   bool isPHI() const { return getOpcode() == TargetOpcode::PHI; }
   bool isKill() const { return getOpcode() == TargetOpcode::KILL; }
   bool isImplicitDef() const { return getOpcode()==TargetOpcode::IMPLICIT_DEF; }
@@ -357,7 +357,7 @@ public:
     int Idx = findRegisterUseOperandIdx(Reg, isKill, TRI);
     return (Idx == -1) ? NULL : &getOperand(Idx);
   }
-  
+
   /// findRegisterDefOperandIdx() - Returns the operand index that is a def of
   /// the specified register or -1 if it is not found. If isDead is true, defs
   /// that are not dead are skipped. If Overlap is true, then it also looks for
@@ -379,7 +379,7 @@ public:
   /// operand list that is used to represent the predicate. It returns -1 if
   /// none is found.
   int findFirstPredOperandIdx() const;
-  
+
   /// isRegTiedToUseOperand - Given the index of a register def operand,
   /// check if the register def is tied to a source operand, due to either
   /// two-address elimination or inline assembly constraints. Returns the
@@ -490,9 +490,9 @@ public:
   /// addOperand - Add the specified operand to the instruction.  If it is an
   /// implicit operand, it is added to the end of the operand list.  If it is
   /// an explicit operand it is added at the end of the explicit operand list
-  /// (before the first implicit operand). 
+  /// (before the first implicit operand).
   void addOperand(const MachineOperand &Op);
-  
+
   /// setDesc - Replace the instruction descriptor (thus opcode) of
   /// the current instruction with a new one.
   ///
@@ -529,12 +529,12 @@ private:
   /// addImplicitDefUseOperands - Add all implicit def and use operands to
   /// this instruction.
   void addImplicitDefUseOperands();
-  
+
   /// RemoveRegOperandsFromUseLists - Unlink all of the register operands in
   /// this instruction from their respective use lists.  This requires that the
   /// operands already be on their use lists.
   void RemoveRegOperandsFromUseLists();
-  
+
   /// AddRegOperandsToUseLists - Add all of the register operands in
   /// this instruction from their respective use lists.  This requires that the
   /// operands not be on their use lists yet.
