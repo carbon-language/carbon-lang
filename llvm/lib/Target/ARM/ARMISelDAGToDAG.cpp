@@ -2168,7 +2168,7 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDNode *N) {
   // Emits: (tMOVCCr:i32 GPR:i32:$false, GPR:i32:$true, (imm:i32):$cc)
   // Pattern complexity = 6  cost = 11  size = 0
   //
-  // Also FCPYScc and FCPYDcc.
+  // Also VMOVScc and VMOVDcc.
   SDValue Tmp2 = CurDAG->getTargetConstant(CCVal, MVT::i32);
   SDValue Ops[] = { FalseVal, TrueVal, Tmp2, CCR, InFlag };
   unsigned Opc = 0;
