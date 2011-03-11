@@ -22,7 +22,7 @@ else()
   add_custom_command(OUTPUT exportsfile
     COMMAND echo "{" > exportsfile
     COMMAND grep -q "\\<" ${srcexp} && echo "  global:" >> exportsfile || :
-    COMMAND sed -e "s/\$\$/;/" -e "s/^/    /" < ${srcexp} >> exportsfile
+    COMMAND sed -e "s/$/;/" -e "s/^/    /" < ${srcexp} >> exportsfile
     COMMAND echo "  local: *;" >> exportsfile
     COMMAND echo "};" >> exportsfile
     DEPENDS ${srcexp}
