@@ -427,8 +427,8 @@ public:
   void addRegisterDefined(unsigned IncomingReg,
                           const TargetRegisterInfo *RegInfo = 0);
 
-  /// setPhysRegsDeadExcept - Mark every physreg used by this instruction as dead
-  /// except those in the UsedRegs list.
+  /// setPhysRegsDeadExcept - Mark every physreg used by this instruction as
+  /// dead except those in the UsedRegs list.
   void setPhysRegsDeadExcept(const SmallVectorImpl<unsigned> &UsedRegs,
                              const TargetRegisterInfo &TRI);
 
