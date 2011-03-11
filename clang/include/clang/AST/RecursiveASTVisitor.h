@@ -1787,7 +1787,7 @@ DEF_TRAVERSE_STMT(OffsetOfExpr, {
     TRY_TO(TraverseTypeLoc(S->getTypeSourceInfo()->getTypeLoc()));
   })
 
-DEF_TRAVERSE_STMT(SizeOfAlignOfExpr, {
+DEF_TRAVERSE_STMT(UnaryExprOrTypeTraitExpr, {
     // The child-iterator will pick up the arg if it's an expression,
     // but not if it's a type.
     if (S->isArgumentType())
@@ -1930,7 +1930,7 @@ DEF_TRAVERSE_STMT(ObjCStringLiteral, { })
 // Candidates:
 //
 //    http://clang.llvm.org/doxygen/classclang_1_1CXXTypeidExpr.html
-//    http://clang.llvm.org/doxygen/classclang_1_1SizeOfAlignOfExpr.html
+//    http://clang.llvm.org/doxygen/classclang_1_1UnaryExprOrTypeTraitExpr.html
 //    http://clang.llvm.org/doxygen/classclang_1_1TypesCompatibleExpr.html
 //    Every class that has getQualifier.
 

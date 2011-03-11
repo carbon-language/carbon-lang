@@ -141,7 +141,7 @@ namespace  {
     void VisitFloatingLiteral(FloatingLiteral *Node);
     void VisitStringLiteral(StringLiteral *Str);
     void VisitUnaryOperator(UnaryOperator *Node);
-    void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node);
+    void VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *Node);
     void VisitMemberExpr(MemberExpr *Node);
     void VisitExtVectorElementExpr(ExtVectorElementExpr *Node);
     void VisitBinaryOperator(BinaryOperator *Node);
@@ -441,9 +441,19 @@ void StmtDumper::VisitUnaryOperator(UnaryOperator *Node) {
   OS << " " << (Node->isPostfix() ? "postfix" : "prefix")
      << " '" << UnaryOperator::getOpcodeStr(Node->getOpcode()) << "'";
 }
-void StmtDumper::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
+void StmtDumper::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *Node) {
   DumpExpr(Node);
-  OS << " " << (Node->isSizeOf() ? "sizeof" : "alignof") << " ";
+  switch(Node->getKind()) {
+  case UETT_SizeOf:
+    OS << " sizeof ";
+    break;
+  case UETT_AlignOf:
+    OS << " __alignof ";
+    break;
+  case UETT_VecStep:
+    OS << " vec_step ";
+    break;
+  }
   if (Node->isArgumentType())
     DumpType(Node->getArgumentType());
 }

@@ -324,7 +324,7 @@ public:
   void VisitUnaryOperator(UnaryOperator *uo);
   void VisitBinaryOperator(BinaryOperator *bo);
   void VisitCastExpr(CastExpr *ce);
-  void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *se);
+  void VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *se);
   void BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs);
   
   bool isTrackedVar(const VarDecl *vd) {
@@ -516,8 +516,9 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
   Visit(ce->getSubExpr());
 }
 
-void TransferFunctions::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *se) {
-  if (se->isSizeOf()) {
+void TransferFunctions::VisitUnaryExprOrTypeTraitExpr(
+                                          UnaryExprOrTypeTraitExpr *se) {
+  if (se->getKind() == UETT_SizeOf) {
     if (se->getType()->isConstantSizeType())
       return;
     // Handle VLAs.

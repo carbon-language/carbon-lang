@@ -2371,8 +2371,8 @@ ExprResult Parser::ParseCXX0XAlignArgument(SourceLocation Start) {
     SourceLocation TypeLoc = Tok.getLocation();
     ParsedType Ty = ParseTypeName().get();
     SourceRange TypeRange(Start, Tok.getLocation());
-    return Actions.ActOnSizeOfAlignOfExpr(TypeLoc, false, true,
-                                          Ty.getAsOpaquePtr(), TypeRange);
+    return Actions.ActOnUnaryExprOrTypeTraitExpr(TypeLoc, UETT_AlignOf, true,
+                                                Ty.getAsOpaquePtr(), TypeRange);
   } else
     return ParseConstantExpression();
 }

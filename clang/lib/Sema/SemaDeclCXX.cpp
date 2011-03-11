@@ -1362,7 +1362,7 @@ static bool InitExprContainsUninitializedFields(const Stmt *S,
       *L = ME->getMemberLoc();
       return true;
     }
-  } else if (isa<SizeOfAlignOfExpr>(S)) {
+  } else if (isa<UnaryExprOrTypeTraitExpr>(S)) {
     // sizeof/alignof doesn't reference contents, do not warn.
     return false;
   } else if (const UnaryOperator *UOE = dyn_cast<UnaryOperator>(S)) {

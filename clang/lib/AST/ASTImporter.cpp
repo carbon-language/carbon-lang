@@ -139,7 +139,7 @@ namespace {
     Expr *VisitCharacterLiteral(CharacterLiteral *E);
     Expr *VisitParenExpr(ParenExpr *E);
     Expr *VisitUnaryOperator(UnaryOperator *E);
-    Expr *VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    Expr *VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E);
     Expr *VisitBinaryOperator(BinaryOperator *E);
     Expr *VisitCompoundAssignOperator(CompoundAssignOperator *E);
     Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
@@ -3799,7 +3799,8 @@ Expr *ASTNodeImporter::VisitUnaryOperator(UnaryOperator *E) {
                                          Importer.Import(E->getOperatorLoc()));                                        
 }
 
-Expr *ASTNodeImporter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+Expr *ASTNodeImporter::VisitUnaryExprOrTypeTraitExpr(
+                                            UnaryExprOrTypeTraitExpr *E) {
   QualType ResultType = Importer.Import(E->getType());
   
   if (E->isArgumentType()) {
@@ -3807,8 +3808,8 @@ Expr *ASTNodeImporter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
     if (!TInfo)
       return 0;
     
-    return new (Importer.getToContext()) SizeOfAlignOfExpr(E->isSizeOf(),
-                                                           TInfo, ResultType,
+    return new (Importer.getToContext()) UnaryExprOrTypeTraitExpr(E->getKind(),
+                                           TInfo, ResultType,
                                            Importer.Import(E->getOperatorLoc()),
                                            Importer.Import(E->getRParenLoc()));
   }
@@ -3817,8 +3818,8 @@ Expr *ASTNodeImporter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   if (!SubExpr)
     return 0;
   
-  return new (Importer.getToContext()) SizeOfAlignOfExpr(E->isSizeOf(),
-                                                         SubExpr, ResultType,
+  return new (Importer.getToContext()) UnaryExprOrTypeTraitExpr(E->getKind(),
+                                          SubExpr, ResultType,
                                           Importer.Import(E->getOperatorLoc()),
                                           Importer.Import(E->getRParenLoc()));
 }

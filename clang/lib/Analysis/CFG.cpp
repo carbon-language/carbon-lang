@@ -343,7 +343,8 @@ private:
   CFGBlock *VisitObjCAtTryStmt(ObjCAtTryStmt *S);
   CFGBlock *VisitObjCForCollectionStmt(ObjCForCollectionStmt *S);
   CFGBlock *VisitReturnStmt(ReturnStmt* R);
-  CFGBlock *VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E, AddStmtChoice asc);
+  CFGBlock *VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E,
+                                          AddStmtChoice asc);
   CFGBlock *VisitStmtExpr(StmtExpr *S, AddStmtChoice asc);
   CFGBlock *VisitSwitchStmt(SwitchStmt *S);
   CFGBlock *VisitUnaryOperator(UnaryOperator *U, AddStmtChoice asc);
@@ -951,8 +952,9 @@ tryAgain:
     case Stmt::ReturnStmtClass:
       return VisitReturnStmt(cast<ReturnStmt>(S));
 
-    case Stmt::SizeOfAlignOfExprClass:
-      return VisitSizeOfAlignOfExpr(cast<SizeOfAlignOfExpr>(S), asc);
+    case Stmt::UnaryExprOrTypeTraitExprClass:
+      return VisitUnaryExprOrTypeTraitExpr(cast<UnaryExprOrTypeTraitExpr>(S),
+                                           asc);
 
     case Stmt::StmtExprClass:
       return VisitStmtExpr(cast<StmtExpr>(S), asc);
@@ -2148,8 +2150,8 @@ CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
   return Block;
 }
 
-CFGBlock *CFGBuilder::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
-                                             AddStmtChoice asc) {
+CFGBlock *CFGBuilder::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E,
+                                                    AddStmtChoice asc) {
 
   if (asc.alwaysAdd(*this, E)) {
     autoCreateBlock();

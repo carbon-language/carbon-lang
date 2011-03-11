@@ -1888,10 +1888,22 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     break;
   }
 
-  case Expr::SizeOfAlignOfExprClass: {
-    const SizeOfAlignOfExpr *SAE = cast<SizeOfAlignOfExpr>(E);
-    if (SAE->isSizeOf()) Out << 's';
-    else Out << 'a';
+  case Expr::UnaryExprOrTypeTraitExprClass: {
+    const UnaryExprOrTypeTraitExpr *SAE = cast<UnaryExprOrTypeTraitExpr>(E);
+    switch(SAE->getKind()) {
+    case UETT_SizeOf:
+      Out << 's';
+      break;
+    case UETT_AlignOf:
+      Out << 'a';
+      break;
+    case UETT_VecStep:
+      Diagnostic &Diags = Context.getDiags();
+      unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
+                                     "cannot yet mangle vec_step expression");
+      Diags.Report(DiagID);
+      return;
+    }
     if (SAE->isArgumentType()) {
       Out << 't';
       mangleType(SAE->getArgumentType());

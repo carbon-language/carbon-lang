@@ -290,9 +290,9 @@ void StmtProfiler::VisitOffsetOfExpr(OffsetOfExpr *S) {
   VisitExpr(S);
 }
 
-void StmtProfiler::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *S) {
+void StmtProfiler::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *S) {
   VisitExpr(S);
-  ID.AddBoolean(S->isSizeOf());
+  ID.AddInteger(S->getKind());
   if (S->isArgumentType())
     VisitType(S->getArgumentType());
 }

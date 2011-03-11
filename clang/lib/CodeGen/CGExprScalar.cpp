@@ -184,7 +184,7 @@ public:
     return EmitNullValue(E->getType());
   }
   Value *VisitOffsetOfExpr(OffsetOfExpr *E);
-  Value *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
+  Value *VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *E);
   Value *VisitAddrLabelExpr(const AddrLabelExpr *E) {
     llvm::Value *V = CGF.GetAddrOfLabel(E->getLabel());
     return Builder.CreateBitCast(V, ConvertType(E->getType()));
@@ -1516,12 +1516,13 @@ Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
   return Result;
 }
 
-/// VisitSizeOfAlignOfExpr - Return the size or alignment of the type of
+/// VisitUnaryExprOrTypeTraitExpr - Return the size or alignment of the type of
 /// argument of the sizeof expression as an integer.
 Value *
-ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
+ScalarExprEmitter::VisitUnaryExprOrTypeTraitExpr(
+                              const UnaryExprOrTypeTraitExpr *E) {
   QualType TypeToSize = E->getTypeOfArgument();
-  if (E->isSizeOf()) {
+  if (E->getKind() == UETT_SizeOf) {
     if (const VariableArrayType *VAT =
           CGF.getContext().getAsVariableArrayType(TypeToSize)) {
       if (E->isArgumentType()) {

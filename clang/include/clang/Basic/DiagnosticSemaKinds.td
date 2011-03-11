@@ -2343,14 +2343,18 @@ def err_func_def_incomplete_result : Error<
 def ext_sizeof_function_type : Extension<
   "invalid application of 'sizeof' to a function type">, InGroup<PointerArith>;
 def err_sizeof_alignof_overloaded_function_type : Error<
-  "invalid application of '%select{sizeof|__alignof}0' to an overloaded "
-  "function">;
+  "invalid application of '%select{sizeof|__alignof|vec_step}0' to an "
+  "overloaded function">;
 def ext_sizeof_void_type : Extension<
-  "invalid application of '%0' to a void type">, InGroup<PointerArith>;
+  "invalid application of '%select{sizeof|__alignof|vec_step}0' to a void "
+  "type">, InGroup<PointerArith>;
 def err_sizeof_alignof_incomplete_type : Error<
-  "invalid application of '%select{sizeof|__alignof}0' to an incomplete type %1">;
+  "invalid application of '%select{sizeof|__alignof|vec_step}0' to an "
+  "incomplete type %1">;
 def err_sizeof_alignof_bitfield : Error<
   "invalid application of '%select{sizeof|__alignof}0' to bit-field">;
+def err_vecstep_non_scalar_vector_type : Error<
+  "'vec_step' requires built-in scalar or vector type, %0 invalid">;
 def err_offsetof_incomplete_type : Error<
   "offsetof of incomplete type %0">;
 def err_offsetof_record_type : Error<

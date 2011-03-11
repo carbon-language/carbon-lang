@@ -706,8 +706,18 @@ void StmtPrinter::VisitOffsetOfExpr(OffsetOfExpr *Node) {
   OS << ")";
 }
 
-void StmtPrinter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
-  OS << (Node->isSizeOf() ? "sizeof" : "__alignof");
+void StmtPrinter::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *Node){
+  switch(Node->getKind()) {
+  case UETT_SizeOf:
+    OS << "sizeof";
+    break;
+  case UETT_AlignOf:
+    OS << "__alignof";
+    break;
+  case UETT_VecStep:
+    OS << "vec_step";
+    break;
+  }
   if (Node->isArgumentType())
     OS << "(" << Node->getArgumentType().getAsString(Policy) << ")";
   else {

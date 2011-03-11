@@ -3660,10 +3660,8 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   bool isCastExpr;
   ParsedType CastTy;
   SourceRange CastRange;
-  ExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
-                                                         isCastExpr,
-                                                         CastTy,
-                                                         CastRange);
+  ExprResult Operand = ParseExprAfterUnaryExprOrTypeTrait(OpTok, isCastExpr,
+                                                          CastTy, CastRange);
   if (hasParens)
     DS.setTypeofParensRange(CastRange);
 

@@ -204,7 +204,7 @@ bool UnreachableCodeChecker::isInvalidPath(const CFGBlock *CB,
   // Run each of the checks on the conditions
   if (containsMacro(cond) || containsEnum(cond)
       || containsStaticLocal(cond) || containsBuiltinOffsetOf(cond)
-      || containsStmt<SizeOfAlignOfExpr>(cond))
+      || containsStmt<UnaryExprOrTypeTraitExpr>(cond))
     return true;
 
   return false;

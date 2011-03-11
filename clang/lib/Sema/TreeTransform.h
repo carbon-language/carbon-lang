@@ -1300,25 +1300,28 @@ public:
                                           NumComponents, RParenLoc);
   }
   
-  /// \brief Build a new sizeof or alignof expression with a type argument.
+  /// \brief Build a new sizeof, alignof or vec_step expression with a 
+  /// type argument.
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildSizeOfAlignOf(TypeSourceInfo *TInfo,
-                                        SourceLocation OpLoc,
-                                        bool isSizeOf, SourceRange R) {
-    return getSema().CreateSizeOfAlignOfExpr(TInfo, OpLoc, isSizeOf, R);
+  ExprResult RebuildUnaryExprOrTypeTrait(TypeSourceInfo *TInfo,
+                                         SourceLocation OpLoc,
+                                         UnaryExprOrTypeTrait ExprKind,
+                                         SourceRange R) {
+    return getSema().CreateUnaryExprOrTypeTraitExpr(TInfo, OpLoc, ExprKind, R);
   }
 
-  /// \brief Build a new sizeof or alignof expression with an expression
-  /// argument.
+  /// \brief Build a new sizeof, alignof or vec step expression with an
+  /// expression argument.
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildSizeOfAlignOf(Expr *SubExpr, SourceLocation OpLoc,
-                                        bool isSizeOf, SourceRange R) {
+  ExprResult RebuildUnaryExprOrTypeTrait(Expr *SubExpr, SourceLocation OpLoc,
+                                         UnaryExprOrTypeTrait ExprKind,
+                                         SourceRange R) {
     ExprResult Result
-      = getSema().CreateSizeOfAlignOfExpr(SubExpr, OpLoc, isSizeOf, R);
+      = getSema().CreateUnaryExprOrTypeTraitExpr(SubExpr, OpLoc, ExprKind, R);
     if (Result.isInvalid())
       return ExprError();
 
@@ -5541,7 +5544,8 @@ TreeTransform<Derived>::TransformOpaqueValueExpr(OpaqueValueExpr *E) {
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+TreeTransform<Derived>::TransformUnaryExprOrTypeTraitExpr(
+                                                UnaryExprOrTypeTraitExpr *E) {
   if (E->isArgumentType()) {
     TypeSourceInfo *OldT = E->getArgumentTypeInfo();
 
@@ -5552,9 +5556,9 @@ TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
     if (!getDerived().AlwaysRebuild() && OldT == NewT)
       return SemaRef.Owned(E);
 
-    return getDerived().RebuildSizeOfAlignOf(NewT, E->getOperatorLoc(),
-                                             E->isSizeOf(),
-                                             E->getSourceRange());
+    return getDerived().RebuildUnaryExprOrTypeTrait(NewT, E->getOperatorLoc(),
+                                                    E->getKind(),
+                                                    E->getSourceRange());
   }
 
   ExprResult SubExpr;
@@ -5572,9 +5576,10 @@ TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
       return SemaRef.Owned(E);
   }
 
-  return getDerived().RebuildSizeOfAlignOf(SubExpr.get(), E->getOperatorLoc(),
-                                           E->isSizeOf(),
-                                           E->getSourceRange());
+  return getDerived().RebuildUnaryExprOrTypeTrait(SubExpr.get(),
+                                                  E->getOperatorLoc(),
+                                                  E->getKind(),
+                                                  E->getSourceRange());
 }
 
 template<typename Derived>

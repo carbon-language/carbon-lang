@@ -111,7 +111,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::ParenExprClass:             
   case Stmt::UnaryOperatorClass:
   case Stmt::OffsetOfExprClass:         
-  case Stmt::SizeOfAlignOfExprClass:     
+  case Stmt::UnaryExprOrTypeTraitExprClass:     
   case Stmt::ArraySubscriptExprClass:    
   case Stmt::BinaryOperatorClass:        
   case Stmt::CompoundAssignOperatorClass:

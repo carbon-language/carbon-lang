@@ -97,7 +97,7 @@ namespace clang {
     void VisitParenListExpr(ParenListExpr *E);
     void VisitUnaryOperator(UnaryOperator *E);
     void VisitOffsetOfExpr(OffsetOfExpr *E);
-    void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    void VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E);
     void VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     void VisitCallExpr(CallExpr *E);
     void VisitMemberExpr(MemberExpr *E);
@@ -555,9 +555,9 @@ void ASTStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
     E->setIndexExpr(I, Reader.ReadSubExpr());
 }
 
-void ASTStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+void ASTStmtReader::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E) {
   VisitExpr(E);
-  E->setSizeof(Record[Idx++]);
+  E->setKind(static_cast<UnaryExprOrTypeTrait>(Record[Idx++]));
   if (Record[Idx] == 0) {
     E->setArgument(Reader.ReadSubExpr());
     ++Idx;
@@ -1546,7 +1546,7 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       break;
         
     case EXPR_SIZEOF_ALIGN_OF:
-      S = new (Context) SizeOfAlignOfExpr(Empty);
+      S = new (Context) UnaryExprOrTypeTraitExpr(Empty);
       break;
 
     case EXPR_ARRAY_SUBSCRIPT:

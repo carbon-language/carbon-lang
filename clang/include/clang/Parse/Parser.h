@@ -1041,10 +1041,10 @@ private:
   }
 
   ExprResult ParsePostfixExpressionSuffix(ExprResult LHS);
-  ExprResult ParseSizeofAlignofExpression();
+  ExprResult ParseUnaryExprOrTypeTraitExpression();
   ExprResult ParseBuiltinPrimaryExpression();
 
-  ExprResult ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
+  ExprResult ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
                                                      bool &isCastExpr,
                                                      ParsedType &CastTy,
                                                      SourceRange &CastRange);

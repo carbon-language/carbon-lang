@@ -3116,10 +3116,11 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                             SourceLocation());
 
     // Build sizeof(returnType)
-    SizeOfAlignOfExpr *sizeofExpr = new (Context) SizeOfAlignOfExpr(true,
-                            Context->getTrivialTypeSourceInfo(returnType),
-                                      Context->getSizeType(),
-                                      SourceLocation(), SourceLocation());
+    UnaryExprOrTypeTraitExpr *sizeofExpr =
+       new (Context) UnaryExprOrTypeTraitExpr(UETT_SizeOf,
+                                 Context->getTrivialTypeSourceInfo(returnType),
+                                 Context->getSizeType(), SourceLocation(),
+                                 SourceLocation());
     // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
     // FIXME: Value of 8 is base on ppc32/x86 ABI for the most common cases.
     // For X86 it is more complicated and some kind of target specific routine

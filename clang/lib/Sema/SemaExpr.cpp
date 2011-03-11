@@ -2711,10 +2711,10 @@ ExprResult Sema::ActOnParenExpr(SourceLocation L,
 
 /// The UsualUnaryConversions() function is *not* called by this routine.
 /// See C99 6.3.2.1p[2-4] for more details.
-bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
-                                     SourceLocation OpLoc,
-                                     SourceRange ExprRange,
-                                     bool isSizeof) {
+bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType exprType,
+                                            SourceLocation OpLoc,
+                                            SourceRange ExprRange,
+                                            UnaryExprOrTypeTrait ExprKind) {
   if (exprType->isDependentType())
     return false;
 
@@ -2725,30 +2725,47 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   if (const ReferenceType *Ref = exprType->getAs<ReferenceType>())
     exprType = Ref->getPointeeType();
 
+  // [OpenCL 1.1 6.11.12] "The vec_step built-in function takes a built-in
+  // scalar or vector data type argument..."
+  // Every built-in scalar type (OpenCL 1.1 6.1.1) is either an arithmetic
+  // type (C99 6.2.5p18) or void.
+  if (ExprKind == UETT_VecStep) {
+    if (!(exprType->isArithmeticType() || exprType->isVoidType() ||
+          exprType->isVectorType())) {
+      Diag(OpLoc, diag::err_vecstep_non_scalar_vector_type)
+        << exprType << ExprRange;
+      return true;
+    }
+  }
+
   // C99 6.5.3.4p1:
   if (exprType->isFunctionType()) {
     // alignof(function) is allowed as an extension.
-    if (isSizeof)
-      Diag(OpLoc, diag::ext_sizeof_function_type) << ExprRange;
+    if (ExprKind == UETT_SizeOf)
+      Diag(OpLoc, diag::ext_sizeof_function_type) 
+        << ExprRange;
     return false;
   }
 
-  // Allow sizeof(void)/alignof(void) as an extension.
+  // Allow sizeof(void)/alignof(void) as an extension.  vec_step(void) is not
+  // an extension, as void is a built-in scalar type (OpenCL 1.1 6.1.1).
   if (exprType->isVoidType()) {
-    Diag(OpLoc, diag::ext_sizeof_void_type)
-      << (isSizeof ? "sizeof" : "__alignof") << ExprRange;
+    if (ExprKind != UETT_VecStep)
+      Diag(OpLoc, diag::ext_sizeof_void_type)
+        << ExprKind << ExprRange;
     return false;
   }
 
   if (RequireCompleteType(OpLoc, exprType,
                           PDiag(diag::err_sizeof_alignof_incomplete_type)
-                          << int(!isSizeof) << ExprRange))
+                          << ExprKind << ExprRange))
     return true;
 
   // Reject sizeof(interface) and sizeof(interface<proto>) in 64-bit mode.
   if (LangOpts.ObjCNonFragileABI && exprType->isObjCObjectType()) {
     Diag(OpLoc, diag::err_sizeof_nonfragile_interface)
-      << exprType << isSizeof << ExprRange;
+      << exprType << (ExprKind == UETT_SizeOf)
+      << ExprRange;
     return true;
   }
 
@@ -2778,78 +2795,98 @@ static bool CheckAlignOfExpr(Sema &S, Expr *E, SourceLocation OpLoc,
     if (isa<FieldDecl>(ME->getMemberDecl()))
       return false;
 
-  return S.CheckSizeOfAlignOfOperand(E->getType(), OpLoc, ExprRange, false);
+  return S.CheckUnaryExprOrTypeTraitOperand(E->getType(), OpLoc, ExprRange,
+                                            UETT_AlignOf);
+}
+
+bool Sema::CheckVecStepExpr(Expr *E, SourceLocation OpLoc,
+                            SourceRange ExprRange) {
+  E = E->IgnoreParens();
+
+  // Cannot know anything else if the expression is dependent.
+  if (E->isTypeDependent())
+    return false;
+
+  return CheckUnaryExprOrTypeTraitOperand(E->getType(), OpLoc, ExprRange,
+                                          UETT_VecStep);
 }
 
 /// \brief Build a sizeof or alignof expression given a type operand.
 ExprResult
-Sema::CreateSizeOfAlignOfExpr(TypeSourceInfo *TInfo,
-                              SourceLocation OpLoc,
-                              bool isSizeOf, SourceRange R) {
+Sema::CreateUnaryExprOrTypeTraitExpr(TypeSourceInfo *TInfo,
+                                     SourceLocation OpLoc,
+                                     UnaryExprOrTypeTrait ExprKind,
+                                     SourceRange R) {
   if (!TInfo)
     return ExprError();
 
   QualType T = TInfo->getType();
 
   if (!T->isDependentType() &&
-      CheckSizeOfAlignOfOperand(T, OpLoc, R, isSizeOf))
+      CheckUnaryExprOrTypeTraitOperand(T, OpLoc, R, ExprKind))
     return ExprError();
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return Owned(new (Context) SizeOfAlignOfExpr(isSizeOf, TInfo,
-                                               Context.getSizeType(), OpLoc,
-                                               R.getEnd()));
+  return Owned(new (Context) UnaryExprOrTypeTraitExpr(ExprKind, TInfo,
+                                                      Context.getSizeType(),
+                                                      OpLoc, R.getEnd()));
 }
 
 /// \brief Build a sizeof or alignof expression given an expression
 /// operand.
 ExprResult
-Sema::CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
-                              bool isSizeOf, SourceRange R) {
+Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
+                                     UnaryExprOrTypeTrait ExprKind,
+                                     SourceRange R) {
   // Verify that the operand is valid.
   bool isInvalid = false;
   if (E->isTypeDependent()) {
     // Delay type-checking for type-dependent expressions.
-  } else if (!isSizeOf) {
+  } else if (ExprKind == UETT_AlignOf) {
     isInvalid = CheckAlignOfExpr(*this, E, OpLoc, R);
+  } else if (ExprKind == UETT_VecStep) {
+    isInvalid = CheckVecStepExpr(E, OpLoc, R);
   } else if (E->getBitField()) {  // C99 6.5.3.4p1.
     Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
     isInvalid = true;
   } else if (E->getType()->isPlaceholderType()) {
     ExprResult PE = CheckPlaceholderExpr(E, OpLoc);
     if (PE.isInvalid()) return ExprError();
-    return CreateSizeOfAlignOfExpr(PE.take(), OpLoc, isSizeOf, R);
+    return CreateUnaryExprOrTypeTraitExpr(PE.take(), OpLoc, ExprKind, R);
   } else {
-    isInvalid = CheckSizeOfAlignOfOperand(E->getType(), OpLoc, R, true);
+    isInvalid = CheckUnaryExprOrTypeTraitOperand(E->getType(), OpLoc, R,
+                                                 UETT_SizeOf);
   }
 
   if (isInvalid)
     return ExprError();
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return Owned(new (Context) SizeOfAlignOfExpr(isSizeOf, E,
-                                               Context.getSizeType(), OpLoc,
-                                               R.getEnd()));
+  return Owned(new (Context) UnaryExprOrTypeTraitExpr(ExprKind, E,
+                                                      Context.getSizeType(),
+                                                      OpLoc, R.getEnd()));
 }
 
-/// ActOnSizeOfAlignOfExpr - Handle @c sizeof(type) and @c sizeof @c expr and
-/// the same for @c alignof and @c __alignof
+/// ActOnUnaryExprOrTypeTraitExpr - Handle @c sizeof(type) and @c sizeof @c
+/// expr and the same for @c alignof and @c __alignof
 /// Note that the ArgRange is invalid if isType is false.
 ExprResult
-Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
-                             void *TyOrEx, const SourceRange &ArgRange) {
+Sema::ActOnUnaryExprOrTypeTraitExpr(SourceLocation OpLoc,
+                                    UnaryExprOrTypeTrait ExprKind, bool isType,
+                                    void *TyOrEx, const SourceRange &ArgRange) {
   // If error parsing type, ignore.
   if (TyOrEx == 0) return ExprError();
 
   if (isType) {
     TypeSourceInfo *TInfo;
     (void) GetTypeFromParser(ParsedType::getFromOpaquePtr(TyOrEx), &TInfo);
-    return CreateSizeOfAlignOfExpr(TInfo, OpLoc, isSizeof, ArgRange);
+    return CreateUnaryExprOrTypeTraitExpr(TInfo, OpLoc, ExprKind, ArgRange);
   }
 
   Expr *ArgEx = (Expr *)TyOrEx;
   ExprResult Result
-    = CreateSizeOfAlignOfExpr(ArgEx, OpLoc, isSizeof, ArgEx->getSourceRange());
+    = CreateUnaryExprOrTypeTraitExpr(ArgEx, OpLoc, ExprKind,
+                                     ArgEx->getSourceRange());
 
   return move(Result);
 }

@@ -1990,19 +1990,25 @@ public:
   ExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                           tok::TokenKind Op, Expr *Input);
 
-  ExprResult CreateSizeOfAlignOfExpr(TypeSourceInfo *T,
-                                     SourceLocation OpLoc,
-                                     bool isSizeOf, SourceRange R);
-  ExprResult CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
-                                     bool isSizeOf, SourceRange R);
+  ExprResult CreateUnaryExprOrTypeTraitExpr(TypeSourceInfo *T,
+                                            SourceLocation OpLoc,
+                                            UnaryExprOrTypeTrait ExprKind,
+                                            SourceRange R);
+  ExprResult CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
+                                            UnaryExprOrTypeTrait ExprKind,
+                                            SourceRange R);
   ExprResult
-    ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
-                           void *TyOrEx, const SourceRange &ArgRange);
+    ActOnUnaryExprOrTypeTraitExpr(SourceLocation OpLoc,
+                                  UnaryExprOrTypeTrait ExprKind,
+                                  bool isType, void *TyOrEx,
+                                  const SourceRange &ArgRange);
 
   ExprResult CheckPlaceholderExpr(Expr *E, SourceLocation Loc);
+  bool CheckVecStepExpr(Expr *E, SourceLocation OpLoc, SourceRange R);
 
-  bool CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc,
-                                 SourceRange R, bool isSizeof);
+  bool CheckUnaryExprOrTypeTraitOperand(QualType type, SourceLocation OpLoc,
+                                        SourceRange R,
+                                        UnaryExprOrTypeTrait ExprKind);
   ExprResult ActOnSizeofParameterPackExpr(Scope *S,
                                           SourceLocation OpLoc,
                                           IdentifierInfo &Name,

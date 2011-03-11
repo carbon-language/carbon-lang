@@ -68,7 +68,7 @@ namespace clang {
     void VisitParenListExpr(ParenListExpr *E);
     void VisitUnaryOperator(UnaryOperator *E);
     void VisitOffsetOfExpr(OffsetOfExpr *E);
-    void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+    void VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E);
     void VisitArraySubscriptExpr(ArraySubscriptExpr *E);
     void VisitCallExpr(CallExpr *E);
     void VisitMemberExpr(MemberExpr *E);
@@ -504,9 +504,9 @@ void ASTStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
   Code = serialization::EXPR_OFFSETOF;
 }
 
-void ASTStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+void ASTStmtWriter::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E) {
   VisitExpr(E);
-  Record.push_back(E->isSizeOf());
+  Record.push_back(E->getKind());
   if (E->isArgumentType())
     Writer.AddTypeSourceInfo(E->getArgumentTypeInfo(), Record);
   else {

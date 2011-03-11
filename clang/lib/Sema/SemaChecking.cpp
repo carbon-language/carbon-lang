@@ -3038,7 +3038,7 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
   if (isa<StmtExpr>(E)) return;
 
   // Don't descend into unevaluated contexts.
-  if (isa<SizeOfAlignOfExpr>(E)) return;
+  if (isa<UnaryExprOrTypeTraitExpr>(E)) return;
 
   // Now just recurse over the expression's children.
   CC = E->getExprLoc();

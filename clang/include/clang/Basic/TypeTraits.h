@@ -42,6 +42,13 @@ namespace clang {
     BTT_TypeCompatible,
     BTT_IsConvertibleTo
   };
+
+  /// UnaryExprOrTypeTrait - Names for the "expression or type" traits.
+  enum UnaryExprOrTypeTrait {
+    UETT_SizeOf,
+    UETT_AlignOf,
+    UETT_VecStep
+  };
 }
 
 #endif

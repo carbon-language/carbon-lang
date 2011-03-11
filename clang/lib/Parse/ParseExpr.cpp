@@ -788,7 +788,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___alignof:  // unary-expression: '__alignof' unary-expression
                            // unary-expression: '__alignof' '(' type-name ')'
                            // unary-expression: 'alignof' '(' type-id ')'
-    return ParseSizeofAlignofExpression();
+  case tok::kw_vec_step:   // unary-expression: OpenCL 'vec_step' expression
+    return ParseUnaryExprOrTypeTraitExpression();
   case tok::ampamp: {      // unary-expression: '&&' identifier
     SourceLocation AmpAmpLoc = ConsumeToken();
     if (Tok.isNot(tok::identifier))
@@ -1256,10 +1257,10 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
   }
 }
 
-/// ParseExprAfterTypeofSizeofAlignof - We parsed a typeof/sizeof/alignof and
-/// we are at the start of an expression or a parenthesized type-id.
-/// OpTok is the operand token (typeof/sizeof/alignof). Returns the expression
-/// (isCastExpr == false) or the type (isCastExpr == true).
+/// ParseExprAfterUnaryExprOrTypeTrait - We parsed a typeof/sizeof/alignof/
+/// vec_step and we are at the start of an expression or a parenthesized
+/// type-id. OpTok is the operand token (typeof/sizeof/alignof). Returns the
+/// expression (isCastExpr == false) or the type (isCastExpr == true).
 ///
 ///       unary-expression:  [C99 6.5.3]
 ///         'sizeof' unary-expression
@@ -1273,15 +1274,20 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
 ///           typeof ( type-name )
 /// [GNU/C++] typeof unary-expression
 ///
+/// [OpenCL 1.1 6.11.12] vec_step built-in function:
+///           vec_step ( expressions )
+///           vec_step ( type-name )
+///
 ExprResult
-Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
-                                          bool &isCastExpr,
-                                          ParsedType &CastTy,
-                                          SourceRange &CastRange) {
+Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
+                                           bool &isCastExpr,
+                                           ParsedType &CastTy,
+                                           SourceRange &CastRange) {
 
   assert((OpTok.is(tok::kw_typeof)    || OpTok.is(tok::kw_sizeof) ||
-          OpTok.is(tok::kw___alignof) || OpTok.is(tok::kw_alignof)) &&
-          "Not a typeof/sizeof/alignof expression!");
+          OpTok.is(tok::kw___alignof) || OpTok.is(tok::kw_alignof) ||
+          OpTok.is(tok::kw_vec_step)) &&
+          "Not a typeof/sizeof/alignof/vec_step expression!");
 
   ExprResult Operand;
 
@@ -1345,7 +1351,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
 }
 
 
-/// ParseSizeofAlignofExpression - Parse a sizeof or alignof expression.
+/// ParseUnaryExprOrTypeTraitExpression - Parse a sizeof or alignof expression.
 ///       unary-expression:  [C99 6.5.3]
 ///         'sizeof' unary-expression
 ///         'sizeof' '(' type-name ')'
@@ -1353,10 +1359,10 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
 /// [GNU]   '__alignof' unary-expression
 /// [GNU]   '__alignof' '(' type-name ')'
 /// [C++0x] 'alignof' '(' type-id ')'
-ExprResult Parser::ParseSizeofAlignofExpression() {
+ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
   assert((Tok.is(tok::kw_sizeof) || Tok.is(tok::kw___alignof)
-          || Tok.is(tok::kw_alignof)) &&
-         "Not a sizeof/alignof expression!");
+          || Tok.is(tok::kw_alignof) || Tok.is(tok::kw_vec_step)) &&
+         "Not a sizeof/alignof/vec_step expression!");
   Token OpTok = Tok;
   ConsumeToken();
 
@@ -1403,24 +1409,31 @@ ExprResult Parser::ParseSizeofAlignofExpression() {
   bool isCastExpr;
   ParsedType CastTy;
   SourceRange CastRange;
-  ExprResult Operand = ParseExprAfterTypeofSizeofAlignof(OpTok,
-                                                               isCastExpr,
-                                                               CastTy,
-                                                               CastRange);
+  ExprResult Operand = ParseExprAfterUnaryExprOrTypeTrait(OpTok,
+                                                          isCastExpr,
+                                                          CastTy,
+                                                          CastRange);
+
+  UnaryExprOrTypeTrait ExprKind = UETT_SizeOf;
+  if (OpTok.is(tok::kw_alignof) || OpTok.is(tok::kw___alignof))
+    ExprKind = UETT_AlignOf;
+  else if (OpTok.is(tok::kw_vec_step))
+    ExprKind = UETT_VecStep;
 
   if (isCastExpr)
-    return Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
-                                          OpTok.is(tok::kw_sizeof),
-                                          /*isType=*/true,
-                                          CastTy.getAsOpaquePtr(),
-                                          CastRange);
+    return Actions.ActOnUnaryExprOrTypeTraitExpr(OpTok.getLocation(),
+                                                 ExprKind,
+                                                 /*isType=*/true,
+                                                 CastTy.getAsOpaquePtr(),
+                                                 CastRange);
 
   // If we get here, the operand to the sizeof/alignof was an expresion.
   if (!Operand.isInvalid())
-    Operand = Actions.ActOnSizeOfAlignOfExpr(OpTok.getLocation(),
-                                             OpTok.is(tok::kw_sizeof),
-                                             /*isType=*/false,
-                                             Operand.release(), CastRange);
+    Operand = Actions.ActOnUnaryExprOrTypeTraitExpr(OpTok.getLocation(),
+                                                    ExprKind,
+                                                    /*isType=*/false,
+                                                    Operand.release(),
+                                                    CastRange);
   return move(Operand);
 }
 

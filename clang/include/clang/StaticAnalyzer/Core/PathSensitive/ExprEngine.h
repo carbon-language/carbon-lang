@@ -339,9 +339,9 @@ public:
   void VisitOffsetOfExpr(const OffsetOfExpr* Ex, ExplodedNode* Pred,
                          ExplodedNodeSet& Dst);
 
-  /// VisitSizeOfAlignOfExpr - Transfer function for sizeof.
-  void VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex, ExplodedNode* Pred,
-                              ExplodedNodeSet& Dst);
+  /// VisitUnaryExprOrTypeTraitExpr - Transfer function for sizeof.
+  void VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr* Ex,
+                              ExplodedNode* Pred, ExplodedNodeSet& Dst);
 
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(const UnaryOperator* B, ExplodedNode* Pred, 

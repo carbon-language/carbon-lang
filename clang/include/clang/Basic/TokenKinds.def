@@ -346,9 +346,10 @@ KEYWORD(__fastcall                  , KEYALL)
 KEYWORD(__thiscall                  , KEYALL)
 KEYWORD(__forceinline               , KEYALL)
 
-// OpenCL-specific keywords (see OpenCL 1.1 [6.1.9])
+// OpenCL-specific keywords
 KEYWORD(__kernel                    , KEYOPENCL)
 ALIAS("kernel", __kernel            , KEYOPENCL)
+KEYWORD(vec_step                    , KEYOPENCL)
 
 // Borland Extensions.
 KEYWORD(__pascal                    , KEYALL)

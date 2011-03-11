@@ -21,6 +21,7 @@
 #include "clang/AST/OperationKinds.h"
 #include "clang/AST/ASTVector.h"
 #include "clang/AST/UsuallyTinyPtrVector.h"
+#include "clang/Basic/TypeTraits.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1554,10 +1555,11 @@ public:
   }
 };
 
-/// SizeOfAlignOfExpr - [C99 6.5.3.4] - This is for sizeof/alignof, both of
-/// types and expressions.
-class SizeOfAlignOfExpr : public Expr {
-  bool isSizeof : 1;  // true if sizeof, false if alignof.
+/// UnaryExprOrTypeTraitExpr - expression with either a type or (unevaluated)
+/// expression operand.  Used for sizeof/alignof (C99 6.5.3.4) and
+/// vec_step (OpenCL 1.1 6.11.12).
+class UnaryExprOrTypeTraitExpr : public Expr {
+  unsigned Kind : 2;
   bool isType : 1;    // true if operand is a type, false if an expression
   union {
     TypeSourceInfo *Ty;
@@ -1566,36 +1568,38 @@ class SizeOfAlignOfExpr : public Expr {
   SourceLocation OpLoc, RParenLoc;
 
 public:
-  SizeOfAlignOfExpr(bool issizeof, TypeSourceInfo *TInfo,
-                    QualType resultType, SourceLocation op,
-                    SourceLocation rp) :
-      Expr(SizeOfAlignOfExprClass, resultType, VK_RValue, OK_Ordinary,
+  UnaryExprOrTypeTraitExpr(UnaryExprOrTypeTrait ExprKind, TypeSourceInfo *TInfo,
+                           QualType resultType, SourceLocation op,
+                           SourceLocation rp) :
+      Expr(UnaryExprOrTypeTraitExprClass, resultType, VK_RValue, OK_Ordinary,
            false, // Never type-dependent (C++ [temp.dep.expr]p3).
            // Value-dependent if the argument is type-dependent.
            TInfo->getType()->isDependentType(),
            TInfo->getType()->containsUnexpandedParameterPack()),
-      isSizeof(issizeof), isType(true), OpLoc(op), RParenLoc(rp) {
+      Kind(ExprKind), isType(true), OpLoc(op), RParenLoc(rp) {
     Argument.Ty = TInfo;
   }
 
-  SizeOfAlignOfExpr(bool issizeof, Expr *E,
-                    QualType resultType, SourceLocation op,
-                    SourceLocation rp) :
-      Expr(SizeOfAlignOfExprClass, resultType, VK_RValue, OK_Ordinary,
+  UnaryExprOrTypeTraitExpr(UnaryExprOrTypeTrait ExprKind, Expr *E,
+                           QualType resultType, SourceLocation op,
+                           SourceLocation rp) :
+      Expr(UnaryExprOrTypeTraitExprClass, resultType, VK_RValue, OK_Ordinary,
            false, // Never type-dependent (C++ [temp.dep.expr]p3).
            // Value-dependent if the argument is type-dependent.
            E->isTypeDependent(),
            E->containsUnexpandedParameterPack()),
-      isSizeof(issizeof), isType(false), OpLoc(op), RParenLoc(rp) {
+      Kind(ExprKind), isType(false), OpLoc(op), RParenLoc(rp) {
     Argument.Ex = E;
   }
 
   /// \brief Construct an empty sizeof/alignof expression.
-  explicit SizeOfAlignOfExpr(EmptyShell Empty)
-    : Expr(SizeOfAlignOfExprClass, Empty) { }
+  explicit UnaryExprOrTypeTraitExpr(EmptyShell Empty)
+    : Expr(UnaryExprOrTypeTraitExprClass, Empty) { }
 
-  bool isSizeOf() const { return isSizeof; }
-  void setSizeof(bool S) { isSizeof = S; }
+  UnaryExprOrTypeTrait getKind() const {
+    return static_cast<UnaryExprOrTypeTrait>(Kind);
+  }
+  void setKind(UnaryExprOrTypeTrait K) { Kind = K; }
 
   bool isArgumentType() const { return isType; }
   QualType getArgumentType() const {
@@ -1610,7 +1614,7 @@ public:
     return static_cast<Expr*>(Argument.Ex);
   }
   const Expr *getArgumentExpr() const {
-    return const_cast<SizeOfAlignOfExpr*>(this)->getArgumentExpr();
+    return const_cast<UnaryExprOrTypeTraitExpr*>(this)->getArgumentExpr();
   }
 
   void setArgument(Expr *E) { Argument.Ex = E; isType = false; }
@@ -1636,9 +1640,9 @@ public:
   }
 
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == SizeOfAlignOfExprClass;
+    return T->getStmtClass() == UnaryExprOrTypeTraitExprClass;
   }
-  static bool classof(const SizeOfAlignOfExpr *) { return true; }
+  static bool classof(const UnaryExprOrTypeTraitExpr *) { return true; }
 
   // Iterators
   child_range children();

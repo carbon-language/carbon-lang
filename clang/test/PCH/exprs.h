@@ -38,7 +38,7 @@ struct Z {
 typedef typeof(__builtin_offsetof(struct Z, y.array[1 + 2].member)) 
   offsetof_type;
 
-// SizeOfAlignOfExpr
+// UnaryExprOrTypeTraitExpr
 typedef typeof(sizeof(int)) typeof_sizeof;
 typedef typeof(sizeof(Enumerator)) typeof_sizeof2;
 

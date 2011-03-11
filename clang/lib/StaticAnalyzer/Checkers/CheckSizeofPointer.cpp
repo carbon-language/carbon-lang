@@ -26,7 +26,7 @@ class WalkAST : public StmtVisitor<WalkAST> {
 
 public:
   WalkAST(BugReporter &br) : BR(br) {}
-  void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+  void VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E);
   void VisitStmt(Stmt *S) { VisitChildren(S); }
   void VisitChildren(Stmt *S);
 };
@@ -39,8 +39,8 @@ void WalkAST::VisitChildren(Stmt *S) {
 }
 
 // CWE-467: Use of sizeof() on a Pointer Type
-void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
-  if (!E->isSizeOf())
+void WalkAST::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E) {
+  if (E->getKind() != UETT_SizeOf)
     return;
 
   // If an explicit type is used in the code, usually the coder knows what he is

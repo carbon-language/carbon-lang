@@ -690,8 +690,9 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       VisitOffsetOfExpr(cast<OffsetOfExpr>(S), Pred, Dst);
       break;
 
-    case Stmt::SizeOfAlignOfExprClass:
-      VisitSizeOfAlignOfExpr(cast<SizeOfAlignOfExpr>(S), Pred, Dst);
+    case Stmt::UnaryExprOrTypeTraitExprClass:
+      VisitUnaryExprOrTypeTraitExpr(cast<UnaryExprOrTypeTraitExpr>(S),
+                                    Pred, Dst);
       break;
 
     case Stmt::StmtExprClass: {
@@ -2410,19 +2411,15 @@ void ExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
   assert(0 && "unprocessed InitListExpr type");
 }
 
-/// VisitSizeOfAlignOfExpr - Transfer function for sizeof(type).
-void ExprEngine::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex,
+/// VisitUnaryExprOrTypeTraitExpr - Transfer function for sizeof(type).
+void ExprEngine::VisitUnaryExprOrTypeTraitExpr(
+                                          const UnaryExprOrTypeTraitExpr* Ex,
                                           ExplodedNode* Pred,
                                           ExplodedNodeSet& Dst) {
   QualType T = Ex->getTypeOfArgument();
-  CharUnits amt;
 
-  if (Ex->isSizeOf()) {
-    if (T == getContext().VoidTy) {
-      // sizeof(void) == 1 byte.
-      amt = CharUnits::One();
-    }
-    else if (!T->isConstantSizeType()) {
+  if (Ex->getKind() == UETT_SizeOf) {
+    if (!T->isIncompleteType() && !T->isConstantSizeType()) {
       assert(T->isVariableArrayType() && "Unknown non-constant-sized type.");
 
       // FIXME: Add support for VLA type arguments, not just VLA expressions.
@@ -2463,13 +2460,11 @@ void ExprEngine::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex,
       Dst.Add(Pred);
       return;
     }
-    else {
-      // All other cases.
-      amt = getContext().getTypeSizeInChars(T);
-    }
   }
-  else  // Get alignment of the type.
-    amt = getContext().getTypeAlignInChars(T);
+
+  Expr::EvalResult Result;
+  Ex->Evaluate(Result, getContext());
+  CharUnits amt = CharUnits::fromQuantity(Result.Val.getInt().getZExtValue());
 
   MakeNode(Dst, Ex, Pred,
            GetState(Pred)->BindExpr(Ex,

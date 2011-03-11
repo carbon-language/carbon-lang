@@ -54,7 +54,7 @@ def CharacterLiteral : DStmt<Expr>;
 def ParenExpr : DStmt<Expr>;
 def UnaryOperator : DStmt<Expr>;
 def OffsetOfExpr : DStmt<Expr>;
-def SizeOfAlignOfExpr : DStmt<Expr>;
+def UnaryExprOrTypeTraitExpr : DStmt<Expr>;
 def ArraySubscriptExpr : DStmt<Expr>;
 def CallExpr : DStmt<Expr>;
 def MemberExpr : DStmt<Expr>;
