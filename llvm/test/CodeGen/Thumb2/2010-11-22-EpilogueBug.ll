@@ -8,7 +8,7 @@ declare void @bar() nounwind optsize
 define void @foo() nounwind optsize {
 ; CHECK: foo:
 ; CHECK: push
-; CHECK: mov r7, sp
+; CHECK: add r7, sp, #4
 ; CHECK: sub sp, #4
 entry:
   %m.i = alloca %struct.buf*, align 4

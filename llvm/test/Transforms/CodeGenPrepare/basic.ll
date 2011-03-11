@@ -14,14 +14,13 @@ entry:
   br i1 %1, label %T, label %trap
 
 ; CHECK: entry:
-; CHECK-NEXT: br label %T
+; HECK-NEXT: ret i32 4
 
 trap:                                             ; preds = %0, %entry
   tail call void @llvm.trap() noreturn nounwind
   unreachable
 
 T:
-; CHECK: ret i32 4
   ret i32 4
 }
 
