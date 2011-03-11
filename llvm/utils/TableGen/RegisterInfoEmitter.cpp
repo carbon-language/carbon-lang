@@ -38,7 +38,10 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
   OS << "enum {\n  NoRegister,\n";
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    OS << "  " << Registers[i].getName() << ", \t// " << i+1 << "\n";
+    OS << "  " << Registers[i].getName() << " = " <<
+      Registers[i].EnumValue << ",\n";
+  assert(Registers.size() == Registers[Registers.size()-1].EnumValue &&
+         "Register enum value mismatch!");
   OS << "  NUM_TARGET_REGS \t// " << Registers.size()+1 << "\n";
   OS << "};\n";
   if (!Namespace.empty())

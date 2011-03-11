@@ -30,6 +30,7 @@ namespace llvm {
     Record *TheDef;
     const std::string &getName() const;
     unsigned DeclaredSpillSize, DeclaredSpillAlignment;
+    unsigned EnumValue;
     CodeGenRegister(Record *R);
   };
 

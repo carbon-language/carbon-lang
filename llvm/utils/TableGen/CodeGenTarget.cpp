@@ -164,6 +164,9 @@ void CodeGenTarget::ReadRegisters() const {
 
   Registers.reserve(Regs.size());
   Registers.assign(Regs.begin(), Regs.end());
+  // Assign the enumeration values.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
+    Registers[i].EnumValue = i + 1;
 }
 
 CodeGenRegister::CodeGenRegister(Record *R) : TheDef(R) {
