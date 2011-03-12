@@ -1,10 +1,12 @@
 set(LLVM_LINK_COMPONENTS support)
-set(LLVM_REQUIRES_EH 1)
 
-add_llvm_tool(llvmc
+# We don't want this library to appear in `llvm-config --libs` output,
+# so its name doesn't start with "LLVM".
+
+add_llvm_library(CompilerDriver
   Action.cpp
+  BuiltinOptions.cpp
   CompilationGraph.cpp
-  llvmc.cpp
-  Plugin.cpp
+  Main.cpp
   Tool.cpp
   )
