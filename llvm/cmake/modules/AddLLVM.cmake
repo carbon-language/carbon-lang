@@ -10,6 +10,7 @@ macro(add_llvm_library name)
   endif( LLVM_COMMON_DEPENDS )
 
   if( BUILD_SHARED_LIBS )
+    llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
     get_system_libs(sl)
     target_link_libraries( ${name} ${sl} )
   endif()
@@ -44,6 +45,10 @@ ${name} ignored.")
 
     add_library( ${name} ${libkind} ${ALL_FILES} )
     set_target_properties( ${name} PROPERTIES PREFIX "" )
+
+    llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
+    get_system_libs(sl)
+    target_link_libraries( ${name} ${sl} )
 
     if (APPLE)
       # Darwin-specific linker flags for loadable modules.

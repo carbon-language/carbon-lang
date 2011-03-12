@@ -64,13 +64,13 @@ function(explicit_map_components_to_libraries out_libs)
 
   # Expand some keywords:
   list(FIND link_components "engine" engine_required)
-  if( engine_required )
+  if( NOT engine_required STREQUAL "-1" )
     # TODO: as we assume we are on X86, this is `jit'.
     list(APPEND link_components "jit")
     list(APPEND link_components "native")
   endif()
   list(FIND link_components "native" native_required)
-  if( native_required )
+  if( NOT native_required STREQUAL "-1" )
     list(APPEND link_components "X86")
   endif()
 
