@@ -282,12 +282,15 @@ const GRState *IteratorsChecker::handleAssign(const GRState *state,
       // Finally, see if it is one of the calls that will create
       // a valid iterator and mark it if so, else mark as Unknown.
       llvm::StringRef mName = ME->getMemberDecl()->getName();
-      return llvm::StringSwitch<const GRState*>(mName)
-        .Cases("begin", "insert", "erase",
-               state->set<IteratorState>(MR, RefState::getBeginValid(IMR)))
-        .Case("end",
-              state->set<IteratorState>(MR, RefState::getEndValid(IMR)))
-        .Default(state->set<IteratorState>(MR, RefState::getUnknown()));      
+      
+      if (llvm::StringSwitch<bool>(mName)        
+          .Cases("begin", "insert", "erase", true).Default(false)) {
+        return state->set<IteratorState>(MR, RefState::getBeginValid(IMR));
+      }
+      if (mName == "end")
+        return state->set<IteratorState>(MR, RefState::getEndValid(IMR));
+
+      return state->set<IteratorState>(MR, RefState::getUnknown());
     }
   }
   // Handle straight copy from another iterator.
