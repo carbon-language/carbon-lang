@@ -523,6 +523,10 @@ class TestBase(unittest2.TestCase):
         # We want our debugger to be synchronous.
         self.dbg.SetAsync(False)
 
+        # This is for the case of directly spawning 'lldb' and interacting with it
+        # using pexpect.
+        self.child = None
+
         # There is no process associated with the debugger as yet.
         # See also self.tearDown() where it checks whether self.process has a
         # valid reference and calls self.process.Kill() to kill the process.
@@ -657,6 +661,12 @@ class TestBase(unittest2.TestCase):
             with recording(self, traceAlways) as sbuf:
                 print >> sbuf, "Executing tearDown hook:", getsource_if_available(hook)
             hook()
+
+        # This is for the case of directly spawning 'lldb' and interacting with it
+        # using pexpect.
+        if self.child and self.child.isalive():
+            self.child.sendline('quit')
+            self.child.close()
 
         # Terminate the current process being debugged, if any.
         if self.runStarted:
@@ -916,3 +926,9 @@ class TestBase(unittest2.TestCase):
         err.write('\t' + "IsPointerType -> " + str(val.TypeIsPointerType()) + '\n')
         err.write('\t' + "Location      -> " + val.GetLocation(frame)       + '\n')
 
+    def DebugPExpect(self, child):
+        """Debug the spwaned pexpect object."""
+        if not traceAlways:
+            return
+
+        print child
