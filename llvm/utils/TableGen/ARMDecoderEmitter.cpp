@@ -1592,11 +1592,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     // better off using the generic RSCri and RSCrs instructions.
     if (Name == "RSCSri" || Name == "RSCSrs") return false;
 
-    // Ignore the non-Darwin BL instructions and the TPsoft (TLS) instruction.
-    if (Name == "BL" || Name == "BL_pred" || Name == "BLX" ||
-        Name == "BLX_pred" || Name == "TPsoft")
-      return false;
-
     // A8-598: VEXT
     // Vector Extract extracts elements from the bottom end of the second
     // operand vector and the top end of the first, concatenates them and
