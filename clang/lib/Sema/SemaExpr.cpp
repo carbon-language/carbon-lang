@@ -5321,9 +5321,10 @@ bool Sema::DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
 QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
                                         ExprValueKind &VK, ExprObjectKind &OK,
                                         SourceLocation QuestionLoc) {
-  // If both LHS and RHS are overloaded functions, try to resolve them.
-  if (Context.hasSameType(LHS->getType(), RHS->getType()) && 
-      LHS->getType()->isSpecificBuiltinType(BuiltinType::Overload)) {
+
+  // If either LHS or RHS are overloaded functions, try to resolve them.
+  if (LHS->getType() == Context.OverloadTy || 
+      RHS->getType() == Context.OverloadTy) {
     ExprResult LHSResult = CheckPlaceholderExpr(LHS, QuestionLoc);
     if (LHSResult.isInvalid())
       return QualType();
@@ -6313,6 +6314,10 @@ QualType Sema::InvalidOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   Diag(Loc, diag::err_typecheck_invalid_operands)
     << lex->getType() << rex->getType()
     << lex->getSourceRange() << rex->getSourceRange();
+    if (lex->getType() == Context.OverloadTy)
+      NoteAllOverloadCandidates(lex);
+    if (rex->getType() == Context.OverloadTy)
+      NoteAllOverloadCandidates(rex);
   return QualType();
 }
 
@@ -6789,11 +6794,13 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 
   QualType lType = lex->getType();
   QualType rType = rex->getType();
-
+ 
   Expr *LHSStripped = lex->IgnoreParenImpCasts();
   Expr *RHSStripped = rex->IgnoreParenImpCasts();
   QualType LHSStrippedType = LHSStripped->getType();
   QualType RHSStrippedType = RHSStripped->getType();
+
+  
 
   // Two different enums will raise a warning when compared.
   if (const EnumType *LHSEnumType = LHSStrippedType->getAs<EnumType>()) {
@@ -8033,6 +8040,26 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   ExprValueKind VK = VK_RValue;
   ExprObjectKind OK = OK_Ordinary;
 
+  // Check if a 'foo<int>' involved in a binary op, identifies a single 
+  // function unambiguously (i.e. an lvalue ala 13.4)
+  // But since an assignment can trigger target based overload, exclude it in 
+  // our blind search. i.e:
+  // template<class T> void f(); template<class T, class U> void f(U);
+  // f<int> == 0;  // resolve f<int> blindly
+  // void (*p)(int); p = f<int>;  // resolve f<int> using target
+  if (Opc != BO_Assign) { 
+    if (lhs->getType() == Context.OverloadTy) {
+      ExprResult resolvedLHS = 
+        ResolveAndFixSingleFunctionTemplateSpecialization(lhs);
+      if (resolvedLHS.isUsable()) lhs = resolvedLHS.release(); 
+    }
+    if (rhs->getType() == Context.OverloadTy) {
+      ExprResult resolvedRHS = 
+        ResolveAndFixSingleFunctionTemplateSpecialization(rhs);
+      if (resolvedRHS.isUsable()) rhs = resolvedRHS.release(); 
+    }
+  }
+
   switch (Opc) {
   case BO_Assign:
     ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, QualType());
@@ -8390,6 +8417,11 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     resultType = CheckAddressOfOperand(*this, Input, OpLoc);
     break;
   case UO_Deref:
+    if (Input->getType() == Context.OverloadTy ) {
+      ExprResult er = ResolveAndFixSingleFunctionTemplateSpecialization(Input);
+      if (er.isUsable())
+        Input = er.release();
+    }
     DefaultFunctionArrayLvalueConversion(Input);
     resultType = CheckIndirectionOperand(*this, Input, VK, OpLoc);
     break;

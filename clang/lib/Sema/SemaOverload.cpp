@@ -7490,6 +7490,44 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From,
   return Matched;
 }
 
+
+
+
+// Resolve and fix an overloaded expression that
+// can be resolved because it identifies a single function
+// template specialization
+// Last three arguments should only be supplied if Complain = true
+ExprResult Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
+             Expr *SrcExpr, bool DoFunctionPointerConverion, bool Complain,
+                                  const SourceRange& OpRangeForComplaining, 
+                                           QualType DestTypeForComplaining, 
+                                            unsigned DiagIDForComplaining ) {
+
+    assert(SrcExpr->getType() == Context.OverloadTy);
+
+    DeclAccessPair Found;
+    Expr* SingleFunctionExpression = 0;
+    if (FunctionDecl* Fn = ResolveSingleFunctionTemplateSpecialization(
+      SrcExpr, false, // false -> Complain 
+      &Found)) {
+        if (!DiagnoseUseOfDecl(Fn, SrcExpr->getSourceRange().getBegin())) {
+          // mark the expression as resolved to Fn
+          SingleFunctionExpression = FixOverloadedFunctionReference(SrcExpr, 
+            Found, Fn);
+          if (DoFunctionPointerConverion)
+            DefaultFunctionArrayLvalueConversion(SingleFunctionExpression);
+        }      
+    }
+    if (!SingleFunctionExpression && Complain) {
+      OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
+      Diag(OpRangeForComplaining.getBegin(), DiagIDForComplaining)
+        << oe->getName() << DestTypeForComplaining << OpRangeForComplaining 
+        << oe->getQualifierLoc().getSourceRange();
+      NoteAllOverloadCandidates(SrcExpr);
+    }
+    return SingleFunctionExpression;
+}
+
 /// \brief Add a single candidate to the overload set.
 static void AddOverloadedCallCandidate(Sema &S,
                                        DeclAccessPair FoundDecl,

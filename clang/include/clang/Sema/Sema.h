@@ -1289,6 +1289,14 @@ public:
                                                    bool Complain = false,
                                                    DeclAccessPair* Found = 0);
 
+  ExprResult ResolveAndFixSingleFunctionTemplateSpecialization(
+                      Expr *SrcExpr, bool DoFunctionPointerConverion = false, 
+                      bool Complain = false, 
+                      const SourceRange& OpRangeForComplaining = SourceRange(), 
+                      QualType DestTypeForComplaining = QualType(), 
+                      unsigned DiagIDForComplaining = 0);
+
+
   Expr *FixOverloadedFunctionReference(Expr *E,
                                        DeclAccessPair FoundDecl,
                                        FunctionDecl *Fn);

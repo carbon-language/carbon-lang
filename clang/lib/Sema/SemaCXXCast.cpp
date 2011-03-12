@@ -128,17 +128,6 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *&SrcExpr,
                                         CastKind &Kind);
 
 
-static ExprResult 
-ResolveAndFixSingleFunctionTemplateSpecialization(
-                    Sema &Self, Expr *SrcExpr, 
-                    bool DoFunctionPointerConverion = false, 
-                    bool Complain = false, 
-                    const SourceRange& OpRangeForComplaining = SourceRange(), 
-                    QualType DestTypeForComplaining = QualType(), 
-                    unsigned DiagIDForComplaining = 0);
-
-
-
 /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
 ExprResult
 Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
@@ -617,7 +606,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     Self.IgnoredValueConversions(SrcExpr);
     if (SrcExpr->getType() == Self.Context.OverloadTy) {
       ExprResult SingleFunctionExpression = 
-         ResolveAndFixSingleFunctionTemplateSpecialization(Self, SrcExpr, 
+         Self.ResolveAndFixSingleFunctionTemplateSpecialization(SrcExpr, 
                 false, // Decay Function to ptr 
                 true, // Complain
                 OpRange, DestType, diag::err_bad_static_cast_overload);
@@ -1260,41 +1249,8 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   return TC_Success;
 }
 
-// A helper function to resolve and fix an overloaded expression that
-// can be resolved because it identifies a single function
-// template specialization
-// Last three arguments should only be supplied if Complain = true
-static ExprResult ResolveAndFixSingleFunctionTemplateSpecialization(
-                    Sema &Self, Expr *SrcExpr, 
-                    bool DoFunctionPointerConverion, 
-                    bool Complain, 
-                    const SourceRange& OpRangeForComplaining, 
-                    QualType DestTypeForComplaining, 
-                    unsigned DiagIDForComplaining) {
-  assert(SrcExpr->getType() == Self.Context.OverloadTy);
-  DeclAccessPair Found;
-  Expr* SingleFunctionExpression = 0;
-  if (FunctionDecl* Fn = Self.ResolveSingleFunctionTemplateSpecialization(
-                                    SrcExpr, false, // false -> Complain 
-                                    &Found)) {
-    if (!Self.DiagnoseUseOfDecl(Fn, SrcExpr->getSourceRange().getBegin())) {
-      // mark the expression as resolved to Fn
-      SingleFunctionExpression = Self.FixOverloadedFunctionReference(SrcExpr, 
-                                                                    Found, Fn);
-      
-      if (DoFunctionPointerConverion)
-        Self.DefaultFunctionArrayLvalueConversion(SingleFunctionExpression);
-    }      
-  }
-  if (!SingleFunctionExpression && Complain) {
-    OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
-    Self.Diag(OpRangeForComplaining.getBegin(), DiagIDForComplaining)
-      << oe->getName() << DestTypeForComplaining << OpRangeForComplaining 
-      << oe->getQualifierLoc().getSourceRange();
-    Self.NoteAllOverloadCandidates(SrcExpr);
-  }
-  return SingleFunctionExpression;
-}
+
+
 
 static TryCastResult TryReinterpretCast(Sema &Self, Expr *&SrcExpr,
                                         QualType DestType, bool CStyle,
@@ -1311,7 +1267,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *&SrcExpr,
   if (SrcType == Self.Context.OverloadTy) {
     // ... unless foo<int> resolves to an lvalue unambiguously
     ExprResult SingleFunctionExpr = 
-        ResolveAndFixSingleFunctionTemplateSpecialization(Self, SrcExpr, 
+        Self.ResolveAndFixSingleFunctionTemplateSpecialization(SrcExpr, 
           Expr::getValueKindForType(DestType) == VK_RValue // Convert Fun to Ptr 
         );
     if (SingleFunctionExpr.isUsable()) {
@@ -1544,11 +1500,11 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
     bool ret = false; // false is 'able to convert'
     if (CastExpr->getType() == Context.OverloadTy) {
       ExprResult SingleFunctionExpr = 
-        ResolveAndFixSingleFunctionTemplateSpecialization(*this, 
-              CastExpr, 
-              /* Decay Function to ptr */ false, 
-              /* Complain */ true, 
-              R, CastTy, diag::err_bad_cstyle_cast_overload);
+        ResolveAndFixSingleFunctionTemplateSpecialization(
+                  CastExpr, /* Decay Function to ptr */ false, 
+                  /* Complain */ true, R, CastTy, 
+                  diag::err_bad_cstyle_cast_overload);
+
       if (SingleFunctionExpr.isUsable()) {
         CastExpr = SingleFunctionExpr.release();
         Kind = CK_ToVoid;

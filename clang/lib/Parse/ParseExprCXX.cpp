@@ -527,7 +527,15 @@ ExprResult Parser::ParseCXXTypeid() {
       RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
       if (RParenLoc.isInvalid())
         return ExprError();
-      
+
+      // If we are a foo<int> that identifies a single function, resolve it now...  
+      Expr* e = Result.get();
+      if (e->getType() == Actions.Context.OverloadTy) {
+        ExprResult er = 
+              Actions.ResolveAndFixSingleFunctionTemplateSpecialization(e);
+        if (er.isUsable())
+          Result = er.release();
+      }
       Result = Actions.ActOnCXXTypeid(OpLoc, LParenLoc, /*isType=*/false,
                                       Result.release(), RParenLoc);
     }
