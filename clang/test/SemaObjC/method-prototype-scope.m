@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -verify %s
+// RUN: %clang_cc1  -fsyntax-only -Wduplicate-method-arg -verify %s
 
 // rdar://8877730
 
@@ -11,7 +11,7 @@ int object;
 
 - doSomethingElseWith:(id)object;
 
-- (NSString *)doSomethingWith:(NSString *)object and:(NSArray *)object; // expected-warning {{redefinition of method parameter 'object'}} \
+- (NSString *)doSomethingWith:(NSString *)object and:(NSArray *)object; // expected-warning {{redeclaration of method parameter 'object'}} \
 					  // expected-note {{previous declaration is here}}
 @end
 

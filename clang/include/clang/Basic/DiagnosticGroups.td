@@ -168,6 +168,7 @@ def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
 def CharSubscript : DiagGroup<"char-subscripts">;
 def LargeByValueCopy : DiagGroup<"large-by-value-copy">;
+def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
 
 // Aggregation warning settings.
 

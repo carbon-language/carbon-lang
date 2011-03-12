@@ -327,7 +327,7 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
     // If this is a method prototype, parse it.
     if (Tok.is(tok::minus) || Tok.is(tok::plus)) {
       Decl *methodPrototype =
-        ParseObjCMethodPrototype(interfaceDecl, MethodImplKind);
+        ParseObjCMethodPrototype(interfaceDecl, MethodImplKind, false);
       allMethods.push_back(methodPrototype);
       // Consume the ';' here, since ParseObjCMethodPrototype() is re-used for
       // method definitions.
@@ -340,7 +340,7 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
       ParseObjCMethodDecl(Tok.getLocation(), 
                           tok::minus, 
                           interfaceDecl,
-                          MethodImplKind);
+                          MethodImplKind, false);
       continue;
     }
     // Ignore excess semicolons.
@@ -582,12 +582,14 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl) {
 ///     __attribute__((deprecated))
 ///
 Decl *Parser::ParseObjCMethodPrototype(Decl *IDecl,
-                                       tok::ObjCKeywordKind MethodImplKind) {
+                                       tok::ObjCKeywordKind MethodImplKind,
+                                       bool MethodDefinition) {
   assert((Tok.is(tok::minus) || Tok.is(tok::plus)) && "expected +/-");
 
   tok::TokenKind methodType = Tok.getKind();
   SourceLocation mLoc = ConsumeToken();
-  Decl *MDecl = ParseObjCMethodDecl(mLoc, methodType, IDecl,MethodImplKind);
+  Decl *MDecl = ParseObjCMethodDecl(mLoc, methodType, IDecl,MethodImplKind,
+                                    MethodDefinition);
   // Since this rule is used for both method declarations and definitions,
   // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
@@ -824,7 +826,8 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
 Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                   tok::TokenKind mType,
                                   Decl *IDecl,
-                                  tok::ObjCKeywordKind MethodImplKind) {
+                                  tok::ObjCKeywordKind MethodImplKind,
+                                  bool MethodDefinition) {
   ParsingDeclRAIIObject PD(*this);
 
   if (Tok.is(tok::code_completion)) {
@@ -875,7 +878,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                           mType, IDecl, DSRet, ReturnType, Sel,
                                           0, 
                                           CParamInfo.data(), CParamInfo.size(),
-                                          attrs.getList(), MethodImplKind);
+                                          attrs.getList(), MethodImplKind, false, 
+                                          MethodDefinition);
     PD.complete(Result);
     return Result;
   }
@@ -996,7 +1000,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                         &ArgInfos[0], 
                                         CParamInfo.data(), CParamInfo.size(),
                                         attrs.getList(),
-                                        MethodImplKind, isVariadic);
+                                        MethodImplKind, isVariadic, MethodDefinition);
   // Leave prototype scope.
   PrototypeScope.Exit();
   

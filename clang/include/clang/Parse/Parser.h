@@ -1001,10 +1001,12 @@ private:
   ParsedType ParseObjCTypeName(ObjCDeclSpec &DS, ObjCTypeNameContext Context);
   void ParseObjCMethodRequirement();
   Decl *ParseObjCMethodPrototype(Decl *classOrCat,
-            tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
+            tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword,
+            bool MethodDefinition = true);
   Decl *ParseObjCMethodDecl(SourceLocation mLoc, tok::TokenKind mType,
                                 Decl *classDecl,
-            tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
+            tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword,
+            bool MethodDefinition=true);
   void ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl);
 
   Decl *ParseObjCMethodDefinition();

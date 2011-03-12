@@ -4559,7 +4559,7 @@ public:
     ObjCArgInfo *ArgInfo,
     DeclaratorChunk::ParamInfo *CParamInfo, unsigned CNumArgs, // c-style args
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind,
-    bool isVariadic = false);
+    bool isVariadic, bool MethodDefinition);
 
   // Helper method for ActOnClassMethod/ActOnInstanceMethod.
   // Will search "local" class/category implementations for a method decl.

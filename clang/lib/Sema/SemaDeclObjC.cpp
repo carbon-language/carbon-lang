@@ -1736,7 +1736,7 @@ Decl *Sema::ActOnMethodDeclaration(
     ObjCArgInfo *ArgInfo,
     DeclaratorChunk::ParamInfo *CParamInfo, unsigned CNumArgs, // c-style args
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
-    bool isVariadic) {
+    bool isVariadic, bool MethodDefinition) {
   // Make sure we can establish a context for the method.
   if (!ClassDecl) {
     Diag(MethodLoc, diag::error_missing_method_context);
@@ -1789,8 +1789,9 @@ Decl *Sema::ActOnMethodDeclaration(
     if (R.isSingleResult()) {
       NamedDecl *PrevDecl = R.getFoundDecl();
       if (S->isDeclScope(PrevDecl)) {
-        // FIXME. This should be an error; but will break projects.
-        Diag(ArgInfo[i].NameLoc, diag::warn_method_param_redefinition) 
+        Diag(ArgInfo[i].NameLoc, 
+             (MethodDefinition ? diag::warn_method_param_redefinition 
+                               : diag::warn_method_param_declaration)) 
           << ArgInfo[i].Name;
         Diag(PrevDecl->getLocation(), 
              diag::note_previous_declaration);
