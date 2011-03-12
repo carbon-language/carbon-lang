@@ -1,6 +1,4 @@
-// RUN: true
-// Disabled for 2.9
-//%clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
 
 // Tests related to constructor inheriting, but not specified in [class.inhctor]
 
