@@ -975,15 +975,16 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
       dispatch(*I);
     pop();
 
-    if (T->hasExceptionSpec()) {
+    if (T->hasDynamicExceptionSpec()) {
       push("exception_specifiers");
-      setFlag("any", T->hasAnyExceptionSpec());
+      setFlag("any", T->getExceptionSpecType() == EST_MSAny);
       completeAttrs();
       for (FunctionProtoType::exception_iterator
              I = T->exception_begin(), E = T->exception_end(); I != E; ++I)
         dispatch(*I);
       pop();
     }
+    // FIXME: noexcept specifier
   }
 
   void visitTemplateSpecializationTypeChildren(TemplateSpecializationType *T) {

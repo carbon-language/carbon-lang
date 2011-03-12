@@ -21,6 +21,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/TypeVisitor.h"
 #include "clang/Basic/Specifiers.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -1165,7 +1166,8 @@ llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
 
 FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
                                      unsigned numArgs, QualType canonical,
-                                     const ExtProtoInfo &epi)
+                                     const ExtProtoInfo &epi,
+                                     const ASTContext *context)
   : FunctionType(FunctionProto, result, epi.Variadic, epi.TypeQuals, 
                  epi.RefQualifier, canonical,
                  result->isDependentType(),
@@ -1173,8 +1175,7 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
                  result->containsUnexpandedParameterPack(),
                  epi.ExtInfo),
     NumArgs(numArgs), NumExceptions(epi.NumExceptions),
-    HasExceptionSpec(isDynamicExceptionSpec(epi.ExceptionSpecType)),
-    HasAnyExceptionSpec(epi.ExceptionSpecType == EST_DynamicAny)
+    ExceptionSpecType(epi.ExceptionSpecType)
 {
   // Fill in the trailing argument array.
   QualType *argSlot = reinterpret_cast<QualType*>(this+1);
@@ -1187,18 +1188,52 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
 
     argSlot[i] = args[i];
   }
-  
-  // Fill in the exception array.
-  QualType *exnSlot = argSlot + numArgs;
-  for (unsigned i = 0, e = epi.NumExceptions; i != e; ++i) {
-    if (epi.Exceptions[i]->isDependentType())
-      setDependent();
 
-    if (epi.Exceptions[i]->containsUnexpandedParameterPack())
-      setContainsUnexpandedParameterPack();
+  if (getExceptionSpecType() == EST_Dynamic) {
+    // Fill in the exception array.
+    QualType *exnSlot = argSlot + numArgs;
+    for (unsigned i = 0, e = epi.NumExceptions; i != e; ++i) {
+      if (epi.Exceptions[i]->isDependentType())
+        setDependent();
 
-    exnSlot[i] = epi.Exceptions[i];
+      if (epi.Exceptions[i]->containsUnexpandedParameterPack())
+        setContainsUnexpandedParameterPack();
+
+      exnSlot[i] = epi.Exceptions[i];
+    }
+  } else if (getExceptionSpecType() == EST_ComputedNoexcept) {
+    // Store the noexcept expression and context.
+    Expr **noexSlot = reinterpret_cast<Expr**>(argSlot + numArgs);
+    *noexSlot = epi.NoexceptExpr;
+    const ASTContext **contextSlot = const_cast<const ASTContext**>(
+        reinterpret_cast<ASTContext**>(noexSlot + 1));
+    *contextSlot = context;
   }
+}
+
+FunctionProtoType::NoexceptResult
+FunctionProtoType::getNoexceptSpec() const {
+  ExceptionSpecificationType est = getExceptionSpecType();
+  if (est == EST_BasicNoexcept)
+    return NR_Nothrow;
+
+  if (est != EST_ComputedNoexcept)
+    return NR_NoNoexcept;
+
+  Expr *noexceptExpr = getNoexceptExpr();
+  if (!noexceptExpr)
+    return NR_BadNoexcept;
+  if (noexceptExpr->isValueDependent())
+    return NR_Dependent;
+
+  llvm::APSInt value;
+  ASTContext& ctx = const_cast<ASTContext&>(*getContext());
+  bool isICE = noexceptExpr->isIntegerConstantExpr(value, ctx, 0,
+                                                   /*evaluated*/false);
+  (void)isICE;
+  assert(isICE && "AST should not contain bad noexcept expressions.");
+
+  return value.getBoolValue() ? NR_Nothrow : NR_Throw;
 }
 
 bool FunctionProtoType::isTemplateVariadic() const {
@@ -1211,23 +1246,27 @@ bool FunctionProtoType::isTemplateVariadic() const {
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 const QualType *ArgTys, unsigned NumArgs,
-                                const ExtProtoInfo &epi) {
+                                const ExtProtoInfo &epi,
+                                const ASTContext *Context) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
   ID.AddBoolean(epi.Variadic);
   ID.AddInteger(epi.TypeQuals);
   ID.AddInteger(epi.RefQualifier);
-  if (isDynamicExceptionSpec(epi.ExceptionSpecType)) {
-    ID.AddBoolean(epi.ExceptionSpecType == EST_DynamicAny);
+  ID.AddInteger(epi.ExceptionSpecType);
+  if (epi.ExceptionSpecType == EST_Dynamic) {
     for (unsigned i = 0; i != epi.NumExceptions; ++i)
       ID.AddPointer(epi.Exceptions[i].getAsOpaquePtr());
+  } else if (epi.ExceptionSpecType == EST_ComputedNoexcept && epi.NoexceptExpr){
+    epi.NoexceptExpr->Profile(ID, *Context, true);
   }
   epi.ExtInfo.Profile(ID);
 }
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getResultType(), arg_type_begin(), NumArgs, getExtProtoInfo());
+  Profile(ID, getResultType(), arg_type_begin(), NumArgs, getExtProtoInfo(),
+          getContext());
 }
 
 QualType TypedefType::desugar() const {

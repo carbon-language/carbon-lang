@@ -1552,8 +1552,8 @@ void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
     mergeParamDeclAttributes(*ni, *oi, Context);    
 }
 
-/// MergeVarDecl - We parsed a variable 'New' which has the same name and scope
-/// as a previous declaration 'Old'.  Figure out how to merge their types,
+/// MergeVarDeclTypes - We parsed a variable 'New' which has the same name and
+/// scope as a previous declaration 'Old'.  Figure out how to merge their types,
 /// emitting diagnostics as appropriate.
 ///
 /// Declarations using the auto type specifier (C++ [decl.spec.auto]) call back
@@ -1570,8 +1570,10 @@ void Sema::MergeVarDeclTypes(VarDecl *New, VarDecl *Old) {
     if (AT && !AT->isDeduced()) {
       // We don't know what the new type is until the initializer is attached.
       return;
-    } else if (Context.hasSameType(New->getType(), Old->getType()))
-      return;
+    } else if (Context.hasSameType(New->getType(), Old->getType())) {
+      // These could still be something that needs exception specs checked.
+      return MergeVarDeclExceptionSpecs(New, Old);
+    }
     // C++ [basic.link]p10:
     //   [...] the types specified by all declarations referring to a given
     //   object or function shall be identical, except that declarations for an

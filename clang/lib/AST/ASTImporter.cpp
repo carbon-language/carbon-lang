@@ -521,16 +521,21 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     }
     if (Proto1->isVariadic() != Proto2->isVariadic())
       return false;
-    if (Proto1->hasExceptionSpec() != Proto2->hasExceptionSpec())
+    if (Proto1->getExceptionSpecType() != Proto2->getExceptionSpecType())
       return false;
-    if (Proto1->hasAnyExceptionSpec() != Proto2->hasAnyExceptionSpec())
-      return false;
-    if (Proto1->getNumExceptions() != Proto2->getNumExceptions())
-      return false;
-    for (unsigned I = 0, N = Proto1->getNumExceptions(); I != N; ++I) {
+    if (Proto1->getExceptionSpecType() == EST_Dynamic) {
+      if (Proto1->getNumExceptions() != Proto2->getNumExceptions())
+        return false;
+      for (unsigned I = 0, N = Proto1->getNumExceptions(); I != N; ++I) {
+        if (!IsStructurallyEquivalent(Context,
+                                      Proto1->getExceptionType(I),
+                                      Proto2->getExceptionType(I)))
+          return false;
+      }
+    } else if (Proto1->getExceptionSpecType() == EST_ComputedNoexcept) {
       if (!IsStructurallyEquivalent(Context,
-                                    Proto1->getExceptionType(I),
-                                    Proto2->getExceptionType(I)))
+                                    Proto1->getNoexceptExpr(),
+                                    Proto2->getNoexceptExpr()))
         return false;
     }
     if (Proto1->getTypeQuals() != Proto2->getTypeQuals())

@@ -1501,10 +1501,12 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   }
 
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = EST_Dynamic;
   if (HasBadAllocExceptionSpec) {
+    EPI.ExceptionSpecType = EST_Dynamic;
     EPI.NumExceptions = 1;
     EPI.Exceptions = &BadAllocType;
+  } else {
+    EPI.ExceptionSpecType = EST_DynamicNone;
   }
 
   QualType FnType = Context.getFunctionType(Return, &Argument, 1, EPI);
@@ -2421,7 +2423,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
             FoundAssign = true;
             const FunctionProtoType *CPT
                 = Operator->getType()->getAs<FunctionProtoType>();
-            if (!CPT->hasEmptyExceptionSpec()) {
+            if (!CPT->isNothrow()) {
               AllNoThrow = false;
               break;
             }
@@ -2461,9 +2463,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
           FoundConstructor = true;
           const FunctionProtoType *CPT
               = Constructor->getType()->getAs<FunctionProtoType>();
-          // TODO: check whether evaluating default arguments can throw.
+          // FIXME: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
-          if (!CPT->hasEmptyExceptionSpec() || CPT->getNumArgs() > 1) {
+          if (!CPT->isNothrow() || CPT->getNumArgs() > 1) {
             AllNoThrow = false;
             break;
           }
@@ -2498,7 +2500,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
               = Constructor->getType()->getAs<FunctionProtoType>();
           // TODO: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
-          return CPT->hasEmptyExceptionSpec() && CPT->getNumArgs() == 0;
+          return CPT->isNothrow() && CPT->getNumArgs() == 0;
         }
       }
     }

@@ -105,7 +105,8 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
                                     New->getType()->getAs<FunctionProtoType>(),
                                     New->getLocation(),
                                     &MissingExceptionSpecification,
-                                    &MissingEmptyExceptionSpecification))
+                                    &MissingEmptyExceptionSpecification,
+                                    /*AllowNoexceptAllMatchWithNoSpec=*/true))
     return false;
 
   // The failure was something other than an empty exception
@@ -129,8 +130,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
        Context.getSourceManager().isInSystemHeader(Old->getLocation())) &&
       Old->isExternC()) {
     FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
-    EPI.ExceptionSpecType = EST_Dynamic;
-    EPI.NumExceptions = 0;
+    EPI.ExceptionSpecType = EST_DynamicNone;
     QualType NewType = Context.getFunctionType(NewProto->getResultType(),
                                                NewProto->arg_type_begin(),
                                                NewProto->getNumArgs(),
@@ -144,11 +144,14 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
       = Old->getType()->getAs<FunctionProtoType>();
 
     FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
-    EPI.ExceptionSpecType = OldProto->hasExceptionSpec() ?
-      (OldProto->hasAnyExceptionSpec() ? EST_DynamicAny : EST_Dynamic) :
-      EST_None;
-    EPI.NumExceptions = OldProto->getNumExceptions();
-    EPI.Exceptions = OldProto->exception_begin();
+    EPI.ExceptionSpecType = OldProto->getExceptionSpecType();
+    if (EPI.ExceptionSpecType == EST_Dynamic) {
+      EPI.NumExceptions = OldProto->getNumExceptions();
+      EPI.Exceptions = OldProto->exception_begin();
+    } else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
+      // FIXME: We can't just take the expression from the old prototype. It
+      // likely contains references to the old prototype's parameters.
+    }
 
     // Update the type of the function with the appropriate exception
     // specification.
@@ -178,20 +181,43 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
     // Warn about the lack of exception specification.
     llvm::SmallString<128> ExceptionSpecString;
     llvm::raw_svector_ostream OS(ExceptionSpecString);
-    OS << "throw(";
-    bool OnFirstException = true;
-    for (FunctionProtoType::exception_iterator E = OldProto->exception_begin(),
-                                            EEnd = OldProto->exception_end();
-         E != EEnd;
-         ++E) {
-      if (OnFirstException)
-        OnFirstException = false;
-      else
-        OS << ", ";
-      
-      OS << E->getAsString(Context.PrintingPolicy);
+    switch (OldProto->getExceptionSpecType()) {
+    case EST_DynamicNone:
+      OS << "throw()";
+      break;
+
+    case EST_Dynamic: {
+      OS << "throw(";
+      bool OnFirstException = true;
+      for (FunctionProtoType::exception_iterator E = OldProto->exception_begin(),
+                                              EEnd = OldProto->exception_end();
+           E != EEnd;
+           ++E) {
+        if (OnFirstException)
+          OnFirstException = false;
+        else
+          OS << ", ";
+        
+        OS << E->getAsString(Context.PrintingPolicy);
+      }
+      OS << ")";
+      break;
     }
-    OS << ")";
+
+    case EST_BasicNoexcept:
+      OS << "noexcept";
+      break;
+
+    case EST_ComputedNoexcept:
+      OS << "noexcept(";
+      OldProto->getNoexceptExpr()->printPretty(OS, Context, 0,
+                                               Context.PrintingPolicy);
+      OS << ")";
+      break;
+
+    default:
+      assert(false && "This spec type is compatible with none.");
+    }
     OS.flush();
 
     SourceLocation FixItLoc;
@@ -236,18 +262,17 @@ bool Sema::CheckEquivalentExceptionSpec(
                                       Old, OldLoc, New, NewLoc);
 }
 
-/// CheckEquivalentExceptionSpec - Check if the two types have equivalent
-/// exception specifications. Exception specifications are equivalent if
-/// they allow exactly the same set of exception types. It does not matter how
-/// that is achieved. See C++ [except.spec]p2.
-bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID, 
+/// CheckEquivalentExceptionSpec - Check if the two types have compatible
+/// exception specifications. See C++ [except.spec]p3.
+bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
                                         const PartialDiagnostic & NoteID,
-                                        const FunctionProtoType *Old, 
+                                        const FunctionProtoType *Old,
                                         SourceLocation OldLoc,
-                                        const FunctionProtoType *New, 
+                                        const FunctionProtoType *New,
                                         SourceLocation NewLoc,
                                         bool *MissingExceptionSpecification,
-                                     bool *MissingEmptyExceptionSpecification)  {
+                                        bool*MissingEmptyExceptionSpecification,
+                                        bool AllowNoexceptAllMatchWithNoSpec) {
   // Just completely ignore this under -fno-exceptions.
   if (!getLangOptions().CXXExceptions)
     return false;
@@ -258,29 +283,109 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   if (MissingEmptyExceptionSpecification)
     *MissingEmptyExceptionSpecification = false;
 
-  bool OldAny = !Old->hasExceptionSpec() || Old->hasAnyExceptionSpec();
-  bool NewAny = !New->hasExceptionSpec() || New->hasAnyExceptionSpec();
-  if (getLangOptions().Microsoft) {
-    // Treat throw(whatever) as throw(...) to be compatible with MS headers.
-    if (New->hasExceptionSpec() && New->getNumExceptions() > 0)
-      NewAny = true;
-    if (Old->hasExceptionSpec() && Old->getNumExceptions() > 0)
-      OldAny = true;
+  // C++0x [except.spec]p3: Two exception-specifications are compatible if:
+  //   - both are non-throwing, regardless of their form,
+  //   - both have the form noexcept(constant-expression) and the constant-
+  //     expressions are equivalent,
+  //   - one exception-specification is a noexcept-specification allowing all
+  //     exceptions and the other is of the form throw(type-id-list), or
+  //   - both are dynamic-exception-specifications that have the same set of
+  //     adjusted types.
+  //
+  // C++0x [except.spec]p12: An exception-specifcation is non-throwing if it is
+  //   of the form throw(), noexcept, or noexcept(constant-expression) where the
+  //   constant-expression yields true.
+  //
+  // CWG 1073 Proposed resolution: Strike the third bullet above.
+  //
+  // C++0x [except.spec]p4: If any declaration of a function has an exception-
+  //   specifier that is not a noexcept-specification allowing all exceptions,
+  //   all declarations [...] of that function shall have a compatible
+  //   exception-specification.
+  //
+  // That last point basically means that noexcept(false) matches no spec.
+  // It's considered when AllowNoexceptAllMatchWithNoSpec is true.
+
+  ExceptionSpecificationType OldEST = Old->getExceptionSpecType();
+  ExceptionSpecificationType NewEST = New->getExceptionSpecType();
+
+  // Shortcut the case where both have no spec.
+  if (OldEST == EST_None && NewEST == EST_None)
+    return false;
+
+  FunctionProtoType::NoexceptResult OldNR = Old->getNoexceptSpec();
+  FunctionProtoType::NoexceptResult NewNR = New->getNoexceptSpec();
+  if (OldNR == FunctionProtoType::NR_BadNoexcept ||
+      NewNR == FunctionProtoType::NR_BadNoexcept)
+    return false;
+
+  // Dependent noexcept specifiers are compatible with each other, but nothing
+  // else.
+  // One noexcept is compatible with another if the argument is the same
+  if (OldNR == NewNR &&
+      OldNR != FunctionProtoType::NR_NoNoexcept &&
+      NewNR != FunctionProtoType::NR_NoNoexcept)
+    return false;
+  if (OldNR != NewNR &&
+      OldNR != FunctionProtoType::NR_NoNoexcept &&
+      NewNR != FunctionProtoType::NR_NoNoexcept) {
+    Diag(NewLoc, DiagID);
+    if (NoteID.getDiagID() != 0)
+      Diag(OldLoc, NoteID);
+    return true;
   }
 
-  if (OldAny && NewAny)
+  if (getLangOptions().Microsoft) {
+    // Treat throw(whatever) as throw(...) to be compatible with MS headers.
+    if (OldEST == EST_Dynamic)
+      OldEST = EST_MSAny;
+    if (NewEST == EST_Dynamic)
+      NewEST = EST_MSAny;
+  }
+
+  // The MS extension throw(...) is compatible with itself.
+  if (OldEST == EST_MSAny && NewEST == EST_MSAny)
     return false;
-  if (OldAny || NewAny) {
+
+  // It's also compatible with no spec.
+  if ((OldEST == EST_None && NewEST == EST_MSAny) ||
+      (OldEST == EST_MSAny && NewEST == EST_None))
+    return false;
+
+  // It's also compatible with noexcept(false).
+  if (OldEST == EST_MSAny && NewNR == FunctionProtoType::NR_Throw)
+    return false;
+  if (NewEST == EST_MSAny && OldNR == FunctionProtoType::NR_Throw)
+    return false;
+
+  // As described above, noexcept(false) matches no spec only for functions.
+  if (AllowNoexceptAllMatchWithNoSpec) {
+    if (OldEST == EST_None && NewNR == FunctionProtoType::NR_Throw)
+      return false;
+    if (NewEST == EST_None && OldNR == FunctionProtoType::NR_Throw)
+      return false;
+  }
+
+  // Any non-throwing specifications are compatible.
+  bool OldNonThrowing = OldNR == FunctionProtoType::NR_Nothrow ||
+                        OldEST == EST_DynamicNone;
+  bool NewNonThrowing = NewNR == FunctionProtoType::NR_Nothrow ||
+                        NewEST == EST_DynamicNone;
+  if (OldNonThrowing && NewNonThrowing)
+    return false;
+
+  // At this point, the only remaining valid case is two matching dynamic
+  // specifications. We return here unless both specifications are dynamic.
+  if (OldEST != EST_Dynamic || NewEST != EST_Dynamic) {
     if (MissingExceptionSpecification && Old->hasExceptionSpec() &&
         !New->hasExceptionSpec()) {
       // The old type has an exception specification of some sort, but
       // the new type does not.
       *MissingExceptionSpecification = true;
 
-      if (MissingEmptyExceptionSpecification && 
-          !Old->hasAnyExceptionSpec() && Old->getNumExceptions() == 0) {
-        // The old type has a throw() exception specification and the
-        // new type has no exception specification, and the caller asked
+      if (MissingEmptyExceptionSpecification && OldNonThrowing) {
+        // The old type has a throw() or noexcept(true) exception specification
+        // and the new type has no exception specification, and the caller asked
         // to handle this itself.
         *MissingEmptyExceptionSpecification = true;
       }
@@ -294,8 +399,11 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
     return true;
   }
 
+  assert(OldEST == EST_Dynamic && NewEST == EST_Dynamic &&
+      "Exception compatibility logic error: non-dynamic spec slipped through.");
+
   bool Success = true;
-  // Both have a definite exception spec. Collect the first set, then compare
+  // Both have a dynamic exception spec. Collect the first set, then compare
   // to the second.
   llvm::SmallPtrSet<CanQualType, 8> OldTypes, NewTypes;
   for (FunctionProtoType::exception_iterator I = Old->exception_begin(),
@@ -340,19 +448,66 @@ bool Sema::CheckExceptionSpecSubset(
   if (!SubLoc.isValid())
     SubLoc = SuperLoc;
 
+  ExceptionSpecificationType SuperEST = Superset->getExceptionSpecType();
+
   // If superset contains everything, we're done.
-  if (!Superset->hasExceptionSpec() || Superset->hasAnyExceptionSpec())
+  if (SuperEST == EST_None || SuperEST == EST_MSAny)
     return CheckParamExceptionSpec(NoteID, Superset, SuperLoc, Subset, SubLoc);
 
+  // If there are dependent noexcept specs, assume everything is fine. Unlike
+  // with the equivalency check, this is safe in this case, because we don't
+  // want to merge declarations. Checks after instantiation will catch any
+  // omissions we make here.
+  // We also shortcut checking if a noexcept expression was bad.
+
+  FunctionProtoType::NoexceptResult SuperNR =Superset->getNoexceptSpec();
+  if (SuperNR == FunctionProtoType::NR_BadNoexcept ||
+      SuperNR == FunctionProtoType::NR_Dependent)
+    return false;
+
+  // Another case of the superset containing everything.
+  if (SuperNR == FunctionProtoType::NR_Throw)
+    return CheckParamExceptionSpec(NoteID, Superset, SuperLoc, Subset, SubLoc);
+
+  ExceptionSpecificationType SubEST = Subset->getExceptionSpecType();
+
   // It does not. If the subset contains everything, we've failed.
-  if (!Subset->hasExceptionSpec() || Subset->hasAnyExceptionSpec()) {
+  if (SubEST == EST_None || SubEST == EST_MSAny) {
     Diag(SubLoc, DiagID);
     if (NoteID.getDiagID() != 0)
       Diag(SuperLoc, NoteID);
     return true;
   }
 
-  // Neither contains everything. Do a proper comparison.
+  FunctionProtoType::NoexceptResult SubNR = Subset->getNoexceptSpec();
+  if (SubNR == FunctionProtoType::NR_BadNoexcept ||
+      SubNR == FunctionProtoType::NR_Dependent)
+    return false;
+
+  // Another case of the subset containing everything.
+  if (SubNR == FunctionProtoType::NR_Throw) {
+    Diag(SubLoc, DiagID);
+    if (NoteID.getDiagID() != 0)
+      Diag(SuperLoc, NoteID);
+    return true;
+  }
+
+  // If the subset contains nothing, we're done.
+  if (SubEST == EST_DynamicNone || SubNR == FunctionProtoType::NR_Nothrow)
+    return CheckParamExceptionSpec(NoteID, Superset, SuperLoc, Subset, SubLoc);
+
+  // Otherwise, if the superset contains nothing, we've failed.
+  if (SuperEST == EST_DynamicNone || SuperNR == FunctionProtoType::NR_Nothrow) {
+    Diag(SubLoc, DiagID);
+    if (NoteID.getDiagID() != 0)
+      Diag(SuperLoc, NoteID);
+    return true;
+  }
+
+  assert(SuperEST == EST_Dynamic && SubEST == EST_Dynamic &&
+         "Exception spec subset: non-dynamic case slipped through.");
+
+  // Neither contains everything or nothing. Do a proper comparison.
   for (FunctionProtoType::exception_iterator SubI = Subset->exception_begin(),
        SubE = Subset->exception_end(); SubI != SubE; ++SubI) {
     // Take one type from the subset.

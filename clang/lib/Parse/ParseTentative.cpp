@@ -1238,6 +1238,16 @@ Parser::TPResult Parser::TryParseFunctionDeclarator() {
     if (!SkipUntil(tok::r_paren))
       return TPResult::Error();
   }
+  if (Tok.is(tok::kw_noexcept)) {
+    ConsumeToken();
+    // Possibly an expression as well.
+    if (Tok.is(tok::l_paren)) {
+      // Find the matching rparen.
+      ConsumeParen();
+      if (!SkipUntil(tok::r_paren))
+        return TPResult::Error();
+    }
+  }
 
   return TPResult::Ambiguous();
 }

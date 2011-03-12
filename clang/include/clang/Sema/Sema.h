@@ -757,7 +757,8 @@ public:
       const FunctionProtoType *Old, SourceLocation OldLoc,
       const FunctionProtoType *New, SourceLocation NewLoc,
       bool *MissingExceptionSpecification = 0,
-      bool *MissingEmptyExceptionSpecification = 0);
+      bool *MissingEmptyExceptionSpecification = 0,
+      bool AllowNoexceptAllMatchWithNoSpec = false);
   bool CheckExceptionSpecSubset(
       const PartialDiagnostic &DiagID, const PartialDiagnostic & NoteID,
       const FunctionProtoType *Superset, SourceLocation SuperLoc,
@@ -1076,8 +1077,9 @@ public:
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
   void mergeObjCMethodDecls(ObjCMethodDecl *New, const ObjCMethodDecl *Old);
-  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old);
   void MergeVarDecl(VarDecl *New, LookupResult &OldDecls);
+  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old);
+  void MergeVarDeclExceptionSpecs(VarDecl *New, VarDecl *Old);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
 
   // AssignmentAction - This is used by all the assignment diagnostic functions

@@ -709,7 +709,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       FuncAttrs |= llvm::Attribute::NoUnwind;
     else if (const FunctionDecl *Fn = dyn_cast<FunctionDecl>(TargetDecl)) {
       const FunctionProtoType *FPT = Fn->getType()->getAs<FunctionProtoType>();
-      if (FPT && FPT->hasEmptyExceptionSpec())
+      if (FPT && FPT->isNothrow())
         FuncAttrs |= llvm::Attribute::NoUnwind;
     }
 

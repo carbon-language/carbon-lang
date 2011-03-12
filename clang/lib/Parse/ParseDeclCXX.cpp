@@ -2042,6 +2042,11 @@ Parser::MaybeParseExceptionSpecification(SourceRange &SpecificationRange,
     SourceLocation LParenLoc = ConsumeParen();
     NoexceptType = EST_ComputedNoexcept;
     NoexceptExpr = ParseConstantExpression();
+    // The argument must be contextually convertible to bool. We use
+    // ActOnBooleanCondition for this purpose.
+    if (!NoexceptExpr.isInvalid())
+      NoexceptExpr = Actions.ActOnBooleanCondition(getCurScope(), KeywordLoc,
+                                                   NoexceptExpr.get());
     SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
     NoexceptRange = SourceRange(KeywordLoc, RParenLoc);
   } else {
@@ -2090,7 +2095,7 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
   if (!Tok.is(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "throw";
     SpecificationRange.setEnd(SpecificationRange.getBegin());
-    return EST_Dynamic;
+    return EST_DynamicNone;
   }
   SourceLocation LParenLoc = ConsumeParen();
 
@@ -2102,7 +2107,7 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
       Diag(EllipsisLoc, diag::ext_ellipsis_exception_spec);
     SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
     SpecificationRange.setEnd(RParenLoc);
-    return EST_DynamicAny;
+    return EST_MSAny;
   }
 
   // Parse the sequence of type-ids.
@@ -2132,7 +2137,7 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
   }
 
   SpecificationRange.setEnd(MatchRHSPunctuation(tok::r_paren, LParenLoc));
-  return EST_Dynamic;
+  return Exceptions.empty() ? EST_DynamicNone : EST_Dynamic;
 }
 
 /// ParseTrailingReturnType - Parse a trailing return type on a new-style

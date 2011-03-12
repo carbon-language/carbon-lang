@@ -982,7 +982,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // exception spec; for this part, we inline
   // CXXNewExpr::shouldNullCheckAllocation()) and we have an
   // interesting initializer.
-  bool nullCheck = allocatorType->hasNonThrowingExceptionSpec() &&
+  bool nullCheck = allocatorType->isNothrow() &&
     !(allocType->isPODType() && !E->hasInitializer());
 
   llvm::BasicBlock *nullCheckBB = 0;

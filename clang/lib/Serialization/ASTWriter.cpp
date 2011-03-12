@@ -178,11 +178,14 @@ void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   Record.push_back(T->isVariadic());
   Record.push_back(T->getTypeQuals());
   Record.push_back(static_cast<unsigned>(T->getRefQualifier()));
-  Record.push_back(T->hasExceptionSpec());
-  Record.push_back(T->hasAnyExceptionSpec());
-  Record.push_back(T->getNumExceptions());
-  for (unsigned I = 0, N = T->getNumExceptions(); I != N; ++I)
-    Writer.AddTypeRef(T->getExceptionType(I), Record);
+  Record.push_back(T->getExceptionSpecType());
+  if (T->getExceptionSpecType() == EST_Dynamic) {
+    Record.push_back(T->getNumExceptions());
+    for (unsigned I = 0, N = T->getNumExceptions(); I != N; ++I)
+      Writer.AddTypeRef(T->getExceptionType(I), Record);
+  } else if (T->getExceptionSpecType() == EST_ComputedNoexcept) {
+    Writer.AddStmt(T->getNoexceptExpr());
+  }
   Code = TYPE_FUNCTION_PROTO;
 }
 

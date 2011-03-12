@@ -1909,7 +1909,7 @@ ASTContext::getFunctionType(QualType ResultTy,
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, EPI);
+  FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, EPI, this);
 
   void *InsertPos = 0;
   if (FunctionProtoType *FTP =
@@ -1953,14 +1953,20 @@ ASTContext::getFunctionType(QualType ResultTy,
 
   // FunctionProtoType objects are allocated with extra bytes after them
   // for two variable size arrays (for parameter and exception types) at the
-  // end of them.
+  // end of them. Instead of the exception types, there could be a noexcept
+  // expression and a context pointer.
   size_t Size = sizeof(FunctionProtoType) +
-                NumArgs * sizeof(QualType) +
-                EPI.NumExceptions * sizeof(QualType);
+                NumArgs * sizeof(QualType);
+  if (EPI.ExceptionSpecType == EST_Dynamic)
+    Size += EPI.NumExceptions * sizeof(QualType);
+  else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
+    Size += sizeof(Expr*) + sizeof(ASTContext*);
+  }
   FunctionProtoType *FTP = (FunctionProtoType*) Allocate(Size, TypeAlignment);
   FunctionProtoType::ExtProtoInfo newEPI = EPI;
   newEPI.ExtInfo = EPI.ExtInfo.withCallingConv(CallConv);
-  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, Canonical, newEPI);
+  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, Canonical, newEPI,
+                              this);
   Types.push_back(FTP);
   FunctionProtoTypes.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);

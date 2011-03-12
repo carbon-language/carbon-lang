@@ -421,12 +421,12 @@ void TypePrinter::printFunctionProto(const FunctionProtoType *T,
     S += " &&";
     break;
   }
-  
-  if (T->hasExceptionSpec()) {
+
+  if (T->hasDynamicExceptionSpec()) {
     S += " throw(";
-    if (T->hasAnyExceptionSpec())
+    if (T->getExceptionSpecType() == EST_MSAny)
       S += "...";
-    else 
+    else
       for (unsigned I = 0, N = T->getNumExceptions(); I != N; ++I) {
         if (I)
           S += ", ";
@@ -436,6 +436,16 @@ void TypePrinter::printFunctionProto(const FunctionProtoType *T,
         S += ExceptionType;
       }
     S += ")";
+  } else if (isNoexceptExceptionSpec(T->getExceptionSpecType())) {
+    S += " noexcept";
+    if (T->getExceptionSpecType() == EST_ComputedNoexcept) {
+      S += "(";
+      llvm::raw_string_ostream EOut(S);
+      T->getNoexceptExpr()->printPretty(EOut, 0, Policy);
+      EOut.flush();
+      S += EOut.str();
+      S += ")";
+    }
   }
 
   print(T->getResultType(), S);

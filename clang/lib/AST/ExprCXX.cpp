@@ -102,7 +102,7 @@ void CXXNewExpr::AllocateArgsArray(ASTContext &C, bool isArray,
 
 bool CXXNewExpr::shouldNullCheckAllocation() const {
   return getOperatorNew()->getType()->
-    castAs<FunctionProtoType>()->hasNonThrowingExceptionSpec();
+    castAs<FunctionProtoType>()->isNothrow();
 }
 
 // CXXDeleteExpr

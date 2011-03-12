@@ -2085,8 +2085,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
   const FunctionProtoType *Proto = Tmpl->getType()->getAs<FunctionProtoType>();
   assert(Proto && "Function template without prototype?");
 
-  if (Proto->hasExceptionSpec() || Proto->hasAnyExceptionSpec() ||
-      Proto->getNoReturnAttr()) {
+  if (Proto->hasExceptionSpec() || Proto->getNoReturnAttr()) {
     // The function has an exception specification or a "noreturn"
     // attribute. Substitute into each of the exception types.
     llvm::SmallVector<QualType, 4> Exceptions;
@@ -2100,7 +2099,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                 Unexpanded);
         assert(!Unexpanded.empty() && 
                "Pack expansion without parameter packs?");
-        
+
         bool Expand = false;
         bool RetainExpansion = false;
         llvm::Optional<unsigned> NumExpansions
@@ -2114,7 +2113,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                     RetainExpansion,
                                                     NumExpansions))
           break;
-                      
+
         if (!Expand) {
           // We can't expand this pack expansion into separate arguments yet;
           // just substitute into the pattern and create a new pack expansion 
@@ -2130,7 +2129,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
           Exceptions.push_back(T);
           continue;
         }
-        
+
         // Substitute into the pack expansion pattern for each template
         bool Invalid = false;
         for (unsigned ArgIdx = 0; ArgIdx != *NumExpansions; ++ArgIdx) {
@@ -2143,13 +2142,13 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
             Invalid = true;
             break;
           }
-          
+
           Exceptions.push_back(T);
         }
-        
+
         if (Invalid)
           break;
-        
+
         continue;
       }
       
@@ -2166,9 +2165,8 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
     // Rebuild the function type 
 
     FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
-    EPI.ExceptionSpecType = Proto->hasExceptionSpec() ?
-      (Proto->hasAnyExceptionSpec() ? EST_DynamicAny : EST_Dynamic) :
-      EST_None;
+    // FIXME: Handle noexcept
+    EPI.ExceptionSpecType = Proto->getExceptionSpecType();
     EPI.NumExceptions = Exceptions.size();
     EPI.Exceptions = Exceptions.data();
     EPI.ExtInfo = Proto->getExtInfo();

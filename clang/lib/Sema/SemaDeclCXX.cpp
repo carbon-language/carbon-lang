@@ -383,6 +383,48 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
   return Invalid;
 }
 
+/// \brief Merge the exception specifications of two variable declarations.
+///
+/// This is called when there's a redeclaration of a VarDecl. The function
+/// checks if the redeclaration might have an exception specification and
+/// validates compatibility and merges the specs if necessary.
+void Sema::MergeVarDeclExceptionSpecs(VarDecl *New, VarDecl *Old) {
+  // Shortcut if exceptions are disabled.
+  if (!getLangOptions().CXXExceptions)
+    return;
+
+  assert(Context.hasSameType(New->getType(), Old->getType()) &&
+         "Should only be called if types are otherwise the same.");
+
+  QualType NewType = New->getType();
+  QualType OldType = Old->getType();
+
+  // We're only interested in pointers and references to functions, as well
+  // as pointers to member functions.
+  if (const ReferenceType *R = NewType->getAs<ReferenceType>()) {
+    NewType = R->getPointeeType();
+    OldType = OldType->getAs<ReferenceType>()->getPointeeType();
+  } else if (const PointerType *P = NewType->getAs<PointerType>()) {
+    NewType = P->getPointeeType();
+    OldType = OldType->getAs<PointerType>()->getPointeeType();
+  } else if (const MemberPointerType *M = NewType->getAs<MemberPointerType>()) {
+    NewType = M->getPointeeType();
+    OldType = OldType->getAs<MemberPointerType>()->getPointeeType();
+  }
+
+  if (!NewType->isFunctionProtoType())
+    return;
+
+  // There's lots of special cases for functions. For function pointers, system
+  // libraries are hopefully not as broken so that we don't need these
+  // workarounds.
+  if (CheckEquivalentExceptionSpec(
+        OldType->getAs<FunctionProtoType>(), Old->getLocation(),
+        NewType->getAs<FunctionProtoType>(), New->getLocation())) {
+    New->setInvalidDecl();
+  }
+}
+
 /// CheckCXXDefaultArguments - Verify that the default arguments for a
 /// function declaration are well-formed according to C++
 /// [dcl.fct.default].
@@ -2978,53 +3020,101 @@ namespace {
   /// implicitly-declared special member functions.
   class ImplicitExceptionSpecification {
     ASTContext &Context;
-    bool AllowsAllExceptions;
+    // We order exception specifications thus:
+    // noexcept is the most restrictive, but is only used in C++0x.
+    // throw() comes next.
+    // Then a throw(collected exceptions)
+    // Finally no specification.
+    // throw(...) is used instead if any called function uses it.
+    ExceptionSpecificationType ComputedEST;
     llvm::SmallPtrSet<CanQualType, 4> ExceptionsSeen;
     llvm::SmallVector<QualType, 4> Exceptions;
-    
+
+    void ClearExceptions() {
+      ExceptionsSeen.clear();
+      Exceptions.clear();
+    }
+
   public:
     explicit ImplicitExceptionSpecification(ASTContext &Context) 
-      : Context(Context), AllowsAllExceptions(false) { }
-    
-    /// \brief Whether the special member function should have any
-    /// exception specification at all.
-    bool hasExceptionSpecification() const {
-      return !AllowsAllExceptions;
+      : Context(Context), ComputedEST(EST_BasicNoexcept) {
+      if (!Context.getLangOptions().CPlusPlus0x)
+        ComputedEST = EST_DynamicNone;
     }
-    
-    /// \brief Whether the special member function should have a
-    /// throw(...) exception specification (a Microsoft extension).
-    bool hasAnyExceptionSpecification() const {
-      return false;
+
+    /// \brief Get the computed exception specification type.
+    ExceptionSpecificationType getExceptionSpecType() const {
+      assert(ComputedEST != EST_ComputedNoexcept &&
+             "noexcept(expr) should not be a possible result");
+      return ComputedEST;
     }
-    
+
     /// \brief The number of exceptions in the exception specification.
     unsigned size() const { return Exceptions.size(); }
-    
+
     /// \brief The set of exceptions in the exception specification.
     const QualType *data() const { return Exceptions.data(); }
-    
-    /// \brief Note that 
+
+    /// \brief Integrate another called method into the collected data.
     void CalledDecl(CXXMethodDecl *Method) {
-      // If we already know that we allow all exceptions, do nothing.
-      if (AllowsAllExceptions || !Method)
+      // If we have an MSAny spec already, don't bother.
+      if (!Method || ComputedEST == EST_MSAny)
         return;
-      
+
       const FunctionProtoType *Proto
         = Method->getType()->getAs<FunctionProtoType>();
-      
+
+      ExceptionSpecificationType EST = Proto->getExceptionSpecType();
+
       // If this function can throw any exceptions, make a note of that.
-      if (!Proto->hasExceptionSpec() || Proto->hasAnyExceptionSpec()) {
-        AllowsAllExceptions = true;
-        ExceptionsSeen.clear();
-        Exceptions.clear();
+      if (EST == EST_MSAny || EST == EST_None) {
+        ClearExceptions();
+        ComputedEST = EST;
         return;
       }
-        
+
+      // If this function has a basic noexcept, it doesn't affect the outcome.
+      if (EST == EST_BasicNoexcept)
+        return;
+
+      // If we have a throw-all spec at this point, ignore the function.
+      if (ComputedEST == EST_None)
+        return;
+
+      // If we're still at noexcept(true) and there's a nothrow() callee,
+      // change to that specification.
+      if (EST == EST_DynamicNone) {
+        if (ComputedEST == EST_BasicNoexcept)
+          ComputedEST = EST_DynamicNone;
+        return;
+      }
+
+      // Check out noexcept specs.
+      if (EST == EST_ComputedNoexcept) {
+        FunctionProtoType::NoexceptResult NR = Proto->getNoexceptSpec();
+        assert(NR != FunctionProtoType::NR_NoNoexcept &&
+               "Must have noexcept result for EST_ComputedNoexcept.");
+        assert(NR != FunctionProtoType::NR_Dependent &&
+               "Should not generate implicit declarations for dependent cases, "
+               "and don't know how to handle them anyway.");
+
+        // noexcept(false) -> no spec on the new function
+        if (NR == FunctionProtoType::NR_Throw) {
+          ClearExceptions();
+          ComputedEST = EST_None;
+        }
+        // noexcept(true) won't change anything either.
+        return;
+      }
+
+      assert(EST == EST_Dynamic && "EST case not considered earlier.");
+      assert(ComputedEST != EST_None &&
+             "Shouldn't collect exceptions when throw-all is guaranteed.");
+      ComputedEST = EST_Dynamic;
       // Record the exceptions in this function's exception specification.
       for (FunctionProtoType::exception_iterator E = Proto->exception_begin(),
                                               EEnd = Proto->exception_end();
-           E != EEnd; ++E) 
+           E != EEnd; ++E)
         if (ExceptionsSeen.insert(Context.getCanonicalType(*E)))
           Exceptions.push_back(*E);
     }
@@ -4672,7 +4762,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   //   exception-specification. [...]
   ImplicitExceptionSpecification ExceptSpec(Context);
 
-  // Direct base-class destructors.
+  // Direct base-class constructors.
   for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
                                        BEnd = ClassDecl->bases_end();
        B != BEnd; ++B) {
@@ -4688,8 +4778,8 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
         ExceptSpec.CalledDecl(Constructor);
     }
   }
-  
-  // Virtual base-class destructors.
+
+  // Virtual base-class constructors.
   for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
                                        BEnd = ClassDecl->vbases_end();
        B != BEnd; ++B) {
@@ -4702,8 +4792,8 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
         ExceptSpec.CalledDecl(Constructor);
     }
   }
-  
-  // Field destructors.
+
+  // Field constructors.
   for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
                                FEnd = ClassDecl->field_end();
        F != FEnd; ++F) {
@@ -4720,9 +4810,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   }
 
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = ExceptSpec.hasExceptionSpecification() ?
-    (ExceptSpec.hasAnyExceptionSpecification() ? EST_DynamicAny : EST_Dynamic) :
-    EST_None;
+  EPI.ExceptionSpecType = ExceptSpec.getExceptionSpecType();
   EPI.NumExceptions = ExceptSpec.size();
   EPI.Exceptions = ExceptSpec.data();
 
@@ -4997,16 +5085,14 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
       ExceptSpec.CalledDecl(
                     LookupDestructor(cast<CXXRecordDecl>(RecordTy->getDecl())));
   }
-  
+
   // Create the actual destructor declaration.
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = ExceptSpec.hasExceptionSpecification() ?
-    (ExceptSpec.hasAnyExceptionSpecification() ? EST_DynamicAny : EST_Dynamic) :
-    EST_None;
+  EPI.ExceptionSpecType = ExceptSpec.getExceptionSpecType();
   EPI.NumExceptions = ExceptSpec.size();
   EPI.Exceptions = ExceptSpec.data();
   QualType Ty = Context.getFunctionType(Context.VoidTy, 0, 0, EPI);
-  
+
   CanQualType ClassType
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
   SourceLocation ClassLoc = ClassDecl->getLocation();
@@ -5014,9 +5100,9 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
     = Context.DeclarationNames.getCXXDestructorName(ClassType);
   DeclarationNameInfo NameInfo(Name, ClassLoc);
   CXXDestructorDecl *Destructor
-    = CXXDestructorDecl::Create(Context, ClassDecl, ClassLoc, NameInfo, Ty, 0,
-                                /*isInline=*/true,
-                                /*isImplicitlyDeclared=*/true);
+      = CXXDestructorDecl::Create(Context, ClassDecl, ClassLoc, NameInfo, Ty, 0,
+                                  /*isInline=*/true,
+                                  /*isImplicitlyDeclared=*/true);
   Destructor->setAccess(AS_public);
   Destructor->setImplicit();
   Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
@@ -5396,13 +5482,11 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
         ExceptSpec.CalledDecl(CopyAssign);      
     }      
   }
-  
+
   //   An implicitly-declared copy assignment operator is an inline public
   //   member of its class.
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = ExceptSpec.hasExceptionSpecification() ?
-    (ExceptSpec.hasAnyExceptionSpecification() ? EST_DynamicAny : EST_Dynamic) :
-    EST_None;
+  EPI.ExceptionSpecType = ExceptSpec.getExceptionSpecType();
   EPI.NumExceptions = ExceptSpec.size();
   EPI.Exceptions = ExceptSpec.data();
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
@@ -5860,13 +5944,11 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
         ExceptSpec.CalledDecl(CopyConstructor);
     }
   }
-  
+
   //   An implicitly-declared copy constructor is an inline public
   //   member of its class.
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = ExceptSpec.hasExceptionSpecification() ?
-    (ExceptSpec.hasAnyExceptionSpecification() ? EST_DynamicAny : EST_Dynamic) :
-    EST_None;
+  EPI.ExceptionSpecType = ExceptSpec.getExceptionSpecType();
   EPI.NumExceptions = ExceptSpec.size();
   EPI.Exceptions = ExceptSpec.data();
   DeclarationName Name

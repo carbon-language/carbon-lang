@@ -1659,7 +1659,7 @@ static Expr::CanThrowResult CanCalleeThrow(const Decl *D,
   if (!FT)
     return Expr::CT_Can;
 
-  return FT->hasEmptyExceptionSpec() ? Expr::CT_Cannot : Expr::CT_Can;
+  return FT->isNothrow() ? Expr::CT_Cannot : Expr::CT_Can;
 }
 
 static Expr::CanThrowResult CanDynamicCastThrow(const CXXDynamicCastExpr *DC) {

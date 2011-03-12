@@ -1128,7 +1128,7 @@ static bool CanThrow(Expr *E) {
   const FunctionType *FT = Ty->getAs<FunctionType>();
   if (FT) {
     if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
-      if (Proto->hasEmptyExceptionSpec())
+      if (Proto->isNothrow())
         return false;
   }
   return true;

@@ -412,22 +412,32 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       if (TypeQuals & Qualifiers::Restrict)
         Proto += " restrict";
     }
-    
-    if (FT && FT->hasExceptionSpec()) {
+
+    if (FT && FT->hasDynamicExceptionSpec()) {
       Proto += " throw(";
-      if (FT->hasAnyExceptionSpec())
+      if (FT->getExceptionSpecType() == EST_MSAny)
         Proto += "...";
       else 
         for (unsigned I = 0, N = FT->getNumExceptions(); I != N; ++I) {
           if (I)
             Proto += ", ";
-          
-          
+
           std::string ExceptionType;
           FT->getExceptionType(I).getAsStringInternal(ExceptionType, SubPolicy);
           Proto += ExceptionType;
         }
       Proto += ")";
+    } else if (FT && isNoexceptExceptionSpec(FT->getExceptionSpecType())) {
+      Proto += " noexcept";
+      if (FT->getExceptionSpecType() == EST_ComputedNoexcept) {
+        Proto += "(";
+        llvm::raw_string_ostream EOut(Proto);
+        FT->getNoexceptExpr()->printPretty(EOut, Context, 0, SubPolicy,
+                                           Indentation);
+        EOut.flush();
+        Proto += EOut.str();
+        Proto += ")";
+      }
     }
 
     if (D->hasAttr<NoReturnAttr>())

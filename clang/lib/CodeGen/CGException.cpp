@@ -449,9 +449,8 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
   if (Proto == 0)
     return;
 
-  assert(!Proto->hasAnyExceptionSpec() && "function with parameter pack");
-
-  if (!Proto->hasExceptionSpec())
+  // FIXME: What about noexcept?
+  if (!Proto->hasDynamicExceptionSpec())
     return;
 
   unsigned NumExceptions = Proto->getNumExceptions();
@@ -477,7 +476,7 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
   if (Proto == 0)
     return;
 
-  if (!Proto->hasExceptionSpec())
+  if (!Proto->hasDynamicExceptionSpec())
     return;
 
   EHStack.popFilter();

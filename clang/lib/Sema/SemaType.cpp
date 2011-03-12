@@ -1901,7 +1901,22 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           EPI.NumExceptions = Exceptions.size();
           EPI.Exceptions = Exceptions.data();
         } else if (FTI.getExceptionSpecType() == EST_ComputedNoexcept) {
-          EPI.NoexceptExpr = FTI.NoexceptExpr;
+          // If an error occurred, there's no expression here.
+          if (Expr *NoexceptExpr = FTI.NoexceptExpr) {
+            assert((NoexceptExpr->isTypeDependent() ||
+                    NoexceptExpr->getType()->getCanonicalTypeUnqualified() ==
+                        Context.BoolTy) &&
+                 "Parser should have made sure that the expression is boolean");
+            SourceLocation ErrLoc;
+            llvm::APSInt Dummy;
+            if (!NoexceptExpr->isValueDependent() &&
+                !NoexceptExpr->isIntegerConstantExpr(Dummy, Context, &ErrLoc,
+                                                     /*evaluated*/false))
+              Diag(ErrLoc, diag::err_noexcept_needs_constant_expression)
+                  << NoexceptExpr->getSourceRange();
+            else
+              EPI.NoexceptExpr = NoexceptExpr;
+          }
         }
 
         T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(), EPI);

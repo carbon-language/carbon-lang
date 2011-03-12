@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++0x -fexceptions -fcxx-exceptions -fsyntax-only -verify %s
 
 // Simple parser tests, dynamic specification.
 
@@ -26,24 +26,35 @@ namespace dyn {
 
 namespace noex {
 
-  void f() noexcept { }
-  void g() noexcept (true) { }
-  void h() noexcept (false) { }
-  void i() noexcept (1 < 2) { }
+  void f1() noexcept { }
+  void f2() noexcept (true) { }
+  void f3() noexcept (false) { }
+  void f4() noexcept (1 < 2) { }
 
-  class Class {
+  class CA1 {
     void foo() noexcept { }
     void bar() noexcept (true) { }
   };
 
-  void (*fptr)() noexcept;
-  void (*gptr)() noexcept (true);
+  void (*fptr1)() noexcept;
+  void (*fptr2)() noexcept (true);
 
 }
 
-namespace bad {
+namespace mix {
 
   void f() throw(int) noexcept { } // expected-error {{cannot have both}}
   void g() noexcept throw(int) { } // expected-error {{cannot have both}}
+
+}
+
+// Sema tests, noexcept specification
+
+namespace noex {
+
+  struct A {};
+
+  void g1() noexcept(A()); // expected-error {{not contextually convertible}}
+  void g2(bool b) noexcept(b); // expected-error {{argument to noexcept specifier must be a constant expression}}
 
 }
