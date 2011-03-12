@@ -124,17 +124,18 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset,
 void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
                                         uint64_t FieldOffset,
                                         llvm::ConstantInt *CI) {
+  const ASTContext &Context = CGM.getContext();
   if (FieldOffset > NextFieldOffsetInBytes * 8) {
     // We need to add padding.
-    uint64_t NumBytes =
-      llvm::RoundUpToAlignment(FieldOffset -
-                               NextFieldOffsetInBytes * 8, 8) / 8;
+    CharUnits PadSize = Context.toCharUnitsFromBits(
+      llvm::RoundUpToAlignment(FieldOffset - NextFieldOffsetInBytes * 8, 
+                               Context.Target.getCharAlign()));
 
-    AppendPadding(CharUnits::fromQuantity(NumBytes));
+    AppendPadding(PadSize);
   }
 
   uint64_t FieldSize =
-    Field->getBitWidth()->EvaluateAsInt(CGM.getContext()).getZExtValue();
+    Field->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
 
   llvm::APInt FieldValue = CI->getValue();
 
