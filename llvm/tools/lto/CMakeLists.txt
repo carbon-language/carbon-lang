@@ -10,10 +10,18 @@ set(SOURCES
   LTOModule.cpp
   )
 
-add_llvm_library(LTO ${SOURCES})
-
 if( NOT WIN32 AND LLVM_ENABLE_PIC )
+  set(bsl ${BUILD_SHARED_LIBS})
   set(BUILD_SHARED_LIBS ON)
-  add_llvm_library(LTO_dll ${SOURCES})
-  set_property(TARGET LTO_dll PROPERTY OUTPUT_NAME "LTO")
+  add_llvm_library(LTO ${SOURCES})
+  set_property(TARGET LTO PROPERTY OUTPUT_NAME "LTO")
+  set(BUILD_SHARED_LIBS ${bsl})
+  set(LTO_STATIC_TARGET_NAME LTO_static)
+else()
+  set(LTO_STATIC_TARGET_NAME LTO)
+endif()
+
+if( NOT BUILD_SHARED_LIBS )
+  add_llvm_library(${LTO_STATIC_TARGET_NAME} ${SOURCES})
+  set_property(TARGET ${LTO_STATIC_TARGET_NAME} PROPERTY OUTPUT_NAME "LTO")
 endif()
