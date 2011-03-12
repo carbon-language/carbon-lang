@@ -105,6 +105,9 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
 
   if (E->isElidable()) {
     VisitAggExpr(E->getArg(0), Dest, Pred, Dst);
+    // FIXME: this is here to force propogation if VisitAggExpr doesn't
+    if (Dst.empty())
+      Dst.Add(Pred);
     return;
   }
 
@@ -200,7 +203,7 @@ void ExprEngine::VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
                                             ExplodedNodeSet &Dst) {
   const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(C->getCalleeDecl());
   if (!MD) {
-    // If the operator doesn't represent a method call treat as regural call.
+    // If the operator doesn't represent a method call treat as regular call.
     VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
     return;
   }
