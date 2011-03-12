@@ -1371,39 +1371,25 @@ let isCall = 1,
           D16, D17, D18, D19, D20, D21, D22, D23,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR],
   Uses = [R7, SP] in {
-  def BLr9  : ABXI<0b1011, (outs), (ins bltarget:$func, variable_ops),
-                IIC_Br, "bl\t$func",
-                [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]> {
-    let Inst{31-28} = 0b1110;
-    bits<24> func;
-    let Inst{23-0} = func;
-  }
+  def BLr9  : ARMPseudoInst<(outs), (ins bltarget:$func, variable_ops),
+                Size4Bytes, IIC_Br,
+                [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]>;
 
-  def BLr9_pred : ABI<0b1011, (outs), (ins bltarget:$func, variable_ops),
-                   IIC_Br, "bl", "\t$func",
+  def BLr9_pred : ARMPseudoInst<(outs),
+                   (ins bltarget:$func, pred:$p, variable_ops),
+                   Size4Bytes, IIC_Br,
                    [(ARMcall_pred tglobaladdr:$func)]>,
-                  Requires<[IsARM, IsDarwin]> {
-    bits<24> func;
-    let Inst{23-0} = func;
-  }
+                  Requires<[IsARM, IsDarwin]>;
 
   // ARMv5T and above
-  def BLXr9 : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
-                IIC_Br, "blx\t$func",
-                [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T, IsDarwin]> {
-    bits<4> func;
-    let Inst{31-4} = 0b1110000100101111111111110011;
-    let Inst{3-0}   = func;
-  }
+  def BLXr9 : ARMPseudoInst<(outs), (ins GPR:$func, variable_ops),
+                Size4Bytes, IIC_Br,
+                [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T, IsDarwin]>;
 
-  def BLXr9_pred : AI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
-                      IIC_Br, "blx", "\t$func",
+  def BLXr9_pred: ARMPseudoInst<(outs), (ins GPR:$func, pred:$p,  variable_ops),
+                      Size4Bytes, IIC_Br,
                       [(ARMcall_pred GPR:$func)]>,
-                   Requires<[IsARM, HasV5T, IsDarwin]> {
-    bits<4> func;
-    let Inst{27-4} = 0b000100101111111111110011;
-    let Inst{3-0}   = func;
-  }
+                   Requires<[IsARM, HasV5T, IsDarwin]>;
 
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
