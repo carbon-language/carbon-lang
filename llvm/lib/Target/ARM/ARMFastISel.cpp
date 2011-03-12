@@ -123,14 +123,15 @@ class ARMFastISel : public FastISel {
                                      const TargetRegisterClass *RC,
                                      unsigned Op0, bool Op0IsKill,
                                      const ConstantFP *FPImm);
-    virtual unsigned FastEmitInst_i(unsigned MachineInstOpcode,
-                                    const TargetRegisterClass *RC,
-                                    uint64_t Imm);
     virtual unsigned FastEmitInst_rri(unsigned MachineInstOpcode,
                                       const TargetRegisterClass *RC,
                                       unsigned Op0, bool Op0IsKill,
                                       unsigned Op1, bool Op1IsKill,
                                       uint64_t Imm);
+    virtual unsigned FastEmitInst_i(unsigned MachineInstOpcode,
+                                    const TargetRegisterClass *RC,
+                                    uint64_t Imm);
+
     virtual unsigned FastEmitInst_extractsubreg(MVT RetVT,
                                                 unsigned Op0, bool Op0IsKill,
                                                 uint32_t Idx);
@@ -193,6 +194,7 @@ class ARMFastISel : public FastISel {
 
     // OptionalDef handling routines.
   private:
+    bool isARMNEONPred(const MachineInstr *MI);
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
     void AddLoadStoreOperands(EVT VT, Address &Addr,
@@ -221,6 +223,21 @@ bool ARMFastISel::DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR) {
   return true;
 }
 
+bool ARMFastISel::isARMNEONPred(const MachineInstr *MI) {
+  const TargetInstrDesc &TID = MI->getDesc();
+  
+  // If we're a thumb2 or not NEON function we were handled via isPredicable.
+  if ((TID.TSFlags & ARMII::DomainMask) != ARMII::DomainNEON ||
+       AFI->isThumb2Function())
+    return false;
+  
+  for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i)
+    if (TID.OpInfo[i].isPredicate())
+      return true;
+  
+  return false;
+}
+
 // If the machine is predicable go ahead and add the predicate operands, if
 // it needs default CC operands add those.
 // TODO: If we want to support thumb1 then we'll need to deal with optional
@@ -230,10 +247,12 @@ const MachineInstrBuilder &
 ARMFastISel::AddOptionalDefs(const MachineInstrBuilder &MIB) {
   MachineInstr *MI = &*MIB;
 
-  // Do we use a predicate?
-  if (TII.isPredicable(MI))
+  // Do we use a predicate? or...
+  // Are we NEON in ARM mode and have a predicate operand? If so, I know
+  // we're not predicable but add it anyways.
+  if (TII.isPredicable(MI) || isARMNEONPred(MI))
     AddDefaultPred(MIB);
-
+  
   // Do we optionally set a predicate?  Preds is size > 0 iff the predicate
   // defines CPSR. All other OptionalDefines in ARM are the CCR register.
   bool CPSR = false;
