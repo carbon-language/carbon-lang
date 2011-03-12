@@ -3443,8 +3443,8 @@ void TypeLocReader::VisitExtVectorTypeLoc(ExtVectorTypeLoc TL) {
   TL.setNameLoc(ReadSourceLocation(Record, Idx));
 }
 void TypeLocReader::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
-  TL.setLParenLoc(ReadSourceLocation(Record, Idx));
-  TL.setRParenLoc(ReadSourceLocation(Record, Idx));
+  TL.setLocalRangeBegin(ReadSourceLocation(Record, Idx));
+  TL.setLocalRangeEnd(ReadSourceLocation(Record, Idx));
   TL.setTrailingReturn(Record[Idx++]);
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
     TL.setArg(i, cast_or_null<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));

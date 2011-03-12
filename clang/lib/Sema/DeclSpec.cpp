@@ -149,14 +149,14 @@ DeclaratorChunk DeclaratorChunk::getFunction(const ParsedAttributes &attrs,
                                              SourceRange *ExceptionRanges,
                                              unsigned NumExceptions,
                                              Expr *NoexceptExpr,
-                                             SourceLocation LPLoc,
-                                             SourceLocation RPLoc,
+                                             SourceLocation LocalRangeBegin,
+                                             SourceLocation LocalRangeEnd,
                                              Declarator &TheDeclarator,
                                              ParsedType TrailingReturnType) {
   DeclaratorChunk I;
   I.Kind                        = Function;
-  I.Loc                         = LPLoc;
-  I.EndLoc                      = RPLoc;
+  I.Loc                         = LocalRangeBegin;
+  I.EndLoc                      = LocalRangeEnd;
   I.Fun.AttrList                = attrs.getList();
   I.Fun.hasPrototype            = hasProto;
   I.Fun.isVariadic              = isVariadic;

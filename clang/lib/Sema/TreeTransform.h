@@ -3880,8 +3880,8 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   }
 
   FunctionProtoTypeLoc NewTL = TLB.push<FunctionProtoTypeLoc>(Result);
-  NewTL.setLParenLoc(TL.getLParenLoc());
-  NewTL.setRParenLoc(TL.getRParenLoc());
+  NewTL.setLocalRangeBegin(TL.getLocalRangeBegin());
+  NewTL.setLocalRangeEnd(TL.getLocalRangeEnd());
   NewTL.setTrailingReturn(TL.getTrailingReturn());
   for (unsigned i = 0, e = NewTL.getNumArgs(); i != e; ++i)
     NewTL.setArg(i, ParamDecls[i]);
@@ -3904,8 +3904,8 @@ QualType TreeTransform<Derived>::TransformFunctionNoProtoType(
     Result = getDerived().RebuildFunctionNoProtoType(ResultType);
 
   FunctionNoProtoTypeLoc NewTL = TLB.push<FunctionNoProtoTypeLoc>(Result);
-  NewTL.setLParenLoc(TL.getLParenLoc());
-  NewTL.setRParenLoc(TL.getRParenLoc());
+  NewTL.setLocalRangeBegin(TL.getLocalRangeBegin());
+  NewTL.setLocalRangeEnd(TL.getLocalRangeEnd());
   NewTL.setTrailingReturn(false);
 
   return Result;

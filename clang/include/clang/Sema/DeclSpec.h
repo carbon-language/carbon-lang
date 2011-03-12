@@ -1240,7 +1240,8 @@ struct DeclaratorChunk {
                                      SourceRange *ExceptionRanges,
                                      unsigned NumExceptions,
                                      Expr *NoexceptExpr,
-                                     SourceLocation LPLoc, SourceLocation RPLoc,
+                                     SourceLocation LocalRangeBegin,
+                                     SourceLocation LocalRangeEnd,
                                      Declarator &TheDeclarator,
                                      ParsedType TrailingReturnType =
                                                     ParsedType());

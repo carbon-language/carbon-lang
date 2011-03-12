@@ -8866,8 +8866,8 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     // Check whether that explicit signature was synthesized by
     // GetTypeForDeclarator.  If so, don't save that as part of the
     // written signature.
-    if (ExplicitSignature.getLParenLoc() ==
-        ExplicitSignature.getRParenLoc()) {
+    if (ExplicitSignature.getLocalRangeBegin() ==
+        ExplicitSignature.getLocalRangeEnd()) {
       // This would be much cheaper if we stored TypeLocs instead of
       // TypeSourceInfos.
       TypeLoc Result = ExplicitSignature.getResultLoc();

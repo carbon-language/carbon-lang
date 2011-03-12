@@ -7440,10 +7440,14 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
 ///
 /// \param InitRange the source range that covers the "0" initializer.
 bool Sema::CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange) {
+  SourceLocation EndLoc = InitRange.getEnd();
+  if (EndLoc.isValid())
+    Method->setRangeEnd(EndLoc);
+
   if (Method->isVirtual() || Method->getParent()->isDependentContext()) {
     Method->setPure();
     return false;
-  } 
+  }
 
   if (!Method->isInvalidDecl())
     Diag(Method->getLocation(), diag::err_non_virtual_pure)

@@ -2466,8 +2466,8 @@ namespace {
     }
     void VisitFunctionTypeLoc(FunctionTypeLoc TL) {
       assert(Chunk.Kind == DeclaratorChunk::Function);
-      TL.setLParenLoc(Chunk.Loc);
-      TL.setRParenLoc(Chunk.EndLoc);
+      TL.setLocalRangeBegin(Chunk.Loc);
+      TL.setLocalRangeEnd(Chunk.EndLoc);
       TL.setTrailingReturn(!!Chunk.Fun.TrailingReturnType);
 
       const DeclaratorChunk::FunctionTypeInfo &FTI = Chunk.Fun;

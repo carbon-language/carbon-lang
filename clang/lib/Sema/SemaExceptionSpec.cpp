@@ -194,14 +194,14 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
     OS << ")";
     OS.flush();
 
-    SourceLocation AfterParenLoc;
+    SourceLocation FixItLoc;
     if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {
       TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
       if (const FunctionTypeLoc *FTLoc = dyn_cast<FunctionTypeLoc>(&TL))
-        AfterParenLoc = PP.getLocForEndOfToken(FTLoc->getRParenLoc());
+        FixItLoc = PP.getLocForEndOfToken(FTLoc->getLocalRangeEnd());
     }
 
-    if (AfterParenLoc.isInvalid())
+    if (FixItLoc.isInvalid())
       Diag(New->getLocation(), diag::warn_missing_exception_specification)
         << New << OS.str();
     else {
@@ -209,7 +209,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
       // late-specified return types.
       Diag(New->getLocation(), diag::warn_missing_exception_specification)
         << New << OS.str()
-        << FixItHint::CreateInsertion(AfterParenLoc, " " + OS.str().str());
+        << FixItHint::CreateInsertion(FixItLoc, " " + OS.str().str());
     }
 
     if (!Old->getLocation().isInvalid())

@@ -1033,7 +1033,8 @@ public:
 
 
 struct FunctionLocInfo {
-  SourceLocation LParenLoc, RParenLoc;
+  SourceLocation LocalRangeBegin;
+  SourceLocation LocalRangeEnd;
   bool TrailingReturn;
 };
 
@@ -1043,18 +1044,18 @@ class FunctionTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
                                                FunctionType,
                                                FunctionLocInfo> {
 public:
-  SourceLocation getLParenLoc() const {
-    return getLocalData()->LParenLoc;
+  SourceLocation getLocalRangeBegin() const {
+    return getLocalData()->LocalRangeBegin;
   }
-  void setLParenLoc(SourceLocation Loc) {
-    getLocalData()->LParenLoc = Loc;
+  void setLocalRangeBegin(SourceLocation L) {
+    getLocalData()->LocalRangeBegin = L;
   }
 
-  SourceLocation getRParenLoc() const {
-    return getLocalData()->RParenLoc;
+  SourceLocation getLocalRangeEnd() const {
+    return getLocalData()->LocalRangeEnd;
   }
-  void setRParenLoc(SourceLocation Loc) {
-    getLocalData()->RParenLoc = Loc;
+  void setLocalRangeEnd(SourceLocation L) {
+    getLocalData()->LocalRangeEnd = L;
   }
 
   bool getTrailingReturn() const {
@@ -1082,12 +1083,12 @@ public:
   }
 
   SourceRange getLocalSourceRange() const {
-    return SourceRange(getLParenLoc(), getRParenLoc());
+    return SourceRange(getLocalRangeBegin(), getLocalRangeEnd());
   }
 
   void initializeLocal(ASTContext &Context, SourceLocation Loc) {
-    setLParenLoc(Loc);
-    setRParenLoc(Loc);
+    setLocalRangeBegin(Loc);
+    setLocalRangeEnd(Loc);
     setTrailingReturn(false);
     for (unsigned i = 0, e = getNumArgs(); i != e; ++i)
       setArg(i, NULL);
