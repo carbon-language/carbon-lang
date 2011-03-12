@@ -2753,6 +2753,13 @@ void DiagnoseImpCast(Sema &S, Expr *E, QualType T, SourceLocation CContext,
     << E->getType() << T << E->getSourceRange() << SourceRange(CContext);
 }
 
+/// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
+void DiagnoseImpCast(Sema &S, Expr *E, QualType SourceType, QualType T, 
+                     SourceLocation CContext, unsigned diag) {
+  S.Diag(E->getExprLoc(), diag)
+    << SourceType << T << E->getSourceRange() << SourceRange(CContext);
+}
+
 std::string PrettyPrintInRange(const llvm::APSInt &Value, IntRange Range) {
   if (!Range.Width) return "0";
 
@@ -2917,6 +2924,18 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   }
 
   // Diagnose conversions between different enumeration types.
+  // In C, we pretend that the type of an EnumConstantDecl is its enumeration
+  // type, to give us better diagnostics.
+  QualType SourceType = E->getType();
+  if (!S.getLangOptions().CPlusPlus) {
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+      if (EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(DRE->getDecl())) {
+        EnumDecl *Enum = cast<EnumDecl>(ECD->getDeclContext());
+        SourceType = S.Context.getTypeDeclType(Enum);
+        Source = S.Context.getCanonicalType(SourceType).getTypePtr();
+      }
+  }
+  
   if (const EnumType *SourceEnum = Source->getAs<EnumType>())
     if (const EnumType *TargetEnum = Target->getAs<EnumType>())
       if ((SourceEnum->getDecl()->getIdentifier() || 
@@ -2927,7 +2946,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
         if (isFromSystemMacro(S, CC))
           return;
 
-        return DiagnoseImpCast(S, E, T, CC, 
+        return DiagnoseImpCast(S, E, SourceType, T, CC, 
                                diag::warn_impcast_different_enum_types);
       }
   

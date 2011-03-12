@@ -323,6 +323,10 @@ void test_8559831(enum E8559831b value_a, E8559831c value_c) {
   enum E8559831a a1 = value_a; // expected-warning{{implicit conversion from enumeration type 'enum E8559831b' to different enumeration type 'enum E8559831a'}}
   a1 = value_a; // expected-warning{{implicit conversion from enumeration type 'enum E8559831b' to different enumeration type 'enum E8559831a'}}
 
+  test_8559831_a(E8559831b_val); // expected-warning{{implicit conversion from enumeration type 'enum E8559831b' to different enumeration type 'enum E8559831a'}}
+  enum E8559831a a1a = E8559831b_val; // expected-warning{{implicit conversion from enumeration type 'enum E8559831b' to different enumeration type 'enum E8559831a'}}
+  a1 = E8559831b_val; // expected-warning{{implicit conversion from enumeration type 'enum E8559831b' to different enumeration type 'enum E8559831a'}}
+  
   test_8559831_a(value_c); // expected-warning{{implicit conversion from enumeration type 'E8559831c' to different enumeration type 'enum E8559831a'}}
   enum E8559831a a2 = value_c; // expected-warning{{implicit conversion from enumeration type 'E8559831c' to different enumeration type 'enum E8559831a'}}
   a2 = value_c; // expected-warning{{implicit conversion from enumeration type 'E8559831c' to different enumeration type 'enum E8559831a'}}
