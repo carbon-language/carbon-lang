@@ -1309,6 +1309,9 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // before calls from potentially appearing dead.
 let isCall = 1,
   // On non-Darwin platforms R9 is callee-saved.
+  // FIXME:  Do we really need a non-predicated version? If so, it should
+  // at least be a pseudo instruction expanding to the predicated version
+  // at MC lowering time.
   Defs = [R0,  R1,  R2,  R3,  R12, LR,
           D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
           D16, D17, D18, D19, D20, D21, D22, D23,
