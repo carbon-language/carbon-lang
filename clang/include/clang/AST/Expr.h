@@ -1457,7 +1457,7 @@ public:
     /// the square brackets. For a field or identifier node, the source range
     /// contains the location of the period (if there is one) and the 
     /// identifier.
-    SourceRange getRange() const { return Range; }
+    SourceRange getSourceRange() const { return Range; }
   };
 
 private:

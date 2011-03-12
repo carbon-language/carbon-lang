@@ -479,8 +479,8 @@ void ASTStmtWriter::VisitOffsetOfExpr(OffsetOfExpr *E) {
   for (unsigned I = 0, N = E->getNumComponents(); I != N; ++I) {
     const OffsetOfExpr::OffsetOfNode &ON = E->getComponent(I);
     Record.push_back(ON.getKind()); // FIXME: Stable encoding
-    Writer.AddSourceLocation(ON.getRange().getBegin(), Record);
-    Writer.AddSourceLocation(ON.getRange().getEnd(), Record);
+    Writer.AddSourceLocation(ON.getSourceRange().getBegin(), Record);
+    Writer.AddSourceLocation(ON.getSourceRange().getEnd(), Record);
     switch (ON.getKind()) {
     case OffsetOfExpr::OffsetOfNode::Array:
       Record.push_back(ON.getArrayExprIndex());

@@ -2000,7 +2000,7 @@ void EnqueueVisitor::VisitOffsetOfExpr(OffsetOfExpr *E) {
       AddStmt(E->getIndexExpr(Node.getArrayExprIndex()));
       break;
     case OffsetOfNode::Field:
-      AddMemberRef(Node.getField(), Node.getRange().getEnd());
+      AddMemberRef(Node.getField(), Node.getSourceRange().getEnd());
       break;
     case OffsetOfNode::Identifier:
     case OffsetOfNode::Base:

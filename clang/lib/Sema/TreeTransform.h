@@ -5490,8 +5490,8 @@ TreeTransform<Derived>::TransformOffsetOfExpr(OffsetOfExpr *E) {
     const Node &ON = E->getComponent(I);
     Component Comp;
     Comp.isBrackets = true;
-    Comp.LocStart = ON.getRange().getBegin();
-    Comp.LocEnd = ON.getRange().getEnd();
+    Comp.LocStart = ON.getSourceRange().getBegin();
+    Comp.LocEnd = ON.getSourceRange().getEnd();
     switch (ON.getKind()) {
     case Node::Array: {
       Expr *FromIndex = E->getIndexExpr(ON.getArrayExprIndex());
