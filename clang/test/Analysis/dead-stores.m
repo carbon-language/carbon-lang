@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-checker=DeadStores -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-checker=deadcode.DeadStores -verify %s
 
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;
@@ -25,7 +25,7 @@ typedef struct _NSPoint {} NSRange;
 extern NSString *NSAlignmentBinding;
 
 // This test case was reported as a false positive due to a bug in the
-// LiveVariables <-> DeadStores interplay.  We should not flag a warning
+// LiveVariables <-> deadcode.DeadStores interplay.  We should not flag a warning
 // here.  The test case was reported in:
 //  http://lists.cs.uiuc.edu/pipermail/cfe-dev/2008-July/002157.html
 void DeadStoreTest(NSObject *anObject) {

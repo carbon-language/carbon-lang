@@ -17,6 +17,7 @@ def Core : Package<"core">;
 def Cocoa : Package<"cocoa">;
 def Unix : Package<"unix">;
 def MacOSX : Package<"macosx">;
+def DeadCode : Package<"deadcode">;
 
 def CoreExperimental : Package<"experimental">,
   InPackage<Core>, Hidden;
@@ -141,9 +142,17 @@ def StackAddrEscapeChecker : Checker<"StackAddrEscape">,
 
 } // end "core"
 
+let ParentPackage = DeadCode in {
+
 def DeadStoresChecker : Checker<"DeadStores">,
   HelpText<"Check for values stored to a variables that are never read afterwards">,
   DescFile<"DeadStoresChecker.cpp">;
+
+def IdempotentOperationChecker : Checker<"IdempotentOperations">,
+  HelpText<"Warn about idempotent operations">,
+  DescFile<"IdempotentOperationChecker.cpp">;
+
+} // end DeadCode
 
 def UnixAPIChecker : Checker<"API">,
   InPackage<Unix>,
@@ -227,11 +236,6 @@ def UnreachableCodeChecker : Checker<"UnreachableCode">,
   HelpText<"Check unreachable code">,
   DescFile<"UnreachableCodeChecker.cpp">,
   Hidden; // Must be specified explicitly in order to run.
-
-def IdempotentOperationChecker : Checker<"IdempotentOps">,
-  InPackage<CoreExperimental>,
-  HelpText<"Warn about idempotent operations">,
-  DescFile<"IdempotentOperationChecker.cpp">;
 
 def CastToStructChecker : Checker<"CastToStruct">,
   InPackage<CoreExperimental>,

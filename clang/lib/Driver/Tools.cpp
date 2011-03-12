@@ -1011,7 +1011,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       if (getToolChain().getTriple().getVendor() == llvm::Triple::Apple)
         CmdArgs.push_back("-analyzer-checker=macosx");
 
-      CmdArgs.push_back("-analyzer-checker=DeadStores");
+      CmdArgs.push_back("-analyzer-checker=deadcode.DeadStores");
+      CmdArgs.push_back("-analyzer-checker=deadcode.IdempotentOperations");
 
       // Checks to perform for Objective-C/Objective-C++.
       if (types::isObjC(InputType)) {
