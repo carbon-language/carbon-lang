@@ -48,6 +48,13 @@ class InlineSpiller : public Spiller {
   const TargetRegisterClass *rc_;
   int stackSlot_;
 
+  // All registers to spill to stackSlot_, including the main register.
+  SmallVector<unsigned, 8> RegsToSpill;
+
+  // All COPY instructions to/from snippets.
+  // They are ignored since both operands refer to the same stack slot.
+  SmallPtrSet<MachineInstr*, 8> SnippetCopies;
+
   // Values that failed to remat at some point.
   SmallPtrSet<VNInfo*, 8> usedValues_;
 
@@ -72,15 +79,21 @@ public:
   void spill(LiveRangeEdit &);
 
 private:
+  bool isSnippet(const LiveInterval &SnipLI);
+  void collectRegsToSpill();
+
   bool reMaterializeFor(MachineBasicBlock::iterator MI);
   void reMaterializeAll();
 
-  bool coalesceStackAccess(MachineInstr *MI);
+  bool coalesceStackAccess(MachineInstr *MI, unsigned Reg);
   bool foldMemoryOperand(MachineBasicBlock::iterator MI,
                          const SmallVectorImpl<unsigned> &Ops,
                          MachineInstr *LoadMI = 0);
   void insertReload(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
-  void insertSpill(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
+  void insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
+                   MachineBasicBlock::iterator MI);
+
+  void spillAroundUses(unsigned Reg);
 };
 }
 
@@ -90,6 +103,114 @@ Spiller *createInlineSpiller(MachineFunctionPass &pass,
                              VirtRegMap &vrm) {
   return new InlineSpiller(pass, mf, vrm);
 }
+}
+
+//===----------------------------------------------------------------------===//
+//                                Snippets
+//===----------------------------------------------------------------------===//
+
+// When spilling a virtual register, we also spill any snippets it is connected
+// to. The snippets are small live ranges that only have a single real use,
+// leftovers from live range splitting. Spilling them enables memory operand
+// folding or tightens the live range around the single use.
+//
+// This minimizes register pressure and maximizes the store-to-load distance for
+// spill slots which can be important in tight loops.
+
+/// isFullCopyOf - If MI is a COPY to or from Reg, return the other register,
+/// otherwise return 0.
+static unsigned isFullCopyOf(const MachineInstr *MI, unsigned Reg) {
+  if (!MI->isCopy())
+    return 0;
+  if (MI->getOperand(0).getSubReg() != 0)
+    return 0;
+  if (MI->getOperand(1).getSubReg() != 0)
+    return 0;
+  if (MI->getOperand(0).getReg() == Reg)
+      return MI->getOperand(1).getReg();
+  if (MI->getOperand(1).getReg() == Reg)
+      return MI->getOperand(0).getReg();
+  return 0;
+}
+
+/// isSnippet - Identify if a live interval is a snippet that should be spilled.
+/// It is assumed that SnipLI is a virtual register with the same original as
+/// edit_->getReg().
+bool InlineSpiller::isSnippet(const LiveInterval &SnipLI) {
+  unsigned Reg = edit_->getReg();
+
+  // A snippet is a tiny live range with only a single instruction using it
+  // besides copies to/from Reg or spills/fills. We accept:
+  //
+  //   %snip = COPY %Reg / FILL fi#
+  //   %snip = USE %snip
+  //   %Reg = COPY %snip / SPILL %snip, fi#
+  //
+  if (SnipLI.getNumValNums() > 2 || !lis_.intervalIsInOneMBB(SnipLI))
+    return false;
+
+  MachineInstr *UseMI = 0;
+
+  // Check that all uses satisfy our criteria.
+  for (MachineRegisterInfo::reg_nodbg_iterator
+         RI = mri_.reg_nodbg_begin(SnipLI.reg);
+       MachineInstr *MI = RI.skipInstruction();) {
+
+    // Allow copies to/from Reg.
+    if (isFullCopyOf(MI, Reg))
+      continue;
+
+    // Allow stack slot loads.
+    int FI;
+    if (SnipLI.reg == tii_.isLoadFromStackSlot(MI, FI) && FI == stackSlot_)
+      continue;
+
+    // Allow stack slot stores.
+    if (SnipLI.reg == tii_.isStoreToStackSlot(MI, FI) && FI == stackSlot_)
+      continue;
+
+    // Allow a single additional instruction.
+    if (UseMI && MI != UseMI)
+      return false;
+    UseMI = MI;
+  }
+  return true;
+}
+
+/// collectRegsToSpill - Collect live range snippets that only have a single
+/// real use.
+void InlineSpiller::collectRegsToSpill() {
+  unsigned Reg = edit_->getReg();
+  unsigned Orig = vrm_.getOriginal(Reg);
+
+  // Main register always spills.
+  RegsToSpill.assign(1, Reg);
+  SnippetCopies.clear();
+
+  // Snippets all have the same original, so there can't be any for an original
+  // register.
+  if (Orig == Reg)
+    return;
+
+  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(Reg);
+       MachineInstr *MI = RI.skipInstruction();) {
+    unsigned SnipReg = isFullCopyOf(MI, Reg);
+    if (!SnipReg)
+      continue;
+    if (!TargetRegisterInfo::isVirtualRegister(SnipReg))
+      continue;
+    if (vrm_.getOriginal(SnipReg) != Orig)
+      continue;
+    LiveInterval &SnipLI = lis_.getInterval(SnipReg);
+    if (!isSnippet(SnipLI))
+      continue;
+    SnippetCopies.insert(MI);
+    if (std::find(RegsToSpill.begin(), RegsToSpill.end(),
+                  SnipReg) == RegsToSpill.end())
+      RegsToSpill.push_back(SnipReg);
+
+    DEBUG(dbgs() << "\talso spill snippet " << SnipLI << '\n');
+  }
 }
 
 /// reMaterializeFor - Attempt to rematerialize before MI instead of reloading.
@@ -106,6 +227,12 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
     }
     DEBUG(dbgs() << UseIdx << '\t' << *MI);
     return true;
+  }
+
+  // FIXME: Properly remat for snippets as well.
+  if (SnippetCopies.count(MI)) {
+    usedValues_.insert(OrigVNI);
+    return false;
   }
 
   LiveRangeEdit::Remat RM(OrigVNI);
@@ -228,15 +355,15 @@ void InlineSpiller::reMaterializeAll() {
 }
 
 /// If MI is a load or store of stackSlot_, it can be removed.
-bool InlineSpiller::coalesceStackAccess(MachineInstr *MI) {
+bool InlineSpiller::coalesceStackAccess(MachineInstr *MI, unsigned Reg) {
   int FI = 0;
-  unsigned reg;
-  if (!(reg = tii_.isLoadFromStackSlot(MI, FI)) &&
-      !(reg = tii_.isStoreToStackSlot(MI, FI)))
+  unsigned InstrReg;
+  if (!(InstrReg = tii_.isLoadFromStackSlot(MI, FI)) &&
+      !(InstrReg = tii_.isStoreToStackSlot(MI, FI)))
     return false;
 
   // We have a stack access. Is it the right register and slot?
-  if (reg != edit_->getReg() || FI != stackSlot_)
+  if (InstrReg != Reg || FI != stackSlot_)
     return false;
 
   DEBUG(dbgs() << "Coalescing stack access: " << *MI);
@@ -301,13 +428,13 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
 }
 
 /// insertSpill - Insert a spill of NewLI.reg after MI.
-void InlineSpiller::insertSpill(LiveInterval &NewLI,
+void InlineSpiller::insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
                                 MachineBasicBlock::iterator MI) {
   MachineBasicBlock &MBB = *MI->getParent();
 
   // Get the defined value. It could be an early clobber so keep the def index.
   SlotIndex Idx = lis_.getInstructionIndex(MI).getDefIndex();
-  VNInfo *VNI = edit_->getParent().getVNInfoAt(Idx);
+  VNInfo *VNI = OldLI.getVNInfoAt(Idx);
   assert(VNI && VNI->def.getDefIndex() == Idx && "Inconsistent VNInfo");
   Idx = VNI->def;
 
@@ -320,42 +447,12 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI,
   NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
 }
 
-void InlineSpiller::spill(LiveRangeEdit &edit) {
-  edit_ = &edit;
-  assert(!TargetRegisterInfo::isStackSlot(edit.getReg())
-         && "Trying to spill a stack slot.");
-  DEBUG(dbgs() << "Inline spilling "
-               << mri_.getRegClass(edit.getReg())->getName()
-               << ':' << edit.getParent() << "\nFrom original "
-               << PrintReg(vrm_.getOriginal(edit.getReg())) << '\n');
-  assert(edit.getParent().isSpillable() &&
-         "Attempting to spill already spilled value.");
+/// spillAroundUses - insert spill code around each use of Reg.
+void InlineSpiller::spillAroundUses(unsigned Reg) {
+  LiveInterval &OldLI = lis_.getInterval(Reg);
 
-  reMaterializeAll();
-
-  // Remat may handle everything.
-  if (edit_->getParent().empty())
-    return;
-
-  rc_ = mri_.getRegClass(edit.getReg());
-
-  // Share a stack slot among all descendants of Orig.
-  unsigned Orig = vrm_.getOriginal(edit.getReg());
-  stackSlot_ = vrm_.getStackSlot(Orig);
-  if (stackSlot_ == VirtRegMap::NO_STACK_SLOT)
-    stackSlot_ = vrm_.assignVirt2StackSlot(Orig);
-
-  if (Orig != edit.getReg())
-    vrm_.assignVirt2StackSlot(edit.getReg(), stackSlot_);
-
-  // Update LiveStacks now that we are committed to spilling.
-  LiveInterval &stacklvr = lss_.getOrCreateInterval(stackSlot_, rc_);
-  if (!stacklvr.hasAtLeastOneValue())
-    stacklvr.getNextValue(SlotIndex(), 0, lss_.getVNInfoAllocator());
-  stacklvr.MergeRangesInAsValue(edit_->getParent(), stacklvr.getValNumInfo(0));
-
-  // Iterate over instructions using register.
-  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(edit.getReg());
+  // Iterate over instructions using Reg.
+  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(Reg);
        MachineInstr *MI = RI.skipInstruction();) {
 
     // Debug values are not allowed to affect codegen.
@@ -376,14 +473,18 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
       continue;
     }
 
+    // Ignore copies to/from snippets. We'll delete them.
+    if (SnippetCopies.count(MI))
+      continue;
+
     // Stack slot accesses may coalesce away.
-    if (coalesceStackAccess(MI))
+    if (coalesceStackAccess(MI, Reg))
       continue;
 
     // Analyze instruction.
     bool Reads, Writes;
     SmallVector<unsigned, 8> Ops;
-    tie(Reads, Writes) = MI->readsWritesVirtualRegister(edit.getReg(), &Ops);
+    tie(Reads, Writes) = MI->readsWritesVirtualRegister(Reg, &Ops);
 
     // Attempt to fold memory ops.
     if (foldMemoryOperand(MI, Ops))
@@ -391,7 +492,7 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
 
     // Allocate interval around instruction.
     // FIXME: Infer regclass from instruction alone.
-    LiveInterval &NewLI = edit.create(mri_, lis_, vrm_);
+    LiveInterval &NewLI = edit_->create(mri_, lis_, vrm_);
     NewLI.markNotSpillable();
 
     if (Reads)
@@ -413,8 +514,62 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
 
     // FIXME: Use a second vreg if instruction has no tied ops.
     if (Writes && hasLiveDef)
-      insertSpill(NewLI, MI);
+      insertSpill(NewLI, OldLI, MI);
 
     DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
   }
+}
+
+void InlineSpiller::spill(LiveRangeEdit &edit) {
+  edit_ = &edit;
+  assert(!TargetRegisterInfo::isStackSlot(edit.getReg())
+         && "Trying to spill a stack slot.");
+  DEBUG(dbgs() << "Inline spilling "
+               << mri_.getRegClass(edit.getReg())->getName()
+               << ':' << edit.getParent() << "\nFrom original "
+               << PrintReg(vrm_.getOriginal(edit.getReg())) << '\n');
+  assert(edit.getParent().isSpillable() &&
+         "Attempting to spill already spilled value.");
+
+  // Share a stack slot among all descendants of Orig.
+  unsigned Orig = vrm_.getOriginal(edit.getReg());
+  stackSlot_ = vrm_.getStackSlot(Orig);
+
+  collectRegsToSpill();
+
+  reMaterializeAll();
+
+  // Remat may handle everything.
+  if (edit_->getParent().empty())
+    return;
+
+  rc_ = mri_.getRegClass(edit.getReg());
+
+  if (stackSlot_ == VirtRegMap::NO_STACK_SLOT)
+    stackSlot_ = vrm_.assignVirt2StackSlot(Orig);
+
+  if (Orig != edit.getReg())
+    vrm_.assignVirt2StackSlot(edit.getReg(), stackSlot_);
+
+  // Update LiveStacks now that we are committed to spilling.
+  LiveInterval &stacklvr = lss_.getOrCreateInterval(stackSlot_, rc_);
+  if (!stacklvr.hasAtLeastOneValue())
+    stacklvr.getNextValue(SlotIndex(), 0, lss_.getVNInfoAllocator());
+  stacklvr.MergeRangesInAsValue(edit_->getParent(), stacklvr.getValNumInfo(0));
+
+  // Spill around uses of all RegsToSpill.
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
+    spillAroundUses(RegsToSpill[i]);
+
+  // Finally delete the SnippetCopies.
+  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(edit.getReg());
+       MachineInstr *MI = RI.skipInstruction();) {
+    assert(SnippetCopies.count(MI) && "Remaining use wasn't a snippet copy");
+    // FIXME: Do this with a LiveRangeEdit callback.
+    vrm_.RemoveMachineInstrFromMaps(MI);
+    lis_.RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+  }
+
+  // FIXME: Notify the register allocator that the snippets are now dead.
 }

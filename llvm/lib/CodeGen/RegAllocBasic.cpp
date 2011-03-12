@@ -289,6 +289,13 @@ void RegAllocBase::allocatePhysRegs() {
 
   // Continue assigning vregs one at a time to available physical registers.
   while (LiveInterval *VirtReg = dequeue()) {
+    // Unused registers can appear when the spiller coalesces snippets.
+    if (MRI->reg_nodbg_empty(VirtReg->reg)) {
+      DEBUG(dbgs() << "Dropping unused " << *VirtReg << '\n');
+      LIS->removeInterval(VirtReg->reg);
+      continue;
+    }
+
     // selectOrSplit requests the allocator to return an available physical
     // register if possible and populate a list of new live intervals that
     // result from splitting.
