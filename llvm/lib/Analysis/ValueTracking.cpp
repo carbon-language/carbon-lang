@@ -431,16 +431,24 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     }
 
     // Are we still trying to solve for the sign bit?
-    if (I->getOpcode() == Instruction::Add &&
-        Mask.isNegative() && !KnownZero.isNegative() && !KnownOne.isNegative()){
+    if (Mask.isNegative() && !KnownZero.isNegative() && !KnownOne.isNegative()){
       OverflowingBinaryOperator *OBO = cast<OverflowingBinaryOperator>(I);
       if (OBO->hasNoSignedWrap()) {
-        // Adding two positive numbers can't wrap into negative ...
-        if (LHSKnownZero.isNegative() && KnownZero2.isNegative())
-          KnownZero |= APInt::getSignBit(BitWidth);
-        // and adding two negative numbers can't wrap into positive.
-        else if (LHSKnownOne.isNegative() && KnownOne2.isNegative())
-          KnownOne |= APInt::getSignBit(BitWidth);
+        if (I->getOpcode() == Instruction::Add) {
+          // Adding two positive numbers can't wrap into negative
+          if (LHSKnownZero.isNegative() && KnownZero2.isNegative())
+            KnownZero |= APInt::getSignBit(BitWidth);
+          // and adding two negative numbers can't wrap into positive.
+          else if (LHSKnownOne.isNegative() && KnownOne2.isNegative())
+            KnownOne |= APInt::getSignBit(BitWidth);
+        } else {
+          // Subtracting a negative number from a positive one can't wrap
+          if (LHSKnownZero.isNegative() && KnownOne2.isNegative())
+            KnownZero |= APInt::getSignBit(BitWidth);
+          // neither can subtracting a positive number from a negative one.
+          else if (LHSKnownOne.isNegative() && KnownZero2.isNegative())
+            KnownOne |= APInt::getSignBit(BitWidth);
+        }
       }
     }
 
