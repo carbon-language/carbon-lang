@@ -555,7 +555,9 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   LiveInterval &stacklvr = lss_.getOrCreateInterval(stackSlot_, rc_);
   if (!stacklvr.hasAtLeastOneValue())
     stacklvr.getNextValue(SlotIndex(), 0, lss_.getVNInfoAllocator());
-  stacklvr.MergeRangesInAsValue(edit_->getParent(), stacklvr.getValNumInfo(0));
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
+    stacklvr.MergeRangesInAsValue(lis_.getInterval(RegsToSpill[i]),
+                                  stacklvr.getValNumInfo(0));
 
   // Spill around uses of all RegsToSpill.
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
