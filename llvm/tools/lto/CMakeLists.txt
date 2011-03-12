@@ -4,12 +4,16 @@ set(LLVM_LINK_COMPONENTS
 
 add_definitions( -DLLVM_VERSION_INFO=\"${PACKAGE_VERSION}\" )
 
-# TODO: build a static library too.
-set(BUILD_SHARED_LIBS ON)
-
-add_llvm_library(LTO
+set(SOURCES
   LTOCodeGenerator.cpp
   lto.cpp
   LTOModule.cpp
   )
 
+add_llvm_library(LTO ${SOURCES})
+
+if( NOT WIN32 AND LLVM_ENABLE_PIC )
+  set(BUILD_SHARED_LIBS ON)
+  add_llvm_library(LTO_dll ${SOURCES})
+  set_property(TARGET LTO_dll PROPERTY OUTPUT_NAME "LTO")
+endif()
