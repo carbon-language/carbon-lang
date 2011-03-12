@@ -298,4 +298,9 @@ def StreamChecker : Checker<"Stream">,
   HelpText<"Check stream handling functions">,
   DescFile<"StreamChecker.cpp">;
 
+def IteratorsChecker : Checker<"Iterators">,
+  InPackage<CoreExperimental>,
+  HelpText<"Check improper uses of STL vector iterators">,
+  DescFile<"IteratorsChecker.cpp">;
+
 }

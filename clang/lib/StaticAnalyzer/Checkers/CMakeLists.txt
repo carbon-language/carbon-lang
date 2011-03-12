@@ -29,6 +29,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   DivZeroChecker.cpp
   FixedAddressChecker.cpp
   IdempotentOperationChecker.cpp
+  IteratorsChecker.cpp
   LLVMConventionsChecker.cpp
   MacOSXAPIChecker.cpp
   MallocChecker.cpp
