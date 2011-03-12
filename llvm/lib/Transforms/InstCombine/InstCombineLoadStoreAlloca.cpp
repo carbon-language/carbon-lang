@@ -429,9 +429,19 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     // the pointer we're loading and is producing the pointer we're storing,
     // then *this* store is dead (X = load P; store X -> P).
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
-      if (LI == Val && equivalentAddressValues(LI->getOperand(0), Ptr) &&
-          !SI.isVolatile())
-        return EraseInstFromFunction(SI);
+      if (equivalentAddressValues(LI->getOperand(0), Ptr) &&
+          !SI.isVolatile()) {
+        if (LI == Val)
+          return EraseInstFromFunction(SI);
+        if (Ptr->hasNUses(2)) {
+          if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
+            if (isa<AllocaInst>(GEP->getOperand(0))) {
+              if (GEP->getOperand(0)->hasOneUse())
+                return EraseInstFromFunction(SI);
+            }
+          }
+        }
+      }
       
       // Otherwise, this is a load from some other location.  Stores before it
       // may not be dead.
