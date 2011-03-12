@@ -1,4 +1,6 @@
-set(LLVM_LINK_COMPONENTS ipo scalaropts linker bitreader bitwriter)
+set(LLVM_LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
+  ipo scalaropts linker bitreader bitwriter)
 
 add_definitions( -DLLVM_VERSION_INFO=\"${PACKAGE_VERSION}\" )
 
