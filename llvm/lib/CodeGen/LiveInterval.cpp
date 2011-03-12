@@ -30,126 +30,22 @@
 #include <algorithm>
 using namespace llvm;
 
-// SlotIndexIterator - adapt an iterator over LiveRanges to look
-// like an iterator over SlotIndexes by accessing the .end member.
-namespace {
-struct SlotIndexIterator
-  : std::iterator<std::random_access_iterator_tag, SlotIndex> {
-
-  SlotIndexIterator() {
-  }
-
-  explicit SlotIndexIterator(LiveInterval::iterator it)
-    : it(it) {
-  }
-
-  SlotIndexIterator(const SlotIndexIterator & that)
-    : it(that.it) {
-  }
-
-  SlotIndexIterator & operator=(const SlotIndexIterator & that) {
-    it = that.it;
-    return *this;
-  }
-
-  SlotIndexIterator & operator++() {
-    ++it;
-    return *this;
-  }
-
-  SlotIndexIterator operator++(int) {
-    SlotIndexIterator that(*this);
-    ++*this;
-    return that;
-  }
-
-  SlotIndexIterator & operator--() {
-    --it;
-    return *this;
-  }
-
-  SlotIndexIterator operator--(int) {
-    SlotIndexIterator that(*this);
-    --*this;
-    return that;
-  }
-
-  SlotIndexIterator & operator+=(std::ptrdiff_t n) {
-    it += n;
-    return *this;
-  }
-
-  SlotIndexIterator & operator-=(std::ptrdiff_t n) {
-    it -= n;
-    return *this;
-  }
-
-  friend bool operator==(SlotIndexIterator lhs, SlotIndexIterator rhs) {
-    return lhs.it == rhs.it;
-  }
-
-  friend bool operator!=(SlotIndexIterator lhs, SlotIndexIterator rhs) {
-    return lhs.it != rhs.it;
-  }
-
-  friend bool operator<(SlotIndexIterator lhs, SlotIndexIterator rhs) {
-    return lhs.it < rhs.it;
-  }
-
-  friend bool operator<=(SlotIndexIterator lhs, SlotIndexIterator rhs) {
-    return lhs.it <= rhs.it;
-  }
-
-  friend bool operator>(SlotIndexIterator lhs, SlotIndexIterator rhs) {
-    return lhs.it > rhs.it;
-  }
-
-  friend bool operator>=(SlotIndexIterator lhs, SlotIndexIterator rhs) {
-    return lhs.it >= rhs.it;
-  }
-
-  friend SlotIndexIterator operator+(SlotIndexIterator that, std::ptrdiff_t n) {
-    return SlotIndexIterator(that.it + n);
-  }
-
-  friend SlotIndexIterator operator+(std::ptrdiff_t n, SlotIndexIterator that) {
-    return SlotIndexIterator(n + that.it);
-  }
-
-  friend SlotIndexIterator operator-(SlotIndexIterator that, std::ptrdiff_t n) {
-    return SlotIndexIterator(that.it - n);
-  }
-
-  friend std::ptrdiff_t operator-(SlotIndexIterator lhs, SlotIndexIterator rhs) {
-    return lhs.it - rhs.it;
-  }
-
-  reference operator*() const {
-    return it->end;
-  }
-
-  reference operator[](std::ptrdiff_t n) const {
-    return it[n].end;
-  }
-
-  pointer operator->() const {
-    return &it->end;
-  }
-
-  LiveInterval::iterator base() const {
-    return it;
-  }
-
-private:
-  LiveInterval::iterator it;
-};
-}
-
 LiveInterval::iterator LiveInterval::find(SlotIndex Pos) {
-  assert(Pos.isValid() && "Cannot search for an invalid index");
-  return std::upper_bound(
-    SlotIndexIterator(begin()),
-    SlotIndexIterator(end()), Pos).base();
+  // This algorithm is basically std::upper_bound.
+  // Unfortunately, std::upper_bound cannot be used with mixed types until we
+  // adopt C++0x. Many libraries can do it, but not all.
+  if (empty() || Pos >= endIndex())
+    return end();
+  iterator I = begin();
+  size_t Len = ranges.size();
+  do {
+    size_t Mid = Len >> 1;
+    if (Pos < I[Mid].end)
+      Len = Mid;
+    else
+      I += Mid + 1, Len -= Mid + 1;
+  } while (Len);
+  return I;
 }
 
 /// killedInRange - Return true if the interval has kills in [Start,End).
