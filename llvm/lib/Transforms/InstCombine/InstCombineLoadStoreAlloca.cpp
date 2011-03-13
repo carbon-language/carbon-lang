@@ -433,6 +433,18 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
           !SI.isVolatile()) {
         if (LI == Val)
           return EraseInstFromFunction(SI);
+        // load and store reference same memory location, the memory location
+        // is represented by getelementptr with two uses (load and store) and
+        // the getelementptr's base is alloca with single use. At this point,
+        // instructions from alloca to store can be removed.
+        // (this pattern is generated when bitfield is accessed.)
+        // For example,
+        // %u = alloca %struct.test, align 4               ; [#uses=1]
+        // %0 = getelementptr inbounds %struct.test* %u, i32 0, i32 0;[#uses=2]
+        // %1 = load i8* %0, align 4                       ; [#uses=1]
+        // %2 = and i8 %1, -16                             ; [#uses=1]
+        // %3 = or i8 %2, 5                                ; [#uses=1]
+        // store i8 %3, i8* %0, align 4
         if (Ptr->hasNUses(2)) {
           if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
             if (isa<AllocaInst>(GEP->getOperand(0))) {
