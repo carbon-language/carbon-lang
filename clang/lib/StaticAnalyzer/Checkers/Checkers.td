@@ -60,6 +60,11 @@ def ClassReleaseChecker : Checker<"ClassRelease">,
   HelpText<"Check for sending 'retain', 'release', or 'autorelease' directly to a Class">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
+def VariadicMethodTypeChecker : Checker<"VariadicMethodTypes">,
+  HelpText<"Check for passing non-Objective-C types to variadic methods that expect"
+           "only Objective-C types">,
+  DescFile<"BasicObjCFoundationChecks.cpp">;
+
 def NSAutoreleasePoolChecker : Checker<"NSAutoreleasePool">,
   HelpText<"Warn for subpar uses of NSAutoreleasePool">,
   DescFile<"NSAutoreleasePoolChecker.cpp">;

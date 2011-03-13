@@ -477,6 +477,143 @@ void ClassReleaseChecker::checkPreObjCMessage(ObjCMessage msg,
 }
 
 //===----------------------------------------------------------------------===//
+// Check for passing non-Objective-C types to variadic methods that expect
+// only Objective-C types.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VariadicMethodTypeChecker : public Checker<check::PreObjCMessage> {
+  mutable Selector arrayWithObjectsS;
+  mutable Selector dictionaryWithObjectsAndKeysS;
+  mutable Selector setWithObjectsS;
+  mutable Selector initWithObjectsS;
+  mutable Selector initWithObjectsAndKeysS;
+  mutable llvm::OwningPtr<BugType> BT;
+
+  bool isVariadicMessage(const ObjCMessage &msg) const;
+
+public:
+  void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
+};
+}
+
+/// isVariadicMessage - Returns whether the given message is a variadic message,
+/// where all arguments must be Objective-C types.
+bool
+VariadicMethodTypeChecker::isVariadicMessage(const ObjCMessage &msg) const {
+  const ObjCMethodDecl *MD = msg.getMethodDecl();
+  if (!MD)
+    return false;
+  
+  if (!MD->isVariadic())
+    return false;
+  
+  Selector S = msg.getSelector();
+  
+  if (msg.isInstanceMessage()) {
+    // FIXME: Ideally we'd look at the receiver interface here, but that's not
+    // useful for init, because alloc returns 'id'. In theory, this could lead
+    // to false positives, for example if there existed a class that had an
+    // initWithObjects: implementation that does accept non-Objective-C pointer
+    // types, but the chance of that happening is pretty small compared to the
+    // gains that this analysis gives.
+    const ObjCInterfaceDecl *Class = MD->getClassInterface();
+
+    // -[NSArray initWithObjects:]
+    if (isReceiverClassOrSuperclass(Class, "NSArray") &&
+        S == initWithObjectsS)
+      return true;
+
+    // -[NSDictionary initWithObjectsAndKeys:]
+    if (isReceiverClassOrSuperclass(Class, "NSDictionary") &&
+        S == initWithObjectsAndKeysS)
+      return true;
+
+    // -[NSSet initWithObjects:]
+    if (isReceiverClassOrSuperclass(Class, "NSSet") &&
+        S == initWithObjectsS)
+      return true;
+  } else {
+    const ObjCInterfaceDecl *Class = msg.getReceiverInterface();
+
+    // -[NSArray arrayWithObjects:]
+    if (isReceiverClassOrSuperclass(Class, "NSArray") &&
+        S == arrayWithObjectsS)
+      return true;
+
+    // -[NSDictionary dictionaryWithObjectsAndKeys:]
+    if (isReceiverClassOrSuperclass(Class, "NSDictionary") &&
+        S == dictionaryWithObjectsAndKeysS)
+      return true;
+
+    // -[NSSet setWithObjects:]
+    if (isReceiverClassOrSuperclass(Class, "NSSet") &&
+        S == setWithObjectsS)
+      return true;
+  }
+
+  return false;
+}
+
+void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
+                                                    CheckerContext &C) const {
+  if (!BT) {
+    BT.reset(new APIMisuse("Arguments passed to variadic method aren't all "
+                           "Objective-C pointer types"));
+
+    ASTContext &Ctx = C.getASTContext();
+    arrayWithObjectsS = GetUnarySelector("arrayWithObjects", Ctx);
+    dictionaryWithObjectsAndKeysS = 
+      GetUnarySelector("dictionaryWithObjectsAndKeys", Ctx);
+    setWithObjectsS = GetUnarySelector("setWithObjects", Ctx);
+
+    initWithObjectsS = GetUnarySelector("initWithObjects", Ctx);
+    initWithObjectsAndKeysS = GetUnarySelector("initWithObjectsAndKeys", Ctx);
+  }
+
+  if (!isVariadicMessage(msg))
+      return;
+
+  // We are not interested in the selector arguments since they have
+  // well-defined types, so the compiler will issue a warning for them.
+  unsigned variadicArgsBegin = msg.getSelector().getNumArgs();
+
+  // We're not interested in the last argument since it has to be nil or the
+  // compiler would have issued a warning for it elsewhere.
+  unsigned variadicArgsEnd = msg.getNumArgs() - 1;
+
+  if (variadicArgsEnd <= variadicArgsBegin)
+    return;
+
+  // Verify that all arguments have Objective-C types.
+  for (unsigned I = variadicArgsBegin; I != variadicArgsEnd; ++I) {
+    QualType ArgTy = msg.getArgType(I);
+    if (ArgTy->isObjCObjectPointerType())
+      continue;
+
+    ExplodedNode *N = C.generateNode();
+    if (!N)
+      continue;
+
+    llvm::SmallString<128> sbuf;
+    llvm::raw_svector_ostream os(sbuf);
+
+    if (const char *TypeName = GetReceiverNameType(msg))
+      os << "Argument to '" << TypeName << "' method '";
+    else
+      os << "Argument to method '";
+
+    os << msg.getSelector().getAsString() 
+      << "' should be an Objective-C pointer type, not '" 
+      << ArgTy.getAsString() << "'";
+
+    RangedBugReport *R = new RangedBugReport(*BT, os.str(), N);
+    R->addRange(msg.getArgSourceRange(I));
+    C.EmitReport(R);
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // Check registration.
 //===----------------------------------------------------------------------===//
 
@@ -494,4 +631,8 @@ void ento::registerCFRetainReleaseChecker(CheckerManager &mgr) {
 
 void ento::registerClassReleaseChecker(CheckerManager &mgr) {
   mgr.registerChecker<ClassReleaseChecker>();
+}
+
+void ento::registerVariadicMethodTypeChecker(CheckerManager &mgr) {
+  mgr.registerChecker<VariadicMethodTypeChecker>();
 }
