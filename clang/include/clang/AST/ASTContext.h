@@ -1529,13 +1529,13 @@ private:
 };
   
 /// @brief Utility function for constructing a nullary selector.
-static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
+static inline Selector GetNullarySelector(llvm::StringRef name, ASTContext& Ctx) {
   IdentifierInfo* II = &Ctx.Idents.get(name);
   return Ctx.Selectors.getSelector(0, &II);
 }
 
 /// @brief Utility function for constructing an unary selector.
-static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
+static inline Selector GetUnarySelector(llvm::StringRef name, ASTContext& Ctx) {
   IdentifierInfo* II = &Ctx.Idents.get(name);
   return Ctx.Selectors.getSelector(1, &II);
 }
