@@ -10,6 +10,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
