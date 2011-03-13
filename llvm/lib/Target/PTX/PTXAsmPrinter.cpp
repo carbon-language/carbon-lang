@@ -62,6 +62,7 @@ public:
                        const char *Modifier = 0);
   void printParamOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
                          const char *Modifier = 0);
+  void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
 
   // autogen'd.
   void printInstruction(const MachineInstr *MI, raw_ostream &OS);
@@ -210,8 +211,12 @@ void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   std::string str;
   str.reserve(64);
 
-  // Write instruction to str
   raw_string_ostream OS(str);
+
+  // Emit predicate
+  printPredicateOperand(MI, OS);
+
+  // Write instruction to str
   printInstruction(MI, OS);
   OS << ';';
   OS.flush();
@@ -392,6 +397,25 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
   }
 
   OutStreamer.EmitRawText(Twine(decl));
+}
+
+void PTXAsmPrinter::
+printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
+  int i = MI->findFirstPredOperandIdx();
+  if (i == -1)
+    llvm_unreachable("missing predicate operand");
+
+  unsigned reg = MI->getOperand(i).getReg();
+  int predOp = MI->getOperand(i+1).getImm();
+
+  DEBUG(dbgs() << "predicate: (" << reg << ", " << predOp << ")\n");
+
+  if (reg && predOp != PTX::PRED_IGNORE) {
+    O << '@';
+    if (predOp == PTX::PRED_NEGATE)
+      O << '!';
+    O << getRegisterName(reg);
+  }
 }
 
 #include "PTXGenAsmWriter.inc"

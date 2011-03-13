@@ -15,61 +15,73 @@
 #define PTX_INSTR_INFO_H
 
 #include "PTXRegisterInfo.h"
-#include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
 class PTXTargetMachine;
 
+class MachineSDNode;
+class SDValue;
+class SelectionDAG;
+
 class PTXInstrInfo : public TargetInstrInfoImpl {
-  private:
-    const PTXRegisterInfo RI;
-    PTXTargetMachine &TM;
+private:
+  const PTXRegisterInfo RI;
+  PTXTargetMachine &TM;
 
-  public:
-    explicit PTXInstrInfo(PTXTargetMachine &_TM);
+public:
+  explicit PTXInstrInfo(PTXTargetMachine &_TM);
 
-    virtual const PTXRegisterInfo &getRegisterInfo() const { return RI; }
+  virtual const PTXRegisterInfo &getRegisterInfo() const { return RI; }
 
-    virtual void copyPhysReg(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator I, DebugLoc DL,
-                             unsigned DstReg, unsigned SrcReg,
-                             bool KillSrc) const;
+  virtual void copyPhysReg(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator I, DebugLoc DL,
+                           unsigned DstReg, unsigned SrcReg,
+                           bool KillSrc) const;
 
-    virtual bool copyRegToReg(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I,
-                              unsigned DstReg, unsigned SrcReg,
-                              const TargetRegisterClass *DstRC,
-                              const TargetRegisterClass *SrcRC,
-                              DebugLoc DL) const;
+  virtual bool copyRegToReg(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator I,
+                            unsigned DstReg, unsigned SrcReg,
+                            const TargetRegisterClass *DstRC,
+                            const TargetRegisterClass *SrcRC,
+                            DebugLoc DL) const;
 
-    virtual bool isMoveInstr(const MachineInstr& MI,
-                             unsigned &SrcReg, unsigned &DstReg,
-                             unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
+  virtual bool isMoveInstr(const MachineInstr& MI,
+                           unsigned &SrcReg, unsigned &DstReg,
+                           unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
 
-    // static helper routines
+  // predicate support
 
-    static MachineSDNode *GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
-                                            DebugLoc dl, EVT VT,
-                                            SDValue Op1) {
-      SDValue pred_reg = DAG->getRegister(0, MVT::i1);
-      SDValue pred_imm = DAG->getTargetConstant(0, MVT::i32);
-      SDValue ops[] = { Op1, pred_reg, pred_imm };
-      return DAG->getMachineNode(Opcode, dl, VT, ops, array_lengthof(ops));
-    }
+  virtual bool isPredicated(const MachineInstr *MI) const;
 
-    static MachineSDNode *GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
-                                            DebugLoc dl, EVT VT,
-                                            SDValue Op1,
-                                            SDValue Op2) {
-      SDValue pred_reg = DAG->getRegister(0, MVT::i1);
-      SDValue pred_imm = DAG->getTargetConstant(0, MVT::i32);
-      SDValue ops[] = { Op1, Op2, pred_reg, pred_imm };
-      return DAG->getMachineNode(Opcode, dl, VT, ops, array_lengthof(ops));
-    }
+  virtual bool isUnpredicatedTerminator(const MachineInstr *MI) const;
 
-  }; // class PTXInstrInfo
+  virtual
+  bool PredicateInstruction(MachineInstr *MI,
+                            const SmallVectorImpl<MachineOperand> &Pred) const;
+
+  virtual
+  bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                         const SmallVectorImpl<MachineOperand> &Pred2) const;
+
+  virtual bool DefinesPredicate(MachineInstr *MI,
+                                std::vector<MachineOperand> &Pred) const;
+
+  // PTX is fully-predicable
+  virtual bool isPredicable(MachineInstr *MI) const { return true; }
+
+  // static helper routines
+
+  static MachineSDNode *GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
+                                          DebugLoc dl, EVT VT,
+                                          SDValue Op1);
+
+  static MachineSDNode *GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
+                                          DebugLoc dl, EVT VT,
+                                          SDValue Op1, SDValue Op2);
+
+  static void AddDefaultPredicate(MachineInstr *MI);
+}; // class PTXInstrInfo
 } // namespace llvm
 
 #endif // PTX_INSTR_INFO_H

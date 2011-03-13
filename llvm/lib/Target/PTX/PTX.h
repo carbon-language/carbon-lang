@@ -29,6 +29,11 @@ namespace llvm {
       PARAMETER = 3,
       SHARED = 4
     };
+
+    enum Predicate {
+      PRED_IGNORE = 0,
+      PRED_NEGATE = 1
+    };
   } // namespace PTX
 
   FunctionPass *createPTXISelDag(PTXTargetMachine &TM,
