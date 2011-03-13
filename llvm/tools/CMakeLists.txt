@@ -46,7 +46,10 @@ add_subdirectory(llvm-stub)
 add_subdirectory(edis)
 add_subdirectory(llvmc)
 
-add_subdirectory(lto)
+if( NOT WIN32 )
+  add_subdirectory(lto)
+endif()
+
 if( LLVM_ENABLE_PIC )
   # TODO: support other systems:
   if( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
