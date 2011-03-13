@@ -573,5 +573,6 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
     MI->eraseFromParent();
   }
 
-  // FIXME: Notify the register allocator that the snippets are now dead.
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
+    edit.eraseVirtReg(RegsToSpill[i], lis_);
 }

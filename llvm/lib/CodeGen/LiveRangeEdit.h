@@ -34,6 +34,11 @@ public:
   struct Delegate {
     /// Called immediately before erasing a dead machine instruction.
     virtual void LRE_WillEraseInstruction(MachineInstr *MI) {}
+
+    /// Called when a virtual register is no longer used. Return false to defer
+    /// its deletion from LiveIntervals.
+    virtual bool LRE_CanEraseVirtReg(unsigned) { return true; }
+
     virtual ~Delegate() {}
   };
 
@@ -149,6 +154,10 @@ public:
   bool didRematerialize(const VNInfo *ParentVNI) const {
     return rematted_.count(ParentVNI);
   }
+
+  /// eraseVirtReg - Notify the delegate that Reg is no longer in use, and try
+  /// to erase it from LIS.
+  void eraseVirtReg(unsigned Reg, LiveIntervals &LIS);
 
   /// eliminateDeadDefs - Try to delete machine instructions that are now dead
   /// (allDefsAreDead returns true). This may cause live intervals to be trimmed

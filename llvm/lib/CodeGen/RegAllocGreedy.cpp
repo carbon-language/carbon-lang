@@ -161,6 +161,7 @@ public:
 
 private:
   void LRE_WillEraseInstruction(MachineInstr*);
+  bool LRE_CanEraseVirtReg(unsigned);
 
   bool checkUncachedInterference(LiveInterval&, unsigned);
   LiveInterval *getSingleInterference(LiveInterval&, unsigned);
@@ -249,6 +250,15 @@ void RAGreedy::LRE_WillEraseInstruction(MachineInstr *MI) {
   VRM->RemoveMachineInstrFromMaps(MI);
 }
 
+bool RAGreedy::LRE_CanEraseVirtReg(unsigned VirtReg) {
+  if (unsigned PhysReg = VRM->getPhys(VirtReg)) {
+    unassign(LIS->getInterval(VirtReg), PhysReg);
+    return true;
+  }
+  // Unassigned virtreg is probably in the priority queue.
+  // RegAllocBase will erase it after dequeueing.
+  return false;
+}
 
 void RAGreedy::releaseMemory() {
   SpillerInstance.reset(0);

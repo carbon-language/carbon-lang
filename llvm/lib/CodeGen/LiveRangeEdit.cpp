@@ -131,6 +131,11 @@ SlotIndex LiveRangeEdit::rematerializeAt(MachineBasicBlock &MBB,
   return lis.InsertMachineInstrInMaps(--MI).getDefIndex();
 }
 
+void LiveRangeEdit::eraseVirtReg(unsigned Reg, LiveIntervals &LIS) {
+  if (delegate_ && delegate_->LRE_CanEraseVirtReg(Reg))
+    LIS.removeInterval(Reg);
+}
+
 void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
                                       LiveIntervals &LIS,
                                       const TargetInstrInfo &TII) {
