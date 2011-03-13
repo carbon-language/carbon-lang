@@ -481,12 +481,11 @@ public:
             *success_ptr = true;
         switch (m_inst.opcode_type)
         {
-        eOpcode8:   return m_inst.opcode.inst8;
-        eOpcode16:  return m_inst.opcode.inst16;
-        eOpcode32:  return m_inst.opcode.inst32;
-        eOpcode64:  return m_inst.opcode.inst64;
-        eOpcodeBytes:
-            break;
+        case eOpcode8:     return m_inst.opcode.inst8;
+        case eOpcode16:    return m_inst.opcode.inst16;
+        case eOpcode32:    return m_inst.opcode.inst32;
+        case eOpcode64:    return m_inst.opcode.inst64;
+        case eOpcodeBytes: break;
         }
         if (success_ptr)
             *success_ptr = false;
