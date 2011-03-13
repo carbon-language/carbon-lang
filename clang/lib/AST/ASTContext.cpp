@@ -195,6 +195,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        IdentifierTable &idents, SelectorTable &sels,
                        Builtin::Context &builtins,
                        unsigned size_reserve) :
+  FunctionProtoTypes(this_()),
   TemplateSpecializationTypes(this_()),
   DependentTemplateSpecializationTypes(this_()),
   GlobalNestedNameSpecifier(0), IsInt128Installed(false),
@@ -1909,7 +1910,7 @@ ASTContext::getFunctionType(QualType ResultTy,
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, EPI, this);
+  FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, EPI, *this);
 
   void *InsertPos = 0;
   if (FunctionProtoType *FTP =
@@ -1960,13 +1961,12 @@ ASTContext::getFunctionType(QualType ResultTy,
   if (EPI.ExceptionSpecType == EST_Dynamic)
     Size += EPI.NumExceptions * sizeof(QualType);
   else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
-    Size += sizeof(Expr*) + sizeof(ASTContext*);
+    Size += sizeof(Expr*);
   }
   FunctionProtoType *FTP = (FunctionProtoType*) Allocate(Size, TypeAlignment);
   FunctionProtoType::ExtProtoInfo newEPI = EPI;
   newEPI.ExtInfo = EPI.ExtInfo.withCallingConv(CallConv);
-  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, Canonical, newEPI,
-                              this);
+  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, Canonical, newEPI);
   Types.push_back(FTP);
   FunctionProtoTypes.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);

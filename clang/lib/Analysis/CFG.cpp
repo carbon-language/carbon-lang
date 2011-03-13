@@ -1118,7 +1118,7 @@ CFGBlock *CFGBuilder::VisitBreakStmt(BreakStmt *B) {
   return Block;
 }
 
-static bool CanThrow(Expr *E) {
+static bool CanThrow(Expr *E, ASTContext &Ctx) {
   QualType Ty = E->getType();
   if (Ty->isFunctionPointerType())
     Ty = Ty->getAs<PointerType>()->getPointeeType();
@@ -1128,7 +1128,7 @@ static bool CanThrow(Expr *E) {
   const FunctionType *FT = Ty->getAs<FunctionType>();
   if (FT) {
     if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
-      if (Proto->isNothrow())
+      if (Proto->isNothrow(Ctx))
         return false;
   }
   return true;
@@ -1156,7 +1156,7 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
       AddEHEdge = false;
   }
 
-  if (!CanThrow(C->getCallee()))
+  if (!CanThrow(C->getCallee(), *Context))
     AddEHEdge = false;
 
   if (!NoReturn && !AddEHEdge)

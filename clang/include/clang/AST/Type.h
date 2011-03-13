@@ -2430,8 +2430,7 @@ private:
   }
 
   FunctionProtoType(QualType result, const QualType *args, unsigned numArgs,
-                    QualType canonical, const ExtProtoInfo &epi,
-                    const ASTContext *Context);
+                    QualType canonical, const ExtProtoInfo &epi);
 
   /// NumArgs - The number of arguments this function has, not counting '...'.
   unsigned NumArgs : 20;
@@ -2450,16 +2449,6 @@ private:
 
   /// NoexceptExpr - Instead of Exceptions, there may be a single Expr* pointing
   /// to the expression in the noexcept() specifier.
-
-  /// Context - If there is a NoexceptExpr, we need to store a pointer to the
-  /// ASTContext as well. We do it right after NoexceptExpr.
-
-  const ASTContext *getContext() const {
-    // Context sits after NoexceptExpr, one pointer past where the arguments end
-    if(getExceptionSpecType() == EST_ComputedNoexcept)
-      return *(reinterpret_cast<const ASTContext *const *>(arg_type_end()) + 1);
-    return 0;
-  }
 
   friend class ASTContext;  // ASTContext creates these.
 
@@ -2511,7 +2500,7 @@ public:
     NR_Nothrow      ///< The noexcept specifier evaluates to true.
   };
   /// \brief Get the meaning of the noexcept spec on this function, if any.
-  NoexceptResult getNoexceptSpec() const;
+  NoexceptResult getNoexceptSpec(ASTContext &Ctx) const;
   unsigned getNumExceptions() const { return NumExceptions; }
   QualType getExceptionType(unsigned i) const {
     assert(i < NumExceptions && "Invalid exception number!");
@@ -2523,13 +2512,13 @@ public:
     // NoexceptExpr sits where the arguments end.
     return *reinterpret_cast<Expr *const *>(arg_type_end());
   }
-  bool isNothrow() const {
+  bool isNothrow(ASTContext &Ctx) const {
     ExceptionSpecificationType EST = getExceptionSpecType();
     if (EST == EST_DynamicNone || EST == EST_BasicNoexcept)
       return true;
     if (EST != EST_ComputedNoexcept)
       return false;
-    return getNoexceptSpec() == NR_Nothrow;
+    return getNoexceptSpec(Ctx) == NR_Nothrow;
   }
 
   using FunctionType::isVariadic;
@@ -2575,10 +2564,10 @@ public:
   }
   static bool classof(const FunctionProtoType *) { return true; }
 
-  void Profile(llvm::FoldingSetNodeID &ID);
+  void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Ctx);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                       arg_type_iterator ArgTys, unsigned NumArgs,
-                      const ExtProtoInfo &EPI, const ASTContext *Context);
+                      const ExtProtoInfo &EPI, const ASTContext &Context);
 };
 
 

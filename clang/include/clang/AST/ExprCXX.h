@@ -1090,7 +1090,7 @@ public:
   /// has a non-throwing exception-specification.  The '03 rule is
   /// identical except that the definition of a non-throwing
   /// exception specification is just "is it throw()?".
-  bool shouldNullCheckAllocation() const;
+  bool shouldNullCheckAllocation(ASTContext &Ctx) const;
   
   FunctionDecl *getOperatorNew() const { return OperatorNew; }
   void setOperatorNew(FunctionDecl *D) { OperatorNew = D; }

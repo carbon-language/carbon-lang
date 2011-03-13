@@ -1166,8 +1166,7 @@ llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
 
 FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
                                      unsigned numArgs, QualType canonical,
-                                     const ExtProtoInfo &epi,
-                                     const ASTContext *context)
+                                     const ExtProtoInfo &epi)
   : FunctionType(FunctionProto, result, epi.Variadic, epi.TypeQuals, 
                  epi.RefQualifier, canonical,
                  result->isDependentType(),
@@ -1205,14 +1204,11 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
     // Store the noexcept expression and context.
     Expr **noexSlot = reinterpret_cast<Expr**>(argSlot + numArgs);
     *noexSlot = epi.NoexceptExpr;
-    const ASTContext **contextSlot = const_cast<const ASTContext**>(
-        reinterpret_cast<ASTContext**>(noexSlot + 1));
-    *contextSlot = context;
   }
 }
 
 FunctionProtoType::NoexceptResult
-FunctionProtoType::getNoexceptSpec() const {
+FunctionProtoType::getNoexceptSpec(ASTContext &ctx) const {
   ExceptionSpecificationType est = getExceptionSpecType();
   if (est == EST_BasicNoexcept)
     return NR_Nothrow;
@@ -1227,7 +1223,6 @@ FunctionProtoType::getNoexceptSpec() const {
     return NR_Dependent;
 
   llvm::APSInt value;
-  ASTContext& ctx = const_cast<ASTContext&>(*getContext());
   bool isICE = noexceptExpr->isIntegerConstantExpr(value, ctx, 0,
                                                    /*evaluated*/false);
   (void)isICE;
@@ -1247,7 +1242,7 @@ bool FunctionProtoType::isTemplateVariadic() const {
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 const QualType *ArgTys, unsigned NumArgs,
                                 const ExtProtoInfo &epi,
-                                const ASTContext *Context) {
+                                const ASTContext &Context) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
@@ -1259,14 +1254,15 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
     for (unsigned i = 0; i != epi.NumExceptions; ++i)
       ID.AddPointer(epi.Exceptions[i].getAsOpaquePtr());
   } else if (epi.ExceptionSpecType == EST_ComputedNoexcept && epi.NoexceptExpr){
-    epi.NoexceptExpr->Profile(ID, *Context, true);
+    epi.NoexceptExpr->Profile(ID, Context, true);
   }
   epi.ExtInfo.Profile(ID);
 }
 
-void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
+void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID,
+                                const ASTContext &Ctx) {
   Profile(ID, getResultType(), arg_type_begin(), NumArgs, getExtProtoInfo(),
-          getContext());
+          Ctx);
 }
 
 QualType TypedefType::desugar() const {

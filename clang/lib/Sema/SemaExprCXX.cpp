@@ -2423,7 +2423,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
             FoundAssign = true;
             const FunctionProtoType *CPT
                 = Operator->getType()->getAs<FunctionProtoType>();
-            if (!CPT->isNothrow()) {
+            if (!CPT->isNothrow(Self.Context)) {
               AllNoThrow = false;
               break;
             }
@@ -2465,7 +2465,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
               = Constructor->getType()->getAs<FunctionProtoType>();
           // FIXME: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
-          if (!CPT->isNothrow() || CPT->getNumArgs() > 1) {
+          if (!CPT->isNothrow(Self.Context) || CPT->getNumArgs() > 1) {
             AllNoThrow = false;
             break;
           }
@@ -2500,7 +2500,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
               = Constructor->getType()->getAs<FunctionProtoType>();
           // TODO: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
-          return CPT->isNothrow() && CPT->getNumArgs() == 0;
+          return CPT->isNothrow(Self.Context) && CPT->getNumArgs() == 0;
         }
       }
     }

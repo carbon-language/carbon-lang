@@ -313,8 +313,8 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   if (OldEST == EST_None && NewEST == EST_None)
     return false;
 
-  FunctionProtoType::NoexceptResult OldNR = Old->getNoexceptSpec();
-  FunctionProtoType::NoexceptResult NewNR = New->getNoexceptSpec();
+  FunctionProtoType::NoexceptResult OldNR = Old->getNoexceptSpec(Context);
+  FunctionProtoType::NoexceptResult NewNR = New->getNoexceptSpec(Context);
   if (OldNR == FunctionProtoType::NR_BadNoexcept ||
       NewNR == FunctionProtoType::NR_BadNoexcept)
     return false;
@@ -460,7 +460,7 @@ bool Sema::CheckExceptionSpecSubset(
   // omissions we make here.
   // We also shortcut checking if a noexcept expression was bad.
 
-  FunctionProtoType::NoexceptResult SuperNR =Superset->getNoexceptSpec();
+  FunctionProtoType::NoexceptResult SuperNR =Superset->getNoexceptSpec(Context);
   if (SuperNR == FunctionProtoType::NR_BadNoexcept ||
       SuperNR == FunctionProtoType::NR_Dependent)
     return false;
@@ -479,7 +479,7 @@ bool Sema::CheckExceptionSpecSubset(
     return true;
   }
 
-  FunctionProtoType::NoexceptResult SubNR = Subset->getNoexceptSpec();
+  FunctionProtoType::NoexceptResult SubNR = Subset->getNoexceptSpec(Context);
   if (SubNR == FunctionProtoType::NR_BadNoexcept ||
       SubNR == FunctionProtoType::NR_Dependent)
     return false;

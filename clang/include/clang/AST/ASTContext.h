@@ -96,7 +96,8 @@ class ASTContext {
     DependentSizedExtVectorTypes;
   mutable llvm::FoldingSet<VectorType> VectorTypes;
   mutable llvm::FoldingSet<FunctionNoProtoType> FunctionNoProtoTypes;
-  mutable llvm::FoldingSet<FunctionProtoType> FunctionProtoTypes;
+  mutable llvm::ContextualFoldingSet<FunctionProtoType, ASTContext&>
+    FunctionProtoTypes;
   mutable llvm::FoldingSet<DependentTypeOfExprType> DependentTypeOfExprTypes;
   mutable llvm::FoldingSet<DependentDecltypeType> DependentDecltypeTypes;
   mutable llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;

@@ -3091,7 +3091,7 @@ namespace {
 
       // Check out noexcept specs.
       if (EST == EST_ComputedNoexcept) {
-        FunctionProtoType::NoexceptResult NR = Proto->getNoexceptSpec();
+        FunctionProtoType::NoexceptResult NR = Proto->getNoexceptSpec(Context);
         assert(NR != FunctionProtoType::NR_NoNoexcept &&
                "Must have noexcept result for EST_ComputedNoexcept.");
         assert(NR != FunctionProtoType::NR_Dependent &&

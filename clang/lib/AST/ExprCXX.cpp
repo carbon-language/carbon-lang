@@ -100,9 +100,9 @@ void CXXNewExpr::AllocateArgsArray(ASTContext &C, bool isArray,
   SubExprs = new (C) Stmt*[TotalSize];
 }
 
-bool CXXNewExpr::shouldNullCheckAllocation() const {
+bool CXXNewExpr::shouldNullCheckAllocation(ASTContext &Ctx) const {
   return getOperatorNew()->getType()->
-    castAs<FunctionProtoType>()->isNothrow();
+    castAs<FunctionProtoType>()->isNothrow(Ctx);
 }
 
 // CXXDeleteExpr
