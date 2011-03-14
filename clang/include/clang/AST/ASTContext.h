@@ -1333,7 +1333,8 @@ public:
                                const ObjCObjectType *RHS);
   bool canAssignObjCInterfacesInBlockPointer(
                                           const ObjCObjectPointerType *LHSOPT,
-                                          const ObjCObjectPointerType *RHSOPT);
+                                          const ObjCObjectPointerType *RHSOPT,
+                                          bool BlockReturnType);
   bool areComparableObjCPointerTypes(QualType LHS, QualType RHS);
   QualType areCommonBaseCompatible(const ObjCObjectPointerType *LHSOPT,
                                    const ObjCObjectPointerType *RHSOPT);
@@ -1341,7 +1342,7 @@ public:
 
   // Functions for calculating composite types
   QualType mergeTypes(QualType, QualType, bool OfBlockPointer=false,
-                      bool Unqualified = false);
+                      bool Unqualified = false, bool BlockReturnType = false);
   QualType mergeFunctionTypes(QualType, QualType, bool OfBlockPointer=false,
                               bool Unqualified = false);
   QualType mergeFunctionArgumentTypes(QualType, QualType,

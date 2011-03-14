@@ -121,3 +121,20 @@ int test4 () {
     return 0;
 }
 
+// rdar:// 9118343
+
+@protocol NSCopying @end
+
+@interface NSAllArray <NSCopying>
+@end
+
+@interface NSAllArray (FooConformance) <Foo>
+@end
+
+int test5() {
+    NSAllArray *(^block)(id);
+    id <Foo> (^genericBlock)(id);
+    genericBlock = block;
+    return 0;
+}
+

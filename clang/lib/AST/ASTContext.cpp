@@ -4838,7 +4838,8 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
 /// not OK. For the return type, the opposite is not OK.
 bool ASTContext::canAssignObjCInterfacesInBlockPointer(
                                          const ObjCObjectPointerType *LHSOPT,
-                                         const ObjCObjectPointerType *RHSOPT) {
+                                         const ObjCObjectPointerType *RHSOPT,
+                                         bool BlockReturnType) {
   if (RHSOPT->isObjCBuiltinType() || LHSOPT->isObjCIdType())
     return true;
   
@@ -4856,9 +4857,9 @@ bool ASTContext::canAssignObjCInterfacesInBlockPointer(
   if (LHS && RHS)  { // We have 2 user-defined types.
     if (LHS != RHS) {
       if (LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
-        return false;
+        return BlockReturnType;
       if (RHS->getDecl()->isSuperClassOf(LHS->getDecl()))
-        return true;
+        return !BlockReturnType;
     }
     else
       return true;
@@ -5082,7 +5083,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     bool UnqualifiedResult = Unqualified;
     if (!UnqualifiedResult)
       UnqualifiedResult = (!RHS.hasQualifiers() && LHS.hasQualifiers());
-    retType = mergeTypes(RHS, LHS, true, UnqualifiedResult);
+    retType = mergeTypes(LHS, RHS, true, UnqualifiedResult, true);
   }
   else
     retType = mergeTypes(lbase->getResultType(), rbase->getResultType(), false,
@@ -5222,7 +5223,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
 
 QualType ASTContext::mergeTypes(QualType LHS, QualType RHS, 
                                 bool OfBlockPointer,
-                                bool Unqualified) {
+                                bool Unqualified, bool BlockReturnType) {
   // C++ [expr]: If an expression initially has the type "reference to T", the
   // type is adjusted to "T" prior to any further analysis, the expression
   // designates the object or function denoted by the reference, and the
@@ -5456,7 +5457,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
     if (OfBlockPointer) {
       if (canAssignObjCInterfacesInBlockPointer(
                                           LHS->getAs<ObjCObjectPointerType>(),
-                                          RHS->getAs<ObjCObjectPointerType>()))
+                                          RHS->getAs<ObjCObjectPointerType>(),
+                                          BlockReturnType))
       return LHS;
       return QualType();
     }
