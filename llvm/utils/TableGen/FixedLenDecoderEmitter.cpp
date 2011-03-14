@@ -1224,7 +1224,8 @@ bool FixedLenDecoderEmitter::populateInstruction(const CodeGenInstruction &CGI,
   if (Bits.allInComplete()) return false;
 
   // Ignore "asm parser only" instructions.
-  if (Def.getValueAsBit("isAsmParserOnly"))
+  if (Def.getValueAsBit("isAsmParserOnly") ||
+      Def.getValueAsBit("isCodeGenOnly"))
     return false;
 
   std::vector<OperandInfo> InsnOperands;
