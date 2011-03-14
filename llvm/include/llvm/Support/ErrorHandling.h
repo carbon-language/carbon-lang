@@ -86,18 +86,21 @@ namespace llvm {
                                                          unsigned line=0);
 }
 
-/// Prints the message and location info to stderr in !NDEBUG builds.
-/// This is intended to be used for "impossible" situations that imply
-/// a bug in the compiler.
+/// Marks that the current location is not supposed to be reachable.
+/// In !NDEBUG builds, prints the message and location info to stderr.
+/// In NDEBUG builds, becomes an optimizer hint that the current location
+/// is not supposed to be reachable.  On compilers that don't support
+/// such hints, prints a reduced message instead.
 ///
-/// In NDEBUG mode it only prints "UNREACHABLE executed".
-/// Use this instead of assert(0), so that the compiler knows this path
-/// is not reachable even for NDEBUG builds.
+/// Use this instead of assert(0).  It conveys intent more clearly and
+/// allows compilers to omit some unnecessary code.
 #ifndef NDEBUG
 #define llvm_unreachable(msg) \
   ::llvm::llvm_unreachable_internal(msg, __FILE__, __LINE__)
-#else
+#elif defined(LLVM_BUILTIN_UNREACHABLE)
 #define llvm_unreachable(msg) LLVM_BUILTIN_UNREACHABLE
+#else
+#define llvm_unreachable(msg) ::llvm::llvm_unreachable_internal()
 #endif
 
 #endif
