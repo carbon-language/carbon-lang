@@ -852,6 +852,10 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VZIP:          return "ARMISD::VZIP";
   case ARMISD::VUZP:          return "ARMISD::VUZP";
   case ARMISD::VTRN:          return "ARMISD::VTRN";
+  case ARMISD::VTBL1:         return "ARMISD::VTBL1";
+  case ARMISD::VTBL2:         return "ARMISD::VTBL2";
+  case ARMISD::VTBL3:         return "ARMISD::VTBL3";
+  case ARMISD::VTBL4:         return "ARMISD::VTBL4";
   case ARMISD::VMULLs:        return "ARMISD::VMULLs";
   case ARMISD::VMULLu:        return "ARMISD::VMULLu";
   case ARMISD::BUILD_VECTOR:  return "ARMISD::BUILD_VECTOR";
@@ -4055,6 +4059,29 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
   }
 }
 
+static SDValue LowerVECTOR_SHUFFLEv8i8(SDValue Op,
+                                       SmallVectorImpl<int> &ShuffleMask,
+                                       SelectionDAG &DAG) {
+  // Check to see if we can use the VTBL instruction.
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+  DebugLoc DL = Op.getDebugLoc();
+
+  SmallVector<SDValue, 8> VTBLMask;
+  for (SmallVectorImpl<int>::iterator
+         I = ShuffleMask.begin(), E = ShuffleMask.end(); I != E; ++I)
+    VTBLMask.push_back(DAG.getConstant(*I, MVT::i32));
+
+  if (V2.getNode()->getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ARMISD::VTBL1, DL, MVT::v8i8, V1,
+                       DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i8,
+                                   &VTBLMask[0], 8));
+  else
+    return DAG.getNode(ARMISD::VTBL2, DL, MVT::v8i8, V1, V2, 
+                       DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i8,
+                                   &VTBLMask[0], 8));
+}
+
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
@@ -4170,6 +4197,12 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     }
     SDValue Val = DAG.getNode(ARMISD::BUILD_VECTOR, dl, VecVT, &Ops[0],NumElts);
     return DAG.getNode(ISD::BITCAST, dl, VT, Val);
+  }
+
+  if (VT == MVT::v8i8) {
+    SDValue NewOp = LowerVECTOR_SHUFFLEv8i8(Op, ShuffleMask, DAG);
+    if (NewOp.getNode())
+      return NewOp;
   }
 
   return SDValue();
@@ -4534,7 +4567,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::GlobalAddress:
     return Subtarget->isTargetDarwin() ? LowerGlobalAddressDarwin(Op, DAG) :
       LowerGlobalAddressELF(Op, DAG);
-  case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
+  case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
   case ISD::SELECT:        return LowerSELECT(Op, DAG);
   case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG);
   case ISD::BR_CC:         return LowerBR_CC(Op, DAG);

@@ -2842,6 +2842,35 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     break;
   }
 
+  case ARMISD::VTBL1: {
+    DebugLoc dl = N->getDebugLoc();
+    EVT VT = N->getValueType(0);
+    SmallVector<SDValue, 6> Ops;
+
+    Ops.push_back(N->getOperand(0));
+    Ops.push_back(N->getOperand(1));
+    Ops.push_back(getAL(CurDAG));                    // Predicate
+    Ops.push_back(CurDAG->getRegister(0, MVT::i32)); // Predicate Register
+    return CurDAG->getMachineNode(ARM::VTBL1, dl, VT, Ops.data(), Ops.size());
+  }
+  case ARMISD::VTBL2: {
+    DebugLoc dl = N->getDebugLoc();
+    EVT VT = N->getValueType(0);
+
+    // Form a REG_SEQUENCE to force register allocation.
+    SDValue V0 = N->getOperand(0);
+    SDValue V1 = N->getOperand(1);
+    SDValue RegSeq = SDValue(PairDRegs(MVT::v16i8, V0, V1), 0);
+
+    SmallVector<SDValue, 6> Ops;
+    Ops.push_back(RegSeq);
+    Ops.push_back(N->getOperand(2));
+    Ops.push_back(getAL(CurDAG));                    // Predicate
+    Ops.push_back(CurDAG->getRegister(0, MVT::i32)); // Predicate Register
+    return CurDAG->getMachineNode(ARM::VTBL2Pseudo, dl, VT,
+                                  Ops.data(), Ops.size());
+  }
+
   case ISD::CONCAT_VECTORS:
     return SelectConcatVector(N);
   }

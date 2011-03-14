@@ -121,15 +121,3 @@ define <4 x i16> @test_largespan(<8 x i16>* %B) nounwind {
         %tmp2 = shufflevector <8 x i16> %tmp1, <8 x i16> undef, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
         ret <4 x i16> %tmp2
 }
-
-; The actual shuffle code only handles some cases, make sure we check
-; this rather than blindly emitting a VECTOR_SHUFFLE (infinite
-; lowering loop can result otherwise).
-define <8 x i8> @test_illegal(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: test_illegal:
-;CHECK: vst1.8
-       %tmp1 = load <16 x i8>* %A
-       %tmp2 = load <16 x i8>* %B
-       %tmp3 = shufflevector <16 x i8> %tmp1, <16 x i8> %tmp2, <8 x i32> <i32 0, i32 7, i32 5, i32 25, i32 3, i32 2, i32 2, i32 26>
-       ret <8 x i8> %tmp3
-}
