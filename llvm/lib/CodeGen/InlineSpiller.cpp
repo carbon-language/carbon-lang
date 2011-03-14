@@ -31,24 +31,23 @@ using namespace llvm;
 
 namespace {
 class InlineSpiller : public Spiller {
-  MachineFunctionPass &pass_;
-  MachineFunction &mf_;
-  LiveIntervals &lis_;
-  LiveStacks &lss_;
-  AliasAnalysis *aa_;
-  VirtRegMap &vrm_;
-  MachineFrameInfo &mfi_;
-  MachineRegisterInfo &mri_;
-  const TargetInstrInfo &tii_;
-  const TargetRegisterInfo &tri_;
-  const BitVector reserved_;
+  MachineFunctionPass &Pass;
+  MachineFunction &MF;
+  LiveIntervals &LIS;
+  LiveStacks &LSS;
+  AliasAnalysis *AA;
+  VirtRegMap &VRM;
+  MachineFrameInfo &MFI;
+  MachineRegisterInfo &MRI;
+  const TargetInstrInfo &TII;
+  const TargetRegisterInfo &TRI;
 
   // Variables that are valid during spill(), but used by multiple methods.
-  LiveRangeEdit *edit_;
-  const TargetRegisterClass *rc_;
-  int stackSlot_;
+  LiveRangeEdit *Edit;
+  const TargetRegisterClass *RC;
+  int StackSlot;
 
-  // All registers to spill to stackSlot_, including the main register.
+  // All registers to spill to StackSlot, including the main register.
   SmallVector<unsigned, 8> RegsToSpill;
 
   // All COPY instructions to/from snippets.
@@ -56,7 +55,7 @@ class InlineSpiller : public Spiller {
   SmallPtrSet<MachineInstr*, 8> SnippetCopies;
 
   // Values that failed to remat at some point.
-  SmallPtrSet<VNInfo*, 8> usedValues_;
+  SmallPtrSet<VNInfo*, 8> UsedValues;
 
   ~InlineSpiller() {}
 
@@ -64,17 +63,16 @@ public:
   InlineSpiller(MachineFunctionPass &pass,
                 MachineFunction &mf,
                 VirtRegMap &vrm)
-    : pass_(pass),
-      mf_(mf),
-      lis_(pass.getAnalysis<LiveIntervals>()),
-      lss_(pass.getAnalysis<LiveStacks>()),
-      aa_(&pass.getAnalysis<AliasAnalysis>()),
-      vrm_(vrm),
-      mfi_(*mf.getFrameInfo()),
-      mri_(mf.getRegInfo()),
-      tii_(*mf.getTarget().getInstrInfo()),
-      tri_(*mf.getTarget().getRegisterInfo()),
-      reserved_(tri_.getReservedRegs(mf_)) {}
+    : Pass(pass),
+      MF(mf),
+      LIS(pass.getAnalysis<LiveIntervals>()),
+      LSS(pass.getAnalysis<LiveStacks>()),
+      AA(&pass.getAnalysis<AliasAnalysis>()),
+      VRM(vrm),
+      MFI(*mf.getFrameInfo()),
+      MRI(mf.getRegInfo()),
+      TII(*mf.getTarget().getInstrInfo()),
+      TRI(*mf.getTarget().getRegisterInfo()) {}
 
   void spill(LiveRangeEdit &);
 
@@ -135,9 +133,9 @@ static unsigned isFullCopyOf(const MachineInstr *MI, unsigned Reg) {
 
 /// isSnippet - Identify if a live interval is a snippet that should be spilled.
 /// It is assumed that SnipLI is a virtual register with the same original as
-/// edit_->getReg().
+/// Edit->getReg().
 bool InlineSpiller::isSnippet(const LiveInterval &SnipLI) {
-  unsigned Reg = edit_->getReg();
+  unsigned Reg = Edit->getReg();
 
   // A snippet is a tiny live range with only a single instruction using it
   // besides copies to/from Reg or spills/fills. We accept:
@@ -146,14 +144,14 @@ bool InlineSpiller::isSnippet(const LiveInterval &SnipLI) {
   //   %snip = USE %snip
   //   %Reg = COPY %snip / SPILL %snip, fi#
   //
-  if (SnipLI.getNumValNums() > 2 || !lis_.intervalIsInOneMBB(SnipLI))
+  if (SnipLI.getNumValNums() > 2 || !LIS.intervalIsInOneMBB(SnipLI))
     return false;
 
   MachineInstr *UseMI = 0;
 
   // Check that all uses satisfy our criteria.
   for (MachineRegisterInfo::reg_nodbg_iterator
-         RI = mri_.reg_nodbg_begin(SnipLI.reg);
+         RI = MRI.reg_nodbg_begin(SnipLI.reg);
        MachineInstr *MI = RI.skipInstruction();) {
 
     // Allow copies to/from Reg.
@@ -162,11 +160,11 @@ bool InlineSpiller::isSnippet(const LiveInterval &SnipLI) {
 
     // Allow stack slot loads.
     int FI;
-    if (SnipLI.reg == tii_.isLoadFromStackSlot(MI, FI) && FI == stackSlot_)
+    if (SnipLI.reg == TII.isLoadFromStackSlot(MI, FI) && FI == StackSlot)
       continue;
 
     // Allow stack slot stores.
-    if (SnipLI.reg == tii_.isStoreToStackSlot(MI, FI) && FI == stackSlot_)
+    if (SnipLI.reg == TII.isStoreToStackSlot(MI, FI) && FI == StackSlot)
       continue;
 
     // Allow a single additional instruction.
@@ -180,8 +178,8 @@ bool InlineSpiller::isSnippet(const LiveInterval &SnipLI) {
 /// collectRegsToSpill - Collect live range snippets that only have a single
 /// real use.
 void InlineSpiller::collectRegsToSpill() {
-  unsigned Reg = edit_->getReg();
-  unsigned Orig = vrm_.getOriginal(Reg);
+  unsigned Reg = Edit->getReg();
+  unsigned Orig = VRM.getOriginal(Reg);
 
   // Main register always spills.
   RegsToSpill.assign(1, Reg);
@@ -192,16 +190,16 @@ void InlineSpiller::collectRegsToSpill() {
   if (Orig == Reg)
     return;
 
-  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(Reg);
+  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Reg);
        MachineInstr *MI = RI.skipInstruction();) {
     unsigned SnipReg = isFullCopyOf(MI, Reg);
     if (!SnipReg)
       continue;
     if (!TargetRegisterInfo::isVirtualRegister(SnipReg))
       continue;
-    if (vrm_.getOriginal(SnipReg) != Orig)
+    if (VRM.getOriginal(SnipReg) != Orig)
       continue;
-    LiveInterval &SnipLI = lis_.getInterval(SnipReg);
+    LiveInterval &SnipLI = LIS.getInterval(SnipReg);
     if (!isSnippet(SnipLI))
       continue;
     SnippetCopies.insert(MI);
@@ -215,14 +213,14 @@ void InlineSpiller::collectRegsToSpill() {
 
 /// reMaterializeFor - Attempt to rematerialize before MI instead of reloading.
 bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
-  SlotIndex UseIdx = lis_.getInstructionIndex(MI).getUseIndex();
-  VNInfo *OrigVNI = edit_->getParent().getVNInfoAt(UseIdx);
+  SlotIndex UseIdx = LIS.getInstructionIndex(MI).getUseIndex();
+  VNInfo *OrigVNI = Edit->getParent().getVNInfoAt(UseIdx);
 
   if (!OrigVNI) {
     DEBUG(dbgs() << "\tadding <undef> flags: ");
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && MO.isUse() && MO.getReg() == edit_->getReg())
+      if (MO.isReg() && MO.isUse() && MO.getReg() == Edit->getReg())
         MO.setIsUndef();
     }
     DEBUG(dbgs() << UseIdx << '\t' << *MI);
@@ -231,27 +229,27 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
 
   // FIXME: Properly remat for snippets as well.
   if (SnippetCopies.count(MI)) {
-    usedValues_.insert(OrigVNI);
+    UsedValues.insert(OrigVNI);
     return false;
   }
 
   LiveRangeEdit::Remat RM(OrigVNI);
-  if (!edit_->canRematerializeAt(RM, UseIdx, false, lis_)) {
-    usedValues_.insert(OrigVNI);
+  if (!Edit->canRematerializeAt(RM, UseIdx, false, LIS)) {
+    UsedValues.insert(OrigVNI);
     DEBUG(dbgs() << "\tcannot remat for " << UseIdx << '\t' << *MI);
     return false;
   }
 
-  // If the instruction also writes edit_->getReg(), it had better not require
+  // If the instruction also writes Edit->getReg(), it had better not require
   // the same register for uses and defs.
   bool Reads, Writes;
   SmallVector<unsigned, 8> Ops;
-  tie(Reads, Writes) = MI->readsWritesVirtualRegister(edit_->getReg(), &Ops);
+  tie(Reads, Writes) = MI->readsWritesVirtualRegister(Edit->getReg(), &Ops);
   if (Writes) {
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(Ops[i]);
       if (MO.isUse() ? MI->isRegTiedToDefOperand(Ops[i]) : MO.getSubReg()) {
-        usedValues_.insert(OrigVNI);
+        UsedValues.insert(OrigVNI);
         DEBUG(dbgs() << "\tcannot remat tied reg: " << UseIdx << '\t' << *MI);
         return false;
       }
@@ -262,35 +260,35 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
   // fold a load into the instruction. That avoids allocating a new register.
   if (RM.OrigMI->getDesc().canFoldAsLoad() &&
       foldMemoryOperand(MI, Ops, RM.OrigMI)) {
-    edit_->markRematerialized(RM.ParentVNI);
+    Edit->markRematerialized(RM.ParentVNI);
     return true;
   }
 
   // Alocate a new register for the remat.
-  LiveInterval &NewLI = edit_->create(mri_, lis_, vrm_);
+  LiveInterval &NewLI = Edit->create(MRI, LIS, VRM);
   NewLI.markNotSpillable();
 
   // Rematting for a copy: Set allocation hint to be the destination register.
   if (MI->isCopy())
-    mri_.setRegAllocationHint(NewLI.reg, 0, MI->getOperand(0).getReg());
+    MRI.setRegAllocationHint(NewLI.reg, 0, MI->getOperand(0).getReg());
 
   // Finally we can rematerialize OrigMI before MI.
-  SlotIndex DefIdx = edit_->rematerializeAt(*MI->getParent(), MI, NewLI.reg, RM,
-                                            lis_, tii_, tri_);
+  SlotIndex DefIdx = Edit->rematerializeAt(*MI->getParent(), MI, NewLI.reg, RM,
+                                           LIS, TII, TRI);
   DEBUG(dbgs() << "\tremat:  " << DefIdx << '\t'
-               << *lis_.getInstructionFromIndex(DefIdx));
+               << *LIS.getInstructionFromIndex(DefIdx));
 
   // Replace operands
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(Ops[i]);
-    if (MO.isReg() && MO.isUse() && MO.getReg() == edit_->getReg()) {
+    if (MO.isReg() && MO.isUse() && MO.getReg() == Edit->getReg()) {
       MO.setReg(NewLI.reg);
       MO.setIsKill();
     }
   }
   DEBUG(dbgs() << "\t        " << UseIdx << '\t' << *MI);
 
-  VNInfo *DefVNI = NewLI.getNextValue(DefIdx, 0, lis_.getVNInfoAllocator());
+  VNInfo *DefVNI = NewLI.getNextValue(DefIdx, 0, LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(DefIdx, UseIdx.getDefIndex(), DefVNI));
   DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
   return true;
@@ -300,15 +298,15 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
 /// and trim the live ranges after.
 void InlineSpiller::reMaterializeAll() {
   // Do a quick scan of the interval values to find if any are remattable.
-  if (!edit_->anyRematerializable(lis_, tii_, aa_))
+  if (!Edit->anyRematerializable(LIS, TII, AA))
     return;
 
-  usedValues_.clear();
+  UsedValues.clear();
 
-  // Try to remat before all uses of edit_->getReg().
+  // Try to remat before all uses of Edit->getReg().
   bool anyRemat = false;
   for (MachineRegisterInfo::use_nodbg_iterator
-       RI = mri_.use_nodbg_begin(edit_->getReg());
+       RI = MRI.use_nodbg_begin(Edit->getReg());
        MachineInstr *MI = RI.skipInstruction();)
      anyRemat |= reMaterializeFor(MI);
 
@@ -317,16 +315,16 @@ void InlineSpiller::reMaterializeAll() {
 
   // Remove any values that were completely rematted.
   bool anyRemoved = false;
-  for (LiveInterval::vni_iterator I = edit_->getParent().vni_begin(),
-       E = edit_->getParent().vni_end(); I != E; ++I) {
+  for (LiveInterval::vni_iterator I = Edit->getParent().vni_begin(),
+       E = Edit->getParent().vni_end(); I != E; ++I) {
     VNInfo *VNI = *I;
-    if (VNI->hasPHIKill() || !edit_->didRematerialize(VNI) ||
-        usedValues_.count(VNI))
+    if (VNI->hasPHIKill() || !Edit->didRematerialize(VNI) ||
+        UsedValues.count(VNI))
       continue;
-    MachineInstr *DefMI = lis_.getInstructionFromIndex(VNI->def);
+    MachineInstr *DefMI = LIS.getInstructionFromIndex(VNI->def);
     DEBUG(dbgs() << "\tremoving dead def: " << VNI->def << '\t' << *DefMI);
-    lis_.RemoveMachineInstrFromMaps(DefMI);
-    vrm_.RemoveMachineInstrFromMaps(DefMI);
+    LIS.RemoveMachineInstrFromMaps(DefMI);
+    VRM.RemoveMachineInstrFromMaps(DefMI);
     DefMI->eraseFromParent();
     VNI->def = SlotIndex();
     anyRemoved = true;
@@ -336,17 +334,17 @@ void InlineSpiller::reMaterializeAll() {
     return;
 
   // Removing values may cause debug uses where parent is not live.
-  for (MachineRegisterInfo::use_iterator RI = mri_.use_begin(edit_->getReg());
+  for (MachineRegisterInfo::use_iterator RI = MRI.use_begin(Edit->getReg());
        MachineInstr *MI = RI.skipInstruction();) {
     if (!MI->isDebugValue())
       continue;
     // Try to preserve the debug value if parent is live immediately after it.
     MachineBasicBlock::iterator NextMI = MI;
     ++NextMI;
-    if (NextMI != MI->getParent()->end() && !lis_.isNotInMIMap(NextMI)) {
-      SlotIndex Idx = lis_.getInstructionIndex(NextMI);
-      VNInfo *VNI = edit_->getParent().getVNInfoAt(Idx);
-      if (VNI && (VNI->hasPHIKill() || usedValues_.count(VNI)))
+    if (NextMI != MI->getParent()->end() && !LIS.isNotInMIMap(NextMI)) {
+      SlotIndex Idx = LIS.getInstructionIndex(NextMI);
+      VNInfo *VNI = Edit->getParent().getVNInfoAt(Idx);
+      if (VNI && (VNI->hasPHIKill() || UsedValues.count(VNI)))
         continue;
     }
     DEBUG(dbgs() << "Removing debug info due to remat:" << "\t" << *MI);
@@ -354,20 +352,20 @@ void InlineSpiller::reMaterializeAll() {
   }
 }
 
-/// If MI is a load or store of stackSlot_, it can be removed.
+/// If MI is a load or store of StackSlot, it can be removed.
 bool InlineSpiller::coalesceStackAccess(MachineInstr *MI, unsigned Reg) {
   int FI = 0;
   unsigned InstrReg;
-  if (!(InstrReg = tii_.isLoadFromStackSlot(MI, FI)) &&
-      !(InstrReg = tii_.isStoreToStackSlot(MI, FI)))
+  if (!(InstrReg = TII.isLoadFromStackSlot(MI, FI)) &&
+      !(InstrReg = TII.isStoreToStackSlot(MI, FI)))
     return false;
 
   // We have a stack access. Is it the right register and slot?
-  if (InstrReg != Reg || FI != stackSlot_)
+  if (InstrReg != Reg || FI != StackSlot)
     return false;
 
   DEBUG(dbgs() << "Coalescing stack access: " << *MI);
-  lis_.RemoveMachineInstrFromMaps(MI);
+  LIS.RemoveMachineInstrFromMaps(MI);
   MI->eraseFromParent();
   return true;
 }
@@ -400,13 +398,13 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
   }
 
   MachineInstr *FoldMI =
-                LoadMI ? tii_.foldMemoryOperand(MI, FoldOps, LoadMI)
-                       : tii_.foldMemoryOperand(MI, FoldOps, stackSlot_);
+                LoadMI ? TII.foldMemoryOperand(MI, FoldOps, LoadMI)
+                       : TII.foldMemoryOperand(MI, FoldOps, StackSlot);
   if (!FoldMI)
     return false;
-  lis_.ReplaceMachineInstrInMaps(MI, FoldMI);
+  LIS.ReplaceMachineInstrInMaps(MI, FoldMI);
   if (!LoadMI)
-    vrm_.addSpillSlotUse(stackSlot_, FoldMI);
+    VRM.addSpillSlotUse(StackSlot, FoldMI);
   MI->eraseFromParent();
   DEBUG(dbgs() << "\tfolded: " << *FoldMI);
   return true;
@@ -416,14 +414,14 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
 void InlineSpiller::insertReload(LiveInterval &NewLI,
                                  MachineBasicBlock::iterator MI) {
   MachineBasicBlock &MBB = *MI->getParent();
-  SlotIndex Idx = lis_.getInstructionIndex(MI).getDefIndex();
-  tii_.loadRegFromStackSlot(MBB, MI, NewLI.reg, stackSlot_, rc_, &tri_);
+  SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
+  TII.loadRegFromStackSlot(MBB, MI, NewLI.reg, StackSlot, RC, &TRI);
   --MI; // Point to load instruction.
-  SlotIndex LoadIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
-  vrm_.addSpillSlotUse(stackSlot_, MI);
+  SlotIndex LoadIdx = LIS.InsertMachineInstrInMaps(MI).getDefIndex();
+  VRM.addSpillSlotUse(StackSlot, MI);
   DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MI);
   VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0,
-                                       lis_.getVNInfoAllocator());
+                                       LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(LoadIdx, Idx, LoadVNI));
 }
 
@@ -433,26 +431,26 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
   MachineBasicBlock &MBB = *MI->getParent();
 
   // Get the defined value. It could be an early clobber so keep the def index.
-  SlotIndex Idx = lis_.getInstructionIndex(MI).getDefIndex();
+  SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
   VNInfo *VNI = OldLI.getVNInfoAt(Idx);
   assert(VNI && VNI->def.getDefIndex() == Idx && "Inconsistent VNInfo");
   Idx = VNI->def;
 
-  tii_.storeRegToStackSlot(MBB, ++MI, NewLI.reg, true, stackSlot_, rc_, &tri_);
+  TII.storeRegToStackSlot(MBB, ++MI, NewLI.reg, true, StackSlot, RC, &TRI);
   --MI; // Point to store instruction.
-  SlotIndex StoreIdx = lis_.InsertMachineInstrInMaps(MI).getDefIndex();
-  vrm_.addSpillSlotUse(stackSlot_, MI);
+  SlotIndex StoreIdx = LIS.InsertMachineInstrInMaps(MI).getDefIndex();
+  VRM.addSpillSlotUse(StackSlot, MI);
   DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MI);
-  VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, lis_.getVNInfoAllocator());
+  VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
 }
 
 /// spillAroundUses - insert spill code around each use of Reg.
 void InlineSpiller::spillAroundUses(unsigned Reg) {
-  LiveInterval &OldLI = lis_.getInterval(Reg);
+  LiveInterval &OldLI = LIS.getInterval(Reg);
 
   // Iterate over instructions using Reg.
-  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(Reg);
+  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Reg);
        MachineInstr *MI = RI.skipInstruction();) {
 
     // Debug values are not allowed to affect codegen.
@@ -461,7 +459,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
       uint64_t Offset = MI->getOperand(1).getImm();
       const MDNode *MDPtr = MI->getOperand(2).getMetadata();
       DebugLoc DL = MI->getDebugLoc();
-      if (MachineInstr *NewDV = tii_.emitFrameIndexDebugValue(mf_, stackSlot_,
+      if (MachineInstr *NewDV = TII.emitFrameIndexDebugValue(MF, StackSlot,
                                                            Offset, MDPtr, DL)) {
         DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
         MachineBasicBlock *MBB = MI->getParent();
@@ -492,7 +490,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
 
     // Allocate interval around instruction.
     // FIXME: Infer regclass from instruction alone.
-    LiveInterval &NewLI = edit_->create(mri_, lis_, vrm_);
+    LiveInterval &NewLI = Edit->create(MRI, LIS, VRM);
     NewLI.markNotSpillable();
 
     if (Reads)
@@ -521,42 +519,42 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
 }
 
 void InlineSpiller::spill(LiveRangeEdit &edit) {
-  edit_ = &edit;
+  Edit = &edit;
   assert(!TargetRegisterInfo::isStackSlot(edit.getReg())
          && "Trying to spill a stack slot.");
   DEBUG(dbgs() << "Inline spilling "
-               << mri_.getRegClass(edit.getReg())->getName()
+               << MRI.getRegClass(edit.getReg())->getName()
                << ':' << edit.getParent() << "\nFrom original "
-               << PrintReg(vrm_.getOriginal(edit.getReg())) << '\n');
+               << PrintReg(VRM.getOriginal(edit.getReg())) << '\n');
   assert(edit.getParent().isSpillable() &&
          "Attempting to spill already spilled value.");
 
   // Share a stack slot among all descendants of Orig.
-  unsigned Orig = vrm_.getOriginal(edit.getReg());
-  stackSlot_ = vrm_.getStackSlot(Orig);
+  unsigned Orig = VRM.getOriginal(edit.getReg());
+  StackSlot = VRM.getStackSlot(Orig);
 
   collectRegsToSpill();
 
   reMaterializeAll();
 
   // Remat may handle everything.
-  if (edit_->getParent().empty())
+  if (Edit->getParent().empty())
     return;
 
-  rc_ = mri_.getRegClass(edit.getReg());
+  RC = MRI.getRegClass(edit.getReg());
 
-  if (stackSlot_ == VirtRegMap::NO_STACK_SLOT)
-    stackSlot_ = vrm_.assignVirt2StackSlot(Orig);
+  if (StackSlot == VirtRegMap::NO_STACK_SLOT)
+    StackSlot = VRM.assignVirt2StackSlot(Orig);
 
   if (Orig != edit.getReg())
-    vrm_.assignVirt2StackSlot(edit.getReg(), stackSlot_);
+    VRM.assignVirt2StackSlot(edit.getReg(), StackSlot);
 
   // Update LiveStacks now that we are committed to spilling.
-  LiveInterval &stacklvr = lss_.getOrCreateInterval(stackSlot_, rc_);
+  LiveInterval &stacklvr = LSS.getOrCreateInterval(StackSlot, RC);
   if (!stacklvr.hasAtLeastOneValue())
-    stacklvr.getNextValue(SlotIndex(), 0, lss_.getVNInfoAllocator());
+    stacklvr.getNextValue(SlotIndex(), 0, LSS.getVNInfoAllocator());
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
-    stacklvr.MergeRangesInAsValue(lis_.getInterval(RegsToSpill[i]),
+    stacklvr.MergeRangesInAsValue(LIS.getInterval(RegsToSpill[i]),
                                   stacklvr.getValNumInfo(0));
 
   // Spill around uses of all RegsToSpill.
@@ -564,15 +562,15 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
     spillAroundUses(RegsToSpill[i]);
 
   // Finally delete the SnippetCopies.
-  for (MachineRegisterInfo::reg_iterator RI = mri_.reg_begin(edit.getReg());
+  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(edit.getReg());
        MachineInstr *MI = RI.skipInstruction();) {
     assert(SnippetCopies.count(MI) && "Remaining use wasn't a snippet copy");
     // FIXME: Do this with a LiveRangeEdit callback.
-    vrm_.RemoveMachineInstrFromMaps(MI);
-    lis_.RemoveMachineInstrFromMaps(MI);
+    VRM.RemoveMachineInstrFromMaps(MI);
+    LIS.RemoveMachineInstrFromMaps(MI);
     MI->eraseFromParent();
   }
 
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
-    edit.eraseVirtReg(RegsToSpill[i], lis_);
+    edit.eraseVirtReg(RegsToSpill[i], LIS);
 }
