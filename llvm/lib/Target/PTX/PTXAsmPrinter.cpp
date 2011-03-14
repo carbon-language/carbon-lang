@@ -316,13 +316,42 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
     decl += " ";
   }
 
-  decl += getTypeName(gv->getType());
-  decl += " ";
 
-  decl += gvsym->getName();
+  if (PointerType::classof(gv->getType())) {
+    const PointerType* pointerTy = dyn_cast<const PointerType>(gv->getType());
+    const Type* elementTy = pointerTy->getElementType();
 
-  if (ArrayType::classof(gv->getType()) || PointerType::classof(gv->getType()))
-    decl += "[]";
+    assert(elementTy->isArrayTy() && "Only pointers to arrays are supported");
+
+    const ArrayType* arrayTy = dyn_cast<const ArrayType>(elementTy);
+    elementTy = arrayTy->getElementType();
+
+    // FIXME: isPrimitiveType() == false for i16?
+    assert(elementTy->isSingleValueType() &&
+           "Non-primitive types are not handled");
+
+    // Compute the size of the array, in bytes.
+    uint64_t arraySize = (elementTy->getPrimitiveSizeInBits() >> 3)
+                         * arrayTy->getNumElements();
+
+    decl += ".b8 ";
+    decl += gvsym->getName();
+    decl += "[";
+    decl += utostr(arraySize);
+    decl += "]";
+  }
+  else {
+    // Note: this is currently the fall-through case and most likely generates
+    //       incorrect code.
+    decl += getTypeName(gv->getType());
+    decl += " ";
+
+    decl += gvsym->getName();
+
+    if (ArrayType::classof(gv->getType()) ||
+        PointerType::classof(gv->getType()))
+      decl += "[]";
+  }
 
   decl += ";";
 

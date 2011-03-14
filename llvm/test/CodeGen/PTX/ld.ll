@@ -1,63 +1,63 @@
 ; RUN: llc < %s -march=ptx | FileCheck %s
 
-;CHECK: .extern .global .u16 array_i16[];
+;CHECK: .extern .global .b8 array_i16[20];
 @array_i16 = external global [10 x i16]
 
-;CHECK: .extern .const .u16 array_constant_i16[];
+;CHECK: .extern .const .b8 array_constant_i16[20];
 @array_constant_i16 = external addrspace(1) constant [10 x i16]
 
-;CHECK: .extern .local .u16 array_local_i16[];
+;CHECK: .extern .local .b8 array_local_i16[20];
 @array_local_i16 = external addrspace(2) global [10 x i16]
 
-;CHECK: .extern .shared .u16 array_shared_i16[];
+;CHECK: .extern .shared .b8 array_shared_i16[20];
 @array_shared_i16 = external addrspace(4) global [10 x i16]
 
-;CHECK: .extern .global .u32 array_i32[];
+;CHECK: .extern .global .b8 array_i32[40];
 @array_i32 = external global [10 x i32]
 
-;CHECK: .extern .const .u32 array_constant_i32[];
+;CHECK: .extern .const .b8 array_constant_i32[40];
 @array_constant_i32 = external addrspace(1) constant [10 x i32]
 
-;CHECK: .extern .local .u32 array_local_i32[];
+;CHECK: .extern .local .b8 array_local_i32[40];
 @array_local_i32 = external addrspace(2) global [10 x i32]
 
-;CHECK: .extern .shared .u32 array_shared_i32[];
+;CHECK: .extern .shared .b8 array_shared_i32[40];
 @array_shared_i32 = external addrspace(4) global [10 x i32]
 
-;CHECK: .extern .global .u64 array_i64[];
+;CHECK: .extern .global .b8 array_i64[80];
 @array_i64 = external global [10 x i64]
 
-;CHECK: .extern .const .u64 array_constant_i64[];
+;CHECK: .extern .const .b8 array_constant_i64[80];
 @array_constant_i64 = external addrspace(1) constant [10 x i64]
 
-;CHECK: .extern .local .u64 array_local_i64[];
+;CHECK: .extern .local .b8 array_local_i64[80];
 @array_local_i64 = external addrspace(2) global [10 x i64]
 
-;CHECK: .extern .shared .u64 array_shared_i64[];
+;CHECK: .extern .shared .b8 array_shared_i64[80];
 @array_shared_i64 = external addrspace(4) global [10 x i64]
 
-;CHECK: .extern .global .f32 array_float[];
+;CHECK: .extern .global .b8 array_float[40];
 @array_float = external global [10 x float]
 
-;CHECK: .extern .const .f32 array_constant_float[];
+;CHECK: .extern .const .b8 array_constant_float[40];
 @array_constant_float = external addrspace(1) constant [10 x float]
 
-;CHECK: .extern .local .f32 array_local_float[];
+;CHECK: .extern .local .b8 array_local_float[40];
 @array_local_float = external addrspace(2) global [10 x float]
 
-;CHECK: .extern .shared .f32 array_shared_float[];
+;CHECK: .extern .shared .b8 array_shared_float[40];
 @array_shared_float = external addrspace(4) global [10 x float]
 
-;CHECK: .extern .global .f64 array_double[];
+;CHECK: .extern .global .b8 array_double[80];
 @array_double = external global [10 x double]
 
-;CHECK: .extern .const .f64 array_constant_double[];
+;CHECK: .extern .const .b8 array_constant_double[80];
 @array_constant_double = external addrspace(1) constant [10 x double]
 
-;CHECK: .extern .local .f64 array_local_double[];
+;CHECK: .extern .local .b8 array_local_double[80];
 @array_local_double = external addrspace(2) global [10 x double]
 
-;CHECK: .extern .shared .f64 array_shared_double[];
+;CHECK: .extern .shared .b8 array_shared_double[80];
 @array_shared_double = external addrspace(4) global [10 x double]
 
 
