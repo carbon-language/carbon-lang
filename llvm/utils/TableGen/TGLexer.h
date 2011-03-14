@@ -36,7 +36,7 @@ namespace tgtok {
     l_brace, r_brace,   // { }
     l_paren, r_paren,   // ( )
     less, greater,      // < >
-    colon, semi,        // ; :
+    colon, semi,        // : ;
     comma, period,      // , .
     equal, question,    // = ?
     
