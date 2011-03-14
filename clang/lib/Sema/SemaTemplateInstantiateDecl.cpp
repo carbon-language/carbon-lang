@@ -2161,14 +2161,20 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
 
       Exceptions.push_back(T);
     }
+    Expr *NoexceptExpr = 0;
+    if (Expr *OldNoexceptExpr = Proto->getNoexceptExpr()) {
+      ExprResult E = SemaRef.SubstExpr(OldNoexceptExpr, TemplateArgs);
+      if (E.isUsable())
+        NoexceptExpr = E.take();
+    }
 
     // Rebuild the function type 
 
     FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
-    // FIXME: Handle noexcept
     EPI.ExceptionSpecType = Proto->getExceptionSpecType();
     EPI.NumExceptions = Exceptions.size();
     EPI.Exceptions = Exceptions.data();
+    EPI.NoexceptExpr = NoexceptExpr;
     EPI.ExtInfo = Proto->getExtInfo();
 
     const FunctionProtoType *NewProto
