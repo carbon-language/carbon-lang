@@ -1494,9 +1494,19 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
   TypeProcessingState state(*this, D);
 
+  // In C++0x, deallocation functions (normal and array operator delete)
+  // are implicitly noexcept.
+  bool ImplicitlyNoexcept = false;
+
   switch (D.getName().getKind()) {
-  case UnqualifiedId::IK_Identifier:
   case UnqualifiedId::IK_OperatorFunctionId:
+    if (getLangOptions().CPlusPlus0x) {
+      OverloadedOperatorKind OO = D.getName().OperatorFunctionId.Operator;
+      if (OO == OO_Delete || OO == OO_Array_Delete)
+        ImplicitlyNoexcept = true;
+    }
+    // Intentional fall-through.
+  case UnqualifiedId::IK_Identifier:
   case UnqualifiedId::IK_LiteralOperatorId:
   case UnqualifiedId::IK_TemplateId:
     T = ConvertDeclSpecToType(*this, state);
@@ -1917,6 +1927,10 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
             else
               EPI.NoexceptExpr = NoexceptExpr;
           }
+        } else if (FTI.getExceptionSpecType() == EST_None &&
+                   ImplicitlyNoexcept && chunkIndex == 0) {
+          // Only the outermost chunk is marked noexcept, of course.
+          EPI.ExceptionSpecType = EST_BasicNoexcept;
         }
 
         T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(), EPI);

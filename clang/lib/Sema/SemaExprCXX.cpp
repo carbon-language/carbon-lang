@@ -1404,11 +1404,18 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
 /// DeclareGlobalNewDelete - Declare the global forms of operator new and
 /// delete. These are:
 /// @code
+///   // C++03:
 ///   void* operator new(std::size_t) throw(std::bad_alloc);
 ///   void* operator new[](std::size_t) throw(std::bad_alloc);
 ///   void operator delete(void *) throw();
 ///   void operator delete[](void *) throw();
+///   // C++0x:
+///   void* operator new(std::size_t);
+///   void* operator new[](std::size_t);
+///   void operator delete(void *);
+///   void operator delete[](void *);
 /// @endcode
+/// C++0x operator delete is implicitly noexcept.
 /// Note that the placement and nothrow forms of new are *not* implicitly
 /// declared. Their use requires including \<new\>.
 void Sema::DeclareGlobalNewDelete() {
@@ -1420,10 +1427,16 @@ void Sema::DeclareGlobalNewDelete() {
   //   implicitly declared in global scope in each translation unit of a
   //   program
   //
+  //     C++03:
   //     void* operator new(std::size_t) throw(std::bad_alloc);
   //     void* operator new[](std::size_t) throw(std::bad_alloc);
   //     void  operator delete(void*) throw();
   //     void  operator delete[](void*) throw();
+  //     C++0x:
+  //     void* operator new(std::size_t);
+  //     void* operator new[](std::size_t);
+  //     void  operator delete(void*);
+  //     void  operator delete[](void*);
   //
   //   These implicit declarations introduce only the function names operator
   //   new, operator new[], operator delete, operator delete[].
@@ -1432,7 +1445,9 @@ void Sema::DeclareGlobalNewDelete() {
   // "std" or "bad_alloc" as necessary to form the exception specification.
   // However, we do not make these implicit declarations visible to name
   // lookup.
-  if (!StdBadAlloc) {
+  // Note that the C++0x versions of operator delete are deallocation functions,
+  // and thus are implicitly noexcept.
+  if (!StdBadAlloc && !getLangOptions().CPlusPlus0x) {
     // The "std::bad_alloc" class has not yet been declared, so build it
     // implicitly.
     StdBadAlloc = CXXRecordDecl::Create(Context, TTK_Class,
@@ -1495,18 +1510,21 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   bool HasBadAllocExceptionSpec
     = (Name.getCXXOverloadedOperator() == OO_New ||
        Name.getCXXOverloadedOperator() == OO_Array_New);
-  if (HasBadAllocExceptionSpec) {
+  if (HasBadAllocExceptionSpec && !getLangOptions().CPlusPlus0x) {
     assert(StdBadAlloc && "Must have std::bad_alloc declared");
     BadAllocType = Context.getTypeDeclType(getStdBadAlloc());
   }
 
   FunctionProtoType::ExtProtoInfo EPI;
   if (HasBadAllocExceptionSpec) {
-    EPI.ExceptionSpecType = EST_Dynamic;
-    EPI.NumExceptions = 1;
-    EPI.Exceptions = &BadAllocType;
+    if (!getLangOptions().CPlusPlus0x) {
+      EPI.ExceptionSpecType = EST_Dynamic;
+      EPI.NumExceptions = 1;
+      EPI.Exceptions = &BadAllocType;
+    }
   } else {
-    EPI.ExceptionSpecType = EST_DynamicNone;
+    EPI.ExceptionSpecType = getLangOptions().CPlusPlus0x ?
+                                EST_BasicNoexcept : EST_DynamicNone;
   }
 
   QualType FnType = Context.getFunctionType(Return, &Argument, 1, EPI);
