@@ -502,10 +502,7 @@ public:
 bool
 VariadicMethodTypeChecker::isVariadicMessage(const ObjCMessage &msg) const {
   const ObjCMethodDecl *MD = msg.getMethodDecl();
-  if (!MD)
-    return false;
-  
-  if (!MD->isVariadic())
+  if (!MD || !MD->isVariadic())
     return false;
   
   Selector S = msg.getSelector();
@@ -586,13 +583,19 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
     return;
 
   // Verify that all arguments have Objective-C types.
+  llvm::Optional<ExplodedNode*> errorNode;
+  
   for (unsigned I = variadicArgsBegin; I != variadicArgsEnd; ++I) {
     QualType ArgTy = msg.getArgType(I);
     if (ArgTy->isObjCObjectPointerType())
       continue;
 
-    ExplodedNode *N = C.generateNode();
-    if (!N)
+    // Generate only one error node to use for all bug reports.
+    if (!errorNode.hasValue()) {
+      errorNode = C.generateNode();
+    }
+
+    if (!errorNode.getValue())
       continue;
 
     llvm::SmallString<128> sbuf;
@@ -607,7 +610,8 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
       << "' should be an Objective-C pointer type, not '" 
       << ArgTy.getAsString() << "'";
 
-    RangedBugReport *R = new RangedBugReport(*BT, os.str(), N);
+    RangedBugReport *R = new RangedBugReport(*BT, os.str(),
+                                             errorNode.getValue());
     R->addRange(msg.getArgSourceRange(I));
     C.EmitReport(R);
   }
