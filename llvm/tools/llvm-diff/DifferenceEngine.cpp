@@ -506,30 +506,30 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
   for (unsigned I = 0; I != NL+1; ++I) {
     Cur[I].Cost = I * LeftCost;
     for (unsigned J = 0; J != I; ++J)
-      Cur[I].Path.push_back(DifferenceEngine::DC_left);
+      Cur[I].Path.push_back(DC_left);
   }
 
   for (BasicBlock::iterator RI = RStart; RI != RE; ++RI) {
     // Initialize the first row.
     Next[0] = Cur[0];
     Next[0].Cost += RightCost;
-    Next[0].Path.push_back(DifferenceEngine::DC_right);
+    Next[0].Path.push_back(DC_right);
 
     unsigned Index = 1;
     for (BasicBlock::iterator LI = LStart; LI != LE; ++LI, ++Index) {
       if (matchForBlockDiff(&*LI, &*RI)) {
         Next[Index] = Cur[Index-1];
         Next[Index].Cost += MatchCost;
-        Next[Index].Path.push_back(DifferenceEngine::DC_match);
+        Next[Index].Path.push_back(DC_match);
         TentativeValues.insert(std::make_pair(&*LI, &*RI));
       } else if (Next[Index-1].Cost <= Cur[Index].Cost) {
         Next[Index] = Next[Index-1];
         Next[Index].Cost += LeftCost;
-        Next[Index].Path.push_back(DifferenceEngine::DC_left);
+        Next[Index].Path.push_back(DC_left);
       } else {
         Next[Index] = Cur[Index];
         Next[Index].Cost += RightCost;
-        Next[Index].Path.push_back(DifferenceEngine::DC_right);
+        Next[Index].Path.push_back(DC_right);
       }
     }
 
@@ -543,23 +543,23 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
   SmallVectorImpl<char> &Path = Cur[NL].Path;
   BasicBlock::iterator LI = LStart, RI = RStart;
 
-  DifferenceEngine::DiffLogBuilder Diff(Engine);
+  DiffLogBuilder Diff(Engine.getConsumer());
 
   // Drop trailing matches.
-  while (Path.back() == DifferenceEngine::DC_match)
+  while (Path.back() == DC_match)
     Path.pop_back();
 
   // Skip leading matches.
   SmallVectorImpl<char>::iterator
     PI = Path.begin(), PE = Path.end();
-  while (PI != PE && *PI == DifferenceEngine::DC_match) {
+  while (PI != PE && *PI == DC_match) {
     unify(&*LI, &*RI);
     ++PI, ++LI, ++RI;
   }
 
   for (; PI != PE; ++PI) {
-    switch (static_cast<DifferenceEngine::DiffChange>(*PI)) {
-    case DifferenceEngine::DC_match:
+    switch (static_cast<DiffChange>(*PI)) {
+    case DC_match:
       assert(LI != LE && RI != RE);
       {
         Instruction *L = &*LI, *R = &*RI;
@@ -569,13 +569,13 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
       ++LI; ++RI;
       break;
 
-    case DifferenceEngine::DC_left:
+    case DC_left:
       assert(LI != LE);
       Diff.addLeft(&*LI);
       ++LI;
       break;
 
-    case DifferenceEngine::DC_right:
+    case DC_right:
       assert(RI != RE);
       Diff.addRight(&*RI);
       ++RI;
