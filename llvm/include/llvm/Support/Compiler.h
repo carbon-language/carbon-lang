@@ -134,7 +134,7 @@
 # define LLVM_BUILTIN_UNREACHABLE __builtin_unreachable()
 #else
 #ifdef __cplusplus
-extern "C" LLVM_ATTRIBUTE_NORETURN void abort();
+extern "C" LLVM_ATTRIBUTE_NORETURN void abort() throw();
 #else
 extern LLVM_ATTRIBUTE_NORETURN void abort();
 #endif
