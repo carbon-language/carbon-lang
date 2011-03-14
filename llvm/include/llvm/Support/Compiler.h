@@ -126,4 +126,19 @@
   decl
 #endif
 
+// LLVM_BUILTIN_UNREACHABLE - On compilers which support it, expands
+// to an expression which states that it is undefined behavior for the
+// compiler to reach this point.
+#if defined(__clang__) || (__GNUC__ > 4) \
+ || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
+# define LLVM_BUILTIN_UNREACHABLE __builtin_unreachable()
+#else
+#ifdef __cplusplus
+extern "C" LLVM_ATTRIBUTE_NORETURN void abort();
+#else
+extern LLVM_ATTRIBUTE_NORETURN void abort();
+#endif
+# define LLVM_BUILTIN_UNREACHABLE abort()
+#endif
+
 #endif

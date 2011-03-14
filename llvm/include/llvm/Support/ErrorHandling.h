@@ -97,7 +97,7 @@ namespace llvm {
 #define llvm_unreachable(msg) \
   ::llvm::llvm_unreachable_internal(msg, __FILE__, __LINE__)
 #else
-#define llvm_unreachable(msg) ::llvm::llvm_unreachable_internal()
+#define llvm_unreachable(msg) LLVM_BUILTIN_UNREACHABLE
 #endif
 
 #endif
