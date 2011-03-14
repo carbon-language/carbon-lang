@@ -269,6 +269,18 @@ multiclass INT3ntnc<string opcstr, SDNode opnode> {
                    [(set RRegu32:$d, (opnode imm:$a, RRegu32:$b))]>;
 }
 
+multiclass PTX_SETP<RegisterClass RC, string regclsname, Operand immcls,
+                        CondCode cmp, string cmpstr> {
+  def rr
+    : InstPTX<(outs Preds:$d), (ins RC:$a, RC:$b),
+              !strconcat("setp.", cmpstr, ".", regclsname, "\t$d, $a, $b"),
+              [(set Preds:$d, (setcc RC:$a, RC:$b, cmp))]>;
+  def ri
+    : InstPTX<(outs Preds:$d), (ins RC:$a, immcls:$b),
+              !strconcat("setp.", cmpstr, ".", regclsname, "\t$d, $a, $b"),
+              [(set Preds:$d, (setcc RC:$a, imm:$b, cmp))]>;
+}
+
 multiclass PTX_LD<string opstr, string typestr, RegisterClass RC, PatFrag pat_load> {
   def rr32 : InstPTX<(outs RC:$d),
                      (ins MEMri32:$a),
@@ -343,6 +355,11 @@ multiclass PTX_ST_ALL<string opstr, PatFrag pat_store> {
 // Instructions
 //===----------------------------------------------------------------------===//
 
+///===- Integer Arithmetic Instructions -----------------------------------===//
+
+defm ADD : INT3<"add", add>;
+defm SUB : INT3<"sub", sub>;
+
 ///===- Floating-Point Arithmetic Instructions ----------------------------===//
 
 // Standard Binary Operations
@@ -397,12 +414,14 @@ def FDIVri64SM10 : InstPTX<(outs RRegf64:$d),
 // TODO: Allow the rounding mode to be selectable through llc.
 defm FMAD : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>;
 
+///===- Comparison and Selection Instructions -----------------------------===//
 
-
-///===- Integer Arithmetic Instructions -----------------------------------===//
-
-defm ADD : INT3<"add", add>;
-defm SUB : INT3<"sub", sub>;
+defm SETPEQu32 : PTX_SETP<RRegu32, "u32", i32imm, SETEQ,  "eq">;
+defm SETPNEu32 : PTX_SETP<RRegu32, "u32", i32imm, SETNE,  "ne">;
+defm SETPLTu32 : PTX_SETP<RRegu32, "u32", i32imm, SETULT, "lt">;
+defm SETPLEu32 : PTX_SETP<RRegu32, "u32", i32imm, SETULE, "le">;
+defm SETPGTu32 : PTX_SETP<RRegu32, "u32", i32imm, SETUGT, "gt">;
+defm SETPGEu32 : PTX_SETP<RRegu32, "u32", i32imm, SETUGE, "ge">;
 
 ///===- Logic and Shift Instructions --------------------------------------===//
 
@@ -474,6 +493,10 @@ defm STs : PTX_ST_ALL<"st.shared", store_shared>;
 // defm STp : PTX_ST_ALL<"st.param",  store_parameter>;
 // defm LDp : PTX_LD_ALL<"ld.param",  load_parameter>;
 // TODO: Do something with st.param if/when it is needed.
+
+def CVT_u32_pred
+  : InstPTX<(outs RRegu32:$d), (ins Preds:$a), "cvt.u32.pred\t$d, $a",
+            [(set RRegu32:$d, (zext Preds:$a))]>;
 
 ///===- Control Flow Instructions -----------------------------------------===//
 

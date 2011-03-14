@@ -100,10 +100,7 @@ bool PTXInstrInfo::isMoveInstr(const MachineInstr& MI,
 
 bool PTXInstrInfo::isPredicated(const MachineInstr *MI) const {
   int i = MI->findFirstPredOperandIdx();
-  if (i == -1)
-    llvm_unreachable("missing predicate operand");
-  return MI->getOperand(i).getReg() ||
-         MI->getOperand(i+1).getImm() != PTX::PRED_IGNORE;
+  return i != -1 && MI->getOperand(i).getReg() != PTX::NoRegister;
 }
 
 bool PTXInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
@@ -143,7 +140,29 @@ DefinesPredicate(MachineInstr *MI,
   // If the specified instruction defines any predicate or condition code
   // register(s) used for predication, returns true as well as the definition
   // predicate(s) by reference.
-  return false;
+
+  switch (MI->getOpcode()) {
+  default:
+    return false;
+  case PTX::SETPEQu32rr:
+  case PTX::SETPEQu32ri:
+  case PTX::SETPNEu32rr:
+  case PTX::SETPNEu32ri:
+  case PTX::SETPLTu32rr:
+  case PTX::SETPLTu32ri:
+  case PTX::SETPLEu32rr:
+  case PTX::SETPLEu32ri:
+  case PTX::SETPGTu32rr:
+  case PTX::SETPGTu32ri:
+  case PTX::SETPGEu32rr:
+  case PTX::SETPGEu32ri: {
+    const MachineOperand &MO = MI->getOperand(0);
+    assert(MO.isReg() && RI.getRegClass(MO.getReg()) == &PTX::PredsRegClass);
+    Pred.push_back(MO);
+    Pred.push_back(MachineOperand::CreateImm(PTX::PRED_NORMAL));
+    return true;
+  }
+  }
 }
 
 // static helper routines
@@ -151,8 +170,8 @@ DefinesPredicate(MachineInstr *MI,
 MachineSDNode *PTXInstrInfo::
 GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
                   DebugLoc dl, EVT VT, SDValue Op1) {
-  SDValue predReg = DAG->getRegister(0, MVT::i1);
-  SDValue predOp = DAG->getTargetConstant(PTX::PRED_IGNORE, MVT::i1);
+  SDValue predReg = DAG->getRegister(PTX::NoRegister, MVT::i1);
+  SDValue predOp = DAG->getTargetConstant(PTX::PRED_NORMAL, MVT::i32);
   SDValue ops[] = { Op1, predReg, predOp };
   return DAG->getMachineNode(Opcode, dl, VT, ops, array_lengthof(ops));
 }
@@ -160,8 +179,8 @@ GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
 MachineSDNode *PTXInstrInfo::
 GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
                   DebugLoc dl, EVT VT, SDValue Op1, SDValue Op2) {
-  SDValue predReg = DAG->getRegister(0, MVT::i1);
-  SDValue predOp = DAG->getTargetConstant(PTX::PRED_IGNORE, MVT::i1);
+  SDValue predReg = DAG->getRegister(PTX::NoRegister, MVT::i1);
+  SDValue predOp = DAG->getTargetConstant(PTX::PRED_NORMAL, MVT::i32);
   SDValue ops[] = { Op1, Op2, predReg, predOp };
   return DAG->getMachineNode(Opcode, dl, VT, ops, array_lengthof(ops));
 }
@@ -169,6 +188,6 @@ GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
 void PTXInstrInfo::AddDefaultPredicate(MachineInstr *MI) {
   if (MI->findFirstPredOperandIdx() == -1) {
     MI->addOperand(MachineOperand::CreateReg(0, /*IsDef=*/false));
-    MI->addOperand(MachineOperand::CreateImm(PTX::PRED_IGNORE));
+    MI->addOperand(MachineOperand::CreateImm(PTX::PRED_NORMAL));
   }
 }

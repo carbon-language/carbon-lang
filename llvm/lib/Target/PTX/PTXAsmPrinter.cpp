@@ -410,7 +410,7 @@ printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
 
   DEBUG(dbgs() << "predicate: (" << reg << ", " << predOp << ")\n");
 
-  if (reg && predOp != PTX::PRED_IGNORE) {
+  if (reg != PTX::NoRegister) {
     O << '@';
     if (predOp == PTX::PRED_NEGATE)
       O << '!';

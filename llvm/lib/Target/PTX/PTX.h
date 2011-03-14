@@ -31,7 +31,7 @@ namespace llvm {
     };
 
     enum Predicate {
-      PRED_IGNORE = 0,
+      PRED_NORMAL = 0,
       PRED_NEGATE = 1
     };
   } // namespace PTX
