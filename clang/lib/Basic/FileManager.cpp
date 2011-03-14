@@ -450,20 +450,16 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
   return UFE;
 }
 
-void FileManager::FixupRelativePath(llvm::SmallVectorImpl<char> &path,
-                                    const FileSystemOptions &FSOpts) {
+void FileManager::FixupRelativePath(llvm::SmallVectorImpl<char> &path) const {
   llvm::StringRef pathRef(path.data(), path.size());
 
-  if (FSOpts.WorkingDir.empty() || llvm::sys::path::is_absolute(pathRef))
+  if (FileSystemOpts.WorkingDir.empty() 
+      || llvm::sys::path::is_absolute(pathRef))
     return;
 
-  llvm::SmallString<128> NewPath(FSOpts.WorkingDir);
+  llvm::SmallString<128> NewPath(FileSystemOpts.WorkingDir);
   llvm::sys::path::append(NewPath, pathRef);
   path = NewPath;
-}
-
-void FileManager::FixupRelativePath(llvm::SmallVectorImpl<char> &path) const {
-  FixupRelativePath(path, FileSystemOpts);
 }
 
 llvm::MemoryBuffer *FileManager::

@@ -370,7 +370,7 @@ void CompilerInstance::clearOutputFiles(bool EraseFiles) {
 
         // If '-working-directory' was passed, the output filename should be
         // relative to that.
-        FileManager::FixupRelativePath(NewOutFile, getFileSystemOpts());
+        FileMgr->FixupRelativePath(NewOutFile);
         if (llvm::error_code ec = llvm::sys::fs::rename(it->TempFilename,
                                                         NewOutFile.str())) {
           getDiagnostics().Report(diag::err_fe_unable_to_rename_temp)
