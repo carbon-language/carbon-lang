@@ -72,6 +72,29 @@ namespace llvm {
     void operator=(const SCEV &);  // DO NOT IMPLEMENT
 
   public:
+    /// NoWrapFlags are bitfield indices into SubclassData.
+    ///
+    /// Add and Mul expressions may have no-unsigned-wrap <NUW> or
+    /// no-signed-wrap <NSW> properties, which are derived from the IR
+    /// operator. NSW is a misnomer that we use to mean no signed overflow or
+    /// underflow.
+    ///
+    /// AddRec expression may have a no-self-wraparound <NW> property if the
+    /// result can never reach the start value. This property is independent of
+    /// the actual start value and step direction. Self-wraparound is defined
+    /// purely in terms of the recurrence's loop, step size, and
+    /// bitwidth. Formally, a recurrence with no self-wraparound satisfies:
+    /// abs(step) * max-iteration(loop) <= unsigned-max(bitwidth).
+    ///
+    /// Note that NUW and NSW are also valid properties of a recurrence, and
+    /// either implies NW. For convenience, NW will be set for a recurrence
+    /// whenever either NUW or NSW are set.
+    enum NoWrapFlags { FlagAnyWrap = 0,          // No guarantee.
+                       FlagNW      = (1 << 0),   // No self-wrap.
+                       FlagNUW     = (1 << 1),   // No unsigned wrap.
+                       FlagNSW     = (1 << 2),   // No signed wrap.
+                       NoWrapMask  = (1 << 3) -1 };
+
     explicit SCEV(const FoldingSetNodeIDRef ID, unsigned SCEVTy) :
       FastID(ID), SCEVType(SCEVTy), SubclassData(0) {}
 
@@ -158,6 +181,20 @@ namespace llvm {
       DominatesBlock,        ///< The SCEV dominates the block.
       ProperlyDominatesBlock ///< The SCEV properly dominates the block.
     };
+
+    /// Convenient NoWrapFlags manipulation that hides enum casts and is
+    /// visible in the ScalarEvolution name space.
+    static SCEV::NoWrapFlags maskFlags(SCEV::NoWrapFlags Flags, int Mask) {
+      return (SCEV::NoWrapFlags)(Flags & Mask);
+    }
+    static SCEV::NoWrapFlags setFlags(SCEV::NoWrapFlags Flags,
+                                      SCEV::NoWrapFlags OnFlags) {
+      return (SCEV::NoWrapFlags)(Flags | OnFlags);
+    }
+    static SCEV::NoWrapFlags clearFlags(SCEV::NoWrapFlags Flags,
+                                        SCEV::NoWrapFlags OffFlags) {
+      return (SCEV::NoWrapFlags)(Flags & ~OffFlags);
+    }
 
   private:
     /// SCEVCallbackVH - A CallbackVH to arrange for ScalarEvolution to be
@@ -465,44 +502,41 @@ namespace llvm {
     const SCEV *getSignExtendExpr(const SCEV *Op, const Type *Ty);
     const SCEV *getAnyExtendExpr(const SCEV *Op, const Type *Ty);
     const SCEV *getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
-                           bool HasNUW = false, bool HasNSW = false);
+                           SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap);
     const SCEV *getAddExpr(const SCEV *LHS, const SCEV *RHS,
-                           bool HasNUW = false, bool HasNSW = false) {
+                           SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap) {
       SmallVector<const SCEV *, 2> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
-      return getAddExpr(Ops, HasNUW, HasNSW);
+      return getAddExpr(Ops, Flags);
     }
-    const SCEV *getAddExpr(const SCEV *Op0, const SCEV *Op1,
-                           const SCEV *Op2,
-                           bool HasNUW = false, bool HasNSW = false) {
+    const SCEV *getAddExpr(const SCEV *Op0, const SCEV *Op1, const SCEV *Op2,
+                           SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap) {
       SmallVector<const SCEV *, 3> Ops;
       Ops.push_back(Op0);
       Ops.push_back(Op1);
       Ops.push_back(Op2);
-      return getAddExpr(Ops, HasNUW, HasNSW);
+      return getAddExpr(Ops, Flags);
     }
     const SCEV *getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
-                           bool HasNUW = false, bool HasNSW = false);
+                           SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap);
     const SCEV *getMulExpr(const SCEV *LHS, const SCEV *RHS,
-                           bool HasNUW = false, bool HasNSW = false) {
+                           SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap)
+    {
       SmallVector<const SCEV *, 2> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
-      return getMulExpr(Ops, HasNUW, HasNSW);
+      return getMulExpr(Ops, Flags);
     }
     const SCEV *getUDivExpr(const SCEV *LHS, const SCEV *RHS);
     const SCEV *getAddRecExpr(const SCEV *Start, const SCEV *Step,
-                              const Loop *L,
-                              bool HasNUW = false, bool HasNSW = false);
+                              const Loop *L, SCEV::NoWrapFlags Flags);
     const SCEV *getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
-                              const Loop *L,
-                              bool HasNUW = false, bool HasNSW = false);
+                              const Loop *L, SCEV::NoWrapFlags Flags);
     const SCEV *getAddRecExpr(const SmallVectorImpl<const SCEV *> &Operands,
-                              const Loop *L,
-                              bool HasNUW = false, bool HasNSW = false) {
+                              const Loop *L, SCEV::NoWrapFlags Flags) {
       SmallVector<const SCEV *, 4> NewOp(Operands.begin(), Operands.end());
-      return getAddRecExpr(NewOp, L, HasNUW, HasNSW);
+      return getAddRecExpr(NewOp, L, Flags);
     }
     const SCEV *getSMaxExpr(const SCEV *LHS, const SCEV *RHS);
     const SCEV *getSMaxExpr(SmallVectorImpl<const SCEV *> &Operands);
@@ -537,11 +571,9 @@ namespace llvm {
     ///
     const SCEV *getNotSCEV(const SCEV *V);
 
-    /// getMinusSCEV - Return LHS-RHS.  Minus is represented in SCEV as A+B*-1,
-    /// and thus the HasNUW and HasNSW bits apply to the resultant add, not
-    /// whether the sub would have overflowed.
+    /// getMinusSCEV - Return LHS-RHS.  Minus is represented in SCEV as A+B*-1.
     const SCEV *getMinusSCEV(const SCEV *LHS, const SCEV *RHS,
-                             bool HasNUW = false, bool HasNSW = false);
+                             SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap);
 
     /// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion
     /// of the input value to the specified type.  If the type must be

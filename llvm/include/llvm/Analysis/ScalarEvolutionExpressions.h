@@ -160,13 +160,8 @@ namespace llvm {
 
     const Type *getType() const { return getOperand(0)->getType(); }
 
-    bool hasNoUnsignedWrap() const { return SubclassData & (1 << 0); }
-    void setHasNoUnsignedWrap(bool B) {
-      SubclassData = (SubclassData & ~(1 << 0)) | (B << 0);
-    }
-    bool hasNoSignedWrap() const { return SubclassData & (1 << 1); }
-    void setHasNoSignedWrap(bool B) {
-      SubclassData = (SubclassData & ~(1 << 1)) | (B << 1);
+    NoWrapFlags getNoWrapFlags(NoWrapFlags Mask = NoWrapMask) const {
+      return (NoWrapFlags)(SubclassData & Mask);
     }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -198,6 +193,11 @@ namespace llvm {
              S->getSCEVType() == scMulExpr ||
              S->getSCEVType() == scSMaxExpr ||
              S->getSCEVType() == scUMaxExpr;
+    }
+
+    /// Set flags for a non-recurrence without clearing previously set flags.
+    void setNoWrapFlags(NoWrapFlags Flags) {
+      SubclassData |= Flags;
     }
   };
 
@@ -305,11 +305,12 @@ namespace llvm {
     /// getStepRecurrence - This method constructs and returns the recurrence
     /// indicating how much this expression steps by.  If this is a polynomial
     /// of degree N, it returns a chrec of degree N-1.
+    /// We cannot determine whether the step recurrence has self-wraparound.
     const SCEV *getStepRecurrence(ScalarEvolution &SE) const {
       if (isAffine()) return getOperand(1);
       return SE.getAddRecExpr(SmallVector<const SCEV *, 3>(op_begin()+1,
                                                            op_end()),
-                              getLoop());
+                              getLoop(), FlagAnyWrap);
     }
 
     /// isAffine - Return true if this is an affine AddRec (i.e., it represents
@@ -325,6 +326,15 @@ namespace llvm {
     /// invariant values.  This corresponds to an addrec of the form {L,+,M,+,N}
     bool isQuadratic() const {
       return getNumOperands() == 3;
+    }
+
+    /// Set flags for a recurrence without clearing any previously set flags.
+    /// For AddRec, either NUW or NSW implies NW. Keep track of this fact here
+    /// to make it easier to propagate flags.
+    void setNoWrapFlags(NoWrapFlags Flags) {
+      if (Flags & (FlagNUW | FlagNSW))
+        Flags = ScalarEvolution::setFlags(Flags, FlagNW);
+      SubclassData |= Flags;
     }
 
     /// evaluateAtIteration - Return the value of this chain of recurrences at
@@ -364,8 +374,7 @@ namespace llvm {
                  const SCEV *const *O, size_t N)
       : SCEVCommutativeExpr(ID, scSMaxExpr, O, N) {
       // Max never overflows.
-      setHasNoUnsignedWrap(true);
-      setHasNoSignedWrap(true);
+      setNoWrapFlags((NoWrapFlags)(FlagNUW | FlagNSW));
     }
 
   public:
@@ -387,8 +396,7 @@ namespace llvm {
                  const SCEV *const *O, size_t N)
       : SCEVCommutativeExpr(ID, scUMaxExpr, O, N) {
       // Max never overflows.
-      setHasNoUnsignedWrap(true);
-      setHasNoSignedWrap(true);
+      setNoWrapFlags((NoWrapFlags)(FlagNUW | FlagNSW));
     }
 
   public:

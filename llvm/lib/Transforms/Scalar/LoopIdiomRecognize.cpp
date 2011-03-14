@@ -485,10 +485,10 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
 
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
-                                         true /*no unsigned overflow*/);
+                                         SCEV::FlagNUW);
   if (StoreSize != 1)
     NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtr, StoreSize),
-                               true /*no unsigned overflow*/);
+                               SCEV::FlagNUW);
 
   Value *NumBytes =
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
@@ -581,10 +581,10 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
 
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
-                                         true /*no unsigned overflow*/);
+                                         SCEV::FlagNUW);
   if (StoreSize != 1)
     NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtr, StoreSize),
-                               true /*no unsigned overflow*/);
+                               SCEV::FlagNUW);
 
   Value *NumBytes =
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());

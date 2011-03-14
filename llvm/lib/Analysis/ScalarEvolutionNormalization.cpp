@@ -97,7 +97,8 @@ const SCEV *llvm::TransformForPostIncUse(TransformKind Kind,
       const SCEV *N = TransformForPostIncUse(Kind, O, LUser, 0, Loops, SE, DT);
       Operands.push_back(N);
     }
-    const SCEV *Result = SE.getAddRecExpr(Operands, L);
+    // Conservatively use AnyWrap until/unless we need FlagNW.
+    const SCEV *Result = SE.getAddRecExpr(Operands, L, SCEV::FlagAnyWrap);
     switch (Kind) {
     default: llvm_unreachable("Unexpected transform name!");
     case NormalizeAutodetect:
