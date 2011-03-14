@@ -1116,13 +1116,16 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
   if (BuiltinID == ARM::BI__clear_cache) {
     const FunctionDecl *FD = E->getDirectCallee();
-    Value *a = EmitScalarExpr(E->getArg(0));
-    Value *b = EmitScalarExpr(E->getArg(1));
+    // Oddly people write this call without args on occasion and gcc accepts
+    // it - it's also marked as varargs in the description file.
+    llvm::SmallVector<Value*, 2> Ops;
+    for (unsigned i = 0; i < E->getNumArgs(); i++)
+      Ops.push_back(EmitScalarExpr(E->getArg(i)));
     const llvm::Type *Ty = CGM.getTypes().ConvertType(FD->getType());
     const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
     llvm::StringRef Name = FD->getName();
-    return Builder.CreateCall2(CGM.CreateRuntimeFunction(FTy, Name),
-                               a, b);
+    return Builder.CreateCall(CGM.CreateRuntimeFunction(FTy, Name),
+                              Ops.begin(), Ops.end());
   }
 
   llvm::SmallVector<Value*, 4> Ops;
