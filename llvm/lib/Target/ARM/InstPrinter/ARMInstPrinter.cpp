@@ -417,16 +417,6 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
   }
 }
 
-void ARMInstPrinter::printNegZeroOperand(const MCInst *MI, unsigned OpNum,
-                                         raw_ostream &O) {
-  const MCOperand &Op = MI->getOperand(OpNum);
-  O << '#';
-  if (Op.getImm() < 0)
-    O << '-' << (-Op.getImm() - 1);
-  else
-    O << Op.getImm();
-}
-
 void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();

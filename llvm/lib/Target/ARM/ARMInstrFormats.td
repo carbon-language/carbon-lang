@@ -206,19 +206,9 @@ def setend_op : Operand<i32> {
   let PrintMethod = "printSetendOperand";
 }
 
-def cps_opt : Operand<i32> {
-  let PrintMethod = "printCPSOptionOperand";
-}
-
 def msr_mask : Operand<i32> {
   let PrintMethod = "printMSRMaskOperand";
   let ParserMatchClass = MSRMaskOperand;
-}
-
-// A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.
-// The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
-def neg_zero : Operand<i32> {
-  let PrintMethod = "printNegZeroOperand";
 }
 
 // Shift Right Immediate - A shift right immediate is encoded differently from

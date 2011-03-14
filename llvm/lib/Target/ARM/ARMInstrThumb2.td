@@ -61,40 +61,6 @@ def t2_so_imm_neg : Operand<i32>,
   return ARM_AM::getT2SOImmVal(-((uint32_t)N->getZExtValue())) != -1;
 }], t2_so_imm_neg_XFORM>;
 
-// Break t2_so_imm's up into two pieces.  This handles immediates with up to 16
-// bits set in them.  This uses t2_so_imm2part to match and t2_so_imm2part_[12]
-// to get the first/second pieces.
-def t2_so_imm2part : Operand<i32>,
-                  PatLeaf<(imm), [{
-      return ARM_AM::isT2SOImmTwoPartVal((unsigned)N->getZExtValue());
-    }]> {
-}
-
-def t2_so_imm2part_1 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getT2SOImmTwoPartFirst((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
-}]>;
-
-def t2_so_imm2part_2 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getT2SOImmTwoPartSecond((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
-}]>;
-
-def t2_so_neg_imm2part : Operand<i32>, PatLeaf<(imm), [{
-      return ARM_AM::isT2SOImmTwoPartVal(-(int)N->getZExtValue());
-    }]> {
-}
-
-def t2_so_neg_imm2part_1 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getT2SOImmTwoPartFirst(-(int)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
-}]>;
-
-def t2_so_neg_imm2part_2 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getT2SOImmTwoPartSecond(-(int)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
-}]>;
-
 /// imm1_31 predicate - True if the 32-bit immediate is in the range [1,31].
 def imm1_31 : PatLeaf<(i32 imm), [{
   return (int32_t)N->getZExtValue() >= 1 && (int32_t)N->getZExtValue() < 32;

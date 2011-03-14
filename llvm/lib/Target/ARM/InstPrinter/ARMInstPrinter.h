@@ -88,9 +88,7 @@ public:
   void printSetendOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printCPSIMod(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printCPSIFlag(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printCPSOptionOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMSRMaskOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printNegZeroOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printPredicateOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMandatoryPredicateOperand(const MCInst *MI, unsigned OpNum,
                                       raw_ostream &O);
