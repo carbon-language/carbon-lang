@@ -51,19 +51,19 @@ entry:
 
 declare i8* @malloc(...)
 
-define fastcc void @test4() nounwind {
+define fastcc void @test4(i16 %addr) nounwind {
 entry:
 ; A8: test4:
-; A8: ldr r1, [r0, r0, lsl #2]
-; A8: str r1, [r0, r0, lsl #2]
+; A8: ldr r2, [r0, r1, lsl #2]
+; A8: str r2, [r0, r1, lsl #2]
 
 ; A9: test4:
-; A9: add r0, r0, r0, lsl #2
+; A9: add r0, r0, r4, lsl #2
 ; A9: ldr r1, [r0]
 ; A9: str r1, [r0]
   %0 = tail call i8* (...)* @malloc(i32 undef) nounwind
   %1 = bitcast i8* %0 to i32*
-  %2 = sext i16 undef to i32
+  %2 = sext i16 %addr to i32
   %3 = getelementptr inbounds i32* %1, i32 %2
   %4 = load i32* %3, align 4
   %5 = add nsw i32 %4, 1
