@@ -1672,7 +1672,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     // FIXME: With OS X ld 123.2 (xcode 4) and LTO we would get a linker error
     // when using private linkage. It is not clear if this is a bug in ld
     // or a reasonable new restriction.
-    Linkage = llvm::GlobalValue::InternalLinkage;
+    Linkage = llvm::GlobalValue::LinkerPrivateLinkage;
     isConstant = !Features.WritableStrings;
   }
   
