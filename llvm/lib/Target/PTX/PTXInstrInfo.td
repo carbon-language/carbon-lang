@@ -414,6 +414,39 @@ def FDIVri64SM10 : InstPTX<(outs RRegf64:$d),
 // TODO: Allow the rounding mode to be selectable through llc.
 defm FMAD : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>;
 
+///===- Floating-Point Intrinsic Instructions -----------------------------===//
+
+def FSQRT32 : InstPTX<(outs RRegf32:$d),
+                      (ins RRegf32:$a),
+                      "sqrt.rn.f32\t$d, $a",
+                      [(set RRegf32:$d, (fsqrt RRegf32:$a))]>;
+
+def FSQRT64 : InstPTX<(outs RRegf64:$d),
+                      (ins RRegf64:$a),
+                      "sqrt.rn.f64\t$d, $a",
+                      [(set RRegf64:$d, (fsqrt RRegf64:$a))]>;
+
+def FSIN32 : InstPTX<(outs RRegf32:$d),
+                     (ins RRegf32:$a),
+                     "sin.approx.f32\t$d, $a",
+                     [(set RRegf32:$d, (fsin RRegf32:$a))]>;
+
+def FSIN64 : InstPTX<(outs RRegf64:$d),
+                     (ins RRegf64:$a),
+                     "sin.approx.f64\t$d, $a",
+                     [(set RRegf64:$d, (fsin RRegf64:$a))]>;
+
+def FCOS32 : InstPTX<(outs RRegf32:$d),
+                     (ins RRegf32:$a),
+                     "cos.approx.f32\t$d, $a",
+                     [(set RRegf32:$d, (fcos RRegf32:$a))]>;
+
+def FCOS64 : InstPTX<(outs RRegf64:$d),
+                     (ins RRegf64:$a),
+                     "cos.approx.f64\t$d, $a",
+                     [(set RRegf64:$d, (fcos RRegf64:$a))]>;
+
+
 ///===- Comparison and Selection Instructions -----------------------------===//
 
 defm SETPEQu32 : PTX_SETP<RRegu32, "u32", i32imm, SETEQ,  "eq">;
