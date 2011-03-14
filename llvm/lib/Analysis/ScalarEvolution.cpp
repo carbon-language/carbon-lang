@@ -1792,6 +1792,17 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
           if (AnyFolded)
             return getAddExpr(NewOps);
         }
+        else if (const SCEVAddRecExpr *
+                 AddRec = dyn_cast<SCEVAddRecExpr>(Ops[1])) {
+          // Negation preserves a recurrence's no self-wrap property.
+          SmallVector<const SCEV *, 4> Operands;
+          for (SCEVAddRecExpr::op_iterator I = AddRec->op_begin(),
+                 E = AddRec->op_end(); I != E; ++I) {
+            Operands.push_back(getMulExpr(Ops[0], *I));
+          }
+          return getAddRecExpr(Operands, AddRec->getLoop(),
+                               AddRec->getNoWrapFlags(SCEV::FlagNW));
+        }
       }
     }
 
