@@ -44,7 +44,7 @@ typedef int (*EDByteReaderCallback)(uint8_t *byte, uint64_t address, void *arg);
  @param arg An anonymous argument for client use.
  @result 0 if the register could be read; -1 otherwise.
  */
-typedef int (*EDRegisterReaderCallback)(uint64_t *value, unsigned regID, 
+typedef int (*EDRegisterReaderCallback)(uint64_t *value, unsigned regID,
                                         void* arg);
 
 /*!
@@ -83,7 +83,7 @@ typedef void *EDTokenRef;
  Encapsulates an operand of an instruction.
  */
 typedef void *EDOperandRef;
-  
+
 /*!
  @functiongroup Getting a disassembler
  */
@@ -91,7 +91,7 @@ typedef void *EDOperandRef;
 /*!
  @function EDGetDisassembler
  Gets the disassembler for a given target.
- @param disassembler A pointer whose target will be filled in with the 
+ @param disassembler A pointer whose target will be filled in with the
    disassembler.
  @param triple Identifies the target.  Example: "x86_64-apple-darwin10"
  @param syntax The assembly syntax to use when decoding instructions.
@@ -104,12 +104,12 @@ int EDGetDisassembler(EDDisassemblerRef *disassembler,
 /*!
  @functiongroup Generic architectural queries
  */
-  
+
 /*!
  @function EDGetRegisterName
  Gets the human-readable name for a given register.
  @param regName A pointer whose target will be pointed at the name of the
-   register.  The name does not need to be deallocated and will be 
+   register.  The name does not need to be deallocated and will be
  @param disassembler The disassembler to query for the name.
  @param regID The register identifier, as returned by EDRegisterTokenValue.
  @result 0 on success; -1 otherwise.
@@ -117,7 +117,7 @@ int EDGetDisassembler(EDDisassemblerRef *disassembler,
 int EDGetRegisterName(const char** regName,
                       EDDisassemblerRef disassembler,
                       unsigned regID);
-  
+
 /*!
  @function EDRegisterIsStackPointer
  Determines if a register is one of the platform's stack-pointer registers.
@@ -137,16 +137,16 @@ int EDRegisterIsStackPointer(EDDisassemblerRef disassembler,
  */
 int EDRegisterIsProgramCounter(EDDisassemblerRef disassembler,
                                unsigned regID);
-  
+
 /*!
  @functiongroup Creating and querying instructions
  */
-  
+
 /*!
  @function EDCreateInst
  Gets a set of contiguous instructions from a disassembler.
  @param insts A pointer to an array that will be filled in with the
-   instructions.  Must have at least count entries.  Entries not filled in will 
+   instructions.  Must have at least count entries.  Entries not filled in will
    be set to NULL.
  @param count The maximum number of instructions to fill in.
  @param disassembler The disassembler to use when decoding the instructions.
@@ -197,7 +197,7 @@ int EDGetInstString(const char **buf,
  @result 0 on success; -1 otherwise.
  */
 int EDInstID(unsigned *instID, EDInstRef inst);
-  
+
 /*!
  @function EDInstIsBranch
  @param inst The instruction to be queried.
@@ -217,7 +217,7 @@ int EDInstIsMove(EDInstRef inst);
 /*!
  @function EDBranchTargetID
  @param inst The instruction to be queried.
- @result The ID of the branch target operand, suitable for use with 
+ @result The ID of the branch target operand, suitable for use with
    EDCopyOperand.  -1 if no such operand exists.
  */
 int EDBranchTargetID(EDInstRef inst);
@@ -225,7 +225,7 @@ int EDBranchTargetID(EDInstRef inst);
 /*!
  @function EDMoveSourceID
  @param inst The instruction to be queried.
- @result The ID of the move source operand, suitable for use with 
+ @result The ID of the move source operand, suitable for use with
    EDCopyOperand.  -1 if no such operand exists.
  */
 int EDMoveSourceID(EDInstRef inst);
@@ -233,7 +233,7 @@ int EDMoveSourceID(EDInstRef inst);
 /*!
  @function EDMoveTargetID
  @param inst The instruction to be queried.
- @result The ID of the move source operand, suitable for use with 
+ @result The ID of the move source operand, suitable for use with
    EDCopyOperand.  -1 if no such operand exists.
  */
 int EDMoveTargetID(EDInstRef inst);
@@ -241,7 +241,7 @@ int EDMoveTargetID(EDInstRef inst);
 /*!
  @functiongroup Creating and querying tokens
  */
-  
+
 /*!
  @function EDNumTokens
  @param inst The instruction to be queried.
@@ -261,7 +261,7 @@ int EDNumTokens(EDInstRef inst);
 int EDGetToken(EDTokenRef *token,
                EDInstRef inst,
                int index);
-  
+
 /*!
  @function EDGetTokenString
  Gets the disassembled text for a token.
@@ -287,7 +287,7 @@ int EDOperandIndexForToken(EDTokenRef token);
  @result 1 if the token is whitespace; 0 if not; -1 on error.
  */
 int EDTokenIsWhitespace(EDTokenRef token);
-  
+
 /*!
  @function EDTokenIsPunctuation
  @param token The token to be queried.
@@ -335,18 +335,18 @@ int EDLiteralTokenAbsoluteValue(uint64_t *value,
 
 /*!
  @function EDRegisterTokenValue
- @param registerID A pointer whose target will be filled in with the LLVM 
+ @param registerID A pointer whose target will be filled in with the LLVM
    register identifier for the token.
  @param token The token to be queried.
  @result 0 on success; -1 otherwise.
  */
 int EDRegisterTokenValue(unsigned *registerID,
                          EDTokenRef token);
-  
+
 /*!
  @functiongroup Creating and querying operands
  */
-  
+
 /*!
  @function EDNumOperands
  @param inst The instruction to be queried.
@@ -366,7 +366,7 @@ int EDNumOperands(EDInstRef inst);
 int EDGetOperand(EDOperandRef *operand,
                  EDInstRef inst,
                  int index);
-  
+
 /*!
  @function EDOperandIsRegister
  @param operand The operand to be queried.
@@ -391,13 +391,13 @@ int EDOperandIsMemory(EDOperandRef operand);
 /*!
  @function EDRegisterOperandValue
  @param value A pointer whose target will be filled in with the LLVM register ID
-   of the register named by the operand.  
+   of the register named by the operand.
  @param operand The operand to be queried.
  @result 0 on success; -1 otherwise.
  */
 int EDRegisterOperandValue(unsigned *value,
                            EDOperandRef operand);
-  
+
 /*!
  @function EDImmediateOperandValue
  @param value A pointer whose target will be filled in with the value of the
@@ -427,7 +427,7 @@ int EDEvaluateOperand(uint64_t *result,
                       EDOperandRef operand,
                       EDRegisterReaderCallback regReader,
                       void *arg);
-  
+
 #ifdef __BLOCKS__
 
 /*!
@@ -458,13 +458,13 @@ typedef int (^EDRegisterBlock_t)(uint64_t *value, unsigned regID);
 typedef int (^EDTokenVisitor_t)(EDTokenRef token);
 
 /*! @functiongroup Block-based interfaces */
-  
+
 /*!
  @function EDBlockCreateInsts
  Gets a set of contiguous instructions from a disassembler, using a block to
  read memory.
  @param insts A pointer to an array that will be filled in with the
-   instructions.  Must have at least count entries.  Entries not filled in will 
+   instructions.  Must have at least count entries.  Entries not filled in will
    be set to NULL.
  @param count The maximum number of instructions to fill in.
  @param disassembler The disassembler to use when decoding the instructions.
@@ -505,7 +505,7 @@ int EDBlockVisitTokens(EDInstRef inst,
                        EDTokenVisitor_t visitor);
 
 #endif
-  
+
 #ifdef __cplusplus
 }
 #endif
