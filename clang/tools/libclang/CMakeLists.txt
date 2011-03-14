@@ -38,8 +38,8 @@ if( LLVM_ENABLE_PIC )
     DEFINE_SYMBOL _CINDEX_LIB_)
 
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(LIBCLANG_LINK_FLAGS "-Wl,-compatibility_version -Wl,1"
-      " -Wl,-dead_strip -Wl,-seg1addr -Wl,0xE0000000")
+    set(LIBCLANG_LINK_FLAGS
+      "-Wl,-compatibility_version -Wl,1 -Wl,-dead_strip -Wl,-seg1addr -Wl,0xE0000000")
     set_target_properties(libclang
       PROPERTIES
       LINK_FLAGS "${LIBCLANG_LINK_FLAGS}"
