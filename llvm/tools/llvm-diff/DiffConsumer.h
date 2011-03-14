@@ -28,7 +28,8 @@ namespace llvm {
   class Function;
 
   /// The interface for consumers of difference data.
-  struct Consumer {
+  class Consumer {
+  public:
     /// Record that a local context has been entered.  Left and
     /// Right are IR "containers" of some sort which are being
     /// considered for structural equivalence: global variables,
