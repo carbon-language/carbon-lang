@@ -47,7 +47,6 @@ void ProcessImplicitDefs::getAnalysisUsage(AnalysisUsage &AU) const {
 bool
 ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
                                             unsigned Reg, unsigned OpIdx,
-                                            const TargetInstrInfo *tii_,
                                             SmallSet<unsigned, 8> &ImpDefRegs) {
   switch(OpIdx) {
   case 1:
@@ -61,7 +60,6 @@ ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
 }
 
 static bool isUndefCopy(MachineInstr *MI, unsigned Reg,
-                        const TargetInstrInfo *tii_,
                         SmallSet<unsigned, 8> &ImpDefRegs) {
   if (MI->isCopy()) {
     MachineOperand &MO0 = MI->getOperand(0);
@@ -86,11 +84,10 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
 
   bool Changed = false;
 
-  const TargetInstrInfo *tii_ = fn.getTarget().getInstrInfo();
-  const TargetRegisterInfo *tri_ = fn.getTarget().getRegisterInfo();
-  MachineRegisterInfo *mri_ = &fn.getRegInfo();
-
-  LiveVariables *lv_ = &getAnalysis<LiveVariables>();
+  TII = fn.getTarget().getInstrInfo();
+  TRI = fn.getTarget().getRegisterInfo();
+  MRI = &fn.getRegInfo();
+  LV = &getAnalysis<LiveVariables>();
 
   SmallSet<unsigned, 8> ImpDefRegs;
   SmallVector<MachineInstr*, 8> ImpDefMIs;
@@ -113,7 +110,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         unsigned Reg = MI->getOperand(0).getReg();
         ImpDefRegs.insert(Reg);
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-          for (const unsigned *SS = tri_->getSubRegisters(Reg); *SS; ++SS)
+          for (const unsigned *SS = TRI->getSubRegisters(Reg); *SS; ++SS)
             ImpDefRegs.insert(*SS);
         }
         ImpDefMIs.push_back(MI);
@@ -125,7 +122,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         MachineOperand &MO = MI->getOperand(1);
         if (MO.isUndef() || ImpDefRegs.count(MO.getReg())) {
           if (MO.isKill()) {
-            LiveVariables::VarInfo& vi = lv_->getVarInfo(MO.getReg());
+            LiveVariables::VarInfo& vi = LV->getVarInfo(MO.getReg());
             vi.removeKill(MI);
           }
           MI->eraseFromParent();
@@ -145,14 +142,14 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         if (!ImpDefRegs.count(Reg))
           continue;
         // Use is a copy, just turn it into an implicit_def.
-        if (CanTurnIntoImplicitDef(MI, Reg, i, tii_, ImpDefRegs)) {
+        if (CanTurnIntoImplicitDef(MI, Reg, i, ImpDefRegs)) {
           bool isKill = MO.isKill();
-          MI->setDesc(tii_->get(TargetOpcode::IMPLICIT_DEF));
+          MI->setDesc(TII->get(TargetOpcode::IMPLICIT_DEF));
           for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
             MI->RemoveOperand(j);
           if (isKill) {
             ImpDefRegs.erase(Reg);
-            LiveVariables::VarInfo& vi = lv_->getVarInfo(Reg);
+            LiveVariables::VarInfo& vi = LV->getVarInfo(Reg);
             vi.removeKill(MI);
           }
           ChangedToImpDef = true;
@@ -210,8 +207,8 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       // uses.
       bool Skip = false;
       SmallVector<MachineInstr*, 4> DeadImpDefs;
-      for (MachineRegisterInfo::def_iterator DI = mri_->def_begin(Reg),
-             DE = mri_->def_end(); DI != DE; ++DI) {
+      for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(Reg),
+             DE = MRI->def_end(); DI != DE; ++DI) {
         MachineInstr *DeadImpDef = &*DI;
         if (!DeadImpDef->isImplicitDef()) {
           Skip = true;
@@ -229,8 +226,8 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       Changed = true;
 
       // Process each use instruction once.
-      for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(Reg),
-             UE = mri_->use_end(); UI != UE; ++UI) {
+      for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
+             UE = MRI->use_end(); UI != UE; ++UI) {
         if (UI.getOperand().isUndef())
           continue;
         MachineInstr *RMI = &*UI;
@@ -242,8 +239,8 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         MachineInstr *RMI = RUses[i];
 
         // Turn a copy use into an implicit_def.
-        if (isUndefCopy(RMI, Reg, tii_, ImpDefRegs)) {
-          RMI->setDesc(tii_->get(TargetOpcode::IMPLICIT_DEF));
+        if (isUndefCopy(RMI, Reg, ImpDefRegs)) {
+          RMI->setDesc(TII->get(TargetOpcode::IMPLICIT_DEF));
 
           bool isKill = false;
           SmallVector<unsigned, 4> Ops;
@@ -263,15 +260,15 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
 
           // Update LiveVariables varinfo if the instruction is a kill.
           if (isKill) {
-            LiveVariables::VarInfo& vi = lv_->getVarInfo(Reg);
+            LiveVariables::VarInfo& vi = LV->getVarInfo(Reg);
             vi.removeKill(RMI);
           }
           continue;
         }
 
         // Replace Reg with a new vreg that's marked implicit.
-        const TargetRegisterClass* RC = mri_->getRegClass(Reg);
-        unsigned NewVReg = mri_->createVirtualRegister(RC);
+        const TargetRegisterClass* RC = MRI->getRegClass(Reg);
+        unsigned NewVReg = MRI->createVirtualRegister(RC);
         bool isKill = true;
         for (unsigned j = 0, ee = RMI->getNumOperands(); j != ee; ++j) {
           MachineOperand &RRMO = RMI->getOperand(j);
