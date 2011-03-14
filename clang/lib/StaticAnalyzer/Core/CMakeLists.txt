@@ -8,19 +8,19 @@ add_clang_library(clangStaticAnalyzerCore
   BasicConstraintManager.cpp
   BasicStore.cpp
   BasicValueFactory.cpp
+  BlockCounter.cpp
   BugReporter.cpp
   BugReporterVisitors.cpp
   CFRefCount.cpp
+  CXXExprEngine.cpp
   CheckerContext.cpp
   CheckerHelpers.cpp
   CheckerManager.cpp
+  CoreEngine.cpp
   Environment.cpp
   ExplodedGraph.cpp
   ExprEngine.cpp
   FlatStore.cpp
-  BlockCounter.cpp
-  CXXExprEngine.cpp
-  CoreEngine.cpp
   GRState.cpp
   HTMLDiagnostics.cpp
   MemRegion.cpp
