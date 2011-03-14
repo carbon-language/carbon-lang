@@ -219,6 +219,18 @@ public:
   virtual std::pair<ranges_iterator, ranges_iterator> getRanges() const {
     return std::make_pair(Ranges.begin(), Ranges.end());
   }
+  
+  virtual void Profile(llvm::FoldingSetNodeID& hash) const {
+    BugReport::Profile(hash);
+    for (llvm::SmallVectorImpl<SourceRange>::const_iterator I =
+          Ranges.begin(), E = Ranges.end(); I != E; ++I) {
+      const SourceRange range = *I;
+      if (!range.isValid())
+        continue;
+      hash.AddInteger(range.getBegin().getRawEncoding());
+      hash.AddInteger(range.getEnd().getRawEncoding());
+    }
+  }
 };
 
 class EnhancedBugReport : public RangedBugReport {
