@@ -4978,15 +4978,6 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   const SCEV *Start = getSCEVAtScope(AddRec->getStart(), L->getParentLoop());
   const SCEV *Step = getSCEVAtScope(AddRec->getOperand(1), L->getParentLoop());
 
-  // If the AddRec is NUW, then (in an unsigned sense) it cannot be counting up
-  // to wrap to 0, it must be counting down to equal 0.  Also, while counting
-  // down, it cannot "miss" 0 (which would cause it to wrap), regardless of what
-  // the stride is.  As such, NUW addrec's will always become zero in
-  // "start / -stride" steps, and we know that the division is exact.
-  if (AddRec->getNoWrapFlags(SCEV::FlagNUW))
-    // FIXME: We really want an "isexact" bit for udiv.
-    return getUDivExpr(Start, getNegativeSCEV(Step));
-
   // For now we handle only constant steps.
   //
   // TODO: Handle a nonconstant Step given AddRec<NUW>. If the
@@ -5002,15 +4993,28 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // For negative steps (counting down to zero):
   //   N = Start/-Step
   // First compute the unsigned distance from zero in the direction of Step.
-  const SCEV *Distance = StepC->getValue()->getValue().isNonNegative() ?
-    getNegativeSCEV(Start) : Start;
+  bool CountDown = StepC->getValue()->getValue().isNegative();
+  const SCEV *Distance = CountDown ? Start : getNegativeSCEV(Start);
 
   // Handle unitary steps, which cannot wraparound.
-  if (StepC->getValue()->equalsInt(1))      // 1*N = -Start (mod 2^BW), so:
-    return Distance;                        //   N = -Start (as unsigned)
+  // 1*N = -Start; -1*N = Start (mod 2^BW), so:
+  //   N = Distance (as unsigned)
+  if (StepC->getValue()->equalsInt(1) || StepC->getValue()->isAllOnesValue())
+    return Distance;
 
-  if (StepC->getValue()->isAllOnesValue())  // -1*N = -Start (mod 2^BW), so:
-    return Distance;                        //    N = Start (as unsigned)
+  // If the recurrence is known not to wraparound, unsigned divide computes the
+  // back edge count. We know that the value will either become zero (and thus
+  // the loop terminates), that the loop will terminate through some other exit
+  // condition first, or that the loop has undefined behavior.  This means
+  // we can't "miss" the exit value, even with nonunit stride.
+  //
+  // FIXME: Prove that loops always exhibits *acceptable* undefined
+  // behavior. Loops must exhibit defined behavior until a wrapped value is
+  // actually used. So the trip count computed by udiv could be smaller than the
+  // number of well-defined iterations.
+  if (AddRec->getNoWrapFlags(SCEV::FlagNW))
+    // FIXME: We really want an "isexact" bit for udiv.
+    return getUDivExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
 
   // Then, try to solve the above equation provided that Start is constant.
   if (const SCEVConstant *StartC = dyn_cast<SCEVConstant>(Start))
