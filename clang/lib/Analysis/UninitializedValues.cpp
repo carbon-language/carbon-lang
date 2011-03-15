@@ -74,7 +74,22 @@ llvm::Optional<unsigned> DeclToIndex::getValueIndex(const VarDecl *d) {
 // CFGBlockValues: dataflow values for CFG blocks.
 //====------------------------------------------------------------------------//
 
-typedef llvm::BitVector ValueVector;
+static const bool Initialized = false;
+static const bool Uninitialized = true;
+
+class ValueVector {
+  llvm::BitVector vec;
+public:
+  ValueVector() {}
+  ValueVector(unsigned size) : vec(size) {}
+  typedef llvm::BitVector::reference reference;
+  void resize(unsigned n) { vec.resize(n); }
+  void merge(const ValueVector &rhs) { vec |= rhs.vec; }
+  bool operator!=(const ValueVector &rhs) const { return vec != rhs.vec; }
+  reference operator[](unsigned idx) { return vec[idx]; }
+  void reset() { vec.reset(); }
+};
+
 typedef std::pair<ValueVector *, ValueVector *> BVPair;
 
 namespace {
@@ -189,7 +204,7 @@ void CFGBlockValues::mergeIntoScratch(ValueVector const &source,
   if (isFirst)
     scratch = source;
   else
-    scratch |= source;  
+    scratch.merge(source);
 }
 #if 0
 static void printVector(const CFGBlock *block, ValueVector &bv,
@@ -285,9 +300,6 @@ const CFGBlock *DataflowWorklist::dequeue() {
 //------------------------------------------------------------------------====//
 // Transfer function for uninitialized values analysis.
 //====------------------------------------------------------------------------//
-
-static const bool Initialized = false;
-static const bool Uninitialized = true;
 
 namespace {
 class FindVarResult {
