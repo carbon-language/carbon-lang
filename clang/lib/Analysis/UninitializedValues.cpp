@@ -74,20 +74,37 @@ llvm::Optional<unsigned> DeclToIndex::getValueIndex(const VarDecl *d) {
 // CFGBlockValues: dataflow values for CFG blocks.
 //====------------------------------------------------------------------------//
 
-static const bool Initialized = false;
-static const bool Uninitialized = true;
+enum Value { Initialized = 0, Uninitialized = 1 };
 
 class ValueVector {
   llvm::BitVector vec;
 public:
   ValueVector() {}
   ValueVector(unsigned size) : vec(size) {}
-  typedef llvm::BitVector::reference reference;
   void resize(unsigned n) { vec.resize(n); }
   void merge(const ValueVector &rhs) { vec |= rhs.vec; }
   bool operator!=(const ValueVector &rhs) const { return vec != rhs.vec; }
-  reference operator[](unsigned idx) { return vec[idx]; }
   void reset() { vec.reset(); }
+  
+  class reference {
+    ValueVector &vv;
+    const unsigned idx;
+
+    reference();  // Undefined    
+  public:
+    reference(ValueVector &vv, unsigned idx) : vv(vv), idx(idx) {}    
+    ~reference() {}
+    
+    reference &operator=(Value v) {
+      vv.vec[idx] = (v == Initialized ? false : true);
+      return *this;
+    }
+    bool operator==(Value v) {
+      return vv.vec[idx] == (v == Initialized ? false : true);      
+    }
+  };
+    
+  reference operator[](unsigned idx) { return reference(*this, idx); }
 };
 
 typedef std::pair<ValueVector *, ValueVector *> BVPair;
@@ -260,7 +277,7 @@ ValueVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
 namespace {
 class DataflowWorklist {
   llvm::SmallVector<const CFGBlock *, 20> worklist;
-  ValueVector enqueuedBlocks;
+  llvm::BitVector enqueuedBlocks;
 public:
   DataflowWorklist(const CFG &cfg) : enqueuedBlocks(cfg.getNumBlockIDs()) {}
   
@@ -450,11 +467,11 @@ void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
       Visit(bo->getRHS());
       Visit(bo->getLHS());
 
-      ValueVector::reference bit = vals[vd];
-      if (bit == Uninitialized) {
+      ValueVector::reference val = vals[vd];
+      if (val == Uninitialized) {
         if (bo->getOpcode() != BO_Assign)
           reportUninit(res.getDeclRefExpr(), vd);
-        bit = Initialized;
+        val = Initialized;
       }
       return;
     }
@@ -602,7 +619,7 @@ void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
   if (vals.hasNoDeclarations())
     return;
   DataflowWorklist worklist(cfg);
-  ValueVector previouslyVisited(cfg.getNumBlockIDs());
+  llvm::BitVector previouslyVisited(cfg.getNumBlockIDs());
   
   worklist.enqueueSuccessors(&cfg.getEntry());
 
