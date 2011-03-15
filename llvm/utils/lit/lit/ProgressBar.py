@@ -105,6 +105,7 @@ class TerminalController:
         # Look up numeric capabilities.
         self.COLS = curses.tigetnum('cols')
         self.LINES = curses.tigetnum('lines')
+        self.XN = curses.tigetflag('xenl')
         
         # Look up string capabilities.
         for capability in self._STRING_CAPABILITIES:
@@ -205,7 +206,7 @@ class ProgressBar:
     The progress bar is colored, if the terminal supports color
     output; and adjusts to the width of the terminal.
     """
-    BAR = '%s${GREEN}[${BOLD}%s%s${NORMAL}${GREEN}]${NORMAL}%s\n'
+    BAR = '%s${GREEN}[${BOLD}%s%s${NORMAL}${GREEN}]${NORMAL}%s'
     HEADER = '${BOLD}${CYAN}%s${NORMAL}\n\n'
         
     def __init__(self, term, header, useETA=True):
@@ -213,7 +214,15 @@ class ProgressBar:
         if not (self.term.CLEAR_EOL and self.term.UP and self.term.BOL):
             raise ValueError("Terminal isn't capable enough -- you "
                              "should use a simpler progress dispaly.")
-        self.width = self.term.COLS or 75
+        self.BOL = self.term.BOL # BoL from col#79
+        self.XNL = "\n" # Newline from col#79
+        if self.term.COLS:
+            self.width = self.term.COLS
+            if not self.term.XN:
+                self.BOL = self.term.UP + self.term.BOL
+                self.XNL = "" # Cursor must be fed to the next line
+        else:
+            self.width = 75
         self.bar = term.render(self.BAR)
         self.header = self.term.render(self.HEADER % header.center(self.width))
         self.cleared = 1 #: true if we haven't drawn the bar yet.
@@ -244,15 +253,19 @@ class ProgressBar:
         else:
             message = '... ' + message[-(self.width-4):]
         sys.stdout.write(
-            self.term.BOL + self.term.UP + self.term.CLEAR_EOL +
+            self.BOL + self.term.UP + self.term.CLEAR_EOL +
             (self.bar % (prefix, '='*n, '-'*(barWidth-n), suffix)) +
+            self.XNL +
             self.term.CLEAR_EOL + message)
+        if not self.term.XN:
+            sys.stdout.flush()
 
     def clear(self):
         if not self.cleared:
-            sys.stdout.write(self.term.BOL + self.term.CLEAR_EOL +
+            sys.stdout.write(self.BOL + self.term.CLEAR_EOL +
                              self.term.UP + self.term.CLEAR_EOL +
                              self.term.UP + self.term.CLEAR_EOL)
+            sys.stdout.flush()
             self.cleared = 1
 
 def test():
