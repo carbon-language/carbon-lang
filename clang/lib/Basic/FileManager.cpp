@@ -466,21 +466,23 @@ llvm::MemoryBuffer *FileManager::
 getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
   llvm::OwningPtr<llvm::MemoryBuffer> Result;
   llvm::error_code ec;
+
+  const char *Filename = Entry->getName();
+  // If the file is already open, use the open file descriptor.
+  if (Entry->FD != -1) {
+    ec = llvm::MemoryBuffer::getOpenFile(Entry->FD, Filename, Result,
+                                         Entry->getSize());
+    if (ErrorStr)
+      *ErrorStr = ec.message();
+
+    close(Entry->FD);
+    Entry->FD = -1;
+    return Result.take();
+  }
+
+  // Otherwise, open the file.
+
   if (FileSystemOpts.WorkingDir.empty()) {
-    const char *Filename = Entry->getName();
-    // If the file is already open, use the open file descriptor.
-    if (Entry->FD != -1) {
-      ec = llvm::MemoryBuffer::getOpenFile(Entry->FD, Filename, Result,
-                                           Entry->getSize());
-      if (ErrorStr)
-        *ErrorStr = ec.message();
-
-      close(Entry->FD);
-      Entry->FD = -1;
-      return Result.take();
-    }
-
-    // Otherwise, open the file.
     ec = llvm::MemoryBuffer::getFile(Filename, Result, Entry->getSize());
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
