@@ -319,7 +319,7 @@ class VSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[HasAVX]>;
 class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
-      : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedSingle>,
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedSingle>, TB,
         Requires<[HasAVX]>;
 
 // SSE2 Instruction Templates:
@@ -353,7 +353,7 @@ class VSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
         Requires<[HasAVX]>;
 class VPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
-      : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedDouble>,
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedDouble>, TB,
         OpSize, Requires<[HasAVX]>;
 
 // SSE3 Instruction Templates:
