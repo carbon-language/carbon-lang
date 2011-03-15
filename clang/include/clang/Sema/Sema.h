@@ -758,7 +758,8 @@ public:
       const FunctionProtoType *New, SourceLocation NewLoc,
       bool *MissingExceptionSpecification = 0,
       bool *MissingEmptyExceptionSpecification = 0,
-      bool AllowNoexceptAllMatchWithNoSpec = false);
+      bool AllowNoexceptAllMatchWithNoSpec = false,
+      bool IsOperatorNew = false);
   bool CheckExceptionSpecSubset(
       const PartialDiagnostic &DiagID, const PartialDiagnostic & NoteID,
       const FunctionProtoType *Superset, SourceLocation SuperLoc,

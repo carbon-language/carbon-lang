@@ -96,6 +96,8 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
 }
 
 bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
+  OverloadedOperatorKind OO = New->getDeclName().getCXXOverloadedOperator();
+  bool IsOperatorNew = OO == OO_New || OO == OO_Array_New;
   bool MissingExceptionSpecification = false;
   bool MissingEmptyExceptionSpecification = false;
   if (!CheckEquivalentExceptionSpec(PDiag(diag::err_mismatched_exception_spec),
@@ -106,7 +108,8 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
                                     New->getLocation(),
                                     &MissingExceptionSpecification,
                                     &MissingEmptyExceptionSpecification,
-                                    /*AllowNoexceptAllMatchWithNoSpec=*/true))
+                                    /*AllowNoexceptAllMatchWithNoSpec=*/true,
+                                    IsOperatorNew))
     return false;
 
   // The failure was something other than an empty exception
@@ -272,7 +275,8 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
                                         SourceLocation NewLoc,
                                         bool *MissingExceptionSpecification,
                                         bool*MissingEmptyExceptionSpecification,
-                                        bool AllowNoexceptAllMatchWithNoSpec) {
+                                        bool AllowNoexceptAllMatchWithNoSpec,
+                                        bool IsOperatorNew) {
   // Just completely ignore this under -fno-exceptions.
   if (!getLangOptions().CXXExceptions)
     return false;
@@ -373,6 +377,38 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
                         NewEST == EST_DynamicNone;
   if (OldNonThrowing && NewNonThrowing)
     return false;
+
+  // As a special compatibility feature, under C++0x we accept no spec and
+  // throw(std::bad_alloc) as equivalent for operator new and operator new[].
+  // This is because the implicit declaration changed, but old code would break.
+  if (getLangOptions().CPlusPlus0x && IsOperatorNew) {
+    const FunctionProtoType *WithExceptions = 0;
+    if (OldEST == EST_None && NewEST == EST_Dynamic)
+      WithExceptions = New;
+    else if (OldEST == EST_Dynamic && NewEST == EST_None)
+      WithExceptions = Old;
+    if (WithExceptions && WithExceptions->getNumExceptions() == 1) {
+      // One has no spec, the other throw(something). If that something is
+      // std::bad_alloc, all conditions are met.
+      QualType Exception = *WithExceptions->exception_begin();
+      if (CXXRecordDecl *ExRecord = Exception->getAsCXXRecordDecl()) {
+        IdentifierInfo* Name = ExRecord->getIdentifier();
+        if (Name && Name->getName() == "bad_alloc") {
+          // It's called bad_alloc, but is it in std?
+          DeclContext* DC = ExRecord->getDeclContext();
+          while (DC && !isa<NamespaceDecl>(DC))
+            DC = DC->getParent();
+          if (DC) {
+            NamespaceDecl* NS = cast<NamespaceDecl>(DC);
+            IdentifierInfo* NSName = NS->getIdentifier();
+            if (NSName && NSName->getName() == "std" &&
+                isa<TranslationUnitDecl>(NS->getParent()))
+              return false;
+          }
+        }
+      }
+    }
+  }
 
   // At this point, the only remaining valid case is two matching dynamic
   // specifications. We return here unless both specifications are dynamic.
