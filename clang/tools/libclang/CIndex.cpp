@@ -3709,7 +3709,9 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   if (clang_isStatement(C.kind)) {
     Stmt *S = getCursorStmt(C);
     if (GotoStmt *Goto = dyn_cast_or_null<GotoStmt>(S))
-      return MakeCXCursor(Goto->getLabel()->getStmt(), getCursorDecl(C), tu);
+      if (LabelDecl *label = Goto->getLabel())
+        if (LabelStmt *labelS = label->getStmt())
+        return MakeCXCursor(labelS, getCursorDecl(C), tu);
 
     return clang_getNullCursor();
   }
