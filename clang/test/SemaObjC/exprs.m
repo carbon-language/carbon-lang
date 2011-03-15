@@ -9,12 +9,12 @@ Class test1(Class X) {
 // rdar://6079877
 void test2() {
   id str = @"foo" 
-          "bar\0"    // expected-warning {{literal contains NUL character}}
+          "bar\0"    // no-warning
           @"baz"  " blarg";
   id str2 = @"foo" 
             "bar"
            @"baz"
-           " b\0larg";  // expected-warning {{literal contains NUL character}}
+           " b\0larg";  // no-warning
 
   
   if (@encode(int) == "foo") { }  // expected-warning {{result of comparison against @encode is unspecified}}

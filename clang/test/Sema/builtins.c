@@ -27,7 +27,7 @@ int test6(float a, long double b) {
 void test7() {
   const void *X;
   X = CFSTR("\242"); // expected-warning {{input conversion stopped}}
-  X = CFSTR("\0"); // expected-warning {{ CFString literal contains NUL character }}
+  X = CFSTR("\0"); // no-warning
   X = CFSTR(242); // expected-error {{ CFString literal is not a string constant }} expected-warning {{incompatible integer to pointer conversion}}
   X = CFSTR("foo", "bar"); // expected-error {{too many arguments to function call}}
 }

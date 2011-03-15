@@ -552,12 +552,6 @@ bool Sema::CheckObjCString(Expr *Arg) {
     return true;
   }
 
-  size_t NulPos = Literal->getString().find('\0');
-  if (NulPos != llvm::StringRef::npos) {
-    Diag(getLocationOfStringLiteralByte(Literal, NulPos),
-         diag::warn_cfstring_literal_contains_nul_character)
-      << Arg->getSourceRange();
-  }
   if (Literal->containsNonAsciiOrNull()) {
     llvm::StringRef String = Literal->getString();
     unsigned NumBytes = String.size();
