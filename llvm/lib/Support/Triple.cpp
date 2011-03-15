@@ -84,6 +84,7 @@ const char *Triple::getVendorTypeName(VendorType Kind) {
 
   case Apple: return "apple";
   case PC: return "pc";
+  case SCEI: return "scei";
   }
 
   return "<invalid>";
@@ -296,6 +297,8 @@ Triple::VendorType Triple::ParseVendor(StringRef VendorName) {
     return Apple;
   else if (VendorName == "pc")
     return PC;
+  else if (VendorName == "scei")
+    return SCEI;
   else
     return UnknownVendor;
 }

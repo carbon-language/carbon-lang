@@ -72,7 +72,8 @@ public:
     UnknownVendor,
 
     Apple,
-    PC
+    PC,
+    SCEI
   };
   enum OSType {
     UnknownOS,
