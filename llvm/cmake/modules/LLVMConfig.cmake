@@ -23,7 +23,8 @@ function(is_llvm_target_library library return_var)
   string(TOUPPER "${library}" capitalized_lib)
   string(TOUPPER "${LLVM_ALL_TARGETS}" targets)
   foreach(t ${targets})
-    if( capitalized_lib STREQUAL "LLVM${t}" OR
+    if( capitalized_lib STREQUAL t OR
+	capitalized_lib STREQUAL "LLVM${t}" OR
 	capitalized_lib STREQUAL "LLVM${t}CODEGEN" OR
 	capitalized_lib STREQUAL "LLVM${t}ASMPARSER" OR
 	capitalized_lib STREQUAL "LLVM${t}ASMPRINTER" OR
