@@ -34,16 +34,30 @@ extern "C" {
 /*
  * Accessor functions for various fields of an Intel instruction
  */
-#define modFromModRM(modRM)  ((modRM & 0xc0) >> 6)
-#define regFromModRM(modRM)  ((modRM & 0x38) >> 3)
-#define rmFromModRM(modRM)   (modRM & 0x7)
-#define scaleFromSIB(sib)    ((sib & 0xc0) >> 6)
-#define indexFromSIB(sib)    ((sib & 0x38) >> 3)
-#define baseFromSIB(sib)     (sib & 0x7)
-#define wFromREX(rex)        ((rex & 0x8) >> 3)
-#define rFromREX(rex)        ((rex & 0x4) >> 2)
-#define xFromREX(rex)        ((rex & 0x2) >> 1)
-#define bFromREX(rex)        (rex & 0x1)
+#define modFromModRM(modRM)  (((modRM) & 0xc0) >> 6)
+#define regFromModRM(modRM)  (((modRM) & 0x38) >> 3)
+#define rmFromModRM(modRM)   ((modRM) & 0x7)
+#define scaleFromSIB(sib)    (((sib) & 0xc0) >> 6)
+#define indexFromSIB(sib)    (((sib) & 0x38) >> 3)
+#define baseFromSIB(sib)     ((sib) & 0x7)
+#define wFromREX(rex)        (((rex) & 0x8) >> 3)
+#define rFromREX(rex)        (((rex) & 0x4) >> 2)
+#define xFromREX(rex)        (((rex) & 0x2) >> 1)
+#define bFromREX(rex)        ((rex) & 0x1)
+    
+#define rFromVEX2of3(vex)       (((~(vex)) & 0x80) >> 7)
+#define xFromVEX2of3(vex)       (((~(vex)) & 0x40) >> 6)
+#define bFromVEX2of3(vex)       (((~(vex)) & 0x20) >> 5)
+#define mmmmmFromVEX2of3(vex)   ((vex) & 0x1f)
+#define wFromVEX3of3(vex)       (((vex) & 0x80) >> 7)
+#define vvvvFromVEX3of3(vex)    (((~(vex)) & 0x78) >> 3)
+#define lFromVEX3of3(vex)       (((vex) & 0x4) >> 2)
+#define ppFromVEX3of3(vex)      ((vex) & 0x3)
+
+#define rFromVEX2of2(vex)       (((~(vex)) & 0x80) >> 7)
+#define vvvvFromVEX2of2(vex)    (((~(vex)) & 0x78) >> 3)
+#define lFromVEX2of2(vex)       (((vex) & 0x4) >> 2)
+#define ppFromVEX2of2(vex)      ((vex) & 0x3)
 
 /*
  * These enums represent Intel registers for use by the decoder.
@@ -206,7 +220,25 @@ extern "C" {
   ENTRY(XMM13)    \
   ENTRY(XMM14)    \
   ENTRY(XMM15)
-  
+
+#define REGS_YMM  \
+  ENTRY(YMM0)     \
+  ENTRY(YMM1)     \
+  ENTRY(YMM2)     \
+  ENTRY(YMM3)     \
+  ENTRY(YMM4)     \
+  ENTRY(YMM5)     \
+  ENTRY(YMM6)     \
+  ENTRY(YMM7)     \
+  ENTRY(YMM8)     \
+  ENTRY(YMM9)     \
+  ENTRY(YMM10)    \
+  ENTRY(YMM11)    \
+  ENTRY(YMM12)    \
+  ENTRY(YMM13)    \
+  ENTRY(YMM14)    \
+  ENTRY(YMM15)
+    
 #define REGS_SEGMENT \
   ENTRY(ES)          \
   ENTRY(CS)          \
@@ -252,6 +284,7 @@ extern "C" {
   REGS_64BIT          \
   REGS_MMX            \
   REGS_XMM            \
+  REGS_YMM            \
   REGS_SEGMENT        \
   REGS_DEBUG          \
   REGS_CONTROL        \
@@ -332,6 +365,27 @@ typedef enum {
   SEG_OVERRIDE_GS,
   SEG_OVERRIDE_max
 } SegmentOverride;
+    
+/*
+ * VEXLeadingOpcodeByte - Possible values for the VEX.m-mmmm field
+ */
+
+typedef enum {
+  VEX_LOB_0F = 0x1,
+  VEX_LOB_0F38 = 0x2,
+  VEX_LOB_0F3A = 0x3
+} VEXLeadingOpcodeByte;
+
+/*
+ * VEXPrefixCode - Possible values for the VEX.pp field
+ */
+
+typedef enum {
+  VEX_PREFIX_NONE = 0x0,
+  VEX_PREFIX_66 = 0x1,
+  VEX_PREFIX_F3 = 0x2,
+  VEX_PREFIX_F2 = 0x3
+} VEXPrefixCode;
 
 typedef uint8_t BOOL;
 
@@ -389,10 +443,12 @@ struct InternalInstruction {
   uint8_t prefixPresent[0x100];
   /* contains the location (for use with the reader) of the prefix byte */
   uint64_t prefixLocations[0x100];
+  /* The value of the VEX prefix, if present */
+  uint8_t vexPrefix[3];
+  /* The length of the VEX prefix (0 if not present) */
+  uint8_t vexSize;
   /* The value of the REX prefix, if present */
   uint8_t rexPrefix;
-  /* The location of the REX prefix */
-  uint64_t rexLocation;
   /* The location where a mandatory prefix would have to be (i.e., right before
      the opcode, or right before the REX prefix if one is present) */
   uint64_t necessaryPrefixLocation;
@@ -428,6 +484,10 @@ struct InternalInstruction {
   /* state for additional bytes, consumed during operand decode.  Pattern:
      consumed___ indicates that the byte was already consumed and does not
      need to be consumed again */
+
+  /* The VEX.vvvv field, which contains a thrid register operand for some AVX
+     instructions */
+  Reg                           vvvv;
   
   /* The ModR/M byte, which contains most register operands and some portion of
      all memory operands */

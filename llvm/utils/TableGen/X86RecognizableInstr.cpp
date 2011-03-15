@@ -214,7 +214,9 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   
   HasOpSizePrefix  = Rec->getValueAsBit("hasOpSizePrefix");
   HasREX_WPrefix   = Rec->getValueAsBit("hasREX_WPrefix");
+  HasVEXPrefix     = Rec->getValueAsBit("hasVEXPrefix");
   HasVEX_4VPrefix  = Rec->getValueAsBit("hasVEX_4VPrefix");
+  HasVEX_WPrefix   = Rec->getValueAsBit("hasVEX_WPrefix");
   HasLockPrefix    = Rec->getValueAsBit("hasLockPrefix");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
   
@@ -224,7 +226,8 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   Operands = &insn.Operands.OperandList;
   
   IsSSE            = HasOpSizePrefix && (Name.find("16") == Name.npos);
-  HasFROperands    = false;
+  HasFROperands    = hasFROperands();
+  HasVEX_LPrefix   = has256BitOperands() || Rec->getValueAsBit("hasVEX_L");
   
   ShouldBeEmitted  = true;
 }
@@ -248,7 +251,32 @@ void RecognizableInstr::processInstr(DisassemblerTables &tables,
 InstructionContext RecognizableInstr::insnContext() const {
   InstructionContext insnContext;
 
-  if (Name.find("64") != Name.npos || HasREX_WPrefix) {
+  if (HasVEX_4VPrefix || HasVEXPrefix) {
+    if (HasOpSizePrefix && HasVEX_LPrefix)
+      insnContext = IC_VEX_L_OPSIZE;
+    else if (HasOpSizePrefix && HasVEX_WPrefix)
+      insnContext = IC_VEX_W_OPSIZE;
+    else if (HasOpSizePrefix)
+      insnContext = IC_VEX_OPSIZE;
+    else if (HasVEX_LPrefix && Prefix == X86Local::XS)
+      insnContext = IC_VEX_L_XS;
+    else if (HasVEX_LPrefix && Prefix == X86Local::XD)
+      insnContext = IC_VEX_L_XD;
+    else if (HasVEX_WPrefix && Prefix == X86Local::XS)
+      insnContext = IC_VEX_W_XS;
+    else if (HasVEX_WPrefix && Prefix == X86Local::XD)
+      insnContext = IC_VEX_W_XD;
+    else if (HasVEX_WPrefix)
+      insnContext = IC_VEX_W;
+    else if (HasVEX_LPrefix)
+      insnContext = IC_VEX_L;
+    else if (Prefix == X86Local::XD)
+      insnContext = IC_VEX_XD;
+    else if (Prefix == X86Local::XS)
+      insnContext = IC_VEX_XS;
+    else
+      insnContext = IC_VEX;
+  } else if (Name.find("64") != Name.npos || HasREX_WPrefix) {
     if (HasREX_WPrefix && HasOpSizePrefix)
       insnContext = IC_64BIT_REXW_OPSIZE;
     else if (HasOpSizePrefix)
@@ -280,6 +308,10 @@ InstructionContext RecognizableInstr::insnContext() const {
 }
   
 RecognizableInstr::filter_ret RecognizableInstr::filter() const {
+  ///////////////////
+  // FILTER_STRONG
+  //
+    
   // Filter out intrinsics
   
   if (!Rec->isSubClassOf("X86Inst"))
@@ -291,26 +323,71 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   
   if (Form == X86Local::MRMInitReg)
     return FILTER_STRONG;
+    
+    
+  // TEMPORARY pending bug fixes
 
-  
+  if (Name.find("VMOVDQU") != Name.npos ||
+      Name.find("VMOVDQA") != Name.npos ||
+      Name.find("VROUND") != Name.npos)
+    return FILTER_STRONG;
+    
+  // Filter out artificial instructions
+    
+  if (Name.find("TAILJMP") != Name.npos    ||
+      Name.find("_Int") != Name.npos       ||
+      Name.find("_int") != Name.npos       ||
+      Name.find("Int_") != Name.npos       ||
+      Name.find("_NOREX") != Name.npos     ||
+      Name.find("_TC") != Name.npos        ||
+      Name.find("EH_RETURN") != Name.npos  ||
+      Name.find("V_SET") != Name.npos      ||
+      Name.find("LOCK_") != Name.npos      ||
+      Name.find("WIN") != Name.npos        ||
+      Name.find("_AVX") != Name.npos       ||
+      Name.find("2SDL") != Name.npos)
+    return FILTER_STRONG;
+
+  // Filter out instructions with segment override prefixes.
+  // They're too messy to handle now and we'll special case them if needed.
+    
+  if (SegOvr)
+    return FILTER_STRONG;
+    
+  // Filter out instructions that can't be printed.
+    
+  if (AsmString.size() == 0)
+    return FILTER_STRONG;
+   
+  // Filter out instructions with subreg operands.
+   
+  if (AsmString.find("subreg") != AsmString.npos)
+    return FILTER_STRONG;
+
+  /////////////////
+  // FILTER_WEAK
+  //
+
+    
   // Filter out instructions with a LOCK prefix;
   //   prefer forms that do not have the prefix
   if (HasLockPrefix)
     return FILTER_WEAK;
-  
-  // Filter out artificial instructions
 
-  if (Name.find("TAILJMP") != Name.npos    ||
-     Name.find("_Int") != Name.npos       ||
-     Name.find("_int") != Name.npos       ||
-     Name.find("Int_") != Name.npos       ||
-     Name.find("_NOREX") != Name.npos     ||
-     Name.find("_TC") != Name.npos     ||
-     Name.find("EH_RETURN") != Name.npos  ||
-     Name.find("V_SET") != Name.npos      ||
-     Name.find("LOCK_") != Name.npos      ||
-     Name.find("WIN") != Name.npos)
-    return FILTER_STRONG;
+  // Filter out alternate forms of AVX instructions
+  if (Name.find("_alt") != Name.npos ||
+      Name.find("XrYr") != Name.npos ||
+      Name.find("r64r") != Name.npos ||
+      Name.find("_64mr") != Name.npos ||
+      Name.find("Xrr") != Name.npos ||
+      Name.find("rr64") != Name.npos)
+    return FILTER_WEAK;
+    
+  if (Name == "VMASKMOVDQU64"  ||
+      Name == "VEXTRACTPSrr64" ||
+      Name == "VMOVQd64rr"     ||
+      Name == "VMOVQs64rr")
+    return FILTER_WEAK;
 
   // Special cases.
 
@@ -339,6 +416,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
       Name == "PUSH32i16"         ||
       Name == "PUSH64i16"         ||
       Name == "MOVPQI2QImr"       ||
+      Name == "VMOVPQI2QImr"      ||
       Name == "MOVSDmr"           ||
       Name == "MOVSDrm"           ||
       Name == "MOVSSmr"           ||
@@ -349,28 +427,39 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
       Name == "CRC32r16")
     return FILTER_WEAK;
 
-  // Filter out instructions with segment override prefixes.
-  // They're too messy to handle now and we'll special case them if needed.
-
-  if (SegOvr)
-    return FILTER_STRONG;
-  
-  // Filter out instructions that can't be printed.
-
-  if (AsmString.size() == 0)
-    return FILTER_STRONG;
-  
-  // Filter out instructions with subreg operands.
-  
-  if (AsmString.find("subreg") != AsmString.npos)
-    return FILTER_STRONG;
-
   if (HasFROperands && Name.find("MOV") != Name.npos &&
      ((Name.find("2") != Name.npos && Name.find("32") == Name.npos) || 
       (Name.find("to") != Name.npos)))
     return FILTER_WEAK;
 
   return FILTER_NORMAL;
+}
+
+bool RecognizableInstr::hasFROperands() const {
+  const std::vector<CGIOperandList::OperandInfo> &OperandList = *Operands;
+  unsigned numOperands = OperandList.size();
+
+  for (unsigned operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
+    const std::string &recName = OperandList[operandIndex].Rec->getName();
+      
+    if (recName.find("FR") != recName.npos)
+      return true;
+  }
+  return false;
+}
+
+bool RecognizableInstr::has256BitOperands() const {
+  const std::vector<CGIOperandList::OperandInfo> &OperandList = *Operands;
+  unsigned numOperands = OperandList.size();
+    
+  for (unsigned operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
+    const std::string &recName = OperandList[operandIndex].Rec->getName();
+       
+    if (!recName.compare("VR256") || !recName.compare("f256mem")) {
+      return true;
+    }
+  }
+  return false;
 }
   
 void RecognizableInstr::handleOperand(
@@ -395,13 +484,13 @@ void RecognizableInstr::handleOperand(
   }
   
   const std::string &typeName = (*Operands)[operandIndex].Rec->getName();
-  
+
   Spec->operands[operandIndex].encoding = encodingFromString(typeName,
                                                               HasOpSizePrefix);
   Spec->operands[operandIndex].type = typeFromString(typeName, 
-                                                      IsSSE,
-                                                      HasREX_WPrefix,
-                                                      HasOpSizePrefix);
+                                                     IsSSE,
+                                                     HasREX_WPrefix,
+                                                     HasOpSizePrefix);
   
   ++operandIndex;
   ++physicalOperandIndex;
@@ -530,31 +619,45 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   case X86Local::MRMSrcReg:
     // Operand 1 is a register operand in the Reg/Opcode field.
     // Operand 2 is a register operand in the R/M field.
+    // - In AVX, there is a register operand in the VEX.vvvv field here -
     // Operand 3 (optional) is an immediate.
-    assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 3 &&
-           "Unexpected number of operands for MRMSrcRegFrm");
-    HANDLE_OPERAND(roRegister)
-    HANDLE_OPERAND(rmRegister)
 
+    if (HasVEX_4VPrefix)
+      assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 4 &&
+             "Unexpected number of operands for MRMSrcRegFrm with VEX_4V"); 
+    else
+      assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 3 &&
+             "Unexpected number of operands for MRMSrcRegFrm");
+  
+    HANDLE_OPERAND(roRegister)
+       
     if (HasVEX_4VPrefix)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
-      HANDLE_OPTIONAL(rmRegister)
-    else
-      HANDLE_OPTIONAL(immediate)
+      HANDLE_OPERAND(vvvvRegister)
+          
+    HANDLE_OPERAND(rmRegister)
+    HANDLE_OPTIONAL(immediate)
     break;
   case X86Local::MRMSrcMem:
     // Operand 1 is a register operand in the Reg/Opcode field.
     // Operand 2 is a memory operand (possibly SIB-extended)
+    // - In AVX, there is a register operand in the VEX.vvvv field here -
     // Operand 3 (optional) is an immediate.
-    assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 3 &&
-           "Unexpected number of operands for MRMSrcMemFrm");
+    
+    if (HasVEX_4VPrefix)
+      assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 4 &&
+             "Unexpected number of operands for MRMSrcMemFrm with VEX_4V"); 
+    else
+      assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 3 &&
+             "Unexpected number of operands for MRMSrcMemFrm");
+    
     HANDLE_OPERAND(roRegister)
 
     if (HasVEX_4VPrefix)
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
-      HANDLE_OPTIONAL(rmRegister)
+      HANDLE_OPERAND(vvvvRegister)
 
     HANDLE_OPERAND(memory)
     HANDLE_OPTIONAL(immediate)
@@ -569,8 +672,14 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   case X86Local::MRM7r:
     // Operand 1 is a register operand in the R/M field.
     // Operand 2 (optional) is an immediate or relocation.
-    assert(numPhysicalOperands <= 2 &&
-           "Unexpected number of operands for MRMnRFrm");
+    if (HasVEX_4VPrefix)
+      assert(numPhysicalOperands <= 3 &&
+             "Unexpected number of operands for MRMSrcMemFrm with VEX_4V");
+    else
+      assert(numPhysicalOperands <= 2 &&
+             "Unexpected number of operands for MRMnRFrm");
+    if (HasVEX_4VPrefix)
+      HANDLE_OPERAND(vvvvRegister);
     HANDLE_OPTIONAL(rmRegister)
     HANDLE_OPTIONAL(relocation)
     break;
@@ -854,6 +963,7 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("ssmem",               TYPE_M32FP)
   TYPE("RST",                 TYPE_ST)
   TYPE("i128mem",             TYPE_M128)
+  TYPE("i256mem",             TYPE_M256)
   TYPE("i64i32imm_pcrel",     TYPE_REL64)
   TYPE("i16imm_pcrel",        TYPE_REL16)
   TYPE("i32imm_pcrel",        TYPE_REL32)
@@ -878,6 +988,7 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("offset16",            TYPE_MOFFS16)
   TYPE("offset32",            TYPE_MOFFS32)
   TYPE("offset64",            TYPE_MOFFS64)
+  TYPE("VR256",               TYPE_XMM256)
   errs() << "Unhandled type string " << s << "\n";
   llvm_unreachable("Unhandled type string");
 }
@@ -900,6 +1011,10 @@ OperandEncoding RecognizableInstr::immediateEncodingFromString
   ENCODING("i64i32imm",       ENCODING_ID)
   ENCODING("i64i8imm",        ENCODING_IB)
   ENCODING("i8imm",           ENCODING_IB)
+  // This is not a typo.  Instructions like BLENDVPD put
+  // register IDs in 8-bit immediates nowadays.
+  ENCODING("VR256",           ENCODING_IB)
+  ENCODING("VR128",           ENCODING_IB)
   errs() << "Unhandled immediate encoding " << s << "\n";
   llvm_unreachable("Unhandled immediate encoding");
 }
@@ -915,6 +1030,7 @@ OperandEncoding RecognizableInstr::rmRegisterEncodingFromString
   ENCODING("FR64",            ENCODING_RM)
   ENCODING("FR32",            ENCODING_RM)
   ENCODING("VR64",            ENCODING_RM)
+  ENCODING("VR256",           ENCODING_RM)
   errs() << "Unhandled R/M register encoding " << s << "\n";
   llvm_unreachable("Unhandled R/M register encoding");
 }
@@ -933,8 +1049,20 @@ OperandEncoding RecognizableInstr::roRegisterEncodingFromString
   ENCODING("SEGMENT_REG",     ENCODING_REG)
   ENCODING("DEBUG_REG",       ENCODING_REG)
   ENCODING("CONTROL_REG",     ENCODING_REG)
+  ENCODING("VR256",           ENCODING_REG)
   errs() << "Unhandled reg/opcode register encoding " << s << "\n";
   llvm_unreachable("Unhandled reg/opcode register encoding");
+}
+
+OperandEncoding RecognizableInstr::vvvvRegisterEncodingFromString
+  (const std::string &s,
+   bool hasOpSizePrefix) {
+  ENCODING("FR32",            ENCODING_VVVV)
+  ENCODING("FR64",            ENCODING_VVVV)
+  ENCODING("VR128",           ENCODING_VVVV)
+  ENCODING("VR256",           ENCODING_VVVV)
+  errs() << "Unhandled VEX.vvvv register encoding " << s << "\n";
+  llvm_unreachable("Unhandled VEX.vvvv register encoding");
 }
 
 OperandEncoding RecognizableInstr::memoryEncodingFromString
@@ -951,6 +1079,7 @@ OperandEncoding RecognizableInstr::memoryEncodingFromString
   ENCODING("f64mem",          ENCODING_RM)
   ENCODING("f32mem",          ENCODING_RM)
   ENCODING("i128mem",         ENCODING_RM)
+  ENCODING("i256mem",         ENCODING_RM)
   ENCODING("f80mem",          ENCODING_RM)
   ENCODING("lea32mem",        ENCODING_RM)
   ENCODING("lea64_32mem",     ENCODING_RM)

@@ -49,7 +49,9 @@
   ENUM_ENTRY(ATTR_XS,     0x02) \
   ENUM_ENTRY(ATTR_XD,     0x04) \
   ENUM_ENTRY(ATTR_REXW,   0x08) \
-  ENUM_ENTRY(ATTR_OPSIZE, 0x10)
+  ENUM_ENTRY(ATTR_OPSIZE, 0x10) \
+  ENUM_ENTRY(ATTR_VEX,    0x20) \
+  ENUM_ENTRY(ATTR_VEXL,   0x40)
 
 #define ENUM_ENTRY(n, v) n = v,
 enum attributeBits {
@@ -87,7 +89,20 @@ enum attributeBits {
                                         "IC_64BIT_REXW_XS")                    \
   ENUM_ENTRY(IC_64BIT_REXW_OPSIZE,  7,  "The Dynamic Duo!  Prefer over all "   \
                                         "else because this changes most "      \
-                                        "operands' meaning")
+                                        "operands' meaning")                   \
+  ENUM_ENTRY(IC_VEX,                1,  "requires a VEX prefix")               \
+  ENUM_ENTRY(IC_VEX_XS,             2,  "requires VEX and the XS prefix")      \
+  ENUM_ENTRY(IC_VEX_XD,             2,  "requires VEX and the XD prefix")      \
+  ENUM_ENTRY(IC_VEX_OPSIZE,         2,  "requires VEX and the OpSize prefix")  \
+  ENUM_ENTRY(IC_VEX_W,              3,  "requires VEX and the W prefix")       \
+  ENUM_ENTRY(IC_VEX_W_XS,           4,  "requires VEX, W, and XS prefix")      \
+  ENUM_ENTRY(IC_VEX_W_XD,           4,  "requires VEX, W, and XD prefix")      \
+  ENUM_ENTRY(IC_VEX_W_OPSIZE,       4,  "requires VEX, W, and OpSize")         \
+  ENUM_ENTRY(IC_VEX_L,              3,  "requires VEX and the L prefix")       \
+  ENUM_ENTRY(IC_VEX_L_XS,           4,  "requires VEX and the L and XS prefix")\
+  ENUM_ENTRY(IC_VEX_L_XD,           4,  "requires VEX and the L and XS prefix")\
+  ENUM_ENTRY(IC_VEX_L_OPSIZE,       4,  "requires VEX, L, and OpSize")
+
 
 #define ENUM_ENTRY(n, r, d) n,    
 typedef enum {
@@ -183,6 +198,7 @@ struct ContextDecision {
   ENUM_ENTRY(ENCODING_NONE,   "")                                              \
   ENUM_ENTRY(ENCODING_REG,    "Register operand in ModR/M byte.")              \
   ENUM_ENTRY(ENCODING_RM,     "R/M operand in ModR/M byte.")                   \
+  ENUM_ENTRY(ENCODING_VVVV,   "Register operand in VEX.vvvv byte.")            \
   ENUM_ENTRY(ENCODING_CB,     "1-byte code offset (possible new CS value)")    \
   ENUM_ENTRY(ENCODING_CW,     "2-byte")                                        \
   ENUM_ENTRY(ENCODING_CD,     "4-byte")                                        \
@@ -278,6 +294,7 @@ struct ContextDecision {
   ENUM_ENTRY(TYPE_XMM32,      "4-byte XMM register or memory operand")         \
   ENUM_ENTRY(TYPE_XMM64,      "8-byte")                                        \
   ENUM_ENTRY(TYPE_XMM128,     "16-byte")                                       \
+  ENUM_ENTRY(TYPE_XMM256,     "32-byte")                                       \
   ENUM_ENTRY(TYPE_XMM0,       "Implicit use of XMM0")                          \
   ENUM_ENTRY(TYPE_SEGMENTREG, "Segment register operand")                      \
   ENUM_ENTRY(TYPE_DEBUGREG,   "Debug register operand")                        \
