@@ -679,8 +679,8 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
 }
 
 // Branch Instructions.
-// BLr9: SignExtend(Imm24:'00', 32)
-// Bcc, BLr9_pred: SignExtend(Imm24:'00', 32) Pred0 Pred1
+// BL: SignExtend(Imm24:'00', 32)
+// Bcc, BL_pred: SignExtend(Imm24:'00', 32) Pred0 Pred1
 // SMC: ZeroExtend(imm4, 32)
 // SVC: ZeroExtend(Imm24, 32)
 //
@@ -760,7 +760,7 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
   }
 
-  assert((Opcode == ARM::Bcc || Opcode == ARM::BLr9 || Opcode == ARM::BLr9_pred
+  assert((Opcode == ARM::Bcc || Opcode == ARM::BL || Opcode == ARM::BL_pred
           || Opcode == ARM::SMC || Opcode == ARM::SVC) &&
          "Unexpected Opcode");
 
@@ -778,12 +778,6 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned Imm26 = slice(insn, 23, 0) << 2;
     //Imm32 = signextend<signed int, 26>(Imm26);
     Imm32 = SignExtend32<26>(Imm26);
-
-    // When executing an ARM instruction, PC reads as the address of the current
-    // instruction plus 8.  The assembler subtracts 8 from the difference
-    // between the branch instruction and the target address, disassembler has
-    // to add 8 to compensate.
-    Imm32 += 8;
   }
 
   MI.addOperand(MCOperand::CreateImm(Imm32));
@@ -793,7 +787,7 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 }
 
 // Misc. Branch Instructions.
-// BLXr9, BXr9
+// BLX, BX
 // BX, BX_RET
 static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
@@ -810,8 +804,7 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
 
   // BLX and BX take one GPR reg.
-  if (Opcode == ARM::BLXr9 || Opcode == ARM::BLXr9_pred ||
-      Opcode == ARM::BLX || Opcode == ARM::BLX_pred ||
+  if (Opcode == ARM::BLX || Opcode == ARM::BLX_pred ||
       Opcode == ARM::BX) {
     assert(NumOps >= 1 && OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
            "Reg operand expected");
