@@ -200,10 +200,6 @@ def Unused : DiagGroup<"unused",
                         UnusedValue, UnusedVariable]>,
                         DiagCategory<"Unused Entity Issue">;
 
-def Uninitialized : DiagGroup<"uninitialized",
-                              [UninitializedMaybe]>,
-                              DiagCategory<"Uninitialized Value Issues">;
-
 // Format settings.
 def FormatSecurity : DiagGroup<"format-security">;
 def Format : DiagGroup<"format",
