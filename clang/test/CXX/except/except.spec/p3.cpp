@@ -98,8 +98,9 @@ extern void (*r21)() noexcept(true); // expected-error {{does not match}}
 // with a throw(bad_alloc) spec, because C++0x makes an incompatible change
 // here.
 extern "C++" { namespace std { class bad_alloc {}; } }
-void* operator new(unsigned long) throw(std::bad_alloc);
-void* operator new(unsigned long);
-void* operator new[](unsigned long);
-void* operator new[](unsigned long) throw(std::bad_alloc);
+typedef decltype(sizeof(int)) mysize_t;
+void* operator new(mysize_t) throw(std::bad_alloc);
+void* operator new(mysize_t);
+void* operator new[](mysize_t);
+void* operator new[](mysize_t) throw(std::bad_alloc);
 
