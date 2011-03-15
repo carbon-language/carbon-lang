@@ -77,7 +77,11 @@ private:
 bool ConstStructBuilder::
 AppendField(const FieldDecl *Field, uint64_t FieldOffset,
             llvm::Constant *InitCst) {
-  uint64_t FieldOffsetInBytes = FieldOffset / 8;
+
+  const ASTContext &Context = CGM.getContext();
+
+  CharUnits FieldOffsetInChars = Context.toCharUnitsFromBits(FieldOffset);
+  uint64_t FieldOffsetInBytes = FieldOffsetInChars.getQuantity();
 
   assert(NextFieldOffsetInBytes <= FieldOffsetInBytes
          && "Field offset mismatch!");
@@ -100,9 +104,9 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset,
   if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
     // We need to append padding.
     AppendPadding(
-        CharUnits::fromQuantity(FieldOffsetInBytes - NextFieldOffsetInBytes));
+        FieldOffsetInChars - CharUnits::fromQuantity(NextFieldOffsetInBytes));
 
-    assert(NextFieldOffsetInBytes == FieldOffsetInBytes &&
+    assert(NextFieldOffsetInBytes == FieldOffsetInChars.getQuantity() &&
            "Did not add enough padding!");
 
     AlignedNextFieldOffsetInBytes = NextFieldOffsetInBytes;
