@@ -6,11 +6,11 @@
 %struct.s2 = type { i32, i8*, i8*, [256 x %struct.s1*], [8 x i32], i64, i8*, i32, i64, i64, i32, %struct.s3*, %struct.s3*, [49 x i64] }
 %struct.s3 = type { %struct.s3*, %struct.s3*, i32, i32, i32 }
 
-define fastcc i8* @t(i64 %size) nounwind {
+define fastcc i8* @t(i32 %base) nounwind {
 entry:
 ; CHECK: t:
 ; CHECK: leaq (%rax,%rax,4)
-  %0 = zext i32 undef to i64
+  %0 = zext i32 %base to i64
   %1 = getelementptr inbounds %struct.s2* null, i64 %0
   br i1 undef, label %bb1, label %bb2
 

@@ -2483,7 +2483,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
       return getNode(OpOpcode, DL, VT, Operand.getNode()->getOperand(0));
     else if (OpOpcode == ISD::UNDEF)
-      return getUNDEF(VT);
+      // sext(undef) = 0, because the top bits will all be the same.
+      return getConstant(0, VT);
     break;
   case ISD::ZERO_EXTEND:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
@@ -2498,6 +2499,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
       return getNode(ISD::ZERO_EXTEND, DL, VT,
                      Operand.getNode()->getOperand(0));
+    else if (OpOpcode == ISD::UNDEF)
+      // zext(undef) = 0, because the top bits will be zero.
+      return getConstant(0, VT);
     break;
   case ISD::ANY_EXTEND:
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
