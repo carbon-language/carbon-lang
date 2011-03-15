@@ -826,7 +826,7 @@ public:
     // relocation entry in the the low 16 bits of r_address field.
     unsigned ThumbBit = 0;
     unsigned MovtBit = 0;
-    switch (Fixup.getKind()) {
+    switch ((unsigned)Fixup.getKind()) {
     default: break;
     case ARM::fixup_arm_movt_hi16:
     case ARM::fixup_arm_movt_hi16_pcrel:
