@@ -117,3 +117,12 @@ int no_default_function_template_args();
 // CHECK-0X: has_default_function_template_args
 // CHECK-NO-0X: no_default_function_template_args
 
+#if __has_feature(cxx_noexcept)
+int has_noexcept();
+#else
+int no_noexcept();
+#endif
+
+// CHECK-0X: has_noexcept
+// CHECK-NO-0X: no_noexcept
+
