@@ -97,9 +97,9 @@ extern void (*r21)() noexcept(true); // expected-error {{does not match}}
 // As a very special workaround, we allow operator new to match no spec
 // with a throw(bad_alloc) spec, because C++0x makes an incompatible change
 // here.
-namespace std { class bad_alloc {}; }
+extern "C++" { namespace std { class bad_alloc {}; } }
 void* operator new(unsigned long) throw(std::bad_alloc);
 void* operator new(unsigned long);
-void* operator new[](unsigned long) throw(std::bad_alloc);
 void* operator new[](unsigned long);
+void* operator new[](unsigned long) throw(std::bad_alloc);
 

@@ -396,14 +396,14 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
         if (Name && Name->getName() == "bad_alloc") {
           // It's called bad_alloc, but is it in std?
           DeclContext* DC = ExRecord->getDeclContext();
-          while (DC && !isa<NamespaceDecl>(DC))
-            DC = DC->getParent();
-          if (DC) {
-            NamespaceDecl* NS = cast<NamespaceDecl>(DC);
+          DC = DC->getEnclosingNamespaceContext();
+          if (NamespaceDecl* NS = dyn_cast<NamespaceDecl>(DC)) {
             IdentifierInfo* NSName = NS->getIdentifier();
+            DC = DC->getParent();
             if (NSName && NSName->getName() == "std" &&
-                isa<TranslationUnitDecl>(NS->getParent()))
+                DC->getEnclosingNamespaceContext()->isTranslationUnit()) {
               return false;
+            }
           }
         }
       }
