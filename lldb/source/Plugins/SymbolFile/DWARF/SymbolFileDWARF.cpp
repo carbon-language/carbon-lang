@@ -2986,6 +2986,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
             ConstString type_name_const_str;
             Type::ResolveState resolve_state = Type::eResolveStateUnresolved;
             size_t byte_size = 0;
+            bool byte_size_valid = false;
             Declaration decl;
 
             Type::EncodingDataType encoding_data_type = Type::eEncodingIsUID;
@@ -3028,7 +3029,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     type_name_cstr = form_value.AsCString(&get_debug_str_data());
                                     type_name_const_str.SetCString(type_name_cstr);
                                     break;
-                                case DW_AT_byte_size:   byte_size = form_value.Unsigned();  break;
+                                case DW_AT_byte_size:   byte_size = form_value.Unsigned();  byte_size_valid = true; break;
                                 case DW_AT_encoding:    encoding = form_value.Unsigned(); break;
                                 case DW_AT_type:        encoding_uid = form_value.Reference(dwarf_cu); break;
                                 default:
@@ -3150,6 +3151,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                                 case DW_AT_byte_size:   
                                     byte_size = form_value.Unsigned(); 
+                                    byte_size_valid = true;
                                     break;
 
                                 case DW_AT_accessibility: 
@@ -3182,8 +3184,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     if (decl.IsValid())
                     {
                         if (GetUniqueDWARFASTTypeMap().Find (type_name_const_str,
+                                                             this,
+                                                             dwarf_cu,
                                                              die,
                                                              decl,
+                                                             byte_size_valid ? byte_size : -1,
                                                              unique_ast_entry))
                         {
                             // We have already parsed this type or from another 
@@ -3280,6 +3285,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     // end up creating many copies of the same type over
                     // and over in the ASTContext for our module
                     unique_ast_entry.m_type_sp = type_sp;
+                    unique_ast_entry.m_symfile = this;
+                    unique_ast_entry.m_cu = dwarf_cu;
                     unique_ast_entry.m_die = die;
                     unique_ast_entry.m_declaration = decl;
                     GetUniqueDWARFASTTypeMap().Insert (type_name_const_str, 
@@ -3333,7 +3340,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     type_name_const_str.SetCString(type_name_cstr);
                                     break;
                                 case DW_AT_type:            encoding_uid = form_value.Reference(dwarf_cu); break;
-                                case DW_AT_byte_size:       byte_size = form_value.Unsigned(); break;
+                                case DW_AT_byte_size:       byte_size = form_value.Unsigned(); byte_size_valid = true; break;
                                 case DW_AT_accessibility:   accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
                                 case DW_AT_declaration:     is_forward_declaration = form_value.Unsigned() != 0; break;
                                 case DW_AT_allocated:
@@ -3691,7 +3698,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     break;
 
                                 case DW_AT_type:            type_die_offset = form_value.Reference(dwarf_cu); break;
-                                case DW_AT_byte_size:       byte_size = form_value.Unsigned(); break;
+                                case DW_AT_byte_size:       byte_size = form_value.Unsigned(); byte_size_valid = true; break;
                                 case DW_AT_byte_stride:     byte_stride = form_value.Unsigned(); break;
                                 case DW_AT_bit_stride:      bit_stride = form_value.Unsigned(); break;
                                 case DW_AT_accessibility:   accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
