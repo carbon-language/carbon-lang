@@ -20,6 +20,8 @@ void allspec() throw(...);
 void intspec() throw(int);
 void emptyspec() throw();
 void nothrowattr() __attribute__((nothrow));
+void noexcept_true() noexcept;
+void noexcept_false() noexcept(false);
 
 void call() {
   N(nospec());
@@ -27,6 +29,8 @@ void call() {
   N(intspec());
   P(emptyspec());
   P(nothrowattr());
+  P(noexcept_true());
+  N(noexcept_false());
 }
 
 void (*pnospec)();
