@@ -308,6 +308,16 @@ multiclass FU6_LU6<string OpcStr, SDNode OpNode> {
                  !strconcat(OpcStr, " $b"),
                  [(OpNode immU16:$b)]>;
 }
+multiclass FU6_LU6_int<string OpcStr, Intrinsic Int> {
+  def _u6: _FU6<
+                 (outs), (ins i32imm:$b),
+                 !strconcat(OpcStr, " $b"),
+                 [(Int immU6:$b)]>;
+  def _lu6: _FLU6<
+                 (outs), (ins i32imm:$b),
+                 !strconcat(OpcStr, " $b"),
+                 [(Int immU16:$b)]>;
+}
 
 multiclass FU6_LU6_np<string OpcStr> {
   def _u6: _FU6<
@@ -638,8 +648,8 @@ defm RETSP : FU6_LU6<"retsp", XCoreRetsp>;
 }
 }
 
-// TODO extdp, kentsp, krestsp, blat, setsr
-// clrsr, getsr, kalli
+// TODO extdp, kentsp, krestsp, blat
+// getsr, kalli
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 def BRBU_u6 : _FU6<
                  (outs),
@@ -677,6 +687,10 @@ def LDAWCP_lu6: _FLRU6<
                     (outs), (ins MEMii:$a),
                     "ldaw r11, cp[$a]",
                     [(set R11, ADDRcpii:$a)]>;
+
+defm SETSR : FU6_LU6_int<"setsr", int_xcore_setsr>;
+
+defm CLRSR : FU6_LU6_int<"clrsr", int_xcore_clrsr>;
 
 // U10
 // TODO ldwcpl, blacp
@@ -818,7 +832,7 @@ def SETD_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
 
 // Two operand long
 // TODO setclk, setrdy, setpsc, endin, peek,
-// getd, testlcl, tinitlr, getps, setps
+// getd, testlcl, tinitlr
 def BITREV_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
                  "bitrev $dst, $src",
                  [(set GRRegs:$dst, (int_xcore_bitrev GRRegs:$src))]>;
@@ -838,6 +852,14 @@ def SETC_l2r : _FL2R<(outs), (ins GRRegs:$r, GRRegs:$val),
 def SETTW_l2r : _FL2R<(outs), (ins GRRegs:$r, GRRegs:$val),
                   "settw res[$r], $val",
                   [(int_xcore_settw GRRegs:$r, GRRegs:$val)]>;
+
+def GETPS_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
+                 "get $dst, ps[$src]",
+                 [(set GRRegs:$dst, (int_xcore_getps GRRegs:$src))]>;
+
+def SETPS_l2r : _FL2R<(outs), (ins GRRegs:$src1, GRRegs:$src2),
+                 "set ps[$src1], $src2",
+                 [(int_xcore_setps GRRegs:$src1, GRRegs:$src2)]>;
 
 // One operand short
 // TODO edu, eeu, waitet, waitef, tstart, msync, mjoin, clrtp
