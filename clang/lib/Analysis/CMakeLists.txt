@@ -12,7 +12,7 @@ add_clang_library(clangAnalysis
   PseudoConstantAnalysis.cpp
   ReachableCode.cpp
   ScanfFormatString.cpp
-  UninitializedValuesV2.cpp
+  UninitializedValues.cpp
   )
 
 add_dependencies(clangAnalysis ClangAttrClasses ClangAttrList

@@ -29,7 +29,7 @@
 #include "clang/Analysis/Analyses/ReachableCode.h"
 #include "clang/Analysis/Analyses/CFGReachabilityAnalysis.h"
 #include "clang/Analysis/CFGStmtMap.h"
-#include "clang/Analysis/Analyses/UninitializedValuesV2.h"
+#include "clang/Analysis/Analyses/UninitializedValues.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/Casting.h"
 

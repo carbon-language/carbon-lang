@@ -1,4 +1,4 @@
-//==- UninitializedValuesV2.cpp - Find Uninitialized Values -----*- C++ --*-==//
+//==- UninitializedValues.cpp - Find Uninitialized Values -------*- C++ --*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,7 +20,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
-#include "clang/Analysis/Analyses/UninitializedValuesV2.h"
+#include "clang/Analysis/Analyses/UninitializedValues.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 
 using namespace clang;

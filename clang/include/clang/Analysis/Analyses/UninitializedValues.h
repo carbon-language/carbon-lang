@@ -1,4 +1,4 @@
-//= UninitializedValuesV2.h - Finding uses of uninitialized values --*- C++ -*-=
+//= UninitializedValues.h - Finding uses of uninitialized values --*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
