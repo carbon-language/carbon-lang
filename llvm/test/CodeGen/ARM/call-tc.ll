@@ -74,7 +74,7 @@ entry:
 ; CHECKT2: t7:
 ; CHECKT2: blxeq _foo
 ; CHECKT2-NEXT: pop.w
-; CHECKT2-NEXT: b.w _foo
+; CHECKT2-NEXT: b _foo
   br i1 undef, label %bb, label %bb1.lr.ph
 
 bb1.lr.ph:

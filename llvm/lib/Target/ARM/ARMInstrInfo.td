@@ -1408,11 +1408,7 @@ let isCall = 1,
 
 // Tail calls.
 
-// FIXME: These should probably be xformed into the non-TC versions of the
-// instructions as part of MC lowering.
-// FIXME: These seem to be used for both Thumb and ARM instruction selection.
-// Thumb should have its own version since the instruction is actually
-// different, even though the mnemonic is the same.
+// FIXME: The Thumb versions of these should live in ARMInstrThumb.td
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Darwin versions.
   let Defs = [R0, R1, R2, R3, R9, R12,
@@ -1426,21 +1422,21 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
                        IIC_Br, []>, Requires<[IsDarwin]>;
 
-    def TAILJMPd : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
-                   IIC_Br, "b\t$dst  @ TAILCALL",
+    def TAILJMPd : ARMPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br,
                    []>, Requires<[IsARM, IsDarwin]>;
 
-    def TAILJMPdt: ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
-                   IIC_Br, "b.w\t$dst  @ TAILCALL",
+    def tTAILJMPd: tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br,
                    []>, Requires<[IsThumb, IsDarwin]>;
 
-    def TAILJMPr : AXI<(outs), (ins tcGPR:$dst, variable_ops),
-                     BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
-                   []>, Requires<[IsDarwin]> {
-      bits<4> dst;
-      let Inst{31-4} = 0b1110000100101111111111110001;
-      let Inst{3-0}  = dst;
-    }
+    def TAILJMPr : ARMPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br,
+                   []>, Requires<[IsARM, IsDarwin]>;
+
+    def tTAILJMPr : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br,
+                   []>, Requires<[IsThumb, IsDarwin]>;
   }
 
   // Non-Darwin versions (the difference is R9).
@@ -1455,21 +1451,20 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     def TCRETURNriND : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
                        IIC_Br, []>, Requires<[IsNotDarwin]>;
 
-    def TAILJMPdND : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
-                   IIC_Br, "b\t$dst  @ TAILCALL",
+    def TAILJMPdND : ARMPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br,
                    []>, Requires<[IsARM, IsNotDarwin]>;
 
-    def TAILJMPdNDt : ABXI<0b1010, (outs), (ins brtarget:$dst, variable_ops),
-                   IIC_Br, "b.w\t$dst  @ TAILCALL",
+    def tTAILJMPdND : tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br,
                    []>, Requires<[IsThumb, IsNotDarwin]>;
 
-    def TAILJMPrND : AXI<(outs), (ins tcGPR:$dst, variable_ops),
-                     BrMiscFrm, IIC_Br, "bx\t$dst  @ TAILCALL",
-                   []>, Requires<[IsNotDarwin]> {
-      bits<4> dst;
-      let Inst{31-4} = 0b1110000100101111111111110001;
-      let Inst{3-0}  = dst;
-    }
+    def TAILJMPrND : ARMPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br,
+                   []>, Requires<[IsARM, IsNotDarwin]>;
+    def tTAILJMPrND : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br,
+                   []>, Requires<[IsThumb, IsNotDarwin]>;
   }
 }
 
